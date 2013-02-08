@@ -19,9 +19,7 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#if HAVE_PLL == 0 
-#include <mpi.h>
-#endif
+
 
 #if ! (defined(__ppc) || defined(__powerpc__) || defined(PPC))
 #include <xmmintrin.h>
