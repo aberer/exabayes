@@ -7,6 +7,7 @@ LANG_FLAGS=-std=gnu99 # because of asm
 
 # TODO they cannot be serious with that...this is the only way of getting rid of the default -O2 -g  
 CFLAGS=
+CXXFLAGS=
 
 AM_CFLAGS=-D__SIM_SSE3 -D_BAYESIAN -msse3 -D_GNU_SOURCE  -D_OPTIMIZED_FUNCTIONS
 
@@ -16,25 +17,24 @@ else
 AM_CFLAGS+=-O2 -fomit-frame-pointer -funroll-loops
 endif
 
-
-
 # TODO avx, threads
   # src/pll/avxLikelihood-pll.c src/pll/axml-pll.c 
 
-# this is fubar
-# OPT_SRC=lib/ncl/ncl/nxsassumptionsblock.cpp   lib/ncl/ncl/nxsdatablock.cpp       lib/ncl/ncl/nxspublicblocks.cpp  lib/ncl/ncl/nxstaxaassociationblock.cpp  lib/ncl/ncl/nxsunalignedblock.cpp lib/ncl/ncl/nxsblock.cpp              lib/ncl/ncl/nxsdistancesblock.cpp  lib/ncl/ncl/nxsreader.cpp        lib/ncl/ncl/nxstaxablock.cpp lib/ncl/ncl/nxscharactersblock.cpp    lib/ncl/ncl/nxsexception.cpp       lib/ncl/ncl/nxssetreader.cpp     lib/ncl/ncl/nxstoken.cpp lib/ncl/ncl/nxscxxdiscretematrix.cpp  lib/ncl/ncl/nxsmultiformat.cpp     lib/ncl/ncl/nxsstring.cpp        lib/ncl/ncl/nxstreesblock.cpp
-# OPT_HEAD= -Ilib/ncl-2.1.18/ncl
 
+srcpre=./src
+srcxpre=./src/examl
+srcppre=./src/pll
 
+SRC=$(srcpre)/nclConfigReader.cpp $(srcpre)/configParser.c $(srcpre)/randomness.c $(srcpre)/bayes.c
 
 if WITH_PLL 
 ########
 # PLL  #
 ########
-OPT_SRC= src/main-pll.c  src/nclConfigReader.cpp src/configParser.c src/randomness.c src/pll/evaluateGenericSpecial-pll.c src/pll/fastDNAparsimony-pll.c src/pll/makenewzGenericSpecial-pll.c  src/pll/models-pll.c src/pll/optimizeModel-pll.c  src/pll/recom-pll.c src/pll/searchAlgo-pll.c  src/pll/trash-pll.c   src/pll/utils-pll.c  src/pll/bipartitionList-pll.c  src/pll/evaluatePartialGenericSpecial-pll.c  src/pll/genericParallelization-pll.c  src/pll/mem_alloc-pll.c src/pll/newviewGenericSpecial-pll.c  src/pll/randomTree-pll.c src/pll/restartHashTable-pll.c  src/pll/topologies-pll.c  src/pll/treeIO-pll.c 
-OPT_HEAD= -I./src/pll/
+OPT_SRC= $(srcpre)/main-pll.c   $(srcppre)/evaluateGenericSpecial-pll.c $(srcppre)/fastDNAparsimony-pll.c $(srcppre)/makenewzGenericSpecial-pll.c  $(srcppre)/models-pll.c $(srcppre)/optimizeModel-pll.c  $(srcppre)/recom-pll.c $(srcppre)/searchAlgo-pll.c  $(srcppre)/trash-pll.c   $(srcppre)/utils-pll.c  $(srcppre)/bipartitionList-pll.c  $(srcppre)/evaluatePartialGenericSpecial-pll.c  $(srcppre)/genericParallelization-pll.c  $(srcppre)/mem_alloc-pll.c $(srcppre)/newviewGenericSpecial-pll.c  $(srcppre)/randomTree-pll.c $(srcppre)/restartHashTable-pll.c  $(srcppre)/topologies-pll.c  $(srcppre)/treeIO-pll.c 
+OPT_HEAD= -I$(srcppre)
 bin_PROGRAMS=exabayes_pll
-exabayes_pll_SOURCES= src/bayes.c $(OPT_SRC)
+exabayes_pll_SOURCES= $(SRC) $(OPT_SRC)
 FEATURE_FLAGS= -D_USE_PTHREADS -pthread #  -D_USE_ALLREDUCE
 else  
 #########
@@ -42,21 +42,17 @@ else
 #########
 CC=mpicc
 CXX=mpicxx
-OPT_SRC= src/main-examl.c src/nclConfigReader.cpp src/main-common.c src/randomness.c src/configParser.c src/examl/bipartitionList.c src/examl/evaluatePartialGenericSpecial.c src/examl/models.c src/examl/optimizeModel.c src/examl/searchAlgo.c src/examl/trash.c \
-src/examl-legacy.c src/examl/evaluateGenericSpecial.c src/examl/makenewzGenericSpecial.c src/examl/newviewGenericSpecial.c src/examl/restartHashTable.c src/examl/topologies.c src/examl/treeIO.c
-OPT_HEAD= -I./src/examl/
+OPT_SRC= $(srcpre)/main-examl.c  $(srcpre)/main-common.c  $(srcxpre)/bipartitionList.c $(srcxpre)/evaluatePartialGenericSpecial.c $(srcxpre)/models.c $(srcxpre)/optimizeModel.c $(srcxpre)/searchAlgo.c $(srcxpre)/trash.c \
+$(srcpre)/examl-legacy.c $(srcxpre)/evaluateGenericSpecial.c $(srcxpre)/makenewzGenericSpecial.c $(srcxpre)/newviewGenericSpecial.c $(srcxpre)/restartHashTable.c $(srcxpre)/topologies.c $(srcxpre)/treeIO.c
+OPT_HEAD= -I$(srcxpre)
 bin_PROGRAMS=exabayes
-exabayes_SOURCES=src/bayes.c $(OPT_SRC)
+exabayes_SOURCES=$(SRC) $(OPT_SRC)
 FEATURE_FLAGS= -D_USE_ALLREDUCE
 endif 
 
 
 
-
-
 AM_CFLAGS+=$(OPT_HEAD)
-AM_CFLAGS+= $(FEATURE_FLAGS) $(WARN_FLAGS) $(LANG_FLAGS)
+AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS) $(LANG_FLAGS)
 AM_CXXFLAGS=$(AM_CFLAGS)
 AM_LDFLAGS = -lm   -lncl  -L/usr/local/lib/ncl/
-
-

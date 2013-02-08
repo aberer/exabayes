@@ -5,11 +5,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "axml.h"
+#include "config.h"
 #include "main-common.h"
 #include "globals.h" 
 
 int modelExists(char *model, tree *tr);
 int filexists(char *filename);  
+
 
 
 int mygetopt(int argc, char **argv, char *opts, int *optind, char **optarg)
@@ -112,7 +114,10 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
   tr->rateHetModel = GAMMA;
  
   tr->multiStateModel  = GTR_MULTI_STATE;
-  tr->useGappedImplementation = FALSE;
+#if (HAVE_PLL == 0 ) 
+    tr->useGappedImplementation = FALSE;
+    tr->saveBestTrees          = 0;
+#endif
   tr->saveMemory = FALSE;
 
   tr->manyPartitions = FALSE;
@@ -123,7 +128,7 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
   tr->constrained = FALSE;
 
   tr->gapyness               = 0.0; 
-  tr->saveBestTrees          = 0;
+
 
   tr->useMedian = FALSE;
 

@@ -47,16 +47,17 @@ if [ ! -d data/$dataset ]; then
 fi
 
 
-if [ -f lastConfig -a   "$(cat lastConfig)" == "$args"    ]; then 
+status=$(./config.status --config )
+
+if  [ "$status"  == "$args" ]; then 
     echo "no need to re-configure / re-build"
 else 
     echo "calling ./configure $args" 
     ./configure $args  
     make clean     
-fi
+fi 
 
 make -j $numCores
-echo $args > lastConfig 
 
 echo "calling exabayes as $baseCall"
 wait 

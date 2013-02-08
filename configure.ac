@@ -7,6 +7,9 @@ AM_INIT_AUTOMAKE(  exabayes , 0.0.1 )
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([src/config.h])
 
+AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])
+AC_DEFINE([PROGRAM_NAME_PLL], ["ExaBayes_PLL"] , ["name used for log files"])
+
 
 AM_SILENT_RULES([yes])
 
@@ -45,6 +48,8 @@ AC_ARG_ENABLE(pll,
    esac],
   [WITH_PLL="no"]
 )
+AC_DEFINE([HAVE_PLL], [0], ["is 1, if built with the PLL "])
+AS_IF([test "x$WITH_PLL" = "xyes"], AC_DEFINE(HAVE_PLL, 1) )
 AM_CONDITIONAL([WITH_PLL], [test  "x$WITH_PLL" = "xyes"])
 
 

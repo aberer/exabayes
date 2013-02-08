@@ -9,3 +9,4 @@ instructions on how to set up this repository:
 * in src: $ ln -s  ../lib/phylogenetic-likelihood-library/ pll
 * in top-level dir: ./configure 
 * now make should work ... 
+* for the PLL: execute ./utils/setupPLLLinks.sh

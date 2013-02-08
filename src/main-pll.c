@@ -1,3 +1,4 @@
+
 #include "mem_alloc.h"
 
 #ifdef WIN32
@@ -39,6 +40,8 @@
 #include "globalVariables.h"
 #undef GLOBAL_VARIABLES_DEFINITION
 
+
+/* #include "main-common.h" */
 
 /* turn on, when in release mode */
 /* #define PRODUCTIVE */
