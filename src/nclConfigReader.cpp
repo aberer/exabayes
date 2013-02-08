@@ -80,7 +80,7 @@ public:
 
   initParamStruct* getResult() 
   {
-    assertInitialized();
+    // assertInitialized();
     return initParam; 
   }
 
