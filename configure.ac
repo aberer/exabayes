@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.67])
+AC_REREQ([2.67])
 AC_INIT([exabayes],[0.0.1],[bla@bla.org])
 AM_INIT_AUTOMAKE(  exabayes , 0.0.1 )
 AC_CONFIG_SRCDIR([src/])
@@ -18,7 +18,7 @@ AM_SILENT_RULES([yes])
 AC_PROG_CC
 AC_PROG_CXX
 
-AX_MPI()
+dnl AX_MPI()
 
 # Checks for libraries.
 dnl AC_CHECK_LIB([ncl], [], [], [ AC_MSG_ERROR([Could not find the ncl library]) ])
