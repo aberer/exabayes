@@ -48,18 +48,6 @@ int parseLine(char* line, int length, state *theState)
   return 0; 
 }
 
-void initDefaultValues(state *theState){
-  
-    theState->proposalWeights[SPR] = 1.0; 
-    theState->proposalWeights[UPDATE_MODEL] = 1.0; 
-    theState->proposalWeights[UPDATE_GAMMA] = 1.0; 
-    theState->proposalWeights[UPDATE_SINGLE_BL] = 1.0;   
-    theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = 0.0;   
-  
-  theState->numGen = 20000;
-  theState->penaltyFactor = 0.0;
-}
-
 
 void parseConfig(state *theState)
 {
