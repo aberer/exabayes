@@ -26,6 +26,7 @@ void addInitParameters(state *curstate, initParamStruct *initParams)
   curstate->proposalWeights[UPDATE_GAMMA] = initParams->initGammaWeight;
   curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight; 
+  curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight; 
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
 }

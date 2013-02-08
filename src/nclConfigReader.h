@@ -9,6 +9,7 @@ typedef struct
   double initGammaWeight; 
   double initModelWeight;
   double initSingleBranchWeight; 
+  double initSingleBranchExpWeight;
   int numGen; 
   double initPenaltyFactor; 
 } initParamStruct ; 

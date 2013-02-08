@@ -4,6 +4,7 @@ begin EXABAYES;
       INITSPRWEIGHT   5 
       initGammaWeight 1
       initSingleBranchWeight 5
+      initSingleBranchExpWeight 5
       numGen 50000
       initPenaltyFactor 1.0
 end;

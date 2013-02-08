@@ -57,6 +57,8 @@ public:
 	      initParam->initGammaWeight = value.ConvertToDouble();
 	    else if (key.EqualsCaseInsensitive("initSingleBranchWeight"))
 	      initParam->initSingleBranchWeight = value.ConvertToDouble();
+	    else if (key.EqualsCaseInsensitive("initSingleBranchExpWeight"))
+	      initParam->initSingleBranchExpWeight = value.ConvertToDouble();	    
 	    else if(key.EqualsCaseInsensitive("numGen"))
 	      initParam->numGen = value.ConvertToInt(); 
 	    else if(key.EqualsCaseInsensitive("initPenaltyFactor"))
