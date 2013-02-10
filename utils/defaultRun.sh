@@ -31,10 +31,10 @@ fi
 
 codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
-    baseCall="mpirun -np 2 $gdb ./exabayes -s data/$dataset/aln.examl.binary -t data/$dataset/tree -n testRun -m $model -p $seed -c examples/test.nex "
+    baseCall="mpirun -np 2 $gdb ./exabayes -s data/$dataset/aln.examl.binary -t data/$dataset/tree -n testRun -p $seed -c examples/test.nex "
 elif [ "$codeBase" == "pll" ]; then 
     args="$args --enable-pll"
-    baseCall="$gdb ./exabayes_pll -T $numCores -p $seed  -s data/$dataset/aln.pll.binary  -t data/$dataset/tree -n testRun -m $model  -c examples/test.nex "
+    baseCall="$gdb ./exabayes_pll -T $numCores -p $seed  -s data/$dataset/aln.pll.binary  -t data/$dataset/tree -n testRun -c examples/test.nex "
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -47,9 +47,9 @@ if [ ! -d data/$dataset ]; then
 fi
 
 
-status=$(./config.status --config )
+status="$(./config.status --config | tr -d "'" )"
 
-if  [ "$status"  == "$args" ]; then 
+if  [ "$(echo $status)"  == "$(echo $args)" ]; then 
     echo "no need to re-configure / re-build"
 else 
     echo "calling ./configure $args" 

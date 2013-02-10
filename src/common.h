@@ -1,3 +1,7 @@
+#ifndef _COMMON_H
+#define _COMMON_H
+
+
 // TODO: we also need a header cleanup, just imported this from examl 
 #ifdef WIN32
 #include <direct.h>
@@ -31,4 +35,7 @@
   #define MM_DAZ_ON    0x0040
   #define MM_DAZ_OFF    0x0000
 */
+#endif
+
+
 #endif
