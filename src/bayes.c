@@ -1,18 +1,11 @@
 
-
 #include "common.h"
 
-/* #include "cycle.h" */
 #include "axml.h"
 #include "proposals.h"
 #include "randomness.h"
 #include "globals.h"
-
-
-extern int Thorough;
-/* extern char run_id[128]; */
-extern int processID;
-extern int seed; 
+#include "main-common.h"
 
 
 
@@ -35,13 +28,14 @@ int parseConfig(state *theState);
 #endif
 
 
-void initDefaultValues(state *theState){
+void initDefaultValues(state *theState)
+{
   
-    theState->proposalWeights[SPR] = 0.0; 
-    theState->proposalWeights[UPDATE_MODEL] = 0.0; 
-    theState->proposalWeights[UPDATE_GAMMA] = 0.0; 
-    theState->proposalWeights[UPDATE_SINGLE_BL] = 0.0;   
-    theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = 0.0;   
+  theState->proposalWeights[SPR] = 0.0; 
+  theState->proposalWeights[UPDATE_MODEL] = 0.0; 
+  theState->proposalWeights[UPDATE_GAMMA] = 0.0; 
+  theState->proposalWeights[UPDATE_SINGLE_BL] = 0.0;   
+  theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = 0.0;   
   
   theState->numGen = 1000000;
   theState->penaltyFactor = 0.0;
@@ -94,8 +88,9 @@ void normalizeProposalWeights(state *curstate)
 }
 
 
-readConfig(state *curstate){
-   initDefaultValues(curstate);
+void readConfig(state *curstate)
+{
+  initDefaultValues(curstate);
 #ifdef _USE_NCL_PARSER
   initParamStruct *initParams = NULL; 
   printf("\n\ntrying to parse %s\n\n", configFileName); 
@@ -105,7 +100,6 @@ readConfig(state *curstate){
   parseConfig(curstate); 
 #endif
   normalizeProposalWeights(curstate); 
- 
   
 }
 
@@ -143,10 +137,10 @@ static void printSubsRates(tree *tr,int model, int numSubsRates)
 {
   assert(tr->partitionData[model].dataType = DNA_DATA);
   int i;
-  printBothOpen("Subs rates: ");
+  PRINT("Subs rates: ");
   for(i=0; i<numSubsRates; i++)
-    printBothOpen("%d => %.3f, ", i, tr->partitionData[model].substRates[i]);
-  printBothOpen("\n\n");
+    PRINT("%d => %.3f, ", i, tr->partitionData[model].substRates[i]);
+  PRINT("\n\n");
 }
 
 static void recordSubsRates(tree *tr, int model, int numSubsRates, double *prevSubsRates)
@@ -893,7 +887,7 @@ void mcmc(tree *tr, analdef *adef)
       double testr;
       double acceptance;
     
-      //     printBothOpen("iter %d, tr LH %f, startLH %f\n",j, tr->likelihood, tr->startLH);
+      //     PRINT("iter %d, tr LH %f, startLH %f\n",j, tr->likelihood, tr->startLH);
       /* proposalAccepted = FALSE; */
     
       //
@@ -907,7 +901,7 @@ void mcmc(tree *tr, analdef *adef)
 #ifdef WITH_PERFORMANCE_MEASUREMENTS    
       perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT
 #endif
-      //      printBothOpen("before proposal, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
+      //      PRINT("before proposal, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
       tr->startLH = tr->likelihood;
 
       //which_proposal = proposal(curstate);
@@ -927,7 +921,7 @@ void mcmc(tree *tr, analdef *adef)
 	  first = 0;
 	  curstate->curprior = curstate->newprior;
 	}
-      //     printBothOpen("proposal done, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
+      //     PRINT("proposal done, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
 
       //proposalTime += gettime() - t;
       /* decide upon acceptance */
@@ -943,7 +937,7 @@ void mcmc(tree *tr, analdef *adef)
 #endif
       if(processID == 0 && (j % 100) == 0) 
 	{
-	  printf( "propb: %d %f %f %d spr: %d (%d) model: %d (%d) ga: %d (%d) bl: %d (%d) blExp: %d (%d) %f %f %f radius: %f %f\n", 
+	  PRINT( "propb: %d %f %f %d spr: %d (%d) model: %d (%d) ga: %d (%d) bl: %d (%d) blExp: %d (%d) %f %f %f radius: %f %f\n", 
 		  j, tr->likelihood, tr->startLH, testr < acceptance, 
 		  curstate->acceptedProposals[SPR]	, curstate->rejectedProposals[SPR] , 
 		  curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] , 
@@ -996,8 +990,8 @@ void mcmc(tree *tr, analdef *adef)
 	  // just for validation 
 	  if(fabs(curstate->tr->startLH - tr->likelihood) > 1.0E-15)
 	    {
-	      printBothOpen("WARNING: LH diff %.20f\n", curstate->tr->startLH - tr->likelihood);
-	      printBothOpen("after reset, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
+	      PRINT("WARNING: LH diff %.20f\n", curstate->tr->startLH - tr->likelihood);
+	      PRINT("after reset, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
 	    }      
 	  assert(fabs(curstate->tr->startLH - tr->likelihood) < 0.1);
 	} 
@@ -1088,10 +1082,10 @@ static void printRecomTree(tree *tr, boolean printBranchLengths, char *title)
   fprintf(nwfile,"%s\n", tr->tree_string);
   fclose(nwfile);
   if(title)
-    printBothOpen("%s\n", title);
+    PRINT("%s\n", title);
   if (printBranchLengths)
-    printBothOpen("%s\n", tr->tree_string);
-  printBothOpen("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    PRINT("%s\n", tr->tree_string);
+  PRINT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
   //system("bin/nw_display tmp.nw");
 
 

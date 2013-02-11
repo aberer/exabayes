@@ -7,6 +7,8 @@
 #include "globals.h"
 
 
+extern void initDefaultValues(state *theState); 
+
 
 int parseLine(char* line, int length, state *theState)
 {

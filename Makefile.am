@@ -26,6 +26,8 @@ srcxpre=./src/examl
 srcppre=./src/pll
 
 SRC=$(srcpre)/nclConfigReader.cpp $(srcpre)/configParser.c $(srcpre)/randomness.c $(srcpre)/bayes.c
+bin_PROGRAMS=exabayes
+
 
 if WITH_PLL 
 ########
@@ -33,8 +35,6 @@ if WITH_PLL
 ########
 OPT_SRC= $(srcpre)/main-pll.c $(srcpre)/main-common.c  $(srcppre)/evaluateGenericSpecial-pll.c $(srcppre)/fastDNAparsimony-pll.c $(srcppre)/makenewzGenericSpecial-pll.c  $(srcppre)/models-pll.c $(srcppre)/optimizeModel-pll.c  $(srcppre)/recom-pll.c $(srcppre)/searchAlgo-pll.c  $(srcppre)/trash-pll.c   $(srcppre)/utils-pll.c  $(srcppre)/bipartitionList-pll.c  $(srcppre)/evaluatePartialGenericSpecial-pll.c  $(srcppre)/genericParallelization-pll.c  $(srcppre)/mem_alloc-pll.c $(srcppre)/newviewGenericSpecial-pll.c  $(srcppre)/randomTree-pll.c $(srcppre)/restartHashTable-pll.c  $(srcppre)/topologies-pll.c  $(srcppre)/treeIO-pll.c 
 OPT_HEAD= -I$(srcppre)
-bin_PROGRAMS=exabayes_pll
-exabayes_pll_SOURCES= $(SRC) $(OPT_SRC)
 FEATURE_FLAGS= -D_USE_PTHREADS -pthread #  -D_USE_ALLREDUCE
 else  
 #########
@@ -45,12 +45,12 @@ CXX=mpicxx
 OPT_SRC= $(srcpre)/main-examl.c  $(srcpre)/main-common.c  $(srcxpre)/bipartitionList.c $(srcxpre)/evaluatePartialGenericSpecial.c $(srcxpre)/models.c $(srcxpre)/optimizeModel.c $(srcxpre)/searchAlgo.c $(srcxpre)/trash.c \
  $(srcxpre)/evaluateGenericSpecial.c $(srcxpre)/makenewzGenericSpecial.c $(srcxpre)/newviewGenericSpecial.c $(srcxpre)/restartHashTable.c $(srcxpre)/topologies.c $(srcxpre)/treeIO.c
 OPT_HEAD= -I$(srcxpre)
-bin_PROGRAMS=exabayes
-exabayes_SOURCES=$(SRC) $(OPT_SRC)
 FEATURE_FLAGS= -D_USE_ALLREDUCE
 endif 
 
 
+
+exabayes_SOURCES= $(SRC) $(OPT_SRC)
 
 AM_CFLAGS+=$(OPT_HEAD)
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS) $(LANG_FLAGS)

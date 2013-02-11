@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 
+#include "config.h"
 #include "common.h"
 
 #include "axml.h"
@@ -39,6 +40,26 @@ void storeValuesInTraversalDescriptor(tree *tr, double *value)
      tr->td[0].parameterValues[model] = value[model];
 }
 
+
+
+void printBothOpen(const char* format, ... )
+{
+  if(processID == 0)
+    {
+      FILE *f = myfopen(infoFileName, "ab");
+      
+      va_list args;
+      va_start(args, format);
+      vfprintf(f, format, args );
+      va_end(args);
+      
+      va_start(args, format);
+      vprintf(format, args );
+      va_end(args);
+      
+      fclose(f);
+    }
+}
 
 static void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
 {
@@ -85,28 +106,6 @@ void *malloc_aligned(size_t size)
    
   return ptr;
 }
-
-
-void printBothOpen(const char* format, ... )
-{
-  if(processID == 0)
-    {
-      FILE *f = myfopen(infoFileName, "ab");
-      
-      va_list args;
-      va_start(args, format);
-      vfprintf(f, format, args );
-      va_end(args);
-      
-      va_start(args, format);
-      vprintf(format, args );
-      va_end(args);
-      
-      fclose(f);
-    }
-}
-
-
 
 
 boolean getSmoothFreqs(int dataType)
@@ -282,8 +281,8 @@ FILE *myfopen(const char *path, const char *mode)
       else
 	{
 	  if(processID == 0)
-	    printf("The file %s ExaML wants to open for writing or appending can not be opened [mode: %s], exiting ...\n",
-		   path, mode);
+	    printf("The file %s %s wants to open for writing or appending can not be opened [mode: %s], exiting ...\n",
+		   path, PROGRAM_NAME, mode);
 	  errorExit(-1);
 	  return (FILE *)NULL;
 	}
@@ -551,50 +550,6 @@ static boolean setupTree (tree *tr)
 /*********************************** *********************************************************/
 
 
-void makeFileNames(void)
-{
-  int 
-    infoFileExists = 0;
-    
-  strcpy(resultFileName,       workdir);
-  strcpy(logFileName,          workdir);  
-  strcpy(infoFileName,         workdir);
-  strcpy(binaryCheckpointName, workdir);
-   
-  strcat(resultFileName,       "ExaML_result.");
-  strcat(logFileName,          "ExaML_log.");  
-  strcat(infoFileName,         "ExaML_info.");
-  strcat(binaryCheckpointName, "ExaML_binaryCheckpoint.");
-  
-  strcat(resultFileName,       run_id);
-  strcat(logFileName,          run_id);  
-  strcat(infoFileName,         run_id); 
-  strcat(binaryCheckpointName, run_id);
-
-  infoFileExists = filexists(infoFileName);
-
-  if(infoFileExists)
-    {
-      if(processID == 0)
-	{
-	  printf("ExaML output files with the run ID <%s> already exist \n", run_id);
-	  printf("in directory %s ...... exiting\n", workdir);
-	}
-#ifdef PRODUCTIVE
-      errorExit(-1);	
-#endif
-    }
-}
-
-
-
-
- 
-
-
-
-
-/***********************reading and initializing input ******************/
 
 
 /********************PRINTING various INFO **************************************/
@@ -762,13 +717,13 @@ void finalizeInfoFile(tree *tr, analdef *adef)
       switch(adef->mode)
 	{	
 	case  BIG_RAPID_MODE:	 
-	  printBothOpen("\n\nOverall Time for 1 Inference %f\n", t);
-	  printBothOpen("\nOverall accumulated Time (in case of restarts): %f\n\n", accumulatedTime);
-	  printBothOpen("Likelihood   : %f\n", tr->likelihood);
-	  printBothOpen("\n\n");	  	  
-	  printBothOpen("Final tree written to:                 %s\n", resultFileName);
-	  printBothOpen("Execution Log File written to:         %s\n", logFileName);
-	  printBothOpen("Execution information file written to: %s\n",infoFileName);	
+	  PRINT("\n\nOverall Time for 1 Inference %f\n", t);
+	  PRINT("\nOverall accumulated Time (in case of restarts): %f\n\n", accumulatedTime);
+	  PRINT("Likelihood   : %f\n", tr->likelihood);
+	  PRINT("\n\n");	  	  
+	  PRINT("Final tree written to:                 %s\n", resultFileName);
+	  PRINT("Execution Log File written to:         %s\n", logFileName);
+	  PRINT("Execution information file written to: %s\n",infoFileName);	
 	  break;
 	default:
 	  assert(0);
@@ -950,7 +905,7 @@ static void multiprocessorScheduling(tree *tr, int tid)
     }
 
   if(tid == 0)
-    printBothOpen("\nMulti-processor partition data distribution enabled (-Q option)\n");
+    PRINT("\nMulti-processor partition data distribution enabled (-Q option)\n");
 
   for(s = 0; s < arrayLength; s++)
     {
@@ -1010,9 +965,9 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	  if(tid == 0)
 	    {
 	      for(i = 0; i < n; i++)	       
-		printBothOpen("Process %d has %d sites for %d state model \n", i, assignments[i], modelStates[s]);		  		
+		PRINT("Process %d has %d sites for %d state model \n", i, assignments[i], modelStates[s]);		  		
 	      
-	      printBothOpen("\n");
+	      PRINT("\n");
 	    }
 
 	  for(i = 0; i < n; i++)
@@ -1383,11 +1338,10 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &processID);
   MPI_Comm_size(MPI_COMM_WORLD, &processes);
 
-  printf("\nThis is ExaML FINE-GRAIN MPI Process Number: %d\n", processID);   
+  printf("\nThis is %s FINE-GRAIN MPI Process Number: %d\n", PROGRAM_NAME, processID);   
   MPI_Barrier(MPI_COMM_WORLD);
 
-  tree  *tr = (tree*)malloc(sizeof(tree));
-  
+  tree  *tr = (tree*)malloc(sizeof(tree));  
   analdef *adef = (analdef*)malloc(sizeof(analdef));   
   
   ignoreExceptionsDenormFloat(); 
@@ -1414,7 +1368,7 @@ int main(int argc, char *argv[])
     {
       /* TODO */
       /* printModelAndProgramInfo(tr, adef, argc, argv); */
-      printBothOpen("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
+      PRINT("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
     }  
                          
   /* 
@@ -1450,9 +1404,8 @@ int main(int argc, char *argv[])
 
       
   /* print some more nonsense into the ExaML_info file */
-  
   if(processID == 0)
-    finalizeInfoFile(tr, adef);
+    finalizeFiles(); 
 
   
   /* return 0 which means that our unix program terminated correctly, the return value is not 1 here */

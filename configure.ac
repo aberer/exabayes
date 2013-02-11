@@ -8,8 +8,6 @@ AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([src/config.h])
 
 AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])
-AC_DEFINE([PROGRAM_NAME_PLL], ["ExaBayes_PLL"] , ["name used for log files"])
-
 
 AM_SILENT_RULES([yes])
 

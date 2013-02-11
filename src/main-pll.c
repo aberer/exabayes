@@ -1,6 +1,10 @@
 #include "mem_alloc.h"
 #include "common.h"
 
+#define _INCLUDE_DEFINITIONS
+#include "globals.h"
+#undef _INCLUDE_DEFINITIONS
+
 #define GLOBAL_VARIABLES_DEFINITION
 #include "axml.h"
 #include "globalVariables.h"
@@ -33,13 +37,13 @@ static void finalizeInfoFile(tree *tr, analdef *adef)
   switch(adef->mode)
   {
     case  BIG_RAPID_MODE:
-      printBothOpen("\n\nOverall Time for 1 Inference %f\n", t);
-      printBothOpen("\nOverall accumulated Time (in case of restarts): %f\n\n", accumulatedTime);
-      printBothOpen("Likelihood   : %f\n", tr->likelihood);
-      printBothOpen("\n\n");
-      printBothOpen("Final tree written to:                 %s\n", resultFileName);
-      printBothOpen("Execution Log File written to:         %s\n", logFileName);
-      printBothOpen("Execution information file written to: %s\n",infoFileName);
+      PRINT("\n\nOverall Time for 1 Inference %f\n", t);
+      PRINT("\nOverall accumulated Time (in case of restarts): %f\n\n", accumulatedTime);
+      PRINT("Likelihood   : %f\n", tr->likelihood);
+      PRINT("\n\n");
+      PRINT("Final tree written to:                 %s\n", resultFileName);
+      PRINT("Execution Log File written to:         %s\n", logFileName);
+      PRINT("Execution information file written to: %s\n",infoFileName);
       break;
     default:
       assert(0);
@@ -56,47 +60,6 @@ static void printBoth(FILE *f, const char* format, ... )
   va_start(args, format);
   vprintf(format, args );
   va_end(args);
-}
-
-
-static void makeFileNames(void)
-{
-  int infoFileExists = 0;
-
-
-
-  strcpy(resultFileName,       workdir);
-  strcpy(logFileName,          workdir);
-  strcpy(infoFileName,         workdir);
-  strcpy(randomFileName,       workdir);
-  strcpy(binaryCheckpointName, workdir);
-
-  strcat(resultFileName,       "RAxML_result.");
-  strcat(logFileName,          "RAxML_log.");
-  strcat(infoFileName,         "RAxML_info.");
-  strcat(randomFileName,       "RAxML_randomTree.");
-  strcat(binaryCheckpointName, "RAxML_binaryCheckpoint.");
-
-  strcat(resultFileName,       run_id);
-  strcat(logFileName,          run_id);
-  strcat(infoFileName,         run_id);
-  strcat(randomFileName,       run_id);
-  strcat(binaryCheckpointName, run_id);
-
-
-
-
-
-  infoFileExists = filexists(infoFileName);
-
-  if(infoFileExists)
-  {
-    printf("RAxML output files with the run ID <%s> already exist \n", run_id);
-    printf("in directory %s ...... exiting\n", workdir);
-#ifdef PRODUCTIVE
-    exit(-1);
-#endif
-  }
 }
 
 
@@ -398,18 +361,18 @@ int main (int argc, char *argv[])
 	}
       requiredLength *= tr->mxtips - 2;
       approxTotalMegabytesRequired = MEM_APROX_OVERHEAD * (requiredLength / 1E6);  
-      printBothOpen("Required memory for inner nodes in MB: %f\n", (float)requiredLength / 1E6);
-      printBothOpen("Estimated total required memory in MB: %f\n", approxTotalMegabytesRequired);
-      printBothOpen("User      maximum use of memory in MB: %f\n", tr->maxMegabytesMemory);
+      PRINT("Required memory for inner nodes in MB: %f\n", (float)requiredLength / 1E6);
+      PRINT("Estimated total required memory in MB: %f\n", approxTotalMegabytesRequired);
+      PRINT("User      maximum use of memory in MB: %f\n", tr->maxMegabytesMemory);
       if (approxTotalMegabytesRequired < tr->maxMegabytesMemory)
 	{
 	  tr->useRecom = FALSE; 
-	  printBothOpen("Deactivated recomputation of inner vectors\n");
+	  PRINT("Deactivated recomputation of inner vectors\n");
 	}
       else
 	{
 	  tr->vectorRecomFraction = tr->maxMegabytesMemory  / approxTotalMegabytesRequired;
-	  printBothOpen("Set recomputation of inner vectors to fraction %f\n", tr->vectorRecomFraction);
+	  PRINT("Set recomputation of inner vectors to fraction %f\n", tr->vectorRecomFraction);
 	  assert(tr->vectorRecomFraction > MIN_RECOM_FRACTION);
 	  assert(tr->vectorRecomFraction < MAX_RECOM_FRACTION);
 	}
@@ -448,28 +411,19 @@ int main (int argc, char *argv[])
   printModelAndProgramInfo(tr, adef, argc, argv);
 
   /* Tells us if the SEV-based memory saving option has been activated in the command line or not.
-     printBothOpen() allows to simultaneously print to terminal and to the RAxML_info file, thereby making 
+     PRINT() allows to simultaneously print to terminal and to the RAxML_info file, thereby making 
      the terminal output and the info in the RAxML_info file consistent */
 
-  printBothOpen("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
+  PRINT("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
 
   /* Tells us if the vector recomputation memory saving option has been activated in the command line or not.
    */
   /* recom */
-  {
-#ifdef _DEBUG_RECOMPUTATION
-    allocTraversalCounter(tr);
-    tr->stlenTime = 0.0;
-    if(tr->useRecom)
-      {
-	tr->rvec->pinTime = 0.0;
-	tr->rvec->recomStraTime = 0.0;
-      }
-#endif
-    printBothOpen("Memory Saving via Additional Vector Recomputations: %s\n", (tr->useRecom == TRUE)?"ENABLED":"DISABLED");
-    if(tr->useRecom)
-      printBothOpen("Using a fraction %f of the total inner vectors that would normally be required\n", tr->vectorRecomFraction);
-  }
+  
+  PRINT("Memory Saving via Additional Vector Recomputations: %s\n", (tr->useRecom == TRUE)?"ENABLED":"DISABLED");
+  if(tr->useRecom)
+    PRINT("Using a fraction %f of the total inner vectors that would normally be required\n", tr->vectorRecomFraction);
+    
   /* E recom */
 
   /* 
@@ -477,11 +431,7 @@ int main (int argc, char *argv[])
      the per-site substitution rates to default starting values */
 
   initModel(tr, empiricalFrequencies); 
-  printBothOpen("Model initialized\n");
-  
-
-
-
+  PRINT("Model initialized\n");
 
   /* 
      this will re-start RAxML exactly where it has left off from a checkpoint file,
@@ -499,25 +449,8 @@ int main (int argc, char *argv[])
      which we maybe should skeip, TODO */
 
 
-  switch(tr->startingTree)
-    {
-    case randomTree:	 
-      makeRandomTree(tr);
-      break;
-    case givenTree:
-      getStartingTree(tr);     
-      break;
-    case parsimonyTree:	     
-      /* runs only on process/thread 0 ! */
-      allocateParsimonyDataStructures(tr);
-      makeParsimonyTreeFast(tr);
-      freeParsimonyDataStructures(tr);
-      break;
-    default:
-      assert(0);
-    }
+  assert(tr->startingTree == givenTree); 
 
-  printBothOpen("Starting tree available\n");
   /* 
      here we do an initial full tree traversal on the starting tree using the Felsenstein pruning algorithm 
      This should basically be the first call to the library that actually computes something :-)
@@ -527,36 +460,27 @@ int main (int argc, char *argv[])
   /* please do not remove this code from here ! */
 
   evaluateGeneric(tr, tr->start, TRUE);
-  printBothOpen("Starting tree evaluated\n");
+  PRINT("Starting tree evaluated\n");
 
   /* the treeEvaluate() function repeatedly iterates over the entire tree to optimize branch lengths until convergence */
 
   treeEvaluate(tr, 32);
-  printBothOpen("tree evaluated: %f\n", tr->likelihood);
+  PRINT("tree evaluated: %f\n", tr->likelihood);
     
   /* now start the ML search algorithm */
 
   /* allocate parsimony data structures for parsimony-biased SPRs */	
   allocateParsimonyDataStructures(tr);
+
   mcmc(tr, adef);
+
   freeParsimonyDataStructures(tr);
 
+  finalizeFiles();
+
   /* print som more nonsense into the RAxML_info file */
+  /* finalizeInfoFile(tr, adef); */
 
-  finalizeInfoFile(tr, adef);
-
-#ifdef _DEBUG_RECOMPUTATION
-  {
-    double t = gettime() - masterTime;
-    printBothOpen("Traversal freq after search \n");
-    printTraversalInfo(tr);
-    if(tr->useRecom)
-      printBothOpen("Recom stlen %f, cost %f, pin %f, t %f\n", 
-		    tr->stlenTime,tr->rvec->recomStraTime, tr->rvec->pinTime, t);
-    else
-      printBothOpen("No Recom stlen %f, t %f\n", tr->stlenTime, t);
-  }
-#endif 
 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
   /* workers escape from their while loop (could be joined in pthread case )  */

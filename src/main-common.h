@@ -2,6 +2,9 @@
 #define _MAIN_COMMON_H 
 
 
+#define PRINT printBothOpen
+
+
 /* provides  */
 void printVersionInfo(); 
 void printREADME(); 
@@ -11,5 +14,6 @@ void analyzeRunId(char id[128]);
 void initAdef(analdef *adef); 
 void ignoreExceptionsDenormFloat(); 
 int filexists(char *filename); 
-
+void makeFileNames(void);
+void finalizeFiles(); 
 #endif

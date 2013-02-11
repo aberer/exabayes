@@ -34,7 +34,7 @@ if [ "$codeBase" == "examl" ]; then
     baseCall="mpirun -np 2 $gdb ./exabayes -s data/$dataset/aln.examl.binary -t data/$dataset/tree -n testRun -p $seed -c examples/test.nex "
 elif [ "$codeBase" == "pll" ]; then 
     args="$args --enable-pll"
-    baseCall="$gdb ./exabayes_pll -T $numCores -p $seed  -s data/$dataset/aln.pll.binary  -t data/$dataset/tree -n testRun -c examples/test.nex "
+    baseCall="$gdb ./exabayes -T $numCores -p $seed  -s data/$dataset/aln.pll.binary  -t data/$dataset/tree -n testRun -c examples/test.nex "
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -54,12 +54,17 @@ if  [ "$(echo $status)"  == "$(echo $args)" ]; then
 else 
     echo "calling ./configure $args" 
     ./configure $args  
-    make clean     
+    make clean 
 fi 
 
 make -j $numCores
 
-echo "calling exabayes as $baseCall"
-wait 
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/ncl $baseCall
+
+
+if [ -f ./exabayes ]; then
+    echo "calling exabayes as $baseCall"
+    wait 
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/ncl $baseCall    
+fi
+
 
