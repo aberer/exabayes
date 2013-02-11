@@ -37,7 +37,7 @@ double drawRandExp(double l)
 {
   double r;
   r=(double)rand()/(double)RAND_MAX;
-  r=exp(-r*l);
+  r=-log(r)/l;
   return r; 
 }
 

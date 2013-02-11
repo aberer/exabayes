@@ -26,12 +26,26 @@ void addInitParameters(state *curstate, initParamStruct *initParams)
   curstate->proposalWeights[UPDATE_GAMMA] = initParams->initGammaWeight;
   curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight; 
+  curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight; 
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
 }
 #else 
 int parseConfig(state *theState);
 #endif
+
+
+void initDefaultValues(state *theState){
+  
+    theState->proposalWeights[SPR] = 0.0; 
+    theState->proposalWeights[UPDATE_MODEL] = 0.0; 
+    theState->proposalWeights[UPDATE_GAMMA] = 0.0; 
+    theState->proposalWeights[UPDATE_SINGLE_BL] = 0.0;   
+    theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = 0.0;   
+  
+  theState->numGen = 1000000;
+  theState->penaltyFactor = 0.0;
+}
 
 
 //reads proposalWeights p and sets t for logistic function such that f(t)=p
@@ -80,7 +94,20 @@ void normalizeProposalWeights(state *curstate)
 }
 
 
-
+readConfig(state *curstate){
+   initDefaultValues(curstate);
+#ifdef _USE_NCL_PARSER
+  initParamStruct *initParams = NULL; 
+  printf("\n\ntrying to parse %s\n\n", configFileName); 
+  parseConfigWithNcl(configFileName, &initParams);   
+  addInitParameters(curstate, initParams); 
+#else  
+  parseConfig(curstate); 
+#endif
+  normalizeProposalWeights(curstate); 
+ 
+  
+}
 
 
 state *state_init(tree *tr, analdef * adef, double bl_w, double rt_w, double gm_w, double bl_p)
@@ -183,7 +210,7 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
 
 static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
- // static double lambda=10; //TODO should be defined elsewhere. Also: must find lambda to yield good proposals
+ //static double lambda=10; //TODO should be defined elsewhere. Also: must find lambda to yield good proposals
   
   int i;
   double new_value;
@@ -198,7 +225,7 @@ static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean 
 	  assert(p->z[i] == p->back->z[i]); 
 	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
 	}
-      //r = drawRandExp(lambda);
+   //   r = drawRandExp(lambda);
        real_z = -log(p->z[i]) * s->tr->fracchange;
 	r = drawRandExp(1.0/real_z);
 
@@ -825,7 +852,10 @@ void mcmc(tree *tr, analdef *adef)
   
   state *curstate = state_init(tr, adef,  bl_sliding_window_w, rt_sliding_window_w, gm_sliding_window_w, bl_prior_exp_lambda); 
 
-
+  
+  readConfig(curstate);
+  /*
+  initDefaultValues(curstate);
 #ifdef _USE_NCL_PARSER
   initParamStruct *initParams = NULL; 
   printf("\n\ntrying to parse %s\n\n", configFileName); 
@@ -835,7 +865,7 @@ void mcmc(tree *tr, analdef *adef)
   parseConfig(curstate); 
 #endif
   normalizeProposalWeights(curstate); 
-  
+  */
 
   int count = 0;
   traverse_branches_set_fixed( tr->start, &count, curstate, 0.65 );
