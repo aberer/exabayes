@@ -87,10 +87,11 @@ typedef struct
   int rejectedProposals[NUM_PROPOSALS];
   int totalAccepted;
   int totalRejected;
-  
-  
+
   /* TODO should this be an attribute of the chain? we could have a run-struct instead...*/
   int numGen; 
+  int currentGeneration; 
+  int samplingFrequency; 
 } state;
 
 

@@ -14,6 +14,9 @@
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
 
+#include "proposals.h"
+#include "output.h"
+
 
 void initAdef(analdef *adef);
 void makeFileNames(void); 
@@ -71,6 +74,111 @@ static void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
   assert(bytes_read == nmemb);
 }
 
+
+static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[])
+{
+  if(processID == 0)
+    {
+      int i, model;
+      FILE *infoFile = myfopen(infoFileName, "ab");
+      char modelType[128];
+
+      
+      if(tr->useMedian)
+	strcpy(modelType, "GAMMA with Median");
+      else
+	strcpy(modelType, "GAMMA");   
+
+      PRINT("\n\nThis is %s version %s.\n\n", PROGRAM_NAME, PACKAGE_VERSION); 
+      
+      PRINT( "\nAlignment has %z distinct alignment patterns\n\n",  tr->originalCrunchedLength);
+      
+      PRINT( "Proportion of gaps and completely undetermined characters in this alignment: %3.2f%s\n", 100.0 * tr->gapyness, "%");
+
+
+      if(adef->perGeneBranchLengths)
+	PRINT( "Using %d distinct models/data partitions with individual per partition branch length optimization\n\n\n", tr->NumberOfModels);
+      else
+	PRINT( "Using %d distinct models/data partitions with joint branch length optimization\n\n\n", tr->NumberOfModels);	
+
+
+      /*
+	if(adef->mode != CLASSIFY_ML)
+	PRINT( "%s Model parameters will be estimated up to an accuracy of %2.10f Log Likelihood units\n\n",
+	modelType, adef->likelihoodEpsilon);
+      */
+    
+      
+      for(model = 0; model < tr->NumberOfModels; model++)
+	{
+	  PRINT( "Partition: %d\n", model);
+	  PRINT( "Alignment Patterns: %d\n", tr->partitionData[model].upper - tr->partitionData[model].lower);
+	  PRINT( "Name: %s\n", tr->partitionData[model].partitionName);
+	  
+	  switch(tr->partitionData[model].dataType)
+	    {
+	    case DNA_DATA:
+	      PRINT( "DataType: DNA\n");	     
+	      PRINT( "Substitution Matrix: GTR\n");
+	      break;
+	    case AA_DATA:
+	      assert(tr->partitionData[model].protModels >= 0 && tr->partitionData[model].protModels < NUM_PROT_MODELS);
+	      PRINT( "DataType: AA\n");	      
+	      PRINT( "Substitution Matrix: %s\n", protModels[tr->partitionData[model].protModels]);
+	      PRINT( "%s Base Frequencies:\n", (tr->partitionData[model].protFreqs == 1)?"Empirical":"Fixed");	     
+	      break;
+	    case BINARY_DATA:
+	      PRINT( "DataType: BINARY/MORPHOLOGICAL\n");	      
+	      PRINT( "Substitution Matrix: Uncorrected\n");
+	      break;
+	    case SECONDARY_DATA:
+	      PRINT( "DataType: SECONDARY STRUCTURE\n");	     
+	      PRINT( "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
+	      break;
+	    case SECONDARY_DATA_6:
+	      PRINT( "DataType: SECONDARY STRUCTURE 6 STATE\n");	     
+	      PRINT( "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
+	      break;
+	    case SECONDARY_DATA_7:
+	      PRINT( "DataType: SECONDARY STRUCTURE 7 STATE\n");	      
+	      PRINT( "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
+	      break;
+	    case GENERIC_32:
+	      PRINT( "DataType: Multi-State with %d distinct states in use (maximum 32)\n",tr->partitionData[model].states);		  
+	      switch(tr->multiStateModel)
+		{
+		case ORDERED_MULTI_STATE:
+		  PRINT( "Substitution Matrix: Ordered Likelihood\n");
+		  break;
+		case MK_MULTI_STATE:
+		  PRINT( "Substitution Matrix: MK model\n");
+		  break;
+		case GTR_MULTI_STATE:
+		  PRINT( "Substitution Matrix: GTR\n");
+		  break;
+		default:
+		  assert(0);
+		}
+	      break;
+	    case GENERIC_64:
+	      PRINT( "DataType: Codon\n");		  
+	      break;		
+	    default:
+	      assert(0);
+	    }
+	  PRINT( "\n\n\n");
+	}
+      
+      PRINT( "\n");
+
+      PRINT( "%s was called as follows:\n\n", PROGRAM_NAME);
+      for(i = 0; i < argc; i++)
+	PRINT("%s ", argv[i]);
+      PRINT("\n\n\n");
+
+      fclose(infoFile);
+    }
+}
 
 void *malloc_aligned(size_t size) 
 {
@@ -1363,11 +1471,10 @@ int main(int argc, char *argv[])
   makeFileNames();
 
   initializeTree(tr, adef);                               
-    
+
   if(processID == 0)  
     {
-      /* TODO */
-      /* printModelAndProgramInfo(tr, adef, argc, argv); */
+      printModelAndProgramInfo(tr, adef, argc, argv);
       PRINT("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
     }  
                          
@@ -1401,17 +1508,12 @@ int main(int argc, char *argv[])
 
   /* now start the ML search algorithm */
   mcmc( tr, adef );
-
-      
-  /* print some more nonsense into the ExaML_info file */
-  if(processID == 0)
-    finalizeFiles(); 
-
+  
   
   /* return 0 which means that our unix program terminated correctly, the return value is not 1 here */
 
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
-
+  
   return 0;
 }

@@ -6,7 +6,7 @@
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
-
+#include "output.h"
 
 
 #define _USE_NCL_PARSER
@@ -22,6 +22,7 @@ void addInitParameters(state *curstate, initParamStruct *initParams)
   curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight; 
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
+  curstate->samplingFrequency = initParams->samplingFrequency; 
 }
 #else 
 int parseConfig(state *theState);
@@ -93,7 +94,6 @@ void readConfig(state *curstate)
   initDefaultValues(curstate);
 #ifdef _USE_NCL_PARSER
   initParamStruct *initParams = NULL; 
-  printf("\n\ntrying to parse %s\n\n", configFileName); 
   parseConfigWithNcl(configFileName, &initParams);   
   addInitParameters(curstate, initParams); 
 #else  
@@ -129,19 +129,6 @@ state *state_init(tree *tr, analdef * adef, double bl_w, double rt_w, double gm_
   return curstate;
 }
 
-
-
-
-
-static void printSubsRates(tree *tr,int model, int numSubsRates)
-{
-  assert(tr->partitionData[model].dataType = DNA_DATA);
-  int i;
-  PRINT("Subs rates: ");
-  for(i=0; i<numSubsRates; i++)
-    PRINT("%d => %.3f, ", i, tr->partitionData[model].substRates[i]);
-  PRINT("\n\n");
-}
 
 static void recordSubsRates(tree *tr, int model, int numSubsRates, double *prevSubsRates)
 {
@@ -778,12 +765,6 @@ static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean pri
 }
 #endif
 
-/* static int tree_dump_num = 0; */
-
-
-
-
-
 
 /* TODO we do not even use this function, do we? NOTE Now we do ;) */
 void penalize(state *curstate, int which_proposal, int acceptance)
@@ -813,12 +794,10 @@ void penalize(state *curstate, int which_proposal, int acceptance)
 }
 
 
+
 void mcmc(tree *tr, analdef *adef)
 {  
-  int j;
-
   size_t inserts = 0;
-  /* double printTime = 0; */
   
   //allocate states
   double bl_prior_exp_lambda = 0.1;
@@ -828,55 +807,37 @@ void mcmc(tree *tr, analdef *adef)
   
   int sum_radius_accept = 0;
   int sum_radius_reject = 0;
-
-
-  printf("initializing RNG with seed %d\n", seed); 
-
+  
   initRNG(seed);
   
   tr->start = find_tip(tr->start, tr );
-  
-  FILE *log_h = fopen( "mcmc.txt", "w" );
-  
-  
-  printf( "isTip: %d %d\n", tr->start->number, tr->mxtips );
-  printf( "z: %f\n", tr->start->z[0] );
-  
+
   assert( isTip(tr->start->number, tr->mxtips ));
   
   state *curstate = state_init(tr, adef,  bl_sliding_window_w, rt_sliding_window_w, gm_sliding_window_w, bl_prior_exp_lambda); 
 
-  
   readConfig(curstate);
-  /*
-  initDefaultValues(curstate);
-#ifdef _USE_NCL_PARSER
-  initParamStruct *initParams = NULL; 
-  printf("\n\ntrying to parse %s\n\n", configFileName); 
-  parseConfigWithNcl(configFileName, &initParams);   
-  addInitParameters(curstate, initParams); 
-#else  
-  parseConfig(curstate); 
-#endif
-  normalizeProposalWeights(curstate); 
-  */
+  
+  if(processID == 0 )
+    initializeOutputFiles(curstate);
 
   int count = 0;
   traverse_branches_set_fixed( tr->start, &count, curstate, 0.65 );
 
   evaluateGeneric(tr, tr->start, TRUE);
-  printf( "after reset start: %f\n", tr->likelihood );
+  PRINT( "after reset start: %f\n\n", tr->likelihood );
   int first = 1;
   
   curstate->curprior = 1;
   curstate->hastings = 1;
+  curstate->currentGeneration = 0; 
 
 #ifdef WITH_PERFORMANCE_MEASUREMENTS  
   perf_timer all_timer = perf_timer_make();
 #endif
   
   /* beginning of the MCMC chain */
-  for(j=0; j< curstate->numGen ; j++)
+  while(curstate->currentGeneration < curstate->numGen)
     {
 #ifdef WITH_PERFORMANCE_MEASUREMENTS
       perf_timer move_timer = perf_timer_make();
@@ -886,15 +847,7 @@ void mcmc(tree *tr, analdef *adef)
       /* double proposalTime = 0.0; */
       double testr;
       double acceptance;
-    
-      //     PRINT("iter %d, tr LH %f, startLH %f\n",j, tr->likelihood, tr->startLH);
-      /* proposalAccepted = FALSE; */
-    
-      //
-      // start of the mcmc iteration
-      //
 
-    
       // just for validation (make sure we compare the same)
       evaluateGeneric(tr, tr->start, FALSE); 
 
@@ -935,27 +888,12 @@ void mcmc(tree *tr, analdef *adef)
 #ifdef WITH_PERFORMANCE_MEASUREMENTS    
       perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT
 #endif
-      if(processID == 0 && (j % 100) == 0) 
-	{
-	  PRINT( "propb: %d %f %f %d spr: %d (%d) model: %d (%d) ga: %d (%d) bl: %d (%d) blExp: %d (%d) %f %f %f radius: %f %f\n", 
-		  j, tr->likelihood, tr->startLH, testr < acceptance, 
-		  curstate->acceptedProposals[SPR]	, curstate->rejectedProposals[SPR] , 
-		  curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] , 
-		  curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] , 
-		  curstate->acceptedProposals[UPDATE_SINGLE_BL], curstate->rejectedProposals[UPDATE_SINGLE_BL], 
-		  curstate->acceptedProposals[UPDATE_SINGLE_BL_EXP], curstate->rejectedProposals[UPDATE_SINGLE_BL_EXP],
-		  curstate->hastings, curstate->newprior, curstate->curprior, 
-		  sum_radius_accept / (float)curstate->acceptedProposals[SPR], 
-		  sum_radius_reject / (float)curstate->rejectedProposals[SPR] );
-      
-	  printSubsRates(curstate->tr, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
 
-#ifdef WITH_PERFORMANCE_MEASUREMENTS      
-	  perf_timer_print( &all_timer );
-#endif
       
-      
-	  fprintf( log_h, "%d %f %f\n", j, tr->likelihood, tr->startLH );
+      if(processID == 0 && (curstate->currentGeneration % curstate->samplingFrequency) == 0)
+	{
+	  printSample(curstate); 
+	  chainInfoOutput(curstate, sum_radius_accept, sum_radius_reject); 
 	}
 
       assert(which_proposal < NUM_PROPOSALS); 
@@ -991,7 +929,7 @@ void mcmc(tree *tr, analdef *adef)
 	  if(fabs(curstate->tr->startLH - tr->likelihood) > 1.0E-15)
 	    {
 	      PRINT("WARNING: LH diff %.20f\n", curstate->tr->startLH - tr->likelihood);
-	      PRINT("after reset, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
+	      PRINT("after reset, iter %d tr LH %f, startLH %f\n", curstate->currentGeneration, tr->likelihood, tr->startLH);
 	    }      
 	  assert(fabs(curstate->tr->startLH - tr->likelihood) < 0.1);
 	} 
@@ -1002,7 +940,11 @@ void mcmc(tree *tr, analdef *adef)
       perf_timer_add( &all_timer, &move_timer );
 #endif
 
+      curstate->currentGeneration++; 
     }
+
+  if(processID == 0)
+    finalizeOutputFiles(curstate);
 }
 
 
@@ -1087,8 +1029,6 @@ static void printRecomTree(tree *tr, boolean printBranchLengths, char *title)
     PRINT("%s\n", tr->tree_string);
   PRINT("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
   //system("bin/nw_display tmp.nw");
-
-
 }  
 
 

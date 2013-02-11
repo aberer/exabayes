@@ -47,6 +47,7 @@ if [ ! -d data/$dataset ]; then
 fi
 
 
+
 status="$(./config.status --config | tr -d "'" )"
 
 if  [ "$(echo $status)"  == "$(echo $args)" ]; then 
@@ -57,6 +58,7 @@ else
     make clean 
 fi 
 
+rm exabayes
 make -j $numCores
 
 

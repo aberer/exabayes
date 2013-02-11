@@ -1,3 +1,4 @@
+#include "config.h"
 #include "mem_alloc.h"
 #include "common.h"
 
@@ -12,6 +13,8 @@
 
 #include "main-common.h"
 
+#include "proposals.h"
+#include "output.h"
 /* turn on, when in release mode */
 /* #define PRODUCTIVE */
 
@@ -25,42 +28,8 @@ int Thorough = 0;
 int processID;
 
 void mcmc(tree *tr, analdef *adef); 
-
-
-static void finalizeInfoFile(tree *tr, analdef *adef)
-{
-  double t;
-
-  t = gettime() - masterTime;
-  accumulatedTime = accumulatedTime + t;
-
-  switch(adef->mode)
-  {
-    case  BIG_RAPID_MODE:
-      PRINT("\n\nOverall Time for 1 Inference %f\n", t);
-      PRINT("\nOverall accumulated Time (in case of restarts): %f\n\n", accumulatedTime);
-      PRINT("Likelihood   : %f\n", tr->likelihood);
-      PRINT("\n\n");
-      PRINT("Final tree written to:                 %s\n", resultFileName);
-      PRINT("Execution Log File written to:         %s\n", logFileName);
-      PRINT("Execution information file written to: %s\n",infoFileName);
-      break;
-    default:
-      assert(0);
-  }
-}
-
-static void printBoth(FILE *f, const char* format, ... )
-{
-  va_list args;
-  va_start(args, format);
-  vfprintf(f, format, args );
-  va_end(args);
-
-  va_start(args, format);
-  vprintf(format, args );
-  va_end(args);
-}
+boolean setupTree (tree *tr, boolean doInit);
+void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile); 
 
 
 /* TODO: Modify this to our needs */
@@ -68,7 +37,6 @@ static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *ar
 {
 
   int i, model;
-  FILE *infoFile = myfopen(infoFileName, "ab");
   char modelType[128];
 
 
@@ -77,112 +45,109 @@ static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *ar
   else
     strcpy(modelType, "GAMMA");
 
-  printBoth(infoFile, "\n\nThis is %s version %s released by Alexandros Stamatakis in %s.\n\n",  programName, programVersion, programDate);
-
-
+  printVersionInfo();
 
   if(!adef->compressPatterns)
-    printBoth(infoFile, "\nAlignment has %d columns\n\n",  tr->originalCrunchedLength);
+    PRINT( "\nAlignment has %d columns\n\n",  tr->originalCrunchedLength);
   else
-    printBoth(infoFile, "\nAlignment has %d distinct alignment patterns\n\n",  tr->originalCrunchedLength);
+    PRINT( "\nAlignment has %d distinct alignment patterns\n\n",  tr->originalCrunchedLength);
 
 
 
-  printBoth(infoFile, "Proportion of gaps and completely undetermined characters in this alignment: %3.2f%s\n", 100.0 * tr->gapyness, "%");
+  PRINT( "Proportion of gaps and completely undetermined characters in this alignment: %3.2f%s\n", 100.0 * tr->gapyness, "%");
 
 
   switch(adef->mode)
   {	
     case  BIG_RAPID_MODE:	 
-      printBoth(infoFile, "\nRAxML rapid hill-climbing mode\n\n");
+      PRINT("\nRAxML rapid hill-climbing mode\n\n");
       break;	
     case  GPU_BENCHMARK:	 
-      printBoth(infoFile, "\nRAxML GPU benchmark\n\n");
+      PRINT("\nRAxML GPU benchmark\n\n");
       break;	
     default:
       assert(0);
   }
 
   if(adef->perGeneBranchLengths)
-    printBoth(infoFile, "Using %d distinct models/data partitions with individual per partition branch length optimization\n\n\n", tr->NumberOfModels);
+    PRINT( "Using %d distinct models/data partitions with individual per partition branch length optimization\n\n\n", tr->NumberOfModels);
   else
-    printBoth(infoFile, "Using %d distinct models/data partitions with joint branch length optimization\n\n\n", tr->NumberOfModels);	
+    PRINT( "Using %d distinct models/data partitions with joint branch length optimization\n\n\n", tr->NumberOfModels);	
 
-  printBoth(infoFile, "All free model parameters will be estimated by RAxML\n");
+  PRINT( "All free model parameters will be estimated by RAxML\n");
 
   if(tr->rateHetModel == GAMMA)
-    printBoth(infoFile, "%s model of rate heteorgeneity, ML estimate of alpha-parameter\n\n", modelType);
+    PRINT("%s model of rate heteorgeneity, ML estimate of alpha-parameter\n\n", modelType);
   else    
-    printBoth(infoFile, "ML estimate of %d per site rate categories\n\n", tr->categories);
+    PRINT("ML estimate of %d per site rate categories\n\n", tr->categories);
 
   for(model = 0; model < tr->NumberOfModels; model++)
   {
-    printBoth(infoFile, "Partition: %d\n", model);
-    printBoth(infoFile, "Alignment Patterns: %d\n", tr->partitionData[model].upper - tr->partitionData[model].lower);
-    printBoth(infoFile, "Name: %s\n", tr->partitionData[model].partitionName);
+    PRINT("Partition: %d\n", model);
+    PRINT("Alignment Patterns: %d\n", tr->partitionData[model].upper - tr->partitionData[model].lower);
+    PRINT("Name: %s\n", tr->partitionData[model].partitionName);
 
     switch(tr->partitionData[model].dataType)
     {
       case DNA_DATA:
-        printBoth(infoFile, "DataType: DNA\n");	     
-        printBoth(infoFile, "Substitution Matrix: GTR\n");
+        PRINT("DataType: DNA\n");	     
+        PRINT("Substitution Matrix: GTR\n");
         break;
       case AA_DATA:
         assert(tr->partitionData[model].protModels >= 0 && tr->partitionData[model].protModels < NUM_PROT_MODELS);
-        printBoth(infoFile, "DataType: AA\n");	      
-        printBoth(infoFile, "Substitution Matrix: %s\n", protModels[tr->partitionData[model].protModels]);
-        printBoth(infoFile, "%s Base Frequencies:\n", (tr->partitionData[model].protFreqs == 1)?"Empirical":"Fixed");	     
+        PRINT("DataType: AA\n");	      
+        PRINT("Substitution Matrix: %s\n", protModels[tr->partitionData[model].protModels]);
+        PRINT("%s Base Frequencies:\n", (tr->partitionData[model].protFreqs == 1)?"Empirical":"Fixed");	     
         break;
       case BINARY_DATA:
-        printBoth(infoFile, "DataType: BINARY/MORPHOLOGICAL\n");	      
-        printBoth(infoFile, "Substitution Matrix: Uncorrected\n");
+        PRINT("DataType: BINARY/MORPHOLOGICAL\n");	      
+        PRINT("Substitution Matrix: Uncorrected\n");
         break;
       case SECONDARY_DATA:
-        printBoth(infoFile, "DataType: SECONDARY STRUCTURE\n");	     
-        printBoth(infoFile, "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
+        PRINT("DataType: SECONDARY STRUCTURE\n");	     
+        PRINT("Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
         break;
       case SECONDARY_DATA_6:
-        printBoth(infoFile, "DataType: SECONDARY STRUCTURE 6 STATE\n");	     
-        printBoth(infoFile, "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
+        PRINT("DataType: SECONDARY STRUCTURE 6 STATE\n");	     
+        PRINT("Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
         break;
       case SECONDARY_DATA_7:
-        printBoth(infoFile, "DataType: SECONDARY STRUCTURE 7 STATE\n");	      
-        printBoth(infoFile, "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
+        PRINT("DataType: SECONDARY STRUCTURE 7 STATE\n");	      
+        PRINT("Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
         break;
       case GENERIC_32:
-        printBoth(infoFile, "DataType: Multi-State with %d distinct states in use (maximum 32)\n",tr->partitionData[model].states);		  
+        PRINT("DataType: Multi-State with %d distinct states in use (maximum 32)\n",tr->partitionData[model].states);		  
         switch(tr->multiStateModel)
         {
           case ORDERED_MULTI_STATE:
-            printBoth(infoFile, "Substitution Matrix: Ordered Likelihood\n");
+            PRINT("Substitution Matrix: Ordered Likelihood\n");
             break;
           case MK_MULTI_STATE:
-            printBoth(infoFile, "Substitution Matrix: MK model\n");
+            PRINT("Substitution Matrix: MK model\n");
             break;
           case GTR_MULTI_STATE:
-            printBoth(infoFile, "Substitution Matrix: GTR\n");
+            PRINT("Substitution Matrix: GTR\n");
             break;
           default:
             assert(0);
         }
         break;
       case GENERIC_64:
-        printBoth(infoFile, "DataType: Codon\n");		  
+        PRINT("DataType: Codon\n");		  
         break;		
       default:
         assert(0);
     }
-    printBoth(infoFile, "\n\n\n");
+    PRINT("\n\n\n");
   }
 
-  printBoth(infoFile, "\n");
+  PRINT("\n");
 
-  printBoth(infoFile, "RAxML was called as follows:\n\n");
+  PRINT("%s was called as follows:\n\n", PROGRAM_NAME);
   for(i = 0; i < argc; i++)
-    printBoth(infoFile,"%s ", argv[i]);
-  printBoth(infoFile,"\n\n\n");
+    PRINT("%s ", argv[i]);
+  PRINT("\n\n\n");
 
-  fclose(infoFile);
 }
 
 
@@ -447,9 +412,10 @@ int main (int argc, char *argv[])
   /* get the starting tree: here we just parse the tree passed via the command line 
      and do an initial likelihood computation traversal 
      which we maybe should skeip, TODO */
-
-
-  assert(tr->startingTree == givenTree); 
+  
+  
+  tr->startingTree = 1 ; 
+  getStartingTree(tr);
 
   /* 
      here we do an initial full tree traversal on the starting tree using the Felsenstein pruning algorithm 
@@ -475,12 +441,6 @@ int main (int argc, char *argv[])
   mcmc(tr, adef);
 
   freeParsimonyDataStructures(tr);
-
-  finalizeFiles();
-
-  /* print som more nonsense into the RAxML_info file */
-  /* finalizeInfoFile(tr, adef); */
-
 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
   /* workers escape from their while loop (could be joined in pthread case )  */

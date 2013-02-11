@@ -25,7 +25,7 @@ srcpre=./src
 srcxpre=./src/examl
 srcppre=./src/pll
 
-SRC=$(srcpre)/nclConfigReader.cpp $(srcpre)/configParser.c $(srcpre)/randomness.c $(srcpre)/bayes.c
+SRC=$(srcpre)/nclConfigReader.cpp $(srcpre)/configParser.c $(srcpre)/randomness.c $(srcpre)/bayes.c $(srcpre)/output.c
 bin_PROGRAMS=exabayes
 
 

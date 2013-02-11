@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include "common.h"
+#include "axml.h"
+#include "main-common.h"
+
 
 
 
@@ -12,6 +16,7 @@
 
 void initRNG(uint64_t seedHere)
 {
+  PRINT("initializing RNG with seed %d\n", seedHere);   
   srand(seedHere);
 }
 

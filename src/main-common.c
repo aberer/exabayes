@@ -55,52 +55,13 @@ void initAdef(analdef *adef)
 void printVersionInfo()
 {
 #if (HAVE_PLL == 1 ) 
-  PRINT("This is %s, version %s\n", PROGRAM_NAME, VERSION); 
+  PRINT("This is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
 #else 
   PRINT("This is %s, version %s\n", PROGRAM_NAME, VERSION); 
-#endif
-  
+#endif  
 }
 
 
-
-void makeFileNames(void)
-{
-  int infoFileExists = 0;
-
-  strcpy(topologyFile, workdir); 
-  strcat(topologyFile, PROGRAM_NAME);
-  strcat(topologyFile, "_sampledTopologies."); 
-  strcat(topologyFile, run_id); 
- 
-  strcpy(outputParamFile,workdir); 
-  strcat(outputParamFile, PROGRAM_NAME);
-  strcat(outputParamFile, "_sampledParameters."); 
-  strcat(outputParamFile, run_id); 
-  
-  strcpy(infoFileName, workdir); 
-  strcat(infoFileName, PROGRAM_NAME);
-  strcat(infoFileName, "_infoFile."); 
-  strcat(infoFileName, run_id); 
-
-
-  strcpy(binaryChainState, workdir); 
-  strcat(binaryChainState, PROGRAM_NAME);
-  strcat(binaryChainState, "_binChainState."); 
-  strcat(binaryChainState, run_id); 
-
-  infoFileExists = filexists(infoFileName);
-
-
-  if(infoFileExists)
-  {
-    printf("RAxML output files with the run ID <%s> already exist \n", run_id);
-    printf("in directory %s ...... exiting\n", workdir);
-#ifdef PRODUCTIVE
-    exit(-1);
-#endif
-  }
-}
 
 
 void analyzeRunId(char id[128])

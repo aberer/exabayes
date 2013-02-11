@@ -28,7 +28,21 @@ public:
   {
     NCL_BLOCKTYPE_ATTR_NAME = "EXABAYES"; 
     initParam = (initParamStruct*)calloc(1,sizeof(initParamStruct)); 
-    // note: all values are 0 by default 
+
+    // note: all values are -1 by default, so we can check for meaningful values later 
+    paramBadInit();
+  }
+
+  void paramBadInit()
+  {
+    initParam->initSPRWeight  = -1 ;
+    initParam->initGammaWeight  = -1 ; 
+    initParam->initModelWeight  = -1 ;
+    initParam->initSingleBranchWeight  = -1 ; 
+    initParam->initSingleBranchExpWeight  = -1 ;
+    initParam->initPenaltyFactor  = -1 ;   
+    initParam->numGen  = -1 ; 
+    initParam->samplingFrequency  = -1 ; 
   }
 
 
@@ -63,6 +77,8 @@ public:
 	      initParam->numGen = value.ConvertToInt(); 
 	    else if(key.EqualsCaseInsensitive("initPenaltyFactor"))
 	      initParam->initPenaltyFactor = value.ConvertToDouble();
+	    else if(key.EqualsCaseInsensitive("samplingfrequency"))
+	      initParam->samplingFrequency = value.ConvertToInt();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }
@@ -71,18 +87,19 @@ public:
 
   void assertInitialized()
   {
-    assert(initParam->initModelWeight != 0); 
-    assert(initParam->initGammaWeight != 0); 
-    assert(initParam->initSPRWeight != 0); 
-    assert(initParam->initSingleBranchWeight != 0); 
-    assert(initParam->numGen != 0); 
-    assert(initParam->initPenaltyFactor != 0); 
+    assert(initParam->initModelWeight != -1); 
+    assert(initParam->initGammaWeight != -1); 
+    assert(initParam->initSPRWeight != -1); 
+    assert(initParam->initSingleBranchWeight != -1); 
+    assert(initParam->numGen != -1); 
+    assert(initParam->initPenaltyFactor != -1); 
+    assert(initParam->samplingFrequency  != -1 ); 
   }
 
 
   initParamStruct* getResult() 
   {
-    // assertInitialized();
+    assertInitialized();
     return initParam; 
   }
 
