@@ -4,7 +4,7 @@
 
 #include "config.h"
 #include "axml.h"
-#include "proposals.h"
+#include "proposalStructs.h"
 #include "main-common.h"
 
 
@@ -258,18 +258,19 @@ static void printSubsRates(tree *tr,int model, int numSubsRates)
 
 
 /* TODO modify this */
-void chainInfoOutput(state *curstate, int sum_radius_accept, int sum_radius_reject )
+void chainInfoOutput(state *curstate )
 {
-  PRINT( "propb: %d %f %f spr: %d (%d) model: %d (%d) ga: %d (%d) bl: %d (%d) blExp: %d (%d) %f %f %f radius: %f %f\n",
+  PRINT( "propb: %d %f %f spr: %d (%d) model: %d (%d) ga: %d (%d) bl: %d (%d) blExp: %d (%d) %f %f %f\n",
 	 curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH, 
 	 curstate->acceptedProposals[SPR]	, curstate->rejectedProposals[SPR] ,
 	 curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] ,
 	 curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] ,
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL], curstate->rejectedProposals[UPDATE_SINGLE_BL],
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL_EXP], curstate->rejectedProposals[UPDATE_SINGLE_BL_EXP],
-	 curstate->hastings, curstate->newprior, curstate->curprior,
-	 sum_radius_accept / (float)curstate->acceptedProposals[SPR],
-	 sum_radius_reject / (float)curstate->rejectedProposals[SPR] );
+	 curstate->hastings, curstate->newprior, curstate->curprior
+	 /* sum_radius_accept / (float)curstate->acceptedProposals[SPR], */
+	 /* sum_radius_reject / (float)curstate->rejectedProposals[SPR]  */
+);
   
   printSubsRates(curstate->tr, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
 

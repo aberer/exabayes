@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "axml.h"
-#include "proposals.h"
+#include "proposalStructs.h"
 #include "globals.h"
 
 

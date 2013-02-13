@@ -14,7 +14,7 @@
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
 
-#include "proposals.h"
+#include "proposalStructs.h"
 #include "output.h"
 
 
@@ -1470,7 +1470,7 @@ int main(int argc, char *argv[])
     
   makeFileNames();
 
-  initializeTree(tr, adef);                               
+  initializeTree(tr, adef); 
 
   if(processID == 0)  
     {
@@ -1500,11 +1500,11 @@ int main(int argc, char *argv[])
      This should basically be the first call to the library that actually computes something :-)
   */
       
-  evaluateGeneric(tr, tr->start, TRUE);	
+  /* evaluateGeneric(tr, tr->start, TRUE); */
 	
   /* the treeEvaluate() function repeatedly iterates over the entire tree to optimize branch lengths until convergence */
       	
-  treeEvaluate(tr, 1); 
+  /* treeEvaluate(tr, 1); */
 
   /* now start the ML search algorithm */
   mcmc( tr, adef );

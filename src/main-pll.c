@@ -425,13 +425,13 @@ int main (int argc, char *argv[])
 
   /* please do not remove this code from here ! */
 
-  evaluateGeneric(tr, tr->start, TRUE);
-  PRINT("Starting tree evaluated\n");
+  /* evaluateGeneric(tr, tr->start, TRUE); */
+  /* PRINT("Starting tree evaluated\n"); */
 
   /* the treeEvaluate() function repeatedly iterates over the entire tree to optimize branch lengths until convergence */
 
-  treeEvaluate(tr, 32);
-  PRINT("tree evaluated: %f\n", tr->likelihood);
+  /* treeEvaluate(tr, 32); */
+  /* PRINT("tree evaluated: %f\n", tr->likelihood); */
     
   /* now start the ML search algorithm */
 
