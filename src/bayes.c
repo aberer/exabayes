@@ -12,6 +12,11 @@
 
 #define _USE_NCL_PARSER
 
+
+void makeRandomTree(tree *tr); 
+
+
+
 #ifdef _USE_NCL_PARSER
 #include "nclConfigReader.h"
 void addInitParameters(state *curstate, initParamStruct *initParams)
@@ -222,6 +227,8 @@ void mcmc(tree *tr, analdef *adef)
   int count = 0;
   traverse_branches_set_fixed( tr->start, &count, curstate, 0.65 );
 
+  makeRandomTree(tr); 
+
   evaluateGeneric(tr, tr->start, TRUE);
   PRINT( "after reset start: %f\n\n", tr->likelihood );
   
@@ -240,6 +247,5 @@ void mcmc(tree *tr, analdef *adef)
   if(processID == 0)
     finalizeOutputFiles(curstate);
 }
-
 
 

@@ -42,8 +42,8 @@ else
 #########
 CC=mpicc
 CXX=mpicxx
-OPT_SRC= $(srcpre)/main-examl.c  $(srcpre)/main-common.c  $(srcxpre)/bipartitionList.c $(srcxpre)/evaluatePartialGenericSpecial.c $(srcxpre)/models.c $(srcxpre)/optimizeModel.c $(srcxpre)/searchAlgo.c $(srcxpre)/trash.c \
- $(srcxpre)/evaluateGenericSpecial.c $(srcxpre)/makenewzGenericSpecial.c $(srcxpre)/newviewGenericSpecial.c $(srcxpre)/restartHashTable.c $(srcxpre)/topologies.c $(srcxpre)/treeIO.c
+OPT_SRC= $(srcpre)/main-examl.c $(srcpre)/make-random-tree-examl.c  $(srcpre)/main-common.c  $(srcxpre)/bipartitionList.c $(srcxpre)/evaluatePartialGenericSpecial.c $(srcxpre)/models.c $(srcxpre)/optimizeModel.c $(srcxpre)/searchAlgo.c $(srcxpre)/trash.c \
+ $(srcxpre)/evaluateGenericSpecial.c $(srcxpre)/makenewzGenericSpecial.c $(srcxpre)/newviewGenericSpecial.c $(srcxpre)/restartHashTable.c $(srcxpre)/topologies.c $(srcxpre)/treeIO.c 
 OPT_HEAD= -I$(srcxpre)
 FEATURE_FLAGS= -D_USE_ALLREDUCE
 endif 

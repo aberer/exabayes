@@ -24,6 +24,9 @@ void initializeTree(tree *tr, analdef *adef);
 void finalizeInfoFile(tree *tr, analdef *adef); 
 
 
+void makeRandomTree(tree *tr); 
+
+
 
 /***************** UTILITY FUNCTIONS **************************/
 
