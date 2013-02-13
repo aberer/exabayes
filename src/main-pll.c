@@ -13,6 +13,7 @@
 
 #include "main-common.h"
 
+#include "proposalStructs.h"
 #include "proposals.h"
 #include "output.h"
 /* turn on, when in release mode */
