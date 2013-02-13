@@ -150,6 +150,9 @@ static void reset_branch_length(nodeptr p, int numBranches)
 }
 
 
+double get_branch_length_prior(double bl){//TODO decide on sensible prior
+ return 1;  
+}
 
 //setting this out to allow for other types of setting
 static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
@@ -169,13 +172,16 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
       r = drawRandDouble();
 
       real_z = -log(p->z[i]) * s->tr->fracchange;
-    
+      
       //     printf( "z: %f %f\n", p->z[i], real_z );
     
       mn = real_z-(s->brLenRemem.bl_sliding_window_w/2);
       mx = real_z+(s->brLenRemem.bl_sliding_window_w/2);
       new_value = exp(-(fabs(mn + r * (mx-mn)/s->tr->fracchange )));
     
+      
+      s->hastings=1;
+      get_branch_length_prior(mn + r * (mx-mn));
     
       /* Ensure always you stay within this range */
       if(new_value > zmax) new_value = zmax;
@@ -209,16 +215,24 @@ static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean 
    //   r = drawRandExp(lambda);
        real_z = -log(p->z[i]) * s->tr->fracchange;
 	r = drawRandExp(1.0/real_z);
-
+  
+	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
+	s->newprior=get_branch_length_prior(r);
+	
       new_value = exp(-(fabs(r /s->tr->fracchange )));
    
     
-      /* Ensure always you stay within this range */
-      if(new_value > zmax) new_value = zmax;
-      if(new_value < zmin) new_value = zmin;
+      /* Ensure always you stay within this range, reflect if necessary *///TODO reflects transformed bl, needs to reflect actual bl
+      while(new_value > zmax || new_value < zmin){
+      if(new_value > zmax) new_value = 2*zmax-new_value;
+      if(new_value < zmin) new_value = 2*zmin-new_value;
+      }
       assert(new_value <= zmax && new_value >= zmin);
       p->z[i] = p->back->z[i] = new_value;
      }
+     
+     
+     
 }
 
 
@@ -686,7 +700,7 @@ static void dispatch_proposal_reset( proposal_type ptype, state *instate ) {
 /* so here the idea would be to randomly choose among proposals? we can use typedef enum to label each, and return that */ 
 static proposal_type select_proposal_type(state * instate)
 {
-  instate->newprior = instate->brLenRemem.bl_prior;  
+  instate->newprior = instate->brLenRemem.bl_prior; //TODO Why is this here? 
   return drawSampleProportionally(instate->proposalWeights, NUM_PROPOSALS) ; 
 }
 
@@ -880,9 +894,10 @@ void mcmc(tree *tr, analdef *adef)
       /* decide upon acceptance */
       testr = drawRandDouble();
       //should look something like 
-      acceptance = fmin(1,(curstate->hastings) * 
-			(exp(curstate->newprior-curstate->curprior)) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));
-    
+     /* acceptance = fmin(1,(curstate->hastings) * 
+			(exp(curstate->newprior-curstate->curprior)) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));*/
+    acceptance = fmin(1,(curstate->hastings) * 
+			(curstate->newprior/curstate->curprior) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));
 
 
 #ifdef WITH_PERFORMANCE_MEASUREMENTS    

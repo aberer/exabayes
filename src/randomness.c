@@ -62,6 +62,7 @@ int drawSampleProportionally( double *weights, int numWeight )
     {
      sum+=weights[i]; 
     }
+    assert(sum>0);
     r=r*sum;
   
   for( i = 0; i < numWeight ; ++i ) 
