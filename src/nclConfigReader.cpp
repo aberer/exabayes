@@ -40,9 +40,12 @@ public:
     initParam->initModelWeight  = -1 ;
     initParam->initSingleBranchWeight  = -1 ; 
     initParam->initSingleBranchExpWeight  = -1 ;
+
     initParam->initPenaltyFactor  = -1 ;   
     initParam->numGen  = -1 ; 
     initParam->samplingFrequency  = -1 ; 
+
+    initParam->eSprStopProb = -1; 
   }
 
 
@@ -79,6 +82,8 @@ public:
 	      initParam->initPenaltyFactor = value.ConvertToDouble();
 	    else if(key.EqualsCaseInsensitive("samplingfrequency"))
 	      initParam->samplingFrequency = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("eSprStopProb"))
+	      initParam->eSprStopProb = value.ConvertToDouble();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }
@@ -94,6 +99,7 @@ public:
     assert(initParam->numGen != -1); 
     assert(initParam->initPenaltyFactor != -1); 
     assert(initParam->samplingFrequency  != -1 ); 
+    assert(initParam->eSprStopProb != -1); 
   }
 
 

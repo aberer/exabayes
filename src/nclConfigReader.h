@@ -11,6 +11,7 @@ typedef struct
   double initSingleBranchWeight; 
   double initSingleBranchExpWeight;
   double initPenaltyFactor;   
+  double eSprStopProb; 
   int numGen; 
   int samplingFrequency; 
 } initParamStruct ; 

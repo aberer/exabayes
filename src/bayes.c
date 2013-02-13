@@ -21,7 +21,7 @@ void makeRandomTree(tree *tr);
 #include "nclConfigReader.h"
 void addInitParameters(state *curstate, initParamStruct *initParams)
 {
-  curstate->proposalWeights[SPR] = initParams->initSPRWeight; 
+  curstate->proposalWeights[E_SPR] = initParams->initSPRWeight; 
   curstate->proposalWeights[UPDATE_GAMMA] = initParams->initGammaWeight;
   curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight; 
@@ -29,6 +29,7 @@ void addInitParameters(state *curstate, initParamStruct *initParams)
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
   curstate->samplingFrequency = initParams->samplingFrequency; 
+  curstate->eSprStopProb = initParams->eSprStopProb; 
 }
 #else 
 int parseConfig(state *theState);
@@ -65,7 +66,7 @@ static void traverse_branches_set_fixed(nodeptr p, int *count, state * s, double
 void initDefaultValues(state *theState)
 {
   
-  theState->proposalWeights[SPR] = 0.0; 
+  theState->proposalWeights[E_SPR] = 0.0; 
   theState->proposalWeights[UPDATE_MODEL] = 0.0; 
   theState->proposalWeights[UPDATE_GAMMA] = 0.0; 
   theState->proposalWeights[UPDATE_SINGLE_BL] = 0.0;   
@@ -227,7 +228,7 @@ void mcmc(tree *tr, analdef *adef)
   int count = 0;
   traverse_branches_set_fixed( tr->start, &count, curstate, 0.65 );
 
-  makeRandomTree(tr); 
+  /* makeRandomTree(tr);  */
 
   evaluateGeneric(tr, tr->start, TRUE);
   PRINT( "after reset start: %f\n\n", tr->likelihood );

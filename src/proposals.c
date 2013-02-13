@@ -7,6 +7,7 @@
 #include "main-common.h"
 #include "output.h"
 
+/* static int spr_depth = 0; */
 
 nodeptr select_random_subtree(tree *tr); 
 void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue);
@@ -63,36 +64,86 @@ static void record_branch_info(nodeptr p, double *bl, int numBranches)
   for(i = 0; i < numBranches; i++)
     bl[i] = p->z[i];
 }
-static int spr_depth = 0;
 
-static node *random_spr_traverse( tree *tr, node *n ) {
 
-  double randprop = drawRandDouble();
+/* static node *extended_spr_traverse( tree *tr, node *n ) { */
+
+/*   double randprop = drawRandDouble(); */
   
-  if( isTip(n->number, tr->mxtips ) || randprop < 0.5 ) {
-    return n;
-  } else if( randprop < 0.75 ) {
-    spr_depth++;
-    return random_spr_traverse( tr, n->next->back );
-  } else {
-    spr_depth++;
-    return random_spr_traverse( tr, n->next->next->back );
-  }
-}
-static node *random_spr( tree *tr, node *n ) {
-  if( isTip(n->number, tr->mxtips ) ) {
-    return n;
-  }
-  spr_depth = 1;
+/*   if( isTip(n->number, tr->mxtips ) || randprop < 0.5 ) { */
+/*     return n; */
+/*   } else if( randprop < 0.75 ) { */
+/*     spr_depth++; */
+/*     return extended_spr_traverse( tr, n->next->back ); */
+/*   } else { */
+/*     spr_depth++; */
+/*     return extended_spr_traverse( tr, n->next->next->back ); */
+/*   } */
+
+/* } */
+
+
+
+
+/* static node *extended_spr( tree *tr, node *n )  */
+/* { */
+/*   if( isTip(n->number, tr->mxtips ) )  */
+/*     return n; */
+
+/*   double randprop = drawRandDouble(); */
+/*   if( randprop < 0.5 )  */
+/*     return extended_spr_traverse( tr, n->next->back ); */
+/*   else  */
+/*     return extended_spr_traverse( tr, n->next->next->back ); */
+/* } */
+
+
+int radius = 0; 
+
+int extended_spr_traverse(state *curstate, nodeptr *insertNode, int direction)
+{
+  int 
+    result, 
+    randNum = drawRandInt(2);
+
+  radius++; 
+
+  if(isTip( (*insertNode)->number, curstate->tr->mxtips))
+    direction--;
+  
+  if(direction % 3 == 0)
+    {
+      if(randNum == 0)
+	*insertNode = (*insertNode)->next->back; 
+      else 
+	*insertNode = (*insertNode)->next->next->back; 
+    }
+  else if(direction % 3 == 1)
+    {
+      if(randNum == 0)
+	*insertNode = (*insertNode)->back; 
+      else 
+	*insertNode = (*insertNode)->next->next->back; 
+    }
+  else 
+    {
+      if(randNum == 0)
+	*insertNode = (*insertNode)->back; 
+      else 
+	*insertNode = (*insertNode)->next->back; 
+    }
+  
   double randprop = drawRandDouble();
-  if( randprop < 0.5 ) {
-    return random_spr_traverse( tr, n->next->back );
-  } else {
-    return random_spr_traverse( tr, n->next->next->back );
-  }
+  result = randprop < curstate->eSprStopProb; 
+  
+  return result; 
 }
 
-static void random_spr_apply(state *instate)
+
+
+
+
+static void extended_spr_apply(state *instate)
 {
   tree * tr = instate->tr;
   
@@ -104,9 +155,7 @@ static void random_spr_apply(state *instate)
 
 #if 0
   parsimonySPR(p, tr);
-#endif
-
-  
+#endif  
 
   /*evaluateGeneric(tr, tr->start, TRUE);
     printf("%f \n", tr->likelihood);*/
@@ -118,7 +167,6 @@ static void random_spr_apply(state *instate)
   record_branch_info(instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, instate->tr->numBranches);
   record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, instate->tr->numBranches);
 
-  /* removeNodeBIG(tr, p,  tr->numBranches); */
   /* remove node p */
   double   zqr[NUM_BRANCHES];
   int i;
@@ -128,27 +176,51 @@ static void random_spr_apply(state *instate)
       if(zqr[i] > zmax) zqr[i] = zmax;
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
+
   hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, tr->numBranches); 
   p->next->next->back = p->next->back = (node *) NULL;
   /* done remove node p (omitted BL opt) */
+  
+  nodeptr curNode = ( drawRandDouble() > 0.5 ) ? instate->sprMoveRemem.nb : instate->sprMoveRemem.nnb; 
+  int accepted = FALSE;   
 
-  
-  double randprop = drawRandDouble();
-  spr_depth = 0;
-  assert( !(isTip(instate->sprMoveRemem.nb->number, instate->tr->mxtips ) && isTip(instate->sprMoveRemem.nnb->number, instate->tr->mxtips )) );
-  if( isTip(instate->sprMoveRemem.nb->number, instate->tr->mxtips ) ) {
-    randprop = 1.0;
-  } else if( isTip(instate->sprMoveRemem.nnb->number, instate->tr->mxtips ) ) {
-    randprop = 0.0;
-  }
-  
-  if( randprop <= 0.5 ) {
-    tr->insertNode = random_spr( tr, instate->sprMoveRemem.nb );
-  } else {
-    tr->insertNode = random_spr( tr, instate->sprMoveRemem.nnb );
-  }
+  radius = 0; 
 
+  while( !  accepted)
+    {
+      accepted = extended_spr_traverse(instate, &curNode, 0); 
+      /* if(processID == 0) */
+	/* printf("%d,",curNode->number);  */
+    }
+  tr->insertNode = curNode; 
+  /* if(processID == 0) */
+    /* printf("\n");  */
+
+
+  instate->hastings = 1; 
+  instate->newprior = 1; 
+  instate->curprior = 1; 
+
+  /* printf("radius is %d\n", radius);  */
+
+  /* REMOVE  */  
+  /* double randprop = drawRandDouble(); */
+  /* assert( ! (isTip(instate->sprMoveRemem.nb->number, instate->tr->mxtips ) && isTip(instate->sprMoveRemem.nnb->number, instate->tr->mxtips )) ); */
+
+  /* if( isTip(instate->sprMoveRemem.nb->number, instate->tr->mxtips ) )      */
+  /*   randprop = 1.0; */
+  /* else if( isTip(instate->sprMoveRemem.nnb->number, instate->tr->mxtips ) )  */
+  /*     randprop = 0.0; */
   
+ 
+  /* if( randprop <= 0.5 )  */
+  /*   tr->insertNode = extended_spr( tr, instate->sprMoveRemem.nb ); */
+  /* else  */
+  /*   tr->insertNode = extended_spr( tr, instate->sprMoveRemem.nnb ); */
+
+
+  /* END REMOVE  */
+
 
   instate->sprMoveRemem.q = tr->insertNode;
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
@@ -166,7 +238,7 @@ static void random_spr_apply(state *instate)
   //printf("%f \n", tr->likelihood);
 }
 
-static void random_spr_reset(state * instate)
+static void extended_spr_reset(state * instate)
 {
   /* prune the insertion */
   hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, instate->tr->numBranches);
@@ -258,11 +330,9 @@ void normalizeProposalWeights(state *curstate)
 
 
 
-double get_branch_length_prior(double bl){//TODO decide on sensible prior
- return 1;  
-
-
-
+double get_branch_length_prior( void *bl)
+{//TODO decide on sensible prior
+  return 1;  
 }
 
 static void simple_model_proposal_apply(state *instate)
@@ -330,8 +400,10 @@ static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRa
 static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
   int i;
-  double new_value;
+  double newZValue;
   double r,mx,mn;
+  double newValue = 0; 
+
   for(i = 0; i < numBranches; i++)
     {
       double real_z;
@@ -349,20 +421,22 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
     
       mn = real_z-(s->brLenRemem.bl_sliding_window_w/2);
       mx = real_z+(s->brLenRemem.bl_sliding_window_w/2);
-      new_value = exp(-(fabs(mn + r * (mx-mn)/s->tr->fracchange )));
+      newZValue = exp(-(fabs(mn + r * (mx-mn)/s->tr->fracchange )));
     
       
       s->hastings=1;
-      get_branch_length_prior(mn + r * (mx-mn));
+      
+      newValue = mn + r * (mx-mn); 
+      get_branch_length_prior(&newValue);
     
       /* Ensure always you stay within this range */
-      if(new_value > zmax) new_value = zmax;
-      if(new_value < zmin) new_value = zmin;
-      assert(new_value <= zmax && new_value >= zmin);
-      //     printf( "z: %f %f %f\n", p->z[i], new_value, real_z );
-      p->z[i] = p->back->z[i] = new_value;
+      if(newZValue > zmax) newZValue = zmax;
+      if(newZValue < zmin) newZValue = zmin;
+      assert(newZValue <= zmax && newZValue >= zmin);
+      //     printf( "z: %f %f %f\n", p->z[i], newZValue, real_z );
+      p->z[i] = p->back->z[i] = newZValue;
       //assuming this will be visiting each node, and multiple threads won't be accessing this
-      //s->bl_prior += log(exp_pdf(s->bl_prior_exp_lambda,new_value));
+      //s->bl_prior += log(exp_pdf(s->bl_prior_exp_lambda,newZValue));
       //s->bl_prior += 1;
     }
 }
@@ -372,7 +446,7 @@ static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean 
  //static double lambda=10; //TODO should be defined elsewhere. Also: must find lambda to yield good proposals
   
   int i;
-  double new_value;
+  double newZValue;
   double r;
   double real_z;
   for(i = 0; i < numBranches; i++)
@@ -389,21 +463,20 @@ static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean 
 	r = drawRandExp(1.0/real_z);
   
 	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
-	s->newprior=get_branch_length_prior(r);
+
+	s->newprior=get_branch_length_prior(&r);
 	
-      new_value = exp(-(fabs(r /s->tr->fracchange )));
+      newZValue = exp(-(fabs(r /s->tr->fracchange )));
    
     
       /* Ensure always you stay within this range, reflect if necessary *///TODO reflects transformed bl, needs to reflect actual bl
-      while(new_value > zmax || new_value < zmin){
-      if(new_value > zmax) new_value = 2*zmax-new_value;
-      if(new_value < zmin) new_value = 2*zmin-new_value;
+      while(newZValue > zmax || newZValue < zmin){
+      if(newZValue > zmax) newZValue = 2*zmax-newZValue;
+      if(newZValue < zmin) newZValue = 2*zmin-newZValue;
       }
-      assert(new_value <= zmax && new_value >= zmin);
-      p->z[i] = p->back->z[i] = new_value;
+      assert(newZValue <= zmax && newZValue >= zmin);
+      p->z[i] = p->back->z[i] = newZValue;
      }
-     
-     
      
 }
 
@@ -596,28 +669,30 @@ nodeptr select_random_subtree(tree *tr)
 
 
 
-static proposal_functions get_proposal_functions( proposal_type ptype ) {
+
+
+
+
+static proposal_functions get_proposal_functions( proposal_type ptype ) 
+{
   
-  //TODO do we really need to define NUM_PROP_FUNCS in addition to NUM_PROPOSALS
-#define NUM_PROP_FUNCS (5) 
-  const static proposal_functions prop_funcs[NUM_PROP_FUNCS] = { 
-    { UPDATE_MODEL, simple_model_proposal_apply, simple_model_proposal_reset },
-    { UPDATE_SINGLE_BL, random_branch_length_proposal_apply, random_branch_length_proposal_reset },
-    { UPDATE_SINGLE_BL_EXP, exp_branch_length_proposal_apply, random_branch_length_proposal_reset },
-    { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset },
-    { SPR, random_spr_apply, random_spr_reset }
+  const static proposal_functions prop_funcs[NUM_PROPOSALS] = { 
+    { UPDATE_MODEL, simple_model_proposal_apply, simple_model_proposal_reset,  get_branch_length_prior},/* TODO replace */
+    { UPDATE_SINGLE_BL, random_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
+    { UPDATE_SINGLE_BL_EXP, exp_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
+    { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset,  get_branch_length_prior},/* TODO replace */
+    { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };
   int i;
   // REMARK: don't worry about the linear search until NUM_PROP_FUNCS exceeds 20...
-  for( i = 0; i < NUM_PROP_FUNCS; ++i ) {
+  for( i = 0; i < NUM_PROPOSALS; ++i ) {
     if( prop_funcs[i].ptype == ptype ) {
       return prop_funcs[i];
     }
   }
   
   assert( 0 && "ptype not found" );
-  
-#undef NUM_PROP_FUNCS
+
 }
 
 static void dispatch_proposal_apply( proposal_type ptype, state *instate ) {
@@ -641,8 +716,7 @@ static proposal_type select_proposal_type(state * instate)
 
 void step(state *curstate)
 {
-  tree *tr = curstate->tr; 
-  
+  tree *tr = curstate->tr;   
 
 #ifdef WITH_PERFORMANCE_MEASUREMENTS
   perf_timer move_timer = perf_timer_make();
@@ -659,11 +733,9 @@ void step(state *curstate)
 #ifdef WITH_PERFORMANCE_MEASUREMENTS    
   perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT
 #endif
-  //      PRINT("before proposal, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
+
   tr->startLH = tr->likelihood;
 
-  //which_proposal = proposal(curstate);
-    
   // select proposal type
   which_proposal = select_proposal_type( curstate );
     
@@ -683,9 +755,11 @@ void step(state *curstate)
   //proposalTime += gettime() - t;
   /* decide upon acceptance */
   testr = drawRandDouble();
+
   //should look something like 
   /* acceptance = fmin(1,(curstate->hastings) * 
      (exp(curstate->newprior-curstate->curprior)) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));*/
+
   acceptance = fmin(1,(curstate->hastings) * 
 		    (curstate->newprior/curstate->curprior) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));
 
@@ -694,12 +768,6 @@ void step(state *curstate)
   perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT
 #endif
 
-      
-  if(processID == 0 && (curstate->currentGeneration % curstate->samplingFrequency) == 0)
-    {
-      printSample(curstate); 
-      chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject
-    }
 
   assert(which_proposal < NUM_PROPOSALS); 
       
@@ -711,8 +779,6 @@ void step(state *curstate)
       curstate->totalAccepted++;
       // curstate->proposalWeights[which_proposal] /= curstate->penaltyFactor;
       penalize(curstate, which_proposal, 1);
-      /* if(which_proposal == SPR) */
-      /* 	sum_radius_accept += spr_depth;  */
 
       curstate->tr->startLH = curstate->tr->likelihood;  //new LH
       curstate->curprior = curstate->newprior;          
@@ -724,8 +790,6 @@ void step(state *curstate)
       curstate->totalRejected++;
       //curstate->proposalWeights[which_proposal] *= curstate->penaltyFactor; 
       penalize(curstate, which_proposal, 0);
-      /* if(which_proposal == SPR) */
-      /* 	sum_radius_reject += spr_depth; */
       
       /* TODO remove, if not necessary any more   */
       evaluateGeneric(tr, tr->start, FALSE); 
@@ -738,6 +802,12 @@ void step(state *curstate)
 	}      
       assert(fabs(curstate->tr->startLH - tr->likelihood) < 0.1);
     } 
+
+  if(processID == 0 && (curstate->currentGeneration % curstate->samplingFrequency) == 0)
+    {
+      printSample(curstate); 
+      chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject
+    }
 
 #ifdef WITH_PERFORMANCE_MEASUREMENTS
   perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT    

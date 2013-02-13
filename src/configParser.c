@@ -28,7 +28,7 @@ int parseLine(char* line, int length, state *theState)
   sscanf(tok, "%s", value); 
 
   if( ! strcmp(key, "initSPRWeight"))
-    theState->proposalWeights[SPR] = atof(value); 
+    theState->proposalWeights[E_SPR] = atof(value); 
   else if( ! strcmp(key, "initModelWeight"))
     theState->proposalWeights[UPDATE_MODEL] = atof(value); 
   else if( ! strcmp(key, "initGammaWeight"))

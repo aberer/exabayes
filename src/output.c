@@ -262,7 +262,7 @@ void chainInfoOutput(state *curstate )
 {
   PRINT( "propb: %d %f %f spr: %d (%d) model: %d (%d) ga: %d (%d) bl: %d (%d) blExp: %d (%d) %f %f %f\n",
 	 curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH, 
-	 curstate->acceptedProposals[SPR]	, curstate->rejectedProposals[SPR] ,
+	 curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] ,
 	 curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] ,
 	 curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] ,
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL], curstate->rejectedProposals[UPDATE_SINGLE_BL],

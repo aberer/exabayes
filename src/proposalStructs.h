@@ -7,11 +7,11 @@
 #define NUM_PROPOSALS (5)
 typedef enum
 {
-  SPR = 0,
-  UPDATE_MODEL = 1 ,
-  UPDATE_GAMMA = 2 ,
-  UPDATE_SINGLE_BL = 3,
-  UPDATE_SINGLE_BL_EXP = 4
+E_SPR = 0,
+UPDATE_MODEL = 1 ,
+UPDATE_GAMMA = 2 ,
+UPDATE_SINGLE_BL = 3,
+UPDATE_SINGLE_BL_EXP = 4
 } proposal_type;
 
 
@@ -77,6 +77,8 @@ typedef struct
   
   double penaltyFactor; //change to the probability of picking a proposal
 
+  double eSprStopProb; 
+
   spr_move_remembrance sprMoveRemem; 
   branch_length_remembrance brLenRemem; 
   gamma_remembrance gammaRemem; 
@@ -100,9 +102,11 @@ typedef struct
 
 
 typedef struct {
-  int  ptype;
-  void (*apply_func)( state * state );
-  void (*reset_func)( state * state );  
+  int  ptype;  
+  void (*apply_func)( state * curstate );
+  void (*reset_func)( state * curstate );    
+  double (*prior_function) (void *something); 
+
 } proposal_functions;
 
 
