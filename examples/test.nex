@@ -9,5 +9,6 @@ begin EXABAYES;
       initPenaltyFactor 1.0 
       samplingFrequency 100 	[ take a sample every n generations ]
 
-      eSprStopProb 0.3  [ probability for not traversing an additional step in an eSPR move ] 
+      eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
+
 end;

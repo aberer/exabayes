@@ -228,7 +228,7 @@ void mcmc(tree *tr, analdef *adef)
   int count = 0;
   traverse_branches_set_fixed( tr->start, &count, curstate, 0.65 );
 
-  /* makeRandomTree(tr);  */
+  makeRandomTree(tr);
 
   evaluateGeneric(tr, tr->start, TRUE);
   PRINT( "after reset start: %f\n\n", tr->likelihood );

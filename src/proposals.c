@@ -201,27 +201,6 @@ static void extended_spr_apply(state *instate)
   instate->newprior = 1; 
   instate->curprior = 1; 
 
-  /* printf("radius is %d\n", radius);  */
-
-  /* REMOVE  */  
-  /* double randprop = drawRandDouble(); */
-  /* assert( ! (isTip(instate->sprMoveRemem.nb->number, instate->tr->mxtips ) && isTip(instate->sprMoveRemem.nnb->number, instate->tr->mxtips )) ); */
-
-  /* if( isTip(instate->sprMoveRemem.nb->number, instate->tr->mxtips ) )      */
-  /*   randprop = 1.0; */
-  /* else if( isTip(instate->sprMoveRemem.nnb->number, instate->tr->mxtips ) )  */
-  /*     randprop = 0.0; */
-  
- 
-  /* if( randprop <= 0.5 )  */
-  /*   tr->insertNode = extended_spr( tr, instate->sprMoveRemem.nb ); */
-  /* else  */
-  /*   tr->insertNode = extended_spr( tr, instate->sprMoveRemem.nnb ); */
-
-
-  /* END REMOVE  */
-
-
   instate->sprMoveRemem.q = tr->insertNode;
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
   record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, instate->tr->numBranches);
