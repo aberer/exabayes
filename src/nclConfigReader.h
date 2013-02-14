@@ -7,6 +7,7 @@ typedef struct
 {
   double initSPRWeight;
   double initGammaWeight; 
+  double initGammaExpWeight;
   double initModelWeight;
   double initSingleBranchWeight; 
   double initSingleBranchExpWeight;

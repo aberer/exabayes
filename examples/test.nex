@@ -3,9 +3,10 @@ begin EXABAYES;
       initModelWeight 3
       INITSPRWEIGHT   5 
       initGammaWeight 1
+      initGammaExpWeight 1
       initSingleBranchWeight 5
       initSingleBranchExpWeight 5
-      numGen 50000               [ total number of generations] 
+      numGen 100000               [ total number of generations] 
       initPenaltyFactor 1.0 
       samplingFrequency 100 	[ take a sample every n generations ]
 

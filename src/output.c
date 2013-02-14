@@ -260,11 +260,12 @@ static void printSubsRates(tree *tr,int model, int numSubsRates)
 /* TODO modify this */
 void chainInfoOutput(state *curstate )
 {
-  PRINT( "propb: %d %f %f spr: %d (%d) model: %d (%d) ga: %d (%d) bl: %d (%d) blExp: %d (%d) %f %f %f\n",
+  PRINT( "gen: %d %f %f eSpr: %d/%d (%d%%) model: %d/%d  ga: %d/%d gaExp: %d/%d bl: %d/%d blExp: %d/%d %f %f %f\n",
 	 curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH, 
-	 curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] ,
+	 curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR])),
 	 curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] ,
 	 curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] ,
+	 curstate->acceptedProposals[UPDATE_GAMMA_EXP]	, curstate->rejectedProposals[UPDATE_GAMMA_EXP] ,
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL], curstate->rejectedProposals[UPDATE_SINGLE_BL],
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL_EXP], curstate->rejectedProposals[UPDATE_SINGLE_BL_EXP],
 	 curstate->hastings, curstate->newprior, curstate->curprior

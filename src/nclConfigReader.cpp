@@ -37,6 +37,7 @@ public:
   {
     initParam->initSPRWeight  = -1 ;
     initParam->initGammaWeight  = -1 ; 
+    initParam->initGammaExpWeight  = -1 ; 
     initParam->initModelWeight  = -1 ;
     initParam->initSingleBranchWeight  = -1 ; 
     initParam->initSingleBranchExpWeight  = -1 ;
@@ -72,6 +73,8 @@ public:
 	      initParam->initModelWeight = value.ConvertToDouble(); 
 	    else if(key.EqualsCaseInsensitive("initGammaWeight"))
 	      initParam->initGammaWeight = value.ConvertToDouble();
+	    else if(key.EqualsCaseInsensitive("initGammaExpWeight"))
+	      initParam->initGammaExpWeight = value.ConvertToDouble();
 	    else if (key.EqualsCaseInsensitive("initSingleBranchWeight"))
 	      initParam->initSingleBranchWeight = value.ConvertToDouble();
 	    else if (key.EqualsCaseInsensitive("initSingleBranchExpWeight"))
@@ -94,6 +97,7 @@ public:
   {
     assert(initParam->initModelWeight != -1); 
     assert(initParam->initGammaWeight != -1); 
+    assert(initParam->initGammaExpWeight != -1); 
     assert(initParam->initSPRWeight != -1); 
     assert(initParam->initSingleBranchWeight != -1); 
     assert(initParam->numGen != -1); 

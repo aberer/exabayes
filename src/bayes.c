@@ -23,6 +23,7 @@ void addInitParameters(state *curstate, initParamStruct *initParams)
 {
   curstate->proposalWeights[E_SPR] = initParams->initSPRWeight; 
   curstate->proposalWeights[UPDATE_GAMMA] = initParams->initGammaWeight;
+  curstate->proposalWeights[UPDATE_GAMMA_EXP] = initParams->initGammaExpWeight;
   curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight; 
@@ -69,6 +70,7 @@ void initDefaultValues(state *theState)
   theState->proposalWeights[E_SPR] = 0.0; 
   theState->proposalWeights[UPDATE_MODEL] = 0.0; 
   theState->proposalWeights[UPDATE_GAMMA] = 0.0; 
+  theState->proposalWeights[UPDATE_GAMMA_EXP] = 0.0; 
   theState->proposalWeights[UPDATE_SINGLE_BL] = 0.0;   
   theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = 0.0;   
   
@@ -221,6 +223,12 @@ void mcmc(tree *tr, analdef *adef)
   state *curstate = state_init(tr, adef,  bl_sliding_window_w, rt_sliding_window_w, gm_sliding_window_w, bl_prior_exp_lambda); 
 
   readConfig(curstate);
+
+  for(int prop=0; prop<NUM_PROPOSALS;prop++)
+  {
+  printf("%f ",curstate->proposalWeights[prop]);
+  }
+  printf("\n");
   
   if(processID == 0 )
     initializeOutputFiles(curstate);
