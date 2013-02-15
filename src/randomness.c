@@ -46,6 +46,26 @@ double drawRandExp(double l)
   return r; 
 }
 
+//Given x this function randomly draws from [x/2,2*x] 
+double drawRandBiUnif(double x)
+{
+  double r;
+  r=(double)rand()/(double)RAND_MAX;
+  /*
+   double s;
+  s=(double)rand()/(double)RAND_MAX;
+  
+  if(r<1/3)//choose left area //if(r<1/3) yields exactly uniform on [x/2,2*x]
+  {
+   s=x/2+s*(x/2);//=x/2+s*(x-x/2) \in [x/2,x]
+  }else{//choose right area
+   s=x+s*x;//=x+s*(2*x-x) \in [x,2x]    
+  }
+  */
+  r=x/2+r*(3/2)*x;//=x/2+r*(2*x-x/2);
+  return r;
+}
+
 
 /* draw r according to distribution given by weights. NOTE sum of weights is not required to be 1.0*/
 int drawSampleProportionally( double *weights, int numWeight )
