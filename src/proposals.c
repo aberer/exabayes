@@ -100,17 +100,28 @@ static void record_branch_info(nodeptr p, double *bl, int numBranches)
 
 int radius = 0; 
 
-int extended_spr_traverse(state *curstate, nodeptr *insertNode, int direction)
+int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 {
   int 
     result, 
     randNum = drawRandInt(2);
 
   radius++; 
-
-  if(isTip( (*insertNode)->number, curstate->tr->mxtips))
-    direction--;
+      if(randNum == 0)
+	*insertNode = (*insertNode)->next->back; 
+      else 
+	*insertNode = (*insertNode)->next->next->back; 
+   
   
+  /*
+  if(isTip( (*insertNode)->number, curstate->tr->mxtips))
+  {
+     if(randNum == 0)
+    direction--;
+    else
+    direction++;
+  }*/
+  /*
   if(direction % 3 == 0)
     {
       if(randNum == 0)
@@ -121,9 +132,9 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode, int direction)
   else if(direction % 3 == 1)
     {
       if(randNum == 0)
-	*insertNode = (*insertNode)->back; 
+	*insertNode = (*insertNode)->next->next->back; 	
       else 
-	*insertNode = (*insertNode)->next->next->back; 
+	*insertNode = (*insertNode)->back; 
     }
   else 
     {
@@ -132,7 +143,15 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode, int direction)
       else 
 	*insertNode = (*insertNode)->next->back; 
     }
-  
+    
+     if(isTip( (*insertNode)->number, curstate->tr->mxtips))
+  {
+     if(randNum == 0)
+    direction--;
+    else
+    direction++;
+  }
+  */
   double randprop = drawRandDouble();
   result = randprop < curstate->eSprStopProb; 
   
@@ -185,16 +204,16 @@ static void extended_spr_apply(state *instate)
   int accepted = FALSE;   
 
   radius = 0; 
-
+//printf("curNode:  back next nextnext\n");
   while( !  accepted)
     {
-      accepted = extended_spr_traverse(instate, &curNode, 0); 
-      /* if(processID == 0) */
-	/* printf("%d,",curNode->number);  */
+      accepted = extended_spr_traverse(instate, &curNode); 
+  //    if(processID == 0) 
+//	printf("%d:  %d  %d  %d\n",curNode->number, curNode->back->number, curNode->next->back->number, curNode->next->next->back->number); 
     }
   tr->insertNode = curNode; 
-  /* if(processID == 0) */
-    /* printf("\n");  */
+  // if(processID == 0)
+   // printf("\n\n\n"); 
 
 
   instate->hastings = 1; 
@@ -228,7 +247,11 @@ static void extended_spr_reset(state * instate)
   newviewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE); 
 }
 
-
+double get_alpha_prior(double a)
+{
+  
+ return 1;//TODO obviously needs acctual prior 
+}
 //simple sliding window
 static void simple_gamma_proposal_apply(state * instate)
 {
@@ -243,11 +266,42 @@ static void simple_gamma_proposal_apply(state * instate)
   /* Ensure always you stay within this range */
   if(newalpha > ALPHA_MAX) newalpha = ALPHA_MAX;
   if(newalpha < ALPHA_MIN) newalpha = ALPHA_MIN;
+  
+  instate->hastings = 1; //since it is symmetrical, hastings=1
+  instate->newprior = get_alpha_prior(newalpha); 
+  instate->curprior = get_alpha_prior(curv); 
+  
   instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
 
   makeGammaCats(instate->tr->partitionData[instate->modelRemem.model].alpha, instate->tr->partitionData[instate->modelRemem.model].gammaRates, 4, instate->tr->useMedian);
 
   
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE);
+}
+
+
+static void exp_gamma_proposal_apply(state * instate)
+{
+  double newalpha, curv;
+  curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
+  instate->gammaRemem.curAlpha = curv;
+  newalpha  = drawRandExp(1/curv);
+  
+
+ 
+  /* Ensure always you stay within this range */
+  while(newalpha > ALPHA_MAX || newalpha < ALPHA_MIN){
+  if(newalpha > ALPHA_MAX) newalpha = 2*ALPHA_MAX-newalpha;
+  if(newalpha < ALPHA_MIN) newalpha = 2*ALPHA_MIN-newalpha;
+  }
+  instate->hastings = (1/newalpha)*exp(-(1/newalpha)*curv)/((1/curv)*exp(-(1/curv)*newalpha)); //TODO do not ignore reflection
+  instate->newprior = get_alpha_prior(newalpha); 
+  instate->curprior = get_alpha_prior(curv); 
+  
+  instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
+  
+  makeGammaCats(instate->tr->partitionData[instate->modelRemem.model].alpha, instate->tr->partitionData[instate->modelRemem.model].gammaRates, 4, instate->tr->useMedian);
+
   evaluateGeneric(instate->tr, instate->tr->start, TRUE);
 }
 
@@ -308,11 +362,6 @@ void normalizeProposalWeights(state *curstate)
 }
 
 
-
-double get_branch_length_prior( void *bl)
-{//TODO decide on sensible prior
-  return 1;  
-}
 
 static void simple_model_proposal_apply(state *instate)
 {
@@ -375,6 +424,11 @@ static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRa
 }
 
 
+double get_branch_length_prior( void *bl)
+{//TODO decide on sensible prior
+  return 1;  
+}
+
 //setting this out to allow for other types of setting
 static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
@@ -406,7 +460,7 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
       s->hastings=1;
       
       newValue = mn + r * (mx-mn); 
-      get_branch_length_prior(&newValue);
+      s->newprior=get_branch_length_prior(&newValue);
     
       /* Ensure always you stay within this range */
       if(newZValue > zmax) newZValue = zmax;
@@ -659,7 +713,8 @@ static proposal_functions get_proposal_functions( proposal_type ptype )
     { UPDATE_MODEL, simple_model_proposal_apply, simple_model_proposal_reset,  get_branch_length_prior},/* TODO replace */
     { UPDATE_SINGLE_BL, random_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
     { UPDATE_SINGLE_BL_EXP, exp_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
-    { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset,  get_branch_length_prior},/* TODO replace */
+    { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
+    { UPDATE_GAMMA_EXP, exp_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
     { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };
   int i;

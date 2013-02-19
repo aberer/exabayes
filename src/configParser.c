@@ -33,6 +33,8 @@ int parseLine(char* line, int length, state *theState)
     theState->proposalWeights[UPDATE_MODEL] = atof(value); 
   else if( ! strcmp(key, "initGammaWeight"))
     theState->proposalWeights[UPDATE_GAMMA] = atof(value); 
+  else if( ! strcmp(key, "initGammaExpWeight"))
+    theState->proposalWeights[UPDATE_GAMMA_EXP] = atof(value); 
   else if( ! strcmp(key, "initSingleBranchWeight"))
     theState->proposalWeights[UPDATE_SINGLE_BL] = atof(value);   
   else if( ! strcmp(key, "initSingleBranchExpWeight"))

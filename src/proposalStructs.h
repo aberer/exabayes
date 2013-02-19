@@ -4,14 +4,15 @@
 
 
 /* okay, so defining enums this way is rather save  */
-#define NUM_PROPOSALS (5)
+#define NUM_PROPOSALS (6)
 typedef enum
 {
 E_SPR = 0,
 UPDATE_MODEL = 1 ,
 UPDATE_GAMMA = 2 ,
-UPDATE_SINGLE_BL = 3,
-UPDATE_SINGLE_BL_EXP = 4
+UPDATE_GAMMA_EXP=3,
+UPDATE_SINGLE_BL = 4,
+UPDATE_SINGLE_BL_EXP = 5
 } proposal_type;
 
 
