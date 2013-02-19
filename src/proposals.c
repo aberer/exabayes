@@ -715,6 +715,7 @@ static proposal_functions get_proposal_functions( proposal_type ptype )
     { UPDATE_SINGLE_BL_EXP, exp_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
     { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
     { UPDATE_GAMMA_EXP, exp_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
+    //PROPOSALADD prop_funcs NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };
   int i;

@@ -39,6 +39,7 @@ int parseLine(char* line, int length, state *theState)
     theState->proposalWeights[UPDATE_SINGLE_BL] = atof(value);   
   else if( ! strcmp(key, "initSingleBranchExpWeight"))
     theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = atof(value);   
+//PROPOSALADD parseLine NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   else if( ! strcmp(key, "numGen"))
     theState->numGen = atoi(value);   
   else if( ! strcmp(key, "initPenaltyFactor"))

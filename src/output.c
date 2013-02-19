@@ -262,7 +262,7 @@ void chainInfoOutput(state *curstate )
 {
   PRINT( "gen: %d %f %f eSpr: %d/%d (%d%%) model: %d/%d  ga: %d/%d gaExp: %d/%d bl: %d/%d blExp: %d/%d %f %f %f\n",
 	 curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH, 
-	 curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR])),
+	 curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)),
 	 curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] ,
 	 curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] ,
 	 curstate->acceptedProposals[UPDATE_GAMMA_EXP]	, curstate->rejectedProposals[UPDATE_GAMMA_EXP] ,

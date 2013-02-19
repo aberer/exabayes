@@ -27,6 +27,7 @@ void addInitParameters(state *curstate, initParamStruct *initParams)
   curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight; 
+  //PROPOSALADD addInitParameters NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
   curstate->samplingFrequency = initParams->samplingFrequency; 
@@ -73,6 +74,7 @@ void initDefaultValues(state *theState)
   theState->proposalWeights[UPDATE_GAMMA_EXP] = 0.0; 
   theState->proposalWeights[UPDATE_SINGLE_BL] = 0.0;   
   theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = 0.0;   
+  //PROPOSALADD initDefaultValues NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   
   theState->numGen = 1000000;
   theState->penaltyFactor = 0.0;
