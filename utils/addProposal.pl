@@ -2,18 +2,22 @@
 #WARNING needs to access /src and /examples from working directory. i.e. must be called as 'perl utils/addProposal.pl'
 #This scipt modifies all relevant files to allow for the new proposal. Parameters/Names need to be changed to the required values in this file.
 #
+#If run with the argument 'test', the original files are kept and temp* files are kept in the working directory. 
+#
 #The following still need to be taken care of manualy: actually implement apply (and reset) function in proposals.c. printf the new values in output.c, add values to config files
 
 #################################################################################
-$proposalName="UPDATE_SINGLE_BL_BIUNIF"; 
-$weightName="initSingleBrancBiunifhWeight";
+$proposalName="UPDATE_SINGLE_BL_TEST"; 
+$weightName="initSingleBranchTESTWeight";
 $initWeight="0.0";
 
-$configName="initSingleBranchBiunifWeight";
-$configWeight="1";
+#$configName="initSingleBranchBiunifWeight";
+$configName=$weightName;
+$configWeight="0.0";
 
-$nexConfigName="initSingleBranchBiunifWeight";#may be same as $configName
-$nexConfigWeight="1";
+#$nexConfigName="initSingleBranchBiunifWeight";#may be same as $configName
+$nexConfigName=$weightName;
+$nexConfigWeight="2.0";
 
 $applyName="biunif_branch_length_proposal_apply";
 $resetName="random_branch_length_proposal_reset";#may already exist
@@ -200,3 +204,26 @@ close WRITEFILE;
 
 system ("mv $temp temptTest.conf");
 
+#########################Move#And#Copy#Files################
+$backupdir="utils/backup";
+if($ARGV[0]!~ /test/){
+system("mkdir $backupdir");
+
+system ("mv src/bayes.c $backupdir/bayes.c");
+system ("mv src/configParser.c $backupdir/configParser.c");
+system ("mv src/nclConfigReader.cpp $backupdir/nclConfigReader.cpp");
+system ("mv src/nclConfigReader.h $backupdir/nclConfigReader.h");
+system ("mv src/proposals.c $backupdir/proposals.c");
+system ("mv src/proposalStructs.h $backupdir/proposalStructs.h");
+system ("mv examples/test.nex $backupdir/test.nex");
+system ("mv examples/test.conf $backupdir/test.conf");
+
+system ("mv tempBayes.c src/bayes.c");
+system ("mv tempConfigParser.c src/configParser.c");
+system ("mv tempNclConfigReader.cpp src/nclConfigReader.cpp");
+system ("mv tempNclConfigReader.h src/nclConfigReader.h");
+system ("mv tempProposals.c src/proposals.c");
+system ("mv tempProposalStructs.h src/proposalStructs.h");
+system ("mv temptTest.nex examples/test.nex");
+system ("mv temptTest.conf examples/test.conf");
+}
