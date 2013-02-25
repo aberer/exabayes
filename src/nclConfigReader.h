@@ -12,6 +12,7 @@ typedef struct
   double initSingleBranchWeight; 
   double initSingleBranchExpWeight;
 double initSingleBranchBiunifWeight;
+double initModelBiunifWeight;
   //PROPOSALADD initParamStruct NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   double initPenaltyFactor;   
   double eSprStopProb; 
