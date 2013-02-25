@@ -10,12 +10,16 @@
 #include "proposals.h"
 
 
+
+/* TODO commented this out, since there are some problems with it,
+   when we build with the PLL */
+/* #define WITH_PERFORMANCE_MEASUREMENTS */
+
+
 #define _USE_NCL_PARSER
 
 
 void makeRandomTree(tree *tr); 
-
-
 
 #ifdef _USE_NCL_PARSER
 #include "nclConfigReader.h"
@@ -38,18 +42,15 @@ curstate->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = initParams->initSingleBranc
 int parseConfig(state *theState);
 #endif
 
+
+
 static void traverse_branches_set_fixed(nodeptr p, int *count, state * s, double z )
 {
   nodeptr q;
   int i;
-  //printf("current BL at %db%d: %f\n", p->number, p->back->number, p->z[0]);
   
   for( i = 0; i < s->tr->numBranches; i++)
-    {
-   
-      p->z[i] = p->back->z[i] = z;
-    }
-  
+    p->z[i] = p->back->z[i] = z;  
   *count += 1;
 
 
@@ -66,9 +67,26 @@ static void traverse_branches_set_fixed(nodeptr p, int *count, state * s, double
 }
 
 
-void initDefaultValues(state *theState)
+void initDefaultValues(state *theState, tree *tr)
 {
-  
+  theState->curprior = 1; 
+  theState->hastings = 1; 
+  theState->currentGeneration = 0; 
+
+  theState->brLenRemem.bl_sliding_window_w = 0.005;
+  theState->brLenRemem.bl_prior = 1.0;
+  theState->brLenRemem.bl_prior_exp_lambda = 0.1 ;
+  //this can be extended to more than one partition, but one for now
+  theState->modelRemem.model = 0;
+
+  theState->modelRemem.rt_sliding_window_w = 0.5;
+  theState->modelRemem.nstates = tr->partitionData[theState->modelRemem.model].states; /* 4 for DNA */
+  theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
+  theState->modelRemem.curSubsRates = (double *) malloc(theState->modelRemem.numSubsRates * sizeof(double));
+  theState->gammaRemem.gm_sliding_window_w = 0.75;
+  theState->brLenRemem.single_bl_branch = -1;
+
+
   theState->proposalWeights[E_SPR] = 0.0; 
   theState->proposalWeights[UPDATE_MODEL] = 0.0; 
   theState->proposalWeights[UPDATE_GAMMA] = 0.0; 
@@ -83,19 +101,9 @@ theState->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = 0.0;
 }
 
 
-
-
-/* TODO commented this out, since there are some problems with it,
-   when we build with the PLL */
-/* #define WITH_PERFORMANCE_MEASUREMENTS */
-
-
-
-
-
-void readConfig(state *curstate)
+void readConfig(state *curstate, tree *tr)
 {
-  initDefaultValues(curstate);
+  initDefaultValues(curstate, tr);
 #ifdef _USE_NCL_PARSER
   initParamStruct *initParams = NULL; 
   parseConfigWithNcl(configFileName, &initParams);   
@@ -108,27 +116,18 @@ void readConfig(state *curstate)
 }
 
 
-state *state_init(tree *tr, analdef * adef, double bl_w, double rt_w, double gm_w, double bl_p)
+state *state_init(tree *tr, analdef * adef)
 {
   state *curstate  =(state *)calloc(1,sizeof(state));
+
   nodeptr *list = (nodeptr *)malloc(sizeof(nodeptr) * 2 * tr->mxtips);
   curstate->list = list;
 
   curstate->tr = tr;
-  curstate->brLenRemem.bl_sliding_window_w = bl_w;
-  curstate->brLenRemem.bl_prior = 1.0;
-  curstate->brLenRemem.bl_prior_exp_lambda = bl_p;
-  //this can be extended to more than one partition, but one for now
-  curstate->modelRemem.model = 0;
+
   curstate->modelRemem.adef = adef;
-  curstate->modelRemem.rt_sliding_window_w = rt_w;
-  curstate->modelRemem.nstates = tr->partitionData[curstate->modelRemem.model].states; /* 4 for DNA */
-  curstate->modelRemem.numSubsRates = (curstate->modelRemem.nstates * curstate->modelRemem.nstates - curstate->modelRemem.nstates) / 2; /* 6 for DNA */
-  curstate->modelRemem.curSubsRates = (double *) malloc(curstate->modelRemem.numSubsRates * sizeof(double));
-  curstate->gammaRemem.gm_sliding_window_w = gm_w;
+
   assert(curstate != NULL);
-  
-  curstate->brLenRemem.single_bl_branch = -1;
 
   return curstate;
 }
@@ -210,28 +209,23 @@ static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean pri
 
 
 
+
 void mcmc(tree *tr, analdef *adef)
 {    
-  //allocate states
-  double bl_prior_exp_lambda = 0.1;
-  double bl_sliding_window_w = 0.005;
-  double gm_sliding_window_w = 0.75;
-  double rt_sliding_window_w = 0.5;
-
   initRNG(seed);
   
   tr->start = find_tip(tr->start, tr );
 
   assert( isTip(tr->start->number, tr->mxtips ));
   
-  state *curstate = state_init(tr, adef,  bl_sliding_window_w, rt_sliding_window_w, gm_sliding_window_w, bl_prior_exp_lambda); 
+  state *curstate = state_init(tr, adef); 
 
-  readConfig(curstate);
+  readConfig(curstate, tr );
 
   for(int prop=0; prop<NUM_PROPOSALS;prop++)
-  {
-  printf("%f ",curstate->proposalWeights[prop]);
-  }
+    {
+      printf("%f ",curstate->proposalWeights[prop]);
+    }
   printf("\n");
   
   if(processID == 0 )
@@ -240,19 +234,12 @@ void mcmc(tree *tr, analdef *adef)
   int count = 0;
   traverse_branches_set_fixed( tr->start, &count, curstate, 0.65 );
 
-  makeRandomTree(tr);
+  /* makeRandomTree(tr); */
 
   evaluateGeneric(tr, tr->start, TRUE);
   PRINT( "after reset start: %f\n\n", tr->likelihood );
-  
-  curstate->curprior = 1;
-  curstate->hastings = 1;
-  curstate->currentGeneration = 0; 
 
-#ifdef WITH_PERFORMANCE_MEASUREMENTS  
-  perf_timer all_timer = perf_timer_make();
-#endif
-  
+
   /* beginning of the MCMC chain */
   while(curstate->currentGeneration < curstate->numGen)
     step(curstate);
