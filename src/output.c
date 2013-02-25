@@ -262,10 +262,12 @@ void chainInfoOutput(state *curstate )
 {
   PRINT( "gen: %d Likelihood: %f StartLH: %f \n",curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH);
   
-  PRINT( "eSpr: %d/%d (%d%%) model: %d/%d (%d%%) biunif model: %d/%d (%d%%)  ga: %d/%d (%d%%) gaExp: %d/%d (%d%%) bl: %d/%d (%d%%) blBiunif: %d/%d (%d%%) blExp: %d/%d (%d%%) \n"
+  PRINT( "eSpr: %d/%d (%d%%) model: %d/%d (%d%%) biunif model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) ga: %d/%d (%d%%) gaExp: %d/%d (%d%%) bl: %d/%d (%d%%) blBiunif: %d/%d (%d%%) blExp: %d/%d (%d%%) \n"
   , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)),
 	 curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] , (int)(curstate->acceptedProposals[UPDATE_MODEL]*100/(curstate->acceptedProposals[UPDATE_MODEL]+curstate->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
 	 curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
+	 curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+0.0001)) ,
+	 curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF]+0.0001)) ,
 	 curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] , (int)(curstate->acceptedProposals[UPDATE_GAMMA]*100/(curstate->acceptedProposals[UPDATE_GAMMA]+curstate->rejectedProposals[UPDATE_GAMMA]+0.0001)),
 	 curstate->acceptedProposals[UPDATE_GAMMA_EXP]	, curstate->rejectedProposals[UPDATE_GAMMA_EXP] , (int)(curstate->acceptedProposals[UPDATE_GAMMA_EXP]*100/(curstate->acceptedProposals[UPDATE_GAMMA_EXP]+curstate->rejectedProposals[UPDATE_GAMMA_EXP]+0.0001)),
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL], curstate->rejectedProposals[UPDATE_SINGLE_BL], (int)(curstate->acceptedProposals[UPDATE_SINGLE_BL]*100/(curstate->acceptedProposals[UPDATE_SINGLE_BL]+curstate->rejectedProposals[UPDATE_SINGLE_BL]+0.0001)),

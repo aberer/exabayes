@@ -8,6 +8,8 @@ begin EXABAYES;
       initSingleBranchExpWeight 4
       initSingleBranchBiunifWeight 4
       initModelBiunifWeight 3
+      initModelSingleBiunifWeight 3
+      initModelAllBiunifWeight 3
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
       initPenaltyFactor 0.0 
