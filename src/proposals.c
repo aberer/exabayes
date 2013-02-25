@@ -614,6 +614,29 @@ static void random_branch_length_proposal_apply(state * instate)
   //   return TRUE;
 }
 
+
+static void biunif_branch_length_proposal_apply(state * instate)
+{
+   
+  //for one branch get the current branch length
+  //pull a uniform like
+  //x = current,
+  //uniform(x/2,x*2)
+  
+  
+  const int num_branches = (instate->tr->mxtips * 2) - 3;
+  int target_branch = drawRandInt(num_branches); 
+  node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
+  
+  
+  //   printf( "apply bl: %p %f\n", p, p->z[0] );
+  set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+
+  instate->brLenRemem.single_bl_branch = target_branch;
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
+  //   return TRUE;
+}
+
 static void exp_branch_length_proposal_apply(state * instate)
 {
   const int num_branches = (instate->tr->mxtips * 2) - 3;
@@ -715,6 +738,7 @@ static proposal_functions get_proposal_functions( proposal_type ptype )
     { UPDATE_SINGLE_BL_EXP, exp_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
     { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
     { UPDATE_GAMMA_EXP, exp_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
+{ UPDATE_SINGLE_BL_BIUNIF, biunif_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior},
     //PROPOSALADD prop_funcs NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };

@@ -7,17 +7,17 @@
 #The following still need to be taken care of manualy: actually implement apply (and reset) function in proposals.c. printf the new values in output.c, add values to config files
 
 #################################################################################
-$proposalName="UPDATE_SINGLE_BL_TEST"; 
-$weightName="initSingleBranchTESTWeight";
+$proposalName="UPDATE_SINGLE_BL_BIUNIF"; 
+$weightName="initSingleBranchBiunifWeight";
 $initWeight="0.0";
 
 #$configName="initSingleBranchBiunifWeight";
 $configName=$weightName;
-$configWeight="0.0";
+$configWeight="4.0";
 
 #$nexConfigName="initSingleBranchBiunifWeight";#may be same as $configName
 $nexConfigName=$weightName;
-$nexConfigWeight="2.0";
+$nexConfigWeight="4.0";
 
 $applyName="biunif_branch_length_proposal_apply";
 $resetName="random_branch_length_proposal_reset";#may already exist

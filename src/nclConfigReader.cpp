@@ -41,6 +41,7 @@ public:
     initParam->initModelWeight  = -1 ;
     initParam->initSingleBranchWeight  = -1 ; 
     initParam->initSingleBranchExpWeight  = -1 ;
+initParam->initSingleBranchBiunifWeight  = -1 ;
     //PROPOSALADD paramBadInit NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 
     initParam->initPenaltyFactor  = -1 ;   
@@ -80,6 +81,8 @@ public:
 	      initParam->initSingleBranchWeight = value.ConvertToDouble();
 	    else if (key.EqualsCaseInsensitive("initSingleBranchExpWeight"))
 	      initParam->initSingleBranchExpWeight = value.ConvertToDouble();	
+else if (key.EqualsCaseInsensitive("initSingleBranchBiunifWeight"))
+initParam->initSingleBranchBiunifWeight = value.ConvertToDouble();
 	    //PROPOSALADD read NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 	    else if(key.EqualsCaseInsensitive("numGen"))
 	      initParam->numGen = value.ConvertToInt(); 
@@ -103,6 +106,7 @@ public:
     assert(initParam->initSPRWeight != -1); 
     assert(initParam->initSingleBranchWeight != -1); 
     assert(initParam->initSingleBranchExpWeight != -1); 
+assert(initParam->initSingleBranchBiunifWeight != -1);
     //PROPOSALADD assertInitialized NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     assert(initParam->numGen != -1); 
     assert(initParam->initPenaltyFactor != -1); 
