@@ -47,6 +47,8 @@ else if( ! strcmp(key, "initModelSingleBiunifWeight"))
 theState->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = atof(value);
 else if( ! strcmp(key, "initModelAllBiunifWeight"))
 theState->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = atof(value);
+else if( ! strcmp(key, "initModelPermBiunifWeight"))
+theState->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = atof(value);
 //PROPOSALADD parseLine NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   else if( ! strcmp(key, "numGen"))
     theState->numGen = atoi(value);   

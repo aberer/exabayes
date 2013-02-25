@@ -98,3 +98,34 @@ int drawSampleProportionally( double *weights, int numWeight )
   return i-1;
 }
 
+//get random permutation of [0,n-1]
+void drawPermutation(int* perm, int n)
+{
+  int i;
+  int randomNumber;
+  perm[0] = 0;
+  
+  for(i=1 ; i<n ; i++){
+  
+    randomNumber = drawRandInt(i+1);
+   // randomNumber=rand() % (i+1);
+   // randomNumber=rand();
+
+    if(randomNumber==i){
+    perm[i]=i;
+    }else{
+    perm[i]=perm[randomNumber];
+    perm[randomNumber]=i;
+    }
+  }
+  
+   /*for(i=0 ; i<n ; i++){
+     printf("%d ",perm[i]);
+
+    
+  }
+   printf("\n");
+    */
+} 
+
+

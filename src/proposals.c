@@ -409,23 +409,26 @@ static void simple_model_proposal_apply(state *instate)
   //only calculate the new ones
 }
 
-
+//draws a random subset (drawing with replacement) of the states and changes the according to biunif distribution.
 static void biunif_model_proposal_apply(state *instate)
 {
   //record the old one 
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
-  //choose a random set parameter,
-  //with uniform probabilities
   int state, randState;
   double new_value,curv;
   double r;
+  int list[instate->modelRemem.numSubsRates];
   
   
    instate->hastings=1.0;
-  randState=drawRandInt(instate->modelRemem.numSubsRates-1);
   for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
     {
-      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+      randState=drawRandInt(instate->modelRemem.numSubsRates);
+      if(list[randState]!=1)
+      {
+      list[randState]=1;;
+      
+      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[randState];
       r =  drawRandBiUnif(curv);
 
       new_value = r;
@@ -436,7 +439,8 @@ static void biunif_model_proposal_apply(state *instate)
       }
       
        instate->hastings*=curv/new_value;
-      edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
+      edit_subs_rates(instate->tr,instate->modelRemem.model, randState, new_value);
+      }
     }
       
   
@@ -446,7 +450,54 @@ static void biunif_model_proposal_apply(state *instate)
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
   
   evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
+  
+
 }
+
+
+static void perm_biunif_model_proposal_apply(state *instate)
+{
+  //record the old one 
+  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  int state, randNumber;
+  double new_value,curv;
+  double r;
+  
+  randNumber=drawRandInt(instate->modelRemem.numSubsRates);
+    int perm[instate->modelRemem.numSubsRates];
+  drawPermutation(perm, instate->modelRemem.numSubsRates);
+  
+   instate->hastings=1.0;
+  for(state = 0;state<randNumber ; state ++)
+    {
+      
+      
+      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[perm[state]];
+      r =  drawRandBiUnif(curv);
+
+      new_value = r;
+
+      while(new_value> RATE_MAX|| new_value< RATE_MIN){
+      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+      }
+      
+       instate->hastings*=curv/new_value;
+      edit_subs_rates(instate->tr,instate->modelRemem.model, perm[state], new_value);
+      
+    }
+      
+  
+
+  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  
+  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
+  
+
+}
+
 
 static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive.
 {
@@ -458,17 +509,12 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
   double new_value,curv;
   double r;
   
-  randState=drawRandInt(instate->modelRemem.numSubsRates-1);
+  randState=drawRandInt(instate->modelRemem.numSubsRates);
   
       curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
       r =  drawRandBiUnif(curv);
 
       new_value = r;
-      /* Ensure always you stay within this range */
-      /*
-      if(new_value > RATE_MAX) new_value = RATE_MAX;
-      if(new_value < RATE_MIN) new_value = RATE_MIN;
-      */
       
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
       if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
@@ -495,13 +541,13 @@ static void all_biunif_model_proposal_apply(state *instate)
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
-  int state, randState;
+  int state;
   double new_value,curv;
   double r;
   
   
    instate->hastings=1.0;
-  randState=drawRandInt(instate->modelRemem.numSubsRates-1);
+
   for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
     {
       curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
@@ -908,6 +954,7 @@ static proposal_functions get_proposal_functions( proposal_type ptype )
 { UPDATE_MODEL_BIUNIF, biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
 { UPDATE_MODEL_SINGLE_BIUNIF, single_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
 { UPDATE_MODEL_ALL_BIUNIF, all_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
+{ UPDATE_MODEL_PERM_BIUNIF, perm_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
     //PROPOSALADD prop_funcs NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };
@@ -1035,6 +1082,7 @@ void step(state *curstate)
     {
       printSample(curstate); 
       chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject
+
     }
 
 #ifdef WITH_PERFORMANCE_MEASUREMENTS
