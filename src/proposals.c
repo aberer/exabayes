@@ -474,6 +474,55 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
     }
 }
 
+static void set_branch_length_biunif(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+{
+  int i;
+  double newZValue;
+  double r;
+  double newValue = 0; 
+
+  for(i = 0; i < numBranches; i++)
+    {
+      double real_z;
+    
+      if(record_tmp_bl)
+	{
+	  assert(p->z[i] == p->back->z[i]); 
+	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
+	}
+      
+      real_z = -log(p->z[i]) * s->tr->fracchange; //convert from exponential to real form
+      r = drawRandBiUnif(real_z);//draw from [real_z/2,2*real_z]
+
+    
+      newZValue = exp(-(fabs( r/s->tr->fracchange )));//convert to exponential form
+      
+      newValue = r; 
+      
+      s->hastings=real_z/newValue;
+      s->newprior=get_branch_length_prior(&newValue);
+    
+      /* Ensure always you stay within this range */
+      /*
+      if(newZValue > zmax) newZValue = zmax;
+      if(newZValue < zmin) newZValue = zmin;
+      assert(newZValue <= zmax && newZValue >= zmin);
+
+      
+      p->z[i] = p->back->z[i] = newZValue;
+      */
+      
+     /* Ensure always you stay within this range, reflect if necessary */
+      while(newZValue > zmax || newZValue < zmin){
+      if(newZValue > zmax) newZValue = 2*zmax-newZValue;
+      if(newZValue < zmin) newZValue = 2*zmin-newZValue;
+      }
+      assert(newZValue <= zmax && newZValue >= zmin);
+      p->z[i] = p->back->z[i] = newZValue;
+
+    }
+}
+
 static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
  //static double lambda=10; //TODO should be defined elsewhere. Also: must find lambda to yield good proposals
@@ -627,10 +676,9 @@ static void biunif_branch_length_proposal_apply(state * instate)
   const int num_branches = (instate->tr->mxtips * 2) - 3;
   int target_branch = drawRandInt(num_branches); 
   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
-  
-  
-  //   printf( "apply bl: %p %f\n", p, p->z[0] );
-  set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+ 
+  //set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+  set_branch_length_biunif(p, instate->tr->numBranches, instate, TRUE);
 
   instate->brLenRemem.single_bl_branch = target_branch;
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below

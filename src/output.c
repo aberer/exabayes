@@ -260,7 +260,7 @@ static void printSubsRates(tree *tr,int model, int numSubsRates)
 /* TODO modify this */
 void chainInfoOutput(state *curstate )
 {
-  PRINT( "gen: %d %f %f eSpr: %d/%d (%d%%) model: %d/%d  ga: %d/%d gaExp: %d/%d bl: %d/%d blExp: %d/%d %f %f %f\n",
+  PRINT( "gen: %d %f %f eSpr: %d/%d (%d%%) model: %d/%d  ga: %d/%d gaExp: %d/%d bl: %d/%d blBiunif: %d/%d blExp: %d/%d %f %f %f\n",
 	 curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH, 
 	 curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)),
 	 curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] ,
@@ -268,6 +268,7 @@ void chainInfoOutput(state *curstate )
 	 curstate->acceptedProposals[UPDATE_GAMMA_EXP]	, curstate->rejectedProposals[UPDATE_GAMMA_EXP] ,
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL], curstate->rejectedProposals[UPDATE_SINGLE_BL],
 	 curstate->acceptedProposals[UPDATE_SINGLE_BL_EXP], curstate->rejectedProposals[UPDATE_SINGLE_BL_EXP],
+	 curstate->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF], curstate->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF],
 	 curstate->hastings, curstate->newprior, curstate->curprior
 	 /* sum_radius_accept / (float)curstate->acceptedProposals[SPR], */
 	 /* sum_radius_reject / (float)curstate->rejectedProposals[SPR]  */
