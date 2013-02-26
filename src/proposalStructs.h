@@ -2,6 +2,8 @@
 #define _PROPOSAL_STRUCTS_H
 
 
+
+
 /* okay, so defining enums this way is rather save  */
 #define NUM_PROPOSALS (11) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
 typedef enum
@@ -148,8 +150,14 @@ typedef struct
   FILE *outputParamFile; 
   int id; 
 
-  paramDump dump; 
+  /* these things are needed for convergence diagnostics, but we
+     should not store it in here
+
+     this pointer is shared among all chains 
+  */
+  hashtable *bvHash; 
   
+  paramDump dump;   
 } state;
 
 

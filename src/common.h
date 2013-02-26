@@ -42,6 +42,8 @@
 #endif
 
 
+typedef  unsigned int nat ; 
+
 #define NOT ! 
 
 
@@ -49,7 +51,18 @@
 #define INIT_BRANCH_LENGTHS 0.65
 
 
+/* for debugging:  */
 #define ADDITIONAL_SAVE_FOR_COMPARISON
 
+
+
+
+#define ASDSF_FREQ_CUTOFF 0.1	/*  ignore clades for which the frequency in no chain exceeds this value */
+#define ASDSF_CONVERGENCE_CRITERION 0.05 /* indicate convergence, as soon as the asdsf is below this value  */
+
+/* a lot of debug information for the asdsf */
+#define ASDSF_BE_VERBOSE 
+
+/* #define USE_MULTIPLE_CHAINS */
 
 #endif

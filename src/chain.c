@@ -11,6 +11,7 @@
 #include "chain.h"
 #include "proposals.h"
 #include "output.h"
+#include "convergence.h" 
 
 
 
@@ -63,6 +64,10 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 
   *resultIndiChains = calloc( (*initParamsPtr)->numIndiChains, sizeof(state)); 
 
+  unsigned int bvLength = 0;   
+  tr->bitVectors = initBitVector(tr->mxtips, &bvLength);
+  hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
+  
   for(int i = 0; i < (*initParamsPtr)->numIndiChains; ++i)
     {
       state *theState = (*resultIndiChains) + i; 
@@ -70,7 +75,8 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       initDefaultValues(theState, tr);
       addInitParameters(theState, *initParamsPtr); 
       normalizeProposalWeights(theState); 
-      
+
+      theState->bvHash = ht; 
       theState->tr = tr; 
 
       /* init the param dump  */
@@ -126,7 +132,7 @@ void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z )
   for( i = 0; i < tr->numBranches; i++)
     p->z[i] = p->back->z[i] = z;  
   *count += 1;
-
+  
   if (! isTip(p->number,tr->mxtips)) 
     {                                  /*  Adjust descendants */
       q = p->next;
@@ -134,7 +140,7 @@ void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z )
 	{
 	  traverseInitFixedBL(q->back, count, tr, z);
 	  q = q->next;
-	}   
+	} 
     }
 }
 

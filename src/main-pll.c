@@ -210,9 +210,9 @@ int main (int argc, char *argv[])
     model;
 
   unsigned char *y;
-
+  
   FILE 
-    *byteFile = myfopen(byteFileName, "rb");	 
+    *byteFile = myfopen(byteFileName, "rb");
 
   myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
   myBinFread(&(tr->originalCrunchedLength), sizeof(int), 1, byteFile);
@@ -271,7 +271,7 @@ int main (int argc, char *argv[])
 
   for(i = 1; i <= (size_t)tr->mxtips; i++)
     addword(tr->nameList[i], tr->nameHash, i);
-
+  
   for(model = 0; model < (size_t)tr->NumberOfModels; model++)
     {
       int 

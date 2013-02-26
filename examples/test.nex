@@ -19,6 +19,6 @@ begin EXABAYES;
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
       diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 4 [ number of independant chains/runs ]
+      numIndiChains 2 [ number of independant chains/runs ]
       
 end;

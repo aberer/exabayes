@@ -119,34 +119,42 @@ void mcmc(tree *tr, analdef *adef)
   evaluateGeneric(tr, tr->start, TRUE);
   PRINT( "after reset start: %f\n\n", tr->likelihood );
 
-  boolean hasConverged = FALSE; 
-  
+
+#ifdef USE_MULTIPLE_CHAINS
+  boolean hasConverged = FALSE;   
   while(NOT hasConverged)
     {
       for(int i = 0; i < numIndiChains; ++i)
 	{
-	  state *curChain = indiChains + i; 
-	  applyChainStateToTree(curChain, tr); 
+	  state *curChain = indiChains + i;
+	  applyChainStateToTree(curChain, tr);
 
 	  for(int j = 0; j < diagFreq; ++j)	    
 	    {
 	      step(curChain); 
 	    }
 
-	  saveTreeStateToChain(curChain, tr); 	  
+	  saveTreeStateToChain(curChain, tr);
 	}
 
       hasConverged = convergenceDiagnostic(indiChains, numIndiChains); 
     }
-
+#else 
+  state *theChain  = indiChains + 0; 
+  while(theChain->currentGeneration < theChain->numGen )
+    {
+      step(theChain);
+    }
+#endif
 
   if(processID == 0)
     {
       for(int i = 0; i < numIndiChains; ++i)
 	finalizeOutputFiles(indiChains + i);
-      PRINT("\nTotal execution time for %d generations: %f\n",  indiChains[0].numGen, gettime() - masterTime);
-    }
-  
+      PRINT("\nConverged after %d generations\n",  indiChains[0].currentGeneration);
+      PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
+    }  
+
 }
 
 

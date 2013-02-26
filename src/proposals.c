@@ -1067,20 +1067,15 @@ void step(state *curstate)
       assert(fabs(tr->startLH - tr->likelihood) < 0.1);
     } 
 
-  if(processID == 0 && (curstate->currentGeneration % curstate->samplingFrequency) == 0)
+  if((curstate->currentGeneration % curstate->samplingFrequency) == 0)
     {
-      printSample(curstate); 
-      chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject
-
+      if(processID == 0)
+	{
+	  printSample(curstate);       
+	  chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject      	  
+	}
+      addBipartitionsToHash(tr, curstate);       
     }
-
-/* #ifdef SAVE_LAST_BEFORE_SWITCH */
-/*   if(processID == 0 && curstate->curstate % curstate->diagFreq == curstate->diagFreq - 1) */
-/*     { */
-/*       printSample(curstate);  */
-/*       chainInfoOutput(curstate);  */
-/*     } */
-/* #endif */
 
   curstate->currentGeneration++; 
 }
