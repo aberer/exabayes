@@ -43,6 +43,10 @@ public:
     initParam->initSingleBranchWeight  = -1 ; 
     initParam->initSingleBranchExpWeight  = -1 ;
 initParam->initSingleBranchBiunifWeight  = -1 ;
+initParam->initModelBiunifWeight  = -1 ;
+initParam->initModelSingleBiunifWeight  = -1 ;
+initParam->initModelAllBiunifWeight  = -1 ;
+initParam->initModelPermBiunifWeight  = -1 ;
     //PROPOSALADD paramBadInit NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 
     initParam->initPenaltyFactor  = -1 ;   
@@ -87,6 +91,14 @@ initParam->initSingleBranchBiunifWeight  = -1 ;
 	      initParam->initSingleBranchExpWeight = value.ConvertToDouble();	
 else if (key.EqualsCaseInsensitive("initSingleBranchBiunifWeight"))
 initParam->initSingleBranchBiunifWeight = value.ConvertToDouble();
+else if (key.EqualsCaseInsensitive("initModelBiunifWeight"))
+initParam->initModelBiunifWeight = value.ConvertToDouble();
+else if (key.EqualsCaseInsensitive("initModelSingleBiunifWeight"))
+initParam->initModelSingleBiunifWeight = value.ConvertToDouble();
+else if (key.EqualsCaseInsensitive("initModelAllBiunifWeight"))
+initParam->initModelAllBiunifWeight = value.ConvertToDouble();
+else if (key.EqualsCaseInsensitive("initModelPermBiunifWeight"))
+initParam->initModelPermBiunifWeight = value.ConvertToDouble();
 	    //PROPOSALADD read NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 	    else if(key.EqualsCaseInsensitive("numGen"))
 	      initParam->numGen = value.ConvertToInt(); 
@@ -117,6 +129,10 @@ initParam->initSingleBranchBiunifWeight = value.ConvertToDouble();
     assert(initParam->initSingleBranchWeight != -1); 
     assert(initParam->initSingleBranchExpWeight != -1); 
 assert(initParam->initSingleBranchBiunifWeight != -1);
+assert(initParam->initModelBiunifWeight != -1);
+assert(initParam->initModelSingleBiunifWeight != -1);
+assert(initParam->initModelAllBiunifWeight != -1);
+assert(initParam->initModelPermBiunifWeight != -1);
     //PROPOSALADD assertInitialized NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     assert(initParam->numGen != -1); 
     assert(initParam->initPenaltyFactor != -1); 

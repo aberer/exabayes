@@ -41,6 +41,14 @@ int parseLine(char* line, int length, state *theState)
     theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = atof(value);   
 else if( ! strcmp(key, "initSingleBranchBiunifWeight"))
 theState->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = atof(value);
+else if( ! strcmp(key, "initModelBiunifWeight"))
+theState->proposalWeights[UPDATE_MODEL_BIUNIF] = atof(value);
+else if( ! strcmp(key, "initModelSingleBiunifWeight"))
+theState->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = atof(value);
+else if( ! strcmp(key, "initModelAllBiunifWeight"))
+theState->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = atof(value);
+else if( ! strcmp(key, "initModelPermBiunifWeight"))
+theState->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = atof(value);
 //PROPOSALADD parseLine NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   else if( ! strcmp(key, "numGen"))
     theState->numGen = atoi(value);   

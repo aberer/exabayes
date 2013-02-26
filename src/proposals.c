@@ -409,6 +409,170 @@ static void simple_model_proposal_apply(state *instate)
   //only calculate the new ones
 }
 
+//draws a random subset (drawing with replacement) of the states and changes the according to biunif distribution.
+static void biunif_model_proposal_apply(state *instate)
+{
+  //record the old one 
+  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  int state, randState;
+  double new_value,curv;
+  double r;
+  int list[instate->modelRemem.numSubsRates];
+  
+  
+   instate->hastings=1.0;
+  for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
+    {
+      randState=drawRandInt(instate->modelRemem.numSubsRates);
+      if(list[randState]!=1)
+      {
+      list[randState]=1;;
+      
+      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[randState];
+      r =  drawRandBiUnif(curv);
+
+      new_value = r;
+
+      while(new_value> RATE_MAX|| new_value< RATE_MIN){
+      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+      }
+      
+       instate->hastings*=curv/new_value;
+      edit_subs_rates(instate->tr,instate->modelRemem.model, randState, new_value);
+      }
+    }
+      
+  
+
+  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  
+  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
+  
+
+}
+
+
+static void perm_biunif_model_proposal_apply(state *instate)
+{
+  //record the old one 
+  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  int state, randNumber;
+  double new_value,curv;
+  double r;
+  
+  randNumber=drawRandInt(instate->modelRemem.numSubsRates);
+    int perm[instate->modelRemem.numSubsRates];
+  drawPermutation(perm, instate->modelRemem.numSubsRates);
+  
+   instate->hastings=1.0;
+  for(state = 0;state<randNumber ; state ++)
+    {
+      
+      
+      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[perm[state]];
+      r =  drawRandBiUnif(curv);
+
+      new_value = r;
+
+      while(new_value> RATE_MAX|| new_value< RATE_MIN){
+      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+      }
+      
+       instate->hastings*=curv/new_value;
+      edit_subs_rates(instate->tr,instate->modelRemem.model, perm[state], new_value);
+      
+    }
+      
+  
+
+  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  
+  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
+  
+
+}
+
+
+static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive.
+{
+  //record the old one //TODO sufficient to store single value.
+  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  //choose a random set parameter,
+  //with uniform probabilities
+  int state, randState;
+  double new_value,curv;
+  double r;
+  
+  randState=drawRandInt(instate->modelRemem.numSubsRates);
+  
+      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+      r =  drawRandBiUnif(curv);
+
+      new_value = r;
+      
+      while(new_value> RATE_MAX|| new_value< RATE_MIN){
+      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+      }
+      
+      
+
+      edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
+    
+      
+   instate->hastings=curv/new_value;
+
+  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  
+  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
+}
+
+static void all_biunif_model_proposal_apply(state *instate)
+{
+  //record the old one 
+  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  //choose a random set parameter,
+  //with uniform probabilities
+  int state;
+  double new_value,curv;
+  double r;
+  
+  
+   instate->hastings=1.0;
+
+  for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
+    {
+      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+      r =  drawRandBiUnif(curv);
+
+      new_value = r;
+
+      while(new_value> RATE_MAX|| new_value< RATE_MIN){
+      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+      }
+      
+       instate->hastings*=curv/new_value;
+      edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
+    }
+      
+  
+
+  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  
+  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
+}
+
 static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
 {
   assert(tr->partitionData[model].dataType = DNA_DATA);
@@ -471,6 +635,55 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
       //assuming this will be visiting each node, and multiple threads won't be accessing this
       //s->bl_prior += log(exp_pdf(s->bl_prior_exp_lambda,newZValue));
       //s->bl_prior += 1;
+    }
+}
+
+static void set_branch_length_biunif(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+{
+  int i;
+  double newZValue;
+  double r;
+  double newValue = 0; 
+
+  for(i = 0; i < numBranches; i++)
+    {
+      double real_z;
+    
+      if(record_tmp_bl)
+	{
+	  assert(p->z[i] == p->back->z[i]); 
+	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
+	}
+      
+      real_z = -log(p->z[i]) * s->tr->fracchange; //convert from exponential to real form
+      r = drawRandBiUnif(real_z);//draw from [real_z/2,2*real_z]
+
+    
+      newZValue = exp(-(fabs( r/s->tr->fracchange )));//convert to exponential form
+      
+      newValue = r; 
+      
+      s->hastings=real_z/newValue;
+      s->newprior=get_branch_length_prior(&newValue);
+    
+      /* Ensure always you stay within this range */
+      /*
+      if(newZValue > zmax) newZValue = zmax;
+      if(newZValue < zmin) newZValue = zmin;
+      assert(newZValue <= zmax && newZValue >= zmin);
+
+      
+      p->z[i] = p->back->z[i] = newZValue;
+      */
+      
+     /* Ensure always you stay within this range, reflect if necessary */
+      while(newZValue > zmax || newZValue < zmin){
+      if(newZValue > zmax) newZValue = 2*zmax-newZValue;
+      if(newZValue < zmin) newZValue = 2*zmin-newZValue;
+      }
+      assert(newZValue <= zmax && newZValue >= zmin);
+      p->z[i] = p->back->z[i] = newZValue;
+
     }
 }
 
@@ -627,10 +840,9 @@ static void biunif_branch_length_proposal_apply(state * instate)
   const int num_branches = (instate->tr->mxtips * 2) - 3;
   int target_branch = drawRandInt(num_branches); 
   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
-  
-  
-  //   printf( "apply bl: %p %f\n", p, p->z[0] );
-  set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+ 
+  //set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+  set_branch_length_biunif(p, instate->tr->numBranches, instate, TRUE);
 
   instate->brLenRemem.single_bl_branch = target_branch;
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
@@ -739,6 +951,10 @@ static proposal_functions get_proposal_functions( proposal_type ptype )
     { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
     { UPDATE_GAMMA_EXP, exp_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
 { UPDATE_SINGLE_BL_BIUNIF, biunif_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior},
+{ UPDATE_MODEL_BIUNIF, biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
+{ UPDATE_MODEL_SINGLE_BIUNIF, single_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
+{ UPDATE_MODEL_ALL_BIUNIF, all_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
+{ UPDATE_MODEL_PERM_BIUNIF, perm_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
     //PROPOSALADD prop_funcs NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };
@@ -855,6 +1071,7 @@ void step(state *curstate)
     {
       printSample(curstate); 
       chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject
+
     }
 
 /* #ifdef SAVE_LAST_BEFORE_SWITCH */
