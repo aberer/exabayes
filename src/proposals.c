@@ -511,22 +511,22 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
   
   randState=drawRandInt(instate->modelRemem.numSubsRates);
   
-      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
-      r =  drawRandBiUnif(curv);
+  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+  r =  drawRandBiUnif(curv);
 
-      new_value = r;
+  new_value = r;
       
-      while(new_value> RATE_MAX|| new_value< RATE_MIN){
-      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
-      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
-      }
+  while(new_value> RATE_MAX|| new_value< RATE_MIN){
+    if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+    if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+  }
       
       
 
-      edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
+  edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
     
       
-   instate->hastings=curv/new_value;
+  instate->hastings=curv/new_value;
 
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 

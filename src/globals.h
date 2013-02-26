@@ -17,6 +17,8 @@ char byteFileName[1024];
 /* TODO  */
 char binaryChainState[1024]; 
 
+int numberOfStartingTrees = 0; 
+
 #else 
 
 extern int seed; 
@@ -37,4 +39,5 @@ extern char infoFileName[1024];
 extern char binaryChainState[1024]; 
 extern int Thorough; 
 
+extern int numberOfStartingTrees; 
 #endif

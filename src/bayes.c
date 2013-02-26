@@ -43,11 +43,11 @@ void addInitParameters(state *curstate, initParamStruct *initParams)
   curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight; 
   curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight; 
-curstate->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = initParams->initSingleBranchBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_BIUNIF] = initParams->initModelBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = initParams->initModelSingleBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = initParams->initModelAllBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = initParams->initModelPermBiunifWeight;
+  curstate->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = initParams->initSingleBranchBiunifWeight;
+  curstate->proposalWeights[UPDATE_MODEL_BIUNIF] = initParams->initModelBiunifWeight;
+  curstate->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = initParams->initModelSingleBiunifWeight;
+  curstate->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = initParams->initModelAllBiunifWeight;
+  curstate->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = initParams->initModelPermBiunifWeight;
   //PROPOSALADD addInitParameters NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
@@ -104,7 +104,8 @@ void mcmc(tree *tr, analdef *adef)
 {    
   initRNG(seed);
 
-  assert( isTip(tr->start->number, tr->mxtips ));
+  /* TODO have removed that -- problematic?   */
+  /* assert( isTip(tr->start->number, tr->mxtips )); */
 
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
   initParamStruct *initParams = NULL;
@@ -114,10 +115,6 @@ void mcmc(tree *tr, analdef *adef)
   int diagFreq = initParams->diagFreq; 
 
   printf("num indi chains is %d\n", numIndiChains); 
-
-  /* TODO  */
-  /* traverse_branches_set_fixed( tr->start, &count, tr, 0.65 ); */
-  /* makeRandomTree(tr); */
 
   evaluateGeneric(tr, tr->start, TRUE);
   PRINT( "after reset start: %f\n\n", tr->likelihood );

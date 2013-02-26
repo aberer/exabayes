@@ -50,6 +50,10 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
   assert(0); 
 #endif
 
+  FILE *treeFH = NULL; 
+  if( numberOfStartingTrees > 0 )
+    treeFH = myfopen(tree_file, "r"); 
+
   *initParamsPtr = calloc(1,sizeof(initParamStruct)); 
   /* initParamStruct *initParams = *initParamsPtr;  */
   
@@ -76,8 +80,18 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       theState->dump.infoPerPart = calloc(tr->NumberOfModels, sizeof(perPartitionInfo)); 
       theState->dump.branchLengths = calloc(2 * tr->mxtips, sizeof(double)); 
 
-      /* TODO alternatively read a tree from the tree file  (that by then also allows multiple trees)  */
-      makeRandomTree(tr);
+      if( i < numberOfStartingTrees )
+	{
+	  treeReadLen(treeFH, tr, FALSE, FALSE, FALSE); 
+	  if(processID == 0)
+	    printf("initializing chain %d with provided starting tree\n", i); 
+	}
+      else 
+	{
+	  makeRandomTree(tr);
+	  if(processID == 0)
+	    printf("initializing chain %d with random tree\n", i); 
+	}
 
       /* TODO these are dummy values, we can do better */
       tr->start = find_tip(tr->start, tr );
@@ -94,6 +108,9 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 	  initializeOutputFiles(theState); 
 	}
     }  
+
+  if(numberOfStartingTrees > 0)
+    fclose(treeFH); 
 
   if(processID == 0)
     printf("initialized %d independent chains\n", (*initParamsPtr)->numIndiChains ); 

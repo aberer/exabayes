@@ -415,8 +415,10 @@ int main (int argc, char *argv[])
      which we maybe should skeip, TODO */
   
   
-  tr->startingTree = 1 ; 
-  getStartingTree(tr);
+  /* tr->startingTree = 1 ; */
+  
+  /* if(tree_file != NULL) */
+  /*   getStartingTree(tr); */
 
   /* 
      here we do an initial full tree traversal on the starting tree using the Felsenstein pruning algorithm 
