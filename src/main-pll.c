@@ -202,7 +202,7 @@ int main (int argc, char *argv[])
 
   /* generate the RAxML output file names and store them in strings */
 
-  makeFileNames();
+  /* makeFileNames(); */
 
   
   size_t 

@@ -777,9 +777,6 @@ void step(state *curstate)
 {
   tree *tr = curstate->tr;   
 
-#ifdef WITH_PERFORMANCE_MEASUREMENTS
-  perf_timer move_timer = perf_timer_make();
-#endif
   proposal_type which_proposal;
   /* double t = gettime();  */
   /* double proposalTime = 0.0; */
@@ -789,10 +786,6 @@ void step(state *curstate)
   // just for validation (make sure we compare the same)
   evaluateGeneric(tr, tr->start, FALSE); 
 
-#ifdef WITH_PERFORMANCE_MEASUREMENTS    
-  perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT
-#endif
-
   tr->startLH = tr->likelihood;
 
   // select proposal type
@@ -801,9 +794,7 @@ void step(state *curstate)
   // apply the proposal function
   dispatch_proposal_apply(which_proposal, curstate );
 
-#ifdef WITH_PERFORMANCE_MEASUREMENTS
-  perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT
-#endif
+
   // FIXME: why is this here?
   if (curstate->currentGeneration == 0 )
     {
@@ -820,30 +811,28 @@ void step(state *curstate)
      (exp(curstate->newprior-curstate->curprior)) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));*/
 
   acceptance = fmin(1,(curstate->hastings) * 
-		    (curstate->newprior/curstate->curprior) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));
-
-
-#ifdef WITH_PERFORMANCE_MEASUREMENTS    
-  perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT
-#endif
+		    (curstate->newprior/curstate->curprior) * (exp(tr->likelihood - tr->startLH)));
 
 
   assert(which_proposal < NUM_PROPOSALS); 
       
   if(testr < acceptance)
     {
-      /* proposalAccepted = TRUE; */
+      /* if(processID == 0) */
+      /* 	printf("%d rejected\n", curstate->currentGeneration);  */
 
       curstate->acceptedProposals[which_proposal]++; 
       curstate->totalAccepted++;
       // curstate->proposalWeights[which_proposal] /= curstate->penaltyFactor;
       penalize(curstate, which_proposal, 1);
 
-      curstate->tr->startLH = curstate->tr->likelihood;  //new LH
+      tr->startLH = tr->likelihood;  //new LH
       curstate->curprior = curstate->newprior;          
     }
   else
     {
+      /* if(processID == 0) */
+      /* 	printf("%d accepted\n", curstate->currentGeneration);  */
       dispatch_proposal_reset(which_proposal,curstate);
       curstate->rejectedProposals[which_proposal]++;
       curstate->totalRejected++;
@@ -854,12 +843,12 @@ void step(state *curstate)
       evaluateGeneric(tr, tr->start, FALSE); 
 
       // just for validation 
-      if(fabs(curstate->tr->startLH - tr->likelihood) > 1.0E-15)
+      if(fabs(tr->startLH - tr->likelihood) > 1.0E-15)
 	{
-	  PRINT("WARNING: LH diff %.20f\n", curstate->tr->startLH - tr->likelihood);
+	  PRINT("WARNING: LH diff %.20f\n", tr->startLH - tr->likelihood);
 	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", curstate->currentGeneration, tr->likelihood, tr->startLH);
 	}      
-      assert(fabs(curstate->tr->startLH - tr->likelihood) < 0.1);
+      assert(fabs(tr->startLH - tr->likelihood) < 0.1);
     } 
 
   if(processID == 0 && (curstate->currentGeneration % curstate->samplingFrequency) == 0)
@@ -868,10 +857,13 @@ void step(state *curstate)
       chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject
     }
 
-#ifdef WITH_PERFORMANCE_MEASUREMENTS
-  perf_timer_add_int( &move_timer ); //////////////////////////////// ADD INT    
-  perf_timer_add( &all_timer, &move_timer );
-#endif
+/* #ifdef SAVE_LAST_BEFORE_SWITCH */
+/*   if(processID == 0 && curstate->curstate % curstate->diagFreq == curstate->diagFreq - 1) */
+/*     { */
+/*       printSample(curstate);  */
+/*       chainInfoOutput(curstate);  */
+/*     } */
+/* #endif */
 
   curstate->currentGeneration++; 
 }

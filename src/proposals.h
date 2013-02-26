@@ -4,4 +4,5 @@
 void step(state *curstate); 
 void normalizeProposalWeights(state *curstate);
 
+
 #endif

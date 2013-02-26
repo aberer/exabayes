@@ -1,6 +1,10 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+#include "config.h"
+
+
+
 
 // TODO: we also need a header cleanup, just imported this from examl 
 #ifdef WIN32
@@ -36,6 +40,16 @@
   #define MM_DAZ_OFF    0x0000
 */
 #endif
+
+
+#define NOT ! 
+
+
+#define _USE_NCL_PARSER
+#define INIT_BRANCH_LENGTHS 0.65
+
+
+#define ADDITIONAL_SAVE_FOR_COMPARISON
 
 
 #endif

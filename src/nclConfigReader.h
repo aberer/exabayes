@@ -17,6 +17,9 @@ double initSingleBranchBiunifWeight;
   double eSprStopProb; 
   int numGen; 
   int samplingFrequency; 
+  int numIndiChains; 
+  int diagFreq; 
+
 } initParamStruct ; 
 
 

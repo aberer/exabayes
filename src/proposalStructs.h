@@ -2,7 +2,6 @@
 #define _PROPOSAL_STRUCTS_H
 
 
-
 /* okay, so defining enums this way is rather save  */
 #define NUM_PROPOSALS (7) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 typedef enum
@@ -69,6 +68,41 @@ typedef struct
 
 typedef struct
 {
+  double alpha ; 
+
+  /* TODO only works with DNA */
+  double substRates[6]; 
+  double frequencies[4];
+
+  /* double fracChange;    */
+  
+} perPartitionInfo; 		/* relevant info from pInfo  */
+
+
+
+typedef struct 
+{
+  /* topology */
+  bestlist *topo; 
+  
+  /* branch lengths  */
+  double *branchLengths; 
+
+  /* substitution parameter */
+  perPartitionInfo *infoPerPart; 
+  
+  /* to avoid that anything goes wrong */
+  double likelihood; 
+} paramDump; 
+
+
+
+
+
+
+
+typedef struct
+{
   /* these 3 are independent of the state, can be taken out unless we want to pass a single pointer as an argument*/  
   nodeptr * list; /* list of possible re-insertion nodes */ 
   int maxradius;  /* maximum radius of re-insertion from the pruning point */
@@ -99,7 +133,19 @@ typedef struct
   int numGen; 
   int currentGeneration; 
   int samplingFrequency; 
+  
+
+  /* new stuff that we need when having multiple chains  */
+  FILE *topologyFile; 
+  FILE *outputParamFile; 
+  int id; 
+
+  paramDump dump; 
+  
 } state;
+
+
+
 
 
 

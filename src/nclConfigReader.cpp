@@ -35,6 +35,7 @@ public:
 
   void paramBadInit()
   {
+    initParam->numIndiChains = -1; 
     initParam->initSPRWeight  = -1 ;
     initParam->initGammaWeight  = -1 ; 
     initParam->initGammaExpWeight  = -1 ; 
@@ -48,7 +49,10 @@ initParam->initSingleBranchBiunifWeight  = -1 ;
     initParam->numGen  = -1 ; 
     initParam->samplingFrequency  = -1 ; 
 
-    initParam->eSprStopProb = -1; 
+    initParam->eSprStopProb = -1;
+
+    initParam->diagFreq = -1; 
+
   }
 
 
@@ -92,6 +96,10 @@ initParam->initSingleBranchBiunifWeight = value.ConvertToDouble();
 	      initParam->samplingFrequency = value.ConvertToInt();
 	    else if(key.EqualsCaseInsensitive("eSprStopProb"))
 	      initParam->eSprStopProb = value.ConvertToDouble();
+	    else if(key.EqualsCaseInsensitive("numIndiChains"))
+	      initParam->numIndiChains = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("diagFreq"))
+	      initParam->diagFreq = value.ConvertToInt();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }
@@ -100,6 +108,8 @@ initParam->initSingleBranchBiunifWeight = value.ConvertToDouble();
 
   void assertInitialized()
   {
+    assert(initParam->diagFreq != 1 ); 
+    assert(initParam->numIndiChains != -1); 
     assert(initParam->initModelWeight != -1); 
     assert(initParam->initGammaWeight != -1); 
     assert(initParam->initGammaExpWeight != -1); 

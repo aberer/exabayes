@@ -2,7 +2,7 @@
 
 
 model=GAMMA
-seed=123
+seed=1234
 numCores=4
 
 
