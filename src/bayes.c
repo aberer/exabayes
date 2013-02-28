@@ -36,6 +36,7 @@ curstate->proposalWeights[UPDATE_MODEL_BIUNIF] = initParams->initModelBiunifWeig
 curstate->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = initParams->initModelSingleBiunifWeight;
 curstate->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = initParams->initModelAllBiunifWeight;
 curstate->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = initParams->initModelPermBiunifWeight;
+curstate->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = initParams->initFrequenciesWeight;
   //PROPOSALADD addInitParameters NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
@@ -102,6 +103,7 @@ theState->proposalWeights[UPDATE_MODEL_BIUNIF] = 0.0;
 theState->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = 0.0;
 theState->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = 0.0;
 theState->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = 0.0;
+theState->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = 0.0;
   //PROPOSALADD initDefaultValues NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   
   theState->numGen = 1000000;

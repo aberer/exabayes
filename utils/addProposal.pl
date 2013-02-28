@@ -7,8 +7,8 @@
 #The following still need to be taken care of manualy: actually implement apply (and reset) function in proposals.c. printf the new values in output.c, add values to config files
 
 #################################################################################
-$proposalName="UPDATE_MODEL_PERM_BIUNIF"; 
-$weightName="initModelPermBiunifWeight";
+$proposalName="UPDATE_FREQUENCIES_BIUNIF"; 
+$weightName="initFrequenciesWeight";
 $initWeight="0.0";
 
 #$configName="initSingleBranchBiunifWeight";
@@ -19,8 +19,8 @@ $configWeight="3";
 $nexConfigName=$weightName;
 $nexConfigWeight="3";
 
-$applyName="perm_biunif_model_proposal_apply";
-$resetName="simple_model_proposal_reset";#may already exist
+$applyName="frequency_proposal_apply";
+$resetName="frequency_proposal_reset";#may already exist
 $priorName="get_branch_length_prior";#may already exist
 
 

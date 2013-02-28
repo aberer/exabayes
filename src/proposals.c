@@ -877,6 +877,17 @@ static void random_branch_length_proposal_reset(state * instate)
 }
 
 
+void frequency_proposal_apply(state * instate)
+{
+  
+}
+
+void frequency_proposal_reset(state * instate)
+{
+  
+}
+
+
 
 /*
  * should be sliding window proposal
@@ -955,6 +966,7 @@ static proposal_functions get_proposal_functions( proposal_type ptype )
 { UPDATE_MODEL_SINGLE_BIUNIF, single_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
 { UPDATE_MODEL_ALL_BIUNIF, all_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
 { UPDATE_MODEL_PERM_BIUNIF, perm_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
+{ UPDATE_FREQUENCIES_BIUNIF, frequency_proposal_apply, frequency_proposal_reset, get_branch_length_prior},
     //PROPOSALADD prop_funcs NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };
