@@ -88,7 +88,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 
       if( i < numberOfStartingTrees )
 	{
-	  treeReadLen(treeFH, tr, FALSE, FALSE, FALSE); 
+	  treeReadLen(treeFH, tr, TRUE, TRUE, FALSE); 
 	  if(processID == 0)
 	    printf("initializing chain %d with provided starting tree\n", i); 
 	}
@@ -97,14 +97,17 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 	  makeRandomTree(tr);
 	  if(processID == 0)
 	    printf("initializing chain %d with random tree\n", i); 
+	  
+	  /* TODO maybe apply prior  */
+
+	  int count = 0; 
+	  traverseInitFixedBL( tr->start->back, &count, tr, INIT_BRANCH_LENGTHS );
+	  assert(count  == 2 * tr->mxtips - 3);
 	}
 
       /* TODO these are dummy values, we can do better */
       tr->start = find_tip(tr->start, tr );
-      int count = 0; 
-      traverseInitFixedBL( tr->start->back, &count, tr, INIT_BRANCH_LENGTHS );
-      assert(count  == 2 * tr->mxtips - 3);
-      
+
       /* now save the tree to a chain state */
       saveTreeStateToChain(theState, tr); 
       
