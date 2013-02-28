@@ -14,30 +14,14 @@
 
 extern double masterTime; 
 
-void makeFileNames(void)
+void makeFileNames()
 {
   int infoFileExists = 0;
 
-  strcpy(topologyFile, workdir); 
-  strcat(topologyFile, PROGRAM_NAME);
-  strcat(topologyFile, "_topologies."); 
-  strcat(topologyFile, run_id); 
- 
-  strcpy(outputParamFile,workdir); 
-  strcat(outputParamFile, PROGRAM_NAME);
-  strcat(outputParamFile, "_parameters."); 
-  strcat(outputParamFile, run_id); 
-  
   strcpy(infoFileName, workdir); 
   strcat(infoFileName, PROGRAM_NAME);
   strcat(infoFileName, "_infoFile."); 
   strcat(infoFileName, run_id); 
-
-
-  strcpy(binaryChainState, workdir); 
-  strcat(binaryChainState, PROGRAM_NAME);
-  strcat(binaryChainState, "_binChainState."); 
-  strcat(binaryChainState, run_id); 
 
   infoFileExists = filexists(infoFileName);
 
@@ -151,19 +135,21 @@ static char *Tree2stringNexus(char *treestr, tree *tr, nodeptr p, int perGene )
 
 static void printNexusTreeFileStart(state *curstate)
 {
-  FILE *fh = myfopen(topologyFile, "w"); 
+  FILE *fh = curstate->topologyFile; 
+
   fprintf(fh, "#NEXUS\n[ID: %s]\n[Param: tree]\nbegin trees;\n\ttranslate\n", "TODO" ); 
 
   for(int i = 0; i < curstate->tr->mxtips-1; ++i)
     fprintf(fh, "\t\t%d %s,\n", i+1, curstate->tr->nameList[i+1]); 
   fprintf(fh, "\t\t%d %s;\n", curstate->tr->mxtips, curstate->tr->nameList[curstate->tr->mxtips]);
-  fclose(fh); 
+  /* fclose(fh);  */
 }
 
 
 static void printParamFileStart(state *curstate)
 {
-  FILE *fh = myfopen(outputParamFile, "w"); 
+  /* FILE *fh = myfopen(outputParamFile, "w");  */
+  FILE *fh = curstate->outputParamFile; 
   
   char *tmp = "TODO"; 
   fprintf(fh, "[ID: %s]\n", tmp);
@@ -171,15 +157,15 @@ static void printParamFileStart(state *curstate)
 \tr(A<->C)\tr(A<->G)\tr(A<->T)\tr(C<->G)\tr(C<->T)\tr(G<->T)\t\
 pi(A)\tpi(C)\tpi(G)\tpi(T)\
 \talpha\tpinvar\n"); 
-
-  fclose(fh); 
+  fflush(fh); 
 }
 
 static void printParams(state *curstate)
 {
   int model = 0; 
-  
-  FILE *fh = myfopen(outputParamFile, "a"); 
+
+  /* FILE *fh = myfopen(outputParamFile, "a");  */
+  FILE *fh = curstate->outputParamFile; 
 
   /* TODO tree length */
   fprintf(fh, "%d\t%f\t%f", curstate->currentGeneration,curstate->tr->likelihood, -1. ); 
@@ -198,8 +184,6 @@ static void printParams(state *curstate)
   fprintf(fh, "\t%f\t%f", curstate->tr->partitionData[model].alpha, -1.  ); 
 
   fprintf(fh, "\n");
-
-  fclose(fh); 
 }
 
 
@@ -213,13 +197,11 @@ void initializeOutputFiles(state *curstate)
 
 void finalizeOutputFiles(state *curstate)
 {
+  FILE *fh = curstate->topologyFile; 
+
   /* topo file  */
-  FILE *fh = myfopen(topologyFile, "a"); 
   fprintf(fh, "end;\n"); 
   fclose(fh); 
-  
-  /* info file  */
-PRINT("\n\nTotal execution time for %d generations: %f\n",  curstate->numGen, gettime() - masterTime); 
 }
 
 
@@ -227,13 +209,13 @@ PRINT("\n\nTotal execution time for %d generations: %f\n",  curstate->numGen, ge
   /* TODO what about per model brach lengths? how does mrB do this? */
 static void exabayes_printTopology(state *curstate)
 {
-  FILE *fh = myfopen(topologyFile, "a");  
+  /* FILE *fh = myfopen(topologyFile, "a");   */
+  FILE *fh = curstate->topologyFile; 
   memset(curstate->tr->tree_string, 0, curstate->tr->treeStringLength * sizeof(char) ); 
   
   Tree2stringNexus(curstate->tr->tree_string, curstate->tr,  curstate->tr->start->back, 0 ); 
   fprintf(fh,"\ttree gen.%d = [&U] %s\n", curstate->currentGeneration, curstate->tr->tree_string);
 
-  fclose(fh);   
 }
 
 
@@ -260,10 +242,11 @@ static void printSubsRates(tree *tr,int model, int numSubsRates)
 /* TODO modify this */
 void chainInfoOutput(state *curstate )
 {
-  PRINT( "gen: %d Likelihood: %f StartLH: %f \n",curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH);
+
+  PRINT( "[chain: %d] gen: %d Likelihood: %f StartLH: %f \n",curstate->id, curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH);
   
   PRINT( "Topo: eSpr: %d/%d (%d%%) \n"
-  , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)));
+	 , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)));
   
   PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] , (int)(curstate->acceptedProposals[UPDATE_MODEL]*100/(curstate->acceptedProposals[UPDATE_MODEL]+curstate->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
 	 curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_BIUNIF]+0.0001)) ,

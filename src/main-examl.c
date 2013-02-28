@@ -399,7 +399,6 @@ FILE *myfopen(const char *path, const char *mode)
 	}
     }
 
-
 }
 
 
@@ -1495,8 +1494,10 @@ int main(int argc, char *argv[])
   /* get the starting tree: here we just parse the tree passed via the command line 
      and do an initial likelihood computation traversal 
      which we maybe should skeip, TODO */
-	       	
-  getStartingTree(tr);     
+	     
+  /* if(tree_file  != NULL) */
+  /*   getStartingTree(tr);      */
+
 	   	          
   /* 
      here we do an initial full tree traversal on the starting tree using the Felsenstein pruning algorithm 

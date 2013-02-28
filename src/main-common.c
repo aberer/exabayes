@@ -378,16 +378,38 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       errorExit(-1);
     }
 
-  if(!treeSet && !adef->useCheckpoint)
+
+  if( ! treeSet)
     {
-      if(processID == 0)
-	{
-	  printf("\nError: please either specify a starting tree for this run with -t\n");
-	  printf("or re-start the run from a checkpoint with -R\n");
-	}
-      
-      errorExit(-1);
+      printf("no tree file provided, will use random trees as initial state.\n "); 
+      char tmp[1024]; 
+      tmp[0] = '\0'; 
+      strcpy(tree_file, tmp); 
+      numberOfStartingTrees = 0; 
+      /* tree_file = "\0";  */
     }
+  else 
+    {
+      FILE *fh = myfopen(tree_file, "r"); 
+      numberOfStartingTrees = 0;  
+      int ch; 
+
+      while((ch = fgetc(fh)) != EOF)
+	if(ch == ';')
+	  numberOfStartingTrees++;
+      
+      printf("%d starting trees provided via -t\n", numberOfStartingTrees); 
+    }
+
+  /* if(!treeSet && !adef->useCheckpoint) */
+  /*   { */
+  /*     if(processID == 0) */
+  /* 	{ */
+  /* 	  printf("\nError: please either specify a starting tree for this run with -t\n"); */
+  /* 	  printf("or re-start the run from a checkpoint with -R\n"); */
+  /* 	} */
+  /* errorExit(-1); */
+  /* } */
   
    {
 

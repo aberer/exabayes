@@ -9,11 +9,15 @@ int seed;
 char tree_file[1024]; 
 char byteFileName[1024]; 
 
-char topologyFile[1024];  /* a nexus-like output file (only sampled things)  */
-char outputParamFile[1024]; /*  outputs the parameters */
+/* char** topologyFiles;  /\* a nexus-like output file (only sampled things)  *\/ */
+/* char** outputParamFiles; /\*  outputs the parameters *\/ */
 /* char infoFileName[1024];	   /\* outputs run specific information *\/ */
 
+
+/* TODO  */
 char binaryChainState[1024]; 
+
+int numberOfStartingTrees = 0; 
 
 #else 
 
@@ -27,12 +31,13 @@ extern char tree_file[1024];
 extern char byteFileName[1024]; 
 
 
-extern char topologyFile[1024]; 
-extern char outputParamFile[1024]; 
+/* extern char** topologyFiles;  */
+/* extern char** outputParamFiles;  */
 extern char infoFileName[1024];
 
 /* TODO */
 extern char binaryChainState[1024]; 
 extern int Thorough; 
 
+extern int numberOfStartingTrees; 
 #endif
