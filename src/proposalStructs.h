@@ -62,6 +62,15 @@ typedef struct
   double *curSubsRates;//used for resetting
 } model_remembrance; 
 
+/* frequency proposal specific  */
+typedef struct
+{
+  analdef * adef;
+  int model;
+  int numFrequRates;
+  double *curFrequRates;//used for resetting
+} frequency_remembrance; 
+
 
 /* spr proposal specific  */
 typedef struct 
@@ -96,7 +105,8 @@ typedef struct
   branch_length_remembrance brLenRemem; 
   gamma_remembrance gammaRemem; 
   model_remembrance modelRemem; 
-
+  frequency_remembrance frequRemem; 
+  
   double proposalWeights[NUM_PROPOSALS]; 
   double proposalLogisticT[NUM_PROPOSALS];
   /* prob_bucket_t proposals[NUM_PROPOSALS];  */

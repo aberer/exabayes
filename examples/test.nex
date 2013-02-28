@@ -11,7 +11,7 @@ begin EXABAYES;
       initModelSingleBiunifWeight 0
       initModelAllBiunifWeight 0
       initModelPermBiunifWeight 3
-      initFrequenciesWeight 0
+      initFrequenciesWeight 10
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
       initPenaltyFactor 0.0 
