@@ -914,7 +914,8 @@ void frequency_proposal_apply(state * instate)
   for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
       curv = instate->tr->partitionData[instate->frequRemem.model].frequencies[state];
-      r[state] =  drawRandDouble(); 
+      //r[state] =  drawRandDouble(); 
+    r[state] =  drawRandBiUnif(curv); 
     }
     
   sum=0;
