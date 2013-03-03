@@ -230,13 +230,18 @@ void printSample(state *curstate)
 
 
 
-static void printSubsRates(tree *tr,int model, int numSubsRates)
+static void printSubsRates(state *prState ,int model, int numSubsRates)
 {
-  assert(tr->partitionData[model].dataType = DNA_DATA);
+  assert(prState->tr->partitionData[model].dataType = DNA_DATA);
   int i;
   PRINT("Subs rates: ");
   for(i=0; i<numSubsRates; i++)
-    PRINT("%d => %.3f, ", i, tr->partitionData[model].substRates[i]);
+    PRINT("%d => %.3f, ", i, prState->tr->partitionData[model].substRates[i]);
+    PRINT("\n");
+  PRINT("frequencies: ");
+  for(i=0; i<prState->frequRemem.numFrequRates; i++)
+    PRINT("%d => %.3f, ", i, prState->tr->partitionData[model].frequencies[i]);
+
   PRINT("\n\n");
 }
 
@@ -256,6 +261,9 @@ void chainInfoOutput(state *curstate )
 	 curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+0.0001)) ,
 	 curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF]+0.0001)));
   
+  PRINT( "Frequencies: unif: %d/%d (%d%%) \n"
+  , curstate->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]	, curstate->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]+curstate->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF]+0.0001)));
+  
   PRINT( "Gamma: slidingWindow: %d/%d (%d%%) gaExp: %d/%d (%d%%) \n",curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] , (int)(curstate->acceptedProposals[UPDATE_GAMMA]*100/(curstate->acceptedProposals[UPDATE_GAMMA]+curstate->rejectedProposals[UPDATE_GAMMA]+0.0001)),
 	 curstate->acceptedProposals[UPDATE_GAMMA_EXP]	, curstate->rejectedProposals[UPDATE_GAMMA_EXP] , (int)(curstate->acceptedProposals[UPDATE_GAMMA_EXP]*100/(curstate->acceptedProposals[UPDATE_GAMMA_EXP]+curstate->rejectedProposals[UPDATE_GAMMA_EXP]+0.0001)));
   
@@ -265,9 +273,9 @@ void chainInfoOutput(state *curstate )
   
   PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",curstate->hastings, curstate->newprior, curstate->curprior);
   
-  printSubsRates(curstate->tr, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
-
-  
+  printSubsRates(curstate, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
+  //printSubsRates(curstate->tr, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
+//printf("numSubs: %d numFrequ: %d\n\n",curstate->modelRemem.numSubsRates,curstate->frequRemem.numFrequRates);
   
 #ifdef WITH_PERFORMANCE_MEASUREMENTS
   perf_timer_print( &all_timer );

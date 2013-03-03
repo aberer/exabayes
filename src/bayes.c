@@ -82,12 +82,17 @@ void initDefaultValues(state *theState, tree *tr)
   theState->brLenRemem.bl_prior = 1.0;
   theState->brLenRemem.bl_prior_exp_lambda = 0.1 ;
   //this can be extended to more than one partition, but one for now
+  
   theState->modelRemem.model = 0;
-
   theState->modelRemem.rt_sliding_window_w = 0.5;
   theState->modelRemem.nstates = tr->partitionData[theState->modelRemem.model].states; /* 4 for DNA */
   theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
   theState->modelRemem.curSubsRates = (double *) malloc(theState->modelRemem.numSubsRates * sizeof(double));
+  
+  theState->frequRemem.model = 0;
+  theState->frequRemem.numFrequRates =tr->partitionData[theState->frequRemem.model].states; /* 4 for DNA */
+  theState->frequRemem.curFrequRates = (double *) malloc(theState->frequRemem.numFrequRates * sizeof(double));
+  
   theState->gammaRemem.gm_sliding_window_w = 0.75;
   theState->brLenRemem.single_bl_branch = -1;
 

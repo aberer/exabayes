@@ -528,13 +528,14 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
-  int state; 
-    /* randState; */
+  int  randState;
+
   double new_value,curv;
   double r;
   
   state=drawRandInt(instate->modelRemem.numSubsRates);
   
+
   curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
   r =  drawRandBiUnif(curv);
 
@@ -544,12 +545,9 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
     if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
     if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
   }
-      
-      
 
   edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
-    
-      
+
   instate->hastings=curv/new_value;
 
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
@@ -897,15 +895,74 @@ static void random_branch_length_proposal_reset(state * instate)
   instate->brLenRemem.single_bl_branch = -1;
 }
 
+double get_frequency_prior(state * instate, double * frequencies)
+{
+ return 1; 
+}
+
+static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequRates, double *prevFrequRates)
+{
+  assert(tr->partitionData[model].dataType = DNA_DATA);
+  int i;
+  for(i=0; i<numFrequRates; i++)
+    tr->partitionData[model].frequencies[i] = prevFrequRates[i];
+
+  initReversibleGTR(tr, model);
+
+  evaluateGeneric(tr, tr->start, TRUE);
+}
+
+static void recordFrequRates(tree *tr, int model, int numFrequRates, double *prevFrequRates)
+{
+  assert(tr->partitionData[model].dataType = DNA_DATA);
+  int i;
+  for(i=0; i<numFrequRates; i++)
+    prevFrequRates[i] = tr->partitionData[model].frequencies[i];
+}
 
 void frequency_proposal_apply(state * instate)
 {
+  recordFrequRates(instate->tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
+
   
+  int state;
+  double sum,curv;
+  double r[instate->frequRemem.numFrequRates];
+  
+
+  for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
+    {
+      curv = instate->tr->partitionData[instate->frequRemem.model].frequencies[state];
+      //r[state] =  drawRandDouble(); 
+    r[state] =  drawRandBiUnif(curv); 
+    }
+    
+  sum=0;
+    
+  for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
+    {
+      sum+=r[state]; 
+    }
+    for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
+    {
+      instate->tr->partitionData[instate->frequRemem.model].frequencies[state]=r[state]/sum; 
+    }
+  //recalculate eigens
+
+  initReversibleGTR(instate->tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+instate->hastings=1;
+instate->curprior=get_frequency_prior(instate, instate->tr->partitionData[instate->frequRemem.model].frequencies);
+instate->newprior=get_frequency_prior(instate, instate->frequRemem.curFrequRates);
+
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+
+  //evaluateGeneric(instate->tr, instate->tr->start, FALSE);
+
 }
 
 void frequency_proposal_reset(state * instate)
 {
-  
+  restore_frequ_rates(instate->tr, instate->frequRemem.adef, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
 }
 
 
@@ -1031,7 +1088,7 @@ static proposal_functions get_proposal_functions( proposal_type ptype )
 { UPDATE_MODEL_SINGLE_BIUNIF, single_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
 { UPDATE_MODEL_ALL_BIUNIF, all_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
 { UPDATE_MODEL_PERM_BIUNIF, perm_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
-{ UPDATE_FREQUENCIES_BIUNIF, frequency_proposal_apply, frequency_proposal_reset, get_branch_length_prior},
+{ UPDATE_FREQUENCIES_BIUNIF, frequency_proposal_apply, frequency_proposal_reset, get_frequency_prior},
     //PROPOSALADD prop_funcs NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
   };
