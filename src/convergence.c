@@ -91,7 +91,7 @@ static void newviewBipartitions(unsigned int **bitVectors, nodeptr p, int numsp,
 }
 
 
-void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberType position, int chainId, int totalChains)
+void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberType position, int chainId)
 {     
   int vectorLength = ( tr->mxtips / 32  ) + ((tr->mxtips % 32) == 0 ?0 : 1) ; ; 
   
@@ -124,7 +124,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
       
       
-      e->treeVector = calloc(totalChains, sizeof(nat)); 
+      e->treeVector = calloc(numberOfChains, sizeof(nat)); 
       e->treeVector[chainId]++; 
       memcpy(e->bitVector, bitVector, sizeof(unsigned int) * vectorLength);
      
@@ -138,7 +138,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
       e->bitVector = (unsigned int*)malloc_aligned(vectorLength * sizeof(unsigned int));
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
 
-      e->treeVector = calloc(totalChains, sizeof(nat)); 
+      e->treeVector = calloc(numberOfChains, sizeof(nat)); 
       e->treeVector[chainId]++; 
 
       memcpy(e->bitVector, bitVector, sizeof(nat) * vectorLength);     
@@ -150,7 +150,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
 }
 
 
-void extractBipartitions(tree *tr, unsigned int **bitVectors, nodeptr p, hashtable *h, int *cnt, int chainId, int totalChains)
+void extractBipartitions(tree *tr, unsigned int **bitVectors, nodeptr p, hashtable *h, int *cnt, int chainId)
 {
   int vectorLength = ( tr->mxtips / 32  ) + ((tr->mxtips % 32) == 0 ?0 : 1) ; ; 
 
@@ -163,7 +163,7 @@ void extractBipartitions(tree *tr, unsigned int **bitVectors, nodeptr p, hashtab
 
       do 
 	{
-	  extractBipartitions(tr, bitVectors, q->back, h, cnt, chainId, totalChains); 
+	  extractBipartitions(tr, bitVectors, q->back, h, cnt, chainId); 
 	  q = q->next;
 	}
       while(q != p);
@@ -182,7 +182,7 @@ void extractBipartitions(tree *tr, unsigned int **bitVectors, nodeptr p, hashtab
 	 
 	  assert(!(toInsert[0] & 1));
 	  *cnt += 1; 
-	  insertAndCount(tr, toInsert, h, position, chainId, totalChains); 
+	  insertAndCount(tr, toInsert, h, position, chainId); 
 	} 
     }
 }
@@ -203,12 +203,12 @@ void resetBitVectors(tree *tr)
 
 
 
-void addBipartitionsToHash(tree *tr, state *chain, int totalChains)
+void addBipartitionsToHash(tree *tr, state *chain)
 {
   resetBitVectors(tr);
 
   int cnt = 0; 
-  extractBipartitions(tr, tr->bitVectors, tr->start->back, chain->bvHash, &cnt, chain->id, totalChains);
+  extractBipartitions(tr, tr->bitVectors, tr->start->back, chain->bvHash, &cnt, chain->id);
   assert(cnt == tr->mxtips -3); 
 }
 
@@ -342,7 +342,9 @@ boolean averageDeviationOfSplitFrequencies(state *allChains, int numChains)
 
 boolean convergenceDiagnostic(state *allChains, int numChains)
 {
-  /* return convergenceDiagnosticDummy(allChains, numChains);  */
-  return averageDeviationOfSplitFrequencies(allChains, numChains); 
+  if(numChains > 1)
+    return averageDeviationOfSplitFrequencies(allChains, numChains); 
+  else 
+    return allChains[0].currentGeneration > allChains[0].numGen; 
 }
 

@@ -29,6 +29,17 @@ void applyChainStateToTree(state *chain, tree *tr);
 
 
 
+/* call this for verification after the lnl has been evaluated somehow */
+void expensiveVerify(tree *tr)
+{
+#ifdef DEBUG_LNL_VERIFY
+  double val1 = tr->likelihood; 
+  evaluateGeneric(tr, tr->start, TRUE); 
+  assert(fabs (tr->likelihood - val1 ) < 0.000001 );   
+#endif
+}
+
+
 
 
 void makeRandomTree(tree *tr); 
@@ -112,45 +123,38 @@ void mcmc(tree *tr, analdef *adef)
   initParamStruct *initParams = NULL;
 
   initializeIndependentChains(tr, &indiChains, &initParams); 
-  int numIndiChains = initParams->numIndiChains; 
+
+  /* TODO  remove this global again */
+  numberOfChains = initParams->numIndiChains; 
   int diagFreq = initParams->diagFreq; 
 
-  printf("num indi chains is %d\n", numIndiChains); 
+  printf("num indi chains is %d\n", numberOfChains); 
 
   evaluateGeneric(tr, tr->start, TRUE);
   PRINT( "after reset start: %f\n\n", tr->likelihood );
 
-
-#ifdef USE_MULTIPLE_CHAINS
   boolean hasConverged = FALSE;   
   while(NOT hasConverged)
     {
-      for(int i = 0; i < numIndiChains; ++i)
+      for(int i = 0; i < numberOfChains; ++i)
 	{
 	  state *curChain = indiChains + i;
 	  applyChainStateToTree(curChain, tr);
 
-	  for(int j = 0; j < diagFreq; ++j)	    
+	  for(int j = 0; j < diagFreq; ++j)
 	    {
-	      step(curChain); 
+	      step(curChain);
 	    }
 
 	  saveTreeStateToChain(curChain, tr);
 	}
-
-      hasConverged = convergenceDiagnostic(indiChains, numIndiChains); 
+      
+      hasConverged = convergenceDiagnostic(indiChains, numberOfChains); 
     }
-#else 
-  state *theChain  = indiChains + 0; 
-  while(theChain->currentGeneration < theChain->numGen )
-    {
-      step(theChain);
-    }
-#endif
 
   if(processID == 0)
     {
-      for(int i = 0; i < numIndiChains; ++i)
+      for(int i = 0; i < numberOfChains; ++i)
 	finalizeOutputFiles(indiChains + i);
       PRINT("\nConverged after %d generations\n",  indiChains[0].currentGeneration);
       PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 

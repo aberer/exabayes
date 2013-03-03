@@ -96,7 +96,7 @@ double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
 }
 
 
-static char *Tree2stringNexus(char *treestr, tree *tr, nodeptr p, int perGene )
+char *Tree2stringNexus(char *treestr, tree *tr, nodeptr p, int perGene )
 {      
   if(isTip(p->number, tr->mxtips)) 
     {	       	        
@@ -184,6 +184,8 @@ static void printParams(state *curstate)
   fprintf(fh, "\t%f\t%f", curstate->tr->partitionData[model].alpha, -1.  ); 
 
   fprintf(fh, "\n");
+
+  fflush(fh); 
 }
 
 

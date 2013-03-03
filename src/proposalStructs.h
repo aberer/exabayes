@@ -95,13 +95,17 @@ typedef struct
 typedef struct 
 {
   /* topology */
-  bestlist *topo; 
+  /* bestlist *topo;  */
+  topol *topo; 
   
   /* branch lengths  */
   double *branchLengths; 
 
   /* substitution parameter */
   perPartitionInfo *infoPerPart; 
+  double *fracchanges; 		/* TODO both needed? */
+  double fracchange; 
+
   
   /* to avoid that anything goes wrong */
   double likelihood; 

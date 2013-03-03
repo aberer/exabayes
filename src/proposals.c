@@ -7,6 +7,14 @@
 #include "main-common.h"
 #include "output.h"
 
+#include "convergence.h"
+
+#include "chain.h"
+
+
+void expensiveVerify(tree *tr); 
+
+
 /* static int spr_depth = 0; */
 
 nodeptr select_random_subtree(tree *tr); 
@@ -104,13 +112,13 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 {
   int 
     result, 
-    randNum = drawRandInt(2);
-
-  radius++; 
-      if(randNum == 0)
-	*insertNode = (*insertNode)->next->back; 
-      else 
-	*insertNode = (*insertNode)->next->next->back; 
+    r = drawRandDouble(); 
+  
+  radius++;   
+  *insertNode = 
+    (r < 0.5) ?
+    (*insertNode)->next->back : 
+    (*insertNode)->next->next->back; 
    
   
   /*
@@ -159,25 +167,24 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 }
 
 
-
-
-
 static void extended_spr_apply(state *instate)
 {
   tree * tr = instate->tr;
+
+#ifdef DEBUG_SHOW_TREE
+  char tmp[10000]; 
+  Tree2stringNexus(tmp, tr, tr->start->back, 0); 
+  if(processID==0)
+    printf("topo before: %s\n", tmp);
+#endif
+
   
   nodeptr    
     p = select_random_subtree(tr);
-  
-  /* evaluateGeneric(tr, tr->start, TRUE);
-     printf("%f \n", tr->likelihood);*/
 
 #if 0
   parsimonySPR(p, tr);
 #endif  
-
-  /*evaluateGeneric(tr, tr->start, TRUE);
-    printf("%f \n", tr->likelihood);*/
 
   instate->sprMoveRemem.p = p;
   instate->sprMoveRemem.nb  = p->next->back;
@@ -187,7 +194,7 @@ static void extended_spr_apply(state *instate)
   record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, instate->tr->numBranches);
 
   /* remove node p */
-  double   zqr[NUM_BRANCHES];
+  double zqr[NUM_BRANCHES];
   int i;
   for(i = 0; i < tr->numBranches; i++)
     {
@@ -212,9 +219,6 @@ static void extended_spr_apply(state *instate)
 //	printf("%d:  %d  %d  %d\n",curNode->number, curNode->back->number, curNode->next->back->number, curNode->next->next->back->number); 
     }
   tr->insertNode = curNode; 
-  // if(processID == 0)
-   // printf("\n\n\n"); 
-
 
   instate->hastings = 1; 
   instate->newprior = 1; 
@@ -224,30 +228,55 @@ static void extended_spr_apply(state *instate)
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
   record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, instate->tr->numBranches);
 
-  
   Thorough = 0;
   // assert(tr->thoroughInsertion == 0);
   /* insertBIG wont change the BL if we are not in thorough mode */
   
   insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
-  evaluateGeneric(instate->tr, instate->sprMoveRemem.p->next->next, FALSE); 
-  /*testInsertBIG(tr, p, tr->insertNode);*/
 
-  //printf("%f \n", tr->likelihood);
+  /* TODO problem here? is not tip?? */
+  evaluateGeneric(instate->tr, instate->sprMoveRemem.p->next->next, FALSE);
+  expensiveVerify(tr); 
+
 }
+
+
 
 static void extended_spr_reset(state * instate)
 {
   /* prune the insertion */
   hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, instate->tr->numBranches);
+
   instate->sprMoveRemem.p->next->next->back = instate->sprMoveRemem.p->next->back = (nodeptr) NULL;
+
   /* insert the pruned tree in its original node */
-  hookup(instate->sprMoveRemem.p->next,       instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, instate->tr->numBranches);
+  hookup(instate->sprMoveRemem.p->next,        instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, instate->tr->numBranches);
   hookup(instate->sprMoveRemem.p->next->next, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, instate->tr->numBranches);
-  newviewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE); 
+  
+  if(processID == 0)
+    {
+
+#ifdef DEBUG_SHOW_TREE
+      char tmp[100000];
+      Tree2stringNexus(tmp, instate->tr, instate->tr->start->back, 0); 
+      printf("topo reset: %s\n", tmp); 
+#endif
+    }
+
+
+
+  newviewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE);
+  double val1 = instate->tr->likelihood; 
+  
+  newviewGeneric(instate->tr, instate->tr->start, TRUE);
+  double  val2 = instate->tr->likelihood; 
+  
+  assert( fabs ( val2 - val1 ) < 0.0001 ); 
+
 }
 
-double get_alpha_prior(double a)
+
+double get_alpha_prior(void *alpha )
 {
   
  return 1;//TODO obviously needs acctual prior 
@@ -268,8 +297,8 @@ static void simple_gamma_proposal_apply(state * instate)
   if(newalpha < ALPHA_MIN) newalpha = ALPHA_MIN;
   
   instate->hastings = 1; //since it is symmetrical, hastings=1
-  instate->newprior = get_alpha_prior(newalpha); 
-  instate->curprior = get_alpha_prior(curv); 
+  instate->newprior = get_alpha_prior(&newalpha); 
+  instate->curprior = get_alpha_prior(&curv); 
   
   instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
 
@@ -295,8 +324,8 @@ static void exp_gamma_proposal_apply(state * instate)
   if(newalpha < ALPHA_MIN) newalpha = 2*ALPHA_MIN-newalpha;
   }
   instate->hastings = (1/newalpha)*exp(-(1/newalpha)*curv)/((1/curv)*exp(-(1/curv)*newalpha)); //TODO do not ignore reflection
-  instate->newprior = get_alpha_prior(newalpha); 
-  instate->curprior = get_alpha_prior(curv); 
+  instate->newprior = get_alpha_prior(&newalpha); 
+  instate->curprior = get_alpha_prior(&curv); 
   
   instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
   
@@ -398,7 +427,7 @@ static void simple_model_proposal_apply(state *instate)
   //TODO: without this, the run will fail after a successful model, but failing SPR
   //TODOFER: what did we have in mind regarding the comment above?
   
-  evaluateGeneric(instate->tr, instate->tr->start, FALSE);
+  /* evaluateGeneric(instate->tr, instate->tr->start, FALSE); */
   //for prior, just use dirichlet
   // independent gamma distribution for each parameter
   //the pdf for this is
@@ -448,9 +477,6 @@ static void biunif_model_proposal_apply(state *instate)
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
-  
-  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
-  
 
 }
 
@@ -493,9 +519,6 @@ static void perm_biunif_model_proposal_apply(state *instate)
 
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
   
-  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
-  
-
 }
 
 
@@ -505,11 +528,12 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
-  int state, randState;
+  int state; 
+    /* randState; */
   double new_value,curv;
   double r;
   
-  randState=drawRandInt(instate->modelRemem.numSubsRates);
+  state=drawRandInt(instate->modelRemem.numSubsRates);
   
   curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
   r =  drawRandBiUnif(curv);
@@ -531,8 +555,6 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
-  
-  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
 }
 
 static void all_biunif_model_proposal_apply(state *instate)
@@ -569,8 +591,7 @@ static void all_biunif_model_proposal_apply(state *instate)
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
-  
-  evaluateGeneric(instate->tr, instate->tr->start, FALSE);//TODO Why is this needed here?
+
 }
 
 static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
@@ -607,7 +628,7 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
     
       if(record_tmp_bl)
 	{
-	  assert(p->z[i] == p->back->z[i]); 
+	  assert(p->z[i] == p->back->z[i]);
 	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
 	}
       r = drawRandDouble();
@@ -701,7 +722,7 @@ static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean 
     
       if(record_tmp_bl)
 	{
-	  assert(p->z[i] == p->back->z[i]); 
+	  assert(p->z[i] == p->back->z[i]);
 	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
 	}
    //   r = drawRandExp(lambda);
@@ -952,6 +973,50 @@ nodeptr select_random_subtree(tree *tr)
 
 
 
+void printProposalType(proposal_type which_proposal)
+{
+  switch(which_proposal)
+    {
+    case E_SPR: 
+      printf("E_SPR\n");
+      break; 
+    case UPDATE_MODEL : 
+      printf("UPDATE_MODEL \n");
+      break; 
+    case UPDATE_GAMMA : 
+      printf("UPDATE_GAMMA \n");
+      break; 
+    case UPDATE_GAMMA_EXP: 
+      printf("UPDATE_GAMMA_EXP\n");
+      break; 
+    case UPDATE_SINGLE_BL: 
+      printf("UPDATE_SINGLE_BL\n");
+    case UPDATE_SINGLE_BL_EXP : 
+      printf("UPDATE_SINGLE_BL_EXP \n");
+      break; 
+    case UPDATE_SINGLE_BL_BIUNIF: 
+      printf("UPDATE_SINGLE_BL_BIUNIF\n");
+      break; 
+    case UPDATE_MODEL_BIUNIF: 
+      printf("UPDATE_MODEL_BIUNIF\n");
+      break; 
+    case UPDATE_MODEL_SINGLE_BIUNIF: 
+      printf("UPDATE_MODEL_SINGLE_BIUNIF\n");
+      break; 
+    case UPDATE_MODEL_ALL_BIUNIF: 
+      printf("UPDATE_MODEL_ALL_BIUNIF\n");
+      break; 
+    case UPDATE_FREQUENCIES_BIUNIF: 
+      printf("UPDATE_FREQUENCIES_BIUNIF\n");
+      break; 
+    default : 
+      assert(0); 
+    }
+}
+
+
+
+
 static proposal_functions get_proposal_functions( proposal_type ptype ) 
 {
   
@@ -1000,7 +1065,6 @@ static proposal_type select_proposal_type(state * instate)
 
 
 
-
 void step(state *curstate)
 {
   tree *tr = curstate->tr;   
@@ -1012,7 +1076,8 @@ void step(state *curstate)
   double acceptance;
 
   // just for validation (make sure we compare the same)
-  evaluateGeneric(tr, tr->start, FALSE); 
+  evaluateGeneric(tr, tr->start, FALSE);
+  expensiveVerify(tr); 
 
   tr->startLH = tr->likelihood;
 
@@ -1041,14 +1106,17 @@ void step(state *curstate)
   acceptance = fmin(1,(curstate->hastings) * 
 		    (curstate->newprior/curstate->curprior) * (exp(tr->likelihood - tr->startLH)));
 
-
   assert(which_proposal < NUM_PROPOSALS); 
       
   if(testr < acceptance)
     {
-      /* if(processID == 0) */
-      /* 	printf("%d rejected\n", curstate->currentGeneration);  */
-
+#ifdef DEBUG_SHOW_EACH_PROPOSAL
+      if(processID == 0)
+	{
+	  printInfo(curstate, "accepting\t");   
+	  printProposalType(which_proposal); 
+	}
+#endif
       curstate->acceptedProposals[which_proposal]++; 
       curstate->totalAccepted++;
       // curstate->proposalWeights[which_proposal] /= curstate->penaltyFactor;
@@ -1059,16 +1127,22 @@ void step(state *curstate)
     }
   else
     {
-      /* if(processID == 0) */
-      /* 	printf("%d accepted\n", curstate->currentGeneration);  */
+#ifdef DEBUG_SHOW_EACH_PROPOSAL
+      if(processID == 0)
+	{
+	  printInfo(curstate, "rejecting\t");   
+	  printProposalType(which_proposal); 
+	}
+#endif
       dispatch_proposal_reset(which_proposal,curstate);
       curstate->rejectedProposals[which_proposal]++;
       curstate->totalRejected++;
       //curstate->proposalWeights[which_proposal] *= curstate->penaltyFactor; 
       penalize(curstate, which_proposal, 0);
       
-      /* TODO remove, if not necessary any more   */
+      /* TODO remove, if not needed any more */
       evaluateGeneric(tr, tr->start, FALSE); 
+      expensiveVerify(tr); 
 
       // just for validation 
       if(fabs(tr->startLH - tr->likelihood) > 1.0E-15)
@@ -1086,13 +1160,11 @@ void step(state *curstate)
 	  printSample(curstate);       
 	  chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject      	  
 	}
-      addBipartitionsToHash(tr, curstate);       
+      addBipartitionsToHash(tr, curstate ); 
     }
 
   curstate->currentGeneration++; 
 }
-
-
 
 
 

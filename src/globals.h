@@ -18,6 +18,7 @@ char byteFileName[1024];
 char binaryChainState[1024]; 
 
 int numberOfStartingTrees = 0; 
+int numberOfChains = 0; 
 
 #else 
 
@@ -40,4 +41,6 @@ extern char binaryChainState[1024];
 extern int Thorough; 
 
 extern int numberOfStartingTrees; 
+
+extern int numberOfChains; 
 #endif

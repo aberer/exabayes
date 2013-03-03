@@ -27,8 +27,6 @@
 #include <stdarg.h>
 #include <limits.h>
 
-
-
 #if ! (defined(__ppc) || defined(__powerpc__) || defined(PPC))
 #include <xmmintrin.h>
 /*
@@ -47,13 +45,27 @@ typedef  unsigned int nat ;
 #define NOT ! 
 
 
+
+
+
+/* ABOVE: stuff that is needed by everyone and can be defined
+   repeatedly
+
+   BELOW: some switches (e.g., debugging) and constants that are could
+   be user variables later (for development lets just keep them here).
+
+ */
+
+
+
+
 #define _USE_NCL_PARSER
 #define INIT_BRANCH_LENGTHS 0.65
 
-
 /* for debugging:  */
-#define ADDITIONAL_SAVE_FOR_COMPARISON
-
+/* #define DEBUG_SHOW_TREE */
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
+/* #define DEBUG_LNL_VERIFY */
 
 
 
@@ -62,7 +74,5 @@ typedef  unsigned int nat ;
 
 /* a lot of debug information for the asdsf */
 #define ASDSF_BE_VERBOSE 
-
-/* #define USE_MULTIPLE_CHAINS */
 
 #endif
