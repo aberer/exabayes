@@ -1,3 +1,5 @@
+#! /usr/bin/perl
+
 
 #WARNING needs to access /src and /examples from working directory. i.e. must be called as 'perl utils/addProposal.pl'
 #This scipt modifies all relevant files to allow for the new proposal. Parameters/Names need to be changed to the required values in this file.
@@ -7,8 +9,8 @@
 #The following still need to be taken care of manualy: actually implement apply (and reset) function in proposals.c. printf the new values in output.c, add values to config files
 
 #################################################################################
-$proposalName="UPDATE_FREQUENCIES_BIUNIF"; 
-$weightName="initFrequenciesWeight";
+$proposalName="E_SPR_MAPPED"; 
+$weightName="initEsprMappedWeight";
 $initWeight="0.0";
 
 #$configName="initSingleBranchBiunifWeight";
@@ -19,9 +21,9 @@ $configWeight="3";
 $nexConfigName=$weightName;
 $nexConfigWeight="3";
 
-$applyName="frequency_proposal_apply";
-$resetName="frequency_proposal_reset";#may already exist
-$priorName="get_branch_length_prior";#may already exist
+$applyName="bla";
+$resetName="bla";#may already exist
+$priorName="bla";#may already exist
 
 
 ###################################################################################

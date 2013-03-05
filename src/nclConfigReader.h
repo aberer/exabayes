@@ -17,6 +17,7 @@ double initModelSingleBiunifWeight;
 double initModelAllBiunifWeight;
 double initModelPermBiunifWeight;
 double initFrequenciesWeight;
+double initEsprMappedWeight;
   //PROPOSALADD initParamStruct NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   double initPenaltyFactor;   
   double eSprStopProb; 

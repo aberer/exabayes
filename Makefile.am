@@ -22,7 +22,7 @@ srcpre=./src
 srcxpre=./src/examl
 srcppre=./src/pll
 
-SRC=$(srcpre)/nclConfigReader.cpp $(srcpre)/configParser.c $(srcpre)/randomness.c $(srcpre)/bayes.c $(srcpre)/output.c $(srcpre)/proposals.c $(srcpre)/chain.c $(srcpre)/convergence.c $(srcpre)/treeRead.c $(srcpre)/bayes-topo.c
+SRC=$(srcpre)/nclConfigReader.cpp $(srcpre)/configParser.c $(srcpre)/randomness.c $(srcpre)/bayes.c $(srcpre)/output.c $(srcpre)/proposals.c $(srcpre)/chain.c $(srcpre)/convergence.c $(srcpre)/treeRead.c $(srcpre)/bayes-topo.c $(srcpre)/utils-topo.c
 bin_PROGRAMS=exabayes
 
 

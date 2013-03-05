@@ -35,7 +35,14 @@ void expensiveVerify(tree *tr)
 #ifdef DEBUG_LNL_VERIFY
   double val1 = tr->likelihood; 
   evaluateGeneric(tr, tr->start, TRUE); 
-  assert(fabs (tr->likelihood - val1 ) < 0.000001 );   
+
+  if(processID == 0)
+    {
+      if(fabs (tr->likelihood - val1 ) > 0.1)
+      printf("WARNING: found in expensive evaluation: likelihood difference is %f (with before/after)\t%f\t%f\n", fabs (tr->likelihood - val1 ), val1, tr->likelihood); 
+      assert(fabs (tr->likelihood - val1 ) < 0.1);   
+    }
+  
 #endif
 }
 
@@ -60,6 +67,7 @@ curstate->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = initParams->initModelSin
 curstate->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = initParams->initModelAllBiunifWeight;
 curstate->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = initParams->initModelPermBiunifWeight;
 curstate->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = initParams->initFrequenciesWeight;
+curstate->proposalWeights[E_SPR_MAPPED] = initParams->initEsprMappedWeight;
   //PROPOSALADD addInitParameters NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   curstate->numGen = initParams->numGen; 
   curstate->penaltyFactor = initParams->initPenaltyFactor; 
@@ -109,6 +117,7 @@ theState->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = 0.0;
 theState->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = 0.0;
 theState->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = 0.0;
 theState->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = 0.0;
+theState->proposalWeights[E_SPR_MAPPED] = 0.0;
   //PROPOSALADD initDefaultValues NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   
   theState->numGen = 1000000;

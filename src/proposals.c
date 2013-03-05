@@ -9,7 +9,10 @@
 
 #include "convergence.h"
 
+
 #include "chain.h"
+
+#include "utils-topo.h" 
 
 
 void expensiveVerify(tree *tr); 
@@ -19,6 +22,36 @@ void expensiveVerify(tree *tr);
 
 nodeptr select_random_subtree(tree *tr); 
 void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue);
+
+
+
+
+
+
+void traverseAndCount(nodeptr p, int *count, tree *tr )
+{
+  nodeptr q;
+  int i;
+  
+  assert(tr->numBranches > 0); 
+
+  /* for( i = 0; i < tr->numBranches; i++) */
+  /*   p->z[i] =  exp( - p->z[i] / tr->fracchange);  */
+  *count += 1;
+  
+  if (! isTip(p->number,tr->mxtips)) 
+    {                                  /*  Adjust descendants */
+      q = p->next;
+      while (q != p) 
+	{
+	  traverseAndCount(q->back, count, tr);
+	  q = q->next;
+	} 
+    }
+}
+
+
+
 
 
 //reads proposalWeights p and sets t for logistic function such that f(t)=p
@@ -169,6 +202,11 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 
 
 
+
+
+
+
+
 static void extended_spr_apply(state *instate, int pSubType)
 {
   tree * tr = instate->tr;
@@ -194,58 +232,94 @@ static void extended_spr_apply(state *instate, int pSubType)
   
   record_branch_info(instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, instate->tr->numBranches);
   record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, instate->tr->numBranches);
-
-  /* remove node p */
-  double zqr[NUM_BRANCHES];
-  if(pSubType == STANDARD)
-    {
-      for(int i = 0; i < tr->numBranches; i++)
-	zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];
-    }
-  else if(pSubType == SPR_MAPPED)
-    {
-      /* for(int i = 0; i < tr->numBranches ;++i) */
-      /* 	zqr[i] =  */
-    }
   
-  for(int i = 0; i < tr->numBranches; ++i)
+
+  /* initial remapping of BL of nodes adjacent to pruned node  */
+  double zqr[NUM_BRANCHES];
+
+  for(int i = 0; i < tr->numBranches; i++)
     {
+      if(pSubType == STANDARD)
+	{
+	  zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];
+	}
+      else if(pSubType == SPR_MAPPED)
+	{
+	  zqr[i] = instate->sprMoveRemem.nb->z[i] ; 
+	}
       if(zqr[i] > zmax) zqr[i] = zmax;
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
-  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, tr->numBranches);       
+
+  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, tr->numBranches); 
   p->next->next->back = p->next->back = (node *) NULL;
   /* done remove node p (omitted BL opt) */
-  
-  nodeptr curNode = ( drawRandDouble() > 0.5 ) ? instate->sprMoveRemem.nb : instate->sprMoveRemem.nnb; 
+
+  nodeptr initNode = NULL; 
+  nodeptr curNode = NULL; 
+  boolean remapBL = FALSE; 
+  if(drawRandDouble() > 0.5)
+    {
+      curNode = instate->sprMoveRemem.nb; 
+      remapBL = TRUE ; 
+    }
+  else 
+    {
+      curNode = instate->sprMoveRemem.nnb; 
+    }
+  initNode = curNode; 
+
   int accepted = FALSE;   
 
   radius = 0; 
 //printf("curNode:  back next nextnext\n");
-  while( !  accepted)
+  while( NOT  accepted)
     {
       accepted = extended_spr_traverse(instate, &curNode); 
   //    if(processID == 0) 
 //	printf("%d:  %d  %d  %d\n",curNode->number, curNode->back->number, curNode->next->back->number, curNode->next->next->back->number); 
+
+      /* needed for spr remap */
+      if(curNode == initNode)
+	remapBL = NOT remapBL; 
     }
-  tr->insertNode = curNode; 
+
 
   instate->hastings = 1; 
   instate->newprior = 1; 
   instate->curprior = 1; 
 
-  instate->sprMoveRemem.q = tr->insertNode;
+  instate->sprMoveRemem.q = curNode;
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
   record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, instate->tr->numBranches);
 
   Thorough = 0;
   // assert(tr->thoroughInsertion == 0);
   /* insertBIG wont change the BL if we are not in thorough mode */
-  
-  insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
 
+  if(pSubType == STANDARD)
+    {
+      insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
+    }
+  else if(pSubType == SPR_MAPPED)
+    {
+      double *neighborZ = remapBL ? instate->sprMoveRemem.nbz :  instate->sprMoveRemem.nnbz; 
+
+      /* insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches); */
+
+      insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, tr->numBranches);
+      newviewGeneric(tr, instate->sprMoveRemem.p, FALSE);
+    }
+
+  if( ( pSubType == SPR_MAPPED )  && remapBL)
+    hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, tr->numBranches); 
+  
   /* TODO problem here? is not tip?? */
+#if 0 
   evaluateGeneric(instate->tr, instate->sprMoveRemem.p->next->next, FALSE);
+#else 
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE);
+#endif
   expensiveVerify(tr); 
 
 }
@@ -256,6 +330,8 @@ static void extended_spr_apply(state *instate, int pSubType)
 
 static void extended_spr_reset(state * instate)
 {
+  tree *tr = instate->tr; 
+
   /* prune the insertion */
   hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, instate->tr->numBranches);
 
@@ -275,14 +351,14 @@ static void extended_spr_reset(state * instate)
 #endif
     }
 
-
+  evaluateGeneric(tr, tr->start, TRUE);
 
   newviewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE);
   double val1 = instate->tr->likelihood; 
   
   newviewGeneric(instate->tr, instate->tr->start, TRUE);
   double  val2 = instate->tr->likelihood; 
-  
+
   assert( fabs ( val2 - val1 ) < 0.0001 ); 
 
 }
@@ -1064,6 +1140,9 @@ void printProposalType(proposal_type which_proposal)
     case E_SPR: 
       printf("E_SPR\n");
       break; 
+    case E_SPR_MAPPED: 
+      printf("E_SPR_MAPPED\n");
+      break; 
     case UPDATE_MODEL : 
       printf("UPDATE_MODEL \n");
       break; 
@@ -1075,6 +1154,7 @@ void printProposalType(proposal_type which_proposal)
       break; 
     case UPDATE_SINGLE_BL: 
       printf("UPDATE_SINGLE_BL\n");
+      break; 
     case UPDATE_SINGLE_BL_EXP : 
       printf("UPDATE_SINGLE_BL_EXP \n");
       break; 
@@ -1093,6 +1173,12 @@ void printProposalType(proposal_type which_proposal)
     case UPDATE_FREQUENCIES_BIUNIF: 
       printf("UPDATE_FREQUENCIES_BIUNIF\n");
       break; 
+    case UPDATE_MODEL_PERM_BIUNIF: 
+      printf("UPDATE_MODEL_PERM_BIUNIF\n");
+      break;  
+
+      /* TODO proposal add PROPOSALADD  */
+
     default : 
       assert(0); 
     }
@@ -1311,7 +1397,12 @@ void step(state *curstate)
       penalize(curstate, which_proposal, 0);
       
       /* TODO remove, if not needed any more */
-      evaluateGeneric(tr, tr->start, FALSE); 
+/* #if 0  */
+      /* evaluateGeneric(tr, tr->start, FALSE); */
+/* #else  */
+      
+/* #endif */
+  
       expensiveVerify(tr); 
 
       // just for validation 
@@ -1321,7 +1412,21 @@ void step(state *curstate)
 	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", curstate->currentGeneration, tr->likelihood, tr->startLH);
 	}      
       assert(fabs(tr->startLH - tr->likelihood) < 0.1);
-    } 
+    }
+  
+  int count = 0; 
+  traverseAndCount(tr->start->back, &count, tr); 
+  if(count != 2 * tr->mxtips - 3 )
+    {      
+      char tmp[10000]; 
+      Tree2stringNexus(tmp, tr, tr->start->back, 0); 
+      if(processID==0)
+	printf("faulty TOPOLOGY: %s\n", tmp);
+
+      assert(2 * tr->mxtips-3 == count); 
+    }
+
+
 
   if((curstate->currentGeneration % curstate->samplingFrequency) == 0)
     {
@@ -1332,7 +1437,7 @@ void step(state *curstate)
 	}
       addBipartitionsToHash(tr, curstate ); 
     }
-
+  
   curstate->currentGeneration++; 
 }
 

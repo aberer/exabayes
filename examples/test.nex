@@ -1,22 +1,23 @@
 #NEXUS
 begin EXABAYES; 
-      initModelWeight 1
+      initModelWeight 0
       initGammaWeight 0
-      initGammaExpWeight 1
+      initGammaExpWeight 0
 
-      INITSPRWEIGHT 3 
+      INITSPRWEIGHT 0 
 
       initSingleBranchWeight 0
-      initSingleBranchExpWeight 1
+      initSingleBranchExpWeight 0
       initSingleBranchBiunifWeight 0 
 
       initModelBiunifWeight 0
-      initModelSingleBiunifWeight 1
+      initModelSingleBiunifWeight 0
       initModelAllBiunifWeight 0
 
-      initModelPermBiunifWeight 3
-      initFrequenciesWeight 10
+      initModelPermBiunifWeight 0
+      initFrequenciesWeight 0
 
+      initEsprMappedWeight 3 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
       initPenaltyFactor 0.0 

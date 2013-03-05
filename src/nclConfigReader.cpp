@@ -48,6 +48,7 @@ initParam->initModelSingleBiunifWeight  = -1 ;
 initParam->initModelAllBiunifWeight  = -1 ;
 initParam->initModelPermBiunifWeight  = -1 ;
 initParam->initFrequenciesWeight  = -1 ;
+initParam->initEsprMappedWeight  = -1 ;
     //PROPOSALADD paramBadInit NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 
     initParam->initPenaltyFactor  = -1 ;   
@@ -102,6 +103,8 @@ else if (key.EqualsCaseInsensitive("initModelPermBiunifWeight"))
 initParam->initModelPermBiunifWeight = value.ConvertToDouble();
 else if (key.EqualsCaseInsensitive("initFrequenciesWeight"))
 initParam->initFrequenciesWeight = value.ConvertToDouble();
+else if (key.EqualsCaseInsensitive("initEsprMappedWeight"))
+initParam->initEsprMappedWeight = value.ConvertToDouble();
 	    //PROPOSALADD read NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 	    else if(key.EqualsCaseInsensitive("numGen"))
 	      initParam->numGen = value.ConvertToInt(); 
@@ -137,6 +140,7 @@ assert(initParam->initModelSingleBiunifWeight != -1);
 assert(initParam->initModelAllBiunifWeight != -1);
 assert(initParam->initModelPermBiunifWeight != -1);
 assert(initParam->initFrequenciesWeight != -1);
+assert(initParam->initEsprMappedWeight != -1);
     //PROPOSALADD assertInitialized NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     assert(initParam->numGen != -1); 
     assert(initParam->initPenaltyFactor != -1); 
