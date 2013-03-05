@@ -286,6 +286,7 @@ static void simple_gamma_proposal_apply(state * instate)
 {
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
+  instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
   instate->gammaRemem.curAlpha = curv;
   r = drawRandDouble();
@@ -396,6 +397,7 @@ static void simple_model_proposal_apply(state *instate)
 {
   //TODO: add safety to max and min values
   //record the old ones
+  instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set of model params,
   //probably with dirichlet proposal
@@ -442,6 +444,7 @@ static void simple_model_proposal_apply(state *instate)
 static void biunif_model_proposal_apply(state *instate)
 {
   //record the old one 
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   int state, randState;
   double new_value,curv;
@@ -484,6 +487,7 @@ static void biunif_model_proposal_apply(state *instate)
 static void perm_biunif_model_proposal_apply(state *instate)
 {
   //record the old one 
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   int state, randNumber;
   double new_value,curv;
@@ -525,18 +529,19 @@ static void perm_biunif_model_proposal_apply(state *instate)
 static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive.
 {
   //record the old one //TODO sufficient to store single value.
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
-  int  randState;
+  int  randState=drawRandInt(instate->modelRemem.numSubsRates);
 
   double new_value,curv;
   double r;
   
-  state=drawRandInt(instate->modelRemem.numSubsRates);
+  //int state=drawRandInt(instate->modelRemem.numSubsRates);
   
 
-  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[randState];
   r =  drawRandBiUnif(curv);
 
   new_value = r;
@@ -546,7 +551,7 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
     if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
   }
 
-  edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
+  edit_subs_rates(instate->tr,instate->modelRemem.model, randState, new_value);
 
   instate->hastings=curv/new_value;
 
@@ -558,6 +563,7 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
 static void all_biunif_model_proposal_apply(state *instate)
 {
   //record the old one 
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
@@ -922,6 +928,7 @@ static void recordFrequRates(tree *tr, int model, int numFrequRates, double *pre
 
 void frequency_proposal_apply(state * instate)
 {
+   instate->frequRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordFrequRates(instate->tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
 
   
@@ -929,16 +936,17 @@ void frequency_proposal_apply(state * instate)
   double sum,curv;
   double r[instate->frequRemem.numFrequRates];
   
-
+  instate->hastings=1;
   for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
       curv = instate->tr->partitionData[instate->frequRemem.model].frequencies[state];
       //r[state] =  drawRandDouble(); 
     r[state] =  drawRandBiUnif(curv); 
+    instate->hastings*=curv/r[state];
     }
     
   sum=0;
-    
+  
   for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
       sum+=r[state]; 
@@ -950,7 +958,7 @@ void frequency_proposal_apply(state * instate)
   //recalculate eigens
 
   initReversibleGTR(instate->tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
-instate->hastings=1;
+
 instate->curprior=get_frequency_prior(instate, instate->tr->partitionData[instate->frequRemem.model].frequencies);
 instate->newprior=get_frequency_prior(instate, instate->frequRemem.curFrequRates);
 
