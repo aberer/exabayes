@@ -30,15 +30,11 @@ void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue);
 
 void traverseAndCount(nodeptr p, int *count, tree *tr )
 {
-  nodeptr q;
-  int i;
-  
+  nodeptr q;  
   assert(tr->numBranches > 0); 
 
-  /* for( i = 0; i < tr->numBranches; i++) */
-  /*   p->z[i] =  exp( - p->z[i] / tr->fracchange);  */
   *count += 1;
-  
+
   if (! isTip(p->number,tr->mxtips)) 
     {                                  /*  Adjust descendants */
       q = p->next;
@@ -149,12 +145,22 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
     r = drawRandDouble(); 
   
   radius++;   
-  *insertNode = 
-    (r < 0.5) ?
-    (*insertNode)->next->back : 
-    (*insertNode)->next->next->back; 
-   
-  
+
+  /* *insertNode = NULL;  */
+  if(r < 0.5 )
+    {
+
+
+      /* *insertNode = isTip((*insertNode)->next->number, curstate->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back; */
+
+      *insertNode = (*insertNode)->next->back ;
+    }
+  else 
+    {
+      /* *insertNode = isTip((*insertNode)->next->next->number, curstate->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back; */
+      *insertNode = (*insertNode)->next->next->back;
+    }
+
   /*
   if(isTip( (*insertNode)->number, curstate->tr->mxtips))
   {
@@ -305,15 +311,24 @@ static void extended_spr_apply(state *instate, int pSubType)
     {
       double *neighborZ = remapBL ? instate->sprMoveRemem.nbz :  instate->sprMoveRemem.nnbz; 
 
-      /* insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches); */
-
       insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, tr->numBranches);
-      newviewGeneric(tr, instate->sprMoveRemem.p, FALSE);
+
+
+      /* IMPORTANT TODO verify, that the mapping actually works, as we
+	 had this in mind. Use topo print functions for that.
+       */
+
+
+      /* TODO PERFORMANCE */
+      /* newviewGeneric(tr, instate->sprMoveRemem.p, FALSE); */
     }
 
-  if( ( pSubType == SPR_MAPPED )  && remapBL)
-    hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, tr->numBranches); 
-  
+  if( (pSubType == SPR_MAPPED ) && remapBL) 
+    {
+      for(int i = 0; i < tr->numBranches; ++i)
+	instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
+    }
+
   /* TODO problem here? is not tip?? */
 #if 0 
   evaluateGeneric(instate->tr, instate->sprMoveRemem.p->next->next, FALSE);
@@ -1400,7 +1415,6 @@ void step(state *curstate)
 /* #if 0  */
       /* evaluateGeneric(tr, tr->start, FALSE); */
 /* #else  */
-      
 /* #endif */
   
       expensiveVerify(tr); 
@@ -1414,6 +1428,8 @@ void step(state *curstate)
       assert(fabs(tr->startLH - tr->likelihood) < 0.1);
     }
   
+
+#ifdef DEBUG_LNL_VERIFY
   int count = 0; 
   traverseAndCount(tr->start->back, &count, tr); 
   if(count != 2 * tr->mxtips - 3 )
@@ -1425,7 +1441,7 @@ void step(state *curstate)
 
       assert(2 * tr->mxtips-3 == count); 
     }
-
+#endif
 
 
   if((curstate->currentGeneration % curstate->samplingFrequency) == 0)

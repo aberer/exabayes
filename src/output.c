@@ -252,8 +252,9 @@ void chainInfoOutput(state *curstate )
 
   PRINT( "[chain: %d] gen: %d Likelihood: %f StartLH: %f \n",curstate->id, curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH);
   
-  PRINT( "Topo: eSpr: %d/%d (%d%%) \n"
-	 , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)));
+  PRINT( "Topo: eSpr: %d/%d (%d%%)\teSpr_mapped: %d/%d\t(%d%%) \n"
+	 , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)),
+	 curstate->acceptedProposals[E_SPR_MAPPED]	, curstate->rejectedProposals[E_SPR_MAPPED] , (int)(curstate->acceptedProposals[E_SPR_MAPPED]*100/(curstate->acceptedProposals[E_SPR_MAPPED]+curstate->rejectedProposals[E_SPR_MAPPED]+0.0001)));
   
   PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] , (int)(curstate->acceptedProposals[UPDATE_MODEL]*100/(curstate->acceptedProposals[UPDATE_MODEL]+curstate->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
 	 curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_BIUNIF]+0.0001)) ,

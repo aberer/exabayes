@@ -14,12 +14,12 @@ void insertWithGenericBL (nodeptr insertNode, nodeptr branchNode, double *insert
 
   nodeptr thirdNode = branchNode->back;   
 
-  if(processID == 0)
-    {
-      printf("insertNode=%d, branchNode=%d, thirdNode=%d\n", insertNode->number, branchNode->number, thirdNode->number); 
-    }
+  /* if(processID == 0) */
+  /*   { */
+  /*     printf("insertNode=%d, branchNode=%d, thirdNode=%d\n", insertNode->number, branchNode->number, thirdNode->number);  */
+  /*   } */
 
   hookup(insertNode->next , branchNode, branchNodeZ, numBranches); 
   hookup(insertNode->next->next, thirdNode, neighbourZ, numBranches); 
-  hookup(insertNode, insertNode->back, insertZ, numBranches); 
+  hookup(insertNode, insertNode->back, insertZ, numBranches);
 }
