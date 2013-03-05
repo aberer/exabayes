@@ -4,6 +4,11 @@
 
 
 
+#define STANDARD 0 
+#define SPR_MAPPED 1 
+
+
+
 /* okay, so defining enums this way is rather save  */
 #define NUM_PROPOSALS (12) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
 typedef enum
@@ -19,12 +24,8 @@ UPDATE_MODEL_BIUNIF = 7,
 UPDATE_MODEL_SINGLE_BIUNIF = 8,
 UPDATE_MODEL_ALL_BIUNIF = 9,
 UPDATE_MODEL_PERM_BIUNIF = 10,
-UPDATE_FREQUENCIES_BIUNIF = 11//PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
-
-
-
-
-
+UPDATE_FREQUENCIES_BIUNIF = 11,
+E_SPR_MAPPED = 12//PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 
 } proposal_type;
 
@@ -161,6 +162,11 @@ typedef struct
   int samplingFrequency; 
   
 
+  /* DEVEL */
+  /* int proposalSubType;  */
+  /* END */
+
+
   /* new stuff that we need when having multiple chains  */
   FILE *topologyFile; 
   FILE *outputParamFile; 
@@ -182,12 +188,15 @@ typedef struct
 
 
 
-typedef struct {
-  int  ptype;  
-  void (*apply_func)( state * curstate );
-  void (*reset_func)( state * curstate );    
-  double (*prior_function) (void *something); 
 
+
+
+typedef struct {
+  int ptype; 
+  int pSubType; 
+  void (*apply_func)( state *curstate, int pSubType);
+  void (*reset_func)( state *curstate );   
+  double (*get_prior_ratio) (state *curstate); 
 } proposal_functions;
 
 

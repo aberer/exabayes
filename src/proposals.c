@@ -168,7 +168,8 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 }
 
 
-static void extended_spr_apply(state *instate)
+
+static void extended_spr_apply(state *instate, int pSubType)
 {
   tree * tr = instate->tr;
 
@@ -196,15 +197,23 @@ static void extended_spr_apply(state *instate)
 
   /* remove node p */
   double zqr[NUM_BRANCHES];
-  int i;
-  for(i = 0; i < tr->numBranches; i++)
+  if(pSubType == STANDARD)
     {
-      zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];
+      for(int i = 0; i < tr->numBranches; i++)
+	zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];
+    }
+  else if(pSubType == SPR_MAPPED)
+    {
+      /* for(int i = 0; i < tr->numBranches ;++i) */
+      /* 	zqr[i] =  */
+    }
+  
+  for(int i = 0; i < tr->numBranches; ++i)
+    {
       if(zqr[i] > zmax) zqr[i] = zmax;
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
-
-  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, tr->numBranches); 
+  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, tr->numBranches);       
   p->next->next->back = p->next->back = (node *) NULL;
   /* done remove node p (omitted BL opt) */
   
@@ -243,6 +252,8 @@ static void extended_spr_apply(state *instate)
 
 
 
+
+
 static void extended_spr_reset(state * instate)
 {
   /* prune the insertion */
@@ -277,16 +288,23 @@ static void extended_spr_reset(state * instate)
 }
 
 
-double get_alpha_prior(void *alpha )
+
+
+double get_alpha_prior(state *curstate )
 {
   
  return 1;//TODO obviously needs acctual prior 
 }
+
+
+
+
 //simple sliding window
-static void simple_gamma_proposal_apply(state * instate)
+static void simple_gamma_proposal_apply(state * instate, int pSubType)
 {
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
+  instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
   instate->gammaRemem.curAlpha = curv;
   r = drawRandDouble();
@@ -298,8 +316,8 @@ static void simple_gamma_proposal_apply(state * instate)
   if(newalpha < ALPHA_MIN) newalpha = ALPHA_MIN;
   
   instate->hastings = 1; //since it is symmetrical, hastings=1
-  instate->newprior = get_alpha_prior(&newalpha); 
-  instate->curprior = get_alpha_prior(&curv); 
+  instate->newprior = get_alpha_prior(instate); 
+  instate->curprior = get_alpha_prior(instate); 
   
   instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
 
@@ -310,7 +328,7 @@ static void simple_gamma_proposal_apply(state * instate)
 }
 
 
-static void exp_gamma_proposal_apply(state * instate)
+static void exp_gamma_proposal_apply(state * instate, int pSubType)
 {
   double newalpha, curv;
   curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
@@ -325,8 +343,8 @@ static void exp_gamma_proposal_apply(state * instate)
   if(newalpha < ALPHA_MIN) newalpha = 2*ALPHA_MIN-newalpha;
   }
   instate->hastings = (1/newalpha)*exp(-(1/newalpha)*curv)/((1/curv)*exp(-(1/curv)*newalpha)); //TODO do not ignore reflection
-  instate->newprior = get_alpha_prior(&newalpha); 
-  instate->curprior = get_alpha_prior(&curv); 
+  /* instate->newprior = get_alpha_prior(instate);  */
+  /* instate->curprior = get_alpha_prior(instate);  */
   
   instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
   
@@ -393,10 +411,11 @@ void normalizeProposalWeights(state *curstate)
 
 
 
-static void simple_model_proposal_apply(state *instate)
+static void simple_model_proposal_apply(state *instate, int pSubType)
 {
   //TODO: add safety to max and min values
   //record the old ones
+  instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set of model params,
   //probably with dirichlet proposal
@@ -440,9 +459,10 @@ static void simple_model_proposal_apply(state *instate)
 }
 
 //draws a random subset (drawing with replacement) of the states and changes the according to biunif distribution.
-static void biunif_model_proposal_apply(state *instate)
+static void biunif_model_proposal_apply(state *instate, int pSubType)
 {
   //record the old one 
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   int state, randState;
   double new_value,curv;
@@ -482,9 +502,10 @@ static void biunif_model_proposal_apply(state *instate)
 }
 
 
-static void perm_biunif_model_proposal_apply(state *instate)
+static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
 {
   //record the old one 
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   int state, randNumber;
   double new_value,curv;
@@ -523,23 +544,23 @@ static void perm_biunif_model_proposal_apply(state *instate)
 }
 
 
-static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive.
+static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
   //record the old one //TODO sufficient to store single value.
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
-  int 
-    state;
 
+  int  randState=drawRandInt(instate->modelRemem.numSubsRates);
 
   double new_value,curv;
   double r;
   
-  state=drawRandInt(instate->modelRemem.numSubsRates);
+  //int state=drawRandInt(instate->modelRemem.numSubsRates);
   
 
-  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[randState];
   r =  drawRandBiUnif(curv);
 
   new_value = r;
@@ -549,7 +570,7 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
     if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
   }
 
-  edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
+  edit_subs_rates(instate->tr,instate->modelRemem.model, randState, new_value);
 
   instate->hastings=curv/new_value;
 
@@ -558,9 +579,10 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
 }
 
-static void all_biunif_model_proposal_apply(state *instate)
+static void all_biunif_model_proposal_apply(state *instate, int pSubType)
 {
   //record the old one 
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
@@ -610,7 +632,7 @@ static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRa
 }
 
 
-double get_branch_length_prior( void *bl)
+double get_branch_length_prior( state *curstate)
 {//TODO decide on sensible prior
   return 1;  
 }
@@ -621,7 +643,7 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
   int i;
   double newZValue;
   double r,mx,mn;
-  double newValue = 0; 
+  /* double newValue = 0; */
 
   for(i = 0; i < numBranches; i++)
     {
@@ -645,8 +667,8 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
       
       s->hastings=1;
       
-      newValue = mn + r * (mx-mn); 
-      s->newprior=get_branch_length_prior(&newValue);
+      /* newValue = mn + r * (mx-mn); */
+      /* s->newprior=get_branch_length_prior(&newValue); */
     
       /* Ensure always you stay within this range */
       if(newZValue > zmax) newZValue = zmax;
@@ -686,7 +708,7 @@ static void set_branch_length_biunif(nodeptr p, int numBranches,state * s, boole
       newValue = r; 
       
       s->hastings=real_z/newValue;
-      s->newprior=get_branch_length_prior(&newValue);
+      /* s->newprior=get_branch_length_prior(&newValue); */
     
       /* Ensure always you stay within this range */
       /*
@@ -732,7 +754,7 @@ static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean 
   
 	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
 
-	s->newprior=get_branch_length_prior(&r);
+	/* s->newprior=get_branch_length_prior(&r); */
 	
       newZValue = exp(-(fabs(r /s->tr->fracchange )));
    
@@ -827,7 +849,7 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
  * should be sliding window proposal
  */
 
-static void random_branch_length_proposal_apply(state * instate)
+static void random_branch_length_proposal_apply(state * instate, int pSubType)
 {
    
   //for each branch get the current branch length
@@ -850,7 +872,7 @@ static void random_branch_length_proposal_apply(state * instate)
 }
 
 
-static void biunif_branch_length_proposal_apply(state * instate)
+static void biunif_branch_length_proposal_apply(state * instate, int pSubType)
 {
    
   //for one branch get the current branch length
@@ -871,7 +893,7 @@ static void biunif_branch_length_proposal_apply(state * instate)
   //   return TRUE;
 }
 
-static void exp_branch_length_proposal_apply(state * instate)
+static void exp_branch_length_proposal_apply(state * instate, int pSubType)
 {
   const int num_branches = (instate->tr->mxtips * 2) - 3;
   int target_branch = drawRandInt(num_branches); 
@@ -898,7 +920,7 @@ static void random_branch_length_proposal_reset(state * instate)
   instate->brLenRemem.single_bl_branch = -1;
 }
 
-double get_frequency_prior(state * instate, double * frequencies)
+double get_frequency_prior(state * instate)
 {
  return 1; 
 }
@@ -923,8 +945,9 @@ static void recordFrequRates(tree *tr, int model, int numFrequRates, double *pre
     prevFrequRates[i] = tr->partitionData[model].frequencies[i];
 }
 
-void frequency_proposal_apply(state * instate)
+void frequency_proposal_apply(state * instate, int pSubType)
 {
+   instate->frequRemem.model=drawRandInt(instate->tr->NumberOfModels);
   recordFrequRates(instate->tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
 
   
@@ -932,16 +955,17 @@ void frequency_proposal_apply(state * instate)
   double sum,curv;
   double r[instate->frequRemem.numFrequRates];
   
-
+  instate->hastings=1;
   for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
       curv = instate->tr->partitionData[instate->frequRemem.model].frequencies[state];
       //r[state] =  drawRandDouble(); 
     r[state] =  drawRandBiUnif(curv); 
+    instate->hastings*=curv/r[state];
     }
     
   sum=0;
-    
+  
   for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
       sum+=r[state]; 
@@ -953,9 +977,9 @@ void frequency_proposal_apply(state * instate)
   //recalculate eigens
 
   initReversibleGTR(instate->tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
-instate->hastings=1;
-instate->curprior=get_frequency_prior(instate, instate->tr->partitionData[instate->frequRemem.model].frequencies);
-instate->newprior=get_frequency_prior(instate, instate->frequRemem.curFrequRates);
+
+/* instate->curprior=get_frequency_prior(instate, instate->tr->partitionData[instate->frequRemem.model].frequencies); */
+/* instate->newprior=get_frequency_prior(instate, instate->frequRemem.curFrequRates); */
 
   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
 
@@ -1077,42 +1101,122 @@ void printProposalType(proposal_type which_proposal)
 
 
 
-static proposal_functions get_proposal_functions( proposal_type ptype ) 
+
+void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 {
-  
-  const static proposal_functions prop_funcs[NUM_PROPOSALS] = { 
-    { UPDATE_MODEL, simple_model_proposal_apply, simple_model_proposal_reset,  get_branch_length_prior},/* TODO replace */
-    { UPDATE_SINGLE_BL, random_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
-    { UPDATE_SINGLE_BL_EXP, exp_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior },
-    { UPDATE_GAMMA, simple_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
-    { UPDATE_GAMMA_EXP, exp_gamma_proposal_apply, simple_gamma_proposal_reset,  get_alpha_prior},
-{ UPDATE_SINGLE_BL_BIUNIF, biunif_branch_length_proposal_apply, random_branch_length_proposal_reset, get_branch_length_prior},
-{ UPDATE_MODEL_BIUNIF, biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
-{ UPDATE_MODEL_SINGLE_BIUNIF, single_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},/* TODO replace */
-{ UPDATE_MODEL_ALL_BIUNIF, all_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
-{ UPDATE_MODEL_PERM_BIUNIF, perm_biunif_model_proposal_apply, simple_model_proposal_reset, get_branch_length_prior},
-{ UPDATE_FREQUENCIES_BIUNIF, frequency_proposal_apply, frequency_proposal_reset, get_frequency_prior},
-    //PROPOSALADD prop_funcs NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
-    { E_SPR, extended_spr_apply, extended_spr_reset,  get_branch_length_prior} /* TODO replace */
-  };
-  int i;
-  // REMARK: don't worry about the linear search until NUM_PROP_FUNCS exceeds 20...
-  for( i = 0; i < NUM_PROPOSALS; ++i ) {
-    if( prop_funcs[i].ptype == ptype ) {
-      return prop_funcs[i];
+  /* TODO proposal add for script  */
+
+ 
+  switch(ptype)
+    {
+    case  UPDATE_MODEL:
+      pF->ptype =  UPDATE_MODEL;
+      pF->pSubType = STANDARD; 
+      pF->apply_func =  simple_model_proposal_apply;
+      pF->reset_func =  simple_model_proposal_reset;
+      pF->get_prior_ratio = get_branch_length_prior;
+      break;
+
+    case  UPDATE_SINGLE_BL:
+      pF->ptype = UPDATE_SINGLE_BL;
+      pF->pSubType = STANDARD; 
+      pF->apply_func =  random_branch_length_proposal_apply;
+      pF->reset_func =  random_branch_length_proposal_reset;
+      pF->get_prior_ratio =  get_branch_length_prior ;
+      break;
+
+    case  UPDATE_SINGLE_BL_EXP:
+      pF->ptype = UPDATE_SINGLE_BL_EXP;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  exp_branch_length_proposal_apply;
+      pF->reset_func =  random_branch_length_proposal_reset;
+      pF->get_prior_ratio =  get_branch_length_prior ;
+      break;
+
+    case  UPDATE_GAMMA:
+      pF->ptype = UPDATE_GAMMA;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  simple_gamma_proposal_apply;
+      pF->reset_func =  simple_gamma_proposal_reset;
+      pF->get_prior_ratio =   get_alpha_prior;
+      break;
+
+    case  UPDATE_GAMMA_EXP:
+      pF->ptype = UPDATE_GAMMA_EXP;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  exp_gamma_proposal_apply;
+      pF->reset_func =  simple_gamma_proposal_reset;
+      pF->get_prior_ratio =   get_alpha_prior;
+      break;
+
+    case  UPDATE_SINGLE_BL_BIUNIF:
+      pF->ptype = UPDATE_SINGLE_BL_BIUNIF;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  biunif_branch_length_proposal_apply;
+      pF->reset_func =  random_branch_length_proposal_reset;
+      pF->get_prior_ratio =  get_branch_length_prior;
+      break;
+
+    case  UPDATE_MODEL_BIUNIF:
+      pF->ptype = UPDATE_MODEL_BIUNIF;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  biunif_model_proposal_apply;
+      pF->reset_func =  simple_model_proposal_reset;
+      pF->get_prior_ratio =  get_branch_length_prior;
+      break;
+	
+    case  UPDATE_MODEL_SINGLE_BIUNIF:
+      pF->ptype = UPDATE_MODEL_SINGLE_BIUNIF;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  single_biunif_model_proposal_apply;
+      pF->reset_func =  simple_model_proposal_reset;
+      pF->get_prior_ratio =  get_branch_length_prior;
+      break;
+
+    case  UPDATE_MODEL_ALL_BIUNIF:
+      pF->ptype = UPDATE_MODEL_ALL_BIUNIF;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  all_biunif_model_proposal_apply;
+      pF->reset_func =  simple_model_proposal_reset;
+      pF->get_prior_ratio =  get_branch_length_prior;
+      break;
+
+    case  UPDATE_MODEL_PERM_BIUNIF:
+      pF->ptype = UPDATE_MODEL_PERM_BIUNIF;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  perm_biunif_model_proposal_apply;
+      pF->reset_func =  simple_model_proposal_reset;
+      pF->get_prior_ratio =  get_branch_length_prior;
+      break;
+	
+    case  UPDATE_FREQUENCIES_BIUNIF:
+      pF->ptype = UPDATE_FREQUENCIES_BIUNIF;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  frequency_proposal_apply;
+      pF->reset_func =  frequency_proposal_reset;
+      pF->get_prior_ratio =  get_frequency_prior;
+      break;
+
+
+    case  E_SPR:
+      pF->ptype = E_SPR;      
+      pF->pSubType = STANDARD; 
+      pF->apply_func =  extended_spr_apply;
+      pF->reset_func =  extended_spr_reset;
+      pF->get_prior_ratio =   get_branch_length_prior;
+      break;
+
+    case E_SPR_MAPPED:
+      pF->ptype = E_SPR_MAPPED; 
+      pF->pSubType = SPR_MAPPED; 
+      pF->apply_func =  extended_spr_apply;
+      pF->reset_func =  extended_spr_reset;
+      pF->get_prior_ratio =   get_branch_length_prior;
+      break;
+
+    default : 
+      assert(0); 
     }
-  }
-  
-  assert( 0 && "ptype not found" );
-
-}
-
-static void dispatch_proposal_apply( proposal_type ptype, state *instate ) {
-  get_proposal_functions(ptype).apply_func( instate );
-}
-
-static void dispatch_proposal_reset( proposal_type ptype, state *instate ) {
-  get_proposal_functions(ptype).reset_func( instate );
 }
 
 
@@ -1144,9 +1248,12 @@ void step(state *curstate)
   // select proposal type
   which_proposal = select_proposal_type( curstate );
     
-  // apply the proposal function
-  dispatch_proposal_apply(which_proposal, curstate );
+  proposal_functions pF; 
+  getProposalFunctions(which_proposal, &pF); 
 
+
+  // apply the proposal function  
+  pF.apply_func(curstate, pF.pSubType);
 
   // FIXME: why is this here?
   if (curstate->currentGeneration == 0 )
@@ -1164,7 +1271,9 @@ void step(state *curstate)
      (exp(curstate->newprior-curstate->curprior)) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));*/
 
   acceptance = fmin(1,(curstate->hastings) * 
-		    (curstate->newprior/curstate->curprior) * (exp(tr->likelihood - tr->startLH)));
+		    pF.get_prior_ratio(curstate) 
+		    /* (curstate->newprior/curstate->curprior) */
+		    * (exp(tr->likelihood - tr->startLH)));
 
   assert(which_proposal < NUM_PROPOSALS); 
       
@@ -1194,7 +1303,8 @@ void step(state *curstate)
 	  printProposalType(which_proposal); 
 	}
 #endif
-      dispatch_proposal_reset(which_proposal,curstate);
+      pF.reset_func(curstate); 
+      /* dispatch_proposal_reset(which_proposal,curstate); */
       curstate->rejectedProposals[which_proposal]++;
       curstate->totalRejected++;
       //curstate->proposalWeights[which_proposal] *= curstate->penaltyFactor; 

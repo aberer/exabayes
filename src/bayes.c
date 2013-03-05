@@ -118,7 +118,8 @@ theState->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = 0.0;
 
 
 void mcmc(tree *tr, analdef *adef)
-{    
+{ 
+  
   initRNG(seed);
 
   /* TODO have removed that -- problematic?   */
