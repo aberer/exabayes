@@ -55,6 +55,7 @@ static void recordSubsRates(tree *tr, int model, int numSubsRates, double *prevS
     prevSubsRates[i] = tr->partitionData[model].substRates[i];
 }
 
+
 static void reset_branch_length(nodeptr p, int numBranches)
 {
   int i;
@@ -528,7 +529,9 @@ static void single_biunif_model_proposal_apply(state *instate)//NOTE whenever a 
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
-  int  randState;
+  int 
+    state;
+
 
   double new_value,curv;
   double r;

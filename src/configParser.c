@@ -1,10 +1,13 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include "common.h"
+
 #include "axml.h"
 #include "proposalStructs.h"
 #include "globals.h"
+
+/* #include <unistd.h> */
+/* #include <stdio.h> */
+/* #include <string.h> */
+
 
 
 extern void initDefaultValues(state *theState); 

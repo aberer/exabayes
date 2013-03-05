@@ -4,6 +4,15 @@
 #include "config.h"
 
 
+#if HAVE_PLL == 1
+#define realloc rax_realloc  
+#define malloc_aligned  rax_malloc_aligned
+#define free rax_free
+#define calloc rax_calloc
+#else 
+#include <stdlib.h>
+#endif
+
 
 
 // TODO: we also need a header cleanup, just imported this from examl 
@@ -20,7 +29,7 @@
 
 #include <math.h>
 #include <time.h>
-#include <stdlib.h>
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>

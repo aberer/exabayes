@@ -1,13 +1,10 @@
 #include <math.h>
 #include <assert.h>
-#include <stdlib.h>
 #include <inttypes.h>
 
 #include "common.h"
 #include "axml.h"
 #include "main-common.h"
-
-
 
 
 /* here are a few wrapper functions: we will not be using the standard

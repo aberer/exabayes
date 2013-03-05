@@ -5,7 +5,8 @@ WARN_FLAGS= --pedantic -Wall #  -Wunused-parameter -Wredundant-decls  -Wreturn-t
 LANG_FLAGS=-std=gnu99 # because of asm 
 
 
-AM_CFLAGS=-D__SIM_SSE3 -D_BAYESIAN -msse3 -D_GNU_SOURCE  -D_OPTIMIZED_FUNCTIONS
+
+AM_CFLAGS=-D__SIM_SSE3  -msse3 -D_GNU_SOURCE  -D_OPTIMIZED_FUNCTIONS   -D_BAYESIAN
 
 if WITH_DEBUG
 AM_CFLAGS+=-g3 -O0
@@ -31,9 +32,9 @@ if WITH_PLL
 ########
 # PLL  #
 ########
-OPT_SRC= $(srcpre)/main-pll.c $(srcpre)/main-common.c  $(srcppre)/evaluateGenericSpecial-pll.c $(srcppre)/fastDNAparsimony-pll.c $(srcppre)/makenewzGenericSpecial-pll.c  $(srcppre)/models-pll.c $(srcppre)/optimizeModel-pll.c  $(srcppre)/recom-pll.c $(srcppre)/searchAlgo-pll.c     $(srcppre)/utils-pll.c  $(srcppre)/bipartitionList-pll.c  $(srcppre)/evaluatePartialGenericSpecial-pll.c  $(srcppre)/genericParallelization-pll.c  $(srcppre)/mem_alloc-pll.c $(srcppre)/newviewGenericSpecial-pll.c  $(srcppre)/randomTree-pll.c $(srcppre)/restartHashTable-pll.c $(srcppre)/treeIO-pll.c $(srcppre)/trash-pll.c $(srcppre)/topologies-pll.c
+OPT_SRC= $(srcpre)/main-pll.c $(srcpre)/main-common.c  $(srcppre)/evaluateGenericSpecial-pll.c $(srcppre)/fastDNAparsimony-pll.c $(srcppre)/makenewzGenericSpecial-pll.c  $(srcppre)/models-pll.c $(srcppre)/optimizeModel-pll.c  $(srcppre)/recom-pll.c $(srcppre)/searchAlgo-pll.c     $(srcppre)/utils-pll.c  $(srcppre)/bipartitionList-pll.c  $(srcppre)/evaluatePartialGenericSpecial-pll.c    $(srcppre)/mem_alloc-pll.c $(srcppre)/newviewGenericSpecial-pll.c  $(srcppre)/randomTree-pll.c $(srcppre)/restartHashTable-pll.c $(srcppre)/treeIO-pll.c $(srcppre)/trash-pll.c $(srcppre)/topologies-pll.c # $(srcppre)/genericParallelization-pll.c
 OPT_HEAD= -I$(srcppre)
-FEATURE_FLAGS= -D_USE_PTHREADS -pthread #  -D_USE_ALLREDUCE
+# FEATURE_FLAGS= -D_USE_PTHREADS -pthread #  -D_USE_ALLREDUCE
 else  
 #########
 # EXAML #
