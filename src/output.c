@@ -234,15 +234,15 @@ static void printSubsRates(state *prState ,int model, int numSubsRates)
 {
   assert(prState->tr->partitionData[model].dataType = DNA_DATA);
   int i;
-  PRINT("Subs rates: ");
+  PRINT("Subs rates[%d]: ", model);
   for(i=0; i<numSubsRates; i++)
     PRINT("%d => %.3f, ", i, prState->tr->partitionData[model].substRates[i]);
     PRINT("\n");
-  PRINT("frequencies: ");
+  PRINT("frequencies[%d]: ", model);
   for(i=0; i<prState->frequRemem.numFrequRates; i++)
     PRINT("%d => %.3f, ", i, prState->tr->partitionData[model].frequencies[i]);
 
-  PRINT("\n\n");
+  PRINT("\n");
 }
 
 
@@ -274,8 +274,11 @@ void chainInfoOutput(state *curstate )
   
   PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",curstate->hastings, curstate->newprior, curstate->curprior);
   
-  printSubsRates(curstate, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
-  //printSubsRates(curstate->tr, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
+  for(int printModel=0; printModel<curstate->tr->NumberOfModels;printModel++)
+  printSubsRates(curstate, printModel, curstate->modelRemem.numSubsRates);
+    
+  PRINT("\n");
+  //printSubsRates(curstate, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
 //printf("numSubs: %d numFrequ: %d\n\n",curstate->modelRemem.numSubsRates,curstate->frequRemem.numFrequRates);
   
 #ifdef WITH_PERFORMANCE_MEASUREMENTS

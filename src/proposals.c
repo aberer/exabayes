@@ -151,14 +151,14 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
     {
 
 
-      /* *insertNode = isTip((*insertNode)->next->number, curstate->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back; */
+       *insertNode = isTip((*insertNode)->next->number, curstate->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back; 
 
-      *insertNode = (*insertNode)->next->back ;
+     // *insertNode = (*insertNode)->next->back ;
     }
   else 
     {
-      /* *insertNode = isTip((*insertNode)->next->next->number, curstate->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back; */
-      *insertNode = (*insertNode)->next->next->back;
+       *insertNode = isTip((*insertNode)->next->next->number, curstate->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back; 
+      //*insertNode = (*insertNode)->next->next->back;
     }
 
   /*
@@ -299,13 +299,19 @@ static void extended_spr_apply(state *instate, int pSubType)
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
   record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, instate->tr->numBranches);
 
-  Thorough = 0;
+ // Thorough = 0;
   // assert(tr->thoroughInsertion == 0);
   /* insertBIG wont change the BL if we are not in thorough mode */
 
   if(pSubType == STANDARD)
     {
-      insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
+     insertWithUnifBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
+     for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
+     {
+       instate->hastings*=instate->sprMoveRemem.nb->z[branchCount]/instate->brLenRemem.qz[branchCount];//multiply hastings by ratio of old value, now given at nb->z and new value, stored in qz. Important: First we look at the current value (nb->z) then at a former value (qz).
+     }
+   //  printf("hastings: %f\n", instate->hastings);
+      // insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
     }
   else if(pSubType == SPR_MAPPED)
     {
@@ -329,7 +335,7 @@ static void extended_spr_apply(state *instate, int pSubType)
 	instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
     }
 
-  /* TODO problem here? is not tip?? */
+  /* TODO problem here? is not tip?? FIXED: should never be a tip anymore. Possible since we are interested in edges and each edge connects to at least one inner node*/
 #if 0 
   evaluateGeneric(instate->tr, instate->sprMoveRemem.p->next->next, FALSE);
 #else 

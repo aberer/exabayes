@@ -1,21 +1,21 @@
 #NEXUS
 begin EXABAYES; 
-      initModelWeight 1
+      initModelWeight 0
       initGammaWeight 1
       initGammaExpWeight 1
 
-      INITSPRWEIGHT 0 
+      INITSPRWEIGHT 5 
 
       initSingleBranchWeight 1
       initSingleBranchExpWeight 1
       initSingleBranchBiunifWeight 1 
 
-      initModelBiunifWeight 1
-      initModelSingleBiunifWeight 1
-      initModelAllBiunifWeight 1
+      initModelBiunifWeight 0
+      initModelSingleBiunifWeight 0
+      initModelAllBiunifWeight 0
 
-      initModelPermBiunifWeight 1
-      initFrequenciesWeight 1
+      initModelPermBiunifWeight 3
+      initFrequenciesWeight 2
 
       initEsprMappedWeight 5
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]

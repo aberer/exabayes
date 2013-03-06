@@ -3,7 +3,7 @@
 #define _UTILS_TOPO_H
 
 void insertWithGenericBL (nodeptr insertNode, nodeptr branchNode, double *insertZ, double *branchNodeZ, double *neighbourZ ,  int numBranches);
-
+void insertWithUnifBL (nodeptr insertNode, nodeptr branchNode, int numBranches);
 
 
 #endif
