@@ -6,6 +6,7 @@
 
 #define STANDARD 0 
 #define SPR_MAPPED 1 
+#define SPR_ADJUST 2
 
 
 

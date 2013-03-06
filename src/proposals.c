@@ -243,15 +243,25 @@ static void extended_spr_apply(state *instate, int pSubType)
   /* initial remapping of BL of nodes adjacent to pruned node  */
   double zqr[NUM_BRANCHES];
 
+instate->hastings = 1; 
+    
   for(int i = 0; i < tr->numBranches; i++)
     {
       if(pSubType == STANDARD)
 	{
 	  zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];
+	
+	  instate->hastings *= log(zqr[i]);
 	}
       else if(pSubType == SPR_MAPPED)
 	{
 	  zqr[i] = instate->sprMoveRemem.nb->z[i] ; 
+	}
+      else if(pSubType == SPR_ADJUST)
+	{
+	  zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];  
+	  instate->hastings *= log(zqr[i]);
+	  zqr[i] = sqrt(zqr[i]);
 	}
       if(zqr[i] > zmax) zqr[i] = zmax;
       if(zqr[i] < zmin) zqr[i] = zmin;
@@ -291,7 +301,7 @@ static void extended_spr_apply(state *instate, int pSubType)
     }
 
 
-  instate->hastings = 1; 
+
   instate->newprior = 1; 
   instate->curprior = 1; 
 
@@ -299,6 +309,20 @@ static void extended_spr_apply(state *instate, int pSubType)
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
   record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, instate->tr->numBranches);
 
+  
+  
+   if(pSubType == STANDARD){
+  for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
+     {
+      instate->hastings/=log(curNode->z[branchCount]);
+     }
+   }else if(pSubType == SPR_ADJUST){
+  for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
+     {
+      instate->hastings/=(2*log(curNode->z[branchCount]));
+     }
+   }
+  
  // Thorough = 0;
   // assert(tr->thoroughInsertion == 0);
   /* insertBIG wont change the BL if we are not in thorough mode */
@@ -306,10 +330,11 @@ static void extended_spr_apply(state *instate, int pSubType)
   if(pSubType == STANDARD)
     {
      insertWithUnifBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
-     for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
+  /*   for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
      {
-       instate->hastings*=instate->sprMoveRemem.nb->z[branchCount]/instate->brLenRemem.qz[branchCount];//multiply hastings by ratio of old value, now given at nb->z and new value, stored in qz. Important: First we look at the current value (nb->z) then at a former value (qz).
+       instate->hastings/=log(instate->brLenRemem.qz[branchCount]);
      }
+     */
    //  printf("hastings: %f\n", instate->hastings);
       // insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
     }
@@ -327,6 +352,10 @@ static void extended_spr_apply(state *instate, int pSubType)
 
       /* TODO PERFORMANCE */
       /* newviewGeneric(tr, instate->sprMoveRemem.p, FALSE); */
+    }
+     else if(pSubType == SPR_ADJUST)
+    {
+      insertWithUnifBLScaled(instate->sprMoveRemem.p, instate->sprMoveRemem.q, 2.0,  instate->tr->numBranches);
     }
 
   if( (pSubType == SPR_MAPPED ) && remapBL) 
@@ -1307,7 +1336,8 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 
     case  E_SPR:
       pF->ptype = E_SPR;      
-      pF->pSubType = STANDARD; 
+      //pF->pSubType = STANDARD; //TODO change back to this and implement other option as propposal
+      pF->pSubType = SPR_ADJUST;
       pF->apply_func =  extended_spr_apply;
       pF->reset_func =  extended_spr_reset;
       pF->get_prior_ratio =   get_branch_length_prior;
