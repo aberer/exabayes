@@ -640,7 +640,20 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
       
        instate->hastings*=curv/new_value;
 	 break;
-	
+	 
+	case SINGLE_BIUNIF:
+	  drawPermutation(list, instate->modelRemem.numSubsRates);
+	 curv = instate->tr->partitionData[instate->modelRemem.model].substRates[list[state]];
+	 r =  drawRandBiUnif(curv);
+       new_value = r;
+      while(new_value> RATE_MAX|| new_value< RATE_MIN){
+      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+      }
+      
+       instate->hastings*=curv/new_value;
+	 break;
+	 
         default:
           assert(0);
         
@@ -1401,8 +1414,8 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 	
     case  UPDATE_MODEL_SINGLE_BIUNIF:
       pF->ptype = UPDATE_MODEL_SINGLE_BIUNIF;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  single_biunif_model_proposal_apply;
+      pF->pSubType = SINGLE_BIUNIF; 
+      pF->apply_func	=  simple_model_proposal_apply;
       pF->reset_func =  simple_model_proposal_reset;
       pF->get_prior_ratio =  get_branch_length_prior;
       break;
