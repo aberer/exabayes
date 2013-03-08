@@ -1414,8 +1414,8 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 	
     case  UPDATE_MODEL_SINGLE_BIUNIF:
       pF->ptype = UPDATE_MODEL_SINGLE_BIUNIF;
-      pF->pSubType = SINGLE_BIUNIF; 
-      pF->apply_func	=  simple_model_proposal_apply;
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  single_biunif_model_proposal_apply;
       pF->reset_func =  simple_model_proposal_reset;
       pF->get_prior_ratio =  get_branch_length_prior;
       break;
