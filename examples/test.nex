@@ -1,6 +1,6 @@
 #NEXUS
 begin EXABAYES; 
-      initModelWeight 0
+      initModelWeight 1
       initGammaWeight 1
       initGammaExpWeight 1
 
@@ -10,9 +10,9 @@ begin EXABAYES;
       initSingleBranchExpWeight 1
       initSingleBranchBiunifWeight 1 
 
-      initModelBiunifWeight 0
-      initModelSingleBiunifWeight 0
-      initModelAllBiunifWeight 0
+      initModelBiunifWeight 1
+      initModelSingleBiunifWeight 1
+      initModelAllBiunifWeight 1
 
       initModelPermBiunifWeight 3
       initFrequenciesWeight 2

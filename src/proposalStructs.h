@@ -10,6 +10,8 @@
 
 #define EXP_DISTR 1
 #define BIUNIF_DISTR 2
+#define BIUNIF_PERM_DISTR 3
+#define SINGLE_BIUNIF 4
 
 
 
