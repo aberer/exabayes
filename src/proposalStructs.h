@@ -8,6 +8,9 @@
 #define SPR_MAPPED 1 
 #define SPR_ADJUST 2
 
+#define EXP_DISTR 1
+#define BIUNIF_DISTR 2
+
 
 
 /* okay, so defining enums this way is rather save  */

@@ -341,7 +341,13 @@ instate->hastings = 1;
   else if(pSubType == SPR_MAPPED)
     {
       double *neighborZ = remapBL ? instate->sprMoveRemem.nbz :  instate->sprMoveRemem.nnbz; 
-
+      
+        if( remapBL ) 
+    {
+      for(int i = 0; i < tr->numBranches; ++i)
+	instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
+    }
+      
       insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, tr->numBranches);
 
 
@@ -358,11 +364,11 @@ instate->hastings = 1;
       insertWithUnifBLScaled(instate->sprMoveRemem.p, instate->sprMoveRemem.q, 2.0,  instate->tr->numBranches);
     }
 
-  if( (pSubType == SPR_MAPPED ) && remapBL) 
-    {
-      for(int i = 0; i < tr->numBranches; ++i)
-	instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
-    }
+//   if( (pSubType == SPR_MAPPED ) && remapBL) 
+//     {
+//       for(int i = 0; i < tr->numBranches; ++i)
+// 	instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
+//     }
 
   /* TODO problem here? is not tip?? FIXED: should never be a tip anymore. Possible since we are interested in edges and each edge connects to at least one inner node*/
 #if 0 
@@ -414,7 +420,7 @@ static void extended_spr_reset(state * instate)
 }
 
 
-
+//--------Alpha-Proposal-for-GAMMA-----------------------------------------------------------------
 
 double get_alpha_prior(state *curstate )
 {
@@ -425,7 +431,7 @@ double get_alpha_prior(state *curstate )
 
 
 
-//simple sliding window
+
 static void simple_gamma_proposal_apply(state * instate, int pSubType)
 {
   //TODO: add safety to max and min values
@@ -433,10 +439,21 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
   curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
   instate->gammaRemem.curAlpha = curv;
-  r = drawRandDouble();
-  mn = curv-(instate->gammaRemem.gm_sliding_window_w/2);
-  mx = curv+(instate->gammaRemem.gm_sliding_window_w/2);
-  newalpha = fabs(mn + r * (mx-mn));
+  
+  switch(pSubType)
+        {
+        case STANDARD://simple sliding window
+	  r = drawRandDouble();
+	  mn = curv-(instate->gammaRemem.gm_sliding_window_w/2);
+	  mx = curv+(instate->gammaRemem.gm_sliding_window_w/2);
+	  newalpha = fabs(mn + r * (mx-mn));
+	  break;
+        case EXP_DISTR:
+          newalpha  = drawRandExp(1/curv);
+          break;
+        default:
+          assert(0);
+        }
   /* Ensure always you stay within this range */
   if(newalpha > ALPHA_MAX) newalpha = ALPHA_MAX;
   if(newalpha < ALPHA_MIN) newalpha = ALPHA_MIN;
@@ -454,30 +471,31 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 }
 
 
-static void exp_gamma_proposal_apply(state * instate, int pSubType)
-{
-  double newalpha, curv;
-  curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
-  instate->gammaRemem.curAlpha = curv;
-  newalpha  = drawRandExp(1/curv);
-  
+// static void exp_gamma_proposal_apply(state * instate, int pSubType)
+// {
+//   double newalpha, curv;
+//   curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
+//   instate->gammaRemem.curAlpha = curv;
+//   newalpha  = drawRandExp(1/curv);
+//   
+// 
+//  
+//   /* Ensure always you stay within this range */
+//   while(newalpha > ALPHA_MAX || newalpha < ALPHA_MIN){
+//   if(newalpha > ALPHA_MAX) newalpha = 2*ALPHA_MAX-newalpha;
+//   if(newalpha < ALPHA_MIN) newalpha = 2*ALPHA_MIN-newalpha;
+//   }
+//   instate->hastings = (1/newalpha)*exp(-(1/newalpha)*curv)/((1/curv)*exp(-(1/curv)*newalpha)); //TODO do not ignore reflection
+//   /* instate->newprior = get_alpha_prior(instate);  */
+//   /* instate->curprior = get_alpha_prior(instate);  */
+//   
+//   instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
+//   
+//   makeGammaCats(instate->tr->partitionData[instate->modelRemem.model].alpha, instate->tr->partitionData[instate->modelRemem.model].gammaRates, 4, instate->tr->useMedian);
+// 
+//   evaluateGeneric(instate->tr, instate->tr->start, TRUE);
+// }
 
- 
-  /* Ensure always you stay within this range */
-  while(newalpha > ALPHA_MAX || newalpha < ALPHA_MIN){
-  if(newalpha > ALPHA_MAX) newalpha = 2*ALPHA_MAX-newalpha;
-  if(newalpha < ALPHA_MIN) newalpha = 2*ALPHA_MIN-newalpha;
-  }
-  instate->hastings = (1/newalpha)*exp(-(1/newalpha)*curv)/((1/curv)*exp(-(1/curv)*newalpha)); //TODO do not ignore reflection
-  /* instate->newprior = get_alpha_prior(instate);  */
-  /* instate->curprior = get_alpha_prior(instate);  */
-  
-  instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
-  
-  makeGammaCats(instate->tr->partitionData[instate->modelRemem.model].alpha, instate->tr->partitionData[instate->modelRemem.model].gammaRates, 4, instate->tr->useMedian);
-
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE);
-}
 
 static void simple_gamma_proposal_reset(state * instate)
 {
@@ -488,7 +506,7 @@ static void simple_gamma_proposal_reset(state * instate)
   evaluateGeneric(instate->tr, instate->tr->start, TRUE);
 }
 
-
+//------------------------------------------------------------------------------
 
 /* TODO we do not even use this function, do we? NOTE Now we do ;) */
 void penalize(state *curstate, int which_proposal, int acceptance)
@@ -758,6 +776,8 @@ static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRa
 }
 
 
+//--------Branch-Length_Proposals---------------------------------------------------
+
 double get_branch_length_prior( state *curstate)
 {//TODO decide on sensible prior
   return 1;  
@@ -859,7 +879,6 @@ static void set_branch_length_biunif(nodeptr p, int numBranches,state * s, boole
 
 static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
- //static double lambda=10; //TODO should be defined elsewhere. Also: must find lambda to yield good proposals
   
   int i;
   double newZValue;
@@ -971,65 +990,73 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 }
 
 
-/*
- * should be sliding window proposal
- */
 
-static void random_branch_length_proposal_apply(state * instate, int pSubType)
+
+static void random_branch_length_proposal_apply(state * instate, int pSubType)//llpqr
 {
-   
-  //for each branch get the current branch length
-  //pull a uniform like
-  //x = current, w =window
-  //uniform(x-w/2,x+w/2)
-  
-  
+
   const int num_branches = (instate->tr->mxtips * 2) - 3;
   int target_branch = drawRandInt(num_branches); 
   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
   
-  
-  //   printf( "apply bl: %p %f\n", p, p->z[0] );
-  set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+    switch(pSubType)
+        {
+        case STANDARD://simple sliding window
+	     //for each branch get the current branch length
+	    //pull a uniform like
+	    //x = current, w =window
+	    //uniform(x-w/2,x+w/2)
+	    set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+	  break;
+        case EXP_DISTR:
+	  set_branch_length_exp(p, instate->tr->numBranches, instate, TRUE);
+          break;
+	case BIUNIF_DISTR:
+	set_branch_length_biunif(p, instate->tr->numBranches, instate, TRUE);
+	  break;
+        default:
+          assert(0);
+        }
+
 
   instate->brLenRemem.single_bl_branch = target_branch;
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
-  //   return TRUE;
+  evaluateGeneric(instate->tr, p, FALSE); 
+  //evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
 }
 
 
-static void biunif_branch_length_proposal_apply(state * instate, int pSubType)
-{
-   
-  //for one branch get the current branch length
-  //pull a uniform like
-  //x = current,
-  //uniform(x/2,x*2)
-  
-  
-  const int num_branches = (instate->tr->mxtips * 2) - 3;
-  int target_branch = drawRandInt(num_branches); 
-  node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
- 
-  //set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
-  set_branch_length_biunif(p, instate->tr->numBranches, instate, TRUE);
+// static void biunif_branch_length_proposal_apply(state * instate, int pSubType)
+// {
+//    
+//   //for one branch get the current branch length
+//   //pull a uniform like
+//   //x = current,
+//   //uniform(x/2,x*2)
+//   
+//   
+//   const int num_branches = (instate->tr->mxtips * 2) - 3;
+//   int target_branch = drawRandInt(num_branches); 
+//   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
+//  
+//   //set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+//   set_branch_length_biunif(p, instate->tr->numBranches, instate, TRUE);
+// 
+//   instate->brLenRemem.single_bl_branch = target_branch;
+//   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
+//   //   return TRUE;
+// }
 
-  instate->brLenRemem.single_bl_branch = target_branch;
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
-  //   return TRUE;
-}
-
-static void exp_branch_length_proposal_apply(state * instate, int pSubType)
-{
-  const int num_branches = (instate->tr->mxtips * 2) - 3;
-  int target_branch = drawRandInt(num_branches); 
-  node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
-  
-  set_branch_length_exp(p, instate->tr->numBranches, instate, TRUE);
-
-  instate->brLenRemem.single_bl_branch = target_branch;
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
-}
+// static void exp_branch_length_proposal_apply(state * instate, int pSubType)
+// {
+//   const int num_branches = (instate->tr->mxtips * 2) - 3;
+//   int target_branch = drawRandInt(num_branches); 
+//   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
+//   
+//   set_branch_length_exp(p, instate->tr->numBranches, instate, TRUE);
+// 
+//   instate->brLenRemem.single_bl_branch = target_branch;
+//   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
+// }
 
 static void random_branch_length_proposal_reset(state * instate)
 {
@@ -1042,7 +1069,8 @@ static void random_branch_length_proposal_reset(state * instate)
   reset_branch_length(p, instate->tr->numBranches);
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
   //update_all_branches(instate, TRUE);
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO should this not be evaluateGeneric(...,FALSE)?
+  evaluateGeneric(instate->tr, instate->tr->start, FALSE);
+ // evaluateGeneric(instate->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from instate->tr->start, that is: evaluateGeneric(instate->tr, instate->tr->start, TRUE);
   instate->brLenRemem.single_bl_branch = -1;
 }
 
@@ -1263,8 +1291,8 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 
     case  UPDATE_SINGLE_BL_EXP:
       pF->ptype = UPDATE_SINGLE_BL_EXP;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  exp_branch_length_proposal_apply;
+      pF->pSubType = EXP_DISTR; 
+      pF->apply_func	=  random_branch_length_proposal_apply;
       pF->reset_func =  random_branch_length_proposal_reset;
       pF->get_prior_ratio =  get_branch_length_prior ;
       break;
@@ -1279,16 +1307,16 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 
     case  UPDATE_GAMMA_EXP:
       pF->ptype = UPDATE_GAMMA_EXP;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  exp_gamma_proposal_apply;
+      pF->pSubType = EXP_DISTR; 
+      pF->apply_func	=  simple_gamma_proposal_apply;
       pF->reset_func =  simple_gamma_proposal_reset;
       pF->get_prior_ratio =   get_alpha_prior;
       break;
 
     case  UPDATE_SINGLE_BL_BIUNIF:
       pF->ptype = UPDATE_SINGLE_BL_BIUNIF;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  biunif_branch_length_proposal_apply;
+      pF->pSubType = BIUNIF_DISTR; 
+      pF->apply_func	=  random_branch_length_proposal_apply;
       pF->reset_func =  random_branch_length_proposal_reset;
       pF->get_prior_ratio =  get_branch_length_prior;
       break;
@@ -1456,7 +1484,7 @@ void step(state *curstate)
       expensiveVerify(tr); 
 
       // just for validation 
-      if(fabs(tr->startLH - tr->likelihood) > 1.0E-15)
+      if(fabs(tr->startLH - tr->likelihood) > 1.0E-15)//TODO change back to 1.0E-15
 	{
 	  PRINT("WARNING: LH diff %.20f\n", tr->startLH - tr->likelihood);
 	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", curstate->currentGeneration, tr->likelihood, tr->startLH);

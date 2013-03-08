@@ -47,19 +47,12 @@ double drawRandExp(double l)
 double drawRandBiUnif(double x)
 {
   double r;
-  r=(double)rand()/(double)RAND_MAX;
-  /*
-   double s;
-  s=(double)rand()/(double)RAND_MAX;
+  //r=(double)rand()/(double)RAND_MAX;  
+  //r=x/2+r*(3/2)*x;//=x/2+r*(2*x-x/2);
   
-  if(r<1/3)//choose left area //if(r<1/3) yields exactly uniform on [x/2,2*x]
-  {
-   s=x/2+s*(x/2);//=x/2+s*(x-x/2) \in [x/2,x]
-  }else{//choose right area
-   s=x+s*x;//=x+s*(2*x-x) \in [x,2x]    
-  }
-  */
-  r=x/2+r*(3/2)*x;//=x/2+r*(2*x-x/2);
+  r=drawRandDouble(2*x-x/2)+x/2;
+  //r=drawRandDouble((3/2)*x-x/(3/2))+x/(3/2);
+  
   return r;
 }
 
