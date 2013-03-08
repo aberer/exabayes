@@ -628,7 +628,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
       }
       }
       break;
-      case BIUNIF_PERM_DISTR:
+      case BIUNIF_PERM_DISTR://TODO NOT used. Lower values than before (without subType)
 	  drawPermutation(list, instate->modelRemem.numSubsRates);
 	 curv = instate->tr->partitionData[instate->modelRemem.model].substRates[list[state]];
 	 r =  drawRandBiUnif(curv);
@@ -641,7 +641,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
        instate->hastings*=curv/new_value;
 	 break;
 	 
-	case SINGLE_BIUNIF:
+	case SINGLE_BIUNIF://TODO not used. Figure out error
 	  drawPermutation(list, instate->modelRemem.numSubsRates);
 	 curv = instate->tr->partitionData[instate->modelRemem.model].substRates[list[state]];
 	 r =  drawRandBiUnif(curv);
@@ -729,46 +729,46 @@ edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
 // }
 
 
-// static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
-// {
-//   //record the old one 
-//    instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
-//   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
-//   int state, randNumber;
-//   double new_value,curv;
-//   double r;
-//   
-//   randNumber=drawRandInt(instate->modelRemem.numSubsRates);
-//     int perm[instate->modelRemem.numSubsRates];
-//   drawPermutation(perm, instate->modelRemem.numSubsRates);
-//   
-//    instate->hastings=1.0;
-//   for(state = 0;state<randNumber ; state ++)
-//     {
-//       
-//       
-//       curv = instate->tr->partitionData[instate->modelRemem.model].substRates[perm[state]];
-//       r =  drawRandBiUnif(curv);
-// 
-//       new_value = r;
-// 
-//       while(new_value> RATE_MAX|| new_value< RATE_MIN){
-//       if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
-//       if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
-//       }
-//       
-//        instate->hastings*=curv/new_value;
-//       edit_subs_rates(instate->tr,instate->modelRemem.model, perm[state], new_value);
-//       
-//     }
-//       
-//   
-// 
-//   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
-// 
-//   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
-//   
-// }
+static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
+{
+  //record the old one 
+   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
+  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  int state, randNumber;
+  double new_value,curv;
+  double r;
+  
+  randNumber=drawRandInt(instate->modelRemem.numSubsRates);
+    int perm[instate->modelRemem.numSubsRates];
+  drawPermutation(perm, instate->modelRemem.numSubsRates);
+  
+   instate->hastings=1.0;
+  for(state = 0;state<randNumber ; state ++)
+    {
+      
+      
+      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[perm[state]];
+      r =  drawRandBiUnif(curv);
+
+      new_value = r;
+
+      while(new_value> RATE_MAX|| new_value< RATE_MIN){
+      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+      }
+      
+       instate->hastings*=curv/new_value;
+      edit_subs_rates(instate->tr,instate->modelRemem.model, perm[state], new_value);
+      
+    }
+      
+  
+
+  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  
+}
 
 
 static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
@@ -1337,8 +1337,8 @@ void printProposalType(proposal_type which_proposal)
     case UPDATE_MODEL_PERM_BIUNIF: 
       printf("UPDATE_MODEL_PERM_BIUNIF\n");
       break;  
-
-      /* TODO proposal add PROPOSALADD  */
+//PROPOSALADD printProposalType NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
+      
 
     default : 
       assert(0); 
@@ -1430,8 +1430,10 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 
     case  UPDATE_MODEL_PERM_BIUNIF:
       pF->ptype = UPDATE_MODEL_PERM_BIUNIF;
-      pF->pSubType = BIUNIF_PERM_DISTR; 
-      pF->apply_func	=  simple_model_proposal_apply;
+      //pF->pSubType = BIUNIF_PERM_DISTR; 
+      pF->pSubType = STANDARD; 
+      pF->apply_func	=  perm_biunif_model_proposal_apply;
+      //pF->apply_func	=  simple_model_proposal_apply;
       pF->reset_func =  simple_model_proposal_reset;
       pF->get_prior_ratio =  get_branch_length_prior;
       break;
@@ -1461,6 +1463,8 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
       pF->reset_func =  extended_spr_reset;
       pF->get_prior_ratio =   get_branch_length_prior;
       break;
+      
+      //PROPOSALADD getProposalFunctions NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
 
     default : 
       assert(0); 
