@@ -30,7 +30,7 @@ void printInfo(state *chain, const char *format, ...)
 {
   if(processID == 0)
     {
-      printf("[chain %d / gen %d] ", chain->id, chain->currentGeneration); 
+      printf("[run %d / heat %d / gen %d] ", chain->id / numberOfRuns, chain->couplingId, chain->currentGeneration); 
       va_list args;
       va_start(args, format);     
       vprintf(format, args );
@@ -64,6 +64,12 @@ static node *find_tip( node *n, tree *tr )
 
 
 
+double getChainHeat(state *chain )
+{
+  return (double)(1. / (1. + HEAT_FACTOR * (double)chain->couplingId)); 
+}
+
+
 /* this function needs to be called when branch lengths are read from
    a file. If this is the case, these BLs are not transformed
    correctly. This function corrects for that.  */
@@ -90,6 +96,13 @@ void traverseInitCorrect(nodeptr p, int *count, tree *tr )
 }
 
 
+void initParamDump(tree *tr, paramDump *dmp)
+{  
+  dmp->topo = setupTopol(tr->mxtips); 
+  dmp->infoPerPart = calloc(tr->NumberOfModels, sizeof(perPartitionInfo));
+  dmp->branchLengths = calloc(2 * tr->mxtips, sizeof(double));
+}
+
 
 void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamStruct **initParamsPtr)
 {
@@ -97,6 +110,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
   /* we MUST use the ncl parser currently */
   assert(0); 
 #endif
+
 
   FILE *treeFH = NULL; 
   if( numberOfStartingTrees > 0 )
@@ -106,93 +120,103 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
   /* initParamStruct *initParams = *initParamsPtr;  */
   
   parseConfigWithNcl(configFileName, initParamsPtr);
+  
+  numberOfRuns =   (*initParamsPtr)->numIndiChains; 
+  numberCoupledChains = (*initParamsPtr)->numCoupledChains; 
+  int totalNumChains =numberOfRuns * numberCoupledChains; 
 
-  printf("num indi chains in init is %d\n", (*initParamsPtr)->numIndiChains); 
-
-  *resultIndiChains = calloc( (*initParamsPtr)->numIndiChains, sizeof(state)); 
+  printf("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", numberOfRuns, numberCoupledChains, totalNumChains ); 
+  *resultIndiChains = calloc( totalNumChains , sizeof(state));   
 
   unsigned int bvLength = 0;   
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength);
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
-  
-  for(int i = 0; i < (*initParamsPtr)->numIndiChains; ++i)
-    {
-      state *theState = (*resultIndiChains) + i; 
-      theState->id = i; 
-      initDefaultValues(theState, tr);
-      addInitParameters(theState, *initParamsPtr); 
-      normalizeProposalWeights(theState); 
 
-      theState->bvHash = ht; 
-      theState->tr = tr; 
+  
+  for(int i = 0; i < totalNumChains; ++i)
+    { 
+      printf("setting up chain %d\n" ,i); 
+
+      state *theChain = *resultIndiChains +   i; 
+      theChain->bvHash = ht; 
+      theChain->tr = tr; 
+      theChain->couplingId = i % (*initParamsPtr)->numCoupledChains ; 
+      
+      theChain->id = i; 
+
+      initDefaultValues(theChain, tr);
+      addInitParameters(theChain, *initParamsPtr); 
+      normalizeProposalWeights(theChain); 
 
       /* init the param dump  */
-      theState->dump.topo = setupTopol(tr->mxtips); 
-
-      theState->dump.infoPerPart = calloc(tr->NumberOfModels, sizeof(perPartitionInfo));
-      theState->dump.branchLengths = calloc(2 * tr->mxtips, sizeof(double));
-      theState->dump.fracchanges = calloc(tr->NumberOfModels, sizeof(double)); 
+      initParamDump(tr, &(theChain->dump)); 
       
-      for(int i = 0; i < tr->NumberOfModels; ++i )	
+      for(int i = 0; i < tr->NumberOfModels; ++i ) 
 	initReversibleGTR(tr,i);
 
-      memcpy(theState->dump.fracchanges, tr->fracchanges, sizeof(double) * tr->NumberOfModels); 
-      theState->dump.fracchange =  tr->fracchange; 
-
-      if( i < numberOfStartingTrees )
+      
+      if( i % numberCoupledChains == 0)
 	{
-	  boolean hasBranchLength = readTreeWithOrWithoutBL(tr, treeFH); 
-
-	  if(hasBranchLength)
+	  /* initialize with new tree  */
+	  if( i  / numberCoupledChains < numberOfStartingTrees )
 	    {
-	      int count = 0; 
-	      traverseInitCorrect(tr->start->back, &count, tr ) ;
-	      assert(count == 2 * tr->mxtips -3); 
+	      boolean hasBranchLength = readTreeWithOrWithoutBL(tr, treeFH); 
+
+	      if(hasBranchLength)
+		{
+		  int count = 0; 
+		  traverseInitCorrect(tr->start->back, &count, tr ) ;
+		  assert(count == 2 * tr->mxtips -3); 
+		}
+	      else 
+		{
+		  /* set some standard branch lengths */
+		  /* TODO based on prior?   */
+		  int count = 0; 
+		  traverseInitFixedBL( tr->start->back, &count, tr, INIT_BRANCH_LENGTHS );
+		  assert(count  == 2 * tr->mxtips - 3);	  	      
+		}
+
+	      if(processID == 0)
+		printf("initializing chain %d with provided starting tree\n", i); 
 	    }
 	  else 
 	    {
-	      /* set some standard branch lengths */
-	      /* TODO based on prior?   */
+	      makeRandomTree(tr);
+	      if(processID == 0)
+		printf("initializing chain %d with random tree\n", i); 
+
+	      /* TODO maybe prior for initial branch lengths   */
 	      int count = 0; 
 	      traverseInitFixedBL( tr->start->back, &count, tr, INIT_BRANCH_LENGTHS );
-	      assert(count  == 2 * tr->mxtips - 3);	  	      
+	      assert(count  == 2 * tr->mxtips - 3);	  
 	    }
-
-	  if(processID == 0)
-	    printf("initializing chain %d with provided starting tree\n", i); 
 	}
       else 
 	{
-	  makeRandomTree(tr);
-	  if(processID == 0)
-	    printf("initializing chain %d with random tree\n", i); 
+	  /* initialize with previous state */
+	  applyChainStateToTree( (*resultIndiChains) + i-1, tr); 
 
-	  /* TODO maybe prior for initial branch lengths   */
-	  int count = 0; 
-	  traverseInitFixedBL( tr->start->back, &count, tr, INIT_BRANCH_LENGTHS );
-	  assert(count  == 2 * tr->mxtips - 3);	  
+	  if(processID == 0)
+	    printf("initialize heated chain %d from previous state\n", i); 
 	}
 
-      /* TODO these are dummy values, we can do better */
       tr->start = find_tip(tr->start, tr );
 
       evaluateGeneric(tr, tr->start, TRUE); 
 
-      /* now save the tree to a chain state */
-      saveTreeStateToChain(theState, tr); 
+      /* now save the tree to a chain chain */
+      saveTreeStateToChain(theChain, tr); 
       
       if(processID == 0)
 	{	  
-	  makeChainFileNames(theState, i); 
-	  initializeOutputFiles(theState); 
+	  makeChainFileNames(theChain, i); 
+	  initializeOutputFiles(theChain); 
 	}
-    }  
+    }
 
   if(numberOfStartingTrees > 0)
     fclose(treeFH); 
-
-  if(processID == 0)
-    printf("initialized %d independent chains\n", (*initParamsPtr)->numIndiChains ); 
 }
 
 
@@ -286,10 +310,6 @@ void applyChainStateToTree(state *chain, tree *tr)
   traverseAndTreatBL(tr->start->back, tr, chain->dump.branchLengths, &cnt, TOPO_RESTORE); 
   assert(cnt == 2 * tr->mxtips -3); 
 
-  /* TODO we never verified, if it is necessary to copy the fracchange (just an assumption)  */
-  memcpy(tr->fracchanges, chain->dump.fracchanges, sizeof(double) * tr->NumberOfModels);
-  tr->fracchange = chain->dump.fracchange;
-  
   /* restore model parameters */
   for(int i = 0; i < tr->NumberOfModels; ++i)
     {
@@ -306,7 +326,7 @@ void applyChainStateToTree(state *chain, tree *tr)
 
   evaluateGeneric(tr, tr->start, TRUE ); 
 
-  printInfo(chain, "switching to chain %d, lnl=%f\n", chain->id, tr->likelihood); 
+  /* printInfo(chain, "switching to run %d / heat %d, lnl=%f\n", chain->id / numberOfRuns, chain->couplingId, tr->likelihood);  */
   if(processID == 0)
     {
 #ifdef DEBUG_BL
@@ -348,8 +368,6 @@ void saveTreeStateToChain(state *chain, tree *tr)
       memcpy(info->frequencies, tr->partitionData[i].frequencies, 4 * sizeof(double)); 
     }  
 
-  memcpy(chain->dump.fracchanges, tr->fracchanges, tr->NumberOfModels * sizeof(double));
-  chain->dump.fracchange = tr->fracchange;
 
   if(processID == 0)
     {

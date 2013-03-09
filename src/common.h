@@ -84,4 +84,9 @@ typedef  unsigned int nat ;
 /* a lot of debug information for the asdsf */
 #define ASDSF_BE_VERBOSE 
 
+
+/* MC3 stuff for development */
+#define HEAT_FACTOR 1.0 
+#define SWITCH_AFTER_GEN 2  	/* number of generations after  which we try to switch states   */
+
 #endif

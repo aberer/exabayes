@@ -15,8 +15,6 @@
 #include "chain.h"
 
 
-
-
 extern double masterTime; 
 
 
@@ -126,6 +124,71 @@ theState->proposalWeights[E_SPR_MAPPED] = 0.0;
 
 
 
+
+/* TODO adapt likelihood */
+void switchChainState(state *chains, int numChain)
+{
+  if(numChain == 1)
+    return;   
+
+  int chainA = drawRandInt(numChain); 
+  int chainB = chainA; 
+  while(chainA == chainB)
+    chainB = drawRandInt(numChain); 
+
+  /* 
+     IMPORTANT TODO
+
+     this currently assumes that we have a non-informative
+     prior. Allow for changes!
+  */
+
+  double heatA = getChainHeat(chains + chainA ) , 
+    heatB  = getChainHeat(chains + chainB); 
+  
+  double lnlA = chains[chainA].likelihood,
+    lnlB = chains[chainB].likelihood; 
+  
+  double accRatio = (pow(lnlA, heatB  ) * pow(lnlB, heatA  ) )  / (pow(lnlA, heatA  ) * pow(lnlB, heatB  ) ); 
+
+  /* do the swap */
+  if( drawRandDouble()  < accRatio)
+    {
+      int tmp = chains[chainA].couplingId ; 
+      chains[chainA].couplingId =  chains[chainB].couplingId; 
+      chains[chainB].couplingId = tmp ; 
+      
+      if(processID == 0)
+	printf("coupled chains %d  and %d switch\n", chainA, chainB); 
+    }  
+}
+
+
+
+void executeOneRun(state *chains, int gensToRun )
+{
+  tree *tr = chains[0].tr; 
+
+  for(int genCtr = 0; genCtr < gensToRun; genCtr += SWITCH_AFTER_GEN)
+    {
+      for(int chainCtr = 0; chainCtr < numberCoupledChains; ++chainCtr)
+	{      
+	  state *curChain = chains + chainCtr; /* TODO  */
+	  applyChainStateToTree(curChain, tr);
+
+	  for(int i = 0; i < SWITCH_AFTER_GEN; ++i)
+	    step(curChain);
+	  	  
+	  saveTreeStateToChain(curChain, tr);
+	}
+
+      switchChainState(chains, numberCoupledChains);
+    }
+}
+
+
+
+
 void mcmc(tree *tr, analdef *adef)
 { 
   
@@ -137,44 +200,31 @@ void mcmc(tree *tr, analdef *adef)
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
   initParamStruct *initParams = NULL;
 
+  
   initializeIndependentChains(tr, &indiChains, &initParams); 
 
   /* TODO  remove this global again */
-  numberOfChains = initParams->numIndiChains; 
+  numberOfRuns = initParams->numIndiChains; 
+  numberCoupledChains = initParams->numCoupledChains; 
+
   int diagFreq = initParams->diagFreq; 
-
-  printf("num indi chains is %d\n", numberOfChains); 
-
-  evaluateGeneric(tr, tr->start, TRUE);
-  PRINT( "after reset start: %f\n\n", tr->likelihood );
 
   boolean hasConverged = FALSE;   
   while(NOT hasConverged)
-    {
-      for(int i = 0; i < numberOfChains; ++i)
-	{
-	  state *curChain = indiChains + i;
-	  applyChainStateToTree(curChain, tr);
-
-	  for(int j = 0; j < diagFreq; ++j)
-	    {
-	      step(curChain);
-	    }
-
-	  saveTreeStateToChain(curChain, tr);
-	}
+    {      
+      for(int i = 0; i < numberOfRuns; ++i)
+	executeOneRun(indiChains + (i * numberCoupledChains), diagFreq); 
       
-      hasConverged = convergenceDiagnostic(indiChains, numberOfChains); 
+      hasConverged = convergenceDiagnostic(indiChains, numberOfRuns); 
     }
 
   if(processID == 0)
     {
-      for(int i = 0; i < numberOfChains; ++i)
+      for(int i = 0; i < numberOfRuns; ++i)
 	finalizeOutputFiles(indiChains + i);
       PRINT("\nConverged after %d generations\n",  indiChains[0].currentGeneration);
       PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
-    }  
-
+    } 
 }
 
 

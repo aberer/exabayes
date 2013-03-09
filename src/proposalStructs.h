@@ -112,7 +112,6 @@ typedef struct
 typedef struct 
 {
   /* topology */
-  /* bestlist *topo;  */
   topol *topo; 
   
   /* branch lengths  */
@@ -120,9 +119,6 @@ typedef struct
 
   /* substitution parameter */
   perPartitionInfo *infoPerPart; 
-  double *fracchanges; 		/* TODO both needed? */
-  double fracchange; 
-
   
   /* to avoid that anything goes wrong */
   double likelihood; 
@@ -147,6 +143,8 @@ typedef struct
   
   double penaltyFactor; //change to the probability of picking a proposal
 
+  double likelihood; 
+
   double eSprStopProb; 
 
   spr_move_remembrance sprMoveRemem; 
@@ -167,16 +165,14 @@ typedef struct
   int numGen; 
   int currentGeneration; 
   int samplingFrequency; 
-  
 
-  /* DEVEL */
-  /* int proposalSubType;  */
-  /* END */
-
+  /* indicates how hot the chain is (i = 0 => cold chain), may change! */
+  int couplingId; 
 
   /* new stuff that we need when having multiple chains  */
   FILE *topologyFile; 
   FILE *outputParamFile; 
+  /* unique id, also determines */
   int id; 
 
   /* these things are needed for convergence diagnostics, but we

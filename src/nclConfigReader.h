@@ -25,6 +25,7 @@ double initEsprMappedWeight;
   int samplingFrequency; 
   int numIndiChains; 
   int diagFreq; 
+  int numCoupledChains; 
 
 } initParamStruct ; 
 

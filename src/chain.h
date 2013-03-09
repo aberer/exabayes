@@ -14,4 +14,5 @@ void applyChainStateToTree(state *chain, tree *tr);
 void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z ); 
 void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamStruct **initParamsPtr); 
 void printInfo(state *chain, const char *format, ...);
+double getChainHeat(state *chain ); 
 #endif

@@ -274,8 +274,11 @@ void chainInfoOutput(state *curstate )
   
   PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",curstate->hastings, curstate->newprior, curstate->curprior);
   
-  for(int printModel=0; printModel<curstate->tr->NumberOfModels;printModel++)
-  printSubsRates(curstate, printModel, curstate->modelRemem.numSubsRates);
+  if(curstate->tr->NumberOfModels < 10)
+    {
+      for(int printModel=0; printModel<curstate->tr->NumberOfModels;printModel++)
+	printSubsRates(curstate, printModel, curstate->modelRemem.numSubsRates);
+    }
     
   PRINT("\n");
   //printSubsRates(curstate, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);

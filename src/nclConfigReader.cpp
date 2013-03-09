@@ -35,6 +35,7 @@ public:
 
   void paramBadInit()
   {
+    initParam->numCoupledChains = -1; 
     initParam->numIndiChains = -1; 
     initParam->initSPRWeight  = -1 ;
     initParam->initGammaWeight  = -1 ; 
@@ -118,6 +119,8 @@ initParam->initEsprMappedWeight = value.ConvertToDouble();
 	      initParam->numIndiChains = value.ConvertToInt();
 	    else if(key.EqualsCaseInsensitive("diagFreq"))
 	      initParam->diagFreq = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("numCoupledChains"))
+	      initParam->numCoupledChains = value.ConvertToInt();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }
@@ -126,7 +129,8 @@ initParam->initEsprMappedWeight = value.ConvertToDouble();
 
   void assertInitialized()
   {
-    assert(initParam->diagFreq != 1 ); 
+    assert(initParam->numCoupledChains != -1); 
+    assert(initParam->diagFreq != -1 ); 
     assert(initParam->numIndiChains != -1); 
     assert(initParam->initModelWeight != -1); 
     assert(initParam->initGammaWeight != -1); 

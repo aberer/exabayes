@@ -1518,10 +1518,17 @@ void step(state *curstate)
   /* acceptance = fmin(1,(curstate->hastings) * 
      (exp(curstate->newprior-curstate->curprior)) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));*/
 
+  
+
   acceptance = fmin(1,(curstate->hastings) * 
-		    pF.get_prior_ratio(curstate) 
-		    /* (curstate->newprior/curstate->curprior) */
-		    * (exp(tr->likelihood - tr->startLH)));
+		    /* TODO for chain swapping ratio must be replaced again by proper prior   */
+		    pow(
+			pF.get_prior_ratio(curstate) 
+			/* (curstate->newprior/curstate->curprior) */
+			* (exp(tr->likelihood - tr->startLH)), 
+			getChainHeat(curstate)) 
+		    );
+
 
   assert(which_proposal < NUM_PROPOSALS); 
       
@@ -1557,13 +1564,7 @@ void step(state *curstate)
       curstate->totalRejected++;
       //curstate->proposalWeights[which_proposal] *= curstate->penaltyFactor; 
       penalize(curstate, which_proposal, 0);
-      
-      /* TODO remove, if not needed any more */
-/* #if 0  */
-      /* evaluateGeneric(tr, tr->start, FALSE); */
-/* #else  */
-/* #endif */
-  
+
       expensiveVerify(tr); 
 
       // just for validation 
@@ -1591,7 +1592,7 @@ void step(state *curstate)
 #endif
 
 
-  if((curstate->currentGeneration % curstate->samplingFrequency) == 0)
+  if(curstate->id % numberCoupledChains == 0 &&    (curstate->currentGeneration % curstate->samplingFrequency) == 0)
     {
       if(processID == 0)
 	{
@@ -1600,6 +1601,8 @@ void step(state *curstate)
 	}
       addBipartitionsToHash(tr, curstate ); 
     }
+
+  curstate->likelihood = tr->likelihood; 
   
   curstate->currentGeneration++; 
 }
