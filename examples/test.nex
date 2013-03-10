@@ -2,6 +2,7 @@
 begin EXABAYES; 
 
 
+
       initGammaWeight 1
       initGammaExpWeight 1
 
@@ -19,6 +20,7 @@ begin EXABAYES;
       initModelAllBiunifWeight 0
 
       initModelPermBiunifWeight 0
+
       initFrequenciesWeight 2
 
 

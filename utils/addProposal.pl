@@ -10,6 +10,7 @@
 
 #################################################################################
 $proposalName="E_SPR_MAPPED"; 
+$proposalSubType="SPR_MAPPED";
 $weightName="initEsprMappedWeight";
 $initWeight="0.0";
 
@@ -129,8 +130,24 @@ while (my $line = <READFILE>) {
 if ($line =~ /PROPOSALADD prop_funcs/){
 print WRITEFILE "{ $proposalName, $applyName, $resetName, $priorName},\n" ;
 }
+elsif ($line =~ /PROPOSALADD printProposalType/){
+print WRITEFILE "    case $proposalName:\n";
+print WRITEFILE "      printf(\"$proposalName\\n\");\n";
+print WRITEFILE "      break;\n" ;
+}elsif ($line =~ /PROPOSALADD getProposalFunctions/){
+print WRITEFILE " case $proposalName:\n";
+print WRITEFILE "      pF->ptype = $proposalName;\n";
+print WRITEFILE "      pF->pSubType = $proposalSubType;\n";
+print WRITEFILE "      pF->apply_func =  $applyName;\n";
+print WRITEFILE "      pF->reset_func =  $resetName;\n";
+print WRITEFILE "      pF->get_prior_ratio =   $priorName;\n";
+print WRITEFILE "      break;\n\n"
+}
+
 print WRITEFILE $line;
 }
+
+
 
 close READFILE;
 close WRITEFILE;
