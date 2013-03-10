@@ -1522,11 +1522,10 @@ void step(state *curstate)
 
   acceptance = fmin(1,(curstate->hastings) * 
 		    /* TODO for chain swapping ratio must be replaced again by proper prior   */
-		    pow(
-			pF.get_prior_ratio(curstate) 
-			/* (curstate->newprior/curstate->curprior) */
-			* (exp(tr->likelihood - tr->startLH)), 
-			getChainHeat(curstate)) 
+		    pF.get_prior_ratio(curstate) 
+		    /* (curstate->newprior/curstate->curprior) */
+		    * (exp(tr->likelihood - tr->startLH) * getChainHeat(curstate))
+		
 		    );
 
 

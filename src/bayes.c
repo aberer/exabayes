@@ -149,7 +149,15 @@ void switchChainState(state *chains, int numChain)
   double lnlA = chains[chainA].likelihood,
     lnlB = chains[chainB].likelihood; 
   
-  double accRatio = (pow(lnlA, heatB  ) * pow(lnlB, heatA  ) )  / (pow(lnlA, heatA  ) * pow(lnlB, heatB  ) ); 
+  double 
+    aB = lnlA *  heatB,
+    bA = lnlB *  heatA,
+    aA = lnlA * heatA,
+    bB =  lnlB *  heatB; 
+
+  double accRatio = ( aB + bA )  - (aA + bB ); 
+
+  /* printf("%f,%f,%f,%f\t%f,%f,%f,%f\taccRatio = %f\n", lnlA, lnlB, heatA, heatB,  aB, bA, aA, bB, accRatio);  */
 
   /* do the swap */
   if( drawRandDouble()  < accRatio)
@@ -158,9 +166,9 @@ void switchChainState(state *chains, int numChain)
       chains[chainA].couplingId =  chains[chainB].couplingId; 
       chains[chainB].couplingId = tmp ; 
       
-      if(processID == 0)
-	printf("coupled chains %d  and %d switch\n", chainA, chainB); 
-    }  
+      /* if(processID == 0) */
+      /* 	printf("coupled chains %d  and %d switch\n", chainA, chainB);  */
+    } 
 }
 
 
