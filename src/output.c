@@ -1,12 +1,9 @@
-#include "globals.h"
 #include "common.h"
-
-
 #include "config.h"
 #include "axml.h"
 #include "proposalStructs.h"
 #include "main-common.h"
-
+#include "globals.h"
 
 #include "output.h"
 

@@ -1,7 +1,7 @@
 #ifndef _PROPOSAL_STRUCTS_H
 #define _PROPOSAL_STRUCTS_H
 
-
+#include "rng.h"
 
 
 #define STANDARD 0 
@@ -183,6 +183,12 @@ typedef struct
   hashtable *bvHash; 
   
   paramDump dump;   
+
+  /* RNG */
+  randKey_t rKey; 
+  randCtr_t rCtr; 
+  
+
 } state;
 
 

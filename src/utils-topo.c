@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "axml.h"
+#include "proposalStructs.h"
 #include "randomness.h"
 
 #include "main-common.h"
@@ -25,8 +26,11 @@ void insertWithGenericBL (nodeptr insertNode, nodeptr branchNode, double *insert
   hookup(insertNode, insertNode->back, insertZ, numBranches);
 }
 
-void insertWithUnifBL (nodeptr insertNode, nodeptr branchNode, int numBranches)
+void insertWithUnifBL (state* chain, nodeptr insertNode, nodeptr branchNode, int numBranches)
 {
+  /* BUG: drawRandDouble does not take an argument  */
+  assert(0); 
+
   double r;
   nodeptr thirdNode = branchNode->back;
   double branchNodeZ[numBranches];
@@ -34,7 +38,7 @@ void insertWithUnifBL (nodeptr insertNode, nodeptr branchNode, int numBranches)
   
   for(int i=0; i<numBranches;i++)
   {
-   r=drawRandDouble(branchNode->z[i]);
+   /* r=drawRandDouble(branchNode->z[i]); */
    branchNodeZ[i]=r;
    neighbourZ[i]=1-r; 
   }
@@ -47,6 +51,10 @@ void insertWithUnifBL (nodeptr insertNode, nodeptr branchNode, int numBranches)
 
 void insertWithUnifBLScaled(nodeptr insertNode, nodeptr branchNode, double scale, int numBranches)
 {
+  /* BUG: drawRandDouble does not take an argument  */
+  assert(0); 
+
+
   double r;
   nodeptr thirdNode = branchNode->back;
   double branchNodeZ[numBranches];
@@ -54,7 +62,7 @@ void insertWithUnifBLScaled(nodeptr insertNode, nodeptr branchNode, double scale
   
   for(int i=0; i<numBranches;i++)
   {
-   r=drawRandDouble(scale*branchNode->z[i]);
+   /* r=drawRandDouble(scale*branchNode->z[i]); */
    branchNodeZ[i]=r;
    neighbourZ[i]=1-r; 
   }

@@ -256,7 +256,7 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
 
   tr->useMedian = FALSE;
 
-  seed = -1 ; 
+  int seed = -1 ;
 
   strcpy(configFileName, "\0");
 
@@ -325,9 +325,13 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       case 'c': 
 	strcpy(configFileName, optarg); 
 	break; 
-      case 'p':
-	seed = atoi(optarg); 
-	break; 
+      case 'p': 
+	{
+	  seed = atoi(optarg);
+	  rGlobalKey.v[0] = seed; 
+	  rGlobalKey.v[1] = 0xbadcafe; /* how funny */
+	  break; 
+	}
       default:
 	errorExit(-1);
       }

@@ -20,7 +20,7 @@ void expensiveVerify(tree *tr);
 
 /* static int spr_depth = 0; */
 
-nodeptr select_random_subtree(tree *tr); 
+nodeptr select_random_subtree(state *chain, tree *tr);
 void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue);
 
 
@@ -142,7 +142,7 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 {
   int 
     result, 
-    r = drawRandDouble(); 
+    r = drawRandDouble01(curstate); 
   
   radius++;   
 
@@ -200,7 +200,7 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
     direction++;
   }
   */
-  double randprop = drawRandDouble();
+  double randprop = drawRandDouble01(curstate);
   result = randprop < curstate->eSprStopProb; 
   
   return result; 
@@ -226,7 +226,7 @@ static void extended_spr_apply(state *instate, int pSubType)
 
   
   nodeptr    
-    p = select_random_subtree(tr);
+    p = select_random_subtree(instate,tr);
 
 #if 0
   parsimonySPR(p, tr);
@@ -274,7 +274,7 @@ instate->hastings = 1;
   nodeptr initNode = NULL; 
   nodeptr curNode = NULL; 
   boolean remapBL = FALSE; 
-  if(drawRandDouble() > 0.5)
+  if(drawRandDouble01(instate) > 0.5)
     {
       curNode = instate->sprMoveRemem.nb; 
       remapBL = TRUE ; 
@@ -436,20 +436,20 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 {
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
-  instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate, instate->tr->NumberOfModels);
   curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
   instate->gammaRemem.curAlpha = curv;
   
   switch(pSubType)
         {
         case STANDARD://simple sliding window
-	  r = drawRandDouble();
+	  r = drawRandDouble01(instate);
 	  mn = curv-(instate->gammaRemem.gm_sliding_window_w/2);
 	  mx = curv+(instate->gammaRemem.gm_sliding_window_w/2);
 	  newalpha = fabs(mn + r * (mx-mn));
 	  break;
         case EXP_DISTR:
-          newalpha  = drawRandExp(1/curv);
+          newalpha  = drawRandExp(instate,1/curv);
           break;
         default:
           assert(0);
@@ -559,7 +559,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
 {
   //TODO: add safety to max and min values
   //record the old ones
-  instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate, instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set of model params,
   //probably with dirichlet proposal
@@ -584,7 +584,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
 	      numberOfEdits=instate->modelRemem.numSubsRates;
 	      break;
 	      case BIUNIF_PERM_DISTR:
-	    numberOfEdits=drawRandInt(instate->modelRemem.numSubsRates);
+		numberOfEdits=drawRandInt(instate, instate->modelRemem.numSubsRates);
 		break;
 	} 
   
@@ -599,7 +599,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
         case STANDARD: //using the branch length sliding window for a test    
 	  changeState=state;
 	  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
-	  r =  drawRandDouble();
+	  r =  drawRandDouble01(instate);
 	  mn = curv-(instate->modelRemem.rt_sliding_window_w/2);
 	  mx = curv+(instate->modelRemem.rt_sliding_window_w/2);
 	
@@ -612,12 +612,12 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
 	  break;
         
 	case BIUNIF_DISTR:
-	changeState=drawRandInt(instate->modelRemem.numSubsRates);
+	  changeState=drawRandInt(instate, instate->modelRemem.numSubsRates);
       if(list[changeState]!=1)
       {
       list[changeState]=1;;      
       curv = instate->tr->partitionData[instate->modelRemem.model].substRates[changeState];
-      r =  drawRandBiUnif(curv);
+      r =  drawRandBiUnif(instate, curv);
       new_value = r;
       instate->hastings*=curv/new_value;
  
@@ -629,9 +629,9 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
       }
       break;
       case BIUNIF_PERM_DISTR://TODO NOT used. Lower values than before (without subType)
-	  drawPermutation(list, instate->modelRemem.numSubsRates);
+	drawPermutation(instate, list, instate->modelRemem.numSubsRates);
 	 curv = instate->tr->partitionData[instate->modelRemem.model].substRates[list[state]];
-	 r =  drawRandBiUnif(curv);
+	 r =  drawRandBiUnif(instate, curv);
        new_value = r;
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
       if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
@@ -642,9 +642,9 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
 	 break;
 	 
 	case SINGLE_BIUNIF://TODO not used. Figure out error
-	  drawPermutation(list, instate->modelRemem.numSubsRates);
+	  drawPermutation(instate,list, instate->modelRemem.numSubsRates);
 	 curv = instate->tr->partitionData[instate->modelRemem.model].substRates[list[state]];
-	 r =  drawRandBiUnif(curv);
+	 r =  drawRandBiUnif(instate, curv);
        new_value = r;
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
       if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
@@ -732,15 +732,15 @@ edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
 static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
 {
   //record the old one 
-   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   int state, randNumber;
   double new_value,curv;
   double r;
   
-  randNumber=drawRandInt(instate->modelRemem.numSubsRates);
+  randNumber=drawRandInt(instate,instate->modelRemem.numSubsRates);
     int perm[instate->modelRemem.numSubsRates];
-  drawPermutation(perm, instate->modelRemem.numSubsRates);
+    drawPermutation(instate,perm, instate->modelRemem.numSubsRates);
   
    instate->hastings=1.0;
   for(state = 0;state<randNumber ; state ++)
@@ -748,7 +748,7 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
       
       
       curv = instate->tr->partitionData[instate->modelRemem.model].substRates[perm[state]];
-      r =  drawRandBiUnif(curv);
+      r =  drawRandBiUnif(instate,curv);
 
       new_value = r;
 
@@ -774,12 +774,12 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
 static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
   //record the old one //TODO sufficient to store single value.
-   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
 
-  int  randState=drawRandInt(instate->modelRemem.numSubsRates);
+  int  randState=drawRandInt(instate,instate->modelRemem.numSubsRates);
 
   double new_value,curv;
   double r;
@@ -788,7 +788,7 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
   
 
   curv = instate->tr->partitionData[instate->modelRemem.model].substRates[randState];
-  r =  drawRandBiUnif(curv);
+  r =  drawRandBiUnif(instate,curv);
 
   new_value = r;
       
@@ -809,7 +809,7 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
 static void all_biunif_model_proposal_apply(state *instate, int pSubType)
 {
   //record the old one 
-   instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
@@ -823,7 +823,7 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
   for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
     {
       curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
-      r =  drawRandBiUnif(curv);
+      r =  drawRandBiUnif(instate,curv);
 
       new_value = r;
 
@@ -867,7 +867,7 @@ double get_branch_length_prior( state *curstate)
 }
 
 //setting this out to allow for other types of setting
-static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
   int i;
   double newZValue;
@@ -883,7 +883,7 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
 	  assert(p->z[i] == p->back->z[i]);
 	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
 	}
-      r = drawRandDouble();
+      r = drawRandDouble01(chain);
 
       real_z = -log(p->z[i]) * s->tr->fracchange;
       
@@ -911,7 +911,7 @@ static void set_branch_length_sliding_window(nodeptr p, int numBranches,state * 
     }
 }
 
-static void set_branch_length_biunif(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
   int i;
   double newZValue;
@@ -929,7 +929,7 @@ static void set_branch_length_biunif(nodeptr p, int numBranches,state * s, boole
 	}
       
       real_z = -log(p->z[i]) * s->tr->fracchange; //convert from exponential to real form
-      r = drawRandBiUnif(real_z);//draw from [real_z/2,2*real_z]
+      r = drawRandBiUnif(chain, real_z);//draw from [real_z/2,2*real_z]
 
     
       newZValue = exp(-(fabs( r/s->tr->fracchange )));//convert to exponential form
@@ -960,7 +960,7 @@ static void set_branch_length_biunif(nodeptr p, int numBranches,state * s, boole
     }
 }
 
-static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
 {
   
   int i;
@@ -978,7 +978,7 @@ static void set_branch_length_exp(nodeptr p, int numBranches,state * s, boolean 
 	}
    //   r = drawRandExp(lambda);
        real_z = -log(p->z[i]) * s->tr->fracchange;
-	r = drawRandExp(1.0/real_z);
+       r = drawRandExp(chain, 1.0/real_z);
   
 	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
 
@@ -1079,7 +1079,7 @@ static void random_branch_length_proposal_apply(state * instate, int pSubType)
 {
 
   const int num_branches = (instate->tr->mxtips * 2) - 3;
-  int target_branch = drawRandInt(num_branches); 
+  int target_branch = drawRandInt(instate,num_branches); 
   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
   
     switch(pSubType)
@@ -1089,13 +1089,13 @@ static void random_branch_length_proposal_apply(state * instate, int pSubType)
 	    //pull a uniform like
 	    //x = current, w =window
 	    //uniform(x-w/2,x+w/2)
-	    set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
+	  set_branch_length_sliding_window(instate,p, instate->tr->numBranches, instate, TRUE);
 	  break;
         case EXP_DISTR:
-	  set_branch_length_exp(p, instate->tr->numBranches, instate, TRUE);
+	  set_branch_length_exp(instate,p, instate->tr->numBranches, instate, TRUE);
           break;
 	case BIUNIF_DISTR:
-	set_branch_length_biunif(p, instate->tr->numBranches, instate, TRUE);
+	  set_branch_length_biunif(instate, p, instate->tr->numBranches, instate, TRUE);
 	  break;
         default:
           assert(0);
@@ -1184,7 +1184,7 @@ static void recordFrequRates(tree *tr, int model, int numFrequRates, double *pre
 
 void frequency_proposal_apply(state * instate, int pSubType)
 {
-   instate->frequRemem.model=drawRandInt(instate->tr->NumberOfModels);
+  instate->frequRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
   recordFrequRates(instate->tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
 
   
@@ -1197,7 +1197,7 @@ void frequency_proposal_apply(state * instate, int pSubType)
     {
       curv = instate->tr->partitionData[instate->frequRemem.model].frequencies[state];
       //r[state] =  drawRandDouble(); 
-    r[state] =  drawRandBiUnif(curv); 
+      r[state] =  drawRandBiUnif(instate,curv); 
     instate->hastings*=curv/r[state];
     }
     
@@ -1253,7 +1253,7 @@ static void simple_model_proposal_reset(state * instate)
   //evaluateGeneric(instate->tr, instate->tr->start, FALSE);
 }
 
-nodeptr select_random_subtree(tree *tr)
+nodeptr select_random_subtree(state *chain, tree *tr)
 {
   nodeptr 
     p;
@@ -1261,9 +1261,9 @@ nodeptr select_random_subtree(tree *tr)
   do
     {
       int 
-        exitDirection = drawRandInt(3); 
+        exitDirection = drawRandInt(chain,3); 
      
-      int r = drawRandInt(tr->mxtips - 2) ; 
+      int r = drawRandInt(chain,tr->mxtips - 2) ; 
 
       p = tr->nodep[ r + 1 + tr->mxtips];
       
@@ -1476,7 +1476,7 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 static proposal_type select_proposal_type(state * instate)
 {
   instate->newprior = instate->brLenRemem.bl_prior; //TODO Why is this here? 
-  return drawSampleProportionally(instate->proposalWeights, NUM_PROPOSALS) ; 
+  return drawSampleProportionally(instate,instate->proposalWeights, NUM_PROPOSALS) ; 
 }
 
 
@@ -1516,7 +1516,7 @@ void step(state *curstate)
 
   //proposalTime += gettime() - t;
   /* decide upon acceptance */
-  testr = drawRandDouble();
+  testr = drawRandDouble01(curstate);
 
   //should look something like 
   /* acceptance = fmin(1,(curstate->hastings) * 
@@ -1595,7 +1595,7 @@ void step(state *curstate)
 #endif
 
 
-  if(curstate->id % numberCoupledChains == 0 &&    (curstate->currentGeneration % curstate->samplingFrequency) == 0)
+  if(curstate->couplingId == 0 &&    (curstate->currentGeneration % curstate->samplingFrequency) == 0)
     {
       if(processID == 0)
 	{

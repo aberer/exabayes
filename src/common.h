@@ -86,7 +86,7 @@ typedef  unsigned int nat ;
 
 
 /* MC3 stuff for development */
-#define HEAT_FACTOR 10.0 
+#define HEAT_FACTOR 2.
 #define SWITCH_AFTER_GEN 1  	/* number of generations after  which we try to switch states   */
 
 #endif

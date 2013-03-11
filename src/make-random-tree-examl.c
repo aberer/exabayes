@@ -67,7 +67,7 @@ static void makePermutation(int *perm, int n, tree *tr)
 
   for (i = 1; i <= n; i++) 
     {    
-      k =  drawRandInt(n + 1 - i);
+      k =  drawGlobalRandIntBound(n + 1 - i);
 
       assert(i + k <= n);
       
@@ -131,7 +131,7 @@ void makeRandomTree(tree *tr)
 
       assert(branchCounter == ((2 * (tr->ntips - 1)) - 3));
       
-      randomBranch = branches[drawRandInt(branchCounter)];
+      randomBranch = branches[drawGlobalRandIntBound(branchCounter)];
       
       insertTaxon(p->back, randomBranch, tr->numBranches);      
     }

@@ -130,11 +130,13 @@ void switchChainState(state *chains, int numChain)
 {
   if(numChain == 1)
     return;   
-
-  int chainA = drawRandInt(numChain); 
-  int chainB = chainA; 
+  
+  /* randCtr_t r = drawGlobalRandInt();  */
+    
+  int chainA = drawGlobalRandIntBound(numChain), 
+   chainB = chainA; 
   while(chainA == chainB)
-    chainB = drawRandInt(numChain); 
+    chainB = drawGlobalRandIntBound(numChain); 
 
   /* 
      IMPORTANT TODO
@@ -160,14 +162,14 @@ void switchChainState(state *chains, int numChain)
   /* printf("%f,%f,%f,%f\t%f,%f,%f,%f\taccRatio = %f\n", lnlA, lnlB, heatA, heatB,  aB, bA, aA, bB, accRatio);  */
 
   /* do the swap */
-  if( drawRandDouble()  < accRatio)
+  if( drawGlobalDouble01()  < accRatio)
     {
       int tmp = chains[chainA].couplingId ; 
       chains[chainA].couplingId =  chains[chainB].couplingId; 
       chains[chainB].couplingId = tmp ; 
       
-      /* if(processID == 0) */
-      /* 	printf("coupled chains %d  and %d switch\n", chainA, chainB);  */
+      if(processID == 0)
+      	printf("coupled chains %d  and %d switch\n", chainA, chainB);
     } 
 }
 
@@ -199,8 +201,10 @@ void executeOneRun(state *chains, int gensToRun )
 
 void mcmc(tree *tr, analdef *adef)
 { 
+
   
-  initRNG(seed);
+  
+  /* initRNG(seed); */
 
   /* TODO have removed that -- problematic?   */
   /* assert( isTip(tr->start->number, tr->mxtips )); */

@@ -1,10 +1,13 @@
-
+#include "rng.h"
 
 #ifdef _INCLUDE_DEFINITIONS
 
+randKey_t rGlobalKey ; 
+randCtr_t rGlobalCtr; 
+
 /* more global variables =(  */
 char configFileName[1024]; 
-int seed; 
+/* int seed;  */
 
 char tree_file[1024]; 
 char byteFileName[1024]; 
@@ -21,9 +24,13 @@ int numberOfStartingTrees = 0;
 int numberOfRuns = 0; 
 int numberCoupledChains = 0; 
 
+
+
 #else 
 
-extern int seed; 
+/* global rng stuff  */
+extern randKey_t rGlobalKey ; 
+extern randCtr_t rGlobalCtr; 
 
 extern int processID; 
 extern char run_id[1024]; 

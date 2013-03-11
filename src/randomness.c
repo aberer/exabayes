@@ -2,65 +2,137 @@
 #include <assert.h>
 #include <inttypes.h>
 
+#include "rng.h"
+
 #include "common.h"
 #include "axml.h"
 #include "main-common.h"
+#include "proposalStructs.h"
+#include "globals.h"
+#include "randomness.h"
+
+
+
+
+
+/* 
+   notice new convention: 
+   
+   * chain-specific random numbers (e.g., proposals, acceptance) are
+     created from randCtr_t and randKey_t and => this way we easily
+     can reset the rng
+
+   * random numbers that are needed in a global context (e.g.,
+     switching chains) are created from a global rng. (see global
+     variables)
+     
+   * for the ctr for the chain-specific stuf: first int is the
+     generation, second a ctr (since we may need more numbers for each
+     step, starting from 0)
+
+ */
 
 
 /* here are a few wrapper functions: we will not be using the standard
    random number generator forever. */
 
 
-void initRNG(uint64_t seedHere)
+static void inc_global()
 {
-  PRINT("initializing RNG with seed %d\n", seedHere);   
-  srand(seedHere);
+  if(rGlobalCtr.v[0] == 2147483645) /* roughly what a int32_t can hold */
+    {
+      rGlobalCtr.v[1]++; 
+      rGlobalCtr.v[0] = 0;       
+    }
+  else 
+    rGlobalCtr.v[0]++; 
+  
+  assert(rGlobalCtr.v[1] < 2147483645); 
 }
 
 
+randCtr_t drawGlobalRandInt()
+{
+  randCtr_t result = exa_rand(rGlobalKey, rGlobalCtr); 
+  inc_global();
+  return result; 
+}
+
+int drawGlobalRandIntBound(int upperBound)
+{
+  randCtr_t r = drawGlobalRandInt();
+  return r.v[0] % upperBound; 
+}
+
+
+
+double drawGlobalDouble01()
+{
+  randCtr_t result  = exa_rand(rGlobalKey, rGlobalCtr);   
+  return u01_closed_open_32_53(result.v[1]) ; 
+}
+
+
+
+/* chain specific  */
 
 
 
 /* uniform r in  [0,upperBound-1] */
-int drawRandInt(int upperBound)
+int drawRandInt(state *chain, int upperBound )
 {
-  return rand() % upperBound; 
+  chain->rCtr.v[0] =  chain->currentGeneration; 
+  randCtr_t r = exa_rand(chain->rKey, chain->rCtr); 
+  chain->rCtr.v[1]++;   
+  return r.v[0] % upperBound; 
+}
+
+
+/* uniform r in [0,1) */
+double drawRandDouble01(state *chain)
+{
+  chain->rCtr.v[0] = chain->currentGeneration; 
+  randCtr_t r = exa_rand(chain->rKey, chain->rCtr); 
+  chain->rCtr.v[1]++; 
+  return u01_closed_open_32_53(r.v[1]); 
 }
 
 
 
-/* uniform r in [0,1] */
-double drawRandDouble()
-{
-  return (double)rand()/(double)RAND_MAX; 
+double drawRandExp(state *chain, double lambda)
+{  
+  chain->rCtr.v[0] =  chain->currentGeneration; 
+  randCtr_t r = exa_rand(chain->rKey, chain->rCtr); 
+  chain->rCtr.v[1]++; 
+  return -log(r.v[0] )/ lambda; 
 }
 
-double drawRandExp(double l)
+
+double drawRandBiUnif(state *chain, double x)
 {
-  double r;
-  r=(double)rand()/(double)RAND_MAX;
-  r=-log(r)/l;
+  double r = drawRandDouble01(chain) *  (2*x-x/2) + x / (3/2) ; 
   return r; 
 }
 
+
 //Given x this function randomly draws from [x/2,2*x] 
-double drawRandBiUnif(double x)
-{
-  double r;
-  //r=(double)rand()/(double)RAND_MAX;  
-  //r=x/2+r*(3/2)*x;//=x/2+r*(2*x-x/2);
+/* double drawRandBiUnif(double x) */
+/* { */
+/*   double r; */
+/*   //r=(double)rand()/(double)RAND_MAX;   */
+/*   //r=x/2+r*(3/2)*x;//=x/2+r*(2*x-x/2); */
   
-  r=drawRandDouble(2*x-x/2)+x/2;
-  //r=drawRandDouble((3/2)*x-x/(3/2))+x/(3/2);
+/*   r=drawRandDouble(2*x-x/2)+x/2; */
+/*   //r=drawRandDouble((3/2)*x-x/(3/2))+x/(3/2); */
   
-  return r;
-}
+/*   return r; */
+/* } */
 
 
 /* draw r according to distribution given by weights. NOTE sum of weights is not required to be 1.0*/
-int drawSampleProportionally( double *weights, int numWeight )
+int drawSampleProportionally(state *chain,  double *weights, int numWeight )
 {
-  double r = drawRandDouble();
+  double r = drawRandDouble01(chain);
   
   double sum=0.0;
   float lower_bound = 0.0;
@@ -89,7 +161,7 @@ int drawSampleProportionally( double *weights, int numWeight )
 }
 
 //get random permutation of [0,n-1]
-void drawPermutation(int* perm, int n)
+void drawPermutation(state *chain, int* perm, int n)
 {
   int i;
   int randomNumber;
@@ -97,25 +169,25 @@ void drawPermutation(int* perm, int n)
   
   for(i=1 ; i<n ; i++){
   
-    randomNumber = drawRandInt(i+1);
-   // randomNumber=rand() % (i+1);
-   // randomNumber=rand();
+    randomNumber = drawRandInt(chain, i+1);
+    // randomNumber=rand() % (i+1);
+    // randomNumber=rand();
 
     if(randomNumber==i){
-    perm[i]=i;
+      perm[i]=i;
     }else{
-    perm[i]=perm[randomNumber];
-    perm[randomNumber]=i;
+      perm[i]=perm[randomNumber];
+      perm[randomNumber]=i;
     }
   }
   
-   /*for(i=0 ; i<n ; i++){
-     printf("%d ",perm[i]);
+  /*for(i=0 ; i<n ; i++){
+    printf("%d ",perm[i]);
 
     
-  }
-   printf("\n");
-    */
+    }
+    printf("\n");
+  */
 } 
 
 

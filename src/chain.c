@@ -17,6 +17,8 @@
 
 #include "bayes-topo.h"
 
+#include "randomness.h"
+
 
 
 /* #define DEBUG_BL */
@@ -154,6 +156,15 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       for(int i = 0; i < tr->NumberOfModels; ++i ) 
 	initReversibleGTR(tr,i);
 
+      /* init rng */
+      theChain->rCtr.v[0] = 0; 
+      theChain->rCtr.v[1] = 0; 
+      randCtr_t r = drawGlobalRandInt();
+      theChain->rKey.v[0] = r.v[0]; 
+      theChain->rKey.v[1] = r.v[1]; 
+      if(processID == 0)
+	printf("initialized chain %d with seed %d,%d\n", theChain->id, theChain->rKey.v[0], theChain->rKey.v[1]); 
+      
       
       if( i % numberCoupledChains == 0)
 	{

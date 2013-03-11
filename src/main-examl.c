@@ -328,20 +328,20 @@ double gettime(void)
 #endif
 }
 
-int gettimeSrand(void)
-{
-#ifdef WIN32
-  time_t tp;
-  struct tm localtm;
-  tp = time(NULL);
-  localtm = *localtime(&tp);
-  return 24*60*60*localtm.tm_yday + 60*60*localtm.tm_hour + 60*localtm.tm_min  + localtm.tm_sec;
-#else
-  struct timeval ttime;
-  gettimeofday(&ttime , NULL);
-  return ttime.tv_sec + ttime.tv_usec;
-#endif
-}
+/* int gettimeSrand(void) */
+/* { */
+/* #ifdef WIN32 */
+/*   time_t tp; */
+/*   struct tm localtm; */
+/*   tp = time(NULL); */
+/*   localtm = *localtime(&tp); */
+/*   return 24*60*60*localtm.tm_yday + 60*60*localtm.tm_hour + 60*localtm.tm_min  + localtm.tm_sec; */
+/* #else */
+/*   struct timeval ttime; */
+/*   gettimeofday(&ttime , NULL); */
+/*   return ttime.tv_sec + ttime.tv_usec; */
+/* #endif */
+/* } */
 
 double randum (long  *seed)
 {

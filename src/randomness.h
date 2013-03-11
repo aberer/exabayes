@@ -1,9 +1,22 @@
+#ifndef _RANDOMNESS_H
+#define _RANDOMNESS_H
+
+int drawGlobalRandIntBound(int upperBound); 
+randCtr_t drawGlobalRandInt(); 
+double drawGlobalDouble01();
+
+int drawRandInt(state *chain, int upperBound); 
+double drawRandDouble01(state *chain);
+double drawRandExp(state *chain, double lambda);
+double drawRandBiUnif(state *chain, double x);
+int drawSampleProportionally(state *chain,  double *weights, int numWeight ); 
+void drawPermutation(state *chain, int* perm, int n); 
+#endif
 
 
-int drawRandInt(int upperBound); 
-double drawRandDouble(); 
-double drawRandExp(double l);
-double drawRandBiUnif(double x);
-int drawSampleProportionally( double *weights, int numWeight ) ; 
-void initRNG(uint64_t seedHere); 
-void drawPermutation(int* perm, int n);
+
+
+
+
+
+
