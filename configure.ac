@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.0.1],[bla@bla.org])
-AM_INIT_AUTOMAKE(  exabayes , 0.0.1 )
+AC_INIT([exabayes],[0.1],[exabayes@googlegroups.com]) # correct? 
+AM_INIT_AUTOMAKE(  exabayes , 0.1 )
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([src/config.h])
 
@@ -12,12 +12,16 @@ AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])
 AM_SILENT_RULES([yes])
 
 
+
+# configures the ncl config reader 
+AC_CONFIG_SUBDIRS([lib/ncl-2.1.18])
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 
-AX_EXT
 
+# AX_EXT
 
 dnl AX_MPI()
 

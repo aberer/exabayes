@@ -1,5 +1,13 @@
 AUTOMAKE_OPTIONS=foreign
 
+
+
+
+
+SUBDIRS = ./lib/ncl-2.1.18/
+
+
+
 WARN_FLAGS= --pedantic -Wall #  -Wunused-parameter -Wredundant-decls  -Wreturn-type  -Wswitch-default -Wunused-value -Wimplicit  -Wimplicit-function-declaration  -Wimplicit-int -Wimport  -Wunused  -Wunused-function  -Wunused-label -Wno-int-to-pointer-cast -Wbad-function-cast -Wnested-externs  -Wold-style-definition -Wpointer-sign -Wextra -Wredundant-decls -Wunused -Wunused-function -Wunused-parameter -Wunused-value  -Wunused-variable -Wformat  -Wformat-nonliteral -Wparentheses -Wsequence-point -Wuninitialized -Wundef -Wbad-function-cast #   -Wstrict-prototypes   -Wdeclaration-after-statement  -Wmissing-prototypes  
 LANG_FLAGS=-std=gnu99 # because of asm 
 
@@ -34,7 +42,7 @@ bin_PROGRAMS=exabayes
 SRC+=src/bayes-topo.h src/common.h src/convergence.h			\
 src/main-common.h src/output.h src/proposalStructs.h src/treeRead.h	\
 src/chain.h src/globals.h src/nclConfigReader.h src/proposals.h		\
-src/randomness.h src/utils-topo.h$ (srcpre)/rng.h
+src/randomness.h src/utils-topo.h $(srcpre)/rng.h
 
 
 
@@ -88,10 +96,16 @@ endif
 
 exabayes_SOURCES= $(SRC) $(OPT_SRC)
 
-AM_CFLAGS+=$(OPT_HEAD) -Ilib/Random123-1.07/include
+AM_CFLAGS+=$(OPT_HEAD) -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS) $(LANG_FLAGS)
 AM_CXXFLAGS=$(AM_CFLAGS)
-AM_LDFLAGS=-lm -lncl -L/usr/local/lib/ncl/
+exabayes_LDADD=./lib/ncl-2.1.18/ncl/.libs/libncl.a
+AM_LDFLAGS=-lm
 
 
-EXTRA_DIST=lib/Random123-1.07
+EXTRA_DIST=lib/Random123-1.07 #  ./utils/defaultRun.sh
+
+
+
+clean-local: 
+	-rm -rf *.o exabayes

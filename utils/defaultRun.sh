@@ -64,9 +64,9 @@ make -j $numCores
 
 
 if [ -f ./exabayes ]; then
-    echo "calling exabayes as LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/ncl  $baseCall"
+    echo "calling exabayes as   $baseCall"
     wait 
-    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/ncl $baseCall    
+    $baseCall    
 fi
 
 
