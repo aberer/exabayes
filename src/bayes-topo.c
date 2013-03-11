@@ -181,6 +181,6 @@ boolean restoreTree (topol *tpl, tree *tr)
   
   tr->nextnode   = tpl->nextnode;    
 
-  evaluateGeneric(tr, tr->start, TRUE);
+  evaluateGenericWrapper(tr, tr->start, TRUE);
   return TRUE;
 }

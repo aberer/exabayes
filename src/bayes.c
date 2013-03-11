@@ -27,26 +27,6 @@ void applyChainStateToTree(state *chain, tree *tr);
 
 
 
-/* call this for verification after the lnl has been evaluated somehow */
-void expensiveVerify(tree *tr)
-{
-#ifdef DEBUG_LNL_VERIFY
-  double val1 = tr->likelihood; 
-  evaluateGeneric(tr, tr->start, TRUE); 
-
-  if(processID == 0)
-    {
-      if(fabs (tr->likelihood - val1 ) > 0.1)
-      printf("WARNING: found in expensive evaluation: likelihood difference is %f (with before/after)\t%f\t%f\n", fabs (tr->likelihood - val1 ), val1, tr->likelihood); 
-      assert(fabs (tr->likelihood - val1 ) < 0.1);   
-    }
-  
-#endif
-}
-
-
-
-
 void makeRandomTree(tree *tr); 
 
 #ifdef _USE_NCL_PARSER
@@ -179,20 +159,34 @@ void executeOneRun(state *chains, int gensToRun )
 {
   tree *tr = chains[0].tr; 
 
-  for(int genCtr = 0; genCtr < gensToRun; genCtr += SWITCH_AFTER_GEN)
+  if(numberCoupledChains > 1 )
     {
-      for(int chainCtr = 0; chainCtr < numberCoupledChains; ++chainCtr)
-	{      
-	  state *curChain = chains + chainCtr; /* TODO  */
-	  applyChainStateToTree(curChain, tr);
+      for(int genCtr = 0; genCtr < gensToRun; genCtr += SWITCH_AFTER_GEN)
+	{
+	  for(int chainCtr = 0; chainCtr < numberCoupledChains; ++chainCtr)
+	    {      
+	      state *curChain = chains + chainCtr; /* TODO */
+	      applyChainStateToTree(curChain, tr);
 
-	  for(int i = 0; i < SWITCH_AFTER_GEN; ++i)
-	    step(curChain);
+	      for(int i = 0; i < SWITCH_AFTER_GEN; ++i)
+		step(curChain);
 	  	  
-	  saveTreeStateToChain(curChain, tr);
-	}
+	      saveTreeStateToChain(curChain, tr);
+	    }
 
-      switchChainState(chains, numberCoupledChains);
+	  switchChainState(chains, numberCoupledChains);
+	}
+    }
+  else 
+    {
+      
+      state *curChain = chains; 
+      applyChainStateToTree(curChain, tr);
+      
+      for(int genCtr = 0; genCtr < gensToRun; genCtr++)
+	step(curChain);
+
+      saveTreeStateToChain(curChain, tr); 
     }
 }
 
@@ -201,17 +195,11 @@ void executeOneRun(state *chains, int gensToRun )
 
 void mcmc(tree *tr, analdef *adef)
 { 
-
   
-  
-  /* initRNG(seed); */
-
-  /* TODO have removed that -- problematic?   */
-  /* assert( isTip(tr->start->number, tr->mxtips )); */
-
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
   initParamStruct *initParams = NULL;
 
+  timeIncrement = gettime();
   
   initializeIndependentChains(tr, &indiChains, &initParams); 
 

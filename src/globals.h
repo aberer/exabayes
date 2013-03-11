@@ -25,6 +25,10 @@ int numberOfRuns = 0;
 int numberCoupledChains = 0; 
 
 
+/* for crude performance measurements */
+double timeIncrement = 0;  
+
+
 
 #else 
 
@@ -52,4 +56,7 @@ extern int numberOfStartingTrees;
 
 extern int numberOfRuns; 
 extern int numberCoupledChains; 
+
+
+extern double timeIncrement;  
 #endif

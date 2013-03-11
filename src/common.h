@@ -74,7 +74,7 @@ typedef  unsigned int nat ;
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
-// #define DEBUG_LNL_VERIFY
+/* #define DEBUG_LNL_VERIFY */
 
 
 

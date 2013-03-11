@@ -34,7 +34,7 @@ SRC=$(srcpre)/nclConfigReader.cpp $(srcpre)/configParser.c		\
 $(srcpre)/randomness.c $(srcpre)/bayes.c $(srcpre)/output.c		\
 $(srcpre)/proposals.c $(srcpre)/chain.c $(srcpre)/convergence.c		\
 $(srcpre)/treeRead.c $(srcpre)/bayes-topo.c $(srcpre)/utils-topo.c	\
-$(srcpre)/main-common.c 
+$(srcpre)/main-common.c  $(srcpre)/eval.c
 
 bin_PROGRAMS=exabayes
 
@@ -42,7 +42,7 @@ bin_PROGRAMS=exabayes
 SRC+=src/bayes-topo.h src/common.h src/convergence.h			\
 src/main-common.h src/output.h src/proposalStructs.h src/treeRead.h	\
 src/chain.h src/globals.h src/nclConfigReader.h src/proposals.h		\
-src/randomness.h src/utils-topo.h $(srcpre)/rng.h
+src/randomness.h src/utils-topo.h $(srcpre)/rng.h $(srcpre)/eval.h
 
 
 

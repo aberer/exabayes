@@ -1,33 +1,30 @@
 #NEXUS
 begin EXABAYES; 
 
-
-
-      initGammaWeight 1
-      initGammaExpWeight 1
+      initGammaWeight 3
+      initGammaExpWeight 3
 
       INITSPRWEIGHT 0 
       initEsprMappedWeight 10
 
-      initSingleBranchWeight 0
-      initSingleBranchExpWeight 5
-      initSingleBranchBiunifWeight 5 
+      initSingleBranchWeight 3
+      initSingleBranchExpWeight 3
+      initSingleBranchBiunifWeight 3 
 
 
       initModelWeight 1
       initModelBiunifWeight 1
       initModelSingleBiunifWeight 1
-      initModelAllBiunifWeight 0
+      initModelAllBiunifWeight  1 
+      initModelPermBiunifWeight 1
 
-      initModelPermBiunifWeight 0
-
-      initFrequenciesWeight 2
+      initFrequenciesWeight 4
 
 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
       initPenaltyFactor 0.0 
-      samplingFrequency 100 	[ take a sample every n generations ]
+      samplingFrequency 20 	[ take a sample every n generations ]
 
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
@@ -35,5 +32,5 @@ begin EXABAYES;
       numIndiChains 1 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 4 [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 1 [ number of chains per independent run (only one is cold) ]       
 end;

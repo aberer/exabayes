@@ -14,18 +14,13 @@
 
 #include "utils-topo.h" 
 
+#include "eval.h"
+
 
 void expensiveVerify(tree *tr); 
 
-
-/* static int spr_depth = 0; */
-
 nodeptr select_random_subtree(state *chain, tree *tr);
 void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue);
-
-
-
-
 
 
 void traverseAndCount(nodeptr p, int *count, tree *tr )
@@ -373,11 +368,9 @@ instate->hastings = 1;
   /* TODO problem here? is not tip?? FIXED: should never be a tip anymore. Possible since we are interested in edges and each edge connects to at least one inner node*/
 #if 0 
   evaluateGeneric(instate->tr, instate->sprMoveRemem.p->next->next, FALSE);
-#else 
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE);
+#else   
+  evaluateGenericWrapper(tr, tr->start, TRUE);
 #endif
-  expensiveVerify(tr); 
-
 }
 
 
@@ -407,7 +400,7 @@ static void extended_spr_reset(state * instate)
 #endif
     }
 
-  evaluateGeneric(tr, tr->start, TRUE);
+  evaluateGenericWrapper(tr, tr->start, TRUE);
 
   newviewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE);
   double val1 = instate->tr->likelihood; 
@@ -434,12 +427,15 @@ double get_alpha_prior(state *curstate )
 
 static void simple_gamma_proposal_apply(state * instate, int pSubType)
 {
+  tree *tr = instate->tr; 
+
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
-  instate->modelRemem.model=drawRandInt(instate, instate->tr->NumberOfModels);
-  curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
+  instate->modelRemem.model=drawRandInt(instate, tr->NumberOfModels);
+  curv = tr->partitionData[instate->modelRemem.model].alpha;
   instate->gammaRemem.curAlpha = curv;
-  
+
+
   switch(pSubType)
         {
         case STANDARD://simple sliding window
@@ -462,12 +458,11 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
   instate->newprior = get_alpha_prior(instate); 
   instate->curprior = get_alpha_prior(instate); 
   
-  instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
+  tr->partitionData[instate->modelRemem.model].alpha = newalpha;
 
-  makeGammaCats(instate->tr->partitionData[instate->modelRemem.model].alpha, instate->tr->partitionData[instate->modelRemem.model].gammaRates, 4, instate->tr->useMedian);
+  makeGammaCats(tr->partitionData[instate->modelRemem.model].alpha, tr->partitionData[instate->modelRemem.model].gammaRates, 4, tr->useMedian);
 
-  
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE);
+  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); 
 }
 
 
@@ -499,11 +494,13 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 
 static void simple_gamma_proposal_reset(state * instate)
 {
-  instate->tr->partitionData[instate->modelRemem.model].alpha = instate->gammaRemem.curAlpha;
+  tree *tr = instate->tr; 
 
-  makeGammaCats(instate->tr->partitionData[instate->modelRemem.model].alpha, instate->tr->partitionData[instate->modelRemem.model].gammaRates, 4, instate->tr->useMedian);
+  tr->partitionData[instate->modelRemem.model].alpha = instate->gammaRemem.curAlpha;
 
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE);
+  makeGammaCats(tr->partitionData[instate->modelRemem.model].alpha, tr->partitionData[instate->modelRemem.model].gammaRates, 4, tr->useMedian);
+
+  evaluateOnePartition(tr, tr->start, TRUE,instate->modelRemem.model); 
 }
 
 //------------------------------------------------------------------------------
@@ -557,6 +554,8 @@ void normalizeProposalWeights(state *curstate)
 
 static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
 {
+  tree *tr = instate->tr; 
+  
   //TODO: add safety to max and min values
   //record the old ones
   instate->modelRemem.model=drawRandInt(instate, instate->tr->NumberOfModels);
@@ -564,11 +563,9 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
   //choose a random set of model params,
   //probably with dirichlet proposal
   //with uniform probabilities, no need to have other
-  int state, changeState;
-  double new_value,curv;
+  int state, changeState = 0;
+  double new_value = 0,curv;
   double r;
-  
-  
 
   
   double mx,mn; //for sliding window
@@ -669,7 +666,8 @@ edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
 
   /* TODO: need to broadcast rates here for parallel version ! */
 
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
+
   //TODO: without this, the run will fail after a successful model, but failing SPR
   //TODOFER: what did we have in mind regarding the comment above?
   
@@ -731,6 +729,8 @@ edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
 
 static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
 {
+  tree *tr = instate->tr; 
+
   //record the old one 
   instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
@@ -766,13 +766,13 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
 
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
-  
+  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */  
 }
 
 
 static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
+  tree *tr = instate->tr; 
   //record the old one //TODO sufficient to store single value.
   instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
@@ -802,12 +802,14 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
   instate->hastings=curv/new_value;
 
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
-
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+  
+  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
 
 static void all_biunif_model_proposal_apply(state *instate, int pSubType)
 {
+  tree *tr = instate->tr; 
+  
   //record the old one 
   instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
@@ -835,13 +837,10 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
        instate->hastings*=curv/new_value;
       edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
     }
-      
-  
 
   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
-
+  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
 
 static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
@@ -855,7 +854,7 @@ static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRa
 
   /* TODO need to broadcast rates here for parallel version */
 
-  evaluateGeneric(tr, tr->start, TRUE);
+  evaluateOnePartition(tr, tr->start, TRUE, model); 
 }
 
 
@@ -1103,7 +1102,7 @@ static void random_branch_length_proposal_apply(state * instate, int pSubType)
 
 
   instate->brLenRemem.single_bl_branch = target_branch;
-  evaluateGeneric(instate->tr, p, FALSE); 
+  evaluateGenericWrapper(instate->tr, p, FALSE); 
   //evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
 }
 
@@ -1152,7 +1151,17 @@ static void random_branch_length_proposal_reset(state * instate)
   reset_branch_length(p, instate->tr->numBranches);
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
   //update_all_branches(instate, TRUE);
-  evaluateGeneric(instate->tr, instate->tr->start, FALSE);
+
+  /* i am not so sure, if we really can do the FALSE here ; will raxml recognize that a branch length has changed? disabling it for now... 
+
+     TODO I think, we should evaluate at the respctive node 
+   */
+#if 0 
+  evaluateGenericWrapper(instate->tr, instate->tr->start, FALSE);
+#else 
+  evaluateGenericWrapper(instate->tr, instate->tr->start, TRUE );
+#endif
+
  // evaluateGeneric(instate->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from instate->tr->start, that is: evaluateGeneric(instate->tr, instate->tr->start, TRUE);
   instate->brLenRemem.single_bl_branch = -1;
 }
@@ -1164,6 +1173,8 @@ double get_frequency_prior(state * instate)
 
 static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequRates, double *prevFrequRates)
 {
+  /* NOTICE: this function should not be called repeatedly  */
+
   assert(tr->partitionData[model].dataType = DNA_DATA);
   int i;
   for(i=0; i<numFrequRates; i++)
@@ -1171,7 +1182,7 @@ static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequ
 
   initReversibleGTR(tr, model);
 
-  evaluateGeneric(tr, tr->start, TRUE);
+  evaluateOnePartition(tr, tr->start, TRUE, model); 
 }
 
 static void recordFrequRates(tree *tr, int model, int numFrequRates, double *prevFrequRates)
@@ -1184,8 +1195,10 @@ static void recordFrequRates(tree *tr, int model, int numFrequRates, double *pre
 
 void frequency_proposal_apply(state * instate, int pSubType)
 {
-  instate->frequRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
-  recordFrequRates(instate->tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
+  tree *tr = instate->tr; 
+
+  instate->frequRemem.model=drawRandInt(instate,tr->NumberOfModels);
+  recordFrequRates(tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
 
   
   int state;
@@ -1195,7 +1208,7 @@ void frequency_proposal_apply(state * instate, int pSubType)
   instate->hastings=1;
   for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
-      curv = instate->tr->partitionData[instate->frequRemem.model].frequencies[state];
+      curv = tr->partitionData[instate->frequRemem.model].frequencies[state];
       //r[state] =  drawRandDouble(); 
       r[state] =  drawRandBiUnif(instate,curv); 
     instate->hastings*=curv/r[state];
@@ -1209,20 +1222,18 @@ void frequency_proposal_apply(state * instate, int pSubType)
     }
     for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
-      instate->tr->partitionData[instate->frequRemem.model].frequencies[state]=r[state]/sum; 
+      tr->partitionData[instate->frequRemem.model].frequencies[state]=r[state]/sum; 
     }
   //recalculate eigens
 
-  initReversibleGTR(instate->tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  initReversibleGTR(tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-/* instate->curprior=get_frequency_prior(instate, instate->tr->partitionData[instate->frequRemem.model].frequencies); */
+/* instate->curprior=get_frequency_prior(instate, tr->partitionData[instate->frequRemem.model].frequencies); */
 /* instate->newprior=get_frequency_prior(instate, instate->frequRemem.curFrequRates); */
 
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
-
-  //evaluateGeneric(instate->tr, instate->tr->start, FALSE);
-
+  evaluateOnePartition(tr, tr->start, TRUE, instate->frequRemem.model);
 }
+
 
 void frequency_proposal_reset(state * instate)
 {
@@ -1250,7 +1261,6 @@ void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue)
 static void simple_model_proposal_reset(state * instate)
 {
   restore_subs_rates(instate->tr, instate->modelRemem.adef, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
-  //evaluateGeneric(instate->tr, instate->tr->start, FALSE);
 }
 
 nodeptr select_random_subtree(state *chain, tree *tr)
@@ -1492,8 +1502,7 @@ void step(state *curstate)
   double acceptance;
 
   // just for validation (make sure we compare the same)
-  evaluateGeneric(tr, tr->start, FALSE);
-  expensiveVerify(tr); 
+  evaluateGenericWrapper(tr, tr->start, FALSE);
 
   tr->startLH = tr->likelihood;
 
@@ -1568,15 +1577,23 @@ void step(state *curstate)
       //curstate->proposalWeights[which_proposal] *= curstate->penaltyFactor; 
       penalize(curstate, which_proposal, 0);
 
-      expensiveVerify(tr); 
 
-      // just for validation 
+
+#if 0       
+      /* probably a bad idea to comment that out. But let's assume
+	 that we can do a verification, whenever we call evaluate. 
+	 Then this here is not necessary.  */
+
+      expensiveVerify(tr);
+
+      // just for validation
       if(fabs(tr->startLH - tr->likelihood) > 1.0E-15)//TODO change back to 1.0E-15
-	{
-	  PRINT("WARNING: LH diff %.20f\n", tr->startLH - tr->likelihood);
-	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", curstate->currentGeneration, tr->likelihood, tr->startLH);
-	}      
+      	{
+      	  PRINT("WARNING: LH diff %.20f\n", tr->startLH - tr->likelihood);
+      	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", curstate->currentGeneration, tr->likelihood, tr->startLH);
+      	}
       assert(fabs(tr->startLH - tr->likelihood) < 0.1);
+#endif
     }
   
 
@@ -1636,7 +1653,7 @@ static boolean simpleBranchLengthProposalApply(state * instate)
   //uniform(x-w/2,x+w/2)
 
   update_all_branches(instate, FALSE);
-  evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood */
+  evaluateGenericWrapper(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood */
 
   //for prior, just using exponential for now
   //calculate for each branch length

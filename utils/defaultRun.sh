@@ -5,7 +5,6 @@ model=GAMMA
 seed=1234
 numCores=4
 
-
 if [ "$#" != 3 ]; then
     echo -e  "./defaultRun.sh debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
     exit
@@ -55,7 +54,7 @@ if  [ "$(echo $status)"  == "$(echo $args)" ]; then
 else 
     echo "calling ./configure $args" 
     ./configure $args  
-    make clean 
+    make clean-local
 fi 
 
 rm exabayes

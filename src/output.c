@@ -247,7 +247,10 @@ static void printSubsRates(state *prState ,int model, int numSubsRates)
 void chainInfoOutput(state *curstate )
 {
 
-  PRINT( "[chain: %d] gen: %d Likelihood: %f StartLH: %f \n",curstate->id, curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH);
+  PRINT( "[chain: %d] [TIME %.2f] gen: %d Likelihood: %f StartLH: %f \n",curstate->id,   gettime()  - timeIncrement  , curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH);
+
+  /* just output how much time has passed since the last increment */
+  timeIncrement = gettime(); 	
   
   PRINT( "Topo: eSpr: %d/%d (%d%%)\teSpr_mapped: %d/%d\t(%d%%) \n"
 	 , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)),
@@ -280,10 +283,7 @@ void chainInfoOutput(state *curstate )
   PRINT("\n");
   //printSubsRates(curstate, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
 //printf("numSubs: %d numFrequ: %d\n\n",curstate->modelRemem.numSubsRates,curstate->frequRemem.numFrequRates);
-  
-#ifdef WITH_PERFORMANCE_MEASUREMENTS
-  perf_timer_print( &all_timer );
-#endif     
+
 }
 
 

@@ -214,7 +214,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 
       tr->start = find_tip(tr->start, tr );
 
-      evaluateGeneric(tr, tr->start, TRUE); 
+      evaluateGenericWrapper(tr, tr->start, TRUE); 
 
       /* now save the tree to a chain chain */
       saveTreeStateToChain(theChain, tr); 
@@ -335,7 +335,7 @@ void applyChainStateToTree(state *chain, tree *tr)
       makeGammaCats(tr->partitionData[i].alpha, tr->partitionData[i].gammaRates, 4, tr->useMedian);
     } 
 
-  evaluateGeneric(tr, tr->start, TRUE ); 
+  evaluateGenericWrapper(tr, tr->start, TRUE ); 
 
   /* printInfo(chain, "switching to run %d / heat %d, lnl=%f\n", chain->id / numberOfRuns, chain->couplingId, tr->likelihood);  */
   if(processID == 0)
