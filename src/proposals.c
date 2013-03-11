@@ -9,12 +9,13 @@
 
 #include "convergence.h"
 
-
 #include "chain.h"
 
 #include "utils-topo.h" 
 
 #include "eval.h"
+
+#include "adapterCode.h"
 
 
 void expensiveVerify(tree *tr); 
@@ -26,7 +27,6 @@ void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue);
 void traverseAndCount(nodeptr p, int *count, tree *tr )
 {
   nodeptr q;  
-  assert(tr->numBranches > 0); 
 
   *count += 1;
 
@@ -73,10 +73,11 @@ void findLogisticP(state *curstate){
 
 static void recordSubsRates(tree *tr, int model, int numSubsRates, double *prevSubsRates)
 {
-  assert(tr->partitionData[model].dataType = DNA_DATA);
+  pInfo *partition = & GET_PARTITION(tr,model); 
+  assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)
-    prevSubsRates[i] = tr->partitionData[model].substRates[i];
+    prevSubsRates[i] = partition->substRates[i];
 }
 
 
@@ -231,16 +232,16 @@ static void extended_spr_apply(state *instate, int pSubType)
   instate->sprMoveRemem.nb  = p->next->back;
   instate->sprMoveRemem.nnb = p->next->next->back;
   
-  record_branch_info(instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, instate->tr->numBranches);
-  record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, instate->tr->numBranches);
+  record_branch_info(instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, GET_NUM_BRANCHES(instate->tr));
+  record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, GET_NUM_BRANCHES(instate->tr));
   
 
   /* initial remapping of BL of nodes adjacent to pruned node  */
   double zqr[NUM_BRANCHES];
-
-instate->hastings = 1; 
-    
-  for(int i = 0; i < tr->numBranches; i++)
+  
+  instate->hastings = 1; 
+  
+  for(int i = 0; i < GET_NUM_BRANCHES(tr); i++)
     {
       if(pSubType == STANDARD)
 	{
@@ -262,7 +263,7 @@ instate->hastings = 1;
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
 
-  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, tr->numBranches); 
+  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, GET_NUM_BRANCHES(tr)); 
   p->next->next->back = p->next->back = (node *) NULL;
   /* done remove node p (omitted BL opt) */
 
@@ -302,17 +303,17 @@ instate->hastings = 1;
 
   instate->sprMoveRemem.q = curNode;
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
-  record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, instate->tr->numBranches);
+  record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, GET_NUM_BRANCHES(instate->tr));
 
   
   
    if(pSubType == STANDARD){
-  for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
+     for(int branchCount=0; branchCount< GET_NUM_BRANCHES(instate->tr); branchCount++)
      {
       instate->hastings/=log(curNode->z[branchCount]);
      }
    }else if(pSubType == SPR_ADJUST){
-  for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
+     for(int branchCount=0; branchCount< GET_NUM_BRANCHES(instate->tr); branchCount++) /*  */
      {
       instate->hastings/=(2*log(curNode->z[branchCount]));
      }
@@ -324,7 +325,7 @@ instate->hastings = 1;
 
   if(pSubType == STANDARD)
     {
-     insertWithUnifBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
+      insertWithUnifBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, GET_NUM_BRANCHES(instate->tr));
   /*   for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
      {
        instate->hastings/=log(instate->brLenRemem.qz[branchCount]);
@@ -338,12 +339,12 @@ instate->hastings = 1;
       double *neighborZ = remapBL ? instate->sprMoveRemem.nbz :  instate->sprMoveRemem.nnbz; 
       
         if( remapBL ) 
-    {
-      for(int i = 0; i < tr->numBranches; ++i)
-	instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
-    }
+	  {
+	    for(int i = 0; i < GET_NUM_BRANCHES(tr); ++i)
+	      instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
+	  }
       
-      insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, tr->numBranches);
+	insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, GET_NUM_BRANCHES(tr));
 
 
       /* IMPORTANT TODO verify, that the mapping actually works, as we
@@ -356,7 +357,7 @@ instate->hastings = 1;
     }
      else if(pSubType == SPR_ADJUST)
     {
-      insertWithUnifBLScaled(instate->sprMoveRemem.p, instate->sprMoveRemem.q, 2.0,  instate->tr->numBranches);
+      insertWithUnifBLScaled(instate->sprMoveRemem.p, instate->sprMoveRemem.q, 2.0,  GET_NUM_BRANCHES(instate->tr));
     }
 
 //   if( (pSubType == SPR_MAPPED ) && remapBL) 
@@ -382,13 +383,13 @@ static void extended_spr_reset(state * instate)
   tree *tr = instate->tr; 
 
   /* prune the insertion */
-  hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, instate->tr->numBranches);
+  hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, GET_NUM_BRANCHES(instate->tr));
 
   instate->sprMoveRemem.p->next->next->back = instate->sprMoveRemem.p->next->back = (nodeptr) NULL;
-
+  /*  */
   /* insert the pruned tree in its original node */
-  hookup(instate->sprMoveRemem.p->next,        instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, instate->tr->numBranches);
-  hookup(instate->sprMoveRemem.p->next->next, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, instate->tr->numBranches);
+  hookup(instate->sprMoveRemem.p->next,        instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, GET_NUM_BRANCHES(instate->tr));
+  hookup(instate->sprMoveRemem.p->next->next, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, GET_NUM_BRANCHES(instate->tr));
   
   if(processID == 0)
     {
@@ -401,11 +402,11 @@ static void extended_spr_reset(state * instate)
     }
 
   evaluateGenericWrapper(tr, tr->start, TRUE);
-
-  newviewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE);
+  
+  exa_newViewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE); 
   double val1 = instate->tr->likelihood; 
   
-  newviewGeneric(instate->tr, instate->tr->start, TRUE);
+  exa_newViewGeneric(instate->tr, instate->tr->start, TRUE);
   double  val2 = instate->tr->likelihood; 
 
   assert( fabs ( val2 - val1 ) < 0.0001 ); 
@@ -429,10 +430,13 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 {
   tree *tr = instate->tr; 
 
+  pInfo *partition = &(GET_PARTITION(tr,instate->modelRemem.model));
+  
+
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
-  instate->modelRemem.model=drawRandInt(instate, tr->NumberOfModels);
-  curv = tr->partitionData[instate->modelRemem.model].alpha;
+  instate->modelRemem.model=drawRandInt(instate, GET_NUM_PARTITIONS(tr));
+  curv = partition->alpha;
   instate->gammaRemem.curAlpha = curv;
 
 
@@ -458,9 +462,9 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
   instate->newprior = get_alpha_prior(instate); 
   instate->curprior = get_alpha_prior(instate); 
   
-  tr->partitionData[instate->modelRemem.model].alpha = newalpha;
+  partition->alpha = newalpha;
 
-  makeGammaCats(tr->partitionData[instate->modelRemem.model].alpha, tr->partitionData[instate->modelRemem.model].gammaRates, 4, tr->useMedian);
+  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 
   evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); 
 }
@@ -495,12 +499,13 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 static void simple_gamma_proposal_reset(state * instate)
 {
   tree *tr = instate->tr; 
+  pInfo *partition = &( GET_PARTITION(tr, instate->modelRemem.model)  ) ; 
+  
+  partition->alpha = instate->gammaRemem.curAlpha; 
 
-  tr->partitionData[instate->modelRemem.model].alpha = instate->gammaRemem.curAlpha;
+  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 
-  makeGammaCats(tr->partitionData[instate->modelRemem.model].alpha, tr->partitionData[instate->modelRemem.model].gammaRates, 4, tr->useMedian);
-
-  evaluateOnePartition(tr, tr->start, TRUE,instate->modelRemem.model); 
+  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); 
 }
 
 //------------------------------------------------------------------------------
@@ -558,8 +563,11 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
   
   //TODO: add safety to max and min values
   //record the old ones
-  instate->modelRemem.model=drawRandInt(instate, instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate, GET_NUM_PARTITIONS(instate->tr));
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+
+  pInfo *partition = &(GET_PARTITION(tr, instate->modelRemem.model)); 
+
   //choose a random set of model params,
   //probably with dirichlet proposal
   //with uniform probabilities, no need to have other
@@ -595,7 +603,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
         {
         case STANDARD: //using the branch length sliding window for a test    
 	  changeState=state;
-	  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+	  curv = partition->substRates[state];
 	  r =  drawRandDouble01(instate);
 	  mn = curv-(instate->modelRemem.rt_sliding_window_w/2);
 	  mx = curv+(instate->modelRemem.rt_sliding_window_w/2);
@@ -613,7 +621,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
       if(list[changeState]!=1)
       {
       list[changeState]=1;;      
-      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[changeState];
+      curv = partition->substRates[changeState];
       r =  drawRandBiUnif(instate, curv);
       new_value = r;
       instate->hastings*=curv/new_value;
@@ -627,7 +635,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
       break;
       case BIUNIF_PERM_DISTR://TODO NOT used. Lower values than before (without subType)
 	drawPermutation(instate, list, instate->modelRemem.numSubsRates);
-	 curv = instate->tr->partitionData[instate->modelRemem.model].substRates[list[state]];
+	 curv = partition->substRates[list[state]];
 	 r =  drawRandBiUnif(instate, curv);
        new_value = r;
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
@@ -640,7 +648,7 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
 	 
 	case SINGLE_BIUNIF://TODO not used. Figure out error
 	  drawPermutation(instate,list, instate->modelRemem.numSubsRates);
-	 curv = instate->tr->partitionData[instate->modelRemem.model].substRates[list[state]];
+	 curv = partition->substRates[list[state]];
 	 r =  drawRandBiUnif(instate, curv);
        new_value = r;
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
@@ -662,7 +670,7 @@ edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
     }
   //recalculate eigens
 
-  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+    exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   /* TODO: need to broadcast rates here for parallel version ! */
 
@@ -732,7 +740,10 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
   tree *tr = instate->tr; 
 
   //record the old one 
-  instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(instate->tr));
+  
+  pInfo *partition = & ( GET_PARTITION(tr , instate->modelRemem.model) ) ; 
+
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   int state, randNumber;
   double new_value,curv;
@@ -744,10 +755,8 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
   
    instate->hastings=1.0;
   for(state = 0;state<randNumber ; state ++)
-    {
-      
-      
-      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[perm[state]];
+    {           
+      curv = partition->substRates[perm[state]];
       r =  drawRandBiUnif(instate,curv);
 
       new_value = r;
@@ -764,7 +773,7 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
       
   
 
-  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */  
 }
@@ -774,7 +783,10 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
 {
   tree *tr = instate->tr; 
   //record the old one //TODO sufficient to store single value.
-  instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(instate->tr)); 
+  
+  pInfo *partition = & (GET_PARTITION(tr,instate->modelRemem.model) ) ; 
+
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
@@ -787,7 +799,7 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
   //int state=drawRandInt(instate->modelRemem.numSubsRates);
   
 
-  curv = instate->tr->partitionData[instate->modelRemem.model].substRates[randState];
+  curv = partition->substRates[randState];
   r =  drawRandBiUnif(instate,curv);
 
   new_value = r;
@@ -801,7 +813,7 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
 
   instate->hastings=curv/new_value;
 
-  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
   
   evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
@@ -811,7 +823,9 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
   tree *tr = instate->tr; 
   
   //record the old one 
-  instate->modelRemem.model=drawRandInt(instate,instate->tr->NumberOfModels);
+  instate->modelRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(instate->tr));
+  pInfo *partition = &( GET_PARTITION(tr, instate->modelRemem.model)) ; 
+
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
@@ -824,7 +838,7 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
 
   for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
     {
-      curv = instate->tr->partitionData[instate->modelRemem.model].substRates[state];
+      curv = partition->substRates[state]; 
       r =  drawRandBiUnif(instate,curv);
 
       new_value = r;
@@ -838,19 +852,19 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
       edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
     }
 
-  initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
 
 static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
 {
-  assert(tr->partitionData[model].dataType = DNA_DATA);
+  assert(GET_PARTITION(tr,model).dataType = DNA_DATA);
   int i;
-  for(i=0; i<numSubsRates; i++)
-    tr->partitionData[model].substRates[i] = prevSubsRates[i];
+  for(i=0; i<numSubsRates; i++)	
+    GET_PARTITION(tr,model).substRates[i] = prevSubsRates[i]; 
 
-  initReversibleGTR(tr, model);
+  exa_initReversibleGTR(tr, model);
 
   /* TODO need to broadcast rates here for parallel version */
 
@@ -1076,7 +1090,7 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 
 static void random_branch_length_proposal_apply(state * instate, int pSubType)
 {
-
+  int numBranches = GET_NUM_BRANCHES(instate->tr);
   const int num_branches = (instate->tr->mxtips * 2) - 3;
   int target_branch = drawRandInt(instate,num_branches); 
   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
@@ -1088,13 +1102,13 @@ static void random_branch_length_proposal_apply(state * instate, int pSubType)
 	    //pull a uniform like
 	    //x = current, w =window
 	    //uniform(x-w/2,x+w/2)
-	  set_branch_length_sliding_window(instate,p, instate->tr->numBranches, instate, TRUE);
+	  set_branch_length_sliding_window(instate,p, numBranches, instate, TRUE);
 	  break;
         case EXP_DISTR:
-	  set_branch_length_exp(instate,p, instate->tr->numBranches, instate, TRUE);
+	  set_branch_length_exp(instate,p, numBranches, instate, TRUE);
           break;
 	case BIUNIF_DISTR:
-	  set_branch_length_biunif(instate, p, instate->tr->numBranches, instate, TRUE);
+	  set_branch_length_biunif(instate, p, numBranches, instate, TRUE);
 	  break;
         default:
           assert(0);
@@ -1148,7 +1162,7 @@ static void random_branch_length_proposal_reset(state * instate)
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
   p = select_branch_by_id_dfs( instate->tr->start, instate->brLenRemem.single_bl_branch, instate );
   
-  reset_branch_length(p, instate->tr->numBranches);
+  reset_branch_length(p, GET_NUM_BRANCHES(instate->tr));
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
   //update_all_branches(instate, TRUE);
 
@@ -1175,29 +1189,35 @@ static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequ
 {
   /* NOTICE: this function should not be called repeatedly  */
 
-  assert(tr->partitionData[model].dataType = DNA_DATA);
+  pInfo *partition = & ( GET_PARTITION(tr, model) ) ; 
+
+  assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numFrequRates; i++)
-    tr->partitionData[model].frequencies[i] = prevFrequRates[i];
+    partition->frequencies[i] = prevFrequRates[i];
 
-  initReversibleGTR(tr, model);
+  exa_initReversibleGTR(tr, model);
 
   evaluateOnePartition(tr, tr->start, TRUE, model); 
 }
 
 static void recordFrequRates(tree *tr, int model, int numFrequRates, double *prevFrequRates)
 {
-  assert(tr->partitionData[model].dataType = DNA_DATA);
+  pInfo *partition = &( GET_PARTITION(tr, model) ) ; 
+
+  assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numFrequRates; i++)
-    prevFrequRates[i] = tr->partitionData[model].frequencies[i];
+    prevFrequRates[i] = partition->frequencies[i];
 }
 
 void frequency_proposal_apply(state * instate, int pSubType)
 {
   tree *tr = instate->tr; 
 
-  instate->frequRemem.model=drawRandInt(instate,tr->NumberOfModels);
+  instate->frequRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(tr));
+  pInfo *partition = &(GET_PARTITION(tr, instate->frequRemem.model)); 
+
   recordFrequRates(tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
 
   
@@ -1208,7 +1228,7 @@ void frequency_proposal_apply(state * instate, int pSubType)
   instate->hastings=1;
   for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
-      curv = tr->partitionData[instate->frequRemem.model].frequencies[state];
+      curv = partition->frequencies[state];
       //r[state] =  drawRandDouble(); 
       r[state] =  drawRandBiUnif(instate,curv); 
     instate->hastings*=curv/r[state];
@@ -1222,11 +1242,11 @@ void frequency_proposal_apply(state * instate, int pSubType)
     }
     for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
     {
-      tr->partitionData[instate->frequRemem.model].frequencies[state]=r[state]/sum; 
+      partition->frequencies[state]=r[state]/sum; 
     }
   //recalculate eigens
 
-  initReversibleGTR(tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
 /* instate->curprior=get_frequency_prior(instate, tr->partitionData[instate->frequRemem.model].frequencies); */
 /* instate->newprior=get_frequency_prior(instate, instate->frequRemem.curFrequRates); */
@@ -1248,12 +1268,14 @@ void frequency_proposal_reset(state * instate)
 
 void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue)
 {
-  assert(tr->partitionData[model].dataType = DNA_DATA);
+  pInfo *partition = &(GET_PARTITION(tr,model)); 
+
+  assert(partition->dataType = DNA_DATA);
   assert(subRateValue <= RATE_MAX && subRateValue >= RATE_MIN);
-  int states = tr->partitionData[model].states; 
+  int states = partition->states; 
   int numSubsRates = (states * states - states) / 2;
   assert(subRatePos >= 0 && subRatePos < numSubsRates);
-  tr->partitionData[model].substRates[subRatePos] = subRateValue;
+  partition->substRates[subRatePos] = subRateValue;
 }
 
 

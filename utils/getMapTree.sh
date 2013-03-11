@@ -18,7 +18,7 @@ bestLnl=$(for elem in $(ls ExaBayes_parameters.$runid.* )  ; do    cut -f 2 $ele
 
 line=$(grep -n -h -- "$bestLnl" ExaBayes_parameters.$runid.* |  cut -f 1 -d ':'  )
 run=$(grep -- "$bestLnl" ExaBayes_parameters.$runid.*  | cut -f 1 -d ':' | sed 's/.*\.\([0-9]*\)$/\1/')
-
+p
 lineInTopo=$(($line - 2))
 ./utils/getTopologies.sh ExaBayes_topologies.$runid.$run | sed -n "${lineInTopo}p" 
 

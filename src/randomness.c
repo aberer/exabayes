@@ -39,21 +39,21 @@
 
 static void inc_global()
 {
-  if(rGlobalCtr.v[0] == 2147483645) /* roughly what a int32_t can hold */
+  if(gAInfo.rGlobalCtr.v[0] == 2147483645) /* roughly what a int32_t can hold */
     {
-      rGlobalCtr.v[1]++; 
-      rGlobalCtr.v[0] = 0;       
+      gAInfo.rGlobalCtr.v[1]++; 
+      gAInfo.rGlobalCtr.v[0] = 0;       
     }
   else 
-    rGlobalCtr.v[0]++; 
+    gAInfo.rGlobalCtr.v[0]++; 
   
-  assert(rGlobalCtr.v[1] < 2147483645); 
+  assert(gAInfo.rGlobalCtr.v[1] < 2147483645); 
 }
 
 
 randCtr_t drawGlobalRandInt()
 {
-  randCtr_t result = exa_rand(rGlobalKey, rGlobalCtr); 
+  randCtr_t result = exa_rand(gAInfo.rGlobalKey, gAInfo.rGlobalCtr); 
   inc_global();
   return result; 
 }
@@ -68,7 +68,7 @@ int drawGlobalRandIntBound(int upperBound)
 
 double drawGlobalDouble01()
 {
-  randCtr_t result  = exa_rand(rGlobalKey, rGlobalCtr);   
+  randCtr_t result  = exa_rand(gAInfo.rGlobalKey, gAInfo.rGlobalCtr);   
   return u01_closed_open_32_53(result.v[1]) ; 
 }
 

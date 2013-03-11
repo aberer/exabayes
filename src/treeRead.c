@@ -2,12 +2,14 @@
    directly use pll or examl stuff, but have to modify that to get
    certain functionality) */
 
-
-#include "globals.h"
 #include "common.h"
 
 #include "config.h"
 #include "axml.h"
+
+#include "globals.h"
+
+#include "adapterCode.h"
 
 static void  treeEchoContext (FILE *fp1, FILE *fp2, int n)
 { /* treeEchoContext */
@@ -317,14 +319,14 @@ static boolean addElementLen (FILE *fp, tree *tr, nodeptr p, boolean readBranchL
       if (! treeProcessLength(fp, &branch))            return FALSE;
       
       /*printf("Branch %8.20f %d\n", branch, tr->numBranches);*/
-      hookup(p, q, &branch, tr->numBranches);
+      hookup(p, q, &branch, GET_NUM_BRANCHES(tr));
     }
   else
     {
       fres = treeFlushLen(fp);
       if(!fres) return FALSE;
       
-      hookupDefault(p, q, tr->numBranches);
+      exa_hookupDefault(tr, p, q);
     }
   return TRUE;          
 }
@@ -389,7 +391,7 @@ void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
   tr->ntips       = 0;
   tr->nextnode    = tr->mxtips + 1;      
  
-  for(i = 0; i < tr->numBranches; i++)
+  for(i = 0; i < GET_NUM_BRANCHES(tr); i++)
     tr->partitionSmoothed[i] = FALSE;
   
   tr->rooted      = FALSE;     

@@ -1,8 +1,9 @@
-#include "globals.h"
-#include "common.h"
 
 #include "config.h"
+#include "common.h"
 #include "axml.h"
+
+#include "globals.h"
 
 #include "proposalStructs.h"
 #include "main-common.h"
@@ -124,7 +125,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
       
       
-      e->treeVector = calloc(numberOfRuns, sizeof(nat)); 
+      e->treeVector = calloc(gAInfo.numberOfRuns, sizeof(nat)); 
       e->treeVector[chainId]++; 
       memcpy(e->bitVector, bitVector, sizeof(unsigned int) * vectorLength);
      
@@ -138,7 +139,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
       e->bitVector = (unsigned int*)malloc_aligned(vectorLength * sizeof(unsigned int));
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
 
-      e->treeVector = calloc(numberOfRuns, sizeof(nat)); 
+      e->treeVector = calloc(gAInfo.numberOfRuns, sizeof(nat)); 
       e->treeVector[chainId]++; 
 
       memcpy(e->bitVector, bitVector, sizeof(nat) * vectorLength);     
@@ -208,7 +209,7 @@ void addBipartitionsToHash(tree *tr, state *chain)
   resetBitVectors(tr);
 
   int cnt = 0; 
-  extractBipartitions(tr, tr->bitVectors, tr->start->back, chain->bvHash, &cnt, chain->id / numberCoupledChains);
+  extractBipartitions(tr, tr->bitVectors, tr->start->back, chain->bvHash, &cnt, chain->id / gAInfo.numberCoupledChains);
   assert(cnt == tr->mxtips -3); 
 }
 
@@ -241,7 +242,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   int numTaxa = aChain->tr->mxtips; 
   hashtable *ht = aChain->bvHash;
 
-  int *numSampled = calloc(numberOfRuns, sizeof(int)); 
+  int *numSampled = calloc(gAInfo.numberOfRuns, sizeof(int)); 
   
   for(int i = 0; i < ht->tableSize; ++i)
     {
@@ -249,7 +250,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
       
       while(e != NULL)
 	{
-	  for(int j = 0; j < numberOfRuns; ++j)
+	  for(int j = 0; j < gAInfo.numberOfRuns; ++j)
 	    numSampled[j] += e->treeVector[j]; 
 
 	  e = e->next; 
@@ -258,7 +259,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   
 
   /* asserting */
-  for(int i = 0; i < numberOfRuns; ++i)
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
     assert(numSampled[0] == numSampled[i]); 
 
   assert(numSampled[0]  %  (numTaxa -3 )  == 0) ; 
@@ -276,7 +277,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 	{
 	  /* check, if we can ignore this bipartition */
 	  boolean relevant = FALSE; 
-	  for(int j = 0; j < numberOfRuns; ++j)
+	  for(int j = 0; j < gAInfo.numberOfRuns; ++j)
 	    if( e->treeVector[j] >  ((double)ASDSF_FREQ_CUTOFF * (double)treesSampled) )
 	      relevant = TRUE; 
 
@@ -285,25 +286,25 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 	      double mu = 0, 
 		sd = 0; 
 
-	      for(int j = 0; j < numberOfRuns; ++j)
+	      for(int j = 0; j < gAInfo.numberOfRuns; ++j)
 		mu += (double)e->treeVector[j] / (double)treesSampled; 
 
-	      mu /= numberOfRuns; 
+	      mu /= gAInfo.numberOfRuns; 
 
-	      for(int j = 0; j < numberOfRuns; ++j)
+	      for(int j = 0; j < gAInfo.numberOfRuns; ++j)
 		sd += pow((((double)e->treeVector[j]  / (double)treesSampled)  - mu ) ,2); 
 
 #ifdef ASDSF_BE_VERBOSE
 	      if(processID == 0)
 		{
 		  printf("RELEVANT: "); 
-		  for(int  j = 0;  j < numberOfRuns; j++)
+		  for(int  j = 0;  j < gAInfo.numberOfRuns; j++)
 		    printf("%d,", e->treeVector[j]); 
 		  printf("\tmu=%f\tsd=%f\n", mu, sd); 
 		}
 #endif
 
-	      asdsf +=  sqrt(sd / numberOfRuns); 
+	      asdsf +=  sqrt(sd / gAInfo.numberOfRuns); 
 	      cntRelevant++; 	    
 	    }
 	  else 
@@ -312,7 +313,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 	      if(processID == 0)
 		{
 		  printf("not relevant: "); 
-		  for(int j = 0; j < numberOfRuns; ++j)
+		  for(int j = 0; j < gAInfo.numberOfRuns; ++j)
 		    printf("%d,", e->treeVector[j]); 
 		  printf("\n"); 
 		}
@@ -342,7 +343,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 
 boolean convergenceDiagnostic(state *allChains)
 {
-  if(numberOfRuns > 1)
+  if(gAInfo.numberOfRuns > 1)
     return averageDeviationOfSplitFrequencies(allChains); 
   else 
     return allChains[0].currentGeneration > allChains[0].numGen; 

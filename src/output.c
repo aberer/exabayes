@@ -7,7 +7,7 @@
 
 #include "output.h"
 
-
+#include "adapterCode.h"
 
 extern double masterTime; 
 
@@ -43,14 +43,14 @@ double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
 
   assert(perGene != NO_BRANCHES);
 	      
-  if(tr->numBranches == 1)
+  if(NOT HAS_PERGENE_BL(tr))
     {
       assert(tr->fracchange != -1.0);
       z = p->z[0];
       if (z < zmin) 
 	z = zmin;      	 
       
-      x = -log(z) * tr->fracchange;           
+      x = -log(z) * tr->fracchange; 
     }
   else
     {
@@ -62,30 +62,38 @@ double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
 	  double 
 	    avgX = 0.0;
 		      
-	  for(i = 0; i < tr->numBranches; i++)
+	  for(i = 0; i < GET_NUM_BRANCHES(tr); i++)
 	    {
+
+#if HAVE_PLL == 1 
+	      /* TODO make line below work with PLL   */
+#else 
 	      assert(tr->partitionContributions[i] != -1.0);
 	      assert(tr->fracchanges[i] != -1.0);
+#endif
+
+
+
 	      z = p->z[i];
 	      if(z < zmin) 
 		z = zmin;      	 
-	      x = -log(z) * tr->fracchanges[i];
-	      avgX += x * tr->partitionContributions[i];
+	      x = -log(z) * GET_FRACCHANGE(tr,i);
+	      avgX += x * GET_PCONTR(tr,i);
 	    }
 
 	  x = avgX;
 	}
       else
 	{	
-	  assert(tr->fracchanges[perGene] != -1.0);
-	  assert(perGene >= 0 && perGene < tr->numBranches);
+	  assert(GET_FRACCHANGE(tr,perGene) != -1.0);
+	  assert(perGene >= 0 && perGene < GET_NUM_BRANCHES(tr));
 	  
 	  z = p->z[perGene];
 	  
 	  if(z < zmin) 
 	    z = zmin;      	 
 	  
-	  x = -log(z) * tr->fracchanges[perGene];	  
+	  x = -log(z) * GET_FRACCHANGE(tr,perGene);
 	}
     }
 
@@ -169,16 +177,18 @@ static void printParams(state *curstate)
 
   /* TODO what about multiple models?  */
   /* TODO that will not work in the future ...  */
+  pInfo *partition = &(GET_PARTITION(curstate->tr,model)); 
+
   for(int i = 0; i< curstate->modelRemem.numSubsRates;  ++i )
-    fprintf(fh, "\t%f" , curstate->tr->partitionData[model].substRates[i]); 
+    fprintf(fh, "\t%f" , partition->substRates[i]); 
 
   
   /* TODO works on dna only currently  */
   for(int i = 0; i < 4; ++i)
-    fprintf(fh, "\t%f", curstate->tr->partitionData[model].frequencies[i]); 
+    fprintf(fh, "\t%f", GET_PARTITION(curstate->tr,model).frequencies[i]); 
 
   /* TODO what is pinvar?  */
-  fprintf(fh, "\t%f\t%f", curstate->tr->partitionData[model].alpha, -1.  ); 
+  fprintf(fh, "\t%f\t%f", GET_PARTITION(curstate->tr,model).alpha, -1.  ); 
 
   fprintf(fh, "\n");
 
@@ -229,15 +239,17 @@ void printSample(state *curstate)
 
 static void printSubsRates(state *prState ,int model, int numSubsRates)
 {
-  assert(prState->tr->partitionData[model].dataType = DNA_DATA);
+  pInfo *partition = &(GET_PARTITION(prState->tr,model)); 
+
+  assert(GET_PARTITION(prState->tr,model).dataType = DNA_DATA);
   int i;
   PRINT("Subs rates[%d]: ", model);
   for(i=0; i<numSubsRates; i++)
-    PRINT("%d => %.3f, ", i, prState->tr->partitionData[model].substRates[i]);
+    PRINT("%d => %.3f, ", i, partition->substRates[i]);
     PRINT("\n");
   PRINT("frequencies[%d]: ", model);
   for(i=0; i<prState->frequRemem.numFrequRates; i++)
-    PRINT("%d => %.3f, ", i, prState->tr->partitionData[model].frequencies[i]);
+    PRINT("%d => %.3f, ", i, partition->frequencies[i]); 
 
   PRINT("\n");
 }
@@ -274,9 +286,9 @@ void chainInfoOutput(state *curstate )
   
   PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",curstate->hastings, curstate->newprior, curstate->curprior);
   
-  if(curstate->tr->NumberOfModels < 10)
+  if(GET_NUM_PARTITIONS(curstate->tr) < 10) 
     {
-      for(int printModel=0; printModel<curstate->tr->NumberOfModels;printModel++)
+      for(int printModel=0; printModel< GET_NUM_PARTITIONS(curstate->tr);printModel++) 
 	printSubsRates(curstate, printModel, curstate->modelRemem.numSubsRates);
     }
     

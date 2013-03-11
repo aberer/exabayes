@@ -1,8 +1,11 @@
-#include "globals.h"
+
 #include "common.h"
 
 #include "config.h"
 #include "axml.h"
+
+#include "globals.h"
+
 #include "proposalStructs.h"
 #include "randomness.h"
 

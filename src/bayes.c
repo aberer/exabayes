@@ -14,6 +14,7 @@
 /* TODO outsource  */
 #include "chain.h"
 
+#include  "adapterCode.h"
 
 extern double masterTime; 
 
@@ -60,6 +61,8 @@ int parseConfig(state *theState);
 
 void initDefaultValues(state *theState, tree *tr)
 {
+
+
   theState->curprior = 1; 
   theState->hastings = 1; 
   theState->currentGeneration = 0; 
@@ -71,12 +74,15 @@ void initDefaultValues(state *theState, tree *tr)
   
   theState->modelRemem.model = 0;
   theState->modelRemem.rt_sliding_window_w = 0.5;
-  theState->modelRemem.nstates = tr->partitionData[theState->modelRemem.model].states; /* 4 for DNA */
+
+  pInfo *partition = &(GET_PARTITION(tr,theState->modelRemem.model) ); 
+
+  theState->modelRemem.nstates = partition->states; /* 4 for DNA */
   theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
   theState->modelRemem.curSubsRates = (double *) malloc(theState->modelRemem.numSubsRates * sizeof(double));
   
   theState->frequRemem.model = 0;
-  theState->frequRemem.numFrequRates =tr->partitionData[theState->frequRemem.model].states; /* 4 for DNA */
+  theState->frequRemem.numFrequRates = partition->states; /* 4 for DNA */
   theState->frequRemem.curFrequRates = (double *) malloc(theState->frequRemem.numFrequRates * sizeof(double));
   
   theState->gammaRemem.gm_sliding_window_w = 0.75;
@@ -159,11 +165,11 @@ void executeOneRun(state *chains, int gensToRun )
 {
   tree *tr = chains[0].tr; 
 
-  if(numberCoupledChains > 1 )
+  if(gAInfo.numberCoupledChains > 1 )
     {
       for(int genCtr = 0; genCtr < gensToRun; genCtr += SWITCH_AFTER_GEN)
 	{
-	  for(int chainCtr = 0; chainCtr < numberCoupledChains; ++chainCtr)
+	  for(int chainCtr = 0; chainCtr < gAInfo.numberCoupledChains; ++chainCtr)
 	    {      
 	      state *curChain = chains + chainCtr; /* TODO */
 	      applyChainStateToTree(curChain, tr);
@@ -174,7 +180,7 @@ void executeOneRun(state *chains, int gensToRun )
 	      saveTreeStateToChain(curChain, tr);
 	    }
 
-	  switchChainState(chains, numberCoupledChains);
+	  switchChainState(chains, gAInfo.numberCoupledChains);
 	}
     }
   else 
@@ -204,23 +210,23 @@ void mcmc(tree *tr, analdef *adef)
   initializeIndependentChains(tr, &indiChains, &initParams); 
 
   /* TODO  remove this global again */
-  numberOfRuns = initParams->numIndiChains; 
-  numberCoupledChains = initParams->numCoupledChains; 
+  gAInfo.numberOfRuns = initParams->numIndiChains; 
+  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
 
   int diagFreq = initParams->diagFreq; 
 
   boolean hasConverged = FALSE;   
   while(NOT hasConverged)
     {      
-      for(int i = 0; i < numberOfRuns; ++i)
-	executeOneRun(indiChains + (i * numberCoupledChains), diagFreq); 
+      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+	executeOneRun(indiChains + (i * gAInfo.numberCoupledChains), diagFreq); 
       
-      hasConverged = convergenceDiagnostic(indiChains, numberOfRuns); 
+      hasConverged = convergenceDiagnostic(indiChains, gAInfo.numberOfRuns); 
     }
 
   if(processID == 0)
     {
-      for(int i = 0; i < numberOfRuns; ++i)
+      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
 	finalizeOutputFiles(indiChains + i);
       PRINT("\nConverged after %d generations\n",  indiChains[0].currentGeneration);
       PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 

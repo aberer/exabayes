@@ -328,8 +328,8 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       case 'p': 
 	{
 	  seed = atoi(optarg);
-	  rGlobalKey.v[0] = seed; 
-	  rGlobalKey.v[1] = 0xbadcafe; /* how funny */
+	  gAInfo.rGlobalKey.v[0] = seed; 
+	  gAInfo.rGlobalKey.v[1] = 0xbadcafe; /* how funny */
 	  break; 
 	}
       default:
@@ -389,20 +389,20 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       char tmp[1024]; 
       tmp[0] = '\0'; 
       strcpy(tree_file, tmp); 
-      numberOfStartingTrees = 0; 
+      gAInfo.numberOfStartingTrees = 0; 
       /* tree_file = "\0";  */
     }
   else 
     {
       FILE *fh = myfopen(tree_file, "r"); 
-      numberOfStartingTrees = 0;  
+      gAInfo.numberOfStartingTrees = 0;  
       int ch; 
 
       while((ch = fgetc(fh)) != EOF)
 	if(ch == ';')
-	  numberOfStartingTrees++;
+	  gAInfo.numberOfStartingTrees++;
       
-      printf("%d starting trees provided via -t\n", numberOfStartingTrees); 
+      printf("%d starting trees provided via -t\n", gAInfo.numberOfStartingTrees); 
     }
 
   /* if(!treeSet && !adef->useCheckpoint) */

@@ -5,13 +5,15 @@
 
 #include "globals.h"
 
+#include "adapterCode.h"
+
 /* call this for verification after the lnl has been evaluated somehow */
 static void expensiveVerify(tree *tr)
 {  
 #ifdef DEBUG_LNL_VERIFY
   double val1 = tr->likelihood; 
 
-  for(int i = 0; i < tr->NumberOfModels ;++i)
+  for(int i = 0; i < getNumberOfPartitions(tr) ;++i)
     tr->executeModel[i] = TRUE; 
 
   evaluateGeneric(tr, tr->start, TRUE); 
@@ -33,25 +35,33 @@ static void expensiveVerify(tree *tr)
  */
 void evaluateOnePartition(tree *tr, nodeptr start, boolean fullTraversal, int model)
 {
-  /* this most likely works differently in the PLL */
-  assert(HAVE_PLL == 0); 
+  int numPartitions = GET_NUM_PARTITIONS(tr); 
 
-  double perPartitionLH[tr->NumberOfModels] ; 
-  memcpy(perPartitionLH, tr->perPartitionLH, sizeof(double) * tr->NumberOfModels); 
+  double perPartitionLH[numPartitions] ; 
 
-  memset(tr->executeModel, 0, sizeof(boolean) * tr->NumberOfModels); 
-  tr->executeModel[model] = TRUE ; 
+  for(int i = 0; i < numPartitions; ++i)
+    perPartitionLH[i] = GET_PLH(tr,i); 
 
+  for(int i = 0; i < numPartitions; ++i)
+    GET_EXECMODEL(tr, i) = FALSE; 
+  GET_EXECMODEL(tr,model) = TRUE; 
+
+
+#if HAVE_PLL == 1 
+  evaluateGeneric(tr, &(gAInfo.partitions), start, fullTraversal); 
+#else 
   evaluateGeneric(tr, start, fullTraversal); 
+#endif
   
-  perPartitionLH[model] = tr->perPartitionLH[model];
-  memcpy(tr->perPartitionLH, perPartitionLH, sizeof(double) * tr->NumberOfModels); 
+  perPartitionLH[model] = GET_PLH(tr, model);
+  for(int i = 0; i < numPartitions; ++i)
+    GET_PLH(tr, i) = perPartitionLH[i]; 
 
   tr->likelihood = 0; 
-  for(int i = 0; i < tr->NumberOfModels; ++i)
+  for(int i = 0; i < numPartitions; ++i)
     {	
-      tr->likelihood +=  tr->perPartitionLH[i];     
-      tr->executeModel[i] = TRUE; 
+      tr->likelihood +=  GET_PLH(tr,i);
+      GET_EXECMODEL(tr,i) = TRUE; 
     }
 
   expensiveVerify(tr);
@@ -66,40 +76,46 @@ void evaluateOnePartition(tree *tr, nodeptr start, boolean fullTraversal, int mo
 */
 void evaluatePartitions(tree *tr, nodeptr start, boolean fullTraversal, boolean *models)
 {  
-  /* this most likely works differently in the PLL */
-  assert(HAVE_PLL == 0); 
+  int numPartitions = GET_NUM_PARTITIONS(tr); 
+  double perPartitionLH[numPartitions] ; 
 
-  double perPartitionLH[tr->NumberOfModels] ; 
+  
+  for(int i = 0; i < numPartitions; ++i)
+    {
+      perPartitionLH[i] = GET_PLH(tr,i); 
+      GET_EXECMODEL(tr,i) = models[i] ; 
+    }
 
-  memcpy(perPartitionLH, tr->perPartitionLH, sizeof(double) * tr->NumberOfModels); 
-  memcpy(tr->executeModel, models, sizeof(boolean)* tr->NumberOfModels);   
-
+#if HAVE_PLL == 1
+  evaluateGeneric(tr, &(gAInfo.partitions), start, fullTraversal); 
+#else 
   evaluateGeneric(tr,start, fullTraversal); 
+#endif
 
   /*  correct for hidden examl feature: reduction is applied multiple times */
-  for(int i = 0; i < tr->NumberOfModels; ++i)
+  for(int i = 0; i < numPartitions; ++i)
     if(models[i] == TRUE)
-      perPartitionLH[i] = tr->perPartitionLH[i]; 
-  memcpy(tr->perPartitionLH, perPartitionLH, sizeof(double) * tr->NumberOfModels); 
-  
+      perPartitionLH[i] = GET_PLH(tr,i); 
+
   tr->likelihood = 0; 
-  for(int i = 0; i < tr->NumberOfModels; ++i)
+  for(int i = 0;i < numPartitions; ++i)
     {
-      if(models[i] == FALSE) 
-	tr->perPartitionLH[i] = perPartitionLH[i]; 
-      tr->likelihood +=  tr->perPartitionLH[i]; 
-      tr->executeModel[i] = TRUE; 
+      GET_PLH(tr,i) = perPartitionLH[i]; 
+      tr->likelihood += GET_PLH(tr,i); 
+      GET_EXECMODEL(tr,i) = TRUE; 
     }
 
   expensiveVerify(tr);
 }
 
 
-
-
-
 void evaluateGenericWrapper(tree *tr, nodeptr start, boolean fullTraversal)
 {
+#if HAVE_PLL == 1 
+  evaluateGeneric(tr, &(gAInfo.partitions), start, fullTraversal);  
+#else 
   evaluateGeneric(tr, start, fullTraversal);
+#endif
+
   expensiveVerify(tr);  
 }

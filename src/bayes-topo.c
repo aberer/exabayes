@@ -1,12 +1,11 @@
-#include "globals.h"
 #include "common.h"
-
 #include "config.h"
 #include "axml.h"
-
+#include "globals.h"
 #include "main-common.h"
+#include "eval.h"
 
-
+#include "adapterCode.h"
 
 
 topol  *setupTopol (int maxtips)
@@ -140,7 +139,7 @@ void saveTree (tree *tr, topol *tpl)
   connptr  r;  
   
   tpl->nextlink = 0;                             /* Reset link pointer */
-  r = tpl->links + saveSubtree(minTreeTip(tr->start, tr->mxtips), tpl, tr->mxtips, tr->numBranches);  /* Save tree */
+  r = tpl->links + saveSubtree(minTreeTip(tr->start, tr->mxtips), tpl, tr->mxtips, GET_NUM_BRANCHES(tr));  /* Save tree */
   r->sibling = 0;
   
   tpl->likelihood = tr->likelihood;
@@ -173,7 +172,7 @@ boolean restoreTree (topol *tpl, tree *tr)
   /*  Copy connections from topology */
 
   for (r = tpl->links, i = 0; i < tpl->nextlink; r++, i++)     
-    hookup(r->p, r->q, r->z, tr->numBranches);      
+    hookup(r->p, r->q, r->z, GET_NUM_BRANCHES(tr));      
 
   tr->likelihood = tpl->likelihood;
   tr->start      = tpl->start;
