@@ -18,18 +18,18 @@ begin EXABAYES;
       initModelAllBiunifWeight  1 
       initModelPermBiunifWeight 1
 
-      initFrequenciesWeight 4
+      initFrequenciesWeight 1
 
 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
       initPenaltyFactor 0.0 
-      samplingFrequency 20 	[ take a sample every n generations ]
+      samplingFrequency 100 	[ take a sample every n generations ]
 
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
       diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 1 [ number of independant chains/runs ]
+      numIndiChains 4 [ number of independant chains/runs ]
 
       [ MC3 ]
       numCoupledChains 1 [ number of chains per independent run (only one is cold) ]       

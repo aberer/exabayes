@@ -19,6 +19,7 @@
 
 #include "randomness.h"
 
+#include "eval.h"
 
 
 /* #define DEBUG_BL */
@@ -218,11 +219,20 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 
       /* now save the tree to a chain chain */
       saveTreeStateToChain(theChain, tr); 
-      
-      if(processID == 0)
+
+      if(processID == 0 )
 	{	  
-	  makeChainFileNames(theChain, i); 
-	  initializeOutputFiles(theChain); 
+	  if( i % numberCoupledChains == 0)
+	    {
+	      makeChainFileNames(theChain, i / numberCoupledChains); 
+	      initializeOutputFiles(theChain); 
+	    }
+	  else 
+	    {	      
+	      state *previousChain = *resultIndiChains + (i  - 1 ) ; 
+	      theChain->topologyFile = previousChain->topologyFile; 
+	      theChain->outputParamFile = previousChain->topologyFile; 
+	    }
 	}
     }
 

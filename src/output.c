@@ -286,13 +286,3 @@ void chainInfoOutput(state *curstate )
 
 }
 
-
-
-/* TODO */
-void newChainInfoOutput(state *curstate)
-{
-  /* current values */
-
-  /* acceptance  / rejection values  */ 
-}
-
