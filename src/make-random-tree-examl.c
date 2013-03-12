@@ -136,8 +136,8 @@ void makeRandomTree(tree *tr)
       insertTaxon(p->back, randomBranch, tr->numBranches);      
     }
   
-  free(perm);            
-  free(branches);
+  exa_free(perm); 
+  exa_free(branches);
 }
 
 /* END RANDOM TRE  */

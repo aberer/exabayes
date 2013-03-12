@@ -1,4 +1,3 @@
-#include "common.h"
 
 #include "axml.h"
 #include "proposalStructs.h"
@@ -79,11 +78,11 @@ void initDefaultValues(state *theState, tree *tr)
 
   theState->modelRemem.nstates = partition->states; /* 4 for DNA */
   theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
-  theState->modelRemem.curSubsRates = (double *) malloc(theState->modelRemem.numSubsRates * sizeof(double));
+  theState->modelRemem.curSubsRates = (double *) exa_malloc(theState->modelRemem.numSubsRates * sizeof(double));
   
   theState->frequRemem.model = 0;
   theState->frequRemem.numFrequRates = partition->states; /* 4 for DNA */
-  theState->frequRemem.curFrequRates = (double *) malloc(theState->frequRemem.numFrequRates * sizeof(double));
+  theState->frequRemem.curFrequRates = (double *) exa_malloc(theState->frequRemem.numFrequRates * sizeof(double));
   
   theState->gammaRemem.gm_sliding_window_w = 0.75;
   theState->brLenRemem.single_bl_branch = -1;

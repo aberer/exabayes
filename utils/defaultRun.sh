@@ -33,7 +33,7 @@ if [ "$codeBase" == "examl" ]; then
     baseCall="mpirun -np 2 $gdb ./exabayes -s data/$dataset/aln.examl.binary -n testRun -p $seed -c examples/test.nex" #  -t data/$dataset/tree_2 
 elif [ "$codeBase" == "pll" ]; then 
     args="$args --enable-pll"
-    baseCall="$gdb ./exabayes -T $numCores -p $seed  -s data/$dataset/aln.pll.binary -n testRun -c examples/test.nex " #   -t data/$dataset/tree_2 
+    baseCall="$gdb ./exabayes -p $seed  -s data/$dataset/aln.pll.binary -n testRun -c examples/test.nex " #   -t data/$dataset/tree_2 
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit

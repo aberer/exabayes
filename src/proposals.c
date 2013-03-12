@@ -430,12 +430,12 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 {
   tree *tr = instate->tr; 
 
-  pInfo *partition = getPartition(tr,instate->modelRemem.model);
-  
-
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
   instate->modelRemem.model=drawRandInt(instate, getNumberOfPartitions(tr));
+
+  pInfo *partition = getPartition(tr,instate->modelRemem.model);
+
   curv = partition->alpha;
   instate->gammaRemem.curAlpha = curv;
 

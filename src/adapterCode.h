@@ -11,6 +11,9 @@ void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q);
 void exa_evaluateGeneric(tree *tr, nodeptr start, boolean fullTraversal); 
 
 
+double getPcontr(tree *tr, int num); 
+int getNumBranches(tree *tr); 
+
 int getNumberOfPartitions(tree *tr) ; 
 pInfo* getPartition(tree *tr, int num); 
 boolean hasPergeneBL(tree *tr); 

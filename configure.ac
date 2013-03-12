@@ -26,12 +26,12 @@ CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
 
 
-# AX_EXT
+dnl NOTICE if you have trouble with that, then install autoconf-archive (or similar)
+AX_EXT
 
 dnl AX_MPI()
 
 # Checks for libraries.
-dnl AC_CHECK_LIB([ncl], [], [], [ AC_MSG_ERROR([Could not find the ncl library]) ])
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h stdint.h stdlib.h string.h strings.h sys/time.h unistd.h])
@@ -51,16 +51,18 @@ AC_CHECK_FUNCS([clock_gettime getcwd getpagesize gettimeofday memset pow sqrt st
 
 
 AC_ARG_ENABLE(pll,
-  [ --enable-pll   enable compilation with PLL instead of ExaML code base (the latter is default)],
+  [ --with-pll   enable compilation with PLL instead of ExaML code base (the latter is default)],
   [case "${enableval}" in
-     yes | no ) WITH_PLL="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --enable-pll) ;;
+     yes | no ) with_pll="${enableval}" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --with-pll) ;;
    esac],
-  [WITH_PLL="no"]
+  [with_pll="no"]
 )
+
+
 AC_DEFINE([HAVE_PLL], [0], ["is 1, if built with the PLL "])
-AS_IF([test "x$WITH_PLL" = "xyes"], AC_DEFINE(HAVE_PLL, 1) )
-AM_CONDITIONAL([WITH_PLL], [test  "x$WITH_PLL" = "xyes"])
+AS_IF([test "x$with_pll" = "xyes"], AC_DEFINE(HAVE_PLL,1) )
+AM_CONDITIONAL([WITH_PLL], [test  "x$with_pll" = "xyes"])
 
 
 AC_ARG_ENABLE(debug,
@@ -79,7 +81,7 @@ AM_CONDITIONAL([DEBUG], [test x$debug = xtrue ])
 
 
 AC_ARG_ENABLE( [examl], 
-	       [ --enable-examl	Use the ExaML code base (ExaML is the default setting)],
+	       [ --with-examl	Use the ExaML code base (ExaML is the default setting)],
 	       [examl_usage=true] )
 AM_CONDITIONAL([ENABLE_EXAML], [test x$examl_usage = xtrue ])
 

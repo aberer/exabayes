@@ -65,14 +65,8 @@ double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
 	  for(i = 0; i < getNumBranches(tr); i++)
 	    {
 
-#if HAVE_PLL == 1 
-	      /* TODO make line below work with PLL   */
-#else 
-	      assert(tr->partitionContributions[i] != -1.0);
-	      assert(tr->fracchanges[i] != -1.0);
-#endif
-
-
+	      assert(getPcontr(tr,i) != -1.0);
+	      assert(getFracChange(tr,i) != -1.0);
 
 	      z = p->z[i];
 	      if(z < zmin) 

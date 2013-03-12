@@ -12,8 +12,8 @@ topol  *setupTopol (int maxtips)
 {
   topol   *tpl;
 
-  if (! (tpl = (topol *) malloc(sizeof(topol))) || 
-      ! (tpl->links = (connptr) malloc((2*maxtips-3) * sizeof(connect))))
+  if (! (tpl = (topol *) exa_malloc(sizeof(topol))) || 
+      ! (tpl->links = (connptr) exa_malloc((2*maxtips-3) * sizeof(connect))))
     {
       printf("ERROR: Unable to get topology memory");
       tpl = (topol *) NULL;
@@ -35,8 +35,8 @@ topol  *setupTopol (int maxtips)
 
 void  freeTopol (topol *tpl)
 {
-  free(tpl->links);
-  free(tpl);
+  exa_free(tpl->links);
+  exa_free(tpl);
 }
 
 

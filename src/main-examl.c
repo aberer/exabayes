@@ -201,7 +201,7 @@ void *malloc_aligned(size_t size)
      a 16-byte aligned pointer
   */
 
-  ptr = malloc(size);
+  ptr = exa_malloc(size);
   
   if(ptr == (void*)NULL) 
    assert(0);
@@ -210,14 +210,13 @@ void *malloc_aligned(size_t size)
   assert(0);
 #endif
 
-
 #else
   res = posix_memalign( &ptr, BYTE_ALIGNMENT, size );
 
   if(res != 0) 
     assert(0);
 #endif 
-   
+
   return ptr;
 }
 
@@ -559,9 +558,9 @@ static boolean setupTree (tree *tr)
 
   tr->treeStringLength = tr->mxtips * (nmlngth+128) + 256 + tr->mxtips * 2;
 
-  tr->tree_string  = (char*)calloc(tr->treeStringLength, sizeof(char)); 
-  tr->tree0 = (char*)calloc(tr->treeStringLength, sizeof(char));
-  tr->tree1 = (char*)calloc(tr->treeStringLength, sizeof(char));
+  tr->tree_string  = (char*)exa_calloc(tr->treeStringLength, sizeof(char)); 
+  tr->tree0 = (char*)exa_calloc(tr->treeStringLength, sizeof(char));
+  tr->tree1 = (char*)exa_calloc(tr->treeStringLength, sizeof(char));
 
 
   /*TODO, must that be so long ?*/
@@ -582,7 +581,7 @@ static boolean setupTree (tree *tr)
   tr->nameList = (char **)malloc(sizeof(char *) * (tips + 1));
    
 
-  if (!(p0 = (nodeptr) malloc((tips + 3*inter) * sizeof(node))))
+  if (!(p0 = (nodeptr) exa_malloc((tips + 3*inter) * sizeof(node))))
     {
       printf("ERROR: Unable to obtain sufficient tree memory\n");
       return  FALSE;
@@ -591,7 +590,7 @@ static boolean setupTree (tree *tr)
   tr->nodeBaseAddress = p0;
 
 
-  if (!(tr->nodep = (nodeptr *) malloc((2*tr->mxtips) * sizeof(nodeptr))))
+  if (!(tr->nodep = (nodeptr *) exa_malloc((2*tr->mxtips) * sizeof(nodeptr))))
     {
       printf("ERROR: Unable to obtain sufficient tree memory, too\n");
       return  FALSE;
@@ -655,7 +654,7 @@ static boolean setupTree (tree *tr)
   
   tr->nameHash = initStringHashTable(10 * tr->mxtips);
 
-  tr->partitionData = (pInfo*)malloc(sizeof(pInfo) * getNumberOfPartitions(tr));
+  tr->partitionData = (pInfo*)exa_malloc(sizeof(pInfo) * getNumberOfPartitions(tr));
 
   return TRUE;
 }
@@ -1002,7 +1001,7 @@ static void multiprocessorScheduling(tree *tr, int tid)
     /* check that we have not addedd any new models for data types with a different number of states
        and forgot to update modelStates */
     
-    tr->partitionAssignment = (int *)malloc(getNumberOfPartitions(tr) * sizeof(int));
+    tr->partitionAssignment = (int *)exa_malloc(getNumberOfPartitions(tr) * sizeof(int));
     
   for(model = 0; model < getNumberOfPartitions(tr); model++)
     {        
@@ -1035,10 +1034,10 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	    k,
 	    n = processes,
 	    p = numberOfPartitions[s],    
-	    *assignments = (int *)calloc(n, sizeof(int));  
+	    *assignments = (int *)exa_calloc(n, sizeof(int));  
 	  
 	  partitionType 
-	    *pt = (partitionType *)malloc(sizeof(partitionType) * p);
+	    *pt = (partitionType *)exa_malloc(sizeof(partitionType) * p);
 	  
 	  
 	  for(i = 0, k = 0; i < getNumberOfPartitions(tr); i++)
@@ -1090,8 +1089,8 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	  
 	  assert(sum == checkSum);
 	  
-	  free(assignments);
-	  free(pt);
+	  exa_free(assignments);
+	  exa_free(pt);
 	}
     } 
 }
@@ -1136,63 +1135,63 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 
       width = tr->partitionData[model].width;
 
-      tr->partitionData[model].wr = (double *)malloc(sizeof(double) * width);
-      tr->partitionData[model].wr2 = (double *)malloc(sizeof(double) * width);     
+      tr->partitionData[model].wr = (double *)exa_malloc(sizeof(double) * width);
+      tr->partitionData[model].wr2 = (double *)exa_malloc(sizeof(double) * width);     
 
      	
       /* 
 	 globalScaler needs to be 2 * tr->mxtips such that scalers of inner AND tip nodes can be added without a case switch
-	 to this end, it must also be initialized with zeros -> calloc
+	 to this end, it must also be initialized with zeros -> exa_calloc
        */
 
-      tr->partitionData[model].globalScaler    = (unsigned int *)calloc(2 * tr->mxtips, sizeof(unsigned int));  	         
+      tr->partitionData[model].globalScaler    = (unsigned int *)exa_calloc(2 * tr->mxtips, sizeof(unsigned int));  	         
 
-      tr->partitionData[model].left              = (double *)malloc_aligned(pl->leftLength * (maxCategories + 1) * sizeof(double));
-      tr->partitionData[model].right             = (double *)malloc_aligned(pl->rightLength * (maxCategories + 1) * sizeof(double));
-      tr->partitionData[model].EIGN              = (double*)malloc(pl->eignLength * sizeof(double));
-      tr->partitionData[model].EV                = (double*)malloc_aligned(pl->evLength * sizeof(double));
-      tr->partitionData[model].EI                = (double*)malloc(pl->eiLength * sizeof(double));
+      tr->partitionData[model].left              = (double *)exa_malloc_aligned(pl->leftLength * (maxCategories + 1) * sizeof(double));
+      tr->partitionData[model].right             = (double *)exa_malloc_aligned(pl->rightLength * (maxCategories + 1) * sizeof(double));
+      tr->partitionData[model].EIGN              = (double*)exa_malloc(pl->eignLength * sizeof(double));
+      tr->partitionData[model].EV                = (double*)exa_malloc_aligned(pl->evLength * sizeof(double));
+      tr->partitionData[model].EI                = (double*)exa_malloc(pl->eiLength * sizeof(double));
       
-      tr->partitionData[model].substRates        = (double *)malloc(pl->substRatesLength * sizeof(double));
-      tr->partitionData[model].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
-      tr->partitionData[model].empiricalFrequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
-      tr->partitionData[model].tipVector         = (double *)malloc_aligned(pl->tipVectorLength * sizeof(double));
-      tr->partitionData[model].symmetryVector    = (int *)malloc(pl->symmetryVectorLength  * sizeof(int));
-      tr->partitionData[model].frequencyGrouping = (int *)malloc(pl->frequencyGroupingLength  * sizeof(int));
+      tr->partitionData[model].substRates        = (double *)exa_malloc(pl->substRatesLength * sizeof(double));
+      tr->partitionData[model].frequencies       = (double*)exa_malloc(pl->frequenciesLength * sizeof(double));
+      tr->partitionData[model].empiricalFrequencies       = (double*)exa_malloc(pl->frequenciesLength * sizeof(double));
+      tr->partitionData[model].tipVector         = (double *)exa_malloc_aligned(pl->tipVectorLength * sizeof(double));
+      tr->partitionData[model].symmetryVector    = (int *)exa_malloc(pl->symmetryVectorLength  * sizeof(int));
+      tr->partitionData[model].frequencyGrouping = (int *)exa_malloc(pl->frequencyGroupingLength  * sizeof(int));
       
-      tr->partitionData[model].perSiteRates      = (double *)malloc(sizeof(double) * tr->maxCategories);
+      tr->partitionData[model].perSiteRates      = (double *)exa_malloc(sizeof(double) * tr->maxCategories);
             
       tr->partitionData[model].nonGTR = FALSE;            
 
-      tr->partitionData[model].gammaRates = (double*)malloc(sizeof(double) * 4);
-      tr->partitionData[model].yVector = (unsigned char **)malloc(sizeof(unsigned char*) * (tr->mxtips + 1));
+      tr->partitionData[model].gammaRates = (double*)exa_malloc(sizeof(double) * 4);
+      tr->partitionData[model].yVector = (unsigned char **)exa_malloc(sizeof(unsigned char*) * (tr->mxtips + 1));
 
       
-      tr->partitionData[model].xVector = (double **)malloc(sizeof(double*) * tr->mxtips);   
+      tr->partitionData[model].xVector = (double **)exa_malloc(sizeof(double*) * tr->mxtips);   
       	
       for(j = 0; j < (size_t)tr->mxtips; j++)	        	  	  	  	 
 	  tr->partitionData[model].xVector[j]   = (double*)NULL;   
 
-      tr->partitionData[model].xSpaceVector = (size_t *)calloc(tr->mxtips, sizeof(size_t));  
+      tr->partitionData[model].xSpaceVector = (size_t *)exa_calloc(tr->mxtips, sizeof(size_t));  
 
-      tr->partitionData[model].sumBuffer = (double *)malloc_aligned(width *
+      tr->partitionData[model].sumBuffer = (double *)exa_malloc_aligned(width *
 									   (size_t)(tr->partitionData[model].states) *
 									   discreteRateCategories(tr->rateHetModel) *
 									   sizeof(double));
 	    
-      tr->partitionData[model].wgt = (int *)malloc_aligned(width * sizeof(int));	  
+      tr->partitionData[model].wgt = (int *)exa_malloc_aligned(width * sizeof(int));	  
 
-      /* rateCategory must be assigned using calloc() at start up there is only one rate category 0 for all sites */
+      /* rateCategory must be assigned using exa_calloc() at start up there is only one rate category 0 for all sites */
 
-      tr->partitionData[model].rateCategory = (int *)calloc(width, sizeof(int));
+      tr->partitionData[model].rateCategory = (int *)exa_calloc(width, sizeof(int));
 
       if(width > 0 && tr->saveMemory)
 	{
 	  tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
 	    
-	  tr->partitionData[model].gapVector = (unsigned int*)calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));	  	    	  	  
+	  tr->partitionData[model].gapVector = (unsigned int*)exa_calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));	  	    	  	  
 	    
-	  tr->partitionData[model].gapColumn = (double *)malloc_aligned(((size_t)tr->mxtips) *								      
+	  tr->partitionData[model].gapColumn = (double *)exa_malloc_aligned(((size_t)tr->mxtips) *								      
 									       ((size_t)(tr->partitionData[model].states)) *
 									       discreteRateCategories(tr->rateHetModel) * sizeof(double));
 	}
@@ -1212,7 +1211,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
    
   /* assign local memory for storing sequence data */
 
-  tr->y_ptr = (unsigned char *)malloc(myLength * (size_t)(tr->mxtips) * sizeof(unsigned char));
+  tr->y_ptr = (unsigned char *)exa_malloc(myLength * (size_t)(tr->mxtips) * sizeof(unsigned char));
   assert(tr->y_ptr != NULL);
    
   for(i = 0; i < (size_t)tr->mxtips; i++)
@@ -1263,7 +1262,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
       assert(globalCounter == tr->originalCrunchedLength);
     }
    
-  y = (unsigned char *)malloc(sizeof(unsigned char) * tr->originalCrunchedLength);
+  y = (unsigned char *)exa_malloc(sizeof(unsigned char) * tr->originalCrunchedLength);
 
   for(i = 1; i <= (size_t)tr->mxtips; i++)
     {
@@ -1309,7 +1308,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	}
     }
 
-  free(y);
+  exa_free(y);
     
   /* initialize gap bit vectors at tips when memory saving option is enabled */
   
@@ -1351,7 +1350,7 @@ void initializeTree(tree *tr, analdef *adef)
   myBinFread(&(tr->NumberOfModels),         sizeof(int), 1, byteFile);
   myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
    
-  empiricalFrequencies = (double **)malloc(sizeof(double *) * getNumberOfPartitions(tr));
+  empiricalFrequencies = (double **)exa_malloc(sizeof(double *) * getNumberOfPartitions(tr));
   
   if(adef->perGeneBranchLengths)
     tr->numBranches = getNumberOfPartitions(tr);
@@ -1363,17 +1362,17 @@ void initializeTree(tree *tr, analdef *adef)
   
  
     
-  tr->aliaswgt                   = (int *)malloc(tr->originalCrunchedLength * sizeof(int));
+  tr->aliaswgt                   = (int *)exa_malloc(tr->originalCrunchedLength * sizeof(int));
   myBinFread(tr->aliaswgt, sizeof(int), tr->originalCrunchedLength, byteFile);	       
   
-  tr->rateCategory    = (int *)    calloc(tr->originalCrunchedLength, sizeof(int));	  
-  tr->wr              = (double *) malloc(tr->originalCrunchedLength * sizeof(double)); 
-  tr->wr2             = (double *) malloc(tr->originalCrunchedLength * sizeof(double)); 
-  tr->patrat          = (double*)  malloc(tr->originalCrunchedLength * sizeof(double));
-  tr->patratStored    = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 
-  tr->lhs             = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 
+  tr->rateCategory    = (int *)    exa_calloc(tr->originalCrunchedLength, sizeof(int));	  
+  tr->wr              = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
+  tr->wr2             = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
+  tr->patrat          = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double));
+  tr->patratStored    = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
+  tr->lhs             = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
   
-  tr->executeModel   = (boolean *)malloc(sizeof(boolean) * getNumberOfPartitions(tr));
+  tr->executeModel   = (boolean *)exa_malloc(sizeof(boolean) * getNumberOfPartitions(tr));
   
   for(i = 0; i < (size_t)getNumberOfPartitions(tr); i++)
     tr->executeModel[i] = TRUE;
@@ -1392,7 +1391,7 @@ void initializeTree(tree *tr, analdef *adef)
 	len;
       
       myBinFread(&len, sizeof(int), 1, byteFile);
-      tr->nameList[i] = (char*)malloc(sizeof(char) * len);
+      tr->nameList[i] = (char*)exa_malloc(sizeof(char) * len);
       myBinFread(tr->nameList[i], sizeof(char), len, byteFile);
       addword(tr->nameList[i], tr->nameHash, i);        
     }  
@@ -1424,10 +1423,10 @@ void initializeTree(tree *tr, analdef *adef)
       */
       
       myBinFread(&len, sizeof(int), 1, byteFile);
-      p->partitionName = (char*)malloc(sizeof(char) * len);
+      p->partitionName = (char*)exa_malloc(sizeof(char) * len);
       myBinFread(p->partitionName, sizeof(char), len, byteFile);
       
-      empiricalFrequencies[model] = (double *)malloc(sizeof(double) * p->states);
+      empiricalFrequencies[model] = (double *)exa_malloc(sizeof(double) * p->states);
       myBinFread(empiricalFrequencies[model], sizeof(double), p->states, byteFile);	   
     }     
   
@@ -1438,9 +1437,9 @@ void initializeTree(tree *tr, analdef *adef)
   initModel(tr, empiricalFrequencies); 
  
   for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
-    free(empiricalFrequencies[model]);
+    exa_free(empiricalFrequencies[model]);
 
-  free(empiricalFrequencies);
+  exa_free(empiricalFrequencies);
 }
 
 
@@ -1456,8 +1455,8 @@ int main(int argc, char *argv[])
   printf("\nThis is %s FINE-GRAIN MPI Process Number: %d\n", PROGRAM_NAME, processID);   
   MPI_Barrier(MPI_COMM_WORLD);
 
-  tree  *tr = (tree*)malloc(sizeof(tree));  
-  analdef *adef = (analdef*)malloc(sizeof(analdef));   
+  tree  *tr = (tree*)exa_malloc(sizeof(tree));  
+  analdef *adef = (analdef*)exa_malloc(sizeof(analdef));   
   
   ignoreExceptionsDenormFloat(); 
 

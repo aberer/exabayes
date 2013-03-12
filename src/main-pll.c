@@ -198,13 +198,13 @@ static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef,
 
 int main (int argc, char *argv[])
 { 
-  tree  *tr = (tree*)rax_malloc(sizeof(tree));
-  /* partitionList *partitions = (partitionList*)rax_malloc(sizeof(partitionList)); */
+  tree  *tr = (tree*)exa_malloc(sizeof(tree));
+  /* partitionList *partitions = (partitionList*)exa_malloc(sizeof(partitionList)); */
   partitionList *partitions = &(gAInfo.partitions); 
 
-  partitions->partitionData = (pInfo**)rax_malloc(NUM_BRANCHES*sizeof(pInfo*));
+  partitions->partitionData = (pInfo**)exa_malloc(NUM_BRANCHES*sizeof(pInfo*));
 
-  analdef *adef = (analdef*)rax_malloc(sizeof(analdef));
+  analdef *adef = (analdef*)exa_malloc(sizeof(analdef));
 
   double **empiricalFrequencies;
 
@@ -280,19 +280,19 @@ int main (int argc, char *argv[])
     /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
        let's not worry about this right now, because it is indeed RAxML-specific */
 
-    tr->aliaswgt                   = (int *)rax_malloc((size_t)tr->originalCrunchedLength * sizeof(int));
+    tr->aliaswgt                   = (int *)exa_malloc((size_t)tr->originalCrunchedLength * sizeof(int));
     myBinFread(tr->aliaswgt, sizeof(int), tr->originalCrunchedLength, byteFile);	       
 
-    tr->rateCategory    = (int *)    rax_malloc((size_t)tr->originalCrunchedLength * sizeof(int));	  
+    tr->rateCategory    = (int *)    exa_malloc((size_t)tr->originalCrunchedLength * sizeof(int));	  
 
-    tr->patrat          = (double*)  rax_malloc((size_t)tr->originalCrunchedLength * sizeof(double));
-    tr->patratStored    = (double*)  rax_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
-    tr->lhs             = (double*)  rax_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
+    tr->patrat          = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double));
+    tr->patratStored    = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
+    tr->lhs             = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
 
-    empiricalFrequencies = (double **)rax_malloc(sizeof(double *) * partitions->numberOfPartitions);
+    empiricalFrequencies = (double **)exa_malloc(sizeof(double *) * partitions->numberOfPartitions);
 
-    y = (unsigned char *)rax_malloc(sizeof(unsigned char) * ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips));
-    tr->yVector = (unsigned char **)rax_malloc(sizeof(unsigned char *) * ((size_t)(tr->mxtips + 1)));
+    y = (unsigned char *)exa_malloc(sizeof(unsigned char) * ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips));
+    tr->yVector = (unsigned char **)exa_malloc(sizeof(unsigned char *) * ((size_t)(tr->mxtips + 1)));
 
     for(i = 1; i <= (size_t)tr->mxtips; i++)
       tr->yVector[i] = &y[(i - 1) *  (size_t)tr->originalCrunchedLength]; 
@@ -314,7 +314,7 @@ int main (int argc, char *argv[])
       {
 	int len;
 	myBinFread(&len, sizeof(int), 1, byteFile);
-	tr->nameList[i] = (char*)rax_malloc(sizeof(char) * (size_t)len);
+	tr->nameList[i] = (char*)exa_malloc(sizeof(char) * (size_t)len);
 	myBinFread(tr->nameList[i], sizeof(char), len, byteFile);
 	/*printf("%s \n", tr->nameList[i]);*/
       }  
@@ -349,10 +349,10 @@ int main (int argc, char *argv[])
 	*/
 
 	myBinFread(&len, sizeof(int), 1, byteFile);
-	p->partitionName = (char*)rax_malloc(sizeof(char) * (size_t)len);
+	p->partitionName = (char*)exa_malloc(sizeof(char) * (size_t)len);
 	myBinFread(p->partitionName, sizeof(char), len, byteFile);
 
-	empiricalFrequencies[model] = (double *)rax_malloc(sizeof(double) * (size_t)partitions->partitionData[model]->states);
+	empiricalFrequencies[model] = (double *)exa_malloc(sizeof(double) * (size_t)partitions->partitionData[model]->states);
 	myBinFread(empiricalFrequencies[model], sizeof(double), partitions->partitionData[model]->states, byteFile);
       }
 

@@ -1,6 +1,3 @@
-
-#include "config.h"
-#include "common.h"
 #include "axml.h"
 
 #include "globals.h"
@@ -121,11 +118,11 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
 
       e = initEntry(); 
 
-      e->bitVector = (unsigned int*)malloc_aligned(vectorLength * sizeof(unsigned int));
+      e->bitVector = (unsigned int*) exa_malloc_aligned(vectorLength * sizeof(unsigned int));
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
       
       
-      e->treeVector = calloc(gAInfo.numberOfRuns, sizeof(nat)); 
+      e->treeVector = exa_calloc(gAInfo.numberOfRuns, sizeof(nat)); 
       e->treeVector[chainId]++; 
       memcpy(e->bitVector, bitVector, sizeof(unsigned int) * vectorLength);
      
@@ -136,10 +133,10 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
     {
       entry *e = initEntry(); 
 
-      e->bitVector = (unsigned int*)malloc_aligned(vectorLength * sizeof(unsigned int));
+      e->bitVector = (unsigned int*)exa_malloc_aligned(vectorLength * sizeof(unsigned int));
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
 
-      e->treeVector = calloc(gAInfo.numberOfRuns, sizeof(nat)); 
+      e->treeVector = exa_calloc(gAInfo.numberOfRuns, sizeof(nat)); 
       e->treeVector[chainId]++; 
 
       memcpy(e->bitVector, bitVector, sizeof(nat) * vectorLength);     
@@ -242,7 +239,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   int numTaxa = aChain->tr->mxtips; 
   hashtable *ht = aChain->bvHash;
 
-  int *numSampled = calloc(gAInfo.numberOfRuns, sizeof(int)); 
+  int *numSampled = exa_calloc(gAInfo.numberOfRuns, sizeof(int)); 
   
   for(int i = 0; i < ht->tableSize; ++i)
     {
@@ -334,7 +331,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
     printf("CONVERGENCE: ASDSF = %f\n", asdsf); 
 #endif
 
-  free(numSampled); 
+  exa_free(numSampled); 
 
   return (asdsf < ASDSF_CONVERGENCE_CRITERION ) ; 
 }

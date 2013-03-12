@@ -103,8 +103,8 @@ void traverseInitCorrect(nodeptr p, int *count, tree *tr )
 void initParamDump(tree *tr, paramDump *dmp)
 {  
   dmp->topo = setupTopol(tr->mxtips); 
-  dmp->infoPerPart = calloc(getNumberOfPartitions(tr), sizeof(perPartitionInfo));
-  dmp->branchLengths = calloc(2 * tr->mxtips, sizeof(double));
+  dmp->infoPerPart = exa_calloc(getNumberOfPartitions(tr), sizeof(perPartitionInfo));
+  dmp->branchLengths = exa_calloc(2 * tr->mxtips, sizeof(double));
 }
 
 
@@ -120,7 +120,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  *initParamsPtr = calloc(1,sizeof(initParamStruct)); 
+  *initParamsPtr = exa_calloc(1,sizeof(initParamStruct)); 
   /* initParamStruct *initParams = *initParamsPtr;  */
   
   parseConfigWithNcl(configFileName, initParamsPtr);
@@ -130,7 +130,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains; 
 
   printf("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
-  *resultIndiChains = calloc( totalNumChains , sizeof(state));   
+  *resultIndiChains = exa_calloc( totalNumChains , sizeof(state));   
 
   unsigned int bvLength = 0;   
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength);

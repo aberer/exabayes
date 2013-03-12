@@ -5,12 +5,19 @@
 
 
 #if HAVE_PLL == 1
-#define realloc rax_realloc  
-#define malloc_aligned  rax_malloc_aligned
-#define free rax_free
-#define calloc rax_calloc
+#define exa_realloc rax_realloc  
+#define exa_malloc_aligned  rax_malloc_aligned
+#define exa_malloc rax_malloc
+#define exa_free rax_free
+#define exa_calloc rax_calloc
 #else 
+
 #include <stdlib.h>
+#define exa_realloc realloc
+#define exa_malloc_aligned malloc_aligned
+#define exa_free free 
+#define exa_malloc malloc
+#define exa_calloc calloc
 #endif
 
 
@@ -64,8 +71,6 @@ typedef  unsigned int nat ;
    be user variables later (for development lets just keep them here).
 
  */
-
-
 
 
 #define _USE_NCL_PARSER
