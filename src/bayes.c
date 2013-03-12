@@ -75,7 +75,7 @@ void initDefaultValues(state *theState, tree *tr)
   theState->modelRemem.model = 0;
   theState->modelRemem.rt_sliding_window_w = 0.5;
 
-  pInfo *partition = &(GET_PARTITION(tr,theState->modelRemem.model) ); 
+  pInfo *partition = getPartition(tr,theState->modelRemem.model); 
 
   theState->modelRemem.nstates = partition->states; /* 4 for DNA */
   theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */

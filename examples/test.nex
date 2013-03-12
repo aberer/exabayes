@@ -1,21 +1,21 @@
 #NEXUS
 begin EXABAYES; 
 
-      initGammaWeight 3
-      initGammaExpWeight 3
+      initGammaWeight 0
+      initGammaExpWeight 0
 
-      INITSPRWEIGHT 0 
-      initEsprMappedWeight 10
+      INITSPRWEIGHT 0  [ broken for now ] 
+      initEsprMappedWeight 1
 
-      initSingleBranchWeight 3
-      initSingleBranchExpWeight 3
-      initSingleBranchBiunifWeight 3 
+      initSingleBranchWeight 1
+      initSingleBranchExpWeight 1
+      initSingleBranchBiunifWeight 1 
 
 
       initModelWeight 1
       initModelBiunifWeight 1
       initModelSingleBiunifWeight 1
-      initModelAllBiunifWeight  1 
+      initModelAllBiunifWeight  1
       initModelPermBiunifWeight 1
 
       initFrequenciesWeight 1
@@ -29,8 +29,8 @@ begin EXABAYES;
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
       diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 4 [ number of independant chains/runs ]
+      numIndiChains 2 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 1 [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 2 [ number of chains per independent run (only one is cold) ]       
 end;

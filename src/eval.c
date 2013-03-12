@@ -1,10 +1,6 @@
 #include "common.h"
-
 #include "axml.h"
-/* #include "eval.h"  */
-
 #include "globals.h"
-
 #include "adapterCode.h"
 
 /* call this for verification after the lnl has been evaluated somehow */
@@ -14,9 +10,9 @@ static void expensiveVerify(tree *tr)
   double val1 = tr->likelihood; 
 
   for(int i = 0; i < getNumberOfPartitions(tr) ;++i)
-    tr->executeModel[i] = TRUE; 
-
-  evaluateGeneric(tr, tr->start, TRUE); 
+    setExecModel(tr,i,TRUE); 
+  
+  exa_evaluateGeneric(tr,tr->start,TRUE); 
 
   if(processID == 0)
     {
@@ -30,38 +26,40 @@ static void expensiveVerify(tree *tr)
 
 
 
+void evaluateGenericWrapper(tree *tr, nodeptr start, boolean fullTraversal)
+{
+  exa_evaluateGeneric(tr,start,fullTraversal); 
+
+  expensiveVerify(tr);  
+}
+
 
 /** @brief the same as below, but just for one partition 
  */
 void evaluateOnePartition(tree *tr, nodeptr start, boolean fullTraversal, int model)
 {
-  int numPartitions = GET_NUM_PARTITIONS(tr); 
+  int numPartitions = getNumberOfPartitions(tr); 
 
   double perPartitionLH[numPartitions] ; 
 
   for(int i = 0; i < numPartitions; ++i)
-    perPartitionLH[i] = GET_PLH(tr,i); 
+    perPartitionLH[i] = getPLH(tr,i); 
 
   for(int i = 0; i < numPartitions; ++i)
-    GET_EXECMODEL(tr, i) = FALSE; 
-  GET_EXECMODEL(tr,model) = TRUE; 
+    setExecModel(tr,i,FALSE); 
+  setExecModel(tr,model,TRUE); 
 
-
-#if HAVE_PLL == 1 
-  evaluateGeneric(tr, &(gAInfo.partitions), start, fullTraversal); 
-#else 
-  evaluateGeneric(tr, start, fullTraversal); 
-#endif
+  exa_evaluateGeneric(tr, start, fullTraversal); 
   
-  perPartitionLH[model] = GET_PLH(tr, model);
+  perPartitionLH[model] = getPLH(tr, model);
   for(int i = 0; i < numPartitions; ++i)
-    GET_PLH(tr, i) = perPartitionLH[i]; 
+    setPLH(tr,i,perPartitionLH[i]); 
 
   tr->likelihood = 0; 
   for(int i = 0; i < numPartitions; ++i)
     {	
-      tr->likelihood +=  GET_PLH(tr,i);
-      GET_EXECMODEL(tr,i) = TRUE; 
+      tr->likelihood +=  getPLH(tr,i);
+      setExecModel(tr,i,TRUE); 
     }
 
   expensiveVerify(tr);
@@ -76,46 +74,31 @@ void evaluateOnePartition(tree *tr, nodeptr start, boolean fullTraversal, int mo
 */
 void evaluatePartitions(tree *tr, nodeptr start, boolean fullTraversal, boolean *models)
 {  
-  int numPartitions = GET_NUM_PARTITIONS(tr); 
+  int numPartitions = getNumberOfPartitions(tr); 
   double perPartitionLH[numPartitions] ; 
 
   
   for(int i = 0; i < numPartitions; ++i)
     {
-      perPartitionLH[i] = GET_PLH(tr,i); 
-      GET_EXECMODEL(tr,i) = models[i] ; 
+      perPartitionLH[i] = getPLH(tr,i); 
+      setExecModel(tr,i,models[i]); 
     }
 
-#if HAVE_PLL == 1
-  evaluateGeneric(tr, &(gAInfo.partitions), start, fullTraversal); 
-#else 
-  evaluateGeneric(tr,start, fullTraversal); 
-#endif
+  exa_evaluateGeneric(tr, start, fullTraversal); 
 
   /*  correct for hidden examl feature: reduction is applied multiple times */
   for(int i = 0; i < numPartitions; ++i)
     if(models[i] == TRUE)
-      perPartitionLH[i] = GET_PLH(tr,i); 
+      perPartitionLH[i] = getPLH(tr,i); 
 
   tr->likelihood = 0; 
   for(int i = 0;i < numPartitions; ++i)
     {
-      GET_PLH(tr,i) = perPartitionLH[i]; 
-      tr->likelihood += GET_PLH(tr,i); 
-      GET_EXECMODEL(tr,i) = TRUE; 
+      setPLH(tr,i,perPartitionLH[i]); 
+      tr->likelihood += getPLH(tr,i); 
+      setExecModel(tr,i,TRUE); 
     }
 
   expensiveVerify(tr);
 }
 
-
-void evaluateGenericWrapper(tree *tr, nodeptr start, boolean fullTraversal)
-{
-#if HAVE_PLL == 1 
-  evaluateGeneric(tr, &(gAInfo.partitions), start, fullTraversal);  
-#else 
-  evaluateGeneric(tr, start, fullTraversal);
-#endif
-
-  expensiveVerify(tr);  
-}

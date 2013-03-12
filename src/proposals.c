@@ -73,7 +73,7 @@ void findLogisticP(state *curstate){
 
 static void recordSubsRates(tree *tr, int model, int numSubsRates, double *prevSubsRates)
 {
-  pInfo *partition = & GET_PARTITION(tr,model); 
+  pInfo *partition = getPartition(tr,model); 
   assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)
@@ -232,8 +232,8 @@ static void extended_spr_apply(state *instate, int pSubType)
   instate->sprMoveRemem.nb  = p->next->back;
   instate->sprMoveRemem.nnb = p->next->next->back;
   
-  record_branch_info(instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, GET_NUM_BRANCHES(instate->tr));
-  record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, GET_NUM_BRANCHES(instate->tr));
+  record_branch_info(instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, getNumBranches(instate->tr));
+  record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, getNumBranches(instate->tr));
   
 
   /* initial remapping of BL of nodes adjacent to pruned node  */
@@ -241,7 +241,7 @@ static void extended_spr_apply(state *instate, int pSubType)
   
   instate->hastings = 1; 
   
-  for(int i = 0; i < GET_NUM_BRANCHES(tr); i++)
+  for(int i = 0; i < getNumBranches(tr); i++)
     {
       if(pSubType == STANDARD)
 	{
@@ -263,7 +263,7 @@ static void extended_spr_apply(state *instate, int pSubType)
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
 
-  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, GET_NUM_BRANCHES(tr)); 
+  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, getNumBranches(tr)); 
   p->next->next->back = p->next->back = (node *) NULL;
   /* done remove node p (omitted BL opt) */
 
@@ -303,17 +303,17 @@ static void extended_spr_apply(state *instate, int pSubType)
 
   instate->sprMoveRemem.q = curNode;
   instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
-  record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, GET_NUM_BRANCHES(instate->tr));
+  record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, getNumBranches(instate->tr));
 
   
   
    if(pSubType == STANDARD){
-     for(int branchCount=0; branchCount< GET_NUM_BRANCHES(instate->tr); branchCount++)
+     for(int branchCount=0; branchCount< getNumBranches(instate->tr); branchCount++)
      {
       instate->hastings/=log(curNode->z[branchCount]);
      }
    }else if(pSubType == SPR_ADJUST){
-     for(int branchCount=0; branchCount< GET_NUM_BRANCHES(instate->tr); branchCount++) /*  */
+     for(int branchCount=0; branchCount< getNumBranches(instate->tr); branchCount++) /*  */
      {
       instate->hastings/=(2*log(curNode->z[branchCount]));
      }
@@ -325,7 +325,7 @@ static void extended_spr_apply(state *instate, int pSubType)
 
   if(pSubType == STANDARD)
     {
-      insertWithUnifBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, GET_NUM_BRANCHES(instate->tr));
+      insertWithUnifBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, getNumBranches(instate->tr));
   /*   for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
      {
        instate->hastings/=log(instate->brLenRemem.qz[branchCount]);
@@ -340,11 +340,11 @@ static void extended_spr_apply(state *instate, int pSubType)
       
         if( remapBL ) 
 	  {
-	    for(int i = 0; i < GET_NUM_BRANCHES(tr); ++i)
+	    for(int i = 0; i < getNumBranches(tr); ++i)
 	      instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
 	  }
       
-	insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, GET_NUM_BRANCHES(tr));
+	insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, getNumBranches(tr));
 
 
       /* IMPORTANT TODO verify, that the mapping actually works, as we
@@ -357,7 +357,7 @@ static void extended_spr_apply(state *instate, int pSubType)
     }
      else if(pSubType == SPR_ADJUST)
     {
-      insertWithUnifBLScaled(instate->sprMoveRemem.p, instate->sprMoveRemem.q, 2.0,  GET_NUM_BRANCHES(instate->tr));
+      insertWithUnifBLScaled(instate->sprMoveRemem.p, instate->sprMoveRemem.q, 2.0,  getNumBranches(instate->tr));
     }
 
 //   if( (pSubType == SPR_MAPPED ) && remapBL) 
@@ -383,13 +383,13 @@ static void extended_spr_reset(state * instate)
   tree *tr = instate->tr; 
 
   /* prune the insertion */
-  hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, GET_NUM_BRANCHES(instate->tr));
+  hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, getNumBranches(instate->tr));
 
   instate->sprMoveRemem.p->next->next->back = instate->sprMoveRemem.p->next->back = (nodeptr) NULL;
   /*  */
   /* insert the pruned tree in its original node */
-  hookup(instate->sprMoveRemem.p->next,        instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, GET_NUM_BRANCHES(instate->tr));
-  hookup(instate->sprMoveRemem.p->next->next, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, GET_NUM_BRANCHES(instate->tr));
+  hookup(instate->sprMoveRemem.p->next,        instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, getNumBranches(instate->tr));
+  hookup(instate->sprMoveRemem.p->next->next, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, getNumBranches(instate->tr));
   
   if(processID == 0)
     {
@@ -430,12 +430,12 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 {
   tree *tr = instate->tr; 
 
-  pInfo *partition = &(GET_PARTITION(tr,instate->modelRemem.model));
+  pInfo *partition = getPartition(tr,instate->modelRemem.model);
   
 
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
-  instate->modelRemem.model=drawRandInt(instate, GET_NUM_PARTITIONS(tr));
+  instate->modelRemem.model=drawRandInt(instate, getNumberOfPartitions(tr));
   curv = partition->alpha;
   instate->gammaRemem.curAlpha = curv;
 
@@ -499,7 +499,7 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 static void simple_gamma_proposal_reset(state * instate)
 {
   tree *tr = instate->tr; 
-  pInfo *partition = &( GET_PARTITION(tr, instate->modelRemem.model)  ) ; 
+  pInfo *partition = getPartition(tr, instate->modelRemem.model) ; 
   
   partition->alpha = instate->gammaRemem.curAlpha; 
 
@@ -563,10 +563,10 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
   
   //TODO: add safety to max and min values
   //record the old ones
-  instate->modelRemem.model=drawRandInt(instate, GET_NUM_PARTITIONS(instate->tr));
+  instate->modelRemem.model=drawRandInt(instate, getNumberOfPartitions(instate->tr));
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
 
-  pInfo *partition = &(GET_PARTITION(tr, instate->modelRemem.model)); 
+  pInfo *partition = getPartition(tr, instate->modelRemem.model); 
 
   //choose a random set of model params,
   //probably with dirichlet proposal
@@ -740,9 +740,9 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
   tree *tr = instate->tr; 
 
   //record the old one 
-  instate->modelRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(instate->tr));
+  instate->modelRemem.model=drawRandInt(instate,getNumberOfPartitions(instate->tr));
   
-  pInfo *partition = & ( GET_PARTITION(tr , instate->modelRemem.model) ) ; 
+  pInfo *partition = getPartition(tr , instate->modelRemem.model) ; 
 
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   int state, randNumber;
@@ -783,9 +783,9 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
 {
   tree *tr = instate->tr; 
   //record the old one //TODO sufficient to store single value.
-  instate->modelRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(instate->tr)); 
+  instate->modelRemem.model=drawRandInt(instate,getNumberOfPartitions(instate->tr)); 
   
-  pInfo *partition = & (GET_PARTITION(tr,instate->modelRemem.model) ) ; 
+  pInfo *partition = getPartition(tr,instate->modelRemem.model) ; 
 
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
@@ -823,8 +823,8 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
   tree *tr = instate->tr; 
   
   //record the old one 
-  instate->modelRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(instate->tr));
-  pInfo *partition = &( GET_PARTITION(tr, instate->modelRemem.model)) ; 
+  instate->modelRemem.model=drawRandInt(instate,getNumberOfPartitions(instate->tr));
+  pInfo *partition = getPartition(tr, instate->modelRemem.model) ; 
 
   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
   //choose a random set parameter,
@@ -859,10 +859,12 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
 
 static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
 {
-  assert(GET_PARTITION(tr,model).dataType = DNA_DATA);
+  pInfo *partition = getPartition(tr, model); 
+
+  assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)	
-    GET_PARTITION(tr,model).substRates[i] = prevSubsRates[i]; 
+    partition->substRates[i] = prevSubsRates[i]; 
 
   exa_initReversibleGTR(tr, model);
 
@@ -1090,7 +1092,7 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 
 static void random_branch_length_proposal_apply(state * instate, int pSubType)
 {
-  int numBranches = GET_NUM_BRANCHES(instate->tr);
+  int numBranches = getNumBranches(instate->tr);
   const int num_branches = (instate->tr->mxtips * 2) - 3;
   int target_branch = drawRandInt(instate,num_branches); 
   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
@@ -1162,7 +1164,7 @@ static void random_branch_length_proposal_reset(state * instate)
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
   p = select_branch_by_id_dfs( instate->tr->start, instate->brLenRemem.single_bl_branch, instate );
   
-  reset_branch_length(p, GET_NUM_BRANCHES(instate->tr));
+  reset_branch_length(p, getNumBranches(instate->tr));
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
   //update_all_branches(instate, TRUE);
 
@@ -1189,7 +1191,7 @@ static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequ
 {
   /* NOTICE: this function should not be called repeatedly  */
 
-  pInfo *partition = & ( GET_PARTITION(tr, model) ) ; 
+  pInfo *partition = getPartition(tr,model);
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -1203,7 +1205,7 @@ static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequ
 
 static void recordFrequRates(tree *tr, int model, int numFrequRates, double *prevFrequRates)
 {
-  pInfo *partition = &( GET_PARTITION(tr, model) ) ; 
+  pInfo *partition = getPartition(tr,model); 
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -1215,8 +1217,8 @@ void frequency_proposal_apply(state * instate, int pSubType)
 {
   tree *tr = instate->tr; 
 
-  instate->frequRemem.model=drawRandInt(instate,GET_NUM_PARTITIONS(tr));
-  pInfo *partition = &(GET_PARTITION(tr, instate->frequRemem.model)); 
+  instate->frequRemem.model=drawRandInt(instate,getNumberOfPartitions(tr));
+  pInfo *partition = getPartition(tr, instate->frequRemem.model); 
 
   recordFrequRates(tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
 
@@ -1268,7 +1270,7 @@ void frequency_proposal_reset(state * instate)
 
 void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue)
 {
-  pInfo *partition = &(GET_PARTITION(tr,model)); 
+  pInfo *partition = getPartition(tr,model); 
 
   assert(partition->dataType = DNA_DATA);
   assert(subRateValue <= RATE_MAX && subRateValue >= RATE_MIN);

@@ -35,7 +35,7 @@ void storeExecuteMaskInTraversalDescriptor(tree *tr)
 {
    int model;
       
-   for(model = 0; model < GET_NUM_PARTITIONS(tr); model++)
+   for(model = 0; model < getNumberOfPartitions(tr); model++)
      tr->td[0].executeModel[model] = tr->executeModel[model];
 }
 
@@ -43,7 +43,7 @@ void storeValuesInTraversalDescriptor(tree *tr, double *value)
 {
    int model;
       
-   for(model = 0; model < GET_NUM_PARTITIONS(tr); model++)
+   for(model = 0; model < getNumberOfPartitions(tr); model++)
      tr->td[0].parameterValues[model] = value[model];
 }
 
@@ -81,7 +81,7 @@ static void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
 
 static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[])
 {
-  int numberOfPartitions = GET_NUM_PARTITIONS(tr); 
+  int numberOfPartitions = getNumberOfPartitions(tr); 
 
   if(processID == 0)
     {
@@ -526,7 +526,7 @@ static boolean setupTree (tree *tr)
     tips,
     inter; 
 
-  int numPartitions = GET_NUM_PARTITIONS(tr) ;
+  int numPartitions = getNumberOfPartitions(tr) ;
 
   
   tr->bigCutoff = FALSE;
@@ -535,7 +535,7 @@ static boolean setupTree (tree *tr)
   
   tr->partitionContributions = (double *)malloc(sizeof(double) * numPartitions);
   
-  for(i = 0; i < GET_NUM_PARTITIONS(tr); i++)
+  for(i = 0; i < getNumberOfPartitions(tr); i++)
     tr->partitionContributions[i] = -1.0;
   
   tr->perPartitionLH = (double *)malloc(sizeof(double) * numPartitions);
@@ -552,7 +552,7 @@ static boolean setupTree (tree *tr)
  
  
   
-  tr->fracchanges  = (double *)malloc(GET_NUM_PARTITIONS(tr) * sizeof(double));
+  tr->fracchanges  = (double *)malloc(getNumberOfPartitions(tr) * sizeof(double));
   
 
  
@@ -570,10 +570,10 @@ static boolean setupTree (tree *tr)
             
   tr->td[0].count = 0;
   tr->td[0].ti    = (traversalInfo *)malloc(sizeof(traversalInfo) * tr->mxtips);
-  tr->td[0].executeModel = (boolean *)malloc(sizeof(boolean) * GET_NUM_PARTITIONS(tr));
-  tr->td[0].parameterValues = (double *)malloc(sizeof(double) * GET_NUM_PARTITIONS(tr));
+  tr->td[0].executeModel = (boolean *)malloc(sizeof(boolean) * getNumberOfPartitions(tr));
+  tr->td[0].parameterValues = (double *)malloc(sizeof(double) * getNumberOfPartitions(tr));
   
-  for(i = 0; i < GET_NUM_PARTITIONS(tr); i++)
+  for(i = 0; i < getNumberOfPartitions(tr); i++)
     tr->fracchanges[i] = -1.0;
   tr->fracchange = -1.0;
   
@@ -655,7 +655,7 @@ static boolean setupTree (tree *tr)
   
   tr->nameHash = initStringHashTable(10 * tr->mxtips);
 
-  tr->partitionData = (pInfo*)malloc(sizeof(pInfo) * GET_NUM_PARTITIONS(tr));
+  tr->partitionData = (pInfo*)malloc(sizeof(pInfo) * getNumberOfPartitions(tr));
 
   return TRUE;
 }
@@ -710,7 +710,7 @@ void printResult(tree *tr, analdef *adef, boolean finalPrint)
 		  break;
 		case CAT:
 		  /*Tree2String(tr->tree_string, tr, tr->start->back, FALSE, TRUE, FALSE, FALSE, finalPrint, adef,
-		    NO_BRANCHES, FALSE, FALSE);*/
+		    NO_BRANCoHES, FALSE, FALSE);*/
 		  
 		  
 		  
@@ -878,7 +878,7 @@ static void computeFractionMany(tree *tr, int tid)
 
   assert(tr->manyPartitions);
 
-  for(model = 0; model < GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < getNumberOfPartitions(tr); model++)
     {
       if(isThisMyPartition(tr, tid, model))
 	{	 
@@ -902,7 +902,7 @@ static void computeFraction(tree *tr, int tid, int n)
   size_t 
     i;
 
-  for(model = 0; model < GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < getNumberOfPartitions(tr); model++)
     {
       size_t 
 	width = 0;
@@ -1002,9 +1002,9 @@ static void multiprocessorScheduling(tree *tr, int tid)
     /* check that we have not addedd any new models for data types with a different number of states
        and forgot to update modelStates */
     
-    tr->partitionAssignment = (int *)malloc(GET_NUM_PARTITIONS(tr) * sizeof(int));
+    tr->partitionAssignment = (int *)malloc(getNumberOfPartitions(tr) * sizeof(int));
     
-  for(model = 0; model < GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < getNumberOfPartitions(tr); model++)
     {        
       boolean 
 	exists = FALSE;
@@ -1041,7 +1041,7 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	    *pt = (partitionType *)malloc(sizeof(partitionType) * p);
 	  
 	  
-	  for(i = 0, k = 0; i < GET_NUM_PARTITIONS(tr); i++)
+	  for(i = 0, k = 0; i < getNumberOfPartitions(tr); i++)
 	    {
 	      if(tr->partitionData[i].states == modelStates[s])
 		{
@@ -1073,7 +1073,7 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	      assert(minIndex >= 0);
 	      
 	      assignments[minIndex] +=  pt[i].partitionLength;
-	      assert(pt[i].partitionNumber >= 0 && pt[i].partitionNumber < GET_NUM_PARTITIONS(tr));
+	      assert(pt[i].partitionNumber >= 0 && pt[i].partitionNumber < getNumberOfPartitions(tr));
 	      tr->partitionAssignment[pt[i].partitionNumber] = minIndex;
 	    }
 	  
@@ -1116,7 +1116,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 
   compute_bits_in_16bits(tr->bits_in_16bits);
   
-  for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
     tr->partitionData[model].width        = 0;
 
   if(tr->manyPartitions)
@@ -1129,7 +1129,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
   	   
   maxCategories = tr->maxCategories;
 
-  for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
     {                       
       const partitionLengths 
 	*pl = getPartitionLengths(&(tr->partitionData[model])); 
@@ -1207,7 +1207,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
     }
 
         
-  for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
     myLength += tr->partitionData[model].width;         
    
   /* assign local memory for storing sequence data */
@@ -1217,7 +1217,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
    
   for(i = 0; i < (size_t)tr->mxtips; i++)
     {
-      for( model = 0,  countOffset = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+      for( model = 0,  countOffset = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	{
 	  tr->partitionData[model].yVector[i+1]   = &tr->y_ptr[i * myLength + countOffset];
 	  countOffset +=  tr->partitionData[model].width;
@@ -1229,7 +1229,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 
   if(tr->manyPartitions)
     {
-      for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+      for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	{
 	  if(isThisMyPartition(tr, processID, model))
 	    {
@@ -1246,7 +1246,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	r, 
 	localCounter;
       
-      for(model = 0, globalCounter = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+      for(model = 0, globalCounter = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	{
 	  for(localCounter = 0, r = (size_t)tr->partitionData[model].lower;  r < (size_t)tr->partitionData[model].upper; r++)
 	    {
@@ -1271,7 +1271,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	
       if(tr->manyPartitions)
 	{
-	  for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+	  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	    {
 	      if(isThisMyPartition(tr, processID, model))	  
 		{
@@ -1289,7 +1289,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	    r, 
 	    localCounter;
 
-	  for(model = 0, globalCounter = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+	  for(model = 0, globalCounter = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	    {
 	      for(localCounter = 0, r = (size_t)tr->partitionData[model].lower;  r < (size_t)tr->partitionData[model].upper; r++)
 		{
@@ -1315,7 +1315,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
   
   if(tr->saveMemory)
     {
-      for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+      for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	{
 	  int        
 	    undetermined = getUndetermined(tr->partitionData[model].dataType);
@@ -1351,10 +1351,10 @@ void initializeTree(tree *tr, analdef *adef)
   myBinFread(&(tr->NumberOfModels),         sizeof(int), 1, byteFile);
   myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
    
-  empiricalFrequencies = (double **)malloc(sizeof(double *) * GET_NUM_PARTITIONS(tr));
+  empiricalFrequencies = (double **)malloc(sizeof(double *) * getNumberOfPartitions(tr));
   
   if(adef->perGeneBranchLengths)
-    tr->numBranches = GET_NUM_PARTITIONS(tr);
+    tr->numBranches = getNumberOfPartitions(tr);
   else
     tr->numBranches = 1;
   
@@ -1373,9 +1373,9 @@ void initializeTree(tree *tr, analdef *adef)
   tr->patratStored    = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 
   tr->lhs             = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 
   
-  tr->executeModel   = (boolean *)malloc(sizeof(boolean) * GET_NUM_PARTITIONS(tr));
+  tr->executeModel   = (boolean *)malloc(sizeof(boolean) * getNumberOfPartitions(tr));
   
-  for(i = 0; i < (size_t)GET_NUM_PARTITIONS(tr); i++)
+  for(i = 0; i < (size_t)getNumberOfPartitions(tr); i++)
     tr->executeModel[i] = TRUE;
    
   setupTree(tr); 
@@ -1397,7 +1397,7 @@ void initializeTree(tree *tr, analdef *adef)
       addword(tr->nameList[i], tr->nameHash, i);        
     }  
  
-  for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
     {      
       int 
 	len;
@@ -1437,7 +1437,7 @@ void initializeTree(tree *tr, analdef *adef)
 
   initModel(tr, empiricalFrequencies); 
  
-  for(model = 0; model < (size_t)GET_NUM_PARTITIONS(tr); model++)
+  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
     free(empiricalFrequencies[model]);
 
   free(empiricalFrequencies);

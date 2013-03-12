@@ -319,7 +319,7 @@ static boolean addElementLen (FILE *fp, tree *tr, nodeptr p, boolean readBranchL
       if (! treeProcessLength(fp, &branch))            return FALSE;
       
       /*printf("Branch %8.20f %d\n", branch, tr->numBranches);*/
-      hookup(p, q, &branch, GET_NUM_BRANCHES(tr));
+      hookup(p, q, &branch, getNumBranches(tr));
     }
   else
     {
@@ -391,7 +391,7 @@ void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
   tr->ntips       = 0;
   tr->nextnode    = tr->mxtips + 1;      
  
-  for(i = 0; i < GET_NUM_BRANCHES(tr); i++)
+  for(i = 0; i < getNumBranches(tr); i++)
     tr->partitionSmoothed[i] = FALSE;
   
   tr->rooted      = FALSE;     

@@ -82,9 +82,9 @@ void traverseInitCorrect(nodeptr p, int *count, tree *tr )
   nodeptr q;
   int i;
   
-  assert(NOT HAS_PERGENE_BL(tr)); 
+  assert(NOT hasPergeneBL(tr)); 
   
-  for( i = 0; i < GET_NUM_BRANCHES(tr); i++)
+  for( i = 0; i < getNumBranches(tr); i++)
     p->z[i] =  exp( - p->z[i] / tr->fracchange); 
   *count += 1;
   
@@ -103,7 +103,7 @@ void traverseInitCorrect(nodeptr p, int *count, tree *tr )
 void initParamDump(tree *tr, paramDump *dmp)
 {  
   dmp->topo = setupTopol(tr->mxtips); 
-  dmp->infoPerPart = calloc(GET_NUM_PARTITIONS(tr), sizeof(perPartitionInfo));
+  dmp->infoPerPart = calloc(getNumberOfPartitions(tr), sizeof(perPartitionInfo));
   dmp->branchLengths = calloc(2 * tr->mxtips, sizeof(double));
 }
 
@@ -155,7 +155,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       /* init the param dump  */
       initParamDump(tr, &(theChain->dump)); 
       
-      for(int i = 0; i < GET_NUM_PARTITIONS(tr); ++i ) 
+      for(int i = 0; i < getNumberOfPartitions(tr); ++i ) 
 	exa_initReversibleGTR(tr,i);
 
       /* init rng */
@@ -248,7 +248,7 @@ void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z )
   nodeptr q;
   int i;
   
-  for( i = 0; i < GET_NUM_BRANCHES(tr); i++)
+  for( i = 0; i < getNumBranches(tr); i++)
     p->z[i] = p->back->z[i] = z;  
   *count += 1;
   
@@ -287,7 +287,7 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
 {
 
   nodeptr q; 
-  assert(GET_NUM_BRANCHES(tr) == 1); 
+  assert(getNumBranches(tr) == 1); 
 
   if(restore == TOPO_RESTORE )
     { 
@@ -322,7 +322,7 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
 void applyChainStateToTree(state *chain, tree *tr)
 {
   /* TODO enable multi-branch    */
-  assert(GET_NUM_BRANCHES(tr) == 1); 
+  assert(getNumBranches(tr) == 1); 
 
   boolean treeWasRestored = restoreTree(chain->dump.topo, tr); 
   assert(treeWasRestored);   
@@ -333,11 +333,11 @@ void applyChainStateToTree(state *chain, tree *tr)
   assert(cnt == 2 * tr->mxtips -3); 
 
   /* restore model parameters */
-  for(int i = 0; i < GET_NUM_PARTITIONS(tr); ++i)
+  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
     {
       perPartitionInfo *info = chain->dump.infoPerPart + i ; 
 
-      pInfo *partition = & GET_PARTITION(tr, i); 
+      pInfo *partition = getPartition(tr, i);
       partition->alpha = info->alpha;
 
       memcpy(partition->substRates, info->substRates , 6 * sizeof(double)); 
@@ -383,13 +383,15 @@ void saveTreeStateToChain(state *chain, tree *tr)
   assert(cnt == 2 * tr->mxtips - 3 ); 
 
   /* save model parameters */
-  for(int i = 0; i < GET_NUM_PARTITIONS(tr); ++i)
+  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
     {
       perPartitionInfo *info = chain->dump.infoPerPart + i; 
-      info->alpha =  GET_PARTITION(tr,i).alpha; 
+      pInfo *partition = getPartition(tr,i); 
       
-      memcpy(info->substRates, GET_PARTITION(tr,i).substRates, 6 * sizeof(double)); 
-      memcpy(info->frequencies, GET_PARTITION(tr,i).frequencies, 4 * sizeof(double)); 
+      info->alpha =  partition->alpha; 
+      
+      memcpy(info->substRates, partition->substRates, 6 * sizeof(double)); 
+      memcpy(info->frequencies, partition->frequencies, 4 * sizeof(double)); 
     }  
 
 
