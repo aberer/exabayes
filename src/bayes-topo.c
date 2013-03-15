@@ -1,11 +1,37 @@
 #include "common.h"
 #include "config.h"
 #include "axml.h"
+#include "proposalStructs.h"
+
 #include "globals.h"
 #include "main-common.h"
 #include "eval.h"
 
 #include "adapterCode.h"
+
+
+
+
+/**
+   @brief A check to ensure that the tree is still consistent. 
+ */ 
+void traverseAndCount(nodeptr p, int *count, tree *tr )
+{
+  nodeptr q;  
+
+  *count += 1;
+
+  if (! isTip(p->number,tr->mxtips)) 
+    {                                  /*  Adjust descendants */
+      q = p->next;
+      while (q != p) 
+	{
+	  traverseAndCount(q->back, count, tr);
+	  q = q->next;
+	} 
+    }
+}
+
 
 
 topol  *setupTopol (int maxtips)
@@ -180,6 +206,114 @@ boolean restoreTree (topol *tpl, tree *tr)
   
   tr->nextnode   = tpl->nextnode;    
 
+
+  /* TODO too expensive!  */
   evaluateGenericWrapper(tr, tr->start, TRUE);
   return TRUE;
 }
+
+
+
+/* #define REPORT_HOOK_IN_COPY */
+
+/**
+   @brief 
+   Searches for a place to hook up. If already correctly hooked, do
+   nothing. If all pointers set already, fail. 
+
+   This means: if you want to copy a topology, make sure all pointers
+   are set to 0 first.
+   
+   @param int numA -- a node id to be hooked up
+   @param int numB -- a node id to be hooked up   
+ */ 
+static void exa_hookupConditionally(tree *tr, int numA, int numB, double *z)
+{
+  assert(numA != 0) ; 
+  assert(numB != 0); 
+  assert(numA < 2 * tr->mxtips-1) ; 
+  assert( numB < 2 * tr->mxtips-1) ;
+
+  boolean alreadyHooked = FALSE;
+  
+  nodeptr p  = tr->nodep[numA],
+    q = tr->nodep[numB]; 
+  
+  nodeptr r = p; 
+  do 
+    {
+      if( r->back != NULL && r->back->number == q->number )
+	alreadyHooked = TRUE ; 
+      r = r->next; 
+    } while(r != p ); 
+
+  if(alreadyHooked)
+    {
+#ifdef REPORT_HOOK_IN_COPY
+      if(processID == 0)
+	printf("%d and %d were already hooked\n", numA, numB); 
+#endif
+      return; 
+    }
+
+
+  /* determine two unset sub-nodes, that we can use for hooking */
+  nodeptr 
+    pUnused = p->next; 
+
+  while(pUnused->back != NULL && p != pUnused )    
+    pUnused = pUnused->next;
+  assert(pUnused->back == NULL); 
+
+  nodeptr
+    qUnused = q->next; 
+  while(qUnused->back != NULL && q != qUnused)
+    qUnused = qUnused->next; 
+  assert(qUnused->back == NULL); 
+  
+  hookup(pUnused, qUnused, z, getNumBranches(tr));
+#ifdef REPORT_HOOK_IN_COPY
+  if(processID == 0)
+    printf("hooking up %d and %d\n", numA, numB); 
+#endif
+}
+
+static void unsetTopology(tree *tr)
+{
+  for(int i = 1; i < 2 * tr->mxtips-1; ++i)
+    {
+      nodeptr p = tr->nodep[i]; 
+      p->back = p->next->back = p->next->next->back = NULL; 
+    }
+}
+
+
+/**
+   @brief Copies topology from origTree to targetTree. 
+   
+   Important assumption: tips must have the same position (i.e. node
+   number 1 in tree a, must correspond to node number 1 in tree
+   b). This should be given, if the trees were initialized from the
+   same alignment.
+
+ */
+void copyTopology(tree *targetTree, tree *origTree)
+{
+  unsetTopology(targetTree); 
+
+  for(int i = 1 ; i < 2 * origTree->mxtips -1  ; ++i )
+    {
+      nodeptr oPtr = origTree->nodep[i]; 
+      exa_hookupConditionally(targetTree, oPtr->number, oPtr->back->number, oPtr->z); 
+      exa_hookupConditionally(targetTree, oPtr->next->number, oPtr->next->back->number, oPtr->next->z); 
+      exa_hookupConditionally(targetTree,oPtr->next->next->number, oPtr->next->next->back->number, oPtr->next->next->z); 
+    }
+
+  targetTree->start = targetTree->nodep[origTree->start->number];
+
+  int cnt = 0; 
+  traverseAndCount(targetTree->start->back, &cnt, targetTree); 
+  assert(cnt == 2 * targetTree->mxtips - 3 ); 
+
+}
+

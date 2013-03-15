@@ -20,7 +20,7 @@ if [ "$default" == "default" ]; then
     args=$args
     gdb=""
 elif [ "$default" == "debug" ]; then 
-    args="$args --enable-debug"
+    args="$args --enable-mydebug"
     gdb="$TERM -e gdb -ex run --args "
 else  
     echo "first argument must be either 'debug' or 'default'"

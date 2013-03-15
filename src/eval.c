@@ -1,6 +1,9 @@
 #include "common.h"
 #include "axml.h"
+#include "proposalStructs.h"
+
 #include "globals.h"
+
 #include "adapterCode.h"
 
 /* call this for verification after the lnl has been evaluated somehow */
@@ -36,30 +39,31 @@ void evaluateGenericWrapper(tree *tr, nodeptr start, boolean fullTraversal)
 
 /** @brief the same as below, but just for one partition 
  */
-void evaluateOnePartition(tree *tr, nodeptr start, boolean fullTraversal, int model)
+void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, int model)
 {
-  int numPartitions = getNumberOfPartitions(tr); 
+  tree *tr = chain->tr; 
+  int numPartitions = getNumberOfPartitions(chain->tr); 
 
   double perPartitionLH[numPartitions] ; 
 
   for(int i = 0; i < numPartitions; ++i)
-    perPartitionLH[i] = getPLH(tr,i); 
+    perPartitionLH[i] = getPLH(chain,i); 
 
   for(int i = 0; i < numPartitions; ++i)
-    setExecModel(tr,i,FALSE); 
-  setExecModel(tr,model,TRUE); 
+    setExecModel(chain,i,FALSE); 
+  setExecModel(chain,model,TRUE); 
 
   exa_evaluateGeneric(tr, start, fullTraversal); 
   
-  perPartitionLH[model] = getPLH(tr, model);
+  perPartitionLH[model] = getPLH(chain, model);
   for(int i = 0; i < numPartitions; ++i)
-    setPLH(tr,i,perPartitionLH[i]); 
+    setPLH(chain,i,perPartitionLH[i]); 
 
   tr->likelihood = 0; 
   for(int i = 0; i < numPartitions; ++i)
     {	
-      tr->likelihood +=  getPLH(tr,i);
-      setExecModel(tr,i,TRUE); 
+      tr->likelihood +=  getPLH(chain,i);
+      setExecModel(chain,i,TRUE); 
     }
 
   expensiveVerify(tr);
@@ -72,16 +76,18 @@ void evaluateOnePartition(tree *tr, nodeptr start, boolean fullTraversal, int mo
 /** @brief
    only evaluate partition given in the execute mask "models"
 */
-void evaluatePartitions(tree *tr, nodeptr start, boolean fullTraversal, boolean *models)
+void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, boolean *models)
 {  
+  tree *tr = chain->tr; 
+  
   int numPartitions = getNumberOfPartitions(tr); 
   double perPartitionLH[numPartitions] ; 
 
   
   for(int i = 0; i < numPartitions; ++i)
     {
-      perPartitionLH[i] = getPLH(tr,i); 
-      setExecModel(tr,i,models[i]); 
+      perPartitionLH[i] = getPLH(chain,i); 
+      setExecModel(chain,i,models[i]); 
     }
 
   exa_evaluateGeneric(tr, start, fullTraversal); 
@@ -89,14 +95,14 @@ void evaluatePartitions(tree *tr, nodeptr start, boolean fullTraversal, boolean 
   /*  correct for hidden examl feature: reduction is applied multiple times */
   for(int i = 0; i < numPartitions; ++i)
     if(models[i] == TRUE)
-      perPartitionLH[i] = getPLH(tr,i); 
+      perPartitionLH[i] = getPLH(chain,i); 
 
   tr->likelihood = 0; 
   for(int i = 0;i < numPartitions; ++i)
     {
-      setPLH(tr,i,perPartitionLH[i]); 
-      tr->likelihood += getPLH(tr,i); 
-      setExecModel(tr,i,TRUE); 
+      setPLH(chain,i,perPartitionLH[i]); 
+      tr->likelihood += getPLH(chain,i); 
+      setExecModel(chain,i,TRUE); 
     }
 
   expensiveVerify(tr);

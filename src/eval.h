@@ -5,7 +5,7 @@
 
 void evaluateGenericWrapper(tree *tr, nodeptr start, boolean fullTraversal); 
 void evaluatePartitions(tree *tr, nodeptr start, boolean fullTraversal, boolean *models); 
-void evaluateOnePartition(tree *tr, nodeptr start, boolean fullTraversal, int model); 
+void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, int model); 
 
 
 #endif

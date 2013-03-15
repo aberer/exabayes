@@ -1,8 +1,8 @@
 #include "axml.h"
 
+#include "proposalStructs.h"
 #include "globals.h"
 
-#include "proposalStructs.h"
 #include "main-common.h"
 
 

@@ -4,9 +4,10 @@
 #include "config.h"
 #include "axml.h"
 
+#include "proposalStructs.h"
+
 #include "globals.h"
 
-#include "proposalStructs.h"
 #include "main-common.h"
 
 #include "chain.h"
@@ -70,7 +71,18 @@ static node *find_tip( node *n, tree *tr )
 
 double getChainHeat(state *chain )
 {
-  return (double)(1. / (1. + HEAT_FACTOR * (double)chain->couplingId)); 
+  const double  deltaT = HEAT_FACTOR; 
+
+  if(chain->couplingId == 0 )
+    return 1; 
+  
+  double tmp  = 1. + deltaT * chain->couplingId; 
+  
+  assert(tmp > 1); 
+  double myHeat = 1. / (double)tmp; 
+
+  assert(myHeat < 1.);
+  return myHeat; 
 }
 
 
@@ -110,11 +122,7 @@ void initParamDump(tree *tr, paramDump *dmp)
 
 void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamStruct **initParamsPtr)
 {
-#ifndef _USE_NCL_PARSER
-  /* we MUST use the ncl parser currently */
-  assert(0); 
-#endif
-
+  gAInfo.successFullSwitchesBatch = 0; 
 
   FILE *treeFH = NULL; 
   if( gAInfo.numberOfStartingTrees > 0 )
@@ -122,7 +130,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 
   *initParamsPtr = exa_calloc(1,sizeof(initParamStruct)); 
   /* initParamStruct *initParams = *initParamsPtr;  */
-  
+
   parseConfigWithNcl(configFileName, initParamsPtr);
   
   gAInfo.numberOfRuns =   (*initParamsPtr)->numIndiChains; 
@@ -130,9 +138,9 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains; 
 
   printf("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
-  *resultIndiChains = exa_calloc( totalNumChains , sizeof(state));   
-
-  unsigned int bvLength = 0;   
+  *resultIndiChains = exa_calloc( totalNumChains , sizeof(state));     
+  
+  unsigned int bvLength = 0; 
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength);
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
 
@@ -144,7 +152,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       state *theChain = *resultIndiChains +   i; 
       theChain->bvHash = ht; 
       theChain->tr = tr; 
-      theChain->couplingId = i % (*initParamsPtr)->numCoupledChains ; 
+      theChain->couplingId = i % (*initParamsPtr)->numCoupledChains ; /*  */
       
       theChain->id = i; 
 
@@ -166,7 +174,6 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       theChain->rKey.v[1] = r.v[1]; 
       if(processID == 0)
 	printf("initialized chain %d with seed %d,%d\n", theChain->id, theChain->rKey.v[0], theChain->rKey.v[1]); 
-      
       
       if( i % gAInfo.numberCoupledChains == 0)
 	{
@@ -208,8 +215,8 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       else 
 	{
 	  /* initialize with previous state */
-	  applyChainStateToTree( (*resultIndiChains) + i-1, tr); 
-
+	  applyChainStateToTree( (*resultIndiChains) + i-1, TRUE); 
+	  
 	  if(processID == 0)
 	    printf("initialize heated chain %d from previous state\n", i); 
 	}
@@ -219,7 +226,7 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
       evaluateGenericWrapper(tr, tr->start, TRUE); 
 
       /* now save the tree to a chain chain */
-      saveTreeStateToChain(theChain, tr); 
+      saveTreeStateToChain(theChain); 
 
       if(processID == 0 )
 	{	  
@@ -285,7 +292,6 @@ void traverseAndPrint(nodeptr p, int *count, tree *tr)
 
 void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean restore)
 {
-
   nodeptr q; 
   assert(getNumBranches(tr) == 1); 
 
@@ -319,8 +325,19 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
 
 
 
-void applyChainStateToTree(state *chain, tree *tr)
+/**
+   @brief Applies the state of the chain to its tree. 
+
+   Notice: you must not simply change the tree pointer. More
+   modifications are necessary to do so.
+
+   @param boolean checkLnl -- should we check, if the lnl is the same as
+   before? If we applied it the first time, there is no before.
+ */ 
+void applyChainStateToTree(state *chain, boolean checkLnl)
 {
+  tree *tr = chain->tr; 
+  
   /* TODO enable multi-branch    */
   assert(getNumBranches(tr) == 1); 
 
@@ -337,7 +354,7 @@ void applyChainStateToTree(state *chain, tree *tr)
     {
       perPartitionInfo *info = chain->dump.infoPerPart + i ; 
 
-      pInfo *partition = getPartition(tr, i);
+      pInfo *partition = getPartition(chain, i);
       partition->alpha = info->alpha;
 
       memcpy(partition->substRates, info->substRates , 6 * sizeof(double)); 
@@ -361,7 +378,7 @@ void applyChainStateToTree(state *chain, tree *tr)
 #endif
     }
 
-  if( fabs (tr->likelihood - chain->dump.likelihood ) > 0.000001 )
+  if( checkLnl && fabs (tr->likelihood - chain->dump.likelihood ) > 0.000001 )
     {
       printInfo(chain, "WARNING: obtained a different likelihood  after restoring previous chain state (before/after): %f / %f\n", 
 		chain->id, chain->currentGeneration, chain->dump.likelihood, tr->likelihood); 
@@ -370,12 +387,17 @@ void applyChainStateToTree(state *chain, tree *tr)
 }
 
 
-void saveTreeStateToChain(state *chain, tree *tr)
+
+/**
+   @brief Save all relevan information from the tree into the chain
+   state. 
+ */ 
+void saveTreeStateToChain(state *chain)
 {
+  tree *tr  = chain->tr; 
   chain->dump.likelihood = tr->likelihood;   
   
   saveTree(tr, chain->dump.topo);
-  /* assert(treeWasSaved);  */
 
   /* save branch lengths */
   int cnt = 0; 
@@ -386,7 +408,7 @@ void saveTreeStateToChain(state *chain, tree *tr)
   for(int i = 0; i < getNumberOfPartitions(tr); ++i)
     {
       perPartitionInfo *info = chain->dump.infoPerPart + i; 
-      pInfo *partition = getPartition(tr,i); 
+      pInfo *partition = getPartition(chain,i); 
       
       info->alpha =  partition->alpha; 
       
@@ -404,23 +426,5 @@ void saveTreeStateToChain(state *chain, tree *tr)
       traverseAndPrint(tr->start->back,  &count,tr);
       printf("\n");
 #endif
-
-
-
-      /*     printf("\n\nsaving state: "); */
-
-      /*     for(int i = 0; i < getNumberOfPartitions(tr); ++i) */
-      /*     printf("\nalpha: %f\n", info->alpha) */
-
-      /*     printf("\nRATES:") */
-      
-      /*     for(int i = 0; i < 6; ++i) */
-      /* 	printf("%f,", info->substRates[i]); */
-      /*     printf("\n"); */
-
-      /*     printf("BL: "); */
-      /*     for(int i = 0; i < 2 * tr->mxtips -3 ;++i) */
-      /* 	printf("%f,", info->) */
-
     }
 }

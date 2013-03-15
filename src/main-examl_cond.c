@@ -10,6 +10,7 @@
 #include "globalVariables.h"
 #include "main-common.h"
 
+#include "proposalStructs.h"
 #define _INCLUDE_DEFINITIONS
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
@@ -19,6 +20,8 @@
 
 #include "adapterCode.h"
 
+
+void exa_main(tree *tr, analdef *adef); 
 void initAdef(analdef *adef);
 void makeFileNames(void); 
 void initializeTree(tree *tr, analdef *adef); 
@@ -532,26 +535,21 @@ static boolean setupTree (tree *tr)
   
   tr->maxCategories = MAX(4, tr->categories);
   
-  tr->partitionContributions = (double *)malloc(sizeof(double) * numPartitions);
+  tr->partitionContributions = (double *)exa_malloc(sizeof(double) * numPartitions);
   
   for(i = 0; i < getNumberOfPartitions(tr); i++)
     tr->partitionContributions[i] = -1.0;
   
-  tr->perPartitionLH = (double *)malloc(sizeof(double) * numPartitions);
+  tr->perPartitionLH = (double *)exa_malloc(sizeof(double) * numPartitions);
   
   
   for(i = 0; i < numPartitions; i++)    
     tr->perPartitionLH[i] = 0.0;	    
   
- 
-  
   tips  = tr->mxtips;
   inter = tr->mxtips - 1;
 
- 
- 
-  
-  tr->fracchanges  = (double *)malloc(getNumberOfPartitions(tr) * sizeof(double));
+  tr->fracchanges  = (double *)exa_malloc(getNumberOfPartitions(tr) * sizeof(double));
   
 
  
@@ -568,17 +566,17 @@ static boolean setupTree (tree *tr)
   
             
   tr->td[0].count = 0;
-  tr->td[0].ti    = (traversalInfo *)malloc(sizeof(traversalInfo) * tr->mxtips);
-  tr->td[0].executeModel = (boolean *)malloc(sizeof(boolean) * getNumberOfPartitions(tr));
-  tr->td[0].parameterValues = (double *)malloc(sizeof(double) * getNumberOfPartitions(tr));
+  tr->td[0].ti    = (traversalInfo *)exa_malloc(sizeof(traversalInfo) * tr->mxtips);
+  tr->td[0].executeModel = (boolean *)exa_malloc(sizeof(boolean) * getNumberOfPartitions(tr));
+  tr->td[0].parameterValues = (double *)exa_malloc(sizeof(double) * getNumberOfPartitions(tr));
   
   for(i = 0; i < getNumberOfPartitions(tr); i++)
     tr->fracchanges[i] = -1.0;
   tr->fracchange = -1.0;
   
-  tr->constraintVector = (int *)malloc((2 * tr->mxtips) * sizeof(int));
+  tr->constraintVector = (int *)exa_malloc((2 * tr->mxtips) * sizeof(int));
   
-  tr->nameList = (char **)malloc(sizeof(char *) * (tips + 1));
+  tr->nameList = (char **)exa_malloc(sizeof(char *) * (tips + 1));
    
 
   if (!(p0 = (nodeptr) exa_malloc((tips + 3*inter) * sizeof(node))))
@@ -1135,8 +1133,8 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 
       width = tr->partitionData[model].width;
 
-      tr->partitionData[model].wr = (double *)exa_malloc(sizeof(double) * width);
-      tr->partitionData[model].wr2 = (double *)exa_malloc(sizeof(double) * width);     
+      /* tr->partitionData[model].wr = (double *)exa_malloc(sizeof(double) * width); */
+      /* tr->partitionData[model].wr2 = (double *)exa_malloc(sizeof(double) * width);      */
 
      	
       /* 
@@ -1333,6 +1331,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 }
 
 
+
 void initializeTree(tree *tr, analdef *adef)
 {
   size_t 
@@ -1366,8 +1365,8 @@ void initializeTree(tree *tr, analdef *adef)
   myBinFread(tr->aliaswgt, sizeof(int), tr->originalCrunchedLength, byteFile);	       
   
   tr->rateCategory    = (int *)    exa_calloc(tr->originalCrunchedLength, sizeof(int));	  
-  tr->wr              = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
-  tr->wr2             = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
+  /* tr->wr              = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double));  */
+  /* tr->wr2             = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double));  */
   tr->patrat          = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double));
   tr->patratStored    = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
   tr->lhs             = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
@@ -1397,7 +1396,7 @@ void initializeTree(tree *tr, analdef *adef)
     }  
  
   for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
-    {      
+    { 
       int 
 	len;
       
@@ -1427,7 +1426,7 @@ void initializeTree(tree *tr, analdef *adef)
       myBinFread(p->partitionName, sizeof(char), len, byteFile);
       
       empiricalFrequencies[model] = (double *)exa_malloc(sizeof(double) * p->states);
-      myBinFread(empiricalFrequencies[model], sizeof(double), p->states, byteFile);	   
+      myBinFread(empiricalFrequencies[model], sizeof(double), p->states, byteFile); 
     }     
   
   initializePartitions(tr, byteFile);
@@ -1475,7 +1474,7 @@ int main(int argc, char *argv[])
   /* generate the ExaML output file names and store them in strings */
     
   makeFileNames();
-
+  
   initializeTree(tr, adef); 
 
   if(processID == 0)  
@@ -1515,7 +1514,9 @@ int main(int argc, char *argv[])
   /* treeEvaluate(tr, 1); */
 
   /* now start the ML search algorithm */
-  mcmc( tr, adef );
+  /* mcmc( tr, adef ); */
+  
+  exa_main(tr,adef);
   
   
   /* return 0 which means that our unix program terminated correctly, the return value is not 1 here */

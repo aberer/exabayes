@@ -1,24 +1,24 @@
 #NEXUS
 begin EXABAYES; 
 
-      initGammaWeight 1
-      initGammaExpWeight 1
+      initGammaWeight 3
+      initGammaExpWeight 0
 
       INITSPRWEIGHT 0  [ broken for now ] 
-      initEsprMappedWeight 0
+      initEsprMappedWeight 10
 
-      initSingleBranchWeight 0
+      initSingleBranchWeight 5
       initSingleBranchExpWeight 0
-      initSingleBranchBiunifWeight 0 
+      initSingleBranchBiunifWeight 5 
 
 
-      initModelWeight 0
+      initModelWeight 2
       initModelBiunifWeight 0
-      initModelSingleBiunifWeight 0
+      initModelSingleBiunifWeight 2
       initModelAllBiunifWeight  0
       initModelPermBiunifWeight 0
 
-      initFrequenciesWeight 0
+      initFrequenciesWeight 1
 
 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
@@ -28,9 +28,9 @@ begin EXABAYES;
 
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
-      diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 2 [ number of independant chains/runs ]
+      diagFreq 10000  [ check for convergence of multiple independent runs after this many generations ]
+      numIndiChains 1 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 2 [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 4 [ number of chains per independent run (only one is cold) ]       
 end;

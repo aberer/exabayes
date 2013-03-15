@@ -6,74 +6,49 @@
 #include "globals.h"
 #include "main-common.h"
 #include "output.h"
-
 #include "convergence.h"
-
 #include "chain.h"
-
 #include "utils-topo.h" 
-
 #include "eval.h"
-
 #include "adapterCode.h"
 
 
 void expensiveVerify(tree *tr); 
 
 nodeptr select_random_subtree(state *chain, tree *tr);
-void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue);
-
-
-void traverseAndCount(nodeptr p, int *count, tree *tr )
-{
-  nodeptr q;  
-
-  *count += 1;
-
-  if (! isTip(p->number,tr->mxtips)) 
-    {                                  /*  Adjust descendants */
-      q = p->next;
-      while (q != p) 
-	{
-	  traverseAndCount(q->back, count, tr);
-	  q = q->next;
-	} 
-    }
-}
-
-
+void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValue);
 
 
 
 //reads proposalWeights p and sets t for logistic function such that f(t)=p
-void findLogisticT(state *curstate){
+void findLogisticT(state *chain){
   static double leftShift=2.0;
    for(int i = 0; i < NUM_PROPOSALS;++i){
-     if(curstate->proposalWeights[i]>0){
-    curstate->proposalLogisticT[i]=-log((1.0-curstate->proposalWeights[i])/curstate->proposalWeights[i])+leftShift;  
-    //printf("p(i): %f e^..: %f\n",curstate->proposalWeights[i], (1.0/(1.0+exp(leftShift-curstate->proposalLogisticT[i])) ));
+     if(chain->proposalWeights[i]>0){
+    chain->proposalLogisticT[i]=-log((1.0-chain->proposalWeights[i])/chain->proposalWeights[i])+leftShift;  
+    //printf("p(i): %f e^..: %f\n",chain->proposalWeights[i], (1.0/(1.0+exp(leftShift-chain->proposalLogisticT[i])) ));
      }else{
-       curstate->proposalLogisticT[i]=-1.0;
+       chain->proposalLogisticT[i]=-1.0;
      }
    }
 }
 
 //get values for logistic function
-void findLogisticP(state *curstate){
+void findLogisticP(state *chain){
   static double leftShift=2.0;
   for(int i = 0; i < NUM_PROPOSALS;++i){
-    if(curstate->proposalLogisticT[i]>=0){
-    curstate->proposalWeights[i]=(1.0/(1.0+exp(leftShift-curstate->proposalLogisticT[i])) );  
-  //  printf("p(i): %f e^..: %f t: %f\n",curstate->proposalWeights[i], (1.0/(1.0+exp(leftShift-curstate->proposalLogisticT[i])) ), curstate->proposalLogisticT[i]);
+    if(chain->proposalLogisticT[i]>=0){
+    chain->proposalWeights[i]=(1.0/(1.0+exp(leftShift-chain->proposalLogisticT[i])) );  
+  //  printf("p(i): %f e^..: %f t: %f\n",chain->proposalWeights[i], (1.0/(1.0+exp(leftShift-chain->proposalLogisticT[i])) ), chain->proposalLogisticT[i]);
    }
   }
 }
 
 
 
-static void recordSubsRates(tree *tr, int model, int numSubsRates, double *prevSubsRates)
+static void recordSubsRates(state *chain, int model, int numSubsRates, double *prevSubsRates)
 {
-  pInfo *partition = getPartition(tr,model); 
+  pInfo *partition = getPartition(chain,model); 
   assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)
@@ -134,11 +109,11 @@ static void record_branch_info(nodeptr p, double *bl, int numBranches)
 
 int radius = 0; 
 
-int extended_spr_traverse(state *curstate, nodeptr *insertNode)
+int extended_spr_traverse(state *chain, nodeptr *insertNode)
 {
   int 
     result, 
-    r = drawRandDouble01(curstate); 
+    r = drawRandDouble01(chain); 
   
   radius++;   
 
@@ -147,18 +122,18 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
     {
 
 
-       *insertNode = isTip((*insertNode)->next->number, curstate->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back; 
+       *insertNode = isTip((*insertNode)->next->number, chain->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back; 
 
      // *insertNode = (*insertNode)->next->back ;
     }
   else 
     {
-       *insertNode = isTip((*insertNode)->next->next->number, curstate->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back; 
+       *insertNode = isTip((*insertNode)->next->next->number, chain->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back; 
       //*insertNode = (*insertNode)->next->next->back;
     }
 
   /*
-  if(isTip( (*insertNode)->number, curstate->tr->mxtips))
+  if(isTip( (*insertNode)->number, chain->tr->mxtips))
   {
      if(randNum == 0)
     direction--;
@@ -188,7 +163,7 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 	*insertNode = (*insertNode)->next->back; 
     }
     
-     if(isTip( (*insertNode)->number, curstate->tr->mxtips))
+     if(isTip( (*insertNode)->number, chain->tr->mxtips))
   {
      if(randNum == 0)
     direction--;
@@ -196,8 +171,8 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
     direction++;
   }
   */
-  double randprop = drawRandDouble01(curstate);
-  result = randprop < curstate->eSprStopProb; 
+  double randprop = drawRandDouble01(chain);
+  result = randprop < chain->eSprStopProb; 
   
   return result; 
 }
@@ -209,9 +184,9 @@ int extended_spr_traverse(state *curstate, nodeptr *insertNode)
 
 
 
-static void extended_spr_apply(state *instate, int pSubType)
+static void extended_spr_apply(state *chain, int pSubType)
 {
-  tree * tr = instate->tr;
+  tree * tr = chain->tr;
 
 #ifdef DEBUG_SHOW_TREE
   char tmp[10000]; 
@@ -222,62 +197,62 @@ static void extended_spr_apply(state *instate, int pSubType)
 
   
   nodeptr    
-    p = select_random_subtree(instate,tr);
+    p = select_random_subtree(chain,tr);
 
 #if 0
   parsimonySPR(p, tr);
 #endif  
 
-  instate->sprMoveRemem.p = p;
-  instate->sprMoveRemem.nb  = p->next->back;
-  instate->sprMoveRemem.nnb = p->next->next->back;
+  chain->sprMoveRemem.p = p;
+  chain->sprMoveRemem.nb  = p->next->back;
+  chain->sprMoveRemem.nnb = p->next->next->back;
   
-  record_branch_info(instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, getNumBranches(instate->tr));
-  record_branch_info(instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, getNumBranches(instate->tr));
+  record_branch_info(chain->sprMoveRemem.nb, chain->sprMoveRemem.nbz, getNumBranches(chain->tr));
+  record_branch_info(chain->sprMoveRemem.nnb, chain->sprMoveRemem.nnbz, getNumBranches(chain->tr));
   
 
   /* initial remapping of BL of nodes adjacent to pruned node  */
   double zqr[NUM_BRANCHES];
   
-  instate->hastings = 1; 
+  chain->hastings = 1; 
   
   for(int i = 0; i < getNumBranches(tr); i++)
     {
       if(pSubType == STANDARD)
 	{
-	  zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];
+	  zqr[i] = chain->sprMoveRemem.nb->z[i] * chain->sprMoveRemem.nnb->z[i];
 	
-	  instate->hastings *= log(zqr[i]);
+	  chain->hastings *= log(zqr[i]);
 	}
       else if(pSubType == SPR_MAPPED)
 	{
-	  zqr[i] = instate->sprMoveRemem.nb->z[i] ; 
+	  zqr[i] = chain->sprMoveRemem.nb->z[i] ; 
 	}
       else if(pSubType == SPR_ADJUST)
 	{
-	  zqr[i] = instate->sprMoveRemem.nb->z[i] * instate->sprMoveRemem.nnb->z[i];  
-	  instate->hastings *= log(zqr[i]);
+	  zqr[i] = chain->sprMoveRemem.nb->z[i] * chain->sprMoveRemem.nnb->z[i];  
+	  chain->hastings *= log(zqr[i]);
 	  zqr[i] = sqrt(zqr[i]);
 	}
       if(zqr[i] > zmax) zqr[i] = zmax;
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
 
-  hookup(instate->sprMoveRemem.nb, instate->sprMoveRemem.nnb, zqr, getNumBranches(tr)); 
+  hookup(chain->sprMoveRemem.nb, chain->sprMoveRemem.nnb, zqr, getNumBranches(tr)); 
   p->next->next->back = p->next->back = (node *) NULL;
   /* done remove node p (omitted BL opt) */
 
   nodeptr initNode = NULL; 
   nodeptr curNode = NULL; 
   boolean remapBL = FALSE; 
-  if(drawRandDouble01(instate) > 0.5)
+  if(drawRandDouble01(chain) > 0.5)
     {
-      curNode = instate->sprMoveRemem.nb; 
+      curNode = chain->sprMoveRemem.nb; 
       remapBL = TRUE ; 
     }
   else 
     {
-      curNode = instate->sprMoveRemem.nnb; 
+      curNode = chain->sprMoveRemem.nnb; 
     }
   initNode = curNode; 
 
@@ -287,7 +262,7 @@ static void extended_spr_apply(state *instate, int pSubType)
 //printf("curNode:  back next nextnext\n");
   while( NOT  accepted)
     {
-      accepted = extended_spr_traverse(instate, &curNode); 
+      accepted = extended_spr_traverse(chain, &curNode); 
   //    if(processID == 0) 
 //	printf("%d:  %d  %d  %d\n",curNode->number, curNode->back->number, curNode->next->back->number, curNode->next->next->back->number); 
 
@@ -298,24 +273,24 @@ static void extended_spr_apply(state *instate, int pSubType)
 
 
 
-  instate->newprior = 1; 
-  instate->curprior = 1; 
+  chain->newprior = 1; 
+  chain->curprior = 1; 
 
-  instate->sprMoveRemem.q = curNode;
-  instate->sprMoveRemem.r = instate->sprMoveRemem.q->back;
-  record_branch_info(instate->sprMoveRemem.q, instate->brLenRemem.qz, getNumBranches(instate->tr));
+  chain->sprMoveRemem.q = curNode;
+  chain->sprMoveRemem.r = chain->sprMoveRemem.q->back;
+  record_branch_info(chain->sprMoveRemem.q, chain->brLenRemem.qz, getNumBranches(chain->tr));
 
   
   
    if(pSubType == STANDARD){
-     for(int branchCount=0; branchCount< getNumBranches(instate->tr); branchCount++)
+     for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++)
      {
-      instate->hastings/=log(curNode->z[branchCount]);
+      chain->hastings/=log(curNode->z[branchCount]);
      }
    }else if(pSubType == SPR_ADJUST){
-     for(int branchCount=0; branchCount< getNumBranches(instate->tr); branchCount++) /*  */
+     for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) /*  */
      {
-      instate->hastings/=(2*log(curNode->z[branchCount]));
+      chain->hastings/=(2*log(curNode->z[branchCount]));
      }
    }
   
@@ -325,26 +300,26 @@ static void extended_spr_apply(state *instate, int pSubType)
 
   if(pSubType == STANDARD)
     {
-      insertWithUnifBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, getNumBranches(instate->tr));
-  /*   for(int branchCount=0; branchCount<instate->tr->numBranches; branchCount++)
+      insertWithUnifBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, getNumBranches(chain->tr));
+  /*   for(int branchCount=0; branchCount<chain->tr->numBranches; branchCount++)
      {
-       instate->hastings/=log(instate->brLenRemem.qz[branchCount]);
+       chain->hastings/=log(chain->brLenRemem.qz[branchCount]);
      }
      */
-   //  printf("hastings: %f\n", instate->hastings);
-      // insertBIG(instate->tr, instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->tr->numBranches);
+   //  printf("hastings: %f\n", chain->hastings);
+      // insertBIG(chain->tr, chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->tr->numBranches);
     }
   else if(pSubType == SPR_MAPPED)
     {
-      double *neighborZ = remapBL ? instate->sprMoveRemem.nbz :  instate->sprMoveRemem.nnbz; 
+      double *neighborZ = remapBL ? chain->sprMoveRemem.nbz :  chain->sprMoveRemem.nnbz; 
       
         if( remapBL ) 
 	  {
 	    for(int i = 0; i < getNumBranches(tr); ++i)
-	      instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
+	      chain->sprMoveRemem.nb->z[i] = chain->sprMoveRemem.nb->back->z[i] = chain->sprMoveRemem.nnbz[i]; 
 	  }
       
-	insertWithGenericBL(instate->sprMoveRemem.p, instate->sprMoveRemem.q, instate->sprMoveRemem.p->z, curNode->z, neighborZ, getNumBranches(tr));
+	insertWithGenericBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->sprMoveRemem.p->z, curNode->z, neighborZ, getNumBranches(tr));
 
 
       /* IMPORTANT TODO verify, that the mapping actually works, as we
@@ -353,22 +328,22 @@ static void extended_spr_apply(state *instate, int pSubType)
 
 
       /* TODO PERFORMANCE */
-      /* newviewGeneric(tr, instate->sprMoveRemem.p, FALSE); */
+      /* newviewGeneric(tr, chain->sprMoveRemem.p, FALSE); */
     }
      else if(pSubType == SPR_ADJUST)
     {
-      insertWithUnifBLScaled(instate->sprMoveRemem.p, instate->sprMoveRemem.q, 2.0,  getNumBranches(instate->tr));
+      insertWithUnifBLScaled(chain->sprMoveRemem.p, chain->sprMoveRemem.q, 2.0,  getNumBranches(chain->tr));
     }
 
 //   if( (pSubType == SPR_MAPPED ) && remapBL) 
 //     {
 //       for(int i = 0; i < tr->numBranches; ++i)
-// 	instate->sprMoveRemem.nb->z[i] = instate->sprMoveRemem.nb->back->z[i] = instate->sprMoveRemem.nnbz[i]; 
+// 	chain->sprMoveRemem.nb->z[i] = chain->sprMoveRemem.nb->back->z[i] = chain->sprMoveRemem.nnbz[i]; 
 //     }
 
   /* TODO problem here? is not tip?? FIXED: should never be a tip anymore. Possible since we are interested in edges and each edge connects to at least one inner node*/
 #if 0 
-  evaluateGeneric(instate->tr, instate->sprMoveRemem.p->next->next, FALSE);
+  evaluateGeneric(chain->tr, chain->sprMoveRemem.p->next->next, FALSE);
 #else   
   evaluateGenericWrapper(tr, tr->start, TRUE);
 #endif
@@ -378,36 +353,36 @@ static void extended_spr_apply(state *instate, int pSubType)
 
 
 
-static void extended_spr_reset(state * instate)
+static void extended_spr_reset(state * chain)
 {
-  tree *tr = instate->tr; 
+  tree *tr = chain->tr; 
 
   /* prune the insertion */
-  hookup(instate->sprMoveRemem.q, instate->sprMoveRemem.r, instate->brLenRemem.qz, getNumBranches(instate->tr));
+  hookup(chain->sprMoveRemem.q, chain->sprMoveRemem.r, chain->brLenRemem.qz, getNumBranches(chain->tr));
 
-  instate->sprMoveRemem.p->next->next->back = instate->sprMoveRemem.p->next->back = (nodeptr) NULL;
+  chain->sprMoveRemem.p->next->next->back = chain->sprMoveRemem.p->next->back = (nodeptr) NULL;
   /*  */
   /* insert the pruned tree in its original node */
-  hookup(instate->sprMoveRemem.p->next,        instate->sprMoveRemem.nb, instate->sprMoveRemem.nbz, getNumBranches(instate->tr));
-  hookup(instate->sprMoveRemem.p->next->next, instate->sprMoveRemem.nnb, instate->sprMoveRemem.nnbz, getNumBranches(instate->tr));
+  hookup(chain->sprMoveRemem.p->next,        chain->sprMoveRemem.nb, chain->sprMoveRemem.nbz, getNumBranches(chain->tr));
+  hookup(chain->sprMoveRemem.p->next->next, chain->sprMoveRemem.nnb, chain->sprMoveRemem.nnbz, getNumBranches(chain->tr));
   
   if(processID == 0)
     {
 
 #ifdef DEBUG_SHOW_TREE
       char tmp[100000];
-      Tree2stringNexus(tmp, instate->tr, instate->tr->start->back, 0); 
+      Tree2stringNexus(tmp, chain->tr, chain->tr->start->back, 0); 
       printf("topo reset: %s\n", tmp); 
 #endif
     }
 
   evaluateGenericWrapper(tr, tr->start, TRUE);
   
-  exa_newViewGeneric(instate->tr, instate->sprMoveRemem.p, FALSE); 
-  double val1 = instate->tr->likelihood; 
+  exa_newViewGeneric(chain, chain->sprMoveRemem.p, FALSE); 
+  double val1 = chain->tr->likelihood; 
   
-  exa_newViewGeneric(instate->tr, instate->tr->start, TRUE);
-  double  val2 = instate->tr->likelihood; 
+  exa_newViewGeneric(chain, chain->tr->start, TRUE);
+  double  val2 = chain->tr->likelihood; 
 
   assert( fabs ( val2 - val1 ) < 0.0001 ); 
 
@@ -416,7 +391,7 @@ static void extended_spr_reset(state * instate)
 
 //--------Alpha-Proposal-for-GAMMA-----------------------------------------------------------------
 
-double get_alpha_prior(state *curstate )
+double get_alpha_prior(state *chain )
 {
   
  return 1;//TODO obviously needs acctual prior 
@@ -426,30 +401,32 @@ double get_alpha_prior(state *curstate )
 
 
 
-static void simple_gamma_proposal_apply(state * instate, int pSubType)
+static void simple_gamma_proposal_apply(state * chain, int pSubType)
 {
-  tree *tr = instate->tr; 
+  tree *tr = chain->tr; 
+
+  assert(tr != NULL); 
 
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
-  instate->modelRemem.model=drawRandInt(instate, getNumberOfPartitions(tr));
+  chain->modelRemem.model=drawRandInt(chain, getNumberOfPartitions(tr));
 
-  pInfo *partition = getPartition(tr,instate->modelRemem.model);
+  pInfo *partition = getPartition(chain,chain->modelRemem.model);
 
   curv = partition->alpha;
-  instate->gammaRemem.curAlpha = curv;
+  chain->gammaRemem.curAlpha = curv;
 
 
   switch(pSubType)
         {
         case STANDARD://simple sliding window
-	  r = drawRandDouble01(instate);
-	  mn = curv-(instate->gammaRemem.gm_sliding_window_w/2);
-	  mx = curv+(instate->gammaRemem.gm_sliding_window_w/2);
+	  r = drawRandDouble01(chain);
+	  mn = curv-(chain->gammaRemem.gm_sliding_window_w/2);
+	  mx = curv+(chain->gammaRemem.gm_sliding_window_w/2);
 	  newalpha = fabs(mn + r * (mx-mn));
 	  break;
         case EXP_DISTR:
-          newalpha  = drawRandExp(instate,1/curv);
+          newalpha  = drawRandExp(chain,1/curv);
           break;
         default:
           assert(0);
@@ -458,23 +435,23 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
   if(newalpha > ALPHA_MAX) newalpha = ALPHA_MAX;
   if(newalpha < ALPHA_MIN) newalpha = ALPHA_MIN;
   
-  instate->hastings = 1; //since it is symmetrical, hastings=1
-  instate->newprior = get_alpha_prior(instate); 
-  instate->curprior = get_alpha_prior(instate); 
+  chain->hastings = 1; //since it is symmetrical, hastings=1
+  chain->newprior = get_alpha_prior(chain); 
+  chain->curprior = get_alpha_prior(chain); 
   
   partition->alpha = newalpha;
 
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 
-  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); 
+  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); 
 }
 
 
-// static void exp_gamma_proposal_apply(state * instate, int pSubType)
+// static void exp_gamma_proposal_apply(state * chain, int pSubType)
 // {
 //   double newalpha, curv;
-//   curv = instate->tr->partitionData[instate->modelRemem.model].alpha;
-//   instate->gammaRemem.curAlpha = curv;
+//   curv = chain->tr->partitionData[chain->modelRemem.model].alpha;
+//   chain->gammaRemem.curAlpha = curv;
 //   newalpha  = drawRandExp(1/curv);
 //   
 // 
@@ -484,57 +461,57 @@ static void simple_gamma_proposal_apply(state * instate, int pSubType)
 //   if(newalpha > ALPHA_MAX) newalpha = 2*ALPHA_MAX-newalpha;
 //   if(newalpha < ALPHA_MIN) newalpha = 2*ALPHA_MIN-newalpha;
 //   }
-//   instate->hastings = (1/newalpha)*exp(-(1/newalpha)*curv)/((1/curv)*exp(-(1/curv)*newalpha)); //TODO do not ignore reflection
-//   /* instate->newprior = get_alpha_prior(instate);  */
-//   /* instate->curprior = get_alpha_prior(instate);  */
+//   chain->hastings = (1/newalpha)*exp(-(1/newalpha)*curv)/((1/curv)*exp(-(1/curv)*newalpha)); //TODO do not ignore reflection
+//   /* chain->newprior = get_alpha_prior(chain);  */
+//   /* chain->curprior = get_alpha_prior(chain);  */
 //   
-//   instate->tr->partitionData[instate->modelRemem.model].alpha = newalpha;
+//   chain->tr->partitionData[chain->modelRemem.model].alpha = newalpha;
 //   
-//   makeGammaCats(instate->tr->partitionData[instate->modelRemem.model].alpha, instate->tr->partitionData[instate->modelRemem.model].gammaRates, 4, instate->tr->useMedian);
+//   makeGammaCats(chain->tr->partitionData[chain->modelRemem.model].alpha, chain->tr->partitionData[chain->modelRemem.model].gammaRates, 4, chain->tr->useMedian);
 // 
-//   evaluateGeneric(instate->tr, instate->tr->start, TRUE);
+//   evaluateGeneric(chain->tr, chain->tr->start, TRUE);
 // }
 
 
-static void simple_gamma_proposal_reset(state * instate)
+static void simple_gamma_proposal_reset(state * chain)
 {
-  tree *tr = instate->tr; 
-  pInfo *partition = getPartition(tr, instate->modelRemem.model) ; 
+  tree *tr = chain->tr; 
+  pInfo *partition = getPartition(chain, chain->modelRemem.model) ; 
   
-  partition->alpha = instate->gammaRemem.curAlpha; 
+  partition->alpha = chain->gammaRemem.curAlpha; 
 
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 
-  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); 
+  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); 
 }
 
 //------------------------------------------------------------------------------
 
 /* TODO we do not even use this function, do we? NOTE Now we do ;) */
-void penalize(state *curstate, int which_proposal, int acceptance)
+void penalize(state *chain, int which_proposal, int acceptance)
 {
   double max=4.0;
   double min=0.0;
   if(acceptance){
-    curstate->proposalLogisticT[which_proposal]+=curstate->penaltyFactor;
-    if(curstate->proposalLogisticT[which_proposal]>max)
-      curstate->proposalLogisticT[which_proposal]=max;
-    //curstate->proposalWeights[which_proposal] /= curstate->penaltyFactor; 
+    chain->proposalLogisticT[which_proposal]+=chain->penaltyFactor;
+    if(chain->proposalLogisticT[which_proposal]>max)
+      chain->proposalLogisticT[which_proposal]=max;
+    //chain->proposalWeights[which_proposal] /= chain->penaltyFactor; 
   }
   else {
-  /*  if(curstate->totalRejected>0){
-    curstate->proposalLogisticT[which_proposal]-=((curstate->totalAccepted/curstate->totalRejected)*curstate->penaltyFactor);*///TODO check whether "VCG" is better than considering all
-    if(curstate->totalRejected - curstate->rejectedProposals[which_proposal]>0){
-    curstate->proposalLogisticT[which_proposal]-=(((curstate->totalAccepted- curstate->acceptedProposals[which_proposal])/(curstate->totalRejected - curstate->rejectedProposals[which_proposal]))*curstate->penaltyFactor);      
+  /*  if(chain->totalRejected>0){
+    chain->proposalLogisticT[which_proposal]-=((chain->totalAccepted/chain->totalRejected)*chain->penaltyFactor);*///TODO check whether "VCG" is better than considering all
+    if(chain->totalRejected - chain->rejectedProposals[which_proposal]>0){
+    chain->proposalLogisticT[which_proposal]-=(((chain->totalAccepted- chain->acceptedProposals[which_proposal])/(chain->totalRejected - chain->rejectedProposals[which_proposal]))*chain->penaltyFactor);      
     }else{
-      curstate->proposalLogisticT[which_proposal]-=curstate->penaltyFactor;
+      chain->proposalLogisticT[which_proposal]-=chain->penaltyFactor;
     }
-    if(curstate->proposalLogisticT[which_proposal]<min)
-      curstate->proposalLogisticT[which_proposal]=min;
-    //curstate->proposalWeights[which_proposal] *= curstate->penaltyFactor; 
+    if(chain->proposalLogisticT[which_proposal]<min)
+      chain->proposalLogisticT[which_proposal]=min;
+    //chain->proposalWeights[which_proposal] *= chain->penaltyFactor; 
   }
-  findLogisticP(curstate);
-  //normalizeProposalWeights(curstate); 
+  findLogisticP(chain);
+  //normalizeProposalWeights(chain); 
 }
 
 
@@ -543,30 +520,30 @@ void penalize(state *curstate, int which_proposal, int acceptance)
 
 //NOTE: should only be called at the very beginning. Afterwards a probability sum of 1.0 is not required.
 
-void normalizeProposalWeights(state *curstate)
+void normalizeProposalWeights(state *chain)
 {
   double sum = 0 ; 
   for(int i = 0; i < NUM_PROPOSALS;++i)
-    sum += curstate->proposalWeights[i]; 
+    sum += chain->proposalWeights[i]; 
   
   for(int i = 0; i < NUM_PROPOSALS;++i)
-    curstate->proposalWeights[i] /= sum; 
+    chain->proposalWeights[i] /= sum; 
   
-  findLogisticT(curstate);
+  findLogisticT(chain);
 }
 
 
 
-static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
+static void simple_model_proposal_apply(state *chain, int pSubType)//llpqr
 {
-  tree *tr = instate->tr; 
+  tree *tr = chain->tr; 
   
   //TODO: add safety to max and min values
   //record the old ones
-  instate->modelRemem.model=drawRandInt(instate, getNumberOfPartitions(instate->tr));
-  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  chain->modelRemem.model=drawRandInt(chain, getNumberOfPartitions(chain->tr));
+  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
 
-  pInfo *partition = getPartition(tr, instate->modelRemem.model); 
+  pInfo *partition = getPartition(chain, chain->modelRemem.model); 
 
   //choose a random set of model params,
   //probably with dirichlet proposal
@@ -578,25 +555,25 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
   
   double mx,mn; //for sliding window
   
-  int list[instate->modelRemem.numSubsRates];//for biunif_distr and biunif_perm_distr
+  int list[chain->modelRemem.numSubsRates];//for biunif_distr and biunif_perm_distr
   
-  int numberOfEdits;//for biunif_perm_distr
+  /* int numberOfEdits;//for biunif_perm_distr */
   
   switch(pSubType)
         {
 	  case STANDARD:
 	    case BIUNIF_DISTR:
-	      numberOfEdits=instate->modelRemem.numSubsRates;
+	      /* numberOfEdits=chain->modelRemem.numSubsRates; */
 	      break;
 	      case BIUNIF_PERM_DISTR:
-		numberOfEdits=drawRandInt(instate, instate->modelRemem.numSubsRates);
+		/* numberOfEdits=drawRandInt(chain, chain->modelRemem.numSubsRates); */
 		break;
 	} 
   
   
-  instate->hastings=1.0;
+  chain->hastings=1.0;
   
-    for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
+    for(state = 0;state<chain->modelRemem.numSubsRates ; state ++)
     {
       
       switch(pSubType)
@@ -604,9 +581,9 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
         case STANDARD: //using the branch length sliding window for a test    
 	  changeState=state;
 	  curv = partition->substRates[state];
-	  r =  drawRandDouble01(instate);
-	  mn = curv-(instate->modelRemem.rt_sliding_window_w/2);
-	  mx = curv+(instate->modelRemem.rt_sliding_window_w/2);
+	  r =  drawRandDouble01(chain);
+	  mn = curv-(chain->modelRemem.rt_sliding_window_w/2);
+	  mx = curv+(chain->modelRemem.rt_sliding_window_w/2);
 	
 	  new_value = fabs(mn + r * (mx-mn));
 	  
@@ -617,14 +594,14 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
 	  break;
         
 	case BIUNIF_DISTR:
-	  changeState=drawRandInt(instate, instate->modelRemem.numSubsRates);
+	  changeState=drawRandInt(chain, chain->modelRemem.numSubsRates);
       if(list[changeState]!=1)
       {
       list[changeState]=1;;      
       curv = partition->substRates[changeState];
-      r =  drawRandBiUnif(instate, curv);
+      r =  drawRandBiUnif(chain, curv);
       new_value = r;
-      instate->hastings*=curv/new_value;
+      chain->hastings*=curv/new_value;
  
       while(new_value> RATE_MAX|| new_value< RATE_MIN)
       {
@@ -634,29 +611,29 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
       }
       break;
       case BIUNIF_PERM_DISTR://TODO NOT used. Lower values than before (without subType)
-	drawPermutation(instate, list, instate->modelRemem.numSubsRates);
+	drawPermutation(chain, list, chain->modelRemem.numSubsRates);
 	 curv = partition->substRates[list[state]];
-	 r =  drawRandBiUnif(instate, curv);
+	 r =  drawRandBiUnif(chain, curv);
        new_value = r;
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
       if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
       if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
       }
       
-       instate->hastings*=curv/new_value;
+       chain->hastings*=curv/new_value;
 	 break;
 	 
 	case SINGLE_BIUNIF://TODO not used. Figure out error
-	  drawPermutation(instate,list, instate->modelRemem.numSubsRates);
+	  drawPermutation(chain,list, chain->modelRemem.numSubsRates);
 	 curv = partition->substRates[list[state]];
-	 r =  drawRandBiUnif(instate, curv);
+	 r =  drawRandBiUnif(chain, curv);
        new_value = r;
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
       if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
       if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
       }
       
-       instate->hastings*=curv/new_value;
+       chain->hastings*=curv/new_value;
 	 break;
 	 
         default:
@@ -665,21 +642,20 @@ static void simple_model_proposal_apply(state *instate, int pSubType)//llpqr
       
 
     }//end of switch
-
-edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
+      edit_subs_rates(chain,chain->modelRemem.model, changeState, new_value);
     }
   //recalculate eigens
 
-    exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+    exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   /* TODO: need to broadcast rates here for parallel version ! */
 
-  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
+  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 
   //TODO: without this, the run will fail after a successful model, but failing SPR
   //TODOFER: what did we have in mind regarding the comment above?
   
-  /* evaluateGeneric(instate->tr, instate->tr->start, FALSE); */
+  /* evaluateGeneric(chain->tr, chain->tr->start, FALSE); */
   //for prior, just use dirichlet
   // independent gamma distribution for each parameter
   //the pdf for this is
@@ -692,26 +668,26 @@ edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
 
 
 // //draws a random subset (drawing with replacement) of the states and changes the according to biunif distribution.
-// static void biunif_model_proposal_apply(state *instate, int pSubType)
+// static void biunif_model_proposal_apply(state *chain, int pSubType)
 // {
 //   //record the old one 
-//    instate->modelRemem.model=drawRandInt(instate->tr->NumberOfModels);
-//   recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+//    chain->modelRemem.model=drawRandInt(chain->tr->NumberOfModels);
+//   recordSubsRates(chain->tr, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
 //   int state, randState;
 //   double new_value,curv;
 //   double r;
-//   int list[instate->modelRemem.numSubsRates];
+//   int list[chain->modelRemem.numSubsRates];
 //   
 //   
-//    instate->hastings=1.0;
-//   for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
+//    chain->hastings=1.0;
+//   for(state = 0;state<chain->modelRemem.numSubsRates ; state ++)
 //     {
-//       randState=drawRandInt(instate->modelRemem.numSubsRates);
+//       randState=drawRandInt(chain->modelRemem.numSubsRates);
 //       if(list[randState]!=1)
 //       {
 //       list[randState]=1;;
 //       
-//       curv = instate->tr->partitionData[instate->modelRemem.model].substRates[randState];
+//       curv = chain->tr->partitionData[chain->modelRemem.model].substRates[randState];
 //       r =  drawRandBiUnif(curv);
 // 
 //       new_value = r;
@@ -721,43 +697,43 @@ edit_subs_rates(instate->tr,instate->modelRemem.model, changeState, new_value);
 //       if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
 //       }
 //       
-//        instate->hastings*=curv/new_value;
-//       edit_subs_rates(instate->tr,instate->modelRemem.model, randState, new_value);
+//        chain->hastings*=curv/new_value;
+//       edit_subs_rates(chain->tr,chain->modelRemem.model, randState, new_value);
 //       }
 //     }
 //       
 // 
 // 
-//   initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+//   initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 // 
-//   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
+//   evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* 2. re-traverse the full tree to update all vectors */
 // 
 // }
 
 
-static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
+static void perm_biunif_model_proposal_apply(state *chain, int pSubType)
 {
-  tree *tr = instate->tr; 
+  tree *tr = chain->tr; 
 
   //record the old one 
-  instate->modelRemem.model=drawRandInt(instate,getNumberOfPartitions(instate->tr));
+  chain->modelRemem.model=drawRandInt(chain,getNumberOfPartitions(chain->tr));
   
-  pInfo *partition = getPartition(tr , instate->modelRemem.model) ; 
+  pInfo *partition = getPartition(chain , chain->modelRemem.model) ; 
 
-  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
   int state, randNumber;
   double new_value,curv;
   double r;
   
-  randNumber=drawRandInt(instate,instate->modelRemem.numSubsRates);
-    int perm[instate->modelRemem.numSubsRates];
-    drawPermutation(instate,perm, instate->modelRemem.numSubsRates);
+  randNumber=drawRandInt(chain,chain->modelRemem.numSubsRates);
+    int perm[chain->modelRemem.numSubsRates];
+    drawPermutation(chain,perm, chain->modelRemem.numSubsRates);
   
-   instate->hastings=1.0;
+   chain->hastings=1.0;
   for(state = 0;state<randNumber ; state ++)
     {           
       curv = partition->substRates[perm[state]];
-      r =  drawRandBiUnif(instate,curv);
+      r =  drawRandBiUnif(chain,curv);
 
       new_value = r;
 
@@ -766,41 +742,41 @@ static void perm_biunif_model_proposal_apply(state *instate, int pSubType)
       if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
       }
       
-       instate->hastings*=curv/new_value;
-      edit_subs_rates(instate->tr,instate->modelRemem.model, perm[state], new_value);
+       chain->hastings*=curv/new_value;
+      edit_subs_rates(chain,chain->modelRemem.model, perm[state], new_value);
       
     }
       
   
 
-  exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */  
+  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */  
 }
 
 
-static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
+static void single_biunif_model_proposal_apply(state *chain,int pSubType)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
-  tree *tr = instate->tr; 
+  tree *tr = chain->tr; 
   //record the old one //TODO sufficient to store single value.
-  instate->modelRemem.model=drawRandInt(instate,getNumberOfPartitions(instate->tr)); 
+  chain->modelRemem.model=drawRandInt(chain,getNumberOfPartitions(chain->tr)); 
   
-  pInfo *partition = getPartition(tr,instate->modelRemem.model) ; 
+  pInfo *partition = getPartition(chain,chain->modelRemem.model) ; 
 
-  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
 
-  int  randState=drawRandInt(instate,instate->modelRemem.numSubsRates);
+  int  randState=drawRandInt(chain,chain->modelRemem.numSubsRates);
 
   double new_value,curv;
   double r;
   
-  //int state=drawRandInt(instate->modelRemem.numSubsRates);
+  //int state=drawRandInt(chain->modelRemem.numSubsRates);
   
 
   curv = partition->substRates[randState];
-  r =  drawRandBiUnif(instate,curv);
+  r =  drawRandBiUnif(chain,curv);
 
   new_value = r;
       
@@ -809,24 +785,24 @@ static void single_biunif_model_proposal_apply(state *instate,int pSubType)//NOT
     if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
   }
 
-  edit_subs_rates(instate->tr,instate->modelRemem.model, randState, new_value);
+  edit_subs_rates(chain,chain->modelRemem.model, randState, new_value);
 
-  instate->hastings=curv/new_value;
+  chain->hastings=curv/new_value;
 
-  exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
   
-  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
+  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
 
-static void all_biunif_model_proposal_apply(state *instate, int pSubType)
+static void all_biunif_model_proposal_apply(state *chain, int pSubType)
 {
-  tree *tr = instate->tr; 
+  tree *tr = chain->tr; 
   
   //record the old one 
-  instate->modelRemem.model=drawRandInt(instate,getNumberOfPartitions(instate->tr));
-  pInfo *partition = getPartition(tr, instate->modelRemem.model) ; 
+  chain->modelRemem.model=drawRandInt(chain,getNumberOfPartitions(chain->tr));
+  pInfo *partition = getPartition(chain, chain->modelRemem.model) ; 
 
-  recordSubsRates(instate->tr, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
   //choose a random set parameter,
   //with uniform probabilities
   int state;
@@ -834,12 +810,12 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
   double r;
   
   
-   instate->hastings=1.0;
+   chain->hastings=1.0;
 
-  for(state = 0;state<instate->modelRemem.numSubsRates ; state ++)
+  for(state = 0;state<chain->modelRemem.numSubsRates ; state ++)
     {
       curv = partition->substRates[state]; 
-      r =  drawRandBiUnif(instate,curv);
+      r =  drawRandBiUnif(chain,curv);
 
       new_value = r;
 
@@ -848,18 +824,20 @@ static void all_biunif_model_proposal_apply(state *instate, int pSubType)
       if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
       }
       
-       instate->hastings*=curv/new_value;
-      edit_subs_rates(instate->tr,instate->modelRemem.model, state, new_value);
+       chain->hastings*=curv/new_value;
+      edit_subs_rates(chain,chain->modelRemem.model, state, new_value);
     }
 
-  exa_initReversibleGTR(instate->tr, instate->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  evaluateOnePartition(tr, tr->start, TRUE, instate->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
+  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
 
-static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
+static void restore_subs_rates(state *chain, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
 {
-  pInfo *partition = getPartition(tr, model); 
+  tree *tr = chain->tr; 
+
+  pInfo *partition = getPartition(chain, model); 
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -870,13 +848,13 @@ static void restore_subs_rates(tree *tr, analdef *adef, int model, int numSubsRa
 
   /* TODO need to broadcast rates here for parallel version */
 
-  evaluateOnePartition(tr, tr->start, TRUE, model); 
+  evaluateOnePartition(chain, tr->start, TRUE, model); 
 }
 
 
 //--------Branch-Length_Proposals---------------------------------------------------
 
-double get_branch_length_prior( state *curstate)
+double get_branch_length_prior( state *chain)
 {//TODO decide on sensible prior
   return 1;  
 }
@@ -1090,12 +1068,12 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 
 
 
-static void random_branch_length_proposal_apply(state * instate, int pSubType)
+static void random_branch_length_proposal_apply(state * chain, int pSubType)
 {
-  int numBranches = getNumBranches(instate->tr);
-  const int num_branches = (instate->tr->mxtips * 2) - 3;
-  int target_branch = drawRandInt(instate,num_branches); 
-  node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
+  int numBranches = getNumBranches(chain->tr);
+  const int num_branches = (chain->tr->mxtips * 2) - 3;
+  int target_branch = drawRandInt(chain,num_branches); 
+  node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
   
     switch(pSubType)
         {
@@ -1104,26 +1082,26 @@ static void random_branch_length_proposal_apply(state * instate, int pSubType)
 	    //pull a uniform like
 	    //x = current, w =window
 	    //uniform(x-w/2,x+w/2)
-	  set_branch_length_sliding_window(instate,p, numBranches, instate, TRUE);
+	  set_branch_length_sliding_window(chain,p, numBranches, chain, TRUE);
 	  break;
         case EXP_DISTR:
-	  set_branch_length_exp(instate,p, numBranches, instate, TRUE);
+	  set_branch_length_exp(chain,p, numBranches, chain, TRUE);
           break;
 	case BIUNIF_DISTR:
-	  set_branch_length_biunif(instate, p, numBranches, instate, TRUE);
+	  set_branch_length_biunif(chain, p, numBranches, chain, TRUE);
 	  break;
         default:
           assert(0);
         }
 
 
-  instate->brLenRemem.single_bl_branch = target_branch;
-  evaluateGenericWrapper(instate->tr, p, FALSE); 
-  //evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
+  chain->brLenRemem.single_bl_branch = target_branch;
+  evaluateGenericWrapper(chain->tr, p, FALSE); 
+  //evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
 }
 
 
-// static void biunif_branch_length_proposal_apply(state * instate, int pSubType)
+// static void biunif_branch_length_proposal_apply(state * chain, int pSubType)
 // {
 //    
 //   //for one branch get the current branch length
@@ -1132,66 +1110,68 @@ static void random_branch_length_proposal_apply(state * instate, int pSubType)
 //   //uniform(x/2,x*2)
 //   
 //   
-//   const int num_branches = (instate->tr->mxtips * 2) - 3;
+//   const int num_branches = (chain->tr->mxtips * 2) - 3;
 //   int target_branch = drawRandInt(num_branches); 
-//   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
+//   node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
 //  
-//   //set_branch_length_sliding_window(p, instate->tr->numBranches, instate, TRUE);
-//   set_branch_length_biunif(p, instate->tr->numBranches, instate, TRUE);
+//   //set_branch_length_sliding_window(p, chain->tr->numBranches, chain, TRUE);
+//   set_branch_length_biunif(p, chain->tr->numBranches, chain, TRUE);
 // 
-//   instate->brLenRemem.single_bl_branch = target_branch;
-//   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
+//   chain->brLenRemem.single_bl_branch = target_branch;
+//   evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
 //   //   return TRUE;
 // }
 
-// static void exp_branch_length_proposal_apply(state * instate, int pSubType)
+// static void exp_branch_length_proposal_apply(state * chain, int pSubType)
 // {
-//   const int num_branches = (instate->tr->mxtips * 2) - 3;
+//   const int num_branches = (chain->tr->mxtips * 2) - 3;
 //   int target_branch = drawRandInt(num_branches); 
-//   node *p = select_branch_by_id_dfs( instate->tr->start, target_branch, instate );
+//   node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
 //   
-//   set_branch_length_exp(p, instate->tr->numBranches, instate, TRUE);
+//   set_branch_length_exp(p, chain->tr->numBranches, chain, TRUE);
 // 
-//   instate->brLenRemem.single_bl_branch = target_branch;
-//   evaluateGeneric(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
+//   chain->brLenRemem.single_bl_branch = target_branch;
+//   evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
 // }
 
-static void random_branch_length_proposal_reset(state * instate)
+static void random_branch_length_proposal_reset(state * chain)
 {
   node *p;
-  assert( instate->brLenRemem.single_bl_branch != -1 );
+  assert( chain->brLenRemem.single_bl_branch != -1 );
   
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
-  p = select_branch_by_id_dfs( instate->tr->start, instate->brLenRemem.single_bl_branch, instate );
+  p = select_branch_by_id_dfs( chain->tr->start, chain->brLenRemem.single_bl_branch, chain );
   
-  reset_branch_length(p, getNumBranches(instate->tr));
+  reset_branch_length(p, getNumBranches(chain->tr));
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
-  //update_all_branches(instate, TRUE);
+  //update_all_branches(chain, TRUE);
 
   /* i am not so sure, if we really can do the FALSE here ; will raxml recognize that a branch length has changed? disabling it for now... 
 
      TODO I think, we should evaluate at the respctive node 
    */
 #if 0 
-  evaluateGenericWrapper(instate->tr, instate->tr->start, FALSE);
+  evaluateGenericWrapper(chain->tr, chain->tr->start, FALSE);
 #else 
-  evaluateGenericWrapper(instate->tr, instate->tr->start, TRUE );
+  evaluateGenericWrapper(chain->tr, chain->tr->start, TRUE );
 #endif
 
- // evaluateGeneric(instate->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from instate->tr->start, that is: evaluateGeneric(instate->tr, instate->tr->start, TRUE);
-  instate->brLenRemem.single_bl_branch = -1;
+ // evaluateGeneric(chain->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from chain->tr->start, that is: evaluateGeneric(chain->tr, chain->tr->start, TRUE);
+  chain->brLenRemem.single_bl_branch = -1;
 }
 
-double get_frequency_prior(state * instate)
+double get_frequency_prior(state * chain)
 {
  return 1; 
 }
 
-static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequRates, double *prevFrequRates)
+static void restore_frequ_rates(state *chain, analdef *adef, int model, int numFrequRates, double *prevFrequRates)
 {
+  tree *tr = chain->tr; 
+
   /* NOTICE: this function should not be called repeatedly  */
 
-  pInfo *partition = getPartition(tr,model);
+  pInfo *partition = getPartition(chain,model);
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -1200,12 +1180,12 @@ static void restore_frequ_rates(tree *tr, analdef *adef, int model, int numFrequ
 
   exa_initReversibleGTR(tr, model);
 
-  evaluateOnePartition(tr, tr->start, TRUE, model); 
+  evaluateOnePartition(chain, tr->start, TRUE, model); 
 }
 
-static void recordFrequRates(tree *tr, int model, int numFrequRates, double *prevFrequRates)
+static void recordFrequRates(state *chain, int model, int numFrequRates, double *prevFrequRates)
 {
-  pInfo *partition = getPartition(tr,model); 
+  pInfo *partition = getPartition(chain,model); 
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -1213,53 +1193,53 @@ static void recordFrequRates(tree *tr, int model, int numFrequRates, double *pre
     prevFrequRates[i] = partition->frequencies[i];
 }
 
-void frequency_proposal_apply(state * instate, int pSubType)
+void frequency_proposal_apply(state * chain, int pSubType)
 {
-  tree *tr = instate->tr; 
+  tree *tr = chain->tr; 
 
-  instate->frequRemem.model=drawRandInt(instate,getNumberOfPartitions(tr));
-  pInfo *partition = getPartition(tr, instate->frequRemem.model); 
+  chain->frequRemem.model=drawRandInt(chain,getNumberOfPartitions(tr));
+  pInfo *partition = getPartition(chain, chain->frequRemem.model); 
 
-  recordFrequRates(tr, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
+  recordFrequRates(chain, chain->frequRemem.model, chain->frequRemem.numFrequRates, chain->frequRemem.curFrequRates);
 
   
   int state;
   double sum,curv;
-  double r[instate->frequRemem.numFrequRates];
+  double r[chain->frequRemem.numFrequRates];
   
-  instate->hastings=1;
-  for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
+  chain->hastings=1;
+  for(state = 0;state<chain->frequRemem.numFrequRates ; state ++)
     {
       curv = partition->frequencies[state];
       //r[state] =  drawRandDouble(); 
-      r[state] =  drawRandBiUnif(instate,curv); 
-    instate->hastings*=curv/r[state];
+      r[state] =  drawRandBiUnif(chain,curv); 
+    chain->hastings*=curv/r[state];
     }
     
   sum=0;
   
-  for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
+  for(state = 0;state<chain->frequRemem.numFrequRates ; state ++)
     {
       sum+=r[state]; 
     }
-    for(state = 0;state<instate->frequRemem.numFrequRates ; state ++)
+    for(state = 0;state<chain->frequRemem.numFrequRates ; state ++)
     {
       partition->frequencies[state]=r[state]/sum; 
     }
   //recalculate eigens
 
-  exa_initReversibleGTR(tr, instate->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(tr, chain->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-/* instate->curprior=get_frequency_prior(instate, tr->partitionData[instate->frequRemem.model].frequencies); */
-/* instate->newprior=get_frequency_prior(instate, instate->frequRemem.curFrequRates); */
+/* chain->curprior=get_frequency_prior(chain, tr->partitionData[chain->frequRemem.model].frequencies); */
+/* chain->newprior=get_frequency_prior(chain, chain->frequRemem.curFrequRates); */
 
-  evaluateOnePartition(tr, tr->start, TRUE, instate->frequRemem.model);
+  evaluateOnePartition(chain, tr->start, TRUE, chain->frequRemem.model);
 }
 
 
-void frequency_proposal_reset(state * instate)
+void frequency_proposal_reset(state * chain)
 {
-  restore_frequ_rates(instate->tr, instate->frequRemem.adef, instate->frequRemem.model, instate->frequRemem.numFrequRates, instate->frequRemem.curFrequRates);
+  restore_frequ_rates(chain, chain->frequRemem.adef, chain->frequRemem.model, chain->frequRemem.numFrequRates, chain->frequRemem.curFrequRates);
 }
 
 
@@ -1268,9 +1248,9 @@ void frequency_proposal_reset(state * instate)
  * should be sliding window proposal
  */
 
-void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue)
+void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValue)
 {
-  pInfo *partition = getPartition(tr,model); 
+  pInfo *partition = getPartition(chain,model); 
 
   assert(partition->dataType = DNA_DATA);
   assert(subRateValue <= RATE_MAX && subRateValue >= RATE_MIN);
@@ -1282,9 +1262,9 @@ void edit_subs_rates(tree *tr, int model, int subRatePos, double subRateValue)
 
 
 
-static void simple_model_proposal_reset(state * instate)
+static void simple_model_proposal_reset(state * chain)
 {
-  restore_subs_rates(instate->tr, instate->modelRemem.adef, instate->modelRemem.model, instate->modelRemem.numSubsRates, instate->modelRemem.curSubsRates);
+  restore_subs_rates(chain, chain->modelRemem.adef, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
 }
 
 nodeptr select_random_subtree(state *chain, tree *tr)
@@ -1321,10 +1301,6 @@ nodeptr select_random_subtree(state *chain, tree *tr)
 
   return p;
 }
-
-
-
-
 
 
 
@@ -1507,17 +1483,31 @@ void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
 
 
 /* so here the idea would be to randomly choose among proposals? we can use typedef enum to label each, and return that */ 
-static proposal_type select_proposal_type(state * instate)
+static proposal_type select_proposal_type(state * chain)
 {
-  instate->newprior = instate->brLenRemem.bl_prior; //TODO Why is this here? 
-  return drawSampleProportionally(instate,instate->proposalWeights, NUM_PROPOSALS) ; 
+  chain->newprior = chain->brLenRemem.bl_prior; //TODO Why is this here? 
+  return drawSampleProportionally(chain,chain->proposalWeights, NUM_PROPOSALS) ; 
 }
 
 
 
-void step(state *curstate)
+
+void resetSuccessCounter(int runid)
 {
-  tree *tr = curstate->tr;   
+  state *start =  gAInfo.allChains + (runid * gAInfo.numberCoupledChains) ; 
+  
+  for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
+    {
+      state *chain = start + i ; 
+      memset(chain->rejectedProposals, 0 , sizeof(int) * NUM_PROPOSALS); 
+      memset(chain->acceptedProposals, 0 , sizeof(int) * NUM_PROPOSALS); 
+    }
+}
+
+
+void step(state *chain)
+{
+  tree *tr = chain->tr;   
 
   proposal_type which_proposal;
   /* double t = gettime();  */
@@ -1531,38 +1521,37 @@ void step(state *curstate)
   tr->startLH = tr->likelihood;
 
   // select proposal type
-  which_proposal = select_proposal_type( curstate );
+  which_proposal = select_proposal_type( chain );
     
   proposal_functions pF; 
   getProposalFunctions(which_proposal, &pF); 
 
 
   // apply the proposal function  
-  pF.apply_func(curstate, pF.pSubType);
+  pF.apply_func(chain, pF.pSubType);
 
   // FIXME: why is this here?
-  if (curstate->currentGeneration == 0 )
+  if (chain->currentGeneration == 0 )
     {
-      curstate->curprior = curstate->newprior;
+      chain->curprior = chain->newprior;
     }
   //     PRINT("proposal done, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
 
   //proposalTime += gettime() - t;
   /* decide upon acceptance */
-  testr = drawRandDouble01(curstate);
+  testr = drawRandDouble01(chain);
 
   //should look something like 
-  /* acceptance = fmin(1,(curstate->hastings) * 
-     (exp(curstate->newprior-curstate->curprior)) * (exp(curstate->tr->likelihood-curstate->tr->startLH)));*/
+  /* acceptance = fmin(1,(chain->hastings) * 
+     (exp(chain->newprior-chain->curprior)) * (exp(chain->tr->likelihood-chain->tr->startLH)));*/
 
-  
+  double myHeat = getChainHeat(chain ) ; 
 
-  acceptance = fmin(1,(curstate->hastings) * 
+  acceptance = fmin(1,(chain->hastings) * 
 		    /* TODO for chain swapping ratio must be replaced again by proper prior   */
-		    pF.get_prior_ratio(curstate) 
-		    /* (curstate->newprior/curstate->curprior) */
-		    * (exp(tr->likelihood - tr->startLH) * getChainHeat(curstate))
-		
+		    pF.get_prior_ratio(chain) 
+		    /* (chain->newprior/chain->curprior) */
+		    * (exp((tr->likelihood - tr->startLH) * myHeat)  ) 
 		    );
 
 
@@ -1573,33 +1562,33 @@ void step(state *curstate)
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
       if(processID == 0)
 	{
-	  printInfo(curstate, "accepting\t");   
+	  printInfo(chain, "accepting\t");   
 	  printProposalType(which_proposal); 
 	}
 #endif
-      curstate->acceptedProposals[which_proposal]++; 
-      curstate->totalAccepted++;
-      // curstate->proposalWeights[which_proposal] /= curstate->penaltyFactor;
-      penalize(curstate, which_proposal, 1);
+      chain->acceptedProposals[which_proposal]++; 
+      chain->totalAccepted++;
+      // chain->proposalWeights[which_proposal] /= chain->penaltyFactor;
+      penalize(chain, which_proposal, 1);
 
       tr->startLH = tr->likelihood;  //new LH
-      curstate->curprior = curstate->newprior;          
+      chain->curprior = chain->newprior;          
     }
   else
     {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
       if(processID == 0)
 	{
-	  printInfo(curstate, "rejecting\t");   
+	  printInfo(chain, "rejecting\t");   
 	  printProposalType(which_proposal); 
 	}
 #endif
-      pF.reset_func(curstate); 
-      /* dispatch_proposal_reset(which_proposal,curstate); */
-      curstate->rejectedProposals[which_proposal]++;
-      curstate->totalRejected++;
-      //curstate->proposalWeights[which_proposal] *= curstate->penaltyFactor; 
-      penalize(curstate, which_proposal, 0);
+      pF.reset_func(chain); 
+      /* dispatch_proposal_reset(which_proposal,chain); */
+      chain->rejectedProposals[which_proposal]++;
+      chain->totalRejected++;
+      //chain->proposalWeights[which_proposal] *= chain->penaltyFactor; 
+      penalize(chain, which_proposal, 0);
 
 
 
@@ -1614,7 +1603,7 @@ void step(state *curstate)
       if(fabs(tr->startLH - tr->likelihood) > 1.0E-15)//TODO change back to 1.0E-15
       	{
       	  PRINT("WARNING: LH diff %.20f\n", tr->startLH - tr->likelihood);
-      	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", curstate->currentGeneration, tr->likelihood, tr->startLH);
+      	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", chain->currentGeneration, tr->likelihood, tr->startLH);
       	}
       assert(fabs(tr->startLH - tr->likelihood) < 0.1);
 #endif
@@ -1636,19 +1625,25 @@ void step(state *curstate)
 #endif
 
 
-  if(curstate->couplingId == 0 &&    (curstate->currentGeneration % curstate->samplingFrequency) == 0)
+  if(chain->couplingId == 0 && (chain->currentGeneration % chain->samplingFrequency) == chain->samplingFrequency - 1  )
     {
       if(processID == 0)
 	{
-	  printSample(curstate);       
-	  chainInfoOutput(curstate);  // , sum_radius_accept, sum_radius_reject      	  
+	  printSample(chain);       
+
+ 	  chainInfo(chain); 
+	  /* chainInfoOutput(chain);  // , sum_radius_accept, sum_radius_reject      	   */
+	  resetSuccessCounter(chain->id / gAInfo.numberCoupledChains);
 	}
-      addBipartitionsToHash(tr, curstate ); 
+
+      if(chain->currentGeneration >  BURNIN)
+	addBipartitionsToHash(tr, chain ); 
+
     }
 
-  curstate->likelihood = tr->likelihood; 
+  chain->likelihood = tr->likelihood; 
   
-  curstate->currentGeneration++; 
+  chain->currentGeneration++; 
 }
 
 
@@ -1668,7 +1663,7 @@ void step(state *curstate)
  * should be sliding window proposal
  */
 
-static boolean simpleBranchLengthProposalApply(state * instate)
+static boolean simpleBranchLengthProposalApply(state * chain)
 {
    
   //for each branch get the current branch length
@@ -1676,8 +1671,8 @@ static boolean simpleBranchLengthProposalApply(state * instate)
   //x = current, w =window
   //uniform(x-w/2,x+w/2)
 
-  update_all_branches(instate, FALSE);
-  evaluateGenericWrapper(instate->tr, instate->tr->start, TRUE); /* update the tr->likelihood */
+  update_all_branches(chain, FALSE);
+  evaluateGenericWrapper(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood */
 
   //for prior, just using exponential for now
   //calculate for each branch length
@@ -1689,9 +1684,9 @@ static boolean simpleBranchLengthProposalApply(state * instate)
   return TRUE;
 }
 
-static void simpleBranchLengthProposalReset(state * instate)
+static void simpleBranchLengthProposalReset(state * chain)
 {
-  update_all_branches(instate, TRUE);
+  update_all_branches(chain, TRUE);
 }
 
 static void update_all_branches(state * s, boolean resetBL)

@@ -2,6 +2,7 @@
 #include "common.h"
 #include "axml.h"
 
+#include "proposalStructs.h"
 #include "globals.h"
 
 #include "config.h"
@@ -15,74 +16,95 @@
 
 
 
-
-
-void setExecModel(tree *tr, int num,boolean value)
+void setNumberOfPartitions(tree *tr, int num)
 {
-#if HAVE_PLL == 1 
-  gAInfo.partitions.partitionData[num]->executeModel = value; 
+#if HAVE_PLL == 1
+  /* NOTICE if really something should be changed, do it! */   
 #else 
-  tr->executeModel[num] = value; 
+  tr->NumberOfModels = num; 
 #endif
 }
 
-boolean getExecModel(tree *tr, int num)
+
+
+void setNumbranches(tree *tr, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.partitionData[num]->executeModel;   
+  /* NOTICE if really something should be changed, do it! */   
 #else 
-  return tr->executeModel[num]; 
+  tr->numBranches = num; 
+#endif
+}
+
+
+
+
+void setExecModel(state *chain, int num,boolean value)
+{
+#if HAVE_PLL == 1 
+  gAInfo.partitions[chain->couplingId].partitionData[num]->executeModel = value; 
+#else 
+  chain->tr->executeModel[num] = value; 
+#endif
+}
+
+boolean getExecModel(state *chain, int num)
+{
+#if HAVE_PLL == 1 
+  return gAInfo.partitions[chain->couplingId].partitionData[num]->executeModel;   
+#else 
+  return chain->tr->executeModel[num]; 
 #endif
 } 
 
 
-void setPLH(tree *tr, int num, double value)
+void setPLH(state *chain, int num, double value)
 {
 #if HAVE_PLL == 1 
-  gAInfo.partitions.partitionData[num]->partitionLH = value; 
+  gAInfo.partitions[chain->couplingId].partitionData[num]->partitionLH = value; 
 #else 
-tr->perPartitionLH[num] = value; 
+  chain->tr->perPartitionLH[num] = value; 
 #endif
 }
 
 
-double getPLH(tree *tr, int num)
+double getPLH(state *chain, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.partitionData[num]->partitionLH; 
+  return gAInfo.partitions[chain->couplingId].partitionData[num]->partitionLH; 
 #else 
-  return tr->perPartitionLH[num]; 
+  return chain->tr->perPartitionLH[num]; 
 #endif
 }
 
 
 
-double getPcontr(tree *tr, int num)
+double getPcontr(state *chain, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.partitionData[num]->partitionContribution; 
+  return gAInfo.partitions[chain->couplingId].partitionData[num]->partitionContribution; 
 #else  
-  return tr->partitionContributions[num]; 
+  return chain->tr->partitionContributions[num]; 
 #endif
 }
 
 
-double getFracChange(tree *tr, int num)
+double getFracChange(state *chain, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.partitionData[num]->fracchange; 
+  return gAInfo.partitions[chain->couplingId].partitionData[num]->fracchange; 
 #else
-  return tr->fracchanges[num]; 
+  return chain->tr->fracchanges[num]; 
 #endif
 }
 
 
-void setFracChange(tree *tr, int num, double value)
+void setFracChange(state *chain, int num, double value)
 {
 #if HAVE_PLL == 1 
-  gAInfo.partitions.partitionData[num]->fracchange = value; 
+  gAInfo.partitions[chain->couplingId].partitionData[num]->fracchange = value; 
 #else 
-  tr->fracchanges[num] = value; 
+  chain->tr->fracchanges[num] = value; 
 #endif
 }
 
@@ -91,7 +113,7 @@ void setFracChange(tree *tr, int num, double value)
 int getNumBranches(tree *tr)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.perGeneBranchLengths ? gAInfo.partitions.numberOfPartitions : 1; 
+  return gAInfo.partitions[0].perGeneBranchLengths ? gAInfo.partitions[0].numberOfPartitions : 1; 
 #else 
   return tr->numBranches; 
 #endif
@@ -102,7 +124,7 @@ int getNumBranches(tree *tr)
 boolean hasPergeneBL(tree *tr)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.perGeneBranchLengths == TRUE; 
+  return gAInfo.partitions[0].perGeneBranchLengths == TRUE; 
 #else 
   return tr->numBranches > 1; 
 #endif
@@ -114,7 +136,7 @@ boolean hasPergeneBL(tree *tr)
 int getNumberOfPartitions(tree *tr) 
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.numberOfPartitions; 
+  return gAInfo.partitions[0].numberOfPartitions; 
 #else 
   return tr->NumberOfModels; 
 #endif
@@ -123,12 +145,12 @@ int getNumberOfPartitions(tree *tr)
 
 
 
-pInfo* getPartition(tree *tr, int num)
+pInfo* getPartition(state *chain, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions.partitionData[num]; 
+  return gAInfo.partitions[chain->couplingId].partitionData[num]; 
 #else 
-  return &(tr->partitionData[num]); 
+  return chain->tr->partitionData + num; 
 #endif
 } 
 
@@ -136,12 +158,12 @@ pInfo* getPartition(tree *tr, int num)
 
 
 
-void exa_newViewGeneric(tree *tr, nodeptr p, boolean masked)
+void exa_newViewGeneric(state *chain, nodeptr p, boolean masked)
 {
 #if HAVE_PLL == 1 
-  newviewGeneric(tr, &(gAInfo.partitions),     p, masked); 
+  newviewGeneric(chain->tr, gAInfo.partitions + chain->couplingId,     p, masked); 
 #else 
-  newviewGeneric(tr, p, masked); 
+  newviewGeneric(chain->tr, p, masked); 
 #endif 
 } 
 
@@ -175,3 +197,5 @@ void exa_evaluateGeneric(tree *tr, nodeptr start, boolean fullTraversal)
   evaluateGeneric(tr, start, fullTraversal); 
 #endif  
 }
+
+

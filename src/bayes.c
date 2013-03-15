@@ -9,21 +9,17 @@
 #include "proposals.h"
 #include "convergence.h"
 
+#include "bayes-topo.h"
+
 
 /* TODO outsource  */
 #include "chain.h"
 
 #include  "adapterCode.h"
 
+#include "eval.h"
+
 extern double masterTime; 
-
-
-void saveTreeStateToChain(state *chain, tree *tr); 
-void applyChainStateToTree(state *chain, tree *tr); 
-
-/* TODO commented this out, since there are some problems with it,
-   when we build with the PLL */
-/* #define WITH_PERFORMANCE_MEASUREMENTS */
 
 
 
@@ -74,7 +70,7 @@ void initDefaultValues(state *theState, tree *tr)
   theState->modelRemem.model = 0;
   theState->modelRemem.rt_sliding_window_w = 0.5;
 
-  pInfo *partition = getPartition(tr,theState->modelRemem.model); 
+  pInfo *partition = getPartition(theState,theState->modelRemem.model); 
 
   theState->modelRemem.nstates = partition->states; /* 4 for DNA */
   theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
@@ -111,8 +107,10 @@ theState->proposalWeights[E_SPR_MAPPED] = 0.0;
 
 
 /* TODO adapt likelihood */
-void switchChainState(state *chains, int numChain)
+void switchChainState(state *chains)
 {
+  int numChain = gAInfo.numberCoupledChains; 
+
   if(numChain == 1)
     return;   
   
@@ -131,8 +129,10 @@ void switchChainState(state *chains, int numChain)
   */
 
   double heatA = getChainHeat(chains + chainA ) , 
-    heatB  = getChainHeat(chains + chainB); 
-  
+    heatB  = getChainHeat(chains + chainB); /*  */
+
+  assert(heatA < 1.f || heatB < 1.f); 
+
   double lnlA = chains[chainA].likelihood,
     lnlB = chains[chainB].likelihood; 
   
@@ -147,14 +147,27 @@ void switchChainState(state *chains, int numChain)
   /* printf("%f,%f,%f,%f\t%f,%f,%f,%f\taccRatio = %f\n", lnlA, lnlB, heatA, heatB,  aB, bA, aA, bB, accRatio);  */
 
   /* do the swap */
-  if( drawGlobalDouble01()  < accRatio)
+  if( drawGlobalDouble01()  < exp(accRatio))
     {
-      int tmp = chains[chainA].couplingId ; 
-      chains[chainA].couplingId =  chains[chainB].couplingId; 
-      chains[chainB].couplingId = tmp ; 
+      /* if(chains[chainA].couplingId == 0 ||  chains[chainB].couplingId == 0)  */
+      /* 	printf("\n\nswap with cold one\n\n");  */
       
-      if(processID == 0)
-      	printf("coupled chains %d  and %d switch\n", chainA, chainB);
+      
+      int tmp = chains[chainA].couplingId ;
+      chains[chainA].couplingId =  chains[chainB].couplingId;
+      chains[chainB].couplingId = tmp ;
+
+
+      int tmpArray[NUM_PROPOSALS] ; 
+      memcpy(tmpArray, chains[chainB].acceptedProposals, sizeof(int) * NUM_PROPOSALS); 
+      memcpy(chains[chainB].acceptedProposals, chains[chainA].acceptedProposals, sizeof(int) * NUM_PROPOSALS); 
+      memcpy(chains[chainA].acceptedProposals, tmpArray, sizeof(int) * NUM_PROPOSALS); 
+
+      memcpy(tmpArray, chains[chainB].rejectedProposals, sizeof(int) * NUM_PROPOSALS); 
+      memcpy(chains[chainB].rejectedProposals, chains[chainA].rejectedProposals, sizeof(int) * NUM_PROPOSALS); 
+      memcpy(chains[chainA].rejectedProposals, tmpArray, sizeof(int) * NUM_PROPOSALS); 
+
+      gAInfo.successFullSwitchesBatch++; 
     } 
 }
 
@@ -162,45 +175,141 @@ void switchChainState(state *chains, int numChain)
 
 void executeOneRun(state *chains, int gensToRun )
 {
-  tree *tr = chains[0].tr; 
-
   if(gAInfo.numberCoupledChains > 1 )
     {
+#ifdef MC3_SPACE_FOR_TIME
+      /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
+      for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
+	applyChainStateToTree(chains+i, TRUE);
+#endif
+
+
       for(int genCtr = 0; genCtr < gensToRun; genCtr += SWITCH_AFTER_GEN)
 	{
 	  for(int chainCtr = 0; chainCtr < gAInfo.numberCoupledChains; ++chainCtr)
 	    {      
 	      state *curChain = chains + chainCtr; /* TODO */
-	      applyChainStateToTree(curChain, tr);
+
+#ifndef MC3_SPACE_FOR_TIME
+	      applyChainStateToTree(curChain, TRUE );
+#endif
 
 	      for(int i = 0; i < SWITCH_AFTER_GEN; ++i)
 		step(curChain);
 	  	  
-	      saveTreeStateToChain(curChain, tr);
+#ifndef MC3_SPACE_FOR_TIME
+	      saveTreeStateToChain(curChain);
+#endif
 	    }
 
-	  switchChainState(chains, gAInfo.numberCoupledChains);
+	  switchChainState(chains);
 	}
+
+
+#ifdef MC3_SPACE_FOR_TIME
+      for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
+	saveTreeStateToChain(chains+i);
+#endif
+
     }
   else 
-    {
-      
+    {      
       state *curChain = chains; 
-      applyChainStateToTree(curChain, tr);
+      applyChainStateToTree(curChain, TRUE );
       
       for(int genCtr = 0; genCtr < gensToRun; genCtr++)
 	step(curChain);
 
-      saveTreeStateToChain(curChain, tr); 
+      saveTreeStateToChain(curChain); 
     }
 }
 
 
 
+void runChains(state *allChains,   int diagFreq)
+{
+  boolean hasConverged = FALSE;   
+  while(NOT hasConverged)
+    {      
+      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+	{
+	  printf("running chains %d\n", i ); 
+	  executeOneRun(allChains + (i * gAInfo.numberCoupledChains), diagFreq); 
+	}
+      
+      hasConverged = convergenceDiagnostic(allChains, gAInfo.numberOfRuns); 
+    }
+}
 
-void mcmc(tree *tr, analdef *adef)
-{ 
+
+
+#ifdef MC3_SPACE_FOR_TIME
+
+/** 
+    if enabled, every heat class of chains has its own tree.
+
+    otherwise ALL chains share the same tree. 
+ */ 
+#if HAVE_PLL == 1 
+#else  
+void initializeTree(tree *tr, analdef *adef); 
+#endif
+void initializeAdditionalTrees(tree *tr, analdef *adef, state *allChains)
+{
+  int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
   
+  /* TODO consider numa issues   */
+  tree
+    *moreTrees = exa_calloc(treesNeeded, sizeof(tree)); 
+  
+  for(int i = 0; i < treesNeeded; ++i)
+    {
+      tree *currentTree= moreTrees + i; 
+      currentTree->mxtips = tr->mxtips; 
+#if HAVE_PLL == 1  
+      assert(0); 
+#else 
+      initializeTree(currentTree, adef); 
+#endif
+    }
+  
+  int totalNumChains = gAInfo.numberCoupledChains * gAInfo.numberOfRuns; 
+  for(int i = 0; i < totalNumChains; ++i)
+    {
+      state *chain = allChains + i ; 
+
+      tree *theTree = chain->couplingId == 0 ? tr : moreTrees + chain->couplingId - 1 ; 
+      chain->tr = theTree; 
+      chain->tr->bitVectors = tr->bitVectors; 
+      
+      /* int treeNum = chain->couplingId == 0 ? chain->couplingId - 1  */
+      if(chain->couplingId == 0 ) 
+	printf("chain %d heat %d gets tree orig\n ", chain->id , chain->couplingId); 
+      else 
+	printf("chain %d heat %d gets additional tree %d\n ", chain->id, chain->couplingId, chain->couplingId - 1 ); 
+
+      if(chain->couplingId > 0)
+	{
+	  /* TODO this should not have been initialized incorrectly in
+	     the first place!  */
+	  freeTopol(chain->dump.topo); 
+	  chain->dump.topo = setupTopol(tr->mxtips);
+
+	  /* copyTopoFromDifferentTree(theTree,tr, tr->start->back ); */
+	  copyTopology(theTree, tr); 
+	  saveTree(theTree, chain->dump.topo); 
+	  applyChainStateToTree(chain,FALSE); 
+	  evaluateGenericWrapper(theTree, theTree->start, TRUE );
+	  saveTreeStateToChain(chain);
+	}
+    }
+}
+#endif
+
+
+
+void exa_main(tree *tr, analdef *adef)
+{   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
   initParamStruct *initParams = NULL;
 
@@ -208,20 +317,23 @@ void mcmc(tree *tr, analdef *adef)
   
   initializeIndependentChains(tr, &indiChains, &initParams); 
 
-  /* TODO  remove this global again */
   gAInfo.numberOfRuns = initParams->numIndiChains; 
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
 
-  int diagFreq = initParams->diagFreq; 
+  assert(gAInfo.numberCoupledChains > 0);
+  /* TODO more bla bla  */  
 
-  boolean hasConverged = FALSE;   
-  while(NOT hasConverged)
-    {      
-      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-	executeOneRun(indiChains + (i * gAInfo.numberCoupledChains), diagFreq); 
-      
-      hasConverged = convergenceDiagnostic(indiChains, gAInfo.numberOfRuns); 
-    }
+
+#ifdef MC3_SPACE_FOR_TIME  
+  if(gAInfo.numberCoupledChains > 1 )
+    initializeAdditionalTrees(tr, adef, indiChains ); 
+#endif
+  
+  int diagFreq = initParams->diagFreq; 
+  
+  gAInfo.allChains = indiChains; 
+
+  runChains(indiChains, diagFreq); 
 
   if(processID == 0)
     {

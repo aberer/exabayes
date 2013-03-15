@@ -7,6 +7,8 @@
 #include "axml.h"
 #include "config.h"
 #include "main-common.h"
+
+#include "proposalStructs.h"
 #include "globals.h" 
 #include "common.h"
 

@@ -5,6 +5,8 @@
 #include "main-common.h"
 #include "globals.h"
 
+
+#include "chain.h"
 #include "output.h"
 
 #include "adapterCode.h"
@@ -22,10 +24,9 @@ void makeFileNames()
 
   infoFileExists = filexists(infoFileName);
 
-
   if(infoFileExists)
   {
-    printf("RAxML output files with the run ID <%s> already exist \n", run_id);
+    printf("%s output files with the run ID <%s> already exist \n", PROGRAM_NAME, run_id);
     printf("in directory %s ...... exiting\n", workdir);
 #ifdef PRODUCTIVE
     exit(-1);
@@ -35,8 +36,10 @@ void makeFileNames()
 
 
 
-double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
+double exabayes_getBranchLength(state *chain, int perGene, nodeptr p)
 {
+  tree *tr = chain->tr; 
+
   double 
     z = 0.0,
     x = 0.0;
@@ -65,21 +68,21 @@ double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
 	  for(i = 0; i < getNumBranches(tr); i++)
 	    {
 
-	      assert(getPcontr(tr,i) != -1.0);
-	      assert(getFracChange(tr,i) != -1.0);
+	      assert(getPcontr(chain,i) != -1.0);
+	      assert(getFracChange(chain,i) != -1.0);
 
 	      z = p->z[i];
 	      if(z < zmin) 
 		z = zmin;      	 
-	      x = -log(z) * getFracChange(tr,i);
-	      avgX += x * getPcontr(tr,i);
+	      x = -log(z) * getFracChange(chain,i);
+	      avgX += x * getPcontr(chain,i);
 	    }
 
 	  x = avgX;
 	}
       else
 	{	
-	  assert(getFracChange(tr,perGene) != -1.0);
+	  assert(getFracChange(chain,perGene) != -1.0);
 	  assert(perGene >= 0 && perGene < getNumBranches(tr));
 	  
 	  z = p->z[perGene];
@@ -87,7 +90,7 @@ double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
 	  if(z < zmin) 
 	    z = zmin;      	 
 	  
-	  x = -log(z) * getFracChange(tr,perGene);
+	  x = -log(z) * getFracChange(chain,perGene);
 	}
     }
 
@@ -95,8 +98,10 @@ double exabayes_getBranchLength(tree *tr, int perGene, nodeptr p)
 }
 
 
-char *Tree2stringNexus(char *treestr, tree *tr, nodeptr p, int perGene )
+char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
 {      
+  tree *tr = chain->tr; 
+
   if(isTip(p->number, tr->mxtips)) 
     {	       	        
       sprintf(treestr, "%d", p->number); 
@@ -105,13 +110,13 @@ char *Tree2stringNexus(char *treestr, tree *tr, nodeptr p, int perGene )
   else 
     {                 	 
       *treestr++ = '(';
-      treestr = Tree2stringNexus(treestr, tr, p->next->back, perGene);
+      treestr = Tree2stringNexus(treestr, chain, p->next->back, perGene);
       *treestr++ = ',';
-      treestr = Tree2stringNexus(treestr, tr, p->next->next->back, perGene);
+      treestr = Tree2stringNexus(treestr, chain, p->next->next->back, perGene);
       if(p == tr->start->back) 
 	{
 	  *treestr++ = ',';
-	  treestr = Tree2stringNexus(treestr, tr, p->back, perGene);
+	  treestr = Tree2stringNexus(treestr, chain, p->back, perGene);
 	}
       *treestr++ = ')';                    
     }
@@ -122,7 +127,7 @@ char *Tree2stringNexus(char *treestr, tree *tr, nodeptr p, int perGene )
       return treestr;
     }
 
-  sprintf(treestr, ":%8.20f", exabayes_getBranchLength(tr, perGene, p));
+  sprintf(treestr, ":%8.20f", exabayes_getBranchLength(chain, perGene, p));
   
   while (*treestr) treestr++;
   return  treestr;
@@ -163,7 +168,7 @@ static void printParams(state *curstate)
 {
   int model = 0; 
 
-  pInfo *partition = getPartition(curstate->tr, model); 
+  pInfo *partition = getPartition(curstate, model); 
 
   /* FILE *fh = myfopen(outputParamFile, "a");  */
   FILE *fh = curstate->outputParamFile; 
@@ -217,7 +222,7 @@ static void exabayes_printTopology(state *curstate)
   FILE *fh = curstate->topologyFile; 
   memset(curstate->tr->tree_string, 0, curstate->tr->treeStringLength * sizeof(char) ); 
   
-  Tree2stringNexus(curstate->tr->tree_string, curstate->tr,  curstate->tr->start->back, 0 ); 
+  Tree2stringNexus(curstate->tr->tree_string, curstate,  curstate->tr->start->back, 0 ); 
   fprintf(fh,"\ttree gen.%d = [&U] %s\n", curstate->currentGeneration, curstate->tr->tree_string);
 
 }
@@ -234,7 +239,7 @@ void printSample(state *curstate)
 
 static void printSubsRates(state *prState ,int model, int numSubsRates)
 {
-  pInfo *partition = getPartition(prState->tr, model); 
+  pInfo *partition = getPartition(prState, model); 
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -250,7 +255,106 @@ static void printSubsRates(state *prState ,int model, int numSubsRates)
 }
 
 
-/* TODO modify this */
+
+
+void printIfPresent(state *chain, char *name, proposal_type id)
+{
+  int acc = chain->acceptedProposals[id], 
+    rejc = chain->rejectedProposals[id]; 
+  if(acc != 0 || rejc != 0)
+    PRINT("%s: %d/%d (%.0f%%)\t", name, acc , rejc,  ( (double)(acc) / (double)( (acc + rejc) + 0.0001))* 100   ); 
+}
+
+
+
+static void printHotChains(int runId)
+{
+  state *start =  gAInfo.allChains +  runId *  gAInfo.numberCoupledChains; 
+  
+  for(int i = 1; i < gAInfo.numberCoupledChains; ++i)
+    {
+      int index = 0; 
+      for(int  j = 0; j < gAInfo.numberCoupledChains; ++j)
+	{
+	  state *chain =   start + j  ; 
+	  if(chain->couplingId == i)
+	    index = j; 
+	}
+      
+      state *chain = start +index ;      
+
+      double myHeat = getChainHeat(chain);
+      assert(chain->couplingId < gAInfo.numberCoupledChains); 
+      assert(chain->couplingId > 0 ) ; 
+      assert( myHeat < 1.f);
+      PRINT("lnl_beta(%.2f)=%.2f\t", myHeat, chain->likelihood); 
+
+    }
+
+  PRINT("successful swaps: %d", gAInfo.successFullSwitchesBatch); 
+  gAInfo.successFullSwitchesBatch = 0; 
+
+}
+
+
+
+
+
+void chainInfo(state *chain)
+{
+#ifndef MC3_SPACE_FOR_TIME
+  assert(0); 
+#endif
+
+  assert(chain->couplingId == 0) ; /* we are the cold chain   */
+
+  int runId = chain->id / gAInfo.numberCoupledChains; 
+
+  PRINT( "[run: %d] [TIME %.2f] gen: %d Likelihood: %.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->tr->likelihood);
+  printHotChains(runId); 
+  PRINT("\n"); 
+
+  /* just output how much time has passed since the last increment */
+  timeIncrement = gettime(); 	
+
+  PRINT("Topo\t"); 
+  printIfPresent(chain, "eSpr", E_SPR); 
+  printIfPresent(chain, "eSprMapped", E_SPR_MAPPED); 
+  PRINT("\n"); 
+  
+  PRINT("Model\t" ); 
+  printIfPresent(chain, "slidWin", UPDATE_MODEL); 
+  printIfPresent(chain, "biunif", UPDATE_MODEL_BIUNIF) ;
+  printIfPresent(chain, "biunif perm", UPDATE_MODEL_PERM_BIUNIF); 
+  printIfPresent(chain, "singleBiunif", UPDATE_MODEL_SINGLE_BIUNIF); 
+  printIfPresent(chain, "allBiunif", UPDATE_MODEL_ALL_BIUNIF); 
+  PRINT("\n"); 
+
+
+  PRINT("Frequencies\t"); 
+  printIfPresent(chain, "unif", UPDATE_FREQUENCIES_BIUNIF); 
+  PRINT("\n"); 
+  
+  PRINT("Gamma\t"); 
+  printIfPresent(chain, "slidWin", UPDATE_GAMMA); 
+  printIfPresent(chain, "exp ", UPDATE_GAMMA_EXP); 
+  PRINT("\n"); 
+
+  PRINT("Branchlengths\t"); 
+  printIfPresent(chain, "slidWin", UPDATE_SINGLE_BL); 
+  printIfPresent(chain, "biUinf", UPDATE_SINGLE_BL_BIUNIF); 
+  printIfPresent(chain, "exp", UPDATE_SINGLE_BL_EXP); 
+  PRINT("\n"); 
+  PRINT("\n"); 
+}
+
+
+
+
+
+
+
+
 void chainInfoOutput(state *curstate )
 {
 
@@ -260,7 +364,9 @@ void chainInfoOutput(state *curstate )
   timeIncrement = gettime(); 	
   
   PRINT( "Topo: eSpr: %d/%d (%d%%)\teSpr_mapped: %d/%d\t(%d%%) \n"
-	 , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/(curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)),
+	 , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/
+											     (curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)
+),
 	 curstate->acceptedProposals[E_SPR_MAPPED]	, curstate->rejectedProposals[E_SPR_MAPPED] , (int)(curstate->acceptedProposals[E_SPR_MAPPED]*100/(curstate->acceptedProposals[E_SPR_MAPPED]+curstate->rejectedProposals[E_SPR_MAPPED]+0.0001)));
   
   PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] , (int)(curstate->acceptedProposals[UPDATE_MODEL]*100/(curstate->acceptedProposals[UPDATE_MODEL]+curstate->rejectedProposals[UPDATE_MODEL]+0.0001)) ,

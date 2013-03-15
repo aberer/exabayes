@@ -11,15 +11,20 @@ typedef struct globs
   int numberOfStartingTrees ; 
   int numberOfRuns; 
   int numberCoupledChains;
-  
+
   /* RNG stuff */
   randKey_t rGlobalKey ; 
   randCtr_t rGlobalCtr; 
 
 #if HAVE_PLL == 1 
-  partitionList partitions;   
+  partitionList* partitions;   
 #endif
+
   
+  /* DEVEL not needed for prodctive runs  */
+  state *allChains; 		/* careful with this! */
+  int successFullSwitchesBatch; 
+
 } globalAnalysisInfo; 
  
 

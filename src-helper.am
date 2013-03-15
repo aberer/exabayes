@@ -1,0 +1,5 @@
+my-update-src:
+	@echo "" > src.am 
+	@echo "exabayes_SOURCES=" $(shell find ./src -maxdepth 1   -name "*.[ch]" | grep -v "_cond") $(shell find ./src -maxdepth 1   -name "*.cpp"  ) >> src.am
+	@echo "libpll_a_SOURCES=" $(shell find ./src/pll -name "*.[ch]" | grep -v "axml-pll.c\|genericParallelization-pll.c\|bayes-pll.c\|avxLikelihood-pll.c") >> src.am
+	@echo "libexaml_a_SOURCES=" $(shell find -L  ./src/examl -name "*.[ch]" | grep -v "axml.c\|avxLikelihood.c" ) >> src.am

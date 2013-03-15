@@ -4,19 +4,19 @@
 #include "config.h"
 #include "axml.h"
 
-#include "globals.h"
 
 #include "proposalStructs.h"
+
+#include "globals.h"
+
 #include "randomness.h"
 
 #include "main-common.h"
 
 
+
 void insertWithGenericBL (nodeptr insertNode, nodeptr branchNode, double *insertZ, double *branchNodeZ, double *neighbourZ ,  int numBranches)
 {
-
-  
-
   nodeptr thirdNode = branchNode->back;   
 
   /* if(processID == 0) */

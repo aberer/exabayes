@@ -7,6 +7,7 @@
 #include "config.h"
 #include "axml.h"
 
+#include "proposalStructs.h"
 #include "globals.h"
 
 #include "adapterCode.h"

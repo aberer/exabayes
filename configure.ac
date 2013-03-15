@@ -11,8 +11,6 @@ AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])
 
 AM_SILENT_RULES([yes])
 
-
-
 # configures the ncl config reader 
 AC_CONFIG_SUBDIRS([lib/ncl-2.1.18])
 
@@ -25,11 +23,13 @@ AC_PROG_CXX
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
 
+AC_PROG_CC_STDC
+AC_PROG_CC_C99
+AC_PROG_RANLIB
+
 
 dnl NOTICE if you have trouble with that, then install autoconf-archive (or similar)
 AX_EXT
-
-dnl AX_MPI()
 
 # Checks for libraries.
 
@@ -49,69 +49,13 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([clock_gettime getcwd getpagesize gettimeofday memset pow sqrt strcasecmp strchr])
 
 
-
-AC_ARG_ENABLE(pll,
-  [ --with-pll   enable compilation with PLL instead of ExaML code base (the latter is default)],
-  [case "${enableval}" in
-     yes | no ) with_pll="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --with-pll) ;;
-   esac],
-  [with_pll="no"]
-)
-
-
+AC_ARG_ENABLE(pll, [--enable-pll   enable compilation with PLL instead of ExaML code base] )
 AC_DEFINE([HAVE_PLL], [0], ["is 1, if built with the PLL "])
-AS_IF([test "x$with_pll" = "xyes"], AC_DEFINE(HAVE_PLL,1) )
-AM_CONDITIONAL([WITH_PLL], [test  "x$with_pll" = "xyes"])
+AS_IF([ test x$enable_pll = xyes ], [AC_DEFINE(HAVE_PLL,1)]) 
+AM_CONDITIONAL([WITH_PLL], [ test x$enable_pll = xyes ] )
 
-
-AC_ARG_ENABLE(debug,
-  [ --enable-debug    compile with debug information and  less optimization ],
-  [case "${enableval}" in
-     yes | no ) WITH_DEBUG="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
-   esac],
-  [WITH_DEBUG="no"]
-)
-AM_CONDITIONAL([WITH_DEBUG], [test  "x$WITH_DEBUG" = "xyes"])
-
-
-AC_ARG_ENABLE([debug],[ --enable-debug	Build with debug information ][debug=false])
-AM_CONDITIONAL([DEBUG], [test x$debug = xtrue ])
-
-
-AC_ARG_ENABLE( [examl], 
-	       [ --with-examl	Use the ExaML code base (ExaML is the default setting)],
-	       [examl_usage=true] )
-AM_CONDITIONAL([ENABLE_EXAML], [test x$examl_usage = xtrue ])
-
-
-dnl AC_ARG_ENABLE([mpi],
-dnl [ --with-mpi	Use the phylogenetic likelihood library instead of the ExaML code base],
-dnl [case "${useval}" in 
-dnl       yes) mpi_usage=true ;;
-dnl       no)  mpi_usage=false ;;
-dnl       *) AC_MSG_ERROR([bad value ${useval} for --with-mpi]) ;; 
-dnl esac], [mpi_usage=false])
-dnl AM_CONDITIONAL([ENABLE_MPI], [test x$mpi_usage = xtrue ])
-
-
-
-# ------------------------------------------------------------------------------
-# Setup MPI
-# ------------------------------------------------------------------------------
-
-dnl AC_ARG_ENABLE(mpi,AS_HELP_STRING([--enable-mpi],[enable mpi code]))
-dnl if test "x$enable_mpi" = "xyes" ; then
-dnl     AX_MPI((
-dnl             AC_DEFINE(_FINE_GRAIN_MPI, [], [Description])
-dnl             CFLAGS="$CFLAGS -std=c11"
-dnl  AC_MSG_NOTICE([MPI detected])),
-dnl            AC_MSG_ERROR([No MPI detected]))
-dnl fi
-dnl AM_CONDITIONAL([USE_MPI],test "x$enable_mpi" = "xyes")
-
-
+AC_ARG_ENABLE([mydebug],[ --enable-debug	Build with debug information ])
+AM_CONDITIONAL([WITH_DEBUG], [ test x$enable_mydebug = xyes ])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
