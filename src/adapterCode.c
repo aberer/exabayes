@@ -168,12 +168,12 @@ void exa_newViewGeneric(state *chain, nodeptr p, boolean masked)
 } 
 
 
-void exa_initReversibleGTR( tree *tr,int model)
+void exa_initReversibleGTR( state *chain,int model)
 {
 #if HAVE_PLL == 1
-  initReversibleGTR(tr, &(gAInfo.partitions), model); 
+  initReversibleGTR(chain->tr, gAInfo.partitions + chain->couplingId, model); 
 #else 
-  initReversibleGTR(tr, model); 
+  initReversibleGTR(chain->tr, model); 
 #endif
 }
 
@@ -189,12 +189,12 @@ void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
 
 
 
-void exa_evaluateGeneric(tree *tr, nodeptr start, boolean fullTraversal)
+void exa_evaluateGeneric(state *chain, nodeptr start, boolean fullTraversal)
 {
 #if HAVE_PLL == 1 
-  evaluateGeneric(tr, &(gAInfo.partitions), start, fullTraversal); 
+  evaluateGeneric(chain->tr, gAInfo.partitions + chain->couplingId, start, fullTraversal); 
 #else 
-  evaluateGeneric(tr, start, fullTraversal); 
+  evaluateGeneric(chain->tr, start, fullTraversal); 
 #endif  
 }
 

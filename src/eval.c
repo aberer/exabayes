@@ -7,15 +7,16 @@
 #include "adapterCode.h"
 
 /* call this for verification after the lnl has been evaluated somehow */
-static void expensiveVerify(tree *tr)
+static void expensiveVerify(state *chain)
 {  
 #ifdef DEBUG_LNL_VERIFY
+  tree *tr = chain->tr; 
   double val1 = tr->likelihood; 
 
   for(int i = 0; i < getNumberOfPartitions(tr) ;++i)
-    setExecModel(tr,i,TRUE); 
+    setExecModel(chain,i,TRUE); 
   
-  exa_evaluateGeneric(tr,tr->start,TRUE); 
+  exa_evaluateGeneric(chain,tr->start,TRUE); 
 
   if(processID == 0)
     {
@@ -29,11 +30,11 @@ static void expensiveVerify(tree *tr)
 
 
 
-void evaluateGenericWrapper(tree *tr, nodeptr start, boolean fullTraversal)
+void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
-  exa_evaluateGeneric(tr,start,fullTraversal); 
+  exa_evaluateGeneric(chain,start,fullTraversal); 
 
-  expensiveVerify(tr);  
+  expensiveVerify(chain);  
 }
 
 
@@ -53,7 +54,7 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
     setExecModel(chain,i,FALSE); 
   setExecModel(chain,model,TRUE); 
 
-  exa_evaluateGeneric(tr, start, fullTraversal); 
+  exa_evaluateGeneric(chain, start, fullTraversal); 
   
   perPartitionLH[model] = getPLH(chain, model);
   for(int i = 0; i < numPartitions; ++i)
@@ -66,7 +67,7 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
       setExecModel(chain,i,TRUE); 
     }
 
-  expensiveVerify(tr);
+  expensiveVerify(chain);
 }
 
 
@@ -90,7 +91,7 @@ void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, bool
       setExecModel(chain,i,models[i]); 
     }
 
-  exa_evaluateGeneric(tr, start, fullTraversal); 
+  exa_evaluateGeneric(chain, start, fullTraversal); 
 
   /*  correct for hidden examl feature: reduction is applied multiple times */
   for(int i = 0; i < numPartitions; ++i)
@@ -105,6 +106,7 @@ void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, bool
       setExecModel(chain,i,TRUE); 
     }
 
-  expensiveVerify(tr);
+  expensiveVerify(chain);      
+
 }
 

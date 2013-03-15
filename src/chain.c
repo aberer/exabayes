@@ -120,7 +120,17 @@ void initParamDump(tree *tr, paramDump *dmp)
 }
 
 
-void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamStruct **initParamsPtr)
+
+
+
+
+#if HAVE_PLL == 1 
+void initializeTree(tree *tr, partitionList *partitions, analdef *adef); 
+#else  
+void initializeTree(tree *tr, analdef *adef); 
+#endif
+
+void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains, initParamStruct **initParamsPtr)
 {
   gAInfo.successFullSwitchesBatch = 0; 
 
@@ -132,69 +142,86 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
   /* initParamStruct *initParams = *initParamsPtr;  */
 
   parseConfigWithNcl(configFileName, initParamsPtr);
-  
+
   gAInfo.numberOfRuns =   (*initParamsPtr)->numIndiChains; 
   gAInfo.numberCoupledChains = (*initParamsPtr)->numCoupledChains; 
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains; 
 
-  printf("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
+#ifdef MC3_SPACE_FOR_TIME
+  int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
+#if HAVE_PLL == 1 
+  gAInfo.partitions = exa_realloc(gAInfo.partitions, (treesNeeded + 1)  * sizeof(partitionList)); 
+#endif
+  tree *moreTrees = exa_calloc(treesNeeded, sizeof(tree)); 
+  for(int i = 0; i < treesNeeded; ++i)
+#if HAVE_PLL == 1 
+    initializeTree(moreTrees + i, gAInfo.partitions + i+1 ,adef); 
+#else 
+    initializeTree(moreTrees + i ,adef); 
+#endif
+#endif
+  
+  if(processID == 0)
+    printf("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
   *resultIndiChains = exa_calloc( totalNumChains , sizeof(state));     
   
   unsigned int bvLength = 0; 
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength);
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
-
   
   for(int i = 0; i < totalNumChains; ++i)
     { 
-      printf("setting up chain %d\n" ,i); 
-
-      state *theChain = *resultIndiChains +   i; 
+      state *theChain = *resultIndiChains + i;     
       theChain->bvHash = ht; 
-      theChain->tr = tr; 
-      theChain->couplingId = i % (*initParamsPtr)->numCoupledChains ; /*  */
-      
-      theChain->id = i; 
 
-      initDefaultValues(theChain, tr);
+      theChain->id = i; 
+      theChain->couplingId = i % gAInfo.numberCoupledChains ; /*  */
+      
+#ifdef MC3_SPACE_FOR_TIME
+      /* important NOTICE : in this scheme, we assume, that there is
+	 one tree (partitionList) for each coupled chain (!= total
+	 number of chains) */
+      assert(theChain->couplingId < gAInfo.numberCoupledChains); 
+      theChain->tr = (theChain->couplingId ==  0) ? tr : moreTrees +  theChain->couplingId - 1 ; 
+#else 
+      /* here we are only working with one single tree */	      
+      theChain->tr = tr;
+#endif 
+      tree *myTree = theChain->tr; 
+      myTree->bitVectors = tr->bitVectors; 
+
+      initDefaultValues(theChain, myTree);
       addInitParameters(theChain, *initParamsPtr); 
       normalizeProposalWeights(theChain); 
 
       /* init the param dump  */
-      initParamDump(tr, &(theChain->dump)); 
+      initParamDump(myTree, &(theChain->dump)); 
       
-      for(int i = 0; i < getNumberOfPartitions(tr); ++i ) 
-	exa_initReversibleGTR(tr,i);
+      for(int i = 0; i < getNumberOfPartitions(myTree); ++i ) 
+	exa_initReversibleGTR(theChain,i);
 
-      /* init rng */
-      theChain->rCtr.v[0] = 0; 
-      theChain->rCtr.v[1] = 0; 
-      randCtr_t r = drawGlobalRandInt();
-      theChain->rKey.v[0] = r.v[0]; 
-      theChain->rKey.v[1] = r.v[1]; 
-      if(processID == 0)
-	printf("initialized chain %d with seed %d,%d\n", theChain->id, theChain->rKey.v[0], theChain->rKey.v[1]); 
+      initLocalRng(theChain); 
       
       if( i % gAInfo.numberCoupledChains == 0)
 	{
 	  /* initialize with new tree  */
 	  if( i  / gAInfo.numberCoupledChains < gAInfo.numberOfStartingTrees )
 	    {
-	      boolean hasBranchLength = readTreeWithOrWithoutBL(tr, treeFH); 
+	      boolean hasBranchLength = readTreeWithOrWithoutBL(theChain->tr, treeFH); 
 
 	      if(hasBranchLength)
 		{
 		  int count = 0; 
-		  traverseInitCorrect(tr->start->back, &count, tr ) ;
-		  assert(count == 2 * tr->mxtips -3); 
+		  traverseInitCorrect(tr->start->back, &count, theChain->tr ) ;
+		  assert(count == 2 * theChain->tr->mxtips -3); 
 		}
 	      else 
 		{
 		  /* set some standard branch lengths */
 		  /* TODO based on prior?   */
 		  int count = 0; 
-		  traverseInitFixedBL( tr->start->back, &count, tr, INIT_BRANCH_LENGTHS );
-		  assert(count  == 2 * tr->mxtips - 3);	  	      
+		  traverseInitFixedBL( theChain->tr->start->back, &count, theChain->tr, INIT_BRANCH_LENGTHS );
+		  assert(count  == 2 * theChain->tr->mxtips - 3);	  	      
 		}
 
 	      if(processID == 0)
@@ -202,30 +229,39 @@ void initializeIndependentChains(tree *tr, state **resultIndiChains, initParamSt
 	    }
 	  else 
 	    {
-	      makeRandomTree(tr);
+	      makeRandomTree(theChain->tr);
 	      if(processID == 0)
 		printf("initializing chain %d with random tree\n", i); 
 
 	      /* TODO maybe prior for initial branch lengths   */
 	      int count = 0; 
-	      traverseInitFixedBL( tr->start->back, &count, tr, INIT_BRANCH_LENGTHS );
+	      traverseInitFixedBL( theChain->tr->start->back, &count, theChain->tr, INIT_BRANCH_LENGTHS );
 	      assert(count  == 2 * tr->mxtips - 3);	  
 	    }
+
+	  theChain->tr->start = find_tip(tr->start, tr );
 	}
       else 
 	{
+#ifdef MC3_SPACE_FOR_TIME
+	  copyTopology(theChain->tr, tr); 
+	  /* int count = 0;  */
+	  /* traverseInitFixedBL( theChain->tr->start->back, &count, theChain->tr, INIT_BRANCH_LENGTHS ); */
+	  /* assert(count  == 2 * theChain->tr->mxtips - 3);	  	       */
+	  saveTree(theChain->tr, theChain->dump.topo); 
+	  /* applyChainStateToTree(theChain,FALSE); */
+#else 
 	  /* initialize with previous state */
 	  applyChainStateToTree( (*resultIndiChains) + i-1, TRUE); 
-	  
-	  if(processID == 0)
-	    printf("initialize heated chain %d from previous state\n", i); 
+#endif
 	}
 
-      tr->start = find_tip(tr->start, tr );
+      evaluateGenericWrapper(theChain, myTree->start, TRUE); 
+      
+      if(processID == 0)
+	printf("init lnl for chain %d is  %f\n", theChain->id, myTree->likelihood); 
 
-      evaluateGenericWrapper(tr, tr->start, TRUE); 
-
-      /* now save the tree to a chain chain */
+      /* now save the tree to a chain chainsǘ */
       saveTreeStateToChain(theChain); 
 
       if(processID == 0 )
@@ -360,12 +396,12 @@ void applyChainStateToTree(state *chain, boolean checkLnl)
       memcpy(partition->substRates, info->substRates , 6 * sizeof(double)); 
       memcpy(partition->frequencies, info->frequencies, 4 * sizeof(double));
 
-      exa_initReversibleGTR (tr, i); 
+      exa_initReversibleGTR (chain, i); 
 
       makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
     } 
 
-  evaluateGenericWrapper(tr, tr->start, TRUE ); 
+  evaluateGenericWrapper(chain, tr->start, TRUE ); 
 
   /* printInfo(chain, "switching to run %d / heat %d, lnl=%f\n", chain->id / numberOfRuns, chain->couplingId, tr->likelihood);  */
   if(processID == 0)

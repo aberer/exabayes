@@ -3,7 +3,7 @@ SUBDIRS = ./lib/ncl-2.1.18/
 
 
 # -f may also help with examl  
-WARN_FLAGS=  -Wall -Werror --pedantic -fgnu89-inline 
+WARN_FLAGS=  -Wall --pedantic -fgnu89-inline 
 
 # SIMD_FLAGS is potentially problematic: auto-avx vectorization was considered harmfull? 
 AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_BAYESIAN
@@ -50,6 +50,7 @@ AM_CXXFLAGS=$(AM_CFLAGS)
 
 libpll_a_CFLAGS= -w $(AM_CFLAGS)
 libexaml_a_CFLAGS=-w $(AM_CFLAGS)
+
 
 AM_LDFLAGS=-lm
 

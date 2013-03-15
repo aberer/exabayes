@@ -294,26 +294,30 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 #ifdef ASDSF_BE_VERBOSE
 	      if(processID == 0)
 		{
-		  printf("RELEVANT: "); 
+		  
+		  for(int i = 0; i < numTaxa; ++i)
+		    printf( ( e->bitVector[ i  / 32 ] &  ( 1<< i )  )  ? "1" : "0") ;
+
+		  printf("\t");
 		  for(int  j = 0;  j < gAInfo.numberOfRuns; j++)
 		    printf("%d,", e->treeVector[j]); 
 		  printf("\tmu=%f\tsd=%f\n", mu, sd); 
 		}
 #endif
 
-	      asdsf +=  sqrt(sd / gAInfo.numberOfRuns); 
+	      asdsf +=  sqrt(sd  / gAInfo.numberOfRuns ) ; 
 	      cntRelevant++; 	    
 	    }
 	  else 
 	    {
 #ifdef ASDSF_BE_VERBOSE
-	      if(processID == 0)
-		{
-		  printf("not relevant: "); 
-		  for(int j = 0; j < gAInfo.numberOfRuns; ++j)
-		    printf("%d,", e->treeVector[j]); 
-		  printf("\n"); 
-		}
+	      /* if(processID == 0) */
+	      /* 	{ */
+	      /* 	  printf("not relevant: ");  */
+	      /* 	  for(int j = 0; j < gAInfo.numberOfRuns; ++j) */
+	      /* 	    printf("%d,", e->treeVector[j]);  */
+	      /* 	  printf("\n");  */
+	      /* 	} */
 #endif
 	    }
 	  

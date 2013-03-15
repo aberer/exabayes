@@ -1,6 +1,8 @@
 #ifndef _RANDOMNESS_H
 #define _RANDOMNESS_H
 
+void initLocalRng(state *theChain); 
+
 int drawGlobalRandIntBound(int upperBound); 
 randCtr_t drawGlobalRandInt(); 
 double drawGlobalDouble01();

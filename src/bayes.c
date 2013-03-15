@@ -56,8 +56,6 @@ int parseConfig(state *theState);
 
 void initDefaultValues(state *theState, tree *tr)
 {
-
-
   theState->curprior = 1; 
   theState->hastings = 1; 
   theState->currentGeneration = 0; 
@@ -232,80 +230,11 @@ void runChains(state *allChains,   int diagFreq)
   while(NOT hasConverged)
     {      
       for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-	{
-	  printf("running chains %d\n", i ); 
-	  executeOneRun(allChains + (i * gAInfo.numberCoupledChains), diagFreq); 
-	}
+	executeOneRun(allChains + (i * gAInfo.numberCoupledChains), diagFreq); 
       
       hasConverged = convergenceDiagnostic(allChains, gAInfo.numberOfRuns); 
     }
 }
-
-
-
-#ifdef MC3_SPACE_FOR_TIME
-
-/** 
-    if enabled, every heat class of chains has its own tree.
-
-    otherwise ALL chains share the same tree. 
- */ 
-#if HAVE_PLL == 1 
-#else  
-void initializeTree(tree *tr, analdef *adef); 
-#endif
-void initializeAdditionalTrees(tree *tr, analdef *adef, state *allChains)
-{
-  int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
-  
-  /* TODO consider numa issues   */
-  tree
-    *moreTrees = exa_calloc(treesNeeded, sizeof(tree)); 
-  
-  for(int i = 0; i < treesNeeded; ++i)
-    {
-      tree *currentTree= moreTrees + i; 
-      currentTree->mxtips = tr->mxtips; 
-#if HAVE_PLL == 1  
-      assert(0); 
-#else 
-      initializeTree(currentTree, adef); 
-#endif
-    }
-  
-  int totalNumChains = gAInfo.numberCoupledChains * gAInfo.numberOfRuns; 
-  for(int i = 0; i < totalNumChains; ++i)
-    {
-      state *chain = allChains + i ; 
-
-      tree *theTree = chain->couplingId == 0 ? tr : moreTrees + chain->couplingId - 1 ; 
-      chain->tr = theTree; 
-      chain->tr->bitVectors = tr->bitVectors; 
-      
-      /* int treeNum = chain->couplingId == 0 ? chain->couplingId - 1  */
-      if(chain->couplingId == 0 ) 
-	printf("chain %d heat %d gets tree orig\n ", chain->id , chain->couplingId); 
-      else 
-	printf("chain %d heat %d gets additional tree %d\n ", chain->id, chain->couplingId, chain->couplingId - 1 ); 
-
-      if(chain->couplingId > 0)
-	{
-	  /* TODO this should not have been initialized incorrectly in
-	     the first place!  */
-	  freeTopol(chain->dump.topo); 
-	  chain->dump.topo = setupTopol(tr->mxtips);
-
-	  /* copyTopoFromDifferentTree(theTree,tr, tr->start->back ); */
-	  copyTopology(theTree, tr); 
-	  saveTree(theTree, chain->dump.topo); 
-	  applyChainStateToTree(chain,FALSE); 
-	  evaluateGenericWrapper(theTree, theTree->start, TRUE );
-	  saveTreeStateToChain(chain);
-	}
-    }
-}
-#endif
-
 
 
 void exa_main(tree *tr, analdef *adef)
@@ -315,20 +244,11 @@ void exa_main(tree *tr, analdef *adef)
 
   timeIncrement = gettime();
   
-  initializeIndependentChains(tr, &indiChains, &initParams); 
-
-  gAInfo.numberOfRuns = initParams->numIndiChains; 
-  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
+  initializeIndependentChains(tr, adef,  &indiChains, &initParams); 
 
   assert(gAInfo.numberCoupledChains > 0);
   /* TODO more bla bla  */  
 
-
-#ifdef MC3_SPACE_FOR_TIME  
-  if(gAInfo.numberCoupledChains > 1 )
-    initializeAdditionalTrees(tr, adef, indiChains ); 
-#endif
-  
   int diagFreq = initParams->diagFreq; 
   
   gAInfo.allChains = indiChains; 

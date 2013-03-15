@@ -1343,13 +1343,14 @@ void initializeTree(tree *tr, analdef *adef)
 
   double 
     **empiricalFrequencies;	 
-  
+
   myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
   myBinFread(&(tr->originalCrunchedLength), sizeof(size_t), 1, byteFile);
   myBinFread(&(tr->NumberOfModels),         sizeof(int), 1, byteFile);
   myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
-   
+
   empiricalFrequencies = (double **)exa_malloc(sizeof(double *) * getNumberOfPartitions(tr));
+
   
   if(adef->perGeneBranchLengths)
     tr->numBranches = getNumberOfPartitions(tr);
@@ -1358,15 +1359,11 @@ void initializeTree(tree *tr, analdef *adef)
   
   /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
      let's not worry about this right now, because it is indeed ExaML-specific */
-  
  
-    
   tr->aliaswgt                   = (int *)exa_malloc(tr->originalCrunchedLength * sizeof(int));
   myBinFread(tr->aliaswgt, sizeof(int), tr->originalCrunchedLength, byteFile);	       
   
   tr->rateCategory    = (int *)    exa_calloc(tr->originalCrunchedLength, sizeof(int));	  
-  /* tr->wr              = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double));  */
-  /* tr->wr2             = (double *) exa_malloc(tr->originalCrunchedLength * sizeof(double));  */
   tr->patrat          = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double));
   tr->patratStored    = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double)); 
   tr->lhs             = (double*)  exa_malloc(tr->originalCrunchedLength * sizeof(double)); 

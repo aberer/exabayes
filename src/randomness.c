@@ -51,6 +51,21 @@ static void inc_global()
 }
 
 
+
+
+void initLocalRng(state *theChain)
+{
+  /* init rng */
+  theChain->rCtr.v[0] = 0; 
+  theChain->rCtr.v[1] = 0; 
+  randCtr_t r = drawGlobalRandInt();
+  theChain->rKey.v[0] = r.v[0]; 
+  theChain->rKey.v[1] = r.v[1]; 
+  if(processID == 0)
+    printf("initialized chain %d with seed %d,%d\n", theChain->id, theChain->rKey.v[0], theChain->rKey.v[1]); 
+}
+
+
 randCtr_t drawGlobalRandInt()
 {
   randCtr_t result = exa_rand(gAInfo.rGlobalKey, gAInfo.rGlobalCtr); 

@@ -5,10 +5,15 @@
 
 
 /* shared  */
-void exa_newViewGeneric(state *chain, nodeptr p, boolean masked); 
-void exa_initReversibleGTR( tree *tr,int model); 
+
+void exa_evaluateGeneric(state *chain, nodeptr start, boolean fullTraversal); 
 void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q); 
-void exa_evaluateGeneric(tree *tr, nodeptr start, boolean fullTraversal); 
+void exa_newViewGeneric(state *chain, nodeptr p, boolean masked); 
+void exa_initReversibleGTR( state *chain,int model); 
+
+
+
+
 
 int getNumBranches(tree *tr); 
 void setNumbranches(tree *tr, int num); 

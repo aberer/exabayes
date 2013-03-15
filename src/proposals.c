@@ -11,6 +11,7 @@
 #include "utils-topo.h" 
 #include "eval.h"
 #include "adapterCode.h"
+#include "bayes-topo.h"
 
 
 void expensiveVerify(tree *tr); 
@@ -345,7 +346,7 @@ static void extended_spr_apply(state *chain, int pSubType)
 #if 0 
   evaluateGeneric(chain->tr, chain->sprMoveRemem.p->next->next, FALSE);
 #else   
-  evaluateGenericWrapper(tr, tr->start, TRUE);
+  evaluateGenericWrapper(chain, tr->start, TRUE);
 #endif
 }
 
@@ -376,7 +377,7 @@ static void extended_spr_reset(state * chain)
 #endif
     }
 
-  evaluateGenericWrapper(tr, tr->start, TRUE);
+  evaluateGenericWrapper(chain, tr->start, TRUE);
   
   exa_newViewGeneric(chain, chain->sprMoveRemem.p, FALSE); 
   double val1 = chain->tr->likelihood; 
@@ -646,8 +647,8 @@ static void simple_model_proposal_apply(state *chain, int pSubType)//llpqr
     }
   //recalculate eigens
 
-    exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
-
+    exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+    
   /* TODO: need to broadcast rates here for parallel version ! */
 
   evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
@@ -749,7 +750,7 @@ static void perm_biunif_model_proposal_apply(state *chain, int pSubType)
       
   
 
-  exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */  
 }
@@ -789,7 +790,7 @@ static void single_biunif_model_proposal_apply(state *chain,int pSubType)//NOTE 
 
   chain->hastings=curv/new_value;
 
-  exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
   
   evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
@@ -828,7 +829,7 @@ static void all_biunif_model_proposal_apply(state *chain, int pSubType)
       edit_subs_rates(chain,chain->modelRemem.model, state, new_value);
     }
 
-  exa_initReversibleGTR(chain->tr, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
@@ -844,7 +845,7 @@ static void restore_subs_rates(state *chain, analdef *adef, int model, int numSu
   for(i=0; i<numSubsRates; i++)	
     partition->substRates[i] = prevSubsRates[i]; 
 
-  exa_initReversibleGTR(tr, model);
+  exa_initReversibleGTR(chain, model);
 
   /* TODO need to broadcast rates here for parallel version */
 
@@ -1096,7 +1097,7 @@ static void random_branch_length_proposal_apply(state * chain, int pSubType)
 
 
   chain->brLenRemem.single_bl_branch = target_branch;
-  evaluateGenericWrapper(chain->tr, p, FALSE); 
+  evaluateGenericWrapper(chain, p, FALSE); 
   //evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
 }
 
@@ -1151,9 +1152,9 @@ static void random_branch_length_proposal_reset(state * chain)
      TODO I think, we should evaluate at the respctive node 
    */
 #if 0 
-  evaluateGenericWrapper(chain->tr, chain->tr->start, FALSE);
+  evaluateGenericWrapper(chain, chain->tr->start, FALSE);
 #else 
-  evaluateGenericWrapper(chain->tr, chain->tr->start, TRUE );
+  evaluateGenericWrapper(chain, chain->tr->start, TRUE );
 #endif
 
  // evaluateGeneric(chain->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from chain->tr->start, that is: evaluateGeneric(chain->tr, chain->tr->start, TRUE);
@@ -1178,7 +1179,7 @@ static void restore_frequ_rates(state *chain, analdef *adef, int model, int numF
   for(i=0; i<numFrequRates; i++)
     partition->frequencies[i] = prevFrequRates[i];
 
-  exa_initReversibleGTR(tr, model);
+  exa_initReversibleGTR(chain, model);
 
   evaluateOnePartition(chain, tr->start, TRUE, model); 
 }
@@ -1228,7 +1229,7 @@ void frequency_proposal_apply(state * chain, int pSubType)
     }
   //recalculate eigens
 
-  exa_initReversibleGTR(tr, chain->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, chain->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
 /* chain->curprior=get_frequency_prior(chain, tr->partitionData[chain->frequRemem.model].frequencies); */
 /* chain->newprior=get_frequency_prior(chain, chain->frequRemem.curFrequRates); */
@@ -1516,7 +1517,7 @@ void step(state *chain)
   double acceptance;
 
   // just for validation (make sure we compare the same)
-  evaluateGenericWrapper(tr, tr->start, FALSE);
+  evaluateGenericWrapper(chain, tr->start, FALSE);
 
   tr->startLH = tr->likelihood;
 
@@ -1616,7 +1617,7 @@ void step(state *chain)
   if(count != 2 * tr->mxtips - 3 )
     {      
       char tmp[10000]; 
-      Tree2stringNexus(tmp, tr, tr->start->back, 0); 
+      Tree2stringNexus(tmp, chain, tr->start->back, 0); 
       if(processID==0)
 	printf("faulty TOPOLOGY: %s\n", tmp);
 
@@ -1672,7 +1673,7 @@ static boolean simpleBranchLengthProposalApply(state * chain)
   //uniform(x-w/2,x+w/2)
 
   update_all_branches(chain, FALSE);
-  evaluateGenericWrapper(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood */
+  evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* update the tr->likelihood */
 
   //for prior, just using exponential for now
   //calculate for each branch length

@@ -208,7 +208,7 @@ boolean restoreTree (topol *tpl, tree *tr)
 
 
   /* TODO too expensive!  */
-  evaluateGenericWrapper(tr, tr->start, TRUE);
+  /* evaluateGenericWrapper(tr, tr->start, TRUE); */
   return TRUE;
 }
 
