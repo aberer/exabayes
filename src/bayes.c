@@ -158,14 +158,6 @@ void switchChainState(state *chains)
       memcpy(chains[chainB].rejectedProposals, chains[chainA].rejectedProposals, sizeof(int) * NUM_PROPOSALS); 
       memcpy(chains[chainA].rejectedProposals, tmpArray, sizeof(int) * NUM_PROPOSALS); 
 
-      printf("%d switches with %d\n", chainA, chainB); 
-
-/* #if HAVE_PLL == 1        */
-/*       partitionList *pTmp = gAInfo.partitions[chainA];  */
-/*       gAInfo.partitions[chainA] = gAInfo.partitions[chainB]; */
-/*       gAInfo.partitions[chainB] = pTmp;       */
-/* #endif */
-
       gAInfo.successFullSwitchesBatch++; 
     } 
 }

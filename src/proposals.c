@@ -1508,8 +1508,6 @@ void resetSuccessCounter(int runid)
 
 void step(state *chain)
 {
-  printInfo(chain, "that's who i am\n"); 
-
   tree *tr = chain->tr;   
 
   proposal_type which_proposal;

@@ -9,14 +9,14 @@
 
 
 
-int getAssignedAln(state *chain )
-{
-#ifdef MC3_SPACE_FOR_TIME
-  return chain->couplingId; 
-#else 
-  return 0; 
-#endif  
-}
+/* int getAssignedAln(state *chain ) */
+/* { */
+/* #ifdef MC3_SPACE_FOR_TIME */
+/*   return chain->couplingId;  */
+/* #else  */
+/*   return 0;  */
+/* #endif   */
+/* } */
 
 
 
@@ -56,8 +56,8 @@ int getAssignedAln(state *chain )
 void setExecModel(state *chain, int num,boolean value)
 {
 #if HAVE_PLL == 1 
-  gAInfo.partitions[getAssignedAln(chain)]->partitionData[num]->executeModel = value; 
-#else 
+  chain->partitions->partitionData[num]->executeModel = value; 
+#else
   chain->tr->executeModel[num] = value; 
 #endif
 }
@@ -65,7 +65,7 @@ void setExecModel(state *chain, int num,boolean value)
 boolean getExecModel(state *chain, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions[getAssignedAln(chain)]->partitionData[num]->executeModel;   
+  return chain->partitions->partitionData[num]->executeModel; 
 #else 
   return chain->tr->executeModel[num]; 
 #endif
@@ -75,7 +75,8 @@ boolean getExecModel(state *chain, int num)
 void setPLH(state *chain, int num, double value)
 {
 #if HAVE_PLL == 1
-  gAInfo.partitions[getAssignedAln(chain)]->partitionData[num]->partitionLH = value; 
+  
+  chain->partitions->partitionData[num]->partitionLH = value; 
 #else 
   chain->tr->perPartitionLH[num] = value; 
 #endif
@@ -85,7 +86,7 @@ void setPLH(state *chain, int num, double value)
 double getPLH(state *chain, int num)
 {
 #if HAVE_PLL == 1
-  return gAInfo.partitions[getAssignedAln(chain)]->partitionData[num]->partitionLH; 
+  return chain->partitions->partitionData[num]->partitionLH; 
 #else 
   return chain->tr->perPartitionLH[num]; 
 #endif
@@ -96,7 +97,7 @@ double getPLH(state *chain, int num)
 double getPcontr(state *chain, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions[getAssignedAln(chain)]->partitionData[num]->partitionContribution; 
+  return chain->partitions->partitionData[num]->partitionContribution; 
 #else  
   return chain->tr->partitionContributions[num]; 
 #endif
@@ -106,7 +107,7 @@ double getPcontr(state *chain, int num)
 double getFracChange(state *chain, int num)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions[getAssignedAln(chain)]->partitionData[num]->fracchange; 
+  return chain->partitions->partitionData[num]->fracchange; 
 #else
   return chain->tr->fracchanges[num]; 
 #endif
@@ -127,7 +128,7 @@ double getFracChange(state *chain, int num)
 int getNumBranches(tree *tr)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions[0]->perGeneBranchLengths ? gAInfo.partitions[0]->numberOfPartitions : 1; 
+  return gAInfo.partitions->perGeneBranchLengths ? gAInfo.partitions->numberOfPartitions : 1; 
 #else 
   return tr->numBranches; 
 #endif
@@ -138,7 +139,7 @@ int getNumBranches(tree *tr)
 boolean hasPergeneBL(tree *tr)
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions[0]->perGeneBranchLengths == TRUE; 
+  return gAInfo.partitions->perGeneBranchLengths == TRUE; 
 #else 
   return tr->numBranches > 1; 
 #endif
@@ -150,7 +151,7 @@ boolean hasPergeneBL(tree *tr)
 int getNumberOfPartitions(tree *tr) 
 {
 #if HAVE_PLL == 1 
-  return gAInfo.partitions[0]->numberOfPartitions; 
+  return gAInfo.partitions->numberOfPartitions; 
 #else 
   return tr->NumberOfModels; 
 #endif
@@ -162,7 +163,7 @@ int getNumberOfPartitions(tree *tr)
 pInfo* getPartition(state *chain, int num)
 {
 #if HAVE_PLL == 1   
-  return gAInfo.partitions[getAssignedAln(chain)]->partitionData[num]; 
+  return chain->partitions->partitionData[num]; 
 #else 
   return chain->tr->partitionData + num; 
 #endif
@@ -175,7 +176,7 @@ pInfo* getPartition(state *chain, int num)
 void exa_newViewGeneric(state *chain, nodeptr p, boolean masked)
 {
 #if HAVE_PLL == 1 
-  newviewGeneric(chain->tr, gAInfo.partitions[getAssignedAln(chain)],     p, masked); 
+  newviewGeneric(chain->tr, chain->partitions,     p, masked); 
 #else 
   newviewGeneric(chain->tr, p, masked); 
 #endif 
@@ -185,7 +186,7 @@ void exa_newViewGeneric(state *chain, nodeptr p, boolean masked)
 void exa_initReversibleGTR( state *chain,int model)
 {
 #if HAVE_PLL == 1
-  initReversibleGTR(chain->tr, gAInfo.partitions[  getAssignedAln(chain)] , model); 
+  initReversibleGTR(chain->tr, chain->partitions , model); 
 #else 
   initReversibleGTR(chain->tr, model); 
 #endif
@@ -206,7 +207,7 @@ void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
 void exa_evaluateGeneric(state *chain, nodeptr start, boolean fullTraversal)
 {
 #if HAVE_PLL == 1 
-  evaluateGeneric(chain->tr, gAInfo.partitions[ getAssignedAln(chain)], start, fullTraversal); 
+  evaluateGeneric(chain->tr, chain->partitions, start, fullTraversal); 
 #else 
   evaluateGeneric(chain->tr, start, fullTraversal); 
 #endif  

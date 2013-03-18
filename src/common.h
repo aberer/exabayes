@@ -78,8 +78,8 @@ typedef  unsigned int nat ;
 
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
-#define DEBUG_LNL_VERIFY
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
+/* #define DEBUG_LNL_VERIFY */
 
 
 
@@ -97,6 +97,6 @@ typedef  unsigned int nat ;
 #define MC3_SPACE_FOR_TIME
 
 
-#define BURNIN 10000
+#define BURNIN 0
 
 #endif

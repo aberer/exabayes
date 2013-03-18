@@ -225,16 +225,14 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #ifdef MC3_SPACE_FOR_TIME
   int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
 #if HAVE_PLL == 1 
-  gAInfo.partitions = (partitionList**)exa_realloc(gAInfo.partitions, (treesNeeded + 1)  * sizeof(partitionList*)); 
-  for(int i = 1 ; i < treesNeeded+1; ++i)
-    gAInfo.partitions[i] = exa_calloc(1,sizeof(partitionList));
+  gAInfo.partitions = (partitionList*)exa_realloc(gAInfo.partitions, (treesNeeded + 1)  * sizeof(partitionList)); 
 #endif
   tree *moreTrees = exa_calloc(treesNeeded, sizeof(tree)); 
   for(int i = 0; i < treesNeeded; ++i)
     {
       preinitTree(moreTrees+i); 
 #if HAVE_PLL == 1 
-      initializeTree(moreTrees + i, gAInfo.partitions[i+1] ,adef); 
+      initializeTree(moreTrees + i, gAInfo.partitions + i+1 ,adef); 
 #else 
       initializeTree(moreTrees + i ,adef); 
 #endif
@@ -274,7 +272,19 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #else 
       /* here we are only working with one single tree */	      
       theChain->tr = tr;
+
 #endif 
+
+#if HAVE_PLL == 1 
+#ifdef MC3_SPACE_FOR_TIME
+      theChain->partitions = gAInfo.partitions + theChain->couplingId ; 
+#else 
+      theChain->partitions = gAInfo.partitions; 
+#endif
+#endif
+
+
+
       tree *myTree = theChain->tr; 
       myTree->bitVectors = tr->bitVectors; 
 

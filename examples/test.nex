@@ -7,9 +7,9 @@ begin EXABAYES;
       INITSPRWEIGHT 0  [ broken for now ] 
       initEsprMappedWeight 10
 
-      initSingleBranchWeight 10
+      initSingleBranchWeight 0
       initSingleBranchExpWeight 0
-      initSingleBranchBiunifWeight 0 
+      initSingleBranchBiunifWeight 10 
 
 
       initModelWeight 5

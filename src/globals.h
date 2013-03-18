@@ -16,10 +16,9 @@ typedef struct globs
   randKey_t rGlobalKey ; 
   randCtr_t rGlobalCtr; 
 
-#if HAVE_PLL == 1 
-  partitionList** partitions;   
+#if HAVE_PLL == 1   
+  partitionList* partitions;   
 #endif
-
   
   /* DEVEL not needed for prodctive runs  */
   state *allChains; 		/* careful with this! */
