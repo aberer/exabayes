@@ -19,6 +19,22 @@ static void getxnodeBips (nodeptr p)
   assert(p->xBips);
 }
 
+void printBv(unsigned int *bv, int bvlen)
+{
+  if(processID == 0)
+    {
+      for(int i = 0; i < bvlen; ++i)
+	{
+	  int pos = i / 32; 
+	  int relPos = i % 32; 
+	if( ( bv[pos ] & (1 << (relPos)) ) > 0 )
+	  printf("1"); 
+	else 
+	  printf("0");
+	}
+    }
+}
+
 static void newviewBipartitions(unsigned int **bitVectors, nodeptr p, int numsp, unsigned int vectorLength)
 {
   
@@ -92,8 +108,11 @@ static void newviewBipartitions(unsigned int **bitVectors, nodeptr p, int numsp,
 void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberType position, int chainId)
 {     
   int vectorLength = ( tr->mxtips / 32  ) + ((tr->mxtips % 32) == 0 ?0 : 1) ; ; 
-  
-  
+
+  /* printf("inserting: "); */
+  /* printBv(bitVector, tr->mxtips); */
+  /* printf("\n"); */
+
   if(h->table[position] != NULL)
     {
       entry *e = h->table[position];     
@@ -167,8 +186,6 @@ void extractBipartitions(tree *tr, unsigned int **bitVectors, nodeptr p, hashtab
       while(q != p);
            
       newviewBipartitions(bitVectors, p, tr->mxtips, vectorLength);
-      
-      assert(p->xBips);
 
       if( NOT (isTip(p->back->number, tr->mxtips)))
 	{
@@ -177,8 +194,9 @@ void extractBipartitions(tree *tr, unsigned int **bitVectors, nodeptr p, hashtab
 
 	  hashNumberType 
 	    position = p->hash % h->tableSize;
-	 
+
 	  assert(!(toInsert[0] & 1));
+
 	  *cnt += 1; 
 	  insertAndCount(tr, toInsert, h, position, chainId); 
 	} 
@@ -189,12 +207,22 @@ void extractBipartitions(tree *tr, unsigned int **bitVectors, nodeptr p, hashtab
 
 void resetBitVectors(tree *tr)
 {
+  /* i think this function is not even necessary =/   */
+
   int bvLength = tr->mxtips / 32 +  ( (  tr->mxtips % 32  ) == 0 ? 0 : 1 )  ; 
 
   for(int i = 1 ; i < 2 * tr->mxtips ; ++i)
     {
       unsigned int *bv = tr->bitVectors[i]; 
       memset(bv, 0,  bvLength * sizeof(nat)); 
+    }
+  
+
+  for(int i = 1 ; i <= tr->mxtips; ++i )
+    {
+      int pos = i / 32, 
+	relPos = i % 32  ;
+      tr->bitVectors[i][ pos  ] |=  (1 << relPos) ; 
     }
 }
 
@@ -204,9 +232,11 @@ void resetBitVectors(tree *tr)
 void addBipartitionsToHash(tree *tr, state *chain)
 {
   resetBitVectors(tr);
-
+  
   int cnt = 0; 
-  extractBipartitions(tr, tr->bitVectors, tr->start->back, chain->bvHash, &cnt, chain->id / gAInfo.numberCoupledChains);
+  /* if(processID == 0) */
+  /*   printf("\n\nstart is %d\n\n", tr->start->number); */
+  extractBipartitions(tr, tr->bitVectors, tr->nodep[1]->back, chain->bvHash, &cnt, chain->id / gAInfo.numberCoupledChains);
   assert(cnt == tr->mxtips -3); 
 }
 
@@ -228,9 +258,6 @@ boolean convergenceDiagnosticDummy(state *allChains, int numChains)
 }
 
 
-
-
-
 boolean averageDeviationOfSplitFrequencies(state *allChains)
 {
   double asdsf = 0; 
@@ -238,8 +265,11 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   state *aChain = allChains + 0; 
   int numTaxa = aChain->tr->mxtips; 
   hashtable *ht = aChain->bvHash;
-
+  
   int *numSampled = exa_calloc(gAInfo.numberOfRuns, sizeof(int)); 
+  
+  entry** bvs = exa_malloc(sizeof(nat*) * ht->entryCount);
+  int ctr = 0; 
   
   for(int i = 0; i < ht->tableSize; ++i)
     {
@@ -248,64 +278,60 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
       while(e != NULL)
 	{
 	  for(int j = 0; j < gAInfo.numberOfRuns; ++j)
-	    numSampled[j] += e->treeVector[j]; 
-
+	    {
+	      numSampled[j] += e->treeVector[j]; 
+	    }
+	  
+	  bvs[ctr] = e;
+	  ctr++; 
 	  e = e->next; 
 	}
     }
-  
+  assert(ctr == ht->entryCount); 
 
   /* asserting */
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
     assert(numSampled[0] == numSampled[i]); 
-
   assert(numSampled[0]  %  (numTaxa -3 )  == 0) ; 
 
-  int treesSampled = numSampled[0] / (numTaxa - 3  ); 
-
-  
-  int cnt = 0; 
+  double treesSampled = numSampled[0] / (numTaxa - 3  ); 
   int cntRelevant = 0; 
-  for(int i = 0; i < ht->tableSize; ++i)
+  for(int i = 0; i < ht->entryCount ; ++i)
     {
-      entry *e  = ht->table[i]; 
+      entry *e = bvs[i]; 
 
-      while(e != NULL)
-	{
-	  /* check, if we can ignore this bipartition */
-	  boolean relevant = FALSE; 
-	  for(int j = 0; j < gAInfo.numberOfRuns; ++j)
-	    if( e->treeVector[j] >  ((double)ASDSF_FREQ_CUTOFF * (double)treesSampled) )
-	      relevant = TRUE; 
+      boolean relevant = FALSE; 
+      for(int j = 0; j < gAInfo.numberOfRuns; ++j)
+	if( e->treeVector[j] >  ((double)ASDSF_FREQ_CUTOFF * treesSampled) )
+	  relevant = TRUE; 
 
 	  if(relevant)
 	    {
-	      double mu = 0, 
+	      double 
+		n = gAInfo.numberOfRuns,
 		sd = 0; 
 
-	      for(int j = 0; j < gAInfo.numberOfRuns; ++j)
-		mu += (double)e->treeVector[j] / (double)treesSampled; 
+	      double mu = 0; 
+	      for(int j = 0; j < n; ++j)
+		mu += (double)e->treeVector[j] / treesSampled; 
+	      mu /= n; 
 
-	      mu /= gAInfo.numberOfRuns; 
-
-	      for(int j = 0; j < gAInfo.numberOfRuns; ++j)
-		sd += pow((((double)e->treeVector[j]  / (double)treesSampled)  - mu ) ,2); 
+	      for(int j = 0; j < n; ++j)
+		sd += pow(((((double)e->treeVector[j]) / treesSampled) - mu ) ,2); 
+	      sd = sqrt(sd) ; 
 
 #ifdef ASDSF_BE_VERBOSE
 	      if(processID == 0)
 		{
-		  
-		  for(int i = 0; i < numTaxa; ++i)
-		    printf( ( e->bitVector[ i  / 32 ] &  ( 1<< i )  )  ? "1" : "0") ;
-
+		  printf("REL\t"); 
+		  printBv(e->bitVector, numTaxa); 
 		  printf("\t");
-		  for(int  j = 0;  j < gAInfo.numberOfRuns; j++)
+		  for(int  j = 0;  j < n ; j++)
 		    printf("%d,", e->treeVector[j]); 
 		  printf("\tmu=%f\tsd=%f\n", mu, sd); 
 		}
-#endif
-
-	      asdsf +=  sqrt(sd  / gAInfo.numberOfRuns ) ; 
+#endif 
+	      asdsf += sd ; 
 	      cntRelevant++; 	    
 	    }
 	  else 
@@ -313,21 +339,18 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 #ifdef ASDSF_BE_VERBOSE
 	      /* if(processID == 0) */
 	      /* 	{ */
-	      /* 	  printf("not relevant: ");  */
+	      /* 	  printf("NOT\t");  */
+	      /* 	  printBv(e->bitVector, numTaxa);  */
+	      /* 	  printf("\t");  */
 	      /* 	  for(int j = 0; j < gAInfo.numberOfRuns; ++j) */
-	      /* 	    printf("%d,", e->treeVector[j]);  */
-	      /* 	  printf("\n");  */
+	      /* 	    printf("%d,", e->treeVector[j]); */
+	      /* 	  printf("\n"); */
 	      /* 	} */
 #endif
 	    }
-	  
-
-	  e = e->next; 
-	  ++cnt; 
-	}
+      
     }
 
-  assert(cnt == ht->entryCount); 
   asdsf /= cntRelevant; 
 
 #ifdef ASDSF_BE_VERBOSE

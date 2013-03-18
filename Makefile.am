@@ -54,7 +54,7 @@ libexaml_a_CFLAGS=-w $(AM_CFLAGS)
 
 AM_LDFLAGS=-lm
 
-EXTRA_DIST=lib/Random123-1.07 src/main-examl.c src/main-pll.c		\
+EXTRA_DIST=lib/Random123-1.07 src/main-examl_cond.c src/main-pll_cond.c		\
               src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c	\
               src/pll/axml-pll.h src/examl/axml-examl.h
 

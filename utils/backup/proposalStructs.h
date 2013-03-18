@@ -103,6 +103,8 @@ typedef struct
   double substRates[6]; 
   double frequencies[4];
 
+  /* double fracChange;    */
+  
 } perPartitionInfo; 		/* relevant info from pInfo  */
 
 

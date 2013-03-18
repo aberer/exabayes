@@ -10,7 +10,7 @@
 #define TOPO_SAVE 1 
 
 void saveTreeStateToChain(state *chain); 
-void applyChainStateToTree(state *chain, boolean checkLnl); 
+void applyChainStateToTree(state *chain); 
 void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z ); 
 void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains, initParamStruct **initParamsPtr); 
 void printInfo(state *chain, const char *format, ...);

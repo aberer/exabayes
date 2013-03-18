@@ -14,15 +14,13 @@
 
 
 
-
-
 void setNumberOfPartitions(tree *tr, int num)
 {
 #if HAVE_PLL == 1
   /* NOTICE if really something should be changed, do it! */   
 #else 
   tr->NumberOfModels = num; 
-#endif
+#endif  
 }
 
 

@@ -221,12 +221,6 @@ void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***
 
   /* data structures for convergence criterion need to be initialized after! setupTree */
 
-  if(tr->searchConvergenceCriterion)
-    {                     
-      tr->bitVectors = initBitVector(tr->mxtips, &(tr->vLength));
-      tr->h = initHashTable(tr->mxtips * 4);        
-    }
-
   for(i = 1; i <= (size_t)tr->mxtips; i++)
     {
       int len;

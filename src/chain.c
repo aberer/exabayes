@@ -32,7 +32,7 @@ void addInitParameters(state *curstate, initParamStruct *initParams);
 
 
 void printInfo(state *chain, const char *format, ...)
-{
+{  
   if(processID == 0)
     {
       printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberOfRuns, chain->couplingId, chain->currentGeneration); 
@@ -56,17 +56,6 @@ void makeChainFileNames(state *theState, int num)
   theState->topologyFile = fopen(tName, "w"); 
   theState->outputParamFile = fopen(pName, "w");   
 }
-
-
-static node *find_tip( node *n, tree *tr ) 
-{
-  if( isTip(n->number, tr->mxtips) ) {
-    return n;
-  } else {
-    return find_tip( n->back, tr );
-  }  
-}
-
 
 
 double getChainHeat(state *chain )
@@ -112,15 +101,83 @@ void traverseInitCorrect(nodeptr p, int *count, tree *tr )
 }
 
 
-void initParamDump(tree *tr, paramDump *dmp)
+static void initParamDump(tree *tr, paramDump *dmp)
 {  
   dmp->topo = setupTopol(tr->mxtips); 
   dmp->infoPerPart = exa_calloc(getNumberOfPartitions(tr), sizeof(perPartitionInfo));
+  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+    {
+      perPartitionInfo *p =  dmp->infoPerPart + i ; 
+      p->alpha = 0.5; 
+      for(int j = 0; j < 5; ++j)
+	p->substRates[j] = 0.5; 
+      p->substRates[5] = 1; 
+      for(int j = 0; j < 4; ++j)
+	p->frequencies[j] = 0.25;       
+    }
+
   dmp->branchLengths = exa_calloc(2 * tr->mxtips, sizeof(double));
+  for(int i = 0; i < 2 * tr->mxtips; ++i)
+    dmp->branchLengths[i] = INIT_BRANCH_LENGTHS;   
 }
 
 
 
+
+static  void copyParamDump(tree *tr,paramDump *dest, const paramDump *src)
+{
+  /* no topo or branch lengths! this should be done by copytopo */
+  
+  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+    {
+      perPartitionInfo *pDest =  dest->infoPerPart + i ,
+	*pSrc = src->infoPerPart + i; 
+      
+      pDest->alpha = pSrc->alpha; 
+      
+      for(int j = 0; j < 6; ++j)
+	pDest->substRates[j] = pSrc->substRates[j]; 
+      for(int j = 0; j < 4; ++j)
+	pDest->frequencies[j] = pSrc->frequencies[j]; 
+    }
+
+}
+
+
+
+
+void copyState(state *dest, const state *src )
+{
+  copyTopology(dest->tr, src->tr); 
+  copyParamDump(dest->tr, &(dest->dump), &(src->dump)); 
+  saveTree(dest->tr, dest->dump.topo); 	  
+  /* applyChainStateToTree(dest);  */
+}
+
+
+
+
+
+
+void preinitTree(tree *tr)
+{   
+  tr->doCutoff = TRUE;
+  tr->secondaryStructureModel = SEC_16; /* default setting */
+  tr->searchConvergenceCriterion = FALSE;
+  tr->rateHetModel = GAMMA; 
+  tr->multiStateModel  = GTR_MULTI_STATE;
+#if (HAVE_PLL == 0 ) 
+    tr->useGappedImplementation = FALSE;
+    tr->saveBestTrees          = 0;
+#endif
+  tr->saveMemory = FALSE;
+  tr->manyPartitions = FALSE;
+  tr->categories             = 25;
+  tr->grouped = FALSE;
+  tr->constrained = FALSE;
+  tr->gapyness               = 0.0; 
+  tr->useMedian = FALSE;
+}
 
 
 
@@ -129,6 +186,24 @@ void initializeTree(tree *tr, partitionList *partitions, analdef *adef);
 #else  
 void initializeTree(tree *tr, analdef *adef); 
 #endif
+
+
+void preInitTree(tree *tr)
+{
+  tr->doCutoff = TRUE;
+  tr->secondaryStructureModel = SEC_16; /* default setting */
+  tr->searchConvergenceCriterion = FALSE;
+  tr->rateHetModel = GAMMA; 
+  tr->multiStateModel  = GTR_MULTI_STATE;
+  tr->saveMemory = FALSE;
+  tr->manyPartitions = FALSE;
+  tr->categories             = 25;
+  tr->grouped = FALSE;
+  tr->constrained = FALSE;
+  tr->gapyness               = 0.0; 
+  tr->useMedian = FALSE;
+}
+
 
 void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains, initParamStruct **initParamsPtr)
 {
@@ -154,11 +229,23 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #endif
   tree *moreTrees = exa_calloc(treesNeeded, sizeof(tree)); 
   for(int i = 0; i < treesNeeded; ++i)
+    {
+      preinitTree(moreTrees+i); 
 #if HAVE_PLL == 1 
-    initializeTree(moreTrees + i, gAInfo.partitions + i+1 ,adef); 
+      initializeTree(moreTrees + i, gAInfo.partitions + i+1 ,adef); 
 #else 
-    initializeTree(moreTrees + i ,adef); 
+      initializeTree(moreTrees + i ,adef); 
 #endif
+    }
+  
+  for(int i = 0; i < treesNeeded; ++i)
+    {
+      tree *trH = moreTrees + i ; 
+      for(int j = 1; j <= trH->mxtips; ++j)
+	trH->nodep[j]->hash = tr->nodep[j]->hash; 
+    }
+
+
 #endif
   
   if(processID == 0)
@@ -166,7 +253,8 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   *resultIndiChains = exa_calloc( totalNumChains , sizeof(state));     
   
   unsigned int bvLength = 0; 
-  tr->bitVectors = initBitVector(tr->mxtips, &bvLength);
+  tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
+
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
   
   for(int i = 0; i < totalNumChains; ++i)
@@ -175,7 +263,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       theChain->bvHash = ht; 
 
       theChain->id = i; 
-      theChain->couplingId = i % gAInfo.numberCoupledChains ; /*  */
+      theChain->couplingId = i % gAInfo.numberCoupledChains ; 
       
 #ifdef MC3_SPACE_FOR_TIME
       /* important NOTICE : in this scheme, we assume, that there is
@@ -238,18 +326,13 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	      traverseInitFixedBL( theChain->tr->start->back, &count, theChain->tr, INIT_BRANCH_LENGTHS );
 	      assert(count  == 2 * tr->mxtips - 3);	  
 	    }
-
-	  theChain->tr->start = find_tip(tr->start, tr );
 	}
       else 
 	{
 #ifdef MC3_SPACE_FOR_TIME
-	  copyTopology(theChain->tr, tr); 
-	  /* int count = 0;  */
-	  /* traverseInitFixedBL( theChain->tr->start->back, &count, theChain->tr, INIT_BRANCH_LENGTHS ); */
-	  /* assert(count  == 2 * theChain->tr->mxtips - 3);	  	       */
-	  saveTree(theChain->tr, theChain->dump.topo); 
-	  /* applyChainStateToTree(theChain,FALSE); */
+	  state *coldChain = *resultIndiChains + (theChain->id / gAInfo.numberCoupledChains) * gAInfo.numberCoupledChains; 
+	  copyState(theChain , coldChain);
+	  applyChainStateToTree(theChain);      
 #else 
 	  /* initialize with previous state */
 	  applyChainStateToTree( (*resultIndiChains) + i-1, TRUE); 
@@ -257,12 +340,12 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	}
 
       evaluateGenericWrapper(theChain, myTree->start, TRUE); 
-      
+
+      /* now save the tree to a chain chains */
+      saveTreeStateToChain(theChain); 
+
       if(processID == 0)
 	printf("init lnl for chain %d is  %f\n", theChain->id, myTree->likelihood); 
-
-      /* now save the tree to a chain chainsǘ */
-      saveTreeStateToChain(theChain); 
 
       if(processID == 0 )
 	{	  
@@ -370,7 +453,7 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
    @param boolean checkLnl -- should we check, if the lnl is the same as
    before? If we applied it the first time, there is no before.
  */ 
-void applyChainStateToTree(state *chain, boolean checkLnl)
+void applyChainStateToTree(state *chain)
 {
   tree *tr = chain->tr; 
   
@@ -414,7 +497,7 @@ void applyChainStateToTree(state *chain, boolean checkLnl)
 #endif
     }
 
-  if( checkLnl && fabs (tr->likelihood - chain->dump.likelihood ) > 0.000001 )
+  if( chain->dump.likelihood != 0 && fabs (tr->likelihood - chain->dump.likelihood ) > 0.000001 )
     {
       printInfo(chain, "WARNING: obtained a different likelihood  after restoring previous chain state (before/after): %f / %f\n", 
 		chain->id, chain->currentGeneration, chain->dump.likelihood, tr->likelihood); 

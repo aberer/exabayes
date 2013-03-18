@@ -1374,13 +1374,8 @@ void initializeTree(tree *tr, analdef *adef)
     tr->executeModel[i] = TRUE;
    
   setupTree(tr); 
-  
-  if(tr->searchConvergenceCriterion && processID == 0)
-    {                     
-      tr->bitVectors = initBitVector(tr->mxtips, &(tr->vLength));
-      tr->h = initHashTable(tr->mxtips * 4);     
-    }
-  
+
+
   for(i = 1; i <= (size_t)tr->mxtips; i++)
     {
       int 

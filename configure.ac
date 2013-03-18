@@ -54,7 +54,7 @@ AC_DEFINE([HAVE_PLL], [0], ["is 1, if built with the PLL "])
 AS_IF([ test x$enable_pll = xyes ], [AC_DEFINE(HAVE_PLL,1)]) 
 AM_CONDITIONAL([WITH_PLL], [ test x$enable_pll = xyes ] )
 
-AC_ARG_ENABLE([mydebug],[ --enable-debug	Build with debug information ])
+AC_ARG_ENABLE(mydebug,[ --enable-mydebug	Build with debug information ])
 AM_CONDITIONAL([WITH_DEBUG], [ test x$enable_mydebug = xyes ])
 
 AC_CONFIG_FILES([Makefile])
