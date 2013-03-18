@@ -1,10 +1,13 @@
+/**
+   @file eval.h
+   @brief Functions for likelihood evaluations.  
+*/ 
+
 #include "common.h"
 #include "axml.h"
 #include "proposalStructs.h"
-
 #include "globals.h"
-
-#include "adapterCode.h"
+#include "adapters.h"		
 
 /* call this for verification after the lnl has been evaluated somehow */
 static void expensiveVerify(state *chain)

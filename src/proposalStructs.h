@@ -1,3 +1,11 @@
+/**
+   @file  proposalStructs.h
+   @brief Provides the main structs for ExaBayes. 
+
+   This is still kind of ugly, will be redesigned soon. 
+*/ 
+
+
 #ifndef _PROPOSAL_STRUCTS_H
 #define _PROPOSAL_STRUCTS_H
 

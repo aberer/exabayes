@@ -1,3 +1,10 @@
+/**
+   @file output.c
+   
+   @brief Functions printing to console or files. 
+ */ 
+
+
 #include "common.h"
 #include "config.h"
 #include "axml.h"
@@ -9,7 +16,7 @@
 #include "chain.h"
 #include "output.h"
 
-#include "adapterCode.h"
+#include "adapters.h"		/*  */
 
 extern double masterTime; 
 

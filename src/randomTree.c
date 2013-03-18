@@ -1,3 +1,10 @@
+/**
+   @file randomTree.c
+
+   @brief Adapted code for building a random tree. 
+
+ */ 
+
 #include "common.h"
 
 #include "axml.h"
@@ -5,7 +12,7 @@
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
-#include "adapterCode.h"
+#include "adapters.h"
 
 
 

@@ -1,3 +1,12 @@
+/**
+   @file randomness.c
+   
+   @brief Wraps random number generation functions. 
+
+   @notice Do not generate random numbers otherwise! 
+ */ 
+
+
 #include <math.h>
 #include <assert.h>
 #include <inttypes.h>

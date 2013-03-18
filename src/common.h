@@ -1,3 +1,8 @@
+/**
+   @file common.h
+   @brief Defines, typdes and developmental switches needed by almost every file.  
+*/ 
+
 #ifndef _COMMON_H
 #define _COMMON_H
 
@@ -93,6 +98,7 @@ typedef  unsigned int nat ;
 /* MC3 stuff for development */
 #define HEAT_FACTOR 0.003
 #define SWITCH_AFTER_GEN 1  	/* number of generations after  which we try to switch states   */
+
 
 #define MC3_SPACE_FOR_TIME
 

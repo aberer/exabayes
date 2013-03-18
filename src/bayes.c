@@ -1,36 +1,42 @@
+
+
+/**
+   @file bayes.c
+ 
+   @brief The top-level  functionality of ExaBayes.
+
+*/
+
+
 #include "axml.h"
 #include "proposalStructs.h"
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
 #include "output.h"
-
 #include "proposals.h"
 #include "convergence.h"
-
-#include "bayes-topo.h"
-
+#include "exa-topology.h"	
+#include "nclConfigReader.h"
 
 /* TODO outsource  */
 #include "chain.h"
 
-#include  "adapterCode.h"
-
+#include  "adapters.h"
 #include "eval.h"
 
 extern double masterTime; 
 
 
-#ifdef _USE_NCL_PARSER
-#include "nclConfigReader.h"
+
 void addInitParameters(state *curstate, initParamStruct *initParams)
 {
-  curstate->proposalWeights[E_SPR] = initParams->initSPRWeight; 
+  curstate->proposalWeights[E_SPR] = initParams->initSPRWeight;
   curstate->proposalWeights[UPDATE_GAMMA] = initParams->initGammaWeight;
   curstate->proposalWeights[UPDATE_GAMMA_EXP] = initParams->initGammaExpWeight;
-  curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight; 
-  curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight; 
-  curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight; 
+  curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight;
+  curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight;
+  curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight;
 curstate->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = initParams->initSingleBranchBiunifWeight;
 curstate->proposalWeights[UPDATE_MODEL_BIUNIF] = initParams->initModelBiunifWeight;
 curstate->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = initParams->initModelSingleBiunifWeight;
@@ -39,14 +45,12 @@ curstate->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = initParams->initModelPermB
 curstate->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = initParams->initFrequenciesWeight;
 curstate->proposalWeights[E_SPR_MAPPED] = initParams->initEsprMappedWeight;
   //PROPOSALADD addInitParameters NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
-  curstate->numGen = initParams->numGen; 
-  curstate->penaltyFactor = initParams->initPenaltyFactor; 
-  curstate->samplingFrequency = initParams->samplingFrequency; 
-  curstate->eSprStopProb = initParams->eSprStopProb; 
+  curstate->numGen = initParams->numGen;
+  curstate->penaltyFactor = initParams->initPenaltyFactor;
+  curstate->samplingFrequency = initParams->samplingFrequency;
+  curstate->eSprStopProb = initParams->eSprStopProb;
 }
-#else 
-int parseConfig(state *theState);
-#endif
+
 
 
 
@@ -164,12 +168,11 @@ void switchChainState(state *chains)
 
 
 
-
 /**
    @brief Execute a portion of one run. 
 
-   @param state *chains  -- the pointer to the beginning of the chains in the chain array. 
-   @param int gensToRun  -- number of generations each chain in this run should proceed. 
+   @param chains  -- the pointer to the beginning of the chains in the chain array. 
+   @param gensToRun  -- number of generations each chain in this run should proceed. 
 
  */
 void executeOneRun(state *chains, int gensToRun )

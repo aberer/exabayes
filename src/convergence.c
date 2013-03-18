@@ -1,3 +1,9 @@
+/**
+   @file convergence.c
+   
+   @brief Convergence diagnostics.
+*/ 
+
 #include "axml.h"
 
 #include "proposalStructs.h"

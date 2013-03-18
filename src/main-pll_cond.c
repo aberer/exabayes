@@ -1,3 +1,8 @@
+/**
+   @file mail-pll_cond.c 
+   @brief sets up ExaBayes with the PLL code base. 
+*/ 
+
 #include "config.h"
 #include "mem_alloc.h"
 #include "common.h"
@@ -22,7 +27,7 @@
 /* #define PRODUCTIVE */
 
 
-#include "adapterCode.h"
+#include "adapters.h"
 
 void exa_main(tree *tr, analdef *adef); 
 

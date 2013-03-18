@@ -1,3 +1,9 @@
+/**
+   @file main-examl_cond.c
+   @brief sets up ExaBayes with the ExaML code base.    
+*/ 
+
+
 /* use, if in productive mode */
 /* #define PRODUCTIVE */
 
@@ -18,7 +24,7 @@
 #include "proposalStructs.h"
 #include "output.h"
 
-#include "adapterCode.h"
+#include "adapters.h"
 
 
 void exa_main(tree *tr, analdef *adef); 

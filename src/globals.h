@@ -1,3 +1,12 @@
+/**
+    @file globals.h
+
+    @brief Global variables for ExaBayes.
+    
+    Notice that there are already a bunch of global variables from axml-variants.  
+*/ 
+
+
 #include "rng.h"
 
 #ifndef _GLOBALS_H

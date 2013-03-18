@@ -1,3 +1,8 @@
+/**
+   @file nclConfigReader.cpp
+   @brief Wraps the ncl-nexus parser for usage with ExaBayes.     
+*/
+
 #include <iostream>
 #include <cassert>
 

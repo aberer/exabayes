@@ -23,7 +23,7 @@ bin_PROGRAMS=exabayes
 include src-helper.am
 include src.am 
 
-.PHONY: my-update-src
+.PHONY: my-update-src doc 
 
 
 exabayes_LDADD=./lib/ncl-2.1.18/ncl/.libs/libncl.a
@@ -65,3 +65,7 @@ clean:
 
 clean-exa: 
 	-rm -rf $(exabayes_OBJECTS) exabayes 
+
+
+doc : 
+	doxygen 

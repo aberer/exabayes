@@ -1,3 +1,11 @@
+/**
+   @file exa-topology.c
+    
+   @brief Adapted code from the axml-variants for storing topologies.  
+   
+*/
+
+
 #include "common.h"
 #include "config.h"
 #include "axml.h"
@@ -7,7 +15,7 @@
 #include "main-common.h"
 #include "eval.h"
 
-#include "adapterCode.h"
+#include "adapters.h"
 
 
 

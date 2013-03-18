@@ -1,3 +1,12 @@
+/**
+    @file rng.h
+
+    @brief The inner wrapper for our random number generator. 
+
+    For reasons of header-hell, we have to keep this in a separate file. 
+*/ 
+
+
 #ifndef _RNG_H
 #define _RNG_H
 

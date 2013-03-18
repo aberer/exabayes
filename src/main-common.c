@@ -1,9 +1,13 @@
-/**************************************************************************************/
-/* NOTICE: contrary to its name, this file cannot be shared yet across pll and examl  */
-/**************************************************************************************/
+/**
+   @file main-common.c
+   
+   @brief Shared methods for setting up ExaBayes with either the PLL
+   or ExaML.
+    
+ */ 
 
-#include <stdio.h>
-#include <unistd.h>
+
+
 #include "axml.h"
 #include "config.h"
 #include "main-common.h"

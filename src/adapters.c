@@ -1,3 +1,13 @@
+/**
+   @file adapters.c
+
+   @brief All code that ensures that ExaBayes can be compiled with
+   either the PLL or the ExaML code base
+
+
+*/ 
+    
+
 
 #include "common.h"
 #include "axml.h"

@@ -1,6 +1,11 @@
-/* purpose of this file: contains tree reading functions (we cannot
-   directly use pll or examl stuff, but have to modify that to get
-   certain functionality) */
+/**
+   @file treeRead.c 
+   @brief functions for reading trees 
+   
+   Mostly taken over from the axml-variants.  
+ 
+*/ 
+
 
 #include "common.h"
 
@@ -10,7 +15,7 @@
 #include "proposalStructs.h"
 #include "globals.h"
 
-#include "adapterCode.h"
+#include "adapters.h"
 
 static void  treeEchoContext (FILE *fp1, FILE *fp2, int n)
 { /* treeEchoContext */

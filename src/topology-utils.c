@@ -1,4 +1,8 @@
-
+/**
+   @file  topology-utils.c
+   
+   @brief Various functions for manipulation of topologies and branch lengths. 
+*/ 
 #include "common.h"
 
 #include "config.h"

@@ -1,3 +1,9 @@
+/**
+   @file chain.c
+   
+   @brief Functions that are applied to individual chains. 
+*/ 
+
 
 #include "common.h"
 
@@ -17,11 +23,11 @@
 
 #include "treeRead.h"
 
-#include "bayes-topo.h"
+#include "exa-topology.h"
 
 #include "randomness.h"
 #include "eval.h"
-#include "adapterCode.h"
+#include "adapters.h"
 
 
 /* #define DEBUG_BL */
@@ -454,13 +460,13 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
 
 
 
-/**
-   @brief Applies the state of the chain to its tree. 
+/*!
+  \brief Applies the state of the chain to its tree. 
 
    Notice: you must not simply change the tree pointer. More
    modifications are necessary to do so.
 
-   @param boolean checkLnl -- should we check, if the lnl is the same as
+   \param boolean checkLnl -- should we check, if the lnl is the same as
    before? If we applied it the first time, there is no before.
  */ 
 void applyChainStateToTree(state *chain)

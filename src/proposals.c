@@ -1,3 +1,13 @@
+/**
+   @file proposals.c
+
+   @brief All proposals that make the chains of ExaBayes move in its
+   space.
+    
+ */ 
+
+
+
 #include "common.h"
 
 #include "axml.h"
@@ -8,10 +18,10 @@
 #include "output.h"
 #include "convergence.h"
 #include "chain.h"
-#include "utils-topo.h" 
+#include "topology-utils.h" 
 #include "eval.h"
-#include "adapterCode.h"
-#include "bayes-topo.h"
+#include "adapters.h"
+#include "exa-topology.h"
 
 
 void expensiveVerify(tree *tr); 
