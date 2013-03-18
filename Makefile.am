@@ -34,12 +34,13 @@ OPT_HEAD= -I./src/pll
 # FEATURE_FLAGS= -D_USE_PTHREADS
 exabayes_LDADD+=libpll.a
 noinst_LIBRARIES=libpll.a
+# exabayes_SOURCES+= src/make-random-tree_cond.c
 else
 CC=mpicc -std=gnu99
 CXX=mpic++
 OPT_HEAD= -Isrc/examl/
 FEATURE_FLAGS= -D_USE_ALLREDUCE
-exabayes_SOURCES+=$(EXAML_SRC) src/make-random-tree_cond.c
+# exabayes_SOURCES+=$(EXAML_SRC) 
 exabayes_LDADD+=libexaml.a
 noinst_LIBRARIES=libexaml.a
 endif 

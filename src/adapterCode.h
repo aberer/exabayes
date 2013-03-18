@@ -15,10 +15,10 @@ void exa_initReversibleGTR( state *chain,int model);
 
 
 
-int getNumBranches(tree *tr); 
-void setNumbranches(tree *tr, int num); 
+int getNumBranches(tree *tr);
+/* void setNumbranches(tree *tr, int num);  */
 
-void setNumberOfPartitions(tree *tr, int num); 
+/* void setNumberOfPartitions(tree *tr, int num);  */
 pInfo* getPartition(state *chain, int num); 
 int getNumberOfPartitions(tree *tr) ; 
 
@@ -32,7 +32,7 @@ boolean getExecModel(state *chain, int num);
 
 double getPcontr(state *chain, int num); 
 double getFracChange(state *chain, int num); 
-void setFracChange(state *chain, int num, double value); 
+/* void setFracChange(state *chain, int num, double value);  */
 
 
 

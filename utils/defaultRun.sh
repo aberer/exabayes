@@ -54,7 +54,7 @@ if  [ "$(echo $status)"  == "$(echo $args)" ]; then
 else 
     echo "calling ./configure $args" 
     ./configure $args  
-    make clean-local
+    make clean
 fi 
 
 rm exabayes

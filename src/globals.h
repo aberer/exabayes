@@ -17,7 +17,7 @@ typedef struct globs
   randCtr_t rGlobalCtr; 
 
 #if HAVE_PLL == 1 
-  partitionList* partitions;   
+  partitionList** partitions;   
 #endif
 
   

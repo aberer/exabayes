@@ -1,6 +1,7 @@
 #ifndef _PROPOSAL_STRUCTS_H
 #define _PROPOSAL_STRUCTS_H
 
+#include "config.h"
 #include "rng.h"
 
 
@@ -133,7 +134,13 @@ typedef struct
   /* these 3 are independent of the state, can be taken out unless we want to pass a single pointer as an argument*/  
   nodeptr * list; /* list of possible re-insertion nodes */ 
   int maxradius;  /* maximum radius of re-insertion from the pruning point */
+
+  
   tree * tr;
+#if HAVE_PLL == 1   
+  partitionList *partitions; 
+#endif  
+
   
   double curprior;
   double newprior;

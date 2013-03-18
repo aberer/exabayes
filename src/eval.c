@@ -63,7 +63,7 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
   tr->likelihood = 0; 
   for(int i = 0; i < numPartitions; ++i)
     {	
-      tr->likelihood +=  getPLH(chain,i);
+      tr->likelihood += getPLH(chain,i);
       setExecModel(chain,i,TRUE); 
     }
 

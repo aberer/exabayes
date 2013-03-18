@@ -293,15 +293,17 @@ int main (int argc, char *argv[])
 #endif
 
   ignoreExceptionsDenormFloat(); 
-
-  tree  *tr = (tree*)exa_malloc(sizeof(tree));
-  gAInfo.partitions = (partitionList*)exa_calloc(1, sizeof(partitionList)); 
-  partitionList *partitions =  gAInfo.partitions; 
-  analdef *adef = (analdef*)exa_malloc(sizeof(analdef));
+  tree  *tr = (tree*)exa_calloc(1,sizeof(tree));
+  analdef *adef = (analdef*)exa_calloc(1,sizeof(analdef));
+  gAInfo.partitions = (partitionList**)exa_calloc(1, sizeof(partitionList*)); 
+  gAInfo.partitions[0] = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
 
   masterTime = gettime();         
   initAdef(adef);
   get_args(argc, argv, adef, tr); 
+
+
+  partitionList *partitions =  gAInfo.partitions[0]; 
   makeFileNames();
 
   initializeTree(tr, partitions, adef); 

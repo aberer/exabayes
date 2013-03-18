@@ -1508,11 +1508,11 @@ void resetSuccessCounter(int runid)
 
 void step(state *chain)
 {
+  printInfo(chain, "that's who i am\n"); 
+
   tree *tr = chain->tr;   
 
   proposal_type which_proposal;
-  /* double t = gettime();  */
-  /* double proposalTime = 0.0; */
   double testr;
   double acceptance;
 
@@ -1544,7 +1544,7 @@ void step(state *chain)
 
   //should look something like 
   /* acceptance = fmin(1,(chain->hastings) * 
-     (exp(chain->newprior-chain->curprior)) * (exp(chain->tr->likelihood-chain->tr->startLH)));*/
+     (exp(chain->newprior-chain->curprior)) * (exp(chain->tr->likelihood-chain->tr->startLH)));*/ 
 
   double myHeat = getChainHeat(chain ) ; 
 

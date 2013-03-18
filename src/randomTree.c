@@ -5,19 +5,20 @@
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
+#include "adapterCode.h"
 
 
 
 /* RANDOM TREE STUFF  */
 
-static void insertTaxon (nodeptr p, nodeptr q, int numBranches)
+static void insertTaxon (tree *tr, nodeptr p, nodeptr q)
 {
   nodeptr  r;
-  
+
   r = q->back;
   
-  hookupDefault(p->next,       q, numBranches);
-  hookupDefault(p->next->next, r, numBranches); 
+  exa_hookupDefault(tr, p->next,       q);
+  exa_hookupDefault(tr, p->next->next, r); 
 } 
 
 static nodeptr buildNewTip (tree *tr, nodeptr p)
@@ -25,7 +26,7 @@ static nodeptr buildNewTip (tree *tr, nodeptr p)
   nodeptr  q;
 
   q = tr->nodep[(tr->nextnode)++];
-  hookupDefault(p, q, tr->numBranches);
+  exa_hookupDefault(tr, p, q);
   q->next->back = (nodeptr)NULL;
   q->next->next->back = (nodeptr)NULL;
  
@@ -47,11 +48,11 @@ static void buildSimpleTreeRandom (tree *tr, int ip, int iq, int ir)
   tr->ntips = 3;
   p = tr->nodep[ip];
   
-  hookupDefault(p, tr->nodep[iq], tr->numBranches);
+  exa_hookupDefault(tr, p, tr->nodep[iq]);
   
   s = buildNewTip(tr, tr->nodep[ir]);
   
-  insertTaxon(s, p, tr->numBranches);
+  insertTaxon(tr, s, p);
 }
 
 
@@ -95,7 +96,7 @@ static int markBranches(nodeptr *branches, nodeptr p, int *counter, int numsp)
 
 
 
-void makeRandomTree(tree *tr)
+void exa_makeRandomTree(tree *tr)
 {  
   nodeptr 
     p, 
@@ -133,7 +134,7 @@ void makeRandomTree(tree *tr)
       
       randomBranch = branches[drawGlobalRandIntBound(branchCounter)];
       
-      insertTaxon(p->back, randomBranch, tr->numBranches);      
+      insertTaxon(tr, p->back, randomBranch);      
     }
   
   exa_free(perm); 

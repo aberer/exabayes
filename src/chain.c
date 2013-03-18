@@ -29,13 +29,13 @@
 void initDefaultValues(state *theState, tree *tr); 
 void addInitParameters(state *curstate, initParamStruct *initParams); 
 
-
+void exa_makeRandomTree(tree *tr);  
 
 void printInfo(state *chain, const char *format, ...)
 {  
   if(processID == 0)
     {
-      printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberOfRuns, chain->couplingId, chain->currentGeneration); 
+      printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberCoupledChains, chain->couplingId, chain->currentGeneration); 
       va_list args;
       va_start(args, format);     
       vprintf(format, args );
@@ -225,14 +225,16 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #ifdef MC3_SPACE_FOR_TIME
   int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
 #if HAVE_PLL == 1 
-  gAInfo.partitions = exa_realloc(gAInfo.partitions, (treesNeeded + 1)  * sizeof(partitionList)); 
+  gAInfo.partitions = (partitionList**)exa_realloc(gAInfo.partitions, (treesNeeded + 1)  * sizeof(partitionList*)); 
+  for(int i = 1 ; i < treesNeeded+1; ++i)
+    gAInfo.partitions[i] = exa_calloc(1,sizeof(partitionList));
 #endif
   tree *moreTrees = exa_calloc(treesNeeded, sizeof(tree)); 
   for(int i = 0; i < treesNeeded; ++i)
     {
       preinitTree(moreTrees+i); 
 #if HAVE_PLL == 1 
-      initializeTree(moreTrees + i, gAInfo.partitions + i+1 ,adef); 
+      initializeTree(moreTrees + i, gAInfo.partitions[i+1] ,adef); 
 #else 
       initializeTree(moreTrees + i ,adef); 
 #endif
@@ -244,8 +246,6 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       for(int j = 1; j <= trH->mxtips; ++j)
 	trH->nodep[j]->hash = tr->nodep[j]->hash; 
     }
-
-
 #endif
   
   if(processID == 0)
@@ -317,7 +317,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	    }
 	  else 
 	    {
-	      makeRandomTree(theChain->tr);
+	      exa_makeRandomTree(theChain->tr);
 	      if(processID == 0)
 		printf("initializing chain %d with random tree\n", i); 
 
@@ -332,20 +332,20 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #ifdef MC3_SPACE_FOR_TIME
 	  state *coldChain = *resultIndiChains + (theChain->id / gAInfo.numberCoupledChains) * gAInfo.numberCoupledChains; 
 	  copyState(theChain , coldChain);
-	  applyChainStateToTree(theChain);      
+	  applyChainStateToTree(theChain); 
 #else 
 	  /* initialize with previous state */
-	  applyChainStateToTree( (*resultIndiChains) + i-1, TRUE); 
+	  applyChainStateToTree( (*resultIndiChains) + i-1); 
 #endif
 	}
 
-      evaluateGenericWrapper(theChain, myTree->start, TRUE); 
+      evaluateGenericWrapper(theChain, theChain->tr->start, TRUE); 
 
       /* now save the tree to a chain chains */
       saveTreeStateToChain(theChain); 
 
       if(processID == 0)
-	printf("init lnl for chain %d is  %f\n", theChain->id, myTree->likelihood); 
+	printf("init lnl for chain %d is  %f\n", theChain->id, theChain->tr->likelihood); 
 
       if(processID == 0 )
 	{	  
@@ -485,8 +485,7 @@ void applyChainStateToTree(state *chain)
     } 
 
   evaluateGenericWrapper(chain, tr->start, TRUE ); 
-
-  /* printInfo(chain, "switching to run %d / heat %d, lnl=%f\n", chain->id / numberOfRuns, chain->couplingId, tr->likelihood);  */
+  
   if(processID == 0)
     {
 #ifdef DEBUG_BL

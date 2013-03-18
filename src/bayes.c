@@ -20,7 +20,6 @@
 
 extern double masterTime; 
 
-void makeRandomTree(tree *tr); 
 
 #ifdef _USE_NCL_PARSER
 #include "nclConfigReader.h"
@@ -116,6 +115,9 @@ void switchChainState(state *chains)
   while(chainA == chainB)
     chainB = drawGlobalRandIntBound(numChain); 
 
+  /* int absIdA =  chains[chainA].id,  */
+  /*   absIdB = chains[chainB].id;  */
+
   /* 
      IMPORTANT TODO
 
@@ -130,7 +132,7 @@ void switchChainState(state *chains)
 
   double lnlA = chains[chainA].likelihood,
     lnlB = chains[chainB].likelihood; 
-  
+
   double 
     aB = lnlA *  heatB,
     bA = lnlB *  heatA,
@@ -139,15 +141,10 @@ void switchChainState(state *chains)
 
   double accRatio = ( aB + bA )  - (aA + bB ); 
 
-  /* printf("%f,%f,%f,%f\t%f,%f,%f,%f\taccRatio = %f\n", lnlA, lnlB, heatA, heatB,  aB, bA, aA, bB, accRatio);  */
-
   /* do the swap */
   if( drawGlobalDouble01()  < exp(accRatio))
     {
-      /* if(chains[chainA].couplingId == 0 ||  chains[chainB].couplingId == 0)  */
-      /* 	printf("\n\nswap with cold one\n\n");  */
-      
-      
+
       int tmp = chains[chainA].couplingId ;
       chains[chainA].couplingId =  chains[chainB].couplingId;
       chains[chainB].couplingId = tmp ;
@@ -161,12 +158,28 @@ void switchChainState(state *chains)
       memcpy(chains[chainB].rejectedProposals, chains[chainA].rejectedProposals, sizeof(int) * NUM_PROPOSALS); 
       memcpy(chains[chainA].rejectedProposals, tmpArray, sizeof(int) * NUM_PROPOSALS); 
 
+      printf("%d switches with %d\n", chainA, chainB); 
+
+/* #if HAVE_PLL == 1        */
+/*       partitionList *pTmp = gAInfo.partitions[chainA];  */
+/*       gAInfo.partitions[chainA] = gAInfo.partitions[chainB]; */
+/*       gAInfo.partitions[chainB] = pTmp;       */
+/* #endif */
+
       gAInfo.successFullSwitchesBatch++; 
     } 
 }
 
 
 
+
+/**
+   @brief Execute a portion of one run. 
+
+   @param state *chains  -- the pointer to the beginning of the chains in the chain array. 
+   @param int gensToRun  -- number of generations each chain in this run should proceed. 
+
+ */
 void executeOneRun(state *chains, int gensToRun )
 {
   if(gAInfo.numberCoupledChains > 1 )
@@ -185,7 +198,7 @@ void executeOneRun(state *chains, int gensToRun )
 	      state *curChain = chains + chainCtr; /* TODO */
 
 #ifndef MC3_SPACE_FOR_TIME
-	      applyChainStateToTree(curChain, TRUE );
+	      applyChainStateToTree(curChain );
 #endif
 
 	      for(int i = 0; i < SWITCH_AFTER_GEN; ++i)

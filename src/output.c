@@ -302,10 +302,6 @@ static void printHotChains(int runId)
 
 void chainInfo(state *chain)
 {
-#ifndef MC3_SPACE_FOR_TIME
-  assert(0); 
-#endif
-
   assert(chain->couplingId == 0) ; /* we are the cold chain   */
 
   int runId = chain->id / gAInfo.numberCoupledChains; 
