@@ -38,10 +38,7 @@ typedef enum _cats {
 /* spr proposal specific */
 typedef struct {
   double qz[NUM_BRANCHES]; /* BL values prior to re-insertion */
-  double bl_sliding_window_w;
-  double bl_prior;
-  double bl_prior_exp_lambda;
-  int single_bl_branch;  
+  int single_bl_branch;
 } branch_length_remembrance; 
 
 
@@ -49,7 +46,6 @@ typedef struct {
 typedef struct
 {
   double curAlpha;
-  double gm_sliding_window_w;  
 } gamma_remembrance; 
 
 
@@ -60,7 +56,6 @@ typedef struct
   int model;
   int nstates;
   int numSubsRates;
-  double rt_sliding_window_w;
   double *curSubsRates;//used for resetting
 } model_remembrance; 
 

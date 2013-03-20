@@ -423,14 +423,16 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 
   switch(pf->ptype)
         {
-	case UPDATE_GAMMA : 
-	  double slidWin = pf->parameters.slidWin; 
+	case UPDATE_GAMMA:
+	  {
+	    double slidWin = pf->parameters.slidWinSize;
 	  
-        /* case STANDARD://simple sliding window */
-	  r = drawRandDouble01(chain);
-	  mn = curv-(slidWin/2);
-	  mx = curv+(slidWin2);
-	  newalpha = fabs(mn + r * (mx-mn));
+	    /* case STANDARD://simple sliding window */
+	    r = drawRandDouble01(chain);
+	    mn = curv-(slidWin/2);
+	    mx = curv+(slidWin/ 2);
+	    newalpha = fabs(mn + r * (mx-mn));
+	  }
 	  break;
 	case UPDATE_GAMMA_EXP: 
           newalpha  = drawRandExp(chain,1/curv);
@@ -599,18 +601,21 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
       switch(pType)
         {
 	case UPDATE_MODEL : //using the branch length sliding window for a test    
-	  changeState=state;
-	  curv = partition->substRates[state];
-	  r =  drawRandDouble01(chain);
-	  mn = curv-(chain->modelRemem.rt_sliding_window_w/2);
-	  mx = curv+(chain->modelRemem.rt_sliding_window_w/2);
+	  {
+	    double range = pf->parameters.slidWinSize / 2; 
+	    
+	    changeState=state;
+	    curv = partition->substRates[state];
+	    r =  drawRandDouble01(chain);
+	    mn = curv-range ;
+	    mx = curv+range ;
 	
-	  new_value = fabs(mn + r * (mx-mn));
+	    new_value = fabs(mn + r * (mx-mn));
 	  
-	  /* Ensure always you stay within this range */
-	  if(new_value > RATE_MAX) new_value = RATE_MAX;
-	  if(new_value < RATE_MIN) new_value = RATE_MIN;
-      
+	    /* Ensure always you stay within this range */
+	    if(new_value > RATE_MAX) new_value = RATE_MAX;
+	    if(new_value < RATE_MIN) new_value = RATE_MIN;
+	  }
 	  break;
         
 	case UPDATE_MODEL_BIUNIF:
@@ -884,7 +889,7 @@ double get_branch_length_prior( state *chain)
 }
 
 //setting this out to allow for other types of setting
-static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double windowRange)
 {
   int i;
   double newZValue;
@@ -906,8 +911,8 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
       
       //     printf( "z: %f %f\n", p->z[i], real_z );
     
-      mn = real_z-(s->brLenRemem.bl_sliding_window_w/2);
-      mx = real_z+(s->brLenRemem.bl_sliding_window_w/2);
+      mn = real_z- windowRange;
+      mx = real_z+ windowRange;
       newZValue = exp(-(fabs(mn + r * (mx-mn)/s->tr->fracchange )));
     
       
@@ -1105,7 +1110,7 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
 	//pull a uniform like
 	//x = current, w =window
 	//uniform(x-w/2,x+w/2)
-	set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE);
+	set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE, pf->parameters.slidWinSize);
 	break;
 	
       case UPDATE_SINGLE_BL_EXP: 
