@@ -424,10 +424,12 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
   switch(pf->ptype)
         {
 	case UPDATE_GAMMA : 
+	  double slidWin = pf->parameters.slidWin; 
+	  
         /* case STANDARD://simple sliding window */
 	  r = drawRandDouble01(chain);
-	  mn = curv-(chain->gammaRemem.gm_sliding_window_w/2);
-	  mx = curv+(chain->gammaRemem.gm_sliding_window_w/2);
+	  mn = curv-(slidWin/2);
+	  mx = curv+(slidWin2);
 	  newalpha = fabs(mn + r * (mx-mn));
 	  break;
 	case UPDATE_GAMMA_EXP: 
