@@ -242,7 +242,7 @@ void addBipartitionsToHash(tree *tr, state *chain)
   int cnt = 0; 
   /* if(processID == 0) */
   /*   printf("\n\nstart is %d\n\n", tr->start->number); */
-  extractBipartitions(tr, tr->bitVectors, tr->nodep[1]->back, chain->bvHash, &cnt, chain->id / gAInfo.numberCoupledChains);
+  extractBipartitions(tr, tr->bitVectors, tr->nodep[1]->back, gAInfo.bvHash, &cnt, chain->id / gAInfo.numberCoupledChains);
   assert(cnt == tr->mxtips -3); 
 }
 
@@ -270,7 +270,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 
   state *aChain = allChains + 0; 
   int numTaxa = aChain->tr->mxtips; 
-  hashtable *ht = aChain->bvHash;
+  hashtable *ht = gAInfo.bvHash; 
   
   int *numSampled = exa_calloc(gAInfo.numberOfRuns, sizeof(int)); 
   
@@ -329,7 +329,6 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 #ifdef ASDSF_BE_VERBOSE
 	      if(processID == 0)
 		{
-		  printf("REL\t"); 
 		  printBv(e->bitVector, numTaxa); 
 		  printf("\t");
 		  for(int  j = 0;  j < n ; j++)

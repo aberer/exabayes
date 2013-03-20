@@ -5,11 +5,12 @@
 
 #include <iostream>
 #include <cassert>
-
 #include <ncl/ncl.h>
+
 #include "nclConfigReader.h"
 
-// NOTE: this is a c++ file! 
+
+// TODO set this up more generic   
 
 
 class ConfigReader : public NxsReader
@@ -22,6 +23,56 @@ public:
   
 } ; 
 
+
+
+
+
+
+
+/**
+   @brief This function is nothing to be proud of, but let's stick to
+   it for now.
+ */ 
+bool mapNameToProposal(NxsString &key, proposal_type *pf)
+{    
+  bool found = true; 
+
+  if(key.EqualsCaseInsensitive("initSPRWeight"))
+    *pf = E_SPR; 
+  else if(key.EqualsCaseInsensitive("initModelWeight")) 
+    *pf = UPDATE_MODEL; 
+  else if(key.EqualsCaseInsensitive("initGammaWeight")) 
+    *pf = UPDATE_GAMMA; 
+  else if(key.EqualsCaseInsensitive("initGammaExpWeight"))    
+    *pf = UPDATE_GAMMA_EXP; 
+  else if(key.EqualsCaseInsensitive("initSingleBranchWeight"))    
+    *pf = UPDATE_SINGLE_BL; 
+  else if(key.EqualsCaseInsensitive("initSingleBranchExpWeight"))    
+    *pf = UPDATE_SINGLE_BL_EXP; 
+  else if(key.EqualsCaseInsensitive("initSingleBranchBiunifWeight"))    
+    *pf = UPDATE_SINGLE_BL_BIUNIF; 
+  else if(key.EqualsCaseInsensitive("initModelBiunifWeight"))    
+    *pf = UPDATE_MODEL_BIUNIF; 
+  else if(key.EqualsCaseInsensitive("initModelSingleBiunifWeight"))    
+    *pf = UPDATE_MODEL_SINGLE_BIUNIF; 
+  else if(key.EqualsCaseInsensitive("initModelAllBiunifWeight"))    
+    *pf = UPDATE_MODEL_ALL_BIUNIF; 
+  else if(key.EqualsCaseInsensitive("initModelPermBiunifWeight"))    
+    *pf = UPDATE_MODEL_PERM_BIUNIF; 
+  else if(key.EqualsCaseInsensitive("initFrequenciesWeight"))    
+    *pf = UPDATE_FREQUENCIES_BIUNIF; 
+  else if(key.EqualsCaseInsensitive("initEsprMappedWeight"    ))    
+    *pf = E_SPR_MAPPED; 
+
+  // TODO@kassian this is a good place for proposal add 
+
+  else 
+    found = false; 
+
+
+
+  return found; 
+}
 
 
 // TODO: catch exceptions: for now, we assume that our users are
@@ -40,29 +91,13 @@ public:
 
   void paramBadInit()
   {
+
     initParam->numCoupledChains = -1; 
     initParam->numIndiChains = -1; 
-    initParam->initSPRWeight  = -1 ;
-    initParam->initGammaWeight  = -1 ; 
-    initParam->initGammaExpWeight  = -1 ; 
-    initParam->initModelWeight  = -1 ;
-    initParam->initSingleBranchWeight  = -1 ; 
-    initParam->initSingleBranchExpWeight  = -1 ;
-initParam->initSingleBranchBiunifWeight  = -1 ;
-initParam->initModelBiunifWeight  = -1 ;
-initParam->initModelSingleBiunifWeight  = -1 ;
-initParam->initModelAllBiunifWeight  = -1 ;
-initParam->initModelPermBiunifWeight  = -1 ;
-initParam->initFrequenciesWeight  = -1 ;
-initParam->initEsprMappedWeight  = -1 ;
-    //PROPOSALADD paramBadInit NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
-
     initParam->initPenaltyFactor  = -1 ;   
     initParam->numGen  = -1 ; 
     initParam->samplingFrequency  = -1 ; 
-
     initParam->eSprStopProb = -1;
-
     initParam->diagFreq = -1; 
 
   }
@@ -83,34 +118,11 @@ initParam->initEsprMappedWeight  = -1 ;
 	  {
 	    NxsString key = token.GetToken(false);
 	    token.GetNextToken(); 
-	    NxsString value = token.GetToken(false); 
-
-	    if( key.EqualsCaseInsensitive("initSPRWeight") )
-	      initParam->initSPRWeight = value.ConvertToDouble();
-	    else if(key.EqualsCaseInsensitive("initModelWeight"))
-	      initParam->initModelWeight = value.ConvertToDouble(); 
-	    else if(key.EqualsCaseInsensitive("initGammaWeight"))
-	      initParam->initGammaWeight = value.ConvertToDouble();
-	    else if(key.EqualsCaseInsensitive("initGammaExpWeight"))
-	      initParam->initGammaExpWeight = value.ConvertToDouble();
-	    else if (key.EqualsCaseInsensitive("initSingleBranchWeight"))
-	      initParam->initSingleBranchWeight = value.ConvertToDouble();
-	    else if (key.EqualsCaseInsensitive("initSingleBranchExpWeight"))
-	      initParam->initSingleBranchExpWeight = value.ConvertToDouble();	
-else if (key.EqualsCaseInsensitive("initSingleBranchBiunifWeight"))
-initParam->initSingleBranchBiunifWeight = value.ConvertToDouble();
-else if (key.EqualsCaseInsensitive("initModelBiunifWeight"))
-initParam->initModelBiunifWeight = value.ConvertToDouble();
-else if (key.EqualsCaseInsensitive("initModelSingleBiunifWeight"))
-initParam->initModelSingleBiunifWeight = value.ConvertToDouble();
-else if (key.EqualsCaseInsensitive("initModelAllBiunifWeight"))
-initParam->initModelAllBiunifWeight = value.ConvertToDouble();
-else if (key.EqualsCaseInsensitive("initModelPermBiunifWeight"))
-initParam->initModelPermBiunifWeight = value.ConvertToDouble();
-else if (key.EqualsCaseInsensitive("initFrequenciesWeight"))
-initParam->initFrequenciesWeight = value.ConvertToDouble();
-else if (key.EqualsCaseInsensitive("initEsprMappedWeight"))
-initParam->initEsprMappedWeight = value.ConvertToDouble();
+	    NxsString value = token.GetToken(false); 	    
+	    proposal_type pt; 
+	    
+	    if(mapNameToProposal(key, &pt))
+	      initParam->initWeights[pt] = value.ConvertToDouble(); 
 	    //PROPOSALADD read NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 	    else if(key.EqualsCaseInsensitive("numGen"))
 	      initParam->numGen = value.ConvertToInt(); 
@@ -137,20 +149,6 @@ initParam->initEsprMappedWeight = value.ConvertToDouble();
     assert(initParam->numCoupledChains != -1); 
     assert(initParam->diagFreq != -1 ); 
     assert(initParam->numIndiChains != -1); 
-    assert(initParam->initModelWeight != -1); 
-    assert(initParam->initGammaWeight != -1); 
-    assert(initParam->initGammaExpWeight != -1); 
-    assert(initParam->initSPRWeight != -1); 
-    assert(initParam->initSingleBranchWeight != -1); 
-    assert(initParam->initSingleBranchExpWeight != -1); 
-assert(initParam->initSingleBranchBiunifWeight != -1);
-assert(initParam->initModelBiunifWeight != -1);
-assert(initParam->initModelSingleBiunifWeight != -1);
-assert(initParam->initModelAllBiunifWeight != -1);
-assert(initParam->initModelPermBiunifWeight != -1);
-assert(initParam->initFrequenciesWeight != -1);
-assert(initParam->initEsprMappedWeight != -1);
-    //PROPOSALADD assertInitialized NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
     assert(initParam->numGen != -1); 
     assert(initParam->initPenaltyFactor != -1); 
     assert(initParam->samplingFrequency  != -1 ); 

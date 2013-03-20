@@ -31,6 +31,10 @@ void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValu
 
 
 
+#if 0 
+
+/* quarantining this, until change is over */
+
 //reads proposalWeights p and sets t for logistic function such that f(t)=p
 void findLogisticT(state *chain){
   static double leftShift=2.0;
@@ -54,7 +58,7 @@ void findLogisticP(state *chain){
    }
   }
 }
-
+#endif
 
 
 static void recordSubsRates(state *chain, int model, int numSubsRates, double *prevSubsRates)
@@ -118,21 +122,18 @@ static void record_branch_info(nodeptr p, double *bl, int numBranches)
 /* } */
 
 
-int radius = 0; 
 
-int extended_spr_traverse(state *chain, nodeptr *insertNode)
+
+/* TODO more diagnostics on where the stuff moves to  */
+int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 {
   int 
     result, 
     r = drawRandDouble01(chain); 
-  
-  radius++;   
 
   /* *insertNode = NULL;  */
   if(r < 0.5 )
     {
-
-
        *insertNode = isTip((*insertNode)->next->number, chain->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back; 
 
      // *insertNode = (*insertNode)->next->back ;
@@ -183,7 +184,8 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode)
   }
   */
   double randprop = drawRandDouble01(chain);
-  result = randprop < chain->eSprStopProb; 
+
+  result = randprop < stopProp;
   
   return result; 
 }
@@ -191,13 +193,11 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode)
 
 
 
-
-
-
-
-static void extended_spr_apply(state *chain, int pSubType)
+static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
-  tree * tr = chain->tr;
+  tree *tr = chain->tr;
+
+  double stopProp = pf->parameters.eSprStopProb; 
 
 #ifdef DEBUG_SHOW_TREE
   char tmp[10000]; 
@@ -229,22 +229,24 @@ static void extended_spr_apply(state *chain, int pSubType)
   
   for(int i = 0; i < getNumBranches(tr); i++)
     {
-      if(pSubType == STANDARD)
+      
+      /* TODO when was this used?  */
+      /* zqr[i] = chain->sprMoveRemem.nb->z[i] * chain->sprMoveRemem.nnb->z[i]; */
+      /* 	  chain->hastings *= log(zqr[i]); */
+
+      switch(pf->ptype)
 	{
-	  zqr[i] = chain->sprMoveRemem.nb->z[i] * chain->sprMoveRemem.nnb->z[i];
-	
-	  chain->hastings *= log(zqr[i]);
-	}
-      else if(pSubType == SPR_MAPPED)
-	{
-	  zqr[i] = chain->sprMoveRemem.nb->z[i] ; 
-	}
-      else if(pSubType == SPR_ADJUST)
-	{
+	case E_SPR : 
 	  zqr[i] = chain->sprMoveRemem.nb->z[i] * chain->sprMoveRemem.nnb->z[i];  
 	  chain->hastings *= log(zqr[i]);
 	  zqr[i] = sqrt(zqr[i]);
+	  break; 
+	case E_SPR_MAPPED: 
+	  zqr[i] = chain->sprMoveRemem.nb->z[i] ; 
+	  break; 
+	default: assert(0); 
 	}
+
       if(zqr[i] > zmax) zqr[i] = zmax;
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
@@ -269,11 +271,12 @@ static void extended_spr_apply(state *chain, int pSubType)
 
   int accepted = FALSE;   
 
-  radius = 0; 
 //printf("curNode:  back next nextnext\n");
   while( NOT  accepted)
     {
-      accepted = extended_spr_traverse(chain, &curNode); 
+      
+
+      accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
   //    if(processID == 0) 
 //	printf("%d:  %d  %d  %d\n",curNode->number, curNode->back->number, curNode->next->back->number, curNode->next->next->back->number); 
 
@@ -291,40 +294,42 @@ static void extended_spr_apply(state *chain, int pSubType)
   chain->sprMoveRemem.r = chain->sprMoveRemem.q->back;
   record_branch_info(chain->sprMoveRemem.q, chain->brLenRemem.qz, getNumBranches(chain->tr));
 
-  
-  
-   if(pSubType == STANDARD){
-     for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++)
-     {
-      chain->hastings/=log(curNode->z[branchCount]);
-     }
-   }else if(pSubType == SPR_ADJUST){
-     for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) /*  */
-     {
-      chain->hastings/=(2*log(curNode->z[branchCount]));
-     }
-   }
-  
- // Thorough = 0;
-  // assert(tr->thoroughInsertion == 0);
-  /* insertBIG wont change the BL if we are not in thorough mode */
 
-  if(pSubType == STANDARD)
+
+
+  switch(pf->ptype)
     {
-      insertWithUnifBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, getNumBranches(chain->tr));
-  /*   for(int branchCount=0; branchCount<chain->tr->numBranches; branchCount++)
-     {
-       chain->hastings/=log(chain->brLenRemem.qz[branchCount]);
-     }
-     */
-   //  printf("hastings: %f\n", chain->hastings);
-      // insertBIG(chain->tr, chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->tr->numBranches);
-    }
-  else if(pSubType == SPR_MAPPED)
-    {
-      double *neighborZ = remapBL ? chain->sprMoveRemem.nbz :  chain->sprMoveRemem.nnbz; 
+      /* TODO this was the standard!  */
+      /* case STANDARD:  */
+      /* for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) */
+      /*   { */
+      /*     chain->hastings/=log(curNode->z[branchCount]); */
+      /*   }   */
+      /*     insertWithUnifBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, getNumBranches(chain->tr)); */
+      /* /\*   for(int branchCount=0; branchCount<chain->tr->numBranches; branchCount++) */
+      /*    { */
+      /*      chain->hastings/=log(chain->brLenRemem.qz[branchCount]); */
+      /*    } */
+      /*    *\/ */
+      /*  //  printf("hastings: %f\n", chain->hastings); */
+      /*     // insertBIG(chain->tr, chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->tr->numBranches); */
+      break; 
+
+
+    case E_SPR  :  		/* ADJUCT */
+      for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) /*  */
+	{
+	  chain->hastings/=(2*log(curNode->z[branchCount]));
+	  insertWithUnifBLScaled(chain->sprMoveRemem.p, chain->sprMoveRemem.q, 2.0,  getNumBranches(chain->tr));
+	}
+      break;       
+    case E_SPR_MAPPED: 
+      {
+	/* TODO hastings?  */
       
-        if( remapBL ) 
+	double *neighborZ = remapBL ? chain->sprMoveRemem.nbz :  chain->sprMoveRemem.nnbz; 
+      
+	if( remapBL ) 
 	  {
 	    for(int i = 0; i < getNumBranches(tr); ++i)
 	      chain->sprMoveRemem.nb->z[i] = chain->sprMoveRemem.nb->back->z[i] = chain->sprMoveRemem.nnbz[i]; 
@@ -333,26 +338,14 @@ static void extended_spr_apply(state *chain, int pSubType)
 	insertWithGenericBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->sprMoveRemem.p->z, curNode->z, neighborZ, getNumBranches(tr));
 
 
-      /* IMPORTANT TODO verify, that the mapping actually works, as we
-	 had this in mind. Use topo print functions for that.
-       */
-
-
-      /* TODO PERFORMANCE */
-      /* newviewGeneric(tr, chain->sprMoveRemem.p, FALSE); */
-    }
-     else if(pSubType == SPR_ADJUST)
-    {
-      insertWithUnifBLScaled(chain->sprMoveRemem.p, chain->sprMoveRemem.q, 2.0,  getNumBranches(chain->tr));
+	/* IMPORTANT TODO verify, that the mapping actually works, as we
+	   had this in mind. Use topo print functions for that.
+	*/
+      }
+      break; 
+    default : assert(0) ; 
     }
 
-//   if( (pSubType == SPR_MAPPED ) && remapBL) 
-//     {
-//       for(int i = 0; i < tr->numBranches; ++i)
-// 	chain->sprMoveRemem.nb->z[i] = chain->sprMoveRemem.nb->back->z[i] = chain->sprMoveRemem.nnbz[i]; 
-//     }
-
-  /* TODO problem here? is not tip?? FIXED: should never be a tip anymore. Possible since we are interested in edges and each edge connects to at least one inner node*/
 #if 0 
   evaluateGeneric(chain->tr, chain->sprMoveRemem.p->next->next, FALSE);
 #else   
@@ -412,7 +405,7 @@ double get_alpha_prior(state *chain )
 
 
 
-static void simple_gamma_proposal_apply(state * chain, int pSubType)
+static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
 
@@ -428,15 +421,16 @@ static void simple_gamma_proposal_apply(state * chain, int pSubType)
   chain->gammaRemem.curAlpha = curv;
 
 
-  switch(pSubType)
+  switch(pf->ptype)
         {
-        case STANDARD://simple sliding window
+	case UPDATE_GAMMA : 
+        /* case STANDARD://simple sliding window */
 	  r = drawRandDouble01(chain);
 	  mn = curv-(chain->gammaRemem.gm_sliding_window_w/2);
 	  mx = curv+(chain->gammaRemem.gm_sliding_window_w/2);
 	  newalpha = fabs(mn + r * (mx-mn));
 	  break;
-        case EXP_DISTR:
+	case UPDATE_GAMMA_EXP: 
           newalpha  = drawRandExp(chain,1/curv);
           break;
         default:
@@ -498,6 +492,8 @@ static void simple_gamma_proposal_reset(state * chain)
 
 //------------------------------------------------------------------------------
 
+
+#if 0 
 /* TODO we do not even use this function, do we? NOTE Now we do ;) */
 void penalize(state *chain, int which_proposal, int acceptance)
 {
@@ -525,12 +521,16 @@ void penalize(state *chain, int which_proposal, int acceptance)
   //normalizeProposalWeights(chain); 
 }
 
+#endif
+
 
 
 
 
 //NOTE: should only be called at the very beginning. Afterwards a probability sum of 1.0 is not required.
 
+
+#if  0
 void normalizeProposalWeights(state *chain)
 {
   double sum = 0 ; 
@@ -542,11 +542,14 @@ void normalizeProposalWeights(state *chain)
   
   findLogisticT(chain);
 }
+#endif
 
 
 
-static void simple_model_proposal_apply(state *chain, int pSubType)//llpqr
+static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llpqr
 {
+  
+
   tree *tr = chain->tr; 
   
   //TODO: add safety to max and min values
@@ -570,26 +573,30 @@ static void simple_model_proposal_apply(state *chain, int pSubType)//llpqr
   
   /* int numberOfEdits;//for biunif_perm_distr */
   
-  switch(pSubType)
-        {
-	  case STANDARD:
-	    case BIUNIF_DISTR:
-	      /* numberOfEdits=chain->modelRemem.numSubsRates; */
-	      break;
-	      case BIUNIF_PERM_DISTR:
-		/* numberOfEdits=drawRandInt(chain, chain->modelRemem.numSubsRates); */
-		break;
-	} 
+  proposal_type  pType = pf->ptype; 
+
+
+  /* TODO reactivate when used and replace old types   */
+  /* switch(pType) */
+  /*   { */
+  /*   case STANDARD: */
+  /*   case BIUNIF_DISTR: */
+  /*     /\* numberOfEdits=chain->modelRemem.numSubsRates; *\/ */
+  /*     break; */
+  /*   case BIUNIF_PERM_DISTR: */
+  /*     /\* numberOfEdits=drawRandInt(chain, chain->modelRemem.numSubsRates); *\/ */
+  /*     break; */
+  /*   default : assert(0);  */
+  /*   }  */
   
   
   chain->hastings=1.0;
   
-    for(state = 0;state<chain->modelRemem.numSubsRates ; state ++)
-    {
-      
-      switch(pSubType)
+  for(state = 0;state<chain->modelRemem.numSubsRates ; state ++)
+    {      
+      switch(pType)
         {
-        case STANDARD: //using the branch length sliding window for a test    
+	case UPDATE_MODEL : //using the branch length sliding window for a test    
 	  changeState=state;
 	  curv = partition->substRates[state];
 	  r =  drawRandDouble01(chain);
@@ -599,65 +606,67 @@ static void simple_model_proposal_apply(state *chain, int pSubType)//llpqr
 	  new_value = fabs(mn + r * (mx-mn));
 	  
 	  /* Ensure always you stay within this range */
-      if(new_value > RATE_MAX) new_value = RATE_MAX;
-      if(new_value < RATE_MIN) new_value = RATE_MIN;
+	  if(new_value > RATE_MAX) new_value = RATE_MAX;
+	  if(new_value < RATE_MIN) new_value = RATE_MIN;
       
 	  break;
         
-	case BIUNIF_DISTR:
+	case UPDATE_MODEL_BIUNIF:
 	  changeState=drawRandInt(chain, chain->modelRemem.numSubsRates);
-      if(list[changeState]!=1)
-      {
-      list[changeState]=1;;      
-      curv = partition->substRates[changeState];
-      r =  drawRandBiUnif(chain, curv);
-      new_value = r;
-      chain->hastings*=curv/new_value;
+	  if(list[changeState]!=1)
+	    {
+	      list[changeState]=1;;      
+	      curv = partition->substRates[changeState];
+	      r =  drawRandBiUnif(chain, curv);
+	      new_value = r;
+	      chain->hastings*=curv/new_value;
  
-      while(new_value> RATE_MAX|| new_value< RATE_MIN)
-      {
-      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
-      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
-      }
-      }
-      break;
-      case BIUNIF_PERM_DISTR://TODO NOT used. Lower values than before (without subType)
-	drawPermutation(chain, list, chain->modelRemem.numSubsRates);
-	 curv = partition->substRates[list[state]];
-	 r =  drawRandBiUnif(chain, curv);
-       new_value = r;
-      while(new_value> RATE_MAX|| new_value< RATE_MIN){
-      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
-      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
-      }
+	      while(new_value> RATE_MAX|| new_value< RATE_MIN)
+		{
+		  if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+		  if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+		}
+	    }
+	  break;
+
+	  /* TODO activate and replace */
+	/* case BIUNIF_PERM_DISTR://TODO NOT used. Lower values than before (without subType) */
+	/*   drawPermutation(chain, list, chain->modelRemem.numSubsRates); */
+	/*   curv = partition->substRates[list[state]]; */
+	/*   r =  drawRandBiUnif(chain, curv); */
+	/*   new_value = r; */
+	/*   while(new_value> RATE_MAX|| new_value< RATE_MIN){ */
+	/*     if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value; */
+	/*     if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value; */
+	/*   } */
       
-       chain->hastings*=curv/new_value;
-	 break;
+	/*   chain->hastings*=curv/new_value; */
+	/*   break; */
 	 
-	case SINGLE_BIUNIF://TODO not used. Figure out error
-	  drawPermutation(chain,list, chain->modelRemem.numSubsRates);
-	 curv = partition->substRates[list[state]];
-	 r =  drawRandBiUnif(chain, curv);
-       new_value = r;
-      while(new_value> RATE_MAX|| new_value< RATE_MIN){
-      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
-      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
-      }
+	/* case SINGLE_BIUNIF://TODO not used. Figure out error */
+	/*   drawPermutation(chain,list, chain->modelRemem.numSubsRates); */
+	/*   curv = partition->substRates[list[state]]; */
+	/*   r =  drawRandBiUnif(chain, curv); */
+	/*   new_value = r; */
+	/*   while(new_value> RATE_MAX|| new_value< RATE_MIN){ */
+	/*     if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value; */
+	/*     if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value; */
+	/*   } */
       
-       chain->hastings*=curv/new_value;
-	 break;
+	/*   chain->hastings*=curv/new_value; */
+	/*   break; */
 	 
         default:
-          assert(0);
-        
-      
+	  {
+	    assert(0);
+	  }
 
-    }//end of switch
+	}//end of switch
       edit_subs_rates(chain,chain->modelRemem.model, changeState, new_value);
     }
   //recalculate eigens
 
-    exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
     
   /* TODO: need to broadcast rates here for parallel version ! */
 
@@ -722,6 +731,7 @@ static void simple_model_proposal_apply(state *chain, int pSubType)//llpqr
 // }
 
 
+
 static void perm_biunif_model_proposal_apply(state *chain, int pSubType)
 {
   tree *tr = chain->tr; 
@@ -766,7 +776,8 @@ static void perm_biunif_model_proposal_apply(state *chain, int pSubType)
 }
 
 
-static void single_biunif_model_proposal_apply(state *chain,int pSubType)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
+
+static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
   tree *tr = chain->tr; 
   //record the old one //TODO sufficient to store single value.
@@ -805,7 +816,7 @@ static void single_biunif_model_proposal_apply(state *chain,int pSubType)//NOTE 
   evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
 }
 
-static void all_biunif_model_proposal_apply(state *chain, int pSubType)
+static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
   
@@ -1079,31 +1090,38 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 
 
 
-static void random_branch_length_proposal_apply(state * chain, int pSubType)
+static void random_branch_length_proposal_apply(state * chain, proposalFunction *pf)
 {
+
+
+
   int numBranches = getNumBranches(chain->tr);
   const int num_branches = (chain->tr->mxtips * 2) - 3;
   int target_branch = drawRandInt(chain,num_branches); 
   node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
   
-    switch(pSubType)
-        {
-        case STANDARD://simple sliding window
-	     //for each branch get the current branch length
-	    //pull a uniform like
-	    //x = current, w =window
-	    //uniform(x-w/2,x+w/2)
-	  set_branch_length_sliding_window(chain,p, numBranches, chain, TRUE);
-	  break;
-        case EXP_DISTR:
-	  set_branch_length_exp(chain,p, numBranches, chain, TRUE);
-          break;
-	case BIUNIF_DISTR:
-	  set_branch_length_biunif(chain, p, numBranches, chain, TRUE);
-	  break;
-        default:
-          assert(0);
-        }
+    switch(pf->ptype)
+      {
+      case UPDATE_SINGLE_BL: 
+
+
+	//for each branch get the current branch length
+	//pull a uniform like
+	//x = current, w =window
+	//uniform(x-w/2,x+w/2)
+	set_branch_length_sliding_window(chain,p, numBranches, chain, TRUE);
+	break;
+	
+      case UPDATE_SINGLE_BL_EXP: 
+	set_branch_length_exp(chain,p, numBranches, chain, TRUE);
+	break;
+      case UPDATE_SINGLE_BL_BIUNIF: 
+
+	set_branch_length_biunif(chain, p, numBranches, chain, TRUE);
+	break;
+      default:
+	assert(0);
+      }
 
 
   chain->brLenRemem.single_bl_branch = target_branch;
@@ -1204,7 +1222,7 @@ static void recordFrequRates(state *chain, int model, int numFrequRates, double 
     prevFrequRates[i] = partition->frequencies[i];
 }
 
-void frequency_proposal_apply(state * chain, int pSubType)
+void frequency_proposal_apply(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
 
@@ -1315,311 +1333,311 @@ nodeptr select_random_subtree(state *chain, tree *tr)
 
 
 
-void printProposalType(proposal_type which_proposal)
+/* void printProposalType(proposal_type which_proposal) */
+/* { */
+/*   switch(which_proposal) */
+/*     { */
+/*     case E_SPR:  */
+/*       printf("E_SPR\n"); */
+/*       break;  */
+/*     case E_SPR_MAPPED:  */
+/*       printf("E_SPR_MAPPED\n"); */
+/*       break;  */
+/*     case UPDATE_MODEL :  */
+/*       printf("UPDATE_MODEL \n"); */
+/*       break;  */
+/*     case UPDATE_GAMMA :  */
+/*       printf("UPDATE_GAMMA \n"); */
+/*       break;  */
+/*     case UPDATE_GAMMA_EXP:  */
+/*       printf("UPDATE_GAMMA_EXP\n"); */
+/*       break;  */
+/*     case UPDATE_SINGLE_BL:  */
+/*       printf("UPDATE_SINGLE_BL\n"); */
+/*       break;  */
+/*     case UPDATE_SINGLE_BL_EXP :  */
+/*       printf("UPDATE_SINGLE_BL_EXP \n"); */
+/*       break;  */
+/*     case UPDATE_SINGLE_BL_BIUNIF:  */
+/*       printf("UPDATE_SINGLE_BL_BIUNIF\n"); */
+/*       break;  */
+/*     case UPDATE_MODEL_BIUNIF:  */
+/*       printf("UPDATE_MODEL_BIUNIF\n"); */
+/*       break;  */
+/*     case UPDATE_MODEL_SINGLE_BIUNIF:  */
+/*       printf("UPDATE_MODEL_SINGLE_BIUNIF\n"); */
+/*       break;  */
+/*     case UPDATE_MODEL_ALL_BIUNIF:  */
+/*       printf("UPDATE_MODEL_ALL_BIUNIF\n"); */
+/*       break;  */
+/*     case UPDATE_FREQUENCIES_BIUNIF:  */
+/*       printf("UPDATE_FREQUENCIES_BIUNIF\n"); */
+/*       break;  */
+/*     case UPDATE_MODEL_PERM_BIUNIF:  */
+/*       printf("UPDATE_MODEL_PERM_BIUNIF\n"); */
+/*       break;   */
+/* //PROPOSALADD printProposalType NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier. */
+      
+
+/*     default :  */
+/*       assert(0);  */
+/*     } */
+/* } */
+
+
+
+
+
+
+static void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
 {
-  switch(which_proposal)
+  proposalFunction ptrBdy; 
+  proposalFunction *ptr = &ptrBdy ; 
+
+  ptr->ptype = (proposal_type)type; 
+  ptr->initWeight = initParams->initWeights[type]; 
+
+  switch(type)
     {
-    case E_SPR: 
-      printf("E_SPR\n");
+    case E_SPR:
+      ptr->apply_func = extended_spr_apply; 
+      ptr->reset_func = extended_spr_reset; 
+      ptr->category = TOPOLOGY;       
+      ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
+      ptr->name = "eSPR"; 
       break; 
     case E_SPR_MAPPED: 
-      printf("E_SPR_MAPPED\n");
+      ptr->apply_func = extended_spr_apply; 
+      ptr->reset_func = extended_spr_reset; 
+      ptr->name = "eSPRMapped"; 
+      ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
+      ptr->category = TOPOLOGY; 
       break; 
-    case UPDATE_MODEL : 
-      printf("UPDATE_MODEL \n");
+    case UPDATE_MODEL: 
+      ptr->apply_func = simple_model_proposal_apply; 
+      ptr->reset_func = simple_model_proposal_reset; 
+      ptr->category = SUBSTITUTION_RATES; 
+      ptr->name = "modelSlidWin"; 
       break; 
-    case UPDATE_GAMMA : 
-      printf("UPDATE_GAMMA \n");
+    case UPDATE_GAMMA:      
+      ptr->apply_func = simple_gamma_proposal_apply; 
+      ptr->reset_func = simple_gamma_proposal_reset; 
+      ptr->category = RATE_HETEROGENEITY; 
+      ptr->name = "gammaSlidWin"; 
       break; 
     case UPDATE_GAMMA_EXP: 
-      printf("UPDATE_GAMMA_EXP\n");
+      ptr->apply_func = simple_gamma_proposal_apply; 
+      ptr->reset_func = simple_gamma_proposal_reset; 
+      ptr->category = RATE_HETEROGENEITY; 
+      ptr->name = "gammaExp"; 
       break; 
     case UPDATE_SINGLE_BL: 
-      printf("UPDATE_SINGLE_BL\n");
+      ptr->apply_func	=  random_branch_length_proposal_apply;
+      ptr->reset_func =  random_branch_length_proposal_reset;
+      ptr->category = BRANCH_LENGTHS; 
+      ptr->name = "singleBLSlidWin"; 
       break; 
-    case UPDATE_SINGLE_BL_EXP : 
-      printf("UPDATE_SINGLE_BL_EXP \n");
+    case UPDATE_SINGLE_BL_EXP: 
+      ptr->apply_func	=  random_branch_length_proposal_apply;
+      ptr->reset_func =  random_branch_length_proposal_reset;
+      ptr->category = BRANCH_LENGTHS; 
+      ptr->name  = "singleBlExp"; 
       break; 
     case UPDATE_SINGLE_BL_BIUNIF: 
-      printf("UPDATE_SINGLE_BL_BIUNIF\n");
+      ptr->apply_func	=  random_branch_length_proposal_apply;
+      ptr->reset_func =  random_branch_length_proposal_reset;
+      ptr->name = "singleBLBiunif"; 
+      ptr->category = BRANCH_LENGTHS; 
+      break; 
+    case UPDATE_MODEL_SINGLE_BIUNIF:       
+      ptr->apply_func	=  single_biunif_model_proposal_apply;
+      ptr->reset_func =  simple_model_proposal_reset;
+      ptr->name = "singleModelBiunif"; 
+      ptr->category = SUBSTITUTION_RATES; 
       break; 
     case UPDATE_MODEL_BIUNIF: 
-      printf("UPDATE_MODEL_BIUNIF\n");
-      break; 
-    case UPDATE_MODEL_SINGLE_BIUNIF: 
-      printf("UPDATE_MODEL_SINGLE_BIUNIF\n");
+      ptr->name = "modelBiunif"; 
+      ptr->category = SUBSTITUTION_RATES; 
+      ptr->apply_func = single_biunif_model_proposal_apply; 
+      ptr->reset_func = simple_model_proposal_reset; 
       break; 
     case UPDATE_MODEL_ALL_BIUNIF: 
-      printf("UPDATE_MODEL_ALL_BIUNIF\n");
+      ptr->apply_func = all_biunif_model_proposal_apply; 
+      ptr->reset_func = simple_model_proposal_reset; 
+      ptr->name = "modelAllBiunif"; 
+      ptr->category = SUBSTITUTION_RATES; 
       break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
-      printf("UPDATE_FREQUENCIES_BIUNIF\n");
-      break; 
+      ptr->apply_func = frequency_proposal_apply; 
+      ptr->reset_func = frequency_proposal_reset; 
+      ptr->name = "freqBiunif"; 
+      ptr->category = FREQUENCIES; 
+      break;
     case UPDATE_MODEL_PERM_BIUNIF: 
-      printf("UPDATE_MODEL_PERM_BIUNIF\n");
-      break;  
-//PROPOSALADD printProposalType NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
-      
-
+      ptr->apply_func = NULL; 	/* TODO */
+      ptr->reset_func = simple_model_proposal_reset; 
+      ptr->name = "modelPermBiunif"; 
+      ptr->category = SUBSTITUTION_RATES; 
+      break; 
+      /* TODO re-install PROPOSALADD anchor for script   */
     default : 
-      assert(0); 
-    }
-}
-
-
-
-
-
-void getProposalFunctions(proposal_type ptype, proposal_functions* pF)
-{
-  /* TODO proposal add for script  */
-
- 
-  switch(ptype)
-    {
-    case  UPDATE_MODEL:
-      pF->ptype =  UPDATE_MODEL;
-      pF->pSubType = STANDARD; 
-      pF->apply_func =  simple_model_proposal_apply;
-      pF->reset_func =  simple_model_proposal_reset;
-      pF->get_prior_ratio = get_branch_length_prior;
-      break;
-
-    case  UPDATE_SINGLE_BL:
-      pF->ptype = UPDATE_SINGLE_BL;
-      pF->pSubType = STANDARD; 
-      pF->apply_func =  random_branch_length_proposal_apply;
-      pF->reset_func =  random_branch_length_proposal_reset;
-      pF->get_prior_ratio =  get_branch_length_prior ;
-      break;
-
-    case  UPDATE_SINGLE_BL_EXP:
-      pF->ptype = UPDATE_SINGLE_BL_EXP;
-      pF->pSubType = EXP_DISTR; 
-      pF->apply_func	=  random_branch_length_proposal_apply;
-      pF->reset_func =  random_branch_length_proposal_reset;
-      pF->get_prior_ratio =  get_branch_length_prior ;
-      break;
-
-    case  UPDATE_GAMMA:
-      pF->ptype = UPDATE_GAMMA;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  simple_gamma_proposal_apply;
-      pF->reset_func =  simple_gamma_proposal_reset;
-      pF->get_prior_ratio =   get_alpha_prior;
-      break;
-
-    case  UPDATE_GAMMA_EXP:
-      pF->ptype = UPDATE_GAMMA_EXP;
-      pF->pSubType = EXP_DISTR; 
-      pF->apply_func	=  simple_gamma_proposal_apply;
-      pF->reset_func =  simple_gamma_proposal_reset;
-      pF->get_prior_ratio =   get_alpha_prior;
-      break;
-
-    case  UPDATE_SINGLE_BL_BIUNIF:
-      pF->ptype = UPDATE_SINGLE_BL_BIUNIF;
-      pF->pSubType = BIUNIF_DISTR; 
-      pF->apply_func	=  random_branch_length_proposal_apply;
-      pF->reset_func =  random_branch_length_proposal_reset;
-      pF->get_prior_ratio =  get_branch_length_prior;
-      break;
-
-    case  UPDATE_MODEL_BIUNIF:
-      pF->ptype = UPDATE_MODEL_BIUNIF;
-      pF->pSubType = BIUNIF_DISTR; 
-      pF->apply_func	=  simple_model_proposal_apply;
-      pF->reset_func =  simple_model_proposal_reset;
-      pF->get_prior_ratio =  get_branch_length_prior;
-      break;
-	
-    case  UPDATE_MODEL_SINGLE_BIUNIF:
-      pF->ptype = UPDATE_MODEL_SINGLE_BIUNIF;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  single_biunif_model_proposal_apply;
-      pF->reset_func =  simple_model_proposal_reset;
-      pF->get_prior_ratio =  get_branch_length_prior;
-      break;
-
-    case  UPDATE_MODEL_ALL_BIUNIF:
-      pF->ptype = UPDATE_MODEL_ALL_BIUNIF;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  all_biunif_model_proposal_apply;
-      pF->reset_func =  simple_model_proposal_reset;
-      pF->get_prior_ratio =  get_branch_length_prior;
-      break;
-
-    case  UPDATE_MODEL_PERM_BIUNIF:
-      pF->ptype = UPDATE_MODEL_PERM_BIUNIF;
-      //pF->pSubType = BIUNIF_PERM_DISTR; 
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  perm_biunif_model_proposal_apply;
-      //pF->apply_func	=  simple_model_proposal_apply;
-      pF->reset_func =  simple_model_proposal_reset;
-      pF->get_prior_ratio =  get_branch_length_prior;
-      break;
-	
-    case  UPDATE_FREQUENCIES_BIUNIF:
-      pF->ptype = UPDATE_FREQUENCIES_BIUNIF;
-      pF->pSubType = STANDARD; 
-      pF->apply_func	=  frequency_proposal_apply;
-      pF->reset_func =  frequency_proposal_reset;
-      pF->get_prior_ratio =  get_frequency_prior;
-      break;
-
-
-    case  E_SPR:
-      pF->ptype = E_SPR;      
-      //pF->pSubType = STANDARD; //TODO change back to this and implement other option as propposal
-      pF->pSubType = SPR_ADJUST;
-      pF->apply_func =  extended_spr_apply;
-      pF->reset_func =  extended_spr_reset;
-      pF->get_prior_ratio =   get_branch_length_prior;
-      break;
-
-    case E_SPR_MAPPED:
-      pF->ptype = E_SPR_MAPPED; 
-      pF->pSubType = SPR_MAPPED; 
-      pF->apply_func =  extended_spr_apply;
-      pF->reset_func =  extended_spr_reset;
-      pF->get_prior_ratio =   get_branch_length_prior;
-      break;
-      
-      //PROPOSALADD getProposalFunctions NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
-
-    default : 
-      assert(0); 
-    }
-}
-
-
-/* so here the idea would be to randomly choose among proposals? we can use typedef enum to label each, and return that */ 
-static proposal_type select_proposal_type(state * chain)
-{
-  chain->newprior = chain->brLenRemem.bl_prior; //TODO Why is this here? 
-  return drawSampleProportionally(chain,chain->proposalWeights, NUM_PROPOSALS) ; 
-}
-
-
-
-
-void resetSuccessCounter(int runid)
-{
-  state *start =  gAInfo.allChains + (runid * gAInfo.numberCoupledChains) ; 
-  
-  for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
-    {
-      state *chain = start + i ; 
-      memset(chain->rejectedProposals, 0 , sizeof(int) * NUM_PROPOSALS); 
-      memset(chain->acceptedProposals, 0 , sizeof(int) * NUM_PROPOSALS); 
-    }
-}
-
-
-void step(state *chain)
-{
-  tree *tr = chain->tr;   
-
-  proposal_type which_proposal;
-  double testr;
-  double acceptance;
-
-  // just for validation (make sure we compare the same)
-  evaluateGenericWrapper(chain, tr->start, FALSE);
-
-  tr->startLH = tr->likelihood;
-
-  // select proposal type
-  which_proposal = select_proposal_type( chain );
-    
-  proposal_functions pF; 
-  getProposalFunctions(which_proposal, &pF); 
-
-
-  // apply the proposal function  
-  pF.apply_func(chain, pF.pSubType);
-
-  // FIXME: why is this here?
-  if (chain->currentGeneration == 0 )
-    {
-      chain->curprior = chain->newprior;
-    }
-  //     PRINT("proposal done, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
-
-  //proposalTime += gettime() - t;
-  /* decide upon acceptance */
-  testr = drawRandDouble01(chain);
-
-  //should look something like 
-  /* acceptance = fmin(1,(chain->hastings) * 
-     (exp(chain->newprior-chain->curprior)) * (exp(chain->tr->likelihood-chain->tr->startLH)));*/ 
-
-  double myHeat = getChainHeat(chain ) ; 
-
-  acceptance = fmin(1,(chain->hastings) * 
-		    /* TODO for chain swapping ratio must be replaced again by proper prior   */
-		    pF.get_prior_ratio(chain) 
-		    /* (chain->newprior/chain->curprior) */
-		    * (exp((tr->likelihood - tr->startLH) * myHeat)  ) 
-		    );
-
-
-  assert(which_proposal < NUM_PROPOSALS); 
-      
-  if(testr < acceptance)
-    {
-#ifdef DEBUG_SHOW_EACH_PROPOSAL
-      if(processID == 0)
-	{
-	  printInfo(chain, "accepting\t");   
-	  printProposalType(which_proposal); 
-	}
-#endif
-      chain->acceptedProposals[which_proposal]++; 
-      chain->totalAccepted++;
-      // chain->proposalWeights[which_proposal] /= chain->penaltyFactor;
-      penalize(chain, which_proposal, 1);
-
-      tr->startLH = tr->likelihood;  //new LH
-      chain->curprior = chain->newprior;          
-    }
-  else
-    {
-#ifdef DEBUG_SHOW_EACH_PROPOSAL
-      if(processID == 0)
-	{
-	  printInfo(chain, "rejecting\t");   
-	  printProposalType(which_proposal); 
-	}
-#endif
-      pF.reset_func(chain); 
-      /* dispatch_proposal_reset(which_proposal,chain); */
-      chain->rejectedProposals[which_proposal]++;
-      chain->totalRejected++;
-      //chain->proposalWeights[which_proposal] *= chain->penaltyFactor; 
-      penalize(chain, which_proposal, 0);
-
-
-
-#if 0       
-      /* probably a bad idea to comment that out. But let's assume
-	 that we can do a verification, whenever we call evaluate. 
-	 Then this here is not necessary.  */
-
-      expensiveVerify(tr);
-
-      // just for validation
-      if(fabs(tr->startLH - tr->likelihood) > 1.0E-15)//TODO change back to 1.0E-15
-      	{
-      	  PRINT("WARNING: LH diff %.20f\n", tr->startLH - tr->likelihood);
-      	  PRINT("after reset, iter %d tr LH %f, startLH %f\n", chain->currentGeneration, tr->likelihood, tr->startLH);
-      	}
-      assert(fabs(tr->startLH - tr->likelihood) < 0.1);
-#endif
+      {
+	printf("unknown value %d\n",type ); 
+	assert(0) ; 
+      }
     }
   
+  *result = NULL; 
+  if(ptr->initWeight != 0)
+    {
+      *result = exa_calloc(1,sizeof(proposalFunction)); 
+      /* memcpy(*result, ptr, sizeof(proposalFunction));  */
+      (*result)->apply_func = ptr->apply_func;
+      (*result)->reset_func = ptr->reset_func;
+      (*result)->name = ptr->name;
+      (*result)->category = ptr->category;
+      (*result)->ptype = ptr->ptype ;
+      (*result)->parameters = ptr->parameters; 
+      (*result)->initWeight = ptr->initWeight;
+      (*result)->currentWeight = ptr->initWeight;
+    }  
+}
 
+
+
+
+
+/**
+   @brief Normalizes the weights of the proposals in this category
+ */
+void normalizePropSubCats(state *chain)
+{
+  double* catWeights = exa_calloc(NUM_PROP_CATS + 1,sizeof(double)); 
+
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      assert(pf->category); 
+      catWeights[pf->category] +=  pf->currentWeight;       
+    }
+
+  for(int i= 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      pf->currentWeight /= catWeights[pf->category]; 
+    }
+
+  exa_free(catWeights); 
+}
+
+
+/**
+   @brief normalizes the categories  
+ */
+void normalizeCategories(state *chain)
+{
+  double sum = 0.; 
+  for(int i = 0; i < NUM_PROP_CATS; ++i)
+    sum += chain->categoryWeights[i]; 
+  for(int i = 0; i < NUM_PROP_CATS; ++i)
+    chain->categoryWeights[i] /= sum;   
+}
+
+
+
+
+void printAllProposalWeights(state *chain)
+{
+  if(processID != 0)
+    return; 
+  
+  printf("cat weights: TOPO=%f\tBL=%f\tFREQ=%f\tSUBST=%f\tHET=%f\n", 
+	 chain->categoryWeights[0],
+	 chain->categoryWeights[1],
+	 chain->categoryWeights[2],
+	 chain->categoryWeights[3],
+	 chain->categoryWeights[4] ); 
+
+  printf("rel. prop weihgts: "); 
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      printf("\t%s=%f", pf->name, pf->currentWeight);       
+    }
+  printf("\n"); 
+}
+
+
+
+
+
+/**
+   @brief   Initializes the proposals based on weights given in the config file. 
+
+   Also normalizes all weights to 1.   
+
+ */
+void setupProposals(state *chain, initParamStruct *initParams)
+{
+  int ctr = 0; 
+
+  proposalFunction **pfs = exa_calloc(NUM_PROPOSALS, sizeof(proposalFunction*));  
+  for(int i = 0; i < NUM_PROPOSALS; ++i)
+    {
+      proposalFunction *pf = NULL; 
+      initProposalFunction((proposal_type)i, initParams, &pf); 
+      if(pf != (proposalFunction*)NULL)
+	pfs[ctr++] = pf; 
+    }  
+  chain->numProposals = ctr; 
+  chain->proposals = pfs; 
+
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      chain->categoryWeights[pf->category-1] += pf->currentWeight; 
+    }
+  normalizeCategories(chain);  
+  normalizePropSubCats(chain); 
+  
+  printAllProposalWeights(chain);
+}
+
+
+
+/**
+   @brief Resets all counters that inform about the number of
+   accepted/rejected states.
+ */ 
+void resetSuccessCounters(state *chain)
+{
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      chain->proposals[i]->successCtr.acc = 0; 
+      chain->proposals[i]->successCtr.rej = 0; 
+    }
+} 
+
+
+void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted) 
+{
+#ifdef DEBUG_SHOW_EACH_PROPOSAL
+  if(processID == 0)
+    {
+      if(accepted)
+	printInfo(chain, "accepting\t");   
+      else 
+	printInfo(chain, "rejecting\t");   	  
+      printf("%s\n" ,pf->name); 
+    }
+#endif
+}
+
+
+void debug_checkTreeConsistency(state *chain)
+{
 #ifdef DEBUG_LNL_VERIFY
+  tree *tr = chain->tr; 
   int count = 0; 
   traverseAndCount(tr->start->back, &count, tr); 
   if(count != 2 * tr->mxtips - 3 )
@@ -1632,9 +1650,138 @@ void step(state *chain)
       assert(2 * tr->mxtips-3 == count); 
     }
 #endif
+}
 
 
-  if(chain->couplingId == 0 && (chain->currentGeneration % chain->samplingFrequency) == chain->samplingFrequency - 1  )
+
+
+
+
+/**
+   @brief draws a proposal function.
+
+   Notice: this could be extended later, if we decide to make this
+   dependent on the previous state.
+   
+   Furthermore, we must be sure now that category weights and relative
+   proposal weights sum up to 1 each. 
+   
+ */ 
+void drawProposalFunction(state *chain, proposalFunction **result )
+{  
+  
+  *result = NULL; 
+  category_t
+    cat = drawSampleProportionally(chain,chain->categoryWeights, NUM_PROP_CATS) + 1; /* it is 1-based */
+
+  /* printInfo(chain, "drawing proposal; category is %d\n"), cat;  */
+  
+  double sum = 0; 
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      if(pf->category == cat)
+	sum += pf->currentWeight; 
+    }
+  assert(fabs(sum - 1.) < 0.000001); 
+
+  double r = drawRandDouble01(chain);
+  /* printf("numProp=%d\n", chain->numProposals);  */
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      if(pf->category == cat)
+	{
+	  if(  r < pf->currentWeight)
+	    {
+	      *result =  pf; 
+	      return; 
+	    }
+	  else 
+	    {
+	      r -= pf->currentWeight; 
+	    }
+	}
+    }
+
+  assert(result != NULL); 
+}
+
+
+void step(state *chain)
+{
+  tree *tr = chain->tr;   
+
+  double prevLnl = tr->likelihood;    
+
+  double myHeat = getChainHeat(chain ) ; 
+
+  // just for validation (make sure we compare the same)
+  evaluateGenericWrapper(chain, tr->start, FALSE);
+
+  proposalFunction *pf = NULL;   
+  drawProposalFunction(chain, &pf);
+
+  // apply the proposal function  
+  pf->apply_func(chain, pf);
+
+  // FIXME: why is this here?
+  if (chain->currentGeneration == 0 )
+    {
+      chain->curprior = chain->newprior;
+    }
+
+
+  //     PRINT("proposal done, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
+
+  /* decide upon acceptance */
+  double testr = drawRandDouble01(chain);
+
+  //should look something like 
+
+
+  double acceptance = fmin(1,(chain->hastings) 
+			   /* TODO for chain swapping ratio must be replaced again by proper prior   */
+			   /* * pF.get_prior_ratio(chain)  */
+			   /* (chain->newprior/chain->curprior) */
+			   * (exp((tr->likelihood - prevLnl) * myHeat)  ) 
+			   );
+
+
+  /* assert(which_proposal < NUM_PROPOSALS);  */
+      
+  debug_printAccRejc(chain, pf, testr < acceptance); 
+
+  if(testr < acceptance)
+    {
+      pf->successCtr.acc++;
+      chain->likelihood = tr->likelihood; 
+
+      /* 
+	 commenting this out for now because of drastic changes: but
+	 we should re-enable that later and do a category-wide tuning
+	 of moves	 
+       */
+      /* penalize(chain, which_proposal, 1); */
+      
+      /* TODO commeted that out for reasons of honesty */
+      /* chain->curprior = chain->newprior;           */
+    }
+  else
+    {
+      pf->reset_func(chain); 
+      pf->successCtr.rej++;
+      chain->likelihood = prevLnl; 
+      
+      /* TODO re-enable */
+      /* penalize(chain, which_proposal, 0); */
+    }
+  
+  debug_checkTreeConsistency(chain); 
+
+  if( 
+     chain->couplingId == 0	/* must be the cold chain  */
+     && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
     {
       if(processID == 0)
 	{
@@ -1642,95 +1789,13 @@ void step(state *chain)
 
  	  chainInfo(chain); 
 	  /* chainInfoOutput(chain);  // , sum_radius_accept, sum_radius_reject      	   */
-	  resetSuccessCounter(chain->id / gAInfo.numberCoupledChains);
+	  /* resetSuccessCounter(chain->id / gAInfo.numberCoupledChains); */
 	}
 
       if(chain->currentGeneration >  BURNIN)
 	addBipartitionsToHash(tr, chain ); 
-
     }
 
-  chain->likelihood = tr->likelihood; 
-  
   chain->currentGeneration++; 
 }
 
-
-
-/****************************************************************************************/
-/* garbage : this is code that was not used in the initial version, but may be of use   */
-/****************************************************************************************/
-
-
-
-
-
-#if 0 
-
-
-/*
- * should be sliding window proposal
- */
-
-static boolean simpleBranchLengthProposalApply(state * chain)
-{
-   
-  //for each branch get the current branch length
-  //pull a uniform like
-  //x = current, w =window
-  //uniform(x-w/2,x+w/2)
-
-  update_all_branches(chain, FALSE);
-  evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* update the tr->likelihood */
-
-  //for prior, just using exponential for now
-  //calculate for each branch length
-  // where lambda is chosen and x is the branch length
-  //lambda * exp(-lamba * x)
-
-  //only calculate the new ones
-  //
-  return TRUE;
-}
-
-static void simpleBranchLengthProposalReset(state * chain)
-{
-  update_all_branches(chain, TRUE);
-}
-
-static void update_all_branches(state * s, boolean resetBL)
-{
-  int updated_branches = 0;
-  assert(isTip(s->tr->start->number, s->tr->mxtips));
-  /* visit each branch exactly once */
-  traverse_branches(s->tr->start->back, &updated_branches, s, resetBL);
-  assert(updated_branches == s->tr->mxtips + s->tr->mxtips - 3);
-}
-
-
-static void traverse_branches(nodeptr p, int *count, state * s, boolean resetBL)
-{
-  nodeptr q;
-  //printf("current BL at %db%d: %f\n", p->number, p->back->number, p->z[0]);
-  if(resetBL)
-    reset_branch_length(p, s->tr->numBranches);
-  else//can allow for other methods later
-    set_branch_length_sliding_window(p, s->tr->numBranches, s, TRUE);
-  *count += 1;
-
-
-  if (! isTip(p->number, s->tr->mxtips)) 
-    {                                  /*  Adjust descendants */
-      q = p->next;
-      while (q != p) 
-	{
-	  traverse_branches(q->back, count, s, resetBL);
-	  q = q->next;
-	}   
-      // WTF? in each recursion?
-      newviewGeneric(s->tr, p, FALSE);     // not sure if we need this
-    }
-}
-
-
-#endif

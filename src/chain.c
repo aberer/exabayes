@@ -16,6 +16,7 @@
 
 #include "main-common.h"
 
+
 #include "chain.h"
 #include "proposals.h"
 #include "output.h"
@@ -33,8 +34,6 @@
 /* #define DEBUG_BL */
 
 void initDefaultValues(state *theState, tree *tr); 
-void addInitParameters(state *curstate, initParamStruct *initParams); 
-
 void exa_makeRandomTree(tree *tr);  
 
 void printInfo(state *chain, const char *format, ...)
@@ -211,7 +210,17 @@ void preInitTree(tree *tr)
 }
 
 
-void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains, initParamStruct **initParamsPtr)
+
+/**
+   @brief An overloaded initialization function for all the chains. 
+
+   This function should initialize all chain data structures and parse
+   the config file.
+
+   This function also decides which aln,tr structures are assigned to
+   which chains.
+ */ 
+void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains)
 {
   gAInfo.successFullSwitchesBatch = 0; 
 
@@ -219,14 +228,17 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  *initParamsPtr = exa_calloc(1,sizeof(initParamStruct)); 
-  /* initParamStruct *initParams = *initParamsPtr;  */
+  initParamStruct *initParams = exa_calloc(1,sizeof(initParamStruct)); 
+  
+  parseConfigWithNcl(configFileName, &initParams);
 
-  parseConfigWithNcl(configFileName, initParamsPtr);
-
-  gAInfo.numberOfRuns =   (*initParamsPtr)->numIndiChains; 
-  gAInfo.numberCoupledChains = (*initParamsPtr)->numCoupledChains; 
+  gAInfo.samplingFrequency = initParams->samplingFrequency; 
+  gAInfo.diagFreq = initParams->diagFreq; 
+  gAInfo.numberOfRuns =   initParams->numIndiChains; 
+  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains; 
+
+
 
 #ifdef MC3_SPACE_FOR_TIME
   int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
@@ -260,14 +272,16 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
 
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
+  gAInfo.bvHash = ht; 
   
   for(int i = 0; i < totalNumChains; ++i)
     { 
       state *theChain = *resultIndiChains + i;     
-      theChain->bvHash = ht; 
 
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 
+
+      theChain->categoryWeights = exa_calloc(NUM_PROP_CATS, sizeof(double)); 
       
 #ifdef MC3_SPACE_FOR_TIME
       /* important NOTICE : in this scheme, we assume, that there is
@@ -289,18 +303,19 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #endif
 #endif
 
-
-
       tree *myTree = theChain->tr; 
       myTree->bitVectors = tr->bitVectors; 
-
+      
       initDefaultValues(theChain, myTree);
-      addInitParameters(theChain, *initParamsPtr); 
-      normalizeProposalWeights(theChain); 
+
+      setupProposals(theChain, initParams); 
+      
+      /* addInitParameters(theChain, *initParamsPtr);  */
+      /* normalizeProposalWeights(theChain);  */
 
       /* init the param dump  */
       initParamDump(myTree, &(theChain->dump)); 
-      
+
       for(int i = 0; i < getNumberOfPartitions(myTree); ++i ) 
 	exa_initReversibleGTR(theChain,i);
 

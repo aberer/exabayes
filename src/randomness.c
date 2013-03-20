@@ -11,7 +11,6 @@
 #include <assert.h>
 #include <inttypes.h>
 
-#include "rng.h"
 
 #include "common.h"
 #include "axml.h"
@@ -153,27 +152,31 @@ double drawRandBiUnif(state *chain, double x)
 /* } */
 
 
-/* draw r according to distribution given by weights. NOTE sum of weights is not required to be 1.0*/
+/**
+   @brief draw r according to distribution given by weights. 
+
+   NOTE sum of weights is not required to be 1.0
+*/
 int drawSampleProportionally(state *chain,  double *weights, int numWeight )
 {
   double r = drawRandDouble01(chain);
-  
+ 
   double sum=0.0;
-  float lower_bound = 0.0;
+  double lower_bound = 0.0;
   size_t i = 0;
   
   assert( numWeight > 0 );
   
   for( i = 0; i < numWeight ; ++i ) 
     {
-     sum+=weights[i]; 
+      sum+=weights[i]; 
     }
-    assert(sum>0);
-    r=r*sum;
-  
+  assert(sum>0);
+  r=r*sum;
+    
   for( i = 0; i < numWeight ; ++i ) 
     {
-      float upper_bound = lower_bound + weights[i];
+      double upper_bound = lower_bound + weights[i];
     
       if( r >= lower_bound && r < upper_bound ) 
 	return i ;

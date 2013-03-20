@@ -1,5 +1,3 @@
-
-
 /**
    @file bayes.c
  
@@ -25,33 +23,9 @@
 #include  "adapters.h"
 #include "eval.h"
 
+#include "proposals.h"
+
 extern double masterTime; 
-
-
-
-void addInitParameters(state *curstate, initParamStruct *initParams)
-{
-  curstate->proposalWeights[E_SPR] = initParams->initSPRWeight;
-  curstate->proposalWeights[UPDATE_GAMMA] = initParams->initGammaWeight;
-  curstate->proposalWeights[UPDATE_GAMMA_EXP] = initParams->initGammaExpWeight;
-  curstate->proposalWeights[UPDATE_MODEL] = initParams->initModelWeight;
-  curstate->proposalWeights[UPDATE_SINGLE_BL] = initParams->initSingleBranchWeight;
-  curstate->proposalWeights[UPDATE_SINGLE_BL_EXP] = initParams->initSingleBranchExpWeight;
-curstate->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = initParams->initSingleBranchBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_BIUNIF] = initParams->initModelBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = initParams->initModelSingleBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = initParams->initModelAllBiunifWeight;
-curstate->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = initParams->initModelPermBiunifWeight;
-curstate->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = initParams->initFrequenciesWeight;
-curstate->proposalWeights[E_SPR_MAPPED] = initParams->initEsprMappedWeight;
-  //PROPOSALADD addInitParameters NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
-  curstate->numGen = initParams->numGen;
-  curstate->penaltyFactor = initParams->initPenaltyFactor;
-  curstate->samplingFrequency = initParams->samplingFrequency;
-  curstate->eSprStopProb = initParams->eSprStopProb;
-}
-
-
 
 
 void initDefaultValues(state *theState, tree *tr)
@@ -81,26 +55,24 @@ void initDefaultValues(state *theState, tree *tr)
   theState->gammaRemem.gm_sliding_window_w = 0.75;
   theState->brLenRemem.single_bl_branch = -1;
 
-
-  theState->proposalWeights[E_SPR] = 0.0; 
-  theState->proposalWeights[UPDATE_MODEL] = 0.0; 
-  theState->proposalWeights[UPDATE_GAMMA] = 0.0; 
-  theState->proposalWeights[UPDATE_GAMMA_EXP] = 0.0; 
-  theState->proposalWeights[UPDATE_SINGLE_BL] = 0.0;   
-  theState->proposalWeights[UPDATE_SINGLE_BL_EXP] = 0.0;   
-theState->proposalWeights[UPDATE_SINGLE_BL_BIUNIF] = 0.0;
-theState->proposalWeights[UPDATE_MODEL_BIUNIF] = 0.0;
-theState->proposalWeights[UPDATE_MODEL_SINGLE_BIUNIF] = 0.0;
-theState->proposalWeights[UPDATE_MODEL_ALL_BIUNIF] = 0.0;
-theState->proposalWeights[UPDATE_MODEL_PERM_BIUNIF] = 0.0;
-theState->proposalWeights[UPDATE_FREQUENCIES_BIUNIF] = 0.0;
-theState->proposalWeights[E_SPR_MAPPED] = 0.0;
-  //PROPOSALADD initDefaultValues NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
-  
   theState->numGen = 1000000;
   theState->penaltyFactor = 0.0;
 }
 
+
+void swpDouble(double *a, double *b)
+{
+  double tmp = *b; 
+  *b = *a; 
+  *a = tmp; 
+}
+
+void swpInt(int *a, int *b)
+{
+  int tmp = *b;
+  *b = *a; 
+  *a = tmp; 
+}
 
 
 
@@ -119,16 +91,13 @@ void switchChainState(state *chains)
   while(chainA == chainB)
     chainB = drawGlobalRandIntBound(numChain); 
 
-  /* int absIdA =  chains[chainA].id,  */
-  /*   absIdB = chains[chainB].id;  */
-
   /* 
      IMPORTANT TODO
 
      this currently assumes that we have a non-informative
      prior. Allow for changes!
   */
-
+  
   double heatA = getChainHeat(chains + chainA ) , 
     heatB  = getChainHeat(chains + chainB); /*  */
 
@@ -143,24 +112,20 @@ void switchChainState(state *chains)
     aA = lnlA * heatA,
     bB =  lnlB *  heatB; 
 
-  double accRatio = ( aB + bA )  - (aA + bB ); 
+  double accRatio = exp(( aB + bA )  - (aA + bB )); 
 
   /* do the swap */
-  if( drawGlobalDouble01()  < exp(accRatio))
+  if( drawGlobalDouble01()  < accRatio)
     {
+      state *a = chains + chainA,
+	*b = chains  + chainB ; 
 
-      int tmp = chains[chainA].couplingId ;
-      chains[chainA].couplingId =  chains[chainB].couplingId;
-      chains[chainB].couplingId = tmp ;
-
-      int tmpArray[NUM_PROPOSALS] ; 
-      memcpy(tmpArray, chains[chainB].acceptedProposals, sizeof(int) * NUM_PROPOSALS); 
-      memcpy(chains[chainB].acceptedProposals, chains[chainA].acceptedProposals, sizeof(int) * NUM_PROPOSALS); 
-      memcpy(chains[chainA].acceptedProposals, tmpArray, sizeof(int) * NUM_PROPOSALS); 
-
-      memcpy(tmpArray, chains[chainB].rejectedProposals, sizeof(int) * NUM_PROPOSALS); 
-      memcpy(chains[chainB].rejectedProposals, chains[chainA].rejectedProposals, sizeof(int) * NUM_PROPOSALS); 
-      memcpy(chains[chainA].rejectedProposals, tmpArray, sizeof(int) * NUM_PROPOSALS); 
+      swpInt(&(a->couplingId), &(b->couplingId)); 
+      for(int i = 0; i < a->numProposals;++i)
+	{
+	  swpInt(&(a->proposals[i]->successCtr.acc), &(b->proposals[i]->successCtr.acc)); 
+	  swpInt(&(a->proposals[i]->successCtr.rej), &(b->proposals[i]->successCtr.rej)); 
+	}
 
       gAInfo.successFullSwitchesBatch++; 
     } 
@@ -228,14 +193,24 @@ void executeOneRun(state *chains, int gensToRun )
 
 
 
-void runChains(state *allChains,   int diagFreq)
+
+/**
+   @brief run all chains for a given number of generations
+ */
+void runChains(state *allChains, int diagFreq)
 {
   boolean hasConverged = FALSE;   
   while(NOT hasConverged)
     {      
       for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-	executeOneRun(allChains + (i * gAInfo.numberCoupledChains), diagFreq); 
-      
+	{
+	  state *relChains =  allChains + (i * gAInfo.numberCoupledChains); 
+	  executeOneRun(relChains, diagFreq); 
+	  
+	  for(int j = 0; j < gAInfo.numberCoupledChains; ++j)
+	    resetSuccessCounters(relChains + j); 
+	}
+
       hasConverged = convergenceDiagnostic(allChains, gAInfo.numberOfRuns); 
     }
 }
@@ -244,20 +219,18 @@ void runChains(state *allChains,   int diagFreq)
 void exa_main(tree *tr, analdef *adef)
 {   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
-  initParamStruct *initParams = NULL;
 
   timeIncrement = gettime();
   
-  initializeIndependentChains(tr, adef,  &indiChains, &initParams); 
+  initializeIndependentChains(tr, adef,  &indiChains); 
 
   assert(gAInfo.numberCoupledChains > 0);
   /* TODO more bla bla  */  
 
-  int diagFreq = initParams->diagFreq; 
-  
   gAInfo.allChains = indiChains; 
-
-  runChains(indiChains, diagFreq); 
+  
+  assert(gAInfo.diagFreq != 0 ); 
+  runChains(indiChains, gAInfo.diagFreq); 
 
   if(processID == 0)
     {

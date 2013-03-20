@@ -12,7 +12,7 @@
 void saveTreeStateToChain(state *chain); 
 void applyChainStateToTree(state *chain); 
 void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z ); 
-void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains, initParamStruct **initParamsPtr); 
+void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains); 
 void printInfo(state *chain, const char *format, ...);
 double getChainHeat(state *chain ); 
 

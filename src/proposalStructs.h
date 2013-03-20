@@ -9,43 +9,27 @@
 #ifndef _PROPOSAL_STRUCTS_H
 #define _PROPOSAL_STRUCTS_H
 
+
+#include "proposalType.h"
 #include "config.h"
 #include "rng.h"
 
 
-#define STANDARD 0 
-#define SPR_MAPPED 1 
-#define SPR_ADJUST 2
-
-#define EXP_DISTR 1
-#define BIUNIF_DISTR 2
-#define BIUNIF_PERM_DISTR 3
-#define SINGLE_BIUNIF 4
-
-
-
-/* okay, so defining enums this way is rather save  */
-#define NUM_PROPOSALS (13) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
-typedef enum
+typedef struct
 {
-E_SPR = 0,
-UPDATE_MODEL = 1 ,
-UPDATE_GAMMA = 2 ,
-UPDATE_GAMMA_EXP=3,
-UPDATE_SINGLE_BL = 4,
-UPDATE_SINGLE_BL_EXP = 5 ,
-UPDATE_SINGLE_BL_BIUNIF = 6,
-UPDATE_MODEL_BIUNIF = 7,
-UPDATE_MODEL_SINGLE_BIUNIF = 8,
-UPDATE_MODEL_ALL_BIUNIF = 9,
-UPDATE_MODEL_PERM_BIUNIF = 10,
-UPDATE_FREQUENCIES_BIUNIF = 11,
-E_SPR_MAPPED = 12//PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
+  int acc; 
+  int rej;     
+} accRejCtr; 
 
 
-} proposal_type;
-
-
+#define NUM_PROP_CATS 5 
+typedef enum _cats {
+  TOPOLOGY = 1  , 
+  BRANCH_LENGTHS = 2, 
+  FREQUENCIES = 3,
+  SUBSTITUTION_RATES = 4  ,
+  RATE_HETEROGENEITY = 5
+} category_t; 
 
 
 /* TODO sliding windows are not an attribute of remembrance */
@@ -132,18 +116,15 @@ typedef struct
 } paramDump; 
 
 
+typedef struct _pfun  proposalFunction; 
 
 
-
-
-
-typedef struct
+typedef struct _state
 {
+  /* TODO remove  */
   /* these 3 are independent of the state, can be taken out unless we want to pass a single pointer as an argument*/  
   nodeptr * list; /* list of possible re-insertion nodes */ 
-  int maxradius;  /* maximum radius of re-insertion from the pruning point */
 
-  
   tree * tr;
 #if HAVE_PLL == 1   
   partitionList *partitions; 
@@ -153,31 +134,28 @@ typedef struct
   double curprior;
   double newprior;
   double hastings;
-  
+
   double penaltyFactor; //change to the probability of picking a proposal
 
   double likelihood; 
 
-  double eSprStopProb; 
 
+  /* TODO make all of this more generic in form of a history     */
   spr_move_remembrance sprMoveRemem; 
   branch_length_remembrance brLenRemem; 
   gamma_remembrance gammaRemem; 
   model_remembrance modelRemem; 
   frequency_remembrance frequRemem; 
-  
-  double proposalWeights[NUM_PROPOSALS]; 
-  double proposalLogisticT[NUM_PROPOSALS];
-  /* prob_bucket_t proposals[NUM_PROPOSALS];  */
-  int acceptedProposals[NUM_PROPOSALS]; 
-  int rejectedProposals[NUM_PROPOSALS];
-  int totalAccepted;
-  int totalRejected;
+
+
+  proposalFunction **proposals; 
+  int numProposals; 
+  double *categoryWeights; 
 
   /* TODO should this be an attribute of the chain? we could have a run-struct instead...*/
   int numGen; 
   int currentGeneration; 
-  int samplingFrequency; 
+  /* int samplingFrequency;  */
 
   /* indicates how hot the chain is (i = 0 => cold chain), may change! */
   int couplingId; 
@@ -188,39 +166,56 @@ typedef struct
   /* unique id, also determines */
   int id; 
 
-  /* these things are needed for convergence diagnostics, but we
+  /* TODO 
+     these things are needed for convergence diagnostics, but we
      should not store it in here
 
      this pointer is shared among all chains 
   */
-  hashtable *bvHash; 
-  
-  paramDump dump;   
+  /* hashtable *bvHash;  */
 
   /* RNG */
-  randKey_t rKey; 
-  randCtr_t rCtr; 
-  
+  randKey_t rKey;
+  randCtr_t rCtr;
+
+  /* saves the entire space in the parameter space  */
+  paramDump dump;   
+
 
 } state;
 
 
 
+struct _pfun 
+{
+  proposal_type ptype; 
+  category_t category; 
+  char *name; 
 
+  double initWeight; 
+  double currentWeight; 
+  
+  accRejCtr successCtr; 
 
-
-
-
-
-
-typedef struct {
-  int ptype; 
-  int pSubType; 
-  void (*apply_func)( state *curstate, int pSubType);
+  void (*apply_func)( state *curstate, struct _pfun *pf );
   void (*reset_func)( state *curstate );   
-  double (*get_prior_ratio) (state *curstate); 
-} proposal_functions;
+
+  /* TODO not used yet */
+  void (*autotune)(struct _pfun *pf); 
+
+  /* TODO use something like that */
+  /* double (*get_prior_ratio) (state *curstate);  */
+
+  union
+  {
+    double eSprStopProb; 
+    double slidWinSize;  	/* TODO not used yet */    
+    double dirichletAlpha; 	/* TODO not used  */
+    double stdDev ; 		/* TODO not used  */
+  } parameters ; 
+}; 
+
+
 
 
 #endif
-

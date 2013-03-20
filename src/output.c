@@ -264,12 +264,13 @@ static void printSubsRates(state *prState ,int model, int numSubsRates)
 
 
 
-void printIfPresent(state *chain, char *name, proposal_type id)
+void printIfPresent(proposalFunction *pf)
 {
-  int acc = chain->acceptedProposals[id], 
-    rejc = chain->rejectedProposals[id]; 
+  int acc = pf->successCtr.acc,
+    rejc = pf->successCtr.rej; 
+
   if(acc != 0 || rejc != 0)
-    PRINT("%s: %d/%d (%.0f%%)\t", name, acc , rejc,  ( (double)(acc) / (double)( (acc + rejc) + 0.0001))* 100   ); 
+    PRINT("%s: %d/%d (%.0f%%)\t", pf->name, acc , rejc,  ( (double)(acc) / (double)( (acc + rejc) + 0.0001))* 100   ); 
 }
 
 
@@ -304,9 +305,6 @@ static void printHotChains(int runId)
 }
 
 
-
-
-
 void chainInfo(state *chain)
 {
   assert(chain->couplingId == 0) ; /* we are the cold chain   */
@@ -320,35 +318,25 @@ void chainInfo(state *chain)
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
 
-  PRINT("Topo\t"); 
-  printIfPresent(chain, "eSpr", E_SPR); 
-  printIfPresent(chain, "eSprMapped", E_SPR_MAPPED); 
-  PRINT("\n"); 
-  
-  PRINT("Model\t" ); 
-  printIfPresent(chain, "slidWin", UPDATE_MODEL); 
-  printIfPresent(chain, "biunif", UPDATE_MODEL_BIUNIF) ;
-  printIfPresent(chain, "biunif perm", UPDATE_MODEL_PERM_BIUNIF); 
-  printIfPresent(chain, "singleBiunif", UPDATE_MODEL_SINGLE_BIUNIF); 
-  printIfPresent(chain, "allBiunif", UPDATE_MODEL_ALL_BIUNIF); 
-  PRINT("\n"); 
+  char* names[]= {"TOPO", "MODEL", "BL", "FREQ", "RATE_HET"} ;   
 
+  for(int i = 1; i < NUM_PROP_CATS; ++i)
+    {
+      category_t type = i; 
+      PRINT("%s:", names[i-1]);       
+      for(int i = 0; i < chain->numProposals;++i )
+	{
+	  proposalFunction *pf = chain->proposals[i]; 	
+	  if(type == pf->category)
+	    {
+	      PRINT("\t"); 
+	      printIfPresent(pf);
+	    }
+	}
+      PRINT("\n"); 
+    }
 
-  PRINT("Frequencies\t"); 
-  printIfPresent(chain, "unif", UPDATE_FREQUENCIES_BIUNIF); 
-  PRINT("\n"); 
-  
-  PRINT("Gamma\t"); 
-  printIfPresent(chain, "slidWin", UPDATE_GAMMA); 
-  printIfPresent(chain, "exp ", UPDATE_GAMMA_EXP); 
-  PRINT("\n"); 
-
-  PRINT("Branchlengths\t"); 
-  printIfPresent(chain, "slidWin", UPDATE_SINGLE_BL); 
-  printIfPresent(chain, "biUinf", UPDATE_SINGLE_BL_BIUNIF); 
-  printIfPresent(chain, "exp", UPDATE_SINGLE_BL_EXP); 
-  PRINT("\n"); 
-  PRINT("\n"); 
+  PRINT("\n");
 }
 
 
@@ -358,6 +346,8 @@ void chainInfo(state *chain)
 
 
 
+#if 0 
+/* QUARANTINE  */
 void chainInfoOutput(state *curstate )
 {
 
@@ -401,4 +391,5 @@ void chainInfoOutput(state *curstate )
 //printf("numSubs: %d numFrequ: %d\n\n",curstate->modelRemem.numSubsRates,curstate->frequRemem.numFrequRates);
 
 }
+#endif
 

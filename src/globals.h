@@ -15,6 +15,15 @@
 
 #include "config.h"
 
+
+
+
+/* Those globals are bad.  Having them as a singleton is slightly
+   better. 
+   
+   NOTICE Mind the initialization! 
+
+ */
 typedef struct globs
 {
   int numberOfStartingTrees ; 
@@ -33,6 +42,12 @@ typedef struct globs
   state *allChains; 		/* careful with this! */
   int successFullSwitchesBatch; 
 
+
+  int samplingFrequency; 
+
+  hashtable *bvHash; 
+
+  int diagFreq; 
 } globalAnalysisInfo; 
  
 
@@ -50,7 +65,22 @@ char byteFileName[1024];
 /* /\* TODO  *\/ */
 /* char binaryChainState[1024];  */
 
-globalAnalysisInfo gAInfo = {0,0,0}; 
+globalAnalysisInfo gAInfo = 
+  {0,
+   0,
+   0,
+   {{0,0}},
+   {{0,0}},
+   #if HAVE_PLL == 1 
+   NULL,
+   #endif
+   NULL, 
+   0,
+   0,
+   NULL,
+   0
+  }; 
+
 
 /* for crude performance measurements */
 double timeIncrement = 0;  

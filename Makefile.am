@@ -3,7 +3,7 @@ SUBDIRS = ./lib/ncl-2.1.18/
 
 
 # -f may also help with examl  
-WARN_FLAGS=  -Wall --pedantic -fgnu89-inline 
+WARN_FLAGS=  -Wall --pedantic -fgnu89-inline  -Wno-unused-function
 
 # SIMD_FLAGS is potentially problematic: auto-avx vectorization was considered harmfull? 
 AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_BAYESIAN
