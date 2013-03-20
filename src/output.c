@@ -318,15 +318,15 @@ void chainInfo(state *chain)
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
 
-  char* names[]= {"TOPO", "MODEL", "BL", "FREQ", "RATE_HET"} ;   
+  char* names[]= {"TOPO", "BL", "FREQ", "MODEL", "HETER"} ;   
 
-  for(int i = 1; i < NUM_PROP_CATS; ++i)
+  for(int i = 1; i < NUM_PROP_CATS + 1 ; ++i)
     {
       category_t type = i; 
       PRINT("%s:", names[i-1]);       
-      for(int i = 0; i < chain->numProposals;++i )
+      for(int j = 0; j < chain->numProposals;++j )
 	{
-	  proposalFunction *pf = chain->proposals[i]; 	
+	  proposalFunction *pf = chain->proposals[j]; 	
 	  if(type == pf->category)
 	    {
 	      PRINT("\t"); 
@@ -338,12 +338,6 @@ void chainInfo(state *chain)
 
   PRINT("\n");
 }
-
-
-
-
-
-
 
 
 #if 0 

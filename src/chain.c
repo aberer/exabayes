@@ -30,11 +30,45 @@
 #include "eval.h"
 #include "adapters.h"
 
+#include "randomTree.h" 
 
-/* #define DEBUG_BL */
 
-void initDefaultValues(state *theState, tree *tr); 
-void exa_makeRandomTree(tree *tr);  
+
+
+
+
+void initDefaultValues(state *theState, tree *tr)
+{
+  /* TODO we have to redo the prior framework */
+  theState->curprior = 1; 
+  theState->newprior = 1; 
+
+
+  theState->hastings = 1; 
+  theState->currentGeneration = 0; 
+
+  /* theState->brLenRemem.bl_prior = 1.0; */
+  /* theState->brLenRemem.bl_prior_exp_lambda = 0.1 ; */
+  //this can be extended to more than one partition, but one for now
+  
+  theState->modelRemem.model = 0;
+
+  pInfo *partition = getPartition(theState,theState->modelRemem.model); 
+
+  theState->modelRemem.nstates = partition->states; /* 4 for DNA */
+  theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
+  theState->modelRemem.curSubsRates = (double *) exa_malloc(theState->modelRemem.numSubsRates * sizeof(double));
+  
+  theState->frequRemem.model = 0;
+  theState->frequRemem.numFrequRates = partition->states; /* 4 for DNA */
+  theState->frequRemem.curFrequRates = (double *) exa_malloc(theState->frequRemem.numFrequRates * sizeof(double));
+
+  theState->brLenRemem.single_bl_branch = -1;
+
+  theState->numGen = 1000000;
+  theState->penaltyFactor = 0.0;
+}
+
 
 void printInfo(state *chain, const char *format, ...)
 {  
@@ -307,11 +341,9 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       myTree->bitVectors = tr->bitVectors; 
       
       initDefaultValues(theChain, myTree);
-
-      setupProposals(theChain, initParams); 
       
-      /* addInitParameters(theChain, *initParamsPtr);  */
-      /* normalizeProposalWeights(theChain);  */
+      setupProposals(theChain, initParams); 
+
 
       /* init the param dump  */
       initParamDump(myTree, &(theChain->dump)); 

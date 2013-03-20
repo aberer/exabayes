@@ -68,6 +68,14 @@ typedef  unsigned int nat ;
 
 
 
+#define INIT_BRANCH_LENGTHS 0.65
+
+#define INIT_BL_SLID_WIN  0.0005
+#define INIT_RATE_SLID_WIN  0.5 
+#define INIT_GAMMA_SLID_WIN  0.75
+
+
+
 
 /* ABOVE: stuff that is needed by everyone and can be defined
    repeatedly
@@ -78,8 +86,10 @@ typedef  unsigned int nat ;
  */
 
 
-#define _USE_NCL_PARSER
-#define INIT_BRANCH_LENGTHS 0.65
+
+
+
+
 
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
@@ -98,11 +108,13 @@ typedef  unsigned int nat ;
 /* MC3 stuff for development */
 #define HEAT_FACTOR 0.003
 #define SWITCH_AFTER_GEN 1  	/* number of generations after  which we try to switch states   */
-
-
 #define MC3_SPACE_FOR_TIME
 
 
+/* here you can set the burnin 
+   
+   TODO make this a parameter in the config file  
+ */
 #define BURNIN 0
 
 #endif

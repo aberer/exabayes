@@ -124,10 +124,8 @@ double drawRandDouble01(state *chain)
 
 double drawRandExp(state *chain, double lambda)
 {  
-  chain->rCtr.v[0] =  chain->currentGeneration; 
-  randCtr_t r = exa_rand(chain->rKey, chain->rCtr); 
-  chain->rCtr.v[1]++; 
-  return -log(r.v[0] )/ lambda; 
+  double r = drawRandDouble01(chain);   
+  return -log(r )/ lambda; 
 }
 
 

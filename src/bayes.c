@@ -28,46 +28,14 @@
 extern double masterTime; 
 
 
-void initDefaultValues(state *theState, tree *tr)
-{
-  theState->curprior = 1; 
-  theState->hastings = 1; 
-  theState->currentGeneration = 0; 
-
-  theState->brLenRemem.bl_sliding_window_w = 0.005;
-  theState->brLenRemem.bl_prior = 1.0;
-  theState->brLenRemem.bl_prior_exp_lambda = 0.1 ;
-  //this can be extended to more than one partition, but one for now
-  
-  theState->modelRemem.model = 0;
-  theState->modelRemem.rt_sliding_window_w = 0.5;
-
-  pInfo *partition = getPartition(theState,theState->modelRemem.model); 
-
-  theState->modelRemem.nstates = partition->states; /* 4 for DNA */
-  theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
-  theState->modelRemem.curSubsRates = (double *) exa_malloc(theState->modelRemem.numSubsRates * sizeof(double));
-  
-  theState->frequRemem.model = 0;
-  theState->frequRemem.numFrequRates = partition->states; /* 4 for DNA */
-  theState->frequRemem.curFrequRates = (double *) exa_malloc(theState->frequRemem.numFrequRates * sizeof(double));
-  
-  theState->gammaRemem.gm_sliding_window_w = 0.75;
-  theState->brLenRemem.single_bl_branch = -1;
-
-  theState->numGen = 1000000;
-  theState->penaltyFactor = 0.0;
-}
-
-
-void swpDouble(double *a, double *b)
+static void swpDouble(double *a, double *b)
 {
   double tmp = *b; 
   *b = *a; 
   *a = tmp; 
 }
 
-void swpInt(int *a, int *b)
+static void swpInt(int *a, int *b)
 {
   int tmp = *b;
   *b = *a; 

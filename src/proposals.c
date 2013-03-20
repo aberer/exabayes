@@ -992,9 +992,9 @@ static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state
 	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
 	}
    //   r = drawRandExp(lambda);
-       real_z = -log(p->z[i]) * s->tr->fracchange;
+      real_z = -log(p->z[i]) * s->tr->fracchange;
        r = drawRandExp(chain, 1.0/real_z);
-  
+
 	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
 
 	/* s->newprior=get_branch_length_prior(&r); */
@@ -1092,32 +1092,26 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 
 static void random_branch_length_proposal_apply(state * chain, proposalFunction *pf)
 {
-
-
-
-  int numBranches = getNumBranches(chain->tr);
-  const int num_branches = (chain->tr->mxtips * 2) - 3;
-  int target_branch = drawRandInt(chain,num_branches); 
+  int multiBranches = getNumBranches(chain->tr);
+  int target_branch = drawRandInt(chain,(chain->tr->mxtips * 2) - 3); 
   node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
   
     switch(pf->ptype)
       {
       case UPDATE_SINGLE_BL: 
-
-
 	//for each branch get the current branch length
 	//pull a uniform like
 	//x = current, w =window
 	//uniform(x-w/2,x+w/2)
-	set_branch_length_sliding_window(chain,p, numBranches, chain, TRUE);
+	set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE);
 	break;
 	
       case UPDATE_SINGLE_BL_EXP: 
-	set_branch_length_exp(chain,p, numBranches, chain, TRUE);
+	set_branch_length_exp(chain,p, multiBranches, chain, TRUE);
 	break;
       case UPDATE_SINGLE_BL_BIUNIF: 
 
-	set_branch_length_biunif(chain, p, numBranches, chain, TRUE);
+	set_branch_length_biunif(chain, p, multiBranches, chain, TRUE);
 	break;
       default:
 	assert(0);
@@ -1222,39 +1216,39 @@ static void recordFrequRates(state *chain, int model, int numFrequRates, double 
     prevFrequRates[i] = partition->frequencies[i];
 }
 
+
+
+
+
 void frequency_proposal_apply(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
+  chain->hastings=1;
+
 
   chain->frequRemem.model=drawRandInt(chain,getNumberOfPartitions(tr));
   pInfo *partition = getPartition(chain, chain->frequRemem.model); 
 
   recordFrequRates(chain, chain->frequRemem.model, chain->frequRemem.numFrequRates, chain->frequRemem.curFrequRates);
+  
+  double r[chain->frequRemem.numFrequRates];  
 
-  
-  int state;
-  double sum,curv;
-  double r[chain->frequRemem.numFrequRates];
-  
-  chain->hastings=1;
-  for(state = 0;state<chain->frequRemem.numFrequRates ; state ++)
+  for(int state = 0;state<chain->frequRemem.numFrequRates ; state ++)
     {
-      curv = partition->frequencies[state];
+      double curv = partition->frequencies[state];
       //r[state] =  drawRandDouble(); 
       r[state] =  drawRandBiUnif(chain,curv); 
-    chain->hastings*=curv/r[state];
+      
+      chain->hastings*=curv/r[state];      
     }
-    
-  sum=0;
-  
-  for(state = 0;state<chain->frequRemem.numFrequRates ; state ++)
-    {
-      sum+=r[state]; 
-    }
-    for(state = 0;state<chain->frequRemem.numFrequRates ; state ++)
-    {
-      partition->frequencies[state]=r[state]/sum; 
-    }
+
+  double sum=0;  
+  for(int state = 0;state<chain->frequRemem.numFrequRates ; state ++)    
+    sum+=r[state]; 
+
+  for(int state = 0;state<chain->frequRemem.numFrequRates ; state ++)    
+    partition->frequencies[state]=r[state]/sum; 
+
   //recalculate eigens
 
   exa_initReversibleGTR(chain, chain->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
@@ -1333,69 +1327,29 @@ nodeptr select_random_subtree(state *chain, tree *tr)
 
 
 
-/* void printProposalType(proposal_type which_proposal) */
-/* { */
-/*   switch(which_proposal) */
-/*     { */
-/*     case E_SPR:  */
-/*       printf("E_SPR\n"); */
-/*       break;  */
-/*     case E_SPR_MAPPED:  */
-/*       printf("E_SPR_MAPPED\n"); */
-/*       break;  */
-/*     case UPDATE_MODEL :  */
-/*       printf("UPDATE_MODEL \n"); */
-/*       break;  */
-/*     case UPDATE_GAMMA :  */
-/*       printf("UPDATE_GAMMA \n"); */
-/*       break;  */
-/*     case UPDATE_GAMMA_EXP:  */
-/*       printf("UPDATE_GAMMA_EXP\n"); */
-/*       break;  */
-/*     case UPDATE_SINGLE_BL:  */
-/*       printf("UPDATE_SINGLE_BL\n"); */
-/*       break;  */
-/*     case UPDATE_SINGLE_BL_EXP :  */
-/*       printf("UPDATE_SINGLE_BL_EXP \n"); */
-/*       break;  */
-/*     case UPDATE_SINGLE_BL_BIUNIF:  */
-/*       printf("UPDATE_SINGLE_BL_BIUNIF\n"); */
-/*       break;  */
-/*     case UPDATE_MODEL_BIUNIF:  */
-/*       printf("UPDATE_MODEL_BIUNIF\n"); */
-/*       break;  */
-/*     case UPDATE_MODEL_SINGLE_BIUNIF:  */
-/*       printf("UPDATE_MODEL_SINGLE_BIUNIF\n"); */
-/*       break;  */
-/*     case UPDATE_MODEL_ALL_BIUNIF:  */
-/*       printf("UPDATE_MODEL_ALL_BIUNIF\n"); */
-/*       break;  */
-/*     case UPDATE_FREQUENCIES_BIUNIF:  */
-/*       printf("UPDATE_FREQUENCIES_BIUNIF\n"); */
-/*       break;  */
-/*     case UPDATE_MODEL_PERM_BIUNIF:  */
-/*       printf("UPDATE_MODEL_PERM_BIUNIF\n"); */
-/*       break;   */
-/* //PROPOSALADD printProposalType NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier. */
-      
-
-/*     default :  */
-/*       assert(0);  */
-/*     } */
-/* } */
-
-
-
-
-
-
 static void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
 {
-  proposalFunction ptrBdy; 
-  proposalFunction *ptr = &ptrBdy ; 
+  if(initParams->initWeights[type] == 0)
+    {
+      *result = NULL; 
+      return ; 
+    }  
 
+  *result = exa_calloc(1,sizeof(proposalFunction));   
+
+  proposalFunction *ptr = *result; 
   ptr->ptype = (proposal_type)type; 
   ptr->initWeight = initParams->initWeights[type]; 
+  ptr->currentWeight = ptr->initWeight; 
+
+
+  /* 
+     TODO@kassian
+   
+     I fear I could not restore all proposals correctly. Or let me put
+     it differently, I do not trust all of them yet. Those, that I do
+     trust are marked.
+  */
 
   switch(type)
     {
@@ -1406,22 +1360,24 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
       ptr->name = "eSPR"; 
       break; 
-    case E_SPR_MAPPED: 
+    case E_SPR_MAPPED: 		/* TRUSTED  */
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
       ptr->name = "eSPRMapped"; 
       ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
       ptr->category = TOPOLOGY; 
       break; 
-    case UPDATE_MODEL: 
+    case UPDATE_MODEL: 		
       ptr->apply_func = simple_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
+      ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN;
       ptr->category = SUBSTITUTION_RATES; 
       ptr->name = "modelSlidWin"; 
       break; 
-    case UPDATE_GAMMA:      
+    case UPDATE_GAMMA:      	
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
+      ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN; 
       ptr->category = RATE_HETEROGENEITY; 
       ptr->name = "gammaSlidWin"; 
       break; 
@@ -1431,10 +1387,11 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = RATE_HETEROGENEITY; 
       ptr->name = "gammaExp"; 
       break; 
-    case UPDATE_SINGLE_BL: 
+    case UPDATE_SINGLE_BL: 	/* TRUSTED */
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->category = BRANCH_LENGTHS; 
+      ptr->parameters.slidWinSize = INIT_BL_SLID_WIN; 
       ptr->name = "singleBLSlidWin"; 
       break; 
     case UPDATE_SINGLE_BL_EXP: 
@@ -1485,21 +1442,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
 	printf("unknown value %d\n",type ); 
 	assert(0) ; 
       }
-    }
-  
-  *result = NULL; 
-  if(ptr->initWeight != 0)
-    {
-      *result = exa_calloc(1,sizeof(proposalFunction)); 
-      /* memcpy(*result, ptr, sizeof(proposalFunction));  */
-      (*result)->apply_func = ptr->apply_func;
-      (*result)->reset_func = ptr->reset_func;
-      (*result)->name = ptr->name;
-      (*result)->category = ptr->category;
-      (*result)->ptype = ptr->ptype ;
-      (*result)->parameters = ptr->parameters; 
-      (*result)->initWeight = ptr->initWeight;
-      (*result)->currentWeight = ptr->initWeight;
     }  
 }
 
@@ -1569,8 +1511,6 @@ void printAllProposalWeights(state *chain)
 
 
 
-
-
 /**
    @brief   Initializes the proposals based on weights given in the config file. 
 
@@ -1602,7 +1542,6 @@ void setupProposals(state *chain, initParamStruct *initParams)
   
   printAllProposalWeights(chain);
 }
-
 
 
 /**

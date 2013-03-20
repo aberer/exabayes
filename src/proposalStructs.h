@@ -209,7 +209,7 @@ struct _pfun
   union
   {
     double eSprStopProb; 
-    double slidWinSize;  	/* TODO not used yet */    
+    double slidWinSize;  	
     double dirichletAlpha; 	/* TODO not used  */
     double stdDev ; 		/* TODO not used  */
   } parameters ; 
