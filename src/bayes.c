@@ -161,7 +161,6 @@ void executeOneRun(state *chains, int gensToRun )
 
 
 
-
 /**
    @brief run all chains for a given number of generations
  */

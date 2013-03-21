@@ -357,7 +357,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
 
 
-static void extended_spr_reset(state * chain)
+static void extended_spr_reset(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
 
@@ -409,37 +409,33 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
 
-  assert(tr != NULL); 
-
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
-  chain->modelRemem.model=drawRandInt(chain, getNumberOfPartitions(tr));
+  pf->model = drawRandInt(chain, getNumberOfPartitions(tr));
 
-  pInfo *partition = getPartition(chain,chain->modelRemem.model);
-
+  pInfo *partition = getPartition(chain,pf->model);
   curv = partition->alpha;
-  chain->gammaRemem.curAlpha = curv;
-
+  pf->remembrance.alpha = curv; 
 
   switch(pf->ptype)
-        {
-	case UPDATE_GAMMA:
-	  {
-	    double slidWin = pf->parameters.slidWinSize;
-	  
-	    /* case STANDARD://simple sliding window */
-	    r = drawRandDouble01(chain);
-	    mn = curv-(slidWin/2);
-	    mx = curv+(slidWin/ 2);
-	    newalpha = fabs(mn + r * (mx-mn));
-	  }
-	  break;
-	case UPDATE_GAMMA_EXP: 
-          newalpha  = drawRandExp(chain,1/curv);
-          break;
-        default:
-          assert(0);
-        }
+    {
+    case UPDATE_GAMMA:
+      {
+	double slidWin = pf->parameters.slidWinSize;
+	    
+	/* case STANDARD://simple sliding window */
+	r = drawRandDouble01(chain);
+	mn = curv-(slidWin/2);
+	mx = curv+(slidWin/ 2);
+	newalpha = fabs(mn + r * (mx-mn));
+      }
+      break;
+    case UPDATE_GAMMA_EXP: 
+      newalpha  = drawRandExp(chain,1/curv);
+      break;
+    default:
+      assert(0);
+    }
   /* Ensure always you stay within this range */
   if(newalpha > ALPHA_MAX) newalpha = ALPHA_MAX;
   if(newalpha < ALPHA_MIN) newalpha = ALPHA_MIN;
@@ -449,10 +445,9 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
   chain->curprior = get_alpha_prior(chain); 
   
   partition->alpha = newalpha;
-
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 
-  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); 
+  evaluateOnePartition(chain, tr->start, TRUE, pf->model ); 
 }
 
 
@@ -482,16 +477,15 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 // }
 
 
-static void simple_gamma_proposal_reset(state * chain)
+static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
-  pInfo *partition = getPartition(chain, chain->modelRemem.model) ; 
+  pInfo *partition = getPartition(chain, pf->model) ; 
   
-  partition->alpha = chain->gammaRemem.curAlpha; 
+  partition->alpha = pf->remembrance.alpha; 
 
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
-
-  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); 
+  evaluateOnePartition(chain, tr->start, TRUE, pf->model); 
 }
 
 //------------------------------------------------------------------------------
@@ -1164,7 +1158,7 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
 //   evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
 // }
 
-static void random_branch_length_proposal_reset(state * chain)
+static void random_branch_length_proposal_reset(state * chain, proposalFunction *pf)
 {
   node *p;
   assert( chain->brLenRemem.single_bl_branch != -1 );
@@ -1267,7 +1261,7 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
 }
 
 
-void frequency_proposal_reset(state * chain)
+void frequency_proposal_reset(state * chain, proposalFunction *pf)
 {
   restore_frequ_rates(chain, chain->frequRemem.adef, chain->frequRemem.model, chain->frequRemem.numFrequRates, chain->frequRemem.curFrequRates);
 }
@@ -1292,7 +1286,7 @@ void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValu
 
 
 
-static void simple_model_proposal_reset(state * chain)
+static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
 {
   restore_subs_rates(chain, chain->modelRemem.adef, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
 }
@@ -1715,7 +1709,7 @@ void step(state *chain)
     }
   else
     {
-      pf->reset_func(chain); 
+      pf->reset_func(chain, pf); 
       pf->successCtr.rej++;
       chain->likelihood = prevLnl; 
       

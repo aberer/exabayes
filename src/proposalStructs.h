@@ -15,6 +15,25 @@
 #include "rng.h"
 
 
+
+typedef struct 
+{  
+  proposal_type type; 
+  int wasAccepted; 
+
+  
+  int model; 
+
+  union 
+  {
+    double alpha; 
+    
+  } change; 
+
+} chainHistory ; 
+
+/* #include "history.h" */
+
 typedef struct
 {
   int acc; 
@@ -32,6 +51,11 @@ typedef enum _cats {
 } category_t; 
 
 
+
+
+
+
+
 /* TODO sliding windows are not an attribute of remembrance */
 
 
@@ -41,12 +65,6 @@ typedef struct {
   int single_bl_branch;
 } branch_length_remembrance; 
 
-
-/* gamma proposal specific  */
-typedef struct
-{
-  double curAlpha;
-} gamma_remembrance; 
 
 
 /* model proposal specific  */
@@ -86,11 +104,9 @@ typedef struct
 typedef struct
 {
   double alpha ; 
-
   /* TODO only works with DNA */
   double substRates[6]; 
   double frequencies[4];
-
 } perPartitionInfo; 		/* relevant info from pInfo  */
 
 
@@ -135,10 +151,14 @@ typedef struct _state
   double likelihood; 
 
 
+  /* TODO that does not work currently */
+  /* chainHistory history;  */
+
+
   /* TODO make all of this more generic in form of a history     */
   spr_move_remembrance sprMoveRemem; 
   branch_length_remembrance brLenRemem; 
-  gamma_remembrance gammaRemem; 
+  /* gamma_remembrance gammaRemem;  */
   model_remembrance modelRemem; 
   frequency_remembrance frequRemem; 
 
@@ -193,7 +213,7 @@ struct _pfun
   accRejCtr successCtr; 
 
   void (*apply_func)( state *curstate, struct _pfun *pf );
-  void (*reset_func)( state *curstate );   
+  void (*reset_func)( state *curstate, struct _pfun *pf );   
 
   /* TODO not used yet */
   void (*autotune)(struct _pfun *pf); 
@@ -201,6 +221,8 @@ struct _pfun
   /* TODO use something like that */
   /* double (*get_prior_ratio) (state *curstate);  */
 
+
+  /* tunable parameters   */
   union
   {
     double eSprStopProb; 
@@ -208,9 +230,25 @@ struct _pfun
     double dirichletAlpha; 	/* TODO not used  */
     double stdDev ; 		/* TODO not used  */
   } parameters ; 
+  /* more parameters could be added in another union. This is a bit of
+     a hack for simplicity, but saves us all that memory allocation
+     stuff */
+
+
+
+
+  /* TODO wrap this up properly  */
+  /*  not ideal yet */
+  union 
+  {
+    double alpha; 
+  }remembrance; 
+  int model; 
+
+
+
+
 }; 
-
-
 
 
 #endif
