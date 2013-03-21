@@ -411,11 +411,14 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
-  pf->model = drawRandInt(chain, getNumberOfPartitions(tr));
 
-  pInfo *partition = getPartition(chain,pf->model);
+  int model = drawRandInt(chain, getNumberOfPartitions(tr));  
+  perPartitionInfo* remem = ((perPartitionInfo*)pf->remembrance); 
+  remem->modelNum = model; 
+
+  pInfo *partition = getPartition(chain,model);
   curv = partition->alpha;
-  pf->remembrance.alpha = curv; 
+  remem->alpha = curv; 
 
   switch(pf->ptype)
     {
@@ -447,7 +450,7 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
   partition->alpha = newalpha;
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 
-  evaluateOnePartition(chain, tr->start, TRUE, pf->model ); 
+  evaluateOnePartition(chain, tr->start, TRUE, model ); 
 }
 
 
@@ -480,12 +483,13 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
-  pInfo *partition = getPartition(chain, pf->model) ; 
+  perPartitionInfo *info  = ((perPartitionInfo*)pf->remembrance); 
+  pInfo *partition = getPartition(chain, info->modelNum) ; 
   
-  partition->alpha = pf->remembrance.alpha; 
+  partition->alpha = info->alpha; 
 
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
-  evaluateOnePartition(chain, tr->start, TRUE, pf->model); 
+  evaluateOnePartition(chain, tr->start, TRUE, info->modelNum); 
 }
 
 //------------------------------------------------------------------------------
@@ -546,16 +550,21 @@ void normalizeProposalWeights(state *chain)
 
 static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llpqr
 {
-  
-
   tree *tr = chain->tr; 
   
   //TODO: add safety to max and min values
   //record the old ones
-  chain->modelRemem.model=drawRandInt(chain, getNumberOfPartitions(chain->tr));
-  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
 
-  pInfo *partition = getPartition(chain, chain->modelRemem.model); 
+  int model = drawRandInt(chain, getNumberOfPartitions(chain->tr));
+  perPartitionInfo *info = (perPartitionInfo*)pf->remembrance;
+
+  pInfo *partition = getPartition(chain, model); 
+  int numRates = (partition->states * partition->states - partition->states) / 2; 
+
+  recordSubsRates(chain, model , numRates, info->substRates);
+
+  info->modelNum = model;
+  info->numRates = numRates; 
 
   //choose a random set of model params,
   //probably with dirichlet proposal
@@ -567,7 +576,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   
   double mx,mn; //for sliding window
   
-  int list[chain->modelRemem.numSubsRates];//for biunif_distr and biunif_perm_distr
+  int list[numRates];//for biunif_distr and biunif_perm_distr
   
   /* int numberOfEdits;//for biunif_perm_distr */
   
@@ -590,7 +599,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   
   chain->hastings=1.0;
   
-  for(state = 0;state<chain->modelRemem.numSubsRates ; state ++)
+  for(state = 0;state<numRates ; state ++)
     {      
       switch(pType)
         {
@@ -613,7 +622,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
 	  break;
         
 	case UPDATE_MODEL_BIUNIF:
-	  changeState=drawRandInt(chain, chain->modelRemem.numSubsRates);
+	  changeState=drawRandInt(chain, numRates);
 	  if(list[changeState]!=1)
 	    {
 	      list[changeState]=1;;      
@@ -663,15 +672,15 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
 	  }
 
 	}//end of switch
-      edit_subs_rates(chain,chain->modelRemem.model, changeState, new_value);
+      edit_subs_rates(chain, info->modelNum, changeState, new_value);
     }
   //recalculate eigens
 
-  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
     
   /* TODO: need to broadcast rates here for parallel version ! */
 
-  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
+  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */
 
   //TODO: without this, the run will fail after a successful model, but failing SPR
   //TODOFER: what did we have in mind regarding the comment above?
@@ -733,26 +742,30 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
 
 
 
-static void perm_biunif_model_proposal_apply(state *chain, int pSubType)
+static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
 
-  //record the old one 
-  chain->modelRemem.model=drawRandInt(chain,getNumberOfPartitions(chain->tr));
-  
-  pInfo *partition = getPartition(chain , chain->modelRemem.model) ; 
+  int model = drawRandInt(chain,getNumberOfPartitions(chain->tr));; 
 
-  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
+  pInfo *partition = getPartition(chain , model) ; 
+
+  perPartitionInfo *info = (perPartitionInfo*)pf->remembrance; 
+
+  int numRates  = (partition->states  * partition->states -partition->states ) / 2 ;  
+  info->numRates = numRates; 
+
+  recordSubsRates(chain, model, numRates, info->substRates);
   int state, randNumber;
   double new_value,curv;
   double r;
   
-  randNumber=drawRandInt(chain,chain->modelRemem.numSubsRates);
-    int perm[chain->modelRemem.numSubsRates];
-    drawPermutation(chain,perm, chain->modelRemem.numSubsRates);
+  randNumber=drawRandInt(chain,numRates);
+  int perm[numRates];
+  drawPermutation(chain,perm, numRates);
   
-   chain->hastings=1.0;
-  for(state = 0;state<randNumber ; state ++)
+  chain->hastings=1.0;
+  for(state = 0;state < randNumber ; state ++)
     {           
       curv = partition->substRates[perm[state]];
       r =  drawRandBiUnif(chain,curv);
@@ -760,20 +773,17 @@ static void perm_biunif_model_proposal_apply(state *chain, int pSubType)
       new_value = r;
 
       while(new_value> RATE_MAX|| new_value< RATE_MIN){
-      if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
-      if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
+	if(new_value > RATE_MAX) new_value = 2*RATE_MAX-new_value;
+	if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
       }
       
-       chain->hastings*=curv/new_value;
-      edit_subs_rates(chain,chain->modelRemem.model, perm[state], new_value);
-      
+      chain->hastings*=curv/new_value;
+      edit_subs_rates(chain,model, perm[state], new_value);      
     }
       
-  
+  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
-
-  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */  
+  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */  
 }
 
 
@@ -781,16 +791,22 @@ static void perm_biunif_model_proposal_apply(state *chain, int pSubType)
 static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
   tree *tr = chain->tr; 
-  //record the old one //TODO sufficient to store single value.
-  chain->modelRemem.model=drawRandInt(chain,getNumberOfPartitions(chain->tr)); 
-  
-  pInfo *partition = getPartition(chain,chain->modelRemem.model) ; 
 
-  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
+  //record the old one //TODO sufficient to store single value.  
+  int model = drawRandInt(chain,getNumberOfPartitions(chain->tr)); 
+
+  perPartitionInfo *info = (perPartitionInfo* ) pf->remembrance; 
+  
+  pInfo *partition = getPartition(chain,model) ; 
+
+  info->modelNum = model; 
+  info->numRates = partition->states ;   
+  int numRates = info->numRates; 
+  recordSubsRates(chain, model, info->numRates, info->substRates);
   //choose a random set parameter,
   //with uniform probabilities
 
-  int  randState=drawRandInt(chain,chain->modelRemem.numSubsRates);
+  int  randState=drawRandInt(chain,numRates);
 
   double new_value,curv;
   double r;
@@ -808,24 +824,31 @@ static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf
     if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
   }
 
-  edit_subs_rates(chain,chain->modelRemem.model, randState, new_value);
+  edit_subs_rates(chain,model, randState, new_value);
 
   chain->hastings=curv/new_value;
 
-  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
   
-  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
+  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */
 }
 
 static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
   
-  //record the old one 
-  chain->modelRemem.model=drawRandInt(chain,getNumberOfPartitions(chain->tr));
-  pInfo *partition = getPartition(chain, chain->modelRemem.model) ; 
+  int model = drawRandInt(chain,getNumberOfPartitions(chain->tr));
 
-  recordSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
+  perPartitionInfo *info = (perPartitionInfo* ) pf->remembrance; 
+  
+  info->modelNum = model; 
+  
+  //record the old one 
+  pInfo *partition = getPartition(chain, model) ; 
+  info->numRates = (partition->states * partition->states - partition->states   ) / 2 ; 
+  int numRates = info->numRates; 
+
+  recordSubsRates(chain, model, numRates, info->substRates);
   //choose a random set parameter,
   //with uniform probabilities
   int state;
@@ -835,7 +858,7 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
   
    chain->hastings=1.0;
 
-  for(state = 0;state<chain->modelRemem.numSubsRates ; state ++)
+  for(state = 0;state<numRates ; state ++)
     {
       curv = partition->substRates[state]; 
       r =  drawRandBiUnif(chain,curv);
@@ -848,17 +871,17 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
       }
       
        chain->hastings*=curv/new_value;
-      edit_subs_rates(chain,chain->modelRemem.model, state, new_value);
+      edit_subs_rates(chain,model, state, new_value);
     }
 
-  exa_initReversibleGTR(chain, chain->modelRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  evaluateOnePartition(chain, tr->start, TRUE, chain->modelRemem.model); /* 2. re-traverse the full tree to update all vectors */
+  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */
 }
 
-static void restore_subs_rates(state *chain, analdef *adef, int model, int numSubsRates, double *prevSubsRates)
+static void restore_subs_rates(state *chain, int model, int numSubsRates, double *prevSubsRates)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->tr;   
 
   pInfo *partition = getPartition(chain, model); 
 
@@ -1189,9 +1212,9 @@ double get_frequency_prior(state * chain)
  return 1; 
 }
 
-static void restore_frequ_rates(state *chain, analdef *adef, int model, int numFrequRates, double *prevFrequRates)
+static void restore_frequ_rates(state *chain, int model, int numFrequRates, double *prevFrequRates)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->tr;
 
   /* NOTICE: this function should not be called repeatedly  */
 
@@ -1204,12 +1227,12 @@ static void restore_frequ_rates(state *chain, analdef *adef, int model, int numF
 
   exa_initReversibleGTR(chain, model);
 
-  evaluateOnePartition(chain, tr->start, TRUE, model); 
+  evaluateOnePartition(chain, tr->start, TRUE, model);
 }
 
 static void recordFrequRates(state *chain, int model, int numFrequRates, double *prevFrequRates)
 {
-  pInfo *partition = getPartition(chain,model); 
+  pInfo *partition = getPartition(chain,model);
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -1220,50 +1243,52 @@ static void recordFrequRates(state *chain, int model, int numFrequRates, double 
 
 
 
-
 void frequency_proposal_apply(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
   chain->hastings=1;
 
+  int model  = drawRandInt(chain,getNumberOfPartitions(tr));
+  perPartitionInfo *info = ((perPartitionInfo*)pf->remembrance); 
 
-  chain->frequRemem.model=drawRandInt(chain,getNumberOfPartitions(tr));
-  pInfo *partition = getPartition(chain, chain->frequRemem.model); 
+  pInfo *partition = getPartition(chain, model); 
 
-  recordFrequRates(chain, chain->frequRemem.model, chain->frequRemem.numFrequRates, chain->frequRemem.curFrequRates);
+  int numFreq = partition->states; 
+  info->modelNum = model;   
+  info->numFreqs = numFreq; 
+
+  recordFrequRates(chain, model, numFreq, info->frequencies);
   
-  double r[chain->frequRemem.numFrequRates];  
-
-  for(int state = 0;state<chain->frequRemem.numFrequRates ; state ++)
+  double r[numFreq];  
+  for(int state = 0;state < numFreq ; state ++)
     {
       double curv = partition->frequencies[state];
-      //r[state] =  drawRandDouble(); 
-      r[state] =  drawRandBiUnif(chain,curv); 
-      
+      r[state] = drawRandBiUnif(chain,curv);       
       chain->hastings*=curv/r[state];      
     }
 
   double sum=0;  
-  for(int state = 0;state<chain->frequRemem.numFrequRates ; state ++)    
+  for(int state = 0;state< numFreq ; state ++)    
     sum+=r[state]; 
 
-  for(int state = 0;state<chain->frequRemem.numFrequRates ; state ++)    
+  for(int state = 0; state< numFreq ; state ++)    
     partition->frequencies[state]=r[state]/sum; 
 
   //recalculate eigens
 
-  exa_initReversibleGTR(chain, chain->frequRemem.model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-/* chain->curprior=get_frequency_prior(chain, tr->partitionData[chain->frequRemem.model].frequencies); */
-/* chain->newprior=get_frequency_prior(chain, chain->frequRemem.curFrequRates); */
+  /* chain->curprior=get_frequency_prior(chain, tr->partitionData[chain->frequRemem.model].frequencies); */
+  /* chain->newprior=get_frequency_prior(chain, chain->frequRemem.curFrequRates); */
 
-  evaluateOnePartition(chain, tr->start, TRUE, chain->frequRemem.model);
+  evaluateOnePartition(chain, tr->start, TRUE, model);
 }
 
 
 void frequency_proposal_reset(state * chain, proposalFunction *pf)
 {
-  restore_frequ_rates(chain, chain->frequRemem.adef, chain->frequRemem.model, chain->frequRemem.numFrequRates, chain->frequRemem.curFrequRates);
+  perPartitionInfo *info = ((perPartitionInfo*)pf->remembrance); 
+  restore_frequ_rates(chain, info->modelNum, info->numFreqs, info->frequencies);
 }
 
 
@@ -1288,7 +1313,8 @@ void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValu
 
 static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
 {
-  restore_subs_rates(chain, chain->modelRemem.adef, chain->modelRemem.model, chain->modelRemem.numSubsRates, chain->modelRemem.curSubsRates);
+  perPartitionInfo *info = ((perPartitionInfo*)pf->remembrance); 
+  restore_subs_rates(chain, info->modelNum, info->numRates, info->substRates);
 }
 
 nodeptr select_random_subtree(state *chain, tree *tr)
@@ -1373,6 +1399,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN;
       ptr->category = SUBSTITUTION_RATES; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "modelSlidWin"; 
       break; 
     case UPDATE_GAMMA:      	
@@ -1380,12 +1407,14 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN; 
       ptr->category = RATE_HETEROGENEITY; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "gammaSlidWin"; 
       break; 
     case UPDATE_GAMMA_EXP: 
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->category = RATE_HETEROGENEITY; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "gammaExp"; 
       break; 
     case UPDATE_SINGLE_BL: 	/* TRUSTED */
@@ -1412,28 +1441,33 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func =  simple_model_proposal_reset;
       ptr->name = "singleModelBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
     case UPDATE_MODEL_BIUNIF: 
       ptr->name = "modelBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
       ptr->apply_func = single_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
     case UPDATE_MODEL_ALL_BIUNIF: 
       ptr->apply_func = all_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->name = "modelAllBiunif"; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->category = SUBSTITUTION_RATES; 
       break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
       ptr->apply_func = frequency_proposal_apply; 
       ptr->reset_func = frequency_proposal_reset; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "freqBiunif"; 
       ptr->category = FREQUENCIES; 
       break;
     case UPDATE_MODEL_PERM_BIUNIF: 
       ptr->apply_func = NULL; 	/* TODO */
       ptr->reset_func = simple_model_proposal_reset; 
+      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "modelPermBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
       break; 

@@ -186,8 +186,10 @@ static void printParams(state *curstate)
   /* TODO what about multiple models?  */
   /* TODO that will not work in the future ...  */
 
+#if 0 
   for(int i = 0; i< curstate->modelRemem.numSubsRates;  ++i )
     fprintf(fh, "\t%f" , partition->substRates[i]); 
+#endif
 
   
   /* TODO works on dna only currently  */
@@ -244,6 +246,8 @@ void printSample(state *curstate)
 
 
 
+
+#if 0 
 static void printSubsRates(state *prState ,int model, int numSubsRates)
 {
   pInfo *partition = getPartition(prState, model); 
@@ -260,6 +264,7 @@ static void printSubsRates(state *prState ,int model, int numSubsRates)
 
   PRINT("\n");
 }
+#endif
 
 
 

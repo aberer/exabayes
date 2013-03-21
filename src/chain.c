@@ -51,17 +51,17 @@ void initDefaultValues(state *theState, tree *tr)
   /* theState->brLenRemem.bl_prior_exp_lambda = 0.1 ; */
   //this can be extended to more than one partition, but one for now
   
-  theState->modelRemem.model = 0;
+  /* theState->modelRemem.model = 0; */
 
-  pInfo *partition = getPartition(theState,theState->modelRemem.model); 
+  /* pInfo *partition = getPartition(theState,theState->modelRemem.model);  */
 
-  theState->modelRemem.nstates = partition->states; /* 4 for DNA */
-  theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /* 6 for DNA */
-  theState->modelRemem.curSubsRates = (double *) exa_malloc(theState->modelRemem.numSubsRates * sizeof(double));
+  /* theState->modelRemem.nstates = partition->states; /\* 4 for DNA *\/ */
+  /* theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /\* 6 for DNA *\/ */
+  /* theState->modelRemem.curSubsRates = (double *) exa_malloc(theState->modelRemem.numSubsRates * sizeof(double)); */
   
-  theState->frequRemem.model = 0;
-  theState->frequRemem.numFrequRates = partition->states; /* 4 for DNA */
-  theState->frequRemem.curFrequRates = (double *) exa_malloc(theState->frequRemem.numFrequRates * sizeof(double));
+  /* theState->frequRemem.model = 0; */
+  /* theState->frequRemem.numFrequRates = partition->states; /\* 4 for DNA *\/ */
+  /* theState->frequRemem.curFrequRates = (double *) exa_malloc(theState->frequRemem.numFrequRates * sizeof(double)); */
 
   theState->brLenRemem.single_bl_branch = -1;
 

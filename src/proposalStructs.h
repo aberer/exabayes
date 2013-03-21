@@ -16,6 +16,8 @@
 
 
 
+
+/* TODO not enabled yet, was not such a good idea */
 typedef struct 
 {  
   proposal_type type; 
@@ -32,7 +34,9 @@ typedef struct
 
 } chainHistory ; 
 
-/* #include "history.h" */
+
+
+
 
 typedef struct
 {
@@ -53,9 +57,6 @@ typedef enum _cats {
 
 
 
-
-
-
 /* TODO sliding windows are not an attribute of remembrance */
 
 
@@ -63,7 +64,7 @@ typedef enum _cats {
 typedef struct {
   double qz[NUM_BRANCHES]; /* BL values prior to re-insertion */
   int single_bl_branch;
-} branch_length_remembrance; 
+} branch_length_remembrance;
 
 
 
@@ -78,13 +79,13 @@ typedef struct
 } model_remembrance; 
 
 /* frequency proposal specific  */
-typedef struct
-{
-  analdef * adef;
-  int model;
-  int numFrequRates;
-  double *curFrequRates;//used for resetting
-} frequency_remembrance; 
+/* typedef struct */
+/* { */
+/*   analdef * adef; */
+/*   int model; */
+/*   int numFrequRates; */
+/*   double *curFrequRates;//used for resetting */
+/* } frequency_remembrance;  */
 
 
 /* spr proposal specific  */
@@ -101,12 +102,21 @@ typedef struct
 
 
 
+
+
+
 typedef struct
 {
-  double alpha ; 
+  int modelNum; 
+  double alpha ;
+ 
   /* TODO only works with DNA */
+  int numRates; 
   double substRates[6]; 
+
+  int numFreqs; 
   double frequencies[4];
+
 } perPartitionInfo; 		/* relevant info from pInfo  */
 
 
@@ -159,8 +169,8 @@ typedef struct _state
   spr_move_remembrance sprMoveRemem; 
   branch_length_remembrance brLenRemem; 
   /* gamma_remembrance gammaRemem;  */
-  model_remembrance modelRemem; 
-  frequency_remembrance frequRemem; 
+  /* model_remembrance modelRemem;  */ 
+  /* frequency_remembrance frequRemem;  */
 
 
   proposalFunction **proposals; 
@@ -236,14 +246,21 @@ struct _pfun
 
 
 
+  
 
+  
+  
+  
   /* TODO wrap this up properly  */
   /*  not ideal yet */
-  union 
-  {
-    double alpha; 
-  }remembrance; 
-  int model; 
+
+  void *remembrance; 
+  /* perPartitionInfo rememberPartpartInfo;  */
+  /* union  */
+  /* { */
+  /*   double alpha;  */
+  /* }remembrance;  */
+  /* int model;  */
 
 
 
