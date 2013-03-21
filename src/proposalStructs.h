@@ -61,10 +61,10 @@ typedef enum _cats {
 
 
 /* spr proposal specific */
-typedef struct {
-  double qz[NUM_BRANCHES]; /* BL values prior to re-insertion */
-  int single_bl_branch;
-} branch_length_remembrance;
+/* typedef struct { */
+/*   double qz[NUM_BRANCHES]; /\* BL values prior to re-insertion *\/ */
+/*   int single_bl_branch; */
+/* } branch_length_remembrance; */
 
 
 
@@ -140,6 +140,22 @@ typedef struct
 typedef struct _pfun  proposalFunction; 
 
 
+
+
+
+typedef struct 
+{
+
+  /** 
+      helps us to remember which branch we manipulated.       
+   */ 
+  int whichBranch; 
+
+  double bls[NUM_BRANCHES]; /// branch lengths for saving 
+} topoRecord; 
+
+
+
 typedef struct _state
 {
   /* TODO remove  */
@@ -161,13 +177,9 @@ typedef struct _state
   double likelihood; 
 
 
-  /* TODO that does not work currently */
-  /* chainHistory history;  */
-
-
   /* TODO make all of this more generic in form of a history     */
   spr_move_remembrance sprMoveRemem; 
-  branch_length_remembrance brLenRemem; 
+  /* branch_length_remembrance brLenRemem;  */
   /* gamma_remembrance gammaRemem;  */
   /* model_remembrance modelRemem;  */ 
   /* frequency_remembrance frequRemem;  */
@@ -253,8 +265,13 @@ struct _pfun
   
   /* TODO wrap this up properly  */
   /*  not ideal yet */
+  /* void *remembrance;  */
+  union 
+  {
+    topoRecord *topoRec; 
+    perPartitionInfo *partInfo; 
+  }remembrance; 
 
-  void *remembrance; 
   /* perPartitionInfo rememberPartpartInfo;  */
   /* union  */
   /* { */

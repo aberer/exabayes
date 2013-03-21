@@ -292,10 +292,9 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   chain->sprMoveRemem.q = curNode;
   chain->sprMoveRemem.r = chain->sprMoveRemem.q->back;
-  record_branch_info(chain->sprMoveRemem.q, chain->brLenRemem.qz, getNumBranches(chain->tr));
-
-
-
+  
+  topoRecord *topoRec =  pf->remembrance.topoRec;
+  record_branch_info(chain->sprMoveRemem.q, topoRec->bls, getNumBranches(chain->tr)); 
 
   switch(pf->ptype)
     {
@@ -361,8 +360,10 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
 
+  topoRecord *topoRec = pf->remembrance.topoRec; 
+
   /* prune the insertion */
-  hookup(chain->sprMoveRemem.q, chain->sprMoveRemem.r, chain->brLenRemem.qz, getNumBranches(chain->tr));
+  hookup(chain->sprMoveRemem.q, chain->sprMoveRemem.r, topoRec->bls, getNumBranches(chain->tr));
 
   chain->sprMoveRemem.p->next->next->back = chain->sprMoveRemem.p->next->back = (nodeptr) NULL;
   /*  */
@@ -413,7 +414,7 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
   double newalpha, curv, r,mx,mn;
 
   int model = drawRandInt(chain, getNumberOfPartitions(tr));  
-  perPartitionInfo* remem = ((perPartitionInfo*)pf->remembrance); 
+  perPartitionInfo* remem = pf->remembrance.partInfo; 
   remem->modelNum = model; 
 
   pInfo *partition = getPartition(chain,model);
@@ -483,7 +484,7 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
-  perPartitionInfo *info  = ((perPartitionInfo*)pf->remembrance); 
+  perPartitionInfo *info  = pf->remembrance.partInfo; 
   pInfo *partition = getPartition(chain, info->modelNum) ; 
   
   partition->alpha = info->alpha; 
@@ -556,7 +557,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   //record the old ones
 
   int model = drawRandInt(chain, getNumberOfPartitions(chain->tr));
-  perPartitionInfo *info = (perPartitionInfo*)pf->remembrance;
+  perPartitionInfo *info = pf->remembrance.partInfo;
 
   pInfo *partition = getPartition(chain, model); 
   int numRates = (partition->states * partition->states - partition->states) / 2; 
@@ -750,7 +751,7 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 
   pInfo *partition = getPartition(chain , model) ; 
 
-  perPartitionInfo *info = (perPartitionInfo*)pf->remembrance; 
+  perPartitionInfo *info = pf->remembrance.partInfo; 
 
   int numRates  = (partition->states  * partition->states -partition->states ) / 2 ;  
   info->numRates = numRates; 
@@ -795,7 +796,7 @@ static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf
   //record the old one //TODO sufficient to store single value.  
   int model = drawRandInt(chain,getNumberOfPartitions(chain->tr)); 
 
-  perPartitionInfo *info = (perPartitionInfo* ) pf->remembrance; 
+  perPartitionInfo *info =  pf->remembrance.partInfo; 
   
   pInfo *partition = getPartition(chain,model) ; 
 
@@ -839,7 +840,7 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
   
   int model = drawRandInt(chain,getNumberOfPartitions(chain->tr));
 
-  perPartitionInfo *info = (perPartitionInfo* ) pf->remembrance; 
+  perPartitionInfo *info = (perPartitionInfo* ) pf->remembrance.partInfo; 
   
   info->modelNum = model; 
   
@@ -1120,29 +1121,28 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
   int target_branch = drawRandInt(chain,(chain->tr->mxtips * 2) - 3); 
   node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
   
-    switch(pf->ptype)
-      {
-      case UPDATE_SINGLE_BL: 
-	//for each branch get the current branch length
-	//pull a uniform like
-	//x = current, w =window
-	//uniform(x-w/2,x+w/2)
-	set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE, pf->parameters.slidWinSize);
-	break;
+  switch(pf->ptype)
+    {
+    case UPDATE_SINGLE_BL: 
+      //for each branch get the current branch length
+      //pull a uniform like
+      //x = current, w =window
+      //uniform(x-w/2,x+w/2)
+      set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE, pf->parameters.slidWinSize);
+      break;
 	
-      case UPDATE_SINGLE_BL_EXP: 
-	set_branch_length_exp(chain,p, multiBranches, chain, TRUE);
-	break;
-      case UPDATE_SINGLE_BL_BIUNIF: 
+    case UPDATE_SINGLE_BL_EXP: 
+      set_branch_length_exp(chain,p, multiBranches, chain, TRUE);
+      break;
+    case UPDATE_SINGLE_BL_BIUNIF: 
 
-	set_branch_length_biunif(chain, p, multiBranches, chain, TRUE);
-	break;
-      default:
-	assert(0);
-      }
+      set_branch_length_biunif(chain, p, multiBranches, chain, TRUE);
+      break;
+    default:
+      assert(0);
+    }
 
-
-  chain->brLenRemem.single_bl_branch = target_branch;
+  pf->remembrance.topoRec->whichBranch = target_branch; 
   evaluateGenericWrapper(chain, p, FALSE); 
   //evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
 }
@@ -1184,10 +1184,9 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
 static void random_branch_length_proposal_reset(state * chain, proposalFunction *pf)
 {
   node *p;
-  assert( chain->brLenRemem.single_bl_branch != -1 );
-  
+
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
-  p = select_branch_by_id_dfs( chain->tr->start, chain->brLenRemem.single_bl_branch, chain );
+  p = select_branch_by_id_dfs( chain->tr->start, pf->remembrance.topoRec->whichBranch, chain );
   
   reset_branch_length(p, getNumBranches(chain->tr));
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
@@ -1204,7 +1203,6 @@ static void random_branch_length_proposal_reset(state * chain, proposalFunction 
 #endif
 
  // evaluateGeneric(chain->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from chain->tr->start, that is: evaluateGeneric(chain->tr, chain->tr->start, TRUE);
-  chain->brLenRemem.single_bl_branch = -1;
 }
 
 double get_frequency_prior(state * chain)
@@ -1249,7 +1247,7 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
   chain->hastings=1;
 
   int model  = drawRandInt(chain,getNumberOfPartitions(tr));
-  perPartitionInfo *info = ((perPartitionInfo*)pf->remembrance); 
+  perPartitionInfo *info = pf->remembrance.partInfo; 
 
   pInfo *partition = getPartition(chain, model); 
 
@@ -1287,7 +1285,7 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
 
 void frequency_proposal_reset(state * chain, proposalFunction *pf)
 {
-  perPartitionInfo *info = ((perPartitionInfo*)pf->remembrance); 
+  perPartitionInfo *info = pf->remembrance.partInfo; 
   restore_frequ_rates(chain, info->modelNum, info->numFreqs, info->frequencies);
 }
 
@@ -1313,7 +1311,7 @@ void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValu
 
 static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
 {
-  perPartitionInfo *info = ((perPartitionInfo*)pf->remembrance); 
+  perPartitionInfo *info = pf->remembrance.partInfo; 
   restore_subs_rates(chain, info->modelNum, info->numRates, info->substRates);
 }
 
@@ -1381,6 +1379,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
   switch(type)
     {
     case E_SPR:
+      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
       ptr->category = TOPOLOGY;       
@@ -1388,6 +1387,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "eSPR"; 
       break; 
     case E_SPR_MAPPED: 		/* TRUSTED  */
+      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
       ptr->name = "eSPRMapped"; 
@@ -1399,7 +1399,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN;
       ptr->category = SUBSTITUTION_RATES; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "modelSlidWin"; 
       break; 
     case UPDATE_GAMMA:      	
@@ -1407,17 +1407,18 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN; 
       ptr->category = RATE_HETEROGENEITY; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "gammaSlidWin"; 
       break; 
     case UPDATE_GAMMA_EXP: 
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->category = RATE_HETEROGENEITY; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "gammaExp"; 
       break; 
     case UPDATE_SINGLE_BL: 	/* TRUSTED */
+      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->category = BRANCH_LENGTHS; 
@@ -1425,12 +1426,14 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "singleBLSlidWin"; 
       break; 
     case UPDATE_SINGLE_BL_EXP: 
+      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->category = BRANCH_LENGTHS; 
       ptr->name  = "singleBlExp"; 
       break; 
     case UPDATE_SINGLE_BL_BIUNIF: 
+      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->name = "singleBLBiunif"; 
@@ -1441,33 +1444,33 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func =  simple_model_proposal_reset;
       ptr->name = "singleModelBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
     case UPDATE_MODEL_BIUNIF: 
       ptr->name = "modelBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
       ptr->apply_func = single_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
     case UPDATE_MODEL_ALL_BIUNIF: 
       ptr->apply_func = all_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->name = "modelAllBiunif"; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->category = SUBSTITUTION_RATES; 
       break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
       ptr->apply_func = frequency_proposal_apply; 
       ptr->reset_func = frequency_proposal_reset; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "freqBiunif"; 
       ptr->category = FREQUENCIES; 
       break;
     case UPDATE_MODEL_PERM_BIUNIF: 
       ptr->apply_func = NULL; 	/* TODO */
       ptr->reset_func = simple_model_proposal_reset; 
-      ptr->remembrance = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "modelPermBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
       break; 

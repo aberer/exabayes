@@ -63,7 +63,7 @@ void initDefaultValues(state *theState, tree *tr)
   /* theState->frequRemem.numFrequRates = partition->states; /\* 4 for DNA *\/ */
   /* theState->frequRemem.curFrequRates = (double *) exa_malloc(theState->frequRemem.numFrequRates * sizeof(double)); */
 
-  theState->brLenRemem.single_bl_branch = -1;
+  /* theState->brLenRemem.single_bl_branch = -1; */
 
   theState->numGen = 1000000;
   theState->penaltyFactor = 0.0;
