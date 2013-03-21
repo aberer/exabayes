@@ -71,14 +71,11 @@ static void recordSubsRates(state *chain, int model, int numSubsRates, double *p
 }
 
 
-static void reset_branch_length(nodeptr p, int numBranches)
+static void reset_branch_length(nodeptr p, int numBranches, double *bls)
 {
   int i;
   for(i = 0; i < numBranches; i++)
-    {
-      assert(p->z_tmp[i] == p->back->z_tmp[i]);
-      p->z[i] = p->back->z[i] = p->z_tmp[i];   /* restore saved value */
-    }
+    p->z[i] = p->back->z[i] = bls[i];   /* restore saved value */
 }
 
 
@@ -907,7 +904,7 @@ double get_branch_length_prior( state *chain)
 }
 
 //setting this out to allow for other types of setting
-static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double windowRange)
+static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double windowRange, double *bls)
 {
   int i;
   double newZValue;
@@ -920,8 +917,11 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
     
       if(record_tmp_bl)
 	{
-	  assert(p->z[i] == p->back->z[i]);
-	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
+	  assert(p->z[i] == p->back->z[i]);	  	  
+	  bls[i] = p->z[i]; 
+
+	  /* bls[i] = p->back->z_tmp[i] = p->z[i]; */
+	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
       r = drawRandDouble01(chain);
 
@@ -951,7 +951,7 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
     }
 }
 
-static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double *bls)
 {
   int i;
   double newZValue;
@@ -965,7 +965,8 @@ static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,st
       if(record_tmp_bl)
 	{
 	  assert(p->z[i] == p->back->z[i]); 
-	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
+	  bls[i] = p->z[i]; 
+	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
       
       real_z = -log(p->z[i]) * s->tr->fracchange; //convert from exponential to real form
@@ -1000,7 +1001,7 @@ static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,st
     }
 }
 
-static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl)
+static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double *bls)
 {
   
   int i;
@@ -1014,7 +1015,8 @@ static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state
       if(record_tmp_bl)
 	{
 	  assert(p->z[i] == p->back->z[i]);
-	  p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /* keep current value */
+	  bls[i] = p->z[i]; 
+	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
    //   r = drawRandExp(lambda);
       real_z = -log(p->z[i]) * s->tr->fracchange;
@@ -1128,15 +1130,15 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
       //pull a uniform like
       //x = current, w =window
       //uniform(x-w/2,x+w/2)
-      set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE, pf->parameters.slidWinSize);
+      set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE, pf->parameters.slidWinSize, pf->remembrance.topoRec->bls); 
       break;
 	
     case UPDATE_SINGLE_BL_EXP: 
-      set_branch_length_exp(chain,p, multiBranches, chain, TRUE);
+      set_branch_length_exp(chain,p, multiBranches, chain, TRUE,pf->remembrance.topoRec->bls);
       break;
     case UPDATE_SINGLE_BL_BIUNIF: 
 
-      set_branch_length_biunif(chain, p, multiBranches, chain, TRUE);
+      set_branch_length_biunif(chain, p, multiBranches, chain, TRUE,pf->remembrance.topoRec->bls);
       break;
     default:
       assert(0);
@@ -1188,7 +1190,7 @@ static void random_branch_length_proposal_reset(state * chain, proposalFunction 
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
   p = select_branch_by_id_dfs( chain->tr->start, pf->remembrance.topoRec->whichBranch, chain );
   
-  reset_branch_length(p, getNumBranches(chain->tr));
+  reset_branch_length(p, getNumBranches(chain->tr), pf->remembrance.topoRec->bls);
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
   //update_all_branches(chain, TRUE);
 
