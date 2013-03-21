@@ -145,7 +145,6 @@ typedef struct _pfun  proposalFunction;
 
 typedef struct 
 {
-
   /** 
       helps us to remember which branch we manipulated.       
    */ 
@@ -158,10 +157,6 @@ typedef struct
 
 typedef struct _state
 {
-  /* TODO remove  */
-  /* these 3 are independent of the state, can be taken out unless we want to pass a single pointer as an argument*/  
-  nodeptr * list; /* list of possible re-insertion nodes */ 
-
   tree * tr;
 #if HAVE_PLL == 1   
   partitionList *partitions; 
@@ -176,13 +171,8 @@ typedef struct _state
 
   double likelihood; 
 
-
   /* TODO make all of this more generic in form of a history     */
   spr_move_remembrance sprMoveRemem; 
-  /* branch_length_remembrance brLenRemem;  */
-  /* gamma_remembrance gammaRemem;  */
-  /* model_remembrance modelRemem;  */ 
-  /* frequency_remembrance frequRemem;  */
 
 
   proposalFunction **proposals; 
@@ -244,7 +234,9 @@ struct _pfun
   /* double (*get_prior_ratio) (state *curstate);  */
 
 
-  /* tunable parameters   */
+  /**
+     tunable parameters
+  */
   union
   {
     double eSprStopProb; 
@@ -258,29 +250,14 @@ struct _pfun
 
 
 
-  
-
-  
-  
-  
-  /* TODO wrap this up properly  */
-  /*  not ideal yet */
-  /* void *remembrance;  */
+  /**
+     Variables that help us remember what we changed. 
+   */
   union 
   {
     topoRecord *topoRec; 
     perPartitionInfo *partInfo; 
   }remembrance; 
-
-  /* perPartitionInfo rememberPartpartInfo;  */
-  /* union  */
-  /* { */
-  /*   double alpha;  */
-  /* }remembrance;  */
-  /* int model;  */
-
-
-
 
 }; 
 
