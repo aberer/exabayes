@@ -53,6 +53,20 @@ nodeptr findNodePtrByNeighbor(tree *tr, int targetNode,  int neighborNode)
 
 
 
+/**
+   @brief Indicates  whether true nodes are hooked.  
+ */
+boolean nodesAreHooked(tree *tr, int nodeA, int nodeB)
+{
+  nodeptr a = tr->nodep[nodeA]; 
+
+  return a->back->number == nodeB
+    || a->next->back->number == nodeB
+    || a->next->next->back->number == nodeB; 
+  
+}
+
+
 static nodeptr findEmptyNodePtr(nodeptr ptr)
 {
   if(ptr->back == NULL)

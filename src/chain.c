@@ -23,8 +23,6 @@
 
 
 
-
-
 void initDefaultValues(state *theState, tree *tr)
 {
   /* TODO we have to redo the prior framework */

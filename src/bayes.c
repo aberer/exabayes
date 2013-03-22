@@ -16,6 +16,7 @@
 #include "convergence.h"
 #include "exa-topology.h"	
 #include "nclConfigReader.h"
+#include "misc-utils.h"
 
 /* TODO outsource  */
 #include "chain.h"
@@ -26,22 +27,6 @@
 #include "proposals.h"
 
 extern double masterTime; 
-
-
-static void swpDouble(double *a, double *b)
-{
-  double tmp = *b; 
-  *b = *a; 
-  *a = tmp; 
-}
-
-static void swpInt(int *a, int *b)
-{
-  int tmp = *b;
-  *b = *a; 
-  *a = tmp; 
-}
-
 
 
 /* TODO adapt likelihood */

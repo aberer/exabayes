@@ -91,9 +91,6 @@ typedef struct
 typedef struct _pfun  proposalFunction; 
 
 
-
-
-
 typedef struct 
 {
   int whichBranch; /// helps us to remember which branch we manipulated.       
@@ -103,12 +100,10 @@ typedef struct
 
   int insertBranch[2]; /// the ids of both nodes  that originally constituted a branch before insertion 
 
-  int pruningBranches[2] ; /// the ids of the two neighbors prior to pruning 
+  int pruningBranches[2] ; /// the ids of the two neighbors prior to pruning  => convertion: the first id is the direction we wandered to!
   double neighborBls[NUM_BRANCHES]; 
   double nextNeighborBls[NUM_BRANCHES]; 
 } topoRecord; /// information that helps us to restore the previous state when doing topological moves or manipulating the branch lengths
-
-
 
 
 

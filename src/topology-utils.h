@@ -15,4 +15,7 @@ void insertNodeIntoBranch(state *chain, int insertNode, int branchNode1, int bra
 
 void traverseAndCount(nodeptr p, int *count, tree *tr ); 
 
+boolean nodesAreHooked(tree *tr, int nodeA, int nodeB); 
+
+
 #endif

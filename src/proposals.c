@@ -18,6 +18,7 @@
 #include "eval.h"
 #include "adapters.h"
 #include "exa-topology.h"
+#include "misc-utils.h"
 
 void expensiveVerify(tree *tr); 
 
@@ -122,58 +123,19 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
     result, 
     r = drawRandDouble01(chain); 
 
-  /* *insertNode = NULL;  */
   if(r < 0.5 )
-    {
-       *insertNode = isTip((*insertNode)->next->number, chain->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back; 
-
-     // *insertNode = (*insertNode)->next->back ;
-    }
+    *insertNode = (*insertNode) ->next->back; 
   else 
-    {
-       *insertNode = isTip((*insertNode)->next->next->number, chain->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back; 
-      //*insertNode = (*insertNode)->next->next->back;
-    }
+    *insertNode = (*insertNode) ->next->next->back; 
+  /* if(r < 0.5 ) */
+  /*   { */
+  /*     *insertNode = isTip((*insertNode)->next->number, chain->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back;  */
+  /*   } */
+  /* else  */
+  /*   { */
+  /*     *insertNode = isTip((*insertNode)->next->next->number, chain->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back;        */
+  /*   } */
 
-  /*
-  if(isTip( (*insertNode)->number, chain->tr->mxtips))
-  {
-     if(randNum == 0)
-    direction--;
-    else
-    direction++;
-  }*/
-  /*
-  if(direction % 3 == 0)
-    {
-      if(randNum == 0)
-	*insertNode = (*insertNode)->next->back; 
-      else 
-	*insertNode = (*insertNode)->next->next->back; 
-    }
-  else if(direction % 3 == 1)
-    {
-      if(randNum == 0)
-	*insertNode = (*insertNode)->next->next->back; 	
-      else 
-	*insertNode = (*insertNode)->back; 
-    }
-  else 
-    {
-      if(randNum == 0)
-	*insertNode = (*insertNode)->back; 
-      else 
-	*insertNode = (*insertNode)->next->back; 
-    }
-    
-     if(isTip( (*insertNode)->number, chain->tr->mxtips))
-  {
-     if(randNum == 0)
-    direction--;
-    else
-    direction++;
-  }
-  */
   double randprop = drawRandDouble01(chain);
 
   result = randprop < stopProp;
@@ -204,8 +166,23 @@ nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 
 static void spr_eval(state *chain, proposalFunction *thisProposal)
 {  
+  /* TODO still so much to do */
+
+  tree *tr = chain->tr; 
+      
   proposalFunction
     *prevProposal = chain->prevProposal; 
+
+  topoRecord
+    *rec = thisProposal->remembrance.topoRec; 
+  
+  /* check, if the move changed anything at all */
+  if( comparePair(rec->pruningBranches[0], rec->pruningBranches[1], rec->insertBranch[0], rec->insertBranch[1]) ) 
+    {
+      /* TODO here we could save tim e */      
+      evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */      
+      return ; 
+    }
 
   /* cleanup necessary  */
   if(NOT chain->wasAccepted)
@@ -224,21 +201,22 @@ static void spr_eval(state *chain, proposalFunction *thisProposal)
       	}
     }
   else 
-    {    
-      topoRecord *rec = thisProposal->remembrance.topoRec; 
-      
+    {       
       /* evaluate subtree again, if necessary   */
       nodeptr subtreePtr = getThirdNode(chain->tr, rec->prunedSubTree, rec->insertBranch[0], rec->insertBranch[1]);      
       exa_newViewGeneric( chain, subtreePtr, FALSE);
 
-      
+      /* find the ptr to the sub-tree that was left unchanged, when we pruned the subtree  */
+      /* if(NOT isTip(rec->pruningBranches[1], tr->mxtips)) */
+      /* 	{ */
+      nodeptr goodSubtreePtr = findNodePtrByNeighbor( tr, rec->pruningBranches[1], rec->pruningBranches[0] );
+      exa_newViewGeneric(chain, goodSubtreePtr, FALSE);
+      /* 	} */
+
       /* evaluateGenericWrapper(chain, thisProposal->remembrance.topoRec->) */
       evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
     }
-
 }
-
-
 
 
 static void extended_spr_apply(state *chain, proposalFunction *pf)
@@ -301,6 +279,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   nodeptr initNode = NULL; 
   nodeptr curNode = NULL; 
+
   boolean remapBL = FALSE; 
   if(drawRandDouble01(chain) > 0.5)
     {
@@ -311,16 +290,17 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
     curNode = nnb; 
   initNode = curNode; 
 
-  int accepted = FALSE;   
-
-//printf("curNode:  back next nextnext\n");
-  while( NOT  accepted)
-    {       
-      accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
+  while(curNode->number == initNode->number)
+    {
+      int accepted = FALSE;   
+      while( NOT  accepted)
+	{       
+	  accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
       
-      /* needed for spr remap */
-      if(curNode == initNode)
-	remapBL = NOT remapBL; 
+	  /* needed for spr remap */
+	  if(curNode == initNode)
+	    remapBL = NOT remapBL; 
+	}
     }
 
   chain->newprior = 1; 
@@ -366,29 +346,42 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       {
 	/* TODO hastings?  */
       
-	double *neighborZ = remapBL ? nbz  :  nnbz; 
-      
+	double *neighborZ = nnbz; 
+
+
+	/* if we went into the other direction, correct for that. 
+	   specfically rec->pruningBranches must point into the direction, we moved the tree to 
+	 */
 	if( remapBL ) 
 	  {
+	    neighborZ = nbz; 
 	    for(int i = 0; i < getNumBranches(tr); ++i)
-	      nb->z[i] = nb->back->z[i] = nnb->z[i]; 	    
+	      nb->z[i] = nb->back->z[i] = nnb->z[i]; 
+	    
+	    assert(getNumBranches(tr) == 1 ); 
+	    swpDouble(rec->neighborBls,rec->nextNeighborBls ); 
+	    swpInt(rec->pruningBranches , rec->pruningBranches + 1 );	    
 	  }
-
 	
-	insertNodeIntoBranch(chain, prunedSubtreePtr->number, rec->insertBranch[0],rec->insertBranch[1], insertBranchPtr->z, neighborZ); 
-	
-	/* insertWithGenericBL(prunedSubtreePtr, insertBranchPtr, insertBranchPtr->z, curNode->z, neighborZ, getNumBranches(tr)); */
-
-
-	/* IMPORTANT TODO verify, that the mapping actually works, as we
-	   had this in mind. Use topo print functions for that.
-	*/
+	insertNodeIntoBranch(chain, prunedSubtreePtr->number, rec->insertBranch[0],rec->insertBranch[1], insertBranchPtr->z, neighborZ);
       }
       break; 
-    default : assert(0) ; 
+    default: assert(0); 
     }
-  
-  debug_checkTreeConsistency(chain ); 
+
+  debug_checkTreeConsistency(chain); 
+
+  assert(nodesAreHooked(tr, rec->prunedSubTree,rec->insertBranch[0])); 
+  assert(nodesAreHooked(tr, rec->prunedSubTree,rec->insertBranch[1]));   
+
+
+  /* NOTICE 
+     
+     in this case the topology has not changed at all! do we really
+     want to allow for that? downside is that we mess up our hastings,
+     if we disallow */
+  if(NOT comparePair(rec->pruningBranches[0],rec->pruningBranches[1],rec->insertBranch[0], rec->insertBranch[1] ))
+    assert(nodesAreHooked(tr, rec->pruningBranches[0],rec->pruningBranches[1]));   
 }
 
 
