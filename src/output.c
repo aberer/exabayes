@@ -2,23 +2,89 @@
    @file output.c
    
    @brief Functions printing to console or files. 
+
+   Also some debug functionality goes in here. 
  */ 
 
 
-#include "common.h"
-#include "config.h"
 #include "axml.h"
 #include "proposalStructs.h"
 #include "main-common.h"
 #include "globals.h"
-
-
 #include "chain.h"
 #include "output.h"
+#include "adapters.h"
+#include "topology-utils.h"
 
-#include "adapters.h"		/*  */
 
-extern double masterTime; 
+
+
+
+/**
+   @brief prints the tree as a debug message. 
+*/
+void debug_printTree(state *chain)
+{
+#ifdef DEBUG_SHOW_TREE  
+  char tmp[100000];
+  Tree2stringNexus(tmp, chain, chain->tr->start->back, 0); 
+  printInfo(chain, "tree: %s\n", tmp); 
+#endif
+}
+
+
+
+
+/**
+   @brief prints the entire environment of a node with branch lengths
+ */
+void debug_printNodeEnvironment(state *chain, int nodeID )
+{
+#ifdef DEBUG_SHOW_TREE
+  nodeptr 
+    p =  chain->tr->nodep[nodeID]; 
+
+  printInfo(chain, "STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, p->back->z[0], 
+	    p->next->back->number, p->next->back->z[0],
+	    p->next->next->back->number, p->next->next->back->z[0]
+	    );   
+#endif
+}
+
+
+
+void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted) 
+{
+#ifdef DEBUG_SHOW_EACH_PROPOSAL
+  if(processID == 0)
+    {
+      if(accepted)
+	printInfo(chain, "accepting\t");   
+      else 
+	printInfo(chain, "rejecting\t");   	  
+      printf("%s\n" ,pf->name); 
+    }
+#endif
+}
+
+
+void debug_checkTreeConsistency(state *chain)
+{
+#ifdef DEBUG_LNL_VERIFY
+  tree *tr = chain->tr; 
+  int count = 0; 
+  traverseAndCount(tr->start->back, &count, tr); 
+  if(count != 2 * tr->mxtips - 3 )
+    {      
+      char tmp[10000]; 
+      Tree2stringNexus(tmp, chain, tr->start->back, 0); 
+      if(processID==0)
+	printf("faulty TOPOLOGY: %s\n", tmp);
+
+      assert(2 * tr->mxtips-3 == count); 
+    }
+#endif
+}
 
 void makeFileNames()
 {
@@ -41,6 +107,26 @@ void makeFileNames()
   }
 }
 
+
+
+
+/**
+   @brief prints a message with associated chain/run/heat information. 
+
+   Please always use this, when possible, it also assures that the
+   message is only printed once.
+ */ 
+void printInfo(state *chain, const char *format, ...)
+{  
+  if(processID == 0)
+    {
+      printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberCoupledChains, chain->couplingId, chain->currentGeneration); 
+      va_list args;
+      va_start(args, format);     
+      vprintf(format, args );
+      va_end(args);
+    }
+}
 
 
 double exabayes_getBranchLength(state *chain, int perGene, nodeptr p)

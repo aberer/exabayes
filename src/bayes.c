@@ -183,6 +183,13 @@ void runChains(state *allChains, int diagFreq)
 }
 
 
+
+/**
+   @brief the main ExaBayes function.
+
+   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+   @param adef -- the legacy adef
+ */
 void exa_main(tree *tr, analdef *adef)
 {   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  

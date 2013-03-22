@@ -6,16 +6,12 @@
 
 
 */ 
-    
 
 
-#include "common.h"
 #include "axml.h"
 
 #include "proposalStructs.h"
 #include "globals.h"
-
-#include "config.h"
 
 
 
@@ -211,6 +207,9 @@ void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
   hookupDefault(p,q,tr->numBranches); 
 #endif
 }
+
+
+
 
 
 

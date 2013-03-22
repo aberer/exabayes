@@ -7,10 +7,8 @@
 /* use, if in productive mode */
 /* #define PRODUCTIVE */
 
-#include <mpi.h>
 
-#include "config.h"
-#include "common.h"
+#include <mpi.h>
 
 #include "axml.h"
 #include "globalVariables.h"

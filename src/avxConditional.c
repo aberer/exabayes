@@ -13,7 +13,7 @@
 #else 
 
 
-int prototypeDummy()
+static int prototypeDummy()
 {
   return 0; 
 }

@@ -5,10 +5,8 @@
 */ 
 
 #include "axml.h"
-
 #include "proposalStructs.h"
 #include "globals.h"
-
 #include "main-common.h"
 
 
@@ -114,10 +112,6 @@ static void newviewBipartitions(unsigned int **bitVectors, nodeptr p, int numsp,
 void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberType position, int chainId)
 {     
   int vectorLength = ( tr->mxtips / 32  ) + ((tr->mxtips % 32) == 0 ?0 : 1) ; ; 
-
-  /* printf("inserting: "); */
-  /* printBv(bitVector, tr->mxtips); */
-  /* printf("\n"); */
 
   if(h->table[position] != NULL)
     {
@@ -240,8 +234,6 @@ void addBipartitionsToHash(tree *tr, state *chain)
   resetBitVectors(tr);
   
   int cnt = 0; 
-  /* if(processID == 0) */
-  /*   printf("\n\nstart is %d\n\n", tr->start->number); */
   extractBipartitions(tr, tr->bitVectors, tr->nodep[1]->back, gAInfo.bvHash, &cnt, chain->id / gAInfo.numberCoupledChains);
   assert(cnt == tr->mxtips -3); 
 }
@@ -256,7 +248,7 @@ boolean convergenceDiagnosticDummy(state *allChains, int numChains)
   for(int i = 0; i < numChains; ++i)
     {
       state *curChain = allChains + i; 
-      if(curChain->currentGeneration < curChain->numGen)
+      if(curChain->currentGeneration < gAInfo.numGen)
 	result = FALSE; 
     }
   
@@ -326,7 +318,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 		sd += pow(((((double)e->treeVector[j]) / treesSampled) - mu ) ,2); 
 	      sd = sqrt(sd) ; 
 
-#ifdef ASDSF_BE_VERBOSE
+#ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
 	      if(processID == 0)
 		{
 		  printBv(e->bitVector, numTaxa); 
@@ -341,7 +333,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 	    }
 	  else 
 	    {
-#ifdef ASDSF_BE_VERBOSE
+#ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
 	      /* if(processID == 0) */
 	      /* 	{ */
 	      /* 	  printf("NOT\t");  */
@@ -358,10 +350,8 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 
   asdsf /= cntRelevant; 
 
-#ifdef ASDSF_BE_VERBOSE
   if(processID == 0)
     printf("CONVERGENCE: ASDSF = %f\n", asdsf); 
-#endif
 
   exa_free(numSampled); 
 
@@ -375,6 +365,6 @@ boolean convergenceDiagnostic(state *allChains)
   if(gAInfo.numberOfRuns > 1)
     return averageDeviationOfSplitFrequencies(allChains); 
   else 
-    return allChains[0].currentGeneration > allChains[0].numGen; 
+    return allChains[0].currentGeneration > gAInfo.numGen; 
 }
 

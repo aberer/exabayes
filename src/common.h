@@ -75,6 +75,8 @@ typedef  unsigned int nat ;
 #define INIT_GAMMA_SLID_WIN  0.75
 
 
+#define ACCEPTED_LIKELIHOOD_EPS 0.0001 
+
 
 
 /* ABOVE: stuff that is needed by everyone and can be defined
@@ -94,15 +96,16 @@ typedef  unsigned int nat ;
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
-#define DEBUG_LNL_VERIFY
+/* #define DEBUG_LNL_VERIFY */
+/* #define DEBUG_SHOW_TOPO_CHANGES */
 
-
+/* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
 #define ASDSF_FREQ_CUTOFF 0.1	/*  ignore clades for which the frequency in no chain exceeds this value */
 #define ASDSF_CONVERGENCE_CRITERION 0.05 /* indicate convergence, as soon as the asdsf is below this value  */
 
 /* a lot of debug information for the asdsf */
-#define ASDSF_BE_VERBOSE 
+
 
 
 /* MC3 stuff for development */

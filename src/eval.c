@@ -3,7 +3,7 @@
    @brief Functions for likelihood evaluations.  
 */ 
 
-#include "common.h"
+
 #include "axml.h"
 #include "proposalStructs.h"
 #include "globals.h"
@@ -26,8 +26,7 @@ static void expensiveVerify(state *chain)
       if(fabs (tr->likelihood - val1 ) > 0.1)
       printf("WARNING: found in expensive evaluation: likelihood difference is %f (with before/after)\t%f\t%f\n", fabs (tr->likelihood - val1 ), val1, tr->likelihood); 
       assert(fabs (tr->likelihood - val1 ) < 0.1);   
-    }
-  
+    }  
 #endif
 }
 

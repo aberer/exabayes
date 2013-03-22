@@ -48,7 +48,11 @@ typedef struct globs
   hashtable *bvHash; 
 
   int diagFreq; 
+
+  
+  int numGen;			/// just relevent, if we have exactly 1 run 
 } globalAnalysisInfo; 
+
  
 
 #endif
@@ -78,7 +82,8 @@ globalAnalysisInfo gAInfo =
    0,
    0,
    NULL,
-   0
+   0,
+   10000
   }; 
 
 

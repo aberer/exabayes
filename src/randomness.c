@@ -8,11 +8,8 @@
 
 
 #include <math.h>
-#include <assert.h>
 #include <inttypes.h>
 
-
-#include "common.h"
 #include "axml.h"
 #include "main-common.h"
 #include "proposalStructs.h"

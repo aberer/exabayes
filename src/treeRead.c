@@ -6,15 +6,9 @@
  
 */ 
 
-
-#include "common.h"
-
-#include "config.h"
 #include "axml.h"
-
 #include "proposalStructs.h"
 #include "globals.h"
-
 #include "adapters.h"
 
 static void  treeEchoContext (FILE *fp1, FILE *fp2, int n)

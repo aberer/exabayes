@@ -5,31 +5,19 @@
 */ 
 
 
-#include "common.h"
-
-#include "config.h"
 #include "axml.h"
-
 #include "proposalStructs.h"
-
 #include "globals.h"
-
 #include "main-common.h"
-
-
 #include "chain.h"
 #include "proposals.h"
 #include "output.h"
 #include "convergence.h" 
-
 #include "treeRead.h"
-
 #include "exa-topology.h"
-
 #include "randomness.h"
 #include "eval.h"
 #include "adapters.h"
-
 #include "randomTree.h" 
 
 
@@ -65,21 +53,8 @@ void initDefaultValues(state *theState, tree *tr)
 
   /* theState->brLenRemem.single_bl_branch = -1; */
 
-  theState->numGen = 1000000;
+
   theState->penaltyFactor = 0.0;
-}
-
-
-void printInfo(state *chain, const char *format, ...)
-{  
-  if(processID == 0)
-    {
-      printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberCoupledChains, chain->couplingId, chain->currentGeneration); 
-      va_list args;
-      va_start(args, format);     
-      vprintf(format, args );
-      va_end(args);
-    }
 }
 
 
@@ -219,14 +194,6 @@ void preinitTree(tree *tr)
 }
 
 
-
-#if HAVE_PLL == 1 
-void initializeTree(tree *tr, partitionList *partitions, analdef *adef); 
-#else  
-void initializeTree(tree *tr, analdef *adef); 
-#endif
-
-
 void preInitTree(tree *tr)
 {
   tr->doCutoff = TRUE;
@@ -265,6 +232,9 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   initParamStruct *initParams = exa_calloc(1,sizeof(initParamStruct)); 
   
   parseConfigWithNcl(configFileName, &initParams);
+  
+  if(initParams->numGen > 0)
+    gAInfo.numGen = initParams->numGen; 
 
   gAInfo.samplingFrequency = initParams->samplingFrequency; 
   gAInfo.diagFreq = initParams->diagFreq; 

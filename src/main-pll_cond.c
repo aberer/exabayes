@@ -3,9 +3,8 @@
    @brief sets up ExaBayes with the PLL code base. 
 */ 
 
-#include "config.h"
+
 #include "mem_alloc.h"
-#include "common.h"
 
 #define GLOBAL_VARIABLES_DEFINITION
 #include "axml.h"

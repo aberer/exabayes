@@ -2,12 +2,15 @@
    @file exa-topology.c
     
    @brief Adapted code from the axml-variants for storing topologies.  
+
+
+   TODO on the long run this should be replaced by a version tailored
+   to our needs. The axml-topology does not work across trees and
+   therefore many hacks in this file could be omitted.
    
 */
 
 
-#include "common.h"
-#include "config.h"
 #include "axml.h"
 #include "proposalStructs.h"
 
@@ -17,29 +20,7 @@
 
 #include "adapters.h"
 
-
-
-
-/**
-   @brief A check to ensure that the tree is still consistent. 
- */ 
-void traverseAndCount(nodeptr p, int *count, tree *tr )
-{
-  nodeptr q;  
-
-  *count += 1;
-
-  if (! isTip(p->number,tr->mxtips)) 
-    {                                  /*  Adjust descendants */
-      q = p->next;
-      while (q != p) 
-	{
-	  traverseAndCount(q->back, count, tr);
-	  q = q->next;
-	} 
-    }
-}
-
+#include "topology-utils.h"
 
 
 topol  *setupTopol (int maxtips)

@@ -5,7 +5,6 @@
 
  */ 
 
-#include "common.h"
 
 #include "axml.h"
 #include "proposalStructs.h"

@@ -18,21 +18,20 @@
 
 
 /* TODO not enabled yet, was not such a good idea */
-typedef struct 
-{  
-  proposal_type type; 
-  int wasAccepted; 
+typedef struct
+{
+  proposal_type type;
+  int wasAccepted;
 
   
-  int model; 
+  int model;
 
-  union 
+  union
   {
-    double alpha; 
-    
-  } change; 
+    double alpha;    
+  } change;
 
-} chainHistory ; 
+} chainHistory ;
 
 
 
@@ -53,54 +52,6 @@ typedef enum _cats {
   SUBSTITUTION_RATES = 4  ,
   RATE_HETEROGENEITY = 5
 } category_t; 
-
-
-
-
-/* TODO sliding windows are not an attribute of remembrance */
-
-
-/* spr proposal specific */
-/* typedef struct { */
-/*   double qz[NUM_BRANCHES]; /\* BL values prior to re-insertion *\/ */
-/*   int single_bl_branch; */
-/* } branch_length_remembrance; */
-
-
-
-/* model proposal specific  */
-typedef struct
-{
-  analdef * adef;
-  int model;
-  int nstates;
-  int numSubsRates;
-  double *curSubsRates;//used for resetting
-} model_remembrance; 
-
-/* frequency proposal specific  */
-/* typedef struct */
-/* { */
-/*   analdef * adef; */
-/*   int model; */
-/*   int numFrequRates; */
-/*   double *curFrequRates;//used for resetting */
-/* } frequency_remembrance;  */
-
-
-/* spr proposal specific  */
-typedef struct 
-{
-  nodeptr p; /* node pruned */
-  nodeptr nb;   /* p->next->back describes an edge that dissapears when p is pruned */
-  double nbz[NUM_BRANCHES];
-  nodeptr nnb; /* p->next->next->back describes an edge that dissapears when p is pruned */
-  double nnbz[NUM_BRANCHES];
-  nodeptr r; /* edge neighbour of re-insertion node, q->back */
-  nodeptr q; /* re-insertion node */
-} spr_move_remembrance; 
-
-
 
 
 
@@ -145,13 +96,19 @@ typedef struct _pfun  proposalFunction;
 
 typedef struct 
 {
-  /** 
-      helps us to remember which branch we manipulated.       
-   */ 
-  int whichBranch; 
-
+  int whichBranch; /// helps us to remember which branch we manipulated.       
   double bls[NUM_BRANCHES]; /// branch lengths for saving 
-} topoRecord; 
+
+  int prunedSubTree ; 
+
+  int insertBranch[2]; /// the ids of both nodes  that originally constituted a branch before insertion 
+
+  int pruningBranches[2] ; /// the ids of the two neighbors prior to pruning 
+  double neighborBls[NUM_BRANCHES]; 
+  double nextNeighborBls[NUM_BRANCHES]; 
+} topoRecord; /// information that helps us to restore the previous state when doing topological moves or manipulating the branch lengths
+
+
 
 
 
@@ -161,7 +118,6 @@ typedef struct _state
 #if HAVE_PLL == 1   
   partitionList *partitions; 
 #endif  
-
   
   double curprior;
   double newprior;
@@ -171,18 +127,12 @@ typedef struct _state
 
   double likelihood; 
 
-  /* TODO make all of this more generic in form of a history     */
-  spr_move_remembrance sprMoveRemem; 
-
 
   proposalFunction **proposals; 
   int numProposals; 
   double *categoryWeights; 
-
-  /* TODO should this be an attribute of the chain? we could have a run-struct instead...*/
-  int numGen; 
+  
   int currentGeneration; 
-  /* int samplingFrequency;  */
 
   /* indicates how hot the chain is (i = 0 => cold chain), may change! */
   int couplingId; 
@@ -192,14 +142,6 @@ typedef struct _state
   FILE *outputParamFile; 
   /* unique id, also determines */
   int id; 
-
-  /* TODO 
-     these things are needed for convergence diagnostics, but we
-     should not store it in here
-
-     this pointer is shared among all chains 
-  */
-  /* hashtable *bvHash;  */
 
   /* RNG */
   randKey_t rKey;

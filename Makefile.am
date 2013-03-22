@@ -34,13 +34,11 @@ OPT_HEAD= -I./src/pll
 # FEATURE_FLAGS= -D_USE_PTHREADS
 exabayes_LDADD+=libpll.a
 noinst_LIBRARIES=libpll.a
-# exabayes_SOURCES+= src/make-random-tree_cond.c
 else
 CC=mpicc -std=gnu99
 CXX=mpic++
 OPT_HEAD= -Isrc/examl/
 FEATURE_FLAGS= -D_USE_ALLREDUCE
-# exabayes_SOURCES+=$(EXAML_SRC) 
 exabayes_LDADD+=libexaml.a
 noinst_LIBRARIES=libexaml.a
 endif 
@@ -57,7 +55,7 @@ AM_LDFLAGS=-lm
 
 EXTRA_DIST=lib/Random123-1.07 src/main-examl_cond.c src/main-pll_cond.c		\
               src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c	\
-              src/pll/axml-pll.h src/examl/axml-examl.h
+              src/pll/axml-pll.h src/examl/axml-examl.h doc/*
 
 
 clean: 

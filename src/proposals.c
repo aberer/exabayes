@@ -6,10 +6,6 @@
     
  */ 
 
-
-
-#include "common.h"
-
 #include "axml.h"
 #include "proposalStructs.h"
 #include "randomness.h"
@@ -23,12 +19,10 @@
 #include "adapters.h"
 #include "exa-topology.h"
 
-
 void expensiveVerify(tree *tr); 
 
 nodeptr select_random_subtree(state *chain, tree *tr);
 void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValue);
-
 
 
 #if 0 
@@ -193,31 +187,29 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr;
-
+  topoRecord *rec = pf->remembrance.topoRec; 
   double stopProp = pf->parameters.eSprStopProb; 
 
-#ifdef DEBUG_SHOW_TREE
-  char tmp[10000]; 
-  Tree2stringNexus(tmp, tr, tr->start->back, 0); 
-  if(processID==0)
-    printf("topo before: %s\n", tmp);
-#endif
+  debug_printTree(chain);
 
-  
   nodeptr    
-    p = select_random_subtree(chain,tr);
-
-#if 0
-  parsimonySPR(p, tr);
-#endif  
-
-  chain->sprMoveRemem.p = p;
-  chain->sprMoveRemem.nb  = p->next->back;
-  chain->sprMoveRemem.nnb = p->next->next->back;
+    prunedSubtreePtr = select_random_subtree(chain,tr);
+  nodeptr nb = prunedSubtreePtr->next->back, 
+    nnb = prunedSubtreePtr->next->next->back; 
   
-  record_branch_info(chain->sprMoveRemem.nb, chain->sprMoveRemem.nbz, getNumBranches(chain->tr));
-  record_branch_info(chain->sprMoveRemem.nnb, chain->sprMoveRemem.nnbz, getNumBranches(chain->tr));
+  /* TODO can we assert this?  */
+  assert( NOT isTip(prunedSubtreePtr->number, tr->mxtips) ) ; 
+
+  rec->prunedSubTree = prunedSubtreePtr->number; 
+
+  rec->pruningBranches[0] = nb->number; 
+  rec->pruningBranches[1] = nnb->number; 
+
+  record_branch_info(nb, rec->neighborBls , getNumBranches(chain->tr));
+  record_branch_info(nnb, rec->nextNeighborBls, getNumBranches(chain->tr));
   
+  double* nbz = rec->neighborBls,
+    *nnbz = rec->nextNeighborBls; 
 
   /* initial remapping of BL of nodes adjacent to pruned node  */
   double zqr[NUM_BRANCHES];
@@ -226,20 +218,15 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
   
   for(int i = 0; i < getNumBranches(tr); i++)
     {
-      
-      /* TODO when was this used?  */
-      /* zqr[i] = chain->sprMoveRemem.nb->z[i] * chain->sprMoveRemem.nnb->z[i]; */
-      /* 	  chain->hastings *= log(zqr[i]); */
-
       switch(pf->ptype)
 	{
 	case E_SPR : 
-	  zqr[i] = chain->sprMoveRemem.nb->z[i] * chain->sprMoveRemem.nnb->z[i];  
+	  zqr [i] = nbz[i] * nnbz[i]; 
 	  chain->hastings *= log(zqr[i]);
 	  zqr[i] = sqrt(zqr[i]);
 	  break; 
 	case E_SPR_MAPPED: 
-	  zqr[i] = chain->sprMoveRemem.nb->z[i] ; 
+	  zqr[i] = nbz[i] ; 
 	  break; 
 	default: assert(0); 
 	}
@@ -247,9 +234,12 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       if(zqr[i] > zmax) zqr[i] = zmax;
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
+  
+  pruneNodeFromNodes(chain, rec->prunedSubTree, rec->pruningBranches[0], rec->pruningBranches[1], zqr);
 
-  hookup(chain->sprMoveRemem.nb, chain->sprMoveRemem.nnb, zqr, getNumBranches(tr)); 
-  p->next->next->back = p->next->back = (node *) NULL;
+  debug_printNodeEnvironment(chain, nb->number); 
+  debug_printNodeEnvironment(chain, nnb->number); 
+
   /* done remove node p (omitted BL opt) */
 
   nodeptr initNode = NULL; 
@@ -257,41 +247,37 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
   boolean remapBL = FALSE; 
   if(drawRandDouble01(chain) > 0.5)
     {
-      curNode = chain->sprMoveRemem.nb; 
+      curNode = nb; 
       remapBL = TRUE ; 
     }
   else 
-    {
-      curNode = chain->sprMoveRemem.nnb; 
-    }
+    curNode = nnb; 
   initNode = curNode; 
 
   int accepted = FALSE;   
 
 //printf("curNode:  back next nextnext\n");
   while( NOT  accepted)
-    {
-      
-
+    {       
       accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
-  //    if(processID == 0) 
-//	printf("%d:  %d  %d  %d\n",curNode->number, curNode->back->number, curNode->next->back->number, curNode->next->next->back->number); 
-
+      
       /* needed for spr remap */
       if(curNode == initNode)
 	remapBL = NOT remapBL; 
     }
 
-
-
   chain->newprior = 1; 
   chain->curprior = 1; 
 
-  chain->sprMoveRemem.q = curNode;
-  chain->sprMoveRemem.r = chain->sprMoveRemem.q->back;
-  
-  topoRecord *topoRec =  pf->remembrance.topoRec;
-  record_branch_info(chain->sprMoveRemem.q, topoRec->bls, getNumBranches(chain->tr)); 
+  rec->insertBranch[0] = curNode->number;   
+  rec->insertBranch[1] = curNode->back->number; 
+
+
+  nodeptr insertBranchPtr = curNode; 
+  /* insertOtherPtr = curNode->back;  */
+
+
+  record_branch_info(insertBranchPtr, pf->remembrance.topoRec->bls, getNumBranches(chain->tr)); 
 
   switch(pf->ptype)
     {
@@ -316,22 +302,25 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) /*  */
 	{
 	  chain->hastings/=(2*log(curNode->z[branchCount]));
-	  insertWithUnifBLScaled(chain->sprMoveRemem.p, chain->sprMoveRemem.q, 2.0,  getNumBranches(chain->tr));
+	  insertWithUnifBLScaled(prunedSubtreePtr, insertBranchPtr, 2.0,  getNumBranches(chain->tr));
 	}
       break;       
     case E_SPR_MAPPED: 
       {
 	/* TODO hastings?  */
       
-	double *neighborZ = remapBL ? chain->sprMoveRemem.nbz :  chain->sprMoveRemem.nnbz; 
+	double *neighborZ = remapBL ? nbz  :  nnbz; 
       
 	if( remapBL ) 
 	  {
 	    for(int i = 0; i < getNumBranches(tr); ++i)
-	      chain->sprMoveRemem.nb->z[i] = chain->sprMoveRemem.nb->back->z[i] = chain->sprMoveRemem.nnbz[i]; 
+	      nb->z[i] = nb->back->z[i] = nnb->z[i]; 	    
 	  }
-      
-	insertWithGenericBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->sprMoveRemem.p->z, curNode->z, neighborZ, getNumBranches(tr));
+
+	
+	insertNodeIntoBranch(chain, prunedSubtreePtr->number, rec->insertBranch[0],rec->insertBranch[1], insertBranchPtr->z, neighborZ); 
+	
+	/* insertWithGenericBL(prunedSubtreePtr, insertBranchPtr, insertBranchPtr->z, curNode->z, neighborZ, getNumBranches(tr)); */
 
 
 	/* IMPORTANT TODO verify, that the mapping actually works, as we
@@ -342,6 +331,8 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
     default : assert(0) ; 
     }
 
+  debug_checkTreeConsistency(chain );
+
 #if 0 
   evaluateGeneric(chain->tr, chain->sprMoveRemem.p->next->next, FALSE);
 #else   
@@ -351,43 +342,38 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
 
 
-
-
 static void extended_spr_reset(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
+  topoRecord
+    *topoRec = pf->remembrance.topoRec; 
 
-  topoRecord *topoRec = pf->remembrance.topoRec; 
+  pruneNodeFromNodes(chain, topoRec->prunedSubTree, topoRec->insertBranch[0],topoRec->insertBranch[1],  topoRec->bls); 
 
-  /* prune the insertion */
-  hookup(chain->sprMoveRemem.q, chain->sprMoveRemem.r, topoRec->bls, getNumBranches(chain->tr));
 
-  chain->sprMoveRemem.p->next->next->back = chain->sprMoveRemem.p->next->back = (nodeptr) NULL;
-  /*  */
-  /* insert the pruned tree in its original node */
-  hookup(chain->sprMoveRemem.p->next,        chain->sprMoveRemem.nb, chain->sprMoveRemem.nbz, getNumBranches(chain->tr));
-  hookup(chain->sprMoveRemem.p->next->next, chain->sprMoveRemem.nnb, chain->sprMoveRemem.nnbz, getNumBranches(chain->tr));
-  
-  if(processID == 0)
-    {
+  insertNodeIntoBranch(chain, topoRec->prunedSubTree, topoRec->pruningBranches[0], topoRec->pruningBranches[1], topoRec->neighborBls, topoRec->nextNeighborBls); 
 
-#ifdef DEBUG_SHOW_TREE
-      char tmp[100000];
-      Tree2stringNexus(tmp, chain->tr, chain->tr->start->back, 0); 
-      printf("topo reset: %s\n", tmp); 
+#ifdef DEBUG_SHOW_TOPO_CHANGES
+  debug_printNodeEnvironment(chain, topoRec->prunedSubTree ); 
+  debug_printNodeEnvironment(chain,   topoRec->pruningBranches[0] ); 
+  debug_printNodeEnvironment(chain,   topoRec->pruningBranches[1] ); 
+  debug_printNodeEnvironment(chain,   topoRec->insertBranch[0] ); 
+  debug_printNodeEnvironment(chain,   topoRec->insertBranch[1] ); 
 #endif
-    }
+
+  debug_checkTreeConsistency(chain );
+  debug_printTree(chain);
+
 
   evaluateGenericWrapper(chain, tr->start, TRUE);
-  
-  exa_newViewGeneric(chain, chain->sprMoveRemem.p, FALSE); 
-  double val1 = chain->tr->likelihood; 
-  
-  exa_newViewGeneric(chain, chain->tr->start, TRUE);
-  double  val2 = chain->tr->likelihood; 
 
-  assert( fabs ( val2 - val1 ) < 0.0001 ); 
 
+  /* TODO this legacy stuff does not really make sense...  */
+  /* exa_newViewGeneric(chain, prunedSubTreePtr, FALSE);  */
+  /* double val1 = chain->tr->likelihood;  */  
+  /* exa_newViewGeneric(chain, chain->tr->start, TRUE); */
+  /* double  val2 = chain->tr->likelihood;  */
+  /* assert( fabs ( val2 - val1 ) < 0.0001 );  */
 }
 
 
@@ -1580,7 +1566,9 @@ void setupProposals(state *chain, initParamStruct *initParams)
   normalizeCategories(chain);  
   normalizePropSubCats(chain); 
   
-  printAllProposalWeights(chain);
+  /* only print that once  */
+  if(chain->id == 0)
+    printAllProposalWeights(chain);
 }
 
 
@@ -1598,38 +1586,8 @@ void resetSuccessCounters(state *chain)
 } 
 
 
-void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted) 
-{
-#ifdef DEBUG_SHOW_EACH_PROPOSAL
-  if(processID == 0)
-    {
-      if(accepted)
-	printInfo(chain, "accepting\t");   
-      else 
-	printInfo(chain, "rejecting\t");   	  
-      printf("%s\n" ,pf->name); 
-    }
-#endif
-}
 
 
-void debug_checkTreeConsistency(state *chain)
-{
-#ifdef DEBUG_LNL_VERIFY
-  tree *tr = chain->tr; 
-  int count = 0; 
-  traverseAndCount(tr->start->back, &count, tr); 
-  if(count != 2 * tr->mxtips - 3 )
-    {      
-      char tmp[10000]; 
-      Tree2stringNexus(tmp, chain, tr->start->back, 0); 
-      if(processID==0)
-	printf("faulty TOPOLOGY: %s\n", tmp);
-
-      assert(2 * tr->mxtips-3 == count); 
-    }
-#endif
-}
 
 
 
@@ -1684,6 +1642,24 @@ void drawProposalFunction(state *chain, proposalFunction **result )
     }
 
   assert(result != NULL); 
+}
+
+
+
+
+void debug_checkLikelihood(state *chain)
+{
+#ifdef DEBUG_LNL_VERIFY
+  tree *tr = chain->tr; 
+  exa_evaluateGeneric(chain, tr->start, TRUE );   
+  double diff =  fabs(chain->likelihood - tr->likelihood ); 
+  if( diff > ACCEPTED_LIKELIHOOD_EPS)
+    {
+      printf("LNL difference: %f\n", diff  ); 
+      assert(diff  < ACCEPTED_LIKELIHOOD_EPS); 
+    }  
+  chain->likelihood = tr->likelihood; 
+#endif  
 }
 
 
@@ -1755,8 +1731,9 @@ void step(state *chain)
       /* TODO re-enable */
       /* penalize(chain, which_proposal, 0); */
     }
-  
-  debug_checkTreeConsistency(chain); 
+
+  debug_checkTreeConsistency(chain);
+  debug_checkLikelihood(chain); 
 
   if( 
      chain->couplingId == 0	/* must be the cold chain  */
