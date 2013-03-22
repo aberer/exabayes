@@ -31,28 +31,8 @@ void initDefaultValues(state *theState, tree *tr)
   theState->curprior = 1; 
   theState->newprior = 1; 
 
-
   theState->hastings = 1; 
   theState->currentGeneration = 0; 
-
-  /* theState->brLenRemem.bl_prior = 1.0; */
-  /* theState->brLenRemem.bl_prior_exp_lambda = 0.1 ; */
-  //this can be extended to more than one partition, but one for now
-  
-  /* theState->modelRemem.model = 0; */
-
-  /* pInfo *partition = getPartition(theState,theState->modelRemem.model);  */
-
-  /* theState->modelRemem.nstates = partition->states; /\* 4 for DNA *\/ */
-  /* theState->modelRemem.numSubsRates = (theState->modelRemem.nstates * theState->modelRemem.nstates - theState->modelRemem.nstates) / 2; /\* 6 for DNA *\/ */
-  /* theState->modelRemem.curSubsRates = (double *) exa_malloc(theState->modelRemem.numSubsRates * sizeof(double)); */
-  
-  /* theState->frequRemem.model = 0; */
-  /* theState->frequRemem.numFrequRates = partition->states; /\* 4 for DNA *\/ */
-  /* theState->frequRemem.curFrequRates = (double *) exa_malloc(theState->frequRemem.numFrequRates * sizeof(double)); */
-
-  /* theState->brLenRemem.single_bl_branch = -1; */
-
 
   theState->penaltyFactor = 0.0;
 }
@@ -72,6 +52,10 @@ void makeChainFileNames(state *theState, int num)
 }
 
 
+
+/**
+   @brief returns the inverse temperature for this chain
+ */ 
 double getChainHeat(state *chain )
 {
   const double  deltaT = HEAT_FACTOR; 
@@ -138,7 +122,7 @@ static void initParamDump(tree *tr, paramDump *dmp)
 
 
 
-static  void copyParamDump(tree *tr,paramDump *dest, const paramDump *src)
+static void copyParamDump(tree *tr,paramDump *dest, const paramDump *src)
 {
   /* no topo or branch lengths! this should be done by copytopo */
   
@@ -192,24 +176,6 @@ void preinitTree(tree *tr)
   tr->gapyness               = 0.0; 
   tr->useMedian = FALSE;
 }
-
-
-void preInitTree(tree *tr)
-{
-  tr->doCutoff = TRUE;
-  tr->secondaryStructureModel = SEC_16; /* default setting */
-  tr->searchConvergenceCriterion = FALSE;
-  tr->rateHetModel = GAMMA; 
-  tr->multiStateModel  = GTR_MULTI_STATE;
-  tr->saveMemory = FALSE;
-  tr->manyPartitions = FALSE;
-  tr->categories             = 25;
-  tr->grouped = FALSE;
-  tr->constrained = FALSE;
-  tr->gapyness               = 0.0; 
-  tr->useMedian = FALSE;
-}
-
 
 
 /**
@@ -535,6 +501,9 @@ void applyChainStateToTree(state *chain)
 		chain->id, chain->currentGeneration, chain->dump.likelihood, tr->likelihood); 
       assert( fabs(chain->dump.likelihood - tr->likelihood ) < 0.000001 ) ; 
     }
+
+  chain->wasAccepted = FALSE; 
+  chain->prevProposal = NULL; 
 }
 
 

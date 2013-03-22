@@ -183,6 +183,63 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 
 
 
+nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
+{
+  nodeptr 
+    target = tr->nodep[node]; 
+
+  if(target->back->number != neighBourA && target->back->number != neighBourB)
+    return target; 
+  else if (target->next->back->number != neighBourA && target->next->back->number != neighBourB)
+    return target->next; 
+  else 
+    {
+      assert(target->next->next->back->number != neighBourB && target->next->next->back->number != neighBourA); 
+      return target->next->next; 
+    }
+  return NULL; 
+}
+
+
+
+static void spr_eval(state *chain, proposalFunction *thisProposal)
+{  
+  proposalFunction
+    *prevProposal = chain->prevProposal; 
+
+  /* cleanup necessary  */
+  if(NOT chain->wasAccepted)
+    {
+      switch(prevProposal->category )
+      	{
+      	/* case TOPOLOGY: */
+      	  /* evaluateGenericWrapper(chain, chain->tr->start, TRUE); */
+      	  /* break; */
+      	/* case RATE_HETEROGENEITY: */
+      	  /* int modelChanged = prevProposal->remembrance.partInfo->modelNum;  */
+      	  /* evaluatePartitions(chain, chain->tr->start, TRUE, ); */
+
+      	default:
+	  evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
+      	}
+    }
+  else 
+    {    
+      topoRecord *rec = thisProposal->remembrance.topoRec; 
+      
+      /* evaluate subtree again, if necessary   */
+      nodeptr subtreePtr = getThirdNode(chain->tr, rec->prunedSubTree, rec->insertBranch[0], rec->insertBranch[1]);      
+      exa_newViewGeneric( chain, subtreePtr, FALSE);
+
+      
+      /* evaluateGenericWrapper(chain, thisProposal->remembrance.topoRec->) */
+      evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
+    }
+
+}
+
+
+
 
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
@@ -330,14 +387,8 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       break; 
     default : assert(0) ; 
     }
-
-  debug_checkTreeConsistency(chain );
-
-#if 0 
-  evaluateGeneric(chain->tr, chain->sprMoveRemem.p->next->next, FALSE);
-#else   
-  evaluateGenericWrapper(chain, tr->start, TRUE);
-#endif
+  
+  debug_checkTreeConsistency(chain ); 
 }
 
 
@@ -1339,7 +1390,6 @@ nodeptr select_random_subtree(state *chain, tree *tr)
 }
 
 
-
 static void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
 {
   if(initParams->initWeights[type] == 0)
@@ -1367,6 +1417,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
   switch(type)
     {
     case E_SPR:
+      ptr->eval_lnl = spr_eval; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
@@ -1375,6 +1426,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "eSPR"; 
       break; 
     case E_SPR_MAPPED: 		/* TRUSTED  */
+      ptr->eval_lnl = spr_eval; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
@@ -1671,30 +1723,14 @@ void step(state *chain)
 
   double myHeat = getChainHeat(chain ) ; 
 
-  // just for validation (make sure we compare the same)
-  evaluateGenericWrapper(chain, tr->start, FALSE);
-
   proposalFunction *pf = NULL;   
   drawProposalFunction(chain, &pf);
 
-  // apply the proposal function  
-  pf->apply_func(chain, pf);
+  pf->apply_func(chain, pf);  
+  if(pf->eval_lnl)
+    pf->eval_lnl(chain, pf); 
 
-  // FIXME: why is this here?
-  if (chain->currentGeneration == 0 )
-    {
-      chain->curprior = chain->newprior;
-    }
-
-
-  //     PRINT("proposal done, iter %d tr LH %f, startLH %f\n", j, tr->likelihood, tr->startLH);
-
-  /* decide upon acceptance */
   double testr = drawRandDouble01(chain);
-
-  //should look something like 
-
-
   double acceptance = fmin(1,(chain->hastings) 
 			   /* TODO for chain swapping ratio must be replaced again by proper prior   */
 			   /* * pF.get_prior_ratio(chain)  */
@@ -1702,12 +1738,11 @@ void step(state *chain)
 			   * (exp((tr->likelihood - prevLnl) * myHeat)  ) 
 			   );
 
+  chain->wasAccepted  = testr < acceptance; 
+  debug_printAccRejc(chain, pf, chain->wasAccepted); 
+  chain->prevProposal = pf;   
 
-  /* assert(which_proposal < NUM_PROPOSALS);  */
-      
-  debug_printAccRejc(chain, pf, testr < acceptance); 
-
-  if(testr < acceptance)
+  if(chain->wasAccepted)
     {
       pf->successCtr.acc++;
       chain->likelihood = tr->likelihood; 

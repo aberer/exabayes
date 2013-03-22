@@ -1043,7 +1043,7 @@ charset gene1 = 1-300;
 charset gene2 = 301-900; 
 charset gene3 = 901-1100; 
 charset gene4 = 1101-1200; 
-
 partition  scheme = 4: gene1,gene2, gene3, gene4; 
 set partition = scheme ; 
+lset nst=6 rates=gamma; 
 end; 

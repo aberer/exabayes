@@ -113,44 +113,40 @@ typedef struct
 
 
 typedef struct _state
-{
+{  
   tree * tr;
 #if HAVE_PLL == 1   
   partitionList *partitions; 
 #endif  
-  
+  proposalFunction *prevProposal;  /// only used for runtime efficiency. Is NULL, if we just saved/applied the state. 
+  boolean wasAccepted; 	/// for debug only  
+
+
+  int id;   
+  int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
+  int currentGeneration; 
+  double likelihood; 
+
   double curprior;
   double newprior;
   double hastings;
 
-  double penaltyFactor; //change to the probability of picking a proposal
-
-  double likelihood; 
-
+  double penaltyFactor; //change to the probability of picking a proposal  
 
   proposalFunction **proposals; 
   int numProposals; 
   double *categoryWeights; 
-  
-  int currentGeneration; 
-
-  /* indicates how hot the chain is (i = 0 => cold chain), may change! */
-  int couplingId; 
 
   /* new stuff that we need when having multiple chains  */
   FILE *topologyFile; 
   FILE *outputParamFile; 
-  /* unique id, also determines */
-  int id; 
 
   /* RNG */
   randKey_t rKey;
   randCtr_t rCtr;
 
   /* saves the entire space in the parameter space  */
-  paramDump dump;   
-
-
+  paramDump dump; 
 } state;
 
 
@@ -166,14 +162,15 @@ struct _pfun
   
   accRejCtr successCtr; 
 
-  void (*apply_func)( state *curstate, struct _pfun *pf );
-  void (*reset_func)( state *curstate, struct _pfun *pf );   
+  void (*apply_func)( state *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
+  void (*reset_func)( state *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluatio n
+  void (*eval_lnl) (state *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
 
   /* TODO not used yet */
   void (*autotune)(struct _pfun *pf); 
 
   /* TODO use something like that */
-  /* double (*get_prior_ratio) (state *curstate);  */
+  /* double (*get_prior_ratio) (state *chain);  */
 
 
   /**
