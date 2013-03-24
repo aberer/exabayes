@@ -66,10 +66,8 @@ typedef  unsigned int nat ;
 #define NOT ! 
 
 
-
-
 #define INIT_BRANCH_LENGTHS 0.65
-
+#define INIT_BL_MULT 2 
 #define INIT_BL_SLID_WIN  0.0005
 #define INIT_RATE_SLID_WIN  0.5 
 #define INIT_GAMMA_SLID_WIN  0.75
@@ -90,19 +88,21 @@ typedef  unsigned int nat ;
 
 
 
-
+#define PRINT_FREQUENCY 100 
+#define TUNE_FREQUENCY 100 
 
 
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
-#define DEBUG_LNL_VERIFY
-#define DEBUG_SHOW_TOPO_CHANGES
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
+/* #define DEBUG_LNL_VERIFY */
+/* #define DEBUG_SHOW_TOPO_CHANGES */
 
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
 #define ASDSF_FREQ_CUTOFF 0.1	/*  ignore clades for which the frequency in no chain exceeds this value */
-#define ASDSF_CONVERGENCE_CRITERION 0.05 /* indicate convergence, as soon as the asdsf is below this value  */
+
+#define ASDSF_CONVERGENCE_CRITERION 0.005 ///  indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence 
 
 /* a lot of debug information for the asdsf */
 

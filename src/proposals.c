@@ -7,7 +7,7 @@
  */ 
 
 #include "axml.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
@@ -19,10 +19,11 @@
 #include "adapters.h"
 #include "exa-topology.h"
 #include "misc-utils.h"
+#include "branch.h"
 
 void expensiveVerify(tree *tr); 
 
-nodeptr select_random_subtree(state *chain, tree *tr);
+/* nodeptr select_random_subtree(state *chain, tree *tr); */
 void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValue);
 
 
@@ -124,17 +125,9 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
     r = drawRandDouble01(chain); 
 
   if(r < 0.5 )
-    *insertNode = (*insertNode) ->next->back; 
+    *insertNode = (*insertNode)->next->back; 
   else 
-    *insertNode = (*insertNode) ->next->next->back; 
-  /* if(r < 0.5 ) */
-  /*   { */
-  /*     *insertNode = isTip((*insertNode)->next->number, chain->tr->mxtips) ? (*insertNode)->next :  (*insertNode)->next->back;  */
-  /*   } */
-  /* else  */
-  /*   { */
-  /*     *insertNode = isTip((*insertNode)->next->next->number, chain->tr->mxtips) ? (*insertNode)->next->next :  (*insertNode)->next->next->back;        */
-  /*   } */
+    *insertNode = (*insertNode)->next->next->back; 
 
   double randprop = drawRandDouble01(chain);
 
@@ -145,7 +138,7 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 
 
 
-nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
+static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 {
   nodeptr 
     target = tr->nodep[node]; 
@@ -164,10 +157,21 @@ nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 
 
 
+static void dummy_eval(state *chain,proposalFunction *thisProposal)
+{
+  evaluateGenericWrapper(chain, chain->tr->start, TRUE);
+}
+
+
+
+
 static void spr_eval(state *chain, proposalFunction *thisProposal)
 {  
-  /* TODO still so much to do */
 
+#if 1 
+  evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
+#else 
+  /* TODO still so much to do */
   tree *tr = chain->tr; 
       
   proposalFunction
@@ -216,8 +220,44 @@ static void spr_eval(state *chain, proposalFunction *thisProposal)
       /* evaluateGenericWrapper(chain, thisProposal->remembrance.topoRec->) */
       evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
     }
+#endif
 }
 
+
+static nodeptr select_random_subtree(state *chain, tree *tr)
+{
+  nodeptr 
+    p;
+
+  do
+    {
+      int 
+        exitDirection = drawRandInt(chain,3); 
+     
+      int r = drawRandInt(chain,tr->mxtips - 2) ; 
+
+      p = tr->nodep[ r + 1 + tr->mxtips];
+      
+      switch(exitDirection)
+        {
+        case 0:
+          break;
+        case 1:
+          p = p->next;
+          break;
+        case 2:
+          p = p->next->next;
+          break;
+        default:
+          assert(0);
+        }
+    }
+  while(isTip(p->next->back->number, tr->mxtips) && isTip(p->next->next->back->number, tr->mxtips));
+
+  assert(!isTip(p->number, tr->mxtips));
+
+  return p;
+}
 
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
@@ -235,10 +275,10 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
   /* TODO can we assert this?  */
   assert( NOT isTip(prunedSubtreePtr->number, tr->mxtips) ) ; 
 
-  rec->prunedSubTree = prunedSubtreePtr->number; 
+  rec->pruned = prunedSubtreePtr->number; 
 
-  rec->pruningBranches[0] = nb->number; 
-  rec->pruningBranches[1] = nnb->number; 
+  rec->pruningBranch.thisNode = nb->number; 
+  rec->pruningBranch.thatNode = nnb->number; 
 
   record_branch_info(nb, rec->neighborBls , getNumBranches(chain->tr));
   record_branch_info(nnb, rec->nextNeighborBls, getNumBranches(chain->tr));
@@ -248,9 +288,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   /* initial remapping of BL of nodes adjacent to pruned node  */
   double zqr[NUM_BRANCHES];
-  
-  chain->hastings = 1; 
-  
+
   for(int i = 0; i < getNumBranches(tr); i++)
     {
       switch(pf->ptype)
@@ -270,7 +308,10 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
   
-  pruneNodeFromNodes(chain, rec->prunedSubTree, rec->pruningBranches[0], rec->pruningBranches[1], zqr);
+  
+
+  pruneBranch(chain,  constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number),zqr);
+  /* pruneNodeFromNodes(chain, rec->pruned, rec->pruningBranch.thisNode, rec->pruningBranch.thatNode, zqr); */
 
   debug_printNodeEnvironment(chain, nb->number); 
   debug_printNodeEnvironment(chain, nnb->number); 
@@ -290,29 +331,26 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
     curNode = nnb; 
   initNode = curNode; 
 
-  while(curNode->number == initNode->number)
-    {
-      int accepted = FALSE;   
-      while( NOT  accepted)
-	{       
-	  accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
+  /* while(curNode->number == initNode->number */
+  /* 	|| curNode->back->number == initNode->number) */
+  /*   {				 */
+      /* printf("initnode->numebr = %d\n", initNode->number);  */
+  int accepted = FALSE;   
+  while( NOT  accepted)
+    {       
+      accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
       
-	  /* needed for spr remap */
-	  if(curNode == initNode)
-	    remapBL = NOT remapBL; 
-	}
+      /* needed for spr remap */
+      if(curNode == initNode)
+	remapBL = NOT remapBL; 
     }
+    /* } */
 
-  chain->newprior = 1; 
-  chain->curprior = 1; 
-
-  rec->insertBranch[0] = curNode->number;   
-  rec->insertBranch[1] = curNode->back->number; 
+  rec->insertBranch.thisNode = curNode->number;   
+  rec->insertBranch.thatNode = curNode->back->number; 
 
 
   nodeptr insertBranchPtr = curNode; 
-  /* insertOtherPtr = curNode->back;  */
-
 
   record_branch_info(insertBranchPtr, pf->remembrance.topoRec->bls, getNumBranches(chain->tr)); 
 
@@ -348,7 +386,6 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       
 	double *neighborZ = nnbz; 
 
-
 	/* if we went into the other direction, correct for that. 
 	   specfically rec->pruningBranches must point into the direction, we moved the tree to 
 	 */
@@ -360,10 +397,16 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 	    
 	    assert(getNumBranches(tr) == 1 ); 
 	    swpDouble(rec->neighborBls,rec->nextNeighborBls ); 
-	    swpInt(rec->pruningBranches , rec->pruningBranches + 1 );	    
+	    rec->pruningBranch = invertBranch(rec->pruningBranch); 
 	  }
 	
-	insertNodeIntoBranch(chain, prunedSubtreePtr->number, rec->insertBranch[0],rec->insertBranch[1], insertBranchPtr->z, neighborZ);
+
+	insertNodeIntoBranch( chain, 
+			      constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number ),
+			      rec->insertBranch, 
+			      insertBranchPtr->z,
+			      neighborZ); 
+	/* insertNodeIntoBranch(chain, prunedSubtreePtr->number, rec->insertBranch.thisNode,rec->insertBranch.thatNode, insertBranchPtr->z, neighborZ); */
       }
       break; 
     default: assert(0); 
@@ -371,18 +414,9 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   debug_checkTreeConsistency(chain); 
 
-  assert(nodesAreHooked(tr, rec->prunedSubTree,rec->insertBranch[0])); 
-  assert(nodesAreHooked(tr, rec->prunedSubTree,rec->insertBranch[1]));   
-
-
-  /* NOTICE 
-     
-     in this case the topology has not changed at all! do we really
-     want to allow for that? downside is that we mess up our hastings,
-     if we disallow */
-  if(NOT comparePair(rec->pruningBranches[0],rec->pruningBranches[1],rec->insertBranch[0], rec->insertBranch[1] ))
-    assert(nodesAreHooked(tr, rec->pruningBranches[0],rec->pruningBranches[1]));   
-}
+  assert(branchExists(tr, constructBranch(rec->pruned, rec->insertBranch.thisNode ))); 
+  assert(branchExists(tr, constructBranch(rec->pruned, rec->insertBranch.thatNode ))); 
+} 
 
 
 
@@ -391,14 +425,26 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
   tree *tr = chain->tr; 
   topoRecord
     *topoRec = pf->remembrance.topoRec; 
+  
 
-  pruneNodeFromNodes(chain, topoRec->prunedSubTree, topoRec->insertBranch[0],topoRec->insertBranch[1],  topoRec->bls); 
+  /* HACK to find the other node in the subtree */  
+  nodeptr p = tr->nodep[topoRec->pruned] ; 
+  while(p->back->number == topoRec->insertBranch.thisNode 
+	|| p->back->number == topoRec->insertBranch.thatNode )
+    p = p->next; 
+  p = p->back; 
+  assert(p->number != topoRec->insertBranch.thisNode  && p->number != topoRec->insertBranch.thatNode); 
+  /* END */
 
+  pruneBranch(chain, constructBranch(topoRec->pruned, p->number) , topoRec->bls);
 
-  insertNodeIntoBranch(chain, topoRec->prunedSubTree, topoRec->pruningBranches[0], topoRec->pruningBranches[1], topoRec->neighborBls, topoRec->nextNeighborBls); 
+  insertNodeIntoBranch(chain, 
+		       constructBranch(topoRec->pruned, p->number), 
+		       topoRec->pruningBranch, 
+		       topoRec->neighborBls, topoRec->nextNeighborBls) ; 
 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
-  debug_printNodeEnvironment(chain, topoRec->prunedSubTree ); 
+  debug_printNodeEnvironment(chain, topoRec->pruned ); 
   debug_printNodeEnvironment(chain,   topoRec->pruningBranches[0] ); 
   debug_printNodeEnvironment(chain,   topoRec->pruningBranches[1] ); 
   debug_printNodeEnvironment(chain,   topoRec->insertBranch[0] ); 
@@ -408,12 +454,11 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
   debug_checkTreeConsistency(chain );
   debug_printTree(chain);
 
-
   evaluateGenericWrapper(chain, tr->start, TRUE);
 
 
   /* TODO this legacy stuff does not really make sense...  */
-  /* exa_newViewGeneric(chain, prunedSubTreePtr, FALSE);  */
+  /* exa_newViewGeneric(chain, prunedPtr, FALSE);  */
   /* double val1 = chain->tr->likelihood;  */  
   /* exa_newViewGeneric(chain, chain->tr->start, TRUE); */
   /* double  val2 = chain->tr->likelihood;  */
@@ -472,8 +517,6 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
   if(newalpha < ALPHA_MIN) newalpha = ALPHA_MIN;
   
   chain->hastings = 1; //since it is symmetrical, hastings=1
-  chain->newprior = get_alpha_prior(chain); 
-  chain->curprior = get_alpha_prior(chain); 
   
   partition->alpha = newalpha;
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
@@ -623,10 +666,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   /*     break; */
   /*   default : assert(0);  */
   /*   }  */
-  
-  
-  chain->hastings=1.0;
-  
+
   for(state = 0;state<numRates ; state ++)
     {      
       switch(pType)
@@ -791,8 +831,7 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
   randNumber=drawRandInt(chain,numRates);
   int perm[numRates];
   drawPermutation(chain,perm, numRates);
-  
-  chain->hastings=1.0;
+
   for(state = 0;state < randNumber ; state ++)
     {           
       curv = partition->substRates[perm[state]];
@@ -882,9 +921,6 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
   int state;
   double new_value,curv;
   double r;
-  
-  
-   chain->hastings=1.0;
 
   for(state = 0;state<numRates ; state ++)
     {
@@ -955,6 +991,9 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
 	}
       r = drawRandDouble01(chain);
 
+      /* TODO@kassian just wondering: is it correct to use the global
+	 frac-change here? what are the local frac-changes good for
+	 then?  */
       real_z = -log(p->z[i]) * s->tr->fracchange;
       
       //     printf( "z: %f %f\n", p->z[i], real_z );
@@ -962,10 +1001,7 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
       mn = real_z- windowRange;
       mx = real_z+ windowRange;
       newZValue = exp(-(fabs(mn + r * (mx-mn)/s->tr->fracchange )));
-    
-      
-      s->hastings=1;
-      
+
       /* newValue = mn + r * (mx-mn); */
       /* s->newprior=get_branch_length_prior(&newValue); */
     
@@ -1095,6 +1131,7 @@ static node *select_branch_by_id_dfs_rec( node *p, int *cur_count, int target, s
     return NULL;
   }
 }
+
 
 
 static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
@@ -1276,7 +1313,6 @@ static void recordFrequRates(state *chain, int model, int numFrequRates, double 
 void frequency_proposal_apply(state * chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
-  chain->hastings=1;
 
   int model  = drawRandInt(chain,getNumberOfPartitions(tr));
   perPartitionInfo *info = pf->remembrance.partInfo; 
@@ -1347,40 +1383,60 @@ static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
   restore_subs_rates(chain, info->modelNum, info->numRates, info->substRates);
 }
 
-nodeptr select_random_subtree(state *chain, tree *tr)
+
+
+/* TODO here  */
+void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
 {
-  nodeptr 
-    p;
+  tree *tr = chain->tr; 
+  branch b =  drawBranchUniform(chain); 
 
-  do
-    {
-      int 
-        exitDirection = drawRandInt(chain,3); 
-     
-      int r = drawRandInt(chain,tr->mxtips - 2) ; 
+  nodeptr p = findNodeFromBranch(tr, b); 
 
-      p = tr->nodep[ r + 1 + tr->mxtips];
-      
-      switch(exitDirection)
-        {
-        case 0:
-          break;
-        case 1:
-          p = p->next;
-          break;
-        case 2:
-          p = p->next->next;
-          break;
-        default:
-          assert(0);
-        }
-    }
-  while(isTip(p->next->back->number, tr->mxtips) && isTip(p->next->next->back->number, tr->mxtips));
+  topoRecord
+    *rec = pf->remembrance.topoRec; 
+  rec->insertBranch = b ; 
 
-  assert(!isTip(p->number, tr->mxtips));
+  record_branch_info( p, rec->bls, getNumBranches(tr));
 
-  return p;
+  double
+    multiplier = exp(pf->parameters.multiplier * (drawRandDouble01(chain) - 0.5 ));   
+  assert(multiplier > 0.); 
+  
+  /* TODO how do we do that wiht multiple bls per branch?  */
+  assert(getNumBranches(tr) == 1); 
+  
+  double newZ  = multiplier * ( -log(p->z[0]) * tr->fracchange);  
+  double newZTransformed = exp(-(newZ / tr->fracchange)); 
+  
+  /* according to lakner2008  */
+  chain->hastings *= multiplier; 
+ 
+  /* just doing it for one right here */
+  p->z[0] = p->back->z[0] = newZTransformed; 
 }
+
+
+/**
+   @brief tunes the BL multiplier
+ */ 
+void autotune_BLMultiplier(proposalFunction *pf)
+{
+  /* assert(0);  */
+}
+
+
+void branch_length_reset(state *chain, proposalFunction *pf)
+{
+  tree *tr = chain->tr; 
+  topoRecord *rec = pf->remembrance.topoRec; 
+  nodeptr p = findNodeFromBranch(tr, rec->insertBranch); 
+  
+  reset_branch_length(p,getNumBranches(tr), rec->bls); 
+
+  evaluateGenericWrapper(chain, tr->start, TRUE );   
+}
+
 
 
 static void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
@@ -1506,6 +1562,16 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "modelPermBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
+      break;
+    case BRANCH_LENGTHS_MULTIPLIER: 
+      ptr->eval_lnl = dummy_eval;
+      ptr->autotune = autotune_BLMultiplier; 
+      ptr->apply_func = branch_length_multiplier_apply; 
+      ptr->reset_func = branch_length_reset; 
+      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
+      ptr->parameters.multiplier = INIT_BL_MULT; 
+      ptr->name = "branchMult"; 
+      ptr->category = BRANCH_LENGTHS; 
       break; 
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 
@@ -1515,6 +1581,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       }
     }  
 }
+
 
 
 
@@ -1633,12 +1700,6 @@ void resetSuccessCounters(state *chain)
 
 
 
-
-
-
-
-
-
 /**
    @brief draws a proposal function.
 
@@ -1708,6 +1769,14 @@ void debug_checkLikelihood(state *chain)
 }
 
 
+
+
+
+
+
+/**
+   @brief Execute one generation of a given chain.  
+ */
 void step(state *chain)
 {
   tree *tr = chain->tr;   
@@ -1719,25 +1788,32 @@ void step(state *chain)
   proposalFunction *pf = NULL;   
   drawProposalFunction(chain, &pf);
 
+  /* reset proposal ratio  */
+  chain->hastings = 1; 
+
+  double oldPrior = chain->priorProb; 		/* TODO  */
+
+  /* chooses move, sets proposal ratio, correctly modifies the prior */
   pf->apply_func(chain, pf);  
+  double priorRatio  = chain->priorProb - oldPrior; 
+  /* enable once we actually have priors  */
+  assert(priorRatio == 0); 
+
+  /* chooses the cheapest way to evaluate the likelihood  */
   if(pf->eval_lnl)
     pf->eval_lnl(chain, pf); 
 
-  double testr = drawRandDouble01(chain);
-  double acceptance = fmin(1,(chain->hastings) 
-			   /* TODO for chain swapping ratio must be replaced again by proper prior   */
-			   /* * pF.get_prior_ratio(chain)  */
-			   /* (chain->newprior/chain->curprior) */
-			   * (exp((tr->likelihood - prevLnl) * myHeat)  ) 
-			   );
+  double testLogr = log(drawRandDouble01(chain));
+  double acceptance = (priorRatio  + tr->likelihood - prevLnl) * myHeat + log(chain->hastings); 
 
-  chain->wasAccepted  = testr < acceptance; 
+  chain->wasAccepted  = testLogr < acceptance; 
   debug_printAccRejc(chain, pf, chain->wasAccepted); 
   chain->prevProposal = pf;   
 
   if(chain->wasAccepted)
     {
       pf->successCtr.acc++;
+      pf->overallSuccessCtr.acc++; 
       chain->likelihood = tr->likelihood; 
 
       /* 
@@ -1746,14 +1822,12 @@ void step(state *chain)
 	 of moves	 
        */
       /* penalize(chain, which_proposal, 1); */
-      
-      /* TODO commeted that out for reasons of honesty */
-      /* chain->curprior = chain->newprior;           */
     }
   else
     {
       pf->reset_func(chain, pf); 
       pf->successCtr.rej++;
+      pf->overallSuccessCtr.rej++; 
       chain->likelihood = prevLnl; 
       
       /* TODO re-enable */
@@ -1763,21 +1837,35 @@ void step(state *chain)
   debug_checkTreeConsistency(chain);
   debug_checkLikelihood(chain); 
 
-  if( 
-     chain->couplingId == 0	/* must be the cold chain  */
-     && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
+  if(  processID == 0 
+       && chain->couplingId == 0	/* must be the cold chain  */
+       && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
     {
-      if(processID == 0)
-	{
-	  printSample(chain);       
-
- 	  chainInfo(chain); 
-	  /* chainInfoOutput(chain);  // , sum_radius_accept, sum_radius_reject      	   */
-	  /* resetSuccessCounter(chain->id / gAInfo.numberCoupledChains); */
-	}
+      printSample(chain);       
 
       if(chain->currentGeneration >  BURNIN)
 	addBipartitionsToHash(tr, chain ); 
+    }
+
+  
+  /* the output for the console  */
+  if(processID == 0 
+     && chain->couplingId == 0     
+     && chain->currentGeneration % PRINT_FREQUENCY == PRINT_FREQUENCY -1   )
+    {
+      chainInfo(chain); 
+    }
+
+  /* autotuning for proposal parameters. With increased parallelism
+     this will become more complicated.  */
+  if(chain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY - 1 )
+    {
+      for(int i = 0; i < chain->numProposals; ++i)
+	{
+	  proposalFunction *pf = chain->proposals[i]; 
+	  if(pf->autotune)	/* only, if we set this   */
+	    pf->autotune(pf);
+	}
     }
 
   chain->currentGeneration++; 

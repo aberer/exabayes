@@ -14,12 +14,12 @@
 #include "globalVariables.h"
 #include "main-common.h"
 
-#include "proposalStructs.h"
+#include "bayes.h"
 #define _INCLUDE_DEFINITIONS
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
 
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "output.h"
 
 #include "adapters.h"

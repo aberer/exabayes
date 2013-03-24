@@ -8,7 +8,7 @@
 
 
 #include "axml.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "main-common.h"
 #include "globals.h"
 #include "chain.h"
@@ -357,8 +357,8 @@ static void printSubsRates(state *prState ,int model, int numSubsRates)
 
 void printIfPresent(proposalFunction *pf)
 {
-  int acc = pf->successCtr.acc,
-    rejc = pf->successCtr.rej; 
+  int acc = pf->overallSuccessCtr.acc,
+    rejc = pf->overallSuccessCtr.rej; 
 
   if(acc != 0 || rejc != 0)
     PRINT("%s: %d/%d (%.0f%%)\t", pf->name, acc , rejc,  ( (double)(acc) / (double)( (acc + rejc) + 0.0001))* 100   ); 
@@ -390,8 +390,7 @@ static void printHotChains(int runId)
 
     }
 
-  PRINT("successful swaps: %d", gAInfo.successFullSwitchesBatch); 
-  gAInfo.successFullSwitchesBatch = 0; 
+
 
 }
 

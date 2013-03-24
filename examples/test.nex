@@ -7,9 +7,10 @@ begin EXABAYES;
       INITSPRWEIGHT 0  [ BROKEN ] 
       initEsprMappedWeight 10 [ ok ]
 
-      initSingleBranchWeight 3 [ ok ] 
-      initSingleBranchExpWeight 3  [ ok ] 
-      initSingleBranchBiunifWeight 3 [ok]
+      initSingleBranchWeight 0 [ ok ] 
+      initSingleBranchExpWeight 0  [ ok ] 
+      initSingleBranchBiunifWeight 0 [ok]
+      branchMulti 10 [ ok ]
 
       initModelWeight 2.5 [ ok ]
       initModelBiunifWeight 2.5 [ok]
@@ -17,7 +18,7 @@ begin EXABAYES;
       initModelAllBiunifWeight  0 [ok] 
       initModelPermBiunifWeight 0 [ BROKEN ] 
 
-      initFrequenciesWeight 3  [ok]
+      initFrequenciesWeight 3   [ ok ]
 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 

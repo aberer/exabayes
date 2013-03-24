@@ -7,7 +7,7 @@
 */ 
 
 #include "axml.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "globals.h"
 #include "adapters.h"
 

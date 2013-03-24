@@ -13,8 +13,7 @@
 #include "proposalType.h"
 #include "config.h"
 #include "rng.h"
-
-
+#include "branch.h"
 
 
 /* TODO not enabled yet, was not such a good idea */
@@ -32,8 +31,6 @@ typedef struct
   } change;
 
 } chainHistory ;
-
-
 
 
 
@@ -96,14 +93,17 @@ typedef struct
   int whichBranch; /// helps us to remember which branch we manipulated.       
   double bls[NUM_BRANCHES]; /// branch lengths for saving 
 
-  int prunedSubTree ; 
+  int pruned ;   
 
-  int insertBranch[2]; /// the ids of both nodes  that originally constituted a branch before insertion 
+  /* will be a branch later  */
+  branch  insertBranch; /// the ids of both nodes  that originally constituted a branch before insertion 
 
-  int pruningBranches[2] ; /// the ids of the two neighbors prior to pruning  => convertion: the first id is the direction we wandered to!
+  branch pruningBranch ; /// the branch prio to pruning => convertion: thisNode id is the direction we wandered to!
   double neighborBls[NUM_BRANCHES]; 
   double nextNeighborBls[NUM_BRANCHES]; 
 } topoRecord; /// information that helps us to restore the previous state when doing topological moves or manipulating the branch lengths
+
+
 
 
 
@@ -116,15 +116,13 @@ typedef struct _state
   proposalFunction *prevProposal;  /// only used for runtime efficiency. Is NULL, if we just saved/applied the state. 
   boolean wasAccepted; 	/// for debug only  
 
-
   int id;   
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  int currentGeneration; 
-  double likelihood; 
+  int currentGeneration;   
+  double likelihood;  /// the current likelihood of the state 
+  double priorProb; /// the prior probability of the current state   => store in log form  
 
-  double curprior;
-  double newprior;
-  double hastings;
+  double hastings;/// the proposal ratio 
 
   double penaltyFactor; //change to the probability of picking a proposal  
 
@@ -155,17 +153,15 @@ struct _pfun
   double initWeight; 
   double currentWeight; 
   
-  accRejCtr successCtr; 
+  accRejCtr successCtr; /// monitors acceptance / rejection rate in recent batch 
+  accRejCtr overallSuccessCtr;  /// the same as above, but we'll never reset this one to obtain overall statistics 
 
   void (*apply_func)( state *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
-  void (*reset_func)( state *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluatio n
   void (*eval_lnl) (state *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
+  void (*reset_func)( state *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
 
   /* TODO not used yet */
   void (*autotune)(struct _pfun *pf); 
-
-  /* TODO use something like that */
-  /* double (*get_prior_ratio) (state *chain);  */
 
 
   /**
@@ -173,6 +169,7 @@ struct _pfun
   */
   union
   {
+    double multiplier;
     double eSprStopProb; 
     double slidWinSize;  	
     double dirichletAlpha; 	/* TODO not used  */

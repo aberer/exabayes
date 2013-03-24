@@ -11,7 +11,7 @@
 #include "globalVariables.h"
 #undef GLOBAL_VARIABLES_DEFINITION
 
-#include "proposalStructs.h"
+#include "bayes.h"
 
 #define _INCLUDE_DEFINITIONS
 #include "globals.h"

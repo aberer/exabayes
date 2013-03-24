@@ -7,7 +7,7 @@
 
 
 #include "axml.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
@@ -29,20 +29,42 @@
 extern double masterTime; 
 
 
-/* TODO adapt likelihood */
+
+
+
+/* int mapToTriangularIndex(int row, int col) */
+/* { */
+/*   for(int i = 0; i < row ; ++i) */
+/*     for(int j = 0; hp) */
+/* } */
+
+
+/**
+   @brief attempt a MC3 switch of chains 
+
+   @param chains -- the pointer to the first chain struct in the chain-array.   
+   
+   NOTICE does not work with priors yet 
+ */
 void switchChainState(state *chains)
-{
+{  
+  int runId = chains[0].id / gAInfo.numberCoupledChains; 
+
   int numChain = gAInfo.numberCoupledChains; 
 
   if(numChain == 1)
     return;   
-  
-  /* randCtr_t r = drawGlobalRandInt();  */
-    
+
   int chainA = drawGlobalRandIntBound(numChain), 
    chainB = chainA; 
   while(chainA == chainB)
     chainB = drawGlobalRandIntBound(numChain); 
+
+  int coupIdA = chains[chainA].couplingId,
+    coupIdB = chains[chainB].couplingId; 
+
+  if(coupIdA > coupIdB)
+    swpInt(&coupIdB, &coupIdA); 
 
   /* 
      IMPORTANT TODO
@@ -80,8 +102,22 @@ void switchChainState(state *chains)
 	  swpInt(&(a->proposals[i]->successCtr.rej), &(b->proposals[i]->successCtr.rej)); 
 	}
 
-      gAInfo.successFullSwitchesBatch++; 
+/*      =0 1 2 3  */
+/* ================ */
+/*    0 =  0 1 2 */
+/*    1 =    3 4  */
+/*    2 =      5  */
+
+      /* 	int n = gAInfo.numberCoupledChains;    */
+      /* return row* n - (row-1)* row/2 + col - row;   */
+
+      /* TODO */
+      /* gAInfo.swapInfo[] */
     } 
+  else 
+    {
+      /* TODO  */
+    }
 }
 
 

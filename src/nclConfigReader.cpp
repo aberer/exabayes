@@ -63,6 +63,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = UPDATE_FREQUENCIES_BIUNIF; 
   else if(key.EqualsCaseInsensitive("initEsprMappedWeight"    ))    
     *pf = E_SPR_MAPPED; 
+  else if(key.EqualsCaseInsensitive("branchMulti"))
+    *pf = BRANCH_LENGTHS_MULTIPLIER; 
 
   // TODO@kassian this is a good place for proposal add 
 

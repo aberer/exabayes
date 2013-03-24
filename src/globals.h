@@ -16,8 +16,6 @@
 #include "config.h"
 
 
-
-
 /* Those globals are bad.  Having them as a singleton is slightly
    better. 
    
@@ -37,20 +35,14 @@ typedef struct globs
 #if HAVE_PLL == 1   
   partitionList* partitions;   
 #endif
-  
-  /* DEVEL not needed for prodctive runs  */
   state *allChains; 		/* careful with this! */
-  int successFullSwitchesBatch; 
-
-
   int samplingFrequency; 
-
   hashtable *bvHash; 
-
-  int diagFreq; 
-
-  
+  int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
+
+  accRejCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> this is a half-matrix for each independent run
+
 } globalAnalysisInfo; 
 
  
@@ -80,10 +72,10 @@ globalAnalysisInfo gAInfo =
    #endif
    NULL, 
    0,
-   0,
    NULL,
    0,
-   10000
+   10000   ,
+   NULL,
   }; 
 
 

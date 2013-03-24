@@ -12,11 +12,10 @@
 
 #include "axml.h"
 #include "main-common.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "globals.h"
 #include "randomness.h"
-
-
+#include "branch.h"
 
 
 
@@ -213,3 +212,53 @@ void drawPermutation(state *chain, int* perm, int n)
 } 
 
 
+
+
+
+/**
+   @brief draws a branch with uniform probability.
+   
+   We have to treat inner and outer branches separated.
+ */
+branch drawBranchUniform(state *chain)
+{
+  tree *tr = chain->tr; 
+
+  boolean accept = FALSE; 
+  int randId = 0; 
+  while(NOT accept)
+    {
+      randId = drawRandInt(chain, 2 * tr->mxtips - 2 ) + 1;
+      assert(randId > 0); 
+      double r = drawRandDouble01(chain); 
+      if(isTip(randId, tr->mxtips) )
+	accept = r < 0.25 ; 
+      else 
+	accept = r <= 0.75; 	
+    }
+
+  branch result; 
+  result.thisNode = randId; 
+  nodeptr p = tr->nodep[randId]; 
+  if(isTip(randId, tr->mxtips))
+    result.thatNode = p->back->number; 
+  else 
+    {
+      int r = drawRandInt(chain,2); 
+      switch(r)
+	{
+	case 0 : 
+	  result.thatNode = p->back->number; 
+	  break; 
+	case 1 : 
+	  result.thatNode = p->next->back->number; 
+	  break; 
+	case 2: 
+	  result.thatNode = p->next->next->back->number; 
+	  break; 
+	default: assert(0); 
+	}
+    }
+  
+  return result; 
+}

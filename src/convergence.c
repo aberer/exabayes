@@ -5,7 +5,7 @@
 */ 
 
 #include "axml.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "globals.h"
 #include "main-common.h"
 

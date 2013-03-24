@@ -9,7 +9,7 @@
 
 #include "axml.h"
 #include "main-common.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "globals.h" 
 
 /* 

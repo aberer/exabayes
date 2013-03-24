@@ -6,7 +6,7 @@
 
 
 #include "axml.h"
-#include "proposalStructs.h"
+#include "bayes.h"
 #include "globals.h"
 #include "main-common.h"
 #include "chain.h"
@@ -23,20 +23,18 @@
 
 
 
-void initDefaultValues(state *theState, tree *tr)
+void initDefaultValues(state *chain, tree *tr)
 {
   /* TODO we have to redo the prior framework */
-  theState->curprior = 1; 
-  theState->newprior = 1; 
+  chain->priorProb = 1; 
+  chain->hastings = 1; 
+  chain->currentGeneration = 0; 
 
-  theState->hastings = 1; 
-  theState->currentGeneration = 0; 
-
-  theState->penaltyFactor = 0.0;
+  chain->penaltyFactor = 0.0;
 }
 
 
-void makeChainFileNames(state *theState, int num)
+void makeChainFileNames(state *chain, int num)
 {
   char tName[1024],
     pName[1024] ; 
@@ -45,8 +43,8 @@ void makeChainFileNames(state *theState, int num)
   sprintf(pName, "%s%s_parameters.%s.%d", workdir, PROGRAM_NAME, run_id, num); 
   
   /* todo binary state file?  */
-  theState->topologyFile = fopen(tName, "w"); 
-  theState->outputParamFile = fopen(pName, "w");   
+  chain->topologyFile = fopen(tName, "w"); 
+  chain->outputParamFile = fopen(pName, "w");   
 }
 
 
@@ -187,8 +185,6 @@ void preinitTree(tree *tr)
  */ 
 void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains)
 {
-  gAInfo.successFullSwitchesBatch = 0; 
-
   FILE *treeFH = NULL; 
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
@@ -206,7 +202,13 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains; 
 
-
+  /* initialize a half matrix of success-ctrs for swapping info   */
+  gAInfo.swapInfo = exa_calloc(gAInfo.numberOfRuns, sizeof(accRejCtr*)); 
+  if(gAInfo.numberCoupledChains > 1 )
+    {
+      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+	gAInfo.swapInfo[i] = exa_calloc( (gAInfo.numberCoupledChains * gAInfo.numberCoupledChains -gAInfo.numberCoupledChains) / 2   ,sizeof(accRejCtr));
+    }
 
 #ifdef MC3_SPACE_FOR_TIME
   int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
