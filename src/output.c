@@ -357,11 +357,12 @@ static void printSubsRates(state *prState ,int model, int numSubsRates)
 
 void printIfPresent(proposalFunction *pf)
 {
-  int acc = pf->overallSuccessCtr.acc,
-    rejc = pf->overallSuccessCtr.rej; 
+  double ratio = getRatioOverall(&(pf->sCtr)); 
+  int acc = pf->sCtr.gAcc; 
+  int rej = pf->sCtr.gRej; 
 
-  if(acc != 0 || rejc != 0)
-    PRINT("%s: %d/%d (%.0f%%)\t", pf->name, acc , rejc,  ( (double)(acc) / (double)( (acc + rejc) + 0.0001))* 100   ); 
+  if(acc != 0 || rej != 0)
+    PRINT("%s: %d/%d (%.1f%%)\t", pf->name, acc  , rej ,  ratio * 100     ); 
 }
 
 
@@ -369,7 +370,7 @@ void printIfPresent(proposalFunction *pf)
 static void printHotChains(int runId)
 {
   state *start =  gAInfo.allChains +  runId *  gAInfo.numberCoupledChains; 
-  
+
   for(int i = 1; i < gAInfo.numberCoupledChains; ++i)
     {
       int index = 0; 
@@ -383,18 +384,60 @@ static void printHotChains(int runId)
       state *chain = start +index ;      
 
       double myHeat = getChainHeat(chain);
+
       assert(chain->couplingId < gAInfo.numberCoupledChains); 
       assert(chain->couplingId > 0 ) ; 
       assert( myHeat < 1.f);
+
       PRINT("lnl_beta(%.2f)=%.2f\t", myHeat, chain->likelihood); 
-
     }
-
-
-
 }
 
 
+
+
+static void printSwapInfo(int runId)
+{
+  successCtr
+    *ctrMatrix = gAInfo.swapInfo[runId]; 
+  
+  int cnt = 0; 
+  for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
+    {
+      if(i < gAInfo.numberCoupledChains - 1 )
+	PRINT("("); 
+
+      for(int j = 0; j < gAInfo.numberCoupledChains; ++j)
+	{
+	  successCtr *ctr = & ( ctrMatrix[cnt]) ; 
+	  if(i < j )
+	    {	      
+	      PRINT("%.1f%%,", i,j, 100 * getRatioOverall(ctr));
+	    }
+	  else 
+	    {
+	      assert( ctr->gAcc == 0 
+			 && ctr->gRej == 0
+			 && ctr->lAcc == 0
+			 && ctr->lRej == 0);  
+	    }
+	  cnt++; 
+	}
+      if(i < gAInfo.numberCoupledChains - 1 )
+	PRINT(")"); 
+    }
+
+  /* PRINT("\tcurrentRatio(0,1)=%.1f%%", getRatioLocal( ctrMatrix + 1) );  */
+}
+
+
+
+
+/**
+   @brief dumps infos on the state of the chain
+
+   @param chain -- the pointer to the first chain that belongs to a particular run in the array of chains 
+ */
 void chainInfo(state *chain)
 {
   assert(chain->couplingId == 0) ; /* we are the cold chain   */
@@ -403,6 +446,7 @@ void chainInfo(state *chain)
 
   PRINT( "[run: %d] [TIME %.2f] gen: %d Likelihood: %.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->tr->likelihood);
   printHotChains(runId); 
+  printSwapInfo(runId);   
   PRINT("\n"); 
 
   /* just output how much time has passed since the last increment */

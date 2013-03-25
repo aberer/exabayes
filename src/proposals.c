@@ -1386,7 +1386,7 @@ static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
 
 
 /* TODO here  */
-void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
+static void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
   branch b =  drawBranchUniform(chain); 
@@ -1420,9 +1420,86 @@ void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
 /**
    @brief tunes the BL multiplier
  */ 
-void autotune_BLMultiplier(proposalFunction *pf)
+static void autotuneMultiplier(state *chain, proposalFunction *pf)
 {
-  /* assert(0);  */
+  double *parameter = &(pf->parameters.multiplier); 
+
+  successCtr *ctr = &(pf->sCtr); 
+
+  int batch = chain->currentGeneration  / (TUNE_FREQUENCY* BATCH_MOD); /* HACK */
+
+  double newParam = tuneParameter(batch, getRatioLocal(ctr), *parameter, FALSE); 
+
+#ifdef DEBUG_PRINT_TUNE_INFO
+  if(processID == 0 )
+    {
+    if(newParam < *parameter)
+      printf("%s\tratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+    else if (newParam > *parameter)
+      printf("%s\tratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+    }
+#endif
+
+  *parameter = newParam; 
+  resetCtr(ctr);   
+}
+
+
+/**
+   @brief autotunes sliding windows 
+   
+*/ 
+static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
+{
+  double *parameter = &(pf->parameters.slidWinSize); 
+  successCtr *ctr = &(pf->sCtr); 
+  double newParam = tuneParameter(chain->currentGeneration / (TUNE_FREQUENCY * BATCH_MOD),
+				  getRatioLocal(&(pf->sCtr)),
+				  *parameter, FALSE  ); 
+  
+#ifdef DEBUG_PRINT_TUNE_INFO
+  if(processID == 0 )
+    {
+      if(newParam < *parameter)
+	printf("%s ratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+      else if (newParam > *parameter)
+	printf("%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+    }
+#endif
+
+  *parameter = newParam; 
+  resetCtr(ctr);   
+
+  
+
+}
+
+
+/**
+   @brief autotunes the stop probability of extended topological moves 
+*/ 
+static void autotuneStopProp(state *chain, proposalFunction *pf) 
+{
+  double *parameter = &(pf->parameters.eSprStopProb); 
+  successCtr *ctr = &(pf->sCtr); 
+  double newParam = tuneParameter( chain->currentGeneration / (TUNE_FREQUENCY * BATCH_MOD), 
+				   getRatioLocal(&(pf->sCtr)),
+				   *parameter, 
+				   TRUE ); 
+  
+#ifdef DEBUG_PRINT_TUNE_INFO
+  if(processID == 0 )
+    {
+    if(newParam < *parameter)
+      printf("%s ratio=%f\t => reduced %f to %f\n", pf->name,getRatioLocal(ctr), *parameter, newParam);
+    else if (newParam > *parameter)
+      printf("%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+    }
+#endif
+
+  *parameter = newParam; 
+  resetCtr(ctr);   
+  
 }
 
 
@@ -1467,6 +1544,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
     {
     case E_SPR:
       ptr->eval_lnl = spr_eval; 
+      ptr->autotune = autotuneStopProp; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
@@ -1476,6 +1554,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case E_SPR_MAPPED: 		/* TRUSTED  */
       ptr->eval_lnl = spr_eval; 
+      ptr->autotune = autotuneStopProp; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
@@ -1484,6 +1563,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = TOPOLOGY; 
       break; 
     case UPDATE_MODEL: 		
+      ptr->autotune = autotuneSlidingWindow; 
       ptr->apply_func = simple_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN;
@@ -1492,6 +1572,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "modelSlidWin"; 
       break; 
     case UPDATE_GAMMA:      	
+      ptr->autotune = autotuneSlidingWindow; 
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN; 
@@ -1507,6 +1588,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "gammaExp"; 
       break; 
     case UPDATE_SINGLE_BL: 	/* TRUSTED */
+      ptr->autotune = autotuneSlidingWindow; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
@@ -1528,7 +1610,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "singleBLBiunif"; 
       ptr->category = BRANCH_LENGTHS; 
       break; 
-    case UPDATE_MODEL_SINGLE_BIUNIF:       
+    case UPDATE_MODEL_SINGLE_BIUNIF: 
       ptr->apply_func	=  single_biunif_model_proposal_apply;
       ptr->reset_func =  simple_model_proposal_reset;
       ptr->name = "singleModelBiunif"; 
@@ -1565,7 +1647,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break;
     case BRANCH_LENGTHS_MULTIPLIER: 
       ptr->eval_lnl = dummy_eval;
-      ptr->autotune = autotune_BLMultiplier; 
+      ptr->autotune = autotuneMultiplier; 
       ptr->apply_func = branch_length_multiplier_apply; 
       ptr->reset_func = branch_length_reset; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
@@ -1684,21 +1766,6 @@ void setupProposals(state *chain, initParamStruct *initParams)
 }
 
 
-/**
-   @brief Resets all counters that inform about the number of
-   accepted/rejected states.
- */ 
-void resetSuccessCounters(state *chain)
-{
-  for(int i = 0; i < chain->numProposals; ++i)
-    {
-      chain->proposals[i]->successCtr.acc = 0; 
-      chain->proposals[i]->successCtr.rej = 0; 
-    }
-} 
-
-
-
 
 /**
    @brief draws a proposal function.
@@ -1812,8 +1879,7 @@ void step(state *chain)
 
   if(chain->wasAccepted)
     {
-      pf->successCtr.acc++;
-      pf->overallSuccessCtr.acc++; 
+      cntAccept(&(pf->sCtr));
       chain->likelihood = tr->likelihood; 
 
       /* 
@@ -1826,8 +1892,7 @@ void step(state *chain)
   else
     {
       pf->reset_func(chain, pf); 
-      pf->successCtr.rej++;
-      pf->overallSuccessCtr.rej++; 
+      cntReject(&(pf->sCtr)); 
       chain->likelihood = prevLnl; 
       
       /* TODO re-enable */
@@ -1856,6 +1921,8 @@ void step(state *chain)
       chainInfo(chain); 
     }
 
+
+#ifdef TUNE_PARAMETERS
   /* autotuning for proposal parameters. With increased parallelism
      this will become more complicated.  */
   if(chain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY - 1 )
@@ -1863,10 +1930,12 @@ void step(state *chain)
       for(int i = 0; i < chain->numProposals; ++i)
 	{
 	  proposalFunction *pf = chain->proposals[i]; 
+
 	  if(pf->autotune)	/* only, if we set this   */
-	    pf->autotune(pf);
+	    pf->autotune(chain, pf);
 	}
     }
+#endif
 
   chain->currentGeneration++; 
 }

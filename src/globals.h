@@ -41,7 +41,11 @@ typedef struct globs
   int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
 
-  accRejCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> this is a half-matrix for each independent run
+
+  
+  double* temperature;   /// one temperature for each run 
+  successCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> only the upper half w/o diag is filled!
+
 
 } globalAnalysisInfo; 
 
@@ -75,6 +79,7 @@ globalAnalysisInfo gAInfo =
    NULL,
    0,
    10000   ,
+   NULL, 
    NULL,
   }; 
 

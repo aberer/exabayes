@@ -54,14 +54,13 @@ void makeChainFileNames(state *chain, int num)
  */ 
 double getChainHeat(state *chain )
 {
-  const double  deltaT = HEAT_FACTOR; 
+  int runId = chain->id / gAInfo.numberCoupledChains;  
+  const double deltaT = gAInfo.temperature[runId]; 
 
   if(chain->couplingId == 0 )
     return 1; 
   
   double tmp  = 1. + deltaT * chain->couplingId; 
-  
-  assert(tmp > 1); 
   double myHeat = 1. / (double)tmp; 
 
   assert(myHeat < 1.);
@@ -69,9 +68,9 @@ double getChainHeat(state *chain )
 }
 
 
-/* this function needs to be called when branch lengths are read from
-   a file. If this is the case, these BLs are not transformed
-   correctly. This function corrects for that.  */
+/**
+   @brief corrects branch lengths when those are read from a file
+*/
 void traverseInitCorrect(nodeptr p, int *count, tree *tr )
 {
   nodeptr q;
@@ -150,9 +149,6 @@ void copyState(state *dest, const state *src )
 
 
 
-
-
-
 void preinitTree(tree *tr)
 {   
   tr->doCutoff = TRUE;
@@ -172,6 +168,7 @@ void preinitTree(tree *tr)
   tr->gapyness               = 0.0; 
   tr->useMedian = FALSE;
 }
+
 
 
 /**
@@ -202,13 +199,16 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains; 
 
-  /* initialize a half matrix of success-ctrs for swapping info   */
-  gAInfo.swapInfo = exa_calloc(gAInfo.numberOfRuns, sizeof(accRejCtr*)); 
-  if(gAInfo.numberCoupledChains > 1 )
-    {
-      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-	gAInfo.swapInfo[i] = exa_calloc( (gAInfo.numberCoupledChains * gAInfo.numberCoupledChains -gAInfo.numberCoupledChains) / 2   ,sizeof(accRejCtr));
-    }
+  /* initialize a matrix of swaps (wasting some space here) */
+  gAInfo.swapInfo = (successCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(successCtr*)); 
+  int n = gAInfo.numberCoupledChains; 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.swapInfo[i] = exa_calloc( n * n , sizeof(successCtr)); 
+
+  gAInfo.temperature = exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.temperature[i] = HEAT_FACTOR; 
+
 
 #ifdef MC3_SPACE_FOR_TIME
   int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
@@ -443,13 +443,13 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
 
 
 
-/*!
-  \brief Applies the state of the chain to its tree. 
+/**
+   @brief Applies the state of the chain to its tree. 
 
    Notice: you must not simply change the tree pointer. More
    modifications are necessary to do so.
 
-   \param boolean checkLnl -- should we check, if the lnl is the same as
+   @param boolean checkLnl -- should we check, if the lnl is the same as
    before? If we applied it the first time, there is no before.
  */ 
 void applyChainStateToTree(state *chain)

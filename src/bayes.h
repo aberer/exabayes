@@ -14,7 +14,7 @@
 #include "config.h"
 #include "rng.h"
 #include "branch.h"
-
+#include "tune.h"
 
 /* TODO not enabled yet, was not such a good idea */
 typedef struct
@@ -34,13 +34,6 @@ typedef struct
 
 
 
-typedef struct
-{
-  int acc; 
-  int rej;     
-} accRejCtr; 
-
-
 #define NUM_PROP_CATS 5 
 typedef enum _cats {
   TOPOLOGY = 1  , 
@@ -49,7 +42,6 @@ typedef enum _cats {
   SUBSTITUTION_RATES = 4  ,
   RATE_HETEROGENEITY = 5
 } category_t; 
-
 
 
 
@@ -153,15 +145,14 @@ struct _pfun
   double initWeight; 
   double currentWeight; 
   
-  accRejCtr successCtr; /// monitors acceptance / rejection rate in recent batch 
-  accRejCtr overallSuccessCtr;  /// the same as above, but we'll never reset this one to obtain overall statistics 
+  successCtr sCtr;  /// counts acceptance / rejection
 
   void (*apply_func)( state *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
   void (*eval_lnl) (state *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
   void (*reset_func)( state *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
 
   /* TODO not used yet */
-  void (*autotune)(struct _pfun *pf); 
+  void (*autotune)(state *chain, struct _pfun *pf); 
 
 
   /**
@@ -190,7 +181,7 @@ struct _pfun
     perPartitionInfo *partInfo; 
   }remembrance; 
 
-}; 
+} ; 
 
 
 #endif

@@ -20,23 +20,13 @@
 
 /* TODO outsource  */
 #include "chain.h"
-
 #include  "adapters.h"
 #include "eval.h"
-
 #include "proposals.h"
 
+#include "tune.h"
+
 extern double masterTime; 
-
-
-
-
-
-/* int mapToTriangularIndex(int row, int col) */
-/* { */
-/*   for(int i = 0; i < row ; ++i) */
-/*     for(int j = 0; hp) */
-/* } */
 
 
 /**
@@ -89,34 +79,32 @@ void switchChainState(state *chains)
 
   double accRatio = exp(( aB + bA )  - (aA + bB )); 
 
+  state *a = chains + chainA,
+    *b = chains  + chainB ; 
+  
   /* do the swap */
   if( drawGlobalDouble01()  < accRatio)
     {
-      state *a = chains + chainA,
-	*b = chains  + chainB ; 
 
+      /* everything, we need to swap */
       swpInt(&(a->couplingId), &(b->couplingId)); 
-      for(int i = 0; i < a->numProposals;++i)
+
+      for(int i = 0; i < a->numProposals; ++i)
 	{
-	  swpInt(&(a->proposals[i]->successCtr.acc), &(b->proposals[i]->successCtr.acc)); 
-	  swpInt(&(a->proposals[i]->successCtr.rej), &(b->proposals[i]->successCtr.rej)); 
+	  proposalFunction *tmp  = a->proposals[i]; 
+	  a->proposals[i] = b->proposals[i]; 
+	  b->proposals[i] = tmp; 
 	}
 
-/*      =0 1 2 3  */
-/* ================ */
-/*    0 =  0 1 2 */
-/*    1 =    3 4  */
-/*    2 =      5  */
-
-      /* 	int n = gAInfo.numberCoupledChains;    */
-      /* return row* n - (row-1)* row/2 + col - row;   */
-
-      /* TODO */
-      /* gAInfo.swapInfo[] */
+      int r = MIN(a->couplingId, b->couplingId ); 
+      int c = MAX(a->couplingId, b->couplingId); 
+      cntAccept(&(gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c ]) );       
     } 
   else 
     {
-      /* TODO  */
+      int r = MIN(a->couplingId, b->couplingId ); 
+      int c = MAX(a->couplingId, b->couplingId); 
+      cntReject(&(gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c ]) ); 
     }
 }
 
@@ -130,7 +118,10 @@ void switchChainState(state *chains)
 
  */
 void executeOneRun(state *chains, int gensToRun )
-{
+{  
+  int
+    runId  =chains[0].id / gAInfo.numberCoupledChains; 
+
   if(gAInfo.numberCoupledChains > 1 )
     {
 #ifdef MC3_SPACE_FOR_TIME
@@ -138,10 +129,11 @@ void executeOneRun(state *chains, int gensToRun )
       for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
 	applyChainStateToTree(chains+i);
 #endif
-
-
+      
       for(int genCtr = 0; genCtr < gensToRun; genCtr += SWITCH_AFTER_GEN)
 	{
+	  boolean timeToTune = FALSE; 
+
 	  for(int chainCtr = 0; chainCtr < gAInfo.numberCoupledChains; ++chainCtr)
 	    {      
 	      state *curChain = chains + chainCtr; /* TODO */
@@ -149,15 +141,28 @@ void executeOneRun(state *chains, int gensToRun )
 #ifndef MC3_SPACE_FOR_TIME
 	      applyChainStateToTree(curChain );
 #endif
-
 	      for(int i = 0; i < SWITCH_AFTER_GEN; ++i)
-		step(curChain);
-	  	  
+		{
+		  step(curChain);
+		  if(curChain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY -1 )
+		    timeToTune = TRUE; 
+		}
+
 #ifndef MC3_SPACE_FOR_TIME
 	      saveTreeStateToChain(curChain);
 #endif
 	    }
 
+	  if(timeToTune)
+	    {
+	      /* naive strategy: tune, s.t. the coldest hot chain swaps
+		 with the coldest chain in 23.4% of all cases */
+	      successCtr *c = &(gAInfo.swapInfo[runId][1]); 
+	      
+	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / (TUNE_FREQUENCY * BATCH_MOD) , getRatioLocal(c), gAInfo.temperature[runId], FALSE);
+	      resetCtr(c);
+	    }
+	    
 	  switchChainState(chains);
 	}
 
@@ -193,10 +198,7 @@ void runChains(state *allChains, int diagFreq)
       for(int i = 0; i < gAInfo.numberOfRuns; ++i)
 	{
 	  state *relChains =  allChains + (i * gAInfo.numberCoupledChains); 
-	  executeOneRun(relChains, diagFreq); 
-	  
-	  for(int j = 0; j < gAInfo.numberCoupledChains; ++j)
-	    resetSuccessCounters(relChains + j); 
+	  executeOneRun(relChains, diagFreq); 	  
 	}
 
       hasConverged = convergenceDiagnostic(allChains, gAInfo.numberOfRuns); 

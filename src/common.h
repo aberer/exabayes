@@ -67,12 +67,12 @@ typedef  unsigned int nat ;
 
 
 #define INIT_BRANCH_LENGTHS 0.65
-#define INIT_BL_MULT 2 
+#define INIT_BL_MULT 3 
 #define INIT_BL_SLID_WIN  0.0005
 #define INIT_RATE_SLID_WIN  0.5 
 #define INIT_GAMMA_SLID_WIN  0.75
 
-
+#define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 0.0001 
 
 
@@ -86,11 +86,13 @@ typedef  unsigned int nat ;
  */
 
 
-
-
-#define PRINT_FREQUENCY 100 
+#define PRINT_FREQUENCY 500 
 #define TUNE_FREQUENCY 100 
+#define BATCH_MOD 1
+#define TUNE_PARAMETERS
 
+
+/* #define DEBUG_PRINT_TUNE_INFO */
 
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
@@ -100,8 +102,9 @@ typedef  unsigned int nat ;
 
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
-#define ASDSF_FREQ_CUTOFF 0.1	/*  ignore clades for which the frequency in no chain exceeds this value */
 
+
+#define ASDSF_FREQ_CUTOFF 0.1	/*  ignore clades for which the frequency in no chain exceeds this value */
 #define ASDSF_CONVERGENCE_CRITERION 0.005 ///  indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence 
 
 /* a lot of debug information for the asdsf */
@@ -109,7 +112,7 @@ typedef  unsigned int nat ;
 
 
 /* MC3 stuff for development */
-#define HEAT_FACTOR 0.003
+#define HEAT_FACTOR 0.01
 #define SWITCH_AFTER_GEN 1  	/* number of generations after  which we try to switch states   */
 #define MC3_SPACE_FOR_TIME
 
@@ -118,6 +121,6 @@ typedef  unsigned int nat ;
    
    TODO make this a parameter in the config file  
  */
-#define BURNIN 0
+#define BURNIN 1000
 
 #endif
