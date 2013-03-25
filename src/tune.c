@@ -34,13 +34,14 @@ double tuneParameter(int batch, double accRatio, double parameter, boolean inver
   double newTuning = exp(logTuning);
 
   /* TODO min+max tuning?  */
-  /* if (newTuning > minTuning && newTuning < maxTuning) */
-
-  return newTuning; 
+  
+  double minTuning = 1e-8,
+    maxTuning = 1e2; 
+  if (minTuning <  newTuning && newTuning < maxTuning)
+    return  newTuning; 
+  else 
+    return parameter; 
 }
-
-
-
 
 
 /**

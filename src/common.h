@@ -88,8 +88,8 @@ typedef  unsigned int nat ;
 
 #define PRINT_FREQUENCY 500 
 #define TUNE_FREQUENCY 100 
-#define BATCH_MOD 1
-#define TUNE_PARAMETERS
+
+#define TUNE_PARAMETERS		/// turn off autotuning 
 
 
 /* #define DEBUG_PRINT_TUNE_INFO */
@@ -97,7 +97,7 @@ typedef  unsigned int nat ;
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
-/* #define DEBUG_LNL_VERIFY */
+#define DEBUG_LNL_VERIFY
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */

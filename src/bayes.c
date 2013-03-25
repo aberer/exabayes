@@ -159,7 +159,7 @@ void executeOneRun(state *chains, int gensToRun )
 		 with the coldest chain in 23.4% of all cases */
 	      successCtr *c = &(gAInfo.swapInfo[runId][1]); 
 	      
-	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / (TUNE_FREQUENCY * BATCH_MOD) , getRatioLocal(c), gAInfo.temperature[runId], FALSE);
+	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / TUNE_FREQUENCY , getRatioLocal(c), gAInfo.temperature[runId], FALSE);
 	      resetCtr(c);
 	    }
 	    

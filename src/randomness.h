@@ -25,6 +25,5 @@ double drawRandBiUnif(state *chain, double x);
 int drawSampleProportionally(state *chain,  double *weights, int numWeight ); 
 void drawPermutation(state *chain, int* perm, int n); 
 
-
 branch drawBranchUniform(state *chain); 
 #endif

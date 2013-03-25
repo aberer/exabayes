@@ -157,6 +157,7 @@ static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 
 
 
+
 static void dummy_eval(state *chain,proposalFunction *thisProposal)
 {
   evaluateGenericWrapper(chain, chain->tr->start, TRUE);
@@ -224,6 +225,24 @@ static void spr_eval(state *chain, proposalFunction *thisProposal)
 }
 
 
+
+
+
+
+
+/* an alternative to the function below: allow for a subtree to be an
+   outer branch => does the function below allow to prune a single
+   taxon and insert it somewhere else?  */
+/* static nodeptr getRandomSubtree(tree *tr) */
+/* { */
+  
+/*   drawRandDouble() */
+  
+  
+/* } */
+
+
+
 static nodeptr select_random_subtree(state *chain, tree *tr)
 {
   nodeptr 
@@ -259,6 +278,11 @@ static nodeptr select_random_subtree(state *chain, tree *tr)
   return p;
 }
 
+
+
+
+/* #define ALT_SUBTREE_SELECT */
+
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr;
@@ -267,8 +291,16 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   debug_printTree(chain);
 
-  nodeptr    
-    prunedSubtreePtr = select_random_subtree(chain,tr);
+#ifdef ALT_SUBTREE_SELECT
+  /* nodeptr prunedSubtreePtr = select_branch_by_id_dfs_rec */
+  branch b  =  drawBranchUniform(chain); 
+  if(isTip(b.thisNode,tr->mxtips))
+    b = invertBranch(b); 
+  /* printf("branch is %d,%d\n", b.thisNode, b.thatNode);  */
+  nodeptr prunedSubtreePtr =  findNodeFromBranch(tr, b); 
+#else 
+  nodeptr prunedSubtreePtr = select_random_subtree(chain,tr);
+#endif
   nodeptr nb = prunedSubtreePtr->next->back, 
     nnb = prunedSubtreePtr->next->next->back; 
   
@@ -454,8 +486,6 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
   debug_checkTreeConsistency(chain );
   debug_printTree(chain);
 
-  evaluateGenericWrapper(chain, tr->start, TRUE);
-
 
   /* TODO this legacy stuff does not really make sense...  */
   /* exa_newViewGeneric(chain, prunedPtr, FALSE);  */
@@ -560,7 +590,7 @@ static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
   partition->alpha = info->alpha; 
 
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
-  evaluateOnePartition(chain, tr->start, TRUE, info->modelNum); 
+ evaluateOnePartition(chain, tr->start, TRUE, info->modelNum); 
 }
 
 //------------------------------------------------------------------------------
@@ -1385,7 +1415,6 @@ static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
 
 
 
-/* TODO here  */
 static void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
@@ -1426,7 +1455,7 @@ static void autotuneMultiplier(state *chain, proposalFunction *pf)
 
   successCtr *ctr = &(pf->sCtr); 
 
-  int batch = chain->currentGeneration  / (TUNE_FREQUENCY* BATCH_MOD); /* HACK */
+  int batch = chain->currentGeneration  / TUNE_FREQUENCY; /* HACK */
 
   double newParam = tuneParameter(batch, getRatioLocal(ctr), *parameter, FALSE); 
 
@@ -1453,7 +1482,7 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 {
   double *parameter = &(pf->parameters.slidWinSize); 
   successCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter(chain->currentGeneration / (TUNE_FREQUENCY * BATCH_MOD),
+  double newParam = tuneParameter(chain->currentGeneration / TUNE_FREQUENCY,
 				  getRatioLocal(&(pf->sCtr)),
 				  *parameter, FALSE  ); 
   
@@ -1482,7 +1511,7 @@ static void autotuneStopProp(state *chain, proposalFunction *pf)
 {
   double *parameter = &(pf->parameters.eSprStopProb); 
   successCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter( chain->currentGeneration / (TUNE_FREQUENCY * BATCH_MOD), 
+  double newParam = tuneParameter( chain->currentGeneration / TUNE_FREQUENCY, 
 				   getRatioLocal(&(pf->sCtr)),
 				   *parameter, 
 				   TRUE ); 
@@ -1497,7 +1526,7 @@ static void autotuneStopProp(state *chain, proposalFunction *pf)
     }
 #endif
 
-  *parameter = newParam; 
+  *parameter = fmin(newParam,1); 
   resetCtr(ctr);   
   
 }
@@ -1562,7 +1591,8 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
       ptr->category = TOPOLOGY; 
       break; 
-    case UPDATE_MODEL: 		
+    case UPDATE_MODEL: 	
+
       ptr->autotune = autotuneSlidingWindow; 
       ptr->apply_func = simple_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
@@ -1925,14 +1955,29 @@ void step(state *chain)
 #ifdef TUNE_PARAMETERS
   /* autotuning for proposal parameters. With increased parallelism
      this will become more complicated.  */
-  if(chain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY - 1 )
+  if( chain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY - 1 )
     {
       for(int i = 0; i < chain->numProposals; ++i)
 	{
 	  proposalFunction *pf = chain->proposals[i]; 
-
+	  
 	  if(pf->autotune)	/* only, if we set this   */
-	    pf->autotune(chain, pf);
+	    {
+	      pf->autotune(chain, pf);
+/* #ifdef ONLY_TUNE_COLD_CHAIN	/\* if we only tune the cold chain, then we have to copy the new parameters to the other chains *\/ */
+/* 	      int */
+/* 		runId = chain->id / gAInfo.numberCoupledChains;  */
+/* 	      state *chainStart = gAInfo.allChains + runId * gAInfo.numberCoupledChains;  */
+/* 	      for(int j = 1 ; j < gAInfo.numberCoupledChains; ++j) */
+/* 		{ */
+/* 		  if(chainStart[j].couplingId  != 0) */
+/* 		    { */
+/* 		      proposalFunction *pfOther = chainStart[j].proposals[i];  */
+/* 		      pfOther->parameters= pf->parameters;  */
+/* 		    } */
+/* 		} */
+/* #endif */
+	    }
 	}
     }
 #endif
