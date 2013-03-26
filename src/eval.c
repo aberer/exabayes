@@ -14,18 +14,18 @@ static void expensiveVerify(state *chain)
 {  
 #ifdef DEBUG_LNL_VERIFY
   tree *tr = chain->tr; 
-  double val1 = tr->likelihood; 
+  double toVerify = chain->likelihood; 
 
   for(int i = 0; i < getNumberOfPartitions(tr) ;++i)
     setExecModel(chain,i,TRUE); 
   
   exa_evaluateGeneric(chain,tr->start,TRUE); 
 
-  if(processID == 0)
+  if(chain->currentGeneration != 0 && processID == 0)
     {
-      if(fabs (tr->likelihood - val1 ) > 0.1)
-      printf("WARNING: found in expensive evaluation: likelihood difference is %f (with before/after)\t%f\t%f\n", fabs (tr->likelihood - val1 ), val1, tr->likelihood); 
-      assert(fabs (tr->likelihood - val1 ) < 0.1);   
+      if(fabs (tr->likelihood - toVerify ) > 0.1)
+      printf("WARNING: found in expensive evaluation: likelihood difference is %f (with before/after)\t%f\t%f\n", fabs (tr->likelihood - toVerify ), toVerify, tr->likelihood); 
+      assert(fabs (tr->likelihood - toVerify ) < 0.1);   
     }  
 #endif
 }
@@ -35,8 +35,9 @@ static void expensiveVerify(state *chain)
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
   exa_evaluateGeneric(chain,start,fullTraversal); 
+  chain->likelihood = chain->tr->likelihood; 
 
-  expensiveVerify(chain);  
+  expensiveVerify(chain);
 }
 
 

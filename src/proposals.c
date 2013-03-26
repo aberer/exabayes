@@ -161,6 +161,7 @@ static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 static void dummy_eval(state *chain,proposalFunction *thisProposal)
 {
   evaluateGenericWrapper(chain, chain->tr->start, TRUE);
+  chain->likelihood = chain->tr->likelihood; 
 }
 
 
@@ -551,7 +552,7 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
   partition->alpha = newalpha;
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 
-  evaluateOnePartition(chain, tr->start, TRUE, model ); 
+  /* evaluateOnePartition(chain, tr->start, TRUE, model );  */
 }
 
 
@@ -590,7 +591,7 @@ static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
   partition->alpha = info->alpha; 
 
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
- evaluateOnePartition(chain, tr->start, TRUE, info->modelNum); 
+ /* evaluateOnePartition(chain, tr->start, TRUE, info->modelNum);  */
 }
 
 //------------------------------------------------------------------------------
@@ -778,7 +779,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
     
   /* TODO: need to broadcast rates here for parallel version ! */
 
-  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */
+  /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/ */
 
   //TODO: without this, the run will fail after a successful model, but failing SPR
   //TODOFER: what did we have in mind regarding the comment above?
@@ -880,7 +881,7 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
       
   exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */  
+  /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/   */
 }
 
 
@@ -927,7 +928,7 @@ static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf
 
   exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
   
-  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */
+  /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/ */
 }
 
 static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
@@ -970,7 +971,7 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 
   exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
-  evaluateOnePartition(chain, tr->start, TRUE, model); /* 2. re-traverse the full tree to update all vectors */
+  /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/ */
 }
 
 static void restore_subs_rates(state *chain, int model, int numSubsRates, double *prevSubsRates)
@@ -988,7 +989,7 @@ static void restore_subs_rates(state *chain, int model, int numSubsRates, double
 
   /* TODO need to broadcast rates here for parallel version */
 
-  evaluateOnePartition(chain, tr->start, TRUE, model); 
+  /* evaluateOnePartition(chain, tr->start, TRUE, model);  */
 }
 
 
@@ -1242,7 +1243,7 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
     }
 
   pf->remembrance.topoRec->whichBranch = target_branch; 
-  evaluateGenericWrapper(chain, p, FALSE); 
+  /* evaluateGenericWrapper(chain, p, FALSE);  */
   //evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
 }
 
@@ -1295,11 +1296,6 @@ static void random_branch_length_proposal_reset(state * chain, proposalFunction 
 
      TODO I think, we should evaluate at the respctive node 
    */
-#if 0 
-  evaluateGenericWrapper(chain, chain->tr->start, FALSE);
-#else 
-  evaluateGenericWrapper(chain, chain->tr->start, TRUE );
-#endif
 
  // evaluateGeneric(chain->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from chain->tr->start, that is: evaluateGeneric(chain->tr, chain->tr->start, TRUE);
 }
@@ -1324,7 +1320,7 @@ static void restore_frequ_rates(state *chain, int model, int numFrequRates, doub
 
   exa_initReversibleGTR(chain, model);
 
-  evaluateOnePartition(chain, tr->start, TRUE, model);
+  /* evaluateOnePartition(chain, tr->start, TRUE, model); */
 }
 
 static void recordFrequRates(state *chain, int model, int numFrequRates, double *prevFrequRates)
@@ -1377,7 +1373,7 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
   /* chain->curprior=get_frequency_prior(chain, tr->partitionData[chain->frequRemem.model].frequencies); */
   /* chain->newprior=get_frequency_prior(chain, chain->frequRemem.curFrequRates); */
 
-  evaluateOnePartition(chain, tr->start, TRUE, model);
+  /* evaluateOnePartition(chain, tr->start, TRUE, model); */
 }
 
 
@@ -1540,7 +1536,7 @@ void branch_length_reset(state *chain, proposalFunction *pf)
   
   reset_branch_length(p,getNumBranches(tr), rec->bls); 
 
-  evaluateGenericWrapper(chain, tr->start, TRUE );   
+  /* evaluateGenericWrapper(chain, tr->start, TRUE );    */
 }
 
 
@@ -1592,7 +1588,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = TOPOLOGY; 
       break; 
     case UPDATE_MODEL: 	
-
+      ptr->eval_lnl = dummy_eval;
       ptr->autotune = autotuneSlidingWindow; 
       ptr->apply_func = simple_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
@@ -1602,6 +1598,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "modelSlidWin"; 
       break; 
     case UPDATE_GAMMA:      	
+      ptr->eval_lnl = dummy_eval;
       ptr->autotune = autotuneSlidingWindow; 
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
@@ -1611,6 +1608,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "gammaSlidWin"; 
       break; 
     case UPDATE_GAMMA_EXP: 
+      ptr->eval_lnl = dummy_eval;
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->category = RATE_HETEROGENEITY; 
@@ -1618,6 +1616,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "gammaExp"; 
       break; 
     case UPDATE_SINGLE_BL: 	/* TRUSTED */
+      ptr->eval_lnl = dummy_eval;
       ptr->autotune = autotuneSlidingWindow; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
@@ -1627,6 +1626,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "singleBLSlidWin"; 
       break; 
     case UPDATE_SINGLE_BL_EXP: 
+      ptr->eval_lnl = dummy_eval;
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
@@ -1634,6 +1634,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name  = "singleBlExp"; 
       break; 
     case UPDATE_SINGLE_BL_BIUNIF: 
+      ptr->eval_lnl = dummy_eval;
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
@@ -1641,6 +1642,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = BRANCH_LENGTHS; 
       break; 
     case UPDATE_MODEL_SINGLE_BIUNIF: 
+      ptr->eval_lnl = dummy_eval;
       ptr->apply_func	=  single_biunif_model_proposal_apply;
       ptr->reset_func =  simple_model_proposal_reset;
       ptr->name = "singleModelBiunif"; 
@@ -1648,13 +1650,15 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
     case UPDATE_MODEL_BIUNIF: 
+      ptr->eval_lnl = dummy_eval;
       ptr->name = "modelBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
       ptr->apply_func = single_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
-    case UPDATE_MODEL_ALL_BIUNIF: 
+    case UPDATE_MODEL_ALL_BIUNIF:
+      ptr->eval_lnl = dummy_eval; 
       ptr->apply_func = all_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->name = "modelAllBiunif"; 
@@ -1662,6 +1666,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = SUBSTITUTION_RATES; 
       break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
+      ptr->eval_lnl = dummy_eval;
       ptr->apply_func = frequency_proposal_apply; 
       ptr->reset_func = frequency_proposal_reset; 
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
@@ -1669,6 +1674,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = FREQUENCIES; 
       break;
     case UPDATE_MODEL_PERM_BIUNIF: 
+      ptr->eval_lnl = dummy_eval;
       ptr->apply_func = NULL; 	/* TODO */
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
@@ -1897,13 +1903,14 @@ void step(state *chain)
   assert(priorRatio == 0); 
 
   /* chooses the cheapest way to evaluate the likelihood  */
-  if(pf->eval_lnl)
-    pf->eval_lnl(chain, pf); 
+  pf->eval_lnl(chain, pf); 
 
-  double testLogr = log(drawRandDouble01(chain));
-  double acceptance = (priorRatio  + tr->likelihood - prevLnl) * myHeat + log(chain->hastings); 
+  double testr = drawRandDouble01(chain);
+  double acceptance = 
+    exp((priorRatio  + chain->likelihood - prevLnl) * myHeat)  
+    *  chain->hastings; 
 
-  chain->wasAccepted  = testLogr < acceptance; 
+  chain->wasAccepted  = testr < acceptance; 
   debug_printAccRejc(chain, pf, chain->wasAccepted); 
   chain->prevProposal = pf;   
 

@@ -495,14 +495,15 @@ void applyChainStateToTree(state *chain)
 #endif
     }
 
-  if( chain->dump.likelihood != 0 && fabs (tr->likelihood - chain->dump.likelihood ) > 0.000001 )
+  if( chain->likelihood != 0 && fabs (tr->likelihood - chain->likelihood ) > 1e-6 )
     {
       printInfo(chain, "WARNING: obtained a different likelihood  after restoring previous chain state (before/after): %f / %f\n", 
-		chain->id, chain->currentGeneration, chain->dump.likelihood, tr->likelihood); 
-      assert( fabs(chain->dump.likelihood - tr->likelihood ) < 0.000001 ) ; 
+		chain->id, chain->currentGeneration, chain->likelihood, tr->likelihood); 
+      assert( fabs(chain->likelihood - tr->likelihood ) < 1e-6 ) ; 
     }
 
-  chain->wasAccepted = FALSE; 
+  /* TODO for now  */
+  chain->wasAccepted = TRUE; 
   chain->prevProposal = NULL; 
 }
 
@@ -514,9 +515,7 @@ void applyChainStateToTree(state *chain)
  */ 
 void saveTreeStateToChain(state *chain)
 {
-  tree *tr  = chain->tr; 
-  chain->dump.likelihood = tr->likelihood;   
-  
+  tree *tr  = chain->tr;   
   saveTree(tr, chain->dump.topo);
 
   /* save branch lengths */

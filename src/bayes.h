@@ -71,9 +71,7 @@ typedef struct
 
   /* substitution parameter */
   perPartitionInfo *infoPerPart; 
-  
-  /* to avoid that anything goes wrong */
-  double likelihood; 
+
 } paramDump; 
 
 
@@ -131,7 +129,7 @@ typedef struct _state
   randCtr_t rCtr;
 
   /* saves the entire space in the parameter space  */
-  paramDump dump; 
+  paramDump dump;
 } state;
 
 
@@ -150,8 +148,6 @@ struct _pfun
   void (*apply_func)( state *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
   void (*eval_lnl) (state *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
   void (*reset_func)( state *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
-
-  /* TODO not used yet */
   void (*autotune)(state *chain, struct _pfun *pf); 
 
 

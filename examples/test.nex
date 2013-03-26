@@ -7,7 +7,7 @@ begin EXABAYES;
       INITSPRWEIGHT 0  [ BROKEN ] 
       initEsprMappedWeight 10 [ ok ]
 
-      initSingleBranchWeight 5 [ ok ] 
+      initSingleBranchWeight 0 [ ok: TODO boundaries for proposals with tuning    ] 
       initSingleBranchExpWeight 0  [ ok ] 
       initSingleBranchBiunifWeight 0 [ok]
       branchMulti 5 [ ok ]
@@ -28,8 +28,8 @@ begin EXABAYES;
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
       diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 2 [ number of independant chains/runs ]
+      numIndiChains 1 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 4 [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 1 [ number of chains per independent run (only one is cold) ]       
 end;
