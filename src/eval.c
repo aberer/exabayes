@@ -41,14 +41,29 @@ void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 
   int numPartitions = getNumberOfPartitions(chain->tr); 
   for(int i = 0; i < numPartitions; ++i)
-    chain->partitionLnl[i] = getPLH( chain, i );
+    chain->lnl.partitionLnl[i] = getPLH( chain, i );
 
-  chain->likelihood = chain->tr->likelihood; 
+  chain->lnl.likelihood = chain->tr->likelihood; 
 
   expensiveVerify(chain);
 }
 
 
+
+
+static void updatePartitionLnl(state *chain, double lnl, int model)
+{
+  chain->lnl.likelihood -= chain->lnl.partitionLnl[model]; 
+  chain->lnl.partitionLnl[model] = lnl; 
+  chain->lnl.likelihood += chain->lnl.partitionLnl[model];
+
+
+  double tmp = 0;
+  for(int i = 0; i < getNumberOfPartitions(chain->tr); ++i)
+    tmp += chain->lnl.partitionLnl[i]; 
+  assert(fabs(tmp - chain->lnl.likelihood) < 1e-6); 
+
+}
 
 
 /**
@@ -84,18 +99,13 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
     }
 
 
-
-  chain->likelihood -= chain->partitionLnl[model]; 
-  chain->partitionLnl[model] = getPLH(chain, model ); 
-  chain->likelihood += chain->partitionLnl[model]; 
-
-  double tmp = 0;
-  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
-    tmp += chain->partitionLnl[i]; 
-  assert(fabs(tmp - chain->likelihood) < 1e-6); 
+  updatePartitionLnl(chain, getPLH(chain, model ), model);  
 
   expensiveVerify(chain);
 }
+
+
+
 
 
 

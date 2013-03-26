@@ -15,6 +15,7 @@
 #include "rng.h"
 #include "branch.h"
 #include "tune.h"
+#include "eval.h"
 
 /* TODO not enabled yet, was not such a good idea */
 typedef struct
@@ -110,9 +111,12 @@ typedef struct _state
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   int currentGeneration;   
 
-  double likelihood;  /// the current likelihood of the state 
+
   double priorProb; /// the prior probability of the current state   => store in log form  
-  double *partitionLnl; 
+
+  
+  lnlContainer lnl;  /// the current likelihood of the state  */
+
 
 
   double hastings;/// the proposal ratio 

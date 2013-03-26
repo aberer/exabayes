@@ -17,8 +17,6 @@
 #include "exa-topology.h"	
 #include "nclConfigReader.h"
 #include "misc-utils.h"
-
-/* TODO outsource  */
 #include "chain.h"
 #include  "adapters.h"
 #include "eval.h"
@@ -68,8 +66,8 @@ void switchChainState(state *chains)
 
   assert(heatA < 1.f || heatB < 1.f); 
 
-  double lnlA = chains[chainA].likelihood,
-    lnlB = chains[chainB].likelihood; 
+  double lnlA = chains[chainA].lnl.likelihood,
+    lnlB = chains[chainB].lnl.likelihood; 
 
   double 
     aB = lnlA *  heatB,

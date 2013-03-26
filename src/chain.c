@@ -243,12 +243,11 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
   gAInfo.bvHash = ht; 
+  int numPart = getNumberOfPartitions(tr); 
   
   for(int i = 0; i < totalNumChains; ++i)
     { 
       state *theChain = *resultIndiChains + i;     
-
-      theChain->partitionLnl = exa_calloc(getNumberOfPartitions(tr), sizeof(double)); 
 
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 
@@ -279,9 +278,21 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       myTree->bitVectors = tr->bitVectors; 
       
       initDefaultValues(theChain, myTree);
+
+
+      theChain->lnl.partitionLnl = exa_calloc(numPart, sizeof(double)); 
+      theChain->lnl.orientation = exa_calloc(numPart, sizeof(char*)); 
+      theChain->lnl.vectorsPerPartition = exa_calloc(numPart, sizeof(double**)); 
+      for(int j = 0; j < numPart; ++j)
+	{
+	  pInfo *partition = getPartition(theChain, j); 
+	  theChain->lnl.vectorsPerPartition[j] = exa_calloc(tr->mxtips, sizeof(double*)); 
+	  /* printInfo(theChain, "lnl array with length %d\n", (int)partition->width)  ;  */
+	  for(int k = 0; k < tr->mxtips; ++k)	      	    	    
+	    theChain->lnl.vectorsPerPartition[j][k] = exa_calloc(partition->width , sizeof(double)); 
+	}
       
       setupProposals(theChain, initParams); 
-
 
       /* init the param dump  */
       initParamDump(myTree, &(theChain->dump)); 
@@ -497,11 +508,11 @@ void applyChainStateToTree(state *chain)
 #endif
     }
 
-  if( chain->likelihood != 0 && fabs (tr->likelihood - chain->likelihood ) > 1e-6 )
+  if( chain->lnl.likelihood != 0 && fabs (tr->likelihood - chain->lnl.likelihood ) > 1e-6 )
     {
       printInfo(chain, "WARNING: obtained a different likelihood  after restoring previous chain state (before/after): %f / %f\n", 
-		chain->id, chain->currentGeneration, chain->likelihood, tr->likelihood); 
-      assert( fabs(chain->likelihood - tr->likelihood ) < 1e-6 ) ; 
+		chain->id, chain->currentGeneration, chain->lnl.likelihood, tr->likelihood); 
+      assert( fabs(chain->lnl.likelihood - tr->likelihood ) < 1e-6 ) ; 
     }
 
   /* TODO for now  */

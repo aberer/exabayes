@@ -234,23 +234,6 @@ static void spr_eval(state *chain, proposalFunction *thisProposal)
 
 
 
-
-
-
-
-/* an alternative to the function below: allow for a subtree to be an
-   outer branch => does the function below allow to prune a single
-   taxon and insert it somewhere else?  */
-/* static nodeptr getRandomSubtree(tree *tr) */
-/* { */
-  
-/*   drawRandDouble() */
-  
-  
-/* } */
-
-
-
 static nodeptr select_random_subtree(state *chain, tree *tr)
 {
   nodeptr 
@@ -287,10 +270,6 @@ static nodeptr select_random_subtree(state *chain, tree *tr)
 }
 
 
-
-
-/* #define ALT_SUBTREE_SELECT */
-
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr;
@@ -299,16 +278,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   debug_printTree(chain);
 
-#ifdef ALT_SUBTREE_SELECT
-  /* nodeptr prunedSubtreePtr = select_branch_by_id_dfs_rec */
-  branch b  =  drawBranchUniform(chain); 
-  if(isTip(b.thisNode,tr->mxtips))
-    b = invertBranch(b); 
-  /* printf("branch is %d,%d\n", b.thisNode, b.thatNode);  */
-  nodeptr prunedSubtreePtr =  findNodeFromBranch(tr, b); 
-#else 
   nodeptr prunedSubtreePtr = select_random_subtree(chain,tr);
-#endif
   nodeptr nb = prunedSubtreePtr->next->back, 
     nnb = prunedSubtreePtr->next->next->back; 
   
@@ -659,8 +629,7 @@ void normalizeProposalWeights(state *chain)
 
 static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llpqr
 {
-  tree *tr = chain->tr; 
-  
+
   //TODO: add safety to max and min values
   //record the old ones
 
@@ -850,7 +819,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
 
 static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
+  /* tree *tr = chain->tr;  */
 
   int model = drawRandInt(chain,getNumberOfPartitions(chain->tr));; 
 
@@ -895,7 +864,7 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 
 static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
-  tree *tr = chain->tr; 
+  /* tree *tr = chain->tr;  */
 
   //record the old one //TODO sufficient to store single value.  
   int model = drawRandInt(chain,getNumberOfPartitions(chain->tr)); 
@@ -940,7 +909,7 @@ static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf
 
 static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
+  /* tree *tr = chain->tr;  */
   
   int model = drawRandInt(chain,getNumberOfPartitions(chain->tr));
 
@@ -983,7 +952,7 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 
 static void restore_subs_rates(state *chain, int model, int numSubsRates, double *prevSubsRates)
 {
-  tree *tr = chain->tr;   
+  /* tree *tr = chain->tr;    */
 
   pInfo *partition = getPartition(chain, model); 
 
@@ -1314,7 +1283,7 @@ double get_frequency_prior(state * chain)
 
 static void restore_frequ_rates(state *chain, int model, int numFrequRates, double *prevFrequRates)
 {
-  tree *tr = chain->tr;
+  /* tree *tr = chain->tr; */
 
   /* NOTICE: this function should not be called repeatedly  */
 
@@ -1899,18 +1868,11 @@ void step(state *chain)
 {
   tree *tr = chain->tr;   
 
-  double prevLnl = chain->likelihood;    
+  double prevLnl = chain->lnl.likelihood;    
   int numPart = getNumberOfPartitions( chain->tr );
   double prevPartLnl[numPart]; 
-  /* double safe = 0 ;  */
   for(int i = 0; i < numPart; ++i)
-    {      
-      prevPartLnl[i] = chain->partitionLnl[i]; 
-      /* safe += prevPartLnl[i];  */
-    }
-
-
-
+    prevPartLnl[i] = chain->lnl.partitionLnl[i]; 
 
   double myHeat = getChainHeat(chain ) ; 
 
@@ -1933,7 +1895,7 @@ void step(state *chain)
 
   double testr = drawRandDouble01(chain);
   double acceptance = 
-    exp((priorRatio  + chain->likelihood - prevLnl) * myHeat) 
+    exp((priorRatio  + chain->lnl.likelihood - prevLnl) * myHeat) 
     * chain->hastings ; 
 
   chain->wasAccepted  = testr < acceptance; 
@@ -1946,8 +1908,8 @@ void step(state *chain)
       
       double tmp = 0; 
       for(int i = 0; i < numPart; ++i)
-	tmp += chain->partitionLnl[i]; 
-      assert(fabs(tmp - chain->likelihood) < 1e-6); 
+	tmp += chain->lnl.partitionLnl[i]; 
+      assert(fabs(tmp - chain->lnl.likelihood) < 1e-6); 
 
       /* 
 	 commenting this out for now because of drastic changes: but
@@ -1961,16 +1923,16 @@ void step(state *chain)
       pf->reset_func(chain, pf); 
       cntReject(&(pf->sCtr)); 
       
-      chain->likelihood = prevLnl; 
+      chain->lnl.likelihood = prevLnl; 
       double tmp = 0;
       for(int i = 0; i < numPart; ++i)
 	{
-	  chain->partitionLnl[i] = prevPartLnl[i]; 
+	  chain->lnl.partitionLnl[i] = prevPartLnl[i]; 
 	  tmp += prevPartLnl[i];
 	}
-      if(fabs(tmp - chain->likelihood) > 1e-6)
+      if(fabs(tmp - chain->lnl.likelihood) > 1e-6)
 	{
-	  printf("WARNING: lnl diff=%f\n", tmp - chain->likelihood); 
+	  printf("WARNING: lnl diff=%f\n", tmp - chain->lnl.likelihood); 
 	  assert(0); 
 	}
       
@@ -2013,19 +1975,6 @@ void step(state *chain)
 	  if(pf->autotune)	/* only, if we set this   */
 	    {
 	      pf->autotune(chain, pf);
-/* #ifdef ONLY_TUNE_COLD_CHAIN	/\* if we only tune the cold chain, then we have to copy the new parameters to the other chains *\/ */
-/* 	      int */
-/* 		runId = chain->id / gAInfo.numberCoupledChains;  */
-/* 	      state *chainStart = gAInfo.allChains + runId * gAInfo.numberCoupledChains;  */
-/* 	      for(int j = 1 ; j < gAInfo.numberCoupledChains; ++j) */
-/* 		{ */
-/* 		  if(chainStart[j].couplingId  != 0) */
-/* 		    { */
-/* 		      proposalFunction *pfOther = chainStart[j].proposals[i];  */
-/* 		      pfOther->parameters= pf->parameters;  */
-/* 		    } */
-/* 		} */
-/* #endif */
 	    }
 	}
     }
