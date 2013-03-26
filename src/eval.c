@@ -1,6 +1,9 @@
 /**
    @file eval.h
    @brief Functions for likelihood evaluations.  
+
+   New convention: all these functions are responsible for updating
+   the chain->likelihood + chain->partitionLnl accordingly. 
 */ 
 
 
@@ -35,13 +38,23 @@ static void expensiveVerify(state *chain)
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
   exa_evaluateGeneric(chain,start,fullTraversal); 
+
+  int numPartitions = getNumberOfPartitions(chain->tr); 
+  for(int i = 0; i < numPartitions; ++i)
+    chain->partitionLnl[i] = getPLH( chain, i );
+
   chain->likelihood = chain->tr->likelihood; 
 
   expensiveVerify(chain);
 }
 
 
-/** @brief the same as below, but just for one partition 
+
+
+/**
+   @brief the same as below, but just for one partition 
+
+   updates chain likelihood and chain-partition-lnl accordingly. 
  */
 void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, int model)
 {
@@ -70,6 +83,17 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
       setExecModel(chain,i,TRUE); 
     }
 
+
+
+  chain->likelihood -= chain->partitionLnl[model]; 
+  chain->partitionLnl[model] = getPLH(chain, model ); 
+  chain->likelihood += chain->partitionLnl[model]; 
+
+  double tmp = 0;
+  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+    tmp += chain->partitionLnl[i]; 
+  assert(fabs(tmp - chain->likelihood) < 1e-6); 
+
   expensiveVerify(chain);
 }
 
@@ -83,6 +107,7 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
 void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, boolean *models)
 {  
   tree *tr = chain->tr; 
+  assert(0); 
   
   int numPartitions = getNumberOfPartitions(tr); 
   double perPartitionLH[numPartitions] ; 

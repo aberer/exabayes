@@ -109,8 +109,11 @@ typedef struct _state
   int id;   
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   int currentGeneration;   
+
   double likelihood;  /// the current likelihood of the state 
   double priorProb; /// the prior probability of the current state   => store in log form  
+  double *partitionLnl; 
+
 
   double hastings;/// the proposal ratio 
 

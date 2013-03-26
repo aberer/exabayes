@@ -190,7 +190,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   
   parseConfigWithNcl(configFileName, &initParams);
   
-  if(initParams->numGen > 0)
+  if (initParams->numGen > 0)
     gAInfo.numGen = initParams->numGen; 
 
   gAInfo.samplingFrequency = initParams->samplingFrequency; 
@@ -247,6 +247,8 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   for(int i = 0; i < totalNumChains; ++i)
     { 
       state *theChain = *resultIndiChains + i;     
+
+      theChain->partitionLnl = exa_calloc(getNumberOfPartitions(tr), sizeof(double)); 
 
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 

@@ -10,7 +10,7 @@ begin EXABAYES;
       initSingleBranchWeight 0 [ ok: TODO boundaries for proposals with tuning    ] 
       initSingleBranchExpWeight 0  [ ok ] 
       initSingleBranchBiunifWeight 0 [ok]
-      branchMulti 5 [ ok ]
+      branchMulti 10 [ ok ]
 
       initModelWeight 3 [ ok ]
       initModelBiunifWeight 0 [ok]
@@ -31,5 +31,5 @@ begin EXABAYES;
       numIndiChains 1 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 1 [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 4 [ number of chains per independent run (only one is cold) ]       
 end;

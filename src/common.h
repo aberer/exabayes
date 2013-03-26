@@ -89,14 +89,14 @@ typedef  unsigned int nat ;
 #define PRINT_FREQUENCY 500 
 #define TUNE_FREQUENCY 100 
 
-#define TUNE_PARAMETERS		/// turn off autotuning 
+#define TUNE_PARAMETERS		/// turn off autotuning
 
 
 /* #define DEBUG_PRINT_TUNE_INFO */
 
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
