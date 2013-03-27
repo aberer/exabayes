@@ -84,9 +84,8 @@ typedef struct
   int whichBranch; /// helps us to remember which branch we manipulated.       
   double bls[NUM_BRANCHES]; /// branch lengths for saving 
 
-  int pruned ;   
+  int pruned ;   		/// TODO branchify 
 
-  /* will be a branch later  */
   branch  insertBranch; /// the ids of both nodes  that originally constituted a branch before insertion 
 
   branch pruningBranch ; /// the branch prio to pruning => convertion: thisNode id is the direction we wandered to!
@@ -105,19 +104,18 @@ typedef struct _state
   partitionList *partitions; 
 #endif  
   proposalFunction *prevProposal;  /// only used for runtime efficiency. Is NULL, if we just saved/applied the state. 
+  int startNode; 
+
   boolean wasAccepted; 	/// for debug only  
 
   int id;   
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   int currentGeneration;   
-
-
+  
   double priorProb; /// the prior probability of the current state   => store in log form  
 
   
   lnlContainer lnl;  /// the current likelihood of the state  */
-
-
 
   double hastings;/// the proposal ratio 
 
@@ -184,7 +182,7 @@ struct _pfun
     perPartitionInfo *partInfo; 
   }remembrance; 
 
-} ; 
+}; 
 
 
 #endif

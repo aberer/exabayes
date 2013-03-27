@@ -1,5 +1,5 @@
 /**
-   @file eval.h
+   @file eval.c
    @brief Functions for likelihood evaluations.  
 
    New convention: all these functions are responsible for updating
@@ -35,6 +35,88 @@ static void expensiveVerify(state *chain)
 
 
 
+/**
+   @brief saves the current orientation of the x-vectors
+ */
+void saveOrientation(state *chain)
+{
+  tree *tr = chain->tr; 
+  int ctr = 0; 
+  for(int i = tr->mxtips+1; i < 2 * tr->mxtips; ++i)
+    {
+      nodeptr p = tr->nodep[i]; 
+      if(p->x)
+	chain->lnl.orientation[ctr] =  0; 
+      else if(p->next->x)
+	chain->lnl.orientation[ctr] = 1; 
+      else if(p->next->next->x)
+	chain->lnl.orientation[ctr] = 2; 
+      else 
+	assert(0); 
+      ctr++;
+    }
+
+  chain->lnl.start = chain->startNode; 
+}
+
+
+/**
+   @brief loads the saved orientation of the x-vectors
+ */
+void loadOrientation(state *chain)
+{
+  tree *tr = chain->tr; 
+  int ctr = 0; 
+  for(int i = tr->mxtips+1; i < 2 * tr->mxtips; ++i)
+    {
+      nodeptr p = tr->nodep[i]; 
+      if(chain->lnl.orientation[ctr] == 0)
+	{
+	  p->x = 1; p->next->x = p->next->next->x = 0; 
+	}
+      else if(chain->lnl.orientation[ctr] == 1)
+	{
+	  p->x = p->next->next->x = 0; p->next->x = 1; 
+	}
+      else if (chain->lnl.orientation[ctr] == 2)
+	{
+	  p->x  = p->next->x = 0; p->next->next->x = 1; 
+	}
+      ctr++; 
+    }
+
+  assert(0); /* TODO implement */
+  /* TODO */
+  /* tr->start = chain->lnl.start;  */
+}
+
+
+
+/**
+   @brief saves the lnl arrays 
+ */ 
+void saveArray(state *chain, int model)
+{
+  pInfo *partition = getPartition(chain, model );
+  double **xVector = getXPtr(chain,model); 
+  for(int i = 0; i < chain->tr->mxtips-2; ++i)
+    memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * partition->width); 
+}
+
+
+/**
+   @brief loads the lnl arrays 
+ */
+void loadArray(state *chain, int model)
+{
+  pInfo *partition = getPartition(chain, model); 
+  double **xVector = getXPtr(chain, model); 
+  for(int i= 0; i < chain->tr->mxtips-2; ++i)
+    memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) * partition->width); 
+}
+
+
+
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
   exa_evaluateGeneric(chain,start,fullTraversal); 
@@ -57,12 +139,10 @@ static void updatePartitionLnl(state *chain, double lnl, int model)
   chain->lnl.partitionLnl[model] = lnl; 
   chain->lnl.likelihood += chain->lnl.partitionLnl[model];
 
-
   double tmp = 0;
   for(int i = 0; i < getNumberOfPartitions(chain->tr); ++i)
     tmp += chain->lnl.partitionLnl[i]; 
   assert(fabs(tmp - chain->lnl.likelihood) < 1e-6); 
-
 }
 
 
@@ -98,7 +178,6 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
       setExecModel(chain,i,TRUE); 
     }
 
-
   updatePartitionLnl(chain, getPLH(chain, model ), model);  
 
   expensiveVerify(chain);
@@ -111,13 +190,13 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
 
 
 
-/** @brief
-   only evaluate partition given in the execute mask "models"
+/**
+   @brief only evaluate partition given in the execute mask "models"
 */
 void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, boolean *models)
 {  
   tree *tr = chain->tr; 
-  assert(0); 
+  assert(0);  			/* not in use  */
   
   int numPartitions = getNumberOfPartitions(tr); 
   double perPartitionLH[numPartitions] ; 

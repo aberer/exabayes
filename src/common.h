@@ -112,7 +112,7 @@ typedef  unsigned int nat ;
 
 
 /* MC3 stuff for development */
-#define HEAT_FACTOR 0.01
+#define HEAT_FACTOR 0.1
 #define SWITCH_AFTER_GEN 1  	/* number of generations after  which we try to switch states   */
 #define MC3_SPACE_FOR_TIME
 
@@ -121,6 +121,6 @@ typedef  unsigned int nat ;
    
    TODO make this a parameter in the config file  
  */
-#define BURNIN 1000
+#define BURNIN 10000
 
 #endif

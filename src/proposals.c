@@ -165,9 +165,46 @@ static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 }
 
 
+
+
+static void evaluateBranch(state *chain, proposalFunction *thisProposal)
+{
+  nodeptr p = findNodeFromBranch(chain->tr, thisProposal->remembrance.topoRec->insertBranch); 
+
+  /* exa_newViewGeneric(chain, p, FALSE);   */
+  /* evaluateGenericWrapper(chain,p,FALSE); */
+  
+  /* printf("alt lnl=%f\n", chain->tr->likelihood);  */
+
+  evaluateGenericWrapper(chain,chain->tr->start, TRUE); 
+  /* printf("now lnl=%f\n", chain->tr->likelihood);  */
+
+  /* assert(0);  */
+
+  /* TODO  */
+  /* chain->remembrance.topoRec.insertBranch */
+  /* evaluateGenericWrapper(chain, chain->tr->start ,TRUE);  */
+}
+
+
+
+
+
+
 static void dummy_eval(state *chain,proposalFunction *thisProposal)
 {
   evaluateGenericWrapper(chain, chain->tr->start, TRUE);
+
+  
+
+  /* nodeptr p = chain->tr->nodep[chain->tr->mxtips+1]; */
+  /* int numPart = getNumberOfPartitions( chain->tr ); */
+  /* double lnl = 0;    */
+  /* exa_newViewGeneric( chain,p,  FALSE ); */
+
+  /* exa_newViewGeneric( chain,p->next,  FALSE ); */
+  /* exa_newViewGeneric( chain,p->next->next,  FALSE ); */
+
 }
 
 
@@ -650,7 +687,6 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   int state, changeState = 0;
   double new_value = 0,curv;
   double r;
-
   
   double mx,mn; //for sliding window
   
@@ -1565,7 +1601,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_MODEL: 	
       ptr->eval_lnl = onePartitionEval; 
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->autotune = autotuneSlidingWindow; 
       ptr->apply_func = simple_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
@@ -1576,7 +1611,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_GAMMA:      	
       ptr->eval_lnl = onePartitionEval;
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->autotune = autotuneSlidingWindow; 
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
@@ -1586,7 +1620,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "gammaSlidWin"; 
       break; 
     case UPDATE_GAMMA_EXP: 
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
@@ -1622,7 +1655,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_MODEL_SINGLE_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->apply_func	=  single_biunif_model_proposal_apply;
       ptr->reset_func =  simple_model_proposal_reset;
       ptr->name = "singleModelBiunif"; 
@@ -1631,7 +1663,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_MODEL_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->name = "modelBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
       ptr->apply_func = single_biunif_model_proposal_apply; 
@@ -1640,7 +1671,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_MODEL_ALL_BIUNIF:
       ptr->eval_lnl = onePartitionEval; 
-      /* ptr->eval_lnl = dummy_eval;  */
       ptr->apply_func = all_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->name = "modelAllBiunif"; 
@@ -1649,7 +1679,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->apply_func = frequency_proposal_apply; 
       ptr->reset_func = frequency_proposal_reset; 
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
@@ -1658,7 +1687,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break;
     case UPDATE_MODEL_PERM_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->apply_func = NULL; 	/* TODO */
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
@@ -1666,7 +1694,8 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = SUBSTITUTION_RATES; 
       break;
     case BRANCH_LENGTHS_MULTIPLIER: 
-      ptr->eval_lnl = dummy_eval;
+      ptr->eval_lnl = evaluateBranch;
+      /* ptr->eval_lnl = dummy_eval;  */
       ptr->autotune = autotuneMultiplier; 
       ptr->apply_func = branch_length_multiplier_apply; 
       ptr->reset_func = branch_length_reset; 
@@ -1861,6 +1890,50 @@ void debug_checkLikelihood(state *chain)
 
 
 
+
+
+void printXs(tree *tr )
+{
+  if(processID == 0)
+    {
+      printf("start %d:\t", tr->start->number); 
+      nodeptr q = tr->start; 
+	  if(q->x)
+	    printf("1");
+	  else 
+	    printf("0");
+	  if(q->next->x)
+	    printf("1"); 
+	  else 
+	    printf("0"); 
+	  if(q->next->next->x)
+	    printf("1"); 
+	  else 
+	    printf("0"); 
+	  printf("\n"); 
+
+      for(int i = tr->mxtips + 1 ; i < 2 * tr->mxtips; ++i) 
+	{
+	  printf("%d\t", i ); 
+	  nodeptr p = tr->nodep[i]; 
+	  if(p->x)
+	    printf("1");
+	  else 
+	    printf("0");
+	  if(p->next->x)
+	    printf("1"); 
+	  else 
+	    printf("0"); 
+	  if(p->next->next->x)
+	    printf("1"); 
+	  else 
+	    printf("0"); 
+	  printf("\n"); 
+	}
+    }
+}
+
+
 /**
    @brief Execute one generation of a given chain.  
  */
@@ -1890,6 +1963,10 @@ void step(state *chain)
   /* enable once we actually have priors  */
   assert(priorRatio == 0); 
 
+  saveOrientation(chain);
+  for(int i = 0; i < numPart; ++i)
+    saveArray(chain,i); 
+
   /* chooses the cheapest way to evaluate the likelihood  */
   pf->eval_lnl(chain, pf); 
 
@@ -1901,6 +1978,7 @@ void step(state *chain)
   chain->wasAccepted  = testr < acceptance; 
   debug_printAccRejc(chain, pf, chain->wasAccepted); 
   chain->prevProposal = pf;   
+
 
   if(chain->wasAccepted)
     {
@@ -1921,8 +1999,13 @@ void step(state *chain)
   else
     {
       pf->reset_func(chain, pf); 
-      cntReject(&(pf->sCtr)); 
       
+      /* TODO  */
+      /* loadOrientation(chain);  */
+      for(int i = 0; i < numPart; ++i)
+	loadArray(chain,i); 
+
+      cntReject(&(pf->sCtr));       
       chain->lnl.likelihood = prevLnl; 
       double tmp = 0;
       for(int i = 0; i < numPart; ++i)

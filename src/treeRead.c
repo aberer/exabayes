@@ -442,7 +442,7 @@ void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
   if (! treeNeedCh(fp, ';', "at end of"))       
     assert(0);
 
-    tr->start = findAnyTip(p, tr->mxtips);    
+  tr->start = findAnyTip(p, tr->mxtips);    
  
   assert(tr->ntips == tr->mxtips);
 }

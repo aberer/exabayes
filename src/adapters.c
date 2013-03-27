@@ -15,48 +15,14 @@
 
 
 
-/* int getAssignedAln(state *chain ) */
-/* { */
-/* #ifdef MC3_SPACE_FOR_TIME */
-/*   return chain->couplingId;  */
-/* #else  */
-/*   return 0;  */
-/* #endif   */
-/* } */
-
-
-
-/* maps the input to the correct alignment  */
-
-
-/** 
-    Adapter methods that allow to either use examl or the pll for the
-    build go in here
-*/
-
-
-
-/* void setNumberOfPartitions(tree *tr, int num) */
-/* { */
-/* #if HAVE_PLL == 1 */
-/*   /\* NOTICE if really something should be changed, do it! *\/    */
-/* #else  */
-/*   tr->NumberOfModels = num;  */
-/* #endif   */
-/* } */
-
-
-
-/* void setNumbranches(tree *tr, int num) */
-/* { */
-/* #if HAVE_PLL == 1  */
-/*   /\* NOTICE if really something should be changed, do it! *\/    */
-/* #else  */
-/*   tr->numBranches = num;  */
-/* #endif */
-/* } */
-
-
+double** getXPtr(state *chain, int model)
+{
+#if HAVE_PLL == 1
+  return chain->partitions->partitionData[model]->xVector;  
+#else
+  return chain->tr->partitionData[model].xVector;
+#endif
+}
 
 
 void setExecModel(state *chain, int num,boolean value)

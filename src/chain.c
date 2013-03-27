@@ -224,6 +224,8 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #else 
       initializeTree(moreTrees + i ,adef); 
 #endif
+      tree *oT = moreTrees + i; 
+      oT->mxtips = tr->mxtips; 
     }
   
   for(int i = 0; i < treesNeeded; ++i)
@@ -248,7 +250,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   for(int i = 0; i < totalNumChains; ++i)
     { 
       state *theChain = *resultIndiChains + i;     
-
+      
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 
 
@@ -278,7 +280,6 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       myTree->bitVectors = tr->bitVectors; 
       
       initDefaultValues(theChain, myTree);
-
 
       theChain->lnl.partitionLnl = exa_calloc(numPart, sizeof(double)); 
       theChain->lnl.orientation = exa_calloc(numPart, sizeof(char*)); 

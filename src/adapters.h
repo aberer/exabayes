@@ -28,4 +28,5 @@ boolean getExecModel(state *chain, int num);
 double getPcontr(state *chain, int num); 
 double getFracChange(state *chain, int num); 
 
+double** getXPtr(state *chain, int model); 
 #endif
