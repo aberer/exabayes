@@ -158,10 +158,25 @@ static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 
 
 
+static void sprEval(state *chain, proposalFunction *thisProposal)
+{
+  evaluateGenericWrapper(chain, chain->tr->start, TRUE);
+}
+
+
 static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 {
+#if 1 				/* still problems with the orientation */
+  evaluateGenericWrapper(chain, chain->tr->start, TRUE); 
+#else 
+
   int model = thisProposal->remembrance.partInfo->modelNum;
-  evaluateOnePartition(chain, chain->tr->start, TRUE ,model);
+  branch root = findRoot(chain);  
+  
+  printf("evaluating partition %d at root %d,%d\n", model, root.thisNode, root.thatNode); 
+  nodeptr p = findNodeFromBranch(chain->tr, root); 
+  evaluateOnePartition(chain, p, TRUE, model); 
+#endif
 }
 
 
@@ -169,33 +184,15 @@ static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 
 static void evaluateBranch(state *chain, proposalFunction *thisProposal)
 {
-  nodeptr p = findNodeFromBranch(chain->tr, thisProposal->remembrance.topoRec->insertBranch); 
-
-  /* exa_newViewGeneric(chain, p, FALSE);   */
-  /* evaluateGenericWrapper(chain,p,FALSE); */
-  
-  /* printf("alt lnl=%f\n", chain->tr->likelihood);  */
-
-  evaluateGenericWrapper(chain,chain->tr->start, TRUE); 
-  /* printf("now lnl=%f\n", chain->tr->likelihood);  */
-
-  /* assert(0);  */
-
-  /* TODO  */
-  /* chain->remembrance.topoRec.insertBranch */
-  /* evaluateGenericWrapper(chain, chain->tr->start ,TRUE);  */
+  nodeptr p = findNodeFromBranch(chain->tr, thisProposal->remembrance.topoRec->insertBranch);
+  evaluateGenericWrapper(chain,p,FALSE);
 }
-
-
-
 
 
 
 static void dummy_eval(state *chain,proposalFunction *thisProposal)
 {
   evaluateGenericWrapper(chain, chain->tr->start, TRUE);
-
-  
 
   /* nodeptr p = chain->tr->nodep[chain->tr->mxtips+1]; */
   /* int numPart = getNumberOfPartitions( chain->tr ); */
@@ -383,15 +380,18 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
   /*   {				 */
       /* printf("initnode->numebr = %d\n", initNode->number);  */
   int accepted = FALSE;   
+  /* printf("curnode %d,", curNode->number);  */
   while( NOT  accepted)
     {       
       accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
+      /* printf("%d, ", curNode->number);  */
+
       
       /* needed for spr remap */
       if(curNode == initNode)
 	remapBL = NOT remapBL; 
     }
-    /* } */
+  /* printf("\n");  */
 
   rec->insertBranch.thisNode = curNode->number;   
   rec->insertBranch.thatNode = curNode->back->number; 
@@ -492,10 +492,10 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   debug_printNodeEnvironment(chain, topoRec->pruned ); 
-  debug_printNodeEnvironment(chain,   topoRec->pruningBranches[0] ); 
-  debug_printNodeEnvironment(chain,   topoRec->pruningBranches[1] ); 
-  debug_printNodeEnvironment(chain,   topoRec->insertBranch[0] ); 
-  debug_printNodeEnvironment(chain,   topoRec->insertBranch[1] ); 
+  debug_printNodeEnvironment(chain,   topoRec->pruningBranch.thisNode ); 
+  debug_printNodeEnvironment(chain,   topoRec->pruningBranch.thatNode ); 
+  debug_printNodeEnvironment(chain,   topoRec->insertBranch.thisNode ); 
+  debug_printNodeEnvironment(chain,   topoRec->insertBranch.thatNode ); 
 #endif
 
   debug_checkTreeConsistency(chain );
@@ -1590,7 +1590,8 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "eSPR"; 
       break; 
     case E_SPR_MAPPED: 		/* TRUSTED  */
-      ptr->eval_lnl = dummy_eval;
+      ptr->eval_lnl = sprEval; 
+      /* ptr->eval_lnl = dummy_eval; */
       ptr->autotune = autotuneStopProp; 
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
@@ -1695,7 +1696,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break;
     case BRANCH_LENGTHS_MULTIPLIER: 
       ptr->eval_lnl = evaluateBranch;
-      /* ptr->eval_lnl = dummy_eval;  */
       ptr->autotune = autotuneMultiplier; 
       ptr->apply_func = branch_length_multiplier_apply; 
       ptr->reset_func = branch_length_reset; 
@@ -1815,83 +1815,6 @@ void setupProposals(state *chain, initParamStruct *initParams)
 }
 
 
-
-/**
-   @brief draws a proposal function.
-
-   Notice: this could be extended later, if we decide to make this
-   dependent on the previous state.
-   
-   Furthermore, we must be sure now that category weights and relative
-   proposal weights sum up to 1 each. 
-   
- */ 
-void drawProposalFunction(state *chain, proposalFunction **result )
-{  
-  
-  *result = NULL; 
-  category_t
-    cat = drawSampleProportionally(chain,chain->categoryWeights, NUM_PROP_CATS) + 1; /* it is 1-based */
-
-  /* printInfo(chain, "drawing proposal; category is %d\n"), cat;  */
-  
-  double sum = 0; 
-  for(int i = 0; i < chain->numProposals; ++i)
-    {
-      proposalFunction *pf = chain->proposals[i]; 
-      if(pf->category == cat)
-	sum += pf->currentWeight; 
-    }
-  assert(fabs(sum - 1.) < 0.000001); 
-
-  double r = drawRandDouble01(chain);
-  /* printf("numProp=%d\n", chain->numProposals);  */
-  for(int i = 0; i < chain->numProposals; ++i)
-    {
-      proposalFunction *pf = chain->proposals[i]; 
-      if(pf->category == cat)
-	{
-	  if(  r < pf->currentWeight)
-	    {
-	      *result =  pf; 
-	      return; 
-	    }
-	  else 
-	    {
-	      r -= pf->currentWeight; 
-	    }
-	}
-    }
-
-  assert(result != NULL); 
-}
-
-
-
-
-void debug_checkLikelihood(state *chain)
-{
-#ifdef DEBUG_LNL_VERIFY
-  tree *tr = chain->tr; 
-  exa_evaluateGeneric(chain, tr->start, TRUE );   
-  double diff =  fabs(chain->likelihood - tr->likelihood ); 
-  if( diff > ACCEPTED_LIKELIHOOD_EPS)
-    {
-      printf("LNL difference: %f\n", diff  ); 
-      assert(diff  < ACCEPTED_LIKELIHOOD_EPS); 
-    }  
-  chain->likelihood = tr->likelihood; 
-#endif  
-}
-
-
-
-
-
-
-
-
-
 void printXs(tree *tr )
 {
   if(processID == 0)
@@ -1934,135 +1857,5 @@ void printXs(tree *tr )
 }
 
 
-/**
-   @brief Execute one generation of a given chain.  
- */
-void step(state *chain)
-{
-  tree *tr = chain->tr;   
 
-  double prevLnl = chain->lnl.likelihood;    
-  int numPart = getNumberOfPartitions( chain->tr );
-  double prevPartLnl[numPart]; 
-  for(int i = 0; i < numPart; ++i)
-    prevPartLnl[i] = chain->lnl.partitionLnl[i]; 
-
-  double myHeat = getChainHeat(chain ) ; 
-
-  proposalFunction *pf = NULL;   
-  drawProposalFunction(chain, &pf);
-
-  /* reset proposal ratio  */
-  chain->hastings = 1; 
-
-  double oldPrior = chain->priorProb; 		/* TODO  */
-
-  /* chooses move, sets proposal ratio, correctly modifies the prior */
-  pf->apply_func(chain, pf);  
-  double priorRatio  = chain->priorProb - oldPrior; 
-  /* enable once we actually have priors  */
-  assert(priorRatio == 0); 
-
-  saveOrientation(chain);
-  for(int i = 0; i < numPart; ++i)
-    saveArray(chain,i); 
-
-  /* chooses the cheapest way to evaluate the likelihood  */
-  pf->eval_lnl(chain, pf); 
-
-  double testr = drawRandDouble01(chain);
-  double acceptance = 
-    exp((priorRatio  + chain->lnl.likelihood - prevLnl) * myHeat) 
-    * chain->hastings ; 
-
-  chain->wasAccepted  = testr < acceptance; 
-  debug_printAccRejc(chain, pf, chain->wasAccepted); 
-  chain->prevProposal = pf;   
-
-
-  if(chain->wasAccepted)
-    {
-      cntAccept(&(pf->sCtr));
-      
-      double tmp = 0; 
-      for(int i = 0; i < numPart; ++i)
-	tmp += chain->lnl.partitionLnl[i]; 
-      assert(fabs(tmp - chain->lnl.likelihood) < 1e-6); 
-
-      /* 
-	 commenting this out for now because of drastic changes: but
-	 we should re-enable that later and do a category-wide tuning
-	 of moves	 
-       */
-      /* penalize(chain, which_proposal, 1); */
-    }
-  else
-    {
-      pf->reset_func(chain, pf); 
-      
-      /* TODO  */
-      /* loadOrientation(chain);  */
-      for(int i = 0; i < numPart; ++i)
-	loadArray(chain,i); 
-
-      cntReject(&(pf->sCtr));       
-      chain->lnl.likelihood = prevLnl; 
-      double tmp = 0;
-      for(int i = 0; i < numPart; ++i)
-	{
-	  chain->lnl.partitionLnl[i] = prevPartLnl[i]; 
-	  tmp += prevPartLnl[i];
-	}
-      if(fabs(tmp - chain->lnl.likelihood) > 1e-6)
-	{
-	  printf("WARNING: lnl diff=%f\n", tmp - chain->lnl.likelihood); 
-	  assert(0); 
-	}
-      
-      /* TODO re-enable */
-      /* penalize(chain, which_proposal, 0); */
-    }
-
-  debug_checkTreeConsistency(chain);
-  debug_checkLikelihood(chain); 
-
-  if(  processID == 0 
-       && chain->couplingId == 0	/* must be the cold chain  */
-       && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
-    {
-      printSample(chain);       
-
-      if(chain->currentGeneration >  BURNIN)
-	addBipartitionsToHash(tr, chain ); 
-    }
-
-  
-  /* the output for the console  */
-  if(processID == 0 
-     && chain->couplingId == 0     
-     && chain->currentGeneration % PRINT_FREQUENCY == PRINT_FREQUENCY -1   )
-    {
-      chainInfo(chain); 
-    }
-
-
-#ifdef TUNE_PARAMETERS
-  /* autotuning for proposal parameters. With increased parallelism
-     this will become more complicated.  */
-  if( chain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY - 1 )
-    {
-      for(int i = 0; i < chain->numProposals; ++i)
-	{
-	  proposalFunction *pf = chain->proposals[i]; 
-	  
-	  if(pf->autotune)	/* only, if we set this   */
-	    {
-	      pf->autotune(chain, pf);
-	    }
-	}
-    }
-#endif
-
-  chain->currentGeneration++; 
-}
 

@@ -20,4 +20,5 @@ branch constructBranch(int thisNode, int thatNode);
 boolean branchExists(tree *tr, branch b); 
 nodeptr findNodeFromBranch(tree *tr, branch b ); 
 void pruneBranch(struct _state  *chain, branch b, double *z); 
+branch findRoot(struct _state *chain); 
 #endif

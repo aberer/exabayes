@@ -389,7 +389,7 @@ static void printHotChains(int runId)
       assert(chain->couplingId > 0 ) ; 
       assert( myHeat < 1.f);
 
-      PRINT("lnl_beta(%.2f)=%.2f\t", myHeat, chain->lnl.likelihood); 
+      PRINT("lnl_beta(%.2f)=%.2f\t", myHeat, chain->tr->likelihood); 
     }
 }
 

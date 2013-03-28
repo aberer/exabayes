@@ -21,7 +21,6 @@
 #include  "adapters.h"
 #include "eval.h"
 #include "proposals.h"
-
 #include "tune.h"
 
 extern double masterTime; 
@@ -66,8 +65,8 @@ void switchChainState(state *chains)
 
   assert(heatA < 1.f || heatB < 1.f); 
 
-  double lnlA = chains[chainA].lnl.likelihood,
-    lnlB = chains[chainB].lnl.likelihood; 
+  double lnlA = chains[chainA].tr->likelihood,
+    lnlB = chains[chainB].tr->likelihood; 
 
   double 
     aB = lnlA *  heatB,
@@ -203,7 +202,7 @@ void runChains(state *allChains, int diagFreq)
     }
 }
 
-
+/* #define TEST */
 
 /**
    @brief the main ExaBayes function.
@@ -218,6 +217,81 @@ void exa_main(tree *tr, analdef *adef)
   timeIncrement = gettime();
   
   initializeIndependentChains(tr, adef,  &indiChains); 
+
+
+#ifdef TEST 
+  {
+    state *chain =  indiChains; 
+    proposalFunction *topoMove = NULL; 
+    for(int i = 0; i < chain->numProposals; ++i)
+      {
+	if(chain->proposals[i]->ptype == E_SPR_MAPPED)
+	  topoMove = chain->proposals[i]; 
+      }
+
+    proposalFunction *mult = NULL; 
+    for(int i = 0; i < chain->numProposals; ++i)
+      {
+	if(chain->proposals[i]->ptype == BRANCH_LENGTHS_MULTIPLIER)
+	  mult = chain->proposals[i]; 
+      }
+
+    /* ================ */
+
+
+    evaluateGenericWrapper(chain, chain->tr->start, TRUE ); 
+    double realLnl = chain->tr->likelihood;
+    printf("init lnl=%f\n", realLnl);
+
+    evaluateGenericWrapper(chain, chain->tr->nodep[7], FALSE); 
+    printf("eval false: lnl=%f\n", chain->tr->likelihood) ;
+
+    evaluateGenericWrapper(chain, chain->tr->nodep[8], FALSE); 
+    printf("restored and eval 2 false: lnl=%f\n", chain->tr->likelihood); 
+
+    /* ================ */
+
+
+    /* shuffle the BLs */
+    for(int i = 0; i <  10; ++i)
+      {
+	mult->apply_func(chain,mult); 
+	mult->eval_lnl(chain,mult); 
+	chain->currentGeneration++; 
+      }
+
+    evaluateGenericWrapper(chain, chain->tr->start, TRUE);
+    double trueLnl = chain->tr->likelihood; 
+    printf("\n\ntrue lnl = %f\n", trueLnl); 
+    /* printAlnTrState(chain); */
+
+    saveOrientation(chain); 
+    int numPart = getNumberOfPartitions(chain->tr ); 
+    for(int i = 0; i < numPart; ++i)
+      saveArray(chain,i); 
+
+    for(int i = 0; i < 10; ++i)
+      {	
+	topoMove->apply_func(chain, topoMove);
+	topoMove->eval_lnl(chain, topoMove);    
+	topoMove->reset_func(chain, topoMove);
+
+	restoreAlignAndTreeState(chain);
+	printf("eval after restore=%f\n", chain->tr->likelihood); 
+	double diff =  fabs(chain->tr->likelihood - trueLnl); 
+	if(diff > 1e-6)
+	  {
+	    printf("\nDIFF: %f\n", diff); 
+	    assert(0);
+	  }
+	chain->currentGeneration++; 
+	printf("\n");
+      }
+
+    assert(0);
+  }
+#endif
+
 
   assert(gAInfo.numberCoupledChains > 0);
   /* TODO more bla bla  */  

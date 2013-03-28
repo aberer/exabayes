@@ -281,16 +281,18 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       
       initDefaultValues(theChain, myTree);
 
-      theChain->lnl.partitionLnl = exa_calloc(numPart, sizeof(double)); 
-      theChain->lnl.orientation = exa_calloc(numPart, sizeof(char*)); 
+      /* theChain->lnl.orientation = exa_calloc(numPart, sizeof(char*));  */
+      theChain->lnl.orientation = exa_calloc(tr->mxtips,sizeof(int)); 
+
       theChain->lnl.vectorsPerPartition = exa_calloc(numPart, sizeof(double**)); 
       for(int j = 0; j < numPart; ++j)
 	{
 	  pInfo *partition = getPartition(theChain, j); 
 	  theChain->lnl.vectorsPerPartition[j] = exa_calloc(tr->mxtips, sizeof(double*)); 
-	  /* printInfo(theChain, "lnl array with length %d\n", (int)partition->width)  ;  */
-	  for(int k = 0; k < tr->mxtips; ++k)	      	    	    
-	    theChain->lnl.vectorsPerPartition[j][k] = exa_calloc(partition->width , sizeof(double)); 
+	  int length = partition->upper - partition->lower; 
+	  assert(length > 0); 
+	  for(int k = 0; k < tr->mxtips; ++k) 
+	    theChain->lnl.vectorsPerPartition[j][k] = exa_calloc( length *  LENGTH_LNL_ARRAY , sizeof(double)); 
 	}
       
       setupProposals(theChain, initParams); 
@@ -509,16 +511,21 @@ void applyChainStateToTree(state *chain)
 #endif
     }
 
-  if( chain->lnl.likelihood != 0 && fabs (tr->likelihood - chain->lnl.likelihood ) > 1e-6 )
+
+#if 0 
+  if( chain->tr->likelihood != 0 && fabs (tr->likelihood - chain->lnl.likelihood ) > 1e-6 )
     {
       printInfo(chain, "WARNING: obtained a different likelihood  after restoring previous chain state (before/after): %f / %f\n", 
 		chain->id, chain->currentGeneration, chain->lnl.likelihood, tr->likelihood); 
       assert( fabs(chain->lnl.likelihood - tr->likelihood ) < 1e-6 ) ; 
     }
+#endif
 
   /* TODO for now  */
   chain->wasAccepted = TRUE; 
   chain->prevProposal = NULL; 
+
+  saveAlignAndTreeState(chain); 
 }
 
 
@@ -560,4 +567,182 @@ void saveTreeStateToChain(state *chain)
       printf("\n");
 #endif
     }
+}
+
+
+
+
+
+/**
+   @brief draws a proposal function.
+
+   Notice: this could be extended later, if we decide to make this
+   dependent on the previous state.
+   
+   Furthermore, we must be sure now that category weights and relative
+   proposal weights sum up to 1 each. 
+   
+ */ 
+void drawProposalFunction(state *chain, proposalFunction **result )
+{  
+  
+  *result = NULL; 
+  category_t
+    cat = drawSampleProportionally(chain,chain->categoryWeights, NUM_PROP_CATS) + 1; /* it is 1-based */
+
+  /* printInfo(chain, "drawing proposal; category is %d\n"), cat;  */
+  
+  double sum = 0; 
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      if(pf->category == cat)
+	sum += pf->currentWeight; 
+    }
+  assert(fabs(sum - 1.) < 0.000001); 
+
+  double r = drawRandDouble01(chain);
+  /* printf("numProp=%d\n", chain->numProposals);  */
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *pf = chain->proposals[i]; 
+      if(pf->category == cat)
+	{
+	  if(  r < pf->currentWeight)
+	    {
+	      *result =  pf; 
+	      return; 
+	    }
+	  else 
+	    {
+	      r -= pf->currentWeight; 
+	    }
+	}
+    }
+
+  assert(result != NULL); 
+}
+
+
+
+void debug_checkLikelihood(state *chain)
+{
+#if 0 
+#ifdef DEBUG_LNL_VERIFY
+  tree *tr = chain->tr; 
+  exa_evaluateGeneric(chain, tr->start, TRUE );   
+  double diff =  fabs(chain->lnl.likelihood - tr->likelihood ); 
+  if( diff > ACCEPTED_LIKELIHOOD_EPS)
+    {
+      printf("LNL difference: %f\n", diff  ); 
+      assert(diff  < 1e-6); 
+    }  
+  chain->lnl.likelihood = tr->likelihood; 
+#endif  
+#endif
+}
+
+
+/**
+   @brief Execute one generation of a given chain.  
+ */
+void step(state *chain)
+{
+  tree *tr = chain->tr;   
+
+  double prevLnl = chain->tr->likelihood;    
+  /* int numPart = getNumberOfPartitions( chain->tr ); */
+  /* double prevPartLnl[numPart];  */
+  /* for(int i = 0; i < numPart; ++i) */
+  /*   prevPartLnl[i] = chain->lnl.partitionLnl[i];  */
+
+  double myHeat = getChainHeat(chain ) ; 
+
+  proposalFunction *pf = NULL;   
+  drawProposalFunction(chain, &pf);
+
+  /* reset proposal ratio  */
+  chain->hastings = 1; 
+
+  double oldPrior = chain->priorProb; 		/* TODO  */
+
+  /* chooses move, sets proposal ratio, correctly modifies the prior */
+  pf->apply_func(chain, pf);  
+  double priorRatio  = chain->priorProb - oldPrior; 
+  /* enable once we actually have priors  */
+  assert(priorRatio == 0); 
+
+  /* chooses the cheapest way to evaluate the likelihood  */
+  pf->eval_lnl(chain, pf); 
+
+  double testr = drawRandDouble01(chain);
+  double acceptance = 
+    exp((priorRatio  + chain->tr->likelihood - prevLnl) * myHeat) 
+    * chain->hastings ; 
+
+  chain->wasAccepted  = testr < acceptance; 
+  debug_printAccRejc(chain, pf, chain->wasAccepted); 
+  chain->prevProposal = pf;   
+
+  if(chain->wasAccepted)
+    {
+      cntAccept(&(pf->sCtr)); 
+      saveAlignAndTreeState(chain); 
+    }
+  else
+    {
+      pf->reset_func(chain, pf); 
+
+      cntReject(&(pf->sCtr)); 
+      restoreAlignAndTreeState(chain); 
+
+      double diff = fabs(prevLnl - chain->tr->likelihood); 
+      if( diff > 1e-6 )
+	{
+	  printf("problem restoring previous tr/aln state DIFF: %f\n", diff); 
+	  assert(0); 
+	}
+    }
+
+  debug_checkTreeConsistency(chain);
+  debug_checkLikelihood(chain); 
+
+  if(  processID == 0 
+       && chain->couplingId == 0	/* must be the cold chain  */
+       && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
+    {
+      printSample(chain);       
+
+      if(chain->currentGeneration >  BURNIN)
+	addBipartitionsToHash(tr, chain ); 
+    }
+
+  
+  /* the output for the console  */
+  if(processID == 0 
+     && chain->couplingId == 0     
+     && chain->currentGeneration % PRINT_FREQUENCY == PRINT_FREQUENCY -1   )
+    {
+      chainInfo(chain); 
+    }
+
+
+#ifdef TUNE_PARAMETERS
+  /* autotuning for proposal parameters. With increased parallelism
+     this will become more complicated.  */
+  if( chain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY - 1 )
+    {
+      for(int i = 0; i < chain->numProposals; ++i)
+	{
+	  proposalFunction *pf = chain->proposals[i]; 
+	  
+	  if(pf->autotune)	/* only, if we set this   */
+	    {
+	      pf->autotune(chain, pf);
+	    }
+	}
+    }
+#endif
+
+  chain->currentGeneration++; 
 }

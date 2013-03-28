@@ -104,7 +104,7 @@ typedef struct _state
   partitionList *partitions; 
 #endif  
   proposalFunction *prevProposal;  /// only used for runtime efficiency. Is NULL, if we just saved/applied the state. 
-  int startNode; 
+  /* branch currentRoot; */ 
 
   boolean wasAccepted; 	/// for debug only  
 

@@ -17,18 +17,18 @@ static void expensiveVerify(state *chain)
 {  
 #ifdef DEBUG_LNL_VERIFY
   tree *tr = chain->tr; 
-  double toVerify = chain->likelihood; 
-
+  double toVerify = chain->tr->likelihood; 
+  
   for(int i = 0; i < getNumberOfPartitions(tr) ;++i)
     setExecModel(chain,i,TRUE); 
   
   exa_evaluateGeneric(chain,tr->start,TRUE); 
-
+  
   if(chain->currentGeneration != 0 && processID == 0)
     {
-      if(fabs (tr->likelihood - toVerify ) > 0.1)
+      if(fabs (tr->likelihood - toVerify ) > 1e-6)
       printf("WARNING: found in expensive evaluation: likelihood difference is %f (with before/after)\t%f\t%f\n", fabs (tr->likelihood - toVerify ), toVerify, tr->likelihood); 
-      assert(fabs (tr->likelihood - toVerify ) < 0.1);   
+      assert(fabs (tr->likelihood - toVerify ) < 1e-6);   
     }  
 #endif
 }
@@ -42,21 +42,20 @@ void saveOrientation(state *chain)
 {
   tree *tr = chain->tr; 
   int ctr = 0; 
-  for(int i = tr->mxtips+1; i < 2 * tr->mxtips; ++i)
+
+  for(int i = tr->mxtips+1; i < 2 * tr->mxtips-1; ++i)
     {
       nodeptr p = tr->nodep[i]; 
-      if(p->x)
-	chain->lnl.orientation[ctr] =  0; 
-      else if(p->next->x)
-	chain->lnl.orientation[ctr] = 1; 
-      else if(p->next->next->x)
-	chain->lnl.orientation[ctr] = 2; 
-      else 
-	assert(0); 
-      ctr++;
-    }
 
-  chain->lnl.start = chain->startNode; 
+      int *val = chain->lnl.orientation + ctr; 
+      if(p->x)
+	*val = p->back->number; 
+      else if(p->next->x)
+	*val = p->next->back->number; 
+      else if(p->next->next->x)
+	*val = p->next->next->back->number;       
+      ctr ++; 
+    }
 }
 
 
@@ -67,25 +66,20 @@ void loadOrientation(state *chain)
 {
   tree *tr = chain->tr; 
   int ctr = 0; 
-  for(int i = tr->mxtips+1; i < 2 * tr->mxtips; ++i)
+  for(int i = tr->mxtips+1; i < 2 * tr->mxtips-1; ++i)
     {
-      nodeptr p = tr->nodep[i]; 
-      if(chain->lnl.orientation[ctr] == 0)
-	{
-	  p->x = 1; p->next->x = p->next->next->x = 0; 
-	}
-      else if(chain->lnl.orientation[ctr] == 1)
-	{
-	  p->x = p->next->next->x = 0; p->next->x = 1; 
-	}
-      else if (chain->lnl.orientation[ctr] == 2)
-	{
-	  p->x  = p->next->x = 0; p->next->next->x = 1; 
-	}
+      int val = chain->lnl.orientation[ctr]; 
+      branch b = constructBranch(tr->nodep[i]->number, val ); 
+      branchExists(chain->tr, b); 
+      
+      nodeptr q = findNodeFromBranch(chain->tr, b);
+      assert(q->back->number == val); 
+      q->x = 1; q->next->x = 0; q->next->next->x = 0;
+      
       ctr++; 
-    }
-
-  assert(0); /* TODO implement */
+    }  
+  
+  /* assert(0); /\* TODO implement *\/ */
   /* TODO */
   /* tr->start = chain->lnl.start;  */
 }
@@ -100,7 +94,7 @@ void saveArray(state *chain, int model)
   pInfo *partition = getPartition(chain, model );
   double **xVector = getXPtr(chain,model); 
   for(int i = 0; i < chain->tr->mxtips-2; ++i)
-    memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * partition->width); 
+    memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * (partition->upper - partition->lower) * LENGTH_LNL_ARRAY);   
 }
 
 
@@ -112,38 +106,64 @@ void loadArray(state *chain, int model)
   pInfo *partition = getPartition(chain, model); 
   double **xVector = getXPtr(chain, model); 
   for(int i= 0; i < chain->tr->mxtips-2; ++i)
-    memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) * partition->width); 
+    memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) * (partition->upper - partition->lower) * LENGTH_LNL_ARRAY); 
 }
 
+
+/**
+   @brief resets the tree orientation and likelihood arrays
+ */ 
+void restoreAlignAndTreeState(state *chain)
+{  
+  int numPart = getNumberOfPartitions( chain->tr); 
+  loadOrientation(chain);
+  for(int i = 0; i < numPart; ++i)
+    loadArray(chain,i); 
+
+  /* printf("state after restore: \n");  */
+  /* printAlnTrState(chain);  */
+
+  branch root = findRoot(chain); 
+
+  /* check, if everything is okay  */
+  /* printf("RESTORE: root is {%d,%d}\n", root.thisNode, root.thatNode);  */
+
+  nodeptr p = findNodeFromBranch(chain->tr,root);
+  evaluateGenericWrapper(chain, p,FALSE);
+}
+
+
+/**
+   @brief saves tree orientation and likelihood arrays 
+ */ 
+void saveAlignAndTreeState(state *chain)
+{
+  int numPart = getNumberOfPartitions(chain->tr);
+  saveOrientation(chain);
+  for(int i = 0; i < numPart; ++i)
+    saveArray(chain,i); 
+}
 
 
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
   exa_evaluateGeneric(chain,start,fullTraversal); 
-
-  int numPartitions = getNumberOfPartitions(chain->tr); 
-  for(int i = 0; i < numPartitions; ++i)
-    chain->lnl.partitionLnl[i] = getPLH( chain, i );
-
-  chain->lnl.likelihood = chain->tr->likelihood; 
-
   expensiveVerify(chain);
 }
 
 
+/* static void updatePartitionLnl(state *chain, double lnl, int model) */
+/* { */
+/*   chain->lnl.likelihood -= chain->lnl.partitionLnl[model];  */
+/*   chain->lnl.partitionLnl[model] = lnl;  */
+/*   chain->lnl.likelihood += chain->lnl.partitionLnl[model]; */
 
+/*   double tmp = 0; */
+/*   for(int i = 0; i < getNumberOfPartitions(chain->tr); ++i) */
+/*     tmp += chain->lnl.partitionLnl[i];  */
+/*   assert(fabs(tmp - chain->lnl.likelihood) < 1e-6);  */
+/* } */
 
-static void updatePartitionLnl(state *chain, double lnl, int model)
-{
-  chain->lnl.likelihood -= chain->lnl.partitionLnl[model]; 
-  chain->lnl.partitionLnl[model] = lnl; 
-  chain->lnl.likelihood += chain->lnl.partitionLnl[model];
-
-  double tmp = 0;
-  for(int i = 0; i < getNumberOfPartitions(chain->tr); ++i)
-    tmp += chain->lnl.partitionLnl[i]; 
-  assert(fabs(tmp - chain->lnl.likelihood) < 1e-6); 
-}
 
 
 /**
@@ -157,9 +177,17 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
   int numPartitions = getNumberOfPartitions(chain->tr); 
 
   double perPartitionLH[numPartitions] ; 
+  
 
+  printf("plh before eval %d: ", model); 
   for(int i = 0; i < numPartitions; ++i)
-    perPartitionLH[i] = getPLH(chain,i); 
+    {
+      perPartitionLH[i] = getPLH(chain,i); 
+      printf("%f," , perPartitionLH[i]); 
+    }
+  printf("\n"); 
+  
+  
 
   for(int i = 0; i < numPartitions; ++i)
     setExecModel(chain,i,FALSE); 
@@ -177,16 +205,14 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
       tr->likelihood += getPLH(chain,i);
       setExecModel(chain,i,TRUE); 
     }
-
-  updatePartitionLnl(chain, getPLH(chain, model ), model);  
+  
+  printf("plh after eval :"); 
+  for(int i = 0; i < numPartitions; ++i)
+    printf("%f,", perPartitionLH[i]); 
+  printf("\n"); 
 
   expensiveVerify(chain);
 }
-
-
-
-
-
 
 
 
@@ -227,3 +253,33 @@ void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, bool
 
 }
 
+
+
+void printAlnTrState(state *chain)
+{
+  tree *tr = chain->tr; 
+  int numPart = getNumberOfPartitions(tr); 
+  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\norient: "); 
+  for(int i = 0; i < tr->mxtips-2; ++i)
+    printf("%d,", chain->lnl.orientation[i]); 
+  printf("\nlnlvect: \n");
+  for(int i = 0; i < numPart; ++i)
+    {
+      pInfo *partition = getPartition(chain,i);
+      int length = (partition->upper-partition->lower) * LENGTH_LNL_ARRAY;
+
+      for(int j = 0; j < tr->mxtips-2; ++j)
+  	{
+  	  printf("%d: ", j);
+  	  for(int k = 0; k < length; ++k)
+  	    printf("%f,", chain->lnl.vectorsPerPartition[i][j][k]);
+  	  printf("\n");
+  	}
+    }
+  branch root = findRoot(chain); 
+  printf("root: {%d,%d}\n", root.thisNode,root.thatNode); 
+  printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"); 
+}
+
+
+      

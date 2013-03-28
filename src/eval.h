@@ -6,13 +6,14 @@
 
 typedef struct 
 {
-  double likelihood; 		///overall likelihood
-  double *partitionLnl; /// likelihood per partition => must be kept up to date 
+  /* double likelihood; */ 		///overall likelihood
+  /* double *partitionLnl; */ /// likelihood per partition => must be kept up to date 
 
   double ***vectorsPerPartition; /// stores the lnl arrays  
-  char *orientation; /// orientation of the x-vectors for a given partition
-  
-  int start; 
+
+  int *orientation;  /// indicates the node towards a specific node is directed  
+
+  /* branch root; /// the root branch: x-vectors should be orientated towards this branch  */
 } lnlContainer;  /// contains partition and overall
 		 /// likelihood. functions in this file have to make
 		 /// sure these are always correct. Also contains info to restore lnl computations later 
@@ -28,4 +29,7 @@ void saveOrientation(struct _state *chain);
 void loadOrientation(struct _state *chain); 
 void saveArray(struct _state *chain, int model); 
 void loadArray(struct _state *chain, int model); 
+void restoreAlignAndTreeState(struct _state *chain); 
+void printAlnTrState(struct _state *chain); 
+void saveAlignAndTreeState(struct _state *chain); 
 #endif

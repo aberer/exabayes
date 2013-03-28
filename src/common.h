@@ -100,9 +100,10 @@ typedef  unsigned int nat ;
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
+
+#define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays
+
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
-
-
 
 #define ASDSF_FREQ_CUTOFF 0.1	/*  ignore clades for which the frequency in no chain exceeds this value */
 #define ASDSF_CONVERGENCE_CRITERION 0.005 ///  indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence 

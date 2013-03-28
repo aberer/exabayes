@@ -8,6 +8,7 @@
 #include "bayes.h"
 #include "branch.h" 
 #include "adapters.h"
+#include "output.h"  
 
 
 static nodeptr findEmptyNodePtr(nodeptr ptr)
@@ -61,7 +62,7 @@ void insertNodeIntoBranch(state *chain, branch  toBeInserted, branch insertionBr
 
 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
-  printInfo(chain, "inserted  %d into %d (bl=%f)\t%d (bl=%f)\n", insertNode, branchNode1, branchNode2,insert1->z[0], insert2->z[0]); 
+  printInfo(chain, "inserted  %d into %d (bl=%f)\t%d (bl=%f)\n", pruned1->number, insert1->number,  insert2->number,pruned1->z[0], insert2->z[0]); 
 #endif
 }
 
@@ -160,6 +161,32 @@ nodeptr findNodeFromBranch(tree *tr, branch b )
 
 
 
+
+/**
+   @brief finds the root in the associated tree  
+ */ 
+branch findRoot(state *chain)
+{
+  tree *tr = chain->tr; 
+  branch root = {0,0}; 
+  for(int i = tr->mxtips +1 ; i < tr->mxtips -2 ; ++i)
+    {
+      nodeptr p = tr->nodep[i]; 
+      if(p->x && p->back->x)
+	root = constructBranch(p->number, p->back->number); 
+    }
+
+  if(root.thisNode == 0)
+    {
+      root.thisNode = tr->start->number; 
+      root.thatNode = tr->start->back->number; 
+    }  
+  
+  return root; 
+}
+
+
+
 /**
    @brief prunes a branch from the tree 
    @param  b -- the branch to be pruned (only thisNode is the pruning point, we only know thatNode for orientation)
@@ -179,7 +206,7 @@ void pruneBranch(state *chain, branch b, double *z)
   hookup(pruned1 , pruned2, z, numBl);
 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
-  printInfo(chain, "pruning %d from %d,%d\tnew bl=%f\n", toPrune->number, pruned1->number, pruned2->number, bls[0]);   
+  printInfo(chain, "pruning %d from %d,%d\tnew bl=%f\n", toPrune->number, pruned1->number, pruned2->number, z[0]);   
 #endif
   
 }
