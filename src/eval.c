@@ -78,13 +78,7 @@ void loadOrientation(state *chain)
       
       ctr++; 
     }  
-  
-  /* assert(0); /\* TODO implement *\/ */
-  /* TODO */
-  /* tr->start = chain->lnl.start;  */
 }
-
-
 
 /**
    @brief saves the lnl arrays 
@@ -120,13 +114,7 @@ void restoreAlignAndTreeState(state *chain)
   for(int i = 0; i < numPart; ++i)
     loadArray(chain,i); 
 
-  /* printf("state after restore: \n");  */
-  /* printAlnTrState(chain);  */
-
   branch root = findRoot(chain); 
-
-  /* check, if everything is okay  */
-  /* printf("RESTORE: root is {%d,%d}\n", root.thisNode, root.thatNode);  */
 
   nodeptr p = findNodeFromBranch(chain->tr,root);
   evaluateGenericWrapper(chain, p,FALSE);
@@ -152,20 +140,6 @@ void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 }
 
 
-/* static void updatePartitionLnl(state *chain, double lnl, int model) */
-/* { */
-/*   chain->lnl.likelihood -= chain->lnl.partitionLnl[model];  */
-/*   chain->lnl.partitionLnl[model] = lnl;  */
-/*   chain->lnl.likelihood += chain->lnl.partitionLnl[model]; */
-
-/*   double tmp = 0; */
-/*   for(int i = 0; i < getNumberOfPartitions(chain->tr); ++i) */
-/*     tmp += chain->lnl.partitionLnl[i];  */
-/*   assert(fabs(tmp - chain->lnl.likelihood) < 1e-6);  */
-/* } */
-
-
-
 /**
    @brief the same as below, but just for one partition 
 
@@ -173,28 +147,26 @@ void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
  */
 void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, int model)
 {
+  assert(fullTraversal); 	/* partial tarversal does not make sense */
+
   tree *tr = chain->tr; 
   int numPartitions = getNumberOfPartitions(chain->tr); 
 
   double perPartitionLH[numPartitions] ; 
-  
 
-  printf("plh before eval %d: ", model); 
   for(int i = 0; i < numPartitions; ++i)
-    {
       perPartitionLH[i] = getPLH(chain,i); 
-      printf("%f," , perPartitionLH[i]); 
-    }
-  printf("\n"); 
-  
-  
 
+  
   for(int i = 0; i < numPartitions; ++i)
     setExecModel(chain,i,FALSE); 
   setExecModel(chain,model,TRUE); 
 
-  exa_evaluateGeneric(chain, start, fullTraversal); 
-  
+  /* compensating for the fact, that we need to have a tip for full traversal  */
+  exa_newViewGeneric(chain, start, FALSE); 
+  exa_newViewGeneric(chain, start->back, FALSE); 
+  evaluateGenericWrapper(chain,start, FALSE);
+
   perPartitionLH[model] = getPLH(chain, model);
   for(int i = 0; i < numPartitions; ++i)
     setPLH(chain,i,perPartitionLH[i]); 
@@ -205,11 +177,6 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
       tr->likelihood += getPLH(chain,i);
       setExecModel(chain,i,TRUE); 
     }
-  
-  printf("plh after eval :"); 
-  for(int i = 0; i < numPartitions; ++i)
-    printf("%f,", perPartitionLH[i]); 
-  printf("\n"); 
 
   expensiveVerify(chain);
 }
@@ -281,5 +248,3 @@ void printAlnTrState(state *chain)
   printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"); 
 }
 
-
-      

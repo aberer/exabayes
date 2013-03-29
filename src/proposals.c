@@ -156,8 +156,6 @@ static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 }
 
 
-
-
 static void sprEval(state *chain, proposalFunction *thisProposal)
 {
   evaluateGenericWrapper(chain, chain->tr->start, TRUE);
@@ -166,26 +164,27 @@ static void sprEval(state *chain, proposalFunction *thisProposal)
 
 static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 {
-#if 1 				/* still problems with the orientation */
-  evaluateGenericWrapper(chain, chain->tr->start, TRUE); 
-#else 
-
   int model = thisProposal->remembrance.partInfo->modelNum;
   branch root = findRoot(chain);  
-  
-  printf("evaluating partition %d at root %d,%d\n", model, root.thisNode, root.thatNode); 
   nodeptr p = findNodeFromBranch(chain->tr, root); 
   evaluateOnePartition(chain, p, TRUE, model); 
-#endif
 }
-
-
 
 
 static void evaluateBranch(state *chain, proposalFunction *thisProposal)
 {
   nodeptr p = findNodeFromBranch(chain->tr, thisProposal->remembrance.topoRec->insertBranch);
   evaluateGenericWrapper(chain,p,FALSE);
+#ifndef DEBUG_LNL_VERIFY
+  assert(isTip(p->number,chain->tr->mxtips)|| isTip(p->back->number,chain->tr->mxtips) || (p->x && p->back->x)); 
+  branch b = findRoot(chain);  
+  if(NOT  (b.thisNode == p->number || b.thatNode == p->number))
+    {
+      printf("root is %d,%d, node was %d\n", b.thisNode, b.thatNode, p->number); 
+      assert(0); 
+    }
+  
+#endif
 }
 
 

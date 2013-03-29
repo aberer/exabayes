@@ -241,11 +241,20 @@ void exa_main(tree *tr, analdef *adef)
 
     evaluateGenericWrapper(chain, chain->tr->start, TRUE ); 
     double realLnl = chain->tr->likelihood;
+    branch b = findRoot(chain); 
     printf("init lnl=%f\n", realLnl);
-
-    evaluateGenericWrapper(chain, chain->tr->nodep[7], FALSE); 
+    
+    
+    nodeptr p = chain->tr->nodep[70]; 
+    evaluateGenericWrapper(chain, p, FALSE); 
+    /* printf("node %d (%d%d%d) is hooked to %d,%d,%d\n", p->number, p->x, p->next->x, p->next->next->x, p->back->number,  */
+    /* 	   p->next->back->number, p->next->next->back->number);  */
+    
     printf("eval false: lnl=%f\n", chain->tr->likelihood) ;
-
+    b = findRoot(chain); 
+    /* printf("root is %d,%d\n", b.thisNode,b.thatNode);  */
+    
+    assert(0); 
     evaluateGenericWrapper(chain, chain->tr->nodep[8], FALSE); 
     printf("restored and eval 2 false: lnl=%f\n", chain->tr->likelihood); 
 

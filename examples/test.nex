@@ -10,7 +10,7 @@ begin EXABAYES;
       initSingleBranchWeight 0 [ ok: TODO boundaries for proposals with tuning    ] 
       initSingleBranchExpWeight 0  [ ok ] 
       initSingleBranchBiunifWeight 0 [ok]
-      branchMulti 40 [ ok ]
+      branchMulti 80 [ ok ]
 
       initModelWeight 3 [ ok ]
       initModelBiunifWeight 0 [ok]

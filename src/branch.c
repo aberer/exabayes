@@ -169,19 +169,34 @@ branch findRoot(state *chain)
 {
   tree *tr = chain->tr; 
   branch root = {0,0}; 
-  for(int i = tr->mxtips +1 ; i < tr->mxtips -2 ; ++i)
+  for(int i = tr->mxtips +1 ; i < 2* tr->mxtips-1 ; ++i)
     {
-      nodeptr p = tr->nodep[i]; 
-      if(p->x && p->back->x)
-	root = constructBranch(p->number, p->back->number); 
+      nodeptr
+	p = tr->nodep[i],
+	q = p;       
+      do 
+	{
+	  if(q->x && q->back->x)
+	    {
+	      root.thisNode = q->number; 
+	      root.thatNode = q->back->number; 	      
+	    }
+	  q = q->next; 
+	} while(p != q); 
     }
 
-  if(root.thisNode == 0)
+
+  for(int i = 1; i < tr->mxtips+1; ++i)
     {
-      root.thisNode = tr->start->number; 
-      root.thatNode = tr->start->back->number; 
-    }  
-  
+      nodeptr
+	p = tr->nodep[i]; 
+      if(p->back->x)
+	{
+	  root.thisNode = p->number; 
+	  root.thatNode = p->back->number; 
+	}
+    }
+
   return root; 
 }
 
