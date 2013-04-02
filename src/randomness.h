@@ -2,6 +2,8 @@
 #define _RANDOMNESS_H
 
 #include "rng.h"
+#include "branch.h"
+#include "stack.h"
 
 
 /* todo replace that once */
@@ -26,4 +28,6 @@ int drawSampleProportionally(state *chain,  double *weights, int numWeight );
 void drawPermutation(state *chain, int* perm, int n); 
 
 branch drawBranchUniform(state *chain); 
+void generateRandomPath( state *chain ,stack *s, double stopProp); 
+branch drawSubtreeUniform(state *chain); 
 #endif

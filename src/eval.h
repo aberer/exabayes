@@ -20,6 +20,8 @@ typedef struct
 
 /* TODO should also contain the posterior */
 
+struct _state; 
+
 
 void evaluateGenericWrapper(struct _state *chain, nodeptr start, boolean fullTraversal); 
 void evaluatePartitions(struct _state *chain, nodeptr start, boolean fullTraversal, boolean *models); 

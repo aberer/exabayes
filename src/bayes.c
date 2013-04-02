@@ -202,7 +202,16 @@ void runChains(state *allChains, int diagFreq)
     }
 }
 
+
+
 /* #define TEST */
+
+
+#ifdef TEST
+#include "path.h" 
+#endif
+
+
 
 /**
    @brief the main ExaBayes function.
@@ -221,84 +230,91 @@ void exa_main(tree *tr, analdef *adef)
 
 #ifdef TEST 
   {
-    state *chain =  indiChains; 
-    proposalFunction *topoMove = NULL; 
-    for(int i = 0; i < chain->numProposals; ++i)
-      {
-	if(chain->proposals[i]->ptype == E_SPR_MAPPED)
-	  topoMove = chain->proposals[i]; 
-      }
-
-    proposalFunction *mult = NULL; 
-    for(int i = 0; i < chain->numProposals; ++i)
-      {
-	if(chain->proposals[i]->ptype == BRANCH_LENGTHS_MULTIPLIER)
-	  mult = chain->proposals[i]; 
-      }
-
-    /* ================ */
-
-
-    evaluateGenericWrapper(chain, chain->tr->start, TRUE ); 
-    double realLnl = chain->tr->likelihood;
-    branch b = findRoot(chain); 
-    printf("init lnl=%f\n", realLnl);
-    
-    
-    nodeptr p = chain->tr->nodep[70]; 
-    evaluateGenericWrapper(chain, p, FALSE); 
-    /* printf("node %d (%d%d%d) is hooked to %d,%d,%d\n", p->number, p->x, p->next->x, p->next->next->x, p->back->number,  */
-    /* 	   p->next->back->number, p->next->next->back->number);  */
-    
-    printf("eval false: lnl=%f\n", chain->tr->likelihood) ;
-    b = findRoot(chain); 
-    /* printf("root is %d,%d\n", b.thisNode,b.thatNode);  */
-    
-    assert(0); 
-    evaluateGenericWrapper(chain, chain->tr->nodep[8], FALSE); 
-    printf("restored and eval 2 false: lnl=%f\n", chain->tr->likelihood); 
-
-    /* ================ */
-
-
-    /* shuffle the BLs */
-    for(int i = 0; i <  10; ++i)
-      {
-	mult->apply_func(chain,mult); 
-	mult->eval_lnl(chain,mult); 
-	chain->currentGeneration++; 
-      }
-
-    evaluateGenericWrapper(chain, chain->tr->start, TRUE);
-    double trueLnl = chain->tr->likelihood; 
-    printf("\n\ntrue lnl = %f\n", trueLnl); 
-    /* printAlnTrState(chain); */
-
-    saveOrientation(chain); 
-    int numPart = getNumberOfPartitions(chain->tr ); 
-    for(int i = 0; i < numPart; ++i)
-      saveArray(chain,i); 
-
-    for(int i = 0; i < 10; ++i)
-      {	
-	topoMove->apply_func(chain, topoMove);
-	topoMove->eval_lnl(chain, topoMove);    
-	topoMove->reset_func(chain, topoMove);
-
-	restoreAlignAndTreeState(chain);
-	printf("eval after restore=%f\n", chain->tr->likelihood); 
-	double diff =  fabs(chain->tr->likelihood - trueLnl); 
-	if(diff > 1e-6)
-	  {
-	    printf("\nDIFF: %f\n", diff); 
-	    assert(0);
-	  }
-	chain->currentGeneration++; 
-	printf("\n");
-      }
-
-    assert(0);
+    stack *s = NULL; 
+    createStack(&s);
+    drawPathForESPR(indiChains,s, 0.1); 
+    exit(0); 
   }
+
+  /* { */
+  /*   state *chain =  indiChains;  */
+  /*   proposalFunction *topoMove = NULL;  */
+  /*   for(int i = 0; i < chain->numProposals; ++i) */
+  /*     { */
+  /* 	if(chain->proposals[i]->ptype == E_SPR_MAPPED) */
+  /* 	  topoMove = chain->proposals[i];  */
+  /*     } */
+
+  /*   proposalFunction *mult = NULL;  */
+  /*   for(int i = 0; i < chain->numProposals; ++i) */
+  /*     { */
+  /* 	if(chain->proposals[i]->ptype == BRANCH_LENGTHS_MULTIPLIER) */
+  /* 	  mult = chain->proposals[i];  */
+  /*     } */
+
+  /*   /\* ================ *\/ */
+
+
+  /*   evaluateGenericWrapper(chain, chain->tr->start, TRUE );  */
+  /*   double realLnl = chain->tr->likelihood; */
+  /*   branch b = findRoot(chain);  */
+  /*   printf("init lnl=%f\n", realLnl); */
+    
+    
+  /*   nodeptr p = chain->tr->nodep[70];  */
+  /*   evaluateGenericWrapper(chain, p, FALSE);  */
+  /*   /\* printf("node %d (%d%d%d) is hooked to %d,%d,%d\n", p->number, p->x, p->next->x, p->next->next->x, p->back->number,  *\/ */
+  /*   /\* 	   p->next->back->number, p->next->next->back->number);  *\/ */
+    
+  /*   printf("eval false: lnl=%f\n", chain->tr->likelihood) ; */
+  /*   b = findRoot(chain);  */
+  /*   /\* printf("root is %d,%d\n", b.thisNode,b.thatNode);  *\/ */
+    
+  /*   assert(0);  */
+  /*   evaluateGenericWrapper(chain, chain->tr->nodep[8], FALSE);  */
+  /*   printf("restored and eval 2 false: lnl=%f\n", chain->tr->likelihood);  */
+
+  /*   /\* ================ *\/ */
+
+
+  /*   /\* shuffle the BLs *\/ */
+  /*   for(int i = 0; i <  10; ++i) */
+  /*     { */
+  /* 	mult->apply_func(chain,mult);  */
+  /* 	mult->eval_lnl(chain,mult);  */
+  /* 	chain->currentGeneration++;  */
+  /*     } */
+
+  /*   evaluateGenericWrapper(chain, chain->tr->start, TRUE); */
+  /*   double trueLnl = chain->tr->likelihood;  */
+  /*   printf("\n\ntrue lnl = %f\n", trueLnl);  */
+  /*   /\* printAlnTrState(chain); *\/ */
+
+  /*   saveOrientation(chain);  */
+  /*   int numPart = getNumberOfPartitions(chain->tr );  */
+  /*   for(int i = 0; i < numPart; ++i) */
+  /*     saveArray(chain,i);  */
+
+  /*   for(int i = 0; i < 10; ++i) */
+  /*     {	 */
+  /* 	topoMove->apply_func(chain, topoMove); */
+  /* 	topoMove->eval_lnl(chain, topoMove);     */
+  /* 	topoMove->reset_func(chain, topoMove); */
+
+  /* 	restoreAlignAndTreeState(chain); */
+  /* 	printf("eval after restore=%f\n", chain->tr->likelihood);  */
+  /* 	double diff =  fabs(chain->tr->likelihood - trueLnl);  */
+  /* 	if(diff > 1e-6) */
+  /* 	  { */
+  /* 	    printf("\nDIFF: %f\n", diff);  */
+  /* 	    assert(0); */
+  /* 	  } */
+  /* 	chain->currentGeneration++;  */
+  /* 	printf("\n"); */
+  /*     } */
+
+  /*   assert(0); */
+  /* } */
 #endif
 
 

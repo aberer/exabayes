@@ -2,6 +2,9 @@
    @file branch.c
    
    @brief Everything that deals with branches.  
+   
+
+   TODO call by value for branches is too expensive  
  */
 
 #include "axml.h"
@@ -9,6 +12,77 @@
 #include "branch.h" 
 #include "adapters.h"
 #include "output.h"  
+
+
+/**
+   @brief gets equality of branches irregardless of their orientation
+ */
+boolean branchEqualUndirected(branch b1, branch b2)
+{
+  return (b1.thisNode == b2.thisNode && b1.thatNode == b2.thatNode) 
+    || (b1.thisNode == b2.thatNode && b1.thatNode == b2.thisNode); 
+}
+
+boolean isTipBranch(branch b, int numTip)
+{
+  return b.thisNode <= numTip 
+    || b.thatNode <= numTip; 
+}
+
+boolean branchesAreConnected(branch b1, branch b2)
+{
+  /* TODO  */
+  assert(0); 
+}
+
+
+/**
+   @brief Gets the third branch that is connected to a node.   
+ */ 
+branch getThirdBranch(tree *tr, branch b1, branch b2)
+{  
+  int node = getIntersectingNode(b1,b2); 
+  
+  assert(NOT isTip(node, tr->mxtips)); 
+
+  nodeptr
+    p = tr->nodep[node] ,
+    q = p; 
+  do 
+    {
+      if(NOT nodeIsInBranch(q->back->number,b1)
+	 && NOT nodeIsInBranch(q->back->number,b2))
+	return constructBranch(q->number, q->back->number); 
+      q = q->next; 
+    }while(p != q); 
+  
+  assert(0); 
+  return constructBranch(0,0); 
+}
+
+
+
+
+int getIntersectingNode(branch b1, branch b2)
+{
+  if(b1.thisNode == b2.thisNode 
+     || b1.thisNode == b2.thatNode )
+    return b1.thisNode; 
+  else if(b1.thatNode == b2.thisNode 
+	  || b1.thatNode == b2.thatNode)
+    return b1.thatNode; 
+  else 
+    {
+      assert(0); 
+      return 0 ; 
+    }    
+}
+
+
+boolean nodeIsInBranch(int number, branch b )
+{
+  return number == b.thisNode || number == b.thatNode; 
+}
 
 
 static nodeptr findEmptyNodePtr(nodeptr ptr)
@@ -40,7 +114,7 @@ static nodeptr findEmptyNodePtr(nodeptr ptr)
    @param insertionBranch -- the branch into which we insert   
 
  */
-void insertNodeIntoBranch(state *chain, branch  toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
+void insertNodeIntoBranch(state *chain, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
 {  
   tree *tr = chain->tr; 
   int
@@ -165,9 +239,9 @@ nodeptr findNodeFromBranch(tree *tr, branch b )
 /**
    @brief finds the root in the associated tree  
  */ 
-branch findRoot(state *chain)
+branch findRoot(tree *tr)
 {
-  tree *tr = chain->tr; 
+  /* tree *tr = chain->tr;  */
   branch root = {0,0}; 
   for(int i = tr->mxtips +1 ; i < 2* tr->mxtips-1 ; ++i)
     {
@@ -225,3 +299,4 @@ void pruneBranch(state *chain, branch b, double *z)
 #endif
   
 }
+

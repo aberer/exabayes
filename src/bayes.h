@@ -6,16 +6,16 @@
 */ 
 
 
-#ifndef _PROPOSAL_STRUCTS_H
-#define _PROPOSAL_STRUCTS_H
+#ifndef _BAYES_H
+#define _BAYES_H
 
 
 #include "proposalType.h"
 #include "config.h"
 #include "rng.h"
-#include "branch.h"
 #include "tune.h"
 #include "eval.h"
+#include "stack.h"
 
 /* TODO not enabled yet, was not such a good idea */
 typedef struct
@@ -79,13 +79,15 @@ typedef struct
 typedef struct _pfun  proposalFunction; 
 
 
+
+
+/* TODO will be replaced completely with paths  */
 typedef struct 
 {
   int whichBranch; /// helps us to remember which branch we manipulated.       
   double bls[NUM_BRANCHES]; /// branch lengths for saving 
 
-  int pruned ;   		/// TODO branchify 
-
+  branch pruned; 		
   branch  insertBranch; /// the ids of both nodes  that originally constituted a branch before insertion 
 
   branch pruningBranch ; /// the branch prio to pruning => convertion: thisNode id is the direction we wandered to!
@@ -178,7 +180,8 @@ struct _pfun
    */
   union 
   {
-    topoRecord *topoRec; 
+    stack *modifiedPath; 
+    topoRecord *topoRec;
     perPartitionInfo *partInfo; 
   }remembrance; 
 

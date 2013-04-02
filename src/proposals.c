@@ -20,6 +20,7 @@
 #include "exa-topology.h"
 #include "misc-utils.h"
 #include "branch.h"
+#include "path.h"
 
 void expensiveVerify(tree *tr); 
 
@@ -156,16 +157,11 @@ static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
 }
 
 
-static void sprEval(state *chain, proposalFunction *thisProposal)
-{
-  evaluateGenericWrapper(chain, chain->tr->start, TRUE);
-}
-
 
 static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 {
   int model = thisProposal->remembrance.partInfo->modelNum;
-  branch root = findRoot(chain);  
+  branch root = findRoot(chain->tr);  
   nodeptr p = findNodeFromBranch(chain->tr, root); 
   evaluateOnePartition(chain, p, TRUE, model); 
 }
@@ -177,13 +173,12 @@ static void evaluateBranch(state *chain, proposalFunction *thisProposal)
   evaluateGenericWrapper(chain,p,FALSE);
 #ifndef DEBUG_LNL_VERIFY
   assert(isTip(p->number,chain->tr->mxtips)|| isTip(p->back->number,chain->tr->mxtips) || (p->x && p->back->x)); 
-  branch b = findRoot(chain);  
+  branch b = findRoot(chain->tr);  
   if(NOT  (b.thisNode == p->number || b.thatNode == p->number))
     {
       printf("root is %d,%d, node was %d\n", b.thisNode, b.thatNode, p->number); 
       assert(0); 
-    }
-  
+    }  
 #endif
 }
 
@@ -207,66 +202,13 @@ static void dummy_eval(state *chain,proposalFunction *thisProposal)
 
 
 
-static void spr_eval(state *chain, proposalFunction *thisProposal)
-{  
-
-#if 1 
-  evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
-#else 
-  /* TODO still so much to do */
-  tree *tr = chain->tr; 
-      
-  proposalFunction
-    *prevProposal = chain->prevProposal; 
-
-  topoRecord
-    *rec = thisProposal->remembrance.topoRec; 
-  
-  /* check, if the move changed anything at all */
-  if( comparePair(rec->pruningBranches[0], rec->pruningBranches[1], rec->insertBranch[0], rec->insertBranch[1]) ) 
-    {
-      /* TODO here we could save tim e */      
-      evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */      
-      return ; 
-    }
-
-  /* cleanup necessary  */
-  if(NOT chain->wasAccepted)
-    {
-      switch(prevProposal->category )
-      	{
-      	/* case TOPOLOGY: */
-      	  /* evaluateGenericWrapper(chain, chain->tr->start, TRUE); */
-      	  /* break; */
-      	/* case RATE_HETEROGENEITY: */
-      	  /* int modelChanged = prevProposal->remembrance.partInfo->modelNum;  */
-      	  /* evaluatePartitions(chain, chain->tr->start, TRUE, ); */
-
-      	default:
-	  evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
-      	}
-    }
-  else 
-    {       
-      /* evaluate subtree again, if necessary   */
-      nodeptr subtreePtr = getThirdNode(chain->tr, rec->prunedSubTree, rec->insertBranch[0], rec->insertBranch[1]);      
-      exa_newViewGeneric( chain, subtreePtr, FALSE);
-
-      /* find the ptr to the sub-tree that was left unchanged, when we pruned the subtree  */
-      /* if(NOT isTip(rec->pruningBranches[1], tr->mxtips)) */
-      /* 	{ */
-      nodeptr goodSubtreePtr = findNodePtrByNeighbor( tr, rec->pruningBranches[1], rec->pruningBranches[0] );
-      exa_newViewGeneric(chain, goodSubtreePtr, FALSE);
-      /* 	} */
-
-      /* evaluateGenericWrapper(chain, thisProposal->remembrance.topoRec->) */
-      evaluateGenericWrapper(chain, chain->tr->start, TRUE); /* TODO   */
-    }
-#endif
-}
 
 
 
+
+
+/* is this function really uniform? a tip node has a lower
+   propbability to be drawn (only one path leads to it) */ 
 static nodeptr select_random_subtree(state *chain, tree *tr)
 {
   nodeptr 
@@ -303,6 +245,79 @@ static nodeptr select_random_subtree(state *chain, tree *tr)
 }
 
 
+void pushToStackIfNovel(stack *s, branch b, int numTip); 
+
+
+
+
+
+
+static void sprEval(state *chain, proposalFunction *thisProposal)
+{  
+  tree *tr = chain->tr; 
+  path *rPath = thisProposal->remembrance.modifiedPath; 
+
+  branch futureRoot = getThirdBranch(tr, rPath->content[0], rPath->content[1]); 
+  
+  /* evaluate at root of inserted subtree */
+  nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
+
+  destroyOrientationAlongPath(tr, rPath, toEval); 
+  destroyOrientationAlongPath(tr,rPath, toEval->back);
+
+  /* printf("evaluating at branch %d,%d\n", toEval->number, toEval->back->number);  */
+  evaluateGenericWrapper(chain, toEval, FALSE);
+}
+
+
+
+static void resetESPR(state *chain, proposalFunction *pf )
+{
+  resetAlongPathForESPR (chain->tr, pf->remembrance.modifiedPath);   
+
+  /* TODO resetAlong... should be able to correctly restore branch lengths    */
+  restoreBranchLengthsPath(chain->tr, pf->remembrance.modifiedPath); 
+
+  debug_checkTreeConsistency(chain);
+  freeStack(&(pf->remembrance.modifiedPath));
+  /* printf("RESET: ");    */
+  debug_printTree(chain); 
+}
+
+
+
+
+/**
+   @brief applies an extended spr move (our version)
+   
+   the same function as below, but I cleaned the other flavour, since so much stuff has changed. 
+ */ 
+static void applyExtendedSPR(state *chain, proposalFunction *pf)
+{
+  tree *tr = chain->tr;
+  double stopProp = pf->parameters.eSprStopProb; 
+
+  debug_printTree(chain);
+  
+  path *rPath = NULL; 
+  createStack(&rPath); 
+  drawPathForESPR(chain,rPath,stopProp); 
+
+  /* printStack(rPath);   */
+
+  saveBranchLengthsPath(chain, rPath); 
+  /* TODO apply multiplier to path */
+
+  applyPathAsESPR(tr, rPath);
+  pf->remembrance.modifiedPath = rPath; 
+
+  debug_checkTreeConsistency(chain); 
+}
+
+
+
+
+
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr;
@@ -314,12 +329,10 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
   nodeptr prunedSubtreePtr = select_random_subtree(chain,tr);
   nodeptr nb = prunedSubtreePtr->next->back, 
     nnb = prunedSubtreePtr->next->next->back; 
-  
-  /* TODO can we assert this?  */
+
   assert( NOT isTip(prunedSubtreePtr->number, tr->mxtips) ) ; 
 
-  rec->pruned = prunedSubtreePtr->number; 
-
+  rec->pruned = constructBranch(0,prunedSubtreePtr->number); 
   rec->pruningBranch.thisNode = nb->number; 
   rec->pruningBranch.thatNode = nnb->number; 
 
@@ -351,15 +364,10 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
   
-  
-
-  pruneBranch(chain,  constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number),zqr);
-  /* pruneNodeFromNodes(chain, rec->pruned, rec->pruningBranch.thisNode, rec->pruningBranch.thatNode, zqr); */
+  pruneBranch(chain, constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number),zqr);
 
   debug_printNodeEnvironment(chain, nb->number); 
   debug_printNodeEnvironment(chain, nnb->number); 
-
-  /* done remove node p (omitted BL opt) */
 
   nodeptr initNode = NULL; 
   nodeptr curNode = NULL; 
@@ -371,30 +379,37 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       remapBL = TRUE ; 
     }
   else 
-    curNode = nnb; 
+    {
+      curNode = nnb; 
+    }
   initNode = curNode; 
 
-  /* while(curNode->number == initNode->number */
-  /* 	|| curNode->back->number == initNode->number) */
-  /*   {				 */
-      /* printf("initnode->numebr = %d\n", initNode->number);  */
+  stack *s = NULL; 
+  createStack(&s); 
+
   int accepted = FALSE;   
-  /* printf("curnode %d,", curNode->number);  */
   while( NOT  accepted)
     {       
       accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
-      /* printf("%d, ", curNode->number);  */
 
-      
+      pushToStackIfNovel(s,constructBranch(curNode->number, curNode->back->number), tr->mxtips);
+
       /* needed for spr remap */
       if(curNode == initNode)
-	remapBL = NOT remapBL; 
+	{
+	  remapBL = NOT remapBL; 
+	  accepted = FALSE; 
+	}
+
+      if(stackIsEmpty(s))
+	accepted = FALSE; 
     }
-  /* printf("\n");  */
+  
+  /* printStack(s);  */
+  freeStack(&s); 
 
   rec->insertBranch.thisNode = curNode->number;   
   rec->insertBranch.thatNode = curNode->back->number; 
-
 
   nodeptr insertBranchPtr = curNode; 
 
@@ -434,7 +449,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
 	/* if we went into the other direction, correct for that. 
 	   specfically rec->pruningBranches must point into the direction, we moved the tree to 
-	 */
+	*/
 	if( remapBL ) 
 	  {
 	    neighborZ = nbz; 
@@ -446,13 +461,12 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 	    rec->pruningBranch = invertBranch(rec->pruningBranch); 
 	  }
 	
-
+	
 	insertNodeIntoBranch( chain, 
 			      constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number ),
 			      rec->insertBranch, 
 			      insertBranchPtr->z,
-			      neighborZ); 
-	/* insertNodeIntoBranch(chain, prunedSubtreePtr->number, rec->insertBranch.thisNode,rec->insertBranch.thatNode, insertBranchPtr->z, neighborZ); */
+			      neighborZ); 	
       }
       break; 
     default: assert(0); 
@@ -460,8 +474,8 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   debug_checkTreeConsistency(chain); 
 
-  assert(branchExists(tr, constructBranch(rec->pruned, rec->insertBranch.thisNode ))); 
-  assert(branchExists(tr, constructBranch(rec->pruned, rec->insertBranch.thatNode ))); 
+  assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thisNode ))); 
+  assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thatNode ))); 
 } 
 
 
@@ -474,7 +488,7 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
   
 
   /* HACK to find the other node in the subtree */  
-  nodeptr p = tr->nodep[topoRec->pruned] ; 
+  nodeptr p = tr->nodep[topoRec->pruned.thatNode] ; 
   while(p->back->number == topoRec->insertBranch.thisNode 
 	|| p->back->number == topoRec->insertBranch.thatNode )
     p = p->next; 
@@ -482,15 +496,15 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
   assert(p->number != topoRec->insertBranch.thisNode  && p->number != topoRec->insertBranch.thatNode); 
   /* END */
 
-  pruneBranch(chain, constructBranch(topoRec->pruned, p->number) , topoRec->bls);
+  pruneBranch(chain, constructBranch(topoRec->pruned.thatNode, p->number) , topoRec->bls);
 
   insertNodeIntoBranch(chain, 
-		       constructBranch(topoRec->pruned, p->number), 
+		       constructBranch(topoRec->pruned.thatNode, p->number), 
 		       topoRec->pruningBranch, 
 		       topoRec->neighborBls, topoRec->nextNeighborBls) ; 
 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
-  debug_printNodeEnvironment(chain, topoRec->pruned ); 
+  debug_printNodeEnvironment(chain,  topoRec->pruned.thatNode ); 
   debug_printNodeEnvironment(chain,   topoRec->pruningBranch.thisNode ); 
   debug_printNodeEnvironment(chain,   topoRec->pruningBranch.thatNode ); 
   debug_printNodeEnvironment(chain,   topoRec->insertBranch.thisNode ); 
@@ -500,13 +514,6 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
   debug_checkTreeConsistency(chain );
   debug_printTree(chain);
 
-
-  /* TODO this legacy stuff does not really make sense...  */
-  /* exa_newViewGeneric(chain, prunedPtr, FALSE);  */
-  /* double val1 = chain->tr->likelihood;  */  
-  /* exa_newViewGeneric(chain, chain->tr->start, TRUE); */
-  /* double  val2 = chain->tr->likelihood;  */
-  /* assert( fabs ( val2 - val1 ) < 0.0001 );  */
 }
 
 
@@ -1590,11 +1597,11 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case E_SPR_MAPPED: 		/* TRUSTED  */
       ptr->eval_lnl = sprEval; 
-      /* ptr->eval_lnl = dummy_eval; */
       ptr->autotune = autotuneStopProp; 
-      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
-      ptr->apply_func = extended_spr_apply; 
-      ptr->reset_func = extended_spr_reset; 
+      /* ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord));  */
+      ptr->remembrance.modifiedPath = exa_calloc(1,sizeof(path)); 
+      ptr->apply_func = applyExtendedSPR; 
+      ptr->reset_func = resetESPR; 
       ptr->name = "eSPRMapped"; 
       ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
       ptr->category = TOPOLOGY; 

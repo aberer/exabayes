@@ -1,16 +1,14 @@
 #ifndef _BRANCH_H
 #define _BRANCH_H
 
-
 struct _state;  
-
 
 typedef struct 
 {
   int thisNode;  /// in case we want to give the branch some orientation, this is the node we want to extract   
   int thatNode;  
-
-  /* todo also branch lengths?  */
+  
+  double length[NUM_BRANCHES]; 	/* TODO expensive?  */
 } branch; /// represents a branch 
 
 
@@ -20,5 +18,11 @@ branch constructBranch(int thisNode, int thatNode);
 boolean branchExists(tree *tr, branch b); 
 nodeptr findNodeFromBranch(tree *tr, branch b ); 
 void pruneBranch(struct _state  *chain, branch b, double *z); 
-branch findRoot(struct _state *chain); 
+/* branch findRoot(struct _state *chain);  */
+branch findRoot(tree *tr); 
+boolean isTipBranch(branch b, int numTip); 
+boolean branchEqualUndirected(branch b1, branch b2); 
+boolean nodeIsInBranch(int number, branch b ); 
+int getIntersectingNode(branch b1, branch b2); 
+branch getThirdBranch(tree *tr, branch b1, branch b2); 
 #endif

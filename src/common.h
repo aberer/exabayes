@@ -91,13 +91,13 @@ typedef  unsigned int nat ;
 
 #define TUNE_PARAMETERS		/// turn off autotuning
 
-
 /* #define DEBUG_PRINT_TUNE_INFO */
 
 /* for debugging:  */
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_LNL_VERIFY */
+/* #define DEBUG_CHECK_TOPO_CONSISTENCY 	/\* TODO <= merge more stuff into that *\/ */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
 

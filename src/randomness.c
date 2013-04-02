@@ -4,22 +4,7 @@
    @brief Wraps random number generation functions. 
 
    @notice Do not generate random numbers otherwise! 
- */ 
 
-
-#include <math.h>
-#include <inttypes.h>
-
-#include "axml.h"
-#include "main-common.h"
-#include "bayes.h"
-#include "globals.h"
-#include "randomness.h"
-#include "branch.h"
-
-
-
-/* 
    notice new convention: 
    
    * chain-specific random numbers (e.g., proposals, acceptance) are
@@ -33,12 +18,19 @@
    * for the ctr for the chain-specific stuf: first int is the
      generation, second a ctr (since we may need more numbers for each
      step, starting from 0)
+ */ 
 
- */
 
+#include <math.h>
+#include <inttypes.h>
 
-/* here are a few wrapper functions: we will not be using the standard
-   random number generator forever. */
+#include "axml.h"
+#include "main-common.h"
+#include "bayes.h"
+#include "globals.h"
+#include "randomness.h"
+#include "branch.h"
+#include "adapters.h"
 
 
 static void inc_global()
@@ -213,12 +205,38 @@ void drawPermutation(state *chain, int* perm, int n)
 
 
 
+/**
+   @brief draws a subtree uniformly. 
+
+   We have to account for tips again. 
+   
+   The thisNode contains the root of the subtree.
+*/ 
+branch drawSubtreeUniform(state *chain)
+{
+  tree *tr = chain->tr;   
+  while(TRUE)
+    {
+      branch b = drawBranchUniform(chain); 
+      if(isTipBranch(b,tr->mxtips))
+	{
+	  if(isTip(b.thisNode, tr->mxtips))
+	    b = invertBranch(b); 
+	  if(drawRandDouble01(chain) < 0.5)
+	    return b; 
+	}
+      else 
+	{
+	  return drawRandDouble01(chain) < 0.5 ? b  : invertBranch(b); 	  
+	}
+    }
+}
 
 
 /**
    @brief draws a branch with uniform probability.
    
-   We have to treat inner and outer branches separated.
+   We have to treat inner and outer branches separatedly.
  */
 branch drawBranchUniform(state *chain)
 {

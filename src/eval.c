@@ -114,7 +114,7 @@ void restoreAlignAndTreeState(state *chain)
   for(int i = 0; i < numPart; ++i)
     loadArray(chain,i); 
 
-  branch root = findRoot(chain); 
+  branch root = findRoot(chain->tr); 
 
   nodeptr p = findNodeFromBranch(chain->tr,root);
   evaluateGenericWrapper(chain, p,FALSE);
@@ -140,6 +140,26 @@ void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 }
 
 
+
+
+static void orientationPointAway(tree *tr, nodeptr p)
+{
+  if(NOT isTip(p->number, tr->mxtips))
+    {
+      if(p->x)
+	{
+	  p->next->x = 1; 
+	  p->x = 0; 
+	}
+      
+      orientationPointAway(tr, p->next->back); 
+      orientationPointAway(tr, p->next->next->back); 
+    }
+}
+
+
+
+
 /**
    @brief the same as below, but just for one partition 
 
@@ -157,14 +177,16 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
   for(int i = 0; i < numPartitions; ++i)
       perPartitionLH[i] = getPLH(chain,i); 
 
-  
   for(int i = 0; i < numPartitions; ++i)
     setExecModel(chain,i,FALSE); 
   setExecModel(chain,model,TRUE); 
 
+  orientationPointAway(tr, start); 
+  orientationPointAway(tr, start->back); 
+  
   /* compensating for the fact, that we need to have a tip for full traversal  */
-  exa_newViewGeneric(chain, start, FALSE); 
-  exa_newViewGeneric(chain, start->back, FALSE); 
+  exa_newViewGeneric(chain, start, TRUE); 
+  exa_newViewGeneric(chain, start->back, TRUE); 
   evaluateGenericWrapper(chain,start, FALSE);
 
   perPartitionLH[model] = getPLH(chain, model);
@@ -243,7 +265,7 @@ void printAlnTrState(state *chain)
   	  printf("\n");
   	}
     }
-  branch root = findRoot(chain); 
+  branch root = findRoot(chain->tr); 
   printf("root: {%d,%d}\n", root.thisNode,root.thatNode); 
   printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"); 
 }
