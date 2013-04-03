@@ -281,18 +281,30 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       
       initDefaultValues(theChain, myTree);
 
-      /* theChain->lnl.orientation = exa_calloc(numPart, sizeof(char*));  */
-      theChain->lnl.orientation = exa_calloc(tr->mxtips,sizeof(int)); 
-
-      theChain->lnl.vectorsPerPartition = exa_calloc(numPart, sizeof(double**)); 
-      for(int j = 0; j < numPart; ++j)
+      if(theChain->id / gAInfo.numberCoupledChains == 0 ) 
 	{
-	  pInfo *partition = getPartition(theChain, j); 
-	  theChain->lnl.vectorsPerPartition[j] = exa_calloc(tr->mxtips, sizeof(double*)); 
-	  int length = partition->upper - partition->lower; 
-	  assert(length > 0); 
-	  for(int k = 0; k < tr->mxtips; ++k) 
-	    theChain->lnl.vectorsPerPartition[j][k] = exa_calloc( length *  LENGTH_LNL_ARRAY , sizeof(double)); 
+	  theChain->lnl.orientation = exa_calloc(tr->mxtips,sizeof(int)); 
+	  theChain->lnl.vectorsPerPartition = exa_calloc(numPart, sizeof(double**)); 
+	  for(int j = 0; j < numPart; ++j)
+	    {
+	      pInfo *partition = getPartition(theChain, j); 
+	      theChain->lnl.vectorsPerPartition[j] = exa_calloc(tr->mxtips, sizeof(double*)); 
+#if HAVE_PLL == 1 		/* TODO that's hacky */
+	      int length = partition->upper - partition->lower; 
+#else 
+	      int length = partition->width; 
+#endif
+	      /* printf(" [%d] length is %d (width=%d)\n", processID, length, (int)partition->width) ; */
+	      assert(length > 0); 
+	      for(int k = 0; k < tr->mxtips; ++k) 
+		theChain->lnl.vectorsPerPartition[j][k] = exa_calloc( length *  LENGTH_LNL_ARRAY , sizeof(double)); 
+	    }
+	}
+      else 
+	{
+	  state *leechChain =   (*resultIndiChains ) + theChain->couplingId; 
+	  theChain->lnl.orientation = leechChain->lnl.orientation; 
+	  theChain->lnl.vectorsPerPartition = leechChain->lnl.vectorsPerPartition; 
 	}
       
       setupProposals(theChain, initParams); 

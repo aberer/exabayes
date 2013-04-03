@@ -88,7 +88,14 @@ void saveArray(state *chain, int model)
   pInfo *partition = getPartition(chain, model );
   double **xVector = getXPtr(chain,model); 
   for(int i = 0; i < chain->tr->mxtips-2; ++i)
-    memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * (partition->upper - partition->lower) * LENGTH_LNL_ARRAY);   
+    {
+#if HAVE_PLL == 1
+      int length = (partition->upper - partition->lower); 
+#else 
+      int length =   partition->width; 
+#endif
+      memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * length * LENGTH_LNL_ARRAY);   
+    }
 }
 
 
@@ -100,7 +107,15 @@ void loadArray(state *chain, int model)
   pInfo *partition = getPartition(chain, model); 
   double **xVector = getXPtr(chain, model); 
   for(int i= 0; i < chain->tr->mxtips-2; ++i)
-    memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) * (partition->upper - partition->lower) * LENGTH_LNL_ARRAY); 
+    {      
+#if HAVE_PLL == 1
+      int length = (partition->upper - partition->lower); 
+#else 
+      int length = partition->width; 
+#endif
+      memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) *  length  * LENGTH_LNL_ARRAY); 
+
+    }
 }
 
 

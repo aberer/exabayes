@@ -199,14 +199,6 @@ static void dummy_eval(state *chain,proposalFunction *thisProposal)
 }
 
 
-
-
-
-
-
-
-
-
 /* is this function really uniform? a tip node has a lower
    propbability to be drawn (only one path leads to it) */ 
 static nodeptr select_random_subtree(state *chain, tree *tr)
