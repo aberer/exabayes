@@ -19,15 +19,15 @@ void initLocalRng(state *theChain);
 int drawGlobalRandIntBound(int upperBound); 
 randCtr_t drawGlobalRandInt();
 double drawGlobalDouble01();
-
 int drawRandInt(state *chain, int upperBound); 
 double drawRandDouble01(state *chain);
 double drawRandExp(state *chain, double lambda);
 double drawRandBiUnif(state *chain, double x);
 int drawSampleProportionally(state *chain,  double *weights, int numWeight ); 
 void drawPermutation(state *chain, int* perm, int n); 
-
 branch drawBranchUniform(state *chain); 
 void generateRandomPath( state *chain ,stack *s, double stopProp); 
 branch drawSubtreeUniform(state *chain); 
+double drawMultiplier(state *chain, double multiplier); 
+double drawFromSlidingWindow(state *chain, double param, double window); 
 #endif

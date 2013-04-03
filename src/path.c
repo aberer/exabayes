@@ -3,6 +3,28 @@
 
 
 
+
+/**
+   @brief is node an outer node in the path?   
+ */
+boolean isOuterNode(int node, path *aPath)
+{
+  boolean occured = FALSE; 
+  for(int i = 0;  i < aPath->index; ++i)
+    {
+      if(nodeIsInBranch(node, aPath->content[i]))
+	{
+	  if(occured)
+	    return TRUE; 
+	  else 
+	    occured = TRUE; 
+	}	
+    }
+
+  return FALSE; 
+}
+
+
 /* TODO should be static  */
 void pushToStackIfNovel(path *s, branch b, int numTip)
 {  
@@ -78,6 +100,77 @@ static void debug_assertPathExists(tree *tr, path *s)
     assert(branchExists(tr, s->content[i])); 
 #endif
 }
+
+
+
+static void multiplyBranch(state *chain, branch b, double parameter, double *hastings)
+{
+  tree *tr = chain->tr; 
+  int numBranches = getNumBranches(tr);
+  nodeptr  p = findNodeFromBranch(tr, b); 
+  double multiplier = drawMultiplier(chain, parameter); 
+  double newZ = branchLengthToInternal(tr, multiplier * branchLengthToReal(tr, p->z[0])); 
+  
+  /* printf("changing BL %.3f to %.3f\n", branchLengthToReal(tr, p->z[0]) , branchLengthToReal(tr,newZ)) ; */
+  *hastings *= multiplier; 
+  hookup(p,p->back, &newZ, numBranches);   
+}
+
+
+/**
+   @brief applies the branch length multiplier along the path
+   (considering the spr has already been applied to the tree)
+ */ 
+void multiplyAlongBranchESPR(state *chain, path *s)
+{
+  /* printf("multiplyAlongBranchESPR \n");  */
+  tree *tr = chain->tr; 
+  assert(s->index >= 2); 
+  int numBranches = getNumBranches(tr); 
+  assert(numBranches == 1 ); 
+
+  /* first two branches: consider that subtree has been pruned */
+  branch b = getThirdBranch(tr, s->content[0], s->content[1]); 
+  int sTNode = b.thisNode; 
+
+  branch firstBranch = constructBranch( getOtherNode(sTNode, s->content[0]) ,
+					getOtherNode(sTNode, s->content[1]));   
+  double hastings = 1; 
+
+  /* TODO hack: using the branch length multiplier parameter here  */
+  proposalFunction *pf = NULL; 
+  for(int i = 0; i < chain->numProposals; ++i)
+    {
+      proposalFunction *tmp = chain->proposals[i]; 
+      if(tmp->ptype == BRANCH_LENGTHS_MULTIPLIER)
+	pf= tmp ; 
+    }
+  if(NOT pf)
+    {
+      printf("sorry, please activate the BL multiplier proposal.\n"); 
+      assert(pf); 
+    }
+
+  double parameter = pf->parameters.multiplier ; 
+  multiplyBranch(chain, firstBranch, parameter, &hastings); 
+  
+  /* treat all branches except the first 2 and the last one */
+  for(int pathPos = 2; pathPos < s->index-1; ++pathPos)
+    {
+      branch b = s->content[pathPos]; 
+      multiplyBranch(chain, b, parameter, &hastings); 
+    }
+
+  /* treat last two paths (only one in representation) */
+  b = constructBranch(sTNode, s->content[s->index-1].thisNode); 
+  multiplyBranch(chain, b,parameter, &hastings); 
+
+  b = constructBranch(sTNode, s->content[s->index-1].thatNode); 
+  multiplyBranch(chain,b,parameter, &hastings);   
+  chain->hastings *= hastings; 
+}
+
+
 
 /**
    @brief draws a random set of branches in the tree that constitute a
@@ -158,7 +251,3 @@ void drawPathForESPR(state *chain,path *s, double stopProp )
 
   debug_assertPathExists(tr, s); 
 }
-
-
-
-

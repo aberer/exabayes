@@ -280,3 +280,25 @@ branch drawBranchUniform(state *chain)
   
   return result; 
 }
+
+
+/**
+   @brief gets a multiplier for updating a parameter or branch length 
+ */
+double drawMultiplier(state *chain, double multiplier)
+{
+  double tmp =  exp(multiplier * (drawRandDouble01(chain)  - 0.5)); 
+  assert(tmp > 0.); 
+  return tmp ; 
+  
+}
+
+
+double drawFromSlidingWindow(state *chain, double param, double window)
+{
+  double upper = param + (window / 2 ) ,
+    lower = param - (window / 2 ); 
+  
+  double r = drawRandDouble01(chain); 
+  return lower + r * (upper - lower)  ; 
+}

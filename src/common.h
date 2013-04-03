@@ -70,11 +70,11 @@ typedef  unsigned int nat ;
 #define INIT_BL_MULT 3 
 #define INIT_BL_SLID_WIN  0.0005
 #define INIT_RATE_SLID_WIN  0.5 
+#define INIT_FREQ_SLID_WIN  0.5 
 #define INIT_GAMMA_SLID_WIN  0.75
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
-#define ACCEPTED_LIKELIHOOD_EPS 0.0001 
-
+#define ACCEPTED_LIKELIHOOD_EPS 1e-6
 
 
 /* ABOVE: stuff that is needed by everyone and can be defined
@@ -85,6 +85,8 @@ typedef  unsigned int nat ;
 
  */
 
+
+/* #define ESPR_MULTIPLY_BL	 /// applyl multiplier to espr as by lakner */
 
 #define PRINT_FREQUENCY 500 
 #define TUNE_FREQUENCY 100 
@@ -109,7 +111,6 @@ typedef  unsigned int nat ;
 #define ASDSF_CONVERGENCE_CRITERION 0.005 ///  indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence 
 
 /* a lot of debug information for the asdsf */
-
 
 
 /* MC3 stuff for development */

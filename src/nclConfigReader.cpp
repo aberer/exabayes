@@ -65,6 +65,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = E_SPR_MAPPED; 
   else if(key.EqualsCaseInsensitive("branchMulti"))
     *pf = BRANCH_LENGTHS_MULTIPLIER; 
+  else if(key.EqualsCaseInsensitive("initFrequencySliderWeight"))
+    *pf = FREQUENCY_SLIDER; 
 
   // TODO@kassian this is a good place for proposal add 
 

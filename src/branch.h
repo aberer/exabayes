@@ -25,4 +25,7 @@ boolean branchEqualUndirected(branch b1, branch b2);
 boolean nodeIsInBranch(int number, branch b ); 
 int getIntersectingNode(branch b1, branch b2); 
 branch getThirdBranch(tree *tr, branch b1, branch b2); 
+int getOtherNode(int node, branch b); 
+double branchLengthToInternal(tree *tr, double realBL);
+double branchLengthToReal(tree *tr, double internalBL); 
 #endif

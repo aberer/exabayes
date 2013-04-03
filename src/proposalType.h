@@ -3,7 +3,7 @@
 
 
 /* okay, so defining enums this way is rather save  */
-#define NUM_PROPOSALS (14) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
+#define NUM_PROPOSALS (15) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
 typedef enum
 {
 E_SPR = 0,
@@ -19,7 +19,9 @@ UPDATE_MODEL_ALL_BIUNIF = 9,
 UPDATE_MODEL_PERM_BIUNIF = 10,
 UPDATE_FREQUENCIES_BIUNIF = 11,
 E_SPR_MAPPED = 12,
-BRANCH_LENGTHS_MULTIPLIER =13//PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
+BRANCH_LENGTHS_MULTIPLIER =13,
+FREQUENCY_SLIDER = 14
+//PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 
 
 } proposal_type;

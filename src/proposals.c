@@ -295,18 +295,21 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
   createStack(&rPath); 
   drawPathForESPR(chain,rPath,stopProp); 
 
-  /* printStack(rPath);   */
+  /* printStack(rPath); */
 
   saveBranchLengthsPath(chain, rPath); 
-  /* TODO apply multiplier to path */
 
   applyPathAsESPR(tr, rPath);
+
   pf->remembrance.modifiedPath = rPath; 
+
+#ifdef ESPR_MULTIPLY_BL
+  if(drawRandDouble01(chain) < 0.5)
+  multiplyAlongBranchESPR(chain, rPath);
+#endif
 
   debug_checkTreeConsistency(chain); 
 }
-
-
 
 
 
@@ -1345,6 +1348,35 @@ static void recordFrequRates(state *chain, int model, int numFrequRates, double 
 
 
 
+static void frequencySliderApply(state *chain, proposalFunction *pf)
+{
+  tree *tr  = chain->tr ; 
+  
+  int model = drawRandInt(chain, getNumberOfPartitions(tr)); 
+  perPartitionInfo *info = pf->remembrance.partInfo; 
+  pInfo*partition = getPartition(chain,model); 
+
+  int numFreq = partition->states; 
+  info->modelNum = model; 
+  info->numFreqs = numFreq; 
+
+  recordFrequRates(chain, model, numFreq, info->frequencies); 
+  
+  int paramToChange = drawRandInt(chain, numFreq); 
+  double curv = partition->frequencies[paramToChange];   
+  double newVal = fabs(drawFromSlidingWindow(chain,curv, pf->parameters.slidWinSize)); 
+  partition->frequencies[paramToChange] = newVal ; 
+
+  double sum = 0;
+  for(int i = 0; i < numFreq; ++i)
+    sum += partition->frequencies[i] ;
+  for(int i = 0; i < numFreq; ++i)
+    partition->frequencies[i] /= sum;
+  
+  exa_initReversibleGTR(chain, model);
+}
+
+
 
 void frequency_proposal_apply(state * chain, proposalFunction *pf)
 {
@@ -1421,6 +1453,11 @@ static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
 
 
 
+
+
+
+
+
 static void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
@@ -1435,20 +1472,19 @@ static void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
   record_branch_info( p, rec->bls, getNumBranches(tr));
 
   double
-    multiplier = exp(pf->parameters.multiplier * (drawRandDouble01(chain) - 0.5 ));   
+    multiplier = drawMultiplier(chain, pf->parameters.multiplier); 
   assert(multiplier > 0.); 
   
   /* TODO how do we do that wiht multiple bls per branch?  */
   assert(getNumBranches(tr) == 1); 
   
-  double newZ  = multiplier * ( -log(p->z[0]) * tr->fracchange);  
-  double newZTransformed = exp(-(newZ / tr->fracchange)); 
+  double newZ  = branchLengthToInternal(tr, multiplier * (branchLengthToReal(tr,p->z[0]))); 
   
   /* according to lakner2008  */
   chain->hastings *= multiplier; 
  
   /* just doing it for one right here */
-  p->z[0] = p->back->z[0] = newZTransformed; 
+  p->z[0] = p->back->z[0] = newZ; 
 }
 
 
@@ -1505,8 +1541,6 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
   *parameter = newParam; 
   resetCtr(ctr);   
 
-  
-
 }
 
 
@@ -1515,13 +1549,16 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 */ 
 static void autotuneStopProp(state *chain, proposalFunction *pf) 
 {
+  const double minimum = 0.01; 
+  const double maximum = 0.95; 
+
   double *parameter = &(pf->parameters.eSprStopProb); 
   successCtr *ctr = &(pf->sCtr); 
   double newParam = tuneParameter( chain->currentGeneration / TUNE_FREQUENCY, 
 				   getRatioLocal(&(pf->sCtr)),
 				   *parameter, 
 				   TRUE ); 
-  
+
 #ifdef DEBUG_PRINT_TUNE_INFO
   if(processID == 0 )
     {
@@ -1531,10 +1568,9 @@ static void autotuneStopProp(state *chain, proposalFunction *pf)
       printf("%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
     }
 #endif
-
-  *parameter = fmin(newParam,1); 
-  resetCtr(ctr);   
   
+  *parameter = fmax(minimum,fmin(newParam,maximum)); 
+  resetCtr(ctr);     
 }
 
 
@@ -1579,7 +1615,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
     {
     case E_SPR:
       ptr->eval_lnl = dummy_eval;
-      ptr->autotune = autotuneStopProp; 
+      ptr->autotune = autotuneStopProp;
       ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func = extended_spr_apply; 
       ptr->reset_func = extended_spr_reset; 
@@ -1589,8 +1625,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case E_SPR_MAPPED: 		/* TRUSTED  */
       ptr->eval_lnl = sprEval; 
-      ptr->autotune = autotuneStopProp; 
-      /* ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord));  */
+      /* ptr->autotune = autotuneStopProp; */
       ptr->remembrance.modifiedPath = exa_calloc(1,sizeof(path)); 
       ptr->apply_func = applyExtendedSPR; 
       ptr->reset_func = resetESPR; 
@@ -1701,6 +1736,17 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->parameters.multiplier = INIT_BL_MULT; 
       ptr->name = "branchMult"; 
       ptr->category = BRANCH_LENGTHS; 
+      break; 
+
+    case FREQUENCY_SLIDER: 
+      ptr->eval_lnl = onePartitionEval; 
+      ptr->apply_func = frequencySliderApply; 
+      ptr->autotune = autotuneSlidingWindow; 
+      ptr->reset_func = frequency_proposal_reset; 
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->name = "freqSlider"; 
+      ptr->category = FREQUENCIES; 
+      ptr->parameters.slidWinSize = INIT_FREQ_SLID_WIN; 
       break; 
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 

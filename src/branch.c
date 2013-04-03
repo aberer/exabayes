@@ -14,6 +14,42 @@
 #include "output.h"  
 
 
+
+
+int getOtherNode(int node, branch b)
+{
+  if(b.thisNode == node)
+    return b.thatNode; 
+  else 
+    {
+      assert(node == b.thatNode); 
+      return b.thisNode;
+    }    
+}
+
+
+
+/**
+   @brief converts the raxml bl into the real value for printing
+ */ 
+double branchLengthToReal(tree *tr, double internalBL)
+{
+  assert(getNumBranches(tr) == 1 ); 
+  return -log(internalBL) * tr->fracchange; 
+}
+
+
+/**
+   @brief converts the real branch length to the raxml internal value  
+ */ 
+double branchLengthToInternal(tree *tr, double realBL)
+{
+  assert(getNumBranches(tr) == 1 ); 
+  return exp(-(realBL / tr->fracchange)); 
+}
+
+
+
 /**
    @brief gets equality of branches irregardless of their orientation
  */
