@@ -96,6 +96,8 @@ void saveArray(state *chain, int model)
 #endif
       memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * length * LENGTH_LNL_ARRAY);   
     }
+  
+  memcpy(chain->lnl.partitionScaler[model], partition->globalScaler, sizeof(nat) * 2 * chain->tr->mxtips); 
 }
 
 
@@ -114,8 +116,8 @@ void loadArray(state *chain, int model)
       int length = partition->width; 
 #endif
       memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) *  length  * LENGTH_LNL_ARRAY); 
-
     }
+  memcpy(partition->globalScaler, chain->lnl.partitionScaler[model], sizeof(nat) * 2 * chain->tr->mxtips); 
 }
 
 

@@ -6,14 +6,11 @@
 
 typedef struct 
 {
-  /* double likelihood; */ 		///overall likelihood
-  /* double *partitionLnl; */ /// likelihood per partition => must be kept up to date 
-
   double ***vectorsPerPartition; /// stores the lnl arrays  
-
   int *orientation;  /// indicates the node towards a specific node is directed  
+  
+  nat **partitionScaler;  /// for each partition, for each node
 
-  /* branch root; /// the root branch: x-vectors should be orientated towards this branch  */
 } lnlContainer;  /// contains partition and overall
 		 /// likelihood. functions in this file have to make
 		 /// sure these are always correct. Also contains info to restore lnl computations later 

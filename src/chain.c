@@ -285,6 +285,8 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	{
 	  theChain->lnl.orientation = exa_calloc(tr->mxtips,sizeof(int)); 
 	  theChain->lnl.vectorsPerPartition = exa_calloc(numPart, sizeof(double**)); 
+	  theChain->lnl.partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 	  
+
 	  for(int j = 0; j < numPart; ++j)
 	    {
 	      pInfo *partition = getPartition(theChain, j); 
@@ -298,13 +300,16 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	      assert(length > 0); 
 	      for(int k = 0; k < tr->mxtips; ++k) 
 		theChain->lnl.vectorsPerPartition[j][k] = exa_calloc( length *  LENGTH_LNL_ARRAY , sizeof(double)); 
-	    }
+
+	      theChain->lnl.partitionScaler[j] = (nat*)exa_calloc(2 * tr->mxtips,sizeof(nat)); 	      
+	    }	  
 	}
       else 
 	{
 	  state *leechChain =   (*resultIndiChains ) + theChain->couplingId; 
 	  theChain->lnl.orientation = leechChain->lnl.orientation; 
 	  theChain->lnl.vectorsPerPartition = leechChain->lnl.vectorsPerPartition; 
+	  theChain->lnl.partitionScaler = leechChain->lnl.partitionScaler; 
 	}
       
       setupProposals(theChain, initParams); 
