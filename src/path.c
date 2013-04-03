@@ -151,7 +151,7 @@ void multiplyAlongBranchESPR(state *chain, path *s)
       assert(pf); 
     }
 
-  double parameter = pf->parameters.multiplier ; 
+  double parameter = pf->param2.multiplier ; 
   multiplyBranch(chain, firstBranch, parameter, &hastings); 
   
   /* treat all branches except the first 2 and the last one */

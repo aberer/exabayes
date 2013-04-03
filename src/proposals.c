@@ -304,7 +304,7 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
   pf->remembrance.modifiedPath = rPath; 
 
 #ifdef ESPR_MULTIPLY_BL
-  if(drawRandDouble01(chain) < 0.5)
+  /* if(drawRandDouble01(chain) < 0.5) */
   multiplyAlongBranchESPR(chain, rPath);
 #endif
 
@@ -1630,6 +1630,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->apply_func = applyExtendedSPR; 
       ptr->reset_func = resetESPR; 
       ptr->name = "eSPRMapped"; 
+      ptr->param2.multiplier = INIT_ESPR_MULT; 
       ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
       ptr->category = TOPOLOGY; 
       break; 

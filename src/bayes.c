@@ -82,7 +82,6 @@ void switchChainState(state *chains)
   /* do the swap */
   if( drawGlobalDouble01()  < accRatio)
     {
-
       /* everything, we need to swap */
       swpInt(&(a->couplingId), &(b->couplingId)); 
 

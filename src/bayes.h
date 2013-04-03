@@ -174,6 +174,12 @@ struct _pfun
      stuff */
 
 
+  union
+  {
+    double multiplier ; 	/* the lambda of eSPR for multiplying moves  */
+  } param2;  
+
+
 
   /**
      Variables that help us remember what we changed. 
