@@ -1,17 +1,70 @@
-/**
-   @file branch.c
-   
-   @brief Everything that deals with branches.  
-   
-
-   TODO call by value for branches is too expensive  
- */
 
 #include "axml.h"
 #include "bayes.h"
 #include "branch.h" 
 #include "adapters.h"
 #include "output.h"  
+
+
+
+#define STRETCH_FACTOR 2 
+
+
+
+
+
+
+/* #define GUIDE_SPR_BRANCH */
+
+/**
+   @brief divide a branch employing a ratio   
+   
+   notice: resultA is directed to thisNode in the branch 
+ */ 
+void divideBranchLengthsWithRatio(tree *tr, double orig,  double ratio, double *resultA, double *resultB)
+{
+  *resultA = pow(orig, (double)STRETCH_FACTOR * ratio) ; 
+  *resultB = pow(orig, (double)STRETCH_FACTOR * (1-ratio)); 
+
+#ifdef GUIDE_SPR_BRANCH
+  printf("divided %g by %g into\t%g,%g\n",  orig, ratio, branchLengthToReal(tr, *resultA), branchLengthToReal(tr, *resultB));
+#endif
+}
+
+
+
+/**
+   @brief combine to branch lengths
+ */ 
+double combineBranchLengths(tree *tr, double origA, double origB)
+{  
+  double result = pow(origA * origB, 1. / (double) STRETCH_FACTOR );
+
+#ifdef GUIDE_SPR_BRANCH
+  printf("combined %g,%g into %g\n", branchLengthToReal(tr, origA), branchLengthToReal(tr, origB), branchLengthToReal(tr, result)); 
+#endif
+  return result; 
+}
+
+
+/**
+    @brief gets the ratio of a to the sum of a and b 
+
+    @notice direction is important!
+ */ 
+double getRatio(tree *tr, double a, double b )
+{
+  double ratio = log(a) / (log(a) + log(b)) ; 
+
+  if(NOT (0 < ratio && ratio < 1.))
+    {
+      printf("\n\nWARNING: %g,%g (%g,%g) in ratio %g\n", a,b,branchLengthToReal(tr, a),branchLengthToReal(tr,b), ratio);
+    }
+    
+  return ratio ; 
+
+}
+
 
 
 
@@ -249,7 +302,7 @@ static nodeptr findNodePtrByNeighbor(tree *tr, int targetNode,  int neighborNode
 
   do 
     {
-      if(p->back->number == neighborNode)
+      if(p->back && p->back->number == neighborNode)
 	{
 	  assert(p->number == targetNode); 
 	  return p; 

@@ -1,8 +1,4 @@
-/**
-   @file  topology-utils.c
-   
-   @brief Various functions for manipulation of topologies and branch lengths. 
-*/ 
+
 #include "axml.h"
 #include "bayes.h"
 #include "globals.h"
@@ -12,6 +8,24 @@
 #include "output.h"
 #include "path.h"
 
+
+
+
+/**
+   @brief gets the tree length. 
+
+   p should be a tip. 
+ */ 
+double getTreeLength(tree *tr, nodeptr p)
+{
+  if(isTip(p->number, tr->mxtips))
+    return p->z[0]; 
+  else 
+    {
+      return p->z[0] * getTreeLength(tr, p->next->back)
+	* getTreeLength(tr, p->next->next->back);       
+    }
+}
 
 
 

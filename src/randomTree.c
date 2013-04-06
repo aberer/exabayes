@@ -1,9 +1,3 @@
-/**
-   @file randomTree.c
-
-   @brief Adapted code for building a random tree. 
-
- */ 
 
 
 #include "axml.h"

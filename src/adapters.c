@@ -1,11 +1,4 @@
-/**
-   @file adapters.c
 
-   @brief All code that ensures that ExaBayes can be compiled with
-   either the PLL or the ExaML code base
-
-
-*/ 
 
 
 #include "axml.h"
@@ -84,17 +77,6 @@ double getFracChange(state *chain, int num)
   return chain->tr->fracchanges[num]; 
 #endif
 }
-
-
-/* void setFracChange(state *chain, int num, double value) */
-/* { */
-/* #if HAVE_PLL == 1  */
-/*   gAInfo.partitions[chain->couplingId].partitionData[num]->fracchange = value;  */
-/* #else  */
-/*   chain->tr->fracchanges[num] = value;  */
-/* #endif */
-/* } */
-
 
 
 int getNumBranches(tree *tr)

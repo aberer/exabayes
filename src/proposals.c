@@ -1,13 +1,7 @@
-/**
-   @file proposals.c
 
-   @brief All proposals that make the chains of ExaBayes move in its
-   space.
-    
- */ 
 
 #include "axml.h"
-#include "bayes.h"
+ #include "bayes.h"
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
@@ -21,6 +15,7 @@
 #include "misc-utils.h"
 #include "branch.h"
 #include "path.h"
+#include "gibbsLikeTopo.h"
 
 void expensiveVerify(tree *tr); 
 
@@ -139,22 +134,22 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 
 
 
-static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB)
-{
-  nodeptr 
-    target = tr->nodep[node]; 
+/* static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB) */
+/* { */
+/*   nodeptr  */
+/*     target = tr->nodep[node];  */
 
-  if(target->back->number != neighBourA && target->back->number != neighBourB)
-    return target; 
-  else if (target->next->back->number != neighBourA && target->next->back->number != neighBourB)
-    return target->next; 
-  else 
-    {
-      assert(target->next->next->back->number != neighBourB && target->next->next->back->number != neighBourA); 
-      return target->next->next; 
-    }
-  return NULL; 
-}
+/*   if(target->back->number != neighBourA && target->back->number != neighBourB) */
+/*     return target;  */
+/*   else if (target->next->back->number != neighBourA && target->next->back->number != neighBourB) */
+/*     return target->next;  */
+/*   else  */
+/*     { */
+/*       assert(target->next->next->back->number != neighBourB && target->next->next->back->number != neighBourA);  */
+/*       return target->next->next;  */
+/*     } */
+/*   return NULL;  */
+/* } */
 
 
 
@@ -167,20 +162,32 @@ static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 }
 
 
-static void evaluateBranch(state *chain, proposalFunction *thisProposal)
+static void evalBranch(state *chain, proposalFunction *thisProposal)
 {
-  nodeptr p = findNodeFromBranch(chain->tr, thisProposal->remembrance.topoRec->insertBranch);
-  evaluateGenericWrapper(chain,p,FALSE);
-#ifndef DEBUG_LNL_VERIFY
-  assert(isTip(p->number,chain->tr->mxtips)|| isTip(p->back->number,chain->tr->mxtips) || (p->x && p->back->x)); 
-  branch b = findRoot(chain->tr);  
-  if(NOT  (b.thisNode == p->number || b.thatNode == p->number))
-    {
-      printf("root is %d,%d, node was %d\n", b.thisNode, b.thatNode, p->number); 
-      assert(0); 
-    }  
-#endif
+  branch b = peekStack(thisProposal->remembrance.modifiedPath);
+  nodeptr p = findNodeFromBranch(chain->tr, b); 
+  evaluateGenericWrapper(chain,p, FALSE); 
 }
+
+
+
+
+
+
+/* static void evaluateBranch(state *chain, proposalFunction *thisProposal) */
+/* { */
+/*   nodeptr p = findNodeFromBranch(chain->tr, thisProposal->remembrance.topoRec->insertBranch); */
+/*   evaluateGenericWrapper(chain,p,FALSE); */
+/* #ifndef DEBUG_LNL_VERIFY */
+/*   assert(isTip(p->number,chain->tr->mxtips)|| isTip(p->back->number,chain->tr->mxtips) || (p->x && p->back->x));  */
+/*   branch b = findRoot(chain->tr);   */
+/*   if(NOT  (b.thisNode == p->number || b.thatNode == p->number)) */
+/*     { */
+/*       printf("root is %d,%d, node was %d\n", b.thisNode, b.thatNode, p->number);  */
+/*       assert(0);  */
+/*     }   */
+/* #endif */
+/* } */
 
 
 
@@ -305,7 +312,7 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
 
 #ifdef ESPR_MULTIPLY_BL
   /* if(drawRandDouble01(chain) < 0.5) */
-  multiplyAlongBranchESPR(chain, rPath);
+  multiplyAlongBranchESPR(chain, rPath, pf->param2.multiplier);
 #endif
 
   debug_checkTreeConsistency(chain); 
@@ -508,20 +515,15 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
 
   debug_checkTreeConsistency(chain );
   debug_printTree(chain);
-
 }
 
 
 //--------Alpha-Proposal-for-GAMMA-----------------------------------------------------------------
 
 double get_alpha_prior(state *chain )
-{
-  
+{  
  return 1;//TODO obviously needs acctual prior 
 }
-
-
-
 
 
 static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
@@ -1218,11 +1220,8 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
   
     return ret;
   
-  }
-  
-  assert(0);
-  
-  
+  }  
+  assert(0);    
 }
 
 
@@ -1231,8 +1230,13 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 static void random_branch_length_proposal_apply(state * chain, proposalFunction *pf)
 {
   int multiBranches = getNumBranches(chain->tr);
+  assert(multiBranches == 1 ); 
   int target_branch = drawRandInt(chain,(chain->tr->mxtips * 2) - 3); 
+
   node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
+  double z = p->z[0]; 
+  double oldZ = 0; 
+   
   
   switch(pf->ptype)
     {
@@ -1241,21 +1245,29 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
       //pull a uniform like
       //x = current, w =window
       //uniform(x-w/2,x+w/2)
-      set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE, pf->parameters.slidWinSize, pf->remembrance.topoRec->bls); 
+      set_branch_length_sliding_window(chain,p, multiBranches, chain, TRUE, pf->parameters.slidWinSize, &oldZ); 
       break;
 	
     case UPDATE_SINGLE_BL_EXP: 
-      set_branch_length_exp(chain,p, multiBranches, chain, TRUE,pf->remembrance.topoRec->bls);
+      set_branch_length_exp(chain,p, multiBranches, chain, TRUE,&oldZ);
       break;
     case UPDATE_SINGLE_BL_BIUNIF: 
 
-      set_branch_length_biunif(chain, p, multiBranches, chain, TRUE,pf->remembrance.topoRec->bls);
+      set_branch_length_biunif(chain, p, multiBranches, chain, TRUE,&oldZ);
       break;
     default:
       assert(0);
     }
 
-  pf->remembrance.topoRec->whichBranch = target_branch; 
+  /* clearStack(pf->remembrance.modifiedPath);  */
+  /* assert(pf->remembrance.modifiedPath != NULL);  */
+  branch b = constructBranch(p->number, p->back->number); 
+  pushStack(pf->remembrance.modifiedPath, b); 
+  pf->remembrance.modifiedPath->content[0].length[0] = z; 
+  
+  /* pf->remembrance.topoRec->whichBranch = target_branch;  */
+  /* pf->remembrance.insertBranch = constructBranch(p->) */
+
   /* evaluateGenericWrapper(chain, p, FALSE);  */
   //evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
 }
@@ -1296,12 +1308,14 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
 
 static void random_branch_length_proposal_reset(state * chain, proposalFunction *pf)
 {
-  node *p;
+  /* branch b = pf->remembrance.modifiedPath->content[0];  */
+  branch b = popStack(pf->remembrance.modifiedPath); 
+  nodeptr p = findNodeFromBranch(chain->tr, b); 
+  p->z[0] = p->back->z[0] = b.length[0]; 
 
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
-  p = select_branch_by_id_dfs( chain->tr->start, pf->remembrance.topoRec->whichBranch, chain );
-  
-  reset_branch_length(p, getNumBranches(chain->tr), pf->remembrance.topoRec->bls);
+  /* p = select_branch_by_id_dfs( chain->tr->start, pf->remembrance.topoRec->whichBranch, chain ); */  
+  /* reset_branch_length(p, getNumBranches(chain->tr), pf->remembrance.topoRec->bls); */
   //   printf( "reset bl: %p %f\n", p, p->z[0] );
   //update_all_branches(chain, TRUE);
 
@@ -1451,25 +1465,35 @@ static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
   restore_subs_rates(chain, info->modelNum, info->numRates, info->substRates);
 }
 
+static void branchLengthWindowApply(state *chain, proposalFunction *pf)
+{  
+  tree *tr = chain->tr; 
+  branch b =  drawBranchUniform(chain); 
 
+  nodeptr p = findNodeFromBranch(tr, b); 
+  
+  clearStack(pf->remembrance.modifiedPath); 
+  pushStack(pf->remembrance.modifiedPath, b);
+  pf->remembrance.modifiedPath->content[0].length[0]  = p->z[0]; 
 
+  double zOld = p->z[0]; 
+  double win =  pf->parameters.slidWinSize ; 
+  double realZ = branchLengthToReal(tr, zOld); 
+  double blNew = branchLengthToInternal(tr,fabs(drawFromSlidingWindow(chain, realZ, win))); 
+  p->z[0] = p->back->z[0] = blNew; 
+}
 
-
-
-
-
-static void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
+static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr; 
   branch b =  drawBranchUniform(chain); 
 
   nodeptr p = findNodeFromBranch(tr, b); 
 
-  topoRecord
-    *rec = pf->remembrance.topoRec; 
-  rec->insertBranch = b ; 
-
-  record_branch_info( p, rec->bls, getNumBranches(tr));
+  clearStack(pf->remembrance.modifiedPath); 
+  pushStack(pf->remembrance.modifiedPath, b);
+  assert(stackLength(pf->remembrance.modifiedPath) == 1 ); 
+  pf->remembrance.modifiedPath->content[0].length[0]  = p->z[0]; 
 
   double
     multiplier = drawMultiplier(chain, pf->parameters.multiplier); 
@@ -1477,9 +1501,10 @@ static void branch_length_multiplier_apply(state *chain, proposalFunction *pf)
   
   /* TODO how do we do that wiht multiple bls per branch?  */
   assert(getNumBranches(tr) == 1); 
-  
-  double newZ  = branchLengthToInternal(tr, multiplier * (branchLengthToReal(tr,p->z[0]))); 
-  
+
+  double newZ = pow(p->z[0], multiplier) ; 
+  /* printf("\t\tBL_MULTI: %g * %g => %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
+
   /* according to lakner2008  */
   chain->hastings *= multiplier; 
  
@@ -1539,8 +1564,7 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 #endif
 
   *parameter = newParam; 
-  resetCtr(ctr);   
-
+  resetCtr(ctr); 
 }
 
 
@@ -1574,16 +1598,14 @@ static void autotuneStopProp(state *chain, proposalFunction *pf)
 }
 
 
-void branch_length_reset(state *chain, proposalFunction *pf)
+void branchLengthReset(state *chain, proposalFunction *pf)
 {
+  branch b = popStack(pf->remembrance.modifiedPath); 
   tree *tr = chain->tr; 
-  topoRecord *rec = pf->remembrance.topoRec; 
-  nodeptr p = findNodeFromBranch(tr, rec->insertBranch); 
-  
-  reset_branch_length(p,getNumBranches(tr), rec->bls); 
-
-  /* evaluateGenericWrapper(chain, tr->start, TRUE );    */
+  nodeptr p = findNodeFromBranch(tr, b); 
+  p->z[0] = p->back->z[0] = b.length[0]; 
 }
+
 
 
 
@@ -1605,14 +1627,23 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
 
   /* 
      TODO@kassian
-   
-     I fear I could not restore all proposals correctly. Or let me put
-     it differently, I do not trust all of them yet. Those, that I do
-     trust are marked.
+     some proposals may be broken      
   */
 
   switch(type)
     {
+    case GUIDED_SPR:
+      ptr->name = "guidedSpr"; 
+      ptr->apply_func = applyGuidedSPR; 
+      ptr->eval_lnl = evalGuidedSPR; 
+      ptr->reset_func = resetGuidedSPR; 
+      /* ptr->remembrance.modifiedPath = exa_calloc(1,sizeof(path));        */
+      ptr->remembrance.modifiedPath = NULL; 
+      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->category = TOPOLOGY; 
+      ptr->parameters.radius = INIT_GUIDED_RADIUS; 
+      ptr->autotune = NULL;       
+      break; 
     case E_SPR:
       ptr->eval_lnl = dummy_eval;
       ptr->autotune = autotuneStopProp;
@@ -1662,12 +1693,13 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "gammaExp"; 
       break; 
-    case UPDATE_SINGLE_BL: 	/* TRUSTED */
-      ptr->eval_lnl = dummy_eval;
+    case UPDATE_SINGLE_BL: 
+      ptr->eval_lnl = evalBranch;
       ptr->autotune = autotuneSlidingWindow; 
-      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
-      ptr->apply_func	=  random_branch_length_proposal_apply;
-      ptr->reset_func =  random_branch_length_proposal_reset;
+      ptr->remembrance.modifiedPath = NULL; 
+      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->apply_func = branchLengthWindowApply; 
+      ptr->reset_func =  branchLengthReset;
       ptr->category = BRANCH_LENGTHS; 
       ptr->parameters.slidWinSize = INIT_BL_SLID_WIN; 
       ptr->name = "singleBLSlidWin"; 
@@ -1729,16 +1761,16 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = SUBSTITUTION_RATES; 
       break;
     case BRANCH_LENGTHS_MULTIPLIER: 
-      ptr->eval_lnl = evaluateBranch;
+      ptr->eval_lnl = evalBranch;
       ptr->autotune = autotuneMultiplier; 
-      ptr->apply_func = branch_length_multiplier_apply; 
-      ptr->reset_func = branch_length_reset; 
-      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
+      ptr->apply_func = branchLengthMultiplierApply; 
+      ptr->reset_func = branchLengthReset; 
+      ptr->remembrance.modifiedPath =  NULL; 
+      createStack(&(ptr->remembrance.modifiedPath));
       ptr->parameters.multiplier = INIT_BL_MULT; 
       ptr->name = "branchMult"; 
       ptr->category = BRANCH_LENGTHS; 
       break; 
-
     case FREQUENCY_SLIDER: 
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = frequencySliderApply; 

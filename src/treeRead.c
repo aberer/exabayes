@@ -1,10 +1,4 @@
-/**
-   @file treeRead.c 
-   @brief functions for reading trees 
-   
-   Mostly taken over from the axml-variants.  
- 
-*/ 
+
 
 #include "axml.h"
 #include "bayes.h"

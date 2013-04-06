@@ -1,3 +1,8 @@
+/**
+   @file  topology-utils.h
+   
+   @brief Various functions for manipulation of topologies and branch lengths. 
+*/ 
 
 #ifndef _UTILS_TOPO_H
 #define _UTILS_TOPO_H
@@ -15,4 +20,5 @@ void applyPathAsESPR(tree *tr, path *rPath );
 void destroyOrientationAlongPath(tree *tr, path *rPath, nodeptr p); 
 void resetAlongPathForESPR(tree *tr, path *rPath); 
 void restoreBranchLengthsPath(tree *tr, path *s); 
+double getTreeLength(tree *tr, nodeptr p); 
 #endif

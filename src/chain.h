@@ -1,3 +1,10 @@
+/**
+   @file chain.h
+   
+   @brief Functions that are applied to individual chains. 
+*/ 
+
+
 #ifndef _CHAIN_H
 #define  _CHAIN_H
 

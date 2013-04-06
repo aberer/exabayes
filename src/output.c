@@ -1,10 +1,4 @@
-/**
-   @file output.c
-   
-   @brief Functions printing to console or files. 
 
-   Also some debug functionality goes in here. 
- */ 
 
 
 #include "axml.h"
@@ -59,10 +53,10 @@ void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted)
   if(processID == 0)
     {
       if(accepted)
-	printInfo(chain, "accepting\t");   
+	printInfo(chain, "ACCEPTING\t");   
       else 
 	printInfo(chain, "rejecting\t");   	  
-      printf("%s\n" ,pf->name); 
+      printf("%s %g\n" ,pf->name, chain->tr->likelihood); 
     }
 #endif
 }
@@ -220,7 +214,7 @@ char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
       return treestr;
     }
 
-  sprintf(treestr, ":%8.20f", exabayes_getBranchLength(chain, perGene, p));
+  sprintf(treestr, ":%g", exabayes_getBranchLength(chain, perGene, p));
   
   while (*treestr) treestr++;
   return  treestr;
@@ -266,8 +260,8 @@ static void printParams(state *curstate)
   /* FILE *fh = myfopen(outputParamFile, "a");  */
   FILE *fh = curstate->outputParamFile; 
 
-  /* TODO tree length */
-  fprintf(fh, "%d\t%f\t%f", curstate->currentGeneration,curstate->tr->likelihood, -1. ); 
+
+  fprintf(fh, "%d\t%f\t%f", curstate->currentGeneration,curstate->tr->likelihood, getTreeLength(curstate->tr,curstate->tr->nodep[1]->back ) ); 
 
   /* TODO what about multiple models?  */
   /* TODO that will not work in the future ...  */

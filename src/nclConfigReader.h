@@ -1,4 +1,9 @@
 
+/**
+   @file nclConfigReader.h
+   @brief Wraps the ncl-nexus parser for usage with ExaBayes.     
+*/
+
 #ifndef _NCL_CONFIG_READER
 #define _NCL_CONFIG_READER
 

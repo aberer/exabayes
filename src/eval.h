@@ -1,3 +1,12 @@
+/**
+   @file eval.h
+   @brief Functions for likelihood evaluations.  
+
+   New convention: all these functions are responsible for updating
+   the chain->likelihood + chain->partitionLnl accordingly. 
+*/ 
+
+
 #ifndef _EVAL_H
 #define _EVAL_H
 

@@ -1,3 +1,12 @@
+/**
+   @file adapters.h
+
+   @brief All code that ensures that ExaBayes can be compiled with
+   either the PLL or the ExaML code base
+
+*/ 
+
+
 #ifndef _ADAPTER_CODE_H
 #define _ADAPTER_CODE_H
 

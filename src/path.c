@@ -121,7 +121,7 @@ static void multiplyBranch(state *chain, branch b, double parameter, double *has
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void multiplyAlongBranchESPR(state *chain, path *s)
+void multiplyAlongBranchESPR(state *chain, path *s, double multi )
 {
   /* printf("multiplyAlongBranchESPR \n");  */
   tree *tr = chain->tr; 
@@ -138,35 +138,36 @@ void multiplyAlongBranchESPR(state *chain, path *s)
   double hastings = 1; 
 
   /* TODO hack: using the branch length multiplier parameter here  */
-  proposalFunction *pf = NULL; 
-  for(int i = 0; i < chain->numProposals; ++i)
-    {
-      proposalFunction *tmp = chain->proposals[i]; 
-      if(tmp->ptype == BRANCH_LENGTHS_MULTIPLIER)
-	pf= tmp ; 
-    }
-  if(NOT pf)
-    {
-      printf("sorry, please activate the BL multiplier proposal.\n"); 
-      assert(pf); 
-    }
-
-  double parameter = pf->param2.multiplier ; 
-  multiplyBranch(chain, firstBranch, parameter, &hastings); 
+  /* proposalFunction *pf = NULL;  */
+  /* for(int i = 0; i < chain->numProposals; ++i) */
+  /*   { */
+  /*     proposalFunction *tmp = chain->proposals[i];  */
+  /*     if(tmp->ptype == BRANCH_LENGTHS_MULTIPLIER) */
+  /* 	pf= tmp ;  */
+  /*   } */
+  /* if(NOT pf) */
+  /*   { */
+  /*     /\* printf("sorry, please activate the BL multiplier proposal.\n");  *\/ */
+  /*     /\* assert(pf);  *\/ */
+  /*   } */
+  /* double parameter = pf->param2.multiplier ;  */
+  
+  
+  multiplyBranch(chain, firstBranch, multi, &hastings); 
   
   /* treat all branches except the first 2 and the last one */
   for(int pathPos = 2; pathPos < s->index-1; ++pathPos)
     {
       branch b = s->content[pathPos]; 
-      multiplyBranch(chain, b, parameter, &hastings); 
+      multiplyBranch(chain, b, multi, &hastings); 
     }
 
   /* treat last two paths (only one in representation) */
   b = constructBranch(sTNode, s->content[s->index-1].thisNode); 
-  multiplyBranch(chain, b,parameter, &hastings); 
+  multiplyBranch(chain, b,multi, &hastings); 
 
   b = constructBranch(sTNode, s->content[s->index-1].thatNode); 
-  multiplyBranch(chain,b,parameter, &hastings);   
+  multiplyBranch(chain,b,multi, &hastings);   
   chain->hastings *= hastings; 
 }
 

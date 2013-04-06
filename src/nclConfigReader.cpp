@@ -1,7 +1,4 @@
-/**
-   @file nclConfigReader.cpp
-   @brief Wraps the ncl-nexus parser for usage with ExaBayes.     
-*/
+
 
 #include <iostream>
 #include <cassert>
@@ -67,6 +64,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = BRANCH_LENGTHS_MULTIPLIER; 
   else if(key.EqualsCaseInsensitive("initFrequencySliderWeight"))
     *pf = FREQUENCY_SLIDER; 
+  else if(key.EqualsCaseInsensitive("initGuidedSPR"))
+    *pf = GUIDED_SPR; 
 
   // TODO@kassian this is a good place for proposal add 
 

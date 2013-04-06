@@ -7,7 +7,7 @@ void createStack(stack **s)
 {
   *s = (stack*)exa_calloc(1,sizeof(stack)); 
   (*s)->content = exa_calloc(INIT_STACK_LENGTH, sizeof(branch)); 
-  (*s)->length = 10; 
+  (*s)->length = INIT_STACK_LENGTH; 
   (*s)->index = 0;  
 }
 

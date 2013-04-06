@@ -1,3 +1,10 @@
+/**
+   @file convergence.h
+   
+   @brief Convergence diagnostics.
+*/ 
+
+
 #ifndef _CONVERGENCE_H 
 #define _CONVERGENCE_H 
 

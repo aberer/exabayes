@@ -1,11 +1,3 @@
-/**
-   @file main-common.c
-   
-   @brief Shared methods for setting up ExaBayes with either the PLL
-   or ExaML.
-    
- */ 
-
 
 #include "axml.h"
 #include "main-common.h"

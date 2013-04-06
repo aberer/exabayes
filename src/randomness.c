@@ -1,24 +1,4 @@
-/**
-   @file randomness.c
-   
-   @brief Wraps random number generation functions. 
 
-   @notice Do not generate random numbers otherwise! 
-
-   notice new convention: 
-   
-   * chain-specific random numbers (e.g., proposals, acceptance) are
-     created from randCtr_t and randKey_t and => this way we easily
-     can reset the rng
-
-   * random numbers that are needed in a global context (e.g.,
-     switching chains) are created from a global rng. (see global
-     variables)
-     
-   * for the ctr for the chain-specific stuf: first int is the
-     generation, second a ctr (since we may need more numbers for each
-     step, starting from 0)
- */ 
 
 
 #include <math.h>
@@ -300,5 +280,5 @@ double drawFromSlidingWindow(state *chain, double param, double window)
     lower = param - (window / 2 ); 
   
   double r = drawRandDouble01(chain); 
-  return lower + r * (upper - lower)  ; 
+  return lower + r * (upper - lower)  ; /* TODO correct?  */
 }

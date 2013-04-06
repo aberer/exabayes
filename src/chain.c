@@ -1,8 +1,4 @@
-/**
-   @file chain.c
-   
-   @brief Functions that are applied to individual chains. 
-*/ 
+
 
 
 #include "axml.h"
@@ -667,11 +663,7 @@ void step(state *chain)
 {
   tree *tr = chain->tr;   
 
-  double prevLnl = chain->tr->likelihood;    
-  /* int numPart = getNumberOfPartitions( chain->tr ); */
-  /* double prevPartLnl[numPart];  */
-  /* for(int i = 0; i < numPart; ++i) */
-  /*   prevPartLnl[i] = chain->lnl.partitionLnl[i];  */
+  double prevLnl = chain->tr->likelihood;     
 
   double myHeat = getChainHeat(chain ) ; 
 
@@ -762,4 +754,5 @@ void step(state *chain)
 #endif
 
   chain->currentGeneration++; 
+  /* printf("\n");  */
 }

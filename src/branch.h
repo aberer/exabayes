@@ -1,3 +1,13 @@
+/**
+   @file branch.h
+   
+   @brief Everything that deals with branches.  
+   
+
+   TODO call by value for branches is too expensive  
+ */
+
+
 #ifndef _BRANCH_H
 #define _BRANCH_H
 
@@ -18,7 +28,6 @@ branch constructBranch(int thisNode, int thatNode);
 boolean branchExists(tree *tr, branch b); 
 nodeptr findNodeFromBranch(tree *tr, branch b ); 
 void pruneBranch(struct _state  *chain, branch b, double *z); 
-/* branch findRoot(struct _state *chain);  */
 branch findRoot(tree *tr); 
 boolean isTipBranch(branch b, int numTip); 
 boolean branchEqualUndirected(branch b1, branch b2); 
@@ -28,4 +37,7 @@ branch getThirdBranch(tree *tr, branch b1, branch b2);
 int getOtherNode(int node, branch b); 
 double branchLengthToInternal(tree *tr, double realBL);
 double branchLengthToReal(tree *tr, double internalBL); 
+void divideBranchLengthsWithRatio(tree *tr, double orig,  double ratio, double *resultA, double *resultB); 
+double combineBranchLengths(tree *tr, double origA, double origB); 
+double getRatio(tree *tr, double a, double b ); 
 #endif

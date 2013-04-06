@@ -16,5 +16,5 @@ void drawPathForESPR(state *chain,stack *s, double stopProp );
 void saveBranchLengthsPath(state *chain, path *s); 
 boolean nodeIsOnPath(int node, path *aPath); 
 boolean isOuterNode(int node, path *aPath); 
-void multiplyAlongBranchESPR(state *chain, path *s); 
+void multiplyAlongBranchESPR(state *chain, path *s, double multi); 
 #endif

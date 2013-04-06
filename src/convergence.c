@@ -1,8 +1,4 @@
-/**
-   @file convergence.c
-   
-   @brief Convergence diagnostics.
-*/ 
+
 
 #include "axml.h"
 #include "bayes.h"

@@ -1,7 +1,3 @@
-/**
-   @file main-examl_cond.c
-   @brief sets up ExaBayes with the ExaML code base.    
-*/ 
 
 
 /* use, if in productive mode */

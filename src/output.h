@@ -1,3 +1,11 @@
+/**
+   @file output.h
+   
+   @brief Functions printing to console or files. 
+   
+   Also some debug functionality goes in here. 
+*/ 
+
 #ifndef  _OUTPUT_H
 #define  _OUTPUT_H
 

@@ -84,7 +84,7 @@ typedef struct _pfun  proposalFunction;
 /* TODO will be replaced completely with paths  */
 typedef struct 
 {
-  int whichBranch; /// helps us to remember which branch we manipulated.       
+  /* int whichBranch; /// helps us to remember which branch we manipulated.        */
   double bls[NUM_BRANCHES]; /// branch lengths for saving 
 
   branch pruned; 		
@@ -140,7 +140,6 @@ typedef struct _state
 } state;
 
 
-
 struct _pfun 
 {
   proposal_type ptype; 
@@ -157,7 +156,6 @@ struct _pfun
   void (*reset_func)( state *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
   void (*autotune)(state *chain, struct _pfun *pf); 
 
-
   /**
      tunable parameters
   */
@@ -166,6 +164,7 @@ struct _pfun
     double multiplier;
     double eSprStopProb; 
     double slidWinSize;  	
+    int radius;     		/* for guided spr moves */
     double dirichletAlpha; 	/* TODO not used  */
     double stdDev ; 		/* TODO not used  */
   } parameters ; 
@@ -173,13 +172,10 @@ struct _pfun
      a hack for simplicity, but saves us all that memory allocation
      stuff */
 
-
   union
   {
     double multiplier ; 	/* the lambda of eSPR for multiplying moves  */
   } param2;  
-
-
 
   /**
      Variables that help us remember what we changed. 
@@ -189,7 +185,10 @@ struct _pfun
     stack *modifiedPath; 
     topoRecord *topoRec;
     perPartitionInfo *partInfo; 
-  }remembrance; 
+  }remembrance;
+
+  /* TODO dirty: is also a remembrance variable  */
+  double ratio; 
 
 }; 
 

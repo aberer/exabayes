@@ -67,12 +67,13 @@ typedef  unsigned int nat ;
 
 
 #define INIT_BRANCH_LENGTHS 0.65
-#define INIT_BL_MULT 1.386 
-#define INIT_BL_SLID_WIN  0.0005
+#define INIT_BL_MULT 1.386294
+#define INIT_BL_SLID_WIN  0.05
 #define INIT_RATE_SLID_WIN  0.15 
 #define INIT_FREQ_SLID_WIN  0.2 
 #define INIT_GAMMA_SLID_WIN  0.75
 #define INIT_ESPR_MULT 0.098
+#define INIT_GUIDED_RADIUS 10
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
@@ -87,16 +88,18 @@ typedef  unsigned int nat ;
  */
 
 
-#define ESPR_MULTIPLY_BL	 /// applyl multiplier to espr as by lakner
+/* #define ESPR_MULTIPLY_BL	 /// applyl multiplier to espr as by lakner */
 
 #define PRINT_FREQUENCY 500 
 #define TUNE_FREQUENCY 100 
 
-#define TUNE_PARAMETERS		/// turn off autotuning
+/* #define TUNE_PARAMETERS		/// turn off autotuning */
 
 /* #define DEBUG_PRINT_TUNE_INFO */
 
+
 /* for debugging:  */
+#define DEBUG_GUIDED_SPR 0	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_LNL_VERIFY */

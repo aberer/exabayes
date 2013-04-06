@@ -1,25 +1,27 @@
 #NEXUS
 begin EXABAYES; 
 
-      initGammaWeight 3 [ ok ]
+      initGammaWeight 6 [ ok ]
       initGammaExpWeight 0 [ ok ]
 
       INITSPRWEIGHT 0  [ BROKEN ] 
-      initEsprMappedWeight 40 [ ok ]
+      initEsprMappedWeight 15 [ ok ]
+      initGuidedSPR 25 [ok ] 
+      
 
-      initSingleBranchWeight 0 [ ok: TODO boundaries for proposals with tuning    ] 
+      initSingleBranchWeight 20 [ ok ] 
       initSingleBranchExpWeight 0  [ ok ] 
       initSingleBranchBiunifWeight 0 [ok]
-      branchMulti 40 [ ok ]
+      branchMulti 20 [ ok ]
 
-      initModelWeight 3 [ ok ]
+      initModelWeight 6 [ ok ]
       initModelBiunifWeight 0 [ok]
       initModelSingleBiunifWeight 0 [ok] 
       initModelAllBiunifWeight  0 [ok] 
       initModelPermBiunifWeight 0 [ BROKEN ] 
 
       initFrequenciesWeight 0   [ ok ]
-      initFrequencySliderWeight 3  [ TODO ]
+      initFrequencySliderWeight 6  [ ok ]
 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
@@ -32,5 +34,5 @@ begin EXABAYES;
       numIndiChains 4 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 4  [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 1  [ number of chains per independent run (only one is cold) ]       
 end;

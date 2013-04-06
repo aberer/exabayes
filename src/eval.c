@@ -1,10 +1,4 @@
-/**
-   @file eval.c
-   @brief Functions for likelihood evaluations.  
 
-   New convention: all these functions are responsible for updating
-   the chain->likelihood + chain->partitionLnl accordingly. 
-*/ 
 
 
 #include "axml.h"

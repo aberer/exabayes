@@ -1,7 +1,3 @@
-/**
-   @file mail-pll_cond.c 
-   @brief sets up ExaBayes with the PLL code base. 
-*/ 
 
 
 #include "mem_alloc.h"

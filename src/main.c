@@ -1,10 +1,3 @@
-/**
-   @file main.c
-
-   @brief A delegator file that contains the main function for builds
-   with either ExaML or the PLL
- */ 
-
 #include "config.h"
 
 #ifdef HAVE_AVX
