@@ -6,7 +6,7 @@ begin EXABAYES;
 
       INITSPRWEIGHT 0  [ BROKEN ] 
       initEsprMappedWeight 15 [ ok ]
-      initGuidedSPR 25 [ok ] 
+      initGuidedSPR 15 [ok ] 
       
 
       initSingleBranchWeight 20 [ ok ] 

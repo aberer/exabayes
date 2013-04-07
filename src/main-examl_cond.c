@@ -529,7 +529,6 @@ static boolean setupTree (tree *tr)
     inter; 
 
   int numPartitions = getNumberOfPartitions(tr) ;
-
   
   tr->bigCutoff = FALSE;
   
@@ -1113,7 +1112,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 
   compute_bits_in_16bits(tr->bits_in_16bits);
   
-  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
+  for(model = 0; model < (size_t)tr->NumberOfModels; model++)
     tr->partitionData[model].width        = 0;
 
   if(tr->manyPartitions)
@@ -1126,10 +1125,400 @@ static void initializePartitions(tree *tr, FILE *byteFile)
   	   
   maxCategories = tr->maxCategories;
 
-  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
+  for(model = 0; model < (size_t)tr->NumberOfModels; model++)
     {                       
       const partitionLengths 
 	*pl = getPartitionLengths(&(tr->partitionData[model])); 
+
+      width = tr->partitionData[model].width;
+	
+      /* 
+	 globalScaler needs to be 2 * tr->mxtips such that scalers of inner AND tip nodes can be added without a case switch
+	 to this end, it must also be initialized with zeros -> calloc
+       */
+
+      tr->partitionData[model].globalScaler    = (unsigned int *)calloc(2 * tr->mxtips, sizeof(unsigned int));  	         
+
+      tr->partitionData[model].left              = (double *)malloc_aligned(pl->leftLength * (maxCategories + 1) * sizeof(double));
+      tr->partitionData[model].right             = (double *)malloc_aligned(pl->rightLength * (maxCategories + 1) * sizeof(double));
+      tr->partitionData[model].EIGN              = (double*)malloc(pl->eignLength * sizeof(double));
+      tr->partitionData[model].EV                = (double*)malloc_aligned(pl->evLength * sizeof(double));
+      tr->partitionData[model].EI                = (double*)malloc(pl->eiLength * sizeof(double));
+      
+      tr->partitionData[model].substRates        = (double *)malloc(pl->substRatesLength * sizeof(double));
+      tr->partitionData[model].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
+      tr->partitionData[model].empiricalFrequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
+      tr->partitionData[model].tipVector         = (double *)malloc_aligned(pl->tipVectorLength * sizeof(double));
+      tr->partitionData[model].symmetryVector    = (int *)malloc(pl->symmetryVectorLength  * sizeof(int));
+      tr->partitionData[model].frequencyGrouping = (int *)malloc(pl->frequencyGroupingLength  * sizeof(int));
+      
+      tr->partitionData[model].perSiteRates      = (double *)malloc(sizeof(double) * tr->maxCategories);
+            
+      tr->partitionData[model].nonGTR = FALSE;            
+
+      tr->partitionData[model].gammaRates = (double*)malloc(sizeof(double) * 4);
+      tr->partitionData[model].yVector = (unsigned char **)malloc(sizeof(unsigned char*) * (tr->mxtips + 1));
+
+      
+      tr->partitionData[model].xVector = (double **)malloc(sizeof(double*) * tr->mxtips);   
+      	
+      for(j = 0; j < (size_t)tr->mxtips; j++)	        	  	  	  	 
+	  tr->partitionData[model].xVector[j]   = (double*)NULL;   
+
+      tr->partitionData[model].xSpaceVector = (size_t *)calloc(tr->mxtips, sizeof(size_t));  
+
+      tr->partitionData[model].sumBuffer = (double *)malloc_aligned(width *
+									   (size_t)(tr->partitionData[model].states) *
+									   discreteRateCategories(tr->rateHetModel) *
+									   sizeof(double));
+	    
+      tr->partitionData[model].wgt = (int *)malloc_aligned(width * sizeof(int));	  
+
+      /* rateCategory must be assigned using calloc() at start up there is only one rate category 0 for all sites */
+
+      tr->partitionData[model].rateCategory = (int *)calloc(width, sizeof(int));
+
+      if(width > 0 && tr->saveMemory)
+	{
+	  tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
+	    
+	  tr->partitionData[model].gapVector = (unsigned int*)calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));	  	    	  	  
+	    
+	  tr->partitionData[model].gapColumn = (double *)malloc_aligned(((size_t)tr->mxtips) *								      
+									       ((size_t)(tr->partitionData[model].states)) *
+									       discreteRateCategories(tr->rateHetModel) * sizeof(double));
+	}
+      else
+	{
+	   tr->partitionData[model].gapVectorLength = 0;
+	    
+	   tr->partitionData[model].gapVector = (unsigned int*)NULL; 	  	    	   
+	    
+	   tr->partitionData[model].gapColumn = (double*)NULL;	    	    	   
+	}              
+    }
+
+        
+  for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+    myLength += tr->partitionData[model].width;         
+   
+  /* assign local memory for storing sequence data */
+
+  tr->y_ptr = (unsigned char *)malloc(myLength * (size_t)(tr->mxtips) * sizeof(unsigned char));
+  assert(tr->y_ptr != NULL);
+   
+  for(i = 0; i < (size_t)tr->mxtips; i++)
+    {
+      for(model = 0, countOffset = 0; model < (size_t)tr->NumberOfModels; model++)
+	{
+	  tr->partitionData[model].yVector[i+1]   = &tr->y_ptr[i * myLength + countOffset];
+	  countOffset +=  tr->partitionData[model].width;
+	}
+      assert(countOffset == myLength);
+    }
+
+  /* figure in data */
+
+  if(tr->manyPartitions)
+    {
+      for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+	{
+	  if(isThisMyPartition(tr, processID, model))
+	    {
+	      width = tr->partitionData[model].upper - tr->partitionData[model].lower;	     
+	      
+	      memcpy(&(tr->partitionData[model].wgt[0]), &(tr->aliaswgt[tr->partitionData[model].lower]), sizeof(int) * width);
+	    }
+	}
+    }
+  else
+    {
+      size_t 	   
+	globalCounter, 
+	r, 
+	localCounter;
+      
+      for(model = 0, globalCounter = 0; model < (size_t)tr->NumberOfModels; model++)
+	{
+	  for(localCounter = 0, r = (size_t)tr->partitionData[model].lower;  r < (size_t)tr->partitionData[model].upper; r++)
+	    {
+	      if(r % (size_t)processes == (size_t)processID)
+		{
+		  tr->partitionData[model].wgt[localCounter] = tr->aliaswgt[globalCounter];	      	     		 		  					     
+		  
+		  localCounter++;
+		}
+	      globalCounter++;
+	    }
+	  assert(localCounter == tr->partitionData[model].width);
+	}   
+      assert(globalCounter == tr->originalCrunchedLength);
+    }
+   
+  /* set up the averaged frac changes per partition such that no further reading accesses to aliaswgt are necessary
+     and we can free the array for the GAMMA model */
+
+  if(tr->NumberOfModels > 1)
+    {        
+      size_t
+	*modelWeights = (size_t *)calloc(tr->NumberOfModels, sizeof(size_t)),
+	wgtsum = 0;  
+      
+      for(model = 0; model < (size_t)tr->NumberOfModels; model++)      
+	 {
+	   size_t
+	     lower = tr->partitionData[model].lower,
+	     upper = tr->partitionData[model].upper,
+	     i;
+	   
+	   for(i = lower; i < upper; i++)
+	     {
+	       double wgt = tr->partitionData[model].wgt[i]; 
+	       modelWeights[model] += wgt; 
+	       wgtsum              += wgt; 
+	     }
+	 }
+
+      for(model = 0; model < (size_t)tr->NumberOfModels; model++)      	
+	tr->partitionContributions[model] = ((double)modelWeights[model]) / ((double)wgtsum); 
+       
+       free(modelWeights);
+    }
+  else 
+    assert(0); 
+
+  if(tr->rateHetModel == GAMMA)
+    free(tr->aliaswgt);
+
+
+  y = (unsigned char *)malloc(sizeof(unsigned char) * tr->originalCrunchedLength);
+
+  for(i = 1; i <= (size_t)tr->mxtips; i++)
+    {
+      myBinFread(y, sizeof(unsigned char), ((size_t)tr->originalCrunchedLength), byteFile);
+	
+      if(tr->manyPartitions)
+	{
+	  for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+	    {
+	      if(isThisMyPartition(tr, processID, model))	  
+		{
+		  memcpy(tr->partitionData[model].yVector[i], &(y[tr->partitionData[model].lower]), sizeof(unsigned char) * tr->partitionData[model].width);					    
+		  assert(tr->partitionData[model].width == tr->partitionData[model].upper - tr->partitionData[model].lower);
+		}
+	      else
+		assert(tr->partitionData[model].width == 0);
+	    }
+	}
+      else
+	{
+	  size_t 	  
+	    globalCounter, 
+	    r, 
+	    localCounter;
+
+	  for(model = 0, globalCounter = 0; model < (size_t)tr->NumberOfModels; model++)
+	    {
+	      for(localCounter = 0, r = (size_t)tr->partitionData[model].lower;  r < (size_t)tr->partitionData[model].upper; r++)
+		{
+		  if(r % (size_t)processes == (size_t)processID)
+		    {		      
+		      tr->partitionData[model].yVector[i][localCounter] = y[globalCounter]; 	     
+		      
+		      localCounter++;
+		    }
+		  globalCounter++;
+		}
+	      
+	      assert(localCounter == tr->partitionData[model].width);
+	    }
+
+	  assert(globalCounter == tr->originalCrunchedLength);
+	}
+    }
+
+  free(y);
+    
+  /* initialize gap bit vectors at tips when memory saving option is enabled */
+  
+  if(tr->saveMemory)
+    {
+      for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+	{
+	  int        
+	    undetermined = getUndetermined(tr->partitionData[model].dataType);
+	  	 
+	  width =  tr->partitionData[model].width;
+	    
+	  if(width > 0)
+	    {	   	    	      	    	     
+	      for(j = 1; j <= (size_t)(tr->mxtips); j++)
+		for(i = 0; i < width; i++)
+		  if(tr->partitionData[model].yVector[j][i] == undetermined)
+		    tr->partitionData[model].gapVector[tr->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];	    
+	    }     
+	}
+    }
+}
+
+
+ void initializeTree(tree *tr, analdef *adef)
+{
+  size_t 
+    i,
+    model;
+  
+#ifdef _USE_ZLIB
+  gzFile
+    byteFile = gzopen(byteFileName, "rb");
+#else
+  FILE 
+    *byteFile = fopen(byteFileName, "rb");
+#endif
+
+  double 
+    **empiricalFrequencies;	 
+  
+  myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
+  myBinFread(&(tr->originalCrunchedLength), sizeof(size_t), 1, byteFile);
+  myBinFread(&(tr->NumberOfModels),         sizeof(int), 1, byteFile);
+  myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
+   
+  empiricalFrequencies = (double **)malloc(sizeof(double *) * tr->NumberOfModels);
+  
+  if(adef->perGeneBranchLengths)
+    tr->numBranches = tr->NumberOfModels;
+  else
+    tr->numBranches = 1;
+  
+  /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
+     let's not worry about this right now, because it is indeed ExaML-specific */
+  
+ 
+    
+  tr->aliaswgt                   = (int *)malloc(tr->originalCrunchedLength * sizeof(int));
+  myBinFread(tr->aliaswgt, sizeof(int), tr->originalCrunchedLength, byteFile);	       
+  
+  if(tr->rateHetModel == CAT)
+    {
+      tr->rateCategory    = (int *)    calloc(tr->originalCrunchedLength, sizeof(int));	    
+      tr->patrat          = (double*)  malloc(tr->originalCrunchedLength * sizeof(double));
+      tr->patratStored    = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 
+      tr->lhs             = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 
+    }
+  
+  tr->executeModel   = (boolean *)malloc(sizeof(boolean) * tr->NumberOfModels);
+  
+  for(i = 0; i < (size_t)tr->NumberOfModels; i++)
+    tr->executeModel[i] = TRUE;
+   
+  setupTree(tr); 
+  
+  if(tr->searchConvergenceCriterion && processID == 0)
+    {                     
+      tr->bitVectors = initBitVector(tr->mxtips, &(tr->vLength));
+      tr->h = initHashTable(tr->mxtips * 4);     
+    }
+  
+  for(i = 1; i <= (size_t)tr->mxtips; i++)
+    {
+      int 
+	len;
+      
+      myBinFread(&len, sizeof(int), 1, byteFile);
+      tr->nameList[i] = (char*)malloc(sizeof(char) * len);
+      myBinFread(tr->nameList[i], sizeof(char), len, byteFile);
+      addword(tr->nameList[i], tr->nameHash, i);        
+    }  
+ 
+  for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+    {      
+      int 
+	len;
+      
+      pInfo 
+	*p = &(tr->partitionData[model]);	   
+      
+      myBinFread(&(p->states),             sizeof(int), 1, byteFile);
+      myBinFread(&(p->maxTipStates),       sizeof(int), 1, byteFile);
+      myBinFread(&(p->lower),              sizeof(size_t), 1, byteFile);
+      myBinFread(&(p->upper),              sizeof(size_t), 1, byteFile);
+      myBinFread(&(p->width),              sizeof(size_t), 1, byteFile);
+      myBinFread(&(p->dataType),           sizeof(int), 1, byteFile);
+      myBinFread(&(p->protModels),         sizeof(int), 1, byteFile);
+      myBinFread(&(p->autoProtModels),     sizeof(int), 1, byteFile);
+      myBinFread(&(p->protFreqs),          sizeof(int), 1, byteFile);
+      myBinFread(&(p->nonGTR),             sizeof(boolean), 1, byteFile);
+      myBinFread(&(p->numberOfCategories), sizeof(int), 1, byteFile);	 
+      
+      /* later on if adding secondary structure data
+	 
+	 int    *symmetryVector;
+	 int    *frequencyGrouping;
+      */
+      
+      myBinFread(&len, sizeof(int), 1, byteFile);
+      p->partitionName = (char*)malloc(sizeof(char) * len);
+      myBinFread(p->partitionName, sizeof(char), len, byteFile);
+      
+      empiricalFrequencies[model] = (double *)malloc(sizeof(double) * p->states);
+      myBinFread(empiricalFrequencies[model], sizeof(double), p->states, byteFile);	   
+    }     
+  
+  initializePartitions(tr, byteFile);
+  
+  
+#ifdef _USE_ZLIB
+  gzclose(byteFile);
+#else
+  fclose(byteFile);
+#endif
+
+  initModel(tr, empiricalFrequencies); 
+ 
+  for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+    free(empiricalFrequencies[model]);
+
+  free(empiricalFrequencies);
+}
+
+
+#if 0 
+static void initializePartitions(tree *tr, FILE *byteFile)
+{
+  size_t
+    i,
+    j,
+    width,
+    model,
+    countOffset,
+    myLength = 0;
+
+  int
+    maxCategories;
+
+  unsigned char
+    *y;
+
+  compute_bits_in_16bits(tr->bits_in_16bits);
+  
+  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
+    tr->partitionData[model].width        = 0;
+
+  if(tr->manyPartitions)
+    {
+      multiprocessorScheduling(tr, processID);
+      computeFractionMany(tr, processID);
+    }
+  else
+    computeFraction(tr, processID, processes);
+  	   
+  maxCategories = tr->maxCategories;
+
+  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
+    {
+      const partitionLengths
+	*pl = getPartitionLengths(&(tr->partitionData[model]));
 
       width = tr->partitionData[model].width;
 
@@ -1137,12 +1526,12 @@ static void initializePartitions(tree *tr, FILE *byteFile)
       /* tr->partitionData[model].wr2 = (double *)exa_malloc(sizeof(double) * width);      */
 
      	
-      /* 
+      /*
 	 globalScaler needs to be 2 * tr->mxtips such that scalers of inner AND tip nodes can be added without a case switch
 	 to this end, it must also be initialized with zeros -> exa_calloc
        */
 
-      tr->partitionData[model].globalScaler    = (unsigned int *)exa_calloc(2 * tr->mxtips, sizeof(unsigned int));  	         
+      tr->partitionData[model].globalScaler    = (unsigned int *)exa_calloc(2 * tr->mxtips, sizeof(unsigned int));
 
       tr->partitionData[model].left              = (double *)exa_malloc_aligned(pl->leftLength * (maxCategories + 1) * sizeof(double));
       tr->partitionData[model].right             = (double *)exa_malloc_aligned(pl->rightLength * (maxCategories + 1) * sizeof(double));
@@ -1159,25 +1548,25 @@ static void initializePartitions(tree *tr, FILE *byteFile)
       
       tr->partitionData[model].perSiteRates      = (double *)exa_malloc(sizeof(double) * tr->maxCategories);
             
-      tr->partitionData[model].nonGTR = FALSE;            
+      tr->partitionData[model].nonGTR = FALSE;
 
       tr->partitionData[model].gammaRates = (double*)exa_malloc(sizeof(double) * 4);
       tr->partitionData[model].yVector = (unsigned char **)exa_malloc(sizeof(unsigned char*) * (tr->mxtips + 1));
 
       
-      tr->partitionData[model].xVector = (double **)exa_malloc(sizeof(double*) * tr->mxtips);   
+      tr->partitionData[model].xVector = (double **)exa_malloc(sizeof(double*) * tr->mxtips);
       	
-      for(j = 0; j < (size_t)tr->mxtips; j++)	        	  	  	  	 
-	  tr->partitionData[model].xVector[j]   = (double*)NULL;   
+      for(j = 0; j < (size_t)tr->mxtips; j++)
+	  tr->partitionData[model].xVector[j]   = (double*)NULL;
 
-      tr->partitionData[model].xSpaceVector = (size_t *)exa_calloc(tr->mxtips, sizeof(size_t));  
+      tr->partitionData[model].xSpaceVector = (size_t *)exa_calloc(tr->mxtips, sizeof(size_t));
 
       tr->partitionData[model].sumBuffer = (double *)exa_malloc_aligned(width *
 									   (size_t)(tr->partitionData[model].states) *
 									   discreteRateCategories(tr->rateHetModel) *
 									   sizeof(double));
 	    
-      tr->partitionData[model].wgt = (int *)exa_malloc_aligned(width * sizeof(int));	  
+      tr->partitionData[model].wgt = (int *)exa_malloc_aligned(width * sizeof(int));
 
       /* rateCategory must be assigned using exa_calloc() at start up there is only one rate category 0 for all sites */
 
@@ -1187,9 +1576,9 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	{
 	  tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
 	    
-	  tr->partitionData[model].gapVector = (unsigned int*)exa_calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));	  	    	  	  
+	  tr->partitionData[model].gapVector = (unsigned int*)exa_calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));
 	    
-	  tr->partitionData[model].gapColumn = (double *)exa_malloc_aligned(((size_t)tr->mxtips) *								      
+	  tr->partitionData[model].gapColumn = (double *)exa_malloc_aligned(((size_t)tr->mxtips) *
 									       ((size_t)(tr->partitionData[model].states)) *
 									       discreteRateCategories(tr->rateHetModel) * sizeof(double));
 	}
@@ -1197,15 +1586,15 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	{
 	   tr->partitionData[model].gapVectorLength = 0;
 	    
-	   tr->partitionData[model].gapVector = (unsigned int*)NULL; 	  	    	   
+	   tr->partitionData[model].gapVector = (unsigned int*)NULL;
 	    
-	   tr->partitionData[model].gapColumn = (double*)NULL;	    	    	   
-	}              
+	   tr->partitionData[model].gapColumn = (double*)NULL;
+	}
     }
 
         
   for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
-    myLength += tr->partitionData[model].width;         
+    myLength += tr->partitionData[model].width;
    
   /* assign local memory for storing sequence data */
 
@@ -1230,7 +1619,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	{
 	  if(isThisMyPartition(tr, processID, model))
 	    {
-	      width = tr->partitionData[model].upper - tr->partitionData[model].lower;	     
+	      width = tr->partitionData[model].upper - tr->partitionData[model].lower;
 	      
 	      memcpy(&(tr->partitionData[model].wgt[0]), &(tr->aliaswgt[tr->partitionData[model].lower]), sizeof(int) * width);
 	    }
@@ -1238,9 +1627,9 @@ static void initializePartitions(tree *tr, FILE *byteFile)
     }
   else
     {
-      size_t 	   
-	globalCounter, 
-	r, 
+      size_t
+	globalCounter,
+	r,
 	localCounter;
       
       for(model = 0, globalCounter = 0; model < (size_t)getNumberOfPartitions(tr); model++)
@@ -1249,14 +1638,14 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	    {
 	      if(r % (size_t)processes == (size_t)processID)
 		{
-		  tr->partitionData[model].wgt[localCounter] = tr->aliaswgt[globalCounter];	      	     		 		  					     
+		  tr->partitionData[model].wgt[localCounter] = tr->aliaswgt[globalCounter];
 		  
 		  localCounter++;
 		}
 	      globalCounter++;
 	    }
 	  assert(localCounter == tr->partitionData[model].width);
-	}   
+	}
       assert(globalCounter == tr->originalCrunchedLength);
     }
    
@@ -1270,9 +1659,9 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	{
 	  for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	    {
-	      if(isThisMyPartition(tr, processID, model))	  
+	      if(isThisMyPartition(tr, processID, model))
 		{
-		  memcpy(tr->partitionData[model].yVector[i], &(y[tr->partitionData[model].lower]), sizeof(unsigned char) * tr->partitionData[model].width);					    
+		  memcpy(tr->partitionData[model].yVector[i], &(y[tr->partitionData[model].lower]), sizeof(unsigned char) * tr->partitionData[model].width);
 		  assert(tr->partitionData[model].width == tr->partitionData[model].upper - tr->partitionData[model].lower);
 		}
 	      else
@@ -1281,9 +1670,9 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	}
       else
 	{
-	  size_t 	  
-	    globalCounter, 
-	    r, 
+	  size_t
+	    globalCounter,
+	    r,
 	    localCounter;
 
 	  for(model = 0, globalCounter = 0; model < (size_t)getNumberOfPartitions(tr); model++)
@@ -1291,8 +1680,8 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	      for(localCounter = 0, r = (size_t)tr->partitionData[model].lower;  r < (size_t)tr->partitionData[model].upper; r++)
 		{
 		  if(r % (size_t)processes == (size_t)processID)
-		    {		      
-		      tr->partitionData[model].yVector[i][localCounter] = y[globalCounter]; 	     
+		    {
+		      tr->partitionData[model].yVector[i][localCounter] = y[globalCounter];
 		      
 		      localCounter++;
 		    }
@@ -1314,24 +1703,26 @@ static void initializePartitions(tree *tr, FILE *byteFile)
     {
       for(model = 0; model < (size_t)getNumberOfPartitions(tr); model++)
 	{
-	  int        
+	  int
 	    undetermined = getUndetermined(tr->partitionData[model].dataType);
 	  	 
 	  width =  tr->partitionData[model].width;
 	    
 	  if(width > 0)
-	    {	   	    	      	    	     
+	    {
 	      for(j = 1; j <= (size_t)(tr->mxtips); j++)
 		for(i = 0; i < width; i++)
 		  if(tr->partitionData[model].yVector[j][i] == undetermined)
-		    tr->partitionData[model].gapVector[tr->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];	    
-	    }     
+		    tr->partitionData[model].gapVector[tr->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];
+	    }
 	}
     }
 }
+#endif
 
 
 
+#if 0 
 void initializeTree(tree *tr, analdef *adef)
 {
   size_t 
@@ -1432,6 +1823,7 @@ void initializeTree(tree *tr, analdef *adef)
 
   exa_free(empiricalFrequencies);
 }
+#endif
 
 
 

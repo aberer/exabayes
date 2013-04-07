@@ -123,66 +123,66 @@ void printInfo(state *chain, const char *format, ...)
 }
 
 
-double exabayes_getBranchLength(state *chain, int perGene, nodeptr p)
-{
-  tree *tr = chain->tr; 
+/* double exabayes_getBranchLength(state *chain, int perGene, nodeptr p) */
+/* { */
+/*   tree *tr = chain->tr;  */
 
-  double 
-    z = 0.0,
-    x = 0.0;
+/*   double  */
+/*     z = 0.0, */
+/*     x = 0.0; */
 
-  assert(perGene != NO_BRANCHES);
+/*   assert(perGene != NO_BRANCHES); */
 	      
-  if(NOT hasPergeneBL(tr))
-    {
-      assert(tr->fracchange != -1.0);
-      z = p->z[0];
-      if (z < zmin) 
-	z = zmin;      	 
+/*   if(NOT hasPergeneBL(tr)) */
+/*     { */
+/*       assert(tr->fracchange != -1.0); */
+/*       z = p->z[0]; */
+/*       if (z < zmin)  */
+/* 	z = zmin;      	  */
       
-      x = -log(z) * tr->fracchange; 
-    }
-  else
-    {
-      if(perGene == SUMMARIZE_LH)
-	{
-	  int 
-	    i;
+/*       x = -log(z) * tr->fracchange;  */
+/*     } */
+/*   else */
+/*     { */
+/*       if(perGene == SUMMARIZE_LH) */
+/* 	{ */
+/* 	  int  */
+/* 	    i; */
 	  
-	  double 
-	    avgX = 0.0;
+/* 	  double  */
+/* 	    avgX = 0.0; */
 		      
-	  for(i = 0; i < getNumBranches(tr); i++)
-	    {
+/* 	  for(i = 0; i < getNumBranches(tr); i++) */
+/* 	    { */
 
-	      assert(getPcontr(chain,i) != -1.0);
-	      assert(getFracChange(chain,i) != -1.0);
+/* 	      assert(getPcontr(chain,i) != -1.0); */
+/* 	      assert(getFracChange(chain,i) != -1.0); */
 
-	      z = p->z[i];
-	      if(z < zmin) 
-		z = zmin;      	 
-	      x = -log(z) * getFracChange(chain,i);
-	      avgX += x * getPcontr(chain,i);
-	    }
+/* 	      z = p->z[i]; */
+/* 	      if(z < zmin)  */
+/* 		z = zmin;      	  */
+/* 	      x = -log(z) * getFracChange(chain,i); */
+/* 	      avgX += x * getPcontr(chain,i); */
+/* 	    } */
 
-	  x = avgX;
-	}
-      else
-	{	
-	  assert(getFracChange(chain,perGene) != -1.0);
-	  assert(perGene >= 0 && perGene < getNumBranches(tr));
+/* 	  x = avgX; */
+/* 	} */
+/*       else */
+/* 	{	 */
+/* 	  assert(getFracChange(chain,perGene) != -1.0); */
+/* 	  assert(perGene >= 0 && perGene < getNumBranches(tr)); */
 	  
-	  z = p->z[perGene];
+/* 	  z = p->z[perGene]; */
 	  
-	  if(z < zmin) 
-	    z = zmin;      	 
+/* 	  if(z < zmin)  */
+/* 	    z = zmin;      	  */
 	  
-	  x = -log(z) * getFracChange(chain,perGene);
-	}
-    }
+/* 	  x = -log(z) * getFracChange(chain,perGene); */
+/* 	} */
+/*     } */
 
-  return x;
-}
+/*   return x; */
+/* } */
 
 
 char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
@@ -214,7 +214,7 @@ char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
       return treestr;
     }
 
-  sprintf(treestr, ":%g", exabayes_getBranchLength(chain, perGene, p));
+  sprintf(treestr, ":%g", branchLengthToReal(chain->tr, p->z[0]));
   
   while (*treestr) treestr++;
   return  treestr;

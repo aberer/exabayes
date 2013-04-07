@@ -1633,6 +1633,8 @@ static void printRatesRest(int n, double *r, char **names, char *fileName)
 	}
     }
 }
+
+
 static double branchLength(int model, double *z, tree *tr)
 {
   double x;
@@ -2244,16 +2246,30 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	   
 	   for(i = lower; i < upper; i++)
 	     {
-	       modelWeights[model] += (size_t)tr->aliaswgt[i];
-	       wgtsum              += (size_t)tr->aliaswgt[i];
+	       /* double wgt = tr->partitionData[model].wgt[i];  */
+	       /* modelWeights[mbodel] += tr->partitionData[model].wgt[i]; */
+	       doubl ewgt = tr->partitionData[model].wgt[i]; 
+	       modelWeights[model] += wgt; 
+	       wgtsum              += wgt; 
 	     }
 	 }
-       
+
+      if(processID == 0)
+	printf("\n");        
       for(model = 0; model < (size_t)tr->NumberOfModels; model++)      	
-	 tr->partitionContributions[model] = ((double)modelWeights[model]) / ((double)wgtsum); 
+	{
+	  tr->partitionContributions[model] = ((double)modelWeights[model]) / ((double)wgtsum); 
+	  if(processID == 0)
+	    printf("contribution[%d] is %g" , model, tr->partitionContributions[model]);
+	}
+      	  if(processID == 0)
+	    printf("\n"); 
+
        
        free(modelWeights);
     }
+  else 
+    assert(0); 
 
   if(tr->rateHetModel == GAMMA)
     free(tr->aliaswgt);
@@ -2572,6 +2588,8 @@ static void optimizeTrees(tree *tr, analdef *adef)
       printBothOpen("Likelihood tree %d: %f \n", i, tr->likelihoods[i]);    
 }
 
+
+
 int main (int argc, char *argv[])
 { 
   MPI_Init(&argc, &argv);
@@ -2687,5 +2705,6 @@ int main (int argc, char *argv[])
 
   return 0;
 }
+
 
 

@@ -6,7 +6,7 @@
 #include "path.h" 
 #include "topology-utils.h"
 
-#include "gibbsLikeTopo.h" 
+#include "guidedMoves.h" 
 
 
 /* 
@@ -287,7 +287,7 @@ void evalGuidedSPR(state *chain, proposalFunction *pf)
 {
   tree
     *tr = chain->tr; 
-  double lnl = chain->tr->likelihood;   
+  /* double lnl = chain->tr->likelihood;    */
 #if 1 
   evaluateGenericWrapper(chain, tr->start, TRUE );
 #else 

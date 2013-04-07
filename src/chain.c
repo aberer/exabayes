@@ -663,6 +663,33 @@ void step(state *chain)
 {
   tree *tr = chain->tr;   
 
+/*   if(processID == 0) */
+/*     { */
+/*       pInfo *partition = getPartition(chain,0 ) ;  */
+/*       assert(getNumBranches(tr) == 1 );  */
+
+/*       double indiFC = 0, */
+/* 	indiFC2 = 0;  */
+/* #if HAVE_PLL == 1  */
+/*       indiFC = partition->fracchange;  */
+/*       indiFC2 = getPartition(chain,1)->fracchange;  */
+/* #else  */
+/*       indiFC = tr->fracchanges[0];  */
+/*       indiFC2 = tr->fracchanges[1];  */
+/* #endif */
+
+/*       printf("fracchange = %g, fracchanges[0]=%g\tfracchanges[1]=%g\tbl=%g\t", tr->fracchange, indiFC, indiFC2 , tr->nodep[1]->z[0]);  */
+/*       for(int i = 0;  i < 6 ; ++i) */
+/* 	printf("%g,", partition->substRates[i]);  */
+/*       printf("\t");  */
+/*       for(int i = 0; i < 4; ++i) */
+/* 	printf("%g,", partition->frequencies[i]);  */
+/*       printf("\n");  */
+/*     } */
+    
+
+  assert(chain->tr->fracchange > 0); 
+
   double prevLnl = chain->tr->likelihood;     
 
   double myHeat = getChainHeat(chain ) ; 

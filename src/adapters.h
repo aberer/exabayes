@@ -35,7 +35,7 @@ double getPLH(state *chain, int num);
 void setExecModel(state *chain, int num,boolean value); 
 boolean getExecModel(state *chain, int num); 
 double getPcontr(state *chain, int num); 
-double getFracChange(state *chain, int num); 
+/* double getFracChange(state *chain, int num);  */
 
 double** getXPtr(state *chain, int model); 
 #endif

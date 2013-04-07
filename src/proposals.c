@@ -15,7 +15,7 @@
 #include "misc-utils.h"
 #include "branch.h"
 #include "path.h"
-#include "gibbsLikeTopo.h"
+#include "guidedMoves.h"
 
 void expensiveVerify(tree *tr); 
 

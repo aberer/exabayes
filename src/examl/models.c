@@ -2731,13 +2731,17 @@ static void updateFracChange(tree *tr)
     {
       int 
 	model;      
-     
+
       assert(tr->NumberOfModels > 1);
 
       tr->fracchange = 0.0;	                     
  	        
       for(model = 0; model < tr->NumberOfModels; model++)                   
-	tr->fracchange +=  tr->partitionContributions[model] * tr->fracchanges[model];	
+	{
+	  tr->fracchange +=  tr->partitionContributions[model] * tr->fracchanges[model]; 
+	  /* printf("summing %g,%g\n" , tr->partitionContributions[model], tr->fracchanges[model] );  */
+	}
+      /* printf("updated FRACCHANGE is %g\n", tr->fracchange);  */
     }
 }
 

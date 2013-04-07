@@ -69,14 +69,19 @@ double getPcontr(state *chain, int num)
 }
 
 
-double getFracChange(state *chain, int num)
-{
-#if HAVE_PLL == 1 
-  return chain->partitions->partitionData[num]->fracchange; 
-#else
-  return chain->tr->fracchanges[num]; 
-#endif
-}
+
+
+
+
+
+/* double getFracChange(state *chain, int num) */
+/* { */
+/* #if HAVE_PLL == 1 */
+/*   return chain->partitions->partitionData[num]->fracchange; */
+/* #else */
+/*   return chain->tr->fracchanges[num]; */
+/* #endif */
+/* } */
 
 
 int getNumBranches(tree *tr)
@@ -155,6 +160,9 @@ void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
   hookupDefault(p,q,tr->numBranches); 
 #endif
 }
+
+
+
 
 
 
