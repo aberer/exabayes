@@ -355,6 +355,7 @@ branch findRoot(tree *tr)
 	p = tr->nodep[i]; 
       if(p->back->x)
 	{
+	  assert(root.thisNode == 0); 
 	  root.thisNode = p->number; 
 	  root.thatNode = p->back->number; 
 	}

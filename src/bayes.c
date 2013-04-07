@@ -229,12 +229,21 @@ void exa_main(tree *tr, analdef *adef)
 
 #ifdef TEST 
   {
+
+    state *chain = indiChains; 
+    tree *tr  = chain->tr;
+    evaluateGenericWrapper(chain, tr->start, TRUE); 
+    
+    evaluateGenericWrapper(chain, tr->nodep[60],FALSE); 
+    branch b =constructBranch(tr->nodep[60]->number,tr->nodep[60]->back->number ) ; 
+    branch root = findRoot(tr); 
+    branchEqualUndirected(b,root); 
+
     stack *s = NULL; 
     createStack(&s);
     drawPathForESPR(indiChains,s, 0.1); 
     exit(0); 
-  }
- 
+  } 
 #endif
 
 

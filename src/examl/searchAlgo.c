@@ -722,9 +722,6 @@ void addTraverseBIG(tree *tr, nodeptr p, nodeptr q, int mintrav, int maxtrav)
 } 
 
 
-
-
-
 int rearrangeBIG(tree *tr, nodeptr p, int mintrav, int maxtrav)   
 {  
   double   p1z[NUM_BRANCHES], p2z[NUM_BRANCHES], q1z[NUM_BRANCHES], q2z[NUM_BRANCHES];
@@ -960,8 +957,6 @@ double treeOptimizeRapid(tree *tr, int mintrav, int maxtrav, analdef *adef, best
 
   return tr->startLH;     
 }
-
-
 
 
 boolean testInsertRestoreBIG (tree *tr, nodeptr p, nodeptr q)

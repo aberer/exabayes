@@ -146,14 +146,16 @@ void saveAlignAndTreeState(state *chain)
 
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
+  /* printf("EVAL at %d\t%d,%d\n",start->number, start->next->back->number, start->next->next->back->number );  */
   exa_evaluateGeneric(chain,start,fullTraversal); 
+  
   expensiveVerify(chain);
 }
 
 
 
 
-static void orientationPointAway(tree *tr, nodeptr p)
+void orientationPointAway(tree *tr, nodeptr p)
 {
   if(NOT isTip(p->number, tr->mxtips))
     {

@@ -1284,8 +1284,6 @@ static void initializePartitions(tree *tr, FILE *byteFile)
        
        free(modelWeights);
     }
-  else 
-    assert(0); 
 
   if(tr->rateHetModel == GAMMA)
     free(tr->aliaswgt);

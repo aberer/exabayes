@@ -289,6 +289,11 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   assert(numSampled[0]  %  (numTaxa -3 )  == 0) ; 
 
   double treesSampled = numSampled[0] / (numTaxa - 3  ); 
+#ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
+  if(processID == 0)
+    printf("trees sampled: %g\n", treesSampled)  ;
+#endif
+
   int cntRelevant = 0; 
   for(int i = 0; i < ht->entryCount ; ++i)
     {
@@ -308,11 +313,11 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 	      double mu = 0; 
 	      for(int j = 0; j < n; ++j)
 		mu += (double)e->treeVector[j] / treesSampled; 
-	      mu /= n; 
+	      mu /= n ; 
 
 	      for(int j = 0; j < n; ++j)
-		sd += pow(((((double)e->treeVector[j]) / treesSampled) - mu ) ,2); 
-	      sd = sqrt(sd) ; 
+		sd += pow((( ((double)e->treeVector[j]) / treesSampled) - mu ) ,2); 
+	      sd = sqrt(sd/n) ; 
 
 #ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
 	      if(processID == 0)

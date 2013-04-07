@@ -40,4 +40,5 @@ void loadArray(struct _state *chain, int model);
 void restoreAlignAndTreeState(struct _state *chain); 
 void printAlnTrState(struct _state *chain); 
 void saveAlignAndTreeState(struct _state *chain); 
+void orientationPointAway(tree *tr, nodeptr p); 
 #endif
