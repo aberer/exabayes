@@ -241,23 +241,23 @@ char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
 /* TODO maybe generate random run id */
 
 
-static void printNexusTreeFileStart(state *curstate)
+static void printNexusTreeFileStart(state *chain)
 {
-  FILE *fh = curstate->topologyFile; 
+  FILE *fh = chain->topologyFile; 
 
   fprintf(fh, "#NEXUS\n[ID: %s]\n[Param: tree]\nbegin trees;\n\ttranslate\n", "TODO" ); 
 
-  for(int i = 0; i < curstate->tr->mxtips-1; ++i)
-    fprintf(fh, "\t\t%d %s,\n", i+1, curstate->tr->nameList[i+1]); 
-  fprintf(fh, "\t\t%d %s;\n", curstate->tr->mxtips, curstate->tr->nameList[curstate->tr->mxtips]);
+  for(int i = 0; i < chain->tr->mxtips-1; ++i)
+    fprintf(fh, "\t\t%d %s,\n", i+1, chain->tr->nameList[i+1]); 
+  fprintf(fh, "\t\t%d %s;\n", chain->tr->mxtips, chain->tr->nameList[chain->tr->mxtips]);
   /* fclose(fh);  */
 }
 
 
-static void printParamFileStart(state *curstate)
+static void printParamFileStart(state *chain)
 {
   /* FILE *fh = myfopen(outputParamFile, "w");  */
-  FILE *fh = curstate->outputParamFile; 
+  FILE *fh = chain->outputParamFile; 
   
   char *tmp = "TODO"; 
   fprintf(fh, "[ID: %s]\n", tmp);
@@ -268,23 +268,27 @@ pi(A)\tpi(C)\tpi(G)\tpi(T)\
   fflush(fh); 
 }
 
-static void printParams(state *curstate)
+static void printParams(state *chain)
 {
+  tree *tr = chain->tr; 
   int model = 0; 
 
-  pInfo *partition = getPartition(curstate, model); 
+  pInfo *partition = getPartition(chain, model); 
 
   /* FILE *fh = myfopen(outputParamFile, "a");  */
-  FILE *fh = curstate->outputParamFile; 
+  FILE *fh = chain->outputParamFile; 
 
-
-  fprintf(fh, "%d\t%f\t%f", curstate->currentGeneration,curstate->tr->likelihood, getTreeLength(curstate->tr,curstate->tr->nodep[1]->back ) ); 
+  double treeLength = branchLengthToReal(tr, getTreeLength(tr,tr->nodep[1]->back )); 
+  assert(treeLength != 0.); 
+  fprintf(fh, "%d\t%f\t%.3f", chain->currentGeneration,
+	  tr->likelihood,  
+	  treeLength); 
 
   /* TODO what about multiple models?  */
   /* TODO that will not work in the future ...  */
 
 #if 0 
-  for(int i = 0; i< curstate->modelRemem.numSubsRates;  ++i )
+  for(int i = 0; i< chain->modelRemem.numSubsRates;  ++i )
     fprintf(fh, "\t%f" , partition->substRates[i]); 
 #endif
 
@@ -303,16 +307,16 @@ static void printParams(state *curstate)
 
 
 
-void initializeOutputFiles(state *curstate)
+void initializeOutputFiles(state *chain)
 {
-  printNexusTreeFileStart(curstate); 
-  printParamFileStart(curstate);
+  printNexusTreeFileStart(chain); 
+  printParamFileStart(chain);
 }
 
 
-void finalizeOutputFiles(state *curstate)
+void finalizeOutputFiles(state *chain)
 {
-  FILE *fh = curstate->topologyFile; 
+  FILE *fh = chain->topologyFile; 
 
   /* topo file  */
   fprintf(fh, "end;\n"); 
@@ -322,23 +326,23 @@ void finalizeOutputFiles(state *curstate)
 
 
   /* TODO what about per model brach lengths? how does mrB do this? */
-static void exabayes_printTopology(state *curstate)
+static void exabayes_printTopology(state *chain)
 {
   /* FILE *fh = myfopen(topologyFile, "a");   */
-  FILE *fh = curstate->topologyFile; 
-  memset(curstate->tr->tree_string, 0, curstate->tr->treeStringLength * sizeof(char) ); 
+  FILE *fh = chain->topologyFile; 
+  memset(chain->tr->tree_string, 0, chain->tr->treeStringLength * sizeof(char) ); 
   
-  Tree2stringNexus(curstate->tr->tree_string, curstate,  curstate->tr->start->back, 0 ); 
-  fprintf(fh,"\ttree gen.%d = [&U] %s\n", curstate->currentGeneration, curstate->tr->tree_string);
+  Tree2stringNexus(chain->tr->tree_string, chain,  chain->tr->start->back, 0 ); 
+  fprintf(fh,"\ttree gen.%d = [&U] %s\n", chain->currentGeneration, chain->tr->tree_string);
 
 }
 
 
 
-void printSample(state *curstate)
+void printSample(state *chain)
 {
-  exabayes_printTopology(curstate);
-  printParams(curstate);
+  exabayes_printTopology(chain);
+  printParams(chain);
 }
 
 
@@ -454,8 +458,9 @@ void chainInfo(state *chain)
   assert(chain->couplingId == 0) ; /* we are the cold chain   */
 
   int runId = chain->id / gAInfo.numberCoupledChains; 
+  tree *tr = chain->tr; 
 
-  PRINT( "[run: %d] [TIME %.2f] gen: %d Likelihood: %.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->tr->likelihood);
+  PRINT( "[run: %d] [TIME %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->tr->likelihood, branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));
   printHotChains(runId); 
   printSwapInfo(runId);   
   PRINT("\n"); 
@@ -487,47 +492,47 @@ void chainInfo(state *chain)
 
 #if 0 
 /* QUARANTINE  */
-void chainInfoOutput(state *curstate )
+void chainInfoOutput(state *chain )
 {
 
-  PRINT( "[chain: %d] [TIME %.2f] gen: %d Likelihood: %f StartLH: %f \n",curstate->id,   gettime()  - timeIncrement  , curstate->currentGeneration, curstate->tr->likelihood, curstate->tr->startLH);
+  PRINT( "[chain: %d] [TIME %.2f] gen: %d Likelihood: %f StartLH: %f \n",chain->id,   gettime()  - timeIncrement  , chain->currentGeneration, chain->tr->likelihood, chain->tr->startLH);
 
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
   
   PRINT( "Topo: eSpr: %d/%d (%d%%)\teSpr_mapped: %d/%d\t(%d%%) \n"
-	 , curstate->acceptedProposals[E_SPR]	, curstate->rejectedProposals[E_SPR] , (int)(curstate->acceptedProposals[E_SPR]*100/
-											     (curstate->acceptedProposals[E_SPR]+curstate->rejectedProposals[E_SPR]+0.0001)
+	 , chain->acceptedProposals[E_SPR]	, chain->rejectedProposals[E_SPR] , (int)(chain->acceptedProposals[E_SPR]*100/
+											     (chain->acceptedProposals[E_SPR]+chain->rejectedProposals[E_SPR]+0.0001)
 ),
-	 curstate->acceptedProposals[E_SPR_MAPPED]	, curstate->rejectedProposals[E_SPR_MAPPED] , (int)(curstate->acceptedProposals[E_SPR_MAPPED]*100/(curstate->acceptedProposals[E_SPR_MAPPED]+curstate->rejectedProposals[E_SPR_MAPPED]+0.0001)));
+	 chain->acceptedProposals[E_SPR_MAPPED]	, chain->rejectedProposals[E_SPR_MAPPED] , (int)(chain->acceptedProposals[E_SPR_MAPPED]*100/(chain->acceptedProposals[E_SPR_MAPPED]+chain->rejectedProposals[E_SPR_MAPPED]+0.0001)));
   
-  PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",curstate->acceptedProposals[UPDATE_MODEL]	, curstate->rejectedProposals[UPDATE_MODEL] , (int)(curstate->acceptedProposals[UPDATE_MODEL]*100/(curstate->acceptedProposals[UPDATE_MODEL]+curstate->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
-	 curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_BIUNIF]+0.0001)) ,
-	 curstate->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF]+0.0001)) ,
-	 curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+0.0001)) ,
-	 curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]	, curstate->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]+curstate->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF]+0.0001)));
+  PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",chain->acceptedProposals[UPDATE_MODEL]	, chain->rejectedProposals[UPDATE_MODEL] , (int)(chain->acceptedProposals[UPDATE_MODEL]*100/(chain->acceptedProposals[UPDATE_MODEL]+chain->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
+	 chain->acceptedProposals[UPDATE_MODEL_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_BIUNIF]+0.0001)) ,
+	 chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF]+0.0001)) ,
+	 chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+0.0001)) ,
+	 chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF]+0.0001)));
   
   PRINT( "Frequencies: unif: %d/%d (%d%%) \n"
-  , curstate->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]	, curstate->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF] , (int)(curstate->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]+curstate->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF]+0.0001)));
+  , chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]	, chain->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]*100/(chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]+chain->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF]+0.0001)));
   
-  PRINT( "Gamma: slidingWindow: %d/%d (%d%%) gaExp: %d/%d (%d%%) \n",curstate->acceptedProposals[UPDATE_GAMMA]	, curstate->rejectedProposals[UPDATE_GAMMA] , (int)(curstate->acceptedProposals[UPDATE_GAMMA]*100/(curstate->acceptedProposals[UPDATE_GAMMA]+curstate->rejectedProposals[UPDATE_GAMMA]+0.0001)),
-	 curstate->acceptedProposals[UPDATE_GAMMA_EXP]	, curstate->rejectedProposals[UPDATE_GAMMA_EXP] , (int)(curstate->acceptedProposals[UPDATE_GAMMA_EXP]*100/(curstate->acceptedProposals[UPDATE_GAMMA_EXP]+curstate->rejectedProposals[UPDATE_GAMMA_EXP]+0.0001)));
+  PRINT( "Gamma: slidingWindow: %d/%d (%d%%) gaExp: %d/%d (%d%%) \n",chain->acceptedProposals[UPDATE_GAMMA]	, chain->rejectedProposals[UPDATE_GAMMA] , (int)(chain->acceptedProposals[UPDATE_GAMMA]*100/(chain->acceptedProposals[UPDATE_GAMMA]+chain->rejectedProposals[UPDATE_GAMMA]+0.0001)),
+	 chain->acceptedProposals[UPDATE_GAMMA_EXP]	, chain->rejectedProposals[UPDATE_GAMMA_EXP] , (int)(chain->acceptedProposals[UPDATE_GAMMA_EXP]*100/(chain->acceptedProposals[UPDATE_GAMMA_EXP]+chain->rejectedProposals[UPDATE_GAMMA_EXP]+0.0001)));
   
-  PRINT( "Branchlength: Slidingwindow: %d/%d (%d%%) blBiunif: %d/%d (%d%%) blExp: %d/%d (%d%%)\n",curstate->acceptedProposals[UPDATE_SINGLE_BL], curstate->rejectedProposals[UPDATE_SINGLE_BL], (int)(curstate->acceptedProposals[UPDATE_SINGLE_BL]*100/(curstate->acceptedProposals[UPDATE_SINGLE_BL]+curstate->rejectedProposals[UPDATE_SINGLE_BL]+0.0001)),
-	 curstate->acceptedProposals[UPDATE_SINGLE_BL_EXP], curstate->rejectedProposals[UPDATE_SINGLE_BL_EXP], (int)(curstate->acceptedProposals[UPDATE_SINGLE_BL_EXP]*100/(curstate->acceptedProposals[UPDATE_SINGLE_BL_EXP]+curstate->rejectedProposals[UPDATE_SINGLE_BL_EXP]+0.0001)),
-	 curstate->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF], curstate->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF], (int)(curstate->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]*100/(curstate->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]+curstate->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF]+0.0001)));
+  PRINT( "Branchlength: Slidingwindow: %d/%d (%d%%) blBiunif: %d/%d (%d%%) blExp: %d/%d (%d%%)\n",chain->acceptedProposals[UPDATE_SINGLE_BL], chain->rejectedProposals[UPDATE_SINGLE_BL], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL]+chain->rejectedProposals[UPDATE_SINGLE_BL]+0.0001)),
+	 chain->acceptedProposals[UPDATE_SINGLE_BL_EXP], chain->rejectedProposals[UPDATE_SINGLE_BL_EXP], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL_EXP]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL_EXP]+chain->rejectedProposals[UPDATE_SINGLE_BL_EXP]+0.0001)),
+	 chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF], chain->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]+chain->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF]+0.0001)));
   
-  PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",curstate->hastings, curstate->newprior, curstate->curprior);
+  PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",chain->hastings, chain->newprior, chain->curprior);
   
-  if(getNumberOfPartitions(curstate->tr) < 10) 
+  if(getNumberOfPartitions(chain->tr) < 10) 
     {
-      for(int printModel=0; printModel< getNumberOfPartitions(curstate->tr);printModel++) 
-	printSubsRates(curstate, printModel, curstate->modelRemem.numSubsRates);
+      for(int printModel=0; printModel< getNumberOfPartitions(chain->tr);printModel++) 
+	printSubsRates(chain, printModel, chain->modelRemem.numSubsRates);
     }
     
   PRINT("\n");
-  //printSubsRates(curstate, curstate->modelRemem.model, curstate->modelRemem.numSubsRates);
-//printf("numSubs: %d numFrequ: %d\n\n",curstate->modelRemem.numSubsRates,curstate->frequRemem.numFrequRates);
+  //printSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates);
+//printf("numSubs: %d numFrequ: %d\n\n",chain->modelRemem.numSubsRates,chain->frequRemem.numFrequRates);
 
 }
 #endif

@@ -73,7 +73,7 @@ typedef  unsigned int nat ;
 #define INIT_FREQ_SLID_WIN  0.2 
 #define INIT_GAMMA_SLID_WIN  0.75
 #define INIT_ESPR_MULT 0.098
-#define INIT_GUIDED_RADIUS 3
+#define INIT_GUIDED_RADIUS 5
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
@@ -93,7 +93,7 @@ typedef  unsigned int nat ;
 #define PRINT_FREQUENCY 500 
 #define TUNE_FREQUENCY 100 
 
-/* #define TUNE_PARAMETERS		/// turn off autotuning */
+#define TUNE_PARAMETERS		/// turn off autotuning
 
 /* #define DEBUG_PRINT_TUNE_INFO */
 

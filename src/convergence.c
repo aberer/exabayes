@@ -352,7 +352,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   asdsf /= cntRelevant; 
 
   if(processID == 0)
-    printf("CONVERGENCE: ASDSF = %f\n", asdsf); 
+    PRINT("CONVERGENCE: ASDSF = %f\n", asdsf); 
 
   exa_free(numSampled); 
 

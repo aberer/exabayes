@@ -11,6 +11,7 @@
 #include "convergence.h" 
 #include "treeRead.h"
 #include "exa-topology.h"
+#include "topology-utils.h"
 #include "randomness.h"
 #include "eval.h"
 #include "adapters.h"
@@ -373,7 +374,13 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       saveTreeStateToChain(theChain); 
 
       if(processID == 0)
-	printf("init lnl for chain %d is  %f\n", theChain->id, theChain->tr->likelihood); 
+	{
+	  double tl = getTreeLength(theChain->tr, theChain->tr->nodep[1]->back); 
+	  printf("init lnl for chain %d is  %f\ttree-length=%.3f\n", theChain->id, theChain->tr->likelihood, 
+		 branchLengthToReal(theChain->tr, tl)); 
+	}
+
+      
 
       if(processID == 0 )
 	{	  
@@ -662,6 +669,8 @@ void debug_checkLikelihood(state *chain)
 void step(state *chain)
 {
   tree *tr = chain->tr;   
+ 
+  /* printf("treelength %f\n", branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));  */
 
 /*   if(processID == 0) */
 /*     { */

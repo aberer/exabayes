@@ -14,7 +14,7 @@ begin EXABAYES;
       initSingleBranchBiunifWeight 0 [ok]
       branchMulti 20 [ ok ]
 
-      initModelWeight 5 [ ok ]
+      initModelWeight 3 [ ok ]
       initModelBiunifWeight 0 [ok]
       initModelSingleBiunifWeight 0 [ok] 
       initModelAllBiunifWeight  0 [ok] 

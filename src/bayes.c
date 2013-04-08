@@ -92,6 +92,13 @@ void switchChainState(state *chains)
 	  b->proposals[i] = tmp; 
 	}
 
+      FILE *tmp = a-> topologyFile; 
+      a->topologyFile = b->topologyFile; 
+      b->topologyFile = tmp; 
+      tmp = a->outputParamFile; 
+      a->outputParamFile = b->outputParamFile; 
+      b->outputParamFile = tmp; 
+
       int r = MIN(a->couplingId, b->couplingId ); 
       int c = MAX(a->couplingId, b->couplingId); 
       cntAccept(&(gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c ]) );       
