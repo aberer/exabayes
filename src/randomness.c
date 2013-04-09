@@ -291,8 +291,7 @@ double drawMultiplier(state *chain, double multiplier)
 {
   double tmp =  exp(multiplier * (drawRandDouble01(chain)  - 0.5)); 
   assert(tmp > 0.); 
-  return tmp ; 
-  
+  return tmp ;   
 }
 
 

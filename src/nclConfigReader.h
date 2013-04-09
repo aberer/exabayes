@@ -19,6 +19,7 @@ typedef struct
   int numIndiChains; 
   int diagFreq; 
   int numCoupledChains; 
+  int initGuidedSPR; 
 
 } initParamStruct ; 
 

@@ -15,7 +15,8 @@
 #include "branch.h"
 #include "path.h"
 #include "guidedMoves.h"
-#include  "stNNI.h"
+#include "stNNI.h"
+#include "tlMult.h" 
 
 void expensiveVerify(tree *tr); 
 
@@ -298,7 +299,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
     {
       switch(pf->ptype)
 	{
-	case E_SPR_MAPPED: 
+	case E_SPR: 
 	  zqr[i] = nbz[i] ; 
 	  break; 
 	default: assert(0); 
@@ -378,7 +379,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       break; 
 
       break;       
-    case E_SPR_MAPPED: 
+    case E_SPR: 
       {
 	/* TODO hastings?  */
       
@@ -1465,9 +1466,9 @@ static void autotuneMultiplier(state *chain, proposalFunction *pf)
   if(processID == 0 )
     {
     if(newParam < *parameter)
-      printf("%s\tratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+      printInfo(chain, "%s\tratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
     else if (newParam > *parameter)
-      printf("%s\tratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+      printInfo(chain, "%s\tratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
     }
 #endif
 
@@ -1492,9 +1493,9 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
   if(processID == 0 )
     {
       if(newParam < *parameter)
-	printf("%s ratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+	printInfo(chain, "%s ratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
       else if (newParam > *parameter)
-	printf("%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+	printInfo(chain, "%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
     }
 #endif
 
@@ -1522,9 +1523,9 @@ static void autotuneStopProp(state *chain, proposalFunction *pf)
   if(processID == 0 )
     {
     if(newParam < *parameter)
-      printf("%s ratio=%f\t => reduced %f to %f\n", pf->name,getRatioLocal(ctr), *parameter, newParam);
+      printInfo(chain, "%s ratio=%f\t => reduced %f to %f\n", pf->name,getRatioLocal(ctr), *parameter, newParam);
     else if (newParam > *parameter)
-      printf("%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
+      printInfo(chain, "%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
     }
 #endif
   
@@ -1540,6 +1541,8 @@ void branchLengthReset(state *chain, proposalFunction *pf)
   nodeptr p = findNodeFromBranch(tr, b); 
   p->z[0] = p->back->z[0] = b.length[0]; 
 }
+
+
 
 
 
@@ -1572,20 +1575,19 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->apply_func = applyGuidedSPR; 
       ptr->eval_lnl = evalGuidedSPR; 
       ptr->reset_func = resetGuidedSPR; 
-      /* ptr->remembrance.modifiedPath = exa_calloc(1,sizeof(path));        */
       ptr->remembrance.modifiedPath = NULL; 
       createStack(&(ptr->remembrance.modifiedPath)); 
       ptr->category = TOPOLOGY; 
-      ptr->parameters.radius = INIT_GUIDED_RADIUS; 
+      ptr->parameters.radius =  initParams->initGuidedSPR; 
       ptr->autotune = NULL;       
       break; 
-    case E_SPR_MAPPED: 		/* TRUSTED  */
+    case E_SPR: 		/* TRUSTED  */
       ptr->eval_lnl = sprEval; 
       /* ptr->autotune = autotuneStopProp; */
       ptr->remembrance.modifiedPath = exa_calloc(1,sizeof(path)); 
       ptr->apply_func = applyExtendedSPR; 
       ptr->reset_func = resetESPR; 
-      ptr->name = "eSPRMapped"; 
+      ptr->name = "eSPR"; 
       ptr->param2.multiplier = INIT_ESPR_MULT; 
       ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
       ptr->category = TOPOLOGY; 
@@ -1715,7 +1717,19 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       createStack(&(ptr->remembrance.modifiedPath)); 
       ptr->name = "stNNI"; 
       ptr->category = TOPOLOGY; 
+      ptr->parameters.multiplier = INIT_NNI_MULT; 
+      break;       
+    case TL_MULT: 
+      ptr->eval_lnl = dummy_eval;
+      ptr->apply_func = applyTLMult; 
+      ptr->reset_func = resetTLMult; 
+      ptr->autotune = autotuneMultiplier; 
+      ptr->remembrance.multiplier = 0; 
+      ptr->name = "tl-mult"; 
+      ptr->category = BRANCH_LENGTHS; 
+      ptr->parameters.multiplier = INIT_TL_MULTI; 
       break; 
+      
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 
       {
@@ -1724,11 +1738,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       }
     }  
 }
-
-
-
-
-
 
 /**
    @brief Normalizes the weights of the proposals in this category
@@ -1867,6 +1876,9 @@ void printXs(tree *tr )
 	}
     }
 }
+
+
+
 
 
 

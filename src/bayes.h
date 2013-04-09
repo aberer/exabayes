@@ -185,6 +185,7 @@ struct _pfun
     stack *modifiedPath; 
     topoRecord *topoRec;
     perPartitionInfo *partInfo; 
+    double multiplier; 
   }remembrance;
 
   /* TODO dirty: is also a remembrance variable  */

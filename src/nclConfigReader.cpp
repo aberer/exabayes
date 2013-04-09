@@ -33,6 +33,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = UPDATE_MODEL; 
   else if(key.EqualsCaseInsensitive("initGammaWeight")) 
     *pf = UPDATE_GAMMA; 
+  else if(key.EqualsCaseInsensitive("treeLengthMult")) 
+    *pf = TL_MULT; 
   else if(key.EqualsCaseInsensitive("initGammaExpWeight"))    
     *pf = UPDATE_GAMMA_EXP; 
   else if(key.EqualsCaseInsensitive("initSingleBranchWeight"))    
@@ -52,7 +54,7 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
   else if(key.EqualsCaseInsensitive("initFrequenciesWeight"))    
     *pf = UPDATE_FREQUENCIES_BIUNIF; 
   else if(key.EqualsCaseInsensitive("initEsprMappedWeight"    ))    
-    *pf = E_SPR_MAPPED; 
+    *pf = E_SPR; 
   else if(key.EqualsCaseInsensitive("branchMulti"))
     *pf = BRANCH_LENGTHS_MULTIPLIER; 
   else if(key.EqualsCaseInsensitive("initFrequencySliderWeight"))
@@ -136,6 +138,8 @@ public:
 	      initParam->diagFreq = value.ConvertToInt();
 	    else if(key.EqualsCaseInsensitive("numCoupledChains"))
 	      initParam->numCoupledChains = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("guidedSPRRadius"))
+	      initParam->initGuidedSPR = value.ConvertToInt();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }

@@ -1,19 +1,20 @@
 #NEXUS
 begin EXABAYES; 
 
-      initGammaWeight 3 [ ok ]
+      initGammaWeight 8 [ ok ]
       initGammaExpWeight 0 [ ok ]
 
-      initEsprMappedWeight 20 [ ok ]
-      initGuidedSPR 0 [ok ] 
-      stNNI 20       
+      initEsprMappedWeight 15 [ 10% in mrbn ]
+      initGuidedSPR 15 [ok ] 
+      stNNI 15       [ ok, w/ bl: 10% in mrb]
 
       initSingleBranchWeight 20 [ ok ] 
       initSingleBranchExpWeight 0  [ broken ] 
       initSingleBranchBiunifWeight 0 [broken]
       branchMulti 20 [ ok ]
+      treeLengthMult 4 [ ok, 4 % in mrb ]
 
-      initModelWeight 3 [ ok ]
+      initModelWeight 6 [ ok ]
       initModelBiunifWeight 0 [broken]
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
@@ -26,6 +27,8 @@ begin EXABAYES;
       numGen 500000               [ total number of generations] 
       initPenaltyFactor 0.0 
       samplingFrequency 50 	[ take a sample every n generations ]
+
+      guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
 
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 

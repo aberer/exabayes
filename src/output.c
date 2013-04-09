@@ -504,7 +504,7 @@ void chainInfoOutput(state *chain )
 	 , chain->acceptedProposals[E_SPR]	, chain->rejectedProposals[E_SPR] , (int)(chain->acceptedProposals[E_SPR]*100/
 											     (chain->acceptedProposals[E_SPR]+chain->rejectedProposals[E_SPR]+0.0001)
 ),
-	 chain->acceptedProposals[E_SPR_MAPPED]	, chain->rejectedProposals[E_SPR_MAPPED] , (int)(chain->acceptedProposals[E_SPR_MAPPED]*100/(chain->acceptedProposals[E_SPR_MAPPED]+chain->rejectedProposals[E_SPR_MAPPED]+0.0001)));
+	 chain->acceptedProposals[E_SPR]	, chain->rejectedProposals[E_SPR_MAPPED] , (int)(chain->acceptedProposals[E_SPR_MAPPED]*100/(chain->acceptedProposals[E_SPR_MAPPED]+chain->rejectedProposals[E_SPR_MAPPED]+0.0001)));
   
   PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",chain->acceptedProposals[UPDATE_MODEL]	, chain->rejectedProposals[UPDATE_MODEL] , (int)(chain->acceptedProposals[UPDATE_MODEL]*100/(chain->acceptedProposals[UPDATE_MODEL]+chain->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
 	 chain->acceptedProposals[UPDATE_MODEL_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_BIUNIF]+0.0001)) ,

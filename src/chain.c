@@ -783,9 +783,14 @@ void step(state *chain)
 	  
 	  if(pf->autotune)	/* only, if we set this   */
 	    {
+#ifdef TUNE_ONLY_IF_ENOUGH
+	      if(pf->sCtr.lAcc + pf->sCtr.lRej < TUNE_FREQUENCY )
+		continue; 
+#endif
 	      pf->autotune(chain, pf);
 	    }
 	}
+
     }
 #endif
 
