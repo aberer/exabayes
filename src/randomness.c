@@ -185,6 +185,28 @@ void drawPermutation(state *chain, int* perm, int n)
 
 
 
+
+
+/**
+    @brief draws an inner branch 
+ */ 
+branch drawInnerBranchUniform(state *chain)
+{
+  tree *tr = chain->tr; 
+  boolean accepted = FALSE; 
+  branch b; 
+  do 
+    {
+      b = drawBranchUniform(chain);
+      accepted = NOT isTip(b.thisNode, tr->mxtips ) && NOT isTip(b.thatNode, tr->mxtips);       
+    }while(NOT accepted); 
+
+  return b; 
+}
+
+
+
+
 /**
    @brief draws a subtree uniformly. 
 

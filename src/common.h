@@ -73,7 +73,7 @@ typedef  unsigned int nat ;
 #define INIT_FREQ_SLID_WIN  0.2 
 #define INIT_GAMMA_SLID_WIN  0.75
 #define INIT_ESPR_MULT 0.098
-#define INIT_GUIDED_RADIUS 5
+#define INIT_GUIDED_RADIUS 10
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
@@ -98,7 +98,11 @@ typedef  unsigned int nat ;
 /* #define DEBUG_PRINT_TUNE_INFO */
 
 
+#define WEIGHT_EPS 1e-3  	/* guided spr    */
+
+
 /* for debugging:  */
+#define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */

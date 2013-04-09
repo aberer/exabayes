@@ -36,7 +36,7 @@ exabayes_LDADD+=libpll.a
 noinst_LIBRARIES=libpll.a
 else
 CC=mpicc -std=gnu99
-CXX=mpic++
+CXX=mpicxx
 OPT_HEAD= -Isrc/examl/
 FEATURE_FLAGS= -D_USE_ALLREDUCE
 exabayes_LDADD+=libexaml.a

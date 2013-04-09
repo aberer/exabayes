@@ -53,4 +53,5 @@ void generateRandomPath( state *chain ,stack *s, double stopProp);
 branch drawSubtreeUniform(state *chain); 
 double drawMultiplier(state *chain, double multiplier); 
 double drawFromSlidingWindow(state *chain, double param, double window); 
+branch drawInnerBranchUniform(state *chain); 
 #endif

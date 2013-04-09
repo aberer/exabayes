@@ -21,11 +21,6 @@ public:
 } ; 
 
 
-
-
-
-
-
 /**
    @brief This function is nothing to be proud of, but let's stick to
    it for now.
@@ -34,9 +29,7 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
 {    
   bool found = true; 
 
-  if(key.EqualsCaseInsensitive("initSPRWeight"))
-    *pf = E_SPR; 
-  else if(key.EqualsCaseInsensitive("initModelWeight")) 
+  if(key.EqualsCaseInsensitive("initModelWeight")) 
     *pf = UPDATE_MODEL; 
   else if(key.EqualsCaseInsensitive("initGammaWeight")) 
     *pf = UPDATE_GAMMA; 
@@ -66,6 +59,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = FREQUENCY_SLIDER; 
   else if(key.EqualsCaseInsensitive("initGuidedSPR"))
     *pf = GUIDED_SPR; 
+  else if(key.EqualsCaseInsensitive("stNNI"))
+    *pf = ST_NNI; 
 
   // TODO@kassian this is a good place for proposal add 
 

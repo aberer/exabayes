@@ -8,8 +8,6 @@
 
 #include "guidedMoves.h" 
 
-#define WEIGHT_EPS 1e-3  
-
 
 /* 
    important TODO

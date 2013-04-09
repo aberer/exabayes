@@ -6,14 +6,6 @@
 #include "output.h"  
 
 
-
-#define STRETCH_FACTOR 2 
-
-
-
-
-
-
 /* #define GUIDE_SPR_BRANCH */
 
 /**

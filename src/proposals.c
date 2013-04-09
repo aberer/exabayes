@@ -1,5 +1,4 @@
 
-
 #include "axml.h"
 #include "bayes.h"
 #include "randomness.h"
@@ -16,6 +15,7 @@
 #include "branch.h"
 #include "path.h"
 #include "guidedMoves.h"
+#include  "stNNI.h"
 
 void expensiveVerify(tree *tr); 
 
@@ -133,26 +133,6 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 }
 
 
-
-/* static nodeptr getThirdNode(tree *tr, int node, int neighBourA, int neighBourB) */
-/* { */
-/*   nodeptr  */
-/*     target = tr->nodep[node];  */
-
-/*   if(target->back->number != neighBourA && target->back->number != neighBourB) */
-/*     return target;  */
-/*   else if (target->next->back->number != neighBourA && target->next->back->number != neighBourB) */
-/*     return target->next;  */
-/*   else  */
-/*     { */
-/*       assert(target->next->next->back->number != neighBourB && target->next->next->back->number != neighBourA);  */
-/*       return target->next->next;  */
-/*     } */
-/*   return NULL;  */
-/* } */
-
-
-
 static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 {
   int model = thisProposal->remembrance.partInfo->modelNum;
@@ -170,39 +150,9 @@ static void evalBranch(state *chain, proposalFunction *thisProposal)
 }
 
 
-
-
-
-
-/* static void evaluateBranch(state *chain, proposalFunction *thisProposal) */
-/* { */
-/*   nodeptr p = findNodeFromBranch(chain->tr, thisProposal->remembrance.topoRec->insertBranch); */
-/*   evaluateGenericWrapper(chain,p,FALSE); */
-/* #ifndef DEBUG_LNL_VERIFY */
-/*   assert(isTip(p->number,chain->tr->mxtips)|| isTip(p->back->number,chain->tr->mxtips) || (p->x && p->back->x));  */
-/*   branch b = findRoot(chain->tr);   */
-/*   if(NOT  (b.thisNode == p->number || b.thatNode == p->number)) */
-/*     { */
-/*       printf("root is %d,%d, node was %d\n", b.thisNode, b.thatNode, p->number);  */
-/*       assert(0);  */
-/*     }   */
-/* #endif */
-/* } */
-
-
-
 static void dummy_eval(state *chain,proposalFunction *thisProposal)
 {
   evaluateGenericWrapper(chain, chain->tr->start, TRUE);
-
-  /* nodeptr p = chain->tr->nodep[chain->tr->mxtips+1]; */
-  /* int numPart = getNumberOfPartitions( chain->tr ); */
-  /* double lnl = 0;    */
-  /* exa_newViewGeneric( chain,p,  FALSE ); */
-
-  /* exa_newViewGeneric( chain,p->next,  FALSE ); */
-  /* exa_newViewGeneric( chain,p->next->next,  FALSE ); */
-
 }
 
 
@@ -245,9 +195,6 @@ static nodeptr select_random_subtree(state *chain, tree *tr)
 
 
 void pushToStackIfNovel(stack *s, branch b, int numTip); 
-
-
-
 
 
 
@@ -351,11 +298,6 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
     {
       switch(pf->ptype)
 	{
-	case E_SPR : 
-	  zqr [i] = nbz[i] * nnbz[i]; 
-	  chain->hastings *= log(zqr[i]);
-	  zqr[i] = sqrt(zqr[i]);
-	  break; 
 	case E_SPR_MAPPED: 
 	  zqr[i] = nbz[i] ; 
 	  break; 
@@ -435,13 +377,6 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
       /*     // insertBIG(chain->tr, chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->tr->numBranches); */
       break; 
 
-
-    case E_SPR  :  		/* ADJUCT */
-      for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) /*  */
-	{
-	  chain->hastings/=(2*log(curNode->z[branchCount]));
-	  insertWithUnifBLScaled(prunedSubtreePtr, insertBranchPtr, 2.0,  getNumBranches(chain->tr));
-	}
       break;       
     case E_SPR_MAPPED: 
       {
@@ -1644,16 +1579,6 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->parameters.radius = INIT_GUIDED_RADIUS; 
       ptr->autotune = NULL;       
       break; 
-    case E_SPR:
-      ptr->eval_lnl = dummy_eval;
-      ptr->autotune = autotuneStopProp;
-      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
-      ptr->apply_func = extended_spr_apply; 
-      ptr->reset_func = extended_spr_reset; 
-      ptr->category = TOPOLOGY;       
-      ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
-      ptr->name = "eSPR"; 
-      break; 
     case E_SPR_MAPPED: 		/* TRUSTED  */
       ptr->eval_lnl = sprEval; 
       /* ptr->autotune = autotuneStopProp; */
@@ -1780,6 +1705,16 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "freqSlider"; 
       ptr->category = FREQUENCIES; 
       ptr->parameters.slidWinSize = INIT_FREQ_SLID_WIN; 
+      break; 
+    case ST_NNI: 
+      ptr->eval_lnl = eval_st_nni; 
+      ptr->apply_func = apply_st_nni; 
+      ptr->autotune = NULL; 
+      ptr->reset_func = reset_st_nni; 
+      ptr->remembrance.modifiedPath = NULL; 
+      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->name = "stNNI"; 
+      ptr->category = TOPOLOGY; 
       break; 
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 
