@@ -250,32 +250,34 @@ static void printNexusTreeFileStart(state *chain)
   for(int i = 0; i < chain->tr->mxtips-1; ++i)
     fprintf(fh, "\t\t%d %s,\n", i+1, chain->tr->nameList[i+1]); 
   fprintf(fh, "\t\t%d %s;\n", chain->tr->mxtips, chain->tr->nameList[chain->tr->mxtips]);
-  /* fclose(fh);  */
 }
 
 
 static void printParamFileStart(state *chain)
 {
-  /* FILE *fh = myfopen(outputParamFile, "w");  */
   FILE *fh = chain->outputParamFile; 
+  tree *tr = chain->tr; 
+  
   
   char *tmp = "TODO"; 
   fprintf(fh, "[ID: %s]\n", tmp);
-  fprintf(fh, "Gen\tLnL\tTL\
-\tr(A<->C)\tr(A<->G)\tr(A<->T)\tr(C<->G)\tr(C<->T)\tr(G<->T)\t\
-pi(A)\tpi(C)\tpi(G)\tpi(T)\
-\talpha\tpinvar\n"); 
+  fprintf(fh, "Gen\tLnL\tTL"); 
+
+  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+    {
+      fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
+      fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
+      fprintf(fh, "\tpi(A).%d\tpi(C).%d\tpi(G).%d\tpi(T).%d", i,i,i,i); 
+    }
+
+  fprintf(fh, "\n"); 
   fflush(fh); 
 }
 
 static void printParams(state *chain)
 {
   tree *tr = chain->tr; 
-  int model = 0; 
 
-  pInfo *partition = getPartition(chain, model); 
-
-  /* FILE *fh = myfopen(outputParamFile, "a");  */
   FILE *fh = chain->outputParamFile; 
 
   double treeLength = branchLengthToReal(tr, getTreeLength(tr,tr->nodep[1]->back )); 
@@ -284,24 +286,17 @@ static void printParams(state *chain)
 	  tr->likelihood,  
 	  treeLength); 
 
-  /* TODO what about multiple models?  */
-  /* TODO that will not work in the future ...  */
+  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+    {
+      pInfo *partition = getPartition(chain,i); 
+      fprintf(fh, "\t%f\t%f", getPLH(chain, i),partition->alpha) ; 
+      for(int j = 0; j < 6 ; ++j) /* TODO */
+	fprintf(fh, "\t%.2f", partition->substRates[j]); 
+      for(int j = 0; j < 4 ; ++j) /* TODO */
+	fprintf(fh, "\t%.2f", partition->frequencies[j]) ;
+    }
 
-#if 0 
-  for(int i = 0; i< chain->modelRemem.numSubsRates;  ++i )
-    fprintf(fh, "\t%f" , partition->substRates[i]); 
-#endif
-
-  
-  /* TODO works on dna only currently  */
-  for(int i = 0; i < 4; ++i)
-    fprintf(fh, "\t%f", partition->frequencies[i]); 
-
-  /* TODO what is pinvar?  */
-  fprintf(fh, "\t%f\t%f", partition->alpha, -1.  ); 
-
-  fprintf(fh, "\n");
-
+  fprintf(fh, "\n"); 
   fflush(fh); 
 }
 
