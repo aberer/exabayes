@@ -35,6 +35,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = UPDATE_GAMMA; 
   else if(key.EqualsCaseInsensitive("treeLengthMult")) 
     *pf = TL_MULT; 
+  else if(key.EqualsCaseInsensitive("rateHetMulti"))    
+    *pf = GAMMA_MULTI; 
   else if(key.EqualsCaseInsensitive("initGammaExpWeight"))    
     *pf = UPDATE_GAMMA_EXP; 
   else if(key.EqualsCaseInsensitive("initSingleBranchWeight"))    

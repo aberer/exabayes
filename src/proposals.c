@@ -268,6 +268,10 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
 
 
 
+
+
+
+
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->tr;
@@ -1545,8 +1549,33 @@ void branchLengthReset(state *chain, proposalFunction *pf)
 
 
 
+void resetGammaMulti(state *chain, proposalFunction *pf)
+{
+  tree *tr = chain->tr;   
+  pInfo *partition = getPartition(chain,pf->remembrance.partInfo->modelNum); 
+  partition->alpha = pf->remembrance.partInfo->alpha;  
+  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);  
+}
+
+ 
+void applyGammaMultiplier(state *chain, proposalFunction *pf)
+{
+  tree *tr = chain->tr; 
+  double multi = drawMultiplier(chain, pf->parameters.multiplier);   
+  int model = drawRandInt(chain, getNumberOfPartitions(tr));
+  pInfo *partition = getPartition(chain, model); 
+
+  
+  perPartitionInfo *pinfo = pf->remembrance.partInfo; 
+  pinfo->modelNum = model; 
+  pinfo->alpha = partition->alpha;
+  
+  partition->alpha *= multi;  
+  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
+}
 
 
+ 
 static void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
 {
   if(initParams->initWeights[type] == 0)
@@ -1728,8 +1757,17 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->name = "tl-mult"; 
       ptr->category = BRANCH_LENGTHS; 
       ptr->parameters.multiplier = INIT_TL_MULTI; 
+      break;       
+    case GAMMA_MULTI: 
+      ptr->apply_func = applyGammaMultiplier;       
+      ptr->eval_lnl = onePartitionEval; 
+      ptr->reset_func = resetGammaMulti; 
+      ptr->autotune = autotuneMultiplier;  
+      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->name =  "gammaMulti"; 
+      ptr->category = RATE_HETEROGENEITY; 
+      ptr->parameters.multiplier = INIT_GAMMA_MULTI;       
       break; 
-      
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 
       {
@@ -1738,6 +1776,8 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       }
     }  
 }
+
+
 
 /**
    @brief Normalizes the weights of the proposals in this category
