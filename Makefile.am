@@ -61,7 +61,7 @@ prsf_SOURCES=src/prsf.c
 
 
 if WITH_PLL
-prsf_SOURCES+=src/pll/mem_alloc-pll.c
+prsf_SOURCES+=src/pll/mem_alloc-pll.c src/main-common.c
 endif
 
 prsf_CFLAGS=$(AM_CFLAGS) -D_STANDALONE

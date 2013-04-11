@@ -1,28 +1,13 @@
 
 #include "axml.h" 
 #include "bayes.h" 
+#include "main-common.h"
 
 
 
-
-
-/* double computePRSF(char *id, int numGen) */
-/* { */
-/*   printf("hello world\n");  */
-/*   return 0;  */
-/* } */
-
-
-
-
-
-
-
-
-
-
-
-
+#ifdef _STANDALONE
+#define PRINT printf
+#endif
 
 /**
    @brief the estimated potential scale rate reduction, as described by Yang.  
@@ -321,7 +306,7 @@ int guessNumGen( int numChain, int numParam, char *runid)
    @notice NOT thread-safe at the moment! 
  */ 
 
-double printPRSF(char *runId )
+void printPRSF(char *runId )
 {  
   double ***matrix = NULL; 
   char **names = NULL; 
@@ -330,21 +315,21 @@ double printPRSF(char *runId )
     numParam =  guessNumParam(runId),
     numGen = guessNumGen(numChain, numParam, runId); 
 
-  parseFiles(numGen,numChain, numParam, "testRun",&matrix, &names);
+  parseFiles(numGen,numChain, numParam, runId,&matrix, &names);
 
-  printf("PRSF by component:\n"); 
+  PRINT("PRSF by component:\n"); 
   int window = 10; 
   for(int iter = 0 ; iter < numParam / window; ++iter)
     {
       for(int i = iter * window; i < (iter+1) * window && i < numParam ; ++i)
-	printf("%s\t", names[i]);     
-      printf("\n"); 
+	PRINT("%s\t", names[i]);     
+      PRINT("\n"); 
       for(int i = iter * window ;  i < (iter+1) * window && i < numParam; ++i)
 	{
 	  double localPrsf = getPrsfForParameter(i, numChain, numGen, matrix); 
-	  printf("%.3f\t\t",  localPrsf);
+	  PRINT("%.3f\t\t",  localPrsf);
 	}	    
-      printf("\n\n"); 
+      PRINT("\n\n"); 
     }
 
   freeMatrix(numChain, numParam, matrix);

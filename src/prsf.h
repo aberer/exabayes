@@ -3,6 +3,7 @@
 
 
 
+void printPRSF(char *runId ); 
 int guessNumGen( int numChain, int numParam, char *runid); 
 
 

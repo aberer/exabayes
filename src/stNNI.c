@@ -59,11 +59,11 @@ void apply_st_nni(state *chain, proposalFunction *pf)
     /* DIRTY */
     double m1 = drawMultiplier(chain, pf->parameters.multiplier),
       m2 =  drawMultiplier(chain, pf->parameters.multiplier),
-      m3 =  drawMultiplier(chain, pf->parameters.multiplier); 
+      m3 =  drawMultiplier(chain, pf->parameters.multiplier);
       
     p->z[0] = pow(p->z[0],m1); 
     r->z[0] = pow(r->z[0],m2); 
-    q->z[0] = pow(q->z[0],m2);     
+    q->z[0] = pow(q->z[0],m3);     
 #endif
 
     hookup(p,p->back, p->z, numBranches); 
