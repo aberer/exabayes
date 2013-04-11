@@ -6,11 +6,20 @@
 
 
 
-double computePRSF(char *id, int numGen)
-{
-  printf("hello world\n"); 
-  return 0; 
-}
+/* double computePRSF(char *id, int numGen) */
+/* { */
+/*   printf("hello world\n");  */
+/*   return 0;  */
+/* } */
+
+
+
+
+
+
+
+
+
 
 
 
@@ -305,30 +314,71 @@ int guessNumGen( int numChain, int numParam, char *runid)
 
 
 
-#ifdef _STANDALONE
-int main(int argc, char **argv)
-{
+/**
+   @brief reads all parameter files and prints the PRSF for each
+   parameter
+
+   @notice NOT thread-safe at the moment! 
+ */ 
+
+double printPRSF(char *runId )
+{  
   double ***matrix = NULL; 
   char **names = NULL; 
 
+  int numChain =  guessNumChain(runId), 
+    numParam =  guessNumParam(runId),
+    numGen = guessNumGen(numChain, numParam, runId); 
+
+  parseFiles(numGen,numChain, numParam, "testRun",&matrix, &names);
+
+  printf("PRSF by component:\n"); 
+  int window = 10; 
+  for(int iter = 0 ; iter < numParam / window; ++iter)
+    {
+      for(int i = iter * window; i < (iter+1) * window && i < numParam ; ++i)
+	printf("%s\t", names[i]);     
+      printf("\n"); 
+      for(int i = iter * window ;  i < (iter+1) * window && i < numParam; ++i)
+	{
+	  double localPrsf = getPrsfForParameter(i, numChain, numGen, matrix); 
+	  printf("%.3f\t\t",  localPrsf);
+	}	    
+      printf("\n\n"); 
+    }
+
+  freeMatrix(numChain, numParam, matrix);
+}
+
+
+
+
+
+#ifdef _STANDALONE
+int main(int argc, char **argv)
+{
   if(argc < 2 || 4 < argc)
     {
       printf("USAGE: %s runId\nMust be called from folder where the respective files are.\n ", argv[0]); 
       exit(-1); 
     }
-  
+
   char runId[1024]; 
   strcpy(runId, argv[1]); 
+
+  
+  double ***matrix = NULL; 
+  char **names = NULL; 
 
   int numChain =  guessNumChain(runId), 
     numParam =  guessNumParam(runId),
     numGen = guessNumGen(numChain, numParam, runId); 
   
-  printf("found %d chains with %d parameters and %d good lines \n", numChain, numParam,numGen ); 
+  printf("found %d chains with %d parameters and %d good lines \n", numChain, numParam,numGen );
 
   parseFiles(numGen,numChain, numParam, "testRun",&matrix, &names);
 
-  printf("printing parsed samples by chain:\n"); 
+  printf("printing parsed samples by chain:\n");
   printMatrix(numParam, numGen, numChain, names, matrix);
 
   printf("PRSF for component:\n"); 
@@ -338,7 +388,12 @@ int main(int argc, char **argv)
       printf("%s\t\t%.3f\n", names[i], localPrsf);
     }
 
-  freeMatrix(numChain, numParam, matrix);
+  freeMatrix(numChain, numParam, matrix); 
   return 0;     
 }
 #endif
+
+
+
+
+

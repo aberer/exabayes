@@ -18,10 +18,13 @@
 #include "nclConfigReader.h"
 #include "misc-utils.h"
 #include "chain.h"
-#include  "adapters.h"
+#include "adapters.h"
 #include "eval.h"
 #include "proposals.h"
 #include "tune.h"
+#include  "prsf.h"
+
+
 
 extern double masterTime; 
 
@@ -205,6 +208,8 @@ void runChains(state *allChains, int diagFreq)
 	}
 
       hasConverged = convergenceDiagnostic(allChains, gAInfo.numberOfRuns); 
+      
+      printPRSF(run_id);
     }
 }
 
