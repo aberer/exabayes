@@ -214,7 +214,7 @@ void runChains(state *allChains, int diagFreq)
 
 
 #ifdef TEST
-#include "path.h" 
+#include "burnin.h"
 #endif
 
 
@@ -237,19 +237,26 @@ void exa_main(tree *tr, analdef *adef)
 #ifdef TEST 
   {
 
-    state *chain = indiChains; 
-    tree *tr  = chain->tr;
-    evaluateGenericWrapper(chain, tr->start, TRUE); 
-    
-    evaluateGenericWrapper(chain, tr->nodep[60],FALSE); 
-    branch b =constructBranch(tr->nodep[60]->number,tr->nodep[60]->back->number ) ; 
-    branch root = findRoot(tr); 
-    branchEqualUndirected(b,root); 
 
-    stack *s = NULL; 
-    createStack(&s);
-    drawPathForESPR(indiChains,s, 0.1); 
+    double fakeLnl[1000] ; 
+
+    int burnin = recognizeBurninBySpearmanCorrelation(fakeLnl,  1000, 1000); 
+    printf("recognized burnin after %d gens\n", burnin); 
+
     exit(0); 
+    /* state *chain = indiChains;  */
+    /* tree *tr  = chain->tr; */
+    /* evaluateGenericWrapper(chain, tr->start, TRUE);  */
+    
+    /* evaluateGenericWrapper(chain, tr->nodep[60],FALSE);  */
+    /* branch b =constructBranch(tr->nodep[60]->number,tr->nodep[60]->back->number ) ;  */
+    /* branch root = findRoot(tr);  */
+    /* branchEqualUndirected(b,root);  */
+
+    /* stack *s = NULL;  */
+    /* createStack(&s); */
+    /* drawPathForESPR(indiChains,s, 0.1);  */
+    /* exit(0);  */
   } 
 #endif
 

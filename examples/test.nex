@@ -37,5 +37,5 @@ begin EXABAYES;
       numIndiChains 2 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 4   [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 1   [ number of chains per independent run (only one is cold) ]       
 end;

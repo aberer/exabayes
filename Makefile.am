@@ -18,7 +18,7 @@ endif
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS=exabayes
+bin_PROGRAMS=exabayes prsf
 
 include src-helper.am
 include src.am 
@@ -57,12 +57,21 @@ EXTRA_DIST=lib/Random123-1.07 src/main-examl_cond.c src/main-pll_cond.c		\
               src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c	\
               src/pll/axml-pll.h src/examl/axml-examl.h doc/*
 
+prsf_SOURCES=src/prsf.c
 
-clean: 
-	-rm -rf *.o exabayes *.a 
+
+if WITH_PLL
+prsf_SOURCES+=src/pll/mem_alloc-pll.c
+endif
+
+prsf_CFLAGS=$(AM_CFLAGS) -D_STANDALONE
+
 
 clean-exa: 
-	-rm -rf $(exabayes_OBJECTS) exabayes 
+	-rm -rf *.o exabayes *.a  
+
+clean: 
+	-rm -rf $(exabayes_OBJECTS) $(bin_PROGRAMS )  $(prsf_OBJECTS) 
 
 
 doc : 
