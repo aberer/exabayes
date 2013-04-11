@@ -208,8 +208,8 @@ void runChains(state *allChains, int diagFreq)
 	}
 
       hasConverged = convergenceDiagnostic(allChains, gAInfo.numberOfRuns); 
-      
-      printPRSF(run_id);
+      if(processID == 0)
+	printPRSF(run_id);
     }
 }
 
