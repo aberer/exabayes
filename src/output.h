@@ -9,9 +9,9 @@
 #ifndef  _OUTPUT_H
 #define  _OUTPUT_H
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 
 void debug_printTree(state *chain); 
@@ -34,7 +34,7 @@ void debug_checkTreeConsistency(state *chain);
 
 void printOrientation(tree *tr, nodeptr p); 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 #endif

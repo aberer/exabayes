@@ -36,7 +36,7 @@ static insertList* getEntry(insertList *lnlList, branch b )
 
 static void appendElem(insertList **list,  branch b , double lnl, double ratio, boolean isFirst  )
 {
-  insertList *elem = exa_calloc(1,sizeof(insertList)); 
+  insertList *elem = (insertList*)exa_calloc(1,sizeof(insertList)); 
   elem->next = *list; 
   *list = elem; 
   elem->lnl = lnl; 

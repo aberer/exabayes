@@ -1,10 +1,9 @@
 
-
-
 #include "axml.h"
 #include "bayes.h"
 #include "globals.h"
 #include "adapters.h"		
+
 
 /* call this for verification after the lnl has been evaluated somehow */
 static void expensiveVerify(state *chain)
@@ -26,6 +25,91 @@ static void expensiveVerify(state *chain)
     }  
 #endif
 }
+
+
+
+
+static void swapArray(double **a, double **b)
+{
+  double **tmp = a ; 
+  a = b; 
+  b = tmp ; 
+}
+
+
+
+
+
+static boolean listContainsElem(savedArray *list, int number)
+{
+  for(savedArray *iter = list ; iter; iter = iter->next)
+    {
+      if(iter->node == number)
+	return TRUE ; 
+    }
+  return FALSE; 
+}
+
+
+
+static void traverseAndBackupHelper(state *chain, nodeptr p, int model)
+{
+  tree *tr = chain->tr; 
+  int numPart = getNumberOfPartitions(tr);
+
+  // back up the array, if necessary 
+  if(NOT p->x
+     && listContainsElem(chain->lnl.savedArrayList, p->number))
+    {
+      savedArray
+	*elem = (savedArray*)exa_calloc(1,sizeof(savedArray));       
+      elem->node = p->number;
+      
+      if(model == -1)		// swap for all models 
+	{ 
+	  for(int i = 0; i < numPart; ++i)
+	    {
+	      pInfo *partition = getPartition(chain, i); 
+	      double **readOnlyArray = partition->xVector + elem->node ; 
+	      double **readWriteArray = chain->lnl.vectorsPerPartition[model] + elem->node ; 
+	      swapArray(readWriteArray, readOnlyArray);
+	    }
+	}
+      else 
+	{
+	  pInfo *partition = getPartition(chain,model); 
+	  double **readOnlyArray =partition->xVector + elem->node; 
+	  double **readWriteArray = chain->lnl.vectorsPerPartition[model] + elem->node; 
+	  swapArray(readWriteArray, readOnlyArray); 
+	}
+      
+      elem->next = chain->lnl.savedArrayList ; 
+      chain->lnl.savedArrayList = elem;       
+    }
+
+  // descend 
+  traverseAndBackupHelper(chain, p->next->back, model); 
+  traverseAndBackupHelper(chain, p->next->next->back, model); 
+  
+}
+
+
+/**
+   @brief traverses the tree and checks, which arrays will be updated
+   in the next evaluation.
+   
+   Arrays that are updated are sent to the backup space (if they are
+   not already there).
+
+   @param model -- -1, if evaluated for all models, the model number, if only one partition is evaluated
+   
+*/
+void traverseAndBackupArrays(state *chain, nodeptr virtualRoot, int model)
+{
+  traverseAndBackupHelper(chain, virtualRoot, model); 
+  traverseAndBackupHelper(chain, virtualRoot->back, model);   
+}
+
 
 
 
@@ -94,25 +178,6 @@ void saveArray(state *chain, int model)
 
 
 
-/* /\** */
-/*    @brief loads the lnl arrays  */
-/*  *\/ */
-/* void loadArray(state *chain, int model) */
-/* { */
-/*   pInfo *partition = getPartition(chain, model); */
-/*   double **xVector = getXPtr(chain, model); */
-/*   for(int i= 0; i < chain->tr->mxtips-2; ++i) */
-/*     { */
-/* #if HAVE_PLL == 1 */
-/*       int length = (partition->upper - partition->lower); */
-/* #else */
-/*       int length = partition->width; */
-/* #endif */
-/*       memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) *  length  * LENGTH_LNL_ARRAY); */
-/*     } */
-/*   memcpy(partition->globalScaler, chain->lnl.partitionScaler[model], sizeof(nat) * 2 * chain->tr->mxtips); */
-/* } */
-
 
 static void freeList(state *chain )
 {  
@@ -120,20 +185,11 @@ static void freeList(state *chain )
   while(iter)
     {
       savedArray *tmp = iter->next;       
-      exa_free(iter->arrayPtrs); 
       exa_free(iter); 
       iter = tmp->next;       
     }
 }
 
-
-
-static void swapArray(double **a, double **b)
-{
-  double **tmp = a ; 
-  a = b; 
-  b = tmp ; 
-}
 
 
 /**
@@ -145,24 +201,24 @@ void restoreAlignAndTreeState(state *chain)
   
   for(savedArray* iter = chain->lnl.savedArrayList; iter; iter = iter->next)
     {
-      if(chain->lnl.numberArrays == 1)
+      if(chain->lnl.numberArrays == 1) // only need to restore one partitio n
 	{
 	  int model = chain->lnl.partitionEvaluated; 
 	  pInfo *partition = getPartition(chain,model);
 	  swapArray(partition->xVector + iter->node, chain->lnl.vectorsPerPartition[model] + iter->node);
 	}
-      else 
+      else 			// multiple partitions need to be restored 
 	{
 	  for(int i = 0; i < chain->lnl.numberArrays; ++i)
 	    {
 	      pInfo *partition = getPartition(chain, i);
 	      swapArray(partition->xVector + iter->node , chain->lnl.vectorsPerPartition[i] + iter->node ); 
+	      memcpy(partition->globalScaler, chain->lnl.partitionScaler, sizeof(nat) * 2 * chain->tr->mxtips); 
 	    }
 	}
     }
 
   freeList(chain); 
-
   branch root = findRoot(chain->tr); 
 
   nodeptr p = findNodeFromBranch(chain->tr,root);
@@ -187,16 +243,22 @@ void updateSavedState(state *chain)
       pInfo *partition = getPartition(chain, i); 
       memcpy(chain->lnl.partitionScaler[i], partition->globalScaler, sizeof(nat) * 2 * chain->tr->mxtips);  
     }
- 
-  
 }
+
+
+
+
+
 
 
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
   /* printf("EVAL at %d\t%d,%d\n",start->number, start->next->back->number, start->next->next->back->number );  */
-  exa_evaluateGeneric(chain,start,fullTraversal); 
+
+
   
+
+  exa_evaluateGeneric(chain,start,fullTraversal);   
   expensiveVerify(chain);
 }
 
@@ -233,7 +295,8 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
   tree *tr = chain->tr; 
   int numPartitions = getNumberOfPartitions(chain->tr); 
 
-  double perPartitionLH[numPartitions] ; 
+  double *perPartitionLH; 
+  perPartitionLH = new double[numPartitions]; 
 
   for(int i = 0; i < numPartitions; ++i)
       perPartitionLH[i] = getPLH(chain,i); 
@@ -261,6 +324,7 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
       setExecModel(chain,i,TRUE); 
     }
 
+  delete [] perPartitionLH; 
   expensiveVerify(chain);
 }
 
@@ -275,7 +339,7 @@ void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, bool
   assert(0);  			/* not in use  */
   
   int numPartitions = getNumberOfPartitions(tr); 
-  double perPartitionLH[numPartitions] ; 
+  double *perPartitionLH = new double[numPartitions]; 
 
   
   for(int i = 0; i < numPartitions; ++i)
@@ -299,6 +363,8 @@ void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, bool
       setExecModel(chain,i,TRUE); 
     }
 
+
+  delete []  perPartitionLH; 
   expensiveVerify(chain); 
 }
 
@@ -330,3 +396,15 @@ void printAlnTrState(state *chain)
   printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"); 
 }
 
+
+
+
+/**
+   @brief backs up arrays and executes the newView 
+ */ 
+void newViewGenericWrapper(state *chain, nodeptr p, boolean masked)
+{
+  
+  
+  exa_newViewGeneric(chain,p,masked);
+}

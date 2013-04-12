@@ -13,7 +13,6 @@
 
 
 
-
 /**
    @brief prints the tree as a debug message. 
 */
@@ -470,7 +469,7 @@ void chainInfo(state *chain)
 
   for(int i = 1; i < NUM_PROP_CATS + 1 ; ++i)
     {
-      category_t type = i; 
+      category_t type = category_t(i); 
       PRINT("%s:", names[i-1]);       
       for(int j = 0; j < chain->numProposals;++j )
 	{

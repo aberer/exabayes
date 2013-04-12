@@ -15,10 +15,10 @@
 
 
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C" */
+/* { */
+/* #endif */
 
 #if HAVE_PLL == 1 
 void initializeTree(tree *tr, partitionList *partitions, analdef *adef); 
@@ -47,7 +47,7 @@ double getPcontr(state *chain, int num);
 double** getXPtr(state *chain, int model); 
 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 #endif

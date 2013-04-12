@@ -1,5 +1,5 @@
 
-#define UINT64_C
+// #define UINT64_C
 
 
 #include "axml.h"
@@ -284,7 +284,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	  theChain->lnl.orientation = (int*)exa_calloc(tr->mxtips,sizeof(int)); 
 	  theChain->lnl.vectorsPerPartition = (double***)exa_calloc(numPart, sizeof(double**)); 
 	  theChain->lnl.partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 	  
-	  theChain->lnl.wasSwitched = (boolean*)exa_calloc(2 * tr->mxtips, sizeof(boolean)); 
+	  // theChain->lnl.wasSwitched = (boolean*)exa_calloc(2 * tr->mxtips, sizeof(boolean)); 
 
 	  for(int j = 0; j < numPart; ++j)
 	    {
@@ -309,7 +309,8 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	  theChain->lnl.orientation = leechChain->lnl.orientation; 
 	  theChain->lnl.vectorsPerPartition = leechChain->lnl.vectorsPerPartition; 
 	  theChain->lnl.partitionScaler = leechChain->lnl.partitionScaler; 
-	  theChain->lnl.wasSwitched = leechChain->lnl.wasSwitched; 
+	  // TODO 
+	  // theChain->lnl.wasSwitched = leechChain->lnl.wasSwitched; 
 	}
       
       setupProposals(theChain, initParams); 
@@ -317,8 +318,8 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       /* init the param dump  */
       initParamDump(myTree, &(theChain->dump)); 
 
-      for(int i = 0; i < getNumberOfPartitions(myTree); ++i ) 
-	exa_initReversibleGTR(theChain,i);
+      for(int j = 0; j < getNumberOfPartitions(myTree); ++j ) 
+	exa_initReversibleGTR(theChain,j);
 
       initLocalRng(theChain); 
       
@@ -648,22 +649,22 @@ void drawProposalFunction(state *chain, proposalFunction **result )
 
 
 
-void debug_checkLikelihood(state *chain)
-{
-#if 0 
-#ifdef DEBUG_LNL_VERIFY
-  tree *tr = chain->tr; 
-  exa_evaluateGeneric(chain, tr->start, TRUE );   
-  double diff =  fabs(chain->lnl.likelihood - tr->likelihood ); 
-  if( diff > ACCEPTED_LIKELIHOOD_EPS)
-    {
-      printf("LNL difference: %f\n", diff  ); 
-      assert(diff  < 1e-6); 
-    }  
-  chain->lnl.likelihood = tr->likelihood; 
-#endif  
-#endif
-}
+// void debug_checkLikelihood(state *chain)
+// {
+// #if 0 
+// #ifdef DEBUG_LNL_VERIFY
+//   tree *tr = chain->tr; 
+//   exa_evaluateGeneric(chain, tr->start, TRUE );   
+//   double diff =  fabs(chain->lnl.likelihood - tr->likelihood ); 
+//   if( diff > ACCEPTED_LIKELIHOOD_EPS)
+//     {
+//       printf("LNL difference: %f\n", diff  ); 
+//       assert(diff  < 1e-6); 
+//     }  
+//   chain->lnl.likelihood = tr->likelihood; 
+// #endif  
+// #endif
+// }
 
 
 /**
@@ -756,7 +757,7 @@ void step(state *chain)
     }
 
   debug_checkTreeConsistency(chain);
-  debug_checkLikelihood(chain); 
+  // debug_checkLikelihood(chain); 
 
   if(  processID == 0 
        && chain->couplingId == 0	/* must be the cold chain  */

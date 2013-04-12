@@ -5,9 +5,9 @@
 #include "axml.h"
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 
 typedef struct 
@@ -27,7 +27,7 @@ void resetCtr(successCtr *ctr);
 
 double tuneParameter(int batch, double accRatio, double parameter, boolean inverse ); 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 #endif

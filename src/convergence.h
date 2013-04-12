@@ -10,16 +10,16 @@
 
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 void addBipartitionsToHash(tree *tr, state *chain);
-boolean convergenceDiagnostic(state *allChains, int numChains); 
+boolean convergenceDiagnostic(state *allChains); 
 void initializeConvergenceStructs(tree *tr, state *chain); 
 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 #endif

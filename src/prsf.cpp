@@ -4,6 +4,16 @@
 #include "main-common.h"
 
 
+#ifndef __cplusplus
+extern "C"{
+#endif
+  extern void printBothOpen(const char* format, ... );  
+#ifndef __cplusplus
+}
+#endif
+
+
+
 
 #ifdef _STANDALONE
 #undef PRINT
@@ -15,7 +25,7 @@
  */ 
 double getPrsfForParameter(int paramNum, int numChain, int numGen, double ***matrix)
 {
-  double meanPerChain[numChain]; 
+  double* meanPerChain  = (double*)exa_calloc(numChain, sizeof(double)); 
   
   for(int i = 0; i < numChain; ++i)
     {
@@ -45,7 +55,7 @@ double getPrsfForParameter(int paramNum, int numChain, int numGen, double ***mat
 
   double withinChainVariance = 0;    
   {
-    double variancePerChain[numChain]; 
+    double *variancePerChain = (double*) exa_calloc(numChain, sizeof(double)); 
 
     for(int i = 0; i < numChain; ++i)
       {
@@ -55,12 +65,14 @@ double getPrsfForParameter(int paramNum, int numChain, int numGen, double ***mat
 	withinChainVariance += variancePerChain[i]; 
       }
     withinChainVariance /= ((numGen-1)* numChain); 
+    exa_free(variancePerChain); 
   }
   
   double tauSquare = ((numGen - 1)  / numGen ) * withinChainVariance  + (betweenChainVariance / numGen); 
 
   double prsf =  tauSquare / withinChainVariance; 
   
+  exa_free(meanPerChain); 
   return prsf; 
 }
 
@@ -74,13 +86,13 @@ double getPrsfForParameter(int paramNum, int numChain, int numGen, double ***mat
  */ 
 void parseFiles(int nGens, int mChains, int numParam, char *runId, double ****resultPtr, char ***paramNamesPtr)
 {
-  (*resultPtr) = exa_calloc(mChains, sizeof(double**)); 
-  *paramNamesPtr = exa_calloc(numParam, sizeof(char*)); 
+  (*resultPtr) = (double***)exa_calloc(mChains, sizeof(double**)); 
+  *paramNamesPtr = (char**)exa_calloc(numParam, sizeof(char*)); 
   for(int i = 0; i < numParam; ++i)
-    (*paramNamesPtr)[i] = exa_calloc(1024, sizeof(char)); 
+    (*paramNamesPtr)[i] = (char*)exa_calloc(1024, sizeof(char)); 
 
   /* scan for param names and determine which tokens to use */
-  boolean* useToken = exa_calloc(2*numParam, sizeof(boolean)); 
+  boolean* useToken = (boolean*)exa_calloc(2*numParam, sizeof(boolean)); 
   {
     char fullName[1024]; 
     sprintf(fullName, "ExaBayes_parameters.%s.%d", runId, 0); 
@@ -116,9 +128,9 @@ void parseFiles(int nGens, int mChains, int numParam, char *runId, double ****re
       char fullName[1024]; 
       sprintf(fullName, "ExaBayes_parameters.%s.%d", runId, i); 
       FILE *fh = fopen(fullName, "r");       
-      (*resultPtr)[i] = exa_calloc(numParam, sizeof(double*)); 
+      (*resultPtr)[i] = (double**)exa_calloc(numParam, sizeof(double*)); 
       for(int j = 0; j < numParam; ++j)
-	(*resultPtr)[i][j] = exa_calloc(nGens, sizeof(double)); 
+	(*resultPtr)[i][j] = (double*)exa_calloc(nGens, sizeof(double)); 
 
       size_t linesiz=0;
       char* line=NULL;

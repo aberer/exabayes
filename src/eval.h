@@ -14,15 +14,15 @@
 #include "common.h"
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 
 typedef struct  _savedArray
 {
   int node; 			/* node this array was associated to */
-  double **arrayPtrs; 		/* array ptr per partition */
+  /* double **arrayPtrs; 		/\* array ptr per partition *\/ */
   struct _savedArray *next; 	
 } savedArray; 
 
@@ -34,7 +34,7 @@ typedef struct
   
   nat **partitionScaler;  /// for each partition, for each node
 
-  boolean* wasSwitched; 		
+  /* boolean* wasSwitched; 		 */
   savedArray *savedArrayList; 
   int partitionEvaluated; 	/* which parition was evaluated, if there has been only one  */
   int numberArrays; 		/* number of arrays taht have been exchanged (i.e., for how many parttions)   */
@@ -62,7 +62,7 @@ void printAlnTrState(struct _state *chain);
 void updateSavedState(struct _state *chain);
 void orientationPointAway(tree *tr, nodeptr p); 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 #endif

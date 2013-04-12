@@ -129,18 +129,18 @@ int drawSampleProportionally(state *chain,  double *weights, int numWeight )
  
   double sum=0.0;
   double lower_bound = 0.0;
-  size_t i = 0;
+  int i = 0; 
   
   assert( numWeight > 0 );
   
-  for( i = 0; i < numWeight ; ++i ) 
+  for(  i = 0; i < numWeight ; ++i ) 
     {
       sum+=weights[i]; 
     }
   assert(sum>0);
   r=r*sum;
     
-  for( i = 0; i < numWeight ; ++i ) 
+  for( int i = 0; i < numWeight ; ++i ) 
     {
       double upper_bound = lower_bound + weights[i];
     

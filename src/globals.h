@@ -59,8 +59,8 @@ typedef struct globs
 /* more global variables =(  */
 char configFileName[1024]; 
 
-char tree_file[1024]; 
-char byteFileName[1024]; 
+/* char tree_file[1024];  */
+/* char byteFileName[1024]; */
 
 /* /\* TODO  *\/ */
 /* char binaryChainState[1024];  */
@@ -95,6 +95,10 @@ extern globalAnalysisInfo gAInfo;
 /* extern char binaryChainState[1024];  */
 
 /* legacy */
+
+/* #ifdef __cplusplus */
+/* extern "C" {  */
+/* #endif */
 extern char infoFileName[1024];
 extern int Thorough; 
 extern int processID; 
@@ -103,6 +107,10 @@ extern char configFileName[1024];
 extern char workdir[1024]; 
 extern char tree_file[1024]; 
 extern char byteFileName[1024]; 
-
 extern double timeIncrement;  
+
+
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 #endif

@@ -7,7 +7,9 @@
 #include <mpi.h>
 
 #include "axml.h"
-#include "globalVariables.h"
+
+
+
 #include "main-common.h"
 
 #include "bayes.h"
@@ -21,13 +23,24 @@
 #include "adapters.h"
 
 
+
+extern int processID; 
+extern char infoFileName[1024];
+extern char *protModels[NUM_PROT_MODELS]; 
+extern const char *secondaryModelList[21]; 
+extern partitionLengths pLengths[MAX_MODEL]; 
+extern partitionLengths pLength;
+extern char resultFileName[1024]; 
+extern double masterTime;
+extern char logFileName[1024]; 
+extern int processes;
+extern double accumulatedTime;
+extern char byteFileName[1024]; 
+
 void exa_main(tree *tr, analdef *adef); 
 void initAdef(analdef *adef);
-/* void makeFileNames(); 	 */
 void initializeTree(tree *tr, analdef *adef); 
 void finalizeInfoFile(tree *tr, analdef *adef); 
-
-
 void makeRandomTree(tree *tr); 
 
 

@@ -45,6 +45,7 @@
 
 #include "axml.h"
 
+
 extern int optimizeRatesInvocations;
 extern int optimizeRateCategoryInvocations;
 extern int optimizeAlphaInvocations;
@@ -56,7 +57,7 @@ extern const unsigned int bitVector32[33];
 extern const unsigned int bitVectorAA[23];
 extern const unsigned int bitVectorIdentity[256];
 
-extern const partitionLengths pLengths[MAX_MODEL];
+/* extern const partitionLengths pLengths[MAX_MODEL]; */
 
 
 

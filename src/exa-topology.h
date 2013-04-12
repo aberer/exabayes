@@ -14,9 +14,9 @@
 #define _BAYES_TOPO
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 
 topol  *setupTopol (int maxtips);
@@ -26,8 +26,8 @@ boolean restoreTree (topol *tpl, tree *tr);
 void copyTopology(tree *targetTree, tree *origTree); 
 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 
 #endif

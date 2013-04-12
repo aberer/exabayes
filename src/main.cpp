@@ -5,7 +5,7 @@
 #endif
 
 #if HAVE_PLL == 1 
-#include "src/main-pll_cond.c"
+#include "src/main-pll_cond.cpp"
 #else 
-#include "src/main-examl_cond.c" 
+#include "src/main-examl_cond.cpp" 
 #endif

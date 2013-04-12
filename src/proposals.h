@@ -12,18 +12,18 @@
 #include "nclConfigReader.h"
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 
 void step(state *curstate); 
 void normalizeProposalWeights(state *curstate);
 void setupProposals(state *chain, initParamStruct *initParams); 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 
 
 #endif

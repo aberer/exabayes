@@ -19,7 +19,7 @@ static int sortByPostProb(const void *a, const void *b)
 
 static double getSpearmanInWindow(double *values, int length)
 {
-  rankHelper *ranks = exa_calloc(length, sizeof(rankHelper)); 
+  rankHelper *ranks = (rankHelper*)exa_calloc(length, sizeof(rankHelper)); 
   for(int i = 0; i < length; ++i)
     {
       ranks[i].value = values[i]; 

@@ -29,9 +29,9 @@
 #include "stack.h"
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 /* todo replace that once */
 typedef struct _rngState
@@ -61,8 +61,8 @@ branch drawInnerBranchUniform(state *chain);
 
 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 
 #endif

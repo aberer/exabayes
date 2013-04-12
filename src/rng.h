@@ -10,6 +10,13 @@
 #ifndef _RNG_H
 #define _RNG_H
 
+
+
+/* TODO is this correct? */
+#ifndef UINT64_C
+#define UINT64_C
+#endif
+
 /* TODO
    
    we could mess around here a lot with 64-bit or the even cooler

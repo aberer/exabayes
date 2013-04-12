@@ -6,7 +6,7 @@
 void createStack(stack **s)
 {
   *s = (stack*)exa_calloc(1,sizeof(stack)); 
-  (*s)->content = exa_calloc(INIT_STACK_LENGTH, sizeof(branch)); 
+  (*s)->content = (branch*)exa_calloc(INIT_STACK_LENGTH, sizeof(branch)); 
   (*s)->length = INIT_STACK_LENGTH; 
   (*s)->index = 0;  
 }
@@ -21,7 +21,7 @@ void pushStack(stack *s, branch value)
 {
   if(s->index == s->length)
     {
-      s->content = exa_realloc(s->content,s->length * 2  * sizeof(branch));
+      s->content = (branch*)exa_realloc(s->content,s->length * 2  * sizeof(branch));
       s->length *= 2;
     }
   

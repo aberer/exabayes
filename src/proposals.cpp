@@ -633,7 +633,8 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   
   double mx,mn; //for sliding window
   
-  int list[numRates];//for biunif_distr and biunif_perm_distr
+  int* list  = (int*)exa_calloc(numRates, sizeof(int)); 
+  // int list[numRates];//for biunif_distr and biunif_perm_distr
   
   /* int numberOfEdits;//for biunif_perm_distr */
   
@@ -731,6 +732,9 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   //recalculate eigens
 
   exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+
+  exa_free(list); 
     
   /* TODO: need to broadcast rates here for parallel version ! */
 
@@ -815,7 +819,8 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
   double r;
   
   randNumber=drawRandInt(chain,numRates);
-  int perm[numRates];
+  int *perm = (int*)exa_calloc(numRates, sizeof(int)); 
+  // int perm[numRates];
   drawPermutation(chain,perm, numRates);
 
   for(state = 0;state < randNumber ; state ++)
@@ -837,6 +842,7 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
   exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/   */
+  exa_free(perm); 
 }
 
 
@@ -1347,7 +1353,8 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
 
   recordFrequRates(chain, model, numFreq, info->frequencies);
   
-  double r[numFreq];  
+  // double r[numFreq];  
+  double* r  =  (double*)exa_calloc(numFreq, sizeof(double)); 
   for(int state = 0;state < numFreq ; state ++)
     {
       double curv = partition->frequencies[state];
@@ -1365,6 +1372,7 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
   //recalculate eigens
 
   exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  exa_free(r); 
 
   /* chain->curprior=get_frequency_prior(chain, tr->partitionData[chain->frequRemem.model].frequencies); */
   /* chain->newprior=get_frequency_prior(chain, chain->frequRemem.curFrequRates); */
@@ -1584,7 +1592,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       return ; 
     }  
 
-  *result = exa_calloc(1,sizeof(proposalFunction));   
+  *result = (proposalFunction*)exa_calloc(1,sizeof(proposalFunction));   
 
   proposalFunction *ptr = *result; 
   ptr->ptype = (proposal_type)type; 
@@ -1613,7 +1621,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
     case E_SPR: 		/* TRUSTED  */
       ptr->eval_lnl = sprEval; 
       /* ptr->autotune = autotuneStopProp; */
-      ptr->remembrance.modifiedPath = exa_calloc(1,sizeof(path)); 
+      ptr->remembrance.modifiedPath = (path*)exa_calloc(1,sizeof(path)); 
       ptr->apply_func = applyExtendedSPR; 
       ptr->reset_func = resetESPR; 
       ptr->name = "eSPR"; 
@@ -1628,7 +1636,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN;
       ptr->category = SUBSTITUTION_RATES; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "modelSlidWin"; 
       break; 
     case UPDATE_GAMMA:      	
@@ -1638,7 +1646,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN; 
       ptr->category = RATE_HETEROGENEITY; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "gammaSlidWin"; 
       break; 
     case UPDATE_GAMMA_EXP: 
@@ -1646,7 +1654,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->apply_func = simple_gamma_proposal_apply; 
       ptr->reset_func = simple_gamma_proposal_reset; 
       ptr->category = RATE_HETEROGENEITY; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "gammaExp"; 
       break; 
     case UPDATE_SINGLE_BL: 
@@ -1662,7 +1670,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_SINGLE_BL_EXP: 
       ptr->eval_lnl = dummy_eval;
-      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
+      ptr->remembrance.topoRec = (topoRecord*)exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->category = BRANCH_LENGTHS; 
@@ -1670,7 +1678,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       break; 
     case UPDATE_SINGLE_BL_BIUNIF: 
       ptr->eval_lnl = dummy_eval;
-      ptr->remembrance.topoRec = exa_calloc(1,sizeof(topoRecord)); 
+      ptr->remembrance.topoRec = (topoRecord*)exa_calloc(1,sizeof(topoRecord)); 
       ptr->apply_func	=  random_branch_length_proposal_apply;
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->name = "singleBLBiunif"; 
@@ -1682,7 +1690,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func =  simple_model_proposal_reset;
       ptr->name = "singleModelBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
     case UPDATE_MODEL_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
@@ -1690,21 +1698,21 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = SUBSTITUTION_RATES; 
       ptr->apply_func = single_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       break; 
     case UPDATE_MODEL_ALL_BIUNIF:
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = all_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->name = "modelAllBiunif"; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->category = SUBSTITUTION_RATES; 
       break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = frequency_proposal_apply; 
       ptr->reset_func = frequency_proposal_reset; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "freqBiunif"; 
       ptr->category = FREQUENCIES; 
       break;
@@ -1712,7 +1720,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = NULL; 	/* TODO */
       ptr->reset_func = simple_model_proposal_reset; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "modelPermBiunif"; 
       ptr->category = SUBSTITUTION_RATES; 
       break;
@@ -1732,7 +1740,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->apply_func = frequencySliderApply; 
       ptr->autotune = autotuneSlidingWindow; 
       ptr->reset_func = frequency_proposal_reset; 
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "freqSlider"; 
       ptr->category = FREQUENCIES; 
       ptr->parameters.slidWinSize = INIT_FREQ_SLID_WIN; 
@@ -1763,7 +1771,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->eval_lnl = onePartitionEval; 
       ptr->reset_func = resetGammaMulti; 
       ptr->autotune = autotuneMultiplier;  
-      ptr->remembrance.partInfo = exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name =  "gammaMulti"; 
       ptr->category = RATE_HETEROGENEITY; 
       ptr->parameters.multiplier = INIT_GAMMA_MULTI;       
@@ -1784,7 +1792,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
  */
 void normalizePropSubCats(state *chain)
 {
-  double* catWeights = exa_calloc(NUM_PROP_CATS + 1,sizeof(double)); 
+  double* catWeights = (double*)exa_calloc(NUM_PROP_CATS + 1,sizeof(double)); 
 
   for(int i = 0; i < chain->numProposals; ++i)
     {
@@ -1851,7 +1859,7 @@ void setupProposals(state *chain, initParamStruct *initParams)
 {
   int ctr = 0; 
 
-  proposalFunction **pfs = exa_calloc(NUM_PROPOSALS, sizeof(proposalFunction*));  
+  proposalFunction **pfs = (proposalFunction**)exa_calloc(NUM_PROPOSALS, sizeof(proposalFunction*));  
   for(int i = 0; i < NUM_PROPOSALS; ++i)
     {
       proposalFunction *pf = NULL; 

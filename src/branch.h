@@ -13,9 +13,9 @@
 
 
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+/* #ifdef __cplusplus */
+/* extern "C"{ */
+/* #endif */
 
 
 
@@ -51,8 +51,8 @@ double getRatio(tree *tr, double a, double b );
 
 
 
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 
 #endif

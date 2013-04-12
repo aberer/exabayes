@@ -1,12 +1,4 @@
-
-
-#include "mem_alloc.h"
-
-#define GLOBAL_VARIABLES_DEFINITION
 #include "axml.h"
-#include "globalVariables.h"
-#undef GLOBAL_VARIABLES_DEFINITION
-
 #include "bayes.h"
 
 #define _INCLUDE_DEFINITIONS
@@ -15,27 +7,42 @@
 
 #include "main-common.h"
 
-
 #include "proposals.h"
 #include "output.h"
 /* turn on, when in release mode */
 /* #define PRODUCTIVE */
 
-
 #include "adapters.h"
+
+
+#include "globalVariables.h" 
+
+
+
+// BEGIN just for compatability 
+
+int processID = 0; 
+// extern const unsigned int mask32[32]; 
+
+// END
+
+
+// extern char infoFileName[1024];
+
+
 
 void exa_main(tree *tr, analdef *adef); 
 
-boolean setupTree (tree *tr, boolean doInit, partitionList *partitions);
+// boolean setupTree (tree *tr, boolean doInit, partitionList *partitions);
 
 /* void initializePartitions(tree *tr, tree *localTree, partitionList *pr, partitionList *localPr, int tid, int n);  */
 
 /* TODO this is really bad... we really have to clean this up... */
 /* more global variables =(  */
-char configFileName[1024]; 
+// char configFileName[1024]; 
 int seed; 
-int Thorough = 0;
-int processID;
+// int Thorough = 0;
+// int processID;
 
 void mcmc(tree *tr, analdef *adef); 
 void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile); 
@@ -57,7 +64,7 @@ static void printBoth(FILE *f, const char* format, ... )
 static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef, int argc, char *argv[])
 {
 
-  int i, model;
+  // int i, model;
   FILE *infoFile = myfopen(infoFileName, "ab");
   char modelType[128];
 
@@ -105,7 +112,7 @@ static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef,
   else
     printBoth(infoFile, "ML estimate of %d per site rate categories\n\n", tr->categories);
 
-  for(model = 0; model < pr->numberOfPartitions; model++)
+  for( int model = 0; model < pr->numberOfPartitions; model++)
   {
     printBoth(infoFile, "Partition: %d\n", model);
     printBoth(infoFile, "Alignment Patterns: %d\n", pr->partitionData[model]->upper - pr->partitionData[model]->lower);
@@ -168,7 +175,7 @@ static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef,
   printBoth(infoFile, "\n");
 
   printBoth(infoFile, "RAxML was called as follows:\n\n");
-  for(i = 0; i < argc; i++)
+  for( int i = 0; i < argc; i++)
     printBoth(infoFile,"%s ", argv[i]);
   printBoth(infoFile,"\n\n\n");
 
@@ -178,9 +185,9 @@ static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef,
 
 void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***empiricalFrequencies)
 {
-  size_t 
-    i,
-    model;
+  // size_t 
+  //   i,
+  //   model;
 
   unsigned char *y;
 
@@ -211,17 +218,17 @@ void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***
   y = (unsigned char *)exa_malloc(sizeof(unsigned char) * ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips));
   tr->yVector = (unsigned char **)exa_malloc(sizeof(unsigned char *) * ((size_t)(tr->mxtips + 1)));
 
-  for(i = 1; i <= (size_t)tr->mxtips; i++)
+  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
     tr->yVector[i] = &y[(i - 1) *  (size_t)tr->originalCrunchedLength]; 
 
   setupTree(tr, FALSE, partitions);
 
-  for(i = 0; i < partitions->numberOfPartitions; i++)
+  for(int i = 0; i < partitions->numberOfPartitions; i++)
     partitions->partitionData[i]->executeModel = TRUE;
 
   /* data structures for convergence criterion need to be initialized after! setupTree */
 
-  for(i = 1; i <= (size_t)tr->mxtips; i++)
+  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
     {
       int len;
       myBinFread(&len, sizeof(int), 1, byteFile);
@@ -230,10 +237,10 @@ void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***
       /*printf("%s \n", tr->nameList[i]);*/
     }  
 
-  for(i = 1; i <= (size_t)tr->mxtips; i++)
+  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
     addword(tr->nameList[i], tr->nameHash, i);
 
-  for(model = 0; model < partitions->numberOfPartitions; model++)
+  for(int model = 0; model < partitions->numberOfPartitions; model++)
     {
       int 
 	len;

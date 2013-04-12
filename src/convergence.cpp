@@ -115,7 +115,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
 
       do
 	{	 
-	  unsigned int i;
+	  int i;
 	  
 	  for(i = 0; i < vectorLength; i++)
 	    if(bitVector[i] != e->bitVector[i])
@@ -137,7 +137,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
       
       
-      e->treeVector = exa_calloc(gAInfo.numberOfRuns, sizeof(nat)); 
+      e->treeVector = (nat*)exa_calloc(gAInfo.numberOfRuns, sizeof(nat)); 
       e->treeVector[chainId]++; 
       memcpy(e->bitVector, bitVector, sizeof(unsigned int) * vectorLength);
      
@@ -151,7 +151,7 @@ void insertAndCount(tree *tr, unsigned int *bitVector, hashtable *h, hashNumberT
       e->bitVector = (unsigned int*)exa_malloc_aligned(vectorLength * sizeof(unsigned int));
       memset(e->bitVector, 0, vectorLength * sizeof(unsigned int));
 
-      e->treeVector = exa_calloc(gAInfo.numberOfRuns, sizeof(nat)); 
+      e->treeVector = (nat*)exa_calloc(gAInfo.numberOfRuns, sizeof(nat)); 
       e->treeVector[chainId]++; 
 
       memcpy(e->bitVector, bitVector, sizeof(nat) * vectorLength);     
@@ -260,12 +260,12 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   int numTaxa = aChain->tr->mxtips; 
   hashtable *ht = gAInfo.bvHash; 
   
-  int *numSampled = exa_calloc(gAInfo.numberOfRuns, sizeof(int)); 
+  int *numSampled = (int*)exa_calloc(gAInfo.numberOfRuns, sizeof(int)); 
   
-  entry** bvs = exa_malloc(sizeof(nat*) * ht->entryCount);
-  int ctr = 0; 
+  entry** bvs = (entry**)exa_malloc(sizeof(entry*) * ht->entryCount); 
+  nat ctr = 0; 
   
-  for(int i = 0; i < ht->tableSize; ++i)
+  for(nat i = 0; i < ht->tableSize; ++i)
     {
       entry *e = ht->table[i]; 
       
@@ -295,7 +295,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 #endif
 
   int cntRelevant = 0; 
-  for(int i = 0; i < ht->entryCount ; ++i)
+  for(nat i = 0; i < ht->entryCount ; ++i)
     {
       entry *e = bvs[i]; 
 

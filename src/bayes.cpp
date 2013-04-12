@@ -22,8 +22,7 @@
 #include "eval.h"
 #include "proposals.h"
 #include "tune.h"
-#include  "prsf.h"
-
+#include "prsf.h"
 
 
 extern double masterTime; 
@@ -207,7 +206,7 @@ void runChains(state *allChains, int diagFreq)
 	  executeOneRun(relChains, diagFreq); 	  
 	}
 
-      hasConverged = convergenceDiagnostic(allChains, gAInfo.numberOfRuns); 
+      hasConverged = convergenceDiagnostic(allChains); 
       if(processID == 0)
 	printPRSF(run_id);
     }
