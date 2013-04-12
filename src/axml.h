@@ -15,11 +15,29 @@
 #define __AVX 
 #endif
 
+
+
+#if HAVE_PLL == 1 
+#else 
+#include "mpi.h"
+#endif
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #if HAVE_PLL == 1 
 #include "pll/axml-pll.h"
 #else 
 #include "examl/axml-examl.h"
 #endif
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

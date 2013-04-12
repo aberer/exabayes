@@ -173,13 +173,13 @@ AUTOHEADER = ${SHELL} /lhome/labererae/proj/exa-bayes/lib/ncl-2.1.18/config/miss
 AUTOMAKE = ${SHELL} /lhome/labererae/proj/exa-bayes/lib/ncl-2.1.18/config/missing --run automake-1.11
 AWK = gawk
 CC = gcc
-CCDEPMODE = depmode=gcc3
+CCDEPMODE = depmode=none
 CFLAGS = -g -O2
 CPP = gcc -E
 CPPFLAGS = -I$(top_srcdir) 
 CXX = g++
 CXXCPP = g++ -E
-CXXDEPMODE = depmode=gcc3
+CXXDEPMODE = depmode=none
 CXXFLAGS =  -O3 -ffast-math 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H

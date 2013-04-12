@@ -25,8 +25,7 @@ typedef struct
 
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C"{
 #endif
   void parseConfigWithNcl(char *configFileName, initParamStruct **initParam); 
 #ifdef __cplusplus

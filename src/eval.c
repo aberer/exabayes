@@ -75,43 +75,64 @@ void loadOrientation(state *chain)
 }
 
 /**
-   @brief saves the lnl arrays 
- */ 
+   @brief saves the lnl arrays
+ */
 void saveArray(state *chain, int model)
 {
   pInfo *partition = getPartition(chain, model );
-  double **xVector = getXPtr(chain,model); 
+  double **xVector = getXPtr(chain,model);
   for(int i = 0; i < chain->tr->mxtips-2; ++i)
     {
 #if HAVE_PLL == 1
-      int length = (partition->upper - partition->lower); 
-#else 
-      int length =   partition->width; 
+      int length = (partition->upper - partition->lower);
+#else
+      int length =   partition->width;
 #endif
-      memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * length * LENGTH_LNL_ARRAY);   
-    }
-  
-  memcpy(chain->lnl.partitionScaler[model], partition->globalScaler, sizeof(nat) * 2 * chain->tr->mxtips); 
+      memcpy(chain->lnl.vectorsPerPartition[model][i] , xVector[i], sizeof(double) * length * LENGTH_LNL_ARRAY);
+    }  
 }
 
 
-/**
-   @brief loads the lnl arrays 
- */
-void loadArray(state *chain, int model)
-{
-  pInfo *partition = getPartition(chain, model); 
-  double **xVector = getXPtr(chain, model); 
-  for(int i= 0; i < chain->tr->mxtips-2; ++i)
-    {      
-#if HAVE_PLL == 1
-      int length = (partition->upper - partition->lower); 
-#else 
-      int length = partition->width; 
-#endif
-      memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) *  length  * LENGTH_LNL_ARRAY); 
+
+/* /\** */
+/*    @brief loads the lnl arrays  */
+/*  *\/ */
+/* void loadArray(state *chain, int model) */
+/* { */
+/*   pInfo *partition = getPartition(chain, model); */
+/*   double **xVector = getXPtr(chain, model); */
+/*   for(int i= 0; i < chain->tr->mxtips-2; ++i) */
+/*     { */
+/* #if HAVE_PLL == 1 */
+/*       int length = (partition->upper - partition->lower); */
+/* #else */
+/*       int length = partition->width; */
+/* #endif */
+/*       memcpy(xVector[i], chain->lnl.vectorsPerPartition[model][i], sizeof(double) *  length  * LENGTH_LNL_ARRAY); */
+/*     } */
+/*   memcpy(partition->globalScaler, chain->lnl.partitionScaler[model], sizeof(nat) * 2 * chain->tr->mxtips); */
+/* } */
+
+
+static void freeList(state *chain )
+{  
+  savedArray *iter = chain->lnl.savedArrayList; 
+  while(iter)
+    {
+      savedArray *tmp = iter->next;       
+      exa_free(iter->arrayPtrs); 
+      exa_free(iter); 
+      iter = tmp->next;       
     }
-  memcpy(partition->globalScaler, chain->lnl.partitionScaler[model], sizeof(nat) * 2 * chain->tr->mxtips); 
+}
+
+
+
+static void swapArray(double **a, double **b)
+{
+  double **tmp = a ; 
+  a = b; 
+  b = tmp ; 
 }
 
 
@@ -120,27 +141,54 @@ void loadArray(state *chain, int model)
  */ 
 void restoreAlignAndTreeState(state *chain)
 {  
-  int numPart = getNumberOfPartitions( chain->tr); 
   loadOrientation(chain);
-  for(int i = 0; i < numPart; ++i)
-    loadArray(chain,i); 
+  
+  for(savedArray* iter = chain->lnl.savedArrayList; iter; iter = iter->next)
+    {
+      if(chain->lnl.numberArrays == 1)
+	{
+	  int model = chain->lnl.partitionEvaluated; 
+	  pInfo *partition = getPartition(chain,model);
+	  swapArray(partition->xVector + iter->node, chain->lnl.vectorsPerPartition[model] + iter->node);
+	}
+      else 
+	{
+	  for(int i = 0; i < chain->lnl.numberArrays; ++i)
+	    {
+	      pInfo *partition = getPartition(chain, i);
+	      swapArray(partition->xVector + iter->node , chain->lnl.vectorsPerPartition[i] + iter->node ); 
+	    }
+	}
+    }
+
+  freeList(chain); 
 
   branch root = findRoot(chain->tr); 
 
   nodeptr p = findNodeFromBranch(chain->tr,root);
-  evaluateGenericWrapper(chain, p,FALSE);
+  evaluateGenericWrapper(chain, p,FALSE); /* TODO inefficient */
 }
 
 
 /**
-   @brief saves tree orientation and likelihood arrays 
+   @brief 
+   saves 
+   * the orientation
+   * the scaler info 
+   * and clears the list 
  */ 
-void saveAlignAndTreeState(state *chain)
+void updateSavedState(state *chain)
 {
   int numPart = getNumberOfPartitions(chain->tr);
   saveOrientation(chain);
+
   for(int i = 0; i < numPart; ++i)
-    saveArray(chain,i); 
+    {
+      pInfo *partition = getPartition(chain, i); 
+      memcpy(chain->lnl.partitionScaler[i], partition->globalScaler, sizeof(nat) * 2 * chain->tr->mxtips);  
+    }
+ 
+  
 }
 
 
@@ -251,8 +299,7 @@ void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, bool
       setExecModel(chain,i,TRUE); 
     }
 
-  expensiveVerify(chain);      
-
+  expensiveVerify(chain); 
 }
 
 

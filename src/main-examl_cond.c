@@ -23,7 +23,7 @@
 
 void exa_main(tree *tr, analdef *adef); 
 void initAdef(analdef *adef);
-void makeFileNames(void); 
+/* void makeFileNames(); 	 */
 void initializeTree(tree *tr, analdef *adef); 
 void finalizeInfoFile(tree *tr, analdef *adef); 
 

@@ -1,4 +1,5 @@
 
+#define UINT64_C
 
 
 #include "axml.h"
@@ -94,7 +95,7 @@ void traverseInitCorrect(nodeptr p, int *count, tree *tr )
 static void initParamDump(tree *tr, paramDump *dmp)
 {  
   dmp->topo = setupTopol(tr->mxtips); 
-  dmp->infoPerPart = exa_calloc(getNumberOfPartitions(tr), sizeof(perPartitionInfo));
+  dmp->infoPerPart = (perPartitionInfo*)exa_calloc(getNumberOfPartitions(tr), sizeof(perPartitionInfo));
   for(int i = 0; i < getNumberOfPartitions(tr); ++i)
     {
       perPartitionInfo *p =  dmp->infoPerPart + i ; 
@@ -106,7 +107,7 @@ static void initParamDump(tree *tr, paramDump *dmp)
 	p->frequencies[j] = 0.25;       
     }
 
-  dmp->branchLengths = exa_calloc(2 * tr->mxtips, sizeof(double));
+  dmp->branchLengths = (double*)exa_calloc(2 * tr->mxtips, sizeof(double));
   for(int i = 0; i < 2 * tr->mxtips; ++i)
     dmp->branchLengths[i] = INIT_BRANCH_LENGTHS;   
 }
@@ -154,8 +155,8 @@ void preinitTree(tree *tr)
   tr->rateHetModel = GAMMA; 
   tr->multiStateModel  = GTR_MULTI_STATE;
 #if (HAVE_PLL == 0 ) 
-    tr->useGappedImplementation = FALSE;
-    tr->saveBestTrees          = 0;
+  tr->useGappedImplementation = FALSE;
+  tr->saveBestTrees          = 0;
 #endif
   tr->saveMemory = FALSE;
   tr->manyPartitions = FALSE;
@@ -183,7 +184,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  initParamStruct *initParams = exa_calloc(1,sizeof(initParamStruct)); 
+  initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct)); 
   
   parseConfigWithNcl(configFileName, &initParams);
   
@@ -200,9 +201,9 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   gAInfo.swapInfo = (successCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(successCtr*)); 
   int n = gAInfo.numberCoupledChains; 
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.swapInfo[i] = exa_calloc( n * n , sizeof(successCtr)); 
+    gAInfo.swapInfo[i] = (successCtr*)exa_calloc( n * n , sizeof(successCtr)); 
 
-  gAInfo.temperature = exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
+  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
     gAInfo.temperature[i] = HEAT_FACTOR; 
 
@@ -212,7 +213,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 #if HAVE_PLL == 1 
   gAInfo.partitions = (partitionList*)exa_realloc(gAInfo.partitions, (treesNeeded + 1)  * sizeof(partitionList)); 
 #endif
-  tree *moreTrees = exa_calloc(treesNeeded, sizeof(tree)); 
+  tree *moreTrees = (tree*)exa_calloc(treesNeeded, sizeof(tree)); 
   for(int i = 0; i < treesNeeded; ++i)
     {
       preinitTree(moreTrees+i); 
@@ -235,7 +236,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   
   if(processID == 0)
     printf("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
-  *resultIndiChains = exa_calloc( totalNumChains , sizeof(state));     
+  *resultIndiChains = (state*)exa_calloc( totalNumChains , sizeof(state));     
   
   unsigned int bvLength = 0; 
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
@@ -251,7 +252,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 
 
-      theChain->categoryWeights = exa_calloc(NUM_PROP_CATS, sizeof(double)); 
+      theChain->categoryWeights = (double*)exa_calloc(NUM_PROP_CATS, sizeof(double)); 
       
 #ifdef MC3_SPACE_FOR_TIME
       /* important NOTICE : in this scheme, we assume, that there is
@@ -280,14 +281,15 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 
       if(theChain->id / gAInfo.numberCoupledChains == 0 ) 
 	{
-	  theChain->lnl.orientation = exa_calloc(tr->mxtips,sizeof(int)); 
-	  theChain->lnl.vectorsPerPartition = exa_calloc(numPart, sizeof(double**)); 
+	  theChain->lnl.orientation = (int*)exa_calloc(tr->mxtips,sizeof(int)); 
+	  theChain->lnl.vectorsPerPartition = (double***)exa_calloc(numPart, sizeof(double**)); 
 	  theChain->lnl.partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 	  
+	  theChain->lnl.wasSwitched = (boolean*)exa_calloc(2 * tr->mxtips, sizeof(boolean)); 
 
 	  for(int j = 0; j < numPart; ++j)
 	    {
 	      pInfo *partition = getPartition(theChain, j); 
-	      theChain->lnl.vectorsPerPartition[j] = exa_calloc(tr->mxtips, sizeof(double*)); 
+	      theChain->lnl.vectorsPerPartition[j] = (double**)exa_calloc(tr->mxtips, sizeof(double*)); 
 #if HAVE_PLL == 1 		/* TODO that's hacky */
 	      int length = partition->upper - partition->lower; 
 #else 
@@ -296,9 +298,9 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	      /* printf(" [%d] length is %d (width=%d)\n", processID, length, (int)partition->width) ; */
 	      assert(length > 0); 
 	      for(int k = 0; k < tr->mxtips; ++k) 
-		theChain->lnl.vectorsPerPartition[j][k] = exa_calloc( length *  LENGTH_LNL_ARRAY , sizeof(double)); 
+		theChain->lnl.vectorsPerPartition[j][k] = (double*)exa_calloc( length *  LENGTH_LNL_ARRAY , sizeof(double)); 
 
-	      theChain->lnl.partitionScaler[j] = (nat*)exa_calloc(2 * tr->mxtips,sizeof(nat)); 	      
+	      theChain->lnl.partitionScaler[j] = (nat*)exa_calloc(2 * tr->mxtips,sizeof(nat));
 	    }	  
 	}
       else 
@@ -307,6 +309,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	  theChain->lnl.orientation = leechChain->lnl.orientation; 
 	  theChain->lnl.vectorsPerPartition = leechChain->lnl.vectorsPerPartition; 
 	  theChain->lnl.partitionScaler = leechChain->lnl.partitionScaler; 
+	  theChain->lnl.wasSwitched = leechChain->lnl.wasSwitched; 
 	}
       
       setupProposals(theChain, initParams); 
@@ -545,7 +548,7 @@ void applyChainStateToTree(state *chain)
   chain->wasAccepted = TRUE; 
   chain->prevProposal = NULL; 
 
-  saveAlignAndTreeState(chain); 
+  updateSavedState(chain); 
 }
 
 
@@ -608,7 +611,7 @@ void drawProposalFunction(state *chain, proposalFunction **result )
   
   *result = NULL; 
   category_t
-    cat = drawSampleProportionally(chain,chain->categoryWeights, NUM_PROP_CATS) + 1; /* it is 1-based */
+    cat = category_t(drawSampleProportionally(chain,chain->categoryWeights, NUM_PROP_CATS) + 1); /* it is 1-based */
 
   /* printInfo(chain, "drawing proposal; category is %d\n"), cat;  */
   
@@ -729,10 +732,13 @@ void step(state *chain)
   debug_printAccRejc(chain, pf, chain->wasAccepted); 
   chain->prevProposal = pf;   
 
+  
+
+
   if(chain->wasAccepted)
     {
       cntAccept(&(pf->sCtr)); 
-      saveAlignAndTreeState(chain); 
+      updateSavedState(chain); 
     }
   else
     {

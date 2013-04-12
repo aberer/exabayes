@@ -13,6 +13,13 @@
 #include "config.h"
 
 
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #if HAVE_PLL == 1 
 void initializeTree(tree *tr, partitionList *partitions, analdef *adef); 
 #else  
@@ -38,4 +45,9 @@ double getPcontr(state *chain, int num);
 /* double getFracChange(state *chain, int num);  */
 
 double** getXPtr(state *chain, int model); 
+
+
+#ifdef __cplusplus
+}
+#endif
 #endif

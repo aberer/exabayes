@@ -11,5 +11,15 @@
 
 #include "axml.h"
 
-void exa_makeRandomTree(tree *tr); 
+
+#ifdef __cplusplus
+extern "C"{
 #endif
+
+void exa_makeRandomTree(tree *tr); 
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+

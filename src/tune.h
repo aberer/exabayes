@@ -4,6 +4,12 @@
 
 #include "axml.h"
 
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+
 typedef struct 
 {
   int lAcc; 			/// success within one tuning batch  
@@ -20,4 +26,8 @@ double getRatioLocal(successCtr *ctr);
 void resetCtr(successCtr *ctr); 
 
 double tuneParameter(int batch, double accRatio, double parameter, boolean inverse ); 
+
+#ifdef __cplusplus
+}
+#endif
 #endif

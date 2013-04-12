@@ -29,6 +29,10 @@
 #include "stack.h"
 
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* todo replace that once */
 typedef struct _rngState
 {
@@ -54,4 +58,11 @@ branch drawSubtreeUniform(state *chain);
 double drawMultiplier(state *chain, double multiplier); 
 double drawFromSlidingWindow(state *chain, double param, double window); 
 branch drawInnerBranchUniform(state *chain); 
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

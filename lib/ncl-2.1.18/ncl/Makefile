@@ -141,13 +141,13 @@ AUTOHEADER = ${SHELL} /lhome/labererae/proj/exa-bayes/lib/ncl-2.1.18/config/miss
 AUTOMAKE = ${SHELL} /lhome/labererae/proj/exa-bayes/lib/ncl-2.1.18/config/missing --run automake-1.11
 AWK = gawk
 CC = gcc
-CCDEPMODE = depmode=gcc3
+CCDEPMODE = depmode=none
 CFLAGS = -g -O2
 CPP = gcc -E
 CPPFLAGS = -I$(top_srcdir) 
 CXX = g++
 CXXCPP = g++ -E
-CXXDEPMODE = depmode=gcc3
+CXXDEPMODE = depmode=none
 CXXFLAGS =  -O3 -ffast-math 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
@@ -377,44 +377,44 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/nxsassumptionsblock.Plo
-include ./$(DEPDIR)/nxsblock.Plo
-include ./$(DEPDIR)/nxscharactersblock.Plo
-include ./$(DEPDIR)/nxscxxdiscretematrix.Plo
-include ./$(DEPDIR)/nxsdatablock.Plo
-include ./$(DEPDIR)/nxsdistancesblock.Plo
-include ./$(DEPDIR)/nxsexception.Plo
-include ./$(DEPDIR)/nxsmultiformat.Plo
-include ./$(DEPDIR)/nxspublicblocks.Plo
-include ./$(DEPDIR)/nxsreader.Plo
-include ./$(DEPDIR)/nxssetreader.Plo
-include ./$(DEPDIR)/nxsstring.Plo
-include ./$(DEPDIR)/nxstaxaassociationblock.Plo
-include ./$(DEPDIR)/nxstaxablock.Plo
-include ./$(DEPDIR)/nxstoken.Plo
-include ./$(DEPDIR)/nxstreesblock.Plo
-include ./$(DEPDIR)/nxsunalignedblock.Plo
+#include ./$(DEPDIR)/nxsassumptionsblock.Plo
+#include ./$(DEPDIR)/nxsblock.Plo
+#include ./$(DEPDIR)/nxscharactersblock.Plo
+#include ./$(DEPDIR)/nxscxxdiscretematrix.Plo
+#include ./$(DEPDIR)/nxsdatablock.Plo
+#include ./$(DEPDIR)/nxsdistancesblock.Plo
+#include ./$(DEPDIR)/nxsexception.Plo
+#include ./$(DEPDIR)/nxsmultiformat.Plo
+#include ./$(DEPDIR)/nxspublicblocks.Plo
+#include ./$(DEPDIR)/nxsreader.Plo
+#include ./$(DEPDIR)/nxssetreader.Plo
+#include ./$(DEPDIR)/nxsstring.Plo
+#include ./$(DEPDIR)/nxstaxaassociationblock.Plo
+#include ./$(DEPDIR)/nxstaxablock.Plo
+#include ./$(DEPDIR)/nxstoken.Plo
+#include ./$(DEPDIR)/nxstreesblock.Plo
+#include ./$(DEPDIR)/nxsunalignedblock.Plo
 
 .cpp.o:
-	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-#	source='$<' object='$@' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXXCOMPILE) -c -o $@ $<
+#	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+#	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+#	source='$<' object='$@' libtool=no 
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) 
+	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-#	source='$<' object='$@' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+#	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+#	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+#	source='$<' object='$@' libtool=no 
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) 
+	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-#	source='$<' object='$@' libtool=yes \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(LTCXXCOMPILE) -c -o $@ $<
+#	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+#	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+#	source='$<' object='$@' libtool=yes 
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) 
+	$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo

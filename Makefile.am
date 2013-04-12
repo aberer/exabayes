@@ -3,10 +3,10 @@ SUBDIRS = ./lib/ncl-2.1.18/
 
 
 # -f may also help with examl  
-WARN_FLAGS=  -Wall --pedantic -fgnu89-inline  -Wno-unused-function
+WARN_FLAGS=  -Wall --pedantic  -Wno-unused-function
 
 # SIMD_FLAGS is potentially problematic: auto-avx vectorization was considered harmfull? 
-AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 #   -D_BAYESIAN
+AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3  -fgnu89-inline
 
 
 if WITH_DEBUG
@@ -45,7 +45,7 @@ endif
 
 AM_CFLAGS+=$(OPT_HEAD) -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS) $(LANG_FLAGS)
-AM_CXXFLAGS=$(AM_CFLAGS)
+AM_CXXFLAGS=$(AM_CFLAGS)   -std=c++11
 
 libpll_a_CFLAGS= -w $(AM_CFLAGS)
 libexaml_a_CFLAGS=-w $(AM_CFLAGS)
@@ -61,7 +61,7 @@ prsf_SOURCES=src/prsf.c
 
 
 if WITH_PLL
-prsf_SOURCES+=src/pll/mem_alloc-pll.c src/main-common.c
+prsf_SOURCES+=src/pll/mem_alloc-pll.c # src/main-common.c
 endif
 
 prsf_CFLAGS=$(AM_CFLAGS) -D_STANDALONE

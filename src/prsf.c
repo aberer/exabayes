@@ -6,6 +6,7 @@
 
 
 #ifdef _STANDALONE
+#undef PRINT
 #define PRINT printf
 #endif
 
@@ -85,8 +86,9 @@ void parseFiles(int nGens, int mChains, int numParam, char *runId, double ****re
     sprintf(fullName, "ExaBayes_parameters.%s.%d", runId, 0); 
     FILE *fh = fopen(fullName, "r"); 
     size_t siz= 0; char *line = NULL; 
-    getline(&line, &siz, fh); 	/* ignore fist line */
-    getline(&line, &siz, fh) ;
+    int retVal __attribute__((unused)) = 0; 
+    retVal = getline(&line, &siz, fh); 	/* ignore fist line */
+    retVal = getline(&line, &siz, fh) ;
     strtok(line, "\t"); 
     strtok(NULL, "\t"); 	/* forward by two  */
     char *pch = strtok(NULL, "\t");     
@@ -120,10 +122,11 @@ void parseFiles(int nGens, int mChains, int numParam, char *runId, double ****re
 
       size_t linesiz=0;
       char* line=NULL;
-
+      int retVal __attribute__((unused)) = 0; 
+      
       /* ignore two lines */
-      getline(&line, &linesiz, fh); 
-      getline(&line, &linesiz, fh); 
+      retVal = getline(&line, &linesiz, fh); 
+      retVal = getline(&line, &linesiz, fh); 
       int sampNum = 0;
       while ( ( getline(&line, &linesiz, fh) > 0 )  && sampNum <nGens) 
 	{
@@ -222,10 +225,11 @@ static int guessNumParam(char *runid)
   FILE *fh = fopen(fullName, "r"); 
   assert(fh != NULL); 
   size_t siz = 0; 
+  int something __attribute__((unused)) = 0; 
   char *line = NULL;  
-  getline(&line, &siz, fh);   
+  something = getline(&line, &siz, fh);   
   assert(siz); 
-  getline(&line, &siz, fh); 	/* second line  */
+  something = getline(&line, &siz, fh); 	/* second line  */
   assert(siz); 
 
   char *pch = strtok(line, "\t"); 
@@ -262,10 +266,11 @@ int guessNumGen( int numChain, int numParam, char *runid)
       sprintf(fullName, "ExaBayes_parameters.%s.%d", runid, i); 
       FILE *fh = fopen(fullName,"r"); 
       assert(fh); 
+      int something __attribute__((unused)) = 0 ; 
       char *line = NULL; size_t siz = 0; 
-      getline(&line,&siz,fh ); 
-      getline(&line,&siz,fh ); 
-
+      something = getline(&line,&siz,fh ); 
+      something = getline(&line,&siz,fh ); 
+      
       int numTokens = 0; 
       {
 	char *pch = strtok(line, "\t"); 

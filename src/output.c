@@ -80,6 +80,9 @@ void debug_checkTreeConsistency(state *chain)
 #endif
 }
 
+
+
+
 void makeFileNames()
 {
   int infoFileExists = 0;

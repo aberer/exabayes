@@ -17,23 +17,6 @@
 #include "eval.h"
 #include "stack.h"
 
-/* TODO not enabled yet, was not such a good idea */
-typedef struct
-{
-  proposal_type type;
-  int wasAccepted;
-
-  
-  int model;
-
-  union
-  {
-    double alpha;    
-  } change;
-
-} chainHistory ;
-
-
 
 #define NUM_PROP_CATS 5 
 typedef enum _cats {

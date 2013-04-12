@@ -14,7 +14,7 @@ void analyzeRunId(char id[128]);
 void initAdef(analdef *adef); 
 void ignoreExceptionsDenormFloat(); 
 int filexists(char *filename); 
-void makeFileNames(void);
+void makeFileNames();
 void finalizeFiles(); 
 
 #endif
