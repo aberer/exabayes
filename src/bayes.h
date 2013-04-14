@@ -10,12 +10,22 @@
 #define _BAYES_H
 
 
+using namespace std; 
+#include <iostream>
+
 #include "proposalType.h"
 #include "config.h"
 #include "rng.h"
 #include "tune.h"
 #include "eval.h"
 #include "stack.h"
+
+
+#include "Chain.hpp"
+
+class TreeAln; 
+class LnlRestorer; 
+
 
 
 #define NUM_PROP_CATS 5 
@@ -28,40 +38,7 @@ typedef enum _cats {
 } category_t; 
 
 
-
-typedef struct
-{
-  int modelNum; 
-  double alpha ;
- 
-  /* TODO only works with DNA */
-  int numRates; 
-  double substRates[6]; 
-
-  int numFreqs; 
-  double frequencies[4];
-
-} perPartitionInfo; 		/* relevant info from pInfo  */
-
-
-
-typedef struct 
-{
-  /* topology */
-  topol *topo; 
-  
-  /* branch lengths  */
-  double *branchLengths; 
-
-  /* substitution parameter */
-  perPartitionInfo *infoPerPart; 
-
-} paramDump; 
-
-
 typedef struct _pfun  proposalFunction; 
-
-
 
 
 /* TODO will be replaced completely with paths  */
@@ -77,50 +54,6 @@ typedef struct
   double neighborBls[NUM_BRANCHES]; 
   double nextNeighborBls[NUM_BRANCHES]; 
 } topoRecord; /// information that helps us to restore the previous state when doing topological moves or manipulating the branch lengths
-
-
-
-
-
-typedef struct _state
-{  
-  tree * tr;
-#if HAVE_PLL == 1   
-  partitionList *partitions; 
-#endif  
-  proposalFunction *prevProposal;  /// only used for runtime efficiency. Is NULL, if we just saved/applied the state. 
-  /* branch currentRoot; */ 
-
-  boolean wasAccepted; 	/// for debug only  
-
-  int id;   
-  int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  int currentGeneration;   
-  
-  double priorProb; /// the prior probability of the current state   => store in log form  
-
-  
-  lnlContainer lnl;  /// the current likelihood of the state  */
-
-  double hastings;/// the proposal ratio 
-
-  double penaltyFactor; //change to the probability of picking a proposal  
-
-  proposalFunction **proposals; 
-  int numProposals; 
-  double *categoryWeights; 
-
-  /* new stuff that we need when having multiple chains  */
-  FILE *topologyFile; 
-  FILE *outputParamFile; 
-
-  /* RNG */
-  randKey_t rKey;
-  randCtr_t rCtr;
-
-  /* saves the entire space in the parameter space  */
-  paramDump dump;
-} state;
 
 
 struct _pfun 
@@ -173,7 +106,6 @@ struct _pfun
 
   /* TODO dirty: is also a remembrance variable  */
   double ratio; 
-
 }; 
 
 

@@ -13,41 +13,9 @@
 #include "config.h"
 
 
-
-
-/* #ifdef __cplusplus */
-/* extern "C" */
-/* { */
-/* #endif */
-
-#if HAVE_PLL == 1 
-void initializeTree(tree *tr, partitionList *partitions, analdef *adef); 
-#else  
-void initializeTree(tree *tr, analdef *adef); 
-#endif
-
-
 /* shared  */
 void exa_evaluateGeneric(state *chain, nodeptr start, boolean fullTraversal); 
 void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q); 
 void exa_newViewGeneric(state *chain, nodeptr p, boolean masked); 
-void exa_initReversibleGTR( state *chain,int model); 
 
-int getNumBranches(tree *tr);
-pInfo* getPartition(state *chain, int num); 
-int getNumberOfPartitions(tree *tr) ; 
-boolean hasPergeneBL(tree *tr); 
-void setPLH(state *chain, int num, double value); 
-double getPLH(state *chain, int num); 
-void setExecModel(state *chain, int num,boolean value); 
-boolean getExecModel(state *chain, int num); 
-double getPcontr(state *chain, int num); 
-/* double getFracChange(state *chain, int num);  */
-
-double** getXPtr(state *chain, int model); 
-
-
-/* #ifdef __cplusplus */
-/* } */
-/* #endif */
 #endif

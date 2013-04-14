@@ -9,7 +9,7 @@
 #include "output.h"
 #include "adapters.h"
 #include "topology-utils.h"
-
+#include "TreeAln.hpp"
 
 
 
@@ -55,22 +55,22 @@ void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted)
 	printInfo(chain, "ACCEPTING\t");   
       else 
 	printInfo(chain, "rejecting\t");   	  
-      printf("%s %g\n" ,pf->name, chain->tr->likelihood); 
+      printf("%s %g\n" ,pf->name, chain->traln->getTr()->likelihood); 
     }
 #endif
 }
 
 
-void debug_checkTreeConsistency(state *chain)
+void debug_checkTreeConsistency(tree *tr)
 {
-#ifdef DEBUG_LNL_VERIFY
-  tree *tr = chain->tr; 
+#ifdef DEBUG_CHECK_TREE_CONSISTENCY
+  // tree *tr = chain->tr; 
   int count = 0; 
   traverseAndCount(tr->start->back, &count, tr); 
   if(count != 2 * tr->mxtips - 3 )
     {      
       char tmp[10000]; 
-      Tree2stringNexus(tmp, chain, tr->start->back, 0); 
+      Tree2stringNexus(tmp, tr, tr->start->back, 0); 
       if(processID==0)
 	printf("faulty TOPOLOGY: %s\n", tmp);
 
@@ -78,9 +78,6 @@ void debug_checkTreeConsistency(state *chain)
     }
 #endif
 }
-
-
-
 
 void makeFileNames()
 {
@@ -204,9 +201,9 @@ void printInfo(state *chain, const char *format, ...)
 /* } */
 
 
-char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
+char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
 {      
-  tree *tr = chain->tr; 
+  // tree *tr = chain->tr; 
 
   if(isTip(p->number, tr->mxtips)) 
     {	       	        
@@ -216,13 +213,13 @@ char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
   else 
     {                 	 
       *treestr++ = '(';
-      treestr = Tree2stringNexus(treestr, chain, p->next->back, perGene);
+      treestr = Tree2stringNexus(treestr, tr, p->next->back, perGene);
       *treestr++ = ',';
-      treestr = Tree2stringNexus(treestr, chain, p->next->next->back, perGene);
+      treestr = Tree2stringNexus(treestr, tr, p->next->next->back, perGene);
       if(p == tr->start->back) 
 	{
 	  *treestr++ = ',';
-	  treestr = Tree2stringNexus(treestr, chain, p->back, perGene);
+	  treestr = Tree2stringNexus(treestr, tr, p->back, perGene);
 	}
       *treestr++ = ')';                    
     }
@@ -233,7 +230,7 @@ char *Tree2stringNexus(char *treestr, state *chain , nodeptr p, int perGene )
       return treestr;
     }
 
-  sprintf(treestr, ":%g", branchLengthToReal(chain->tr, p->z[0]));
+  sprintf(treestr, ":%g", branchLengthToReal(tr, p->z[0]));
   
   while (*treestr) treestr++;
   return  treestr;
@@ -249,23 +246,21 @@ static void printNexusTreeFileStart(state *chain)
 
   fprintf(fh, "#NEXUS\n[ID: %s]\n[Param: tree]\nbegin trees;\n\ttranslate\n", "TODO" ); 
 
-  for(int i = 0; i < chain->tr->mxtips-1; ++i)
-    fprintf(fh, "\t\t%d %s,\n", i+1, chain->tr->nameList[i+1]); 
-  fprintf(fh, "\t\t%d %s;\n", chain->tr->mxtips, chain->tr->nameList[chain->tr->mxtips]);
+  for(int i = 0; i < chain->traln->getTr()->mxtips-1; ++i)
+    fprintf(fh, "\t\t%d %s,\n", i+1, chain->traln->getTr()->nameList[i+1]); 
+  fprintf(fh, "\t\t%d %s;\n", chain->traln->getTr()->mxtips, chain->traln->getTr()->nameList[chain->traln->getTr()->mxtips]);
 }
 
 
 static void printParamFileStart(state *chain)
 {
   FILE *fh = chain->outputParamFile; 
-  tree *tr = chain->tr; 
-  
-  
+
   char *tmp = "TODO"; 
   fprintf(fh, "[ID: %s]\n", tmp);
   fprintf(fh, "Gen\tLnL\tTL"); 
 
-  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+  for(int i = 0; i < chain->traln->getNumberOfPartitions(); ++i)
     {
       fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
       fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
@@ -278,7 +273,7 @@ static void printParamFileStart(state *chain)
 
 static void printParams(state *chain)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
 
   FILE *fh = chain->outputParamFile; 
 
@@ -288,10 +283,10 @@ static void printParams(state *chain)
 	  tr->likelihood,  
 	  treeLength); 
 
-  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+  for(int i = 0; i < chain->traln->getNumberOfPartitions(); ++i)
     {
-      pInfo *partition = getPartition(chain,i); 
-      fprintf(fh, "\t%f\t%f", getPLH(chain, i),partition->alpha) ; 
+      pInfo *partition = chain->traln->getPartition(i); 
+      fprintf(fh, "\t%f\t%f", chain->traln->accessPartitionLH( i),partition->alpha) ; 
       for(int j = 0; j < 6 ; ++j) /* TODO */
 	fprintf(fh, "\t%.2f", partition->substRates[j]); 
       for(int j = 0; j < 4 ; ++j) /* TODO */
@@ -325,12 +320,13 @@ void finalizeOutputFiles(state *chain)
   /* TODO what about per model brach lengths? how does mrB do this? */
 static void exabayes_printTopology(state *chain)
 {
+  tree *tr = chain->traln->getTr();
   /* FILE *fh = myfopen(topologyFile, "a");   */
   FILE *fh = chain->topologyFile; 
-  memset(chain->tr->tree_string, 0, chain->tr->treeStringLength * sizeof(char) ); 
+  memset(chain->traln->getTr()->tree_string, 0, chain->traln->getTr()->treeStringLength * sizeof(char) ); 
   
-  Tree2stringNexus(chain->tr->tree_string, chain,  chain->tr->start->back, 0 ); 
-  fprintf(fh,"\ttree gen.%d = [&U] %s\n", chain->currentGeneration, chain->tr->tree_string);
+  Tree2stringNexus(chain->traln->getTr()->tree_string, tr,  chain->traln->getTr()->start->back, 0 ); 
+  fprintf(fh,"\ttree gen.%d = [&U] %s\n", chain->currentGeneration, chain->traln->getTr()->tree_string);
 
 }
 
@@ -401,7 +397,7 @@ static void printHotChains(int runId)
       assert(chain->couplingId > 0 ) ; 
       assert( myHeat < 1.f);
 
-      PRINT("lnl_beta(%.2f)=%.2f\t", myHeat, chain->tr->likelihood); 
+      PRINT("lnl_beta(%.2f)=%.2f\t", myHeat, chain->traln->getTr()->likelihood); 
     }
 }
 
@@ -455,9 +451,9 @@ void chainInfo(state *chain)
   assert(chain->couplingId == 0) ; /* we are the cold chain   */
 
   int runId = chain->id / gAInfo.numberCoupledChains; 
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
 
-  PRINT( "[run: %d] [TIME %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->tr->likelihood, branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));
+  PRINT( "[run: %d] [TIME %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));
   printHotChains(runId); 
   printSwapInfo(runId);   
   PRINT("\n"); 
@@ -492,7 +488,7 @@ void chainInfo(state *chain)
 void chainInfoOutput(state *chain )
 {
 
-  PRINT( "[chain: %d] [TIME %.2f] gen: %d Likelihood: %f StartLH: %f \n",chain->id,   gettime()  - timeIncrement  , chain->currentGeneration, chain->tr->likelihood, chain->tr->startLH);
+  PRINT( "[chain: %d] [TIME %.2f] gen: %d Likelihood: %f StartLH: %f \n",chain->id,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, chain->traln->getTr()->startLH);
 
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
@@ -521,9 +517,9 @@ void chainInfoOutput(state *chain )
   
   PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",chain->hastings, chain->newprior, chain->curprior);
   
-  if(getNumberOfPartitions(chain->tr) < 10) 
+  if(getNumberOfPartitions(chain->traln->getTr()) < 10) 
     {
-      for(int printModel=0; printModel< getNumberOfPartitions(chain->tr);printModel++) 
+      for(int printModel=0; printModel< getNumberOfPartitions(chain->traln->getTr());printModel++) 
 	printSubsRates(chain, printModel, chain->modelRemem.numSubsRates);
     }
     

@@ -4,6 +4,7 @@
 #include "branch.h" 
 #include "adapters.h"
 #include "output.h"  
+#include "TreeAln.hpp" 
 
 
 /* #define GUIDE_SPR_BRANCH */
@@ -79,7 +80,8 @@ int getOtherNode(int node, branch b)
  */ 
 double branchLengthToReal(tree *tr, double internalBL)
 {
-  assert(getNumBranches(tr) == 1 ); 
+  // TODO also own class for that 
+  // assert(getNumBranches(tr) == 1 ); 
   return -log(internalBL) * tr->fracchange; 
 }
 
@@ -89,7 +91,8 @@ double branchLengthToReal(tree *tr, double internalBL)
  */ 
 double branchLengthToInternal(tree *tr, double realBL)
 {
-  assert(getNumBranches(tr) == 1 ); 
+  // TODO also own class for that 
+  // assert(getNumBranches(tr) == 1 ); 
   return exp(-(realBL / tr->fracchange)); 
 }
 
@@ -197,9 +200,9 @@ static nodeptr findEmptyNodePtr(nodeptr ptr)
  */
 void insertNodeIntoBranch(state *chain, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
 {  
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   int
-    numBranches = getNumBranches( tr); 
+    numBranches = chain->traln->getNumBranches(); 
 
   nodeptr
     pruned1 = findEmptyNodePtr(tr->nodep[toBeInserted.thisNode]); 
@@ -259,9 +262,9 @@ boolean branchExists(tree *tr, branch b)
 {
   nodeptr a = tr->nodep[b.thisNode]; 
 
-  return a->back->number == b.thatNode
-    || a->next->back->number == b.thatNode
-    || a->next->next->back->number == b.thatNode;   
+  return (a->back != NULL &&  a->back->number == b.thatNode) 
+    || (a->next->back != NULL && a->next->back->number == b.thatNode ) 
+    || ( a->next->next->back != NULL && a->next->next->back->number == b.thatNode ) ;  
 }
 
 
@@ -365,8 +368,8 @@ branch findRoot(tree *tr)
 */
 void pruneBranch(state *chain, branch b, double *z)
 {  
-  tree *tr = chain->tr ; 
-  int numBl = getNumBranches( chain->tr); 
+  tree *tr = chain->traln->getTr() ; 
+  int numBl = chain->traln->getNumBranches(); 
 
   nodeptr toPrune  = findNodeFromBranch(tr, b); 
   nodeptr pruned1 = toPrune->next->back,

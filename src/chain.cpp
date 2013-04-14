@@ -1,7 +1,4 @@
 
-// #define UINT64_C
-
-
 #include "axml.h"
 #include "bayes.h"
 #include "globals.h"
@@ -18,7 +15,8 @@
 #include "adapters.h"
 #include "randomTree.h" 
 
-
+#include "TreeAln.hpp"
+#include "LnlRestorer.hpp"
 
 
 void initDefaultValues(state *chain, tree *tr)
@@ -69,14 +67,13 @@ double getChainHeat(state *chain )
 /**
    @brief corrects branch lengths when those are read from a file
 */
-void traverseInitCorrect(nodeptr p, int *count, tree *tr )
+void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
 {
+  tree *tr = traln->getTr();
   nodeptr q;
   int i;
-  
-  assert(NOT hasPergeneBL(tr)); 
-  
-  for( i = 0; i < getNumBranches(tr); i++)
+
+  for( i = 0; i < traln->getNumBranches(); i++)
     p->z[i] =  exp( - p->z[i] / tr->fracchange); 
   *count += 1;
   
@@ -85,18 +82,19 @@ void traverseInitCorrect(nodeptr p, int *count, tree *tr )
       q = p->next;
       while (q != p) 
 	{
-	  traverseInitCorrect(q->back, count, tr);
+	  traverseInitCorrect(q->back, count, traln);
 	  q = q->next;
 	} 
     }
 }
 
 
-static void initParamDump(tree *tr, paramDump *dmp)
+static void initParamDump(TreeAln *traln, paramDump *dmp)
 {  
+  tree *tr = traln->getTr();
   dmp->topo = setupTopol(tr->mxtips); 
-  dmp->infoPerPart = (perPartitionInfo*)exa_calloc(getNumberOfPartitions(tr), sizeof(perPartitionInfo));
-  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+  dmp->infoPerPart = (perPartitionInfo*)exa_calloc(traln->getNumberOfPartitions(), sizeof(perPartitionInfo));
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
       perPartitionInfo *p =  dmp->infoPerPart + i ; 
       p->alpha = 0.5; 
@@ -115,11 +113,11 @@ static void initParamDump(tree *tr, paramDump *dmp)
 
 
 
-static void copyParamDump(tree *tr,paramDump *dest, const paramDump *src)
+static void copyParamDump(TreeAln *traln,paramDump *dest, const paramDump *src)
 {
   /* no topo or branch lengths! this should be done by copytopo */
   
-  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
       perPartitionInfo *pDest =  dest->infoPerPart + i ,
 	*pSrc = src->infoPerPart + i; 
@@ -139,34 +137,45 @@ static void copyParamDump(tree *tr,paramDump *dest, const paramDump *src)
 
 void copyState(state *dest, const state *src )
 {
-  copyTopology(dest->tr, src->tr); 
-  copyParamDump(dest->tr, &(dest->dump), &(src->dump)); 
-  saveTree(dest->tr, dest->dump.topo); 	  
-  /* applyChainStateToTree(dest);  */
+  copyTopology(dest->traln->getTr(), src->traln->getTr()); 
+  copyParamDump(dest->traln, &(dest->dump), &(src->dump)); 
+  saveTree(dest->traln, dest->dump.topo); 	  
 }
 
 
 
-void preinitTree(tree *tr)
-{   
-  tr->doCutoff = TRUE;
-  tr->secondaryStructureModel = SEC_16; /* default setting */
-  tr->searchConvergenceCriterion = FALSE;
-  tr->rateHetModel = GAMMA; 
-  tr->multiStateModel  = GTR_MULTI_STATE;
-#if (HAVE_PLL == 0 ) 
-  tr->useGappedImplementation = FALSE;
-  tr->saveBestTrees          = 0;
-#endif
-  tr->saveMemory = FALSE;
-  tr->manyPartitions = FALSE;
-  tr->categories             = 25;
-  tr->grouped = FALSE;
-  tr->constrained = FALSE;
-  tr->gapyness               = 0.0; 
-  tr->useMedian = FALSE;
+
+static void setupGlobals(initParamStruct *initParams, tree *tr)
+{
+  if (initParams->numGen > 0)
+    gAInfo.numGen = initParams->numGen; 
+
+  gAInfo.samplingFrequency = initParams->samplingFrequency; 
+  gAInfo.diagFreq = initParams->diagFreq; 
+  gAInfo.numberOfRuns =   initParams->numIndiChains; 
+  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
+
+
+
+  /* initialize a matrix of swaps (wasting some space here) */
+  gAInfo.swapInfo = (successCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(successCtr*)); 
+  int n = gAInfo.numberCoupledChains; 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.swapInfo[i] = (successCtr*)exa_calloc( n * n , sizeof(successCtr)); 
+
+  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.temperature[i] = HEAT_FACTOR; 
+
+  unsigned int bvLength = 0; 
+  tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
+  hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
+  gAInfo.bvHash = ht; 
 }
 
+
+#include <vector>
+using namespace std; 
 
 
 /**
@@ -184,142 +193,46 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct)); 
-  
-  parseConfigWithNcl(configFileName, &initParams);
-  
-  if (initParams->numGen > 0)
-    gAInfo.numGen = initParams->numGen; 
+  initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
+  parseConfigWithNcl(configFileName, &initParams);  
+  setupGlobals(initParams, tr); 
+  int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
 
-  gAInfo.samplingFrequency = initParams->samplingFrequency; 
-  gAInfo.diagFreq = initParams->diagFreq; 
-  gAInfo.numberOfRuns =   initParams->numIndiChains; 
-  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
-  int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains; 
-
-  /* initialize a matrix of swaps (wasting some space here) */
-  gAInfo.swapInfo = (successCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(successCtr*)); 
-  int n = gAInfo.numberCoupledChains; 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.swapInfo[i] = (successCtr*)exa_calloc( n * n , sizeof(successCtr)); 
-
-  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.temperature[i] = HEAT_FACTOR; 
-
-
-#ifdef MC3_SPACE_FOR_TIME
-  int treesNeeded = gAInfo.numberCoupledChains  -1 ; 
-#if HAVE_PLL == 1 
-  gAInfo.partitions = (partitionList*)exa_realloc(gAInfo.partitions, (treesNeeded + 1)  * sizeof(partitionList)); 
-#endif
-  tree *moreTrees = (tree*)exa_calloc(treesNeeded, sizeof(tree)); 
-  for(int i = 0; i < treesNeeded; ++i)
-    {
-      preinitTree(moreTrees+i); 
-#if HAVE_PLL == 1 
-      initializeTree(moreTrees + i, gAInfo.partitions + i+1 ,adef); 
-#else 
-      initializeTree(moreTrees + i ,adef); 
-#endif
-      tree *oT = moreTrees + i; 
-      oT->mxtips = tr->mxtips; 
-    }
-  
-  for(int i = 0; i < treesNeeded; ++i)
-    {
-      tree *trH = moreTrees + i ; 
-      for(int j = 1; j <= trH->mxtips; ++j)
-	trH->nodep[j]->hash = tr->nodep[j]->hash; 
-    }
-#endif
-  
-  if(processID == 0)
-    printf("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
+  PRINT("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
   *resultIndiChains = (state*)exa_calloc( totalNumChains , sizeof(state));     
-  
-  unsigned int bvLength = 0; 
-  tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
 
-  hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
-  gAInfo.bvHash = ht; 
-  int numPart = getNumberOfPartitions(tr); 
-  
+#ifdef DEBUG_LNL_VERIFY
+  gAInfo.debugTree = new TreeAln(tr , true ); 
+#endif
+
   for(int i = 0; i < totalNumChains; ++i)
     { 
-      state *theChain = *resultIndiChains + i;     
-      
+      state *theChain = *resultIndiChains + i;       
+      theChain->traln = new TreeAln(tr, i < gAInfo.numberCoupledChains); 
+      TreeAln *traln = 	theChain->traln; 
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 
 
       theChain->categoryWeights = (double*)exa_calloc(NUM_PROP_CATS, sizeof(double)); 
-      
-#ifdef MC3_SPACE_FOR_TIME
-      /* important NOTICE : in this scheme, we assume, that there is
-	 one tree (partitionList) for each coupled chain (!= total
-	 number of chains) */
-      assert(theChain->couplingId < gAInfo.numberCoupledChains); 
-      theChain->tr = (theChain->couplingId ==  0) ? tr : moreTrees +  theChain->couplingId - 1 ; 
-#else 
-      /* here we are only working with one single tree */	      
-      theChain->tr = tr;
 
-#endif 
-
-#if HAVE_PLL == 1 
-#ifdef MC3_SPACE_FOR_TIME
-      theChain->partitions = gAInfo.partitions + theChain->couplingId ; 
-#else 
-      theChain->partitions = gAInfo.partitions; 
-#endif
-#endif
-
-      tree *myTree = theChain->tr; 
-      myTree->bitVectors = tr->bitVectors; 
-      
+      tree *myTree = theChain->traln->getTr();       
       initDefaultValues(theChain, myTree);
 
       if(theChain->id / gAInfo.numberCoupledChains == 0 ) 
-	{
-	  theChain->lnl.orientation = (int*)exa_calloc(tr->mxtips,sizeof(int)); 
-	  theChain->lnl.vectorsPerPartition = (double***)exa_calloc(numPart, sizeof(double**)); 
-	  theChain->lnl.partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 	  
-	  // theChain->lnl.wasSwitched = (boolean*)exa_calloc(2 * tr->mxtips, sizeof(boolean)); 
-
-	  for(int j = 0; j < numPart; ++j)
-	    {
-	      pInfo *partition = getPartition(theChain, j); 
-	      theChain->lnl.vectorsPerPartition[j] = (double**)exa_calloc(tr->mxtips, sizeof(double*)); 
-#if HAVE_PLL == 1 		/* TODO that's hacky */
-	      int length = partition->upper - partition->lower; 
-#else 
-	      int length = partition->width; 
-#endif
-	      /* printf(" [%d] length is %d (width=%d)\n", processID, length, (int)partition->width) ; */
-	      assert(length > 0); 
-	      for(int k = 0; k < tr->mxtips; ++k) 
-		theChain->lnl.vectorsPerPartition[j][k] = (double*)exa_calloc( length *  LENGTH_LNL_ARRAY , sizeof(double)); 
-
-	      theChain->lnl.partitionScaler[j] = (nat*)exa_calloc(2 * tr->mxtips,sizeof(nat));
-	    }	  
-	}
+	theChain->restorer = new LnlRestorer(theChain);
       else 
-	{
+	{	  
 	  state *leechChain =   (*resultIndiChains ) + theChain->couplingId; 
-	  theChain->lnl.orientation = leechChain->lnl.orientation; 
-	  theChain->lnl.vectorsPerPartition = leechChain->lnl.vectorsPerPartition; 
-	  theChain->lnl.partitionScaler = leechChain->lnl.partitionScaler; 
-	  // TODO 
-	  // theChain->lnl.wasSwitched = leechChain->lnl.wasSwitched; 
+	  theChain->restorer = leechChain->restorer; 
 	}
-      
+
       setupProposals(theChain, initParams); 
 
-      /* init the param dump  */
-      initParamDump(myTree, &(theChain->dump)); 
+      /* init the param dump  */      
+      initParamDump(traln, &(theChain->dump)); 
 
-      for(int j = 0; j < getNumberOfPartitions(myTree); ++j ) 
-	exa_initReversibleGTR(theChain,j);
+      for(int j = 0; j < traln->getNumberOfPartitions(); ++j ) 
+	theChain->traln->initRevMat(j);
 
       initLocalRng(theChain); 
       
@@ -328,21 +241,21 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	  /* initialize with new tree  */
 	  if( i  / gAInfo.numberCoupledChains < gAInfo.numberOfStartingTrees )
 	    {
-	      boolean hasBranchLength = readTreeWithOrWithoutBL(theChain->tr, treeFH); 
+	      boolean hasBranchLength = readTreeWithOrWithoutBL(theChain->traln->getTr(), treeFH); 
 
 	      if(hasBranchLength)
 		{
 		  int count = 0; 
-		  traverseInitCorrect(tr->start->back, &count, theChain->tr ) ;
-		  assert(count == 2 * theChain->tr->mxtips -3); 
+		  traverseInitCorrect(tr->start->back, &count, theChain->traln ) ;
+		  assert(count == 2 * theChain->traln->getTr()->mxtips -3); 
 		}
 	      else 
 		{
 		  /* set some standard branch lengths */
 		  /* TODO based on prior?   */
 		  int count = 0; 
-		  traverseInitFixedBL( theChain->tr->start->back, &count, theChain->tr, INIT_BRANCH_LENGTHS );
-		  assert(count  == 2 * theChain->tr->mxtips - 3);	  	      
+		  traverseInitFixedBL( theChain->traln->getTr()->start->back, &count, theChain->traln, INIT_BRANCH_LENGTHS );
+		  assert(count  == 2 * theChain->traln->getTr()->mxtips - 3);	  	      
 		}
 
 	      if(processID == 0)
@@ -350,41 +263,30 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	    }
 	  else 
 	    {
-	      exa_makeRandomTree(theChain->tr);
+	      exa_makeRandomTree(theChain->traln->getTr());
 	      if(processID == 0)
 		printf("initializing chain %d with random tree\n", i); 
 
 	      /* TODO maybe prior for initial branch lengths   */
 	      int count = 0; 
-	      traverseInitFixedBL( theChain->tr->start->back, &count, theChain->tr, INIT_BRANCH_LENGTHS );
+	      traverseInitFixedBL( theChain->traln->getTr()->start->back, &count, theChain->traln, INIT_BRANCH_LENGTHS );
 	      assert(count  == 2 * tr->mxtips - 3);	  
 	    }
 	}
       else 
 	{
-#ifdef MC3_SPACE_FOR_TIME
 	  state *coldChain = *resultIndiChains + (theChain->id / gAInfo.numberCoupledChains) * gAInfo.numberCoupledChains; 
 	  copyState(theChain , coldChain);
 	  applyChainStateToTree(theChain); 
-#else 
-	  /* initialize with previous state */
-	  applyChainStateToTree( (*resultIndiChains) + i-1); 
-#endif
 	}
 
-      evaluateGenericWrapper(theChain, theChain->tr->start, TRUE); 
+      evaluateFullNoBackup(theChain);
 
       /* now save the tree to a chain chains */
       saveTreeStateToChain(theChain); 
 
-      if(processID == 0)
-	{
-	  double tl = getTreeLength(theChain->tr, theChain->tr->nodep[1]->back); 
-	  printf("init lnl for chain %d is  %f\ttree-length=%.3f\n", theChain->id, theChain->tr->likelihood, 
-		 branchLengthToReal(theChain->tr, tl)); 
-	}
-
-      
+      PRINT("init lnl for chain %d is  %f\ttree-length=%.3f\n", theChain->id, theChain->traln->getTr()->likelihood, 
+	    branchLengthToReal(theChain->traln->getTr(), getTreeLength(theChain->traln->getTr(), theChain->traln->getTr()->nodep[1]->back))); 
 
       if(processID == 0 )
 	{	  
@@ -404,16 +306,19 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 
   if(gAInfo.numberOfStartingTrees > 0)
     fclose(treeFH); 
+
+  // TODO kill initial tree 
 }
 
 
 
-void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z )
+void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
 {
+  tree *tr = traln->getTr();
   nodeptr q;
   int i;
   
-  for( i = 0; i < getNumBranches(tr); i++)
+  for( i = 0; i < traln->getNumBranches(); i++)
     p->z[i] = p->back->z[i] = z;  
   *count += 1;
   
@@ -422,7 +327,7 @@ void traverseInitFixedBL(nodeptr p, int *count, tree *tr,  double z )
       q = p->next;
       while (q != p) 
 	{
-	  traverseInitFixedBL(q->back, count, tr, z);
+	  traverseInitFixedBL(q->back, count, traln, z);
 	  q = q->next;
 	} 
     }
@@ -448,10 +353,11 @@ void traverseAndPrint(nodeptr p, int *count, tree *tr)
 
 
 
-void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean restore)
+void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolean restore)
 {
+  tree *tr = traln->getTr();
   nodeptr q; 
-  assert(getNumBranches(tr) == 1); 
+  assert(traln->getNumBranches() == 1); 
 
   if(restore == TOPO_RESTORE )
     { 
@@ -473,7 +379,7 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
       q = p->next; 
       while(q != p )
 	{
-	  traverseAndTreatBL(q->back, tr, blBuf, cnt, restore); 
+	  traverseAndTreatBL(q->back, traln, blBuf, cnt, restore); 
 	  q = q->next; 
 	}
     }
@@ -494,36 +400,36 @@ void traverseAndTreatBL(node *p, tree *tr, double *blBuf, int* cnt, boolean rest
  */ 
 void applyChainStateToTree(state *chain)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   
   /* TODO enable multi-branch    */
-  assert(getNumBranches(tr) == 1); 
+  assert(chain->traln->getNumBranches() == 1); 
 
-  boolean treeWasRestored = restoreTree(chain->dump.topo, tr); 
+  boolean treeWasRestored = restoreTree(chain->dump.topo, chain->traln); 
   assert(treeWasRestored);   
 
   /* restore branch lengths */
   int cnt = 0; 
-  traverseAndTreatBL(tr->start->back, tr, chain->dump.branchLengths, &cnt, TOPO_RESTORE); 
+  traverseAndTreatBL(tr->start->back, chain->traln, chain->dump.branchLengths, &cnt, TOPO_RESTORE); 
   assert(cnt == 2 * tr->mxtips -3); 
 
   /* restore model parameters */
-  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+  for(int i = 0; i < chain->traln->getNumberOfPartitions(); ++i)
     {
       perPartitionInfo *info = chain->dump.infoPerPart + i ; 
 
-      pInfo *partition = getPartition(chain, i);
+      pInfo *partition = chain->traln->getPartition( i);
       partition->alpha = info->alpha;
 
       memcpy(partition->substRates, info->substRates , 6 * sizeof(double)); 
       memcpy(partition->frequencies, info->frequencies, 4 * sizeof(double));
-
-      exa_initReversibleGTR (chain, i); 
-
+      
+      chain->traln->initRevMat(i);
       makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
     } 
 
-  evaluateGenericWrapper(chain, tr->start, TRUE ); 
+  // evaluateGenericWrapper(chain, tr->start, TRUE ); 
+  evaluateFullNoBackup(chain); 
   
   if(processID == 0)
     {
@@ -547,9 +453,11 @@ void applyChainStateToTree(state *chain)
 
   /* TODO for now  */
   chain->wasAccepted = TRUE; 
-  chain->prevProposal = NULL; 
+  // chain->prevProposal = NULL; 
 
+#if 0 				// TODO 
   updateSavedState(chain); 
+#endif
 }
 
 
@@ -560,19 +468,19 @@ void applyChainStateToTree(state *chain)
  */ 
 void saveTreeStateToChain(state *chain)
 {
-  tree *tr  = chain->tr;   
-  saveTree(tr, chain->dump.topo);
+  tree *tr  = chain->traln->getTr();   
+  saveTree(chain->traln, chain->dump.topo);
 
   /* save branch lengths */
   int cnt = 0; 
-  traverseAndTreatBL(tr->start->back, tr, chain->dump.branchLengths, &cnt, TOPO_SAVE); 
+  traverseAndTreatBL(tr->start->back, chain->traln, chain->dump.branchLengths, &cnt, TOPO_SAVE); 
   assert(cnt == 2 * tr->mxtips - 3 ); 
 
   /* save model parameters */
-  for(int i = 0; i < getNumberOfPartitions(tr); ++i)
+  for(int i = 0; i < chain->traln->getNumberOfPartitions(); ++i)
     {
       perPartitionInfo *info = chain->dump.infoPerPart + i; 
-      pInfo *partition = getPartition(chain,i); 
+      pInfo *partition = chain->traln->getPartition(i); 
       
       info->alpha =  partition->alpha; 
       
@@ -648,62 +556,18 @@ void drawProposalFunction(state *chain, proposalFunction **result )
 }
 
 
-
-// void debug_checkLikelihood(state *chain)
-// {
-// #if 0 
-// #ifdef DEBUG_LNL_VERIFY
-//   tree *tr = chain->tr; 
-//   exa_evaluateGeneric(chain, tr->start, TRUE );   
-//   double diff =  fabs(chain->lnl.likelihood - tr->likelihood ); 
-//   if( diff > ACCEPTED_LIKELIHOOD_EPS)
-//     {
-//       printf("LNL difference: %f\n", diff  ); 
-//       assert(diff  < 1e-6); 
-//     }  
-//   chain->lnl.likelihood = tr->likelihood; 
-// #endif  
-// #endif
-// }
-
-
 /**
    @brief Execute one generation of a given chain.  
  */
 void step(state *chain)
 {
-  tree *tr = chain->tr;   
- 
-  /* printf("treelength %f\n", branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));  */
+  chain->restorer->resetRestorer();
 
-/*   if(processID == 0) */
-/*     { */
-/*       pInfo *partition = getPartition(chain,0 ) ;  */
-/*       assert(getNumBranches(tr) == 1 );  */
+  tree *tr = chain->traln->getTr();   
 
-/*       double indiFC = 0, */
-/* 	indiFC2 = 0;  */
-/* #if HAVE_PLL == 1  */
-/*       indiFC = partition->fracchange;  */
-/*       indiFC2 = getPartition(chain,1)->fracchange;  */
-/* #else  */
-/*       indiFC = tr->fracchanges[0];  */
-/*       indiFC2 = tr->fracchanges[1];  */
-/* #endif */
+  assert(tr->fracchange > 0); 
 
-/*       printf("fracchange = %g, fracchanges[0]=%g\tfracchanges[1]=%g\tbl=%g\t", tr->fracchange, indiFC, indiFC2 , tr->nodep[1]->z[0]);  */
-/*       for(int i = 0;  i < 6 ; ++i) */
-/* 	printf("%g,", partition->substRates[i]);  */
-/*       printf("\t");  */
-/*       for(int i = 0; i < 4; ++i) */
-/* 	printf("%g,", partition->frequencies[i]);  */
-/*       printf("\n");  */
-/*     } */
-    
-
-  assert(chain->tr->fracchange > 0); 
-
-  double prevLnl = chain->tr->likelihood;     
+  double prevLnl = tr->likelihood;     
 
   double myHeat = getChainHeat(chain ) ; 
 
@@ -726,37 +590,24 @@ void step(state *chain)
 
   double testr = drawRandDouble01(chain);
   double acceptance = 
-    exp((priorRatio  + chain->tr->likelihood - prevLnl) * myHeat) 
+    exp((priorRatio  + tr->likelihood - prevLnl) * myHeat) 
     * chain->hastings ; 
 
   chain->wasAccepted  = testr < acceptance; 
   debug_printAccRejc(chain, pf, chain->wasAccepted); 
-  chain->prevProposal = pf;   
-
-  
-
 
   if(chain->wasAccepted)
     {
       cntAccept(&(pf->sCtr)); 
-      updateSavedState(chain); 
     }
   else
     {
       pf->reset_func(chain, pf); 
-
-      cntReject(&(pf->sCtr)); 
-      restoreAlignAndTreeState(chain); 
-
-      double diff = fabs(prevLnl - chain->tr->likelihood); 
-      if( diff > 1e-6 )
-	{
-	  printf("problem restoring previous tr/aln state DIFF: %f\n", diff); 
-	  assert(0); 
-	}
+      cntReject(&(pf->sCtr));       
+      chain->restorer->restore(); // restores the previous tree state 
     }
 
-  debug_checkTreeConsistency(chain);
+  debug_checkTreeConsistency(chain->traln->getTr());
   // debug_checkLikelihood(chain); 
 
   if(  processID == 0 
@@ -802,5 +653,4 @@ void step(state *chain)
 #endif
 
   chain->currentGeneration++; 
-  /* printf("\n");  */
 }

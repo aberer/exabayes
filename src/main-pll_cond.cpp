@@ -29,10 +29,6 @@ int processID = 0;
 
 // extern char infoFileName[1024];
 
-
-
-void exa_main(tree *tr, analdef *adef); 
-
 // boolean setupTree (tree *tr, boolean doInit, partitionList *partitions);
 
 /* void initializePartitions(tree *tr, tree *localTree, partitionList *pr, partitionList *localPr, int tid, int n);  */
@@ -199,6 +195,8 @@ void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***
   myBinFread(&(partitions->numberOfPartitions),  sizeof(int), 1, byteFile);
   myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
 
+  printf("number of partitions is %d\n", partitions->numberOfPartitions); 
+
   partitions->perGeneBranchLengths = adef->perGeneBranchLengths;
 
   /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
@@ -292,6 +290,13 @@ void initializeTree(tree *tr, partitionList *partitions, analdef *adef)
 }
 
 
+
+void exa_main(tree *tr, 
+#if HAVE_PLL == 1 
+	      partitionList *partitions,
+#endif
+	      analdef *adef); 
+
 int main (int argc, char *argv[])
 { 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
@@ -302,19 +307,18 @@ int main (int argc, char *argv[])
   ignoreExceptionsDenormFloat(); 
   tree  *tr = (tree*)exa_calloc(1,sizeof(tree));
   analdef *adef = (analdef*)exa_calloc(1,sizeof(analdef));
-  gAInfo.partitions = (partitionList*)exa_calloc(1, sizeof(partitionList));
 
   masterTime = gettime();         
   initAdef(adef);
   get_args(argc, argv, adef, tr); 
 
 
-  partitionList *partitions =  gAInfo.partitions; 
+  partitionList *partitions =  (partitionList*)exa_calloc(1, sizeof(partitionList));
   makeFileNames();
 
   initializeTree(tr, partitions, adef); 
   printModelAndProgramInfo(tr, partitions, adef, argc, argv);
-  exa_main(tr, adef); 
+  exa_main(tr, partitions, adef); 
 
   return 0;
 }

@@ -12,13 +12,6 @@
 #define _BRANCH_H
 
 
-
-/* #ifdef __cplusplus */
-/* extern "C"{ */
-/* #endif */
-
-
-
 struct _state;  
 
 typedef struct 
@@ -49,10 +42,5 @@ void divideBranchLengthsWithRatio(tree *tr, double orig,  double ratio, double *
 double combineBranchLengths(tree *tr, double origA, double origB); 
 double getRatio(tree *tr, double a, double b ); 
 
-
-
-/* #ifdef __cplusplus */
-/* } */
-/* #endif */
 
 #endif

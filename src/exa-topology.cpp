@@ -8,6 +8,7 @@
 #include "eval.h"
 #include "adapters.h"
 #include "topology-utils.h"
+#include "TreeAln.hpp" 
 
 
 topol  *setupTopol (int maxtips)
@@ -132,16 +133,17 @@ static int saveSubtree (nodeptr p, topol *tpl, int numsp, int numBranches)
   return  (r - r0);
 }
 
-void saveTree (tree *tr, topol *tpl)
+void saveTree (TreeAln *traln, topol *tpl)
 /*  Save a tree topology in a standard order so that first branches
  *  from a node contain lower value tips than do second branches from
  *  the node.  The root tip should have the lowest value of all.
  */
 {
+  tree *tr = traln->getTr();
   connptr  r;  
   
   tpl->nextlink = 0;                             /* Reset link pointer */
-  r = tpl->links + saveSubtree(minTreeTip(tr->start, tr->mxtips), tpl, tr->mxtips, getNumBranches(tr));  /* Save tree */
+  r = tpl->links + saveSubtree(minTreeTip(tr->start, tr->mxtips), tpl, tr->mxtips, traln->getNumBranches());  /* Save tree */
   r->sibling = 0;
   
   tpl->likelihood = tr->likelihood;
@@ -153,8 +155,9 @@ void saveTree (tree *tr, topol *tpl)
 
 
 
-boolean restoreTree (topol *tpl, tree *tr)
+boolean restoreTree (topol *tpl, TreeAln *traln)
 { 
+  tree *tr = traln->getTr();
   connptr  r;
   nodeptr  p, p0;    
   int  i;
@@ -174,7 +177,7 @@ boolean restoreTree (topol *tpl, tree *tr)
   /*  Copy connections from topology */
 
   for (r = tpl->links, i = 0; i < tpl->nextlink; r++, i++)     
-    hookup(r->p, r->q, r->z, getNumBranches(tr));      
+    hookup(r->p, r->q, r->z, traln->getNumBranches());      
 
   tr->likelihood = tpl->likelihood;
   tr->start      = tpl->start;
@@ -182,9 +185,6 @@ boolean restoreTree (topol *tpl, tree *tr)
   
   tr->nextnode   = tpl->nextnode;    
 
-
-  /* TODO too expensive!  */
-  /* evaluateGenericWrapper(tr, tr->start, TRUE); */
   return TRUE;
 }
 
@@ -203,8 +203,9 @@ boolean restoreTree (topol *tpl, tree *tr)
    @param int numA -- a node id to be hooked up
    @param int numB -- a node id to be hooked up   
  */ 
-static void exa_hookupConditionally(tree *tr, int numA, int numB, double *z)
+static void exa_hookupConditionally(TreeAln *traln, int numA, int numB, double *z)
 {
+  tree *tr = traln->getTr();
   assert(numA != 0) ; 
   assert(numB != 0); 
   assert(numA < 2 * tr->mxtips-1) ; 
@@ -247,7 +248,7 @@ static void exa_hookupConditionally(tree *tr, int numA, int numB, double *z)
     qUnused = qUnused->next; 
   assert(qUnused->back == NULL); 
   
-  hookup(pUnused, qUnused, z, getNumBranches(tr));
+  hookup(pUnused, qUnused, z, traln->getNumBranches());
 #ifdef REPORT_HOOK_IN_COPY
   if(processID == 0)
     printf("hooking up %d and %d\n", numA, numB); 
@@ -264,6 +265,8 @@ static void unsetTopology(tree *tr)
 }
 
 
+
+
 /**
    @brief Copies topology from origTree to targetTree. 
    
@@ -275,14 +278,17 @@ static void unsetTopology(tree *tr)
  */
 void copyTopology(tree *targetTree, tree *origTree)
 {
+
+  // TODO actually do this in the tree  
+  assert(0);
   unsetTopology(targetTree); 
 
   for(int i = 1 ; i < 2 * origTree->mxtips -1  ; ++i )
     {
-      nodeptr oPtr = origTree->nodep[i]; 
-      exa_hookupConditionally(targetTree, oPtr->number, oPtr->back->number, oPtr->z); 
-      exa_hookupConditionally(targetTree, oPtr->next->number, oPtr->next->back->number, oPtr->next->z); 
-      exa_hookupConditionally(targetTree,oPtr->next->next->number, oPtr->next->next->back->number, oPtr->next->next->z); 
+      // nodeptr oPtr = origTree->nodep[i]; 
+      // exa_hookupConditionally(targetTree, oPtr->number, oPtr->back->number, oPtr->z); 
+      // exa_hookupConditionally(targetTree, oPtr->next->number, oPtr->next->back->number, oPtr->next->z); 
+      // exa_hookupConditionally(targetTree,oPtr->next->next->number, oPtr->next->next->back->number, oPtr->next->next->z); 
     }
 
   targetTree->start = targetTree->nodep[origTree->start->number];

@@ -5,6 +5,13 @@
 #define PRINT printBothOpen
 
 
+
+#if HAVE_PLL == 1 
+void initializeTree(tree *tr, partitionList *partitions, analdef *adef); 
+#else  
+void initializeTree(tree *tr, analdef *adef); 
+#endif
+
 /* provides  */
 void printVersionInfo(); 
 void printREADME(); 

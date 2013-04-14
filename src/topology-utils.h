@@ -9,25 +9,16 @@
 
 #include "path.h"
 
-
-
-/* #ifdef __cplusplus */
-/* extern "C"{ */
-/* #endif */
-
 void insertWithGenericBL (nodeptr insertNode, nodeptr branchNode, double *insertZ, double *branchNodeZ, double *neighbourZ ,  int numBranches);
 void insertWithUnifBL (nodeptr insertNode, nodeptr branchNode, int numBranches);
 void insertWithUnifBLScaled(nodeptr insertNode, nodeptr branchNode, double scale, int numBranches);
 
 void traverseAndCount(nodeptr p, int *count, tree *tr ); 
 
-void applyPathAsESPR(tree *tr, path *rPath ); 
+void applyPathAsESPR(TreeAln *traln, path *rPath ); 
 void destroyOrientationAlongPath(tree *tr, path *rPath, nodeptr p); 
-void resetAlongPathForESPR(tree *tr, path *rPath); 
-void restoreBranchLengthsPath(tree *tr, path *s); 
+void resetAlongPathForESPR(TreeAln *traln, path *rPath); 
 double getTreeLength(tree *tr, nodeptr p); 
 
-/* #ifdef __cplusplus */
-/* } */
-/* #endif */
+void restoreBranchLengthsPath(TreeAln *traln, path *s); 
 #endif

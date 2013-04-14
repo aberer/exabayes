@@ -5,8 +5,8 @@
 #include "output.h"
 #include "path.h" 
 #include "topology-utils.h"
-
 #include "guidedMoves.h" 
+#include "TreeAln.hpp"
 
 
 /* 
@@ -51,18 +51,18 @@ static void appendElem(insertList **list,  branch b , double lnl, double ratio, 
 
 static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
 { 
+  tree *tr = chain->traln->getTr();
+
   /* insertList *la = *lnlList;  */
-  if(depthLeft == 0 || isTip(pruneBranch.thisNode,chain->tr->mxtips) )
+  if(depthLeft == 0 || isTip(pruneBranch.thisNode,tr->mxtips) )
     return; 
   
 #if DEBUG_GUIDED_SPR > 1 
   printf("descendend to branch %d,%d\n", pruneBranch.thisNode, pruneBranch.thatNode);
 #endif
 
-  tree *tr = chain->tr; 
-
   int
-    numBranches = getNumBranches(tr); 
+    numBranches = chain->traln->getNumBranches(); 
  
   nodeptr
     q = findNodeFromBranch(tr, pruneBranch), 
@@ -84,17 +84,17 @@ static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtre
       hookup(p->next,iP, &a, numBranches);   
       hookup(p->next->next,iP2, &b, numBranches); 
 
-      exa_newViewGeneric(chain, p, FALSE); 
+      newViewGenericWrapper(chain, p, FALSE); 
       evaluateGenericWrapper(chain, p, FALSE); 
 
-      appendElem(lnlList, constructBranch(iP->number, iP2->number), chain->tr->likelihood, ratio, isFirst); 
+      appendElem(lnlList, constructBranch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 
       printf("test insert: inserting %d into {%d,%d}(%g) => %.3f \n", p->number, iP->number, iP2->number, branchLengthToReal(tr, iP->z[0]), chain->tr->likelihood); 
 #endif 
       /* remove the node again */
       hookup(iP, iP2, &zOld,numBranches); 
-      exa_newViewGeneric(chain, iP, FALSE); /* OKAY?  */
-      exa_newViewGeneric(chain, iP2, FALSE);
+      newViewGenericWrapper(chain, iP, FALSE); /* OKAY  */
+      newViewGenericWrapper(chain, iP2, FALSE);
       p->next->next->back = p->next->back = (nodeptr)NULL;       
     }
   else 
@@ -120,16 +120,16 @@ static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtre
       hookup(p->next, iP, &a, numBranches); 
       hookup(p->next->next, iP2, &b, numBranches); 
 
-      exa_newViewGeneric(chain,p,FALSE); 
+      newViewGenericWrapper(chain,p,FALSE); 
       evaluateGenericWrapper(chain,p,FALSE); 
 
-      appendElem(lnlList, constructBranch(iP->number, iP2->number), chain->tr->likelihood, ratio, isFirst); 
+      appendElem(lnlList, constructBranch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 
       printf("test insert: inserting %d into {%d,%d}(%g) => %.3f\n", p->number, iP->number, iP2->number, branchLengthToReal(tr, iP->z[0]),  chain->tr->likelihood);   
 #endif
       hookup(iP, iP2, &zOrig, numBranches); 
-      exa_newViewGeneric(chain, iP, FALSE);
-      exa_newViewGeneric(chain, iP2, FALSE);
+      newViewGenericWrapper(chain, iP, FALSE);
+      newViewGenericWrapper(chain, iP2, FALSE);
       p->next->next->back = p->next->back = (nodeptr) NULL; 
     }
   else
@@ -189,8 +189,8 @@ void createWeights(tree  *tr, insertList **lnlList, boolean doFirst)
 
 static void testInsertWithRadius(state *chain, insertList **lnlList, branch subtree, branch pruneBranch, int radius, boolean isFirst)
 {
-  tree *tr = chain->tr;
-  int numBranches = getNumBranches(tr); 
+  tree *tr = chain->traln->getTr();
+  int numBranches = chain->traln->getNumBranches(); 
   assert(numBranches == 1 ); 
 
   double ratio = 0; 
@@ -207,7 +207,7 @@ static void testInsertWithRadius(state *chain, insertList **lnlList, branch subt
 
     hookup(q,r, &tmp, numBranches); 
     p->next->back = p->next->next->back = (nodeptr)NULL;     
-    exa_newViewGeneric(chain, q, FALSE); /* TODO no newview on r necessary?   */
+    newViewGenericWrapper(chain, q, FALSE); /* TODO no newview on r necessary?   */
   }
 
   descendAndTestInsert(chain, pruneBranch, subtree, ratio, lnlList,  radius, isFirst); 
@@ -226,7 +226,7 @@ static void testInsertWithRadius(state *chain, insertList **lnlList, branch subt
     hookup(p->next->next, r, &z2, numBranches);   
   }
 
-  debug_checkTreeConsistency(chain);
+  debug_checkTreeConsistency(chain->traln->getTr());
 }
 
 
@@ -288,7 +288,7 @@ void printInsertList(insertList *list)
 void evalGuidedSPR(state *chain, proposalFunction *pf)
 {
   tree
-    *tr = chain->tr; 
+    *tr = chain->traln->getTr(); 
 
   nodeptr p = findNodeFromBranch(tr, pf->remembrance.modifiedPath->content[1]);
   evaluateGenericWrapper(chain, p, FALSE );
@@ -298,8 +298,8 @@ void evalGuidedSPR(state *chain, proposalFunction *pf)
 
 void resetGuidedSPR(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
-  int numBranches = getNumBranches(tr); 
+  tree *tr = chain->traln->getTr(); 
+  int numBranches = chain->traln->getNumBranches(); 
   assert(numBranches == 1); 
 
   path *rememPath = pf->remembrance.modifiedPath; 
@@ -327,7 +327,7 @@ void resetGuidedSPR(state *chain, proposalFunction *pf)
     branchLengthToReal(tr ,a),branchLengthToReal(tr, b), ratio); 
 #endif
   
-  debug_checkTreeConsistency(chain);
+  debug_checkTreeConsistency(chain->traln->getTr());
 #ifdef  DEBUG_SHOW_TREE 
   printf("RESET:\t");      
 #endif
@@ -370,8 +370,8 @@ void applyGuidedSPR(state *chain, proposalFunction *pf)
 #endif
   debug_printTree(chain);
 
-  tree *tr = chain->tr; 
-  int numBranches = getNumBranches(tr); 
+  tree *tr = chain->traln->getTr(); 
+  int numBranches = chain->traln->getNumBranches(); 
   assert(numBranches == 1); 
 
   /* find subtree to prune  */
@@ -448,7 +448,7 @@ void applyGuidedSPR(state *chain, proposalFunction *pf)
     otherPart = branchLengthToInternal(tr, otherPart); 
     hookup(p->next, p->next->back, &onePart, numBranches); 
     hookup(p->next->next, p->next->next->back, &otherPart, numBranches); 
-    exa_newViewGeneric(chain, p, FALSE);
+    newViewGenericWrapper(chain, p, FALSE);
   }
 
 #if DEBUG_GUIDED_SPR > 1  

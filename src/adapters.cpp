@@ -5,151 +5,17 @@
 
 #include "bayes.h"
 #include "globals.h"
-
-
-
-double** getXPtr(state *chain, int model)
-{
-#if HAVE_PLL == 1
-  return chain->partitions->partitionData[model]->xVector;  
-#else
-  return chain->tr->partitionData[model].xVector;
-#endif
-}
-
-
-void setExecModel(state *chain, int num,boolean value)
-{
-#if HAVE_PLL == 1 
-  chain->partitions->partitionData[num]->executeModel = value; 
-#else
-  chain->tr->executeModel[num] = value; 
-#endif
-}
-
-boolean getExecModel(state *chain, int num)
-{
-#if HAVE_PLL == 1 
-  return chain->partitions->partitionData[num]->executeModel; 
-#else 
-  return chain->tr->executeModel[num]; 
-#endif
-} 
-
-
-void setPLH(state *chain, int num, double value)
-{
-#if HAVE_PLL == 1
-  
-  chain->partitions->partitionData[num]->partitionLH = value; 
-#else 
-  chain->tr->perPartitionLH[num] = value; 
-#endif
-}
-
-
-double getPLH(state *chain, int num)
-{
-#if HAVE_PLL == 1
-  return chain->partitions->partitionData[num]->partitionLH; 
-#else 
-  return chain->tr->perPartitionLH[num]; 
-#endif
-}
-
-
-
-double getPcontr(state *chain, int num)
-{
-#if HAVE_PLL == 1 
-  return chain->partitions->partitionData[num]->partitionContribution; 
-#else  
-  return chain->tr->partitionContributions[num]; 
-#endif
-}
-
-
-
-
-
-
-
-/* double getFracChange(state *chain, int num) */
-/* { */
-/* #if HAVE_PLL == 1 */
-/*   return chain->partitions->partitionData[num]->fracchange; */
-/* #else */
-/*   return chain->tr->fracchanges[num]; */
-/* #endif */
-/* } */
-
-
-int getNumBranches(tree *tr)
-{
-#if HAVE_PLL == 1 
-  return gAInfo.partitions->perGeneBranchLengths ? gAInfo.partitions->numberOfPartitions : 1; 
-#else 
-  return tr->numBranches; 
-#endif
-}
-
-
-
-boolean hasPergeneBL(tree *tr)
-{
-#if HAVE_PLL == 1 
-  return gAInfo.partitions->perGeneBranchLengths == TRUE; 
-#else 
-  return tr->numBranches > 1; 
-#endif
-}
-
-
-
-
-int getNumberOfPartitions(tree *tr) 
-{
-#if HAVE_PLL == 1 
-  return gAInfo.partitions->numberOfPartitions; 
-#else 
-  return tr->NumberOfModels; 
-#endif
-}
-
-
-
-
-pInfo* getPartition(state *chain, int num)
-{
-#if HAVE_PLL == 1   
-  return chain->partitions->partitionData[num]; 
-#else 
-  return chain->tr->partitionData + num; 
-#endif
-} 
-
-
-
+#include "TreeAln.hpp" 
 
 
 void exa_newViewGeneric(state *chain, nodeptr p, boolean masked)
 {
 #if HAVE_PLL == 1 
-  newviewGeneric(chain->tr, chain->partitions,     p, masked); 
+  newviewGeneric(chain->traln->getTr(), chain->traln->getPartitionsPtr(), p, masked); 
 #else 
   newviewGeneric(chain->tr, p, masked); 
 #endif 
 } 
-
-
-void exa_initReversibleGTR( state *chain,int model)
-{
-#if HAVE_PLL == 1
-  initReversibleGTR(chain->tr, chain->partitions , model); 
-#else 
-  initReversibleGTR(chain->tr, model); 
-#endif
-}
 
 
 void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
@@ -161,20 +27,12 @@ void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
 #endif
 }
 
-
-
-
-
-
-
-
-
 void exa_evaluateGeneric(state *chain, nodeptr start, boolean fullTraversal)
 {
 #if HAVE_PLL == 1 
-  evaluateGeneric(chain->tr, chain->partitions, start, fullTraversal); 
+  evaluateGeneric(chain->traln->getTr(), chain->traln->getPartitionsPtr(), start, fullTraversal); 
 #else 
-  evaluateGeneric(chain->tr, start, fullTraversal); 
+  evaluateGeneric(chain->traln->getTr(), start, fullTraversal); 
 #endif  
 }
 

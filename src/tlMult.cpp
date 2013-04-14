@@ -2,6 +2,7 @@
 #include "axml.h"
 #include "bayes.h"
 #include "randomness.h"
+#include "TreeAln.hpp"
 
 /* TODO ask alexis, if we can do this w/o evaluating the entire
    tree */
@@ -28,15 +29,17 @@ void multiplyBranchLengthsRecursively(tree *tr, nodeptr p, double multiplier)
 
 void applyTLMult(state *chain,  proposalFunction *pf )
 {
+  tree *tr = chain->traln->getTr(); 
   double multiplier = drawMultiplier(chain, pf->parameters.multiplier);
   pf->remembrance.multiplier = multiplier; 
-  multiplyBranchLengthsRecursively(chain->tr, chain->tr->start->back, multiplier); 
+  multiplyBranchLengthsRecursively(tr , tr->start->back, multiplier); 
 }
 
 
 void resetTLMult(state *chain, proposalFunction *pf)
 {
-  multiplyBranchLengthsRecursively(chain->tr, chain->tr->start->back, 1/pf->remembrance.multiplier); 
+  tree *tr = chain->traln->getTr();
+  multiplyBranchLengthsRecursively(tr, tr->start->back, 1/pf->remembrance.multiplier); 
 }
 
 

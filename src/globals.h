@@ -32,9 +32,9 @@ typedef struct globs
   randKey_t rGlobalKey ; 
   randCtr_t rGlobalCtr; 
 
-#if HAVE_PLL == 1   
-  partitionList* partitions;   
-#endif
+/* #if HAVE_PLL == 1 */
+/*   partitionList* partitions;     */
+/* #endif */
   state *allChains; 		/* careful with this! */
   int samplingFrequency; 
   hashtable *bvHash; 
@@ -45,7 +45,12 @@ typedef struct globs
   
   double* temperature;   /// one temperature for each run 
   successCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> only the upper half w/o diag is filled!
+  
+  analdef *adef; 
 
+#ifdef DEBUG_LNL_VERIFY
+  TreeAln *debugTree; 
+#endif
 
 } globalAnalysisInfo; 
 
@@ -71,16 +76,16 @@ globalAnalysisInfo gAInfo =
    0,
    {{0,0}},
    {{0,0}},
-   #if HAVE_PLL == 1 
-   NULL,
-   #endif
+   /* #if HAVE_PLL == 1  */
+   /* NULL, */
+   /* #endif */
    NULL, 
    0,
    NULL,
    0,
-   10000   ,
-   NULL, 
-   NULL,
+   10000 ,
+   NULL , 
+   NULL  
   }; 
 
 

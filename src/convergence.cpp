@@ -4,6 +4,7 @@
 #include "bayes.h"
 #include "globals.h"
 #include "main-common.h"
+#include "TreeAln.hpp" 
 
 
 static void getxnodeBips (nodeptr p)
@@ -257,7 +258,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
   double asdsf = 0; 
 
   state *aChain = allChains + 0; 
-  int numTaxa = aChain->tr->mxtips; 
+  int numTaxa = aChain->traln->getTr()->mxtips; 
   hashtable *ht = gAInfo.bvHash; 
   
   int *numSampled = (int*)exa_calloc(gAInfo.numberOfRuns, sizeof(int)); 

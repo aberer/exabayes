@@ -9,7 +9,7 @@
 #include "path.h"
 
 
-
+#include "TreeAln.hpp"
 
 /**
    @brief gets the tree length. 
@@ -26,6 +26,19 @@ double getTreeLength(tree *tr, nodeptr p)
 	* getTreeLength(tr, p->next->next->back);       
     }
 }
+
+void restoreBranchLengthsPath(TreeAln *traln, path *s)
+{
+  int numBranches = traln->getNumBranches();
+  for(int i = 0; i < s->index; ++i)
+    {
+      branch b = s->content[i]; 
+      nodeptr p = findNodeFromBranch(traln->getTr(), b); 
+      hookup(p, p->back, b.length, numBranches); 
+    }
+
+}
+
 
 
 
@@ -78,9 +91,10 @@ void destroyOrientationAlongPath(tree *tr, path *rPath, nodeptr p)
    first two branches in path define subtree, all further branches are
    traversed, last branch is the insertion branch. 
  */
-void applyPathAsESPR(tree *tr, path *rPath )
+void applyPathAsESPR(TreeAln *traln, path *rPath )
 {
-  int numBranches = getNumBranches(tr); 
+  int numBranches = traln->getNumBranches(); 
+  tree *tr = traln->getTr();
   
   assert(stackLength(rPath) > 2 ); 
 
@@ -137,22 +151,6 @@ void applyPathAsESPR(tree *tr, path *rPath )
 }
 
 
-void restoreBranchLengthsPath(tree *tr, path *s)
-{
-  int numBranches = getNumBranches(tr);
-  for(int i = 0; i < s->index; ++i)
-    {
-      branch b = s->content[i]; 
-      nodeptr p = findNodeFromBranch(tr, b); 
-      hookup(p, p->back, b.length, numBranches); 
-    }
-
-}
-
-
-
-
-
 /**
    @brief undoes topological changes, if an eSPR move was done
    according to rPath.
@@ -160,13 +158,14 @@ void restoreBranchLengthsPath(tree *tr, path *s)
    Only resets the spr move, not any branch length changes due to BL
    multiplying.
  */ 
-void resetAlongPathForESPR(tree *tr, path *rPath)
+void resetAlongPathForESPR(TreeAln *traln, path *rPath)
 {
+  tree *tr = traln->getTr();
 
   /* BUG branch lengths are not restored correctly, currently relying on restoreBranchLengthsPath function */
 
   assert(rPath->index > 2); 
-  int numBranches = getNumBranches(tr); 
+  int numBranches = traln->getNumBranches(); 
   int lastNode = 0, otherNode = 0; 
   if(nodeIsInBranch(rPath->content[rPath->index-1].thisNode,  rPath->content[rPath->index-2]))
     {

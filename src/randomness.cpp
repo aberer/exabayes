@@ -12,6 +12,8 @@
 #include "branch.h"
 #include "adapters.h"
 
+#include "TreeAln.hpp" 
+
 
 static void inc_global()
 {
@@ -192,7 +194,7 @@ void drawPermutation(state *chain, int* perm, int n)
  */ 
 branch drawInnerBranchUniform(state *chain)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   boolean accepted = FALSE; 
   branch b; 
   do 
@@ -216,7 +218,7 @@ branch drawInnerBranchUniform(state *chain)
 */ 
 branch drawSubtreeUniform(state *chain)
 {
-  tree *tr = chain->tr;   
+  tree *tr = chain->traln->getTr();   
   while(TRUE)
     {
       branch b = drawBranchUniform(chain); 
@@ -242,7 +244,7 @@ branch drawSubtreeUniform(state *chain)
  */
 branch drawBranchUniform(state *chain)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
 
   boolean accept = FALSE; 
   int randId = 0; 

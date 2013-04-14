@@ -10,17 +10,15 @@ AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 #   -
 
 
 if WITH_DEBUG
-AM_CFLAGS+=-g3 -O0 -fgnu89-inline 
+AM_CFLAGS+=-g3 -O0 # -fgnu89-inline 
 else
 AM_CFLAGS+=-O2 -fomit-frame-pointer -funroll-loops 
 endif
 
-# AM_CFLAGS+=-Wl,--export-dynamic
-
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS=exabayes #  prsf
+bin_PROGRAMS= exabayes   prsf 
 
 include src-helper.am
 include src.am 
@@ -45,10 +43,7 @@ endif
 
 AM_CFLAGS+=$(OPT_HEAD) -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS) $(LANG_FLAGS)
-AM_CXXFLAGS=$(AM_CFLAGS) # -std=c++11
-
-# libpll_a_CFLAGS= -w $(AM_CFLAGS)
-libexaml_a_CFLAGS=-w $(AM_CFLAGS)
+AM_CXXFLAGS=$(AM_CFLAGS) 
 
 
 AM_LDFLAGS=-lm
@@ -61,17 +56,15 @@ EXTRA_DIST=lib/Random123-1.07 src/main-examl_cond.c src/main-pll_cond.c		\
 
 
 if WITH_PLL
-prsf_SOURCES+=src/pll/mem_alloc-pll.c # src/main-common.c
+prsf_SOURCES+=./src/pll/mem_alloc-pll.c ./src/pllmem_alloc-pll.h
 endif
 
-prsf_CFLAGS=$(AM_CFLAGS) -D_STANDALONE
+prsf_CXXFLAGS=$(AM_CXXFLAGS) -D_STANDALONE
 
 
-clean-exa: 
-	-rm -rf *.o exabayes *.a  
-
-clean: 
+clean:
 	-rm -rf $(exabayes_OBJECTS) $(bin_PROGRAMS )  $(prsf_OBJECTS) 
+# -rm -rf 
 
 
 doc : 

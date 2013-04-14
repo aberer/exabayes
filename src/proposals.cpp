@@ -1,6 +1,6 @@
 
 #include "axml.h"
-#include "bayes.h"
+#include "bayes.h"		// 
 #include "randomness.h"
 #include "globals.h"
 #include "main-common.h"
@@ -17,6 +17,7 @@
 #include "guidedMoves.h"
 #include "stNNI.h"
 #include "tlMult.h" 
+#include "TreeAln.hpp"
 
 void expensiveVerify(tree *tr); 
 
@@ -56,7 +57,7 @@ void findLogisticP(state *chain){
 
 static void recordSubsRates(state *chain, int model, int numSubsRates, double *prevSubsRates)
 {
-  pInfo *partition = getPartition(chain,model); 
+  pInfo *partition = chain->traln->getPartition(model); 
   assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)
@@ -137,8 +138,8 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 {
   int model = thisProposal->remembrance.partInfo->modelNum;
-  branch root = findRoot(chain->tr);  
-  nodeptr p = findNodeFromBranch(chain->tr, root); 
+  branch root = findRoot(chain->traln->getTr());  
+  nodeptr p = findNodeFromBranch(chain->traln->getTr(), root); 
   evaluateOnePartition(chain, p, TRUE, model); 
 }
 
@@ -146,14 +147,14 @@ static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 static void evalBranch(state *chain, proposalFunction *thisProposal)
 {
   branch b = peekStack(thisProposal->remembrance.modifiedPath);
-  nodeptr p = findNodeFromBranch(chain->tr, b); 
+  nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
   evaluateGenericWrapper(chain,p, FALSE); 
 }
 
 
 static void dummy_eval(state *chain,proposalFunction *thisProposal)
 {
-  evaluateGenericWrapper(chain, chain->tr->start, TRUE);
+  evaluateGenericWrapper(chain, chain->traln->getTr()->start, TRUE);
 }
 
 
@@ -201,7 +202,7 @@ void pushToStackIfNovel(stack *s, branch b, int numTip);
 
 static void sprEval(state *chain, proposalFunction *thisProposal)
 {  
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   path *rPath = thisProposal->remembrance.modifiedPath; 
 
   branch futureRoot = getThirdBranch(tr, rPath->content[0], rPath->content[1]); 
@@ -220,12 +221,12 @@ static void sprEval(state *chain, proposalFunction *thisProposal)
 
 static void resetESPR(state *chain, proposalFunction *pf )
 {
-  resetAlongPathForESPR (chain->tr, pf->remembrance.modifiedPath);   
+  resetAlongPathForESPR (chain->traln, pf->remembrance.modifiedPath);   
 
   /* TODO resetAlong... should be able to correctly restore branch lengths    */
-  restoreBranchLengthsPath(chain->tr, pf->remembrance.modifiedPath); 
+  restoreBranchLengthsPath(chain->traln, pf->remembrance.modifiedPath); 
 
-  debug_checkTreeConsistency(chain);
+  debug_checkTreeConsistency(chain->traln->getTr());
   freeStack(&(pf->remembrance.modifiedPath));
   /* printf("RESET: ");    */
   debug_printTree(chain); 
@@ -241,7 +242,6 @@ static void resetESPR(state *chain, proposalFunction *pf )
  */ 
 static void applyExtendedSPR(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr;
   double stopProp = pf->parameters.eSprStopProb; 
 
   debug_printTree(chain);
@@ -254,7 +254,7 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
 
   saveBranchLengthsPath(chain, rPath); 
 
-  applyPathAsESPR(tr, rPath);
+  applyPathAsESPR(chain->traln, rPath);
 
   pf->remembrance.modifiedPath = rPath; 
 
@@ -263,7 +263,7 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
   multiplyAlongBranchESPR(chain, rPath, pf->param2.multiplier);
 #endif
 
-  debug_checkTreeConsistency(chain); 
+  debug_checkTreeConsistency(chain->traln->getTr()); 
 }
 
 
@@ -274,7 +274,7 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
 
 static void extended_spr_apply(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr;
+  tree *tr = chain->traln->getTr();
   topoRecord *rec = pf->remembrance.topoRec; 
   double stopProp = pf->parameters.eSprStopProb; 
 
@@ -290,8 +290,8 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
   rec->pruningBranch.thisNode = nb->number; 
   rec->pruningBranch.thatNode = nnb->number; 
 
-  record_branch_info(nb, rec->neighborBls , getNumBranches(chain->tr));
-  record_branch_info(nnb, rec->nextNeighborBls, getNumBranches(chain->tr));
+  record_branch_info(nb, rec->neighborBls , chain->traln->getNumBranches());
+  record_branch_info(nnb, rec->nextNeighborBls, chain->traln->getNumBranches());
   
   double* nbz = rec->neighborBls,
     *nnbz = rec->nextNeighborBls; 
@@ -299,7 +299,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
   /* initial remapping of BL of nodes adjacent to pruned node  */
   double zqr[NUM_BRANCHES];
 
-  for(int i = 0; i < getNumBranches(tr); i++)
+  for(int i = 0; i < chain->traln->getNumBranches(); i++)
     {
       switch(pf->ptype)
 	{
@@ -362,7 +362,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
   nodeptr insertBranchPtr = curNode; 
 
-  record_branch_info(insertBranchPtr, pf->remembrance.topoRec->bls, getNumBranches(chain->tr)); 
+  record_branch_info(insertBranchPtr, pf->remembrance.topoRec->bls, chain->traln->getNumBranches()); 
 
   switch(pf->ptype)
     {
@@ -395,10 +395,10 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 	if( remapBL ) 
 	  {
 	    neighborZ = nbz; 
-	    for(int i = 0; i < getNumBranches(tr); ++i)
+	    for(int i = 0; i < chain->traln->getNumBranches(); ++i)
 	      nb->z[i] = nb->back->z[i] = nnb->z[i]; 
 	    
-	    assert(getNumBranches(tr) == 1 ); 
+	    assert(chain->traln->getNumBranches() == 1 ); 
 	    swpDouble(rec->neighborBls,rec->nextNeighborBls ); 
 	    rec->pruningBranch = invertBranch(rec->pruningBranch); 
 	  }
@@ -414,7 +414,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
     default: assert(0); 
     }
 
-  debug_checkTreeConsistency(chain); 
+  debug_checkTreeConsistency(chain->traln->getTr()); 
 
   assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thisNode ))); 
   assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thatNode ))); 
@@ -424,7 +424,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
 static void extended_spr_reset(state * chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   topoRecord
     *topoRec = pf->remembrance.topoRec; 
   
@@ -453,7 +453,7 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
   debug_printNodeEnvironment(chain,   topoRec->insertBranch.thatNode ); 
 #endif
 
-  debug_checkTreeConsistency(chain );
+  debug_checkTreeConsistency(chain->traln->getTr() );
   debug_printTree(chain);
 }
 
@@ -468,16 +468,16 @@ double get_alpha_prior(state *chain )
 
 static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
 
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
 
-  int model = drawRandInt(chain, getNumberOfPartitions(tr));  
+  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());  
   perPartitionInfo* remem = pf->remembrance.partInfo; 
   remem->modelNum = model; 
 
-  pInfo *partition = getPartition(chain,model);
+  pInfo *partition = chain->traln->getPartition(model);
   curv = partition->alpha;
   remem->alpha = curv; 
 
@@ -541,9 +541,9 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 
 static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   perPartitionInfo *info  = pf->remembrance.partInfo; 
-  pInfo *partition = getPartition(chain, info->modelNum) ; 
+  pInfo *partition = chain->traln->getPartition( info->modelNum) ; 
   
   partition->alpha = info->alpha; 
 
@@ -613,10 +613,10 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   //TODO: add safety to max and min values
   //record the old ones
 
-  int model = drawRandInt(chain, getNumberOfPartitions(chain->tr));
+  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo;
 
-  pInfo *partition = getPartition(chain, model); 
+  pInfo *partition = chain->traln->getPartition( model); 
   int numRates = (partition->states * partition->states - partition->states) / 2; 
 
   recordSubsRates(chain, model , numRates, info->substRates);
@@ -731,7 +731,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
     }
   //recalculate eigens
 
-  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  chain->traln->initRevMat(model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
 
   exa_free(list); 
@@ -804,9 +804,9 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 {
   /* tree *tr = chain->tr;  */
 
-  int model = drawRandInt(chain,getNumberOfPartitions(chain->tr));; 
+  int model = drawRandInt(chain,chain->traln->getNumberOfPartitions());; 
 
-  pInfo *partition = getPartition(chain , model) ; 
+  pInfo *partition = chain->traln->getPartition( model) ; 
 
   perPartitionInfo *info = pf->remembrance.partInfo; 
 
@@ -839,7 +839,7 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
       edit_subs_rates(chain,model, perm[state], new_value);      
     }
       
-  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  chain->traln->initRevMat(model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/   */
   exa_free(perm); 
@@ -852,11 +852,11 @@ static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf
   /* tree *tr = chain->tr;  */
 
   //record the old one //TODO sufficient to store single value.  
-  int model = drawRandInt(chain,getNumberOfPartitions(chain->tr)); 
+  int model = drawRandInt(chain,chain->traln->getNumberOfPartitions()); 
 
   perPartitionInfo *info =  pf->remembrance.partInfo; 
   
-  pInfo *partition = getPartition(chain,model) ; 
+  pInfo *partition = chain->traln->getPartition(model) ; 
 
   info->modelNum = model; 
   info->numRates = partition->states ;   
@@ -887,7 +887,9 @@ static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf
 
   chain->hastings=curv/new_value;
 
-  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  
+  chain->traln->initRevMat(model);
+  // exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
   
   /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/ */
 }
@@ -896,14 +898,14 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 {
   /* tree *tr = chain->tr;  */
   
-  int model = drawRandInt(chain,getNumberOfPartitions(chain->tr));
+  int model = drawRandInt(chain,chain->traln->getNumberOfPartitions());
 
   perPartitionInfo *info = (perPartitionInfo* ) pf->remembrance.partInfo; 
   
   info->modelNum = model; 
   
   //record the old one 
-  pInfo *partition = getPartition(chain, model) ; 
+  pInfo *partition = chain->traln->getPartition(model) ; 
   info->numRates = (partition->states * partition->states - partition->states   ) / 2 ; 
   int numRates = info->numRates; 
 
@@ -929,8 +931,8 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
        chain->hastings*=curv/new_value;
       edit_subs_rates(chain,model, state, new_value);
     }
-
-  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  chain->traln->initRevMat(model);
+  // exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
 
   /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/ */
 }
@@ -939,14 +941,15 @@ static void restore_subs_rates(state *chain, int model, int numSubsRates, double
 {
   /* tree *tr = chain->tr;    */
 
-  pInfo *partition = getPartition(chain, model); 
+  pInfo *partition = chain->traln->getPartition( model); 
 
   assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)	
     partition->substRates[i] = prevSubsRates[i]; 
 
-  exa_initReversibleGTR(chain, model);
+  chain->traln->initRevMat(model);
+  // exa_initReversibleGTR(chain, model);
 
   /* TODO need to broadcast rates here for parallel version */
 
@@ -986,13 +989,13 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
       /* TODO@kassian just wondering: is it correct to use the global
 	 frac-change here? what are the local frac-changes good for
 	 then?  */
-      real_z = -log(p->z[i]) * s->tr->fracchange;
+      real_z = -log(p->z[i]) * chain->traln->getTr()->fracchange;
       
       //     printf( "z: %f %f\n", p->z[i], real_z );
     
       mn = real_z- windowRange;
       mx = real_z+ windowRange;
-      newZValue = exp(-(fabs(mn + r * (mx-mn)/s->tr->fracchange )));
+      newZValue = exp(-(fabs(mn + r * (mx-mn)/chain->traln->getTr()->fracchange )));
 
       /* newValue = mn + r * (mx-mn); */
       /* s->newprior=get_branch_length_prior(&newValue); */
@@ -1027,11 +1030,11 @@ static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,st
 	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
       
-      real_z = -log(p->z[i]) * s->tr->fracchange; //convert from exponential to real form
+      real_z = -log(p->z[i]) * chain->traln->getTr()->fracchange; //convert from exponential to real form
       r = drawRandBiUnif(chain, real_z);//draw from [real_z/2,2*real_z]
 
     
-      newZValue = exp(-(fabs( r/s->tr->fracchange )));//convert to exponential form
+      newZValue = exp(-(fabs( r/chain->traln->getTr()->fracchange )));//convert to exponential form
       
       newValue = r; 
       
@@ -1077,14 +1080,14 @@ static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state
 	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
    //   r = drawRandExp(lambda);
-      real_z = -log(p->z[i]) * s->tr->fracchange;
+      real_z = -log(p->z[i]) * chain->traln->getTr()->fracchange;
        r = drawRandExp(chain, 1.0/real_z);
 
 	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
 
 	/* s->newprior=get_branch_length_prior(&r); */
 	
-      newZValue = exp(-(fabs(r /s->tr->fracchange )));
+	newZValue = exp(-(fabs(r /chain->traln->getTr()->fracchange )));
    
     
       /* Ensure always you stay within this range, reflect if necessary *///TODO reflects transformed bl, needs to reflect actual bl
@@ -1105,7 +1108,7 @@ static node *select_branch_by_id_dfs_rec( node *p, int *cur_count, int target, s
       return p;
     }
   
-  if( !isTip( p->number, s->tr->mxtips )) {
+  if( !isTip( p->number, s->traln->getTr()->mxtips )) {
     // node *q = p->back;
     node *ret = NULL;
     
@@ -1127,7 +1130,7 @@ static node *select_branch_by_id_dfs_rec( node *p, int *cur_count, int target, s
 
 
 static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
-  const int num_branches = (2 * s->tr->mxtips) - 3;
+  const int num_branches = (2 * s->traln->getTr()->mxtips) - 3;
   
   //   if( target == num_branches ) {
   //     return NULL;
@@ -1148,7 +1151,7 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
   
     node *q = p->back;
     
-    if( isTip( q->number, s->tr->mxtips ) ) {
+    if( isTip( q->number, s->traln->getTr()->mxtips ) ) {
       assert( 0 ); // error: target must be invalid 'branch id'
       return NULL; 
     }
@@ -1175,11 +1178,11 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 
 static void random_branch_length_proposal_apply(state * chain, proposalFunction *pf)
 {
-  int multiBranches = getNumBranches(chain->tr);
+  int multiBranches = chain->traln->getNumBranches(); 
   assert(multiBranches == 1 ); 
-  int target_branch = drawRandInt(chain,(chain->tr->mxtips * 2) - 3); 
+  int target_branch = drawRandInt(chain,(chain->traln->getTr()->mxtips * 2) - 3); 
 
-  node *p = select_branch_by_id_dfs( chain->tr->start, target_branch, chain );
+  node *p = select_branch_by_id_dfs( chain->traln->getTr()->start, target_branch, chain );
   double z = p->z[0]; 
   double oldZ = 0; 
    
@@ -1256,7 +1259,7 @@ static void random_branch_length_proposal_reset(state * chain, proposalFunction 
 {
   /* branch b = pf->remembrance.modifiedPath->content[0];  */
   branch b = popStack(pf->remembrance.modifiedPath); 
-  nodeptr p = findNodeFromBranch(chain->tr, b); 
+  nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
   p->z[0] = p->back->z[0] = b.length[0]; 
 
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
@@ -1284,21 +1287,22 @@ static void restore_frequ_rates(state *chain, int model, int numFrequRates, doub
 
   /* NOTICE: this function should not be called repeatedly  */
 
-  pInfo *partition = getPartition(chain,model);
+  pInfo *partition = chain->traln->getPartition(model);
 
   assert(partition->dataType = DNA_DATA);
   int i;
   for(i=0; i<numFrequRates; i++)
     partition->frequencies[i] = prevFrequRates[i];
 
-  exa_initReversibleGTR(chain, model);
+  chain->traln->initRevMat(model);
+  // exa_initReversibleGTR(chain, model);
 
   /* evaluateOnePartition(chain, tr->start, TRUE, model); */
 }
 
 static void recordFrequRates(state *chain, int model, int numFrequRates, double *prevFrequRates)
 {
-  pInfo *partition = getPartition(chain,model);
+  pInfo *partition = chain->traln->getPartition(model);
 
   assert(partition->dataType = DNA_DATA);
   int i;
@@ -1309,12 +1313,10 @@ static void recordFrequRates(state *chain, int model, int numFrequRates, double 
 
 
 static void frequencySliderApply(state *chain, proposalFunction *pf)
-{
-  tree *tr  = chain->tr ; 
-  
-  int model = drawRandInt(chain, getNumberOfPartitions(tr)); 
+{  
+  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions()); 
   perPartitionInfo *info = pf->remembrance.partInfo; 
-  pInfo*partition = getPartition(chain,model); 
+  pInfo*partition = chain->traln->getPartition(model); 
 
   int numFreq = partition->states; 
   info->modelNum = model; 
@@ -1333,19 +1335,18 @@ static void frequencySliderApply(state *chain, proposalFunction *pf)
   for(int i = 0; i < numFreq; ++i)
     partition->frequencies[i] /= sum;
   
-  exa_initReversibleGTR(chain, model);
+  chain->traln->initRevMat(model);
+  // exa_initReversibleGTR(chain, model);
 }
 
 
 
 void frequency_proposal_apply(state * chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
-
-  int model  = drawRandInt(chain,getNumberOfPartitions(tr));
+  int model  = drawRandInt(chain,chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo; 
 
-  pInfo *partition = getPartition(chain, model); 
+  pInfo *partition = chain->traln->getPartition( model); 
 
   int numFreq = partition->states; 
   info->modelNum = model;   
@@ -1370,8 +1371,8 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
     partition->frequencies[state]=r[state]/sum; 
 
   //recalculate eigens
-
-  exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+  chain->traln->initRevMat(model);
+  // exa_initReversibleGTR(chain, model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
   exa_free(r); 
 
   /* chain->curprior=get_frequency_prior(chain, tr->partitionData[chain->frequRemem.model].frequencies); */
@@ -1395,7 +1396,7 @@ void frequency_proposal_reset(state * chain, proposalFunction *pf)
 
 void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValue)
 {
-  pInfo *partition = getPartition(chain,model); 
+  pInfo *partition = chain->traln->getPartition(model); 
 
   assert(partition->dataType = DNA_DATA);
   assert(subRateValue <= RATE_MAX && subRateValue >= RATE_MIN);
@@ -1415,7 +1416,7 @@ static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
 
 static void branchLengthWindowApply(state *chain, proposalFunction *pf)
 {  
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   branch b =  drawBranchUniform(chain); 
 
   nodeptr p = findNodeFromBranch(tr, b); 
@@ -1433,7 +1434,7 @@ static void branchLengthWindowApply(state *chain, proposalFunction *pf)
 
 static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   branch b =  drawBranchUniform(chain); 
 
   nodeptr p = findNodeFromBranch(tr, b); 
@@ -1448,7 +1449,7 @@ static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
   assert(multiplier > 0.); 
   
   /* TODO how do we do that wiht multiple bls per branch?  */
-  assert(getNumBranches(tr) == 1); 
+  assert(chain->traln->getNumBranches() == 1); 
 
   double newZ = pow(p->z[0], multiplier) ; 
   /* printf("\t\tBL_MULTI: %g * %g => %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
@@ -1549,7 +1550,7 @@ static void autotuneStopProp(state *chain, proposalFunction *pf)
 void branchLengthReset(state *chain, proposalFunction *pf)
 {
   branch b = popStack(pf->remembrance.modifiedPath); 
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   nodeptr p = findNodeFromBranch(tr, b); 
   p->z[0] = p->back->z[0] = b.length[0]; 
 }
@@ -1559,8 +1560,8 @@ void branchLengthReset(state *chain, proposalFunction *pf)
 
 void resetGammaMulti(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr;   
-  pInfo *partition = getPartition(chain,pf->remembrance.partInfo->modelNum); 
+  tree *tr = chain->traln->getTr();   
+  pInfo *partition = chain->traln->getPartition(pf->remembrance.partInfo->modelNum); 
   partition->alpha = pf->remembrance.partInfo->alpha;  
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);  
 }
@@ -1568,10 +1569,10 @@ void resetGammaMulti(state *chain, proposalFunction *pf)
  
 void applyGammaMultiplier(state *chain, proposalFunction *pf)
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
   double multi = drawMultiplier(chain, pf->parameters.multiplier);   
-  int model = drawRandInt(chain, getNumberOfPartitions(tr));
-  pInfo *partition = getPartition(chain, model); 
+  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
+  pInfo *partition = chain->traln->getPartition( model); 
 
   
   perPartitionInfo *pinfo = pf->remembrance.partInfo; 

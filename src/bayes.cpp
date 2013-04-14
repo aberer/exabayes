@@ -23,6 +23,7 @@
 #include "proposals.h"
 #include "tune.h"
 #include "prsf.h"
+#include "TreeAln.hpp"
 
 
 extern double masterTime; 
@@ -67,8 +68,8 @@ void switchChainState(state *chains)
 
   assert(heatA < 1.f || heatB < 1.f); 
 
-  double lnlA = chains[chainA].tr->likelihood,
-    lnlB = chains[chainB].tr->likelihood; 
+  double lnlA = chains[chainA].traln->getTr()->likelihood,
+    lnlB = chains[chainB].traln->getTr()->likelihood; 
 
   double 
     aB = lnlA *  heatB,
@@ -207,19 +208,22 @@ void runChains(state *allChains, int diagFreq)
 	}
 
       hasConverged = convergenceDiagnostic(allChains); 
+#ifdef ENABLE_PRSF
       if(processID == 0)
 	printPRSF(run_id);
+#endif
     }
 }
 
 
-
 /* #define TEST */
-
 
 #ifdef TEST
 #include "burnin.h"
 #endif
+
+
+
 
 
 
@@ -229,12 +233,17 @@ void runChains(state *allChains, int diagFreq)
    @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
-void exa_main(tree *tr, analdef *adef)
+void exa_main(tree *tr, 
+#if HAVE_PLL == 1 
+	      partitionList *partitions,
+#endif
+analdef *adef)
 {   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
 
   timeIncrement = gettime();
-  
+  gAInfo.adef = adef; 
+
   initializeIndependentChains(tr, adef,  &indiChains); 
 
 
@@ -242,7 +251,6 @@ void exa_main(tree *tr, analdef *adef)
   {
   } 
 #endif
-
 
   assert(gAInfo.numberCoupledChains > 0);
   /* TODO more bla bla  */  

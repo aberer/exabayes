@@ -6,6 +6,7 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+
 #include "config.h"
 
 
@@ -61,6 +62,9 @@
 #endif
 
 
+#define ALL_MODELS -1 
+
+
 typedef  unsigned int nat ; 
 
 #define NOT ! 
@@ -106,6 +110,7 @@ typedef  unsigned int nat ;
 
 /* #define DEBUG_PRINT_TUNE_INFO */
 
+/* #define ENABLE_PRSF */
 
 
 #define WEIGHT_EPS 1e-3  	/* guided spr    */
@@ -115,7 +120,8 @@ typedef  unsigned int nat ;
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
 #define DEBUG_SHOW_EACH_PROPOSAL
-/* #define DEBUG_LNL_VERIFY */
+#define DEBUG_CHECK_TREE_CONSISTENCY
+#define DEBUG_LNL_VERIFY
 /* #define DEBUG_CHECK_TOPO_CONSISTENCY 	/\* TODO <= merge more stuff into that *\/ */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
@@ -143,3 +149,7 @@ typedef  unsigned int nat ;
 #define BURNIN 5000
 
 #endif
+
+
+
+

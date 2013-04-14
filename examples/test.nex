@@ -1,28 +1,33 @@
 #NEXUS
 begin EXABAYES; 
 
-      initGammaWeight 0 [ ok ]
-      initGammaExpWeight 0 [ ok ]
-      rateHetMulti 2   [ ok, 2 in mrb  ]
+      [ TOPOLOGY ]
+      initEsprMappedWeight 0 [ 10% in mrbn ]
+      initGuidedSPR 0 [ok ] 
+      stNNI 10       [ ok 10% in mrb]
 
-      initEsprMappedWeight 15 [ 10% in mrbn ]
-      initGuidedSPR 15 [ok ] 
-      stNNI 15       [ ok 10% in mrb]
-
-      initSingleBranchWeight 10 [ ok ] 
+      [ BRANCH LENGTHS ] 
+      initSingleBranchWeight 0 [ ok ] 
       initSingleBranchExpWeight 0  [ broken ] 
       initSingleBranchBiunifWeight 0 [broken]
-      branchMulti 30 [ ok, 40% in mrb ]
-      treeLengthMult 4 [ ok, 4 % in mrb ]
+      branchMulti 0 [ ok, 40% in mrb ]
+      treeLengthMult 0 [ ok, 4 % in mrb ]
 
-      initModelWeight 2 [ ok ]
+      [ RATE HETEROGENEITY ]
+      initGammaWeight 0 [ ok ]
+      initGammaExpWeight 0 [ ok ]
+      rateHetMulti 0   [ ok, 2 in mrb  ]
+
+      [ REVMAT ] 
+      initModelWeight 0 [ ok ]
       initModelBiunifWeight 0 [broken]
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
       initModelPermBiunifWeight 0 [ BROKEN ] 
 
+      [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
-      initFrequencySliderWeight 2  [ ok ]
+      initFrequencySliderWeight 0  [ ok ]
 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
@@ -34,8 +39,8 @@ begin EXABAYES;
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
       diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 8 [ number of independant chains/runs ]
+      numIndiChains 1 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 4   [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 1   [ number of chains per independent run (only one is cold) ]       
 end;

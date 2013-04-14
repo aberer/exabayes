@@ -7,13 +7,15 @@
 #include "output.h"
 #include "misc-utils.h"
 
+#include "TreeAln.hpp"
+
 
 
 
 void apply_st_nni(state *chain, proposalFunction *pf)
 {  
-  tree *tr = chain->tr; 
-  int numBranches = getNumBranches(tr);
+  tree *tr = chain->traln->getTr(); 
+  int numBranches = chain->traln->getNumBranches();
   assert(numBranches == 1); 
   branch b = drawInnerBranchUniform(chain); 
 
@@ -71,14 +73,14 @@ void apply_st_nni(state *chain, proposalFunction *pf)
     hookup(q, rBack, q->z, numBranches);    
   }
 
-  debug_checkTreeConsistency(chain);
+  debug_checkTreeConsistency(chain->traln->getTr());
   /* TODO maybe multiply as well */
   
 }
 
 void eval_st_nni(state *chain, proposalFunction *pf )
 {
-  tree *tr = chain->tr; 
+  tree *tr = chain->traln->getTr(); 
 
   branch b1 = pf->remembrance.modifiedPath->content[0],
     b2  = pf->remembrance.modifiedPath->content[2]; 
@@ -88,8 +90,20 @@ void eval_st_nni(state *chain, proposalFunction *pf )
   nodeptr p = findNodeFromBranch(tr, exchangeBranch),
     q = findNodeFromBranch(tr, invertBranch(exchangeBranch)); 
 
-  exa_newViewGeneric(chain, p, FALSE); 
-  exa_newViewGeneric(chain, q, FALSE); 
+  // if(p->x)
+  //   {
+  //     p->x = 0; 
+  //     p->next->x = 1; 
+  //   }
+  // if(q->x) 
+  //   {
+  //     q->x = 0; 
+  //     q->next->x = 1; 
+  //   }
+
+
+  newViewGenericWrapper(chain, p, FALSE); 
+  newViewGenericWrapper(chain, q, FALSE); 
 
   evaluateGenericWrapper(chain,p,FALSE); 
   /* printf("lnl = %g\n", tr->likelihood);  */
@@ -98,8 +112,8 @@ void eval_st_nni(state *chain, proposalFunction *pf )
 void reset_st_nni(state *chain, proposalFunction *pf)
 {
   tree
-    *tr = chain->tr; 
-  int numBranches = getNumBranches(tr); 
+    *tr = chain->traln->getTr(); 
+  int numBranches = chain->traln->getNumBranches(); 
   
   path *rStack = pf->remembrance.modifiedPath; 
   branch a = popStack(rStack),	/* switchingBranch */
@@ -114,7 +128,7 @@ void reset_st_nni(state *chain, proposalFunction *pf)
       qBack = q->back; 
     nodeptr r = findNodeFromBranch(tr, b), 
       rBack = r->back; 
-
+    
     nodeptr between = findNodeFromBranch(tr, chosenBranch ); 
     
     hookup(between, between->back, chosenBranch.length, numBranches); 
@@ -122,6 +136,5 @@ void reset_st_nni(state *chain, proposalFunction *pf)
     hookup(q, rBack, a.length, numBranches) ; /* q->z */
   }
 
-  debug_checkTreeConsistency(chain);
-
+  debug_checkTreeConsistency(chain->traln->getTr());
 }
