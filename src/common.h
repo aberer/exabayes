@@ -80,6 +80,7 @@ typedef  unsigned int nat ;
 #define INIT_NNI_MULT 0.098
 #define INIT_TL_MULTI 1.386294
 #define INIT_GAMMA_MULTI 0.811
+#define INIT_NODE_SLIDER_MULT  0.191
 
 /* => moved this to the parser now  */
 /* #define INIT_GUIDED_RADIUS 10 */

@@ -17,6 +17,7 @@
 #include "stNNI.h"
 #include "tlMult.h" 
 #include "TreeAln.hpp"
+#include "nodeSlider.h"
 
 void expensiveVerify(tree *tr); 
 
@@ -1766,6 +1767,17 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->category = BRANCH_LENGTHS; 
       ptr->parameters.multiplier = INIT_TL_MULTI; 
       break;       
+    case NODE_SLIDER: 
+      ptr->apply_func = applyNodeSlider; 
+      ptr->eval_lnl = evaluateNodeSlider; 
+      ptr->reset_func = resetNodeSlider;  
+      ptr->autotune = autotuneMultiplier; 
+      ptr->remembrance.modifiedPath = NULL; 
+      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->name = "nodeSlider"; 
+      ptr->category = BRANCH_LENGTHS; 
+      ptr->parameters.multiplier = INIT_NODE_SLIDER_MULT; 
+      break; 
     case GAMMA_MULTI: 
       ptr->apply_func = applyGammaMultiplier;       
       ptr->eval_lnl = onePartitionEval; 

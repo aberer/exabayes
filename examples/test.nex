@@ -2,16 +2,17 @@
 begin EXABAYES; 
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 15 [ 10% in mrb ]
-      initGuidedSPR 15  [ok ] 
-      stNNI 15      [ ok 10% in mrb]	
+      initEsprMappedWeight 20 [ 10% in mrb ]
+      initGuidedSPR 0  [ok ] 
+      stNNI 20      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
-      initSingleBranchWeight 20 [ ok ] 
+      initSingleBranchWeight 0 [ ok ] 
       initSingleBranchExpWeight 0  [ broken ] 
       initSingleBranchBiunifWeight 0 [broken]
-      branchMulti 20 [ ok, 40% in mrb ]
+      branchMulti 40 [ ok, 40% in mrb ]
       treeLengthMult 4 [ ok, 4 % in mrb ]
+      nodeSlider  10 [ ok, 10% in mrb ]
 
       [ RATE HETEROGENEITY ]
       initGammaWeight 0 [ ok ]		

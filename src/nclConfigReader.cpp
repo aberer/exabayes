@@ -65,7 +65,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = GUIDED_SPR; 
   else if(key.EqualsCaseInsensitive("stNNI"))
     *pf = ST_NNI; 
-
+  else if (key.EqualsCaseInsensitive("nodeSlider"))
+    *pf = NODE_SLIDER; 
   // TODO@kassian this is a good place for proposal add 
 
   else 
