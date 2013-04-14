@@ -13,7 +13,7 @@ void exa_newViewGeneric(state *chain, nodeptr p, boolean masked)
 #if HAVE_PLL == 1 
   newviewGeneric(chain->traln->getTr(), chain->traln->getPartitionsPtr(), p, masked); 
 #else 
-  newviewGeneric(chain->tr, p, masked); 
+  newviewGeneric(chain->traln->getTr(), p, masked); 
 #endif 
 } 
 

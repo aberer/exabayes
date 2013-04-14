@@ -10,7 +10,6 @@
 #include "topology-utils.h" 
 #include "eval.h"
 #include "adapters.h"
-#include "exa-topology.h"
 #include "misc-utils.h"
 #include "branch.h"
 #include "path.h"
@@ -1619,7 +1618,7 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->parameters.radius =  initParams->initGuidedSPR; 
       ptr->autotune = NULL;       
       break; 
-    case E_SPR: 		/* TRUSTED  */
+    case E_SPR:
       ptr->eval_lnl = sprEval; 
       /* ptr->autotune = autotuneStopProp; */
       ptr->remembrance.modifiedPath = (path*)exa_calloc(1,sizeof(path)); 
@@ -1883,52 +1882,4 @@ void setupProposals(state *chain, initParamStruct *initParams)
   if(chain->id == 0)
     printAllProposalWeights(chain);
 }
-
-
-void printXs(tree *tr )
-{
-  if(processID == 0)
-    {
-      printf("start %d:\t", tr->start->number); 
-      nodeptr q = tr->start; 
-	  if(q->x)
-	    printf("1");
-	  else 
-	    printf("0");
-	  if(q->next->x)
-	    printf("1"); 
-	  else 
-	    printf("0"); 
-	  if(q->next->next->x)
-	    printf("1"); 
-	  else 
-	    printf("0"); 
-	  printf("\n"); 
-
-      for(int i = tr->mxtips + 1 ; i < 2 * tr->mxtips; ++i) 
-	{
-	  printf("%d\t", i ); 
-	  nodeptr p = tr->nodep[i]; 
-	  if(p->x)
-	    printf("1");
-	  else 
-	    printf("0");
-	  if(p->next->x)
-	    printf("1"); 
-	  else 
-	    printf("0"); 
-	  if(p->next->next->x)
-	    printf("1"); 
-	  else 
-	    printf("0"); 
-	  printf("\n"); 
-	}
-    }
-}
-
-
-
-
-
-
 

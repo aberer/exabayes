@@ -14,7 +14,6 @@
 #include "output.h"
 #include "proposals.h"
 #include "convergence.h"
-#include "exa-topology.h"	
 #include "nclConfigReader.h"
 #include "misc-utils.h"
 #include "chain.h"

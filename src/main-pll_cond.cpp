@@ -195,8 +195,6 @@ void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***
   myBinFread(&(partitions->numberOfPartitions),  sizeof(int), 1, byteFile);
   myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
 
-  printf("number of partitions is %d\n", partitions->numberOfPartitions); 
-
   partitions->perGeneBranchLengths = adef->perGeneBranchLengths;
 
   /* If we use the RF-based convergence criterion we will need to allocate some hash tables.

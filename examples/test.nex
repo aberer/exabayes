@@ -2,24 +2,24 @@
 begin EXABAYES; 
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 0 [ 10% in mrbn ]
-      initGuidedSPR 0 [ok ] 
-      stNNI 10       [ ok 10% in mrb]
+      initEsprMappedWeight 15 [ 10% in mrb ]
+      initGuidedSPR 15  [ok ] 
+      stNNI 15      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
-      initSingleBranchWeight 0 [ ok ] 
+      initSingleBranchWeight 20 [ ok ] 
       initSingleBranchExpWeight 0  [ broken ] 
       initSingleBranchBiunifWeight 0 [broken]
-      branchMulti 0 [ ok, 40% in mrb ]
-      treeLengthMult 0 [ ok, 4 % in mrb ]
+      branchMulti 20 [ ok, 40% in mrb ]
+      treeLengthMult 4 [ ok, 4 % in mrb ]
 
       [ RATE HETEROGENEITY ]
-      initGammaWeight 0 [ ok ]
+      initGammaWeight 0 [ ok ]		
       initGammaExpWeight 0 [ ok ]
-      rateHetMulti 0   [ ok, 2 in mrb  ]
+      rateHetMulti 2   [ ok, 2 in mrb  ]
 
       [ REVMAT ] 
-      initModelWeight 0 [ ok ]
+      initModelWeight 2 [ ok ]		
       initModelBiunifWeight 0 [broken]
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
@@ -27,7 +27,7 @@ begin EXABAYES;
 
       [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
-      initFrequencySliderWeight 0  [ ok ]
+      initFrequencySliderWeight 2  [ ok ] 
 
       [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
       numGen 500000               [ total number of generations] 
@@ -39,8 +39,8 @@ begin EXABAYES;
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
       diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 1 [ number of independant chains/runs ]
+      numIndiChains 2 [ number of independant chains/runs ]
 
       [ MC3 ]
-      numCoupledChains 1   [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 4   [ number of chains per independent run (only one is cold) ]       
 end;

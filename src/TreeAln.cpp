@@ -8,33 +8,29 @@
 
 
 
+// #define DEBUG_LINK_INFO 	// TODO erase 
+
+
 /** 
     @param tr -- tree to be initialized from 
  */ 
-TreeAln::TreeAln(tree *trOuter ,bool allocateStructures) 
+TreeAln::TreeAln(tree *trOuter) 
 {  
-  if(allocateStructures)
-    {  
-      tree *newTr = (tree*)exa_calloc(1, sizeof(tree) ); 
-      newTr->mxtips = trOuter->mxtips; 
-      this->tr = newTr; 
-      initDefault(); 
+  tree *newTr = (tree*)exa_calloc(1, sizeof(tree) ); 
+  newTr->mxtips = trOuter->mxtips; 
+  this->tr = newTr; 
+  initDefault(); 
 
-      // create a new tree 
+  // create a new tree 
 #if  ( HAVE_PLL == 1  ) 
-      partitionList *partition = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
-      this->partitions = partition; 
-      initializeTree(newTr, partition ,gAInfo.adef); 
-      this->partitions = partition; 
+  partitionList *partition = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
+  this->partitions = partition; 
+  initializeTree(newTr, partition ,gAInfo.adef); 
+  this->partitions = partition; 
 #else 
-      initializeTree(newTr ,gAInfo.adef); 
+  initializeTree(newTr ,gAInfo.adef); 
 #endif        
-      initFromTree(trOuter);  
-    }
-  else 
-    {
-      this->tr = trOuter; 
-    }    
+  initFromTree(trOuter);  
 }
 
 
@@ -80,7 +76,9 @@ TreeAln::~TreeAln()
 
 void TreeAln::unlinkTree()
 {
+#ifdef DEBUG_LINK_INFO
   cout << "unlinking everything" << endl; 
+#endif
 
   // unlink tips 
   for(int i = 1; i < tr->mxtips+1; ++i)
@@ -158,7 +156,9 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       nodeptr a = rhsTree->nodep[i],
 	b = rhsTree->nodep[i]->back; 
 
+#ifdef DEBUG_LINK_INFO
       cout << "hooking up tip " << a->number << " and " << b->number << endl; 
+#endif
       
       hookup(this->getUnhookedNode(a->number), 
 	     this->getUnhookedNode(b->number),a->z, getNumBranches()); 
@@ -172,12 +172,16 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 	{
 	  if(NOT branchExists(thisTree, constructBranch(q->number, q->back->number)))
 	    {
+#ifdef DEBUG_LINK_INFO
 	      cout << "hooing up " << q->number << " and " << q->back->number << endl; 
+#endif
 	      hookup(getUnhookedNode(q->number ) , getUnhookedNode(q->back->number) , q->z, getNumBranches()); 
 	    }
 	  else 
 	    {
+#ifdef DEBUG_LINK_INFO
 	      cout << "branch between " << q->number <<  " and "  << q->back->number << " already existing" <<endl; 
+#endif
 	    }
 
 	  q = q->next ; 
@@ -189,6 +193,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
   
   return *this; 
 }
+
 
 
 /**

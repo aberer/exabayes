@@ -11,6 +11,10 @@
 #ifndef _BRANCH_H
 #define _BRANCH_H
 
+#include <iostream>
+using namespace std; 
+
+
 
 struct _state;  
 
@@ -42,5 +46,6 @@ void divideBranchLengthsWithRatio(tree *tr, double orig,  double ratio, double *
 double combineBranchLengths(tree *tr, double origA, double origB); 
 double getRatio(tree *tr, double a, double b ); 
 
+ostream& operator<<(ostream& rhs, const branch &b);
 
 #endif

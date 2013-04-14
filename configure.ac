@@ -3,7 +3,7 @@
 
 AC_REREQ([2.67])
 AC_INIT([exabayes],[0.1],[exabayes@googlegroups.com]) # correct? 
-AM_INIT_AUTOMAKE(  exabayes , 0.1 )
+AM_INIT_AUTOMAKE(  exabayes , 0.2 )
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([src/config.h])
 

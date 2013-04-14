@@ -11,7 +11,7 @@
 
 
 /* call this for verification after the lnl has been evaluated somehow */
-static void expensiveVerify(state *chain)
+void expensiveVerify(state *chain)
 {  
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTraln = gAInfo.debugTree;   
@@ -53,19 +53,32 @@ void newViewGenericWrapper(state *chain, nodeptr p, boolean masked)
 	}
     }
 
-#ifdef DEBUG_EVAL
-  cout << "newViewGenericWrapper on " << p->number  << " and " <<  modelToEval << endl; 
-#endif
-  
   assert(numberToExecute == 1 || numberToExecute == chain->traln->getNumberOfPartitions()); 
   if(numberToExecute > 1)
     modelToEval = ALL_MODELS; 
 
+#ifdef DEBUG_EVAL
+  cout << "newViewGenericWrapper on " << p->number  << " and model " <<  modelToEval << endl; 
+#endif
 
+  if(p->x)
+    {
+      tree *tr = chain->traln->getTr();
+      assert(NOT isTip(p->number, tr->mxtips)); 
+      p->x = 0; 
+      p->next->x = 1; 
+    }
   chain->restorer->traverseAndSwitchIfNecessary(p, modelToEval, false); 
   exa_newViewGeneric(chain,p,masked); // NEEDED
 }
 
+
+
+void evaluatePartialNoBackup(state *chain, nodeptr p)
+{  
+  exa_evaluateGeneric(chain,p,FALSE );   
+  expensiveVerify(chain);
+}
 
 void evaluateFullNoBackup(state *chain)
 {

@@ -8,8 +8,6 @@
    tree */
 
 
-
-
 void multiplyBranchLengthsRecursively(tree *tr, nodeptr p, double multiplier)
 {  
   double newZ = pow(p->z[0],multiplier); 
@@ -41,6 +39,3 @@ void resetTLMult(state *chain, proposalFunction *pf)
   tree *tr = chain->traln->getTr();
   multiplyBranchLengthsRecursively(tr, tr->start->back, 1/pf->remembrance.multiplier); 
 }
-
-
-

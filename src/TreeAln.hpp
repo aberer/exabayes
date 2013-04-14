@@ -6,22 +6,21 @@
 
 
 
-/** @brief
-    mostly wraps the legacy tr
+/** 
+    @brief mostly wraps the legacy tr and partition list 
  */
 
 class TreeAln
 {
 public: 
-  TreeAln(tree *tr ,bool allocateStructures); 
-  TreeAln(const TreeAln &rhs); 
+  TreeAln(tree *tr); 
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
-  
-
+  TreeAln(const TreeAln &rhs); 
 
   void initRevMat(int model); 
-
+  void unlinkTree();
+  nodeptr getUnhookedNode(int number);
 
   // getters 
   pInfo* getPartition(int model);
@@ -37,9 +36,7 @@ public:
 
 private: 
   void initDefault();
-  void initFromTree(tree *tr) ; 
-  void unlinkTree();
-  nodeptr getUnhookedNode(int number);
+  void initFromTree(tree *tr); 
 
   tree * tr;
 #if HAVE_PLL == 1   
@@ -47,6 +44,4 @@ private:
 #endif  
 
 };  
-
-
 

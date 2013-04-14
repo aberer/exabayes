@@ -96,7 +96,7 @@ void generateRandomPath(state *chain ,path *s, double stopProp)
 
 static void debug_assertPathExists(tree *tr, path *s)
 {
-#ifdef DEBUG_CHECK_TOPO_CONSISTENCY
+#ifdef DEBUG_CHECK_TREE_CONSISTENCY
   for(int i = 0; i < s->index; ++i)
     assert(branchExists(tr, s->content[i])); 
 #endif

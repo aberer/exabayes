@@ -119,10 +119,9 @@ typedef  unsigned int nat ;
 #define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
-#define DEBUG_CHECK_TREE_CONSISTENCY
-#define DEBUG_LNL_VERIFY
-/* #define DEBUG_CHECK_TOPO_CONSISTENCY 	/\* TODO <= merge more stuff into that *\/ */
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
+/* #define DEBUG_CHECK_TREE_CONSISTENCY */
+/* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
 

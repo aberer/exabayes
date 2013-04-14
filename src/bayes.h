@@ -21,7 +21,7 @@ using namespace std;
 #include "stack.h"
 
 
-#include "Chain.hpp"
+#include "chain.hpp"
 
 class TreeAln; 
 class LnlRestorer; 

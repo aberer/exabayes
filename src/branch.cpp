@@ -385,3 +385,11 @@ void pruneBranch(state *chain, branch b, double *z)
   
 }
 
+
+
+
+ostream& operator<<(ostream& rhs, const branch &b )
+{
+  rhs << b.thisNode << "/" << b.thatNode << "(" << b.length[0] << ")" ; 
+  return rhs; 
+}

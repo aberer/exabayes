@@ -8,7 +8,6 @@
 #include "output.h"
 #include "convergence.h" 
 #include "treeRead.h"
-#include "exa-topology.h"
 #include "topology-utils.h"
 #include "randomness.h"
 #include "eval.h"
@@ -17,6 +16,7 @@
 
 #include "TreeAln.hpp"
 #include "LnlRestorer.hpp"
+#include "Topology.hpp"
 
 
 void initDefaultValues(state *chain, tree *tr)
@@ -92,7 +92,8 @@ void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
 static void initParamDump(TreeAln *traln, paramDump *dmp)
 {  
   tree *tr = traln->getTr();
-  dmp->topo = setupTopol(tr->mxtips); 
+  
+  dmp->topology = new Topology(tr->mxtips); 
   dmp->infoPerPart = (perPartitionInfo*)exa_calloc(traln->getNumberOfPartitions(), sizeof(perPartitionInfo));
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
@@ -137,9 +138,13 @@ static void copyParamDump(TreeAln *traln,paramDump *dest, const paramDump *src)
 
 void copyState(state *dest, const state *src )
 {
-  copyTopology(dest->traln->getTr(), src->traln->getTr()); 
-  copyParamDump(dest->traln, &(dest->dump), &(src->dump)); 
-  saveTree(dest->traln, dest->dump.topo); 	  
+  TreeAln &thisTraln =  *(dest->traln); 
+  TreeAln &rhsTraln = *(src->traln); 
+
+  thisTraln = rhsTraln; 
+  *(dest->traln ) = *(src->traln); 
+  
+  dest->dump.topology->saveTopology(thisTraln);
 }
 
 
@@ -202,13 +207,20 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
   *resultIndiChains = (state*)exa_calloc( totalNumChains , sizeof(state));     
 
 #ifdef DEBUG_LNL_VERIFY
-  gAInfo.debugTree = new TreeAln(tr , true ); 
+  gAInfo.debugTree = new TreeAln(tr ); 
 #endif
 
   for(int i = 0; i < totalNumChains; ++i)
-    { 
+    {       
       state *theChain = *resultIndiChains + i;       
-      theChain->traln = new TreeAln(tr, i < gAInfo.numberCoupledChains); 
+      if( i < gAInfo.numberCoupledChains)
+	theChain->traln = new TreeAln(tr); 
+      else 
+	{
+	  state *masterChain = *resultIndiChains + (i %  gAInfo.numberCoupledChains) ; 
+	  theChain->traln = new TreeAln(*(masterChain->traln)); // initialize from master chain 
+	}
+      
       TreeAln *traln = 	theChain->traln; 
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 
@@ -405,8 +417,7 @@ void applyChainStateToTree(state *chain)
   /* TODO enable multi-branch    */
   assert(chain->traln->getNumBranches() == 1); 
 
-  boolean treeWasRestored = restoreTree(chain->dump.topo, chain->traln); 
-  assert(treeWasRestored);   
+  chain->dump.topology->restoreTopology(*(chain->traln));
 
   /* restore branch lengths */
   int cnt = 0; 
@@ -468,8 +479,8 @@ void applyChainStateToTree(state *chain)
  */ 
 void saveTreeStateToChain(state *chain)
 {
-  tree *tr  = chain->traln->getTr();   
-  saveTree(chain->traln, chain->dump.topo);
+  tree *tr  = chain->traln->getTr();     
+  chain->dump.topology->saveTopology(*(chain->traln));
 
   /* save branch lengths */
   int cnt = 0; 
@@ -599,6 +610,7 @@ void step(state *chain)
   if(chain->wasAccepted)
     {
       cntAccept(&(pf->sCtr)); 
+      expensiveVerify(chain);
     }
   else
     {
@@ -608,7 +620,6 @@ void step(state *chain)
     }
 
   debug_checkTreeConsistency(chain->traln->getTr());
-  // debug_checkLikelihood(chain); 
 
   if(  processID == 0 
        && chain->couplingId == 0	/* must be the cold chain  */

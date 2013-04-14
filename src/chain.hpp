@@ -2,6 +2,7 @@
 
 class TreeAln; 
 class LnlRestorer; 
+class Topology; 
 
 
 typedef struct
@@ -22,7 +23,8 @@ typedef struct
 typedef struct 
 {
   /* topology */
-  topol *topo; 
+  // topol *topo; 
+  Topology *topology; 
   
   /* branch lengths  */
   double *branchLengths; 

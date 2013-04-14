@@ -1,15 +1,12 @@
-
-
 #include "axml.h"
 #include "bayes.h"
 #include "randomness.h"
 #include "path.h"
 #include "output.h"
 #include "misc-utils.h"
-
 #include "TreeAln.hpp"
 
-
+// #define DEBUG_INFO 
 
 
 void apply_st_nni(state *chain, proposalFunction *pf)
@@ -21,21 +18,25 @@ void apply_st_nni(state *chain, proposalFunction *pf)
 
   nodeptr p = findNodeFromBranch(tr, b); 
   
-  branch toBePruned = constructBranch(p->next->back->number, p->next->number ); 
+  branch toBePruned = constructBranch(p->next->back->number, p->number ); 
   
   branch switchingBranch; 
   double r = drawRandDouble01(chain);
   double bl = 0; 
   if(r < 0.5)
     {
-      switchingBranch = constructBranch(p->back->next->back->number, p->back->next->number); 
+      switchingBranch = constructBranch(p->back->next->back->number, p->back->number); 
       bl = p->back->next->back->z[0]; 
     }
   else 
     {
-      switchingBranch = constructBranch(p->back->next->next->back->number, p->back->next->next->number); 
+      switchingBranch = constructBranch(p->back->next->next->back->number, p->back->number); 
       bl = p->back->next->next->back->z[0]; 
     }
+
+#ifdef DEBUG_INFO
+  cout << "stNNI: switching " <<  toBePruned <<  " with "  << switchingBranch << "\t common branch " << b << endl; 
+#endif
 
   toBePruned.length[0] = p->next->back->z[0]; 
   b.length[0] = p->z[0]; 
@@ -71,7 +72,10 @@ void apply_st_nni(state *chain, proposalFunction *pf)
     hookup(p,p->back, p->z, numBranches); 
     hookup(r, qBack, r->z, numBranches);
     hookup(q, rBack, q->z, numBranches);    
+
   }
+  
+
 
   debug_checkTreeConsistency(chain->traln->getTr());
   /* TODO maybe multiply as well */
@@ -82,32 +86,21 @@ void eval_st_nni(state *chain, proposalFunction *pf )
 {
   tree *tr = chain->traln->getTr(); 
 
-  branch b1 = pf->remembrance.modifiedPath->content[0],
-    b2  = pf->remembrance.modifiedPath->content[2]; 
+  branch b1 = pf->remembrance.modifiedPath->content[0], // tobepruned 
+    b2  = pf->remembrance.modifiedPath->content[2];	// switchingbranch 
   
   branch exchangeBranch = constructBranch(b1.thatNode, b2.thatNode);
   
   nodeptr p = findNodeFromBranch(tr, exchangeBranch),
     q = findNodeFromBranch(tr, invertBranch(exchangeBranch)); 
 
-  // if(p->x)
-  //   {
-  //     p->x = 0; 
-  //     p->next->x = 1; 
-  //   }
-  // if(q->x) 
-  //   {
-  //     q->x = 0; 
-  //     q->next->x = 1; 
-  //   }
-
-
   newViewGenericWrapper(chain, p, FALSE); 
   newViewGenericWrapper(chain, q, FALSE); 
 
   evaluateGenericWrapper(chain,p,FALSE); 
-  /* printf("lnl = %g\n", tr->likelihood);  */
 }
+
+
 
 void reset_st_nni(state *chain, proposalFunction *pf)
 {

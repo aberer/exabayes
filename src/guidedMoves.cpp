@@ -338,7 +338,7 @@ void resetGuidedSPR(state *chain, proposalFunction *pf)
 
 void debug_checkHooks(tree *tr)
 {
-#ifdef DEBUG_CHECK_TOPO_CONSISTENCY
+#ifdef DEBUG_CHECK_TREE_CONSISTENCY
   for(int i = 1 ; i < 2 * tr->mxtips -2 ; ++i)
     {
       nodeptr p = tr->nodep[i]; 
@@ -351,7 +351,6 @@ void debug_checkHooks(tree *tr)
 	  assert(p->back != NULL 
 		 && p->next->back != NULL
 		 && p->next->next->back != NULL); 
-
 	}
     }
 #endif

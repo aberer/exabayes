@@ -6,9 +6,10 @@
 #include <iostream>
 using namespace std; 
 
-#define DEBUG_LNL_THOROUGH
 
 // #define DEBUG_ARRAY_SWAP
+
+
 
 LnlRestorer::LnlRestorer(state *_chain)
   : chain(_chain)
@@ -182,15 +183,17 @@ void LnlRestorer::restore()
       memcpy(partitionScaler[i], partition->globalScaler, sizeof(nat) * 2 * chain->traln->getTr()->mxtips);     
     }
   
+
+#ifdef DEBUG_LNL_VERIFY
   nodeptr p = findNodeFromBranch(tr, findRoot(tr)); 
-  evaluateGenericWrapper(chain, p, FALSE); 
-  
+  evaluatePartialNoBackup(chain, p);   
   double diff = fabs(prevLnl - chain->traln->getTr()->likelihood); 
   if( diff > 1e-6 )
     {
       cout << "problem restoring previous tr/aln state DIFF: " <<  diff  << "\t" << "(" << prevLnl << "," << chain->traln->getTr()->likelihood << ")"  << endl; 
       assert(0); 
     }
+#endif
 
 }
 
@@ -213,8 +216,9 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
     return; 
 
   bool incorrect = NOT virtualRoot->x; 
-  if(incorrect
-     && NOT wasSwitched[virtualRoot->number])
+  if( ( incorrect
+	|| fullTraversal )      
+      && NOT wasSwitched[virtualRoot->number])
     {
 #ifdef DEBUG_ARRAY_SWAP
       cout << "incorr, unseen " << virtualRoot->number << endl; 
@@ -228,7 +232,6 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
 #ifdef DEBUG_ARRAY_SWAP
       cout << "incorr, seen " <<  virtualRoot->number  << endl; 
 #endif
-      assert(0); 
     }
 #ifdef DEBUG_ARRAY_SWAP
   else
