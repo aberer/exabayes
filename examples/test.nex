@@ -2,9 +2,9 @@
 begin EXABAYES; 
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 20 [ 10% in mrb ]
+      initEsprMappedWeight 15 [ 10% in mrb ]
       initGuidedSPR 0  [ok ] 
-      stNNI 20      [ ok 10% in mrb]	
+      stNNI 15      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
       initSingleBranchWeight 0 [ ok ] 

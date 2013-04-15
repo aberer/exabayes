@@ -453,15 +453,6 @@ void applyChainStateToTree(state *chain)
     }
 
 
-#if 0 
-  if( chain->tr->likelihood != 0 && fabs (tr->likelihood - chain->lnl.likelihood ) > 1e-6 )
-    {
-      printInfo(chain, "WARNING: obtained a different likelihood  after restoring previous chain state (before/after): %f / %f\n", 
-		chain->id, chain->currentGeneration, chain->lnl.likelihood, tr->likelihood); 
-      assert( fabs(chain->lnl.likelihood - tr->likelihood ) < 1e-6 ) ; 
-    }
-#endif
-
   /* TODO for now  */
   chain->wasAccepted = TRUE; 
   // chain->prevProposal = NULL; 
@@ -617,6 +608,7 @@ void step(state *chain)
       pf->reset_func(chain, pf); 
       cntReject(&(pf->sCtr));       
       chain->restorer->restore(); // restores the previous tree state 
+
     }
 
   debug_checkTreeConsistency(chain->traln->getTr());

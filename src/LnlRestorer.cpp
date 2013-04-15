@@ -19,7 +19,7 @@ LnlRestorer::LnlRestorer(state *_chain)
     numTax = tr->mxtips; 
   
   reserveArrays = (double***)exa_calloc(numPart, sizeof(double**)); 
-  partitionScaler = (int**)exa_calloc(numPart, sizeof(int*)); 
+  partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 
   
   for(int i = 0; i < numPart; ++i)
     {
@@ -36,7 +36,7 @@ LnlRestorer::LnlRestorer(state *_chain)
 	reserveArrays[i][j] = (double*)exa_calloc(length * LENGTH_LNL_ARRAY, sizeof(double)); // TODO not aligned? 
 
 
-      partitionScaler[i] = (int*)exa_calloc(2 * tr->mxtips , sizeof(int)); 
+      partitionScaler[i] = (nat*)exa_calloc(2 * tr->mxtips , sizeof(nat)); 
     }  
   
   orientation = (int*) exa_calloc(tr->mxtips, sizeof(int)); 
@@ -180,7 +180,7 @@ void LnlRestorer::restore()
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = chain->traln->getPartition( i); 
-      memcpy(partitionScaler[i], partition->globalScaler, sizeof(nat) * 2 * chain->traln->getTr()->mxtips);     
+      memcpy(partition->globalScaler, partitionScaler[i], sizeof(nat) * 2 * chain->traln->getTr()->mxtips);     
     }
   
 
@@ -194,6 +194,8 @@ void LnlRestorer::restore()
       assert(0); 
     }
 #endif
+
+  tr->likelihood = prevLnl; 
 
 }
 
@@ -259,10 +261,14 @@ void LnlRestorer::resetRestorer()
   int numPart = chain->traln->getNumberOfPartitions(); 
   memset(wasSwitched, 0, sizeof(bool) * ( 2 * tr->mxtips) ); 
   storeOrientation(); 
+  // cout << "scaler is :" << endl; 
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = chain->traln->getPartition( i); 
       memcpy(partitionScaler[i], partition->globalScaler, sizeof(nat) * 2 * chain->traln->getTr()->mxtips);     
+      // for(int j = 0 ; j < 2 * tr->mxtips; ++j )
+	// cout << partitionScaler[i][j] << "," ; 
+      // cout << endl; 
     }
   modelEvaluated = -1; 
   prevLnl = tr->likelihood;   

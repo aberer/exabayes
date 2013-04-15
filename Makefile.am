@@ -35,7 +35,7 @@ OPT_HEAD= -I./src/pll
 exabayes_SOURCES+=$(libpll_a_SOURCES) 
 else
 CC=mpicc -std=c99
-CXX=mpicxx -std=c++11
+CXX=mpicxx -std=c++0x
 OPT_HEAD= -Isrc/examl/
 FEATURE_FLAGS= -D_USE_ALLREDUCE
 exabayes_SOURCES+=$(libexaml_a_SOURCES)
@@ -43,7 +43,7 @@ endif
 
 AM_CFLAGS+=$(OPT_HEAD) -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS)
-AM_CXXFLAGS=$(AM_CFLAGS) -std=c++11
+AM_CXXFLAGS=$(AM_CFLAGS) -std=c++0x
 
 
 AM_LDFLAGS=-lm

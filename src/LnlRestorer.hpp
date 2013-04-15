@@ -27,7 +27,7 @@ private:
   double ***reserveArrays; 
   int* orientation; 
   bool *wasSwitched; 
-  int **partitionScaler;   
+  nat **partitionScaler;   
   double prevLnl; 		// for DEBUG
 }; 
 

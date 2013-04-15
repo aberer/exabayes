@@ -126,6 +126,7 @@ typedef  unsigned int nat ;
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
 
+
 #define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays
 
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
