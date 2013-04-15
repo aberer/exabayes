@@ -32,9 +32,6 @@ typedef struct globs
   randKey_t rGlobalKey ; 
   randCtr_t rGlobalCtr; 
 
-/* #if HAVE_PLL == 1 */
-/*   partitionList* partitions;     */
-/* #endif */
   state *allChains; 		/* careful with this! */
   int samplingFrequency; 
   hashtable *bvHash; 
@@ -51,6 +48,15 @@ typedef struct globs
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
 #endif
+  int tuneFreq; 
+  int printFreq; 
+  double asdsfIgnoreFreq; 
+  double asdsfConvergence; 
+  double heatFactor; 
+  int swapInterval; 
+  bool tuneHeat;
+  int burninGen ; 
+  double burninProportion; 
 
 } globalAnalysisInfo; 
 
@@ -64,28 +70,33 @@ typedef struct globs
 /* more global variables =(  */
 char configFileName[1024]; 
 
-/* char tree_file[1024];  */
-/* char byteFileName[1024]; */
-
-/* /\* TODO  *\/ */
-/* char binaryChainState[1024];  */
 
 globalAnalysisInfo gAInfo = 
   {0,
-   0,
-   0,
+   1,
+   1,
    {{0,0}},
    {{0,0}},
-   /* #if HAVE_PLL == 1  */
-   /* NULL, */
-   /* #endif */
    NULL, 
    0,
    NULL,
    0,
    10000 ,
    NULL , 
-   NULL  
+   NULL,  
+   NULL, 
+#ifdef DEBUG_LNL_VERIFY
+   NULL, 
+#endif   
+   100, 
+   500, 
+   0.1, 
+   0.005, 
+   0.1 ,
+   1,
+   true, 
+   5000, 
+   0.0
   }; 
 
 
@@ -96,14 +107,7 @@ double timeIncrement = 0;
 
 extern globalAnalysisInfo gAInfo; 
 
-/* TODO  */
-/* extern char binaryChainState[1024];  */
 
-/* legacy */
-
-/* #ifdef __cplusplus */
-/* extern "C" {  */
-/* #endif */
 extern char infoFileName[1024];
 extern int Thorough; 
 extern int processID; 
@@ -114,8 +118,4 @@ extern char tree_file[1024];
 extern char byteFileName[1024]; 
 extern double timeIncrement;  
 
-
-/* #ifdef __cplusplus */
-/* } */
-/* #endif */
 #endif

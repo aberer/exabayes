@@ -1471,18 +1471,12 @@ static void autotuneMultiplier(state *chain, proposalFunction *pf)
 
   successCtr *ctr = &(pf->sCtr); 
 
-  int batch = chain->currentGeneration  / TUNE_FREQUENCY; /* HACK */
+  int batch = chain->currentGeneration  / gAInfo.tuneFreq; 
 
   double newParam = tuneParameter(batch, getRatioLocal(ctr), *parameter, FALSE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
-  if(processID == 0 )
-    {
-    if(newParam < *parameter)
-      printInfo(chain, "%s\tratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
-    else if (newParam > *parameter)
-      printInfo(chain, "%s\tratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
-    }
+  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
 #endif
 
   *parameter = newParam; 
@@ -1498,18 +1492,12 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 {
   double *parameter = &(pf->parameters.slidWinSize); 
   successCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter(chain->currentGeneration / TUNE_FREQUENCY,
+  double newParam = tuneParameter(chain->currentGeneration / gAInfo.tuneFreq,
 				  getRatioLocal(&(pf->sCtr)),
 				  *parameter, FALSE  ); 
   
 #ifdef DEBUG_PRINT_TUNE_INFO
-  if(processID == 0 )
-    {
-      if(newParam < *parameter)
-	printInfo(chain, "%s ratio=%f\t => reduced %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
-      else if (newParam > *parameter)
-	printInfo(chain, "%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
-    }
+  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
 #endif
 
   *parameter = newParam; 
@@ -1527,19 +1515,13 @@ static void autotuneStopProp(state *chain, proposalFunction *pf)
 
   double *parameter = &(pf->parameters.eSprStopProb); 
   successCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter( chain->currentGeneration / TUNE_FREQUENCY, 
+  double newParam = tuneParameter( chain->currentGeneration / gAInfo.tuneFreq, 
 				   getRatioLocal(&(pf->sCtr)),
 				   *parameter, 
 				   TRUE ); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
-  if(processID == 0 )
-    {
-    if(newParam < *parameter)
-      printInfo(chain, "%s ratio=%f\t => reduced %f to %f\n", pf->name,getRatioLocal(ctr), *parameter, newParam);
-    else if (newParam > *parameter)
-      printInfo(chain, "%s ratio=%f\t => increased %f to %f\n", pf->name, getRatioLocal(ctr), *parameter, newParam);
-    }
+  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
 #endif
   
   *parameter = fmax(minimum,fmin(newParam,maximum)); 

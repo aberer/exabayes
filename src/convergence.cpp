@@ -302,7 +302,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 
       boolean relevant = FALSE; 
       for(int j = 0; j < gAInfo.numberOfRuns; ++j)
-	if( e->treeVector[j] >  ((double)ASDSF_FREQ_CUTOFF * treesSampled) )
+	if( e->treeVector[j] >  (gAInfo.asdsfIgnoreFreq * treesSampled) )
 	  relevant = TRUE; 
 
 	  if(relevant)
@@ -357,7 +357,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 
   exa_free(numSampled); 
 
-  return (asdsf < ASDSF_CONVERGENCE_CRITERION ) ; 
+  return (asdsf <  gAInfo.asdsfConvergence ) ; 
 }
 
 

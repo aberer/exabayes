@@ -170,12 +170,22 @@ static void setupGlobals(initParamStruct *initParams, tree *tr)
 
   gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.temperature[i] = HEAT_FACTOR; 
+    gAInfo.temperature[i] = gAInfo.heatFactor; 
 
   unsigned int bvLength = 0; 
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
   gAInfo.bvHash = ht; 
+
+  gAInfo.printFreq = initParams->printFreq; 
+  gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
+  gAInfo.asdsfConvergence = initParams->asdsfConvergence; 
+  gAInfo.heatFactor  = initParams->heatFactor; 
+  gAInfo.swapInterval =  initParams->swapInterval; 
+  gAInfo.tuneHeat = initParams->tuneHeat; 
+  gAInfo.burninGen = initParams->burninGen; 
+  gAInfo.burninProportion = initParams->burninProportion; 
+  gAInfo.tuneFreq = initParams->tuneFreq; 
 }
 
 
@@ -613,30 +623,34 @@ void step(state *chain)
 
   debug_checkTreeConsistency(chain->traln->getTr());
 
-  if(  processID == 0 
-       && chain->couplingId == 0	/* must be the cold chain  */
+  if( chain->couplingId == 0	/* must be the cold chain  */
        && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
     {
+      if( processID == 0 ) 
       printSample(chain);       
 
-      if(chain->currentGeneration >  BURNIN)
-	addBipartitionsToHash(tr, chain ); 
+      if(chain->currentGeneration >  gAInfo.burninGen)
+	{
+	  addBipartitionsToHash(tr, chain ); 
+	  assert(gAInfo.burninProportion == 0.0); 
+	}
     }
+  
+
 
   
   /* the output for the console  */
   if(processID == 0 
      && chain->couplingId == 0     
-     && chain->currentGeneration % PRINT_FREQUENCY == PRINT_FREQUENCY -1   )
+     && gAInfo.printFreq > 0 
+     && chain->currentGeneration % gAInfo.printFreq == gAInfo.printFreq -1   )
     {
       chainInfo(chain); 
     }
 
-
-#ifdef TUNE_PARAMETERS
   /* autotuning for proposal parameters. With increased parallelism
      this will become more complicated.  */
-  if( chain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY - 1 )
+  if( gAInfo.tuneFreq > 0 && chain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 )
     {
       for(int i = 0; i < chain->numProposals; ++i)
 	{
@@ -645,15 +659,13 @@ void step(state *chain)
 	  if(pf->autotune)	/* only, if we set this   */
 	    {
 #ifdef TUNE_ONLY_IF_ENOUGH
-	      if(pf->sCtr.lAcc + pf->sCtr.lRej < TUNE_FREQUENCY )
+	      if(pf->sCtr.lAcc + pf->sCtr.lRej < gAInfo.tuneFreq )
 		continue; 
 #endif
 	      pf->autotune(chain, pf);
 	    }
 	}
-
     }
-#endif
 
   chain->currentGeneration++; 
 }

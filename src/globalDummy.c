@@ -21,11 +21,3 @@
 #undef GLOBAL_VARIABLES_DEFINITION
 #endif
 
-
-/* inline unsigned int bitcount_64_bit(unsigned long i) */
-/* { */
-/*   printf("hello world!\n");  */
-/* return 0 ;  */
-/* } */
-
-

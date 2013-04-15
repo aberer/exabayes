@@ -1,10 +1,38 @@
 #NEXUS
 begin EXABAYES; 
 
+      [ RUN PARAMETERS ]
+      diagFreq 500		[ check for convergence of multiple independent runs after this many generations ]
+      samplingFrequency 50 	[ take a sample every n generations ]
+      numIndiChains 2 		[ number of independant chains/runs ]
+      numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
+      tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
+      printFreq 0		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+
+      [ CONVERGENCE ]
+      asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
+      asdsfConvergence  0.5    [ indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence ] 
+
+
+      [ MCMCMC ]
+      numCoupledChains 1   [ number of chains per independent run (only one is cold) ]       
+      heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
+      swapInterval 1 	   [ attempt a swap between chains every n generations ]
+      tuneHeat true        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
+
+      [ BURNIN ] 
+      [ comment out one of the two options ]      
+      burninGen 1000    [ exact number of generations that are discarded for diagnostics ] 
+[      burninProportion 25 [ discard n % of all initial samples as burnin  ] ]
+
+      [================================================================]
+      [ MOVE configuration ]
+      [================================================================]
+
       [ TOPOLOGY ]
-      initEsprMappedWeight 15 [ 10% in mrb ]
-      initGuidedSPR 0  [ok ] 
-      stNNI 15      [ ok 10% in mrb]	
+      initEsprMappedWeight 20 [ 10% in mrb ]
+      initGuidedSPR 10  [ok ] 
+      stNNI 10      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
       initSingleBranchWeight 0 [ ok ] 
@@ -30,18 +58,14 @@ begin EXABAYES;
       initFrequenciesWeight 0   [ broken : biunif ]
       initFrequencySliderWeight 2  [ ok ] 
 
-      [//PROPOSALADD nexusConfig NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.]
-      numGen 500000               [ total number of generations] 
-      initPenaltyFactor 0.0 
-      samplingFrequency 50 	[ take a sample every n generations ]
 
-      guidedSPRRadius 5  [ maximum radius that is searched by the guided spr move ] 
-
+      [ PARAMETERS for various moves ]
+      guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
-      diagFreq 1000  [ check for convergence of multiple independent runs after this many generations ]
-      numIndiChains 2 [ number of independant chains/runs ]
 
-      [ MC3 ]
-      numCoupledChains 4   [ number of chains per independent run (only one is cold) ]       
+      [================================================================]
+
+      [ UNUSED ]
+      initPenaltyFactor 0.0 
 end;

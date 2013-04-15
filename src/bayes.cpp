@@ -129,13 +129,11 @@ void executeOneRun(state *chains, int gensToRun )
 
   if(gAInfo.numberCoupledChains > 1 )
     {
-#ifdef MC3_SPACE_FOR_TIME
       /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
       for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
 	applyChainStateToTree(chains+i);
-#endif
       
-      for(int genCtr = 0; genCtr < gensToRun; genCtr += SWITCH_AFTER_GEN)
+      for(int genCtr = 0; genCtr < gensToRun; genCtr += gAInfo.swapInterval)
 	{
 	  boolean timeToTune = FALSE; 
 
@@ -143,39 +141,29 @@ void executeOneRun(state *chains, int gensToRun )
 	    {      
 	      state *curChain = chains + chainCtr; /* TODO */
 
-#ifndef MC3_SPACE_FOR_TIME
-	      applyChainStateToTree(curChain );
-#endif
-	      for(int i = 0; i < SWITCH_AFTER_GEN; ++i)
+	      for(int i = 0; i < gAInfo.swapInterval; ++i)
 		{
-		  step(curChain);
-		  if(curChain->currentGeneration % TUNE_FREQUENCY == TUNE_FREQUENCY -1 )
+		  step(curChain);		  
+		  if(gAInfo.tuneFreq > 0 && gAInfo.tuneHeat && curChain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 )
 		    timeToTune = TRUE; 
 		}
-
-#ifndef MC3_SPACE_FOR_TIME
-	      saveTreeStateToChain(curChain);
-#endif
 	    }
 
 	  if(timeToTune)
-	    {
+	    {	      
 	      /* naive strategy: tune, s.t. the coldest hot chain swaps
 		 with the coldest chain in 23.4% of all cases */
 	      successCtr *c = &(gAInfo.swapInfo[runId][1]); 
 	      
-	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / TUNE_FREQUENCY , getRatioLocal(c), gAInfo.temperature[runId], FALSE);
+	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / gAInfo.tuneFreq , getRatioLocal(c), gAInfo.temperature[runId], FALSE);
 	      resetCtr(c);
 	    }
 	    
 	  switchChainState(chains);
 	}
 
-
-#ifdef MC3_SPACE_FOR_TIME
       for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
 	saveTreeStateToChain(chains+i);
-#endif
 
     }
   else 
@@ -207,6 +195,7 @@ void runChains(state *allChains, int diagFreq)
 	}
 
       hasConverged = convergenceDiagnostic(allChains); 
+
 #ifdef ENABLE_PRSF
       if(processID == 0)
 	printPRSF(run_id);
@@ -259,7 +248,7 @@ analdef *adef)
   assert(gAInfo.diagFreq != 0 ); 
   runChains(indiChains, gAInfo.diagFreq); 
 
-  if(processID == 0)
+   if(processID == 0)
     {
       for(int i = 0; i < gAInfo.numberOfRuns; ++i)
 	finalizeOutputFiles(indiChains + i);

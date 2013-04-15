@@ -20,7 +20,15 @@ typedef struct
   int diagFreq; 
   int numCoupledChains; 
   int initGuidedSPR; 
-
+  int printFreq; 
+  double asdsfIgnoreFreq; 
+  double asdsfConvergence; 
+  int heatFactor; 
+  int swapInterval; 
+  bool tuneHeat;
+  int burninGen ; 
+  double burninProportion; 
+  int tuneFreq; 
 } initParamStruct ; 
 
 

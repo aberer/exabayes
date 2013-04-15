@@ -128,7 +128,11 @@ void printOrientation(tree *tr, nodeptr p)
  */ 
 void printInfo(state *chain, const char *format, ...)
 {  
-  if(processID == 0)
+  if(
+#if HAVE_PLL == 1
+     true || 
+#endif
+     processID == 0)
     {
       printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberCoupledChains, chain->couplingId, chain->currentGeneration); 
       va_list args;

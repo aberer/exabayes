@@ -1889,33 +1889,8 @@ int main(int argc, char *argv[])
 	
   if(processID == 0)
     accumulatedTime = 0.0;
-	
-  /* get the starting tree: here we just parse the tree passed via the command line 
-     and do an initial likelihood computation traversal 
-     which we maybe should skeip, TODO */
-	     
-  /* if(tree_file  != NULL) */
-  /*   getStartingTree(tr);      */
-
-	   	          
-  /* 
-     here we do an initial full tree traversal on the starting tree using the Felsenstein pruning algorithm 
-     This should basically be the first call to the library that actually computes something :-)
-  */
-      
-  /* evaluateGeneric(tr, tr->start, TRUE); */
-	
-  /* the treeEvaluate() function repeatedly iterates over the entire tree to optimize branch lengths until convergence */
-      	
-  /* treeEvaluate(tr, 1); */
-
-  /* now start the ML search algorithm */
-  /* mcmc( tr, adef ); */
-  
+ 
   exa_main(tr,adef);
-  
-  
-  /* return 0 which means that our unix program terminated correctly, the return value is not 1 here */
 
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();

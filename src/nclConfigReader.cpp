@@ -21,6 +21,23 @@ public:
 } ; 
 
 
+
+static bool convertToBool(NxsString &string)
+{
+  if(string.EqualsCaseInsensitive("true"))
+    return true ; 
+  else if (string.EqualsCaseInsensitive("false"))
+    return false; 
+  else 
+    {
+      cerr << "ERROR while parsing boolean value: expected either \"true\" or \"false\"" << endl; 
+      assert(0); 
+      return false; 
+    }  
+}
+
+
+
 /**
    @brief This function is nothing to be proud of, but let's stick to
    it for now.
@@ -71,8 +88,6 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
 
   else 
     found = false; 
-
-
 
   return found; 
 }
@@ -143,6 +158,24 @@ public:
 	      initParam->numCoupledChains = value.ConvertToInt();
 	    else if(key.EqualsCaseInsensitive("guidedSPRRadius"))
 	      initParam->initGuidedSPR = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("printFreq"))
+	      initParam->printFreq = value.ConvertToInt();
+	    else if (key.EqualsCaseInsensitive("asdsfIgnoreFreq"))
+	      initParam->asdsfIgnoreFreq = value.ConvertToDouble();
+	    else if (key.EqualsCaseInsensitive("asdsfConvergence"))
+	      initParam->asdsfConvergence = value.ConvertToDouble();
+	    else if (key.EqualsCaseInsensitive("heatFactor"))
+	      initParam->heatFactor = value.ConvertToDouble();
+	    else if(key.EqualsCaseInsensitive("swapInterval"))
+	      initParam->swapInterval = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("tuneHeat"))
+	      initParam->tuneHeat = convertToBool(value);
+	    else if(key.EqualsCaseInsensitive("tuneFreq"))
+	      initParam->tuneFreq = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("burninGen"))
+	      initParam->burninGen = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("burninProportion"))
+	      initParam->burninProportion = value.ConvertToDouble();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }

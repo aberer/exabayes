@@ -82,8 +82,6 @@ typedef  unsigned int nat ;
 #define INIT_GAMMA_MULTI 0.811
 #define INIT_NODE_SLIDER_MULT  0.191
 
-/* => moved this to the parser now  */
-/* #define INIT_GUIDED_RADIUS 10 */
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
@@ -102,18 +100,10 @@ typedef  unsigned int nat ;
 #define ESPR_MULTIPLY_BL	 /// apply multiplier to espr as by lakner
 #define NNI_MULTIPLY_BL		 /// apply multiplier to nni move
 
-#define PRINT_FREQUENCY 500 
-#define TUNE_FREQUENCY 100 
-
-#define TUNE_PARAMETERS		/// turn off autotuning
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
-
-
 /* #define DEBUG_PRINT_TUNE_INFO */
 
 /* #define ENABLE_PRSF */
-
-
 #define WEIGHT_EPS 1e-3  	/* guided spr    */
 
 /* for debugging:  */
@@ -125,29 +115,9 @@ typedef  unsigned int nat ;
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
-
-
-#define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays
-
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
-#define ASDSF_FREQ_CUTOFF 0.1	/*  ignore clades for which the frequency in no chain exceeds this value */
-#define ASDSF_CONVERGENCE_CRITERION 0.005 ///  indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence 
-
-/* a lot of debug information for the asdsf */
-
-
-/* MC3 stuff for development */
-#define HEAT_FACTOR 0.1
-#define SWITCH_AFTER_GEN 1  	/* number of generations after  which we try to switch states   */
-#define MC3_SPACE_FOR_TIME
-
-
-/* here you can set the burnin 
-   
-   TODO make this a parameter in the config file  
- */
-#define BURNIN 5000
+#define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays
 
 #endif
 
