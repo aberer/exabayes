@@ -57,7 +57,8 @@ typedef struct globs
   bool tuneHeat;
   int burninGen ; 
   double burninProportion; 
-
+  
+  bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
 } globalAnalysisInfo; 
 
  
@@ -96,7 +97,8 @@ globalAnalysisInfo gAInfo =
    1,
    true, 
    5000, 
-   0.0
+   0.0,
+   true   
   }; 
 
 

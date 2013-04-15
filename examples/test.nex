@@ -4,7 +4,7 @@ begin EXABAYES;
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
-      numIndiChains 2 		[ number of independant chains/runs ]
+      numIndiChains 1 		[ number of independant chains/runs ]
       numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
       printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
@@ -15,23 +15,23 @@ begin EXABAYES;
 
 
       [ MCMCMC ]
-      numCoupledChains 4   [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 1   [ number of chains per independent run (only one is cold) ]       
       heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
       swapInterval 1 	   [ attempt a swap between chains every n generations ]
       tuneHeat true         [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
 
       [ BURNIN ] 
       [ comment out one of the two options ]      
-      burninGen 1000    [ exact number of generations that are discarded for diagnostics ] 
-[      burninProportion 25 [ discard n % of all initial samples as burnin  ] ]
+      burninGen 5000    [ exact number of generations that are discarded for diagnostics ] 
+      [ burninProportion 25 [ discard n % of all initial samples as burnin  ] ]
 
       [================================================================]
       [ MOVE configuration ]
       [================================================================]
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 20 [ 10% in mrb ]
-      initGuidedSPR 10  [ok ] 
+      initEsprMappedWeight 10 [ 10% in mrb ]
+      initGuidedSPR 20  [ok ] 
       stNNI 10      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
@@ -39,16 +39,16 @@ begin EXABAYES;
       initSingleBranchExpWeight 0  [ broken ] 
       initSingleBranchBiunifWeight 0 [broken]
       branchMulti 40 [ ok, 40% in mrb ]
-      treeLengthMult 4 [ ok, 4 % in mrb ]
+      treeLengthMult 4  [ ok, 4 % in mrb ]
       nodeSlider  10 [ ok, 10% in mrb ]
 
       [ RATE HETEROGENEITY ]
       initGammaWeight 0 [ ok ]		
       initGammaExpWeight 0 [ ok ]
-      rateHetMulti 2   [ ok, 2 in mrb  ]
+      rateHetMulti 4   [ ok, 2 in mrb  ]
 
       [ REVMAT ] 
-      initModelWeight 2 [ ok ]		
+      initModelWeight 4 [ ok ]		
       initModelBiunifWeight 0 [broken]
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
@@ -56,7 +56,7 @@ begin EXABAYES;
 
       [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
-      initFrequencySliderWeight 2  [ ok ] 
+      initFrequencySliderWeight 4  [ ok ] 
 
 
       [ PARAMETERS for various moves ]

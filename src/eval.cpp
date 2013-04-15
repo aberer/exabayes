@@ -7,7 +7,7 @@
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 
 
-// #define DEBUG_EVAL
+
 
 
 /* call this for verification after the lnl has been evaluated somehow */
@@ -28,7 +28,7 @@ void expensiveVerify(state *chain)
   if(chain->currentGeneration != 0 && processID == 0)
     {
       if(fabs (verifiedLnl - toVerify ) > 1e-6)
-	printf("WARNING: found in expensive evaluation: likelihood difference is %f (with before/after)\t%f\t%f\n", fabs (verifiedLnl - toVerify ), toVerify, verifiedLnl); 
+	printf("WARNING: found in expensive evaluation: likelihood difference is %f (with toVerify/verified)\t%f\t%f\n", fabs (verifiedLnl - toVerify ), toVerify, verifiedLnl); 
       assert(fabs (verifiedLnl - toVerify ) < 1e-6);   
     }  
 
@@ -58,6 +58,7 @@ void newViewGenericWrapper(state *chain, nodeptr p, boolean masked)
     modelToEval = ALL_MODELS; 
 
 #ifdef DEBUG_EVAL
+  if(processID == 0)
   cout << "newViewGenericWrapper on " << p->number  << " and model " <<  modelToEval << endl; 
 #endif
 
@@ -83,6 +84,7 @@ void evaluatePartialNoBackup(state *chain, nodeptr p)
 void evaluateFullNoBackup(state *chain)
 {
 #ifdef DEBUG_EVAL
+  if(processID == 0)
   cout << "conducting full evaluation, no backup created" << endl; 
 #endif
   
@@ -96,6 +98,7 @@ void evaluateFullNoBackup(state *chain)
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
 #ifdef DEBUG_EVAL
+  if(processID == 0)
   cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" ) ; 
 #endif
 
@@ -115,20 +118,22 @@ void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
     {
       model = ALL_MODELS; 
 #ifdef DEBUG_EVAL
+if(processID == 0)
       cout << " and all models" << endl; 
 #endif
     }
 #ifdef DEBUG_EVAL
   else
+if(processID == 0)
     cout << " and model "<< model << endl; 
 #endif
-
 
   chain->restorer->traverseAndSwitchIfNecessary(start, model, fullTraversal);
   chain->restorer->traverseAndSwitchIfNecessary(start->back, model, fullTraversal);
 
   exa_evaluateGeneric(chain,start,fullTraversal);   
-  expensiveVerify(chain);
+  if(gAInfo.verifyLnl)
+    expensiveVerify(chain);
 }
 
 
@@ -187,12 +192,13 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
     traln->accessExecModel(i) = FALSE; 
   traln->accessExecModel(model) = TRUE; 
 
+  gAInfo.verifyLnl = false; 	// HACK
   evaluateGenericWrapper(chain,start, FALSE);
+  gAInfo.verifyLnl = true  ; 
 
-  perPartitionLH[model] = traln->accessPartitionLH(model) ; 
+  perPartitionLH[model] = traln->accessPartitionLH(model); 
   for(int i = 0; i < numPartitions; ++i)
     traln->accessPartitionLH(i) = perPartitionLH[i]; 
-    
 
   tr->likelihood = 0; 
   for(int i = 0; i < numPartitions; ++i)

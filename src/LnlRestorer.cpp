@@ -2,13 +2,10 @@
 #include "adapters.h"
 #include "branch.h"
 #include "TreeAln.hpp" 
+#include "globals.h"
 
 #include <iostream>
 using namespace std; 
-
-
-// #define DEBUG_ARRAY_SWAP
-
 
 
 LnlRestorer::LnlRestorer(state *_chain)
@@ -119,6 +116,7 @@ void LnlRestorer::swapArray(int nodeNumber, int model)
   if(model == ALL_MODELS)
     {
 #ifdef DEBUG_ARRAY_SWAP
+if(processID == 0)
       cout << "swapped array for node " << nodeNumber <<   " and all  models "; 
 #endif
 
@@ -129,6 +127,7 @@ void LnlRestorer::swapArray(int nodeNumber, int model)
 	  double *&a =  reserveArrays[i][posInArray], 
 	    *&b  = partition->xVector[posInArray] ; 
 #ifdef DEBUG_ARRAY_SWAP
+if(processID == 0)
 	  cout << a << "," << b << "\t"; 
 #endif
 	  if(NOT b )
@@ -147,6 +146,7 @@ void LnlRestorer::swapArray(int nodeNumber, int model)
 	*&b  = partition->xVector[posInArray]; 
 
 #ifdef  DEBUG_ARRAY_SWAP
+      if(processID == 0)
       cout << "swapped array for node " << nodeNumber <<  " and model " << model << ": " << a   << "," << b  << endl; 
 #endif
       if(NOT b )
@@ -164,6 +164,7 @@ void LnlRestorer::swapArray(int nodeNumber, int model)
 void LnlRestorer::restore()
 {
 #ifdef DEBUG_ARRAY_SWAP 
+if(processID == 0)
   cout << "RESTORE for model" << modelEvaluated << endl; 
 #endif
   tree *tr = chain->traln->getTr(); 
@@ -223,6 +224,7 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
       && NOT wasSwitched[virtualRoot->number])
     {
 #ifdef DEBUG_ARRAY_SWAP
+      if(processID == 0)
       cout << "incorr, unseen " << virtualRoot->number << endl; 
 #endif
       wasSwitched[virtualRoot->number] = true; 
@@ -232,11 +234,13 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
   else if (incorrect)
     {
 #ifdef DEBUG_ARRAY_SWAP
+      if(processID == 0)
       cout << "incorr, seen " <<  virtualRoot->number  << endl; 
 #endif
     }
 #ifdef DEBUG_ARRAY_SWAP
   else
+if(processID == 0)
     cout << "corr "<<  virtualRoot->number << endl; 
 #endif
 
@@ -255,6 +259,7 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
 void LnlRestorer::resetRestorer()
 {
 #ifdef DEBUG_ARRAY_SWAP
+  if(processID == 0)
   cout << "RESETTING RESTORER" << endl; 
 #endif
   tree *tr = chain->traln->getTr();

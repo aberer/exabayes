@@ -96,6 +96,11 @@ typedef  unsigned int nat ;
  */
 
 
+
+/* #define DEBUG_EVAL */
+/* #define DEBUG_ARRAY_SWAP */
+
+
 /* i think for the burn-in at least, this hurts... */
 #define ESPR_MULTIPLY_BL	 /// apply multiplier to espr as by lakner
 #define NNI_MULTIPLY_BL		 /// apply multiplier to nni move

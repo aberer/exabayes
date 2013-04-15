@@ -323,7 +323,8 @@ void finalizeOutputFiles(state *chain)
 
   /* TODO what about per model brach lengths? how does mrB do this? */
 static void exabayes_printTopology(state *chain)
-{
+{  
+  assert(chain->couplingId == 0);
   tree *tr = chain->traln->getTr();
   /* FILE *fh = myfopen(topologyFile, "a");   */
   FILE *fh = chain->topologyFile; 

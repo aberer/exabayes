@@ -97,7 +97,7 @@ void eval_st_nni(state *chain, proposalFunction *pf )
   newViewGenericWrapper(chain, p, FALSE); 
   newViewGenericWrapper(chain, q, FALSE); 
 
-  evaluateGenericWrapper(chain,p,FALSE); 
+  evaluateGenericWrapper(chain,p,FALSE ); 
 }
 
 

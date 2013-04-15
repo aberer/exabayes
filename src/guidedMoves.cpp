@@ -1,5 +1,5 @@
 #include "axml.h"
-#include "bayes.h"
+ #include "bayes.h"
 #include "adapters.h"
 #include "randomness.h"
 #include "output.h"
@@ -85,7 +85,7 @@ static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtre
       hookup(p->next->next,iP2, &b, numBranches); 
 
       newViewGenericWrapper(chain, p, FALSE); 
-      evaluateGenericWrapper(chain, p, FALSE); 
+      evaluateGenericWrapper(chain, p, FALSE ); 
 
       appendElem(lnlList, constructBranch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 
@@ -121,7 +121,7 @@ static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtre
       hookup(p->next->next, iP2, &b, numBranches); 
 
       newViewGenericWrapper(chain,p,FALSE); 
-      evaluateGenericWrapper(chain,p,FALSE); 
+      evaluateGenericWrapper(chain,p,FALSE  ); 
 
       appendElem(lnlList, constructBranch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 

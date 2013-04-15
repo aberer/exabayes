@@ -148,13 +148,13 @@ static void evalBranch(state *chain, proposalFunction *thisProposal)
 {
   branch b = peekStack(thisProposal->remembrance.modifiedPath);
   nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
-  evaluateGenericWrapper(chain,p, FALSE); 
+  evaluateGenericWrapper(chain,p, FALSE ); 
 }
 
 
 static void dummy_eval(state *chain,proposalFunction *thisProposal)
 {
-  evaluateGenericWrapper(chain, chain->traln->getTr()->start, TRUE);
+  evaluateGenericWrapper(chain, chain->traln->getTr()->start, TRUE );
 }
 
 

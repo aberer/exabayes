@@ -86,7 +86,7 @@ void evaluateNodeSlider(state *chain, proposalFunction *pf)
     }
   // TODO efficient? 
   newViewGenericWrapper(chain, p, FALSE);  
-  evaluateGenericWrapper(chain, p, FALSE);
+  evaluateGenericWrapper(chain, p, FALSE );
 }
 
 
