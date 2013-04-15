@@ -457,7 +457,7 @@ void chainInfo(state *chain)
   int runId = chain->id / gAInfo.numberCoupledChains; 
   tree *tr = chain->traln->getTr(); 
 
-  PRINT( "[run: %d] [TIME %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));
+  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));
   printHotChains(runId); 
   printSwapInfo(runId);   
   PRINT("\n"); 

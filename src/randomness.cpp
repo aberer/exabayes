@@ -39,8 +39,10 @@ void initLocalRng(state *theChain)
   randCtr_t r = drawGlobalRandInt();
   theChain->rKey.v[0] = r.v[0]; 
   theChain->rKey.v[1] = r.v[1]; 
+#if 0 
   if(processID == 0)
     printf("initialized chain %d with seed %d,%d\n", theChain->id, theChain->rKey.v[0], theChain->rKey.v[1]); 
+#endif
 }
 
 

@@ -95,6 +95,7 @@ static void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
 }
 
 
+
 static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[])
 {  
   int numberOfPartitions = tr->NumberOfModels; 
@@ -104,33 +105,17 @@ static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *ar
       int i, model;
       FILE *infoFile = myfopen(infoFileName, "ab");
       char modelType[128];
-
       
       if(tr->useMedian)
 	strcpy(modelType, "GAMMA with Median");
       else
 	strcpy(modelType, "GAMMA");   
 
-      PRINT("\n\nThis is %s version %s.\n\n", PROGRAM_NAME, PACKAGE_VERSION); 
-      
-      PRINT( "\nAlignment has %z distinct alignment patterns\n\n",  tr->originalCrunchedLength);
-      
-      PRINT( "Proportion of gaps and completely undetermined characters in this alignment: %3.2f%s\n", 100.0 * tr->gapyness, "%");
+      printVersionInfo();
+
+      PRINT("\nAlignment has %z distinct alignment patters\n\n", tr->originalCrunchedLength); 
 
 
-      // if(adef->perGeneBranchLengths)
-      // 	PRINT( "Using %d distinct models/data partitions with individual per partition branch length optimization\n\n\n", numberOfPartitions);
-      // else
-      // 	PRINT( "Using %d distinct models/data partitions with joint branch length optimization\n\n\n", numberOfPartitions);	
-
-
-      /*
-	if(adef->mode != CLASSIFY_ML)
-	PRINT( "%s Model parameters will be estimated up to an accuracy of %2.10f Log Likelihood units\n\n",
-	modelType, adef->likelihoodEpsilon);
-      */
-    
-      
       for(model = 0; model < numberOfPartitions; model++)
 	{
 	  PRINT( "Partition: %d\n", model);
@@ -188,7 +173,7 @@ static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *ar
 	    default:
 	      assert(0);
 	    }
-	  PRINT( "\n\n\n");
+	  PRINT( "\n\n");
 	}
       
       PRINT( "\n");

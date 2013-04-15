@@ -23,7 +23,7 @@ typedef struct
   int printFreq; 
   double asdsfIgnoreFreq; 
   double asdsfConvergence; 
-  int heatFactor; 
+  double heatFactor; 
   int swapInterval; 
   bool tuneHeat;
   int burninGen ; 

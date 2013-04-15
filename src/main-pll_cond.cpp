@@ -17,30 +17,10 @@
 
 #include "globalVariables.h" 
 
-
-
-// BEGIN just for compatability 
-
 int processID = 0; 
-// extern const unsigned int mask32[32]; 
-
-// END
-
-
-// extern char infoFileName[1024];
-
-// boolean setupTree (tree *tr, boolean doInit, partitionList *partitions);
-
-/* void initializePartitions(tree *tr, tree *localTree, partitionList *pr, partitionList *localPr, int tid, int n);  */
-
-/* TODO this is really bad... we really have to clean this up... */
-/* more global variables =(  */
-// char configFileName[1024]; 
 int seed; 
-// int Thorough = 0;
-// int processID;
 
-void mcmc(tree *tr, analdef *adef); 
+
 void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile); 
 
 static void printBoth(FILE *f, const char* format, ... )
@@ -59,8 +39,6 @@ static void printBoth(FILE *f, const char* format, ... )
 
 static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef, int argc, char *argv[])
 {
-
-  // int i, model;
   FILE *infoFile = myfopen(infoFileName, "ab");
   char modelType[128];
 
@@ -70,43 +48,20 @@ static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef,
   else
     strcpy(modelType, "GAMMA");
 
-  printBoth(infoFile, "\n\nThis is %s version %s released by Alexandros Stamatakis in %s.\n\n",  programName, programVersion, programDate);
 
-
+  printVersionInfo();
 
   if(!adef->compressPatterns)
     printBoth(infoFile, "\nAlignment has %d columns\n\n",  tr->originalCrunchedLength);
   else
     printBoth(infoFile, "\nAlignment has %d distinct alignment patterns\n\n",  tr->originalCrunchedLength);
 
-
-
   printBoth(infoFile, "Proportion of gaps and completely undetermined characters in this alignment: %3.2f%s\n", 100.0 * tr->gapyness, "%");
-
-
-  switch(adef->mode)
-  {
-    case  BIG_RAPID_MODE:
-      printBoth(infoFile, "\nRAxML rapid hill-climbing mode\n\n");
-      break;
-    case  GPU_BENCHMARK:
-      printBoth(infoFile, "\nRAxML GPU benchmark\n\n");
-      break;
-    default:
-      assert(0);
-  }
 
   if(adef->perGeneBranchLengths)
     printBoth(infoFile, "Using %d distinct models/data partitions with individual per partition branch length optimization\n\n\n", pr->numberOfPartitions);
   else
     printBoth(infoFile, "Using %d distinct models/data partitions with joint branch length optimization\n\n\n", pr->numberOfPartitions);
-
-  printBoth(infoFile, "All free model parameters will be estimated by RAxML\n");
-
-  if(tr->rateHetModel == GAMMA)
-    printBoth(infoFile, "%s model of rate heteorgeneity, ML estimate of alpha-parameter\n\n", modelType);
-  else
-    printBoth(infoFile, "ML estimate of %d per site rate categories\n\n", tr->categories);
 
   for( int model = 0; model < pr->numberOfPartitions; model++)
   {
@@ -170,7 +125,7 @@ static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef,
 
   printBoth(infoFile, "\n");
 
-  printBoth(infoFile, "RAxML was called as follows:\n\n");
+  printBoth(infoFile, "%s was called as follows:\n\n", PROGRAM_NAME);
   for( int i = 0; i < argc; i++)
     printBoth(infoFile,"%s ", argv[i]);
   printBoth(infoFile,"\n\n\n");
@@ -181,10 +136,6 @@ static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef,
 
 void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***empiricalFrequencies)
 {
-  // size_t 
-  //   i,
-  //   model;
-
   unsigned char *y;
 
   FILE 

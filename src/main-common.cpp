@@ -18,6 +18,15 @@ void ignoreExceptionsDenormFloat()
 }
 
 
+
+// void printHeader(tree *tr, analdef *adef)
+// {
+//   PRINT("\n\n This is %s version %s\n", PROGRAM_NAME, PACKAGE_VERSION);   
+
+// }
+
+
+
  void printREADME()
 {
   printf("TODO\n"); 
@@ -41,9 +50,9 @@ void initAdef(analdef *adef)
 void printVersionInfo()
 {
 #if (HAVE_PLL == 1 ) 
-  PRINT("This is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
+  PRINT("\n\nThis is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
 #else 
-  PRINT("This is %s, version %s\n", PROGRAM_NAME, VERSION); 
+  PRINT("\n\nThis is %s, version %s\n", PROGRAM_NAME, VERSION); 
 #endif  
 }
 

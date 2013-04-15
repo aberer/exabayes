@@ -160,18 +160,6 @@ static void setupGlobals(initParamStruct *initParams, tree *tr)
   gAInfo.numberOfRuns =   initParams->numIndiChains; 
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
 
-
-
-  /* initialize a matrix of swaps (wasting some space here) */
-  gAInfo.swapInfo = (successCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(successCtr*)); 
-  int n = gAInfo.numberCoupledChains; 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.swapInfo[i] = (successCtr*)exa_calloc( n * n , sizeof(successCtr)); 
-
-  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.temperature[i] = gAInfo.heatFactor; 
-
   unsigned int bvLength = 0; 
   tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
   hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
@@ -186,6 +174,18 @@ static void setupGlobals(initParamStruct *initParams, tree *tr)
   gAInfo.burninGen = initParams->burninGen; 
   gAInfo.burninProportion = initParams->burninProportion; 
   gAInfo.tuneFreq = initParams->tuneFreq; 
+
+
+
+  /* initialize a matrix of swaps (wasting some space here) */
+  gAInfo.swapInfo = (successCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(successCtr*)); 
+  int n = gAInfo.numberCoupledChains; 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.swapInfo[i] = (successCtr*)exa_calloc( n * n , sizeof(successCtr)); 
+
+  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.temperature[i] = gAInfo.heatFactor; 
 }
 
 
@@ -307,8 +307,10 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       /* now save the tree to a chain chains */
       saveTreeStateToChain(theChain); 
 
-      PRINT("init lnl for chain %d is  %f\ttree-length=%.3f\n", theChain->id, theChain->traln->getTr()->likelihood, 
-	    branchLengthToReal(theChain->traln->getTr(), getTreeLength(theChain->traln->getTr(), theChain->traln->getTr()->nodep[1]->back))); 
+      PRINT("Initial LnL for chain %d is  %f\ttree-length=%.3f\tseed=%u,%u\n", theChain->id, theChain->traln->getTr()->likelihood, 
+	    branchLengthToReal(theChain->traln->getTr(), getTreeLength(theChain->traln->getTr(), theChain->traln->getTr()->nodep[1]->back)),
+	    theChain->rKey.v[0], theChain->rKey.v[1]
+	    ); 
 
       if(processID == 0 )
 	{	  
@@ -328,6 +330,9 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 
   if(gAInfo.numberOfStartingTrees > 0)
     fclose(treeFH); 
+
+
+  PRINT("\n"); 
 
   // TODO kill initial tree 
 }
