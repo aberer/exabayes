@@ -24,8 +24,9 @@ extern "C"
 
 // #define REPORT_MEMORY
 
+#if HAVE_PLL == 1  &&  defined(_GLIBCXX_THROW) // BAD BAD hack 
 
-#if HAVE_PLL == 1 
+
 
 static void* allocate(size_t s)
 {
@@ -46,54 +47,56 @@ static void doFree(void *p)
 
 
 
-void* operator new(std::size_t s) _GLIBCXX_THROW (std::bad_alloc)
+void* operator new(size_t s) _GLIBCXX_THROW  (bad_alloc) 
 {
   void *p = allocate(s); 
   if(p == NULL)
-    throw new  std::bad_alloc; 
+    throw new  bad_alloc; 
   return p ;     
 }
 
-void* operator new[](std::size_t s) _GLIBCXX_THROW (std::bad_alloc)
+void* operator new[](size_t s) _GLIBCXX_THROW  (bad_alloc) 
 {
   void *p = allocate(s); 
   if(p == NULL)
-    throw new  std::bad_alloc; 
+    throw new  bad_alloc; 
   return p ;     
 }
 
 
-void* operator new(std::size_t s, const std::nothrow_t&) _GLIBCXX_USE_NOEXCEPT
+void* operator new(size_t s, const nothrow_t&) _GLIBCXX_USE_NOEXCEPT
 {
     void *p = allocate(s); 
   return p ;     
 }
 
-void* operator new[](std::size_t s, const std::nothrow_t&) _GLIBCXX_USE_NOEXCEPT
+void* operator new[](size_t s, const nothrow_t&) _GLIBCXX_USE_NOEXCEPT
 {
   void *p = allocate(s); 
   return p ;     
 }
 
 
-void operator delete(void* p, const std::nothrow_t&) _GLIBCXX_USE_NOEXCEPT
-{
-  doFree(p); 
-}
-
-void operator delete[](void* p, const std::nothrow_t&) _GLIBCXX_USE_NOEXCEPT
+void operator delete(void* p, const nothrow_t&)     _GLIBCXX_USE_NOEXCEPT
 {
   doFree(p); 
 }
 
 
-void operator delete(void* p) _GLIBCXX_USE_NOEXCEPT
+
+void operator delete[](void* p, const nothrow_t&)     _GLIBCXX_USE_NOEXCEPT
 {
   doFree(p); 
 }
 
 
-void operator delete[](void* p) _GLIBCXX_USE_NOEXCEPT
+void operator delete(void* p)  _GLIBCXX_USE_NOEXCEPT
+{
+  doFree(p); 
+}
+
+
+void operator delete[](void* p)  _GLIBCXX_USE_NOEXCEPT
 {
   doFree(p); 
 }

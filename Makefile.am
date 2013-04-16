@@ -6,11 +6,11 @@ SUBDIRS = ./lib/ncl-2.1.18/
 WARN_FLAGS=  -Wall --pedantic  -Wno-unused-function -Wno-write-strings -Wno-vla
 
 # SIMD_FLAGS is potentially problematic: auto-avx vectorization was considered harmfull? 
-AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 #   -fgnu89-inline
+AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3
 
 
 if WITH_DEBUG
-AM_CFLAGS+=-g3 -O0 # -fgnu89-inline 
+AM_CFLAGS+=-g3 -O0
 else
 AM_CFLAGS+=-O2 -fomit-frame-pointer -funroll-loops 
 endif
@@ -43,7 +43,7 @@ endif
 
 AM_CFLAGS+=$(OPT_HEAD) -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS)
-AM_CXXFLAGS=$(AM_CFLAGS) -std=c++0x
+AM_CXXFLAGS=$(AM_CFLAGS)  -std=c++0x
 
 
 AM_LDFLAGS=-lm
@@ -51,8 +51,6 @@ AM_LDFLAGS=-lm
 EXTRA_DIST=lib/Random123-1.07 src/main-examl_cond.c src/main-pll_cond.c		\
               src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c	\
               src/pll/axml-pll.h src/examl/axml-examl.h doc/*
-
-# prsf_SOURCES=
 
 
 if WITH_PLL
@@ -64,7 +62,6 @@ prsf_CXXFLAGS=$(AM_CXXFLAGS) -D_STANDALONE
 
 clean:
 	-rm -rf $(exabayes_OBJECTS) $(bin_PROGRAMS )  $(prsf_OBJECTS) 
-# -rm -rf 
 
 
 doc : 

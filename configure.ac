@@ -3,9 +3,17 @@
 
 AC_REREQ([2.67])
 AC_INIT([exabayes],[0.1],[exabayes@googlegroups.com]) # correct? 
+
+
+dnl m4_include([./m4/ax_cxx_compile_stdcxx_0x.m4])
+dnl m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
+dnl m4_include([./m4/ax_ext.m4]) 
+
 AM_INIT_AUTOMAKE(  exabayes , 0.2 )
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([src/config.h])
+
+
 
 AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])
 
@@ -13,7 +21,7 @@ AM_SILENT_RULES([yes])
 
 # configures the ncl config reader 
 AC_CONFIG_SUBDIRS([lib/ncl-2.1.18])
-AC_CONFIG_MACRO_DIR([m4])
+dnl AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for programs.
 
