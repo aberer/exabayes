@@ -3190,363 +3190,365 @@ void newviewGTRGAMMAPROT_AVX_GAPPED_SAVE(int tipCase,
       }
       break;
     case INNER_INNER:    	  
-      for(k = 0; k < 4; k++) 
-	{
-	  vl = &(x1_gapColumn[20 * k]);
-	  vr = &(x2_gapColumn[20 * k]);
-	  v  = &(x3_gapColumn[20 * k]);	      	   
+      {
+	for(k = 0; k < 4; k++) 
+	  {
+	    vl = &(x1_gapColumn[20 * k]);
+	    vr = &(x2_gapColumn[20 * k]);
+	    v  = &(x3_gapColumn[20 * k]);	      	   
 
-	  __m256d vv[5]; 
+	    __m256d vv[5]; 
 	  
-	  vv[0] = _mm256_setzero_pd();
-	  vv[1] = _mm256_setzero_pd();
-	  vv[2] = _mm256_setzero_pd();
-	  vv[3] = _mm256_setzero_pd();
-	  vv[4] = _mm256_setzero_pd();
+	    vv[0] = _mm256_setzero_pd();
+	    vv[1] = _mm256_setzero_pd();
+	    vv[2] = _mm256_setzero_pd();
+	    vv[3] = _mm256_setzero_pd();
+	    vv[4] = _mm256_setzero_pd();
 	  
-	  for(l = 0; l < 20; l++) 
-	    {		  
-	      __m256d al = _mm256_setzero_pd();
-	      __m256d ar = _mm256_setzero_pd();
+	    for(l = 0; l < 20; l++) 
+	      {		  
+		__m256d al = _mm256_setzero_pd();
+		__m256d ar = _mm256_setzero_pd();
 	      
-	      __m256d leftv  = _mm256_load_pd(&left[k * 400 + l * 20 + 0]);
-	      __m256d rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 0]);
-	      __m256d vlv = _mm256_load_pd(&vl[0]);
-	      __m256d vrv = _mm256_load_pd(&vr[0]);
+		__m256d leftv  = _mm256_load_pd(&left[k * 400 + l * 20 + 0]);
+		__m256d rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 0]);
+		__m256d vlv = _mm256_load_pd(&vl[0]);
+		__m256d vrv = _mm256_load_pd(&vr[0]);
 	      
 #ifdef _FMA
 	      
-	      al = FMAMACC(al, vlv, leftv);
-	      ar = FMAMACC(ar, vrv, rightv);
+		al = FMAMACC(al, vlv, leftv);
+		ar = FMAMACC(ar, vrv, rightv);
 #else
-	      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-	      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));		  
+		al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+		ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));		  
 #endif
 	      
-	      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 4]);
-	      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 4]);
-	      vlv = _mm256_load_pd(&vl[4]);
-	      vrv = _mm256_load_pd(&vr[4]);
+		leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 4]);
+		rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 4]);
+		vlv = _mm256_load_pd(&vl[4]);
+		vrv = _mm256_load_pd(&vr[4]);
 #ifdef _FMA
 	      
-	      al = FMAMACC(al, vlv, leftv);
-	      ar = FMAMACC(ar, vrv, rightv);
+		al = FMAMACC(al, vlv, leftv);
+		ar = FMAMACC(ar, vrv, rightv);
 #else
-	      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-	      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+		al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+		ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 	      
-	      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 8]);
-	      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 8]);
-	      vlv = _mm256_load_pd(&vl[8]);
-	      vrv = _mm256_load_pd(&vr[8]);
+		leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 8]);
+		rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 8]);
+		vlv = _mm256_load_pd(&vl[8]);
+		vrv = _mm256_load_pd(&vr[8]);
 #ifdef _FMA
 	      
-	      al = FMAMACC(al, vlv, leftv);
-	      ar = FMAMACC(ar, vrv, rightv);
+		al = FMAMACC(al, vlv, leftv);
+		ar = FMAMACC(ar, vrv, rightv);
 #else
-	      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-	      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+		al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+		ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 	      
-	      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 12]);
-	      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 12]);
-	      vlv = _mm256_load_pd(&vl[12]);
-	      vrv = _mm256_load_pd(&vr[12]);
+		leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 12]);
+		rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 12]);
+		vlv = _mm256_load_pd(&vl[12]);
+		vrv = _mm256_load_pd(&vr[12]);
 #ifdef _FMA
 	      
-	      al = FMAMACC(al, vlv, leftv);
-	      ar = FMAMACC(ar, vrv, rightv);
+		al = FMAMACC(al, vlv, leftv);
+		ar = FMAMACC(ar, vrv, rightv);
 #else
-	      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-	      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+		al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+		ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 	      
-	      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 16]);
-	      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 16]);
-	      vlv = _mm256_load_pd(&vl[16]);
-	      vrv = _mm256_load_pd(&vr[16]);
+		leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 16]);
+		rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 16]);
+		vlv = _mm256_load_pd(&vl[16]);
+		vrv = _mm256_load_pd(&vr[16]);
 	      
 #ifdef _FMA		    
-	      al = FMAMACC(al, vlv, leftv);
-	      ar = FMAMACC(ar, vrv, rightv);
+		al = FMAMACC(al, vlv, leftv);
+		ar = FMAMACC(ar, vrv, rightv);
 #else
-	      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-	      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+		al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+		ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 	      
-	      /**************************************************************************************************************/
+		/**************************************************************************************************************/
 	      
-	      al = hadd3(al);
-	      ar = hadd3(ar);
-	      al = _mm256_mul_pd(ar,al);
+		al = hadd3(al);
+		ar = hadd3(ar);
+		al = _mm256_mul_pd(ar,al);
 	      
-	      /************************************************************************************************************/
+		/************************************************************************************************************/
 #ifdef _FMA		    
-	      __m256d ev =  _mm256_load_pd(&extEV[20 * l + 0]);
-	      vv[0] = FMAMACC(vv[0], al, ev);		 
+		__m256d ev =  _mm256_load_pd(&extEV[20 * l + 0]);
+		vv[0] = FMAMACC(vv[0], al, ev);		 
 #else
-	      vv[0] = _mm256_add_pd(vv[0],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 0])));			  		 		  
+		vv[0] = _mm256_add_pd(vv[0],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 0])));			  		 		  
 #endif
-	      _mm256_store_pd(&v[0],vv[0]);
-	      
-#ifdef _FMA		    
-	      ev =  _mm256_load_pd(&extEV[20 * l + 4]);
-	      vv[1] = FMAMACC(vv[1], al, ev);		 
-#else
-	      vv[1] = _mm256_add_pd(vv[1],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 4])));		  		 
-#endif
-	      _mm256_store_pd(&v[4],vv[1]);
+		_mm256_store_pd(&v[0],vv[0]);
 	      
 #ifdef _FMA		    
-	      ev =  _mm256_load_pd(&extEV[20 * l + 8]);
-	      vv[2] = FMAMACC(vv[2], al, ev);		 
+		ev =  _mm256_load_pd(&extEV[20 * l + 4]);
+		vv[1] = FMAMACC(vv[1], al, ev);		 
 #else
-	      vv[2] = _mm256_add_pd(vv[2],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 8])));		  		 
+		vv[1] = _mm256_add_pd(vv[1],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 4])));		  		 
 #endif
-	      _mm256_store_pd(&v[8],vv[2]);
+		_mm256_store_pd(&v[4],vv[1]);
 	      
 #ifdef _FMA		    
-	      ev =  _mm256_load_pd(&extEV[20 * l + 12]);
-	      vv[3] = FMAMACC(vv[3], al, ev);		 
+		ev =  _mm256_load_pd(&extEV[20 * l + 8]);
+		vv[2] = FMAMACC(vv[2], al, ev);		 
 #else
-	      vv[3] = _mm256_add_pd(vv[3],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 12])));		  		 
+		vv[2] = _mm256_add_pd(vv[2],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 8])));		  		 
 #endif
-	      _mm256_store_pd(&v[12],vv[3]);
+		_mm256_store_pd(&v[8],vv[2]);
 	      
 #ifdef _FMA		    
-	      ev =  _mm256_load_pd(&extEV[20 * l + 16]);
-	      vv[4] = FMAMACC(vv[4], al, ev);		 
+		ev =  _mm256_load_pd(&extEV[20 * l + 12]);
+		vv[3] = FMAMACC(vv[3], al, ev);		 
 #else
-	      vv[4] = _mm256_add_pd(vv[4],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 16])));			 	  
+		vv[3] = _mm256_add_pd(vv[3],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 12])));		  		 
 #endif
-	      _mm256_store_pd(&v[16],vv[4]);		 
-	    } 
-	}
+		_mm256_store_pd(&v[12],vv[3]);
+	      
+#ifdef _FMA		    
+		ev =  _mm256_load_pd(&extEV[20 * l + 16]);
+		vv[4] = FMAMACC(vv[4], al, ev);		 
+#else
+		vv[4] = _mm256_add_pd(vv[4],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 16])));			 	  
+#endif
+		_mm256_store_pd(&v[16],vv[4]);		 
+	      } 
+	  }
 	
-      v = x3_gapColumn;
-      scale = 1;
-      __m256d minlikelihood_avx = _mm256_set1_pd(minlikelihood);	 
+	v = x3_gapColumn;
+	scale = 1;
+	__m256d minlikelihood_avx = _mm256_set1_pd(minlikelihood);	 
       
-      for(l = 0; scale && (l < 80); l += 4) 
-	{
-	  __m256d vv = _mm256_load_pd(&v[l]);
-	  __m256d vv_abs = _mm256_and_pd(vv,absMask_AVX.m);
-	  vv_abs = _mm256_cmp_pd(vv_abs,minlikelihood_avx,_CMP_LT_OS);
-	  if(_mm256_movemask_pd(vv_abs) != 15)
-	    scale = 0;	     
-	}
+	for(l = 0; scale && (l < 80); l += 4) 
+	  {
+	    __m256d vv = _mm256_load_pd(&v[l]);
+	    __m256d vv_abs = _mm256_and_pd(vv,absMask_AVX.m);
+	    vv_abs = _mm256_cmp_pd(vv_abs,minlikelihood_avx,_CMP_LT_OS);
+	    if(_mm256_movemask_pd(vv_abs) != 15)
+	      scale = 0;	     
+	  }
 
-      if(scale) 
-	{		     	      
-	  __m256d twotothe256v = _mm256_set_pd(twotothe256,twotothe256,twotothe256,twotothe256);
-	  gapScaling = 1;
+	if(scale) 
+	  {		     	      
+	    __m256d twotothe256v = _mm256_set_pd(twotothe256,twotothe256,twotothe256,twotothe256);
+	    gapScaling = 1;
 
-	  for(l = 0; l < 80; l += 4) 
-	    {
-	      __m256d vv = _mm256_load_pd(&v[l]);
-	      _mm256_store_pd(&v[l],_mm256_mul_pd(vv,twotothe256v));
-	    }
+	    for(l = 0; l < 80; l += 4) 
+	      {
+		__m256d vv = _mm256_load_pd(&v[l]);
+		_mm256_store_pd(&v[l],_mm256_mul_pd(vv,twotothe256v));
+	      }
 	  
-	} 
+	  } 
    
      
 
-      for(i = 0; i < n; i++) 
-	{   
+	for(i = 0; i < n; i++) 
+	  {   
 	  
-	  if(x3_gap[i / 32] & mask32[i % 32])
-	    {	     
-	      if(gapScaling)
-		{
-		  if(useFastScaling)
-		    addScale += wgt[i];
-		  else
-		    ex3[i]  += 1; 	       
-		}
-	    }
-	  else
-	    {
-	      if(x1_gap[i / 32] & mask32[i % 32])
-		x1 = x1_gapColumn;
-	      else
-		{
-		  x1 = x1_ptr;
-		  x1_ptr += 80;
-		}
+	    if(x3_gap[i / 32] & mask32[i % 32])
+	      {	     
+		if(gapScaling)
+		  {
+		    if(useFastScaling)
+		      addScale += wgt[i];
+		    else
+		      ex3[i]  += 1; 	       
+		  }
+	      }
+	    else
+	      {
+		if(x1_gap[i / 32] & mask32[i % 32])
+		  x1 = x1_gapColumn;
+		else
+		  {
+		    x1 = x1_ptr;
+		    x1_ptr += 80;
+		  }
 
-	      if(x2_gap[i / 32] & mask32[i % 32])
-		x2 = x2_gapColumn;
-	      else
-		{
-		  x2 = x2_ptr;
-		  x2_ptr += 80;
-		}	   
+		if(x2_gap[i / 32] & mask32[i % 32])
+		  x2 = x2_gapColumn;
+		else
+		  {
+		    x2 = x2_ptr;
+		    x2_ptr += 80;
+		  }	   
 	  
-	      for(k = 0; k < 4; k++) 
-		{
-		  vl = &(x1[20 * k]);
-		  vr = &(x2[20 * k]);
-		  v  = &(x3_ptr[20 * k]);	      	   
+		for(k = 0; k < 4; k++) 
+		  {
+		    vl = &(x1[20 * k]);
+		    vr = &(x2[20 * k]);
+		    v  = &(x3_ptr[20 * k]);	      	   
 		  
-		  __m256d vv[5]; 
+		    __m256d vv[5]; 
 		  
-		  vv[0] = _mm256_setzero_pd();
-		  vv[1] = _mm256_setzero_pd();
-		  vv[2] = _mm256_setzero_pd();
-		  vv[3] = _mm256_setzero_pd();
-		  vv[4] = _mm256_setzero_pd();
+		    vv[0] = _mm256_setzero_pd();
+		    vv[1] = _mm256_setzero_pd();
+		    vv[2] = _mm256_setzero_pd();
+		    vv[3] = _mm256_setzero_pd();
+		    vv[4] = _mm256_setzero_pd();
 		  
-		  for(l = 0; l < 20; l++) 
-		    {		  
-		      __m256d al = _mm256_setzero_pd();
-		      __m256d ar = _mm256_setzero_pd();
+		    for(l = 0; l < 20; l++) 
+		      {		  
+			__m256d al = _mm256_setzero_pd();
+			__m256d ar = _mm256_setzero_pd();
 		      
-		      __m256d leftv  = _mm256_load_pd(&left[k * 400 + l * 20 + 0]);
-		      __m256d rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 0]);
-		      __m256d vlv = _mm256_load_pd(&vl[0]);
-		      __m256d vrv = _mm256_load_pd(&vr[0]);
+			__m256d leftv  = _mm256_load_pd(&left[k * 400 + l * 20 + 0]);
+			__m256d rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 0]);
+			__m256d vlv = _mm256_load_pd(&vl[0]);
+			__m256d vrv = _mm256_load_pd(&vr[0]);
 		      
 #ifdef _FMA
 		      
-		      al = FMAMACC(al, vlv, leftv);
-		      ar = FMAMACC(ar, vrv, rightv);
+			al = FMAMACC(al, vlv, leftv);
+			ar = FMAMACC(ar, vrv, rightv);
 #else
-		      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-		      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));		  
+			al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+			ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));		  
 #endif
 		      
-		      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 4]);
-		      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 4]);
-		      vlv = _mm256_load_pd(&vl[4]);
-		      vrv = _mm256_load_pd(&vr[4]);
+			leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 4]);
+			rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 4]);
+			vlv = _mm256_load_pd(&vl[4]);
+			vrv = _mm256_load_pd(&vr[4]);
 #ifdef _FMA
 		      
-		      al = FMAMACC(al, vlv, leftv);
-		      ar = FMAMACC(ar, vrv, rightv);
+			al = FMAMACC(al, vlv, leftv);
+			ar = FMAMACC(ar, vrv, rightv);
 #else
-		      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-		      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+			al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+			ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 		      
-		      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 8]);
-		      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 8]);
-		      vlv = _mm256_load_pd(&vl[8]);
-		      vrv = _mm256_load_pd(&vr[8]);
+			leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 8]);
+			rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 8]);
+			vlv = _mm256_load_pd(&vl[8]);
+			vrv = _mm256_load_pd(&vr[8]);
 #ifdef _FMA
 		      
-		      al = FMAMACC(al, vlv, leftv);
-		      ar = FMAMACC(ar, vrv, rightv);
+			al = FMAMACC(al, vlv, leftv);
+			ar = FMAMACC(ar, vrv, rightv);
 #else
-		      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-		      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+			al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+			ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 		      
-		      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 12]);
-		      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 12]);
-		      vlv = _mm256_load_pd(&vl[12]);
-		      vrv = _mm256_load_pd(&vr[12]);
+			leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 12]);
+			rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 12]);
+			vlv = _mm256_load_pd(&vl[12]);
+			vrv = _mm256_load_pd(&vr[12]);
 #ifdef _FMA
 		      
-		      al = FMAMACC(al, vlv, leftv);
-		      ar = FMAMACC(ar, vrv, rightv);
+			al = FMAMACC(al, vlv, leftv);
+			ar = FMAMACC(ar, vrv, rightv);
 #else
-		      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-		      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+			al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+			ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 		      
-		      leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 16]);
-		      rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 16]);
-		      vlv = _mm256_load_pd(&vl[16]);
-		      vrv = _mm256_load_pd(&vr[16]);
+			leftv = _mm256_load_pd(&left[k * 400 + l * 20 + 16]);
+			rightv = _mm256_load_pd(&right[k * 400 + l * 20 + 16]);
+			vlv = _mm256_load_pd(&vl[16]);
+			vrv = _mm256_load_pd(&vr[16]);
 		      
 #ifdef _FMA		    
-		      al = FMAMACC(al, vlv, leftv);
-		      ar = FMAMACC(ar, vrv, rightv);
+			al = FMAMACC(al, vlv, leftv);
+			ar = FMAMACC(ar, vrv, rightv);
 #else
-		      al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
-		      ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
+			al = _mm256_add_pd(al,_mm256_mul_pd(vlv,leftv));
+			ar = _mm256_add_pd(ar,_mm256_mul_pd(vrv,rightv));
 #endif
 		      
-		      /**************************************************************************************************************/
+			/**************************************************************************************************************/
 		      
-		      al = hadd3(al);
-		      ar = hadd3(ar);
-		      al = _mm256_mul_pd(ar,al);
+			al = hadd3(al);
+			ar = hadd3(ar);
+			al = _mm256_mul_pd(ar,al);
 		      
-		      /************************************************************************************************************/
+			/************************************************************************************************************/
 #ifdef _FMA		    
-		      __m256d ev =  _mm256_load_pd(&extEV[20 * l + 0]);
-		      vv[0] = FMAMACC(vv[0], al, ev);		 
+			__m256d ev =  _mm256_load_pd(&extEV[20 * l + 0]);
+			vv[0] = FMAMACC(vv[0], al, ev);		 
 #else
-		      vv[0] = _mm256_add_pd(vv[0],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 0])));			  		 		  
+			vv[0] = _mm256_add_pd(vv[0],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 0])));			  		 		  
 #endif
-		      _mm256_store_pd(&v[0],vv[0]);
-		      
-#ifdef _FMA		    
-		      ev =  _mm256_load_pd(&extEV[20 * l + 4]);
-		      vv[1] = FMAMACC(vv[1], al, ev);		 
-#else
-		      vv[1] = _mm256_add_pd(vv[1],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 4])));		  		 
-#endif
-		      _mm256_store_pd(&v[4],vv[1]);
+			_mm256_store_pd(&v[0],vv[0]);
 		      
 #ifdef _FMA		    
-		      ev =  _mm256_load_pd(&extEV[20 * l + 8]);
-		      vv[2] = FMAMACC(vv[2], al, ev);		 
+			ev =  _mm256_load_pd(&extEV[20 * l + 4]);
+			vv[1] = FMAMACC(vv[1], al, ev);		 
 #else
-		      vv[2] = _mm256_add_pd(vv[2],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 8])));		  		 
+			vv[1] = _mm256_add_pd(vv[1],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 4])));		  		 
 #endif
-		      _mm256_store_pd(&v[8],vv[2]);
+			_mm256_store_pd(&v[4],vv[1]);
 		      
 #ifdef _FMA		    
-		      ev =  _mm256_load_pd(&extEV[20 * l + 12]);
-		      vv[3] = FMAMACC(vv[3], al, ev);		 
+			ev =  _mm256_load_pd(&extEV[20 * l + 8]);
+			vv[2] = FMAMACC(vv[2], al, ev);		 
 #else
-		      vv[3] = _mm256_add_pd(vv[3],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 12])));		  		 
+			vv[2] = _mm256_add_pd(vv[2],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 8])));		  		 
 #endif
-		      _mm256_store_pd(&v[12],vv[3]);
+			_mm256_store_pd(&v[8],vv[2]);
 		      
 #ifdef _FMA		    
-		      ev =  _mm256_load_pd(&extEV[20 * l + 16]);
-		      vv[4] = FMAMACC(vv[4], al, ev);		 
+			ev =  _mm256_load_pd(&extEV[20 * l + 12]);
+			vv[3] = FMAMACC(vv[3], al, ev);		 
 #else
-		      vv[4] = _mm256_add_pd(vv[4],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 16])));			 	  
+			vv[3] = _mm256_add_pd(vv[3],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 12])));		  		 
 #endif
-		      _mm256_store_pd(&v[16],vv[4]);		 
-		    }
-		}
+			_mm256_store_pd(&v[12],vv[3]);
+		      
+#ifdef _FMA		    
+			ev =  _mm256_load_pd(&extEV[20 * l + 16]);
+			vv[4] = FMAMACC(vv[4], al, ev);		 
+#else
+			vv[4] = _mm256_add_pd(vv[4],_mm256_mul_pd(al, _mm256_load_pd(&extEV[20 * l + 16])));			 	  
+#endif
+			_mm256_store_pd(&v[16],vv[4]);		 
+		      }
+		  }
 	      
-	      v = x3_ptr;
-	      scale = 1;
+		v = x3_ptr;
+		scale = 1;
 	      
-	      __m256d minlikelihood_avx = _mm256_set1_pd(minlikelihood);	 
+		__m256d minlikelihood_avx = _mm256_set1_pd(minlikelihood);	 
 	      
-	      for(l = 0; scale && (l < 80); l += 4) 
-		{
-		  __m256d vv = _mm256_load_pd(&v[l]);
-		  __m256d vv_abs = _mm256_and_pd(vv,absMask_AVX.m);
-		  vv_abs = _mm256_cmp_pd(vv_abs,minlikelihood_avx,_CMP_LT_OS);
-		  if(_mm256_movemask_pd(vv_abs) != 15)
-		    scale = 0;	     
-		}
+		for(l = 0; scale && (l < 80); l += 4) 
+		  {
+		    __m256d vv = _mm256_load_pd(&v[l]);
+		    __m256d vv_abs = _mm256_and_pd(vv,absMask_AVX.m);
+		    vv_abs = _mm256_cmp_pd(vv_abs,minlikelihood_avx,_CMP_LT_OS);
+		    if(_mm256_movemask_pd(vv_abs) != 15)
+		      scale = 0;	     
+		  }
 	      
-	      if(scale) 
-		{		     	      
-		  __m256d twotothe256v = _mm256_set_pd(twotothe256,twotothe256,twotothe256,twotothe256);
-		  for(l = 0; l < 80; l += 4) 
-		    {
-		      __m256d vv = _mm256_load_pd(&v[l]);
-		      _mm256_store_pd(&v[l],_mm256_mul_pd(vv,twotothe256v));
-		    }
-		  if(useFastScaling)
-		    addScale += wgt[i];					
-		  else
-		    ex3[i] += 1;
-		}  
-	      x3_ptr += 80;
-	    }
-	}
+		if(scale) 
+		  {		     	      
+		    __m256d twotothe256v = _mm256_set_pd(twotothe256,twotothe256,twotothe256,twotothe256);
+		    for(l = 0; l < 80; l += 4) 
+		      {
+			__m256d vv = _mm256_load_pd(&v[l]);
+			_mm256_store_pd(&v[l],_mm256_mul_pd(vv,twotothe256v));
+		      }
+		    if(useFastScaling)
+		      addScale += wgt[i];					
+		    else
+		      ex3[i] += 1;
+		  }  
+		x3_ptr += 80;
+	      }
+	  }
+      }
       break;
     default:
       assert(0);

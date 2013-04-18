@@ -8,10 +8,12 @@
    tree */
 
 
-void multiplyBranchLengthsRecursively(tree *tr, nodeptr p, double multiplier)
+void multiplyBranchLengthsRecursively(TreeAln* traln, nodeptr p, double multiplier)
 {  
-  double newZ = pow(p->z[0],multiplier); 
-  p->z[0] = p->back->z[0] = newZ; 
+  tree *tr = traln->getTr();
+  double newZ = pow( traln->getBranchLength( p->number,0),multiplier); 
+  // p->z[0] = p->back->z[0]
+  traln->setBranchLengthSave(newZ, 0, p); 
 
   if(isTip(p->number, tr->mxtips))
     return; 
@@ -19,7 +21,7 @@ void multiplyBranchLengthsRecursively(tree *tr, nodeptr p, double multiplier)
   nodeptr q = p->next; 
   while(p != q)
     {
-      multiplyBranchLengthsRecursively(tr, q->back,multiplier); 
+      multiplyBranchLengthsRecursively(traln, q->back,multiplier); 
       q = q->next; 
     }
 }
@@ -30,12 +32,12 @@ void applyTLMult(state *chain,  proposalFunction *pf )
   tree *tr = chain->traln->getTr(); 
   double multiplier = drawMultiplier(chain, pf->parameters.multiplier);
   pf->remembrance.multiplier = multiplier; 
-  multiplyBranchLengthsRecursively(tr , tr->start->back, multiplier); 
+  multiplyBranchLengthsRecursively(chain->traln , tr->start->back, multiplier); 
 }
 
 
 void resetTLMult(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr();
-  multiplyBranchLengthsRecursively(tr, tr->start->back, 1/pf->remembrance.multiplier); 
+  multiplyBranchLengthsRecursively(chain->traln, tr->start->back, 1/pf->remembrance.multiplier); 
 }

@@ -1,18 +1,19 @@
 #include "nodeSlider.h"
 
 
-static void insertBranchLength(tree *tr, branch &b)
+static void insertBranchLength(TreeAln *traln, branch &b)
 {
-  nodeptr p = findNodeFromBranch(tr, b); 
-  b.length[0] = p->z[0]; 
-  assert(p->z[0] == p->back->z[0]); 
+  nodeptr p = findNodeFromBranch(traln->getTr(), b); 
+  b.length[0] = traln->getBranchLength( p->number,0); 
+  // getBranchLength( traln->assert(p->number,0) == traln->getBranchLength( p->back->number,0)); 
 }
 
 void applyNodeSlider(state *chain, proposalFunction *pf)
 {
+  TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
   branch oneBranch = drawInnerBranchUniform(chain); 
-  insertBranchLength(tr, oneBranch); 
+  insertBranchLength(chain->traln, oneBranch); 
   int numBranch = chain->traln->getNumBranches(); 
   assert(numBranch == 1 ); 
 
@@ -29,7 +30,7 @@ void applyNodeSlider(state *chain, proposalFunction *pf)
   otherBranch.thatNode = 
     drawRandDouble01(chain) < 0.5 ? p->next->back->number : p->next->next->back->number;       
 
-  insertBranchLength(tr, otherBranch); 
+  insertBranchLength(traln, otherBranch); 
   
   // cout << "chose branches " << oneBranch << " and " << otherBranch << endl; 
 
@@ -42,7 +43,7 @@ void applyNodeSlider(state *chain, proposalFunction *pf)
   nodeptr nodeA = findNodeFromBranch(tr, oneBranch),
     nodeB = findNodeFromBranch(tr,otherBranch); 
 
-  double bothZ = nodeA->z[0] * nodeB->z[0]; 
+  double bothZ = traln->getBranchLength( nodeA->number,0) * traln->getBranchLength( nodeB->number,0); 
   double multiplier = drawMultiplier(chain, pf->parameters.multiplier);
   chain->hastings *= multiplier; 
   double newZ = branchLengthToReal(tr,pow(bothZ,multiplier));  

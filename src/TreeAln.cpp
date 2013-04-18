@@ -7,6 +7,25 @@
 #include "output.h"
 
 
+// here we initialize the max/min values for our various
+// parameters. Static const is essentially like a global variable but
+// saver. You access it with e.g., TreeAln::zmin, since the variable
+// does not belong to an instance of the class, but the class in general. 
+// It is a bit over-engineering. 
+
+// most of it has been copied over from raxml. But maybe we want to differ? 
+
+const double TreeAln::zMin = 1.0E-15 ; 
+const double TreeAln::zMax = (1.0 - 1.0E-6) ; 
+
+const double TreeAln::rateMin = 0.0000001; 
+const double TreeAln::rateMax = 1000000.0; 
+
+const double TreeAln::alphaMin = 0.02; 
+const double TreeAln::alphaMax = 1000.0; 
+
+const double TreeAln::freqMin = 0.001; 
+
 
 // #define DEBUG_LINK_INFO 	// TODO erase 
 
@@ -143,7 +162,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       memcpy(partitionLhs->substRates, partitionRhs->substRates, 6 * sizeof(double)); 
       partitionLhs->alpha = partitionRhs->alpha; 
       this->initRevMat(i);
-      makeGammaCats(partitionLhs->alpha, partitionLhs->gammaRates, 4, tr->useMedian);
+      this->discretizeGamma(i);       
     }
   
 
@@ -234,6 +253,8 @@ int TreeAln::getNumberOfPartitions()
 // usefull stuff 
 pInfo* TreeAln::getPartition(int model) 
 {
+  assert(model < getNumberOfPartitions()); 
+  
 #if HAVE_PLL == 1   
   return partitions->partitionData[model]; 
 #else 
@@ -274,3 +295,84 @@ void TreeAln::initRevMat(int model)
 
 
 
+/** 
+    @brief save setting method for a frequency parameter 
+
+    @return newValue after check
+ */  
+double TreeAln::setFrequencySave(double newValue, int model, int position )
+{
+  if(freqMin < newValue)
+    newValue = freqMin; 
+
+  pInfo *partition = getPartition(model); 
+  // TODO assert? 
+  partition->frequencies[position] = newValue; 
+  return newValue; 
+}
+
+/** 
+    @brief save setting method for a substitution parameter 
+    @return newValue after check
+ */  
+double TreeAln::setSubstSave(double newValue, int model, int position)
+{
+  if(newValue < rateMin)
+    newValue = rateMin; 
+  if(rateMax < newValue )
+    newValue = rateMax; 
+
+  pInfo *partition = getPartition(model);
+  assert(position < partition->states); 
+  partition->substRates[position] = newValue; 
+  
+  return newValue; 
+}
+
+
+
+/** 
+    @brief save setting method for a branch length
+ */  
+double TreeAln::setBranchLengthSave(double newValue, int model, nodeptr p)
+{
+  if(newValue < zMin)
+    newValue = zMin; 
+  if (zMax < newValue)
+    newValue = zMax; 
+  
+  p->z[model] = p->back->z[model] = newValue; 
+
+  return newValue; 
+}
+
+
+/** 
+    @brief save setting method for an alpha value 
+    @return newValue after check 
+    
+ */  
+double TreeAln::setAlphaSave(double newValue, int model)
+{
+  if(newValue < alphaMin)
+    newValue = alphaMin; 
+  if(alphaMax < newValue )
+    newValue = alphaMax; 
+
+  pInfo *partition = getPartition(model);
+  partition->alpha =  newValue; 
+  
+  return newValue; 
+}
+
+
+/**
+   @brief makes the discrete categories for the gamma
+   distribution. Has to be called, if alpha was updated.   
+
+ */ 
+void TreeAln::discretizeGamma(int model)
+{
+  pInfo *partition =  getPartition(model); 
+  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
+}

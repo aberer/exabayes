@@ -37,9 +37,9 @@ void debug_printNodeEnvironment(state *chain, int nodeID )
   nodeptr 
     p =  chain->tr->nodep[nodeID]; 
 
-  printInfo(chain, "STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, p->back->z[0], 
-	    p->next->back->number, p->next->back->z[0],
-	    p->next->next->back->number, p->next->next->back->z[0]
+  printInfo(chain, "STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, traln->getBranchLength( p->back->number,0), 
+	    p->next->back->number, traln->getBranchLength( p->next->back->number,0),
+	    p->next->next->back->number, traln->getBranchLength( p->next->next->back->number,0)
 	    );   
 #endif
 }
@@ -206,7 +206,7 @@ void printInfo(state *chain, const char *format, ...)
 
 
 char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
-{      
+{   
   // tree *tr = chain->tr; 
 
   if(isTip(p->number, tr->mxtips)) 
@@ -281,7 +281,7 @@ static void printParams(state *chain)
 
   FILE *fh = chain->outputParamFile; 
 
-  double treeLength = branchLengthToReal(tr, getTreeLength(tr,tr->nodep[1]->back )); 
+  double treeLength = branchLengthToReal(tr, getTreeLength(chain->traln,tr->nodep[1]->back )); 
   assert(treeLength != 0.); 
   fprintf(fh, "%d\t%f\t%.3f", chain->currentGeneration,
 	  tr->likelihood,  
@@ -290,11 +290,11 @@ static void printParams(state *chain)
   for(int i = 0; i < chain->traln->getNumberOfPartitions(); ++i)
     {
       pInfo *partition = chain->traln->getPartition(i); 
-      fprintf(fh, "\t%f\t%f", chain->traln->accessPartitionLH( i),partition->alpha) ; 
+      fprintf(fh, "\t%f\t%f", chain->traln->accessPartitionLH( i),chain->traln->getAlpha(i)) ; 
       for(int j = 0; j < 6 ; ++j) /* TODO */
 	fprintf(fh, "\t%.2f", partition->substRates[j]); 
       for(int j = 0; j < 4 ; ++j) /* TODO */
-	fprintf(fh, "\t%.2f", partition->frequencies[j]) ;
+	fprintf(fh, "\t%.2f", chain->traln->getFrequency(i,j));
     }
 
   fprintf(fh, "\n"); 
@@ -326,7 +326,6 @@ static void exabayes_printTopology(state *chain)
 {  
   assert(chain->couplingId == 0);
   tree *tr = chain->traln->getTr();
-  /* FILE *fh = myfopen(topologyFile, "a");   */
   FILE *fh = chain->topologyFile; 
   memset(chain->traln->getTr()->tree_string, 0, chain->traln->getTr()->treeStringLength * sizeof(char) ); 
   
@@ -342,30 +341,6 @@ void printSample(state *chain)
   exabayes_printTopology(chain);
   printParams(chain);
 }
-
-
-
-
-#if 0 
-static void printSubsRates(state *prState ,int model, int numSubsRates)
-{
-  pInfo *partition = getPartition(prState, model); 
-
-  assert(partition->dataType = DNA_DATA);
-  int i;
-  PRINT("Subs rates[%d]: ", model);
-  for(i=0; i<numSubsRates; i++)
-    PRINT("%d => %.3f, ", i, partition->substRates[i]);
-    PRINT("\n");
-  PRINT("frequencies[%d]: ", model);
-  for(i=0; i<prState->frequRemem.numFrequRates; i++)
-    PRINT("%d => %.3f, ", i, partition->frequencies[i]); 
-
-  PRINT("\n");
-}
-#endif
-
-
 
 
 void printIfPresent(proposalFunction *pf)
@@ -458,7 +433,7 @@ void chainInfo(state *chain)
   int runId = chain->id / gAInfo.numberCoupledChains; 
   tree *tr = chain->traln->getTr(); 
 
-  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));
+  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(chain->traln, tr->nodep[1]->back)));
   printHotChains(runId); 
   printSwapInfo(runId);   
   PRINT("\n"); 

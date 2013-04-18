@@ -35,7 +35,7 @@ OPT_HEAD= -I./src/pll
 exabayes_SOURCES+=$(libpll_a_SOURCES) 
 else
 CC=mpicc -std=c99
-CXX=mpicxx -std=c++0x
+CXX=mpicxx 
 OPT_HEAD= -Isrc/examl/
 FEATURE_FLAGS= -D_USE_ALLREDUCE
 exabayes_SOURCES+=$(libexaml_a_SOURCES)

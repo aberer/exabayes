@@ -74,7 +74,10 @@ void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
   int i;
 
   for( i = 0; i < traln->getNumBranches(); i++)
-    p->z[i] =  exp( - p->z[i] / tr->fracchange); 
+    {
+      double val = traln->getBranchLength(p->number, i); 
+      traln->setBranchLengthSave(exp( - val  / tr->fracchange), i,p); 
+    }
   *count += 1;
   
   if (! isTip(p->number,tr->mxtips)) 
@@ -99,7 +102,7 @@ static void initParamDump(TreeAln *traln, paramDump *dmp)
     {
       perPartitionInfo *p =  dmp->infoPerPart + i ; 
       p->alpha = 0.5; 
-      for(int j = 0; j < 5; ++j)
+      for(int j = 0; j < 6; ++j)
 	p->substRates[j] = 0.5; 
       p->substRates[5] = 1; 
       for(int j = 0; j < 4; ++j)
@@ -231,7 +234,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	  theChain->traln = new TreeAln(*(masterChain->traln)); // initialize from master chain 
 	}
       
-      TreeAln *traln = 	theChain->traln; 
+      TreeAln *traln = 	theChain->traln;  
       theChain->id = i; 
       theChain->couplingId = i % gAInfo.numberCoupledChains ; 
 
@@ -308,7 +311,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
       saveTreeStateToChain(theChain); 
 
       PRINT("Initial LnL for chain %d is  %f\ttree-length=%.3f\tseed=%u,%u\n", theChain->id, theChain->traln->getTr()->likelihood, 
-	    branchLengthToReal(theChain->traln->getTr(), getTreeLength(theChain->traln->getTr(), theChain->traln->getTr()->nodep[1]->back)),
+	    branchLengthToReal(theChain->traln->getTr(), getTreeLength(theChain->traln, theChain->traln->getTr()->nodep[1]->back)),
 	    theChain->rKey.v[0], theChain->rKey.v[1]
 	    ); 
 
@@ -317,6 +320,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	  if( i % gAInfo.numberCoupledChains == 0)
 	    {
 	      makeChainFileNames(theChain, i / gAInfo.numberCoupledChains); 
+	      // printf("\n\ninitializing output file\n\n") ;
 	      initializeOutputFiles(theChain); 
 	    }
 	  else 
@@ -346,7 +350,8 @@ void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
   int i;
   
   for( i = 0; i < traln->getNumBranches(); i++)
-    p->z[i] = p->back->z[i] = z;  
+      traln->setBranchLengthSave(z, i, p); 
+  
   *count += 1;
   
   if (! isTip(p->number,tr->mxtips)) 
@@ -361,25 +366,6 @@ void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
 }
 
 
-
-void traverseAndPrint(nodeptr p, int *count, tree *tr)
-{
-  nodeptr q; 
-  printf("%d:%f,", p->number, p->z[0]); 
-
-  if( ! isTip(p->number, tr->mxtips))
-    {
-      q = p->next; 
-      while(p != q)
-	{
-	  traverseAndPrint(q->back,count, tr); 
-	  q = q->next; 
-	}
-    }  
-}
-
-
-
 void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolean restore)
 {
   tree *tr = traln->getTr();
@@ -387,16 +373,9 @@ void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolea
   assert(traln->getNumBranches() == 1); 
 
   if(restore == TOPO_RESTORE )
-    { 
-      /* TODO kassian: is this correct? */
-      p->z[0] = blBuf[*cnt];             
-      p->back->z[0] = blBuf[*cnt]; 
-      
-    }
+    traln->setBranchLengthSave(blBuf[*cnt], 0,p); 
   else if(restore == TOPO_SAVE)    
-    {
-      blBuf[*cnt] =  p->z[0]; 
-    }
+    blBuf[*cnt] =  traln->getBranchLength(p->number,0); 
   else 
     assert(0); 
   *cnt += 1 ; 
@@ -451,30 +430,13 @@ void applyChainStateToTree(state *chain)
       memcpy(partition->frequencies, info->frequencies, 4 * sizeof(double));
       
       chain->traln->initRevMat(i);
-      makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
+      chain->traln->discretizeGamma(i);	 
     } 
 
-  // evaluateGenericWrapper(chain, tr->start, TRUE ); 
   evaluateFullNoBackup(chain); 
-  
-  if(processID == 0)
-    {
-#ifdef DEBUG_BL
-      printf("branch lengths: ");
-      int count = 0; 
-      traverseAndPrint(tr->start->back, &count, tr); 
-      printf("\n"); 
-#endif
-    }
 
-
-  /* TODO for now  */
   chain->wasAccepted = TRUE; 
-  // chain->prevProposal = NULL; 
 
-#if 0 				// TODO 
-  updateSavedState(chain); 
-#endif
 }
 
 
@@ -506,16 +468,6 @@ void saveTreeStateToChain(state *chain)
     }  
 
 
-  if(processID == 0)
-    {
-
-#ifdef DEBUG_BL
-      int count = 0;       
-      printf("saving state: ");
-      traverseAndPrint(tr->start->back,  &count,tr);
-      printf("\n");
-#endif
-    }
 }
 
 
@@ -632,7 +584,7 @@ void step(state *chain)
        && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
     {
       if( processID == 0 ) 
-      printSample(chain);       
+	printSample(chain);       
 
       if(chain->currentGeneration >  gAInfo.burninGen)
 	{

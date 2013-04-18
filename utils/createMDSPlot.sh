@@ -32,7 +32,7 @@ do
     file=$1
     shift 
 
-    $(dirname $0)/getTopologies.sh $file |  sed -n "0~${thinning}p"  > topoTMP
+    $(dirname $0)/getTopologies.sh $file |  sed -n "0~${thinning}p" | sed -e '$d'   > topoTMP
     cat topoTMP | wc -l  >> numTrees.$id 
     cat topoTMP    >> allTopo.$id
     rm topoTMP

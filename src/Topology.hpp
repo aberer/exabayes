@@ -3,11 +3,6 @@
 #include "TreeAln.hpp"
 
 
-
-/** 
-    @brief stores a topology and the associated branch lengths 
-
- */
 class Topology
 {
 public: 

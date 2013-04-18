@@ -1,3 +1,5 @@
+
+
 #include "LnlRestorer.hpp" 
 #include "adapters.h"
 #include "branch.h"
@@ -6,6 +8,8 @@
 
 #include <iostream>
 using namespace std; 
+
+
 
 
 LnlRestorer::LnlRestorer(state *_chain)
@@ -39,6 +43,7 @@ LnlRestorer::LnlRestorer(state *_chain)
   orientation = (int*) exa_calloc(tr->mxtips, sizeof(int)); 
   wasSwitched = (bool*)exa_calloc( 2 * tr->mxtips , sizeof(bool));
 }
+
 
 
 
@@ -158,9 +163,7 @@ if(processID == 0)
 
 
 
-/**
-   @brief restores the original state of the tree 
- */ 
+
 void LnlRestorer::restore()
 {
 #ifdef DEBUG_ARRAY_SWAP 
@@ -204,11 +207,6 @@ if(processID == 0)
 
 
 
-
-/**
-   @brief save any arrays that are recomputed, if they have not
-   already been flipped
- */ 
 void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, bool fullTraversal)
 {  
   this->modelEvaluated = model; 
@@ -253,9 +251,8 @@ if(processID == 0)
 
 
 
-/**
-   @brief synchronizes restorer with tree 
- */ 
+
+/**@brief  resets the restorer, s.t. it is consistent with the current tree (and can restore it later) */ 
 void LnlRestorer::resetRestorer()
 {
 #ifdef DEBUG_ARRAY_SWAP

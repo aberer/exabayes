@@ -16,15 +16,19 @@
 
    p should be a tip. 
  */ 
-double getTreeLength(tree *tr, nodeptr p)
+double getTreeLength(TreeAln *traln, nodeptr p)
 {
+  tree *tr  = traln->getTr();
   if(isTip(p->number, tr->mxtips))
-    return p->z[0]; 
+    return traln->getBranchLength( p->number,0); 
   else 
     {
-      return p->z[0] * getTreeLength(tr, p->next->back)
-	* getTreeLength(tr, p->next->next->back);       
+      return traln->getBranchLength( p->number,0) * getTreeLength(traln, p->next->back)
+	* getTreeLength(traln, p->next->next->back);       
     }
+  
+  assert(0);
+  return 0; 
 }
 
 void restoreBranchLengthsPath(TreeAln *traln, path *s)
@@ -185,7 +189,7 @@ void resetAlongPathForESPR(TreeAln *traln, path *rPath)
   
   double ztmp[NUM_BRANCHES]; 
   for(int i = 0; i < numBranches; ++i)
-    ztmp[i] = lNPtr->z[i]; 
+    ztmp[i] = traln->getBranchLength( lNPtr->number,0); 
 
   hookup(lNPtr, oNPtr, oNPtr->z, numBranches);   
   branch b = getThirdBranch(tr, constructBranch(sTNode, lastNode), constructBranch(sTNode, otherNode)); 
@@ -194,7 +198,7 @@ void resetAlongPathForESPR(TreeAln *traln, path *rPath)
   nodeptr sTPtr = findNodeFromBranch(tr, b);
   sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL;
 #ifdef DEBUG_SHOW_TOPO_CHANGES
-  printf("RESET: pruning %d from %d (%.2f),%d (%.2f)\n", sTPtr->number, oNPtr->number,oNPtr->z[0] , lNPtr->number, lNPtr->z[0]); 
+  printf("RESET: pruning %d from %d (%.2f),%d (%.2f)\n", sTPtr->number, oNPtr->number, traln->getBranchLength( oNPtr->number,0) , lNPtr->number, traln->getBranchLength( lNPtr->number,0)); 
 #endif
 
   int firstNode = rPath->content[0].thisNode == sTNode ? rPath->content[0].thatNode : rPath->content[0].thisNode; 
@@ -208,7 +212,7 @@ void resetAlongPathForESPR(TreeAln *traln, path *rPath)
   hookup(sTPtr->next,        fPtr, fPtr->z, numBranches ); 
   hookup(sTPtr->next->next,  sPtr, ztmp, numBranches ); 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
-  printf("RESET: inserting %d into %d (%.2f),%d (%.2f)\n", sTPtr->number, fPtr->number, fPtr->z[0], sPtr->number, sPtr->z[0]); 
+  printf("RESET: inserting %d into %d (%.2f),%d (%.2f)\n", sTPtr->number, fPtr->number, traln->getBranchLength( fPtr->number,0), sPtr->number, sPtr->z[0]); 
 #endif
   
 }
