@@ -4,6 +4,8 @@
 #include <math.h>
 #include <inttypes.h>
 
+#include <random>
+
 #include "axml.h"
 #include "main-common.h"
 #include "bayes.h"
@@ -108,18 +110,44 @@ double drawRandBiUnif(state *chain, double x)
 }
 
 
-//Given x this function randomly draws from [x/2,2*x] 
-/* double drawRandBiUnif(double x) */
-/* { */
-/*   double r; */
-/*   //r=(double)rand()/(double)RAND_MAX;   */
-/*   //r=x/2+r*(3/2)*x;//=x/2+r*(2*x-x/2); */
+  // Gamma(alpha, beta) distribution
+double drawRandGamma(state *chain, double alpha, double beta)
+{
   
-/*   r=drawRandDouble(2*x-x/2)+x/2; */
-/*   //r=drawRandDouble((3/2)*x-x/(3/2))+x/(3/2); */
+   double gamma=0;
+  assert(alpha > 0 && beta > 0);
   
-/*   return r; */
-/* } */
+  if (alpha < 1) {
+      double r;
+      boolean done=false;
+      double b=1+1/alpha;
+      while(!done) {
+        r=drawRandDouble01(chain);
+     if (r>1/b) {
+          gamma=-log((b-r)/alpha);
+          if (drawRandDouble01(chain)<=pow(gamma,alpha-1)) 
+	    done=true;
+        }
+	else {
+          gamma=pow(r,1/alpha);
+          if (drawRandDouble01(chain)<=exp(-gamma)) 
+	    done=true;
+        }
+       }
+    } 
+    else if (alpha == 1) {//GAMMA(1,1)=EXP(1)
+      gamma = -log (drawRandDouble01(chain));
+    } else {    
+      double y = -log (drawRandDouble01(chain));
+      while (drawRandDouble01(chain) > pow (y * exp (1 - y), alpha - 1))
+        y = -log (drawRandDouble01(chain));
+      gamma = alpha * y;
+    }
+    return beta*gamma;//scale from GAMMA(alpha,1) to GAMMA(alpha,beta)
+  }  
+  
+
+
 
 
 /**

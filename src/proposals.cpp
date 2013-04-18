@@ -1382,6 +1382,40 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
 }
 
 
+
+void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
+{
+  int model  = drawRandInt(chain,chain->traln->getNumberOfPartitions());
+  perPartitionInfo *info = pf->remembrance.partInfo; 
+
+  pInfo *partition = chain->traln->getPartition( model); 
+
+  int numFreq = partition->states; 
+  info->modelNum = model;   
+  info->numFreqs = numFreq; 
+
+  recordFrequRates(chain, model, numFreq, info->frequencies);
+  
+  double* r  =  (double*)exa_calloc(numFreq, sizeof(double)); 
+  for(int state = 0;state < numFreq ; state ++)
+    {
+      double curv = partition->frequencies[state];
+      r[state] = drawRandBiUnif(chain,curv);       
+      chain->hastings*=curv/r[state];      
+    }
+
+  double sum=0;  
+  for(int state = 0;state< numFreq ; state ++)    
+    sum+=r[state]; 
+
+  for(int state = 0; state< numFreq ; state ++)    
+    partition->frequencies[state]=r[state]/sum; 
+
+  chain->traln->initRevMat(model);
+
+  exa_free(r);
+}
+
 void frequency_proposal_reset(state * chain, proposalFunction *pf)
 {
   perPartitionInfo *info = pf->remembrance.partInfo; 
@@ -1697,6 +1731,14 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func = frequency_proposal_reset; 
       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "freqBiunif"; 
+      ptr->category = FREQUENCIES; 
+      break;
+    case UPDATE_FREQUENCIES_DIRICHLET: 
+      ptr->eval_lnl = onePartitionEval; 
+      ptr->apply_func = frequency_dirichlet_proposal_apply; 
+      ptr->reset_func = frequency_proposal_reset; 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->name = "freqDirichlet"; 
       ptr->category = FREQUENCIES; 
       break;
     case UPDATE_MODEL_PERM_BIUNIF: 

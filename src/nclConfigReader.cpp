@@ -84,6 +84,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = ST_NNI; 
   else if (key.EqualsCaseInsensitive("nodeSlider"))
     *pf = NODE_SLIDER; 
+  else if (key.EqualsCaseInsensitive("initFrequencyDirichletWeight"))
+    *pf = UPDATE_FREQUENCIES_DIRICHLET;
   // TODO@kassian this is a good place for proposal add 
 
   else 

@@ -57,6 +57,7 @@ begin EXABAYES;
       [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
       initFrequencySliderWeight 2  [ ok ] 
+      initFrequencyDirichletWeight 2  [ ]
 
 
       [ PARAMETERS for various moves ]

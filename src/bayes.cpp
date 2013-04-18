@@ -176,6 +176,8 @@ void executeOneRun(state *chains, int gensToRun )
 
       saveTreeStateToChain(curChain); 
     }
+    
+    
 }
 
 
