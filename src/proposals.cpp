@@ -78,7 +78,7 @@ static void record_branch_info(TreeAln* traln, nodeptr p, double *bl)
   int i;
   int numBranches = traln->getNumBranches(); 
   for(i = 0; i < numBranches; i++)
-    bl[i] = traln->getBranchLength( p->number,0);
+    bl[i] = traln->getBranchLength( p,0);
 }
 
 
@@ -398,7 +398,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 	  {
 	    neighborZ = nbz; 
 	    for(int i = 0; i < chain->traln->getNumBranches(); ++i)
-	      traln->setBranchLengthSave(traln->getBranchLength(nnb->number, i), i,nb); 
+	      traln->setBranchLengthSave(traln->getBranchLength(nnb, i), i,nb); 
 	    
 	    assert(chain->traln->getNumBranches() == 1 ); 
 	    swpDouble(rec->neighborBls,rec->nextNeighborBls ); 
@@ -942,7 +942,7 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
       if(record_tmp_bl)
 	{
 	  assert(p->z[i] == p->back->z[i]);	  	  
-	  bls[i] = traln->getBranchLength( p->number,0); 
+	  bls[i] = traln->getBranchLength( p,0); 
 
 	  /* bls[i] = p->back->z_tmp[i] = p->z[i]; */
 	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
@@ -952,7 +952,7 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
       /* TODO@kassian just wondering: is it correct to use the global
 	 frac-change here? what are the local frac-changes good for
 	 then?  */
-      real_z = -log( traln->getBranchLength( p->number,0)) * chain->traln->getTr()->fracchange;
+      real_z = -log( traln->getBranchLength( p,0)) * chain->traln->getTr()->fracchange;
       
       //     printf( "z: %f %f\n", p->z[i], real_z );
     
@@ -991,11 +991,11 @@ static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,st
       if(record_tmp_bl)
 	{
 	  assert(p->z[i] == p->back->z[i]); 
-	  bls[i] = traln->getBranchLength( p->number,0); 
+	  bls[i] = traln->getBranchLength( p,0); 
 	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
       
-      real_z = -log( traln->getBranchLength( p->number,0)) * chain->traln->getTr()->fracchange; //convert from exponential to real form
+      real_z = -log( traln->getBranchLength( p,0)) * chain->traln->getTr()->fracchange; //convert from exponential to real form
       r = drawRandBiUnif(chain, real_z);//draw from [real_z/2,2*real_z]
 
     
@@ -1041,11 +1041,11 @@ static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state
       if(record_tmp_bl)
 	{
 	  assert(p->z[i] == p->back->z[i]); 
-	  bls[i] = traln->getBranchLength( p->number,0); 
+	  bls[i] = traln->getBranchLength( p,0); 
 	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
    //   r = drawRandExp(lambda);
-      real_z = -log( traln->getBranchLength( p->number,0)) * chain->traln->getTr()->fracchange;
+      real_z = -log( traln->getBranchLength( p,0)) * chain->traln->getTr()->fracchange;
        r = drawRandExp(chain, 1.0/real_z);
 
 	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
@@ -1151,7 +1151,7 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
   int target_branch = drawRandInt(chain,(chain->traln->getTr()->mxtips * 2) - 3); 
 
   node *p = select_branch_by_id_dfs( chain->traln->getTr()->start, target_branch, chain );
-  double z = traln->getBranchLength( p->number,0); 
+  double z = traln->getBranchLength( p,0); 
   double oldZ = 0; 
    
   
@@ -1389,9 +1389,9 @@ static void branchLengthWindowApply(state *chain, proposalFunction *pf)
   
   clearStack(pf->remembrance.modifiedPath); 
   pushStack(pf->remembrance.modifiedPath, b);
-  pf->remembrance.modifiedPath->content[0].length[0]  = chain->traln->getBranchLength( p->number,0); 
+  pf->remembrance.modifiedPath->content[0].length[0]  = chain->traln->getBranchLength( p,0); 
 
-  double zOld = chain->traln->getBranchLength( p->number,0); 
+  double zOld = chain->traln->getBranchLength( p,0); 
   double win =  pf->parameters.slidWinSize ; 
   double realZ = branchLengthToReal(tr, zOld); 
   double blNew = branchLengthToInternal(tr,fabs(drawFromSlidingWindow(chain, realZ, win))); 
@@ -1410,7 +1410,7 @@ static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
   clearStack(pf->remembrance.modifiedPath); 
   pushStack(pf->remembrance.modifiedPath, b);
   assert(stackLength(pf->remembrance.modifiedPath) == 1 ); 
-  pf->remembrance.modifiedPath->content[0].length[0]  = traln->getBranchLength( p->number,0); 
+  pf->remembrance.modifiedPath->content[0].length[0]  = traln->getBranchLength( p,0); 
 
   double
     multiplier = drawMultiplier(chain, pf->parameters.multiplier); 
@@ -1419,7 +1419,7 @@ static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
   /* TODO how do we do that wiht multiple bls per branch?  */
   assert(chain->traln->getNumBranches() == 1); 
 
-  double newZ = pow( traln->getBranchLength( p->number,0), multiplier) ; 
+  double newZ = pow( traln->getBranchLength( p,0), multiplier) ; 
   /* printf("\t\tBL_MULTI: %g * %g => %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
 
   /* according to lakner2008  */

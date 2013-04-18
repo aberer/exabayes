@@ -45,7 +45,7 @@ public:
   // direct acceses to for instance branch lengths. Makes our code
   // saver and if we want to do something globally (e.g., print), then
   // it can simply be added to these functions.
-  double getBranchLength(int node, int model){return tr->nodep[node]->z[model] ;  }
+  double getBranchLength(nodeptr p, int model){return p->z[model] ;  }
   double getSubstRate(int model, int position){pInfo *partition = getPartition(model); return partition->substRates[position]; }
   double getFrequency(int model, int position){pInfo *partition = getPartition(model); return partition->frequencies[position]; }
   double getAlpha(int model){pInfo *partition = getPartition(model) ; return partition->alpha; } 

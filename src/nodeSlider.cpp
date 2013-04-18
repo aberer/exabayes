@@ -4,7 +4,7 @@
 static void insertBranchLength(TreeAln *traln, branch &b)
 {
   nodeptr p = findNodeFromBranch(traln->getTr(), b); 
-  b.length[0] = traln->getBranchLength( p->number,0); 
+  b.length[0] = traln->getBranchLength( p,0); 
   // getBranchLength( traln->assert(p->number,0) == traln->getBranchLength( p->back->number,0)); 
 }
 
@@ -43,7 +43,7 @@ void applyNodeSlider(state *chain, proposalFunction *pf)
   nodeptr nodeA = findNodeFromBranch(tr, oneBranch),
     nodeB = findNodeFromBranch(tr,otherBranch); 
 
-  double bothZ = traln->getBranchLength( nodeA->number,0) * traln->getBranchLength( nodeB->number,0); 
+  double bothZ = traln->getBranchLength( nodeA,0) * traln->getBranchLength( nodeB,0); 
   double multiplier = drawMultiplier(chain, pf->parameters.multiplier);
   chain->hastings *= multiplier; 
   double newZ = branchLengthToReal(tr,pow(bothZ,multiplier));  

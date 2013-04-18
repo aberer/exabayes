@@ -302,7 +302,7 @@ void TreeAln::initRevMat(int model)
  */  
 double TreeAln::setFrequencySave(double newValue, int model, int position )
 {
-  if(freqMin < newValue)
+  if(newValue < freqMin )
     newValue = freqMin; 
 
   pInfo *partition = getPartition(model); 
@@ -323,7 +323,7 @@ double TreeAln::setSubstSave(double newValue, int model, int position)
     newValue = rateMax; 
 
   pInfo *partition = getPartition(model);
-  assert(position < partition->states); 
+  assert(position < partition->states * partition->states - partition->states); 
   partition->substRates[position] = newValue; 
   
   return newValue; 

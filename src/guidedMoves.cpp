@@ -1,5 +1,5 @@
 #include "axml.h"
- #include "bayes.h"
+#include "bayes.h"
 #include "adapters.h"
 #include "randomness.h"
 #include "output.h"
@@ -78,7 +78,7 @@ static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtre
       nodeptr 
 	iP = q->next,    
 	iP2 = q->next->back; 
-      double zOld = chain->traln->getBranchLength(iP->number, 0),
+      double zOld = chain->traln->getBranchLength(iP, 0),
 	a,b;       
       divideBranchLengthsWithRatio(tr, zOld, ratio, &a, &b); 
       hookup(p->next,iP, &a, numBranches);   
@@ -113,7 +113,7 @@ static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtre
       nodeptr iP = q->next->next, 
 	iP2 = q->next->next->back; 
 
-      double zOrig = chain->traln->getBranchLength(iP->number,0),
+      double zOrig = chain->traln->getBranchLength(iP,0),
 	a,b; 
       divideBranchLengthsWithRatio(tr, zOrig, ratio, &a, &b); 
 
@@ -203,8 +203,8 @@ static void testInsertWithRadius(state *chain, insertList **lnlList, branch subt
       q = p->next->back, 
       r = p->next->next->back; 
 
-    ratio = getRatio(tr, traln->getBranchLength(q->number,0), traln->getBranchLength(r->number,0));
-    double tmp = combineBranchLengths(tr, traln->getBranchLength(q->number,0), traln->getBranchLength(r->number,0));
+    ratio = getRatio(tr, traln->getBranchLength(q,0), traln->getBranchLength(r,0));
+    double tmp = combineBranchLengths(tr, traln->getBranchLength(q,0), traln->getBranchLength(r,0));
 
     hookup(q,r, &tmp, numBranches); 
     p->next->back = p->next->next->back = (nodeptr)NULL;     
@@ -222,7 +222,7 @@ static void testInsertWithRadius(state *chain, insertList **lnlList, branch subt
       r = findNodeFromBranch(tr, invertBranch(pruneBranch)); 
 
     double z1, z2; 
-    divideBranchLengthsWithRatio(tr, traln->getBranchLength(q->number,0), ratio, &z1, &z2); 
+    divideBranchLengthsWithRatio(tr, traln->getBranchLength(q,0), ratio, &z1, &z2); 
     hookup(p->next, q, &z1, numBranches); 
     hookup(p->next->next, r, &z2, numBranches);   
   }
@@ -311,7 +311,7 @@ void resetGuidedSPR(state *chain, proposalFunction *pf)
     subtreeBranch = rememPath->content[1]; 
 
   nodeptr p = findNodeFromBranch(tr, subtreeBranch ); 
-  double restoredZ = combineBranchLengths(tr, chain->traln->getBranchLength(p->next->back->number, 0), chain->traln->getBranchLength(p->next->next->back->number, 0)) ; 
+  double restoredZ = combineBranchLengths(tr, chain->traln->getBranchLength(p->next->back, 0), chain->traln->getBranchLength(p->next->next->back, 0)) ; 
   hookup(p->next->back, p->next->next->back, &restoredZ, numBranches); 
 #if DEBUG_GUIDED_SPR > 1   
   printf("RESET: hooking up %d with %d (%g)\n", p->next->back->number, p->next->next->back->number, branchLengthToReal(tr, restoredZ)); 
@@ -320,7 +320,7 @@ void resetGuidedSPR(state *chain, proposalFunction *pf)
   nodeptr q = findNodeFromBranch(tr, pruneBranch),
     r = findNodeFromBranch(tr, invertBranch(pruneBranch)); 
   double a,b; 
-  divideBranchLengthsWithRatio(tr, traln->getBranchLength(q->number, 0 ), ratio, &a,&b); 
+  divideBranchLengthsWithRatio(tr, traln->getBranchLength(q, 0 ), ratio, &a,&b); 
   hookup(p->next, q, &a,numBranches); 
   hookup(p->next->next, r, &b,numBranches); 
 
@@ -394,7 +394,7 @@ void applyGuidedSPR(state *chain, proposalFunction *pf)
 	{
 	  pruneBranch.thisNode = p->next->back->number; 
 	  pruneBranch.thatNode = p->next->next->back->number; 	  
-	  ratio = getRatio(tr,  traln->getBranchLength(p->next->back->number, 0 ) , traln->getBranchLength( p->next->next->back->number,0));
+	  ratio = getRatio(tr,  traln->getBranchLength(p->next->back, 0 ) , traln->getBranchLength( p->next->next->back,0));
 	  /* printf("\nRATIO=%g\n", ratio) ; */
 	}
     }
@@ -415,14 +415,14 @@ void applyGuidedSPR(state *chain, proposalFunction *pf)
   /* prune subtree and insert into new position  */
   {
     nodeptr p = findNodeFromBranch(tr, subtree); 
-    double z = combineBranchLengths(tr, traln->getBranchLength( p->next->back->number,0),   traln->getBranchLength( p->next->next->back->number,0)); 
+    double z = combineBranchLengths(tr, traln->getBranchLength( p->next->back,0),   traln->getBranchLength( p->next->next->back,0)); 
     hookup(p->next->back, p->next->next->back, &z, numBranches); 
     
     nodeptr iP = findNodeFromBranch(tr, sampledBranch),
       iP2 = findNodeFromBranch(tr, invertBranch(sampledBranch)); 
 
     double a,b; 
-    divideBranchLengthsWithRatio(tr, traln->getBranchLength( iP->number,0), sampledElem->ratio, &a,&b); 
+    divideBranchLengthsWithRatio(tr, traln->getBranchLength( iP,0), sampledElem->ratio, &a,&b); 
 
 #if DEBUG_GUIDED_SPR > 0 
     printf("inserting into %d into %d,%d(%g) with %g,%g\n", p->number, iP->number, iP2->number, branchLengthToReal(tr, traln->getBranchLength( iP->number,0)), branchLengthToReal(tr, a),branchLengthToReal(tr, b)); 
@@ -444,7 +444,7 @@ void applyGuidedSPR(state *chain, proposalFunction *pf)
      the proposals, even with weird BLs.  */
   {
     nodeptr p = findNodeFromBranch(tr, subtree); 
-    double sum = branchLengthToReal(tr, traln->getBranchLength( p->next->number,0) * traln->getBranchLength( p->next->next->number,0));
+    double sum = branchLengthToReal(tr, traln->getBranchLength( p->next,0) * traln->getBranchLength( p->next->next,0));
     double onePart = drawRandDouble01(chain) * sum ; 
     double otherPart = sum - onePart; 
     onePart = branchLengthToInternal(tr, onePart); 

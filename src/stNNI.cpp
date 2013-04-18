@@ -27,20 +27,20 @@ void apply_st_nni(state *chain, proposalFunction *pf)
   if(r < 0.5)
     {
       switchingBranch = constructBranch(p->back->next->back->number, p->back->number); 
-      bl = traln->getBranchLength( p->back->next->back->number,0); 
+      bl = traln->getBranchLength( p->back->next->back,0); 
     }
   else 
     {
       switchingBranch = constructBranch(p->back->next->next->back->number, p->back->number); 
-      bl = traln->getBranchLength( p->back->next->next->back->number,0); 
+      bl = traln->getBranchLength( p->back->next->next->back,0); 
     }
 
 #ifdef DEBUG_INFO
   cout << "stNNI: switching " <<  toBePruned <<  " with "  << switchingBranch << "\t common branch " << b << endl; 
 #endif
 
-  toBePruned.length[0] = traln->getBranchLength( p->next->back->number,0); 
-  b.length[0] = traln->getBranchLength( p->number,0); 
+  toBePruned.length[0] = traln->getBranchLength( p->next->back,0); 
+  b.length[0] = traln->getBranchLength( p,0); 
   switchingBranch.length[0] = bl; 
   
   path *rememStack = pf->remembrance.modifiedPath; 
@@ -65,9 +65,9 @@ void apply_st_nni(state *chain, proposalFunction *pf)
       m2 =  drawMultiplier(chain, pf->parameters.multiplier),
       m3 =  drawMultiplier(chain, pf->parameters.multiplier);
       
-    traln->setBranchLengthSave( pow( traln->getBranchLength( p->number,0),m1),0,p); 
-    traln->setBranchLengthSave( pow( traln->getBranchLength( r->number,0),m2),0,r); 
-    traln->setBranchLengthSave( pow( traln->getBranchLength( q->number,0),m3),0,q); 
+    traln->setBranchLengthSave( pow( traln->getBranchLength( p,0),m1),0,p); 
+    traln->setBranchLengthSave( pow( traln->getBranchLength( r,0),m2),0,r); 
+    traln->setBranchLengthSave( pow( traln->getBranchLength( q,0),m3),0,q); 
 
 #endif
 

@@ -20,10 +20,10 @@ double getTreeLength(TreeAln *traln, nodeptr p)
 {
   tree *tr  = traln->getTr();
   if(isTip(p->number, tr->mxtips))
-    return traln->getBranchLength( p->number,0); 
+    return traln->getBranchLength( p,0); 
   else 
     {
-      return traln->getBranchLength( p->number,0) * getTreeLength(traln, p->next->back)
+      return traln->getBranchLength( p,0) * getTreeLength(traln, p->next->back)
 	* getTreeLength(traln, p->next->next->back);       
     }
   
@@ -189,7 +189,7 @@ void resetAlongPathForESPR(TreeAln *traln, path *rPath)
   
   double ztmp[NUM_BRANCHES]; 
   for(int i = 0; i < numBranches; ++i)
-    ztmp[i] = traln->getBranchLength( lNPtr->number,0); 
+    ztmp[i] = traln->getBranchLength( lNPtr,0); 
 
   hookup(lNPtr, oNPtr, oNPtr->z, numBranches);   
   branch b = getThirdBranch(tr, constructBranch(sTNode, lastNode), constructBranch(sTNode, otherNode)); 

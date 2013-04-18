@@ -82,7 +82,7 @@ void saveBranchLengthsPath(state *chain, path *s)
       nodeptr p = findNodeFromBranch(tr, *bPtr); 
 
       for(int j = 0; j < numBranches; ++j)
-	bPtr->length[j] = traln->getBranchLength( p->number,0); 
+	bPtr->length[j] = traln->getBranchLength( p,0); 
     }
 }
 
@@ -112,7 +112,7 @@ static void multiplyBranch(state *chain, branch b, double parameter, double *has
   int numBranches = chain->traln->getNumBranches();
   nodeptr  p = findNodeFromBranch(tr, b); 
   double multiplier = drawMultiplier(chain, parameter); 
-  double newZ = branchLengthToInternal(tr, multiplier * branchLengthToReal(tr, traln->getBranchLength( p->number,0))); 
+  double newZ = branchLengthToInternal(tr, multiplier * branchLengthToReal(tr, traln->getBranchLength( p,0))); 
 
   *hastings *= multiplier; 
   hookup(p,p->back, &newZ, numBranches);   
@@ -210,7 +210,7 @@ void drawPathForESPR(state *chain,path *s, double stopProp )
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
   for(int i = 0; i < chain->traln->getNumBranches(); ++i)
-    zqr[i] = traln->getBranchLength( r->number,0); 
+    zqr[i] = traln->getBranchLength( r,0); 
   hookup(q,r, q->z, chain->traln->getNumBranches());
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 

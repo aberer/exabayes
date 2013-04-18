@@ -31,7 +31,7 @@ void Topology::traverseAndSave(TreeAln &traln, nodeptr p, nat &number)
   branch *b = branches[number]; 
   b->thisNode = p->number; 
   b->thatNode = p->back->number; ; 
-  b->length[0] = traln.getBranchLength( p->number,0);   
+  b->length[0] = traln.getBranchLength( p,0);   
   number++; 
 
   if(NOT isTip(p->number, tr->mxtips))

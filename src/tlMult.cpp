@@ -11,7 +11,7 @@
 void multiplyBranchLengthsRecursively(TreeAln* traln, nodeptr p, double multiplier)
 {  
   tree *tr = traln->getTr();
-  double newZ = pow( traln->getBranchLength( p->number,0),multiplier); 
+  double newZ = pow( traln->getBranchLength( p,0),multiplier); 
   // p->z[0] = p->back->z[0]
   traln->setBranchLengthSave(newZ, 0, p); 
 

@@ -75,7 +75,7 @@ void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
 
   for( i = 0; i < traln->getNumBranches(); i++)
     {
-      double val = traln->getBranchLength(p->number, i); 
+      double val = traln->getBranchLength(p, i); 
       traln->setBranchLengthSave(exp( - val  / tr->fracchange), i,p); 
     }
   *count += 1;
@@ -375,7 +375,7 @@ void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolea
   if(restore == TOPO_RESTORE )
     traln->setBranchLengthSave(blBuf[*cnt], 0,p); 
   else if(restore == TOPO_SAVE)    
-    blBuf[*cnt] =  traln->getBranchLength(p->number,0); 
+    blBuf[*cnt] =  traln->getBranchLength(p,0); 
   else 
     assert(0); 
   *cnt += 1 ; 
