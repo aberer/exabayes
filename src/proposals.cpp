@@ -1385,6 +1385,7 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
 
 void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
 {
+   
   int model  = drawRandInt(chain,chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo; 
 
@@ -1397,19 +1398,29 @@ void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
   recordFrequRates(chain, model, numFreq, info->frequencies);
   
   double* r  =  (double*)exa_calloc(numFreq, sizeof(double)); 
-  for(int state = 0;state < numFreq ; state ++)
-    {
-      double curv = partition->frequencies[state];
-      r[state] = drawRandBiUnif(chain,curv);       
-      chain->hastings*=curv/r[state];      
-    }
+  
+  
+  //drawRandDirichlet(chain, r, partition->frequencies, 1.0, numFreq);
+  drawDirichletExpected(chain, r, partition->frequencies, 100.0, numFreq);
+  
+  
+  
+  chain->hastings=densityDirichlet(partition->frequencies, r, numFreq) / densityDirichlet(r, partition->frequencies, numFreq);
 
+      
+         for(int state = 0;state < numFreq ; state ++)
+    {
+      if (r[state]<FREQ_MIN)
+	r[state]=FREQ_MIN+FREQ_MIN*FREQ_MIN*(numFreq-1);//with this minima sheme, minima should be satisfied even after rescaling.
+    }
+      
   double sum=0;  
   for(int state = 0;state< numFreq ; state ++)    
     sum+=r[state]; 
 
   for(int state = 0; state< numFreq ; state ++)    
     partition->frequencies[state]=r[state]/sum; 
+  
 
   chain->traln->initRevMat(model);
 

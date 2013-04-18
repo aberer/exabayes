@@ -51,6 +51,8 @@ double drawRandDouble01(state *chain);
 double drawRandExp(state *chain, double lambda);
 double drawRandBiUnif(state *chain, double x);
 double drawRandGamma(state *chain, double alpha, double beta);
+void drawRandDirichlet(state *chain, double* results, double* alphas, double beta, int length);
+void drawDirichletExpected(state *chain, double* results, double* mean, double beta, int length);
 int drawSampleProportionally(state *chain,  double *weights, int numWeight ); 
 void drawPermutation(state *chain, int* perm, int n); 
 branch drawBranchUniform(state *chain); 
@@ -60,6 +62,8 @@ double drawMultiplier(state *chain, double multiplier);
 double drawFromSlidingWindow(state *chain, double param, double window); 
 branch drawInnerBranchUniform(state *chain); 
 
+
+double densityDirichlet(double *values, double *alphas, int length);
 
 /* #ifdef __cplusplus */
 /* } */
