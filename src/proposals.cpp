@@ -757,7 +757,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)
 }
 
 
-static void model_dirichlet_proposal_apply(state *chain, proposalFunction *pf)//llpqr
+static void model_dirichlet_proposal_apply(state *chain, proposalFunction *pf)
 {
 
   int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
@@ -1545,6 +1545,34 @@ static void branchLengthWindowApply(state *chain, proposalFunction *pf)
   p->z[0] = p->back->z[0] = blNew; 
 }
 
+
+static void guided_branch_length_proposal_apply(state *chain, proposalFunction *pf)
+{  
+ // printf("in---------------------------------------------------------------------------------------------------------------------\n");
+  tree *tr = chain->traln->getTr(); 
+  branch b =  drawBranchUniform(chain); 
+
+  nodeptr p = findNodeFromBranch(tr, b); 
+  
+  clearStack(pf->remembrance.modifiedPath); 
+  pushStack(pf->remembrance.modifiedPath, b);
+  pf->remembrance.modifiedPath->content[0].length[0]  = p->z[0]; 
+
+  double zOld = p->z[0]; 
+ // double win =  pf->parameters.slidWinSize ; 
+ // double realZ = branchLengthToReal(tr, zOld); 
+  //double blNew = branchLengthToInternal(tr,fabs(drawFromSlidingWindow(chain, realZ, win))); 
+  double newZ=drawGuidedBl(chain, p);
+  
+  double blNew = branchLengthToInternal(tr,newZ); 
+  
+  p->z[0] = p->back->z[0] = blNew; 
+
+ // printf("after----------------------------------------------------------------------------------------------------------------------\n");
+  
+}
+
+
 static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr(); 
@@ -1771,6 +1799,15 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->category = BRANCH_LENGTHS; 
       ptr->name  = "singleBlExp"; 
+      break;
+    case UPDATE_SINGLE_BL_GUIDED: 
+      ptr->eval_lnl = evalBranch;
+      ptr->remembrance.modifiedPath = NULL; 
+      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->apply_func	=  guided_branch_length_proposal_apply;
+      ptr->reset_func =  branchLengthReset;
+      ptr->category = BRANCH_LENGTHS; 
+      ptr->name  = "singleBlGuided"; 
       break; 
     case UPDATE_SINGLE_BL_BIUNIF: 
       ptr->eval_lnl = dummy_eval;

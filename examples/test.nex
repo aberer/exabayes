@@ -41,6 +41,7 @@ begin EXABAYES;
       branchMulti 40 [ ok, 40% in mrb ]
       treeLengthMult 4  [ ok, 4 % in mrb ]
       nodeSlider  10 [ ok, 10% in mrb ]
+      initGuidedBL 10 []
 
       [ RATE HETEROGENEITY ]
       initGammaWeight 0 [ ok ]		

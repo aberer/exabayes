@@ -113,11 +113,24 @@ double drawRandExp(state *chain, double lambda)
 }
 
 
+
+
 double drawRandBiUnif(state *chain, double x)
 {
   double r = drawRandDouble01(chain) *  (2*x-x/2) + x / (3/2) ; 
   return r; 
 }
+
+
+
+double drawGuidedBl(state *chain,nodeptr p)
+{
+  
+  double r = branchLengthToReal(chain->traln->getTr(), p->z[0]); 
+  
+ return r; 
+}
+
 
 
 double gammaFunction(double alpha)
@@ -261,6 +274,9 @@ void drawDirichletExpected(state *chain, double* results, double* mean,double sc
   }
   
 }
+
+
+
 
 
 /**
