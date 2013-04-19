@@ -18,7 +18,7 @@ endif
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS= exabayes   prsf 
+bin_PROGRAMS= exabayes prsf asdsf
 
 include src-helper.am
 include src.am 
@@ -53,12 +53,39 @@ EXTRA_DIST=lib/Random123-1.07 src/main-examl_cond.c src/main-pll_cond.c		\
               src/pll/axml-pll.h src/examl/axml-examl.h doc/*
 
 
+
+################################################################
+# PRSF
+
 if WITH_PLL
 prsf_SOURCES+=./src/pll/mem_alloc-pll.c ./src/pllmem_alloc-pll.h
 endif
 
 prsf_CXXFLAGS=$(AM_CXXFLAGS) -D_STANDALONE
 
+
+
+################################################################
+# ASDSF
+
+
+asdsf_SOURCES=src/AvgSplitFreqAssessor.cpp src/AvgSplitFreqAssessor.hpp  ./src/convergence.cpp ./src/globalDummy.c ./src/treeRead.cpp
+asdsf_CXXFLAGS=$(AM_CXXFLAGS) -D_ASDSF_STANDALONE 
+asdsf_LDADD=./lib/ncl-2.1.18/ncl/.libs/libncl.a
+
+
+if WITH_PLL	
+ asdsf_SOURCES+=./src/pll/mem_alloc-pll.c ./src/pll/bipartitionList-pll.c
+else 
+ asdsf_SOURCES+=./src/examl/bipartitionList.c
+endif
+
+
+
+
+
+################################################################
+# cleanup 
 
 clean:
 	-rm -rf $(exabayes_OBJECTS) $(bin_PROGRAMS )  $(prsf_OBJECTS) 
