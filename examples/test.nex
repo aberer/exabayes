@@ -53,11 +53,12 @@ begin EXABAYES;
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
       initModelPermBiunifWeight 0 [ BROKEN ] 
+      initModelDirichlet 2 []
 
       [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
       initFrequencySliderWeight 2  [ ok ] 
-      initFrequencyDirichletWeight 2  [ ]
+      initFrequencyDirichletWeight 2  [ok but needs scaling]
 
 
       [ PARAMETERS for various moves ]

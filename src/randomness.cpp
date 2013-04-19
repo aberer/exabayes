@@ -227,43 +227,37 @@ double drawRandGamma(state *chain, double alpha, double beta)
   
   
   //This function should be called if the alphas for the dirichlet distribution are given
-void drawRandDirichlet(state *chain, double* results, double* alphas, double beta,  int length)
+void drawRandDirichlet(state *chain, double* results, double* alphas,  int length)
 {
-  double originalSum=0;
-  double newSum=0;
+  double sum=0;
   for(int i=0; i< length;i++)
   {
-    results[i]=drawRandGamma(chain, alphas[i], beta);
-    originalSum+=alphas[i];
-    newSum+=results[i];
+    results[i]=drawRandGamma(chain, alphas[i], 1.0);
+    sum+=results[i];
   }
    for(int i=0; i< length;i++)
   {
-    results[i]=results[i]*originalSum/newSum;
+    results[i]=results[i]/sum;
   }
 }
 
   //This function should be called if the expected values for the dirichlet distribution are given
-void drawDirichletExpected(state *chain, double* results, double* mean,double beta, int length)
+void drawDirichletExpected(state *chain, double* results, double* mean,double scale, int length)
 {
   double alphas[length];
   double originalSum=0;
-  double newSum=0;
+
      for(int i=0; i< length;i++)
   {
     originalSum+=mean[i];
-    alphas[i]=mean[i]*beta;
+    alphas[i]=mean[i]*scale;
   }
   
-  drawRandDirichlet(chain, results, alphas, beta, length);
+  drawRandDirichlet(chain, results, alphas, length);
 
-    for(int i=0; i< length;i++)
-  {
-  newSum+=results[i];    
-  }
   for(int i=0; i< length;i++)
   {
-  results[i]=results[i]*originalSum/newSum;    
+  results[i]=results[i]*originalSum;    
   }
   
 }

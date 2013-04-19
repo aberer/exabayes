@@ -607,7 +607,7 @@ void normalizeProposalWeights(state *chain)
 
 
 
-static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llpqr
+static void simple_model_proposal_apply(state *chain, proposalFunction *pf)
 {
 
   //TODO: add safety to max and min values
@@ -693,6 +693,8 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
 		}
 	    }
 	  break;
+	  
+	  
 
 	  /* TODO activate and replace */
 	/* case BIUNIF_PERM_DISTR://TODO NOT used. Lower values than before (without subType) */
@@ -752,6 +754,50 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)//llp
   //for statefreqs should all be uniform
 
   //only calculate the new ones
+}
+
+
+static void model_dirichlet_proposal_apply(state *chain, proposalFunction *pf)//llpqr
+{
+
+  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
+  perPartitionInfo *info = pf->remembrance.partInfo;
+
+  pInfo *partition = chain->traln->getPartition( model); 
+  int numRates = (partition->states * partition->states - partition->states) / 2; 
+
+  recordSubsRates(chain, model , numRates, info->substRates);
+
+  info->modelNum = model;
+  info->numRates = numRates; 
+
+  double r[numRates];
+
+  int* list  = (int*)exa_calloc(numRates, sizeof(int)); 
+
+     
+  drawDirichletExpected(chain, r, partition->substRates, 50.0, numRates);
+  chain->hastings=densityDirichlet(partition->substRates, r, numRates) / densityDirichlet(r, partition->substRates, numRates);    
+  
+	    /* Ensure always you stay within this range */
+	    for(int i=0; i<numRates; i++)
+	    {
+	    if(r[i] > RATE_MAX) r[i] = RATE_MAX;
+	    if(r[i] < RATE_MIN) r[i] = RATE_MIN;
+	     edit_subs_rates(chain, info->modelNum, i, r[i]);
+	    }
+
+
+     
+    
+    
+  //recalculate eigens
+
+  chain->traln->initRevMat(model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
+
+
+  exa_free(list); 
+
 }
 
 
@@ -936,6 +982,11 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 
   /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/ */
 }
+
+
+
+
+
 
 static void restore_subs_rates(state *chain, int model, int numSubsRates, double *prevSubsRates)
 {
@@ -1400,13 +1451,30 @@ void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
   double* r  =  (double*)exa_calloc(numFreq, sizeof(double)); 
   
   
+        
   //drawRandDirichlet(chain, r, partition->frequencies, 1.0, numFreq);
-  drawDirichletExpected(chain, r, partition->frequencies, 100.0, numFreq);
-  
-  
-  
+  drawDirichletExpected(chain, r, partition->frequencies, 50.0, numFreq);
   chain->hastings=densityDirichlet(partition->frequencies, r, numFreq) / densityDirichlet(r, partition->frequencies, numFreq);
 
+  /*
+  //Validation-----------------------------------------
+  printf("frequencies: ");
+  for(int state = 0;state < numFreq ; state ++)
+    {
+     printf("%f ", partition->frequencies[state]); 
+    }
+  printf("\n");
+  printf("r:           ");
+     for(int state = 0;state < numFreq ; state ++)
+    {
+     printf("%f ",r[state]); 
+    }
+  printf("\n");
+  printf("hastings %f \n", chain->hastings);
+  printf("\n");
+  //--------------------------------------------------
+  */
+  
       
          for(int state = 0;state < numFreq ; state ++)
     {
@@ -1733,6 +1801,14 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
       ptr->apply_func = all_biunif_model_proposal_apply; 
       ptr->reset_func = simple_model_proposal_reset; 
       ptr->name = "modelAllBiunif"; 
+      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+      ptr->category = SUBSTITUTION_RATES; 
+      break; 
+    case UPDATE_MODEL_DIRICHLET:
+      ptr->eval_lnl = onePartitionEval; 
+      ptr->apply_func = model_dirichlet_proposal_apply; 
+      ptr->reset_func = simple_model_proposal_reset; 
+      ptr->name = "modelDirichlet"; 
       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->category = SUBSTITUTION_RATES; 
       break; 

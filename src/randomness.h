@@ -51,7 +51,7 @@ double drawRandDouble01(state *chain);
 double drawRandExp(state *chain, double lambda);
 double drawRandBiUnif(state *chain, double x);
 double drawRandGamma(state *chain, double alpha, double beta);
-void drawRandDirichlet(state *chain, double* results, double* alphas, double beta, int length);
+void drawRandDirichlet(state *chain, double* results, double* alphas, int length);
 void drawDirichletExpected(state *chain, double* results, double* mean, double beta, int length);
 int drawSampleProportionally(state *chain,  double *weights, int numWeight ); 
 void drawPermutation(state *chain, int* perm, int n); 

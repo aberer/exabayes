@@ -69,7 +69,9 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
   else if(key.EqualsCaseInsensitive("initModelAllBiunifWeight"))    
     *pf = UPDATE_MODEL_ALL_BIUNIF; 
   else if(key.EqualsCaseInsensitive("initModelPermBiunifWeight"))    
-    *pf = UPDATE_MODEL_PERM_BIUNIF; 
+    *pf = UPDATE_MODEL_PERM_BIUNIF;
+  else if(key.EqualsCaseInsensitive("initModelDirichlet"))    
+    *pf = UPDATE_MODEL_DIRICHLET; 
   else if(key.EqualsCaseInsensitive("initFrequenciesWeight"))    
     *pf = UPDATE_FREQUENCIES_BIUNIF; 
   else if(key.EqualsCaseInsensitive("initEsprMappedWeight"    ))    
