@@ -69,7 +69,9 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
   else if(key.EqualsCaseInsensitive("initModelAllBiunifWeight"))    
     *pf = UPDATE_MODEL_ALL_BIUNIF; 
   else if(key.EqualsCaseInsensitive("initModelPermBiunifWeight"))    
-    *pf = UPDATE_MODEL_PERM_BIUNIF; 
+    *pf = UPDATE_MODEL_PERM_BIUNIF;
+  else if(key.EqualsCaseInsensitive("initModelDirichlet"))    
+    *pf = UPDATE_MODEL_DIRICHLET; 
   else if(key.EqualsCaseInsensitive("initFrequenciesWeight"))    
     *pf = UPDATE_FREQUENCIES_BIUNIF; 
   else if(key.EqualsCaseInsensitive("initEsprMappedWeight"    ))    
@@ -84,6 +86,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = ST_NNI; 
   else if (key.EqualsCaseInsensitive("nodeSlider"))
     *pf = NODE_SLIDER; 
+  else if (key.EqualsCaseInsensitive("initFrequencyDirichletWeight"))
+    *pf = UPDATE_FREQUENCIES_DIRICHLET;
   // TODO@kassian this is a good place for proposal add 
 
   else 

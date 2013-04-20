@@ -4,10 +4,10 @@ begin EXABAYES;
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
-      numIndiChains 2 		[ number of independant chains/runs ]
+      numIndiChains 4 		[ number of independant chains/runs ]
       numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
-      printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+      printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
       [ CONVERGENCE ]
       asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
@@ -53,11 +53,12 @@ begin EXABAYES;
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
       initModelPermBiunifWeight 0 [ BROKEN ] 
+      initModelDirichlet 2 []
 
       [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
-      initFrequencySliderWeight 6  [ ok ] 
-
+      initFrequencySliderWeight 2  [ ok ] 
+      initFrequencyDirichletWeight 2  [ok but needs scaling]
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 5  [ maximum radius that is searched by the guided spr move ] 

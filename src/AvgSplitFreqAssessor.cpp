@@ -26,7 +26,6 @@
 #endif
 
 #include "main-common.h"
-
 #include "globalVariables.h"
 
 
@@ -252,37 +251,25 @@ AvgSplitFreqAssessor::AvgSplitFreqAssessor(vector<string> fileNames, int _start,
 
 
 
-// void killWhiteSpace(FILE *fh)
-// {
-//   int c = 0; 
-  
-//   do 
-//     {
-//       c = getc(fh); 
-//     }while(  c == ' ' || c == '\t'  );
-//   ungetc(c,fh);
-// }
 
-
-// void skipline(FILE *fh)
-// {
-//   int c = 0; 
-//   do 
-//     {
-//       c = getc(fh); 
-//     }
-//   while( c != '\n' || c != EOF);
-// }
 
 
 void AvgSplitFreqAssessor::extractBips()
 {
+  for (auto filename : fns)
+    {
+      FILE *fh = fopen(filename.c_str()); 
+      int c = 0; 
+      while( (c = getc(fh)) != "("); 
+      ungetc(c, fh); 
 
+      myTreeReadLen(fh, this->tr, FALSE); 
 
+      Tree2stringNexus(tr->tree_string, tr,  tr->nodep[1]->back, 0 ); 
+      cout << tr->tree_string << endl; 
 
-  // for (auto filename : fns)
-  //   {
-
+      exit(0); 
+      
   //     ifstream infile(filename) ; 
   //     string line; 
 
@@ -301,9 +288,7 @@ void AvgSplitFreqAssessor::extractBips()
 
   //     cout << "found " << treeNum << " trees" << endl; 
 
-  //   }
-  // extractBipartitions(); 
-
+    }
 }
 
 

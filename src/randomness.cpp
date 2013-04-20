@@ -4,6 +4,8 @@
 #include <math.h>
 #include <inttypes.h>
 
+#include <random>
+
 #include "axml.h"
 #include "main-common.h"
 #include "bayes.h"
@@ -72,6 +74,16 @@ double drawGlobalDouble01()
 /* chain specific  */
 
 
+void normalize(double * vector, int length, double normalizingConstant)
+{
+  double sum=0;
+  for(int i=0; i<length; i++)
+    sum+=vector[i];
+  
+  for(int i=0; i<length; i++)
+    vector[i]=vector[i]*normalizingConstant/sum;
+  
+}
 
 /* uniform r in  [0,upperBound-1] */
 int drawRandInt(state *chain, int upperBound )
@@ -108,18 +120,147 @@ double drawRandBiUnif(state *chain, double x)
 }
 
 
-//Given x this function randomly draws from [x/2,2*x] 
-/* double drawRandBiUnif(double x) */
-/* { */
-/*   double r; */
-/*   //r=(double)rand()/(double)RAND_MAX;   */
-/*   //r=x/2+r*(3/2)*x;//=x/2+r*(2*x-x/2); */
+double gammaFunction(double alpha)
+{
   
-/*   r=drawRandDouble(2*x-x/2)+x/2; */
-/*   //r=drawRandDouble((3/2)*x-x/(3/2))+x/(3/2); */
+double  lgam = lgamma(alpha);
+ return signgam*exp(lgam); 
+}
+
+double betaFunction(double *alpha, int length)
+{
+ double beta=1.0;
+ double sum=0;
+  for(int i=0; i<length;i++)
+  {
+   beta*=gammaFunction(alpha[i]); 
+  sum+=alpha[i];    
+  }
+  beta=beta/(gammaFunction(sum));
+ 
+ return beta;
+}
+
+//density for dirichlet distribution with parameters "alphas" at point "values".
+double densityDirichlet(double *values, double *alphas, int length)
+{
+  double density=1;
+  double normValues[length];
   
-/*   return r; */
-/* } */
+  for(int i=0; i<length; i++)
+  normValues[i]=values[i];
+  
+  density=density/betaFunction(alphas, length);
+  
+  normalize(normValues, length, 1);
+  
+  for(int i=0; i<length; i++)
+    density=density*pow(normValues[i],alphas[i]-1);
+  
+ return density; 
+}
+
+  // Gamma(alpha, beta) sampling
+double drawRandGamma(state *chain, double alpha, double beta)
+{
+
+ double alpha_min=0.0001;
+  if(alpha<alpha_min)
+    alpha=alpha_min;
+  
+  if(beta<0)
+    beta=0;
+  
+   double gamma=0;
+   
+   int escape=0, limit=2000;
+   boolean alert=true;
+   
+  if (alpha < 1) {
+      double r;
+      boolean done=false;
+      double b=1+1/alpha;
+      while(!done) {
+        r=drawRandDouble01(chain);
+     if (r>1/b) {
+          gamma=-log((b-r)/alpha);
+          if (drawRandDouble01(chain)<=pow(gamma,alpha-1)) 
+	    done=true;
+        }
+	else {
+          gamma=pow(r,1/alpha);
+          if (drawRandDouble01(chain)<=exp(-gamma)) 
+	    done=true;
+        }
+        
+        
+        
+	    escape++;
+	    if(alert && escape>limit)
+	    {
+	    printf("r>1/b==%.2f>%.2f\n",r,1/b);
+	    printf("FREQ_MIN==%f alpha==%f gamma==%.2f\n",FREQ_MIN, alpha, gamma);
+	    alert=false; 
+	    //assert(0);
+	    }
+	
+	
+	
+       }
+    } 
+    else if (alpha == 1) {//GAMMA(1,1)=EXP(1)
+      gamma = -log (drawRandDouble01(chain));
+    } else {    
+      double y = -log (drawRandDouble01(chain));
+      while (drawRandDouble01(chain) > pow (y * exp (1 - y), alpha - 1)){
+        y = -log (drawRandDouble01(chain));
+	escape++;
+	if(alert && escape>limit){
+	  printf("in second\n");
+	 alert=false; 
+	}
+      }
+      gamma = alpha * y;
+    }
+    return beta*gamma;//scale from GAMMA(alpha,1) to GAMMA(alpha,beta)
+  }  
+  
+  
+  //This function should be called if the alphas for the dirichlet distribution are given
+void drawRandDirichlet(state *chain, double* results, double* alphas,  int length)
+{
+  double sum=0;
+  for(int i=0; i< length;i++)
+  {
+    results[i]=drawRandGamma(chain, alphas[i], 1.0);
+    sum+=results[i];
+  }
+   for(int i=0; i< length;i++)
+  {
+    results[i]=results[i]/sum;
+  }
+}
+
+  //This function should be called if the expected values for the dirichlet distribution are given
+void drawDirichletExpected(state *chain, double* results, double* mean,double scale, int length)
+{
+  double alphas[length];
+  double originalSum=0;
+
+     for(int i=0; i< length;i++)
+  {
+    originalSum+=mean[i];
+    alphas[i]=mean[i]*scale;
+  }
+  
+  drawRandDirichlet(chain, results, alphas, length);
+
+  for(int i=0; i< length;i++)
+  {
+  results[i]=results[i]*originalSum;    
+  }
+  
+}
 
 
 /**

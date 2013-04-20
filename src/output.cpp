@@ -258,6 +258,9 @@ static void printNexusTreeFileStart(state *chain)
 
 static void printParamFileStart(state *chain)
 {
+  
+   
+  
   FILE *fh = chain->outputParamFile; 
 
   char *tmp = "TODO"; 
