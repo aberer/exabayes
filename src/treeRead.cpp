@@ -453,14 +453,9 @@ boolean nextTreeHasBranchLength(FILE *fp)
   boolean foundBL = FALSE; 
   long oldPos = ftell(fp); 
 
-  /* if(processID == 0 ) */
-  /* printf("pos is %ld\n", oldPos);  */
-
   int c = 0; 
   while(( c = getc(fp)) != EOF)
     {
-      /* if(processID == 0 ) */
-      /* printf("%c",c);  */
       if(c == ':')
 	{
 	  foundBL = TRUE; 
@@ -481,14 +476,6 @@ boolean readTreeWithOrWithoutBL(tree *tr, FILE *fh)
 {  
   boolean hasBL = nextTreeHasBranchLength(fh); 
 
-  /* if(processID == 0) */
-  /*   { */
-  /*     if(hasBL) */
-  /* 	printf("NEXT TREE HAS  BL\n"); */
-  /*     else  */
-  /* 	printf("NEXT TREE HAS **** NO *** BL\n"); */
-  /*   } */
- 
   myTreeReadLen(fh, tr, hasBL); 
 
   /* 

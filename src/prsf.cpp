@@ -1,30 +1,17 @@
 
 #include "axml.h"
 #include "bayes.h"
-#include "prsfComputer.h"
 
 #define _INCLUDE_DEFINITIONS
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
 
-
 #include "main-common.h"
+#include "prsfComputer.h"
+
+#if HAVE_PLL != 0 
 #include "globalVariables.h" 
-
-
-void printBoth(FILE *f, const char* format, ... )
-{
-  va_list args;
-  va_start(args, format);
-  vfprintf(f, format, args );
-  va_end(args);
-
-  va_start(args, format);
-  vprintf(format, args );
-  va_end(args);
-}
-
-
+#endif
 
 int main(int argc, char **argv)
 {

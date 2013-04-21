@@ -30,9 +30,9 @@ begin EXABAYES;
       [================================================================]
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 10 [ 10% in mrb ]
-      initGuidedSPR 20  [ok ] 
-      stNNI 10      [ ok 10% in mrb]	
+      initEsprMappedWeight 20 [ 10% in mrb ]
+      initGuidedSPR 0  [ok ] 
+      stNNI 20      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
       initSingleBranchWeight 0 [ ok ] 
@@ -45,10 +45,10 @@ begin EXABAYES;
       [ RATE HETEROGENEITY ]
       initGammaWeight 0 [ ok ]		
       initGammaExpWeight 0 [ ok ]
-      rateHetMulti 6   [ ok, 2 in mrb  ]
+      rateHetMulti 2   [ ok, 2 in mrb  ]
 
       [ REVMAT ] 
-      initModelWeight 6 [ ok ]		
+      initModelWeight 0 [ ok ]		
       initModelBiunifWeight 0 [broken]
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
@@ -57,7 +57,7 @@ begin EXABAYES;
 
       [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
-      initFrequencySliderWeight 2  [ ok ] 
+      initFrequencySliderWeight 0  [ ok ] 
       initFrequencyDirichletWeight 2  [ok but needs scaling]
 
       [ PARAMETERS for various moves ]

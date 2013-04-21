@@ -199,7 +199,7 @@ void runChains(state *allChains, int diagFreq)
       hasConverged = convergenceDiagnostic(allChains); 
 
 #ifdef ENABLE_PRSF
-      if(processID == 0)
+      if(isOutputProcess)
 	printPRSF(run_id);
 #endif
     }
@@ -224,7 +224,7 @@ void runChains(state *allChains, int diagFreq)
    @param adef -- the legacy adef
  */
 void exa_main(tree *tr, 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 	      partitionList *partitions,
 #endif
 analdef *adef)
@@ -250,7 +250,7 @@ analdef *adef)
   assert(gAInfo.diagFreq != 0 ); 
   runChains(indiChains, gAInfo.diagFreq); 
 
-   if(processID == 0)
+  if(isOutputProcess() )
     {
       for(int i = 0; i < gAInfo.numberOfRuns; ++i)
 	finalizeOutputFiles(indiChains + i);

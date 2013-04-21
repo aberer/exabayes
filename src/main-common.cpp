@@ -17,7 +17,7 @@ void ignoreExceptionsDenormFloat()
 }
 
 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 static void errorExit( int i )
 {
   printf("error\n") ; 
@@ -43,7 +43,7 @@ void initAdef(analdef *adef)
 
 void printVersionInfo()
 {
-#if (HAVE_PLL == 1 ) 
+#if HAVE_PLL != 0
   PRINT("\n\nThis is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
 #else 
   PRINT("\n\nThis is %s, version %s\n", PROGRAM_NAME, VERSION); 
@@ -95,7 +95,7 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
   tr->rateHetModel = GAMMA;
  
   tr->multiStateModel  = GTR_MULTI_STATE;
-#if (HAVE_PLL == 0 ) 
+#if HAVE_PLL == 0 
     tr->useGappedImplementation = FALSE;
     tr->saveBestTrees          = 0;
 #endif
@@ -197,45 +197,40 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
   
   if(strlen(configFileName) == 0 ||  ! filexists(configFileName) )
     {
-      if(processID == 0)
-	printf("\nPlease provide a config file via -C <file>. A testing file is available under  \n"); 
+      PRINT("\nPlease provide a config file via -C <file>. A testing file is available under  \n"); 
       errorExit(-1); 
     }
 
   
   if(seed == -1 )
     {
-      if(processID == 0)
-	printf("\nPlease provide a proper seed for the initialization of the random number generator. \n "); 
+      PRINT("\nPlease provide a proper seed for the initialization of the random number generator. \n "); 
       errorExit(-1); 
     }
 
   if( ! filexists( configFileName))
     {
-      if(processID == 0 )
-  	printf("\nPlease provide a minimal config file via -C <file>.\n");
+
+      PRINT("\nPlease provide a minimal config file via -C <file>.\n");
       errorExit(-1);
     }
 
 
   if(!byteFileSet)
     {
-      if(processID == 0)
-	printf("\nError, you must specify a binary format data file with the \"-s\" option\n");
+      PRINT("\nError, you must specify a binary format data file with the \"-s\" option\n");
       errorExit(-1);
     }
 
   if(!modelSet)
     {
-      if(processID == 0)
-	printf("\nError, you must specify a model of rate heterogeneity with the \"-m\" option\n");
+      PRINT("\nError, you must specify a model of rate heterogeneity with the \"-m\" option\n");
       errorExit(-1);
     }
 
   if(!nameSet)
     {
-      if(processID == 0)
-	printf("\nError: please specify a name for this run with -n\n");
+      PRINT("\nError: please specify a name for this run with -n\n");
       errorExit(-1);
     }
 
@@ -262,16 +257,6 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       printf("%d starting trees provided via -t\n", gAInfo.numberOfStartingTrees); 
     }
 
-  /* if(!treeSet && !adef->useCheckpoint) */
-  /*   { */
-  /*     if(processID == 0) */
-  /* 	{ */
-  /* 	  printf("\nError: please either specify a starting tree for this run with -t\n"); */
-  /* 	  printf("or re-start the run from a checkpoint with -R\n"); */
-  /* 	} */
-  /* errorExit(-1); */
-  /* } */
-  
    {
 
     const 

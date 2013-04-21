@@ -49,7 +49,7 @@ void debug_printNodeEnvironment(state *chain, int nodeID )
 void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-  if(processID == 0)
+  if(isOutputProcess())
     {
       if(accepted)
 	printInfo(chain, "ACCEPTING\t");   
@@ -71,7 +71,7 @@ void debug_checkTreeConsistency(tree *tr)
     {      
       char tmp[10000]; 
       Tree2stringNexus(tmp, tr, tr->start->back, 0); 
-      if(processID==0)
+      if(isOutputProcess())
 	printf("faulty TOPOLOGY: %s\n", tmp);
 
       assert(2 * tr->mxtips-3 == count); 
@@ -128,11 +128,7 @@ void printOrientation(tree *tr, nodeptr p)
  */ 
 void printInfo(state *chain, const char *format, ...)
 {  
-  if(
-#if HAVE_PLL == 1
-     true || 
-#endif
-     processID == 0)
+  if( isOutputProcess())
     {
       printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberCoupledChains, chain->couplingId, chain->currentGeneration); 
       va_list args;

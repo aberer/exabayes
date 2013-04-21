@@ -41,7 +41,7 @@ TreeAln::TreeAln(tree *trOuter)
   initDefault(); 
 
   // create a new tree 
-#if  ( HAVE_PLL == 1  ) 
+#if HAVE_PLL != 0
   partitionList *partition = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
   this->partitions = partition; 
   initializeTree(newTr, partition ,gAInfo.adef); 
@@ -72,7 +72,7 @@ void TreeAln::initDefault()
   tr->searchConvergenceCriterion = FALSE;
   tr->rateHetModel = GAMMA; 
   tr->multiStateModel  = GTR_MULTI_STATE;
-#if (HAVE_PLL == 0 ) 
+#if HAVE_PLL == 0 
   tr->useGappedImplementation = FALSE;
   tr->saveBestTrees          = 0;
 #endif
@@ -221,7 +221,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 TreeAln::TreeAln(const TreeAln& rhs)  
 {  
   this->tr = rhs.tr; 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
   this->partitions = rhs.partitions; 
 #endif
 }
@@ -230,7 +230,7 @@ TreeAln::TreeAln(const TreeAln& rhs)
 
 int TreeAln::getNumBranches()
 {
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
   return partitions->perGeneBranchLengths  ? partitions->numberOfPartitions : 1 ; 
 #else 
   return tr->numBranches; 
@@ -241,7 +241,7 @@ int TreeAln::getNumBranches()
 
 int TreeAln::getNumberOfPartitions()
 {
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
   return partitions->numberOfPartitions; 
 #else 
   return tr->NumberOfModels; 
@@ -255,7 +255,7 @@ pInfo* TreeAln::getPartition(int model)
 {
   assert(model < getNumberOfPartitions()); 
   
-#if HAVE_PLL == 1   
+#if HAVE_PLL != 0  
   return partitions->partitionData[model]; 
 #else 
   return tr->partitionData + model; 
@@ -265,7 +265,7 @@ pInfo* TreeAln::getPartition(int model)
 
 int& TreeAln::accessExecModel(int model)
 {
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
   return partitions->partitionData[model]->executeModel; 
 #else 
   return tr->executeModel[model]; 
@@ -275,7 +275,7 @@ int& TreeAln::accessExecModel(int model)
 
 double& TreeAln::accessPartitionLH(int model)
 {
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
   return partitions->partitionData[model]->partitionLH; 
 #else  
   return tr->perPartitionLH[model]; 
@@ -285,7 +285,7 @@ double& TreeAln::accessPartitionLH(int model)
 
 void TreeAln::initRevMat(int model)
 {
-#if HAVE_PLL == 1
+#if HAVE_PLL != 0
   initReversibleGTR(tr, getPartitionsPtr() , model); 
 #else 
   initReversibleGTR(tr, model); 

@@ -16,12 +16,10 @@
 #endif
 
 
-
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 #else 
 #include "mpi.h"
 #endif
-
 
 
 #ifdef __cplusplus
@@ -29,7 +27,7 @@ extern "C"
 {
 #endif
 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 #include "pll/axml-pll.h"
 #else 
 #include "examl/axml-examl.h"

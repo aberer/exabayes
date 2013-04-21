@@ -27,7 +27,7 @@ LnlRestorer::LnlRestorer(state *_chain)
       pInfo *partition = chain->traln->getPartition(i );
       reserveArrays[i] = (double**)exa_calloc(tr->mxtips, sizeof(double*)); 
 
-#if HAVE_PLL == 1 		/* TODO that's hacky */
+#if HAVE_PLL != 0		/* TODO that's hacky */
       int length = partition->upper - partition->lower; 
 #else 
       int length = partition->width; 
@@ -121,7 +121,7 @@ void LnlRestorer::swapArray(int nodeNumber, int model)
   if(model == ALL_MODELS)
     {
 #ifdef DEBUG_ARRAY_SWAP
-if(processID == 0)
+      if(isOutputProcess())
       cout << "swapped array for node " << nodeNumber <<   " and all  models "; 
 #endif
 
@@ -132,7 +132,7 @@ if(processID == 0)
 	  double *&a =  reserveArrays[i][posInArray], 
 	    *&b  = partition->xVector[posInArray] ; 
 #ifdef DEBUG_ARRAY_SWAP
-if(processID == 0)
+	  if(isOutputProcess())
 	  cout << a << "," << b << "\t"; 
 #endif
 	  if(NOT b )
@@ -151,7 +151,7 @@ if(processID == 0)
 	*&b  = partition->xVector[posInArray]; 
 
 #ifdef  DEBUG_ARRAY_SWAP
-      if(processID == 0)
+      if(isOutputProcess())
       cout << "swapped array for node " << nodeNumber <<  " and model " << model << ": " << a   << "," << b  << endl; 
 #endif
       if(NOT b )
@@ -167,7 +167,7 @@ if(processID == 0)
 void LnlRestorer::restore()
 {
 #ifdef DEBUG_ARRAY_SWAP 
-if(processID == 0)
+  if(isOutputProcess())
   cout << "RESTORE for model" << modelEvaluated << endl; 
 #endif
   tree *tr = chain->traln->getTr(); 
@@ -222,7 +222,7 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
       && NOT wasSwitched[virtualRoot->number])
     {
 #ifdef DEBUG_ARRAY_SWAP
-      if(processID == 0)
+      if(isOutputProcess())
       cout << "incorr, unseen " << virtualRoot->number << endl; 
 #endif
       wasSwitched[virtualRoot->number] = true; 
@@ -232,13 +232,13 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
   else if (incorrect)
     {
 #ifdef DEBUG_ARRAY_SWAP
-      if(processID == 0)
+      if(isOutputProcess())
       cout << "incorr, seen " <<  virtualRoot->number  << endl; 
 #endif
     }
 #ifdef DEBUG_ARRAY_SWAP
   else
-if(processID == 0)
+    if(isOutputProcess())
     cout << "corr "<<  virtualRoot->number << endl; 
 #endif
 
@@ -256,7 +256,7 @@ if(processID == 0)
 void LnlRestorer::resetRestorer()
 {
 #ifdef DEBUG_ARRAY_SWAP
-  if(processID == 0)
+  if(isOutputProcess())
   cout << "RESETTING RESTORER" << endl; 
 #endif
   tree *tr = chain->traln->getTr();

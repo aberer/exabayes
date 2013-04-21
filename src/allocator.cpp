@@ -9,7 +9,7 @@ using namespace std;
 
 #include <iostream>
 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 extern "C"
 {
   void *rax_malloc(size_t size);
@@ -24,7 +24,7 @@ extern "C"
 
 // #define REPORT_MEMORY
 
-#if HAVE_PLL == 1  &&  defined(_GLIBCXX_THROW) // BAD BAD hack 
+#if  HAVE_PLL != 0  &&  defined(_GLIBCXX_THROW) // BAD BAD hack 
 
 
 

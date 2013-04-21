@@ -110,7 +110,7 @@ double timeIncrement = 0;
 extern globalAnalysisInfo gAInfo; 
 
 
-extern char infoFileName[1024];
+
 extern int Thorough; 
 extern int processID; 
 extern char run_id[1024]; 
@@ -119,5 +119,9 @@ extern char workdir[1024];
 extern char tree_file[1024]; 
 extern char byteFileName[1024]; 
 extern double timeIncrement;  
+extern char infoFileName[1024];
 
 #endif
+
+
+

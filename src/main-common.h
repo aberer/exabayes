@@ -6,7 +6,7 @@
 
 
 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 void initializeTree(tree *tr, partitionList *partitions, analdef *adef); 
 #else  
 void initializeTree(tree *tr, analdef *adef); 

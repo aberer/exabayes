@@ -1918,7 +1918,7 @@ void normalizeCategories(state *chain)
 
 void printAllProposalWeights(state *chain)
 {
-  if(processID != 0)
+  if(not isOutputProcess())
     return; 
   
   printf("cat weights: TOPO=%f\tBL=%f\tFREQ=%f\tSUBST=%f\tHET=%f\n", 

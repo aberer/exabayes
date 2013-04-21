@@ -283,14 +283,12 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 		  assert(count  == 2 * theChain->traln->getTr()->mxtips - 3);	  	      
 		}
 
-	      if(processID == 0)
-		printf("initializing chain %d with provided starting tree\n", i); 
+	      PRINT("initializing chain %d with provided starting tree\n", i); 
 	    }
 	  else 
 	    {
 	      exa_makeRandomTree(theChain->traln->getTr());
-	      if(processID == 0)
-		printf("initializing chain %d with random tree\n", i); 
+	      PRINT("initializing chain %d with random tree\n", i); 
 
 	      /* TODO maybe prior for initial branch lengths   */
 	      int count = 0; 
@@ -315,7 +313,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	    theChain->rKey.v[0], theChain->rKey.v[1]
 	    ); 
 
-      if(processID == 0 )
+      if(isOutputProcess() )
 	{	  
 	  if( i % gAInfo.numberCoupledChains == 0)
 	    {
@@ -583,7 +581,8 @@ void step(state *chain)
   if( chain->couplingId == 0	/* must be the cold chain  */
        && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
     {
-      if( processID == 0 ) 
+
+      if( isOutputProcess() ) 
 	printSample(chain);       
 
       if(chain->currentGeneration >  gAInfo.burninGen)
@@ -597,7 +596,7 @@ void step(state *chain)
 
   
   /* the output for the console  */
-  if(processID == 0 
+  if(isOutputProcess() 
      && chain->couplingId == 0     
      && gAInfo.printFreq > 0 
      && chain->currentGeneration % gAInfo.printFreq == gAInfo.printFreq -1   )

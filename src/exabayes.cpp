@@ -5,141 +5,18 @@
 #include "axml.h" 
 #include "bayes.h"
 
-#if HAVE_PLL == 1 
-
-#include "axml.h"
-#include "bayes.h"
-
 #define _INCLUDE_DEFINITIONS
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
 
 #include "main-common.h"
-
 #include "proposals.h"
 #include "output.h"
-/* turn on, when in release mode */
-/* #define PRODUCTIVE */
-
 #include "adapters.h"
-#include "globalVariables.h" 
 
-int processID = 0; 
-int seed; 
+#if HAVE_PLL != 0
 
-
-void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile); 
-
-static void printBoth(FILE *f, const char* format, ... )
-{
-  va_list args;
-  va_start(args, format);
-  vfprintf(f, format, args );
-  va_end(args);
-
-  va_start(args, format);
-  vprintf(format, args );
-  va_end(args);
-}
-
-
-
-static void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef, int argc, char *argv[])
-{
-  FILE *infoFile = myfopen(infoFileName, "ab");
-  char modelType[128];
-
-
-  if(tr->useMedian)
-    strcpy(modelType, "GAMMA with Median");
-  else
-    strcpy(modelType, "GAMMA");
-
-
-  printVersionInfo();
-
-  if(!adef->compressPatterns)
-    printBoth(infoFile, "\nAlignment has %d columns\n\n",  tr->originalCrunchedLength);
-  else
-    printBoth(infoFile, "\nAlignment has %d distinct alignment patterns\n\n",  tr->originalCrunchedLength);
-
-  printBoth(infoFile, "Proportion of gaps and completely undetermined characters in this alignment: %3.2f%s\n", 100.0 * tr->gapyness, "%");
-
-  if(adef->perGeneBranchLengths)
-    printBoth(infoFile, "Using %d distinct models/data partitions with individual per partition branch length optimization\n\n\n", pr->numberOfPartitions);
-  else
-    printBoth(infoFile, "Using %d distinct models/data partitions with joint branch length optimization\n\n\n", pr->numberOfPartitions);
-
-  for( int model = 0; model < pr->numberOfPartitions; model++)
-  {
-    printBoth(infoFile, "Partition: %d\n", model);
-    printBoth(infoFile, "Alignment Patterns: %d\n", pr->partitionData[model]->upper - pr->partitionData[model]->lower);
-    printBoth(infoFile, "Name: %s\n", pr->partitionData[model]->partitionName);
-
-    switch(pr->partitionData[model]->dataType)
-    {
-      case DNA_DATA:
-        printBoth(infoFile, "DataType: DNA\n");
-        printBoth(infoFile, "Substitution Matrix: GTR\n");
-        break;
-      case AA_DATA:
-        assert(pr->partitionData[model]->protModels >= 0 && pr->partitionData[model]->protModels < NUM_PROT_MODELS);
-        printBoth(infoFile, "DataType: AA\n");
-        printBoth(infoFile, "Substitution Matrix: %s\n", protModels[pr->partitionData[model]->protModels]);
-        printBoth(infoFile, "%s Base Frequencies:\n", (pr->partitionData[model]->protFreqs == 1)?"Empirical":"Fixed");
-        break;
-      case BINARY_DATA:
-        printBoth(infoFile, "DataType: BINARY/MORPHOLOGICAL\n");
-        printBoth(infoFile, "Substitution Matrix: Uncorrected\n");
-        break;
-      case SECONDARY_DATA:
-        printBoth(infoFile, "DataType: SECONDARY STRUCTURE\n");
-        printBoth(infoFile, "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
-        break;
-      case SECONDARY_DATA_6:
-        printBoth(infoFile, "DataType: SECONDARY STRUCTURE 6 STATE\n");
-        printBoth(infoFile, "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
-        break;
-      case SECONDARY_DATA_7:
-        printBoth(infoFile, "DataType: SECONDARY STRUCTURE 7 STATE\n");
-        printBoth(infoFile, "Substitution Matrix: %s\n", secondaryModelList[tr->secondaryStructureModel]);
-        break;
-      case GENERIC_32:
-        printBoth(infoFile, "DataType: Multi-State with %d distinct states in use (maximum 32)\n",pr->partitionData[model]->states);
-        switch(tr->multiStateModel)
-        {
-          case ORDERED_MULTI_STATE:
-            printBoth(infoFile, "Substitution Matrix: Ordered Likelihood\n");
-            break;
-          case MK_MULTI_STATE:
-            printBoth(infoFile, "Substitution Matrix: MK model\n");
-            break;
-          case GTR_MULTI_STATE:
-            printBoth(infoFile, "Substitution Matrix: GTR\n");
-            break;
-          default:
-            assert(0);
-        }
-        break;
-      case GENERIC_64:
-        printBoth(infoFile, "DataType: Codon\n");
-        break;
-      default:
-        assert(0);
-    }
-    printBoth(infoFile, "\n\n\n");
-  }
-
-  printBoth(infoFile, "\n");
-
-  printBoth(infoFile, "%s was called as follows:\n\n", PROGRAM_NAME);
-  for( int i = 0; i < argc; i++)
-    printBoth(infoFile,"%s ", argv[i]);
-  printBoth(infoFile,"\n\n\n");
-
-  fclose(infoFile);
-}
-
+#include "globalVariables.h"
 
 void readByteFile(tree *tr, analdef *adef, partitionList *partitions, double ***empiricalFrequencies)
 {
@@ -248,7 +125,7 @@ void initializeTree(tree *tr, partitionList *partitions, analdef *adef)
 
 
 void exa_main(tree *tr, 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 	      partitionList *partitions,
 #endif
 	      analdef *adef); 
@@ -285,26 +162,6 @@ int main (int argc, char *argv[])
 
 
 #else 
-
-
-
-
-
-
-#include <mpi.h>
-#include "axml.h"
-#include "main-common.h"
-
-#include "bayes.h"
-#define _INCLUDE_DEFINITIONS
-#include "globals.h"
-#undef _INCLUDE_DEFINITIONS
-
-#include "bayes.h"
-#include "output.h"
-
-#include "adapters.h"
-
 
 
 extern int processID; 
@@ -361,7 +218,7 @@ int main(int argc, char *argv[])
   
   initializeTree(tr, adef); 
 
-  if(processID == 0)  
+  if(isOutputProcess()) 
     {
       printModelAndProgramInfo(tr, adef, argc, argv);
       PRINT("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
@@ -375,7 +232,7 @@ int main(int argc, char *argv[])
   /* not important, only used to keep track of total accumulated exec time 
      when checkpointing and restarts were used */
 	
-  if(processID == 0)
+  if(isOutputProcess())
     accumulatedTime = 0.0;
  
   exa_main(tr,adef);

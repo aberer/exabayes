@@ -1,5 +1,3 @@
-#include "AvgSplitFreqAssessor.hpp"
-
 
 /** 
     @file AvgSplitFreqAssessor.hpp
@@ -12,10 +10,15 @@
 
 #include <fstream>
 #include <ncl/ncl.h>
-#include <regex>
 #include <algorithm> 
 
+#include "axml.h"
+#include "bayes.h"
 #include "main-common.h"
+
+#include "AvgSplitFreqAssessor.hpp"
+
+
 
 
 static void initializeTreeOnly(int numTax, tree **tre ); 
@@ -182,42 +185,6 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
 }
 
 
-
-
-
-#ifdef _ASDSF_STANDALONE 
-int main(int argc, char** argv)
-{
-  if(argc < 4)
-    {
-      cout << "Usage: " << argv[0] << " start end [file ...]  " << endl << endl
-	   << "where  " << endl
-	   << "start\t is first tree to include (potentially skipping a burnin) " << endl
-	   << "end\t is the last generation to include (file may be truncated)" << endl
-	   << "[file ...]\t are various ExaBayes_topology* files. " << endl; 
-      exit(0); 
-    }
-
-  int start = atoi(argv[1]); 
-  int end = atoi(argv[2]); 
-  
-  char *aFile = argv[3]; 	// TODO 
-
-
-  vector<string> tmp;
-  tmp.push_back(string(aFile)); 
-  
-
-  AvgSplitFreqAssessor asdsf(tmp,start,end); 
-  asdsf.extractBips();
-
-  return 0; 
-}
-
-
-#endif
-
-
 /** 
     @brief only initializes a raw tree, no partitions or alignment information. 
     
@@ -230,7 +197,7 @@ static void initializeTreeOnly(int numTax, tree **tre )
   
   tr->mxtips = numTax; 
 
-#if HAVE_PLL  == 1 
+#if HAVE_PLL != 0
   partitionList pl; 
   
   setupTree(tr, false, &pl);

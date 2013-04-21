@@ -30,9 +30,9 @@ fi
 
 codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
+    args="$args --disable-pll"
     baseCall="mpirun -np 2 $gdb ./exabayes -s data/$dataset/aln.examl.binary -n testRun -p $seed -c examples/test.nex" #  -t data/$dataset/tree_2 
 elif [ "$codeBase" == "pll" ]; then 
-    args="$args --enable-pll"
     baseCall="$gdb ./exabayes -p $seed  -s data/$dataset/aln.pll.binary -n testRun -c examples/test.nex " #   -t data/$dataset/tree_2 
 else
     echo "second argument must be either 'pll' or 'examl'"

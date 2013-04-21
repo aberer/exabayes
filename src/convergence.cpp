@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "main-common.h"
 #include "TreeAln.hpp" 
+#include "adapters.h"
 
 
 static void getxnodeBips (nodeptr p)
@@ -22,7 +23,7 @@ static void getxnodeBips (nodeptr p)
 
 void printBv(unsigned int *bv, int bvlen)
 {
-  if(processID == 0)
+  if(isOutputProcess())
     {
       for(int i = 0; i < bvlen; ++i)
 	{
@@ -291,7 +292,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 
   double treesSampled = numSampled[0] / (numTaxa - 3  ); 
 #ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
-  if(processID == 0)
+  if(isOutputProcess())
     printf("trees sampled: %g\n", treesSampled)  ;
 #endif
 
@@ -321,7 +322,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 	      sd = sqrt(sd/n) ; 
 
 #ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
-	      if(processID == 0)
+	      if(isOutputProcess()) 
 		{
 		  printBv(e->bitVector, numTaxa); 
 		  printf("\t");
@@ -352,7 +353,7 @@ boolean averageDeviationOfSplitFrequencies(state *allChains)
 
   asdsf /= cntRelevant; 
 
-  if(processID == 0)
+  if(isOutputProcess())
     PRINT("CONVERGENCE: ASDSF = %f\n\n", asdsf); 
 
   exa_free(numSampled); 

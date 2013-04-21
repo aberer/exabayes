@@ -9,15 +9,10 @@
 
 #include "axml.h" 
 
-#if HAVE_PLL == 1
-#define GLOBAL_VARIABLES_DEFINITION
-#endif
 
+#define GLOBAL_VARIABLES_DEFINITION
 #define _INCLUDE_DEFINITIONS
 #include "globalVariables.h"  
-#undef  _INCLUDE_DEFINITIONS
-
-#if HAVE_PLL == 1
+#undef _INCLUDE_DEFINITIONS
 #undef GLOBAL_VARIABLES_DEFINITION
-#endif
 

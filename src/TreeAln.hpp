@@ -51,7 +51,7 @@ public:
   double getAlpha(int model){pInfo *partition = getPartition(model) ; return partition->alpha; } 
 
 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
   partitionList* getPartitionsPtr(){return partitions; } 
 #endif
 
@@ -69,7 +69,7 @@ private:
   void initFromTree(tree *tr); 
 
   tree * tr;
-#if HAVE_PLL == 1   
+#if HAVE_PLL != 0
   partitionList *partitions; 
 #endif  
 
