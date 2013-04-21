@@ -1,4 +1,3 @@
-
 #include "axml.h"
 #include "main-common.h"
 #include "bayes.h"
@@ -18,19 +17,14 @@ void ignoreExceptionsDenormFloat()
 }
 
 
-
-// void printHeader(tree *tr, analdef *adef)
-// {
-//   PRINT("\n\n This is %s version %s\n", PROGRAM_NAME, PACKAGE_VERSION);   
-
-// }
-
-
-
- void printREADME()
+#if HAVE_PLL == 1 
+static void errorExit( int i )
 {
-  printf("TODO\n"); 
+  printf("error\n") ; 
+  exit(0); 
 }
+#endif
+
 
 void initAdef(analdef *adef)
 {   
@@ -56,147 +50,15 @@ void printVersionInfo()
 #endif  
 }
 
-
-
-
-void analyzeRunId(char id[128])
+void printREADME()
 {
-  int i = 0;
-
-  while(id[i] != '\0')
-    {
-      if(i >= 128)
-	{
-	  printf("\n Error: run id after \"-n\" is too long, it has %d characters please use a shorter one\n\n", i);
-	  assert(0);
-	}
-
-      if(id[i] == '/')
-	{
-	  printf("\n Error: character %c not allowed in run ID\n\n", id[i]);
-	  assert(0);
-	}
-
-
-      i++;
-    }
-
-  if(i == 0)
-    {
-      printf("\n Error: please provide a string for the run id after \"-n\" \n\n");
-      assert(0);
-    }
+  printf("TODO\n"); 
 }
-
-
-
-int filexists(char *filename)
-{
-  FILE
-    *fp;
-  
-  int
-    res;
-  
-  fp = fopen(filename,"rb");
-
-  if(fp)
-    {
-      res = 1;
-      fclose(fp);
-    }
-  else
-    res = 0;
-
-  return res;
-}
-
-
-
-void errorExit(int e)
-{
-#if  (HAVE_PLL == 0 )
-  MPI_Finalize();
-#endif
-
-  exit(e);
-}
-
 
 
 void finalizeFiles()
 {
   PRINT("TODO\n"); 
-}
-
-
-
-
-int mygetopt(int argc, char **argv, char *opts, int *optind, char **optarg)
-{
-  static int sp = 1;
-  register int c;
-  register char *cp;
-
-  if(sp == 1)
-    {
-      if(*optind >= argc || argv[*optind][0] != '-' || argv[*optind][1] == '\0')
-	return -1;
-    }
-  else
-    {
-      if(strcmp(argv[*optind], "--") == 0)
-	{
-	  *optind =  *optind + 1;
-	  return -1;
-	}
-    }
-
-  c = argv[*optind][sp];
-  if(c == ':' || (cp=strchr(opts, c)) == 0)
-    {
-      printf(": illegal option -- %c \n", c);
-      if(argv[*optind][++sp] == '\0')
-	{
-	  *optind =  *optind + 1;
-	  sp = 1;
-	}
-      return('?');
-    }
-  if(*++cp == ':')
-    {
-      if(argv[*optind][sp+1] != '\0')
-	{
-	  *optarg = &argv[*optind][sp+1];
-	  *optind =  *optind + 1;
-	}
-      else
-	{
-	  *optind =  *optind + 1;
-	  if(*optind >= argc)
-	    {
-	      printf(": option requires an argument -- %c\n", c);
-	      sp = 1;
-	      return('?');
-	    }
-	  else
-	    {
-	      *optarg = argv[*optind];
-	      *optind =  *optind + 1;
-	    }
-	}
-      sp = 1;
-    }
-  else
-    {
-      if(argv[*optind][++sp] == '\0')
-	{
-	  sp = 1;
-	  *optind =  *optind + 1;
-	}
-      *optarg = 0;
-    }
-  return(c);
 }
 
 

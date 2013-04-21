@@ -1,3 +1,12 @@
+#ifdef HAVE_AVX
+#define __AVX
+#endif
+
+#include "axml.h" 
+#include "bayes.h"
+
+#if HAVE_PLL == 1 
+
 #include "axml.h"
 #include "bayes.h"
 
@@ -13,8 +22,6 @@
 /* #define PRODUCTIVE */
 
 #include "adapters.h"
-
-
 #include "globalVariables.h" 
 
 int processID = 0; 
@@ -246,6 +253,8 @@ void exa_main(tree *tr,
 #endif
 	      analdef *adef); 
 
+
+
 int main (int argc, char *argv[])
 { 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
@@ -271,5 +280,115 @@ int main (int argc, char *argv[])
 
   return 0;
 }
+
+
+
+
+#else 
+
+
+
+
+
+
+#include <mpi.h>
+#include "axml.h"
+#include "main-common.h"
+
+#include "bayes.h"
+#define _INCLUDE_DEFINITIONS
+#include "globals.h"
+#undef _INCLUDE_DEFINITIONS
+
+#include "bayes.h"
+#include "output.h"
+
+#include "adapters.h"
+
+
+
+extern int processID; 
+extern char infoFileName[1024];
+extern char *protModels[NUM_PROT_MODELS]; 
+extern const char *secondaryModelList[21]; 
+extern partitionLengths pLengths[MAX_MODEL]; 
+extern partitionLengths pLength;
+extern char resultFileName[1024]; 
+extern double masterTime;
+extern char logFileName[1024]; 
+extern int processes;
+extern double accumulatedTime;
+extern char byteFileName[1024]; 
+
+void exa_main(tree *tr, analdef *adef); 
+
+
+
+void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[]);
+void initializeTree(tree *tr, analdef *adef);
+
+
+int main(int argc, char *argv[])
+{ 
+  
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &processID);
+  MPI_Comm_size(MPI_COMM_WORLD, &processes);
+
+  printf("\nThis is %s FINE-GRAIN MPI Process Number: %d\n", PROGRAM_NAME, processID);   
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  tree  *tr = (tree*)exa_malloc(sizeof(tree));  
+  analdef *adef = (analdef*)exa_malloc(sizeof(analdef));   
+  
+  ignoreExceptionsDenormFloat(); 
+
+  /* get the start time */
+   
+  masterTime = gettime();         
+    
+  /* initialize the analysis parameters in struct adef to default values */
+    
+  initAdef(adef);
+
+  /* parse command line arguments: this has a side effect on tr struct and adef struct variables */
+  
+  get_args(argc, argv, adef, tr); 
+  
+  /* generate the ExaML output file names and store them in strings */
+    
+  makeFileNames();
+  
+  initializeTree(tr, adef); 
+
+  if(processID == 0)  
+    {
+      printModelAndProgramInfo(tr, adef, argc, argv);
+      PRINT("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
+    }  
+                         
+  /* 
+     this will re-start ExaML exactly where it has left off from a checkpoint file,
+     while checkpointing is important and has to be implemented for the library we should not worry about this right now 
+  */
+
+  /* not important, only used to keep track of total accumulated exec time 
+     when checkpointing and restarts were used */
+	
+  if(processID == 0)
+    accumulatedTime = 0.0;
+ 
+  exa_main(tr,adef);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Finalize();
+  
+  return 0;
+}
+
+
+#endif
+
+
 
 

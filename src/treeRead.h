@@ -9,16 +9,8 @@
 #ifndef _TREE_READ_H
 #define _TREE_READ_H
 
-
-/* #ifdef __cplusplus */
-/* extern "C"{ */
-/* #endif */
-
-
 boolean readTreeWithOrWithoutBL(tree *tr, FILE *treeFile); 
+void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL); 
 
-/* #ifdef __cplusplus */
-/* } */
-/* #endif */
 
 #endif

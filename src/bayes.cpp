@@ -21,7 +21,7 @@
 #include "eval.h"
 #include "proposals.h"
 #include "tune.h"
-#include "prsf.h"
+#include "prsfComputer.h"
 #include "TreeAln.hpp"
 
 
