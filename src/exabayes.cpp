@@ -140,6 +140,8 @@ int main (int argc, char *argv[])
 #endif
 
   ignoreExceptionsDenormFloat(); 
+
+
   tree  *tr = (tree*)exa_calloc(1,sizeof(tree));
   analdef *adef = (analdef*)exa_calloc(1,sizeof(analdef));
 
@@ -178,9 +180,6 @@ extern double accumulatedTime;
 extern char byteFileName[1024]; 
 
 void exa_main(tree *tr, analdef *adef); 
-
-
-
 void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[]);
 void initializeTree(tree *tr, analdef *adef);
 
@@ -200,22 +199,11 @@ int main(int argc, char *argv[])
   
   ignoreExceptionsDenormFloat(); 
 
-  /* get the start time */
-   
   masterTime = gettime();         
-    
-  /* initialize the analysis parameters in struct adef to default values */
-    
-  initAdef(adef);
 
-  /* parse command line arguments: this has a side effect on tr struct and adef struct variables */
-  
-  get_args(argc, argv, adef, tr); 
-  
-  /* generate the ExaML output file names and store them in strings */
-    
-  makeFileNames();
-  
+  initAdef(adef);
+  get_args(argc, argv, adef, tr);       
+  makeFileNames();  
   initializeTree(tr, adef); 
 
   if(isOutputProcess()) 
@@ -223,15 +211,7 @@ int main(int argc, char *argv[])
       printModelAndProgramInfo(tr, adef, argc, argv);
       PRINT("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
     }  
-                         
-  /* 
-     this will re-start ExaML exactly where it has left off from a checkpoint file,
-     while checkpointing is important and has to be implemented for the library we should not worry about this right now 
-  */
 
-  /* not important, only used to keep track of total accumulated exec time 
-     when checkpointing and restarts were used */
-	
   if(isOutputProcess())
     accumulatedTime = 0.0;
  

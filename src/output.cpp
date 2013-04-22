@@ -81,6 +81,8 @@ void debug_checkTreeConsistency(tree *tr)
 #endif
 }
 
+
+
 void makeFileNames()
 {
   int infoFileExists = 0;
@@ -141,68 +143,6 @@ void printInfo(state *chain, const char *format, ...)
 }
 
 
-/* double exabayes_getBranchLength(state *chain, int perGene, nodeptr p) */
-/* { */
-/*   tree *tr = chain->tr;  */
-
-/*   double  */
-/*     z = 0.0, */
-/*     x = 0.0; */
-
-/*   assert(perGene != NO_BRANCHES); */
-	      
-/*   if(NOT hasPergeneBL(tr)) */
-/*     { */
-/*       assert(tr->fracchange != -1.0); */
-/*       z = p->z[0]; */
-/*       if (z < zmin)  */
-/* 	z = zmin;      	  */
-      
-/*       x = -log(z) * tr->fracchange;  */
-/*     } */
-/*   else */
-/*     { */
-/*       if(perGene == SUMMARIZE_LH) */
-/* 	{ */
-/* 	  int  */
-/* 	    i; */
-	  
-/* 	  double  */
-/* 	    avgX = 0.0; */
-		      
-/* 	  for(i = 0; i < getNumBranches(tr); i++) */
-/* 	    { */
-
-/* 	      assert(getPcontr(chain,i) != -1.0); */
-/* 	      assert(getFracChange(chain,i) != -1.0); */
-
-/* 	      z = p->z[i]; */
-/* 	      if(z < zmin)  */
-/* 		z = zmin;      	  */
-/* 	      x = -log(z) * getFracChange(chain,i); */
-/* 	      avgX += x * getPcontr(chain,i); */
-/* 	    } */
-
-/* 	  x = avgX; */
-/* 	} */
-/*       else */
-/* 	{	 */
-/* 	  assert(getFracChange(chain,perGene) != -1.0); */
-/* 	  assert(perGene >= 0 && perGene < getNumBranches(tr)); */
-	  
-/* 	  z = p->z[perGene]; */
-	  
-/* 	  if(z < zmin)  */
-/* 	    z = zmin;      	  */
-	  
-/* 	  x = -log(z) * getFracChange(chain,perGene); */
-/* 	} */
-/*     } */
-
-/*   return x; */
-/* } */
-
-
 char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
 {   
   // tree *tr = chain->tr; 
@@ -232,7 +172,7 @@ char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
       return treestr;
     }
 
-  sprintf(treestr, ":%g", branchLengthToReal(tr, p->z[0]));
+  sprintf(treestr, ":%.7f", branchLengthToReal(tr, p->z[0]));
   
   while (*treestr) treestr++;
   return  treestr;
@@ -453,52 +393,4 @@ void chainInfo(state *chain)
 
   PRINT("\n");
 }
-
-
-#if 0 
-/* QUARANTINE  */
-void chainInfoOutput(state *chain )
-{
-
-  PRINT( "[chain: %d] [TIME %.2f] gen: %d Likelihood: %f StartLH: %f \n",chain->id,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, chain->traln->getTr()->startLH);
-
-  /* just output how much time has passed since the last increment */
-  timeIncrement = gettime(); 	
-  
-  PRINT( "Topo: eSpr: %d/%d (%d%%)\teSpr_mapped: %d/%d\t(%d%%) \n"
-	 , chain->acceptedProposals[E_SPR]	, chain->rejectedProposals[E_SPR] , (int)(chain->acceptedProposals[E_SPR]*100/
-											     (chain->acceptedProposals[E_SPR]+chain->rejectedProposals[E_SPR]+0.0001)
-),
-	 chain->acceptedProposals[E_SPR]	, chain->rejectedProposals[E_SPR_MAPPED] , (int)(chain->acceptedProposals[E_SPR_MAPPED]*100/(chain->acceptedProposals[E_SPR_MAPPED]+chain->rejectedProposals[E_SPR_MAPPED]+0.0001)));
-  
-  PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",chain->acceptedProposals[UPDATE_MODEL]	, chain->rejectedProposals[UPDATE_MODEL] , (int)(chain->acceptedProposals[UPDATE_MODEL]*100/(chain->acceptedProposals[UPDATE_MODEL]+chain->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_BIUNIF]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF]+0.0001)));
-  
-  PRINT( "Frequencies: unif: %d/%d (%d%%) \n"
-  , chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]	, chain->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]*100/(chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]+chain->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF]+0.0001)));
-  
-  PRINT( "Gamma: slidingWindow: %d/%d (%d%%) gaExp: %d/%d (%d%%) \n",chain->acceptedProposals[UPDATE_GAMMA]	, chain->rejectedProposals[UPDATE_GAMMA] , (int)(chain->acceptedProposals[UPDATE_GAMMA]*100/(chain->acceptedProposals[UPDATE_GAMMA]+chain->rejectedProposals[UPDATE_GAMMA]+0.0001)),
-	 chain->acceptedProposals[UPDATE_GAMMA_EXP]	, chain->rejectedProposals[UPDATE_GAMMA_EXP] , (int)(chain->acceptedProposals[UPDATE_GAMMA_EXP]*100/(chain->acceptedProposals[UPDATE_GAMMA_EXP]+chain->rejectedProposals[UPDATE_GAMMA_EXP]+0.0001)));
-  
-  PRINT( "Branchlength: Slidingwindow: %d/%d (%d%%) blBiunif: %d/%d (%d%%) blExp: %d/%d (%d%%)\n",chain->acceptedProposals[UPDATE_SINGLE_BL], chain->rejectedProposals[UPDATE_SINGLE_BL], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL]+chain->rejectedProposals[UPDATE_SINGLE_BL]+0.0001)),
-	 chain->acceptedProposals[UPDATE_SINGLE_BL_EXP], chain->rejectedProposals[UPDATE_SINGLE_BL_EXP], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL_EXP]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL_EXP]+chain->rejectedProposals[UPDATE_SINGLE_BL_EXP]+0.0001)),
-	 chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF], chain->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]+chain->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF]+0.0001)));
-  
-  PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",chain->hastings, chain->newprior, chain->curprior);
-  
-  if(getNumberOfPartitions(chain->traln->getTr()) < 10) 
-    {
-      for(int printModel=0; printModel< getNumberOfPartitions(chain->traln->getTr());printModel++) 
-	printSubsRates(chain, printModel, chain->modelRemem.numSubsRates);
-    }
-    
-  PRINT("\n");
-  //printSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates);
-//printf("numSubs: %d numFrequ: %d\n\n",chain->modelRemem.numSubsRates,chain->frequRemem.numFrequRates);
-
-}
-#endif
 
