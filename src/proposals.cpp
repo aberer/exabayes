@@ -741,18 +741,14 @@ static void model_dirichlet_proposal_apply(state *chain, proposalFunction *pf)//
   drawDirichletExpected(chain, r, partition->substRates, 50.0, numRates);
   chain->hastings=densityDirichlet(partition->substRates, r, numRates) / densityDirichlet(r, partition->substRates, numRates);    
   
-	    /* Ensure always you stay within this range */
-	    for(int i=0; i<numRates; i++)
-	    {
-	    if(r[i] > RATE_MAX) r[i] = RATE_MAX;
-	    if(r[i] < RATE_MIN) r[i] = RATE_MIN;
-	     edit_subs_rates(chain, info->modelNum, i, r[i]);
-	    }
-
-
+  /* Ensure always you stay within this range */
+  for(int i=0; i<numRates; i++)
+    {
+      if(r[i] > RATE_MAX) r[i] = RATE_MAX;
+      if(r[i] < RATE_MIN) r[i] = RATE_MIN;
+      edit_subs_rates(chain, info->modelNum, i, r[i]);
+    }
      
-    
-    
   //recalculate eigens
 
   chain->traln->initRevMat(model); /* 1. recomputes Eigenvectors, Eigenvalues etc. for Q decomp. */
@@ -1426,15 +1422,15 @@ void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
   //Validation-----------------------------------------
   printf("frequencies: ");
   for(int state = 0;state < numFreq ; state ++)
-    {
-     printf("%f ", partition->frequencies[state]); 
-    }
+  {
+  printf("%f ", partition->frequencies[state]); 
+  }
   printf("\n");
   printf("r:           ");
-     for(int state = 0;state < numFreq ; state ++)
-    {
-     printf("%f ",r[state]); 
-    }
+  for(int state = 0;state < numFreq ; state ++)
+  {
+  printf("%f ",r[state]); 
+  }
   printf("\n");
   printf("hastings %f \n", chain->hastings);
   printf("\n");
@@ -1442,7 +1438,7 @@ void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
   */
   
       
-         for(int state = 0;state < numFreq ; state ++)
+  for(int state = 0;state < numFreq ; state ++)
     {
       if (r[state]<FREQ_MIN)
 	r[state]=FREQ_MIN+FREQ_MIN*FREQ_MIN*(numFreq-1);//with this minima sheme, minima should be satisfied even after rescaling.
@@ -1550,18 +1546,19 @@ static void autotuneMultiplier(state *chain, proposalFunction *pf)
 {
   double *parameter = &(pf->parameters.multiplier); 
 
-  successCtr *ctr = &(pf->sCtr); 
+  // successCtr *ctr = &(pf->sCtr); 
+  SuccessCtr *ctr = &(pf->sCtr); 
 
   int batch = chain->currentGeneration  / gAInfo.tuneFreq; 
 
-  double newParam = tuneParameter(batch, getRatioLocal(ctr), *parameter, FALSE); 
+  double newParam = tuneParameter(batch, ctr->getRatioInLastInterval(), *parameter, FALSE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
   printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
 #endif
 
   *parameter = newParam; 
-  resetCtr(ctr);   
+  ctr->reset();   
 }
 
 
@@ -1572,9 +1569,9 @@ static void autotuneMultiplier(state *chain, proposalFunction *pf)
 static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 {
   double *parameter = &(pf->parameters.slidWinSize); 
-  successCtr *ctr = &(pf->sCtr); 
+  SuccessCtr *ctr = &(pf->sCtr); 
   double newParam = tuneParameter(chain->currentGeneration / gAInfo.tuneFreq,
-				  getRatioLocal(&(pf->sCtr)),
+				  ctr->getRatioInLastInterval(), 
 				  *parameter, FALSE  ); 
   
 #ifdef DEBUG_PRINT_TUNE_INFO
@@ -1582,32 +1579,34 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 #endif
 
   *parameter = newParam; 
-  resetCtr(ctr); 
+  ctr->reset(); 
 }
 
 
+
+// TODO this below did not work at all 
 /**
    @brief autotunes the stop probability of extended topological moves 
 */ 
-static void autotuneStopProp(state *chain, proposalFunction *pf) 
-{
-  const double minimum = 0.01; 
-  const double maximum = 0.95; 
+// static void autotuneStopProp(state *chain, proposalFunction *pf) 
+// {
+//   const double minimum = 0.01; 
+//   const double maximum = 0.95; 
 
-  double *parameter = &(pf->parameters.eSprStopProb); 
-  successCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter( chain->currentGeneration / gAInfo.tuneFreq, 
-				   getRatioLocal(&(pf->sCtr)),
-				   *parameter, 
-				   TRUE ); 
+//   double *parameter = &(pf->parameters.eSprStopProb); 
+//   successCtr *ctr = &(pf->sCtr); 
+//   double newParam = tuneParameter( chain->currentGeneration / gAInfo.tuneFreq, 
+// 				   getRatioLocal(&(pf->sCtr)),
+// 				   *parameter, 
+// 				   TRUE ); 
 
-#ifdef DEBUG_PRINT_TUNE_INFO
-  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
-#endif
+// #ifdef DEBUG_PRINT_TUNE_INFO
+//   printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
+// #endif
   
-  *parameter = fmax(minimum,fmin(newParam,maximum)); 
-  resetCtr(ctr);     
-}
+//   *parameter = fmax(minimum,fmin(newParam,maximum)); 
+//   resetCtr(ctr);     
+// }
 
 
 void branchLengthReset(state *chain, proposalFunction *pf)

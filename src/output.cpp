@@ -1,4 +1,6 @@
 
+#include <sstream>
+
 
 
 #include "axml.h"
@@ -342,14 +344,13 @@ void printSample(state *chain)
 }
 
 
+
+
 void printIfPresent(proposalFunction *pf)
 {
-  double ratio = getRatioOverall(&(pf->sCtr)); 
-  int acc = pf->sCtr.gAcc; 
-  int rej = pf->sCtr.gRej; 
-
-  if(acc != 0 || rej != 0)
-    PRINT("%s: %d/%d (%.1f%%)\t", pf->name, acc  , rej ,  ratio * 100     ); 
+  stringstream buf; 
+  buf << pf->sCtr; 
+  PRINT("%s: %s\t", pf->name, buf.str().c_str());   
 }
 
 
@@ -385,8 +386,10 @@ static void printHotChains(int runId)
 
 static void printSwapInfo(int runId)
 {
-  successCtr
-    *ctrMatrix = gAInfo.swapInfo[runId]; 
+  // successCtr
+  //   *ctrMatrix = gAInfo.swapInfo[runId]; 
+
+  SuccessCtr *ctrMatrix = gAInfo.swapInfo[runId]; 
   
   int cnt = 0; 
   for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
@@ -396,25 +399,15 @@ static void printSwapInfo(int runId)
 
       for(int j = 0; j < gAInfo.numberCoupledChains; ++j)
 	{
-	  successCtr *ctr = & ( ctrMatrix[cnt]) ; 
+	  SuccessCtr *ctr = ctrMatrix + cnt; 
 	  if(i < j )
-	    {	      
-	      PRINT("%.1f%%,", i,j, 100 * getRatioOverall(ctr));
-	    }
-	  else 
-	    {
-	      assert( ctr->gAcc == 0 
-			 && ctr->gRej == 0
-			 && ctr->lAcc == 0
-			 && ctr->lRej == 0);  
-	    }
+	    PRINT("%.1f%%,", i,j, 100 * ctr->getRatioOverall());
+
 	  cnt++; 
 	}
       if(i < gAInfo.numberCoupledChains - 1 )
 	PRINT(")"); 
     }
-
-  /* PRINT("\tcurrentRatio(0,1)=%.1f%%", getRatioLocal( ctrMatrix + 1) );  */
 }
 
 

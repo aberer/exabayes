@@ -15,6 +15,8 @@
 
 #include "config.h"
 
+class SuccessCtr; 
+
 
 /* Those globals are bad.  Having them as a singleton is slightly
    better. 
@@ -41,7 +43,10 @@ typedef struct globs
 
   
   double* temperature;   /// one temperature for each run 
-  successCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> only the upper half w/o diag is filled!
+  /* successCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> only the upper half w/o diag is filled! */
+  
+  /* todo replace with a chain swapper? */
+  SuccessCtr **swapInfo; 
   
   analdef *adef; 
 

@@ -181,10 +181,10 @@ static void setupGlobals(initParamStruct *initParams, tree *tr)
 
 
   /* initialize a matrix of swaps (wasting some space here) */
-  gAInfo.swapInfo = (successCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(successCtr*)); 
+  gAInfo.swapInfo = (SuccessCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(SuccessCtr*)); 
   int n = gAInfo.numberCoupledChains; 
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.swapInfo[i] = (successCtr*)exa_calloc( n * n , sizeof(successCtr)); 
+    gAInfo.swapInfo[i] = (SuccessCtr*)exa_calloc( n * n , sizeof(SuccessCtr)); 
 
   gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
@@ -565,13 +565,13 @@ void step(state *chain)
 
   if(chain->wasAccepted)
     {
-      cntAccept(&(pf->sCtr)); 
+      pf->sCtr.accept();
       expensiveVerify(chain);
     }
   else
     {
       pf->reset_func(chain, pf); 
-      cntReject(&(pf->sCtr));       
+      pf->sCtr.reject();
       chain->restorer->restore(); // restores the previous tree state 
 
     }

@@ -103,13 +103,15 @@ void switchChainState(state *chains)
 
       int r = MIN(a->couplingId, b->couplingId ); 
       int c = MAX(a->couplingId, b->couplingId); 
-      cntAccept(&(gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c ]) );       
+      
+      gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].accept();
     } 
   else 
     {
       int r = MIN(a->couplingId, b->couplingId ); 
       int c = MAX(a->couplingId, b->couplingId); 
-      cntReject(&(gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c ]) ); 
+
+      gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].reject();
     }
 }
 
@@ -153,10 +155,10 @@ void executeOneRun(state *chains, int gensToRun )
 	    {	      
 	      /* naive strategy: tune, s.t. the coldest hot chain swaps
 		 with the coldest chain in 23.4% of all cases */
-	      successCtr *c = &(gAInfo.swapInfo[runId][1]); 
+	      SuccessCtr *c = &(gAInfo.swapInfo[runId][1]); 
 	      
-	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / gAInfo.tuneFreq , getRatioLocal(c), gAInfo.temperature[runId], FALSE);
-	      resetCtr(c);
+	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / gAInfo.tuneFreq , c->getRatioInLastInterval(), gAInfo.temperature[runId], FALSE);
+	      c->reset();
 	    }
 	    
 	  switchChainState(chains);
