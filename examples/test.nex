@@ -4,10 +4,10 @@ begin EXABAYES;
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
-      numIndiChains 4 		[ number of independant chains/runs ]
+      numIndiChains 2 		[ number of independant chains/runs ]
       numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
-      printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+      printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
       [ CONVERGENCE ]
       asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
@@ -22,7 +22,7 @@ begin EXABAYES;
 
       [ BURNIN ] 
       [ comment out one of the two options ]      
-      burninGen 5000    [ exact number of generations that are discarded for diagnostics ] 
+      burninGen 1    [ exact number of generations that are discarded for diagnostics ] 
       [ burninProportion 25 [ discard n % of all initial samples as burnin  ] ]
 
       [================================================================]
@@ -30,9 +30,9 @@ begin EXABAYES;
       [================================================================]
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 20 [ 10% in mrb ]
-      initGuidedSPR 0  [ok ] 
-      stNNI 20      [ ok 10% in mrb]	
+      initEsprMappedWeight 10 [ 10% in mrb ]
+      initGuidedSPR 20  [ok ] 
+      stNNI 10      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
       initSingleBranchWeight 0 [ ok ] 
@@ -61,7 +61,7 @@ begin EXABAYES;
       initFrequencyDirichletWeight 2  [ok but needs scaling]
 
       [ PARAMETERS for various moves ]
-      guidedSPRRadius 5  [ maximum radius that is searched by the guided spr move ] 
+      guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
 

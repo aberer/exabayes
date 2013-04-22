@@ -209,26 +209,40 @@ void runChains(state *allChains, int diagFreq)
 
 
 
+// #define TEST 
+ 
+#include "MyTestProposal.hpp"
 
-/**
-   @brief the main ExaBayes function.
 
-   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
-   @param adef -- the legacy adef
- */
-void exa_main(analdef *adef, int seed)
+
+// /**
+//    @brief the main ExaBayes function.
+
+//    @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+//    @param adef -- the legacy adef
+//  */
+void exa_main (analdef *adef, int seed)
 {   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
 
   timeIncrement = gettime();
   gAInfo.adef = adef; 
 
+#ifdef TEST   
+  MyTestProposal prop();
+  
+  
+
+  exit(0); 
+#endif
+
+
   initializeIndependentChains(adef,  seed, &indiChains); 
 
   assert(gAInfo.numberCoupledChains > 0);
 
   gAInfo.allChains = indiChains; 
-  
+
   assert(gAInfo.diagFreq != 0 ); 
   runChains(indiChains, gAInfo.diagFreq); 
 

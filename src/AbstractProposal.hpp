@@ -8,17 +8,17 @@
 class AbstractProposal
 {
 public: 
-  AbstractProposal(double weight); 
+  AbstractProposal(); 
   virtual ~AbstractProposal();
 
-  virtual void applyToTree(); 
-  virtual void evaluateProposal(); 
-  virtual void resetTree(); 
-  virtual void autotune();
+  virtual void applyToTree() = 0; 
+  virtual void evaluateProposal() = 0; 
+  virtual void resetTree() = 0; 
+  virtual void autotune() = 0;
 
 private: 
-  string name; 
-  
+  string name;   
+  SuccessCtr sctr; 
   // various parameters and stuff 
 
 }; 

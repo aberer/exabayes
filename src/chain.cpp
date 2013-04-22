@@ -18,6 +18,12 @@
 #include "LnlRestorer.hpp"
 #include "Topology.hpp"
 
+#include "BipartitionHash.hpp"
+
+
+#include <vector>
+using namespace std; 
+
 
 void initDefaultValues(state *chain, tree *tr)
 {
@@ -155,8 +161,6 @@ void copyState(state *dest, const state *src )
 
 static void setupGlobals(initParamStruct *initParams)
 {
-  int numTax = 1000 ;		// TODO HACK! 
-
   if (initParams->numGen > 0)
     gAInfo.numGen = initParams->numGen; 
 
@@ -164,9 +168,6 @@ static void setupGlobals(initParamStruct *initParams)
   gAInfo.diagFreq = initParams->diagFreq; 
   gAInfo.numberOfRuns =   initParams->numIndiChains; 
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
-
-  hashtable *ht = initHashTable(numTax * numTax * 10);
-  gAInfo.bvHash = ht; 
 
   gAInfo.printFreq = initParams->printFreq; 
   gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
@@ -190,8 +191,7 @@ static void setupGlobals(initParamStruct *initParams)
 }
 
 
-#include <vector>
-using namespace std; 
+
 
 
 /**
@@ -242,6 +242,8 @@ void initializeIndependentChains( analdef *adef, int seed, state **resultIndiCha
       tree *myTree = theChain->traln->getTr();       
       initDefaultValues(theChain, myTree);
 
+
+      // TODO as kassian pointed out, we only need one lnl restorer
       if(theChain->id / gAInfo.numberCoupledChains == 0 ) 
 	theChain->restorer = new LnlRestorer(theChain);
       else 
@@ -331,6 +333,13 @@ void initializeIndependentChains( analdef *adef, int seed, state **resultIndiCha
 	}
     }
 
+  {
+    state* chain = *resultIndiChains + 0; 
+    int numTax = chain->traln->getTr()->mxtips; 
+    gAInfo.bipHash = new BipartitionHash(numTax, gAInfo.numberOfRuns);
+  }
+  
+  
   if(gAInfo.numberOfStartingTrees > 0)
     fclose(treeFH); 
 
@@ -588,14 +597,12 @@ void step(state *chain)
 
       if(chain->currentGeneration >  gAInfo.burninGen)
 	{
-	  addBipartitionsToHash(tr, chain ); 
+	  gAInfo.bipHash->addBipartitionsToHash(*(chain->traln),  chain->id / gAInfo.numberCoupledChains); 
 	  assert(gAInfo.burninProportion == 0.0); 
 	}
     }
-  
 
 
-  
   /* the output for the console  */
   if(isOutputProcess() 
      && chain->couplingId == 0     

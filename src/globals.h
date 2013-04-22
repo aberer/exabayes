@@ -15,6 +15,7 @@
 
 #include "config.h"
 
+class BipartitionHash; 
 class SuccessCtr; 
 
 
@@ -36,7 +37,9 @@ typedef struct globs
 
   state *allChains; 		/* careful with this! */
   int samplingFrequency; 
-  hashtable *bvHash; 
+  /* hashtable *bvHash;  */
+  BipartitionHash* bipHash; 
+
   int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
 

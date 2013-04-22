@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iomanip>
 
+using namespace std; 
+
 
 // TODO  an success interval would be nice 
 

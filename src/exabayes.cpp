@@ -69,7 +69,8 @@ int main(int argc, char *argv[])
 
   CommandLine cl(argc, argv); 
 
-  makeFileNames(); 
+  if(processID == 0)
+    makeFileNames(); 
   exa_main(cl.getAdef(), cl.getSeed()); 
 
   MPI_Barrier(MPI_COMM_WORLD);

@@ -35,7 +35,6 @@ public:
   void traverseAndSwitchIfNecessary(nodep virtualRoot, int model, bool fullTraversal); 
 
 
-
 private:   
   void storeOrientation(); 
   void loadOrientation();
