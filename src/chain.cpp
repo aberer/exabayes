@@ -6,7 +6,6 @@
 #include "chain.h"
 #include "proposals.h"
 #include "output.h"
-#include "convergence.h" 
 #include "treeRead.h"
 #include "topology-utils.h"
 #include "randomness.h"

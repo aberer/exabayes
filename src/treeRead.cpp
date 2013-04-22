@@ -343,7 +343,6 @@ void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
     {
       topologyOnly = TRUE; 
     }
-
     
   nodeptr  
     p;

@@ -1,8 +1,6 @@
 #ifndef _TREEALN_H
 #define _TREEALN_H
 
-#include <memory>
-
 #include "axml.h"
 #include "bayes.h"
 
@@ -16,6 +14,7 @@ class TreeAln
 {
 public: 
   explicit TreeAln( char* bytefile); 
+  explicit TreeAln(tree *tr); 
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
   TreeAln(const TreeAln &rhs); 
@@ -32,15 +31,15 @@ public:
   double setBranchLengthSave(double newValue, int model, nodeptr p); 
   double setAlphaSave(double newValue, int model); 
   
-  void setTr(tree *newTr){ tr = shared_ptr<tree>(newTr); }
+  void setTr(tree *newTr){ tr = newTr; }
 #if HAVE_PLL != 0 
-  void setPartitionList(partitionList *pl) { partitions = shared_ptr<partitionList>(pl); }
+  void setPartitionList(partitionList *pl) { partitions = pl; }
 #endif
   
 
   // getters 
   pInfo* getPartition(int model);
-  tree* getTr(){return tr.get();}
+  tree* getTr(){return tr;}
   int getNumBranches(); 
   int getNumberOfPartitions();   
   int& accessExecModel(int model); 
@@ -57,7 +56,7 @@ public:
 
 
 #if HAVE_PLL != 0
-  partitionList* getPartitionsPtr(){ return partitions.get(); } 
+  partitionList* getPartitionsPtr(){ return partitions; } 
 #endif
 
 
@@ -70,11 +69,11 @@ public:
 
 private: 
   void initDefault();
-  shared_ptr<tree> tr;
+  tree* tr;		// TODO replace with an object for cleanup 
 
 #if HAVE_PLL != 0
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
-  shared_ptr<partitionList> partitions; 
+  partitionList* partitions; 
   void initializeTreePLL();
   void initializePartitionsPLL(char *bytefile, double ***empFreq);
 #endif  

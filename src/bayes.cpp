@@ -1,7 +1,7 @@
 /**
    @file bayes.c
  
-   @brief The top-level  functionality of ExaBayes.
+   @brief The top-level functionality of ExaBayes.
 
 */
 
@@ -13,7 +13,6 @@
 #include "main-common.h"
 #include "output.h"
 #include "proposals.h"
-#include "convergence.h"
 #include "nclConfigReader.h"
 #include "misc-utils.h"
 #include "chain.h"
@@ -23,7 +22,7 @@
 #include "tune.h"
 #include "prsfComputer.h"
 #include "TreeAln.hpp"
-
+#include "BipartitionHash.hpp"
 
 extern double masterTime; 
 
@@ -180,6 +179,20 @@ void executeOneRun(state *chains, int gensToRun )
     }
     
     
+}
+
+
+
+bool convergenceDiagnostic(state *allChains)
+{
+  if(gAInfo.numberOfRuns > 1)
+    {      
+      double asdsf = gAInfo.bipHash->averageDeviationOfSplitFrequencies(gAInfo.asdsfIgnoreFreq);
+      PRINT("ASDSF=%f\n", asdsf); 
+      return asdsf < gAInfo.asdsfConvergence ; 
+    }
+  else 
+    return allChains[0].currentGeneration > gAInfo.numGen; 
 }
 
 

@@ -17,6 +17,7 @@
 #endif
 
 
+
 int main(int argc, char** argv)
 {
   if(argc < 4)
@@ -31,16 +32,30 @@ int main(int argc, char** argv)
 
   int start = atoi(argv[1]); 
   int end = atoi(argv[2]); 
-  
-  char *aFile = argv[3]; 	// TODO 
-
 
   vector<string> tmp;
-  tmp.push_back(string(aFile)); 
-  
+  for(int i = 3 ; i < argc; ++i)  
+    {
+      // check if the file exists 
+      FILE *fh = fopen(argv[i],"r"); 
+      if(fh == NULL)
+	{
+	  cerr << "could not find file >" << argv[i] << "<"<< endl; 
+	  exit(0); 
+	}
+
+      tmp.push_back(string(argv[i]));
+    }
 
   AvgSplitFreqAssessor asdsf(tmp,start,end); 
+
+  // cout << "all files contain at least " << asdsf.getMinNumTrees() << " trees" << endl; ;
   asdsf.extractBips();
 
+  double ignoreFreq = 0.1; 
+  
+  cout << "average deviation of split frequencies: " << asdsf.computeAsdsf(ignoreFreq) << endl; 
+  cout << "ignored splits that did not occur more than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << endl; 
   return 0; 
 }
+

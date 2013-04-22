@@ -10,7 +10,7 @@
 
 #include "BipartitionHash.hpp"
 #include "TreeAln.hpp"
-
+#include "adapters.h"
 
 
 /** 
@@ -30,9 +30,34 @@ BipartitionHash::BipartitionHash(int _numTax, int numRuns)
   initializeRandomHash(); 
 }
 
+
+
 BipartitionHash::~BipartitionHash()
 {
-  // TODO cleanup the stuff    
+  for(nat i = 0; i < 2 * numTax ;++i)
+    exa_free(bitvectors[i]); 
+  exa_free(bitvectors); 
+
+  freeHashTable(h);
+}
+
+
+
+void BipartitionHash::printBv(nat *bv)
+{
+  int bvlen = vectorLength; 
+  if(isOutputProcess())
+    {
+      for(int i = 0; i < bvlen; ++i)
+	{
+	  int pos = i / 32; 
+	  int relPos = i % 32; 
+	if( ( bv[pos ] & (1 << (relPos)) ) > 0 )
+	  printf("1"); 
+	else 
+	  printf("0");
+	}
+    }
 }
 
 

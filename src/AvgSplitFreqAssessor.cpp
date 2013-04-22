@@ -7,19 +7,22 @@
     @notice This file is full of hacks, to get this somehow going. 
  */ 
 
-
 #include <fstream>
+#include <algorithm>
+#include <sstream> 
+
 #include <ncl/ncl.h>
-#include <algorithm> 
 
 #include "axml.h"
 #include "bayes.h"
 #include "main-common.h"
+#include "TreeAln.hpp"
+
+#include "output.h"
+#include "treeRead.h"
 
 #include "AvgSplitFreqAssessor.hpp"
 
-
-static void initializeTreeOnly(int numTax, tree **tre ); 
 
 
 /**
@@ -40,40 +43,58 @@ AvgSplitFreqAssessor::AvgSplitFreqAssessor(vector<string> fileNames, int _start,
 	}
     }
 
-  tr = NULL; 
+  tree *tr = NULL; 
   initializeTreeOnly(taxa.size(), &tr );
-  unsigned int vectorLength = 0; 
-  tr->bitVectors = initBitVector(tr->mxtips, &vectorLength );
-  tr->h = initHashTable(10 * tr->mxtips);
   fns = fileNames; 
+
+  traln = new TreeAln(tr); 
+  
+  bipHash = new BipartitionHash(taxa.size(), fileNames.size());
 }
 
 
 
 
-#include "output.h"
-#include "treeRead.h"
+AvgSplitFreqAssessor::~AvgSplitFreqAssessor()
+{
+  delete bipHash; 
+  delete traln; 
+}
+
+
+void AvgSplitFreqAssessor::nextTree(FILE *fh )
+{
+  tree *tr = traln->getTr();
+  int c = 0; 
+  while( (c = getc(fh)) != '('); 
+  ungetc(c, fh);   
+  myTreeReadLen(fh, tr , FALSE); 
+}
+
+
 
 
 void AvgSplitFreqAssessor::extractBips()
 {
+  int ctr = 0; 
   for (auto filename : fns)
     {
       FILE *fh = fopen(filename.c_str(), "r"); 
-      int c = 0; 
-      while( (c = getc(fh)) != '('); 
-      ungetc(c, fh); 
 
-      myTreeReadLen(fh, this->tr, FALSE); 
-      Tree2stringNexus(tr->tree_string, tr,  tr->nodep[1]->back, 0 ); 
-      cout << tr->tree_string << endl; 
+      for(int i = 0; i < start; ++i)
+	nextTree(fh);
 
-      exit(0); 
+      for(int i = start ; i < end; ++i)
+	{
+	  nextTree(fh);
+	  bipHash->addBipartitionsToHash(*traln, ctr);      
+	}
 
+      
+      fclose(fh);
+      ++ctr; 
     }
 }
-
-
 
 
 
@@ -143,11 +164,11 @@ bool AvgSplitFreqAssessor::fileIsCorrect(string fileName)
 }
 
 
-
-double AvgSplitFreqAssessor::computeAsdsf()
+double AvgSplitFreqAssessor::computeAsdsf(double ignoreFreq)
 {
-  return 0; 
+  return bipHash->averageDeviationOfSplitFrequencies(ignoreFreq); 
 }
+
 
 
 void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
@@ -156,13 +177,13 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
   ifstream infile(fileName); 
   string line; 
   bool foundStart = false; 
-  while(getline(infile, line))
+  bool abort = false; 
+  while(not abort && getline(infile, line))
     {      
       string cleanLine = trim(line); 
 
       if(foundStart)
 	{
-	  bool abort = false; 
 	  if(cleanLine[cleanLine.size()-1] == ';') // we are done 
 	    abort = true; 
 
@@ -173,14 +194,14 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
 	    name = cleanerString.substr(pos+1, cleanerString.size()); 	  
 
 	  taxa.push_back(name); 
-	  if(abort)
-	    break; 
 	}
       else if(  cleanLine.compare("translate") == 0  )
 	foundStart = true; 
     }  
+
   assert(foundStart); 
 }
+
 
 
 /** 
@@ -188,20 +209,62 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
     
     important: does NOT need a bytefile 
  */ 
-static void initializeTreeOnly(int numTax, tree **tre )
+void AvgSplitFreqAssessor::initializeTreeOnly(int numTax, tree **tre )
 {
   *tre = (tree*)exa_calloc(1,sizeof(tree)); 
-  tree *tr = *tre; 
-  
+  tree *tr = *tre;   
   tr->mxtips = numTax; 
 
 #if HAVE_PLL != 0
   partitionList pl; 
-  
+  pl.numberOfPartitions = 0; 
   setupTree(tr, false, &pl);
 #else 
+  tr->NumberOfModels = 0; 
   setupTree(tr);
 #endif
 
+  int space = int(log(numTax) * 10 ) ;
+  // initialize the name hash, s.t. we can read trees 
+  for(int i = 1; i <= tr->mxtips; i++)
+    {      
+      tr->nameList[i] = (char*)malloc(sizeof(char) * space );      
+      stringstream ss; 
+      ss << i ;
+      strcpy(tr->nameList[i], ss.str().c_str()); 
+      addword(tr->nameList[i] , tr->nameHash, i); 
+    }
 }
 
+
+
+
+int AvgSplitFreqAssessor::getMinNumTrees()
+{
+  int minimum = -1; 
+  for(auto fn : fns )
+    {
+      FILE *fh = fopen(fn.c_str(), "r"); 
+
+      // the following is moderately evil: assuming, there is no '('
+      // except for the first tree and no ';' char except for tree
+      // delimitation, after we found a 
+
+      int numTreesHere = 0; 
+
+      int c; 
+      while( ( c = getc(fh) ) != EOF && c != '('); 
+      
+      
+      while( (c = getc(fh) )  != EOF )
+	if(c == ';')
+	  numTreesHere++;
+
+      if(minimum == -1 || numTreesHere < minimum)
+	minimum = numTreesHere; 
+
+      fclose(fh); 
+    }
+  
+  return minimum; 
+} 
