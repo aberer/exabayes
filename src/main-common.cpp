@@ -1,4 +1,3 @@
-
 #include "axml.h"
 #include "main-common.h"
 #include "bayes.h"
@@ -18,191 +17,51 @@ void ignoreExceptionsDenormFloat()
 }
 
 
+#if HAVE_PLL != 0
+static void errorExit( int i )
+{
+  printf("error\n") ; 
+  exit(0); 
+}
+#endif
 
-// void printHeader(tree *tr, analdef *adef)
+
+// void printVersionInfo()
 // {
-//   PRINT("\n\n This is %s version %s\n", PROGRAM_NAME, PACKAGE_VERSION);   
+// #if HAVE_PLL != 0
+//   PRINT("\n\nThis is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
+// #else 
+//   PRINT("\n\nThis is %s, version %s\n", PROGRAM_NAME, VERSION); 
+// #endif  
+// }
 
+// void printREADME()
+// {
+//   printf("TODO\n"); 
+// }
+
+
+// void finalizeFiles()
+// {
+//   PRINT("TODO\n"); 
 // }
 
 
 
- void printREADME()
+
+void parseCommandLine(int argc, char *argv[], analdef *adef)
 {
-  printf("TODO\n"); 
-}
-
-void initAdef(analdef *adef)
-{   
-  adef->max_rearrange          = 21;
-  adef->stepwidth              = 5;
-  adef->initial                = 10;
-  adef->bestTrav               = 10;
-  adef->initialSet             = FALSE; 
-  adef->mode                   = BIG_RAPID_MODE; 
-  adef->likelihoodEpsilon      = 0.1; 
-  adef->permuteTreeoptimize    = FALSE; 
-  adef->perGeneBranchLengths   = FALSE;   
-  adef->useCheckpoint          = FALSE;
-}
-
-
-void printVersionInfo()
-{
-#if (HAVE_PLL == 1 ) 
-  PRINT("\n\nThis is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
-#else 
-  PRINT("\n\nThis is %s, version %s\n", PROGRAM_NAME, VERSION); 
-#endif  
-}
-
-
-
-
-void analyzeRunId(char id[128])
-{
-  int i = 0;
-
-  while(id[i] != '\0')
-    {
-      if(i >= 128)
-	{
-	  printf("\n Error: run id after \"-n\" is too long, it has %d characters please use a shorter one\n\n", i);
-	  assert(0);
-	}
-
-      if(id[i] == '/')
-	{
-	  printf("\n Error: character %c not allowed in run ID\n\n", id[i]);
-	  assert(0);
-	}
-
-
-      i++;
-    }
-
-  if(i == 0)
-    {
-      printf("\n Error: please provide a string for the run id after \"-n\" \n\n");
-      assert(0);
-    }
-}
-
-
-
-int filexists(char *filename)
-{
-  FILE
-    *fp;
   
-  int
-    res;
-  
-  fp = fopen(filename,"rb");
-
-  if(fp)
-    {
-      res = 1;
-      fclose(fp);
-    }
-  else
-    res = 0;
-
-  return res;
 }
 
 
-
-void errorExit(int e)
-{
-#if  (HAVE_PLL == 0 )
-  MPI_Finalize();
-#endif
-
-  exit(e);
-}
-
-
-
-void finalizeFiles()
-{
-  PRINT("TODO\n"); 
-}
-
-
-
-
-int mygetopt(int argc, char **argv, char *opts, int *optind, char **optarg)
-{
-  static int sp = 1;
-  register int c;
-  register char *cp;
-
-  if(sp == 1)
-    {
-      if(*optind >= argc || argv[*optind][0] != '-' || argv[*optind][1] == '\0')
-	return -1;
-    }
-  else
-    {
-      if(strcmp(argv[*optind], "--") == 0)
-	{
-	  *optind =  *optind + 1;
-	  return -1;
-	}
-    }
-
-  c = argv[*optind][sp];
-  if(c == ':' || (cp=strchr(opts, c)) == 0)
-    {
-      printf(": illegal option -- %c \n", c);
-      if(argv[*optind][++sp] == '\0')
-	{
-	  *optind =  *optind + 1;
-	  sp = 1;
-	}
-      return('?');
-    }
-  if(*++cp == ':')
-    {
-      if(argv[*optind][sp+1] != '\0')
-	{
-	  *optarg = &argv[*optind][sp+1];
-	  *optind =  *optind + 1;
-	}
-      else
-	{
-	  *optind =  *optind + 1;
-	  if(*optind >= argc)
-	    {
-	      printf(": option requires an argument -- %c\n", c);
-	      sp = 1;
-	      return('?');
-	    }
-	  else
-	    {
-	      *optarg = argv[*optind];
-	      *optind =  *optind + 1;
-	    }
-	}
-      sp = 1;
-    }
-  else
-    {
-      if(argv[*optind][++sp] == '\0')
-	{
-	  sp = 1;
-	  *optind =  *optind + 1;
-	}
-      *optarg = 0;
-    }
-  return(c);
-}
 
 
 /* TODO consolidate */
-void get_args(int argc, char *argv[], analdef *adef, tree *tr)
+void get_args_old(int argc, char *argv[], analdef *adef, tree *tr)
 {
+  assert(0); 
+  
   boolean
     bad_opt    = FALSE,
     resultDirSet = FALSE;
@@ -233,7 +92,7 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
   tr->rateHetModel = GAMMA;
  
   tr->multiStateModel  = GTR_MULTI_STATE;
-#if (HAVE_PLL == 0 ) 
+#if HAVE_PLL == 0 
     tr->useGappedImplementation = FALSE;
     tr->saveBestTrees          = 0;
 #endif
@@ -268,10 +127,10 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
     {
     switch(c)
       {    
-      case 'a':
-	tr->useMedian = TRUE;
-	break;
-      case 'Q':
+      // case 'a':
+      // 	tr->useMedian = TRUE;
+      // 	break;
+      case 'Q':			// TODO  
 	tr->manyPartitions = TRUE;   	
 	break;
       case 's': 
@@ -335,45 +194,40 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
   
   if(strlen(configFileName) == 0 ||  ! filexists(configFileName) )
     {
-      if(processID == 0)
-	printf("\nPlease provide a config file via -C <file>. A testing file is available under  \n"); 
+      PRINT("\nPlease provide a config file via -C <file>. A testing file is available under  \n"); 
       errorExit(-1); 
     }
 
   
   if(seed == -1 )
     {
-      if(processID == 0)
-	printf("\nPlease provide a proper seed for the initialization of the random number generator. \n "); 
+      PRINT("\nPlease provide a proper seed for the initialization of the random number generator. \n "); 
       errorExit(-1); 
     }
 
   if( ! filexists( configFileName))
     {
-      if(processID == 0 )
-  	printf("\nPlease provide a minimal config file via -C <file>.\n");
+
+      PRINT("\nPlease provide a minimal config file via -C <file>.\n");
       errorExit(-1);
     }
 
 
   if(!byteFileSet)
     {
-      if(processID == 0)
-	printf("\nError, you must specify a binary format data file with the \"-s\" option\n");
+      PRINT("\nError, you must specify a binary format data file with the \"-s\" option\n");
       errorExit(-1);
     }
 
   if(!modelSet)
     {
-      if(processID == 0)
-	printf("\nError, you must specify a model of rate heterogeneity with the \"-m\" option\n");
+      PRINT("\nError, you must specify a model of rate heterogeneity with the \"-m\" option\n");
       errorExit(-1);
     }
 
   if(!nameSet)
     {
-      if(processID == 0)
-	printf("\nError: please specify a name for this run with -n\n");
+      PRINT("\nError: please specify a name for this run with -n\n");
       errorExit(-1);
     }
 
@@ -400,16 +254,6 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       printf("%d starting trees provided via -t\n", gAInfo.numberOfStartingTrees); 
     }
 
-  /* if(!treeSet && !adef->useCheckpoint) */
-  /*   { */
-  /*     if(processID == 0) */
-  /* 	{ */
-  /* 	  printf("\nError: please either specify a starting tree for this run with -t\n"); */
-  /* 	  printf("or re-start the run from a checkpoint with -R\n"); */
-  /* 	} */
-  /* errorExit(-1); */
-  /* } */
-  
    {
 
     const 
@@ -447,3 +291,4 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
 
   return;
 }
+

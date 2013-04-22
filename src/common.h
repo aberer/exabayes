@@ -10,7 +10,7 @@
 #include "config.h"
 
 
-#if HAVE_PLL == 1
+#if HAVE_PLL != 0
 #define exa_realloc rax_realloc  
 #define exa_malloc_aligned  rax_malloc_aligned
 #define exa_malloc rax_malloc

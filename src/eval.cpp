@@ -25,7 +25,7 @@ void expensiveVerify(state *chain)
   double verifiedLnl =  helpChain->traln->getTr()->likelihood; 
 
 
-  if(chain->currentGeneration != 0 && processID == 0)
+  if(chain->currentGeneration != 0 && isOutputProcess())
     {
       if(fabs (verifiedLnl - toVerify ) > 1e-6)
 	printf("WARNING: found in expensive evaluation: likelihood difference is %f (with toVerify/verified)\t%f\t%f\n", fabs (verifiedLnl - toVerify ), toVerify, verifiedLnl); 
@@ -58,7 +58,7 @@ void newViewGenericWrapper(state *chain, nodeptr p, boolean masked)
     modelToEval = ALL_MODELS; 
 
 #ifdef DEBUG_EVAL
-  if(processID == 0)
+  if(isOutputProcess())
   cout << "newViewGenericWrapper on " << p->number  << " and model " <<  modelToEval << endl; 
 #endif
 
@@ -84,7 +84,7 @@ void evaluatePartialNoBackup(state *chain, nodeptr p)
 void evaluateFullNoBackup(state *chain)
 {
 #ifdef DEBUG_EVAL
-  if(processID == 0)
+  if(isOutputProcess())
   cout << "conducting full evaluation, no backup created" << endl; 
 #endif
   
@@ -98,7 +98,7 @@ void evaluateFullNoBackup(state *chain)
 void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
 {
 #ifdef DEBUG_EVAL
-  if(processID == 0)
+  if(isOutputProcess())
   cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" ) ; 
 #endif
 
@@ -118,13 +118,13 @@ void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
     {
       model = ALL_MODELS; 
 #ifdef DEBUG_EVAL
-if(processID == 0)
+      if(isOutputProcess())
       cout << " and all models" << endl; 
 #endif
     }
 #ifdef DEBUG_EVAL
   else
-if(processID == 0)
+    if(isOutputProcess())
     cout << " and model "<< model << endl; 
 #endif
 

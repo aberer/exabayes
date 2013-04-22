@@ -18,7 +18,7 @@ void traverseAndCount(nodeptr p, int *count, tree *tr );
 void applyPathAsESPR(TreeAln *traln, path *rPath ); 
 void destroyOrientationAlongPath(tree *tr, path *rPath, nodeptr p); 
 void resetAlongPathForESPR(TreeAln *traln, path *rPath); 
-double getTreeLength(tree *tr, nodeptr p); 
+double getTreeLength(TreeAln *traln, nodeptr p); 
 
 void restoreBranchLengthsPath(TreeAln *traln, path *s); 
 #endif

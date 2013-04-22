@@ -95,8 +95,63 @@ void storeValuesInTraversalDescriptor(tree *tr, double *value)
 
 
 
+void myBinFwrite(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
+{
+#ifdef _USE_ZLIB
+  int 
+    s;
+  
+  const int 
+    max = INT_MAX;
+   
+   if((size * nmemb) > (size_t)max)
+    {
+      size_t 	
+	toRead = size * nmemb,
+	offset = 0;
+     
+      unsigned char 
+	*localPtr = (unsigned char*)ptr;
 
-static void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
+      size_t 
+	rest;
+
+      for(offset = 0; offset < toRead - (size_t)max; offset += (size_t)max)
+	{
+	  s = gzwrite(byteFile, (void *)(&localPtr[offset]), max);
+
+	  assert(s == max);      
+	}
+            
+      
+      rest = (toRead - offset);
+
+      if(rest > 0)
+	{
+	  assert(rest <= (size_t)max);
+	  
+	  s = gzwrite(byteFile, (void *)(&localPtr[offset]), (int)rest);
+	  
+	  assert(s == (int)rest);
+	}
+    }
+  else    
+    {
+      s = gzwrite(byteFile, ptr, (unsigned int)(size * nmemb));
+
+      assert(s == (int)(size * nmemb));
+    }
+#else
+  size_t
+    bytes_read;
+  
+  bytes_read = fwrite(ptr, size, nmemb, byteFile);
+
+  assert(bytes_read == nmemb);
+#endif
+}
+
+void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
 {  
 #ifdef _USE_ZLIB
   int 
@@ -127,11 +182,14 @@ static void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
       
       rest = (toRead - offset);
 
-      assert(rest <= (size_t)max);
-
-      s = gzread(byteFile, (void *)(&localPtr[offset]), (int)rest);
-
-      assert(s == (int)rest);
+      if(rest > 0)
+	{
+	  assert(rest <= (size_t)max);
+	  
+	  s = gzread(byteFile, (void *)(&localPtr[offset]), (int)rest);
+	  
+	  assert(s == (int)rest);
+	}
     }
   else    
     {
@@ -394,7 +452,7 @@ double randum (long  *seed)
   return res;
 }
 
-static int filexists(char *filename)
+int filexists(char *filename)
 {
   FILE 
     *fp;
@@ -562,7 +620,7 @@ static unsigned int KISS32(void)
   return (x+y+w);
 }
 
-static boolean setupTree (tree *tr)
+boolean setupTree (tree *tr)
 {
   nodeptr  p0, p, q;
   int
@@ -760,7 +818,7 @@ static int modelExists(char *model, tree *tr)
 
 
 
-static int mygetopt(int argc, char **argv, char *opts, int *optind, char **optarg)
+int mygetopt(int argc, char **argv, char *opts, int *optind, char **optarg)
 {
   static int sp = 1;
   register int c;
@@ -974,7 +1032,7 @@ static void printREADME(void)
 
 
 
-static void analyzeRunId(char id[128])
+void analyzeRunId(char id[128])
 {
   int i = 0;
 
@@ -1312,7 +1370,7 @@ static void makeFileNames(void)
 /********************PRINTING various INFO **************************************/
 
 
-static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[])
+void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[])
 {
   if(processID == 0)
     {
@@ -1402,7 +1460,7 @@ static void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *ar
 	      assert(tr->partitionData[model].protModels >= 0 && tr->partitionData[model].protModels < NUM_PROT_MODELS);
 	      printBoth(infoFile, "DataType: AA\n");	      
 	      printBoth(infoFile, "Substitution Matrix: %s\n", protModels[tr->partitionData[model].protModels]);
-	      printBoth(infoFile, "%s Base Frequencies:\n", (tr->partitionData[model].protFreqs == 1)?"Empirical":"Fixed");	     
+	      printBoth(infoFile, "Using %s Base Frequencies\n", (tr->partitionData[model].protFreqs == 1)?"empirical":"fixed");	     
 	      break;
 	    case BINARY_DATA:
 	      printBoth(infoFile, "DataType: BINARY/MORPHOLOGICAL\n");	      
@@ -1633,8 +1691,6 @@ static void printRatesRest(int n, double *r, char **names, char *fileName)
 	}
     }
 }
-
-
 static double branchLength(int model, double *z, tree *tr)
 {
   double x;
@@ -1745,6 +1801,20 @@ static void printModelParams(tree *tr, analdef *adef, int treeIteration)
 	    char *freqNames[20] = {"A", "R", "N ","D", "C", "Q", "E", "G",
 				   "H", "I", "L", "K", "M", "F", "P", "S",
 				   "T", "W", "Y", "V"};
+
+	     if(tr->partitionData[model].protModels == LG4)
+	      {
+		int 
+		  k;
+		
+		for(k = 0; k < 4; k++)
+		  {
+		    printBothOpenDifferentFile(fileName, "LGM %d\n", k);
+		    printRatesRest(20, tr->partitionData[model].substRates_LG4[k], freqNames, fileName);
+		    printBothOpenDifferentFile(fileName, "\n");
+		    printFreqs(20, tr->partitionData[model].frequencies_LG4[k], freqNames, fileName);
+		  }
+	      }
 
 	    printRatesRest(20, r, freqNames, fileName);
 	    printBothOpenDifferentFile(fileName, "\n");
@@ -2122,6 +2192,24 @@ static void initializePartitions(tree *tr, FILE *byteFile)
       tr->partitionData[model].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
       tr->partitionData[model].empiricalFrequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
       tr->partitionData[model].tipVector         = (double *)malloc_aligned(pl->tipVectorLength * sizeof(double));
+
+      if(tr->partitionData[model].protModels == LG4)      
+	{	  	  
+	  int 
+	    k;
+	  
+	  for(k = 0; k < 4; k++)
+	    {	    
+	      tr->partitionData[model].EIGN_LG4[k]              = (double*)malloc(pl->eignLength * sizeof(double));
+	      tr->partitionData[model].EV_LG4[k]                = (double*)malloc_aligned(pl->evLength * sizeof(double));
+	      tr->partitionData[model].EI_LG4[k]                = (double*)malloc(pl->eiLength * sizeof(double));
+	      tr->partitionData[model].substRates_LG4[k]        = (double *)malloc(pl->substRatesLength * sizeof(double));
+	      tr->partitionData[model].frequencies_LG4[k]       = (double*)malloc(pl->frequenciesLength * sizeof(double));
+	      tr->partitionData[model].tipVector_LG4[k]         = (double *)malloc_aligned(pl->tipVectorLength * sizeof(double));
+	    }
+	}
+
+
       tr->partitionData[model].symmetryVector    = (int *)malloc(pl->symmetryVectorLength  * sizeof(int));
       tr->partitionData[model].frequencyGrouping = (int *)malloc(pl->frequencyGroupingLength  * sizeof(int));
       
@@ -2246,30 +2334,16 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	   
 	   for(i = lower; i < upper; i++)
 	     {
-	       /* double wgt = tr->partitionData[model].wgt[i];  */
-	       /* modelWeights[mbodel] += tr->partitionData[model].wgt[i]; */
-	       doubl ewgt = tr->partitionData[model].wgt[i]; 
-	       modelWeights[model] += wgt; 
-	       wgtsum              += wgt; 
+	       modelWeights[model] += (size_t)tr->aliaswgt[i];
+	       wgtsum              += (size_t)tr->aliaswgt[i];
 	     }
 	 }
-
-      if(processID == 0)
-	printf("\n");        
+       
       for(model = 0; model < (size_t)tr->NumberOfModels; model++)      	
-	{
-	  tr->partitionContributions[model] = ((double)modelWeights[model]) / ((double)wgtsum); 
-	  if(processID == 0)
-	    printf("contribution[%d] is %g" , model, tr->partitionContributions[model]);
-	}
-      	  if(processID == 0)
-	    printf("\n"); 
-
+	 tr->partitionContributions[model] = ((double)modelWeights[model]) / ((double)wgtsum); 
        
        free(modelWeights);
     }
-  else 
-    assert(0); 
 
   if(tr->rateHetModel == GAMMA)
     free(tr->aliaswgt);
@@ -2346,7 +2420,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 }
 
 
-static void initializeTree(tree *tr, analdef *adef)
+void initializeTree(tree *tr, analdef *adef)
 {
   size_t 
     i,
@@ -2588,7 +2662,17 @@ static void optimizeTrees(tree *tr, analdef *adef)
       printBothOpen("Likelihood tree %d: %f \n", i, tr->likelihoods[i]);    
 }
 
+static void clean_MPI_Exit(void)
+{
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Finalize();
 
+  return;
+}
+
+
+#define IS_LIBRARAY
+#ifndef IS_LIBRARAY
 
 int main (int argc, char *argv[])
 { 
@@ -2599,9 +2683,11 @@ int main (int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
   
   {
-    tree  *tr = (tree*)malloc(sizeof(tree));
+    tree  
+      *tr = (tree*)malloc(sizeof(tree));
   
-    analdef *adef = (analdef*)malloc(sizeof(analdef));   
+    analdef 
+      *adef = (analdef*)malloc(sizeof(analdef));   
 
     /* 
        tell the CPU to ignore exceptions generated by denormalized floating point values.
@@ -2632,11 +2718,38 @@ int main (int argc, char *argv[])
     initializeTree(tr, adef);                               
     
     if(processID == 0)  
-      {
+      {	
 	printModelAndProgramInfo(tr, adef, argc, argv);  
 	printBothOpen("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
-      }  
-                         
+      }
+	
+    /* do some error checks for the LG4 model */
+
+    {
+      int 
+	countLG4 = 0,
+	model;
+	
+      for(model = 0; model < tr->NumberOfModels; model++)
+	if(tr->partitionData[model].protModels == LG4)
+	  countLG4++;
+
+      if(countLG4 > 0)
+	{
+	  if(tr->saveMemory == TRUE)
+	    {
+	      printBothOpen("Error: the LG4 substitution model does not work in combination with the \"-U\" memory saving flag!\n\n");	  
+	      clean_MPI_Exit();
+	    }
+
+	  if(tr->rateHetModel == CAT)
+	    {
+	      printBothOpen("Error: the LG4 substitution model does not work for proportion of invariavble sites estimates!\n\n");
+	      clean_MPI_Exit();
+	    }
+	}
+    }
+	             
     /* 
        this will re-start ExaML exactly where it has left off from a checkpoint file,
        while checkpointing is important and has to be implemented for the library we should not worry about this right now 
@@ -2649,6 +2762,8 @@ int main (int argc, char *argv[])
 	break;
       case BIG_RAPID_MODE:
        
+
+
 	if(adef->useCheckpoint)
 	  {      
 	    /* read checkpoint file */
@@ -2676,8 +2791,8 @@ int main (int argc, char *argv[])
 	       This should basically be the first call to the library that actually computes something :-)
 	    */
 	    
-	    evaluateGeneric(tr, tr->start, TRUE);	
-	    
+	    evaluateGeneric(tr, tr->start, TRUE);
+	    	
 	    /* the treeEvaluate() function repeatedly iterates over the entire tree to optimize branch lengths until convergence */
 	    
 	    treeEvaluate(tr, 1); 
@@ -2700,11 +2815,11 @@ int main (int argc, char *argv[])
   
   /* return 0 which means that our unix program terminated correctly, the return value is not 1 here */
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Finalize();
+  clean_MPI_Exit();
 
   return 0;
 }
 
+#endif
 
 

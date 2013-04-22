@@ -1,0 +1,248 @@
+Okay, here are the most important constructs in C++. Applying them
+sometimes leads to compiler errors, you have to get used to. But once
+again, c is (almost) a subset of c++, so you can continue coding c,
+this is just to let you know, what is going on in c++ parts of the
+code without having to google a lot.
+
+C++ is just stricter in some ways than c (during the conversion I
+actually discovered a few bugs, that were not reported by C).
+
+For instance, instead of 
+int *a = calloc(3,sizeof(int)); 
+you MUST cast the pointer write: 
+int *a = (int*)calloc(3,sizeof(int)); 
+
+
+
+================================================================
+
+
+1. Objects.  
+
+In principle the same thing as a struct with function pointers. Most
+classes will look like that and are declared in a header file (.hpp). 
+
+class MyObject
+{
+public: 
+	MyObject(int someArg);                    // constructor 
+	~MyObject();                              // destructor 
+	
+	int aPublicFunction(double foo);
+	
+	double aPublicVariable; 
+
+private: 
+	 int aPrivateVariable; 
+	 int *anArray; 
+	 int aPrivateMethod();
+
+}; 
+
+
+The implementation then is in another file (MyObject.cpp). Here we
+implement the methods, a prefix has to be used (MyObject::) in order
+to inform the compiler that this method belongs to the object. 
+
+int MyObject::aPublicFunction(double foo)
+{
+	// accessing the private variable (cannot be done from outside, only INSIDE the object)  
+	aPrivateVariable = (int)foo;  
+	return 0; 
+}
+
+
+For creating an object, we have to implement a constructor. This
+constructor manages an array and allocates the space for it:
+
+MyObject::MyObject(int someArg)
+{
+	anArray = (int*)malloc(someArg, sizeof(int)); 
+}
+
+
+Also there needs to be a destructor that tells c++ how to clean up the
+object, once it is not needed any more. The destructor is NEVER called
+by the programmer:
+
+MyObject::~MyObject()
+{
+	free(anArray); 
+}
+
+
+Now we can create an object in some other function: 
+
+#include "MyObject.hpp"
+MyObject* someFunction()
+{
+	MyObject obj(3);              
+
+	obj.aPublicFunction(3.4); // executes the function 
+
+	MyObject* objPtr = new MyObject(3); 	
+	objPtr->aPublicFunction(3.4);    // we have to use the -> acessor instead of .
+	return objPtr; 
+}
+
+
+For objects, the scope of the variable is important. Above, we created
+an instance of the object called obj. Just like any other variable
+(e.g., an int), it will vanish, once we leave the function (c++ will
+call the destructor).
+
+In contrast to that, with objPtr, we allocated an object and therefore
+also can return a pointer to it with our function. For cleaning up this object, 
+you have to call the delete (that then calls the destructor of the object): 
+
+int yetAnotherFunction()
+{
+	MyObject* theObjPtr= someFunction(); 
+	
+	// do stuff with our obj
+		
+	delete theObjPtr; 
+}
+
+
+
+When using our object outside the class, we can access public
+variables (declared in the "public:"-part of the class), but no
+private variables. The same holds for methods. Everything that follows
+'private:' is hidden. That's good, since if we are sure about the
+public interface (e.g., our class should be able to update the gamma
+categories), then we only use the public interface of the class in any
+surrounding code and easily can change the internals, if there is
+reason to do so. 
+
+int aFunction()
+{
+	MyObject obj(3); 
+	obj.aPublicFunction(3.4); // okay! 
+	obj.aPrivateVariable = 3; // ERROR! 
+	obj.aPrivateVariable = 3; // ERROR! 
+	int something = obj.aPrivateMethod(); // ERROR! 
+	int foo = obj.aPublicVariable; 	
+}
+
+
+public variables should not be used however...
+
+That's almost everything about classes. 
+
+
+================================================================
+2. Printing to std-out
+There is an alternative printing interface in c++, that goes like that: 
+
+#include <iostream>
+using namespace std; 
+
+cout << "Hello world! "  << endl; 
+equals 
+printf("Hello world!\n"); 
+
+It is a bit more convenient.
+
+You do not have to specify the format of anything. 
+int foo = 3; 
+double bla = 3.4; 
+int *aPtr = (int*)malloc(3,sizeof(int)); 
+
+cout <<  "foo=" << foo << "\tbla="  << bla << "\t the pointer points to  " << aPtr << endl; 
+
+Fo using this, you have to include the iostream-header and actually,
+all that belongs to the std-namespace, therefore you either have to
+write
+std::cout << "bla" << std::endl; 
+or "import" everything by 
+using namespace std; 
+
+Still, printf works just like in c. 
+
+
+
+
+================================================================
+3. Another complicated, but immensely helpful facett of C++ are
+templates, that have these <> brackets. Basically you are telling
+something that it is of a certain type:
+
+template<typename aType>
+aType myFunction(aType var)
+{
+	cout << aType << endl; 
+}
+
+
+we can now call this function with whatever type we like: 
+myFunction<double>(3.4);
+myFunction<int>(4);
+myFunction<char*>("bla bla bla");
+
+We can also have class templates: 
+template<typename aType> 
+class SomeContainer
+{
+public: 
+	SomeContainer(int length); 
+
+private: 
+	 aType*  array; 
+}; 
+
+
+and the implementation: 
+
+template<typename aType> SomeContainer::SomeContainer(int length)
+{
+	array = malloc(length * sizeof(aType)); 
+}
+
+
+
+
+
+
+
+================================================================
+4. lists, hashtables, vectors
+
+The really cool thing about c++ is that a lot of data structures are
+included already.  They follow a common pattern and are relatively
+easy to use (instead of defining and cleaning up your own stuff).
+
+For instance a <vector> is something like an array: 
+
+#include <vector>
+
+int function()
+{
+	vector<int> myVector; 
+
+	myVector.push_back(3); 
+	myVector.push_back(4); 
+
+	cout << "val1=" << myVector[0] << "\tval2=" << myVector[1] << endl; 
+	
+	// cleaned up automatically! 
+}
+
+
+They also work with objects, but it is usually easier to use object pointers: 
+
+vector<Object*> myVectorOfObjects; 
+myVectorOfObjects.push_back(new Object(3)); 
+myVectorOfObjects.push_back(new Object(4)); 
+
+Object* anObject = myVectorOfObjects[0]; 
+anObject->aPubicMethod();
+
+// now we have to cleanup, since we allocated memory! 
+for(int i = 0; i < myVectorOfObjects.size(); ++i)
+{
+	Object* anObject = myVectorOfObjects[0]; 
+	delete anObject; 
+}
+
+

@@ -21,7 +21,7 @@
 #include "eval.h"
 #include "proposals.h"
 #include "tune.h"
-#include "prsf.h"
+#include "prsfComputer.h"
 #include "TreeAln.hpp"
 
 
@@ -103,13 +103,15 @@ void switchChainState(state *chains)
 
       int r = MIN(a->couplingId, b->couplingId ); 
       int c = MAX(a->couplingId, b->couplingId); 
-      cntAccept(&(gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c ]) );       
+      
+      gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].accept();
     } 
   else 
     {
       int r = MIN(a->couplingId, b->couplingId ); 
       int c = MAX(a->couplingId, b->couplingId); 
-      cntReject(&(gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c ]) ); 
+
+      gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].reject();
     }
 }
 
@@ -153,10 +155,10 @@ void executeOneRun(state *chains, int gensToRun )
 	    {	      
 	      /* naive strategy: tune, s.t. the coldest hot chain swaps
 		 with the coldest chain in 23.4% of all cases */
-	      successCtr *c = &(gAInfo.swapInfo[runId][1]); 
+	      SuccessCtr *c = &(gAInfo.swapInfo[runId][1]); 
 	      
-	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / gAInfo.tuneFreq , getRatioLocal(c), gAInfo.temperature[runId], FALSE);
-	      resetCtr(c);
+	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / gAInfo.tuneFreq , c->getRatioInLastInterval(), gAInfo.temperature[runId], FALSE);
+	      c->reset();
 	    }
 	    
 	  switchChainState(chains);
@@ -199,58 +201,52 @@ void runChains(state *allChains, int diagFreq)
       hasConverged = convergenceDiagnostic(allChains); 
 
 #ifdef ENABLE_PRSF
-      if(processID == 0)
+      if(isOutputProcess)
 	printPRSF(run_id);
 #endif
     }
 }
 
 
-/* #define TEST */
 
-#ifdef TEST
-#include "burnin.h"
-#endif
-
+// #define TEST 
+ 
+#include "MyTestProposal.hpp"
 
 
 
+// /**
+//    @brief the main ExaBayes function.
 
-
-/**
-   @brief the main ExaBayes function.
-
-   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
-   @param adef -- the legacy adef
- */
-void exa_main(tree *tr, 
-#if HAVE_PLL == 1 
-	      partitionList *partitions,
-#endif
-analdef *adef)
+//    @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+//    @param adef -- the legacy adef
+//  */
+void exa_main (analdef *adef, int seed)
 {   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
 
   timeIncrement = gettime();
   gAInfo.adef = adef; 
 
-  initializeIndependentChains(tr, adef,  &indiChains); 
+#ifdef TEST   
+  MyTestProposal prop();
+  
+  
 
-
-#ifdef TEST 
-  {
-  } 
+  exit(0); 
 #endif
 
+
+  initializeIndependentChains(adef,  seed, &indiChains); 
+
   assert(gAInfo.numberCoupledChains > 0);
-  /* TODO more bla bla  */  
 
   gAInfo.allChains = indiChains; 
-  
+
   assert(gAInfo.diagFreq != 0 ); 
   runChains(indiChains, gAInfo.diagFreq); 
 
-   if(processID == 0)
+  if(isOutputProcess() )
     {
       for(int i = 0; i < gAInfo.numberOfRuns; ++i)
 	finalizeOutputFiles(indiChains + i);

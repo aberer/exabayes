@@ -5,7 +5,7 @@
 
 #define  __AVX
 
-#if HAVE_PLL == 1 
+#if HAVE_PLL != 0
 #include "pll/avxLikelihood-pll.c"
 #else 
 #include "examl/avxLikelihood.c"

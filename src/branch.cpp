@@ -1,4 +1,3 @@
-
 #include "axml.h"
 #include "bayes.h"
 #include "branch.h" 
@@ -8,6 +7,8 @@
 
 
 /* #define GUIDE_SPR_BRANCH */
+
+
 
 /**
    @brief divide a branch employing a ratio   
@@ -220,7 +221,7 @@ void insertNodeIntoBranch(state *chain, branch toBeInserted, branch insertionBra
 
 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
-  printInfo(chain, "inserted  %d into %d (bl=%f)\t%d (bl=%f)\n", pruned1->number, insert1->number,  insert2->number,pruned1->z[0], insert2->z[0]); 
+  printInfo(chain, "inserted  %d into %d (bl=%f)\t%d (bl=%f)\n", pruned1->number, insert1->number,  insert2->number, traln->getBranchLength( pruned1->number,0), traln->getBranchLength( insert2->number,0)); 
 #endif
 }
 

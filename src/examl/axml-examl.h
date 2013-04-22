@@ -40,10 +40,9 @@
 
 
 
-
 #include <mpi.h>
 
-extern const unsigned int mask32[32]; 
+
 
 
 #define MAX_TIP_EV     0.999999999 /* max tip vector value, sum of EVs needs to be smaller than 1.0, otherwise the numerics break down */
@@ -171,8 +170,8 @@ extern const unsigned int mask32[32];
 #define PointGamma(prob,alpha,beta)  PointChi2(prob,2.0*(alpha))/(2.0*(beta))
 
 #define programName        "ExaML"
-#define programVersion     "1.0.1"
-#define programDate        "March 2013"
+#define programVersion     "1.0.2"
+#define programDate        "March 29 2013"
 
 
 #define  TREE_EVALUATION            0
@@ -210,9 +209,10 @@ extern const unsigned int mask32[32];
 #define JTTDCMUT   16
 #define FLU        17 
 #define AUTO       18
-#define GTR        19  /* GTR always needs to be the last one */
+#define LG4        19
+#define GTR        20  /* GTR always needs to be the last one */
 
-#define NUM_PROT_MODELS 20
+#define NUM_PROT_MODELS 21
 
 /* bipartition stuff */
 
@@ -503,6 +503,19 @@ typedef struct {
   double *EI;
   double *left;
   double *right;
+
+   /* LG4 */
+
+  double *EIGN_LG4[4];
+  double *EV_LG4[4];
+  double *EI_LG4[4];   
+
+  double *frequencies_LG4[4];
+  double *tipVector_LG4[4];
+  double *substRates_LG4[4];
+  
+  /* LG4 */
+
   double *frequencies;
   double *empiricalFrequencies;
   double *tipVector; 
@@ -1143,11 +1156,19 @@ extern void restart(tree *tr, analdef *adef);
 
 extern void writeCheckpoint(tree *tr);
 
-#define isGap(x, pos) ( x[(pos) / 32] & mask32[(pos) % 32]  ) 
-#define noGap(x, pos) (!(x[(pos) / 32] & mask32[(pos) % 32])) 
+inline boolean isGap(unsigned int *x, int pos);
+inline boolean noGap(unsigned int *x, int pos);
 
+void myBinFwrite(void *ptr, size_t size, size_t nmemb, FILE *byteFile);
+void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile);
 
 #ifdef __AVX
+
+extern void newviewGTRGAMMAPROT_AVX_LG4(int tipCase,
+					double *x1, double *x2, double *x3, double *extEV[4], double *tipVector[4],
+					int *ex3, unsigned char *tipX1, unsigned char *tipX2, int n, 
+					double *left, double *right, int *wgt, int *scalerIncrement, const boolean useFastScaling);
+
 extern void newviewGTRCAT_AVX(int tipCase,  double *EV,  int *cptr,
 			      double *x1_start, double *x2_start,  double *x3_start, double *tipVector,
 			      unsigned char *tipX1, unsigned char *tipX2,
@@ -1206,3 +1227,15 @@ void newviewGTRGAMMAPROT_AVX_GAPPED_SAVE(int tipCase,
 					 unsigned int *x1_gap, unsigned int *x2_gap, unsigned int *x3_gap, 
 					 double *x1_gapColumn, double *x2_gapColumn, double *x3_gapColumn); 
 #endif
+
+
+
+
+/* added after it has been de-static-ized */
+boolean setupTree (tree *tr); 
+void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[]); 
+void initializeTree(tree *tr, analdef *adef); 
+int mygetopt(int argc, char **argv, char *opts, int *optind, char **optarg); 
+void analyzeRunId(char id[128]);
+int filexists(char *filename); 
+void printBothOpen(const char* format, ... );

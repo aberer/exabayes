@@ -72,6 +72,7 @@ boolean nodeIsOnPath(int node, path *aPath)
  */ 
 void saveBranchLengthsPath(state *chain, path *s)
 {
+  TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
   int numBranches = chain->traln->getNumBranches() ;
   
@@ -81,7 +82,7 @@ void saveBranchLengthsPath(state *chain, path *s)
       nodeptr p = findNodeFromBranch(tr, *bPtr); 
 
       for(int j = 0; j < numBranches; ++j)
-	bPtr->length[j] = p->z[j]; 
+	bPtr->length[j] = traln->getBranchLength( p,0); 
     }
 }
 
@@ -106,13 +107,13 @@ static void debug_assertPathExists(tree *tr, path *s)
 
 static void multiplyBranch(state *chain, branch b, double parameter, double *hastings)
 {
+  TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
   int numBranches = chain->traln->getNumBranches();
   nodeptr  p = findNodeFromBranch(tr, b); 
   double multiplier = drawMultiplier(chain, parameter); 
-  double newZ = branchLengthToInternal(tr, multiplier * branchLengthToReal(tr, p->z[0])); 
-  
-  /* printf("changing BL %.3f to %.3f\n", branchLengthToReal(tr, p->z[0]) , branchLengthToReal(tr,newZ)) ; */
+  double newZ = branchLengthToInternal(tr, multiplier * branchLengthToReal(tr, traln->getBranchLength( p,0))); 
+
   *hastings *= multiplier; 
   hookup(p,p->back, &newZ, numBranches);   
 }
@@ -185,6 +186,8 @@ void multiplyAlongBranchESPR(state *chain, path *s, double multi )
  */
 void drawPathForESPR(state *chain,path *s, double stopProp )
 {
+  TreeAln *traln = chain->traln; 
+
   assert(0 < stopProp && stopProp < 1.0 ); 
 
   assert(stackIsEmpty(s)); 
@@ -199,7 +202,6 @@ void drawPathForESPR(state *chain,path *s, double stopProp )
       p = findNodeFromBranch(tr, start);
       q = p->next->back; 
       r = p->next->next->back;
-      /* printf("\nchose subtree for pruning {%d,%d} => hooked to %d (%.2f),%d (%.2f)\n", start.thisNode, start.thatNode, p->next->back->number, p->next->back->z[0], p->next->next->back->number, p->next->next->back->z[0]); */
     } while(isTip(q->number,tr->mxtips) && isTip(r->number, tr->mxtips)); 
 
   /* TODO assert that the pruned subtree is not too big (s.t. we cannot find any insertion points)  */
@@ -208,7 +210,7 @@ void drawPathForESPR(state *chain,path *s, double stopProp )
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
   for(int i = 0; i < chain->traln->getNumBranches(); ++i)
-    zqr[i] = r->z[i]; 
+    zqr[i] = traln->getBranchLength( r,0); 
   hookup(q,r, q->z, chain->traln->getNumBranches());
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 
@@ -236,7 +238,7 @@ void drawPathForESPR(state *chain,path *s, double stopProp )
     }
 
   /* undo changes to the tree  */
-  hookup(p->next,q,q->z, chain->traln->getNumBranches()); 
+  hookup(p->next,q, q->z, chain->traln->getNumBranches()); 
   hookup(p->next->next,r,zqr, chain->traln->getNumBranches());   
 
   /* now correct  */

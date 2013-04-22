@@ -1,3 +1,5 @@
+
+
 #include "LnlRestorer.hpp" 
 #include "adapters.h"
 #include "branch.h"
@@ -6,6 +8,8 @@
 
 #include <iostream>
 using namespace std; 
+
+
 
 
 LnlRestorer::LnlRestorer(state *_chain)
@@ -23,7 +27,7 @@ LnlRestorer::LnlRestorer(state *_chain)
       pInfo *partition = chain->traln->getPartition(i );
       reserveArrays[i] = (double**)exa_calloc(tr->mxtips, sizeof(double*)); 
 
-#if HAVE_PLL == 1 		/* TODO that's hacky */
+#if HAVE_PLL != 0		/* TODO that's hacky */
       int length = partition->upper - partition->lower; 
 #else 
       int length = partition->width; 
@@ -39,6 +43,7 @@ LnlRestorer::LnlRestorer(state *_chain)
   orientation = (int*) exa_calloc(tr->mxtips, sizeof(int)); 
   wasSwitched = (bool*)exa_calloc( 2 * tr->mxtips , sizeof(bool));
 }
+
 
 
 
@@ -116,7 +121,7 @@ void LnlRestorer::swapArray(int nodeNumber, int model)
   if(model == ALL_MODELS)
     {
 #ifdef DEBUG_ARRAY_SWAP
-if(processID == 0)
+      if(isOutputProcess())
       cout << "swapped array for node " << nodeNumber <<   " and all  models "; 
 #endif
 
@@ -127,7 +132,7 @@ if(processID == 0)
 	  double *&a =  reserveArrays[i][posInArray], 
 	    *&b  = partition->xVector[posInArray] ; 
 #ifdef DEBUG_ARRAY_SWAP
-if(processID == 0)
+	  if(isOutputProcess())
 	  cout << a << "," << b << "\t"; 
 #endif
 	  if(NOT b )
@@ -146,7 +151,7 @@ if(processID == 0)
 	*&b  = partition->xVector[posInArray]; 
 
 #ifdef  DEBUG_ARRAY_SWAP
-      if(processID == 0)
+      if(isOutputProcess())
       cout << "swapped array for node " << nodeNumber <<  " and model " << model << ": " << a   << "," << b  << endl; 
 #endif
       if(NOT b )
@@ -158,13 +163,11 @@ if(processID == 0)
 
 
 
-/**
-   @brief restores the original state of the tree 
- */ 
+
 void LnlRestorer::restore()
 {
 #ifdef DEBUG_ARRAY_SWAP 
-if(processID == 0)
+  if(isOutputProcess())
   cout << "RESTORE for model" << modelEvaluated << endl; 
 #endif
   tree *tr = chain->traln->getTr(); 
@@ -204,11 +207,6 @@ if(processID == 0)
 
 
 
-
-/**
-   @brief save any arrays that are recomputed, if they have not
-   already been flipped
- */ 
 void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, bool fullTraversal)
 {  
   this->modelEvaluated = model; 
@@ -224,7 +222,7 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
       && NOT wasSwitched[virtualRoot->number])
     {
 #ifdef DEBUG_ARRAY_SWAP
-      if(processID == 0)
+      if(isOutputProcess())
       cout << "incorr, unseen " << virtualRoot->number << endl; 
 #endif
       wasSwitched[virtualRoot->number] = true; 
@@ -234,13 +232,13 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
   else if (incorrect)
     {
 #ifdef DEBUG_ARRAY_SWAP
-      if(processID == 0)
+      if(isOutputProcess())
       cout << "incorr, seen " <<  virtualRoot->number  << endl; 
 #endif
     }
 #ifdef DEBUG_ARRAY_SWAP
   else
-if(processID == 0)
+    if(isOutputProcess())
     cout << "corr "<<  virtualRoot->number << endl; 
 #endif
 
@@ -253,13 +251,12 @@ if(processID == 0)
 
 
 
-/**
-   @brief synchronizes restorer with tree 
- */ 
+
+/**@brief  resets the restorer, s.t. it is consistent with the current tree (and can restore it later) */ 
 void LnlRestorer::resetRestorer()
 {
 #ifdef DEBUG_ARRAY_SWAP
-  if(processID == 0)
+  if(isOutputProcess())
   cout << "RESETTING RESTORER" << endl; 
 #endif
   tree *tr = chain->traln->getTr();

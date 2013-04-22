@@ -19,7 +19,7 @@ using namespace std;
 #include "tune.h"
 #include "eval.h"
 #include "stack.h"
-
+#include "SuccessCtr.hpp"
 
 #include "chain.hpp"
 
@@ -64,8 +64,8 @@ struct _pfun
 
   double initWeight; 
   double currentWeight; 
-  
-  successCtr sCtr;  /// counts acceptance / rejection
+
+  SuccessCtr sCtr; 
 
   void (*apply_func)( state *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
   void (*eval_lnl) (state *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
@@ -107,6 +107,9 @@ struct _pfun
   /* TODO dirty: is also a remembrance variable  */
   double ratio; 
 }; 
+
+
+void exa_main(analdef *adef, int seed); 
 
 
 #endif

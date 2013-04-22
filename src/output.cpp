@@ -1,4 +1,6 @@
 
+#include <sstream>
+
 
 
 #include "axml.h"
@@ -37,9 +39,9 @@ void debug_printNodeEnvironment(state *chain, int nodeID )
   nodeptr 
     p =  chain->tr->nodep[nodeID]; 
 
-  printInfo(chain, "STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, p->back->z[0], 
-	    p->next->back->number, p->next->back->z[0],
-	    p->next->next->back->number, p->next->next->back->z[0]
+  printInfo(chain, "STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, traln->getBranchLength( p->back->number,0), 
+	    p->next->back->number, traln->getBranchLength( p->next->back->number,0),
+	    p->next->next->back->number, traln->getBranchLength( p->next->next->back->number,0)
 	    );   
 #endif
 }
@@ -49,7 +51,7 @@ void debug_printNodeEnvironment(state *chain, int nodeID )
 void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-  if(processID == 0)
+  if(isOutputProcess())
     {
       if(accepted)
 	printInfo(chain, "ACCEPTING\t");   
@@ -71,13 +73,15 @@ void debug_checkTreeConsistency(tree *tr)
     {      
       char tmp[10000]; 
       Tree2stringNexus(tmp, tr, tr->start->back, 0); 
-      if(processID==0)
+      if(isOutputProcess())
 	printf("faulty TOPOLOGY: %s\n", tmp);
 
       assert(2 * tr->mxtips-3 == count); 
     }
 #endif
 }
+
+
 
 void makeFileNames()
 {
@@ -128,11 +132,7 @@ void printOrientation(tree *tr, nodeptr p)
  */ 
 void printInfo(state *chain, const char *format, ...)
 {  
-  if(
-#if HAVE_PLL == 1
-     true || 
-#endif
-     processID == 0)
+  if( isOutputProcess())
     {
       printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberCoupledChains, chain->couplingId, chain->currentGeneration); 
       va_list args;
@@ -143,70 +143,8 @@ void printInfo(state *chain, const char *format, ...)
 }
 
 
-/* double exabayes_getBranchLength(state *chain, int perGene, nodeptr p) */
-/* { */
-/*   tree *tr = chain->tr;  */
-
-/*   double  */
-/*     z = 0.0, */
-/*     x = 0.0; */
-
-/*   assert(perGene != NO_BRANCHES); */
-	      
-/*   if(NOT hasPergeneBL(tr)) */
-/*     { */
-/*       assert(tr->fracchange != -1.0); */
-/*       z = p->z[0]; */
-/*       if (z < zmin)  */
-/* 	z = zmin;      	  */
-      
-/*       x = -log(z) * tr->fracchange;  */
-/*     } */
-/*   else */
-/*     { */
-/*       if(perGene == SUMMARIZE_LH) */
-/* 	{ */
-/* 	  int  */
-/* 	    i; */
-	  
-/* 	  double  */
-/* 	    avgX = 0.0; */
-		      
-/* 	  for(i = 0; i < getNumBranches(tr); i++) */
-/* 	    { */
-
-/* 	      assert(getPcontr(chain,i) != -1.0); */
-/* 	      assert(getFracChange(chain,i) != -1.0); */
-
-/* 	      z = p->z[i]; */
-/* 	      if(z < zmin)  */
-/* 		z = zmin;      	  */
-/* 	      x = -log(z) * getFracChange(chain,i); */
-/* 	      avgX += x * getPcontr(chain,i); */
-/* 	    } */
-
-/* 	  x = avgX; */
-/* 	} */
-/*       else */
-/* 	{	 */
-/* 	  assert(getFracChange(chain,perGene) != -1.0); */
-/* 	  assert(perGene >= 0 && perGene < getNumBranches(tr)); */
-	  
-/* 	  z = p->z[perGene]; */
-	  
-/* 	  if(z < zmin)  */
-/* 	    z = zmin;      	  */
-	  
-/* 	  x = -log(z) * getFracChange(chain,perGene); */
-/* 	} */
-/*     } */
-
-/*   return x; */
-/* } */
-
-
 char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
-{      
+{   
   // tree *tr = chain->tr; 
 
   if(isTip(p->number, tr->mxtips)) 
@@ -234,7 +172,7 @@ char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
       return treestr;
     }
 
-  sprintf(treestr, ":%g", branchLengthToReal(tr, p->z[0]));
+  sprintf(treestr, ":%.7f", branchLengthToReal(tr, p->z[0]));
   
   while (*treestr) treestr++;
   return  treestr;
@@ -284,7 +222,7 @@ static void printParams(state *chain)
 
   FILE *fh = chain->outputParamFile; 
 
-  double treeLength = branchLengthToReal(tr, getTreeLength(tr,tr->nodep[1]->back )); 
+  double treeLength = branchLengthToReal(tr, getTreeLength(chain->traln,tr->nodep[1]->back )); 
   assert(treeLength != 0.); 
   fprintf(fh, "%d\t%f\t%.3f", chain->currentGeneration,
 	  tr->likelihood,  
@@ -293,11 +231,11 @@ static void printParams(state *chain)
   for(int i = 0; i < chain->traln->getNumberOfPartitions(); ++i)
     {
       pInfo *partition = chain->traln->getPartition(i); 
-      fprintf(fh, "\t%f\t%f", chain->traln->accessPartitionLH( i),partition->alpha) ; 
+      fprintf(fh, "\t%f\t%f", chain->traln->accessPartitionLH( i),chain->traln->getAlpha(i)) ; 
       for(int j = 0; j < 6 ; ++j) /* TODO */
 	fprintf(fh, "\t%.2f", partition->substRates[j]); 
       for(int j = 0; j < 4 ; ++j) /* TODO */
-	fprintf(fh, "\t%.2f", partition->frequencies[j]) ;
+	fprintf(fh, "\t%.2f", chain->traln->getFrequency(i,j));
     }
 
   fprintf(fh, "\n"); 
@@ -329,7 +267,6 @@ static void exabayes_printTopology(state *chain)
 {  
   assert(chain->couplingId == 0);
   tree *tr = chain->traln->getTr();
-  /* FILE *fh = myfopen(topologyFile, "a");   */
   FILE *fh = chain->topologyFile; 
   memset(chain->traln->getTr()->tree_string, 0, chain->traln->getTr()->treeStringLength * sizeof(char) ); 
   
@@ -349,36 +286,11 @@ void printSample(state *chain)
 
 
 
-#if 0 
-static void printSubsRates(state *prState ,int model, int numSubsRates)
-{
-  pInfo *partition = getPartition(prState, model); 
-
-  assert(partition->dataType = DNA_DATA);
-  int i;
-  PRINT("Subs rates[%d]: ", model);
-  for(i=0; i<numSubsRates; i++)
-    PRINT("%d => %.3f, ", i, partition->substRates[i]);
-    PRINT("\n");
-  PRINT("frequencies[%d]: ", model);
-  for(i=0; i<prState->frequRemem.numFrequRates; i++)
-    PRINT("%d => %.3f, ", i, partition->frequencies[i]); 
-
-  PRINT("\n");
-}
-#endif
-
-
-
-
 void printIfPresent(proposalFunction *pf)
 {
-  double ratio = getRatioOverall(&(pf->sCtr)); 
-  int acc = pf->sCtr.gAcc; 
-  int rej = pf->sCtr.gRej; 
-
-  if(acc != 0 || rej != 0)
-    PRINT("%s: %d/%d (%.1f%%)\t", pf->name, acc  , rej ,  ratio * 100     ); 
+  stringstream buf; 
+  buf << pf->sCtr; 
+  PRINT("%s: %s\t", pf->name, buf.str().c_str());   
 }
 
 
@@ -414,8 +326,10 @@ static void printHotChains(int runId)
 
 static void printSwapInfo(int runId)
 {
-  successCtr
-    *ctrMatrix = gAInfo.swapInfo[runId]; 
+  // successCtr
+  //   *ctrMatrix = gAInfo.swapInfo[runId]; 
+
+  SuccessCtr *ctrMatrix = gAInfo.swapInfo[runId]; 
   
   int cnt = 0; 
   for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
@@ -425,25 +339,15 @@ static void printSwapInfo(int runId)
 
       for(int j = 0; j < gAInfo.numberCoupledChains; ++j)
 	{
-	  successCtr *ctr = & ( ctrMatrix[cnt]) ; 
+	  SuccessCtr *ctr = ctrMatrix + cnt; 
 	  if(i < j )
-	    {	      
-	      PRINT("%.1f%%,", i,j, 100 * getRatioOverall(ctr));
-	    }
-	  else 
-	    {
-	      assert( ctr->gAcc == 0 
-			 && ctr->gRej == 0
-			 && ctr->lAcc == 0
-			 && ctr->lRej == 0);  
-	    }
+	    PRINT("%.1f%%,", i,j, 100 * ctr->getRatioOverall());
+
 	  cnt++; 
 	}
       if(i < gAInfo.numberCoupledChains - 1 )
 	PRINT(")"); 
     }
-
-  /* PRINT("\tcurrentRatio(0,1)=%.1f%%", getRatioLocal( ctrMatrix + 1) );  */
 }
 
 
@@ -461,7 +365,7 @@ void chainInfo(state *chain)
   int runId = chain->id / gAInfo.numberCoupledChains; 
   tree *tr = chain->traln->getTr(); 
 
-  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(tr, tr->nodep[1]->back)));
+  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(chain->traln, tr->nodep[1]->back)));
   printHotChains(runId); 
   printSwapInfo(runId);   
   PRINT("\n"); 
@@ -489,52 +393,4 @@ void chainInfo(state *chain)
 
   PRINT("\n");
 }
-
-
-#if 0 
-/* QUARANTINE  */
-void chainInfoOutput(state *chain )
-{
-
-  PRINT( "[chain: %d] [TIME %.2f] gen: %d Likelihood: %f StartLH: %f \n",chain->id,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, chain->traln->getTr()->startLH);
-
-  /* just output how much time has passed since the last increment */
-  timeIncrement = gettime(); 	
-  
-  PRINT( "Topo: eSpr: %d/%d (%d%%)\teSpr_mapped: %d/%d\t(%d%%) \n"
-	 , chain->acceptedProposals[E_SPR]	, chain->rejectedProposals[E_SPR] , (int)(chain->acceptedProposals[E_SPR]*100/
-											     (chain->acceptedProposals[E_SPR]+chain->rejectedProposals[E_SPR]+0.0001)
-),
-	 chain->acceptedProposals[E_SPR]	, chain->rejectedProposals[E_SPR_MAPPED] , (int)(chain->acceptedProposals[E_SPR_MAPPED]*100/(chain->acceptedProposals[E_SPR_MAPPED]+chain->rejectedProposals[E_SPR_MAPPED]+0.0001)));
-  
-  PRINT( "Model: slidingWindow: %d/%d (%d%%) biunif bin model: %d/%d (%d%%) biunif perm model: %d/%d (%d%%) single biunif model: %d/%d (%d%%) all biunif model: %d/%d (%d%%) \n",chain->acceptedProposals[UPDATE_MODEL]	, chain->rejectedProposals[UPDATE_MODEL] , (int)(chain->acceptedProposals[UPDATE_MODEL]*100/(chain->acceptedProposals[UPDATE_MODEL]+chain->rejectedProposals[UPDATE_MODEL]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_BIUNIF]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_PERM_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_PERM_BIUNIF]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_SINGLE_BIUNIF]+0.0001)) ,
-	 chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]	, chain->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_MODEL_ALL_BIUNIF]+chain->rejectedProposals[UPDATE_MODEL_ALL_BIUNIF]+0.0001)));
-  
-  PRINT( "Frequencies: unif: %d/%d (%d%%) \n"
-  , chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]	, chain->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF] , (int)(chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]*100/(chain->acceptedProposals[UPDATE_FREQUENCIES_BIUNIF]+chain->rejectedProposals[UPDATE_FREQUENCIES_BIUNIF]+0.0001)));
-  
-  PRINT( "Gamma: slidingWindow: %d/%d (%d%%) gaExp: %d/%d (%d%%) \n",chain->acceptedProposals[UPDATE_GAMMA]	, chain->rejectedProposals[UPDATE_GAMMA] , (int)(chain->acceptedProposals[UPDATE_GAMMA]*100/(chain->acceptedProposals[UPDATE_GAMMA]+chain->rejectedProposals[UPDATE_GAMMA]+0.0001)),
-	 chain->acceptedProposals[UPDATE_GAMMA_EXP]	, chain->rejectedProposals[UPDATE_GAMMA_EXP] , (int)(chain->acceptedProposals[UPDATE_GAMMA_EXP]*100/(chain->acceptedProposals[UPDATE_GAMMA_EXP]+chain->rejectedProposals[UPDATE_GAMMA_EXP]+0.0001)));
-  
-  PRINT( "Branchlength: Slidingwindow: %d/%d (%d%%) blBiunif: %d/%d (%d%%) blExp: %d/%d (%d%%)\n",chain->acceptedProposals[UPDATE_SINGLE_BL], chain->rejectedProposals[UPDATE_SINGLE_BL], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL]+chain->rejectedProposals[UPDATE_SINGLE_BL]+0.0001)),
-	 chain->acceptedProposals[UPDATE_SINGLE_BL_EXP], chain->rejectedProposals[UPDATE_SINGLE_BL_EXP], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL_EXP]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL_EXP]+chain->rejectedProposals[UPDATE_SINGLE_BL_EXP]+0.0001)),
-	 chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF], chain->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF], (int)(chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]*100/(chain->acceptedProposals[UPDATE_SINGLE_BL_BIUNIF]+chain->rejectedProposals[UPDATE_SINGLE_BL_BIUNIF]+0.0001)));
-  
-  PRINT( "Hastings: %f new Prior: %f Current Prior: %f\n",chain->hastings, chain->newprior, chain->curprior);
-  
-  if(getNumberOfPartitions(chain->traln->getTr()) < 10) 
-    {
-      for(int printModel=0; printModel< getNumberOfPartitions(chain->traln->getTr());printModel++) 
-	printSubsRates(chain, printModel, chain->modelRemem.numSubsRates);
-    }
-    
-  PRINT("\n");
-  //printSubsRates(chain, chain->modelRemem.model, chain->modelRemem.numSubsRates);
-//printf("numSubs: %d numFrequ: %d\n\n",chain->modelRemem.numSubsRates,chain->frequRemem.numFrequRates);
-
-}
-#endif
 

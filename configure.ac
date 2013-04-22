@@ -2,18 +2,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.1],[exabayes@googlegroups.com]) # correct? 
+AC_INIT([exabayes],[0.2],[exabayes@googlegroups.com]) # correct? 
 
-
-dnl m4_include([./m4/ax_cxx_compile_stdcxx_0x.m4])
-dnl m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
-dnl m4_include([./m4/ax_ext.m4]) 
+m4_include([./m4/lx_find_mpi.m4])
 
 AM_INIT_AUTOMAKE(  exabayes , 0.2 )
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([src/config.h])
-
-
 
 AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])
 
@@ -21,7 +16,6 @@ AM_SILENT_RULES([yes])
 
 # configures the ncl config reader 
 AC_CONFIG_SUBDIRS([lib/ncl-2.1.18])
-dnl AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for programs.
 
@@ -32,19 +26,15 @@ AC_PROG_CXX
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
 
-
-
 AC_PROG_CC_STDC
 AC_PROG_CC_C99
-AX_CXX_COMPILE_STDCXX_0X	
-AX_CXX_COMPILE_STDCXX_11()
 AC_PROG_RANLIB
 
 
 dnl NOTICE if you have trouble with that, then install autoconf-archive (or similar)
 AX_EXT
+LX_FIND_MPI()
 
-# Checks for libraries.
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h stdint.h stdlib.h string.h strings.h sys/time.h unistd.h])
@@ -62,10 +52,52 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([clock_gettime getcwd getpagesize gettimeofday memset pow sqrt strcasecmp strchr])
 
 
-AC_ARG_ENABLE(pll, [--enable-pll   enable compilation with PLL instead of ExaML code base] )
-AC_DEFINE([HAVE_PLL], [0], ["is 1, if built with the PLL "])
-AS_IF([ test x$enable_pll = xyes ], [AC_DEFINE(HAVE_PLL,1)]) 
-AM_CONDITIONAL([WITH_PLL], [ test x$enable_pll = xyes ] )
+AC_DEFINE([HAVE_PLL], [0], "")
+AC_ARG_ENABLE( [pll], 	      
+	   [  --enable-pll[=val]	compile ExaBayes with a specific code base. Options: 
+	  no : ExaML code base 	 
+	  sequential [default]:  sequential PLL,
+	  threads: PLL with pthreads parallelization
+	  mpi: PLL with MPI processes   ],
+[ case "${enableval}" in
+    no ) CODE="no" ;;	
+  sequential | yes  ) CODE="sequential" ;; 
+  mpi ) CODE="mpi" ;; 
+  threads ) CODE="threads" ;; 
+  esac ],
+[CODE="sequential"]
+)
+
+
+if test "x$CODE" = "xno" ; then 
+   AC_DEFINE([HAVE_PLL], [0], "")
+elif test "x$CODE" = "xsequential" ; then 
+   AC_DEFINE([HAVE_PLL], [1], "")
+elif test "x$CODE" = "xyes" ; then 
+   AC_DEFINE([HAVE_PLL], [1], "")
+elif test "x$CODE" = "xthreads" ; then 
+   AC_DEFINE([HAVE_PLL], [2], "")
+elif test "x$CODE" = "xmpi" ; then 
+   AC_DEFINE([HAVE_PLL], [3], "")
+else 
+   AC_MSG_ERROR(bad value --enable-pll) 
+fi 
+
+
+
+AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xno"   ])
+
+dnl AC_ARG_ENABLE(pll, [--enable-pll   enable compilation with ExaML code base instead of the PLL ] )
+dnl AM_CONDITIONAL([WITH_EXAML], [ test x$enable_examl = xyes ])
+dnl AC_DEFINE([HAVE_PLL],[1], "use the PLL for likelihood computations")
+
+
+
+
+
+dnl AS_IF([ test x$enable_pll = xyes ], [AC_DEFINE([HAVE_EXAML],[1], "use ExaML for building ExaBayes")]) 
+dnl AM_CONDITIONAL([WITH_PLL], [ test x$enable_pll = xyes ] )
+dnl AM_CONDITIONAL([WITH_PLL], [ test x$enable_pll = xyes ] )
 
 AC_ARG_ENABLE(mydebug,[ --enable-mydebug	Build with debug information ])
 AM_CONDITIONAL([WITH_DEBUG], [ test x$enable_mydebug = xyes ])

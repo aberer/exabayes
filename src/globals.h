@@ -15,6 +15,9 @@
 
 #include "config.h"
 
+class BipartitionHash; 
+class SuccessCtr; 
+
 
 /* Those globals are bad.  Having them as a singleton is slightly
    better. 
@@ -34,14 +37,19 @@ typedef struct globs
 
   state *allChains; 		/* careful with this! */
   int samplingFrequency; 
-  hashtable *bvHash; 
+  /* hashtable *bvHash;  */
+  BipartitionHash* bipHash; 
+
   int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
 
 
   
   double* temperature;   /// one temperature for each run 
-  successCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> only the upper half w/o diag is filled!
+  /* successCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> only the upper half w/o diag is filled! */
+  
+  /* todo replace with a chain swapper? */
+  SuccessCtr **swapInfo; 
   
   analdef *adef; 
 
@@ -110,7 +118,7 @@ double timeIncrement = 0;
 extern globalAnalysisInfo gAInfo; 
 
 
-extern char infoFileName[1024];
+
 extern int Thorough; 
 extern int processID; 
 extern char run_id[1024]; 
@@ -119,5 +127,9 @@ extern char workdir[1024];
 extern char tree_file[1024]; 
 extern char byteFileName[1024]; 
 extern double timeIncrement;  
+extern char infoFileName[1024];
 
 #endif
+
+
+
