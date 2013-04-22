@@ -153,8 +153,10 @@ void copyState(state *dest, const state *src )
 
 
 
-static void setupGlobals(initParamStruct *initParams, tree *tr)
+static void setupGlobals(initParamStruct *initParams)
 {
+  int numTax = 1000 ;		// TODO HACK! 
+
   if (initParams->numGen > 0)
     gAInfo.numGen = initParams->numGen; 
 
@@ -163,9 +165,7 @@ static void setupGlobals(initParamStruct *initParams, tree *tr)
   gAInfo.numberOfRuns =   initParams->numIndiChains; 
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
 
-  unsigned int bvLength = 0; 
-  tr->bitVectors = initBitVector(tr->mxtips, &bvLength); 
-  hashtable *ht = initHashTable(tr->mxtips * tr->mxtips * 10);
+  hashtable *ht = initHashTable(numTax * numTax * 10);
   gAInfo.bvHash = ht; 
 
   gAInfo.printFreq = initParams->printFreq; 
@@ -177,8 +177,6 @@ static void setupGlobals(initParamStruct *initParams, tree *tr)
   gAInfo.burninGen = initParams->burninGen; 
   gAInfo.burninProportion = initParams->burninProportion; 
   gAInfo.tuneFreq = initParams->tuneFreq; 
-
-
 
   /* initialize a matrix of swaps (wasting some space here) */
   gAInfo.swapInfo = (SuccessCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(SuccessCtr*)); 
@@ -205,7 +203,7 @@ using namespace std;
    This function also decides which aln,tr structures are assigned to
    which chains.
  */ 
-void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains)
+void initializeIndependentChains( analdef *adef, int seed, state **resultIndiChains)
 {
   FILE *treeFH = NULL; 
   if( gAInfo.numberOfStartingTrees > 0 )
@@ -213,24 +211,25 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 
   initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
   parseConfigWithNcl(configFileName, &initParams);  
-  setupGlobals(initParams, tr); 
+  setupGlobals(initParams); 
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
 
   PRINT("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
   *resultIndiChains = (state*)exa_calloc( totalNumChains , sizeof(state));     
 
 #ifdef DEBUG_LNL_VERIFY
-  gAInfo.debugTree = new TreeAln(tr ); 
+  gAInfo.debugTree = new TreeAln( byteFileName); 
 #endif
 
   for(int i = 0; i < totalNumChains; ++i)
     {       
       state *theChain = *resultIndiChains + i;       
+
       if( i < gAInfo.numberCoupledChains)
-	theChain->traln = new TreeAln(tr); 
+	theChain->traln = new TreeAln(byteFileName);
       else 
 	{
-	  state *masterChain = *resultIndiChains + (i %  gAInfo.numberCoupledChains) ; 
+  	  state *masterChain = *resultIndiChains + (i %  gAInfo.numberCoupledChains) ; 
 	  theChain->traln = new TreeAln(*(masterChain->traln)); // initialize from master chain 
 	}
       
@@ -271,6 +270,7 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	      if(hasBranchLength)
 		{
 		  int count = 0; 
+		  tree *tr = theChain->traln->getTr();
 		  traverseInitCorrect(tr->start->back, &count, theChain->traln ) ;
 		  assert(count == 2 * theChain->traln->getTr()->mxtips -3); 
 		}
@@ -293,7 +293,8 @@ void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChai
 	      /* TODO maybe prior for initial branch lengths   */
 	      int count = 0; 
 	      traverseInitFixedBL( theChain->traln->getTr()->start->back, &count, theChain->traln, INIT_BRANCH_LENGTHS );
-	      assert(count  == 2 * tr->mxtips - 3);	  
+
+	      assert(count  == 2 * theChain->traln->getTr()->mxtips - 3);	  
 	    }
 	}
       else 

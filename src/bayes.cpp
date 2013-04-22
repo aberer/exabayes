@@ -208,15 +208,6 @@ void runChains(state *allChains, int diagFreq)
 }
 
 
-/* #define TEST */
-
-#ifdef TEST
-#include "burnin.h"
-#endif
-
-
-
-
 
 
 /**
@@ -225,27 +216,16 @@ void runChains(state *allChains, int diagFreq)
    @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
-void exa_main(tree *tr, 
-#if HAVE_PLL != 0
-	      partitionList *partitions,
-#endif
-analdef *adef)
+void exa_main(analdef *adef, int seed)
 {   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
 
   timeIncrement = gettime();
   gAInfo.adef = adef; 
 
-  initializeIndependentChains(tr, adef,  &indiChains); 
-
-
-#ifdef TEST 
-  {
-  } 
-#endif
+  initializeIndependentChains(adef,  seed, &indiChains); 
 
   assert(gAInfo.numberCoupledChains > 0);
-  /* TODO more bla bla  */  
 
   gAInfo.allChains = indiChains; 
   

@@ -26,45 +26,42 @@ static void errorExit( int i )
 #endif
 
 
-void initAdef(analdef *adef)
-{   
-  adef->max_rearrange          = 21;
-  adef->stepwidth              = 5;
-  adef->initial                = 10;
-  adef->bestTrav               = 10;
-  adef->initialSet             = FALSE; 
-  adef->mode                   = BIG_RAPID_MODE; 
-  adef->likelihoodEpsilon      = 0.1; 
-  adef->permuteTreeoptimize    = FALSE; 
-  adef->perGeneBranchLengths   = FALSE;   
-  adef->useCheckpoint          = FALSE;
-}
+// void printVersionInfo()
+// {
+// #if HAVE_PLL != 0
+//   PRINT("\n\nThis is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
+// #else 
+//   PRINT("\n\nThis is %s, version %s\n", PROGRAM_NAME, VERSION); 
+// #endif  
+// }
+
+// void printREADME()
+// {
+//   printf("TODO\n"); 
+// }
 
 
-void printVersionInfo()
+// void finalizeFiles()
+// {
+//   PRINT("TODO\n"); 
+// }
+
+
+
+
+void parseCommandLine(int argc, char *argv[], analdef *adef)
 {
-#if HAVE_PLL != 0
-  PRINT("\n\nThis is %s, version %s built with the phlogenetic likelihood library.\n", PROGRAM_NAME, VERSION); 
-#else 
-  PRINT("\n\nThis is %s, version %s\n", PROGRAM_NAME, VERSION); 
-#endif  
-}
-
-void printREADME()
-{
-  printf("TODO\n"); 
+  
 }
 
 
-void finalizeFiles()
-{
-  PRINT("TODO\n"); 
-}
 
 
 /* TODO consolidate */
-void get_args(int argc, char *argv[], analdef *adef, tree *tr)
+void get_args_old(int argc, char *argv[], analdef *adef, tree *tr)
 {
+  assert(0); 
+  
   boolean
     bad_opt    = FALSE,
     resultDirSet = FALSE;
@@ -130,10 +127,10 @@ void get_args(int argc, char *argv[], analdef *adef, tree *tr)
     {
     switch(c)
       {    
-      case 'a':
-	tr->useMedian = TRUE;
-	break;
-      case 'Q':
+      // case 'a':
+      // 	tr->useMedian = TRUE;
+      // 	break;
+      case 'Q':			// TODO  
 	tr->manyPartitions = TRUE;   	
 	break;
       case 's': 

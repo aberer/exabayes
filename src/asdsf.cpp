@@ -6,6 +6,10 @@
 #undef _INCLUDE_DEFINITIONS
 
 #include "main-common.h"
+
+#undef PRINT 
+#define PRINT printf
+
 #include "AvgSplitFreqAssessor.hpp"
 
 #if HAVE_PLL != 0 

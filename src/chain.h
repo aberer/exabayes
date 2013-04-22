@@ -19,7 +19,7 @@ class TreeAln;
 void saveTreeStateToChain(state *chain); 
 void applyChainStateToTree(state *chain); 
 void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z ); 
-void initializeIndependentChains(tree *tr, analdef *adef, state **resultIndiChains); 
+void initializeIndependentChains(analdef *adef, int seed, state **resultIndiChains); 
 double getChainHeat(state *chain ); 
 
 

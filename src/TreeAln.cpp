@@ -1,4 +1,5 @@
 
+
 #include "config.h"
 #include "TreeAln.hpp"
 
@@ -30,34 +31,26 @@ const double TreeAln::freqMin = 0.001;
 // #define DEBUG_LINK_INFO 	// TODO erase 
 
 
-/** 
-    @param tr -- tree to be initialized from 
- */ 
-TreeAln::TreeAln(tree *trOuter) 
-{  
-  tree *newTr = (tree*)exa_calloc(1, sizeof(tree) ); 
-  newTr->mxtips = trOuter->mxtips; 
-  this->tr = newTr; 
-  initDefault(); 
+TreeAln::TreeAln(char *bytefile)
+{ 
+  tree *tre = (tree*)exa_calloc(1,sizeof(tree)) ; 
+  this->tr = shared_ptr<tree>(tre); 
 
-  // create a new tree 
 #if HAVE_PLL != 0
-  partitionList *partition = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
-  this->partitions = partition; 
-  initializeTree(newTr, partition ,gAInfo.adef); 
-  this->partitions = partition; 
+  partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
+  partitions = shared_ptr<partitionList>(pl);
+  this->initializeTreePLL();
 #else 
-  initializeTree(newTr ,gAInfo.adef); 
-#endif        
-  initFromTree(trOuter);  
+  initializeTree(tre, gAInfo.adef);   
+#endif
 }
 
-
-void TreeAln::initFromTree(tree *trOuter) 
-{
-  for(int j = 1; j <= trOuter->mxtips; ++j)
-    this->tr->nodep[j]->hash = trOuter->nodep[j]->hash; 
-  this->tr->bitVectors = trOuter->bitVectors; 
+TreeAln::TreeAln(const TreeAln &rhs)
+  : tr(rhs.tr)
+#if HAVE_PLL != 0
+  , partitions(rhs.partitions)
+#endif
+{  
 }
 
 
@@ -208,23 +201,23 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
     }
 
   tr->start = tr->nodep[rhsTree->start->number]; 
-  debug_checkTreeConsistency(this->tr);
+  debug_checkTreeConsistency(this->getTr());
   
   return *this; 
 }
 
 
 
-/**
-   @brief shallow copy of the tree 
- */ 
-TreeAln::TreeAln(const TreeAln& rhs)  
-{  
-  this->tr = rhs.tr; 
-#if HAVE_PLL != 0
-  this->partitions = rhs.partitions; 
-#endif
-}
+// /**
+//    @brief shallow copy of the tree 
+//  */ 
+// TreeAln::TreeAln(const TreeAln& rhs)  
+// {  
+//   this->tr = rhs.tr; 
+// #if HAVE_PLL != 0
+//   this->partitions = rhs.partitions; 
+// #endif
+// }
 
 
 
@@ -286,9 +279,9 @@ double& TreeAln::accessPartitionLH(int model)
 void TreeAln::initRevMat(int model)
 {
 #if HAVE_PLL != 0
-  initReversibleGTR(tr, getPartitionsPtr() , model); 
+  initReversibleGTR(getTr(), getPartitionsPtr() , model); 
 #else 
-  initReversibleGTR(tr, model); 
+  initReversibleGTR(getTr(), model); 
 #endif
 }
 
@@ -376,3 +369,124 @@ void TreeAln::discretizeGamma(int model)
   pInfo *partition =  getPartition(model); 
   makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
 }
+
+
+
+
+// initialization code from the PLL in future version, we could also
+// support plain files again. Just do not really know what to do with
+// it =/
+#if HAVE_PLL  != 0 
+
+void TreeAln::initializeTreePLL()
+{
+  partitionList *pl = getPartitionsPtr();
+  pl->partitionData = (pInfo**)exa_malloc(NUM_BRANCHES*sizeof(pInfo*));
+
+  double **empFreq = NULL; 
+  initializePartitionsPLL(&(byteFileName[0]), &empFreq);
+
+  initializePartitionsSequential(getTr(), getPartitionsPtr());
+  initModel(getTr(), empFreq, getPartitionsPtr());
+} 
+
+
+void TreeAln::initializePartitionsPLL(char *bytefile, double ***empiricalFrequencies)
+{
+  analdef *adef = gAInfo.adef ; 
+  tree *tr = getTr();
+  partitionList *partitions = getPartitionsPtr();
+
+  unsigned char *y;
+
+  FILE 
+    *byteFile = myfopen(bytefile, "rb");	 
+
+  myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
+  myBinFread(&(tr->originalCrunchedLength), sizeof(int), 1, byteFile);
+  myBinFread(&(partitions->numberOfPartitions),  sizeof(int), 1, byteFile);
+  myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
+
+
+  partitions->perGeneBranchLengths = adef->perGeneBranchLengths;
+
+  /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
+     let's not worry about this right now, because it is indeed RAxML-specific */
+
+  tr->aliaswgt                   = (int *)exa_malloc((size_t)tr->originalCrunchedLength * sizeof(int));
+  myBinFread(tr->aliaswgt, sizeof(int), tr->originalCrunchedLength, byteFile);	       
+
+  tr->rateCategory    = (int *)    exa_malloc((size_t)tr->originalCrunchedLength * sizeof(int));	  
+
+  tr->patrat          = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double));
+  tr->patratStored    = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
+  tr->lhs             = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
+
+  *empiricalFrequencies = (double **)exa_malloc(sizeof(double *) * partitions->numberOfPartitions);
+
+  y = (unsigned char *)exa_malloc(sizeof(unsigned char) * ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips));
+  tr->yVector = (unsigned char **)exa_malloc(sizeof(unsigned char *) * ((size_t)(tr->mxtips + 1)));
+
+  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
+    tr->yVector[i] = &y[(i - 1) *  (size_t)tr->originalCrunchedLength]; 
+
+  setupTree(tr, FALSE, partitions);
+
+  for(int i = 0; i < partitions->numberOfPartitions; i++)
+    partitions->partitionData[i]->executeModel = TRUE;
+
+  /* data structures for convergence criterion need to be initialized after! setupTree */
+
+  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
+    {
+      int len;
+      myBinFread(&len, sizeof(int), 1, byteFile);
+      tr->nameList[i] = (char*)exa_malloc(sizeof(char) * (size_t)len);
+      myBinFread(tr->nameList[i], sizeof(char), len, byteFile);
+      /*printf("%s \n", tr->nameList[i]);*/
+    }  
+
+  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
+    addword(tr->nameList[i], tr->nameHash, i);
+
+  for(int model = 0; model < partitions->numberOfPartitions; model++)
+    {
+      int 
+	len;
+
+      pInfo 
+	*p = partitions->partitionData[model];
+
+      myBinFread(&(p->states),             sizeof(int), 1, byteFile);
+      myBinFread(&(p->maxTipStates),       sizeof(int), 1, byteFile);
+      myBinFread(&(p->lower),              sizeof(int), 1, byteFile);
+      myBinFread(&(p->upper),              sizeof(int), 1, byteFile);
+      myBinFread(&(p->width),              sizeof(int), 1, byteFile);
+      myBinFread(&(p->dataType),           sizeof(int), 1, byteFile);
+      myBinFread(&(p->protModels),         sizeof(int), 1, byteFile);
+      myBinFread(&(p->autoProtModels),     sizeof(int), 1, byteFile);
+      myBinFread(&(p->protFreqs),          sizeof(int), 1, byteFile);
+      myBinFread(&(p->nonGTR),             sizeof(boolean), 1, byteFile);
+      myBinFread(&(p->numberOfCategories), sizeof(int), 1, byteFile); 
+
+      /* later on if adding secondary structure data
+
+	 int    *symmetryVector;
+	 int    *frequencyGrouping;
+      */
+
+      myBinFread(&len, sizeof(int), 1, byteFile);
+      p->partitionName = (char*)exa_malloc(sizeof(char) * (size_t)len);
+      myBinFread(p->partitionName, sizeof(char), len, byteFile);
+
+      (*empiricalFrequencies)[model] = (double *)exa_malloc(sizeof(double) * (size_t)partitions->partitionData[model]->states);
+      myBinFread((*empiricalFrequencies)[model], sizeof(double), partitions->partitionData[model]->states, byteFile);
+    }
+
+  myBinFread(y, sizeof(unsigned char), ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips), byteFile);
+
+  fclose(byteFile);
+}
+
+
+#endif

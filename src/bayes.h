@@ -109,4 +109,7 @@ struct _pfun
 }; 
 
 
+void exa_main(analdef *adef, int seed); 
+
+
 #endif
