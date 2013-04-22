@@ -8,9 +8,7 @@
 
 
 /** 
-    @brief mostly wraps the legacy tr and partition list 
-
-    
+    @brief mostly wraps the legacy tr and partition list     
  */
 
 class TreeAln

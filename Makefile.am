@@ -16,7 +16,7 @@ endif
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS=   exabayes prsf # asdsf 
+bin_PROGRAMS= exabayes prsf asdsf 
 
 include src-helper.am
 include src.am 
@@ -30,7 +30,7 @@ AM_LDFLAGS=-lm
 
 
 exabayes_LDADD= 
-exabayes_SOURCES =   ./src/exabayes.cpp # ./src/prsf.cpp # 
+exabayes_SOURCES =   ./src/exabayes.cpp
 
 PLLINCLUDE=-I./src/pll
 libpll_a_SOURCES= ./src/pll/evaluateGenericSpecial-pll.c ./src/pll/axml-pll.c ./src/pll/trash-pll.c ./src/pll/vec_unit.h ./src/pll/makenewzGenericSpecial-pll.c ./src/pll/mem_alloc-pll.c ./src/pll/restartHashTable-pll.c ./src/pll/axml-pll.h ./src/pll/mem_alloc.h ./src/pll/recom-pll.c ./src/pll/searchAlgo-pll.c ./src/pll/phylip_parser/msa_sites.h ./src/pll/phylip_parser/xalloc.h ./src/pll/phylip_parser/phylip.h ./src/pll/phylip_parser/lexer.h ./src/pll/phylip_parser/ssort.h ./src/pll/utils-pll.c ./src/pll/treeIO-pll.c ./src/pll/cycle.h ./src/pll/aligned_buffer.h ./src/pll/globalVariables.h ./src/pll/topologies-pll.c ./src/pll/utils.h ./src/pll/evaluatePartialGenericSpecial-pll.c ./src/pll/fastDNAparsimony-pll.c ./src/pll/randomTree-pll.c ./src/pll/optimizeModel-pll.c ./src/pll/treeIO.h ./src/pll/newviewGenericSpecial-pll.c ./src/pll/bipartitionList-pll.c ./src/pll/models-pll.c ./src/pll/genericParallelization.h 
@@ -46,8 +46,7 @@ noinst_LIBRARIES=libbayes.a
 if WITH_EXAML 
 LIBTOUSE=libexaml.a
 AM_CFLAGS += $(EXAMLINCLUDE) $(MPI_CFLAGS) 
-exabayes_LDFLAGS = $(MPI_CLDFLAGS)
-prsf_LDFLAGS = $(MPI_CLDFLAGS)
+AM_LDFLAGS+=$(MPI_CLDFLAGS)
 else
 LIBTOUSE=libpll.a
 AM_CFLAGS+=$(PLLINCLUDE)
@@ -68,20 +67,21 @@ prsf_SOURCES= ./src/prsf.cpp
 
 
 ################################################################
-# ASDSF
 
-asdsf_SOURCES=src/asdsf.cpp
-asdsf_LDADD=libbayes.a $(LIBTOUSE) 
+# ASDSF
+asdsf_LDADD=    libbayes.a $(LIBTOUSE)   ./lib/ncl-2.1.18/ncl/.libs/libncl.a
+asdsf_SOURCES= ./src/asdsf.cpp
+
 
 
 ################################################################
 # cleanup 
 
 clean:
-	-rm -rf *.o *.a  #   $(exabayes_OBJECTS) $(libbayes_A_OBJECTS) libbayes.a $(bin_PROGRAMS )  $(prsf_OBJECTS)  
+	-rm -rf *.o *.a $(bin_PROGRAMS ) $(exabayes_OBJECTS) $(libbayes_A_OBJECTS) libbayes.a
 
 clean-all : 
-	-rm -rf $(exabayes_OBJECTS) $(bin_PROGRAMS )  $(prsf_OBJECTS)  *.a  *.o 
+	-rm -rf $(bin_PROGRAMS) *.o *.a 
 
 
 doc : 

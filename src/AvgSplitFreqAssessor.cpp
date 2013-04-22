@@ -19,8 +19,6 @@
 #include "AvgSplitFreqAssessor.hpp"
 
 
-
-
 static void initializeTreeOnly(int numTax, tree **tre ); 
 
 

@@ -6,10 +6,11 @@
 #undef _INCLUDE_DEFINITIONS
 
 #include "main-common.h"
-#include "prsfComputer.h"
-
 #include "AvgSplitFreqAssessor.hpp"
 
+#if HAVE_PLL != 0 
+#include "globalVariables.h" 
+#endif
 
 
 int main(int argc, char** argv)
