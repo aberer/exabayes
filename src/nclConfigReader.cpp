@@ -200,6 +200,21 @@ public:
   }
 
 
+  void validate()
+  {
+    if(initParam->burninProportion != 0 && initParam->burninGen)
+      {
+	cout << "Please EITHER specifiy the a relative burnin via burninGen OR or a relative burnin that discards a certain percentage of samples via burninProportion. Both options cannot be used at the same time." << endl; 
+	exit(1); 
+      }
+    
+    if( initParam->burninProportion > 0.99 )
+      {
+	cout << "Relative burnin proportion " << initParam->burninProportion << " is too high! Please choose a value below 0.99" <<endl; 
+      }
+    
+  }
+
   initParamStruct* getResult() 
   {
     assertInitialized();
@@ -226,7 +241,9 @@ void parseConfigWithNcl(char *configFileName, initParamStruct **params)
 
   reader.Add(myBlock); 
   reader.Execute(token);
-  
+
+  myBlock->validate();
+
   *params = myBlock->getResult();
 }
 

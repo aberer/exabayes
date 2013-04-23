@@ -37,17 +37,13 @@ typedef struct globs
 
   state *allChains; 		/* careful with this! */
   int samplingFrequency; 
-  /* hashtable *bvHash;  */
   BipartitionHash* bipHash; 
 
   int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
-
-
   
   double* temperature;   /// one temperature for each run 
-  /* successCtr **swapInfo;   /// indicates how ofter swaps  between chains succeeded -> only the upper half w/o diag is filled! */
-  
+
   /* todo replace with a chain swapper? */
   SuccessCtr **swapInfo; 
   

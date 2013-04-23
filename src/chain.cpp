@@ -6,7 +6,6 @@
 #include "chain.h"
 #include "proposals.h"
 #include "output.h"
-#include "convergence.h" 
 #include "treeRead.h"
 #include "topology-utils.h"
 #include "randomness.h"
@@ -595,11 +594,8 @@ void step(state *chain)
       if( isOutputProcess() ) 
 	printSample(chain);       
 
-      if(chain->currentGeneration >  gAInfo.burninGen)
-	{
-	  gAInfo.bipHash->addBipartitionsToHash(*(chain->traln),  chain->id / gAInfo.numberCoupledChains); 
-	  assert(gAInfo.burninProportion == 0.0); 
-	}
+      // TODO keep? 
+      gAInfo.bipHash->addBipartitionsToHash(*(chain->traln),  chain->id / gAInfo.numberCoupledChains); 
     }
 
 

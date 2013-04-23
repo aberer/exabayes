@@ -1,5 +1,4 @@
 
-
 #include "config.h"
 #include "TreeAln.hpp"
 
@@ -34,16 +33,61 @@ const double TreeAln::freqMin = 0.001;
 TreeAln::TreeAln(char *bytefile)
 { 
   tree *tre = (tree*)exa_calloc(1,sizeof(tree)) ; 
-  this->tr = shared_ptr<tree>(tre); 
+  this->tr = tre; 
 
 #if HAVE_PLL != 0
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
-  partitions = shared_ptr<partitionList>(pl);
+  partitions = pl;
   this->initializeTreePLL();
 #else 
   initializeTree(tre, gAInfo.adef);   
 #endif
 }
+
+
+TreeAln::TreeAln(tree *_tr)
+  : tr(_tr)
+{
+}
+
+
+TreeAln::~TreeAln()
+{
+  exa_free(tr->aliaswgt); 
+  exa_free(tr->rateCategory); 
+  exa_free(tr->patrat);
+  exa_free(tr->patratStored);
+  exa_free(tr->lhs);  
+  // exa_free(tr->yVector[0]);
+  exa_free(tr->yVector); 
+  for(int i = 1; i <= tr->mxtips; ++i )
+    exa_free(tr->nameList[i]);
+
+  exa_free(tr->nameList);
+  exa_free(tr->tree_string);
+  exa_free(tr->tree0);
+  exa_free(tr->tree1);
+
+  exa_free(tr->constraintVector); 
+  exa_free(tr->nodeBaseAddress);
+
+  for(int i = 0; i < getNumberOfPartitions();++i)
+    {
+      pInfo *partition = getPartition(i); 
+      exa_free(partition); 
+    }
+  
+#if HAVE_PLL != 0 
+  if(getNumberOfPartitions() > 0 )
+    exa_free(partitions->partitionData); 
+  exa_free(partitions); 
+#else 
+  exa_free(tr->partitionData);
+#endif
+
+  exa_free(tr);
+}
+
 
 TreeAln::TreeAln(const TreeAln &rhs)
   : tr(rhs.tr)
@@ -76,13 +120,6 @@ void TreeAln::initDefault()
   tr->constrained = FALSE;
   tr->gapyness               = 0.0; 
   tr->useMedian = FALSE;
-}
-
-
-
-TreeAln::~TreeAln()
-{
-  // TODO 
 }
 
 
@@ -205,19 +242,6 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
   
   return *this; 
 }
-
-
-
-// /**
-//    @brief shallow copy of the tree 
-//  */ 
-// TreeAln::TreeAln(const TreeAln& rhs)  
-// {  
-//   this->tr = rhs.tr; 
-// #if HAVE_PLL != 0
-//   this->partitions = rhs.partitions; 
-// #endif
-// }
 
 
 

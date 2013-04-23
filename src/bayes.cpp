@@ -1,7 +1,7 @@
 /**
    @file bayes.c
  
-   @brief The top-level  functionality of ExaBayes.
+   @brief The top-level functionality of ExaBayes.
 
 */
 
@@ -13,7 +13,6 @@
 #include "main-common.h"
 #include "output.h"
 #include "proposals.h"
-#include "convergence.h"
 #include "nclConfigReader.h"
 #include "misc-utils.h"
 #include "chain.h"
@@ -23,7 +22,7 @@
 #include "tune.h"
 #include "prsfComputer.h"
 #include "TreeAln.hpp"
-
+#include "AvgSplitFreqAssessor.hpp"
 
 extern double masterTime; 
 
@@ -180,6 +179,69 @@ void executeOneRun(state *chains, int gensToRun )
     }
     
     
+}
+
+
+
+
+
+#include <sstream>
+bool convergenceDiagnostic(state *allChains)
+{
+  if(gAInfo.numberOfRuns > 1)
+    { 
+      vector<string> fns; 
+      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+	{
+	  stringstream ss; 
+	  ss <<  PROGRAM_NAME << "_topologies." << run_id << "." << i; 
+	  fns.push_back(ss.str());
+	}
+     
+      AvgSplitFreqAssessor asdsf(fns);
+
+      int end = asdsf.getEnd();
+      
+      int treesInBatch = gAInfo.diagFreq / gAInfo.samplingFrequency; 
+
+      end /= treesInBatch; 
+      end *= treesInBatch;       
+
+      if(end > 0)
+	{	  
+	  asdsf.setEnd(end);
+	  if( gAInfo.burninGen > 0 )
+	    {
+	      assert(gAInfo.burninProportion == 0.); 
+
+	      int treesToDiscard =  gAInfo.burninGen / gAInfo.samplingFrequency; 
+
+	      if(end < treesToDiscard + 2 )
+		return false; 
+	      else 
+		asdsf.setStart(treesToDiscard);  
+	    }
+	  else 
+	    {
+	      assert(gAInfo.burninGen == 0); 
+	      int start = (int)((double)end * gAInfo.burninProportion  ); 
+	      asdsf.setStart(start);
+	    } 
+
+	  asdsf.extractBips();
+	  double asdsfVal = asdsf.computeAsdsf(gAInfo.asdsfIgnoreFreq);
+
+	  PRINT("ASDSF for trees %d-%d: %f\n", asdsf.getStart(), asdsf.getEnd(), asdsfVal ); 
+
+	  return asdsfVal < gAInfo.asdsfConvergence; 
+
+	}
+      else 
+	return false; 
+      
+    }
+  else 
+    return allChains[0].currentGeneration > gAInfo.numGen; 
 }
 
 

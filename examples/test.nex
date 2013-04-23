@@ -22,17 +22,17 @@ begin EXABAYES;
 
       [ BURNIN ] 
       [ comment out one of the two options ]      
-      burninGen 1    [ exact number of generations that are discarded for diagnostics ] 
-      [ burninProportion 25 [ discard n % of all initial samples as burnin  ] ]
+      [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
+      burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
 
       [================================================================]
       [ MOVE configuration ]
       [================================================================]
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 10 [ 10% in mrb ]
-      initGuidedSPR 20  [ok ] 
-      stNNI 10      [ ok 10% in mrb]	
+      initEsprMappedWeight 20 [ 10% in mrb ]
+      initGuidedSPR 0  [ok ] 
+      stNNI 20      [ ok 10% in mrb]	
 
       [ BRANCH LENGTHS ] 
       initSingleBranchWeight 0 [ ok ] 

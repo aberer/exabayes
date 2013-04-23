@@ -22,6 +22,7 @@ private:
   void extractBipartitions(TreeAln &traln, nodeptr p, int *cnt, int chainId); 
   void resetBitVectors();
   void initializeRandomHash(); 
+  void printBv(nat *bv); 
 
 
   hashtable* h; 
