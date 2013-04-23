@@ -34,7 +34,7 @@ BipartitionHash::BipartitionHash(int _numTax, int numRuns)
 
 BipartitionHash::~BipartitionHash()
 {
-  for(nat i = 0; i < 2 * numTax ;++i)
+  for(nat i = 1; i < 2 * numTax ;++i)
     exa_free(bitvectors[i]); 
   exa_free(bitvectors); 
 

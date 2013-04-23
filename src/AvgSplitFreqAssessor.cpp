@@ -28,9 +28,7 @@
 /**
    @brief checks, if everything is in order with the files and the trees it contains  
 */ 
-AvgSplitFreqAssessor::AvgSplitFreqAssessor(vector<string> fileNames, int _start, int _end)
-  : start(_start)
-  , end(_end)
+AvgSplitFreqAssessor::AvgSplitFreqAssessor(vector<string> fileNames)
 {
   fillTaxaInfo(fileNames[0]); 
 
@@ -43,13 +41,14 @@ AvgSplitFreqAssessor::AvgSplitFreqAssessor(vector<string> fileNames, int _start,
 	}
     }
 
-  tree *tr = NULL; 
-  initializeTreeOnly(taxa.size(), &tr );
+  initializeTreeOnly(taxa.size() );
   fns = fileNames; 
 
-  traln = new TreeAln(tr); 
-  
   bipHash = new BipartitionHash(taxa.size(), fileNames.size());
+
+  this->start = 0; 
+  this->end = getMinNumTrees();
+  // cout << "AvgSplitFreqAssessor: start " << start << "\tend" <<  end << endl; 
 }
 
 
@@ -89,7 +88,6 @@ void AvgSplitFreqAssessor::extractBips()
 	  nextTree(fh);
 	  bipHash->addBipartitionsToHash(*traln, ctr);      
 	}
-
       
       fclose(fh);
       ++ctr; 
@@ -209,16 +207,17 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
     
     important: does NOT need a bytefile 
  */ 
-void AvgSplitFreqAssessor::initializeTreeOnly(int numTax, tree **tre )
+void AvgSplitFreqAssessor::initializeTreeOnly(int numTax )
 {
-  *tre = (tree*)exa_calloc(1,sizeof(tree)); 
-  tree *tr = *tre;   
+  tree *tr =(tree*)exa_calloc(1,sizeof(tree)); 
   tr->mxtips = numTax; 
+  traln = new TreeAln(tr) ; 
 
 #if HAVE_PLL != 0
-  partitionList pl; 
-  pl.numberOfPartitions = 0; 
-  setupTree(tr, false, &pl);
+  partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
+  pl->numberOfPartitions = 0; 
+  setupTree(tr, false, pl);  
+  traln->setPartitionList(pl); 
 #else 
   tr->NumberOfModels = 0; 
   setupTree(tr);

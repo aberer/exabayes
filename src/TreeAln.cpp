@@ -1,5 +1,4 @@
 
-
 #include "config.h"
 #include "TreeAln.hpp"
 
@@ -59,7 +58,7 @@ TreeAln::~TreeAln()
   exa_free(tr->patrat);
   exa_free(tr->patratStored);
   exa_free(tr->lhs);  
-  exa_free(tr->yVector[0]);
+  // exa_free(tr->yVector[0]);
   exa_free(tr->yVector); 
   for(int i = 1; i <= tr->mxtips; ++i )
     exa_free(tr->nameList[i]);
@@ -77,9 +76,10 @@ TreeAln::~TreeAln()
       pInfo *partition = getPartition(i); 
       exa_free(partition); 
     }
-
+  
 #if HAVE_PLL != 0 
-  exa_free(partitions->partitionData); 
+  if(getNumberOfPartitions() > 0 )
+    exa_free(partitions->partitionData); 
   exa_free(partitions); 
 #else 
   exa_free(tr->partitionData);

@@ -47,7 +47,10 @@ int main(int argc, char** argv)
       tmp.push_back(string(argv[i]));
     }
 
-  AvgSplitFreqAssessor asdsf(tmp,start,end); 
+  AvgSplitFreqAssessor asdsf(tmp); 
+
+  asdsf.setStart(start);
+  asdsf.setEnd(end);
 
   // cout << "all files contain at least " << asdsf.getMinNumTrees() << " trees" << endl; ;
   asdsf.extractBips();
