@@ -83,21 +83,7 @@ else
    AC_MSG_ERROR(bad value --enable-pll) 
 fi 
 
-
-
 AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xno"   ])
-
-dnl AC_ARG_ENABLE(pll, [--enable-pll   enable compilation with ExaML code base instead of the PLL ] )
-dnl AM_CONDITIONAL([WITH_EXAML], [ test x$enable_examl = xyes ])
-dnl AC_DEFINE([HAVE_PLL],[1], "use the PLL for likelihood computations")
-
-
-
-
-
-dnl AS_IF([ test x$enable_pll = xyes ], [AC_DEFINE([HAVE_EXAML],[1], "use ExaML for building ExaBayes")]) 
-dnl AM_CONDITIONAL([WITH_PLL], [ test x$enable_pll = xyes ] )
-dnl AM_CONDITIONAL([WITH_PLL], [ test x$enable_pll = xyes ] )
 
 AC_ARG_ENABLE(mydebug,[ --enable-mydebug	Build with debug information ])
 AM_CONDITIONAL([WITH_DEBUG], [ test x$enable_mydebug = xyes ])

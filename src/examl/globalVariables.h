@@ -168,9 +168,6 @@ partitionLengths pLengths[MAX_MODEL] = {
 
 partitionLengths pLength;
 
-     
 
 
-
-
-
+MPI_Comm comm; 

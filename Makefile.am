@@ -86,7 +86,7 @@ parserExaml_SOURCES=$(pre1)/axml.c c  $(pre1)/parsePartitions.c $(pre1)/axml.h  
 # pll parser 
 pre2=./lib/phylogenetic-likelihood-library/parser
 parserPll_SOURCES=$(pre2)/axml.c $(pre2)/parsePartitions.c $(pre2)/axml.h $(pre2)/globalVariables.h src/pll/mem_alloc.h ./src/pll/mem_alloc-pll.c
-parserPll_CFLAGS=-I$(pre2) -I$(PLLINCLUDE) $(AM_CFLAGS) 
+parserPll_CFLAGS=  -w -I$(pre2) -I$(PLLINCLUDE) $(AM_CFLAGS) 
 
 
 ################################################################

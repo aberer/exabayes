@@ -4,7 +4,7 @@ begin EXABAYES;
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
-      numIndiChains 2 		[ number of independant chains/runs ]
+      numIndiChains 4 		[ number of independant chains/runs ]
       numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
       printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
@@ -15,7 +15,7 @@ begin EXABAYES;
 
 
       [ MCMCMC ]
-      numCoupledChains 4   [ number of chains per independent run (only one is cold) ]       
+      numCoupledChains 2   [ number of chains per independent run (only one is cold) ]       
       heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
       swapInterval 1 	   [ attempt a swap between chains every n generations ]
       tuneHeat true        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
@@ -24,6 +24,10 @@ begin EXABAYES;
       [ comment out one of the two options ]      
       [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
       burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
+
+      [ PARALLELIZATION ]
+      numRunParallel 2       [ number of runs (i.e., independant chains) that are executed in parallel; currently this only can be used with ExaML ] 
+
 
       [================================================================]
       [ MOVE configuration ]

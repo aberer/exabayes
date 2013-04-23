@@ -6,6 +6,9 @@
 */
 
 
+#include <sstream>
+
+
 #include "axml.h"
 #include "bayes.h"
 #include "randomness.h"
@@ -25,6 +28,49 @@
 #include "AvgSplitFreqAssessor.hpp"
 
 extern double masterTime; 
+
+
+
+
+/** 
+    @brief nasty, but we need to manage a lot of global
+    variables. 
+
+    Maybe we can turn this into a singleton later or
+    de-globalize it. Has already caused some trouble. 
+
+ */ 
+void setupGlobals(initParamStruct *initParams)
+{
+  if (initParams->numGen > 0)
+    gAInfo.numGen = initParams->numGen; 
+
+  gAInfo.samplingFrequency = initParams->samplingFrequency; 
+  gAInfo.diagFreq = initParams->diagFreq; 
+  gAInfo.numberOfRuns =   initParams->numIndiChains; 
+  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
+
+  gAInfo.printFreq = initParams->printFreq; 
+  gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
+  gAInfo.asdsfConvergence = initParams->asdsfConvergence; 
+  gAInfo.heatFactor  = initParams->heatFactor; 
+  gAInfo.swapInterval =  initParams->swapInterval; 
+  gAInfo.tuneHeat = initParams->tuneHeat; 
+  gAInfo.burninGen = initParams->burninGen; 
+  gAInfo.burninProportion = initParams->burninProportion; 
+  gAInfo.tuneFreq = initParams->tuneFreq; 
+
+  /* initialize a matrix of swaps (wasting some space here) */
+  gAInfo.swapInfo = (SuccessCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(SuccessCtr*)); 
+  int n = gAInfo.numberCoupledChains; 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.swapInfo[i] = (SuccessCtr*)exa_calloc( n * n , sizeof(SuccessCtr)); 
+
+  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    gAInfo.temperature[i] = gAInfo.heatFactor; 
+}
+
 
 
 /**
@@ -183,9 +229,6 @@ void executeOneRun(state *chains, int gensToRun )
 
 
 
-
-
-#include <sstream>
 bool convergenceDiagnostic(state *allChains)
 {
   if(gAInfo.numberOfRuns > 1)
@@ -277,13 +320,13 @@ void runChains(state *allChains, int diagFreq)
 
 
 
-// /**
-//    @brief the main ExaBayes function.
+/**
+   @brief the main ExaBayes function.
 
-//    @param tr -- a tree structure that has been initialize in one of the adapter mains. 
-//    @param adef -- the legacy adef
-//  */
-void exa_main (analdef *adef, int seed)
+   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+   @param adef -- the legacy adef
+ */
+void exa_main (analdef *adef, int seed, initParamStruct *initParams)
 {   
   state *indiChains = NULL; 		/* one state per indipendent run/chain */  
 
@@ -298,9 +341,7 @@ void exa_main (analdef *adef, int seed)
   exit(0); 
 #endif
 
-
-  initializeIndependentChains(adef,  seed, &indiChains); 
-
+  initializeIndependentChains(adef,  seed, &indiChains, initParams); 
   assert(gAInfo.numberCoupledChains > 0);
 
   gAInfo.allChains = indiChains; 

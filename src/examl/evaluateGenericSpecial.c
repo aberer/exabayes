@@ -62,6 +62,8 @@
 */
 
 
+extern MPI_Comm comm; 
+
 extern const char inverseMeaningDNA[16];
 extern int processID;
 
@@ -780,10 +782,10 @@ void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal)
       *recv = (double *)malloc(sizeof(double) * tr->NumberOfModels);
     
 #ifdef _USE_ALLREDUCE   
-    MPI_Allreduce(tr->perPartitionLH, recv, tr->NumberOfModels, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(tr->perPartitionLH, recv, tr->NumberOfModels, MPI_DOUBLE, MPI_SUM, comm);
 #else
-    MPI_Reduce(tr->perPartitionLH, recv, tr->NumberOfModels, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Bcast(recv, tr->NumberOfModels, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Reduce(tr->perPartitionLH, recv, tr->NumberOfModels, MPI_DOUBLE, MPI_SUM, 0, comm);
+    MPI_Bcast(recv, tr->NumberOfModels, MPI_DOUBLE, 0, comm);
 #endif
     
     memcpy(tr->perPartitionLH, recv, tr->NumberOfModels * sizeof(double));

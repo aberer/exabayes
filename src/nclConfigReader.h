@@ -29,15 +29,9 @@ typedef struct
   int burninGen ; 
   double burninProportion; 
   int tuneFreq; 
+  int numRunParallel; 
 } initParamStruct ; 
 
-
-#ifdef __cplusplus
-extern "C"{
-#endif
-  void parseConfigWithNcl(char *configFileName, initParamStruct **initParam); 
-#ifdef __cplusplus
-}
-#endif
+void parseConfigWithNcl(char *configFileName, initParamStruct **initParam); 
 
 #endif

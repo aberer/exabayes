@@ -55,6 +55,7 @@
 
 extern int processID;
 extern const unsigned int mask32[32];
+extern MPI_Comm comm; 
 
 /*******************/
 
@@ -987,10 +988,10 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
 #ifdef _USE_ALLREDUCE	  
 	/* the MPI_Allreduce implementation is apparently sometimes not deterministic */
 
-	MPI_Allreduce(send, recv, tr->numBranches * 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);	    	    
+	MPI_Allreduce(send, recv, tr->numBranches * 2, MPI_DOUBLE, MPI_SUM, comm);	    	    
 #else
-	MPI_Reduce(send, recv, tr->numBranches * 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	MPI_Bcast(recv,        tr->numBranches * 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Reduce(send, recv, tr->numBranches * 2, MPI_DOUBLE, MPI_SUM, 0, comm);
+	MPI_Bcast(recv,        tr->numBranches * 2, MPI_DOUBLE, 0, comm);
 #endif   
 
 	memcpy(dlnLdlz,   &recv[0],               sizeof(double) * tr->numBranches);

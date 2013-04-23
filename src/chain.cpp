@@ -156,43 +156,6 @@ void copyState(state *dest, const state *src )
 }
 
 
-
-
-static void setupGlobals(initParamStruct *initParams)
-{
-  if (initParams->numGen > 0)
-    gAInfo.numGen = initParams->numGen; 
-
-  gAInfo.samplingFrequency = initParams->samplingFrequency; 
-  gAInfo.diagFreq = initParams->diagFreq; 
-  gAInfo.numberOfRuns =   initParams->numIndiChains; 
-  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
-
-  gAInfo.printFreq = initParams->printFreq; 
-  gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
-  gAInfo.asdsfConvergence = initParams->asdsfConvergence; 
-  gAInfo.heatFactor  = initParams->heatFactor; 
-  gAInfo.swapInterval =  initParams->swapInterval; 
-  gAInfo.tuneHeat = initParams->tuneHeat; 
-  gAInfo.burninGen = initParams->burninGen; 
-  gAInfo.burninProportion = initParams->burninProportion; 
-  gAInfo.tuneFreq = initParams->tuneFreq; 
-
-  /* initialize a matrix of swaps (wasting some space here) */
-  gAInfo.swapInfo = (SuccessCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(SuccessCtr*)); 
-  int n = gAInfo.numberCoupledChains; 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.swapInfo[i] = (SuccessCtr*)exa_calloc( n * n , sizeof(SuccessCtr)); 
-
-  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.temperature[i] = gAInfo.heatFactor; 
-}
-
-
-
-
-
 /**
    @brief An overloaded initialization function for all the chains. 
 
@@ -202,17 +165,14 @@ static void setupGlobals(initParamStruct *initParams)
    This function also decides which aln,tr structures are assigned to
    which chains.
  */ 
-void initializeIndependentChains( analdef *adef, int seed, state **resultIndiChains)
+void initializeIndependentChains( analdef *adef, int seed, state **resultIndiChains, initParamStruct *initParams )
 {
   FILE *treeFH = NULL; 
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
-  parseConfigWithNcl(configFileName, &initParams);  
-  setupGlobals(initParams); 
-  int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
 
+  int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
   PRINT("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
   *resultIndiChains = (state*)exa_calloc( totalNumChains , sizeof(state));     
 

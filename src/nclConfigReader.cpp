@@ -88,8 +88,6 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = NODE_SLIDER; 
   else if (key.EqualsCaseInsensitive("initFrequencyDirichletWeight"))
     *pf = UPDATE_FREQUENCIES_DIRICHLET;
-  // TODO@kassian this is a good place for proposal add 
-
   else 
     found = false; 
 
@@ -145,7 +143,6 @@ public:
 	    
 	    if(mapNameToProposal(key, &pt))
 	      initParam->initWeights[pt] = value.ConvertToDouble(); 
-	    //PROPOSALADD read NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
 	    else if(key.EqualsCaseInsensitive("numGen"))
 	      initParam->numGen = value.ConvertToInt(); 
 	    else if(key.EqualsCaseInsensitive("initPenaltyFactor"))
@@ -180,6 +177,8 @@ public:
 	      initParam->burninGen = value.ConvertToInt();
 	    else if(key.EqualsCaseInsensitive("burninProportion"))
 	      initParam->burninProportion = value.ConvertToDouble();
+	    else if(key.EqualsCaseInsensitive("numRunParallel"))
+	      initParam->numRunParallel = value.ConvertToInt();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }

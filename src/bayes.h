@@ -20,8 +20,9 @@ using namespace std;
 #include "eval.h"
 #include "stack.h"
 #include "SuccessCtr.hpp"
-
 #include "chain.hpp"
+#include "nclConfigReader.h"
+
 
 class TreeAln; 
 class LnlRestorer; 
@@ -109,7 +110,9 @@ struct _pfun
 }; 
 
 
-void exa_main(analdef *adef, int seed); 
+
+void exa_main(analdef *adef, int seed, initParamStruct *initParam); 
+void setupGlobals(initParamStruct *initParams); 
 
 
 #endif

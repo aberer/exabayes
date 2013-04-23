@@ -27,7 +27,7 @@
 #include "proposals.h"
 #include "output.h"
 #include "adapters.h"
-
+#include "chain.h"
 #include "CommandLine.hpp"
 
 #if HAVE_PLL != 0
@@ -44,7 +44,12 @@ int main (int argc, char *argv[])
 
   CommandLine cl(argc, argv); 
   makeFileNames(); 
-  exa_main(cl.getAdef(), cl.getSeed()); 
+
+  initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
+  parseConfigWithNcl(configFileName, &initParams);
+  setupGlobals(initParams); 
+
+  exa_main(cl.getAdef(), cl.getSeed(), initParams); 
 
   return 0;
 }
@@ -54,24 +59,41 @@ int main (int argc, char *argv[])
 
 extern int processID; 
 extern int processes;
+extern MPI_Comm comm; 
+
+
 
 int main(int argc, char *argv[])
 { 
+  int globalCommSize = 0, 
+    globalId = 0; 
+  
   
   MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &processID);
-  MPI_Comm_size(MPI_COMM_WORLD, &processes);
+  MPI_Comm_rank(MPI_COMM_WORLD, &globalId);
+  MPI_Comm_size(MPI_COMM_WORLD, &globalCommSize);
 
-  printf("\nThis is %s FINE-GRAIN MPI Process Number: %d\n", PROGRAM_NAME, processID);   
+  printf("\nThis is %s FINE-GRAIN MPI Process Number: %d / %d\n", PROGRAM_NAME, globalId, globalCommSize);   
   MPI_Barrier(MPI_COMM_WORLD);
 
   ignoreExceptionsDenormFloat(); 
 
   CommandLine cl(argc, argv); 
 
+  initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
+  parseConfigWithNcl(configFileName, &initParams);
+  setupGlobals(initParams); 
+
+  // comm is the communicator used by the legacy axml-stuff in order to compute the likelihood.  
+  int processesPerBatch = globalCommSize / initParams->numRunParallel; 
+  int myColor = globalId / processesPerBatch; 
+  int newRank = globalId  % processesPerBatch; 
+
+  MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm); 
+  
   if(processID == 0)
     makeFileNames(); 
-  exa_main(cl.getAdef(), cl.getSeed()); 
+  exa_main(cl.getAdef(), cl.getSeed(), initParams); 
 
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();

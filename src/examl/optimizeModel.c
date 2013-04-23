@@ -64,6 +64,8 @@ extern checkPointState ckp;
 extern int processes;
 extern int processID;
 
+extern MPI_Comm comm; 
+
 /*********************FUNCTIONS FOOR EXACT MODEL OPTIMIZATION UNDER GTRGAMMA ***************************************/
 
 
@@ -1637,11 +1639,11 @@ static void gatherCatsWorker(tree *tr, int tid)
 	}		 		
     }
     
-  MPI_Gatherv(catBufSend,       sendBufferSize, MPI_INT,    (int*)NULL, (int*)NULL, (int*)NULL, MPI_INT,    0, MPI_COMM_WORLD);
-  MPI_Gatherv(rateBufSend,      sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(patBufSend,       sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(patStoredBufSend, sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(lhsBufSend,       sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(catBufSend,       sendBufferSize, MPI_INT,    (int*)NULL, (int*)NULL, (int*)NULL, MPI_INT,    0, comm);
+  MPI_Gatherv(rateBufSend,      sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, comm);
+  MPI_Gatherv(patBufSend,       sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, comm);
+  MPI_Gatherv(patStoredBufSend, sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, comm);
+  MPI_Gatherv(lhsBufSend,       sendBufferSize, MPI_DOUBLE, (double*)NULL, (int*)NULL, (int*)NULL, MPI_DOUBLE, 0, comm);
   
   free(catBufSend);
   free(rateBufSend);
@@ -1725,11 +1727,11 @@ static void gatherCatsMaster(tree *tr, int tid, int n)
 	}	      
     }
    
-  MPI_Gatherv(catBufSend,       sendBufferSize, MPI_INT,    catBufRecv,       countArray, offsetArray, MPI_INT,    0, MPI_COMM_WORLD);
-  MPI_Gatherv(rateBufSend,      sendBufferSize, MPI_DOUBLE, rateBufRecv,      countArray, offsetArray, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(patBufSend,       sendBufferSize, MPI_DOUBLE, patBufRecv,       countArray, offsetArray, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(patStoredBufSend, sendBufferSize, MPI_DOUBLE, patStoredBufRecv, countArray, offsetArray, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(lhsBufSend,       sendBufferSize, MPI_DOUBLE, lhsBufRecv,       countArray, offsetArray, MPI_DOUBLE, 0, MPI_COMM_WORLD);	
+  MPI_Gatherv(catBufSend,       sendBufferSize, MPI_INT,    catBufRecv,       countArray, offsetArray, MPI_INT,    0, comm);
+  MPI_Gatherv(rateBufSend,      sendBufferSize, MPI_DOUBLE, rateBufRecv,      countArray, offsetArray, MPI_DOUBLE, 0, comm);
+  MPI_Gatherv(patBufSend,       sendBufferSize, MPI_DOUBLE, patBufRecv,       countArray, offsetArray, MPI_DOUBLE, 0, comm);
+  MPI_Gatherv(patStoredBufSend, sendBufferSize, MPI_DOUBLE, patStoredBufRecv, countArray, offsetArray, MPI_DOUBLE, 0, comm);
+  MPI_Gatherv(lhsBufSend,       sendBufferSize, MPI_DOUBLE, lhsBufRecv,       countArray, offsetArray, MPI_DOUBLE, 0, comm);	
 
   for(model = 0; model < (size_t)tr->NumberOfModels; model++)
     {        
@@ -1934,8 +1936,8 @@ static void updatePerSiteRatesManyPartitions(tree *tr, boolean scaleRates)
 	  a[0] = (double)accRat;
 	  a[1] = (double)accWgt;
 
-	  MPI_Reduce(a, r, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	  MPI_Bcast(r, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	  MPI_Reduce(a, r, 2, MPI_DOUBLE, MPI_SUM, 0, comm);
+	  MPI_Bcast(r, 2, MPI_DOUBLE, 0, comm);
 	      
 	  accRat = r[0];
 	  dwgt   = r[1];
@@ -1981,8 +1983,8 @@ static void updatePerSiteRatesManyPartitions(tree *tr, boolean scaleRates)
 	  a[0] = (double)accRat;
 	  a[1] = (double)accWgt;
 	  
-	  MPI_Reduce(a, r, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	  MPI_Bcast(r, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	  MPI_Reduce(a, r, 2, MPI_DOUBLE, MPI_SUM, 0, comm);
+	  MPI_Bcast(r, 2, MPI_DOUBLE, 0, comm);
 	  
 	  accRat = r[0];
 	  dwgt   = r[1];
@@ -2024,8 +2026,8 @@ static void updatePerSiteRatesManyPartitions(tree *tr, boolean scaleRates)
 	  a[0] = (double)accRat;
 	  a[1] = (double)accWgt;
 	  
-	  MPI_Reduce(a, r, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	  MPI_Bcast(r, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	  MPI_Reduce(a, r, 2, MPI_DOUBLE, MPI_SUM, 0, comm);
+	  MPI_Bcast(r, 2, MPI_DOUBLE, 0, comm);
 	  
 	  accRat = r[0];
 	  dwgt   = r[1];
@@ -2095,9 +2097,9 @@ static void gatherRatesFewPartitions(tree *tr, int tid)
 		}	    
 	  }
 
-        MPI_Gather(patBufSend,       sendBufferSize, MPI_DOUBLE, patBufRecv,       sendBufferSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Gather(patStoredBufSend, sendBufferSize, MPI_DOUBLE, patStoredBufRecv, sendBufferSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Gather(lhsBufSend,       sendBufferSize, MPI_DOUBLE, lhsBufRecv,       sendBufferSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);	
+        MPI_Gather(patBufSend,       sendBufferSize, MPI_DOUBLE, patBufRecv,       sendBufferSize, MPI_DOUBLE, 0, comm);
+        MPI_Gather(patStoredBufSend, sendBufferSize, MPI_DOUBLE, patStoredBufRecv, sendBufferSize, MPI_DOUBLE, 0, comm);
+        MPI_Gather(lhsBufSend,       sendBufferSize, MPI_DOUBLE, lhsBufRecv,       sendBufferSize, MPI_DOUBLE, 0, comm);	
 
         for(model = 0; model < tr->NumberOfModels; model++)
 	  {   	      
@@ -2148,9 +2150,9 @@ static void gatherRatesFewPartitions(tree *tr, int tid)
 	      }		  
 	}
       
-      MPI_Gather(patBufSend,       sendBufferSize, MPI_DOUBLE, localDummy, sendBufferSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-      MPI_Gather(patStoredBufSend, sendBufferSize, MPI_DOUBLE, localDummy, sendBufferSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-      MPI_Gather(lhsBufSend,       sendBufferSize, MPI_DOUBLE, localDummy, sendBufferSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gather(patBufSend,       sendBufferSize, MPI_DOUBLE, localDummy, sendBufferSize, MPI_DOUBLE, 0, comm);
+      MPI_Gather(patStoredBufSend, sendBufferSize, MPI_DOUBLE, localDummy, sendBufferSize, MPI_DOUBLE, 0, comm);
+      MPI_Gather(lhsBufSend,       sendBufferSize, MPI_DOUBLE, localDummy, sendBufferSize, MPI_DOUBLE, 0, comm);
       
       free(patBufSend);
       free(patStoredBufSend);
@@ -2166,17 +2168,17 @@ static void broadcastRatesFewPartitions(tree *tr, int tid)
   size_t
     n = (size_t)processes;
   
-  MPI_Bcast(tr->patrat, tr->originalCrunchedLength, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(tr->patratStored, tr->originalCrunchedLength, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(tr->patrat, tr->originalCrunchedLength, MPI_DOUBLE, 0, comm);
+  MPI_Bcast(tr->patratStored, tr->originalCrunchedLength, MPI_DOUBLE, 0, comm);
 
   for(model = 0; model < tr->NumberOfModels; model++)
     { 
-      MPI_Bcast(&(tr->partitionData[model].numberOfCategories), 1, MPI_INT, 0, MPI_COMM_WORLD);
-      MPI_Bcast(tr->partitionData[model].perSiteRates, tr->partitionData[model].numberOfCategories, MPI_DOUBLE, 0, MPI_COMM_WORLD);	   
+      MPI_Bcast(&(tr->partitionData[model].numberOfCategories), 1, MPI_INT, 0, comm);
+      MPI_Bcast(tr->partitionData[model].perSiteRates, tr->partitionData[model].numberOfCategories, MPI_DOUBLE, 0, comm);	   
     }
 
 
-  MPI_Bcast(tr->rateCategory, tr->originalCrunchedLength, MPI_INT,    0, MPI_COMM_WORLD);
+  MPI_Bcast(tr->rateCategory, tr->originalCrunchedLength, MPI_INT,    0, comm);
   
   
   for(model = 0; model < tr->NumberOfModels; model++)
@@ -2196,7 +2198,7 @@ static void broadcastRatesFewPartitions(tree *tr, int tid)
 	}
     }
  
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm);
 }
 
 static void updatePerSiteRatesFewPartitions(tree *tr, boolean scaleRates)
