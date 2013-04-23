@@ -230,8 +230,9 @@ bool convergenceDiagnostic(state *allChains)
 
 	  asdsf.extractBips();
 	  double asdsfVal = asdsf.computeAsdsf(gAInfo.asdsfIgnoreFreq);
-
-	  PRINT("ASDSF for trees %d-%d: %f\n", asdsf.getStart(), asdsf.getEnd(), asdsfVal ); 
+      
+	  if(processID == 0)
+	    cout << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " << asdsfVal << endl; 
 
 	  return asdsfVal < gAInfo.asdsfConvergence; 
 

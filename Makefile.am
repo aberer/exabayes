@@ -47,12 +47,9 @@ if WITH_EXAML
 LIBTOUSE=libexaml.a
 AM_CFLAGS += $(EXAMLINCLUDE) $(MPI_CFLAGS) 
 AM_LDFLAGS+=$(MPI_CLDFLAGS)
-noinst_LIBRARIES=$(LIBTOUSE)
-bin_PROGRAMS+=parserExaml
 else
 LIBTOUSE=libpll.a
 AM_CFLAGS+=$(PLLINCLUDE)
-bin_PROGRAMS+=parserPll
 endif 
 
 noinst_LIBRARIES+=$(LIBTOUSE)
@@ -76,24 +73,12 @@ asdsf_LDADD=    libbayes.a $(LIBTOUSE)   ./lib/ncl-2.1.18/ncl/.libs/libncl.a
 asdsf_SOURCES= ./src/asdsf.cpp
 
 
-################################################################
-# examl parser 
-pre1=./lib/ExaML/parser/
-parserExaml_SOURCES=$(pre1)/axml.c c  $(pre1)/parsePartitions.c $(pre1)/axml.h  $(pre1)/globalVariables.h
-
-
-################################################################
-# pll parser 
-pre2=./lib/phylogenetic-likelihood-library/parser
-parserPll_SOURCES=$(pre2)/axml.c $(pre2)/parsePartitions.c $(pre2)/axml.h $(pre2)/globalVariables.h src/pll/mem_alloc.h ./src/pll/mem_alloc-pll.c
-parserPll_CFLAGS=-I$(pre2) -I$(PLLINCLUDE) $(AM_CFLAGS) 
-
 
 ################################################################
 # cleanup 
 
 clean:
-	-rm -rf $(bin_PROGRAMS) $(exabayes_OBJECTS) $(libbayes_a_OBJECTS) libbayes.a
+	-rm -rf *.o *.a $(bin_PROGRAMS ) $(exabayes_OBJECTS) $(libbayes_A_OBJECTS) libbayes.a
 
 clean-all : 
 	-rm -rf $(bin_PROGRAMS) *.o *.a 
