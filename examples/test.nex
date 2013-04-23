@@ -22,8 +22,8 @@ begin EXABAYES;
 
       [ BURNIN ] 
       [ comment out one of the two options ]      
-       [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
-        burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
+      [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
+      burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
 
       [================================================================]
       [ MOVE configuration ]
