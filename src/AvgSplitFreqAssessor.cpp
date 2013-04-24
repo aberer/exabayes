@@ -15,7 +15,7 @@
 
 #include "axml.h"
 #include "bayes.h"
-#include "main-common.h"
+// #include "main-common.h"
 #include "TreeAln.hpp"
 
 #include "output.h"

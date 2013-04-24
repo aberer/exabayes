@@ -9,6 +9,7 @@
 
 #include "config.h"
 
+#define PRINT printBothOpen
 
 #if HAVE_PLL != 0
 #define exa_realloc rax_realloc  

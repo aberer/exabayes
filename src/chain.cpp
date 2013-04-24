@@ -2,7 +2,7 @@
 #include "axml.h"
 #include "bayes.h"
 #include "globals.h"
-#include "main-common.h"
+// -#include "main-common.h"
 #include "chain.h"
 #include "proposals.h"
 #include "output.h"

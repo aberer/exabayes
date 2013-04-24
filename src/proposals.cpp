@@ -3,7 +3,7 @@
 #include "bayes.h"		// 
 #include "randomness.h"
 #include "globals.h"
-#include "main-common.h"
+// #include "main-common.h"
 #include "output.h"
 #include "chain.h"
 #include "topology-utils.h" 

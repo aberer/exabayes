@@ -3,7 +3,7 @@
 #include "TreeAln.hpp"
 
 #include "globals.h"
-#include "main-common.h" 
+// #include "main-common.h" 
 #include "output.h"
 
 

@@ -23,7 +23,7 @@
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
 
-#include "main-common.h"
+// #include "main-common.h"
 #include "proposals.h"
 #include "output.h"
 #include "adapters.h"
@@ -39,8 +39,8 @@ int main (int argc, char *argv[])
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
   assert(0); 
 #endif
-
-  ignoreExceptionsDenormFloat(); 
+  // TODO 
+  // ignoreExceptionsDenormFloat(); 
 
   CommandLine cl(argc, argv); 
   makeFileNames(); 
