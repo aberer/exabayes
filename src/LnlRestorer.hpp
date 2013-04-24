@@ -13,14 +13,13 @@
 #include "bayes.h"
 
 typedef node* nodep;  
-typedef struct _state state; 
 
 
 class LnlRestorer
 {
 public: 
   /** @brief initializes the arrays (expensive memory-wise) */
-  LnlRestorer(state *chain);
+  LnlRestorer(Chain *chain);
 
   /** @brief cleanup (automatically called) */
   ~LnlRestorer();
@@ -28,7 +27,7 @@ public:
 
   void resetRestorer(); 
 
-  /// @brief restores the original state of the tree 
+  /// @brief restores the original Chain of the tree 
   void restore();  
 
   /** @brief save any arrays that are recomputed, if they have not   already been flipped */ 
@@ -41,7 +40,7 @@ private:
   void swapArray(int number, int model); 
 
   int modelEvaluated; 
-  state *chain; 
+  Chain *chain; 
   double ***reserveArrays; 
   int* orientation; 
   bool *wasSwitched; 

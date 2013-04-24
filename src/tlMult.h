@@ -2,6 +2,6 @@
 #define TL_MULT_H
 
 
-void applyTLMult(state *chain,  proposalFunction *pf ); 
-void resetTLMult(state *chain, proposalFunction *pf);
+void applyTLMult(Chain *chain,  proposalFunction *pf ); 
+void resetTLMult(Chain *chain, proposalFunction *pf);
 #endif

@@ -4,7 +4,7 @@
 
 
 
-void eval_st_nni(state *chain, proposalFunction *pf ); 
-void apply_st_nni(state *chain, proposalFunction *pf); 
-void reset_st_nni(state *chain, proposalFunction *pf); 
+void eval_st_nni(Chain *chain, proposalFunction *pf ); 
+void apply_st_nni(Chain *chain, proposalFunction *pf); 
+void reset_st_nni(Chain *chain, proposalFunction *pf); 
 #endif

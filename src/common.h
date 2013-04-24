@@ -7,6 +7,10 @@
 #define _COMMON_H
 
 
+
+#define PRINT printBothOpen
+
+
 #include "config.h"
 
 

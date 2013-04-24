@@ -9,7 +9,7 @@
 // #define DEBUG_INFO 
 
 
-void apply_st_nni(state *chain, proposalFunction *pf)
+void apply_st_nni(Chain *chain, proposalFunction *pf)
 {  
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
@@ -84,7 +84,7 @@ void apply_st_nni(state *chain, proposalFunction *pf)
   
 }
 
-void eval_st_nni(state *chain, proposalFunction *pf )
+void eval_st_nni(Chain *chain, proposalFunction *pf )
 {
   tree *tr = chain->traln->getTr(); 
 
@@ -104,7 +104,7 @@ void eval_st_nni(state *chain, proposalFunction *pf )
 
 
 
-void reset_st_nni(state *chain, proposalFunction *pf)
+void reset_st_nni(Chain *chain, proposalFunction *pf)
 {
   tree
     *tr = chain->traln->getTr(); 

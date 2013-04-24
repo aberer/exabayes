@@ -9,23 +9,24 @@
 #ifndef  _OUTPUT_H
 #define  _OUTPUT_H
 
-void debug_printTree(state *chain); 
+void debug_printTree(Chain *chain); 
 
 /* for debugging */
 char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene ); 
 
-void chainInfoOutput(state *chain ); 
-void printSample(state *chain);
-void initializeOutputFiles(state *chain);
-void finalizeOutputFiles(state *chain); 
+void chainInfoOutput(Chain *chain ); 
+void printSample(Chain *chain);
+void initializeOutputFiles(Chain *chain);
+void finalizeOutputFiles(Chain *chain); 
 
-void chainInfo(state *chain); 
-void printInfo(state *chain, const char *format, ...); 
-void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted) ; 
+void chainInfo(Chain *chain); 
+void printInfo(Chain *chain, const char *format, ...); 
+void debug_printAccRejc(Chain *chain, proposalFunction *pf, boolean accepted) ; 
 
-void debug_printNodeEnvironment(state *chain, int nodeID ); 
+void debug_printNodeEnvironment(Chain *chain, int nodeID ); 
 void debug_checkTreeConsistency(tree *tr); 
 void printOrientation(tree *tr, nodeptr p); 
+
 
 void makeFileNames();
 

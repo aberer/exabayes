@@ -1,24 +1,26 @@
-
 #include <sstream>
-
-
 
 #include "axml.h"
 #include "bayes.h"
 #include "main-common.h"
 #include "globals.h"
-#include "chain.h"
 #include "output.h"
 #include "adapters.h"
 #include "topology-utils.h"
 #include "TreeAln.hpp"
 
 
+#include "chain.h"
+
+#include "Chain.hpp"
+
+
+
 
 /**
    @brief prints the tree as a debug message. 
 */
-void debug_printTree(state *chain)
+void debug_printTree(Chain *chain)
 {
 #ifdef DEBUG_SHOW_TREE  
   char tmp[100000];
@@ -33,7 +35,7 @@ void debug_printTree(state *chain)
 /**
    @brief prints the entire environment of a node with branch lengths
  */
-void debug_printNodeEnvironment(state *chain, int nodeID )
+void debug_printNodeEnvironment(Chain *chain, int nodeID )
 {
 #ifdef DEBUG_SHOW_TREE
   nodeptr 
@@ -48,7 +50,7 @@ void debug_printNodeEnvironment(state *chain, int nodeID )
 
 
 
-void debug_printAccRejc(state *chain, proposalFunction *pf, boolean accepted) 
+void debug_printAccRejc(Chain *chain, proposalFunction *pf, boolean accepted) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   if(isOutputProcess())
@@ -130,7 +132,7 @@ void printOrientation(tree *tr, nodeptr p)
    Please always use this, when possible, it also assures that the
    message is only printed once.
  */ 
-void printInfo(state *chain, const char *format, ...)
+void printInfo(Chain *chain, const char *format, ...)
 {  
   if( isOutputProcess())
     {
@@ -182,7 +184,7 @@ char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
 /* TODO maybe generate random run id */
 
 
-static void printNexusTreeFileStart(state *chain)
+static void printNexusTreeFileStart(Chain *chain)
 {
   FILE *fh = chain->topologyFile; 
 
@@ -194,7 +196,7 @@ static void printNexusTreeFileStart(state *chain)
 }
 
 
-static void printParamFileStart(state *chain)
+static void printParamFileStart(Chain *chain)
 {
   
    
@@ -216,7 +218,7 @@ static void printParamFileStart(state *chain)
   fflush(fh); 
 }
 
-static void printParams(state *chain)
+static void printParams(Chain *chain)
 {
   tree *tr = chain->traln->getTr(); 
 
@@ -244,14 +246,14 @@ static void printParams(state *chain)
 
 
 
-void initializeOutputFiles(state *chain)
+void initializeOutputFiles(Chain *chain)
 {
   printNexusTreeFileStart(chain); 
   printParamFileStart(chain);
 }
 
 
-void finalizeOutputFiles(state *chain)
+void finalizeOutputFiles(Chain *chain)
 {
   FILE *fh = chain->topologyFile; 
 
@@ -263,7 +265,7 @@ void finalizeOutputFiles(state *chain)
 
 
   /* TODO what about per model brach lengths? how does mrB do this? */
-static void exabayes_printTopology(state *chain)
+static void exabayes_printTopology(Chain *chain)
 {  
   assert(chain->couplingId == 0);
   tree *tr = chain->traln->getTr();
@@ -277,7 +279,7 @@ static void exabayes_printTopology(state *chain)
 
 
 
-void printSample(state *chain)
+void printSample(Chain *chain)
 {
   exabayes_printTopology(chain);
   printParams(chain);
@@ -293,25 +295,23 @@ void printIfPresent(proposalFunction *pf)
   PRINT("%s: %s\t", pf->name, buf.str().c_str());   
 }
 
-
-
 static void printHotChains(int runId)
 {
-  state *start =  gAInfo.allChains +  runId *  gAInfo.numberCoupledChains; 
+  Chain *start =  gAInfo.allChains +  runId *  gAInfo.numberCoupledChains; 
 
   for(int i = 1; i < gAInfo.numberCoupledChains; ++i)
     {
       int index = 0; 
       for(int  j = 0; j < gAInfo.numberCoupledChains; ++j)
 	{
-	  state *chain =   start + j  ; 
+	  Chain *chain =   start + j  ; 
 	  if(chain->couplingId == i)
 	    index = j; 
 	}
       
-      state *chain = start +index ;      
+      Chain *chain = start +index ;      
 
-      double myHeat = getChainHeat(chain);
+      double myHeat = chain->getChainHeat();
 
       assert(chain->couplingId < gAInfo.numberCoupledChains); 
       assert(chain->couplingId > 0 ) ; 
@@ -323,42 +323,12 @@ static void printHotChains(int runId)
 
 
 
-
-static void printSwapInfo(int runId)
-{
-  // successCtr
-  //   *ctrMatrix = gAInfo.swapInfo[runId]; 
-
-  SuccessCtr *ctrMatrix = gAInfo.swapInfo[runId]; 
-  
-  int cnt = 0; 
-  for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
-    {
-      if(i < gAInfo.numberCoupledChains - 1 )
-	PRINT("("); 
-
-      for(int j = 0; j < gAInfo.numberCoupledChains; ++j)
-	{
-	  SuccessCtr *ctr = ctrMatrix + cnt; 
-	  if(i < j )
-	    PRINT("%.1f%%,", i,j, 100 * ctr->getRatioOverall());
-
-	  cnt++; 
-	}
-      if(i < gAInfo.numberCoupledChains - 1 )
-	PRINT(")"); 
-    }
-}
-
-
-
-
 /**
-   @brief dumps infos on the state of the chain
+   @brief dumps infos on the Chain of the chain
 
    @param chain -- the pointer to the first chain that belongs to a particular run in the array of chains 
  */
-void chainInfo(state *chain)
+void chainInfo(Chain *chain)
 {
   assert(chain->couplingId == 0) ; /* we are the cold chain   */
 
@@ -367,7 +337,8 @@ void chainInfo(state *chain)
 
   PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(chain->traln, tr->nodep[1]->back)));
   printHotChains(runId); 
-  printSwapInfo(runId);   
+  // printSwapInfo(runId);   
+  // TODO 
   PRINT("\n"); 
 
   /* just output how much time has passed since the last increment */

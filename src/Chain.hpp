@@ -1,8 +1,21 @@
-#pragma once 
+#ifndef _CHAIN_H
+#define  _CHAIN_H
+
+#include "rng.h"
+#include <vector>
+
+#include "nclConfigReader.h"
+
+
+using namespace std; 
 
 class TreeAln; 
 class LnlRestorer; 
 class Topology; 
+
+typedef struct _pfun proposalFunction; 
+
+
 
 
 typedef struct
@@ -35,15 +48,19 @@ typedef struct
 } paramDump; 
 
 
-typedef struct _pfun proposalFunction; 
 
 
-typedef struct _state
-{  
+
+class Chain
+{
+  // LEGACY stuff 
+
+public: 
+
+  // TODO shared pointer!
   TreeAln *traln; 
-  /* tree* tr; */
 
-  boolean wasAccepted; 	/// for debug only  
+  bool wasAccepted; 	/// for debug only  
 
   int id;   
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
@@ -71,7 +88,36 @@ typedef struct _state
   randKey_t rKey;
   randCtr_t rCtr;
 
+
   /* saves the entire space in the parameter space  */
   paramDump dump;
-} state;
 
+
+
+  // CORRECT part 
+public: 
+  Chain(randKey_t seed, int id, int runid, TreeAln* trealns, initParamStruct *initParams)  ; 
+
+  
+  void setRestorer(LnlRestorer *rest){restorer = rest ; }
+  void setupProposals(initParamStruct *initParam);
+
+  double getChainHeat(); 
+  void setDeltaT(double dt){deltaT = dt; }
+  
+  /** @brief Execute one generation of a given chain. */
+  void step();
+  
+
+private : 
+  double deltaT; 		// this is the global heat parameter that defines the heat increments  
+  
+  void normalizePropSubCats(); 
+  void normalizeCategories(); 
+  void printAllProposalWeights(); 
+
+}; 
+
+
+
+#endif

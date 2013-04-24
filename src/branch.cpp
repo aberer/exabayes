@@ -199,7 +199,7 @@ static nodeptr findEmptyNodePtr(nodeptr ptr)
    @param insertionBranch -- the branch into which we insert   
 
  */
-void insertNodeIntoBranch(state *chain, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
+void insertNodeIntoBranch(Chain *chain, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
 {  
   tree *tr = chain->traln->getTr(); 
   int
@@ -367,7 +367,7 @@ branch findRoot(tree *tr)
    @param  b -- the branch to be pruned (only thisNode is the pruning point, we only know thatNode for orientation)
    @param z -- the branch lengths at the pruning point after pruning 
 */
-void pruneBranch(state *chain, branch b, double *z)
+void pruneBranch(Chain *chain, branch b, double *z)
 {  
   tree *tr = chain->traln->getTr() ; 
   int numBl = chain->traln->getNumBranches(); 

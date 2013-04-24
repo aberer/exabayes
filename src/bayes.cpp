@@ -8,7 +8,6 @@
 
 #include <sstream>
 
-
 #include "axml.h"
 #include "bayes.h"
 #include "randomness.h"
@@ -28,7 +27,6 @@
 #include "AvgSplitFreqAssessor.hpp"
 
 extern double masterTime; 
-
 
 
 
@@ -58,179 +56,34 @@ void setupGlobals(initParamStruct *initParams)
   gAInfo.tuneHeat = initParams->tuneHeat; 
   gAInfo.burninGen = initParams->burninGen; 
   gAInfo.burninProportion = initParams->burninProportion; 
-  gAInfo.tuneFreq = initParams->tuneFreq; 
+  gAInfo.tuneFreq = initParams->tuneFreq ; 
 
   /* initialize a matrix of swaps (wasting some space here) */
-  gAInfo.swapInfo = (SuccessCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(SuccessCtr*)); 
-  int n = gAInfo.numberCoupledChains; 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.swapInfo[i] = (SuccessCtr*)exa_calloc( n * n , sizeof(SuccessCtr)); 
+  // gAInfo.swapInfo = (SuccessCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(SuccessCtr*)); 
+  // int n = gAInfo.numberCoupledChains; 
+  // for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+  //   gAInfo.swapInfo[i] = (SuccessCtr*)exa_calloc( n * n , sizeof(SuccessCtr)); 
 
-  gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    gAInfo.temperature[i] = gAInfo.heatFactor; 
+  // gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
+  // for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    // gAInfo.temperature[i] = gAInfo.heatFactor; 
 }
 
 
 
-/**
-   @brief attempt a MC3 switch of chains 
 
-   @param chains -- the pointer to the first chain struct in the chain-array.   
-   
-   NOTICE does not work with priors yet 
- */
-void switchChainState(state *chains)
-{  
-  int runId = chains[0].id / gAInfo.numberCoupledChains; 
+#include <vector>
 
-  int numChain = gAInfo.numberCoupledChains; 
+#include "CoupledChains.hpp"
 
-  if(numChain == 1)
-    return;   
-
-  int chainA = drawGlobalRandIntBound(numChain), 
-   chainB = chainA; 
-  while(chainA == chainB)
-    chainB = drawGlobalRandIntBound(numChain); 
-
-  int coupIdA = chains[chainA].couplingId,
-    coupIdB = chains[chainB].couplingId; 
-
-  if(coupIdA > coupIdB)
-    swpInt(&coupIdB, &coupIdA); 
-
-  /* 
-     IMPORTANT TODO
-
-     this currently assumes that we have a non-informative
-     prior. Allow for changes!
-  */
-  
-  double heatA = getChainHeat(chains + chainA ) , 
-    heatB  = getChainHeat(chains + chainB); /*  */
-
-  assert(heatA < 1.f || heatB < 1.f); 
-
-  double lnlA = chains[chainA].traln->getTr()->likelihood,
-    lnlB = chains[chainB].traln->getTr()->likelihood; 
-
-  double 
-    aB = lnlA *  heatB,
-    bA = lnlB *  heatA,
-    aA = lnlA * heatA,
-    bB =  lnlB *  heatB; 
-
-  double accRatio = exp(( aB + bA )  - (aA + bB )); 
-
-  state *a = chains + chainA,
-    *b = chains  + chainB ; 
-  
-  /* do the swap */
-  if( drawGlobalDouble01()  < accRatio)
-    {
-      /* everything, we need to swap */
-      swpInt(&(a->couplingId), &(b->couplingId)); 
-
-      for(int i = 0; i < a->numProposals; ++i)
-	{
-	  proposalFunction *tmp  = a->proposals[i]; 
-	  a->proposals[i] = b->proposals[i]; 
-	  b->proposals[i] = tmp; 
-	}
-
-      FILE *tmp = a-> topologyFile; 
-      a->topologyFile = b->topologyFile; 
-      b->topologyFile = tmp; 
-      tmp = a->outputParamFile; 
-      a->outputParamFile = b->outputParamFile; 
-      b->outputParamFile = tmp; 
-
-      int r = MIN(a->couplingId, b->couplingId ); 
-      int c = MAX(a->couplingId, b->couplingId); 
-      
-      gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].accept();
-    } 
-  else 
-    {
-      int r = MIN(a->couplingId, b->couplingId ); 
-      int c = MAX(a->couplingId, b->couplingId); 
-
-      gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].reject();
-    }
-}
-
-
-
-/**
-   @brief Execute a portion of one run. 
-
-   @param chains  -- the pointer to the beginning of the chains in the chain array. 
-   @param gensToRun  -- number of generations each chain in this run should proceed. 
-
- */
-void executeOneRun(state *chains, int gensToRun )
-{  
-  int
-    runId  =chains[0].id / gAInfo.numberCoupledChains; 
-
-  if(gAInfo.numberCoupledChains > 1 )
-    {
-      /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
-      for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
-	applyChainStateToTree(chains+i);
-      
-      for(int genCtr = 0; genCtr < gensToRun; genCtr += gAInfo.swapInterval)
-	{
-	  boolean timeToTune = FALSE; 
-
-	  for(int chainCtr = 0; chainCtr < gAInfo.numberCoupledChains; ++chainCtr)
-	    {      
-	      state *curChain = chains + chainCtr; /* TODO */
-
-	      for(int i = 0; i < gAInfo.swapInterval; ++i)
-		{
-		  step(curChain);		  
-		  if(gAInfo.tuneFreq > 0 && gAInfo.tuneHeat && curChain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 )
-		    timeToTune = TRUE; 
-		}
-	    }
-
-	  if(timeToTune)
-	    {	      
-	      /* naive strategy: tune, s.t. the coldest hot chain swaps
-		 with the coldest chain in 23.4% of all cases */
-	      SuccessCtr *c = &(gAInfo.swapInfo[runId][1]); 
-	      
-	      gAInfo.temperature[runId] = tuneParameter(chains[0].currentGeneration / gAInfo.tuneFreq , c->getRatioInLastInterval(), gAInfo.temperature[runId], FALSE);
-	      c->reset();
-	    }
-	    
-	  switchChainState(chains);
-	}
-
-      for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
-	saveTreeStateToChain(chains+i);
-
-    }
-  else 
-    {      
-      state *curChain = chains; 
-      applyChainStateToTree(curChain );
-      
-      for(int genCtr = 0; genCtr < gensToRun; genCtr++)
-	step(curChain);
-
-      saveTreeStateToChain(curChain); 
-    }
-    
-    
-}
-
-
-
-bool convergenceDiagnostic(state *allChains)
+//STAY 
+bool convergenceDiagnostic(vector<CoupledChains*> runs)
 {
+  Chain *allChains = NULL; 
+  assert(0); 
+  // just force to compile 
+
+
   if(gAInfo.numberOfRuns > 1)
     { 
       vector<string> fns; 
@@ -292,18 +145,18 @@ bool convergenceDiagnostic(state *allChains)
 /**
    @brief run all chains for a given number of generations
  */
-void runChains(state *allChains, int diagFreq)
-{
-  boolean hasConverged = FALSE;   
-  while(NOT hasConverged)
+void runChains(vector<CoupledChains*> allRuns, int diagFreq)
+{  
+  bool hasConverged = false;   
+  while(not hasConverged)
     {      
-      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+      for(nat i = 0; i < allRuns.size(); ++i)
 	{
-	  state *relChains =  allChains + (i * gAInfo.numberCoupledChains); 
-	  executeOneRun(relChains, diagFreq); 	  
+	  auto run = allRuns[i]; 
+	  run->executePart(diagFreq);
 	}
 
-      hasConverged = convergenceDiagnostic(allChains); 
+      hasConverged = convergenceDiagnostic(allRuns); 
 
 #ifdef ENABLE_PRSF
       if(isOutputProcess)
@@ -328,7 +181,7 @@ void runChains(state *allChains, int diagFreq)
  */
 void exa_main (analdef *adef, int seed, initParamStruct *initParams)
 {   
-  state *indiChains = NULL; 		/* one state per indipendent run/chain */  
+  Chain *indiChains = NULL; 		/* one state per indipendent run/chain */  
 
   timeIncrement = gettime();
   gAInfo.adef = adef; 
@@ -341,13 +194,13 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   exit(0); 
 #endif
 
-  initializeIndependentChains(adef,  seed, &indiChains, initParams); 
+  vector<CoupledChains*> runs; 
+
+  initializeIndependentChains(adef,  seed, runs, initParams); 
   assert(gAInfo.numberCoupledChains > 0);
 
-  gAInfo.allChains = indiChains; 
-
   assert(gAInfo.diagFreq != 0 ); 
-  runChains(indiChains, gAInfo.diagFreq); 
+  runChains(runs, gAInfo.diagFreq); 
 
   if(isOutputProcess() )
     {
@@ -357,5 +210,4 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
       PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
     } 
 }
-
 

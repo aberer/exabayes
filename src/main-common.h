@@ -2,7 +2,6 @@
 #define _MAIN_COMMON_H 
 
 
-#define PRINT printBothOpen
 
 
 

@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
   double ignoreFreq = 0.1; 
   
-  cout << "average deviation of split frequencies: " << asdsf.computeAsdsf(ignoreFreq) << endl; 
+  cout << "average deviation of split frequencies: " << asdsf.computeAsdsf(ignoreFreq) * 100  << "%" << endl; 
   cout << "ignored splits that did not occur more than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << endl; 
   return 0; 
 }

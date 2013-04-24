@@ -20,7 +20,7 @@ using namespace std;
 #include "eval.h"
 #include "stack.h"
 #include "SuccessCtr.hpp"
-#include "chain.hpp"
+#include "Chain.hpp"
 #include "nclConfigReader.h"
 
 
@@ -54,7 +54,7 @@ typedef struct
   branch pruningBranch ; /// the branch prio to pruning => convertion: thisNode id is the direction we wandered to!
   double neighborBls[NUM_BRANCHES]; 
   double nextNeighborBls[NUM_BRANCHES]; 
-} topoRecord; /// information that helps us to restore the previous state when doing topological moves or manipulating the branch lengths
+} topoRecord; /// information that helps us to restore the previous Chain when doing topological moves or manipulating the branch lengths
 
 
 struct _pfun 
@@ -68,10 +68,10 @@ struct _pfun
 
   SuccessCtr sCtr; 
 
-  void (*apply_func)( state *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
-  void (*eval_lnl) (state *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
-  void (*reset_func)( state *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
-  void (*autotune)(state *chain, struct _pfun *pf); 
+  void (*apply_func)( Chain *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
+  void (*eval_lnl) (Chain *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
+  void (*reset_func)( Chain *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
+  void (*autotune)(Chain *chain, struct _pfun *pf); 
 
   /**
      tunable parameters

@@ -70,7 +70,7 @@ boolean nodeIsOnPath(int node, path *aPath)
 /**
     @brief saves all branch lengths along the path in s. 
  */ 
-void saveBranchLengthsPath(state *chain, path *s)
+void saveBranchLengthsPath(Chain *chain, path *s)
 {
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
@@ -88,7 +88,7 @@ void saveBranchLengthsPath(state *chain, path *s)
 
 
 /* draws a random path => would be practical */
-void generateRandomPath(state *chain ,path *s, double stopProp)
+void generateRandomPath(Chain *chain ,path *s, double stopProp)
 {
   assert(0); 
   
@@ -105,7 +105,7 @@ static void debug_assertPathExists(tree *tr, path *s)
 
 
 
-static void multiplyBranch(state *chain, branch b, double parameter, double *hastings)
+static void multiplyBranch(Chain *chain, branch b, double parameter, double *hastings)
 {
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
@@ -123,7 +123,7 @@ static void multiplyBranch(state *chain, branch b, double parameter, double *has
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void multiplyAlongBranchESPR(state *chain, path *s, double multi )
+void multiplyAlongBranchESPR(Chain *chain, path *s, double multi )
 {
   /* printf("multiplyAlongBranchESPR \n");  */
   tree *tr = chain->traln->getTr(); 
@@ -184,7 +184,7 @@ void multiplyAlongBranchESPR(state *chain, path *s, double multi )
    @param s -- the result : the first two branches in the stack define
    the root of the pruned subtree
  */
-void drawPathForESPR(state *chain,path *s, double stopProp )
+void drawPathForESPR(Chain *chain,path *s, double stopProp )
 {
   TreeAln *traln = chain->traln; 
 

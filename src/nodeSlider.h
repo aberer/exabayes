@@ -8,6 +8,6 @@
 #include "randomness.h"
 #include "TreeAln.hpp"
 
-void applyNodeSlider(state *chain, proposalFunction *pf); 
-void evaluateNodeSlider(state *chain, proposalFunction *pf); 
-void resetNodeSlider(state *chain, proposalFunction *pf); 
+void applyNodeSlider(Chain *chain, proposalFunction *pf); 
+void evaluateNodeSlider(Chain *chain, proposalFunction *pf); 
+void resetNodeSlider(Chain *chain, proposalFunction *pf); 

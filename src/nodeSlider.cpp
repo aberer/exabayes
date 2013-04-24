@@ -8,7 +8,7 @@ static void insertBranchLength(TreeAln *traln, branch &b)
   // getBranchLength( traln->assert(p->number,0) == traln->getBranchLength( p->back->number,0)); 
 }
 
-void applyNodeSlider(state *chain, proposalFunction *pf)
+void applyNodeSlider(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
@@ -59,7 +59,7 @@ void applyNodeSlider(state *chain, proposalFunction *pf)
 }
 
 
-void evaluateNodeSlider(state *chain, proposalFunction *pf)
+void evaluateNodeSlider(Chain *chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr();
   stack *pth = pf->remembrance.modifiedPath; 
@@ -92,7 +92,7 @@ void evaluateNodeSlider(state *chain, proposalFunction *pf)
 
 
 
-void resetNodeSlider(state *chain, proposalFunction *pf)
+void resetNodeSlider(Chain *chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr();
   stack *pth = pf->remembrance.modifiedPath; 

@@ -14,8 +14,8 @@
 
 
 /* shared  */
-void exa_evaluateGeneric(state *chain, nodeptr start, boolean fullTraversal); 
+void exa_evaluateGeneric(Chain *chain, nodeptr start, boolean fullTraversal); 
 void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q); 
-void exa_newViewGeneric(state *chain, nodeptr p, boolean masked); 
+void exa_newViewGeneric(Chain *chain, nodeptr p, boolean masked); 
 bool isOutputProcess(); 
 #endif

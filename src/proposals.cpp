@@ -20,8 +20,8 @@
 
 void expensiveVerify(tree *tr); 
 
-/* nodeptr select_random_subtree(state *chain, tree *tr); */
-void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValue);
+/* nodeptr select_random_subtree(Chain *chain, tree *tr); */
+void edit_subs_rates(Chain *chain, int model, int subRatePos, double subRateValue);
 
 
 #if 0 
@@ -29,7 +29,7 @@ void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValu
 /* quarantining this, until change is over */
 
 //reads proposalWeights p and sets t for logistic function such that f(t)=p
-void findLogisticT(state *chain){
+void findLogisticT(Chain *chain){
   static double leftShift=2.0;
    for(int i = 0; i < NUM_PROPOSALS;++i){
      if(chain->proposalWeights[i]>0){
@@ -42,7 +42,7 @@ void findLogisticT(state *chain){
 }
 
 //get values for logistic function
-void findLogisticP(state *chain){
+void findLogisticP(Chain *chain){
   static double leftShift=2.0;
   for(int i = 0; i < NUM_PROPOSALS;++i){
     if(chain->proposalLogisticT[i]>=0){
@@ -54,7 +54,7 @@ void findLogisticP(state *chain){
 #endif
 
 
-static void recordSubsRates(state *chain, int model, int numSubsRates, double *prevSubsRates)
+static void recordSubsRates(Chain *chain, int model, int numSubsRates, double *prevSubsRates)
 {
   pInfo *partition = chain->traln->getPartition(model); 
   assert(partition->dataType = DNA_DATA);
@@ -116,7 +116,7 @@ static void record_branch_info(TreeAln* traln, nodeptr p, double *bl)
 
 
 /* TODO more diagnostics on where the stuff moves to  */
-int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
+int extended_spr_traverse(Chain *chain, nodeptr *insertNode, double stopProp)
 {
   int 
     result, 
@@ -135,7 +135,7 @@ int extended_spr_traverse(state *chain, nodeptr *insertNode, double stopProp)
 }
 
 
-static void onePartitionEval(state *chain, proposalFunction *thisProposal)
+static void onePartitionEval(Chain *chain, proposalFunction *thisProposal)
 {
   int model = thisProposal->remembrance.partInfo->modelNum;
   branch root = findRoot(chain->traln->getTr());  
@@ -144,7 +144,7 @@ static void onePartitionEval(state *chain, proposalFunction *thisProposal)
 }
 
 
-static void evalBranch(state *chain, proposalFunction *thisProposal)
+static void evalBranch(Chain *chain, proposalFunction *thisProposal)
 {
   branch b = peekStack(thisProposal->remembrance.modifiedPath);
   nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
@@ -152,7 +152,7 @@ static void evalBranch(state *chain, proposalFunction *thisProposal)
 }
 
 
-static void dummy_eval(state *chain,proposalFunction *thisProposal)
+static void dummy_eval(Chain *chain,proposalFunction *thisProposal)
 {
   evaluateGenericWrapper(chain, chain->traln->getTr()->start, TRUE );
 }
@@ -160,7 +160,7 @@ static void dummy_eval(state *chain,proposalFunction *thisProposal)
 
 /* is this function really uniform? a tip node has a lower
    propbability to be drawn (only one path leads to it) */ 
-static nodeptr select_random_subtree(state *chain, tree *tr)
+static nodeptr select_random_subtree(Chain *chain, tree *tr)
 {
   nodeptr 
     p;
@@ -200,7 +200,7 @@ void pushToStackIfNovel(stack *s, branch b, int numTip);
 
 
 
-static void sprEval(state *chain, proposalFunction *thisProposal)
+static void sprEval(Chain *chain, proposalFunction *thisProposal)
 {  
   tree *tr = chain->traln->getTr(); 
   path *rPath = thisProposal->remembrance.modifiedPath; 
@@ -219,7 +219,7 @@ static void sprEval(state *chain, proposalFunction *thisProposal)
 
 
 
-static void resetESPR(state *chain, proposalFunction *pf )
+static void resetESPR(Chain *chain, proposalFunction *pf )
 {
   resetAlongPathForESPR (chain->traln, pf->remembrance.modifiedPath);   
 
@@ -240,7 +240,7 @@ static void resetESPR(state *chain, proposalFunction *pf )
    
    the same function as below, but I cleaned the other flavour, since so much stuff has changed. 
  */ 
-static void applyExtendedSPR(state *chain, proposalFunction *pf)
+static void applyExtendedSPR(Chain *chain, proposalFunction *pf)
 {
   double stopProp = pf->parameters.eSprStopProb; 
 
@@ -272,7 +272,7 @@ static void applyExtendedSPR(state *chain, proposalFunction *pf)
 
 
 
-static void extended_spr_apply(state *chain, proposalFunction *pf)
+static void extended_spr_apply(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr();
@@ -423,7 +423,7 @@ static void extended_spr_apply(state *chain, proposalFunction *pf)
 
 
 
-static void extended_spr_reset(state * chain, proposalFunction *pf)
+static void extended_spr_reset(Chain * chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr(); 
   topoRecord
@@ -461,13 +461,13 @@ static void extended_spr_reset(state * chain, proposalFunction *pf)
 
 //--------Alpha-Proposal-for-GAMMA-----------------------------------------------------------------
 
-double get_alpha_prior(state *chain )
+double get_alpha_prior(Chain *chain )
 {  
  return 1;//TODO obviously needs acctual prior 
 }
 
 
-static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
+static void simple_gamma_proposal_apply(Chain * chain, proposalFunction *pf)
 {
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
@@ -507,7 +507,7 @@ static void simple_gamma_proposal_apply(state * chain, proposalFunction *pf)
 }
 
 
-static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
+static void simple_gamma_proposal_reset(Chain *chain, proposalFunction *pf)
 {
   perPartitionInfo *info  = pf->remembrance.partInfo;     
   chain->traln->setAlphaSave(info->alpha, info->modelNum); 
@@ -519,7 +519,7 @@ static void simple_gamma_proposal_reset(state *chain, proposalFunction *pf)
 
 #if 0 
 /* TODO we do not even use this function, do we? NOTE Now we do ;) */
-void penalize(state *chain, int which_proposal, int acceptance)
+void penalize(Chain *chain, int which_proposal, int acceptance)
 {
   double max=4.0;
   double min=0.0;
@@ -555,7 +555,7 @@ void penalize(state *chain, int which_proposal, int acceptance)
 
 
 #if  0
-void normalizeProposalWeights(state *chain)
+void normalizeProposalWeights(Chain *chain)
 {
   double sum = 0 ; 
   for(int i = 0; i < NUM_PROPOSALS;++i)
@@ -570,7 +570,7 @@ void normalizeProposalWeights(state *chain)
 
 
 
-static void simple_model_proposal_apply(state *chain, proposalFunction *pf)
+static void simple_model_proposal_apply(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
 
@@ -718,7 +718,7 @@ static void simple_model_proposal_apply(state *chain, proposalFunction *pf)
 }
 
 
-static void model_dirichlet_proposal_apply(state *chain, proposalFunction *pf)//llpqr
+static void model_dirichlet_proposal_apply(Chain *chain, proposalFunction *pf)//llpqr
 {
 
   int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
@@ -803,7 +803,7 @@ static void model_dirichlet_proposal_apply(state *chain, proposalFunction *pf)//
 
 
 
-static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
+static void perm_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
 
@@ -850,7 +850,7 @@ static void perm_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 
 
 
-static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
+static void single_biunif_model_proposal_apply(Chain *chain,proposalFunction *pf)//NOTE whenever a model parameter changes, all branch lengths have to be re-normalized with 1/fracchange. Additionally we always must do a full tree traversal to get the likelihood. So updating a single parameter is rather expensive, .
 {
   TreeAln *traln = chain->traln; 
 
@@ -897,7 +897,7 @@ static void single_biunif_model_proposal_apply(state *chain,proposalFunction *pf
   /* evaluateOnePartition(chain, tr->start, TRUE, model); /\* 2. re-traverse the full tree to update all vectors *\/ */
 }
 
-static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
+static void all_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
   
@@ -945,7 +945,7 @@ static void all_biunif_model_proposal_apply(state *chain, proposalFunction *pf)
 
 
 
-static void restore_subs_rates(state *chain, int model, int numSubsRates, double *prevSubsRates)
+static void restore_subs_rates(Chain *chain, int model, int numSubsRates, double *prevSubsRates)
 {
   TreeAln *traln = chain->traln; 
 
@@ -967,13 +967,13 @@ static void restore_subs_rates(state *chain, int model, int numSubsRates, double
 
 //--------Branch-Length_Proposals---------------------------------------------------
 
-double get_branch_length_prior( state *chain)
+double get_branch_length_prior( Chain *chain)
 {//TODO decide on sensible prior
   return 1;  
 }
 
 //setting this out to allow for other types of setting
-static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double windowRange, double *bls)
+static void set_branch_length_sliding_window(Chain *chain, nodeptr p, int numBranches,Chain * s, boolean record_tmp_bl, double windowRange, double *bls)
 {
   TreeAln *traln = chain->traln; 
   int i;
@@ -1022,7 +1022,7 @@ static void set_branch_length_sliding_window(state *chain, nodeptr p, int numBra
     }
 }
 
-static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double *bls)
+static void set_branch_length_biunif(Chain *chain, nodeptr p, int numBranches,Chain * s, boolean record_tmp_bl, double *bls)
 {
   TreeAln *traln = chain->traln; 
   int i;
@@ -1073,7 +1073,7 @@ static void set_branch_length_biunif(state *chain, nodeptr p, int numBranches,st
     }
 }
 
-static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state * s, boolean record_tmp_bl, double *bls)
+static void set_branch_length_exp(Chain *chain, nodeptr p, int numBranches,Chain * s, boolean record_tmp_bl, double *bls)
 {
   TreeAln *traln = chain->traln;
   int i;
@@ -1114,7 +1114,7 @@ static void set_branch_length_exp(state *chain, nodeptr p, int numBranches,state
 }
 
 
-static node *select_branch_by_id_dfs_rec( node *p, int *cur_count, int target, state *s ) {
+static node *select_branch_by_id_dfs_rec( node *p, int *cur_count, int target, Chain *s ) {
   if( (*cur_count) == target ) 
     {
       return p;
@@ -1141,7 +1141,7 @@ static node *select_branch_by_id_dfs_rec( node *p, int *cur_count, int target, s
 
 
 
-static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
+static node *select_branch_by_id_dfs( node *p, int target, Chain *s ) {
   const int num_branches = (2 * s->traln->getTr()->mxtips) - 3;
   
   //   if( target == num_branches ) {
@@ -1188,7 +1188,7 @@ static node *select_branch_by_id_dfs( node *p, int target, state *s ) {
 
 
 
-static void random_branch_length_proposal_apply(state * chain, proposalFunction *pf)
+static void random_branch_length_proposal_apply(Chain * chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
 
@@ -1269,7 +1269,7 @@ static void random_branch_length_proposal_apply(state * chain, proposalFunction 
 //   evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *///TODO see below
 // }
 
-static void random_branch_length_proposal_reset(state * chain, proposalFunction *pf)
+static void random_branch_length_proposal_reset(Chain * chain, proposalFunction *pf)
 {
   /* branch b = pf->remembrance.modifiedPath->content[0];  */
   branch b = popStack(pf->remembrance.modifiedPath); 
@@ -1290,12 +1290,12 @@ static void random_branch_length_proposal_reset(state * chain, proposalFunction 
  // evaluateGeneric(chain->tr, p, FALSE); //This yields a very slight likelihood difference.NOTE if we want exact likelihoods as before the proposal, we must evaluate from chain->tr->start, that is: evaluateGeneric(chain->tr, chain->tr->start, TRUE);
 }
 
-double get_frequency_prior(state * chain)
+double get_frequency_prior(Chain * chain)
 {
  return 1; 
 }
 
-static void restore_frequ_rates(state *chain, int model, int numFrequRates, double *prevFrequRates)
+static void restore_frequ_rates(Chain *chain, int model, int numFrequRates, double *prevFrequRates)
 {
   /* NOTICE: this function should not be called repeatedly  */
 
@@ -1309,7 +1309,7 @@ static void restore_frequ_rates(state *chain, int model, int numFrequRates, doub
   chain->traln->initRevMat(model);
 }
 
-static void recordFrequRates(state *chain, int model, int numFrequRates, double *prevFrequRates)
+static void recordFrequRates(Chain *chain, int model, int numFrequRates, double *prevFrequRates)
 {
   pInfo *partition = chain->traln->getPartition(model);
 
@@ -1321,7 +1321,7 @@ static void recordFrequRates(state *chain, int model, int numFrequRates, double 
 
 
 
-static void frequencySliderApply(state *chain, proposalFunction *pf)
+static void frequencySliderApply(Chain *chain, proposalFunction *pf)
 {  
   int model = drawRandInt(chain, chain->traln->getNumberOfPartitions()); 
   perPartitionInfo *info = pf->remembrance.partInfo; 
@@ -1353,7 +1353,7 @@ static void frequencySliderApply(state *chain, proposalFunction *pf)
 
 
 
-void frequency_proposal_apply(state * chain, proposalFunction *pf)
+void frequency_proposal_apply(Chain * chain, proposalFunction *pf)
 {
   int model  = drawRandInt(chain,chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo; 
@@ -1395,7 +1395,7 @@ void frequency_proposal_apply(state * chain, proposalFunction *pf)
 
 
 
-void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
+void frequency_dirichlet_proposal_apply(Chain * chain, proposalFunction *pf)
 {
    
   int model  = drawRandInt(chain,chain->traln->getNumberOfPartitions());
@@ -1456,7 +1456,7 @@ void frequency_dirichlet_proposal_apply(state * chain, proposalFunction *pf)
   exa_free(r);
 }
 
-void frequency_proposal_reset(state * chain, proposalFunction *pf)
+void frequency_proposal_reset(Chain * chain, proposalFunction *pf)
 {
   perPartitionInfo *info = pf->remembrance.partInfo; 
   restore_frequ_rates(chain, info->modelNum, info->numFreqs, info->frequencies);
@@ -1468,7 +1468,7 @@ void frequency_proposal_reset(state * chain, proposalFunction *pf)
  * should be sliding window proposal
  */
 
-void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValue)
+void edit_subs_rates(Chain *chain, int model, int subRatePos, double subRateValue)
 {
   pInfo *partition = chain->traln->getPartition(model); 
 
@@ -1482,13 +1482,13 @@ void edit_subs_rates(state *chain, int model, int subRatePos, double subRateValu
 
 
 
-static void simple_model_proposal_reset(state * chain, proposalFunction *pf)
+static void simple_model_proposal_reset(Chain * chain, proposalFunction *pf)
 {
   perPartitionInfo *info = pf->remembrance.partInfo; 
   restore_subs_rates(chain, info->modelNum, info->numRates, info->substRates);
 }
 
-static void branchLengthWindowApply(state *chain, proposalFunction *pf)
+static void branchLengthWindowApply(Chain *chain, proposalFunction *pf)
 {  
   tree *tr = chain->traln->getTr(); 
   branch b =  drawBranchUniform(chain); 
@@ -1507,7 +1507,7 @@ static void branchLengthWindowApply(state *chain, proposalFunction *pf)
   // p->z[0] = p->back->z[0] = blNew; 
 }
 
-static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
+static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
 {
   auto traln =  chain->traln; 
   tree *tr = chain->traln->getTr(); 
@@ -1541,7 +1541,7 @@ static void branchLengthMultiplierApply(state *chain, proposalFunction *pf)
 /**
    @brief tunes the BL multiplier
  */ 
-static void autotuneMultiplier(state *chain, proposalFunction *pf)
+static void autotuneMultiplier(Chain *chain, proposalFunction *pf)
 {
   double *parameter = &(pf->parameters.multiplier); 
 
@@ -1565,7 +1565,7 @@ static void autotuneMultiplier(state *chain, proposalFunction *pf)
    @brief autotunes sliding windows 
    
 */ 
-static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
+static void autotuneSlidingWindow(Chain *chain, proposalFunction *pf)
 {
   double *parameter = &(pf->parameters.slidWinSize); 
   SuccessCtr *ctr = &(pf->sCtr); 
@@ -1587,7 +1587,7 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 /**
    @brief autotunes the stop probability of extended topological moves 
 */ 
-// static void autotuneStopProp(state *chain, proposalFunction *pf) 
+// static void autotuneStopProp(Chain *chain, proposalFunction *pf) 
 // {
 //   const double minimum = 0.01; 
 //   const double maximum = 0.95; 
@@ -1608,7 +1608,7 @@ static void autotuneSlidingWindow(state *chain, proposalFunction *pf)
 // }
 
 
-void branchLengthReset(state *chain, proposalFunction *pf)
+void branchLengthReset(Chain *chain, proposalFunction *pf)
 {
   branch b = popStack(pf->remembrance.modifiedPath); 
   tree *tr = chain->traln->getTr(); 
@@ -1620,7 +1620,7 @@ void branchLengthReset(state *chain, proposalFunction *pf)
 
 
 
-void resetGammaMulti(state *chain, proposalFunction *pf)
+void resetGammaMulti(Chain *chain, proposalFunction *pf)
 {
   int model = pf->remembrance.partInfo->modelNum; 
   chain->traln->setAlphaSave(pf->remembrance.partInfo->alpha, model); 
@@ -1628,7 +1628,7 @@ void resetGammaMulti(state *chain, proposalFunction *pf)
 }
 
  
-void applyGammaMultiplier(state *chain, proposalFunction *pf)
+void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
 {
   double multi = drawMultiplier(chain, pf->parameters.multiplier);   
   int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
@@ -1645,7 +1645,7 @@ void applyGammaMultiplier(state *chain, proposalFunction *pf)
 
 
  
-static void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
+void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
 {
   if(initParams->initWeights[type] == 0)
     {
@@ -1871,103 +1871,5 @@ static void initProposalFunction( proposal_type type, initParamStruct *initParam
 	assert(0) ; 
       }
     }  
-}
-
-
-
-/**
-   @brief Normalizes the weights of the proposals in this category
- */
-void normalizePropSubCats(state *chain)
-{
-  double* catWeights = (double*)exa_calloc(NUM_PROP_CATS + 1,sizeof(double)); 
-
-  for(int i = 0; i < chain->numProposals; ++i)
-    {
-      proposalFunction *pf = chain->proposals[i]; 
-      assert(pf->category); 
-      catWeights[pf->category] +=  pf->currentWeight;       
-    }
-
-  for(int i= 0; i < chain->numProposals; ++i)
-    {
-      proposalFunction *pf = chain->proposals[i]; 
-      pf->currentWeight /= catWeights[pf->category]; 
-    }
-
-  exa_free(catWeights); 
-}
-
-
-/**
-   @brief normalizes the categories  
- */
-void normalizeCategories(state *chain)
-{
-  double sum = 0.; 
-  for(int i = 0; i < NUM_PROP_CATS; ++i)
-    sum += chain->categoryWeights[i]; 
-  for(int i = 0; i < NUM_PROP_CATS; ++i)
-    chain->categoryWeights[i] /= sum;   
-}
-
-
-
-
-void printAllProposalWeights(state *chain)
-{
-  if(not isOutputProcess())
-    return; 
-  
-  printf("cat weights: TOPO=%f\tBL=%f\tFREQ=%f\tSUBST=%f\tHET=%f\n", 
-	 chain->categoryWeights[0],
-	 chain->categoryWeights[1],
-	 chain->categoryWeights[2],
-	 chain->categoryWeights[3],
-	 chain->categoryWeights[4] ); 
-
-  printf("rel. prop weihgts: "); 
-  for(int i = 0; i < chain->numProposals; ++i)
-    {
-      proposalFunction *pf = chain->proposals[i]; 
-      printf("\t%s=%f", pf->name, pf->currentWeight);       
-    }
-  printf("\n"); 
-}
-
-
-
-/**
-   @brief   Initializes the proposals based on weights given in the config file. 
-
-   Also normalizes all weights to 1.   
-
- */
-void setupProposals(state *chain, initParamStruct *initParams)
-{
-  int ctr = 0; 
-
-  proposalFunction **pfs = (proposalFunction**)exa_calloc(NUM_PROPOSALS, sizeof(proposalFunction*));  
-  for(int i = 0; i < NUM_PROPOSALS; ++i)
-    {
-      proposalFunction *pf = NULL; 
-      initProposalFunction((proposal_type)i, initParams, &pf); 
-      if(pf != (proposalFunction*)NULL)
-	pfs[ctr++] = pf; 
-    }  
-  chain->numProposals = ctr; 
-  chain->proposals = pfs; 
-
-  for(int i = 0; i < chain->numProposals; ++i)
-    {
-      proposalFunction *pf = chain->proposals[i]; 
-      chain->categoryWeights[pf->category-1] += pf->currentWeight; 
-    }
-  normalizeCategories(chain);  
-  normalizePropSubCats(chain); 
-  
-  /* only print that once  */
-  if(chain->id == 0)
-    printAllProposalWeights(chain);
 }
 

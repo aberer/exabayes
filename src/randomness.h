@@ -29,10 +29,6 @@
 #include "stack.h"
 
 
-/* #ifdef __cplusplus */
-/* extern "C"{ */
-/* #endif */
-
 /* todo replace that once */
 typedef struct _rngState
 {
@@ -41,32 +37,29 @@ typedef struct _rngState
 } rngState; 
 
 
-void initLocalRng(state *theChain); 
+void initLocalRng(Chain *theChain); 
 
 int drawGlobalRandIntBound(int upperBound); 
 randCtr_t drawGlobalRandInt();
 double drawGlobalDouble01();
-int drawRandInt(state *chain, int upperBound); 
-double drawRandDouble01(state *chain);
-double drawRandExp(state *chain, double lambda);
-double drawRandBiUnif(state *chain, double x);
-double drawRandGamma(state *chain, double alpha, double beta);
-void drawRandDirichlet(state *chain, double* results, double* alphas, int length);
-void drawDirichletExpected(state *chain, double* results, double* mean, double beta, int length);
-int drawSampleProportionally(state *chain,  double *weights, int numWeight ); 
-void drawPermutation(state *chain, int* perm, int n); 
-branch drawBranchUniform(state *chain); 
-void generateRandomPath( state *chain ,stack *s, double stopProp); 
-branch drawSubtreeUniform(state *chain); 
-double drawMultiplier(state *chain, double multiplier); 
-double drawFromSlidingWindow(state *chain, double param, double window); 
-branch drawInnerBranchUniform(state *chain); 
+int drawRandInt(Chain *chain, int upperBound); 
+double drawRandDouble01(Chain *chain);
+double drawRandExp(Chain *chain, double lambda);
+double drawRandBiUnif(Chain *chain, double x);
+double drawRandGamma(Chain *chain, double alpha, double beta);
+void drawRandDirichlet(Chain *chain, double* results, double* alphas, int length);
+void drawDirichletExpected(Chain *chain, double* results, double* mean, double beta, int length);
+int drawSampleProportionally(Chain *chain,  double *weights, int numWeight ); 
+void drawPermutation(Chain *chain, int* perm, int n); 
+branch drawBranchUniform(Chain *chain); 
+void generateRandomPath( Chain *chain ,stack *s, double stopProp); 
+branch drawSubtreeUniform(Chain *chain); 
+double drawMultiplier(Chain *chain, double multiplier); 
+double drawFromSlidingWindow(Chain *chain, double param, double window); 
+branch drawInnerBranchUniform(Chain *chain); 
 
 
 double densityDirichlet(double *values, double *alphas, int length);
 
-/* #ifdef __cplusplus */
-/* } */
-/* #endif */
 
 #endif

@@ -255,7 +255,7 @@ void insertWithGenericBL (nodeptr insertNode, nodeptr branchNode, double *insert
   hookup(insertNode, insertNode->back, insertZ, numBranches);
 }
 
-void insertWithUnifBL (state* chain, nodeptr insertNode, nodeptr branchNode, int numBranches)
+void insertWithUnifBL (Chain* chain, nodeptr insertNode, nodeptr branchNode, int numBranches)
 {
   /* BUG: drawRandDouble does not take an argument  */
   assert(0); 

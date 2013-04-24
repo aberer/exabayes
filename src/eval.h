@@ -13,16 +13,17 @@
 #include "axml.h"
 #include "common.h"
 
-typedef struct _state state; 
+class Chain; 
 
-void evaluateGenericWrapper(struct _state *chain, nodeptr start, boolean fullTraversal); 
-void evaluateOnePartition(struct _state  *chain, nodeptr start, boolean fullTraversal, int model); 
-void printAlnTrState(struct _state *chain); 
+
+void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal); 
+void evaluateOnePartition(Chain  *chain, nodeptr start, boolean fullTraversal, int model); 
+void printAlnTrState(Chain *chain); 
 void orientationPointAway(tree *tr, nodeptr p); 
-void newViewGenericWrapper(struct _state  *chain, nodeptr p, boolean masked); 
+void newViewGenericWrapper(Chain  *chain, nodeptr p, boolean masked); 
 
-void evaluateFullNoBackup(state *chain); 
-void evaluatePartialNoBackup(state *chain, nodeptr p); 
+void evaluateFullNoBackup(Chain *chain); 
+void evaluatePartialNoBackup(Chain *chain, nodeptr p); 
 
-void expensiveVerify(state *chain); 
+void expensiveVerify(Chain *chain); 
 #endif

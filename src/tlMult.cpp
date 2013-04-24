@@ -27,7 +27,7 @@ void multiplyBranchLengthsRecursively(TreeAln* traln, nodeptr p, double multipli
 }
 
 
-void applyTLMult(state *chain,  proposalFunction *pf )
+void applyTLMult(Chain *chain,  proposalFunction *pf )
 {
   tree *tr = chain->traln->getTr(); 
   double multiplier = drawMultiplier(chain, pf->parameters.multiplier);
@@ -36,7 +36,7 @@ void applyTLMult(state *chain,  proposalFunction *pf )
 }
 
 
-void resetTLMult(state *chain, proposalFunction *pf)
+void resetTLMult(Chain *chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr();
   multiplyBranchLengthsRecursively(chain->traln, tr->start->back, 1/pf->remembrance.multiplier); 

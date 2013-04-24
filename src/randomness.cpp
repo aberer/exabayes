@@ -1,6 +1,3 @@
-
-
-
 #include <math.h>
 #include <inttypes.h>
 
@@ -15,6 +12,9 @@
 #include "adapters.h"
 
 #include "TreeAln.hpp" 
+
+
+
 
 
 static void inc_global()
@@ -33,15 +33,15 @@ static void inc_global()
 
 
 
-void initLocalRng(state *theChain)
-{
-  /* init rng */
-  theChain->rCtr.v[0] = 0; 
-  theChain->rCtr.v[1] = 0; 
-  randCtr_t r = drawGlobalRandInt();
-  theChain->rKey.v[0] = r.v[0]; 
-  theChain->rKey.v[1] = r.v[1]; 
-}
+// void initLocalRng(Chain *theChain)
+// {
+//   /* init rng */
+//   theChain->rCtr.v[0] = 0; 
+//   theChain->rCtr.v[1] = 0; 
+//   randCtr_t r = drawGlobalRandInt();
+//   theChain->rKey.v[0] = r.v[0]; 
+//   theChain->rKey.v[1] = r.v[1]; 
+// }
 
 
 randCtr_t drawGlobalRandInt()
@@ -82,7 +82,7 @@ void normalize(double * vector, int length, double normalizingConstant)
 }
 
 /* uniform r in  [0,upperBound-1] */
-int drawRandInt(state *chain, int upperBound )
+int drawRandInt(Chain *chain, int upperBound )
 {
   chain->rCtr.v[0] =  chain->currentGeneration; 
   randCtr_t r = exa_rand(chain->rKey, chain->rCtr); 
@@ -92,7 +92,7 @@ int drawRandInt(state *chain, int upperBound )
 
 
 /* uniform r in [0,1) */
-double drawRandDouble01(state *chain)
+double drawRandDouble01(Chain *chain)
 {
   chain->rCtr.v[0] = chain->currentGeneration; 
   randCtr_t r = exa_rand(chain->rKey, chain->rCtr); 
@@ -102,14 +102,14 @@ double drawRandDouble01(state *chain)
 
 
 
-double drawRandExp(state *chain, double lambda)
+double drawRandExp(Chain *chain, double lambda)
 {  
   double r = drawRandDouble01(chain);   
   return -log(r )/ lambda; 
 }
 
 
-double drawRandBiUnif(state *chain, double x)
+double drawRandBiUnif(Chain *chain, double x)
 {
   double r = drawRandDouble01(chain) *  (2*x-x/2) + x / (3/2) ; 
   return r; 
@@ -157,7 +157,7 @@ double densityDirichlet(double *values, double *alphas, int length)
 }
 
   // Gamma(alpha, beta) sampling
-double drawRandGamma(state *chain, double alpha, double beta)
+double drawRandGamma(Chain *chain, double alpha, double beta)
 {
 
  double alpha_min=0.0001;
@@ -223,7 +223,7 @@ double drawRandGamma(state *chain, double alpha, double beta)
   
   
   //This function should be called if the alphas for the dirichlet distribution are given
-void drawRandDirichlet(state *chain, double* results, double* alphas,  int length)
+void drawRandDirichlet(Chain *chain, double* results, double* alphas,  int length)
 {
   double sum=0;
   for(int i=0; i< length;i++)
@@ -238,7 +238,7 @@ void drawRandDirichlet(state *chain, double* results, double* alphas,  int lengt
 }
 
   //This function should be called if the expected values for the dirichlet distribution are given
-void drawDirichletExpected(state *chain, double* results, double* mean,double scale, int length)
+void drawDirichletExpected(Chain *chain, double* results, double* mean,double scale, int length)
 {
   double alphas[length];
   double originalSum=0;
@@ -264,7 +264,7 @@ void drawDirichletExpected(state *chain, double* results, double* mean,double sc
 
    NOTE sum of weights is not required to be 1.0
 */
-int drawSampleProportionally(state *chain,  double *weights, int numWeight )
+int drawSampleProportionally(Chain *chain,  double *weights, int numWeight )
 {
   double r = drawRandDouble01(chain);
  
@@ -295,7 +295,7 @@ int drawSampleProportionally(state *chain,  double *weights, int numWeight )
 }
 
 //get random permutation of [0,n-1]
-void drawPermutation(state *chain, int* perm, int n)
+void drawPermutation(Chain *chain, int* perm, int n)
 {
   int i;
   int randomNumber;
@@ -331,7 +331,7 @@ void drawPermutation(state *chain, int* perm, int n)
 /**
     @brief draws an inner branch 
  */ 
-branch drawInnerBranchUniform(state *chain)
+branch drawInnerBranchUniform(Chain *chain)
 {
   tree *tr = chain->traln->getTr(); 
   boolean accepted = FALSE; 
@@ -355,7 +355,7 @@ branch drawInnerBranchUniform(state *chain)
    
    The thisNode contains the root of the subtree.
 */ 
-branch drawSubtreeUniform(state *chain)
+branch drawSubtreeUniform(Chain *chain)
 {
   tree *tr = chain->traln->getTr();   
   while(TRUE)
@@ -381,7 +381,7 @@ branch drawSubtreeUniform(state *chain)
    
    We have to treat inner and outer branches separatedly.
  */
-branch drawBranchUniform(state *chain)
+branch drawBranchUniform(Chain *chain)
 {
   tree *tr = chain->traln->getTr(); 
 
@@ -428,7 +428,7 @@ branch drawBranchUniform(state *chain)
 /**
    @brief gets a multiplier for updating a parameter or branch length 
  */
-double drawMultiplier(state *chain, double multiplier)
+double drawMultiplier(Chain *chain, double multiplier)
 {
   double tmp =  exp(multiplier * (drawRandDouble01(chain)  - 0.5)); 
   assert(tmp > 0.); 
@@ -436,7 +436,7 @@ double drawMultiplier(state *chain, double multiplier)
 }
 
 
-double drawFromSlidingWindow(state *chain, double param, double window)
+double drawFromSlidingWindow(Chain *chain, double param, double window)
 {
   double upper = param + (window / 2 ) ,
     lower = param - (window / 2 ); 

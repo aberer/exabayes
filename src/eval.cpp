@@ -11,7 +11,7 @@
 
 
 /* call this for verification after the lnl has been evaluated somehow */
-void expensiveVerify(state *chain)
+void expensiveVerify(Chain *chain)
 {  
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTraln = gAInfo.debugTree;   
@@ -19,7 +19,7 @@ void expensiveVerify(state *chain)
 
   double toVerify = chain->traln->getTr()->likelihood; 
   
-  state  *helpChain = (state*) exa_calloc(1,sizeof(chain)) ; 
+  Chain  *helpChain = (Chain*) exa_calloc(1,sizeof(chain)) ; 
   helpChain->traln = debugTraln; 
   exa_evaluateGeneric(helpChain, helpChain->traln->getTr()->start, TRUE); 
   double verifiedLnl =  helpChain->traln->getTr()->likelihood; 
@@ -40,7 +40,7 @@ void expensiveVerify(state *chain)
 /**
    @brief backs up arrays and executes the newView 
  */ 
-void newViewGenericWrapper(state *chain, nodeptr p, boolean masked)
+void newViewGenericWrapper(Chain *chain, nodeptr p, boolean masked)
 {
   int numberToExecute = 0; 
   int modelToEval = ALL_MODELS; 
@@ -75,13 +75,13 @@ void newViewGenericWrapper(state *chain, nodeptr p, boolean masked)
 
 
 
-void evaluatePartialNoBackup(state *chain, nodeptr p)
+void evaluatePartialNoBackup(Chain *chain, nodeptr p)
 {  
   exa_evaluateGeneric(chain,p,FALSE );   
   expensiveVerify(chain);
 }
 
-void evaluateFullNoBackup(state *chain)
+void evaluateFullNoBackup(Chain *chain)
 {
 #ifdef DEBUG_EVAL
   if(isOutputProcess())
@@ -95,7 +95,7 @@ void evaluateFullNoBackup(state *chain)
 
 
 
-void evaluateGenericWrapper(state *chain, nodeptr start, boolean fullTraversal)
+void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
 {
 #ifdef DEBUG_EVAL
   if(isOutputProcess())
@@ -158,7 +158,7 @@ void orientationPointAway(tree *tr, nodeptr p)
 
    updates chain likelihood and chain-partition-lnl accordingly. 
  */
-void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, int model)
+void evaluateOnePartition(Chain *chain, nodeptr start, boolean fullTraversal, int model)
 {
   assert(fullTraversal); 	/* partial tarversal does not make sense */
   
@@ -218,7 +218,7 @@ void evaluateOnePartition(state *chain, nodeptr start, boolean fullTraversal, in
 /**
    @brief only evaluate partition given in the execute mask "models"
 */
-void evaluatePartitions(state *chain, nodeptr start, boolean fullTraversal, boolean *models)
+void evaluatePartitions(Chain *chain, nodeptr start, boolean fullTraversal, boolean *models)
 {  
   tree *tr = chain->traln->getTr(); 
   assert(0);  			/* not in use  */

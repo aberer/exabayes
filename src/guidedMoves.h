@@ -21,8 +21,8 @@ typedef struct  _insertWeight
 
 
 
-void applyGuidedSPR(state *chain, proposalFunction *pf); 
-void resetGuidedSPR(state *chain, proposalFunction *pf); 
-void evalGuidedSPR(state *chain, proposalFunction *pf); 
+void applyGuidedSPR(Chain *chain, proposalFunction *pf); 
+void resetGuidedSPR(Chain *chain, proposalFunction *pf); 
+void evalGuidedSPR(Chain *chain, proposalFunction *pf); 
 
 #endif

@@ -4,9 +4,10 @@
 #include "bayes.h"
 #include "globals.h"
 #include "TreeAln.hpp" 
+#include "Chain.hpp" 
 
 
-void exa_newViewGeneric(state *chain, nodeptr p, boolean masked)
+void exa_newViewGeneric(Chain *chain, nodeptr p, boolean masked)
 {
 #if HAVE_PLL != 0
   newviewGeneric(chain->traln->getTr(), chain->traln->getPartitionsPtr(), p, masked); 
@@ -25,7 +26,7 @@ void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
 #endif
 }
 
-void exa_evaluateGeneric(state *chain, nodeptr start, boolean fullTraversal)
+void exa_evaluateGeneric(Chain *chain, nodeptr start, boolean fullTraversal)
 {
 #if HAVE_PLL != 0
   evaluateGeneric(chain->traln->getTr(), chain->traln->getPartitionsPtr(), start, fullTraversal); 

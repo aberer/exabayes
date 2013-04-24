@@ -12,7 +12,7 @@ using namespace std;
 
 
 
-LnlRestorer::LnlRestorer(state *_chain)
+LnlRestorer::LnlRestorer(Chain *_chain)
   : chain(_chain)
 {
   tree *tr = chain->traln->getTr(); 

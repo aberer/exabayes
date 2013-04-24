@@ -12,9 +12,9 @@
 typedef stack path;  
 
 void pushToStackIfNovel(stack *s, branch b, int numTip); 
-void drawPathForESPR(state *chain,stack *s, double stopProp ); 
-void saveBranchLengthsPath(state *chain, path *s); 
+void drawPathForESPR(Chain *chain,stack *s, double stopProp ); 
+void saveBranchLengthsPath(Chain *chain, path *s); 
 boolean nodeIsOnPath(int node, path *aPath); 
 boolean isOuterNode(int node, path *aPath); 
-void multiplyAlongBranchESPR(state *chain, path *s, double multi); 
+void multiplyAlongBranchESPR(Chain *chain, path *s, double multi); 
 #endif

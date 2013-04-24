@@ -35,18 +35,13 @@ typedef struct globs
   randKey_t rGlobalKey ; 
   randCtr_t rGlobalCtr; 
 
-  state *allChains; 		/* careful with this! */
+  Chain *allChains; 		/* careful with this! */
   int samplingFrequency; 
   BipartitionHash* bipHash; 
 
   int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
-  
-  double* temperature;   /// one temperature for each run 
 
-  /* todo replace with a chain swapper? */
-  SuccessCtr **swapInfo; 
-  
   analdef *adef; 
 
 #ifdef DEBUG_LNL_VERIFY
@@ -76,34 +71,36 @@ typedef struct globs
 char configFileName[1024]; 
 
 
-globalAnalysisInfo gAInfo = 
-  {0,
-   1,
-   1,
-   {{0,0}},
-   {{0,0}},
-   NULL, 
-   0,
-   NULL,
-   0,
-   10000 ,
-   NULL , 
-   NULL,  
-   NULL, 
-#ifdef DEBUG_LNL_VERIFY
-   NULL, 
-#endif   
-   100, 
-   500, 
-   0.1, 
-   0.005, 
-   0.1 ,
-   1,
-   true, 
-   5000, 
-   0.0,
-   true   
-  }; 
+globalAnalysisInfo gAInfo; 
+ /* = */
+/*   {0, */
+/*    1, */
+/*    1, */
+/*    {{0,0}}, */
+/*    {{0,0}}, */
+/*    NULL,  */
+/*    0, */
+/*    NULL, */
+/*    0, */
+/*    10000 , */
+/*    NULL ,  */
+/*    NULL,   */
+/*    NULL,  */
+/* #ifdef DEBUG_LNL_VERIFY */
+/*    NULL,  */
+/* #endif    */
+/*    100,  */
+/*    500,  */
+/*    0.1,  */
+/*    0.005,  */
+/*    0.1 , */
+/*    1, */
+/*    true,  */
+/*    5000,  */
+/*    0.0, */
+/*    true    */
+/*   } ;*/ 
+/* TODO  */
 
 
 /* for crude performance measurements */

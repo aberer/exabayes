@@ -49,7 +49,7 @@ static void appendElem(insertList **list,  branch b , double lnl, double ratio, 
     elem->containedInSecond = TRUE; 
 }
 
-static void descendAndTestInsert(state *chain, branch pruneBranch, branch subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
+static void descendAndTestInsert(Chain *chain, branch pruneBranch, branch subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
 { 
   tree *tr = chain->traln->getTr();
 
@@ -187,7 +187,7 @@ void createWeights(tree  *tr, insertList **lnlList, boolean doFirst)
 
 
 
-static void testInsertWithRadius(state *chain, insertList **lnlList, branch subtree, branch pruneBranch, int radius, boolean isFirst)
+static void testInsertWithRadius(Chain *chain, insertList **lnlList, branch subtree, branch pruneBranch, int radius, boolean isFirst)
 {
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr();
@@ -235,7 +235,7 @@ static void testInsertWithRadius(state *chain, insertList **lnlList, branch subt
 /**
    @brief samples a branch according to the likelihoods we determined
  */ 
-insertList* sampleFromLnlArray(state *chain, insertList* lnlList)
+insertList* sampleFromLnlArray(Chain *chain, insertList* lnlList)
 {
   double
     r = drawRandDouble01(chain); 
@@ -286,7 +286,7 @@ void printInsertList(insertList *list)
    actually this method should not do anything. Currently, we need
    it, to update the lnl arrays appropriatly. Pretty expensive.
 */ 
-void evalGuidedSPR(state *chain, proposalFunction *pf)
+void evalGuidedSPR(Chain *chain, proposalFunction *pf)
 {
   tree
     *tr = chain->traln->getTr(); 
@@ -297,7 +297,7 @@ void evalGuidedSPR(state *chain, proposalFunction *pf)
 
 
 
-void resetGuidedSPR(state *chain, proposalFunction *pf)
+void resetGuidedSPR(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
@@ -360,7 +360,7 @@ void debug_checkHooks(tree *tr)
 
 
 
-void applyGuidedSPR(state *chain, proposalFunction *pf)
+void applyGuidedSPR(Chain *chain, proposalFunction *pf)
 {  
   TreeAln *traln = chain->traln; 
   

@@ -12,8 +12,6 @@
 #include "nclConfigReader.h"
 
 
-void step(state *curstate); 
-void normalizeProposalWeights(state *curstate);
-void setupProposals(state *chain, initParamStruct *initParams); 
+void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result); 
 
 #endif

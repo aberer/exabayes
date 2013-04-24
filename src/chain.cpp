@@ -20,53 +20,17 @@
 #include "BipartitionHash.hpp"
 
 
+#include "CoupledChains.hpp"
+
+
 #include <vector>
 using namespace std; 
 
 
-void initDefaultValues(state *chain, tree *tr)
-{
-  /* TODO we have to redo the prior framework */
-  chain->priorProb = 1; 
-  chain->hastings = 1; 
-  chain->currentGeneration = 0; 
+// void makeChainFileNames(Chain *chain, int num)
+// {
 
-  chain->penaltyFactor = 0.0;
-}
-
-
-void makeChainFileNames(state *chain, int num)
-{
-  char tName[1024],
-    pName[1024] ; 
-  
-  sprintf(tName, "%s%s_topologies.%s.%d", workdir, PROGRAM_NAME, run_id, num); 
-  sprintf(pName, "%s%s_parameters.%s.%d", workdir, PROGRAM_NAME, run_id, num); 
-  
-  /* todo binary state file?  */
-  chain->topologyFile = fopen(tName, "w"); 
-  chain->outputParamFile = fopen(pName, "w");   
-}
-
-
-
-/**
-   @brief returns the inverse temperature for this chain
- */ 
-double getChainHeat(state *chain )
-{
-  int runId = chain->id / gAInfo.numberCoupledChains;  
-  const double deltaT = gAInfo.temperature[runId]; 
-
-  if(chain->couplingId == 0 )
-    return 1; 
-  
-  double tmp  = 1. + deltaT * chain->couplingId; 
-  double myHeat = 1. / (double)tmp; 
-
-  assert(myHeat < 1.);
-  return myHeat; 
-}
+// }
 
 
 /**
@@ -96,8 +60,7 @@ void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
     }
 }
 
-
-static void initParamDump(TreeAln *traln, paramDump *dmp)
+void initParamDump(TreeAln *traln, paramDump *dmp)
 {  
   tree *tr = traln->getTr();
   
@@ -120,9 +83,7 @@ static void initParamDump(TreeAln *traln, paramDump *dmp)
 }
 
 
-
-
-static void copyParamDump(TreeAln *traln,paramDump *dest, const paramDump *src)
+void copyParamDump(TreeAln *traln,paramDump *dest, const paramDump *src)
 {
   /* no topo or branch lengths! this should be done by copytopo */
   
@@ -144,7 +105,7 @@ static void copyParamDump(TreeAln *traln,paramDump *dest, const paramDump *src)
 
 
 
-void copyState(state *dest, const state *src )
+void copyState(Chain *dest, const Chain *src )
 {
   TreeAln &thisTraln =  *(dest->traln); 
   TreeAln &rhsTraln = *(src->traln); 
@@ -165,61 +126,72 @@ void copyState(state *dest, const state *src )
    This function also decides which aln,tr structures are assigned to
    which chains.
  */ 
-void initializeIndependentChains( analdef *adef, int seed, state **resultIndiChains, initParamStruct *initParams )
+void initializeIndependentChains( analdef *adef, int seed, vector<CoupledChains*> &runs, initParamStruct *initParams )
 {
   FILE *treeFH = NULL; 
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-
   int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
   PRINT("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
-  *resultIndiChains = (state*)exa_calloc( totalNumChains , sizeof(state));     
 
 #ifdef DEBUG_LNL_VERIFY
   gAInfo.debugTree = new TreeAln( byteFileName); 
 #endif
 
-  for(int i = 0; i < totalNumChains; ++i)
-    {       
-      state *theChain = *resultIndiChains + i;       
-
-      if( i < gAInfo.numberCoupledChains)
-	theChain->traln = new TreeAln(byteFileName);
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    {
+      // initialize some trees 
+      vector<TreeAln*> trees; 
+      if(i == 0 )	
+	{
+	  trees.push_back(new TreeAln(byteFileName)); 
+	}
       else 
 	{
-  	  state *masterChain = *resultIndiChains + (i %  gAInfo.numberCoupledChains) ; 
-	  theChain->traln = new TreeAln(*(masterChain->traln)); // initialize from master chain 
+	  CoupledChains* aRun = runs[0]; 
+	  for(int i = 0; i < aRun->getNumberOfChains(); ++i)	    
+	    {
+	      TreeAln *traln = aRun->getChain(i)->traln; 
+	      trees.push_back(new TreeAln(*traln)); 
+	    }	  
+	}      
+    }
+
+  
+  // only use one restorer for all chains 
+  LnlRestorer *restorer = new LnlRestorer(runs[0]->getChain(0));
+  for(auto run : runs )
+    {
+      for(int i = 0; i < run->getNumberOfChains(); ++i )
+	{
+	  Chain *chain = run->getChain(i); 
+	  chain->setRestorer(restorer); 
 	}
-      
-      TreeAln *traln = 	theChain->traln;  
-      theChain->id = i; 
-      theChain->couplingId = i % gAInfo.numberCoupledChains ; 
+    }
 
-      theChain->categoryWeights = (double*)exa_calloc(NUM_PROP_CATS, sizeof(double)); 
 
+
+  // initialize following runs 
+
+  assert(0); 
+  // TODO all of this must be integrated 
+#if 0 
+  
+
+  for(int i = 0; i < totalNumChains; ++i)
+    {       
       tree *myTree = theChain->traln->getTr();       
-      initDefaultValues(theChain, myTree);
-
-
-      // TODO as kassian pointed out, we only need one lnl restorer
-      if(theChain->id / gAInfo.numberCoupledChains == 0 ) 
-	theChain->restorer = new LnlRestorer(theChain);
-      else 
-	{	  
-	  state *leechChain =   (*resultIndiChains ) + theChain->couplingId; 
-	  theChain->restorer = leechChain->restorer; 
-	}
 
       setupProposals(theChain, initParams); 
 
       /* init the param dump  */      
       initParamDump(traln, &(theChain->dump)); 
 
-      for(int j = 0; j < traln->getNumberOfPartitions(); ++j ) 
-	theChain->traln->initRevMat(j);
+      // for(int j = 0; j < traln->getNumberOfPartitions(); ++j ) 
+      // 	theChain->traln->initRevMat(j);
 
-      initLocalRng(theChain); 
+      // initLocalRng(theChain); 
       
       if( i % gAInfo.numberCoupledChains == 0)
 	{
@@ -260,20 +232,20 @@ void initializeIndependentChains( analdef *adef, int seed, state **resultIndiCha
 	}
       else 
 	{
-	  state *coldChain = *resultIndiChains + (theChain->id / gAInfo.numberCoupledChains) * gAInfo.numberCoupledChains; 
+	  Chain *coldChain = *runs + (theChain->id / gAInfo.numberCoupledChains) * gAInfo.numberCoupledChains; 
 	  copyState(theChain , coldChain);
 	  applyChainStateToTree(theChain); 
 	}
 
-      evaluateFullNoBackup(theChain);
+      // evaluateFullNoBackup(theChain);
 
-      /* now save the tree to a chain chains */
-      saveTreeStateToChain(theChain); 
+      // /* now save the tree to a chain chains */
+      // saveTreeStateToChain(theChain); 
 
-      PRINT("Initial LnL for chain %d is  %f\ttree-length=%.3f\tseed=%u,%u\n", theChain->id, theChain->traln->getTr()->likelihood, 
-	    branchLengthToReal(theChain->traln->getTr(), getTreeLength(theChain->traln, theChain->traln->getTr()->nodep[1]->back)),
-	    theChain->rKey.v[0], theChain->rKey.v[1]
-	    ); 
+      // PRINT("Initial LnL for chain %d is  %f\ttree-length=%.3f\tseed=%u,%u\n", theChain->id, theChain->traln->getTr()->likelihood, 
+      // 	    branchLengthToReal(theChain->traln->getTr(), getTreeLength(theChain->traln, theChain->traln->getTr()->nodep[1]->back)),
+      // 	    theChain->rKey.v[0], theChain->rKey.v[1]
+      // 	    ); 
 
       if(isOutputProcess() )
 	{	  
@@ -285,15 +257,19 @@ void initializeIndependentChains( analdef *adef, int seed, state **resultIndiCha
 	    }
 	  else 
 	    {	      
-	      state *previousChain = *resultIndiChains + (i  - 1 ) ; 
+	      Chain *previousChain = *runs + (i  - 1 ) ; 
 	      theChain->topologyFile = previousChain->topologyFile; 
 	      theChain->outputParamFile = previousChain->topologyFile; 
 	    }
 	}
     }
 
+
+#endif 
+
+
   {
-    state* chain = *resultIndiChains + 0; 
+    Chain* chain = runs[0]->getChain(0); 
     int numTax = chain->traln->getTr()->mxtips; 
     gAInfo.bipHash = new BipartitionHash(numTax, gAInfo.numberOfRuns);
   }
@@ -363,7 +339,7 @@ void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolea
 
 
 /**
-   @brief Applies the state of the chain to its tree. 
+   @brief Applies the Chain of the chain to its tree. 
 
    Notice: you must not simply change the tree pointer. More
    modifications are necessary to do so.
@@ -371,7 +347,7 @@ void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolea
    @param boolean checkLnl -- should we check, if the lnl is the same as
    before? If we applied it the first time, there is no before.
  */ 
-void applyChainStateToTree(state *chain)
+void applyChainStateToTree(Chain *chain)
 {
   tree *tr = chain->traln->getTr(); 
   
@@ -410,9 +386,9 @@ void applyChainStateToTree(state *chain)
 
 /**
    @brief Save all relevan information from the tree into the chain
-   state. 
+   Chain. 
  */ 
-void saveTreeStateToChain(state *chain)
+void saveTreeStateToChain(Chain *chain)
 {
   tree *tr  = chain->traln->getTr();     
   chain->dump.topology->saveTopology(*(chain->traln));
@@ -451,7 +427,7 @@ void saveTreeStateToChain(state *chain)
    proposal weights sum up to 1 each. 
    
  */ 
-void drawProposalFunction(state *chain, proposalFunction **result )
+void drawProposalFunction(Chain *chain, proposalFunction **result )
 {  
   
   *result = NULL; 
@@ -491,101 +467,3 @@ void drawProposalFunction(state *chain, proposalFunction **result )
   assert(result != NULL); 
 }
 
-
-/**
-   @brief Execute one generation of a given chain.  
- */
-void step(state *chain)
-{
-  chain->restorer->resetRestorer();
-
-  tree *tr = chain->traln->getTr();   
-
-  assert(tr->fracchange > 0); 
-
-  double prevLnl = tr->likelihood;     
-
-  double myHeat = getChainHeat(chain ) ; 
-
-  proposalFunction *pf = NULL;   
-  drawProposalFunction(chain, &pf);
-
-  /* reset proposal ratio  */
-  chain->hastings = 1; 
-
-  double oldPrior = chain->priorProb; 		/* TODO  */
-
-  /* chooses move, sets proposal ratio, correctly modifies the prior */
-  pf->apply_func(chain, pf);  
-  double priorRatio  = chain->priorProb - oldPrior; 
-  /* enable once we actually have priors  */
-  assert(priorRatio == 0); 
-
-  /* chooses the cheapest way to evaluate the likelihood  */
-  pf->eval_lnl(chain, pf); 
-
-  double testr = drawRandDouble01(chain);
-  double acceptance = 
-    exp((priorRatio  + tr->likelihood - prevLnl) * myHeat) 
-    * chain->hastings ; 
-
-  chain->wasAccepted  = testr < acceptance; 
-  debug_printAccRejc(chain, pf, chain->wasAccepted); 
-
-  if(chain->wasAccepted)
-    {
-      pf->sCtr.accept();
-      expensiveVerify(chain);
-    }
-  else
-    {
-      pf->reset_func(chain, pf); 
-      pf->sCtr.reject();
-      chain->restorer->restore(); // restores the previous tree state 
-
-    }
-
-  debug_checkTreeConsistency(chain->traln->getTr());
-
-  if( chain->couplingId == 0	/* must be the cold chain  */
-       && (chain->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
-    {
-
-      if( isOutputProcess() ) 
-	printSample(chain);       
-
-      // TODO keep? 
-      gAInfo.bipHash->addBipartitionsToHash(*(chain->traln),  chain->id / gAInfo.numberCoupledChains); 
-    }
-
-
-  /* the output for the console  */
-  if(isOutputProcess() 
-     && chain->couplingId == 0     
-     && gAInfo.printFreq > 0 
-     && chain->currentGeneration % gAInfo.printFreq == gAInfo.printFreq -1   )
-    {
-      chainInfo(chain); 
-    }
-
-  /* autotuning for proposal parameters. With increased parallelism
-     this will become more complicated.  */
-  if( gAInfo.tuneFreq > 0 && chain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 )
-    {
-      for(int i = 0; i < chain->numProposals; ++i)
-	{
-	  proposalFunction *pf = chain->proposals[i]; 
-	  
-	  if(pf->autotune)	/* only, if we set this   */
-	    {
-#ifdef TUNE_ONLY_IF_ENOUGH
-	      if(pf->sCtr.lAcc + pf->sCtr.lRej < gAInfo.tuneFreq )
-		continue; 
-#endif
-	      pf->autotune(chain, pf);
-	    }
-	}
-    }
-
-  chain->currentGeneration++; 
-}
