@@ -83,30 +83,30 @@ double Chain::getChainHeat()
 
 
 // LEGACY
-static void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolean restore)
-{
-  tree *tr = traln->getTr();
-  nodeptr q; 
-  assert(traln->getNumBranches() == 1); 
+// static void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolean restore)
+// {
+//   tree *tr = traln->getTr();
+//   nodeptr q; 
+//   assert(traln->getNumBranches() == 1); 
 
-  if(restore == TOPO_RESTORE )
-    traln->setBranchLengthSave(blBuf[*cnt], 0,p); 
-  else if(restore == TOPO_SAVE)    
-    blBuf[*cnt] =  traln->getBranchLength(p,0); 
-  else 
-    assert(0); 
-  *cnt += 1 ; 
+//   if(restore == TOPO_RESTORE )
+//     traln->setBranchLengthSave(blBuf[*cnt], 0,p); 
+//   else if(restore == TOPO_SAVE)    
+//     blBuf[*cnt] =  traln->getBranchLength(p,0); 
+//   else 
+//     assert(0); 
+//   *cnt += 1 ; 
   
-  if( NOT isTip(p->number, tr->mxtips))
-    {
-      q = p->next; 
-      while(q != p )
-	{
-	  traverseAndTreatBL(q->back, traln, blBuf, cnt, restore); 
-	  q = q->next; 
-	}
-    }
-}
+//   if( NOT isTip(p->number, tr->mxtips))
+//     {
+//       q = p->next; 
+//       while(q != p )
+// 	{
+// 	  traverseAndTreatBL(q->back, traln, blBuf, cnt, restore); 
+// 	  q = q->next; 
+// 	}
+//     }
+// }
 
 
 /**
@@ -222,19 +222,18 @@ Chain& Chain::operator=(Chain& rhs)
 
 
 
-/**
-   @brief Save all relevan information from the tree into the chain
-   Chain. 
- */ 
+
 void Chain::saveTreeStateToChain()
 {
-  tree *tr  = this->traln->getTr();     
+  // tree *tr  = this->traln->getTr();     
   dump.topology->saveTopology(*(traln));
 
+  
+  // TODO should not be needed any more  
   /* save branch lengths */
-  int cnt = 0; 
-  traverseAndTreatBL(tr->start->back, this->traln, this->dump.branchLengths, &cnt, TOPO_SAVE); 
-  assert(cnt == 2 * tr->mxtips - 3 ); 
+  // int cnt = 0; 
+  // traverseAndTreatBL(tr->start->back, this->traln, this->dump.branchLengths, &cnt, TOPO_SAVE); 
+  // assert(cnt == 2 * tr->mxtips - 3 ); 
 
   /* save model parameters */
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
@@ -254,7 +253,7 @@ void Chain::saveTreeStateToChain()
 
 void Chain::applyChainStateToTree()
 {
-  tree *tr = traln->getTr(); 
+  // tree *tr = traln->getTr(); 
   
   /* TODO enable multi-branch    */
   assert(traln->getNumBranches() == 1); 
@@ -262,9 +261,9 @@ void Chain::applyChainStateToTree()
   dump.topology->restoreTopology(*(traln));
 
   /* restore branch lengths */
-  int cnt = 0; 
-  traverseAndTreatBL(tr->start->back, traln, dump.branchLengths, &cnt, TOPO_RESTORE); 
-  assert(cnt == 2 * tr->mxtips -3); 
+  // int cnt = 0; 
+  // traverseAndTreatBL(tr->start->back, traln, dump.branchLengths, &cnt, TOPO_RESTORE); 
+  // assert(cnt == 2 * tr->mxtips -3); 
 
   /* restore model parameters */
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
@@ -284,7 +283,6 @@ void Chain::applyChainStateToTree()
   evaluateFullNoBackup(this); 
 
   wasAccepted = TRUE; 
-
 }
 
 

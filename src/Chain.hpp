@@ -36,7 +36,6 @@ typedef struct
 typedef struct 
 {
   /* topology */
-  // topol *topo; 
   Topology *topology; 
   
   /* branch lengths  */
@@ -69,8 +68,6 @@ public:
   double priorProb; /// the prior probability of the current state   => store in log form  
 
   LnlRestorer *restorer; 
-
-  /* lnlContainer lnl;  /// the current likelihood of the state */
 
   double hastings;/// the proposal ratio 
 
@@ -117,7 +114,6 @@ public:
    
   */ 
   void drawProposalFunction(proposalFunction **result ); 
-
 
   /** @brief Saves all relevan information from the tree into the chain Chain. */ 
   void saveTreeStateToChain(); 

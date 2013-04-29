@@ -1,38 +1,12 @@
 #include "CoupledChains.hpp"
 #include "Chain.hpp"
 #include "randomness.h"
-
-// #include "Cchain.h"
 #include "globals.h"
 #include "proposals.h"
 
 #include "treeRead.h"
 
 #include "randomTree.h"
-
-
-// LEGACY
-static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
-{
-  tree *tr = traln->getTr();
-  nodeptr q;
-  int i;
-  
-  for( i = 0; i < traln->getNumBranches(); i++)
-      traln->setBranchLengthSave(z, i, p); 
-  
-  *count += 1;
-  
-  if (! isTip(p->number,tr->mxtips)) 
-    {                                  /*  Adjust descendants */
-      q = p->next;
-      while (q != p) 
-	{
-	  traverseInitFixedBL(q->back, count, traln, z);
-	  q = q->next;
-	} 
-    }
-}
 
 
 CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int runid, initParamStruct *initParams)
@@ -227,57 +201,4 @@ void CoupledChains::tuneTemperature()
 
 
 
-
-void CoupledChains::initStartingTree(FILE *fh)
-{
-  Chain *masterChain = chains[0]; 
-
-  // fetch a tree 
-  TreeAln *traln = masterChain->traln; 
-  tree *tr = traln->getTr();
-  boolean hasBranchLength =  readTreeWithOrWithoutBL(tr, fh);
-
-  int count = 0;       
-  if(hasBranchLength)
-    traverseInitCorrect(tr->start->back, &count, traln ) ;  
-  else      
-    traverseInitFixedBL(tr->start->back, &count, traln, TreeAln::initBL ); 
-
-  assert(count == 2 * tr->mxtips  -3);       
-
-  for(int i = 1; i < getNumberOfChains(); ++i)
-    {
-      Chain *chain = getChain(i); 
-      *chain  = *masterChain; 
-      chain->applyChainStateToTree();
-    }
-}
-
-
-
-
-
-
-void CoupledChains::initRandomOne(int seed)
-{
-  Chain *masterChain = chains[0]; 
-  TreeAln *traln = masterChain->traln; 
-  tree *tr = traln->getTr();
-  exa_makeRandomTree(tr); 
-  
-  
-  assert(0); 
-  // TODO where is the randomness coming from?    
-  
-  int count = 0; 
-  traverseInitFixedBL( tr->start->back, &count, traln, TreeAln::initBL);
-  assert(count  == 2 * tr->mxtips - 3);
-  
-  for(int i = 1; i < getNumberOfChains(); ++i)
-    {
-      Chain *chain = getChain(i); 
-      *chain  = *masterChain;       
-      chain->applyChainStateToTree();
-    }
-}
 

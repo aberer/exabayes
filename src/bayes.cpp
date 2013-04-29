@@ -27,6 +27,10 @@
 #include "AvgSplitFreqAssessor.hpp"
 #include "LnlRestorer.hpp"
 
+#include "randomTree.h"
+#include "treeRead.h"
+
+
 extern double masterTime; 
 
 
@@ -171,6 +175,77 @@ void runChains(vector<CoupledChains*> allRuns, int diagFreq)
 
 
 
+// LEGACY
+static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
+{
+  tree *tr = traln->getTr();
+  nodeptr q;
+  int i;
+  
+  for( i = 0; i < traln->getNumBranches(); i++)
+      traln->setBranchLengthSave(z, i, p); 
+  
+  *count += 1;
+  
+  if (! isTip(p->number,tr->mxtips)) 
+    {                                  /*  Adjust descendants */
+      q = p->next;
+      while (q != p) 
+	{
+	  traverseInitFixedBL(q->back, count, traln, z);
+	  q = q->next;
+	} 
+    }
+}
+
+
+
+
+static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns)
+{
+
+  TreeAln *traln = tralns[0]; 
+  tree *tr = traln->getTr();
+  exa_makeRandomTree(tr); 
+  
+  
+  assert(0); 
+  // TODO where is the randomness coming from?    
+  
+  int count = 0; 
+  traverseInitFixedBL( tr->start->back, &count, traln, TreeAln::initBL);
+  assert(count  == 2 * tr->mxtips - 3);
+  
+  for(nat i = 1; i < tralns.size(); ++i)
+    *(tralns[i])  = *traln;   
+}
+
+
+
+
+
+
+static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns)
+{
+  // Chain *masterChain = chains[0]; 
+
+  // fetch a tree 
+  TreeAln *traln = tralns[0]; 
+  tree *tr = traln->getTr();
+  boolean hasBranchLength =  readTreeWithOrWithoutBL(tr, fh);
+
+  int count = 0;       
+  if(hasBranchLength)
+    traverseInitCorrect(tr->start->back, &count, traln ) ;  
+  else      
+    traverseInitFixedBL(tr->start->back, &count, traln, TreeAln::initBL ); 
+
+  assert(count == 2 * tr->mxtips  -3);       
+
+  for(nat i = 1 ; i < tralns.size(); ++i)
+    *(tralns[i]) = *traln; 
+}
+
 
 
 /**
@@ -194,7 +269,6 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 #ifdef DEBUG_LNL_VERIFY
   gAInfo.debugTree = new TreeAln( byteFileName); 
 #endif
-  
 
   // sets up tree structures 
   vector<TreeAln*>  trees; 
@@ -205,21 +279,21 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
       trees.push_back(traln); 
     }
 
-
   int mySeed = 0; 		// TODO 
 
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
     {
+      if( i < gAInfo.numberOfStartingTrees)
+	initWithStartingTree(treeFH, trees); 
+      else 
+	{
+	  int anotherSeed = 0; 
+	  initTreeWithOneRandom(anotherSeed, trees);
+	}
+
       CoupledChains *cc = new CoupledChains(mySeed, gAInfo.numberCoupledChains, trees, i, initParams);
       runs.push_back(cc); 
 
-      if(i < gAInfo.numberOfStartingTrees)
-	cc->initStartingTree(treeFH);      
-      else 
-	{
-	  int anotherSeed= 0;  	// TODO 
-	  cc->initRandomOne(anotherSeed);	  
-	}
     }
   
   // only use one restorer for all chains 

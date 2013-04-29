@@ -21,6 +21,7 @@ Topology::Topology(int numTax)
 
 void Topology::traverseAndSave(TreeAln &traln, nodeptr p, nat &number)
 {
+  assert(traln.getNumBranches() == 1); 
   tree *tr = traln.getTr();
 
 #ifdef TOPO_INFO
@@ -82,5 +83,4 @@ void Topology::restoreTopology(TreeAln &traln)
 
   debug_checkTreeConsistency(traln.getTr());
 }
-
 
