@@ -1,5 +1,3 @@
-
-
 #include "LnlRestorer.hpp" 
 #include "adapters.h"
 #include "branch.h"
@@ -8,8 +6,6 @@
 
 #include <iostream>
 using namespace std; 
-
-
 
 
 LnlRestorer::LnlRestorer(Chain *_chain)
@@ -34,8 +30,7 @@ LnlRestorer::LnlRestorer(Chain *_chain)
 #endif
 
       for(int j = 0; j < numTax-2; ++j)
-	reserveArrays[i][j] = (double*)exa_calloc(length * LENGTH_LNL_ARRAY, sizeof(double)); // TODO not aligned? 
-
+	reserveArrays[i][j] = (double*)exa_malloc_aligned(length * LENGTH_LNL_ARRAY * sizeof(double)); // TODO not aligned? 
 
       partitionScaler[i] = (nat*)exa_calloc(2 * tr->mxtips , sizeof(nat)); 
     }  
@@ -49,14 +44,16 @@ LnlRestorer::LnlRestorer(Chain *_chain)
 
 LnlRestorer::~LnlRestorer()  
 {
-  tree *tr = chain->traln->getTr(); 
+  // tree *tr = chain->traln->getTr(); 
   int numPart = chain->traln->getNumberOfPartitions(); 
   for(int i = 0; i <  numPart; ++i)
     {
+#if 0      
+      // TODO ! 
       for(int j = 0; j < tr->mxtips; ++j)
-	{
-	  exa_free(reserveArrays[i][j]);
-	}
+	exa_free(reserveArrays[i][j]);
+#endif
+
       exa_free(reserveArrays[i]); 
       
       exa_free(partitionScaler[i]); 
@@ -186,11 +183,11 @@ void LnlRestorer::restore()
       pInfo *partition = chain->traln->getPartition( i); 
       memcpy(partition->globalScaler, partitionScaler[i], sizeof(nat) * 2 * chain->traln->getTr()->mxtips);     
     }
-  
+
 
 #ifdef DEBUG_LNL_VERIFY
   nodeptr p = findNodeFromBranch(tr, findRoot(tr)); 
-  evaluatePartialNoBackup(chain, p);   
+  evaluatePartialNoBackup(chain, p); 
   double diff = fabs(prevLnl - chain->traln->getTr()->likelihood); 
   if( diff > 1e-6 )
     {
@@ -250,27 +247,21 @@ void LnlRestorer::traverseAndSwitchIfNecessary(nodeptr virtualRoot, int model, b
 }
 
 
-
-
-/**@brief  resets the restorer, s.t. it is consistent with the current tree (and can restore it later) */ 
 void LnlRestorer::resetRestorer()
 {
 #ifdef DEBUG_ARRAY_SWAP
   if(isOutputProcess())
   cout << "RESETTING RESTORER" << endl; 
 #endif
+
   tree *tr = chain->traln->getTr();
   int numPart = chain->traln->getNumberOfPartitions(); 
   memset(wasSwitched, 0, sizeof(bool) * ( 2 * tr->mxtips) ); 
   storeOrientation(); 
-  // cout << "scaler is :" << endl; 
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = chain->traln->getPartition( i); 
       memcpy(partitionScaler[i], partition->globalScaler, sizeof(nat) * 2 * chain->traln->getTr()->mxtips);     
-      // for(int j = 0 ; j < 2 * tr->mxtips; ++j )
-	// cout << partitionScaler[i][j] << "," ; 
-      // cout << endl; 
     }
   modelEvaluated = -1; 
   prevLnl = tr->likelihood;   

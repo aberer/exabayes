@@ -17,7 +17,6 @@
 #include "proposals.h"
 #include "nclConfigReader.h"
 #include "misc-utils.h"
-// #include "chain.h"
 #include "adapters.h"
 #include "eval.h"
 #include "proposals.h"
@@ -26,10 +25,10 @@
 #include "TreeAln.hpp"
 #include "AvgSplitFreqAssessor.hpp"
 #include "LnlRestorer.hpp"
-
-#include "randomTree.h"
+#include "TreeRandomizer.hpp"
 #include "treeRead.h"
 
+#include "topology-utils.h"
 
 extern double masterTime; 
 
@@ -63,15 +62,6 @@ void setupGlobals(initParamStruct *initParams)
   gAInfo.burninProportion = initParams->burninProportion; 
   gAInfo.tuneFreq = initParams->tuneFreq ; 
 
-  /* initialize a matrix of swaps (wasting some space here) */
-  // gAInfo.swapInfo = (SuccessCtr**)exa_calloc(gAInfo.numberOfRuns, sizeof(SuccessCtr*)); 
-  // int n = gAInfo.numberCoupledChains; 
-  // for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-  //   gAInfo.swapInfo[i] = (SuccessCtr*)exa_calloc( n * n , sizeof(SuccessCtr)); 
-
-  // gAInfo.temperature = (double*)exa_calloc(gAInfo.numberOfRuns, sizeof(double)); 
-  // for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    // gAInfo.temperature[i] = gAInfo.heatFactor; 
 }
 
 
@@ -171,10 +161,6 @@ void runChains(vector<CoupledChains*> allRuns, int diagFreq)
 }
 
 
-
-
-
-
 // LEGACY
 static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
 {
@@ -199,19 +185,15 @@ static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z
 }
 
 
-
-
 static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns)
 {
 
   TreeAln *traln = tralns[0]; 
   tree *tr = traln->getTr();
-  exa_makeRandomTree(tr); 
-  
-  
-  assert(0); 
-  // TODO where is the randomness coming from?    
-  
+
+  TreeRandomizer trRandomizer(seed, traln);
+  trRandomizer.randomizeTree();
+
   int count = 0; 
   traverseInitFixedBL( tr->start->back, &count, traln, TreeAln::initBL);
   assert(count  == 2 * tr->mxtips - 3);
@@ -221,14 +203,8 @@ static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns)
 }
 
 
-
-
-
-
 static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns)
 {
-  // Chain *masterChain = chains[0]; 
-
   // fetch a tree 
   TreeAln *traln = tralns[0]; 
   tree *tr = traln->getTr();
@@ -247,16 +223,6 @@ static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns)
 }
 
 
-
-/**
-   @brief An overloaded initialization function for all the chains. 
-
-   This function should initialize all chain data structures and parse
-   the config file.
-
-   This function also decides which aln,tr structures are assigned to
-   which chains.
- */ 
 static void initializeIndependentChains( analdef *adef, int seed, vector<CoupledChains*> &runs, initParamStruct *initParams )
 {
   FILE *treeFH = NULL; 
@@ -267,7 +233,8 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
   PRINT("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
 
 #ifdef DEBUG_LNL_VERIFY
-  gAInfo.debugTree = new TreeAln( byteFileName); 
+  gAInfo.debugTree = new TreeAln(); 
+  gAInfo.debugTree->initializeFromByteFile(byteFileName); 
 #endif
 
   // sets up tree structures 
@@ -279,7 +246,15 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
       trees.push_back(traln); 
     }
 
-  int mySeed = 0; 		// TODO 
+
+  Randomness masterRand(seed);   
+  vector<int> runSeeds; 
+  for(int i = 0; i < gAInfo.numberOfRuns;++i)
+    {
+      randCtr_t r = masterRand.generateSeed();
+      runSeeds.push_back(r.v[0]); 
+    }
+
 
   for(int i = 0; i < gAInfo.numberOfRuns; ++i)
     {
@@ -287,13 +262,12 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 	initWithStartingTree(treeFH, trees); 
       else 
 	{
-	  int anotherSeed = 0; 
-	  initTreeWithOneRandom(anotherSeed, trees);
+	  randCtr_t r = masterRand.generateSeed(); 
+	  initTreeWithOneRandom(r.v[0], trees);
 	}
 
-      CoupledChains *cc = new CoupledChains(mySeed, gAInfo.numberCoupledChains, trees, i, initParams);
+      CoupledChains *cc = new CoupledChains(runSeeds[i], gAInfo.numberCoupledChains, trees, i, initParams);
       runs.push_back(cc); 
-
     }
   
   // only use one restorer for all chains 
@@ -307,20 +281,26 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 	}
     }
 
-  {
-    Chain* chain = runs[0]->getChain(0); 
-    int numTax = chain->traln->getTr()->mxtips; 
-    gAInfo.bipHash = new BipartitionHash(numTax, gAInfo.numberOfRuns);
-  }
-  
+  for(auto run : runs)
+    {
+      for(int i = 0; i < run->getNumberOfChains(); ++i)
+	{
+	  Chain *chain = run->getChain(i); 
+	  tree *tr = chain->traln->getTr();
+	  Randomness *rand = chain->getChainRand(); 
+	  stringstream ss; 
+	  ss << *rand ;	  	  
+	  chain->printInfo("init lnl=%f\tTL=%f\tseeds=%s\n", chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(chain->traln, tr->nodep[1]->back)), ss.str().c_str()); 
+	}
+    }
+
+
   if(gAInfo.numberOfStartingTrees > 0)
     fclose(treeFH); 
 
   PRINT("\n"); 
 
 }
-
-
 
 
 // #define TEST 

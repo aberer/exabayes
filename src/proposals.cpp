@@ -16,6 +16,7 @@
 #include "tlMult.h" 
 #include "TreeAln.hpp"
 #include "nodeSlider.h"
+#include "Randomness.hpp"
 
 void expensiveVerify(tree *tr); 
 
@@ -119,14 +120,14 @@ int extended_spr_traverse(Chain *chain, nodeptr *insertNode, double stopProp)
 {
   int 
     result, 
-    r = drawRandDouble01(chain); 
+    r = chain->getChainRand()->drawRandDouble01(); 
 
   if(r < 0.5 )
     *insertNode = (*insertNode)->next->back; 
   else 
     *insertNode = (*insertNode)->next->next->back; 
 
-  double randprop = drawRandDouble01(chain);
+  double randprop = chain->getChainRand()->drawRandDouble01();
 
   result = randprop < stopProp;
   
@@ -167,9 +168,9 @@ static nodeptr select_random_subtree(Chain *chain, tree *tr)
   do
     {
       int 
-        exitDirection = drawRandInt(chain,3); 
+        exitDirection = chain->getChainRand()->drawRandInt(3); 
      
-      int r = drawRandInt(chain,tr->mxtips - 2) ; 
+      int r = chain->getChainRand()->drawRandInt(tr->mxtips - 2) ; 
 
       p = tr->nodep[ r + 1 + tr->mxtips];
       
@@ -322,7 +323,7 @@ static void extended_spr_apply(Chain *chain, proposalFunction *pf)
   nodeptr curNode = NULL; 
 
   boolean remapBL = FALSE; 
-  if(drawRandDouble01(chain) > 0.5)
+  if(chain->getChainRand()->drawRandDouble01() > 0.5)
     {
       curNode = nb; 
       remapBL = TRUE ; 
@@ -471,7 +472,7 @@ static void simple_gamma_proposal_apply(Chain * chain, proposalFunction *pf)
   //TODO: add safety to max and min values
   double newalpha, curv, r,mx,mn;
 
-  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());  
+  int model = chain->getChainRand()->drawRandInt(chain->traln->getNumberOfPartitions());  
   perPartitionInfo* remem = pf->remembrance.partInfo; 
   remem->modelNum = model; 
 
@@ -485,14 +486,14 @@ static void simple_gamma_proposal_apply(Chain * chain, proposalFunction *pf)
 	double slidWin = pf->parameters.slidWinSize;
 	    
 	/* case STANDARD://simple sliding window */
-	r = drawRandDouble01(chain);
+	r = chain->getChainRand()->drawRandDouble01();
 	mn = curv-(slidWin/2);
 	mx = curv+(slidWin/ 2);
 	newalpha = fabs(mn + r * (mx-mn));
       }
       break;
     case UPDATE_GAMMA_EXP: 
-      newalpha  = drawRandExp(chain,1/curv);
+      newalpha  = chain->getChainRand()->drawRandExp(1/curv);
       break;
     default:
       assert(0);
@@ -573,7 +574,7 @@ static void simple_model_proposal_apply(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
 
-  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
+  int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo;
 
   pInfo *partition = chain->traln->getPartition( model); 
@@ -624,7 +625,7 @@ static void simple_model_proposal_apply(Chain *chain, proposalFunction *pf)
 	    
 	    changeState=state;
 	    curv = traln->getSubstRate(model, state);
-	    r =  drawRandDouble01(chain);
+	    r =  chain->getChainRand()->drawRandDouble01();
 	    mn = curv-range ;
 	    mx = curv+range ;
 	
@@ -637,12 +638,12 @@ static void simple_model_proposal_apply(Chain *chain, proposalFunction *pf)
 	  break;
         
 	case UPDATE_MODEL_BIUNIF:
-	  changeState=drawRandInt(chain, numRates);
+	  changeState=chain->getChainRand()->drawRandInt( numRates);
 	  if(list[changeState]!=1)
 	    {
 	      list[changeState]=1;;      
 	      curv = traln->getSubstRate(model, changeState); 
-	      r =  drawRandBiUnif(chain, curv);
+	      r =  chain->getChainRand()->drawRandBiUnif( curv);
 	      new_value = r;
 	      chain->hastings*=curv/new_value;
  
@@ -720,7 +721,7 @@ static void simple_model_proposal_apply(Chain *chain, proposalFunction *pf)
 static void model_dirichlet_proposal_apply(Chain *chain, proposalFunction *pf)//llpqr
 {
 
-  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
+  int model = chain->getChainRand()->drawRandInt(chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo;
 
   pInfo *partition = chain->traln->getPartition( model); 
@@ -736,8 +737,9 @@ static void model_dirichlet_proposal_apply(Chain *chain, proposalFunction *pf)//
   int* list  = (int*)exa_calloc(numRates, sizeof(int)); 
 
      
-  drawDirichletExpected(chain, r, partition->substRates, 50.0, numRates);
-  chain->hastings=densityDirichlet(partition->substRates, r, numRates) / densityDirichlet(r, partition->substRates, numRates);    
+  chain->getChainRand()->drawDirichletExpected(r, partition->substRates, 50.0, numRates);
+  chain->hastings= chain->getChainRand()->densityDirichlet(partition->substRates, r, numRates) 
+    / chain->getChainRand()->densityDirichlet(r, partition->substRates, numRates);    
   
   /* Ensure always you stay within this range */
   for(int i=0; i<numRates; i++)
@@ -806,7 +808,7 @@ static void perm_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
 
-  int model = drawRandInt(chain,chain->traln->getNumberOfPartitions());; 
+  int model = chain->getChainRand()->drawRandInt(chain->traln->getNumberOfPartitions());; 
 
   pInfo *partition = chain->traln->getPartition( model) ; 
 
@@ -820,15 +822,15 @@ static void perm_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
   double new_value,curv;
   double r;
   
-  randNumber=drawRandInt(chain,numRates);
+  randNumber=chain->getChainRand()->drawRandInt(numRates);
   int *perm = (int*)exa_calloc(numRates, sizeof(int)); 
   // int perm[numRates];
-  drawPermutation(chain,perm, numRates);
+  chain->getChainRand()->drawPermutation(perm, numRates);
 
   for(state = 0;state < randNumber ; state ++)
     {           
       curv = traln->getSubstRate(model, perm[state]);;
-      r =  drawRandBiUnif(chain,curv);
+      r =  chain->getChainRand()->drawRandBiUnif(curv);
 
       new_value = r;
 
@@ -854,7 +856,7 @@ static void single_biunif_model_proposal_apply(Chain *chain,proposalFunction *pf
   TreeAln *traln = chain->traln; 
 
   //record the old one //TODO sufficient to store single value.  
-  int model = drawRandInt(chain,chain->traln->getNumberOfPartitions()); 
+  int model = chain->getChainRand()->drawRandInt(chain->traln->getNumberOfPartitions()); 
 
   perPartitionInfo *info =  pf->remembrance.partInfo; 
   
@@ -867,7 +869,7 @@ static void single_biunif_model_proposal_apply(Chain *chain,proposalFunction *pf
   //choose a random set parameter,
   //with uniform probabilities
 
-  int randState= drawRandInt(chain,numRates);
+  int randState= chain->getChainRand()->drawRandInt(numRates);
 
   double new_value,curv;
   double r;
@@ -876,7 +878,7 @@ static void single_biunif_model_proposal_apply(Chain *chain,proposalFunction *pf
   
 
   curv = traln->getSubstRate(model, randState);
-  r =  drawRandBiUnif(chain,curv);
+  r =  chain->getChainRand()->drawRandBiUnif(curv);
 
   new_value = r;
       
@@ -900,7 +902,7 @@ static void all_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
   
-  int model = drawRandInt(chain,chain->traln->getNumberOfPartitions());
+  int model = chain->getChainRand()->drawRandInt(chain->traln->getNumberOfPartitions());
 
   perPartitionInfo *info = (perPartitionInfo* ) pf->remembrance.partInfo; 
   
@@ -921,7 +923,7 @@ static void all_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
   for(state = 0;state<numRates ; state ++)
     {
       curv = traln->getSubstRate(model, state); 
-      r =  drawRandBiUnif(chain,curv);
+      r =  chain->getChainRand()->drawRandBiUnif(curv);
 
       new_value = r;
 
@@ -992,7 +994,7 @@ static void set_branch_length_sliding_window(Chain *chain, nodeptr p, int numBra
 	  /* bls[i] = p->back->z_tmp[i] = p->z[i]; */
 	  /* p->z_tmp[i] = p->back->z_tmp[i] = p->z[i];   /\* keep current value *\/ */
 	}
-      r = drawRandDouble01(chain);
+      r = chain->getChainRand()->drawRandDouble01();
 
       /* TODO@kassian just wondering: is it correct to use the global
 	 frac-change here? what are the local frac-changes good for
@@ -1041,7 +1043,7 @@ static void set_branch_length_biunif(Chain *chain, nodeptr p, int numBranches,Ch
 	}
       
       real_z = -log( traln->getBranchLength( p,0)) * chain->traln->getTr()->fracchange; //convert from exponential to real form
-      r = drawRandBiUnif(chain, real_z);//draw from [real_z/2,2*real_z]
+      r = chain->getChainRand()->drawRandBiUnif( real_z);//draw from [real_z/2,2*real_z]
 
     
       newZValue = exp(-(fabs( r/chain->traln->getTr()->fracchange )));//convert to exponential form
@@ -1091,7 +1093,7 @@ static void set_branch_length_exp(Chain *chain, nodeptr p, int numBranches,Chain
 	}
    //   r = drawRandExp(lambda);
       real_z = -log( traln->getBranchLength( p,0)) * chain->traln->getTr()->fracchange;
-       r = drawRandExp(chain, 1.0/real_z);
+       r = chain->getChainRand()->drawRandExp( 1.0/real_z);
 
 	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
 
@@ -1193,7 +1195,7 @@ static void random_branch_length_proposal_apply(Chain * chain, proposalFunction 
 
   int multiBranches = chain->traln->getNumBranches(); 
   assert(multiBranches == 1 ); 
-  int target_branch = drawRandInt(chain,(chain->traln->getTr()->mxtips * 2) - 3); 
+  int target_branch = chain->getChainRand()->drawRandInt((chain->traln->getTr()->mxtips * 2) - 3); 
 
   node *p = select_branch_by_id_dfs( chain->traln->getTr()->start, target_branch, chain );
   double z = traln->getBranchLength( p,0); 
@@ -1322,7 +1324,7 @@ static void recordFrequRates(Chain *chain, int model, int numFrequRates, double 
 
 static void frequencySliderApply(Chain *chain, proposalFunction *pf)
 {  
-  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions()); 
+  int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions()); 
   perPartitionInfo *info = pf->remembrance.partInfo; 
   pInfo*partition = chain->traln->getPartition(model); 
 
@@ -1332,9 +1334,9 @@ static void frequencySliderApply(Chain *chain, proposalFunction *pf)
 
   recordFrequRates(chain, model, numFreq, info->frequencies); 
   
-  int paramToChange = drawRandInt(chain, numFreq); 
+  int paramToChange = chain->getChainRand()->drawRandInt( numFreq); 
   double curv = chain->traln->getFrequency(model, paramToChange);   
-  double newVal = fabs(drawFromSlidingWindow(chain,curv, pf->parameters.slidWinSize)); 
+  double newVal = fabs(chain->getChainRand()->drawFromSlidingWindow(curv, pf->parameters.slidWinSize)); 
   chain->traln->setFrequencySave(newVal,model, paramToChange); 
 
   double sum = 0;
@@ -1354,7 +1356,7 @@ static void frequencySliderApply(Chain *chain, proposalFunction *pf)
 
 void frequency_proposal_apply(Chain * chain, proposalFunction *pf)
 {
-  int model  = drawRandInt(chain,chain->traln->getNumberOfPartitions());
+  int model  = chain->getChainRand()->drawRandInt(chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo; 
 
   pInfo *partition = chain->traln->getPartition( model); 
@@ -1370,7 +1372,7 @@ void frequency_proposal_apply(Chain * chain, proposalFunction *pf)
   for(int state = 0;state < numFreq ; state ++)
     {
       double curv = chain->traln->getFrequency(model,state);
-      r[state] = drawRandBiUnif(chain,curv);       
+      r[state] = chain->getChainRand()->drawRandBiUnif(curv);       
       chain->hastings*=curv/r[state];      
     }
 
@@ -1397,7 +1399,7 @@ void frequency_proposal_apply(Chain * chain, proposalFunction *pf)
 void frequency_dirichlet_proposal_apply(Chain * chain, proposalFunction *pf)
 {
    
-  int model  = drawRandInt(chain,chain->traln->getNumberOfPartitions());
+  int model  = chain->getChainRand()->drawRandInt(chain->traln->getNumberOfPartitions());
   perPartitionInfo *info = pf->remembrance.partInfo; 
 
   pInfo *partition = chain->traln->getPartition( model); 
@@ -1413,8 +1415,8 @@ void frequency_dirichlet_proposal_apply(Chain * chain, proposalFunction *pf)
   
         
   //drawRandDirichlet(chain, r, partition->frequencies, 1.0, numFreq);
-  drawDirichletExpected(chain, r, partition->frequencies, 50.0, numFreq);
-  chain->hastings=densityDirichlet(partition->frequencies, r, numFreq) / densityDirichlet(r, partition->frequencies, numFreq);
+  chain->getChainRand()->drawDirichletExpected( r, partition->frequencies, 50.0, numFreq);
+  chain->hastings=chain->getChainRand()->densityDirichlet(partition->frequencies, r, numFreq) / chain->getChainRand()->densityDirichlet(r, partition->frequencies, numFreq);
 
   /*
   //Validation-----------------------------------------
@@ -1490,7 +1492,7 @@ static void simple_model_proposal_reset(Chain * chain, proposalFunction *pf)
 static void branchLengthWindowApply(Chain *chain, proposalFunction *pf)
 {  
   tree *tr = chain->traln->getTr(); 
-  branch b =  drawBranchUniform(chain); 
+  branch b =  chain->getChainRand()->drawBranchUniform(*(chain->traln)); 
 
   nodeptr p = findNodeFromBranch(tr, b); 
   
@@ -1501,7 +1503,7 @@ static void branchLengthWindowApply(Chain *chain, proposalFunction *pf)
   double zOld = chain->traln->getBranchLength( p,0); 
   double win =  pf->parameters.slidWinSize ; 
   double realZ = branchLengthToReal(tr, zOld); 
-  double blNew = branchLengthToInternal(tr,fabs(drawFromSlidingWindow(chain, realZ, win))); 
+  double blNew = branchLengthToInternal(tr,fabs(chain->getChainRand()->drawFromSlidingWindow( realZ, win))); 
   chain->traln->setBranchLengthSave(blNew, 0,p);
   // p->z[0] = p->back->z[0] = blNew; 
 }
@@ -1510,7 +1512,7 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
 {
   auto traln =  chain->traln; 
   tree *tr = chain->traln->getTr(); 
-  branch b =  drawBranchUniform(chain); 
+  branch b =  chain->getChainRand()->drawBranchUniform(*traln); 
 
   nodeptr p = findNodeFromBranch(tr, b); 
 
@@ -1520,7 +1522,7 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
   pf->remembrance.modifiedPath->content[0].length[0]  = traln->getBranchLength( p,0); 
 
   double
-    multiplier = drawMultiplier(chain, pf->parameters.multiplier); 
+    multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier); 
   assert(multiplier > 0.); 
   
   /* TODO how do we do that wiht multiple bls per branch?  */
@@ -1629,8 +1631,8 @@ void resetGammaMulti(Chain *chain, proposalFunction *pf)
  
 void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
 {
-  double multi = drawMultiplier(chain, pf->parameters.multiplier);   
-  int model = drawRandInt(chain, chain->traln->getNumberOfPartitions());
+  double multi = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);   
+  int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions());
   pInfo *partition = chain->traln->getPartition( model); 
 
   

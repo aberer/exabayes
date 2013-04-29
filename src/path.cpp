@@ -2,6 +2,7 @@
 #include "path.h"
 
 #include "TreeAln.hpp"
+#include "Randomness.hpp"
 
 
 
@@ -111,7 +112,7 @@ static void multiplyBranch(Chain *chain, branch b, double parameter, double *has
   tree *tr = chain->traln->getTr(); 
   int numBranches = chain->traln->getNumBranches();
   nodeptr  p = findNodeFromBranch(tr, b); 
-  double multiplier = drawMultiplier(chain, parameter); 
+  double multiplier = chain->getChainRand()->drawMultiplier( parameter); 
   double newZ = branchLengthToInternal(tr, multiplier * branchLengthToReal(tr, traln->getBranchLength( p,0))); 
 
   *hastings *= multiplier; 
@@ -197,7 +198,7 @@ void drawPathForESPR(Chain *chain,path *s, double stopProp )
   nodeptr p,q,r; 
   do 
     {
-      start  = drawSubtreeUniform(chain);
+      start  = chain->getChainRand()->drawSubtreeUniform(traln); 
   
       p = findNodeFromBranch(tr, start);
       q = p->next->back; 
@@ -217,13 +218,13 @@ void drawPathForESPR(Chain *chain,path *s, double stopProp )
   pushStack(s, start); 
   pushStack(s,constructBranch(q->number, r->number)); 
 
-  nodeptr currentNode = drawRandDouble01(chain) ? q : r; 
+  nodeptr currentNode = chain->getChainRand()->drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
   /* printf("%d\n", currentNode->number); */
   while(NOT accepted)
     {
       nodeptr n = 
-	drawRandDouble01(chain)  < 0.5 
+	chain->getChainRand()->drawRandDouble01()  < 0.5 
 	? currentNode->next->back
 	: currentNode->next->next->back; 
 
@@ -233,7 +234,7 @@ void drawPathForESPR(Chain *chain,path *s, double stopProp )
 
       currentNode = n; 
       
-      accepted = drawRandDouble01(chain) < stopProp && stackLength(s) > 2 ; 	
+      accepted = chain->getChainRand()->drawRandDouble01() < stopProp && stackLength(s) > 2 ; 	
       /* printStack(s); */
     }
 

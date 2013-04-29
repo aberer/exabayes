@@ -19,7 +19,7 @@ using namespace std;
 
 
 
-typedef struct 
+typedef struct  _branch
 {
   int thisNode;  /// in case we want to give the branch some orientation, this is the node we want to extract   
   int thatNode;  

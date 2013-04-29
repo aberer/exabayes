@@ -21,10 +21,9 @@ public:
   /** @brief initializes the arrays (expensive memory-wise) */
   LnlRestorer(Chain *chain);
 
-  /** @brief cleanup (automatically called) */
   ~LnlRestorer();
 
-
+  /**@brief  resets the restorer, s.t. it is consistent with the current tree (and can restore it later) */ 
   void resetRestorer(); 
 
   /// @brief restores the original Chain of the tree 
@@ -38,6 +37,9 @@ private:
   void storeOrientation(); 
   void loadOrientation();
   void swapArray(int number, int model); 
+  
+  // the original ptrs to the allocated stuff; only for cleanup
+  // double ***reserveArraysPtr; 
 
   int modelEvaluated; 
   Chain *chain; 

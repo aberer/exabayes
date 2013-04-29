@@ -49,22 +49,6 @@ void debug_printNodeEnvironment(Chain *chain, int nodeID )
 }
 
 
-
-void debug_printAccRejc(Chain *chain, proposalFunction *pf, boolean accepted) 
-{
-#ifdef DEBUG_SHOW_EACH_PROPOSAL
-  if(isOutputProcess())
-    {
-      if(accepted)
-	printInfo(chain, "ACCEPTING\t");   
-      else 
-	printInfo(chain, "rejecting\t");   	  
-      printf("%s %g\n" ,pf->name, chain->traln->getTr()->likelihood); 
-    }
-#endif
-}
-
-
 void debug_checkTreeConsistency(tree *tr)
 {
 #ifdef DEBUG_CHECK_TREE_CONSISTENCY
@@ -121,27 +105,6 @@ void printOrientation(tree *tr, nodeptr p)
     printf("%d is orientated towards %d\n", p->number,p->next->next->back->number); 
   else 
     assert(0); 
-}
-
-
-
-
-/**
-   @brief prints a message with associated chain/run/heat information. 
-
-   Please always use this, when possible, it also assures that the
-   message is only printed once.
- */ 
-void printInfo(Chain *chain, const char *format, ...)
-{  
-  if( isOutputProcess())
-    {
-      printf("[run %d / heat %d / gen %d] ", chain->id / gAInfo.numberCoupledChains, chain->couplingId, chain->currentGeneration); 
-      va_list args;
-      va_start(args, format);     
-      vprintf(format, args );
-      va_end(args);
-    }
 }
 
 
@@ -286,82 +249,4 @@ void printSample(Chain *chain)
 }
 
 
-
-
-void printIfPresent(proposalFunction *pf)
-{
-  stringstream buf; 
-  buf << pf->sCtr; 
-  PRINT("%s: %s\t", pf->name, buf.str().c_str());   
-}
-
-static void printHotChains(int runId)
-{
-  Chain *start =  gAInfo.allChains +  runId *  gAInfo.numberCoupledChains; 
-
-  for(int i = 1; i < gAInfo.numberCoupledChains; ++i)
-    {
-      int index = 0; 
-      for(int  j = 0; j < gAInfo.numberCoupledChains; ++j)
-	{
-	  Chain *chain =   start + j  ; 
-	  if(chain->couplingId == i)
-	    index = j; 
-	}
-      
-      Chain *chain = start +index ;      
-
-      double myHeat = chain->getChainHeat();
-
-      assert(chain->couplingId < gAInfo.numberCoupledChains); 
-      assert(chain->couplingId > 0 ) ; 
-      assert( myHeat < 1.f);
-
-      PRINT("lnl_beta(%.2f)=%.2f\t", myHeat, chain->traln->getTr()->likelihood); 
-    }
-}
-
-
-
-/**
-   @brief dumps infos on the Chain of the chain
-
-   @param chain -- the pointer to the first chain that belongs to a particular run in the array of chains 
- */
-void chainInfo(Chain *chain)
-{
-  assert(chain->couplingId == 0) ; /* we are the cold chain   */
-
-  int runId = chain->id / gAInfo.numberCoupledChains; 
-  tree *tr = chain->traln->getTr(); 
-
-  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runId,   gettime()  - timeIncrement  , chain->currentGeneration, chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(chain->traln, tr->nodep[1]->back)));
-  printHotChains(runId); 
-  // printSwapInfo(runId);   
-  // TODO 
-  PRINT("\n"); 
-
-  /* just output how much time has passed since the last increment */
-  timeIncrement = gettime(); 	
-
-  char* names[]= {"TOPO", "BL", "FREQ", "MODEL", "HETER"} ;   
-
-  for(int i = 1; i < NUM_PROP_CATS + 1 ; ++i)
-    {
-      category_t type = category_t(i); 
-      PRINT("%s:", names[i-1]);       
-      for(int j = 0; j < chain->numProposals;++j )
-	{
-	  proposalFunction *pf = chain->proposals[j]; 	
-	  if(type == pf->category)
-	    {
-	      PRINT("\t"); 
-	      printIfPresent(pf);
-	    }
-	}
-      PRINT("\n"); 
-    }
-
-  PRINT("\n");
-}
 

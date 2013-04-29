@@ -1,4 +1,5 @@
 #include "nodeSlider.h"
+#include "Randomness.hpp"
 
 
 static void insertBranchLength(TreeAln *traln, branch &b)
@@ -12,7 +13,7 @@ void applyNodeSlider(Chain *chain, proposalFunction *pf)
 {
   TreeAln *traln = chain->traln; 
   tree *tr = chain->traln->getTr(); 
-  branch oneBranch = drawInnerBranchUniform(chain); 
+  branch oneBranch = chain->getChainRand()->drawInnerBranchUniform(*traln); 
   insertBranchLength(chain->traln, oneBranch); 
   int numBranch = chain->traln->getNumBranches(); 
   assert(numBranch == 1 ); 
@@ -24,11 +25,11 @@ void applyNodeSlider(Chain *chain, proposalFunction *pf)
   else if(isTip(oneBranch.thatNode, tr->mxtips))
     p = findNodeFromBranch(tr, oneBranch); 
   else  
-    p = drawRandDouble01(chain) < 0.5  ? findNodeFromBranch(tr, oneBranch) : findNodeFromBranch(tr,invertBranch(oneBranch)); 
+    p = chain->getChainRand()->drawRandDouble01() < 0.5  ? findNodeFromBranch(tr, oneBranch) : findNodeFromBranch(tr,invertBranch(oneBranch)); 
 
   otherBranch.thisNode = p->number; 
   otherBranch.thatNode = 
-    drawRandDouble01(chain) < 0.5 ? p->next->back->number : p->next->next->back->number;       
+    chain->getChainRand()->drawRandDouble01() < 0.5 ? p->next->back->number : p->next->next->back->number;       
 
   insertBranchLength(traln, otherBranch); 
   
@@ -44,13 +45,13 @@ void applyNodeSlider(Chain *chain, proposalFunction *pf)
     nodeB = findNodeFromBranch(tr,otherBranch); 
 
   double bothZ = traln->getBranchLength( nodeA,0) * traln->getBranchLength( nodeB,0); 
-  double multiplier = drawMultiplier(chain, pf->parameters.multiplier);
+  double multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);
   chain->hastings *= multiplier; 
   double newZ = branchLengthToReal(tr,pow(bothZ,multiplier));  
   double realOldZ = branchLengthToReal(tr, bothZ); 
   chain->hastings *= ( realOldZ / newZ); 
   
-  double uniScaler = drawRandDouble01(chain); 
+  double uniScaler = chain->getChainRand()->drawRandDouble01(); 
   double aZ = branchLengthToInternal(tr, uniScaler * newZ),
     bZ = branchLengthToInternal(tr, (1-uniScaler) * newZ); 
   

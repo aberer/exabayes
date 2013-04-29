@@ -1,3 +1,11 @@
+/**
+   @file CoupledChains.hpp 
+
+   represents a run (consisting of a number of coupled chains) 
+   
+ */
+
+
 #ifndef _COUPLED_CHAINS_H
 #define _COUPLED_CHAINS_H
 
@@ -31,6 +39,8 @@ public:
   void run(int numGen); 
 
   void printSwapInfo();
+
+  void chainInfo(); 
 
 /**
    @brief Execute a portion of one run. 

@@ -5,6 +5,7 @@
 #include "output.h"
 #include "misc-utils.h"
 #include "TreeAln.hpp"
+#include "Randomness.hpp"
 
 // #define DEBUG_INFO 
 
@@ -15,14 +16,14 @@ void apply_st_nni(Chain *chain, proposalFunction *pf)
   tree *tr = chain->traln->getTr(); 
   int numBranches = chain->traln->getNumBranches();
   assert(numBranches == 1); 
-  branch b = drawInnerBranchUniform(chain); 
+  branch b = chain->getChainRand()->drawInnerBranchUniform(*traln); 
 
   nodeptr p = findNodeFromBranch(tr, b); 
   
   branch toBePruned = constructBranch(p->next->back->number, p->number ); 
   
   branch switchingBranch; 
-  double r = drawRandDouble01(chain);
+  double r = chain->getChainRand()->drawRandDouble01();
   double bl = 0; 
   if(r < 0.5)
     {
@@ -61,9 +62,9 @@ void apply_st_nni(Chain *chain, proposalFunction *pf)
 #ifdef NNI_MULTIPLY_BL
 
     /* DIRTY */
-    double m1 = drawMultiplier(chain, pf->parameters.multiplier),
-      m2 =  drawMultiplier(chain, pf->parameters.multiplier),
-      m3 =  drawMultiplier(chain, pf->parameters.multiplier);
+    double m1 = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier),
+      m2 =  chain->getChainRand()->drawMultiplier(pf->parameters.multiplier),
+      m3 =  chain->getChainRand()->drawMultiplier(pf->parameters.multiplier);
       
     traln->setBranchLengthSave( pow( traln->getBranchLength( p,0),m1),0,p); 
     traln->setBranchLengthSave( pow( traln->getBranchLength( r,0),m2),0,r); 

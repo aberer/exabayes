@@ -1,12 +1,15 @@
+#include <sstream>
+
+
 #include "CoupledChains.hpp"
 #include "Chain.hpp"
 #include "randomness.h"
 #include "globals.h"
 #include "proposals.h"
-
 #include "treeRead.h"
+#include "output.h"
+#include "topology-utils.h"
 
-#include "randomTree.h"
 
 
 CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int runid, initParamStruct *initParams)
@@ -14,7 +17,7 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
 {
   assert((nat)numCoupled == trees.size());
 
-  for(int i = 0; numCoupled; ++i)
+  for(int i = 0; i < numCoupled; ++i)
     {
       Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], initParams); 
       chains.push_back(chain);
@@ -70,10 +73,10 @@ void CoupledChains::switchChainState()
   if(numChain == 1)
     return;   
 
-  int chainA = drawGlobalRandIntBound(numChain), 
-   chainB = chainA; 
+  int chainA = rand.drawRandInt(numChain),
+    chainB = chainA; 
   while(chainA == chainB)
-    chainB = drawGlobalRandIntBound(numChain); 
+    chainB = rand.drawRandInt(numChain); 
 
   int coupIdA = chains[chainA]->couplingId,
     coupIdB = chains[chainB]->couplingId; 
@@ -93,7 +96,7 @@ void CoupledChains::switchChainState()
   double heatA = chains[chainA]->getChainHeat(),
     heatB = chains[chainB]->getChainHeat(); 
 
-  assert(heatA < 1.f || heatB < 1.f); 
+  assert(heatA <= 1.f || heatB <= 1.f); 
 
   double lnlA = chains[chainA]->traln->getTr()->likelihood,
     lnlB = chains[chainB]->traln->getTr()->likelihood; 
@@ -110,7 +113,7 @@ void CoupledChains::switchChainState()
     *b = chains[ chainB] ; 
   
   /* do the swap */
-  if( drawGlobalDouble01()  < accRatio)
+  if( rand.drawRandDouble01()  < accRatio)
     {
       /* everything, we need to swap */
       swap(a->couplingId, b->couplingId); 
@@ -147,6 +150,61 @@ void CoupledChains::switchChainState()
 }
 
 
+void CoupledChains::chainInfo()
+{
+  // find cold chain
+  Chain *coldChain = NULL; 
+  for(auto chain : chains )
+    if(chain->couplingId == 0)
+      coldChain = chain; 
+  assert(coldChain != NULL); 
+  
+  tree *tr = coldChain->traln->getTr(); 
+
+  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runid,   gettime()  - timeIncrement  , coldChain->currentGeneration, coldChain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(coldChain->traln, tr->nodep[1]->back)));
+
+  
+  // print hot chains
+  vector<Chain*> sortedChains(chains.size()); 
+  for(auto chain : chains)
+    sortedChains[chain->couplingId] = chain; 
+  for(nat i = 1 ; i < chains.size(); ++i)
+    {
+      Chain *chain = sortedChains[i]; 
+      double heat = chain->getChainHeat();
+      assert(heat < 1.0f); 
+      
+      PRINT("lnl_beta(%.2f)=%.2f\t", heat, chain->traln->getTr()->likelihood); 
+    }
+
+  PRINT("\n"); 
+
+  /* just output how much time has passed since the last increment */
+  timeIncrement = gettime(); 	
+
+  char* names[]= {"TOPO", "BL", "FREQ", "MODEL", "HETER"} ;   
+
+  for(int i = 1; i < NUM_PROP_CATS + 1 ; ++i)
+    {
+      category_t type = category_t(i); 
+      PRINT("%s:", names[i-1]);       
+      for(int j = 0; j < coldChain->numProposals;++j )
+	{
+	  proposalFunction *pf = coldChain->proposals[j]; 	
+	  if(type == pf->category)
+	    {
+	      stringstream buf; 
+	      buf << pf->sCtr; 
+	      PRINT("\t%s: %s\t", pf->name, buf.str().c_str()); 
+	    }
+	}
+      PRINT("\n"); 
+    }
+
+  PRINT("\n");
+}
+
+
 void CoupledChains::executePart(int gensToRun)
 {  
   /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
@@ -155,24 +213,26 @@ void CoupledChains::executePart(int gensToRun)
 
   for(int genCtr = 0; genCtr < gensToRun; genCtr += gAInfo.swapInterval)
     {
-      boolean timeToTune = FALSE; 
+      bool timeToTune = false; 
+      bool timeToPrint = false; 
 
       for(int chainCtr = 0; chainCtr < gAInfo.numberCoupledChains; ++chainCtr)
 	{      
-	  Chain *curChain = chains[ chainCtr];
+	  Chain *chain = getChain(chainCtr); 
 
 	  for(int i = 0; i < gAInfo.swapInterval; ++i)
 	    {
-	      curChain->step();		  
-	      if(gAInfo.tuneFreq > 0 && gAInfo.tuneHeat && curChain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 )
-		timeToTune = TRUE; 
+	      chain->step(); 
+	      timeToTune = gAInfo.tuneFreq > 0 && gAInfo.tuneHeat && chain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 ; 
+	      timeToPrint = isOutputProcess() && chain->couplingId == 0 && gAInfo.printFreq > 0 && chain->currentGeneration % gAInfo.printFreq == gAInfo.printFreq - 1 ; // that is a bit nonsensical 
 	    }
 	}
 
       if(timeToTune)
-	{	      
-	  tuneTemperature();
-	}
+	tuneTemperature();
+      
+      if(timeToPrint)
+	
 	    
       
       switchChainState();

@@ -31,13 +31,8 @@ typedef struct globs
   int numberOfRuns; 
   int numberCoupledChains;
 
-  /* RNG stuff */
-  randKey_t rGlobalKey ; 
-  randCtr_t rGlobalCtr; 
-
-  Chain *allChains; 		/* careful with this! */
   int samplingFrequency; 
-  BipartitionHash* bipHash; 
+  /* BipartitionHash* bipHash;  */
 
   int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
@@ -72,36 +67,6 @@ char configFileName[1024];
 
 
 globalAnalysisInfo gAInfo; 
- /* = */
-/*   {0, */
-/*    1, */
-/*    1, */
-/*    {{0,0}}, */
-/*    {{0,0}}, */
-/*    NULL,  */
-/*    0, */
-/*    NULL, */
-/*    0, */
-/*    10000 , */
-/*    NULL ,  */
-/*    NULL,   */
-/*    NULL,  */
-/* #ifdef DEBUG_LNL_VERIFY */
-/*    NULL,  */
-/* #endif    */
-/*    100,  */
-/*    500,  */
-/*    0.1,  */
-/*    0.005,  */
-/*    0.1 , */
-/*    1, */
-/*    true,  */
-/*    5000,  */
-/*    0.0, */
-/*    true    */
-/*   } ;*/ 
-/* TODO  */
-
 
 /* for crude performance measurements */
 double timeIncrement = 0;  

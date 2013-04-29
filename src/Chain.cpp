@@ -2,8 +2,7 @@
 #include "Topology.hpp"
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp"
-#include "randomness.h"
-// #include "chain.h"
+#include "Randomness.hpp"
 #include "output.h"
 #include "globals.h"
 #include "BipartitionHash.hpp"
@@ -12,25 +11,15 @@
 #include "topology-utils.h"
 
 
-
-// TODO 
-#define TOPO_RESTORE 0 
-#define TOPO_SAVE 1 
-
-
-
-
-
-Chain::Chain(randKey_t seed, int id, int runid, TreeAln* _traln, initParamStruct *initParams)  
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruct *initParams)  
   : traln(_traln)
   , couplingId(id)
   , currentGeneration(0)
   , hastings(1)
+  , runid(_runid)
 {
-  rKey.v[0] = seed.v[0]; 
-  rKey.v[1] = seed.v[1]; 
-
-  // make the file names 
+  chainRand = new Randomness(seed.v[0]);
+  assert(id < gAInfo.numberCoupledChains); 
   
   if(id == 0)
     {
@@ -57,13 +46,6 @@ Chain::Chain(randKey_t seed, int id, int runid, TreeAln* _traln, initParamStruct
 
   evaluateFullNoBackup(this);   
   saveTreeStateToChain(); 
-  PRINT("Initial LnL for chain %d is  %f\ttree-length=%.3f\tseed=%u,%u\n", this->id, this->traln->getTr()->likelihood, 
-	branchLengthToReal(this->traln->getTr(), getTreeLength(this->traln, this->traln->getTr()->nodep[1]->back)),
-	this->rKey.v[0], this->rKey.v[1]
-	); 
-
-  // TODO  
-  assert(0); 
 }
 
 
@@ -75,38 +57,9 @@ double Chain::getChainHeat()
 {
   double tmp = 1. + deltaT * couplingId; 
   double inverseHeat = 1 / tmp; 
-  assert(inverseHeat < 1.); 
+  assert(inverseHeat <= 1.); 
   return inverseHeat; 
 }
-
-
-
-
-// LEGACY
-// static void traverseAndTreatBL(node *p, TreeAln *traln, double *blBuf, int* cnt, boolean restore)
-// {
-//   tree *tr = traln->getTr();
-//   nodeptr q; 
-//   assert(traln->getNumBranches() == 1); 
-
-//   if(restore == TOPO_RESTORE )
-//     traln->setBranchLengthSave(blBuf[*cnt], 0,p); 
-//   else if(restore == TOPO_SAVE)    
-//     blBuf[*cnt] =  traln->getBranchLength(p,0); 
-//   else 
-//     assert(0); 
-//   *cnt += 1 ; 
-  
-//   if( NOT isTip(p->number, tr->mxtips))
-//     {
-//       q = p->next; 
-//       while(q != p )
-// 	{
-// 	  traverseAndTreatBL(q->back, traln, blBuf, cnt, restore); 
-// 	  q = q->next; 
-// 	}
-//     }
-// }
 
 
 /**
@@ -225,15 +178,7 @@ Chain& Chain::operator=(Chain& rhs)
 
 void Chain::saveTreeStateToChain()
 {
-  // tree *tr  = this->traln->getTr();     
   dump.topology->saveTopology(*(traln));
-
-  
-  // TODO should not be needed any more  
-  /* save branch lengths */
-  // int cnt = 0; 
-  // traverseAndTreatBL(tr->start->back, this->traln, this->dump.branchLengths, &cnt, TOPO_SAVE); 
-  // assert(cnt == 2 * tr->mxtips - 3 ); 
 
   /* save model parameters */
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
@@ -253,17 +198,10 @@ void Chain::saveTreeStateToChain()
 
 void Chain::applyChainStateToTree()
 {
-  // tree *tr = traln->getTr(); 
-  
   /* TODO enable multi-branch    */
   assert(traln->getNumBranches() == 1); 
 
   dump.topology->restoreTopology(*(traln));
-
-  /* restore branch lengths */
-  // int cnt = 0; 
-  // traverseAndTreatBL(tr->start->back, traln, dump.branchLengths, &cnt, TOPO_RESTORE); 
-  // assert(cnt == 2 * tr->mxtips -3); 
 
   /* restore model parameters */
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
@@ -281,11 +219,25 @@ void Chain::applyChainStateToTree()
     } 
 
   evaluateFullNoBackup(this); 
-
-  wasAccepted = TRUE; 
 }
 
 
+
+
+
+void Chain::debug_printAccRejc(proposalFunction *pf, bool accepted) 
+{
+#ifdef DEBUG_SHOW_EACH_PROPOSAL
+  if(isOutputProcess())
+    {
+      if(accepted)
+	printInfo( "ACC\t");   
+      else 
+	printInfo("rej\t");   	  
+      printf("%s %g\n" ,pf->name, this->traln->getTr()->likelihood); 
+    }
+#endif
+}
 
 
 
@@ -294,9 +246,7 @@ void Chain::drawProposalFunction(proposalFunction **result )
 {    
   *result = NULL; 
   category_t
-    cat = category_t(drawSampleProportionally(this,categoryWeights, NUM_PROP_CATS) + 1); /* it is 1-based */
-
-  /* printInfo(chain, "drawing proposal; category is %d\n"), cat;  */
+    cat = category_t(chainRand->drawSampleProportionally(categoryWeights, NUM_PROP_CATS) + 1); /* it is 1-based */
   
   double sum = 0; 
   for(int i = 0; i < numProposals; ++i)
@@ -307,8 +257,7 @@ void Chain::drawProposalFunction(proposalFunction **result )
     }
   assert(fabs(sum - 1.) < 0.000001); 
 
-  double r = drawRandDouble01(this);
-  /* printf("numProp=%d\n", chain->numProposals);  */
+  double r = chainRand->drawRandDouble01();
   for(int i = 0; i < numProposals; ++i)
     {
       proposalFunction *pf = proposals[i]; 
@@ -342,9 +291,7 @@ void Chain::step()
 
   double prevLnl = tr->likelihood;     
 
-  double myHeat = this->getChainHeat();
-
-  // double myHeat = getChainHeat(chain ) ; 
+  double myHeat = getChainHeat();
 
   proposalFunction *pf = NULL;   
   drawProposalFunction(&pf);
@@ -363,15 +310,15 @@ void Chain::step()
   /* chooses the cheapest way to evaluate the likelihood  */
   pf->eval_lnl(this, pf); 
 
-  double testr = drawRandDouble01(this);
+  double testr = chainRand->drawRandDouble01();
   double acceptance = 
     exp((priorRatio  + tr->likelihood - prevLnl) * myHeat) 
     * this->hastings ; 
 
-  this->wasAccepted  = testr < acceptance; 
-  debug_printAccRejc(this, pf, this->wasAccepted); 
+  bool wasAccepted  = testr < acceptance; 
+  debug_printAccRejc( pf, wasAccepted); 
 
-  if(this->wasAccepted)
+  if(wasAccepted)
     {
       pf->sCtr.accept();
       expensiveVerify(this);
@@ -394,18 +341,9 @@ void Chain::step()
 	printSample(this);       
 
       // TODO keep? 
-      gAInfo.bipHash->addBipartitionsToHash(*(this->traln),  this->id / gAInfo.numberCoupledChains); 
+      // gAInfo.bipHash->addBipartitionsToHash(*(this->traln),  this->id / gAInfo.numberCoupledChains); 
     }
 
-
-  /* the output for the console  */
-  if(isOutputProcess() 
-     && this->couplingId == 0     
-     && gAInfo.printFreq > 0 
-     && this->currentGeneration % gAInfo.printFreq == gAInfo.printFreq -1   )
-    {
-      chainInfo(this); 
-    }
 
   /* autotuning for proposal parameters. With increased parallelism
      this will become more complicated.  */
@@ -433,7 +371,7 @@ void Chain::step()
 
 
 
-void Chain::initParamDump( )
+void Chain::initParamDump()
 {  
   tree *tr = traln->getTr();
   
@@ -449,8 +387,25 @@ void Chain::initParamDump( )
       for(int j = 0; j < 4; ++j)
 	p->frequencies[j] = 0.25;       
     }
-
-  dump.branchLengths = (double*)exa_calloc(2 * tr->mxtips, sizeof(double));
-  for(int i = 0; i < 2 * tr->mxtips; ++i)
-    dump.branchLengths[i] = TreeAln::initBL;   
 }
+
+
+/**
+   @brief prints a message with associated chain/run/heat information. 
+
+   Please always use this, when possible, it also assures that the
+   message is only printed once.
+ */ 
+void Chain::printInfo(const char *format, ...)
+{  
+  if( isOutputProcess())
+    {
+      printf("[run %d / heat %d / gen %d] ", this->runid, this->couplingId, this->currentGeneration); 
+      va_list args;
+      va_start(args, format);     
+      vprintf(format, args );
+      va_end(args);
+    }
+}
+
+

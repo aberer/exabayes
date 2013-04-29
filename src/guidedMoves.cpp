@@ -1,7 +1,8 @@
 #include "axml.h"
 #include "bayes.h"
 #include "adapters.h"
-#include "randomness.h"
+// #include "randomness.h"
+#include "Randomness.hpp"
 #include "output.h"
 #include "path.h" 
 #include "topology-utils.h"
@@ -238,7 +239,7 @@ static void testInsertWithRadius(Chain *chain, insertList **lnlList, branch subt
 insertList* sampleFromLnlArray(Chain *chain, insertList* lnlList)
 {
   double
-    r = drawRandDouble01(chain); 
+    r = chain->getChainRand()->drawRandDouble01(); 
 
   for(insertList *iter = lnlList; iter ; iter = iter->next)
     {
@@ -386,7 +387,7 @@ void applyGuidedSPR(Chain *chain, proposalFunction *pf)
   
   while(NOT accepted) 
     {
-      subtree = drawBranchUniform(chain);      
+      subtree = chain->getChainRand()->drawBranchUniform(*(chain->traln)); 
       p = findNodeFromBranch(tr, subtree); 
       accepted = NOT isTip(p->number, tr->mxtips)
 	&& (NOT isTip(p->next->back->number,tr->mxtips ) && NOT isTip(p->next->next->back->number, tr->mxtips)); 
@@ -445,7 +446,7 @@ void applyGuidedSPR(Chain *chain, proposalFunction *pf)
   {
     nodeptr p = findNodeFromBranch(tr, subtree); 
     double sum = branchLengthToReal(tr, traln->getBranchLength( p->next,0) * traln->getBranchLength( p->next->next,0));
-    double onePart = drawRandDouble01(chain) * sum ; 
+    double onePart = chain->getChainRand()->drawRandDouble01() * sum ; 
     double otherPart = sum - onePart; 
     onePart = branchLengthToInternal(tr, onePart); 
     otherPart = branchLengthToInternal(tr, otherPart); 
