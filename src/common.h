@@ -74,7 +74,7 @@ typedef  unsigned int nat ;
 #define NOT ! 
 
 
-#define INIT_BRANCH_LENGTHS 0.65
+/* #define INIT_BRANCH_LENGTHS 0.65 */
 #define INIT_BL_MULT 1.386294
 #define INIT_BL_SLID_WIN  0.075
 #define INIT_RATE_SLID_WIN  0.15 

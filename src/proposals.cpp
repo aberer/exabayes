@@ -5,7 +5,6 @@
 #include "globals.h"
 #include "main-common.h"
 #include "output.h"
-#include "chain.h"
 #include "topology-utils.h" 
 #include "eval.h"
 #include "adapters.h"

@@ -11,6 +11,6 @@
 
 boolean readTreeWithOrWithoutBL(tree *tr, FILE *treeFile); 
 void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL); 
-
+void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln ); 
 
 #endif

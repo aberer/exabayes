@@ -27,74 +27,86 @@ const double TreeAln::alphaMax = 1000.0;
 const double TreeAln::freqMin = 0.001; 
 
 
+const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
+
+
 // #define DEBUG_LINK_INFO 	// TODO erase 
 
 
-TreeAln::TreeAln(char *bytefile)
-{ 
-  tree *tre = (tree*)exa_calloc(1,sizeof(tree)) ; 
-  this->tr = tre; 
 
+TreeAln::TreeAln()
+{
+  tree *tre = (tree*)exa_calloc(1,sizeof(tree));
+  this->tr = tre; 
+}
+
+
+void TreeAln::initializeFromByteFile(char *bytefile)
+{
 #if HAVE_PLL != 0
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
   partitions = pl;
   this->initializeTreePLL();
 #else 
   initializeTree(tre, gAInfo.adef);   
-#endif
+#endif  
 }
 
-
-TreeAln::TreeAln(tree *_tr)
-  : tr(_tr)
-{
-}
 
 
 TreeAln::~TreeAln()
 {
-  exa_free(tr->aliaswgt); 
-  exa_free(tr->rateCategory); 
-  exa_free(tr->patrat);
-  exa_free(tr->patratStored);
-  exa_free(tr->lhs);  
-  // exa_free(tr->yVector[0]);
-  exa_free(tr->yVector); 
-  for(int i = 1; i <= tr->mxtips; ++i )
-    exa_free(tr->nameList[i]);
+  if(tr->aliaswgt != NULL)
+    exa_free(tr->aliaswgt); 
+  if(tr->rateCategory != NULL)
+    exa_free(tr->rateCategory); 
+  if(tr->patrat != NULL)
+    exa_free(tr->patrat);
+  if(tr->patratStored != NULL)
+    exa_free(tr->patratStored);
+  if(tr->lhs != NULL)
+    exa_free(tr->lhs);  
+  if(tr->yVector != NULL)
+    exa_free(tr->yVector); 
+  if(tr->nameList != NULL)
+    {
+      for(int i = 1; i <= tr->mxtips; ++i )
+	exa_free(tr->nameList[i]);
+      exa_free(tr->nameList);
+    }
 
-  exa_free(tr->nameList);
-  exa_free(tr->tree_string);
-  exa_free(tr->tree0);
-  exa_free(tr->tree1);
+  if(tr->tree_string != NULL)
+    exa_free(tr->tree_string);
+  if(tr->tree0 != NULL)
+    exa_free(tr->tree0);
+  if(tr->tree1 != NULL)
+    exa_free(tr->tree1);
+  
+  if(tr->constraintVector != NULL)
+    exa_free(tr->constraintVector); 
+  if(tr->nodeBaseAddress != NULL)
+    exa_free(tr->nodeBaseAddress);
 
-  exa_free(tr->constraintVector); 
-  exa_free(tr->nodeBaseAddress);
-
-  for(int i = 0; i < getNumberOfPartitions();++i)
+  
+  int numPart = getNumberOfPartitions();
+  for(int i = 0; i < numPart ;++i)
     {
       pInfo *partition = getPartition(i); 
       exa_free(partition); 
     }
   
+  if(numPart > 0)
+    {
 #if HAVE_PLL != 0 
-  if(getNumberOfPartitions() > 0 )
-    exa_free(partitions->partitionData); 
-  exa_free(partitions); 
+      if(getNumberOfPartitions() > 0 )
+	exa_free(partitions->partitionData); 
+      exa_free(partitions); 
 #else 
-  exa_free(tr->partitionData);
+      exa_free(tr->partitionData);
 #endif
+    }
 
   exa_free(tr);
-}
-
-
-TreeAln::TreeAln(const TreeAln &rhs)
-  : tr(rhs.tr)
-#if HAVE_PLL != 0
-  , partitions(rhs.partitions)
-#endif
-{  
 }
 
 

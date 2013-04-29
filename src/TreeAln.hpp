@@ -13,16 +13,18 @@
 class TreeAln
 {
 public: 
-  explicit TreeAln( char* bytefile); 
-  explicit TreeAln(tree *tr); 
+  explicit TreeAln();
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
-  TreeAln(const TreeAln &rhs); 
+  // TreeAln(const TreeAln &rhs); 
   
   void initRevMat(int model); 
   void unlinkTree();
   nodeptr getUnhookedNode(int number);
   void discretizeGamma(int model); 
+
+  void initializeFromByteFile(char *bytefile); 
+  
 
 
   // save setters 
@@ -65,6 +67,8 @@ public:
     rateMax, rateMin, 
     alphaMin, alphaMax,
     freqMin; 
+  
+  static const double initBL;  	// init values 
 
 
 private: 

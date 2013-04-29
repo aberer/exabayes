@@ -17,7 +17,7 @@
 #include "proposals.h"
 #include "nclConfigReader.h"
 #include "misc-utils.h"
-#include "chain.h"
+// #include "chain.h"
 #include "adapters.h"
 #include "eval.h"
 #include "proposals.h"
@@ -25,6 +25,7 @@
 #include "prsfComputer.h"
 #include "TreeAln.hpp"
 #include "AvgSplitFreqAssessor.hpp"
+#include "LnlRestorer.hpp"
 
 extern double masterTime; 
 
@@ -167,8 +168,90 @@ void runChains(vector<CoupledChains*> allRuns, int diagFreq)
 
 
 
+
+
+
+
+
+/**
+   @brief An overloaded initialization function for all the chains. 
+
+   This function should initialize all chain data structures and parse
+   the config file.
+
+   This function also decides which aln,tr structures are assigned to
+   which chains.
+ */ 
+static void initializeIndependentChains( analdef *adef, int seed, vector<CoupledChains*> &runs, initParamStruct *initParams )
+{
+  FILE *treeFH = NULL; 
+  if( gAInfo.numberOfStartingTrees > 0 )
+    treeFH = myfopen(tree_file, "r"); 
+
+  int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
+  PRINT("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
+
+#ifdef DEBUG_LNL_VERIFY
+  gAInfo.debugTree = new TreeAln( byteFileName); 
+#endif
+  
+
+  // sets up tree structures 
+  vector<TreeAln*>  trees; 
+  for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
+    {
+      TreeAln *traln = new TreeAln();
+      traln->initializeFromByteFile(byteFileName); 
+      trees.push_back(traln); 
+    }
+
+
+  int mySeed = 0; 		// TODO 
+
+  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+    {
+      CoupledChains *cc = new CoupledChains(mySeed, gAInfo.numberCoupledChains, trees, i, initParams);
+      runs.push_back(cc); 
+
+      if(i < gAInfo.numberOfStartingTrees)
+	cc->initStartingTree(treeFH);      
+      else 
+	{
+	  int anotherSeed= 0;  	// TODO 
+	  cc->initRandomOne(anotherSeed);	  
+	}
+    }
+  
+  // only use one restorer for all chains 
+  LnlRestorer *restorer = new LnlRestorer(runs[0]->getChain(0));
+  for(auto run : runs )
+    {
+      for(int i = 0; i < run->getNumberOfChains(); ++i )
+	{
+	  Chain *chain = run->getChain(i); 
+	  chain->setRestorer(restorer); 
+	}
+    }
+
+  {
+    Chain* chain = runs[0]->getChain(0); 
+    int numTax = chain->traln->getTr()->mxtips; 
+    gAInfo.bipHash = new BipartitionHash(numTax, gAInfo.numberOfRuns);
+  }
+  
+  if(gAInfo.numberOfStartingTrees > 0)
+    fclose(treeFH); 
+
+  PRINT("\n"); 
+
+}
+
+
+
+
 // #define TEST 
  
+
 #include "MyTestProposal.hpp"
 
 

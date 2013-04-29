@@ -2,15 +2,43 @@
 #include "Chain.hpp"
 #include "randomness.h"
 
-#include "chain.h"
+// #include "Cchain.h"
 #include "globals.h"
 #include "proposals.h"
+
+#include "treeRead.h"
+
+#include "randomTree.h"
+
+
+// LEGACY
+static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
+{
+  tree *tr = traln->getTr();
+  nodeptr q;
+  int i;
+  
+  for( i = 0; i < traln->getNumBranches(); i++)
+      traln->setBranchLengthSave(z, i, p); 
+  
+  *count += 1;
+  
+  if (! isTip(p->number,tr->mxtips)) 
+    {                                  /*  Adjust descendants */
+      q = p->next;
+      while (q != p) 
+	{
+	  traverseInitFixedBL(q->back, count, traln, z);
+	  q = q->next;
+	} 
+    }
+}
 
 
 CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int runid, initParamStruct *initParams)
   : rand(seed)
 {
-  assert(numCoupled == sizeof(trees));
+  assert((nat)numCoupled == trees.size());
 
   for(int i = 0; numCoupled; ++i)
     {
@@ -149,7 +177,7 @@ void CoupledChains::executePart(int gensToRun)
 {  
   /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
   for(nat i = 0; i < chains.size(); ++i)
-    applyChainStateToTree(chains[i]);
+    chains[i]->applyChainStateToTree();
 
   for(int genCtr = 0; genCtr < gensToRun; genCtr += gAInfo.swapInterval)
     {
@@ -177,7 +205,7 @@ void CoupledChains::executePart(int gensToRun)
     }
 
   for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
-    saveTreeStateToChain(chains[i]);
+    chains[i]->saveTreeStateToChain();
 }
 
 
@@ -196,3 +224,60 @@ void CoupledChains::tuneTemperature()
   for(auto chain : chains)
     chain->setDeltaT(temperature); 
 }
+
+
+
+
+void CoupledChains::initStartingTree(FILE *fh)
+{
+  Chain *masterChain = chains[0]; 
+
+  // fetch a tree 
+  TreeAln *traln = masterChain->traln; 
+  tree *tr = traln->getTr();
+  boolean hasBranchLength =  readTreeWithOrWithoutBL(tr, fh);
+
+  int count = 0;       
+  if(hasBranchLength)
+    traverseInitCorrect(tr->start->back, &count, traln ) ;  
+  else      
+    traverseInitFixedBL(tr->start->back, &count, traln, TreeAln::initBL ); 
+
+  assert(count == 2 * tr->mxtips  -3);       
+
+  for(int i = 1; i < getNumberOfChains(); ++i)
+    {
+      Chain *chain = getChain(i); 
+      *chain  = *masterChain; 
+      chain->applyChainStateToTree();
+    }
+}
+
+
+
+
+
+
+void CoupledChains::initRandomOne(int seed)
+{
+  Chain *masterChain = chains[0]; 
+  TreeAln *traln = masterChain->traln; 
+  tree *tr = traln->getTr();
+  exa_makeRandomTree(tr); 
+  
+  
+  assert(0); 
+  // TODO where is the randomness coming from?    
+  
+  int count = 0; 
+  traverseInitFixedBL( tr->start->back, &count, traln, TreeAln::initBL);
+  assert(count  == 2 * tr->mxtips - 3);
+  
+  for(int i = 1; i < getNumberOfChains(); ++i)
+    {
+      Chain *chain = getChain(i); 
+      *chain  = *masterChain;       
+      chain->applyChainStateToTree();
+    }
+}
+

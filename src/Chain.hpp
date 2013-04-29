@@ -97,6 +97,7 @@ public:
   // CORRECT part 
 public: 
   Chain(randKey_t seed, int id, int runid, TreeAln* trealns, initParamStruct *initParams)  ; 
+  Chain& operator=(Chain& rhs); 
 
   
   void setRestorer(LnlRestorer *rest){restorer = rest ; }
@@ -104,17 +105,45 @@ public:
 
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
+
+
+  /**   @brief draws a proposal function.
+
+	Notice: this could be extended later, if we decide to make this
+	dependent on the previous state.
+   
+	Furthermore, we must be sure now that category weights and relative
+	proposal weights sum up to 1 each. 
+   
+  */ 
+  void drawProposalFunction(proposalFunction **result ); 
+
+
+  /** @brief Saves all relevan information from the tree into the chain Chain. */ 
+  void saveTreeStateToChain(); 
+
+
+  /** @brief Applies the Chain of the chain to its tree. 
+
+      Notice: you must not simply change the tree pointer. More
+      modifications are necessary to do so.
+
+      @param boolean checkLnl -- should we check, if the lnl is the same as
+      before? If we applied it the first time, there is no before.
+  */ 
+  void applyChainStateToTree(); 
   
   /** @brief Execute one generation of a given chain. */
   void step();
   
-
 private : 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   
   void normalizePropSubCats(); 
   void normalizeCategories(); 
   void printAllProposalWeights(); 
+
+  void initParamDump(); 
 
 }; 
 

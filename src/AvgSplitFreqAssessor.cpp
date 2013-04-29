@@ -210,9 +210,9 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
  */ 
 void AvgSplitFreqAssessor::initializeTreeOnly(int numTax )
 {
-  tree *tr =(tree*)exa_calloc(1,sizeof(tree)); 
+  traln = new TreeAln();
+  tree *tr = traln->getTr();
   tr->mxtips = numTax; 
-  traln = new TreeAln(tr) ; 
 
 #if HAVE_PLL != 0
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 

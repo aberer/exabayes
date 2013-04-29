@@ -4,6 +4,7 @@
 #include "bayes.h"
 #include "globals.h"
 #include "adapters.h"
+#include "TreeAln.hpp"
 
 static void  treeEchoContext (FILE *fp1, FILE *fp2, int n)
 { /* treeEchoContext */
@@ -494,3 +495,30 @@ boolean readTreeWithOrWithoutBL(tree *tr, FILE *fh)
 
 
 
+
+
+
+// TODO HACK 
+void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
+{
+  tree *tr = traln->getTr();
+  nodeptr q;
+  int i;
+
+  for( i = 0; i < traln->getNumBranches(); i++)
+    {
+      double val = traln->getBranchLength(p, i); 
+      traln->setBranchLengthSave(exp( - val  / tr->fracchange), i,p); 
+    }
+  *count += 1;
+  
+  if (! isTip(p->number,tr->mxtips)) 
+    {                                  /*  Adjust descendants */
+      q = p->next;
+      while (q != p) 
+	{
+	  traverseInitCorrect(q->back, count, traln);
+	  q = q->next;
+	} 
+    }
+}
