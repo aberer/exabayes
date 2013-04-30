@@ -503,7 +503,6 @@ static void simple_gamma_proposal_apply(Chain * chain, proposalFunction *pf)
   
   chain->traln->setAlphaSave(newalpha, model); 
   chain->traln->discretizeGamma(model); 
-
 }
 
 
@@ -1637,12 +1636,17 @@ void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
   int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions());
   pInfo *partition = chain->traln->getPartition( model); 
 
+  chain->hastings *= multi; 
   
-  perPartitionInfo *pinfo = pf->remembrance.partInfo; 
+  perPartitionInfo *pinfo = pf->remembrance.partInfo;
   pinfo->modelNum = model;   
   pinfo->alpha = chain->traln->getAlpha(model);
-  
-  chain->traln->setAlphaSave(partition->alpha * multi, model); 
+
+  double tmp = partition->alpha * multi; 
+  double valueUsed = chain->traln->setAlphaSave(partition->alpha * multi, model); 
+
+  // cout << "model " << model << " oldAlpha="  << pinfo->alpha << "\tproposed=" << tmp  << "\tnewAlpha=" << valueUsed << "\t\tALPHA="  << partition->alpha<< endl; 
+
   chain->traln->discretizeGamma(model);
 }
 

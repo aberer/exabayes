@@ -38,6 +38,7 @@ TreeAln::TreeAln()
 {
   tree *tre = (tree*)exa_calloc(1,sizeof(tree));
   this->tr = tre; 
+  tr->rateHetModel = GAMMA; 	// !!!
 }
 
 
@@ -387,7 +388,7 @@ double TreeAln::setAlphaSave(double newValue, int model)
     newValue = alphaMin; 
   if(alphaMax < newValue )
     newValue = alphaMax; 
-
+  
   pInfo *partition = getPartition(model);
   partition->alpha =  newValue; 
   

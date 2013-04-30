@@ -313,13 +313,16 @@ void Chain::step()
   /* reset proposal ratio  */
   this->hastings = 1; 
 
-  double oldPrior = this->priorProb; 		/* TODO  */
+  // double oldPrior = this->priorProb; 		/* TODO  */
 
   /* chooses move, sets proposal ratio, correctly modifies the prior */
   pf->apply_func(this, pf);  
-  double priorRatio  = this->priorProb - oldPrior; 
+
+  // TODO 
+  double priorRatio = 0 ; 
+  // double priorRatio  = this->priorProb - oldPrior; 
   /* enable once we actually have priors  */
-  assert(priorRatio == 0); 
+  // assert(priorRatio == 0); 
 
   /* chooses the cheapest way to evaluate the likelihood  */
   pf->eval_lnl(this, pf); 
@@ -328,6 +331,8 @@ void Chain::step()
   double acceptance = 
     exp((priorRatio  + tr->likelihood - prevLnl) * myHeat) 
     * this->hastings ; 
+
+  // cout << "priorRatio=" << priorRatio << "\tlnl="  << tr->likelihood << "\tprevLnl="  << prevLnl << "\tmyheat=" << myHeat << "\thastings=" << hastings << endl; 
 
   bool wasAccepted  = testr < acceptance; 
   debug_printAccRejc( pf, wasAccepted); 

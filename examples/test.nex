@@ -58,7 +58,7 @@ begin EXABAYES;
       initModelSingleBiunifWeight 0 [broken] 
       initModelAllBiunifWeight  0 [broken] 
       initModelPermBiunifWeight 0 [ BROKEN ] 
-      initModelDirichlet 2 []
+      initModelDirichlet 2  []
 
       [ FREQUENIES ]
       initFrequenciesWeight 0   [ broken : biunif ]
@@ -66,7 +66,7 @@ begin EXABAYES;
       initFrequencyDirichletWeight 2  [ok but needs scaling]
 
       [ PARAMETERS for various moves ]
-      guidedSPRRadius 50  [ maximum radius that is searched by the guided spr move ] 
+      guidedSPRRadius 5  [ maximum radius that is searched by the guided spr move ] 
       eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
 
