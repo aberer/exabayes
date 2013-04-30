@@ -283,7 +283,7 @@ void Chain::drawProposalFunction(proposalFunction **result )
 
 void Chain::step()
 {
-  this->restorer->resetRestorer();
+  this->restorer->resetRestorer(*traln);
 
   tree *tr = this->traln->getTr();   
 
@@ -327,8 +327,7 @@ void Chain::step()
     {
       pf->reset_func(this, pf); 
       pf->sCtr.reject();
-      this->restorer->restore(); // restores the previous tree state 
-
+      this->restorer->restoreArrays(*traln); // restores the previous tree state 
     }
 
   debug_checkTreeConsistency(this->traln->getTr());

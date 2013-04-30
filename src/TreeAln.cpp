@@ -48,7 +48,7 @@ void TreeAln::initializeFromByteFile(char *bytefile)
   partitions = pl;
   this->initializeTreePLL();
 #else 
-  initializeTree(tre, gAInfo.adef);   
+  initializeTree(tr, gAInfo.adef);   
 #endif  
 }
 

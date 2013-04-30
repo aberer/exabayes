@@ -53,6 +53,8 @@ void setupGlobals(initParamStruct *initParams)
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
 
   gAInfo.printFreq = initParams->printFreq; 
+  cout << "printing every " << gAInfo.printFreq << " generations" << endl; 
+  
   gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
   gAInfo.asdsfConvergence = initParams->asdsfConvergence; 
   gAInfo.heatFactor  = initParams->heatFactor; 
@@ -74,11 +76,6 @@ void setupGlobals(initParamStruct *initParams)
 //STAY 
 bool convergenceDiagnostic(vector<CoupledChains*> runs)
 {
-  Chain *allChains = NULL; 
-  assert(0); 
-  // just force to compile 
-
-
   if(gAInfo.numberOfRuns > 1)
     { 
       vector<string> fns; 
@@ -132,7 +129,9 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
       
     }
   else 
-    return allChains[0].currentGeneration > gAInfo.numGen; 
+    {
+      return runs[0]->getChain(0)->currentGeneration > gAInfo.numGen;
+    }
 }
 
 
@@ -143,7 +142,7 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
 void runChains(vector<CoupledChains*> allRuns, int diagFreq)
 {  
   bool hasConverged = false;   
-  while(not hasConverged)
+  while(not hasConverged)   
     {      
       for(nat i = 0; i < allRuns.size(); ++i)
 	{

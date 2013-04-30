@@ -16,7 +16,6 @@ public:
   explicit TreeAln();
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
-  // TreeAln(const TreeAln &rhs); 
   
   void initRevMat(int model); 
   void unlinkTree();
@@ -44,7 +43,7 @@ public:
   tree* getTr(){return tr;}
   int getNumBranches(); 
   int getNumberOfPartitions();   
-  int& accessExecModel(int model); 
+  boolean& accessExecModel(int model); 
   double& accessPartitionLH(int model); 
 
   // getters for various parameters. We should use them to reduce the

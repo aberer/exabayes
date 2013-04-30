@@ -24,25 +24,28 @@ public:
   ~LnlRestorer();
 
   /**@brief  resets the restorer, s.t. it is consistent with the current tree (and can restore it later) */ 
-  void resetRestorer(); 
+  void resetRestorer(TreeAln &traln); 
 
   /// @brief restores the original Chain of the tree 
-  void restore();  
+  void restoreArrays(TreeAln &traln);  
 
   /** @brief save any arrays that are recomputed, if they have not   already been flipped */ 
-  void traverseAndSwitchIfNecessary(nodep virtualRoot, int model, bool fullTraversal); 
-
+  void traverseAndSwitchIfNecessary(TreeAln &traln, nodep virtualRoot, int model, bool fullTraversal); 
 
 private:   
-  void storeOrientation(); 
-  void loadOrientation();
-  void swapArray(int number, int model); 
+  void storeOrientation(TreeAln &traln); 
+  void loadOrientation(TreeAln &traln);
+  void swapArray(TreeAln& traln, int number, int model); 
+
+  int numPart; 
+  int numTax; 
   
   // the original ptrs to the allocated stuff; only for cleanup
   // double ***reserveArraysPtr; 
 
+  vector<double> partitionLnl; 
+
   int modelEvaluated; 
-  Chain *chain; 
   double ***reserveArrays; 
   int* orientation; 
   bool *wasSwitched; 

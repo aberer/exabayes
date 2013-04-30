@@ -9,7 +9,6 @@
 
 
 
-
 /* call this for verification after the lnl has been evaluated somehow */
 void expensiveVerify(Chain *chain)
 {  
@@ -69,7 +68,7 @@ void newViewGenericWrapper(Chain *chain, nodeptr p, boolean masked)
       p->x = 0; 
       p->next->x = 1; 
     }
-  chain->getRestorer()->traverseAndSwitchIfNecessary(p, modelToEval, false); 
+  chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), p, modelToEval, false); 
   exa_newViewGeneric(chain,p,masked); // NEEDED
 }
 
@@ -128,8 +127,8 @@ void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
     cout << " and model "<< model << endl; 
 #endif
 
-  chain->getRestorer()->traverseAndSwitchIfNecessary(start, model, fullTraversal);
-  chain->getRestorer()->traverseAndSwitchIfNecessary(start->back, model, fullTraversal);
+  chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), start, model, fullTraversal);
+  chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), start->back, model, fullTraversal);
 
   exa_evaluateGeneric(chain,start,fullTraversal);   
   if(gAInfo.verifyLnl)
@@ -210,7 +209,6 @@ void evaluateOnePartition(Chain *chain, nodeptr start, boolean fullTraversal, in
   delete [] perPartitionLH; 
   expensiveVerify(chain);
 }
-
 
 
 
