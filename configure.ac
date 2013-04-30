@@ -33,7 +33,9 @@ AC_PROG_RANLIB
 
 dnl NOTICE if you have trouble with that, then install autoconf-archive (or similar)
 AX_EXT
-LX_FIND_MPI()
+
+dnl simply does not work =( 
+dnl LX_FIND_MPI()
 
 
 # Checks for header files.

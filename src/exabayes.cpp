@@ -88,30 +88,42 @@ extern MPI_Comm comm;
 
 
 int main(int argc, char *argv[])
-{ 
-  int globalCommSize = 0, 
-    globalId = 0; 
-  
-  
+{   
   MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &globalId);
-  MPI_Comm_size(MPI_COMM_WORLD, &globalCommSize);
 
-  printf("\nThis is %s process number: %d / %d\n", PROGRAM_NAME, globalId, globalCommSize);   
+  int globalRank = 0, 
+    globalSize = 0; 
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
+  MPI_Comm_size(MPI_COMM_WORLD, &globalSize);
+
+  printf("\nThis is %s process number: %d / %d\n", PROGRAM_NAME, globalRank, globalSize);   
   MPI_Barrier(MPI_COMM_WORLD);
 
   ignoreExceptionsDenormFloat(); 
 
   CommandLine cl(argc, argv); 
 
+  gAInfo.globalSize = globalSize; 
+  gAInfo.globalRank = globalRank; 
+
   initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
   parseConfigWithNcl(configFileName, &initParams);
   setupGlobals(initParams); 
 
+  if(globalSize < initParams->numRunParallel)
+    {
+      if(globalRank == 0)
+	{
+	  cout << "You requested to run "  << initParams->numRunParallel << " in parallel, however there are only " << globalSize << " processes (we need at least 1 process per run, see >numRunParallel<)"  << endl; 
+	}
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+  
   // comm is the communicator used by the legacy axml-stuff in order to compute the likelihood.  
-  int processesPerBatch = globalCommSize / initParams->numRunParallel; 
-  int myColor = globalId / processesPerBatch; 
-  int newRank = globalId  % processesPerBatch; 
+  int processesPerBatch = globalSize / initParams->numRunParallel; 
+  int myColor = globalRank / processesPerBatch; 
+  int newRank = globalRank  % processesPerBatch; 
 
   gAInfo.myBatch = myColor;  
 

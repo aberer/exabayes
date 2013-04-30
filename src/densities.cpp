@@ -45,6 +45,8 @@ static void normalize(double * vector, int length, double normalizingConstant)
 
 
 
+
+
 double densityDirichlet(double *values, double *alphas, int length)
 {
   double density=1;

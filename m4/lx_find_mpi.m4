@@ -138,6 +138,7 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
              if [[ "$?" -eq 0 ]]; then
                  echo yes
                  lx_mpi_link_line=`$$1 -link-info 2>/dev/null`
+		 # echo "set linking to $lx_mpi_link_line"
              else
                  echo no
                  echo -n "Checking whether $$1 responds to '-show'... "

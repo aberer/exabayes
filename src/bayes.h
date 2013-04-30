@@ -82,7 +82,7 @@ struct _pfun
     double eSprStopProb; 
     double slidWinSize;  	
     int radius;     		/* for guided spr moves */
-    double dirichletAlpha; 	/* TODO not used  */
+    double dirichletAlpha;
     double stdDev ; 		/* TODO not used  */
   } parameters ; 
   /* more parameters could be added in another union. This is a bit of
@@ -109,10 +109,7 @@ struct _pfun
   double ratio; 
 }; 
 
-
-
 void exa_main(analdef *adef, int seed, initParamStruct *initParam); 
 void setupGlobals(initParamStruct *initParams); 
-
 
 #endif

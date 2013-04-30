@@ -738,7 +738,7 @@ static void model_dirichlet_proposal_apply(Chain *chain, proposalFunction *pf)//
   int* list  = (int*)exa_calloc(numRates, sizeof(int)); 
 
      
-  chain->getChainRand()->drawDirichletExpected(r, partition->substRates, 50.0, numRates);
+  chain->getChainRand()->drawDirichletExpected(r, partition->substRates, pf->parameters.dirichletAlpha, numRates);
   chain->hastings= densityDirichlet(partition->substRates, r, numRates) 
     / densityDirichlet(r, partition->substRates, numRates);    
   
@@ -1350,7 +1350,6 @@ static void frequencySliderApply(Chain *chain, proposalFunction *pf)
 
   
   chain->traln->initRevMat(model);
-  // exa_initReversibleGTR(chain, model);
 }
 
 
@@ -1416,7 +1415,7 @@ void frequency_dirichlet_proposal_apply(Chain * chain, proposalFunction *pf)
   
         
   //drawRandDirichlet(chain, r, partition->frequencies, 1.0, numFreq);
-  chain->getChainRand()->drawDirichletExpected( r, partition->frequencies, 50.0, numFreq);
+  chain->getChainRand()->drawDirichletExpected( r, partition->frequencies, pf->parameters.dirichletAlpha, numFreq);
   chain->hastings= densityDirichlet(partition->frequencies, r, numFreq) / densityDirichlet(r, partition->frequencies, numFreq);
 
   /*
@@ -1583,6 +1582,24 @@ static void autotuneSlidingWindow(Chain *chain, proposalFunction *pf)
   ctr->reset(); 
 }
 
+
+
+static void autotuneDirichletAlpha(Chain *chain, proposalFunction *pf)
+{
+  double *parameter = &(pf->parameters.dirichletAlpha); 
+
+  SuccessCtr *ctr = &(pf->sCtr); 
+  double newParam = tuneParameter(chain->currentGeneration / gAInfo.tuneFreq, 
+				  ctr->getRatioInLastInterval(),
+				  *parameter, FALSE); 
+
+#ifdef DEBUG_PRINT_TUNE_INFO
+  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
+#endif
+
+  * parameter = newParam; 
+  ctr->reset();
+}
 
 
 // TODO this below did not work at all 
@@ -1801,6 +1818,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->name = "modelDirichlet"; 
       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->category = SUBSTITUTION_RATES; 
+      ptr->parameters.dirichletAlpha = INIT_DIRICHLET_ALPHA; 
+      ptr->autotune = autotuneDirichletAlpha; 
       break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
@@ -1817,6 +1836,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->name = "freqDirichlet"; 
       ptr->category = FREQUENCIES; 
+      ptr->parameters.dirichletAlpha = INIT_DIRICHLET_ALPHA; 
+      ptr->autotune = autotuneDirichletAlpha; 
       break;
     case UPDATE_MODEL_PERM_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 

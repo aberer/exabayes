@@ -1,4 +1,5 @@
 
+#include "config.h"
 
 #include <iostream>
 #include <cassert>
@@ -210,8 +211,15 @@ public:
     if( initParam->burninProportion > 0.99 )
       {
 	cout << "Relative burnin proportion " << initParam->burninProportion << " is too high! Please choose a value below 0.99" <<endl; 
+	exit(1); 
       }
-    
+
+    if(initParam->numIndiChains < initParam->numRunParallel)
+      {
+	cout << "According to your specification, " << PROGRAM_NAME << " should run " <<  initParam->numRunParallel << " runs in parallel. However, only "   << initParam->numIndiChains << " runs were specified at all. Please correct." << endl; 
+	exit(1); 
+      }    
+
   }
 
   initParamStruct* getResult() 

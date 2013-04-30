@@ -86,6 +86,7 @@ typedef  unsigned int nat ;
 #define INIT_TL_MULTI 1.386294
 #define INIT_GAMMA_MULTI 0.811
 #define INIT_NODE_SLIDER_MULT  0.191
+#define INIT_DIRICHLET_ALPHA 100.0
 
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve

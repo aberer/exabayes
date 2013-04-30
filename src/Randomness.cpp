@@ -330,7 +330,7 @@ double Randomness::drawRandGamma(double alpha, double beta)
   double gamma=0;
    
   int escape=0, limit=2000;
-  boolean alert=true;
+  bool alert=false;
    
   if (alpha < 1) {
     double r;

@@ -38,15 +38,17 @@ libpll_a_CFLAGS= -w $(AM_CFLAGS) $(PLLINCLUDE)
 
 EXAMLINCLUDE=-I./src/examl/
 libexaml_a_SOURCES= ./src/examl/searchAlgo.c ./src/examl/treeIO.c ./src/examl/restartHashTable.c ./src/examl/optimizeModel.c ./src/examl/newviewGenericSpecial.c ./src/examl/trash.c ./src/examl/topologies.c ./src/examl/axml-examl.h ./src/examl/globalVariables.h ./src/examl/evaluatePartialGenericSpecial.c ./src/examl/bipartitionList.c ./src/examl/models.c ./src/examl/makenewzGenericSpecial.c ./src/examl/evaluateGenericSpecial.c ./src/examl/axml.c ./src/avxConditional.c
-libexaml_a_CFLAGS= -w $(AM_CFLAGS) -fgnu89-inline  $(EXAMLINCLUDE) $(MPI_CFLAGS)
+libexaml_a_CFLAGS= -w $(AM_CFLAGS) -fgnu89-inline  $(EXAMLINCLUDE)  # $(MPI_CFLAGS)
 
 noinst_LIBRARIES=libbayes.a 
 
 # configure examl/pll specific stuff 
 if WITH_EXAML 
+CC=mpicc
+CXX=mpic++
 LIBTOUSE=libexaml.a
-AM_CFLAGS += $(EXAMLINCLUDE) $(MPI_CFLAGS) 
-AM_LDFLAGS+=$(MPI_CLDFLAGS)
+AM_CFLAGS += $(EXAMLINCLUDE) # $(MPI_CFLAGS) 
+# AM_LDFLAGS+=$(MPI_CLDFLAGS)
 else
 LIBTOUSE=libpll.a
 AM_CFLAGS+=$(PLLINCLUDE)
