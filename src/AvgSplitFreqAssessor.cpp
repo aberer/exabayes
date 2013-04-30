@@ -173,6 +173,7 @@ double AvgSplitFreqAssessor::computeAsdsf(double ignoreFreq)
 void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
 {
   string whiteSpace = " \t"; 
+  // cout << "filename is " << fileName << endl;
   ifstream infile(fileName); 
   string line; 
   bool foundStart = false; 
@@ -180,6 +181,8 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
   while(not abort && getline(infile, line))
     {      
       string cleanLine = trim(line); 
+
+      // cout << "line is  >" << line << "<" << endl; 
 
       if(foundStart)
 	{
@@ -194,7 +197,7 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
 
 	  taxa.push_back(name); 
 	}
-      else if(  cleanLine.compare("translate") == 0  )
+      else if(cleanLine.compare("translate") == 0  )
 	foundStart = true; 
     }  
 

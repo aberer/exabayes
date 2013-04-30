@@ -53,6 +53,8 @@ typedef struct globs
   double burninProportion; 
   
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
+
+  int myBatch ; 		/* if runs are executed in parallel: which runs should be done by this process? */
 } globalAnalysisInfo; 
 
  

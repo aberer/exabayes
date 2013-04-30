@@ -1641,11 +1641,8 @@ void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
   perPartitionInfo *pinfo = pf->remembrance.partInfo;
   pinfo->modelNum = model;   
   pinfo->alpha = chain->traln->getAlpha(model);
-
-  double tmp = partition->alpha * multi; 
-  double valueUsed = chain->traln->setAlphaSave(partition->alpha * multi, model); 
-
-  // cout << "model " << model << " oldAlpha="  << pinfo->alpha << "\tproposed=" << tmp  << "\tnewAlpha=" << valueUsed << "\t\tALPHA="  << partition->alpha<< endl; 
+  
+  chain->traln->setAlphaSave(partition->alpha * multi, model); 
 
   chain->traln->discretizeGamma(model);
 }

@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &globalId);
   MPI_Comm_size(MPI_COMM_WORLD, &globalCommSize);
 
-  printf("\nThis is %s FINE-GRAIN MPI Process Number: %d / %d\n", PROGRAM_NAME, globalId, globalCommSize);   
+  printf("\nThis is %s process number: %d / %d\n", PROGRAM_NAME, globalId, globalCommSize);   
   MPI_Barrier(MPI_COMM_WORLD);
 
   ignoreExceptionsDenormFloat(); 
@@ -113,8 +113,16 @@ int main(int argc, char *argv[])
   int myColor = globalId / processesPerBatch; 
   int newRank = globalId  % processesPerBatch; 
 
+  gAInfo.myBatch = myColor;  
+
   MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm); 
-  
+
+
+  MPI_Comm_rank(comm, &processID); 
+  MPI_Comm_size(comm, &processes); 
+
+  printf("\n\n process %d working on batch %d\n", processID, myColor); 
+
   if(processID == 0)
     makeFileNames(); 
   exa_main(cl.getAdef(), cl.getSeed(), initParams); 

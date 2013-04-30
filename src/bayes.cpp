@@ -248,22 +248,24 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 
   Randomness masterRand(seed);   
   vector<int> runSeeds; 
+  vector<int> treeSeeds; 
   for(int i = 0; i < gAInfo.numberOfRuns;++i)
     {
       randCtr_t r = masterRand.generateSeed();
       runSeeds.push_back(r.v[0]); 
+      treeSeeds.push_back(r.v[1]); 
     }
 
 
-  for(int i = 0; i < gAInfo.numberOfRuns; ++i)
-    {
+  for(int i = 0; i < gAInfo.numberOfRuns ; ++i)
+    {      
+      if(i % initParams->numRunParallel != gAInfo.myBatch )
+	continue; 
+
       if( i < gAInfo.numberOfStartingTrees)
 	initWithStartingTree(treeFH, trees); 
       else 
-	{
-	  randCtr_t r = masterRand.generateSeed(); 
-	  initTreeWithOneRandom(r.v[0], trees);
-	}
+	initTreeWithOneRandom(treeSeeds[i], trees);
 
       CoupledChains *cc = new CoupledChains(runSeeds[i], gAInfo.numberCoupledChains, trees, i, initParams);
       runs.push_back(cc); 
