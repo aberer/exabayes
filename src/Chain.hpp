@@ -58,7 +58,7 @@ public:
   // TODO shared pointer!
   TreeAln *traln; 
 
-  int id;   
+  // int id;   
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   int currentGeneration;   
   

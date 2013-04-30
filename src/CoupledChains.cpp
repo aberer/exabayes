@@ -12,16 +12,16 @@
 
 
 
-CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int runid, initParamStruct *initParams)
+CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid, initParamStruct *initParams)
   : temperature(initParams->heatFactor)
   , rand(seed)
+  , runid(_runid)
 {
   assert((nat)numCoupled == trees.size());
 
   for(int i = 0; i < numCoupled; ++i)
     {
       Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], initParams); 
-      cout << "heat is " << initParams->heatFactor << endl; 
 
       chain->setDeltaT(initParams->heatFactor); 
       chains.push_back(chain);
@@ -31,6 +31,7 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
   for(int i = 0; i < numCoupled * numCoupled ; ++i)
     swapInfo.push_back(new SuccessCtr());       
 }
+
 
 
 
@@ -140,7 +141,6 @@ void CoupledChains::switchChainState()
       int c = MAX(a->couplingId, b->couplingId); 
 
       swapInfo[r * chains.size() + c]->accept(); 
-            // gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].accept();
     } 
   else 
     {
@@ -148,8 +148,6 @@ void CoupledChains::switchChainState()
       int c = MAX(a->couplingId, b->couplingId); 
 
       swapInfo[r * chains.size() + c]->reject(); 
-
-      // gAInfo.swapInfo[runId][r * gAInfo.numberCoupledChains + c].reject();
     }
 }
 
@@ -167,7 +165,6 @@ void CoupledChains::chainInfo()
 
   PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runid,   gettime()  - timeIncrement  , coldChain->currentGeneration, coldChain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(coldChain->traln, tr->nodep[1]->back)));
 
-  
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
   for(auto chain : chains)
@@ -180,6 +177,8 @@ void CoupledChains::chainInfo()
       
       PRINT("lnl_beta(%.2f)=%.2f\t", heat, chain->traln->getTr()->likelihood); 
     }
+
+  printSwapInfo();
 
   PRINT("\n"); 
 
@@ -220,23 +219,24 @@ void CoupledChains::executePart(int gensToRun)
       bool timeToTune = false; 
       bool timeToPrint = false; 
 
-      for(int chainCtr = 0; chainCtr < gAInfo.numberCoupledChains; ++chainCtr)
-	{      
-	  Chain *chain = getChain(chainCtr); 
-
+      for(auto chain : chains)
+	{
 	  for(int i = 0; i < gAInfo.swapInterval; ++i)
 	    {
 	      chain->step(); 
-	      timeToTune = gAInfo.tuneFreq > 0 && gAInfo.tuneHeat && chain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 ; 
-	      timeToPrint = isOutputProcess() && chain->couplingId == 0 && gAInfo.printFreq > 0 && chain->currentGeneration % gAInfo.printFreq == gAInfo.printFreq - 1 ; // that is a bit nonsensical 
+
+	      timeToTune |= gAInfo.tuneFreq > 0 && gAInfo.tuneHeat && chain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 ; 
+	      timeToPrint |= isOutputProcess() 
+		&& chain->couplingId == 0 && gAInfo.printFreq > 0
+		&& (chain->currentGeneration % gAInfo.printFreq )  == (gAInfo.printFreq - 1) ;
 	    }
 	}
 
-      if(timeToTune)
-	tuneTemperature();
-      
       if(timeToPrint)
-	chainInfo();	    
+      	chainInfo();	    
+
+      if(timeToTune)
+	tuneTemperature();      
       
       switchChainState();
     }
@@ -253,8 +253,6 @@ void CoupledChains::tuneTemperature()
   SuccessCtr *c = swapInfo[1]; 
 
   int batch = chains[0]->currentGeneration / gAInfo.tuneFreq; 
-
-  // cout << "TUNING sCtr: " << *c <<  ""
 
   temperature = tuneParameter(batch, c->getRatioInLastInterval(), temperature, FALSE); 
 

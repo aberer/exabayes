@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "Chain.hpp"
 #include "Topology.hpp"
 #include "LnlRestorer.hpp"
@@ -15,6 +17,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
   : traln(_traln)
   , couplingId(id)
   , currentGeneration(0)
+  , priorProb(1)
   , hastings(1)
   , runid(_runid)
 {
@@ -45,6 +48,14 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
     traln->initRevMat(j);
 
   evaluateFullNoBackup(this);   
+  
+
+  tree *tr = traln->getTr();
+  Randomness *rand = getChainRand(); 
+  stringstream ss; 
+  ss << *rand ;	  	  
+  printInfo("init lnl=%f\tTL=%f\tseeds=%s\n", traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(traln, tr->nodep[1]->back)), ss.str().c_str()); 
+
   saveTreeStateToChain(); 
 }
 
@@ -131,8 +142,8 @@ void Chain::setupProposals( initParamStruct *initParams)
   normalizeCategories();  
   normalizePropSubCats(); 
   
-  /* only print that once  */
-  if(this->id == 0)
+  // meh =/ 
+  if(couplingId == 0 && runid == 0)
     printAllProposalWeights();
 }
 
@@ -285,6 +296,9 @@ void Chain::step()
 {
   this->restorer->resetRestorer(*traln);
 
+  // inform the rng that we produce random numbers for generation x  
+  chainRand->rebase(currentGeneration);
+
   tree *tr = this->traln->getTr();   
 
   assert(tr->fracchange > 0); 
@@ -292,10 +306,6 @@ void Chain::step()
   double prevLnl = tr->likelihood;     
 
   double myHeat = getChainHeat();
-
-  // printInfo("my heat is %f\n", myHeat); 
-
-  // cout << "my heat is " << myHeat << endl; 
 
   proposalFunction *pf = NULL;   
   drawProposalFunction(&pf);

@@ -51,10 +51,7 @@ void setupGlobals(initParamStruct *initParams)
   gAInfo.diagFreq = initParams->diagFreq; 
   gAInfo.numberOfRuns =   initParams->numIndiChains; 
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
-
-  gAInfo.printFreq = initParams->printFreq; 
-  // cout << "printing every " << gAInfo.printFreq << " generations" << endl; 
-  
+  gAInfo.printFreq = initParams->printFreq;   
   gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
   gAInfo.asdsfConvergence = initParams->asdsfConvergence; 
   gAInfo.heatFactor  = initParams->heatFactor; 
@@ -282,20 +279,6 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 	  chain->setRestorer(restorer); 
 	}
     }
-
-  for(auto run : runs)
-    {
-      for(int i = 0; i < run->getNumberOfChains(); ++i)
-	{
-	  Chain *chain = run->getChain(i); 
-	  tree *tr = chain->traln->getTr();
-	  Randomness *rand = chain->getChainRand(); 
-	  stringstream ss; 
-	  ss << *rand ;	  	  
-	  chain->printInfo("init lnl=%f\tTL=%f\tseeds=%s\n", chain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(chain->traln, tr->nodep[1]->back)), ss.str().c_str()); 
-	}
-    }
-
 
   if(gAInfo.numberOfStartingTrees > 0)
     fclose(treeFH); 
