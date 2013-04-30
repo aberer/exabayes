@@ -4,7 +4,7 @@
 #include <random>
 
 #include "axml.h"
-#include "main-common.h"
+// #include "main-common.h"
 #include "bayes.h"
 #include "globals.h"
 #include "randomness.h"
@@ -70,8 +70,6 @@ double drawGlobalDouble01()
 
 
 /* uniform r in [0,1) */
-
-
 
 
 

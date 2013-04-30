@@ -3,7 +3,7 @@
 #include "bayes.h"		// 
 #include "randomness.h"
 #include "globals.h"
-#include "main-common.h"
+// #include "main-common.h"
 #include "output.h"
 #include "topology-utils.h" 
 #include "eval.h"
@@ -716,6 +716,7 @@ static void simple_model_proposal_apply(Chain *chain, proposalFunction *pf)
 
   //only calculate the new ones
 }
+
 
 
 static void model_dirichlet_proposal_apply(Chain *chain, proposalFunction *pf)//llpqr
@@ -1737,6 +1738,15 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->reset_func =  random_branch_length_proposal_reset;
       ptr->category = BRANCH_LENGTHS; 
       ptr->name  = "singleBlExp"; 
+      break;
+    case UPDATE_SINGLE_BL_GUIDED: 
+      ptr->eval_lnl = evalBranch;
+      ptr->remembrance.modifiedPath = NULL; 
+      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->apply_func	=  guided_branch_length_proposal_apply;
+      ptr->reset_func =  branchLengthReset;
+      ptr->category = BRANCH_LENGTHS; 
+      ptr->name  = "singleBlGuided"; 
       break; 
     case UPDATE_SINGLE_BL_BIUNIF: 
       ptr->eval_lnl = dummy_eval;

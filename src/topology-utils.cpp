@@ -3,7 +3,7 @@
 #include "bayes.h"
 #include "globals.h"
 #include "randomness.h"
-#include "main-common.h"
+// #include "main-common.h"
 #include "adapters.h"
 #include "output.h"
 #include "path.h"

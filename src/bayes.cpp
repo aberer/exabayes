@@ -12,7 +12,7 @@
 #include "bayes.h"
 #include "randomness.h"
 #include "globals.h"
-#include "main-common.h"
+// #include "main-common.h"
 #include "output.h"
 #include "proposals.h"
 #include "nclConfigReader.h"
@@ -119,7 +119,10 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
 	  asdsf.extractBips();
 	  double asdsfVal = asdsf.computeAsdsf(gAInfo.asdsfIgnoreFreq);
 
-	  PRINT("ASDSF for trees %d-%d: %f\n", asdsf.getStart(), asdsf.getEnd(), asdsfVal ); 
+ #if HAVE_PLL == 0      
+	  if(processID == 0)
+#endif 
+	    cout << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " << asdsfVal << endl; 
 
 	  return asdsfVal < gAInfo.asdsfConvergence; 
 

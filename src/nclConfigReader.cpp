@@ -78,6 +78,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = E_SPR; 
   else if(key.EqualsCaseInsensitive("branchMulti"))
     *pf = BRANCH_LENGTHS_MULTIPLIER; 
+  else if(key.EqualsCaseInsensitive("initGuidedBL"))
+    *pf = UPDATE_SINGLE_BL_GUIDED; 
   else if(key.EqualsCaseInsensitive("initFrequencySliderWeight"))
     *pf = FREQUENCY_SLIDER; 
   else if(key.EqualsCaseInsensitive("initGuidedSPR"))
