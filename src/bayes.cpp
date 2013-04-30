@@ -259,8 +259,10 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 
   for(int i = 0; i < gAInfo.numberOfRuns ; ++i)
     {      
+#if HAVE_PLL == 0
       if(i % initParams->numRunParallel != gAInfo.myBatch )
 	continue; 
+#endif
 
       if( i < gAInfo.numberOfStartingTrees)
 	initWithStartingTree(treeFH, trees); 
