@@ -17,6 +17,7 @@
 #include "TreeAln.hpp"
 #include "nodeSlider.h"
 #include "Randomness.hpp"
+#include "densities.h"
 
 void expensiveVerify(tree *tr); 
 
@@ -738,8 +739,8 @@ static void model_dirichlet_proposal_apply(Chain *chain, proposalFunction *pf)//
 
      
   chain->getChainRand()->drawDirichletExpected(r, partition->substRates, 50.0, numRates);
-  chain->hastings= chain->getChainRand()->densityDirichlet(partition->substRates, r, numRates) 
-    / chain->getChainRand()->densityDirichlet(r, partition->substRates, numRates);    
+  chain->hastings= densityDirichlet(partition->substRates, r, numRates) 
+    / densityDirichlet(r, partition->substRates, numRates);    
   
   /* Ensure always you stay within this range */
   for(int i=0; i<numRates; i++)
@@ -1416,7 +1417,7 @@ void frequency_dirichlet_proposal_apply(Chain * chain, proposalFunction *pf)
         
   //drawRandDirichlet(chain, r, partition->frequencies, 1.0, numFreq);
   chain->getChainRand()->drawDirichletExpected( r, partition->frequencies, 50.0, numFreq);
-  chain->hastings=chain->getChainRand()->densityDirichlet(partition->frequencies, r, numFreq) / chain->getChainRand()->densityDirichlet(r, partition->frequencies, numFreq);
+  chain->hastings= densityDirichlet(partition->frequencies, r, numFreq) / densityDirichlet(r, partition->frequencies, numFreq);
 
   /*
   //Validation-----------------------------------------

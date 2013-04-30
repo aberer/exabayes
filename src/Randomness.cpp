@@ -5,6 +5,8 @@
 
 #include <limits>
 
+#include "densities.h"
+
 // TODO proper AND carefull make-over of randomness
 
 
@@ -262,49 +264,11 @@ int Randomness::drawSampleProportionally( double *weights, int numWeight )
 
 
 
-double Randomness::betaFunction(double *alpha, int length)
-{
-  double beta=1.0;
-  double sum=0;
-  for(int i=0; i<length;i++)
-    {
-      beta*=gammaFunction(alpha[i]); 
-      sum+=alpha[i];    
-    }
-  beta=beta/(gammaFunction(sum));
- 
-  return beta;
-}
 
 
 
 
-double Randomness::gammaFunction(double alpha)
-{
-  
-  double  lgam = lgamma(alpha);
-  return signgam*exp(lgam); 
-}
 
-
-//density for dirichlet distribution with parameters "alphas" at point "values".
-double Randomness::densityDirichlet(double *values, double *alphas, int length)
-{
-  double density=1;
-  double normValues[length];
-  
-  for(int i=0; i<length; i++)
-    normValues[i]=values[i];
-  
-  density=density/betaFunction(alphas, length);
-  
-  normalize(normValues, length, 1);
-  
-  for(int i=0; i<length; i++)
-    density=density*pow(normValues[i],alphas[i]-1);
-  
-  return density; 
-}
 
 
 
@@ -345,6 +309,9 @@ void Randomness::drawDirichletExpected(double* results, double* mean,double scal
     }
   
 }
+
+
+
 
 
 
@@ -412,18 +379,6 @@ double Randomness::drawRandGamma(double alpha, double beta)
     gamma = alpha * y;
   }
   return beta*gamma;//scale from GAMMA(alpha,1) to GAMMA(alpha,beta)
-}
-
-
-void Randomness::normalize(double * vector, int length, double normalizingConstant)
-{
-  double sum=0;
-  for(int i=0; i<length; i++)
-    sum+=vector[i];
-  
-  for(int i=0; i<length; i++)
-    vector[i]=vector[i]*normalizingConstant/sum;
-  
 }
 
 

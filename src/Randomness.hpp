@@ -44,8 +44,6 @@ public:
 
   branch drawBranchUniform(TreeAln &traln); 
 
-  double densityDirichlet(double *values, double *alphas, int length);     
-  
   /** @brief prints the RNG state  */ 
   friend ostream& operator<<( ostream& out, const Randomness &rhs ); 
 
@@ -60,7 +58,7 @@ private:
 
   double gammaFunction(double alpha); 
   double betaFunction(double *alpha, int length); 
-  void normalize(double * vector, int length, double normalizingConstant); 
+  // void normalize(double * vector, int length, double normalizingConstant); 
 
 }; 
 
