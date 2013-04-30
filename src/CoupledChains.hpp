@@ -42,12 +42,7 @@ public:
 
   void chainInfo(); 
 
-/**
-   @brief Execute a portion of one run. 
-   @param chains  -- the pointer to the beginning of the chains in the chain array. 
-   @param gensToRun  -- number of generations each chain in this run should proceed. 
-
- */
+  /** @brief Execute a portion of one run. */
   void executePart(int gensToRun); 
 
   Chain* getChain(int i) {return chains[i]; }

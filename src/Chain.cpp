@@ -55,9 +55,9 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
  */ 
 double Chain::getChainHeat()
 {
-  double tmp = 1. + deltaT * couplingId; 
-  double inverseHeat = 1 / tmp; 
-  assert(inverseHeat <= 1.); 
+  double tmp = 1. + ( deltaT * couplingId ) ; 
+  double inverseHeat = 1.f / tmp; 
+  assert(couplingId == 0 || inverseHeat < 1.); 
   return inverseHeat; 
 }
 
@@ -292,6 +292,10 @@ void Chain::step()
   double prevLnl = tr->likelihood;     
 
   double myHeat = getChainHeat();
+
+  // printInfo("my heat is %f\n", myHeat); 
+
+  // cout << "my heat is " << myHeat << endl; 
 
   proposalFunction *pf = NULL;   
   drawProposalFunction(&pf);

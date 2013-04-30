@@ -53,7 +53,7 @@ void setupGlobals(initParamStruct *initParams)
   gAInfo.numberCoupledChains = initParams->numCoupledChains; 
 
   gAInfo.printFreq = initParams->printFreq; 
-  cout << "printing every " << gAInfo.printFreq << " generations" << endl; 
+  // cout << "printing every " << gAInfo.printFreq << " generations" << endl; 
   
   gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
   gAInfo.asdsfConvergence = initParams->asdsfConvergence; 

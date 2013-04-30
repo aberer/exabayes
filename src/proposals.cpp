@@ -1610,6 +1610,7 @@ static void autotuneSlidingWindow(Chain *chain, proposalFunction *pf)
 // }
 
 
+
 void branchLengthReset(Chain *chain, proposalFunction *pf)
 {
   branch b = popStack(pf->remembrance.modifiedPath); 
@@ -1644,6 +1645,17 @@ void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
   chain->traln->setAlphaSave(partition->alpha * multi, model); 
   chain->traln->discretizeGamma(model);
 }
+
+
+
+void guided_branch_length_proposal_apply(Chain *chain, proposalFunction *pf)
+{
+  // DUMMY, just for making it compile. 
+
+  // please delete this function, once you have implemented it or added the source
+}
+
+
 
 
  
@@ -1742,8 +1754,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
     case UPDATE_SINGLE_BL_GUIDED: 
       ptr->eval_lnl = evalBranch;
       ptr->remembrance.modifiedPath = NULL; 
-      createStack(&(ptr->remembrance.modifiedPath)); 
-      ptr->apply_func	=  guided_branch_length_proposal_apply;
+      createStack(&(ptr->remembrance.modifiedPath));       
+      ptr->apply_func =  guided_branch_length_proposal_apply;
       ptr->reset_func =  branchLengthReset;
       ptr->category = BRANCH_LENGTHS; 
       ptr->name  = "singleBlGuided"; 

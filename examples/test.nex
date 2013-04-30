@@ -7,7 +7,7 @@ begin EXABAYES;
       numIndiChains 2 		[ number of independant chains/runs ]
       numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
-      printFreq 100		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+      printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
       [ CONVERGENCE ]
       asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
@@ -45,7 +45,7 @@ begin EXABAYES;
       branchMulti 40 [ ok, 40% in mrb ]
       treeLengthMult 4 [ ok, 4 % in mrb ]
       nodeSlider  10 [ ok, 10% in mrb ]
-      initGuidedBL 10 []
+      initGuidedBL 0 []
 
       [ RATE HETEROGENEITY ]
       initGammaWeight 0 [ ok ]		

@@ -13,19 +13,23 @@
 
 
 CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int runid, initParamStruct *initParams)
-  : rand(seed)
+  : temperature(initParams->heatFactor)
+  , rand(seed)
 {
   assert((nat)numCoupled == trees.size());
 
   for(int i = 0; i < numCoupled; ++i)
     {
       Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], initParams); 
+      cout << "heat is " << initParams->heatFactor << endl; 
+
+      chain->setDeltaT(initParams->heatFactor); 
       chains.push_back(chain);
     }
 
   // swap info matrix 
   for(int i = 0; i < numCoupled * numCoupled ; ++i)
-    swapInfo.push_back(new SuccessCtr());     
+    swapInfo.push_back(new SuccessCtr());       
 }
 
 
@@ -232,8 +236,7 @@ void CoupledChains::executePart(int gensToRun)
 	tuneTemperature();
       
       if(timeToPrint)
-	
-	    
+	chainInfo();	    
       
       switchChainState();
     }
@@ -250,6 +253,9 @@ void CoupledChains::tuneTemperature()
   SuccessCtr *c = swapInfo[1]; 
 
   int batch = chains[0]->currentGeneration / gAInfo.tuneFreq; 
+
+  // cout << "TUNING sCtr: " << *c <<  ""
+
   temperature = tuneParameter(batch, c->getRatioInLastInterval(), temperature, FALSE); 
 
   c->reset();
