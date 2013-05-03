@@ -1,6 +1,5 @@
 #include <sstream>
 
-
 #include "CoupledChains.hpp"
 #include "Chain.hpp"
 #include "randomness.h"
@@ -9,8 +8,7 @@
 #include "treeRead.h"
 #include "output.h"
 #include "topology-utils.h"
-
-
+#include "AbstractProposal.hpp"
 
 CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid, initParamStruct *initParams)
   : temperature(initParams->heatFactor)
@@ -31,8 +29,6 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
   for(int i = 0; i < numCoupled * numCoupled ; ++i)
     swapInfo.push_back(new SuccessCtr());       
 }
-
-
 
 
 CoupledChains::~CoupledChains()
@@ -67,8 +63,6 @@ void CoupledChains::printSwapInfo()
 	PRINT(")"); 
     }
 }
-
-
 
 
 void CoupledChains::switchChainState()
@@ -123,12 +117,17 @@ void CoupledChains::switchChainState()
       /* everything, we need to swap */
       swap(a->couplingId, b->couplingId); 
 
-      for(int i = 0; i < a->numProposals; ++i)
-	{
-	  proposalFunction *tmp  = a->proposals[i]; 
-	  a->proposals[i] = b->proposals[i]; 
-	  b->proposals[i] = tmp; 
-	}
+      for(nat i = 0; i < a->proposalCategories.size(); ++i)
+	a->proposalCategories.swap(b->proposalCategories); 
+
+      // EVIL
+      // for the legacy proposals, we need to update the chain ptr       
+      {
+	a->clarifyOwnership();
+	b->clarifyOwnership();
+      }
+      
+
 
       FILE *tmp = a-> topologyFile; 
       a->topologyFile = b->topologyFile; 
@@ -185,23 +184,12 @@ void CoupledChains::chainInfo()
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
 
-  char* names[]= {"TOPO", "BL", "FREQ", "MODEL", "HETER"} ;   
-
-  for(int i = 1; i < NUM_PROP_CATS + 1 ; ++i)
+  for(auto cat : coldChain->getProposalCategories())
     {
-      category_t type = category_t(i); 
-      PRINT("%s:", names[i-1]);       
-      for(int j = 0; j < coldChain->numProposals;++j )
-	{
-	  proposalFunction *pf = coldChain->proposals[j]; 	
-	  if(type == pf->category)
-	    {
-	      stringstream buf; 
-	      buf << pf->sCtr; 
-	      PRINT("\t%s: %s\t", pf->name, buf.str().c_str()); 
-	    }
-	}
-      PRINT("\n"); 
+      cout << cat.getName() << ":\t";
+      for( auto p : cat.getProposals() )
+	cout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
+      cout << endl; 
     }
 
   PRINT("\n");
@@ -250,7 +238,11 @@ void CoupledChains::tuneTemperature()
 {
   /* naive strategy: tune, s.t. the coldest hot chain swaps
      with the coldest chain in 23.4% of all cases */
-  SuccessCtr *c = swapInfo[1]; 
+
+  if(chains.size() == 1 ) 
+    return; 
+
+  auto c = swapInfo[1]; 
 
   int batch = chains[0]->currentGeneration / gAInfo.tuneFreq; 
 

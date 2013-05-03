@@ -16,28 +16,16 @@ using namespace std;
 #include "proposalType.h"
 #include "config.h"
 #include "rng.h"
-#include "tune.h"
 #include "eval.h"
 #include "stack.h"
 #include "SuccessCtr.hpp"
+#include "categoryType.h"
 #include "Chain.hpp"
 #include "nclConfigReader.h"
 
 
 class TreeAln; 
 class LnlRestorer; 
-
-
-
-#define NUM_PROP_CATS 5 
-typedef enum _cats {
-  TOPOLOGY = 1  , 
-  BRANCH_LENGTHS = 2, 
-  FREQUENCIES = 3,
-  SUBSTITUTION_RATES = 4  ,
-  RATE_HETEROGENEITY = 5
-} category_t; 
-
 
 typedef struct _pfun  proposalFunction; 
 
@@ -66,12 +54,16 @@ struct _pfun
   double initWeight; 
   double currentWeight; 
 
-  SuccessCtr sCtr; 
+  /* SuccessCtr sCtr;  */
 
   void (*apply_func)( Chain *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
   void (*eval_lnl) (Chain *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
   void (*reset_func)( Chain *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
-  void (*autotune)(Chain *chain, struct _pfun *pf); 
+  void (*autotune)(struct _pfun *pf, SuccessCtr *ctr); 
+
+
+
+  double relativeWeight; 
 
   /**
      tunable parameters
@@ -88,6 +80,7 @@ struct _pfun
   /* more parameters could be added in another union. This is a bit of
      a hack for simplicity, but saves us all that memory allocation
      stuff */
+
 
   union
   {

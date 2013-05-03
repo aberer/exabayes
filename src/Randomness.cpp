@@ -75,6 +75,8 @@ double Randomness::drawRandBiUnif(double x)
 /** @brief gets a multiplier for updating a parameter or branch length */
 double Randomness::drawMultiplier(double multiplier)
 {
+  // cout << multiplier << endl; 
+
   double tmp =  exp(multiplier * (drawRandDouble01()  - 0.5)); 
   assert(tmp > 0.); 
   return tmp ;   

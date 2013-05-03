@@ -90,7 +90,7 @@ parserPll_CFLAGS=  -w -I$(pre2) -I$(PLLINCLUDE) $(AM_CFLAGS)
 # cleanup 
 
 clean:
-	-rm -rf *.o *.a $(bin_PROGRAMS ) $(exabayes_OBJECTS) $(libbayes_A_OBJECTS) libbayes.a
+	-rm -rf *.o *.a $(bin_PROGRAMS) $(exabayes_OBJECTS) $(libbayes_A_OBJECTS) libbayes.a
 
 clean-all : 
 	-rm -rf $(bin_PROGRAMS) *.o *.a 

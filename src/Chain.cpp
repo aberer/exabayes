@@ -11,13 +11,17 @@
 #include "adapters.h"
 #include "proposals.h"
 #include "topology-utils.h"
+#include "ExtendedTBR.hpp"
+#include "WrappedProposal.hpp"
+
+// meh =/ 
+extern bool isNewProposal[NUM_PROPOSALS]; 
 
 
 Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruct *initParams)  
   : traln(_traln)
   , couplingId(id)
   , currentGeneration(0)
-  , priorProb(1)
   , hastings(1)
   , runid(_runid)
 {
@@ -38,8 +42,6 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
       initializeOutputFiles(this);
     }
 
-  categoryWeights = (double*)exa_calloc(NUM_PROP_CATS, sizeof(double)); 
-
   setupProposals(initParams); 
   
   initParamDump(); 
@@ -49,7 +51,6 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
 
   evaluateFullNoBackup(this);   
   
-
   tree *tr = traln->getTr();
   Randomness *rand = getChainRand(); 
   stringstream ss; 
@@ -73,105 +74,93 @@ double Chain::getChainHeat()
 }
 
 
-/**
-   @brief Normalizes the weights of the proposals in this category
- */
-void Chain::normalizePropSubCats()
-{
-  double* catWeights = (double*)exa_calloc(NUM_PROP_CATS + 1,sizeof(double)); 
-
-  for(int i = 0; i < this->numProposals; ++i)
-    {
-      proposalFunction *pf = this->proposals[i]; 
-      assert(pf->category); 
-      catWeights[pf->category] +=  pf->currentWeight;       
-    }
-
-  for(int i= 0; i < this->numProposals; ++i)
-    {
-      proposalFunction *pf = this->proposals[i]; 
-      pf->currentWeight /= catWeights[pf->category]; 
-    }
-
-  exa_free(catWeights); 
-}
-
-
-/**
-   @brief normalizes the categories  
- */
-void Chain::normalizeCategories()
-{
-  double sum = 0.; 
-  for(int i = 0; i < NUM_PROP_CATS; ++i)
-    sum += this->categoryWeights[i]; 
-  for(int i = 0; i < NUM_PROP_CATS; ++i)
-    this->categoryWeights[i] /= sum;   
-}
-
-
-
-
-
-/**
-   @brief   Initializes the proposals based on weights given in the config file. 
-
-   Also normalizes all weights to 1.   
-
- */
 void Chain::setupProposals( initParamStruct *initParams)
 {
-  int ctr = 0; 
-
-  proposalFunction **pfs = (proposalFunction**)exa_calloc(NUM_PROPOSALS, sizeof(proposalFunction*));  
-  for(int i = 0; i < NUM_PROPOSALS; ++i)
-    {
-      proposalFunction *pf = NULL; 
-      initProposalFunction((proposal_type)i, initParams, &pf); 
-      if(pf != (proposalFunction*)NULL)
-	pfs[ctr++] = pf; 
-    }  
-  this->numProposals = ctr; 
-  this->proposals = pfs; 
-
-  for(int i = 0; i < this->numProposals; ++i)
-    {
-      proposalFunction *pf = this->proposals[i]; 
-      this->categoryWeights[pf->category-1] += pf->currentWeight; 
-    }
-  normalizeCategories();  
-  normalizePropSubCats(); 
+  vector<proposalFunction*> legProp; 
+  vector<AbstractProposal*> prop; 
   
-  // meh =/ 
-  if(couplingId == 0 && runid == 0)
-    printAllProposalWeights();
+  // initialize proposals 
+  for(int i = 0; i < NUM_PROPOSALS ; ++i)
+    { 
+      if( NOT isNewProposal[i])
+	{
+	  proposalFunction *pf = NULL; 
+	  initProposalFunction(proposal_type(i), initParams, &pf); 
+	  if(pf != (proposalFunction*) NULL)
+	    prop.push_back(new WrappedProposal( pf, this)); 
+	}
+      else 
+	{
+	  switch(proposal_type(i))
+	    {
+	    case E_TBR: 
+	      if(initParams->initWeights[E_TBR] != 0)
+		prop.push_back(new ExtendedTBR(initParams->initWeights[E_TBR], initParams->eSprStopProb)); 
+	      break; 
+	    default : 
+	      assert(0); 
+	    }
+	}  
+    }
+
+  // get total sum 
+  double sum = 0; 
+  for(int i = 0; i < NUM_PROPOSALS; ++i)    
+    sum += initParams->initWeights[i]; 
+
+  // create categories 
+  vector<string> allNames = {"", "Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
+  for(int i = 1; i < NUM_PROP_CATS+1; ++i)
+    {
+      // fish out the correct proposals 
+      vector<proposalFunction*> legPr; 
+      vector<AbstractProposal*> pr; 
+      double catSum = 0; 
+      for(auto p : legProp)
+	if(p->category == i)
+	  {
+	    legPr.push_back(p); 
+	    catSum += p->relativeWeight; 
+	  }
+      for(auto p : prop)
+	if(p->getCategory() == i)
+	  {
+	    pr.push_back(p); 
+	    catSum += p->getRelativeProbability();
+	  }
+
+      if(pr.size() > 0 || legPr.size() > 0)
+	proposalCategories.push_back( Category(allNames[i], category_t(i), catSum / sum, pr )); 
+    }    
+
+
+  if ( isOutputProcess() 
+       && couplingId == 0
+       && runid == 0)
+    {
+      // print some info 
+      cout << "using the following moves: " << endl; 
+      for(nat i = 0; i < proposalCategories.size(); ++i)
+	{
+	  // TODO also to info file 
+      
+	  cout << proposalCategories[i].getName() << " " << fixed << setprecision(2) << proposalCategories[i].getCatFreq() * 100 << "%\t" ; 
+	  auto cat = proposalCategories[i]; 
+	  auto p1 =  cat.getProposals(); 
+	  for(auto p : p1)
+	    cout << "\t" << p->getName() << "(" << fixed << setprecision(2) <<  p->getRelativeProbability() * 100 << "%)" ;
+	  cout << endl; 
+	}
+    }
 }
 
 
 
-void Chain::printAllProposalWeights()
-{
-  if(not isOutputProcess())
-    return; 
-  
-  printf("cat weights: TOPO=%f\tBL=%f\tFREQ=%f\tSUBST=%f\tHET=%f\n", 
-	 this->categoryWeights[0],
-	 this->categoryWeights[1],
-	 this->categoryWeights[2],
-	 this->categoryWeights[3],
-	 this->categoryWeights[4] ); 
+/**
+   @brief assigns the entire chain state from rhs to this chain
 
-  printf("rel. prop weihgts: "); 
-  for(int i = 0; i < this->numProposals; ++i)
-    {
-      proposalFunction *pf = this->proposals[i]; 
-      printf("\t%s=%f", pf->name, pf->currentWeight);       
-    }
-  printf("\n"); 
-}
-
-
-
+   This includes topology, parameters, all proposal parameters 
+ */ 
 Chain& Chain::operator=(Chain& rhs)
 {
   TreeAln &thisTraln = *traln; 
@@ -179,12 +168,11 @@ Chain& Chain::operator=(Chain& rhs)
 
   thisTraln = rhsTraln; 
 
+  // TODO should also copy proposals, but that is currently not used
+
   dump.topology->saveTopology(thisTraln);  
   return *this; 
 }
-
-
-
 
 
 void Chain::saveTreeStateToChain()
@@ -235,8 +223,7 @@ void Chain::applyChainStateToTree()
 
 
 
-
-void Chain::debug_printAccRejc(proposalFunction *pf, bool accepted) 
+void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   if(isOutputProcess())
@@ -245,7 +232,7 @@ void Chain::debug_printAccRejc(proposalFunction *pf, bool accepted)
 	printInfo( "ACC\t");   
       else 
 	printInfo("rej\t");   	  
-      printf("%s %g\n" ,pf->name, this->traln->getTr()->likelihood); 
+      printf("%s %g\n" ,prob->getName().c_str() , lnl); 
     }
 #endif
 }
@@ -253,42 +240,21 @@ void Chain::debug_printAccRejc(proposalFunction *pf, bool accepted)
 
 
 
-void Chain::drawProposalFunction(proposalFunction **result )
+AbstractProposal* Chain::drawProposalFunction()
 {    
-  *result = NULL; 
-  category_t
-    cat = category_t(chainRand->drawSampleProportionally(categoryWeights, NUM_PROP_CATS) + 1); /* it is 1-based */
+  double r = chainRand->drawRandDouble01();  
+  for(auto c : proposalCategories)
+    {
+      double ref = c.getCatFreq(); 
+      if(r <= ref )
+	return c.drawProposal(*chainRand);
+      else 
+	r -= ref; 
+    }
   
-  double sum = 0; 
-  for(int i = 0; i < numProposals; ++i)
-    {
-      proposalFunction *pf = proposals[i]; 
-      if(pf->category == cat)
-	sum += pf->currentWeight; 
-    }
-  assert(fabs(sum - 1.) < 0.000001); 
-
-  double r = chainRand->drawRandDouble01();
-  for(int i = 0; i < numProposals; ++i)
-    {
-      proposalFunction *pf = proposals[i]; 
-      if(pf->category == cat)
-	{
-	  if(  r < pf->currentWeight)
-	    {
-	      *result =  pf; 
-	      return; 
-	    }
-	  else 
-	    {
-	      r -= pf->currentWeight; 
-	    }
-	}
-    }
-
-  assert(result != NULL); 
+  assert(0); 
+  return NULL; 
 }
-
 
 
 
@@ -307,45 +273,40 @@ void Chain::step()
 
   double myHeat = getChainHeat();
 
-  proposalFunction *pf = NULL;   
-  drawProposalFunction(&pf);
-
+  AbstractProposal *pfun = drawProposalFunction();
+ 
   /* reset proposal ratio  */
   this->hastings = 1; 
-
-  // double oldPrior = this->priorProb; 		/* TODO  */
-
-  /* chooses move, sets proposal ratio, correctly modifies the prior */
-  pf->apply_func(this, pf);  
-
-  // TODO 
-  double priorRatio = 0 ; 
-  // double priorRatio  = this->priorProb - oldPrior; 
-  /* enable once we actually have priors  */
-  // assert(priorRatio == 0); 
-
-  /* chooses the cheapest way to evaluate the likelihood  */
-  pf->eval_lnl(this, pf); 
+  
+  double oldPrior = prior.getLogPriorProbability();
+  pfun->applyToState(*traln, prior, hastings, *chainRand);
+  pfun->evaluateProposal(*traln, prior);
+  
+  double priorRatio = prior.getLogPriorProbability() - oldPrior;
+  double lnlRatio = tr->likelihood - prevLnl; 
 
   double testr = chainRand->drawRandDouble01();
   double acceptance = 
-    exp((priorRatio  + tr->likelihood - prevLnl) * myHeat) 
-    * this->hastings ; 
-
-  // cout << "priorRatio=" << priorRatio << "\tlnl="  << tr->likelihood << "\tprevLnl="  << prevLnl << "\tmyheat=" << myHeat << "\thastings=" << hastings << endl; 
-
+    exp(( priorRatio   + lnlRatio) * myHeat) 
+    * hastings;
+  
   bool wasAccepted  = testr < acceptance; 
-  debug_printAccRejc( pf, wasAccepted); 
+
+  // printInfo("prior=%f\tlnl=%f\tacc=%f\ttestr=%f\n", priorRatio, lnlRatio, acceptance, testr); 
+  
+  debug_printAccRejc( pfun, wasAccepted, tr->likelihood); 
 
   if(wasAccepted)
     {
-      pf->sCtr.accept();
+      pfun->accept();
       expensiveVerify(this);
     }
   else
     {
-      pf->reset_func(this, pf); 
-      pf->sCtr.reject();
+      pfun->resetState(*traln, prior);
+      pfun->reject();
+      
+      // TODO maybe not here =/ 
       this->restorer->restoreArrays(*traln); // restores the previous tree state 
     }
 
@@ -354,7 +315,6 @@ void Chain::step()
   if( this->couplingId == 0	/* must be the cold chain  */
        && (this->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
     {
-
       if( isOutputProcess() ) 
 	printSample(this);       
 
@@ -362,7 +322,11 @@ void Chain::step()
       // gAInfo.bipHash->addBipartitionsToHash(*(this->traln),  this->id / gAInfo.numberCoupledChains); 
     }
 
+  if(pfun->isTimeToTune(gAInfo.tuneFreq))
+    pfun->autotune();
 
+
+#if 0 
   /* autotuning for proposal parameters. With increased parallelism
      this will become more complicated.  */
   if( gAInfo.tuneFreq > 0 && this->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 )
@@ -381,6 +345,7 @@ void Chain::step()
 	    }
 	}
     }
+#endif
 
   this->currentGeneration++; 
 }
@@ -427,3 +392,27 @@ void Chain::printInfo(const char *format, ...)
 }
 
 
+
+
+void Chain::clarifyOwnership()
+{
+  for(auto c : proposalCategories)
+    for(auto p : c.getProposals())
+      p->setOwningChain(this); 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

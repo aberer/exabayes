@@ -20,7 +20,7 @@
 #include "adapters.h"
 #include "eval.h"
 #include "proposals.h"
-#include "tune.h"
+// #include "tune.h"
 #include "prsfComputer.h"
 #include "TreeAln.hpp"
 #include "AvgSplitFreqAssessor.hpp"
@@ -119,7 +119,7 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
  #if HAVE_PLL == 0      
 	  if(processID == 0)
 #endif 
-	    cout << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " << asdsfVal << endl; 
+	    cout << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
 
 	  return asdsfVal < gAInfo.asdsfConvergence; 
 
@@ -228,8 +228,8 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
   if( gAInfo.numberOfStartingTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
-  PRINT("number of independent runs=%d, number of coupled chains per run=%d => total of %d chains \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains, totalNumChains ); 
+  // int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
+  PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains ); 
 
 #ifdef DEBUG_LNL_VERIFY
   gAInfo.debugTree = new TreeAln(); 

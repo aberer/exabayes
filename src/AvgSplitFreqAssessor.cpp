@@ -15,7 +15,6 @@
 
 #include "axml.h"
 #include "bayes.h"
-// #include "main-common.h"
 #include "TreeAln.hpp"
 
 #include "output.h"
@@ -32,14 +31,9 @@ AvgSplitFreqAssessor::AvgSplitFreqAssessor(vector<string> fileNames)
 {
   fillTaxaInfo(fileNames[0]); 
 
+  // at least does some checking 
   for(string fn : fileNames)
-    {
-      if(not fileIsCorrect(fn))
-	{
-	  cerr << "problem parsing file " << fn << endl;  
-	  assert(0); 
-	}
-    }
+    getNumTreeAvailable (fn); 
 
   initializeTreeOnly(taxa.size() );
   fns = fileNames; 
@@ -116,8 +110,23 @@ std::string trim(const std::string& str,
    
    @notice I guess this is not how you write a good parser ;-) 
  */
-bool AvgSplitFreqAssessor::fileIsCorrect(string fileName)
+// bool AvgSplitFreqAssessor::fileIsCorrect(string fileName)
+// {
+//   int numTrees = getNumTreeAvailable(fileName);
+//   return (numTrees >=  (end - start)); 
+// }
+
+
+double AvgSplitFreqAssessor::computeAsdsf(double ignoreFreq)
 {
+  return bipHash->averageDeviationOfSplitFrequencies(ignoreFreq); 
+}
+
+
+
+
+int AvgSplitFreqAssessor::getNumTreeAvailable(string fileName)
+{  
   string whitespace = " \t"; 
   ifstream infile(fileName); 
   string line ; 
@@ -158,15 +167,8 @@ bool AvgSplitFreqAssessor::fileIsCorrect(string fileName)
     }
 
   assert(foundTaxaStart && foundTreeStart); 
-  return (numTrees >=  (end - start)); 
+  return numTrees; 
 }
-
-
-double AvgSplitFreqAssessor::computeAsdsf(double ignoreFreq)
-{
-  return bipHash->averageDeviationOfSplitFrequencies(ignoreFreq); 
-}
-
 
 
 

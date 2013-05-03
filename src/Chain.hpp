@@ -1,17 +1,31 @@
+/**
+   @brief represents a chain 
+
+   notice: the chain currently is in an intermediate stage to full c++
+   conversion. That's why we have two public regions. 
+ */ 
+
+
+
 #ifndef _CHAIN_H
 #define  _CHAIN_H
 #include <vector>
 
 #include "rng.h"
-
 #include "nclConfigReader.h"
+#include "Category.hpp"
+#include "PriorManager.hpp"
+
+
+
+
+class AbstractProposal; 
 
 using namespace std; 
 
 class TreeAln; 
 class LnlRestorer; 
 class Topology; 
-class Randomness; 
 
 typedef struct _pfun proposalFunction; 
 
@@ -52,7 +66,6 @@ typedef struct
 class Chain
 {
   // LEGACY stuff 
-
 public: 
 
   // TODO shared pointer!
@@ -61,16 +74,8 @@ public:
   // int id;   
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   int currentGeneration;   
-  
-  double priorProb; /// the prior probability of the current state   => store in log form  
-
-  double hastings;/// the proposal ratio 
 
   double penaltyFactor; //change to the probability of picking a proposal  
-
-  proposalFunction **proposals; 
-  int numProposals; 
-  double *categoryWeights; 
 
   /* saves the entire space in the parameter space  */
   paramDump dump;
@@ -79,7 +84,13 @@ public:
   FILE *topologyFile; 
   FILE *outputParamFile; 
 
+  double hastings;/// the proposal ratio 
+  
+  
+  void clarifyOwnership(); 
 
+
+  vector<Category> proposalCategories; // proposals that we implemented using the new framework 
 
   // CORRECT part 
 public: 
@@ -93,13 +104,13 @@ public:
   void setDeltaT(double dt){deltaT = dt; }
   void setRestorer(LnlRestorer *rest){restorer = rest ; }
   LnlRestorer* getRestorer(){return restorer; }
+  vector<Category>& getProposalCategories(){return proposalCategories;}
   
   /** @brief draws a proposal function. */ 
-  void drawProposalFunction(proposalFunction **result ); 
+  AbstractProposal* drawProposalFunction( ); 
 
   /** @brief Saves all relevan information from the tree into the chain Chain. */ 
   void saveTreeStateToChain(); 
-
 
   /** @brief Applies the Chain of the chain to its tree. */ 
   void applyChainStateToTree(); 
@@ -116,16 +127,10 @@ private :
   Randomness *chainRand; 
   LnlRestorer *restorer; 
   int runid; 
-  
-  void normalizePropSubCats(); 
-  void normalizeCategories(); 
-  void printAllProposalWeights(); 
-  void debug_printAccRejc(proposalFunction *pf, bool accepted) ; 
+  PriorManager prior; 
 
+  void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl ) ; 
   void initParamDump(); 
-
-
-
 }; 
 
 

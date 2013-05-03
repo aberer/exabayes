@@ -237,7 +237,7 @@ static void exabayes_printTopology(Chain *chain)
   
   Tree2stringNexus(chain->traln->getTr()->tree_string, tr,  chain->traln->getTr()->start->back, 0 ); 
   fprintf(fh,"\ttree gen.%d = [&U] %s\n", chain->currentGeneration, chain->traln->getTr()->tree_string);
-
+  fflush(fh);
 }
 
 

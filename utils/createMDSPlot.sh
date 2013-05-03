@@ -26,7 +26,8 @@ shift
 echo -ne  "" >  numTrees.$id
 echo -ne  "" > allTopo.$id
 
-
+idfile=tmp.$id.idfile
+echo -ne  "" > $idfile
 for  i in $(seq 1 $#)
 do
     file=$1
@@ -34,15 +35,17 @@ do
 
     $(dirname $0)/getTopologies.sh $file |  sed -n "0~${thinning}p" | sed -e '$d'   > topoTMP
     cat topoTMP | wc -l  >> numTrees.$id 
-    cat topoTMP    >> allTopo.$id
+    cat topoTMP >> allTopo.$id
     rm topoTMP
+    echo $file | cut -f2,3 -d '.' >> $idfile
 done 
 
 rm -f  *.rfDistances
 $raxml -f r -n rfDistances  -z allTopo.$id  -m GTRCAT  > /dev/null
 cat  RAxML_RF-Distances.rfDistances  | cut -f 1,2,3 -d ' ' | tr -d  ':'  > tmp.$id.rf
 
-$(dirname $0 )/createMDSPlotHelper.R tmp.$id.rf numTrees.$id $id
+$(dirname $0 )/createMDSPlotHelper.R tmp.$id.rf numTrees.$id $id $idfile
 
 rm tmp.$id.rf
 rm *.rfDistances
+# rm tmp.$id.idfile

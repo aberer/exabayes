@@ -36,16 +36,17 @@ public:
   int getStart(){return start; }
   void setEnd(int _end){end = _end; }
   void setStart(int _start){start = _start; }
+
+  int getNumTreeAvailable(string filename); 
+
   
-
-
 
 private: 
   void fillTaxaInfo(string fileName); 
   bool fileIsCorrect(string fileName);   
   void nextTree(FILE *fh);
   void initializeTreeOnly(int numTax); 
-  
+
   TreeAln *traln;
   vector<string> fns; 
   vector<string>  taxa; 

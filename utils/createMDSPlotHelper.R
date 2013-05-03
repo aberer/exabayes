@@ -6,7 +6,12 @@ args = commandArgs(trailingOnly = TRUE)
 
 fn = args[1]                          #rf distances
 numTreeFile = args[2]                      # number of trees per run 
-name = args[3]                          # an id ofr the run
+name = args[3]                          # an id for the run
+ids = args[4]
+
+
+idTab = read.table(ids, header=F, as.is=T)
+## idTab
 
 tab = read.table(fn, header=F)
 
@@ -22,8 +27,6 @@ rfDists = x
 
 ## rfDists
 scaled = cmdscale(rfDists)
-## scaled
-## stopifnot(dim(scaled)[1] == sum(numTrees)-1 )
 
 pdf(paste("mdsplot-", name, ".pdf", sep=""))
 matplot(NA,NA, xlim=range(scaled[,1]),ylim=range(scaled[,2]), xlab="dim A", ylab="dim B")
@@ -33,12 +36,9 @@ for (i in 1:dim(numTrees)[1])
     start = end + 1 
     end = start + numTrees[i,1] - 1 
 
-    ## if(i == dim(numTrees)[1])
-    ##   {
-    ##     end = end - 1 
-    ##   }
-
     matlines(scaled[start:end,1],scaled[start:end,2], col=i)
+    
+    legend("topleft", legend=t(idTab), lty=1, lwd=3, col=1:(dim(idTab)[1]))
   }
 
 bla = dev.off()

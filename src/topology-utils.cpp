@@ -1,6 +1,6 @@
 
 #include "axml.h"
-#include "bayes.h"
+#include "bayes.h"		// 
 #include "globals.h"
 #include "randomness.h"
 // #include "main-common.h"

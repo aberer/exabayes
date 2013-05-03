@@ -1,5 +1,5 @@
-#ifndef __RANDOMNESS_H
-#define __RANDOMNESS_H
+#ifndef ___RANDOMNESS_H
+#define ___RANDOMNESS_H
 
 #include "rng.h"
 #include "axml.h"
@@ -56,8 +56,8 @@ private:
 
   //density for dirichlet distribution with parameters "alphas" at point "values".
 
-  double gammaFunction(double alpha); 
-  double betaFunction(double *alpha, int length); 
+  // double gammaFunction(double alpha); 
+  // double betaFunction(double *alpha, int length); 
   // void normalize(double * vector, int length, double normalizingConstant); 
 
 }; 

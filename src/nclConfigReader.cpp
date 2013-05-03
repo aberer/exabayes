@@ -91,6 +91,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = NODE_SLIDER; 
   else if (key.EqualsCaseInsensitive("initFrequencyDirichletWeight"))
     *pf = UPDATE_FREQUENCIES_DIRICHLET;
+  else if (key.EqualsCaseInsensitive("etbr"))
+    *pf = E_TBR;
   else 
     found = false; 
 

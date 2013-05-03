@@ -199,11 +199,11 @@ static nodeptr findEmptyNodePtr(nodeptr ptr)
    @param insertionBranch -- the branch into which we insert   
 
  */
-void insertNodeIntoBranch(Chain *chain, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
+void insertNodeIntoBranch(TreeAln *traln, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
 {  
-  tree *tr = chain->traln->getTr(); 
+  tree *tr = traln->getTr(); 
   int
-    numBranches = chain->traln->getNumBranches(); 
+    numBranches = traln->getNumBranches(); 
 
   nodeptr
     pruned1 = findEmptyNodePtr(tr->nodep[toBeInserted.thisNode]); 
@@ -220,9 +220,9 @@ void insertNodeIntoBranch(Chain *chain, branch toBeInserted, branch insertionBra
   hookup(pruned2, insert2, blsNode2, numBranches);   
 
 
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  printInfo(chain, "inserted  %d into %d (bl=%f)\t%d (bl=%f)\n", pruned1->number, insert1->number,  insert2->number, traln->getBranchLength( pruned1->number,0), traln->getBranchLength( insert2->number,0)); 
-#endif
+// #ifdef DEBUG_SHOW_TOPO_CHANGES
+//   printInfo(chain, "inserted  %d into %d (bl=%f)\t%d (bl=%f)\n", pruned1->number, insert1->number,  insert2->number, traln->getBranchLength( pruned1->number,0), traln->getBranchLength( insert2->number,0)); 
+// #endif
 }
 
 
@@ -367,10 +367,10 @@ branch findRoot(tree *tr)
    @param  b -- the branch to be pruned (only thisNode is the pruning point, we only know thatNode for orientation)
    @param z -- the branch lengths at the pruning point after pruning 
 */
-void pruneBranch(Chain *chain, branch b, double *z)
+void pruneBranch(TreeAln *traln, branch b, double *z)
 {  
-  tree *tr = chain->traln->getTr() ; 
-  int numBl = chain->traln->getNumBranches(); 
+  tree *tr = traln->getTr() ; 
+  int numBl = traln->getNumBranches(); 
 
   nodeptr toPrune  = findNodeFromBranch(tr, b); 
   nodeptr pruned1 = toPrune->next->back,
@@ -380,9 +380,9 @@ void pruneBranch(Chain *chain, branch b, double *z)
 
   hookup(pruned1 , pruned2, z, numBl);
 
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  printInfo(chain, "pruning %d from %d,%d\tnew bl=%f\n", toPrune->number, pruned1->number, pruned2->number, z[0]);   
-#endif
+// #ifdef DEBUG_SHOW_TOPO_CHANGES
+//   printInfo(chain, "pruning %d from %d,%d\tnew bl=%f\n", toPrune->number, pruned1->number, pruned2->number, z[0]);   
+// #endif
   
 }
 

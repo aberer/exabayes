@@ -13,5 +13,5 @@
 
 
 void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result); 
-
+double tuneParameter(int batch, double accRatio, double parameter, boolean inverse ); 
 #endif

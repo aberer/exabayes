@@ -26,9 +26,9 @@ void expensiveVerify(Chain *chain)
 
   if(chain->currentGeneration != 0 && isOutputProcess())
     {
-      if(fabs (verifiedLnl - toVerify ) > 1e-6)
+      if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
 	printf("WARNING: found in expensive evaluation: likelihood difference is %f (with toVerify/verified)\t%f\t%f\n", fabs (verifiedLnl - toVerify ), toVerify, verifiedLnl); 
-      assert(fabs (verifiedLnl - toVerify ) < 1e-6);   
+      assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
     }  
 
   exa_free(helpChain); 

@@ -315,7 +315,7 @@ static void extended_spr_apply(Chain *chain, proposalFunction *pf)
       if(zqr[i] < zmin) zqr[i] = zmin;
     }
   
-  pruneBranch(chain, constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number),zqr);
+  pruneBranch(chain->traln, constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number),zqr);
 
   debug_printNodeEnvironment(chain, nb->number); 
   debug_printNodeEnvironment(chain, nnb->number); 
@@ -406,7 +406,7 @@ static void extended_spr_apply(Chain *chain, proposalFunction *pf)
 	  }
 	
 	
-	insertNodeIntoBranch( chain, 
+	insertNodeIntoBranch( chain->traln, 
 			      constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number ),
 			      rec->insertBranch, 
 			      insertBranchPtr->z,
@@ -440,9 +440,9 @@ static void extended_spr_reset(Chain * chain, proposalFunction *pf)
   assert(p->number != topoRec->insertBranch.thisNode  && p->number != topoRec->insertBranch.thatNode); 
   /* END */
 
-  pruneBranch(chain, constructBranch(topoRec->pruned.thatNode, p->number) , topoRec->bls);
+  pruneBranch(chain->traln, constructBranch(topoRec->pruned.thatNode, p->number) , topoRec->bls);
 
-  insertNodeIntoBranch(chain, 
+  insertNodeIntoBranch(chain->traln, 
 		       constructBranch(topoRec->pruned.thatNode, p->number), 
 		       topoRec->pruningBranch, 
 		       topoRec->neighborBls, topoRec->nextNeighborBls) ; 
@@ -1539,26 +1539,65 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
 }
 
 
+
+
+
+
+/**
+   @brief log tuning for a parameter 
+   
+   @return tuned parameter    
+ */
+double tuneParameter(int batch, double accRatio, double parameter, boolean inverse )
+{  
+  double delta = 1.0 / sqrt(batch);
+  delta = 0.01 < delta ? 0.01 : delta;
+
+  double logTuning = log(parameter);
+  
+  if(inverse)
+    logTuning += (accRatio > TARGET_RATIO)  ? -delta : +delta ;
+  else 
+    logTuning += (accRatio > TARGET_RATIO)  ? +delta : -delta ;
+  
+  double newTuning = exp(logTuning);
+
+  /* TODO min+max tuning?  */
+  
+  double minTuning = 1e-8,
+    maxTuning = 1e3; 
+  if (minTuning <  newTuning && newTuning < maxTuning)
+    return  newTuning; 
+  else 
+    return parameter; 
+}
+
+
+
+
+
+
 /**
    @brief tunes the BL multiplier
  */ 
-static void autotuneMultiplier(Chain *chain, proposalFunction *pf)
+static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
 {
   double *parameter = &(pf->parameters.multiplier); 
 
   // successCtr *ctr = &(pf->sCtr); 
-  SuccessCtr *ctr = &(pf->sCtr); 
+  // SuccessCtr *ctr = &(pf->sCtr); 
 
-  int batch = chain->currentGeneration  / gAInfo.tuneFreq; 
 
-  double newParam = tuneParameter(batch, ctr->getRatioInLastInterval(), *parameter, FALSE); 
+  // int batch = chain->currentGeneration  / gAInfo.tuneFreq; 
+
+  double newParam = tuneParameter(ctr->getBatch(), ctr->getRatioInLastInterval(), *parameter, FALSE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
   printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
 #endif
 
   *parameter = newParam; 
-  ctr->reset();   
+  // ctr->reset();   
 }
 
 
@@ -1566,11 +1605,11 @@ static void autotuneMultiplier(Chain *chain, proposalFunction *pf)
    @brief autotunes sliding windows 
    
 */ 
-static void autotuneSlidingWindow(Chain *chain, proposalFunction *pf)
+static void autotuneSlidingWindow(proposalFunction *pf, SuccessCtr *ctr)
 {
   double *parameter = &(pf->parameters.slidWinSize); 
-  SuccessCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter(chain->currentGeneration / gAInfo.tuneFreq,
+  // SuccessCtr *ctr = &(pf->sCtr); 
+  double newParam = tuneParameter(ctr->getBatch() ,
 				  ctr->getRatioInLastInterval(), 
 				  *parameter, FALSE  ); 
   
@@ -1579,19 +1618,21 @@ static void autotuneSlidingWindow(Chain *chain, proposalFunction *pf)
 #endif
 
   *parameter = newParam; 
-  ctr->reset(); 
+  // ctr->reset(); 
 }
 
 
 
-static void autotuneDirichletAlpha(Chain *chain, proposalFunction *pf)
+
+/** @brief tune the alpha of a dirichlet distribution */ 
+static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCtr *ctr)
 {
   double *parameter = &(pf->parameters.dirichletAlpha); 
 
-  SuccessCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter(chain->currentGeneration / gAInfo.tuneFreq, 
+  // SuccessCtr *ctr = &(pf->sCtr); 
+  double newParam = tuneParameter(ctr->getBatch(), 
 				  ctr->getRatioInLastInterval(),
-				  *parameter, FALSE); 
+				  *parameter, TRUE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
   printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
@@ -1600,32 +1641,6 @@ static void autotuneDirichletAlpha(Chain *chain, proposalFunction *pf)
   * parameter = newParam; 
   ctr->reset();
 }
-
-
-// TODO this below did not work at all 
-/**
-   @brief autotunes the stop probability of extended topological moves 
-*/ 
-// static void autotuneStopProp(Chain *chain, proposalFunction *pf) 
-// {
-//   const double minimum = 0.01; 
-//   const double maximum = 0.95; 
-
-//   double *parameter = &(pf->parameters.eSprStopProb); 
-//   successCtr *ctr = &(pf->sCtr); 
-//   double newParam = tuneParameter( chain->currentGeneration / gAInfo.tuneFreq, 
-// 				   getRatioLocal(&(pf->sCtr)),
-// 				   *parameter, 
-// 				   TRUE ); 
-
-// #ifdef DEBUG_PRINT_TUNE_INFO
-//   printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
-// #endif
-  
-//   *parameter = fmax(minimum,fmin(newParam,maximum)); 
-//   resetCtr(ctr);     
-// }
-
 
 
 void branchLengthReset(Chain *chain, proposalFunction *pf)
@@ -1692,6 +1707,7 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
   ptr->ptype = (proposal_type)type; 
   ptr->initWeight = initParams->initWeights[type]; 
   ptr->currentWeight = ptr->initWeight; 
+  ptr->relativeWeight = initParams->initWeights[type] ; 
 
 
   /* 
@@ -1918,4 +1934,3 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       }
     }  
 }
-

@@ -13,13 +13,18 @@ using namespace std;
 class SuccessCtr
 {
 public: 
-  SuccessCtr() : globalAcc(0),globalRej(0), localAcc(0), localRej(0){}
+  SuccessCtr() : globalAcc(0),globalRej(0), localAcc(0), localRej(0), batch(1){}
 
   void accept(){globalAcc++;localAcc++;}
   void reject(){globalRej++;localRej++;}
+
+  int getRecentlySeen(){return localAcc + localRej; }
   
   double getRatioInLastInterval() const  { return (double)localAcc / ((double)(localAcc + localRej) ); }
   double getRatioOverall() const {return (double) globalAcc / ((double)(globalAcc + globalRej)); }
+
+  void nextBatch(){batch++;reset();}
+  int getBatch(){return batch; }
 
   void reset(){localRej = 0; localAcc = 0; }
   
@@ -31,6 +36,7 @@ private:
   
   int localAcc; 
   int localRej; 
+  int batch; 
 }; 
 
 

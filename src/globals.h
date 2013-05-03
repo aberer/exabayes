@@ -60,12 +60,45 @@ typedef struct globs
   int globalRank; 
 } globalAnalysisInfo; 
 
+
+ 
+
+
  
 
 #endif
 
 
 #ifdef _INCLUDE_DEFINITIONS
+
+
+bool isNewProposal[NUM_PROPOSALS] = 
+  {
+    false,     
+    false, 
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,     
+    false,
+    true   
+  }; 
+
 
 /* more global variables =(  */
 char configFileName[1024]; 
@@ -81,7 +114,7 @@ double timeIncrement = 0;
 extern globalAnalysisInfo gAInfo; 
 
 
-
+extern bool isNewPropossal[NUM_PROPOSALS]; 
 extern int Thorough; 
 extern int processID; 
 extern char run_id[1024]; 
