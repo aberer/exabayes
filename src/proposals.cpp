@@ -158,264 +158,155 @@ static nodeptr select_random_subtree(Chain *chain, tree *tr)
 void pushToStackIfNovel(stack *s, branch b, int numTip); 
 
 
+// static void extended_spr_apply(Chain *chain, proposalFunction *pf)
+// {
+//   TreeAln *traln = chain->traln; 
+//   tree *tr = chain->traln->getTr();
+//   topoRecord *rec = pf->remembrance.topoRec; 
+//   double stopProp = pf->parameters.eSprStopProb; 
 
-static void sprEval(Chain *chain, proposalFunction *thisProposal)
-{  
-  tree *tr = chain->traln->getTr(); 
-  path *rPath = thisProposal->remembrance.modifiedPath; 
+//   debug_printTree(chain);
 
-  branch futureRoot = getThirdBranch(tr, rPath->content[0], rPath->content[1]); 
+//   nodeptr prunedSubtreePtr = select_random_subtree(chain,tr);
+//   nodeptr nb = prunedSubtreePtr->next->back, 
+//     nnb = prunedSubtreePtr->next->next->back; 
+
+//   assert( NOT isTip(prunedSubtreePtr->number, tr->mxtips) ) ; 
+
+//   rec->pruned = constructBranch(0,prunedSubtreePtr->number); 
+//   rec->pruningBranch.thisNode = nb->number; 
+//   rec->pruningBranch.thatNode = nnb->number; 
+
+//   record_branch_info(traln, nb, rec->neighborBls);
+//   record_branch_info(traln,nnb, rec->nextNeighborBls);
   
-  /* evaluate at root of inserted subtree */
-  nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
+//   double* nbz = rec->neighborBls,
+//     *nnbz = rec->nextNeighborBls; 
 
-  destroyOrientationAlongPath(tr, rPath, toEval); 
-  destroyOrientationAlongPath(tr,rPath, toEval->back);
+//   /* initial remapping of BL of nodes adjacent to pruned node  */
+//   double zqr[NUM_BRANCHES];
 
-  /* printf("evaluating at branch %d,%d\n", toEval->number, toEval->back->number);  */
-  evaluateGenericWrapper(chain, toEval, FALSE);
-}
+//   for(int i = 0; i < chain->traln->getNumBranches(); i++)
+//     {
+//       switch(pf->ptype)
+// 	{
+// 	case E_SPR: 
+// 	  zqr[i] = nbz[i] ; 
+// 	  break; 
+// 	default: assert(0); 
+// 	}
 
-
-
-static void resetESPR(Chain *chain, proposalFunction *pf )
-{
-  resetAlongPathForESPR (chain->traln, pf->remembrance.modifiedPath);   
-
-  /* TODO resetAlong... should be able to correctly restore branch lengths    */
-  restoreBranchLengthsPath(chain->traln, pf->remembrance.modifiedPath); 
-
-  debug_checkTreeConsistency(chain->traln->getTr());
-  freeStack(&(pf->remembrance.modifiedPath));
-  /* printf("RESET: ");    */
-  debug_printTree(chain); 
-}
-
-
-
-
-/**
-   @brief applies an extended spr move (our version)
-   
-   the same function as below, but I cleaned the other flavour, since so much stuff has changed. 
- */ 
-static void applyExtendedSPR(Chain *chain, proposalFunction *pf)
-{
-  double stopProp = pf->parameters.eSprStopProb; 
-
-  debug_printTree(chain);
+//       if(zqr[i] > zmax) zqr[i] = zmax;
+//       if(zqr[i] < zmin) zqr[i] = zmin;
+//     }
   
-  path *rPath = NULL; 
-  createStack(&rPath); 
-  drawPathForESPR(chain,rPath,stopProp); 
+//   pruneBranch(chain->traln, constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number),zqr);
 
-  /* printStack(rPath); */
+//   debug_printNodeEnvironment(chain, nb->number); 
+//   debug_printNodeEnvironment(chain, nnb->number); 
 
-  saveBranchLengthsPath(chain, rPath); 
+//   nodeptr initNode = NULL; 
+//   nodeptr curNode = NULL; 
 
-  applyPathAsESPR(chain->traln, rPath);
+//   boolean remapBL = FALSE; 
+//   if(chain->getChainRand()->drawRandDouble01() > 0.5)
+//     {
+//       curNode = nb; 
+//       remapBL = TRUE ; 
+//     }
+//   else 
+//     {
+//       curNode = nnb; 
+//     }
+//   initNode = curNode; 
 
-  pf->remembrance.modifiedPath = rPath; 
+//   stack *s = NULL; 
+//   createStack(&s); 
 
-#ifdef ESPR_MULTIPLY_BL
-  /* if(drawRandDouble01(chain) < 0.5) */
-  multiplyAlongBranchESPR(chain, rPath, pf->param2.multiplier);
-#endif
+//   int accepted = FALSE;   
+//   while( NOT  accepted)
+//     {       
+//       accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
 
-  debug_checkTreeConsistency(chain->traln->getTr()); 
-}
+//       pushToStackIfNovel(s,constructBranch(curNode->number, curNode->back->number), tr->mxtips);
 
+//       /* needed for spr remap */
+//       if(curNode == initNode)
+// 	{
+// 	  remapBL = NOT remapBL; 
+// 	  accepted = FALSE; 
+// 	}
 
-
-
-
-
-
-static void extended_spr_apply(Chain *chain, proposalFunction *pf)
-{
-  TreeAln *traln = chain->traln; 
-  tree *tr = chain->traln->getTr();
-  topoRecord *rec = pf->remembrance.topoRec; 
-  double stopProp = pf->parameters.eSprStopProb; 
-
-  debug_printTree(chain);
-
-  nodeptr prunedSubtreePtr = select_random_subtree(chain,tr);
-  nodeptr nb = prunedSubtreePtr->next->back, 
-    nnb = prunedSubtreePtr->next->next->back; 
-
-  assert( NOT isTip(prunedSubtreePtr->number, tr->mxtips) ) ; 
-
-  rec->pruned = constructBranch(0,prunedSubtreePtr->number); 
-  rec->pruningBranch.thisNode = nb->number; 
-  rec->pruningBranch.thatNode = nnb->number; 
-
-  record_branch_info(traln, nb, rec->neighborBls);
-  record_branch_info(traln,nnb, rec->nextNeighborBls);
+//       if(stackIsEmpty(s))
+// 	accepted = FALSE; 
+//     }
   
-  double* nbz = rec->neighborBls,
-    *nnbz = rec->nextNeighborBls; 
+//   /* printStack(s);  */
+//   freeStack(&s); 
 
-  /* initial remapping of BL of nodes adjacent to pruned node  */
-  double zqr[NUM_BRANCHES];
+//   rec->insertBranch.thisNode = curNode->number;   
+//   rec->insertBranch.thatNode = curNode->back->number; 
 
-  for(int i = 0; i < chain->traln->getNumBranches(); i++)
-    {
-      switch(pf->ptype)
-	{
-	case E_SPR: 
-	  zqr[i] = nbz[i] ; 
-	  break; 
-	default: assert(0); 
-	}
+//   nodeptr insertBranchPtr = curNode; 
 
-      if(zqr[i] > zmax) zqr[i] = zmax;
-      if(zqr[i] < zmin) zqr[i] = zmin;
-    }
-  
-  pruneBranch(chain->traln, constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number),zqr);
+//   record_branch_info(traln, insertBranchPtr, pf->remembrance.topoRec->bls); 
 
-  debug_printNodeEnvironment(chain, nb->number); 
-  debug_printNodeEnvironment(chain, nnb->number); 
+//   switch(pf->ptype)
+//     {
+//       /* TODO this was the standard!  */
+//       /* case STANDARD:  */
+//       /* for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) */
+//       /*   { */
+//       /*     chain->hastings/=log(curNode->z[branchCount]); */
+//       /*   }   */
+//       /*     insertWithUnifBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, getNumBranches(chain->tr)); */
+//       /* /\*   for(int branchCount=0; branchCount<chain->tr->numBranches; branchCount++) */
+//       /*    { */
+//       /*      chain->hastings/=log(chain->brLenRemem.qz[branchCount]); */
+//       /*    } */
+//       /*    *\/ */
+//       /*  //  printf("hastings: %f\n", chain->hastings); */
+//       /*     // insertBIG(chain->tr, chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->tr->numBranches); */
+//       break; 
 
-  nodeptr initNode = NULL; 
-  nodeptr curNode = NULL; 
-
-  boolean remapBL = FALSE; 
-  if(chain->getChainRand()->drawRandDouble01() > 0.5)
-    {
-      curNode = nb; 
-      remapBL = TRUE ; 
-    }
-  else 
-    {
-      curNode = nnb; 
-    }
-  initNode = curNode; 
-
-  stack *s = NULL; 
-  createStack(&s); 
-
-  int accepted = FALSE;   
-  while( NOT  accepted)
-    {       
-      accepted = extended_spr_traverse(chain, &curNode, stopProp ); 
-
-      pushToStackIfNovel(s,constructBranch(curNode->number, curNode->back->number), tr->mxtips);
-
-      /* needed for spr remap */
-      if(curNode == initNode)
-	{
-	  remapBL = NOT remapBL; 
-	  accepted = FALSE; 
-	}
-
-      if(stackIsEmpty(s))
-	accepted = FALSE; 
-    }
-  
-  /* printStack(s);  */
-  freeStack(&s); 
-
-  rec->insertBranch.thisNode = curNode->number;   
-  rec->insertBranch.thatNode = curNode->back->number; 
-
-  nodeptr insertBranchPtr = curNode; 
-
-  record_branch_info(traln, insertBranchPtr, pf->remembrance.topoRec->bls); 
-
-  switch(pf->ptype)
-    {
-      /* TODO this was the standard!  */
-      /* case STANDARD:  */
-      /* for(int branchCount=0; branchCount< getNumBranches(chain->tr); branchCount++) */
-      /*   { */
-      /*     chain->hastings/=log(curNode->z[branchCount]); */
-      /*   }   */
-      /*     insertWithUnifBL(chain->sprMoveRemem.p, chain->sprMoveRemem.q, getNumBranches(chain->tr)); */
-      /* /\*   for(int branchCount=0; branchCount<chain->tr->numBranches; branchCount++) */
-      /*    { */
-      /*      chain->hastings/=log(chain->brLenRemem.qz[branchCount]); */
-      /*    } */
-      /*    *\/ */
-      /*  //  printf("hastings: %f\n", chain->hastings); */
-      /*     // insertBIG(chain->tr, chain->sprMoveRemem.p, chain->sprMoveRemem.q, chain->tr->numBranches); */
-      break; 
-
-      break;       
-    case E_SPR: 
-      {
-	/* TODO hastings?  */
+//       break;       
+//     case E_SPR: 
+//       {
+// 	/* TODO hastings?  */
       
-	double *neighborZ = nnbz; 
+// 	double *neighborZ = nnbz; 
 
-	/* if we went into the other direction, correct for that. 
-	   specfically rec->pruningBranches must point into the direction, we moved the tree to 
-	*/
-	if( remapBL ) 
-	  {
-	    neighborZ = nbz; 
-	    for(int i = 0; i < chain->traln->getNumBranches(); ++i)
-	      traln->setBranchLengthSave(traln->getBranchLength(nnb, i), i,nb); 
+// 	/* if we went into the other direction, correct for that. 
+// 	   specfically rec->pruningBranches must point into the direction, we moved the tree to 
+// 	*/
+// 	if( remapBL ) 
+// 	  {
+// 	    neighborZ = nbz; 
+// 	    for(int i = 0; i < chain->traln->getNumBranches(); ++i)
+// 	      traln->setBranchLengthSave(traln->getBranchLength(nnb, i), i,nb); 
 	    
-	    assert(chain->traln->getNumBranches() == 1 ); 
-	    swpDouble(rec->neighborBls,rec->nextNeighborBls ); 
-	    rec->pruningBranch = invertBranch(rec->pruningBranch); 
-	  }
+// 	    assert(chain->traln->getNumBranches() == 1 ); 
+// 	    swpDouble(rec->neighborBls,rec->nextNeighborBls ); 
+// 	    rec->pruningBranch = invertBranch(rec->pruningBranch); 
+// 	  }
 	
 	
-	insertNodeIntoBranch( chain->traln, 
-			      constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number ),
-			      rec->insertBranch, 
-			      insertBranchPtr->z,
-			      neighborZ); 	
-      }
-      break; 
-    default: assert(0); 
-    }
+// 	insertNodeIntoBranch( chain->traln, 
+// 			      constructBranch(prunedSubtreePtr->number, prunedSubtreePtr->back->number ),
+// 			      rec->insertBranch, 
+// 			      insertBranchPtr->z,
+// 			      neighborZ); 	
+//       }
+//       break; 
+//     default: assert(0); 
+//     }
 
-  debug_checkTreeConsistency(chain->traln->getTr()); 
+//   debug_checkTreeConsistency(chain->traln->getTr()); 
 
-  assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thisNode ))); 
-  assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thatNode ))); 
-} 
+//   assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thisNode ))); 
+//   assert(branchExists(tr, constructBranch(rec->pruned.thatNode, rec->insertBranch.thatNode ))); 
+// }
 
-
-
-static void extended_spr_reset(Chain * chain, proposalFunction *pf)
-{
-  tree *tr = chain->traln->getTr(); 
-  topoRecord
-    *topoRec = pf->remembrance.topoRec; 
-  
-
-  /* HACK to find the other node in the subtree */  
-  nodeptr p = tr->nodep[topoRec->pruned.thatNode] ; 
-  while(p->back->number == topoRec->insertBranch.thisNode 
-	|| p->back->number == topoRec->insertBranch.thatNode )
-    p = p->next; 
-  p = p->back; 
-  assert(p->number != topoRec->insertBranch.thisNode  && p->number != topoRec->insertBranch.thatNode); 
-  /* END */
-
-  pruneBranch(chain->traln, constructBranch(topoRec->pruned.thatNode, p->number) , topoRec->bls);
-
-  insertNodeIntoBranch(chain->traln, 
-		       constructBranch(topoRec->pruned.thatNode, p->number), 
-		       topoRec->pruningBranch, 
-		       topoRec->neighborBls, topoRec->nextNeighborBls) ; 
-
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  debug_printNodeEnvironment(chain,  topoRec->pruned.thatNode ); 
-  debug_printNodeEnvironment(chain,   topoRec->pruningBranch.thisNode ); 
-  debug_printNodeEnvironment(chain,   topoRec->pruningBranch.thatNode ); 
-  debug_printNodeEnvironment(chain,   topoRec->insertBranch.thisNode ); 
-  debug_printNodeEnvironment(chain,   topoRec->insertBranch.thatNode ); 
-#endif
-
-  debug_checkTreeConsistency(chain->traln->getTr() );
-  debug_printTree(chain);
-}
 
 
 //--------Alpha-Proposal-for-GAMMA-----------------------------------------------------------------
@@ -1686,17 +1577,17 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->parameters.radius =  initParams->initGuidedSPR; 
       ptr->autotune = NULL;       
       break; 
-    case E_SPR:
-      ptr->eval_lnl = sprEval; 
-      /* ptr->autotune = autotuneStopProp; */
-      ptr->remembrance.modifiedPath = (path*)exa_calloc(1,sizeof(path)); 
-      ptr->apply_func = applyExtendedSPR; 
-      ptr->reset_func = resetESPR; 
-      ptr->name = "eSPR"; 
-      ptr->param2.multiplier = INIT_ESPR_MULT; 
-      ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
-      ptr->category = TOPOLOGY; 
-      break; 
+    // case E_SPR:
+    //   ptr->eval_lnl = sprEval; 
+    //   /* ptr->autotune = autotuneStopProp; */
+    //   ptr->remembrance.modifiedPath = (path*)exa_calloc(1,sizeof(path)); 
+    //   ptr->apply_func = applyExtendedSPR; 
+    //   ptr->reset_func = resetESPR; 
+    //   ptr->name = "eSPR"; 
+    //   ptr->param2.multiplier = INIT_ESPR_MULT; 
+    //   ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
+    //   ptr->category = TOPOLOGY; 
+    //   break; 
     case UPDATE_MODEL: 	
       ptr->eval_lnl = onePartitionEval; 
       ptr->autotune = autotuneSlidingWindow; 

@@ -12,6 +12,7 @@
 #include "proposals.h"
 #include "topology-utils.h"
 #include "ExtendedTBR.hpp"
+#include "ExtendedSPR.hpp"
 #include "WrappedProposal.hpp"
 
 // meh =/ 
@@ -96,6 +97,10 @@ void Chain::setupProposals( initParamStruct *initParams)
 	    case E_TBR: 
 	      if(initParams->initWeights[E_TBR] != 0)
 		prop.push_back(new ExtendedTBR(initParams->initWeights[E_TBR], initParams->eSprStopProb)); 
+	      break; 
+	    case E_SPR: 
+	      if(initParams->initWeights[E_SPR] != 0)
+		prop.push_back(new ExtendedSPR(this, initParams->initWeights[E_SPR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
 	      break; 
 	    default : 
 	      assert(0); 
@@ -411,18 +416,3 @@ void Chain::clarifyOwnership()
       p->setOwningChain(this); 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 

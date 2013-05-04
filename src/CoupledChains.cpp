@@ -43,6 +43,9 @@ CoupledChains::~CoupledChains()
 
 void CoupledChains::printSwapInfo()
 {
+  if(chains.size( )== 1 )
+    return ; 
+  
   int numCoupledChains = chains.size(); 
   
   int cnt = 0; 
@@ -166,6 +169,7 @@ void CoupledChains::chainInfo()
 
   PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runid,   gettime()  - timeIncrement  , coldChain->currentGeneration, coldChain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(coldChain->traln, tr->nodep[1]->back)));
 
+
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
   for(auto chain : chains)
@@ -178,10 +182,14 @@ void CoupledChains::chainInfo()
       
       PRINT("lnl_beta(%.2f)=%.2f\t", heat, chain->traln->getTr()->likelihood); 
     }
+
   
   printSwapInfo();
 
+
   PRINT("\n"); 
+
+
 
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
@@ -190,7 +198,7 @@ void CoupledChains::chainInfo()
     {
       cout << cat.getName() << ":\t";
       for( auto p : cat.getProposals() )
-	cout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
+  	cout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
       cout << endl; 
     }
 
@@ -221,7 +229,7 @@ void CoupledChains::executePart(int gensToRun)
 	}
 
       if(timeToPrint)
-      	chainInfo();	    
+      	chainInfo(); 
 
       if(gAInfo.tuneHeat)
       	tuneTemperature();      

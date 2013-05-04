@@ -95,7 +95,7 @@ bool isNewProposal[NUM_PROPOSALS] =
     false,     
     false,     
     false,     
-    false,
+    true,
     true   
   }; 
 

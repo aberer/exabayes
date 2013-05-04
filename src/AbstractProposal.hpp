@@ -25,16 +25,15 @@ public:
 
   // HACK! 
   virtual void setOwningChain( Chain *chain) = 0; 
-  
-  
+
   // getters and setters 
-  double getRelativeProbability(){return relativeProbability; }
+  double getRelativeProbability() const {return relativeProbability; }
   void setRelativeProbability(double prob ){ relativeProbability = prob; }
   
-  category_t getCategory(){return category; }
-  proposal_type getPtype(){return ptype; }
+  category_t getCategory() const {return category; }
+  proposal_type getPtype() const {return ptype; }
   
-  string getName(){return name; }
+  string getName() const {return name; }
   
   void accept() {sctr.accept();}
   void reject() {sctr.reject();}
