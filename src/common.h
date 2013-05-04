@@ -90,7 +90,7 @@ typedef  unsigned int nat ;
 
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
-#define ACCEPTED_LIKELIHOOD_EPS 1e-1
+#define ACCEPTED_LIKELIHOOD_EPS 1e-6
 
 
 /* ABOVE: stuff that is needed by everyone and can be defined
@@ -101,6 +101,9 @@ typedef  unsigned int nat ;
 
  */
 
+
+
+/* #define PRINT_MULT  */
 
 
 /* #define DEBUG_EVAL */
@@ -121,11 +124,12 @@ typedef  unsigned int nat ;
 #define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
-#define DEBUG_LNL_VERIFY
+/* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 
+/* #define VERIFY_LNL_SUPER_EXPENSIVE   */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
 #define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays

@@ -69,6 +69,8 @@ public:
   
   static const double initBL;  	// init values 
 
+  friend ostream& operator<< (ostream& out,  TreeAln&  traln);
+
 
 private: 
   void initDefault();

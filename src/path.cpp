@@ -113,7 +113,12 @@ static void multiplyBranch(Chain *chain, branch b, double parameter, double *has
   int numBranches = chain->traln->getNumBranches();
   nodeptr  p = findNodeFromBranch(tr, b); 
   double multiplier = chain->getChainRand()->drawMultiplier( parameter); 
-  double newZ = branchLengthToInternal(tr, multiplier * branchLengthToReal(tr, traln->getBranchLength( p,0))); 
+
+  double oldZ = branchLengthToReal(tr, traln->getBranchLength( p,0)); 
+  double newZ = branchLengthToInternal(tr, multiplier * oldZ); 
+#ifdef PRINT_MULT
+  cout  << setprecision(6) << "spr: " << oldZ <<   " * " << multiplier << " = "  << multiplier * oldZ << endl; // 
+#endif
 
   *hastings *= multiplier; 
   hookup(p,p->back, &newZ, numBranches);   

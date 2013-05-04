@@ -1,6 +1,6 @@
 #include "axml.h"
 #include "bayes.h"
-#include "randomness.h"
+// #include "randomness.h"
 #include "path.h"
 #include "output.h"
 #include "misc-utils.h"
@@ -66,10 +66,22 @@ void apply_st_nni(Chain *chain, proposalFunction *pf)
       m2 =  chain->getChainRand()->drawMultiplier(pf->parameters.multiplier),
       m3 =  chain->getChainRand()->drawMultiplier(pf->parameters.multiplier);
       
-    traln->setBranchLengthSave( pow( traln->getBranchLength( p,0),m1),0,p); 
-    traln->setBranchLengthSave( pow( traln->getBranchLength( r,0),m2),0,r); 
-    traln->setBranchLengthSave( pow( traln->getBranchLength( q,0),m3),0,q); 
 
+    double old1 = traln->getBranchLength( p,0),
+      old2 = traln->getBranchLength( r,0), 
+      old3 = traln->getBranchLength( q,0),
+      new1 = pow( old1,m1),
+      new2 = pow( old2 ,m2),
+      new3 = pow( old3 ,m3); 
+
+#ifdef PRINT_MULT
+    printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
+#endif
+
+    traln->setBranchLengthSave( new1 ,0,p); 
+    traln->setBranchLengthSave( new2 ,0,r); 
+    traln->setBranchLengthSave( new3 ,0,q); 
+    
 #endif
 
     hookup(p,p->back, p->z, numBranches); 

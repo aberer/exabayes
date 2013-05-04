@@ -2,7 +2,7 @@
 
 #include "CoupledChains.hpp"
 #include "Chain.hpp"
-#include "randomness.h"
+
 #include "globals.h"
 #include "proposals.h"
 #include "treeRead.h"

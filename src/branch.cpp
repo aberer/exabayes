@@ -81,7 +81,6 @@ int getOtherNode(int node, branch b)
  */ 
 double branchLengthToReal(tree *tr, double internalBL)
 {
-  // TODO also own class for that 
   // assert(getNumBranches(tr) == 1 ); 
   return -log(internalBL) * tr->fracchange; 
 }
@@ -92,7 +91,6 @@ double branchLengthToReal(tree *tr, double internalBL)
  */ 
 double branchLengthToInternal(tree *tr, double realBL)
 {
-  // TODO also own class for that 
   // assert(getNumBranches(tr) == 1 ); 
   return exp(-(realBL / tr->fracchange)); 
 }

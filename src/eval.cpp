@@ -20,14 +20,30 @@ void expensiveVerify(Chain *chain)
   
   Chain  *helpChain = (Chain*) exa_calloc(1,sizeof(chain)) ; 
   helpChain->traln = debugTraln; 
-  exa_evaluateGeneric(helpChain, helpChain->traln->getTr()->start, TRUE); 
+
+// #if 0 
+  nodeptr
+    p = findNodeFromBranch(debugTraln->getTr(), findRoot(chain->traln->getTr())); 
+  orientationPointAway(debugTraln->getTr(), p);
+  orientationPointAway(debugTraln->getTr(), p->back);
+
+  exa_evaluateGeneric(helpChain, p , FALSE); 
+// #else 
+//   exa_evaluateGeneric(helpChain, debugTraln->getTr()->start , TRUE); 
+// #endif
   double verifiedLnl =  helpChain->traln->getTr()->likelihood; 
 
 
   if(chain->currentGeneration != 0 && isOutputProcess())
-    {
+    {      
       if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
-	printf("WARNING: found in expensive evaluation: likelihood difference is %f (with toVerify/verified)\t%f\t%f\n", fabs (verifiedLnl - toVerify ), toVerify, verifiedLnl); 
+	{
+	  printf("WARNING: found in expensive evaluation: likelihood difference is %f (with toVerify/verified)\t%f\t%f\n", fabs (verifiedLnl - toVerify ), toVerify, verifiedLnl); 
+
+	  cout << "current tree: " << *(chain->traln) << endl; 
+	  cout << "help tree: " <<  *(helpChain->traln) << endl; 
+	  
+	}
       assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
     }  
 

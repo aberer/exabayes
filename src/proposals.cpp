@@ -1,7 +1,7 @@
 
 #include "axml.h"
 #include "bayes.h"		// 
-#include "randomness.h"
+// #include "randomness.h"
 #include "globals.h"
 // #include "main-common.h"
 #include "output.h"
@@ -65,14 +65,6 @@ static void recordSubsRates(Chain *chain, int model, int numSubsRates, double *p
 }
 
 
-// static void reset_branch_length(nodeptr p, int numBranches, double *bls)
-// {
-//   int i;
-//   for(i = 0; i < numBranches; i++) 
-//     p->z[i] = p->back->z[i] = bls[i];   /* restore saved value */
-// }
-
-
 static void record_branch_info(TreeAln* traln, nodeptr p, double *bl)
 {
   int i;
@@ -80,40 +72,6 @@ static void record_branch_info(TreeAln* traln, nodeptr p, double *bl)
   for(i = 0; i < numBranches; i++)
     bl[i] = traln->getBranchLength( p,0);
 }
-
-
-/* static node *extended_spr_traverse( tree *tr, node *n ) { */
-
-/*   double randprop = drawRandDouble(); */
-  
-/*   if( isTip(n->number, tr->mxtips ) || randprop < 0.5 ) { */
-/*     return n; */
-/*   } else if( randprop < 0.75 ) { */
-/*     spr_depth++; */
-/*     return extended_spr_traverse( tr, n->next->back ); */
-/*   } else { */
-/*     spr_depth++; */
-/*     return extended_spr_traverse( tr, n->next->next->back ); */
-/*   } */
-
-/* } */
-
-
-
-
-/* static node *extended_spr( tree *tr, node *n )  */
-/* { */
-/*   if( isTip(n->number, tr->mxtips ) )  */
-/*     return n; */
-
-/*   double randprop = drawRandDouble(); */
-/*   if( randprop < 0.5 )  */
-/*     return extended_spr_traverse( tr, n->next->back ); */
-/*   else  */
-/*     return extended_spr_traverse( tr, n->next->next->back ); */
-/* } */
-
-
 
 
 /* TODO more diagnostics on where the stuff moves to  */
@@ -1528,8 +1486,15 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
   /* TODO how do we do that wiht multiple bls per branch?  */
   assert(chain->traln->getNumBranches() == 1); 
 
-  double newZ = pow( traln->getBranchLength( p,0), multiplier) ; 
+  double oldZ = traln->getBranchLength( p,0); 
+  double newZ = pow( oldZ, multiplier) ; 
   /* printf("\t\tBL_MULTI: %g * %g => %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
+
+
+#ifdef PRINT_MULT  
+  cout  << setprecision(6) << "bl-multi: " << branchLengthToReal(tr,oldZ) <<   " * " << multiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
+#endif
+
 
   /* according to lakner2008  */
   chain->hastings *= multiplier; 
@@ -1565,7 +1530,7 @@ double tuneParameter(int batch, double accRatio, double parameter, boolean inver
   /* TODO min+max tuning?  */
   
   double minTuning = 1e-8,
-    maxTuning = 1e3; 
+    maxTuning = 1e1; 
   if (minTuning <  newTuning && newTuning < maxTuning)
     return  newTuning; 
   else 
@@ -1584,12 +1549,6 @@ static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
 {
   double *parameter = &(pf->parameters.multiplier); 
 
-  // successCtr *ctr = &(pf->sCtr); 
-  // SuccessCtr *ctr = &(pf->sCtr); 
-
-
-  // int batch = chain->currentGeneration  / gAInfo.tuneFreq; 
-
   double newParam = tuneParameter(ctr->getBatch(), ctr->getRatioInLastInterval(), *parameter, FALSE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
@@ -1597,7 +1556,7 @@ static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
 #endif
 
   *parameter = newParam; 
-  // ctr->reset();   
+  ctr->reset();   
 }
 
 
@@ -1608,17 +1567,14 @@ static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
 static void autotuneSlidingWindow(proposalFunction *pf, SuccessCtr *ctr)
 {
   double *parameter = &(pf->parameters.slidWinSize); 
-  // SuccessCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter(ctr->getBatch() ,
-				  ctr->getRatioInLastInterval(), 
-				  *parameter, FALSE  ); 
+  double newParam = tuneParameter(ctr->getBatch() , ctr->getRatioInLastInterval(), *parameter, FALSE  ); 
   
 #ifdef DEBUG_PRINT_TUNE_INFO
   printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
 #endif
 
   *parameter = newParam; 
-  // ctr->reset(); 
+  ctr->reset(); 
 }
 
 
@@ -1629,10 +1585,7 @@ static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCtr *ctr)
 {
   double *parameter = &(pf->parameters.dirichletAlpha); 
 
-  // SuccessCtr *ctr = &(pf->sCtr); 
-  double newParam = tuneParameter(ctr->getBatch(), 
-				  ctr->getRatioInLastInterval(),
-				  *parameter, TRUE); 
+  double newParam = tuneParameter(ctr->getBatch(), ctr->getRatioInLastInterval(), *parameter, TRUE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
   printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
@@ -1665,6 +1618,7 @@ void resetGammaMulti(Chain *chain, proposalFunction *pf)
  
 void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
 {
+
   double multi = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);   
   int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions());
   pInfo *partition = chain->traln->getPartition( model); 
@@ -1675,7 +1629,11 @@ void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
   pinfo->modelNum = model;   
   pinfo->alpha = chain->traln->getAlpha(model);
   
-  chain->traln->setAlphaSave(partition->alpha * multi, model); 
+  double oldAlpha = partition->alpha; 
+  chain->traln->setAlphaSave( oldAlpha * multi, model); 
+#ifdef PRINT_MULT
+  cout  << setprecision(6) << "alpha-multi: " <<  oldAlpha <<   " * " << multi << " = "  << partition->alpha << endl; 
+#endif
 
   chain->traln->discretizeGamma(model);
 }

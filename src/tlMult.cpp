@@ -32,6 +32,9 @@ void applyTLMult(Chain *chain,  proposalFunction *pf )
 {
   tree *tr = chain->traln->getTr(); 
   double multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);
+#ifdef PRINT_MULT
+  cout  << setprecision(6) << "tl-multi with " << multiplier << endl; 
+#endif
   pf->remembrance.multiplier = multiplier; 
   multiplyBranchLengthsRecursively(chain->traln , tr->start->back, multiplier); 
 }

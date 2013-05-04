@@ -45,10 +45,13 @@ void applyNodeSlider(Chain *chain, proposalFunction *pf)
     nodeB = findNodeFromBranch(tr,otherBranch); 
 
   double bothZ = traln->getBranchLength( nodeA,0) * traln->getBranchLength( nodeB,0); 
-  double multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);
+  double multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier); 
   chain->hastings *= multiplier; 
   double newZ = branchLengthToReal(tr,pow(bothZ,multiplier));  
   double realOldZ = branchLengthToReal(tr, bothZ); 
+#ifdef PRINT_MULT
+  cout << setprecision(6) << "nodeslider: " << realOldZ << " * "  << multiplier << " = " << newZ; 
+#endif
   chain->hastings *= ( realOldZ / newZ); 
   
   double uniScaler = chain->getChainRand()->drawRandDouble01(); 

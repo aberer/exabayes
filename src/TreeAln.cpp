@@ -15,8 +15,19 @@
 
 // most of it has been copied over from raxml. But maybe we want to differ? 
 
+
+
+// TODO these raxml values would allow for branch lengths up to 13,
+// I'll reduce it now because i ran into trouble there, but this
+// definitely needs to be discussed
+// #if 0 
 const double TreeAln::zMin = 1.0E-15 ; 
 const double TreeAln::zMax = (1.0 - 1.0E-6) ; 
+// #else 
+// const double TreeAln::zMin = 1.0E-8 ; 
+// const double TreeAln::zMax = (1.0 - 1.0E-3) ; 
+// #endif
+
 
 const double TreeAln::rateMin = 0.0000001; 
 const double TreeAln::rateMax = 1000000.0; 
@@ -184,7 +195,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
   return NULL;
 }
 
-
+#define UNSAFE_EXACT_TREE_COPY
 
 /**
    @brief copies the entire state from the rhs to this tree/alignment.
@@ -194,6 +205,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
  */ 
 TreeAln& TreeAln::operator=( TreeAln& rhs)
 {
+  
   assert(&rhs != this); 
 
   // copy partition parameters 
@@ -213,6 +225,27 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
   int mxtips = rhs.getTr()->mxtips ;
   tree *rhsTree = rhs.getTr(),
     *thisTree = getTr();
+
+
+#ifdef UNSAFE_EXACT_TREE_COPY
+  // if this works, it is one of the most hackney things, I've ever done... 
+  for(int i = mxtips+1 ; i < 2* tr->mxtips-1; ++i)
+    {
+      nodeptr rhsNode = rhsTree->nodep[i],
+	lhsNode = thisTree->nodep[i];       
+      hookup(lhsNode, lhsNode -   (rhsNode - rhsNode->back), rhsNode->z, getNumBranches()) ;             
+
+      lhsNode = lhsNode->next; 
+      rhsNode = rhsNode->next; 
+      hookup(lhsNode, lhsNode -   (rhsNode - rhsNode->back), rhsNode->z, getNumBranches()) ;       
+
+      lhsNode = lhsNode->next; 
+      rhsNode = rhsNode->next; 
+      hookup(lhsNode, lhsNode  -   (rhsNode - rhsNode->back), rhsNode->z, getNumBranches()) ; 
+    }
+#else 
+
+
   for(int i = 1 ; i <= mxtips; ++i )
     {
       nodeptr a = rhsTree->nodep[i],
@@ -249,6 +282,8 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 	  q = q->next ; 
 	} while(q != pRhs); 
     }
+
+#endif
 
   tr->start = tr->nodep[rhsTree->start->number]; 
   debug_checkTreeConsistency(this->getTr());
@@ -527,3 +562,17 @@ void TreeAln::initializePartitionsPLL(char *bytefile, double ***empiricalFrequen
 
 
 #endif
+
+
+
+#include <sstream>
+
+ostream& operator<< (ostream& out,  TreeAln&  traln)
+{
+  tree *tr = traln.getTr();
+  Tree2stringNexus(tr->tree_string, tr, tr->start->back,0);
+  stringstream ss; 
+  ss << tr->tree_string;   
+  out << ss.str() ; 
+  return out; 
+}

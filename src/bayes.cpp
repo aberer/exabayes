@@ -10,9 +10,7 @@
 
 #include "axml.h"
 #include "bayes.h"
-#include "randomness.h"
 #include "globals.h"
-// #include "main-common.h"
 #include "output.h"
 #include "proposals.h"
 #include "nclConfigReader.h"
@@ -20,14 +18,12 @@
 #include "adapters.h"
 #include "eval.h"
 #include "proposals.h"
-// #include "tune.h"
 #include "prsfComputer.h"
 #include "TreeAln.hpp"
 #include "AvgSplitFreqAssessor.hpp"
 #include "LnlRestorer.hpp"
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
-
 #include "topology-utils.h"
 
 extern double masterTime; 
@@ -324,6 +320,13 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
 
   initializeIndependentChains(adef,  seed, runs, initParams); 
   assert(gAInfo.numberCoupledChains > 0);
+
+  // Chain* chain = runs[0]->getChain(0); 
+  // cout << setprecision(10) << "interanl=" <<  TreeAln::zMax << "\t" <<  TreeAln::zMin << endl; 
+  // cout << "min=" <<  branchLengthToReal(chain->traln->getTr(), TreeAln::zMin) << 
+  //   "\tmax=" << branchLengthToReal(chain->traln->getTr(), TreeAln::zMax) << endl;  
+  // assert(0);
+  
 
   assert(gAInfo.diagFreq != 0 ); 
   runChains(runs, gAInfo.diagFreq); 

@@ -296,6 +296,16 @@ void Chain::step()
   
   debug_printAccRejc( pfun, wasAccepted, tr->likelihood); 
 
+
+#ifdef VERIFY_LNL_SUPER_EXPENSIVE  
+  // TEST
+  double lnlBefore = tr->likelihood; 
+  evaluateFullNoBackup(this); 
+  assert( ( this->traln->getTr()->likelihood  - lnlBefore ) < ACCEPTED_LIKELIHOOD_EPS); 
+  // END
+#endif
+
+
   if(wasAccepted)
     {
       pfun->accept();
