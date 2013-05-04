@@ -145,22 +145,6 @@ void multiplyAlongBranchESPR(Chain *chain, path *s, double multi )
 					getOtherNode(sTNode, s->content[1]));   
   double hastings = 1; 
 
-  /* TODO hack: using the branch length multiplier parameter here  */
-  /* proposalFunction *pf = NULL;  */
-  /* for(int i = 0; i < chain->numProposals; ++i) */
-  /*   { */
-  /*     proposalFunction *tmp = chain->proposals[i];  */
-  /*     if(tmp->ptype == BRANCH_LENGTHS_MULTIPLIER) */
-  /* 	pf= tmp ;  */
-  /*   } */
-  /* if(NOT pf) */
-  /*   { */
-  /*     /\* printf("sorry, please activate the BL multiplier proposal.\n");  *\/ */
-  /*     /\* assert(pf);  *\/ */
-  /*   } */
-  /* double parameter = pf->param2.multiplier ;  */
-  
-  
   multiplyBranch(chain, firstBranch, multi, &hastings); 
   
   /* treat all branches except the first 2 and the last one */

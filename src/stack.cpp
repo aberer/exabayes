@@ -11,6 +11,7 @@ void createStack(stack **s)
   (*s)->index = 0;  
 }
 
+
 void clearStack(stack *s)
 {
   s->index = 0;   

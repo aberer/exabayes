@@ -1,10 +1,8 @@
-#ifndef _PATH_H
-#define _PATH_H
-
+#ifndef _OLD_PATH_H
+#define _OLD_PATH_H
 
 #include "axml.h"
 #include "bayes.h"
-/* #include "randomness.h" */
 #include "adapters.h"
 #include "branch.h"
 

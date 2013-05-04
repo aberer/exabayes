@@ -19,7 +19,7 @@ void ExtendedTBR::autotune()
 
 void ExtendedTBR::applyToState(TreeAln& traln, PriorManager& prior, double &hastings, Randomness &rand)
 {
-
+  
 }
 
 
