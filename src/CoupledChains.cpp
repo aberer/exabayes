@@ -62,6 +62,8 @@ void CoupledChains::printSwapInfo()
       if(i < numCoupledChains - 1 )
 	PRINT(")"); 
     }
+
+  PRINT("\tswap01:%.1f%%", swapInfo[1]->getRatioInLast100() * 100 ) ; 
 }
 
 
@@ -176,7 +178,7 @@ void CoupledChains::chainInfo()
       
       PRINT("lnl_beta(%.2f)=%.2f\t", heat, chain->traln->getTr()->likelihood); 
     }
-
+  
   printSwapInfo();
 
   PRINT("\n"); 
@@ -204,7 +206,6 @@ void CoupledChains::executePart(int gensToRun)
 
   for(int genCtr = 0; genCtr < gensToRun; genCtr += gAInfo.swapInterval)
     {
-      bool timeToTune = false; 
       bool timeToPrint = false; 
 
       for(auto chain : chains)
@@ -213,7 +214,6 @@ void CoupledChains::executePart(int gensToRun)
 	    {
 	      chain->step(); 
 
-	      timeToTune |= gAInfo.tuneFreq > 0 && gAInfo.tuneHeat && chain->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 ; 
 	      timeToPrint |= isOutputProcess() 
 		&& chain->couplingId == 0 && gAInfo.printFreq > 0
 		&& (chain->currentGeneration % gAInfo.printFreq )  == (gAInfo.printFreq - 1) ;
@@ -223,8 +223,8 @@ void CoupledChains::executePart(int gensToRun)
       if(timeToPrint)
       	chainInfo();	    
 
-      if(timeToTune)
-	tuneTemperature();      
+      if(gAInfo.tuneHeat)
+      	tuneTemperature();      
       
       switchChainState();
     }
@@ -244,11 +244,12 @@ void CoupledChains::tuneTemperature()
 
   auto c = swapInfo[1]; 
 
-  int batch = chains[0]->currentGeneration / gAInfo.tuneFreq; 
+  // seen enough? 
+  if(c->getRecentlySeen() < gAInfo.tuneFreq)
+    return ;  
 
-  temperature = tuneParameter(batch, c->getRatioInLastInterval(), temperature, FALSE); 
-
-  c->reset();
+  temperature = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), temperature, FALSE); 
+  c->nextBatch();
   
   // update the chains 
   for(auto chain : chains)

@@ -8,7 +8,7 @@
 #include "categoryType.h" 
 #include "proposalType.h"
 #include "PriorManager.hpp"
-
+#include "globals.h"
 
 class Chain; 
 
@@ -41,7 +41,7 @@ public:
   
   SuccessCtr getSCtr() const { return sctr; }
   
-  bool isTimeToTune(int tuneFreq){return true;  }
+  bool isTimeToTune(int tuneFreq){ return sctr.getRecentlySeen() == gAInfo.tuneFreq;  }
 
 protected: 
   string name;   

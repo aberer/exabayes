@@ -1530,7 +1530,7 @@ double tuneParameter(int batch, double accRatio, double parameter, boolean inver
   /* TODO min+max tuning?  */
   
   double minTuning = 1e-8,
-    maxTuning = 1e1; 
+    maxTuning = 1e5; 
   if (minTuning <  newTuning && newTuning < maxTuning)
     return  newTuning; 
   else 
@@ -1552,11 +1552,11 @@ static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
   double newParam = tuneParameter(ctr->getBatch(), ctr->getRatioInLastInterval(), *parameter, FALSE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
-  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
+  cout << pf->name << ": with ratio " << ctr->getRatioInLastInterval() << ": "<< ((newParam < *parameter ) ? "reducing" : "increasing") <<  "\t" << *parameter << "," << newParam << endl; 
 #endif
 
   *parameter = newParam; 
-  ctr->reset();   
+  ctr->nextBatch();
 }
 
 
@@ -1570,11 +1570,11 @@ static void autotuneSlidingWindow(proposalFunction *pf, SuccessCtr *ctr)
   double newParam = tuneParameter(ctr->getBatch() , ctr->getRatioInLastInterval(), *parameter, FALSE  ); 
   
 #ifdef DEBUG_PRINT_TUNE_INFO
-  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
+  cout << pf->name << ": with ratio " << ctr->getRatioInLastInterval() << ": "<< ((newParam < *parameter ) ? "reducing" : "increasing") <<  "\t" << *parameter << "," << newParam << endl; 
 #endif
 
   *parameter = newParam; 
-  ctr->reset(); 
+  ctr->nextBatch();
 }
 
 
@@ -1588,11 +1588,11 @@ static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCtr *ctr)
   double newParam = tuneParameter(ctr->getBatch(), ctr->getRatioInLastInterval(), *parameter, TRUE); 
 
 #ifdef DEBUG_PRINT_TUNE_INFO
-  printInfo(chain, "%s\tratio=%f\t => %s %f to %f\n", pf->name, getRatioLocal(ctr), (newParam < *parameter ) ? "reducing" : "increasing", *parameter, newParam);
+  cout << pf->name << ": with ratio " << ctr->getRatioInLastInterval() << ": "<< ((newParam < *parameter ) ? "reducing" : "increasing") <<  "\t" << *parameter << "," << newParam << endl; 
 #endif
 
   * parameter = newParam; 
-  ctr->reset();
+  ctr->nextBatch();
 }
 
 

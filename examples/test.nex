@@ -6,7 +6,7 @@ begin EXABAYES;
       samplingFrequency 50 	[ take a sample every n generations ]
       numIndiChains  4 		[ number of independant chains/runs ]
       numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
-      tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
+      tuneFreq 30 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
       printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
       [ CONVERGENCE ]
@@ -26,7 +26,7 @@ begin EXABAYES;
       burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
 
       [ PARALLELIZATION ]
-      numRunParallel 4       [ number of runs (i.e., independant chains) that are executed in parallel; currently this only can be used with ExaML ] 
+      numRunParallel 1       [ number of runs (i.e., independant chains) that are executed in parallel; currently this only can be used with ExaML ] 
 
 
       [================================================================]

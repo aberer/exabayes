@@ -289,11 +289,8 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 
 
 // #define TEST 
- 
 
-#include "MyTestProposal.hpp"
-
-
+// #include <list>
 
 /**
    @brief the main ExaBayes function.
@@ -309,8 +306,19 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   gAInfo.adef = adef; 
 
 #ifdef TEST   
-  MyTestProposal prop();
+
+  list<bool>  bla; 
+  bla.push_back(true); 
+  bla.push_back(false); 
+  bla.push_back(true ); 
+  bla.push_back(false); 
   
+  bla.pop_front(); 
+  bla.push_back(true ); 
+
+  for(auto e : bla )
+    cout << e << ","; 
+  cout << endl; 
   
 
   exit(0); 
