@@ -31,9 +31,9 @@ protected:
   Path* modifiedPath; 
 
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 
-  void multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double multi, double &hastings ); 
+  void multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings ); 
   void applyPathAsESPR(TreeAln *traln ); 
-  void resetAlongPathForESPR(TreeAln *traln);
+  void resetAlongPathForESPR(TreeAln &traln);
 
 }; 
 

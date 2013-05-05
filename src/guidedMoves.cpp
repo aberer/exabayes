@@ -334,7 +334,7 @@ void resetGuidedSPR(Chain *chain, proposalFunction *pf)
 #ifdef  DEBUG_SHOW_TREE 
   printf("RESET:\t");      
 #endif
-  debug_printTree(chain);
+  debug_printTree(*(chain->traln));
 }
 
 
@@ -366,13 +366,13 @@ void applyGuidedSPR(Chain *chain, proposalFunction *pf)
   TreeAln *traln = chain->traln; 
   
 #ifdef DEBUG_SHOW_TREE 
-  printf("\n"); 
-  double
-    treeLength = getTreeLength(chain->tr, chain->tr->nodep[1]->back); 
-  printf("tree length = %g\n", branchLengthToReal(chain->tr,treeLength)); 
-  printf("BEFORE:\t"); 
+  // printf("\n"); 
+  // double
+  //   treeLength = getTreeLength(chain->tr, chain->tr->nodep[1]->back); 
+  // printf("tree length = %g\n", branchLengthToReal(chain->tr,treeLength)); 
+  // printf("BEFORE:\t"); 
 #endif
-  debug_printTree(chain);
+  debug_printTree(*traln);
 
   tree *tr = chain->traln->getTr(); 
   int numBranches = chain->traln->getNumBranches(); 

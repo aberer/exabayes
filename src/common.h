@@ -7,7 +7,6 @@
 #define _COMMON_H
 
 
-
 #define PRINT printBothOpen
 
 
@@ -120,11 +119,13 @@ typedef  unsigned int nat ;
 /* #define ENABLE_PRSF */
 #define WEIGHT_EPS 1e-3  	/* guided spr    */
 
+#define CONTROL_ESPR
+
 /* for debugging:  */
 #define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-/* #define DEBUG_SHOW_EACH_PROPOSAL */
+#define DEBUG_SHOW_EACH_PROPOSAL
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */

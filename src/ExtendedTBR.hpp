@@ -1,6 +1,7 @@
 #include "bayes.h"
 #include "axml.h"
 
+#include "Path.hpp"
 #include "AbstractProposal.hpp"
 
 class Chain; 
@@ -9,7 +10,7 @@ class Chain;
 class ExtendedTBR : public AbstractProposal
 {
 public: 
-  ExtendedTBR( double relativeProbability, double extensionProb);
+  ExtendedTBR( Chain *chain, double relativeProbability, double extensionProb, double multiplier);
   virtual ~ExtendedTBR(){};
 
   virtual void applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand); 
@@ -20,7 +21,11 @@ public:
   virtual void setOwningChain(Chain *chain){}
   
 private: 
+  Chain *chain; 
   double extensionProbability; 
-
+  
+  Path modifiedPath1; 
+  Path modifiedPath2; 
+  double multiplier; 
 
 }; 

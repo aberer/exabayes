@@ -9,7 +9,9 @@
 #ifndef  _OUTPUT_H
 #define  _OUTPUT_H
 
-void debug_printTree(Chain *chain); 
+
+#include "TreeAln.hpp"
+void debug_printTree(TreeAln &traln); 
 
 /* for debugging */
 char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene ); 

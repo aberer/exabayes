@@ -136,13 +136,15 @@ void Path::saveBranchLengthsPath(TreeAln& traln)
   tree *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches() ;
 
-  for(auto b : stack)
+  for(branch& b : stack)
     {
-      branch *bPtr = &b; 
-      nodeptr p = findNodeFromBranch(tr, *bPtr); 
+      nodeptr p = findNodeFromBranch(tr, b); 
 
       for(int j = 0; j < numBranches; ++j)
-	bPtr->length[j] = traln.getBranchLength( p,0); 
+	{
+	  double tmp = traln.getBranchLength( p,0); 
+	  b.length[j] = tmp ; 
+	}
     }
 }
 
@@ -183,7 +185,11 @@ bool Path::isOuterNode(int node)
 
 
 
-
+void Path::printWithBLs(TreeAln &traln )
+{
+  for(auto b : stack)    
+    cout << "(" << b.thisNode << "," << b.thatNode << ":" << branchLengthToReal(traln.getTr(), b.length[0]) << "),"; 
+}
 
 
 ostream& operator<<(ostream &out, const Path &rhs)  
@@ -196,7 +202,7 @@ ostream& operator<<(ostream &out, const Path &rhs)
 
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double *hastings)
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings)
 {  
   tree *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches();
@@ -209,7 +215,7 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double par
   cout  << setprecision(6) << "spr: " << oldZ <<   " * " << multiplier << " = "  << multiplier * oldZ << endl; // 
 #endif
 
-  *hastings *= multiplier; 
+  hastings *= multiplier; 
   hookup(p,p->back, &newZ, numBranches);   
 }
 
@@ -220,6 +226,7 @@ void Path::restoreBranchLengthsPath(TreeAln &traln)
   for(auto b : stack)
     {
       nodeptr p = findNodeFromBranch(traln.getTr(), b); 
+      // cout << "restoring " << b.length[0] << endl; 
       hookup(p, p->back, b.length, numBranches); 
     }  
 }
@@ -249,8 +256,10 @@ void Path::destroyOrientationAlongPath(tree *tr,  nodeptr p)
 
 
 int Path::getNthNodeInPath(nat num)  
-{
-  assert(num < stack.size() + 1 ); 
+{  
+  int result; 
+  
+  assert(num <= stack.size( )+  1 ); 
   // TODO stronger warrenty when constructing 
   assert(stack.size() != 1 ); 
   
@@ -258,35 +267,37 @@ int Path::getNthNodeInPath(nat num)
     {
       branch b = stack[0]; 
       if(nodeIsInBranch(b.thisNode, stack[1]))
-	return b.thatNode; 
+	result= b.thatNode; 
       else 
 	{
 	  nodeIsInBranch(b.thatNode,stack[1]); 
-	  return b.thisNode; 
+	  result= b.thisNode; 
 	}
     }
-  else if(num == stack.size())
+  else if(num == stack.size() )
     {
       branch b = stack[num-1]; 
       
       if(nodeIsInBranch(b.thisNode, stack[num-2]))
-	return b.thatNode; 
+	result=  b.thatNode; 
       else 
 	{
 	  assert(nodeIsInBranch(b.thatNode, stack[num-2])); 
-	  return b.thisNode; 
+	  result= b.thisNode; 
 	}
     }
   else 
     {
       branch b = stack[num]; 
       if(nodeIsInBranch(b.thisNode, stack[num-1]))
-	return b.thisNode; 
+	result= b.thisNode; 
       else 
 	{
 	  assert(nodeIsInBranch(b.thatNode, stack[num-1])); 
-	  return b.thatNode; 
+	  result= b.thatNode; 
 	}	
     }
+
+  return result; 
 }
 

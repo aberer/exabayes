@@ -20,12 +20,12 @@
 /**
    @brief prints the tree as a debug message. 
 */
-void debug_printTree(Chain *chain)
+void debug_printTree(TreeAln &traln)
 {
 #ifdef DEBUG_SHOW_TREE  
-  char tmp[100000];
-  Tree2stringNexus(tmp, chain, chain->tr->start->back, 0); 
-  printInfo(chain, "tree: %s\n", tmp); 
+  tree *tr = traln.getTr();
+  Tree2stringNexus(tr->tree_string, tr, tr->start->back, 0); 
+  cout << "tree: "<< tr->tree_string << endl; 
 #endif
 }
 
@@ -35,15 +35,17 @@ void debug_printTree(Chain *chain)
 /**
    @brief prints the entire environment of a node with branch lengths
  */
-void debug_printNodeEnvironment(Chain *chain, int nodeID )
+void debug_printNodeEnvironment(TreeAln &traln, int nodeID )
 {
 #ifdef DEBUG_SHOW_TREE
+  tree *tr = traln.getTr();
   nodeptr 
-    p =  chain->tr->nodep[nodeID]; 
+    p =  tr->nodep[nodeID]; 
 
-  printInfo(chain, "STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, traln->getBranchLength( p->back->number,0), 
-	    p->next->back->number, traln->getBranchLength( p->next->back->number,0),
-	    p->next->next->back->number, traln->getBranchLength( p->next->next->back->number,0)
+  
+  printf("STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, traln.getBranchLength( p->back,0), 
+	 p->next->back->number, traln.getBranchLength( p->next->back,0),
+	    p->next->next->back->number, traln.getBranchLength( p->next->next->back,0)
 	    );   
 #endif
 }

@@ -96,7 +96,7 @@ void Chain::setupProposals( initParamStruct *initParams)
 	    {
 	    case E_TBR: 
 	      if(initParams->initWeights[E_TBR] != 0)
-		prop.push_back(new ExtendedTBR(initParams->initWeights[E_TBR], initParams->eSprStopProb)); 
+		prop.push_back(new ExtendedTBR(this, initParams->initWeights[E_TBR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
 	      break; 
 	    case E_SPR: 
 	      if(initParams->initWeights[E_SPR] != 0)
