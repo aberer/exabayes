@@ -1357,7 +1357,7 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
 
   pf->remembrance.modifiedPath->clearStack(); 
   pf->remembrance.modifiedPath->pushStack( b);
-  assert(pf->remembrance.modifiedPath->stackLength() == 1 ); 
+  assert(pf->remembrance.modifiedPath->size() == 1 ); 
   pf->remembrance.modifiedPath->at(0).length[0]  = traln->getBranchLength( p,0); 
 
   double

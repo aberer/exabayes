@@ -23,7 +23,7 @@ public:
   void pushStack(branch value); 
   branch popStack(); 
   bool stackIsEmpty(); 
-  int stackLength() {return stack.size(); }
+  int size() {return stack.size(); }
   branch& peekStack(); 
   void restoreBranchLengthsPath(TreeAln &traln); 
 

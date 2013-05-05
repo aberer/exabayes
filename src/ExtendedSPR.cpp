@@ -78,7 +78,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 
       currentNode = n; 
       
-      accepted = rand.drawRandDouble01() < stopProp && modifiedPath->stackLength() > 2 ; 	
+      accepted = rand.drawRandDouble01() < stopProp && modifiedPath->size() > 2 ; 	
     }
 
   /* undo changes to the tree  */
@@ -114,7 +114,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorManager &prior, double &hast
   debug_printTree(traln);
 
   modifiedPath->clearStack(); 
-  assert(modifiedPath->stackLength() == 0); 
+  assert(modifiedPath->size() == 0); 
   drawPathForESPR( traln,rand ,stopProb); 
 
   modifiedPath->saveBranchLengthsPath(traln); 
@@ -174,7 +174,7 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorManager &prior)
  */ 
 void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings )
 {
-  assert(modifiedPath->stackLength() >= 2); 
+  assert(modifiedPath->size() >= 2); 
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
  
@@ -200,6 +200,7 @@ void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, doub
 }
 
 
+
 /**
    @brief applies the path onto the tree 
 
@@ -215,7 +216,7 @@ void ExtendedSPR::applyPathAsESPR(TreeAln *traln )
 double treeLengthBefore = getTreeLength(traln, tr->start->back); 
 #endif
   
-  assert(modifiedPath->stackLength() > 2 ); 
+  assert(modifiedPath->size() > 2 ); 
 
   /* get the subtree ptr */
   nodeptr sTPtr = findNodeFromBranch(tr,getThirdBranch(tr, modifiedPath->at(0), modifiedPath->at(1))); 
@@ -285,7 +286,7 @@ void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln)
 
   /* BUG branch lengths are not restored correctly, currently relying on restoreBranchLengthsPath function */
 
-  assert(modifiedPath->stackLength() > 2); 
+  assert(modifiedPath->size() > 2); 
   int numBranches = traln.getNumBranches(); 
 
   int numNodes = modifiedPath->getNumberOfNodes(); 

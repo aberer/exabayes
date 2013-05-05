@@ -113,6 +113,8 @@ typedef  unsigned int nat ;
 #define ESPR_MULTIPLY_BL	 /// apply multiplier to espr as by lakner
 #define NNI_MULTIPLY_BL		 /// apply multiplier to nni move
 
+#define TBR_MULTIPLY_BL
+
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
 /* #define DEBUG_PRINT_TUNE_INFO */
 

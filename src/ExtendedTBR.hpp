@@ -21,6 +21,10 @@ public:
   virtual void setOwningChain(Chain *chain){}
   
 private: 
+  void drawPaths(TreeAln &traln, Randomness &rand); 
+  void executeTBR(TreeAln & traln); 
+  
+
   Chain *chain; 
   double extensionProbability; 
   

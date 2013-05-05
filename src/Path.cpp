@@ -226,7 +226,6 @@ void Path::restoreBranchLengthsPath(TreeAln &traln)
   for(auto b : stack)
     {
       nodeptr p = findNodeFromBranch(traln.getTr(), b); 
-      // cout << "restoring " << b.length[0] << endl; 
       hookup(p, p->back, b.length, numBranches); 
     }  
 }
