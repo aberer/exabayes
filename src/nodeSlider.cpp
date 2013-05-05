@@ -1,5 +1,6 @@
 #include "nodeSlider.h"
 #include "Randomness.hpp"
+#include "Path.hpp"
 
 
 static void insertBranchLength(TreeAln *traln, branch &b)
@@ -8,6 +9,7 @@ static void insertBranchLength(TreeAln *traln, branch &b)
   b.length[0] = traln->getBranchLength( p,0); 
   // getBranchLength( traln->assert(p->number,0) == traln->getBranchLength( p->back->number,0)); 
 }
+
 
 void applyNodeSlider(Chain *chain, proposalFunction *pf)
 {
@@ -35,10 +37,11 @@ void applyNodeSlider(Chain *chain, proposalFunction *pf)
   
   // cout << "chose branches " << oneBranch << " and " << otherBranch << endl; 
 
-  stack *thePath = pf->remembrance.modifiedPath; 
-  clearStack(thePath);
-  pushStack(thePath, oneBranch);
-  pushStack(thePath, otherBranch);
+  Path *thePath = pf->remembrance.modifiedPath; 
+  // stack *thePath = pf->remembrance.modifiedPath; 
+  thePath->clearStack();
+  thePath->pushStack(oneBranch);
+  thePath->pushStack(otherBranch);
 
 
   nodeptr nodeA = findNodeFromBranch(tr, oneBranch),
@@ -66,8 +69,8 @@ void applyNodeSlider(Chain *chain, proposalFunction *pf)
 void evaluateNodeSlider(Chain *chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr();
-  stack *pth = pf->remembrance.modifiedPath; 
-  branch otherBranch = getThirdBranch(tr, pth->content[0], pth->content[1]);
+  Path *pth = pf->remembrance.modifiedPath; 
+  branch otherBranch = getThirdBranch(tr, pth->at(0), pth->at(1));
 
   // cout << "third branch is "<< otherBranch << endl; 
   
@@ -99,11 +102,11 @@ void evaluateNodeSlider(Chain *chain, proposalFunction *pf)
 void resetNodeSlider(Chain *chain, proposalFunction *pf)
 {
   tree *tr = chain->traln->getTr();
-  stack *pth = pf->remembrance.modifiedPath; 
+  Path *pth = pf->remembrance.modifiedPath; 
   int numBranches = chain->traln->getNumBranches();
 
-  branch a = popStack(pth),
-    b = popStack(pth); 
+  branch a = pth->popStack(),
+    b = pth->popStack(); 
 
   nodeptr p = findNodeFromBranch(tr, a),
     q = findNodeFromBranch(tr, b); 

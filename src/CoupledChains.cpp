@@ -2,6 +2,7 @@
 
 #include "CoupledChains.hpp"
 #include "Chain.hpp"
+#include "adapters.h" 
 
 #include "globals.h"
 #include "proposals.h"

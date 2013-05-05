@@ -96,7 +96,6 @@ double branchLengthToInternal(tree *tr, double realBL)
 }
 
 
-
 /**
    @brief gets equality of branches irregardless of their orientation
  */

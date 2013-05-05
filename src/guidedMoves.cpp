@@ -4,7 +4,7 @@
 // #include "randomness.h"
 #include "Randomness.hpp"
 #include "output.h"
-#include "path.h" 
+#include "Path.hpp" 
 #include "topology-utils.h"
 #include "guidedMoves.h" 
 #include "TreeAln.hpp"
@@ -292,7 +292,7 @@ void evalGuidedSPR(Chain *chain, proposalFunction *pf)
   tree
     *tr = chain->traln->getTr(); 
 
-  nodeptr p = findNodeFromBranch(tr, pf->remembrance.modifiedPath->content[1]);
+  nodeptr p = findNodeFromBranch(tr, pf->remembrance.modifiedPath->at(1));
   evaluateGenericWrapper(chain, p, FALSE );
 }
 
@@ -305,11 +305,11 @@ void resetGuidedSPR(Chain *chain, proposalFunction *pf)
   int numBranches = chain->traln->getNumBranches(); 
   assert(numBranches == 1); 
 
-  path *rememPath = pf->remembrance.modifiedPath; 
+  Path *rememPath = pf->remembrance.modifiedPath; 
   double ratio = pf->ratio ; 
 
-  branch pruneBranch = rememPath->content[0],
-    subtreeBranch = rememPath->content[1]; 
+  branch pruneBranch = rememPath->at(0),
+    subtreeBranch = rememPath->at(1); 
 
   nodeptr p = findNodeFromBranch(tr, subtreeBranch ); 
   double restoredZ = combineBranchLengths(tr, chain->traln->getBranchLength(p->next->back, 0), chain->traln->getBranchLength(p->next->next->back, 0)) ; 
@@ -473,10 +473,10 @@ void applyGuidedSPR(Chain *chain, proposalFunction *pf)
   pf->ratio = ratio;  
 
   /* describe how to reset the move */
-  path *rememPath = pf->remembrance.modifiedPath; 
-  clearStack(rememPath); 
-  pushStack(rememPath, pruneBranch); 
-  pushStack(rememPath, subtree); 
+  Path *rememPath = pf->remembrance.modifiedPath; 
+  rememPath->clearStack(); 
+  rememPath->pushStack( pruneBranch); 
+  rememPath->pushStack( subtree); 
 
   debug_checkHooks( tr); 
   freeList(lnlList);   

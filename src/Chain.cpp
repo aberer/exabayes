@@ -313,17 +313,25 @@ void Chain::step()
 
   if(wasAccepted)
     {
-      pfun->accept();
+      pfun->accept();      
       expensiveVerify(this);
     }
   else
     {
       pfun->resetState(*traln, prior);
       pfun->reject();
-      
+
       // TODO maybe not here =/ 
       this->restorer->restoreArrays(*traln); // restores the previous tree state 
     }
+
+#ifdef VERIFY_LNL_SUPER_EXPENSIVE  
+  // {
+  //   double lnlBefore = tr->likelihood;  
+  //   evaluateFullNoBackup(this);
+  //   assert( ( this->traln->getTr()->likelihood  - lnlBefore ) < ACCEPTED_LIKELIHOOD_EPS); 
+  // }
+#endif
 
   debug_checkTreeConsistency(this->traln->getTr());
 

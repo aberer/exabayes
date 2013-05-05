@@ -1,7 +1,6 @@
 #include "axml.h"
 #include "bayes.h"
-// #include "randomness.h"
-#include "path.h"
+#include "Path.hpp"
 #include "output.h"
 #include "misc-utils.h"
 #include "TreeAln.hpp"
@@ -44,11 +43,11 @@ void apply_st_nni(Chain *chain, proposalFunction *pf)
   b.length[0] = traln->getBranchLength( p,0); 
   switchingBranch.length[0] = bl; 
   
-  path *rememStack = pf->remembrance.modifiedPath; 
-  clearStack(rememStack); 
-  pushStack(rememStack, toBePruned);
-  pushStack(rememStack, b); 
-  pushStack(rememStack, switchingBranch);
+  Path *rememStack = pf->remembrance.modifiedPath; 
+  rememStack->clearStack(); 
+  rememStack->pushStack( toBePruned);
+  rememStack->pushStack( b); 
+  rememStack->pushStack( switchingBranch);
 
   /* switch the branches  */
   {
@@ -97,12 +96,14 @@ void apply_st_nni(Chain *chain, proposalFunction *pf)
   
 }
 
+
+
 void eval_st_nni(Chain *chain, proposalFunction *pf )
 {
   tree *tr = chain->traln->getTr(); 
 
-  branch b1 = pf->remembrance.modifiedPath->content[0], // tobepruned 
-    b2  = pf->remembrance.modifiedPath->content[2];	// switchingbranch 
+  branch b1 = pf->remembrance.modifiedPath->at(0), // tobepruned 
+    b2  = pf->remembrance.modifiedPath->at(2);	// switchingbranch 
   
   branch exchangeBranch = constructBranch(b1.thatNode, b2.thatNode);
   
@@ -123,10 +124,10 @@ void reset_st_nni(Chain *chain, proposalFunction *pf)
     *tr = chain->traln->getTr(); 
   int numBranches = chain->traln->getNumBranches(); 
   
-  path *rStack = pf->remembrance.modifiedPath; 
-  branch a = popStack(rStack),	/* switchingBranch */
-    chosenBranch = popStack(rStack), /* inner branch   */
-    b = popStack(rStack); 	/* toBePruned */
+  Path *rStack = pf->remembrance.modifiedPath; 
+  branch a = rStack->popStack(),	/* switchingBranch */
+    chosenBranch = rStack->popStack(), /* inner branch   */
+    b = rStack->popStack(); 	/* toBePruned */
 
   swpInt(&a.thatNode, &b.thatNode); 
 
@@ -146,3 +147,4 @@ void reset_st_nni(Chain *chain, proposalFunction *pf)
 
   debug_checkTreeConsistency(chain->traln->getTr());
 }
+

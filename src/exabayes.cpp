@@ -23,11 +23,9 @@
 #include "globals.h"
 #undef _INCLUDE_DEFINITIONS
 
-// #include "main-common.h"
 #include "proposals.h"
 #include "output.h"
 #include "adapters.h"
-// #include "chain.h"
 #include "CommandLine.hpp"
 
 

@@ -1,16 +1,14 @@
 
 #include "axml.h"
-#include "bayes.h"		// 
-// #include "randomness.h"
+#include "bayes.h"
 #include "globals.h"
-// #include "main-common.h"
 #include "output.h"
 #include "topology-utils.h" 
 #include "eval.h"
 #include "adapters.h"
 #include "misc-utils.h"
 #include "branch.h"
-#include "path.h"
+#include "Path.hpp"
 #include "guidedMoves.h"
 #include "stNNI.h"
 #include "tlMult.h" 
@@ -105,7 +103,7 @@ static void onePartitionEval(Chain *chain, proposalFunction *thisProposal)
 
 static void evalBranch(Chain *chain, proposalFunction *thisProposal)
 {
-  branch b = peekStack(thisProposal->remembrance.modifiedPath);
+  branch b = thisProposal->remembrance.modifiedPath->peekStack();
   nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
   evaluateGenericWrapper(chain,p, FALSE ); 
 }
@@ -153,10 +151,6 @@ static nodeptr select_random_subtree(Chain *chain, tree *tr)
 
   return p;
 }
-
-
-void pushToStackIfNovel(stack *s, branch b, int numTip); 
-
 
 // static void extended_spr_apply(Chain *chain, proposalFunction *pf)
 // {
@@ -1076,14 +1070,10 @@ static void random_branch_length_proposal_apply(Chain * chain, proposalFunction 
   /* clearStack(pf->remembrance.modifiedPath);  */
   /* assert(pf->remembrance.modifiedPath != NULL);  */
   branch b = constructBranch(p->number, p->back->number); 
-  pushStack(pf->remembrance.modifiedPath, b); 
-  pf->remembrance.modifiedPath->content[0].length[0] = z; 
+  pf->remembrance.modifiedPath->pushStack( b); 
   
-  /* pf->remembrance.topoRec->whichBranch = target_branch;  */
-  /* pf->remembrance.insertBranch = constructBranch(p->) */
-
-  /* evaluateGenericWrapper(chain, p, FALSE);  */
-  //evaluateGeneric(chain->tr, chain->tr->start, TRUE); /* update the tr->likelihood *//FALSE seems to work
+  branch &something = pf->remembrance.modifiedPath->at(0); 
+  something.length[0] = z; 
 }
 
 
@@ -1123,7 +1113,7 @@ static void random_branch_length_proposal_apply(Chain * chain, proposalFunction 
 static void random_branch_length_proposal_reset(Chain * chain, proposalFunction *pf)
 {
   /* branch b = pf->remembrance.modifiedPath->content[0];  */
-  branch b = popStack(pf->remembrance.modifiedPath); 
+  branch b = pf->remembrance.modifiedPath->popStack(); 
   nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
   chain->traln->setBranchLengthSave(b.length[0],0,p); 
 
@@ -1345,9 +1335,9 @@ static void branchLengthWindowApply(Chain *chain, proposalFunction *pf)
 
   nodeptr p = findNodeFromBranch(tr, b); 
   
-  clearStack(pf->remembrance.modifiedPath); 
-  pushStack(pf->remembrance.modifiedPath, b);
-  pf->remembrance.modifiedPath->content[0].length[0]  = chain->traln->getBranchLength( p,0); 
+  pf->remembrance.modifiedPath->clearStack(); 
+  pf->remembrance.modifiedPath->pushStack( b);
+  pf->remembrance.modifiedPath->at(0).length[0]  = chain->traln->getBranchLength( p,0); 
 
   double zOld = chain->traln->getBranchLength( p,0); 
   double win =  pf->parameters.slidWinSize ; 
@@ -1365,10 +1355,10 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
 
   nodeptr p = findNodeFromBranch(tr, b); 
 
-  clearStack(pf->remembrance.modifiedPath); 
-  pushStack(pf->remembrance.modifiedPath, b);
-  assert(stackLength(pf->remembrance.modifiedPath) == 1 ); 
-  pf->remembrance.modifiedPath->content[0].length[0]  = traln->getBranchLength( p,0); 
+  pf->remembrance.modifiedPath->clearStack(); 
+  pf->remembrance.modifiedPath->pushStack( b);
+  assert(pf->remembrance.modifiedPath->stackLength() == 1 ); 
+  pf->remembrance.modifiedPath->at(0).length[0]  = traln->getBranchLength( p,0); 
 
   double
     multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier); 
@@ -1489,7 +1479,7 @@ static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCtr *ctr)
 
 void branchLengthReset(Chain *chain, proposalFunction *pf)
 {
-  branch b = popStack(pf->remembrance.modifiedPath); 
+  branch b = pf->remembrance.modifiedPath->popStack(); 
   tree *tr = chain->traln->getTr(); 
   nodeptr p = findNodeFromBranch(tr, b); 
   chain->traln->setBranchLengthSave(b.length[0], 0,p); 
@@ -1571,23 +1561,11 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->apply_func = applyGuidedSPR; 
       ptr->eval_lnl = evalGuidedSPR; 
       ptr->reset_func = resetGuidedSPR; 
-      ptr->remembrance.modifiedPath = NULL; 
-      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->remembrance.modifiedPath = new Path(); 
       ptr->category = TOPOLOGY; 
       ptr->parameters.radius =  initParams->initGuidedSPR; 
       ptr->autotune = NULL;       
       break; 
-    // case E_SPR:
-    //   ptr->eval_lnl = sprEval; 
-    //   /* ptr->autotune = autotuneStopProp; */
-    //   ptr->remembrance.modifiedPath = (path*)exa_calloc(1,sizeof(path)); 
-    //   ptr->apply_func = applyExtendedSPR; 
-    //   ptr->reset_func = resetESPR; 
-    //   ptr->name = "eSPR"; 
-    //   ptr->param2.multiplier = INIT_ESPR_MULT; 
-    //   ptr->parameters.eSprStopProb = initParams->eSprStopProb; 
-    //   ptr->category = TOPOLOGY; 
-    //   break; 
     case UPDATE_MODEL: 	
       ptr->eval_lnl = onePartitionEval; 
       ptr->autotune = autotuneSlidingWindow; 
@@ -1619,8 +1597,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
     case UPDATE_SINGLE_BL: 
       ptr->eval_lnl = evalBranch;
       ptr->autotune = autotuneSlidingWindow; 
-      ptr->remembrance.modifiedPath = NULL; 
-      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->remembrance.modifiedPath = new Path(); 
+      // createStack(&(ptr->remembrance.modifiedPath)); 
       ptr->apply_func = branchLengthWindowApply; 
       ptr->reset_func =  branchLengthReset;
       ptr->category = BRANCH_LENGTHS; 
@@ -1637,8 +1615,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       break;
     case UPDATE_SINGLE_BL_GUIDED: 
       ptr->eval_lnl = evalBranch;
-      ptr->remembrance.modifiedPath = NULL; 
-      createStack(&(ptr->remembrance.modifiedPath));       
+      ptr->remembrance.modifiedPath = new Path(); 
+      // createStack(&(ptr->remembrance.modifiedPath));       
       ptr->apply_func =  guided_branch_length_proposal_apply;
       ptr->reset_func =  branchLengthReset;
       ptr->category = BRANCH_LENGTHS; 
@@ -1717,8 +1695,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->autotune = autotuneMultiplier; 
       ptr->apply_func = branchLengthMultiplierApply; 
       ptr->reset_func = branchLengthReset; 
-      ptr->remembrance.modifiedPath =  NULL; 
-      createStack(&(ptr->remembrance.modifiedPath));
+      ptr->remembrance.modifiedPath =  new Path(); 
+      // createStack(&(ptr->remembrance.modifiedPath));
       ptr->parameters.multiplier = INIT_BL_MULT; 
       ptr->name = "branchMult"; 
       ptr->category = BRANCH_LENGTHS; 
@@ -1738,8 +1716,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->apply_func = apply_st_nni; 
       ptr->autotune = NULL; 
       ptr->reset_func = reset_st_nni; 
-      ptr->remembrance.modifiedPath = NULL; 
-      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->remembrance.modifiedPath = new Path(); 
+      // createStack(&(ptr->remembrance.modifiedPath)); 
       ptr->name = "stNNI"; 
       ptr->category = TOPOLOGY; 
       ptr->parameters.multiplier = INIT_NNI_MULT; 
@@ -1759,8 +1737,8 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->eval_lnl = evaluateNodeSlider; 
       ptr->reset_func = resetNodeSlider;  
       ptr->autotune = autotuneMultiplier; 
-      ptr->remembrance.modifiedPath = NULL; 
-      createStack(&(ptr->remembrance.modifiedPath)); 
+      ptr->remembrance.modifiedPath = new Path(); 
+      // createStack(&(ptr->remembrance.modifiedPath)); 
       ptr->name = "nodeSlider"; 
       ptr->category = BRANCH_LENGTHS; 
       ptr->parameters.multiplier = INIT_NODE_SLIDER_MULT; 

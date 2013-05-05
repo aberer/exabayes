@@ -128,8 +128,7 @@ typedef  unsigned int nat ;
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
-
-/* #define VERIFY_LNL_SUPER_EXPENSIVE   */
+/* #define VERIFY_LNL_SUPER_EXPENSIVE */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
 #define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays

@@ -17,13 +17,13 @@ using namespace std;
 #include "config.h"
 #include "rng.h"
 #include "eval.h"
-#include "stack.h"
 #include "SuccessCtr.hpp"
 #include "categoryType.h"
 #include "Chain.hpp"
 #include "nclConfigReader.h"
 
 
+class Path; 
 class TreeAln; 
 class LnlRestorer; 
 
@@ -90,7 +90,7 @@ struct _pfun
    */
   union 
   {
-    stack *modifiedPath; 
+    Path *modifiedPath; 
     topoRecord *topoRec;
     perPartitionInfo *partInfo; 
     double multiplier; 
