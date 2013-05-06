@@ -21,16 +21,16 @@ void expensiveVerify(Chain *chain)
   Chain  *helpChain = (Chain*) exa_calloc(1,sizeof(chain)) ; 
   helpChain->traln = debugTraln; 
 
-// #if 0 
+#if 1 
   nodeptr
     p = findNodeFromBranch(debugTraln->getTr(), findRoot(chain->traln->getTr())); 
   orientationPointAway(debugTraln->getTr(), p);
   orientationPointAway(debugTraln->getTr(), p->back);
 
   exa_evaluateGeneric(helpChain, p , FALSE); 
-// #else 
-//   exa_evaluateGeneric(helpChain, debugTraln->getTr()->start , TRUE); 
-// #endif
+#else 
+  exa_evaluateGeneric(helpChain, debugTraln->getTr()->start , TRUE); 
+#endif
   double verifiedLnl =  helpChain->traln->getTr()->likelihood; 
 
 

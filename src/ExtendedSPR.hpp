@@ -30,6 +30,7 @@ protected:
 
   Path* modifiedPath; 
 
+  void destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p); 
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 
   void multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings ); 
   void applyPathAsESPR(TreeAln *traln ); 

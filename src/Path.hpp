@@ -21,24 +21,10 @@ public:
   // lets do this correctly for once ... 
   Path();
   ~Path();   
+  Path& operator=(const Path &rhs ) ;   
+  Path( const Path &rhs) ; 
+  friend void swap(Path &first, Path &second); 
 
-  Path& operator=(const Path &rhs ) 
-  {
-    Path tmp(rhs); 
-    swap(*this, tmp); 
-    return *this; 
-  }
-  
-  Path( const Path &rhs) 
-    : stack(rhs.stack)
-  {    
-  }
-
-  friend void swap(Path &first, Path &second)
-  {
-    using std::swap; 
-    swap(first.stack, second.stack); 
-  }
   
   /** @brief returns true, if the node with a given id is part of this branch */ 
   bool nodeIsOnPath(int node);  
@@ -64,6 +50,14 @@ public:
   /** @brief yields the branch */  
   branch& at(int num){return stack[num]; }
   branch at(int num) const{return stack[num];}
+
+  /** @brief reverse the path */ 
+  void reverse(); 
+
+  /** @brief removes the last element */ 
+  void pop(); 
+  /** @brief removes the first element */ 
+  void popFront(); 
   
 
   /** @brief returns the id of the nth node in the path. nodes 0 and n+1 are the outer nodes in this path that do not have a neighbor. */ 
@@ -77,9 +71,6 @@ public:
   void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings); 
 
   friend ostream& operator<<(ostream &out, const Path &rhs)  ;
-
-  void destroyOrientationAlongPath(tree *tr,  nodeptr p); // TODO move? 
-
 
 private: 
   vector<branch> stack; 

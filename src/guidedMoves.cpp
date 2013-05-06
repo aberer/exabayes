@@ -5,7 +5,7 @@
 #include "Randomness.hpp"
 #include "output.h"
 #include "Path.hpp" 
-#include "topology-utils.h"
+// #include "topology-utils.h"
 #include "guidedMoves.h" 
 #include "TreeAln.hpp"
 

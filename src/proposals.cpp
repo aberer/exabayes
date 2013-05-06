@@ -3,7 +3,7 @@
 #include "bayes.h"
 #include "globals.h"
 #include "output.h"
-#include "topology-utils.h" 
+// #include "topology-utils.h" 
 #include "eval.h"
 #include "adapters.h"
 #include "misc-utils.h"

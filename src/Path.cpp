@@ -14,27 +14,21 @@ Path::~Path()
 }
 
 
-
-
-// Meh 
-static void disorientHelper(tree *tr, nodeptr p)
-{
-  if(isTip(p->number, tr->mxtips))
-    {
-
-      /* printf("not disorienting tip %d\n", p->number);  */
-    }
-  else if(p->x)
-    {
-      p->x = 0; 
-      p->next->x = 1; 
-      /* printf("disorienting %d (CORRECT  before) -> oriented to %d NOW \n", p->number, p->next->back->number); */
-    }
-  else 
-    {
-      /* printf("disorienting %d  (was incorrect before)\n", p->number); */
-    }
+Path::Path(const Path &rhs)
+    : stack(rhs.stack)
+{    
 }
+
+
+
+Path& Path::operator=(const Path &rhs )  
+{
+  Path tmp(rhs); 
+  swap(*this, tmp); 
+  return *this; 
+}
+
+
 
 
 
@@ -48,6 +42,17 @@ void Path::append(branch value)
   stack.push_back(value);
 }
 
+
+
+void Path::pop()
+{
+  stack.pop_back();
+}
+
+void Path::popFront()
+{
+  stack.erase(stack.begin()); 
+}
 
 
 void Path::pushToStackIfNovel(branch b, int numTip)
@@ -122,7 +127,6 @@ bool Path::nodeIsOnPath(int node)
 
 ostream& operator<<(ostream &out, const Path &rhs)  
 {
-  out << "content:" ;
   for(auto b : rhs.stack)
     out << "(" << b.thisNode << "," << b.thatNode << "),";       
   return out; 
@@ -159,36 +163,13 @@ void Path::restoreBranchLengthsPath(TreeAln &traln)
 }
 
 
-
-/**
-   @brief dis-orients the path, s.t. the lnl can be recomputed
-   correctly.
-   
-   @notice assumes that the lnl will be evaluated at the end of the
-   path; also notice that an SPR move has already been applied to the
-   tree
- */ 
-void Path::destroyOrientationAlongPath(tree *tr,  nodeptr p)
-{  
-  /* TODO efficiency =/  */
-
-  if(NOT nodeIsOnPath(p->number) || isTip(p->number, tr->mxtips))
-    return; 
-
-  disorientHelper(tr,p);
-  destroyOrientationAlongPath(tr, p->next->back); 
-  destroyOrientationAlongPath(tr, p->next->next->back);
-}
-
-
-
 int Path::getNthNodeInPath(nat num)   const
-{  
+{ 
   int result; 
   
   assert(num <= stack.size( )+  1 ); 
   // TODO stronger warrenty when constructing 
-  assert(stack.size() != 1 ); 
+  // assert(stack.size() != 1 ); 
   
   if(num == 0)
     {
@@ -228,3 +209,14 @@ int Path::getNthNodeInPath(nat num)   const
   return result; 
 }
 
+void swap(Path &first, Path &second)
+{
+  using std::swap; 
+  swap(first.stack, second.stack); 
+}
+
+
+void Path::reverse()
+{
+  std::reverse(stack.begin(), stack.end());
+}

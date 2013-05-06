@@ -24,7 +24,6 @@
 #include "LnlRestorer.hpp"
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
-#include "topology-utils.h"
 
 extern double masterTime; 
 
@@ -319,11 +318,11 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   path.append(constructBranch(4,5)); 
   path.append(constructBranch(5,6)); 
 
-  for(int i = 0; i < path.getNumberOfNodes(); ++i)
-    assert(path.getNthNodeInPath(i) == i+1 ); 
+  Path path2(path); 
   
-  assert(0); 
-
+  path2.at(1) = constructBranch(100,100); 
+  cout << path << endl; 
+  cout << path2 << endl; 
 #endif
 
   vector<CoupledChains*> runs; 

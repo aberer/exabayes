@@ -10,7 +10,7 @@
 #include "BipartitionHash.hpp"
 #include "adapters.h"
 #include "proposals.h"
-#include "topology-utils.h"
+// #include "topology-utils.h"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
 #include "WrappedProposal.hpp"

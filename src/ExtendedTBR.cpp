@@ -1,7 +1,7 @@
 #include "ExtendedTBR.hpp"
 #include "output.h"
 #include "branch.h"
-#include "topology-utils.h"
+
 
 
 // #define DEBUG_TBR
@@ -209,13 +209,73 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorManager& prior, double &hast
 }
 
 
-void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorManager& prior)
+
+static void disorientHelper(TreeAln &traln, nodeptr p)
 {
+  if(NOT traln.isTipNode(p))
+    {
+      p->next->x = p->next->next->x = 0; 
+      p->x = 1 ; 
+      // cout << "disorienting " << p->number << endl; 
+    }
+  // else 
+    // cout << "NOT disorienting " << p->number << endl; 
+}
+
+
+static void destroyOrientationAlongPath(TreeAln &traln, Path &path)
+{
+  tree *tr = traln.getTr(); 
+  // TODO necessary for the last node? 
+  for(int i = 0 ; i < path.getNumberOfNodes()-1; ++i)
+    {
+      nodeptr p = findNodeFromBranch(tr,  constructBranch(path.getNthNodeInPath(i) ,path.getNthNodeInPath(i+1) ));
+      disorientHelper(traln, p); 
+    }
+  
+  // nodeptr p = findNodeFromBranch(tr , constructBranch(path.getNthNodeInPath(path.getNumberOfNodes()-1), 
+  // 						      path.getNthNodeInPath(path.getNumberOfNodes()-2))); 
+  // disorientHelper(traln, p); 
+}
+
+
+
+static void evalHelper(Path &path, Chain &chain, TreeAln &traln )
+{  
+  tree *tr = traln.getTr();
+  nodeptr p = findNodeFromBranch ( tr, constructBranch(path.getNthNodeInPath(path.getNumberOfNodes()-1), 
+						       path.getNthNodeInPath(1))); 		       
+  newViewGenericWrapper(&chain, p, FALSE);  
+
+  Path pathCopy(path); 
+  pathCopy.pop();   
+  branch prunedBranch = constructBranch(pathCopy.getNthNodeInPath(0), pathCopy.getNthNodeInPath(2)); 
+  pathCopy.popFront();
+  pathCopy.at(0) = prunedBranch; 
+  pathCopy.append(constructBranch(path.getNthNodeInPath(1),path.getNthNodeInPath(path.getNumberOfNodes()-2))); 
+  pathCopy.reverse(); 
+  // cout << "path for eval is " << pathCopy << endl; 
+  destroyOrientationAlongPath(traln, pathCopy); 
+  p = findNodeFromBranch(tr, constructBranch( pathCopy.getNthNodeInPath(0), pathCopy.getNthNodeInPath(1))); 
+  if(NOT traln.isTipNode(p))
+    newViewGenericWrapper(&chain, p,FALSE); 
+}
+
+
+
+void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorManager& prior)
+{  
 #if 1 
-  assert(0); 
+  tree *tr = traln.getTr(); 
 
-
-
+  branch bisectedBranch = constructBranch(modifiedPath1.getNthNodeInPath(1), modifiedPath2.getNthNodeInPath(1)); 
+  
+  // evaluate both ends of the paths 
+  evalHelper(modifiedPath1, *chain, traln); 
+  evalHelper(modifiedPath2, *chain, traln); 
+  nodeptr p = findNodeFromBranch(tr, bisectedBranch);
+  evaluateGenericWrapper(chain, p, FALSE);
+  
 #else 
 
   // IMPORTANT TODO !!! 

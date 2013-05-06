@@ -2,7 +2,7 @@
 #include "output.h"
 #include "Path.hpp"
 #include "TreeAln.hpp"
-#include "topology-utils.h"
+// #include "topology-utils.h"
 
 // #define DEBUG_ESPR
 
@@ -22,6 +22,49 @@ ExtendedSPR::ExtendedSPR(Chain *_chain, double _relativeWeight, double _stopProb
 ExtendedSPR::~ExtendedSPR()
 {
   delete modifiedPath; 
+}
+
+
+
+// Meh 
+static void disorientHelper(tree *tr, nodeptr p)
+{
+  if(isTip(p->number, tr->mxtips))
+    {
+
+      /* printf("not disorienting tip %d\n", p->number);  */
+    }
+  else if(p->x)
+    {
+      p->x = 0; 
+      p->next->x = 1; 
+      /* printf("disorienting %d (CORRECT  before) -> oriented to %d NOW \n", p->number, p->next->back->number); */
+    }
+  else 
+    {
+      /* printf("disorienting %d  (was incorrect before)\n", p->number); */
+    }
+}
+
+
+/**
+   @brief dis-orients the path, s.t. the lnl can be recomputed
+   correctly.
+   
+   @notice assumes that the lnl will be evaluated at the end of the
+   path; also notice that an SPR move has already been applied to the
+   tree
+ */ 
+void ExtendedSPR::destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p)
+{  
+  /* TODO efficiency =/  */
+
+  if(NOT path.nodeIsOnPath(p->number) || isTip(p->number, tr->mxtips))
+    return; 
+
+  disorientHelper(tr,p);
+  destroyOrientationAlongPath(path, tr, p->next->back); 
+  destroyOrientationAlongPath(path, tr, p->next->next->back);
 }
 
 
@@ -161,8 +204,8 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorManager &prior)
   /* evaluate at root of inserted subtree */
   nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
 
-  rPath->destroyOrientationAlongPath(tr, toEval); 
-  rPath->destroyOrientationAlongPath(tr, toEval->back);
+  destroyOrientationAlongPath(*rPath, tr, toEval); 
+  destroyOrientationAlongPath(*rPath, tr, toEval->back);
 
   evaluateGenericWrapper(chain, toEval, FALSE);
 }

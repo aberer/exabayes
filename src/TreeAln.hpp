@@ -60,6 +60,8 @@ public:
   double getAlpha(int model){pInfo *partition = getPartition(model) ; return partition->alpha; } 
 
 
+  bool isTipNode(nodeptr p){return isTip(p->number, getTr()->mxtips );}
+
 #if HAVE_PLL != 0
   partitionList* getPartitionsPtr(){ return partitions; } 
 #endif
