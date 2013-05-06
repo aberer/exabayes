@@ -1,5 +1,8 @@
 #include "ExtendedTBR.hpp"
+#include "output.h"
 #include "branch.h"
+#include "topology-utils.h"
+
 
 
 
@@ -219,8 +222,40 @@ void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorManager& prior)
 }
 
 
+
+/** 
+    @notice dont care so much about branch lengths here, we have a
+    reset later anyway.
+ */ 
+static void resetOneSide(TreeAln &traln, Path& path)
+{
+  tree *tr = traln.getTr(); 
+  int numBranches = traln.getNumBranches(); 
+
+  int lastNode = path.getNthNodeInPath(path.getNumberOfNodes() -1 ),
+    s2lastNode =  path.getNthNodeInPath(path.getNumberOfNodes()-2); 
+  
+  int subTreeNode = path.at(0).thisNode; 
+
+  nodeptr p1 = findNodeFromBranch(tr, constructBranch(lastNode, subTreeNode)),
+    p2 = findNodeFromBranch(tr, constructBranch(s2lastNode, subTreeNode));     
+
+  double defaultVal = 0.123; 
+  hookup(p1,p2,&defaultVal, numBranches); 
+
+  // getThirdBranch(path.at(0), );
+}
+
+
 void ExtendedTBR::resetState(TreeAln &traln, PriorManager& prior)
 {
-  
+  resetOneSide(traln, modifiedPath1); 
+  resetOneSide(traln, modifiedPath2); 
+
+  modifiedPath1.restoreBranchLengthsPath(traln); 
+  modifiedPath2.restoreBranchLengthsPath(traln); 
+
+  debug_checkTreeConsistency(traln.getTr()); 
+  debug_printTree(traln);   
 }
 

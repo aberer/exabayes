@@ -112,7 +112,6 @@ typedef  unsigned int nat ;
 /* i think for the burn-in at least, this hurts... */
 #define ESPR_MULTIPLY_BL	 /// apply multiplier to espr as by lakner
 #define NNI_MULTIPLY_BL		 /// apply multiplier to nni move
-
 #define TBR_MULTIPLY_BL
 
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
@@ -127,7 +126,7 @@ typedef  unsigned int nat ;
 #define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */

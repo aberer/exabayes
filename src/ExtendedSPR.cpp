@@ -145,7 +145,7 @@ void ExtendedSPR::resetState(TreeAln &traln, PriorManager &prior )
   /* TODO resetAlong... should be able to correctly restore branch lengths    */
   modifiedPath->restoreBranchLengthsPath(traln); 
 
-  debug_checkTreeConsistency((&traln)->getTr());
+  debug_checkTreeConsistency(traln.getTr());
 
   debug_printTree(traln); 
 }
