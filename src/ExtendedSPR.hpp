@@ -26,7 +26,7 @@ protected:
   Chain* chain; 
   double stopProb; 
   double multiplier; 
-
+  
 
   Path* modifiedPath; 
 

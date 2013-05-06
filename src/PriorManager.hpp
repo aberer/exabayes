@@ -17,7 +17,7 @@ public:
 
   // dummy 
   double getLogPriorProbability(){return 0;}
-
+  
 
 private: 
 

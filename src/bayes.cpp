@@ -288,9 +288,14 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 }
 
 
+
+
+#include "branch.h"
+#include "Path.hpp"
+
+
 // #define TEST 
 
-// #include <list>
 
 /**
    @brief the main ExaBayes function.
@@ -305,23 +310,20 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   timeIncrement = gettime();
   gAInfo.adef = adef; 
 
+
 #ifdef TEST   
+  Path path;
+  path.append(constructBranch(1,2)); 
+  path.append(constructBranch(3,2)); 
+  path.append(constructBranch(3,4)); 
+  path.append(constructBranch(4,5)); 
+  path.append(constructBranch(5,6)); 
 
-  list<bool>  bla; 
-  bla.push_back(true); 
-  bla.push_back(false); 
-  bla.push_back(true ); 
-  bla.push_back(false); 
+  for(int i = 0; i < path.getNumberOfNodes(); ++i)
+    assert(path.getNthNodeInPath(i) == i+1 ); 
   
-  bla.pop_front(); 
-  bla.push_back(true ); 
+  assert(0); 
 
-  for(auto e : bla )
-    cout << e << ","; 
-  cout << endl; 
-  
-
-  exit(0); 
 #endif
 
   vector<CoupledChains*> runs; 

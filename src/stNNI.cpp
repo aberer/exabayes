@@ -44,10 +44,10 @@ void apply_st_nni(Chain *chain, proposalFunction *pf)
   switchingBranch.length[0] = bl; 
   
   Path *rememStack = pf->remembrance.modifiedPath; 
-  rememStack->clearStack(); 
-  rememStack->pushStack( toBePruned);
-  rememStack->pushStack( b); 
-  rememStack->pushStack( switchingBranch);
+  rememStack->clear(); 
+  rememStack->append( toBePruned);
+  rememStack->append( b); 
+  rememStack->append( switchingBranch);
 
   /* switch the branches  */
   {
@@ -125,9 +125,15 @@ void reset_st_nni(Chain *chain, proposalFunction *pf)
   int numBranches = chain->traln->getNumBranches(); 
   
   Path *rStack = pf->remembrance.modifiedPath; 
-  branch a = rStack->popStack(),	/* switchingBranch */
-    chosenBranch = rStack->popStack(), /* inner branch   */
-    b = rStack->popStack(); 	/* toBePruned */
+
+  branch b = rStack->at(0),
+    chosenBranch = rStack->at(1),
+    a = rStack->at(2); 
+  
+
+  // branch a = rStack->popStack(),	/* switchingBranch */
+  //   chosenBranch = rStack->popStack(), /* inner branch   */
+  //   b = rStack->popStack(); 	/* toBePruned */
 
   swpInt(&a.thatNode, &b.thatNode); 
 
@@ -146,5 +152,7 @@ void reset_st_nni(Chain *chain, proposalFunction *pf)
   }
 
   debug_checkTreeConsistency(chain->traln->getTr());
+
+  rStack->clear();
 }
 

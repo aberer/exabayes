@@ -474,9 +474,9 @@ void applyGuidedSPR(Chain *chain, proposalFunction *pf)
 
   /* describe how to reset the move */
   Path *rememPath = pf->remembrance.modifiedPath; 
-  rememPath->clearStack(); 
-  rememPath->pushStack( pruneBranch); 
-  rememPath->pushStack( subtree); 
+  rememPath->clear(); 
+  rememPath->append( pruneBranch); 
+  rememPath->append( subtree); 
 
   debug_checkHooks( tr); 
   freeList(lnlList);   

@@ -103,7 +103,8 @@ static void onePartitionEval(Chain *chain, proposalFunction *thisProposal)
 
 static void evalBranch(Chain *chain, proposalFunction *thisProposal)
 {
-  branch b = thisProposal->remembrance.modifiedPath->peekStack();
+  assert(thisProposal->remembrance.modifiedPath->size() == 1); 
+  branch b = thisProposal->remembrance.modifiedPath->at(0);
   nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
   evaluateGenericWrapper(chain,p, FALSE ); 
 }
@@ -1070,7 +1071,7 @@ static void random_branch_length_proposal_apply(Chain * chain, proposalFunction 
   /* clearStack(pf->remembrance.modifiedPath);  */
   /* assert(pf->remembrance.modifiedPath != NULL);  */
   branch b = constructBranch(p->number, p->back->number); 
-  pf->remembrance.modifiedPath->pushStack( b); 
+  pf->remembrance.modifiedPath->append( b); 
   
   branch &something = pf->remembrance.modifiedPath->at(0); 
   something.length[0] = z; 
@@ -1113,9 +1114,10 @@ static void random_branch_length_proposal_apply(Chain * chain, proposalFunction 
 static void random_branch_length_proposal_reset(Chain * chain, proposalFunction *pf)
 {
   /* branch b = pf->remembrance.modifiedPath->content[0];  */
-  branch b = pf->remembrance.modifiedPath->popStack(); 
+  branch b = pf->remembrance.modifiedPath->at(0); 
   nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
   chain->traln->setBranchLengthSave(b.length[0],0,p); 
+  pf->remembrance.modifiedPath->clear(); 
 
   // ok, maybe it would be smarter to store the node ptr for rollback rather than re-search it...
   /* p = select_branch_by_id_dfs( chain->tr->start, pf->remembrance.topoRec->whichBranch, chain ); */  
@@ -1335,8 +1337,8 @@ static void branchLengthWindowApply(Chain *chain, proposalFunction *pf)
 
   nodeptr p = findNodeFromBranch(tr, b); 
   
-  pf->remembrance.modifiedPath->clearStack(); 
-  pf->remembrance.modifiedPath->pushStack( b);
+  pf->remembrance.modifiedPath->clear(); 
+  pf->remembrance.modifiedPath->append( b);
   pf->remembrance.modifiedPath->at(0).length[0]  = chain->traln->getBranchLength( p,0); 
 
   double zOld = chain->traln->getBranchLength( p,0); 
@@ -1355,8 +1357,8 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
 
   nodeptr p = findNodeFromBranch(tr, b); 
 
-  pf->remembrance.modifiedPath->clearStack(); 
-  pf->remembrance.modifiedPath->pushStack( b);
+  pf->remembrance.modifiedPath->clear(); 
+  pf->remembrance.modifiedPath->append( b);
   assert(pf->remembrance.modifiedPath->size() == 1 ); 
   pf->remembrance.modifiedPath->at(0).length[0]  = traln->getBranchLength( p,0); 
 
@@ -1479,7 +1481,9 @@ static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCtr *ctr)
 
 void branchLengthReset(Chain *chain, proposalFunction *pf)
 {
-  branch b = pf->remembrance.modifiedPath->popStack(); 
+  assert(pf->remembrance.modifiedPath->size() == 1 ); 
+  branch b = pf->remembrance.modifiedPath->at(0); 
+  pf->remembrance.modifiedPath->clear(); 
   tree *tr = chain->traln->getTr(); 
   nodeptr p = findNodeFromBranch(tr, b); 
   chain->traln->setBranchLengthSave(b.length[0], 0,p); 

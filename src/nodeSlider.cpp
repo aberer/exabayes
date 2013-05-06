@@ -39,9 +39,9 @@ void applyNodeSlider(Chain *chain, proposalFunction *pf)
 
   Path *thePath = pf->remembrance.modifiedPath; 
   // stack *thePath = pf->remembrance.modifiedPath; 
-  thePath->clearStack();
-  thePath->pushStack(oneBranch);
-  thePath->pushStack(otherBranch);
+  thePath->clear();
+  thePath->append(oneBranch);
+  thePath->append(otherBranch);
 
 
   nodeptr nodeA = findNodeFromBranch(tr, oneBranch),
@@ -105,8 +105,10 @@ void resetNodeSlider(Chain *chain, proposalFunction *pf)
   Path *pth = pf->remembrance.modifiedPath; 
   int numBranches = chain->traln->getNumBranches();
 
-  branch a = pth->popStack(),
-    b = pth->popStack(); 
+  assert(pth->size() == 2 ); 
+
+  branch &a = pth->at(0),
+    &b =  pth->at(1); 
 
   nodeptr p = findNodeFromBranch(tr, a),
     q = findNodeFromBranch(tr, b); 
@@ -115,6 +117,8 @@ void resetNodeSlider(Chain *chain, proposalFunction *pf)
     bZ = b.length[0]; 
   hookup(p, p->back, &aZ, numBranches); 
   hookup(q,q->back, &bZ, numBranches);   
+
+  pth->clear(); 
 }
 
 

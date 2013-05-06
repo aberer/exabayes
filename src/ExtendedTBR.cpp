@@ -4,9 +4,6 @@
 #include "topology-utils.h"
 
 
-
-
-
 static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomness &rand, double stopProb )
 {
   int numBranches = traln.getNumBranches(); 
@@ -14,7 +11,7 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
   tree *tr  = traln.getTr();
 
   nodeptr p=  findNodeFromBranch(tr, bisectedBranch); 
-  path.clearStack();
+  path.clear();
 
   nodeptr pn = p->next->back,
     pnn = p->next->next->back; 
@@ -27,8 +24,8 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
   // prune  
   hookup(pn, pnn, &someDefault, numBranches); 
   p->next->next->back = p->next->back = NULL; 
-  path.pushStack(bisectedBranch);
-  path.pushStack(constructBranch(pn->number, pnn->number)); 
+  path.append(bisectedBranch);
+  path.append(constructBranch(pn->number, pnn->number)); 
   nodeptr currentNode = rand.drawRandDouble01() ? pn : pnn;
   bool accepted = false; 
   while(NOT accepted )
@@ -54,7 +51,12 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
     path.at(1).thisNode = p->number;     
   else 
     assert(0); 
+
+  // for reasons of resetting the first branch in the path must be
+  // identifyable later   
+  path.at(0) = getThirdBranch(tr, bisectedBranch, path.at(0)); 
 }
+
 
 
 
@@ -107,28 +109,51 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
     } while( TRUE  ); 		// just because of the many nasty
 				// variables otherwise
 
-  
+  cout << "bisected branch is " << bisectedBranch << endl; 
+
   buildPath(modifiedPath1, bisectedBranch, traln, rand, extensionProbability); 
   buildPath(modifiedPath2, invertBranch(bisectedBranch), traln, rand, extensionProbability); 
 }
 
 
 
-static void pruneOneSide(Path &path, TreeAln &traln, double &savedZ)
+static void pruneAndInsertOneSide(Path &path, TreeAln &traln, double &savedZ)
 {
   tree *tr  = traln.getTr(); 
   int numBranches = traln.getNumBranches(); 
 
-  branch b1 = getThirdBranch(tr, path.at(0), path.at(1)); 
-  nodeptr p1 = findNodeFromBranch(tr, b1)->back; 
+  branch bisectedBranch = getThirdBranch(tr, path.at(0), path.at(1)); 
+  nodeptr disconnectedPtr = findNodeFromBranch(tr, bisectedBranch); 
+  cout << "bisected is " << bisectedBranch << "empty ptr is " << disconnectedPtr->number << endl;  
 
+  branch b1 = constructBranch(path.getNthNodeInPath(0), path.getNthNodeInPath(1)); 
+  cout << "trying to find " << b1  <<endl; 
+  nodeptr p1 = findNodeFromBranch(tr, b1); 
+
+
+  
   int newConnect = path.getNthNodeInPath(2) ; 
   nodeptr pConn1 = findNodeFromBranch( tr, constructBranch(newConnect, getOtherNode(newConnect, path.at(1)))) ;
   savedZ = pConn1->z[0]; 
   hookup(pConn1, p1, p1->z, numBranches);
-  
+  disconnectedPtr->next->back =  disconnectedPtr->next->next->back  = NULL; 
   cout << "hooking " << pConn1->number << "," <<p1->number << "(" << p1->z[0] << ")" << endl; 
+
+  branch insertBranch  = constructBranch(path.getNthNodeInPath(path.size( )- 1 ), path.getNthNodeInPath(path.size()-2) );   
+  cout << "insert branch is " << insertBranch << endl; 
+  // nodeptr iPtr = findNodeFromBranch(tr, insertBranch),
+    // iPtr2 = findNodeFromBranch(tr, invertBranch(insertBranch)); 
+  
+  
+  
+
+  assert(0); 
+  
+
 }
+
+
+
 
 
 
@@ -139,8 +164,10 @@ static void insertOneSide(Path &path, TreeAln &traln, double savedZ)
 
   int lastNode = path.getNthNodeInPath(path.getNumberOfNodes()-1),
     s2LastNode = path.getNthNodeInPath(path.getNumberOfNodes()-2); 
+  
+  branch b1 = constructBranch(path.getNthNodeInPath(0), path.getNthNodeInPath(1)); 
 
-  nodeptr tmp = findNodeFromBranch(tr, path.at(0)),
+  nodeptr tmp = findNodeFromBranch(tr, b1),
     iPtr1 = tmp->next,
     iPtr2 = tmp->next->next; 
 
@@ -161,16 +188,13 @@ void ExtendedTBR::executeTBR(TreeAln & traln)
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
 
-  assert(branchEqualUndirected(modifiedPath1.at(0), modifiedPath2.at(0))); 
+  // assert(branchEqualUndirected(modifiedPath1.at(0), modifiedPath2.at(0))); 
   
   // prune the bisected branch from both sides, leaving behind two
   // unconnected trees
   double saved1 = 0,  saved2 = 0; 
-  pruneOneSide(modifiedPath1, traln, saved1); 
-  pruneOneSide(modifiedPath2, traln, saved2); 
-  
-  insertOneSide(modifiedPath1,traln, saved1); 
-  insertOneSide(modifiedPath2, traln, saved2); 
+  pruneAndInsertOneSide(modifiedPath1, traln, saved1); 
+  pruneAndInsertOneSide(modifiedPath2, traln, saved2); 
 }
 
 
@@ -180,8 +204,8 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorManager& prior, double &hast
 
   cout << "before: " << traln << endl; 
 
-  modifiedPath1.clearStack();
-  modifiedPath2.clearStack();
+  modifiedPath1.clear();
+  modifiedPath2.clear();
 
   drawPaths(traln,rand);
 
@@ -190,14 +214,16 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorManager& prior, double &hast
 
 #ifdef TBR_MULTIPLY_BL  
   int ctr = 0; 
-  for(auto  b : modifiedPath1.getStack() )
+  for(int i = 0 ;i < modifiedPath1.size(); ++i)
     {
+      branch &b = modifiedPath1.at(i);  
       if(ctr == 0)continue; // do nothing to the first guy! -- while this could also be modified  	 
       modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings);       
     }
   ctr = 0; 
-  for(auto b : modifiedPath2.getStack())
+  for(int i = 0; i < modifiedPath2.size(); ++i)
     {
+      branch &b = modifiedPath2.at(i); 
       if(ctr == 0) continue; 
       modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings); 
     }
@@ -210,6 +236,7 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorManager& prior, double &hast
 
   cout << "after: " << traln << endl; 
 
+  assert(0); 
 }
 
 

@@ -38,7 +38,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 {
   assert(0 < stopProp && stopProp < 1.0 ); 
 
-  assert(modifiedPath->stackIsEmpty()); 
+  assert(modifiedPath->size( ) == 0 ); 
   tree *tr  = traln.getTr();   
 
   branch start; 
@@ -62,8 +62,8 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   hookup(q,r, q->z, traln.getNumBranches());
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 
-  modifiedPath->pushStack(start); 
-  modifiedPath->pushStack(constructBranch(q->number, r->number)); 
+  modifiedPath->append(start); 
+  modifiedPath->append(constructBranch(q->number, r->number)); 
 
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
@@ -113,7 +113,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorManager &prior, double &hast
 {
   debug_printTree(traln);
 
-  modifiedPath->clearStack(); 
+  modifiedPath->clear(); 
   assert(modifiedPath->size() == 0); 
   drawPathForESPR( traln,rand ,stopProb); 
 
@@ -185,10 +185,12 @@ void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, doub
   
   /* treat all branches except the first 2 and the last one */
   int ctr = 0; 
-  for(auto b : modifiedPath->getStack()  )
+  for(int i = 0; i < modifiedPath->size() ; ++i)
     {
       if(ctr < 2 )
 	continue; 
+      
+      branch &b = modifiedPath->at(i); 
 
       modifiedPath->multiplyBranch(traln, rand, b, multiplier, hastings); 
     }

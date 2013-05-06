@@ -37,79 +37,39 @@ static void disorientHelper(tree *tr, nodeptr p)
 
 
 
-void Path::clearStack()
+void Path::clear()
 {
   stack.clear(); 
 }
 
-void Path::pushStack(branch value)
+void Path::append(branch value)
 {
   stack.push_back(value);
 }
 
-// TODO 
-branch Path::popStack()
-{
-  if(stack.empty())
-    {
-      assert(0); 
-      branch b = {0,0}; 
-      return b; 
-    }
-  else 
-    {
-      branch b = stack.back(); 
-      stack.pop_back(); 
-      return b; 
-    }
-}
 
 
-
-branch& Path::peekStack()
-{
-  if(stack.empty())
-    {
-      assert( 0);      
-      branch *b = new branch; 
-      return *b ;
-
-    }
-  else 
-    return stack.back(); 
-}
-
-
-bool Path::stackIsEmpty()
-{
-  return stack.empty();
-}
-
-
-/* TODO should be static  */
 void Path::pushToStackIfNovel(branch b, int numTip)
 {  
   assert(stack.size() >= 2 ); 
 
-  branch bPrev = peekStack(); 
+  branch bPrev = at(size()-1); 
   if(stack.size() == 2)
     {
       if(NOT branchEqualUndirected(b, bPrev))
-	pushStack(b); 
+	append(b); 
     }
   else 
     {      
       if(branchEqualUndirected(b,bPrev))
-	{
-	  popStack(); 
-	}
+	stack.pop_back();
       else if(isTipBranch(bPrev, numTip))
 	{
-	  popStack(); 
-	  pushStack(b); 
+	  stack.pop_back();
+	  append(b); 
 	}
       else 
-	pushStack(b ); 
+	append(b ); 
     }
 }
 
@@ -158,37 +118,6 @@ bool Path::nodeIsOnPath(int node)
       return true;       
 
   return false; 
-}
-
-
-
-
-/**
-   @brief is node an outer node in the path?   
- */
-bool Path::isOuterNode(int node)
-{
-  boolean occured = false; 
-  for(auto b : stack)
-    {
-      if(nodeIsInBranch(node, b))
-	{
-	  if(occured)
-	    return true; 
-	  else 
-	    occured = true ; 
-	}	      
-    }
-
-  return false; 
-}
-
-
-
-void Path::printWithBLs(TreeAln &traln )
-{
-  for(auto b : stack)    
-    cout << "(" << b.thisNode << "," << b.thatNode << ":" << branchLengthToReal(traln.getTr(), b.length[0]) << "),"; 
 }
 
 
