@@ -215,7 +215,7 @@ void ExtendedSPR::applyPathAsESPR(TreeAln *traln )
   tree *tr = traln->getTr();
 
 #ifdef CONTROL_ESPR
-double treeLengthBefore = getTreeLength(traln, tr->start->back); 
+double treeLengthBefore = traln->getTreeLength(); 
 #endif
   
   assert(modifiedPath->size() > 2 ); 
@@ -260,7 +260,7 @@ double treeLengthBefore = getTreeLength(traln, tr->start->back);
 #endif
 
 #ifdef CONTROL_ESPR
-  double treeLengthAfter =  getTreeLength(traln, tr->start->back); 
+  double treeLengthAfter =  traln->getTreeLength(); 
   if( fabs(treeLengthAfter  -  treeLengthBefore) > 1e-3  )
     {
       cout << setprecision(8)  << "TL before " << branchLengthToReal(traln->getTr(),treeLengthBefore) << "\tafter" <<  branchLengthToReal(traln->getTr(), treeLengthAfter) << endl; 

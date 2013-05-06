@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-// #include <cassert>
 
 #include "Path.hpp"
 #include "branch.h"
@@ -13,6 +12,8 @@ Path::Path()
 Path::~Path()
 {
 }
+
+
 
 
 // Meh 
@@ -109,8 +110,6 @@ void Path::saveBranchLengthsPath(TreeAln& traln)
 }
 
 
-
-
 bool Path::nodeIsOnPath(int node)
 {
   for(auto b : stack)
@@ -183,7 +182,7 @@ void Path::destroyOrientationAlongPath(tree *tr,  nodeptr p)
 
 
 
-int Path::getNthNodeInPath(nat num)  
+int Path::getNthNodeInPath(nat num)   const
 {  
   int result; 
   

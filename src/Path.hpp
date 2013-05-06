@@ -18,8 +18,27 @@
 class Path
 {
 public: 
+  // lets do this correctly for once ... 
   Path();
   ~Path();   
+
+  Path& operator=(const Path &rhs ) 
+  {
+    Path tmp(rhs); 
+    swap(*this, tmp); 
+    return *this; 
+  }
+  
+  Path( const Path &rhs) 
+    : stack(rhs.stack)
+  {    
+  }
+
+  friend void swap(Path &first, Path &second)
+  {
+    using std::swap; 
+    swap(first.stack, second.stack); 
+  }
   
   /** @brief returns true, if the node with a given id is part of this branch */ 
   bool nodeIsOnPath(int node);  
@@ -39,22 +58,26 @@ public:
   // straight-forward container methods 
   void append(branch value); 
   void clear(); 
-  int size() {return stack.size(); }
+  /** @brief number of branches in the path */ 
+  int size() const {return stack.size(); }
+
+  /** @brief yields the branch */  
   branch& at(int num){return stack[num]; }
+  branch at(int num) const{return stack[num];}
+  
 
   /** @brief returns the id of the nth node in the path. nodes 0 and n+1 are the outer nodes in this path that do not have a neighbor. */ 
-  int getNthNodeInPath(nat num) ; 
+  int getNthNodeInPath(nat num) const ; 
   
   /** @brief gets the number of nodes represented by the path (assuming it is connected)  */
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
-  void printWithBLs(TreeAln &traln ); 
+  void printWithBLs(TreeAln &traln ) const; 
 
   // TODO this should return a new path instance  
   void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings); 
 
   friend ostream& operator<<(ostream &out, const Path &rhs)  ;
 
-  
   void destroyOrientationAlongPath(tree *tr,  nodeptr p); // TODO move? 
 
 

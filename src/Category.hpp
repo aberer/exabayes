@@ -29,7 +29,6 @@ public:
 
   vector<AbstractProposal*> getProposals(){return proposals; }
 
-  // Category& operator=(const Category& rhs); 
 
 private: 
   category_t type;

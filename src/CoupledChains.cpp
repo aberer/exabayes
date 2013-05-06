@@ -168,7 +168,7 @@ void CoupledChains::chainInfo()
   
   tree *tr = coldChain->traln->getTr(); 
 
-  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runid,   gettime()  - timeIncrement  , coldChain->currentGeneration, coldChain->traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(coldChain->traln, tr->nodep[1]->back)));
+  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runid,   gettime()  - timeIncrement  , coldChain->currentGeneration, coldChain->traln->getTr()->likelihood, branchLengthToReal(tr, coldChain->traln->getTreeLength()));
 
 
   // print hot chains

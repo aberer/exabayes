@@ -576,3 +576,26 @@ ostream& operator<< (ostream& out,  TreeAln&  traln)
   out << ss.str() ; 
   return out; 
 }
+
+
+
+double TreeAln::getTreeLength()
+{
+  return getTreeLengthHelper(tr->start->back); 
+}
+
+
+double TreeAln::getTreeLengthHelper( nodeptr p)
+{
+  tree *tr  = getTr();
+  if(isTip(p->number, tr->mxtips))
+    return getBranchLength( p,0); 
+  else 
+    {
+      return getBranchLength( p,0) * getTreeLengthHelper(p->next->back)
+	* getTreeLengthHelper(p->next->next->back);       
+    }
+  
+  assert(0);
+  return 0; 
+}

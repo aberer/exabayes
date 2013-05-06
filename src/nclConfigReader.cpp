@@ -75,7 +75,7 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = UPDATE_MODEL_DIRICHLET; 
   else if(key.EqualsCaseInsensitive("initFrequenciesWeight"))    
     *pf = UPDATE_FREQUENCIES_BIUNIF; 
-  else if(key.EqualsCaseInsensitive("initEsprMappedWeight"    ))    
+  else if(key.EqualsCaseInsensitive("eSPR" ))    
     *pf = E_SPR; 
   else if(key.EqualsCaseInsensitive("branchMulti"))
     *pf = BRANCH_LENGTHS_MULTIPLIER; 
@@ -83,7 +83,7 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = UPDATE_SINGLE_BL_GUIDED; 
   else if(key.EqualsCaseInsensitive("initFrequencySliderWeight"))
     *pf = FREQUENCY_SLIDER; 
-  else if(key.EqualsCaseInsensitive("initGuidedSPR"))
+  else if(key.EqualsCaseInsensitive("guidedSPR"))
     *pf = GUIDED_SPR; 
   else if(key.EqualsCaseInsensitive("stNNI"))
     *pf = ST_NNI; 

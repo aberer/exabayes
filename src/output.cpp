@@ -17,6 +17,31 @@
 
 
 
+
+/**
+   @brief A check to ensure that the tree is still consistent. 
+   
+   @param  p -- pointer to an inner (!) node
+ */ 
+static void traverseAndCount(nodeptr p, int *count, tree *tr )
+{
+  nodeptr q;  
+
+  *count += 1;
+
+  if (! isTip(p->number,tr->mxtips)) 
+    {                                  /*  Adjust descendants */
+      q = p->next;
+      while (q != p) 
+	{
+	  traverseAndCount(q->back, count, tr);
+	  q = q->next;
+	} 
+    }
+}
+
+
+
 /**
    @brief prints the tree as a debug message. 
 */
@@ -189,7 +214,7 @@ static void printParams(Chain *chain)
 
   FILE *fh = chain->outputParamFile; 
 
-  double treeLength = branchLengthToReal(tr, getTreeLength(chain->traln,tr->nodep[1]->back )); 
+  double treeLength = branchLengthToReal(tr, chain->traln->getTreeLength()); 
   assert(treeLength != 0.); 
   fprintf(fh, "%d\t%f\t%.3f", chain->currentGeneration,
 	  tr->likelihood,  

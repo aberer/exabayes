@@ -56,7 +56,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
   Randomness *rand = getChainRand(); 
   stringstream ss; 
   ss << *rand ;	  	  
-  printInfo("init lnl=%f\tTL=%f\tseeds=%s\n", traln->getTr()->likelihood, branchLengthToReal(tr, getTreeLength(traln, tr->nodep[1]->back)), ss.str().c_str()); 
+  printInfo("init lnl=%f\tTL=%f\tseeds=%s\n", traln->getTr()->likelihood, branchLengthToReal(tr, traln->getTreeLength()), ss.str().c_str()); 
 
   saveTreeStateToChain(); 
 }

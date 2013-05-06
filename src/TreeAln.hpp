@@ -25,6 +25,10 @@ public:
   void initializeFromByteFile(char *bytefile); 
   
 
+  /**
+     @brief gets the tree length (internal representation)
+  */   
+  double getTreeLength(); 
 
   // save setters 
   double setFrequencySave(double newValue, int model, int position ); 
@@ -73,6 +77,8 @@ public:
 
 
 private: 
+  double getTreeLengthHelper(nodeptr p);
+  
   void initDefault();
   tree* tr;		// TODO replace with an object for cleanup 
 

@@ -47,19 +47,6 @@ AbstractProposal* Category::drawProposal(Randomness &rand)
 }
 
 
-// Category& Category::operator=(const Category& rhs)
-// {
-//   proposals = rhs.proposals; 
-//   assert(type == rhs.type); 
-//   assert(name == rhs.name); 
-//   assert(categoryFrequency == rhs.categoryFrequency); 
-//   return *this; 
-// }
-
-
-
-
-
 Category::~Category()
 {
 }

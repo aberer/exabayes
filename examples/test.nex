@@ -34,10 +34,10 @@ begin EXABAYES;
       [================================================================]
 
       [ TOPOLOGY ]
-      initEsprMappedWeight 30 [ 10% in mrb  ]
-      initGuidedSPR 0  [ok ] 
+      eSPR 20 [ 10% in mrb  ]
+      guidedSPR 0  [ ok ] 
       stNNI 10      [ ok 10% in mrb]	
-      etbr  0 [  to be implemented ] 
+      eTBR  10 [  to be implemented ] 
 
       [ BRANCH LENGTHS ] 
       initSingleBranchWeight 0 [ ok ] 
@@ -68,7 +68,7 @@ begin EXABAYES;
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
-      eSprStopProb 0.5 [ stopping probability for eSPR moves ] 
+      eSprStopProb 0.3 [ stopping probability for eSPR moves ] 
 
 
       [================================================================]
