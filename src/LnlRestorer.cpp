@@ -2,7 +2,8 @@
 #include "adapters.h"
 #include "branch.h"
 #include "TreeAln.hpp" 
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 
 #include <iostream>
 using namespace std; 

@@ -26,7 +26,7 @@ begin EXABAYES;
       burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
 
       [ PARALLELIZATION ]
-      numRunParallel 1       [ number of runs (i.e., independant chains) that are executed in parallel; currently this only can be used with ExaML ] 
+      numRunParallel 2       [ number of runs (i.e., independant chains) that are executed in parallel; currently this only can be used with ExaML ] 
 
 
       [================================================================]
@@ -75,31 +75,31 @@ begin EXABAYES;
       parsimonySPR 0  [ to be implemented, 10% in mb ]
 
       [ BRANCH LENGTHS ] 
-      initSingleBranchWeight 0 [ ok ] 
-      initSingleBranchExpWeight 0  [ broken ] 
-      initSingleBranchBiunifWeight 0 [broken]
+      SingleBranch 0 [ ok ] 
+      SingleBranchExp 0  [ broken ] 
+      SingleBranchBiunif 0 [broken]
       branchMulti 40 [ ok, 40% in mrb ]
       treeLengthMult 4 [ ok, 4 % in mrb ]
       nodeSlider  10 [ ok, 10% in mrb ]
-      initGuidedBL 0 []
+      GuidedBL 0 []
 
       [ RATE HETEROGENEITY ]
-      initGammaWeight 0 [ ok ]		
-      initGammaExpWeight 0 [ ok ]
+      Gamma 0 [ ok ]		
+      GammaExp 0 [ ok ]
       rateHetMulti 2   [ ok, 2 in mrb  ]
 
       [ REVMAT ] 
-      initModelWeight 0 [ ok ]		
-      initModelBiunifWeight 0 [broken]
-      initModelSingleBiunifWeight 0 [broken] 
-      initModelAllBiunifWeight  0 [broken] 
-      initModelPermBiunifWeight 0 [ BROKEN ] 
-      initModelDirichlet 2  [ ok ]
+      Model 0 [ ok ]		
+      ModelBiunif 0 [broken]
+      ModelSingleBiunif 0 [broken] 
+      ModelAllBiunif  0 [broken] 
+      ModelPermBiunif 0 [ BROKEN ] 
+      ModelDirichlet 2  [ ok ]
 
       [ FREQUENIES ]
-      initFrequenciesWeight 0   [ broken : biunif ]
-      initFrequencySliderWeight 0  [ ok ] 
-      initFrequencyDirichletWeight 2  [ ok ]
+      Frequencies 0   [ broken : biunif ]
+      FrequencySlider 0  [ ok ] 
+      FrequencyDirichlet 2  [ ok ]
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
@@ -109,6 +109,4 @@ begin EXABAYES;
 
       [================================================================]
 
-      [ UNUSED ]
-      initPenaltyFactor 0.0 
 end;

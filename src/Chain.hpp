@@ -11,8 +11,7 @@
 #define  _CHAIN_H
 #include <vector>
 
-#include "rng.h"
-#include "nclConfigReader.h"
+#include "ConfigReader.hpp"
 #include "Category.hpp"
 #include "PriorManager.hpp"
 
@@ -88,8 +87,7 @@ public:
   
   
   void clarifyOwnership(); 
-
-
+  
   vector<Category> proposalCategories; // proposals that we implemented using the new framework 
 
   // CORRECT part 
@@ -128,6 +126,8 @@ private :
   LnlRestorer *restorer; 
   int runid; 
   PriorManager prior; 
+  
+  int tuneFrequency; 		// TODO should be have per-proposal tuning?   
 
   void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl ) ; 
   void initParamDump(); 

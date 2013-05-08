@@ -12,7 +12,6 @@
 typedef struct  
 {
   double initWeights[NUM_PROPOSALS]; 
-  double initPenaltyFactor;   
   double eSprStopProb; 
   int numGen; 
   int samplingFrequency; 

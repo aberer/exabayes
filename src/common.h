@@ -117,7 +117,7 @@ typedef  unsigned int nat ;
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
 /* #define DEBUG_PRINT_TUNE_INFO */
 
-#define ENABLE_PRSF
+/* #define ENABLE_PRSF */
 #define WEIGHT_EPS 1e-3  	/* guided spr    */
 
 #define CONTROL_ESPR

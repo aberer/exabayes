@@ -15,12 +15,12 @@ using namespace std;
 
 #include "proposalType.h"
 #include "config.h"
-#include "rng.h"
-/* #include "eval.h" */
 #include "SuccessCtr.hpp"
 #include "categoryType.h"
 #include "Chain.hpp"
-#include "nclConfigReader.h"
+#include "ConfigReader.hpp"
+
+/* TODO basically this entire file has to die ...  */
 
 
 class Path; 

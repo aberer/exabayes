@@ -7,6 +7,11 @@
 using namespace std; 
 
 
+// we do not actually need any of this as long as we do not use memory saving features 
+
+#if 0 
+
+
 #include <iostream>
 
 #if HAVE_PLL != 0
@@ -100,6 +105,9 @@ void operator delete[](void* p)  _GLIBCXX_USE_NOEXCEPT
 {
   doFree(p); 
 }
+
+
+#endif
 
 
 #endif

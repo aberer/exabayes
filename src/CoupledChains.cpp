@@ -4,7 +4,8 @@
 #include "Chain.hpp"
 #include "adapters.h" 
 
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 #include "proposals.h"
 #include "treeRead.h"
 #include "output.h"
@@ -13,7 +14,8 @@
 CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid, initParamStruct *initParams)
   : temperature(initParams->heatFactor)
   , rand(seed)
-  , runid(_runid)
+  , runid(_runid) 
+  , tuneHeat(false)
 {
   assert((nat)numCoupled == trees.size());
 
@@ -212,32 +214,34 @@ void CoupledChains::executePart(int gensToRun)
   for(nat i = 0; i < chains.size(); ++i)
     chains[i]->applyChainStateToTree();
 
-  for(int genCtr = 0; genCtr < gensToRun; genCtr += gAInfo.swapInterval)
+  for(int genCtr = 0; genCtr < gensToRun; genCtr += globals.swapInterval)
     {
       bool timeToPrint = false; 
 
       for(auto chain : chains)
 	{
-	  for(int i = 0; i < gAInfo.swapInterval; ++i)
+	  for(int i = 0; i < globals.swapInterval; ++i)
 	    {
 	      chain->step(); 
 
 	      timeToPrint |= isOutputProcess() 
-		&& chain->couplingId == 0 && gAInfo.printFreq > 0
-		&& (chain->currentGeneration % gAInfo.printFreq )  == (gAInfo.printFreq - 1) ;
+		&& chain->couplingId == 0 && globals.printFreq > 0
+		&& (chain->currentGeneration % globals.printFreq )  == (globals.printFreq - 1) ;
 	    }
 	}
 
       if(timeToPrint)
       	chainInfo(); 
 
-      if(gAInfo.tuneHeat)
+      if(chains.size()  > 1 
+	 && tuneHeat
+	 && tuneFreq < swapInfo[1]->getRecentlySeen()  )
       	tuneTemperature();      
       
       switchChainState();
     }
 
-  for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
+  for(int i = 0; i < globals.numberCoupledChains; ++i)
     chains[i]->saveTreeStateToChain();
 }
 
@@ -247,14 +251,7 @@ void CoupledChains::tuneTemperature()
   /* naive strategy: tune, s.t. the coldest hot chain swaps
      with the coldest chain in 23.4% of all cases */
 
-  if(chains.size() == 1 ) 
-    return; 
-
   auto c = swapInfo[1]; 
-
-  // seen enough? 
-  if(c->getRecentlySeen() < gAInfo.tuneFreq)
-    return ;  
 
   temperature = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), temperature, FALSE); 
   c->nextBatch();

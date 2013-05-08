@@ -9,8 +9,6 @@
 #ifndef _PRIORMANAGER_H
 #define _PRIORMANAGER_H
 
-#include "nclConfigReader.h"
-
 using namespace std; 
 
 #include <vector>
@@ -51,7 +49,7 @@ class RateHetPrior
 class PriorManager
 {
 public: 
-  PriorManager(initParamStruct &initParams); 
+  PriorManager(); 
   ~PriorManager(){};
 
   // TODO support topology 

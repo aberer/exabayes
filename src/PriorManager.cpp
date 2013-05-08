@@ -1,7 +1,7 @@
 #include "PriorManager.hpp"
 
 
-PriorManager::PriorManager(initParamStruct &initParams)
+PriorManager::PriorManager()
   : logProb(0)
 {
 }

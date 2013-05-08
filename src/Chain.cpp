@@ -6,7 +6,8 @@
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "output.h"
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 #include "BipartitionHash.hpp"
 #include "adapters.h"
 #include "proposals.h"
@@ -26,10 +27,10 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
   , currentGeneration(0)
   , hastings(1)
   , runid(_runid)
-  , prior(*initParams)
+  // , prior(*initParams)
 {
   chainRand = new Randomness(seed.v[0]);
-  assert(id < gAInfo.numberCoupledChains); 
+  assert(id < globals.numberCoupledChains); 
   
   if(id == 0)
     {
@@ -342,23 +343,23 @@ void Chain::step()
   debug_checkTreeConsistency(this->traln->getTr());
 
   if( this->couplingId == 0	/* must be the cold chain  */
-       && (this->currentGeneration % gAInfo.samplingFrequency) == gAInfo.samplingFrequency - 1  ) 
+       && (this->currentGeneration % globals.samplingFrequency) == globals.samplingFrequency - 1  ) 
     {
       if( isOutputProcess() ) 
 	printSample(this);       
 
       // TODO keep? 
-      // gAInfo.bipHash->addBipartitionsToHash(*(this->traln),  this->id / gAInfo.numberCoupledChains); 
+      // globals.bipHash->addBipartitionsToHash(*(this->traln),  this->id / globals.numberCoupledChains); 
     }
 
-  if(pfun->isTimeToTune(gAInfo.tuneFreq))
+  if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
     pfun->autotune();
 
 
 #if 0 
   /* autotuning for proposal parameters. With increased parallelism
      this will become more complicated.  */
-  if( gAInfo.tuneFreq > 0 && this->currentGeneration % gAInfo.tuneFreq == gAInfo.tuneFreq - 1 )
+  if( globals.tuneFreq > 0 && this->currentGeneration % globals.tuneFreq == globals.tuneFreq - 1 )
     {
       for(int i = 0; i < this->numProposals; ++i)
 	{
@@ -367,7 +368,7 @@ void Chain::step()
 	  if(pf->autotune)	/* only, if we set this   */
 	    {
 #ifdef TUNE_ONLY_IF_ENOUGH
-	      if(pf->sCtr.lAcc + pf->sCtr.lRej < gAInfo.tuneFreq )
+	      if(pf->sCtr.lAcc + pf->sCtr.lRej < globals.tuneFreq )
 		continue; 
 #endif
 	      pf->autotune(this, pf);

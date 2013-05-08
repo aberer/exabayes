@@ -11,10 +11,11 @@
 
 #include "axml.h"
 #include "bayes.h"
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 #include "output.h"
 #include "proposals.h"
-#include "nclConfigReader.h"
+#include "ConfigReader.hpp"
 #include "misc-utils.h"
 #include "adapters.h"
 #include "eval.h"
@@ -42,32 +43,29 @@ extern double masterTime;
 void setupGlobals(initParamStruct *initParams)
 {
   if (initParams->numGen > 0)
-    gAInfo.numGen = initParams->numGen; 
+    globals.numGen = initParams->numGen; 
 
-  gAInfo.samplingFrequency = initParams->samplingFrequency; 
-  gAInfo.diagFreq = initParams->diagFreq; 
-  gAInfo.numberOfRuns =   initParams->numIndiChains; 
-  gAInfo.numberCoupledChains = initParams->numCoupledChains; 
-  gAInfo.printFreq = initParams->printFreq;   
-  gAInfo.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
-  gAInfo.asdsfConvergence = initParams->asdsfConvergence; 
-  gAInfo.heatFactor  = initParams->heatFactor; 
-  gAInfo.swapInterval =  initParams->swapInterval; 
-  gAInfo.tuneHeat = initParams->tuneHeat; 
-  gAInfo.burninGen = initParams->burninGen; 
-  gAInfo.burninProportion = initParams->burninProportion; 
-  gAInfo.tuneFreq = initParams->tuneFreq ; 
-
+  globals.samplingFrequency = initParams->samplingFrequency; 
+  globals.diagFreq = initParams->diagFreq; 
+  globals.numberOfRuns =   initParams->numIndiChains; 
+  globals.numberCoupledChains = initParams->numCoupledChains; 
+  globals.printFreq = initParams->printFreq;   
+  globals.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
+  globals.asdsfConvergence = initParams->asdsfConvergence; 
+  globals.heatFactor  = initParams->heatFactor; 
+  globals.swapInterval =  initParams->swapInterval; 
+  globals.burninGen = initParams->burninGen; 
+  globals.burninProportion = initParams->burninProportion; 
 }
 
 
 //STAY 
 bool convergenceDiagnostic(vector<CoupledChains*> runs)
 {
-  if(gAInfo.numberOfRuns > 1)
+  if(globals.numberOfRuns > 1)    
     { 
       vector<string> fns; 
-      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+      for(nat i = 0; i < globals.numberOfRuns; ++i)
 	{
 	  stringstream ss; 
 	  ss <<  PROGRAM_NAME << "_topologies." << run_id << "." << i; 
@@ -78,7 +76,7 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
 
       int end = asdsf.getEnd();
       
-      int treesInBatch = gAInfo.diagFreq / gAInfo.samplingFrequency; 
+      int treesInBatch = globals.diagFreq / globals.samplingFrequency; 
 
       end /= treesInBatch; 
       end *= treesInBatch;       
@@ -86,11 +84,11 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
       if(end > 0)
 	{	  
 	  asdsf.setEnd(end);
-	  if( gAInfo.burninGen > 0 )
+	  if( globals.burninGen > 0 )
 	    {
-	      assert(gAInfo.burninProportion == 0.); 
+	      assert(globals.burninProportion == 0.); 
 
-	      int treesToDiscard =  gAInfo.burninGen / gAInfo.samplingFrequency; 
+	      int treesToDiscard =  globals.burninGen / globals.samplingFrequency; 
 
 	      if(end < treesToDiscard + 2 )
 		return false; 
@@ -99,20 +97,20 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
 	    }
 	  else 
 	    {
-	      assert(gAInfo.burninGen == 0); 
-	      int start = (int)((double)end * gAInfo.burninProportion  ); 
+	      assert(globals.burninGen == 0); 
+	      int start = (int)((double)end * globals.burninProportion  ); 
 	      asdsf.setStart(start);
 	    } 
 
 	  asdsf.extractBips();
-	  double asdsfVal = asdsf.computeAsdsf(gAInfo.asdsfIgnoreFreq);
+	  double asdsfVal = asdsf.computeAsdsf(globals.asdsfIgnoreFreq);
 
  #if HAVE_PLL == 0      
 	  if(processID == 0)
 #endif 
 	    cout << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
 
-	  return asdsfVal < gAInfo.asdsfConvergence; 
+	  return asdsfVal < globals.asdsfConvergence; 
 
 	}
       else 
@@ -121,7 +119,7 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
     }
   else 
     {
-      return runs[0]->getChain(0)->currentGeneration > gAInfo.numGen;
+      return runs[0]->getChain(0)->currentGeneration > globals.numGen;
     }
 }
 
@@ -144,7 +142,7 @@ void runChains(vector<CoupledChains*> allRuns, int diagFreq)
       hasConverged = convergenceDiagnostic(allRuns); 
 
 #ifdef ENABLE_PRSF
-      if(isOutputProcess)
+if(isOutputProcess())
 	printPRSF(run_id);
 #endif
     }
@@ -241,17 +239,17 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
   if( numTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains ); 
+  PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", initParams->numIndiChains, initParams->numCoupledChains ); 
 
 #ifdef DEBUG_LNL_VERIFY
-  gAInfo.debugTree = new TreeAln();   
-  gAInfo.debugTree->initializeFromByteFile(byteFileName); 
-  gAInfo.debugTree->enableParsimony();
+  globals.debugTree = new TreeAln();   
+  globals.debugTree->initializeFromByteFile(byteFileName); 
+  globals.debugTree->enableParsimony();
 #endif
 
   // sets up tree structures 
   vector<TreeAln*>  trees; 
-  for(int i = 0; i < gAInfo.numberCoupledChains; ++i)
+  for(int i = 0; i < globals.numberCoupledChains; ++i)
     {
       TreeAln *traln = new TreeAln();
       traln->initializeFromByteFile(byteFileName); 
@@ -265,7 +263,7 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
   Randomness masterRand(seed);   
   vector<int> runSeeds; 
   vector<int> treeSeeds; 
-  for(int i = 0; i < gAInfo.numberOfRuns;++i)
+  for(int i = 0; i < initParams->numIndiChains;++i)
     {
       randCtr_t r = masterRand.generateSeed();
       runSeeds.push_back(r.v[0]); 
@@ -273,7 +271,7 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
     }
 
 
-  for(int i = 0; i < gAInfo.numberOfRuns ; ++i)
+  for(int i = 0; i < initParams->numIndiChains ; ++i)
     {      
       if( i < numTrees)
 	initWithStartingTree(treeFH, trees); 
@@ -281,11 +279,13 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
 #if HAVE_PLL == 0
-      if(i % initParams->numRunParallel != gAInfo.myBatch )
+      if(i % initParams->numRunParallel != globals.myBatch )
 	continue; 
 #endif
 
-      CoupledChains *cc = new CoupledChains(runSeeds[i], gAInfo.numberCoupledChains, trees, i, initParams);
+      CoupledChains *cc = new CoupledChains(runSeeds[i], globals.numberCoupledChains, trees, i, initParams);
+      if(initParams->tuneHeat)
+	cc->enableHeatTuning(initParams->tuneFreq); 
       runs.push_back(cc); 
     }
   
@@ -336,7 +336,7 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   Chain *indiChains = NULL; 		/* one state per indipendent run/chain */  
 
   timeIncrement = gettime();
-  gAInfo.adef = adef; 
+  globals.adef = adef; 
 
 
 #ifdef TEST   
@@ -360,7 +360,7 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   vector<CoupledChains*> runs; 
 
   initializeIndependentChains(adef,  seed, runs, initParams); 
-  assert(gAInfo.numberCoupledChains > 0);
+  assert(globals.numberCoupledChains > 0);
 
   // Chain* chain = runs[0]->getChain(0); 
   // cout << setprecision(10) << "interanl=" <<  TreeAln::zMax << "\t" <<  TreeAln::zMin << endl; 
@@ -369,12 +369,12 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   // assert(0);
   
 
-  assert(gAInfo.diagFreq != 0 ); 
-  runChains(runs, gAInfo.diagFreq); 
+  assert(globals.diagFreq != 0 ); 
+  runChains(runs, globals.diagFreq); 
 
   if(isOutputProcess() )
     {
-      for(int i = 0; i < gAInfo.numberOfRuns; ++i)
+      for(nat i = 0; i < runs.size(); ++i)
 	finalizeOutputFiles(indiChains + i);
       PRINT("\nConverged after %d generations\n",  indiChains[0].currentGeneration);
       PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 

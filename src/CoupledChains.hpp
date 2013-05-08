@@ -47,6 +47,13 @@ public:
 
   Chain* getChain(int i) {return chains[i]; }
   int getNumberOfChains(){return chains.size();}
+
+  void enableHeatTuning(int freq )
+  {
+    tuneHeat = true; 
+    tuneFreq = freq; 
+  }
+
   
 
 private: 
@@ -67,11 +74,19 @@ private:
   vector<SuccessCtr*> swapInfo;  
 
   double temperature; 
-  
   // the mcmc specific randomness used to initialize chains and do the swapping 
   Randomness rand; 
 
   int runid; 
+
+
+
+  int tuneFreq; 
+  bool tuneHeat; 
+  
+
+
+
 
   
 }; 

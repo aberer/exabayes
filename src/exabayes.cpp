@@ -20,7 +20,8 @@
 #include "bayes.h"
 
 #define _INCLUDE_DEFINITIONS
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
 #include "proposals.h"
@@ -102,8 +103,8 @@ int main(int argc, char *argv[])
 
   CommandLine cl(argc, argv); 
 
-  gAInfo.globalSize = globalSize; 
-  gAInfo.globalRank = globalRank; 
+  globals.globalSize = globalSize; 
+  globals.globalRank = globalRank; 
 
   initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
   parseConfigWithNcl(configFileName, &initParams);
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
   int myColor = globalRank / processesPerBatch; 
   int newRank = globalRank  % processesPerBatch; 
 
-  gAInfo.myBatch = myColor;  
+  globals.myBatch = myColor;  
 
   MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm); 
 

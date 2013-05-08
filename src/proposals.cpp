@@ -1,7 +1,8 @@
 
 #include "axml.h"
 #include "bayes.h"
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 #include "output.h"
 // #include "topology-utils.h" 
 #include "eval.h"

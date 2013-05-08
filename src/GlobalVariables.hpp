@@ -7,7 +7,7 @@
 */ 
 
 
-#include "rng.h"
+// #include "rng.h"
 
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
@@ -19,20 +19,14 @@ class BipartitionHash;
 class SuccessCtr; 
 
 
-/* Those globals are bad.  Having them as a singleton is slightly
-   better. 
-   
-   NOTICE Mind the initialization! 
 
- */
-typedef struct globs
+
+class GlobalVariables
 {
-  string startingTrees; 
+public: 
   int numberOfRuns; 
   int numberCoupledChains;
-
   int samplingFrequency; 
-  /* BipartitionHash* bipHash;  */
 
   int diagFreq;   
   int numGen;			/// just relevent, if we have exactly 1 run 
@@ -42,29 +36,21 @@ typedef struct globs
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
 #endif
-  int tuneFreq; 
   int printFreq; 
   double asdsfIgnoreFreq; 
   double asdsfConvergence; 
   double heatFactor; 
   int swapInterval; 
-  bool tuneHeat;
   int burninGen ; 
   double burninProportion; 
-  
+
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
 
   int myBatch ; 		/* if runs are executed in parallel: which runs should be done by this process? */
-
   int globalSize;
   int globalRank; 
-} globalAnalysisInfo; 
+}; 
 
-
- 
-
-
- 
 
 #endif
 
@@ -105,15 +91,13 @@ bool isNewProposal[NUM_PROPOSALS] =
 char configFileName[1024]; 
 
 
-globalAnalysisInfo gAInfo; 
+GlobalVariables globals; 
 
 /* for crude performance measurements */
 double timeIncrement = 0;  
 
 #else 
-
-extern globalAnalysisInfo gAInfo; 
-
+extern GlobalVariables globals; 
 
 extern bool isNewPropossal[NUM_PROPOSALS]; 
 extern int Thorough; 

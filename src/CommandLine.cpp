@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include "CommandLine.hpp"
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 
 
 CommandLine::CommandLine(int argc, char *argv[])

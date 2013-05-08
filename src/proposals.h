@@ -9,7 +9,7 @@
 #ifndef _PROPOSALS_H
 #define _PROPOSALS_H
 
-#include "nclConfigReader.h"
+#include "ConfigReader.hpp"
 
 
 void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result); 

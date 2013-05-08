@@ -2,7 +2,8 @@
 #include "config.h"
 #include "TreeAln.hpp"
 
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 // #include "main-common.h" 
 #include "output.h"
 
@@ -61,7 +62,7 @@ void TreeAln::initializeFromByteFile(char *bytefile)
   partitions = pl;
   this->initializeTreePLL();
 #else 
-  initializeTree(tr, gAInfo.adef);   
+  initializeTree(tr, globals.adef);   
 #endif  
 }
 
@@ -485,7 +486,7 @@ void TreeAln::initializeTreePLL()
 
 void TreeAln::initializePartitionsPLL(char *bytefile, double ***empiricalFrequencies)
 {
-  analdef *adef = gAInfo.adef ; 
+  analdef *adef = globals.adef ; 
   tree *tr = getTr();
   partitionList *partitions = getPartitionsPtr();
 

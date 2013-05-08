@@ -71,13 +71,13 @@ static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prune
 static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &score)
 {
 #ifdef DEBUG_LNL_VERIFY
-  *gAInfo.debugTree = traln; 
+  *globals.debugTree = traln; 
   cout << endl; 
   cout << "orig " << traln << endl; 
-  cout << "copy " << *(gAInfo.debugTree) << endl; 
+  cout << "copy " << *(globals.debugTree) << endl; 
 
 
-  tree *tr = gAInfo.debugTree->getTr(); 
+  tree *tr = globals.debugTree->getTr(); 
   
   cout << "trying to find " << constructBranch(pruned->number,pruned->back->number ) << ", "
        << score.getBranch() <<  ","
@@ -91,9 +91,9 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
   exa_hookupDefault(tr, pn, p->next); 
   exa_hookupDefault(tr, pnn, p->next->next);  
 
-  cout << "after spr " << *(gAInfo.debugTree) << endl ; 
+  cout << "after spr " << *(globals.debugTree) << endl ; 
   
-  nat verifiedScore = exa_evaluateParsimony(*(gAInfo.debugTree), gAInfo.debugTree->getTr()->nodep[1]->back, TRUE); 
+  nat verifiedScore = exa_evaluateParsimony(*(globals.debugTree), globals.debugTree->getTr()->nodep[1]->back, TRUE); 
 
   cout << "for " << score.getBranch() << "\t toVerify: " << score.getScore() <<  "\tveification result: " << verifiedScore <<  endl; 
   assert(verifiedScore == score.getScore()); 

@@ -5,7 +5,7 @@
 #include <cassert>
 #include <ncl/ncl.h>
 
-#include "nclConfigReader.h"
+#include "ConfigReader.hpp"
 
 
 // TODO set this up more generic   
@@ -46,41 +46,41 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
 {    
   bool found = true; 
 
-  if(key.EqualsCaseInsensitive("initModelWeight")) 
+  if(key.EqualsCaseInsensitive("model")) 
     *pf = UPDATE_MODEL; 
-  else if(key.EqualsCaseInsensitive("initGammaWeight")) 
+  else if(key.EqualsCaseInsensitive("gamma")) 
     *pf = UPDATE_GAMMA; 
   else if(key.EqualsCaseInsensitive("treeLengthMult")) 
     *pf = TL_MULT; 
   else if(key.EqualsCaseInsensitive("rateHetMulti"))    
     *pf = GAMMA_MULTI; 
-  else if(key.EqualsCaseInsensitive("initGammaExpWeight"))    
+  else if(key.EqualsCaseInsensitive("gammaexp"))    
     *pf = UPDATE_GAMMA_EXP; 
-  else if(key.EqualsCaseInsensitive("initSingleBranchWeight"))    
+  else if(key.EqualsCaseInsensitive("singlebranch"))    
     *pf = UPDATE_SINGLE_BL; 
-  else if(key.EqualsCaseInsensitive("initSingleBranchExpWeight"))    
+  else if(key.EqualsCaseInsensitive("singlebranchexp"))    
     *pf = UPDATE_SINGLE_BL_EXP; 
-  else if(key.EqualsCaseInsensitive("initSingleBranchBiunifWeight"))    
+  else if(key.EqualsCaseInsensitive("singlebranchbiunif"))    
     *pf = UPDATE_SINGLE_BL_BIUNIF; 
-  else if(key.EqualsCaseInsensitive("initModelBiunifWeight"))    
+  else if(key.EqualsCaseInsensitive("modelbiunif"))    
     *pf = UPDATE_MODEL_BIUNIF; 
-  else if(key.EqualsCaseInsensitive("initModelSingleBiunifWeight"))    
+  else if(key.EqualsCaseInsensitive("modelsinglebiunif"))    
     *pf = UPDATE_MODEL_SINGLE_BIUNIF; 
-  else if(key.EqualsCaseInsensitive("initModelAllBiunifWeight"))    
+  else if(key.EqualsCaseInsensitive("modelallbiunif"))    
     *pf = UPDATE_MODEL_ALL_BIUNIF; 
-  else if(key.EqualsCaseInsensitive("initModelPermBiunifWeight"))    
+  else if(key.EqualsCaseInsensitive("modelpermbiunif"))    
     *pf = UPDATE_MODEL_PERM_BIUNIF;
-  else if(key.EqualsCaseInsensitive("initModelDirichlet"))    
+  else if(key.EqualsCaseInsensitive("modeldirichlet"))    
     *pf = UPDATE_MODEL_DIRICHLET; 
-  else if(key.EqualsCaseInsensitive("initFrequenciesWeight"))    
+  else if(key.EqualsCaseInsensitive("frequencies"))    
     *pf = UPDATE_FREQUENCIES_BIUNIF; 
   else if(key.EqualsCaseInsensitive("eSPR" ))    
     *pf = E_SPR; 
   else if(key.EqualsCaseInsensitive("branchMulti"))
     *pf = BRANCH_LENGTHS_MULTIPLIER; 
-  else if(key.EqualsCaseInsensitive("initGuidedBL"))
+  else if(key.EqualsCaseInsensitive("guidedbl"))
     *pf = UPDATE_SINGLE_BL_GUIDED; 
-  else if(key.EqualsCaseInsensitive("initFrequencySliderWeight"))
+  else if(key.EqualsCaseInsensitive("frequencyslider"))
     *pf = FREQUENCY_SLIDER; 
   else if(key.EqualsCaseInsensitive("guidedSPR"))
     *pf = GUIDED_SPR; 
@@ -88,7 +88,7 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = ST_NNI; 
   else if (key.EqualsCaseInsensitive("nodeSlider"))
     *pf = NODE_SLIDER; 
-  else if (key.EqualsCaseInsensitive("initFrequencyDirichletWeight"))
+  else if (key.EqualsCaseInsensitive("frequencydirichlet"))
     *pf = UPDATE_FREQUENCIES_DIRICHLET;
   else if (key.EqualsCaseInsensitive("etbr"))
     *pf = E_TBR;
@@ -120,7 +120,7 @@ public:
 
     initParam->numCoupledChains = -1; 
     initParam->numIndiChains = -1; 
-    initParam->initPenaltyFactor  = -1 ;   
+    // initParam->initPenaltyFactor  = -1 ;   
     initParam->numGen  = -1 ; 
     initParam->samplingFrequency  = -1 ; 
     initParam->eSprStopProb = -1;
@@ -151,8 +151,6 @@ public:
 	      initParam->initWeights[pt] = value.ConvertToDouble(); 
 	    else if(key.EqualsCaseInsensitive("numGen"))
 	      initParam->numGen = value.ConvertToInt(); 
-	    else if(key.EqualsCaseInsensitive("initPenaltyFactor"))
-	      initParam->initPenaltyFactor = value.ConvertToDouble();
 	    else if(key.EqualsCaseInsensitive("samplingfrequency"))
 	      initParam->samplingFrequency = value.ConvertToInt();
 	    else if(key.EqualsCaseInsensitive("eSprStopProb"))
@@ -199,7 +197,6 @@ public:
     assert(initParam->diagFreq != -1 ); 
     assert(initParam->numIndiChains != -1); 
     assert(initParam->numGen != -1); 
-    assert(initParam->initPenaltyFactor != -1); 
     assert(initParam->samplingFrequency  != -1 ); 
     assert(initParam->eSprStopProb != -1); 
   }

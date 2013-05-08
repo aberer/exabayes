@@ -1,7 +1,8 @@
 
 #include "axml.h"
 #include "bayes.h"
-#include "globals.h"
+// #include "globals.h"
+#include "GlobalVariables.hpp"
 #include "adapters.h"		
 
 #include "LnlRestorer.hpp"
@@ -31,7 +32,7 @@ void orientationPointAway(tree *tr, nodeptr p);
 void expensiveVerify(Chain *chain)
 {  
 #ifdef DEBUG_LNL_VERIFY
-  TreeAln *debugTraln = gAInfo.debugTree;   
+  TreeAln *debugTraln = globals.debugTree;   
   *debugTraln = *(chain->traln); 
 
   double toVerify = chain->traln->getTr()->likelihood; 
@@ -189,8 +190,8 @@ void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
   chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), start->back, model, fullTraversal);
 
   exa_evaluateGeneric(chain,start,fullTraversal);   
-  if(gAInfo.verifyLnl)
-    expensiveVerify(chain);
+  if(globals.verifyLnl)
+  expensiveVerify(chain);
 }
 
 
@@ -249,9 +250,9 @@ void evaluateOnePartition(Chain *chain, nodeptr start, boolean fullTraversal, in
     traln->accessExecModel(i) = FALSE; 
   traln->accessExecModel(model) = TRUE; 
 
-  gAInfo.verifyLnl = false; 	// HACK
+  globals.verifyLnl = false; 	// HACK
   evaluateGenericWrapper(chain,start, FALSE);
-  gAInfo.verifyLnl = true  ; 
+  globals.verifyLnl = true  ; 
 
   perPartitionLH[model] = traln->accessPartitionLH(model); 
   for(int i = 0; i < numPartitions; ++i)
