@@ -38,7 +38,6 @@ static bool convertToBool(NxsString &string)
 }
 
 
-
 /**
    @brief This function is nothing to be proud of, but let's stick to
    it for now.

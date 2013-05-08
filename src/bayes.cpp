@@ -328,7 +328,7 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 /**
    @brief the main ExaBayes function.
 
-   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+  @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
 void exa_main (analdef *adef, int seed, initParamStruct *initParams)

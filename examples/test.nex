@@ -15,7 +15,7 @@ begin EXABAYES;
 
 
       [ MCMCMC ]
-      numCoupledChains 1   [ number of chains per independent run (only one is cold)  => must be > 0] 
+      numCoupledChains 4   [ number of chains per independent run (only one is cold)  => must be > 0] 
       heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
       swapInterval 1 	   [ attempt a swap between chains every n generations ]
       tuneHeat true        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
@@ -30,7 +30,41 @@ begin EXABAYES;
 
 
       [================================================================]
-      [ MOVE configuration ]
+      [ PRIOR configuration ]
+      [================================================================]
+
+      [ TODO: topology ]
+
+      [ branch lengths: TODO per-partition,clock,fixed ]
+      [ brlen uniform(1e-6,2) ] 
+      [ brlen fixed ] [ user tree must have been provided! ]
+      brlen exponential(10.0) 
+
+
+      [ substitution matrix ]
+      revMatPr dirichlet(1.0,1.0,1.0,1.0,1.0,1.0)
+      [ revMatPr fixed(1,2,3,4,5,6) ] 
+      
+
+      [ state frequencies ] 
+      stateFreqPr  dirichlet(1.0,1.0,1.0,1.0)
+      [ stateFreqPr fixed(equal) ]
+      [ stateFreqPr fixed(empirical) ]
+      [ stateFreqPr fixed(1,2,3,4) ]
+
+
+      [ rate heterogeneity: alpha parameter ]
+      [ shapePr exponential(1) ]
+      shapePr uniform(1e-6,200)
+      [ shapePr fixed(1) ] 
+
+
+
+
+
+
+      [================================================================]
+      [ PROPOSAL configuration ]
       [================================================================]
 
       [ TOPOLOGY ]

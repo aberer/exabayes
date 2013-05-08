@@ -26,6 +26,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
   , currentGeneration(0)
   , hastings(1)
   , runid(_runid)
+  , prior(*initParams)
 {
   chainRand = new Randomness(seed.v[0]);
   assert(id < gAInfo.numberCoupledChains); 
@@ -288,11 +289,11 @@ void Chain::step()
   /* reset proposal ratio  */
   this->hastings = 1; 
   
-  double oldPrior = prior.getLogPriorProbability();
+  double oldPrior = prior.getLogProb();
   pfun->applyToState(*traln, prior, hastings, *chainRand);
   pfun->evaluateProposal(*traln, prior);
   
-  double priorRatio = prior.getLogPriorProbability() - oldPrior;
+  double priorRatio = prior.getLogProb() - oldPrior;
   double lnlRatio = tr->likelihood - prevLnl; 
 
   double testr = chainRand->drawRandDouble01();
