@@ -7,6 +7,7 @@
 
 
 #include <sstream>
+#include <vector>
 
 #include "axml.h"
 #include "bayes.h"
@@ -24,6 +25,7 @@
 #include "LnlRestorer.hpp"
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
+#include "CoupledChains.hpp"
 
 extern double masterTime; 
 
@@ -58,12 +60,6 @@ void setupGlobals(initParamStruct *initParams)
 
 }
 
-
-
-
-#include <vector>
-
-#include "CoupledChains.hpp"
 
 //STAY 
 bool convergenceDiagnostic(vector<CoupledChains*> runs)
@@ -217,18 +213,40 @@ static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns)
 }
 
 
+static int countNumberOfTreesQuick(char *fn )
+{
+  FILE *fh = fopen(fn, "r"); 
+
+  if(fh == 0)
+    return 0; 
+
+  int c = 0; 
+  int result = 0; 
+  while( ( c = getc(fh) ) != EOF)
+    {
+      if(c == ';')
+	++result; 	
+    }
+  
+  fclose(fh);
+  return result; 
+}
+
+
 static void initializeIndependentChains( analdef *adef, int seed, vector<CoupledChains*> &runs, initParamStruct *initParams )
 {
   FILE *treeFH = NULL; 
-  if( gAInfo.numberOfStartingTrees > 0 )
+  int numTrees = countNumberOfTreesQuick(tree_file); 
+  
+  if( numTrees > 0 )
     treeFH = myfopen(tree_file, "r"); 
 
-  // int totalNumChains = gAInfo.numberOfRuns * gAInfo.numberCoupledChains;   
   PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", gAInfo.numberOfRuns, gAInfo.numberCoupledChains ); 
 
 #ifdef DEBUG_LNL_VERIFY
-  gAInfo.debugTree = new TreeAln(); 
+  gAInfo.debugTree = new TreeAln();   
   gAInfo.debugTree->initializeFromByteFile(byteFileName); 
+  gAInfo.debugTree->enableParsimony();
 #endif
 
   // sets up tree structures 
@@ -237,6 +255,9 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
     {
       TreeAln *traln = new TreeAln();
       traln->initializeFromByteFile(byteFileName); 
+#if HAVE_PLL != 0 
+      traln->enableParsimony();
+#endif
       trees.push_back(traln); 
     }
 
@@ -254,15 +275,15 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 
   for(int i = 0; i < gAInfo.numberOfRuns ; ++i)
     {      
+      if( i < numTrees)
+	initWithStartingTree(treeFH, trees); 
+      else 
+	initTreeWithOneRandom(treeSeeds[i], trees);
+
 #if HAVE_PLL == 0
       if(i % initParams->numRunParallel != gAInfo.myBatch )
 	continue; 
 #endif
-
-      if( i < gAInfo.numberOfStartingTrees)
-	initWithStartingTree(treeFH, trees); 
-      else 
-	initTreeWithOneRandom(treeSeeds[i], trees);
 
       CoupledChains *cc = new CoupledChains(runSeeds[i], gAInfo.numberCoupledChains, trees, i, initParams);
       runs.push_back(cc); 
@@ -279,7 +300,7 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 	}
     }
 
-  if(gAInfo.numberOfStartingTrees > 0)
+  if(numTrees > 0)
     fclose(treeFH); 
 
   PRINT("\n"); 
@@ -289,12 +310,20 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
 
 
 
-#include "branch.h"
-#include "Path.hpp"
+// #include "branch.h"
+// #include "Path.hpp"
+#include "TreeRandomizer.hpp" 
 
 
-// #define TEST 
 
+// #define TEST  
+
+// #if
+// extern "C"
+// {
+//   unsigned int evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full); 
+  
+// }
 
 /**
    @brief the main ExaBayes function.
@@ -311,18 +340,21 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
 
 
 #ifdef TEST   
-  Path path;
-  path.append(constructBranch(1,2)); 
-  path.append(constructBranch(3,2)); 
-  path.append(constructBranch(3,4)); 
-  path.append(constructBranch(4,5)); 
-  path.append(constructBranch(5,6)); 
+  TreeAln traln; 
+  traln.initializeFromByteFile(byteFileName);
+  traln.enableParsimony(); 
 
-  Path path2(path); 
+  TreeRandomizer r(123, &traln); 
+  r.randomizeTree();
+  tree *tr = traln.getTr(); 
   
-  path2.at(1) = constructBranch(100,100); 
-  cout << path << endl; 
-  cout << path2 << endl; 
+  for(int i = tr->mxtips+1; i < 2 * tr->mxtips; ++i)
+    {
+      cout << exa_evaluateParsimony(traln, tr->nodep[i], TRUE ) << endl; 
+    }
+
+  exit(0);
+
 #endif
 
   vector<CoupledChains*> runs; 

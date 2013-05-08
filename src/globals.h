@@ -27,7 +27,7 @@ class SuccessCtr;
  */
 typedef struct globs
 {
-  int numberOfStartingTrees ; 
+  string startingTrees; 
   int numberOfRuns; 
   int numberCoupledChains;
 
@@ -96,7 +96,8 @@ bool isNewProposal[NUM_PROPOSALS] =
     false,     
     false,     
     true,
-    true   
+    true, 
+    true 
   }; 
 
 

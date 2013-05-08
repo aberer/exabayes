@@ -6,6 +6,7 @@
 CommandLine::CommandLine(int argc, char *argv[])
   : adef(unique_ptr<analdef>( (analdef*)exa_calloc(1,sizeof(analdef)) ))
 {
+  // cout << tree_file << endl; 
   initAdef();
   parse(argc, argv) ;
 }
@@ -50,12 +51,15 @@ void CommandLine::printHelp()
 
 
 
+
+
 /** 
     @brief parses the command line 
  */ 
 void CommandLine::parse(int argc, char *argv[])
 {
   int c ; 
+
 
   bool runidSet = false, 
   configFileSet = false, 
@@ -70,11 +74,23 @@ void CommandLine::parse(int argc, char *argv[])
       switch(c)
 	{
 	case 'c': 		// config file 	  
+	  {
 	  strcpy(configFileName, optarg) ; 
+	  if( NOT filexists(configFileName))
+	    {
+	      cout << "could not find file "  << configFileName << ". Aborting." << endl; 
+	      exit(0); 
+	    }
 	  configFileSet = true; 
+	  }
 	  break; 
 	case 'f': 		// aln file 
 	  strcpy(byteFileName, optarg); 
+	  if( NOT filexists(byteFileName))
+	    {
+	      cout << "could not find file "  << byteFileName << ". Aborting." << endl; 
+	      exit(0); 
+	    }
 	  alnFileSet = true; 
 	  break; 
 	case 'v':  		// version 
@@ -90,6 +106,11 @@ void CommandLine::parse(int argc, char *argv[])
 	  break; 
 	case 't': 		// trees -- have that in the config file? 
 	  strcpy(tree_file, optarg); 
+	  if( NOT filexists(tree_file))
+	    {
+	      cout << "could not find file "  << tree_file << ". Aborting." << endl; 
+	      exit(0); 
+	    }
 	  break; 
 	case 'w':		// working dir TODO 
 	  strcpy(workdir, optarg); 

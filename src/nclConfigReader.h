@@ -30,6 +30,7 @@ typedef struct
   double burninProportion; 
   int tuneFreq; 
   int numRunParallel; 
+  double parsWarp; 
 } initParamStruct ; 
 
 void parseConfigWithNcl(char *configFileName, initParamStruct **initParam); 

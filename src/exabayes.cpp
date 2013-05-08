@@ -74,9 +74,9 @@ int main (int argc, char *argv[])
   exa_main(cl.getAdef(), cl.getSeed(), initParams); 
 
   return 0;
+
+  
 }
-
-
 #else 
 
 extern int processID; 
@@ -145,7 +145,3 @@ int main(int argc, char *argv[])
 
 
 #endif
-
-
-
-

@@ -8,6 +8,24 @@
 #include "TreeAln.hpp" 
 
 
+// grml 
+#if HAVE_PLL == 0
+extern "C"
+{
+  void newviewParsimony(tree *tr, nodeptr  p); 
+  nat evaluateParsimony(tree *tr, nodeptr p, boolean full); 
+}
+#else 
+extern "C"
+{
+  void newviewParsimony(tree *tr, partitionList *pr, nodeptr  p); 
+  nat evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full); 
+}
+#endif
+
+
+void orientationPointAway(tree *tr, nodeptr p); 
+
 
 /* call this for verification after the lnl has been evaluated somehow */
 void expensiveVerify(Chain *chain)
@@ -48,6 +66,30 @@ void expensiveVerify(Chain *chain)
     }  
 
   exa_free(helpChain); 
+#endif
+}
+
+
+void exa_newViewParsimony(TreeAln &traln, nodeptr p)
+{
+#if HAVE_PLL != 0
+  newviewParsimony(traln.getTr(), traln.getPartitionsPtr(), p); 
+#else 
+  // newviewParsimony(traln.getTr(),p); 
+  assert(0);
+#endif
+}
+
+
+
+nat exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal )
+{
+#if HAVE_PLL != 0 
+  return evaluateParsimony(traln.getTr(), traln.getPartitionsPtr(), p, fullTraversal); 
+#else 
+  // return evaluateParsimony(traln.getTr(),  p, fullTraversal); 
+  assert(0);
+  return 0 ;
 #endif
 }
 

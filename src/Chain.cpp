@@ -10,10 +10,11 @@
 #include "BipartitionHash.hpp"
 #include "adapters.h"
 #include "proposals.h"
-// #include "topology-utils.h"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
 #include "WrappedProposal.hpp"
+#include "ParsimonySPR.hpp" 
+#include "eval.h"
 
 // meh =/ 
 extern bool isNewProposal[NUM_PROPOSALS]; 
@@ -101,6 +102,10 @@ void Chain::setupProposals( initParamStruct *initParams)
 	    case E_SPR: 
 	      if(initParams->initWeights[E_SPR] != 0)
 		prop.push_back(new ExtendedSPR(this, initParams->initWeights[E_SPR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
+	      break; 
+	    case PARSIMONY_SPR:
+	      if(initParams->initWeights[PARSIMONY_SPR] != 0)
+		prop.push_back(new ParsimonySPR(this, initParams->initWeights[PARSIMONY_SPR], initParams->parsWarp, INIT_ESPR_MULT)); 
 	      break; 
 	    default : 
 	      assert(0); 

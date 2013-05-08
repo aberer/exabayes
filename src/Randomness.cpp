@@ -102,12 +102,12 @@ double Randomness::drawFromSlidingWindow(double param, double window)
    
    The thisNode contains the root of the subtree.
 */ 
-branch Randomness::drawSubtreeUniform(TreeAln *traln)
+branch Randomness::drawSubtreeUniform(TreeAln &traln)
 {
-  tree *tr = traln->getTr();   
+  tree *tr = traln.getTr();   
   while(TRUE)
     {
-      branch b = drawBranchUniform(*traln); 
+      branch b = drawBranchUniform(traln); 
       if(isTipBranch(b,tr->mxtips))
 	{
 	  if(isTip(b.thisNode, tr->mxtips))

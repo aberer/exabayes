@@ -1,7 +1,7 @@
 #include "nodeSlider.h"
 #include "Randomness.hpp"
 #include "Path.hpp"
-
+#include "eval.h"
 
 static void insertBranchLength(TreeAln *traln, branch &b)
 {

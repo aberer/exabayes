@@ -10,8 +10,13 @@
 #ifndef _EVAL_H
 #define _EVAL_H
 
+
+
 #include "axml.h"
 #include "common.h"
+
+#include "TreeAln.hpp"
+
 
 class Chain; 
 
@@ -26,4 +31,6 @@ void evaluateFullNoBackup(Chain *chain);
 void evaluatePartialNoBackup(Chain *chain, nodeptr p); 
 
 void expensiveVerify(Chain *chain); 
+nat exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal ); 
+void exa_newViewParsimony(TreeAln &traln, nodeptr p); 
 #endif

@@ -56,7 +56,7 @@ void findLogisticP(Chain *chain){
 static void recordSubsRates(Chain *chain, int model, int numSubsRates, double *prevSubsRates)
 {
   pInfo *partition = chain->traln->getPartition(model); 
-  assert(partition->dataType = DNA_DATA);
+  assert(partition->dataType == DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)
     prevSubsRates[i] = chain->traln->getSubstRate(model,i); 
@@ -625,7 +625,7 @@ static void restore_subs_rates(Chain *chain, int model, int numSubsRates, double
 
   pInfo *partition = chain->traln->getPartition( model); 
 
-  assert(partition->dataType = DNA_DATA);
+  assert(partition->dataType == DNA_DATA);
   int i;
   for(i=0; i<numSubsRates; i++)	
     traln->setSubstSave( prevSubsRates[i],model,i ); 
@@ -972,7 +972,7 @@ static void restore_frequ_rates(Chain *chain, int model, int numFrequRates, doub
 
   pInfo *partition = chain->traln->getPartition(model);
 
-  assert(partition->dataType = DNA_DATA);
+  assert(partition->dataType == DNA_DATA);
   int i;
   for(i=0; i<numFrequRates; i++)
     chain->traln->setFrequencySave(prevFrequRates[i], model, i); 
@@ -984,7 +984,7 @@ static void recordFrequRates(Chain *chain, int model, int numFrequRates, double 
 {
   pInfo *partition = chain->traln->getPartition(model);
 
-  assert(partition->dataType = DNA_DATA);
+  assert(partition->dataType == DNA_DATA);
   int i;
   for(i=0; i<numFrequRates; i++)
     prevFrequRates[i] = chain->traln->getFrequency(model,i);
@@ -1142,7 +1142,7 @@ void edit_subs_rates(Chain *chain, int model, int subRatePos, double subRateValu
 {
   pInfo *partition = chain->traln->getPartition(model); 
 
-  assert(partition->dataType = DNA_DATA);
+  assert(partition->dataType == DNA_DATA);
   assert(subRateValue <= RATE_MAX && subRateValue >= RATE_MIN);
   int states = partition->states; 
   int numSubsRates = (states * states - states) / 2;

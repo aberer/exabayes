@@ -8,7 +8,6 @@
 #include "proposals.h"
 #include "treeRead.h"
 #include "output.h"
-// #include "topology-utils.h"
 #include "AbstractProposal.hpp"
 
 CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid, initParamStruct *initParams)

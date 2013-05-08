@@ -28,7 +28,7 @@ protected:
   double multiplier; 
   
 
-  Path* modifiedPath; 
+  Path modifiedPath; 
 
   void destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p); 
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 

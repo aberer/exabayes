@@ -1,6 +1,4 @@
 
-
-
 #include "Topology.hpp"
 #include "output.h"
 
@@ -17,6 +15,12 @@ Topology::Topology(int numTax)
     }
 }
 
+
+Topology::~Topology()
+{
+  for(auto b : branches)
+    exa_free(b);  
+}
 
 
 void Topology::traverseAndSave(TreeAln &traln, nodeptr p, nat &number)

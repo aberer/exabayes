@@ -5,6 +5,7 @@
 #include "misc-utils.h"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
+#include "eval.h"
 
 // #define DEBUG_INFO 
 

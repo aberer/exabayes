@@ -2,7 +2,8 @@
 #include "output.h"
 #include "Path.hpp"
 #include "TreeAln.hpp"
-// #include "topology-utils.h"
+#include "eval.h"
+
 
 // #define DEBUG_ESPR
 
@@ -14,14 +15,12 @@ ExtendedSPR::ExtendedSPR(Chain *_chain, double _relativeWeight, double _stopProb
   this->name = "eSPR"; 
   category = TOPOLOGY; 
   ptype = E_SPR; 
-  modifiedPath = new Path(); 
 }
 
 
 
 ExtendedSPR::~ExtendedSPR()
 {
-  delete modifiedPath; 
 }
 
 
@@ -81,14 +80,14 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 {
   assert(0 < stopProp && stopProp < 1.0 ); 
 
-  assert(modifiedPath->size( ) == 0 ); 
+  assert(modifiedPath.size( ) == 0 ); 
   tree *tr  = traln.getTr();   
 
   branch start; 
   nodeptr p,q,r; 
   do 
     {
-      start  = rand.drawSubtreeUniform(&traln); 
+      start  = rand.drawSubtreeUniform(traln); 
   
       p = findNodeFromBranch(tr, start);
       q = p->next->back; 
@@ -105,8 +104,8 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   hookup(q,r, q->z, traln.getNumBranches());
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 
-  modifiedPath->append(start); 
-  modifiedPath->append(constructBranch(q->number, r->number)); 
+  modifiedPath.append(start); 
+  modifiedPath.append(constructBranch(q->number, r->number)); 
 
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
@@ -117,11 +116,11 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 	? currentNode->next->back
 	: currentNode->next->next->back; 
 
-      modifiedPath->pushToStackIfNovel(constructBranch(currentNode->number, n->number),tr->mxtips); 
+      modifiedPath.pushToStackIfNovel(constructBranch(currentNode->number, n->number),tr->mxtips); 
 
       currentNode = n; 
       
-      accepted = rand.drawRandDouble01() < stopProp && modifiedPath->size() > 2 ; 	
+      accepted = rand.drawRandDouble01() < stopProp && modifiedPath.size() > 2 ; 	
     }
 
   /* undo changes to the tree  */
@@ -129,21 +128,21 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   hookup(p->next->next,r,zqr, traln.getNumBranches());   
 
   /* now correct  */
-  if(nodeIsInBranch(modifiedPath->at(1).thisNode, modifiedPath->at(2) ))    
-    modifiedPath->at(1).thatNode = p->number; 
-  else if(nodeIsInBranch(modifiedPath->at(1).thatNode, modifiedPath->at(2) ))    
-    modifiedPath->at(1).thisNode = p->number; 
+  if(nodeIsInBranch(modifiedPath.at(1).thisNode, modifiedPath.at(2) ))    
+    modifiedPath.at(1).thatNode = p->number; 
+  else if(nodeIsInBranch(modifiedPath.at(1).thatNode, modifiedPath.at(2) ))    
+    modifiedPath.at(1).thisNode = p->number; 
   else 
     assert(0); 
 
   /* correct the incorrectly set first branch in the path */
-  modifiedPath->at(0) = getThirdBranch(tr, modifiedPath->at(0), modifiedPath->at(1)); 
+  modifiedPath.at(0) = getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1)); 
   
 #ifdef DEBUG_ESPR
   cout << *modifiedPath << endl; 
 #endif
   
-  modifiedPath->debug_assertPathExists(traln); 
+  modifiedPath.debug_assertPathExists(traln); 
 }
 
 
@@ -156,14 +155,14 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorManager &prior, double &hast
 {
   debug_printTree(traln);
 
-  modifiedPath->clear(); 
-  assert(modifiedPath->size() == 0); 
+  modifiedPath.clear(); 
+  assert(modifiedPath.size() == 0); 
   drawPathForESPR( traln,rand ,stopProb); 
 
-  modifiedPath->saveBranchLengthsPath(traln); 
+  modifiedPath.saveBranchLengthsPath(traln); 
 
   // cout << "printing bls after save : "  ; 
-  // modifiedPath->printWithBLs(traln);
+  // modifiedPath.printWithBLs(traln);
   // cout << endl; 
   
   applyPathAsESPR(chain->traln);
@@ -186,7 +185,7 @@ void ExtendedSPR::resetState(TreeAln &traln, PriorManager &prior )
   resetAlongPathForESPR (traln);   
 
   /* TODO resetAlong... should be able to correctly restore branch lengths    */
-  modifiedPath->restoreBranchLengthsPath(traln); 
+  modifiedPath.restoreBranchLengthsPath(traln); 
 
   debug_checkTreeConsistency(traln.getTr());
 
@@ -197,15 +196,14 @@ void ExtendedSPR::resetState(TreeAln &traln, PriorManager &prior )
 void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorManager &prior)
 {  
   tree *tr = traln.getTr(); 
-  Path *rPath = modifiedPath; 
 
-  branch futureRoot = getThirdBranch(tr, modifiedPath->at(0), modifiedPath->at(1)); 
+  branch futureRoot = getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1)); 
   
   /* evaluate at root of inserted subtree */
   nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
 
-  destroyOrientationAlongPath(*rPath, tr, toEval); 
-  destroyOrientationAlongPath(*rPath, tr, toEval->back);
+  destroyOrientationAlongPath(modifiedPath, tr, toEval); 
+  destroyOrientationAlongPath(modifiedPath, tr, toEval->back);
 
   evaluateGenericWrapper(chain, toEval, FALSE);
 }
@@ -217,31 +215,31 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorManager &prior)
  */ 
 void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings )
 {
-  assert(modifiedPath->size() >= 2); 
+  assert(modifiedPath.size() >= 2); 
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
  
-  int sTNode = modifiedPath->getNthNodeInPath(1); 
-  branch firstBranch = constructBranch( modifiedPath->getNthNodeInPath(0), modifiedPath->getNthNodeInPath(2)); 
+  int sTNode = modifiedPath.getNthNodeInPath(1); 
+  branch firstBranch = constructBranch( modifiedPath.getNthNodeInPath(0), modifiedPath.getNthNodeInPath(2)); 
 
-  modifiedPath->multiplyBranch(traln, rand, firstBranch, multiplier, hastings); 
+  modifiedPath.multiplyBranch(traln, rand, firstBranch, multiplier, hastings); 
   
   /* treat all branches except the first 2 and the last one */
   int ctr = 0; 
-  for(int i = 0; i < modifiedPath->size() ; ++i)
+  for(int i = 0; i < modifiedPath.size() ; ++i)
     {
       if(ctr < 2 )
 	continue; 
       
-      branch &b = modifiedPath->at(i); 
+      branch &b = modifiedPath.at(i); 
 
-      modifiedPath->multiplyBranch(traln, rand, b, multiplier, hastings); 
+      modifiedPath.multiplyBranch(traln, rand, b, multiplier, hastings); 
     }
 
-  int lastNode = modifiedPath->getNthNodeInPath(modifiedPath->getNumberOfNodes()-1),
-    s2LastNode = modifiedPath->getNthNodeInPath(modifiedPath->getNumberOfNodes()-2); 
-  modifiedPath->multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings); 
-  modifiedPath->multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings); 
+  int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
+    s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
+  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings); 
+  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings); 
 }
 
 
@@ -261,16 +259,16 @@ void ExtendedSPR::applyPathAsESPR(TreeAln *traln )
 double treeLengthBefore = traln->getTreeLength(); 
 #endif
   
-  assert(modifiedPath->size() > 2 ); 
+  assert(modifiedPath.size() > 2 ); 
 
   /* get the subtree ptr */
-  nodeptr sTPtr = findNodeFromBranch(tr,getThirdBranch(tr, modifiedPath->at(0), modifiedPath->at(1))); 
-  assert(nodeIsInBranch(sTPtr->number, modifiedPath->at(1))); 
+  nodeptr sTPtr = findNodeFromBranch(tr,getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1))); 
+  assert(nodeIsInBranch(sTPtr->number, modifiedPath.at(1))); 
 
 
   // finds the two nodeptrs adjacent to the subtree  
-  nodeptr prNPtr = findNodeFromBranch(tr, constructBranch(modifiedPath->getNthNodeInPath(0) ,modifiedPath->getNthNodeInPath(1))),
-    prPtr = findNodeFromBranch(tr, constructBranch(modifiedPath->getNthNodeInPath(2), modifiedPath->getNthNodeInPath(1))); 
+  nodeptr prNPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(0) ,modifiedPath.getNthNodeInPath(1))),
+    prPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(2), modifiedPath.getNthNodeInPath(1))); 
 
   nodeptr toBeInserted = prPtr->back;   
   nodeptr toBeInsertedPath = prNPtr->back;  
@@ -284,8 +282,8 @@ double treeLengthBefore = traln->getTreeLength();
   hookup(prPtr, prNPtr, prNPtr->z,numBranches); 
   sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL; 
 
-  int lastNode = modifiedPath->getNthNodeInPath(modifiedPath->getNumberOfNodes()-1),
-    s2LastNode = modifiedPath->getNthNodeInPath(modifiedPath->getNumberOfNodes()-2); 
+  int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
+    s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
   nodeptr iPtr = findNodeFromBranch(tr, constructBranch(s2LastNode, lastNode)),
     iNPtr = findNodeFromBranch(tr, constructBranch(lastNode, s2LastNode)); 
 
@@ -324,22 +322,22 @@ double treeLengthBefore = traln->getTreeLength();
 void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln)
 {
   // cout << "before reset: " <<  traln << endl; 
-  // modifiedPath->printWithBLs(traln);
+  // modifiedPath.printWithBLs(traln);
   // cout << endl; 
 
   tree *tr = traln.getTr();
 
   /* BUG branch lengths are not restored correctly, currently relying on restoreBranchLengthsPath function */
 
-  assert(modifiedPath->size() > 2); 
+  assert(modifiedPath.size() > 2); 
   int numBranches = traln.getNumBranches(); 
 
-  int numNodes = modifiedPath->getNumberOfNodes(); 
-  int lastNode = modifiedPath->getNthNodeInPath(numNodes-1),
-    otherNode = modifiedPath->getNthNodeInPath(numNodes-2); 
+  int numNodes = modifiedPath.getNumberOfNodes(); 
+  int lastNode = modifiedPath.getNthNodeInPath(numNodes-1),
+    otherNode = modifiedPath.getNthNodeInPath(numNodes-2); 
 
   /* prune the subtree  */  
-  int sTNode =  modifiedPath->getNthNodeInPath(1); 
+  int sTNode =  modifiedPath.getNthNodeInPath(1); 
   nodeptr lNPtr = findNodeFromBranch(tr, constructBranch(lastNode, sTNode)),
     oNPtr = findNodeFromBranch(tr, constructBranch(otherNode, sTNode)); 
   
@@ -358,8 +356,8 @@ void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln)
   printf("RESET: pruning %d from %d (%.2f),%d (%.2f)\n", sTPtr->number, oNPtr->number, traln.getBranchLength( oNPtr,0) , lNPtr->number, traln.getBranchLength( lNPtr,0)); 
 #endif
 
-  int firstNode = modifiedPath->getNthNodeInPath(0),
-    secondNode = modifiedPath->getNthNodeInPath(2); 
+  int firstNode = modifiedPath.getNthNodeInPath(0),
+    secondNode = modifiedPath.getNthNodeInPath(2); 
 
   nodeptr fPtr = findNodeFromBranch(tr, constructBranch(firstNode,secondNode )),
     sPtr = findNodeFromBranch(tr, constructBranch(secondNode,firstNode )); 

@@ -46,6 +46,7 @@ const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0
 
 
 TreeAln::TreeAln()
+  : parsimonyEnabled(true)
 {
   tree *tre = (tree*)exa_calloc(1,sizeof(tree));
   this->tr = tre; 
@@ -118,9 +119,28 @@ TreeAln::~TreeAln()
 #endif
     }
 
+  if(parsimonyEnabled)
+#if HAVE_PLL != 0
+    freeParsimonyDataStructures(tr, partitions);  
+#else 
+  ; 
+#endif
+
   exa_free(tr);
 }
 
+
+
+void TreeAln::enableParsimony()
+{
+#if HAVE_PLL == 0
+  // allocateParsimonyDataStructures(tr);   
+  // cout << "parsimony not implemented yet in ExaML" << endl; 
+  // assert(0); 
+#else 
+  allocateParsimonyDataStructures(tr, partitions);   
+#endif
+}
 
 
 /** 

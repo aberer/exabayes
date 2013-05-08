@@ -93,6 +93,8 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
     *pf = UPDATE_FREQUENCIES_DIRICHLET;
   else if (key.EqualsCaseInsensitive("etbr"))
     *pf = E_TBR;
+  else if(key.EqualsCaseInsensitive("parsimonySPR"))
+    *pf = PARSIMONY_SPR; 
   else 
     found = false; 
 
@@ -184,6 +186,8 @@ public:
 	      initParam->burninProportion = value.ConvertToDouble();
 	    else if(key.EqualsCaseInsensitive("numRunParallel"))
 	      initParam->numRunParallel = value.ConvertToInt();
+	    else if(key.EqualsCaseInsensitive("parsimonyWarp"))
+	      initParam->parsWarp = value.ConvertToDouble();
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }

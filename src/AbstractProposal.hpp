@@ -18,13 +18,20 @@ public:
   AbstractProposal(){}
   virtual ~AbstractProposal(){}
 
+
+  // you MUST implement all virtual methods in your derived
+  // proposal. Here, the signatures are set to 0, this must not
+  // be the case in the derived proposal. This 0 keyword makes it
+  // impossible to create an instance of AbstractProposal and forces
+  // you to implement these methods, when you derive from
+  // AbstractProposal.
   virtual void applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand) = 0; 
   virtual void evaluateProposal(TreeAln &traln, PriorManager &prior) = 0; 
-  virtual void resetState(TreeAln &traln, PriorManager &prior) = 0; 
-  virtual void autotune() = 0;
+  virtual void resetState(TreeAln &traln, PriorManager &prior) = 0 ; 
+  virtual void autotune() = 0  ;
 
   // HACK! 
-  virtual void setOwningChain( Chain *chain) = 0; 
+  virtual void setOwningChain( Chain *chain) =  0 ; 
 
   // getters and setters 
   double getRelativeProbability() const {return relativeProbability; }
