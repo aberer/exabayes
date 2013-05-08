@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS=foreign
-SUBDIRS = ./lib/ncl-2.1.18/
+# SUBDIRS = ./lib/ncl-2.1.18/
 
 WARN_FLAGS=  -Wall --pedantic  -Wno-unused-function -Wno-write-strings -Wno-vla
 
@@ -57,7 +57,8 @@ endif
 noinst_LIBRARIES+=$(LIBTOUSE)
 exabayes_LDADD+=$(LIBTOUSE)
 
-exabayes_LDADD+=libbayes.a ./lib/ncl-2.1.18/ncl/.libs/libncl.a 
+# ./lib/ncl-2.1.18/ncl/.libs/
+exabayes_LDADD+=libbayes.a libncl.a 
 EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*
 
 ################################################################
@@ -70,14 +71,24 @@ prsf_SOURCES= ./src/prsf.cpp
 
 ################################################################
 
+  # ./lib/ncl-2.1.18/ncl/.libs/
 # ASDSF
-asdsf_LDADD=    libbayes.a $(LIBTOUSE)   ./lib/ncl-2.1.18/ncl/.libs/libncl.a
+asdsf_LDADD=    libbayes.a $(LIBTOUSE)  libncl.a
 asdsf_SOURCES= ./src/asdsf.cpp
 
 ################################################################
 # examl parser 
 pre1=./lib/ExaML/parser/
 parserExaml_SOURCES=$(pre1)/axml.c c  $(pre1)/parsePartitions.c $(pre1)/axml.h  $(pre1)/globalVariables.h
+
+
+
+################################################################
+# ncl 
+npre=lib/ncl-2.1.18/ncl
+libncl_a_SOURCES = $(npre)/nxsreader.cpp $(npre)/nxscxxdiscretematrix.cpp $(npre)/nxstaxaassociationblock.cpp $(npre)/nxsunalignedblock.cpp $(npre)/nxsmultiformat.cpp $(npre)/nxsdatablock.cpp $(npre)/nxspublicblocks.cpp $(npre)/nxstaxablock.cpp $(npre)/nxscharactersblock.cpp $(npre)/nxsstring.cpp $(npre)/nxstoken.cpp $(npre)/nxsassumptionsblock.cpp $(npre)/nxsblock.cpp $(npre)/nxsdistancesblock.cpp $(npre)/nxssetreader.cpp $(npre)/nxsexception.cpp $(npre)/nxstreesblock.cpp
+noinst_LIBRARIES+=libncl.a
+libncl_a_CXXFLAGS= -pedantic $(AM_CFLAGS) 
 
 
 ################################################################
@@ -90,7 +101,7 @@ parserPll_CFLAGS=  -w -I$(pre2) -I$(PLLINCLUDE) $(AM_CFLAGS)
 # cleanup 
 
 clean:
-	-rm -rf *.o *.a $(bin_PROGRAMS) $(exabayes_OBJECTS) $(libbayes_A_OBJECTS) libbayes.a
+	-rm -rf  $(bin_PROGRAMS) $(exabayes_OBJECTS) $(libbayes_a_OBJECTS) libbayes.a
 
 clean-all : 
 	-rm -rf $(bin_PROGRAMS) *.o *.a 
