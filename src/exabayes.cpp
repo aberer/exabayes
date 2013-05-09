@@ -20,7 +20,6 @@
 #include "bayes.h"
 
 #define _INCLUDE_DEFINITIONS
-// #include "globals.h"
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 

@@ -11,7 +11,6 @@
 
 #include "axml.h"
 #include "bayes.h"
-// #include "globals.h"
 #include "GlobalVariables.hpp"
 #include "output.h"
 #include "proposals.h"
@@ -333,11 +332,8 @@ static void initializeIndependentChains( analdef *adef, int seed, vector<Coupled
  */
 void exa_main (analdef *adef, int seed, initParamStruct *initParams)
 {   
-  Chain *indiChains = NULL; 		/* one state per indipendent run/chain */  
-
   timeIncrement = gettime();
   globals.adef = adef; 
-
 
 #ifdef TEST   
   TreeAln traln; 
@@ -372,12 +368,13 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
   assert(globals.diagFreq != 0 ); 
   runChains(runs, globals.diagFreq); 
 
-  if(isOutputProcess() )
-    {
-      for(nat i = 0; i < runs.size(); ++i)
-	finalizeOutputFiles(indiChains + i);
-      PRINT("\nConverged after %d generations\n",  indiChains[0].currentGeneration);
-      PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
-    } 
+  // if(isOutputProcess() )
+  //   {
+  //     for(nat i = 0; i < runs.size(); ++i)
+  // 	finalizeOutputFiles(indiChains + i);
+  //     PRINT("\nConverged after %d generations\n",  indiChains[0].currentGeneration);
+  //     PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
+  //   }
+  
 }
 

@@ -16,6 +16,7 @@
 #include "ParsimonySPR.hpp" 
 #include "eval.h"
 #include "TreeLengthMultiplier.hpp"
+#include "StatNNI.hpp"
 
 // meh =/ 
 extern bool isNewProposal[NUM_PROPOSALS]; 
@@ -104,13 +105,16 @@ void Chain::setupProposals( initParamStruct *initParams)
 		  prop.push_back(new TreeLengthMultiplier(this, weight, INIT_TL_MULTI));
 		  break; 
 		case E_TBR: 
-		  prop.push_back(new ExtendedTBR(this, initParams->initWeights[E_TBR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  prop.push_back(new ExtendedTBR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
 		  break; 
 		case E_SPR: 
-		  prop.push_back(new ExtendedSPR(this, initParams->initWeights[E_SPR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  prop.push_back(new ExtendedSPR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
 		  break; 
 		case PARSIMONY_SPR:	
-		  prop.push_back(new ParsimonySPR(this, initParams->initWeights[PARSIMONY_SPR], initParams->parsWarp, INIT_ESPR_MULT)); 
+		  prop.push_back(new ParsimonySPR(this, weight, initParams->parsWarp, INIT_ESPR_MULT)); 
+		  break; 
+		case ST_NNI: 
+		  prop.push_back(new StatNNI(this, weight, INIT_NNI_MULT)); 
 		  break; 
 		default : 
 		  assert(0); 

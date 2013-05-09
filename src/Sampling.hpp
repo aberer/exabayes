@@ -7,11 +7,27 @@
  */ 
 
 
+#ifndef _SAMPLING_H
+#define _SAMPLING_H
+
+#include <vector>
+
+#include "CoupledChains.hpp"
+
+using namespace std; 
+
 
 class Sampling
 {
 public: 
+  Sampling();
+  ~Sampling();
 
 private: 
+  vector<CoupledChains> runs; 
 
+  
 };  
+
+
+#endif
