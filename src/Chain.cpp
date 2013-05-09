@@ -17,6 +17,10 @@
 #include "eval.h"
 #include "TreeLengthMultiplier.hpp"
 #include "StatNNI.hpp"
+#include "PartitionProposal.hpp"
+#include "ProposalFunctions.hpp"
+#include "Parameters.hpp"
+
 
 // meh =/ 
 extern bool isNewProposal[NUM_PROPOSALS]; 
@@ -100,6 +104,12 @@ void Chain::setupProposals( initParamStruct *initParams)
 	    {
 	      switch(proposal_type(i))
 		{
+		case UPDATE_MODEL: 
+		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(this,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
+		  break; 
+		case FREQUENCY_SLIDER:
+		  prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>(this, weight, INIT_FREQ_SLID_WIN, "freqSlider"));
+		  break; 		  
 		case TL_MULT:
 		  prop.push_back(new TreeLengthMultiplier(this, weight, INIT_TL_MULTI));
 		  break; 
@@ -114,6 +124,21 @@ void Chain::setupProposals( initParamStruct *initParams)
 		  break; 
 		case ST_NNI: 
 		  prop.push_back(new StatNNI(this, weight, INIT_NNI_MULT)); 
+		  break; 
+		case GAMMA_MULTI: 
+		  prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>(this, weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
+		  break; 
+		case UPDATE_GAMMA: 
+		  prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>(this, weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
+		  break; 
+		case UPDATE_GAMMA_EXP: 
+		  prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>(this, weight, 0, "rateHetExp")); 
+		  break; 
+		case UPDATE_FREQUENCIES_DIRICHLET: 
+		  prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>(this, weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
+		  break; 
+		case UPDATE_MODEL_DIRICHLET: 
+		  prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(this,weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
 		  break; 
 		default : 
 		  assert(0); 

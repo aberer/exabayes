@@ -3,7 +3,7 @@
 #include "output.h"
 #include "eval.h"
 #include "adapters.h"
-#include "misc-utils.h"
+// #include "misc-utils.h"
 #include "branch.h"
 #include "Path.hpp"
 #include "guidedMoves.h"
@@ -1315,35 +1315,33 @@ void branchLengthReset(Chain *chain, proposalFunction *pf)
 
 
 
-void resetGammaMulti(Chain *chain, proposalFunction *pf)
-{
-  int model = pf->remembrance.partInfo->modelNum; 
-  chain->traln->setAlphaSave(pf->remembrance.partInfo->alpha, model); 
-  chain->traln->discretizeGamma(model); 
-}
+// void resetGammaMulti(Chain *chain, proposalFunction *pf)
+// {
+
+// }
 
  
-void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
-{
+// void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
+// {
 
-  double multi = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);   
-  int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions());
-  pInfo *partition = chain->traln->getPartition( model); 
+//   double multi = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);   
+//   int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions());
+//   pInfo *partition = chain->traln->getPartition( model); 
 
-  chain->hastings *= multi; 
+//   chain->hastings *= multi; 
   
-  perPartitionInfo *pinfo = pf->remembrance.partInfo;
-  pinfo->modelNum = model;   
-  pinfo->alpha = chain->traln->getAlpha(model);
+//   perPartitionInfo *pinfo = pf->remembrance.partInfo;
+//   pinfo->modelNum = model;   
+//   pinfo->alpha = chain->traln->getAlpha(model);
   
-  double oldAlpha = partition->alpha; 
-  chain->traln->setAlphaSave( oldAlpha * multi, model); 
-#ifdef PRINT_MULT
-  cout  << setprecision(6) << "alpha-multi: " <<  oldAlpha <<   " * " << multi << " = "  << partition->alpha << endl; 
-#endif
+//   double oldAlpha = partition->alpha; 
+//   chain->traln->setAlphaSave( oldAlpha * multi, model); 
+// #ifdef PRINT_MULT
+//   cout  << setprecision(6) << "alpha-multi: " <<  oldAlpha <<   " * " << multi << " = "  << partition->alpha << endl; 
+// #endif
 
-  chain->traln->discretizeGamma(model);
-}
+//   chain->traln->discretizeGamma(model);
+// }
 
 
 
@@ -1498,16 +1496,16 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->name = "freqBiunif"; 
       ptr->category = FREQUENCIES; 
       break;
-    case UPDATE_FREQUENCIES_DIRICHLET: 
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func = frequency_dirichlet_proposal_apply; 
-      ptr->reset_func = frequency_proposal_reset; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name = "freqDirichlet"; 
-      ptr->category = FREQUENCIES; 
-      ptr->parameters.dirichletAlpha = INIT_DIRICHLET_ALPHA; 
-      ptr->autotune = autotuneDirichletAlpha; 
-      break;
+    // case UPDATE_FREQUENCIES_DIRICHLET: 
+    //   ptr->eval_lnl = onePartitionEval; 
+    //   ptr->apply_func = frequency_dirichlet_proposal_apply; 
+    //   ptr->reset_func = frequency_proposal_reset; 
+    //   ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+    //   ptr->name = "freqDirichlet"; 
+    //   ptr->category = FREQUENCIES; 
+    //   ptr->parameters.dirichletAlpha = INIT_DIRICHLET_ALPHA; 
+    //   ptr->autotune = autotuneDirichletAlpha; 
+    //   break;
     case UPDATE_MODEL_PERM_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = NULL; 	/* TODO */
@@ -1527,16 +1525,16 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->name = "branchMult"; 
       ptr->category = BRANCH_LENGTHS; 
       break; 
-    case FREQUENCY_SLIDER: 
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func = frequencySliderApply; 
-      ptr->autotune = autotuneSlidingWindow; 
-      ptr->reset_func = frequency_proposal_reset; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name = "freqSlider"; 
-      ptr->category = FREQUENCIES; 
-      ptr->parameters.slidWinSize = INIT_FREQ_SLID_WIN; 
-      break; 
+    // case FREQUENCY_SLIDER: 
+    //   ptr->eval_lnl = onePartitionEval; 
+    //   ptr->apply_func = frequencySliderApply; 
+    //   ptr->autotune = autotuneSlidingWindow; 
+    //   ptr->reset_func = frequency_proposal_reset; 
+    //   ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+    //   ptr->name = "freqSlider"; 
+    //   ptr->category = FREQUENCIES; 
+    //   ptr->parameters.slidWinSize = INIT_FREQ_SLID_WIN; 
+    //   break; 
     case NODE_SLIDER: 
       ptr->apply_func = applyNodeSlider; 
       ptr->eval_lnl = evaluateNodeSlider; 
@@ -1548,16 +1546,16 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->category = BRANCH_LENGTHS; 
       ptr->parameters.multiplier = INIT_NODE_SLIDER_MULT; 
       break; 
-    case GAMMA_MULTI: 
-      ptr->apply_func = applyGammaMultiplier;       
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->reset_func = resetGammaMulti; 
-      ptr->autotune = autotuneMultiplier;  
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name =  "gammaMulti"; 
-      ptr->category = RATE_HETEROGENEITY; 
-      ptr->parameters.multiplier = INIT_GAMMA_MULTI;       
-      break; 
+    // case GAMMA_MULTI: 
+    //   ptr->apply_func = applyGammaMultiplier;       
+    //   ptr->eval_lnl = onePartitionEval; 
+    //   ptr->reset_func = resetGammaMulti; 
+    //   ptr->autotune = autotuneMultiplier;  
+    //   ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+    //   ptr->name =  "gammaMulti"; 
+    //   ptr->category = RATE_HETEROGENEITY; 
+    //   ptr->parameters.multiplier = INIT_GAMMA_MULTI;       
+    //   break; 
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 
       {

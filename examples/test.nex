@@ -84,8 +84,8 @@ begin EXABAYES;
       GuidedBL 0 []
 
       [ RATE HETEROGENEITY ]
-      Gamma 0 [ ok ]		
-      GammaExp 0 [ ok ]
+      rateHetSlider 0 [ ok ]		
+      rateHetExp 0 [ ok ]
       rateHetMulti 2   [ ok, 2 in mrb  ]
 
       [ REVMAT ] 

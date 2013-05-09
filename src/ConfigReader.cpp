@@ -48,13 +48,13 @@ bool mapNameToProposal(NxsString &key, proposal_type *pf)
 
   if(key.EqualsCaseInsensitive("model")) 
     *pf = UPDATE_MODEL; 
-  else if(key.EqualsCaseInsensitive("gamma")) 
+  else if(key.EqualsCaseInsensitive("rateHetslider")) 
     *pf = UPDATE_GAMMA; 
   else if(key.EqualsCaseInsensitive("treeLengthMult")) 
     *pf = TL_MULT; 
   else if(key.EqualsCaseInsensitive("rateHetMulti"))    
     *pf = GAMMA_MULTI; 
-  else if(key.EqualsCaseInsensitive("gammaexp"))    
+  else if(key.EqualsCaseInsensitive("ratehetexp"))    
     *pf = UPDATE_GAMMA_EXP; 
   else if(key.EqualsCaseInsensitive("singlebranch"))    
     *pf = UPDATE_SINGLE_BL; 

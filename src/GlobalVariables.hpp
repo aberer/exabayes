@@ -14,11 +14,8 @@
 #include "config.h"
 #include "proposalType.h"
 
-
 class BipartitionHash; 
 class SuccessCtr; 
-
-
 
 
 class GlobalVariables
@@ -46,11 +43,9 @@ public:
 bool isNewProposal[NUM_PROPOSALS] = 
   {
     true,     
-    false, 
-    false,     
-    false,     
-    false,     
-    false,     
+    true, 
+    true,     
+    true,     
     false,     
     false,     
     false,     
@@ -62,9 +57,11 @@ bool isNewProposal[NUM_PROPOSALS] =
     false,     
     true,     
     false,     
+    true,     
+    true,     
     false,     
-    false,     
-    false,     
+    true,     
+    true,     
     false,     
     true,
     true, 
