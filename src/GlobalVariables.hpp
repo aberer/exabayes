@@ -7,8 +7,6 @@
 */ 
 
 
-// #include "rng.h"
-
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
@@ -24,31 +22,17 @@ class SuccessCtr;
 class GlobalVariables
 {
 public: 
-  int numberOfRuns; 
-  int numberCoupledChains;
-  int samplingFrequency; 
-
-  int diagFreq;   
-  int numGen;			/// just relevent, if we have exactly 1 run 
-
   analdef *adef; 
 
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
-#endif
-
-  double asdsfIgnoreFreq; 
-  double asdsfConvergence; 
-
-  int burninGen ; 
-  double burninProportion; 
-
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
+#endif
 
   int myBatch ; 		/* if runs are executed in parallel: which runs should be done by this process? */
   int globalSize;
   int globalRank; 
-}; 
+};
 
 
 #endif

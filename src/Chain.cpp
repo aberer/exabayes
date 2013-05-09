@@ -31,7 +31,6 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruc
   // , prior(*initParams)
 {
   chainRand = new Randomness(seed.v[0]);
-  assert(id < globals.numberCoupledChains); 
   
   if(id == 0)
     {
@@ -280,6 +279,8 @@ AbstractProposal* Chain::drawProposalFunction()
 
 void Chain::step()
 {
+  this->currentGeneration++; 
+
   this->restorer->resetRestorer(*traln);
 
   // inform the rng that we produce random numbers for generation x  
@@ -349,17 +350,7 @@ void Chain::step()
 #endif
 
   debug_checkTreeConsistency(this->traln->getTr());
-
-  if( this->couplingId == 0	/* must be the cold chain  */
-       && (this->currentGeneration % globals.samplingFrequency) == globals.samplingFrequency - 1  ) 
-    {
-      if( isOutputProcess() ) 
-	printSample(this);       
-
-      // TODO keep? 
-      // globals.bipHash->addBipartitionsToHash(*(this->traln),  this->id / globals.numberCoupledChains); 
-    }
-
+ 
   if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
     pfun->autotune();
 
@@ -385,7 +376,7 @@ void Chain::step()
     }
 #endif
 
-  this->currentGeneration++; 
+
 }
 
 

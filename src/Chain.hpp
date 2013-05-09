@@ -116,6 +116,8 @@ public:
   /** @brief Execute one generation of the chain. */
   void step();
 
+  int getGeneration(){return currentGeneration; }
+
   Randomness* getChainRand(){return chainRand;}
 
   void printInfo(const char *format, ...); 
@@ -132,7 +134,6 @@ private :
   void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl ) ; 
   void initParamDump(); 
 }; 
-
 
 
 #endif

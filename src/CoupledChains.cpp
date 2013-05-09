@@ -18,6 +18,7 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
   , tuneHeat(false)
   , printFreq(initParams->printFreq)
   , swapInterval(initParams->swapInterval)
+  , samplingFreq(initParams->samplingFrequency)
 {
   assert((nat)numCoupled == trees.size());
 
@@ -35,13 +36,16 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
 }
 
 
+
+
 CoupledChains::~CoupledChains()
 {
-  for(auto chain : chains) 
-    exa_free(chain); 
+  // IMPORTANT TODO 
+  // for(auto chain : chains) 
+  //   exa_free(chain); 
 
-  for(auto swapI : swapInfo)
-    exa_free(swapI); 
+  // for(auto swapI : swapInfo)
+  //   exa_free(swapI); 
 }
 
 
@@ -224,8 +228,13 @@ void CoupledChains::executePart(int gensToRun)
 	{
 	  for(int i = 0; i < swapInterval; ++i)
 	    {
-	      chain->step(); 
-
+	      chain->step(); 	      
+	      if(chain->getChainHeat() == 1 
+		 && (chain->getGeneration() % samplingFreq)  == samplingFreq - 1
+		 && isOutputProcess() ) 
+		printSample(chain); 
+		
+	      
 	      timeToPrint |= isOutputProcess() 
 		&& chain->couplingId == 0 && printFreq > 0
 		&& (chain->currentGeneration % printFreq )  == (printFreq - 1) ;
@@ -243,8 +252,8 @@ void CoupledChains::executePart(int gensToRun)
       switchChainState();
     }
 
-  for(int i = 0; i < globals.numberCoupledChains; ++i)
-    chains[i]->saveTreeStateToChain();
+  for(auto chain : chains)
+    chain->saveTreeStateToChain();
 }
 
 

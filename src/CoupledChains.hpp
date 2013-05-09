@@ -27,6 +27,7 @@ class CoupledChains
 {
 public: 
   CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int runid, initParamStruct *initParam);   
+  // ~CoupledChains(){}
 
   /** @brief initializes all trees with a given starting tree */
   void initStartingTree(FILE *fh);
@@ -83,6 +84,7 @@ private:
   bool tuneHeat; 
   int printFreq; 
   int swapInterval; 
+  int samplingFreq; 
 }; 
 
 

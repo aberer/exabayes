@@ -190,8 +190,10 @@ void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
   chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), start->back, model, fullTraversal);
 
   exa_evaluateGeneric(chain,start,fullTraversal);   
+#ifdef DEBUG_LNL_VERIFY
   if(globals.verifyLnl)
-  expensiveVerify(chain);
+    expensiveVerify(chain);
+#endif
 }
 
 
@@ -249,10 +251,13 @@ void evaluateOnePartition(Chain *chain, nodeptr start, boolean fullTraversal, in
   for(int i = 0; i < numPartitions; ++i)
     traln->accessExecModel(i) = FALSE; 
   traln->accessExecModel(model) = TRUE; 
-
+#ifdef DEBUG_LNL_VERIFY
   globals.verifyLnl = false; 	// HACK
+#endif
   evaluateGenericWrapper(chain,start, FALSE);
+#ifdef DEBUG_LNL_VERIFY
   globals.verifyLnl = true  ; 
+#endif
 
   perPartitionLH[model] = traln->accessPartitionLH(model); 
   for(int i = 0; i < numPartitions; ++i)
