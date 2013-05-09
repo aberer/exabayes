@@ -65,7 +65,7 @@ bool convergenceDiagnostic(vector<CoupledChains*> runs)
   if(globals.numberOfRuns > 1)    
     { 
       vector<string> fns; 
-      for(nat i = 0; i < globals.numberOfRuns; ++i)
+      for(int i = 0; i < globals.numberOfRuns; ++i)
 	{
 	  stringstream ss; 
 	  ss <<  PROGRAM_NAME << "_topologies." << run_id << "." << i; 

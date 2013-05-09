@@ -60,7 +60,7 @@ public:
 
 bool isNewProposal[NUM_PROPOSALS] = 
   {
-    false,     
+    true,     
     false, 
     false,     
     false,     

@@ -12,7 +12,7 @@
 #include "Path.hpp"
 #include "guidedMoves.h"
 #include "stNNI.h"
-#include "tlMult.h" 
+// #include "tlMult.h" 
 #include "TreeAln.hpp"
 #include "nodeSlider.h"
 #include "Randomness.hpp"
@@ -1265,7 +1265,7 @@ static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
 
 #ifdef DEBUG_PRINT_TUNE_INFO
   cout << pf->name << ": with ratio " << ctr->getRatioInLastInterval() << ": "<< ((newParam < *parameter ) ? "reducing" : "increasing") <<  "\t" << *parameter << "," << newParam << endl; 
-#endif
+#endif 
 
   *parameter = newParam; 
   ctr->nextBatch();
@@ -1555,16 +1555,16 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->category = TOPOLOGY; 
       ptr->parameters.multiplier = INIT_NNI_MULT; 
       break;       
-    case TL_MULT: 
-      ptr->eval_lnl = dummy_eval;
-      ptr->apply_func = applyTLMult; 
-      ptr->reset_func = resetTLMult; 
-      ptr->autotune = autotuneMultiplier; 
-      ptr->remembrance.multiplier = 0; 
-      ptr->name = "tl-mult"; 
-      ptr->category = BRANCH_LENGTHS; 
-      ptr->parameters.multiplier = INIT_TL_MULTI; 
-      break;       
+    // case TL_MULT: 
+    //   ptr->eval_lnl = dummy_eval;
+    //   ptr->apply_func = applyTLMult; 
+    //   ptr->reset_func = resetTLMult; 
+    //   ptr->autotune = autotuneMultiplier; 
+    //   ptr->remembrance.multiplier = 0; 
+    //   ptr->name = "tl-mult"; 
+    //   ptr->category = BRANCH_LENGTHS; 
+    //   ptr->parameters.multiplier = INIT_TL_MULTI; 
+    //   break;       
     case NODE_SLIDER: 
       ptr->apply_func = applyNodeSlider; 
       ptr->eval_lnl = evaluateNodeSlider; 

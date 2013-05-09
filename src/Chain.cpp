@@ -6,7 +6,6 @@
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "output.h"
-// #include "globals.h"
 #include "GlobalVariables.hpp"
 #include "BipartitionHash.hpp"
 #include "adapters.h"
@@ -16,6 +15,7 @@
 #include "WrappedProposal.hpp"
 #include "ParsimonySPR.hpp" 
 #include "eval.h"
+#include "TreeLengthMultiplier.hpp"
 
 // meh =/ 
 extern bool isNewProposal[NUM_PROPOSALS]; 
@@ -95,22 +95,26 @@ void Chain::setupProposals( initParamStruct *initParams)
 	}
       else 
 	{
-	  switch(proposal_type(i))
+	  double weight = initParams->initWeights[proposal_type(i)]; 
+	  if( weight != 0)
 	    {
-	    case E_TBR: 
-	      if(initParams->initWeights[E_TBR] != 0)
-		prop.push_back(new ExtendedTBR(this, initParams->initWeights[E_TBR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
-	      break; 
-	    case E_SPR: 
-	      if(initParams->initWeights[E_SPR] != 0)
-		prop.push_back(new ExtendedSPR(this, initParams->initWeights[E_SPR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
-	      break; 
-	    case PARSIMONY_SPR:
-	      if(initParams->initWeights[PARSIMONY_SPR] != 0)
-		prop.push_back(new ParsimonySPR(this, initParams->initWeights[PARSIMONY_SPR], initParams->parsWarp, INIT_ESPR_MULT)); 
-	      break; 
-	    default : 
-	      assert(0); 
+	      switch(proposal_type(i))
+		{
+		case TL_MULT:
+		  prop.push_back(new TreeLengthMultiplier(this, weight, INIT_TL_MULTI));
+		  break; 
+		case E_TBR: 
+		  prop.push_back(new ExtendedTBR(this, initParams->initWeights[E_TBR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  break; 
+		case E_SPR: 
+		  prop.push_back(new ExtendedSPR(this, initParams->initWeights[E_SPR], initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  break; 
+		case PARSIMONY_SPR:	
+		  prop.push_back(new ParsimonySPR(this, initParams->initWeights[PARSIMONY_SPR], initParams->parsWarp, INIT_ESPR_MULT)); 
+		  break; 
+		default : 
+		  assert(0); 
+		}
 	    }
 	}  
     }

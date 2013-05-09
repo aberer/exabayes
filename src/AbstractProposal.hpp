@@ -48,7 +48,7 @@ public:
   SuccessCtr getSCtr() const { return sctr; }
   
   int  getNumCallSinceTuning(){ return sctr.getRecentlySeen(); }
-  // bool isTimeToTune(int tuneFreq){ return sctr.getRecentlySeen() == globals.tuneFreq;  }
+
 
 protected: 
   string name;   
