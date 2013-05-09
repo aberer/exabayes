@@ -9,8 +9,10 @@
 #ifndef  _OUTPUT_H
 #define  _OUTPUT_H
 
-
 #include "TreeAln.hpp"
+#include "proposalFunction.h"
+
+class Chain; 
 void debug_printTree(TreeAln &traln); 
 
 /* for debugging */

@@ -3,7 +3,7 @@
 #define _TREE_RANDOMIZER_H
 
 #include "axml.h" 
-#include "bayes.h"
+// #include "bayes.h"
 #include "Randomness.hpp"
 
 

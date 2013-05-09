@@ -10,10 +10,10 @@
 #define   _LNL_RESTORER_H
 
 #include "axml.h"
-#include "bayes.h"
+#include "TreeAln.hpp"
 
 typedef node* nodep;  
-
+class Chain;
 
 class LnlRestorer
 {

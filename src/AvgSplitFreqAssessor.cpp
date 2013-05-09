@@ -14,7 +14,8 @@
 #include <ncl/ncl.h>
 
 #include "axml.h"
-#include "bayes.h"
+// #include "bayes.h"
+#include "proposalFunction.h"
 #include "TreeAln.hpp"
 
 #include "output.h"

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "axml.h"
-#include "bayes.h"
+// #include "bayes.h"
 
 
 class CommandLine

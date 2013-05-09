@@ -10,16 +10,11 @@
 #ifndef _EVAL_H
 #define _EVAL_H
 
-
-
 #include "axml.h"
-#include "common.h"
-
 #include "TreeAln.hpp"
 
 
 class Chain; 
-
 
 void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal); 
 void evaluateOnePartition(Chain  *chain, nodeptr start, boolean fullTraversal, int model); 

@@ -1,12 +1,13 @@
 #include <sstream>
 
 #include "axml.h"
-#include "bayes.h"
+// #include "bayes.h"
 // #include "main-common.h"
 #include "GlobalVariables.hpp"
 // #include "globals.h"
-#include "output.h"
+#include "output.h"		// 
 #include "adapters.h"
+#include "proposalFunction.h"
 // #include "topology-utils.h"
 #include "TreeAln.hpp"
 

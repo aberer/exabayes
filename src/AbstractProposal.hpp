@@ -1,6 +1,7 @@
 #ifndef _ABSTRACTPROPOSAL_H
 #define _ABSTRACTPROPOSAL_H
 
+#include "axml.h"
 #include <string>
 #include "SuccessCtr.hpp" 
 #include "proposalType.h"

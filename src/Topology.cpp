@@ -1,6 +1,8 @@
 
+#include "branch.h"
 #include "Topology.hpp"
 #include "output.h"
+
 
 
 // #define TOPO_INFO  

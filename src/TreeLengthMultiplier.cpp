@@ -2,7 +2,7 @@
 
 
 #include "axml.h"
-#include "bayes.h"
+// #include "bayes.h"
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
 #include "eval.h"

@@ -1,5 +1,6 @@
 #include "axml.h"
-#include "bayes.h"
+// #include "bayes.h"
+
 #include "adapters.h"
 #include "Randomness.hpp"
 #include "output.h"

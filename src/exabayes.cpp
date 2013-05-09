@@ -17,7 +17,7 @@
 #endif
 
 #include "axml.h" 
-#include "bayes.h"
+// #include "bayes.h"
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
@@ -27,6 +27,9 @@
 #include "output.h"
 #include "adapters.h"
 #include "CommandLine.hpp"
+#include "SampleMaster.hpp"
+
+void exa_main (analdef *adef, int seed, initParamStruct *initParams); 
 
 
 #if HAVE_PLL != 0
@@ -69,7 +72,6 @@ int main (int argc, char *argv[])
 
   initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
   parseConfigWithNcl(configFileName, &initParams);
-  setupGlobals(initParams); 
 
   exa_main(cl.getAdef(), cl.getSeed(), initParams); 
 
@@ -145,3 +147,64 @@ int main(int argc, char *argv[])
 
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// #define TEST  
+/**
+   @brief the main ExaBayes function.
+
+  @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+   @param adef -- the legacy adef
+ */
+void exa_main (analdef *adef, int seed, initParamStruct *initParams)
+{   
+  timeIncrement = gettime();
+  globals.adef = adef; 
+
+#ifdef TEST   
+  TreeAln traln; 
+  traln.initializeFromByteFile(byteFileName);
+  traln.enableParsimony(); 
+
+  TreeRandomizer r(123, &traln); 
+  r.randomizeTree();
+  tree *tr = traln.getTr(); 
+  
+  for(int i = tr->mxtips+1; i < 2 * tr->mxtips; ++i)
+    {
+      cout << exa_evaluateParsimony(traln, tr->nodep[i], TRUE ) << endl; 
+    }
+
+  exit(0);
+
+#endif
+
+  SampleMaster master(adef,  seed, initParams);
+  master.run();
+  master.finalizeRuns();
+}
+

@@ -10,11 +10,7 @@
 #define _BAYES_H
 
 
-using namespace std; 
-#include <iostream>
-
 #include "proposalType.h"
-#include "config.h"
 #include "SuccessCtr.hpp"
 #include "categoryType.h"
 #include "Chain.hpp"
@@ -60,7 +56,6 @@ struct _pfun
   void (*autotune)(struct _pfun *pf, SuccessCtr *ctr); 
 
 
-
   double relativeWeight; 
 
   /**
@@ -99,8 +94,5 @@ struct _pfun
   /* TODO dirty: is also a remembrance variable  */
   double ratio; 
 }; 
-
-void exa_main(analdef *adef, int seed, initParamStruct *initParam); 
-void setupGlobals(initParamStruct *initParams); 
 
 #endif

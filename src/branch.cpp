@@ -1,5 +1,5 @@
 #include "axml.h"
-#include "bayes.h"
+// #include "bayes.h"
 #include "branch.h" 
 #include "adapters.h"
 #include "output.h"  

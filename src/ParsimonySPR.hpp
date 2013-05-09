@@ -9,7 +9,7 @@
 
 
 
-#include "bayes.h"
+// #include "bayes.h"
 #include "axml.h"
 #include "AbstractProposal.hpp"
 #include "Path.hpp"

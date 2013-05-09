@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "bayes.h"
+// #include "bayes.h"
 #include "axml.h"
 
 #include "CoupledChains.hpp"
@@ -25,7 +25,8 @@ class SampleMaster
 public: 
   SampleMaster(analdef *adef , int seed, initParamStruct *initParams );
   ~SampleMaster(){};
-  
+
+  void finalizeRuns();  
   void  run(); 
 
 private: 

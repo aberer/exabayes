@@ -11,16 +11,9 @@
 #ifndef _BRANCH_H
 #define _BRANCH_H
 
-#include <iostream>
-using namespace std; 
-
-
-/* #include "Chain.hpp" */
-/* #include "TreeAln.hpp" */
+#include "axml.h"
 
 class TreeAln; 
-
-
 
 typedef struct  _branch
 {

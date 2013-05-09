@@ -1,9 +1,13 @@
 #include <sstream>
 
+#include "output.h"
+#include "eval.h"
+#include "adapters.h"
 #include "SampleMaster.hpp"
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
+
 // TODO =( 
 #include "GlobalVariables.hpp"
 
@@ -11,6 +15,8 @@
 #include "AvgSplitFreqAssessor.hpp"
 
 
+
+extern double masterTime; 
 
 //STAY 
 bool SampleMaster::convergenceDiagnostic()
@@ -269,4 +275,24 @@ void SampleMaster::run()
 	printPRSF(run_id);
 #endif
     }
+}
+ 
+ 
+void SampleMaster::finalizeRuns()
+{
+  if(isOutputProcess() )
+    {
+      for(auto run : runs)
+	{
+	  for(int i = 0; i < run.getNumberOfChains(); ++i)
+	    {
+	      Chain *chain = run.getChain(0);
+	      if( chain->getChainHeat() == 1.f)
+		finalizeOutputFiles(chain);
+	    }
+	}
+
+      PRINT("\nConverged after %d generations\n",  runs[0].getChain(0)->getGeneration());
+      PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
+    }  
 }

@@ -11,9 +11,9 @@
 #include <vector>
 
 #include "axml.h"
-#include "bayes.h"
 #include "branch.h"
 #include "TreeAln.hpp"
+#include "Randomness.hpp"
 
 class Path
 {

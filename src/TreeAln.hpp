@@ -2,7 +2,7 @@
 #define _TREEALN_H
 
 #include "axml.h"
-#include "bayes.h"
+// #include "bayes.h"
 
 
 

@@ -1,9 +1,9 @@
 #ifndef _BIPARTITIONHASH_H
 
+#include <vector>
+
 #include "axml.h"
-#include "bayes.h"
-
-
+#include "TreeAln.hpp"
 
 class BipartitionHash
 {

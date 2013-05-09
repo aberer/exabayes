@@ -1,11 +1,8 @@
 #ifndef _AVGSPLITFREQASSESSOR_H
 #define _AVGSPLITFREQASSESSOR_H
 
-
-#include <vector>
-
 #include "axml.h"
-#include "bayes.h"
+#include "proposalFunction.h"
 
 #include "BipartitionHash.hpp"
 

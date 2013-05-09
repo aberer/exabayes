@@ -1,12 +1,9 @@
 #include "axml.h"
-#include "bayes.h"
+#include "proposalFunction.h"
 
 #define _INCLUDE_DEFINITIONS
-// #include "globals.h"
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
-
-// #include "main-common.h"
 
 #undef PRINT 
 #define PRINT printf

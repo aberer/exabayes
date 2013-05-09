@@ -1,5 +1,5 @@
 
-#include "bayes.h"
+// #include "bayes.h"
 
 #include "Category.hpp"
 #include "AbstractProposal.hpp"

@@ -1,7 +1,7 @@
 #ifndef _EXTENDED_SPR_H
 #define _EXTENDED_SPR_H
 
-#include "bayes.h"
+// #include "bayes.h"
 #include "axml.h"
 #include "AbstractProposal.hpp"
 #include "Randomness.hpp"

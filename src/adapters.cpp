@@ -1,7 +1,7 @@
 
 #include "axml.h"
 
-#include "bayes.h"
+#include "proposalFunction.h"
 #include "GlobalVariables.hpp"
 #include "TreeAln.hpp" 
 #include "Chain.hpp" 

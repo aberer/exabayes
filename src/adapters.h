@@ -10,9 +10,8 @@
 #ifndef _ADAPTER_CODE_H
 #define _ADAPTER_CODE_H
 
-#include "config.h"
 
-
+class Chain; 
 /* shared  */
 void exa_evaluateGeneric(Chain *chain, nodeptr start, boolean fullTraversal); 
 void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q); 

@@ -12,6 +12,8 @@
 
 
 #include "config.h"
+#include "proposalType.h"
+
 
 class BipartitionHash; 
 class SuccessCtr; 

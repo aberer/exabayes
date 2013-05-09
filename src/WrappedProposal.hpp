@@ -1,5 +1,5 @@
 
-#include "bayes.h"
+#include "proposalFunction.h"
 
 #include "AbstractProposal.hpp"
 

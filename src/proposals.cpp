@@ -1,6 +1,4 @@
-
 #include "axml.h"
-#include "bayes.h"
 #include "GlobalVariables.hpp"
 #include "output.h"
 #include "eval.h"
@@ -16,7 +14,6 @@
 
 void expensiveVerify(tree *tr); 
 
-/* nodeptr select_random_subtree(Chain *chain, tree *tr); */
 void edit_subs_rates(Chain *chain, int model, int subRatePos, double subRateValue);
 
 

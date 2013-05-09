@@ -2,12 +2,9 @@
 #include "adapters.h"
 #include "branch.h"
 #include "TreeAln.hpp" 
-// #include "globals.h"
 #include "GlobalVariables.hpp"
 
-#include <iostream>
-using namespace std; 
-
+#include "Chain.hpp"
 
 LnlRestorer::LnlRestorer(Chain *chain)
   : numPart(chain->traln->getNumberOfPartitions())

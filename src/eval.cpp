@@ -1,9 +1,11 @@
 
 #include "axml.h"
-#include "bayes.h"
+
+// #include "bayes.h"
 // #include "globals.h"
 #include "GlobalVariables.hpp"
 #include "adapters.h"		
+#include "Chain.hpp"
 
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 

@@ -1,7 +1,6 @@
 #include "WrappedProposal.hpp"
 
 
-
 WrappedProposal::WrappedProposal(proposalFunction *pf, Chain *_chain)
   : pfun(pf)
   , chain(_chain)
