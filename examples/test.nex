@@ -103,7 +103,7 @@ begin EXABAYES;
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
-      eSprStopProb 0.3 [ stopping probability for eSPR moves, 0.5 in mb! ] 
+      eSprStopProb 0.5 [ stopping probability for eSPR moves, 0.5 in mb! ] 
       parsimonyWarp 0.10 [ warp factor for parsimony based moves => if we set that to 10, it is a reference to the star trek voyager episode "threshold" ]  
 
 

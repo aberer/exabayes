@@ -23,7 +23,7 @@ using namespace std;
 class SampleMaster
 {
 public: 
-  SampleMaster(analdef *adef , int seed, initParamStruct *initParams );
+  SampleMaster( int seed, initParamStruct *initParams, int myBatch );
   ~SampleMaster(){};
 
   void finalizeRuns();  
@@ -41,6 +41,7 @@ private:
   int numGen; 
 
   bool convergenceDiagnostic(); 
+  int myBatch; 
 
 };  
 

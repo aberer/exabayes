@@ -17,7 +17,6 @@
 #endif
 
 #include "axml.h" 
-// #include "bayes.h"
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
@@ -29,7 +28,7 @@
 #include "CommandLine.hpp"
 #include "SampleMaster.hpp"
 
-void exa_main (analdef *adef, int seed, initParamStruct *initParams); 
+void exa_main (int seed, initParamStruct *initParams, int myBatch); 
 
 
 #if HAVE_PLL != 0
@@ -73,7 +72,7 @@ int main (int argc, char *argv[])
   initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
   parseConfigWithNcl(configFileName, &initParams);
 
-  exa_main(cl.getAdef(), cl.getSeed(), initParams); 
+  exa_main(cl.getSeed(), initParams); 
 
   return 0;
 
@@ -84,7 +83,6 @@ int main (int argc, char *argv[])
 extern int processID; 
 extern int processes;
 extern MPI_Comm comm; 
-
 
 
 int main(int argc, char *argv[])
@@ -104,12 +102,8 @@ int main(int argc, char *argv[])
 
   CommandLine cl(argc, argv); 
 
-  globals.globalSize = globalSize; 
-  globals.globalRank = globalRank; 
-
   initParamStruct *initParams = (initParamStruct*)exa_calloc(1,sizeof(initParamStruct));   
   parseConfigWithNcl(configFileName, &initParams);
-  setupGlobals(initParams); 
 
   if(globalSize < initParams->numRunParallel)
     {
@@ -125,10 +119,7 @@ int main(int argc, char *argv[])
   int myColor = globalRank / processesPerBatch; 
   int newRank = globalRank  % processesPerBatch; 
 
-  globals.myBatch = myColor;  
-
   MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm); 
-
 
   MPI_Comm_rank(comm, &processID); 
   MPI_Comm_size(comm, &processes); 
@@ -137,7 +128,7 @@ int main(int argc, char *argv[])
 
   if(processID == 0)
     makeFileNames(); 
-  exa_main(cl.getAdef(), cl.getSeed(), initParams); 
+  exa_main( cl.getSeed(), initParams, myColor); 
 
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
@@ -180,10 +171,9 @@ int main(int argc, char *argv[])
   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
-void exa_main (analdef *adef, int seed, initParamStruct *initParams)
+void exa_main (int seed, initParamStruct *initParams, int myBatch)
 {   
   timeIncrement = gettime();
-  globals.adef = adef; 
 
 #ifdef TEST   
   TreeAln traln; 
@@ -203,7 +193,7 @@ void exa_main (analdef *adef, int seed, initParamStruct *initParams)
 
 #endif
 
-  SampleMaster master(adef,  seed, initParams);
+  SampleMaster master( seed, initParams, myBatch);
   master.run();
   master.finalizeRuns();
 }

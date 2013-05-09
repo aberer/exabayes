@@ -11,6 +11,9 @@
 #ifndef _BRANCH_H
 #define _BRANCH_H
 
+#include <iostream>
+using namespace std; 
+
 #include "axml.h"
 
 class TreeAln; 

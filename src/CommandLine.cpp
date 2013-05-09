@@ -1,14 +1,13 @@
 #include <unistd.h>
+#include <iostream>
 #include "CommandLine.hpp"
-// #include "globals.h"
 #include "GlobalVariables.hpp"
+
+using namespace std; 
 
 
 CommandLine::CommandLine(int argc, char *argv[])
-  : adef(unique_ptr<analdef>( (analdef*)exa_calloc(1,sizeof(analdef)) ))
 {
-  // cout << tree_file << endl; 
-  initAdef();
   parse(argc, argv) ;
 }
 
@@ -154,19 +153,4 @@ void CommandLine::parse(int argc, char *argv[])
 
 
 
-/**
-   @brief legacy init of adef structure 
- */ 
-void CommandLine::initAdef()
-{ 
-  adef->max_rearrange          = 21;
-  adef->stepwidth              = 5;
-  adef->initial                = 10;
-  adef->bestTrav               = 10;
-  adef->initialSet             = FALSE; 
-  adef->mode                   = BIG_RAPID_MODE; 
-  adef->likelihoodEpsilon      = 0.1; 
-  adef->permuteTreeoptimize    = FALSE; 
-  adef->perGeneBranchLengths   = FALSE;   
-  adef->useCheckpoint          = FALSE;
-}
+

@@ -2,9 +2,7 @@
 #include "config.h"
 #include "TreeAln.hpp"
 
-// #include "globals.h"
 #include "GlobalVariables.hpp"
-// #include "main-common.h" 
 #include "output.h"
 
 
@@ -62,7 +60,20 @@ void TreeAln::initializeFromByteFile(char *bytefile)
   partitions = pl;
   this->initializeTreePLL();
 #else 
-  initializeTree(tr, globals.adef);   
+  analdef adef ; 
+
+  adef.max_rearrange          = 21;
+  adef.stepwidth              = 5;
+  adef.initial                = 10;
+  adef.bestTrav               = 10;
+  adef.initialSet             = FALSE; 
+  adef.mode                   = BIG_RAPID_MODE; 
+  adef.likelihoodEpsilon      = 0.1; 
+  adef.permuteTreeoptimize    = FALSE; 
+  adef.perGeneBranchLengths   = FALSE;   
+  adef.useCheckpoint          = FALSE;
+
+  initializeTree(tr, &adef);   
 #endif  
 }
 
@@ -477,16 +488,17 @@ void TreeAln::initializeTreePLL()
   pl->partitionData = (pInfo**)exa_malloc(NUM_BRANCHES*sizeof(pInfo*));
 
   double **empFreq = NULL; 
-  initializePartitionsPLL(&(byteFileName[0]), &empFreq);
+  bool perGeneBL = false; 
+  initializePartitionsPLL(&(byteFileName[0]), &empFreq, perGeneBL );
 
   initializePartitionsSequential(getTr(), getPartitionsPtr());
   initModel(getTr(), empFreq, getPartitionsPtr());
 } 
 
 
-void TreeAln::initializePartitionsPLL(char *bytefile, double ***empiricalFrequencies)
+void TreeAln::initializePartitionsPLL(char *bytefile, double ***empiricalFrequencies, bool multiBranch)
 {
-  analdef *adef = globals.adef ; 
+  // analdef *adef = globals.adef ; 
   tree *tr = getTr();
   partitionList *partitions = getPartitionsPtr();
 
@@ -501,7 +513,7 @@ void TreeAln::initializePartitionsPLL(char *bytefile, double ***empiricalFrequen
   myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
 
 
-  partitions->perGeneBranchLengths = adef->perGeneBranchLengths;
+  partitions->perGeneBranchLengths = multiBranch ? 1 : 0 ;
 
   /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
      let's not worry about this right now, because it is indeed RAxML-specific */

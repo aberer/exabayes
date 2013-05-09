@@ -169,7 +169,7 @@ static int countNumberOfTreesQuick(char *fn )
 
 
 
-SampleMaster::SampleMaster(analdef *adef , int seed, initParamStruct *initParams )
+SampleMaster::SampleMaster(int seed, initParamStruct *initParams, int _myBatch )
   : diagFreq(initParams->diagFreq)
   , asdsfIgnoreFreq(initParams->asdsfIgnoreFreq)
   , asdsfConvergence(initParams->asdsfConvergence)
@@ -178,6 +178,7 @@ SampleMaster::SampleMaster(analdef *adef , int seed, initParamStruct *initParams
   , samplingFreq(initParams->samplingFrequency)
   , numRunConv(initParams->numIndiChains)
   , numGen(initParams->numGen)
+  , myBatch(_myBatch)
 {
   assert(initParams->numCoupledChains != 0 ); 
 
@@ -228,15 +229,16 @@ SampleMaster::SampleMaster(analdef *adef , int seed, initParamStruct *initParams
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
 #if HAVE_PLL == 0
-      if(i % initParams->numRunParallel != globals.myBatch )
+      if(i % initParams->numRunParallel != myBatch )
 	continue; 
 #endif
 
       runs.push_back(CoupledChains(runSeeds[i], initParams->numCoupledChains, trees, i, initParams));       
-      if(initParams->tuneHeat)
-	runs.at(i).enableHeatTuning(initParams->tuneFreq); 
-
     }
+  
+  if(initParams->tuneHeat)
+    for(auto r : runs)
+      r.enableHeatTuning(initParams->tuneFreq); 
   
   // only use one restorer for all chains 
   LnlRestorer *restorer = new LnlRestorer(runs[0].getChain(0));

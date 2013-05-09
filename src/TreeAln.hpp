@@ -1,9 +1,12 @@
 #ifndef _TREEALN_H
 #define _TREEALN_H
 
-#include "axml.h"
-// #include "bayes.h"
+#include <vector>
+#include <iostream>
 
+using namespace std; 
+
+#include "axml.h"
 
 
 /** 
@@ -92,7 +95,7 @@ private:
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
   partitionList* partitions; 
   void initializeTreePLL();
-  void initializePartitionsPLL(char *bytefile, double ***empFreq);
+  void initializePartitionsPLL(char *bytefile, double ***empFreq, bool multiBranch);
 #endif  
 
 };  

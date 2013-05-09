@@ -21,16 +21,10 @@ class SuccessCtr;
 class GlobalVariables
 {
 public: 
-  analdef *adef; 
-
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
 #endif
-
-  int myBatch ; 		/* if runs are executed in parallel: which runs should be done by this process? */
-  int globalSize;
-  int globalRank; 
 };
 
 
