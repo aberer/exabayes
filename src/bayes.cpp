@@ -48,11 +48,9 @@ void setupGlobals(initParamStruct *initParams)
   globals.diagFreq = initParams->diagFreq; 
   globals.numberOfRuns =   initParams->numIndiChains; 
   globals.numberCoupledChains = initParams->numCoupledChains; 
-  globals.printFreq = initParams->printFreq;   
   globals.asdsfIgnoreFreq = initParams->asdsfIgnoreFreq; 
   globals.asdsfConvergence = initParams->asdsfConvergence; 
-  globals.heatFactor  = initParams->heatFactor; 
-  globals.swapInterval =  initParams->swapInterval; 
+  // globals.swapInterval =  initParams->swapInterval; 
   globals.burninGen = initParams->burninGen; 
   globals.burninProportion = initParams->burninProportion; 
 }

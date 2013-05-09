@@ -1540,27 +1540,6 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
       ptr->category = FREQUENCIES; 
       ptr->parameters.slidWinSize = INIT_FREQ_SLID_WIN; 
       break; 
-    // case ST_NNI: 
-    //   ptr->eval_lnl = eval_st_nni; 
-    //   ptr->apply_func = apply_st_nni; 
-    //   ptr->autotune = NULL; 
-    //   ptr->reset_func = reset_st_nni; 
-    //   ptr->remembrance.modifiedPath = new Path(); 
-    //   // createStack(&(ptr->remembrance.modifiedPath)); 
-    //   ptr->name = "stNNI"; 
-    //   ptr->category = TOPOLOGY; 
-    //   ptr->parameters.multiplier = INIT_NNI_MULT; 
-    //   break;       
-    // case TL_MULT: 
-    //   ptr->eval_lnl = dummy_eval;
-    //   ptr->apply_func = applyTLMult; 
-    //   ptr->reset_func = resetTLMult; 
-    //   ptr->autotune = autotuneMultiplier; 
-    //   ptr->remembrance.multiplier = 0; 
-    //   ptr->name = "tl-mult"; 
-    //   ptr->category = BRANCH_LENGTHS; 
-    //   ptr->parameters.multiplier = INIT_TL_MULTI; 
-    //   break;       
     case NODE_SLIDER: 
       ptr->apply_func = applyNodeSlider; 
       ptr->eval_lnl = evaluateNodeSlider; 

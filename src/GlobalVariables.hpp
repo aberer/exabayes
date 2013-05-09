@@ -36,11 +36,10 @@ public:
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
 #endif
-  int printFreq; 
+
   double asdsfIgnoreFreq; 
   double asdsfConvergence; 
-  double heatFactor; 
-  int swapInterval; 
+
   int burninGen ; 
   double burninProportion; 
 

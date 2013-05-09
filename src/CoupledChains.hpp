@@ -79,16 +79,10 @@ private:
 
   int runid; 
 
-
-
   int tuneFreq; 
   bool tuneHeat; 
-  
-
-
-
-
-  
+  int printFreq; 
+  int swapInterval; 
 }; 
 
 
