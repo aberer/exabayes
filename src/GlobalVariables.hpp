@@ -66,7 +66,7 @@ bool isNewProposal[NUM_PROPOSALS] =
     true,     
     true,     
     true,     
-    false,     
+    true,     
     true,     
     true,     
     false,     

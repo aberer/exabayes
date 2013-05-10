@@ -17,6 +17,7 @@
 #include "StatNNI.hpp"
 #include "RadiusMlSPR.hpp"
 #include "Category.hpp"
+#include "NodeSlider.hpp"
 
 
 // TODO =( 
@@ -382,6 +383,9 @@ void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBel
 	    {
 	      switch(proposal_type(i))
 		{
+		case NODE_SLIDER:
+		  prop.push_back(new NodeSlider(NULL, weight, INIT_NODE_SLIDER_MULT, "nodeSlider"));
+		  break; 
 		case UPDATE_MODEL: 
 		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(NULL,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
 		  break; 

@@ -6,7 +6,6 @@
 #include "branch.h"
 #include "Path.hpp"
 #include "TreeAln.hpp"
-#include "nodeSlider.h"
 #include "Randomness.hpp"
 #include "densities.h"
 
@@ -1409,17 +1408,6 @@ void initProposalFunction( proposal_type type, vector<double> weights, proposalF
       ptr->parameters.multiplier = INIT_BL_MULT; 
       ptr->name = "branchMult"; 
       ptr->category = BRANCH_LENGTHS; 
-      break; 
-    case NODE_SLIDER: 
-      ptr->apply_func = applyNodeSlider; 
-      ptr->eval_lnl = evaluateNodeSlider; 
-      ptr->reset_func = resetNodeSlider;  
-      ptr->autotune = autotuneMultiplier; 
-      ptr->remembrance.modifiedPath = new Path(); 
-      // createStack(&(ptr->remembrance.modifiedPath)); 
-      ptr->name = "nodeSlider"; 
-      ptr->category = BRANCH_LENGTHS; 
-      ptr->parameters.multiplier = INIT_NODE_SLIDER_MULT; 
       break; 
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 
