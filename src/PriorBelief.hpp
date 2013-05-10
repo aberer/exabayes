@@ -1,5 +1,5 @@
 /**
-   @file PriorManager.hpp
+   @file PriorBelief.hpp
 
    @brief top level object that represents the prior probability of a
    chain
@@ -46,11 +46,11 @@ class RateHetPrior
 // ################################################################
 
 
-class PriorManager
+class PriorBelief
 {
 public: 
-  PriorManager(); 
-  ~PriorManager(){};
+  PriorBelief(); 
+  ~PriorBelief(){};
 
   // TODO support topology 
 

@@ -11,18 +11,18 @@ WrappedProposal::WrappedProposal(proposalFunction *pf, Chain *_chain)
   ptype = pf->ptype; 
 }
 
-void WrappedProposal::applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand)
+void WrappedProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
   pfun->apply_func(chain, pfun);
 }
 
 
-void WrappedProposal::evaluateProposal(TreeAln &traln, PriorManager &prior)
+void WrappedProposal::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 {
   pfun->eval_lnl(chain, pfun);
 }
 
-void WrappedProposal::resetState(TreeAln &traln, PriorManager &prior) 
+void WrappedProposal::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   pfun->reset_func(chain, pfun); 
 }

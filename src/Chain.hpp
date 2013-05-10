@@ -13,7 +13,7 @@
 
 #include "ConfigReader.hpp"
 #include "Category.hpp"
-#include "PriorManager.hpp"
+#include "PriorBelief.hpp"
 
 
 
@@ -127,7 +127,7 @@ private :
   Randomness *chainRand; 
   LnlRestorer *restorer; 
   int runid; 
-  PriorManager prior; 
+  PriorBelief prior; 
   
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
 

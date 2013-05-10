@@ -194,10 +194,8 @@ void SampleMaster::initWithConfigFile(string configFileName)
 void SampleMaster::validateRunParams()
 {
   assert(numCoupledChains > 0); 
+  // TODO 
 }
-
-
-
 
 
 SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl) 
@@ -271,7 +269,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 	continue; 
 #endif
 
-      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, initParams)); 
+      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor)); 
     }
   
   if(tuneHeat)
@@ -334,4 +332,10 @@ void SampleMaster::finalizeRuns()
       PRINT("\nConverged after %d generations\n",  runs[0].getChain(0)->getGeneration());
       PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
     }  
+}
+
+
+void SampleMaster::setupProposals(vector<AbstractProposal*> &result, const PriorBelief &priors )
+{
+  assert(0); 
 }

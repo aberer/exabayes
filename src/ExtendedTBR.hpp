@@ -13,9 +13,9 @@ public:
   ExtendedTBR( Chain *chain, double relativeProbability, double extensionProb, double multiplier);
   virtual ~ExtendedTBR()  { }
 
-  virtual void applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand); 
-  virtual void evaluateProposal(TreeAln &traln, PriorManager &prior); 
-  virtual void resetState(TreeAln& traln, PriorManager &prior); 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand); 
+  virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior); 
+  virtual void resetState(TreeAln& traln, PriorBelief &prior); 
   virtual void autotune();
   
   // this MUST be copied!! otherwise swapping will fail 

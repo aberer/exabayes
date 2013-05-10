@@ -13,6 +13,7 @@
 #include <string>
 #include "config.h"
 #include "proposalType.h"
+#include "teestream.hpp"
 
 
 class TreeAln; 
@@ -25,11 +26,13 @@ using namespace std;
 class GlobalVariables
 {
 public: 
+
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
 #endif
   string logFile; 
+  teestream* tout; 
 };
 
 

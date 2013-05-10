@@ -13,7 +13,7 @@ PartitionProposal<FUN,PARAM>::PartitionProposal(Chain *_chain, double relativeWe
 
 
 template<typename FUN, typename PARAM>
-void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand) 
+void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
   model = rand.drawRandInt( traln.getNumberOfPartitions());  
   values = PARAM::getParameters(traln, model); 
@@ -23,7 +23,7 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorManager &pr
 }
 
 template<typename FUN, typename PARAM>
-void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorManager &prior) 
+void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
   branch root = findRoot(chain->traln->getTr());  
   nodeptr p = findNodeFromBranch(chain->traln->getTr(), root); 
@@ -32,7 +32,7 @@ void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorManager
   
 
 template<typename FUN, typename PARAM>
-void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorManager &prior) 
+void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   PARAM::setParameters(traln, model, values);
   PARAM::init(traln,model);

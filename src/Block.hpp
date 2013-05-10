@@ -23,7 +23,7 @@ public:
 private: 
   SampleMaster *sm; 
   vector<double> proposalWeights ; 
-  PriorManager prior;   
+  PriorBelief prior;   
   map<string, proposal_type> name2proposal; 
 }; 
 

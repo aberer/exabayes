@@ -169,7 +169,7 @@ void ExtendedTBR::executeTBR(TreeAln & traln)
 }
 
 
-void ExtendedTBR::applyToState(TreeAln& traln, PriorManager& prior, double &hastings, Randomness &rand)
+void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hastings, Randomness &rand)
 {
   // tree *tr = traln.getTr(); 
 #ifdef DEBUG_TBR
@@ -264,7 +264,7 @@ static void evalHelper(Path &path, Chain &chain, TreeAln &traln )
 
 
 
-void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorManager& prior)
+void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorBelief& prior)
 {  
 #if 1 
   tree *tr = traln.getTr(); 
@@ -335,7 +335,7 @@ static void resetOneSide(TreeAln &traln, Path& path)
 }
 
 
-void ExtendedTBR::resetState(TreeAln &traln, PriorManager& prior)
+void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 {
   resetOneSide(traln, modifiedPath1); 
   resetOneSide(traln, modifiedPath2); 

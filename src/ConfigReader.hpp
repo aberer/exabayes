@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "proposalType.h"
-#include "PriorManager.hpp"
+#include "PriorBelief.hpp"
 #include "AbstractProposal.hpp"
 
 

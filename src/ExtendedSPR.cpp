@@ -151,7 +151,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
    
    the same function as below, but I cleaned the other flavour, since so much stuff has changed. 
  */ 
-void ExtendedSPR::applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand)
+void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
   debug_printTree(traln);
 
@@ -180,7 +180,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorManager &prior, double &hast
 
 
 
-void ExtendedSPR::resetState(TreeAln &traln, PriorManager &prior )
+void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
 {
   resetAlongPathForESPR (traln);   
 
@@ -193,7 +193,7 @@ void ExtendedSPR::resetState(TreeAln &traln, PriorManager &prior )
 }
 
 
-void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorManager &prior)
+void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 {  
   tree *tr = traln.getTr(); 
 

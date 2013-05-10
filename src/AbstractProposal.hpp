@@ -8,7 +8,7 @@
 #include "Randomness.hpp"
 #include "categoryType.h" 
 #include "proposalType.h"
-#include "PriorManager.hpp"
+#include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"
 
 class Chain; 
@@ -26,9 +26,9 @@ public:
   // impossible to create an instance of AbstractProposal and forces
   // you to implement these methods, when you derive from
   // AbstractProposal.
-  virtual void applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand) = 0; 
-  virtual void evaluateProposal(TreeAln &traln, PriorManager &prior) = 0; 
-  virtual void resetState(TreeAln &traln, PriorManager &prior) = 0 ; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) = 0; 
+  virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) = 0; 
+  virtual void resetState(TreeAln &traln, PriorBelief &prior) = 0 ; 
   virtual void autotune() = 0  ;
 
   // HACK! 

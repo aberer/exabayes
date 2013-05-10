@@ -17,7 +17,7 @@ StatNNI::StatNNI(Chain *_chain, double _weight, double _multiplier)
 }
 
 
-void StatNNI::applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand) 
+void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {  
   tree *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches();
@@ -106,7 +106,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorManager &prior, double &hastings
 
 
 
-void StatNNI::evaluateProposal(TreeAln &traln, PriorManager &prior)
+void StatNNI::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 {
   tree *tr = traln.getTr(); 
 
@@ -126,7 +126,7 @@ void StatNNI::evaluateProposal(TreeAln &traln, PriorManager &prior)
 
 
 
-void StatNNI::resetState(TreeAln &traln, PriorManager &prior)  
+void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)  
 {
   tree
     *tr = traln.getTr(); 

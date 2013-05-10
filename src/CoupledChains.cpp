@@ -10,14 +10,14 @@
 #include "output.h"
 #include "AbstractProposal.hpp"
 
-CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid, initParamStruct *initParams)
-  : temperature(initParams->heatFactor)
+CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor )
+  : temperature(heatFactor)
   , rand(seed)
   , runid(_runid) 
   , tuneHeat(false)
-  , printFreq(initParams->printFreq)
-  , swapInterval(initParams->swapInterval)
-  , samplingFreq(initParams->samplingFrequency)
+  , printFreq(_printFreq)
+  , swapInterval(_swapInterval)
+  , samplingFreq(_samplingFreq)
 {
   assert((nat)numCoupled == trees.size());
 
@@ -28,7 +28,7 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
     {
       Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], runname); 
 
-      chain->setDeltaT(initParams->heatFactor); 
+      chain->setDeltaT(temperature); 
       chains.push_back(chain);
     }
 

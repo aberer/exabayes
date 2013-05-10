@@ -103,7 +103,7 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
 
 
 
-void ParsimonySPR::applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand) 
+void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {    
   vector<InsertionScore> insertionPoints; 
   tree *tr = traln.getTr(); 
@@ -160,12 +160,12 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorManager &prior, double &has
 }
 
 
-void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorManager &prior) 
+void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
   assert(0); 
 }
 
-void ParsimonySPR::resetState(TreeAln &traln, PriorManager &prior) 
+void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   assert(0); 
 }

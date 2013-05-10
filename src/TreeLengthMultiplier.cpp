@@ -41,7 +41,7 @@ void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, node
 }
 
 
-void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorManager &prior, double &hastings, Randomness &rand) 
+void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
   tree *tr = traln.getTr(); 
   rememMultiplier  = rand.drawMultiplier( multiplier);
@@ -55,7 +55,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorManager &prior, dou
 }
 
 
-void TreeLengthMultiplier::resetState(TreeAln &traln, PriorManager &prior)  
+void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
 {
   // TODO prior 
   tree *tr = chain->traln->getTr();
@@ -79,7 +79,7 @@ void TreeLengthMultiplier::autotune()
 }
  
  
-void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorManager &prior) 
+void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
   evaluateGenericWrapper(chain, traln.getTr()->start, TRUE);
 }
