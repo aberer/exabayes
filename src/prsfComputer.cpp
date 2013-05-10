@@ -1,6 +1,7 @@
+#include <cassert>
+
 #include "axml.h" 
-// #include "bayes.h" 
-// #include "main-common.h"
+
 
 
 /**

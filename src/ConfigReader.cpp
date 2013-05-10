@@ -3,24 +3,10 @@
 
 #include <iostream>
 #include <cassert>
-#include <ncl/ncl.h>
-
 #include "ConfigReader.hpp"
 
 
 // TODO set this up more generic   
-
-
-class ConfigReader : public NxsReader
-{
-public: 
-  ConfigReader() : NxsReader(){SetWarningOutputLevel(SUPPRESS_WARNINGS_LEVEL); }
-  virtual void ExitingBlock(NxsString blockName){}
-  virtual void ExecuteStopping(){}
-  virtual void ExecuteStarting(){}
-  
-} ; 
-
 
 
 static bool convertToBool(NxsString &string)
@@ -120,7 +106,6 @@ public:
 
     initParam->numCoupledChains = -1; 
     initParam->numIndiChains = -1; 
-    // initParam->initPenaltyFactor  = -1 ;   
     initParam->numGen  = -1 ; 
     initParam->samplingFrequency  = -1 ; 
     initParam->eSprStopProb = -1;
@@ -185,6 +170,16 @@ public:
 	      initParam->numRunParallel = value.ConvertToInt();
 	    else if(key.EqualsCaseInsensitive("parsimonyWarp"))
 	      initParam->parsWarp = value.ConvertToDouble();
+	    else if(key.EqualsCaseInsensitive("brlen"))
+	      {
+		cout << "yes! value would be "<< value << endl; 
+
+		token.GetNextToken();		
+		string tok = token.GetToken();
+		assert(tok.compare ("(") == 0 );
+		token.GetNextToken();		
+		// tok = 
+	      }
 	    else 	      
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	  }
@@ -239,20 +234,20 @@ using namespace std;
 
 
 
-void parseConfigWithNcl(char *configFileName, initParamStruct **params)
-{
-  ConfigReader reader;
-  ExabayesBlock *myBlock = new ExabayesBlock(); 
+// void parseConfigWithNcl(char *configFileName, initParamStruct **params)
+// {
+//   ConfigReader reader;
+//   ExabayesBlock *myBlock = new ExabayesBlock(); 
 
-  ifstream fh(configFileName); 
+//   ifstream fh(configFileName); 
   
-  NxsToken token(fh); 
+//   NxsToken token(fh); 
 
-  reader.Add(myBlock); 
-  reader.Execute(token);
+//   reader.Add(myBlock); 
+//   reader.Execute(token);
 
-  myBlock->validate();
+//   myBlock->validate();
 
-  *params = myBlock->getResult();
-}
+//   *params = myBlock->getResult();
+// }
 

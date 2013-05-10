@@ -33,6 +33,7 @@ begin EXABAYES;
       [ PRIOR configuration ]
       [================================================================]
 
+[ 
       [ TODO: topology ]
 
       [ branch lengths: TODO per-partition,clock,fixed ]
@@ -59,7 +60,7 @@ begin EXABAYES;
       [ shapePr fixed(1) ] 
 
 
-
+]
 
 
 

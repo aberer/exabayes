@@ -8,6 +8,8 @@
    to numbers must always be the same 
  */
 
+#include <cassert>
+
 #include "BipartitionHash.hpp"
 #include "TreeAln.hpp"
 #include "adapters.h"

@@ -12,10 +12,12 @@
 
 #include <vector>
 
-// #include "bayes.h"
 #include "axml.h"
 
+#include "CommandLine.hpp"
 #include "CoupledChains.hpp"
+#include "ConfigReader.hpp"
+#include "ParallelSetup.hpp"
 
 using namespace std; 
 
@@ -23,7 +25,7 @@ using namespace std;
 class SampleMaster
 {
 public: 
-  SampleMaster( int seed, initParamStruct *initParams, int myBatch );
+  SampleMaster(const CommandLine &cl , ParallelSetup &pl);
   ~SampleMaster(){};
 
   void finalizeRuns();  
@@ -39,6 +41,7 @@ private:
   int samplingFreq; 
   int numRunConv; 
   int numGen; 
+  string runId; 
 
   bool convergenceDiagnostic(); 
   int myBatch; 

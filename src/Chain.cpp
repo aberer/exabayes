@@ -25,32 +25,37 @@
 // meh =/ 
 extern bool isNewProposal[NUM_PROPOSALS]; 
 
+#include <sstream>
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, initParamStruct *initParams)  
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, string runName )  
   : traln(_traln)
   , couplingId(id)
   , currentGeneration(0)
   , hastings(1)
   , runid(_runid)
-  // , prior(*initParams)
 {
   chainRand = new Randomness(seed.v[0]);
+
+  string workdir = ""; 
+  assert(0); 
   
   if(id == 0)
     {
-      char tName[1024],
-	pName[1024] ; 
-  
-      sprintf(tName, "%s%s_topologies.%s.%d", workdir, PROGRAM_NAME, run_id, runid); 
-      sprintf(pName, "%s%s_parameters.%s.%d", workdir, PROGRAM_NAME, run_id, runid); 
-  
+      stringstream tNameBuilder,
+	pNameBuilder;
+      tNameBuilder << workdir << PROGRAM_NAME << "_topologies." << runName << "."  << runid ; 
+      pNameBuilder << workdir << PROGRAM_NAME << "_parameters." << runName << "."  << runid  ; 
+
       /* todo binary Chain file?  */
-      topologyFile = fopen(tName, "w"); 
-      outputParamFile = fopen(pName, "w");   
+      topologyFile = fopen(tNameBuilder.str().c_str(), "w"); 
+      outputParamFile = fopen(pNameBuilder.str().c_str(), "w");   
       initializeOutputFiles(this);
     }
-
+  
+  assert(0);
+#if 0 
   setupProposals(initParams); 
+#endif
   
   initParamDump(); 
 

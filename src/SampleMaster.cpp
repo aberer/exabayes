@@ -27,7 +27,7 @@ bool SampleMaster::convergenceDiagnostic()
       for(int i = 0; i < numRunConv; ++i)
 	{
 	  stringstream ss; 
-	  ss <<  PROGRAM_NAME << "_topologies." << run_id << "." << i; 
+	  ss <<  PROGRAM_NAME << "_topologies." << runId << "." << i; 
 	  fns.push_back(ss.str());
 	}
      
@@ -148,7 +148,7 @@ static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns)
 
 // TODO finalize output files  
 
-static int countNumberOfTreesQuick(char *fn )
+static int countNumberOfTreesQuick(const char *fn )
 {
   FILE *fh = fopen(fn, "r"); 
 
@@ -168,25 +168,41 @@ static int countNumberOfTreesQuick(char *fn )
 }
 
 
+// void SampleMaster::initializeRunParameters()
+// {
+  
 
-SampleMaster::SampleMaster(int seed, initParamStruct *initParams, int _myBatch )
-  : diagFreq(initParams->diagFreq)
-  , asdsfIgnoreFreq(initParams->asdsfIgnoreFreq)
-  , asdsfConvergence(initParams->asdsfConvergence)
-  , burninGen(initParams->burninGen)
-  , burninProportion(initParams->burninProportion)
-  , samplingFreq(initParams->samplingFrequency)
-  , numRunConv(initParams->numIndiChains)
-  , numGen(initParams->numGen)
-  , myBatch(_myBatch)
+// }
+
+
+
+
+
+SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl) 
+  : 
+  runId(cl.getRunid())
+  // : diagFreq(initParams->diagFreq)
+  // , asdsfIgnoreFreq(initParams->asdsfIgnoreFreq)
+  // , asdsfConvergence(initParams->asdsfConvergence)
+  // , burninGen(initParams->burninGen)
+  // , burninProportion(initParams->burninProportion)
+  // , samplingFreq(initParams->samplingFrequency)
+  // , numRunConv(initParams->numIndiChains)
+  // , numGen(initParams->numGen)
+  // , myBatch(_myBatch)
 {
+  ConfigReader reader; 
+  
+  initParamStruct *initParams; 
+  assert(0); 
+  
   assert(initParams->numCoupledChains != 0 ); 
 
   FILE *treeFH = NULL; 
-  int numTrees = countNumberOfTreesQuick(tree_file); 
+  int numTrees = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
   
   if( numTrees > 0 )
-    treeFH = myfopen(tree_file, "r"); 
+    treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
 
   PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", initParams->numIndiChains, initParams->numCoupledChains ); 
 
@@ -202,7 +218,7 @@ SampleMaster::SampleMaster(int seed, initParamStruct *initParams, int _myBatch )
   for(int i = 0; i < initParams->numCoupledChains; ++i)
     {
       TreeAln *traln = new TreeAln();
-      traln->initializeFromByteFile(byteFileName); 
+      traln->initializeFromByteFile(cl.getAlnFileName()); 
 #if HAVE_PLL != 0 
       traln->enableParsimony();
 #endif
@@ -210,7 +226,7 @@ SampleMaster::SampleMaster(int seed, initParamStruct *initParams, int _myBatch )
     }
 
 
-  Randomness masterRand(seed);   
+  Randomness masterRand(cl.getSeed());   
   vector<int> runSeeds; 
   vector<int> treeSeeds; 
   for(int i = 0; i < initParams->numIndiChains;++i)

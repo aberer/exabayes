@@ -7,6 +7,13 @@ using namespace std;
 
 
 CommandLine::CommandLine(int argc, char *argv[])
+  : seed(0)
+  , configFileName("")
+  , alnFileName("")
+  , runid("")
+  , treeFile("")
+  , workDir("")
+  , runNumParallel(1)
 {
   parse(argc, argv) ;
 }
@@ -44,12 +51,25 @@ void CommandLine::printHelp()
        << "\t-w dir\t\tspecify a working directory for output files (NOT IMPLEMENTED)\n"
        << "\t-s seed\t\ta master seed for the MCMC [mandatory]\n"
        << "\t-n ruid\t\ta run id [mandatory]\n"
+       << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel"
        << endl; 
 
   exit(0); 
 }
 
 
+void CommandLine::assertFileExists(string filename)
+{
+  FILE *fh = myfopen(filename.c_str(), "r");
+
+  if(fh == NULL )
+    {
+      fclose(fh); 
+      cout << "could not file file " << filename << ". Aborting." << endl; 
+      exit(0);
+    }
+  fclose(fh); 
+}
 
 
 
@@ -60,12 +80,6 @@ void CommandLine::parse(int argc, char *argv[])
 {
   int c ; 
 
-
-  bool runidSet = false, 
-  configFileSet = false, 
-  alnFileSet = false, 
-    seedSet = false; 
-
   // TODO threads/ processes? 
   // TODO implement working directory 
   
@@ -75,23 +89,13 @@ void CommandLine::parse(int argc, char *argv[])
 	{
 	case 'c': 		// config file 	  
 	  {
-	  strcpy(configFileName, optarg) ; 
-	  if( NOT filexists(configFileName))
-	    {
-	      cout << "could not find file "  << configFileName << ". Aborting." << endl; 
-	      exit(0); 
-	    }
-	  configFileSet = true; 
+	    configFileName = string(optarg); 
+	    assertFileExists(configFileName);
 	  }
 	  break; 
 	case 'f': 		// aln file 
-	  strcpy(byteFileName, optarg); 
-	  if( NOT filexists(byteFileName))
-	    {
-	      cout << "could not find file "  << byteFileName << ". Aborting." << endl; 
-	      exit(0); 
-	    }
-	  alnFileSet = true; 
+	  alnFileName = string(optarg); 
+	  assertFileExists(alnFileName); 
 	  break; 
 	case 'v':  		// version 
 	  printVersion();
@@ -101,48 +105,44 @@ void CommandLine::parse(int argc, char *argv[])
 	  printHelp();
 	  break; 
 	case 'n': 		// runid 
-	  strcpy(run_id,optarg); 
-	  runidSet = true ; 
+	  runid = string(optarg); 	  
 	  break; 
 	case 't': 		// trees -- have that in the config file? 
-	  strcpy(tree_file, optarg); 
-	  if( NOT filexists(tree_file))
-	    {
-	      cout << "could not find file "  << tree_file << ". Aborting." << endl; 
-	      exit(0); 
-	    }
+	  treeFile = string(optarg); 
 	  break; 
-	case 'w':		// working dir TODO 
-	  strcpy(workdir, optarg); 
+	case 'w':		// working dir  
+	  workDir = string(optarg); 
 	  break; 
 	case 's': 		// seed 
 	  seed = atoi(optarg);
-	  seedSet = true; 
 	  break; 
+	case 'R': 
+	  runNumParallel = atoi(optarg);
+	  break; 	  
 	default: 
 	  printf("?? Encountered unknown command line argument 0%o ??\n\nFor an overview of program options, please use -h", c);
 	}
     }  
   
-  if(not runidSet)
+  if(runid.compare("") == 0 )
     {
       cerr << "please specify a runid with -n runid" << endl; 
       abort(); 
     }
 
-  if(not seedSet)
+  if(seed == 0 )
     {
-      cerr << "please specify a seed via -s seed"   << endl; 
+      cerr << "please specify a seed via -s seed (must NOT be 0)"   << endl; 
       abort(); 
     }
 
-  if(not configFileSet)
+  if( configFileName.compare("") == 0)
     {
       cerr << "please specify a config file via -c configfile" << endl << "You find a template in the examples/ folder" << endl; 
       abort(); 
     }
 
-  if(not alnFileSet)
+  if(alnFileName.compare("") == 0 )
     {
       cerr << "please specify a binary alignment file via -f file" <<  endl 
 	   << "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << endl; 

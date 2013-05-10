@@ -25,7 +25,7 @@ public:
   nodeptr getUnhookedNode(int number);
   void discretizeGamma(int model); 
 
-  void initializeFromByteFile(char *bytefile); 
+  void initializeFromByteFile(string  byteFileName); 
   
 
   void enableParsimony();
@@ -94,8 +94,9 @@ private:
 #if HAVE_PLL != 0
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
   partitionList* partitions; 
-  void initializeTreePLL();
-  void initializePartitionsPLL(char *bytefile, double ***empFreq, bool multiBranch);
+  void initializeTreePLL(string byteFileName);
+  // void initializeTreePLL();
+  void initializePartitionsPLL(string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
 
 };  

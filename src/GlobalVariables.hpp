@@ -33,7 +33,6 @@ public:
 
 #ifdef _INCLUDE_DEFINITIONS
 
-
 bool isNewProposal[NUM_PROPOSALS] = 
   {
     true,     
@@ -64,7 +63,7 @@ bool isNewProposal[NUM_PROPOSALS] =
 
 
 /* more global variables =(  */
-char configFileName[1024]; 
+// char configFileName[1024]; 
 
 
 GlobalVariables globals; 
@@ -75,18 +74,15 @@ double timeIncrement = 0;
 #else 
 extern GlobalVariables globals; 
 
-extern bool isNewPropossal[NUM_PROPOSALS]; 
-extern int Thorough; 
-extern int processID; 
-extern char run_id[1024]; 
-extern char configFileName[1024]; 
-extern char workdir[1024]; 
-extern char tree_file[1024]; 
-extern char byteFileName[1024]; 
+extern bool isNewPropossal[NUM_PROPOSALS]; // HACK  needed 
+extern int processID; 		// needed for raxml 
 extern double timeIncrement;  
+
+// extern char run_id[1024]; 
+// extern char configFileName[1024]; 
+// extern char workdir[1024]; 
+// extern char tree_file[1024]; 
+// extern char byteFileName[1024]; 
 extern char infoFileName[1024];
 
 #endif
-
-
-

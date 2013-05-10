@@ -53,12 +53,12 @@ TreeAln::TreeAln()
 }
 
 
-void TreeAln::initializeFromByteFile(char *bytefile)
+void TreeAln::initializeFromByteFile(string byteFileName)
 {
 #if HAVE_PLL != 0
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
   partitions = pl;
-  this->initializeTreePLL();
+  this->initializeTreePLL(byteFileName);
 #else 
   analdef adef ; 
 
@@ -482,30 +482,29 @@ void TreeAln::discretizeGamma(int model)
 // it =/
 #if HAVE_PLL  != 0 
 
-void TreeAln::initializeTreePLL()
+void TreeAln::initializeTreePLL(string byteFileName)
 {
   partitionList *pl = getPartitionsPtr();
   pl->partitionData = (pInfo**)exa_malloc(NUM_BRANCHES*sizeof(pInfo*));
 
   double **empFreq = NULL; 
   bool perGeneBL = false; 
-  initializePartitionsPLL(&(byteFileName[0]), &empFreq, perGeneBL );
+  initializePartitionsPLL(byteFileName, &empFreq, perGeneBL );
 
   initializePartitionsSequential(getTr(), getPartitionsPtr());
   initModel(getTr(), empFreq, getPartitionsPtr());
 } 
 
 
-void TreeAln::initializePartitionsPLL(char *bytefile, double ***empiricalFrequencies, bool multiBranch)
+void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFrequencies, bool multiBranch)
 {
-  // analdef *adef = globals.adef ; 
   tree *tr = getTr();
   partitionList *partitions = getPartitionsPtr();
 
   unsigned char *y;
 
   FILE 
-    *byteFile = myfopen(bytefile, "rb");	 
+    *byteFile = myfopen(byteFileName.c_str(), "rb");	 
 
   myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
   myBinFread(&(tr->originalCrunchedLength), sizeof(int), 1, byteFile);

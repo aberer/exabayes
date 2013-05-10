@@ -1,6 +1,8 @@
 #ifndef _PARAMETER_H
 #define _PARAMETER_H
 
+#include <cassert>
+
 #include "TreeAln.hpp"
 #include "categoryType.h"
 

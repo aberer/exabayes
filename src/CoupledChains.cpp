@@ -22,9 +22,12 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
 {
   assert((nat)numCoupled == trees.size());
 
+  string runname = ""; 
+  assert(0);
+
   for(int i = 0; i < numCoupled; ++i)
     {
-      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], initParams); 
+      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], runname); 
 
       chain->setDeltaT(initParams->heatFactor); 
       chains.push_back(chain);

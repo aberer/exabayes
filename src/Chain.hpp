@@ -92,7 +92,7 @@ public:
 
   // CORRECT part 
 public: 
-  Chain(randKey_t seed, int id, int runid, TreeAln* trealns, initParamStruct *initParams)  ; 
+  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, string runName )  ; 
   Chain& operator=(Chain& rhs); 
 
   void setupProposals(initParamStruct *initParam);

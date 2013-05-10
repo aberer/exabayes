@@ -1,4 +1,6 @@
 
+#include <cassert>
+
 #include "axml.h"
 #include "GlobalVariables.hpp"
 #include "adapters.h"
