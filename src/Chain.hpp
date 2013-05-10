@@ -57,11 +57,6 @@ typedef struct
 } paramDump; 
 
 
-
-
-
-
-
 class Chain
 {
   // LEGACY stuff 
@@ -70,7 +65,6 @@ public:
   // TODO shared pointer!
   TreeAln *traln; 
 
-  // int id;   
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   int currentGeneration;   
 
@@ -79,17 +73,13 @@ public:
   /* saves the entire space in the parameter space  */
   paramDump dump;
 
-  /* new stuff that we need when having multiple chains  */
-  // FILE *topologyFile; 
-  // FILE *outputParamFile; 
-
   double hastings;/// the proposal ratio 
 
   vector<Category> proposalCategories; // proposals that we implemented using the new framework 
 
   // CORRECT part 
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, PriorBelief _prior, vector<Category> propCats);
+  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats) ;
   Chain& operator=(Chain& rhs); 
 
   // getters and setters 

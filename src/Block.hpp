@@ -19,6 +19,7 @@ public:
 
   virtual void Read(NxsToken &token); 
   void setupMap(); 
+  void fillProposalWeights(vector<double> &weights){ weights = proposalWeights;  } 
 
 private: 
   SampleMaster *sm; 

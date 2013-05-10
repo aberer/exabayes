@@ -185,10 +185,10 @@ static int countNumberOfTreesQuick(const char *fn )
 
 
 
-void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<Category> &proposalResult )
-{
-  assert(0);
 
+
+void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights )
+{
   ConfigReader reader;   
   ifstream fh(configFileName);
   NxsToken token(fh);
@@ -197,10 +197,8 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
   reader.Add(&block) ; 
   reader.Execute(token);  
 
+  block.fillProposalWeights(proposalWeights);
   validateRunParams();
-
-  // TODO 
-  
 
 }
 
@@ -237,7 +235,10 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 
   PriorBelief prior;
   vector<Category> proposals; 
-  initWithConfigFile(cl.getConfigFileName(), prior, proposals);
+
+  vector<double> proposalWeihgts; 
+
+  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeihgts);
 
   
   if( numTrees > 0 )

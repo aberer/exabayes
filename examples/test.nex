@@ -25,9 +25,6 @@ begin EXABAYES;
        [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
       burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
 
-      [ PARALLELIZATION ]
-      numRunParallel 2       [ number of runs (i.e., independant chains) that are executed in parallel; currently this only can be used with ExaML ] 
-
 
       [================================================================]
       [ PRIOR configuration ]

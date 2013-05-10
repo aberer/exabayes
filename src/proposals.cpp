@@ -64,26 +64,6 @@ static void record_branch_info(TreeAln* traln, nodeptr p, double *bl)
 }
 
 
-/* TODO more diagnostics on where the stuff moves to  */
-int extended_spr_traverse(Chain *chain, nodeptr *insertNode, double stopProp)
-{
-  int 
-    result, 
-    r = chain->getChainRand()->drawRandDouble01(); 
-
-  if(r < 0.5 )
-    *insertNode = (*insertNode)->next->back; 
-  else 
-    *insertNode = (*insertNode)->next->next->back; 
-
-  double randprop = chain->getChainRand()->drawRandDouble01();
-
-  result = randprop < stopProp;
-  
-  return result; 
-}
-
-
 static void onePartitionEval(Chain *chain, proposalFunction *thisProposal)
 {
   int model = thisProposal->remembrance.partInfo->modelNum;
@@ -1311,38 +1291,6 @@ void branchLengthReset(Chain *chain, proposalFunction *pf)
 }
 
 
-
-
-// void resetGammaMulti(Chain *chain, proposalFunction *pf)
-// {
-
-// }
-
- 
-// void applyGammaMultiplier(Chain *chain, proposalFunction *pf)
-// {
-
-//   double multi = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier);   
-//   int model = chain->getChainRand()->drawRandInt( chain->traln->getNumberOfPartitions());
-//   pInfo *partition = chain->traln->getPartition( model); 
-
-//   chain->hastings *= multi; 
-  
-//   perPartitionInfo *pinfo = pf->remembrance.partInfo;
-//   pinfo->modelNum = model;   
-//   pinfo->alpha = chain->traln->getAlpha(model);
-  
-//   double oldAlpha = partition->alpha; 
-//   chain->traln->setAlphaSave( oldAlpha * multi, model); 
-// #ifdef PRINT_MULT
-//   cout  << setprecision(6) << "alpha-multi: " <<  oldAlpha <<   " * " << multi << " = "  << partition->alpha << endl; 
-// #endif
-
-//   chain->traln->discretizeGamma(model);
-// }
-
-
-
 void guided_branch_length_proposal_apply(Chain *chain, proposalFunction *pf)
 {
   // DUMMY, just for making it compile. 
@@ -1375,44 +1323,6 @@ void initProposalFunction( proposal_type type, vector<double> weights, proposalF
 
   switch(type)
     {
-    // case GUIDED_SPR:
-    //   ptr->name = "guidedSpr"; 
-    //   ptr->apply_func = applyGuidedSPR; 
-    //   ptr->eval_lnl = evalGuidedSPR; 
-    //   ptr->reset_func = resetGuidedSPR; 
-    //   ptr->remembrance.modifiedPath = new Path(); 
-    //   ptr->category = TOPOLOGY; 
-    //   ptr->parameters.radius =  initParams->initGuidedSPR; 
-    //   ptr->autotune = NULL;       
-    //   break; 
-    case UPDATE_MODEL: 	
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->autotune = autotuneSlidingWindow; 
-      ptr->apply_func = simple_model_proposal_apply; 
-      ptr->reset_func = simple_model_proposal_reset; 
-      ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN;
-      ptr->category = SUBSTITUTION_RATES; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name = "modelSlidWin"; 
-      break; 
-    case UPDATE_GAMMA:      	
-      ptr->eval_lnl = onePartitionEval;
-      ptr->autotune = autotuneSlidingWindow; 
-      ptr->apply_func = simple_gamma_proposal_apply; 
-      ptr->reset_func = simple_gamma_proposal_reset; 
-      ptr->parameters.slidWinSize = INIT_RATE_SLID_WIN; 
-      ptr->category = RATE_HETEROGENEITY; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name = "gammaSlidWin"; 
-      break; 
-    case UPDATE_GAMMA_EXP: 
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func = simple_gamma_proposal_apply; 
-      ptr->reset_func = simple_gamma_proposal_reset; 
-      ptr->category = RATE_HETEROGENEITY; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name = "gammaExp"; 
-      break; 
     case UPDATE_SINGLE_BL: 
       ptr->eval_lnl = evalBranch;
       ptr->autotune = autotuneSlidingWindow; 
@@ -1473,16 +1383,6 @@ void initProposalFunction( proposal_type type, vector<double> weights, proposalF
       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
       ptr->category = SUBSTITUTION_RATES; 
       break; 
-    case UPDATE_MODEL_DIRICHLET:
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func = model_dirichlet_proposal_apply; 
-      ptr->reset_func = simple_model_proposal_reset; 
-      ptr->name = "modelDirichlet"; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->category = SUBSTITUTION_RATES; 
-      ptr->parameters.dirichletAlpha = INIT_DIRICHLET_ALPHA; 
-      ptr->autotune = autotuneDirichletAlpha; 
-      break; 
     case UPDATE_FREQUENCIES_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = frequency_proposal_apply; 
@@ -1491,16 +1391,6 @@ void initProposalFunction( proposal_type type, vector<double> weights, proposalF
       ptr->name = "freqBiunif"; 
       ptr->category = FREQUENCIES; 
       break;
-    // case UPDATE_FREQUENCIES_DIRICHLET: 
-    //   ptr->eval_lnl = onePartitionEval; 
-    //   ptr->apply_func = frequency_dirichlet_proposal_apply; 
-    //   ptr->reset_func = frequency_proposal_reset; 
-    //   ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-    //   ptr->name = "freqDirichlet"; 
-    //   ptr->category = FREQUENCIES; 
-    //   ptr->parameters.dirichletAlpha = INIT_DIRICHLET_ALPHA; 
-    //   ptr->autotune = autotuneDirichletAlpha; 
-    //   break;
     case UPDATE_MODEL_PERM_BIUNIF: 
       ptr->eval_lnl = onePartitionEval; 
       ptr->apply_func = NULL; 	/* TODO */
@@ -1520,16 +1410,6 @@ void initProposalFunction( proposal_type type, vector<double> weights, proposalF
       ptr->name = "branchMult"; 
       ptr->category = BRANCH_LENGTHS; 
       break; 
-    // case FREQUENCY_SLIDER: 
-    //   ptr->eval_lnl = onePartitionEval; 
-    //   ptr->apply_func = frequencySliderApply; 
-    //   ptr->autotune = autotuneSlidingWindow; 
-    //   ptr->reset_func = frequency_proposal_reset; 
-    //   ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-    //   ptr->name = "freqSlider"; 
-    //   ptr->category = FREQUENCIES; 
-    //   ptr->parameters.slidWinSize = INIT_FREQ_SLID_WIN; 
-    //   break; 
     case NODE_SLIDER: 
       ptr->apply_func = applyNodeSlider; 
       ptr->eval_lnl = evaluateNodeSlider; 
@@ -1541,16 +1421,6 @@ void initProposalFunction( proposal_type type, vector<double> weights, proposalF
       ptr->category = BRANCH_LENGTHS; 
       ptr->parameters.multiplier = INIT_NODE_SLIDER_MULT; 
       break; 
-    // case GAMMA_MULTI: 
-    //   ptr->apply_func = applyGammaMultiplier;       
-    //   ptr->eval_lnl = onePartitionEval; 
-    //   ptr->reset_func = resetGammaMulti; 
-    //   ptr->autotune = autotuneMultiplier;  
-    //   ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-    //   ptr->name =  "gammaMulti"; 
-    //   ptr->category = RATE_HETEROGENEITY; 
-    //   ptr->parameters.multiplier = INIT_GAMMA_MULTI;       
-    //   break; 
       /* TODO re-install PROPOSALADD anchor for script   */
     default : 
       {

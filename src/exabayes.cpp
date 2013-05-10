@@ -153,6 +153,9 @@ int main(int argc, char *argv[])
   
   makeInfoFile(cl);
 
+  cl.printVersion(true);
+  tout << endl; 
+
 #if HAVE_PLL == 0 
   pl.initializeExaml(cl);
 #endif

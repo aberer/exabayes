@@ -20,7 +20,7 @@ static bool convertToBool(NxsString &string)
 
 ExabayesBlock::ExabayesBlock(SampleMaster *_sm ) 
 :sm(_sm)
-, proposalWeights(0, NUM_PROPOSALS)
+, proposalWeights(NUM_PROPOSALS)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "EXABAYES"; 
   setupMap();
@@ -102,29 +102,29 @@ void ExabayesBlock::Read(NxsToken &token)
 
 void ExabayesBlock::setupMap()
 {
-  name2proposal["model"] = UPDATE_MODEL; 
-  name2proposal["ratehetslider"] =  UPDATE_GAMMA;
-  name2proposal["treelengthmult"] =  TL_MULT;
-  name2proposal["ratehetmulti"] =  GAMMA_MULTI;
-  name2proposal["ratehetexp"] =  UPDATE_GAMMA_EXP;
-  name2proposal["singlebranch"] =  UPDATE_SINGLE_BL;
-  name2proposal["singlebranchexp"] =  UPDATE_SINGLE_BL_EXP;
-  name2proposal["singlebranchbiunif"] =  UPDATE_SINGLE_BL_BIUNIF;
-  name2proposal["modelbiunif"] =  UPDATE_MODEL_BIUNIF;
-  name2proposal["modelsinglebiunif"] =  UPDATE_MODEL_SINGLE_BIUNIF;
-  name2proposal["modelallbiunif"] =  UPDATE_MODEL_ALL_BIUNIF;
-  name2proposal["modelpermbiunif"] =  UPDATE_MODEL_PERM_BIUNIF;
-  name2proposal["modeldirichlet"] =  UPDATE_MODEL_DIRICHLET;
-  name2proposal["frequencies"] =  UPDATE_FREQUENCIES_BIUNIF;
-  name2proposal["espr"] =  E_SPR;
-  name2proposal["branchmulti"] =  BRANCH_LENGTHS_MULTIPLIER;
-  name2proposal["guidedbl"] =  UPDATE_SINGLE_BL_GUIDED;
-  name2proposal["frequencyslider"] =  FREQUENCY_SLIDER;
-  name2proposal["guidedspr"] =  GUIDED_SPR;
-  name2proposal["stnni"] =  ST_NNI;
-  name2proposal["nodeslider"] =  NODE_SLIDER;
-  name2proposal["frequencydirichlet"] =  UPDATE_FREQUENCIES_DIRICHLET;
-  name2proposal["etbr"] =  E_TBR;
-  name2proposal["parsimonyspr"] =  PARSIMONY_SPR;
+  name2proposal["MODEL"] = UPDATE_MODEL; 
+  name2proposal["RATEHETSLIDER"] =  UPDATE_GAMMA;
+  name2proposal["TREELENGTHMULT"] =  TL_MULT;
+  name2proposal["RATEHETMULTI"] =  GAMMA_MULTI;
+  name2proposal["RATEHETEXP"] =  UPDATE_GAMMA_EXP;
+  name2proposal["SINGLEBRANCH"] =  UPDATE_SINGLE_BL;
+  name2proposal["SINGLEBRANCHEXP"] =  UPDATE_SINGLE_BL_EXP;
+  name2proposal["SINGLEBRANCHBIUNIF"] =  UPDATE_SINGLE_BL_BIUNIF;
+  name2proposal["MODELBIUNIF"] =  UPDATE_MODEL_BIUNIF;
+  name2proposal["MODELSINGLEBIUNIF"] =  UPDATE_MODEL_SINGLE_BIUNIF;
+  name2proposal["MODELALLBIUNIF"] =  UPDATE_MODEL_ALL_BIUNIF;
+  name2proposal["MODELPERMBIUNIF"] =  UPDATE_MODEL_PERM_BIUNIF;
+  name2proposal["MODELDIRICHLET"] =  UPDATE_MODEL_DIRICHLET;
+  name2proposal["FREQUENCIES"] =  UPDATE_FREQUENCIES_BIUNIF;
+  name2proposal["ESPR"] =  E_SPR;
+  name2proposal["BRANCHMULTI"] =  BRANCH_LENGTHS_MULTIPLIER;
+  name2proposal["GUIDEDBL"] =  UPDATE_SINGLE_BL_GUIDED;
+  name2proposal["FREQUENCYSLIDER"] =  FREQUENCY_SLIDER;
+  name2proposal["GUIDEDSPR"] =  GUIDED_SPR;
+  name2proposal["STNNI"] =  ST_NNI;
+  name2proposal["NODESLIDER"] =  NODE_SLIDER;
+  name2proposal["FREQUENCYDIRICHLET"] =  UPDATE_FREQUENCIES_DIRICHLET;
+  name2proposal["ETBR"] =  E_TBR;
+  name2proposal["PARSIMONYSPR"] =  PARSIMONY_SPR;
 }
 

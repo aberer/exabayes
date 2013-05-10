@@ -27,7 +27,7 @@ extern bool isNewProposal[NUM_PROPOSALS];
 
 #include <sstream>
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, PriorBelief _prior, vector<Category> propCats) 
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats) 
   : traln(_traln)
   , couplingId(id)
   , currentGeneration(0)
@@ -46,8 +46,10 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, PriorBelief _p
   evaluateFullNoBackup(this);   
   
   tree *tr = traln->getTr();
-  tout <<  "init lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds="  << *chainRand << endl; 
+  tout << "[run:" << runid << ",heat:" <<  id <<   "] lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds="  << *chainRand << endl; 
   saveTreeStateToChain(); 
+  
+  clarifyOwnership();
 }
 
 

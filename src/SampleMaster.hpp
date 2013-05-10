@@ -31,7 +31,7 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, PriorBelief &prior, vector<Category> &proposalResult ); 
+  void initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights ); 
   void setupProposals(vector<double> proposalWeights, const PriorBelief &prior);
 
   // HERE 

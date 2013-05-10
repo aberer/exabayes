@@ -20,6 +20,7 @@ public:
   string getTreeFile() const {return treeFile; }
   int getNumRunParallel() const {return runNumParallel; }
   string getWorkdir() const {return workDir; }
+  void printVersion(bool toInfoFile);
 
 private: 
   int seed; 
@@ -32,7 +33,6 @@ private:
 
   void assertFileExists(string filename); 
   void parse(int argc, char *argv[]); 
-  void printVersion(bool toInfoFile);
   void printHelp();
 }; 
 
