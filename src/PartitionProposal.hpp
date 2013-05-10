@@ -29,6 +29,8 @@ public:
   virtual void autotune();	// disabled 
   virtual void setOwningChain(Chain *_chain) {chain = _chain;}
 
+  virtual PartitionProposal<FUN,PARAM>* clone() const; 
+
 private: 
   int model; 			// which model
   double parameter; 

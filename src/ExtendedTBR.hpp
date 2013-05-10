@@ -20,6 +20,8 @@ public:
   
   // this MUST be copied!! otherwise swapping will fail 
   virtual void setOwningChain(Chain *_chain){chain = _chain;}
+
+  virtual AbstractProposal* clone() const; 
   
 private: 
   void drawPaths(TreeAln &traln, Randomness &rand); 

@@ -53,4 +53,15 @@ void PartitionProposal<FUN,PARAM>::autotune()
 }
 
 
+template<typename FUN, typename PARAM> 
+PartitionProposal<FUN,PARAM>* PartitionProposal<FUN,PARAM>::clone() const
+{
+  return new PartitionProposal<FUN,PARAM>(chain, relativeProbability, parameter, name);
+}
+
+
+
+
+
+
 

@@ -27,14 +27,15 @@ extern bool isNewProposal[NUM_PROPOSALS];
 
 #include <sstream>
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats) 
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats, int _tuneFreq) 
   : traln(_traln)
-  , couplingId(id)
-  , currentGeneration(0)
-  , hastings(1)
-  , proposalCategories(propCats)    
   , runid(_runid)
   , prior(_prior)
+  , tuneFrequency(_tuneFreq)
+  , hastings(1)
+  , currentGeneration(0)
+  , couplingId(id)
+  , proposalCategories(propCats)    
 {
   chainRand = new Randomness(seed.v[0]);
 
@@ -137,13 +138,7 @@ void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   if(isOutputProcess())
-    {
-      if(accepted)
-	printInfo( "ACC\t");   
-      else 
-	printInfo("rej\t");   	  
-      printf("%s %g\n" ,prob->getName().c_str() , lnl); 
-    }
+    tout << "[run:" << runid << ",heat:"  << couplingId << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << lnl << endl; 
 #endif
 }
 
@@ -201,6 +196,9 @@ void Chain::step()
   double acceptance = 
     exp(( priorRatio   + lnlRatio) * myHeat) 
     * hastings;
+
+  // TODO log-ify the hastings
+
   
   bool wasAccepted  = testr < acceptance; 
 
@@ -291,27 +289,6 @@ void Chain::initParamDump()
 	p->frequencies[j] = 0.25;       
     }
 }
-
-
-/**
-   @brief prints a message with associated chain/run/heat information. 
-
-   Please always use this, when possible, it also assures that the
-   message is only printed once.
- */ 
-// void Chain::printInfo(const char *format, ...)
-// {  
-//   if( isOutputProcess())
-//     {
-//       printf("[run %d / heat %d / gen %d] ", this->runid, this->couplingId, this->currentGeneration); 
-//       va_list args;
-//       va_start(args, format);     
-//       vprintf(format, args );
-//       va_end(args);
-//     }
-// }
-
-
 
 
 void Chain::clarifyOwnership()

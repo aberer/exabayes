@@ -65,21 +65,12 @@ public:
   // TODO shared pointer!
   TreeAln *traln; 
 
-  int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  int currentGeneration;   
-
-  double penaltyFactor; //change to the probability of picking a proposal  
-
   /* saves the entire space in the parameter space  */
   paramDump dump;
 
-  double hastings;/// the proposal ratio 
-
-  vector<Category> proposalCategories; // proposals that we implemented using the new framework 
-
   // CORRECT part 
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats) ;
+  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats, int tuneFreq) ;
   Chain& operator=(Chain& rhs); 
 
   // getters and setters 
@@ -88,6 +79,8 @@ public:
   void setRestorer(LnlRestorer *rest){restorer = rest ; }
   LnlRestorer* getRestorer(){return restorer; }
   vector<Category>& getProposalCategories(){return proposalCategories;}
+  int getCouplingId(){return couplingId; }
+  void setCouplingId(int id) {couplingId = id; }
   
   /** @brief draws a proposal function. */ 
   AbstractProposal* drawProposalFunction( ); 
@@ -114,17 +107,26 @@ public:
 
   void clarifyOwnership(); 
   
+  void addToHastings(double _hastings) {hastings *= _hastings; }
+  
 private : 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   Randomness *chainRand; 
   LnlRestorer *restorer; 
   int runid; 
   PriorBelief prior; 
-  
+
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
+
+  double hastings;/// the proposal ratio 
+  int currentGeneration;   
 
   void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl ) ; 
   void initParamDump(); 
+
+  int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
+  
+  vector<Category> proposalCategories; // proposals that we implemented using the new framework 
 }; 
 
 

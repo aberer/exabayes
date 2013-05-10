@@ -15,9 +15,6 @@
 #include "PriorBelief.hpp"
 #include "AbstractProposal.hpp"
 
-
-
-
 class ConfigReader : public NxsReader
 {
 public: 
@@ -27,29 +24,5 @@ public:
   virtual void ExecuteStarting(){}
 
 }; 
-
-
-typedef struct  
-{
-  double initWeights[NUM_PROPOSALS]; 
-  double eSprStopProb; 
-  int numGen; 
-  int samplingFrequency; 
-  int numIndiChains; 
-  int diagFreq; 
-  int numCoupledChains; 
-  int initGuidedSPR; 
-  int printFreq; 
-  double asdsfIgnoreFreq; 
-  double asdsfConvergence; 
-  double heatFactor; 
-  int swapInterval; 
-  bool tuneHeat;
-  int burninGen ; 
-  double burninProportion; 
-  int tuneFreq; 
-  int numRunParallel; 
-  double parsWarp; 
-} initParamStruct ; 
 
 #endif

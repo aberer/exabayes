@@ -176,3 +176,8 @@ void ParsimonySPR::autotune()
   // nothing to do 
 }
 
+
+AbstractProposal* ParsimonySPR::clone() const
+{
+  return new ParsimonySPR(chain, relativeProbability, parsWarp, blMulti);
+} 

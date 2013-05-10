@@ -24,7 +24,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
   MPI_Comm_size(MPI_COMM_WORLD, &globalSize);
   
-  tout << endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << endl; 
+  tout << endl << endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << endl; 
   MPI_Barrier(MPI_COMM_WORLD);
 
   

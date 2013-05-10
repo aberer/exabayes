@@ -22,6 +22,8 @@ public:
   virtual void autotune() {}	// disabled 
   virtual void setOwningChain(Chain *_chain) {chain = _chain;}
 
+    virtual AbstractProposal* clone() const;  
+
 protected: 
   Chain* chain; 
   double stopProb; 

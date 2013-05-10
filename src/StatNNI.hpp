@@ -29,6 +29,8 @@ public:
   virtual void autotune() {}	// disabled 
   virtual void setOwningChain(Chain *_chain) {chain = _chain;}
 
+  virtual AbstractProposal* clone() const;  
+
 private:
   Chain* chain; 
   double multiplier; 

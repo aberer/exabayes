@@ -31,6 +31,8 @@ public:
   virtual void resetState(TreeAln &traln, PriorBelief &prior) = 0 ; 
   virtual void autotune() = 0  ;
 
+  virtual AbstractProposal* clone() const = 0;  
+
   // HACK! 
   virtual void setOwningChain( Chain *chain) =  0 ; 
 

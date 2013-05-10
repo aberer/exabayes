@@ -17,6 +17,8 @@ public:
   Category(string name, category_t _type, double catFreq, vector<AbstractProposal*> _proposals ); 
   ~Category(); 
 
+  void copyDeep(Category& rhs); 
+  
   /** @brief adds a proposal */ 
   void addProposal(AbstractProposal *proposal){proposals.push_back(proposal); }
 

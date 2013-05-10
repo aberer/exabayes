@@ -32,18 +32,17 @@ public:
   void finalizeRuns();  
   void run(); 
   void initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights ); 
-  void setupProposals(vector<double> proposalWeights, const PriorBelief &prior);
+  void setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior);
 
   // HERE 
   void setGuidedRadius ( int guidedRadius ) {this->guidedRadius = guidedRadius ; }
   void setParsimonyWarp   ( double parsimonyWarp   ) {this->parsimonyWarp   = parsimonyWarp   ; }
-  void setEsprStopProp ( int esprStopProp ) {this->esprStopProp = esprStopProp ; }
+  void setEsprStopProp ( double esprStopProp ) {this->esprStopProp = esprStopProp ; }
   void setTuneFreq  ( int tuneFreq  ) {this->tuneFreq  = tuneFreq  ; }
 
   void setNumGen(int numGen){this->numGen = numGen; }
   void setDiagFreq(int diagFreq) {this->diagFreq = diagFreq; }
   void setAsdsfIgoreFreq(double asdsfIgnoreFreq){this->asdsfIgnoreFreq = asdsfIgnoreFreq; }
-  // void setMyBatch ( int myBatch ) {this->myBatch = myBatch ; }
   void setRunId ( string runId ) {this->runId = runId ; }
   void setNumRunConv ( int numRunConv ) {this->numRunConv = numRunConv ; }
   void setSamplingFreq ( int samplingFreq ) {this->samplingFreq = samplingFreq ; }
@@ -77,7 +76,7 @@ private:
   int tuneFreq;  
 
   // move options
-  int esprStopProp; 
+  double esprStopProp; 
   double parsimonyWarp;   
   int guidedRadius; 
 

@@ -164,9 +164,7 @@ static void simple_gamma_proposal_apply(Chain * chain, proposalFunction *pf)
     default:
       assert(0);
     }
-  
-  chain->hastings = 1; //since it is symmetrical, hastings=1
-  
+
   chain->traln->setAlphaSave(newalpha, model); 
   chain->traln->discretizeGamma(model); 
 }
@@ -288,7 +286,7 @@ static void simple_model_proposal_apply(Chain *chain, proposalFunction *pf)
 	      curv = traln->getSubstRate(model, changeState); 
 	      r =  chain->getChainRand()->drawRandBiUnif( curv);
 	      new_value = r;
-	      chain->hastings*=curv/new_value;
+	      chain->addToHastings(curv/new_value);
  
 	      while(new_value> RATE_MAX|| new_value< RATE_MIN)
 		{
@@ -382,8 +380,8 @@ static void model_dirichlet_proposal_apply(Chain *chain, proposalFunction *pf)//
 
      
   chain->getChainRand()->drawDirichletExpected(r, partition->substRates, pf->parameters.dirichletAlpha, numRates);
-  chain->hastings= densityDirichlet(partition->substRates, r, numRates) 
-    / densityDirichlet(r, partition->substRates, numRates);    
+  chain->addToHastings( densityDirichlet(partition->substRates, r, numRates) 
+			/ densityDirichlet(r, partition->substRates, numRates) ) ;    
   
   /* Ensure always you stay within this range */
   for(int i=0; i<numRates; i++)
@@ -483,7 +481,7 @@ static void perm_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
 	if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
       }
       
-      chain->hastings*=curv/new_value;
+      chain->addToHastings(curv/new_value);
       edit_subs_rates(chain,model, perm[state], new_value);      
     }
       
@@ -533,7 +531,7 @@ static void single_biunif_model_proposal_apply(Chain *chain,proposalFunction *pf
 
   edit_subs_rates(chain,model, randState, new_value);
 
-  chain->hastings=curv/new_value;
+  chain->addToHastings(curv/new_value);
 
   
   chain->traln->initRevMat(model);
@@ -576,7 +574,7 @@ static void all_biunif_model_proposal_apply(Chain *chain, proposalFunction *pf)
       if(new_value< RATE_MIN) new_value= 2*RATE_MIN-new_value;
       }
       
-       chain->hastings*=curv/new_value;
+      chain->addToHastings(curv/new_value);
       edit_subs_rates(chain,model, state, new_value);
     }
   chain->traln->initRevMat(model);
@@ -694,7 +692,7 @@ static void set_branch_length_biunif(Chain *chain, nodeptr p, int numBranches,Ch
       
       newValue = r; 
       
-      s->hastings=real_z/newValue;
+      s->addToHastings(real_z/newValue);
       /* s->newprior=get_branch_length_prior(&newValue); */
     
       /* Ensure always you stay within this range */
@@ -739,7 +737,7 @@ static void set_branch_length_exp(Chain *chain, nodeptr p, int numBranches,Chain
       real_z = -log( traln->getBranchLength( p,0)) * chain->traln->getTr()->fracchange;
        r = chain->getChainRand()->drawRandExp( 1.0/real_z);
 
-	s->hastings=(1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r));
+       s->addToHastings((1/r)*exp(-(1/r)*real_z)/((1/real_z)*exp(-(1/real_z)*r)));
 
 	/* s->newprior=get_branch_length_prior(&r); */
 	
@@ -1013,7 +1011,7 @@ void frequency_proposal_apply(Chain * chain, proposalFunction *pf)
     {
       double curv = chain->traln->getFrequency(model,state);
       r[state] = chain->getChainRand()->drawRandBiUnif(curv);       
-      chain->hastings*=curv/r[state];      
+      chain->addToHastings(curv/r[state]); 
     }
 
   double sum=0;  
@@ -1056,7 +1054,8 @@ void frequency_dirichlet_proposal_apply(Chain * chain, proposalFunction *pf)
         
   //drawRandDirichlet(chain, r, partition->frequencies, 1.0, numFreq);
   chain->getChainRand()->drawDirichletExpected( r, partition->frequencies, pf->parameters.dirichletAlpha, numFreq);
-  chain->hastings= densityDirichlet(partition->frequencies, r, numFreq) / densityDirichlet(r, partition->frequencies, numFreq);
+  chain->addToHastings(densityDirichlet(partition->frequencies, r, numFreq) 
+		       / densityDirichlet(r, partition->frequencies, numFreq));
 
   /*
   //Validation-----------------------------------------
@@ -1179,7 +1178,7 @@ static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
 
 
   /* according to lakner2008  */
-  chain->hastings *= multiplier; 
+  chain->addToHastings( multiplier); 
  
   /* just doing it for one right here */
   traln->setBranchLengthSave(newZ, 0, p); 

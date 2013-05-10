@@ -50,7 +50,7 @@ void ExabayesBlock::Read(NxsToken &token)
 	    sm->setNumGen(value.ConvertToInt()); 
 	  else if(key.EqualsCaseInsensitive("samplingfrequency"))
 	    sm->setSamplingFreq(value.ConvertToInt());
-	  else if(key.EqualsCaseInsensitive("eSprStopProb"))
+	  else if(key.EqualsCaseInsensitive("esprstopprob"))	    
 	    sm->setEsprStopProp( value.ConvertToDouble());
 	  else if(key.EqualsCaseInsensitive("numIndiChains"))
 	    sm->setNumRunConv(value.ConvertToInt());
@@ -58,7 +58,7 @@ void ExabayesBlock::Read(NxsToken &token)
 	    sm->setDiagFreq(value.ConvertToInt());
 	  else if(key.EqualsCaseInsensitive("numcoupledChains"))
 	    sm->setNumCoupledChains(value.ConvertToInt());
-	  else if(key.EqualsCaseInsensitive("guidedSPRRadius"))
+	  else if(key.EqualsCaseInsensitive("guidedsprradius"))
 	    sm->setGuidedRadius(value.ConvertToInt());
 	  else if(key.EqualsCaseInsensitive("printFreq") )	   
 	    sm->setPrintFreq( value.ConvertToInt());

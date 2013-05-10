@@ -409,9 +409,9 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   /* set the hastings */  
   insertList *entry = getEntry(lnlList, pruneBranch); 
-  assert( sampledElem->containedInFirst && entry->containedInSecond  && chain->hastings == 1.); 
+  assert( sampledElem->containedInFirst && entry->containedInSecond); 
   assert(entry->weightInSecond != 0 &&  sampledElem->weightInFirst != 0); 
-  chain->hastings = entry->weightInSecond / sampledElem->weightInFirst; 
+  chain->addToHastings(entry->weightInSecond / sampledElem->weightInFirst); 
 #if DEBUG_GUIDED_SPR   > 1 
   printf("hastings: %g / %g => %g\n", entry->weightInSecond, sampledElem->weightInFirst , chain->hastings); 
 #endif
@@ -482,3 +482,9 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
   debug_printTree(traln);
 } 
 
+
+
+AbstractProposal* RadiusMlSPR::clone() const
+{
+  return new RadiusMlSPR(chain,relativeProbability, radius);
+}

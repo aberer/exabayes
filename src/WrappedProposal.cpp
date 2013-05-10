@@ -33,3 +33,10 @@ void WrappedProposal::autotune()
   if(pfun->autotune != NULL)
     pfun->autotune(pfun, &sctr);
 }
+
+
+WrappedProposal* WrappedProposal::clone() const
+{  
+  WrappedProposal* result = new WrappedProposal(pfun, chain);
+  return result; 
+} 

@@ -3,7 +3,7 @@
 #include "eval.h"
 
 
-NodeSlider::NodeSlider(Chain *_chain, double _relativeProbability, double _multiplier, string name)
+NodeSlider::NodeSlider(Chain *_chain, double _relativeProbability, double _multiplier)
   : chain(_chain)
   , multiplier(_multiplier)
 {
@@ -124,3 +124,10 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
 
   path.clear(); 
 }
+
+
+AbstractProposal* NodeSlider::clone() const
+{
+  NodeSlider* result = new NodeSlider(chain, relativeProbability, multiplier);
+  return result;   
+}  

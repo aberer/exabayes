@@ -50,3 +50,19 @@ AbstractProposal* Category::drawProposal(Randomness &rand)
 Category::~Category()
 {
 }
+
+
+void Category::copyDeep(Category& rhs)
+{
+  name = rhs.name; 
+  type = rhs.type; 
+  proposals.clear();
+  categoryFrequency = rhs.categoryFrequency;   
+  for(auto p : rhs.proposals)
+    proposals.push_back(p->clone());   
+}
+
+
+
+
+

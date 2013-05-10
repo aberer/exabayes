@@ -27,7 +27,7 @@ class SuccessCtr;
 class CoupledChains
 {
 public: 
-  CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals); 
+  CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals, int tuneFreq); 
   // ~CoupledChains(){}
 
   /** @brief initializes all trees with a given starting tree */

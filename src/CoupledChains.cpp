@@ -12,7 +12,7 @@
 #include "PriorBelief.hpp"
 #include "Category.hpp"
 
-CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals)
+CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals, int tuneFreq)
   : temperature(heatFactor)
   , rand(seed)
   , runid(_runid) 
@@ -26,7 +26,8 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
 
   for(int i = 0; i < numCoupled; ++i)
     {
-      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], prior, proposals); 
+      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], prior, proposals, tuneFreq); 
+      // cout << "tree " << i << *(trees[i]) << endl; 
 
       chain->setDeltaT(temperature); 
       chains.push_back(chain);
@@ -101,13 +102,13 @@ void CoupledChains::switchChainState()
   if(numChain == 1)
     return;   
 
-  int chainA = rand.drawRandInt(numChain),
-    chainB = chainA; 
-  while(chainA == chainB)
-    chainB = rand.drawRandInt(numChain); 
+  int chainAId = rand.drawRandInt(numChain),
+    chainBId = chainAId; 
+  while(chainAId == chainBId)
+    chainBId = rand.drawRandInt(numChain); 
 
-  int coupIdA = chains[chainA]->couplingId,
-    coupIdB = chains[chainB]->couplingId; 
+  int coupIdA = chains[chainAId]->getCouplingId(),
+    coupIdB = chains[chainBId]->getCouplingId(); 
   
 
   if(coupIdA > coupIdB)
@@ -121,13 +122,13 @@ void CoupledChains::switchChainState()
      prior. Allow for changes!
   */
 
-  double heatA = chains[chainA]->getChainHeat(),
-    heatB = chains[chainB]->getChainHeat(); 
+  double heatA = chains[chainAId]->getChainHeat(),
+    heatB = chains[chainBId]->getChainHeat(); 
 
   assert(heatA <= 1.f || heatB <= 1.f); 
 
-  double lnlA = chains[chainA]->traln->getTr()->likelihood,
-    lnlB = chains[chainB]->traln->getTr()->likelihood; 
+  double lnlA = chains[chainAId]->traln->getTr()->likelihood,
+    lnlB = chains[chainBId]->traln->getTr()->likelihood; 
 
   double 
     aB = lnlA *  heatB,
@@ -137,17 +138,18 @@ void CoupledChains::switchChainState()
 
   double accRatio = exp(( aB + bA )  - (aA + bB )); 
 
-  Chain *a = chains[ chainA],
-    *b = chains[ chainB] ; 
+  Chain *a = chains[ chainAId],
+    *b = chains[ chainBId] ; 
   
   /* do the swap */
   if( rand.drawRandDouble01()  < accRatio)
     {
       /* everything, we need to swap */
-      swap(a->couplingId, b->couplingId); 
+      int tmp = a->getCouplingId();
+      a->setCouplingId(b->getCouplingId()); 
+      b->setCouplingId(tmp); 
 
-      for(nat i = 0; i < a->proposalCategories.size(); ++i)
-	a->proposalCategories.swap(b->proposalCategories); 
+      swap(a->getProposalCategories(), b->getProposalCategories()); 
 
       // EVIL
       // for the legacy proposals, we need to update the chain ptr       
@@ -156,15 +158,15 @@ void CoupledChains::switchChainState()
 	b->clarifyOwnership();
       }
 
-      int r = MIN(a->couplingId, b->couplingId ); 
-      int c = MAX(a->couplingId, b->couplingId); 
+      int r = MIN(coupIdA, coupIdB ); 
+      int c = MAX(coupIdA, coupIdB); 
 
       swapInfo[r * chains.size() + c]->accept(); 
     } 
   else 
     {
-      int r = MIN(a->couplingId, b->couplingId ); 
-      int c = MAX(a->couplingId, b->couplingId); 
+      int r = MIN(coupIdA, coupIdB ); 
+      int c = MAX(coupIdA, coupIdB); 
 
       swapInfo[r * chains.size() + c]->reject(); 
     }
@@ -176,18 +178,18 @@ void CoupledChains::chainInfo()
   // find cold chain
   Chain *coldChain = NULL; 
   for(auto chain : chains )
-    if(chain->couplingId == 0)
+    if(chain->getCouplingId() == 0)
       coldChain = chain; 
   assert(coldChain != NULL); 
   
   tree *tr = coldChain->traln->getTr(); 
 
-  tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->currentGeneration << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\tTL=" << setprecision(2)<< branchLengthToReal(tr, coldChain->traln->getTreeLength()) << "\t" ; 
+  tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->getGeneration() << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\tTL=" << setprecision(2)<< branchLengthToReal(tr, coldChain->traln->getTreeLength()) << "\t" ; 
 
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
   for(auto chain : chains)
-    sortedChains[chain->couplingId] = chain; 
+    sortedChains[chain->getCouplingId()] = chain; 
   for(nat i = 1 ; i < chains.size(); ++i)
     {
       Chain *chain = sortedChains[i]; 
@@ -240,8 +242,8 @@ void CoupledChains::executePart(int gensToRun)
 		
 	      
 	      timeToPrint |= isOutputProcess() 
-		&& chain->couplingId == 0 && printFreq > 0
-		&& (chain->currentGeneration % printFreq )  == (printFreq - 1) ;
+		&& chain->getCouplingId() == 0 && printFreq > 0
+		&& (chain->getGeneration() % printFreq )  == (printFreq - 1) ;
 	    }
 	}
 

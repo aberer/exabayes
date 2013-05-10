@@ -93,7 +93,7 @@ bool SampleMaster::convergenceDiagnostic()
     }
   else 
     {
-      return runs[0].getChain(0)->currentGeneration > numGen;
+      return runs[0].getChain(0)->getGeneration() > numGen;
     }
 }
 
@@ -215,8 +215,8 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
   :  diagFreq(1000)
   , asdsfIgnoreFreq(0.1)
   , asdsfConvergence(0.01)
-  , burninGen(5000)
-  , burninProportion(0.25)
+  , burninGen(0)
+  , burninProportion(0)
   , samplingFreq(50)
   , numRunConv(2)
   , numGen(50000)
@@ -237,15 +237,21 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
   PriorBelief prior;
   vector<Category> proposals; 
 
-  vector<double> proposalWeihgts; 
+  vector<double> proposalWeights; 
 
-  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeihgts);
+  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeights);
+
+  assert(tuneFreq > 0); 
+
+  assert(esprStopProp > 0) ;
+
+  setupProposals(proposals, proposalWeights, prior);
 
   
   if( numTrees > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
 
-  tout << "Will run " << numRunConv << " runs in total with "<<  numCoupledChains << " coupled chains" << endl; 
+  tout << endl << "Will run " << numRunConv << " runs in total with "<<  numCoupledChains << " coupled chains" << endl << endl; 
 
 #ifdef DEBUG_LNL_VERIFY
   globals.debugTree = new TreeAln();   
@@ -290,7 +296,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 	continue; 
 #endif
 
-      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals)); 
+      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq)); 
     }
   
   if(tuneHeat)
@@ -360,12 +366,16 @@ void SampleMaster::finalizeRuns()
 
 
 
-
-void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBelief &prior)
+/** 
+    @brief sets up the proposals depending on the prior configuration 
+    
+ */ 
+void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior)
 {
   vector<proposalFunction*> legProp; 
   vector<AbstractProposal*> prop; 
-  
+
+
   // initialize proposals 
   for(int i = 0; i < NUM_PROPOSALS ; ++i)
     { 
@@ -384,7 +394,7 @@ void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBel
 	      switch(proposal_type(i))
 		{
 		case NODE_SLIDER:
-		  prop.push_back(new NodeSlider(NULL, weight, INIT_NODE_SLIDER_MULT, "nodeSlider"));
+		  prop.push_back(new NodeSlider(NULL, weight, INIT_NODE_SLIDER_MULT));		  
 		  break; 
 		case UPDATE_MODEL: 
 		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(NULL,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
@@ -424,6 +434,7 @@ void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBel
 		  break; 
 		case GUIDED_SPR:
 		  prop.push_back(new RadiusMlSPR(NULL, weight, guidedRadius )); 
+		  break; 
 		default : 
 		  assert(0); 
 		}
@@ -432,16 +443,10 @@ void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBel
     }
 
 
-  // danger,  we cannot rely on the fact that all proposals are used 
-  assert(0); 
-
-
   // get total sum 
   double sum = 0; 
   for(int i = 0; i < NUM_PROPOSALS; ++i)    
     sum += proposalWeights[i]; 
-
-  vector<Category> proposalCategories; 
 
   // create categories 
   vector<string> allNames = {"", "Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 

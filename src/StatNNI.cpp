@@ -157,3 +157,9 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
 
   path.clear();
 }
+
+
+AbstractProposal* StatNNI::clone()  const
+{
+  return new StatNNI(chain, relativeProbability, multiplier);
+}

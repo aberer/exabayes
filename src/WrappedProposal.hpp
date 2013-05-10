@@ -17,6 +17,7 @@ public:
   virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
   virtual void autotune() ;
+  virtual WrappedProposal* clone() const; 
 
   virtual void setOwningChain(Chain *_chain)  {chain = _chain; }
 

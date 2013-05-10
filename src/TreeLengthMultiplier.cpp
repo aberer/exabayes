@@ -81,3 +81,9 @@ void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 {
   evaluateGenericWrapper(chain, traln.getTr()->start, TRUE);
 }
+
+
+AbstractProposal* TreeLengthMultiplier::clone() const
+{
+  return new TreeLengthMultiplier(chain, relativeProbability, multiplier);
+}  

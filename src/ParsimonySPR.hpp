@@ -17,8 +17,6 @@
 class Chain; 
 
 
-
-
 class ParsimonySPR : public AbstractProposal
 {
 public: 
@@ -31,6 +29,7 @@ public:
   virtual void autotune() ;
 
   virtual void setOwningChain(Chain *_chain) {chain = _chain;}  
+  AbstractProposal* clone() const; 
   
 protected: 
   Chain *chain; 

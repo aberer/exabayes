@@ -369,3 +369,9 @@ void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln)
   printf("RESET: inserting %d into %d (%.2f),%d (%.2f)\n", sTPtr->number, fPtr->number, traln.getBranchLength( fPtr,0), sPtr->number, sPtr->z[0]); 
 #endif
 }
+
+
+AbstractProposal* ExtendedSPR::clone() const
+{
+  return new ExtendedSPR(chain, relativeProbability, stopProb, multiplier);
+}

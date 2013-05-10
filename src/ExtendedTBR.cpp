@@ -347,3 +347,9 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
   debug_printTree(traln);   
 }
 
+
+
+AbstractProposal* ExtendedTBR::clone() const 
+{
+  return new ExtendedTBR(chain, relativeProbability, extensionProbability, multiplier);
+}
