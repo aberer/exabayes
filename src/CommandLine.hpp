@@ -19,6 +19,7 @@ public:
   string getRunid() const {return runid; }
   string getTreeFile() const {return treeFile; }
   int getNumRunParallel() const {return runNumParallel; }
+  string getWorkdir() const {return workDir; }
 
 private: 
   int seed; 

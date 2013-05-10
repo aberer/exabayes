@@ -103,6 +103,25 @@ extern MPI_Comm comm;
 #endif
 
 
+
+
+#include <sstream>
+void makeInfoFile(const CommandLine &cl)
+{
+  stringstream ss; 
+  string workdir =  cl.getWorkdir(); 
+  ss << workdir ; 
+  if(workdir.compare("") != 0 )
+    ss << "/" ; 
+  ss << PROGRAM_NAME << "_info."  << cl.getRunid() ;
+  
+  // TODO maybe check for existance 
+
+  globals.logFile = ss.str();   
+}
+
+
+
 int main(int argc, char *argv[])
 {   
   ParallelSetup pl(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
@@ -119,11 +138,6 @@ int main(int argc, char *argv[])
 #if HAVE_PLL == 0 
   pl.initializeExaml(cl);
 #endif
-
-#if HAVE_PLL == 0
-  if(processID == 0)
-#endif
-    makeFileNames();
 
 
   exa_main( cl, pl); 

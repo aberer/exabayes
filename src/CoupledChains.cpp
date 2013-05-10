@@ -4,7 +4,6 @@
 #include "Chain.hpp"
 #include "adapters.h" 
 
-// #include "globals.h"
 #include "GlobalVariables.hpp"
 #include "proposals.h"
 #include "treeRead.h"

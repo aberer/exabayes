@@ -1,7 +1,8 @@
 
 /**
-   @file nclConfigReader.h
-   @brief Wraps the ncl-nexus parser for usage with ExaBayes.     
+   @file ConfigReader.hpp
+
+   @brief specializes a nxsreader for parsing of an exabayes block.
 */
 
 #ifndef _NCL_CONFIG_READER
@@ -14,6 +15,9 @@
 #include "PriorManager.hpp"
 #include "AbstractProposal.hpp"
 
+
+
+
 class ConfigReader : public NxsReader
 {
 public: 
@@ -21,14 +25,7 @@ public:
   virtual void ExitingBlock(NxsString blockName){}
   virtual void ExecuteStopping(){}
   virtual void ExecuteStarting(){}
-  
-  PriorManager getPriorConfig(){return priorConfig; }
-  
 
-private: 
-  PriorManager priorConfig;
-  vector<AbstractProposal*>  proposals;     
-  int numCoupledChains; 
 }; 
 
 
@@ -54,7 +51,5 @@ typedef struct
   int numRunParallel; 
   double parsWarp; 
 } initParamStruct ; 
-
-void parseConfigWithNcl(char *configFileName, initParamStruct **initParam); 
 
 #endif

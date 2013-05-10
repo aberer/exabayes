@@ -10,12 +10,16 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
-
+#include <string>
 #include "config.h"
 #include "proposalType.h"
 
+
+class TreeAln; 
 class BipartitionHash; 
 class SuccessCtr; 
+
+using namespace std; 
 
 
 class GlobalVariables
@@ -25,6 +29,7 @@ public:
   TreeAln *debugTree; 
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
 #endif
+  string logFile; 
 };
 
 
@@ -62,10 +67,6 @@ bool isNewProposal[NUM_PROPOSALS] =
   }; 
 
 
-/* more global variables =(  */
-// char configFileName[1024]; 
-
-
 GlobalVariables globals; 
 
 /* for crude performance measurements */
@@ -77,12 +78,5 @@ extern GlobalVariables globals;
 extern bool isNewPropossal[NUM_PROPOSALS]; // HACK  needed 
 extern int processID; 		// needed for raxml 
 extern double timeIncrement;  
-
-// extern char run_id[1024]; 
-// extern char configFileName[1024]; 
-// extern char workdir[1024]; 
-// extern char tree_file[1024]; 
-// extern char byteFileName[1024]; 
-extern char infoFileName[1024];
 
 #endif

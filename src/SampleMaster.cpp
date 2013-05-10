@@ -1,5 +1,7 @@
 #include <sstream>
+#include <fstream>
 
+#include "Block.hpp"
 #include "output.h"
 #include "eval.h"
 #include "adapters.h"
@@ -168,54 +170,74 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-// void SampleMaster::initializeRunParameters()
-// {
+
+
+
+void SampleMaster::initWithConfigFile(string configFileName)
+{
+  ConfigReader reader;   
+  ifstream fh(configFileName);
+  NxsToken token(fh);
+  
+  ExabayesBlock block(this);
+  reader.Add(&block) ; 
+  reader.Execute(token);  
+
+  validateRunParams();
+
+  // TODO 
   
 
-// }
+}
+
+
+void SampleMaster::validateRunParams()
+{
+  assert(numCoupledChains > 0); 
+}
 
 
 
 
 
 SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl) 
-  : 
-  runId(cl.getRunid())
-  // : diagFreq(initParams->diagFreq)
-  // , asdsfIgnoreFreq(initParams->asdsfIgnoreFreq)
-  // , asdsfConvergence(initParams->asdsfConvergence)
-  // , burninGen(initParams->burninGen)
-  // , burninProportion(initParams->burninProportion)
-  // , samplingFreq(initParams->samplingFrequency)
-  // , numRunConv(initParams->numIndiChains)
-  // , numGen(initParams->numGen)
-  // , myBatch(_myBatch)
+  :  diagFreq(1000)
+  , asdsfIgnoreFreq(0.1)
+  , asdsfConvergence(0.01)
+  , burninGen(5000)
+  , burninProportion(0.25)
+  , samplingFreq(50)
+  , numRunConv(2)
+  , numGen(50000)
+  , runId(cl.getRunid())
+  , numCoupledChains(1)
+  , printFreq(500)
+  , heatFactor(0.1)
+  , swapInterval(1)
+  , tuneHeat(true)
+  , tuneFreq(50)
+  , esprStopProp(0.5)
+  , parsimonyWarp(0.1)
+  , guidedRadius(5)
 {
-  ConfigReader reader; 
-  
-  initParamStruct *initParams; 
-  assert(0); 
-  
-  assert(initParams->numCoupledChains != 0 ); 
-
   FILE *treeFH = NULL; 
   int numTrees = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
   
   if( numTrees > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
 
-  PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", initParams->numIndiChains, initParams->numCoupledChains ); 
+  PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", numRunConv, numCoupledChains ); 
 
 #ifdef DEBUG_LNL_VERIFY
   globals.debugTree = new TreeAln();   
-  globals.debugTree->initializeFromByteFile(byteFileName); 
+  globals.debugTree->initializeFromByteFile(cl.getAlnFileName()); 
   globals.debugTree->enableParsimony();
 #endif
 
   // sets up tree structures 
   vector<TreeAln*>  trees; 
   
-  for(int i = 0; i < initParams->numCoupledChains; ++i)
+  for(int i = 0; i < numCoupledChains; ++i)
     {
       TreeAln *traln = new TreeAln();
       traln->initializeFromByteFile(cl.getAlnFileName()); 
@@ -229,7 +251,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
   Randomness masterRand(cl.getSeed());   
   vector<int> runSeeds; 
   vector<int> treeSeeds; 
-  for(int i = 0; i < initParams->numIndiChains;++i)
+  for(int i = 0; i < numRunConv;++i)
     {
       randCtr_t r = masterRand.generateSeed();
       runSeeds.push_back(r.v[0]); 
@@ -237,7 +259,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
     }
 
 
-  for(int i = 0; i < initParams->numIndiChains ; ++i)
+  for(int i = 0; i < numRunConv ; ++i)
     {      
       if( i < numTrees)
 	initWithStartingTree(treeFH, trees); 
@@ -249,12 +271,12 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 	continue; 
 #endif
 
-      runs.push_back(CoupledChains(runSeeds[i], initParams->numCoupledChains, trees, i, initParams));       
+      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, initParams)); 
     }
   
-  if(initParams->tuneHeat)
+  if(tuneHeat)
     for(auto r : runs)
-      r.enableHeatTuning(initParams->tuneFreq); 
+      r.enableHeatTuning(tuneFreq); 
   
   // only use one restorer for all chains 
   LnlRestorer *restorer = new LnlRestorer(runs[0].getChain(0));
@@ -271,7 +293,6 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
     fclose(treeFH); 
 
   PRINT("\n"); 
-
 }
 
 

@@ -31,7 +31,4 @@ void debug_printNodeEnvironment(Chain *chain, int nodeID );
 void debug_checkTreeConsistency(tree *tr); 
 void printOrientation(tree *tr, nodeptr p); 
 
-
-void makeFileNames();
-
 #endif

@@ -98,42 +98,6 @@ void debug_checkTreeConsistency(tree *tr)
 
 
 
-// void makeFileNames()
-// {
-
-//   // int infoFileExists = 0;
-//   string workdir  = ""; 
-//   assert(0); 
-//   string run_id = ""; 
-//   assert(0); 
-    
-//   strcpy(infoFileName, workdir.c_str()); 
-//   strcat(infoFileName, PROGRAM_NAME);
-//   strcat(infoFileName, "_infoFile."); 
-//   strcat(infoFileName, run_id.c_str()); 
-//   // TODO 
-// #if 0 
-//   infoFileExists = filexists(infoFileName);
-// #endif
-
-//   assert(0); 
-
-// #if 0 
-//   if(infoFileExists)
-//   {
-//     printf("%s output files with the run ID <%s> already exist \n", PROGRAM_NAME, run_id);
-//     printf("in directory %s ...... exiting\n", workdir);
-// #ifdef PRODUCTIVE
-//     exit(-1);
-// #endif
-//   }
-// #endif
-// }
-
-
-
-
-
 void printOrientation(tree *tr, nodeptr p)
 {
   if(isTip(p->number,tr->mxtips))
