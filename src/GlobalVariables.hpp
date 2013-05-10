@@ -16,6 +16,9 @@
 #include "teestream.hpp"
 
 
+#define tout (*(globals.teeOut))
+
+
 class TreeAln; 
 class BipartitionHash; 
 class SuccessCtr; 
@@ -32,8 +35,11 @@ public:
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
 #endif
   string logFile; 
-  teestream* tout; 
+  ofstream *logStream;   
+  teestream* teeOut; 
 };
+
+
 
 
 #endif
@@ -78,7 +84,7 @@ double timeIncrement = 0;
 #else 
 extern GlobalVariables globals; 
 
-extern bool isNewPropossal[NUM_PROPOSALS]; // HACK  needed 
+extern bool isNewProposal[NUM_PROPOSALS]; // HACK  needed 
 extern int processID; 		// needed for raxml 
 extern double timeIncrement;  
 

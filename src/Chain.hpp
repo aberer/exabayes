@@ -80,22 +80,17 @@ public:
   paramDump dump;
 
   /* new stuff that we need when having multiple chains  */
-  FILE *topologyFile; 
-  FILE *outputParamFile; 
+  // FILE *topologyFile; 
+  // FILE *outputParamFile; 
 
   double hastings;/// the proposal ratio 
-  
-  
-  void clarifyOwnership(); 
-  
+
   vector<Category> proposalCategories; // proposals that we implemented using the new framework 
 
   // CORRECT part 
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, string runName )  ; 
+  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, PriorBelief _prior, vector<Category> propCats);
   Chain& operator=(Chain& rhs); 
-
-  void setupProposals(initParamStruct *initParam);
 
   // getters and setters 
   double getChainHeat(); 
@@ -120,7 +115,14 @@ public:
 
   Randomness* getChainRand(){return chainRand;}
 
-  void printInfo(const char *format, ...); 
+  void printNexusTreeFileStart( FILE *fh  ); 
+  void printParams(FILE *fh); 
+  void printParamFileStart(FILE *fh); 
+  void finalizeOutputFiles(FILE *fh); 
+  void printSample(FILE *topofile, FILE *paramFile); 
+  void printTopology(FILE *fh); 
+
+  void clarifyOwnership(); 
   
 private : 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  

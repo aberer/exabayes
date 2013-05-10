@@ -1,6 +1,13 @@
 #include <cassert>
+#include <iostream>
+#include <iomanip>
+
+#include "GlobalVariables.hpp"
+
 
 #include "axml.h" 
+
+using namespace std; 
 
 
 
@@ -318,19 +325,20 @@ void printPRSF(char *runId )
 
   parseFiles(numGen,numChain, numParam, runId,&matrix, &names);
 
-  PRINT("PRSF by component:\n"); 
+  tout << "PRSF by component: "  << endl;   
   int window = 10; 
   for(int iter = 0 ; iter < numParam / window; ++iter)
     {
       for(int i = iter * window; i < (iter+1) * window && i < numParam ; ++i)
-	PRINT("%s\t", names[i]);     
-      PRINT("\n"); 
+	tout <<  names[i] << "\t";     
+      tout << "\n"; 
+
       for(int i = iter * window ;  i < (iter+1) * window && i < numParam; ++i)
 	{
 	  double localPrsf = getPrsfForParameter(i, numChain, numGen, matrix); 
-	  PRINT("%.3f\t\t",  localPrsf);
+	  tout << std::setprecision(3) << localPrsf << "\t\t"; 
 	}	    
-      PRINT("\n\n"); 
+      tout << endl << endl; 
     }
 
   freeMatrix(numChain, numParam, matrix);

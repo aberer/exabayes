@@ -1,3 +1,6 @@
+#ifndef _TEE_BUF_H
+#define _TEE_BUF_H
+
 #include <streambuf>
 
 using namespace std; 
@@ -33,3 +36,6 @@ private:
   streambuf *sb1; 
   streambuf *sb2; 
 }; 
+
+
+#endif

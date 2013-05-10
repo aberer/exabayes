@@ -69,7 +69,7 @@ bool SampleMaster::convergenceDiagnostic()
 #if HAVE_PLL == 0      
 	  if(processID == 0)
 #endif 
-	    cout << "ASDSF or trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
+	    tout  << "ASDSF or trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
 
 	  return asdsfVal < asdsfConvergence; 
 
@@ -173,8 +173,10 @@ static int countNumberOfTreesQuick(const char *fn )
 
 
 
-void SampleMaster::initWithConfigFile(string configFileName)
+void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<Category> &proposalResult )
 {
+  assert(0);
+
   ConfigReader reader;   
   ifstream fh(configFileName);
   NxsToken token(fh);
@@ -220,11 +222,16 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 {
   FILE *treeFH = NULL; 
   int numTrees = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
+
+  PriorBelief prior;
+  vector<Category> proposals; 
+  initWithConfigFile(cl.getConfigFileName(), prior, proposals);
+
   
   if( numTrees > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
 
-  PRINT("number of independent runs=%d, number of coupled chains per run=%d \n", numRunConv, numCoupledChains ); 
+  tout << "Will run " << numRunConv << " runs in total with "<<  numCoupledChains << " coupled chains" << endl; 
 
 #ifdef DEBUG_LNL_VERIFY
   globals.debugTree = new TreeAln();   
@@ -269,7 +276,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 	continue; 
 #endif
 
-      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor)); 
+      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals)); 
     }
   
   if(tuneHeat)
@@ -290,7 +297,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
   if(numTrees > 0)
     fclose(treeFH); 
 
-  PRINT("\n"); 
+  tout << endl; 
 }
 
 
@@ -325,17 +332,133 @@ void SampleMaster::finalizeRuns()
 	    {
 	      Chain *chain = run.getChain(0);
 	      if( chain->getChainHeat() == 1.f)
-		finalizeOutputFiles(chain);
+		chain->finalizeOutputFiles(run.getTopoFile());
 	    }
 	}
 
-      PRINT("\nConverged after %d generations\n",  runs[0].getChain(0)->getGeneration());
-      PRINT("\nTotal execution time: %f seconds\n", gettime() - masterTime); 
+      tout << endl << "Converged after " << runs[0].getChain(0)->getGeneration() << " generations" << endl; 
+      tout << endl << "Total execution time: " << setprecision(2) <<  gettime() - masterTime <<  " seconds" << endl; 
     }  
 }
 
 
-void SampleMaster::setupProposals(vector<AbstractProposal*> &result, const PriorBelief &priors )
+
+
+
+
+
+void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBelief &prior)
 {
-  assert(0); 
+  vector<proposalFunction*> legProp; 
+  vector<AbstractProposal*> prop; 
+  
+  // initialize proposals 
+  for(int i = 0; i < NUM_PROPOSALS ; ++i)
+    { 
+      if( NOT isNewProposal[i])
+	{
+	  proposalFunction *pf = NULL; 
+	  initProposalFunction(proposal_type(i), initParams,&pf); 
+	  if(pf != (proposalFunction*) NULL)
+	    prop.push_back(new WrappedProposal( pf, this)); 
+	}
+      else 
+	{
+	  double weight = initParams->initWeights[proposal_type(i)]; 
+	  if( weight != 0)
+	    {
+	      switch(proposal_type(i))
+		{
+		case UPDATE_MODEL: 
+		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(this,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
+		  break; 
+		case FREQUENCY_SLIDER:
+		  prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>(this, weight, INIT_FREQ_SLID_WIN, "freqSlider"));
+		  break; 		  
+		case TL_MULT:
+		  prop.push_back(new TreeLengthMultiplier(this, weight, INIT_TL_MULTI));
+		  break; 
+		case E_TBR: 
+		  prop.push_back(new ExtendedTBR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  break; 
+		case E_SPR: 
+		  prop.push_back(new ExtendedSPR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  break; 
+		case PARSIMONY_SPR:	
+		  prop.push_back(new ParsimonySPR(this, weight, initParams->parsWarp, INIT_ESPR_MULT)); 
+		  break; 
+		case ST_NNI: 
+		  prop.push_back(new StatNNI(this, weight, INIT_NNI_MULT)); 
+		  break; 
+		case GAMMA_MULTI: 
+		  prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>(this, weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
+		  break; 
+		case UPDATE_GAMMA: 
+		  prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>(this, weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
+		  break; 
+		case UPDATE_GAMMA_EXP: 
+		  prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>(this, weight, 0, "rateHetExp")); 
+		  break; 
+		case UPDATE_FREQUENCIES_DIRICHLET: 
+		  prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>(this, weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
+		  break; 
+		case UPDATE_MODEL_DIRICHLET: 
+		  prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(this,weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
+		  break; 
+		default : 
+		  assert(0); 
+		}
+	    }
+	}  
+    }
+
+  // get total sum 
+  double sum = 0; 
+  for(int i = 0; i < NUM_PROPOSALS; ++i)    
+    sum += initParams->initWeights[i]; 
+
+  // create categories 
+  vector<string> allNames = {"", "Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
+  for(int i = 1; i < NUM_PROP_CATS+1; ++i)
+    {
+      // fish out the correct proposals 
+      vector<proposalFunction*> legPr; 
+      vector<AbstractProposal*> pr; 
+      double catSum = 0; 
+      for(auto p : legProp)
+	if(p->category == i)
+	  {
+	    legPr.push_back(p); 
+	    catSum += p->relativeWeight; 
+	  }
+      for(auto p : prop)
+	if(p->getCategory() == i)
+	  {
+	    pr.push_back(p); 
+	    catSum += p->getRelativeProbability();
+	  }
+
+      if(pr.size() > 0 || legPr.size() > 0)
+	proposalCategories.push_back( Category(allNames[i], category_t(i), catSum / sum, pr )); 
+    }    
+
+
+  if ( isOutputProcess() 
+       && couplingId == 0
+       && runid == 0)
+    {
+      // print some info 
+      tout << "using the following moves: " << endl; 
+      for(nat i = 0; i < proposalCategories.size(); ++i)
+	{
+	  // TODO also to info file 
+      
+	  tout << proposalCategories[i].getName() << " " << fixed << setprecision(2) << proposalCategories[i].getCatFreq() * 100 << "%\t" ; 
+	  auto cat = proposalCategories[i]; 
+	  auto p1 =  cat.getProposals(); 
+	  for(auto p : p1)
+	    tout << "\t" << p->getName() << "(" << fixed << setprecision(2) <<  p->getRelativeProbability() * 100 << "%)" ;
+	  tout << endl; 
+	}
+    }
 }

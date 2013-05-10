@@ -32,7 +32,7 @@ private:
 
   void assertFileExists(string filename); 
   void parse(int argc, char *argv[]); 
-  void printVersion();
+  void printVersion(bool toInfoFile);
   void printHelp();
 }; 
 

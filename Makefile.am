@@ -16,7 +16,7 @@ endif
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS= exabayes prsf asdsf 
+bin_PROGRAMS= exabayes prsf asdsf parserExaml parserPll
 
 include src-helper.am
 include src.am 

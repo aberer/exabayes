@@ -27,36 +27,17 @@ extern bool isNewProposal[NUM_PROPOSALS];
 
 #include <sstream>
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, string runName )  
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, PriorBelief _prior, vector<Category> propCats) 
   : traln(_traln)
   , couplingId(id)
   , currentGeneration(0)
   , hastings(1)
   , runid(_runid)
+  , proposalCategories(propCats)    
+  , prior(_prior)
 {
   chainRand = new Randomness(seed.v[0]);
 
-  string workdir = ""; 
-  assert(0); 
-  
-  if(id == 0)
-    {
-      stringstream tNameBuilder,
-	pNameBuilder;
-      tNameBuilder << workdir << PROGRAM_NAME << "_topologies." << runName << "."  << runid ; 
-      pNameBuilder << workdir << PROGRAM_NAME << "_parameters." << runName << "."  << runid  ; 
-
-      /* todo binary Chain file?  */
-      topologyFile = fopen(tNameBuilder.str().c_str(), "w"); 
-      outputParamFile = fopen(pNameBuilder.str().c_str(), "w");   
-      initializeOutputFiles(this);
-    }
-  
-  assert(0);
-#if 0 
-  setupProposals(initParams); 
-#endif
-  
   initParamDump(); 
 
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
@@ -65,11 +46,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, string runName
   evaluateFullNoBackup(this);   
   
   tree *tr = traln->getTr();
-  Randomness *rand = getChainRand(); 
-  stringstream ss; 
-  ss << *rand ;	  	  
-  printInfo("init lnl=%f\tTL=%f\tseeds=%s\n", traln->getTr()->likelihood, branchLengthToReal(tr, traln->getTreeLength()), ss.str().c_str()); 
-
+  tout <<  "init lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds="  << *chainRand << endl; 
   saveTreeStateToChain(); 
 }
 
@@ -85,124 +62,6 @@ double Chain::getChainHeat()
   assert(couplingId == 0 || inverseHeat < 1.); 
   return inverseHeat; 
 }
-
-
-void Chain::setupProposals( initParamStruct *initParams)
-{
-  vector<proposalFunction*> legProp; 
-  vector<AbstractProposal*> prop; 
-  
-  // initialize proposals 
-  for(int i = 0; i < NUM_PROPOSALS ; ++i)
-    { 
-      if( NOT isNewProposal[i])
-	{
-	  proposalFunction *pf = NULL; 
-	  initProposalFunction(proposal_type(i), initParams, &pf); 
-	  if(pf != (proposalFunction*) NULL)
-	    prop.push_back(new WrappedProposal( pf, this)); 
-	}
-      else 
-	{
-	  double weight = initParams->initWeights[proposal_type(i)]; 
-	  if( weight != 0)
-	    {
-	      switch(proposal_type(i))
-		{
-		case UPDATE_MODEL: 
-		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(this,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
-		  break; 
-		case FREQUENCY_SLIDER:
-		  prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>(this, weight, INIT_FREQ_SLID_WIN, "freqSlider"));
-		  break; 		  
-		case TL_MULT:
-		  prop.push_back(new TreeLengthMultiplier(this, weight, INIT_TL_MULTI));
-		  break; 
-		case E_TBR: 
-		  prop.push_back(new ExtendedTBR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
-		  break; 
-		case E_SPR: 
-		  prop.push_back(new ExtendedSPR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
-		  break; 
-		case PARSIMONY_SPR:	
-		  prop.push_back(new ParsimonySPR(this, weight, initParams->parsWarp, INIT_ESPR_MULT)); 
-		  break; 
-		case ST_NNI: 
-		  prop.push_back(new StatNNI(this, weight, INIT_NNI_MULT)); 
-		  break; 
-		case GAMMA_MULTI: 
-		  prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>(this, weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
-		  break; 
-		case UPDATE_GAMMA: 
-		  prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>(this, weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
-		  break; 
-		case UPDATE_GAMMA_EXP: 
-		  prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>(this, weight, 0, "rateHetExp")); 
-		  break; 
-		case UPDATE_FREQUENCIES_DIRICHLET: 
-		  prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>(this, weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
-		  break; 
-		case UPDATE_MODEL_DIRICHLET: 
-		  prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(this,weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
-		  break; 
-		default : 
-		  assert(0); 
-		}
-	    }
-	}  
-    }
-
-  // get total sum 
-  double sum = 0; 
-  for(int i = 0; i < NUM_PROPOSALS; ++i)    
-    sum += initParams->initWeights[i]; 
-
-  // create categories 
-  vector<string> allNames = {"", "Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
-  for(int i = 1; i < NUM_PROP_CATS+1; ++i)
-    {
-      // fish out the correct proposals 
-      vector<proposalFunction*> legPr; 
-      vector<AbstractProposal*> pr; 
-      double catSum = 0; 
-      for(auto p : legProp)
-	if(p->category == i)
-	  {
-	    legPr.push_back(p); 
-	    catSum += p->relativeWeight; 
-	  }
-      for(auto p : prop)
-	if(p->getCategory() == i)
-	  {
-	    pr.push_back(p); 
-	    catSum += p->getRelativeProbability();
-	  }
-
-      if(pr.size() > 0 || legPr.size() > 0)
-	proposalCategories.push_back( Category(allNames[i], category_t(i), catSum / sum, pr )); 
-    }    
-
-
-  if ( isOutputProcess() 
-       && couplingId == 0
-       && runid == 0)
-    {
-      // print some info 
-      cout << "using the following moves: " << endl; 
-      for(nat i = 0; i < proposalCategories.size(); ++i)
-	{
-	  // TODO also to info file 
-      
-	  cout << proposalCategories[i].getName() << " " << fixed << setprecision(2) << proposalCategories[i].getCatFreq() * 100 << "%\t" ; 
-	  auto cat = proposalCategories[i]; 
-	  auto p1 =  cat.getProposals(); 
-	  for(auto p : p1)
-	    cout << "\t" << p->getName() << "(" << fixed << setprecision(2) <<  p->getRelativeProbability() * 100 << "%)" ;
-	  cout << endl; 
-	}
-    }
-}
-
 
 
 /**
@@ -438,17 +297,17 @@ void Chain::initParamDump()
    Please always use this, when possible, it also assures that the
    message is only printed once.
  */ 
-void Chain::printInfo(const char *format, ...)
-{  
-  if( isOutputProcess())
-    {
-      printf("[run %d / heat %d / gen %d] ", this->runid, this->couplingId, this->currentGeneration); 
-      va_list args;
-      va_start(args, format);     
-      vprintf(format, args );
-      va_end(args);
-    }
-}
+// void Chain::printInfo(const char *format, ...)
+// {  
+//   if( isOutputProcess())
+//     {
+//       printf("[run %d / heat %d / gen %d] ", this->runid, this->couplingId, this->currentGeneration); 
+//       va_list args;
+//       va_start(args, format);     
+//       vprintf(format, args );
+//       va_end(args);
+//     }
+// }
 
 
 
@@ -460,3 +319,85 @@ void Chain::clarifyOwnership()
       p->setOwningChain(this); 
 }
 
+
+void Chain::printParams(FILE *fh)
+{
+  tree *tr = traln->getTr(); 
+
+
+  double treeLength = branchLengthToReal(tr, traln->getTreeLength()); 
+  assert(treeLength != 0.); 
+  fprintf(fh, "%d\t%f\t%.3f", currentGeneration,
+	  tr->likelihood,  
+	  treeLength); 
+
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+    {
+      pInfo *partition = traln->getPartition(i); 
+      fprintf(fh, "\t%f\t%f", traln->accessPartitionLH( i),traln->getAlpha(i)) ; 
+      for(int j = 0; j < 6 ; ++j) /* TODO */
+	fprintf(fh, "\t%.2f", partition->substRates[j]); 
+      for(int j = 0; j < 4 ; ++j) /* TODO */
+	fprintf(fh, "\t%.2f", traln->getFrequency(i,j));
+    }
+
+  fprintf(fh, "\n"); 
+  fflush(fh); 
+}
+
+
+
+
+void Chain::printParamFileStart(FILE *fh)
+{
+  char *tmp = "TODO"; 
+  fprintf(fh, "[ID: %s]\n", tmp);
+  fprintf(fh, "Gen\tLnL\tTL"); 
+
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+    {
+      fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
+      fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
+      fprintf(fh, "\tpi(A).%d\tpi(C).%d\tpi(G).%d\tpi(T).%d", i,i,i,i); 
+    }
+
+  fprintf(fh, "\n"); 
+  fflush(fh); 
+}
+
+
+void Chain::finalizeOutputFiles(FILE *fh)
+{
+  /* topo file  */
+  fprintf(fh, "end;\n"); 
+}
+
+
+void Chain::printSample(FILE *topofile, FILE *paramFile)
+{
+  this->printTopology(topofile);
+  this->printParams(paramFile);
+}
+
+
+  /* TODO what about per model brach lengths? how does mrB do this? */
+void Chain::printTopology(FILE *fh)
+{  
+  assert(couplingId == 0);
+  tree *tr = traln->getTr();
+  memset(traln->getTr()->tree_string, 0, traln->getTr()->treeStringLength * sizeof(char) ); 
+  
+  Tree2stringNexus(traln->getTr()->tree_string, tr,  traln->getTr()->start->back, 0 ); 
+  fprintf(fh,"\ttree gen.%d = [&U] %s\n", currentGeneration, traln->getTr()->tree_string);
+  fflush(fh);
+}
+
+
+void Chain::printNexusTreeFileStart( FILE *fh  )
+{
+  fprintf(fh, "#NEXUS\n[ID: %s]\n[Param: tree]\nbegin trees;\n\ttranslate\n", "TODO" ); 
+
+  for(int i = 0; i < traln->getTr()->mxtips-1; ++i)
+    fprintf(fh, "\t\t%d %s,\n", i+1, traln->getTr()->nameList[i+1]); 
+  fprintf(fh, "\t\t%d %s;\n", traln->getTr()->mxtips, traln->getTr()->nameList[traln->getTr()->mxtips]);
+}

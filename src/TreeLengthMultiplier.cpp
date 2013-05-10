@@ -1,8 +1,6 @@
-#include "TreeLengthMultiplier.hpp"
-
-
 #include "axml.h"
-// #include "bayes.h"
+
+#include "TreeLengthMultiplier.hpp"
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
 #include "eval.h"

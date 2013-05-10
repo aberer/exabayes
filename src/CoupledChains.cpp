@@ -9,8 +9,10 @@
 #include "treeRead.h"
 #include "output.h"
 #include "AbstractProposal.hpp"
+#include "PriorBelief.hpp"
+#include "Category.hpp"
 
-CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor )
+CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals)
   : temperature(heatFactor)
   , rand(seed)
   , runid(_runid) 
@@ -18,15 +20,13 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
   , printFreq(_printFreq)
   , swapInterval(_swapInterval)
   , samplingFreq(_samplingFreq)
+  , runname(_runname)
 {
   assert((nat)numCoupled == trees.size());
 
-  string runname = ""; 
-  assert(0);
-
   for(int i = 0; i < numCoupled; ++i)
     {
-      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], runname); 
+      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], prior, proposals); 
 
       chain->setDeltaT(temperature); 
       chains.push_back(chain);
@@ -35,6 +35,19 @@ CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, i
   // swap info matrix 
   for(int i = 0; i < numCoupled * numCoupled ; ++i)
     swapInfo.push_back(new SuccessCtr());       
+
+  
+  stringstream tNameBuilder,
+    pNameBuilder;
+  tNameBuilder << workingdir << PROGRAM_NAME << "_topologies." << runname << "."  << runid ; 
+  pNameBuilder << workingdir << PROGRAM_NAME << "_parameters." << runname << "."  << runid  ; 
+  
+  /* todo binary Chain file?  */
+  topoFile = fopen(tNameBuilder.str().c_str(), "w"); 
+  paramFile = fopen(pNameBuilder.str().c_str(), "w");   
+
+  chains[0]->printNexusTreeFileStart(topoFile);
+  chains[0]->printParamFileStart(paramFile) ;
 }
 
 
@@ -62,21 +75,22 @@ void CoupledChains::printSwapInfo()
   for(int i = 0; i < numCoupledChains; ++i)
     {
       if(i < numCoupledChains - 1 )
-	PRINT("("); 
+	tout << "(";
+
 
       for(int j = 0; j < numCoupledChains; ++j)
 	{
 	  SuccessCtr *ctr = swapInfo[cnt]; 
 	  if(i < j )
-	    PRINT("%.1f%%,", i,j, 100 * ctr->getRatioOverall());
+	    tout << setprecision(1) << 100 * ctr->getRatioOverall() << "%";
 
 	  cnt++; 
 	}
       if(i < numCoupledChains - 1 )
-	PRINT(")"); 
+	tout << ")";
     }
-
-  PRINT("\tbaseSwap:%.1f%%", swapInfo[1]->getRatioInLast100() * 100 ) ; 
+  
+  tout << "\tbaseSwap: " << setprecision(1)<< swapInfo[1]->getRatioInLast100() * 100 << "%"; 
 }
 
 
@@ -141,15 +155,6 @@ void CoupledChains::switchChainState()
 	a->clarifyOwnership();
 	b->clarifyOwnership();
       }
-      
-
-
-      FILE *tmp = a-> topologyFile; 
-      a->topologyFile = b->topologyFile; 
-      b->topologyFile = tmp; 
-      tmp = a->outputParamFile; 
-      a->outputParamFile = b->outputParamFile; 
-      b->outputParamFile = tmp; 
 
       int r = MIN(a->couplingId, b->couplingId ); 
       int c = MAX(a->couplingId, b->couplingId); 
@@ -177,8 +182,7 @@ void CoupledChains::chainInfo()
   
   tree *tr = coldChain->traln->getTr(); 
 
-  PRINT( "[run: %d] [time %.2f] gen: %d Likelihood: %.2f\tTL=%.2f\t",runid,   gettime()  - timeIncrement  , coldChain->currentGeneration, coldChain->traln->getTr()->likelihood, branchLengthToReal(tr, coldChain->traln->getTreeLength()));
-
+  tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->currentGeneration << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\tTL=" << setprecision(2)<< branchLengthToReal(tr, coldChain->traln->getTreeLength()) << "\t" ; 
 
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
@@ -190,29 +194,27 @@ void CoupledChains::chainInfo()
       double heat = chain->getChainHeat();
       assert(heat < 1.0f); 
       
-      PRINT("lnl_beta(%.2f)=%.2f\t", heat, chain->traln->getTr()->likelihood); 
+      tout << "lnl(" << setprecision(2)<< heat << ")=" << setprecision(2)<< chain->traln->getTr()->likelihood << "\t" ;  
     }
 
   
   printSwapInfo();
 
 
-  PRINT("\n"); 
-
-
+  tout << endl; 
 
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
 
   for(auto cat : coldChain->getProposalCategories())
     {
-      cout << cat.getName() << ":\t";
+      tout << cat.getName() << ":\t";
       for( auto p : cat.getProposals() )
-  	cout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
-      cout << endl; 
+  	tout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
+      tout << endl; 
     }
 
-  PRINT("\n");
+  tout << endl; 
 }
 
 
@@ -234,7 +236,7 @@ void CoupledChains::executePart(int gensToRun)
 	      if(chain->getChainHeat() == 1 
 		 && (chain->getGeneration() % samplingFreq)  == samplingFreq - 1
 		 && isOutputProcess() ) 
-		printSample(chain); 
+		chain->printSample(topoFile, paramFile); 
 		
 	      
 	      timeToPrint |= isOutputProcess() 
@@ -273,7 +275,4 @@ void CoupledChains::tuneTemperature()
   for(auto chain : chains)
     chain->setDeltaT(temperature); 
 }
-
-
-
 

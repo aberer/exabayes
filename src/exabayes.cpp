@@ -31,6 +31,7 @@
 
 
 
+#include "teestream.hpp"
 
 
 
@@ -46,6 +47,16 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
   timeIncrement = gettime();
 
 #ifdef TEST   
+
+
+  ofstream log("foo.log"); 
+  teestream tee(cout, log); 
+  tee <<  "this should be written into the log and to stdout" << endl; 
+  
+  exit(0); 
+
+
+#if 0 
   TreeAln traln; 
   traln.initializeFromByteFile(byteFileName);
   traln.enableParsimony(); 
@@ -58,6 +69,7 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
     {
       cout << exa_evaluateParsimony(traln, tr->nodep[i], TRUE ) << endl; 
     }
+#endif
 
   exit(0);
 
@@ -105,6 +117,8 @@ extern MPI_Comm comm;
 
 
 
+using namespace std; 
+
 #include <sstream>
 void makeInfoFile(const CommandLine &cl)
 {
@@ -118,6 +132,8 @@ void makeInfoFile(const CommandLine &cl)
   // TODO maybe check for existance 
 
   globals.logFile = ss.str();   
+  globals.logStream = new ofstream (globals.logFile) ; 
+  globals.teeOut = new teestream(cout, *globals.logStream);
 }
 
 
@@ -134,6 +150,8 @@ int main(int argc, char *argv[])
 
   ignoreExceptionsDenormFloat(); 
   CommandLine cl(argc, argv); 
+  
+  makeInfoFile(cl);
 
 #if HAVE_PLL == 0 
   pl.initializeExaml(cl);

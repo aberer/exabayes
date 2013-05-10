@@ -1353,9 +1353,6 @@ void guided_branch_length_proposal_apply(Chain *chain, proposalFunction *pf)
 }
 
 
-
-
- 
 void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
 {
   if(initParams->initWeights[type] == 0)

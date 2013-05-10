@@ -31,8 +31,8 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName);
-  void setupProposals(vector<AbstractProposal*> &result, const PriorBelief &priors ); 
+  void initWithConfigFile(string configFileName, PriorBelief &prior, vector<Category> &proposalResult ); 
+  void setupProposals(vector<double> proposalWeights, const PriorBelief &prior);
 
   // HERE 
   void setGuidedRadius ( int guidedRadius ) {this->guidedRadius = guidedRadius ; }

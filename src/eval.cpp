@@ -59,10 +59,12 @@ void expensiveVerify(Chain *chain)
     {      
       if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
 	{
-	  printf("WARNING: found in expensive evaluation: likelihood difference is %f (with toVerify/verified)\t%f\t%f\n", fabs (verifiedLnl - toVerify ), toVerify, verifiedLnl); 
+	  tout << "WARNING: found in expensive evaluation: likelihood difference is " 
+	       <<  fabs (verifiedLnl - toVerify )
+	       << "(with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
-	  cout << "current tree: " << *(chain->traln) << endl; 
-	  cout << "help tree: " <<  *(helpChain->traln) << endl; 
+	  tout << "current tree: " << *(chain->traln) << endl; 
+	  tout << "help tree: " <<  *(helpChain->traln) << endl; 
 	  
 	}
       assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
@@ -172,7 +174,6 @@ void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
 	  model = i; 
 	}
     }
-  // cout << "\t" << numModels << "\t"; 
   assert(numModels == 1 || numModels == chain->traln->getNumberOfPartitions()); 
   if(numModels > 1)
     {

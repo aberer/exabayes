@@ -24,7 +24,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
   MPI_Comm_size(MPI_COMM_WORLD, &globalSize);
   
-  printf("\nThis is %s process number: %d / %d\n", PROGRAM_NAME, globalRank, globalSize);   
+  tout << endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << endl; 
   MPI_Barrier(MPI_COMM_WORLD);
 
   
@@ -32,7 +32,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
     {
       if(globalRank == 0)
 	{
-	  cout << "You requested to run "  << runsParallel << " in parallel, however there are only " 
+	  tout << "You requested to run "  << runsParallel << " in parallel, however there are only " 
 	       << globalSize << " processes (we need at least 1 process per run, see command line option -R )"  << endl; 
 	}
       MPI_Abort(MPI_COMM_WORLD, 1);

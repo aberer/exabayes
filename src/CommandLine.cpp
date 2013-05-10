@@ -19,13 +19,13 @@ CommandLine::CommandLine(int argc, char *argv[])
 }
 
 
-void CommandLine::printVersion()
+void CommandLine::printVersion(bool toInfofile )
 {
 #if HAVE_PLL == 0
   if(processID == 0)
 #endif
     {
-      cout << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << endl << endl
+      (toInfofile ? tout : cout )  << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << endl << endl
 	   << "For bugs reports and feature inquiries, please send an email to " << PACKAGE_BUGREPORT << endl; 
     }
 }
@@ -40,7 +40,7 @@ void CommandLine::printHelp()
 #endif
 
 
-  printVersion(); 
+  printVersion(false); 
 
   cout << "\n\n" 
        <<  "Options:\n" 
@@ -65,7 +65,7 @@ void CommandLine::assertFileExists(string filename)
   if(fh == NULL )
     {
       fclose(fh); 
-      cout << "could not file file " << filename << ". Aborting." << endl; 
+      cerr << "could not file file " << filename << ". Aborting." << endl; 
       exit(0);
     }
   fclose(fh); 
@@ -98,7 +98,7 @@ void CommandLine::parse(int argc, char *argv[])
 	  assertFileExists(alnFileName); 
 	  break; 
 	case 'v':  		// version 
-	  printVersion();
+	  printVersion(false);
 	  exit(0); 
 	  break; 
 	case 'h': 		// help 

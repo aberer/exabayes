@@ -27,7 +27,7 @@ class SuccessCtr;
 class CoupledChains
 {
 public: 
-  CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heat ); 
+  CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals); 
   // ~CoupledChains(){}
 
   /** @brief initializes all trees with a given starting tree */
@@ -55,7 +55,12 @@ public:
     tuneHeat = true; 
     tuneFreq = freq; 
   }
-
+  
+  void printNexusTreeFileStart(Chain &chain, FILE *fh  ); 
+  
+  FILE* getTopoFile(){return topoFile; }
+  FILE* getParamFile(){return paramFile; }
+  
   
 
 private: 
@@ -86,6 +91,11 @@ private:
   int printFreq; 
   int swapInterval; 
   int samplingFreq; 
+  string runname; 
+
+  // files for sampling the cold chain  
+  FILE *topoFile; 
+  FILE *paramFile; 
 }; 
 
 
