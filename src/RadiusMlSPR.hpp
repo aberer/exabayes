@@ -2,6 +2,20 @@
 #define _RADIUSMLSPR_H
 
 #include "AbstractProposal.hpp"
+#include "Path.hpp"
+
+typedef struct  _insertWeight
+{
+  branch b; 
+  double lnl; 
+  double weightInFirst; 
+  double weightInSecond; 
+  boolean containedInFirst; 
+  boolean containedInSecond; 
+  double ratio; 		/* TODO ? */
+  struct _insertWeight *next; 
+} insertList ; 
+
 
 
 class RadiusMlSPR : public AbstractProposal
@@ -20,8 +34,10 @@ public:
 
 private: 
   Chain *chain; 
+  Path path; 
 
   int radius; 
+  int ratio; 
   
 }; 
 

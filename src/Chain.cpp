@@ -32,8 +32,8 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, PriorBelief _p
   , couplingId(id)
   , currentGeneration(0)
   , hastings(1)
-  , runid(_runid)
   , proposalCategories(propCats)    
+  , runid(_runid)
   , prior(_prior)
 {
   chainRand = new Randomness(seed.v[0]);

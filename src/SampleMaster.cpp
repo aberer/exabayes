@@ -9,14 +9,26 @@
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
+#include "proposals.h"
+#include "WrappedProposal.hpp"
+#include "ExtendedTBR.hpp"
+#include "ExtendedSPR.hpp"
+#include "ParsimonySPR.hpp"
+#include "StatNNI.hpp"
+#include "RadiusMlSPR.hpp"
+#include "Category.hpp"
+
 
 // TODO =( 
 #include "GlobalVariables.hpp"
 
 #include "LnlRestorer.hpp"
 #include "AvgSplitFreqAssessor.hpp"
+#include "ProposalFunctions.hpp"
+#include "Parameters.hpp"
+#include "TreeLengthMultiplier.hpp"
 
-
+#include "PartitionProposal.hpp"
 
 extern double masterTime; 
 
@@ -358,53 +370,55 @@ void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBel
       if( NOT isNewProposal[i])
 	{
 	  proposalFunction *pf = NULL; 
-	  initProposalFunction(proposal_type(i), initParams,&pf); 
+	  initProposalFunction(proposal_type(i), proposalWeights ,&pf); 
 	  if(pf != (proposalFunction*) NULL)
-	    prop.push_back(new WrappedProposal( pf, this)); 
+	    prop.push_back(new WrappedProposal( pf, NULL)); 
 	}
       else 
 	{
-	  double weight = initParams->initWeights[proposal_type(i)]; 
+ 	  double weight = proposalWeights[proposal_type(i)]; 
 	  if( weight != 0)
 	    {
 	      switch(proposal_type(i))
 		{
 		case UPDATE_MODEL: 
-		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(this,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
+		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(NULL,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
 		  break; 
 		case FREQUENCY_SLIDER:
-		  prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>(this, weight, INIT_FREQ_SLID_WIN, "freqSlider"));
+		  prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>(NULL, weight, INIT_FREQ_SLID_WIN, "freqSlider"));
 		  break; 		  
 		case TL_MULT:
-		  prop.push_back(new TreeLengthMultiplier(this, weight, INIT_TL_MULTI));
+		  prop.push_back(new TreeLengthMultiplier(NULL, weight, INIT_TL_MULTI));
 		  break; 
 		case E_TBR: 
-		  prop.push_back(new ExtendedTBR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  prop.push_back(new ExtendedTBR(NULL, weight, esprStopProp, INIT_ESPR_MULT)); 
 		  break; 
 		case E_SPR: 
-		  prop.push_back(new ExtendedSPR(this, weight, initParams->eSprStopProb, INIT_ESPR_MULT)); 
+		  prop.push_back(new ExtendedSPR(NULL, weight, esprStopProp, INIT_ESPR_MULT)); 
 		  break; 
 		case PARSIMONY_SPR:	
-		  prop.push_back(new ParsimonySPR(this, weight, initParams->parsWarp, INIT_ESPR_MULT)); 
+		  prop.push_back(new ParsimonySPR(NULL, weight, parsimonyWarp, INIT_ESPR_MULT)); 
 		  break; 
 		case ST_NNI: 
-		  prop.push_back(new StatNNI(this, weight, INIT_NNI_MULT)); 
+		  prop.push_back(new StatNNI(NULL, weight, INIT_NNI_MULT)); 
 		  break; 
 		case GAMMA_MULTI: 
-		  prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>(this, weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
+		  prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>(NULL, weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
 		  break; 
 		case UPDATE_GAMMA: 
-		  prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>(this, weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
+		  prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>(NULL, weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
 		  break; 
 		case UPDATE_GAMMA_EXP: 
-		  prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>(this, weight, 0, "rateHetExp")); 
+		  prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>(NULL, weight, 0, "rateHetExp")); 
 		  break; 
 		case UPDATE_FREQUENCIES_DIRICHLET: 
-		  prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>(this, weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
+		  prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>(NULL, weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
 		  break; 
 		case UPDATE_MODEL_DIRICHLET: 
-		  prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(this,weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
+		  prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(NULL,weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
 		  break; 
+		case GUIDED_SPR:
+		  prop.push_back(new RadiusMlSPR(NULL, weight, guidedRadius )); 
 		default : 
 		  assert(0); 
 		}
@@ -412,10 +426,17 @@ void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBel
 	}  
     }
 
+
+  // danger,  we cannot rely on the fact that all proposals are used 
+  assert(0); 
+
+
   // get total sum 
   double sum = 0; 
   for(int i = 0; i < NUM_PROPOSALS; ++i)    
-    sum += initParams->initWeights[i]; 
+    sum += proposalWeights[i]; 
+
+  vector<Category> proposalCategories; 
 
   // create categories 
   vector<string> allNames = {"", "Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
@@ -443,9 +464,7 @@ void SampleMaster::setupProposals(vector<double> proposalWeights, const PriorBel
     }    
 
 
-  if ( isOutputProcess() 
-       && couplingId == 0
-       && runid == 0)
+  if ( isOutputProcess() )
     {
       // print some info 
       tout << "using the following moves: " << endl; 

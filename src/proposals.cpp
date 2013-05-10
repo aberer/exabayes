@@ -3,10 +3,8 @@
 #include "output.h"
 #include "eval.h"
 #include "adapters.h"
-// #include "misc-utils.h"
 #include "branch.h"
 #include "Path.hpp"
-#include "guidedMoves.h"
 #include "TreeAln.hpp"
 #include "nodeSlider.h"
 #include "Randomness.hpp"
@@ -1353,9 +1351,9 @@ void guided_branch_length_proposal_apply(Chain *chain, proposalFunction *pf)
 }
 
 
-void initProposalFunction( proposal_type type, initParamStruct *initParams, proposalFunction **result)
+void initProposalFunction( proposal_type type, vector<double> weights, proposalFunction **result)
 {
-  if(initParams->initWeights[type] == 0)
+  if(weights[type] == 0)
     {
       *result = NULL; 
       return ; 
@@ -1365,9 +1363,9 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
 
   proposalFunction *ptr = *result; 
   ptr->ptype = (proposal_type)type; 
-  ptr->initWeight = initParams->initWeights[type]; 
+  ptr->initWeight = weights[type]; 
   ptr->currentWeight = ptr->initWeight; 
-  ptr->relativeWeight = initParams->initWeights[type] ; 
+  ptr->relativeWeight = weights[type] ; 
 
 
   /* 
@@ -1377,16 +1375,16 @@ void initProposalFunction( proposal_type type, initParamStruct *initParams, prop
 
   switch(type)
     {
-    case GUIDED_SPR:
-      ptr->name = "guidedSpr"; 
-      ptr->apply_func = applyGuidedSPR; 
-      ptr->eval_lnl = evalGuidedSPR; 
-      ptr->reset_func = resetGuidedSPR; 
-      ptr->remembrance.modifiedPath = new Path(); 
-      ptr->category = TOPOLOGY; 
-      ptr->parameters.radius =  initParams->initGuidedSPR; 
-      ptr->autotune = NULL;       
-      break; 
+    // case GUIDED_SPR:
+    //   ptr->name = "guidedSpr"; 
+    //   ptr->apply_func = applyGuidedSPR; 
+    //   ptr->eval_lnl = evalGuidedSPR; 
+    //   ptr->reset_func = resetGuidedSPR; 
+    //   ptr->remembrance.modifiedPath = new Path(); 
+    //   ptr->category = TOPOLOGY; 
+    //   ptr->parameters.radius =  initParams->initGuidedSPR; 
+    //   ptr->autotune = NULL;       
+    //   break; 
     case UPDATE_MODEL: 	
       ptr->eval_lnl = onePartitionEval; 
       ptr->autotune = autotuneSlidingWindow; 
