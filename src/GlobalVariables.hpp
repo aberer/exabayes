@@ -21,7 +21,6 @@
 
 class TreeAln; 
 class BipartitionHash; 
-class SuccessCtr; 
 
 using namespace std; 
 
@@ -47,35 +46,6 @@ public:
 
 #ifdef _INCLUDE_DEFINITIONS
 
-bool isNewProposal[NUM_PROPOSALS] = 
-  {
-    true,     
-    true, 
-    true,     
-    true,     
-    false,     
-    false,     
-    false,     
-    false,     
-    false,     
-    false,     
-    false,     
-    false,     
-    false,     
-    true,     
-    true,     
-    true,     
-    true,     
-    true,     
-    true,     
-    true,     
-    false,     
-    true,
-    true, 
-    true 
-  }; 
-
-
 GlobalVariables globals; 
 
 /* for crude performance measurements */
@@ -83,8 +53,6 @@ double timeIncrement = 0;
 
 #else 
 extern GlobalVariables globals; 
-
-extern bool isNewProposal[NUM_PROPOSALS]; // HACK  needed 
 extern int processID; 		// needed for raxml 
 extern double timeIncrement;  
 

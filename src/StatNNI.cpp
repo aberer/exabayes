@@ -5,9 +5,8 @@
 
 
 
-StatNNI::StatNNI(Chain *_chain, double _weight, double _multiplier)
-  : chain(_chain)  
-  , multiplier(_multiplier)
+StatNNI::StatNNI( double _weight, double _multiplier)
+  :  multiplier(_multiplier)
 {
   this->relativeProbability = _weight; 
   this->name = "stNNI" ; 
@@ -118,10 +117,10 @@ void StatNNI::evaluateProposal(TreeAln &traln, PriorBelief &prior)
   nodeptr p = findNodeFromBranch(tr, exchangeBranch),
     q = findNodeFromBranch(tr, invertBranch(exchangeBranch)); 
 
-  newViewGenericWrapper(chain, p, FALSE); 
-  newViewGenericWrapper(chain, q, FALSE); 
+  newViewGenericWrapper(traln, p, FALSE); 
+  newViewGenericWrapper(traln, q, FALSE); 
 
-  evaluateGenericWrapper(chain,p,FALSE ); 
+  evaluateGenericWrapper(traln,p,FALSE ); 
 }
 
 
@@ -161,5 +160,5 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* StatNNI::clone()  const
 {
-  return new StatNNI(chain, relativeProbability, multiplier);
+  return new StatNNI(relativeProbability, multiplier);
 }

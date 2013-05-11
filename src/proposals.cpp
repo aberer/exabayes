@@ -63,27 +63,27 @@ static void record_branch_info(TreeAln* traln, nodeptr p, double *bl)
 }
 
 
-static void onePartitionEval(Chain *chain, proposalFunction *thisProposal)
+static void onePartitionEval(TreeAln& traln, proposalFunction *thisProposal)
 {
   int model = thisProposal->remembrance.partInfo->modelNum;
-  branch root = findRoot(chain->traln->getTr());  
-  nodeptr p = findNodeFromBranch(chain->traln->getTr(), root); 
-  evaluateOnePartition(chain, p, TRUE, model); 
+  branch root = findRoot(traln.getTr());  
+  nodeptr p = findNodeFromBranch(traln.getTr(), root); 
+  evaluateOnePartition(traln, p, TRUE, model); 
 }
 
 
-static void evalBranch(Chain *chain, proposalFunction *thisProposal)
+static void evalBranch(TreeAln &traln, proposalFunction *thisProposal)
 {
   assert(thisProposal->remembrance.modifiedPath->size() == 1); 
   branch b = thisProposal->remembrance.modifiedPath->at(0);
-  nodeptr p = findNodeFromBranch(chain->traln->getTr(), b); 
-  evaluateGenericWrapper(chain,p, FALSE ); 
+  nodeptr p = findNodeFromBranch(traln.getTr(), b); 
+  evaluateGenericWrapper(traln,p, FALSE ); 
 }
 
 
-static void dummy_eval(Chain *chain,proposalFunction *thisProposal)
+static void dummy_eval(TreeAln &traln,proposalFunction *thisProposal)
 {
-  evaluateGenericWrapper(chain, chain->traln->getTr()->start, TRUE );
+  evaluateGenericWrapper(traln, traln.getTr()->start, TRUE );
 }
 
 
@@ -1147,42 +1147,42 @@ static void branchLengthWindowApply(Chain *chain, proposalFunction *pf)
   // p->z[0] = p->back->z[0] = blNew; 
 }
 
-static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
-{
-  auto traln =  chain->traln; 
-  tree *tr = chain->traln->getTr(); 
-  branch b =  chain->getChainRand()->drawBranchUniform(*traln); 
+// static void branchLengthMultiplierApply(Chain *chain, proposalFunction *pf)
+// {
+//   auto traln =  chain->traln; 
+//   tree *tr = chain->traln->getTr(); 
+//   branch b =  chain->getChainRand()->drawBranchUniform(*traln); 
 
-  nodeptr p = findNodeFromBranch(tr, b); 
+//   nodeptr p = findNodeFromBranch(tr, b); 
 
-  pf->remembrance.modifiedPath->clear(); 
-  pf->remembrance.modifiedPath->append( b);
-  assert(pf->remembrance.modifiedPath->size() == 1 ); 
-  pf->remembrance.modifiedPath->at(0).length[0]  = traln->getBranchLength( p,0); 
+//   pf->remembrance.modifiedPath->clear(); 
+//   pf->remembrance.modifiedPath->append( b);
+//   assert(pf->remembrance.modifiedPath->size() == 1 ); 
+//   pf->remembrance.modifiedPath->at(0).length[0]  = traln->getBranchLength( p,0); 
 
-  double
-    multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier); 
-  assert(multiplier > 0.); 
+//   double
+//     multiplier = chain->getChainRand()->drawMultiplier( pf->parameters.multiplier); 
+//   assert(multiplier > 0.); 
   
-  /* TODO how do we do that wiht multiple bls per branch?  */
-  assert(chain->traln->getNumBranches() == 1); 
+//   /* TODO how do we do that wiht multiple bls per branch?  */
+//   assert(chain->traln->getNumBranches() == 1); 
 
-  double oldZ = traln->getBranchLength( p,0); 
-  double newZ = pow( oldZ, multiplier) ; 
-  /* printf("\t\tBL_MULTI: %g * %g => %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
-
-
-#ifdef PRINT_MULT  
-  cout  << setprecision(6) << "bl-multi: " << branchLengthToReal(tr,oldZ) <<   " * " << multiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
-#endif
+//   double oldZ = traln->getBranchLength( p,0); 
+//   double newZ = pow( oldZ, multiplier) ; 
+//   /* printf("\t\tBL_MULTI: %g * %g => %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
 
 
-  /* according to lakner2008  */
-  chain->addToHastings( multiplier); 
+// #ifdef PRINT_MULT  
+//   cout  << setprecision(6) << "bl-multi: " << branchLengthToReal(tr,oldZ) <<   " * " << multiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
+// #endif
+
+
+//   /* according to lakner2008  */
+//   chain->addToHastings( multiplier); 
  
-  /* just doing it for one right here */
-  traln->setBranchLengthSave(newZ, 0, p); 
-}
+//   /* just doing it for one right here */
+//   traln->setBranchLengthSave(newZ, 0, p); 
+// }
 
 
 
@@ -1226,7 +1226,7 @@ double tuneParameter(int batch, double accRatio, double parameter, boolean inver
 /**
    @brief tunes the BL multiplier
  */ 
-static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
+static void autotuneMultiplier( proposalFunction *pf, SuccessCounter *ctr)
 {
   double *parameter = &(pf->parameters.multiplier); 
 
@@ -1245,7 +1245,7 @@ static void autotuneMultiplier( proposalFunction *pf, SuccessCtr *ctr)
    @brief autotunes sliding windows 
    
 */ 
-static void autotuneSlidingWindow(proposalFunction *pf, SuccessCtr *ctr)
+static void autotuneSlidingWindow(proposalFunction *pf, SuccessCounter *ctr)
 {
   double *parameter = &(pf->parameters.slidWinSize); 
   double newParam = tuneParameter(ctr->getBatch() , ctr->getRatioInLastInterval(), *parameter, FALSE  ); 
@@ -1262,7 +1262,7 @@ static void autotuneSlidingWindow(proposalFunction *pf, SuccessCtr *ctr)
 
 
 /** @brief tune the alpha of a dirichlet distribution */ 
-static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCtr *ctr)
+static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCounter *ctr)
 {
   double *parameter = &(pf->parameters.dirichletAlpha); 
 
@@ -1277,16 +1277,16 @@ static void autotuneDirichletAlpha(proposalFunction *pf, SuccessCtr *ctr)
 }
 
 
-void branchLengthReset(Chain *chain, proposalFunction *pf)
-{
-  assert(pf->remembrance.modifiedPath->size() == 1 ); 
-  branch b = pf->remembrance.modifiedPath->at(0); 
-  pf->remembrance.modifiedPath->clear(); 
-  tree *tr = chain->traln->getTr(); 
-  nodeptr p = findNodeFromBranch(tr, b); 
-  chain->traln->setBranchLengthSave(b.length[0], 0,p); 
-  // p->z[0] = p->back->z[0] = b.length[0]; 
-}
+// void branchLengthReset(Chain *chain, proposalFunction *pf)
+// {
+//   assert(pf->remembrance.modifiedPath->size() == 1 ); 
+//   branch b = pf->remembrance.modifiedPath->at(0); 
+//   pf->remembrance.modifiedPath->clear(); 
+//   tree *tr = chain->traln->getTr(); 
+//   nodeptr p = findNodeFromBranch(tr, b); 
+//   chain->traln->setBranchLengthSave(b.length[0], 0,p); 
+//   // p->z[0] = p->back->z[0] = b.length[0]; 
+// }
 
 
 void guided_branch_length_proposal_apply(Chain *chain, proposalFunction *pf)
@@ -1297,122 +1297,122 @@ void guided_branch_length_proposal_apply(Chain *chain, proposalFunction *pf)
 }
 
 
-void initProposalFunction( proposal_type type, vector<double> weights, proposalFunction **result)
-{
-  if(weights[type] == 0)
-    {
-      *result = NULL; 
-      return ; 
-    }  
+// void initProposalFunction( proposal_type type, vector<double> weights, proposalFunction **result)
+// {
+//   if(weights[type] == 0)
+//     {
+//       *result = NULL; 
+//       return ; 
+//     }  
 
-  *result = (proposalFunction*)exa_calloc(1,sizeof(proposalFunction));   
+//   *result = (proposalFunction*)exa_calloc(1,sizeof(proposalFunction));   
 
-  proposalFunction *ptr = *result; 
-  ptr->ptype = (proposal_type)type; 
-  ptr->initWeight = weights[type]; 
-  ptr->currentWeight = ptr->initWeight; 
-  ptr->relativeWeight = weights[type] ; 
+//   proposalFunction *ptr = *result; 
+//   ptr->ptype = (proposal_type)type; 
+//   ptr->initWeight = weights[type]; 
+//   ptr->currentWeight = ptr->initWeight; 
+//   ptr->relativeWeight = weights[type] ; 
 
 
-  /* 
-     TODO@kassian
-     some proposals may be broken      
-  */
+//   /* 
+//      TODO@kassian
+//      some proposals may be broken      
+//   */
 
-  switch(type)
-    {
-    case UPDATE_SINGLE_BL: 
-      ptr->eval_lnl = evalBranch;
-      ptr->autotune = autotuneSlidingWindow; 
-      ptr->remembrance.modifiedPath = new Path(); 
-      // createStack(&(ptr->remembrance.modifiedPath)); 
-      ptr->apply_func = branchLengthWindowApply; 
-      ptr->reset_func =  branchLengthReset;
-      ptr->category = BRANCH_LENGTHS; 
-      ptr->parameters.slidWinSize = INIT_BL_SLID_WIN; 
-      ptr->name = "singleBLSlidWin"; 
-      break; 
-    case UPDATE_SINGLE_BL_EXP: 
-      ptr->eval_lnl = dummy_eval;
-      ptr->remembrance.topoRec = (topoRecord*)exa_calloc(1,sizeof(topoRecord)); 
-      ptr->apply_func	=  random_branch_length_proposal_apply;
-      ptr->reset_func =  random_branch_length_proposal_reset;
-      ptr->category = BRANCH_LENGTHS; 
-      ptr->name  = "singleBlExp"; 
-      break;
-    case UPDATE_SINGLE_BL_GUIDED: 
-      ptr->eval_lnl = evalBranch;
-      ptr->remembrance.modifiedPath = new Path(); 
-      // createStack(&(ptr->remembrance.modifiedPath));       
-      ptr->apply_func =  guided_branch_length_proposal_apply;
-      ptr->reset_func =  branchLengthReset;
-      ptr->category = BRANCH_LENGTHS; 
-      ptr->name  = "singleBlGuided"; 
-      break; 
-    case UPDATE_SINGLE_BL_BIUNIF: 
-      ptr->eval_lnl = dummy_eval;
-      ptr->remembrance.topoRec = (topoRecord*)exa_calloc(1,sizeof(topoRecord)); 
-      ptr->apply_func	=  random_branch_length_proposal_apply;
-      ptr->reset_func =  random_branch_length_proposal_reset;
-      ptr->name = "singleBLBiunif"; 
-      ptr->category = BRANCH_LENGTHS; 
-      break; 
-    case UPDATE_MODEL_SINGLE_BIUNIF: 
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func	=  single_biunif_model_proposal_apply;
-      ptr->reset_func =  simple_model_proposal_reset;
-      ptr->name = "singleModelBiunif"; 
-      ptr->category = SUBSTITUTION_RATES; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      break; 
-    case UPDATE_MODEL_BIUNIF: 
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->name = "modelBiunif"; 
-      ptr->category = SUBSTITUTION_RATES; 
-      ptr->apply_func = single_biunif_model_proposal_apply; 
-      ptr->reset_func = simple_model_proposal_reset; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      break; 
-    case UPDATE_MODEL_ALL_BIUNIF:
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func = all_biunif_model_proposal_apply; 
-      ptr->reset_func = simple_model_proposal_reset; 
-      ptr->name = "modelAllBiunif"; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->category = SUBSTITUTION_RATES; 
-      break; 
-    case UPDATE_FREQUENCIES_BIUNIF: 
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func = frequency_proposal_apply; 
-      ptr->reset_func = frequency_proposal_reset; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name = "freqBiunif"; 
-      ptr->category = FREQUENCIES; 
-      break;
-    case UPDATE_MODEL_PERM_BIUNIF: 
-      ptr->eval_lnl = onePartitionEval; 
-      ptr->apply_func = NULL; 	/* TODO */
-      ptr->reset_func = simple_model_proposal_reset; 
-      ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
-      ptr->name = "modelPermBiunif"; 
-      ptr->category = SUBSTITUTION_RATES; 
-      break;
-    case BRANCH_LENGTHS_MULTIPLIER: 
-      ptr->eval_lnl = evalBranch;
-      ptr->autotune = autotuneMultiplier; 
-      ptr->apply_func = branchLengthMultiplierApply; 
-      ptr->reset_func = branchLengthReset; 
-      ptr->remembrance.modifiedPath =  new Path(); 
-      // createStack(&(ptr->remembrance.modifiedPath));
-      ptr->parameters.multiplier = INIT_BL_MULT; 
-      ptr->name = "branchMult"; 
-      ptr->category = BRANCH_LENGTHS; 
-      break; 
-      /* TODO re-install PROPOSALADD anchor for script   */
-    default : 
-      {
-	printf("unknown value %d\n",type ); 
-	assert(0) ; 
-      }
-    }  
-}
+//   switch(type)
+//     {
+//     case UPDATE_SINGLE_BL: 
+//       ptr->eval_lnl = evalBranch;
+//       ptr->autotune = autotuneSlidingWindow; 
+//       ptr->remembrance.modifiedPath = new Path(); 
+//       // createStack(&(ptr->remembrance.modifiedPath)); 
+//       ptr->apply_func = branchLengthWindowApply; 
+//       ptr->reset_func =  branchLengthReset;
+//       ptr->category = BRANCH_LENGTHS; 
+//       ptr->parameters.slidWinSize = INIT_BL_SLID_WIN; 
+//       ptr->name = "singleBLSlidWin"; 
+//       break; 
+//     case UPDATE_SINGLE_BL_EXP: 
+//       ptr->eval_lnl = dummy_eval;
+//       ptr->remembrance.topoRec = (topoRecord*)exa_calloc(1,sizeof(topoRecord)); 
+//       ptr->apply_func	=  random_branch_length_proposal_apply;
+//       ptr->reset_func =  random_branch_length_proposal_reset;
+//       ptr->category = BRANCH_LENGTHS; 
+//       ptr->name  = "singleBlExp"; 
+//       break;
+//     case UPDATE_SINGLE_BL_GUIDED: 
+//       ptr->eval_lnl = evalBranch;
+//       ptr->remembrance.modifiedPath = new Path(); 
+//       // createStack(&(ptr->remembrance.modifiedPath));       
+//       ptr->apply_func =  guided_branch_length_proposal_apply;
+//       ptr->reset_func =  branchLengthReset;
+//       ptr->category = BRANCH_LENGTHS; 
+//       ptr->name  = "singleBlGuided"; 
+//       break; 
+//     case UPDATE_SINGLE_BL_BIUNIF: 
+//       ptr->eval_lnl = dummy_eval;
+//       ptr->remembrance.topoRec = (topoRecord*)exa_calloc(1,sizeof(topoRecord)); 
+//       ptr->apply_func	=  random_branch_length_proposal_apply;
+//       ptr->reset_func =  random_branch_length_proposal_reset;
+//       ptr->name = "singleBLBiunif"; 
+//       ptr->category = BRANCH_LENGTHS; 
+//       break; 
+//     case UPDATE_MODEL_SINGLE_BIUNIF: 
+//       ptr->eval_lnl = onePartitionEval; 
+//       ptr->apply_func	=  single_biunif_model_proposal_apply;
+//       ptr->reset_func =  simple_model_proposal_reset;
+//       ptr->name = "singleModelBiunif"; 
+//       ptr->category = SUBSTITUTION_RATES; 
+//       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+//       break; 
+//     case UPDATE_MODEL_BIUNIF: 
+//       ptr->eval_lnl = onePartitionEval; 
+//       ptr->name = "modelBiunif"; 
+//       ptr->category = SUBSTITUTION_RATES; 
+//       ptr->apply_func = single_biunif_model_proposal_apply; 
+//       ptr->reset_func = simple_model_proposal_reset; 
+//       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+//       break; 
+//     case UPDATE_MODEL_ALL_BIUNIF:
+//       ptr->eval_lnl = onePartitionEval; 
+//       ptr->apply_func = all_biunif_model_proposal_apply; 
+//       ptr->reset_func = simple_model_proposal_reset; 
+//       ptr->name = "modelAllBiunif"; 
+//       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+//       ptr->category = SUBSTITUTION_RATES; 
+//       break; 
+//     case UPDATE_FREQUENCIES_BIUNIF: 
+//       ptr->eval_lnl = onePartitionEval; 
+//       ptr->apply_func = frequency_proposal_apply; 
+//       ptr->reset_func = frequency_proposal_reset; 
+//       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+//       ptr->name = "freqBiunif"; 
+//       ptr->category = FREQUENCIES; 
+//       break;
+//     case UPDATE_MODEL_PERM_BIUNIF: 
+//       ptr->eval_lnl = onePartitionEval; 
+//       ptr->apply_func = NULL; 	/* TODO */
+//       ptr->reset_func = simple_model_proposal_reset; 
+//       ptr->remembrance.partInfo = (perPartitionInfo*)exa_calloc(1,sizeof(perPartitionInfo)); 
+//       ptr->name = "modelPermBiunif"; 
+//       ptr->category = SUBSTITUTION_RATES; 
+//       break;
+//     case BRANCH_LENGTHS_MULTIPLIER: 
+//       ptr->eval_lnl = evalBranch;
+//       ptr->autotune = autotuneMultiplier; 
+//       ptr->apply_func = branchLengthMultiplierApply; 
+//       ptr->reset_func = branchLengthReset; 
+//       ptr->remembrance.modifiedPath =  new Path(); 
+//       // createStack(&(ptr->remembrance.modifiedPath));
+//       ptr->parameters.multiplier = INIT_BL_MULT; 
+//       ptr->name = "branchMult"; 
+//       ptr->category = BRANCH_LENGTHS; 
+//       break; 
+//       /* TODO re-install PROPOSALADD anchor for script   */
+//     default : 
+//       {
+// 	printf("unknown value %d\n",type ); 
+// 	assert(0) ; 
+//       }
+//     }  
+// }

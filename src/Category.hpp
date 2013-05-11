@@ -19,6 +19,8 @@ public:
   Category& operator=(Category rhs); 
   ~Category(); 
 
+  void copyDeep(const Category& rhs); 
+
   /** @brief adds a proposal */ 
   void addProposal(AbstractProposal *proposal){proposals.push_back(proposal); }
 
@@ -29,7 +31,8 @@ public:
   double getCatFreq( ) const {return categoryFrequency ; }
   string getName()  const {return name; }
 
-  vector<AbstractProposal*> getProposals(){return proposals; }
+  vector<AbstractProposal*> getProposals() const {return proposals; }
+
 
   friend void swap(Category &c1, Category &c2); 
   // void swap(Category& rhs); 

@@ -8,8 +8,8 @@
 // #define DEBUG_ESPR
 
 
-ExtendedSPR::ExtendedSPR(Chain *_chain, double _relativeWeight, double _stopProb, double _multiplier)
-  : chain(_chain), stopProb(_stopProb), multiplier(_multiplier)    
+ExtendedSPR::ExtendedSPR(double _relativeWeight, double _stopProb, double _multiplier)
+  : stopProb(_stopProb), multiplier(_multiplier)    
 {
   this->relativeProbability = _relativeWeight; 
   this->name = "eSPR"; 
@@ -165,7 +165,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   // modifiedPath.printWithBLs(traln);
   // cout << endl; 
   
-  applyPathAsESPR(chain->traln);
+  applyPathAsESPR(&traln);
 
 #ifdef ESPR_MULTIPLY_BL
   multiplyAlongBranchESPR(traln, rand, hastings);
@@ -175,7 +175,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 #endif
 #endif
 
-  debug_checkTreeConsistency(chain->traln->getTr()); 
+  debug_checkTreeConsistency(traln.getTr()); 
 }
 
 
@@ -205,7 +205,7 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
   destroyOrientationAlongPath(modifiedPath, tr, toEval); 
   destroyOrientationAlongPath(modifiedPath, tr, toEval->back);
 
-  evaluateGenericWrapper(chain, toEval, FALSE);
+  evaluateGenericWrapper(traln, toEval, FALSE);
 }
 
 
@@ -373,5 +373,6 @@ void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln)
 
 AbstractProposal* ExtendedSPR::clone() const
 {
-  return new ExtendedSPR(chain, relativeProbability, stopProb, multiplier);
+  // tout << "cloning "  << name << endl;
+  return new ExtendedSPR(relativeProbability, stopProb, multiplier);
 }

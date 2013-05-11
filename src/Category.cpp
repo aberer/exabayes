@@ -28,13 +28,12 @@ Category::Category(string _name, category_t _type, double catFreq, vector<Abstra
 
 Category::Category(const Category &rhs)
   : type(rhs.type)
+  , proposals(rhs.proposals)
   , categoryFrequency(rhs.categoryFrequency)   
   , name(rhs.name)
 {
-  assert(proposals.size() == 0);  
-  for(auto p : rhs.proposals)
-    proposals.push_back(p->clone());     
 }
+
 
 Category& Category::operator=(Category rhs)
 {
@@ -45,8 +44,17 @@ Category& Category::operator=(Category rhs)
 
 Category::~Category()
 {
-  for(auto p :  getProposals())
-    delete p; 
+  // for(auto p :  getProposals())
+  //   delete p; 
+}
+
+
+
+void Category::copyDeep(const Category& rhs)
+{
+  proposals.clear(); 
+  for(auto p :  rhs.getProposals())
+    proposals.push_back(p->clone());    
 }
 
 

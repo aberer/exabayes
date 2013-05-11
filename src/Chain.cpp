@@ -12,7 +12,6 @@
 #include "proposals.h"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
-#include "WrappedProposal.hpp"
 #include "ParsimonySPR.hpp" 
 #include "eval.h"
 #include "TreeLengthMultiplier.hpp"
@@ -44,18 +43,11 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
 
-  evaluateFullNoBackup(this);   
+  evaluateFullNoBackup(*traln);   
   
   tree *tr = traln->getTr();
-  addChainInfo(tout) << " lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds="  << *chainRand << endl; 
+  addChainInfo(tout) << " lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds=>"  << *chainRand << endl; 
   saveTreeStateToChain(); 
-
-  addChainInfo(tout) << " my traln= "   << traln << ", my tree=" << traln->getTr() << endl; 
-  // for(Category& c : proposalCategories )
-  //   for(AbstractProposal* p : c.getProposals() )
-  //     tout << "owning proposal "  << p <<"," << p->getName() << endl; 
-  
-  clarifyOwnership();
 }
 
 
@@ -78,29 +70,6 @@ double Chain::getChainHeat()
 }
 
 
-
-
-
-
-/**
-   @brief assigns the entire chain state from rhs to this chain
-
-   This includes topology, parameters, all proposal parameters 
- */ 
-// Chain& Chain::operator=(Chain& rhs)
-// {
-//   TreeAln &thisTraln = *traln; 
-//   TreeAln &rhsTraln = *(rhs.traln); 
-
-//   thisTraln = rhsTraln; 
-
-//   // TODO should also copy proposals, but that is currently not used
-
-//   dump.topology->saveTopology(thisTraln);  
-//   return *this; 
-// }
-
-
 void Chain::saveTreeStateToChain()
 {
   dump.topology->saveTopology(*(traln));
@@ -117,8 +86,6 @@ void Chain::saveTreeStateToChain()
       memcpy(info->frequencies, partition->frequencies, 4 * sizeof(double)); 
     }  
 }
-
-
 
 
 void Chain::applyChainStateToTree()
@@ -143,7 +110,7 @@ void Chain::applyChainStateToTree()
       traln->discretizeGamma(i);	 
     } 
 
-  evaluateFullNoBackup(this); 
+  evaluateFullNoBackup(*traln); 
 }
 
 
@@ -182,8 +149,7 @@ void Chain::step()
 {
   currentGeneration++; 
   tree *tr = traln->getTr();   
-
-  restorer->resetRestorer(*traln);
+  traln->getRestorer()->resetRestorer(*traln);
 
   // inform the rng that we produce random numbers for generation x  
   chainRand->rebase(currentGeneration);
@@ -229,7 +195,7 @@ void Chain::step()
   if(wasAccepted)
     {
       pfun->accept();      
-      expensiveVerify(this);
+      expensiveVerify(*traln);
     }
   else
     {
@@ -237,7 +203,7 @@ void Chain::step()
       pfun->reject();
 
       // TODO maybe not here =/ 
-      this->restorer->restoreArrays(*traln); // restores the previous tree state 
+      traln->getRestorer()->restoreArrays(*traln);
     }
 
   debug_checkTreeConsistency(this->traln->getTr());
@@ -290,14 +256,6 @@ void Chain::initParamDump()
       for(int j = 0; j < 4; ++j)
 	p->frequencies[j] = 0.25;       
     }
-}
-
-
-void Chain::clarifyOwnership()
-{
-  for(Category&  c : proposalCategories)
-    for(AbstractProposal* p : c.getProposals())
-      p->setOwningChain(this); 
 }
 
 

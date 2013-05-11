@@ -1,8 +1,4 @@
-
 #include "axml.h"
-
-// #include "bayes.h"
-// #include "globals.h"
 #include "GlobalVariables.hpp"
 #include "adapters.h"		
 #include "Chain.hpp"
@@ -26,36 +22,45 @@ extern "C"
 }
 #endif
 
-
-void orientationPointAway(tree *tr, nodeptr p); 
+void orientationPointAway(tree *tr, nodeptr p)
+{
+  if(NOT isTip(p->number, tr->mxtips))
+    {
+      if(p->x)
+	{
+	  p->next->x = 1; 
+	  p->x = 0; 
+	}
+      
+      orientationPointAway(tr, p->next->back); 
+      orientationPointAway(tr, p->next->next->back); 
+    }
+}
 
 
 /* call this for verification after the lnl has been evaluated somehow */
-void expensiveVerify(Chain *chain)
+void expensiveVerify(TreeAln& traln)
 {  
 #ifdef DEBUG_LNL_VERIFY
-  TreeAln *debugTraln = globals.debugTree;   
-  *debugTraln = *(chain->traln); 
+  TreeAln &debugTraln = *(globals.debugTree);   
+  double toVerify = traln.getTr()->likelihood; 
 
-  double toVerify = chain->traln->getTr()->likelihood; 
+  debugTraln = traln; 
   
-  Chain  *helpChain = (Chain*) exa_calloc(1,sizeof(chain)) ; 
-  helpChain->traln = debugTraln; 
-
-#if 1 
+#if 0 
   nodeptr
-    p = findNodeFromBranch(debugTraln->getTr(), findRoot(chain->traln->getTr())); 
-  orientationPointAway(debugTraln->getTr(), p);
-  orientationPointAway(debugTraln->getTr(), p->back);
+    p = findNodeFromBranch(debugTraln.getTr(), findRoot(traln.getTr())); 
+  orientationPointAway(debugTraln.getTr(), p);
+  orientationPointAway(debugTraln.getTr(), p->back);
 
-  exa_evaluateGeneric(helpChain, p , FALSE); 
+  exa_evaluateGeneric(debugTraln, p , FALSE); 
 #else 
-  exa_evaluateGeneric(helpChain, debugTraln->getTr()->start , TRUE); 
+  exa_evaluateGeneric(debugTraln, debugTraln.getTr()->start , TRUE); 
 #endif
-  double verifiedLnl =  helpChain->traln->getTr()->likelihood; 
+  double verifiedLnl =  debugTraln.getTr()->likelihood; 
 
 
-  if(chain->currentGeneration != 0 && isOutputProcess())
+  if( isOutputProcess())
     {      
       if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
 	{
@@ -63,14 +68,12 @@ void expensiveVerify(Chain *chain)
 	       <<  fabs (verifiedLnl - toVerify )
 	       << "(with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
-	  tout << "current tree: " << *(chain->traln) << endl; 
-	  tout << "help tree: " <<  *(helpChain->traln) << endl; 
+	  tout << "current tree: " << traln << endl; 
+	  tout << "help tree: " <<  debugTraln << endl; 
 	  
 	}
       assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
     }  
-
-  exa_free(helpChain); 
 #endif
 }
 
@@ -102,20 +105,20 @@ nat exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal )
 /**
    @brief backs up arrays and executes the newView 
  */ 
-void newViewGenericWrapper(Chain *chain, nodeptr p, boolean masked)
+void newViewGenericWrapper(TreeAln &traln, nodeptr p, boolean masked)
 {
   int numberToExecute = 0; 
   int modelToEval = ALL_MODELS; 
-  for(int i = 0; i < chain->traln->getNumberOfPartitions(); ++i)
+  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      if(chain->traln->accessExecModel(i))
+      if(traln.accessExecModel(i))
 	{
 	  numberToExecute++; 
 	  modelToEval = i; 
 	}
     }
 
-  assert(numberToExecute == 1 || numberToExecute == chain->traln->getNumberOfPartitions()); 
+  assert(numberToExecute == 1 || numberToExecute == traln.getNumberOfPartitions()); 
   if(numberToExecute > 1)
     modelToEval = ALL_MODELS; 
 
@@ -126,38 +129,38 @@ void newViewGenericWrapper(Chain *chain, nodeptr p, boolean masked)
 
   if(p->x)
     {
-      tree *tr = chain->traln->getTr();
+      tree *tr = traln.getTr();
       assert(NOT isTip(p->number, tr->mxtips)); 
       p->x = 0; 
       p->next->x = 1; 
     }
-  chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), p, modelToEval, false); 
-  exa_newViewGeneric(chain,p,masked); // NEEDED
+  traln.getRestorer()->traverseAndSwitchIfNecessary(traln, p, modelToEval, false); 
+  exa_newViewGeneric(traln,p,masked); // NEEDED
 }
 
 
 
-void evaluatePartialNoBackup(Chain *chain, nodeptr p)
+void evaluatePartialNoBackup(TreeAln& traln, nodeptr p)
 {  
-  exa_evaluateGeneric(chain,p,FALSE );   
-  expensiveVerify(chain);
+  exa_evaluateGeneric(traln,p,FALSE );   
+  expensiveVerify(traln);
 }
 
-void evaluateFullNoBackup(Chain *chain)
+void evaluateFullNoBackup(TreeAln& traln)
 {
 #ifdef DEBUG_EVAL
   if(isOutputProcess())
   cout << "conducting full evaluation, no backup created" << endl; 
 #endif
   
-  exa_evaluateGeneric(chain,chain->traln->getTr()->start,TRUE );   
-  expensiveVerify(chain);
+  exa_evaluateGeneric(traln,traln.getTr()->start,TRUE );   
+  expensiveVerify(traln);
 }
 
 
 
 
-void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
+void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
 #ifdef DEBUG_EVAL
   if(isOutputProcess())
@@ -166,15 +169,15 @@ void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
 
   int model = ALL_MODELS; 
   int numModels = 0; 
-  for(int i = 0; i < chain->traln->getNumberOfPartitions() ; ++i)
+  for(int i = 0; i < traln.getNumberOfPartitions() ; ++i)
     {
-      if(chain->traln->accessExecModel(i))
+      if(traln.accessExecModel(i))
 	{	  
 	  numModels++; 
 	  model = i; 
 	}
     }
-  assert(numModels == 1 || numModels == chain->traln->getNumberOfPartitions()); 
+  assert(numModels == 1 || numModels == traln.getNumberOfPartitions()); 
   if(numModels > 1)
     {
       model = ALL_MODELS; 
@@ -189,31 +192,18 @@ void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal)
     cout << " and model "<< model << endl; 
 #endif
 
-  chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), start, model, fullTraversal);
-  chain->getRestorer()->traverseAndSwitchIfNecessary(*(chain->traln), start->back, model, fullTraversal);
-
-  exa_evaluateGeneric(chain,start,fullTraversal);   
+  traln.getRestorer()->traverseAndSwitchIfNecessary(traln, start, model, fullTraversal);
+  traln.getRestorer()->traverseAndSwitchIfNecessary(traln, start->back, model, fullTraversal);
+  
+  exa_evaluateGeneric(traln,start,fullTraversal);   
 #ifdef DEBUG_LNL_VERIFY
   if(globals.verifyLnl)
-    expensiveVerify(chain);
+    expensiveVerify(traln);
 #endif
 }
 
 
-void orientationPointAway(tree *tr, nodeptr p)
-{
-  if(NOT isTip(p->number, tr->mxtips))
-    {
-      if(p->x)
-	{
-	  p->next->x = 1; 
-	  p->x = 0; 
-	}
-      
-      orientationPointAway(tr, p->next->back); 
-      orientationPointAway(tr, p->next->next->back); 
-    }
-}
+
 
 
 /**
@@ -221,60 +211,59 @@ void orientationPointAway(tree *tr, nodeptr p)
 
    updates chain likelihood and chain-partition-lnl accordingly. 
  */
-void evaluateOnePartition(Chain *chain, nodeptr start, boolean fullTraversal, int model)
+void evaluateOnePartition(TreeAln& traln, nodeptr start, boolean fullTraversal, int model)
 {
   assert(fullTraversal); 	/* partial tarversal does not make sense */
-  
-  TreeAln *traln = chain->traln;
-  tree *tr = chain->traln->getTr(); 
-  int numPartitions = chain->traln->getNumberOfPartitions(); 
+
+  tree *tr = traln.getTr(); 
+  int numPartitions = traln.getNumberOfPartitions(); 
 
   double *perPartitionLH; 
   perPartitionLH = new double[numPartitions]; 
 
   for(int i = 0; i < numPartitions; ++i)
-    perPartitionLH[i] = traln->accessPartitionLH(i); 
+    perPartitionLH[i] = traln.accessPartitionLH(i); 
 
   for(int i = 0; i < numPartitions; ++i)
-    traln->accessExecModel(i) = FALSE; 
-  traln->accessExecModel(model) = TRUE; 
+    traln.accessExecModel(i) = FALSE; 
+  traln.accessExecModel(model) = TRUE; 
 
   orientationPointAway(tr, start); 
   orientationPointAway(tr, start->back); 
   
   /* compensating for the fact, that we need to have a tip for full traversal  */
-  newViewGenericWrapper(chain, start, TRUE); 
+  newViewGenericWrapper(traln, start, TRUE); 
 
   for(int i = 0; i < numPartitions; ++i)
-    traln->accessExecModel(i) = FALSE; 
-  traln->accessExecModel(model) = TRUE; 
+    traln.accessExecModel(i) = FALSE; 
+  traln.accessExecModel(model) = TRUE; 
 
-  newViewGenericWrapper(chain, start->back, TRUE); 
+  newViewGenericWrapper(traln, start->back, TRUE); 
 
   for(int i = 0; i < numPartitions; ++i)
-    traln->accessExecModel(i) = FALSE; 
-  traln->accessExecModel(model) = TRUE; 
+    traln.accessExecModel(i) = FALSE; 
+  traln.accessExecModel(model) = TRUE; 
 #ifdef DEBUG_LNL_VERIFY
   globals.verifyLnl = false; 	// HACK
 #endif
-  evaluateGenericWrapper(chain,start, FALSE);
+  evaluateGenericWrapper(traln,start, FALSE);
 #ifdef DEBUG_LNL_VERIFY
   globals.verifyLnl = true  ; 
 #endif
 
-  perPartitionLH[model] = traln->accessPartitionLH(model); 
+  perPartitionLH[model] = traln.accessPartitionLH(model); 
   for(int i = 0; i < numPartitions; ++i)
-    traln->accessPartitionLH(i) = perPartitionLH[i]; 
+    traln.accessPartitionLH(i) = perPartitionLH[i]; 
 
   tr->likelihood = 0; 
   for(int i = 0; i < numPartitions; ++i)
     {	
-      tr->likelihood += traln->accessPartitionLH(i);
-      traln->accessExecModel(i) = TRUE; 
+      tr->likelihood += traln.accessPartitionLH(i);
+      traln.accessExecModel(i) = TRUE; 
     }
 
   delete [] perPartitionLH; 
-  expensiveVerify(chain);
+  expensiveVerify(traln);
 }
 
 

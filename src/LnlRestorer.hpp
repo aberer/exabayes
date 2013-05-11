@@ -13,13 +13,12 @@
 #include "TreeAln.hpp"
 
 typedef node* nodep;  
-class Chain;
 
 class LnlRestorer
 {
 public: 
   /** @brief initializes the arrays (expensive memory-wise) */
-  LnlRestorer(Chain *chain);
+  LnlRestorer(TreeAln& traln); 
 
   ~LnlRestorer();
 

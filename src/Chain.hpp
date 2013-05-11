@@ -18,7 +18,7 @@ using namespace std;
 #include "PriorBelief.hpp"
 
 class TreeAln; 
-class LnlRestorer; 
+// class LnlRestorer; 
 class Topology; 
 class AbstractProposal; 
 
@@ -70,8 +70,6 @@ public:
   // getters and setters 
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
-  void setRestorer(LnlRestorer *rest){restorer = rest ; }
-  LnlRestorer* getRestorer(){return restorer; }
   vector<Category>& getProposalCategories(){return proposalCategories;}
   int getCouplingId(){return couplingId; }
   void setCouplingId(int id) {couplingId = id; }
@@ -113,7 +111,6 @@ private :
   Chain(const Chain& rhs)  ; 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   Randomness *chainRand; 
-  LnlRestorer *restorer; 
   int runid; 
   PriorBelief prior; 
 

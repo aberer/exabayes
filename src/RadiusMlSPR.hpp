@@ -21,7 +21,7 @@ typedef struct  _insertWeight
 class RadiusMlSPR : public AbstractProposal
 {
 public: 
-  RadiusMlSPR(Chain *chain, double relativeWeight, int radius);
+  RadiusMlSPR(double relativeWeight, int radius);
   virtual ~RadiusMlSPR(){}
   
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -29,12 +29,10 @@ public:
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
 
   virtual void autotune() {}	// disabled 
-  virtual void setOwningChain(Chain *_chain) {chain = _chain;}
-  
+
   virtual AbstractProposal* clone() const;  
 
 private: 
-  Chain *chain; 
   Path path; 
 
   int radius; 

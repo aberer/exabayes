@@ -12,7 +12,7 @@
 class ExtendedSPR : public AbstractProposal
 {
 public: 
-  ExtendedSPR( Chain *chain, double relativeWeight, double stopProb, double multiplier); 
+  ExtendedSPR( double relativeWeight, double stopProb, double multiplier); 
   virtual ~ExtendedSPR(); 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -20,12 +20,10 @@ public:
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
 
   virtual void autotune() {}	// disabled 
-  virtual void setOwningChain(Chain *_chain) {chain = _chain;}
 
   virtual AbstractProposal* clone() const;  
 
 protected: 
-  Chain* chain; 
   double stopProb; 
   double multiplier; 
   

@@ -16,16 +16,17 @@
 
 class Chain; 
 
-void evaluateGenericWrapper(Chain *chain, nodeptr start, boolean fullTraversal); 
-void evaluateOnePartition(Chain  *chain, nodeptr start, boolean fullTraversal, int model); 
-void printAlnTrState(Chain *chain); 
+
+
 void orientationPointAway(tree *tr, nodeptr p); 
-void newViewGenericWrapper(Chain  *chain, nodeptr p, boolean masked); 
+void expensiveVerify(TreeAln& traln); 
+void exa_newViewParsimony(TreeAln &traln, nodeptr p); 
+void newViewGenericWrapper(TreeAln &traln, nodeptr p, boolean masked); 
+void evaluatePartialNoBackup(TreeAln& traln, nodeptr p); 
+void evaluateFullNoBackup(TreeAln& traln); 
+void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal); 
+void evaluateOnePartition(TreeAln& traln, nodeptr start, boolean fullTraversal, int model); 
 
-void evaluateFullNoBackup(Chain *chain); 
-void evaluatePartialNoBackup(Chain *chain, nodeptr p); 
-
-void expensiveVerify(Chain *chain); 
 nat exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal ); 
 void exa_newViewParsimony(TreeAln &traln, nodeptr p); 
 #endif

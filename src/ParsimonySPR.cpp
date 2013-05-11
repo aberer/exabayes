@@ -22,9 +22,8 @@ private:
 
 
 
-ParsimonySPR::ParsimonySPR(Chain *_chain, double _relativeWeight, double _parsWarp, double _blMulti)
-  : chain(_chain) 
-  , parsWarp(_parsWarp)    
+ParsimonySPR::ParsimonySPR( double _relativeWeight, double _parsWarp, double _blMulti)
+  : parsWarp(_parsWarp)    
   , blMulti(_blMulti)    
 {
   this->name = "parsSPR"; 
@@ -179,5 +178,5 @@ void ParsimonySPR::autotune()
 
 AbstractProposal* ParsimonySPR::clone() const
 {
-  return new ParsimonySPR(chain, relativeProbability, parsWarp, blMulti);
+  return new ParsimonySPR( relativeProbability, parsWarp, blMulti);
 } 

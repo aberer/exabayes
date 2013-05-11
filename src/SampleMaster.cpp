@@ -1,5 +1,6 @@
 #include <sstream>
 #include <fstream>
+#include <memory>
 
 #include "Block.hpp"
 #include "output.h"
@@ -10,7 +11,6 @@
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
 #include "proposals.h"
-#include "WrappedProposal.hpp"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
 #include "ParsimonySPR.hpp"
@@ -18,6 +18,7 @@
 #include "RadiusMlSPR.hpp"
 #include "Category.hpp"
 #include "NodeSlider.hpp"
+#include "BranchLengthMultiplier.hpp"
 
 
 // TODO =( 
@@ -261,7 +262,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 
   // sets up tree structures 
   vector<TreeAln*>  trees; 
-  
+
   for(int i = 0; i < numCoupledChains; ++i)
     {
       TreeAln *traln = new TreeAln();
@@ -271,7 +272,11 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 #endif
       trees.push_back(traln); 
     }
-
+  
+  // only use one restorer for all chains 
+  auto restorer = shared_ptr<LnlRestorer> (new LnlRestorer(*(trees[0])));
+  for(auto tree : trees)
+    tree->setRestorer(restorer);
 
   Randomness masterRand(cl.getSeed());   
   vector<int> runSeeds; 
@@ -300,19 +305,8 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
     }
   
   if(tuneHeat)
-    for(auto r : runs)
+    for(CoupledChains& r : runs)
       r.enableHeatTuning(tuneFreq); 
-  
-  // only use one restorer for all chains 
-  LnlRestorer *restorer = new LnlRestorer(runs[0].getChain(0));
-  for(auto run : runs )
-    {
-      for(int i = 0; i < run.getNumberOfChains(); ++i )
-	{
-	  Chain *chain = run.getChain(i); 
-	  chain->setRestorer(restorer); 
-	}
-    }
 
   if(numTrees > 0)
     fclose(treeFH); 
@@ -375,71 +369,63 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
   vector<proposalFunction*> legProp; 
   vector<AbstractProposal*> prop; 
 
-
   // initialize proposals 
   for(int i = 0; i < NUM_PROPOSALS ; ++i)
     { 
-      if( NOT isNewProposal[i])
+      double weight = proposalWeights[proposal_type(i)]; 
+      if( weight != 0)
 	{
-	  proposalFunction *pf = NULL; 
-	  initProposalFunction(proposal_type(i), proposalWeights ,&pf); 
-	  if(pf != (proposalFunction*) NULL)
-	    prop.push_back(new WrappedProposal( pf, NULL)); 
-	}
-      else 
-	{
- 	  double weight = proposalWeights[proposal_type(i)]; 
-	  if( weight != 0)
+	  switch(proposal_type(i))
 	    {
-	      switch(proposal_type(i))
-		{
-		case NODE_SLIDER:
-		  prop.push_back(new NodeSlider(NULL, weight, INIT_NODE_SLIDER_MULT));		  
-		  break; 
-		case UPDATE_MODEL: 
-		  prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(NULL,weight, INIT_RATE_SLID_WIN, "revMatSlider"));
-		  break; 
-		case FREQUENCY_SLIDER:
-		  prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>(NULL, weight, INIT_FREQ_SLID_WIN, "freqSlider"));
-		  break; 		  
-		case TL_MULT:
-		  prop.push_back(new TreeLengthMultiplier(NULL, weight, INIT_TL_MULTI));
-		  break; 
-		case E_TBR: 
-		  prop.push_back(new ExtendedTBR(NULL, weight, esprStopProp, INIT_ESPR_MULT)); 
-		  break; 
-		case E_SPR: 
-		  prop.push_back(new ExtendedSPR(NULL, weight, esprStopProp, INIT_ESPR_MULT)); 
-		  break; 
-		case PARSIMONY_SPR:	
-		  prop.push_back(new ParsimonySPR(NULL, weight, parsimonyWarp, INIT_ESPR_MULT)); 
-		  break; 
-		case ST_NNI: 
-		  prop.push_back(new StatNNI(NULL, weight, INIT_NNI_MULT)); 
-		  break; 
-		case GAMMA_MULTI: 
-		  prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>(NULL, weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
-		  break; 
-		case UPDATE_GAMMA: 
-		  prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>(NULL, weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
-		  break; 
-		case UPDATE_GAMMA_EXP: 
-		  prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>(NULL, weight, 0, "rateHetExp")); 
-		  break; 
-		case UPDATE_FREQUENCIES_DIRICHLET: 
-		  prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>(NULL, weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
-		  break; 
-		case UPDATE_MODEL_DIRICHLET: 
-		  prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(NULL,weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
-		  break; 
-		case GUIDED_SPR:
-		  prop.push_back(new RadiusMlSPR(NULL, weight, guidedRadius )); 
-		  break; 
-		default : 
-		  assert(0); 
-		}
+	    case BRANCH_LENGTHS_MULTIPLIER:
+	      prop.push_back(new BranchLengthMultiplier(weight, INIT_BL_MULT) ); 
+	      break; 
+	    case NODE_SLIDER:
+	      prop.push_back(new NodeSlider( weight, INIT_NODE_SLIDER_MULT));		  
+	      break; 
+	    case UPDATE_MODEL: 
+	      prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(weight, INIT_RATE_SLID_WIN, "revMatSlider"));
+	      break; 
+	    case FREQUENCY_SLIDER:
+	      prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>( weight, INIT_FREQ_SLID_WIN, "freqSlider"));
+	      break; 		  
+	    case TL_MULT:
+	      prop.push_back(new TreeLengthMultiplier( weight, INIT_TL_MULTI));
+	      break; 
+	    case E_TBR: 
+	      prop.push_back(new ExtendedTBR( weight, esprStopProp, INIT_ESPR_MULT)); 
+	      break; 
+	    case E_SPR: 
+	      prop.push_back(new ExtendedSPR( weight, esprStopProp, INIT_ESPR_MULT)); 
+	      break; 
+	    case PARSIMONY_SPR:	
+	      prop.push_back(new ParsimonySPR( weight, parsimonyWarp, INIT_ESPR_MULT)); 
+	      break; 
+	    case ST_NNI: 
+	      prop.push_back(new StatNNI( weight, INIT_NNI_MULT)); 
+	      break; 
+	    case GAMMA_MULTI: 
+	      prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>( weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
+	      break; 
+	    case UPDATE_GAMMA: 
+	      prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>( weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
+	      break; 
+	    case UPDATE_GAMMA_EXP: 
+	      prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>( weight, 0, "rateHetExp")); 
+	      break; 
+	    case UPDATE_FREQUENCIES_DIRICHLET: 
+	      prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>( weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
+	      break; 
+	    case UPDATE_MODEL_DIRICHLET: 
+	      prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
+	      break; 
+	    case GUIDED_SPR:
+	      prop.push_back(new RadiusMlSPR( weight, guidedRadius )); 
+	      break; 
+	    default : 
+	      assert(0); 
 	    }
-	}  
+	}
     }
 
 
@@ -466,7 +452,6 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
 	{	  
 	  if(p->getCategory() == i)
 	    {
-	      tout << p->getName() << endl; ;
 	      pr.push_back(p); 
 	      catSum += p->getRelativeProbability();
 	    }

@@ -41,6 +41,10 @@ double combineBranchLengths(tree *tr, double origA, double origB)
 }
 
 
+#define MIN_RATIO
+#define MAX_RATIO
+
+
 /**
     @brief gets the ratio of a to the sum of a and b 
 
@@ -48,15 +52,16 @@ double combineBranchLengths(tree *tr, double origA, double origB)
  */ 
 double getRatio(tree *tr, double a, double b )
 {
-  double ratio = log(a) / (log(a) + log(b)) ; 
+  double realA = branchLengthToReal(tr, a ) , 
+    realB = branchLengthToReal(tr,b); 
+  
+  double ratio = realA / (realA + realB ); 
 
   if(NOT (0 < ratio && ratio < 1.))
     {
       printf("\n\nWARNING: %g,%g (%g,%g) in ratio %g\n", a,b,branchLengthToReal(tr, a),branchLengthToReal(tr,b), ratio);
-    }
-    
+    }    
   return ratio ; 
-
 }
 
 

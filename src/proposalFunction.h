@@ -11,7 +11,7 @@
 
 
 #include "proposalType.h"
-#include "SuccessCtr.hpp"
+#include "SuccessCounter.hpp"
 #include "categoryType.h"
 #include "Chain.hpp"
 #include "ConfigReader.hpp"
@@ -53,7 +53,7 @@ struct _pfun
   void (*apply_func)( Chain *chain, struct _pfun *pf ); /// modifies according to the proposal drawn
   void (*eval_lnl) (Chain *chain, struct _pfun *pf);  /// chooses the cheapest way to evaluate the likelihood  of a proposal 
   void (*reset_func)( Chain *chain, struct _pfun *pf );    /// only resets all cheap changes to the partition/tr strcuts => no evaluation (that's the goal at least)
-  void (*autotune)(struct _pfun *pf, SuccessCtr *ctr); 
+  void (*autotune)(struct _pfun *pf, SuccessCounter *ctr); 
 
 
   double relativeWeight; 

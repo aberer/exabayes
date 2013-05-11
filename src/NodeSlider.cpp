@@ -1,15 +1,13 @@
 #include "NodeSlider.hpp"
-#include "Chain.hpp"
 #include "eval.h"
 
 
-NodeSlider::NodeSlider(Chain *_chain, double _relativeProbability, double _multiplier)
-  : chain(_chain)
-  , multiplier(_multiplier)
+NodeSlider::NodeSlider(double _relativeProbability, double _multiplier)
+  : multiplier(_multiplier)
 {
   this->relativeProbability = _relativeProbability;   
   name = "nodeSlider"; 
-  category = BRANCH_LENGTHS; 
+  this->category = BRANCH_LENGTHS; 
   ptype = NODE_SLIDER;   
 }
 
@@ -99,8 +97,8 @@ void NodeSlider::evaluateProposal(TreeAln &traln, PriorBelief &prior)
       r->next->x = 1; 
     }
   // TODO efficient? 
-  newViewGenericWrapper(chain, p, FALSE);  
-  evaluateGenericWrapper(chain, p, FALSE );
+  newViewGenericWrapper(traln, p, FALSE);  
+  evaluateGenericWrapper(traln, p, FALSE );
 }
 
 
@@ -128,6 +126,6 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* NodeSlider::clone() const
 {
-  NodeSlider* result = new NodeSlider(chain, relativeProbability, multiplier);
+  NodeSlider* result = new NodeSlider(relativeProbability, multiplier);
   return result;   
 }  

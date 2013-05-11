@@ -6,12 +6,8 @@
 #include "eval.h"
 #include "proposals.h"
 
-class Chain; 
-
-
-TreeLengthMultiplier::TreeLengthMultiplier(Chain *_chain, double _relativeWeight, double _multiplier)
-  : chain(_chain)
-  , multiplier(_multiplier)    
+TreeLengthMultiplier::TreeLengthMultiplier( double _relativeWeight, double _multiplier)
+  : multiplier(_multiplier)    
 {
   this->relativeProbability = _relativeWeight; 
   this->name = "TL-Mult"; 
@@ -56,7 +52,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
 {
   // TODO prior 
-  tree *tr = chain->traln->getTr();
+  tree *tr = traln.getTr();
   multiplyBranchLengthsRecursively(traln, tr->start->back, 1/rememMultiplier); 
 } 
 
@@ -79,11 +75,11 @@ void TreeLengthMultiplier::autotune()
  
 void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
-  evaluateGenericWrapper(chain, traln.getTr()->start, TRUE);
+  evaluateGenericWrapper(traln, traln.getTr()->start, TRUE);
 }
 
 
 AbstractProposal* TreeLengthMultiplier::clone() const
 {
-  return new TreeLengthMultiplier(chain, relativeProbability, multiplier);
+  return new TreeLengthMultiplier(relativeProbability, multiplier);
 }  

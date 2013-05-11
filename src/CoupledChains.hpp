@@ -14,9 +14,6 @@
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 
-class SuccessCtr; 
-
-
 
 /**
    @brief represents some coupled chains, one of them cold, many of
@@ -78,7 +75,7 @@ private:
 
 
   vector<Chain*> chains; 
-  vector<SuccessCtr*> swapInfo;  
+  vector<SuccessCounter*> swapInfo;  
 
   double temperature; 
   // the mcmc specific randomness used to initialize chains and do the swapping 

@@ -12,14 +12,11 @@
 
 #include "AbstractProposal.hpp"
 
-
-class Chain; 
-
 template<typename FUN, typename PARAM>
 class PartitionProposal : public AbstractProposal
 {
 public: 
-  PartitionProposal(Chain *_chain, double relativeWeight, double _param, string _name); 
+  PartitionProposal( double relativeWeight, double _param, string _name); 
   virtual ~PartitionProposal(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -27,7 +24,6 @@ public:
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
 
   virtual void autotune();
-  virtual void setOwningChain(Chain *_chain) {chain = _chain;}
 
   virtual PartitionProposal<FUN,PARAM>* clone() const; 
 
@@ -35,7 +31,6 @@ private:
   int model; 			// which model
   double parameter; 
   vector<double> values; 
-  Chain *chain ;
 }; 
 
 

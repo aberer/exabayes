@@ -6,7 +6,7 @@ begin EXABAYES;
       samplingFrequency 50 	[ take a sample every n generations ]
       numIndiChains  1 		[ number of independant chains/runs ]
       numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
-      tuneFreq 30 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
+      tuneFreq 50 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
       printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
       [ CONVERGENCE ]
@@ -15,7 +15,7 @@ begin EXABAYES;
 
 
       [ MCMCMC ]
-      numCoupledChains 1   [ number of chains per independent run (only one is cold)  => must be > 0] 
+      numCoupledChains 4   [ number of chains per independent run (only one is cold)  => must be > 0] 
       heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
       swapInterval 1 	   [ attempt a swap between chains every n generations ]
       tuneHeat true        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
@@ -30,7 +30,6 @@ begin EXABAYES;
       [ PRIOR configuration ]
       [================================================================]
 
-[ 
       [ TODO: topology ]
 
       [ branch lengths: TODO per-partition,clock,fixed ]
@@ -57,8 +56,6 @@ begin EXABAYES;
       [ shapePr fixed(1) ] 
 
 
-]
-
 
 
       [================================================================]
@@ -66,8 +63,8 @@ begin EXABAYES;
       [================================================================]
 
       [ TOPOLOGY ]
-      eSPR 10 [ ok, 10% in mb  ]
-      guidedSPR 0  [ ok ] 
+      eSPR 20 [ ok, 10% in mb  ]
+      guidedSPR 0   [ broken ] 
       stNNI 10      [ ok, 10% in mb]	
       eTBR  10 [ ok, 10% in mb ] 
       parsimonySPR 0  [ to be implemented, 10% in mb ]
@@ -101,7 +98,7 @@ begin EXABAYES;
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
-      eSprStopProb 0.5 [ stopping probability for eSPR moves, 0.5 in mb! ] 
+      eSprStopProb 0.3 [ stopping probability for eSPR moves, 0.5 in mb! ] 
       parsimonyWarp 0.10 [ warp factor for parsimony based moves => if we set that to 10, it is a reference to the star trek voyager episode "threshold" ]  
 
 

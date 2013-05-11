@@ -1,16 +1,18 @@
+
+#include <cassert>
+
 #include "LnlRestorer.hpp" 
 #include "adapters.h"
 #include "branch.h"
 #include "TreeAln.hpp" 
 #include "GlobalVariables.hpp"
 
-#include "Chain.hpp"
 
-LnlRestorer::LnlRestorer(Chain *chain)
-  : numPart(chain->traln->getNumberOfPartitions())
-  , numTax(chain->traln->getTr()->mxtips)
+LnlRestorer::LnlRestorer(TreeAln& traln)
+  : numPart(traln.getNumberOfPartitions())
+  , numTax(traln.getTr()->mxtips)
 {
-  tree *tr = chain->traln->getTr(); 
+  tree *tr = traln.getTr(); 
 
   reserveArrays = (double***)exa_calloc(numPart, sizeof(double**)); 
   partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 
@@ -19,7 +21,7 @@ LnlRestorer::LnlRestorer(Chain *chain)
   
   for(int i = 0; i < numPart; ++i)
     {
-      pInfo *partition = chain->traln->getPartition(i);
+      pInfo *partition = traln.getPartition(i);
       reserveArrays[i] = (double**)exa_calloc(tr->mxtips, sizeof(double*)); 
 
 #if HAVE_PLL != 0		/* TODO that's hacky */

@@ -10,11 +10,8 @@
 #ifndef _ADAPTER_CODE_H
 #define _ADAPTER_CODE_H
 
-
-class Chain; 
-/* shared  */
-void exa_evaluateGeneric(Chain *chain, nodeptr start, boolean fullTraversal); 
+void exa_newViewGeneric(TreeAln& traln, nodeptr p, boolean masked); 
 void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q); 
-void exa_newViewGeneric(Chain *chain, nodeptr p, boolean masked); 
+void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
 bool isOutputProcess(); 
 #endif

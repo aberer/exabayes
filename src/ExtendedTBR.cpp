@@ -8,9 +8,8 @@
 // #define DEBUG_TBR
 
 
-ExtendedTBR::ExtendedTBR( Chain *_chain, double _relativeProbability, double _extensionProb, double _multiplier)
-  : chain(_chain)
-  ,  extensionProbability(_extensionProb)
+ExtendedTBR::ExtendedTBR( double _relativeProbability, double _extensionProb, double _multiplier)
+  :  extensionProbability(_extensionProb)
   , multiplier(_multiplier)
 {
   name = "eTBR"; 
@@ -241,12 +240,12 @@ static void destroyOrientationAlongPath(TreeAln &traln, Path &path)
 
 
 
-static void evalHelper(Path &path, Chain &chain, TreeAln &traln )
+static void evalHelper(Path &path, TreeAln& traln )
 {  
   tree *tr = traln.getTr();
   nodeptr p = findNodeFromBranch ( tr, constructBranch(path.getNthNodeInPath(path.getNumberOfNodes()-1), 
 						       path.getNthNodeInPath(1))); 		       
-  newViewGenericWrapper(&chain, p, FALSE);  
+  newViewGenericWrapper(traln, p, FALSE);  
 
   Path pathCopy(path); 
   pathCopy.pop();   
@@ -259,7 +258,7 @@ static void evalHelper(Path &path, Chain &chain, TreeAln &traln )
   destroyOrientationAlongPath(traln, pathCopy); 
   p = findNodeFromBranch(tr, constructBranch( pathCopy.getNthNodeInPath(0), pathCopy.getNthNodeInPath(1))); 
   if(NOT traln.isTipNode(p))
-    newViewGenericWrapper(&chain, p,FALSE); 
+    newViewGenericWrapper(traln, p,FALSE); 
 }
 
 
@@ -272,10 +271,10 @@ void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorBelief& prior)
   branch bisectedBranch = constructBranch(modifiedPath1.getNthNodeInPath(1), modifiedPath2.getNthNodeInPath(1)); 
   
   // evaluate both ends of the paths 
-  evalHelper(modifiedPath1, *chain, traln); 
-  evalHelper(modifiedPath2, *chain, traln); 
+  evalHelper(modifiedPath1, traln); 
+  evalHelper(modifiedPath2, traln); 
   nodeptr p = findNodeFromBranch(tr, bisectedBranch);
-  evaluateGenericWrapper(chain, p, FALSE);
+  evaluateGenericWrapper(traln, p, FALSE);
   
 #else 
 
@@ -283,7 +282,7 @@ void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorBelief& prior)
 #ifdef DEBUG_TBR
   cout << "lnl before = "  << traln.getTr()->likelihood << endl; 
 #endif
-  evaluateGenericWrapper(chain,traln.getTr()->start, TRUE );
+  evaluateGenericWrapper(traln,traln.getTr()->start, TRUE );
 #ifdef DEBUG_TBR
   cout << "lnl after = " << traln.getTr()->likelihood << endl; 
 #endif
@@ -351,5 +350,5 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 
 AbstractProposal* ExtendedTBR::clone() const 
 {
-  return new ExtendedTBR(chain, relativeProbability, extensionProbability, multiplier);
+  return new ExtendedTBR(relativeProbability, extensionProbability, multiplier);
 }
