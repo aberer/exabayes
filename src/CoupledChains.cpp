@@ -12,7 +12,7 @@
 #include "PriorBelief.hpp"
 #include "Category.hpp"
 
-CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals, int tuneFreq)
+CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, const vector<Category> proposals, int tuneFreq)
   : temperature(heatFactor)
   , rand(seed)
   , runid(_runid) 
@@ -108,8 +108,7 @@ void CoupledChains::switchChainState()
     chainBId = rand.drawRandInt(numChain); 
 
   int coupIdA = chains[chainAId]->getCouplingId(),
-    coupIdB = chains[chainBId]->getCouplingId(); 
-  
+    coupIdB = chains[chainBId]->getCouplingId();   
 
   if(coupIdA > coupIdB)
     swap(coupIdB, coupIdA); 
@@ -140,36 +139,18 @@ void CoupledChains::switchChainState()
 
   Chain *a = chains[ chainAId],
     *b = chains[ chainBId] ; 
+
+  int r = MIN(coupIdA, coupIdB ); 
+  int c = MAX(coupIdA, coupIdB); 
   
   /* do the swap */
   if( rand.drawRandDouble01()  < accRatio)
     {
-      /* everything, we need to swap */
-      int tmp = a->getCouplingId();
-      a->setCouplingId(b->getCouplingId()); 
-      b->setCouplingId(tmp); 
-
-      swap(a->getProposalCategories(), b->getProposalCategories()); 
-
-      // EVIL
-      // for the legacy proposals, we need to update the chain ptr       
-      {
-	a->clarifyOwnership();
-	b->clarifyOwnership();
-      }
-
-      int r = MIN(coupIdA, coupIdB ); 
-      int c = MAX(coupIdA, coupIdB); 
-
+      a->switchState(*b); 
       swapInfo[r * chains.size() + c]->accept(); 
     } 
   else 
-    {
-      int r = MIN(coupIdA, coupIdB ); 
-      int c = MAX(coupIdA, coupIdB); 
-
-      swapInfo[r * chains.size() + c]->reject(); 
-    }
+    swapInfo[r * chains.size() + c]->reject(); 
 }
 
 

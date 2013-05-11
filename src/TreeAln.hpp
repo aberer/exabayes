@@ -3,11 +3,14 @@
 
 #include <vector>
 #include <iostream>
+#include <memory>
 
 using namespace std; 
 
 #include "axml.h"
 
+// #include "LnlRestorer.hpp"
+class LnlRestorer; 
 
 /** 
     @brief mostly wraps the legacy tr and partition list     
@@ -82,14 +85,19 @@ public:
 
   friend ostream& operator<< (ostream& out,  TreeAln&  traln);
 
+  void setRestorer(shared_ptr<LnlRestorer> rest){ restorer = rest; }
+auto getRestorer() const ->  shared_ptr<LnlRestorer> {return restorer;  }  
 
-private: 
+
+private:   
   double getTreeLengthHelper(nodeptr p);
   
   void initDefault();
   tree* tr;		// TODO replace with an object for cleanup 
   
   bool parsimonyEnabled; 
+  
+  shared_ptr<LnlRestorer> restorer; 
 
 #if HAVE_PLL != 0
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 

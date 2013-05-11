@@ -463,11 +463,14 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
 	    catSum += p->relativeWeight; 
 	  }
       for(auto p : prop)
-	if(p->getCategory() == i)
-	  {
-	    pr.push_back(p); 
-	    catSum += p->getRelativeProbability();
-	  }
+	{	  
+	  if(p->getCategory() == i)
+	    {
+	      tout << p->getName() << endl; ;
+	      pr.push_back(p); 
+	      catSum += p->getRelativeProbability();
+	    }
+	}
 
       if(pr.size() > 0 || legPr.size() > 0)
 	proposalCategories.push_back( Category(allNames[i], category_t(i), catSum / sum, pr )); 

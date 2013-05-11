@@ -1,10 +1,12 @@
 
-
-
 #ifndef _PROPOSAL_FUNCTION_H
 #define _PROPOSAL_FUNCTION_H
 
+#include "Randomness.hpp"
 #include "densities.h"
+#include <vector>
+
+using namespace std; 
 
 class DirichletProposal
 {				
@@ -37,8 +39,11 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
     
     return newValues; 
   }
-
+  
+  static bool tune; 
+  static bool tuneup; 
 }; 
+
 
 class ExponentialProposal
 {
@@ -49,6 +54,10 @@ public: static vector<double> getNewValues(vector<double> oldValue, double param
     return vector<double>();
 
   }
+
+  static bool tune; 
+  static bool tuneup; 
+  
 };
 
 
@@ -61,7 +70,11 @@ public: static vector<double> getNewValues(vector<double> oldValue, double param
     assert(0); 
     return vector<double>();
   }
+  
+  static bool tune; 
+  static bool tuneup; 
 };  
+
 
 
 class MultiplierProposal
@@ -74,7 +87,12 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
     oldValues[position] = oldValues[position] * multiplier; 
     return oldValues;
   }
+
+  static bool tune; 
+  static bool tuneup; 
 }; 
+
+
 
 class SlidingProposal
 {
@@ -85,6 +103,9 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
     // no hastings moification needed
     return oldValues; 
   }  
+
+  static bool tune; 
+  static bool tuneup; 
 }; 
 
 

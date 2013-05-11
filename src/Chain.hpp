@@ -11,24 +11,18 @@
 #define  _CHAIN_H
 #include <vector>
 
+using namespace std; 
+
 #include "ConfigReader.hpp"
 #include "Category.hpp"
 #include "PriorBelief.hpp"
 
-
-
-
-class AbstractProposal; 
-
-using namespace std; 
-
 class TreeAln; 
 class LnlRestorer; 
 class Topology; 
+class AbstractProposal; 
 
 typedef struct _pfun proposalFunction; 
-
-
 
 
 typedef struct
@@ -70,8 +64,8 @@ public:
 
   // CORRECT part 
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats, int tuneFreq) ;
-  Chain& operator=(Chain& rhs); 
+  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief _prior, const vector<Category> propCats, int _tuneFreq);
+  
 
   // getters and setters 
   double getChainHeat(); 
@@ -108,8 +102,15 @@ public:
   void clarifyOwnership(); 
   
   void addToHastings(double _hastings) {hastings *= _hastings; }
+
+  
+  void switchState(Chain &rhs);
+  ostream& addChainInfo(ostream &out); 
+  
   
 private : 
+  Chain& operator=(Chain& rhs); 
+  Chain(const Chain& rhs)  ; 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   Randomness *chainRand; 
   LnlRestorer *restorer; 

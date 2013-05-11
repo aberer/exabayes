@@ -27,7 +27,7 @@ extern bool isNewProposal[NUM_PROPOSALS];
 
 #include <sstream>
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief &_prior, const vector<Category> &propCats, int _tuneFreq) 
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief _prior, const vector<Category> propCats, int _tuneFreq) 
   : traln(_traln)
   , runid(_runid)
   , prior(_prior)
@@ -47,10 +47,21 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
   evaluateFullNoBackup(this);   
   
   tree *tr = traln->getTr();
-  tout << "[run:" << runid << ",heat:" <<  id <<   "] lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds="  << *chainRand << endl; 
+  addChainInfo(tout) << " lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds="  << *chainRand << endl; 
   saveTreeStateToChain(); 
+
+  addChainInfo(tout) << " my traln= "   << traln << ", my tree=" << traln->getTr() << endl; 
+  // for(Category& c : proposalCategories )
+  //   for(AbstractProposal* p : c.getProposals() )
+  //     tout << "owning proposal "  << p <<"," << p->getName() << endl; 
   
   clarifyOwnership();
+}
+
+
+ostream& Chain::addChainInfo(ostream &out)
+{
+  return out << "[run " << runid << ",heat " << couplingId << "]" ; 
 }
 
 
@@ -67,23 +78,27 @@ double Chain::getChainHeat()
 }
 
 
+
+
+
+
 /**
    @brief assigns the entire chain state from rhs to this chain
 
    This includes topology, parameters, all proposal parameters 
  */ 
-Chain& Chain::operator=(Chain& rhs)
-{
-  TreeAln &thisTraln = *traln; 
-  TreeAln &rhsTraln = *(rhs.traln); 
+// Chain& Chain::operator=(Chain& rhs)
+// {
+//   TreeAln &thisTraln = *traln; 
+//   TreeAln &rhsTraln = *(rhs.traln); 
 
-  thisTraln = rhsTraln; 
+//   thisTraln = rhsTraln; 
 
-  // TODO should also copy proposals, but that is currently not used
+//   // TODO should also copy proposals, but that is currently not used
 
-  dump.topology->saveTopology(thisTraln);  
-  return *this; 
-}
+//   dump.topology->saveTopology(thisTraln);  
+//   return *this; 
+// }
 
 
 void Chain::saveTreeStateToChain()
@@ -165,14 +180,13 @@ AbstractProposal* Chain::drawProposalFunction()
 
 void Chain::step()
 {
-  this->currentGeneration++; 
+  currentGeneration++; 
+  tree *tr = traln->getTr();   
 
-  this->restorer->resetRestorer(*traln);
+  restorer->resetRestorer(*traln);
 
   // inform the rng that we produce random numbers for generation x  
   chainRand->rebase(currentGeneration);
-
-  tree *tr = this->traln->getTr();   
 
   assert(tr->fracchange > 0); 
 
@@ -202,10 +216,7 @@ void Chain::step()
   
   bool wasAccepted  = testr < acceptance; 
 
-  // printInfo("prior=%f\tlnl=%f\tacc=%f\ttestr=%f\n", priorRatio, lnlRatio, acceptance, testr); 
-  
   debug_printAccRejc( pfun, wasAccepted, tr->likelihood); 
-
 
 #ifdef VERIFY_LNL_SUPER_EXPENSIVE  
   // TEST
@@ -214,7 +225,6 @@ void Chain::step()
   assert( ( this->traln->getTr()->likelihood  - lnlBefore ) < ACCEPTED_LIKELIHOOD_EPS); 
   // END
 #endif
-
 
   if(wasAccepted)
     {
@@ -229,14 +239,6 @@ void Chain::step()
       // TODO maybe not here =/ 
       this->restorer->restoreArrays(*traln); // restores the previous tree state 
     }
-
-#ifdef VERIFY_LNL_SUPER_EXPENSIVE  
-  // {
-  //   double lnlBefore = tr->likelihood;  
-  //   evaluateFullNoBackup(this);
-  //   assert( ( this->traln->getTr()->likelihood  - lnlBefore ) < ACCEPTED_LIKELIHOOD_EPS); 
-  // }
-#endif
 
   debug_checkTreeConsistency(this->traln->getTr());
  
@@ -293,8 +295,8 @@ void Chain::initParamDump()
 
 void Chain::clarifyOwnership()
 {
-  for(auto c : proposalCategories)
-    for(auto p : c.getProposals())
+  for(Category&  c : proposalCategories)
+    for(AbstractProposal* p : c.getProposals())
       p->setOwningChain(this); 
 }
 
@@ -379,4 +381,13 @@ void Chain::printNexusTreeFileStart( FILE *fh  )
   for(int i = 0; i < traln->getTr()->mxtips-1; ++i)
     fprintf(fh, "\t\t%d %s,\n", i+1, traln->getTr()->nameList[i+1]); 
   fprintf(fh, "\t\t%d %s;\n", traln->getTr()->mxtips, traln->getTr()->nameList[traln->getTr()->mxtips]);
+}
+
+
+
+void Chain::switchState(Chain &rhs)
+{
+  swap(couplingId, rhs.couplingId); 
+  swap(chainRand, rhs.chainRand); 
+  swap(proposalCategories, rhs.proposalCategories); 
 }

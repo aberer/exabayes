@@ -15,10 +15,10 @@ class Category
 {
 public: 
   Category(string name, category_t _type, double catFreq, vector<AbstractProposal*> _proposals ); 
+  Category(const Category &rhs);
+  Category& operator=(Category rhs); 
   ~Category(); 
 
-  void copyDeep(Category& rhs); 
-  
   /** @brief adds a proposal */ 
   void addProposal(AbstractProposal *proposal){proposals.push_back(proposal); }
 
@@ -31,6 +31,8 @@ public:
 
   vector<AbstractProposal*> getProposals(){return proposals; }
 
+  friend void swap(Category &c1, Category &c2); 
+  // void swap(Category& rhs); 
 
 private: 
   category_t type;

@@ -26,7 +26,7 @@ public:
   virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
 
-  virtual void autotune();	// disabled 
+  virtual void autotune();
   virtual void setOwningChain(Chain *_chain) {chain = _chain;}
 
   virtual PartitionProposal<FUN,PARAM>* clone() const; 

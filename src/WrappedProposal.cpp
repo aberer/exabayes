@@ -35,8 +35,19 @@ void WrappedProposal::autotune()
 }
 
 
+static void copyProposalFunction(proposalFunction* input,  proposalFunction** result)
+{
+  *result = (proposalFunction*)exa_calloc(1,sizeof(proposalFunction));   
+  memcpy(*result, input, sizeof(proposalFunction)); 
+}
+
+    
+
+
 WrappedProposal* WrappedProposal::clone() const
 {  
-  WrappedProposal* result = new WrappedProposal(pfun, chain);
+  proposalFunction *newProp = NULL; 
+  copyProposalFunction(pfun, &newProp);
+  WrappedProposal* result = new WrappedProposal(newProp, chain);
   return result; 
 } 

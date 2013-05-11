@@ -18,13 +18,35 @@ Category::Category(string _name, category_t _type, double catFreq, vector<Abstra
   , name(_name) 
 {
   // normalize relative proposal weights  
-
   double sum = 0;   
   for (auto proposal: proposals)
     sum += proposal->getRelativeProbability(); 
 
   for(auto proposal : proposals) 
     proposal->setRelativeProbability(proposal->getRelativeProbability() / sum); 
+}
+
+Category::Category(const Category &rhs)
+  : type(rhs.type)
+  , categoryFrequency(rhs.categoryFrequency)   
+  , name(rhs.name)
+{
+  assert(proposals.size() == 0);  
+  for(auto p : rhs.proposals)
+    proposals.push_back(p->clone());     
+}
+
+Category& Category::operator=(Category rhs)
+{
+  swap(*this, rhs); 
+  return *this; 
+}
+
+
+Category::~Category()
+{
+  for(auto p :  getProposals())
+    delete p; 
 }
 
 
@@ -47,22 +69,12 @@ AbstractProposal* Category::drawProposal(Randomness &rand)
 }
 
 
-Category::~Category()
+
+
+void swap(Category &c1, Category &c2)
 {
-}
-
-
-void Category::copyDeep(Category& rhs)
-{
-  name = rhs.name; 
-  type = rhs.type; 
-  proposals.clear();
-  categoryFrequency = rhs.categoryFrequency;   
-  for(auto p : rhs.proposals)
-    proposals.push_back(p->clone());   
-}
-
-
-
-
-
+  std::swap(c1.type, c2.type); 
+  std::swap(c1.name, c2.name); 
+  std::swap(c1.categoryFrequency, c2.categoryFrequency); 
+  std::swap(c1.proposals, c2.proposals); 
+} 

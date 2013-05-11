@@ -39,10 +39,14 @@ void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior
 }
 
 
+
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::autotune() 
 {
-  double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, FALSE);
+  if(not FUN::tune)
+    return; 
+
+  double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, not FUN::tuneup);
   
 #ifdef DEBUG_PRINT_TUNE_INFO
   cout << pf->name << ": with ratio " << ctr->getRatioInLastInterval() << ": "<< ((newParam < *parameter ) ? "reducing" : "increasing") <<  "\t" << *parameter << "," << newParam << endl; 
