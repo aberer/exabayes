@@ -1,5 +1,7 @@
+#include <cassert>
+
 #include "axml.h"
-#include "proposalFunction.h"
+
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"

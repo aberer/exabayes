@@ -10,7 +10,6 @@
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
-// #include "proposals.h"
 #include "tune.h"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
@@ -202,7 +201,11 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
   block.fillProposalWeights(proposalWeights);
   prior = block.getPrior();
 
+  prior.addStandardPriors();
+
   tout << "Your prior belief consists of: "<< endl << prior << endl; 
+
+
 
   validateRunParams();
 }
@@ -442,15 +445,8 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
   for(int i = 1; i < NUM_PROP_CATS+1; ++i)
     {
       // fish out the correct proposals 
-      vector<proposalFunction*> legPr; 
       vector<AbstractProposal*> pr; 
       double catSum = 0; 
-      for(auto p : legProp)
-	if(p->category == i)
-	  {
-	    legPr.push_back(p); 
-	    catSum += p->relativeWeight; 
-	  }
       for(auto p : prop)
 	{	  
 	  if(p->getCategory() == i)
@@ -460,7 +456,7 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
 	    }
 	}
 
-      if(pr.size() > 0 || legPr.size() > 0)
+      if(pr.size() > 0)
 	proposalCategories.push_back( Category(allNames[i], category_t(i), catSum / sum, pr )); 
     }    
 

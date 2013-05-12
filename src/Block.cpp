@@ -67,11 +67,13 @@ shared_ptr<AbstractPrior> ExabayesBlock::parsePrior(NxsToken &token, NxsString &
 	} 
       else 
 	{
-	  vector<double> fixedValues; 
-	  while(token.GetToken().compare(")") == 0)
+	  vector<double> fixedValues; 	  
+	  while(token.GetToken().compare(")") != 0)
 	    {
 	      fixedValues.push_back(atof(token.GetToken().c_str()));
 	      token.GetNextToken();
+	      if(token.GetToken().compare(",") == 0)
+		token.GetNextToken();
 	    }
 	  return shared_ptr<AbstractPrior>(new FixedPrior(fixedValues));
 	}

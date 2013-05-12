@@ -3,6 +3,7 @@
 
 #include "Path.hpp"
 #include "branch.h"
+#include "Chain.hpp"
 
 
 Path::Path()
@@ -134,7 +135,7 @@ ostream& operator<<(ostream &out, const Path &rhs)
 
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings)
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior)
 {  
   tree *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches();
@@ -146,18 +147,22 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double par
 #ifdef PRINT_MULT
   cout  << setprecision(6) << "spr: " << oldZ <<   " * " << multiplier << " = "  << multiplier * oldZ << endl; // 
 #endif
-
-  hastings *= multiplier; 
+  
+  prior.updateBranchLength(oldZ, branchLengthToReal(traln.getTr(),newZ));
+  
+  updateHastings(hastings, multiplier, "pathMod");; 
   hookup(p,p->back, &newZ, numBranches);   
 }
 
 
-void Path::restoreBranchLengthsPath(TreeAln &traln)
+void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior)
 {
   int numBranches = traln.getNumBranches();
+  assert(numBranches == 1); 
   for(auto b : stack)
     {
       nodeptr p = findNodeFromBranch(traln.getTr(), b); 
+      prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), b.length[0]) );
       hookup(p, p->back, b.length, numBranches); 
     }  
 }

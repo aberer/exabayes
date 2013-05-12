@@ -161,15 +161,10 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   modifiedPath.saveBranchLengthsPath(traln); 
 
-  // cout << "printing bls after save : "  ; 
-  // modifiedPath.printWithBLs(traln);
-  // cout << endl; 
-  
-  applyPathAsESPR(&traln);
+  applyPathAsESPR(traln);
 
 #ifdef ESPR_MULTIPLY_BL
-  multiplyAlongBranchESPR(traln, rand, hastings);
-
+  multiplyAlongBranchESPR(traln, rand, hastings, prior);
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   cout << "after multiply: " << traln  << endl; 
 #endif
@@ -182,10 +177,10 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
 void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
 {
-  resetAlongPathForESPR (traln);   
+  resetAlongPathForESPR (traln, prior);   
 
   /* TODO resetAlong... should be able to correctly restore branch lengths    */
-  modifiedPath.restoreBranchLengthsPath(traln); 
+  modifiedPath.restoreBranchLengthsPath(traln, prior ); 
 
   debug_checkTreeConsistency(traln.getTr());
 
@@ -213,7 +208,7 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings )
+void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior )
 {
   assert(modifiedPath.size() >= 2); 
   int numBranches = traln.getNumBranches(); 
@@ -222,7 +217,7 @@ void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, doub
   int sTNode = modifiedPath.getNthNodeInPath(1); 
   branch firstBranch = constructBranch( modifiedPath.getNthNodeInPath(0), modifiedPath.getNthNodeInPath(2)); 
 
-  modifiedPath.multiplyBranch(traln, rand, firstBranch, multiplier, hastings); 
+  modifiedPath.multiplyBranch(traln, rand, firstBranch, multiplier, hastings, prior); 
   
   /* treat all branches except the first 2 and the last one */
   int ctr = 0; 
@@ -233,13 +228,13 @@ void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, doub
       
       branch &b = modifiedPath.at(i); 
 
-      modifiedPath.multiplyBranch(traln, rand, b, multiplier, hastings); 
+      modifiedPath.multiplyBranch(traln, rand, b, multiplier, hastings, prior); 
     }
 
   int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
     s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
-  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings); 
-  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings); 
+  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings, prior); 
+  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings, prior); 
 }
 
 
@@ -250,13 +245,13 @@ void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, doub
    first two branches in path define subtree, all further branches are
    traversed, last branch is the insertion branch. 
  */
-void ExtendedSPR::applyPathAsESPR(TreeAln *traln )
+void ExtendedSPR::applyPathAsESPR(TreeAln &traln )
 {
-  int numBranches = traln->getNumBranches(); 
-  tree *tr = traln->getTr();
+  int numBranches = traln.getNumBranches(); 
+  tree *tr = traln.getTr();
 
 #ifdef CONTROL_ESPR
-double treeLengthBefore = traln->getTreeLength(); 
+double treeLengthBefore = traln.getTreeLength(); 
 #endif
   
   assert(modifiedPath.size() > 2 ); 
@@ -301,10 +296,10 @@ double treeLengthBefore = traln->getTreeLength();
 #endif
 
 #ifdef CONTROL_ESPR
-  double treeLengthAfter =  traln->getTreeLength(); 
+  double treeLengthAfter =  traln.getTreeLength(); 
   if( fabs(treeLengthAfter  -  treeLengthBefore) > 1e-3  )
     {
-      cout << setprecision(8)  << "TL before " << branchLengthToReal(traln->getTr(),treeLengthBefore) << "\tafter" <<  branchLengthToReal(traln->getTr(), treeLengthAfter) << endl; 
+      cout << setprecision(8)  << "TL before " << branchLengthToReal(traln.getTr(),treeLengthBefore) << "\tafter" <<  branchLengthToReal(traln.getTr(), treeLengthAfter) << endl; 
       assert(treeLengthAfter == treeLengthBefore); 
     }
 #endif
@@ -319,7 +314,7 @@ double treeLengthBefore = traln->getTreeLength();
    Only resets the spr move, not any branch length changes due to BL
    multiplying.
  */ 
-void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln)
+void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior)
 {
   // cout << "before reset: " <<  traln << endl; 
   // modifiedPath.printWithBLs(traln);

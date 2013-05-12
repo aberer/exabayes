@@ -52,13 +52,15 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 
   double bothZ = traln.getBranchLength( nodeA,0) * traln.getBranchLength( nodeB,0); 
   double drawnMultiplier = rand.drawMultiplier( multiplier); 
-  hastings *= multiplier; 
+
+  updateHastings(hastings, drawnMultiplier, name ); 
+
   double newZ = branchLengthToReal(tr,pow(bothZ,drawnMultiplier));  
   double realOldZ = branchLengthToReal(tr, bothZ); 
 #ifdef PRINT_MULT
   cout << setprecision(6) << "nodeslider: " << realOldZ << " * "  << drawMultiplier << " = " << newZ; 
 #endif
-  hastings *= ( realOldZ / newZ); 
+  updateHastings(hastings, realOldZ / newZ, name); 
   
   double uniScaler = rand.drawRandDouble01(); 
   double aZ = branchLengthToInternal(tr, uniScaler * newZ),

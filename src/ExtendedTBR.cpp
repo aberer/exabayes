@@ -155,16 +155,30 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
 }
 
 
+#define EXPENSIVE_ETBR_VERIFY
+
 void ExtendedTBR::executeTBR(TreeAln & traln)
 {  
-  // tree *tr = traln.getTr();
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
+
+#ifdef EXPENSIVE_ETBR_VERIFY
+  double tlBefore = traln.getTreeLength(); 
+#endif
 
   // prune the bisected branch from both sides, leaving behind two
   // unconnected trees
   pruneAndInsertOneSide(modifiedPath1, traln); 
   pruneAndInsertOneSide(modifiedPath2, traln); 
+
+#ifdef EXPENSIVE_ETBR_VERIFY
+  double tlAfter = traln.getTreeLength();
+  if(fabs (tlAfter - tlBefore) > 0.000001   )
+    {
+      cout << "tbr changed bls where it should not" << endl; 
+      assert(0); 
+    }
+#endif  
 }
 
 
@@ -187,12 +201,12 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   for(int i = 0 ;i < modifiedPath1.size(); ++i)
     {
       branch &b = modifiedPath1.at(i);  
-      modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings);       
+      modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings, prior);       
     }
   for(int i = 0; i < modifiedPath2.size(); ++i)
     {
       branch &b = modifiedPath2.at(i); 
-      modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings); 
+      modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior); 
     }
 #endif
   
@@ -339,8 +353,8 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
   resetOneSide(traln, modifiedPath1); 
   resetOneSide(traln, modifiedPath2); 
 
-  modifiedPath1.restoreBranchLengthsPath(traln); 
-  modifiedPath2.restoreBranchLengthsPath(traln); 
+  modifiedPath1.restoreBranchLengthsPath(traln, prior); 
+  modifiedPath2.restoreBranchLengthsPath(traln, prior); 
 
   debug_checkTreeConsistency(traln.getTr()); 
   debug_printTree(traln);   

@@ -1,3 +1,4 @@
+#include <cassert>
 
 #include "branch.h"
 #include "Topology.hpp"

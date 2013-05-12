@@ -37,12 +37,14 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   savedBranch.length[0] = oldZ; 
   double newZ = pow( oldZ, drawnMultiplier) ; 
 
+  prior.updateBranchLength(branchLengthToReal(tr,oldZ), branchLengthToReal(tr,newZ));
+
 #ifdef PRINT_MULT  
   cout  << setprecision(6) << "bl-multi: " << branchLengthToReal(tr,oldZ) <<   " * " << drawnMultiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
 #endif
 
   /* according to lakner2008  */
-  hastings *= drawnMultiplier; 
+  updateHastings(hastings, drawnMultiplier, name);
  
   /* just doing it for one right here */
   traln.setBranchLengthSave(newZ, 0, p); 
@@ -60,8 +62,14 @@ void BranchLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior
 void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   nodeptr p = findNodeFromBranch(traln.getTr(), savedBranch); 
+  double newRealZ = branchLengthToReal(traln.getTr(), p->z[0]),
+    oldRealZ = branchLengthToReal(traln.getTr(), savedBranch.length[0]); 
+  prior.updateBranchLength(newRealZ, oldRealZ); 
   traln.setBranchLengthSave(savedBranch.length[0], 0,p); 
 }
+
+
+
 
 void BranchLengthMultiplier::autotune() 
 {

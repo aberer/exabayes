@@ -11,12 +11,13 @@
 #include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"
 
+void updateHastings(double &hastings, double valToAdd, string whoDoneIt); 
+
 class AbstractProposal
 {
 public: 
   AbstractProposal(){}
   virtual ~AbstractProposal(){}
-
 
   // you MUST implement all virtual methods in your derived
   // proposal. Here, the signatures are set to 0, this must not

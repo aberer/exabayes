@@ -408,9 +408,9 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   assert( sampledElem->containedInFirst && entry->containedInSecond); 
   assert(entry->weightInSecond != 0 &&  sampledElem->weightInFirst != 0); 
   
-  hastings *= ( entry->weightInSecond / sampledElem->weightInFirst ) ;  
+  updateHastings(hastings,entry->weightInSecond / sampledElem->weightInFirst , name ); 
 #if DEBUG_GUIDED_SPR   > 1 
-  printf("hastings: %g / %g => %g\n", entry->weightInSecond, sampledElem->weightInFirst , chain->hastings); 
+  printf("ln-hastings: %g / %g => %g\n", entry->weightInSecond, sampledElem->weightInFirst , chain->hastings); 
 #endif
   
   /* set this for the eval function */

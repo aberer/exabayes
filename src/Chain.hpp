@@ -17,8 +17,11 @@ using namespace std;
 #include "Category.hpp"
 #include "PriorBelief.hpp"
 
+
+// void updateHastings(double &hastings, double valToAdd, string whoDoneIt ); 
+
 class TreeAln; 
-// class LnlRestorer; 
+
 class Topology; 
 class AbstractProposal; 
 
@@ -66,7 +69,6 @@ public:
 public: 
   Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief _prior, const vector<Category> propCats, int _tuneFreq);
   
-
   // getters and setters 
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
@@ -88,6 +90,8 @@ public:
 
   int getGeneration(){return currentGeneration; }
 
+  const PriorBelief& getPrior() const  {return prior; } 
+
   Randomness* getChainRand(){return chainRand;}
 
   void printNexusTreeFileStart( FILE *fh  ); 
@@ -97,14 +101,8 @@ public:
   void printSample(FILE *topofile, FILE *paramFile); 
   void printTopology(FILE *fh); 
 
-  void clarifyOwnership(); 
-  
-  void addToHastings(double _hastings) {hastings *= _hastings; }
-
-  
   void switchState(Chain &rhs);
   ostream& addChainInfo(ostream &out); 
-  
   
 private : 
   Chain& operator=(Chain& rhs); 
@@ -116,7 +114,7 @@ private :
 
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
 
-  double hastings;/// the proposal ratio 
+  double hastings;/// the log hastings ratio  
   int currentGeneration;   
 
   void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl ) ; 

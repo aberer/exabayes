@@ -43,6 +43,8 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   cout  << setprecision(6) << "tl-multi with " << rememMultpier << endl; 
 #endif
 
+  updateHastings(hastings, rememMultiplier, "TL-Mult");
+
   // TODO prior 
 
   multiplyBranchLengthsRecursively(traln , tr->start->back, rememMultiplier); 

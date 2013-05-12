@@ -14,6 +14,7 @@
 #include "branch.h"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
+#include "PriorBelief.hpp"
 
 class Path
 {
@@ -35,7 +36,7 @@ public:
   void debug_assertPathExists(TreeAln& traln); 
 
   /** @brief assigns stored branch lengths of a path to a given tree  */ 
-  void restoreBranchLengthsPath(TreeAln &traln); 
+  void restoreBranchLengthsPath(TreeAln &traln, PriorBelief &prior); 
 
   /** @brief only add a branch to the path, if it is novel. If the new
       branch cancels out an existing branch, the path is shortened again */ 
@@ -68,7 +69,7 @@ public:
   void printWithBLs(TreeAln &traln ) const; 
 
   // TODO this should return a new path instance  
-  void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings); 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior); 
 
   friend ostream& operator<<(ostream &out, const Path &rhs)  ;
 

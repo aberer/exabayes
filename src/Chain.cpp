@@ -31,7 +31,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
   , runid(_runid)
   , prior(_prior)
   , tuneFrequency(_tuneFreq)
-  , hastings(1)
+  , hastings(0)
   , currentGeneration(0)
   , couplingId(id)
   , proposalCategories(propCats)    
@@ -48,11 +48,8 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
   tree *tr = traln->getTr();
   prior.initPrior(*traln);
 
-  addChainInfo(tout)  << "lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds=>"  << *chainRand << endl; 
+  addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds=>"  << *chainRand << endl; 
   saveTreeStateToChain(); 
-
-
-  // cout << "prior belief is " << prior.getLogProb() << endl; 
 }
 
 
@@ -149,6 +146,8 @@ AbstractProposal* Chain::drawProposalFunction()
 }
 
 
+#define DEBUG_ACCEPTANCE
+
 
 void Chain::step()
 {
@@ -168,7 +167,7 @@ void Chain::step()
   AbstractProposal *pfun = drawProposalFunction();
  
   /* reset proposal ratio  */
-  this->hastings = 1; 
+  hastings = 0; 
   
   double oldPrior = prior.getLogProb();
   pfun->applyToState(*traln, prior, hastings, *chainRand);
@@ -178,13 +177,13 @@ void Chain::step()
   double lnlRatio = tr->likelihood - prevLnl; 
 
   double testr = chainRand->drawRandDouble01();
-  double acceptance = 
-    exp(( priorRatio   + lnlRatio) * myHeat) 
-    * hastings;
+  double acceptance = exp(( priorRatio   + lnlRatio) * myHeat + hastings) ; 
 
-  // TODO log-ify the hastings
+#ifdef DEBUG_ACCEPTANCE
+  tout << "(" << prior.getLogProb() << " - " << oldPrior << ") + ( " << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
+#endif
 
-  
+
   bool wasAccepted  = testr < acceptance; 
 
   debug_printAccRejc( pfun, wasAccepted, tr->likelihood); 
@@ -195,6 +194,10 @@ void Chain::step()
   evaluateFullNoBackup(this); 
   assert( ( this->traln->getTr()->likelihood  - lnlBefore ) < ACCEPTED_LIKELIHOOD_EPS); 
   // END
+#endif
+
+#ifdef DEBUG_VERIFY_LNPR
+  prior.verify(*traln);
 #endif
 
   if(wasAccepted)
@@ -210,6 +213,11 @@ void Chain::step()
       // TODO maybe not here =/ 
       traln->getRestorer()->restoreArrays(*traln);
     }
+
+#ifdef DEBUG_VERIFY_LNPR
+  prior.verify(*traln);
+#endif
+
 
   debug_checkTreeConsistency(this->traln->getTr());
  

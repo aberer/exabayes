@@ -1,11 +1,12 @@
 #include <sstream>
+#include <cassert>
 
 #include "axml.h"
 #include "GlobalVariables.hpp"
 #include "output.h"		// 
 #include "adapters.h"
-#include "proposalFunction.h"
 #include "TreeAln.hpp"
+#include "branch.h"
 
 
 /**

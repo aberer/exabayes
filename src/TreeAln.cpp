@@ -1,9 +1,12 @@
 
+#include <cassert>
+
 #include "config.h"
 #include "TreeAln.hpp"
 
 #include "GlobalVariables.hpp"
 #include "output.h"
+#include "branch.h"
 
 
 // here we initialize the max/min values for our various
@@ -616,8 +619,8 @@ double TreeAln::getTreeLength() const
   vector<branch> branches; 
   extractBranches(*this,branches ); 
   
-  double length = 0; 
+  double length = 1; 
   for(auto b : branches)
-    length += branchLengthToReal(getTr(), b.length[0]);
+    length *= branchLengthToReal(getTr(), b.length[0]);
   return length; 
 }

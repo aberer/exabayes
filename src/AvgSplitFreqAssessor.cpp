@@ -10,12 +10,11 @@
 #include <fstream>
 #include <algorithm>
 #include <sstream> 
+#include <cassert>
 
 #include <ncl/ncl.h>
 
 #include "axml.h"
-// #include "bayes.h"
-#include "proposalFunction.h"
 #include "TreeAln.hpp"
 
 #include "output.h"

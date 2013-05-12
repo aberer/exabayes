@@ -9,10 +9,11 @@
 #ifndef _COUPLED_CHAINS_H
 #define _COUPLED_CHAINS_H
 
-#include "proposalFunction.h"
-
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
+#include "PriorBelief.hpp"
+#include "Category.hpp"
+#include "Chain.hpp"
 
 
 /**

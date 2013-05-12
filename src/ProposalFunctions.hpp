@@ -2,9 +2,12 @@
 #ifndef _PROPOSAL_FUNCTION_H
 #define _PROPOSAL_FUNCTION_H
 
+#include <vector>
+
 #include "Randomness.hpp"
 #include "densities.h"
-#include <vector>
+#include "Chain.hpp"
+
 
 using namespace std; 
 
@@ -35,8 +38,8 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
     // cout << newValues << endl; 
 
 
-    hastings *= densityDirichlet(tmp, tmpNew, oldValues.size()) / densityDirichlet(tmpNew,tmp, oldValues.size());
-    
+updateHastings(hastings, densityDirichlet(tmp, tmpNew, oldValues.size()) / densityDirichlet(tmpNew,tmp, oldValues.size()), "dirichlet"); 
+
     return newValues; 
   }
   
@@ -83,7 +86,7 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
   {    
     int position = rand.drawRandInt(oldValues.size()); 
     double multiplier =  rand.drawMultiplier( parameter); 
-    hastings *= multiplier; 
+    updateHastings(hastings, multiplier, "multiplier"); 
     oldValues[position] = oldValues[position] * multiplier; 
     return oldValues;
   }

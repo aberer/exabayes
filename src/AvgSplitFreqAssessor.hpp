@@ -2,7 +2,7 @@
 #define _AVGSPLITFREQASSESSOR_H
 
 #include "axml.h"
-#include "proposalFunction.h"
+// #include "proposalFunction.h"
 
 #include "BipartitionHash.hpp"
 
