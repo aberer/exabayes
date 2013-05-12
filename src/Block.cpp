@@ -27,6 +27,74 @@ ExabayesBlock::ExabayesBlock(SampleMaster *_sm )
 }
 
 
+shared_ptr<AbstractPrior> ExabayesBlock::parsePrior(NxsToken &token, NxsString &value)
+{
+  token.GetNextToken();
+  assert(token.GetToken().compare("(") == 0); 
+  if(value.EqualsCaseInsensitive("uniform"))
+    {
+      token.GetNextToken();
+      double n1 = atof(token.GetToken().c_str()); 
+      token.GetNextToken();
+      assert(token.GetToken().compare(",") == 0);
+      token.GetNextToken();
+      double n2 = atof(token.GetToken().c_str());
+      token.GetNextToken();
+      assert(token.GetToken().compare(")") == 0);
+      return shared_ptr<AbstractPrior> (new UniformPrior(n1,n2));  
+    }
+  else if(value.EqualsCaseInsensitive("dirichlet"))
+    {      
+      vector<double> alphas; 
+      while(token.GetToken().compare(")") != 0 )
+	{
+	  token.GetNextToken();
+	  alphas.push_back(atof(token.GetToken().c_str())); 
+	  token.GetNextToken();
+	  assert(token.GetToken().compare(",") == 0 
+		 || token.GetToken().compare(")") == 0); 
+	} 
+      return shared_ptr<AbstractPrior>(new DirichletPrior(alphas)); 
+    }
+  else if(value.EqualsCaseInsensitive("fixed"))
+    { 
+      token.GetNextToken();
+      if(token.GetToken().EqualsCaseInsensitive("empirical"))
+	{
+	  cerr << "not implemented yet " << endl; // TODO 
+	  exit(1);
+	  return NULL; 
+	} 
+      else 
+	{
+	  vector<double> fixedValues; 
+	  while(token.GetToken().compare(")") == 0)
+	    {
+	      fixedValues.push_back(atof(token.GetToken().c_str()));
+	      token.GetNextToken();
+	    }
+	  return shared_ptr<AbstractPrior>(new FixedPrior(fixedValues));
+	}
+    }
+  else if(value.EqualsCaseInsensitive("exponential"))
+    {
+      token.GetNextToken();
+      double n1 = atof(token.GetToken().c_str());
+      token.GetNextToken();
+      assert(token.GetToken().compare(")") == 0);
+      return shared_ptr<AbstractPrior>(new ExponentialPrior(n1));
+    }
+  else 
+    {
+      cerr << "attempted to parse prior. Did not recognize keyword " <<  value << endl; 
+      exit(1);
+    }
+
+  return NULL; 
+}
+
+
+
 void ExabayesBlock::Read(NxsToken &token)
 {    
   DemandEndSemicolon(token, "EXABAYES");
@@ -80,16 +148,15 @@ void ExabayesBlock::Read(NxsToken &token)
 	    sm->setBurninProportion( value.ConvertToDouble());
 	  else if(key.EqualsCaseInsensitive("parsimonyWarp"))
 	    sm->setParsimonyWarp( value.ConvertToDouble());
-	  else if(key.EqualsCaseInsensitive("brlen"))
-	    {
-	      cout << "yes! value would be "<< value << endl; 
-
-	      token.GetNextToken();		
-	      string tok = token.GetToken();
-	      assert(tok.compare ("(") == 0 );
-	      token.GetNextToken();		
-	      // tok = 
-	    }
+	  // PRIORS
+	  else if(key.EqualsCaseInsensitive("brlenpr"))
+	    prior.setBranchLengthPrior(parsePrior(token, value)); 
+	  else if(key.EqualsCaseInsensitive("revmatpr"))
+	    prior.setRevMatPrior( parsePrior(token,value)); 
+	  else if(key.EqualsCaseInsensitive("statefreqpr"))
+	    prior.setStateFreqPrior(parsePrior(token,value ));
+	  else if(key.EqualsCaseInsensitive("shapepr"))	      
+	    prior.setRateHetPrior(parsePrior(token,value)); 	    
 	  else 	      
 	    cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	}

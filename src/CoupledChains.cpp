@@ -5,7 +5,7 @@
 #include "adapters.h" 
 #include "SuccessCounter.hpp"
 #include "GlobalVariables.hpp"
-#include "proposals.h"
+#include "tune.h"
 #include "treeRead.h"
 #include "output.h"
 #include "AbstractProposal.hpp"

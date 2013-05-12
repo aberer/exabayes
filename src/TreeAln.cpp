@@ -325,7 +325,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 
 
 
-int TreeAln::getNumBranches()
+int TreeAln::getNumBranches() const
 {
 #if HAVE_PLL != 0
   return partitions->perGeneBranchLengths  ? partitions->numberOfPartitions : 1 ; 
@@ -336,7 +336,7 @@ int TreeAln::getNumBranches()
 
 
 
-int TreeAln::getNumberOfPartitions()
+int TreeAln::getNumberOfPartitions() const
 {
 #if HAVE_PLL != 0
   return partitions->numberOfPartitions; 
@@ -348,7 +348,7 @@ int TreeAln::getNumberOfPartitions()
 
 
 // usefull stuff 
-pInfo* TreeAln::getPartition(int model) 
+pInfo* TreeAln::getPartition(int model)  const
 {
   assert(model < getNumberOfPartitions()); 
   
@@ -611,23 +611,13 @@ ostream& operator<< (ostream& out,  TreeAln&  traln)
 
 
 
-double TreeAln::getTreeLength()
+double TreeAln::getTreeLength() const
 {
-  return getTreeLengthHelper(tr->start->back); 
-}
-
-
-double TreeAln::getTreeLengthHelper( nodeptr p)
-{
-  tree *tr  = getTr();
-  if(isTip(p->number, tr->mxtips))
-    return getBranchLength( p,0); 
-  else 
-    {
-      return getBranchLength( p,0) * getTreeLengthHelper(p->next->back)
-	* getTreeLengthHelper(p->next->next->back);       
-    }
+  vector<branch> branches; 
+  extractBranches(*this,branches ); 
   
-  assert(0);
-  return 0; 
+  double length = 0; 
+  for(auto b : branches)
+    length += branchLengthToReal(getTr(), b.length[0]);
+  return length; 
 }

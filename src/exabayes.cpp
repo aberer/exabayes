@@ -22,7 +22,8 @@
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-#include "proposals.h"
+// #include "proposals.h"
+#include "tune.h"
 #include "output.h"
 #include "adapters.h"
 #include "CommandLine.hpp"
@@ -36,6 +37,9 @@
 
 
 // #define TEST  
+// #include "branch.h"
+// #include "TreeRandomizer.hpp"
+
 /**
    @brief the main ExaBayes function.
 
@@ -47,14 +51,6 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
   timeIncrement = gettime();
 
 #ifdef TEST   
-
-
-  ofstream log("foo.log"); 
-  teestream tee(cout, log); 
-  tee <<  "this should be written into the log and to stdout" << endl; 
-  
-  exit(0); 
-
 
 #if 0 
   TreeAln traln; 
@@ -70,6 +66,20 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
       cout << exa_evaluateParsimony(traln, tr->nodep[i], TRUE ) << endl; 
     }
 #endif
+
+
+  TreeAln traln; 
+  traln.initializeFromByteFile(cl.getAlnFileName()); 
+  TreeRandomizer r(123, &traln); 
+  r.randomizeTree();
+
+  vector<branch> result; 
+  extractBranches(traln, result);
+
+  cout << "got "<< result.size() << " branches" << endl; 
+  
+  for(auto b : result)
+    cout << b  << endl; 
 
   exit(0);
 

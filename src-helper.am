@@ -1,6 +1,6 @@
 my-update-src:
 	@echo "" > src.am 
-	@echo "libbayes_a_SOURCES=" $(shell find ./src -maxdepth 1   -name "*.[ch]" ) $(shell find ./src -maxdepth 1   -name "*.cpp" ) >> src.am
+	@echo "libbayes_a_SOURCES=" $(shell find ./src -maxdepth 1   -name "*.[ch]" ) $(shell find ./src -maxdepth 1   -name "*.[ch]pp" ) >> src.am
 
 
 

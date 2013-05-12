@@ -10,7 +10,8 @@
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
-#include "proposals.h"
+// #include "proposals.h"
+#include "tune.h"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
 #include "ParsimonySPR.hpp"
@@ -19,7 +20,6 @@
 #include "Category.hpp"
 #include "NodeSlider.hpp"
 #include "BranchLengthMultiplier.hpp"
-
 
 // TODO =( 
 #include "GlobalVariables.hpp"
@@ -200,8 +200,11 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
   reader.Execute(token);  
 
   block.fillProposalWeights(proposalWeights);
-  validateRunParams();
+  prior = block.getPrior();
 
+  tout << "Your prior belief consists of: "<< endl << prior << endl; 
+
+  validateRunParams();
 }
 
 

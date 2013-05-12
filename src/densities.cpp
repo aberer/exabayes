@@ -1,6 +1,7 @@
 #include "densities.h"
-
 #include "axml.h"
+
+#include <cassert>
 
 
 
@@ -45,6 +46,23 @@ static void normalize(double * vector, int length, double normalizingConstant)
 
 
 
+/** 
+    @brief just wraps the method for usage with vectors 
+ */ 
+double densityDirichletWrapper(vector<double> values, vector<double> alphas)
+{
+  assert(values.size() == alphas.size());
+  double tmpVal[values.size()] , 
+    tmpAlpha[alphas.size()]; 
+  for(nat i = 0; i < values.size(); ++i)
+    {
+      tmpVal[i] = values[i]; 
+      tmpAlpha[i] = alphas[i]; 
+    }
+
+  return densityDirichlet(tmpVal, tmpAlpha, values.size());
+}
+
 
 
 double densityDirichlet(double *values, double *alphas, int length)
@@ -64,3 +82,12 @@ double densityDirichlet(double *values, double *alphas, int length)
   
   return density; 
 }
+
+
+double exponentialDensity(double value, double lambda)
+{
+  return lambda * exp(- lambda * value); 
+} 
+
+
+

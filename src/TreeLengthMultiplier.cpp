@@ -4,7 +4,7 @@
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
 #include "eval.h"
-#include "proposals.h"
+#include "tune.h"
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _relativeWeight, double _multiplier)
   : multiplier(_multiplier)    

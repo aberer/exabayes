@@ -3,9 +3,6 @@
 #include "proposalFunction.h"
 #include "GlobalVariables.hpp"
 #include "TreeAln.hpp" 
-#include "Chain.hpp" 
-
-
 
 void exa_newViewGeneric(TreeAln& traln, nodeptr p, boolean masked)
 {

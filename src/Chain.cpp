@@ -9,7 +9,7 @@
 #include "GlobalVariables.hpp"
 #include "BipartitionHash.hpp"
 #include "adapters.h"
-#include "proposals.h"
+#include "tune.h"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
 #include "ParsimonySPR.hpp" 
@@ -46,8 +46,13 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
   evaluateFullNoBackup(*traln);   
   
   tree *tr = traln->getTr();
-  addChainInfo(tout) << " lnl=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds=>"  << *chainRand << endl; 
+  prior.initPrior(*traln);
+
+  addChainInfo(tout)  << "lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds=>"  << *chainRand << endl; 
   saveTreeStateToChain(); 
+
+
+  // cout << "prior belief is " << prior.getLogProb() << endl; 
 }
 
 

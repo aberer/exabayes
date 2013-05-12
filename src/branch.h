@@ -11,6 +11,7 @@
 #ifndef _BRANCH_H
 #define _BRANCH_H
 
+#include <vector>
 #include <iostream>
 using namespace std; 
 
@@ -25,6 +26,10 @@ typedef struct  _branch
   
   double length[NUM_BRANCHES]; 	/* TODO expensive?  */
 } branch; /// represents a branch 
+
+
+
+void extractBranches(const TreeAln &traln, vector<branch> &result) ; 
 
 
 void insertNodeIntoBranch(TreeAln* traln, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2); 

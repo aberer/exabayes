@@ -22,7 +22,7 @@ begin EXABAYES;
 
       [ BURNIN ] 
       [ comment out one of the two options ]      
-       [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
+      [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
       burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
 
 
@@ -32,30 +32,27 @@ begin EXABAYES;
 
       [ TODO: topology ]
 
-      [ branch lengths: TODO per-partition,clock,fixed ]
-      [ brlen uniform(1e-6,2) ] 
-      [ brlen fixed ] [ user tree must have been provided! ]
-      brlen exponential(10.0) 
+      [ branch lengths: TODO per-partition,clock ]
+      [ brlenpr uniform(0.000001,4) ] 
+      [ brlenpr fixed() ] [ you should have provided a user tree with branch lengths ]
+      brlenpr exponential(10.0) 
 
 
       [ substitution matrix ]
       revMatPr dirichlet(1.0,1.0,1.0,1.0,1.0,1.0)
       [ revMatPr fixed(1,2,3,4,5,6) ] 
-      
+
 
       [ state frequencies ] 
       stateFreqPr  dirichlet(1.0,1.0,1.0,1.0)
-      [ stateFreqPr fixed(equal) ]
       [ stateFreqPr fixed(empirical) ]
       [ stateFreqPr fixed(1,2,3,4) ]
 
 
       [ rate heterogeneity: alpha parameter ]
       [ shapePr exponential(1) ]
-      shapePr uniform(1e-6,200)
+      shapePr uniform(0.0000001,200)
       [ shapePr fixed(1) ] 
-
-
 
 
       [================================================================]

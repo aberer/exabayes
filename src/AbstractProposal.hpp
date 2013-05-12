@@ -55,10 +55,7 @@ protected:
   double relativeProbability ; 	// probability relative to category
   proposal_type ptype;  		// TODO will not be needed later  
 
-
   // various parameters and stuff 
-
 }; 
-
 
 #endif

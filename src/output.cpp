@@ -7,11 +7,6 @@
 #include "proposalFunction.h"
 #include "TreeAln.hpp"
 
-#include "Chain.hpp"
-
-
-
-
 
 /**
    @brief A check to ensure that the tree is still consistent. 

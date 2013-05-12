@@ -36,7 +36,7 @@ public:
   /**
      @brief gets the tree length (internal representation)
   */   
-  double getTreeLength(); 
+  double getTreeLength() const ; 
 
   // save setters 
   double setFrequencySave(double newValue, int model, int position ); 
@@ -51,10 +51,10 @@ public:
   
 
   // getters 
-  pInfo* getPartition(int model);
-  tree* getTr(){return tr;}
-  int getNumBranches(); 
-  int getNumberOfPartitions();   
+  pInfo* getPartition(int model) const;
+  tree* getTr() const {return tr;}
+  int getNumBranches() const; 
+  int getNumberOfPartitions() const;   
   boolean& accessExecModel(int model); 
   double& accessPartitionLH(int model); 
 
@@ -62,16 +62,16 @@ public:
   // direct acceses to for instance branch lengths. Makes our code
   // saver and if we want to do something globally (e.g., print), then
   // it can simply be added to these functions.
-  double getBranchLength(nodeptr p, int model){return p->z[model] ;  }
-  double getSubstRate(int model, int position){pInfo *partition = getPartition(model); return partition->substRates[position]; }
-  double getFrequency(int model, int position){pInfo *partition = getPartition(model); return partition->frequencies[position]; }
-  double getAlpha(int model){pInfo *partition = getPartition(model) ; return partition->alpha; } 
+  double getBranchLength(nodeptr p, int model) const {return p->z[model] ;  }
+  double getSubstRate(int model, int position) const { return getPartition(model)->substRates[position]; }
+  double getFrequency(int model, int position) const {pInfo *partition = getPartition(model); return partition->frequencies[position]; }
+  double getAlpha(int model) const {pInfo *partition = getPartition(model) ; return partition->alpha; } 
 
 
-  bool isTipNode(nodeptr p){return isTip(p->number, getTr()->mxtips );}
+  bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
 
 #if HAVE_PLL != 0
-  partitionList* getPartitionsPtr(){ return partitions; } 
+  partitionList* getPartitionsPtr() const { return partitions; } 
 #endif
 
 
@@ -90,7 +90,7 @@ auto getRestorer() const ->  shared_ptr<LnlRestorer> {return restorer;  }
 
 
 private:   
-  double getTreeLengthHelper(nodeptr p);
+  double getTreeLengthHelper(nodeptr p) const;
   
   void initDefault();
   tree* tr;		// TODO replace with an object for cleanup 
