@@ -308,8 +308,10 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
 #if HAVE_PLL == 0
-      if(i % initParams->numRunParallel != myBatch )
-	continue; 
+      // TODO implement batch stuff 
+      
+      // TODO implement 
+      // assert(0); 
 #endif
 
       runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq)); 

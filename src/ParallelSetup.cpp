@@ -1,4 +1,5 @@
 #include "ParallelSetup.hpp"
+#include "GlobalVariables.hpp"
 
 #include <iostream> 
 

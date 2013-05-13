@@ -56,13 +56,16 @@ TreeAln::TreeAln()
 }
 
 
-void TreeAln::initializeFromByteFile(string byteFileName)
+void TreeAln::initializeFromByteFile(string _byteFileName)
 {
 #if HAVE_PLL != 0
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
   partitions = pl;
-  this->initializeTreePLL(byteFileName);
+  this->initializeTreePLL(_byteFileName);
 #else 
+  extern char byteFileName[1024]; 
+  strcpy(byteFileName, _byteFileName.c_str() ) ;  
+
   analdef adef ; 
 
   adef.max_rearrange          = 21;
@@ -75,7 +78,7 @@ void TreeAln::initializeFromByteFile(string byteFileName)
   adef.permuteTreeoptimize    = FALSE; 
   adef.perGeneBranchLengths   = FALSE;   
   adef.useCheckpoint          = FALSE;
-
+  
   initializeTree(tr, &adef);   
 #endif  
 }
