@@ -1,6 +1,6 @@
 #include "Block.hpp"
 
-#include "proposalType.h"
+// #include "proposalType.h"
 
 
 static bool convertToBool(NxsString &string)

@@ -14,7 +14,7 @@ class LnlRestorer;
 
 /** 
     @brief mostly wraps the legacy tr and partition list     
- */
+*/
 
 class TreeAln
 {
@@ -86,7 +86,7 @@ public:
   friend ostream& operator<< (ostream& out,  TreeAln&  traln);
 
   void setRestorer(shared_ptr<LnlRestorer> rest){ restorer = rest; }
-auto getRestorer() const ->  shared_ptr<LnlRestorer> {return restorer;  }  
+  auto getRestorer() const ->  shared_ptr<LnlRestorer> {return restorer;  }  
 
 
 private:   
@@ -96,6 +96,8 @@ private:
   tree* tr;		// TODO replace with an object for cleanup 
   
   bool parsimonyEnabled; 
+  
+  bool branchLengthsFixed; 
   
   shared_ptr<LnlRestorer> restorer; 
 

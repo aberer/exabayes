@@ -3,8 +3,8 @@
 
 #include <cassert>
 
+#include "GlobalVariables.hpp"
 #include "TreeAln.hpp"
-#include "categoryType.h"
 #include "PriorBelief.hpp"
 
 class FrequencyParameter

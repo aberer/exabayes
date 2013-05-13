@@ -51,6 +51,7 @@ double PriorBelief::scoreBranchLengths(const TreeAln &traln)
     {
       vector<double> tmp; 
       tmp.push_back(branchLengthToReal(traln.getTr(), b.length[0]));
+      // cout << "scoring " << tmp[0] << endl; 
       result += brPr->getLogProb(tmp);
     }
   return result; 
@@ -181,4 +182,3 @@ void PriorBelief::assertEmpty(shared_ptr<AbstractPrior> prior)
       assert(0); 
     }
 }
-

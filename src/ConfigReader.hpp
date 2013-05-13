@@ -11,7 +11,7 @@
 #include <ncl/ncl.h>
 #include <vector>
 
-#include "proposalType.h"
+// #include "proposalType.h"
 #include "PriorBelief.hpp"
 #include "AbstractProposal.hpp"
 

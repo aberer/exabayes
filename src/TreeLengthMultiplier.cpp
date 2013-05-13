@@ -16,11 +16,11 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _relativeWeight, double _mult
 }
 
 
-
 void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere)
 {  
   tree *tr = traln.getTr();
   double newZ = pow( traln.getBranchLength( p,0),multiHere); 
+  // cout << "TL: multiplying " << branchLengthToReal(traln.getTr(),traln.getBranchLength( p,0) ) << " with "<< multiHere << " => " << branchLengthToReal (traln.getTr(), newZ) << endl; 
   traln.setBranchLengthSave(newZ, 0, p); 
 
   if(isTip(p->number, tr->mxtips))
@@ -40,15 +40,20 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   tree *tr = traln.getTr(); 
   rememMultiplier  = rand.drawMultiplier( multiplier);
 #ifdef PRINT_MULT
-  cout  << setprecision(6) << "tl-multi with " << rememMultpier << endl; 
+  cout  << setprecision(6) << "tl-multi with " << rememMultiplier << endl; 
+#endif
+
+#ifdef UNSURE
+  assert(0); 
 #endif
 
   updateHastings(hastings, rememMultiplier, "TL-Mult");
 
   initTreeLength =  traln.getTreeLength(); 
-  prior.updateBranchLength(initTreeLength, initTreeLength * rememMultiplier);
 
   multiplyBranchLengthsRecursively(traln , tr->start->back, rememMultiplier); 
+
+  prior.rescoreAllBranchLengths(traln);
 }
 
 
@@ -56,7 +61,7 @@ void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)
 {
   tree *tr = traln.getTr();
   multiplyBranchLengthsRecursively(traln, tr->start->back, 1/rememMultiplier);   
-  prior.updateBranchLength(initTreeLength * rememMultiplier, initTreeLength);
+  prior.rescoreAllBranchLengths(traln);
 } 
 
 

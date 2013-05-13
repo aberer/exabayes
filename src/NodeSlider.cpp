@@ -57,7 +57,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   double newZ = branchLengthToReal(tr,pow(bothZ,drawnMultiplier));
   double realOldZ = branchLengthToReal(tr, bothZ); 
 #ifdef PRINT_MULT
-  cout << setprecision(6) << "nodeslider: " << realOldZ << " * "  << drawMultiplier << " = " << newZ; 
+  cout << setprecision(6) << name << realOldZ << " * "  << drawnMultiplier << " = " << newZ << endl;  
 #endif
   updateHastings(hastings, realOldZ / newZ, name); 
 

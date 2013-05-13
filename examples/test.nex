@@ -33,9 +33,9 @@ begin EXABAYES;
       [ TODO: topology ]
 
       [ branch lengths: TODO per-partition,clock ]
-      [ brlenpr uniform(0.000001,4) ] 
-      [ brlenpr fixed() ] [ you should have provided a user tree with branch lengths ]
-       brlenpr exponential(10.0) 
+        [ brlenpr uniform(0.0000001,4)  ] 
+       brlenpr fixed()    [ you should have provided a user tree with branch lengths ] 
+      [  brlenpr exponential(10.0) ] 
 
       [ substitution matrix ]
       revMatPr dirichlet(1.0,1.0,1.0,1.0,1.0,1.0)

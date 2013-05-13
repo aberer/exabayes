@@ -123,7 +123,7 @@ void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   if(isOutputProcess())
-    tout << "[run:" << runid << ",heat:"  << couplingId << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << lnl  <<  "\t"<< lnPr << endl; 
+    tout << "[run=" << runid << ",heat="  << couplingId << ",gen="  << currentGeneration << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << lnl  <<  "\t"<< lnPr << endl; 
 #endif
 }
 

@@ -8,7 +8,7 @@
 // also add #include "MyTemplateProposal.hpp" in SampleMaster.cpp
 
 
-// finally, proposalType.h must be updated. That's it!  
+// finally, GlobalVariables.h must be updated. That's it!
 
 
 // if you created a new source file (=> .cpp), then inform automake

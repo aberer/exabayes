@@ -73,7 +73,6 @@ public:
   {
     assert(values.size() == 1); 
     double value =  values[0]; 
-    // double result = exponentialDistribution(value, lambda); 
     double result = exponentialDensity(value, lambda); 
     result = log(result); 
     return result ; 
@@ -105,7 +104,6 @@ public:
     else  
      {
 	double result = numeric_limits<double>::lowest(); 
-	cout << "returning improbably event: " << result << endl; 
 	return result; 
       }
   }

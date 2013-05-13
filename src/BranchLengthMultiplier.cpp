@@ -1,11 +1,7 @@
 #include "BranchLengthMultiplier.hpp"
 #include "eval.h"
 #include "TreeAln.hpp"
-// #include "proposals.h"
 #include "tune.h"
-
-// #define PRINT_MULT
-
 
 BranchLengthMultiplier::BranchLengthMultiplier(double relativeWeight, double _multiplier)
   :  multiplier(_multiplier)
@@ -37,11 +33,13 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   savedBranch.length[0] = oldZ; 
   double newZ = pow( oldZ, drawnMultiplier) ; 
 
-  prior.updateBranchLength(branchLengthToReal(tr,oldZ), branchLengthToReal(tr,newZ));
 
 #ifdef PRINT_MULT  
-  cout  << setprecision(6) << "bl-multi: " << branchLengthToReal(tr,oldZ) <<   " * " << drawnMultiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
+  cout  << setprecision(6) << name << branchLengthToReal(tr,oldZ) <<   " * " << drawnMultiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
 #endif
+
+
+  prior.updateBranchLength(branchLengthToReal(tr,oldZ), branchLengthToReal(tr,newZ));
 
   /* according to lakner2008  */
   updateHastings(hastings, drawnMultiplier, name);

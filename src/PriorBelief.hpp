@@ -87,8 +87,18 @@ public:
 
   void  rescoreAllBranchLengths(const TreeAln &traln)
   {
+#ifdef EFFICIENT
+    assert(0); 
+#endif
     lnBrProb = scoreBranchLengths(traln); 
   }
+  
+  
+  // checks if anything is fixed 
+  bool believingInFixedBranchLengths() const { return  typeid(*(brPr.get())) == typeid(FixedPrior) ;  } 
+  bool believingInFixedRevMat() const { return typeid(*(revMatPr.get())) == typeid(FixedPrior);  }
+  bool believingInFixedRateHet() const {return typeid(*(rateHetPr.get())) == typeid(FixedPrior) ; }
+  bool believingInFixedStateFreq() const { return typeid(*(revMatPr.get())) == typeid(FixedPrior) ;  }
   
   
 private: 

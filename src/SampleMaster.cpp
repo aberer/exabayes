@@ -183,9 +183,14 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
+void SampleMaster::modifyProposalWeights(const PriorBelief &prior, vector<double> &proposalWeights)
+{
+  if(prior.believingInFixedBranchLengths())
+    {
+      
+    }
 
-
-
+}
 
 
 void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights )
@@ -203,9 +208,9 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
 
   prior.addStandardPriors();
 
+  modifyProposalWeights(prior, proposalWeights); 
+
   tout << "Your prior belief consists of: "<< endl << prior << endl; 
-
-
 
   validateRunParams();
 }

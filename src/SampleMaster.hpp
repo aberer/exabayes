@@ -80,10 +80,8 @@ private:
   double parsimonyWarp;   
   int guidedRadius; 
 
-
+  void modifyProposalWeights(const PriorBelief &prior, vector<double> &proposalWeights);     
   bool convergenceDiagnostic(); 
-  // int myBatch; 
-
 };  
 
 

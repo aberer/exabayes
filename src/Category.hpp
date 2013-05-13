@@ -4,9 +4,8 @@
 
 #include <vector>
 
-typedef struct _pfun proposalFunction; 
-
-#include "categoryType.h"
+#include "GlobalVariables.hpp"
+// #include "categoryType.h"
 #include "Randomness.hpp"
 
 class AbstractProposal; 

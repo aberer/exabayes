@@ -4,10 +4,10 @@
 #include "axml.h"
 #include <string>
 #include "SuccessCounter.hpp" 
-#include "proposalType.h"
+// #include "proposalType.h"
 #include "Randomness.hpp"
-#include "categoryType.h" 
-#include "proposalType.h"
+// #include "categoryType.h" 
+// #include "proposalType.h"
 #include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"
 
