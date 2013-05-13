@@ -116,8 +116,8 @@ private :
 
   double hastings;/// the log hastings ratio  
   int currentGeneration;   
-
-  void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl ) ; 
+  
+  void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr ) ;   
   void initParamDump(); 
 
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!

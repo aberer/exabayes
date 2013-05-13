@@ -1,6 +1,5 @@
 #include "axml.h"
 
-// #include "proposalFunction.h"
 #include "GlobalVariables.hpp"
 #include "TreeAln.hpp" 
 

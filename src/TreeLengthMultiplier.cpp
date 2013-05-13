@@ -12,7 +12,7 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _relativeWeight, double _mult
   this->relativeProbability = _relativeWeight; 
   this->name = "TL-Mult"; 
   category = BRANCH_LENGTHS; 
-  ptype = TL_MULT; 
+  // ptype = TL_MULT; 
 }
 
 
@@ -45,7 +45,8 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
   updateHastings(hastings, rememMultiplier, "TL-Mult");
 
-  // TODO prior 
+  initTreeLength =  traln.getTreeLength(); 
+  prior.updateBranchLength(initTreeLength, initTreeLength * rememMultiplier);
 
   multiplyBranchLengthsRecursively(traln , tr->start->back, rememMultiplier); 
 }
@@ -53,9 +54,9 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
 void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
 {
-  // TODO prior 
   tree *tr = traln.getTr();
-  multiplyBranchLengthsRecursively(traln, tr->start->back, 1/rememMultiplier); 
+  multiplyBranchLengthsRecursively(traln, tr->start->back, 1/rememMultiplier);   
+  prior.updateBranchLength(initTreeLength * rememMultiplier, initTreeLength);
 } 
 
 

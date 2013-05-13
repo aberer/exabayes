@@ -1,4 +1,3 @@
-
 #ifndef _PROPOSAL_FUNCTION_H
 #define _PROPOSAL_FUNCTION_H
 
@@ -23,22 +22,8 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
     rand.drawDirichletExpected(tmpNew, tmp, parameter, (int)oldValues.size());
     for(nat i = 0; i < oldValues.size(); ++i)
       newValues.push_back( tmpNew[i]); 
-    
-    // cout << "old :" ; 
-    // for(auto v : oldValues)
-    //   cout << v << "," ; 
-    // cout << endl; 
 
-    // cout << "new :" ; 
-    // for(auto v : newValues)
-    //   cout << v << ",";
-    // cout << endl; 
-
-    // cout << oldValues << endl; 
-    // cout << newValues << endl; 
-
-
-updateHastings(hastings, densityDirichlet(tmp, tmpNew, oldValues.size()) / densityDirichlet(tmpNew,tmp, oldValues.size()), "dirichlet"); 
+    updateHastings(hastings, densityDirichlet(tmp, tmpNew, oldValues.size()) / densityDirichlet(tmpNew,tmp, oldValues.size()), "dirichlet"); 
 
     return newValues; 
   }

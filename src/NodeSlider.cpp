@@ -8,7 +8,7 @@ NodeSlider::NodeSlider(double _relativeProbability, double _multiplier)
   this->relativeProbability = _relativeProbability;   
   name = "nodeSlider"; 
   this->category = BRANCH_LENGTHS; 
-  ptype = NODE_SLIDER;   
+  // ptype = NODE_SLIDER;   
 }
 
 
@@ -16,7 +16,6 @@ static void insertBranchLength(TreeAln &traln, branch &b)
 {
   nodeptr p = findNodeFromBranch(traln.getTr(), b); 
   b.length[0] = traln.getBranchLength( p,0); 
-  // getBranchLength( traln.assert(p->number,0) == traln.getBranchLength( p->back->number,0)); 
 }
 
 
@@ -55,17 +54,22 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 
   updateHastings(hastings, drawnMultiplier, name ); 
 
-  double newZ = branchLengthToReal(tr,pow(bothZ,drawnMultiplier));  
+  double newZ = branchLengthToReal(tr,pow(bothZ,drawnMultiplier));
   double realOldZ = branchLengthToReal(tr, bothZ); 
 #ifdef PRINT_MULT
   cout << setprecision(6) << "nodeslider: " << realOldZ << " * "  << drawMultiplier << " = " << newZ; 
 #endif
   updateHastings(hastings, realOldZ / newZ, name); 
+
+  
   
   double uniScaler = rand.drawRandDouble01(); 
   double aZ = branchLengthToInternal(tr, uniScaler * newZ),
     bZ = branchLengthToInternal(tr, (1-uniScaler) * newZ); 
   
+  
+  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeA->z[0]) , branchLengthToReal(traln.getTr(), aZ));
+  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeB->z[0]) , branchLengthToReal(traln.getTr(), bZ));
   hookup(nodeA, nodeA->back, &aZ, numBranch); 
   hookup(nodeB, nodeB->back, &bZ, numBranch);  
 }
@@ -73,13 +77,9 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 
 void NodeSlider::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
-
   tree *tr = traln.getTr();
-  // Path *pth = pf->remembrance.modifiedPath; 
   branch otherBranch = getThirdBranch(tr, path.at(0), path.at(1));
 
-  // cout << "third branch is "<< otherBranch << endl; 
-  
   nodeptr p = findNodeFromBranch(tr, otherBranch);   
   
   nodeptr q = p->next->back, 
@@ -87,14 +87,12 @@ void NodeSlider::evaluateProposal(TreeAln &traln, PriorBelief &prior)
   
   if(q->x)
     {
-      // cout << "disorienting "  << q->number << endl; 
       q->x = 0; 
       q->next->x =  1 ; 
     }
   
   if(r->x)
     {
-      // cout << "disorienting "  << r->number << endl; 
       r->x = 0; 
       r->next->x = 1; 
     }
@@ -119,6 +117,11 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
   
   double aZ = a.length[0], 
     bZ = b.length[0]; 
+  
+  assert(numBranches == 1); 
+  prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), aZ));
+  prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), bZ));
+
   hookup(p, p->back, &aZ, numBranches); 
   hookup(q,q->back, &bZ, numBranches);   
 

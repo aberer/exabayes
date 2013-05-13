@@ -404,7 +404,7 @@ ostream& operator<<(ostream& rhs, const branch &b )
 static void extractHelper(const TreeAln& traln,  nodeptr p , vector<branch> &result, bool isStart) 
 {
   branch b = constructBranch(p->number, p->back->number);       
-  b.length[0] = p->z[0]; 
+  b.length[0] = p->back->z[0]; 
   result.push_back(b);
 
   if(not isStart && traln.isTipNode(p))
@@ -421,4 +421,16 @@ void extractBranches(const TreeAln &traln, vector<branch> &result)
 {
   tree *tr = traln.getTr();
   extractHelper(traln, tr->nodep[1]->back, result, true);
+}
+
+
+void applyBranches(TreeAln &traln, const vector<branch> &result)
+{
+  tree *tr = traln.getTr(); 
+  int numBranches = traln.getNumBranches();  
+  for(auto b : result)
+    {
+      nodeptr p = findNodeFromBranch(tr, b); 
+      hookup(p, p->back, b.length, numBranches);
+    }
 }

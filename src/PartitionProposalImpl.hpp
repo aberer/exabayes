@@ -10,15 +10,37 @@ PartitionProposal<FUN,PARAM>::PartitionProposal(double relativeWeight, double _p
 }
 
 
-
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
+  // tree *tr = traln.getTr(); 
+
   model = rand.drawRandInt( traln.getNumberOfPartitions());  
   values = PARAM::getParameters(traln, model); 
   vector<double> proposedValues =  FUN::getNewValues(values, parameter, rand, hastings); 
+  assert(proposedValues.size() == values.size()); 
+
   PARAM::setParameters(traln, model, proposedValues);
+
+  // double fracChangeBefore = tr->fracchange; 
   PARAM::init(traln, model);
+  // double fracChangeAfter = tr->fracchange;    
+
+  // if(fracChangeAfter != fracChangeBefore)
+  //   {
+      
+
+  //     double ratio = fracChangeBefore / fracChangeAfter;       
+  //     cout << "APPLY: frachange changed! before=" << fracChangeBefore << "\tafter="  << fracChangeAfter << " => ratio " << ratio << endl; 
+  //     prior.updateBranchLengthAllByFactor(ratio); 
+  //     // exit(0); 
+
+  
+  //   }
+
+  
+  PARAM::updatePrior(traln, prior, values, proposedValues); 
+
 }
 
 template<typename FUN, typename PARAM>
@@ -33,8 +55,26 @@ void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief 
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior) 
 {
+  // tree *tr = traln.getTr();   
+
+  vector<double> curVals =  PARAM::getParameters(traln,model);
   PARAM::setParameters(traln, model, values);
+  assert(curVals.size() == values.size()); 
+
+  // double fracChangeBefore = tr->fracchange; 
   PARAM::init(traln,model);
+  // double fracChangeAfter = tr->fracchange; 
+  // if(fracChangeAfter != fracChangeBefore)
+  //   {
+  //     double ratio = fracChangeBefore / fracChangeAfter ; 
+  //     cout << "RESET: frachange changed! before=" << fracChangeBefore << "\tafter="  << fracChangeAfter << " => ratio " << ratio << endl; 
+  //     prior.updateBranchLengthAllByFactor(ratio); 
+  //   }
+
+
+  
+  PARAM::updatePrior(traln, prior, curVals, values);   
+  
 }
 
 

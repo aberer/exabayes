@@ -22,7 +22,6 @@
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-// #include "proposals.h"
 #include "tune.h"
 #include "output.h"
 #include "adapters.h"
@@ -30,11 +29,7 @@
 #include "SampleMaster.hpp"
 #include "ParallelSetup.hpp"
 
-
-
 #include "teestream.hpp"
-
-
 
 // #define TEST  
 // #include "branch.h"
@@ -157,10 +152,9 @@ int main(int argc, char *argv[])
   assert(0); 
 #endif
 
-
   ignoreExceptionsDenormFloat(); 
   CommandLine cl(argc, argv); 
-  
+
   makeInfoFile(cl);
 
   cl.printVersion(true);

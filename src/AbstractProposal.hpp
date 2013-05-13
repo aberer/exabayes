@@ -37,7 +37,7 @@ public:
   void setRelativeProbability(double prob ){ relativeProbability = prob; }
   
   category_t getCategory() const {return category; }
-  proposal_type getPtype() const {return ptype; }
+  // proposal_type getPtype() const {return ptype; }
   
   string getName() const {return name; }
   
@@ -54,7 +54,7 @@ protected:
   SuccessCounter sctr; 
   category_t category; 
   double relativeProbability ; 	// probability relative to category
-  proposal_type ptype;  		// TODO will not be needed later  
+  // proposal_type ptype;  		// TODO will not be needed later  
 
   // various parameters and stuff 
 }; 

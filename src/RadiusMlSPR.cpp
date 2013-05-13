@@ -19,7 +19,7 @@ RadiusMlSPR::RadiusMlSPR( double relativeWeight, int _radius)
   this->relativeProbability = relativeWeight; 
   this->name = "radiusMLspr" ;
   category = TOPOLOGY; 
-  ptype = GUIDED_SPR;   
+  // ptype = GUIDED_SPR;   
 }
 
 

@@ -91,6 +91,8 @@ typedef  unsigned int nat ;
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
 
+#define ACCEPTED_LNPR_EPS 1e-4 
+
 
 /* ABOVE: stuff that is needed by everyone and can be defined
    repeatedly
@@ -100,6 +102,9 @@ typedef  unsigned int nat ;
 
  */
 
+
+
+/* #define EFFICIENT  */
 
 
 /* #define PRINT_MULT  */
@@ -126,7 +131,7 @@ typedef  unsigned int nat ;
 #define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */

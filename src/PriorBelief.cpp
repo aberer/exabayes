@@ -1,34 +1,45 @@
+
 #include "PriorBelief.hpp"
 #include "branch.h"
 #include "GlobalVariables.hpp"
 #include "Priors.hpp"
 
 
-
-
 PriorBelief::PriorBelief()
-  : logProb(0)
+  : lnBrProb(0)
+  , lnRevMatProb(0)
+  , lnRateHetProb(0)
+  , lnStatFreqProb(0)
 {
   
 }
 
 
-void PriorBelief::initPrior(const TreeAln& traln)
+void PriorBelief::initPrior(const TreeAln &traln)
 {
-  logProb = scoreEverything(traln);
+  lnBrProb = scoreBranchLengths(traln); 
+  cout << "bl-pr="  <<lnBrProb << ", "; 
+
+  lnRevMatProb = scoreRevMats(traln); 
+  cout << "revmat-pr="  << lnRevMatProb << ", " ; 
+  
+  lnRateHetProb = scoreRateHets(traln);
+  cout << "ratehet-pr="  << lnRateHetProb << ", " ; 
+
+  lnStatFreqProb = scoreStateFreqs(traln);  
+  cout << "statefreq-pr="  << lnStatFreqProb << ", " ; 
+  
+  cout << endl; 
 }
 
 
-double PriorBelief::scoreEverything(const TreeAln &traln)
+double PriorBelief::scoreEverything(const TreeAln& traln)
 {
-  double result = 0; 
-  result += scoreBranchLengths(traln); 
-  result += scoreRevMats(traln); 
-  result += scoreRateHets(traln);
-  result += scoreStateFreqs(traln);
-  return result;
+  return scoreBranchLengths(traln)
+    + scoreRevMats(traln)
+    + scoreRateHets(traln)
+    + scoreStateFreqs(traln);   
 }
-
 
 
 double PriorBelief::scoreBranchLengths(const TreeAln &traln)
@@ -90,7 +101,9 @@ void PriorBelief::verify(const TreeAln &traln)
 {
   double verified = scoreEverything(traln); 
 
-  if(fabs (verified - logProb)  > ACCEPTED_LIKELIHOOD_EPS) 
+  double logProb = getLogProb(); 
+
+  if(fabs (verified - logProb)  > ACCEPTED_LNPR_EPS) 
     {
       cerr << "WARNING: lnPrior was " <<  logProb << " while verification says, it should be " << verified << "\t"
 	   << "DIFF:\t" << verified - logProb  << endl; 
@@ -135,27 +148,37 @@ void PriorBelief::addStandardPriors()
 }
 
 
-
 void PriorBelief::updateBranchLength(double oldValue, double newValue)
 {
   vector<double> oldV = {oldValue}; 
   vector<double> newV = {newValue};   
-  logProb +=  ( brPr->getLogProb(newV) - brPr->getLogProb(oldV) ) ; 
+  lnBrProb +=  ( brPr->getLogProb(newV) - brPr->getLogProb(oldV) ) ; 
 } 
 
 void PriorBelief::updateRevMat( vector<double> oldValues, vector<double> newValues)
 {
-  logProb += revMatPr->getLogProb(newValues) - revMatPr->getLogProb(oldValues); 
+  lnRevMatProb += revMatPr->getLogProb(newValues) - revMatPr->getLogProb(oldValues); 
 }
  
 void PriorBelief::updateFreq(vector<double> oldValues, vector<double> newValues)
 {
-  logProb += stateFreqPr->getLogProb(newValues) - revMatPr->getLogProb(oldValues); 
+  lnStatFreqProb += stateFreqPr->getLogProb(newValues) - stateFreqPr->getLogProb(oldValues); 
 }
  
 void PriorBelief::updateRateHet(double oldValue, double newValue)
 {
   vector<double> oldV = {oldValue}; 
   vector<double> newV = {newValue} ;
-  logProb += (rateHetPr->getLogProb(newV) - rateHetPr->getLogProb(oldV)); 
+  lnRateHetProb += (rateHetPr->getLogProb(newV) - rateHetPr->getLogProb(oldV)); 
 } 
+
+
+void PriorBelief::assertEmpty(shared_ptr<AbstractPrior> prior)
+{
+  if(prior.get() != nullptr)
+    {
+      cerr << "Error! Attempted to set prior already specified prior "  << prior.get() << ". Did you specify it twice in the config file?" << endl; 
+      assert(0); 
+    }
+}
+

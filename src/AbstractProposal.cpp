@@ -9,6 +9,6 @@ void updateHastings(double &hastings, double valToAdd, string whoDoneIt)
   hastings += log(valToAdd); 	// we are logarithmic now   
 
 #ifdef DEBUG_HASTINGS
-  tout << " => " << hastings << endl; 
+  tout <<  " => " << hastings << endl; 
 #endif
 }

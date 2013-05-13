@@ -11,7 +11,7 @@ StatNNI::StatNNI( double _weight, double _multiplier)
   this->relativeProbability = _weight; 
   this->name = "stNNI" ; 
   this->category = TOPOLOGY; 
-  ptype = ST_NNI; 
+  // ptype = ST_NNI; 
   
 }
 
@@ -78,6 +78,10 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
       new1 = pow( old1,m1),
       new2 = pow( old2 ,m2),
       new3 = pow( old3 ,m3); 
+
+    prior.updateBranchLength(branchLengthToReal(traln.getTr(), old1), branchLengthToReal(traln.getTr(), new1));
+    prior.updateBranchLength(branchLengthToReal(traln.getTr(), old2), branchLengthToReal(traln.getTr(), new2)); 
+    prior.updateBranchLength(branchLengthToReal(traln.getTr(), old3), branchLengthToReal(traln.getTr(), new3)); 
 
 #ifdef PRINT_MULT
     printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
@@ -147,6 +151,11 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
     
     nodeptr between = findNodeFromBranch(tr, chosenBranch ); 
     
+    assert(numBranches == 1); 
+    prior.updateBranchLength(branchLengthToReal(traln.getTr(), between->z[0]), branchLengthToReal(traln.getTr(), chosenBranch.length[0]));
+    prior.updateBranchLength(branchLengthToReal(traln.getTr(), r->z[0]), branchLengthToReal(traln.getTr(), b.length[0]));
+    prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), a.length[0]));
+
     hookup(between, between->back, chosenBranch.length, numBranches); 
     hookup(r, qBack, b.length, numBranches);  /* r->z */
     hookup(q, rBack, a.length, numBranches) ; /* q->z */

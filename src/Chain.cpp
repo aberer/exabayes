@@ -45,10 +45,11 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
 
   evaluateFullNoBackup(*traln);   
   
-  tree *tr = traln->getTr();
+  // tree *tr = traln->getTr();
   prior.initPrior(*traln);
 
-  addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(tr, traln->getTreeLength()) << "\tseeds=>"  << *chainRand << endl; 
+  addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << *chainRand << endl; 
+  // tout <<  *traln << endl; 
   saveTreeStateToChain(); 
 }
 
@@ -118,11 +119,11 @@ void Chain::applyChainStateToTree()
 
 
 
-void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl) 
+void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   if(isOutputProcess())
-    tout << "[run:" << runid << ",heat:"  << couplingId << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << lnl << endl; 
+    tout << "[run:" << runid << ",heat:"  << couplingId << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << lnl  <<  "\t"<< lnPr << endl; 
 #endif
 }
 
@@ -146,7 +147,7 @@ AbstractProposal* Chain::drawProposalFunction()
 }
 
 
-#define DEBUG_ACCEPTANCE
+// #define DEBUG_ACCEPTANCE
 
 
 void Chain::step()
@@ -186,7 +187,7 @@ void Chain::step()
 
   bool wasAccepted  = testr < acceptance; 
 
-  debug_printAccRejc( pfun, wasAccepted, tr->likelihood); 
+  debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLogProb()); 
 
 #ifdef VERIFY_LNL_SUPER_EXPENSIVE  
   // TEST
@@ -277,7 +278,7 @@ void Chain::printParams(FILE *fh)
   tree *tr = traln->getTr(); 
 
 
-  double treeLength = branchLengthToReal(tr, traln->getTreeLength()); 
+  double treeLength =  traln->getTreeLength(); 
   assert(treeLength != 0.); 
   fprintf(fh, "%d\t%f\t%.3f", currentGeneration,
 	  tr->likelihood,  
@@ -355,10 +356,10 @@ void Chain::printNexusTreeFileStart( FILE *fh  )
 }
 
 
-
 void Chain::switchState(Chain &rhs)
 {
   swap(couplingId, rhs.couplingId); 
   swap(chainRand, rhs.chainRand); 
   swap(proposalCategories, rhs.proposalCategories); 
 }
+

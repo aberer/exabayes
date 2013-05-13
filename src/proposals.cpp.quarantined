@@ -1169,7 +1169,7 @@ static void branchLengthWindowApply(Chain *chain, proposalFunction *pf)
 
 //   double oldZ = traln->getBranchLength( p,0); 
 //   double newZ = pow( oldZ, multiplier) ; 
-//   /* printf("\t\tBL_MULTI: %g * %g => %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
+//   /* printf("\t\tBL_MULTI: %g * %g g=> %g\n", branchLengthToReal(tr, p->z[0]), multiplier, branchLengthToReal(tr, newZ));  */
 
 
 // #ifdef PRINT_MULT  

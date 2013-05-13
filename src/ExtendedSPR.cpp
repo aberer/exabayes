@@ -14,7 +14,7 @@ ExtendedSPR::ExtendedSPR(double _relativeWeight, double _stopProb, double _multi
   this->relativeProbability = _relativeWeight; 
   this->name = "eSPR"; 
   category = TOPOLOGY; 
-  ptype = E_SPR; 
+  // ptype = E_SPR; 
 }
 
 

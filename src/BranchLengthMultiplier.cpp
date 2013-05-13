@@ -13,7 +13,7 @@ BranchLengthMultiplier::BranchLengthMultiplier(double relativeWeight, double _mu
   this->relativeProbability = relativeWeight; 
   this->name = "blMult"; 
   this->category = BRANCH_LENGTHS; 
-  ptype = BRANCH_LENGTHS_MULTIPLIER; 
+  // ptype = BRANCH_LENGTHS_MULTIPLIER; 
 }
 
 

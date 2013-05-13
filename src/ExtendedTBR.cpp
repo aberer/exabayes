@@ -15,7 +15,7 @@ ExtendedTBR::ExtendedTBR( double _relativeProbability, double _extensionProb, do
   name = "eTBR"; 
   relativeProbability = _relativeProbability; 
   category = TOPOLOGY; 
-  ptype = E_TBR; 
+  // ptype = E_TBR; 
 }
 
 
@@ -355,6 +355,13 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 
   modifiedPath1.restoreBranchLengthsPath(traln, prior); 
   modifiedPath2.restoreBranchLengthsPath(traln, prior); 
+
+
+#ifdef EFFICIENT
+  assert(0); 
+#endif
+
+  prior.rescoreAllBranchLengths(traln);
 
   debug_checkTreeConsistency(traln.getTr()); 
   debug_printTree(traln);   

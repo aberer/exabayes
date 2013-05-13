@@ -10,7 +10,7 @@ MyTemplateProposal::MyTemplateProposal(double _relativeProbability, double aVari
   name = "MyTemplateProposal"; 	
   category = TOPOLOGY ; 	// check out categoryType.h
   
-  ptype = E_TBR; 		// actually not used any more... 
+  // ptype = E_TBR; 		// actually not used any more... 
 
 }
 

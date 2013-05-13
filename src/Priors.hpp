@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 #include "axml.h"
 #include "densities.h"
@@ -32,7 +33,15 @@ public:
   DirichletPrior(vector<double> alphas) : alphas(alphas)
   {
   }
-  virtual double getLogProb(vector<double> values) const { return log(densityDirichletWrapper(values, alphas)); } 
+
+  virtual double getLogProb(vector<double> values) const 
+  {   
+    double result = densityDirichletWrapper(values, alphas); 
+
+    result = log(result);
+    
+    return result; 
+  } 
   
   virtual void print(ostream& out ) const 
   {
@@ -64,7 +73,10 @@ public:
   {
     assert(values.size() == 1); 
     double value =  values[0]; 
-    return log( exponentialDensity(value, lambda) ) ; 
+    // double result = exponentialDistribution(value, lambda); 
+    double result = exponentialDensity(value, lambda); 
+    result = log(result); 
+    return result ; 
   }
 
   virtual void print(ostream& out ) const  
@@ -88,10 +100,14 @@ public:
     assert(values.size() == 1); 
     double value = values[0];
 
-    if(minVal < value && value < maxVal )
-      return 0; 
-    else 
-      return numeric_limits<double>::lowest(); 
+    if(minVal < value && value < maxVal )      
+      return log(1 / (maxVal - minVal)); 
+    else  
+     {
+	double result = numeric_limits<double>::lowest(); 
+	cout << "returning improbably event: " << result << endl; 
+	return result; 
+      }
   }
 
   virtual void print(ostream& out ) const  

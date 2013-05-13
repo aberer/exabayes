@@ -28,7 +28,7 @@ ParsimonySPR::ParsimonySPR( double _relativeWeight, double _parsWarp, double _bl
 {
   this->name = "parsSPR"; 
   this->category = TOPOLOGY ; 
-  ptype = PARSIMONY_SPR; 
+  // ptype = PARSIMONY_SPR; 
   this->relativeProbability =  _relativeWeight; 
 }
 
