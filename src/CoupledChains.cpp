@@ -118,14 +118,6 @@ void CoupledChains::switchChainState()
   if(coupIdA > coupIdB)
     swap(coupIdB, coupIdA); 
 
-
-  /* 
-     IMPORTANT TODO
-
-     this currently assumes that we have a non-informative
-     prior. Allow for changes!
-  */
-
   double heatA = chains[chainAId]->getChainHeat(),
     heatB = chains[chainBId]->getChainHeat(); 
 
@@ -134,11 +126,14 @@ void CoupledChains::switchChainState()
   double lnlA = chains[chainAId]->traln->getTr()->likelihood,
     lnlB = chains[chainBId]->traln->getTr()->likelihood; 
 
+  double lnPrA = chains[chainAId]->getPrior().getLogProb(), 
+    lnPrB = chains[chainBId]->getPrior().getLogProb(); 
+
   double 
-    aB = lnlA *  heatB,
-    bA = lnlB *  heatA,
-    aA = lnlA * heatA,
-    bB =  lnlB *  heatB; 
+    aB = (lnlA + lnPrA ) *  heatB,
+    bA = ( lnlB + lnPrB ) *  heatA,
+    aA = ( lnlA + lnPrA ) * heatA,
+    bB =  ( lnlB + lnPrB ) *  heatB; 
 
   double accRatio = exp(( aB + bA )  - (aA + bB )); 
 
@@ -168,7 +163,10 @@ void CoupledChains::chainInfo()
       coldChain = chain; 
   assert(coldChain != NULL); 
 
-  tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->getGeneration() <<  "\tTL=" << setprecision(2)<< coldChain->traln->getTreeLength() << "\tlnPr(1)=" << coldChain->getPrior().getLogProb() << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\t" ; 
+  tout << 
+    "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->getGeneration() 
+       <<  "\tTL=" << setprecision(2)<< coldChain->traln->getTreeLength()
+       << "\tlnPr(1)=" << coldChain->getPrior().getLogProb() << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\t" ; 
 
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 

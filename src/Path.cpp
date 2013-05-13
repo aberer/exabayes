@@ -147,7 +147,9 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double par
 #ifdef PRINT_MULT
   cout  << setprecision(6) << "spr: " << oldZ <<   " * " << multiplier << " = "  << multiplier * oldZ << endl; // 
 #endif
-  
+
+  assert(not prior.believingInFixedBranchLengths()); 
+
   prior.updateBranchLength(oldZ, branchLengthToReal(traln.getTr(),newZ));
   
   updateHastings(hastings, multiplier, "pathMod");; 
@@ -162,7 +164,8 @@ void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior)
   for(auto b : stack)
     {
       nodeptr p = findNodeFromBranch(traln.getTr(), b); 
-      prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), b.length[0]) );
+      if(not prior.believingInFixedBranchLengths())
+	prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), b.length[0]) );
       hookup(p, p->back, b.length, numBranches); 
     }  
 }

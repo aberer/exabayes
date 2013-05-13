@@ -17,19 +17,35 @@ PriorBelief::PriorBelief()
 
 void PriorBelief::initPrior(const TreeAln &traln)
 {
-  lnBrProb = scoreBranchLengths(traln); 
-  cout << "bl-pr="  <<lnBrProb << ", "; 
-
-  lnRevMatProb = scoreRevMats(traln); 
-  cout << "revmat-pr="  << lnRevMatProb << ", " ; 
+  tout << "topo-pr= 0, "  ; 
   
-  lnRateHetProb = scoreRateHets(traln);
-  cout << "ratehet-pr="  << lnRateHetProb << ", " ; 
+  if(not believingInFixedBranchLengths())
+    lnBrProb = scoreBranchLengths(traln); 
+  else 
+    lnBrProb = 0; 
+  tout << "bl-pr="  <<lnBrProb << ", "; 
 
-  lnStatFreqProb = scoreStateFreqs(traln);  
-  cout << "statefreq-pr="  << lnStatFreqProb << ", " ; 
+  if(not believingInFixedRevMat())
+    lnRevMatProb = scoreRevMats(traln); 
+  else 
+    lnRevMatProb = 0; 
+  tout << "revmat-pr="  << lnRevMatProb << ", " ; 
+
   
-  cout << endl; 
+  if(not believingInFixedRateHet())
+    lnRateHetProb = scoreRateHets(traln);
+  else 
+    lnRateHetProb = 0; 
+  tout << "ratehet-pr="  << lnRateHetProb << ", " ; 
+
+
+  if(not believingInFixedStateFreq())
+    lnStatFreqProb = scoreStateFreqs(traln);  
+  else 
+    lnStatFreqProb = 0;     
+  tout << "statefreq-pr="  << lnStatFreqProb << ", " ;   
+
+  tout << endl; 
 }
 
 
@@ -44,6 +60,9 @@ double PriorBelief::scoreEverything(const TreeAln& traln)
 
 double PriorBelief::scoreBranchLengths(const TreeAln &traln)
 {  
+  if(believingInFixedBranchLengths())
+    return 0; 
+
   double result = 0; 
   vector<branch> branches; 
   extractBranches(traln, branches);
@@ -60,6 +79,9 @@ double PriorBelief::scoreBranchLengths(const TreeAln &traln)
 
 double PriorBelief::scoreRevMats(const TreeAln &traln)
 {
+  if(believingInFixedRevMat())
+    return 0; 
+
   double result = 0; 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
@@ -73,6 +95,9 @@ double PriorBelief::scoreRevMats(const TreeAln &traln)
 
 double PriorBelief::scoreRateHets(const TreeAln &traln)
 {
+  if(believingInFixedRateHet())
+    return 0 ; 
+
   double result = 0; 
   for(int i = 0; i <  traln.getNumberOfPartitions(); ++i)
     {
@@ -86,6 +111,9 @@ double PriorBelief::scoreRateHets(const TreeAln &traln)
 
 double PriorBelief::scoreStateFreqs(const TreeAln &traln)
 {
+  if(believingInFixedStateFreq())
+    return 0; 
+
   double result = 0; 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
@@ -117,6 +145,12 @@ void PriorBelief::verify(const TreeAln &traln)
 // this would also solve our problem with various states and so on
 void PriorBelief::addStandardPriors()
 {
+  if(topologyPr.get()  == nullptr) 
+    {
+      setTopologyPrior(shared_ptr<UniformPrior> (new UniformPrior(0,0))); 
+      tout << "No topology prior specified. Falling back to default " << topologyPr.get() << " as topology prior." << endl; 
+    }
+
   if( brPr.get() == nullptr)
     {
       setBranchLengthPrior(shared_ptr<ExponentialPrior>(new ExponentialPrior(10)));
@@ -153,21 +187,25 @@ void PriorBelief::updateBranchLength(double oldValue, double newValue)
 {
   vector<double> oldV = {oldValue}; 
   vector<double> newV = {newValue};   
+  assert(not believingInFixedBranchLengths()); 
   lnBrProb +=  ( brPr->getLogProb(newV) - brPr->getLogProb(oldV) ) ; 
 } 
 
 void PriorBelief::updateRevMat( vector<double> oldValues, vector<double> newValues)
 {
+  assert(not believingInFixedRevMat()); 
   lnRevMatProb += revMatPr->getLogProb(newValues) - revMatPr->getLogProb(oldValues); 
 }
  
 void PriorBelief::updateFreq(vector<double> oldValues, vector<double> newValues)
 {
+  assert(not believingInFixedStateFreq()); 
   lnStatFreqProb += stateFreqPr->getLogProb(newValues) - stateFreqPr->getLogProb(oldValues); 
 }
  
 void PriorBelief::updateRateHet(double oldValue, double newValue)
 {
+  assert(not believingInFixedRateHet()); 
   vector<double> oldV = {oldValue}; 
   vector<double> newV = {newValue} ;
   lnRateHetProb += (rateHetPr->getLogProb(newV) - rateHetPr->getLogProb(oldV)); 

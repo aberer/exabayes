@@ -17,6 +17,7 @@ using namespace std;
 
 #include "TreeAln.hpp"
 #include "Priors.hpp"
+#include "GlobalVariables.hpp"
 
 
 class PriorBelief
@@ -33,7 +34,7 @@ public:
     lnBrProb *= factor; 
   }
 
-  
+
   /** @brief updates the branch lengths prior with a new value (and cancels out the old one) */ 
   void updateBranchLength(double oldValue, double newValue); 
 
@@ -60,6 +61,9 @@ public:
   
   /** @brief sets the state freq prior */ 
   void setStateFreqPrior(shared_ptr<AbstractPrior> ptr)  { assertEmpty(stateFreqPr); stateFreqPr = ptr; }
+
+  /** @brief sets the topology prior */ 
+  void setTopologyPrior(shared_ptr<AbstractPrior> ptr) {assertEmpty(topologyPr) ; topologyPr = ptr; }
   
   
   /** @brief gets the logarithmic probabililty of all parameters   */ 
@@ -77,10 +81,12 @@ public:
   // print method 
   friend ostream& operator<<(ostream &out, const PriorBelief& rhs)
   {
-    return out << "Branch Lengths:\t" << rhs.brPr.get() << endl  
-	       << "Reversible Matrix:\t" << rhs.revMatPr.get() << endl 
-	       << "Rate Heterogeneity:\t" << rhs.rateHetPr.get() << endl 
-	       << "State Frequencies:\t" << rhs.stateFreqPr.get() << endl; 
+    return out
+      << "Topology:\t" << rhs.topologyPr.get() << endl 
+      << "Branch Lengths:\t" << rhs.brPr.get() << endl  
+      << "Reversible Matrix:\t" << rhs.revMatPr.get() << endl 
+      << "Rate Heterogeneity:\t" << rhs.rateHetPr.get() << endl 
+      << "State Frequencies:\t" << rhs.stateFreqPr.get() << endl; 
   }
 
   double scoreBranchLengths(const TreeAln &traln); 
@@ -93,20 +99,42 @@ public:
     lnBrProb = scoreBranchLengths(traln); 
   }
   
-  
+
+  bool categoryIsFixed(category_t cat) const
+  {
+    switch(cat)
+      {
+      case TOPOLOGY: 
+	return believingInFixedTopology(); 
+      case BRANCH_LENGTHS: 
+	return believingInFixedBranchLengths();
+      case SUBSTITUTION_RATES: 
+	return believingInFixedRevMat(); 
+      case RATE_HETEROGENEITY: 
+	return believingInFixedRateHet(); 
+      case FREQUENCIES: 
+	return believingInFixedStateFreq();
+      default: 
+	assert(0); 
+      }
+  }
+
+
   // checks if anything is fixed 
   bool believingInFixedBranchLengths() const { return  typeid(*(brPr.get())) == typeid(FixedPrior) ;  } 
   bool believingInFixedRevMat() const { return typeid(*(revMatPr.get())) == typeid(FixedPrior);  }
   bool believingInFixedRateHet() const {return typeid(*(rateHetPr.get())) == typeid(FixedPrior) ; }
-  bool believingInFixedStateFreq() const { return typeid(*(revMatPr.get())) == typeid(FixedPrior) ;  }
+  bool believingInFixedStateFreq() const { return typeid(*(stateFreqPr.get())) == typeid(FixedPrior) ;  }
+  bool believingInFixedTopology() const {return typeid(*(topologyPr.get())) == typeid(FixedPrior); }
+
   
-  
-private: 
+private:
   double lnBrProb; 		// prior for branch lengths
   double lnRevMatProb; 		// prior for revmat 
   double lnRateHetProb; 	// prior for rate hetero 
   double lnStatFreqProb; 	// prior for state frequencies
 
+  shared_ptr<AbstractPrior> topologyPr; // this one is still treated special somewhat 
   shared_ptr<AbstractPrior> brPr; 
   shared_ptr<AbstractPrior> revMatPr; 
   shared_ptr<AbstractPrior> rateHetPr; 

@@ -58,8 +58,6 @@ typedef enum
     E_TBR = 22,
     PARSIMONY_SPR= 23 
     //PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
-
-
   } proposal_type;
 
 
@@ -98,6 +96,20 @@ public:
 
 
 #ifdef _INCLUDE_DEFINITIONS
+
+
+// i really hate to this ... 
+// category_t categoriesOfProposals = 
+//   {
+//     TOPOLOGY, 
+//     SUBSTITUTION_RATES, 
+//     RATE_HETEROGENEITY, 
+//     RATE_HETEROGENEITY, 
+
+    
+//   } ; 
+
+
 
 GlobalVariables globals; 
 

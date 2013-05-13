@@ -6,6 +6,7 @@ PartitionProposal<FUN,PARAM>::PartitionProposal(double relativeWeight, double _p
   this->relativeProbability = relativeWeight;
   this->name= _name;
   this->category = PARAM::cat; 
+
   // ptype? 
 }
 

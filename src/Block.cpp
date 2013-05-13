@@ -1,7 +1,5 @@
 #include "Block.hpp"
 
-// #include "proposalType.h"
-
 
 static bool convertToBool(NxsString &string)
 {
@@ -34,6 +32,11 @@ shared_ptr<AbstractPrior> ExabayesBlock::parsePrior(NxsToken &token, NxsString &
   if(value.EqualsCaseInsensitive("uniform"))
     {
       token.GetNextToken();
+
+      // for non-continuous variables (e.g., topology)
+      if(token.GetToken().compare(")") == 0) 
+	return shared_ptr<AbstractPrior> (new UniformPrior(0,0)); 
+
       double n1 = atof(token.GetToken().c_str()); 
       token.GetNextToken();
       assert(token.GetToken().compare(",") == 0);
@@ -159,6 +162,8 @@ void ExabayesBlock::Read(NxsToken &token)
 	    prior.setStateFreqPrior(parsePrior(token,value ));
 	  else if(key.EqualsCaseInsensitive("shapepr"))	      
 	    prior.setRateHetPrior(parsePrior(token,value)); 	    
+	  else if(key.EqualsCaseInsensitive("topoPr"))
+	    prior.setTopologyPrior(parsePrior(token,value)); 
 	  else 	      
 	    cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	}

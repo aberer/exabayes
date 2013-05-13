@@ -164,7 +164,10 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   applyPathAsESPR(traln);
 
 #ifdef ESPR_MULTIPLY_BL
-  multiplyAlongBranchESPR(traln, rand, hastings, prior);
+  if(not prior.believingInFixedBranchLengths())
+    {
+      multiplyAlongBranchESPR(traln, rand, hastings, prior);
+    }
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   cout << "after multiply: " << traln  << endl; 
 #endif

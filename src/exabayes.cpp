@@ -157,8 +157,15 @@ int main(int argc, char *argv[])
 
   makeInfoFile(cl);
 
-  cl.printVersion(true);
+  cl.printVersion(true);  
   tout << endl; 
+
+  tout << PROGRAM_NAME << " was called as follows: " << endl; 
+  for(int i = 0; i < argc; ++i)
+    tout << argv[i] << " " ; 
+  tout << endl << endl; 
+
+
 
 #if HAVE_PLL == 0 
   pl.initializeExaml(cl);

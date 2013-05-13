@@ -377,7 +377,6 @@ void SampleMaster::finalizeRuns()
  */ 
 void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior)
 {
-  vector<proposalFunction*> legProp; 
   vector<AbstractProposal*> prop; 
 
   // initialize proposals 
@@ -386,64 +385,71 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
       double weight = proposalWeights[proposal_type(i)]; 
       if( weight != 0)
 	{
+	  AbstractProposal *proposal = NULL; 
+	  
 	  switch(proposal_type(i))
-	    {
-	    case BRANCH_LENGTHS_MULTIPLIER:
-	      prop.push_back(new BranchLengthMultiplier(weight, INIT_BL_MULT) ); 
+	    {	      
+	    case BRANCH_LENGTHS_MULTIPLIER:	      
+	      proposal = new BranchLengthMultiplier(weight, INIT_BL_MULT) ; 
 	      break; 
 	    case NODE_SLIDER:
-	      prop.push_back(new NodeSlider( weight, INIT_NODE_SLIDER_MULT));		  
+	      proposal = new NodeSlider( weight, INIT_NODE_SLIDER_MULT); 
 	      break; 
 	    case UPDATE_MODEL: 
-	      prop.push_back(new PartitionProposal<SlidingProposal, RevMatParameter>(weight, INIT_RATE_SLID_WIN, "revMatSlider"));
+	      proposal = new PartitionProposal<SlidingProposal, RevMatParameter>(weight, INIT_RATE_SLID_WIN, "revMatSlider"); 
 	      break; 
 	    case FREQUENCY_SLIDER:
-	      prop.push_back(new PartitionProposal<SlidingProposal, FrequencyParameter>( weight, INIT_FREQ_SLID_WIN, "freqSlider"));
+	      proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>( weight, INIT_FREQ_SLID_WIN, "freqSlider"); 
 	      break; 		  
 	    case TL_MULT:
-	      prop.push_back(new TreeLengthMultiplier( weight, INIT_TL_MULTI));
+	      proposal = new TreeLengthMultiplier( weight, INIT_TL_MULTI); 
 	      break; 
 	    case E_TBR: 
-	      prop.push_back(new ExtendedTBR( weight, esprStopProp, INIT_ESPR_MULT)); 
+	      proposal = new ExtendedTBR( weight, esprStopProp, INIT_ESPR_MULT); 
 	      break; 
 	    case E_SPR: 
-	      prop.push_back(new ExtendedSPR( weight, esprStopProp, INIT_ESPR_MULT)); 
+	      proposal = new ExtendedSPR( weight, esprStopProp, INIT_ESPR_MULT); 
 	      break; 
 	    case PARSIMONY_SPR:	
-	      prop.push_back(new ParsimonySPR( weight, parsimonyWarp, INIT_ESPR_MULT)); 
+	      proposal = new ParsimonySPR( weight, parsimonyWarp, INIT_ESPR_MULT); 
 	      break; 
 	    case ST_NNI: 
-	      prop.push_back(new StatNNI( weight, INIT_NNI_MULT)); 
+	      proposal = new StatNNI( weight, INIT_NNI_MULT); 
 	      break; 
 	    case GAMMA_MULTI: 
-	      prop.push_back(new PartitionProposal<MultiplierProposal,RateHetParameter>( weight, INIT_GAMMA_MULTI, "rateHetMulti")); 
+	      proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>( weight, INIT_GAMMA_MULTI, "rateHetMulti"); 
 	      break; 
 	    case UPDATE_GAMMA: 
-	      prop.push_back(new PartitionProposal<SlidingProposal,RateHetParameter>( weight, INIT_GAMMA_SLID_WIN, "rateHetSlider")); 
+	      proposal = new PartitionProposal<SlidingProposal,RateHetParameter>( weight, INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
 	      break; 
 	    case UPDATE_GAMMA_EXP: 
-	      prop.push_back(new PartitionProposal<ExponentialProposal,RateHetParameter>( weight, 0, "rateHetExp")); 
+	      proposal = new PartitionProposal<ExponentialProposal,RateHetParameter>( weight, 0, "rateHetExp"); 
 	      break; 
 	    case UPDATE_FREQUENCIES_DIRICHLET: 
-	      prop.push_back(new PartitionProposal<DirichletProposal,FrequencyParameter>( weight, INIT_DIRICHLET_ALPHA, "freqDirich")); 
+	      proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>( weight, INIT_DIRICHLET_ALPHA, "freqDirich"); 
 	      break; 
 	    case UPDATE_MODEL_DIRICHLET: 
-	      prop.push_back(new PartitionProposal<DirichletProposal,RevMatParameter>(weight, INIT_DIRICHLET_ALPHA, "revMatDirich"));
+	      proposal = new PartitionProposal<DirichletProposal,RevMatParameter>(weight, INIT_DIRICHLET_ALPHA, "revMatDirich"); 
 	      break; 
 	    case GUIDED_SPR:
-	      prop.push_back(new RadiusMlSPR( weight, guidedRadius )); 
+	      proposal = new RadiusMlSPR( weight, guidedRadius ); 
 	      break; 
 	    default : 
 	      assert(0); 
 	    }
+
+	  if(not prior.categoryIsFixed(proposal->getCategory()))
+	    prop.push_back(proposal);
+	  else 
+	    tout << "Notice: Relative weight " << weight << " was specified for proposal "   << proposal->getName()  << ". Since the prior for this category was set to fixed, this proposal will be ignored." << endl; 	      
 	}
     }
 
 
   // get total sum 
   double sum = 0; 
-  for(int i = 0; i < NUM_PROPOSALS; ++i)    
-    sum += proposalWeights[i]; 
+  for(auto p : prop)
+    sum += p->getRelativeProbability();
 
   // create categories 
   vector<string> allNames = {"", "Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 

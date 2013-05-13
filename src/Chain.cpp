@@ -21,10 +21,10 @@
 #include "Parameters.hpp"
 
 
-// meh =/ 
-extern bool isNewProposal[NUM_PROPOSALS]; 
+// #define DEBUG_ACCEPTANCE
 
-#include <sstream>
+
+
 
 Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief _prior, const vector<Category> propCats, int _tuneFreq) 
   : traln(_traln)
@@ -44,12 +44,10 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
     traln->initRevMat(j);
 
   evaluateFullNoBackup(*traln);   
-  
-  // tree *tr = traln->getTr();
+
   prior.initPrior(*traln);
 
   addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << *chainRand << endl; 
-  // tout <<  *traln << endl; 
   saveTreeStateToChain(); 
 }
 
@@ -147,7 +145,119 @@ AbstractProposal* Chain::drawProposalFunction()
 }
 
 
-// #define DEBUG_ACCEPTANCE
+
+
+void Chain::initParamDump()
+{  
+  tree *tr = traln->getTr();
+  
+  dump.topology = new Topology(tr->mxtips); 
+  dump.infoPerPart = (perPartitionInfo*)exa_calloc(traln->getNumberOfPartitions(), sizeof(perPartitionInfo));
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+    {
+      perPartitionInfo *p =  dump.infoPerPart + i ; 
+      p->alpha = 0.5; 
+      for(int j = 0; j < 6; ++j)
+	p->substRates[j] = 0.5; 
+      p->substRates[5] = 1; 
+      for(int j = 0; j < 4; ++j)
+	p->frequencies[j] = 0.25;       
+    }
+}
+
+
+void Chain::printParams(FILE *fh)
+{
+  tree *tr = traln->getTr(); 
+
+  double treeLength =  traln->getTreeLength(); 
+  assert(treeLength != 0.); 
+  fprintf(fh, "%d\t%f\t%f\t%.3f", currentGeneration,
+	  prior.getLogProb(), 
+	  tr->likelihood,  
+	  treeLength); 
+
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+    {
+      pInfo *partition = traln->getPartition(i); 
+      fprintf(fh, "\t%f\t%f", traln->accessPartitionLH( i),traln->getAlpha(i)) ; 
+      for(int j = 0; j < 6 ; ++j) /* TODO */
+	fprintf(fh, "\t%.2f", partition->substRates[j]); 
+      for(int j = 0; j < 4 ; ++j) /* TODO */
+	fprintf(fh, "\t%.2f", traln->getFrequency(i,j));
+    }
+
+  fprintf(fh, "\n"); 
+  fflush(fh); 
+}
+
+
+
+
+void Chain::printParamFileStart(FILE *fh)
+{
+  char *tmp = "TODO"; 
+  fprintf(fh, "[ID: %s]\n", tmp);
+  fprintf(fh, "Gen\tLnPr\tLnL\tTL"); 
+
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+    {
+      fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
+      fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
+      fprintf(fh, "\tpi(A).%d\tpi(C).%d\tpi(G).%d\tpi(T).%d", i,i,i,i); 
+    }
+
+  fprintf(fh, "\n"); 
+  fflush(fh); 
+}
+
+
+void Chain::finalizeOutputFiles(FILE *fh)
+{
+  /* topo file  */
+  fprintf(fh, "end;\n"); 
+}
+
+
+void Chain::printSample(FILE *topofile, FILE *paramFile)
+{
+  this->printTopology(topofile);
+  this->printParams(paramFile);
+}
+
+
+  /* TODO what about per model brach lengths? how does mrB do this? */
+void Chain::printTopology(FILE *fh)
+{  
+  assert(couplingId == 0);
+  tree *tr = traln->getTr();
+  memset(traln->getTr()->tree_string, 0, traln->getTr()->treeStringLength * sizeof(char) ); 
+  
+  Tree2stringNexus(traln->getTr()->tree_string, tr,  traln->getTr()->start->back, 0 ); 
+  fprintf(fh,"\ttree gen.%d = [&U] %s\n", currentGeneration, traln->getTr()->tree_string);
+  fflush(fh);
+}
+
+
+void Chain::printNexusTreeFileStart( FILE *fh  )
+{
+  fprintf(fh, "#NEXUS\n[ID: %s]\n[Param: tree]\nbegin trees;\n\ttranslate\n", "TODO" ); 
+
+  for(int i = 0; i < traln->getTr()->mxtips-1; ++i)
+    fprintf(fh, "\t\t%d %s,\n", i+1, traln->getTr()->nameList[i+1]); 
+  fprintf(fh, "\t\t%d %s;\n", traln->getTr()->mxtips, traln->getTr()->nameList[traln->getTr()->mxtips]);
+}
+
+
+void Chain::switchState(Chain &rhs)
+{
+  swap(couplingId, rhs.couplingId); 
+  swap(chainRand, rhs.chainRand); 
+  swap(proposalCategories, rhs.proposalCategories); 
+}
+
+
+
 
 
 void Chain::step()
@@ -249,117 +359,3 @@ void Chain::step()
 
 
 }
-
-
-
-
-
-void Chain::initParamDump()
-{  
-  tree *tr = traln->getTr();
-  
-  dump.topology = new Topology(tr->mxtips); 
-  dump.infoPerPart = (perPartitionInfo*)exa_calloc(traln->getNumberOfPartitions(), sizeof(perPartitionInfo));
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      perPartitionInfo *p =  dump.infoPerPart + i ; 
-      p->alpha = 0.5; 
-      for(int j = 0; j < 6; ++j)
-	p->substRates[j] = 0.5; 
-      p->substRates[5] = 1; 
-      for(int j = 0; j < 4; ++j)
-	p->frequencies[j] = 0.25;       
-    }
-}
-
-
-void Chain::printParams(FILE *fh)
-{
-  tree *tr = traln->getTr(); 
-
-
-  double treeLength =  traln->getTreeLength(); 
-  assert(treeLength != 0.); 
-  fprintf(fh, "%d\t%f\t%.3f", currentGeneration,
-	  tr->likelihood,  
-	  treeLength); 
-
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      pInfo *partition = traln->getPartition(i); 
-      fprintf(fh, "\t%f\t%f", traln->accessPartitionLH( i),traln->getAlpha(i)) ; 
-      for(int j = 0; j < 6 ; ++j) /* TODO */
-	fprintf(fh, "\t%.2f", partition->substRates[j]); 
-      for(int j = 0; j < 4 ; ++j) /* TODO */
-	fprintf(fh, "\t%.2f", traln->getFrequency(i,j));
-    }
-
-  fprintf(fh, "\n"); 
-  fflush(fh); 
-}
-
-
-
-
-void Chain::printParamFileStart(FILE *fh)
-{
-  char *tmp = "TODO"; 
-  fprintf(fh, "[ID: %s]\n", tmp);
-  fprintf(fh, "Gen\tLnL\tTL"); 
-
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
-      fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
-      fprintf(fh, "\tpi(A).%d\tpi(C).%d\tpi(G).%d\tpi(T).%d", i,i,i,i); 
-    }
-
-  fprintf(fh, "\n"); 
-  fflush(fh); 
-}
-
-
-void Chain::finalizeOutputFiles(FILE *fh)
-{
-  /* topo file  */
-  fprintf(fh, "end;\n"); 
-}
-
-
-void Chain::printSample(FILE *topofile, FILE *paramFile)
-{
-  this->printTopology(topofile);
-  this->printParams(paramFile);
-}
-
-
-  /* TODO what about per model brach lengths? how does mrB do this? */
-void Chain::printTopology(FILE *fh)
-{  
-  assert(couplingId == 0);
-  tree *tr = traln->getTr();
-  memset(traln->getTr()->tree_string, 0, traln->getTr()->treeStringLength * sizeof(char) ); 
-  
-  Tree2stringNexus(traln->getTr()->tree_string, tr,  traln->getTr()->start->back, 0 ); 
-  fprintf(fh,"\ttree gen.%d = [&U] %s\n", currentGeneration, traln->getTr()->tree_string);
-  fflush(fh);
-}
-
-
-void Chain::printNexusTreeFileStart( FILE *fh  )
-{
-  fprintf(fh, "#NEXUS\n[ID: %s]\n[Param: tree]\nbegin trees;\n\ttranslate\n", "TODO" ); 
-
-  for(int i = 0; i < traln->getTr()->mxtips-1; ++i)
-    fprintf(fh, "\t\t%d %s,\n", i+1, traln->getTr()->nameList[i+1]); 
-  fprintf(fh, "\t\t%d %s;\n", traln->getTr()->mxtips, traln->getTr()->nameList[traln->getTr()->mxtips]);
-}
-
-
-void Chain::switchState(Chain &rhs)
-{
-  swap(couplingId, rhs.couplingId); 
-  swap(chainRand, rhs.chainRand); 
-  swap(proposalCategories, rhs.proposalCategories); 
-}
-

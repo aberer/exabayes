@@ -87,6 +87,28 @@ private:
   double lambda; 
 }; 
 
+
+
+
+
+// class UniformTopology : public AbstractPrior
+// {
+// public: 
+//   explicit UniformTopology() {}
+  
+//   virtual double getLogProb(vector<double>values) const
+//   {
+//     return 0; 
+//   }
+
+//   virtual void print(ostream &out) const
+//   {
+//     out << "UniformTopology()"   ; 
+//   }
+
+// } ; 
+
+
 class UniformPrior : public AbstractPrior
 {
 public: 

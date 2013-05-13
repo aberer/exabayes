@@ -1,6 +1,9 @@
  #NEXUS
 begin EXABAYES; 
 
+   [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
+
+
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
@@ -30,26 +33,28 @@ begin EXABAYES;
       [ PRIOR configuration ]
       [================================================================]
 
-      [ TODO: topology ]
+      [ topology: constraints not enabled currently  ]
+       [ topoPr fixed()   ] 
+      [ topoPr uniform() ] 
 
       [ branch lengths: TODO per-partition,clock ]
         [ brlenpr uniform(0.0000001,4)  ] 
-       brlenpr fixed()    [ you should have provided a user tree with branch lengths ] 
+      [ brlenpr fixed()  ]    [ you should have provided a user tree with branch lengths ]  
       [  brlenpr exponential(10.0) ] 
 
       [ substitution matrix ]
-      revMatPr dirichlet(1.0,1.0,1.0,1.0,1.0,1.0)
+       [ revMatPr dirichlet(1,2,3,4,5,6)   ] 
       [ revMatPr fixed(1,2,3,4,5,6) ] 
 
       [ state frequencies ] 
-      stateFreqPr  dirichlet(1.0,1.0,1.0,1.0) 
+      [ stateFreqPr  dirichlet(1.0,1.0,1.0,1.0)  ] 
       [ stateFreqPr fixed(empirical) ] [ NOT implemented yet ] 
-      [ stateFreqPr fixed(1,2,3,4)  ] 
+       [ stateFreqPr fixed(1,2,3,4)   ] 
 
       [ rate heterogeneity: alpha parameter ]
       [ shapePr exponential(1) ]
-      shapePr uniform(0.0000001,200)
-      [ shapePr fixed(1) ] 
+      [ shapePr uniform(0.0000001,200) ] 
+       [ shapePr fixed(1)   ] 
 
       [================================================================]
       [ PROPOSAL configuration ]
