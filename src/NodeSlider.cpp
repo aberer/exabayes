@@ -52,26 +52,33 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   double bothZ = traln.getBranchLength( nodeA,0) * traln.getBranchLength( nodeB,0); 
   double drawnMultiplier = rand.drawMultiplier( multiplier); 
 
-  updateHastings(hastings, drawnMultiplier, name ); 
-
   double newZ = branchLengthToReal(tr,pow(bothZ,drawnMultiplier));
-  double realOldZ = branchLengthToReal(tr, bothZ); 
 #ifdef PRINT_MULT
   cout << setprecision(6) << name << realOldZ << " * "  << drawnMultiplier << " = " << newZ << endl;  
 #endif
-  updateHastings(hastings, realOldZ / newZ, name); 
 
-  
-  
   double uniScaler = rand.drawRandDouble01(); 
   double aZ = branchLengthToInternal(tr, uniScaler * newZ),
     bZ = branchLengthToInternal(tr, (1-uniScaler) * newZ); 
 
+  double zABefore = branchLengthToReal(tr, traln.getBranchLength(nodeA,0)),
+    zBBefore =branchLengthToReal(tr,traln.getBranchLength(nodeB, 0)); 
+
   traln.clipNode(nodeA, nodeA->back, aZ); 
   traln.clipNode(nodeB, nodeB->back, bZ); 
 
-  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeA->z[0]) , branchLengthToReal(traln.getTr(), aZ));
-  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeB->z[0]) , branchLengthToReal(traln.getTr(), bZ)); 
+  // update the hastings with the REAL value of the branch lengths
+  // after multiplication. This has to be so complicated, since
+  // clipNode sets the bl in a bounded region.
+  updateHastings(hastings,   branchLengthToReal(tr, aZ * bZ ) / branchLengthToReal(tr, bothZ), "nodeSlider" ); 
+  // TODO@kassian: is this hastings correct? 
+
+#ifdef UNSURE
+  assert(0); 
+#endif
+
+  prior.updateBranchLength( zABefore , branchLengthToReal(traln.getTr(), aZ));
+  prior.updateBranchLength( zBBefore , branchLengthToReal(traln.getTr(), bZ)); 
 }
 
 

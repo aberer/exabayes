@@ -17,11 +17,7 @@ using namespace std;
 #include "Category.hpp"
 #include "PriorBelief.hpp"
 
-
-// void updateHastings(double &hastings, double valToAdd, string whoDoneIt ); 
-
 class TreeAln; 
-
 class Topology; 
 class AbstractProposal; 
 
@@ -123,6 +119,9 @@ private :
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   
   vector<Category> proposalCategories; // proposals that we implemented using the new framework 
+
+
+  // State state; 2
 }; 
 
 

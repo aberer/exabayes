@@ -3,7 +3,8 @@
 
 model=GAMMA
 seed=1234
-numCores=4
+
+numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
 
 if [ "$(which ccache)" != "" ]  ; then 

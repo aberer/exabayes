@@ -81,18 +81,17 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 	  new2 = pow( old2 ,m2),
 	  new3 = pow( old3 ,m3); 
 
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old1), branchLengthToReal(traln.getTr(), new1));
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old2), branchLengthToReal(traln.getTr(), new2)); 
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old3), branchLengthToReal(traln.getTr(), new3)); 
+	traln.setBranchLengthBounded( new1 ,0,p); 
+	traln.setBranchLengthBounded( new2 ,0,r); 
+	traln.setBranchLengthBounded( new3 ,0,q); 
 
 #ifdef PRINT_MULT
 	printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
 #endif
 
-	traln.setBranchLengthBounded( new1 ,0,p); 
-	traln.setBranchLengthBounded( new2 ,0,r); 
-	traln.setBranchLengthBounded( new3 ,0,q); 
-    
+	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old1), branchLengthToReal(traln.getTr(), new1));
+	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old2), branchLengthToReal(traln.getTr(), new2)); 
+	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old3), branchLengthToReal(traln.getTr(), new3)); 
 
       }
 #endif

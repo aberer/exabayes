@@ -149,10 +149,12 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double par
 
   assert(not prior.believingInFixedBranchLengths()); 
 
-  prior.updateBranchLength(oldZ, branchLengthToReal(traln.getTr(),newZ));
-  
-  updateHastings(hastings, multiplier, "pathMod");; 
   traln.clipNode(p,p->back, newZ);   
+
+  double realMultiplier = branchLengthToReal(tr, newZ ) / oldZ ; 
+
+  prior.updateBranchLength(oldZ, branchLengthToReal(traln.getTr(),newZ));  
+  updateHastings(hastings, realMultiplier, "pathMod");; 
 }
 
 
