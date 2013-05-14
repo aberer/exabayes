@@ -19,6 +19,7 @@
 #include "Category.hpp"
 #include "NodeSlider.hpp"
 #include "BranchLengthMultiplier.hpp"
+#include "BranchCollapser.hpp"
 
 // TODO =( 
 #include "GlobalVariables.hpp"
@@ -32,6 +33,86 @@
 #include "PartitionProposal.hpp"
 
 extern double masterTime; 
+
+static int countNumberOfTreesQuick(const char *fn ); 
+static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns); 
+static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns); 
+
+SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl) 
+  :  diagFreq(1000)
+  , asdsfIgnoreFreq(0.1)
+  , asdsfConvergence(0.01)
+  , burninGen(0)
+  , burninProportion(0)
+  , samplingFreq(50)
+  , numRunConv(2)
+  , numGen(50000)
+  , runId(cl.getRunid())
+  , numCoupledChains(1)
+  , printFreq(500)
+  , heatFactor(0.1)
+  , swapInterval(1)
+  , tuneHeat(true)
+  , tuneFreq(50)
+  , esprStopProp(0.5)
+  , parsimonyWarp(0.1)
+  , guidedRadius(5)
+  , pl(pl)
+  , initTime(gettime())
+{
+  FILE *treeFH = NULL; 
+  int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
+
+  PriorBelief prior;
+  vector<Category> proposals; 
+  vector<double> proposalWeights; 
+  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeights);
+  assert(tuneFreq > 0); 
+  assert(esprStopProp > 0) ;
+  setupProposals(proposals, proposalWeights, prior);
+
+  if( numTreesAvailable > 0 )
+    treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
+  
+  vector<TreeAln*> trees; 
+  initTrees(trees, cl );
+
+  Randomness masterRand(cl.getSeed());   
+  vector<int> runSeeds; 
+  vector<int> treeSeeds; 
+  for(int i = 0; i < numRunConv;++i)
+    {
+      randCtr_t r = masterRand.generateSeed();
+      runSeeds.push_back(r.v[0]); 
+      treeSeeds.push_back(r.v[1]); 
+    }
+
+
+  for(int i = 0; i < numRunConv ; ++i)
+    {      
+      if( i < numTreesAvailable)
+	initWithStartingTree(treeFH, trees); 
+      else 
+	initTreeWithOneRandom(treeSeeds[i], trees);
+
+      if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
+	{
+	runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq)); 
+	}
+
+
+    }
+  
+  if(tuneHeat)
+    for(CoupledChains& r : runs)
+      r.enableHeatTuning(tuneFreq); 
+
+  if(numTreesAvailable > 0)
+    fclose(treeFH); 
+
+  tout << endl; 
+}
+
 
 //STAY 
 bool SampleMaster::convergenceDiagnostic()
@@ -250,82 +331,6 @@ void SampleMaster::initTrees(vector<TreeAln*> &trees, const CommandLine &cl )
 }
 
 
-
-SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl) 
-  :  diagFreq(1000)
-  , asdsfIgnoreFreq(0.1)
-  , asdsfConvergence(0.01)
-  , burninGen(0)
-  , burninProportion(0)
-  , samplingFreq(50)
-  , numRunConv(2)
-  , numGen(50000)
-  , runId(cl.getRunid())
-  , numCoupledChains(1)
-  , printFreq(500)
-  , heatFactor(0.1)
-  , swapInterval(1)
-  , tuneHeat(true)
-  , tuneFreq(50)
-  , esprStopProp(0.5)
-  , parsimonyWarp(0.1)
-  , guidedRadius(5)
-  , pl(pl)
-{
-  FILE *treeFH = NULL; 
-  int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
-
-  PriorBelief prior;
-  vector<Category> proposals; 
-  vector<double> proposalWeights; 
-  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeights);
-  assert(tuneFreq > 0); 
-  assert(esprStopProp > 0) ;
-  setupProposals(proposals, proposalWeights, prior);
-
-  if( numTreesAvailable > 0 )
-    treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
-  
-  vector<TreeAln*> trees; 
-  initTrees(trees, cl );
-
-  Randomness masterRand(cl.getSeed());   
-  vector<int> runSeeds; 
-  vector<int> treeSeeds; 
-  for(int i = 0; i < numRunConv;++i)
-    {
-      randCtr_t r = masterRand.generateSeed();
-      runSeeds.push_back(r.v[0]); 
-      treeSeeds.push_back(r.v[1]); 
-    }
-
-
-  for(int i = 0; i < numRunConv ; ++i)
-    {      
-      if( i < numTreesAvailable)
-	initWithStartingTree(treeFH, trees); 
-      else 
-	initTreeWithOneRandom(treeSeeds[i], trees);
-
-      if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
-	{
-	runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq)); 
-	}
-
-
-    }
-  
-  if(tuneHeat)
-    for(CoupledChains& r : runs)
-      r.enableHeatTuning(tuneFreq); 
-
-  if(numTreesAvailable > 0)
-    fclose(treeFH); 
-
-  tout << endl; 
-}
-
-
 void SampleMaster::run()
 {
   bool hasConverged = false;   
@@ -362,7 +367,7 @@ void SampleMaster::finalizeRuns()
 	}
 
       tout << endl << "Converged after " << runs[0].getChain(0)->getGeneration() << " generations" << endl; 
-      tout << endl << "Total execution time: " << setprecision(2) <<  gettime() - masterTime <<  " seconds" << endl; 
+      tout << endl << "Total execution time: " << setprecision(2) <<  gettime() - initTime <<  " seconds" << endl; 
     }  
 }
 
@@ -433,6 +438,9 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
 	      break; 
 	    case GUIDED_SPR:
 	      proposal = new RadiusMlSPR( weight, guidedRadius ); 
+	      break; 
+	    case BRANCH_COLLAPSER:
+	      proposal = new BranchCollapser(weight); 
 	      break; 
 	    default : 
 	      assert(0); 

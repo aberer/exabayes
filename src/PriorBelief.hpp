@@ -78,6 +78,9 @@ public:
   */ 
   void addStandardPriors(); 
 
+
+  shared_ptr<AbstractPrior> getBranchLengthPrior(){ return brPr; }
+
   // print method 
   friend ostream& operator<<(ostream &out, const PriorBelief& rhs)
   {
@@ -116,6 +119,21 @@ public:
 	return believingInFixedStateFreq();
       default: 
 	assert(0); 
+      }
+  }
+
+
+  vector<double> drawFromPriorByCategory(category_t cat, Randomness &rand)
+  {
+    if(cat == BRANCH_LENGTHS)
+      {
+	return brPr->drawFromPrior(rand);
+      }
+    else 
+      {
+	assert(0) ; 
+	vector<double>tmp; 
+	return tmp; 
       }
   }
 

@@ -11,11 +11,14 @@
 #include "axml.h"
 #include "densities.h"
 
+#include "Randomness.hpp"
+
 using namespace std; 
 
 class AbstractPrior
 {
 public: 
+  virtual vector<double> drawFromPrior(Randomness &rand)  const = 0; 
   virtual double getLogProb(vector<double> values ) const = 0; 
   virtual void print(ostream &out) const = 0;
   friend ostream& operator<<(ostream &out,  AbstractPrior *rhs)
@@ -56,6 +59,22 @@ public:
     out << ")";
   }
 
+  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  {
+    double tmp[alphas.size()];
+    for(nat i = 0; i < alphas.size(); ++i)
+      tmp[i] = alphas[i]; 
+
+    double result[alphas.size()]; 
+
+    rand.drawRandDirichlet( result, tmp, alphas.size()); 
+
+    vector<double> resultVect; 
+    for(nat i = 0; i < alphas.size(); ++i)
+      resultVect.push_back(result[i]);
+    return resultVect;     
+  }
+
 private: vector<double> alphas; 
 
 
@@ -78,6 +97,13 @@ public:
     return result ; 
   }
 
+  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  {
+    double drawn = rand.drawRandExp(lambda); 
+    vector<double> result = {drawn}; 
+    return result;  
+  }
+
   virtual void print(ostream& out ) const  
   {        
     out << "Exponential("  << lambda << ")" ;       
@@ -86,27 +112,6 @@ public:
 private: 
   double lambda; 
 }; 
-
-
-
-
-
-// class UniformTopology : public AbstractPrior
-// {
-// public: 
-//   explicit UniformTopology() {}
-  
-//   virtual double getLogProb(vector<double>values) const
-//   {
-//     return 0; 
-//   }
-
-//   virtual void print(ostream &out) const
-//   {
-//     out << "UniformTopology()"   ; 
-//   }
-
-// } ; 
 
 
 class UniformPrior : public AbstractPrior
@@ -128,6 +133,13 @@ public:
 	double result = numeric_limits<double>::lowest(); 
 	return result; 
       }
+  }
+
+  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  {
+    double val = minVal + rand.drawRandDouble01() * (maxVal - minVal); 
+    vector<double> result = {val}; 
+    return result; 
   }
 
   virtual void print(ostream& out ) const  
@@ -154,6 +166,11 @@ public:
     for(nat i = 0; i < fixedValues.size() ; ++i)
       assert(fixedValues[i] == values[i]);
     return 0; 
+  }
+
+  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  {
+    return fixedValues; 
   }
 
   virtual void print(ostream &out) const 

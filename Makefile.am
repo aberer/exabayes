@@ -50,11 +50,11 @@ CXX=mpicxx
 LIBTOUSE=libexaml.a
 AM_CFLAGS += $(EXAMLINCLUDE) # $(MPI_CFLAGS) 
 # AM_LDFLAGS+=$(MPI_CLDFLAGS)
-bin_PROGRAMS= parserExaml
+bin_PROGRAMS+= parserExaml
 else
 LIBTOUSE=libpll.a
 AM_CFLAGS+=$(PLLINCLUDE)
-bin_PROGRAMS= parserPll
+bin_PROGRAMS+= parserPll
 endif 
 
 noinst_LIBRARIES+=$(LIBTOUSE)

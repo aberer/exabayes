@@ -32,6 +32,8 @@ const double TreeAln::zMax = (1.0 - 1.0E-6) ;
 // #endif
 
 
+const double TreeAln::zZero = TreeAln::zMax + ( 1 - TreeAln::zMax) / 2 ; 
+
 const double TreeAln::rateMin = 0.0000001; 
 const double TreeAln::rateMax = 1000000.0; 
 
@@ -639,3 +641,34 @@ double TreeAln::getTreeLength() const
   // cout << branchLengthToReal(getTr(), length) << endl; 
   return branchLengthToReal(getTr(), length); 
 }
+
+
+
+
+
+void TreeAln::collapseBranch(branch b)
+{
+  assert(getNumBranches() == 1 ); 
+  nodeptr p = findNodeFromBranch(  getTr(), b); 
+  p->z[0] = p->back->z[0] = TreeAln::zZero;   
+}
+
+
+
+
+bool TreeAln::isCollapsed(branch b ) 
+{
+  assert(getNumBranches() == 1 ); 
+  nodeptr p = findNodeFromBranch(  getTr(), b); 
+  return p->z[0] >=  TreeAln::zMax ; 
+}
+
+
+void TreeAln::setBranchLengthUnsafe(branch b ) 
+{
+  assert(getNumBranches() == 1 ); 
+  nodeptr p = findNodeFromBranch(  getTr(), b);   
+  p->z[0] = p->back->z[0] = b.length[0];   
+} 
+
+

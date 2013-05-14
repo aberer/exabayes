@@ -17,9 +17,8 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 {
   tree *tr = traln.getTr(); 
   branch b =  rand.drawBranchUniform(traln); 
-
+  
   nodeptr p = findNodeFromBranch(tr, b); 
-
   savedBranch = b; 
 
   double
@@ -31,7 +30,13 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 
   double oldZ = traln.getBranchLength( p,0);
   savedBranch.length[0] = oldZ; 
-  double newZ = pow( oldZ, drawnMultiplier) ; 
+
+  
+  double newZ = oldZ; 
+  if(not traln.isCollapsed(b))    
+    newZ = pow( oldZ, drawnMultiplier);
+  else 
+    drawnMultiplier = 1; 
 
 
 #ifdef PRINT_MULT  

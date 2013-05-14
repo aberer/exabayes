@@ -8,6 +8,10 @@
 // also add #include "MyTemplateProposal.hpp" in SampleMaster.cpp
 
 
+
+// also add a keyword in Block.cpp to let the parser know about your new proposal  
+
+
 // finally, GlobalVariables.h must be updated. That's it!
 
 

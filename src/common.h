@@ -104,6 +104,12 @@ typedef  unsigned int nat ;
 
 
 
+/* #define DEBUG_ACCEPTANCE */
+
+/* #define DEBUG_HASTINGS */
+
+
+
 /* #define UNSURE  */
 /* #define EFFICIENT  */
 

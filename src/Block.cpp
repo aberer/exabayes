@@ -173,7 +173,7 @@ void ExabayesBlock::Read(NxsToken &token)
 
 
 
-
+// NOTICE 
 void ExabayesBlock::setupMap()
 {
   name2proposal["MODEL"] = UPDATE_MODEL; 
@@ -200,5 +200,6 @@ void ExabayesBlock::setupMap()
   name2proposal["FREQUENCYDIRICHLET"] =  UPDATE_FREQUENCIES_DIRICHLET;
   name2proposal["ETBR"] =  E_TBR;
   name2proposal["PARSIMONYSPR"] =  PARSIMONY_SPR;
+  name2proposal["BRANCHCOLLAPSER"] = BRANCH_COLLAPSER; 
 }
 

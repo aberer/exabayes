@@ -7,8 +7,8 @@ begin EXABAYES;
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
-      numIndiChains  2 		[ number of independant chains/runs ]
-      numGen 500000             [ if numIndiChains = 1, stop simulation after that many generations ] 
+      numIndiChains  4 		[ number of independant chains/runs ]
+      numGen 2000000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 50 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
       printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
@@ -39,7 +39,7 @@ begin EXABAYES;
 
       [ branch lengths: TODO per-partition,clock ]
         [ brlenpr uniform(0.0000001,4)  ] 
-      [ brlenpr fixed()  ]    [ you should have provided a user tree with branch lengths ]  
+        [ brlenpr fixed()  ]      [ you should have provided a user tree with branch lengths ]  
       [  brlenpr exponential(10.0) ] 
 
       [ substitution matrix ]
@@ -72,9 +72,10 @@ begin EXABAYES;
       SingleBranchExp 0  [ broken ] 
       SingleBranchBiunif 0 [broken]
       branchMulti 40 [ ok, 40% in mrb ]
-      treeLengthMult 4 [ ok, 4 % in mrb ]
-      nodeSlider  10 [ ok, 10% in mrb ]
+      treeLengthMult 0 [ ok, 4 % in mrb ]
+      nodeSlider  0 [ ok, 10% in mrb ]
       GuidedBL 0 []
+      branchCollapser 10   [ ok ]
 
       [ RATE HETEROGENEITY ]
       rateHetSlider 0 [ ok ]		

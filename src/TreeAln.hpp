@@ -7,6 +7,8 @@
 
 using namespace std; 
 
+#include "Priors.hpp"
+#include "branch.h"
 #include "axml.h"
 
 // #include "LnlRestorer.hpp"
@@ -30,10 +32,18 @@ public:
 
   void initializeFromByteFile(string  byteFileName); 
   
-
   void enableParsimony();
 
 
+  // BEGIN collapse test 
+  void collapseBranch(branch b); 
+  bool isCollapsed(branch b) ; 
+  void setBranchLengthUnsafe(branch b ) ; 
+  // END
+  
+
+
+  
   /** 
       @brief clips two nodes together. Notice that z is a reference to
       the internal branch length. If z is outside the bl-bounds, it
@@ -92,6 +102,8 @@ public:
     rateMax, rateMin, 
     alphaMin, alphaMax,
     freqMin; 
+
+  static const double zZero; 
   
   static const double initBL;  	// init values 
 
