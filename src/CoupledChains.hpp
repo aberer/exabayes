@@ -14,6 +14,7 @@
 #include "PriorBelief.hpp"
 #include "Category.hpp"
 #include "Chain.hpp"
+#include "SuccessCounter.hpp"
 
 
 /**

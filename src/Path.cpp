@@ -4,6 +4,7 @@
 #include "Path.hpp"
 #include "branch.h"
 #include "Chain.hpp"
+#include "AbstractProposal.hpp"
 
 
 Path::Path()

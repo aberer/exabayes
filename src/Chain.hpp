@@ -13,41 +13,13 @@
 
 using namespace std; 
 
-#include "ConfigReader.hpp"
 #include "Category.hpp"
 #include "PriorBelief.hpp"
+#include "State.hpp"
 
 class TreeAln; 
 class Topology; 
 class AbstractProposal; 
-
-typedef struct _pfun proposalFunction; 
-
-
-typedef struct
-{
-  int modelNum; 
-  double alpha ;
- 
-  /* TODO only works with DNA */
-  int numRates; 
-  double substRates[6]; 
-
-  int numFreqs; 
-  double frequencies[4];
-
-} perPartitionInfo; 		/* relevant info from pInfo  */
-
-
-typedef struct 
-{
-  /* topology */
-  Topology *topology; 
-
-  /* substitution parameter */
-  perPartitionInfo *infoPerPart; 
-
-} paramDump; 
 
 
 class Chain
@@ -55,13 +27,12 @@ class Chain
   // LEGACY stuff 
 public: 
 
+  // BAD BAD BAD 
   // TODO shared pointer!
   TreeAln *traln; 
 
-  /* saves the entire space in the parameter space  */
-  paramDump dump;
 
-  // CORRECT part 
+
 public: 
   Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief _prior, const vector<Category> propCats, int _tuneFreq);
   
@@ -88,7 +59,7 @@ public:
 
   const PriorBelief& getPrior() const  {return prior; } 
 
-  Randomness* getChainRand(){return chainRand;}
+  Randomness& getChainRand(){return chainRand;}
 
   void printNexusTreeFileStart( FILE *fh  ); 
   void printParams(FILE *fh); 
@@ -104,7 +75,6 @@ private :
   Chain& operator=(Chain& rhs); 
   Chain(const Chain& rhs)  ; 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
-  Randomness *chainRand; 
   int runid; 
   PriorBelief prior; 
 
@@ -120,8 +90,9 @@ private :
   
   vector<Category> proposalCategories; // proposals that we implemented using the new framework 
 
+  State state; 
 
-  // State state; 2
+  Randomness chainRand; 
 }; 
 
 

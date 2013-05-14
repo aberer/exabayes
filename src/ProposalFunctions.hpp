@@ -6,7 +6,7 @@
 #include "Randomness.hpp"
 #include "densities.h"
 #include "Chain.hpp"
-
+#include "AbstractProposal.hpp"
 
 using namespace std; 
 

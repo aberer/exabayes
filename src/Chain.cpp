@@ -34,11 +34,9 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
   , currentGeneration(0)
   , couplingId(id)
   , proposalCategories(propCats)    
+  , state(*traln)
+  , chainRand(seed.v[0])
 {
-  chainRand = new Randomness(seed.v[0]);
-
-  initParamDump(); 
-
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
 
@@ -46,7 +44,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
 
   prior.initPrior(*traln);
 
-  addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << *chainRand << endl; 
+  addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << chainRand << endl; 
   saveTreeStateToChain(); 
 }
 
@@ -72,40 +70,48 @@ double Chain::getChainHeat()
 
 void Chain::saveTreeStateToChain()
 {
-  dump.topology->saveTopology(*(traln));
+  state.accessTopology().saveTopology(*(traln));
 
   /* save model parameters */
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
-      perPartitionInfo *info = dump.infoPerPart + i; 
-      pInfo *partition = traln->getPartition(i); 
+      Partition& partInfo =  state.accessPartition(i);       
+      pInfo *partitionTr = traln->getPartition(i); 
       
-      info->alpha =  partition->alpha; 
-      
-      memcpy(info->substRates, partition->substRates, 6 * sizeof(double)); 
-      memcpy(info->frequencies, partition->frequencies, 4 * sizeof(double)); 
+      partInfo.setAlpha( partitionTr->alpha) ; 
+
+      vector<double> tmp; 
+      for(int i = 0; i < Partition::numStateToNumInTriangleMatrix(partitionTr->states); ++i)
+	tmp.push_back(partitionTr->substRates[i]); 
+      partInfo.setRevMat(tmp); 
+      tmp.clear(); 
+      for(int i = 0; i < partitionTr->states ; ++i)
+	tmp.push_back(partitionTr->frequencies[i]); 
+      partInfo.setStateFreqs(tmp); 
     }  
 }
 
 
 void Chain::applyChainStateToTree()
 {
-  /* TODO enable multi-branch    */
   assert(traln->getNumBranches() == 1); 
-
-  dump.topology->restoreTopology(*(traln));
+  state.accessTopology().restoreTopology(*traln); 
 
   /* restore model parameters */
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
-      perPartitionInfo *info = dump.infoPerPart + i ; 
-
-      pInfo *partition = traln->getPartition( i);
-      partition->alpha = info->alpha;
-
-      memcpy(partition->substRates, info->substRates , 6 * sizeof(double)); 
-      memcpy(partition->frequencies, info->frequencies, 4 * sizeof(double));
+      Partition& partInfo = state.accessPartition(i);
+      double alpha = partInfo.getAlpha(); 
+      traln->setAlphaBounded(alpha,i) ; 
       
+      vector<double> revMat = state.accessPartition(i).getRevMat();       
+      for(nat j = 0; j < revMat.size(); ++j)
+	traln->setSubstBounded(revMat[j], i,j); 
+      
+      vector<double> stateFreqs = state.accessPartition(i).getStateFreqs(); 
+      for(nat j = 0; j < stateFreqs.size(); ++j)
+	traln->setFrequencyBounded(stateFreqs[j], i,j); 
+
       traln->initRevMat(i);
       traln->discretizeGamma(i);	 
     } 
@@ -129,12 +135,12 @@ void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl
 
 AbstractProposal* Chain::drawProposalFunction()
 {    
-  double r = chainRand->drawRandDouble01();  
+  double r = chainRand.drawRandDouble01();  
   for(auto c : proposalCategories)
     {
       double ref = c.getCatFreq(); 
       if(r <= ref )
-	return c.drawProposal(*chainRand);
+	return c.drawProposal(chainRand);
       else 
 	r -= ref; 
     }
@@ -146,23 +152,23 @@ AbstractProposal* Chain::drawProposalFunction()
 
 
 
-void Chain::initParamDump()
-{  
-  tree *tr = traln->getTr();
+// void Chain::initParamDump()
+// {  
+//   tree *tr = traln->getTr();
   
-  dump.topology = new Topology(tr->mxtips); 
-  dump.infoPerPart = (perPartitionInfo*)exa_calloc(traln->getNumberOfPartitions(), sizeof(perPartitionInfo));
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      perPartitionInfo *p =  dump.infoPerPart + i ; 
-      p->alpha = 0.5; 
-      for(int j = 0; j < 6; ++j)
-	p->substRates[j] = 0.5; 
-      p->substRates[5] = 1; 
-      for(int j = 0; j < 4; ++j)
-	p->frequencies[j] = 0.25;       
-    }
-}
+//   dump.topology = new Topology(tr->mxtips); 
+//   dump.infoPerPart = (perPartitionInfo*)exa_calloc(traln->getNumberOfPartitions(), sizeof(perPartitionInfo));
+//   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+//     {
+//       perPartitionInfo *p =  dump.infoPerPart + i ; 
+//       p->alpha = 0.5; 
+//       for(int j = 0; j < 6; ++j)
+// 	p->substRates[j] = 0.5; 
+//       p->substRates[5] = 1; 
+//       for(int j = 0; j < 4; ++j)
+// 	p->frequencies[j] = 0.25;       
+//     }
+// }
 
 
 void Chain::printParams(FILE *fh)
@@ -265,7 +271,7 @@ void Chain::step()
   traln->getRestorer()->resetRestorer(*traln);
 
   // inform the rng that we produce random numbers for generation x  
-  chainRand->rebase(currentGeneration);
+  chainRand.rebase(currentGeneration);
 
   assert(tr->fracchange > 0); 
 
@@ -279,13 +285,13 @@ void Chain::step()
   hastings = 0; 
   
   double oldPrior = prior.getLogProb();
-  pfun->applyToState(*traln, prior, hastings, *chainRand);
+  pfun->applyToState(*traln, prior, hastings, chainRand);
   pfun->evaluateProposal(*traln, prior);
   
   double priorRatio = prior.getLogProb() - oldPrior;
   double lnlRatio = tr->likelihood - prevLnl; 
 
-  double testr = chainRand->drawRandDouble01();
+  double testr = chainRand.drawRandDouble01();
   double acceptance = exp(( priorRatio   + lnlRatio) * myHeat + hastings) ; 
 
 #ifdef DEBUG_ACCEPTANCE
