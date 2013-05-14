@@ -1,11 +1,10 @@
-
 #include <cassert>
 
 #include "axml.h"
 #include "GlobalVariables.hpp"
 #include "TreeAln.hpp"
 
-void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
+static void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
 {
 #if HAVE_PLL != 0
   hookupDefault(p,q); 

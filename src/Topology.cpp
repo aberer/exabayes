@@ -85,7 +85,7 @@ void Topology::restoreTopology(TreeAln &traln)
       nodeptr p = traln.getUnhookedNode(b->thisNode),
 	q = traln.getUnhookedNode(b->thatNode); 
       
-      hookup(p, q, b->length, numBranches); 
+      traln.clipNode(p, q, b->length[0]); 
     }
 
   debug_checkTreeConsistency(traln.getTr());

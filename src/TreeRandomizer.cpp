@@ -95,12 +95,10 @@ int TreeRandomizer::markBranches(nodeptr *branches, nodeptr p, int *counter, int
 void TreeRandomizer::insertTaxon (nodeptr p, nodeptr q)
 {
   nodeptr  r;
-
   r = q->back;
-  tree *tr = traln->getTr();
   
-  exa_hookupDefault(tr,  p->next,       q);
-  exa_hookupDefault(tr, p->next->next, r); 
+  traln->clipNodeDefault(  p->next,       q);
+  traln->clipNodeDefault( p->next->next, r); 
 }
 
 
@@ -110,7 +108,7 @@ nodeptr TreeRandomizer::buildNewTip (nodeptr p)
   tree *tr = traln->getTr();
 
   q = tr->nodep[(tr->nextnode)++];
-  exa_hookupDefault(tr, p, q);
+  traln->clipNodeDefault( p, q);
   q->next->back = (nodeptr)NULL;
   q->next->next->back = (nodeptr)NULL;
  
@@ -135,7 +133,7 @@ void TreeRandomizer::buildSimpleTreeRandom (int ip, int iq, int ir)
   tr->ntips = 3;
   p = tr->nodep[ip];
   
-  exa_hookupDefault(tr, p, tr->nodep[iq]);
+  traln->clipNodeDefault( p, tr->nodep[iq]);
   
   s = buildNewTip( tr->nodep[ir]);
   

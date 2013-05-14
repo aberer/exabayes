@@ -100,8 +100,8 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
   for(int i = 0; i < traln.getNumBranches(); ++i)
-    zqr[i] = traln.getBranchLength( r,0); 
-  hookup(q,r, q->z, traln.getNumBranches());
+    zqr[i] = traln.getBranchLength( r,0);   
+  traln.clipNode(q,r, q->z[0]);
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 
   modifiedPath.append(start); 
@@ -124,8 +124,8 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
     }
 
   /* undo changes to the tree  */
-  hookup(p->next,q, q->z, traln.getNumBranches()); 
-  hookup(p->next->next,r,zqr, traln.getNumBranches());   
+  traln.clipNode(p->next,q, q->z[0]); 
+  traln.clipNode(p->next->next,r,zqr[0]);   
 
   /* now correct  */
   if(nodeIsInBranch(modifiedPath.at(1).thisNode, modifiedPath.at(2) ))    
@@ -250,7 +250,6 @@ void ExtendedSPR::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, doub
  */
 void ExtendedSPR::applyPathAsESPR(TreeAln &traln )
 {
-  int numBranches = traln.getNumBranches(); 
   tree *tr = traln.getTr();
 
 #ifdef CONTROL_ESPR
@@ -277,7 +276,7 @@ double treeLengthBefore = traln.getTreeLength();
   printf("APPLY: pruning %d from %d,%d\n", toBeInserted->number, prPtr->number, prNPtr->number); 
 #endif
   /* prune sTPtr */
-  hookup(prPtr, prNPtr, prNPtr->z,numBranches); 
+  traln.clipNode(prPtr, prNPtr, prNPtr->z[0]); 
   sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL; 
 
   int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
@@ -285,8 +284,8 @@ double treeLengthBefore = traln.getTreeLength();
   nodeptr iPtr = findNodeFromBranch(tr, constructBranch(s2LastNode, lastNode)),
     iNPtr = findNodeFromBranch(tr, constructBranch(lastNode, s2LastNode)); 
 
-  hookup(toBeInsertedPath, iPtr, iPtr->z, numBranches); 
-  hookup(toBeInserted, iNPtr, toBeInserted->z,numBranches); 
+  traln.clipNode(toBeInsertedPath, iPtr, iPtr->z[0]); 
+  traln.clipNode(toBeInserted, iNPtr, toBeInserted->z[0]); 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   printf("APPLY: inserting %d to %d,%d\n", toBeInserted->number, iPtr->number, iNPtr->number); 
 #endif
@@ -344,7 +343,7 @@ void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior)
   for(int i = 0; i < numBranches; ++i)
     ztmp = traln.getBranchLength( lNPtr,0); 
 
-  hookup(lNPtr, oNPtr, oNPtr->z, numBranches);   
+  traln.clipNode(lNPtr, oNPtr, oNPtr->z[0]);   
   branch b = getThirdBranch(tr, constructBranch(sTNode, lastNode), constructBranch(sTNode, otherNode)); 
   assert(b.thisNode == sTNode); 
 
@@ -360,8 +359,8 @@ void ExtendedSPR::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior)
   nodeptr fPtr = findNodeFromBranch(tr, constructBranch(firstNode,secondNode )),
     sPtr = findNodeFromBranch(tr, constructBranch(secondNode,firstNode )); 
 
-  hookup(sTPtr->next,        fPtr, fPtr->z, numBranches ); 
-  hookup(sTPtr->next->next,  sPtr, &ztmp, numBranches ); 
+  traln.clipNode(sTPtr->next,        fPtr, fPtr->z[0] ); 
+  traln.clipNode(sTPtr->next->next,  sPtr, ztmp ); // 
 
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   printf("RESET: inserting %d into %d (%.2f),%d (%.2f)\n", sTPtr->number, fPtr->number, traln.getBranchLength( fPtr,0), sPtr->number, sPtr->z[0]); 

@@ -67,9 +67,6 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
   printf("descendend to branch %d,%d\n", pruneBranch.thisNode, pruneBranch.thatNode);
 #endif
 
-  int
-    numBranches = traln.getNumBranches(); 
- 
   nodeptr
     q = findNodeFromBranch(tr, pruneBranch), 
     p = findNodeFromBranch(tr, subtree); 
@@ -87,8 +84,8 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
       double zOld = traln.getBranchLength(iP, 0),
 	a,b; 
       divideBranchLengthsWithRatio(tr, zOld, ratio, &a, &b); 
-      hookup(p->next,iP, &a, numBranches);   
-      hookup(p->next->next,iP2, &b, numBranches); 
+      traln.clipNode(p->next,iP, a);   
+      traln.clipNode(p->next->next,iP2, b); 
       traln.setBranchLengthBounded(a, 0, p->next );
       traln.setBranchLengthBounded(b, 0, p->next->next );
 
@@ -100,7 +97,7 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
       printf("test insert: inserting %d into {%d,%d}(%g) => %.3f \n", p->number, iP->number, iP2->number, branchLengthToReal(tr, traln.getBranchLength(  iP,0)), tr->likelihood); 
 #endif 
       /* remove the node again */
-      hookup(iP, iP2, &zOld,numBranches); 
+      traln.clipNode(iP, iP2, zOld); 
       newViewGenericWrapper(traln, iP, FALSE); /* OKAY  */
       newViewGenericWrapper(traln, iP2, FALSE);
       p->next->next->back = p->next->back = (nodeptr)NULL;       
@@ -125,8 +122,8 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
 	a,b; 
       divideBranchLengthsWithRatio(tr, zOrig, ratio, &a, &b); 
 
-      hookup(p->next, iP, &a, numBranches); 
-      hookup(p->next->next, iP2, &b, numBranches); 
+      traln.clipNode(p->next, iP, a); 
+      traln.clipNode(p->next->next, iP2, b); 
       traln.setBranchLengthBounded(a,0,p->next);
       traln.setBranchLengthBounded(b,0,p->next->next);
 
@@ -137,7 +134,7 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
 #if DEBUG_GUIDED_SPR > 1 
       printf("test insert: inserting %d into {%d,%d}(%g) => %.3f\n", p->number, iP->number, iP2->number, branchLengthToReal(tr, traln.getBranchLength(iP->number, 0)),  tr->likelihood);   
 #endif
-      hookup(iP, iP2, &zOrig, numBranches); 
+      traln.clipNode(iP, iP2, zOrig); 
       newViewGenericWrapper(traln, iP, FALSE);
       newViewGenericWrapper(traln, iP2, FALSE);
       p->next->next->back = p->next->back = (nodeptr) NULL; 
@@ -215,7 +212,7 @@ static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, branch su
     ratio = getRatio(tr, traln.getBranchLength(q,0), traln.getBranchLength(r,0));
     double tmp = combineBranchLengths(tr, traln.getBranchLength(q,0), traln.getBranchLength(r,0));
 
-    hookup(q,r, &tmp, numBranches); 
+    traln.clipNode(q,r, tmp); 
     p->next->back = p->next->next->back = (nodeptr)NULL;     
     newViewGenericWrapper(traln, q, FALSE); /* TODO no newview on r necessary?   */
   }
@@ -232,8 +229,8 @@ static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, branch su
 
     double z1, z2; 
     divideBranchLengthsWithRatio(tr, traln.getBranchLength(q,0), ratio, &z1, &z2); 
-    hookup(p->next, q, &z1, numBranches); 
-    hookup(p->next->next, r, &z2, numBranches);   
+    traln.clipNode(p->next, q, z1); 
+    traln.clipNode(p->next->next, r, z2);   
     traln.setBranchLengthBounded(z1,0,p->next);
     traln.setBranchLengthBounded(z2,0,p->next->next); 
   }
@@ -349,7 +346,7 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   {
     nodeptr p = findNodeFromBranch(tr, subtree); 
     double z = combineBranchLengths(tr, traln.getBranchLength( p->next->back,0),   traln.getBranchLength( p->next->next->back,0)); 
-    hookup(p->next->back, p->next->next->back, &z, numBranches); 
+    traln.clipNode(p->next->back, p->next->next->back, z); 
     
     nodeptr iP = findNodeFromBranch(tr, sampledBranch),
       iP2 = findNodeFromBranch(tr, invertBranch(sampledBranch)); 
@@ -361,9 +358,9 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
     printf("inserting into %d into %d,%d(%g) with %g,%g\n", p->number, iP->number, iP2->number, branchLengthToReal(tr, traln.getBranchLength( iP->number,0)), branchLengthToReal(tr, a),branchLengthToReal(tr, b)); 
 #endif
 
-    hookup(p->next, iP, &a,numBranches); 
+    traln.clipNode(p->next, iP, a); 
     traln.setBranchLengthBounded(a,0,p->next);
-    hookup(p->next->next, iP2, &b, numBranches);     
+    traln.clipNode(p->next->next, iP2, b);     
     traln.setBranchLengthBounded(b,0,p->next->next);    
   }
   
@@ -384,8 +381,8 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
     double otherPart = sum - onePart; 
     onePart = branchLengthToInternal(tr, onePart); 
     otherPart = branchLengthToInternal(tr, otherPart); 
-    hookup(p->next, p->next->back, &onePart, numBranches); 
-    hookup(p->next->next, p->next->next->back, &otherPart, numBranches); 
+    traln.clipNode(p->next, p->next->back, onePart); 
+    traln.clipNode(p->next->next, p->next->next->back, otherPart); 
     newViewGenericWrapper(traln, p, FALSE);
   }
 
@@ -445,7 +442,7 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
 
   nodeptr p = findNodeFromBranch(tr, subtreeBranch ); 
   double restoredZ = combineBranchLengths(tr, traln.getBranchLength(p->next->back, 0), traln.getBranchLength(p->next->next->back, 0)) ; 
-  hookup(p->next->back, p->next->next->back, &restoredZ, numBranches); 
+  traln.clipNode(p->next->back, p->next->next->back, restoredZ); 
 #if DEBUG_GUIDED_SPR > 1   
   printf("RESET: hooking up %d with %d (%g)\n", p->next->back->number, p->next->next->back->number, branchLengthToReal(tr, restoredZ)); 
 #endif
@@ -454,8 +451,8 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
     r = findNodeFromBranch(tr, invertBranch(pruneBranch)); 
   double a,b; 
   divideBranchLengthsWithRatio(tr, traln.getBranchLength(q, 0 ), ratio, &a,&b); 
-  hookup(p->next, q, &a,numBranches); 
-  hookup(p->next->next, r, &b,numBranches); 
+  traln.clipNode(p->next, q, a); 
+  traln.clipNode(p->next->next, r, b); 
 
 #if DEBUG_GUIDED_SPR > 1   
   printf("RESET: hooking %d with %d,%d with %g,%g\tratio=%g\n", p->number, q->number, r->number, 

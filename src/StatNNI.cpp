@@ -97,9 +97,9 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
       }
 #endif
 
-    hookup(p,p->back, p->z, numBranches); 
-    hookup(r, qBack, r->z, numBranches);
-    hookup(q, rBack, q->z, numBranches);    
+    traln.clipNode(p,p->back, p->z[0]); 
+    traln.clipNode(r, qBack, r->z[0]);
+    traln.clipNode(q, rBack, q->z[0]);    
 
   }
   
@@ -162,9 +162,9 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), a.length[0]));
       }
 
-    hookup(between, between->back, chosenBranch.length, numBranches); 
-    hookup(r, qBack, b.length, numBranches);  /* r->z */
-    hookup(q, rBack, a.length, numBranches) ; /* q->z */
+    traln.clipNode(between, between->back, chosenBranch.length[0]); 
+    traln.clipNode(r, qBack, b.length[0]);  /* r->z */
+    traln.clipNode(q, rBack, a.length[0]) ; /* q->z */
   }
 
   debug_checkTreeConsistency(traln.getTr());

@@ -138,7 +138,6 @@ ostream& operator<<(ostream &out, const Path &rhs)
 void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior)
 {  
   tree *tr = traln.getTr(); 
-  int numBranches = traln.getNumBranches();
   nodeptr  p = findNodeFromBranch(tr, b); 
   double multiplier = rand.drawMultiplier(parameter); 
 
@@ -153,7 +152,7 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double par
   prior.updateBranchLength(oldZ, branchLengthToReal(traln.getTr(),newZ));
   
   updateHastings(hastings, multiplier, "pathMod");; 
-  hookup(p,p->back, &newZ, numBranches);   
+  traln.clipNode(p,p->back, newZ);   
 }
 
 
@@ -166,7 +165,7 @@ void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior)
       nodeptr p = findNodeFromBranch(traln.getTr(), b); 
       if(not prior.believingInFixedBranchLengths())
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), b.length[0]) );
-      hookup(p, p->back, b.length, numBranches); 
+      traln.clipNode(p, p->back, b.length[0]); 
     }  
 }
 

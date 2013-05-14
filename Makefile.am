@@ -34,13 +34,14 @@ exabayes_SOURCES = ./src/exabayes.cpp ./src/CommandLine.cpp ./src/CommandLine.hp
 
 PLLINCLUDE=-I./src/pll
 libpll_a_SOURCES= ./src/pll/evaluateGenericSpecial-pll.c ./src/pll/axml-pll.c ./src/pll/trash-pll.c ./src/pll/vec_unit.h ./src/pll/makenewzGenericSpecial-pll.c ./src/pll/mem_alloc-pll.c ./src/pll/restartHashTable-pll.c ./src/pll/axml-pll.h ./src/pll/mem_alloc.h ./src/pll/recom-pll.c ./src/pll/searchAlgo-pll.c ./src/pll/phylip_parser/msa_sites.h ./src/pll/phylip_parser/xalloc.h ./src/pll/phylip_parser/phylip.h ./src/pll/phylip_parser/lexer.h ./src/pll/phylip_parser/ssort.h ./src/pll/utils-pll.c ./src/pll/treeIO-pll.c ./src/pll/cycle.h ./src/pll/aligned_buffer.h ./src/pll/globalVariables.h ./src/pll/topologies-pll.c ./src/pll/utils.h ./src/pll/evaluatePartialGenericSpecial-pll.c ./src/pll/fastDNAparsimony-pll.c ./src/pll/randomTree-pll.c ./src/pll/optimizeModel-pll.c ./src/pll/treeIO.h ./src/pll/newviewGenericSpecial-pll.c ./src/pll/bipartitionList-pll.c ./src/pll/models-pll.c ./src/pll/genericParallelization.h ./src/avxConditional.c
-libpll_a_CFLAGS= -w $(AM_CFLAGS) $(PLLINCLUDE)
+libpll_a_CFLAGS= -O2 -fomit-frame-pointer -funroll-loops -w $(AM_CFLAGS) $(PLLINCLUDE)
 
 EXAMLINCLUDE=-I./src/examl/
 libexaml_a_SOURCES= ./src/examl/searchAlgo.c ./src/examl/treeIO.c ./src/examl/restartHashTable.c ./src/examl/optimizeModel.c ./src/examl/newviewGenericSpecial.c ./src/examl/trash.c ./src/examl/topologies.c ./src/examl/axml-examl.h ./src/examl/globalVariables.h ./src/examl/evaluatePartialGenericSpecial.c ./src/examl/bipartitionList.c ./src/examl/models.c ./src/examl/makenewzGenericSpecial.c ./src/examl/evaluateGenericSpecial.c ./src/examl/axml.c ./src/avxConditional.c ./src/examl/fastDNAparsimony.c
-libexaml_a_CFLAGS= -w $(AM_CFLAGS) -fgnu89-inline  $(EXAMLINCLUDE)  # $(MPI_CFLAGS)
+libexaml_a_CFLAGS= -O2 -fomit-frame-pointer -funroll-loops -w $(AM_CFLAGS) -fgnu89-inline  $(EXAMLINCLUDE)  # $(MPI_CFLAGS)
 
 noinst_LIBRARIES=libbayes.a 
+libbayes_a_CXXFLAGS=-O3 $(AM_CXXFLAGS)
 
 # configure examl/pll specific stuff 
 if WITH_EXAML 
@@ -58,6 +59,7 @@ endif
 
 noinst_LIBRARIES+=$(LIBTOUSE)
 exabayes_LDADD+=$(LIBTOUSE)
+exabayes_CFLAGS= -O3 $(AM_CXXFLAGS)
 
 # ./lib/ncl-2.1.18/ncl/.libs/
 exabayes_LDADD+=libbayes.a libncl.a 

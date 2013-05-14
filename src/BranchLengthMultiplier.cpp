@@ -41,7 +41,10 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   /* just doing it for one right here */
   traln.setBranchLengthBounded(newZ, 0, p); 
 
-  prior.updateBranchLength(branchLengthToReal(tr,oldZ), branchLengthToReal(tr,newZ));
+  double realOld = branchLengthToReal(tr,oldZ); 
+  double realNew = branchLengthToReal(tr,newZ); 
+  prior.updateBranchLength(realOld, realNew);
+  drawnMultiplier =  realNew / realOld ; 
 
   /* according to lakner2008  */
   updateHastings(hastings, drawnMultiplier, name);

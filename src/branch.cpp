@@ -6,11 +6,7 @@
 #include "TreeAln.hpp" 
 
 
-
-
 /* #define GUIDE_SPR_BRANCH */
-
-
 
 /**
    @brief divide a branch employing a ratio   
@@ -28,7 +24,6 @@ void divideBranchLengthsWithRatio(tree *tr, double orig,  double ratio, double *
 }
 
 
-
 /**
    @brief combine to branch lengths
  */ 
@@ -41,10 +36,6 @@ double combineBranchLengths(tree *tr, double origA, double origB)
 #endif
   return result; 
 }
-
-
-#define MIN_RATIO
-#define MAX_RATIO
 
 
 /**
@@ -189,45 +180,7 @@ static nodeptr findEmptyNodePtr(nodeptr ptr)
     }
 }
 
-/**
-   @brief Inserts a node into a branch for given node ids. 
 
-   This could replace with the other insert function in this file, if
-   we decide to stick to the node-id scheme.
-
-   Notice that, two next pointers must be NULL, for the
-   insertNode. This is the case by default, if you called
-   pruneNodeFromNodes before.
-
-   @param insertBranch -- the branch we insert (thisNode must be set and thatNode must NOT be set)
-   @param insertionBranch -- the branch into which we insert   
-
- */
-void insertNodeIntoBranch(TreeAln *traln, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2)
-{  
-  tree *tr = traln->getTr(); 
-  int
-    numBranches = traln->getNumBranches(); 
-
-  nodeptr
-    pruned1 = findEmptyNodePtr(tr->nodep[toBeInserted.thisNode]); 
-
-  assert(branchExists(tr, insertionBranch)); 
-  
-  nodeptr insert1 = findNodeFromBranch(tr, insertionBranch),
-    insert2 = findNodeFromBranch(tr, invertBranch(insertionBranch)); 
-
-  
-
-  hookup(pruned1,insert1, blsNode1, numBranches );
-  nodeptr pruned2 = findEmptyNodePtr( tr->nodep[toBeInserted.thisNode] ); 
-  hookup(pruned2, insert2, blsNode2, numBranches);   
-
-
-// #ifdef DEBUG_SHOW_TOPO_CHANGES
-//   printInfo(chain, "inserted  %d into %d (bl=%f)\t%d (bl=%f)\n", pruned1->number, insert1->number,  insert2->number, traln->getBranchLength( pruned1->number,0), traln->getBranchLength( insert2->number,0)); 
-// #endif
-}
 
 
 
@@ -365,41 +318,11 @@ branch findRoot(tree *tr)
 }
 
 
-
-/**
-   @brief prunes a branch from the tree 
-   @param  b -- the branch to be pruned (only thisNode is the pruning point, we only know thatNode for orientation)
-   @param z -- the branch lengths at the pruning point after pruning 
-*/
-void pruneBranch(TreeAln *traln, branch b, double *z)
-{  
-  tree *tr = traln->getTr() ; 
-  int numBl = traln->getNumBranches(); 
-
-  nodeptr toPrune  = findNodeFromBranch(tr, b); 
-  nodeptr pruned1 = toPrune->next->back,
-    pruned2 = toPrune->next->next->back; 
-
-  toPrune->next->back = toPrune->next->next->back = (nodeptr)NULL; 
-
-  hookup(pruned1 , pruned2, z, numBl);
-
-// #ifdef DEBUG_SHOW_TOPO_CHANGES
-//   printInfo(chain, "pruning %d from %d,%d\tnew bl=%f\n", toPrune->number, pruned1->number, pruned2->number, z[0]);   
-// #endif
-  
-}
-
-
-
-
 ostream& operator<<(ostream& rhs, const branch &b )
 {
   rhs << b.thisNode << "/" << b.thatNode << "(" << b.length[0] << ")" ; 
   return rhs; 
 }
-
-
 
 
 static void extractHelper(const TreeAln& traln,  nodeptr p , vector<branch> &result, bool isStart) 
@@ -424,14 +347,3 @@ void extractBranches(const TreeAln &traln, vector<branch> &result)
   extractHelper(traln, tr->nodep[1]->back, result, true);
 }
 
-
-void applyBranches(TreeAln &traln, const vector<branch> &result)
-{
-  tree *tr = traln.getTr(); 
-  int numBranches = traln.getNumBranches();  
-  for(auto b : result)
-    {
-      nodeptr p = findNodeFromBranch(tr, b); 
-      hookup(p, p->back, b.length, numBranches);
-    }
-}

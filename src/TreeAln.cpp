@@ -310,8 +310,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       cout << "hooking up tip " << a->number << " and " << b->number << endl; 
 #endif
       
-      hookup(this->getUnhookedNode(a->number), 
-	     this->getUnhookedNode(b->number),a->z, getNumBranches()); 
+      hookup(this->getUnhookedNode(a->number), this->getUnhookedNode(b->number),a->z, getNumBranches()); 
     }
 
   for(int i = mxtips+1; i < 2 * tr->mxtips-1; ++i)
@@ -448,6 +447,8 @@ void TreeAln::setSubstBounded(double &newValue, int model, int position)
 
 /** 
     @brief save setting method for a branch length
+
+    @param newValue -- INTERNAL branch length
  */  
 void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
 {

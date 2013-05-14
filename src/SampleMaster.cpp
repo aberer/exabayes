@@ -210,7 +210,7 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
 
   modifyProposalWeights(prior, proposalWeights); 
 
-  tout << "Your prior belief consists of: "<< endl << prior << endl; 
+  tout << endl << "Your prior belief consists of: "<< endl << prior << endl; 
 
   validateRunParams();
 }

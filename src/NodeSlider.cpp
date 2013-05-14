@@ -67,8 +67,8 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   double aZ = branchLengthToInternal(tr, uniScaler * newZ),
     bZ = branchLengthToInternal(tr, (1-uniScaler) * newZ); 
 
-  hookup(nodeA, nodeA->back, &aZ, numBranch); 
-  hookup(nodeB, nodeB->back, &bZ, numBranch); 
+  traln.clipNode(nodeA, nodeA->back, aZ); 
+  traln.clipNode(nodeB, nodeB->back, bZ); 
 
   prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeA->z[0]) , branchLengthToReal(traln.getTr(), aZ));
   prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeB->z[0]) , branchLengthToReal(traln.getTr(), bZ)); 
@@ -122,8 +122,8 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
   prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), aZ));
   prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), bZ));
 
-  hookup(p, p->back, &aZ, numBranches); 
-  hookup(q,q->back, &bZ, numBranches);   
+  traln.clipNode(p, p->back, aZ); 
+  traln.clipNode(q,q->back, bZ);   
 
   path.clear(); 
 }

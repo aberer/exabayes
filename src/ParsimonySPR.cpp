@@ -35,13 +35,9 @@ ParsimonySPR::ParsimonySPR( double _relativeWeight, double _parsWarp, double _bl
 
 static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, vector<InsertionScore> &insertPoints)
 {
-  // cout << "inserting" << prunedTree->number << "," << prunedTree->back->number <<   " at pos " << insertPos->number << "," <<  insertPos->back->number << endl; 
-
-  tree *tr = traln.getTr(); 
-
   nodeptr insertBack =  insertPos->back;   
-  exa_hookupDefault(tr, insertPos, prunedTree->next);
-  exa_hookupDefault(tr, insertBack, prunedTree->next->next); 
+  traln.clipNodeDefault(insertPos, prunedTree->next);
+  traln.clipNodeDefault( insertBack, prunedTree->next->next); 
   branch b = constructBranch(insertPos->number, insertBack->number); 
 
   cout << "newview on " << prunedTree->number << endl; 
@@ -55,7 +51,7 @@ static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prune
   insertPoints.push_back(i); 
   // cout << "pushing " << i << endl; 
   
-  exa_hookupDefault(tr, insertPos, insertBack); 
+  traln.clipNodeDefault(insertPos, insertBack); 
   prunedTree->next->back = prunedTree->next->next->back = NULL; 
 
   // recursively descend 
@@ -85,10 +81,10 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
   nodeptr p = findNodeFromBranch(tr, constructBranch(pruned->number,pruned->back->number )),
     pn = findNodeFromBranch(tr, score.getBranch()),
     pnn = findNodeFromBranch(tr, invertBranch(score.getBranch())); 
-  exa_hookupDefault(tr, p->next->back, p->next->next->back); 
+  traln.clipNodeDefault( p->next->back, p->next->next->back); 
   
-  exa_hookupDefault(tr, pn, p->next); 
-  exa_hookupDefault(tr, pnn, p->next->next);  
+  traln.clipNodeDefault( pn, p->next); 
+  traln.clipNodeDefault( pnn, p->next->next);  
 
   cout << "after spr " << *(globals.debugTree) << endl ; 
   
@@ -119,7 +115,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   nodeptr p = findNodeFromBranch(tr, prunedTree),
     pn = p->next->back,
     pnn = p->next->next->back;   
-  exa_hookupDefault(tr, pn, pnn); 
+  traln.clipNodeDefault( pn, pnn); 
   p->next->back = p->next->next->back = NULL; 
   branch pruningBranch = constructBranch(pn->number, pnn->number); 
   // insertionPoints.push_back(InsertionScore(pruningBranch, initScore)); 
@@ -141,8 +137,8 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
     }
 
   // probably not even necessary 
-  exa_hookupDefault( tr, p->next, pn ); 
-  exa_hookupDefault( tr, p->next->next, pnn); 
+  traln.clipNodeDefault( p->next, pn ); 
+  traln.clipNodeDefault( p->next->next, pnn); 
   
   for(auto elem : insertionPoints )
     {

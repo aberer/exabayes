@@ -28,16 +28,12 @@ typedef struct  _branch
 } branch; /// represents a branch 
 
 
-
 void extractBranches(const TreeAln &traln, vector<branch> &result) ; 
 
-
-void insertNodeIntoBranch(TreeAln* traln, branch toBeInserted, branch insertionBranch, double* blsNode1, double* blsNode2); 
 branch invertBranch(branch b); 
 branch constructBranch(int thisNode, int thatNode); 
 boolean branchExists(tree *tr, branch b); 
 nodeptr findNodeFromBranch(tree *tr, branch b ); 
-void pruneBranch(TreeAln* traln, branch b, double *z); 
 branch findRoot(tree *tr); 
 boolean isTipBranch(branch b, int numTip); 
 boolean branchEqualUndirected(branch b1, branch b2); 

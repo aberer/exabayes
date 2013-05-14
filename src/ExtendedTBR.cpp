@@ -44,7 +44,7 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
   double someDefault = 0.123; 
 
   // prune  
-  hookup(pn, pnn, &someDefault, numBranches); 
+  traln.clipNode(pn, pnn, someDefault); 
   p->next->next->back = p->next->back = NULL; 
   path.append(bisectedBranch);
   path.append(constructBranch(pn->number, pnn->number)); 
@@ -63,8 +63,8 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
     }
 
   // reset
-  hookup(p->next, pn, &z1, numBranches); 
-  hookup(p->next->next, pnn, &z2, numBranches); 
+  traln.clipNode(p->next, pn, z1); 
+  traln.clipNode(p->next->next, pnn, z2); 
 
   // a correction is necessary 
   if(nodeIsInBranch(path.at(1).thisNode, path.at(2)))
@@ -123,7 +123,6 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
 {   
   tree *tr  = traln.getTr(); 
-  int numBranches = traln.getNumBranches(); 
 
   branch bisectedBranch = getThirdBranch(tr, path.at(0), path.at(1)); 
   nodeptr disconnectedPtr = findNodeFromBranch(tr, bisectedBranch); 
@@ -136,7 +135,7 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
   int newConnect = path.getNthNodeInPath(2) ; 
   nodeptr pConn1 = findNodeFromBranch( tr, constructBranch(newConnect, getOtherNode(newConnect, path.at(1)))) ;
   double savedZ = pConn1->z[0]; 
-  hookup(pConn1, p1, p1->z, numBranches);
+  traln.clipNode(pConn1, p1, p1->z[0]);
   disconnectedPtr->next->back =  disconnectedPtr->next->next->back  = NULL; 
 #ifdef DEBUG_TBR
   cout << "hooking " << pConn1->number << "," <<p1->number << "(" << p1->z[0] << ")" << endl; 
@@ -150,8 +149,8 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
     iPtr2 = findNodeFromBranch(tr, invertBranch(insertBranch)); 
 
 
-  hookup(disconnectedPtr->next, iPtr, iPtr->z, numBranches); 
-  hookup(disconnectedPtr->next->next, iPtr2, &savedZ, numBranches); 
+  traln.clipNode(disconnectedPtr->next, iPtr, iPtr->z[0]); 
+  traln.clipNode(disconnectedPtr->next->next, iPtr2, savedZ); 
 }
 
 
@@ -316,7 +315,6 @@ void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorBelief& prior)
 static void resetOneSide(TreeAln &traln, Path& path)
 {  
   tree *tr = traln.getTr(); 
-  int numBranches = traln.getNumBranches(); 
   
   int lastNode = path.getNthNodeInPath(path.getNumberOfNodes() -1 ),
     s2lastNode =  path.getNthNodeInPath(path.getNumberOfNodes()-2);   
@@ -339,15 +337,15 @@ static void resetOneSide(TreeAln &traln, Path& path)
   
   // prune the subtree  
   assert(p1->back->number == p2->back->number); 
-  hookup(p1,p2,&defaultVal, numBranches); 
+  traln.clipNode(p1,p2,defaultVal); 
   
   // reinsert the subtree 
   branch insertBranch = constructBranch(path.getNthNodeInPath(0), path.getNthNodeInPath(2)); 
   nodeptr iPtr = findNodeFromBranch(tr, insertBranch),
     iPtr2 = findNodeFromBranch(tr, invertBranch(insertBranch)); 
   
-  hookup(iPtr, subTreePtr->next, &defaultVal,numBranches); 
-  hookup(iPtr2, subTreePtr->next->next, &defaultVal, numBranches); 
+  traln.clipNode(iPtr, subTreePtr->next, defaultVal); 
+  traln.clipNode(iPtr2, subTreePtr->next->next, defaultVal); 
 }
 
 
