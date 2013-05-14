@@ -1,8 +1,6 @@
  #NEXUS
 begin EXABAYES; 
-
    [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
-
 
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
@@ -21,7 +19,7 @@ begin EXABAYES;
       numCoupledChains 4   [ number of chains per independent run (only one is cold)  => must be > 0] 
       heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
       swapInterval 1 	   [ attempt a swap between chains every n generations ]
-      tuneHeat true        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
+      tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
 
       [ BURNIN ] 
       [ comment out one of the two options ]      
@@ -75,7 +73,7 @@ begin EXABAYES;
       treeLengthMult 0 [ ok, 4 % in mrb ]
       nodeSlider  0 [ ok, 10% in mrb ]
       GuidedBL 0 []
-      branchCollapser 10   [ ok ]
+      branchCollapser 0     [ ok ]
 
       [ RATE HETEROGENEITY ]
       rateHetSlider 0 [ ok ]		

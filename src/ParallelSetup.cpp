@@ -42,6 +42,9 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
       MPI_Abort(MPI_COMM_WORLD, 1);
     }  
 
+
+  tout << endl << runsParallel <<  " runs will be run in parallel." << endl; 
+
   // comm is the communicator used by the legacy axml-stuff in order to compute the likelihood.  
   int processesPerBatch = globalSize / runsParallel; 
   int myColor = globalRank / processesPerBatch; 
@@ -54,7 +57,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   MPI_Comm_rank(comm, &processID); 
   MPI_Comm_size(comm, &processes); 
 
-  tout << "process with global id "<< globalRank  << " works on batch "  << myRunBatch << " and has new rank " << processID << endl; 
+  tout << endl << "process with global id "<< globalRank  << " works on batch "  << myRunBatch << " and has new rank " << processID << endl; 
 
 }
 #endif

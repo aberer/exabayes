@@ -84,7 +84,7 @@ void CommandLine::parse(int argc, char *argv[])
   // TODO threads/ processes? 
   // TODO implement working directory 
   
-  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:")) != EOF)
+  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:")) != EOF)
     {
       switch(c)
 	{
@@ -121,7 +121,11 @@ void CommandLine::parse(int argc, char *argv[])
 	  runNumParallel = atoi(optarg);
 	  break; 	  
 	default: 
-	  printf("?? Encountered unknown command line argument 0%o ??\n\nFor an overview of program options, please use -h", c);
+	  {
+	    printf("?? Encountered unknown command line argument 0%o ??\n\nFor an overview of program options, please use -h", c);
+	    // TODO mpi-finalize stuff 
+	    abort();
+	  }
 	}
     }  
   

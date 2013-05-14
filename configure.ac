@@ -2,11 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.2],[exabayes@googlegroups.com]) # correct? 
+AC_INIT([exabayes],[0.3],[exabayes@googlegroups.com]) 
 
 dnl m4_include([./m4/lx_find_mpi.m4])
 
-AM_INIT_AUTOMAKE(  exabayes , 0.2 )
+AM_INIT_AUTOMAKE([exabayes],[0.3])
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([src/config.h])
 
