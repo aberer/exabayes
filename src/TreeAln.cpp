@@ -1,4 +1,5 @@
 
+#include <sstream>
 #include <cassert>
 
 #include "config.h"
@@ -43,44 +44,12 @@ const double TreeAln::freqMin = 0.001;
 const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
 
 
-// #define DEBUG_LINK_INFO 	// TODO erase 
-
-
-
 TreeAln::TreeAln()
   : parsimonyEnabled(true)
 {
   tree *tre = (tree*)exa_calloc(1,sizeof(tree));
   this->tr = tre; 
-  tr->rateHetModel = GAMMA; 	// !!!
-}
-
-
-void TreeAln::initializeFromByteFile(string _byteFileName)
-{
-#if HAVE_PLL != 0
-  partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
-  partitions = pl;
-  this->initializeTreePLL(_byteFileName);
-#else 
-  extern char byteFileName[1024]; 
-  strcpy(byteFileName, _byteFileName.c_str() ) ;  
-
-  analdef adef ; 
-
-  adef.max_rearrange          = 21;
-  adef.stepwidth              = 5;
-  adef.initial                = 10;
-  adef.bestTrav               = 10;
-  adef.initialSet             = FALSE; 
-  adef.mode                   = BIG_RAPID_MODE; 
-  adef.likelihoodEpsilon      = 0.1; 
-  adef.permuteTreeoptimize    = FALSE; 
-  adef.perGeneBranchLengths   = FALSE;   
-  adef.useCheckpoint          = FALSE;
-  
-  initializeTree(tr, &adef);   
-#endif  
+  initDefault();
 }
 
 
@@ -148,6 +117,33 @@ TreeAln::~TreeAln()
 }
 
 
+void TreeAln::initializeFromByteFile(string _byteFileName)
+{
+#if HAVE_PLL != 0
+  partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
+  partitions = pl;
+  this->initializeTreePLL(_byteFileName);
+#else 
+  extern char byteFileName[1024]; 
+  strcpy(byteFileName, _byteFileName.c_str() ) ;  
+
+  analdef adef ; 
+
+  adef.max_rearrange          = 21;
+  adef.stepwidth              = 5;
+  adef.initial                = 10;
+  adef.bestTrav               = 10;
+  adef.initialSet             = FALSE; 
+  adef.mode                   = BIG_RAPID_MODE; 
+  adef.likelihoodEpsilon      = 0.1; 
+  adef.permuteTreeoptimize    = FALSE; 
+  adef.perGeneBranchLengths   = FALSE;   
+  adef.useCheckpoint          = FALSE;
+  
+  initializeTree(tr, &adef);   
+#endif  
+}
+
 
 void TreeAln::enableParsimony()
 {
@@ -182,6 +178,27 @@ void TreeAln::initDefault()
   tr->constrained = FALSE;
   tr->gapyness               = 0.0; 
   tr->useMedian = FALSE;
+}
+
+
+
+
+void TreeAln::clipNodeDefault(nodeptr p, nodeptr q )
+{
+  double tmp = TreeAln::initBL; 
+  clipNode(p,q, tmp);
+}
+
+
+void TreeAln::clipNode(nodeptr p, nodeptr q, double &z)
+{
+  p->back = q; 
+  q->back = p; 
+  assert(getNumBranches() == 1);   
+
+  setBranchLengthBounded(z,0,p);
+  setBranchLengthBounded(z,0,q);
+
 }
 
 
@@ -400,10 +417,8 @@ void TreeAln::initRevMat(int model)
 
 /** 
     @brief save setting method for a frequency parameter 
-
-    @return newValue after check
  */  
-double TreeAln::setFrequencySave(double newValue, int model, int position )
+void TreeAln::setFrequencyBounded(double &newValue, int model, int position )
 {
   if(newValue < freqMin )
     newValue = freqMin; 
@@ -411,14 +426,13 @@ double TreeAln::setFrequencySave(double newValue, int model, int position )
   pInfo *partition = getPartition(model); 
   // TODO assert? 
   partition->frequencies[position] = newValue; 
-  return newValue; 
 }
 
 /** 
     @brief save setting method for a substitution parameter 
     @return newValue after check
  */  
-double TreeAln::setSubstSave(double newValue, int model, int position)
+void TreeAln::setSubstBounded(double &newValue, int model, int position)
 {
   if(newValue < rateMin)
     newValue = rateMin; 
@@ -428,8 +442,6 @@ double TreeAln::setSubstSave(double newValue, int model, int position)
   pInfo *partition = getPartition(model);
   assert(position < partition->states * partition->states - partition->states); 
   partition->substRates[position] = newValue; 
-  
-  return newValue; 
 }
 
 
@@ -437,7 +449,7 @@ double TreeAln::setSubstSave(double newValue, int model, int position)
 /** 
     @brief save setting method for a branch length
  */  
-double TreeAln::setBranchLengthSave(double newValue, int model, nodeptr p)
+void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
 {
   if(newValue < zMin)
     newValue = zMin; 
@@ -445,8 +457,6 @@ double TreeAln::setBranchLengthSave(double newValue, int model, nodeptr p)
     newValue = zMax; 
   
   p->z[model] = p->back->z[model] = newValue; 
-
-  return newValue; 
 }
 
 
@@ -455,7 +465,7 @@ double TreeAln::setBranchLengthSave(double newValue, int model, nodeptr p)
     @return newValue after check 
     
  */  
-double TreeAln::setAlphaSave(double newValue, int model)
+void TreeAln::setAlphaBounded(double &newValue, int model)
 {
   if(newValue < alphaMin)
     newValue = alphaMin; 
@@ -464,8 +474,6 @@ double TreeAln::setAlphaSave(double newValue, int model)
   
   pInfo *partition = getPartition(model);
   partition->alpha =  newValue; 
-  
-  return newValue; 
 }
 
 
@@ -600,10 +608,6 @@ void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFr
 
 
 #endif
-
-
-
-#include <sstream>
 
 ostream& operator<< (ostream& out,  TreeAln&  traln)
 {

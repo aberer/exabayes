@@ -61,14 +61,8 @@ typedef enum
   } proposal_type;
 
 
-
-
-
-
-
-
 #define tout (*(globals.teeOut))
-
+#define toutPure (*(globals.teeOut))
 
 class TreeAln; 
 class BipartitionHash; 

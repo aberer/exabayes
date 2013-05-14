@@ -7,6 +7,10 @@ using namespace std;
 
 
 ParallelSetup::ParallelSetup(int argc, char **argv)
+  : myRunBatch(0)
+  , runsParallel(1)
+  , globalRank(0)
+  , globalSize(1)
 {
 #if HAVE_PLL == 0 
   MPI_Init(&argc, &argv);
@@ -27,7 +31,6 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   
   tout << endl << endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << endl; 
   MPI_Barrier(MPI_COMM_WORLD);
-
   
   if(globalSize <  runsParallel)
     {
@@ -44,12 +47,15 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   int myColor = globalRank / processesPerBatch; 
   int newRank = globalRank  % processesPerBatch; 
   
-  MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm); 
+  myRunBatch = myColor; 
 
+  MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm); 
+  
   MPI_Comm_rank(comm, &processID); 
   MPI_Comm_size(comm, &processes); 
 
-  printf("\n\n process %d working on batch %d\n", processID, myColor); 
+  tout << "process with global id "<< globalRank  << " works on batch "  << myRunBatch << " and has new rank " << processID << endl; 
+
 }
 #endif
 

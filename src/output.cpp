@@ -4,9 +4,18 @@
 #include "axml.h"
 #include "GlobalVariables.hpp"
 #include "output.h"		// 
-#include "adapters.h"
+// #include "adapters.h"
 #include "TreeAln.hpp"
 #include "branch.h"
+
+bool isOutputProcess()
+{
+#if HAVE_PLL != 0
+  return true; 
+#else 
+  return processID == 0; 
+#endif   
+}
 
 
 /**

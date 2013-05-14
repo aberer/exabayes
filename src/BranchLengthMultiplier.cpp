@@ -38,14 +38,13 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   cout  << setprecision(6) << name << branchLengthToReal(tr,oldZ) <<   " * " << drawnMultiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
 #endif
 
+  /* just doing it for one right here */
+  traln.setBranchLengthBounded(newZ, 0, p); 
 
   prior.updateBranchLength(branchLengthToReal(tr,oldZ), branchLengthToReal(tr,newZ));
 
   /* according to lakner2008  */
   updateHastings(hastings, drawnMultiplier, name);
- 
-  /* just doing it for one right here */
-  traln.setBranchLengthSave(newZ, 0, p); 
 } 
 
 
@@ -62,8 +61,8 @@ void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)
   nodeptr p = findNodeFromBranch(traln.getTr(), savedBranch); 
   double newRealZ = branchLengthToReal(traln.getTr(), p->z[0]),
     oldRealZ = branchLengthToReal(traln.getTr(), savedBranch.length[0]); 
+  traln.setBranchLengthBounded(savedBranch.length[0], 0,p); 
   prior.updateBranchLength(newRealZ, oldRealZ); 
-  traln.setBranchLengthSave(savedBranch.length[0], 0,p); 
 }
 
 

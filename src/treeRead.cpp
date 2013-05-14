@@ -3,8 +3,16 @@
 
 #include "axml.h"
 #include "GlobalVariables.hpp"
-#include "adapters.h"
 #include "TreeAln.hpp"
+
+void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
+{
+#if HAVE_PLL != 0
+  hookupDefault(p,q); 
+#else
+  hookupDefault(p,q,tr->numBranches); 
+#endif
+}
 
 static void  treeEchoContext (FILE *fp1, FILE *fp2, int n)
 { /* treeEchoContext */
@@ -508,7 +516,10 @@ void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
   for( i = 0; i < traln->getNumBranches(); i++)
     {
       double val = traln->getBranchLength(p, i); 
-      traln->setBranchLengthSave(exp( - val  / tr->fracchange), i,p); 
+      {
+	double tmp = exp( - val  / tr->fracchange); 
+	traln->setBranchLengthBounded(tmp , i,p); 
+      }
     }
   *count += 1;
   

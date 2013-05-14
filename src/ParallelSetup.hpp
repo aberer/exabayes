@@ -14,9 +14,11 @@ public:
   void initializeExaml(const CommandLine &cl); 
 #endif
 
+
+  int getMyRunBatch() const {return myRunBatch ; } 
+  int getRunsParallel() const {return runsParallel ; }
+
 private: 
-  
-public: 
   int myRunBatch; 
   int runsParallel;
   int globalRank; 

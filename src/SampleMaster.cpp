@@ -5,7 +5,7 @@
 #include "Block.hpp"
 #include "output.h"
 #include "eval.h"
-#include "adapters.h"
+// #include "adapters.h"
 #include "SampleMaster.hpp"
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
@@ -82,7 +82,7 @@ bool SampleMaster::convergenceDiagnostic()
 #if HAVE_PLL == 0      
 	  if(processID == 0)
 #endif 
-	    tout  << "ASDSF or trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
+	    tout  << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
 
 	  return asdsfVal < asdsfConvergence; 
 
@@ -106,7 +106,7 @@ static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z
   int i;
   
   for( i = 0; i < traln->getNumBranches(); i++)
-      traln->setBranchLengthSave(z, i, p); 
+      traln->setBranchLengthBounded(z, i, p); 
   
   *count += 1;
   
@@ -223,7 +223,35 @@ void SampleMaster::validateRunParams()
 }
 
 
-SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl) 
+void SampleMaster::initTrees(vector<TreeAln*> &trees, const CommandLine &cl )
+{  
+  tout << endl << "Will run " << numRunConv << " runs in total with "<<  numCoupledChains << " coupled chains" << endl << endl; 
+
+#ifdef DEBUG_LNL_VERIFY
+  globals.debugTree = new TreeAln();   
+  globals.debugTree->initializeFromByteFile(cl.getAlnFileName()); 
+  globals.debugTree->enableParsimony();
+#endif
+
+  for(int i = 0; i < numCoupledChains; ++i)
+    {
+      TreeAln *traln = new TreeAln();
+      traln->initializeFromByteFile(cl.getAlnFileName()); 
+#if HAVE_PLL != 0 
+      traln->enableParsimony();
+#endif
+      trees.push_back(traln); 
+    }
+  
+  // only use one restorer for all chains 
+  auto restorer = shared_ptr<LnlRestorer> (new LnlRestorer(*(trees[0])));
+  for(auto tree : trees)
+    tree->setRestorer(restorer);
+}
+
+
+
+SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl) 
   :  diagFreq(1000)
   , asdsfIgnoreFreq(0.1)
   , asdsfConvergence(0.01)
@@ -242,52 +270,24 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
   , esprStopProp(0.5)
   , parsimonyWarp(0.1)
   , guidedRadius(5)
+  , pl(pl)
 {
   FILE *treeFH = NULL; 
-  int numTrees = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
+  int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
   PriorBelief prior;
   vector<Category> proposals; 
-
   vector<double> proposalWeights; 
-
   initWithConfigFile(cl.getConfigFileName(), prior, proposalWeights);
-
   assert(tuneFreq > 0); 
-
   assert(esprStopProp > 0) ;
-
   setupProposals(proposals, proposalWeights, prior);
 
-  
-  if( numTrees > 0 )
+  if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
-
-  tout << endl << "Will run " << numRunConv << " runs in total with "<<  numCoupledChains << " coupled chains" << endl << endl; 
-
-#ifdef DEBUG_LNL_VERIFY
-  globals.debugTree = new TreeAln();   
-  globals.debugTree->initializeFromByteFile(cl.getAlnFileName()); 
-  globals.debugTree->enableParsimony();
-#endif
-
-  // sets up tree structures 
-  vector<TreeAln*>  trees; 
-
-  for(int i = 0; i < numCoupledChains; ++i)
-    {
-      TreeAln *traln = new TreeAln();
-      traln->initializeFromByteFile(cl.getAlnFileName()); 
-#if HAVE_PLL != 0 
-      traln->enableParsimony();
-#endif
-      trees.push_back(traln); 
-    }
   
-  // only use one restorer for all chains 
-  auto restorer = shared_ptr<LnlRestorer> (new LnlRestorer(*(trees[0])));
-  for(auto tree : trees)
-    tree->setRestorer(restorer);
+  vector<TreeAln*> trees; 
+  initTrees(trees, cl );
 
   Randomness masterRand(cl.getSeed());   
   vector<int> runSeeds; 
@@ -302,26 +302,24 @@ SampleMaster::SampleMaster(const CommandLine &cl , ParallelSetup &pl)
 
   for(int i = 0; i < numRunConv ; ++i)
     {      
-      if( i < numTrees)
+      if( i < numTreesAvailable)
 	initWithStartingTree(treeFH, trees); 
       else 
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
-#if HAVE_PLL == 0
-      // TODO implement batch stuff 
-      
-      // TODO implement 
-      // assert(0); 
-#endif
+      if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
+	{
+	runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq)); 
+	}
 
-      runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq)); 
+
     }
   
   if(tuneHeat)
     for(CoupledChains& r : runs)
       r.enableHeatTuning(tuneFreq); 
 
-  if(numTrees > 0)
+  if(numTreesAvailable > 0)
     fclose(treeFH); 
 
   tout << endl; 

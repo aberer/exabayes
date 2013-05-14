@@ -2,7 +2,7 @@
 
 #include "CoupledChains.hpp"
 #include "Chain.hpp"
-#include "adapters.h" 
+// #include "adapters.h" 
 #include "SuccessCounter.hpp"
 #include "GlobalVariables.hpp"
 #include "tune.h"

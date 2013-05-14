@@ -54,8 +54,6 @@ protected:
   SuccessCounter sctr; 
   category_t category; 
   double relativeProbability ; 	// probability relative to category
-  // proposal_type ptype;  		// TODO will not be needed later  
-
   // various parameters and stuff 
 }; 
 

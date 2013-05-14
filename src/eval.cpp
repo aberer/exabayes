@@ -1,11 +1,30 @@
 #include <cassert>
 #include "axml.h"
 #include "GlobalVariables.hpp"
-#include "adapters.h"		
+// #include "adapters.h"		
 
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 
 
+
+static void exa_newViewGeneric(TreeAln& traln, nodeptr p, boolean masked)
+{
+#if HAVE_PLL != 0
+  newviewGeneric(traln.getTr(), traln.getPartitionsPtr(), p, masked); 
+#else 
+  newviewGeneric(traln.getTr(), p, masked); 
+#endif 
+}
+
+
+static void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
+{
+#if HAVE_PLL != 0
+  evaluateGeneric(traln.getTr(), traln.getPartitionsPtr(), start, fullTraversal); 
+#else 
+  evaluateGeneric(traln.getTr(), start, fullTraversal); 
+#endif  
+}
 
 // grml 
 #if HAVE_PLL == 0

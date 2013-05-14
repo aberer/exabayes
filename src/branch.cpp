@@ -1,10 +1,11 @@
+#include <cassert>
+
 #include "axml.h"
 #include "branch.h" 
-#include "adapters.h"
 #include "output.h"  
 #include "TreeAln.hpp" 
 
-#include <cassert>
+
 
 
 /* #define GUIDE_SPR_BRANCH */

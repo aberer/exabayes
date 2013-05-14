@@ -16,6 +16,11 @@
 #define __AVX
 #endif
 
+using namespace std; 
+
+#include <sstream>
+
+
 #include "axml.h" 
 
 #define _INCLUDE_DEFINITIONS
@@ -24,7 +29,7 @@
 
 #include "tune.h"
 #include "output.h"
-#include "adapters.h"
+
 #include "CommandLine.hpp"
 #include "SampleMaster.hpp"
 #include "ParallelSetup.hpp"
@@ -32,8 +37,6 @@
 #include "teestream.hpp"
 
 // #define TEST  
-// #include "branch.h"
-// #include "TreeRandomizer.hpp"
 
 /**
    @brief the main ExaBayes function.
@@ -120,11 +123,6 @@ extern MPI_Comm comm;
 #endif
 
 
-
-
-using namespace std; 
-
-#include <sstream>
 void makeInfoFile(const CommandLine &cl)
 {
   stringstream ss; 
@@ -138,7 +136,8 @@ void makeInfoFile(const CommandLine &cl)
 
   globals.logFile = ss.str();   
   globals.logStream = new ofstream (globals.logFile) ; 
-  globals.teeOut = new teestream(cout, *globals.logStream);
+  // if(isOutputProcess())
+    globals.teeOut = new teestream(cout, *globals.logStream);
 }
 
 

@@ -25,7 +25,7 @@ using namespace std;
 class SampleMaster
 {
 public: 
-  SampleMaster(const CommandLine &cl , ParallelSetup &pl);
+  SampleMaster(const CommandLine &cl , const ParallelSetup &pl) ;   
   ~SampleMaster(){};
 
   void initRunParameters(string configFileName); 
@@ -80,6 +80,9 @@ private:
   double parsimonyWarp;   
   int guidedRadius; 
 
+  ParallelSetup pl; 
+
+  void initTrees(vector<TreeAln*> &trees, const CommandLine &cl ); 
   void modifyProposalWeights(const PriorBelief &prior, vector<double> &proposalWeights);     
   bool convergenceDiagnostic(); 
 };  

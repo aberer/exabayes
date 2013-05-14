@@ -12,7 +12,7 @@
 
 #include "BipartitionHash.hpp"
 #include "TreeAln.hpp"
-#include "adapters.h"
+#include "output.h"
 
 
 /** 

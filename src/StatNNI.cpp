@@ -89,9 +89,9 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 	printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
 #endif
 
-	traln.setBranchLengthSave( new1 ,0,p); 
-	traln.setBranchLengthSave( new2 ,0,r); 
-	traln.setBranchLengthSave( new3 ,0,q); 
+	traln.setBranchLengthBounded( new1 ,0,p); 
+	traln.setBranchLengthBounded( new2 ,0,r); 
+	traln.setBranchLengthBounded( new3 ,0,q); 
     
 
       }

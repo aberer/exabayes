@@ -77,6 +77,12 @@ void MyTemplateProposal::resetState(TreeAln &traln, PriorBelief &prior)
   double oldBL = 0; 
   
   prior.updateBranchLength(newBL, oldBL); // values are switched this time  
+
+  
+  // NOTICE: always call this update prior methods AFTER you have
+  // called the respective setBounded-method. setBounded will modify
+  // the original value, if it is not within the bound and thus the
+  // prior remains correctly set.
 }
 
 

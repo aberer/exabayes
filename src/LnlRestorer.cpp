@@ -2,7 +2,8 @@
 #include <cassert>
 
 #include "LnlRestorer.hpp" 
-#include "adapters.h"
+
+
 #include "branch.h"
 #include "TreeAln.hpp" 
 #include "GlobalVariables.hpp"

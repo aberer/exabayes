@@ -33,16 +33,28 @@ public:
 
   void enableParsimony();
 
+
+  /** 
+      @brief clips two nodes together. Notice that z is a reference to
+      the internal branch length. If z is outside the bl-bounds, it
+      will yield a corrected z this way.
+   */ 
+  void clipNode(nodeptr p, nodeptr q, double &z); 
   /**
-     @brief gets the tree length (internal representation)
+     @brief clips two nodes with a default branch length
+   */ 
+  void clipNodeDefault(nodeptr p, nodeptr q); 
+
+  /**
+     @brief gets the tree length (real value)
   */   
   double getTreeLength() const ; 
 
-  // save setters 
-  double setFrequencySave(double newValue, int model, int position ); 
-  double setSubstSave(double newValue, int model, int position); 
-  double setBranchLengthSave(double newValue, int model, nodeptr p); 
-  double setAlphaSave(double newValue, int model); 
+  // these are not your average setters! They modify the original value
+  void setFrequencyBounded(double &newValue, int model, int position ); 
+  void setSubstBounded(double &newValue, int model, int position); 
+  void setBranchLengthBounded(double &newValue, int model, nodeptr p); 
+  void setAlphaBounded(double &newValue, int model); 
   
   void setTr(tree *newTr){ tr = newTr; }
 #if HAVE_PLL != 0 

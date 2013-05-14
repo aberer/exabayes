@@ -1,7 +1,7 @@
 #include "ParsimonySPR.hpp"
 #include "Topology.hpp"
 #include "eval.h"
-#include "adapters.h"
+#include "treeRead.h"
 
 #define DEBUG_PARS_SPR
 

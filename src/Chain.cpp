@@ -8,7 +8,6 @@
 #include "output.h"
 #include "GlobalVariables.hpp"
 #include "BipartitionHash.hpp"
-#include "adapters.h"
 #include "tune.h"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
@@ -196,8 +195,7 @@ void Chain::printParams(FILE *fh)
 
 void Chain::printParamFileStart(FILE *fh)
 {
-  char *tmp = "TODO"; 
-  fprintf(fh, "[ID: %s]\n", tmp);
+  fprintf(fh, "[ID: %s]\n", "TODO");
   fprintf(fh, "Gen\tLnPr\tLnL\tTL"); 
 
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)

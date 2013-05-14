@@ -1,7 +1,6 @@
 #include "TreeRandomizer.hpp"
 #include "TreeAln.hpp"
-#include "adapters.h"
-
+#include "treeRead.h"
 
 TreeRandomizer::TreeRandomizer(int seed, TreeAln *_traln)
   : rand(seed)

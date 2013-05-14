@@ -66,12 +66,12 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   double uniScaler = rand.drawRandDouble01(); 
   double aZ = branchLengthToInternal(tr, uniScaler * newZ),
     bZ = branchLengthToInternal(tr, (1-uniScaler) * newZ); 
-  
-  
-  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeA->z[0]) , branchLengthToReal(traln.getTr(), aZ));
-  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeB->z[0]) , branchLengthToReal(traln.getTr(), bZ));
+
   hookup(nodeA, nodeA->back, &aZ, numBranch); 
-  hookup(nodeB, nodeB->back, &bZ, numBranch);  
+  hookup(nodeB, nodeB->back, &bZ, numBranch); 
+
+  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeA->z[0]) , branchLengthToReal(traln.getTr(), aZ));
+  prior.updateBranchLength( branchLengthToReal(traln.getTr(), nodeB->z[0]) , branchLengthToReal(traln.getTr(), bZ)); 
 }
 
 

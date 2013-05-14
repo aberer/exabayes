@@ -89,8 +89,8 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
       divideBranchLengthsWithRatio(tr, zOld, ratio, &a, &b); 
       hookup(p->next,iP, &a, numBranches);   
       hookup(p->next->next,iP2, &b, numBranches); 
-      traln.setBranchLengthSave(a, 0, p->next );
-      traln.setBranchLengthSave(b, 0, p->next->next );
+      traln.setBranchLengthBounded(a, 0, p->next );
+      traln.setBranchLengthBounded(b, 0, p->next->next );
 
       newViewGenericWrapper(traln, p, FALSE); 
       evaluateGenericWrapper(traln, p, FALSE ); 
@@ -127,8 +127,8 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
 
       hookup(p->next, iP, &a, numBranches); 
       hookup(p->next->next, iP2, &b, numBranches); 
-      traln.setBranchLengthSave(a,0,p->next);
-      traln.setBranchLengthSave(b,0,p->next->next);
+      traln.setBranchLengthBounded(a,0,p->next);
+      traln.setBranchLengthBounded(b,0,p->next->next);
 
       newViewGenericWrapper(traln,p,FALSE); 
       evaluateGenericWrapper(traln,p,FALSE  ); 
@@ -234,8 +234,8 @@ static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, branch su
     divideBranchLengthsWithRatio(tr, traln.getBranchLength(q,0), ratio, &z1, &z2); 
     hookup(p->next, q, &z1, numBranches); 
     hookup(p->next->next, r, &z2, numBranches);   
-    traln.setBranchLengthSave(z1,0,p->next);
-    traln.setBranchLengthSave(z2,0,p->next->next); 
+    traln.setBranchLengthBounded(z1,0,p->next);
+    traln.setBranchLengthBounded(z2,0,p->next->next); 
   }
 
   debug_checkTreeConsistency(traln.getTr());
@@ -278,17 +278,6 @@ static void freeList(insertList *lnlList)
       iter = tmp; 
     }
 }
-
-
-static void printInsertList(insertList *list)
-{
-  for(insertList *iter = list; iter ; iter = iter->next)
-    {
-      printf("{%d,%d}:lnl=%.2f, weights=[%g,%g]\n", iter->b.thisNode, iter->b.thatNode, 
-	     iter->lnl, iter->weightInFirst, iter->weightInSecond); 
-    }  
-}
-
 
 
 static void debug_checkHooks(tree *tr)
@@ -373,15 +362,16 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 #endif
 
     hookup(p->next, iP, &a,numBranches); 
-    traln.setBranchLengthSave(a,0,p->next);
+    traln.setBranchLengthBounded(a,0,p->next);
     hookup(p->next->next, iP2, &b, numBranches);     
-    traln.setBranchLengthSave(b,0,p->next->next);    
+    traln.setBranchLengthBounded(b,0,p->next->next);    
   }
   
   testInsertWithRadius(traln, &lnlList, subtree, sampledBranch, radius, FALSE); 
   createWeights(tr, &lnlList, FALSE); 
 
-
+  // TODO prior 
+  assert(0); 
 
   /* do a uniform slide on the insertion branch: if we do not do that,
      we may get into a situation, where BLs become extremely short

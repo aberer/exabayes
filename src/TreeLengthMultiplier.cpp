@@ -21,7 +21,7 @@ void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, node
   tree *tr = traln.getTr();
   double newZ = pow( traln.getBranchLength( p,0),multiHere); 
   // cout << "TL: multiplying " << branchLengthToReal(traln.getTr(),traln.getBranchLength( p,0) ) << " with "<< multiHere << " => " << branchLengthToReal (traln.getTr(), newZ) << endl; 
-  traln.setBranchLengthSave(newZ, 0, p); 
+  traln.setBranchLengthBounded(newZ, 0, p); 
 
   if(isTip(p->number, tr->mxtips))
     return; 
