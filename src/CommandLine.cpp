@@ -88,6 +88,11 @@ void CommandLine::parse(int argc, char *argv[])
     {
       switch(c)
 	{
+	case 'C': 		// chain-level parallelism 
+	  {
+	    
+	  }
+	  break; 
 	case 'c': 		// config file 	  
 	  {
 	    configFileName = string(optarg); 

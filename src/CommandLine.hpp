@@ -21,6 +21,7 @@ public:
   int getNumRunParallel() const {return runNumParallel; }
   string getWorkdir() const {return workDir; }
   void printVersion(bool toInfoFile);
+  int getChainNumParallel() const { return chainNumParallel; }
 
 private: 
   int seed; 
@@ -30,6 +31,7 @@ private:
   string treeFile; 
   string workDir;
   int runNumParallel; 
+  int chainNumParallel; 
 
   void assertFileExists(string filename); 
   void parse(int argc, char *argv[]); 

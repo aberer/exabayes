@@ -70,8 +70,8 @@ begin EXABAYES;
       SingleBranchExp 0  [ broken ] 
       SingleBranchBiunif 0 [broken]
       branchMulti 40 [ ok, 40% in mrb ]
-      treeLengthMult 0 [ ok, 4 % in mrb ]
-      nodeSlider  0 [ ok, 10% in mrb ]
+      treeLengthMult 4 [ ok, 4 % in mrb ]
+      nodeSlider  10 [ ok, 10% in mrb ]
       GuidedBL 0 []
       branchCollapser 0     [ ok ]
 
@@ -95,7 +95,7 @@ begin EXABAYES;
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
-      eSprStopProb 0.3 [ stopping probability for eSPR moves, 0.5 in mb! ] 
+      eSprStopProb 0.5 [ stopping probability for eSPR moves, 0.5 in mb! ] 
       parsimonyWarp 0.10 [ warp factor for parsimony based moves => if we set that to 10, it is a reference to the star trek voyager episode "threshold" ]  
 
 
