@@ -1,8 +1,7 @@
 #include <cassert>
 #include "axml.h"
 #include "GlobalVariables.hpp"
-// #include "adapters.h"		
-
+#include "output.h"
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 
 
@@ -31,13 +30,13 @@ static void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTrave
 extern "C"
 {
   void newviewParsimony(tree *tr, nodeptr  p); 
-  nat evaluateParsimony(tree *tr, nodeptr p, boolean full); 
+  nat evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony); 
 }
 #else 
 extern "C"
 {
   void newviewParsimony(tree *tr, partitionList *pr, nodeptr  p); 
-  nat evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full); 
+  nat evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, nat *partitionParsimony); 
 }
 #endif
 
@@ -66,7 +65,7 @@ void expensiveVerify(TreeAln& traln)
 
   debugTraln = traln; 
   
-#if 0 
+#if 1 
   nodeptr
     p = findNodeFromBranch(debugTraln.getTr(), findRoot(traln.getTr())); 
   orientationPointAway(debugTraln.getTr(), p);
@@ -84,7 +83,7 @@ void expensiveVerify(TreeAln& traln)
       if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
 	{
 	  tout << "WARNING: found in expensive evaluation: likelihood difference is " 
-	       <<  fabs (verifiedLnl - toVerify )
+	       << setprecision(8) <<   fabs (verifiedLnl - toVerify )
 	       << "(with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
 	  tout << "current tree: " << traln << endl; 
@@ -109,15 +108,24 @@ void exa_newViewParsimony(TreeAln &traln, nodeptr p)
 
 
 
-nat exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal )
+void exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal, vector<nat> &partitionParsimony)
 {
+  partitionParsimony.clear();   
+  // nat tmp[traln.getNumberOfPartitions()]; 
+  nat* tmp = (nat*)exa_calloc(traln.getNumberOfPartitions(), sizeof(nat)); 
+  
 #if HAVE_PLL != 0 
-  return evaluateParsimony(traln.getTr(), traln.getPartitionsPtr(), p, fullTraversal); 
+  evaluateParsimony(traln.getTr(), traln.getPartitionsPtr(), p, fullTraversal, tmp); 
 #else 
   // return evaluateParsimony(traln.getTr(),  p, fullTraversal); 
   assert(0);
-  return 0 ;
+  // return 0 ;
 #endif
+
+  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+    partitionParsimony.push_back(tmp[i]); 
+
+  exa_free(tmp); 
 }
 
  

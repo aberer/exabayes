@@ -71,12 +71,18 @@ public:
   // TODO this should return a new path instance  
   void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior); 
 
+  void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
+
   friend ostream& operator<<(ostream &out, const Path &rhs)  ;
 
 private: 
   vector<branch> stack; 
 
+  bool findPathHelper(const TreeAln &traln, nodeptr p, const branch &target);
+
 }; 
 
 
 #endif
+
+

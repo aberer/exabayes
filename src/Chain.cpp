@@ -45,6 +45,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBel
   prior.initPrior(*traln);
 
   addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << chainRand << endl; 
+
   saveTreeStateToChain(); 
 }
 
@@ -151,26 +152,6 @@ AbstractProposal* Chain::drawProposalFunction()
 
 
 
-
-// void Chain::initParamDump()
-// {  
-//   tree *tr = traln->getTr();
-  
-//   dump.topology = new Topology(tr->mxtips); 
-//   dump.infoPerPart = (perPartitionInfo*)exa_calloc(traln->getNumberOfPartitions(), sizeof(perPartitionInfo));
-//   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-//     {
-//       perPartitionInfo *p =  dump.infoPerPart + i ; 
-//       p->alpha = 0.5; 
-//       for(int j = 0; j < 6; ++j)
-// 	p->substRates[j] = 0.5; 
-//       p->substRates[5] = 1; 
-//       for(int j = 0; j < 4; ++j)
-// 	p->frequencies[j] = 0.25;       
-//     }
-// }
-
-
 void Chain::printParams(FILE *fh)
 {
   tree *tr = traln->getTr(); 
@@ -186,17 +167,16 @@ void Chain::printParams(FILE *fh)
     {
       pInfo *partition = traln->getPartition(i); 
       fprintf(fh, "\t%f\t%f", traln->accessPartitionLH( i),traln->getAlpha(i)) ; 
-      for(int j = 0; j < 6 ; ++j) /* TODO */
-	fprintf(fh, "\t%.2f", partition->substRates[j]); 
-      for(int j = 0; j < 4 ; ++j) /* TODO */
-	fprintf(fh, "\t%.2f", traln->getFrequency(i,j));
+      
+      for(int j = 0; j < Partition::numStateToNumInTriangleMatrix(partition->states) ; ++j) 
+	fprintf(fh,"\t%.2f", partition->substRates[i]); 
+      for(int j = 0; j < partition->states; ++j)
+	fprintf(fh,"\t%.2f", traln->getFrequency(i,j)); 
     }
 
   fprintf(fh, "\n"); 
   fflush(fh); 
 }
-
-
 
 
 void Chain::printParamFileStart(FILE *fh)

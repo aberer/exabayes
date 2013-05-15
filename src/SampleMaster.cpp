@@ -96,11 +96,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl)
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
       if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
-	{
-	runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq)); 
-	}
-
-
+	runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq));       
     }
   
   if(tuneHeat)
@@ -264,16 +260,6 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::modifyProposalWeights(const PriorBelief &prior, vector<double> &proposalWeights)
-{
-  if(prior.believingInFixedBranchLengths())
-    {
-      
-    }
-
-}
-
-
 void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights )
 {
   ConfigReader reader;   
@@ -288,8 +274,6 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
   prior = block.getPrior();
 
   prior.addStandardPriors();
-
-  modifyProposalWeights(prior, proposalWeights); 
 
   tout << endl << "Your prior belief consists of: "<< endl << prior << endl; 
 

@@ -23,14 +23,14 @@ Path::Path(const Path &rhs)
 
 
 
+
+
 Path& Path::operator=(const Path &rhs )  
 {
   Path tmp(rhs); 
   swap(*this, tmp); 
   return *this; 
 }
-
-
 
 
 
@@ -229,4 +229,54 @@ void swap(Path &first, Path &second)
 void Path::reverse()
 {
   std::reverse(stack.begin(), stack.end());
+}
+
+
+
+
+bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const branch &target)
+{
+  branch curBranch =  constructBranch(p->number, p->back->number); 
+  if( branchEqualUndirected(curBranch, target) ) 
+    {
+      append(curBranch); 
+      return true; 
+    }
+  
+
+  bool found = false; 
+  for(auto q = p->next ; p != q && not found ; q = q->next)
+    {
+      found = findPathHelper(traln, q->back, target); 
+      if(found)	
+	append(constructBranch(q->number, q->back->number));
+    }
+  return found; 
+}
+
+
+
+void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
+{  
+  stack.clear();   
+
+  branch targetBranch = constructBranch(q->number, q->back->number ); 
+
+  bool found = findPathHelper(traln, p->back, targetBranch); 
+  if(found)  
+    append(constructBranch(p->number, p->back->number)); 
+  else 
+    {    
+      found = findPathHelper(traln, p->next->back, targetBranch); 
+      if(found)
+	append(constructBranch(p->next->number, p->next->back->number)); 
+      else 
+	{
+	  found = findPathHelper(traln, p->next->next->back, targetBranch); 
+	  if(found)
+	    append(constructBranch(p->next->next->number, p->next->next->back->number)); 
+	}
+    }
+
+  assert(found);
 }

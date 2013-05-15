@@ -74,14 +74,14 @@ using namespace std;
 class GlobalVariables
 {
 public: 
+  string logFile; 
+  ofstream *logStream;   
+  teestream* teeOut; 
 
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
 #endif
-  string logFile; 
-  ofstream *logStream;   
-  teestream* teeOut; 
 };
 
 

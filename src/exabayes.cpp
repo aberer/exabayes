@@ -38,6 +38,12 @@ using namespace std;
 
 // #define TEST  
 
+#ifdef TEST
+#include "TreeRandomizer.hpp"
+#include "eval.h"
+#endif
+
+
 /**
    @brief the main ExaBayes function.
 
@@ -50,34 +56,24 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
 #ifdef TEST   
 
-#if 0 
   TreeAln traln; 
-  traln.initializeFromByteFile(byteFileName);
+  traln.initializeFromByteFile(cl.getAlnFileName());
   traln.enableParsimony(); 
 
   TreeRandomizer r(123, &traln); 
   r.randomizeTree();
   tree *tr = traln.getTr(); 
   
-  for(int i = tr->mxtips+1; i < 2 * tr->mxtips; ++i)
+  for(int i = 1 ;  i < 2 * tr->mxtips -2 ; ++i)
     {
-      cout << exa_evaluateParsimony(traln, tr->nodep[i], TRUE ) << endl; 
+      vector<nat> partitionParsimony; 
+      exa_evaluateParsimony(traln, tr->nodep[i], TRUE ,partitionParsimony); 
+      
+      for(auto b : partitionParsimony)
+	cout << b << "," ; 
+      cout << endl; 
     }
-#endif
 
-
-  TreeAln traln; 
-  traln.initializeFromByteFile(cl.getAlnFileName()); 
-  TreeRandomizer r(123, &traln); 
-  r.randomizeTree();
-
-  vector<branch> result; 
-  extractBranches(traln, result);
-
-  cout << "got "<< result.size() << " branches" << endl; 
-  
-  for(auto b : result)
-    cout << b  << endl; 
 
   exit(0);
 
@@ -131,13 +127,12 @@ void makeInfoFile(const CommandLine &cl)
   if(workdir.compare("") != 0 )
     ss << "/" ; 
   ss << PROGRAM_NAME << "_info."  << cl.getRunid() ;
-  
+
   // TODO maybe check for existance 
 
   globals.logFile = ss.str();   
   globals.logStream = new ofstream (globals.logFile) ; 
-  // if(isOutputProcess())
-    globals.teeOut = new teestream(cout, *globals.logStream);
+  globals.teeOut = new teestream(cout, *globals.logStream);
 }
 
 
@@ -169,7 +164,6 @@ int main(int argc, char *argv[])
 #if HAVE_PLL == 0 
   pl.initializeExaml(cl);
 #endif
-
 
   exa_main( cl, pl); 
 

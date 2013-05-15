@@ -8,7 +8,7 @@ AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_US
 # TODO 
 
 if WITH_DEBUG
-AM_CFLAGS+=-g3 -O0
+AM_CFLAGS+=-ggdb -O0
 else
 AM_CFLAGS+=-O2 -fomit-frame-pointer -funroll-loops
 endif
@@ -26,7 +26,7 @@ include src.am
 AM_CFLAGS+= -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS)
 AM_CXXFLAGS=$(AM_CFLAGS)  -std=c++0x
-AM_LDFLAGS=-lm
+AM_LDFLAGS=-lm 
 
 
 exabayes_LDADD= 
@@ -41,7 +41,12 @@ libexaml_a_SOURCES= ./src/examl/searchAlgo.c ./src/examl/treeIO.c ./src/examl/re
 libexaml_a_CFLAGS= -O2 -fomit-frame-pointer -funroll-loops -w $(AM_CFLAGS) -fgnu89-inline  $(EXAMLINCLUDE)  # $(MPI_CFLAGS)
 
 noinst_LIBRARIES=libbayes.a 
+
+if WITH_DEBUG
+libbayes_a_CXXFLAGS=-ggdb  $(AM_CXXFLAGS)
+else 
 libbayes_a_CXXFLAGS=-O3 $(AM_CXXFLAGS)
+endif
 
 # configure examl/pll specific stuff 
 if WITH_EXAML 

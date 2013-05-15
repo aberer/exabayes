@@ -27,6 +27,6 @@ void evaluateFullNoBackup(TreeAln& traln);
 void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal); 
 void evaluateOnePartition(TreeAln& traln, nodeptr start, boolean fullTraversal, int model); 
 
-nat exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal ); 
+void exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal, vector<nat> &partitionParsimony); 
 void exa_newViewParsimony(TreeAln &traln, nodeptr p); 
 #endif

@@ -85,7 +85,6 @@ private:
   double initTime; 
 
   void initTrees(vector<TreeAln*> &trees, const CommandLine &cl ); 
-  void modifyProposalWeights(const PriorBelief &prior, vector<double> &proposalWeights);     
   bool convergenceDiagnostic(); 
 };  
 

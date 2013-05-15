@@ -72,7 +72,6 @@ public:
   ostream& addChainInfo(ostream &out); 
   
 private : 
-  Chain& operator=(Chain& rhs); 
   Chain(const Chain& rhs)  ; 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 

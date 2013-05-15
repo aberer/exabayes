@@ -8,15 +8,35 @@
 class  InsertionScore
 {
 public: 
-  InsertionScore(branch _b, nat _score) : b(_b), score(_score){}
-  branch getBranch() {return b; }
-  nat getScore(){return score; }
+  InsertionScore(branch _b, vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
+  branch getBranch() const  {return b; }
+
+  double getWeight() const {return  logProb; }
+  void setWeight(double w) { logProb = w; }
+
+  nat getScore() const
+  {
+    nat result = 0; 
+    for(auto b : partitionParsimony)
+      result += b; 
+    return result; 
+  }
+
+  nat getPartitionScore(int model) const{return partitionParsimony[model] ; }
+
 
 private: 
   branch b; 
-  nat score ;   
+  vector<nat> partitionParsimony; 
+  double logProb;
   
-  friend ostream& operator<< (ostream &out, const InsertionScore &rhs) { return out << "(" << rhs.b.thisNode << "," << rhs.b.thatNode << ")" << "="  << rhs.score ;  }
+
+  friend ostream& operator<< (ostream &out, const InsertionScore &rhs) { 
+    out <<  "(" << rhs.b.thisNode << "," << rhs.b.thatNode << ")" << "=" ; 
+    for(auto elem : rhs.partitionParsimony)
+      out << elem << "," ; 
+    return out; 
+  }
 } ; 
 
 
@@ -28,7 +48,6 @@ ParsimonySPR::ParsimonySPR( double _relativeWeight, double _parsWarp, double _bl
 {
   this->name = "parsSPR"; 
   this->category = TOPOLOGY ; 
-  // ptype = PARSIMONY_SPR; 
   this->relativeProbability =  _relativeWeight; 
 }
 
@@ -40,14 +59,12 @@ static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prune
   traln.clipNodeDefault( insertBack, prunedTree->next->next); 
   branch b = constructBranch(insertPos->number, insertBack->number); 
 
-  cout << "newview on " << prunedTree->number << endl; 
   exa_newViewParsimony(traln, prunedTree);
-  nat result = exa_evaluateParsimony(traln, prunedTree->back, FALSE);
-  nat result2 = exa_evaluateParsimony(traln, prunedTree->back, TRUE);
-   
-  cout << "result1=" << result << ",result2=" << result2 << endl; 
+  
+  vector<nat> partitionParsimony ; 
+  exa_evaluateParsimony(traln, prunedTree->back, FALSE, partitionParsimony);
 
-  InsertionScore i(b, result); 
+  InsertionScore i(b, partitionParsimony); 
   insertPoints.push_back(i); 
   // cout << "pushing " << i << endl; 
   
@@ -55,7 +72,7 @@ static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prune
   prunedTree->next->back = prunedTree->next->next->back = NULL; 
 
   // recursively descend 
-  if(NOT traln.isTipNode(insertPos))
+  if(not traln.isTipNode(insertPos))
     {
       testInsertParsimony(traln, insertPos->next->back, prunedTree, insertPoints); 
       testInsertParsimony(traln, insertPos->next->next->back, prunedTree, insertPoints); 
@@ -66,7 +83,7 @@ static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prune
 static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &score)
 {
 #ifdef DEBUG_LNL_VERIFY
-  *globals.debugTree = traln; 
+  globals.debugTree = &traln; 
   cout << endl; 
   cout << "orig " << traln << endl; 
   cout << "copy " << *(globals.debugTree) << endl; 
@@ -88,14 +105,16 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
 
   cout << "after spr " << *(globals.debugTree) << endl ; 
   
-  nat verifiedScore = exa_evaluateParsimony(*(globals.debugTree), globals.debugTree->getTr()->nodep[1]->back, TRUE); 
-
-  cout << "for " << score.getBranch() << "\t toVerify: " << score.getScore() <<  "\tveification result: " << verifiedScore <<  endl; 
+  vector<nat> partitionParsimony; 
+  exa_evaluateParsimony(*(globals.debugTree), globals.debugTree->getTr()->nodep[1]->back, TRUE, partitionParsimony);   
+  nat verifiedScore = 0; 
+  for(auto elem : partitionParsimony)
+    verifiedScore += elem; 
+  
+  // cout << "for " << score.getBranch() << "\t toVerify: " << score.getScore() <<  "\tveification result: " << verifiedScore <<  endl; 
   assert(verifiedScore == score.getScore()); 
 #endif
 }
-
-
 
 
 void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
@@ -105,11 +124,14 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   Topology prevTopo(traln.getTr()->mxtips) ; 
   prevTopo.saveTopology(traln); 
 
-  double initScore =   exa_evaluateParsimony(traln, traln.getTr()->start, TRUE);
+  nat initScore = 0; 
+  vector<nat> partitionParsimony; 
+  exa_evaluateParsimony(traln, traln.getTr()->start, TRUE, partitionParsimony);
+  for(auto elem : partitionParsimony)
+    initScore += elem; 
   cout << initScore << endl; 
 
   branch prunedTree  = rand.drawSubtreeUniform(traln);  
-  // path.append(prunedTree); 
 
   // prune the subtree 
   nodeptr p = findNodeFromBranch(tr, prunedTree),
@@ -118,18 +140,17 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   traln.clipNodeDefault( pn, pnn); 
   p->next->back = p->next->next->back = NULL; 
   branch pruningBranch = constructBranch(pn->number, pnn->number); 
-  // insertionPoints.push_back(InsertionScore(pruningBranch, initScore)); 
 
   cout << "pruned  " << p->number << " from "  << pruningBranch << endl;  
 
   // fetch all parsimony scores   
-  if(NOT traln.isTipNode(pn)) 
+  if(not traln.isTipNode(pn)) 
     {
       cout << "descending on " << pn->number << " with neighbors " << pn->next->back->number << "," << pn->next->next->back->number  << endl; 
       testInsertParsimony(traln, pn->next->back, p, insertionPoints);
       testInsertParsimony(traln, pn->next->next->back, p, insertionPoints); 
     }
-  if(NOT traln.isTipNode(pnn))
+  if(not traln.isTipNode(pnn))
     {
       cout << "descending on " << pnn->number << " with neighbors " << pnn->next->back->number << "," << pnn->next->next->back->number  << endl; 
       testInsertParsimony(traln, pnn->next->back,p, insertionPoints); 
@@ -140,17 +161,93 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   traln.clipNodeDefault( p->next, pn ); 
   traln.clipNodeDefault( p->next->next, pnn); 
   
-  for(auto elem : insertionPoints )
+  for(auto elem : insertionPoints)
     {
-      cout << elem << "," ; 
-// #ifdef DEBUG_PARS_SPR
-//       verifyParsimony(traln,p, elem); 
-// #endif
+      cout << elem << "," << endl; 
     }
-  cout << endl; 
 
   
-  assert(0);   
+  double minWeight = numeric_limits<double>::max(); 
+  // now get the real scores 
+  for(InsertionScore& elem : insertionPoints)
+    {     
+      double result = 0; 
+      for(int i = 0 ; i < traln.getNumberOfPartitions(); ++i)
+	{
+	  double states  = double(traln.getPartition(i)->states); 
+	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05 * tr->fracchange)) / states)) ; 
+	  result += divFactor * elem.getPartitionScore(i);
+
+	}
+
+      if(result < minWeight)
+	minWeight = result; 
+
+      elem.setWeight(result); 
+    }
+
+  double sum =  0; 
+  for(InsertionScore& elem : insertionPoints)
+    {
+      double normWeight = exp( minWeight - elem.getWeight())  ; 
+      sum += normWeight;       
+      elem.setWeight(normWeight); 
+      cout << elem.getWeight() << endl; 
+    }
+  
+  // loop could be avoided 
+  for(InsertionScore & elem : insertionPoints)
+    {
+      double val = elem.getWeight(); 
+      elem.setWeight(val / sum); 
+    }
+
+
+#ifdef UNSURE
+  // dont choose the original position again 
+  assert(0); 
+#endif  
+
+  // draw the proposal 
+  double r = rand.drawRandDouble01();
+  InsertionScore& chosen = insertionPoints[0]; 
+  for(InsertionScore &elem : insertionPoints)
+    {
+      double weight = elem.getWeight(); 
+      if(r < weight)
+	{
+	  chosen = elem; 
+	  break; 
+	}
+      else 
+	r -= weight; 
+    }
+
+  path.clear(); 
+  cout << "will insert " << p->number << "," << p->back->number << " into " << chosen << endl; 
+
+  path.findPath(traln ,p, findNodeFromBranch(traln.getTr(), chosen.getBranch()));
+  path.reverse();  
+  
+  nodeptr aNode = findNodeFromBranch(traln.getTr(), path.at(0)); 
+  if(traln.isTipNode(aNode))
+    aNode = findNodeFromBranch(traln.getTr(), invertBranch(path.at(0)));
+  assert(not traln.isTipNode(aNode)); 
+  branch b = path.at(0); 
+  while(branchEqualUndirected(b, path.at(0)) || branchEqualUndirected(b,constructBranch(p->number, p->back->number))) 
+    {
+      aNode = aNode->next; 
+      b = constructBranch(aNode->number, aNode->back->number) ;
+    }
+  path.reverse();
+  path.append(b); 
+  path.reverse();
+
+  // TODO this is crazy! remove all the redundancies later.
+  cout << path << endl; 
+
+  
+
   prevTopo.restoreTopology(traln);
 }
 
@@ -168,9 +265,9 @@ void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior)
 
 void ParsimonySPR::autotune() 
 {
-  // nothing to do 
+      // nothing to do 
 }
-
+ 
 
 AbstractProposal* ParsimonySPR::clone() const
 {

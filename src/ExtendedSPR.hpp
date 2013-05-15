@@ -1,12 +1,10 @@
 #ifndef _EXTENDED_SPR_H
 #define _EXTENDED_SPR_H
 
-// #include "bayes.h"
 #include "axml.h"
 #include "AbstractProposal.hpp"
 #include "Randomness.hpp"
 #include "Path.hpp"
-
 
 
 class ExtendedSPR : public AbstractProposal
@@ -26,8 +24,6 @@ public:
 protected: 
   double stopProb; 
   double multiplier; 
-  
-
   Path modifiedPath; 
 
   void destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p); 

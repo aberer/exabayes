@@ -261,8 +261,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
    lengths are copied.
  */ 
 TreeAln& TreeAln::operator=( TreeAln& rhs)
-{
-  
+{  
   assert(&rhs != this); 
 
   // copy partition parameters 
