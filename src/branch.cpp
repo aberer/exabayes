@@ -320,7 +320,9 @@ branch findRoot(tree *tr)
 
 ostream& operator<<(ostream& rhs, const branch &b )
 {
-  rhs << b.thisNode << "/" << b.thatNode << "(" << b.length[0] << ")" ; 
+  rhs << b.thisNode << "/" << b.thatNode
+      // << "(" << b.length[0] << ")" 
+    ; 
   return rhs; 
 }
 

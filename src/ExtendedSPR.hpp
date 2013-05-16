@@ -5,6 +5,7 @@
 #include "AbstractProposal.hpp"
 #include "Randomness.hpp"
 #include "Path.hpp"
+#include "SprMove.hpp"
 
 
 class ExtendedSPR : public AbstractProposal
@@ -26,11 +27,13 @@ protected:
   double multiplier; 
   Path modifiedPath; 
 
-  void destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p); 
+  SprMove move; 
+
+  // void destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p); 
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 
-  void multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
-  void applyPathAsESPR(TreeAln &traln ); 
-  void resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior); 
+  // void multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
+  // void applyPathAsESPR(TreeAln &traln ); 
+  // void resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior); 
 
 }; 
 

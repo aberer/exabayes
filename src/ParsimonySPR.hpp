@@ -10,6 +10,7 @@
 #include "axml.h"
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
+#include "SprMove.hpp"
 
 class ParsimonySPR : public AbstractProposal
 {
@@ -28,4 +29,9 @@ protected:
   double parsWarp; 
   double blMulti;   
   Path path; 
+
+  void determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
+  
+  SprMove move; 
+  
 }; 

@@ -238,20 +238,19 @@ bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const branch &target)
 {
   branch curBranch =  constructBranch(p->number, p->back->number); 
   if( branchEqualUndirected(curBranch, target) ) 
-    {
-      append(curBranch); 
-      return true; 
-    }
+    return true; 
   
-
   bool found = false; 
   for(auto q = p->next ; p != q && not found ; q = q->next)
     {
       found = findPathHelper(traln, q->back, target); 
       if(found)	
-	append(constructBranch(q->number, q->back->number));
+	{
+	  append(constructBranch(q->number, q->back->number));
+	  return found; 
+	}
     }
-  return found; 
+  return false; 
 }
 
 
@@ -264,19 +263,23 @@ void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
 
   bool found = findPathHelper(traln, p->back, targetBranch); 
   if(found)  
-    append(constructBranch(p->number, p->back->number)); 
-  else 
-    {    
-      found = findPathHelper(traln, p->next->back, targetBranch); 
-      if(found)
-	append(constructBranch(p->next->number, p->next->back->number)); 
-      else 
-	{
-	  found = findPathHelper(traln, p->next->next->back, targetBranch); 
-	  if(found)
-	    append(constructBranch(p->next->next->number, p->next->next->back->number)); 
-	}
+    {      
+      append(constructBranch(p->number, p->back->number)); 
+      return ; 
     }
 
+  assert(stack.size() == 0); 
+  
+  found = findPathHelper(traln, p->next->back, targetBranch); 
+  if(found  )
+    {
+      append(constructBranch(p->next->number, p->next->back->number)); 
+      return; 
+    }
+
+  assert(stack.size() == 0);   
+  found = findPathHelper(traln, p->next->next->back, targetBranch); 
+  if(found)
+    append(constructBranch(p->next->next->number, p->next->next->back->number)); 
   assert(found);
 }

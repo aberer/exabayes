@@ -2,6 +2,7 @@
 #include "Topology.hpp"
 #include "eval.h"
 #include "treeRead.h"
+#include "output.h"
 
 #define DEBUG_PARS_SPR
 
@@ -117,8 +118,13 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
 }
 
 
-void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
-{    
+
+
+
+void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
+{
+
+
   vector<InsertionScore> insertionPoints; 
   tree *tr = traln.getTr(); 
   Topology prevTopo(traln.getTr()->mxtips) ; 
@@ -129,30 +135,32 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   exa_evaluateParsimony(traln, traln.getTr()->start, TRUE, partitionParsimony);
   for(auto elem : partitionParsimony)
     initScore += elem; 
-  cout << initScore << endl; 
 
-  branch prunedTree  = rand.drawSubtreeUniform(traln);  
+  // BAD 
+  branch prunedTree; 
+  nodeptr p = nullptr, pn = nullptr , pnn = nullptr ; 
+
+  while( ( pn == nullptr && pnn == nullptr ) 
+	 || ( traln.isTipNode(pn) && traln.isTipNode(pnn) ) )
+    {      
+      prunedTree  = rand.drawSubtreeUniform(traln);  
+      p = findNodeFromBranch(tr, prunedTree); 
+      pn = p->next->back; 
+      pnn = p->next->next->back;   
+    }
 
   // prune the subtree 
-  nodeptr p = findNodeFromBranch(tr, prunedTree),
-    pn = p->next->back,
-    pnn = p->next->next->back;   
   traln.clipNodeDefault( pn, pnn); 
   p->next->back = p->next->next->back = NULL; 
-  branch pruningBranch = constructBranch(pn->number, pnn->number); 
-
-  cout << "pruned  " << p->number << " from "  << pruningBranch << endl;  
 
   // fetch all parsimony scores   
   if(not traln.isTipNode(pn)) 
     {
-      cout << "descending on " << pn->number << " with neighbors " << pn->next->back->number << "," << pn->next->next->back->number  << endl; 
       testInsertParsimony(traln, pn->next->back, p, insertionPoints);
       testInsertParsimony(traln, pn->next->next->back, p, insertionPoints); 
     }
   if(not traln.isTipNode(pnn))
     {
-      cout << "descending on " << pnn->number << " with neighbors " << pnn->next->back->number << "," << pnn->next->next->back->number  << endl; 
       testInsertParsimony(traln, pnn->next->back,p, insertionPoints); 
       testInsertParsimony(traln, pnn->next->next->back,p, insertionPoints); 
     }
@@ -160,13 +168,8 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   // probably not even necessary 
   traln.clipNodeDefault( p->next, pn ); 
   traln.clipNodeDefault( p->next->next, pnn); 
-  
-  for(auto elem : insertionPoints)
-    {
-      cout << elem << "," << endl; 
-    }
 
-  
+
   double minWeight = numeric_limits<double>::max(); 
   // now get the real scores 
   for(InsertionScore& elem : insertionPoints)
@@ -177,7 +180,6 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 	  double states  = double(traln.getPartition(i)->states); 
 	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05 * tr->fracchange)) / states)) ; 
 	  result += divFactor * elem.getPartitionScore(i);
-
 	}
 
       if(result < minWeight)
@@ -192,7 +194,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
       double normWeight = exp( minWeight - elem.getWeight())  ; 
       sum += normWeight;       
       elem.setWeight(normWeight); 
-      cout << elem.getWeight() << endl; 
+      // cout << elem.getWeight() << endl; 
     }
   
   // loop could be avoided 
@@ -224,7 +226,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
     }
 
   path.clear(); 
-  cout << "will insert " << p->number << "," << p->back->number << " into " << chosen << endl; 
+  // cout << "will insert " << p->number << "," << p->back->number << " currently hooked to " << p->next->back->number << "," << p->next->next->back->number << " into " << chosen << endl; 
 
   path.findPath(traln ,p, findNodeFromBranch(traln.getTr(), chosen.getBranch()));
   path.reverse();  
@@ -240,32 +242,89 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
       b = constructBranch(aNode->number, aNode->back->number) ;
     }
   path.reverse();
-  path.append(b); 
+  path.append(b);  
   path.reverse();
 
   // TODO this is crazy! remove all the redundancies later.
-  cout << path << endl; 
-
+  // cout << path << endl; 
+  
+ 
+#ifdef UNSURE
+  // modify the hastings...not today
+  assert(0); 
+#endif 
   
 
   prevTopo.restoreTopology(traln);
+} 
+
+
+void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+{ 
+  // cout << "APPLY" << endl; 
+  path.clear(); 
+  determineSprPath(traln, rand, hastings, prior); 
+  path.saveBranchLengthsPath(traln);  
+
+  // cout << traln << endl; 
+  move.applyPathAsESPR(traln,path);
+  // cout << traln << endl; 
+
+  
+#ifdef ESPR_MULTIPLY_BL
+  if(not prior.believingInFixedBranchLengths())
+    {
+      move.multiplyAlongBranchESPR(traln, rand, hastings, prior, path, blMulti);
+    }
+#ifdef DEBUG_SHOW_TOPO_CHANGES
+  cout << "after multiply: " << traln  << endl; 
+#endif
+#endif
+  
+  debug_checkTreeConsistency(traln.getTr()); 
 }
 
 
+
 void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
-{
-  assert(0); 
+{  
+  // cout << "EVAL" << endl; 
+  tree *tr = traln.getTr(); 
+
+  branch b = getThirdBranch(tr, path.at(0), path.at(1)); 
+  branch lastBranch = path.at(path.size()-1); 
+  
+  branch futureRoot = getThirdBranch(tr,  constructBranch(b.thisNode, lastBranch.thisNode),
+    constructBranch(b.thisNode,lastBranch.thatNode)); 
+
+  // cout << "future root is " << futureRoot << endl; 
+
+  /* evaluate at root of inserted subtree */
+  nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
+
+  move.destroyOrientationAlongPath(path, tr, toEval); 
+  move.destroyOrientationAlongPath(path, tr, toEval->back);
+
+#if 0 
+  evaluateGenericWrapper(traln, toEval, FALSE);
+#else 
+  evaluateGenericWrapper(traln, traln.getTr()->start, TRUE);
+#endif
 }
 
 void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  assert(0); 
+  // cout << "RESET" << endl; 
+  move.resetAlongPathForESPR (traln, prior, path);   
+  path.restoreBranchLengthsPath(traln, prior ); 
+  debug_checkTreeConsistency(traln.getTr());
+  debug_printTree(traln); 
 }
  
 
 void ParsimonySPR::autotune() 
 {
-      // nothing to do 
+  // nothing to do 
 }
  
 

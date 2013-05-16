@@ -5,7 +5,7 @@ begin EXABAYES;
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
-      numIndiChains  1 		[ number of independant chains/runs ]
+      numIndiChains  4 		[ number of independant chains/runs ]
       numGen 2000000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 50 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
       printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
@@ -16,7 +16,7 @@ begin EXABAYES;
 
 
       [ MCMCMC ]
-      numCoupledChains 1   [ number of chains per independent run (only one is cold)  => must be > 0] 
+      numCoupledChains 4   [ number of chains per independent run (only one is cold)  => must be > 0] 
       heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
       swapInterval 1 	   [ attempt a swap between chains every n generations ]
       tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
@@ -59,11 +59,11 @@ begin EXABAYES;
       [================================================================]
 
       [ TOPOLOGY ]
-      eSPR 0 [ ok, 10% in mb  ]
+      eSPR 10  [ ok, 10% in mb  ]
       guidedSPR 0   [ broken ] 
-      stNNI 0 [ ok, 10% in mb]	
-      eTBR  0 [ ok, 10% in mb ] 
-      parsimonySPR 40  [ to be implemented, 10% in mb ]
+      stNNI 10  [ ok, 10% in mb]	
+      eTBR  10 [ ok, 10% in mb ] 
+      parsimonySPR 10  [ to be implemented, 10% in mb ]
 
       [ BRANCH LENGTHS ] 
       SingleBranch 0 [ ok ] 
