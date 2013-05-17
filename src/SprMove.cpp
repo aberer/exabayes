@@ -5,18 +5,17 @@ static void disorientHelper(tree *tr, nodeptr p)
 {
   if(isTip(p->number, tr->mxtips))
     {
-
-      /* printf("not disorienting tip %d\n", p->number);  */
+      // printf("not disorienting tip %d\n", p->number);
     }
   else if(p->x)
     {
       p->x = 0; 
       p->next->x = 1; 
-      /* printf("disorienting %d (CORRECT  before) -> oriented to %d NOW \n", p->number, p->next->back->number); */
+      // printf("disorienting %d (CORRECT  before) -> oriented to %d NOW \n", p->number, p->next->back->number);
     }
   else 
     {
-      /* printf("disorienting %d  (was incorrect before)\n", p->number); */
+      // printf("disorienting %d  (was incorrect before)\n", p->number);
     }
 }
 
@@ -88,10 +87,6 @@ void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &
  */ 
 void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, Path& modifiedPath)
 {
-  // cout << "before reset: " <<  traln << endl; 
-  // modifiedPath.printWithBLs(traln);
-  // cout << endl; 
-
   tree *tr = traln.getTr();
 
   /* BUG branch lengths are not restored correctly, currently relying on restoreBranchLengthsPath function */

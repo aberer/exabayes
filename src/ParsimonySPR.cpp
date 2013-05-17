@@ -4,7 +4,7 @@
 #include "treeRead.h"
 #include "output.h"
 
-#define DEBUG_PARS_SPR
+// #define DEBUG_PARS_SPR
 
 class  InsertionScore
 {
@@ -123,8 +123,6 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
 
 void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
 {
-
-
   vector<InsertionScore> insertionPoints; 
   tree *tr = traln.getTr(); 
   Topology prevTopo(traln.getTr()->mxtips) ; 
@@ -178,7 +176,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
       for(int i = 0 ; i < traln.getNumberOfPartitions(); ++i)
 	{
 	  double states  = double(traln.getPartition(i)->states); 
-	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05 * tr->fracchange)) / states)) ; 
+	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05)) / states)) ;  //  * tr->fracchange
 	  result += divFactor * elem.getPartitionScore(i);
 	}
 
@@ -194,7 +192,6 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
       double normWeight = exp( minWeight - elem.getWeight())  ; 
       sum += normWeight;       
       elem.setWeight(normWeight); 
-      // cout << elem.getWeight() << endl; 
     }
   
   // loop could be avoided 
@@ -261,16 +258,12 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 
 void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 { 
-  // cout << "APPLY" << endl; 
   path.clear(); 
   determineSprPath(traln, rand, hastings, prior); 
   path.saveBranchLengthsPath(traln);  
 
-  // cout << traln << endl; 
   move.applyPathAsESPR(traln,path);
-  // cout << traln << endl; 
 
-  
 #ifdef ESPR_MULTIPLY_BL
   if(not prior.believingInFixedBranchLengths())
     {
@@ -286,6 +279,9 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
 
 
+
+
+
 void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {  
   // cout << "EVAL" << endl; 
@@ -293,20 +289,29 @@ void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 
   branch b = getThirdBranch(tr, path.at(0), path.at(1)); 
   branch lastBranch = path.at(path.size()-1); 
+
+#ifdef DEBUG_PARS_SPR
+  cout << "lastB = "<< lastBranch  << endl; 
+  cout << path << endl; 
+#endif
   
   branch futureRoot = getThirdBranch(tr,  constructBranch(b.thisNode, lastBranch.thisNode),
     constructBranch(b.thisNode,lastBranch.thatNode)); 
 
-  // cout << "future root is " << futureRoot << endl; 
+#if DEBUG_PARS_SPR
+  cout << "future root is " << futureRoot << endl;
+  // cout << traln << endl; 
+#endif
 
   /* evaluate at root of inserted subtree */
   nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
 
-  move.destroyOrientationAlongPath(path, tr, toEval); 
-  move.destroyOrientationAlongPath(path, tr, toEval->back);
+  move.destroyOrientationAlongPath(path, tr, toEval);
+  move.destroyOrientationAlongPath(path, tr, toEval->back); 
 
 #if 0 
   evaluateGenericWrapper(traln, toEval, FALSE);
+  cout << "tree aln: " << traln.getTr()->likelihood << endl; 
 #else 
   evaluateGenericWrapper(traln, traln.getTr()->start, TRUE);
 #endif
@@ -332,3 +337,4 @@ AbstractProposal* ParsimonySPR::clone() const
 {
   return new ParsimonySPR( relativeProbability, parsWarp, blMulti);
 } 
+

@@ -52,10 +52,11 @@ void PartitionProposal<FUN,PARAM>::autotune()
   double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, not FUN::tuneup);
   
 #ifdef DEBUG_PRINT_TUNE_INFO
-  cout << pf->name << ": with ratio " << ctr->getRatioInLastInterval() << ": "<< ((newParam < *parameter ) ? "reducing" : "increasing") <<  "\t" << *parameter << "," << newParam << endl; 
+  cout << name << ": with ratio " << sctr.getRatioInLastInterval() << ": "<< ((newParam < parameter ) ? "reducing" : "increasing") <<  "\t" << parameter << "," << newParam << endl; 
 #endif
   
   parameter = newParam; 
+  
   sctr.nextBatch();
 }
 

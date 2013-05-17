@@ -19,7 +19,9 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
     for(nat i = 0; i < oldValues.size(); ++i)
       tmp[i] = oldValues[i]; 
     double tmpNew[oldValues.size()];
-    rand.drawDirichletExpected(tmpNew, tmp, parameter, (int)oldValues.size());
+    rand.drawDirichletExpected(tmpNew, tmp, 
+			       parameter * oldValues.size(),
+			       (int)oldValues.size());
     for(nat i = 0; i < oldValues.size(); ++i)
       newValues.push_back( tmpNew[i]); 
 

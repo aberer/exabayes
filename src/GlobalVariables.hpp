@@ -29,35 +29,35 @@ typedef enum _cats {
 
 
 
+// NOTICE it is not problem to change the numbers 
+
+
 /* okay, so defining enums this way is rather save  */
-#define NUM_PROPOSALS (25) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
+#define NUM_PROPOSALS (17) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
 typedef enum
-  {
-    TL_MULT = 0, 
-    UPDATE_MODEL = 1 ,
-    UPDATE_GAMMA = 2 ,
-    UPDATE_GAMMA_EXP=3,
-    UPDATE_SINGLE_BL = 4,
-    UPDATE_SINGLE_BL_EXP = 5 ,
-    UPDATE_SINGLE_BL_BIUNIF = 6,
-    UPDATE_MODEL_BIUNIF = 7,
-    UPDATE_MODEL_SINGLE_BIUNIF = 8,
-    UPDATE_MODEL_ALL_BIUNIF = 9,
-    UPDATE_MODEL_PERM_BIUNIF = 10,
-    UPDATE_FREQUENCIES_BIUNIF = 11,
-    BRANCH_LENGTHS_MULTIPLIER =12,
-    FREQUENCY_SLIDER = 13,
-    GUIDED_SPR = 14,
-    ST_NNI= 15, 
-    GAMMA_MULTI = 16,
-    NODE_SLIDER = 17,
-    UPDATE_FREQUENCIES_DIRICHLET = 18,
-    UPDATE_MODEL_DIRICHLET = 19,
-    UPDATE_SINGLE_BL_GUIDED = 20,
-    E_SPR = 21,
-    E_TBR = 22,
-    PARSIMONY_SPR= 23 , 
-    BRANCH_COLLAPSER = 24
+  {    
+    ST_NNI= 0, 
+    E_SPR = 1,
+    E_TBR = 2,
+    PARSIMONY_SPR= 3 , 
+    GUIDED_SPR = 4,
+
+    BRANCH_SLIDER = 5 ,
+    TL_MULT = 6, 
+    BRANCH_COLLAPSER = 7,
+    NODE_SLIDER = 8,
+    BRANCH_LENGTHS_MULTIPLIER = 9 , 
+    UPDATE_SINGLE_BL_GUIDED = 10 , 
+
+    REVMAT_SLIDER = 11 ,
+    REVMAT_DIRICHLET = 12, 
+
+    RATE_HET_SLIDER = 13, 
+    RATE_HET_MULTI = 14, 
+    
+    FREQUENCY_SLIDER = 15, 
+    FREQUENCY_DIRICHLET = 16
+
     //PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   } proposal_type;
 
@@ -93,19 +93,6 @@ public:
 #ifdef _INCLUDE_DEFINITIONS
 
 
-// i really hate to this ... 
-// category_t categoriesOfProposals = 
-//   {
-//     TOPOLOGY, 
-//     SUBSTITUTION_RATES, 
-//     RATE_HETEROGENEITY, 
-//     RATE_HETEROGENEITY, 
-
-    
-//   } ; 
-
-
-
 GlobalVariables globals; 
 
 /* for crude performance measurements */
@@ -117,9 +104,4 @@ extern int processID; 		// needed for raxml
 extern double timeIncrement;  
 
 #endif
-
-
-
-
-
 

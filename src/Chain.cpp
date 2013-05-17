@@ -82,7 +82,7 @@ void Chain::saveTreeStateToChain()
       partInfo.setAlpha( partitionTr->alpha) ; 
 
       vector<double> tmp; 
-      for(int i = 0; i < Partition::numStateToNumInTriangleMatrix(partitionTr->states); ++i)
+      for(int i = 0; i < numStateToNumInTriangleMatrix(partitionTr->states); ++i)
 	tmp.push_back(partitionTr->substRates[i]); 
       partInfo.setRevMat(tmp); 
       tmp.clear(); 
@@ -106,12 +106,10 @@ void Chain::applyChainStateToTree()
       traln->setAlphaBounded(alpha,i) ; 
       
       vector<double> revMat = state.accessPartition(i).getRevMat();       
-      for(nat j = 0; j < revMat.size(); ++j)
-	traln->setSubstBounded(revMat[j], i,j); 
+      traln->setRevMatBounded(revMat, i); 
       
       vector<double> stateFreqs = state.accessPartition(i).getStateFreqs(); 
-      for(nat j = 0; j < stateFreqs.size(); ++j)
-	traln->setFrequencyBounded(stateFreqs[j], i,j); 
+      traln->setFrequenciesBounded(stateFreqs, i); 
 
       traln->initRevMat(i);
       traln->discretizeGamma(i);	 
@@ -165,13 +163,15 @@ void Chain::printParams(FILE *fh)
 
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
-      pInfo *partition = traln->getPartition(i); 
       fprintf(fh, "\t%f\t%f", traln->accessPartitionLH( i),traln->getAlpha(i)) ; 
+
+      auto revMat = traln->getRevMat(i);
+      for(auto r : revMat)
+	fprintf(fh, "\t%.2f", r); 
       
-      for(int j = 0; j < Partition::numStateToNumInTriangleMatrix(partition->states) ; ++j) 
-	fprintf(fh,"\t%.2f", partition->substRates[i]); 
-      for(int j = 0; j < partition->states; ++j)
-	fprintf(fh,"\t%.2f", traln->getFrequency(i,j)); 
+      auto freqs = traln->getFrequencies(i); 
+      for(auto f : freqs)
+	fprintf(fh, "\t%.2f", f); 
     }
 
   fprintf(fh, "\n"); 

@@ -49,6 +49,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 
   /* TODO assert that the pruned subtree is not too big (s.t. we cannot find any insertion points)  */
 
+  // cout << "subtree " << start  << endl; 
 
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
@@ -113,6 +114,8 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   drawPathForESPR( traln,rand ,stopProb); 
 
   modifiedPath.saveBranchLengthsPath(traln); 
+
+  // cout<< modifiedPath << endl; 
 
   move.applyPathAsESPR(traln, modifiedPath);
 

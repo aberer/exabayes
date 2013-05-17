@@ -10,9 +10,15 @@ using namespace std;
 #include "Priors.hpp"
 #include "branch.h"
 #include "axml.h"
+// #include "Partition.hpp"
 
-// #include "LnlRestorer.hpp"
+static int numStateToNumInTriangleMatrix(int numStates) 
+{  
+  return (  numStates * numStates - numStates) / 2 ; 
+}
+
 class LnlRestorer; 
+class Partition; 
 
 /** 
     @brief mostly wraps the legacy tr and partition list     
@@ -61,8 +67,8 @@ public:
   double getTreeLength() const ; 
 
   // these are not your average setters! They modify the original value
-  void setFrequencyBounded(double &newValue, int model, int position ); 
-  void setSubstBounded(double &newValue, int model, int position); 
+  void setFrequenciesBounded(vector<double> &newValues, int model ); 
+  void setRevMatBounded(vector<double> &newValues, int model); 
   void setBranchLengthBounded(double &newValue, int model, nodeptr p); 
   void setAlphaBounded(double &newValue, int model); 
   
@@ -85,11 +91,11 @@ public:
   // saver and if we want to do something globally (e.g., print), then
   // it can simply be added to these functions.
   double getBranchLength(nodeptr p, int model) const {return p->z[model] ;  }
-  double getSubstRate(int model, int position) const { return getPartition(model)->substRates[position]; }
-  double getFrequency(int model, int position) const {pInfo *partition = getPartition(model); return partition->frequencies[position]; }
+
+  vector<double> getRevMat(int model) const ; 
+  vector<double> getFrequencies(int model) const; 
+
   double getAlpha(int model) const {pInfo *partition = getPartition(model) ; return partition->alpha; } 
-
-
   bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
 
 #if HAVE_PLL != 0
@@ -132,8 +138,6 @@ private:
   // void initializeTreePLL();
   void initializePartitionsPLL(string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
-
 };  
-
 
 #endif

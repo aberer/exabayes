@@ -33,8 +33,6 @@ private:
   vector<double> values; 
 }; 
 
-
 #include "PartitionProposalImpl.hpp"
-
 
 #endif

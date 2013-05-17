@@ -10,8 +10,12 @@
 class FrequencyParameter
 {
 public: 
-  static void setParameters(TreeAln &traln, int model, vector<double> vals) {     for(nat i = 0; i < vals.size(); ++i) traln.setFrequencyBounded(vals[i], model, i); }
-  static vector<double> getParameters(TreeAln &traln, int model) { vector<double> result; for(int i = 0; i < 4; ++i) result.push_back( traln.getFrequency(model, i) ); return result; }
+  static void setParameters(TreeAln &traln, int model, vector<double> vals) 
+  { 
+    traln.setFrequenciesBounded(vals, model);
+  }
+
+  static vector<double> getParameters(TreeAln &traln, int model) { return traln.getFrequencies(model) ; }
 
   static void updatePrior(const TreeAln &traln, PriorBelief &prior, vector<double> oldVals, vector<double>newVals) 
   { 
@@ -26,8 +30,12 @@ public:
 class RevMatParameter
 {
 public: 
-  static void   setParameters(TreeAln &traln, int model, vector<double> values) { for(nat i = 0; i < values.size() ;++i) traln.setSubstBounded(values[i], model, i);   }
-  static vector<double> getParameters(TreeAln &traln, int model) { vector<double> result; for(int i = 0; i < 6 ; ++i) result.push_back(traln.getSubstRate(model, i)); return result;  }  
+  static void setParameters(TreeAln &traln, int model, vector<double> values) 
+  { 
+    traln.setRevMatBounded(values, model) ; 
+  } 
+  
+  static vector<double> getParameters(TreeAln &traln, int model) { return traln.getRevMat(model);  }  
   static void init(TreeAln &traln, int model){traln.initRevMat(model);}
   static void updatePrior(const TreeAln &traln, PriorBelief &prior, vector<double> oldVals, vector<double>newVals) 
   {  

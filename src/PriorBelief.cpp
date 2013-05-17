@@ -85,9 +85,7 @@ double PriorBelief::scoreRevMats(const TreeAln &traln)
   double result = 0; 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      vector<double> rates; 
-      for(int j = 0; j < 6; ++j )
-	rates.push_back(traln.getSubstRate(i,j));
+      auto rates = traln.getRevMat(i);
       result += revMatPr->getLogProb(rates);
     }
   return result; 
@@ -117,9 +115,7 @@ double PriorBelief::scoreStateFreqs(const TreeAln &traln)
   double result = 0; 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      vector<double> freq; 
-      for(int j = 0; j < 4; ++j)	// TODO 
-	freq.push_back(traln.getFrequency(i,j));
+      auto freq = traln.getFrequencies(i); 
       result += stateFreqPr->getLogProb(freq);
     }
   return result; 

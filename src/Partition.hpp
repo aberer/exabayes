@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "TreeAln.hpp"
+
 
 class Partition 
 {
@@ -22,11 +24,6 @@ public:
   void setRevMat(vector<double> _revMat ) {revMat = _revMat; }
   void setStateFreqs(vector<double> _stateFreqs) {stateFreqs = _stateFreqs; }
 
-  
-  static int numStateToNumInTriangleMatrix(int numStates) 
-  {  
-    return (  numStates * numStates - numStates) / 2 ; 
-  }
 
   double getAlpha() const {return alpha; }
   vector<double> getRevMat() const {return revMat; }

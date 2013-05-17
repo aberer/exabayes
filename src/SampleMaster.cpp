@@ -5,7 +5,6 @@
 #include "Block.hpp"
 #include "output.h"
 #include "eval.h"
-// #include "adapters.h"
 #include "SampleMaster.hpp"
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
@@ -356,10 +355,6 @@ void SampleMaster::finalizeRuns()
 }
 
 
-
-
-
-
 /** 
     @brief sets up the proposals depending on the prior configuration 
     
@@ -384,7 +379,7 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
 	    case NODE_SLIDER:
 	      proposal = new NodeSlider( weight, INIT_NODE_SLIDER_MULT); 
 	      break; 
-	    case UPDATE_MODEL: 
+	    case REVMAT_SLIDER: 
 	      proposal = new PartitionProposal<SlidingProposal, RevMatParameter>(weight, INIT_RATE_SLID_WIN, "revMatSlider"); 
 	      break; 
 	    case FREQUENCY_SLIDER:
@@ -405,20 +400,17 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
 	    case ST_NNI: 
 	      proposal = new StatNNI( weight, INIT_NNI_MULT); 
 	      break; 
-	    case GAMMA_MULTI: 
+	    case RATE_HET_MULTI: 
 	      proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>( weight, INIT_GAMMA_MULTI, "rateHetMulti"); 
 	      break; 
-	    case UPDATE_GAMMA: 
+	    case RATE_HET_SLIDER: 
 	      proposal = new PartitionProposal<SlidingProposal,RateHetParameter>( weight, INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
 	      break; 
-	    case UPDATE_GAMMA_EXP: 
-	      proposal = new PartitionProposal<ExponentialProposal,RateHetParameter>( weight, 0, "rateHetExp"); 
-	      break; 
-	    case UPDATE_FREQUENCIES_DIRICHLET: 
+	    case FREQUENCY_DIRICHLET: 
 	      proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>( weight, INIT_DIRICHLET_ALPHA, "freqDirich"); 
 	      break; 
-	    case UPDATE_MODEL_DIRICHLET: 
-	      proposal = new PartitionProposal<DirichletProposal,RevMatParameter>(weight, INIT_DIRICHLET_ALPHA, "revMatDirich"); 
+	    case REVMAT_DIRICHLET: 
+	      proposal = new PartitionProposal<DirichletProposal,RevMatParameter>(weight, INIT_DIRICHLET_ALPHA, "revMatDirich"); 	      
 	      break; 
 	    case GUIDED_SPR:
 	      proposal = new RadiusMlSPR( weight, guidedRadius ); 

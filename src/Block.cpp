@@ -176,30 +176,31 @@ void ExabayesBlock::Read(NxsToken &token)
 // NOTICE 
 void ExabayesBlock::setupMap()
 {
-  name2proposal["MODEL"] = UPDATE_MODEL; 
-  name2proposal["RATEHETSLIDER"] =  UPDATE_GAMMA;
-  name2proposal["TREELENGTHMULT"] =  TL_MULT;
-  name2proposal["RATEHETMULTI"] =  GAMMA_MULTI;
-  name2proposal["RATEHETEXP"] =  UPDATE_GAMMA_EXP;
-  name2proposal["SINGLEBRANCH"] =  UPDATE_SINGLE_BL;
-  name2proposal["SINGLEBRANCHEXP"] =  UPDATE_SINGLE_BL_EXP;
-  name2proposal["SINGLEBRANCHBIUNIF"] =  UPDATE_SINGLE_BL_BIUNIF;
-  name2proposal["MODELBIUNIF"] =  UPDATE_MODEL_BIUNIF;
-  name2proposal["MODELSINGLEBIUNIF"] =  UPDATE_MODEL_SINGLE_BIUNIF;
-  name2proposal["MODELALLBIUNIF"] =  UPDATE_MODEL_ALL_BIUNIF;
-  name2proposal["MODELPERMBIUNIF"] =  UPDATE_MODEL_PERM_BIUNIF;
-  name2proposal["MODELDIRICHLET"] =  UPDATE_MODEL_DIRICHLET;
-  name2proposal["FREQUENCIES"] =  UPDATE_FREQUENCIES_BIUNIF;
-  name2proposal["ESPR"] =  E_SPR;
-  name2proposal["BRANCHMULTI"] =  BRANCH_LENGTHS_MULTIPLIER;
-  name2proposal["GUIDEDBL"] =  UPDATE_SINGLE_BL_GUIDED;
-  name2proposal["FREQUENCYSLIDER"] =  FREQUENCY_SLIDER;
-  name2proposal["GUIDEDSPR"] =  GUIDED_SPR;
+  // TODO 
   name2proposal["STNNI"] =  ST_NNI;
-  name2proposal["NODESLIDER"] =  NODE_SLIDER;
-  name2proposal["FREQUENCYDIRICHLET"] =  UPDATE_FREQUENCIES_DIRICHLET;
+  name2proposal["ESPR"] =  E_SPR;
   name2proposal["ETBR"] =  E_TBR;
   name2proposal["PARSIMONYSPR"] =  PARSIMONY_SPR;
+  name2proposal["GUIDEDSPR"] =  GUIDED_SPR;
+  
+  // BL 
+  name2proposal["BRANCHSLIDER"] =  BRANCH_SLIDER;
   name2proposal["BRANCHCOLLAPSER"] = BRANCH_COLLAPSER; 
+  name2proposal["TREELENGTHMULT"] =  TL_MULT;
+  name2proposal["BRANCHMULTI"] =  BRANCH_LENGTHS_MULTIPLIER;
+  name2proposal["GUIDEDBL"] =  UPDATE_SINGLE_BL_GUIDED;
+  name2proposal["NODESLIDER"] =  NODE_SLIDER;
+  
+  // revmat 
+  name2proposal["REVMATSLIDER"] = REVMAT_SLIDER; 
+  name2proposal["REVMATDIRICHLET"] =  REVMAT_DIRICHLET;
+  
+  // rate heterogeneity 
+  name2proposal["RATEHETSLIDER"] =  RATE_HET_SLIDER;
+  name2proposal["RATEHETMULTI"] =  RATE_HET_MULTI;
+
+  // state frequencies
+  name2proposal["FREQUENCYSLIDER"] =  FREQUENCY_SLIDER;
+  name2proposal["FREQUENCYDIRICHLET"] =  FREQUENCY_DIRICHLET;
 }
 

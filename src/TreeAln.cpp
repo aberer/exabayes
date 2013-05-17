@@ -125,6 +125,7 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
   partitions = pl;
   this->initializeTreePLL(_byteFileName);
+
 #else 
   extern char byteFileName[1024]; 
   strcpy(byteFileName, _byteFileName.c_str() ) ;  
@@ -144,6 +145,19 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
   
   initializeTree(tr, &adef);   
 #endif  
+
+
+  // correct default values 
+
+  // HACK
+  for(int i = 0; i < getNumberOfPartitions(); ++i)
+    {
+      pInfo *partition = getPartition(i); 
+      vector<double> tmp(partition->states, 1.0 / (double)partition->states ); 
+      setFrequenciesBounded(tmp, i); 
+      vector<double>tmp2( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)); 
+      setRevMatBounded(tmp2,i );       
+    }
 }
 
 
@@ -414,36 +428,59 @@ void TreeAln::initRevMat(int model)
 
 
 
+void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
+{  
+  int changed = 0; 
+  double sum =0 ; 
+  for(double &v : newValues)
+    if(v < freqMin)
+      {
+	v = freqMin; 
+	changed++; 
+      }
+    else 
+      sum += v; 
 
-/** 
-    @brief save setting method for a frequency parameter 
- */  
-void TreeAln::setFrequencyBounded(double &newValue, int model, int position )
-{
-  if(newValue < freqMin )
-    newValue = freqMin; 
+  // @todo kassian check 
+
+  sum += ( changed * freqMin ); 
+  for(double &v : newValues)
+    if(v != freqMin)
+      v /= sum; 	  
 
   pInfo *partition = getPartition(model); 
-  // TODO assert? 
-  partition->frequencies[position] = newValue; 
+  for(nat i = 0; i < newValues.size(); ++i)
+    partition->frequencies[i] = newValues[i];   
+
+  // cout << "FREQ after: " ; 
+  // for(auto v : newValues)
+  //   cout << v << ","; 
+  // cout << endl;     
 }
 
-/** 
-    @brief save setting method for a substitution parameter 
-    @return newValue after check
- */  
-void TreeAln::setSubstBounded(double &newValue, int model, int position)
+
+void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
 {
-  if(newValue < rateMin)
-    newValue = rateMin; 
-  if(rateMax < newValue )
-    newValue = rateMax; 
+  // @todo kassian check 
 
-  pInfo *partition = getPartition(model);
-  assert(position < partition->states * partition->states - partition->states); 
-  partition->substRates[position] = newValue; 
+  for(double &v : newValues)
+    if(v < rateMin)
+      v = rateMin; 
+    else if(rateMax < v )
+      v = rateMax; 
+
+#if 0
+  double& normValue = newValues[newValues.size()-1]; 
+  for(double &v : newValues)
+    if(v != rateMax && v != rateMin)
+      v /= normValue; 
+  assert(normValue == 1);
+#endif
+
+  pInfo *partition = getPartition(model); 
+  for(nat i = 0; i < newValues.size(); ++i)
+    partition->substRates[i] = newValues[i]; 
 }
-
 
 
 /** 
@@ -671,3 +708,20 @@ void TreeAln::setBranchLengthUnsafe(branch b )
 } 
 
 
+vector<double> TreeAln::getRevMat(int model) const 
+{
+  vector<double> result; 
+  pInfo *partition = getPartition(model); 
+  for(int i =0 ; i < numStateToNumInTriangleMatrix(partition->states); ++i)
+    result.push_back(partition->substRates[i]);
+  return result; 
+}
+
+vector<double> TreeAln::getFrequencies(int model) const
+{
+  vector<double> result; 
+  pInfo* partition = getPartition(model) ; 
+  for(int i = 0; i < partition->states; ++i) 
+    result.push_back(partition->frequencies[i]); 
+  return result; 
+}
