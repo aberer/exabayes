@@ -1,11 +1,58 @@
  #NEXUS
-begin EXABAYES; 
+begin params; 
+[================================================================]
+[ LINKING of parameters across partitions ]
+[================================================================]
+[ notice: everything (except branch lengths) is unlinked by default ]
+
+stateFreq = (0,1/2/3)
+rateHet = (0,2/3/1)
+
+[ TODO: branch lengths ]
+end;  
+
+
+
+begin PRIOR; 
+
+[================================================================]
+[ PRIOR configuration ]
+[================================================================]
+
+[ topology: constraints not enabled currently  ]
+[ topoPr fixed()  ] 
+[ topoPr uniform() ] 
+
+[ branch lengths: TODO per-partition,clock ]
+[ brlenpr uniform(0.0000001,4)  ] 
+[ brlenpr fixed()  ]      [ you should have provided a user tree with branch lengths ]  
+[  brlenpr{3} exponential(10.0) ] 
+
+[ substitution matrix ]
+[ revMatPr dirichlet(1,2,3,4,5,6)   ] 
+[ revMatPr fixed(1,2,3,4,5,6) ] 
+
+[ state frequencies ] 
+stateFreqPr{1}  dirichlet(1.0,1.0,1.0,1.0)  
+[ stateFreqPr fixed(empirical) ] [ NOT implemented yet ] 
+[ stateFreqPr fixed(1,2,3,4)   ] 
+
+[ rate heterogeneity: alpha parameter ]
+[ shapePr exponential(1) ]
+[ shapePr uniform(0.0000001,200) ] 
+[ shapePr fixed(1)   ] 
+
+[ todo: prior in substitution matrices ]
+
+end; 
+
+begin runconfig; 
    [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
 
       [ RUN PARAMETERS ]
       diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
       samplingFrequency 50 	[ take a sample every n generations ]
-      numIndiChains  1 		[ number of independant chains/runs ]
+      numIndiChains  4 		[ number of independant chains/runs ]
       numGen 10000             [ if numIndiChains = 1, stop simulation after that many generations ] 
       tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
       printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
@@ -23,67 +70,48 @@ begin EXABAYES;
 
       [ BURNIN ] 
       [ comment out one of the two options ]      
-      [ burninGen 2000    [ exact number of generations that are discarded for diagnostics ] ] 
+      [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
       burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
+end; 
 
 
-      [================================================================]
-      [ PRIOR configuration ]
-      [================================================================]
-
-      [ topology: constraints not enabled currently  ]
-        [ topoPr fixed()  ] 
-      [ topoPr uniform() ] 
-
-      [ branch lengths: TODO per-partition,clock ]
-        [ brlenpr uniform(0.0000001,4)  ] 
-        [ brlenpr fixed()  ]      [ you should have provided a user tree with branch lengths ]  
-      [  brlenpr exponential(10.0) ] 
-
-      [ substitution matrix ]
-       [ revMatPr dirichlet(1,2,3,4,5,6)   ] 
-      [ revMatPr fixed(1,2,3,4,5,6) ] 
-
-      [ state frequencies ] 
-      [ stateFreqPr  dirichlet(1.0,1.0,1.0,1.0)  ] 
-      [ stateFreqPr fixed(empirical) ] [ NOT implemented yet ] 
-       [ stateFreqPr fixed(1,2,3,4)   ] 
-
-      [ rate heterogeneity: alpha parameter ]
-      [ shapePr exponential(1) ]
-      [ shapePr uniform(0.0000001,200) ] 
-       [ shapePr fixed(1)   ] 
+[
+begin exabayes; 
 
       [================================================================]
       [ PROPOSAL configuration ]
       [================================================================]
 
       [ TOPOLOGY ]
-      eSPR 10  [ ok, 10% in mb  ]
-      stNNI 10  [ ok, 10% in mb]	
-      eTBR  10 [ ok, 10% in mb ] 
-      parsimonySPR 10 [ ok, 10% in mb ]
+      eSPR 16.94  [ ok, 10% in mb  ]
+      stNNI 8.47  [ ok, 10% in mb]	
+      eTBR  8.47 [ ok, 10% in mb ] 
+      parsimonySPR 0 [ ok, 10% in mb ]
       guidedSPR 0   [ broken ] 
 
       [ BRANCH LENGTHS ] 
       branchSlider 0 [ ok ] 
-      branchMulti 40 [ ok, 40% in mrb ]
-      treeLengthMult 4 [ ok, 4 % in mrb ]
-      nodeSlider  10 [ ok, 10% in mrb ]
+      branchMulti 33.9 [ ok, 40% in mrb ]
+      treeLengthMult 3.39 [ ok, 4 % in mrb ]
+      nodeSlider  8.47 [ ok, 10% in mrb ]
       GuidedBL 0 []
       branchCollapser 0    [ ok ]
 
       [ RATE HETEROGENEITY ]
       rateHetSlider 0 [ broken, 1 in mrb ]		
-      rateHetMulti 2   [ ok, 1 in mrb  ]
+      rateHetMulti 1.69   [ ok, 1 in mrb  ]
 
       [ REVMAT ] 
-      revMatSlider 1 [  ok, 1 in mrb ]		
-      revMatDirichlet 1  [ ok, 1 in mrb ]
+      revMatSlider 3.4 [  ok, 1 in mrb ]		
+      revMatDirichlet 3.4  [ ok, 1 in mrb ]
 
       [ FREQUENIES ]
-      FrequencySlider 1  [ ok, 1 in mrb  ] 
-      FrequencyDirichlet 1  [ ok, 1 in mrb ]
+      FrequencySlider 3.4  [ ok, 1 in mrb  ] 
+      FrequencyDirichlet 3.4  [ ok, 1 in mrb ]
+
+      [ AA models ]
+      aaModelJump 0  [ todo ]
+
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
@@ -93,4 +121,10 @@ begin EXABAYES;
 
       [================================================================]
 
+
 end;
+
+ 
+
+ 
+]

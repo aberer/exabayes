@@ -1046,4 +1046,5 @@ charset gene4 = 1101-1200;
 partition  scheme = 4: gene1,gene2, gene3, gene4; 
 set partition = scheme ; 
 lset nst=6 rates=gamma; 
+unlink statefreq=(all) revmat=(all)  shape=(all)    ; 
 end; 

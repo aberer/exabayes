@@ -18,6 +18,7 @@
 #include "CoupledChains.hpp"
 #include "ConfigReader.hpp"
 #include "ParallelSetup.hpp"
+#include "BlockRunParameters.hpp"
 
 using namespace std; 
 
@@ -31,49 +32,22 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights ); 
+  void initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights, const TreeAln& traln ); 
   void setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior);
 
   // HERE 
   void setGuidedRadius ( int guidedRadius ) {this->guidedRadius = guidedRadius ; }
   void setParsimonyWarp   ( double parsimonyWarp   ) {this->parsimonyWarp   = parsimonyWarp   ; }
   void setEsprStopProp ( double esprStopProp ) {this->esprStopProp = esprStopProp ; }
-  void setTuneFreq  ( int tuneFreq  ) {this->tuneFreq  = tuneFreq  ; }
-
-  void setNumGen(int numGen){this->numGen = numGen; }
-  void setDiagFreq(int diagFreq) {this->diagFreq = diagFreq; }
-  void setAsdsfIgoreFreq(double asdsfIgnoreFreq){this->asdsfIgnoreFreq = asdsfIgnoreFreq; }
-  void setRunId ( string runId ) {this->runId = runId ; }
-  void setNumRunConv ( int numRunConv ) {this->numRunConv = numRunConv ; }
-  void setSamplingFreq ( int samplingFreq ) {this->samplingFreq = samplingFreq ; }
-  void setBurninProportion ( double burninProportion ) {this->burninProportion = burninProportion ; }
-  void setBurninGen ( int burninGen ) {this->burninGen = burninGen ; }
-  void setAsdsfConvergence ( double asdsfConvergence ) {this->asdsfConvergence = asdsfConvergence ; }
-  void setNumCoupledChains(int numCoupledChains) {this->numCoupledChains = numCoupledChains; }
-  void setPrintFreq(int printFreq){this->printFreq = printFreq; }
-  void setHeatFactor(double heat) {this->heatFactor = heat; }
-  void setSwapInterval(int swapI){this->swapInterval = swapI; }
-  void setTuneHeat(bool heat){this->tuneHeat = heat; }
 
   void validateRunParams(); 	// TODO  
 
 private: 
+  void initTrees(vector<TreeAln*> &trees, const CommandLine &cl ); 
+  bool convergenceDiagnostic(); 
+
   vector<CoupledChains> runs; 
-  int diagFreq ; 
-  double asdsfIgnoreFreq; 
-  double asdsfConvergence; 
-  int burninGen; 
-  double burninProportion; 
-  int samplingFreq; 
-  int numRunConv; 
-  int numGen; 
-  string runId; 
-  int numCoupledChains; 
-  int printFreq; 
-  double heatFactor ; 
-  int swapInterval; 
-  bool tuneHeat; 
-  int tuneFreq;  
+
 
   // move options
   double esprStopProp; 
@@ -84,8 +58,7 @@ private:
 
   double initTime; 
 
-  void initTrees(vector<TreeAln*> &trees, const CommandLine &cl ); 
-  bool convergenceDiagnostic(); 
+  BlockRunParameters runParams;
 };  
 
 

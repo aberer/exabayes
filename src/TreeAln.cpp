@@ -150,14 +150,17 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
   // correct default values 
 
   // HACK
+#if 0 
   for(int i = 0; i < getNumberOfPartitions(); ++i)
     {
       pInfo *partition = getPartition(i); 
+
       vector<double> tmp(partition->states, 1.0 / (double)partition->states ); 
       setFrequenciesBounded(tmp, i); 
       vector<double>tmp2( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)); 
       setRevMatBounded(tmp2,i );       
     }
+#endif
 }
 
 
@@ -283,14 +286,14 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
     {
       pInfo *partitionRhs = rhs.getPartition(i); 
       pInfo *partitionLhs = this->getPartition(i); 
-      memcpy(partitionLhs->frequencies, partitionRhs->frequencies, 4 * sizeof(double)); 
-      memcpy(partitionLhs->substRates, partitionRhs->substRates, 6 * sizeof(double)); 
+      memcpy(partitionLhs->frequencies, partitionRhs->frequencies, partitionRhs->states * sizeof(double)); 
+      memcpy(partitionLhs->substRates, partitionRhs->substRates, numStateToNumInTriangleMatrix(partitionRhs->states) * sizeof(double)); 
       partitionLhs->alpha = partitionRhs->alpha; 
       this->initRevMat(i);
       this->discretizeGamma(i);       
     }
-  
 
+  
   this->unlinkTree();
   int mxtips = rhs.getTr()->mxtips ;
   tree *rhsTree = rhs.getTr(),
@@ -679,9 +682,6 @@ double TreeAln::getTreeLength() const
 }
 
 
-
-
-
 void TreeAln::collapseBranch(branch b)
 {
   assert(getNumBranches() == 1 ); 
@@ -725,3 +725,14 @@ vector<double> TreeAln::getFrequencies(int model) const
     result.push_back(partition->frequencies[i]); 
   return result; 
 }
+
+bool TreeAln::revMatIsImmutable(int model) const
+{
+#ifdef UNSURE
+  assert(0); 
+#endif
+    
+  pInfo *partition = getPartition(model); 
+    
+  return partition->states == 20 && partition->protModels != GTR; 
+} 

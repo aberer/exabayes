@@ -2,7 +2,9 @@
 #include <fstream>
 #include <memory>
 
-#include "Block.hpp"
+
+#include "BlockRunParameters.hpp"
+#include "ConfigReader.hpp"
 #include "output.h"
 #include "eval.h"
 #include "SampleMaster.hpp"
@@ -19,6 +21,8 @@
 #include "NodeSlider.hpp"
 #include "BranchLengthMultiplier.hpp"
 #include "BranchCollapser.hpp"
+#include "AminoModelJump.hpp"
+
 
 // TODO =( 
 #include "GlobalVariables.hpp"
@@ -38,22 +42,7 @@ static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns);
 static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns); 
 
 SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl) 
-  :  diagFreq(1000)
-  , asdsfIgnoreFreq(0.1)
-  , asdsfConvergence(0.01)
-  , burninGen(0)
-  , burninProportion(0)
-  , samplingFreq(50)
-  , numRunConv(2)
-  , numGen(50000)
-  , runId(cl.getRunid())
-  , numCoupledChains(1)
-  , printFreq(500)
-  , heatFactor(0.1)
-  , swapInterval(1)
-  , tuneHeat(true)
-  , tuneFreq(50)
-  , esprStopProp(0.5)
+  : esprStopProp(0.5)
   , parsimonyWarp(0.1)
   , guidedRadius(5)
   , pl(pl)
@@ -65,21 +54,22 @@ SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl)
   PriorBelief prior;
   vector<Category> proposals; 
   vector<double> proposalWeights; 
-  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeights);
-  assert(tuneFreq > 0); 
+
+  vector<TreeAln*> trees; 
+  initTrees(trees, cl );
+
+  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeights, *(trees[0]));
+  assert(runParams.getTuneFreq() > 0); 
   assert(esprStopProp > 0) ;
   setupProposals(proposals, proposalWeights, prior);
 
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
   
-  vector<TreeAln*> trees; 
-  initTrees(trees, cl );
-
   Randomness masterRand(cl.getSeed());   
   vector<int> runSeeds; 
   vector<int> treeSeeds; 
-  for(int i = 0; i < numRunConv;++i)
+  for(int i = 0; i < runParams.getNumRunConv();++i)
     {
       randCtr_t r = masterRand.generateSeed();
       runSeeds.push_back(r.v[0]); 
@@ -87,7 +77,7 @@ SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl)
     }
 
 
-  for(int i = 0; i < numRunConv ; ++i)
+  for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {      
       if( i < numTreesAvailable)
 	initWithStartingTree(treeFH, trees); 
@@ -95,12 +85,12 @@ SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl)
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
       if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
-	runs.push_back(CoupledChains(runSeeds[i], numCoupledChains, trees, i, printFreq, swapInterval, samplingFreq, heatFactor, cl.getRunid(), cl.getWorkdir(), prior, proposals, tuneFreq));       
+	runs.push_back(CoupledChains(runSeeds[i], runParams.getNumCoupledChains(), trees, i, runParams.getPrintFreq(), runParams.getSwapInterval(), runParams.getSamplingFreq(), runParams.getHeatFactor(), cl.getRunid(), cl.getWorkdir(), prior, proposals, runParams.getTuneFreq())); 
     }
   
-  if(tuneHeat)
+	  if(runParams.getTuneHeat())
     for(CoupledChains& r : runs)
-      r.enableHeatTuning(tuneFreq); 
+      r.enableHeatTuning(runParams.getTuneFreq()); 
 
   if(numTreesAvailable > 0)
     fclose(treeFH); 
@@ -112,13 +102,13 @@ SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl)
 //STAY 
 bool SampleMaster::convergenceDiagnostic()
 {
-  if(numRunConv > 1)    
+  if(runParams.getNumRunConv() > 1)    
     { 
       vector<string> fns; 
-      for(int i = 0; i < numRunConv; ++i)
+      for(int i = 0; i < runParams.getNumRunConv(); ++i)
 	{
 	  stringstream ss; 
-	  ss <<  PROGRAM_NAME << "_topologies." << runId << "." << i; 
+	  ss <<  PROGRAM_NAME << "_topologies." << runParams.getRunId() << "." << i; 
 	  fns.push_back(ss.str());
 	}
      
@@ -126,7 +116,7 @@ bool SampleMaster::convergenceDiagnostic()
 
       int end = asdsf.getEnd();
       
-      int treesInBatch = diagFreq / samplingFreq; 
+      int treesInBatch = runParams.getDiagFreq() / runParams.getSamplingFreq(); 
 
       end /= treesInBatch; 
       end *= treesInBatch;       
@@ -134,11 +124,11 @@ bool SampleMaster::convergenceDiagnostic()
       if(end > 0)
 	{	  
 	  asdsf.setEnd(end);
-	  if( burninGen > 0 )
+	  if( runParams.getBurninGen() > 0 )
 	    {
-	      assert(burninProportion == 0.); 
+	      assert(runParams.getBurninProportion() == 0.); 
 
-	      int treesToDiscard =  burninGen / samplingFreq; 
+	      int treesToDiscard =  runParams.getBurninGen() / runParams.getSamplingFreq(); 
 
 	      if(end < treesToDiscard + 2 )
 		return false; 
@@ -147,20 +137,20 @@ bool SampleMaster::convergenceDiagnostic()
 	    }
 	  else 
 	    {
-	      assert(burninGen == 0); 
-	      int start = (int)((double)end * burninProportion  ); 
+	      assert(runParams.getBurninGen() == 0); 
+	      int start = (int)((double)end * runParams.getBurninProportion()  ); 
 	      asdsf.setStart(start);
 	    } 
 
 	  asdsf.extractBips();
-	  double asdsfVal = asdsf.computeAsdsf(asdsfIgnoreFreq);
+	  double asdsfVal = asdsf.computeAsdsf(runParams.getAsdsfIgnoreFreq());
 
 #if HAVE_PLL == 0      
 	  if(processID == 0)
 #endif 
 	    tout  << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
 
-	  return asdsfVal < asdsfConvergence; 
+	  return asdsfVal < runParams.getAsdsfConvergence(); 
 
 	}
       else 
@@ -169,7 +159,7 @@ bool SampleMaster::convergenceDiagnostic()
     }
   else 
     {
-      return runs[0].getChain(0)->getGeneration() > numGen;
+      return runs[0].getChain(0)->getGeneration() > runParams.getNumGen();
     }
 }
 
@@ -259,37 +249,47 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights )
+void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights, const TreeAln &traln )
 {
-  ConfigReader reader;   
-  ifstream fh(configFileName);
-  NxsToken token(fh);
+  ConfigReader reader; 
+  ifstream fh(configFileName); 
+  NxsToken token(fh); 
+
+  BlockParams paramBlock(traln.getNumberOfPartitions()); 
+  reader.Add(&paramBlock); 
+
+  BlockPrior priorBlock(traln.getNumberOfPartitions());
+  reader.Add(&priorBlock);
+
+  reader.Add(&runParams);
+
+  reader.Execute(token);
+
+  // auto parameters =  paramBlock.getParameters() ;
+  // cout << "parsed parameters: " ; 
+  // for(auto v : parameters)
+  //   cout << v << ","; 
+  // cout << endl; 
+  // assert(0); 
+
   
-  ExabayesBlock block(this);
-  reader.Add(&block) ; 
-  reader.Execute(token);  
+  // ConfigHandler conf(configFileName); 
 
-  block.fillProposalWeights(proposalWeights);
-  prior = block.getPrior();
+  assert(NOT_IMPLEMENTED); 
 
-  prior.addStandardPriors();
-
-  tout << endl << "Your prior belief consists of: "<< endl << prior << endl; 
-
-  validateRunParams();
 }
 
 
 void SampleMaster::validateRunParams()
 {
-  assert(numCoupledChains > 0); 
+  assert(runParams.getNumCoupledChains() > 0); 
   // TODO 
 }
 
 
 void SampleMaster::initTrees(vector<TreeAln*> &trees, const CommandLine &cl )
 {  
-  tout << endl << "Will run " << numRunConv << " runs in total with "<<  numCoupledChains << " coupled chains" << endl << endl; 
+  tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl; 
 
 #ifdef DEBUG_LNL_VERIFY
   globals.debugTree = new TreeAln();   
@@ -297,7 +297,7 @@ void SampleMaster::initTrees(vector<TreeAln*> &trees, const CommandLine &cl )
   globals.debugTree->enableParsimony();
 #endif
 
-  for(int i = 0; i < numCoupledChains; ++i)
+  for(int i = 0; i < runParams.getNumCoupledChains(); ++i)
     {
       TreeAln *traln = new TreeAln();
       traln->initializeFromByteFile(cl.getAlnFileName()); 
@@ -322,7 +322,7 @@ void SampleMaster::run()
       for(nat i = 0; i < runs.size(); ++i)
 	{
 	  auto run = runs[i]; 
-	  run.executePart(diagFreq);
+	  run.executePart(runParams.getDiagFreq());
 	}
 
       hasConverged = convergenceDiagnostic(); 
@@ -362,6 +362,8 @@ void SampleMaster::finalizeRuns()
 void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior)
 {
   vector<AbstractProposal*> prop; 
+  
+  vector<aaMatrix_t> someMatrices; // TODO, probably extract from prior belief 
 
   // initialize proposals 
   for(int i = 0; i < NUM_PROPOSALS ; ++i)
@@ -418,6 +420,9 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
 	    case BRANCH_COLLAPSER:
 	      proposal = new BranchCollapser(weight); 
 	      break; 
+	    case AMINO_MODEL_JUMP: 
+	      proposal = new AminoModelJump(weight, someMatrices);
+	      break; 
 	    default : 
 	      assert(0); 
 	    }
@@ -436,8 +441,8 @@ void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<d
     sum += p->getRelativeProbability();
 
   // create categories 
-  vector<string> allNames = {"", "Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
-  for(int i = 1; i < NUM_PROP_CATS+1; ++i)
+  vector<string> allNames = {"Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
+  for(int i = 0; i < NUM_PROP_CATS; ++i)
     {
       // fish out the correct proposals 
       vector<AbstractProposal*> pr; 

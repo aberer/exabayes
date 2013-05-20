@@ -1,8 +1,11 @@
 #ifndef _ABSTRACTPROPOSAL_H
 #define _ABSTRACTPROPOSAL_H
 
-#include "axml.h"
 #include <string>
+#include <vector>
+
+#include "axml.h"
+#include "RandomVariable.hpp"
 #include "SuccessCounter.hpp" 
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"
@@ -52,6 +55,8 @@ protected:
   category_t category; 
   double relativeProbability ; 	// probability relative to category
   // various parameters and stuff 
+
+  vector<RandomVariable> randomVariables; 
 }; 
 
 #endif

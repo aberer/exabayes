@@ -26,6 +26,7 @@ public:
     rhs->print(out); 
     return out; 
   }
+
 }; 
 
 
@@ -37,14 +38,8 @@ public:
   {
   }
 
-  virtual double getLogProb(vector<double> values) const 
-  {   
-    double result = densityDirichletWrapper(values, alphas); 
-
-    result = log(result);
-    
-    return result; 
-  } 
+  virtual double getLogProb(vector<double> values) const ; 
+ 
   
   virtual void print(ostream& out ) const 
   {
@@ -75,8 +70,8 @@ public:
     return resultVect;     
   }
 
-private: vector<double> alphas; 
-
+private: 
+  vector<double> alphas; 
 
 } ; 
 
@@ -129,7 +124,7 @@ public:
     if(minVal < value && value < maxVal )      
       return log(1 / (maxVal - minVal)); 
     else  
-     {
+      {
 	double result = numeric_limits<double>::lowest(); 
 	return result; 
       }

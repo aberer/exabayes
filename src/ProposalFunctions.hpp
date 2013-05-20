@@ -22,8 +22,14 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
     rand.drawDirichletExpected(tmpNew, tmp, 
 			       parameter * oldValues.size(),
 			       (int)oldValues.size());
+
+    // cout << "new proposal: " ; 
     for(nat i = 0; i < oldValues.size(); ++i)
-      newValues.push_back( tmpNew[i]); 
+      {
+	newValues.push_back( tmpNew[i]); 
+	// cout << tmpNew[i] << "," ; 
+      }
+    // cout << endl; 
 
     updateHastings(hastings, densityDirichlet(tmp, tmpNew, oldValues.size()) / densityDirichlet(tmpNew,tmp, oldValues.size()), "dirichlet"); 
 

@@ -10,7 +10,6 @@ using namespace std;
 #include "Priors.hpp"
 #include "branch.h"
 #include "axml.h"
-// #include "Partition.hpp"
 
 static int numStateToNumInTriangleMatrix(int numStates) 
 {  
@@ -109,15 +108,16 @@ public:
     alphaMin, alphaMax,
     freqMin; 
 
-  static const double zZero; 
-  
+  static const double zZero;   
   static const double initBL;  	// init values 
 
   friend ostream& operator<< (ostream& out,  TreeAln&  traln);
 
   void setRestorer(shared_ptr<LnlRestorer> rest){ restorer = rest; }
   auto getRestorer() const ->  shared_ptr<LnlRestorer> {return restorer;  }  
-
+  
+  /** @brief the partition does not have a revmat */ 
+  bool revMatIsImmutable(int model) const ; 
 
 private:   
   double getTreeLengthHelper(nodeptr p) const;
@@ -125,11 +125,10 @@ private:
   void initDefault();
   tree* tr;		// TODO replace with an object for cleanup 
   
-  bool parsimonyEnabled; 
-  
-  bool branchLengthsFixed; 
-  
+  bool parsimonyEnabled;   
+  bool branchLengthsFixed;   
   shared_ptr<LnlRestorer> restorer; 
+
 
 #if HAVE_PLL != 0
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 

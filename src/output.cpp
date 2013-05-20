@@ -3,7 +3,7 @@
 
 #include "axml.h"
 #include "GlobalVariables.hpp"
-#include "output.h"		// 
+#include "output.h"
 #include "TreeAln.hpp"
 #include "branch.h"
 

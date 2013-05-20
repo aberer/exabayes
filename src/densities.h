@@ -25,7 +25,8 @@ double gammaFunction(double alpha);
 /** @brief the beta function */ 
 double betaFunction(double *alpha, int length); 
 
-double densityDirichletWrapper(vector<double> values, vector<double> alphas); 
+double densityDirichletLog(double *values, double *alphas, int length); 
+double densityDirichletWrapper(vector<double> values, vector<double> alphas, bool logScale); 
 double exponentialDistribution(double value, double lambda); 
 
 #endif

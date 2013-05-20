@@ -20,11 +20,12 @@
 
 #define NUM_PROP_CATS 5 
 typedef enum _cats {
-  TOPOLOGY = 1  , 
-  BRANCH_LENGTHS = 2, 
-  FREQUENCIES = 3,
-  SUBSTITUTION_RATES = 4  ,
-  RATE_HETEROGENEITY = 5
+  TOPOLOGY = 0, 
+  BRANCH_LENGTHS = 1, 
+  FREQUENCIES = 2,
+  SUBSTITUTION_RATES = 3,
+  RATE_HETEROGENEITY = 4	// revmat: also uses aa-matrix
+  
 } category_t; 
 
 
@@ -33,7 +34,7 @@ typedef enum _cats {
 
 
 /* okay, so defining enums this way is rather save  */
-#define NUM_PROPOSALS (17) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
+#define NUM_PROPOSALS (18) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
 typedef enum
   {    
     ST_NNI= 0, 
@@ -56,7 +57,9 @@ typedef enum
     RATE_HET_MULTI = 14, 
     
     FREQUENCY_SLIDER = 15, 
-    FREQUENCY_DIRICHLET = 16
+    FREQUENCY_DIRICHLET = 16, 
+    
+    AMINO_MODEL_JUMP = 17
 
     //PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   } proposal_type;
@@ -84,14 +87,9 @@ public:
 #endif
 };
 
-
-
-
 #endif
 
-
 #ifdef _INCLUDE_DEFINITIONS
-
 
 GlobalVariables globals; 
 
@@ -104,4 +102,3 @@ extern int processID; 		// needed for raxml
 extern double timeIncrement;  
 
 #endif
-

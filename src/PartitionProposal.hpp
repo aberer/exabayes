@@ -1,14 +1,14 @@
 /** 
-    @file ParameterProposal.hpp
+    @file PartitionProposal.hpp
     
-    @brief represents proposals that change the alpha parameter of the
-    gamma distribution of rate heterogeneity.
+    @brief proposes to change ONE parameter (e.g., revmat, shape, stateFreq)
     
+    This parameter may be linked accross partitions.     
  */ 
 
 
-#ifndef _SIMPLERATEHET_H
-#define _SIMPLERATEHET_H
+#ifndef _PART_PROPO_H
+#define _PART_PROPO_H
 
 #include "AbstractProposal.hpp"
 
@@ -29,7 +29,8 @@ public:
 
 private: 
   int model; 			// which model
-  double parameter; 
+
+  double parameter; 		
   vector<double> values; 
 }; 
 

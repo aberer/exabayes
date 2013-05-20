@@ -24,7 +24,6 @@ public:
   void setRevMat(vector<double> _revMat ) {revMat = _revMat; }
   void setStateFreqs(vector<double> _stateFreqs) {stateFreqs = _stateFreqs; }
 
-
   double getAlpha() const {return alpha; }
   vector<double> getRevMat() const {return revMat; }
   vector<double> getStateFreqs() const {return stateFreqs; }

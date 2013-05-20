@@ -3,6 +3,25 @@
 
 #include <cassert>
 
+using namespace std; 
+#include <iostream>
+
+
+
+double betaFunctionLog(double *alpha, int length)
+{
+  double beta=0;
+  double sum=0;
+  for(int i=0; i<length;i++)
+    {
+      beta+=lgamma(alpha[i]);       
+      sum+=alpha[i];    
+    }
+  beta -= lgamma(sum);
+
+  return beta;
+}
+
 
 
 double betaFunction(double *alpha, int length)
@@ -15,11 +34,9 @@ double betaFunction(double *alpha, int length)
       sum+=alpha[i];    
     }
   beta=beta/(gammaFunction(sum));
- 
+
   return beta;
 }
-
-
 
 
 
@@ -49,7 +66,7 @@ static void normalize(double * vector, int length, double normalizingConstant)
 /** 
     @brief just wraps the method for usage with vectors 
  */ 
-double densityDirichletWrapper(vector<double> values, vector<double> alphas)
+double densityDirichletWrapper(vector<double> values, vector<double> alphas, bool logScale)
 {
   assert(values.size() == alphas.size());
   double tmpVal[values.size()] , 
@@ -60,8 +77,36 @@ double densityDirichletWrapper(vector<double> values, vector<double> alphas)
       tmpAlpha[i] = alphas[i]; 
     }
 
-  return densityDirichlet(tmpVal, tmpAlpha, values.size());
+  return logScale   
+    ? densityDirichletLog(tmpVal, tmpAlpha, values.size())
+    : densityDirichlet(tmpVal, tmpAlpha, values.size());
 }
+
+
+
+
+double densityDirichletLog(double *values, double *alphas, int length)
+{
+  double density=0;
+  double normValues[length];
+  
+  for(int i=0; i<length; i++)
+    normValues[i] = values[i];  
+
+  density -= betaFunctionLog(alphas, length);
+
+  normalize(normValues, length, 1);
+  
+  for(int i=0; i<length; i++)
+    {      
+      double val =  pow(normValues[i],alphas[i]-1); 
+      density += log(val);
+    }
+
+  return density; 
+}
+
+
 
 
 
@@ -69,10 +114,10 @@ double densityDirichlet(double *values, double *alphas, int length)
 {
   double density=1;
   double normValues[length];
-  
+
   for(int i=0; i<length; i++)
-    normValues[i]=values[i];
-  
+    normValues[i]=values[i];  
+
   density=density/betaFunction(alphas, length);
   
   normalize(normValues, length, 1);

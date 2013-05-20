@@ -76,7 +76,7 @@ public:
      @brief adds some standard priors, in case the user has not
      provided specifications for all type of priors
   */ 
-  void addStandardPriors(); 
+  void addStandardPriors(const TreeAln &traln ); 
 
 
   shared_ptr<AbstractPrior> getBranchLengthPrior(){ return brPr; }

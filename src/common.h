@@ -7,6 +7,7 @@
 #define _COMMON_H
 
 
+#define NOT_IMPLEMENTED  0
 /* #define PRINT printBothOpen */
 
 
@@ -84,7 +85,7 @@ typedef  unsigned int nat ;
 #define INIT_GAMMA_MULTI 0.811
 #define INIT_NODE_SLIDER_MULT  0.191
 
-#define INIT_DIRICHLET_ALPHA 100.0 
+#define INIT_DIRICHLET_ALPHA 1000.0 
 
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
@@ -141,13 +142,13 @@ typedef  unsigned int nat ;
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
-#define DEBUG_LNL_VERIFY
+/* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define VERIFY_LNL_SUPER_EXPENSIVE */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
 /* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
 
-#define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays
+/* #define LENGTH_LNL_ARRAY 16 /// factor we need to multiply to the conditional arrays */
 
 #endif

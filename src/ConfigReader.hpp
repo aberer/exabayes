@@ -14,6 +14,9 @@
 #include "PriorBelief.hpp"
 #include "AbstractProposal.hpp"
 
+#include "BlockParams.hpp" 
+#include "BlockPrior.hpp"
+
 class ConfigReader : public NxsReader
 {
 public: 

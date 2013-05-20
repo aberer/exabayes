@@ -81,12 +81,20 @@ double PriorBelief::scoreRevMats(const TreeAln &traln)
 {
   if(believingInFixedRevMat())
     return 0; 
-
+  
   double result = 0; 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
       auto rates = traln.getRevMat(i);
-      result += revMatPr->getLogProb(rates);
+      
+      // cout << "rates:  "; 
+      // for(auto r : rates)
+      // 	cout << r << "," ; 
+      // cout << endl; 
+
+      result += revMatPr->getLogProb(rates);      
+
+      // cout << "parttion " << i  << "\t" << result << endl; 
     }
   return result; 
 }
@@ -139,8 +147,14 @@ void PriorBelief::verify(const TreeAln &traln)
 // TODO some defaults may change in the light of various run
 // configurations => we'd need a run-configuration object for that
 // this would also solve our problem with various states and so on
-void PriorBelief::addStandardPriors()
+void PriorBelief::addStandardPriors(const TreeAln &traln )
 {
+  int numStates = 0; 
+  pInfo *partition = traln.getPartition(0); 
+  numStates = partition->states; 
+  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+    assert(traln.getPartition(i)->states == numStates);       
+
   if(topologyPr.get()  == nullptr) 
     {
       setTopologyPrior(shared_ptr<UniformPrior> (new UniformPrior(0,0))); 
@@ -155,8 +169,9 @@ void PriorBelief::addStandardPriors()
 
   if( revMatPr.get() == nullptr)
     {
+
       vector<double> tmp ; 
-      for(int i = 0; i < 6; ++i)
+      for(int i = 0; i < numStateToNumInTriangleMatrix(numStates); ++i)
 	tmp.push_back(1.0); 
       setRevMatPrior(shared_ptr<DirichletPrior>(new DirichletPrior(tmp ))); 
       tout << "No prior for the reversible substitution matrix specified. Falling back to default "<<  revMatPr.get() << " as prior for the reversible matrix." << endl; 
@@ -171,7 +186,7 @@ void PriorBelief::addStandardPriors()
   if(stateFreqPr.get() == nullptr)
     {
       vector<double> tmp ; 
-      for(int i = 0; i < 4; ++i)
+      for(int i = 0; i <  numStates  ; ++i)
 	tmp.push_back(1.0); 
       setStateFreqPrior(shared_ptr<DirichletPrior>(new DirichletPrior(tmp))); 
       tout << "No prior for state frequencies specified. Falling back to default " << stateFreqPr.get() << " as prior for state frequencies. " << endl; 
