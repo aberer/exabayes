@@ -10,6 +10,7 @@
 
 #include <memory> 
 #include <vector>
+#include <map>
 
 #include "Priors.hpp"
 #include "GlobalVariables.hpp"
@@ -28,7 +29,10 @@ public:
   }
   
   void addPartition(nat id) { partitions.push_back(id); }
+
   const vector<nat>& getPartitions() const {return partitions; }
+  category_t getCategory() const { return cat; }
+  nat getId() const { return id; }
   
 private: 
   category_t cat; 
@@ -40,6 +44,17 @@ private:
 
   friend ostream& operator<<(ostream &out, const RandomVariable& rhs)
   {
+    map<category_t, string> nameMap = {
+      { TOPOLOGY, "topo" } , 
+      { BRANCH_LENGTHS, "bl" },
+      { FREQUENCIES , "pi" } ,
+      { SUBSTITUTION_RATES, "revMat"} , 
+      { RATE_HETEROGENEITY , "shape" } , 
+      { AA_MODEL, "aaModel" } 
+    } ; 
+
+    out << nameMap[rhs.cat] ; 
+
     bool  isFirst = true; 
     out << "{" ; 
     for(auto v : rhs.partitions)

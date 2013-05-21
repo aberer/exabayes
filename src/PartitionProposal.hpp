@@ -11,6 +11,8 @@
 #define _PART_PROPO_H
 
 #include "AbstractProposal.hpp"
+#include "eval.h"
+#include "tune.h"
 
 template<typename FUN, typename PARAM>
 class PartitionProposal : public AbstractProposal

@@ -13,12 +13,12 @@
 #include <vector>
 
 #include "axml.h"
-
+#include "BlockRunParameters.hpp"
+#include "BlockProposalConfig.hpp"
 #include "CommandLine.hpp"
 #include "CoupledChains.hpp"
 #include "ConfigReader.hpp"
 #include "ParallelSetup.hpp"
-#include "BlockRunParameters.hpp"
 
 using namespace std; 
 
@@ -26,20 +26,14 @@ using namespace std;
 class SampleMaster
 {
 public: 
-  SampleMaster(const CommandLine &cl , const ParallelSetup &pl) ;   
+  SampleMaster( const ParallelSetup &pl) ;   
   ~SampleMaster(){};
 
+  void initializeRuns(const CommandLine &cl ); 
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights, const TreeAln& traln ); 
-  void setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior);
-
-  // HERE 
-  void setGuidedRadius ( int guidedRadius ) {this->guidedRadius = guidedRadius ; }
-  void setParsimonyWarp   ( double parsimonyWarp   ) {this->parsimonyWarp   = parsimonyWarp   ; }
-  void setEsprStopProp ( double esprStopProp ) {this->esprStopProp = esprStopProp ; }
-
+  void initWithConfigFile(string configFileName, PriorBelief &prior, const TreeAln& traln ); 
   void validateRunParams(); 	// TODO  
 
 private: 
@@ -48,18 +42,13 @@ private:
 
   vector<CoupledChains> runs; 
 
-
-  // move options
-  double esprStopProp; 
-  double parsimonyWarp;   
-  int guidedRadius; 
-
   ParallelSetup pl; 
 
   double initTime; 
 
-  BlockRunParameters runParams;
+  BlockRunParameters runParams;  
+  BlockProposalConfig propConfig; 
+  
 };  
-
 
 #endif

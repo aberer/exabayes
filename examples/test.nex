@@ -5,8 +5,10 @@ begin params;
 [================================================================]
 [ notice: everything (except branch lengths) is unlinked by default ]
 
-stateFreq = (0,1/2/3)
-rateHet = (0,2/3/1)
+stateFreq = (0,1)
+rateHet = (0,2/1,3)
+revMat = (0,1,2,3)
+
 
 [ TODO: branch lengths ]
 end;  
@@ -75,39 +77,38 @@ begin runconfig;
 end; 
 
 
-[
-begin exabayes; 
+begin proposals; 
 
       [================================================================]
       [ PROPOSAL configuration ]
       [================================================================]
 
       [ TOPOLOGY ]
-      eSPR 16.94  [ ok, 10% in mb  ]
-      stNNI 8.47  [ ok, 10% in mb]	
-      eTBR  8.47 [ ok, 10% in mb ] 
-      parsimonySPR 0 [ ok, 10% in mb ]
-      guidedSPR 0   [ broken ] 
+      eSPR 6.66
+      stNNI 6.66
+      eTBR  6.66
+      parsimonySPR 0 [ inefficient ]
+      guidedSPR 0
 
       [ BRANCH LENGTHS ] 
-      branchSlider 0 [ ok ] 
-      branchMulti 33.9 [ ok, 40% in mrb ]
-      treeLengthMult 3.39 [ ok, 4 % in mrb ]
-      nodeSlider  8.47 [ ok, 10% in mrb ]
+      branchSlider 0
+      branchMulti 20 
+      treeLengthMult 2 
+      nodeSlider  5 
       GuidedBL 0 []
-      branchCollapser 0    [ ok ]
+      branchCollapser 0 [ bug! ]
 
       [ RATE HETEROGENEITY ]
-      rateHetSlider 0 [ broken, 1 in mrb ]		
-      rateHetMulti 1.69   [ ok, 1 in mrb  ]
+      rateHetSlider 0
+      rateHetMulti 1 
 
       [ REVMAT ] 
-      revMatSlider 3.4 [  ok, 1 in mrb ]		
-      revMatDirichlet 3.4  [ ok, 1 in mrb ]
+      revMatSlider 0.5
+      revMatDirichlet 0.5
 
       [ FREQUENIES ]
-      FrequencySlider 3.4  [ ok, 1 in mrb  ] 
-      FrequencyDirichlet 3.4  [ ok, 1 in mrb ]
+      FrequencySlider 0.5
+      FrequencyDirichlet 0.5
 
       [ AA models ]
       aaModelJump 0  [ todo ]
@@ -121,10 +122,4 @@ begin exabayes;
 
       [================================================================]
 
-
-end;
-
- 
-
- 
-]
+end ; 

@@ -79,7 +79,8 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
 #endif
 
-  SampleMaster master( cl, pl);
+  SampleMaster master(  pl);
+  master.initializeRuns(cl);
   master.run();
   master.finalizeRuns();
 }

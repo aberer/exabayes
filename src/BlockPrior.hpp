@@ -25,6 +25,9 @@ public:
   shared_ptr<AbstractPrior> parsePrior(NxsToken &token)  ; 
   virtual void Read(NxsToken &token); 
 
+  vector<shared_ptr<AbstractPrior> > getGeneralPriors() const {return generalPriors; }
+  vector< map<nat, shared_ptr<AbstractPrior > > >  getSpecificPriors() const {return specificPriors; }
+
 private: 
   nat numPart; 
   

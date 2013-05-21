@@ -1,10 +1,6 @@
 #include "AbstractProposal.hpp"
 
 
-
-
-
-
 /**
    @brief valToAdd must not be on the log-scale 
  */ 

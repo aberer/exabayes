@@ -48,6 +48,8 @@ public:
   
   int  getNumCallSinceTuning(){ return sctr.getRecentlySeen(); }
 
+  void setRandomVariables(vector<RandomVariable> vars) {randomVariables = vars; }
+
 
 protected: 
   string name;   
@@ -56,7 +58,7 @@ protected:
   double relativeProbability ; 	// probability relative to category
   // various parameters and stuff 
 
-  vector<RandomVariable> randomVariables; 
+  vector<RandomVariable> randomVariables; // random variables that are integrated by this proposal
 }; 
 
 #endif

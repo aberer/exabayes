@@ -3,6 +3,7 @@
 #include <memory>
 
 
+#include "BlockProposalConfig.hpp"
 #include "BlockRunParameters.hpp"
 #include "ConfigReader.hpp"
 #include "output.h"
@@ -12,17 +13,8 @@
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
 #include "tune.h"
-#include "ExtendedTBR.hpp"
-#include "ExtendedSPR.hpp"
-#include "ParsimonySPR.hpp"
-#include "StatNNI.hpp"
-#include "RadiusMlSPR.hpp"
 #include "Category.hpp"
-#include "NodeSlider.hpp"
-#include "BranchLengthMultiplier.hpp"
-#include "BranchCollapser.hpp"
-#include "AminoModelJump.hpp"
-
+#include "RunFactory.hpp"
 
 // TODO =( 
 #include "GlobalVariables.hpp"
@@ -31,9 +23,6 @@
 #include "AvgSplitFreqAssessor.hpp"
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
-#include "TreeLengthMultiplier.hpp"
-
-#include "PartitionProposal.hpp"
 
 extern double masterTime; 
 
@@ -41,27 +30,31 @@ static int countNumberOfTreesQuick(const char *fn );
 static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns); 
 static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns); 
 
-SampleMaster::SampleMaster(const CommandLine &cl , const ParallelSetup &pl) 
-  : esprStopProp(0.5)
-  , parsimonyWarp(0.1)
-  , guidedRadius(5)
-  , pl(pl)
+SampleMaster::SampleMaster(const ParallelSetup &pl) 
+  : pl(pl)
   , initTime(gettime())
+{
+
+}
+
+
+void SampleMaster::initializeRuns(const CommandLine &cl )
 {
   FILE *treeFH = NULL; 
   int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
   PriorBelief prior;
   vector<Category> proposals; 
-  vector<double> proposalWeights; 
 
   vector<TreeAln*> trees; 
   initTrees(trees, cl );
 
-  initWithConfigFile(cl.getConfigFileName(), prior, proposalWeights, *(trees[0]));
+  initWithConfigFile(cl.getConfigFileName(), prior, *(trees[0]));
   assert(runParams.getTuneFreq() > 0); 
-  assert(esprStopProp > 0) ;
+
+#if 0 
   setupProposals(proposals, proposalWeights, prior);
+#endif
 
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
@@ -249,13 +242,13 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, vector<double> &proposalWeights, const TreeAln &traln )
+void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, const TreeAln &traln)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 
   NxsToken token(fh); 
 
-  BlockParams paramBlock(traln.getNumberOfPartitions()); 
+  BlockParams paramBlock(traln); 
   reader.Add(&paramBlock); 
 
   BlockPrior priorBlock(traln.getNumberOfPartitions());
@@ -263,20 +256,16 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
 
   reader.Add(&runParams);
 
+  BlockProposalConfig proposalConfig; 
+  reader.Add(&proposalConfig);   
+
   reader.Execute(token);
 
-  // auto parameters =  paramBlock.getParameters() ;
-  // cout << "parsed parameters: " ; 
-  // for(auto v : parameters)
-  //   cout << v << ","; 
-  // cout << endl; 
-  // assert(0); 
+  RunFactory r; 
+  r.configureRuns(proposalConfig, priorBlock , paramBlock, traln);
+  auto proposals = r.getProposals();
 
-  
-  // ConfigHandler conf(configFileName); 
-
-  assert(NOT_IMPLEMENTED); 
-
+  assert(NOT_IMPLEMENTED);
 }
 
 
@@ -354,127 +343,3 @@ void SampleMaster::finalizeRuns()
     }  
 }
 
-
-/** 
-    @brief sets up the proposals depending on the prior configuration 
-    
- */ 
-void SampleMaster::setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior)
-{
-  vector<AbstractProposal*> prop; 
-  
-  vector<aaMatrix_t> someMatrices; // TODO, probably extract from prior belief 
-
-  // initialize proposals 
-  for(int i = 0; i < NUM_PROPOSALS ; ++i)
-    { 
-      double weight = proposalWeights[proposal_type(i)]; 
-      if( weight != 0)
-	{
-	  AbstractProposal *proposal = NULL; 
-	  
-	  switch(proposal_type(i))
-	    {	      
-	    case BRANCH_LENGTHS_MULTIPLIER:	      
-	      proposal = new BranchLengthMultiplier(weight, INIT_BL_MULT) ; 
-	      break; 
-	    case NODE_SLIDER:
-	      proposal = new NodeSlider( weight, INIT_NODE_SLIDER_MULT); 
-	      break; 
-	    case REVMAT_SLIDER: 
-	      proposal = new PartitionProposal<SlidingProposal, RevMatParameter>(weight, INIT_RATE_SLID_WIN, "revMatSlider"); 
-	      break; 
-	    case FREQUENCY_SLIDER:
-	      proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>( weight, INIT_FREQ_SLID_WIN, "freqSlider"); 
-	      break; 		  
-	    case TL_MULT:
-	      proposal = new TreeLengthMultiplier( weight, INIT_TL_MULTI); 
-	      break; 
-	    case E_TBR: 
-	      proposal = new ExtendedTBR( weight, esprStopProp, INIT_ESPR_MULT); 
-	      break; 
-	    case E_SPR: 
-	      proposal = new ExtendedSPR( weight, esprStopProp, INIT_ESPR_MULT); 
-	      break; 
-	    case PARSIMONY_SPR:	
-	      proposal = new ParsimonySPR( weight, parsimonyWarp, INIT_ESPR_MULT); 
-	      break; 
-	    case ST_NNI: 
-	      proposal = new StatNNI( weight, INIT_NNI_MULT); 
-	      break; 
-	    case RATE_HET_MULTI: 
-	      proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>( weight, INIT_GAMMA_MULTI, "rateHetMulti"); 
-	      break; 
-	    case RATE_HET_SLIDER: 
-	      proposal = new PartitionProposal<SlidingProposal,RateHetParameter>( weight, INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
-	      break; 
-	    case FREQUENCY_DIRICHLET: 
-	      proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>( weight, INIT_DIRICHLET_ALPHA, "freqDirich"); 
-	      break; 
-	    case REVMAT_DIRICHLET: 
-	      proposal = new PartitionProposal<DirichletProposal,RevMatParameter>(weight, INIT_DIRICHLET_ALPHA, "revMatDirich"); 	      
-	      break; 
-	    case GUIDED_SPR:
-	      proposal = new RadiusMlSPR( weight, guidedRadius ); 
-	      break; 
-	    case BRANCH_COLLAPSER:
-	      proposal = new BranchCollapser(weight); 
-	      break; 
-	    case AMINO_MODEL_JUMP: 
-	      proposal = new AminoModelJump(weight, someMatrices);
-	      break; 
-	    default : 
-	      assert(0); 
-	    }
-
-	  if(not prior.categoryIsFixed(proposal->getCategory()))
-	    prop.push_back(proposal);
-	  else 
-	    tout << "Notice: Relative weight " << weight << " was specified for proposal "   << proposal->getName()  << ". Since the prior for this category was set to fixed, this proposal will be ignored." << endl; 	      
-	}
-    }
-
-
-  // get total sum 
-  double sum = 0; 
-  for(auto p : prop)
-    sum += p->getRelativeProbability();
-
-  // create categories 
-  vector<string> allNames = {"Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
-  for(int i = 0; i < NUM_PROP_CATS; ++i)
-    {
-      // fish out the correct proposals 
-      vector<AbstractProposal*> pr; 
-      double catSum = 0; 
-      for(auto p : prop)
-	{	  
-	  if(p->getCategory() == i)
-	    {
-	      pr.push_back(p); 
-	      catSum += p->getRelativeProbability();
-	    }
-	}
-
-      if(pr.size() > 0)
-	proposalCategories.push_back( Category(allNames[i], category_t(i), catSum / sum, pr )); 
-    }    
-
-
-  if ( isOutputProcess() )
-    {
-      // print some info 
-      tout << "using the following moves: " << endl; 
-      for(nat i = 0; i < proposalCategories.size(); ++i)
-	{
-	  // TODO also to info file 
-      
-	  tout << proposalCategories[i].getName() << " " << fixed << setprecision(2) << proposalCategories[i].getCatFreq() * 100 << "%\t" ; 
-	  auto cat = proposalCategories[i]; 
-	  auto p1 =  cat.getProposals(); 
-	  for(auto p : p1)
-	    tout << "\t" << p->getName() << "(" << fixed << setprecision(2) <<  p->getRelativeProbability() * 100 << "%)" ;
-	  tout << endl; 
-	}
-    }
-}

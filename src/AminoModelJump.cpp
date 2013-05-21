@@ -5,7 +5,7 @@ AminoModelJump::AminoModelJump(double _relativeProbability, vector<aaMatrix_t> m
 {
   this->relativeProbability = _relativeProbability; //  the constructor argument should not have the exact same name as the member variable
   name = "aaMat"; 	
-  category = SUBSTITUTION_RATES ; 	// check out categoryType.h
+  category = AA_MODEL ; 
 
 }
 

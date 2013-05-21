@@ -18,14 +18,14 @@
 // TODO this is still very bad style and we'll get rid of it as soon
 // as I've the time to figure out how to do this 
 
-#define NUM_PROP_CATS 5 
+#define NUM_PROP_CATS 6 
 typedef enum _cats {
   TOPOLOGY = 0, 
   BRANCH_LENGTHS = 1, 
   FREQUENCIES = 2,
   SUBSTITUTION_RATES = 3,
-  RATE_HETEROGENEITY = 4	// revmat: also uses aa-matrix
-  
+  RATE_HETEROGENEITY = 4,	
+  AA_MODEL= 5
 } category_t; 
 
 

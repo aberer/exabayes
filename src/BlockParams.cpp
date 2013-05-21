@@ -2,26 +2,9 @@
 #include "axml.h"
 
 
-void BlockParams::initialize(const TreeAln &traln)
-{
-  NCL_BLOCKTYPE_ATTR_NAME = "PARAMS"; 
-
-  hasDna = false; 
-  hasAA = false; 
-
-  for(int i = 0; i < numPart; ++i)
-    {
-      pInfo *partition =  traln.getPartition(i);
-      hasDna |= ( partition->dataType == DNA_DATA); 
-      hasAA |= ( partition->dataType == AA_DATA ); 
-      
-      assert(partition->dataType == DNA_DATA || partition->dataType == AA_DATA) ; 
-    }
-} 
-
 void BlockParams::parseScheme(NxsToken& token, category_t cat, nat &idCtr)
 {
-  vector<bool> partAppeared(false); 
+  vector<bool> partAppeared(traln.getNumberOfPartitions(), false); 
 
   token.GetNextToken();
   auto str = token.GetToken(false); 
@@ -68,12 +51,19 @@ void BlockParams::parseScheme(NxsToken& token, category_t cat, nat &idCtr)
 	  parameters.push_back(*curVar); 
 	}
     }  
-
-  for(int i = 0; i < numPart; ++i)
+  
+  // maybe this should not be done here /= 
+  // too clumsy -- must be tested 
+  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      if(not partAppeared[i])
+      if(not partAppeared[i] && 
+	 (   ( cat == AA_MODEL && traln.getPartition(i)->dataType == AA_DATA ) 
+	     || (cat == SUBSTITUTION_RATES && traln.getPartition(i)->dataType == DNA_DATA) 
+	     || ( cat != SUBSTITUTION_RATES && cat != AA_MODEL) ))
 	{
+	  
 	  RandomVariable r(cat, idCtr); 
+	  r.addPartition(i);
 	  parameters.push_back(r); 
 	}
     }
@@ -108,8 +98,14 @@ void BlockParams::Read(NxsToken &token)
 	    {
 	      parseScheme(token, SUBSTITUTION_RATES, idCtr);
 	    }
+	  else if(str.EqualsCaseInsensitive("aaModel"))
+	    {
+	      parseScheme(token, AA_MODEL, idCtr); 
+	      assert(NOT_IMPLEMENTED); 
+	    }	  
 	  else if(str.EqualsCaseInsensitive("branchLength"))
 	    {
+	      parseScheme(token, BRANCH_LENGTHS, idCtr); 
 	      assert(NOT_IMPLEMENTED);
 	    }
 	  else 

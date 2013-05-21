@@ -22,6 +22,7 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
   PARAM::updatePrior(traln, prior, values, proposedValues); 
 }
 
+
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
@@ -29,7 +30,6 @@ void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief 
   nodeptr p = findNodeFromBranch(traln.getTr(), root); 
   evaluateOnePartition(traln, p, TRUE, model); 
 }
-  
 
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior) 
