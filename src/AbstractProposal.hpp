@@ -29,8 +29,12 @@ public:
   virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) = 0; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) = 0 ; 
   virtual void autotune() = 0  ;
+  
+  virtual void smallPrint(ostream &out) {assert(NOT_IMPLEMENTED); } // TODO 
+  virtual void printEverything(ostream &out){assert(NOT_IMPLEMENTED); }  // TODO 
 
   virtual AbstractProposal* clone() const = 0;  
+
 
   category_t getCategory() const {return category; }
   string getName() const {return name; }
@@ -42,14 +46,24 @@ public:
   
   int  getNumCallSinceTuning(){ return sctr.getRecentlySeen(); }
 
-  void setRandomVariables(vector<RandomVariable> vars) {randomVariables = vars; }
+  void addRandomVariable(RandomVariable var) {randomVariables.push_back(var) ; }
+
+
+
+  friend ostream&  operator<< ( ostream& out , const AbstractProposal* rhs)
+  {
+    out << "proposal " << rhs->name <<  " modifying " ; 
+    for(auto r : rhs->randomVariables)
+      out << r << ",\t"  ; 
+    return out; 
+  }
+
+
 
 protected: 
   string name;   
   SuccessCounter sctr; 
   category_t category; 
-
-  static double relPropDummy; 
 
   vector<RandomVariable> randomVariables; // random variables that are integrated by this proposal
 }; 

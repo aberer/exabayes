@@ -83,6 +83,7 @@ begin proposals;
       [ PROPOSAL configuration ]
       [================================================================]
 
+[ 
       [ TOPOLOGY ]
       eSPR 6.66
       stNNI 6.66
@@ -91,7 +92,7 @@ begin proposals;
       guidedSPR 0
 
       [ BRANCH LENGTHS ] 
-      branchSlider 0
+[       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
       branchMulti 20 
       treeLengthMult 2 
       nodeSlider  5 
@@ -99,7 +100,7 @@ begin proposals;
       branchCollapser 0 [ bug! ]
 
       [ RATE HETEROGENEITY ]
-      rateHetSlider 0
+[       rateHetSlider 0 ] 
       rateHetMulti 1 
 
       [ REVMAT ] 
@@ -111,8 +112,9 @@ begin proposals;
       FrequencyDirichlet 0.5
 
       [ AA models ]
-      aaModelJump 0  [ todo ]
+[       aaModelJump 0  [ todo ] ] 
 
+] 
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 

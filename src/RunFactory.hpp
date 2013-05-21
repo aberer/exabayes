@@ -32,6 +32,7 @@ public:
   void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln); 
 
   vector<shared_ptr<AbstractProposal> > getProposals() const {return proposals;  } 
+  vector<RandomVariable> getRandomVariables() const {return randomVariables; }
 
 private: 
   void addStandardParameters(vector<RandomVariable> &vars, const TreeAln &traln ); 
@@ -39,7 +40,7 @@ private:
   void addStandardPrior(RandomVariable &var, const TreeAln& traln ); 
 
   // DUMMY
-  void setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior); 
+  // void setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior); 
 
   vector<shared_ptr<AbstractProposal> > proposals; 
   vector<RandomVariable> randomVariables; 

@@ -263,7 +263,8 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
 
   RunFactory r; 
   r.configureRuns(proposalConfig, priorBlock , paramBlock, traln);
-  auto proposals = r.getProposals();
+  auto proposals = r.getProposals();  
+  auto vars = r.getRandomVariables();
 
   assert(NOT_IMPLEMENTED);
 }
@@ -274,6 +275,7 @@ void SampleMaster::validateRunParams()
   assert(runParams.getNumCoupledChains() > 0); 
   // TODO 
 }
+
 
 
 void SampleMaster::initTrees(vector<TreeAln*> &trees, const CommandLine &cl )

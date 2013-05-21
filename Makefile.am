@@ -23,7 +23,7 @@ include src.am
 
 .PHONY: my-update-src doc 
 
-AM_CFLAGS+= -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/
+AM_CFLAGS+= -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/ -Isrc/proposals
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS)
 AM_CXXFLAGS=$(AM_CFLAGS)  -std=c++0x
 AM_LDFLAGS=-lm 

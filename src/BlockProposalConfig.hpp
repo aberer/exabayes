@@ -12,14 +12,15 @@ public:
   BlockProposalConfig();
   virtual void Read(NxsToken &token); 
   void setupMap(); 
-  void fillProposalWeights(vector<double> &weights){ weights = proposalWeights;  } 
+  vector<double> getUserProposalWeights() const {return userProposalWeights; }
+  // void fillProposalWeights(){ weights = proposalWeights;  } 
 
   double getEsprStopProp() const {return esprStopProp; } 
   double getParsimonyWarp() const {return parsimonyWarp; }
-  int getGuidedRadius() const {return guidedRadius; }
+  int getGuidedRadius() const {return guidedRadius; }  
 
 private: 
-  vector<double> proposalWeights ; 
+  vector<double> userProposalWeights ; 
   map<string, proposal_type> name2proposal; 
 
   double esprStopProp; 

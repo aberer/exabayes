@@ -1,148 +1,11 @@
 #include "RunFactory.hpp"
-#include "allProposals.hpp"
+#include "ProposalRegistry.hpp"
 #include "output.h"
-
+#include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 
-// for dummy 
-#include "BlockProposalConfig.hpp"
-
-#define TODO   0
-
-
-#if 0 
-void RunFactory::setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior)
-{
-
-  BlockProposalConfig propConfig; 
-
-  vector<AbstractProposal*> prop; 
-  
-  vector<aaMatrix_t> someMatrices; // TODO, probably extract from prior belief 
-
-  // initialize proposals 
-  for(int i = 0; i < NUM_PROPOSALS ; ++i)
-    { 
-      double weight = proposalWeights[proposal_type(i)]; 
-      if( weight != 0)
-	{
-	  AbstractProposal *proposal = NULL; 
-	  
-	  switch(proposal_type(i))
-	    {	      
-	    case BRANCH_LENGTHS_MULTIPLIER:	      
-	      proposal = new BranchLengthMultiplier( INIT_BL_MULT) ; 
-	      break; 
-	    case NODE_SLIDER:
-	      proposal = new NodeSlider(  INIT_NODE_SLIDER_MULT); 
-	      break; 
-	    case REVMAT_SLIDER: 
-	      proposal = new PartitionProposal<SlidingProposal, RevMatParameter>( INIT_RATE_SLID_WIN, "revMatSlider"); 
-	      break; 
-	    case FREQUENCY_SLIDER:
-	      proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>(  INIT_FREQ_SLID_WIN, "freqSlider"); 
-	      break; 		  
-	    case TL_MULT:
-	      proposal = new TreeLengthMultiplier(  INIT_TL_MULTI); 
-	      break; 
-	    case E_TBR: 
-	      proposal = new ExtendedTBR(  propConfig.getEsprStopProp(), INIT_ESPR_MULT); 
-	      break; 
-	    case E_SPR: 
-	      proposal = new ExtendedSPR(  propConfig.getEsprStopProp(), INIT_ESPR_MULT); 
-	      break; 
-	    case PARSIMONY_SPR:	
-	      proposal = new ParsimonySPR(  propConfig.getParsimonyWarp(), INIT_ESPR_MULT); 
-	      break; 
-	    case ST_NNI: 
-	      proposal = new StatNNI(  INIT_NNI_MULT); 
-	      break; 
-	    case RATE_HET_MULTI: 
-	      proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>(  INIT_GAMMA_MULTI, "rateHetMulti"); 
-	      break; 
-	    case RATE_HET_SLIDER: 
-	      proposal = new PartitionProposal<SlidingProposal,RateHetParameter>(  INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
-	      break; 
-	    case FREQUENCY_DIRICHLET: 
-	      proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>(  INIT_DIRICHLET_ALPHA, "freqDirich"); 
-	      break; 
-	    case REVMAT_DIRICHLET: 
-	      proposal = new PartitionProposal<DirichletProposal,RevMatParameter>( INIT_DIRICHLET_ALPHA, "revMatDirich"); 	      
-	      break; 
-	    case GUIDED_SPR:
-	      proposal = new RadiusMlSPR(  propConfig.getGuidedRadius() ); 
-	      break; 
-	    case BRANCH_COLLAPSER:
-	      proposal = new BranchCollapser(); 
-	      break; 
-	    case AMINO_MODEL_JUMP: 
-	      proposal = new AminoModelJump( someMatrices);
-	      break; 
-	    default : 
-	      assert(0); 
-	    }
-
-	  if(not prior.categoryIsFixed(proposal->getCategory()))
-	    prop.push_back(proposal);
-	  else 
-	    tout << "Notice: Relative weight " << weight << " was specified for proposal "   << proposal->getName()  << ". Since the prior for this category was set to fixed, this proposal will be ignored." << endl; 	      
-	}
-    }
-
-
-
-#if TODO 
-  // get total sum 
-  double sum = 0; 
-  for(auto p : prop)
-    sum += p->getRelativeProbability();
-
-
-  // create categories 
-  vector<string> allNames = {"Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
-  for(int i = 0; i < NUM_PROP_CATS; ++i)
-    {
-      // fish out the correct proposals 
-      vector<AbstractProposal*> pr; 
-      double catSum = 0; 
-      for(auto p : prop)
-	{	  
-	  if(p->getCategory() == i)
-	    {
-	      pr.push_back(p); 
-	      catSum += p->getRelativeProbability();
-	    }
-	}
-
-      if(pr.size() > 0)
-	proposalCategories.push_back( Category(allNames[i], category_t(i), catSum / sum, pr )); 
-    }    
-
-
-#endif
-  if ( isOutputProcess() )
-    {
-      // print some info 
-      tout << "using the following moves: " << endl; 
-      for(nat i = 0; i < proposalCategories.size(); ++i)
-	{
-	  // TODO also to info file 
-      
-	  tout << proposalCategories[i].getName() << " " << fixed << setprecision(2) << proposalCategories[i].getCatFreq() * 100 << "%\t" ; 
-	  auto cat = proposalCategories[i]; 
-	  auto p1 =  cat.getProposals(); 
-#if TODO 
-	  for(auto p : p1)
-	    tout << "\t" << p->getName() << "(" << fixed << setprecision(2) <<  p->getRelativeProbability() * 100 << "%)" ;
-	  tout << endl; 
-#endif
-	}
-    }
-}
-
-#endif
-
+// not to be confused with a fun factory...
 
 
 void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeAln &traln )
@@ -321,13 +184,43 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 
 void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln)
 {
-  auto vars = partitionParams.getParameters();
-  addStandardParameters(vars, traln);
-  addPriorsToVariables(traln, priorInfo, vars);
+  randomVariables = partitionParams.getParameters();
+  addStandardParameters(randomVariables, traln);
+  addPriorsToVariables(traln, priorInfo, randomVariables);
 
-  cout << "Random variables: " << endl; 
-  for(auto v : vars)
-    cout <<  v << endl; 
-  cout << endl;
+  ProposalRegistry reg; 
+  
+  // BEGIN this could be done somewhere else 
+  reg.updateProposalWeights(propConfig);
+  // END 
+
+  for(auto v : randomVariables)
+    {
+      vector<shared_ptr<AbstractProposal> >  props = reg.getProposals(v.getCategory(), propConfig);
+      for(shared_ptr<AbstractProposal> &p : props )
+	{
+	  p->addRandomVariable(v);
+	  proposals.push_back(p); 
+	}
+    }
+
+
+  // lets see if it worked 
+
+  // seems to work....
+#if 0 
+  cout << "RandomVariables: " << endl; 
+  for(auto v : randomVariables)
+    cout << v  << endl; 
+  cout << endl; 
+  
+
+  cout << "Proposals: " << endl; 
+  for(auto p : proposals )
+    {
+      cout << p << endl; 
+    }
+#endif
+
 }
 
