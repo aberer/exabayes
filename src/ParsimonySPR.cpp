@@ -6,6 +6,8 @@
 
 // #define DEBUG_PARS_SPR
 
+double ParsimonySPR::relativeWeight = 5.;
+
 class  InsertionScore
 {
 public: 
@@ -43,13 +45,13 @@ private:
 
 
 
-ParsimonySPR::ParsimonySPR( double _relativeWeight, double _parsWarp, double _blMulti)
+ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
   : parsWarp(_parsWarp)    
   , blMulti(_blMulti)    
 {
   this->name = "parsSPR"; 
   this->category = TOPOLOGY ; 
-  this->relativeProbability =  _relativeWeight; 
+  // this->relativeProbability =  _relativeWeight; 
 }
 
 
@@ -335,6 +337,6 @@ void ParsimonySPR::autotune()
 
 AbstractProposal* ParsimonySPR::clone() const
 {
-  return new ParsimonySPR( relativeProbability, parsWarp, blMulti);
+  return new ParsimonySPR(  parsWarp, blMulti);
 } 
 

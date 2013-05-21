@@ -2,6 +2,8 @@
 #include "AbstractProposal.hpp"
 
 
+#define TODO 0 
+
 /**
    @brief initializes a category of proposals. 
 
@@ -14,12 +16,17 @@ Category::Category(string _name, category_t _type, double catFreq, vector<Abstra
   , name(_name) 
 {
   // normalize relative proposal weights  
+
+#if TODO
   double sum = 0;   
   for (auto proposal: proposals)
     sum += proposal->getRelativeProbability(); 
+#endif
 
+#if TODO
   for(auto proposal : proposals) 
     proposal->setRelativeProbability(proposal->getRelativeProbability() / sum); 
+#endif
 }
 
 Category::Category(const Category &rhs)
@@ -57,16 +64,22 @@ void Category::copyDeep(const Category& rhs)
 
 AbstractProposal* Category::drawProposal(Randomness &rand)
 {
+#if TODO
   double r = rand.drawRandDouble01();
+
 
   for(auto proposal : proposals)
     {
+
       double prob = proposal->getRelativeProbability(); 
+
       if(r <= prob )
 	return proposal; 
       else 
 	r -= prob; 	
+
     }
+#endif
 
   assert(0); 
   return NULL;   

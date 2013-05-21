@@ -1,9 +1,11 @@
 #include "AminoModelJump.hpp"
 
+double AminoModelJump::relativeWeight = 0.0; // ??? TODO 
 
-AminoModelJump::AminoModelJump(double _relativeProbability, vector<aaMatrix_t> matrices)
+
+AminoModelJump::AminoModelJump(vector<aaMatrix_t> matrices)
 {
-  this->relativeProbability = _relativeProbability; //  the constructor argument should not have the exact same name as the member variable
+  // this->relativeProbability = _relativeProbability; //  the constructor argument should not have the exact same name as the member variable
   name = "aaMat"; 	
   category = AA_MODEL ; 
 
@@ -40,6 +42,6 @@ void AminoModelJump::autotune()
 
 AbstractProposal* AminoModelJump::clone() const 
 {
-  return new AminoModelJump(relativeProbability, matrices);
+  return new AminoModelJump( matrices);
 }
 

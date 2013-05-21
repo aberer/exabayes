@@ -11,7 +11,7 @@
 class ExtendedSPR : public AbstractProposal
 {
 public: 
-  ExtendedSPR( double relativeWeight, double stopProb, double multiplier); 
+  ExtendedSPR(  double stopProb, double multiplier); 
   virtual ~ExtendedSPR(); 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -19,6 +19,8 @@ public:
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
   virtual void autotune() {}	// disabled 
   virtual AbstractProposal* clone() const;  
+
+  static double relativeWeight;
 
 protected: 
   double stopProb; 

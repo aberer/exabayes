@@ -6,10 +6,12 @@
 #include "eval.h"
 #include "tune.h"
 
-TreeLengthMultiplier::TreeLengthMultiplier( double _relativeWeight, double _multiplier)
+double TreeLengthMultiplier::relativeWeight = 5 ;
+
+TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
   : multiplier(_multiplier)    
 {
-  this->relativeProbability = _relativeWeight; 
+  // this->relativeProbability = _relativeWeight; 
   this->name = "TL-Mult"; 
   category = BRANCH_LENGTHS; 
   // ptype = TL_MULT; 
@@ -89,5 +91,5 @@ void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* TreeLengthMultiplier::clone() const
 {
-  return new TreeLengthMultiplier(relativeProbability, multiplier);
+  return new TreeLengthMultiplier(multiplier);
 }  

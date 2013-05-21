@@ -32,13 +32,15 @@ enum aaMatrix_t
 class AminoModelJump : public AbstractProposal
 {
 public: 
-  AminoModelJump(double _relativeProbability, vector<aaMatrix_t> matrices); 
+  AminoModelJump(vector<aaMatrix_t> matrices); 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
   virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
+
+  static double relativeWeight;
 
 private: 
   vector<aaMatrix_t> matrices; 

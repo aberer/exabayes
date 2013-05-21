@@ -2,12 +2,7 @@
 #define _AVGSPLITFREQASSESSOR_H
 
 #include "axml.h"
-// #include "proposalFunction.h"
-
 #include "BipartitionHash.hpp"
-
-
-
 
 /**
    @brief a one-time object that computes the ASDSF for the trees
@@ -36,7 +31,7 @@ public:
 
   int getNumTreeAvailable(string filename); 
 
-  
+  static double relativeWeight;
 
 private: 
   void fillTaxaInfo(string fileName); 

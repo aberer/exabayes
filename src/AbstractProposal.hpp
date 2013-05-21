@@ -32,13 +32,7 @@ public:
 
   virtual AbstractProposal* clone() const = 0;  
 
-  // getters and setters 
-  double getRelativeProbability() const {return relativeProbability; }
-  void setRelativeProbability(double prob ){ relativeProbability = prob; }
-  
   category_t getCategory() const {return category; }
-  // proposal_type getPtype() const {return ptype; }
-  
   string getName() const {return name; }
   
   void accept() {sctr.accept();}
@@ -50,13 +44,12 @@ public:
 
   void setRandomVariables(vector<RandomVariable> vars) {randomVariables = vars; }
 
-
 protected: 
   string name;   
   SuccessCounter sctr; 
   category_t category; 
-  double relativeProbability ; 	// probability relative to category
-  // various parameters and stuff 
+
+  static double relPropDummy; 
 
   vector<RandomVariable> randomVariables; // random variables that are integrated by this proposal
 }; 

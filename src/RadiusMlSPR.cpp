@@ -2,6 +2,9 @@
 #include "eval.h"
 #include "output.h"
 
+
+double RadiusMlSPR::relativeWeight = 5.0;
+
 /* 
    important TODO
    i am not sure, but treating branch lengths this way may seriously distort the lnls. 
@@ -13,10 +16,9 @@
 
 
 
-RadiusMlSPR::RadiusMlSPR( double relativeWeight, int _radius)
+RadiusMlSPR::RadiusMlSPR(  int _radius)
   : radius(_radius)
 {
-  this->relativeProbability = relativeWeight; 
   this->name = "radiusMLspr" ;
   category = TOPOLOGY; 
   // ptype = GUIDED_SPR;   
@@ -470,5 +472,5 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* RadiusMlSPR::clone() const
 {
-  return new RadiusMlSPR(relativeProbability, radius);
+  return new RadiusMlSPR( radius);
 }

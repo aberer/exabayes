@@ -2,10 +2,12 @@
 #include "eval.h"
 
 
-NodeSlider::NodeSlider(double _relativeProbability, double _multiplier)
+double NodeSlider::relativeWeight = 5.;
+
+
+NodeSlider::NodeSlider( double _multiplier)
   : multiplier(_multiplier)
 {
-  this->relativeProbability = _relativeProbability;   
   name = "nodeSlider"; 
   this->category = BRANCH_LENGTHS; 
   // ptype = NODE_SLIDER;   
@@ -138,6 +140,6 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* NodeSlider::clone() const
 {
-  NodeSlider* result = new NodeSlider(relativeProbability, multiplier);
+  NodeSlider* result = new NodeSlider( multiplier);
   return result;   
 }  

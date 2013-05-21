@@ -21,7 +21,7 @@ typedef struct  _insertWeight
 class RadiusMlSPR : public AbstractProposal
 {
 public: 
-  RadiusMlSPR(double relativeWeight, int radius);
+  RadiusMlSPR( int radius);
   virtual ~RadiusMlSPR(){}
   
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -31,6 +31,8 @@ public:
   virtual void autotune() {}	// disabled 
 
   virtual AbstractProposal* clone() const;  
+
+  static double relativeWeight;
 
 private: 
   Path path; 

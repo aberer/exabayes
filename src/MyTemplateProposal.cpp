@@ -1,12 +1,20 @@
 #include "MyTemplateProposal.hpp"
 
 
+// this MUST be initialized like that here. It defines the relative
+// weight for all proposals of this type. This variable can be
+// overridden in the config file.
+
+// the variable MUST be defined in the header file first
+double MyTemplateProposal::relativeWeight = 2.0; 
+
+
+
+
 
 // we need a constructor!  
-MyTemplateProposal::MyTemplateProposal(double _relativeProbability, double aVariable)
+MyTemplateProposal::MyTemplateProposal( double aVariable)
 {
-  this->relativeProbability = _relativeProbability; //  the constructor argument should not have the exact same name as the member variable
-
   name = "MyTemplateProposal"; 	
   category = TOPOLOGY ; 	// check out categoryType.h
   
@@ -104,7 +112,7 @@ void MyTemplateProposal::autotune()
 // wants to have its own instance of a proposal)
 AbstractProposal* MyTemplateProposal::clone() const 
 {
-  return new MyTemplateProposal(relativeProbability, aVariable);
+  return new MyTemplateProposal( aVariable);
 }
 
 

@@ -15,7 +15,7 @@
 class ParsimonySPR : public AbstractProposal
 {
 public: 
-  ParsimonySPR(double relativeWeight, double parsWarp, double blMulti); 
+  ParsimonySPR( double parsWarp, double blMulti); 
   virtual ~ParsimonySPR(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -24,6 +24,8 @@ public:
   virtual void autotune() ;
 
   AbstractProposal* clone() const; 
+
+  static double relativeWeight;
   
 protected: 
   double parsWarp; 

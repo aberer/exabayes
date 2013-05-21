@@ -26,7 +26,7 @@
 class MyTemplateProposal : public AbstractProposal
 {
 public: 
-  MyTemplateProposal(double relativeProbability, double aVariable);
+  MyTemplateProposal( double aVariable);
 
   // everything copied over from AbstractProposal that has a = 0
   // there. This declares the methods pure virtual, and the derived
@@ -36,6 +36,9 @@ public:
   virtual void resetState(TreeAln &traln, PriorBelief &prior); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
+
+  
+  static double relativeWeight;
 
 
 private: 

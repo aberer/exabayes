@@ -19,7 +19,7 @@ class Chain;
 class StatNNI : public AbstractProposal
 {
 public: 
-  StatNNI( double weigth, double multiplier);
+  StatNNI( double multiplier);
   virtual ~StatNNI(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -29,6 +29,8 @@ public:
   virtual void autotune() {}	// disabled 
 
   virtual AbstractProposal* clone() const;  
+
+  static double relativeWeight;
 
 private:
   double multiplier; 

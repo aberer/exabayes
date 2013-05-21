@@ -8,10 +8,10 @@
 // for dummy 
 #include "BlockProposalConfig.hpp"
 
-/** 
-    @brief sets up the proposals depending on the prior configuration 
-    
- */ 
+#define TODO   0
+
+
+#if 0 
 void RunFactory::setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior)
 {
 
@@ -32,52 +32,52 @@ void RunFactory::setupProposals(vector<Category> &proposalCategories, vector<dou
 	  switch(proposal_type(i))
 	    {	      
 	    case BRANCH_LENGTHS_MULTIPLIER:	      
-	      proposal = new BranchLengthMultiplier(weight, INIT_BL_MULT) ; 
+	      proposal = new BranchLengthMultiplier( INIT_BL_MULT) ; 
 	      break; 
 	    case NODE_SLIDER:
-	      proposal = new NodeSlider( weight, INIT_NODE_SLIDER_MULT); 
+	      proposal = new NodeSlider(  INIT_NODE_SLIDER_MULT); 
 	      break; 
 	    case REVMAT_SLIDER: 
-	      proposal = new PartitionProposal<SlidingProposal, RevMatParameter>(weight, INIT_RATE_SLID_WIN, "revMatSlider"); 
+	      proposal = new PartitionProposal<SlidingProposal, RevMatParameter>( INIT_RATE_SLID_WIN, "revMatSlider"); 
 	      break; 
 	    case FREQUENCY_SLIDER:
-	      proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>( weight, INIT_FREQ_SLID_WIN, "freqSlider"); 
+	      proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>(  INIT_FREQ_SLID_WIN, "freqSlider"); 
 	      break; 		  
 	    case TL_MULT:
-	      proposal = new TreeLengthMultiplier( weight, INIT_TL_MULTI); 
+	      proposal = new TreeLengthMultiplier(  INIT_TL_MULTI); 
 	      break; 
 	    case E_TBR: 
-	      proposal = new ExtendedTBR( weight, propConfig.getEsprStopProp(), INIT_ESPR_MULT); 
+	      proposal = new ExtendedTBR(  propConfig.getEsprStopProp(), INIT_ESPR_MULT); 
 	      break; 
 	    case E_SPR: 
-	      proposal = new ExtendedSPR( weight, propConfig.getEsprStopProp(), INIT_ESPR_MULT); 
+	      proposal = new ExtendedSPR(  propConfig.getEsprStopProp(), INIT_ESPR_MULT); 
 	      break; 
 	    case PARSIMONY_SPR:	
-	      proposal = new ParsimonySPR( weight, propConfig.getParsimonyWarp(), INIT_ESPR_MULT); 
+	      proposal = new ParsimonySPR(  propConfig.getParsimonyWarp(), INIT_ESPR_MULT); 
 	      break; 
 	    case ST_NNI: 
-	      proposal = new StatNNI( weight, INIT_NNI_MULT); 
+	      proposal = new StatNNI(  INIT_NNI_MULT); 
 	      break; 
 	    case RATE_HET_MULTI: 
-	      proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>( weight, INIT_GAMMA_MULTI, "rateHetMulti"); 
+	      proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>(  INIT_GAMMA_MULTI, "rateHetMulti"); 
 	      break; 
 	    case RATE_HET_SLIDER: 
-	      proposal = new PartitionProposal<SlidingProposal,RateHetParameter>( weight, INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
+	      proposal = new PartitionProposal<SlidingProposal,RateHetParameter>(  INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
 	      break; 
 	    case FREQUENCY_DIRICHLET: 
-	      proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>( weight, INIT_DIRICHLET_ALPHA, "freqDirich"); 
+	      proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>(  INIT_DIRICHLET_ALPHA, "freqDirich"); 
 	      break; 
 	    case REVMAT_DIRICHLET: 
-	      proposal = new PartitionProposal<DirichletProposal,RevMatParameter>(weight, INIT_DIRICHLET_ALPHA, "revMatDirich"); 	      
+	      proposal = new PartitionProposal<DirichletProposal,RevMatParameter>( INIT_DIRICHLET_ALPHA, "revMatDirich"); 	      
 	      break; 
 	    case GUIDED_SPR:
-	      proposal = new RadiusMlSPR( weight, propConfig.getGuidedRadius() ); 
+	      proposal = new RadiusMlSPR(  propConfig.getGuidedRadius() ); 
 	      break; 
 	    case BRANCH_COLLAPSER:
-	      proposal = new BranchCollapser(weight); 
+	      proposal = new BranchCollapser(); 
 	      break; 
 	    case AMINO_MODEL_JUMP: 
-	      proposal = new AminoModelJump(weight, someMatrices);
+	      proposal = new AminoModelJump( someMatrices);
 	      break; 
 	    default : 
 	      assert(0); 
@@ -91,10 +91,13 @@ void RunFactory::setupProposals(vector<Category> &proposalCategories, vector<dou
     }
 
 
+
+#if TODO 
   // get total sum 
   double sum = 0; 
   for(auto p : prop)
     sum += p->getRelativeProbability();
+
 
   // create categories 
   vector<string> allNames = {"Topology", "BranchLengths", "Frequencies", "RevMatrix", "RateHet" }; 
@@ -117,6 +120,7 @@ void RunFactory::setupProposals(vector<Category> &proposalCategories, vector<dou
     }    
 
 
+#endif
   if ( isOutputProcess() )
     {
       // print some info 
@@ -128,12 +132,16 @@ void RunFactory::setupProposals(vector<Category> &proposalCategories, vector<dou
 	  tout << proposalCategories[i].getName() << " " << fixed << setprecision(2) << proposalCategories[i].getCatFreq() * 100 << "%\t" ; 
 	  auto cat = proposalCategories[i]; 
 	  auto p1 =  cat.getProposals(); 
+#if TODO 
 	  for(auto p : p1)
 	    tout << "\t" << p->getName() << "(" << fixed << setprecision(2) <<  p->getRelativeProbability() * 100 << "%)" ;
 	  tout << endl; 
+#endif
 	}
     }
 }
+
+#endif
 
 
 
@@ -317,10 +325,9 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   addStandardParameters(vars, traln);
   addPriorsToVariables(traln, priorInfo, vars);
 
-
-
   cout << "Random variables: " << endl; 
   for(auto v : vars)
     cout <<  v << endl; 
   cout << endl;
 }
+

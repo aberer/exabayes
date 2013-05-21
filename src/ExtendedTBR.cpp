@@ -3,17 +3,19 @@
 #include "branch.h"
 #include "eval.h"
 
+double ExtendedTBR::relativeWeight = 5.;
+
 
 
 // #define DEBUG_TBR
 
 
-ExtendedTBR::ExtendedTBR( double _relativeProbability, double _extensionProb, double _multiplier)
+ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
   :  extensionProbability(_extensionProb)
   , multiplier(_multiplier)
 {
   name = "eTBR"; 
-  relativeProbability = _relativeProbability; 
+  // relativeProbability = _relativeProbability; 
   category = TOPOLOGY; 
   // ptype = E_TBR; 
 }
@@ -372,5 +374,5 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 
 AbstractProposal* ExtendedTBR::clone() const 
 {
-  return new ExtendedTBR(relativeProbability, extensionProbability, multiplier);
+  return new ExtendedTBR( extensionProbability, multiplier);
 }

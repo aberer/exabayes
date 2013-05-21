@@ -18,7 +18,7 @@ template<typename FUN, typename PARAM>
 class PartitionProposal : public AbstractProposal
 {
 public: 
-  PartitionProposal( double relativeWeight, double _param, string _name); 
+  PartitionProposal(  double _param, string _name); 
   virtual ~PartitionProposal(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -28,6 +28,8 @@ public:
   virtual void autotune();
 
   virtual PartitionProposal<FUN,PARAM>* clone() const; 
+
+  static double relativeWeight;
 
 private: 
   int model; 			// which model

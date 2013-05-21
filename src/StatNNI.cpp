@@ -5,10 +5,10 @@
 
 
 
-StatNNI::StatNNI( double _weight, double _multiplier)
+StatNNI::StatNNI( double _multiplier)
   :  multiplier(_multiplier)
 {
-  this->relativeProbability = _weight; 
+  // this->relativeProbability = _weight; 
   this->name = "stNNI" ; 
   this->category = TOPOLOGY; 
   // ptype = ST_NNI; 
@@ -174,5 +174,5 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* StatNNI::clone()  const
 {
-  return new StatNNI(relativeProbability, multiplier);
+  return new StatNNI( multiplier);
 }

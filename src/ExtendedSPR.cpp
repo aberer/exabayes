@@ -4,12 +4,14 @@
 #include "TreeAln.hpp"
 #include "eval.h"
 
+double ExtendedSPR::relativeWeight = 5.;
+
 // #define DEBUG_ESPR
 
-ExtendedSPR::ExtendedSPR(double _relativeWeight, double _stopProb, double _multiplier)
+ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
   : stopProb(_stopProb), multiplier(_multiplier)    
 {
-  this->relativeProbability = _relativeWeight; 
+  // this->relativeProbability = _relativeWeight; 
   this->name = "eSPR"; 
   category = TOPOLOGY; 
 }
@@ -162,5 +164,5 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 AbstractProposal* ExtendedSPR::clone() const
 {
   // tout << "cloning "  << name << endl;
-  return new ExtendedSPR(relativeProbability, stopProb, multiplier);
+  return new ExtendedSPR( stopProb, multiplier);
 }

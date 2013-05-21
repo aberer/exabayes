@@ -1,9 +1,9 @@
 
 template<typename FUN, typename PARAM>
-PartitionProposal<FUN,PARAM>::PartitionProposal(double relativeWeight, double _param, string _name)
+PartitionProposal<FUN,PARAM>::PartitionProposal( double _param, string _name)
   :  parameter(_param)
 {
-  this->relativeProbability = relativeWeight;
+  // this->relativeProbability = relativeWeight;
   this->name= _name;
   this->category = PARAM::cat; 
 }
@@ -64,7 +64,7 @@ void PartitionProposal<FUN,PARAM>::autotune()
 template<typename FUN, typename PARAM> 
 PartitionProposal<FUN,PARAM>* PartitionProposal<FUN,PARAM>::clone() const
 {
-  return new PartitionProposal<FUN,PARAM>( relativeProbability, parameter, name);
+  return new PartitionProposal<FUN,PARAM>(  parameter, name);
 }
 
 

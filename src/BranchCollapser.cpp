@@ -2,9 +2,12 @@
 #include "eval.h"
 
 
-BranchCollapser::BranchCollapser(double _relativeProbability)
+double BranchCollapser::relativeWeight = 0.0 ; 
+
+
+BranchCollapser::BranchCollapser()
 {
-  this->relativeProbability = _relativeProbability; //  the constructor argument should not have the exact same name as the member variable
+  // this->relativeProbability = _relativeProbability; //  the constructor argument should not have the exact same name as the member variable
 
   name = "BranchCollapser"; 	
   category = BRANCH_LENGTHS ; 	// check out categoryType.h
@@ -66,6 +69,6 @@ void BranchCollapser::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* BranchCollapser::clone() const 
 {
-  return new BranchCollapser(relativeProbability);
+  return new BranchCollapser();
 }
 

@@ -6,7 +6,7 @@
 class ExtendedTBR : public AbstractProposal
 {
 public: 
-  ExtendedTBR( double relativeProbability, double extensionProb, double multiplier);
+  ExtendedTBR( double _extensionProb, double _multiplier); 
   virtual ~ExtendedTBR()  { }
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand); 
@@ -15,6 +15,8 @@ public:
   virtual void autotune();
 
   virtual AbstractProposal* clone() const; 
+
+  static double relativeWeight;
   
 private: 
   void drawPaths(TreeAln &traln, Randomness &rand); 

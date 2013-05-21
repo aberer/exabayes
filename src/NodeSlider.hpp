@@ -8,7 +8,7 @@
 class NodeSlider : public AbstractProposal
 {
 public:   
-  NodeSlider(double relativeProbability, double multiplier);
+  NodeSlider( double multiplier);
   virtual ~NodeSlider(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -18,6 +18,8 @@ public:
   virtual void autotune() {}	// disabled 
 
   virtual AbstractProposal* clone() const;  
+
+  static double relativeWeight;
 
 protected: 
   double multiplier; 

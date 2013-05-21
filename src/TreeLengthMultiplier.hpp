@@ -4,7 +4,7 @@
 class TreeLengthMultiplier : public AbstractProposal
 {
 public: 
-TreeLengthMultiplier( double _relativeWeight, double _multiplier); 
+  TreeLengthMultiplier( double _multiplier) ; 
   ~TreeLengthMultiplier(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -13,6 +13,8 @@ TreeLengthMultiplier( double _relativeWeight, double _multiplier);
   virtual void autotune() ;
 
   virtual AbstractProposal* clone() const;  
+
+  static double relativeWeight;
 
 private: 
   double multiplier; 		// the tuning variable  

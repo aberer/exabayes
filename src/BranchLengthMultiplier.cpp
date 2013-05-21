@@ -3,10 +3,12 @@
 #include "TreeAln.hpp"
 #include "tune.h"
 
-BranchLengthMultiplier::BranchLengthMultiplier(double relativeWeight, double _multiplier)
+double BranchLengthMultiplier::relativeWeight = 20;
+
+BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
   :  multiplier(_multiplier)
 {
-  this->relativeProbability = relativeWeight; 
+  // this->relativeProbability = relativeWeight; 
   this->name = "blMult"; 
   this->category = BRANCH_LENGTHS; 
   // ptype = BRANCH_LENGTHS_MULTIPLIER; 
@@ -87,5 +89,5 @@ void BranchLengthMultiplier::autotune()
 AbstractProposal* BranchLengthMultiplier::clone() const
 {
   // tout << "cloning "  << name << endl;
-  return new BranchLengthMultiplier(relativeProbability, multiplier);
+  return new BranchLengthMultiplier(multiplier);
 }

@@ -8,7 +8,7 @@
 class BranchLengthMultiplier : public AbstractProposal
 {
 public: 
-  BranchLengthMultiplier( double relativeWeight, double multiplier); 
+  BranchLengthMultiplier(  double multiplier); 
   virtual ~BranchLengthMultiplier(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -18,6 +18,8 @@ public:
   virtual void autotune();
 
   virtual AbstractProposal* clone() const;  
+
+  static double relativeWeight;
   
 private: 
   double multiplier;  
