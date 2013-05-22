@@ -85,7 +85,7 @@ begin proposals;
 
 [ 
       [ TOPOLOGY ]
-      eSPR 6.66
+      eSPR 6.66 
       stNNI 6.66
       eTBR  6.66
       parsimonySPR 0 [ inefficient ]

@@ -11,8 +11,7 @@
 
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
-#include "PriorBelief.hpp"
-#include "Category.hpp"
+#include "BlockRunParameters.hpp"
 #include "Chain.hpp"
 #include "SuccessCounter.hpp"
 
@@ -26,8 +25,7 @@
 class CoupledChains
 {
 public: 
-  CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, vector<Category> proposals, int tuneFreq); 
-  // ~CoupledChains(){}
+  CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAln*> trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariable> &vars); 
 
   /** @brief initializes all trees with a given starting tree */
   void initStartingTree(FILE *fh);

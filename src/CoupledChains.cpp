@@ -8,31 +8,27 @@
 #include "output.h"
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
-#include "Category.hpp"
 
-CoupledChains::CoupledChains(int seed, int numCoupled, vector<TreeAln*> trees, int _runid , double _printFreq, double _swapInterval, int _samplingFreq, double heatFactor, string _runname, string workingdir, const PriorBelief &prior, const vector<Category> proposals, int tuneFreq)
-  : temperature(heatFactor)
+CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAln*> trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariable > &vars)
+  : temperature(params.getHeatFactor())
   , rand(seed)
-  , runid(_runid) 
-  , tuneHeat(false)
-  , printFreq(_printFreq)
-  , swapInterval(_swapInterval)
-  , samplingFreq(_samplingFreq)
-  , runname(_runname)
+  , runid(runNum) 
+  , tuneHeat(params.getTuneHeat())
+  , printFreq(params.getPrintFreq())
+  , swapInterval(params.getSwapInterval())
+  , samplingFreq(params.getSamplingFreq())
+  , runname(params.getRunId())
 {
+  int numCoupled = params.getNumCoupledChains();
   assert((nat)numCoupled == trees.size());
 
   for(int i = 0; i < numCoupled; ++i)
     {
-      vector<Category> pCopy; 
-      for(auto c : proposals)
-	{
-	  Category aCopy(c); 
-	  aCopy.copyDeep(c); 
-	  pCopy.push_back(aCopy);
-	}
-
-      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i], prior, pCopy, tuneFreq); 
+      // vector<shared_ptr<AbstractProposal> >pCopy; 
+      // for(auto elem : proposals)
+      // 	pCopy.push_back(shared_ptr<AbstractProposal>(elem->clone())); 
+      
+      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i],  proposals, tuneFreq, vars); 
       chain->setDeltaT(temperature); 
       chains.push_back(chain);
     }
@@ -124,8 +120,8 @@ void CoupledChains::switchChainState()
   double lnlA = chains[chainAId]->traln->getTr()->likelihood,
     lnlB = chains[chainBId]->traln->getTr()->likelihood; 
 
-  double lnPrA = chains[chainAId]->getPrior().getLogProb(), 
-    lnPrB = chains[chainBId]->getPrior().getLogProb(); 
+  double lnPrA = chains[chainAId]->getPrior().getLnPrior(), 
+    lnPrB = chains[chainBId]->getPrior().getLnPrior(); 
 
   double 
     aB = (lnlA + lnPrA ) *  heatB,
@@ -164,7 +160,7 @@ void CoupledChains::chainInfo()
   tout << 
     "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->getGeneration() 
        <<  "\tTL=" << setprecision(2)<< coldChain->traln->getTreeLength()
-       << "\tlnPr(1)=" << coldChain->getPrior().getLogProb() << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\t" ; 
+       << "\tlnPr(1)=" << coldChain->getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\t" ; 
 
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
@@ -188,6 +184,10 @@ void CoupledChains::chainInfo()
   /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
 
+
+
+
+#if TODO 
   for(auto cat : coldChain->getProposalCategories())
     {
       tout << cat.getName() << ":\t";
@@ -197,6 +197,7 @@ void CoupledChains::chainInfo()
     }
 
   tout << endl; 
+#endif
 }
 
 

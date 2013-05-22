@@ -10,13 +10,6 @@ SuccessCounter::SuccessCounter()
 }
 
 
-SuccessCounter::SuccessCounter(const SuccessCounter& rhs)
-{
-  assert(0); 
-}
-
-
-
 void SuccessCounter::accept() 
 {
   globalAcc++;

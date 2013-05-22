@@ -16,6 +16,8 @@ public:
 
   static double relativeWeight;
 
+  virtual double getRelativeWeight() const {return relativeWeight; }
+
 private: 
   double multiplier; 		// the tuning variable  
   double rememMultiplier; 	// for resetting 

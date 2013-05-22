@@ -16,8 +16,7 @@ using namespace std;
 class SuccessCounter
 {
 public: 
-  SuccessCounter();
-  SuccessCounter(const SuccessCounter& rhs); 
+  SuccessCounter();  
 
   void accept(); 
   void reject();

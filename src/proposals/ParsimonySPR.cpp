@@ -267,10 +267,13 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   move.applyPathAsESPR(traln,path);
 
 #ifdef ESPR_MULTIPLY_BL
-  if(not prior.believingInFixedBranchLengths())
-    {
+
+  // checked for fixed 
+  assert(NOT_IMPLEMENTED); 
+  // if(not prior.believingInFixedBranchLengths())
+  //   {
       move.multiplyAlongBranchESPR(traln, rand, hastings, prior, path, blMulti);
-    }
+    // }
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   cout << "after multiply: " << traln  << endl; 
 #endif
@@ -337,6 +340,7 @@ void ParsimonySPR::autotune()
 
 AbstractProposal* ParsimonySPR::clone() const
 {
-  return new ParsimonySPR(  parsWarp, blMulti);
+  return new ParsimonySPR(*this); 
+  // return new ParsimonySPR(  parsWarp, blMulti);
 } 
 

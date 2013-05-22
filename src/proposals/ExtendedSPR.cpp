@@ -122,10 +122,14 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   move.applyPathAsESPR(traln, modifiedPath);
 
 #ifdef ESPR_MULTIPLY_BL
-  if(not prior.believingInFixedBranchLengths())
-    {
+
+  assert(NOT_IMPLEMENTED); 
+  // check for fixed 
+
+  // if(not prior.believingInFixedBranchLengths())
+  //   {
       move.multiplyAlongBranchESPR(traln, rand, hastings, prior, modifiedPath, multiplier);
-    }
+    // }
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   cout << "after multiply: " << traln  << endl; 
 #endif
@@ -164,5 +168,6 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 AbstractProposal* ExtendedSPR::clone() const
 {
   // tout << "cloning "  << name << endl;
-  return new ExtendedSPR( stopProb, multiplier);
+  // return new ExtendedSPR( stopProb, multiplier);
+  return new ExtendedSPR( *this); 
 }

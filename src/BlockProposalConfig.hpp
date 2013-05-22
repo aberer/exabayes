@@ -11,23 +11,23 @@ class BlockProposalConfig : public NxsBlock
 public: 
   BlockProposalConfig();
   virtual void Read(NxsToken &token); 
-  void setupMap(); 
-  vector<double> getUserProposalWeights() const {return userProposalWeights; }
-  // void fillProposalWeights(){ weights = proposalWeights;  } 
+  void setupMap();  
+  
+  bool wasSetByUser( nat num) const  {return setByUser[num]; }
+  double getProposalWeight(nat num ) const  {return userProposalWeights[num]; }
 
   double getEsprStopProp() const {return esprStopProp; } 
   double getParsimonyWarp() const {return parsimonyWarp; }
   int getGuidedRadius() const {return guidedRadius; }  
 
 private: 
+  vector<bool> setByUser; 
   vector<double> userProposalWeights ; 
   map<string, proposal_type> name2proposal; 
 
   double esprStopProp; 
   double parsimonyWarp;   
   int guidedRadius; 
-
-
 
 }; 
 

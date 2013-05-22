@@ -22,11 +22,20 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
   nodeptr p = findNodeFromBranch(traln.getTr(),b) ; 
   modifiedBranch.length[0] = p->z[0];       
   
+
+  AbstractPrior* brPr; 
+#if TODO 
   auto brPr = prior.getBranchLengthPrior();       
+#endif
 
   if(traln.isCollapsed(b))
-    {      
-      vector<double> zNews =  prior.drawFromPriorByCategory(BRANCH_LENGTHS, rand);
+    {    
+
+      vector<double> zNews ; 
+#if TODO
+      zNews=  prior.drawFromPriorByCategory(BRANCH_LENGTHS, rand);
+#endif
+
       assert(zNews.size() == 1); 
       b.length[0] = branchLengthToInternal(traln.getTr(), zNews[0]); 
       traln.setBranchLengthUnsafe(b); 
@@ -43,8 +52,10 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 
     }  
 
+#if 0 
   prior.updateBranchLength(branchLengthToReal(traln.getTr(), modifiedBranch.length[0]) ,
 			   branchLengthToReal(traln.getTr(), p->z[0] ) );
+#endif
 }
 
 
@@ -58,10 +69,11 @@ void BranchCollapser::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 
 void BranchCollapser::resetState(TreeAln &traln, PriorBelief &prior)
 {  
+#if TODO 
   nodeptr p = findNodeFromBranch(traln.getTr(), modifiedBranch) ; 
-
   prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0] ) , 
 			   branchLengthToReal(traln.getTr(), modifiedBranch.length[0]) );
+#endif
 
   traln.setBranchLengthUnsafe(modifiedBranch);
 }
@@ -69,6 +81,6 @@ void BranchCollapser::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* BranchCollapser::clone() const 
 {
-  return new BranchCollapser();
+  return new BranchCollapser(*this);
 }
 

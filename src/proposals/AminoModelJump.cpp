@@ -42,6 +42,7 @@ void AminoModelJump::autotune()
 
 AbstractProposal* AminoModelJump::clone() const 
 {
-  return new AminoModelJump( matrices);
+  // return new AminoModelJump( matrices);
+  return new AminoModelJump(*this); 
 }
 

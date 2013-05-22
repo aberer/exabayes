@@ -31,6 +31,8 @@ public:
 
   static double relativeWeight;
 
+  virtual double getRelativeWeight() const {return relativeWeight; }
+
 private: 
   int model; 			// which model
 

@@ -35,6 +35,8 @@ public:
 
   virtual AbstractProposal* clone() const = 0;  
 
+  virtual double getRelativeWeight() const = 0; 
+
 
   category_t getCategory() const {return category; }
   string getName() const {return name; }
@@ -50,7 +52,7 @@ public:
 
 
 
-  friend ostream&  operator<< ( ostream& out , const AbstractProposal* rhs)
+  friend ostream&  operator<< ( ostream& out , const unique_ptr<AbstractProposal> &rhs)
   {
     out << "proposal " << rhs->name <<  " modifying " ; 
     for(auto r : rhs->randomVariables)
@@ -64,7 +66,6 @@ protected:
   string name;   
   SuccessCounter sctr; 
   category_t category; 
-
   vector<RandomVariable> randomVariables; // random variables that are integrated by this proposal
 }; 
 

@@ -10,6 +10,7 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
+#include "common.h"
 #include <string>
 #include "config.h"
 #include "teestream.hpp"

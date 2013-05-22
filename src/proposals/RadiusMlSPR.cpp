@@ -472,5 +472,6 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* RadiusMlSPR::clone() const
 {
-  return new RadiusMlSPR( radius);
+  // return new RadiusMlSPR( radius);
+  return new RadiusMlSPR( *this );
 }

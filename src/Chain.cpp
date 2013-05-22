@@ -1,5 +1,6 @@
 #include <sstream>
 
+
 #include "Chain.hpp"
 #include "Topology.hpp"
 #include "LnlRestorer.hpp"
@@ -25,28 +26,33 @@
 
 
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief _prior, const vector<Category> propCats, int _tuneFreq) 
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) 
   : traln(_traln)
   , runid(_runid)
-  , prior(_prior)
   , tuneFrequency(_tuneFreq)
   , hastings(0)
   , currentGeneration(0)
   , couplingId(id)
-  , proposalCategories(propCats)    
   , state(*traln)
   , chainRand(seed.v[0])
+  , relWeightSum(0)
+  , prior(*_traln, variables)
 {
+  for(auto &p : _proposals)
+    proposals.push_back(unique_ptr<AbstractProposal>(p->clone())); 
+
+
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
 
   evaluateFullNoBackup(*traln);   
 
-  prior.initPrior(*traln);
-
-  addChainInfo(tout)  << " lnPr="  << prior.getLogProb() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << chainRand << endl; 
+  addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << chainRand << endl; 
 
   saveTreeStateToChain(); 
+
+  for(auto& elem : proposals)
+    relWeightSum +=  elem->getRelativeWeight();
 }
 
 
@@ -90,6 +96,8 @@ void Chain::saveTreeStateToChain()
 	tmp.push_back(partitionTr->frequencies[i]); 
       partInfo.setStateFreqs(tmp); 
     }  
+
+  state.setBranchLengthsFixed(traln->getBranchLengthsFixed()); 
 }
 
 
@@ -115,13 +123,14 @@ void Chain::applyChainStateToTree()
       traln->discretizeGamma(i);	 
     } 
 
+  traln->setBranchLengthsFixed(state.getBranchLengthsFixed());   
   evaluateFullNoBackup(*traln); 
 }
 
 
 
 
-void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr ) 
+void Chain::debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   if(isOutputProcess())
@@ -132,20 +141,24 @@ void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl
 
 
 
-AbstractProposal* Chain::drawProposalFunction()
-{    
-  double r = chainRand.drawRandDouble01();  
-  for(auto c : proposalCategories)
+unique_ptr<AbstractProposal>& Chain::drawProposalFunction()
+{ 
+  double r = relWeightSum * chainRand.drawRandDouble01();   
+
+  for(auto& c : proposals)
     {
-      double ref = c.getCatFreq(); 
-      if(r <= ref )
-	return c.drawProposal(chainRand);
+      double w = c->getRelativeWeight(); 
+      if(r < w )
+	{
+	  cout << "drawn proposal " << c << endl; 
+	  return c;
+	}
       else 
-	r -= ref; 
+	r -= w; 
     }
-  
+
   assert(0); 
-  return NULL; 
+  return proposals[0]; 
 }
 
 
@@ -157,7 +170,7 @@ void Chain::printParams(FILE *fh)
   double treeLength =  traln->getTreeLength(); 
   assert(treeLength != 0.); 
   fprintf(fh, "%d\t%f\t%f\t%.3f", currentGeneration,
-	  prior.getLogProb(), 
+	  prior.getLnPrior(), 
 	  tr->likelihood,  
 	  treeLength); 
 
@@ -237,11 +250,8 @@ void Chain::switchState(Chain &rhs)
 {
   swap(couplingId, rhs.couplingId); 
   swap(chainRand, rhs.chainRand); 
-  swap(proposalCategories, rhs.proposalCategories); 
+  swap(proposals, rhs.proposals); 
 }
-
-
-
 
 
 void Chain::step()
@@ -259,16 +269,19 @@ void Chain::step()
 
   double myHeat = getChainHeat();
 
-  AbstractProposal *pfun = drawProposalFunction();
+  auto& pfun = drawProposalFunction();
  
   /* reset proposal ratio  */
   hastings = 0; 
-  
-  double oldPrior = prior.getLogProb();
+
+#ifdef DEBUG_ACCEPTANCE
+  double oldPrior = prior.getLnPrior();
+#endif
+
   pfun->applyToState(*traln, prior, hastings, chainRand);
   pfun->evaluateProposal(*traln, prior);
   
-  double priorRatio = prior.getLogProb() - oldPrior;
+  double priorRatio = prior.getLnPriorRatio();
   double lnlRatio = tr->likelihood - prevLnl; 
 
   double testr = chainRand.drawRandDouble01();
@@ -278,10 +291,9 @@ void Chain::step()
   tout << "(" << prior.getLogProb() << " - " << oldPrior << ") + ( " << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
 #endif
 
-
   bool wasAccepted  = testr < acceptance; 
 
-  debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLogProb()); 
+  debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior()); 
 
 #ifdef VERIFY_LNL_SUPER_EXPENSIVE  
   // TEST
@@ -291,26 +303,27 @@ void Chain::step()
   // END
 #endif
 
-#ifdef DEBUG_VERIFY_LNPR
-  prior.verify(*traln);
-#endif
+// #ifdef DEBUG_VERIFY_LNPR
+//   prior.verify(*traln);
+// #endif
 
   if(wasAccepted)
     {
       pfun->accept();      
-      expensiveVerify(*traln);
+      prior.accept();
+      expensiveVerify(*traln);      
     }
   else
     {
       pfun->resetState(*traln, prior);
       pfun->reject();
+      prior.reject();
 
-      // TODO maybe not here =/ 
       traln->getRestorer()->restoreArrays(*traln);
     }
 
 #ifdef DEBUG_VERIFY_LNPR
-  prior.verify(*traln);
+  prior.verifyPrior(*traln);
 #endif
 
 
@@ -318,28 +331,5 @@ void Chain::step()
  
   if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
     pfun->autotune();
-
-
-#if 0 
-  /* autotuning for proposal parameters. With increased parallelism
-     this will become more complicated.  */
-  if( globals.tuneFreq > 0 && this->currentGeneration % globals.tuneFreq == globals.tuneFreq - 1 )
-    {
-      for(int i = 0; i < this->numProposals; ++i)
-	{
-	  proposalFunction *pf = this->proposals[i]; 
-	  
-	  if(pf->autotune)	/* only, if we set this   */
-	    {
-#ifdef TUNE_ONLY_IF_ENOUGH
-	      if(pf->sCtr.lAcc + pf->sCtr.lRej < globals.tuneFreq )
-		continue; 
-#endif
-	      pf->autotune(this, pf);
-	    }
-	}
-    }
-#endif
-
 
 }

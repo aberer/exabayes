@@ -64,8 +64,11 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
     
     
 #ifdef NNI_MULTIPLY_BL
-    if(not prior.believingInFixedBranchLengths() )
-      {
+    // check for fixed  
+
+    assert(NOT_IMPLEMENTED); 
+    // if(not prior.believingInFixedBranchLengths() )
+      // {
 
 	/* DIRTY */
 	double m1 = rand.drawMultiplier( multiplier), 
@@ -88,11 +91,13 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 	printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
 #endif
 
+#if TODO 
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old1), branchLengthToReal(traln.getTr(), new1));
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old2), branchLengthToReal(traln.getTr(), new2)); 
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old3), branchLengthToReal(traln.getTr(), new3)); 
+#endif
 
-      }
+      // }
 #endif
 
     traln.clipNode(p,p->back, p->z[0]); 
@@ -153,12 +158,17 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
     
     assert(numBranches == 1); 
     
-    if(not prior.believingInFixedBranchLengths())
-      {
+
+    assert(NOT_IMPLEMENTED); 
+    // TODO check for fixed 
+    // if(not prior.believingInFixedBranchLengths())
+      // {
+#if TODO 
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), between->z[0]), branchLengthToReal(traln.getTr(), chosenBranch.length[0]));
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), r->z[0]), branchLengthToReal(traln.getTr(), b.length[0]));
 	prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), a.length[0]));
-      }
+#endif
+      // }
 
     traln.clipNode(between, between->back, chosenBranch.length[0]); 
     traln.clipNode(r, qBack, b.length[0]);  /* r->z */
@@ -173,5 +183,6 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* StatNNI::clone()  const
 {
-  return new StatNNI( multiplier);
+  // return new StatNNI( multiplier);
+  return new StatNNI( *this );
 }

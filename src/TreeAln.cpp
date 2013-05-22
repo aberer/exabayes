@@ -161,8 +161,31 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
       setRevMatBounded(tmp2,i );       
     }
 #endif
+
+
+  
+
 }
 
+double TreeAln::getTreeLengthExpensive() const
+{
+  vector<branch> branches; 
+  extractBranches(*this, branches); 
+  
+  assert(getNumBranches() == 1 ); 
+
+  double result = 1; 
+  for(auto b : branches)
+    result *= b.length[0]; 
+
+  return result; 
+}
+
+void TreeAln::verifyTreeLength() const
+{
+  double tlVerified = getTreeLengthExpensive() ;
+  assert(treeLength == tlVerified); 
+}
 
 void TreeAln::enableParsimony()
 {
@@ -493,10 +516,13 @@ void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
  */  
 void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
 {
+  double oldZ = p->z[model] ; 
   if(newValue < zMin)
     newValue = zMin; 
   if (zMax < newValue)
     newValue = zMax; 
+
+  treeLength *= newValue / oldZ ; 
   
   p->z[model] = p->back->z[model] = newValue; 
 }

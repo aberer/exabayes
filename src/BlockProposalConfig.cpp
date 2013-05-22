@@ -4,7 +4,8 @@
 
 
 BlockProposalConfig::BlockProposalConfig()
-  : userProposalWeights(NUM_PROPOSALS)
+  : setByUser(NUM_PROPOSALS, false)
+   ,userProposalWeights(NUM_PROPOSALS, 0)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "PROPOSALS"; 
   setupMap();
@@ -32,6 +33,7 @@ void BlockProposalConfig::Read(NxsToken &token)
 	    {
 	      double val = value.ConvertToDouble(); 
 	      userProposalWeights[proposal_type(name2proposal[key])] = val;
+	      setByUser[proposal_type(name2proposal[key])] = true; 
 	    }
 	  else if(key.EqualsCaseInsensitive("esprstopprob"))	    
 	    esprStopProp = value.ConvertToDouble();	  

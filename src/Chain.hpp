@@ -13,7 +13,7 @@
 
 using namespace std; 
 
-#include "Category.hpp"
+
 #include "PriorBelief.hpp"
 #include "State.hpp"
 
@@ -34,17 +34,17 @@ public:
 
 
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const PriorBelief _prior, const vector<Category> propCats, int _tuneFreq);
+  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) ; 
   
   // getters and setters 
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
-  vector<Category>& getProposalCategories(){return proposalCategories;}
+  // vector<Category>& getProposalCategories(){return proposalCategories;}
   int getCouplingId(){return couplingId; }
   void setCouplingId(int id) {couplingId = id; }
   
   /** @brief draws a proposal function. */ 
-  AbstractProposal* drawProposalFunction( ); 
+  unique_ptr<AbstractProposal>& drawProposalFunction();
 
   /** @brief Saves all relevan information from the tree into the chain Chain. */ 
   void saveTreeStateToChain(); 
@@ -75,23 +75,28 @@ private :
   Chain(const Chain& rhs)  ; 
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 
-  PriorBelief prior; 
 
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
 
   double hastings;/// the log hastings ratio  
   int currentGeneration;   
   
-  void debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr ) ;   
+  void debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) ;
   void initParamDump(); 
 
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  
-  vector<Category> proposalCategories; // proposals that we implemented using the new framework 
+
+  vector< unique_ptr<AbstractProposal> > proposals; 
 
   State state; 
 
   Randomness chainRand; 
+
+  
+  double relWeightSum ; 	// sum of all relative weights
+
+  PriorBelief prior; 
+
 }; 
 
 

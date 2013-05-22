@@ -56,12 +56,15 @@ void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double
   privateMethod(traln,rand);
 
 
+#if 0 
   // assume we have changed the branch lengths. Then we have to modify the prior as well.   
   double oldBL = 0; 		// the REAL vaule 
   double newBL = 0; 	
+
   prior.updateBranchLength(oldBL, newBL); // updates the prior, also
 					  // check out the other
 					  // methods for modification.
+#endif
 
   // for verifying that your prior modifications are correct, check
   // out the DEBUG_LNPR in common.h
@@ -79,12 +82,15 @@ void MyTemplateProposal::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 void MyTemplateProposal::resetState(TreeAln &traln, PriorBelief &prior)
 {  
   // reset your modifications to the tree   
-  
+
+#if TODO    
   // dont forget to update the prior: 
   double newBL = 0; 		// we probably have stored that as a private member variable
   double oldBL = 0; 
   
+
   prior.updateBranchLength(newBL, oldBL); // values are switched this time  
+#endif
 
   
   // NOTICE: always call this update prior methods AFTER you have
@@ -112,7 +118,7 @@ void MyTemplateProposal::autotune()
 // wants to have its own instance of a proposal)
 AbstractProposal* MyTemplateProposal::clone() const 
 {
-  return new MyTemplateProposal( aVariable);
+  return new MyTemplateProposal( *this);
 }
 
 

@@ -6,6 +6,8 @@
 #include "Chain.hpp"
 #include "AbstractProposal.hpp"
 
+#define TODO 0  
+
 
 Path::Path()
 {
@@ -148,13 +150,17 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double par
   cout  << setprecision(6) << "spr: " << oldZ <<   " * " << multiplier << " = "  << multiplier * oldZ << endl; // 
 #endif
 
+#if TODO
   assert(not prior.believingInFixedBranchLengths()); 
+#endif
 
   traln.clipNode(p,p->back, newZ);   
 
   double realMultiplier = branchLengthToReal(tr, newZ ) / oldZ ; 
 
+#if TODO 
   prior.updateBranchLength(oldZ, branchLengthToReal(traln.getTr(),newZ));  
+#endif
   updateHastings(hastings, realMultiplier, "pathMod");; 
 }
 
@@ -166,8 +172,10 @@ void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior)
   for(auto b : stack)
     {
       nodeptr p = findNodeFromBranch(traln.getTr(), b); 
-      if(not prior.believingInFixedBranchLengths())
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), b.length[0]) );
+      // if(not prior.believingInFixedBranchLengths())
+#if 0 
+      prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), b.length[0]) );
+#endif
       traln.clipNode(p, p->back, b.length[0]); 
     }  
 }

@@ -119,6 +119,13 @@ public:
   /** @brief the partition does not have a revmat */ 
   bool revMatIsImmutable(int model) const ; 
 
+  double getTreeLengthExpensive() const;
+
+  void verifyTreeLength() const; 
+
+  vector<bool> getBranchLengthsFixed () const {return branchLengthsFixed; }
+  void setBranchLengthsFixed(vector<bool> vect) {branchLengthsFixed = vect; }
+
 private:   
   double getTreeLengthHelper(nodeptr p) const;
   
@@ -126,7 +133,7 @@ private:
   tree* tr;		// TODO replace with an object for cleanup 
   
   bool parsimonyEnabled;   
-  bool branchLengthsFixed;   
+  vector<bool> branchLengthsFixed;   
   shared_ptr<LnlRestorer> restorer; 
 
 
@@ -137,6 +144,9 @@ private:
   // void initializeTreePLL();
   void initializePartitionsPLL(string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
+
+  double treeLength ; 		// on internal scale 
 };  
+
 
 #endif

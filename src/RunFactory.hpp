@@ -20,7 +20,6 @@
 #include "AbstractProposal.hpp"
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
-#include "Category.hpp"
 #include "RandomVariable.hpp"
 
 
@@ -29,9 +28,8 @@ class RunFactory
 public: 
   RunFactory(){}
 
-  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln); 
-
-  vector<shared_ptr<AbstractProposal> > getProposals() const {return proposals;  } 
+  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposalResult); 
+  
   vector<RandomVariable> getRandomVariables() const {return randomVariables; }
 
 private: 
@@ -42,7 +40,7 @@ private:
   // DUMMY
   // void setupProposals(vector<Category> &proposalCategories, vector<double> proposalWeights, const PriorBelief &prior); 
 
-  vector<shared_ptr<AbstractProposal> > proposals; 
+  // vector<unique_ptr<AbstractProposal> > proposals; 
   vector<RandomVariable> randomVariables; 
 
 }; 

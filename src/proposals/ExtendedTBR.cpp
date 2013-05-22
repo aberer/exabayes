@@ -5,8 +5,6 @@
 
 double ExtendedTBR::relativeWeight = 5.;
 
-
-
 // #define DEBUG_TBR
 
 
@@ -199,18 +197,19 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   modifiedPath2.saveBranchLengthsPath(traln); 
 
 #ifdef TBR_MULTIPLY_BL  
-  if(not prior.believingInFixedBranchLengths())
+
+  // check for fixed branch lengths!
+  assert(NOT_IMPLEMENTED); 
+
+  for(int i = 0 ;i < modifiedPath1.size(); ++i)
     {
-      for(int i = 0 ;i < modifiedPath1.size(); ++i)
-	{
-	  branch &b = modifiedPath1.at(i);  
-	  modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings, prior);       
-	}
-      for(int i = 0; i < modifiedPath2.size(); ++i)
-	{
-	  branch &b = modifiedPath2.at(i); 
-	  modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior); 
-	}
+      branch &b = modifiedPath1.at(i);  
+      modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings, prior);       
+    }
+  for(int i = 0; i < modifiedPath2.size(); ++i)
+    {
+      branch &b = modifiedPath2.at(i); 
+      modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior); 
     }
 #endif
   
@@ -363,9 +362,7 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 #ifdef EFFICIENT
   assert(0); 
 #endif
-
-  prior.rescoreAllBranchLengths(traln);
-
+ 
   debug_checkTreeConsistency(traln.getTr()); 
   debug_printTree(traln);   
 }
@@ -374,5 +371,6 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 
 AbstractProposal* ExtendedTBR::clone() const 
 {
-  return new ExtendedTBR( extensionProbability, multiplier);
+  return new ExtendedTBR( *this );
+// extensionProbability, multiplier
 }

@@ -124,13 +124,13 @@ void BlockPrior::Read(NxsToken &token)
 
 	  if(priorPartition == -1 )	  
 	    {
-	      assert(generalPriors[cat].get() == nullptr); 
+	      assert(generalPriors[cat] == nullptr); 
 	      generalPriors[cat] = prior; 
 	    }	    
 	  else 
 	    {
 	      map<nat, shared_ptr<AbstractPrior>>& priorsForPartition = specificPriors[cat]; 
-	      assert(priorsForPartition[priorPartition].get() == nullptr); 
+	      assert(priorsForPartition[priorPartition] == nullptr); 
 	      priorsForPartition[priorPartition] = prior; 
 	    }
 	}

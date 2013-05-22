@@ -13,8 +13,7 @@
 #include "TreeRandomizer.hpp"
 #include "treeRead.h"
 #include "tune.h"
-#include "Category.hpp"
-#include "RunFactory.hpp"
+#include "RunFactory.hpp"	
 
 // TODO =( 
 #include "GlobalVariables.hpp"
@@ -43,18 +42,24 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
   FILE *treeFH = NULL; 
   int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
-  PriorBelief prior;
-  vector<Category> proposals; 
-
   vector<TreeAln*> trees; 
   initTrees(trees, cl );
 
-  initWithConfigFile(cl.getConfigFileName(), prior, *(trees[0]));
+  vector<unique_ptr<AbstractProposal> > proposals; 
+  vector<RandomVariable> variables; 
+
+  cout << "tree has " << trees[0]->getNumberOfPartitions() <<  " partitions " << endl; 
+
+  initWithConfigFile(cl.getConfigFileName(),  *(trees[0]), proposals, variables);
   assert(runParams.getTuneFreq() > 0); 
 
-#if 0 
-  setupProposals(proposals, proposalWeights, prior);
-#endif
+  // TODO should be a vector later 
+  bool fixedBL = false; 
+  for(auto v : variables)
+    {
+      if(v.getCategory() == BRANCH_LENGTHS && typeid(v.getPrior()) == typeid(shared_ptr<FixedPrior>))
+	fixedBL = true ; 
+    }
 
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
@@ -69,7 +74,6 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
       treeSeeds.push_back(r.v[1]); 
     }
 
-
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {      
       if( i < numTreesAvailable)
@@ -77,11 +81,15 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
       else 
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
+      // account for fixed branch lengths 
+      for(TreeAln *t : trees)
+	t->setBranchLengthsFixed({fixedBL});
+
       if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
-	runs.push_back(CoupledChains(runSeeds[i], runParams.getNumCoupledChains(), trees, i, runParams.getPrintFreq(), runParams.getSwapInterval(), runParams.getSamplingFreq(), runParams.getHeatFactor(), cl.getRunid(), cl.getWorkdir(), prior, proposals, runParams.getTuneFreq())); 
+	runs.push_back(CoupledChains(runSeeds[i], i, runParams, trees, cl.getWorkdir(), proposals, variables)); 
     }
-  
-	  if(runParams.getTuneHeat())
+
+  if(runParams.getTuneHeat())
     for(CoupledChains& r : runs)
       r.enableHeatTuning(runParams.getTuneFreq()); 
 
@@ -242,7 +250,7 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior, const TreeAln &traln)
+void SampleMaster::initWithConfigFile(string configFileName, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposalResult, vector<RandomVariable> &variableResult)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 
@@ -262,11 +270,9 @@ void SampleMaster::initWithConfigFile(string configFileName, PriorBelief &prior,
   reader.Execute(token);
 
   RunFactory r; 
-  r.configureRuns(proposalConfig, priorBlock , paramBlock, traln);
-  auto proposals = r.getProposals();  
-  auto vars = r.getRandomVariables();
-
-  assert(NOT_IMPLEMENTED);
+  r.configureRuns(proposalConfig, priorBlock , paramBlock, traln, proposalResult);
+  // proposalResult =  r.getProposals();  
+  variableResult = r.getRandomVariables(); 
 }
 
 

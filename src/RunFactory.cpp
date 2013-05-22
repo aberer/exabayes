@@ -10,7 +10,7 @@
 
 void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeAln &traln )
 {
-  vector<bool> categoryIsActive(false, NUM_PROP_CATS);
+  vector<bool> categoryIsActive( NUM_PROP_CATS, false);
   for(auto v : vars )
     categoryIsActive[v.getCategory()] = true; 
 
@@ -87,7 +87,7 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 	      {
 		for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 		  {
-		    pInfo* partition = traln.getPartition(i);
+		    pInfo* partition = traln.getPartition(j);
 		    if(partition->dataType == AA_DATA)
 		      {
 			RandomVariable r(catIter, highestId);
@@ -155,7 +155,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       auto partitionIds = v.getPartitions(); 
 
       map<nat, shared_ptr<AbstractPrior > >  idMap = specificPriors[ v.getCategory() ]; 
-      AbstractPrior* thePrior = nullptr; 
+      shared_ptr<AbstractPrior> thePrior = nullptr; 
       for(nat partId : partitionIds)	
 	{	  	  
 	  if(idMap.find(partId) != idMap.end()) // found 
@@ -166,23 +166,22 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 		  exit(1); 
 		}
 	      else 
-		thePrior = idMap.at(partId).get(); 
+		thePrior = idMap.at(partId); 
 	    }	 	    
 	}
       
       // use a general prior, if we have not found anything
       if(thePrior == nullptr)
-	thePrior = generalPriors.at(v.getCategory()).get(); 
+	thePrior = generalPriors.at(v.getCategory()); 
       
       if(thePrior != nullptr)
-	v.setPrior(shared_ptr<AbstractPrior>(thePrior));
+	v.setPrior(thePrior);
       else 
 	addStandardPrior(v, traln);
     }
 }
 
-
-void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln)
+void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals)
 {
   randomVariables = partitionParams.getParameters();
   addStandardParameters(randomVariables, traln);
@@ -196,11 +195,13 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   for(auto v : randomVariables)
     {
-      vector<shared_ptr<AbstractProposal> >  props = reg.getProposals(v.getCategory(), propConfig);
-      for(shared_ptr<AbstractProposal> &p : props )
+      if(typeid(v.getPrior()) == typeid(shared_ptr<FixedPrior>))
+	continue; 
+      
+      reg.getProposals(v.getCategory(), propConfig, proposals); 
+      for(auto  &p : proposals )
 	{
 	  p->addRandomVariable(v);
-	  proposals.push_back(p); 
 	}
     }
 
@@ -208,19 +209,14 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   // lets see if it worked 
 
   // seems to work....
-#if 0 
-  cout << "RandomVariables: " << endl; 
-  for(auto v : randomVariables)
-    cout << v  << endl; 
-  cout << endl; 
+  // cout << "RandomVariables: " << endl; 
+  // for(auto v : randomVariables)
+  //   cout << v  << endl; 
+  // cout << endl; 
   
 
-  cout << "Proposals: " << endl; 
-  for(auto p : proposals )
-    {
-      cout << p << endl; 
-    }
-#endif
-
+  // cout << "Proposals: " << endl; 
+  // for(auto p : proposals )
+  //   cout << p << endl; 
 }
 

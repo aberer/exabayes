@@ -8,9 +8,11 @@ AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_US
 # TODO 
 
 if WITH_DEBUG
-AM_CFLAGS+=-ggdb -O0
+AM_CFLAGS+=-g -O0
+AM_CXXFLAGS=-g -O0
 else
 AM_CFLAGS+=-O2 -fomit-frame-pointer -funroll-loops
+AM_CXXFLAGS=
 endif
 
 # TODO threads
@@ -25,8 +27,8 @@ include src.am
 
 AM_CFLAGS+= -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/ -Isrc/proposals
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS)
-AM_CXXFLAGS=$(AM_CFLAGS)  -std=c++0x
-AM_LDFLAGS=-lm 
+AM_CXXFLAGS+=$(AM_CFLAGS)  -std=c++0x
+AM_LDFLAGS=-lm -g 
 
 
 exabayes_LDADD= 

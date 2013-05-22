@@ -40,6 +40,8 @@ public:
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
+  virtual double getRelativeWeight() const {return relativeWeight; }
+  
   static double relativeWeight;
 
 private: 

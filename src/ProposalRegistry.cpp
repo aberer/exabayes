@@ -6,9 +6,9 @@
 /**
    @brief yields a set of proposls for integrating a category  
  */
-vector<shared_ptr<AbstractProposal> > ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &config) const 
+void ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> >& result) const 
 {
-  vector<shared_ptr<AbstractProposal> > result; 
+  // vector<unique_ptr<AbstractProposal> > result; 
 
   vector<aaMatrix_t> someMatrices; 
 
@@ -78,18 +78,18 @@ vector<shared_ptr<AbstractProposal> > ProposalRegistry::getProposals(category_t 
 	  }
 	}
 
-      if(proposal->getCategory() != cat)
+      if(proposal->getCategory() != cat )
 	delete proposal; 
       else 
-	result.push_back(shared_ptr<AbstractProposal>(proposal)); 
+	result.push_back(unique_ptr<AbstractProposal>(proposal)); 
     }
-  return result;
+  // return result;
 } 
 
 
 void ProposalRegistry::updateProposalWeights(const BlockProposalConfig &propConfig) const
 {
-  auto weights =  propConfig.getUserProposalWeights();
+  // auto weights =  propConfig.getUserProposalWeights();
 
   double *dummy = nullptr; 	// specify the variable in your proposal, to enable the proposal
   
@@ -118,10 +118,7 @@ void ProposalRegistry::updateProposalWeights(const BlockProposalConfig &propConf
     } ; 
 
   for(nat i = 0; i < NUM_PROPOSALS; ++i)
-    {
-      if(theMap[proposal_type(i)] != nullptr)
-	{
-	  *(theMap[proposal_type(i)]) = weights[i]; 
-	}
-    }
+    if(theMap[proposal_type(i)] != nullptr && propConfig.wasSetByUser(i))
+      *(theMap[proposal_type(i)]) = propConfig.getProposalWeight(i); 
+
 }

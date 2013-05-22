@@ -63,8 +63,10 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   double aZ = branchLengthToInternal(tr, uniScaler * newZ),
     bZ = branchLengthToInternal(tr, (1-uniScaler) * newZ); 
 
+#if TODO 
   double zABefore = branchLengthToReal(tr, traln.getBranchLength(nodeA,0)),
     zBBefore =branchLengthToReal(tr,traln.getBranchLength(nodeB, 0)); 
+#endif
 
   traln.clipNode(nodeA, nodeA->back, aZ); 
   traln.clipNode(nodeB, nodeB->back, bZ); 
@@ -79,8 +81,10 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   assert(0); 
 #endif
 
+#if TODO  
   prior.updateBranchLength( zABefore , branchLengthToReal(traln.getTr(), aZ));
   prior.updateBranchLength( zBBefore , branchLengthToReal(traln.getTr(), bZ)); 
+#endif
 }
 
 
@@ -128,9 +132,10 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
     bZ = b.length[0]; 
   
   assert(numBranches == 1); 
+#if TODO 
   prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), aZ));
   prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), bZ));
-
+#endif
   traln.clipNode(p, p->back, aZ); 
   traln.clipNode(q,q->back, bZ);   
 
@@ -140,6 +145,7 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* NodeSlider::clone() const
 {
-  NodeSlider* result = new NodeSlider( multiplier);
-  return result;   
+  return new NodeSlider(*this); 
+  // NodeSlider* result = new NodeSlider( multiplier);
+  // return result;   
 }  

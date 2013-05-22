@@ -22,7 +22,7 @@
 class ProposalRegistry
 {
 public: 
-  vector<shared_ptr<AbstractProposal> > getProposals(category_t cat, const BlockProposalConfig &config) const ;
+  void  getProposals(category_t cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result) const ;
   void updateProposalWeights(const BlockProposalConfig &propConfig) const; 
 
 private: 

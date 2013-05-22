@@ -54,8 +54,6 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   initTreeLength =  traln.getTreeLength(); 
 
   multiplyBranchLengthsRecursively(traln , tr->start->back, rememMultiplier); 
-
-  prior.rescoreAllBranchLengths(traln);
 }
 
 
@@ -63,7 +61,6 @@ void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)
 {
   tree *tr = traln.getTr();
   multiplyBranchLengthsRecursively(traln, tr->start->back, 1/rememMultiplier);   
-  prior.rescoreAllBranchLengths(traln);
 } 
 
 
@@ -91,5 +88,7 @@ void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* TreeLengthMultiplier::clone() const
 {
-  return new TreeLengthMultiplier(multiplier);
+  return new TreeLengthMultiplier(*this);
+  
+  // return new TreeLengthMultiplier(multiplier);
 }  

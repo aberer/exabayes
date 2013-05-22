@@ -1,6 +1,7 @@
 #ifndef _PRIORS_H
 #define _PRIORS_H
 
+#include <memory>
 #include <vector>
 #include <limits>
 #include <cassert>
@@ -18,10 +19,12 @@ using namespace std;
 class AbstractPrior
 {
 public: 
+  virtual ~AbstractPrior(){assert(0);}
+
   virtual vector<double> drawFromPrior(Randomness &rand)  const = 0; 
   virtual double getLogProb(vector<double> values ) const = 0; 
   virtual void print(ostream &out) const = 0;
-  friend ostream& operator<<(ostream &out,  AbstractPrior *rhs)
+  friend ostream& operator<<(ostream &out,  shared_ptr<AbstractPrior> rhs)
   {
     rhs->print(out); 
     return out; 
