@@ -47,43 +47,42 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   path.append(oneBranch);
   path.append(otherBranch);
 
+
   nodeptr nodeA = findNodeFromBranch(tr, oneBranch),
     nodeB = findNodeFromBranch(tr,otherBranch); 
+  double oldA = traln.getBranchLength( nodeA,0),
+    oldB = traln.getBranchLength( nodeB,0);  
 
-  double bothZ = traln.getBranchLength( nodeA,0) * traln.getBranchLength( nodeB,0); 
-  double drawnMultiplier = rand.drawMultiplier( multiplier); 
+  double bothZ = oldA * oldB; 
+  double oldBoth = bothZ; 
 
-  double newZ = branchLengthToReal(tr,pow(bothZ,drawnMultiplier));
-#ifdef PRINT_MULT
-  cout << setprecision(6) << name << realOldZ << " * "  << drawnMultiplier << " = " << newZ << endl;  
-#endif
+  double drawnMultiplier = 0,
+    newZ = 0;  
+  do 
+    { 
+      drawnMultiplier  =rand.drawMultiplier( multiplier);  
+      newZ = pow(bothZ, drawnMultiplier);       
+    } while(newZ  < 2 * TreeAln::zMin || newZ > 2 * TreeAln::zMax); 
 
-  double uniScaler = rand.drawRandDouble01(); 
-  double aZ = branchLengthToInternal(tr, uniScaler * newZ),
-    bZ = branchLengthToInternal(tr, (1-uniScaler) * newZ); 
+  double uniScaler = 0, 
+    newA = 0,
+    newB = 0; 
+  do 
+    {
+      uniScaler = rand.drawRandDouble01();
+      newA = pow(bothZ, uniScaler ) ; 
+      newB = pow(bothZ, 1-uniScaler); 
+    } while (newB < TreeAln::zMin || newA < TreeAln::zMin || newB > TreeAln::zMax || newA > TreeAln::zMax);
+  
+  traln.setBranchLengthBounded(newA, 0,nodeA);
+  traln.setBranchLengthBounded(newB, 0,nodeB); 
+  
+  updateHastings(hastings, ( log(bothZ) / log(oldBoth)) * drawnMultiplier, name ); 
 
-#if TODO 
-  double zABefore = branchLengthToReal(tr, traln.getBranchLength(nodeA,0)),
-    zBBefore =branchLengthToReal(tr,traln.getBranchLength(nodeB, 0)); 
-#endif
+  auto brPr = randomVariables[0].getPrior(); 
 
-  traln.clipNode(nodeA, nodeA->back, aZ); 
-  traln.clipNode(nodeB, nodeB->back, bZ); 
-
-  // update the hastings with the REAL value of the branch lengths
-  // after multiplication. This has to be so complicated, since
-  // clipNode sets the bl in a bounded region.
-  updateHastings(hastings,   branchLengthToReal(tr, aZ * bZ ) / branchLengthToReal(tr, bothZ), "nodeSlider" ); 
-  // TODO@kassian: is this hastings correct? 
-
-#ifdef UNSURE
-  assert(0); 
-#endif
-
-#if TODO  
-  prior.updateBranchLength( zABefore , branchLengthToReal(traln.getTr(), aZ));
-  prior.updateBranchLength( zBBefore , branchLengthToReal(traln.getTr(), bZ)); 
-#endif
+  prior.updateBranchLengthPrior(traln, oldA, newA, brPr);
+  prior.updateBranchLengthPrior(traln, oldB, newB, brPr);
 }
 
 
@@ -131,10 +130,7 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
     bZ = b.length[0]; 
   
   assert(numBranches == 1); 
-#if TODO 
-  prior.updateBranchLength(branchLengthToReal(traln.getTr(), p->z[0]), branchLengthToReal(traln.getTr(), aZ));
-  prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), bZ));
-#endif
+
   traln.clipNode(p, p->back, aZ); 
   traln.clipNode(q,q->back, bZ);   
 
@@ -145,6 +141,4 @@ void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior)
 AbstractProposal* NodeSlider::clone() const
 {
   return new NodeSlider(*this); 
-  // NodeSlider* result = new NodeSlider( multiplier);
-  // return result;   
 }  
