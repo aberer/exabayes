@@ -11,7 +11,6 @@ double ExtendedSPR::relativeWeight = 5.;
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
   : stopProb(_stopProb), multiplier(_multiplier)    
 {
-  // this->relativeProbability = _relativeWeight; 
   this->name = "eSPR"; 
   category = TOPOLOGY; 
 }
@@ -122,17 +121,12 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   move.applyPathAsESPR(traln, modifiedPath);
 
 #ifdef ESPR_MULTIPLY_BL
-
-  assert(NOT_IMPLEMENTED); 
-  // check for fixed 
-
-  // if(not prior.believingInFixedBranchLengths())
-  //   {
-      move.multiplyAlongBranchESPR(traln, rand, hastings, prior, modifiedPath, multiplier);
-    // }
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  cout << "after multiply: " << traln  << endl; 
-#endif
+  assert(traln.getNumBranches() == 1 ); 
+  if(not traln.getBranchLengthsFixed()[0]) 
+    {
+      auto brPr = prior.getBranchLengthPrior(); 
+      move.multiplyAlongBranchESPR(traln, rand, hastings, prior, modifiedPath, multiplier, brPr);
+    }
 #endif
 
   debug_checkTreeConsistency(traln.getTr()); 

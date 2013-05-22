@@ -37,7 +37,7 @@ public:
   void validateRunParams(); 	// TODO  
 
 private: 
-  void initTrees(vector<TreeAln*> &trees, const CommandLine &cl ); 
+  void initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandLine &cl ); 
   bool convergenceDiagnostic(); 
 
   vector<CoupledChains> runs; 

@@ -4,15 +4,13 @@
 #include "Priors.hpp"
 
 
-
 PriorBelief::PriorBelief(const TreeAln &traln, const vector<RandomVariable> &_variables)
   :lnPrior(0)
   , lnPriorRatio(0)
   , variables(_variables)
 {
   lnPrior = scoreEverything(traln);
-
-  cout << "initial prior is " << lnPrior << endl;  
+  // cout << "scored everything => " << lnPrior << endl; 
 }
 
 
@@ -25,14 +23,16 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, int model, const ve
 double PriorBelief::scoreEverything(const TreeAln &traln) const 
 {
   double result = 0; 
- 
+
   for(auto v : variables)
     {
+      double partialResult = 0; 
+
       switch(v.getCategory())			// TODO => category object 
 	{	  
 	case TOPOLOGY: 	  
-	  // result += v.getPrior()->getLogProb({});
-	  result += 0; 	// well...
+	  // partialResult = v.getPrior()->getLogProb({});
+	  partialResult = 0; 	// well...
 	  break; 
 	case BRANCH_LENGTHS: 
 	  {
@@ -41,25 +41,25 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 	    extractBranches(traln,bs);
 	    auto pr = v.getPrior();	    
 	    for(auto b : bs)
-	      result += pr->getLogProb( { branchLengthToReal(traln.getTr(),b.length[0]) } );
+	      partialResult += pr->getLogProb( { branchLengthToReal(traln.getTr(),b.length[0]) } );
 	  }
 	  break; 
 	case FREQUENCIES: 
 	  {
 	    auto freqs = traln.getFrequencies(v.getPartitions()[0]); 
-	    result += v.getPrior()->getLogProb( freqs) ; 
+	    partialResult = v.getPrior()->getLogProb( freqs) ; 
 	  } 
 	  break; 
 	case SUBSTITUTION_RATES: 
 	  {
 	    auto revMat = traln.getRevMat(v.getPartitions()[0]); 
-	    result += v.getPrior()->getLogProb(revMat); 
+	    partialResult = v.getPrior()->getLogProb(revMat); 
 	  }
 	  break; 
 	case RATE_HETEROGENEITY: 
 	  {
 	    double alpha = traln.getAlpha(v.getPartitions()[0]) ;
-	    result += v.getPrior()->getLogProb({ alpha }); 
+	    partialResult = v.getPrior()->getLogProb({ alpha }); 
 	  }
 	  break; 
 	case AA_MODEL: 
@@ -67,6 +67,9 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 	  break; 
 	default : assert(0); 
 	}
+      
+      // cout << "pr(" <<  v << ") = "<< partialResult << endl ; 
+      result += partialResult; 
     }
 
   return result; 
@@ -75,17 +78,41 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 
 void PriorBelief::verifyPrior(const TreeAln &traln) const 
 {
+  assert(lnPriorRatio == 0); 
   double verified = scoreEverything(traln); 
-  assert(verified == lnPrior); 
+  if ( fabs(verified -  lnPrior ) >= 1e-6)
+    {
+      cerr << "ln prior was " << lnPrior << " while it should be " << verified << endl; 
+      assert(fabs(verified -  lnPrior ) < 1e-6); 
+    }
 }
+
+shared_ptr<AbstractPrior> PriorBelief::getBranchLengthPrior() const
+{
+  for(auto v : variables)
+    {
+      if(v.getCategory() == BRANCH_LENGTHS)
+	return v.getPrior(); 
+    }
+
+  assert(0); 
+  return shared_ptr<AbstractPrior>(); 
+}
+
 
 
 void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
 {
-  if(typeid(brPr) == typeid(shared_ptr<ExponentialPrior>))
-    lnPrior += (newInternalZ - oldInternalZ) *  traln.getTr()->fracchange; 
+  if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
+    {
+      auto casted = dynamic_cast<ExponentialPrior*> (brPr.get()); 
+      lnPriorRatio += (log(newInternalZ /   oldInternalZ) ) * traln.getTr()->fracchange * casted->getLamda(); 
+    }
   else 
-    lnPrior += brPr->getLogProb({newInternalZ}) - brPr->getLogProb({oldInternalZ}) ; 
+    {
+      assert(0);		// very artificial
+      lnPriorRatio += brPr->getLogProb({newInternalZ}) - brPr->getLogProb({oldInternalZ}) ; 
+    }
 } 
 
 

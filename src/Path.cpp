@@ -138,29 +138,21 @@ ostream& operator<<(ostream &out, const Path &rhs)
 
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior)
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> brPr)
 {  
   tree *tr = traln.getTr(); 
   nodeptr  p = findNodeFromBranch(tr, b); 
   double multiplier = rand.drawMultiplier(parameter); 
 
-  double oldZ = branchLengthToReal(tr, traln.getBranchLength( p,0)); 
-  double newZ = branchLengthToInternal(tr, multiplier * oldZ); 
-#ifdef PRINT_MULT
-  cout  << setprecision(6) << "spr: " << oldZ <<   " * " << multiplier << " = "  << multiplier * oldZ << endl; // 
-#endif
-
-#if TODO
-  assert(not prior.believingInFixedBranchLengths()); 
-#endif
+  
+  double oldZ = traln.getBranchLength(p,0);
+  double newZ = multiplier * oldZ; 
 
   traln.clipNode(p,p->back, newZ);   
 
-  double realMultiplier = branchLengthToReal(tr, newZ ) / oldZ ; 
+  prior.updateBranchLengthPrior(traln, oldZ, newZ, brPr);
 
-#if TODO 
-  prior.updateBranchLength(oldZ, branchLengthToReal(traln.getTr(),newZ));  
-#endif
+  double realMultiplier = log(newZ) / log(oldZ);    
   updateHastings(hastings, realMultiplier, "pathMod");; 
 }
 

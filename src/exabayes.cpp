@@ -16,7 +16,7 @@
 #define __AVX
 #endif
 
-using namespace std; 
+// using namespace std; 
 
 #include <sstream>
 

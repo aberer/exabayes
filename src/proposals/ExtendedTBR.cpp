@@ -197,19 +197,24 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   modifiedPath2.saveBranchLengthsPath(traln); 
 
 #ifdef TBR_MULTIPLY_BL  
-
-  // check for fixed branch lengths!
-  assert(NOT_IMPLEMENTED); 
-
-  for(int i = 0 ;i < modifiedPath1.size(); ++i)
+  
+  assert(traln.getNumBranches() == 1); 
+  if(not traln.getBranchLengthsFixed()[0]) 
     {
-      branch &b = modifiedPath1.at(i);  
-      modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings, prior);       
-    }
-  for(int i = 0; i < modifiedPath2.size(); ++i)
-    {
-      branch &b = modifiedPath2.at(i); 
-      modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior); 
+      // find the branch length prior : very nasty 
+      
+      auto brPr = prior.getBranchLengthPrior(); 
+
+      for(int i = 0 ;i < modifiedPath1.size(); ++i)
+	{
+	  branch &b = modifiedPath1.at(i);  
+	  modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr);       
+	}
+      for(int i = 0; i < modifiedPath2.size(); ++i)
+	{
+	  branch &b = modifiedPath2.at(i); 
+	  modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr); 
+	}
     }
 #endif
   

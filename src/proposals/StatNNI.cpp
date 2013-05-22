@@ -64,9 +64,13 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
     
     
 #ifdef NNI_MULTIPLY_BL
+    assert(traln.getNumBranches() == 1 ); 
+    if(traln.getBranchLengthsFixed()[0])
+      {
+
     // check for fixed  
 
-    assert(NOT_IMPLEMENTED); 
+    // assert(NOT_IMPLEMENTED); 
     // if(not prior.believingInFixedBranchLengths() )
       // {
 
@@ -87,17 +91,26 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 	traln.setBranchLengthBounded( new2 ,0,r); 
 	traln.setBranchLengthBounded( new3 ,0,q); 
 
+	double realNew1  =traln.getBranchLength(p,0),
+	  realNew2 = traln.getBranchLength(r,0),
+	  realNew3 = traln.getBranchLength(q,0); 
+
+	double realM1 = log(realNew1)/ log(old1),
+	  realM2 = log(realNew2) / log(old2),
+	  realM3 = log(realNew3) / log(old3); 
+
+	updateHastings(hastings, realM1 * realM2 * realM3 , name); 
+	
 #ifdef PRINT_MULT
 	printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
 #endif
 
-#if TODO 
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old1), branchLengthToReal(traln.getTr(), new1));
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old2), branchLengthToReal(traln.getTr(), new2)); 
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), old3), branchLengthToReal(traln.getTr(), new3)); 
-#endif
+	auto brPr = prior.getBranchLengthPrior(); 
+	prior.updateBranchLengthPrior(traln, old1, realNew1, brPr);
+	prior.updateBranchLengthPrior(traln, old2, realNew2, brPr);
+	prior.updateBranchLengthPrior(traln, old3, realNew3, brPr);
 
-      // }
+      }
 #endif
 
     traln.clipNode(p,p->back, p->z[0]); 
@@ -157,18 +170,6 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
     nodeptr between = findNodeFromBranch(tr, chosenBranch ); 
     
     assert(numBranches == 1); 
-    
-
-    assert(NOT_IMPLEMENTED); 
-    // TODO check for fixed 
-    // if(not prior.believingInFixedBranchLengths())
-      // {
-#if TODO 
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), between->z[0]), branchLengthToReal(traln.getTr(), chosenBranch.length[0]));
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), r->z[0]), branchLengthToReal(traln.getTr(), b.length[0]));
-	prior.updateBranchLength(branchLengthToReal(traln.getTr(), q->z[0]), branchLengthToReal(traln.getTr(), a.length[0]));
-#endif
-      // }
 
     traln.clipNode(between, between->back, chosenBranch.length[0]); 
     traln.clipNode(r, qBack, b.length[0]);  /* r->z */
@@ -183,6 +184,5 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* StatNNI::clone()  const
 {
-  // return new StatNNI( multiplier);
   return new StatNNI( *this );
 }

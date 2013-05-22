@@ -7,6 +7,9 @@
 #define _COMMON_H
 
 
+
+
+
 #define NOT_IMPLEMENTED  0
 /* #define PRINT printBothOpen */
 

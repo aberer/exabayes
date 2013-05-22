@@ -68,8 +68,10 @@ public:
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
   void printWithBLs(TreeAln &traln ) const; 
 
-  // TODO this should return a new path instance  
-  void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior); 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> prBr); 
+
+  // // TODO this should return a new path instance  
+  // void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior); 
 
   void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
 

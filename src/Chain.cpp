@@ -26,7 +26,7 @@
 
 
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) 
+Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) 
   : traln(_traln)
   , runid(_runid)
   , tuneFrequency(_tuneFreq)
@@ -41,13 +41,12 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const vector< 
   for(auto &p : _proposals)
     proposals.push_back(unique_ptr<AbstractProposal>(p->clone())); 
 
-
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
 
   evaluateFullNoBackup(*traln);   
 
-  addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << traln->getTreeLength() << "\tseeds=>"  << chainRand << endl; 
+  addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(traln->getTr(), traln->getTreeLength()) << "\tseeds=>"  << chainRand << endl; 
 
   saveTreeStateToChain(); 
 
@@ -125,6 +124,7 @@ void Chain::applyChainStateToTree()
 
   traln->setBranchLengthsFixed(state.getBranchLengthsFixed());   
   evaluateFullNoBackup(*traln); 
+  prior.reinitPrior(*traln);
 }
 
 
@@ -149,10 +149,7 @@ unique_ptr<AbstractProposal>& Chain::drawProposalFunction()
     {
       double w = c->getRelativeWeight(); 
       if(r < w )
-	{
-	  cout << "drawn proposal " << c << endl; 
-	  return c;
-	}
+	return c;
       else 
 	r -= w; 
     }
@@ -256,6 +253,9 @@ void Chain::switchState(Chain &rhs)
 
 void Chain::step()
 {
+  // cout << "current prior is " << prior.getLnPrior() << " and ratio is " << prior.getLnPriorRatio() << endl; 
+  prior.verifyPrior(*traln);
+
   currentGeneration++; 
   tree *tr = traln->getTr();   
   traln->getRestorer()->resetRestorer(*traln);
@@ -295,18 +295,6 @@ void Chain::step()
 
   debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior()); 
 
-#ifdef VERIFY_LNL_SUPER_EXPENSIVE  
-  // TEST
-  double lnlBefore = tr->likelihood; 
-  evaluateFullNoBackup(this); 
-  assert( ( this->traln->getTr()->likelihood  - lnlBefore ) < ACCEPTED_LIKELIHOOD_EPS); 
-  // END
-#endif
-
-// #ifdef DEBUG_VERIFY_LNPR
-//   prior.verify(*traln);
-// #endif
-
   if(wasAccepted)
     {
       pfun->accept();      
@@ -322,10 +310,14 @@ void Chain::step()
       traln->getRestorer()->restoreArrays(*traln);
     }
 
+#ifdef DEBUG_TREE_LENGTH
+  
+  assert( fabs (traln->getTreeLengthExpensive() -  traln->getTreeLength())  < 1e-6); 
+#endif
+
 #ifdef DEBUG_VERIFY_LNPR
   prior.verifyPrior(*traln);
 #endif
-
 
   debug_checkTreeConsistency(this->traln->getTr());
  

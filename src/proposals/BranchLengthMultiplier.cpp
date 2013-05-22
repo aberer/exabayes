@@ -43,11 +43,6 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   updateHastings(hastings, realMultiplier, name); 
 
   prior.updateBranchLengthPrior(traln, oldZ, newZ, randomVariables[0].getPrior()); 
-  
-#ifdef PRINT_MULT  
-  cout  << setprecision(6) << name << branchLengthToReal(tr,oldZ) <<   " * " << drawnMultiplier << " = "  << branchLengthToReal(tr, newZ) << endl; 
-#endif
-
 } 
 
 

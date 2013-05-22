@@ -7,9 +7,13 @@ seed=1234
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
 
-if [ "$(which ccache)" != "" ]  ; then 
-    cargs="CC='ccache gcc' CXX='ccache g++'"
-fi 
+if [ $(which clang) != "" ]; then
+    cargs="CC=clang CXX=clang++"
+fi
+
+# if [ "$(which ccache)" != "" ]  ; then 
+#     cargs="CC='ccache gcc' CXX='ccache g++'"
+# fi 
 
 
 
@@ -57,11 +61,11 @@ fi
 
 status="$(./config.status --config | tr -d "'" )"
 
-if  [ "$(echo $status)"  == "$(echo $args)" ]; then 
+if  [ "$(echo $status)"  == "$(echo $args $cargs)" ]; then 
     echo "no need to re-configure / re-build"
 else 
-    echo "calling ./configure $args" 
-    ./configure $args   # $cargs
+    echo "calling ./configure $args $cargs" 
+    ./configure $args $cargs
     make clean
 fi 
 

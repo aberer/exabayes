@@ -1,8 +1,5 @@
 #include <cassert>
-
 #include "SuccessCounter.hpp"
-
-
 
 SuccessCounter::SuccessCounter() 
   : globalAcc(0),globalRej(0), localAcc(0), localRej(0), batch(0)

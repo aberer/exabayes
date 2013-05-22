@@ -699,12 +699,9 @@ double TreeAln::getTreeLength() const
   
   double length = 1; 
   for(auto b : branches)
-    {
-      // cout << branchLengthToReal(getTr(), b.length[0]) << endl; 
-      length *= b.length[0];
-    }
-  // cout << branchLengthToReal(getTr(), length) << endl; 
-  return branchLengthToReal(getTr(), length); 
+    length *= b.length[0];
+
+  return length; 
 }
 
 

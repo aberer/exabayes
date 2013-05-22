@@ -21,12 +21,8 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
   modifiedBranch = b ; 
   nodeptr p = findNodeFromBranch(traln.getTr(),b) ; 
   modifiedBranch.length[0] = p->z[0];       
-  
 
-  AbstractPrior* brPr; 
-#if TODO 
-  auto brPr = prior.getBranchLengthPrior();       
-#endif
+  auto brPr = prior.getBranchLengthPrior(); // TODO correct? 
 
   if(traln.isCollapsed(b))
     {    

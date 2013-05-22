@@ -9,7 +9,7 @@
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 
-CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAln*> trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariable > &vars)
+CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariable > &vars)
   : temperature(params.getHeatFactor())
   , rand(seed)
   , runid(runNum) 
@@ -24,10 +24,7 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
 
   for(int i = 0; i < numCoupled; ++i)
     {
-      // vector<shared_ptr<AbstractProposal> >pCopy; 
-      // for(auto elem : proposals)
-      // 	pCopy.push_back(shared_ptr<AbstractProposal>(elem->clone())); 
-      
+
       Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i],  proposals, tuneFreq, vars); 
       chain->setDeltaT(temperature); 
       chains.push_back(chain);
@@ -117,8 +114,8 @@ void CoupledChains::switchChainState()
 
   assert(heatA <= 1.f || heatB <= 1.f); 
 
-  double lnlA = chains[chainAId]->traln->getTr()->likelihood,
-    lnlB = chains[chainBId]->traln->getTr()->likelihood; 
+  double lnlA = chains[chainAId]->getTraln().getTr()->likelihood,
+    lnlB = chains[chainBId]->getTraln().getTr()->likelihood; 
 
   double lnPrA = chains[chainAId]->getPrior().getLnPrior(), 
     lnPrB = chains[chainBId]->getPrior().getLnPrior(); 
@@ -159,8 +156,8 @@ void CoupledChains::chainInfo()
 
   tout << 
     "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->getGeneration() 
-       <<  "\tTL=" << setprecision(2)<< coldChain->traln->getTreeLength()
-       << "\tlnPr(1)=" << coldChain->getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain->traln->getTr()->likelihood << "\t" ; 
+       <<  "\tTL=" << setprecision(2)<< coldChain->getTraln().getTreeLength()
+       << "\tlnPr(1)=" << coldChain->getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain->getTraln().getTr()->likelihood << "\t" ; 
 
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
@@ -172,7 +169,7 @@ void CoupledChains::chainInfo()
       double heat = chain->getChainHeat();
       assert(heat < 1.0f); 
       
-      tout << "lnl(" << setprecision(2)<< heat << ")=" << setprecision(2)<< chain->traln->getTr()->likelihood << "\t" ;  
+      tout << "lnl(" << setprecision(2)<< heat << ")=" << setprecision(2)<< chain->getTraln().getTr()->likelihood << "\t" ;  
     }
 
   

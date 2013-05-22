@@ -125,6 +125,9 @@ public:
 
   vector<bool> getBranchLengthsFixed () const {return branchLengthsFixed; }
   void setBranchLengthsFixed(vector<bool> vect) {branchLengthsFixed = vect; }
+  
+  
+  double getConvertBranchLength(double length) const { return -log(length) * tr->fracchange; }
 
 private:   
   double getTreeLengthHelper(nodeptr p) const;

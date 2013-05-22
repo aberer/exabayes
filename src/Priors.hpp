@@ -12,6 +12,7 @@
 #include "axml.h"
 #include "densities.h"
 
+#include "TreeAln.hpp"
 #include "Randomness.hpp"
 
 using namespace std; 
@@ -107,6 +108,8 @@ public:
     out << "Exponential("  << lambda << ")" ;       
   }
 
+  virtual double getLamda()  const  { return lambda; } 
+
 private: 
   double lambda; 
 }; 
@@ -132,6 +135,7 @@ public:
 	return result; 
       }
   }
+
 
   virtual vector<double> drawFromPrior(Randomness &rand)  const
   {

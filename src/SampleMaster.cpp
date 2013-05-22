@@ -26,8 +26,8 @@
 extern double masterTime; 
 
 static int countNumberOfTreesQuick(const char *fn ); 
-static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns); 
-static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns); 
+static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > tralns); 
+static void initTreeWithOneRandom(int seed, vector<shared_ptr<TreeAln> > tralns); 
 
 SampleMaster::SampleMaster(const ParallelSetup &pl) 
   : pl(pl)
@@ -42,7 +42,7 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
   FILE *treeFH = NULL; 
   int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
-  vector<TreeAln*> trees; 
+  vector<shared_ptr<TreeAln> > trees; 
   initTrees(trees, cl );
 
   vector<unique_ptr<AbstractProposal> > proposals; 
@@ -82,7 +82,7 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
       // account for fixed branch lengths 
-      for(TreeAln *t : trees)
+      for(auto& t : trees)
 	t->setBranchLengthsFixed({fixedBL});
 
       if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
@@ -166,7 +166,7 @@ bool SampleMaster::convergenceDiagnostic()
 
 
 // LEGACY
-static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z )
+static void traverseInitFixedBL(nodeptr p, int *count, shared_ptr<TreeAln> traln,  double z )
 {
   tree *tr = traln->getTr();
   nodeptr q;
@@ -189,10 +189,10 @@ static void traverseInitFixedBL(nodeptr p, int *count, TreeAln *traln,  double z
 }
 
 
-static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns)
+static void initTreeWithOneRandom(int seed, vector<shared_ptr<TreeAln> > tralns)
 {
 
-  TreeAln *traln = tralns[0]; 
+  auto traln = tralns[0]; 
   tree *tr = traln->getTr();
 
   TreeRandomizer trRandomizer(seed, traln);
@@ -208,10 +208,10 @@ static void initTreeWithOneRandom(int seed, vector<TreeAln*> &tralns)
 
 
 
-static void initWithStartingTree(FILE *fh, vector<TreeAln*> &tralns)
+static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > tralns)
 {
   // fetch a tree 
-  TreeAln *traln = tralns[0]; 
+  auto traln = tralns[0]; 
   tree *tr = traln->getTr();
   boolean hasBranchLength =  readTreeWithOrWithoutBL(tr, fh);
 
@@ -284,7 +284,7 @@ void SampleMaster::validateRunParams()
 
 
 
-void SampleMaster::initTrees(vector<TreeAln*> &trees, const CommandLine &cl )
+void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandLine &cl )
 {  
   tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl; 
 
@@ -296,7 +296,7 @@ void SampleMaster::initTrees(vector<TreeAln*> &trees, const CommandLine &cl )
 
   for(int i = 0; i < runParams.getNumCoupledChains(); ++i)
     {
-      TreeAln *traln = new TreeAln();
+      auto traln =  shared_ptr<TreeAln>(new TreeAln());
       traln->initializeFromByteFile(cl.getAlnFileName()); 
 #if HAVE_PLL != 0 
       traln->enableParsimony();

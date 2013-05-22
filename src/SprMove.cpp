@@ -47,7 +47,7 @@ void SprMove::destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p)
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior,  Path &modifiedPath, double multiplier )
+void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior,  Path &modifiedPath, double multiplier, shared_ptr<AbstractPrior> brPr)
 {
   assert(modifiedPath.size() >= 2); 
   int numBranches = traln.getNumBranches(); 
@@ -56,7 +56,7 @@ void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &
   int sTNode = modifiedPath.getNthNodeInPath(1); 
   branch firstBranch = constructBranch( modifiedPath.getNthNodeInPath(0), modifiedPath.getNthNodeInPath(2)); 
 
-  modifiedPath.multiplyBranch(traln, rand, firstBranch, multiplier, hastings, prior); 
+  modifiedPath.multiplyBranch(traln, rand, firstBranch, multiplier, hastings, prior, brPr); 
   
   /* treat all branches except the first 2 and the last one */
   int ctr = 0; 
@@ -67,13 +67,13 @@ void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &
       
       branch &b = modifiedPath.at(i); 
 
-      modifiedPath.multiplyBranch(traln, rand, b, multiplier, hastings, prior); 
+      modifiedPath.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr); 
     }
 
   int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
     s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
-  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings, prior); 
-  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings, prior); 
+  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings, prior, brPr); 
+  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings, prior, brPr); 
 }
 
 

@@ -9,7 +9,6 @@
 #ifndef _PRIORMANAGER_H
 #define _PRIORMANAGER_H
 
-using namespace std; 
 #include <cassert>
 #include <memory>
 #include <vector>
@@ -28,15 +27,14 @@ public:
 
   void accept()  { lnPrior += lnPriorRatio;  lnPriorRatio = 0; }  
   void reject() {lnPriorRatio = 0; }
-  double getLnPrior () const {return lnPriorRatio; } 
+  double getLnPrior () const {return lnPrior; } 
   double getLnPriorRatio() const {return lnPriorRatio; }
   void addToRatio(double val)  { lnPriorRatio += val; }
   void accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs )  ; 
   void updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) ; 
-  void verifyPrior(const TreeAln &traln) const ;
-
-  // BACKWARD COMPATIBILITY: REMOVE, once productive! 
-  // void updateBranchLength(double oldValue, double newValue){}
+  void verifyPrior(const TreeAln &traln) const ;  
+  void reinitPrior(const TreeAln &traln ) {lnPrior = scoreEverything(traln); lnPriorRatio = 0; }
+  shared_ptr<AbstractPrior> getBranchLengthPrior() const; 
 
 private: 
   double scoreEverything(const TreeAln &traln) const ; 

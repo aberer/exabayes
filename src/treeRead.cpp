@@ -506,7 +506,7 @@ boolean readTreeWithOrWithoutBL(tree *tr, FILE *fh)
 
 
 // TODO HACK 
-void traverseInitCorrect(nodeptr p, int *count, TreeAln *traln )
+void traverseInitCorrect(nodeptr p, int *count, shared_ptr<TreeAln> traln )
 {
   tree *tr = traln->getTr();
   nodeptr q;

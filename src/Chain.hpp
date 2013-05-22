@@ -10,9 +10,7 @@
 #ifndef _CHAIN_H
 #define  _CHAIN_H
 #include <vector>
-
-using namespace std; 
-
+#include <memory>
 
 #include "PriorBelief.hpp"
 #include "State.hpp"
@@ -21,20 +19,12 @@ class TreeAln;
 class Topology; 
 class AbstractProposal; 
 
+using namespace std; 
 
 class Chain
 {
-  // LEGACY stuff 
 public: 
-
-  // BAD BAD BAD 
-  // TODO shared pointer!
-  TreeAln *traln; 
-
-
-
-public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAln* _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) ; 
+  Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) ; 
   
   // getters and setters 
   double getChainHeat(); 
@@ -56,47 +46,34 @@ public:
   void step();
 
   int getGeneration(){return currentGeneration; }
-
   const PriorBelief& getPrior() const  {return prior; } 
-
   Randomness& getChainRand(){return chainRand;}
-
   void printNexusTreeFileStart( FILE *fh  ); 
   void printParams(FILE *fh); 
   void printParamFileStart(FILE *fh); 
   void finalizeOutputFiles(FILE *fh); 
   void printSample(FILE *topofile, FILE *paramFile); 
   void printTopology(FILE *fh); 
-
   void switchState(Chain &rhs);
   ostream& addChainInfo(ostream &out); 
+  TreeAln& getTraln() { return *traln; }
   
 private : 
-  Chain(const Chain& rhs)  ; 
+  void initParamDump(); 
+  void debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) ;
+
+  shared_ptr<TreeAln> traln;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 
-
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
-
   double hastings;/// the log hastings ratio  
-  int currentGeneration;   
-  
-  void debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) ;
-  void initParamDump(); 
-
+  int currentGeneration;     
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-
   vector< unique_ptr<AbstractProposal> > proposals; 
-
   State state; 
-
-  Randomness chainRand; 
-
-  
+  Randomness chainRand;   
   double relWeightSum ; 	// sum of all relative weights
-
   PriorBelief prior; 
-
 }; 
 
 

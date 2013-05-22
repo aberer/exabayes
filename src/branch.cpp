@@ -320,9 +320,7 @@ branch findRoot(tree *tr)
 
 ostream& operator<<(ostream& rhs, const branch &b )
 {
-  rhs << b.thisNode << "/" << b.thatNode
-      // << "(" << b.length[0] << ")" 
-    ; 
+  rhs << b.thisNode << "/" << b.thatNode ; 
   return rhs; 
 }
 
@@ -341,6 +339,7 @@ static void extractHelper(const TreeAln& traln,  nodeptr p , vector<branch> &res
   for(nodeptr q =  p->next; p != q ; q = q->next)        
     extractHelper(traln, q->back, result, false);    
 }
+
 
 
 void extractBranches(const TreeAln &traln, vector<branch> &result) 

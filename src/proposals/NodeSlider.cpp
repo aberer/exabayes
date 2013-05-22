@@ -10,7 +10,6 @@ NodeSlider::NodeSlider( double _multiplier)
 {
   name = "nodeSlider"; 
   this->category = BRANCH_LENGTHS; 
-  // ptype = NODE_SLIDER;   
 }
 
 

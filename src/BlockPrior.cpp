@@ -45,7 +45,7 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	{
 	  cerr << "not implemented yet " << endl; // TODO 
 	  exit(1);
-	  return NULL; 
+	  return nullptr; 
 	} 
       else 
 	{
@@ -74,7 +74,7 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       exit(1);
     }
 
-  return NULL; 
+  return nullptr; 
 }
 
 
