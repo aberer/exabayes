@@ -310,9 +310,8 @@ void Chain::step()
       traln->getRestorer()->restoreArrays(*traln);
     }
 
-#ifdef DEBUG_TREE_LENGTH
-  
-  assert( fabs (traln->getTreeLengthExpensive() -  traln->getTreeLength())  < 1e-6); 
+#ifdef DEBUG_TREE_LENGTH  
+  assert( fabs (traln->getTreeLengthExpensive() - traln->getTreeLength())  < 1e-6); 
 #endif
 
 #ifdef DEBUG_VERIFY_LNPR

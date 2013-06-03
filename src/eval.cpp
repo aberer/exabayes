@@ -232,6 +232,50 @@ void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal
 
 
 
+void evaluatePartitions(TreeAln &traln, nodeptr start, vector<nat> models  ) 
+{
+  // notice assuming full traversal -- need partial for per-gene branch lengths 
+
+  tree *tr = traln.getTr(); 
+  nat numPart = traln.getNumberOfPartitions();
+  
+  vector<double> perPartitionLH; 
+  for(auto i = 0; i < numPart; ++i)
+    perPartitionLH.push_back(traln.accessPartitionLH(i));
+  
+  for(auto i = 0; i < numPart; ++i)
+    traln.accessExecModel(i) = FALSE; 
+  for(auto m : models)
+    traln.accessExecModel(m) = TRUE ; 
+  
+
+  // SERIOUSLY??? 
+#ifdef DEBUG_LNL_VERIFY
+  globals.verifyLnl = false; 	// HACK
+#endif
+  evaluateGenericWrapper(traln, start, TRUE );
+#ifdef DEBUG_LNL_VERIFY
+  globals.verifyLnl = true; 	// HACK
+#endif
+  
+  for(auto m : models )
+    perPartitionLH[m] = traln.accessPartitionLH(m); 
+
+  for(auto i = 0; i < numPart; ++i )
+    traln.accessPartitionLH(i) = perPartitionLH[i]; 
+
+  tr->likelihood = 0; 
+  for(auto i = 0; i < numPart; ++i)
+    {
+      tr->likelihood += traln.accessPartitionLH(i); 
+      traln.accessExecModel(i) = TRUE; 
+    }  
+  
+  expensiveVerify(traln);   
+}
+
+
+
 
 /**
    @brief the same as below, but just for one partition 
@@ -295,6 +339,7 @@ void evaluateOnePartition(TreeAln& traln, nodeptr start, boolean fullTraversal, 
 
 
 
+
 #if 0 
 /**
    @brief only evaluate partition given in the execute mask "models"
@@ -333,5 +378,5 @@ void evaluatePartitions(Chain *chain, nodeptr start, boolean fullTraversal, bool
   delete []  perPartitionLH; 
   expensiveVerify(chain); 
 }
-#endif
 
+#endif

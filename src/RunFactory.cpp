@@ -7,7 +7,6 @@
 
 // not to be confused with a fun factory...
 
-
 void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeAln &traln )
 {
   vector<bool> categoryIsActive( NUM_PROP_CATS, false);
@@ -50,6 +49,15 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 
 	case FREQUENCIES: 
 	  {
+	    if(not categoryIsActive[catIter] )
+	      {		
+		for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
+		  {		    
+		    RandomVariable r(catIter, highestId);
+		    r.addPartition(j); 
+		    vars.push_back(r);	   
+		  }
+	      }
 	    break; 
 	  }
 
@@ -109,7 +117,7 @@ void RunFactory::addStandardPrior(RandomVariable &var, const TreeAln& traln )
   switch(var.getCategory())			// TODO such switches should be part of an object
     {
     case TOPOLOGY:  
-      var.setPrior(shared_ptr<AbstractPrior>(new UniformPrior(0,0))); // TODO : proper topology prior? 
+      var.setPrior(make_shared<UniformPrior>(0,0)); // TODO : proper topology prior? 
       break; 
     case BRANCH_LENGTHS: 
       var.setPrior(shared_ptr<AbstractPrior>(new ExponentialPrior(10.0)));
@@ -147,14 +155,15 @@ void RunFactory::addStandardPrior(RandomVariable &var, const TreeAln& traln )
 
 void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<RandomVariable> &variables)
 {
-  vector<shared_ptr<AbstractPrior> > generalPriors = priorInfo.getGeneralPriors();
-  vector< map<nat, shared_ptr<AbstractPrior > > >  specificPriors = priorInfo.getSpecificPriors();
+  auto generalPriors = priorInfo.getGeneralPriors();
+  auto specificPriors = priorInfo.getSpecificPriors();
 
   for(RandomVariable &v : variables)
     {
       auto partitionIds = v.getPartitions(); 
 
-      map<nat, shared_ptr<AbstractPrior > >  idMap = specificPriors[ v.getCategory() ]; 
+      // try adding a partition specific prior 
+      auto idMap = specificPriors[ v.getCategory() ]; 
       shared_ptr<AbstractPrior> thePrior = nullptr; 
       for(nat partId : partitionIds)	
 	{	  	  
@@ -169,15 +178,26 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 		thePrior = idMap.at(partId); 
 	    }	 	    
 	}
-      
+
       // use a general prior, if we have not found anything
-      if(thePrior == nullptr)
-	thePrior = generalPriors.at(v.getCategory()); 
+      if(thePrior == nullptr)	  
+	{
+	  thePrior = generalPriors.at(v.getCategory()); 	  
+	  if(thePrior != nullptr)
+	    cout << "using GENERAL prior for variable " <<  endl; 
+	}
+      else 
+	{
+	  cout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
+	}
       
       if(thePrior != nullptr)
 	v.setPrior(thePrior);
       else 
-	addStandardPrior(v, traln);
+	{	  
+	  addStandardPrior(v, traln);
+	  cout << "using STANDARD prior for variable "  << v << endl; 
+	}
     }
 }
 
@@ -197,11 +217,18 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
     {
       if(typeid(v.getPrior()) == typeid(shared_ptr<FixedPrior>))
 	continue; 
-      
-      reg.getProposals(v.getCategory(), propConfig, proposals); 
-      for(auto  &p : proposals )
+
+      vector<unique_ptr<AbstractProposal> > tmpResult;  
+
+      reg.getProposals(v.getCategory(), propConfig, tmpResult); 
+      for(auto  &p : tmpResult )
+	p->addRandomVariable(v);
+
+      // dammit...
+      for(auto it = tmpResult.begin(); it != tmpResult.end(); )
 	{
-	  p->addRandomVariable(v);
+	  proposals.emplace_back(std::move(*it));
+	  it = tmpResult.erase(it);
 	}
     }
 
@@ -209,14 +236,14 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   // lets see if it worked 
 
   // seems to work....
-  // cout << "RandomVariables: " << endl; 
-  // for(auto v : randomVariables)
-  //   cout << v  << endl; 
-  // cout << endl; 
+  cout << "RandomVariables: " << endl; 
+  for(auto v : randomVariables)
+    cout << v  << endl; 
+  cout << endl; 
   
 
-  // cout << "Proposals: " << endl; 
-  // for(auto p : proposals )
-  //   cout << p << endl; 
+  cout << "Proposals: " << endl; 
+  for(auto &p : proposals )
+    cout << p << endl; 
 }
 

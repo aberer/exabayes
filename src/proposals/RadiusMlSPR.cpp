@@ -3,7 +3,7 @@
 #include "output.h"
 
 
-double RadiusMlSPR::relativeWeight = 5.0;
+double RadiusMlSPR::relativeWeight = 0.0;
 
 /* 
    important TODO

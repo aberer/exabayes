@@ -23,6 +23,6 @@ ostream& operator<<(ostream &out, const RandomVariable& rhs)
 	isFirst = false; 
       out << v; 
     }
-  out << "} \n\twith prior " << rhs.getPrior();   
+  out << "} \twith prior " << rhs.getPrior();   
   return out;
 }

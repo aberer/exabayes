@@ -37,7 +37,6 @@ public:
 
   virtual double getRelativeWeight() const = 0; 
 
-
   category_t getCategory() const {return category; }
   string getName() const {return name; }
   
@@ -48,25 +47,29 @@ public:
   
   int  getNumCallSinceTuning(){ return sctr.getRecentlySeen(); }
 
-  void addRandomVariable(RandomVariable var) {randomVariables.push_back(var) ; }
-
-
+  void addPrimVar(RandomVariable var) {primVar.push_back(var) ; }
+  void addSecVar(RandomVariable var) {secVar.push_back(var) ; }
 
   friend ostream&  operator<< ( ostream& out , const unique_ptr<AbstractProposal> &rhs)
   {
-    out << "proposal " << rhs->name <<  " modifying " ; 
-    for(auto r : rhs->randomVariables)
+    out << rhs->name <<  " primarily modifying " ; 
+    for(auto r : rhs->primVar)
       out << r << ",\t"  ; 
+    out << "\tand also modifying " ; 
+    for(auto r : rhs->secVar ) 
+      out << r << ",\t" ; 
     return out; 
   }
-
 
 
 protected: 
   string name;   
   SuccessCounter sctr; 
   category_t category; 
-  vector<RandomVariable> randomVariables; // random variables that are integrated by this proposal
+  
+  vector<RandomVariable> primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  vector<RandomVariable> secVar;  // as a by-product also these random variables are changed 
+  // vector<RandomVariable> randomVariables; // random variables that are integrated by this proposal
 }; 
 
 #endif

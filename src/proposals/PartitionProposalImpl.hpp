@@ -11,8 +11,15 @@ PartitionProposal<FUN,PARAM>::PartitionProposal( double _param, string _name)
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
-  model = rand.drawRandInt( traln.getNumberOfPartitions());  
-  values = PARAM::getParameters(traln, model); 
+  auto oneModel  = randomVariables[0].getPartitions()[0];
+
+  cout <<  "we have " << randomVariables.size() << " random variables " << endl; 
+  for(auto v : randomVariables)
+    cout <<  v << endl; 
+
+  assert(randomVariables.size() ==1 ) ; // <= TODO 
+
+  values = PARAM::getParameters(traln, oneModel); 
   vector<double> proposedValues =  FUN::getNewValues(values, parameter, rand, hastings); 
   assert(proposedValues.size() == values.size()); 
 
@@ -20,35 +27,66 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
 
   double oldFracChange = traln.getTr()->fracchange; 
 
-  PARAM::setParameters(traln, model, proposedValues);  
-  PARAM::init(traln, model);  
+  for(auto v : randomVariables[0].getPartitions())
+    {
+      PARAM::setParameters(traln, v, proposedValues);  
+      PARAM::init(traln, v);  
+    }
 
   double newFracChange = traln.getTr()->fracchange;   
 
-  assert(randomVariables.size() == 0);   
-  auto thePrior = randomVariables[0].getPrior(); 
-  prior.addToRatio(   thePrior->getLogProb(proposedValues) - thePrior->getLogProb(values)  ) ;
+  assert(randomVariables.size() != 0);   
 
-  if(oldFracChange != newFracChange && PARAM::needsFcUpdate)
-    prior.accountForFracChange(traln, model, {oldFracChange}, {newFracChange});
+  auto thePrior = randomVariables[0].getPrior(); 
+  prior.addToRatio( thePrior->getLogProb(proposedValues) -  thePrior->getLogProb(values) ) ;
+  
+  auto brPr = prior.getBranchLengthPrior();
+  if(PARAM::needsFcUpdate )
+    {
+      if( dynamic_cast<ExponentialPrior*>(brPr.get()) != nullptr)
+	{	  
+	  double lambda = dynamic_cast<ExponentialPrior*>(brPr.get())->getLamda();
+	  prior.accountForFracChange(traln, oneModel, {oldFracChange}, {newFracChange}, lambda);
+	}
+      else if (dynamic_cast<UniformPrior*>(brPr.get()) != nullptr) 
+	{
+	  // uniform prior: all branches need to be checked =/ 
+	  assert(0); 
+	}
+      else 
+	assert(0); 
+    }
 }
 
 
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
-  branch root = findRoot(traln.getTr());  
-  nodeptr p = findNodeFromBranch(traln.getTr(), root); 
-  evaluateOnePartition(traln, p, TRUE, model); 
+  // branch root = findRoot(traln.getTr());  
+
+  // nodeptr p = findNodeFromBranch(traln.getTr(), root); 
+
+  assert(randomVariables.size() == 1 ); 
+
+#ifdef EFFICIENT
+  // dammit, we need to do it with the root...
+  assert(0); 
+#endif
+  // evaluatePartitions(traln, traln.getTr()->start,   randomVariables[0].getPartitions()) ; 
+  evaluateGenericWrapper(traln, traln.getTr()->start, TRUE); 
+
 }
 
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  vector<double> curVals =  PARAM::getParameters(traln,model);
-  PARAM::setParameters(traln, model, values);
-  assert(curVals.size() == values.size()); 
-  PARAM::init(traln,model);  
+  assert(randomVariables.size() == 1 ); 
+
+  for(auto elem : randomVariables[0].getPartitions())
+    {
+      PARAM::setParameters(traln, elem, values);
+      PARAM::init(traln,elem);  
+    }
 }
 
 
@@ -74,6 +112,5 @@ void PartitionProposal<FUN,PARAM>::autotune()
 template<typename FUN, typename PARAM> 
 PartitionProposal<FUN,PARAM>* PartitionProposal<FUN,PARAM>::clone() const
 {
-  // return new PartitionProposal<FUN,PARAM>(  parameter, name);
   return new PartitionProposal<FUN,PARAM>(  *this );
 }

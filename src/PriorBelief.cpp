@@ -10,13 +10,13 @@ PriorBelief::PriorBelief(const TreeAln &traln, const vector<RandomVariable> &_va
   , variables(_variables)
 {
   lnPrior = scoreEverything(traln);
-  // cout << "scored everything => " << lnPrior << endl; 
 }
 
 
-void PriorBelief::accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs )  
+void PriorBelief::accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs, double lambda )  
 {
-  assert(0); 
+  assert(oldFc.size() == 1 && newFcs.size() == 1 );  
+  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * traln.getTreeLength();
 }
 
 
@@ -92,7 +92,10 @@ shared_ptr<AbstractPrior> PriorBelief::getBranchLengthPrior() const
   for(auto v : variables)
     {
       if(v.getCategory() == BRANCH_LENGTHS)
-	return v.getPrior(); 
+	{
+	  // cout << "prior is " << v.getPrior() << endl; 
+	  return v.getPrior(); 
+	}
     }
 
   assert(0); 

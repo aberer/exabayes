@@ -107,7 +107,6 @@ void MyTemplateProposal::autotune()
 }
 
 
-
 // returns the base class type. This way, we can store the proposal in
 // a vector<AbstractProposal*> and do not even have to know which
 // proposal it is. We simply can use the methods that are implemented
@@ -120,12 +119,6 @@ AbstractProposal* MyTemplateProposal::clone() const
 {
   return new MyTemplateProposal( *this);
 }
-
-
-
-
-
-
 
 
 void MyTemplateProposal::privateMethod(TreeAln& traln, Randomness &rand)

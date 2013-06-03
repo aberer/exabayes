@@ -30,7 +30,7 @@ public:
   double getLnPrior () const {return lnPrior; } 
   double getLnPriorRatio() const {return lnPriorRatio; }
   void addToRatio(double val)  { lnPriorRatio += val; }
-  void accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs )  ; 
+  void accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs, double lambda )  ; 
   void updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) ; 
   void verifyPrior(const TreeAln &traln) const ;  
   void reinitPrior(const TreeAln &traln ) {lnPrior = scoreEverything(traln); lnPriorRatio = 0; }

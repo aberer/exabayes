@@ -34,7 +34,7 @@ public:
   virtual double getRelativeWeight() const {return relativeWeight; }
 
 private: 
-  int model; 			// which model
+  // int model; 			// which model
 
   double parameter; 		
   vector<double> values; 

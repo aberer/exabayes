@@ -13,9 +13,7 @@ ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
   , multiplier(_multiplier)
 {
   name = "eTBR"; 
-  // relativeProbability = _relativeProbability; 
   category = TOPOLOGY; 
-  // ptype = E_TBR; 
 }
 
 

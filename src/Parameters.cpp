@@ -8,4 +8,4 @@ category_t RateHetParameter::cat = RATE_HETEROGENEITY;
 
 bool RevMatParameter::needsFcUpdate = true; 
 bool FrequencyParameter::needsFcUpdate = true; 
-bool RateHetParameter::needsFcUpdate = true; 
+bool RateHetParameter::needsFcUpdate = false; // correct? 

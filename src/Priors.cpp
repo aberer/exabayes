@@ -1,9 +1,9 @@
-
 #include "Priors.hpp"
 
-
- double DirichletPrior::getLogProb(vector<double> values) const 
+double DirichletPrior::getLogProb(vector<double> values) const 
 {       
+  assert(values.size() == alphas.size() ); 
+
   // cout << "values are "; 
   // for(auto v : values)
   //   cout <<  v << "," ; 
@@ -11,7 +11,6 @@
 
   double result = densityDirichletWrapper(values, alphas, true ); 
 
-  // result = log(result);
   // cout << "RESULT is " <<  result << endl; 
     
   return result; 
