@@ -48,7 +48,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   assert(0); 
 #endif
 
-  auto brPr = randomVariables[0].getPrior(); 
+  auto brPr = primVar[0].getPrior(); 
   
   updateHastings(hastings, rememMultiplier, "TL-Mult");
   initTreeLength = traln.getTreeLength(); // TODO? 

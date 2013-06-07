@@ -44,6 +44,19 @@
 #endif
 
 
+
+// have ae look at that later again 
+double fastPow(double a, double b) {
+  union {
+    double d;
+    int x[2];
+  } u = { a };
+  u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
+  u.x[0] = 0;
+  return u.d;
+}
+
+
 /**
    @brief the main ExaBayes function.
 
@@ -56,26 +69,48 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
 #ifdef TEST   
 
-  TreeAln traln; 
-  traln.initializeFromByteFile(cl.getAlnFileName());
-  traln.enableParsimony(); 
+  double a = 0.1234567; 
+  double b = 0.983279641; 
 
-  TreeRandomizer r(123, &traln); 
-  r.randomizeTree();
-  tree *tr = traln.getTr(); 
+  double res  = b;  
+  for(int i = 0; i < 10000000 ; ++i)
+    res = pow(a,res); 
   
-  for(int i = 1 ;  i < 2 * tr->mxtips -2 ; ++i)
-    {
-      vector<nat> partitionParsimony; 
-      exa_evaluateParsimony(traln, tr->nodep[i], TRUE ,partitionParsimony); 
+  cout << res << endl;  
+  cout << "time: " << gettime() - timeIncrement << endl; 
+
+
+  timeIncrement = gettime(); 
+  res = b; 
+  for(int i = 0; i < 10000000 ; ++i)
+    res = fastPow(a,res);   
+  cout << res << endl; 
+  cout << "time: " << gettime() - timeIncrement << endl; 
+  
+
+  exit(0); 
+  
+
+  // TreeAln traln; 
+  // traln.initializeFromByteFile(cl.getAlnFileName());
+  // traln.enableParsimony(); 
+
+  // TreeRandomizer r(123, &traln); 
+  // r.randomizeTree();
+  // tree *tr = traln.getTr(); 
+  
+  // for(int i = 1 ;  i < 2 * tr->mxtips -2 ; ++i)
+  //   {
+  //     vector<nat> partitionParsimony; 
+  //     exa_evaluateParsimony(traln, tr->nodep[i], TRUE ,partitionParsimony); 
       
-      for(auto b : partitionParsimony)
-	cout << b << "," ; 
-      cout << endl; 
-    }
+  //     for(auto b : partitionParsimony)
+  // 	cout << b << "," ; 
+  //     cout << endl; 
+  //   }
 
 
-  exit(0);
+  // exit(0);
 
 #endif
 

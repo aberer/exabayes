@@ -13,11 +13,11 @@ PriorBelief::PriorBelief(const TreeAln &traln, const vector<RandomVariable> &_va
 }
 
 
-void PriorBelief::accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs, double lambda )  
-{
-  assert(oldFc.size() == 1 && newFcs.size() == 1 );  
-  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * traln.getTreeLength();
-}
+// void PriorBelief::accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs, double lambda )  
+// {
+//   assert(oldFc.size() == 1 && newFcs.size() == 1 );  
+//   lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * traln.getTreeLength();
+// }
 
 
 double PriorBelief::scoreEverything(const TreeAln &traln) const 
@@ -104,18 +104,19 @@ shared_ptr<AbstractPrior> PriorBelief::getBranchLengthPrior() const
 
 
 
-void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
-{
-  if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
-    {
-      auto casted = dynamic_cast<ExponentialPrior*> (brPr.get()); 
-      lnPriorRatio += (log(newInternalZ /   oldInternalZ) ) * traln.getTr()->fracchange * casted->getLamda(); 
-    }
-  else 
-    {
-      assert(0);		// very artificial
-      lnPriorRatio += brPr->getLogProb({newInternalZ}) - brPr->getLogProb({oldInternalZ}) ; 
-    }
-} 
+// void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
+// {
+//   if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
+//     {
+//       auto casted = dynamic_cast<ExponentialPrior*> (brPr.get()); 
+//       lnPriorRatio += (log(newInternalZ /   oldInternalZ) ) * traln.getTr()->fracchange * casted->getLamda(); 
+//     }
+//   else 
+//     {
+//       assert(0);		// very artificial
+//       lnPriorRatio += brPr->getLogProb({newInternalZ}) - brPr->getLogProb({oldInternalZ}) ; 
+//     }
+// }
+
 
 

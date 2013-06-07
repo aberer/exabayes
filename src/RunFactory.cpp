@@ -222,7 +222,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
       reg.getProposals(v.getCategory(), propConfig, tmpResult); 
       for(auto  &p : tmpResult )
-	p->addRandomVariable(v);
+	p->addPrimVar(v);
 
       // dammit...
       for(auto it = tmpResult.begin(); it != tmpResult.end(); )

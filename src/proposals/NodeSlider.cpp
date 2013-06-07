@@ -79,7 +79,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   
   updateHastings(hastings, ( log(bothZ) / log(oldBoth)) * drawnMultiplier, name ); 
 
-  auto brPr = randomVariables[0].getPrior(); 
+  auto brPr = primVar[0].getPrior(); 
 
   prior.updateBranchLengthPrior(traln, oldA, newA, brPr);
   prior.updateBranchLengthPrior(traln, oldB, newB, brPr);

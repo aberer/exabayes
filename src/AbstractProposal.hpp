@@ -55,9 +55,14 @@ public:
     out << rhs->name <<  " primarily modifying " ; 
     for(auto r : rhs->primVar)
       out << r << ",\t"  ; 
-    out << "\tand also modifying " ; 
-    for(auto r : rhs->secVar ) 
-      out << r << ",\t" ; 
+
+    if(not rhs->secVar.empty() )
+      {
+	out << "\tand also modifying " ; 
+	for(auto r : rhs->secVar ) 
+	  out << r << ",\t" ; 
+      }
+
     return out; 
   }
 
@@ -69,7 +74,6 @@ protected:
   
   vector<RandomVariable> primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
   vector<RandomVariable> secVar;  // as a by-product also these random variables are changed 
-  // vector<RandomVariable> randomVariables; // random variables that are integrated by this proposal
 }; 
 
 #endif
