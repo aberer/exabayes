@@ -83,7 +83,7 @@ void MyTemplateProposal::resetState(TreeAln &traln, PriorBelief &prior)
 {  
   // reset your modifications to the tree   
 
-#if TODO    
+#if 0    
   // dont forget to update the prior: 
   double newBL = 0; 		// we probably have stored that as a private member variable
   double oldBL = 0; 

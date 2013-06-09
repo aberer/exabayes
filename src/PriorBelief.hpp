@@ -34,7 +34,7 @@ public:
   void updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) ; 
   void verifyPrior(const TreeAln &traln) const ;  
   void reinitPrior(const TreeAln &traln ) {lnPrior = scoreEverything(traln); lnPriorRatio = 0; }
-  shared_ptr<AbstractPrior> getBranchLengthPrior() const; 
+  // shared_ptr<AbstractPrior> getBranchLengthPrior() const; 
 
 private: 
   double scoreEverything(const TreeAln &traln) const ; 

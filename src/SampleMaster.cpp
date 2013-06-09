@@ -48,8 +48,6 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
   vector<unique_ptr<AbstractProposal> > proposals; 
   vector<RandomVariable> variables; 
 
-  cout << "tree has " << trees[0]->getNumberOfPartitions() <<  " partitions " << endl; 
-
   initWithConfigFile(cl.getConfigFileName(),  *(trees[0]), proposals, variables);
   assert(runParams.getTuneFreq() > 0); 
 

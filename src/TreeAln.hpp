@@ -144,7 +144,6 @@ private:
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
   partitionList* partitions; 
   void initializeTreePLL(string byteFileName);
-  // void initializeTreePLL();
   void initializePartitionsPLL(string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
 

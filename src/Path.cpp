@@ -6,8 +6,6 @@
 #include "Chain.hpp"
 #include "AbstractProposal.hpp"
 
-#define TODO 0  
-
 
 Path::Path()
 {

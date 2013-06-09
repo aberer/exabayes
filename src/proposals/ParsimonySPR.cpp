@@ -268,9 +268,10 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
 #ifdef ESPR_MULTIPLY_BL
   assert(traln.getNumBranches() == 1); 
-  if(traln.getBranchLengthsFixed()[0])
+
+  if(traln.getBranchLengthsFixed()[0]) // TODO 
     {
-      auto brPr = prior.getBranchLengthPrior(); 
+      auto brPr =  secVar[0].getPrior();
       move.multiplyAlongBranchESPR(traln, rand, hastings, prior, path, blMulti, brPr);      
     }
 #ifdef DEBUG_SHOW_TOPO_CHANGES

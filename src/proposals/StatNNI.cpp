@@ -105,7 +105,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 	printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
 #endif
 
-	auto brPr = prior.getBranchLengthPrior(); 
+	auto brPr = secVar[0].getPrior();
 	prior.updateBranchLengthPrior(traln, old1, realNew1, brPr);
 	prior.updateBranchLengthPrior(traln, old2, realNew2, brPr);
 	prior.updateBranchLengthPrior(traln, old3, realNew3, brPr);

@@ -83,11 +83,16 @@ begin runconfig;
  [================================================================]
  [ PROPOSAL configuration ]
  [================================================================]
- 
+
  [ 
+
+      FrequencyDirichlet 0
+      FrequencySlider 0
+
+      revMatSlider 0
       revMatSlider 0
       revMatDirichlet 0	
-      FrequencyDirichlet 0
+
       FrequencySlider 0
 ] 
 [ 

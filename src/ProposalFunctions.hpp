@@ -14,24 +14,19 @@ class DirichletProposal
 {				
 public: static vector<double> getNewValues(vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
   {
+    double sum = 0; 
+    for(auto &v : oldValues)
+      sum += v; 
+    assert(fabs(sum - 1.0 ) < 1e-6); 
+
     vector<double> newValues; 
-    double tmp[oldValues.size()]; 
-    for(nat i = 0; i < oldValues.size(); ++i)
-      tmp[i] = oldValues[i]; 
-    double tmpNew[oldValues.size()];
-    rand.drawDirichletExpected(tmpNew, tmp, 
-			       parameter * oldValues.size(),
-			       (int)oldValues.size());
+    rand.drawDirichletExpected(newValues, oldValues, parameter * oldValues.size() );
+    updateHastings(hastings, densityDirichlet(oldValues, newValues) / densityDirichlet(newValues,oldValues) , "dirichlet"); 
 
-    // cout << "new proposal: " ; 
-    for(nat i = 0; i < oldValues.size(); ++i)
-      {
-	newValues.push_back( tmpNew[i]); 
-	// cout << tmpNew[i] << "," ; 
-      }
-    // cout << endl; 
-
-    updateHastings(hastings, densityDirichlet(tmp, tmpNew, oldValues.size()) / densityDirichlet(tmpNew,tmp, oldValues.size()), "dirichlet"); 
+    sum = 0; 
+    for(auto &v : newValues)
+      sum += v; 
+    assert(fabs(sum - 1.0)< 1e-6); 
 
     return newValues; 
   }
@@ -96,7 +91,15 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
   {
     int position = rand.drawRandInt(oldValues.size());
     oldValues[position] = rand.drawFromSlidingWindow(oldValues[position], parameter); 
-    // no hastings moification needed
+
+    // this is only ONE way to do it! 
+    double sum = 0; 
+    for(auto v : oldValues)
+      sum += v ; 
+
+    for(auto &v : oldValues)
+      v /= sum ; 
+
     return oldValues; 
   }  
 

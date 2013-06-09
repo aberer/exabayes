@@ -147,22 +147,17 @@ void CoupledChains::switchChainState()
 
 void CoupledChains::chainInfo()
 {
-  // find cold chain
-  Chain *coldChain = NULL; 
-  for(auto chain : chains )
-    if(chain->getCouplingId() == 0)
-      coldChain = chain; 
-  assert(coldChain != NULL); 
-
-  tout << 
-    "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain->getGeneration() 
-       <<  "\tTL=" << setprecision(2)<< coldChain->getTraln().getTreeLength()
-       << "\tlnPr(1)=" << coldChain->getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain->getTraln().getTr()->likelihood << "\t" ; 
-
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
   for(auto chain : chains)
     sortedChains[chain->getCouplingId()] = chain; 
+
+  const Chain& coldChain = *(sortedChains[0]); 
+
+  tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain.getGeneration() 
+       <<  "\tTL=" << setprecision(2)<< coldChain.getTraln().getTreeLength()
+       << "\tlnPr(1)=" << coldChain.getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain.getTraln().getTr()->likelihood << "\t" ; 
+
   for(nat i = 1 ; i < chains.size(); ++i)
     {
       Chain *chain = sortedChains[i]; 
@@ -172,29 +167,39 @@ void CoupledChains::chainInfo()
       tout << "lnl(" << setprecision(2)<< heat << ")=" << setprecision(2)<< chain->getTraln().getTr()->likelihood << "\t" ;  
     }
 
-  
   printSwapInfo();
-
-
   tout << endl; 
-
-  /* just output how much time has passed since the last increment */
   timeIncrement = gettime(); 	
 
+  map<category_t, vector< AbstractProposal* > > sortedProposals; 
+  auto& proposals = coldChain.getProposals();
+  for(auto& p : proposals)
+    sortedProposals[p->getCategory()].push_back(p.get()) ; 
 
-
-
-#if TODO 
-  for(auto cat : coldChain->getProposalCategories())
+  map<category_t, string> names = 
     {
-      tout << cat.getName() << ":\t";
-      for( auto p : cat.getProposals() )
-  	tout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
-      tout << endl; 
-    }
+      { TOPOLOGY , "Topolo"} , 
+      { BRANCH_LENGTHS, "BranchLen" } , 
+      { FREQUENCIES , "Frequencies" } , 
+      { SUBSTITUTION_RATES , "revMat" } , 
+      { RATE_HETEROGENEITY, "rateHet" } , 
+      { AA_MODEL , "aaModel" } 
+    };  
 
+  for(auto &n : names)
+    {      
+      category_t cat = n.first; 
+      tout << n.second << ":\t";
+      for(auto &p : proposals)
+	{
+	  if(p->getCategory() == cat)
+	    {
+	      tout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
+	    } 
+	  tout << endl; 
+	}
+    }
   tout << endl; 
-#endif
 }
 
 

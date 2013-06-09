@@ -456,6 +456,12 @@ void TreeAln::initRevMat(int model)
 
 void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
 {  
+  cout << "SETTING frequencies:" << endl; 
+  cout << "init:"; 
+  for(auto &v : newValues)
+    cout << v << "," ; 
+  cout << endl; 
+
   int changed = 0; 
   double sum =0 ; 
   for(double &v : newValues)
@@ -467,41 +473,55 @@ void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
     else 
       sum += v; 
 
-  // @todo kassian check 
-
   sum += ( changed * freqMin ); 
   for(double &v : newValues)
     if(v != freqMin)
-      v /= sum; 	  
+      v /= sum; 
+
+
+  cout << "after norm:"; 
+  for(auto &v : newValues)
+    cout << v << "," ; 
+  cout << endl; 	  
 
   pInfo *partition = getPartition(model); 
   for(nat i = 0; i < newValues.size(); ++i)
     partition->frequencies[i] = newValues[i];   
-
-  // cout << "FREQ after: " ; 
-  // for(auto v : newValues)
-  //   cout << v << ","; 
-  // cout << endl;     
+  
+  sum = 0; 
+  for(auto &v : newValues)
+    sum += v; 
+  assert(fabs (sum - 1.0) < 1e-6  );  
 }
 
 
+
 void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
-{
-  // @todo kassian check 
+{ 
+  // cout << "initial values "; 
+  // for(auto &v : newValues)
+  //   cout << v << ","; 
+  // cout << endl; 
 
-  for(double &v : newValues)
-    if(v < rateMin)
-      v = rateMin; 
-    else if(rateMax < v )
-      v = rateMax; 
+  vector<double> normValues = newValues; 
 
-#if 0
-  double& normValue = newValues[newValues.size()-1]; 
-  for(double &v : newValues)
-    if(v != rateMax && v != rateMin)
-      v /= normValue; 
-  assert(normValue == 1);
-#endif
+  for(auto &v : normValues)
+    v /= normValues[normValues.size()-1]; 
+  
+  double sum = 0; 
+  for(double &v : normValues)
+    {
+      if(v < rateMin)
+	v = rateMin; 
+      else if(rateMax < v )
+	v = rateMax; 
+      sum += v ; 
+    }
+
+  // cout << "after correction " ; 
+  // for(auto &v : normValues)
+  //   cout << v << "," ; 
+  // cout << endl; 
 
   pInfo *partition = getPartition(model); 
   for(nat i = 0; i < newValues.size(); ++i)
@@ -735,8 +755,20 @@ vector<double> TreeAln::getRevMat(int model) const
 {
   vector<double> result; 
   pInfo *partition = getPartition(model); 
+  double sum = 0; 
   for(int i =0 ; i < numStateToNumInTriangleMatrix(partition->states); ++i)
-    result.push_back(partition->substRates[i]);
+    {
+      result.push_back(partition->substRates[i]);
+      sum += result[i]; 
+    }
+
+  // normalize such that sum is 1 
+  for_each(result.begin(), result.end(), [&](double &v) { v /= sum ; }) ; 
+  
+  // cout << "afer norm "  ; 
+  // for_each(result.begin(), result.end(), [](double v) {cout << v <<  ","; }); 
+  // cout << endl; 
+  
   return result; 
 }
 

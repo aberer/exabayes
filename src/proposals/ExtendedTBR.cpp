@@ -197,12 +197,12 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 #ifdef TBR_MULTIPLY_BL  
   
   assert(traln.getNumBranches() == 1); 
+  // TODO replace by absence of prior 
   if(not traln.getBranchLengthsFixed()[0]) 
     {
       // find the branch length prior : very nasty 
       
-      auto brPr = prior.getBranchLengthPrior(); 
-
+      auto brPr = secVar[0].getPrior();
       for(int i = 0 ;i < modifiedPath1.size(); ++i)
 	{
 	  branch &b = modifiedPath1.at(i);  
@@ -213,6 +213,7 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 	  branch &b = modifiedPath2.at(i); 
 	  modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr); 
 	}
+
     }
 #endif
   

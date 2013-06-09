@@ -32,6 +32,22 @@ public:
 
   shared_ptr<AbstractPrior> getPrior() const {return prior; }
 
+  ostream&  printShort(ostream& out)
+  {
+    out << nameMap[cat] << "{" ; 
+    bool isFirst= true; 
+    for(auto v : partitions)
+      {
+      if(not isFirst)
+	out << ","; 
+      else 
+	isFirst = false; 
+      out  << v ; 
+      }
+    out << "}";     
+    return out; 
+  }
+
 private: 
   friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
 
@@ -41,6 +57,8 @@ private:
   nat id ; 			//  which id does the  parameter have among all of its kind  
 
   shared_ptr<AbstractPrior> prior; 
+
+  static map<category_t, string>  nameMap; 
 };
 
 #endif

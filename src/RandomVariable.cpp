@@ -1,8 +1,6 @@
 #include "RandomVariable.hpp"
 
-ostream& operator<<(ostream &out, const RandomVariable& rhs)
-{
-  map<category_t, string> nameMap = {
+map<category_t, string> RandomVariable::nameMap = {
     { TOPOLOGY, "topo" } , 
     { BRANCH_LENGTHS, "bl" },
     { FREQUENCIES , "pi" } ,
@@ -11,7 +9,10 @@ ostream& operator<<(ostream &out, const RandomVariable& rhs)
     { AA_MODEL, "aaModel" } 
   } ; 
 
-  out << nameMap[rhs.cat] ; 
+
+ostream& operator<<(ostream &out, const RandomVariable& rhs)
+{
+  out << RandomVariable::nameMap[rhs.cat] ; 
 
   bool  isFirst = true; 
   out << "{" ; 

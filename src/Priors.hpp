@@ -42,7 +42,18 @@ public:
   {
   }
 
-  virtual double getLogProb(vector<double> values) const ; 
+
+  virtual double getLogProb(vector<double> values) const 
+  {
+    assert(values.size() == alphas.size() ); 
+    double sum = 0; 
+    for(auto v: values)
+      sum += v; 
+    assert(fabs(sum - 1.0) < 1e-6); 
+
+    double result = densityDirichletLog(values, alphas ); 
+    return result; 
+  }
  
   
   virtual void print(ostream& out ) const 
@@ -60,20 +71,11 @@ public:
 
   virtual vector<double> drawFromPrior(Randomness &rand)  const
   {
-    double tmp[alphas.size()];
-    for(nat i = 0; i < alphas.size(); ++i)
-      tmp[i] = alphas[i]; 
-
-    double result[alphas.size()]; 
-
-    rand.drawRandDirichlet( result, tmp, alphas.size()); 
-
-    vector<double> resultVect; 
-    for(nat i = 0; i < alphas.size(); ++i)
-      resultVect.push_back(result[i]);
-    return resultVect;     
+    vector<double> result; 
+    rand.drawRandDirichlet( result, alphas); 
+    return result; 
   }
-
+  
 private: 
   vector<double> alphas; 
 
@@ -192,6 +194,3 @@ private:
 }; 
 
 #endif
-
-
-

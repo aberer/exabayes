@@ -87,36 +87,36 @@ void PriorBelief::verifyPrior(const TreeAln &traln) const
     }
 }
 
-shared_ptr<AbstractPrior> PriorBelief::getBranchLengthPrior() const
-{
-  for(auto v : variables)
-    {
-      if(v.getCategory() == BRANCH_LENGTHS)
-	{
-	  // cout << "prior is " << v.getPrior() << endl; 
-	  return v.getPrior(); 
-	}
-    }
-
-  assert(0); 
-  return shared_ptr<AbstractPrior>(); 
-}
-
-
-
-// void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
+// shared_ptr<AbstractPrior> PriorBelief::getBranchLengthPrior() const
 // {
-//   if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
+//   for(auto v : variables)
 //     {
-//       auto casted = dynamic_cast<ExponentialPrior*> (brPr.get()); 
-//       lnPriorRatio += (log(newInternalZ /   oldInternalZ) ) * traln.getTr()->fracchange * casted->getLamda(); 
+//       if(v.getCategory() == BRANCH_LENGTHS)
+// 	{
+// 	  // cout << "prior is " << v.getPrior() << endl; 
+// 	  return v.getPrior(); 
+// 	}
 //     }
-//   else 
-//     {
-//       assert(0);		// very artificial
-//       lnPriorRatio += brPr->getLogProb({newInternalZ}) - brPr->getLogProb({oldInternalZ}) ; 
-//     }
+
+//   assert(0); 
+//   return shared_ptr<AbstractPrior>(); 
 // }
+
+
+
+void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
+{
+  if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
+    {
+      auto casted = dynamic_cast<ExponentialPrior*> (brPr.get()); 
+      lnPriorRatio += (log(newInternalZ /   oldInternalZ) ) * traln.getTr()->fracchange * casted->getLamda(); 
+    }
+  else 
+    {
+      assert(0);		// very artificial
+      lnPriorRatio += brPr->getLogProb({newInternalZ}) - brPr->getLogProb({oldInternalZ}) ; 
+    }
+}
 
 
 

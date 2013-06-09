@@ -45,6 +45,12 @@
 
 
 
+#include "branch.h"
+
+
+
+
+
 // have ae look at that later again 
 double fastPow(double a, double b) {
   union {
@@ -69,36 +75,33 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
 #ifdef TEST   
 
-  double a = 0.1234567; 
-  double b = 0.983279641; 
-
-  double res  = b;  
-  for(int i = 0; i < 10000000 ; ++i)
-    res = pow(a,res); 
-  
-  cout << res << endl;  
-  cout << "time: " << gettime() - timeIncrement << endl; 
-
-
-  timeIncrement = gettime(); 
-  res = b; 
-  for(int i = 0; i < 10000000 ; ++i)
-    res = fastPow(a,res);   
-  cout << res << endl; 
-  cout << "time: " << gettime() - timeIncrement << endl; 
+  vector<double> tmp = {1,2,3,4,5,6}; 
+  cout << std::accumulate(tmp.begin(), tmp.end(), 0 , plus<double>()) << endl; 
   
 
-  exit(0); 
-  
 
   // TreeAln traln; 
   // traln.initializeFromByteFile(cl.getAlnFileName());
-  // traln.enableParsimony(); 
 
-  // TreeRandomizer r(123, &traln); 
+  // cout << traln << endl; 
+
+  // TreeRandomizer r(123, ); 
   // r.randomizeTree();
   // tree *tr = traln.getTr(); 
-  
+
+
+  // cout << traln.getTr()->nodep[1]->back << endl; 
+  // cout << "hi" << endl; 
+
+  // modifyBranchLength(traln,traln.getTr()->nodep[1]->back, 
+  // 		     [](nodeptr p)
+  // 		     {
+  // 		       cout << "visiting node number " << p->number << "\t" << endl ;  // << p->z[0] << endl; 
+  // 		     }
+  // 		     ); 
+
+  // traln.enableParsimony(); 
+
   // for(int i = 1 ;  i < 2 * tr->mxtips -2 ; ++i)
   //   {
   //     vector<nat> partitionParsimony; 

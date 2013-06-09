@@ -29,7 +29,6 @@ public:
   // getters and setters 
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
-  // vector<Category>& getProposalCategories(){return proposalCategories;}
   int getCouplingId(){return couplingId; }
   void setCouplingId(int id) {couplingId = id; }
   
@@ -45,7 +44,7 @@ public:
   /** @brief Execute one generation of the chain. */
   void step();
 
-  int getGeneration(){return currentGeneration; }
+  int getGeneration() const {return currentGeneration; }
   const PriorBelief& getPrior() const  {return prior; } 
   Randomness& getChainRand(){return chainRand;}
   void printNexusTreeFileStart( FILE *fh  ); 
@@ -56,7 +55,11 @@ public:
   void printTopology(FILE *fh); 
   void switchState(Chain &rhs);
   ostream& addChainInfo(ostream &out); 
-  TreeAln& getTraln() { return *traln; }
+  const TreeAln& getTraln() const { return *traln; }
+  TreeAln& getTraln()  { return *traln; }
+
+  const vector<unique_ptr<AbstractProposal>>& getProposals() const { return proposals;}
+
   
 private : 
   void initParamDump(); 

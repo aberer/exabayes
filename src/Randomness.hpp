@@ -55,11 +55,11 @@ public:
   double drawRandGamma(double alpha, double beta); 
 
   //This function should be called if the alphas for the dirichlet distribution are given
-  void drawRandDirichlet( double* results, double* alphas,  int length); 
+  void drawRandDirichlet( vector<double> &results, const vector<double> &alphas); 
 
 
   //This function should be called if the expected values for the dirichlet distribution are given
-  void drawDirichletExpected(double* results, double* mean,double scale, int length); 
+  void drawDirichletExpected(vector<double> &results, const vector<double> &mean,double scale); 
 
   branch drawBranchUniform(TreeAln &traln); 
 

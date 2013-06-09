@@ -274,41 +274,37 @@ int Randomness::drawSampleProportionally( double *weights, int numWeight )
 
 
 //This function should be called if the alphas for the dirichlet distribution are given
-void Randomness::drawRandDirichlet( double* results, double* alphas,  int length)
+void Randomness::drawRandDirichlet( vector<double> &results, const vector<double> &alphas)
 {
   double sum=0;
-  for(int i=0; i< length;i++)
+  results.resize(alphas.size()); 
+  for(int i=0; i< alphas.size();i++)
     {
-      results[i]=drawRandGamma(alphas[i], 1.0);
-      sum+=results[i];
+      results[i] = drawRandGamma(alphas[i], 1.0) ;
+      sum += results[i];
     }
-  for(int i=0; i< length;i++)
-    {
-      results[i]=results[i]/sum;
-    }
+  for(int i=0; i< alphas.size();i++)
+    results[i] /= sum;
 }
 
 
 
 //This function should be called if the expected values for the dirichlet distribution are given
-void Randomness::drawDirichletExpected(double* results, double* mean,double scale, int length)
+void Randomness::drawDirichletExpected(vector<double> &results, const vector<double> &mean,double scale)
 {
-  double alphas[length];
+  vector<double> alphas; 
   double originalSum=0;
 
-  for(int i=0; i< length;i++)
+  for(int i=0; i< mean.size();i++)
     {
       originalSum+=mean[i];
-      alphas[i]=mean[i]*scale;
+      alphas.push_back( mean[i]*scale ) ;
     }
   
-  drawRandDirichlet( results, alphas, length);
+  drawRandDirichlet( results, alphas);
 
-  for(int i=0; i< length;i++)
-    {
-      results[i]=results[i]*originalSum;    
-    }
-  
+  for(int i=0; i< alphas.size() ;i++)
+    results[i]=results[i]*originalSum;      
 }
 
 

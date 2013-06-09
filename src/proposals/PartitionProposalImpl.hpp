@@ -1,3 +1,4 @@
+
 template<typename FUN, typename PARAM>
 PartitionProposal<FUN,PARAM>::PartitionProposal( double _param, string _name)
   :  parameter(_param)
@@ -10,45 +11,70 @@ PartitionProposal<FUN,PARAM>::PartitionProposal( double _param, string _name)
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
-  auto oneModel  = primVar[0].getPartitions()[0];
+  cout << "modifying " ; 
+  for(auto &v : primVar[0].getPartitions())
+    cout << v << ","; 
+  cout << endl; 
+
+  auto oneModel = primVar[0].getPartitions()[0];
   assert(primVar.size() == 1 ) ; // <= TODO 
 
   values = PARAM::getParameters(traln, oneModel); 
-  vector<double> proposedValues =  FUN::getNewValues(values, parameter, rand, hastings); 
-  assert(proposedValues.size() == values.size()); 
-  assert(traln.getNumBranches() == 1 ); 
-
   double oldFracChange = traln.getTr()->fracchange; 
+      
+  bool blCorrectionFailed = true  ; 
+  vector<double> proposedValues; 
+  while( blCorrectionFailed)  
+    {      
+      proposedValues = FUN::getNewValues(values, parameter, rand, hastings); 
 
-  for(auto v : primVar[0].getPartitions())
-    {
-      PARAM::setParameters(traln, v, proposedValues);  
-      PARAM::init(traln, v);  
+      assert(proposedValues.size() == values.size()); 
+      assert(traln.getNumBranches() == 1 ); 
+
+      for(auto v : primVar[0].getPartitions())
+	{
+	  PARAM::setParameters(traln, v, proposedValues);  
+	  PARAM::init(traln, v);  
+	}
+
+      double newFracChange = traln.getTr()->fracchange;   
+      assert(primVar.size() != 0);         
+
+      blCorrectionFailed = false; 
+
+      // attempt correction 
+      if(PARAM::needsBLupdate)
+	{
+	  double updateValue = oldFracChange / newFracChange; 
+	  cout << "need to update branches with " << updateValue << endl; 
+	  vector<branch> oldBranches; 
+	  extractBranches(traln, oldBranches); 
+	  vector<branch> newBranches(oldBranches); 
+
+	  for(auto& b : newBranches)	    
+	    {
+	      double &z = b.length[0]; 	      
+	      z = pow(z, updateValue); 
+	      
+	      blCorrectionFailed = blCorrectionFailed ||  ( z < TreeAln::zMin || TreeAln::zMax < z ) ; 
+	    }
+
+	  if(not blCorrectionFailed)
+	    {
+	      for(auto &b : newBranches)
+		{
+		  nodeptr p = findNodeFromBranch(traln.getTr(), b); 
+		  traln.clipNode(p,p->back, b.length[0]); 
+		}
+
+	      storedBranches = oldBranches; 
+	    } 
+
+	}
     }
-
-  double newFracChange = traln.getTr()->fracchange;   
-
-  assert(primVar.size() != 0);   
-
+ 
   auto thePrior = primVar[0].getPrior(); 
   prior.addToRatio( thePrior->getLogProb(proposedValues) -  thePrior->getLogProb(values) ) ;
-  
-  auto brPr = prior.getBranchLengthPrior();
-  // if(PARAM::needsFcUpdate )
-  //   {
-  //     if( dynamic_cast<ExponentialPrior*>(brPr.get()) != nullptr)
-  // 	{	  
-  // 	  double lambda = dynamic_cast<ExponentialPrior*>(brPr.get())->getLamda();
-  // 	  prior.accountForFracChange(traln, oneModel, {oldFracChange}, {newFracChange}, lambda);
-  // 	}
-  //     else if (dynamic_cast<UniformPrior*>(brPr.get()) != nullptr) 
-  // 	{
-  // 	  // uniform prior: all branches need to be checked =/ 
-  // 	  assert(0); 
-  // 	}
-  //     else 
-  // 	assert(0); 
-  //   }
 }
 
 
@@ -67,8 +93,8 @@ void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief 
 #endif
   // evaluatePartitions(traln, traln.getTr()->start,   randomVariables[0].getPartitions()) ; 
   evaluateGenericWrapper(traln, traln.getTr()->start, TRUE); 
-
 }
+
 
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior) 
@@ -80,8 +106,17 @@ void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior
       PARAM::setParameters(traln, elem, values);
       PARAM::init(traln,elem);  
     }
-}
 
+  if(PARAM::needsBLupdate)
+    {
+      for( auto &b : storedBranches)
+	{
+	  // use memset instead? 
+	  nodeptr p  = findNodeFromBranch(traln.getTr(), b); 
+	  traln.clipNode(p,p->back, b.length[0]); 
+	}
+    }
+}
 
 
 template<typename FUN, typename PARAM>

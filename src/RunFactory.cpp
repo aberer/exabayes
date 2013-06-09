@@ -212,6 +212,11 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   // BEGIN this could be done somewhere else 
   reg.updateProposalWeights(propConfig);
   // END 
+  
+  vector<RandomVariable> blRandVars; 
+  for(auto v : randomVariables)
+    if(v.getCategory() == BRANCH_LENGTHS)
+      blRandVars.push_back(v); 
 
   for(auto v : randomVariables)
     {
@@ -222,7 +227,12 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
       reg.getProposals(v.getCategory(), propConfig, tmpResult); 
       for(auto  &p : tmpResult )
-	p->addPrimVar(v);
+	{
+	  p->addPrimVar(v);
+	  if(v.getCategory() == TOPOLOGY)
+	    for(auto blRandVar : blRandVars)
+	      p->addSecVar(blRandVar); 
+	}
 
       // dammit...
       for(auto it = tmpResult.begin(); it != tmpResult.end(); )
@@ -234,16 +244,24 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
 
   // lets see if it worked 
-
   // seems to work....
-  cout << "RandomVariables: " << endl; 
+  tout << endl << "RandomVariables to be integrated: " << endl; 
   for(auto v : randomVariables)
-    cout << v  << endl; 
-  cout << endl; 
+    tout << v  << endl; 
+  tout << endl; 
   
 
-  cout << "Proposals: " << endl; 
+  double sum = 0; 
+  for(auto &p : proposals)
+    sum += p->getRelativeWeight(); 
+  
+  tout << "Will employ the following proposal mixture (frequency,type,affected variables): " << endl; 
   for(auto &p : proposals )
-    cout << p << endl; 
+    {
+      tout << setprecision(2) << p->getRelativeWeight() / sum * 100 <<   "%\t" ; 
+      p->printShort(tout) ; 
+      tout << endl; 
+    }
+  tout << setprecision(2) << fixed << endl ; 
 }
 

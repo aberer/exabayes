@@ -320,7 +320,7 @@ branch findRoot(tree *tr)
 
 ostream& operator<<(ostream& rhs, const branch &b )
 {
-  rhs << b.thisNode << "/" << b.thatNode ; 
+  rhs << b.thisNode << "/" << b.thatNode << "(" << b.length[0]  << ")"; 
   return rhs; 
 }
 
@@ -348,3 +348,21 @@ void extractBranches(const TreeAln &traln, vector<branch> &result)
   extractHelper(traln, tr->nodep[1]->back, result, true);
 }
 
+
+
+
+
+
+void modifyBranchLength(TreeAln &traln, nodeptr p, const std::function<void(nodeptr)> &fun)
+{  
+
+  cout << "init " << p->number << endl; 
+
+  for(nodeptr q = p->next ; q != p ; q = q->next)
+    {
+      cout << "visiting node " << q->number << endl; 
+      fun(q); 
+      if(not traln.isTipNode(q))
+	modifyBranchLength(traln,q->back, fun); 
+    }
+}

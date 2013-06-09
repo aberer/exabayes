@@ -66,6 +66,37 @@ public:
     return out; 
   }
 
+  ostream& printShort(ostream &out) 
+  {
+    out << name << "( " ;  
+    
+    bool isFirst = true; 
+    for(auto &v : primVar)
+      {
+	if(not isFirst)
+	  out << ","; 
+	else 
+	  isFirst = false; 
+	v.printShort(out); 
+      }
+    
+    if(secVar.size() > 0 )
+      {
+	out << ";"; 
+	isFirst = false; 
+	for(auto &v : secVar)
+	  {
+	    if(not isFirst)
+	      out << ","; 
+	    else 
+	      isFirst = false; 
+	    v.printShort(out); 
+	  }
+      }
+    out << " )"; 
+    return out; 
+  }
+
 
 protected: 
   string name;   

@@ -8,14 +8,14 @@ using namespace std;
 
 
 
-double betaFunctionLog(double *alpha, int length)
+static double betaFunctionLog(const vector<double> &alphas)
 {
   double beta=0;
   double sum=0;
-  for(int i=0; i<length;i++)
+  for(auto v : alphas)
     {
-      beta+=lgamma(alpha[i]);       
-      sum+=alpha[i];    
+      beta+=lgamma(v);       
+      sum+=v ;    
     }
   beta -= lgamma(sum);
 
@@ -24,16 +24,18 @@ double betaFunctionLog(double *alpha, int length)
 
 
 
-double betaFunction(double *alpha, int length)
+static double betaFunction(const vector<double> &alphas)
 {
   double beta=1.0;
   double sum=0;
-  for(int i=0; i<length;i++)
+
+  for(auto v : alphas)
     {
-      beta*=gammaFunction(alpha[i]); 
-      sum+=alpha[i];    
+      beta *= gammaFunction(v); 
+      sum += v; 
     }
-  beta=beta/(gammaFunction(sum));
+
+  beta /= gammaFunction(sum);
 
   return beta;
 }
@@ -50,56 +52,27 @@ double gammaFunction(double alpha)
 
 
 
-static void normalize(double * vector, int length, double normalizingConstant)
+static void normalize( vector<double>  &vector, double normalizingConstant)
 {
   double sum=0;
-  for(int i=0; i<length; i++)
-    sum+=vector[i];
+  for(auto v: vector)
+    sum+=v; 
   
-  for(int i=0; i<length; i++)
-    vector[i]=vector[i]*normalizingConstant/sum;
-  
+  for(auto &v : vector)
+    v *= normalizingConstant/sum;   
 }
 
 
-
-/** 
-    @brief just wraps the method for usage with vectors 
- */ 
-double densityDirichletWrapper(vector<double> values, vector<double> alphas, bool logScale)
-{
-  assert(values.size() == alphas.size());
-  double tmpVal[values.size()] , 
-    tmpAlpha[alphas.size()]; 
-  for(nat i = 0; i < values.size(); ++i)
-    {
-      tmpVal[i] = values[i]; 
-      tmpAlpha[i] = alphas[i]; 
-    }
-
-  return logScale   
-    ? densityDirichletLog(tmpVal, tmpAlpha, values.size())
-    : densityDirichlet(tmpVal, tmpAlpha, values.size());
-}
-
-
-
-
-double densityDirichletLog(double *values, double *alphas, int length)
+double densityDirichletLog(vector<double> values, const vector<double> &alphas)
 {
   double density=0;
-  double normValues[length];
-  
-  for(int i=0; i<length; i++)
-    normValues[i] = values[i];  
+  density -= betaFunctionLog(alphas);
 
-  density -= betaFunctionLog(alphas, length);
+  normalize(values, 1);
 
-  normalize(normValues, length, 1);
-  
-  for(int i=0; i<length; i++)
+  for(int i=0; i<values.size(); i++)
     {      
-      double val =  pow(normValues[i],alphas[i]-1); 
+      double val =  pow(values[i],alphas[i]-1); 
       density += log(val);
     }
 
@@ -110,20 +83,16 @@ double densityDirichletLog(double *values, double *alphas, int length)
 
 
 
-double densityDirichlet(double *values, double *alphas, int length)
+double densityDirichlet(vector<double> values, const vector<double> &alphas)
 {
   double density=1;
-  double normValues[length];
 
-  for(int i=0; i<length; i++)
-    normValues[i]=values[i];  
-
-  density=density/betaFunction(alphas, length);
+  density /= betaFunction(alphas);
   
-  normalize(normValues, length, 1);
+  normalize(values, 1);
   
-  for(int i=0; i<length; i++)
-    density=density*pow(normValues[i],alphas[i]-1);
+  for(int i=0; i< values.size(); i++)
+    density *= pow( values[i],alphas[i]-1);
   
   return density; 
 }

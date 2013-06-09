@@ -122,9 +122,9 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
 #ifdef ESPR_MULTIPLY_BL
   assert(traln.getNumBranches() == 1 ); 
-  if(not traln.getBranchLengthsFixed()[0]) 
+  if(not traln.getBranchLengthsFixed()[0]) // TODO 
     {
-      auto brPr = prior.getBranchLengthPrior(); 
+      auto brPr = secVar[0].getPrior();
       move.multiplyAlongBranchESPR(traln, rand, hastings, prior, modifiedPath, multiplier, brPr);
     }
 #endif
