@@ -35,8 +35,9 @@ public:
 
   virtual AbstractProposal* clone() const = 0;  
 
-  virtual double getRelativeWeight() const = 0; 
-
+  double getRelativeWeight() const { return relativeWeight; }
+  void setRelativeWeight(double tmp) { relativeWeight = tmp; }
+  
   category_t getCategory() const {return category; }
   string getName() const {return name; }
   
@@ -114,13 +115,15 @@ public:
     return out; 
   }
 
-protected: 
+protected:   
   string name;   
   SuccessCounter sctr; 
   category_t category; 
   
   vector<RandomVariable> primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
   vector<RandomVariable> secVar;  // as a by-product also these random variables are changed 
+
+  double relativeWeight; 
 }; 
 
 #endif

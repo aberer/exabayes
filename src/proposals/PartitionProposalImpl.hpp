@@ -1,5 +1,5 @@
 
-template<typename FUN, typename PARAM>
+template<typename FUN, typename PARAM >
 PartitionProposal<FUN,PARAM>::PartitionProposal( double _param, string _name)
   :  parameter(_param)
 {  

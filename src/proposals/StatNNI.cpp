@@ -4,14 +4,12 @@
 #include "output.h"
 
 
-double StatNNI::relativeWeight = 5 ;
-
-
 StatNNI::StatNNI( double _multiplier)
   :  multiplier(_multiplier)
 {
   this->name = "stNNI" ; 
   this->category = TOPOLOGY; 
+  relativeWeight = 5; 
 }
 
 

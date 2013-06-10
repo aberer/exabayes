@@ -4,9 +4,6 @@
 #include "eval.h"
 
 // #define EXPENSIVE_ETBR_VERIFY
-
-double ExtendedTBR::relativeWeight = 5.;
-
 // #define DEBUG_TBR
 
 
@@ -16,6 +13,7 @@ ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
 {
   name = "eTBR"; 
   category = TOPOLOGY; 
+  relativeWeight = 5.;
 }
 
 

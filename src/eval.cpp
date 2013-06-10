@@ -86,13 +86,13 @@ void expensiveVerify(TreeAln& traln)
 	{
 	  tout << "WARNING: found in expensive evaluation: likelihood difference is " 
 	       << setprecision(8) <<   fabs (verifiedLnl - toVerify )
-	       << "(with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
+	       << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
 	  tout << "current tree: " << traln << endl; 
 	  tout << "help tree: " <<  debugTraln << endl; 	  
 
 	  evaluateFullNoBackup(traln);
-	  tout << "full evaluation on original tree yiels: "  << traln.getTr()->likelihood << endl; 
+	  tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
 	}
 
       assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   

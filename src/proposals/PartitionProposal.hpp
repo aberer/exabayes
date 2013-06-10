@@ -13,12 +13,14 @@
 #include "AbstractProposal.hpp"
 #include "eval.h"
 #include "tune.h"
+#include "Parameters.hpp"
 
 template<typename FUN, typename PARAM>
 class PartitionProposal : public AbstractProposal
 {
 public: 
   PartitionProposal(  double _param, string _name); 
+  
   virtual ~PartitionProposal(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -28,10 +30,6 @@ public:
   virtual void autotune();
 
   virtual PartitionProposal<FUN,PARAM>* clone() const; 
-
-  static double relativeWeight;
-
-  virtual double getRelativeWeight() const {return relativeWeight; }
 
 private: 
   double parameter; 		

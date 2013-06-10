@@ -20,10 +20,6 @@ public:
   virtual void autotune() {}	// disabled 
   virtual AbstractProposal* clone() const;  
 
-  static double relativeWeight;
-
-  virtual double getRelativeWeight() const {return relativeWeight; }
-
 protected: 
   double stopProb; 
   double multiplier; 

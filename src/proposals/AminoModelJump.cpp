@@ -1,14 +1,13 @@
 #include "AminoModelJump.hpp"
 
-double AminoModelJump::relativeWeight = 0.0; // ??? TODO 
+
 
 
 AminoModelJump::AminoModelJump(vector<aaMatrix_t> matrices)
 {
-  // this->relativeProbability = _relativeProbability; //  the constructor argument should not have the exact same name as the member variable
   name = "aaMat"; 	
   category = AA_MODEL ; 
-
+  relativeWeight = 0.0; // ??? TODO 
 }
 
 

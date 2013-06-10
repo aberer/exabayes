@@ -3,7 +3,7 @@
 #include "output.h"
 
 
-double RadiusMlSPR::relativeWeight = 0.0;
+
 
 /* 
    important TODO
@@ -21,6 +21,7 @@ RadiusMlSPR::RadiusMlSPR(  int _radius)
 {
   this->name = "radiusMLspr" ;
   category = TOPOLOGY; 
+  relativeWeight = 0.0;
   // ptype = GUIDED_SPR;   
 }
 

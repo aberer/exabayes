@@ -17,7 +17,9 @@ void ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &c
     {      
       AbstractProposal *proposal = nullptr; 
   
-      switch(proposal_type(i))
+      proposal_type curProp = proposal_type(i); 
+
+      switch(curProp)
 	{	      
 	case ST_NNI: 
 	  proposal = new StatNNI(INIT_NNI_MULT);
@@ -30,9 +32,11 @@ void ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &c
 	  break; 
 	case REVMAT_SLIDER: 
 	  proposal = new PartitionProposal<SlidingProposal, RevMatParameter>( INIT_RATE_SLID_WIN, "revMatSlider"); 
+	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case FREQUENCY_SLIDER:
 	  proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>(  INIT_FREQ_SLID_WIN, "freqSlider"); 
+	  proposal->setRelativeWeight(0.5); 
 	  break; 		  
 	case TL_MULT:
 	  proposal = new TreeLengthMultiplier(  INIT_TL_MULTI); 
@@ -48,15 +52,19 @@ void ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &c
 	  break; 
 	case RATE_HET_MULTI: 
 	  proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>(  INIT_GAMMA_MULTI, "rateHetMulti"); 
+	  proposal->setRelativeWeight(1); 
 	  break; 
 	case RATE_HET_SLIDER: 
 	  proposal = new PartitionProposal<SlidingProposal,RateHetParameter>(  INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
+	  proposal->setRelativeWeight(0); 
 	  break; 
 	case FREQUENCY_DIRICHLET: 
 	  proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>(  INIT_DIRICHLET_ALPHA, "freqDirich"); 
+	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case REVMAT_DIRICHLET: 
 	  proposal = new PartitionProposal<DirichletProposal,RevMatParameter>( INIT_DIRICHLET_ALPHA, "revMatDirich"); 	      
+	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case GUIDED_SPR:
 	  proposal = new RadiusMlSPR(  config.getGuidedRadius() ); 
@@ -77,48 +85,14 @@ void ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &c
 	    assert(0); 
 	  }
 	}
+      
+      if(config.wasSetByUser(curProp) )
+	proposal->setRelativeWeight(config.getProposalWeight(curProp)); 
 
       if(proposal->getCategory() != cat || proposal->getRelativeWeight() == 0 )
 	delete proposal; 
       else 
 	result.push_back(unique_ptr<AbstractProposal>(proposal)); 
     }
-  // return result;
 } 
 
-
-void ProposalRegistry::updateProposalWeights(const BlockProposalConfig &propConfig) const
-{
-  // auto weights =  propConfig.getUserProposalWeights();
-
-  double *dummy = nullptr; 	// specify the variable in your proposal, to enable the proposal
-  
-
-  // maps the type to the location of the relative weight variable. Just copy the scheme 
-  map<proposal_type,double*> theMap =   
-    {
-      {   ST_NNI , &(StatNNI::relativeWeight)} ,
-      {	  E_SPR, &(ExtendedSPR::relativeWeight) },
-      {	  E_TBR, &(ExtendedTBR::relativeWeight) },
-      {	  PARSIMONY_SPR, &(ParsimonySPR::relativeWeight) },
-      {	  GUIDED_SPR, &(RadiusMlSPR::relativeWeight) },
-      {	  REVMAT_SLIDER, &(PartitionProposal<SlidingProposal,RevMatParameter>::relativeWeight) },
-      {	  REVMAT_DIRICHLET, &(PartitionProposal<DirichletProposal,RevMatParameter>::relativeWeight) },
-      {	  RATE_HET_SLIDER, &(PartitionProposal<SlidingProposal,RateHetParameter>::relativeWeight) },
-      {	  RATE_HET_MULTI, &(PartitionProposal<MultiplierProposal,RateHetParameter>::relativeWeight) },
-      {	  FREQUENCY_SLIDER, &(PartitionProposal<SlidingProposal,FrequencyParameter>::relativeWeight) },
-      {	  FREQUENCY_DIRICHLET, &(PartitionProposal<DirichletProposal,FrequencyParameter>::relativeWeight) },
-      {	  TL_MULT, &(TreeLengthMultiplier::relativeWeight) },
-      {	  BRANCH_COLLAPSER, &(BranchCollapser::relativeWeight) },
-      {	  NODE_SLIDER, &(NodeSlider::relativeWeight) },
-      {	  BRANCH_LENGTHS_MULTIPLIER, &(BranchLengthMultiplier::relativeWeight) }, 
-      {   BRANCH_SLIDER , dummy}, 
-      {   UPDATE_SINGLE_BL_GUIDED, dummy},
-      {   AMINO_MODEL_JUMP, dummy}
-    } ; 
-
-  for(nat i = 0; i < NUM_PROPOSALS; ++i)
-    if(theMap[proposal_type(i)] != nullptr && propConfig.wasSetByUser(i))
-      *(theMap[proposal_type(i)]) = propConfig.getProposalWeight(i); 
-
-}

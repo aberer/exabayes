@@ -6,13 +6,14 @@
 #include "eval.h"
 #include "tune.h"
 
-double TreeLengthMultiplier::relativeWeight = 2 ;
+
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
   : multiplier(_multiplier)    
 {
   this->name = "TL-Mult"; 
   category = BRANCH_LENGTHS; 
+  relativeWeight = 2 ;
 }
 
 
@@ -48,20 +49,37 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   assert(0); 
 #endif
 
+#ifdef EFFICIENT
+  // this whole tree length stuff is still highly unsatisfactory 
+  assert(0); 
+#endif
+
   auto brPr = primVar[0].getPrior(); 
   
-  updateHastings(hastings, rememMultiplier, "TL-Mult");
-  initTreeLength = traln.getTreeLengthExpensive(); // TODO? 
+  updateHastings(hastings, pow(rememMultiplier, 2 * traln.getTr()->mxtips - 3  ) , "TL-Mult");
+
+  storedBranches.clear();   
+  extractBranches(traln, storedBranches); 
+  double initTreeLength = 1,
+    newTreeLength = 1;   
+  for(auto &b : storedBranches)
+    {
+      initTreeLength *= b.length[0];
+      newTreeLength *= pow(b.length[0], rememMultiplier); 
+    }  
+
   multiplyBranchLengthsRecursively(traln , tr->start->back, rememMultiplier);   
-  double newTreeLength = pow( initTreeLength, rememMultiplier ); 
   prior.updateBranchLengthPrior(traln, initTreeLength, newTreeLength, brPr);
 }
 
 
 void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
 {
-  tree *tr = traln.getTr();
-  multiplyBranchLengthsRecursively(traln, tr->start->back, 1/rememMultiplier);   
+  for(auto &b : storedBranches)
+    {
+      nodeptr p = findNodeFromBranch(traln.getTr(), b); 
+      traln.clipNode(p,p->back, b.length[0]);
+    }
 } 
 
 

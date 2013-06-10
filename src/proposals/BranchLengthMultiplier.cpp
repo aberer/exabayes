@@ -3,13 +3,14 @@
 #include "TreeAln.hpp"
 #include "tune.h"
 
-double BranchLengthMultiplier::relativeWeight = 20;
+
 
 BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
   :  multiplier(_multiplier)
 {
   this->name = "blMult"; 
   this->category = BRANCH_LENGTHS; 
+  relativeWeight = 20;
 }
 
 

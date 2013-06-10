@@ -32,10 +32,6 @@ public:
 
   virtual AbstractProposal* clone() const;  
 
-  static double relativeWeight;
-
-  virtual double getRelativeWeight() const {return relativeWeight; }
-
 private: 
   Path path; 
 

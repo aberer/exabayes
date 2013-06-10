@@ -22,8 +22,8 @@
 class ProposalRegistry
 {
 public: 
-  void  getProposals(category_t cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result) const ;
-  void updateProposalWeights(const BlockProposalConfig &propConfig) const; 
+  void getProposals(category_t cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result) const ;
+  // void updateProposalWeights(const BlockProposalConfig &propConfig) const; 
 
 private: 
 

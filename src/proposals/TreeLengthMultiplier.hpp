@@ -14,10 +14,6 @@ public:
 
   virtual AbstractProposal* clone() const;  
 
-  static double relativeWeight;
-
-  virtual double getRelativeWeight() const {return relativeWeight; }
-
 private: 
   double multiplier; 		// the tuning variable  
   double rememMultiplier; 	// for resetting 
@@ -25,5 +21,6 @@ private:
   
   void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 
 
+  vector<branch> storedBranches; 
 
 } ; 

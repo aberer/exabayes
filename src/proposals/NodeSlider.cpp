@@ -1,15 +1,12 @@
 #include "NodeSlider.hpp"
 #include "eval.h"
 
-
-double NodeSlider::relativeWeight = 5.;
-
-
 NodeSlider::NodeSlider( double _multiplier)
   : multiplier(_multiplier)
 {
   name = "nodeSlider"; 
   this->category = BRANCH_LENGTHS; 
+  relativeWeight = 5.; 
 }
 
 

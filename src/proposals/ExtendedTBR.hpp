@@ -16,10 +16,6 @@ public:
 
   virtual AbstractProposal* clone() const; 
 
-  static double relativeWeight;
-
-  virtual double getRelativeWeight() const {return relativeWeight; }
-  
 private: 
   void drawPaths(TreeAln &traln, Randomness &rand); 
   void executeTBR(TreeAln & traln); 

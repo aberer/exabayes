@@ -6,7 +6,7 @@
 
 // #define DEBUG_PARS_SPR
 
-double ParsimonySPR::relativeWeight = 5.;
+
 
 class  InsertionScore
 {
@@ -51,6 +51,7 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
 {
   this->name = "parsSPR"; 
   this->category = TOPOLOGY ; 
+  relativeWeight = 5.;
   // this->relativeProbability =  _relativeWeight; 
 }
 

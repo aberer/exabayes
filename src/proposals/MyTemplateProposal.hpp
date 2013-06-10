@@ -37,11 +37,6 @@ public:
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
-  
-  static double relativeWeight;
-
-  virtual double getRelativeWeight() const {return relativeWeight; }
-
 private: 
   void privateMethod(TreeAln &traln, Randomness& rand)  ; 	// some helper method. It is in the private sector, s.t. it cannot be accessed from the outside 
 

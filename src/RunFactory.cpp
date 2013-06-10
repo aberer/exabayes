@@ -210,7 +210,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   ProposalRegistry reg; 
   
   // BEGIN this could be done somewhere else 
-  reg.updateProposalWeights(propConfig);
+  // reg.updateProposalWeights(propConfig);
   // END 
   
   vector<RandomVariable> blRandVars; 

@@ -6,11 +6,6 @@
 // overridden in the config file.
 
 // the variable MUST be defined in the header file first
-double MyTemplateProposal::relativeWeight = 2.0; 
-
-
-
-
 
 // we need a constructor!  
 MyTemplateProposal::MyTemplateProposal( double aVariable)
@@ -18,7 +13,10 @@ MyTemplateProposal::MyTemplateProposal( double aVariable)
   name = "MyTemplateProposal"; 	
   category = TOPOLOGY ; 	// check out categoryType.h
   
+
   // ptype = E_TBR; 		// actually not used any more... 
+
+  relativeWeight = 2.0; 
 
 }
 

@@ -305,6 +305,10 @@ void Chain::step()
       prior.reject();
 
       traln->getRestorer()->restoreArrays(*traln);
+
+// #ifdef DEBUG_VERIFY_LNL
+      expensiveVerify(*traln); 
+// #endif
     }
 
 #ifdef DEBUG_TREE_LENGTH  

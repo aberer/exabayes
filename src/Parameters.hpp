@@ -24,6 +24,7 @@ public:
   static category_t cat; 
 
   static bool needsBLupdate;
+
 }; 
 
 class RevMatParameter
@@ -39,6 +40,7 @@ public:
   static category_t cat; 
 
   static bool needsBLupdate;
+
 }; 
 
 
@@ -50,6 +52,7 @@ public:
   static void init(TreeAln &traln, int model){traln.discretizeGamma(model); }
   static category_t cat; 
   static bool needsBLupdate;
+
 }; 
 
 

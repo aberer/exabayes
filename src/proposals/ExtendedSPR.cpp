@@ -4,7 +4,7 @@
 #include "TreeAln.hpp"
 #include "eval.h"
 
-double ExtendedSPR::relativeWeight = 5.;
+
 
 // #define DEBUG_ESPR
 
@@ -13,6 +13,7 @@ ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
 {
   this->name = "eSPR"; 
   category = TOPOLOGY; 
+  relativeWeight = 5.;
 }
 
 
