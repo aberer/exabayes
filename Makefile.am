@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS=foreign
 # SUBDIRS = ./lib/ncl-2.1.18/
 
-WARN_FLAGS=  -Wall --pedantic  -Wno-vla -Wno-unused-function -Wno-write-strings
+WARN_FLAGS= -Wall --pedantic -Wno-vla -Wno-unused-function -Wno-write-strings  -Wsign-compare  
 
 # SIMD_FLAGS is potentially problematic: auto-avx vectorization was considered harmfull? 
 AM_CFLAGS= $(SIMD_FLAGS) -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE

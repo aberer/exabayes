@@ -7,7 +7,9 @@ seed=1234
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
 
-if [ "$(which clang)" != "" ]; then
+useClang=0
+
+if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     cargs="CC=clang CXX=clang++"
 fi
 

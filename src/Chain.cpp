@@ -296,7 +296,6 @@ void Chain::step()
     {
       pfun->accept();      
       prior.accept();
-      expensiveVerify(*traln); 
     }
   else
     {
@@ -305,11 +304,10 @@ void Chain::step()
       prior.reject();
 
       traln->getRestorer()->restoreArrays(*traln);
-
-// #ifdef DEBUG_VERIFY_LNL
-      expensiveVerify(*traln); 
-// #endif
     }
+
+  expensiveVerify(*traln); 
+  
 
 #ifdef DEBUG_TREE_LENGTH  
   assert( fabs (traln->getTreeLengthExpensive() - traln->getTreeLength())  < 1e-6); 

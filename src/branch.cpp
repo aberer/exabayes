@@ -308,6 +308,8 @@ branch findRoot(tree *tr)
 	p = tr->nodep[i]; 
       if(p->back->x)
 	{
+	  if(root.thisNode != 0)
+	    cout << "previous root was " << root << endl; 
 	  assert(root.thisNode == 0); 
 	  root.thisNode = p->number; 
 	  root.thatNode = p->back->number; 

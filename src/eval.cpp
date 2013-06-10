@@ -251,12 +251,12 @@ void evaluatePartitions(TreeAln &traln, nodeptr start, vector<nat> models  )
   nat numPart = traln.getNumberOfPartitions();
   
   vector<double> perPartitionLH; 
-  for(auto i = 0; i < numPart; ++i)
+  for(nat i = 0; i < numPart; ++i)
     perPartitionLH.push_back(traln.accessPartitionLH(i));
   
-  for(auto i = 0; i < numPart; ++i)
+  for(nat i = 0; i < numPart; ++i)
     traln.accessExecModel(i) = FALSE; 
-  for(auto m : models)
+  for(auto m  : models)
     traln.accessExecModel(m) = TRUE ; 
   
 
@@ -272,11 +272,11 @@ void evaluatePartitions(TreeAln &traln, nodeptr start, vector<nat> models  )
   for(auto m : models )
     perPartitionLH[m] = traln.accessPartitionLH(m); 
 
-  for(auto i = 0; i < numPart; ++i )
+  for(nat i = 0; i < numPart; ++i )
     traln.accessPartitionLH(i) = perPartitionLH[i]; 
 
   tr->likelihood = 0; 
-  for(auto i = 0; i < numPart; ++i)
+  for(nat i = 0; i < numPart; ++i)
     {
       tr->likelihood += traln.accessPartitionLH(i); 
       traln.accessExecModel(i) = TRUE; 

@@ -70,7 +70,7 @@ double densityDirichletLog(vector<double> values, const vector<double> &alphas)
 
   normalize(values, 1);
 
-  for(int i=0; i<values.size(); i++)
+  for(nat i=0; i<values.size(); i++)
     {      
       double val =  pow(values[i],alphas[i]-1); 
       density += log(val);
@@ -91,7 +91,7 @@ double densityDirichlet(vector<double> values, const vector<double> &alphas)
   
   normalize(values, 1);
   
-  for(int i=0; i< values.size(); i++)
+  for(nat i=0; i< values.size(); i++)
     density *= pow( values[i],alphas[i]-1);
   
   return density; 

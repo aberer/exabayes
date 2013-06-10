@@ -204,12 +204,12 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
       // find the branch length prior : very nasty 
       
       auto brPr = secVar.at(0).getPrior();
-      for(int i = 0 ;i < modifiedPath1.size(); ++i)
+      for(nat i = 0 ;i < modifiedPath1.size(); ++i)
 	{
 	  branch &b = modifiedPath1.at(i);  
 	  modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr);       
 	}
-      for(int i = 0; i < modifiedPath2.size(); ++i)
+      for(nat i = 0; i < modifiedPath2.size(); ++i)
 	{
 	  branch &b = modifiedPath2.at(i); 
 	  modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr); 

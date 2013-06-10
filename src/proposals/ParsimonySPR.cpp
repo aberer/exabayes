@@ -52,7 +52,6 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
   this->name = "parsSPR"; 
   this->category = TOPOLOGY ; 
   relativeWeight = 5.;
-  // this->relativeProbability =  _relativeWeight; 
 }
 
 
@@ -295,26 +294,25 @@ void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
   branch b = getThirdBranch(tr, path.at(0), path.at(1)); 
   branch lastBranch = path.at(path.size()-1); 
 
-#ifdef DEBUG_PARS_SPR
-  cout << "lastB = "<< lastBranch  << endl; 
-  cout << path << endl; 
-#endif
+  branch futureRoot = getThirdBranch(tr, constructBranch(b.thisNode, lastBranch.thisNode),
+				     constructBranch(b.thisNode,lastBranch.thatNode)); 
+
+  nodeptr toEval = findNodeFromBranch(tr, futureRoot);
+
+  Path pathNow; 
+  move.getPathAfterMove(traln, path, pathNow); 
+
+  cout << "transformed " << path << " into " << pathNow << endl ; 
+  // assert(0); 
+
+  move.destroyOrientationAlongPath(pathNow, tr, toEval); 
+  // move.destroyOrientationAlongPath(pathNow, tr, toEval->back); 
+
   
-  branch futureRoot = getThirdBranch(tr,  constructBranch(b.thisNode, lastBranch.thisNode),
-    constructBranch(b.thisNode,lastBranch.thatNode)); 
+  // move.destroyOrientationAlongPath(path, tr, toEval);
+  // move.destroyOrientationAlongPath(path, tr, toEval->back); 
 
-#if DEBUG_PARS_SPR
-  cout << "future root is " << futureRoot << endl;
-  // cout << traln << endl; 
-#endif
-
-  /* evaluate at root of inserted subtree */
-  nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
-
-  move.destroyOrientationAlongPath(path, tr, toEval);
-  move.destroyOrientationAlongPath(path, tr, toEval->back); 
-
-#if 0 
+#if 1 
   evaluateGenericWrapper(traln, toEval, FALSE);
   cout << "tree aln: " << traln.getTr()->likelihood << endl; 
 #else 

@@ -46,7 +46,7 @@ public:
   void append(branch value); 
   void clear(); 
   /** @brief number of branches in the path */ 
-  int size() const {return stack.size(); }
+  nat size() const {return stack.size(); }
 
   /** @brief yields the branch */  
   branch& at(int num){return stack[num]; }

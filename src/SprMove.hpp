@@ -19,7 +19,8 @@ public:
   void destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p); 
   void multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior,  Path &modifiedPath, double multiplier, shared_ptr<AbstractPrior> brPr); 
   void applyPathAsESPR(TreeAln &traln, Path &modifiedPath ); 
-  void resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior , Path &modifiedPath); 
+  void resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior , Path &modifiedPath);   
+  void getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, Path &resultPath); 
 }; 
 
 

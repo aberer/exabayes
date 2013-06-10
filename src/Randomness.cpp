@@ -286,12 +286,12 @@ void Randomness::drawRandDirichlet( vector<double> &results, const vector<double
 {
   double sum=0;
   results.resize(alphas.size()); 
-  for(int i=0; i< alphas.size();i++)
+  for(nat i=0; i< alphas.size();i++)
     {
       results[i] = drawRandGamma(alphas[i], 1.0) ;
       sum += results[i];
     }
-  for(int i=0; i< alphas.size();i++)
+  for(nat i=0; i< alphas.size();i++)
     results[i] /= sum;
 }
 
@@ -303,7 +303,7 @@ void Randomness::drawDirichletExpected(vector<double> &results, const vector<dou
   vector<double> alphas; 
   double originalSum=0;
 
-  for(int i=0; i< mean.size();i++)
+  for(nat i=0; i< mean.size();i++)
     {
       originalSum+=mean[i];
       alphas.push_back( mean[i]*scale ) ;
@@ -311,7 +311,7 @@ void Randomness::drawDirichletExpected(vector<double> &results, const vector<dou
   
   drawRandDirichlet( results, alphas);
 
-  for(int i=0; i< alphas.size() ;i++)
+  for(nat i=0; i< alphas.size() ;i++)
     results[i]=results[i]*originalSum;      
 }
 

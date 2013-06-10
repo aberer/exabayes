@@ -1,4 +1,7 @@
+#include <set>
+
 #include "SprMove.hpp"
+
 
 // #define CONTROL_ESPR
 
@@ -7,17 +10,42 @@ static void disorientHelper(tree *tr, nodeptr p)
 {
   if(isTip(p->number, tr->mxtips))
     {
-      // printf("not disorienting tip %d\n", p->number);
     }
   else if(p->x)
     {
       p->x = 0; 
-      p->next->x = 1; 
-      // printf("disorienting %d (CORRECT  before) -> oriented to %d NOW \n", p->number, p->next->back->number);
+
+      // if(isTip(p->next->back->number,tr->mxtips))	
+      // 	{
+      // 	  assert(not isTip(p->next->next->back->number, tr->mxtips)); 	    
+      // 	  p->next->next->x = 1 ; 
+      // 	  printf("disiorient %d -> to %d now \n", p->number, p->next->next->back->number);
+
+      // 	}	
+      // else 	
+      	// {
+	  p->next->x = 1; 
+	  printf("disiorient %d -> to %d now \n", p->number, p->next->back->number);
+	// }
     }
   else 
     {
-      // printf("disorienting %d  (was incorrect before)\n", p->number);
+      // if(p->next->x   && isTip(p->next->back->number, tr->mxtips) ) 
+      // 	{
+      // 	  assert(not isTip(p->next->next->number,tr->mxtips)); 
+      // 	  p->next->next->x = 1 ; 
+      // 	  p->next->x = 0; 
+      // 	  cout << "changed to " << p->next->next->back->number << endl; 
+      // 	}
+      // else if(p->next->next->x && isTip(p->next->next->back->number, tr->mxtips))
+      // 	{	  
+      // 	  p->next-> x = 1 ; 
+      // 	  p->next->next->x = 0; 
+      // 	  assert(not isTip(p->next->number,tr->mxtips)); 
+      // 	  cout << "changed to " << p->next->back->number << endl; 
+      // 	}
+      // else 
+	cout << "NOT " << p->number << " already to " << ( p->next->x ? p->next->back->number : p->next->next->back->number)   << endl; 
     }
 }
 
@@ -33,6 +61,7 @@ static void disorientHelper(tree *tr, nodeptr p)
  */ 
 void SprMove::destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p)
 {  
+  cout << "visiting " << p->number << endl; 
   /* TODO efficiency =/  */
 
   if(NOT path.nodeIsOnPath(p->number) || isTip(p->number, tr->mxtips))
@@ -62,7 +91,7 @@ void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &
   
   /* treat all branches except the first 2 and the last one */
   int ctr = 0; 
-  for(int i = 0; i < modifiedPath.size() ; ++i)
+  for(nat i = 0; i < modifiedPath.size() ; ++i)
     {
       if(ctr < 2 )
 	continue; 
@@ -194,4 +223,56 @@ double treeLengthBefore = traln.getTreeLength();
       assert(treeLengthAfter == treeLengthBefore); 
     }
 #endif
+}
+
+
+
+/** 
+    @brief Gets the description path after the move has been executed. 
+
+    Can be used for reversal => orientation is inverted 
+
+    Does not contain branch lengths.   
+ */ 
+void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, Path &resultPath)
+{  
+  int subTreeNode =  modifiedPath.getNthNodeInPath(1);   
+  branch lastBranch = modifiedPath.at(modifiedPath.size()-1); 
+
+  resultPath.append(constructBranch( lastBranch.thatNode , subTreeNode ) )  ; 
+  resultPath.append(constructBranch( lastBranch.thisNode , subTreeNode ) )  ; 
+  
+  assert(modifiedPath.size() > 2); 
+  
+  // insert the non-descriptive branches in reversed order 
+  for(int i = int(modifiedPath.size())-2 ; i > 1 ; --i)
+    resultPath.append(modifiedPath.at(i)); 
+
+  // fuse the first two branches 
+  auto b1 = modifiedPath.at(0),
+    b2  = modifiedPath.at(1); 
+
+  set<int> ids; 
+  ids.insert(b1.thisNode); 
+  ids.insert(b2.thisNode); 
+  ids.insert(b1.thatNode); 
+  ids.insert(b2.thatNode); 
+  
+  assert(ids.find(subTreeNode) != ids.end());   
+  ids.erase(subTreeNode); 
+  
+  assert(ids.size() == 2); 
+
+  
+  auto it = ids.begin(); 
+  int a = *it; 
+  ++it; 
+  int b = *it;   
+  
+  // auto newBranch = constructBranch(a,b); 
+  // if(branchesAreConnected(newBranch,  resultPath.at(resultPath.size()-1)
+
+  resultPath.append(constructBranch(a,b)); 
+
+  assert(modifiedPath.size() == resultPath.size()); 
 }
