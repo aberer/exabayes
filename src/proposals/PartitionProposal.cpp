@@ -2,7 +2,7 @@
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 
-template<> double PartitionProposal<MultiplierProposal,RateHetParameter>::relativeWeight = 0.5;
+template<> double PartitionProposal<MultiplierProposal,RateHetParameter>::relativeWeight = 1;
 template<> double PartitionProposal<SlidingProposal,RateHetParameter>::relativeWeight = 0 ;
 
 template<> double PartitionProposal<DirichletProposal,FrequencyParameter>::relativeWeight = 0.5;

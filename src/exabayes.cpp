@@ -77,7 +77,6 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
   vector<double> tmp = {1,2,3,4,5,6}; 
   cout << std::accumulate(tmp.begin(), tmp.end(), 0 , plus<double>()) << endl; 
-  
 
 
   // TreeAln traln; 

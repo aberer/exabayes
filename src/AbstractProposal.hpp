@@ -66,6 +66,23 @@ public:
     return out; 
   }
 
+  ostream& printNamePartitions(ostream &out)
+  {
+    out << name  << "(" ; 
+    assert(primVar.size() == 1); 
+    bool isFirst= true; 
+    for (auto v : primVar[0].getPartitions()) 
+      {
+	if( not isFirst)
+	  out << ","; 
+	else 
+	  isFirst = false; 
+	out << v ; 
+      }
+    out << ")" ; 
+    return out; 
+  }
+
   ostream& printShort(ostream &out) 
   {
     out << name << "( " ;  
@@ -79,11 +96,11 @@ public:
 	  isFirst = false; 
 	v.printShort(out); 
       }
-    
-    if(secVar.size() > 0 )
+
+    if(secVar.size() > 0)
       {
 	out << ";"; 
-	isFirst = false; 
+	isFirst = true; 
 	for(auto &v : secVar)
 	  {
 	    if(not isFirst)
@@ -96,7 +113,6 @@ public:
     out << " )"; 
     return out; 
   }
-
 
 protected: 
   string name;   

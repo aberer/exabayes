@@ -1,4 +1,4 @@
- #NEXUS
+#NEXUS
 begin params; 
 [================================================================]
 [ LINKING of parameters across partitions ]
@@ -7,13 +7,13 @@ begin params;
 [ Thus, if you omit partition ids for a certain proposal type, 
   then you have an additional parameter to integrate ]
 
-stateFreq = (0,1)   [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
-rateHet = (0,2/1,3) 
-revMat = (0,1,2,3) 
+
+[ stateFreq = (0,1,2,3)  ]   [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
+[ rateHet = (0,2,1,3) ] 
+[ revMat = (0,1,2,3)  ] 
 
 [ TODO: branch lengths ]
 end;  
-
 
 
 begin PRIOR; 
@@ -55,7 +55,7 @@ begin runconfig;
  [ RUN PARAMETERS ]
  diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 50 	[ take a sample every n generations ]
- numIndiChains  1 		[ number of independant chains/runs ]
+ numIndiChains  2 		[ number of independant chains/runs ]
  numGen 10000             [ if numIndiChains = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
@@ -66,7 +66,7 @@ begin runconfig;
 
 
  [ MCMCMC ]
- numCoupledChains 1   [ number of chains per independent run (only one is cold)  => must be > 0] 
+ numCoupledChains 4   [ number of chains per independent run (only one is cold)  => must be > 0] 
  heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
  swapInterval 1 	   [ attempt a swap between chains every n generations ]
  tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
@@ -84,17 +84,13 @@ begin runconfig;
  [ PROPOSAL configuration ]
  [================================================================]
 
- [ 
+[       parsimonySPR 0 [ inefficient ]
+      eSPR 0 
+      stNNI 0
+      eTBR  20 ] 
 
-      FrequencyDirichlet 0
-      FrequencySlider 0
+       treelengthmult 0  
 
-      revMatSlider 0
-      revMatSlider 0
-      revMatDirichlet 0	
-
-      FrequencySlider 0
-] 
 [ 
       [ TOPOLOGY ]
       eSPR 6.66 

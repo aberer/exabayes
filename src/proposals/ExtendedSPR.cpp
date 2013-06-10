@@ -116,18 +116,20 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   modifiedPath.saveBranchLengthsPath(traln); 
 
-  // cout<< modifiedPath << endl; 
-
   move.applyPathAsESPR(traln, modifiedPath);
 
-#ifdef ESPR_MULTIPLY_BL
+  // cout << modifiedPath << endl; 
+
   assert(traln.getNumBranches() == 1 ); 
-  if(not traln.getBranchLengthsFixed()[0]) // TODO 
+
+  bool modifiesBl = false; 
+  for(auto v : secVar)
+    modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+  if(modifiesBl)
     {
-      auto brPr = secVar[0].getPrior();
+      auto brPr = secVar.at(0).getPrior();
       move.multiplyAlongBranchESPR(traln, rand, hastings, prior, modifiedPath, multiplier, brPr);
     }
-#endif
 
   debug_checkTreeConsistency(traln.getTr()); 
 }
@@ -161,7 +163,5 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 
 AbstractProposal* ExtendedSPR::clone() const
 {
-  // tout << "cloning "  << name << endl;
-  // return new ExtendedSPR( stopProb, multiplier);
   return new ExtendedSPR( *this); 
 }

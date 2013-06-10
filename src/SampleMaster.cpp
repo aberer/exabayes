@@ -2,7 +2,6 @@
 #include <fstream>
 #include <memory>
 
-
 #include "BlockProposalConfig.hpp"
 #include "BlockRunParameters.hpp"
 #include "ConfigReader.hpp"
@@ -15,7 +14,6 @@
 #include "tune.h"
 #include "RunFactory.hpp"	
 
-// TODO =( 
 #include "GlobalVariables.hpp"
 
 #include "LnlRestorer.hpp"
@@ -44,12 +42,14 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
 
   vector<shared_ptr<TreeAln> > trees; 
   initTrees(trees, cl );
-
+  
   vector<unique_ptr<AbstractProposal> > proposals; 
   vector<RandomVariable> variables; 
 
   initWithConfigFile(cl.getConfigFileName(),  *(trees[0]), proposals, variables);
   assert(runParams.getTuneFreq() > 0); 
+
+  // assert(runParams.get)
 
   // TODO should be a vector later 
   bool fixedBL = false; 
@@ -260,7 +260,12 @@ void SampleMaster::initWithConfigFile(string configFileName, const TreeAln &tral
   BlockPrior priorBlock(traln.getNumberOfPartitions());
   reader.Add(&priorBlock);
 
-  reader.Add(&runParams);
+  BlockRunParameters rp; 
+  reader.Add(&rp);
+
+  // runParams = rp; 
+  
+  cout << "after parsing " << rp.getNumCoupledChains() << " and "<< rp.getNumRunConv() << endl; 
 
   BlockProposalConfig proposalConfig; 
   reader.Add(&proposalConfig);   
@@ -291,7 +296,9 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandL
   globals.debugTree->initializeFromByteFile(cl.getAlnFileName()); 
   globals.debugTree->enableParsimony();
 #endif
-
+  
+  cout << "have " << runParams.getNumCoupledChains() << " coupled chains" << endl; 
+  
   for(int i = 0; i < runParams.getNumCoupledChains(); ++i)
     {
       auto traln =  shared_ptr<TreeAln>(new TreeAln());

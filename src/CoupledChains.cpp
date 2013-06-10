@@ -19,7 +19,8 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
   , samplingFreq(params.getSamplingFreq())
   , runname(params.getRunId())
 {
-  int numCoupled = params.getNumCoupledChains();
+  int numCoupled = params.getNumCoupledChains();  
+  cout << "have " << trees.size()  << " trees" << endl; 
   assert((nat)numCoupled == trees.size());
 
   for(int i = 0; i < numCoupled; ++i)
@@ -178,24 +179,33 @@ void CoupledChains::chainInfo()
 
   map<category_t, string> names = 
     {
-      { TOPOLOGY , "Topolo"} , 
+      { TOPOLOGY , "Topology"} , 
       { BRANCH_LENGTHS, "BranchLen" } , 
       { FREQUENCIES , "Frequencies" } , 
-      { SUBSTITUTION_RATES , "revMat" } , 
-      { RATE_HETEROGENEITY, "rateHet" } , 
+      { SUBSTITUTION_RATES , "ReversiMatr" } , 
+      { RATE_HETEROGENEITY, "RateHetero" } , 
       { AA_MODEL , "aaModel" } 
     };  
 
   for(auto &n : names)
-    {      
+    {       
       category_t cat = n.first; 
-      tout << n.second << ":\t";
+
+      bool isThere = false; 
       for(auto &p : proposals)
+	isThere |= p->getCategory() == cat ; 
+      
+      if(isThere)
 	{
-	  if(p->getCategory() == cat)
+	  tout << n.second << ":\t";
+	  for(auto &p : proposals)
 	    {
-	      tout << p->getName() << ":"  << p->getSCtr() << "\t" ; 
-	    } 
+	      if(p->getCategory() == cat)
+		{
+		  p->printNamePartitions(tout); 
+		  tout  << ":"  << p->getSCtr() << "\t" ; 	      
+		}
+	    }
 	  tout << endl; 
 	}
     }

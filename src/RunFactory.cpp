@@ -13,7 +13,7 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
   for(auto v : vars )
     categoryIsActive[v.getCategory()] = true; 
 
-  nat highestId = vars[vars.size()-1].getId(); 
+  nat highestId = vars.size() == 0 ? 0 : vars[vars.size()-1].getId(); 
 
   // add standard stuff, if not defined yet
   for(int i = 0; i < NUM_PROP_CATS; ++i)
@@ -259,7 +259,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   for(auto &p : proposals )
     {
       tout << setprecision(2) << p->getRelativeWeight() / sum * 100 <<   "%\t" ; 
-      p->printShort(tout) ; 
+      p->printShort(tout ) ; 
       tout << endl; 
     }
   tout << setprecision(2) << fixed << endl ; 

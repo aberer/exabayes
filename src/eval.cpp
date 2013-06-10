@@ -5,6 +5,8 @@
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 
 
+void evaluateFullNoBackup(TreeAln& traln); 
+
 
 static void exa_newViewGeneric(TreeAln& traln, nodeptr p, boolean masked)
 {
@@ -87,13 +89,31 @@ void expensiveVerify(TreeAln& traln)
 	       << "(with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
 	  tout << "current tree: " << traln << endl; 
-	  tout << "help tree: " <<  debugTraln << endl; 
-	  
+	  tout << "help tree: " <<  debugTraln << endl; 	  
+
+	  evaluateFullNoBackup(traln);
+	  tout << "full evaluation on original tree yiels: "  << traln.getTr()->likelihood << endl; 
 	}
+
       assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
     }  
 #endif
 }
+
+
+void evaluateFullNoBackup(TreeAln& traln)
+{
+#ifdef DEBUG_EVAL
+  if(isOutputProcess())
+  cout << "conducting full evaluation, no backup created" << endl; 
+#endif
+  
+  exa_evaluateGeneric(traln,traln.getTr()->start,TRUE );   
+  expensiveVerify(traln);
+}
+
+
+
 
 
 void exa_newViewParsimony(TreeAln &traln, nodeptr p)
@@ -173,16 +193,7 @@ void evaluatePartialNoBackup(TreeAln& traln, nodeptr p)
   expensiveVerify(traln);
 }
 
-void evaluateFullNoBackup(TreeAln& traln)
-{
-#ifdef DEBUG_EVAL
-  if(isOutputProcess())
-  cout << "conducting full evaluation, no backup created" << endl; 
-#endif
-  
-  exa_evaluateGeneric(traln,traln.getTr()->start,TRUE );   
-  expensiveVerify(traln);
-}
+
 
 
 

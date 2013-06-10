@@ -69,19 +69,19 @@ void BlockRunParameters::Read(NxsToken &token)
 	  else if (key.EqualsCaseInsensitive("asdsfIgnoreFreq"))
 	    asdsfIgnoreFreq = value.ConvertToDouble(); 
 	  else if (key.EqualsCaseInsensitive("asdsfConvergence"))
-	    asdsfConvergence =  value.ConvertToDouble();
+	    asdsfConvergence = value.ConvertToDouble();
 	  else if (key.EqualsCaseInsensitive("heatFactor"))
 	    heatFactor = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("swapInterval"))
-	    swapInterval =  value.ConvertToInt();
+	    swapInterval = value.ConvertToInt();
 	  else if(key.EqualsCaseInsensitive("tuneHeat"))
-	    tuneHeat =  convertToBool(value);
+	    tuneHeat = convertToBool(value);
 	  else if(key.EqualsCaseInsensitive("tuneFreq"))
 	    tuneFreq = value.ConvertToInt();
 	  else if(key.EqualsCaseInsensitive("burninGen"))
-	    burninGen =  value.ConvertToInt();
+	    burninGen = value.ConvertToInt();
 	  else if(key.EqualsCaseInsensitive("burninProportion"))
-	    burninProportion =  value.ConvertToDouble();
+	    burninProportion = value.ConvertToDouble();
 	  else 	      
 	    cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	}

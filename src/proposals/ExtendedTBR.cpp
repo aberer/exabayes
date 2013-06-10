@@ -3,6 +3,8 @@
 #include "branch.h"
 #include "eval.h"
 
+#define EXPENSIVE_ETBR_VERIFY
+
 double ExtendedTBR::relativeWeight = 5.;
 
 // #define DEBUG_TBR
@@ -39,10 +41,8 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
   double z1 = pn->z[0],
     z2 = pnn->z[0]; 
 
-  double someDefault = 0.123; 
-
   // prune  
-  traln.clipNode(pn, pnn, someDefault); 
+  traln.clipNodeDefault(pn, pnn); 
   p->next->next->back = p->next->back = NULL; 
   path.append(bisectedBranch);
   path.append(constructBranch(pn->number, pnn->number)); 
@@ -146,13 +146,12 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
   nodeptr iPtr = findNodeFromBranch(tr, insertBranch),
     iPtr2 = findNodeFromBranch(tr, invertBranch(insertBranch)); 
 
-
   traln.clipNode(disconnectedPtr->next, iPtr, iPtr->z[0]); 
   traln.clipNode(disconnectedPtr->next->next, iPtr2, savedZ); 
 }
 
 
-#define EXPENSIVE_ETBR_VERIFY
+
 
 void ExtendedTBR::executeTBR(TreeAln & traln)
 {  
@@ -170,7 +169,7 @@ void ExtendedTBR::executeTBR(TreeAln & traln)
 
 #ifdef EXPENSIVE_ETBR_VERIFY
   double tlAfter = traln.getTreeLength();
-  if(fabs (tlAfter - tlBefore) > 0.000001   )
+  if(fabs (tlAfter - tlBefore) > 1e-6   )
     {
       cout << "tbr changed bls where it should not" << endl; 
       assert(0); 
@@ -194,15 +193,19 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   modifiedPath1.saveBranchLengthsPath(traln); 
   modifiedPath2.saveBranchLengthsPath(traln); 
 
-#ifdef TBR_MULTIPLY_BL  
-  
+#ifdef TBR_MULTIPLY_BL    
   assert(traln.getNumBranches() == 1); 
   // TODO replace by absence of prior 
-  if(not traln.getBranchLengthsFixed()[0]) 
+  
+  bool modifiesBl = false;   
+  for(auto v : secVar)
+    modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+
+  if(modifiesBl)
     {
       // find the branch length prior : very nasty 
       
-      auto brPr = secVar[0].getPrior();
+      auto brPr = secVar.at(0).getPrior();
       for(int i = 0 ;i < modifiedPath1.size(); ++i)
 	{
 	  branch &b = modifiedPath1.at(i);  
@@ -328,7 +331,7 @@ static void resetOneSide(TreeAln &traln, Path& path)
   nodeptr p1 = findNodeFromBranch(tr, constructBranch(lastNode, subTreeNode)),
     p2 = findNodeFromBranch(tr, constructBranch(s2lastNode, subTreeNode));     
 
-  double defaultVal = 0.123; 
+  // double defaultVal = 0.123; 
 
   // correctly orient the subtree ptr 
   nodeptr subTreePtr = NULL; 
@@ -342,15 +345,15 @@ static void resetOneSide(TreeAln &traln, Path& path)
   
   // prune the subtree  
   assert(p1->back->number == p2->back->number); 
-  traln.clipNode(p1,p2,defaultVal); 
+  traln.clipNodeDefault(p1,p2); 
   
   // reinsert the subtree 
   branch insertBranch = constructBranch(path.getNthNodeInPath(0), path.getNthNodeInPath(2)); 
   nodeptr iPtr = findNodeFromBranch(tr, insertBranch),
     iPtr2 = findNodeFromBranch(tr, invertBranch(insertBranch)); 
   
-  traln.clipNode(iPtr, subTreePtr->next, defaultVal); 
-  traln.clipNode(iPtr2, subTreePtr->next->next, defaultVal); 
+  traln.clipNodeDefault(iPtr, subTreePtr->next); 
+  traln.clipNodeDefault(iPtr2, subTreePtr->next->next); 
 }
 
 

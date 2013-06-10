@@ -37,7 +37,8 @@ public:
 private:
   double multiplier; 
   Path path; 
-  
+
+  void treatOneBranch(nodeptr p, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand); 
 };
 
 #endif

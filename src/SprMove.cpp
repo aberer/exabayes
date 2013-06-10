@@ -1,5 +1,7 @@
 #include "SprMove.hpp"
 
+// #define CONTROL_ESPR
+
 // Meh 
 static void disorientHelper(tree *tr, nodeptr p)
 {
@@ -89,8 +91,6 @@ void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, Path& mo
 {
   tree *tr = traln.getTr();
 
-  /* BUG branch lengths are not restored correctly, currently relying on restoreBranchLengthsPath function */
-
   assert(modifiedPath.size() > 2); 
   int numBranches = traln.getNumBranches(); 
 
@@ -102,8 +102,7 @@ void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, Path& mo
   int sTNode =  modifiedPath.getNthNodeInPath(1); 
   nodeptr lNPtr = findNodeFromBranch(tr, constructBranch(lastNode, sTNode)),
     oNPtr = findNodeFromBranch(tr, constructBranch(otherNode, sTNode)); 
-  
-  // double ztmp[NUM_BRANCHES]; 
+
   double ztmp ; 
   for(int i = 0; i < numBranches; ++i)
     ztmp = traln.getBranchLength( lNPtr,0); 
@@ -154,7 +153,6 @@ double treeLengthBefore = traln.getTreeLength();
   nodeptr sTPtr = findNodeFromBranch(tr,getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1))); 
   assert(nodeIsInBranch(sTPtr->number, modifiedPath.at(1))); 
 
-
   // finds the two nodeptrs adjacent to the subtree  
   nodeptr prNPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(0) ,modifiedPath.getNthNodeInPath(1))),
     prPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(2), modifiedPath.getNthNodeInPath(1))); 
@@ -163,7 +161,6 @@ double treeLengthBefore = traln.getTreeLength();
   nodeptr toBeInsertedPath = prNPtr->back;  
   assert(toBeInserted->number == sTPtr->number && sTPtr->number == toBeInsertedPath->number); 
 
-  
 #ifdef DEBUG_SHOW_TOPO_CHANGES
   printf("APPLY: pruning %d from %d,%d\n", toBeInserted->number, prPtr->number, prNPtr->number); 
 #endif
@@ -191,7 +188,7 @@ double treeLengthBefore = traln.getTreeLength();
 
 #ifdef CONTROL_ESPR
   double treeLengthAfter =  traln.getTreeLength(); 
-  if( fabs(treeLengthAfter  -  treeLengthBefore) > 1e-3  )
+  if( fabs(treeLengthAfter  -  treeLengthBefore) > 1e-6  )
     {
       cout << setprecision(8)  << "TL before " << branchLengthToReal(traln.getTr(),treeLengthBefore) << "\tafter" <<  branchLengthToReal(traln.getTr(), treeLengthAfter) << endl; 
       assert(treeLengthAfter == treeLengthBefore); 

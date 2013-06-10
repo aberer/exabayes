@@ -94,8 +94,7 @@ typedef  unsigned int nat ;
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
-
-#define ACCEPTED_LNPR_EPS 1e-4 
+#define ACCEPTED_LNPR_EPS 1e-6 
 
 
 /* ABOVE: stuff that is needed by everyone and can be defined

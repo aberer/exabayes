@@ -15,6 +15,22 @@ StatNNI::StatNNI( double _multiplier)
 }
 
 
+void StatNNI::treatOneBranch(nodeptr p, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand)
+{
+  double m = rand.drawMultiplier( multiplier);
+  double oldV = traln.getBranchLength( p,0); 
+  double newV = pow(oldV, m); 
+
+  traln.setBranchLengthBounded(newV, 0, p); 
+  
+  double realM = log(newV) /  log(oldV);   
+  updateHastings(hastings, realM, name); 
+
+  auto brPr = secVar[0].getPrior();
+  prior.updateBranchLengthPrior(traln,oldV, newV, brPr);
+}
+
+
 void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {  
   tree *tr = traln.getTr(); 
@@ -27,9 +43,8 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   branch toBePruned = constructBranch(p->next->back->number, p->number ); 
   
   branch switchingBranch; 
-  double r = rand.drawRandDouble01();
   double bl = 0; 
-  if(r < 0.5)
+  if(rand.drawRandDouble01() < 0.5)
     {
       switchingBranch = constructBranch(p->back->next->back->number, p->back->number); 
       bl = traln.getBranchLength( p->back->next->back,0); 
@@ -40,84 +55,40 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
       bl = traln.getBranchLength( p->back->next->next->back,0); 
     }
 
-#ifdef DEBUG_INFO
-  cout << "stNNI: switching " <<  toBePruned <<  " with "  << switchingBranch << "\t common branch " << b << endl; 
-#endif
-
   toBePruned.length[0] = traln.getBranchLength( p->next->back,0); 
   b.length[0] = traln.getBranchLength( p,0); 
   switchingBranch.length[0] = bl; 
-  
-  // Path *rememStack = pf->remembrance.modifiedPath; 
+
   path.clear(); 
   path.append( toBePruned);
   path.append( b); 
   path.append( switchingBranch);
 
   /* switch the branches  */
-  {
-    nodeptr q = findNodeFromBranch(tr, toBePruned),
-      qBack = q->back; 
+  nodeptr q = findNodeFromBranch(tr, toBePruned),
+    qBack = q->back; 
     
-    nodeptr r = findNodeFromBranch(tr, switchingBranch),
-      rBack = r->back; 
+  nodeptr r = findNodeFromBranch(tr, switchingBranch),
+    rBack = r->back; 
     
     
 #ifdef NNI_MULTIPLY_BL
-    assert(traln.getNumBranches() == 1 ); 
-    if(traln.getBranchLengthsFixed()[0])
-      {
+  bool modifiesBl = false ; 
+  for(auto v : secVar)
+    modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
 
-    // check for fixed  
-
-    // assert(NOT_IMPLEMENTED); 
-    // if(not prior.believingInFixedBranchLengths() )
-      // {
-
-	/* DIRTY */
-	double m1 = rand.drawMultiplier( multiplier), 
-	  m2 =  rand.drawMultiplier(multiplier),
-	  m3 =  rand.drawMultiplier(multiplier);
-      
-
-	double old1 = traln.getBranchLength( p,0),
-	  old2 = traln.getBranchLength( r,0), 
-	  old3 = traln.getBranchLength( q,0),
-	  new1 = pow( old1,m1),
-	  new2 = pow( old2 ,m2),
-	  new3 = pow( old3 ,m3); 
-
-	traln.setBranchLengthBounded( new1 ,0,p); 
-	traln.setBranchLengthBounded( new2 ,0,r); 
-	traln.setBranchLengthBounded( new3 ,0,q); 
-
-	double realNew1  =traln.getBranchLength(p,0),
-	  realNew2 = traln.getBranchLength(r,0),
-	  realNew3 = traln.getBranchLength(q,0); 
-
-	double realM1 = log(realNew1)/ log(old1),
-	  realM2 = log(realNew2) / log(old2),
-	  realM3 = log(realNew3) / log(old3); 
-
-	updateHastings(hastings, realM1 * realM2 * realM3 , name); 
-	
-#ifdef PRINT_MULT
-	printf("%f*%f=%f\t%f*%f=%f\t%f*%f=%f\n", old1, m1, new1, old2, m2, new2, old3,m3,new3) ;
+  assert(traln.getNumBranches() == 1 ); 
+  if(modifiesBl)
+    {
+      treatOneBranch(p, traln,hastings, prior, rand);
+      treatOneBranch(q, traln,hastings, prior, rand);
+      treatOneBranch(r, traln,hastings, prior, rand);
+    }
 #endif
 
-	auto brPr = secVar[0].getPrior();
-	prior.updateBranchLengthPrior(traln, old1, realNew1, brPr);
-	prior.updateBranchLengthPrior(traln, old2, realNew2, brPr);
-	prior.updateBranchLengthPrior(traln, old3, realNew3, brPr);
-
-      }
-#endif
-
-    traln.clipNode(p,p->back, p->z[0]); 
-    traln.clipNode(r, qBack, r->z[0]);
-    traln.clipNode(q, rBack, q->z[0]);    
-
-  }
+  traln.clipNode(p,p->back, p->z[0]); 
+  traln.clipNode(r, qBack, r->z[0]);
+  traln.clipNode(q, rBack, q->z[0]);    
   
   debug_checkTreeConsistency(traln.getTr());
   /* TODO maybe multiply as well */

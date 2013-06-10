@@ -267,9 +267,13 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   move.applyPathAsESPR(traln,path);
 
 #ifdef ESPR_MULTIPLY_BL
+  bool modifiesBl = false; 
+  for(auto v : secVar)
+    modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+
   assert(traln.getNumBranches() == 1); 
 
-  if(traln.getBranchLengthsFixed()[0]) // TODO 
+  if(modifiesBl)
     {
       auto brPr =  secVar[0].getPrior();
       move.multiplyAlongBranchESPR(traln, rand, hastings, prior, path, blMulti, brPr);      
@@ -285,7 +289,6 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
 void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {  
-  // cout << "EVAL" << endl; 
   tree *tr = traln.getTr(); 
 
   branch b = getThirdBranch(tr, path.at(0), path.at(1)); 

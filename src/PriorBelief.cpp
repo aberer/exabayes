@@ -80,28 +80,12 @@ void PriorBelief::verifyPrior(const TreeAln &traln) const
 {
   assert(lnPriorRatio == 0); 
   double verified = scoreEverything(traln); 
-  if ( fabs(verified -  lnPrior ) >= 1e-6)
+  if ( fabs(verified -  lnPrior ) >= ACCEPTED_LNPR_EPS)
     {
-      cerr << "ln prior was " << lnPrior << " while it should be " << verified << endl; 
-      assert(fabs(verified -  lnPrior ) < 1e-6); 
+      cerr << setprecision(10) << "ln prior was " << lnPrior << " while it should be " << verified << endl; 
+      assert(fabs(verified -  lnPrior ) < ACCEPTED_LNPR_EPS); 
     }
 }
-
-// shared_ptr<AbstractPrior> PriorBelief::getBranchLengthPrior() const
-// {
-//   for(auto v : variables)
-//     {
-//       if(v.getCategory() == BRANCH_LENGTHS)
-// 	{
-// 	  // cout << "prior is " << v.getPrior() << endl; 
-// 	  return v.getPrior(); 
-// 	}
-//     }
-
-//   assert(0); 
-//   return shared_ptr<AbstractPrior>(); 
-// }
-
 
 
 void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 

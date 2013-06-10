@@ -89,16 +89,40 @@ class SlidingProposal
 {
 public: static vector<double> getNewValues(vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
   {
-    int position = rand.drawRandInt(oldValues.size());
-    oldValues[position] = rand.drawFromSlidingWindow(oldValues[position], parameter); 
+    if(oldValues.size() == 1 )
+      {
+	double newVal = rand.drawFromSlidingWindow(oldValues[0], parameter);
+	if(newVal < 0 )
+	  newVal = - newVal ; 
+	oldValues[0] = newVal; 
+      }
+    else
+      {
+	int posA = rand.drawRandInt(oldValues.size()),
+	  posB = rand.drawRandInt(oldValues.size()-1); 
+	if(posB == posA)
+	  posB = oldValues.size()-1; 
 
-    // this is only ONE way to do it! 
-    double sum = 0; 
-    for(auto v : oldValues)
-      sum += v ; 
+	double both =  (oldValues[posA] + oldValues[posB]); 
+	double oldProp = oldValues[posA] / both ; 
+	double newProp = rand.drawFromSlidingWindow(oldProp, parameter);
+	if(newProp < 0 )
+	  newProp = - newProp; 
+	if(newProp > 1 )
+	  newProp = newProp - 1 ; 
 
-    for(auto &v : oldValues)
-      v /= sum ; 
+	oldValues[posA] = newProp * both; 
+	oldValues[posB] = (1-newProp) * (both); 
+
+	double sum = 0; 
+	for(auto v : oldValues)
+	  {
+	    sum += v ; 
+	    assert(v > 0) ; 
+	  }
+	assert(fabs( sum - 1.0 ) < 1e-6); 
+
+      }
 
     return oldValues; 
   }  

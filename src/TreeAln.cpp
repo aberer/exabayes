@@ -146,25 +146,22 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
   initializeTree(tr, &adef);   
 #endif  
 
-
-  // correct default values 
-
-  // HACK
-#if 0 
   for(int i = 0; i < getNumberOfPartitions(); ++i)
     {
-      pInfo *partition = getPartition(i); 
+
+      // TODO empirical freqs? 
+
+      // TODO aa? 
+
+      pInfo *partition =  getPartition(i);
+
+      assert(partition->dataType == DNA_DATA);
 
       vector<double> tmp(partition->states, 1.0 / (double)partition->states ); 
-      setFrequenciesBounded(tmp, i); 
+      setFrequenciesBounded(tmp,i);
       vector<double>tmp2( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)); 
-      setRevMatBounded(tmp2,i );       
+      setRevMatBounded(tmp2,i);
     }
-#endif
-
-
-  
-
 }
 
 double TreeAln::getTreeLengthExpensive() const
@@ -240,7 +237,6 @@ void TreeAln::clipNode(nodeptr p, nodeptr q, double &z)
 
   setBranchLengthBounded(z,0,p);
   setBranchLengthBounded(z,0,q);
-
 }
 
 
@@ -456,11 +452,10 @@ void TreeAln::initRevMat(int model)
 
 void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
 {  
-  cout << "SETTING frequencies:" << endl; 
-  cout << "init:"; 
-  for(auto &v : newValues)
-    cout << v << "," ; 
-  cout << endl; 
+  // cout << "set freq:"; 
+  // for(auto &v : newValues)
+  //   cout << v << "," ; 
+  // cout << endl; 
 
   int changed = 0; 
   double sum =0 ; 
@@ -479,10 +474,10 @@ void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
       v /= sum; 
 
 
-  cout << "after norm:"; 
-  for(auto &v : newValues)
-    cout << v << "," ; 
-  cout << endl; 	  
+  // cout << "after norm:"; 
+  // for(auto &v : newValues)
+  //   cout << v << "," ; 
+  // cout << endl; 	  
 
   pInfo *partition = getPartition(model); 
   for(nat i = 0; i < newValues.size(); ++i)
@@ -498,7 +493,7 @@ void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
 
 void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
 { 
-  // cout << "initial values "; 
+  // cout << "setting revmat "; 
   // for(auto &v : newValues)
   //   cout << v << ","; 
   // cout << endl; 
@@ -542,7 +537,8 @@ void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
   if (zMax < newValue)
     newValue = zMax; 
 
-  treeLength *= newValue / oldZ ; 
+  if(newValue != oldZ)
+    treeLength *= newValue / oldZ ; 
   
   p->z[model] = p->back->z[model] = newValue; 
 }

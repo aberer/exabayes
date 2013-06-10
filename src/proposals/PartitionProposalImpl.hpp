@@ -11,11 +11,6 @@ PartitionProposal<FUN,PARAM>::PartitionProposal( double _param, string _name)
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
-  cout << "modifying " ; 
-  for(auto &v : primVar[0].getPartitions())
-    cout << v << ","; 
-  cout << endl; 
-
   auto oneModel = primVar[0].getPartitions()[0];
   assert(primVar.size() == 1 ) ; // <= TODO 
 
@@ -46,7 +41,7 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
       if(PARAM::needsBLupdate)
 	{
 	  double updateValue = oldFracChange / newFracChange; 
-	  cout << "need to update branches with " << updateValue << endl; 
+	  // cout << "need to update branches with " << updateValue << endl; 
 	  vector<branch> oldBranches; 
 	  extractBranches(traln, oldBranches); 
 	  vector<branch> newBranches(oldBranches); 
@@ -72,6 +67,8 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
 
 	}
     }
+
+  // cout << "fracchange after app " << traln.getTr()->fracchange << endl; 
  
   auto thePrior = primVar[0].getPrior(); 
   prior.addToRatio( thePrior->getLogProb(proposedValues) -  thePrior->getLogProb(values) ) ;

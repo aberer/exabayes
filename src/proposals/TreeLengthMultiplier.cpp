@@ -6,7 +6,7 @@
 #include "eval.h"
 #include "tune.h"
 
-double TreeLengthMultiplier::relativeWeight = 5 ;
+double TreeLengthMultiplier::relativeWeight = 2 ;
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
   : multiplier(_multiplier)    
@@ -17,7 +17,7 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
 
 
 void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere)
-{  
+{
   tree *tr = traln.getTr();
   double newZ = pow( traln.getBranchLength( p,0),multiHere); 
 
@@ -90,6 +90,4 @@ void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 AbstractProposal* TreeLengthMultiplier::clone() const
 {
   return new TreeLengthMultiplier(*this);
-  
-  // return new TreeLengthMultiplier(multiplier);
 }  

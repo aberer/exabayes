@@ -83,6 +83,15 @@ double Randomness::drawMultiplier(double multiplier) //
 
 
 
+
+#if 1 
+// alternative slider as used in mrBayes
+double Randomness::drawFromSlidingWindow(double value, double window)
+{
+  return value + window * (drawRandDouble01() - 0.5); 
+}
+
+#else 
 double Randomness::drawFromSlidingWindow(double param, double window)
 {
   double upper = param + (window / 2 ) ,
@@ -91,8 +100,7 @@ double Randomness::drawFromSlidingWindow(double param, double window)
   double r = drawRandDouble01(); 
   return lower + r * (upper - lower)  ; /* TODO correct?  */
 }
-
-
+#endif
 
 
 /**
@@ -306,11 +314,6 @@ void Randomness::drawDirichletExpected(vector<double> &results, const vector<dou
   for(int i=0; i< alphas.size() ;i++)
     results[i]=results[i]*originalSum;      
 }
-
-
-
-
-
 
 
 // Gamma(alpha, beta) sampling

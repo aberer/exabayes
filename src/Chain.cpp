@@ -299,7 +299,7 @@ void Chain::step()
     {
       pfun->accept();      
       prior.accept();
-      expensiveVerify(*traln);      
+      expensiveVerify(*traln); 
     }
   else
     {
