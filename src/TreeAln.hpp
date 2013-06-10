@@ -60,10 +60,12 @@ public:
    */ 
   void clipNodeDefault(nodeptr p, nodeptr q); 
 
+#if 0 
   /**
      @brief gets the tree length (real value)
   */   
   double getTreeLength() const ; 
+#endif
 
   // these are not your average setters! They modify the original value
   void setFrequenciesBounded(vector<double> &newValues, int model ); 
@@ -123,10 +125,6 @@ public:
 
   void verifyTreeLength() const; 
 
-  vector<bool> getBranchLengthsFixed () const {return branchLengthsFixed; }
-  void setBranchLengthsFixed(vector<bool> vect) {branchLengthsFixed = vect; }
-  
-  
   double getConvertBranchLength(double length) const { return -log(length) * tr->fracchange; }
 
 private:   
@@ -136,9 +134,7 @@ private:
   tree* tr;		// TODO replace with an object for cleanup 
   
   bool parsimonyEnabled;   
-  vector<bool> branchLengthsFixed;   
   shared_ptr<LnlRestorer> restorer; 
-
 
 #if HAVE_PLL != 0
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
@@ -147,7 +143,6 @@ private:
   void initializePartitionsPLL(string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
 
-  double treeLength ; 		// on internal scale 
 };  
 
 

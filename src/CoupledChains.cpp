@@ -20,7 +20,6 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
   , runname(params.getRunId())
 {
   int numCoupled = params.getNumCoupledChains();  
-  cout << "have " << trees.size()  << " trees" << endl; 
   assert((nat)numCoupled == trees.size());
 
   for(int i = 0; i < numCoupled; ++i)
@@ -156,7 +155,7 @@ void CoupledChains::chainInfo()
   const Chain& coldChain = *(sortedChains[0]); 
 
   tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain.getGeneration() 
-       <<  "\tTL=" << setprecision(2)<< coldChain.getTraln().getTreeLength()
+       <<  "\tTL=" << setprecision(2)<< branchLengthToReal(coldChain.getTraln().getTr(), coldChain.getTraln().getTreeLengthExpensive())
        << "\tlnPr(1)=" << coldChain.getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain.getTraln().getTr()->likelihood << "\t" ; 
 
   for(nat i = 1 ; i < chains.size(); ++i)

@@ -55,8 +55,8 @@ begin runconfig;
  [ RUN PARAMETERS ]
  diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 50 	[ take a sample every n generations ]
- numIndiChains  2 		[ number of independant chains/runs ]
- numGen 10000             [ if numIndiChains = 1, stop simulation after that many generations ] 
+ numRuns  2 		[ number of independant runs ]
+ numGen 10000             [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
  
@@ -75,7 +75,8 @@ begin runconfig;
  [ comment out one of the two options ]      
  [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
  burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
- end; 
+
+end; 
  
  
  begin proposals; 

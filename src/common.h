@@ -34,7 +34,7 @@
 #define exa_calloc calloc
 #endif
 
-#define TODO 1 
+#define TODO 0 
 
 
 // TODO: we also need a header cleanup, just imported this from examl 
@@ -135,10 +135,10 @@ typedef  unsigned int nat ;
 /* #define ENABLE_PRSF */
 #define WEIGHT_EPS 1e-3  	/* guided spr    */
 
-#define CONTROL_ESPR
+/* #define CONTROL_ESPR */
 
 
-#define DEBUG_TREE_LENGTH
+/* #define DEBUG_TREE_LENGTH */
 
 /* #define DEBUG_PARS_SPR */
 
@@ -146,7 +146,7 @@ typedef  unsigned int nat ;
 #define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 #define DEBUG_LNL_VERIFY
 /* #define DEBUG_SHOW_TOPO_CHANGES */

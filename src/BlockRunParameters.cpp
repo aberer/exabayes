@@ -58,7 +58,7 @@ void BlockRunParameters::Read(NxsToken &token)
 	    numGen = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("samplingfrequency"))
 	    samplingFreq = value.ConvertToInt(); 
-	  else if(key.EqualsCaseInsensitive("numIndiChains"))
+	  else if(key.EqualsCaseInsensitive("numRuns"))
 	    numRunConv = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("diagFreq"))
 	    diagFreq = value.ConvertToInt(); 

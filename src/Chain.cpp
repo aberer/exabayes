@@ -46,7 +46,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, con
 
   evaluateFullNoBackup(*traln);   
 
-  addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(traln->getTr(), traln->getTreeLength()) << "\tseeds=>"  << chainRand << endl; 
+  addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(traln->getTr(), traln->getTreeLengthExpensive()) << "\tseeds=>"  << chainRand << endl; 
 
   saveTreeStateToChain(); 
 
@@ -95,8 +95,6 @@ void Chain::saveTreeStateToChain()
 	tmp.push_back(partitionTr->frequencies[i]); 
       partInfo.setStateFreqs(tmp); 
     }  
-
-  state.setBranchLengthsFixed(traln->getBranchLengthsFixed()); 
 }
 
 
@@ -122,7 +120,6 @@ void Chain::applyChainStateToTree()
       traln->discretizeGamma(i);	 
     } 
 
-  traln->setBranchLengthsFixed(state.getBranchLengthsFixed());   
   evaluateFullNoBackup(*traln); 
   prior.reinitPrior(*traln);
 }
@@ -164,7 +161,7 @@ void Chain::printParams(FILE *fh)
 {
   tree *tr = traln->getTr(); 
 
-  double treeLength =  traln->getTreeLength(); 
+  double treeLength =  branchLengthToReal(tr, traln->getTreeLengthExpensive()); 
   assert(treeLength != 0.); 
   fprintf(fh, "%d\t%f\t%f\t%.3f", currentGeneration,
 	  prior.getLnPrior(), 

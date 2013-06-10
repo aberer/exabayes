@@ -3,7 +3,7 @@
 #include "branch.h"
 #include "eval.h"
 
-#define EXPENSIVE_ETBR_VERIFY
+// #define EXPENSIVE_ETBR_VERIFY
 
 double ExtendedTBR::relativeWeight = 5.;
 

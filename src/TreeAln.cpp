@@ -180,8 +180,10 @@ double TreeAln::getTreeLengthExpensive() const
 
 void TreeAln::verifyTreeLength() const
 {
+#if TODO 
   double tlVerified = getTreeLengthExpensive() ;
   assert(treeLength == tlVerified); 
+#endif
 }
 
 void TreeAln::enableParsimony()
@@ -531,14 +533,18 @@ void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
  */  
 void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
 {
+#if TODO 
   double oldZ = p->z[model] ; 
+#endif
   if(newValue < zMin)
     newValue = zMin; 
   if (zMax < newValue)
     newValue = zMax; 
 
+#if TODO 
   if(newValue != oldZ)
     treeLength *= newValue / oldZ ; 
+#endif
   
   p->z[model] = p->back->z[model] = newValue; 
 }
@@ -705,6 +711,7 @@ ostream& operator<< (ostream& out,  TreeAln&  traln)
 
 
 
+#if 0 
 /** 
     @brief returns real branch length
  */ 
@@ -719,6 +726,8 @@ double TreeAln::getTreeLength() const
 
   return length; 
 }
+
+#endif
 
 
 void TreeAln::collapseBranch(branch b)

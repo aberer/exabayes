@@ -9,7 +9,7 @@
 
 void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeAln &traln )
 {
-  vector<bool> categoryIsActive( NUM_PROP_CATS, false);
+  vector<bool> categoryIsActive( NUM_PROP_CATS, false );
   for(auto v : vars )
     categoryIsActive[v.getCategory()] = true; 
 

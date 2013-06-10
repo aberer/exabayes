@@ -18,7 +18,7 @@ class State
 public: 
   State(const TreeAln &traln)
     : topology(traln.getTr()->mxtips)    
-    , branchLengthsAreFixed(traln.getBranchLengthsFixed())
+    // , branchLengthsAreFixed(traln.getBranchLengthsFixed())
   {
     nat numPart = traln.getNumberOfPartitions(); 
     for(nat i = 0; i < numPart; ++i)
@@ -28,13 +28,13 @@ public:
   Topology& accessTopology(){ return topology; }
   Partition& accessPartition(int num) { return partitions[num]; }
 
-  vector<bool> getBranchLengthsFixed() const {return branchLengthsAreFixed; }
-  void setBranchLengthsFixed(vector<bool> blFixed){branchLengthsAreFixed = blFixed; }
+  // vector<bool> getBranchLengthsFixed() const {return branchLengthsAreFixed; }
+  // void setBranchLengthsFixed(vector<bool> blFixed){branchLengthsAreFixed = blFixed; }
   
 private: 
   Topology topology; 
   vector<Partition> partitions; 
-  vector<bool> branchLengthsAreFixed;
+  // vector<bool> branchLengthsAreFixed;
 
 }; 
 
