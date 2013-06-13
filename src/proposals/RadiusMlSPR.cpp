@@ -238,7 +238,7 @@ static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, branch su
     traln.setBranchLengthBounded(z2,0,p->next->next); 
   }
 
-  debug_checkTreeConsistency(traln.getTr());
+  debug_checkTreeConsistency(traln);
 }
 
 
@@ -462,7 +462,7 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
     branchLengthToReal(tr ,a),branchLengthToReal(tr, b), ratio); 
 #endif
   
-  debug_checkTreeConsistency(traln.getTr());
+  debug_checkTreeConsistency(traln);
 #ifdef  DEBUG_SHOW_TREE 
   printf("RESET:\t");      
 #endif

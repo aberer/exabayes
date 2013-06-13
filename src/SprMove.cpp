@@ -6,26 +6,25 @@
 // #define CONTROL_ESPR
 
 // Meh 
-static void disorientHelper(tree *tr, nodeptr p)
+static void disorientHelper(const TreeAln &traln, nodeptr p)
 {
-  if(isTip(p->number, tr->mxtips))
+  if(traln.isTipNode(p))
     {
     }
   else if(p->x)
     {
       p->x = 0; 
 
-      // if(isTip(p->next->back->number,tr->mxtips))	
+      // if( isTip(p->next->back->number,tr->mxtips) ) 
       // 	{
       // 	  assert(not isTip(p->next->next->back->number, tr->mxtips)); 	    
       // 	  p->next->next->x = 1 ; 
       // 	  printf("disiorient %d -> to %d now \n", p->number, p->next->next->back->number);
-
-      // 	}	
+      // 	}
       // else 	
-      	// {
-	  p->next->x = 1; 
-	  printf("disiorient %d -> to %d now \n", p->number, p->next->back->number);
+      // 	{
+      p->next->x = 1; 
+      printf("DISIORIENT %d -> to %d now \n", p->number, p->next->back->number);
 	// }
     }
   else 
@@ -45,7 +44,7 @@ static void disorientHelper(tree *tr, nodeptr p)
       // 	  cout << "changed to " << p->next->back->number << endl; 
       // 	}
       // else 
-	cout << "NOT " << p->number << " already to " << ( p->next->x ? p->next->back->number : p->next->next->back->number)   << endl; 
+	cout << "okay " << p->number << " already to " << ( p->next->x ? p->next->back->number : p->next->next->back->number)   << endl; 
     }
 }
 
@@ -59,17 +58,17 @@ static void disorientHelper(tree *tr, nodeptr p)
    path; also notice that an SPR move has already been applied to the
    tree
  */ 
-void SprMove::destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p)
+void SprMove::destroyOrientationAlongPath( Path& path, const TreeAln &traln,  nodeptr p)
 {  
   cout << "visiting " << p->number << endl; 
   /* TODO efficiency =/  */
 
-  if(NOT path.nodeIsOnPath(p->number) || isTip(p->number, tr->mxtips))
+  if(NOT path.nodeIsOnPath(p->number) || traln.isTipNode(p))
     return; 
 
-  disorientHelper(tr,p);
-  destroyOrientationAlongPath(path, tr, p->next->back); 
-  destroyOrientationAlongPath(path, tr, p->next->next->back);
+  disorientHelper(traln, p);
+  destroyOrientationAlongPath(path, traln, p->next->back); 
+  destroyOrientationAlongPath(path, traln, p->next->next->back);
 }
 
 
@@ -196,7 +195,7 @@ double treeLengthBefore = traln.getTreeLength();
   /* prune sTPtr */
   traln.clipNode(prPtr, prNPtr, prNPtr->z[0]); 
   sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL; 
-
+  
   int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
     s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
   nodeptr iPtr = findNodeFromBranch(tr, constructBranch(s2LastNode, lastNode)),

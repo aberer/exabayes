@@ -23,9 +23,6 @@
 
 // #define DEBUG_ACCEPTANCE
 
-
-
-
 Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) 
   : traln(_traln)
   , runid(_runid)
@@ -44,9 +41,9 @@ Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, con
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
 
-  evaluateFullNoBackup(*traln);   
+  // evaluateFullNoBackup(*traln);   
 
-  addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(traln->getTr(), traln->getTreeLengthExpensive()) << "\tseeds=>"  << chainRand << endl; 
+  // addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(traln->getTr(), traln->getTreeLengthExpensive()) << "\tseeds=>"  << chainRand << endl; 
 
   saveTreeStateToChain(); 
 
@@ -221,11 +218,11 @@ void Chain::printSample(FILE *topofile, FILE *paramFile)
 void Chain::printTopology(FILE *fh)
 {  
   assert(couplingId == 0);
-  tree *tr = traln->getTr();
-  memset(traln->getTr()->tree_string, 0, traln->getTr()->treeStringLength * sizeof(char) ); 
   
-  Tree2stringNexus(traln->getTr()->tree_string, tr,  traln->getTr()->start->back, 0 ); 
-  fprintf(fh,"\ttree gen.%d = [&U] %s\n", currentGeneration, traln->getTr()->tree_string);
+  TreePrinter tp(true, false, false);
+  string treeString = tp.printTree(*traln);
+
+  fprintf(fh,"\ttree gen.%d = [&U] %s\n", currentGeneration, treeString.c_str());
   fflush(fh);
 }
 
@@ -307,6 +304,11 @@ void Chain::step()
     }
 
   expensiveVerify(*traln); 
+
+// proposals/Chai
+  TreePrinter tp(false, true, false); 
+  cout << "after proposal: " << tp.printTree(*traln)<< endl; 
+
   
 
 #ifdef DEBUG_TREE_LENGTH  
@@ -317,7 +319,7 @@ void Chain::step()
   prior.verifyPrior(*traln);
 #endif
 
-  debug_checkTreeConsistency(this->traln->getTr());
+  debug_checkTreeConsistency(this->getTraln());
  
   if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
     pfun->autotune();

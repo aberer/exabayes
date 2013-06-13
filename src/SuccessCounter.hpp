@@ -20,7 +20,7 @@ public:
 
   void accept(); 
   void reject();
-  int getRecentlySeen(){return localAcc + localRej; }
+  int getRecentlySeen() const {return localAcc + localRej; }
   double getRatioInLast100() const ; 
   double getRatioInLastInterval() const ; 
   double getRatioOverall() const ; 

@@ -368,7 +368,7 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
   assert(0); 
 #endif
  
-  debug_checkTreeConsistency(traln.getTr()); 
+  debug_checkTreeConsistency(traln); 
   debug_printTree(traln);   
 }
 

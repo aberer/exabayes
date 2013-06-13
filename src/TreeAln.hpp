@@ -11,6 +11,8 @@ using namespace std;
 #include "branch.h"
 #include "axml.h"
 
+#include "TreePrinter.hpp"
+
 static int numStateToNumInTriangleMatrix(int numStates) 
 {  
   return (  numStates * numStates - numStates) / 2 ; 
@@ -48,6 +50,10 @@ public:
   
 
 
+  // TODO 
+  // string toString(bool showInternal, bool showBL, bool printNames ) const ; 
+
+
   
   /** 
       @brief clips two nodes together. Notice that z is a reference to
@@ -81,7 +87,8 @@ public:
 
   // getters 
   pInfo* getPartition(int model) const;
-  tree* getTr() const {return tr;}
+  tree* getTr() {return tr;}
+  const tree* getTr() const{return tr; }
   int getNumBranches() const; 
   int getNumberOfPartitions() const;   
   boolean& accessExecModel(int model); 

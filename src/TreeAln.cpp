@@ -379,7 +379,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 #endif
 
   tr->start = tr->nodep[rhsTree->start->number]; 
-  debug_checkTreeConsistency(this->getTr());
+  debug_checkTreeConsistency(*this);
   
   return *this; 
 }
@@ -699,14 +699,22 @@ void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFr
 
 #endif
 
+
+
+
+
 ostream& operator<< (ostream& out,  TreeAln&  traln)
 {
-  tree *tr = traln.getTr();
-  Tree2stringNexus(tr->tree_string, tr, tr->start->back,0);
-  stringstream ss; 
-  ss << tr->tree_string;   
-  out << ss.str() ; 
-  return out; 
+  TreePrinter tp(true, false, false); 
+  return out << tp.printTree(traln); 
+  
+
+  // tree *tr = traln.getTr();
+  // Tree2stringNexus(tr->tree_string, tr, tr->start->back,0);
+  // stringstream ss; 
+  // ss << tr->tree_string;   
+  // out << ss.str() ; 
+  // return out; 
 }
 
 
@@ -796,3 +804,25 @@ bool TreeAln::revMatIsImmutable(int model) const
     
   return partition->states == 20 && partition->protModels != GTR; 
 } 
+
+
+
+
+
+
+
+
+// bool TreeAln::toString(bool showInternal, bool showBL, bool printNames) const
+// {
+
+//   assert(not printNames); 
+
+//   tree *tr = traln.getTr();
+//   Tree2stringNexus(tr->tree_string, tr, tr->start->back,0);
+//   stringstream ss; 
+//   ss << tr->tree_string;   
+//   return ss.str(); 
+//   return out; 
+// }
+
+

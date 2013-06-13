@@ -22,11 +22,11 @@ bool isOutputProcess()
    
    @param  p -- pointer to an inner (!) node
  */ 
-static void traverseAndCount(nodeptr p, int *count, tree *tr )
+static void traverseAndCount(nodeptr p, int &count, const tree *tr )
 {
   nodeptr q;  
 
-  *count += 1;
+  ++count;
 
   if (! isTip(p->number,tr->mxtips)) 
     {                                  /*  Adjust descendants */
@@ -46,47 +46,26 @@ static void traverseAndCount(nodeptr p, int *count, tree *tr )
 */
 void debug_printTree(TreeAln &traln)
 {
-#ifdef DEBUG_SHOW_TREE  
-  tree *tr = traln.getTr();
-  Tree2stringNexus(tr->tree_string, tr, tr->start->back, 0); 
-  tout << "tree: "<< tr->tree_string << endl; 
-#endif
-}
-
-
-
-
-/**
-   @brief prints the entire environment of a node with branch lengths
- */
-void debug_printNodeEnvironment(TreeAln &traln, int nodeID )
-{
 #ifdef DEBUG_SHOW_TREE
-  tree *tr = traln.getTr();
-  nodeptr 
-    p =  tr->nodep[nodeID]; 
-
-  
-  printf("STATE node %d:\thooked to %d (bl=%f),\t%d (bl=%f)\tand %d (bl=%f)\n", p->number, p->back->number, traln.getBranchLength( p->back,0), 
-	 p->next->back->number, traln.getBranchLength( p->next->back,0),
-	    p->next->next->back->number, traln.getBranchLength( p->next->next->back,0)
-	    );   
+  TreePrinter tp(true, false, false); 
+  tout << "tree: " << tp.printTree(traln) << endl; 
 #endif
 }
 
 
-void debug_checkTreeConsistency(tree *tr)
+void debug_checkTreeConsistency(const TreeAln &traln)
 {
 #ifdef DEBUG_CHECK_TREE_CONSISTENCY
-  // tree *tr = chain->tr; 
+  auto tr = traln.getTr(); 
   int count = 0; 
-  traverseAndCount(tr->start->back, &count, tr); 
+  traverseAndCount(tr->start->back, count, tr); 
   if(count != 2 * tr->mxtips - 3 )
-    {      
-      char tmp[10000]; 
-      Tree2stringNexus(tmp, tr, tr->start->back, 0); 
+    { 
+      TreePrinter tp(true, false, false); 
+      string treeString = tp.printTree(traln); 
+
       if(isOutputProcess())
-	printf("faulty TOPOLOGY: %s\n", tmp);
+	tout << "faulty Topology: " << treeString << endl; 
 
       assert(2 * tr->mxtips-3 == count); 
     }
@@ -109,38 +88,3 @@ void printOrientation(tree *tr, nodeptr p)
     assert(0); 
 }
 
-
-char *Tree2stringNexus(char *treestr, tree *tr , nodeptr p, int perGene )
-{   
-  // tree *tr = chain->tr; 
-
-  if(isTip(p->number, tr->mxtips)) 
-    {	       	        
-      sprintf(treestr, "%d", p->number); 
-      while (*treestr) treestr++;
-    }
-  else 
-    {                 	 
-      *treestr++ = '(';
-      treestr = Tree2stringNexus(treestr, tr, p->next->back, perGene);
-      *treestr++ = ',';
-      treestr = Tree2stringNexus(treestr, tr, p->next->next->back, perGene);
-      if(p == tr->start->back) 
-	{
-	  *treestr++ = ',';
-	  treestr = Tree2stringNexus(treestr, tr, p->back, perGene);
-	}
-      *treestr++ = ')';                    
-    }
-
-  if(p == tr->start->back) 
-    {
-      sprintf(treestr, ";"); 
-      return treestr;
-    }
-
-  sprintf(treestr, ":%.7f", branchLengthToReal(tr, p->z[0]));
-  
-  while (*treestr) treestr++;
-  return  treestr;
-}

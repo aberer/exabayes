@@ -16,7 +16,7 @@
 class SprMove
 {
 public:  
-  void destroyOrientationAlongPath( Path& path, tree *tr,  nodeptr p); 
+  void destroyOrientationAlongPath( Path& path, const TreeAln &traln,  nodeptr p); 
   void multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior,  Path &modifiedPath, double multiplier, shared_ptr<AbstractPrior> brPr); 
   void applyPathAsESPR(TreeAln &traln, Path &modifiedPath ); 
   void resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior , Path &modifiedPath);   

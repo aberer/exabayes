@@ -88,6 +88,6 @@ void Topology::restoreTopology(TreeAln &traln)
       traln.clipNode(p, q, b->length[0]); 
     }
 
-  debug_checkTreeConsistency(traln.getTr());
+  debug_checkTreeConsistency(traln);
 }
 

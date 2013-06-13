@@ -1,9 +1,11 @@
+
 #include <cassert>
 
 #include "axml.h"
 #include "branch.h" 
 #include "output.h"  
 #include "TreeAln.hpp" 
+#include "Branch.hpp"
 
 
 /* #define GUIDE_SPR_BRANCH */
@@ -77,7 +79,7 @@ int getOtherNode(int node, branch b)
 /**
    @brief converts the raxml bl into the real value for printing
  */ 
-double branchLengthToReal(tree *tr, double internalBL)
+double branchLengthToReal(const tree *tr, double internalBL)
 {
   // assert(getNumBranches(tr) == 1 ); 
   return -log(internalBL) * tr->fracchange; 
@@ -87,7 +89,7 @@ double branchLengthToReal(tree *tr, double internalBL)
 /**
    @brief converts the real branch length to the raxml internal value  
  */ 
-double branchLengthToInternal(tree *tr, double realBL)
+double branchLengthToInternal(const tree *tr, double realBL)
 {
   // assert(getNumBranches(tr) == 1 ); 
   return exp(-(realBL / tr->fracchange)); 
@@ -283,8 +285,7 @@ nodeptr findNodeFromBranch(tree *tr, branch b )
  */ 
 branch findRoot(tree *tr)
 {
-  /* tree *tr = chain->tr;  */
-  branch root = {0,0}; 
+  Branch root; 
   for(int i = tr->mxtips +1 ; i < 2* tr->mxtips-1 ; ++i)
     {
       nodeptr
@@ -292,10 +293,13 @@ branch findRoot(tree *tr)
 	q = p;       
       do 
 	{
-	  if(q->x && q->back->x)
+	  Branch newRoot(q->number, q->back->number); 
+	  if(q->x && q->back->x && not root.equalsUndirected(newRoot))
 	    {
-	      root.thisNode = q->number; 
-	      root.thatNode = q->back->number; 	      
+	      if(root.getPrimNode() != 0 )
+		cout << "root already taken! " << root << " now at " << newRoot << endl; 
+	      assert(root.getPrimNode( )== 0 ) ;
+	      root = newRoot; 
 	    }
 	  q = q->next; 
 	} while(p != q); 
@@ -308,15 +312,18 @@ branch findRoot(tree *tr)
 	p = tr->nodep[i]; 
       if(p->back->x)
 	{
-	  if(root.thisNode != 0)
-	    cout << "previous root was " << root << endl; 
-	  assert(root.thisNode == 0); 
-	  root.thisNode = p->number; 
-	  root.thatNode = p->back->number; 
+	  if(root.getPrimNode() != 0)
+	    {	      
+	      cout << "previous root was " << root << " now at " << Branch(p->number , p->back->number)  << endl; 	      
+	    }
+	  assert(root.getPrimNode() == 0); 
+	  root = Branch(p->number, p->back->number); 
 	}
     }
 
-  return root; 
+  assert(root.getPrimNode( )!= 0); 
+
+  return root.toLegacyBranch(); 
 }
 
 
@@ -346,7 +353,7 @@ static void extractHelper(const TreeAln& traln,  nodeptr p , vector<branch> &res
 
 void extractBranches(const TreeAln &traln, vector<branch> &result) 
 {
-  tree *tr = traln.getTr();
+  auto tr = traln.getTr();
   extractHelper(traln, tr->nodep[1]->back, result, true);
 }
 

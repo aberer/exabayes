@@ -75,20 +75,23 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
 #ifdef TEST   
 
-  vector<double> tmp = {1,2,3,4,5,6}; 
-  cout << std::accumulate(tmp.begin(), tmp.end(), 0 , plus<double>()) << endl; 
 
+  auto traln =  make_shared<TreeAln>( )  ; 
+  traln->initializeFromByteFile(cl.getAlnFileName());
 
-  // TreeAln traln; 
-  // traln.initializeFromByteFile(cl.getAlnFileName());
+  vector<shared_ptr<TreeAln> >  tralns = {traln}; 
 
-  // cout << traln << endl; 
+  TreeRandomizer r(123, traln ); 
+  
+  for(int i = 0; i < 10; ++i)
+    {
+      r.randomizeTree();
 
-  // TreeRandomizer r(123, ); 
-  // r.randomizeTree();
-  // tree *tr = traln.getTr(); 
-
-
+      // tree *tr = traln.getTr();   
+      cout << *traln << endl; 
+    }
+  exit(0); 
+  
   // cout << traln.getTr()->nodep[1]->back << endl; 
   // cout << "hi" << endl; 
 

@@ -132,7 +132,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
       move.multiplyAlongBranchESPR(traln, rand, hastings, prior, modifiedPath, multiplier, brPr);
     }
 
-  debug_checkTreeConsistency(traln.getTr()); 
+  debug_checkTreeConsistency(traln); 
 }
 
 
@@ -141,7 +141,7 @@ void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
 {
   move.resetAlongPathForESPR (traln, prior, modifiedPath);   
   modifiedPath.restoreBranchLengthsPath(traln, prior ); 
-  debug_checkTreeConsistency(traln.getTr());
+  debug_checkTreeConsistency(traln);
   debug_printTree(traln); 
 }
 
@@ -150,13 +150,20 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 {  
   tree *tr = traln.getTr(); 
 
+
+#if 0 
   branch futureRoot = getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1)); 
-  
-  /* evaluate at root of inserted subtree */
+#else 
+  branch b = getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1)); 
+  branch lastBranch = modifiedPath.at(modifiedPath.size( )- 1 ) ;
+  branch futureRoot = getThirdBranch(tr, constructBranch(b.thisNode, lastBranch.thisNode),
+				     constructBranch(b.thisNode,lastBranch.thatNode)); 
+
+#endif
+
   nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
 
-  move.destroyOrientationAlongPath(modifiedPath, tr, toEval); 
-  move.destroyOrientationAlongPath(modifiedPath, tr, toEval->back);
+  move.destroyOrientationAlongPath(modifiedPath, traln, toEval); 
 
   evaluateGenericWrapper(traln, toEval, FALSE);
 }

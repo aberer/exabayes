@@ -200,10 +200,11 @@ void evaluatePartialNoBackup(TreeAln& traln, nodeptr p)
 
 void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
-#ifdef DEBUG_EVAL
+
+// #ifdef DEBUG_EVAL
   if(isOutputProcess())
-  cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" ) ; 
-#endif
+    cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" )  << endl; 
+// #endif
 
   int model = ALL_MODELS; 
   int numModels = 0; 

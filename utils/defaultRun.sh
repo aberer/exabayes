@@ -2,20 +2,28 @@
 
 
 model=GAMMA
-seed=1234
+seed=4
 
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
-
-useClang=0
+useClang=1
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
-    cargs="CC=clang CXX=clang++"
+    ccompiler="clang -Qunused-arguments"
+    cxxcompiler="clang++ -Qunused-arguments"
+else 
+    ccompiler="gcc"
+    cxxcompiler="g++"
 fi
 
-# if [ "$(which ccache)" != "" ]  ; then 
-#     cargs="CC='ccache gcc' CXX='ccache g++'"
-# fi 
+if [ "$(which ccache)" != "" ]  ; then 
+    export CC="ccache $ccompiler"
+    export CXX="ccache $cxxcompiler"
+else 
+    export CC="$ccompiler"
+    export CXX="$cxxcompiler"
+fi 
+
 
 
 
@@ -25,7 +33,7 @@ if [ "$#" != 3 ]; then
 fi
 
 
-args=""
+args="-disable-silent-rules"
 
 dataset=$3
 
@@ -63,16 +71,24 @@ fi
 
 status="$(./config.status --config | tr -d "'" )"
 
-if  [ "$(echo $status)"  == "$(echo $args $cargs)" ]; then 
-    echo "no need to re-configure / re-build"
-else 
-    echo "calling ./configure $args $cargs" 
-    ./configure $args $cargs
-    make clean
-fi 
 
-rm exabayes
+./configure -C  $args  $cargs
+# rm exabayes 
 make -j $numCores
+
+# if  [ "$(echo $status)"  == "$(echo $args)" ]; then 
+#     echo "no need to re-configure / re-build"
+# else 
+#     cmd="$cargs ./configure $args"
+#     echo $cmd
+#     # echo "calling  $cargs ./configure $args" 
+#     # $cargs ./configure $args
+#     $($cmd)
+#     make clean
+# fi 
+
+# rm exabayes
+# make -j $nu mCores
 
 
 

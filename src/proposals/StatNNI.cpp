@@ -88,7 +88,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   traln.clipNode(r, qBack, r->z[0]);
   traln.clipNode(q, rBack, q->z[0]);    
   
-  debug_checkTreeConsistency(traln.getTr());
+  debug_checkTreeConsistency(traln);
   /* TODO maybe multiply as well */
   
 }
@@ -145,7 +145,7 @@ void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)
     traln.clipNode(q, rBack, a.length[0]) ; /* q->z */
   }
 
-  debug_checkTreeConsistency(traln.getTr());
+  debug_checkTreeConsistency(traln);
 
   path.clear();
 }

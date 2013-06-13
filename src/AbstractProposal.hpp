@@ -46,7 +46,7 @@ public:
   
   const SuccessCounter& getSCtr()  const { return sctr; }
   
-  int  getNumCallSinceTuning(){ return sctr.getRecentlySeen(); }
+  int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
 
   void addPrimVar(RandomVariable var) {primVar.push_back(var) ; }
   void addSecVar(RandomVariable var) {secVar.push_back(var) ; }
