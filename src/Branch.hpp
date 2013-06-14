@@ -13,9 +13,12 @@ public:
   double getInterpretedLength(const TreeAln &traln) const; 
   branch toLegacyBranch() const ; 
   void invert() { swap(thisNode, thatNode) ; }
+  void getInverted(Branch &rhs) const {rhs.thisNode = thatNode; rhs.thatNode = thisNode; rhs.length = length;   }
   bool equalsUndirected(const Branch &rhs) const ; 
   nat getPrimNode() const {return thisNode; } 
   nat getSecNode() const {return thatNode; }
+
+  nodeptr findNodeFromBranch(const TreeAln &traln) const; 
 
   friend ostream& operator<<(ostream &out, const Branch& br); 
 

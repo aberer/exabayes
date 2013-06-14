@@ -14,37 +14,10 @@ static void disorientHelper(const TreeAln &traln, nodeptr p)
   else if(p->x)
     {
       p->x = 0; 
-
-      // if( isTip(p->next->back->number,tr->mxtips) ) 
-      // 	{
-      // 	  assert(not isTip(p->next->next->back->number, tr->mxtips)); 	    
-      // 	  p->next->next->x = 1 ; 
-      // 	  printf("disiorient %d -> to %d now \n", p->number, p->next->next->back->number);
-      // 	}
-      // else 	
-      // 	{
       p->next->x = 1; 
-      printf("DISIORIENT %d -> to %d now \n", p->number, p->next->back->number);
-	// }
     }
   else 
     {
-      // if(p->next->x   && isTip(p->next->back->number, tr->mxtips) ) 
-      // 	{
-      // 	  assert(not isTip(p->next->next->number,tr->mxtips)); 
-      // 	  p->next->next->x = 1 ; 
-      // 	  p->next->x = 0; 
-      // 	  cout << "changed to " << p->next->next->back->number << endl; 
-      // 	}
-      // else if(p->next->next->x && isTip(p->next->next->back->number, tr->mxtips))
-      // 	{	  
-      // 	  p->next-> x = 1 ; 
-      // 	  p->next->next->x = 0; 
-      // 	  assert(not isTip(p->next->number,tr->mxtips)); 
-      // 	  cout << "changed to " << p->next->back->number << endl; 
-      // 	}
-      // else 
-	cout << "okay " << p->number << " already to " << ( p->next->x ? p->next->back->number : p->next->next->back->number)   << endl; 
     }
 }
 
@@ -60,10 +33,10 @@ static void disorientHelper(const TreeAln &traln, nodeptr p)
  */ 
 void SprMove::destroyOrientationAlongPath( Path& path, const TreeAln &traln,  nodeptr p)
 {  
-  cout << "visiting " << p->number << endl; 
-  /* TODO efficiency =/  */
+  nat first = path.getNthNodeInPath(0),
+    last = path.getNthNodeInPath(path.getNumberOfNodes()-1); 
 
-  if(NOT path.nodeIsOnPath(p->number) || traln.isTipNode(p))
+  if(NOT path.nodeIsOnPath(p->number) || traln.isTipNode(p) || p->number == first || p->number == last )
     return; 
 
   disorientHelper(traln, p);
@@ -96,7 +69,6 @@ void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &
 	continue; 
       
       branch &b = modifiedPath.at(i); 
-
       modifiedPath.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr); 
     }
 

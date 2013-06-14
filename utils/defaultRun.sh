@@ -33,7 +33,7 @@ if [ "$#" != 3 ]; then
 fi
 
 
-args="-disable-silent-rules"
+args=""
 
 dataset=$3
 
@@ -61,36 +61,17 @@ else
     exit
 fi
 
-
 if [ ! -d data/$dataset ]; then
     echo "could not find dataset data/$dataset"
     exit
 fi
 
-
-
 status="$(./config.status --config | tr -d "'" )"
 
 
+rm exabayes
 ./configure -C  $args  $cargs
-# rm exabayes 
 make -j $numCores
-
-# if  [ "$(echo $status)"  == "$(echo $args)" ]; then 
-#     echo "no need to re-configure / re-build"
-# else 
-#     cmd="$cargs ./configure $args"
-#     echo $cmd
-#     # echo "calling  $cargs ./configure $args" 
-#     # $cargs ./configure $args
-#     $($cmd)
-#     make clean
-# fi 
-
-# rm exabayes
-# make -j $nu mCores
-
-
 
 if [ -f ./exabayes ]; then
     echo "calling exabayes as   $baseCall"

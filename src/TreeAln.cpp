@@ -421,6 +421,10 @@ pInfo* TreeAln::getPartition(int model)  const
 }
 
 
+
+
+
+// this is BS 
 int& TreeAln::accessExecModel(int model)
 {
 #if HAVE_PLL != 0
@@ -804,6 +808,9 @@ bool TreeAln::revMatIsImmutable(int model) const
     
   return partition->states == 20 && partition->protModels != GTR; 
 } 
+
+
+
 
 
 

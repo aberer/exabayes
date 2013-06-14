@@ -78,18 +78,8 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
-  // branch root = findRoot(traln.getTr());  
-
-  // nodeptr p = findNodeFromBranch(traln.getTr(), root); 
-
   assert(primVar.size() == 1 ); 
-
-#ifdef EFFICIENT
-  // dammit, we need to do it with the root...
-  assert(0); 
-#endif
-  // evaluatePartitions(traln, traln.getTr()->start,   randomVariables[0].getPartitions()) ; 
-  evaluateGenericWrapper(traln, traln.getTr()->start, TRUE); 
+  lnlEvaluator.evaluatePartitions(traln, primVar[0].getPartitions(), true  ); 
 }
 
 

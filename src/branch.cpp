@@ -7,6 +7,7 @@
 #include "TreeAln.hpp" 
 #include "Branch.hpp"
 
+#include "LikelihoodEvaluator.hpp" 
 
 /* #define GUIDE_SPR_BRANCH */
 
@@ -283,47 +284,12 @@ nodeptr findNodeFromBranch(tree *tr, branch b )
 /**
    @brief finds the root in the associated tree  
  */ 
-branch findRoot(tree *tr)
+branch findRoot( const TreeAln& traln )
 {
-  Branch root; 
-  for(int i = tr->mxtips +1 ; i < 2* tr->mxtips-1 ; ++i)
-    {
-      nodeptr
-	p = tr->nodep[i],
-	q = p;       
-      do 
-	{
-	  Branch newRoot(q->number, q->back->number); 
-	  if(q->x && q->back->x && not root.equalsUndirected(newRoot))
-	    {
-	      if(root.getPrimNode() != 0 )
-		cout << "root already taken! " << root << " now at " << newRoot << endl; 
-	      assert(root.getPrimNode( )== 0 ) ;
-	      root = newRoot; 
-	    }
-	  q = q->next; 
-	} while(p != q); 
-    }
-
-
-  for(int i = 1; i < tr->mxtips+1; ++i)
-    {
-      nodeptr
-	p = tr->nodep[i]; 
-      if(p->back->x)
-	{
-	  if(root.getPrimNode() != 0)
-	    {	      
-	      cout << "previous root was " << root << " now at " << Branch(p->number , p->back->number)  << endl; 	      
-	    }
-	  assert(root.getPrimNode() == 0); 
-	  root = Branch(p->number, p->back->number); 
-	}
-    }
-
-  assert(root.getPrimNode( )!= 0); 
-
-  return root.toLegacyBranch(); 
+  LikelihoodEvaluator eval; 
+  Branch result ;
+  eval.findVirtualRoot(traln, result);
+  return result.toLegacyBranch(); 
 }
 
 
@@ -369,7 +335,7 @@ void modifyBranchLength(TreeAln &traln, nodeptr p, const std::function<void(node
 
   for(nodeptr q = p->next ; q != p ; q = q->next)
     {
-      cout << "visiting node " << q->number << endl; 
+      // cout << "visiting node " << q->number << endl; 
       fun(q); 
       if(not traln.isTipNode(q))
 	modifyBranchLength(traln,q->back, fun); 

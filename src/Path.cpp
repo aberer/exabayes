@@ -250,7 +250,7 @@ bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const branch &target)
 
 void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
 {  
-  cout << "trying to find path between " << p->number << "/" << p->back->number << " and "  << q->number << "/" << q->back->number  << endl; 
+  // cout << "trying to find path between " << p->number << "/" << p->back->number << " and "  << q->number << "/" << q->back->number  << endl; 
   
   stack.clear();   
 

@@ -21,7 +21,7 @@
 void orientationPointAway(tree *tr, nodeptr p); 
 void expensiveVerify(TreeAln& traln); 
 void exa_newViewParsimony(TreeAln &traln, nodeptr p); 
-void newViewGenericWrapper(TreeAln &traln, nodeptr p, boolean masked); 
+void newViewGenericWrapper( TreeAln &traln, nodeptr p, boolean masked); 
 void evaluatePartialNoBackup(TreeAln& traln, nodeptr p); 
 void evaluateFullNoBackup(TreeAln& traln); 
 void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal); 

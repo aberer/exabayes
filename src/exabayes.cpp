@@ -16,10 +16,7 @@
 #define __AVX
 #endif
 
-// using namespace std; 
-
 #include <sstream>
-
 
 #include "axml.h" 
 

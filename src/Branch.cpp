@@ -18,6 +18,23 @@ void Branch::initFromLegacy(branch b)
   
 
 
+nodeptr Branch::findNodeFromBranch(const TreeAln &traln) const
+{
+  auto tr = traln.getTr(); 
+  
+  nodeptr p = tr->nodep[thisNode]; 
+  if(p->back->number == (int)thatNode)
+    return p ; 
+  else if(p->next->back->number == (int)thatNode) 
+    return p->next; 
+  else 
+    {
+      assert(p->next->next->back->number == (int)thatNode); 
+      return p->next->next; 
+    }  
+} 
+
+
 
 ostream& operator<<(ostream &out, const Branch& br)
 { 

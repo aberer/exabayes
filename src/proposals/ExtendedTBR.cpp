@@ -238,10 +238,7 @@ static void disorientHelper(TreeAln &traln, nodeptr p)
     {
       p->next->x = p->next->next->x = 0; 
       p->x = 1 ; 
-      // cout << "disorienting " << p->number << endl; 
     }
-  // else 
-    // cout << "NOT disorienting " << p->number << endl; 
 }
 
 

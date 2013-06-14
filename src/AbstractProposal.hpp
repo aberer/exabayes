@@ -10,6 +10,7 @@
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"
+#include "LikelihoodEvaluator.hpp"
 
 void updateHastings(double &hastings, double valToAdd, string whoDoneIt); 
 
@@ -124,6 +125,8 @@ protected:
   vector<RandomVariable> secVar;  // as a by-product also these random variables are changed 
 
   double relativeWeight; 
+
+  LikelihoodEvaluator lnlEvaluator; 
 }; 
 
 #endif

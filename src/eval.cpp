@@ -4,11 +4,12 @@
 #include "output.h"
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 
+#include "LikelihoodEvaluator.hpp" 
 
 void evaluateFullNoBackup(TreeAln& traln); 
 
 
-static void exa_newViewGeneric(TreeAln& traln, nodeptr p, boolean masked)
+static void exa_newViewGeneric( TreeAln& traln, nodeptr p, boolean masked)
 {
 #if HAVE_PLL != 0
   newviewGeneric(traln.getTr(), traln.getPartitionsPtr(), p, masked); 
@@ -66,17 +67,18 @@ void expensiveVerify(TreeAln& traln)
   double toVerify = traln.getTr()->likelihood; 
 
   debugTraln = traln; 
-  
-#if 1 
+
+  LikelihoodEvaluator eval; 
+  Branch root ; 
+  eval.findVirtualRoot(traln, root); 
+
   nodeptr
-    p = findNodeFromBranch(debugTraln.getTr(), findRoot(traln.getTr())); 
+    p = root.findNodeFromBranch(debugTraln ); 
   orientationPointAway(debugTraln.getTr(), p);
   orientationPointAway(debugTraln.getTr(), p->back);
 
   exa_evaluateGeneric(debugTraln, p , FALSE); 
-#else 
-  exa_evaluateGeneric(debugTraln, debugTraln.getTr()->start , TRUE); 
-#endif
+
   double verifiedLnl =  debugTraln.getTr()->likelihood; 
 
 
@@ -152,7 +154,7 @@ void exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal, vec
 /**
    @brief backs up arrays and executes the newView 
  */ 
-void newViewGenericWrapper(TreeAln &traln, nodeptr p, boolean masked)
+void newViewGenericWrapper( TreeAln &traln, nodeptr p, boolean masked)
 {
   int numberToExecute = 0; 
   int modelToEval = ALL_MODELS; 
@@ -200,11 +202,10 @@ void evaluatePartialNoBackup(TreeAln& traln, nodeptr p)
 
 void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
-
-// #ifdef DEBUG_EVAL
+#ifdef DEBUG_EVAL
   if(isOutputProcess())
     cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" )  << endl; 
-// #endif
+#endif
 
   int model = ALL_MODELS; 
   int numModels = 0; 
@@ -244,47 +245,47 @@ void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal
 
 
 
-void evaluatePartitions(TreeAln &traln, nodeptr start, vector<nat> models  ) 
-{
-  // notice assuming full traversal -- need partial for per-gene branch lengths 
+// void evaluatePartitions(TreeAln &traln, nodeptr start, vector<nat> models  ) 
+// {
+//   // notice assuming full traversal -- need partial for per-gene branch lengths 
 
-  tree *tr = traln.getTr(); 
-  nat numPart = traln.getNumberOfPartitions();
+//   tree *tr = traln.getTr(); 
+//   nat numPart = traln.getNumberOfPartitions();
   
-  vector<double> perPartitionLH; 
-  for(nat i = 0; i < numPart; ++i)
-    perPartitionLH.push_back(traln.accessPartitionLH(i));
+//   vector<double> perPartitionLH; 
+//   for(nat i = 0; i < numPart; ++i)
+//     perPartitionLH.push_back(traln.accessPartitionLH(i));
   
-  for(nat i = 0; i < numPart; ++i)
-    traln.accessExecModel(i) = FALSE; 
-  for(auto m  : models)
-    traln.accessExecModel(m) = TRUE ; 
+//   for(nat i = 0; i < numPart; ++i)
+//     traln.accessExecModel(i) = FALSE; 
+//   for(auto m  : models)
+//     traln.accessExecModel(m) = TRUE ; 
   
 
-  // SERIOUSLY??? 
-#ifdef DEBUG_LNL_VERIFY
-  globals.verifyLnl = false; 	// HACK
-#endif
-  evaluateGenericWrapper(traln, start, TRUE );
-#ifdef DEBUG_LNL_VERIFY
-  globals.verifyLnl = true; 	// HACK
-#endif
+//   // SERIOUSLY??? 
+// #ifdef DEBUG_LNL_VERIFY
+//   globals.verifyLnl = false; 	// HACK
+// #endif
+//   evaluateGenericWrapper(traln, start, TRUE );
+// #ifdef DEBUG_LNL_VERIFY
+//   globals.verifyLnl = true; 	// HACK
+// #endif
   
-  for(auto m : models )
-    perPartitionLH[m] = traln.accessPartitionLH(m); 
+//   for(auto m : models )
+//     perPartitionLH[m] = traln.accessPartitionLH(m); 
 
-  for(nat i = 0; i < numPart; ++i )
-    traln.accessPartitionLH(i) = perPartitionLH[i]; 
+//   for(nat i = 0; i < numPart; ++i )
+//     traln.accessPartitionLH(i) = perPartitionLH[i]; 
 
-  tr->likelihood = 0; 
-  for(nat i = 0; i < numPart; ++i)
-    {
-      tr->likelihood += traln.accessPartitionLH(i); 
-      traln.accessExecModel(i) = TRUE; 
-    }  
+//   tr->likelihood = 0; 
+//   for(nat i = 0; i < numPart; ++i)
+//     {
+//       tr->likelihood += traln.accessPartitionLH(i); 
+//       traln.accessExecModel(i) = TRUE; 
+//     }  
   
-  expensiveVerify(traln);   
-}
+//   expensiveVerify(traln);   
+// }
 
 
 

@@ -306,8 +306,8 @@ void Chain::step()
   expensiveVerify(*traln); 
 
 // proposals/Chai
-  TreePrinter tp(false, true, false); 
-  cout << "after proposal: " << tp.printTree(*traln)<< endl; 
+  // TreePrinter tp(false, true, false); 
+  // cout << "after proposal: " << tp.printTree(*traln)<< endl; 
 
   
 
