@@ -208,11 +208,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   addPriorsToVariables(traln, priorInfo, randomVariables);
 
   ProposalRegistry reg; 
-  
-  // BEGIN this could be done somewhere else 
-  // reg.updateProposalWeights(propConfig);
-  // END 
-  
+
   vector<RandomVariable> blRandVars; 
   for(auto v : randomVariables)
     if(v.getCategory() == BRANCH_LENGTHS)

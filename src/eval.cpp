@@ -74,9 +74,8 @@ void expensiveVerify(TreeAln& traln)
 
   nodeptr
     p = root.findNodeFromBranch(debugTraln ); 
-  orientationPointAway(debugTraln.getTr(), p);
-  orientationPointAway(debugTraln.getTr(), p->back);
 
+  eval.disorientTree(traln, root); 
   exa_evaluateGeneric(debugTraln, p , FALSE); 
 
   double verifiedLnl =  debugTraln.getTr()->likelihood; 
@@ -196,10 +195,6 @@ void evaluatePartialNoBackup(TreeAln& traln, nodeptr p)
 }
 
 
-
-
-
-
 void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
 #ifdef DEBUG_EVAL
@@ -243,153 +238,3 @@ void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal
 }
 
 
-
-
-// void evaluatePartitions(TreeAln &traln, nodeptr start, vector<nat> models  ) 
-// {
-//   // notice assuming full traversal -- need partial for per-gene branch lengths 
-
-//   tree *tr = traln.getTr(); 
-//   nat numPart = traln.getNumberOfPartitions();
-  
-//   vector<double> perPartitionLH; 
-//   for(nat i = 0; i < numPart; ++i)
-//     perPartitionLH.push_back(traln.accessPartitionLH(i));
-  
-//   for(nat i = 0; i < numPart; ++i)
-//     traln.accessExecModel(i) = FALSE; 
-//   for(auto m  : models)
-//     traln.accessExecModel(m) = TRUE ; 
-  
-
-//   // SERIOUSLY??? 
-// #ifdef DEBUG_LNL_VERIFY
-//   globals.verifyLnl = false; 	// HACK
-// #endif
-//   evaluateGenericWrapper(traln, start, TRUE );
-// #ifdef DEBUG_LNL_VERIFY
-//   globals.verifyLnl = true; 	// HACK
-// #endif
-  
-//   for(auto m : models )
-//     perPartitionLH[m] = traln.accessPartitionLH(m); 
-
-//   for(nat i = 0; i < numPart; ++i )
-//     traln.accessPartitionLH(i) = perPartitionLH[i]; 
-
-//   tr->likelihood = 0; 
-//   for(nat i = 0; i < numPart; ++i)
-//     {
-//       tr->likelihood += traln.accessPartitionLH(i); 
-//       traln.accessExecModel(i) = TRUE; 
-//     }  
-  
-//   expensiveVerify(traln);   
-// }
-
-
-
-
-/**
-   @brief the same as below, but just for one partition 
-
-   updates chain likelihood and chain-partition-lnl accordingly. 
- */
-void evaluateOnePartition(TreeAln& traln, nodeptr start, boolean fullTraversal, int model)
-{
-  assert(fullTraversal); 	/* partial tarversal does not make sense */
-
-  tree *tr = traln.getTr(); 
-  int numPartitions = traln.getNumberOfPartitions(); 
-
-  double *perPartitionLH; 
-  perPartitionLH = new double[numPartitions]; 
-
-  for(int i = 0; i < numPartitions; ++i)
-    perPartitionLH[i] = traln.accessPartitionLH(i); 
-
-  for(int i = 0; i < numPartitions; ++i)
-    traln.accessExecModel(i) = FALSE; 
-  traln.accessExecModel(model) = TRUE; 
-
-  orientationPointAway(tr, start); 
-  orientationPointAway(tr, start->back); 
-  
-  /* compensating for the fact, that we need to have a tip for full traversal  */
-  newViewGenericWrapper(traln, start, TRUE); 
-
-  for(int i = 0; i < numPartitions; ++i)
-    traln.accessExecModel(i) = FALSE; 
-  traln.accessExecModel(model) = TRUE; 
-
-  newViewGenericWrapper(traln, start->back, TRUE); 
-
-  for(int i = 0; i < numPartitions; ++i)
-    traln.accessExecModel(i) = FALSE; 
-  traln.accessExecModel(model) = TRUE; 
-#ifdef DEBUG_LNL_VERIFY
-  globals.verifyLnl = false; 	// HACK
-#endif
-  evaluateGenericWrapper(traln,start, FALSE);
-#ifdef DEBUG_LNL_VERIFY
-  globals.verifyLnl = true  ; 
-#endif
-
-  perPartitionLH[model] = traln.accessPartitionLH(model); 
-  for(int i = 0; i < numPartitions; ++i)
-    traln.accessPartitionLH(i) = perPartitionLH[i]; 
-
-  tr->likelihood = 0; 
-  for(int i = 0; i < numPartitions; ++i)
-    {	
-      tr->likelihood += traln.accessPartitionLH(i);
-      traln.accessExecModel(i) = TRUE; 
-    }
-
-  delete [] perPartitionLH; 
-  expensiveVerify(traln);
-}
-
-
-
-
-#if 0 
-/**
-   @brief only evaluate partition given in the execute mask "models"
-*/
-void evaluatePartitions(Chain *chain, nodeptr start, boolean fullTraversal, boolean *models)
-{  
-  tree *tr = chain->traln->getTr(); 
-  assert(0);  			/* not in use  */
-  
-  int numPartitions = getNumberOfPartitions(tr); 
-  double *perPartitionLH = new double[numPartitions]; 
-
-  
-  for(int i = 0; i < numPartitions; ++i)
-    {
-      perPartitionLH[i] = getPLH(chain,i); 
-      setExecModel(chain,i,models[i]); 
-    }
-
-  exa_evaluateGeneric(chain, start, fullTraversal); 
-
-  /*  correct for hidden examl feature: reduction is applied multiple times */
-  for(int i = 0; i < numPartitions; ++i)
-    if(models[i] == TRUE)
-      perPartitionLH[i] = getPLH(chain,i); 
-
-  tr->likelihood = 0; 
-  for(int i = 0;i < numPartitions; ++i)
-    {
-      setPLH(chain,i,perPartitionLH[i]); 
-      tr->likelihood += getPLH(chain,i); 
-      setExecModel(chain,i,TRUE); 
-    }
-
-
-  delete []  perPartitionLH; 
-  expensiveVerify(chain); 
-}
-
-#endif

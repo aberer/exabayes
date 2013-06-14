@@ -57,11 +57,7 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
 
 
   tree *tr = globals.debugTree->getTr(); 
-  
-  // cout << "trying to find " << constructBranch(pruned->number,pruned->back->number ) << ", "
-  //      << score.getBranch() <<  ","
-  //      << invertBranch(score.getBranch()) << endl; 
-  
+
   nodeptr p = findNodeFromBranch(tr, constructBranch(pruned->number,pruned->back->number )),
     pn = findNodeFromBranch(tr, score.getBranch()),
     pnn = findNodeFromBranch(tr, invertBranch(score.getBranch())); 
@@ -70,15 +66,12 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
   traln.clipNodeDefault( pn, p->next); 
   traln.clipNodeDefault( pnn, p->next->next);  
 
-  // cout << "after spr " << *(globals.debugTree) << endl ; 
-  
   vector<nat> partitionParsimony; 
   exa_evaluateParsimony(*(globals.debugTree), globals.debugTree->getTr()->nodep[1]->back, TRUE, partitionParsimony);   
   nat verifiedScore = 0; 
   for(auto elem : partitionParsimony)
     verifiedScore += elem; 
-  
-  // cout << "for " << score.getBranch() << "\t toVerify: " << score.getScore() <<  "\tveification result: " << verifiedScore <<  endl; 
+
   assert(verifiedScore == score.getScore()); 
 #endif
 }
@@ -113,6 +106,9 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
       pn = p->next->back; 
       pnn = p->next->next->back;   
     }
+
+  branch initBranch = constructBranch(pn->number, pnn->number); 
+  insertionPoints.push_back(InsertionScore(initBranch, partitionParsimony)); 
 
   // prune the subtree 
   traln.clipNodeDefault( pn, pnn); 
@@ -168,49 +164,44 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
       elem.setWeight(val / sum); 
     }
 
-
-#ifdef UNSURE
-  // dont choose the original position again 
-  assert(0); 
-#endif  
-
   // draw the proposal 
   double r = rand.drawRandDouble01();
-  InsertionScore& chosen = insertionPoints[0]; 
-  for(InsertionScore &elem : insertionPoints)
+  InsertionScore& chosen = insertionPoints[0];
+
+  Branch initBranchNew; 
+  initBranchNew.initFromLegacy(initBranch); 
+
+  do 
     {
-      double weight = elem.getWeight(); 
-      if(r < weight)
+      for(InsertionScore &elem : insertionPoints)
 	{
-	  chosen = elem; 
-	  break; 
+	  double weight = elem.getWeight(); 
+	  if(r < weight)
+	    {
+	      chosen = elem; 
+	      break; 
+	    }
+	  else 
+	    r -= weight; 
 	}
-      else 
-	r -= weight; 
-    }
+    }while (chosen.getNewBranch().equalsUndirected(initBranchNew) ); 
 
   path.clear();   
-
-  Branch chosenBranch;   
   path.findPath(traln ,p, findNodeFromBranch(traln.getTr(), chosen.getBranch()) );
+  path.reverse(); 
 
-  // cout << "now path is " << path << endl; 
 
-  // cout << "will insert " << p->number << "," << p->back->number 
-  //      << " currently hooked to " << p->next->back->number << "," << p->next->next->back->number
-  //      << " into " << chosen << endl; 
-  
-  // cout << "current root is " << findRoot(traln.getTr() ) << endl; 
+  // adjust hastings   
+  double initWeight = 0; 
+  for(auto &elem: insertionPoints)
+    {
+      if(elem.getNewBranch().equalsUndirected(initBranchNew))
+	initWeight = elem.getWeight(); 
+    }
+  assert(initWeight != 0); 
 
-  int numTax = traln.getTr()->mxtips; 
+  updateHastings(hastings, initWeight / chosen.getWeight(), name); 
 
-  for(int i = 1 ; i < numTax; ++i)
-    assert(traln.getTr()->nodep[i]->x == 0 ); 
-
-  path.reverse();  
-
-  // TODO : here's the bug!   
-  
   nodeptr aNode = findNodeFromBranch(traln.getTr(), path.at(0)); 
   if(traln.isTipNode(aNode))
     aNode = findNodeFromBranch(traln.getTr(), invertBranch(path.at(0)));
@@ -225,16 +216,11 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   path.append(b);  
   path.reverse();
 
-  // cout << "path is " << path << endl; 
 
-  // TODO this is crazy! remove all the redundancies later.
-  // cout << path << endl; 
-  
- 
-#ifdef UNSURE
-  // modify the hastings...not today
+#ifdef EFFICIENT 
+  // branch mapping would be more efficient
   assert(0); 
-#endif 
+#endif
 
   for(auto &b : branches)    
     {

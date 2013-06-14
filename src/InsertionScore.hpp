@@ -7,6 +7,8 @@ public:
   InsertionScore(branch _b, vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
   branch getBranch() const  {return b; }
 
+  Branch getNewBranch() const {Branch br; br.initFromLegacy(b); return br; }
+
   double getWeight() const {return  logProb; }
   void setWeight(double w) { logProb = w; }
 

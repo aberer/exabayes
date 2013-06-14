@@ -14,7 +14,7 @@ public:
   branch toLegacyBranch() const ; 
   void invert() { swap(thisNode, thatNode) ; }
   void getInverted(Branch &rhs) const {rhs.thisNode = thatNode; rhs.thatNode = thisNode; rhs.length = length;   }
-  bool equalsUndirected(const Branch &rhs) const ; 
+  bool equalsUndirected(const Branch &rhs) const ;   
   nat getPrimNode() const {return thisNode; } 
   nat getSecNode() const {return thatNode; }
 
