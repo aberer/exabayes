@@ -30,11 +30,12 @@ public:
   double getLnPrior () const {return lnPrior; } 
   double getLnPriorRatio() const {return lnPriorRatio; }
   void addToRatio(double val)  { lnPriorRatio += val; }
-  void accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs, double lambda )  ; 
+
+  void accountForFracChange(const TreeAln &traln, const vector<double> &oldFc, const vector<double> &newFcs,  const vector<shared_ptr<AbstractPrior> > &blPriors)  ; 
+
   void updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) ; 
   void verifyPrior(const TreeAln &traln) const ;  
   void reinitPrior(const TreeAln &traln ) {lnPrior = scoreEverything(traln); lnPriorRatio = 0; }
-  // shared_ptr<AbstractPrior> getBranchLengthPrior() const; 
 
 private: 
   double scoreEverything(const TreeAln &traln) const ; 
@@ -42,12 +43,7 @@ private:
   double lnPrior; 
   double lnPriorRatio; 
 
-  // bad, but it's the only possibility
-  const vector<bool> needsFranchChangeAccounting; // does changing the fracchange influence the prior of this partition? 
-  const vector<double> lambdaOfPartition; 
-  
   const vector<RandomVariable> variables; 
-
 }; 
 
 #endif

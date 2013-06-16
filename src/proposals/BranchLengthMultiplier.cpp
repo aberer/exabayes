@@ -63,7 +63,13 @@ void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)
 
 void BranchLengthMultiplier::autotune() 
 {
-  double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), multiplier, FALSE);
+  double ratio = sctr.getRatioInLastInterval(); 
+  double newParam = tuneParameter(sctr.getBatch(), ratio , multiplier, false);
+
+  // bool up = multiplier  < newParam; 
+
+  // cout << "tuned " << ( up ? " UP ":  " DOWN " )  <<  multiplier << " => " << newParam << "\t ratio=" << setprecision(3) << ratio << endl; 
+  
   multiplier = newParam; 
   sctr.nextBatch();
 }

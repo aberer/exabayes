@@ -13,11 +13,30 @@ PriorBelief::PriorBelief(const TreeAln &traln, const vector<RandomVariable> &_va
 }
 
 
-// void PriorBelief::accountForFracChange(const TreeAln &traln, int model, const vector<double> &oldFc, const vector<double> &newFcs, double lambda )  
-// {
-//   assert(oldFc.size() == 1 && newFcs.size() == 1 );  
-//   lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * traln.getTreeLength();
-// }
+
+void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double> &oldFc, const vector<double> &newFcs, const vector<shared_ptr<AbstractPrior> > &blPriors)  
+{
+  assert(blPriors.size() == 1  &&  dynamic_cast<ExponentialPrior*>(blPriors[0].get()) != nullptr) ; 
+
+  // TODO this is horrible, but let's go with that for now. 
+
+  double lambda = dynamic_cast<ExponentialPrior*> (blPriors[0].get())->getLamda(); 
+
+#ifdef EFFICIENT
+  // TODO investigate on more efficient tree length 
+  assert(0); 
+#endif
+
+  assert(oldFc.size() == 1 && newFcs.size() == 1 );  
+
+  double blInfluence = 0; 
+  vector<branch> branches; 
+  extractBranches(traln, branches) ;  
+  for(auto &b : branches)
+    blInfluence += log(b.length[0]); 
+
+  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * blInfluence;
+}
 
 
 double PriorBelief::scoreEverything(const TreeAln &traln) const 

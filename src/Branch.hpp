@@ -1,22 +1,31 @@
 #ifndef _BRANCH_NEW_H
 #define _BRANCH_NEW_H
 
+// #include <functional>
+
 #include "axml.h"
 #include "branch.h"
-
 
 class Branch
 {
 public: 
+  Branch(branch b); 
+  Branch(nodeptr p); 
   Branch(nat a = 0, nat b = 0, double length = 0.0); 
   void initFromLegacy(branch b) ; 
   double getInterpretedLength(const TreeAln &traln) const; 
   branch toLegacyBranch() const ; 
   void invert() { swap(thisNode, thatNode) ; }
-  void getInverted(Branch &rhs) const {rhs.thisNode = thatNode; rhs.thatNode = thisNode; rhs.length = length;   }
+  Branch getInverted() const { return Branch(thatNode, thisNode, length); }
   bool equalsUndirected(const Branch &rhs) const ;   
   nat getPrimNode() const {return thisNode; } 
   nat getSecNode() const {return thatNode; }
+  void setLength(double intLength){length = intLength; }
+  double getLength () const {return length; }
+
+  bool exists(TreeAln &traln) const ;  
+
+  bool nodeIsInBranch(nat node) const {return (thisNode == node) || (thatNode == node) ;  }
 
   nodeptr findNodeFromBranch(const TreeAln &traln) const; 
 
@@ -32,5 +41,23 @@ private:
 
 
 
+
+class BranchHashNoLength
+{ 
+public: 
+  size_t operator()(const Branch &b ) const 
+  {
+    return hash<nat>()(b.getPrimNode()) ^ hash<nat>()( b.getSecNode()) ; 
+  }
+}; 
+
+class BranchEqualNoLength
+{
+public:
+  bool operator() (const Branch &b, const Branch &a) const 
+  {
+    return a.equalsUndirected(b); 
+  }
+};
 
 #endif

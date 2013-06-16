@@ -1,3 +1,4 @@
+#include <iostream>
 #include <cassert>
 #include "SuccessCounter.hpp"
 
@@ -39,7 +40,9 @@ double SuccessCounter::getRatioInLast100() const
 
 double SuccessCounter::getRatioInLastInterval() const 
 { 
-  return (double)localAcc / ((double)(localAcc + localRej) ); 
+  double ratio =   ((double)localAcc) / ((double)(localAcc + localRej) ); 
+  // cout << "ratio is " <<  ratio << endl; 
+  return  ratio ; 
 }
 
 

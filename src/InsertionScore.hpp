@@ -1,6 +1,7 @@
 #ifndef _INSERTION_SCORE 
 #define _INSERTION_SCORE 
 
+
 class  InsertionScore
 {
 public: 

@@ -8,6 +8,7 @@
 #include "PriorBelief.hpp"
 
 
+
 // #include 
 
 class FrequencyParameter
@@ -23,7 +24,7 @@ public:
   static void init(TreeAln &traln, int model){ traln.initRevMat(model); }
   static category_t cat; 
 
-  static bool needsBLupdate;
+  static bool modifiesBL;
 
 }; 
 
@@ -39,7 +40,7 @@ public:
   static void init(TreeAln &traln, int model){traln.initRevMat(model);}  
   static category_t cat; 
 
-  static bool needsBLupdate;
+  static bool modifiesBL;
 
 }; 
 
@@ -51,7 +52,7 @@ public:
   static vector<double> getParameters(TreeAln &traln, int model) { vector<double> result; result.push_back(traln.getAlpha(model)); return result;  }  
   static void init(TreeAln &traln, int model){traln.discretizeGamma(model); }
   static category_t cat; 
-  static bool needsBLupdate;
+  static bool modifiesBL;
 
 }; 
 

@@ -41,7 +41,9 @@ void TreePrinter::helper(const TreeAln &traln, stringstream &ss, nodeptr p)
     }
   
   if(withInternalNodes && not traln.isTipNode(p))
-    ss << p->number << "[x:" << getTheX(p) << "]"; 
+    ss << p->number
+      // <<  "[x:" << getTheX(p) << "]"
+      ; 
 
   if(withBranchLengths)
     ss << ":" << setprecision(7) << fixed  << branchLengthToReal(traln.getTr(), p->z[0]); 

@@ -217,7 +217,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   for(auto v : randomVariables)
     {
       if(typeid(v.getPrior()) == typeid(shared_ptr<FixedPrior>))
-	continue; 
+	continue;
 
       vector<unique_ptr<AbstractProposal> > tmpResult;  
 
@@ -226,8 +226,15 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 	{
 	  p->addPrimVar(v);
 	  if(v.getCategory() == TOPOLOGY)
-	    for(auto blRandVar : blRandVars)
-	      p->addSecVar(blRandVar); 
+	    {
+	      for(auto blRandVar : blRandVars)
+		p->addSecVar(blRandVar); 
+	    }
+	  else if(v.getCategory() == FREQUENCIES || v.getCategory() == SUBSTITUTION_RATES)
+	    {
+	      for(auto blRandVar : blRandVars)
+		p->addSecVar(blRandVar); 
+	    }	  
 	}
 
       // dammit...

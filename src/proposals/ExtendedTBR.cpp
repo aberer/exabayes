@@ -191,13 +191,16 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   modifiedPath1.saveBranchLengthsPath(traln); 
   modifiedPath2.saveBranchLengthsPath(traln); 
 
-#ifdef TBR_MULTIPLY_BL    
   assert(traln.getNumBranches() == 1); 
   // TODO replace by absence of prior 
   
   bool modifiesBl = false;   
   for(auto v : secVar)
     modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+
+#ifdef NO_SEC_BL_MULTI
+  modifiesBl = false; 
+#endif
 
   if(modifiesBl)
     {
@@ -216,12 +219,6 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 	}
 
     }
-#endif
-  
-#ifdef DEBUG_TBR
-  cout << modifiedPath1 <<  endl; 
-  cout << modifiedPath2 <<  endl; 
-#endif
 
   executeTBR(traln);
   

@@ -5,7 +5,7 @@ class TreeLengthMultiplier : public AbstractProposal
 {
 public: 
   TreeLengthMultiplier( double _multiplier) ; 
-  ~TreeLengthMultiplier(){}
+  virtual ~TreeLengthMultiplier(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
   virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) ; 

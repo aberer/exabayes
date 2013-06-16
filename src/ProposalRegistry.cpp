@@ -2,14 +2,24 @@
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 
+// #define INIT_BL_SLID_WIN  0.075
+
+const double ProposalRegistry::initBranchLengthMultiplier = 1.386294; 
+const double ProposalRegistry::initRateSlidingWindow = 0.15 ;
+const double ProposalRegistry::initFrequencySlidingWindow = 0.2 ; 
+const double ProposalRegistry::initGammaSlidingWindow = 0.75; 
+const double ProposalRegistry::initSecondaryBranchLengthMultiplier = 0.098; 
+const double ProposalRegistry::initTreeLengthMultiplier = 1.386294; 
+const double ProposalRegistry::initDirichletAlpha = 100 ; 
+const double ProposalRegistry::initGammaMultiplier = 0.811 ; 
+const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ; 
+
 
 /**
    @brief yields a set of proposls for integrating a category  
  */
 void ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> >& result) const 
 {
-  // vector<unique_ptr<AbstractProposal> > result; 
-
   vector<aaMatrix_t> someMatrices; 
 
   // TODO: this is not terrible as a design ... but reflection of course would be cooler  
@@ -22,48 +32,48 @@ void ProposalRegistry::getProposals(category_t cat, const BlockProposalConfig &c
       switch(curProp)
 	{	      
 	case ST_NNI: 
-	  proposal = new StatNNI(INIT_NNI_MULT);
+	  proposal = new StatNNI(initSecondaryBranchLengthMultiplier);
 	  break; 
 	case BRANCH_LENGTHS_MULTIPLIER:	      
-	  proposal = new BranchLengthMultiplier( INIT_BL_MULT) ; 
+	  proposal = new BranchLengthMultiplier( initBranchLengthMultiplier) ; 
 	  break; 
 	case NODE_SLIDER:
-	  proposal = new NodeSlider(INIT_NODE_SLIDER_MULT); 
+	  proposal = new NodeSlider(initNodeSliderMultiplier); 
 	  break; 
 	case REVMAT_SLIDER: 
-	  proposal = new PartitionProposal<SlidingProposal, RevMatParameter>( INIT_RATE_SLID_WIN, "revMatSlider"); 
+	  proposal = new PartitionProposal<SlidingProposal, RevMatParameter>( initRateSlidingWindow, "revMatSlider"); 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case FREQUENCY_SLIDER:
-	  proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>(  INIT_FREQ_SLID_WIN, "freqSlider"); 
+	  proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>(  initFrequencySlidingWindow, "freqSlider"); 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 		  
 	case TL_MULT:
-	  proposal = new TreeLengthMultiplier(  INIT_TL_MULTI); 
+	  proposal = new TreeLengthMultiplier(  ProposalRegistry::initTreeLengthMultiplier); 
 	  break; 
 	case E_TBR: 
-	  proposal = new ExtendedTBR(  config.getEsprStopProp(), INIT_ESPR_MULT); 
+	  proposal = new ExtendedTBR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier); 
 	  break; 
 	case E_SPR: 
-	  proposal = new ExtendedSPR(  config.getEsprStopProp(), INIT_ESPR_MULT); 
+	  proposal = new ExtendedSPR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier); 
 	  break; 
 	case PARSIMONY_SPR:	
-	  proposal = new ParsimonySPR(  config.getParsimonyWarp(), INIT_ESPR_MULT); 
+	  proposal = new ParsimonySPR(  config.getParsimonyWarp(), initSecondaryBranchLengthMultiplier); 
 	  break; 
 	case RATE_HET_MULTI: 
-	  proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>(  INIT_GAMMA_MULTI, "rateHetMulti"); 
+	  proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>(  initGammaMultiplier, "rateHetMulti"); 
 	  proposal->setRelativeWeight(1); 
 	  break; 
 	case RATE_HET_SLIDER: 
-	  proposal = new PartitionProposal<SlidingProposal,RateHetParameter>(  INIT_GAMMA_SLID_WIN, "rateHetSlider"); 
+	  proposal = new PartitionProposal<SlidingProposal,RateHetParameter>(  initGammaSlidingWindow, "rateHetSlider"); 
 	  proposal->setRelativeWeight(0); 
 	  break; 
 	case FREQUENCY_DIRICHLET: 
-	  proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>(  INIT_DIRICHLET_ALPHA, "freqDirich"); 
+	  proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>(  initDirichletAlpha, "freqDirich"); 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case REVMAT_DIRICHLET: 
-	  proposal = new PartitionProposal<DirichletProposal,RevMatParameter>( INIT_DIRICHLET_ALPHA, "revMatDirich"); 	      
+	  proposal = new PartitionProposal<DirichletProposal,RevMatParameter>( initDirichletAlpha, "revMatDirich"); 	      
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case GUIDED_SPR:

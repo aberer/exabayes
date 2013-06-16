@@ -16,59 +16,29 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
 
   values = PARAM::getParameters(traln, oneModel); 
   double oldFracChange = traln.getTr()->fracchange; 
-      
-  bool blCorrectionFailed = true  ; 
   vector<double> proposedValues; 
-  while( blCorrectionFailed)  
-    {      
-      proposedValues = FUN::getNewValues(values, parameter, rand, hastings); 
 
-      assert(proposedValues.size() == values.size()); 
-      assert(traln.getNumBranches() == 1 ); 
+  proposedValues = FUN::getNewValues(values, parameter, rand, hastings); 
 
-      for(auto v : primVar[0].getPartitions())
-	{
-	  PARAM::setParameters(traln, v, proposedValues);  
-	  PARAM::init(traln, v);  
-	}
+  assert(proposedValues.size() == values.size()); 
+  assert(traln.getNumBranches() == 1 ); 
 
-      double newFracChange = traln.getTr()->fracchange;   
-      assert(primVar.size() != 0);         
-
-      blCorrectionFailed = false; 
-
-      // attempt correction 
-      if(PARAM::needsBLupdate)
-	{
-	  double updateValue = oldFracChange / newFracChange; 
-	  // cout << "need to update branches with " << updateValue << endl; 
-	  vector<branch> oldBranches; 
-	  extractBranches(traln, oldBranches); 
-	  vector<branch> newBranches(oldBranches); 
-
-	  for(auto& b : newBranches)	    
-	    {
-	      double &z = b.length[0]; 	      
-	      z = pow(z, updateValue); 
-	      
-	      blCorrectionFailed = blCorrectionFailed ||  ( z < TreeAln::zMin || TreeAln::zMax < z ) ; 
-	    }
-
-	  if(not blCorrectionFailed)
-	    {
-	      for(auto &b : newBranches)
-		{
-		  nodeptr p = findNodeFromBranch(traln.getTr(), b); 
-		  traln.clipNode(p,p->back, b.length[0]); 
-		}
-
-	      storedBranches = oldBranches; 
-	    } 
-
-	}
+  for(auto v : primVar[0].getPartitions())
+    {
+      PARAM::setParameters(traln, v, proposedValues);  
+      PARAM::init(traln, v);  
     }
 
-  // cout << "fracchange after app " << traln.getTr()->fracchange << endl; 
+  double newFracChange = traln.getTr()->fracchange;   
+  assert(primVar.size() != 0);   
+
+  if(PARAM::modifiesBL)
+    {
+      vector<shared_ptr<AbstractPrior> > blPriors; 
+      for(auto v : secVar)
+	blPriors.push_back(v.getPrior()) ; 
+      prior.accountForFracChange(traln, {oldFracChange}, {newFracChange} , blPriors);
+    }
  
   auto thePrior = primVar[0].getPrior(); 
   prior.addToRatio( thePrior->getLogProb(proposedValues) -  thePrior->getLogProb(values) ) ;
@@ -79,7 +49,9 @@ template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
   assert(primVar.size() == 1 ); 
-  lnlEvaluator.evaluatePartitions(traln, primVar[0].getPartitions(), true  ); 
+
+  LikelihoodEvaluator eval ; 
+  eval.evaluatePartitions(traln, primVar[0].getPartitions() ); 
 }
 
 
@@ -92,16 +64,6 @@ void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior
     {
       PARAM::setParameters(traln, elem, values);
       PARAM::init(traln,elem);  
-    }
-
-  if(PARAM::needsBLupdate)
-    {
-      for( auto &b : storedBranches)
-	{
-	  // use memset instead? 
-	  nodeptr p  = findNodeFromBranch(traln.getTr(), b); 
-	  traln.clipNode(p,p->back, b.length[0]); 
-	}
     }
 }
 

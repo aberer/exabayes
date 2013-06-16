@@ -60,6 +60,8 @@ double fastPow(double a, double b) {
 }
 
 
+#include <unordered_map>
+
 /**
    @brief the main ExaBayes function.
 
@@ -72,7 +74,6 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
 #ifdef TEST   
 
-
   auto traln =  make_shared<TreeAln>( )  ; 
   traln->initializeFromByteFile(cl.getAlnFileName());
 
@@ -81,38 +82,36 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
   TreeRandomizer r(123, traln ); 
   
   for(int i = 0; i < 10; ++i)
+    r.randomizeTree();
+
+  ofstream myfile; 
+  myfile.open("branches.txt") ; 
+
+  unordered_map<int, unordered_map<int,int>> mapmap; 
+
+  Randomness rand(123); 
+  for(int i = 0; i < 10000; ++i)
     {
-      r.randomizeTree();
-
-      // tree *tr = traln.getTr();   
-      cout << *traln << endl; 
-    }
-  exit(0); 
-  
-  // cout << traln.getTr()->nodep[1]->back << endl; 
-  // cout << "hi" << endl; 
-
-  // modifyBranchLength(traln,traln.getTr()->nodep[1]->back, 
-  // 		     [](nodeptr p)
-  // 		     {
-  // 		       cout << "visiting node number " << p->number << "\t" << endl ;  // << p->z[0] << endl; 
-  // 		     }
-  // 		     ); 
-
-  // traln.enableParsimony(); 
-
-  // for(int i = 1 ;  i < 2 * tr->mxtips -2 ; ++i)
-  //   {
-  //     vector<nat> partitionParsimony; 
-  //     exa_evaluateParsimony(traln, tr->nodep[i], TRUE ,partitionParsimony); 
+      Branch b = rand.drawInnerBranchUniform(*traln); 
+      // myfile << b.getPrimNode() << "\t" << b.getSecNode() << endl;
       
-  //     for(auto b : partitionParsimony)
-  // 	cout << b << "," ; 
-  //     cout << endl; 
-  //   }
+      mapmap[b.getPrimNode()][b.getSecNode()]++; 
+      
+    }
+  myfile.close(); 
 
+  for(auto &submap : mapmap)
+    {
+      cout << submap.first << endl; 
+      for(auto & v : submap.second)
+	{
+	  cout << "\t" << v.first << ": "<< v.second << endl; 
+	}
+    }
 
-  // exit(0);
+  
+  exit(0); 
+
 
 #endif
 

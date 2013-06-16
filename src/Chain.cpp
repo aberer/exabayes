@@ -19,6 +19,7 @@
 #include "PartitionProposal.hpp"
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
+#include "LikelihoodEvaluator.hpp" 
 
 
 // #define DEBUG_ACCEPTANCE
@@ -40,10 +41,6 @@ Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, con
 
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
-
-  // evaluateFullNoBackup(*traln);   
-
-  // addChainInfo(tout)  << " lnPr="  << prior.getLnPrior() << " lnLH=" << traln->getTr()->likelihood << "\tTL=" << branchLengthToReal(traln->getTr(), traln->getTreeLengthExpensive()) << "\tseeds=>"  << chainRand << endl; 
 
   saveTreeStateToChain(); 
 
@@ -240,15 +237,16 @@ void Chain::printNexusTreeFileStart( FILE *fh  )
 void Chain::switchState(Chain &rhs)
 {
   swap(couplingId, rhs.couplingId); 
-  swap(chainRand, rhs.chainRand); 
+  // swap(chainRand, rhs.chainRand); 
   swap(proposals, rhs.proposals); 
 }
 
 
 void Chain::step()
 {
-  // cout << "current prior is " << prior.getLnPrior() << " and ratio is " << prior.getLnPriorRatio() << endl; 
+#ifdef DEBUG_VERIFY_LNPR
   prior.verifyPrior(*traln);
+#endif
 
   currentGeneration++; 
   tree *tr = traln->getTr();   
@@ -305,12 +303,6 @@ void Chain::step()
 
   expensiveVerify(*traln); 
 
-// proposals/Chai
-  // TreePrinter tp(false, true, false); 
-  // cout << "after proposal: " << tp.printTree(*traln)<< endl; 
-
-  
-
 #ifdef DEBUG_TREE_LENGTH  
   assert( fabs (traln->getTreeLengthExpensive() - traln->getTreeLength())  < 1e-6); 
 #endif
@@ -320,8 +312,9 @@ void Chain::step()
 #endif
 
   debug_checkTreeConsistency(this->getTraln());
- 
-  if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
-    pfun->autotune();
 
+  if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
+    {
+      pfun->autotune();
+    }
 }

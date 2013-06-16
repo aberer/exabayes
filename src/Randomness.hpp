@@ -45,7 +45,7 @@ public:
   double drawMultiplier(double multiplier); 
   double drawFromSlidingWindow(double param, double window); 
 
-  branch drawSubtreeUniform(TreeAln &traln); 
+  // branch drawSubtreeUniform(TreeAln &traln); 
   branch drawInnerBranchUniform(TreeAln &traln); 
 
   void drawPermutation( int* perm, int n); 

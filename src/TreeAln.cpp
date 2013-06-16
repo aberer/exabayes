@@ -704,42 +704,12 @@ void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFr
 #endif
 
 
-
-
-
 ostream& operator<< (ostream& out,  TreeAln&  traln)
 {
   TreePrinter tp(true, false, false); 
   return out << tp.printTree(traln); 
-  
-
-  // tree *tr = traln.getTr();
-  // Tree2stringNexus(tr->tree_string, tr, tr->start->back,0);
-  // stringstream ss; 
-  // ss << tr->tree_string;   
-  // out << ss.str() ; 
-  // return out; 
 }
 
-
-
-#if 0 
-/** 
-    @brief returns real branch length
- */ 
-double TreeAln::getTreeLength() const
-{
-  vector<branch> branches; 
-  extractBranches(*this,branches ); 
-  
-  double length = 1; 
-  for(auto b : branches)
-    length *= b.length[0];
-
-  return length; 
-}
-
-#endif
 
 
 void TreeAln::collapseBranch(branch b)
@@ -748,8 +718,6 @@ void TreeAln::collapseBranch(branch b)
   nodeptr p = findNodeFromBranch(  getTr(), b); 
   p->z[0] = p->back->z[0] = TreeAln::zZero;   
 }
-
-
 
 
 bool TreeAln::isCollapsed(branch b ) 
@@ -779,13 +747,8 @@ vector<double> TreeAln::getRevMat(int model) const
       sum += result[i]; 
     }
 
-  // normalize such that sum is 1 
   for_each(result.begin(), result.end(), [&](double &v) { v /= sum ; }) ; 
-  
-  // cout << "afer norm "  ; 
-  // for_each(result.begin(), result.end(), [](double v) {cout << v <<  ","; }); 
-  // cout << endl; 
-  
+
   return result; 
 }
 

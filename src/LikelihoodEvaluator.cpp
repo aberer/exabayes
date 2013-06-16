@@ -1,6 +1,7 @@
 #include "LikelihoodEvaluator.hpp"
 #include "eval.h"
 #include "GlobalVariables.hpp"
+#include "LnlRestorer.hpp"
 
 // TODO const correctness  
 // TODO use move lnl restorer into this here 
@@ -19,25 +20,30 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
 }
 
 
-
-void LikelihoodEvaluator::disorientTree(TreeAln &traln, const Branch &root) const
+void LikelihoodEvaluator::disorientTree(TreeAln &traln, const Branch &root) 
 {
   disorientSubtree(traln,root);   
-  Branch b; 
-  root.getInverted(b);   
-  disorientSubtree(traln, b); 
+  disorientSubtree(traln, root.getInverted()); 
 }
 
 
-void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch) const
-{  
-  auto p = branch.findNodeFromBranch(traln ); 
-
+bool LikelihoodEvaluator::disorientNode( nodeptr p)
+{
+  bool result =  ( p->x == 1 ) ; 
   if(p->x)
     {
       p->x = 0; 
-      p->next->x = 1 ; 
+      p->next->x = 1; 
     }
+  return result; 
+}
+
+
+void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch) 
+{  
+  auto p = branch.findNodeFromBranch(traln ); 
+
+  disorientNode(p); 
 
   if(not traln.isTipNode(p))
     {
@@ -94,7 +100,7 @@ void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) 
 }
 
 
-double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat>& partitions, bool fullTraversal)    
+double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)    
 {
   Branch root; 
   findVirtualRoot(traln,root); 
@@ -112,18 +118,17 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat
   for(auto m : partitions)
     traln.accessExecModel(m) = TRUE; 
 
-#ifdef DEBUG_LNL_VERIFY
-  globals.verifyLnl = false; 	// HACK
-#endif
-
   disorientTree(traln, root); 
-  evaluate(traln, Branch(tr->start->number, tr->start->back->number,0), true) ; 
+  
+  for(auto p : partitions)
+    {
+      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.findNodeFromBranch(traln), p, true ); 
+      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodeFromBranch(traln), p, true); 
+    }
 
-#ifdef DEBUG_LNL_VERIFY
-  globals.verifyLnl = true; 	// HACK
-#endif
-
-    for(auto m : partitions )
+  exa_evaluateGeneric(traln, root.findNodeFromBranch(traln),  FALSE ); 
+  
+  for(auto m : partitions )
     perPartitionLH[m] = traln.accessPartitionLH(m); 
 
   for(nat i = 0; i < numPart; ++i )
@@ -136,8 +141,10 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat
       traln.accessExecModel(i) = TRUE; 
     }  
   
+#ifdef DEBUG_LNL_VERIFY
   expensiveVerify(traln);   
+#endif
   
-  return 0 ; 
+  return tr->likelihood; 
 }
 

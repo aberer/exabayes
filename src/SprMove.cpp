@@ -22,7 +22,6 @@ static void disorientHelper(const TreeAln &traln, nodeptr p)
 }
 
 
-
 /**
    @brief dis-orients the path, s.t. the lnl can be recomputed
    correctly.
@@ -33,8 +32,8 @@ static void disorientHelper(const TreeAln &traln, nodeptr p)
  */ 
 void SprMove::destroyOrientationAlongPath( Path& path, const TreeAln &traln,  nodeptr p)
 {  
-  nat first = path.getNthNodeInPath(0),
-    last = path.getNthNodeInPath(path.getNumberOfNodes()-1); 
+  int first = (int)path.getNthNodeInPath(0),
+    last = (int)path.getNthNodeInPath(path.getNumberOfNodes()-1); 
 
   if(NOT path.nodeIsOnPath(p->number) || traln.isTipNode(p) || p->number == first || p->number == last )
     return; 
@@ -43,7 +42,6 @@ void SprMove::destroyOrientationAlongPath( Path& path, const TreeAln &traln,  no
   destroyOrientationAlongPath(path, traln, p->next->back); 
   destroyOrientationAlongPath(path, traln, p->next->next->back);
 }
-
 
 
 /**

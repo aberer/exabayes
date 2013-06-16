@@ -15,6 +15,7 @@ class Chain;
 #include "TreeAln.hpp"
 #include "Path.hpp"
 #include "AbstractProposal.hpp"
+#include "NniMove.hpp"
 
 class StatNNI : public AbstractProposal
 {
@@ -33,6 +34,7 @@ public:
 private:
   double multiplier; 
   Path path; 
+  NniMove move; 
 
   void treatOneBranch(nodeptr p, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand); 
 };

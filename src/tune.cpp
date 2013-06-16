@@ -6,7 +6,7 @@
    
    @return tuned parameter    
  */
-double tuneParameter(int batch, double accRatio, double parameter, boolean inverse )
+double tuneParameter(int batch, double accRatio, double parameter, bool inverse )
 {  
   double delta = 1.0 / sqrt(batch);
   delta = 0.01 < delta ? 0.01 : delta;

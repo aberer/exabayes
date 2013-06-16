@@ -30,5 +30,7 @@ void evaluateOnePartition(TreeAln& traln, nodeptr start, boolean fullTraversal, 
 void exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal, vector<nat> &partitionParsimony); 
 void exa_newViewParsimony(TreeAln &traln, nodeptr p); 
 
+void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
+
 void evaluatePartitions(TreeAln &traln, nodeptr start, vector<nat> models  ) ; 
 #endif

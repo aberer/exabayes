@@ -8,14 +8,15 @@
 class LikelihoodEvaluator
 {
 public: 
-  double evaluatePartitions( TreeAln &traln, const vector<nat>& partitions, bool fullTraversal)  ; 
+  double evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)  ; 
   void evalSubtree( TreeAln &traln, const Branch &evalBranch)    ; 
   double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
 
   void findVirtualRoot(const TreeAln &traln, Branch &result) const ; 
 
-  void disorientTree(TreeAln &traln, const Branch &root) const; 
-  void disorientSubtree(TreeAln &traln, const Branch &branch) const; 
+  static bool disorientNode( nodeptr p); 
+  static void disorientTree(TreeAln &traln, const Branch &root) ; 
+  static void disorientSubtree(TreeAln &traln, const Branch &branch) ; 
 
 private: 
   // TODO lnl restorer 

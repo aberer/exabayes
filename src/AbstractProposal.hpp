@@ -126,7 +126,6 @@ protected:
 
   double relativeWeight; 
 
-  LikelihoodEvaluator lnlEvaluator; 
 }; 
 
 #endif

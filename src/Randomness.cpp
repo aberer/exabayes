@@ -103,32 +103,32 @@ double Randomness::drawFromSlidingWindow(double param, double window)
 #endif
 
 
-/**
-   @brief draws a subtree uniformly. 
+// /**
+//    @brief draws a subtree uniformly. 
 
-   We have to account for tips again. 
+//    We have to account for tips again. 
    
-   The thisNode contains the root of the subtree.
-*/ 
-branch Randomness::drawSubtreeUniform(TreeAln &traln)
-{
-  tree *tr = traln.getTr();   
-  while(TRUE)
-    {
-      branch b = drawBranchUniform(traln); 
-      if(isTipBranch(b,tr->mxtips))
-	{
-	  if(isTip(b.thisNode, tr->mxtips))
-	    b = invertBranch(b); 
-	  if(drawRandDouble01() < 0.5)
-	    return b; 
-	}
-      else 
-	{
-	  return drawRandDouble01() < 0.5 ? b  : invertBranch(b); 	  
-	}
-    }
-}
+//    The thisNode contains the root of the subtree.
+// */ 
+// branch Randomness::drawSubtreeUniform(TreeAln &traln)
+// {
+//   tree *tr = traln.getTr();   
+//   while(TRUE)
+//     {
+//       branch b = drawBranchUniform(traln); 
+//       if(isTipBranch(b,tr->mxtips))
+// 	{
+// 	  if(isTip(b.thisNode, tr->mxtips))
+// 	    b = invertBranch(b); 
+// 	  if(drawRandDouble01() < 0.5)
+// 	    return b; 
+// 	}
+//       else 
+// 	{
+// 	  return drawRandDouble01() < 0.5 ? b  : invertBranch(b); 	  
+// 	}
+//     }
+// }}
 
 
 
@@ -141,9 +141,9 @@ branch Randomness::drawBranchUniform(TreeAln &traln)
 {
   tree *tr = traln.getTr(); 
 
-  boolean accept = FALSE; 
+  bool accept = false; 
   int randId = 0; 
-  while(NOT accept)
+  while(not accept)
     {
       randId = drawRandInt(2 * tr->mxtips - 2 ) + 1;
       assert(randId > 0); 
@@ -188,6 +188,10 @@ branch Randomness::drawBranchUniform(TreeAln &traln)
 */ 
 branch Randomness::drawInnerBranchUniform(TreeAln &traln)
 {
+#ifdef EFFICIENT
+  assert(0); 
+#endif
+
   tree *tr = traln.getTr(); 
   boolean accepted = FALSE; 
   branch b; 

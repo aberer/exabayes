@@ -36,7 +36,6 @@ LnlRestorer::LnlRestorer(TreeAln& traln)
       for(int j = 0; j < numTax-2; ++j)
 	{
 	  reserveArrays[i][j] = (double*)exa_malloc_aligned(length *  partition->states * GAMMA_CATS  * sizeof(double)); // TODO not aligned? 
-	  // reserveArrays[i][j] = (double*)exa_calloc(length * LENGTH_LNL_ARRAY , sizeof(double)); // TODO not aligned? 
 	  memset(reserveArrays[i][j], 0, length * partition->states * GAMMA_CATS * sizeof(double)); 
 	}
 

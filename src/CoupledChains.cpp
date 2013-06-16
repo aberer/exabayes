@@ -25,7 +25,7 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
   for(int i = 0; i < numCoupled; ++i)
     {
 
-      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i],  proposals, tuneFreq, vars); 
+      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i],  proposals, params.getTuneFreq(), vars); 
       chain->setDeltaT(temperature); 
       chains.push_back(chain);
     }
@@ -264,7 +264,7 @@ void CoupledChains::tuneTemperature()
 
   auto c = swapInfo[1]; 
 
-  temperature = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), temperature, FALSE); 
+  temperature = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), temperature, false); 
   // tout << "new temperature " << setprecision(3) << temperature<< ". Ratio was "  << c->getRatioInLastInterval() << endl; 
   c->nextBatch();
   

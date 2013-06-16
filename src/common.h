@@ -7,7 +7,7 @@
 #define _COMMON_H
 
 
-
+/* #define NO_SEC_BL_MULTI */
 
 
 #define NOT_IMPLEMENTED  0
@@ -73,23 +73,9 @@
 
 #define ALL_MODELS -1 
 
-
 typedef  unsigned int nat ; 
 
 #define NOT ! 
-
-#define INIT_BL_MULT 1.386294
-#define INIT_BL_SLID_WIN  0.075
-#define INIT_RATE_SLID_WIN  0.15 
-#define INIT_FREQ_SLID_WIN  0.2 
-#define INIT_GAMMA_SLID_WIN  0.75
-#define INIT_ESPR_MULT 0.098
-#define INIT_NNI_MULT 0.098
-#define INIT_TL_MULTI 1.386294
-#define INIT_GAMMA_MULTI 0.811
-#define INIT_NODE_SLIDER_MULT  0.191
-
-#define INIT_DIRICHLET_ALPHA 1000.0 
 
 
 #define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
@@ -105,20 +91,14 @@ typedef  unsigned int nat ;
 
  */
 
-
-
 /* #define DEBUG_ACCEPTANCE */
 
 /* #define DEBUG_HASTINGS */
 
-
-
 /* #define UNSURE  */
 /* #define EFFICIENT  */
 
-
 /* #define PRINT_MULT */
-
 
 /* #define DEBUG_EVAL */
 /* #define DEBUG_ARRAY_SWAP */
@@ -146,13 +126,13 @@ typedef  unsigned int nat ;
 #define STRETCH_FACTOR 2 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define VERIFY_LNL_SUPER_EXPENSIVE */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
 /* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
-#define DEBUG_LNL_VERIFY
+/* #define DEBUG_LNL_VERIFY */
 
 #endif

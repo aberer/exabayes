@@ -19,7 +19,7 @@ static void exa_newViewGeneric( TreeAln& traln, nodeptr p, boolean masked)
 }
 
 
-static void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
+void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
 #if HAVE_PLL != 0
   evaluateGeneric(traln.getTr(), traln.getPartitionsPtr(), start, fullTraversal); 
@@ -75,11 +75,10 @@ void expensiveVerify(TreeAln& traln)
   nodeptr
     p = root.findNodeFromBranch(debugTraln ); 
 
-  eval.disorientTree(traln, root); 
+  eval.disorientTree(debugTraln, root); 
   exa_evaluateGeneric(debugTraln, p , FALSE); 
 
   double verifiedLnl =  debugTraln.getTr()->likelihood; 
-
 
   if( isOutputProcess())
     {      
@@ -98,6 +97,8 @@ void expensiveVerify(TreeAln& traln)
 
       assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
     }  
+  else 
+    cout << "okay" << endl; 
 #endif
 }
 
@@ -114,9 +115,6 @@ void evaluateFullNoBackup(TreeAln& traln)
 }
 
 
-
-
-
 void exa_newViewParsimony(TreeAln &traln, nodeptr p)
 {
 #if HAVE_PLL != 0
@@ -126,7 +124,6 @@ void exa_newViewParsimony(TreeAln &traln, nodeptr p)
   assert(0);
 #endif
 }
-
 
 
 void exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal, vector<nat> &partitionParsimony)
@@ -202,30 +199,7 @@ void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal
     cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" )  << endl; 
 #endif
 
-  int model = ALL_MODELS; 
-  int numModels = 0; 
-  for(int i = 0; i < traln.getNumberOfPartitions() ; ++i)
-    {
-      if(traln.accessExecModel(i))
-	{	  
-	  numModels++; 
-	  model = i; 
-	}
-    }
-  assert(numModels == 1 || numModels == traln.getNumberOfPartitions()); 
-  if(numModels > 1)
-    {
-      model = ALL_MODELS; 
-#ifdef DEBUG_EVAL
-      if(isOutputProcess())
-      cout << " and all models" << endl; 
-#endif
-    }
-#ifdef DEBUG_EVAL
-  else
-    if(isOutputProcess())
-    cout << " and model "<< model << endl; 
-#endif
+  int model  = ALL_MODELS; 
 
   traln.getRestorer()->traverseAndSwitchIfNecessary(traln, start, model, fullTraversal);
   traln.getRestorer()->traverseAndSwitchIfNecessary(traln, start->back, model, fullTraversal);

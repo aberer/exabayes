@@ -1,3 +1,6 @@
+#include <unordered_map>
+#include <functional>
+
 #include "ParsimonySPR.hpp"
 #include "Topology.hpp"
 #include "eval.h"
@@ -5,6 +8,9 @@
 #include "output.h"
 #include "InsertionScore.hpp"
 #include "Branch.hpp"
+// #include "PossibilityCollection.hpp"
+
+
 
 
 // #define DEBUG_PARS_SPR
@@ -20,20 +26,21 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
 }
 
 
-static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, vector<InsertionScore> &insertPoints)
+static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, unordered_map<Branch,vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses)
 {
   nodeptr insertBack =  insertPos->back;   
   traln.clipNodeDefault(insertPos, prunedTree->next);
   traln.clipNodeDefault( insertBack, prunedTree->next->next); 
-  branch b = constructBranch(insertPos->number, insertBack->number); 
+
+  Branch b(insertPos->number, insertBack->number); 
 
   exa_newViewParsimony(traln, prunedTree);
   
   vector<nat> partitionParsimony ; 
   exa_evaluateParsimony(traln, prunedTree->back, FALSE, partitionParsimony);
 
-  InsertionScore i(b, partitionParsimony); 
-  insertPoints.push_back(i); 
+  assert(posses.find(b) == posses.end()) ;   
+  posses[b] = partitionParsimony; 
 
   traln.clipNodeDefault(insertPos, insertBack); 
   prunedTree->next->back = prunedTree->next->next->back = NULL; 
@@ -41,8 +48,8 @@ static void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prune
   // recursively descend 
   if(not traln.isTipNode(insertPos))
     {
-      testInsertParsimony(traln, insertPos->next->back, prunedTree, insertPoints); 
-      testInsertParsimony(traln, insertPos->next->next->back, prunedTree, insertPoints); 
+      testInsertParsimony(traln, insertPos->next->back, prunedTree, posses); 
+      testInsertParsimony(traln, insertPos->next->next->back, prunedTree, posses); 
     }
 }
 
@@ -54,7 +61,6 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
   cout << endl; 
   cout << "orig " << traln << endl; 
   cout << "copy " << *(globals.debugTree) << endl; 
-
 
   tree *tr = globals.debugTree->getTr(); 
 
@@ -78,6 +84,41 @@ static void verifyParsimony(TreeAln &traln, nodeptr pruned, InsertionScore &scor
 
 
 
+weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &insertions) const
+{
+  weightMap result; 
+  double minWeight = numeric_limits<double>::max(); 
+
+  for(auto &elem : insertions)
+    {
+      double score = 0; 
+      for(int i = 0 ; i < traln.getNumberOfPartitions(); ++i)
+	{
+	  double states  = double(traln.getPartition(i)->states); 
+	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05)) / states)) ;  //  * tr->fracchange
+	  score += divFactor * elem.second[i];
+	}
+
+      if(score < minWeight)
+	minWeight = score; 
+
+      result[elem.first] = score; 
+    }
+
+  double sum = 0; 
+  for(auto & elem : result)
+    {
+      double normalizedWeight =exp(minWeight - elem.second); 
+      sum += normalizedWeight; 
+      elem.second = normalizedWeight; 
+    }
+
+  for(auto &elem : result)
+    elem.second /= sum; 
+
+  return result; 
+} 
+
 
 
 void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
@@ -85,8 +126,9 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   vector<branch> branches; 
   extractBranches(traln, branches); 
   
-  vector<InsertionScore> insertionPoints; 
   tree *tr = traln.getTr(); 
+
+  scoreMap possibilities; 
 
   nat initScore = 0; 
   vector<nat> partitionParsimony; 
@@ -101,14 +143,13 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   while( ( pn == nullptr && pnn == nullptr ) 
 	 || ( traln.isTipNode(pn) && traln.isTipNode(pnn) ) )
     {      
-      prunedTree  = rand.drawSubtreeUniform(traln);  
+      prunedTree = rand.drawInnerBranchUniform(traln); 
       p = findNodeFromBranch(tr, prunedTree); 
       pn = p->next->back; 
       pnn = p->next->next->back;   
     }
 
-  branch initBranch = constructBranch(pn->number, pnn->number); 
-  insertionPoints.push_back(InsertionScore(initBranch, partitionParsimony)); 
+  Branch initBranch = Branch(pn->number, pnn->number); 
 
   // prune the subtree 
   traln.clipNodeDefault( pn, pnn); 
@@ -117,90 +158,46 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   // fetch all parsimony scores   
   if(not traln.isTipNode(pn)) 
     {
-      testInsertParsimony(traln, pn->next->back, p, insertionPoints);
-      testInsertParsimony(traln, pn->next->next->back, p, insertionPoints); 
+      testInsertParsimony(traln, pn->next->back, p, possibilities);
+      testInsertParsimony(traln, pn->next->next->back, p, possibilities); 
     }
   if(not traln.isTipNode(pnn))
     {
-      testInsertParsimony(traln, pnn->next->back,p, insertionPoints); 
-      testInsertParsimony(traln, pnn->next->next->back,p, insertionPoints); 
+      testInsertParsimony(traln, pnn->next->back,p, possibilities); 
+      testInsertParsimony(traln, pnn->next->next->back,p, possibilities); 
     }
 
   // probably not even necessary 
   traln.clipNodeDefault( p->next, pn ); 
   traln.clipNodeDefault( p->next->next, pnn); 
 
+  auto weightedInsertions = getWeights(traln, possibilities) ; 
 
-  double minWeight = numeric_limits<double>::max(); 
-  // now get the real scores 
-  for(InsertionScore& elem : insertionPoints)
-    {     
-      double result = 0; 
-      for(int i = 0 ; i < traln.getNumberOfPartitions(); ++i)
+
+  double r = rand.drawRandDouble01(); 
+  pair<Branch,double> chosen; 
+  for(auto v : weightedInsertions)
+    {
+      if(r < v.second)
 	{
-	  double states  = double(traln.getPartition(i)->states); 
-	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05)) / states)) ;  //  * tr->fracchange
-	  result += divFactor * elem.getPartitionScore(i);
+	  chosen = v; 
+	  break; 
 	}
-
-      if(result < minWeight)
-	minWeight = result; 
-
-      elem.setWeight(result); 
+      else 
+	r -= v.second; 
     }
-
-  double sum =  0; 
-  for(InsertionScore& elem : insertionPoints)
-    {
-      double normWeight = exp( minWeight - elem.getWeight())  ; 
-      sum += normWeight;       
-      elem.setWeight(normWeight); 
-    }
-  
-  // loop could be avoided 
-  for(InsertionScore & elem : insertionPoints)
-    {
-      double val = elem.getWeight(); 
-      elem.setWeight(val / sum); 
-    }
-
-  // draw the proposal 
-  double r = rand.drawRandDouble01();
-  InsertionScore& chosen = insertionPoints[0];
-
-  Branch initBranchNew; 
-  initBranchNew.initFromLegacy(initBranch); 
-
-  do 
-    {
-      for(InsertionScore &elem : insertionPoints)
-	{
-	  double weight = elem.getWeight(); 
-	  if(r < weight)
-	    {
-	      chosen = elem; 
-	      break; 
-	    }
-	  else 
-	    r -= weight; 
-	}
-    }while (chosen.getNewBranch().equalsUndirected(initBranchNew) ); 
 
   path.clear();   
-  path.findPath(traln ,p, findNodeFromBranch(traln.getTr(), chosen.getBranch()) );
-  path.reverse(); 
+  path.findPath(traln, p, chosen.first.findNodeFromBranch(traln));
+  path.reverse();   
+  
+  assert(possibilities.find(initBranch) == possibilities.end()); 
+  possibilities[initBranch] = partitionParsimony; 
+  possibilities.erase(chosen.first); 
 
-
-  // adjust hastings   
-  double initWeight = 0; 
-  for(auto &elem: insertionPoints)
-    {
-      if(elem.getNewBranch().equalsUndirected(initBranchNew))
-	initWeight = elem.getWeight(); 
-    }
-  assert(initWeight != 0); 
-
-  updateHastings(hastings, initWeight / chosen.getWeight(), name); 
+  auto backWeights = getWeights(traln,possibilities); 
+  
+  updateHastings( hastings, backWeights[initBranch] /  chosen.second , name); 
 
   nodeptr aNode = findNodeFromBranch(traln.getTr(), path.at(0)); 
   if(traln.isTipNode(aNode))
@@ -215,7 +212,6 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   path.reverse();
   path.append(b);  
   path.reverse();
-
 
 #ifdef EFFICIENT 
   // branch mapping would be more efficient
@@ -245,6 +241,11 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
     modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
 
   assert(traln.getNumBranches() == 1); 
+
+
+#ifdef  NO_SEC_BL_MULTI
+  modifiesBl = false;
+#endif
 
   if( modifiesBl)
     {

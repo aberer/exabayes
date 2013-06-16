@@ -3,6 +3,19 @@
 
 
 
+Branch::Branch(nodeptr p)
+  : Branch(p->number, p->back->number, p->z[0])
+{
+}
+
+
+Branch::Branch(branch b)
+  : Branch(b.thisNode, b.thatNode)
+{
+  this->length = b.length[0]; 
+}
+
+
 Branch::Branch(nat a , nat b, double length) 
   : thisNode(a), thatNode(b), length(length)
 {
@@ -16,6 +29,17 @@ void Branch::initFromLegacy(branch b)
   length = b.length[0]; 
 }
   
+
+bool Branch::exists(TreeAln &traln) const
+{
+  // nodeptr p = findNodeFromBranch(traln); 
+  nodeptr p = traln.getTr()->nodep[thisNode]; 
+  return
+    (nat)p->back->number == thatNode
+    || (nat)p->next->back->number == thatNode
+    || (nat)p->next->next->back->number == thatNode; 
+}
+
 
 
 nodeptr Branch::findNodeFromBranch(const TreeAln &traln) const

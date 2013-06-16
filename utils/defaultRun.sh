@@ -2,7 +2,7 @@
 
 
 model=GAMMA
-seed=4
+seed=1234
 
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 

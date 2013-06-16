@@ -42,12 +42,12 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   nodeptr p,q,r; 
   do 
     {
-      start  = rand.drawSubtreeUniform(traln); 
+      start = rand.drawInnerBranchUniform(traln); 
   
       p = findNodeFromBranch(tr, start);
       q = p->next->back; 
       r = p->next->next->back;
-    } while(isTip(q->number,tr->mxtips) && isTip(r->number, tr->mxtips)); 
+    } while(traln.isTipNode(q) && traln.isTipNode(r) ); 
 
   /* TODO assert that the pruned subtree is not too big (s.t. we cannot find any insertion points)  */
 
@@ -126,6 +126,11 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   bool modifiesBl = false; 
   for(auto v : secVar)
     modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+
+#ifdef NO_SEC_BL_MULTI
+  modifiesBl = false; 
+#endif
+
   if(modifiesBl)
     {
       auto brPr = secVar.at(0).getPrior();

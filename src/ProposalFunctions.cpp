@@ -1,5 +1,6 @@
 #include "ProposalFunctions.hpp"
 
+
 bool DirichletProposal::tune = true; 
 bool DirichletProposal::tuneup = false; 
 

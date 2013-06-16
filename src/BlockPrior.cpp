@@ -84,11 +84,11 @@ void BlockPrior::Read(NxsToken &token)
 
   map<string,category_t> categoryNameMap = 
     {
-      {"topoPr", TOPOLOGY}, 
-      {"brlenpr", BRANCH_LENGTHS}, 
-      {"stateFreqPr" , FREQUENCIES}, 
-      {"revMatPr", SUBSTITUTION_RATES}, 
-      {"shapePr", RATE_HETEROGENEITY}
+      {"TOPOPR", TOPOLOGY}, 
+      {"BRLENPR", BRANCH_LENGTHS}, 
+      {"STATEFREQPR" , FREQUENCIES}, 
+      {"REVMATPR", SUBSTITUTION_RATES}, 
+      {"SHAPEPR", RATE_HETEROGENEITY}
     } ; 
 
   while(true)
@@ -99,15 +99,14 @@ void BlockPrior::Read(NxsToken &token)
       if (res == NxsBlock::NxsCommandResult(STOP_PARSING_BLOCK))
 	return;
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
-	{	  
-	  token.GetNextToken();	  
-
-	  auto str = token.GetToken (false); 
+	{
+	  auto str = token.GetToken(false).ToUpper(); 
 	  category_t cat = categoryNameMap[str]; 
 
+	  token.GetNextToken();
 
 	  int priorPartition = -1;  
-	  if(str.compare("{") == 0)
+	  if(token.GetToken().compare("{") == 0)
 	    {
 	      token.GetNextToken();
 	      str = token.GetToken(false);
