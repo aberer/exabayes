@@ -23,6 +23,8 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
   this->name = "parsSPR"; 
   this->category = TOPOLOGY ; 
   relativeWeight = 5.;
+
+  // cout << "initialized parsiminy spr with warp "<< parsWarp << endl;  
 }
 
 
@@ -140,17 +142,21 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   branch prunedTree; 
   nodeptr p = nullptr, pn = nullptr , pnn = nullptr ; 
 
-  while( ( pn == nullptr && pnn == nullptr ) 
-	 || ( traln.isTipNode(pn) && traln.isTipNode(pnn) ) )
-    {      
-      prunedTree = rand.drawInnerBranchUniform(traln); 
+  do 
+    {
+      Branch b  = rand.drawBranchWithInnerNode(traln); 
+      prunedTree = b.toLegacyBranch(); 
+
       p = findNodeFromBranch(tr, prunedTree); 
       pn = p->next->back; 
-      pnn = p->next->next->back;   
-    }
+      pnn = p->next->next->back;         
+
+    } while( (traln.isTipNode(pn) &&  traln.isTipNode(pnn))     ); 
+
+  // cout <<"pruning " << p->number << "," << p->back->number << endl; 
 
   Branch initBranch = Branch(pn->number, pnn->number); 
-
+  
   // prune the subtree 
   traln.clipNodeDefault( pn, pnn); 
   p->next->back = p->next->next->back = NULL; 
@@ -172,7 +178,6 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   traln.clipNodeDefault( p->next->next, pnn); 
 
   auto weightedInsertions = getWeights(traln, possibilities) ; 
-
 
   double r = rand.drawRandDouble01(); 
   pair<Branch,double> chosen; 

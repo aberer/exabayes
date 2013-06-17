@@ -1,8 +1,7 @@
 #ifndef _BRANCH_NEW_H
 #define _BRANCH_NEW_H
 
-// #include <functional>
-
+#include <cassert>
 #include "axml.h"
 #include "branch.h"
 
@@ -23,6 +22,8 @@ public:
   void setLength(double intLength){length = intLength; }
   double getLength () const {return length; }
 
+  void applyToTree( TreeAln &traln) const ; 
+
   bool exists(TreeAln &traln) const ;  
 
   bool nodeIsInBranch(nat node) const {return (thisNode == node) || (thatNode == node) ;  }
@@ -30,6 +31,9 @@ public:
   nodeptr findNodeFromBranch(const TreeAln &traln) const; 
 
   friend ostream& operator<<(ostream &out, const Branch& br); 
+
+  nat getCommonNode(const Branch &rhs ) const; 
+  nat getOtherNode(nat node) const {assert(node == thisNode || node ==  thatNode) ; return thisNode == node ? thatNode : thisNode; }
 
 private: 
   nat thisNode; 

@@ -125,7 +125,7 @@ void Chain::debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   if(isOutputProcess())
-    tout << "[run=" << runid << ",heat="  << couplingId << ",gen="  << currentGeneration << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << setprecision(2) << fixed << lnl  <<  "\t"<< lnPr << endl; 
+    tout << "[run=" << runid << ",heat="  << couplingId << ",gen="  << currentGeneration << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << setprecision(2) << fixed << lnl  << endl; //   "\t"<< lnPr << endl; 
 #endif
 }
 
@@ -277,10 +277,10 @@ void Chain::step()
   double lnlRatio = tr->likelihood - prevLnl; 
 
   double testr = chainRand.drawRandDouble01();
-  double acceptance = exp(( priorRatio   + lnlRatio) * myHeat + hastings) ; 
+  double acceptance = exp(( priorRatio + lnlRatio) * myHeat + hastings) ; 
 
 #ifdef DEBUG_ACCEPTANCE
-  tout << "(" << prior.getLogProb() << " - " << oldPrior << ") + ( " << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
+  tout  << endl << "(" << oldPrior<<  " - " << prior.getLnPriorRatio()  << ") + ( " << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
 #endif
 
   bool wasAccepted  = testr < acceptance; 

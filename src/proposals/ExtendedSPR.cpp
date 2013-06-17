@@ -42,16 +42,19 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   nodeptr p,q,r; 
   do 
     {
-      start = rand.drawInnerBranchUniform(traln); 
-  
+      Branch startNew = rand.drawBranchWithInnerNode(traln); 
+      start = startNew.toLegacyBranch();
+
       p = findNodeFromBranch(tr, start);
       q = p->next->back; 
       r = p->next->next->back;
-    } while(traln.isTipNode(q) && traln.isTipNode(r) ); 
+    } while(traln.isTipNode(q) || traln.isTipNode(r) 
+// || traln.isTipNode(p->back)
+	    ); 
+
+  // cout << "drawn branch "  << p->number << ","  << p->back->number << endl; 
 
   /* TODO assert that the pruned subtree is not too big (s.t. we cannot find any insertion points)  */
-
-  // cout << "subtree " << start  << endl; 
 
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
@@ -66,7 +69,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
   while(NOT accepted)
-    {
+    {      
       nodeptr n = 
 	rand.drawRandDouble01()  < 0.5 
 	? currentNode->next->back

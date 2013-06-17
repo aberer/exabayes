@@ -47,14 +47,14 @@ public:
   bool isCollapsed(branch b) ; 
   void setBranchLengthUnsafe(branch b ) ; 
   // END
-  
+
+  nat getNumberOfTaxa() const {return getTr()->mxtips; }
+  nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
 
 
-  // TODO 
-  // string toString(bool showInternal, bool showBL, bool printNames ) const ; 
+  nodeptr getNode(nat elem) const {if( not (elem != 0 && elem < getNumberOfNodes() + 2 )) { cout << "bug: attempted to get node " << elem << endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;} return  getTr()->nodep[elem] ; }
 
 
-  
   /** 
       @brief clips two nodes together. Notice that z is a reference to
       the internal branch length. If z is outside the bl-bounds, it
@@ -65,13 +65,6 @@ public:
      @brief clips two nodes with a default branch length
    */ 
   void clipNodeDefault(nodeptr p, nodeptr q); 
-
-#if 0 
-  /**
-     @brief gets the tree length (real value)
-  */   
-  double getTreeLength() const ; 
-#endif
 
   // these are not your average setters! They modify the original value
   void setFrequenciesBounded(vector<double> &newValues, int model ); 

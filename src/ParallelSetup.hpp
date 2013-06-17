@@ -21,7 +21,7 @@ public:
 private: 
   int myRunBatch; 
   int runsParallel;
-  int globalRank; 
+  int globalRank; 		// 
   int globalSize; 
   
 }; 

@@ -56,7 +56,15 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
   auto brPr = primVar[0].getPrior(); 
   
-  updateHastings(hastings, pow(rememMultiplier, 2 * traln.getTr()->mxtips - 3  ) , "TL-Mult");
+#ifdef UNSURE
+  // how  to calcluate the hastings? 
+  assert(0); 
+#endif
+
+  updateHastings(hastings, 
+		 pow(rememMultiplier, 2 * traln.getTr()->mxtips - 3  ) , 
+		 // rememMultiplier, 
+		 "TL-Mult");
 
   storedBranches.clear();   
   extractBranches(traln, storedBranches); 

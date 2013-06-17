@@ -21,7 +21,9 @@ public:
 
 protected: 
   double multiplier; 
-  Path path; 
+  // Path path; 
+  Branch oneBranch; 
+  Branch otherBranch; 
 
 };  
 

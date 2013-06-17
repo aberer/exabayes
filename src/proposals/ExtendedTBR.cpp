@@ -83,6 +83,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
   tree *tr = traln.getTr();
 
   branch bisectedBranch = {0,0}; 
+  
 
   assert(tr->mxtips > 8 ); 
 
@@ -91,19 +92,20 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   do
     {
-      bisectedBranch = rand.drawInnerBranchUniform(traln); 
+      Branch tmp  = rand.drawInnerBranchUniform(traln); 
+      bisectedBranch = tmp.toLegacyBranch();
+
+      // cout << tmp << endl; 
       p1 = findNodeFromBranch(tr, bisectedBranch); 
       p2 = findNodeFromBranch(tr, invertBranch( bisectedBranch)); 
 
       assert(NOT isTip(p1->number, tr->mxtips) && NOT isTip(p2->number, tr->mxtips)); 
-      
-      // we do not want a subtree that is a tip-tip case 
-      if(NOT (( isTip( p1->next->back->number, tr->mxtips) && isTip( p1->next->next->back->number, tr->mxtips) ) 
-	      || ( isTip( p2->next->back->number, tr->mxtips) && isTip( p2->next->next->back->number, tr->mxtips) ) ))
-	break; 
-      
-      
-    } while( TRUE  ); 		// just because of the many nasty
+
+    } while( (traln.isTipNode(p1->next->back)  && traln.isTipNode(p1->next->next->back) ) 
+	     || (traln.isTipNode(p2->next->back)  && traln.isTipNode(p2->next->next->back) ) ) ; 
+
+	    // (( isTip( p1->next->back->number, tr->mxtips) && isTip( p1->next->next->back->number, tr->mxtips) ) 
+	    //   || ( isTip( p2->next->back->number, tr->mxtips) && isTip( p2->next->next->back->number, tr->mxtips) ) )  ); 		// just because of the many nasty
 				// variables otherwise
 
 #ifdef DEBUG_TBR

@@ -14,12 +14,13 @@ public:
 
   string printTree(const TreeAln &traln ); 
 
+
 private: 
   bool withBranchLengths; 
   bool withInternalNodes; 
   bool withRealNames; 
 
-  void helper(const TreeAln &traln, stringstream &ss, nodeptr p); 
+  void helper(const TreeAln &traln, stringstream &ss, nodeptr p, bool isFirst); 
   
 
 }; 

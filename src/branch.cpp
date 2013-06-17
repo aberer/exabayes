@@ -156,6 +156,7 @@ int getIntersectingNode(branch b1, branch b2)
     return b1.thatNode; 
   else 
     {
+      cout << "error: no nodes in common: "  << b1 << "\t"  << b2 << endl; 
       assert(0); 
       return 0 ; 
     }    

@@ -71,16 +71,19 @@ void CoupledChains::printSwapInfo()
   int cnt = 0; 
   for(int i = 0; i < numCoupledChains; ++i)
     {
+      bool isFirst = true; 
+
       if(i < numCoupledChains - 1 )
 	tout << "(";      
 
       for(int j = 0; j < numCoupledChains; ++j)
-	{
-	  bool isFirst = true; 
+	{	  
 	  SuccessCounter *ctr = swapInfo[cnt]; 
 	  if(i < j )
-	    tout <<  (isFirst ? "," : "" ) << setprecision(1) << 100 * ctr->getRatioOverall() << "%";
-	  isFirst = false; 
+	    {
+	      tout <<  (isFirst ? "" : "," ) << setprecision(1) << 100 * ctr->getRatioOverall() << "%";
+	      isFirst = false; 
+	    }
 	  cnt++; 
 	}
       if(i < numCoupledChains - 1 )

@@ -68,9 +68,19 @@ fi
 
 status="$(./config.status --config | tr -d "'" )"
 
-
 rm exabayes
-./configure -C  $args  $cargs
+
+prevStat=$(cat status)
+if [ "$prevStat"  == "./configure $args" ]  
+then     
+    echo "no need to reconfigure"
+else 
+    make clean 
+    echo "configuring with ./configure  $args"
+    ./configure  $args
+    echo "./configure $args" > status 
+fi 
+
 make -j $numCores
 
 if [ -f ./exabayes ]; then

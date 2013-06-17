@@ -87,3 +87,24 @@ branch Branch::toLegacyBranch() const
   b.length[0] = length; 
   return b;
 }
+
+
+nat Branch::getCommonNode(const Branch &rhs ) const
+{
+  if(thisNode == rhs.thisNode || thatNode == rhs.thisNode)
+    return rhs.thisNode;
+  else if(thatNode == rhs.thatNode || thisNode == rhs.thatNode)
+    return rhs.thatNode; 
+  else 
+    return 0;   
+} 
+
+
+
+void Branch::applyToTree( TreeAln &traln) const
+{
+  nodeptr p = findNodeFromBranch(traln); 
+  double tmp = length; 
+  // =/ 
+  traln.clipNode(p, p->back, tmp); 
+}

@@ -39,6 +39,33 @@ void Randomness::incrementNoLimit()
 }
 
 
+
+
+/** 
+    @brief draw integer uniformly from [0,upperBound]
+ */ 
+int Randomness::drawIntegerClosed(int upperBound)
+{
+  randCtr_t r = exa_rand(key, ctr); 
+  ctr.v[1]++;
+  return r.v[0] % (upperBound + 1 ) ; 
+}
+
+
+/** 
+    @brief for transition: draw integer uniformly from [0,upperBound)
+ */ 
+int Randomness::drawIntegerOpen(int upperBound)
+{
+  assert(upperBound > 1); 
+  return drawIntegerClosed(upperBound-1);   
+}
+
+
+
+/** 
+    @brief draw integer uniformly from [0,upperBound)
+ */ 
 int Randomness::drawRandInt(int upperBound )
 {
   randCtr_t r = exa_rand(key, ctr); 
@@ -103,35 +130,6 @@ double Randomness::drawFromSlidingWindow(double param, double window)
 #endif
 
 
-// /**
-//    @brief draws a subtree uniformly. 
-
-//    We have to account for tips again. 
-   
-//    The thisNode contains the root of the subtree.
-// */ 
-// branch Randomness::drawSubtreeUniform(TreeAln &traln)
-// {
-//   tree *tr = traln.getTr();   
-//   while(TRUE)
-//     {
-//       branch b = drawBranchUniform(traln); 
-//       if(isTipBranch(b,tr->mxtips))
-// 	{
-// 	  if(isTip(b.thisNode, tr->mxtips))
-// 	    b = invertBranch(b); 
-// 	  if(drawRandDouble01() < 0.5)
-// 	    return b; 
-// 	}
-//       else 
-// 	{
-// 	  return drawRandDouble01() < 0.5 ? b  : invertBranch(b); 	  
-// 	}
-//     }
-// }}
-
-
-
 /**
    @brief draws a branch with uniform probability.
    
@@ -145,8 +143,8 @@ branch Randomness::drawBranchUniform(TreeAln &traln)
   int randId = 0; 
   while(not accept)
     {
-      randId = drawRandInt(2 * tr->mxtips - 2 ) + 1;
-      assert(randId > 0); 
+      randId = drawIntegerClosed(traln.getNumberOfNodes() ) + 1 ; 
+      assert(randId > 0 && (nat)randId <= traln.getNumberOfNodes() + 1  ); 
       double r = drawRandDouble01(); 
       if(isTip(randId, tr->mxtips) )
 	accept = r < 0.25 ; 
@@ -157,7 +155,7 @@ branch Randomness::drawBranchUniform(TreeAln &traln)
   branch result; 
   result.thisNode = randId; 
   nodeptr p = tr->nodep[randId]; 
-  if(isTip(randId, tr->mxtips))
+  if(traln.isTipNode(p))
     result.thatNode = p->back->number; 
   else 
     {
@@ -183,27 +181,88 @@ branch Randomness::drawBranchUniform(TreeAln &traln)
 
 
 
-/**
-   @brief draws an inner branch 
-*/ 
-branch Randomness::drawInnerBranchUniform(TreeAln &traln)
+
+nat Randomness::drawInnerNode(const TreeAln &traln )
+{  
+  nat res = drawIntegerClosed(traln.getNumberOfTaxa() - 3 ) + traln.getNumberOfTaxa()  + 1 ;   
+  assert(traln.getNumberOfTaxa() < res  && res <= traln.getNumberOfNodes()  + 1 ); 
+  return res; 
+}
+
+
+
+/** 
+    @brief draw a branch that has an inner node as primary node   
+ */ 
+Branch Randomness::drawBranchWithInnerNode(const TreeAln &traln)
 {
-#ifdef EFFICIENT
-  assert(0); 
-#endif
+  nat idA = drawInnerNode(traln); 
+  nat r = drawIntegerClosed(2);  
+  nodeptr p = traln.getNode(idA); 
+  assert(not traln.isTipNode(p)) ; 
 
-  tree *tr = traln.getTr(); 
-  boolean accepted = FALSE; 
-  branch b; 
-  do 
+  Branch b; 
+  switch(r)
     {
-      b = drawBranchUniform(traln);
-      accepted = NOT isTip(b.thisNode, tr->mxtips ) && NOT isTip(b.thatNode, tr->mxtips);       
-    }while(NOT accepted); 
-
+    case 0: 
+      b = Branch(idA, p->back->number); 
+      break; 
+    case 1: 
+      b = Branch(idA, p->next->back->number); 
+      break; 
+    case 2: 
+      b = Branch(idA, p->next->next->back->number); 
+      break; 
+    default: assert(0); 
+    }
+ 
   return b; 
 }
 
+
+/** 
+    @brief samples an inner branch (including orientation), such that
+    each oriented inner branch is equally likely.
+ */ 
+Branch Randomness::drawInnerBranchUniform(const TreeAln &traln )
+{
+  bool acc = false;   
+  int node = 0; 
+  nodeptr p = nullptr; 
+  while(not acc)
+    {      
+      node = drawInnerNode(traln); 
+      p = traln.getNode(node); 
+      
+      nat numTips = 0; 
+      if( traln.isTipNode(p->back) ) 
+	numTips++; 
+      if(traln.isTipNode(p->next->back))
+	numTips++;
+      if(traln.isTipNode(p->next->next->back))
+	numTips++; 
+      
+      assert(numTips != 3); 
+      
+      acc = numTips == 0 || drawRandDouble01() <  (3. - double(numTips)) / 3.;       
+    }
+  assert(node != 0); 
+  
+  vector<nat> options; 
+  if(not traln.isTipNode(p->back))
+    options.push_back(p->back->number); 
+  if(not traln.isTipNode(p->next->back))
+    options.push_back(p->next->back->number); 
+  if(not traln.isTipNode(p->next->next->back))
+    options.push_back(p->next->next->back->number); 
+
+  nat other = 0;
+  if(options.size() == 1 )
+    other = options[0]; 
+  else 
+    other = options.at(drawIntegerOpen(options.size()));   
+  return Branch(node, other); 
+}
 
 
 //get random permutation of [0,n-1]

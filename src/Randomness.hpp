@@ -4,8 +4,9 @@
 #include "axml.h"
 #include "branch.h"
 #include <iostream>
+#include "Branch.hpp"
 
-typedef struct _branch  branch; 
+// typedef struct _branch  branch; 
 class TreeAln; 
 
 /* TODO is this correct? */
@@ -28,7 +29,7 @@ class TreeAln;
 typedef threefry2x32_key_t randKey_t; 
 typedef threefry2x32_ctr_t randCtr_t; 
 
-
+// class Branch; 
 
 class Randomness
 {
@@ -46,7 +47,7 @@ public:
   double drawFromSlidingWindow(double param, double window); 
 
   // branch drawSubtreeUniform(TreeAln &traln); 
-  branch drawInnerBranchUniform(TreeAln &traln); 
+  // branch drawInnerBranchUniform(TreeAln &traln); 
 
   void drawPermutation( int* perm, int n); 
   int drawSampleProportionally( double *weights, int numWeight ); 
@@ -60,11 +61,19 @@ public:
 
   //This function should be called if the expected values for the dirichlet distribution are given
   void drawDirichletExpected(vector<double> &results, const vector<double> &mean,double scale); 
-
+  
   branch drawBranchUniform(TreeAln &traln); 
+  Branch drawInnerBranchUniform(const TreeAln &traln ); 
+  int drawIntegerOpen(int upperBound); 
 
   /** @brief prints the RNG state  */ 
   friend ostream& operator<<( ostream& out, const Randomness &rhs ); 
+
+  Branch drawBranchWithInnerNode(const TreeAln &traln); 
+
+  int drawIntegerClosed(int upperBound); 
+
+  nat drawInnerNode(const TreeAln &traln ); 
 
 private:   
   randCtr_t ctr; 

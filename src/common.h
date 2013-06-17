@@ -98,6 +98,9 @@ typedef  unsigned int nat ;
 /* #define UNSURE  */
 /* #define EFFICIENT  */
 
+/* #define INCORRECT */
+
+
 /* #define PRINT_MULT */
 
 /* #define DEBUG_EVAL */
