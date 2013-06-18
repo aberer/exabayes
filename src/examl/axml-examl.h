@@ -1239,3 +1239,4 @@ int mygetopt(int argc, char **argv, char *opts, int *optind, char **optarg);
 void analyzeRunId(char id[128]);
 int filexists(char *filename); 
 void printBothOpen(const char* format, ... );
+extern  void allocateParsimonyDataStructures(tree *tr);

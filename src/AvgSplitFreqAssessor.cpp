@@ -175,7 +175,6 @@ int AvgSplitFreqAssessor::getNumTreeAvailable(string fileName)
 void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
 {
   string whiteSpace = " \t"; 
-  // cout << "filename is " << fileName << endl;
   ifstream infile(fileName); 
   string line; 
   bool foundStart = false; 
@@ -183,8 +182,6 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
   while(not abort && getline(infile, line))
     {      
       string cleanLine = trim(line); 
-
-      // cout << "line is  >" << line << "<" << endl; 
 
       if(foundStart)
 	{

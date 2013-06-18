@@ -323,22 +323,3 @@ void extractBranches(const TreeAln &traln, vector<branch> &result)
   auto tr = traln.getTr();
   extractHelper(traln, tr->nodep[1]->back, result, true);
 }
-
-
-
-
-
-
-void modifyBranchLength(TreeAln &traln, nodeptr p, const std::function<void(nodeptr)> &fun)
-{  
-
-  cout << "init " << p->number << endl; 
-
-  for(nodeptr q = p->next ; q != p ; q = q->next)
-    {
-      // cout << "visiting node " << q->number << endl; 
-      fun(q); 
-      if(not traln.isTipNode(q))
-	modifyBranchLength(traln,q->back, fun); 
-    }
-}

@@ -8,8 +8,6 @@
 class Branch
 {
 public: 
-  Branch(branch b); 
-  Branch(nodeptr p); 
   Branch(nat a = 0, nat b = 0, double length = 0.0); 
   void initFromLegacy(branch b) ; 
   double getInterpretedLength(const TreeAln &traln) const; 

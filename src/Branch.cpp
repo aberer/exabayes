@@ -2,20 +2,6 @@
 #include "TreeAln.hpp"
 
 
-
-Branch::Branch(nodeptr p)
-  : Branch(p->number, p->back->number, p->z[0])
-{
-}
-
-
-Branch::Branch(branch b)
-  : Branch(b.thisNode, b.thatNode)
-{
-  this->length = b.length[0]; 
-}
-
-
 Branch::Branch(nat a , nat b, double length) 
   : thisNode(a), thatNode(b), length(length)
 {

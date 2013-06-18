@@ -1,5 +1,4 @@
 AUTOMAKE_OPTIONS=foreign
-# SUBDIRS = ./lib/ncl-2.1.18/
 
 WARN_FLAGS= -Wall --pedantic -Wno-vla -Wno-unused-function -Wno-write-strings  -Wsign-compare
 
@@ -27,11 +26,11 @@ include src.am
 
 AM_CFLAGS+= -Ilib/Random123-1.07/include -Ilib/ncl-2.1.18/ -Isrc/proposals
 AM_CFLAGS+=$(FEATURE_FLAGS) $(WARN_FLAGS)
-AM_CXXFLAGS+=$(AM_CFLAGS)  -std=c++0x    -fpermissive
+AM_CXXFLAGS+=$(AM_CFLAGS) -std=c++0x -fpermissive
 AM_LDFLAGS=-lm -g 
 
 
-exabayes_LDADD= 
+exabayes_LDADD= libncl.a libbayes.a 
 exabayes_SOURCES = ./src/exabayes.cpp ./src/CommandLine.cpp ./src/CommandLine.hpp
 
 PLLINCLUDE=-I./src/pll
@@ -40,36 +39,33 @@ libpll_a_CFLAGS= -O2 -fomit-frame-pointer -funroll-loops -w $(AM_CFLAGS) $(PLLIN
 
 EXAMLINCLUDE=-I./src/examl/
 libexaml_a_SOURCES= ./src/examl/searchAlgo.c ./src/examl/treeIO.c ./src/examl/restartHashTable.c ./src/examl/optimizeModel.c ./src/examl/newviewGenericSpecial.c ./src/examl/trash.c ./src/examl/topologies.c ./src/examl/axml-examl.h ./src/examl/globalVariables.h ./src/examl/evaluatePartialGenericSpecial.c ./src/examl/bipartitionList.c ./src/examl/models.c ./src/examl/makenewzGenericSpecial.c ./src/examl/evaluateGenericSpecial.c ./src/examl/axml.c ./src/avxConditional.c ./src/examl/fastDNAparsimony.c
-libexaml_a_CFLAGS= -O2 -fomit-frame-pointer -funroll-loops -w $(AM_CFLAGS) -fgnu89-inline  $(EXAMLINCLUDE)  # $(MPI_CFLAGS)
+libexaml_a_CFLAGS= -O2 -fomit-frame-pointer -funroll-loops -w $(AM_CFLAGS) -fgnu89-inline  $(EXAMLINCLUDE) 
 
 noinst_LIBRARIES=libbayes.a 
 
 if WITH_DEBUG
-libbayes_a_CXXFLAGS=-ggdb  $(AM_CXXFLAGS)
+libbayes_a_CXXFLAGS=-ggdb $(AM_CXXFLAGS)
 else 
 libbayes_a_CXXFLAGS=-O3 $(AM_CXXFLAGS)
 endif
 
 # configure examl/pll specific stuff 
 if WITH_EXAML 
-CC=mpicc
-CXX=mpicxx
 LIBTOUSE=libexaml.a
-AM_CFLAGS += $(EXAMLINCLUDE) # $(MPI_CFLAGS) 
-# AM_LDFLAGS+=$(MPI_CLDFLAGS)
+AM_CFLAGS += $(EXAMLINCLUDE)
 bin_PROGRAMS+= parserExaml
 else
 LIBTOUSE=libpll.a
-AM_CFLAGS+=$(PLLINCLUDE)
+AM_CFLAGS+=$(PLLINCLUDE) 
 bin_PROGRAMS+= parserPll
 endif 
 
+
 noinst_LIBRARIES+=$(LIBTOUSE)
 exabayes_LDADD+=$(LIBTOUSE)
+# exabayes_LDADD+=
 exabayes_CFLAGS= -O3 $(AM_CXXFLAGS)
 
-# ./lib/ncl-2.1.18/ncl/.libs/
-exabayes_LDADD+=libbayes.a libncl.a 
 EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*
 
 ################################################################

@@ -15,8 +15,10 @@ public:
     ,tbuf(o1.rdbuf(), o2.rdbuf())
   {}
   
+  void disable(){tbuf.disable();}
+  
 private :
-  teebuf tbuf;   
+  teebuf tbuf; 
 }; 
 
 #endif

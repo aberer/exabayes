@@ -2,6 +2,8 @@
 #include <sstream>
 #include <cassert>
 
+#include "axml.h"
+
 #include "config.h"
 #include "TreeAln.hpp"
 
@@ -125,7 +127,6 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
   partitions = pl;
   this->initializeTreePLL(_byteFileName);
-
 #else 
   extern char byteFileName[1024]; 
   strcpy(byteFileName, _byteFileName.c_str() ) ;  
@@ -187,11 +188,9 @@ void TreeAln::verifyTreeLength() const
 }
 
 void TreeAln::enableParsimony()
-{
+{  
 #if HAVE_PLL == 0
-  // allocateParsimonyDataStructures(tr);   
-  // cout << "parsimony not implemented yet in ExaML" << endl; 
-  // assert(0); 
+  allocateParsimonyDataStructures(tr);   
 #else 
   allocateParsimonyDataStructures(tr, partitions);   
 #endif
@@ -771,28 +770,4 @@ bool TreeAln::revMatIsImmutable(int model) const
     
   return partition->states == 20 && partition->protModels != GTR; 
 } 
-
-
-
-
-
-
-
-
-
-
-
-// bool TreeAln::toString(bool showInternal, bool showBL, bool printNames) const
-// {
-
-//   assert(not printNames); 
-
-//   tree *tr = traln.getTr();
-//   Tree2stringNexus(tr->tree_string, tr, tr->start->back,0);
-//   stringstream ss; 
-//   ss << tr->tree_string;   
-//   return ss.str(); 
-//   return out; 
-// }
-
 

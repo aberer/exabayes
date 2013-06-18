@@ -3,7 +3,6 @@
 shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {
   auto value = token.GetToken(false); 
-  // cout << value << endl; 
   token.GetNextToken();
 
   assert(token.GetToken(false).compare("(") == 0); 

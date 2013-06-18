@@ -147,7 +147,7 @@ extern MPI_Comm comm;
 #endif
 
 
-void makeInfoFile(const CommandLine &cl)
+void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 {
   stringstream ss; 
   string workdir =  cl.getWorkdir(); 
@@ -161,6 +161,9 @@ void makeInfoFile(const CommandLine &cl)
   globals.logFile = ss.str();   
   globals.logStream = new ofstream (globals.logFile) ; 
   globals.teeOut = new teestream(cout, *globals.logStream);
+
+  if(not pl.isReportingProcess())
+    tout.disable(); 
 }
 
 
@@ -177,9 +180,13 @@ int main(int argc, char *argv[])
   ignoreExceptionsDenormFloat(); 
   CommandLine cl(argc, argv); 
 
-  makeInfoFile(cl);
+#if HAVE_PLL == 0 
+  pl.initializeExaml(cl);
+#endif
 
-  cl.printVersion(true);  
+  makeInfoFile(cl, pl);
+
+  // cl.printVersion(true);  
   tout << endl; 
 
   tout << PROGRAM_NAME << " was called as follows: " << endl; 
@@ -188,10 +195,6 @@ int main(int argc, char *argv[])
   tout << endl << endl; 
 
 
-
-#if HAVE_PLL == 0 
-  pl.initializeExaml(cl);
-#endif
 
   exa_main( cl, pl); 
 

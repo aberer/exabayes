@@ -235,6 +235,8 @@ void *malloc_aligned(size_t size)
 
 
 #else
+  
+  /* printf("trying to allocate %d\n", size);  */
   res = posix_memalign( &ptr, BYTE_ALIGNMENT, size );
 
   if(res != 0) 
@@ -328,7 +330,8 @@ int getStates(int dataType)
 int getUndetermined(int dataType)
 {
   assert(MIN_MODEL < dataType && dataType < MAX_MODEL);
-
+  /* printf("datatype is %d\n", dataType);  */
+  
   return pLengths[dataType].undetermined;
 }
 
@@ -2305,7 +2308,7 @@ static void initializePartitions(tree *tr, FILE *byteFile)
 	    {
 	      if(r % (size_t)processes == (size_t)processID)
 		{
-		  tr->partitionData[model].wgt[localCounter] = tr->aliaswgt[globalCounter];	      	     		 		  					     
+		  tr->partitionData[model].wgt[localCounter] = tr->aliaswgt[globalCounter]; 
 		  
 		  localCounter++;
 		}

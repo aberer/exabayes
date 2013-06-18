@@ -124,7 +124,7 @@ void Chain::applyChainStateToTree()
 void Chain::debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-  if(isOutputProcess())
+  // if(isOutputProcess())
     tout << "[run=" << runid << ",heat="  << couplingId << ",gen="  << currentGeneration << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << setprecision(2) << fixed << lnl  << endl; //   "\t"<< lnPr << endl; 
 #endif
 }

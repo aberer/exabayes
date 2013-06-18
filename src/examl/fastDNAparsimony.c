@@ -207,17 +207,17 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
 
 static char bits_in_16bits [0x1u << 16];
 
-static void compute_bits_in_16bits(void)
-{
-    unsigned int i;    
+/* static void compute_bits_in_16bits(void) */
+/* { */
+/*     unsigned int i;     */
     
-    for (i = 0; i < (0x1u<<16); i++)
-        bits_in_16bits[i] = iterated_bitcount(i);
+/*     for (i = 0; i < (0x1u<<16); i++) */
+/*         bits_in_16bits[i] = iterated_bitcount(i); */
     
-    return ;
-}
+/*     return ; */
+/* } */
 
-/* TODO  */
+ /* TODO */
 
 static unsigned int precomputed16_bitcount_bla (unsigned int n)
 {
@@ -1304,10 +1304,10 @@ static void addTraverseParsimony (tree *tr, nodeptr p, nodeptr q, int mintrav, i
 }
 
 
-static nodeptr findAnyTipFast(nodeptr p, int numsp)
-{ 
-  return  (p->number <= numsp)? p : findAnyTipFast(p->next->back, numsp);
-} 
+/* static nodeptr findAnyTipFast(nodeptr p, int numsp) */
+/* {  */
+/*   return  (p->number <= numsp)? p : findAnyTipFast(p->next->back, numsp); */
+/* }  */
 
 
 /* static void makePermutationFast(int *perm, int n, analdef *adef) */
@@ -1534,7 +1534,7 @@ static boolean isInformative2(tree *tr, int site)
 */
 
 
-static boolean isInformative(tree *tr, int dataType, int site)
+static boolean isInformative(tree *tr, int dataType, int site, int model)
 {
   int
     informativeCounter = 0,
@@ -1547,18 +1547,17 @@ static boolean isInformative(tree *tr, int dataType, int site)
 
   unsigned char
     nucleotide;
-  
-	
+
   for(j = 0; j < 256; j++)
     check[j] = 0;
   
   for(j = 1; j <= tr->mxtips; j++)
     {	   
-      nucleotide = tr->yVector[j][site];	    
+      nucleotide = tr->partitionData[model].yVector[j][site]; 
       check[nucleotide] =  check[nucleotide] + 1;
       assert(bitVector[nucleotide] > 0);	           
     }
-  
+
   for(j = 0; j < undetermined; j++)
     {
       if(check[j] > 0)
@@ -1600,23 +1599,29 @@ static void determineUninformativeSites(tree *tr, int *informative)
      amibiguous DNA encoding.
   */
 
-
   for(model = 0; model < tr->NumberOfModels; model++)
     {
-      for(i = tr->partitionData[model].lower; i < tr->partitionData[model].upper; i++)
+      int ctr = 0; 
+
+      /* printf("entering %d\n", model);  */
+      int length = tr->partitionData[model].lower + tr->partitionData[model].width ; 
+      for(i = tr->partitionData[model].lower; i < length; i++)
 	{
-	  if(isInformative(tr , tr->partitionData[model].dataType, i))
+
+	  /* TODO this is problematic as well. We do not itertate over the entire alignment this way, do we? */
+	  assert(0); 
+	  /* printf("checking site %d\n", i );  */
+	  if(isInformative(tr , tr->partitionData[model].dataType, ctr, model))
 	     informative[i] = 1;
 	   else
 	     {
 	       informative[i] = 0;
 	       number++;
 	     }  
+	  ++ctr; 
 	}      
     }
 
- 
- 
   /* printf("Uninformative Patterns: %d\n", number); */
 }
 
@@ -1667,12 +1672,9 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
     i,
     model;
 
-  /* if(saveMemory) */
-  /*   totalNodes = (size_t)tr->innerNodes + 1 + (size_t)tr->mxtips; */
-  /* else */
-    totalNodes = 2 * (size_t)tr->mxtips;
+  assert(NOT saveMemory); 
 
-
+  totalNodes = 2 * (size_t)tr->mxtips;
 
   for(model = 0; model < (size_t) tr->NumberOfModels; model++)
     {
@@ -1691,12 +1693,16 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
       
       for(i = lower; i < upper; i++)    
 	if(informative[i])
-	  entries += (size_t)tr->aliaswgt[i];     
+	  entries += (size_t)tr->aliaswgt[i]; 
+
+
+      /* honestly, this is not unproblematic: we do not have the entire alignment in memory any more, i think...  */
+      assert(0); 
   
       compressedEntries = entries / PCF;
 
       if(entries % PCF != 0)
-	compressedEntries++;
+	compressedEntries++;      
 
 #if (defined(__SIM_SSE3) || defined(__AVX))
       if(compressedEntries % INTS_PER_VECTOR != 0)
@@ -1708,7 +1714,10 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
 #endif     
 
       
-      tr->partitionData[model].parsVect = (parsimonyNumber *)malloc_aligned((size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
+      size_t toAllocate = (size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber); 
+      
+      /* printf("allocating a vector of size %d = %d  *  %d * %d * %d\n", toAllocate, compressedEntriesPadded, states, totalNodes, sizeof(parsimonyNumber));  */
+      tr->partitionData[model].parsVect = (parsimonyNumber *)malloc_aligned(toAllocate);
      
       for(i = 0; i < compressedEntriesPadded * states * totalNodes; i++)      
 	tr->partitionData[model].parsVect[i] = 0;          
@@ -1926,10 +1935,10 @@ static int markBranches(nodeptr *branches, nodeptr p, int *counter, int numsp)
 
 
 
-nodeptr findAnyTip(nodeptr p, int numsp)
-{ 
-  return  isTip(p->number, numsp) ? p : findAnyTip(p->next->back, numsp);
-} 
+/* nodeptr findAnyTip(nodeptr p, int numsp) */
+/* {  */
+/*   return  isTip(p->number, numsp) ? p : findAnyTip(p->next->back, numsp); */
+/* } */ 
 
 
 int randomInt(int n)
@@ -1963,25 +1972,25 @@ boolean tipHomogeneityChecker(tree *tr, nodeptr p, int grouping)
 
 
 
-void nodeRectifier(tree *tr)
-{
-  nodeptr *np = (nodeptr *)malloc(2 * tr->mxtips * sizeof(nodeptr));
-  int i;
-  int count = 0;
+/* void nodeRectifier(tree *tr) */
+/* { */
+/*   nodeptr *np = (nodeptr *)malloc(2 * tr->mxtips * sizeof(nodeptr)); */
+/*   int i; */
+/*   int count = 0; */
   
-  tr->start       = tr->nodep[1];
-  tr->rooted      = FALSE;
+/*   tr->start       = tr->nodep[1]; */
+/*   tr->rooted      = FALSE; */
 
-  /* TODO why is tr->rooted set to FALSE here ?*/
+/*   /\* TODO why is tr->rooted set to FALSE here ?*\/ */
   
-  for(i = tr->mxtips + 1; i <= (tr->mxtips + tr->mxtips - 1); i++)
-    np[i] = tr->nodep[i];           
+/*   for(i = tr->mxtips + 1; i <= (tr->mxtips + tr->mxtips - 1); i++) */
+/*     np[i] = tr->nodep[i];            */
   
-  reorderNodes(tr, np, tr->start->back, &count); 
+/*   reorderNodes(tr, np, tr->start->back, &count);  */
 
  
-  free(np);
-}
+/*   free(np); */
+/* } */
 
 
 /* static void setupBranchMetaInfo(tree *tr, nodeptr p, int nTips, branchInfo *bInf) */
@@ -2176,6 +2185,33 @@ typedef struct
     int number;
   }
   infoMP;
+
+
+
+void allocateParsimonyDataStructures(tree *tr)
+{
+  int 
+    i,
+    *informative = (int *)exa_malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
+ 
+  determineUninformativeSites(tr, informative);
+
+  compressDNA(tr, informative, FALSE);
+
+  for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 1; i++)
+    {
+      nodeptr 
+	p = tr->nodep[i];
+
+      p->xPars = 1;		/*  */
+      p->next->xPars = 0;
+      p->next->next->xPars = 0;
+    }
+
+  tr->ti = (int*)exa_malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
+
+  exa_free(informative); 
+}
 
 
 static int infoCompare(const void *p1, const void *p2)

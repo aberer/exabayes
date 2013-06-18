@@ -49,8 +49,4 @@ double getRatio(tree *tr, double a, double b );
 
 ostream& operator<<(ostream& rhs, const branch &b);
 
-
-#include <functional>
-void modifyBranchLength(TreeAln &traln, nodeptr p, const std::function<void(nodeptr)> &fun);
-
 #endif

@@ -11,12 +11,18 @@ public:
   teebuf(streambuf *_sb1, streambuf *_sb2)
     : sb1(_sb1)
     , sb2(_sb2)
+    , isDisabled(false)
   {}
+
+  void disable() {isDisabled = true; }
+  
 
 private: 
   virtual int overflow(int c)
   {
-    if( c == EOF)      
+    if(isDisabled)
+      return EOF; 
+    if(  c == EOF)      
       return !EOF; 
     else 
       {	
@@ -28,13 +34,18 @@ private:
 
   virtual int sync()
   {
-    int const r1 = sb1->pubsync();
-    int const r2 = sb2->pubsync();
-    return r1 == 0 && r2 == 0 ? 0 : -1; 
+    if(not isDisabled)
+      {
+	int const r1 = sb1->pubsync();
+	int const r2 = sb2->pubsync();
+	return r1 == 0 && r2 == 0 ? 0 : -1; 
+      }
+    return 0; 
   }
 
   streambuf *sb1; 
   streambuf *sb2; 
+  bool isDisabled; 
 }; 
 
 

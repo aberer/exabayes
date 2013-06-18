@@ -13,10 +13,10 @@ void NniMove::init(const TreeAln &traln, const Branch& _innerBranch, pair<int,in
   assert(traln.getNumBranches() == 1 ); 
   innerBranch.setLength(p->z[0]); 
   
-  outerBranches.push_back(Branch(p->next->back)); 
-  outerBranches.push_back(Branch(p->next->next->back)); 
-  outerBranches.push_back(Branch(p->back->next->back)); 
-  outerBranches.push_back(Branch(p->back->next->next->back)); 
+  outerBranches.push_back(Branch(p->next->back->number, p->number, p->z[0])); 
+  outerBranches.push_back(Branch(p->next->next->back->number, p->number, p->z[0])); 
+  outerBranches.push_back(Branch(p->back->next->back->number,p->back->number, p->back->z[0])); 
+  outerBranches.push_back(Branch(p->back->next->next->back->number, p->back->number, p->back->z[0])); 
 
   bool foundA = false; 
   bool foundB = false; 

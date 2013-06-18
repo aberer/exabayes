@@ -6,7 +6,7 @@ seed=1234
 
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
-useClang=1
+useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang -Qunused-arguments"
@@ -16,16 +16,6 @@ else
     cxxcompiler="g++"
 fi
 
-if [ "$(which ccache)" != "" ]  ; then 
-    export CC="ccache $ccompiler"
-    export CXX="ccache $cxxcompiler"
-else 
-    export CC="$ccompiler"
-    export CXX="$cxxcompiler"
-fi 
-
-
-
 
 if [ "$#" != 3 ]; then
     echo -e  "./defaultRun.sh debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
@@ -33,16 +23,15 @@ if [ "$#" != 3 ]; then
 fi
 
 
-args=""
+args="" # "--disable-silent-rules" # 
 
 dataset=$3
 
 default=$1
 if [ "$default" == "default" ]; then
-    args=$args
     gdb=""
 elif [ "$default" == "debug" ]; then 
-    args="$args --enable-mydebug"
+    args="$args--enable-mydebug"
     gdb="$TERM -e gdb -ex run --args "
 else  
     echo "first argument must be either 'debug' or 'default'"
@@ -50,12 +39,20 @@ else
 fi
 
 
+CC="mpicc"  #  -cc=$ccompiler
+CXX="mpicxx"   # -cxx=$cxxcompiler
+if [ "$(which ccache)" != "" ]  ; then 
+    CC="ccache $CC"
+    CXX="ccache $CXX"
+fi 
+args="$args CC=\""$CC"\" CXX=\""$CXX"\""
+
 codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
     args="$args --disable-pll"
-    baseCall="mpirun -np 2 $gdb ./exabayes -f data/$dataset/aln.examl.binary -n testRun -s $seed -c examples/test.nex" #  -t data/$dataset/tree_2 
+    baseCall="mpirun -np 2 $gdb ./exabayes -f data/$dataset/aln.examl.binary -n testRun -s $seed -c examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
-    baseCall="$gdb ./exabayes -s $seed -f data/$dataset/aln.pll.binary -n testRun -c examples/test.nex " #   -t data/$dataset/tree_2 
+    baseCall="$gdb ./exabayes -s $seed -f data/$dataset/aln.pll.binary -n testRun -c examples/test.nex " 
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -68,17 +65,31 @@ fi
 
 status="$(./config.status --config | tr -d "'" )"
 
-rm exabayes
+rm -f exabayes
 
-prevStat=$(cat status)
-if [ "$prevStat"  == "./configure $args" ]  
+
+if [ -f status ] ; then 
+    prevStat=$(cat status)
+else    
+    prevStat=""
+fi 
+
+cmd="./configure $args"
+
+if [ "$prevStat"  == "$cmd" ]  
 then     
-    echo "no need to reconfigure"
+    echo "=> no need to reconfigure"
 else 
-    make clean 
-    echo "configuring with ./configure  $args"
-    ./configure  $args
-    echo "./configure $args" > status 
+    echo "config before: >"$prevStat"<"
+    echo "config    now: >$cmd<"
+
+    rm -f  Makefile   
+    eval $cmd
+
+    echo "configuring with $cmd"
+    if [ $? -eq 0 ]; then
+	echo "$cmd" > status 	
+    fi
 fi 
 
 make -j $numCores
