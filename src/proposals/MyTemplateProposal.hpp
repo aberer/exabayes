@@ -43,7 +43,7 @@ private:
   double aVariable; 		// needed for remembrance  
   double aTuningParamer; 	// for instance a multiplier we draw from  
 
-}; 
+};
 
 
 #endif

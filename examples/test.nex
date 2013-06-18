@@ -85,17 +85,18 @@ end;
  [================================================================]
  [ PROPOSAL configuration ]
  [================================================================]
+ 
 
-[ 
+[
    
       [ TOPOLOGY ]
       eSPR 0 
       stNNI 0
       eTBR  0
-      parsimonySPR 20 [ inefficient ]
+      parsimonySPR 0 [ inefficient ]
       guidedSPR 0
+ ]
  
-] 
  
       [ BRANCH LENGTHS ] 
 [       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
@@ -124,7 +125,7 @@ end;
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
-      eSprStopProb 0.5 [ stopping probability for eSPR moves, 0.5 in mb! ] 
+      eSprStopProb 0.9 [ stopping probability for eSPR moves, 0.5 in mb! ] 
       parsimonyWarp 0.10 [ warp factor for parsimony based moves => if we set that to 10, it is a reference to the star trek voyager episode "threshold" ]  
 
 

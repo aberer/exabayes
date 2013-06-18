@@ -109,25 +109,11 @@ double Randomness::drawMultiplier(double multiplier) //
 }
 
 
-
-
-#if 1 
 // alternative slider as used in mrBayes
 double Randomness::drawFromSlidingWindow(double value, double window)
 {
   return value + window * (drawRandDouble01() - 0.5); 
 }
-
-#else 
-double Randomness::drawFromSlidingWindow(double param, double window)
-{
-  double upper = param + (window / 2 ) ,
-    lower = param - (window / 2 ); 
-  
-  double r = drawRandDouble01(); 
-  return lower + r * (upper - lower)  ; /* TODO correct?  */
-}
-#endif
 
 
 /**
@@ -285,14 +271,7 @@ void Randomness::drawPermutation( int* perm, int n)
       perm[randomNumber]=i;
     }
   }
-  
-  /*for(i=0 ; i<n ; i++){
-    printf("%d ",perm[i]);
 
-    
-    }
-    printf("\n");
-  */
 }
 
 

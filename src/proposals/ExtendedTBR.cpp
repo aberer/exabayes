@@ -95,17 +95,14 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
       Branch tmp  = rand.drawInnerBranchUniform(traln); 
       bisectedBranch = tmp.toLegacyBranch();
 
-      // cout << tmp << endl; 
       p1 = findNodeFromBranch(tr, bisectedBranch); 
       p2 = findNodeFromBranch(tr, invertBranch( bisectedBranch)); 
 
       assert(NOT isTip(p1->number, tr->mxtips) && NOT isTip(p2->number, tr->mxtips)); 
 
-    } while( (traln.isTipNode(p1->next->back)  && traln.isTipNode(p1->next->next->back) ) 
+    } while( (traln.isTipNode(p1->next->back) && traln.isTipNode(p1->next->next->back) ) 
 	     || (traln.isTipNode(p2->next->back)  && traln.isTipNode(p2->next->next->back) ) ) ; 
 
-	    // (( isTip( p1->next->back->number, tr->mxtips) && isTip( p1->next->next->back->number, tr->mxtips) ) 
-	    //   || ( isTip( p2->next->back->number, tr->mxtips) && isTip( p2->next->next->back->number, tr->mxtips) ) )  ); 		// just because of the many nasty
 				// variables otherwise
 
 #ifdef DEBUG_TBR
