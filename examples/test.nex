@@ -87,14 +87,14 @@ end;
  [================================================================]
 
 
- [ 
+[  
       [ TOPOLOGY ]
       eSPR 0 
       stNNI 0
       eTBR  0
       parsimonySPR 0 [ inefficient ]
       guidedSPR 0
-] 
+ ]
  
  
  
