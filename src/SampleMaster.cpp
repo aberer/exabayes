@@ -325,20 +325,18 @@ void SampleMaster::run()
  
 void SampleMaster::finalizeRuns()
 {
-  if(isOutputProcess() )
+  for(auto run : runs)
     {
-      for(auto run : runs)
+      for(int i = 0; i < run.getNumberOfChains(); ++i)
 	{
-	  for(int i = 0; i < run.getNumberOfChains(); ++i)
-	    {
-	      Chain *chain = run.getChain(0);
-	      if( chain->getChainHeat() == 1.f)
-		chain->finalizeOutputFiles(run.getTopoFile());
-	    }
+	  Chain *chain = run.getChain(0);
+	  if( chain->getChainHeat() == 1.f)
+	    chain->finalizeOutputFiles(run.getTopoFile());
+	  tout << "best state was: " << chain->getBestState( )<< endl; 
 	}
+    }
 
-      tout << endl << "Converged after " << runs[0].getChain(0)->getGeneration() << " generations" << endl; 
-      tout << endl << "Total execution time: " << setprecision(2) <<  gettime() - initTime <<  " seconds" << endl; 
-    }  
+  tout << endl << "Converged after " << runs[0].getChain(0)->getGeneration() << " generations" << endl; 
+  tout << endl << "Total execution time: " << setprecision(2) <<  gettime() - initTime <<  " seconds" << endl; 
 }
 

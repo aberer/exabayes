@@ -142,7 +142,7 @@ void SprMove::applyPathAsESPR(TreeAln &traln, Path &modifiedPath )
   tree *tr = traln.getTr();
 
 #ifdef CONTROL_ESPR
-double treeLengthBefore = traln.getTreeLength(); 
+double treeLengthBefore = traln.getTreeLengthExpensive(); 
 #endif
   
   assert(modifiedPath.size() > 2 ); 
@@ -152,46 +152,42 @@ double treeLengthBefore = traln.getTreeLength();
   assert(nodeIsInBranch(sTPtr->number, modifiedPath.at(1))); 
 
   // finds the two nodeptrs adjacent to the subtree  
-  nodeptr prNPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(0) ,modifiedPath.getNthNodeInPath(1))),
-    prPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(2), modifiedPath.getNthNodeInPath(1))); 
+  nodeptr prOuterPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(0) ,modifiedPath.getNthNodeInPath(1))),
+    prInnerPtr = findNodeFromBranch(tr, constructBranch(modifiedPath.getNthNodeInPath(2), modifiedPath.getNthNodeInPath(1))); 
 
-  nodeptr toBeInserted = prPtr->back;   
-  nodeptr toBeInsertedPath = prNPtr->back;  
-  assert(toBeInserted->number == sTPtr->number && sTPtr->number == toBeInsertedPath->number); 
-
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  printf("APPLY: pruning %d from %d,%d\n", toBeInserted->number, prPtr->number, prNPtr->number); 
-#endif
-  /* prune sTPtr */
-  traln.clipNode(prPtr, prNPtr, prNPtr->z[0]); 
-  sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL; 
-  
   int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
     s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
-  nodeptr iPtr = findNodeFromBranch(tr, constructBranch(s2LastNode, lastNode)),
-    iNPtr = findNodeFromBranch(tr, constructBranch(lastNode, s2LastNode)); 
+  nodeptr s2lPtr = findNodeFromBranch(tr, constructBranch(s2LastNode, lastNode)), // s2l 
+    lPtr = findNodeFromBranch(tr, constructBranch(lastNode, s2LastNode)); // l
 
-  traln.clipNode(toBeInsertedPath, iPtr, iPtr->z[0]); 
-  traln.clipNode(toBeInserted, iNPtr, toBeInserted->z[0]); 
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  printf("APPLY: inserting %d to %d,%d\n", toBeInserted->number, iPtr->number, iNPtr->number); 
-#endif
-  
-  assert(branchExists(tr, constructBranch(sTPtr->number, iNPtr->number))); 
-  assert(branchExists(tr, constructBranch(sTPtr->number, iPtr->number))); 
+  // cout << modifiedPath << endl; 
+  // cout <<  "pruned: " << sTPtr->number << "\tlastNode: " << lastNode << "\ts2l: " << s2LastNode << endl; 
 
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  cout << "after inserting: " << *traln<< endl; 
-#endif
+  nodeptr toBeInserted = prInnerPtr->back;   
+  nodeptr toBeInsertedPath = prOuterPtr->back;  
+  assert(toBeInserted->number == sTPtr->number && sTPtr->number == toBeInsertedPath->number); 
+
+  /* prune sTPtr */
+  traln.clipNode(prInnerPtr, prOuterPtr, prOuterPtr->z[0]); 
+  sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL; 
+
+  traln.clipNode(toBeInsertedPath, lPtr, lPtr->z[0]); 
+  traln.clipNode(toBeInserted, s2lPtr, toBeInserted->z[0]); 
+
+  assert(branchExists(tr, constructBranch(sTPtr->number, s2lPtr->number))); 
+  assert(branchExists(tr, constructBranch(sTPtr->number, lPtr->number))); 
+
 
 #ifdef CONTROL_ESPR
-  double treeLengthAfter =  traln.getTreeLength(); 
+  double treeLengthAfter =  traln.getTreeLengthExpensive(); 
   if( fabs(treeLengthAfter  -  treeLengthBefore) > 1e-6  )
     {
       cout << setprecision(8)  << "TL before " << branchLengthToReal(traln.getTr(),treeLengthBefore) << "\tafter" <<  branchLengthToReal(traln.getTr(), treeLengthAfter) << endl; 
       assert(treeLengthAfter == treeLengthBefore); 
     }
 #endif
+
+  // cout << endl; 
 }
 
 

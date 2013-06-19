@@ -60,6 +60,8 @@ public:
 
   const vector<unique_ptr<AbstractProposal>>& getProposals() const { return proposals;}
 
+  double getBestState() const {return bestState; }
+
   
 private : 
   void initParamDump(); 
@@ -77,6 +79,8 @@ private :
   Randomness chainRand;   
   double relWeightSum ; 	// sum of all relative weights
   PriorBelief prior; 
+
+  double bestState; 
 }; 
 
 

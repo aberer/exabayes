@@ -85,6 +85,9 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
 
 
 
+#define ALT_SLIDER  
+
+
 class SlidingProposal
 {
 public: static vector<double> getNewValues(vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
@@ -98,6 +101,36 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
       }
     else
       {
+#ifdef ALT_SLIDER
+	int posA = rand.drawRandInt(oldValues.size()); 
+	double oldVal = oldValues[posA] ; 
+	double newVal = rand.drawFromSlidingWindow(oldVal, parameter); 
+
+
+#if TODO
+	// use the min values here 
+	assert(0); 
+#endif
+
+	if(newVal < 0 )
+	  newVal = -newVal; 
+	if(newVal > 1) 
+	  newVal =  newVal - 1 ; // TODO cannot be good 
+
+	oldValues[posA] = newVal; 
+
+
+	double sum = 0; 
+	for(auto v : oldValues)
+	  {
+	    sum  += v; 
+	    assert(v > 0); 	    
+	  }
+	
+	for(auto &v : oldValues)
+	  v /= sum; 
+	  
+#else 
 	int posA = rand.drawRandInt(oldValues.size()),
 	  posB = rand.drawRandInt(oldValues.size()-1); 
 	if(posB == posA)
@@ -120,8 +153,10 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
 	    sum += v ; 
 	    assert(v > 0) ; 
 	  }
-	assert(fabs( sum - 1.0 ) < 1e-6); 
-
+	
+	assert(fabs( sum - 1.0 ) < 1e-6);       
+#endif
+	
       }
 
     return oldValues; 

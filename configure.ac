@@ -4,7 +4,7 @@
 AC_REREQ([2.67])
 AC_INIT([exabayes],[0.3],[exabayes@googlegroups.com]) 
 
-dnl m4_include([./m4/lx_find_mpi.m4])
+m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 
 AM_INIT_AUTOMAKE([exabayes],[0.3])
 AC_CONFIG_SRCDIR([src/])
@@ -19,6 +19,7 @@ dnl AC_CONFIG_SUBDIRS([lib/ncl-2.1.18])
 
 # Checks for programs.
 
+
 OLD_CXXFLAGS=$CXXFLAGS
 OLD_CFLAGS=$CFLAGS
 AC_PROG_CC
@@ -26,17 +27,14 @@ AC_PROG_CXX
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
 
+
+AX_CXX_COMPILE_STDCXX_11
 AC_PROG_CC_STDC
 AC_PROG_CC_C99
 AC_PROG_RANLIB
 
-
 dnl NOTICE if you have trouble with that, then install autoconf-archive (or similar)
 AX_EXT
-
-dnl simply does not work =( 
-dnl LX_FIND_MPI()
-
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h stdint.h stdlib.h string.h strings.h sys/time.h unistd.h])
@@ -85,10 +83,7 @@ else
    AC_MSG_ERROR(bad value --enable-pll) 
 fi 
 
-AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xno"   ])
-
-AC_ARG_ENABLE(mydebug,[ --enable-mydebug	Build with debug information ])
-AM_CONDITIONAL([WITH_DEBUG], [ test x$enable_mydebug = xyes ])
+AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xno" ])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -35,6 +35,7 @@ Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, con
   , chainRand(seed.v[0])
   , relWeightSum(0)
   , prior(*_traln, variables)
+  , bestState(numeric_limits<double>::lowest())
 {
   for(auto &p : _proposals)
     proposals.push_back(unique_ptr<AbstractProposal>(p->clone())); 
@@ -291,6 +292,8 @@ void Chain::step()
     {
       pfun->accept();      
       prior.accept();
+      if(bestState < traln->getTr()->likelihood  )
+	bestState = traln->getTr()->likelihood; 
     }
   else
     {

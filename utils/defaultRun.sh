@@ -23,40 +23,40 @@ if [ "$#" != 3 ]; then
 fi
 
 
-args="" # "--disable-silent-rules" # 
+args="--disable-silent-rules " # "" # 
 
 dataset=$3
 
 default=$1
-if [ "$default" == "default" ]; then
-    gdb=""
-elif [ "$default" == "debug" ]; then 
-    args="$args--enable-mydebug"
+if [ "$default" == "debug" ]; then 
+    cflags="CFLAGS=\"-O1 -ggdb\""
+    cxxflags="CXXFLAGS=\"-O1 -ggdb\""
     gdb="$TERM -e gdb -ex run --args "
-else  
+elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"
     exit 
 fi
 
-
-CC="mpicc"  #  -cc=$ccompiler
-CXX="mpicxx"   # -cxx=$cxxcompiler
-if [ "$(which ccache)" != "" ]  ; then 
-    CC="ccache $CC"
-    CXX="ccache $CXX"
-fi 
-args="$args CC=\""$CC"\" CXX=\""$CXX"\""
-
 codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
+    CC="mpicc -cc=$ccompiler" 
+    CXX="mpicxx -cxx=$cxxcompiler"  
     args="$args --disable-pll"
     baseCall="mpirun -np 2 $gdb ./exabayes -f data/$dataset/aln.examl.binary -n testRun -s $seed -c examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
+    CC="$ccompiler"
+    CXX="$cxxcompiler"
     baseCall="$gdb ./exabayes -s $seed -f data/$dataset/aln.pll.binary -n testRun -c examples/test.nex " 
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
 fi
+
+if [ "$(which ccache)" != "" ]  ; then 
+    CC="ccache $CC"
+    CXX="ccache $CXX"
+fi 
+args="$args CC=\""$CC"\" CXX=\""$CXX"\" $cflags $cxxflags"
 
 if [ ! -d data/$dataset ]; then
     echo "could not find dataset data/$dataset"
@@ -83,11 +83,11 @@ else
     echo "config before: >"$prevStat"<"
     echo "config    now: >$cmd<"
 
-    rm -f  Makefile   
+    rm -f  Makefile     
     eval $cmd
 
     echo "configuring with $cmd"
-    if [ $? -eq 0 ]; then
+    if [ -f Makefile ]; then
 	echo "$cmd" > status 	
     fi
 fi 
@@ -99,5 +99,3 @@ if [ -f ./exabayes ]; then
     wait 
     $baseCall    
 fi
-
-

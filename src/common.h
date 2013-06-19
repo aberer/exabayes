@@ -7,7 +7,7 @@
 #define _COMMON_H
 
 
-/* #define NO_SEC_BL_MULTI */
+#define NO_SEC_BL_MULTI
 
 
 #define NOT_IMPLEMENTED  0
@@ -34,7 +34,7 @@
 #define exa_calloc calloc
 #endif
 
-#define TODO 0 
+#define TODO 0
 
 
 // TODO: we also need a header cleanup, just imported this from examl 
@@ -107,10 +107,6 @@ typedef  unsigned int nat ;
 /* #define DEBUG_ARRAY_SWAP */
 
 
-/* i think for the burn-in at least, this hurts... */
-#define ESPR_MULTIPLY_BL	 /// apply multiplier to espr as by lakner
-#define NNI_MULTIPLY_BL		 /// apply multiplier to nni move
-#define TBR_MULTIPLY_BL
 
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
 /* #define DEBUG_PRINT_TUNE_INFO */
