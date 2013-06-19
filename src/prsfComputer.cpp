@@ -75,7 +75,7 @@ double getPrsfForParameter(int paramNum, int numChain, int numGen, double ***mat
    @param result -- a matrix of parameter values  mChains x parameter x nGen
    
  */ 
-void parseFiles(int nGens, int mChains, int numParam, char *runId, double ****resultPtr, char ***paramNamesPtr)
+void parseFiles(int nGens, int mChains, int numParam, string runId, double ****resultPtr, char ***paramNamesPtr)
 {
   (*resultPtr) = (double***)exa_calloc(mChains, sizeof(double**)); 
   *paramNamesPtr = (char**)exa_calloc(numParam, sizeof(char*)); 
@@ -86,7 +86,7 @@ void parseFiles(int nGens, int mChains, int numParam, char *runId, double ****re
   boolean* useToken = (boolean*)exa_calloc(2*numParam, sizeof(boolean)); 
   {
     char fullName[1024]; 
-    sprintf(fullName, "ExaBayes_parameters.%s.%d", runId, 0); 
+    sprintf(fullName, "ExaBayes_parameters.%s.%d", runId.c_str(), 0); 
     FILE *fh = fopen(fullName, "r"); 
     size_t siz= 0; char *line = NULL; 
     int retVal __attribute__((unused)) = 0; 
@@ -117,8 +117,8 @@ void parseFiles(int nGens, int mChains, int numParam, char *runId, double ****re
   for(int i = 0 ;i < mChains; ++i)
     {
       char fullName[1024]; 
-      sprintf(fullName, "ExaBayes_parameters.%s.%d", runId, i); 
-      FILE *fh = fopen(fullName, "r");       
+      sprintf(fullName, "ExaBayes_parameters.%s.%d", runId.c_str(), i); 
+      FILE *fh = fopen(fullName, "r");      
       (*resultPtr)[i] = (double**)exa_calloc(numParam, sizeof(double*)); 
       for(int j = 0; j < numParam; ++j)
 	(*resultPtr)[i][j] = (double*)exa_calloc(nGens, sizeof(double)); 

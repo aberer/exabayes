@@ -120,8 +120,8 @@ void exa_newViewParsimony(TreeAln &traln, nodeptr p)
 #if HAVE_PLL != 0
   newviewParsimony(traln.getTr(), traln.getPartitionsPtr(), p); 
 #else 
-  // newviewParsimony(traln.getTr(),p); 
-  assert(0);
+  newviewParsimony(traln.getTr(),p); 
+  // assert(0);
 #endif
 }
 
@@ -134,7 +134,8 @@ void exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal, vec
 #if HAVE_PLL != 0 
   evaluateParsimony(traln.getTr(), traln.getPartitionsPtr(), p, fullTraversal, tmp); 
 #else 
-  assert(0);
+  evaluateParsimony(traln.getTr(), p, fullTraversal, tmp); 
+  // assert(0);
 #endif
 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)

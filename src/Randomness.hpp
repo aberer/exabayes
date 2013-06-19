@@ -21,8 +21,8 @@ class TreeAln;
    worth it, threefry is already much better than the default RNG.
  */
 
-#include <Random123/threefry.h>
-#include <Random123/u01.h>
+#include "Random123/threefry.h"
+#include "Random123/u01.h"
 
 #define exa_rand(c,k) threefry2x32(c,k)
 

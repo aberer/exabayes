@@ -1,6 +1,8 @@
 #! /bin/bash
 
 
+topdir=$(dirname  $0 )/../
+
 model=GAMMA
 seed=1234
 
@@ -9,8 +11,8 @@ numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l)
 useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
-    ccompiler="clang -Qunused-arguments"
-    cxxcompiler="clang++ -Qunused-arguments"
+    ccompiler="clang -Qunused-arguments -D__STRICT_ANSI__"
+    cxxcompiler="clang++ -Qunused-arguments -D__STRICT_ANSI__"
 else 
     ccompiler="gcc"
     cxxcompiler="g++"
@@ -18,14 +20,19 @@ fi
 
 
 if [ "$#" != 3 ]; then
-    echo -e  "./defaultRun.sh debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
+    echo -e  "$0 debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
     exit
 fi
 
-
-args="--disable-silent-rules " # "" # 
-
+args="" 
 dataset=$3
+
+pathtodata=$topdir/data/$dataset
+if [ ! -d $pathtodata ]; then     
+    echo "could not find dataset $dataset"
+    exit
+fi 
+
 
 default=$1
 if [ "$default" == "debug" ]; then 
@@ -42,11 +49,11 @@ if [ "$codeBase" == "examl" ]; then
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
     args="$args --disable-pll"
-    baseCall="mpirun -np 2 $gdb ./exabayes -f data/$dataset/aln.examl.binary -n testRun -s $seed -c examples/test.nex"
+    baseCall="mpirun -np 2 $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./exabayes -s $seed -f data/$dataset/aln.pll.binary -n testRun -c examples/test.nex " 
+    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n testRun -c $topdir/examples/test.nex " 
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -58,23 +65,14 @@ if [ "$(which ccache)" != "" ]  ; then
 fi 
 args="$args CC=\""$CC"\" CXX=\""$CXX"\" $cflags $cxxflags"
 
-if [ ! -d data/$dataset ]; then
-    echo "could not find dataset data/$dataset"
-    exit
-fi
-
-status="$(./config.status --config | tr -d "'" )"
-
 rm -f exabayes
-
-
 if [ -f status ] ; then 
     prevStat=$(cat status)
 else    
     prevStat=""
 fi 
 
-cmd="./configure $args"
+cmd="$topdir/configure $args"
 
 if [ "$prevStat"  == "$cmd" ]  
 then     

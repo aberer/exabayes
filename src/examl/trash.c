@@ -71,8 +71,10 @@ void nodeRectifier(tree *tr)
   free(np);
 }
 
+#if 0 
 nodeptr findAnyTip(nodeptr p, int numsp)
 { 
   return  isTip(p->number, numsp) ? p : findAnyTip(p->next->back, numsp);
 } 
+#endif
 

@@ -46,6 +46,10 @@
 #include <string.h>
 #include <stdint.h>
 
+
+/* NOTE modification by andre  */
+#define __SIM_SSE3
+
 #ifdef __AVX
 
 #ifdef __SIM_SSE3
@@ -120,27 +124,6 @@ extern char run_id[128];
 
 /********************************DNA FUNCTIONS *****************************************************************/
 
-
-
-/* static void checkSeed(analdef *adef)
-/* {  */
-/*   static boolean seedChecked = FALSE; */
-
-/*   if(!seedChecked)  */
-/*     { */
-/*       /\\*printf("Checking seed\n");*\\/ */
-
-/*       if(adef->parsimonySeed <= 0) */
-/* 	{ */
-/* 	  printf("Error: you need to specify a random number seed with \"-p\" for the randomized stepwise addition\n"); */
-/* 	  printf("parsimony algorithm or random tree building algorithm such that runs can be reproduced and debugged ... exiting\n");       */
-/* 	} */
-  
-/*       assert(adef->parsimonySeed > 0); */
-/*       seedChecked = TRUE; */
-/*     } */
-/* } */
-
 static void getxnodeLocal (nodeptr p)
 {
   nodeptr  s;
@@ -202,22 +185,37 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
 #define BIT_COUNT(x)  precomputed16_bitcount_bla(x, tr->bits_in_16bits)
 #endif
 
-
+/* int iterated_bitcount(unsigned int n);  */
 
 
 static char bits_in_16bits [0x1u << 16];
 
-/* static void compute_bits_in_16bits(void) */
-/* { */
-/*     unsigned int i;     */
-    
-/*     for (i = 0; i < (0x1u<<16); i++) */
-/*         bits_in_16bits[i] = iterated_bitcount(i); */
-    
-/*     return ; */
-/* } */
 
- /* TODO */
+static int iterated_bitcount(unsigned int n)
+{
+    int 
+      count=0;    
+    
+    while(n)
+      {
+        count += n & 0x1u ;    
+        n >>= 1 ;
+      }
+    
+    return count;
+}
+
+static void compute_bits_in_16bits(void)
+{
+    unsigned int i;    
+    
+    for (i = 0; i < (0x1u<<16); i++)
+      bits_in_16bits[i] = iterated_bitcount(i);
+    
+    return ;
+}
+
+/* TODO  */
 
 static unsigned int precomputed16_bitcount_bla (unsigned int n)
 {
@@ -1161,17 +1159,17 @@ void newviewParsimony(tree *tr, nodeptr  p)
 
 /****************************************************************************************************************************************/
 
-static void insertParsimony (tree *tr, nodeptr p, nodeptr q)
-{
-  nodeptr  r;
+/* static void insertParsimony (tree *tr, nodeptr p, nodeptr q) */
+/* { */
+/*   nodeptr  r; */
   
-  r = q->back;
+/*   r = q->back; */
   
-  hookupDefault(p->next,       q, tr->numBranches);
-  hookupDefault(p->next->next, r, tr->numBranches); 
+/*   hookupDefault(p->next,       q, tr->numBranches); */
+/*   hookupDefault(p->next->next, r, tr->numBranches);  */
    
-  newviewParsimony(tr, p);     
-} 
+/*   newviewParsimony(tr, p);      */
+/* } */ 
 
 /*
   static nodeptr buildNewTip (tree *tr, nodeptr p)
@@ -1188,126 +1186,126 @@ static void insertParsimony (tree *tr, nodeptr p, nodeptr q)
   } 
 */
 
-static nodeptr buildNewTip (tree *tr, nodeptr p)
-{ 
-  nodeptr  q;
-
-  q = tr->nodep[(tr->nextnode)++];
-  hookupDefault(p, q, tr->numBranches);
-  q->next->back = (nodeptr)NULL;
-  q->next->next->back = (nodeptr)NULL;
- 
-  return  q;
-} 
-
-static void buildSimpleTree (tree *tr, int ip, int iq, int ir)
-{    
-  nodeptr  p, s;
-  int  i;
-  
-  i = MIN(ip, iq);
-  if (ir < i)  i = ir; 
-  tr->start = tr->nodep[i];
-  tr->ntips = 3;
-  p = tr->nodep[ip];
-  hookupDefault(p, tr->nodep[iq], tr->numBranches);
-  s = buildNewTip(tr, tr->nodep[ir]);
-  insertParsimony(tr, s, p);
-}
-
-
-static void testInsertParsimony (tree *tr, nodeptr p, nodeptr q)
-{ 
-  unsigned int 
-    mp;
- 
-  nodeptr  
-    r = q->back;   
-
-  boolean 
-    doIt = TRUE;
-    
-  if(tr->grouped)
-    {
-      int 
-	rNumber = tr->constraintVector[r->number],
-	qNumber = tr->constraintVector[q->number],
-	pNumber = tr->constraintVector[p->number];
-
-      doIt = FALSE;
-     
-      if(pNumber == -9)
-	pNumber = checker(tr, p->back);
-      if(pNumber == -9)
-	doIt = TRUE;
-      else
-	{
-	  if(qNumber == -9)
-	    qNumber = checker(tr, q);
-
-	  if(rNumber == -9)
-	    rNumber = checker(tr, r);
-
-	  if(pNumber == rNumber || pNumber == qNumber)
-	    doIt = TRUE;       
-	}
-    }
-
-  if(doIt)
-    {
-      insertParsimony(tr, p, q);   
-  
-      mp = evaluateParsimony(tr, p->next->next, FALSE);          
-      
-      if(mp < tr->bestParsimony)
-	{
-	  tr->bestParsimony = mp;
-	  tr->insertNode = q;
-	  tr->removeNode = p;
-	}
-  
-      hookupDefault(q, r, tr->numBranches);
-      p->next->next->back = p->next->back = (nodeptr) NULL;
-    }
-       
-  return;
-} 
-
-
-static void restoreTreeParsimony(tree *tr, nodeptr p, nodeptr q)
-{ 
-  nodeptr
-    r = q->back;
-  
-  int counter = 4;
-  
-  hookupDefault(p->next,       q, tr->numBranches);
-  hookupDefault(p->next->next, r, tr->numBranches);
-  
-  computeTraversalInfoParsimony(p, tr->ti, &counter, tr->mxtips, FALSE);              
-  tr->ti[0] = counter;
-    
-  newviewParsimonyIterativeFast(tr); 
-}
-
-
-static void addTraverseParsimony (tree *tr, nodeptr p, nodeptr q, int mintrav, int maxtrav, boolean doAll)
-{        
-  if (doAll || (--mintrav <= 0))               
-    testInsertParsimony(tr, p, q);	                 
-
-  if (((q->number > tr->mxtips)) && ((--maxtrav > 0) || doAll))
-    {	      
-      addTraverseParsimony(tr, p, q->next->back, mintrav, maxtrav, doAll);	      
-      addTraverseParsimony(tr, p, q->next->next->back, mintrav, maxtrav, doAll);              	     
-    }
-}
-
-
-/* static nodeptr findAnyTipFast(nodeptr p, int numsp) */
+/* static nodeptr buildNewTip (tree *tr, nodeptr p) */
 /* {  */
-/*   return  (p->number <= numsp)? p : findAnyTipFast(p->next->back, numsp); */
-/* }  */
+/*   nodeptr  q; */
+
+/*   q = tr->nodep[(tr->nextnode)++]; */
+/*   hookupDefault(p, q, tr->numBranches); */
+/*   q->next->back = (nodeptr)NULL; */
+/*   q->next->next->back = (nodeptr)NULL; */
+ 
+/*   return  q; */
+/* } */ 
+
+/* static void buildSimpleTree (tree *tr, int ip, int iq, int ir) */
+/* {     */
+/*   nodeptr  p, s; */
+/*   int  i; */
+  
+/*   i = MIN(ip, iq); */
+/*   if (ir < i)  i = ir;  */
+/*   tr->start = tr->nodep[i]; */
+/*   tr->ntips = 3; */
+/*   p = tr->nodep[ip]; */
+/*   hookupDefault(p, tr->nodep[iq], tr->numBranches); */
+/*   s = buildNewTip(tr, tr->nodep[ir]); */
+/*   insertParsimony(tr, s, p); */
+/* } */
+
+
+/* static void testInsertParsimony (tree *tr, nodeptr p, nodeptr q) */
+/* {  */
+/*   unsigned int  */
+/*     mp; */
+ 
+/*   nodeptr   */
+/*     r = q->back;    */
+
+/*   boolean  */
+/*     doIt = TRUE; */
+    
+/*   if(tr->grouped) */
+/*     { */
+/*       int  */
+/* 	rNumber = tr->constraintVector[r->number], */
+/* 	qNumber = tr->constraintVector[q->number], */
+/* 	pNumber = tr->constraintVector[p->number]; */
+
+/*       doIt = FALSE; */
+     
+/*       if(pNumber == -9) */
+/* 	pNumber = checker(tr, p->back); */
+/*       if(pNumber == -9) */
+/* 	doIt = TRUE; */
+/*       else */
+/* 	{ */
+/* 	  if(qNumber == -9) */
+/* 	    qNumber = checker(tr, q); */
+
+/* 	  if(rNumber == -9) */
+/* 	    rNumber = checker(tr, r); */
+
+/* 	  if(pNumber == rNumber || pNumber == qNumber) */
+/* 	    doIt = TRUE;        */
+/* 	} */
+/*     } */
+
+/*   if(doIt) */
+/*     { */
+/*       insertParsimony(tr, p, q);    */
+  
+/*       mp = evaluateParsimony(tr, p->next->next, FALSE);           */
+      
+/*       if(mp < tr->bestParsimony) */
+/* 	{ */
+/* 	  tr->bestParsimony = mp; */
+/* 	  tr->insertNode = q; */
+/* 	  tr->removeNode = p; */
+/* 	} */
+  
+/*       hookupDefault(q, r, tr->numBranches); */
+/*       p->next->next->back = p->next->back = (nodeptr) NULL; */
+/*     } */
+       
+/*   return; */
+/* } */ 
+
+
+/* static void restoreTreeParsimony(tree *tr, nodeptr p, nodeptr q) */
+/* {  */
+/*   nodeptr */
+/*     r = q->back; */
+  
+/*   int counter = 4; */
+  
+/*   hookupDefault(p->next,       q, tr->numBranches); */
+/*   hookupDefault(p->next->next, r, tr->numBranches); */
+  
+/*   computeTraversalInfoParsimony(p, tr->ti, &counter, tr->mxtips, FALSE);               */
+/*   tr->ti[0] = counter; */
+    
+/*   newviewParsimonyIterativeFast(tr);  */
+/* } */
+
+
+/* static void addTraverseParsimony (tree *tr, nodeptr p, nodeptr q, int mintrav, int maxtrav, boolean doAll) */
+/* {         */
+/*   if (doAll || (--mintrav <= 0))                */
+/*     testInsertParsimony(tr, p, q);	                  */
+
+/*   if (((q->number > tr->mxtips)) && ((--maxtrav > 0) || doAll)) */
+/*     {	       */
+/*       addTraverseParsimony(tr, p, q->next->back, mintrav, maxtrav, doAll);	       */
+/*       addTraverseParsimony(tr, p, q->next->next->back, mintrav, maxtrav, doAll);              	      */
+/*     } */
+/* } */
+
+
+static nodeptr findAnyTipFast(nodeptr p, int numsp)
+{ 
+  return  (p->number <= numsp)? p : findAnyTipFast(p->next->back, numsp);
+} 
 
 
 /* static void makePermutationFast(int *perm, int n, analdef *adef) */
@@ -1335,137 +1333,137 @@ static void addTraverseParsimony (tree *tr, nodeptr p, nodeptr q, int mintrav, i
 /*     } */
 /* } */
 
-static nodeptr  removeNodeParsimony (nodeptr p, tree *tr)
-{ 
-  nodeptr  q, r;         
+/* static nodeptr  removeNodeParsimony (nodeptr p, tree *tr) */
+/* {  */
+/*   nodeptr  q, r;          */
 
-  q = p->next->back;
-  r = p->next->next->back;   
+/*   q = p->next->back; */
+/*   r = p->next->next->back;    */
     
-  hookupDefault(q, r, tr->numBranches);
+/*   hookupDefault(q, r, tr->numBranches); */
 
-  p->next->next->back = p->next->back = (node *) NULL;
+/*   p->next->next->back = p->next->back = (node *) NULL; */
   
-  return  q;
-}
+/*   return  q; */
+/* } */
 
-static int rearrangeParsimony(tree *tr, nodeptr p, int mintrav, int maxtrav, boolean doAll)  
-{   
-  nodeptr  
-    p1, 
-    p2, 
-    q, 
-    q1, 
-    q2;
+/* static int rearrangeParsimony(tree *tr, nodeptr p, int mintrav, int maxtrav, boolean doAll)   */
+/* {    */
+/*   nodeptr   */
+/*     p1,  */
+/*     p2,  */
+/*     q,  */
+/*     q1,  */
+/*     q2; */
   
-  int      
-    mintrav2; 
+/*   int       */
+/*     mintrav2;  */
 
-  boolean 
-    doP = TRUE,
-    doQ = TRUE;
+/*   boolean  */
+/*     doP = TRUE, */
+/*     doQ = TRUE; */
            
-  if (maxtrav > tr->ntips - 3)  
-    maxtrav = tr->ntips - 3; 
+/*   if (maxtrav > tr->ntips - 3)   */
+/*     maxtrav = tr->ntips - 3;  */
 
-  assert(mintrav == 1);
+/*   assert(mintrav == 1); */
 
-  if(maxtrav < mintrav)
-    return 0;
+/*   if(maxtrav < mintrav) */
+/*     return 0; */
 
-  q = p->back;
+/*   q = p->back; */
 
-  if(tr->constrained)
-    {    
-      if(! tipHomogeneityChecker(tr, p->back, 0))
-	doP = FALSE;
+/*   if(tr->constrained) */
+/*     {     */
+/*       if(! tipHomogeneityChecker(tr, p->back, 0)) */
+/* 	doP = FALSE; */
 	
-      if(! tipHomogeneityChecker(tr, q->back, 0))
-	doQ = FALSE;
+/*       if(! tipHomogeneityChecker(tr, q->back, 0)) */
+/* 	doQ = FALSE; */
 		        
-      if(doQ == FALSE && doP == FALSE)
-	return 0;
-    }  
+/*       if(doQ == FALSE && doP == FALSE) */
+/* 	return 0; */
+/*     }   */
 
-  if((p->number > tr->mxtips) && doP) 
-    {     
-      p1 = p->next->back;
-      p2 = p->next->next->back;
+/*   if((p->number > tr->mxtips) && doP)  */
+/*     {      */
+/*       p1 = p->next->back; */
+/*       p2 = p->next->next->back; */
       
-      if ((p1->number > tr->mxtips) || (p2->number > tr->mxtips)) 
-	{	  	  
-	  removeNodeParsimony(p, tr);	  	 
+/*       if ((p1->number > tr->mxtips) || (p2->number > tr->mxtips))  */
+/* 	{	  	   */
+/* 	  removeNodeParsimony(p, tr);	  	  */
 
-	  if ((p1->number > tr->mxtips)) 
-	    {
-	      addTraverseParsimony(tr, p, p1->next->back, mintrav, maxtrav, doAll);         
-	      addTraverseParsimony(tr, p, p1->next->next->back, mintrav, maxtrav, doAll);          
-	    }
+/* 	  if ((p1->number > tr->mxtips))  */
+/* 	    { */
+/* 	      addTraverseParsimony(tr, p, p1->next->back, mintrav, maxtrav, doAll);          */
+/* 	      addTraverseParsimony(tr, p, p1->next->next->back, mintrav, maxtrav, doAll);           */
+/* 	    } */
 	 
-	  if ((p2->number > tr->mxtips)) 
-	    {
-	      addTraverseParsimony(tr, p, p2->next->back, mintrav, maxtrav, doAll);
-	      addTraverseParsimony(tr, p, p2->next->next->back, mintrav, maxtrav, doAll);          
-	    }
+/* 	  if ((p2->number > tr->mxtips))  */
+/* 	    { */
+/* 	      addTraverseParsimony(tr, p, p2->next->back, mintrav, maxtrav, doAll); */
+/* 	      addTraverseParsimony(tr, p, p2->next->next->back, mintrav, maxtrav, doAll);           */
+/* 	    } */
 	    
 	   
-	  hookupDefault(p->next,       p1, tr->numBranches); 
-	  hookupDefault(p->next->next, p2, tr->numBranches);	   	    	    
+/* 	  hookupDefault(p->next,       p1, tr->numBranches);  */
+/* 	  hookupDefault(p->next->next, p2, tr->numBranches);	   	    	     */
 
-	  newviewParsimony(tr, p);
-	}
-    }  
+/* 	  newviewParsimony(tr, p); */
+/* 	} */
+/*     }   */
        
-  if ((q->number > tr->mxtips) && (maxtrav > 0) && doQ) 
-    {
-      q1 = q->next->back;
-      q2 = q->next->next->back;
+/*   if ((q->number > tr->mxtips) && (maxtrav > 0) && doQ)  */
+/*     { */
+/*       q1 = q->next->back; */
+/*       q2 = q->next->next->back; */
 
-      if (
-	  (
-	   (q1->number > tr->mxtips) && 
-	   ((q1->next->back->number > tr->mxtips) || (q1->next->next->back->number > tr->mxtips))
-	   )
-	  ||
-	  (
-	   (q2->number > tr->mxtips) && 
-	   ((q2->next->back->number > tr->mxtips) || (q2->next->next->back->number > tr->mxtips))
-	   )
-	  )
-	{	   
+/*       if ( */
+/* 	  ( */
+/* 	   (q1->number > tr->mxtips) &&  */
+/* 	   ((q1->next->back->number > tr->mxtips) || (q1->next->next->back->number > tr->mxtips)) */
+/* 	   ) */
+/* 	  || */
+/* 	  ( */
+/* 	   (q2->number > tr->mxtips) &&  */
+/* 	   ((q2->next->back->number > tr->mxtips) || (q2->next->next->back->number > tr->mxtips)) */
+/* 	   ) */
+/* 	  ) */
+/* 	{	    */
 
-	  removeNodeParsimony(q, tr);
+/* 	  removeNodeParsimony(q, tr); */
 	  
-	  mintrav2 = mintrav > 2 ? mintrav : 2;
+/* 	  mintrav2 = mintrav > 2 ? mintrav : 2; */
 	  
-	  if ((q1->number > tr->mxtips)) 
-	    {
-	      addTraverseParsimony(tr, q, q1->next->back, mintrav2 , maxtrav, doAll);
-	      addTraverseParsimony(tr, q, q1->next->next->back, mintrav2 , maxtrav, doAll);         
-	    }
+/* 	  if ((q1->number > tr->mxtips))  */
+/* 	    { */
+/* 	      addTraverseParsimony(tr, q, q1->next->back, mintrav2 , maxtrav, doAll); */
+/* 	      addTraverseParsimony(tr, q, q1->next->next->back, mintrav2 , maxtrav, doAll);          */
+/* 	    } */
 	 
-	  if ((q2->number > tr->mxtips)) 
-	    {
-	      addTraverseParsimony(tr, q, q2->next->back, mintrav2 , maxtrav, doAll);
-	      addTraverseParsimony(tr, q, q2->next->next->back, mintrav2 , maxtrav, doAll);          
-	    }	   
+/* 	  if ((q2->number > tr->mxtips))  */
+/* 	    { */
+/* 	      addTraverseParsimony(tr, q, q2->next->back, mintrav2 , maxtrav, doAll); */
+/* 	      addTraverseParsimony(tr, q, q2->next->next->back, mintrav2 , maxtrav, doAll);           */
+/* 	    }	    */
 	   
-	  hookupDefault(q->next,       q1, tr->numBranches); 
-	  hookupDefault(q->next->next, q2, tr->numBranches);
+/* 	  hookupDefault(q->next,       q1, tr->numBranches);  */
+/* 	  hookupDefault(q->next->next, q2, tr->numBranches); */
 	   
-	  newviewParsimony(tr, q);
-	}
-    }
+/* 	  newviewParsimony(tr, q); */
+/* 	} */
+/*     } */
 
-  return 1;
-} 
+/*   return 1; */
+/* } */ 
 
 
-static void restoreTreeRearrangeParsimony(tree *tr)
-{    
-  removeNodeParsimony(tr->removeNode, tr);  
-  restoreTreeParsimony(tr, tr->removeNode, tr->insertNode);  
-}
+/* static void restoreTreeRearrangeParsimony(tree *tr) */
+/* {     */
+/*   removeNodeParsimony(tr->removeNode, tr);   */
+/*   restoreTreeParsimony(tr, tr->removeNode, tr->insertNode);   */
+/* } */
 
 /*
 static boolean isInformative2(tree *tr, int site)
@@ -1534,7 +1532,7 @@ static boolean isInformative2(tree *tr, int site)
 */
 
 
-static boolean isInformative(tree *tr, int dataType, int site, int model)
+static boolean isInformative(tree *tr, int dataType, int site)
 {
   int
     informativeCounter = 0,
@@ -1547,17 +1545,18 @@ static boolean isInformative(tree *tr, int dataType, int site, int model)
 
   unsigned char
     nucleotide;
-
+  
+	
   for(j = 0; j < 256; j++)
     check[j] = 0;
   
   for(j = 1; j <= tr->mxtips; j++)
     {	   
-      nucleotide = tr->partitionData[model].yVector[j][site]; 
+      nucleotide = tr->yVector[j][site];	    
       check[nucleotide] =  check[nucleotide] + 1;
       assert(bitVector[nucleotide] > 0);	           
     }
-
+  
   for(j = 0; j < undetermined; j++)
     {
       if(check[j] > 0)
@@ -1599,29 +1598,23 @@ static void determineUninformativeSites(tree *tr, int *informative)
      amibiguous DNA encoding.
   */
 
+
   for(model = 0; model < tr->NumberOfModels; model++)
     {
-      int ctr = 0; 
-
-      /* printf("entering %d\n", model);  */
-      int length = tr->partitionData[model].lower + tr->partitionData[model].width ; 
-      for(i = tr->partitionData[model].lower; i < length; i++)
+      for(i = tr->partitionData[model].lower; i < tr->partitionData[model].upper; i++)
 	{
-
-	  /* TODO this is problematic as well. We do not itertate over the entire alignment this way, do we? */
-	  assert(0); 
-	  /* printf("checking site %d\n", i );  */
-	  if(isInformative(tr , tr->partitionData[model].dataType, ctr, model))
+	  if(isInformative(tr , tr->partitionData[model].dataType, i))
 	     informative[i] = 1;
 	   else
 	     {
 	       informative[i] = 0;
 	       number++;
 	     }  
-	  ++ctr; 
 	}      
     }
 
+ 
+ 
   /* printf("Uninformative Patterns: %d\n", number); */
 }
 
@@ -1672,9 +1665,11 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
     i,
     model;
 
-  assert(NOT saveMemory); 
+  /* if(saveMemory) */
+  /*   totalNodes = (size_t)tr->innerNodes + 1 + (size_t)tr->mxtips; */
+  /* else */
+    totalNodes = 2 * (size_t)tr->mxtips;
 
-  totalNodes = 2 * (size_t)tr->mxtips;
 
   for(model = 0; model < (size_t) tr->NumberOfModels; model++)
     {
@@ -1693,16 +1688,12 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
       
       for(i = lower; i < upper; i++)    
 	if(informative[i])
-	  entries += (size_t)tr->aliaswgt[i]; 
-
-
-      /* honestly, this is not unproblematic: we do not have the entire alignment in memory any more, i think...  */
-      assert(0); 
+	  entries += (size_t)tr->aliaswgt[i];     
   
       compressedEntries = entries / PCF;
 
       if(entries % PCF != 0)
-	compressedEntries++;      
+	compressedEntries++;
 
 #if (defined(__SIM_SSE3) || defined(__AVX))
       if(compressedEntries % INTS_PER_VECTOR != 0)
@@ -1712,12 +1703,8 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
 #else
       compressedEntriesPadded = compressedEntries;
 #endif     
-
       
-      size_t toAllocate = (size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber); 
-      
-      /* printf("allocating a vector of size %d = %d  *  %d * %d * %d\n", toAllocate, compressedEntriesPadded, states, totalNodes, sizeof(parsimonyNumber));  */
-      tr->partitionData[model].parsVect = (parsimonyNumber *)malloc_aligned(toAllocate);
+      tr->partitionData[model].parsVect = (parsimonyNumber *)malloc_aligned((size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
      
       for(i = 0; i < compressedEntriesPadded * states * totalNodes; i++)      
 	tr->partitionData[model].parsVect[i] = 0;          
@@ -1854,15 +1841,15 @@ static void markNodesInTree(nodeptr p, tree *tr, unsigned char *nodesInTree)
 }
 
  
-static void insertRandom (nodeptr p, nodeptr q, int numBranches)
-{
-  nodeptr  r;
+/* static void insertRandom (nodeptr p, nodeptr q, int numBranches) */
+/* { */
+/*   nodeptr  r; */
   
-  r = q->back;
+/*   r = q->back; */
   
-  hookupDefault(p->next,       q, numBranches);
-  hookupDefault(p->next->next, r, numBranches); 
-} 
+/*   hookupDefault(p->next,       q, numBranches); */
+/*   hookupDefault(p->next->next, r, numBranches);  */
+/* } */ 
 
 
 
@@ -1870,20 +1857,20 @@ static void insertRandom (nodeptr p, nodeptr q, int numBranches)
 
 
 
-static void buildSimpleTreeRandom (tree *tr, int ip, int iq, int ir)
-{    
-  nodeptr  p, s;
-  int  i;
+/* static void buildSimpleTreeRandom (tree *tr, int ip, int iq, int ir) */
+/* {     */
+/*   nodeptr  p, s; */
+/*   int  i; */
   
-  i = MIN(ip, iq);
-  if (ir < i)  i = ir; 
-  tr->start = tr->nodep[i];
-  tr->ntips = 3;
-  p = tr->nodep[ip];
-  hookupDefault(p, tr->nodep[iq], tr->numBranches);
-  s = buildNewTip(tr, tr->nodep[ir]);
-  insertRandom(s, p, tr->numBranches);
-}
+/*   i = MIN(ip, iq); */
+/*   if (ir < i)  i = ir;  */
+/*   tr->start = tr->nodep[i]; */
+/*   tr->ntips = 3; */
+/*   p = tr->nodep[ip]; */
+/*   hookupDefault(p, tr->nodep[iq], tr->numBranches); */
+/*   s = buildNewTip(tr, tr->nodep[ir]); */
+/*   insertRandom(s, p, tr->numBranches); */
+/* } */
 
 int checker(tree *tr, nodeptr p)
 {
@@ -1935,10 +1922,10 @@ static int markBranches(nodeptr *branches, nodeptr p, int *counter, int numsp)
 
 
 
-/* nodeptr findAnyTip(nodeptr p, int numsp) */
-/* {  */
-/*   return  isTip(p->number, numsp) ? p : findAnyTip(p->next->back, numsp); */
-/* } */ 
+nodeptr findAnyTip(nodeptr p, int numsp)
+{ 
+  return  isTip(p->number, numsp) ? p : findAnyTip(p->next->back, numsp);
+} 
 
 
 int randomInt(int n)
@@ -1969,28 +1956,53 @@ boolean tipHomogeneityChecker(tree *tr, nodeptr p, int grouping)
 
 
 
+void allocateParsimonyDataStructures(tree *tr)
+{
+  int 
+    i,
+    *informative = (int *)malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
+ 
+  determineUninformativeSites(tr, informative);
+
+  compressDNA(tr, informative, FALSE);
+
+  for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 1; i++)
+    {
+      nodeptr 
+	p = tr->nodep[i];
+
+      p->xPars = 1;		/*  */
+      p->next->xPars = 0;
+      p->next->next->xPars = 0;
+    }
+
+  tr->ti = (int*)malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
+
+  free(informative); 
+}
 
 
 
-/* void nodeRectifier(tree *tr) */
-/* { */
-/*   nodeptr *np = (nodeptr *)malloc(2 * tr->mxtips * sizeof(nodeptr)); */
-/*   int i; */
-/*   int count = 0; */
+
+void nodeRectifier(tree *tr)
+{
+  nodeptr *np = (nodeptr *)malloc(2 * tr->mxtips * sizeof(nodeptr));
+  int i;
+  int count = 0;
   
-/*   tr->start       = tr->nodep[1]; */
-/*   tr->rooted      = FALSE; */
+  tr->start       = tr->nodep[1];
+  tr->rooted      = FALSE;
 
-/*   /\* TODO why is tr->rooted set to FALSE here ?*\/ */
+  /* TODO why is tr->rooted set to FALSE here ?*/
   
-/*   for(i = tr->mxtips + 1; i <= (tr->mxtips + tr->mxtips - 1); i++) */
-/*     np[i] = tr->nodep[i];            */
+  for(i = tr->mxtips + 1; i <= (tr->mxtips + tr->mxtips - 1); i++)
+    np[i] = tr->nodep[i];           
   
-/*   reorderNodes(tr, np, tr->start->back, &count);  */
+  reorderNodes(tr, np, tr->start->back, &count); 
 
  
-/*   free(np); */
-/* } */
+  free(np);
+}
 
 
 /* static void setupBranchMetaInfo(tree *tr, nodeptr p, int nTips, branchInfo *bInf) */
@@ -2185,33 +2197,6 @@ typedef struct
     int number;
   }
   infoMP;
-
-
-
-void allocateParsimonyDataStructures(tree *tr)
-{
-  int 
-    i,
-    *informative = (int *)exa_malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
- 
-  determineUninformativeSites(tr, informative);
-
-  compressDNA(tr, informative, FALSE);
-
-  for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 1; i++)
-    {
-      nodeptr 
-	p = tr->nodep[i];
-
-      p->xPars = 1;		/*  */
-      p->next->xPars = 0;
-      p->next->next->xPars = 0;
-    }
-
-  tr->ti = (int*)exa_malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
-
-  exa_free(informative); 
-}
 
 
 static int infoCompare(const void *p1, const void *p2)

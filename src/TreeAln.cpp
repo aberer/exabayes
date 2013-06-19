@@ -165,6 +165,7 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
     }
 }
 
+
 double TreeAln::getTreeLengthExpensive() const
 {
   vector<branch> branches; 
@@ -190,7 +191,15 @@ void TreeAln::verifyTreeLength() const
 void TreeAln::enableParsimony()
 {  
 #if HAVE_PLL == 0
-  allocateParsimonyDataStructures(tr);   
+  // assert the parsimony x-ints are set correctly 
+  for(nat i = 1; i < getNumberOfNodes() + 1 ; ++i)
+    {
+      tr->nodep[i]->xPars = 1; 
+      tr->nodep[i]->next->xPars = 0; 
+      tr->nodep[i]->next->next->xPars = 0; 
+    }
+  
+  // allocateParsimonyDataStructures(tr);   
 #else 
   allocateParsimonyDataStructures(tr, partitions);   
 #endif

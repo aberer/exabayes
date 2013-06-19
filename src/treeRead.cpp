@@ -151,13 +151,13 @@ static int treeGetCh (FILE *fp)         /* get next nonblank, noncomment charact
 
 
 
-static boolean treeNeedCh (FILE *fp, int c1, char *where)
+static boolean treeNeedCh (FILE *fp, int c1, string where)
 {
   int  c2;
   
   if ((c2 = treeGetCh(fp)) == c1)  return TRUE;
   
-  printf("ERROR: Expecting '%c' %s tree; found:", c1, where);
+  printf("ERROR: Expecting '%c' %s tree; found:", c1, where.c_str());
   if (c2 == EOF) 
     {
       printf("End-of-File");

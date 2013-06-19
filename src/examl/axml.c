@@ -2491,6 +2491,8 @@ void initializeTree(tree *tr, analdef *adef)
       myBinFread(tr->nameList[i], sizeof(char), len, byteFile);
       addword(tr->nameList[i], tr->nameHash, i);        
     }  
+
+  size_t totalNodes = 2 * tr->mxtips; 
  
   for(model = 0; model < (size_t)tr->NumberOfModels; model++)
     {      
@@ -2524,9 +2526,23 @@ void initializeTree(tree *tr, analdef *adef)
       
       empiricalFrequencies[model] = (double *)malloc(sizeof(double) * p->states);
       myBinFread(empiricalFrequencies[model], sizeof(double), p->states, byteFile);	   
+
+      /* BEGIN added by andre for parsimony  */
+      myBinFread(&(tr->partitionData[model].parsimonyLength), sizeof(size_t), 1 , byteFile); 
+
+      myBinFread(tr->partitionData[model].parsVect, sizeof(parsimonyNumber), 
+		 totalNodes * tr->partitionData[model].states
+		 * tr->partitionData[model].parsimonyLength, byteFile); 
+      /* END  */
+      
     }     
   
   initializePartitions(tr, byteFile);
+
+  /* BEGIN added by andre for parsimony  */
+  tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes);  
+  tr->ti = (int*) malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
+  /* END */
   
   
 #ifdef _USE_ZLIB
