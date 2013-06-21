@@ -73,40 +73,33 @@ void expensiveVerify(TreeAln& traln)
   eval.findVirtualRoot(traln, root); 
 
   nodeptr
-    p = root.findNodeFromBranch(debugTraln ); 
+    p = root.findNodePtr(debugTraln ); 
 
   eval.disorientTree(debugTraln, root); 
   exa_evaluateGeneric(debugTraln, p , FALSE); 
 
   double verifiedLnl =  debugTraln.getTr()->likelihood; 
 
-  if( isOutputProcess())
-    {      
-      if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
-	{
-	  tout << "WARNING: found in expensive evaluation: likelihood difference is " 
-	       << setprecision(8) <<   fabs (verifiedLnl - toVerify )
-	       << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
+  if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
+    {
+      tout << "WARNING: found in expensive evaluation: likelihood difference is " 
+	   << setprecision(8) <<   fabs (verifiedLnl - toVerify )
+	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
-	  tout << "current tree: " << traln << endl; 
-	  tout << "help tree: " <<  debugTraln << endl; 	  
+      tout << "current tree: " << traln << endl; 
+      tout << "help tree: " <<  debugTraln << endl; 	  
 
-	  evaluateFullNoBackup(traln);
-	  tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
-	}
-
-      assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
+      evaluateFullNoBackup(traln);
+      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
     }  
-  else 
-    cout << "okay" << endl; 
+  assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
 #endif
 }
 
 
 void evaluateFullNoBackup(TreeAln& traln)
 {
-#ifdef DEBUG_EVAL
-  if(isOutputProcess())
+#ifdef DEBUG_EVAL  
   cout << "conducting full evaluation, no backup created" << endl; 
 #endif
   
@@ -165,8 +158,7 @@ void newViewGenericWrapper( TreeAln &traln, nodeptr p, boolean masked)
   if(numberToExecute > 1)
     modelToEval = ALL_MODELS; 
 
-#ifdef DEBUG_EVAL
-  if(isOutputProcess())
+#ifdef DEBUG_EVAL  
   cout << "newViewGenericWrapper on " << p->number  << " and model " <<  modelToEval << endl; 
 #endif
 
@@ -192,9 +184,8 @@ void evaluatePartialNoBackup(TreeAln& traln, nodeptr p)
 
 void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
-#ifdef DEBUG_EVAL
-  if(isOutputProcess())
-    cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" )  << endl; 
+#ifdef DEBUG_EVAL  
+  cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" )  << endl; 
 #endif
 
   int model  = ALL_MODELS; 

@@ -121,8 +121,7 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
   
   if(model == ALL_MODELS)
     {
-#ifdef DEBUG_ARRAY_SWAP
-      if(isOutputProcess())
+#ifdef DEBUG_ARRAY_SWAP      
       cout << "swapped array for node " << nodeNumber <<   " and all  models "; 
 #endif
 
@@ -132,8 +131,7 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 	  int posInArray = nodeNumber -( tr->mxtips + 1); 	  
 	  double *&a =  reserveArrays[i][posInArray], 
 	    *&b  = partition->xVector[posInArray] ; 
-#ifdef DEBUG_ARRAY_SWAP
-	  if(isOutputProcess())
+#ifdef DEBUG_ARRAY_SWAP	  
 	  cout << a << "," << b << "\t"; 
 #endif
 	  if(NOT b )
@@ -152,7 +150,6 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 	*&b  = partition->xVector[posInArray]; 
 
 #ifdef  DEBUG_ARRAY_SWAP
-      if(isOutputProcess())
       cout << "swapped array for node " << nodeNumber <<  " and model " << model << ": " << a   << "," << b  << endl; 
 #endif
       if(NOT b )
@@ -164,8 +161,7 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 
 void LnlRestorer::restoreArrays(TreeAln& traln)
 {
-#ifdef DEBUG_ARRAY_SWAP 
-  if(isOutputProcess())
+#ifdef DEBUG_ARRAY_SWAP   
   cout << "RESTORE for model" << modelEvaluated << endl; 
 #endif
   tree *tr = traln.getTr(); 
@@ -204,7 +200,6 @@ void LnlRestorer::traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRo
       && NOT wasSwitched[virtualRoot->number])
     {
 #ifdef DEBUG_ARRAY_SWAP
-      if(isOutputProcess())
       cout << "incorr, unseen " << virtualRoot->number << endl; 
 #endif
       wasSwitched[virtualRoot->number] = true; 
@@ -214,13 +209,12 @@ void LnlRestorer::traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRo
   else if (incorrect)
     {
 #ifdef DEBUG_ARRAY_SWAP
-      if(isOutputProcess())
+      
       cout << "incorr, seen " <<  virtualRoot->number  << endl; 
 #endif
     }
 #ifdef DEBUG_ARRAY_SWAP
   else
-    if(isOutputProcess())
     cout << "corr "<<  virtualRoot->number << endl; 
 #endif
 
@@ -235,7 +229,6 @@ void LnlRestorer::traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRo
 void LnlRestorer::resetRestorer(TreeAln &traln)
 {
 #ifdef DEBUG_ARRAY_SWAP
-  if(isOutputProcess())
   cout << "RESETTING RESTORER" << endl; 
 #endif
 

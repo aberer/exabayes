@@ -19,7 +19,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   assert(numBranches == 1); 
 
   Branch b( rand.drawInnerBranchUniform(traln) ) ; 
-  nodeptr p = b.findNodeFromBranch(traln); 
+  nodeptr p = b.findNodePtr(traln); 
 
   pair<int,int> switching(p->next->back->number,
 			  rand.drawRandDouble01() < 0.5  
@@ -58,7 +58,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 void StatNNI::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 {
   move.disortient(traln); 
-  nodeptr p = move.getEvalBranch().findNodeFromBranch(traln);
+  nodeptr p = move.getEvalBranch().findNodePtr(traln);
   evaluateGenericWrapper(traln, p,FALSE); 
 }
 

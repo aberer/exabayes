@@ -125,7 +125,6 @@ void Chain::applyChainStateToTree()
 void Chain::debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-  // if(isOutputProcess())
     tout << "[run=" << runid << ",heat="  << couplingId << ",gen="  << currentGeneration << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << setprecision(2) << fixed << lnl  << endl; //   "\t"<< lnPr << endl; 
 #endif
 }
@@ -305,7 +304,7 @@ void Chain::step()
     }
 
   expensiveVerify(*traln); 
-
+  
 #ifdef DEBUG_TREE_LENGTH  
   assert( fabs (traln->getTreeLengthExpensive() - traln->getTreeLength())  < 1e-6); 
 #endif

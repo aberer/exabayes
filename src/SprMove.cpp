@@ -1,37 +1,25 @@
-#include <set>
+ #include <set>
 
 #include "SprMove.hpp"
+#include "branch.h"
+
+// TODO make branch stuff more optional (performance)
 
 
-// #define CONTROL_ESPR
-
-// Meh 
-static void disorientHelper(const TreeAln &traln, nodeptr p)
+void SprMove::applyToTree(TreeAln &traln) const
 {
-  if(traln.isTipNode(p))
-    {
-    }
-  else if(p->x)
-    {
-      p->x = 0; 
-      p->next->x = 1; 
-    }
-  else 
-    {
-    }
+  applyPathAsESPR(traln, path); 
 }
 
+void SprMove::revertTree(TreeAln &traln, PriorBelief &prior) const
+{
+  resetAlongPathForESPR(traln, prior, path) ;   
+  path.restoreBranchLengthsPath(traln, prior); 
+}
 
-/**
-   @brief dis-orients the path, s.t. the lnl can be recomputed
-   correctly.
-   
-   @notice assumes that the lnl will be evaluated at the end of the
-   path; also notice that an SPR move has already been applied to the
-   tree
- */ 
-void SprMove::destroyOrientationAlongPath( Path& path, const TreeAln &traln,  nodeptr p)
-{  
+ 
+void SprMove::disorientAtNode(TreeAln &traln, nodeptr p) const
+{
   int first = (int)path.getNthNodeInPath(0),
     last = (int)path.getNthNodeInPath(path.getNumberOfNodes()-1); 
 
@@ -39,16 +27,89 @@ void SprMove::destroyOrientationAlongPath( Path& path, const TreeAln &traln,  no
     return; 
 
   disorientHelper(traln, p);
-  destroyOrientationAlongPath(path, traln, p->next->back); 
-  destroyOrientationAlongPath(path, traln, p->next->next->back);
+  
+  disorientAtNode( traln, p->next->back); 
+  disorientAtNode( traln, p->next->next->back);
 }
+
+
+void SprMove::extractMoveInfo(const TreeAln &traln, vector<Branch> description)
+{
+#ifdef EFFICIENT
+  // looks very clunky 
+  assert(0); 
+#endif
+
+  Branch chosen = description.at(1); 
+  Branch prunedTree = description.at(0); 
+
+  nodeptr p = prunedTree.findNodePtr(traln);
+  
+  path.clear();   
+  path.findPath(traln, p, chosen.findNodePtr(traln));
+  path.reverse();   
+
+  branch tmp = path.at(0); 
+  Branch Tmp = Branch(tmp.thisNode, tmp.thatNode); 
+
+  nodeptr aNode = Tmp.findNodePtr(traln); 
+  if(traln.isTipNode(aNode))
+    aNode = findNodeFromBranch(traln.getTr(), invertBranch(path.at(0)));
+  assert(not traln.isTipNode(aNode)); 
+  branch b = path.at(0); 
+  while(branchEqualUndirected(b, path.at(0)) || branchEqualUndirected(b,constructBranch(p->number, p->back->number))) 
+    {
+      aNode = aNode->next; 
+      b = constructBranch(aNode->number, aNode->back->number) ;
+    }
+  path.reverse();
+  path.append(b);  
+  path.reverse();
+
+  path.saveBranchLengthsPath(traln); 
+  // =/ 
+} 
+
+
+AbstractMove* SprMove::clone() const
+{
+  return new SprMove; 
+} 
+
+
+
+
+Branch SprMove::getEvalBranch(const TreeAln &traln) const
+{  
+  // LEGACY 
+  auto *tr = traln.getTr(); 
+  
+  branch b = getThirdBranch(tr, path.at(0), path.at(1)); 
+  branch lastBranch = path.at(path.size()-1); 
+
+  branch bA = constructBranch(b.thisNode, lastBranch.thisNode), 
+    bB = constructBranch(b.thisNode,lastBranch.thatNode); 
+
+  assert(branchExists(tr, bA) && branchExists(tr,bB)); 
+
+  branch futureRoot = getThirdBranch(tr, bA, bB ); 
+  
+  return Branch(futureRoot.thisNode, futureRoot.thatNode); 
+}
+
+
+
+void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, shared_ptr<AbstractPrior> brPr)  const 
+{  
+  multiplyAlongBranchESPR(traln, rand, hastings, prior,  path, multiplier,  brPr); 
+} 
 
 
 /**
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior,  Path &modifiedPath, double multiplier, shared_ptr<AbstractPrior> brPr)
+void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior,  const Path &modifiedPath, double multiplier, shared_ptr<AbstractPrior> brPr) const
 {
   assert(modifiedPath.size() >= 2); 
   int numBranches = traln.getNumBranches(); 
@@ -65,9 +126,8 @@ void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &
     {
       if(ctr < 2 )
 	continue; 
-      
-      branch &b = modifiedPath.at(i); 
-      modifiedPath.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr); 
+
+      modifiedPath.multiplyBranch(traln, rand, modifiedPath.at(i), multiplier, hastings, prior, brPr); 
     }
 
   int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
@@ -85,48 +145,11 @@ void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &
    Only resets the spr move, not any branch length changes due to BL
    multiplying.
  */ 
-void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, Path& modifiedPath)
+void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, const Path& modifiedPath) const
 {
-  tree *tr = traln.getTr();
-
-  assert(modifiedPath.size() > 2); 
-  int numBranches = traln.getNumBranches(); 
-
-  int numNodes = modifiedPath.getNumberOfNodes(); 
-  int lastNode = modifiedPath.getNthNodeInPath(numNodes-1),
-    otherNode = modifiedPath.getNthNodeInPath(numNodes-2); 
-
-  /* prune the subtree  */  
-  int sTNode =  modifiedPath.getNthNodeInPath(1); 
-  nodeptr lNPtr = findNodeFromBranch(tr, constructBranch(lastNode, sTNode)),
-    oNPtr = findNodeFromBranch(tr, constructBranch(otherNode, sTNode)); 
-
-  double ztmp ; 
-  for(int i = 0; i < numBranches; ++i)
-    ztmp = traln.getBranchLength( lNPtr,0); 
-
-  traln.clipNode(lNPtr, oNPtr, oNPtr->z[0]);   
-  branch b = getThirdBranch(tr, constructBranch(sTNode, lastNode), constructBranch(sTNode, otherNode)); 
-  assert(b.thisNode == sTNode); 
-
-  nodeptr sTPtr = findNodeFromBranch(tr, b);
-  sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL;
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  printf("RESET: pruning %d from %d (%.2f),%d (%.2f)\n", sTPtr->number, oNPtr->number, traln.getBranchLength( oNPtr,0) , lNPtr->number, traln.getBranchLength( lNPtr,0)); 
-#endif
-
-  int firstNode = modifiedPath.getNthNodeInPath(0),
-    secondNode = modifiedPath.getNthNodeInPath(2); 
-
-  nodeptr fPtr = findNodeFromBranch(tr, constructBranch(firstNode,secondNode )),
-    sPtr = findNodeFromBranch(tr, constructBranch(secondNode,firstNode )); 
-
-  traln.clipNode(sTPtr->next,        fPtr, fPtr->z[0] ); 
-  traln.clipNode(sTPtr->next->next,  sPtr, ztmp ); // 
-
-#ifdef DEBUG_SHOW_TOPO_CHANGES
-  printf("RESET: inserting %d into %d (%.2f),%d (%.2f)\n", sTPtr->number, fPtr->number, traln.getBranchLength( fPtr,0), sPtr->number, sPtr->z[0]); 
-#endif
+  Path anotherPath ; 
+  getPathAfterMove(traln, modifiedPath, anotherPath);
+  applyPathAsESPR(traln, anotherPath);     
 }
 
 
@@ -137,7 +160,7 @@ void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, Path& mo
    first two branches in path define subtree, all further branches are
    traversed, last branch is the insertion branch. 
  */
-void SprMove::applyPathAsESPR(TreeAln &traln, Path &modifiedPath )
+void SprMove::applyPathAsESPR(TreeAln &traln, const Path &modifiedPath ) const 
 {
   tree *tr = traln.getTr();
 
@@ -159,9 +182,6 @@ double treeLengthBefore = traln.getTreeLengthExpensive();
     s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
   nodeptr s2lPtr = findNodeFromBranch(tr, constructBranch(s2LastNode, lastNode)), // s2l 
     lPtr = findNodeFromBranch(tr, constructBranch(lastNode, s2LastNode)); // l
-
-  // cout << modifiedPath << endl; 
-  // cout <<  "pruned: " << sTPtr->number << "\tlastNode: " << lastNode << "\ts2l: " << s2LastNode << endl; 
 
   nodeptr toBeInserted = prInnerPtr->back;   
   nodeptr toBeInsertedPath = prOuterPtr->back;  
@@ -186,8 +206,6 @@ double treeLengthBefore = traln.getTreeLengthExpensive();
       assert(treeLengthAfter == treeLengthBefore); 
     }
 #endif
-
-  // cout << endl; 
 }
 
 
@@ -199,7 +217,7 @@ double treeLengthBefore = traln.getTreeLengthExpensive();
 
     Does not contain branch lengths.   
  */ 
-void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, Path &resultPath)
+void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, Path &resultPath) const 
 {  
   int subTreeNode =  modifiedPath.getNthNodeInPath(1);   
   branch lastBranch = modifiedPath.at(modifiedPath.size()-1); 
@@ -241,3 +259,9 @@ void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, P
 
   assert(modifiedPath.size() == resultPath.size()); 
 }
+
+
+ostream& operator<<(ostream &out, const SprMove& rhs)
+{
+  return out << rhs.path;   
+} 

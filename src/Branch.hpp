@@ -26,7 +26,7 @@ public:
 
   bool nodeIsInBranch(nat node) const {return (thisNode == node) || (thatNode == node) ;  }
 
-  nodeptr findNodeFromBranch(const TreeAln &traln) const; 
+  nodeptr findNodePtr(const TreeAln &traln) const; 
 
   friend ostream& operator<<(ostream &out, const Branch& br); 
 

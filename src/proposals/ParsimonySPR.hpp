@@ -10,6 +10,11 @@
 #ifndef __PARSIMONY_SPR
 #define __PARSIMONY_SPR
 
+
+
+// why not evaluate stuff only on a few partitions and use that for guidance? 
+
+
 #include <unordered_map>
 
 #include "axml.h"
@@ -36,11 +41,11 @@ public:
 protected: 
   double parsWarp; 
   double blMulti;   
-  Path path; 
 
   weightMap getWeights(const TreeAln& traln, const scoreMap &insertions) const; 
-  // weightMap getForwardWeights( const scoreMap& insertions) const; 
   void determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
+  void traverse(const TreeAln &traln, nodeptr p, int distance ); 
+  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, unordered_map<Branch,vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses); 
   
   SprMove move; 
   

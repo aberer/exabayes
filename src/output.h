@@ -22,11 +22,7 @@ void finalizeOutputFiles(Chain *chain);
 void chainInfo(Chain *chain); 
 void printInfo(Chain *chain, const char *format, ...); 
 
-/* void debug_printNodeEnvironment(Chain *chain, int nodeID );  */
 void debug_checkTreeConsistency(const TreeAln& traln); 
 void printOrientation(tree *tr, nodeptr p); 
-
-
-bool isOutputProcess(); 
 
 #endif

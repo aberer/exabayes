@@ -9,13 +9,13 @@
 // must be partial 
 void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)   
 { 
-  newViewGenericWrapper(traln, evalBranch.findNodeFromBranch(traln), false); 
+  newViewGenericWrapper(traln, evalBranch.findNodePtr(traln), false); 
 }
 
 
 double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, bool fullTraversal )  
 {
-  evaluateGenericWrapper(traln, evalBranch.findNodeFromBranch(traln), fullTraversal ? TRUE : FALSE );  
+  evaluateGenericWrapper(traln, evalBranch.findNodePtr(traln), fullTraversal ? TRUE : FALSE );  
   return traln.getTr()->likelihood;  
 }
 
@@ -41,7 +41,7 @@ bool LikelihoodEvaluator::disorientNode( nodeptr p)
 
 void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch) 
 {  
-  auto p = branch.findNodeFromBranch(traln ); 
+  auto p = branch.findNodePtr(traln ); 
 
   disorientNode(p); 
 
@@ -122,11 +122,11 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat
   
   for(auto p : partitions)
     {
-      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.findNodeFromBranch(traln), p, true ); 
-      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodeFromBranch(traln), p, true); 
+      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, true ); 
+      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, true); 
     }
 
-  exa_evaluateGeneric(traln, root.findNodeFromBranch(traln),  FALSE ); 
+  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
   
   for(auto m : partitions )
     perPartitionLH[m] = traln.accessPartitionLH(m); 

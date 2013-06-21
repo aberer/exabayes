@@ -7,14 +7,6 @@
 #include "TreeAln.hpp"
 #include "branch.h"
 
-bool isOutputProcess()
-{
-#if HAVE_PLL != 0
-  return true; 
-#else 
-  return processID == 0; 
-#endif   
-}
 
 
 /**
@@ -64,8 +56,7 @@ void debug_checkTreeConsistency(const TreeAln &traln)
       TreePrinter tp(true, false, false); 
       string treeString = tp.printTree(traln); 
 
-      if(isOutputProcess())
-	tout << "faulty Topology: " << treeString << endl; 
+      tout << "faulty Topology: " << treeString << endl; 
 
       assert(2 * tr->mxtips-3 == count); 
     }

@@ -4,7 +4,7 @@
 /**
    @brief valToAdd must not be on the log-scale 
  */ 
-void updateHastings(double &hastings, double valToAdd, string whoDoneIt) 
+void AbstractProposal::updateHastings(double &hastings, double valToAdd, string whoDoneIt) 
 {
 #ifdef DEBUG_HASTINGS  
   if(whoDoneIt.compare("branchCollapser" ) == 0 )

@@ -99,9 +99,9 @@ void Path::debug_assertPathExists(TreeAln& traln)
 /**
     @brief saves all branch lengths along the path in s. 
  */ 
-void Path::saveBranchLengthsPath(TreeAln& traln)
+void Path::saveBranchLengthsPath(const TreeAln& traln)
 {
-  tree *tr = traln.getTr(); 
+  auto *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches() ;
 
   for(branch& b : stack)
@@ -117,7 +117,7 @@ void Path::saveBranchLengthsPath(TreeAln& traln)
 }
 
 
-bool Path::nodeIsOnPath(int node)
+bool Path::nodeIsOnPath(int node) const
 {
   for(auto b : stack)
     if(nodeIsInBranch(node, b))
@@ -136,7 +136,7 @@ ostream& operator<<(ostream &out, const Path &rhs)
 
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> brPr)
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> brPr) const 
 {  
   tree *tr = traln.getTr(); 
   nodeptr p = findNodeFromBranch(tr, b); 
@@ -150,11 +150,11 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double par
   prior.updateBranchLengthPrior(traln, oldZ, newZ, brPr);
 
   double realMultiplier = log(newZ) / log(oldZ);    
-  updateHastings(hastings, realMultiplier, "pathMod");; 
+  AbstractProposal::updateHastings(hastings, realMultiplier, "pathMod");; 
 }
 
 
-void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior)
+void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior) const 
 {
   int numBranches = traln.getNumBranches();
   assert(numBranches == 1); 

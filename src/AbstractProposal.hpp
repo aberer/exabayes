@@ -12,7 +12,9 @@
 #include "GlobalVariables.hpp"
 #include "LikelihoodEvaluator.hpp"
 
-void updateHastings(double &hastings, double valToAdd, string whoDoneIt); 
+
+
+// void 
 
 class AbstractProposal
 {
@@ -30,9 +32,6 @@ public:
   virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) = 0; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) = 0 ; 
   virtual void autotune() = 0  ;
-  
-  virtual void smallPrint(ostream &out) {assert(NOT_IMPLEMENTED); } // TODO 
-  virtual void printEverything(ostream &out){assert(NOT_IMPLEMENTED); }  // TODO 
 
   virtual AbstractProposal* clone() const = 0;  
 
@@ -51,6 +50,8 @@ public:
 
   void addPrimVar(RandomVariable var) {primVar.push_back(var) ; }
   void addSecVar(RandomVariable var) {secVar.push_back(var) ; }
+
+  static void updateHastings(double &hastings, double valToAdd, string whoDoneIt); 
 
   friend ostream&  operator<< ( ostream& out , const unique_ptr<AbstractProposal> &rhs)
   {

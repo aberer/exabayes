@@ -122,7 +122,7 @@ boolean branchesAreConnected(branch b1, branch b2)
 /**
    @brief Gets the third branch that is connected to a node.   
  */ 
-branch getThirdBranch(tree *tr, branch b1, branch b2)
+branch getThirdBranch(const tree *tr, branch b1, branch b2)
 {  
   int node = getIntersectingNode(b1,b2); 
   
@@ -220,7 +220,7 @@ branch constructBranch(int thisNode, int thatNode)
 /**
    @brief Indicates  whether true nodes are hooked.  
  */
-boolean branchExists(tree *tr, branch b)
+boolean branchExists(const tree *tr, branch b)
 {
   nodeptr a = tr->nodep[b.thisNode]; 
 
@@ -247,7 +247,7 @@ boolean branchExists(tree *tr, branch b)
    @param targetNode   the node the nodeptr belongs to  
    @param neighborNode the id of the node, the target node should be hooked with
  */
-static nodeptr findNodePtrByNeighbor(tree *tr, int targetNode,  int neighborNode)
+static nodeptr findNodePtrByNeighbor(const tree *tr, int targetNode,  int neighborNode)
 {
   nodeptr 
     result = tr->nodep[targetNode];
@@ -274,7 +274,7 @@ static nodeptr findNodePtrByNeighbor(tree *tr, int targetNode,  int neighborNode
 
 
 /* TODO replaces the next method   */
-nodeptr findNodeFromBranch(tree *tr, branch b )
+nodeptr findNodeFromBranch(const tree *tr, branch b )
 {  
   return findNodePtrByNeighbor(tr, b.thisNode, b.thatNode); 
 }

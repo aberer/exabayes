@@ -28,7 +28,7 @@ bool Branch::exists(TreeAln &traln) const
 
 
 
-nodeptr Branch::findNodeFromBranch(const TreeAln &traln) const
+nodeptr Branch::findNodePtr(const TreeAln &traln) const
 {
   auto tr = traln.getTr(); 
   
@@ -89,7 +89,7 @@ nat Branch::getCommonNode(const Branch &rhs ) const
 
 void Branch::applyToTree( TreeAln &traln) const
 {
-  nodeptr p = findNodeFromBranch(traln); 
+  nodeptr p = findNodePtr(traln); 
   double tmp = length; 
   // =/ 
   traln.clipNode(p, p->back, tmp); 

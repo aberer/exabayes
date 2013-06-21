@@ -232,12 +232,12 @@ void CoupledChains::executePart(int gensToRun)
 	      chain->step(); 	      
 	      if(chain->getChainHeat() == 1 
 		 && (chain->getGeneration() % samplingFreq)  == samplingFreq - 1
-		 && isOutputProcess() ) 
+		 ) 
 		chain->printSample(topoFile, paramFile); 
 		
 	      
-	      timeToPrint |= isOutputProcess() 
-		&& chain->getCouplingId() == 0 && printFreq > 0
+	      timeToPrint |= 
+		chain->getCouplingId() == 0 && printFreq > 0
 		&& (chain->getGeneration() % printFreq )  == (printFreq - 1) ;
 	    }
 	}

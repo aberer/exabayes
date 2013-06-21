@@ -48,18 +48,15 @@ BipartitionHash::~BipartitionHash()
 void BipartitionHash::printBv(nat *bv)
 {
   int bvlen = vectorLength; 
-  // if(isOutputProcess())
-    // {
-      for(int i = 0; i < bvlen; ++i)
-	{
-	  int pos = i / 32; 
-	  int relPos = i % 32; 
-	if( ( bv[pos ] & (1 << (relPos)) ) > 0 )
-	  printf("1"); 
-	else 
-	  printf("0");
-	}
-    // }
+  for(int i = 0; i < bvlen; ++i)
+    {
+      int pos = i / 32; 
+      int relPos = i % 32; 
+      if( ( bv[pos ] & (1 << (relPos)) ) > 0 )
+	printf("1"); 
+      else 
+	printf("0");
+    }
 }
 
 
@@ -350,8 +347,7 @@ double BipartitionHash::averageDeviationOfSplitFrequencies(double ignoreFreq)
 
   double treesSampled = numSampled[0] / (numTax - 3  ); 
 #ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
-  // if(isOutputProcess())
-    printf("trees sampled: %g\n", treesSampled)  ;
+  printf("trees sampled: %g\n", treesSampled)  ;
 #endif
 
   int cntRelevant = 0; 
@@ -380,14 +376,11 @@ double BipartitionHash::averageDeviationOfSplitFrequencies(double ignoreFreq)
 	      sd = sqrt(sd/n) ; 
 
 #ifdef DEBUG_ASDSF_PRINT_ALL_BIPS
-	      // if(isOutputProcess()) 
-		// {
-		  printBv(e->bitVector, numTaxa); 
-		  printf("\t");
-		  for(int  j = 0;  j < n ; j++)
-		    printf("%d,", e->treeVector[j]); 
-		  printf("\tmu=%f\tsd=%f\n", mu, sd); 
-		// }
+	      printBv(e->bitVector, numTaxa); 
+	      printf("\t");
+	      for(int  j = 0;  j < n ; j++)
+		printf("%d,", e->treeVector[j]); 
+	      printf("\tmu=%f\tsd=%f\n", mu, sd); 
 #endif 
 	      asdsf += sd ; 
 	      cntRelevant++; 	    

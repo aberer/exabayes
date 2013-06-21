@@ -8,7 +8,7 @@ seed=1234
 
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
-useClang=0
+useClang=1
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang -Qunused-arguments -D__STRICT_ANSI__"

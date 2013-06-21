@@ -315,9 +315,8 @@ void SampleMaster::run()
 
       hasConverged = convergenceDiagnostic(); 
 
-#ifdef ENABLE_PRSF
-      if(isOutputProcess())
-	printPRSF(run_id);
+#ifdef ENABLE_PRSF      
+      printPRSF(run_id);
 #endif
     }
 }

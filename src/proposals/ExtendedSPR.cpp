@@ -48,13 +48,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
       p = findNodeFromBranch(tr, start);
       q = p->next->back; 
       r = p->next->next->back;
-    } while(traln.isTipNode(q) || traln.isTipNode(r) 
-// || traln.isTipNode(p->back)
-	    ); 
-
-  // cout << "drawn branch "  << p->number << ","  << p->back->number << endl; 
-
-  /* TODO assert that the pruned subtree is not too big (s.t. we cannot find any insertion points)  */
+    } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
 
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
@@ -102,7 +96,17 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 #endif
   
   modifiedPath.debug_assertPathExists(traln); 
+
+  // TODO in principle, we can throw away the path of this proposal and use the move proposal  
+  // move.
+
+  // BEGIN  TODO remove modifiedPath
+  branch bla = modifiedPath.at(modifiedPath.size()-1); 
+  move.extractMoveInfo(traln, {Branch(p->number, p->back->number), Branch(bla.thisNode, bla.thatNode) }); 
+  modifiedPath.clear(); 
+  // END
 }
+
 
 
 /**
@@ -118,11 +122,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   assert(modifiedPath.size() == 0); 
   drawPathForESPR( traln,rand ,stopProb); 
 
-  modifiedPath.saveBranchLengthsPath(traln); 
-
-  move.applyPathAsESPR(traln, modifiedPath);
-
-  // cout << modifiedPath << endl; 
+  move.applyToTree(traln); 
 
   assert(traln.getNumBranches() == 1 ); 
 
@@ -144,36 +144,20 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 }
 
 
-
-void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
-{
-  move.resetAlongPathForESPR (traln, prior, modifiedPath);   
-  modifiedPath.restoreBranchLengthsPath(traln, prior ); 
-  debug_checkTreeConsistency(traln);
-  debug_printTree(traln); 
+void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
+{  
+  Branch toEval = move.getEvalBranch(traln);
+  auto p = toEval.findNodePtr(traln); 
+  move.disorientAtNode(traln,p); 
+  evaluateGenericWrapper(traln, p, FALSE);
 }
 
 
-void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
-{  
-  tree *tr = traln.getTr(); 
-
-
-#if 0 
-  branch futureRoot = getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1)); 
-#else 
-  branch b = getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1)); 
-  branch lastBranch = modifiedPath.at(modifiedPath.size( )- 1 ) ;
-  branch futureRoot = getThirdBranch(tr, constructBranch(b.thisNode, lastBranch.thisNode),
-				     constructBranch(b.thisNode,lastBranch.thatNode)); 
-
-#endif
-
-  nodeptr toEval = findNodeFromBranch(tr, futureRoot); /* dangerous */
-
-  move.destroyOrientationAlongPath(modifiedPath, traln, toEval); 
-
-  evaluateGenericWrapper(traln, toEval, FALSE);
+void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
+{
+  move.revertTree(traln,prior); 
+  debug_checkTreeConsistency(traln);
+  debug_printTree(traln); 
 }
 
 

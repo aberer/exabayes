@@ -466,11 +466,6 @@ void TreeAln::initRevMat(int model)
 
 void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
 {  
-  // cout << "set freq:"; 
-  // for(auto &v : newValues)
-  //   cout << v << "," ; 
-  // cout << endl; 
-
   int changed = 0; 
   double sum =0 ; 
   for(double &v : newValues)
@@ -487,12 +482,6 @@ void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
     if(v != freqMin)
       v /= sum; 
 
-
-  // cout << "after norm:"; 
-  // for(auto &v : newValues)
-  //   cout << v << "," ; 
-  // cout << endl; 	  
-
   pInfo *partition = getPartition(model); 
   for(nat i = 0; i < newValues.size(); ++i)
     partition->frequencies[i] = newValues[i];   
@@ -507,10 +496,6 @@ void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
 
 void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
 { 
-  // cout << "setting revmat "; 
-  // for(auto &v : newValues)
-  //   cout << v << ","; 
-  // cout << endl; 
 
   vector<double> normValues = newValues; 
 
@@ -526,11 +511,6 @@ void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
 	v = rateMax; 
       sum += v ; 
     }
-
-  // cout << "after correction " ; 
-  // for(auto &v : normValues)
-  //   cout << v << "," ; 
-  // cout << endl; 
 
   pInfo *partition = getPartition(model); 
   for(nat i = 0; i < newValues.size(); ++i)

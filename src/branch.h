@@ -32,14 +32,14 @@ void extractBranches(const TreeAln &traln, vector<branch> &result) ;
 
 branch invertBranch(branch b); 
 branch constructBranch(int thisNode, int thatNode); 
-boolean branchExists(tree *tr, branch b); 
-nodeptr findNodeFromBranch(tree *tr, branch b ); 
+boolean branchExists(const tree *tr, branch b) ; 
+nodeptr findNodeFromBranch(const tree *tr, branch b ); 
 branch findRoot(tree *tr); 
 boolean isTipBranch(branch b, int numTip); 
 boolean branchEqualUndirected(branch b1, branch b2); 
 boolean nodeIsInBranch(int number, branch b ); 
 int getIntersectingNode(branch b1, branch b2); 
-branch getThirdBranch(tree *tr, branch b1, branch b2); 
+branch getThirdBranch(const tree *tr, branch b1, branch b2); 
 int getOtherNode(int node, branch b); 
 double branchLengthToInternal(const tree *tr, double realBL);
 double branchLengthToReal(const tree *tr, double internalBL); 

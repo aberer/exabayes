@@ -254,7 +254,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
     index; 
   
   for(index = 4; index < count; index += 4)
-    {      
+    {       
       size_t
 	pNumber = (size_t)ti[index],
 	qNumber = (size_t)ti[index + 1],

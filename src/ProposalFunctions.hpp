@@ -21,7 +21,7 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
 
     vector<double> newValues; 
     rand.drawDirichletExpected(newValues, oldValues, parameter * oldValues.size() );
-    updateHastings(hastings, densityDirichlet(oldValues, newValues) / densityDirichlet(newValues,oldValues) , "dirichlet"); 
+    AbstractProposal::updateHastings(hastings, densityDirichlet(oldValues, newValues) / densityDirichlet(newValues,oldValues) , "dirichlet"); 
 
     sum = 0; 
     for(auto &v : newValues)
@@ -74,7 +74,7 @@ public: static vector<double> getNewValues(vector<double> oldValues, double para
   {    
     int position = rand.drawRandInt(oldValues.size()); 
     double multiplier =  rand.drawMultiplier( parameter); 
-    updateHastings(hastings, multiplier, "multiplier"); 
+    AbstractProposal::updateHastings(hastings, multiplier, "multiplier"); 
     oldValues[position] = oldValues[position] * multiplier; 
     return oldValues;
   }

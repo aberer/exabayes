@@ -9,7 +9,7 @@ void NniMove::init(const TreeAln &traln, const Branch& _innerBranch, pair<int,in
 
   innerBranch = _innerBranch; 
   switching = _switching; 
-  nodeptr p = innerBranch.findNodeFromBranch(traln); 
+  nodeptr p = innerBranch.findNodePtr(traln); 
   assert(traln.getNumBranches() == 1 ); 
   innerBranch.setLength(p->z[0]); 
   
@@ -34,7 +34,7 @@ void NniMove::init(const TreeAln &traln, const Branch& _innerBranch, pair<int,in
 
 void NniMove::disortient(TreeAln &traln) const 
 {
-  nodeptr p = innerBranch.findNodeFromBranch(traln); 
+  nodeptr p = innerBranch.findNodePtr(traln); 
   LikelihoodEvaluator::disorientNode(p); 
   LikelihoodEvaluator::disorientNode(p->back); 
 }
@@ -58,8 +58,8 @@ void NniMove::apply(TreeAln &traln) const
       assert(b.exists(traln));       
     }  
 
-  nodeptr pA = a.findNodeFromBranch(traln),
-    pB = b.findNodeFromBranch(traln), 
+  nodeptr pA = a.findNodePtr(traln),
+    pB = b.findNodePtr(traln), 
     pABack = pA->back,
     pBBack = pB->back; 
 
@@ -73,13 +73,13 @@ void NniMove::revert(TreeAln &traln) const
   apply(traln);
 
   // revert branch lengths 
-  nodeptr p = innerBranch.findNodeFromBranch(traln); 
+  nodeptr p = innerBranch.findNodePtr(traln); 
   double tmp = innerBranch.getLength(); 
   traln.clipNode(p,p->back, tmp); 
 
   for(auto &elem : outerBranches)
     {
-      nodeptr q = elem.findNodeFromBranch(traln); 
+      nodeptr q = elem.findNodePtr(traln); 
       tmp =  elem.getLength(); 
       traln.clipNode(q,q->back, tmp); 
     }
@@ -88,7 +88,7 @@ void NniMove::revert(TreeAln &traln) const
 
 void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , vector<shared_ptr<AbstractPrior> > priors, string name)
 {
-  nodeptr p = branch.findNodeFromBranch(traln); 
+  nodeptr p = branch.findNodePtr(traln); 
 
   double multi = rand.drawMultiplier(parameter); 
   double oldV = traln.getBranchLength( p,0); 
@@ -97,7 +97,7 @@ void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hasti
   traln.setBranchLengthBounded(newV, 0, p); 
   
   double realM = log(newV) /  log(oldV);   
-  updateHastings(hastings, realM, name); 
+  AbstractProposal::updateHastings(hastings, realM, name); 
   
   assert(priors.size() == 1); 
   auto brPr = priors[0]; 

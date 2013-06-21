@@ -17,7 +17,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   if(rand.drawRandDouble01() < 0.5 )
     oneBranch.invert();
 
-  nodeptr p = oneBranch.findNodeFromBranch(traln); 
+  nodeptr p = oneBranch.findNodePtr(traln); 
   nodeptr q = rand.drawRandDouble01() < 0.5  ? p->next->back : p->next->next->back; 
   oneBranch.setLength(traln.getBranchLength(p,0)); 
   otherBranch = Branch(p->number, q->number, traln.getBranchLength(q,0)); 
@@ -41,12 +41,12 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   newA = pow(newZ, uniScaler ) ; 
   newB = pow(newZ, 1-uniScaler); 
 
-  traln.clipNode(oneBranch.findNodeFromBranch(traln), 
-		oneBranch.getInverted().findNodeFromBranch(traln),
+  traln.clipNode(oneBranch.findNodePtr(traln), 
+		oneBranch.getInverted().findNodePtr(traln),
 		newA); 
   
-  traln.clipNode(otherBranch.findNodeFromBranch(traln),
-		 otherBranch.getInverted().findNodeFromBranch(traln),
+  traln.clipNode(otherBranch.findNodePtr(traln),
+		 otherBranch.getInverted().findNodePtr(traln),
 		 newB); 
 
 #ifdef UNSURE
@@ -72,7 +72,7 @@ void NodeSlider::evaluateProposal(TreeAln &traln, PriorBelief &prior)
   nat otherNode = oneBranch.getOtherNode(middleNode); 
   
   Branch b(middleNode, otherNode); 
-  nodeptr p = b.findNodeFromBranch(traln);    
+  nodeptr p = b.findNodePtr(traln);    
   LikelihoodEvaluator::disorientNode( p); 
 
   LikelihoodEvaluator eval; 
