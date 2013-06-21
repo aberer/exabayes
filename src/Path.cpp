@@ -6,31 +6,6 @@
 #include "AbstractProposal.hpp"
 
 
-Path::Path()
-{
-}
-
-Path::~Path()
-{
-}
-
-
-Path::Path(const Path &rhs)
-    : stack(rhs.stack)
-{    
-}
-
-
-
-
-
-Path& Path::operator=(const Path &rhs )  
-{
-  Path tmp(rhs); 
-  swap(*this, tmp); 
-  return *this; 
-}
-
 
 
 void Path::clear()
@@ -199,24 +174,18 @@ int Path::getNthNodeInPath(nat num)   const
 	}
     }
   else 
-    {
+    {      
       Branch b = stack[num]; 
       if(stack[num-1].nodeIsInBranch(b.getPrimNode() ))
 	result= b.getPrimNode(); 
       else 
 	{
-	  assert(stack[num-1].nodeIsInBranch(b.getPrimNode() )); 
+	  assert(stack[num-1].nodeIsInBranch(b.getSecNode() )); 
 	  result= b.getSecNode(); 
 	}	
     }
 
   return result; 
-}
-
-void swap(Path &first, Path &second)
-{
-  using std::swap; 
-  swap(first.stack, second.stack); 
 }
 
 

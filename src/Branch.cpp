@@ -17,7 +17,6 @@ bool Branch::isTipBranch(const TreeAln &traln) const
 
 bool Branch::exists(const TreeAln &traln) const
 {
-  // nodeptr p = findNodeFromBranch(traln); 
   nodeptr p = traln.getTr()->nodep[thisNode]; 
   return
     (nat)p->back->number == thatNode
@@ -65,15 +64,6 @@ double Branch::getInterpretedLength(const TreeAln &traln) const
 } 
 
 
-
-// branch Branch::toLegacyBranch() const
-// {
-//   auto b = constructBranch(thisNode,thatNode) ; 
-//   b.length[0] = length; 
-//   return b;
-// }
-
-
 nat Branch::getCommonNode(const Branch &rhs ) const
 {
   if(thisNode == rhs.thisNode || thatNode == rhs.thisNode)
@@ -85,7 +75,6 @@ nat Branch::getCommonNode(const Branch &rhs ) const
 } 
 
 
-
 void Branch::applyToTree( TreeAln &traln) const
 {
   nodeptr p = findNodePtr(traln); 
@@ -95,9 +84,9 @@ void Branch::applyToTree( TreeAln &traln) const
 }
 
 
-
 Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
 {
+  // TODO efficiency 
   int node = getIntersectingNode(rhs); 
   assert(not traln.isTipNode(traln.getTr()->nodep[node])); 
 
@@ -113,18 +102,17 @@ Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
   int pNumber = p->number; 
   
   if( not rhs.nodeIsInBranch(altA) &&   not nodeIsInBranch(altA ) )    
-    return Branch(altA, pNumber) ;
+    return Branch(pNumber, altA) ; 
   else if( not   rhs.nodeIsInBranch(altB) &&   not nodeIsInBranch(altB) )
-    return Branch(altB,pNumber) ;
+    return Branch(pNumber,altB) ;
   else if( not   rhs.nodeIsInBranch(altC) &&   not nodeIsInBranch(altC) )
-    return Branch(altC, pNumber) ;
+    return Branch(pNumber, altC) ;
   else 
     {
       assert(0); 
       return Branch(0,0); 
     }
 } 
-
 
 
 nat Branch::getIntersectingNode(const Branch  &rhs) const 

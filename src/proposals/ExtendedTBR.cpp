@@ -3,6 +3,8 @@
 #include "eval.h"
 
 
+// TODO the disorient is still  very inefficient 
+
 ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
   :  extensionProbability(_extensionProb)
   , multiplier(_multiplier)
@@ -81,7 +83,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   do
     {
-      Branch bisectedBranch  = traln.drawInnerBranchUniform(rand); 
+      bisectedBranch  = traln.drawInnerBranchUniform(rand); 
 
       p1 = bisectedBranch.findNodePtr(traln ); 
       p2 = bisectedBranch.getInverted().findNodePtr(traln); 
@@ -97,7 +99,11 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
   cout << "bisected branch is " << bisectedBranch << endl; 
 #endif
 
+  
+
   buildPath(modifiedPath1, bisectedBranch, traln, rand, extensionProbability); 
+  
+
   buildPath(modifiedPath2, bisectedBranch.getInverted(), traln, rand, extensionProbability); 
 }
 
@@ -116,16 +122,11 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
   int newConnect = path.getNthNodeInPath(2) ; 
   nodeptr pConn1 = Branch(newConnect, path.at(1).getOtherNode(newConnect )).findNodePtr( traln ) ;
   double savedZ = pConn1->z[0]; 
+
   traln.clipNode(pConn1, p1, p1->z[0]);
   disconnectedPtr->next->back =  disconnectedPtr->next->next->back  = NULL; 
-#ifdef DEBUG_TBR
-  cout << "hooking " << pConn1->number << "," <<p1->number << "(" << p1->z[0] << ")" << endl; 
-#endif
 
   Branch insertBranch(path.getNthNodeInPath(path.getNumberOfNodes( )- 1 ), path.getNthNodeInPath(path.getNumberOfNodes()-2) );   
-#ifdef DEBUG_TBR
-  cout << "insert branch is " << insertBranch << endl; 
-#endif
   nodeptr iPtr = insertBranch.findNodePtr(traln ),
     iPtr2 = insertBranch.getInverted().findNodePtr(traln); 
 
@@ -139,7 +140,7 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
 void ExtendedTBR::executeTBR(TreeAln & traln)
 {  
   int numBranches = traln.getNumBranches(); 
-  assert(numBranches == 1 ); 
+  assert(numBranches == 1); 
 
 #ifdef EXPENSIVE_ETBR_VERIFY
   double tlBefore = traln.getTreeLength(); 
@@ -224,6 +225,7 @@ static void disorientHelper(TreeAln &traln, nodeptr p)
 }
 
 
+
 static void destroyOrientationAlongPath(TreeAln &traln, Path &path)
 {
   tree *tr = traln.getTr(); 
@@ -233,10 +235,6 @@ static void destroyOrientationAlongPath(TreeAln &traln, Path &path)
       nodeptr p = Branch(path.getNthNodeInPath(i) ,path.getNthNodeInPath(i+1) ).findNodePtr(traln );
       disorientHelper(traln, p); 
     }
-  
-  // nodeptr p = findNodeFromBranch(tr , constructBranch(path.getNthNodeInPath(path.getNumberOfNodes()-1), 
-  // 						      path.getNthNodeInPath(path.getNumberOfNodes()-2))); 
-  // disorientHelper(traln, p); 
 }
 
 
@@ -244,7 +242,10 @@ static void destroyOrientationAlongPath(TreeAln &traln, Path &path)
 static void evalHelper(Path &path, TreeAln& traln )
 {  
   tree *tr = traln.getTr();
-  nodeptr p = Branch(path.getNthNodeInPath(path.getNumberOfNodes()-1), path.getNthNodeInPath(1)).findNodePtr ( traln ); 		       
+
+  Branch aBranch (path.getNthNodeInPath(path.getNumberOfNodes()-1), path.getNthNodeInPath(1)); 
+
+  nodeptr p = aBranch.findNodePtr( traln ); 		       
   newViewGenericWrapper(traln, p, FALSE);  
 
   Path pathCopy(path); 
@@ -265,28 +266,15 @@ static void evalHelper(Path &path, TreeAln& traln )
 
 void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorBelief& prior)
 {  
-#if 1 
   tree *tr = traln.getTr(); 
 
   Branch bisectedBranch(modifiedPath1.getNthNodeInPath(1), modifiedPath2.getNthNodeInPath(1)); 
-  
+
   // evaluate both ends of the paths 
   evalHelper(modifiedPath1, traln); 
   evalHelper(modifiedPath2, traln); 
   nodeptr p = bisectedBranch.findNodePtr(traln );
-  evaluateGenericWrapper(traln, p, FALSE);
-  
-#else 
-
-  // IMPORTANT TODO !!! 
-#ifdef DEBUG_TBR
-  cout << "lnl before = "  << traln.getTr()->likelihood << endl; 
-#endif
-  evaluateGenericWrapper(traln,traln.getTr()->start, TRUE );
-#ifdef DEBUG_TBR
-  cout << "lnl after = " << traln.getTr()->likelihood << endl; 
-#endif
-#endif
+  evaluateGenericWrapper(traln, p, FALSE);  
 }
 
 
@@ -341,7 +329,6 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
   modifiedPath1.restoreBranchLengthsPath(traln, prior); 
   modifiedPath2.restoreBranchLengthsPath(traln, prior); 
 
-
 #ifdef EFFICIENT
   assert(0); 
 #endif
@@ -355,5 +342,4 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 AbstractProposal* ExtendedTBR::clone() const 
 {
   return new ExtendedTBR( *this );
-// extensionProbability, multiplier
 }

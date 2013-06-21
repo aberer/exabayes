@@ -18,14 +18,7 @@
 
 class Path
 {
-public: 
-  // lets do this correctly for once ... 
-  Path();
-  ~Path();   
-  Path& operator=(const Path &rhs ) ;   
-  Path( const Path &rhs) ; 
-  friend void swap(Path &first, Path &second); 
-  
+public:   
 /** @brief returns true, if the node with a given id is part of this branch */ 
   bool nodeIsOnPath(int node) const;  
   /** @brief for all branches in the path, copy over the branch lengths */ 

@@ -148,7 +148,6 @@ void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath ) const
   /* get the subtree ptr */
   
   Branch third =  modifiedPath.at(0).getThirdBranch(traln, modifiedPath.at(1)); 
-  cout << "the third branch is "  << third << endl; 
   nodeptr sTPtr = third.findNodePtr(traln); 
   assert(modifiedPath.at(1).nodeIsInBranch(sTPtr->number )); 
 
