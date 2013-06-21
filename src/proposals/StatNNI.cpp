@@ -21,13 +21,14 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   Branch b( rand.drawInnerBranchUniform(traln) ) ; 
   nodeptr p = b.findNodePtr(traln); 
 
-  pair<int,int> switching(p->next->back->number,
-			  rand.drawRandDouble01() < 0.5  
-			  ? p->back->next->back->number
-			  : p->back->next->next->back->number
-			  ); 
-
-  move.init( traln, b,  switching);
+  Branch switchingBranch = Branch( 
+				  rand.drawRandDouble01() < 0.5  
+				  ? p->back->next->back->number
+				  : p->back->next->next->back->number, 
+				  p->back->number
+				   ); 
+  
+  move.extractMoveInfo(traln, {b, switchingBranch}); 
 
   vector<shared_ptr<AbstractPrior> > priors; 
   bool multiplyBranches = false; 
@@ -46,9 +47,9 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 #endif
 
   if(multiplyBranches)
-    move.multiplyAllBranches(traln, hastings, prior, rand, multiplier, priors, name);
+    move.multiplyBranches(traln, rand, hastings, prior, multiplier, priors); 
 
-  move.apply(traln);
+  move.applyToTree(traln);
   debug_checkTreeConsistency(traln);
 }
 
@@ -57,8 +58,8 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 
 void StatNNI::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 {
-  move.disortient(traln); 
-  nodeptr p = move.getEvalBranch().findNodePtr(traln);
+  nodeptr p = move.getEvalBranch(traln).findNodePtr(traln);
+  move.disorientAtNode(traln, p);
   evaluateGenericWrapper(traln, p,FALSE); 
 }
 
@@ -66,7 +67,7 @@ void StatNNI::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 
 void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)  
 {
-  move.revert(traln); 
+  move.revertTree(traln,prior); 
   debug_checkTreeConsistency(traln);
 }
 

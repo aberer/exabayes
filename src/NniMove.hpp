@@ -6,25 +6,27 @@
 #include "Branch.hpp"
 #include "PriorBelief.hpp"
 
-class  NniMove
+#include "AbstractMove.hpp"
+
+class  NniMove : public AbstractMove
 {
 public: 
-  void apply(TreeAln &traln) const ; 
-  void revert(TreeAln &traln) const; 
-  void disortient(TreeAln &traln) const ; 
-  void init(const TreeAln &traln, const Branch& _innerBranch, pair<int,int> _switching); 
-  Branch getEvalBranch() const {return innerBranch; }
-  
-  void multiplyAllBranches( TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter, vector<shared_ptr<AbstractPrior> > priors, string name) ; 
+  virtual void applyToTree(TreeAln &traln) const ; 
+  virtual void revertTree(TreeAln &traln, PriorBelief &prior) const ; 
+  virtual void disorientAtNode(TreeAln &traln, nodeptr p) const ; 
+  virtual void extractMoveInfo(const TreeAln &traln, vector<Branch> description) ; 
+  virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, vector<shared_ptr<AbstractPrior> > brPr) const ; 
 
+  virtual Branch getEvalBranch(const TreeAln &traln) const {return innerBranch; }
+  virtual AbstractMove* clone() const {return new NniMove();}  
+
+private: 			// METHODS 
+  void multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , vector<shared_ptr<AbstractPrior> > priors, string name) const; 
   
-private: 
+private: 			// ATTRIBUTES 
   Branch innerBranch; 
   vector<Branch> outerBranches; 
   pair<int,int> switching; 
-
-
-  void multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , vector<shared_ptr<AbstractPrior> > priors, string name); 
 }; 
 
 

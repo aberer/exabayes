@@ -3,9 +3,6 @@
 #include "branch.h"
 #include "eval.h"
 
-// #define EXPENSIVE_ETBR_VERIFY
-// #define DEBUG_TBR
-
 
 ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
   :  extensionProbability(_extensionProb)
@@ -14,13 +11,6 @@ ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
   name = "eTBR"; 
   category = TOPOLOGY; 
   relativeWeight = 5.;
-}
-
-
-
-void ExtendedTBR::autotune()
-{
-  // cannot tune that 
 }
 
 

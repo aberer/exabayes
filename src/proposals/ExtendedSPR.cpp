@@ -137,7 +137,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   if(modifiesBl)
     {
       auto brPr = secVar.at(0).getPrior();
-      move.multiplyAlongBranchESPR(traln, rand, hastings, prior, modifiedPath, multiplier, brPr);
+      move.multiplyBranches(traln, rand, hastings, prior, multiplier, {brPr} ); 
     }
 
   debug_checkTreeConsistency(traln); 

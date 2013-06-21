@@ -226,7 +226,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   if( modifiesBl)
     {
       auto brPr =  secVar[0].getPrior();
-      move.multiplyBranches(traln, rand, hastings, prior,  blMulti, brPr); 
+      move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 
   debug_checkTreeConsistency(traln);   

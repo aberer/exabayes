@@ -5,15 +5,19 @@
 
 // TODO make branch stuff more optional (performance)
 
+// TODO constructor instead of extract move info 
+
 
 void SprMove::applyToTree(TreeAln &traln) const
 {
-  applyPathAsESPR(traln, path); 
+  applyPath(traln, path); 
 }
 
 void SprMove::revertTree(TreeAln &traln, PriorBelief &prior) const
 {
-  resetAlongPathForESPR(traln, prior, path) ;   
+  Path anotherPath ; 
+  getPathAfterMove(traln, path, anotherPath);
+  applyPath(traln, anotherPath); 
   path.restoreBranchLengthsPath(traln, prior); 
 }
 
@@ -99,59 +103,38 @@ Branch SprMove::getEvalBranch(const TreeAln &traln) const
 
 
 
-void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, shared_ptr<AbstractPrior> brPr)  const 
-{  
-  multiplyAlongBranchESPR(traln, rand, hastings, prior,  path, multiplier,  brPr); 
-} 
-
-
 /**
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void SprMove::multiplyAlongBranchESPR(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior,  const Path &modifiedPath, double multiplier, shared_ptr<AbstractPrior> brPr) const
-{
-  assert(modifiedPath.size() >= 2); 
+void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, vector<shared_ptr<AbstractPrior> > brPrs)  const 
+{  
+  assert(path.size() >= 2); 
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
+  assert(brPrs.size() < 2 ); 
+  auto brPr = brPrs[0]; 
  
-  int sTNode = modifiedPath.getNthNodeInPath(1); 
-  branch firstBranch = constructBranch( modifiedPath.getNthNodeInPath(0), modifiedPath.getNthNodeInPath(2)); 
+  int sTNode = path.getNthNodeInPath(1); 
+  branch firstBranch = constructBranch( path.getNthNodeInPath(0), path.getNthNodeInPath(2)); 
 
-  modifiedPath.multiplyBranch(traln, rand, firstBranch, multiplier, hastings, prior, brPr); 
+  path.multiplyBranch(traln, rand, firstBranch, multiplier, hastings, prior, brPr); 
   
   /* treat all branches except the first 2 and the last one */
   int ctr = 0; 
-  for(nat i = 0; i < modifiedPath.size() ; ++i)
+  for(nat i = 0; i < path.size() ; ++i)
     {
       if(ctr < 2 )
 	continue; 
 
-      modifiedPath.multiplyBranch(traln, rand, modifiedPath.at(i), multiplier, hastings, prior, brPr); 
+      path.multiplyBranch(traln, rand, path.at(i), multiplier, hastings, prior, brPr); 
     }
 
-  int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
-    s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
-  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings, prior, brPr); 
-  modifiedPath.multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings, prior, brPr); 
-}
-
-
-
-/**
-   @brief undoes topological changes, if an eSPR move was done
-   according to rPath.
-
-   Only resets the spr move, not any branch length changes due to BL
-   multiplying.
- */ 
-void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, const Path& modifiedPath) const
-{
-  Path anotherPath ; 
-  getPathAfterMove(traln, modifiedPath, anotherPath);
-  applyPathAsESPR(traln, anotherPath);     
-}
-
+  int lastNode = path.getNthNodeInPath(path.getNumberOfNodes()-1),
+    s2LastNode = path.getNthNodeInPath(path.getNumberOfNodes()-2); 
+  path.multiplyBranch(traln, rand, constructBranch(sTNode, lastNode), multiplier, hastings, prior, brPr); 
+  path.multiplyBranch(traln, rand, constructBranch(sTNode, s2LastNode), multiplier, hastings, prior, brPr); 
+} 
 
 
 /**
@@ -160,14 +143,10 @@ void SprMove::resetAlongPathForESPR(TreeAln &traln, PriorBelief &prior, const Pa
    first two branches in path define subtree, all further branches are
    traversed, last branch is the insertion branch. 
  */
-void SprMove::applyPathAsESPR(TreeAln &traln, const Path &modifiedPath ) const 
+void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath ) const 
 {
   tree *tr = traln.getTr();
 
-#ifdef CONTROL_ESPR
-double treeLengthBefore = traln.getTreeLengthExpensive(); 
-#endif
-  
   assert(modifiedPath.size() > 2 ); 
 
   /* get the subtree ptr */
@@ -197,15 +176,6 @@ double treeLengthBefore = traln.getTreeLengthExpensive();
   assert(branchExists(tr, constructBranch(sTPtr->number, s2lPtr->number))); 
   assert(branchExists(tr, constructBranch(sTPtr->number, lPtr->number))); 
 
-
-#ifdef CONTROL_ESPR
-  double treeLengthAfter =  traln.getTreeLengthExpensive(); 
-  if( fabs(treeLengthAfter  -  treeLengthBefore) > 1e-6  )
-    {
-      cout << setprecision(8)  << "TL before " << branchLengthToReal(traln.getTr(),treeLengthBefore) << "\tafter" <<  branchLengthToReal(traln.getTr(), treeLengthAfter) << endl; 
-      assert(treeLengthAfter == treeLengthBefore); 
-    }
-#endif
 }
 
 
