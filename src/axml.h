@@ -10,6 +10,11 @@
 #include "config.h"
 #include "common.h"
 
+#ifdef _USE_GOOGLE_PROFILER
+#include <google/profiler.h>
+#endif
+
+
 
 #ifdef HAVE_AVX
 #define __AVX 

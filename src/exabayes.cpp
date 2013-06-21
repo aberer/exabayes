@@ -40,12 +40,7 @@
 #include "eval.h"
 #endif
 
-
-
 #include "branch.h"
-
-
-
 
 
 // have ae look at that later again 
@@ -60,7 +55,6 @@ double fastPow(double a, double b) {
 }
 
 
-#include <unordered_map>
 
 /**
    @brief the main ExaBayes function.
@@ -147,10 +141,33 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 
 
 
+
+void initializeProfiler()
+{
+  // see this page for info 
+  // http://google-perftools.googlecode.com/svn/trunk/doc/cpuprofile.html  
+  // that option is important
+  // CPUPROFILE_FREQUENCY=x
+#ifdef _USE_GOOGLE_PROFILER
+  ProfilerStart("profile.out");
+#endif
+}
+ 
+
+ 
+void finalizeProfiler()
+{
+#ifdef _USE_GOOGLE_PROFILER
+  ProfilerStop();
+#endif
+}
+
+
 int main(int argc, char *argv[])
-{   
+{ 
   ParallelSetup pl(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
 
+  initializeProfiler();
 
 #if HAVE_PLL != 0 && ( (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS)))
   assert(0); 
@@ -173,10 +190,11 @@ int main(int argc, char *argv[])
     tout << argv[i] << " " ; 
   tout << endl << endl; 
 
-
-
   exa_main( cl, pl); 
 
+  finalizeProfiler();
+
   pl.finalize();  
+
   return 0;
 }

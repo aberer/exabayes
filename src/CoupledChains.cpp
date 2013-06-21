@@ -257,6 +257,10 @@ void CoupledChains::executePart(int gensToRun)
 
   for(auto chain : chains)
     chain->saveTreeStateToChain();
+
+#ifdef _USE_GOOGLE_PROFILER
+  ProfilerFlush();
+#endif
 }
 
 
