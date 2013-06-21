@@ -26,24 +26,52 @@ RadiusMlSPR::RadiusMlSPR(  int _radius)
 }
 
 
+static void divideBranchLengthsWithRatio(double orig, double ratio, double &resultA , double &resultB)
+{
+  resultA = pow(orig, (double)STRETCH_FACTOR * ratio) ; 
+  resultB = pow(orig, (double)STRETCH_FACTOR * (1-ratio)); 
+
+}
+
+
+
+double getRatio(tree *tr, double a, double b )
+{
+  // sorry...not in the mood 
+#if 1 
+  return 1 ; 
+
+#else 
+  double realA = branchLengthToReal(tr, a ) , 
+    realB = branchLengthToReal(tr,b); 
+  
+  double ratio = realA / (realA + realB ); 
+
+  if(NOT (0 < ratio && ratio < 1.))
+    {
+      printf("\n\nWARNING: %g,%g (%g,%g) in ratio %g\n", a,b,branchLengthToReal(tr, a),branchLengthToReal(tr,b), ratio);
+    }    
+  return ratio ; 
+#endif 
+}
 
 
 /**
     @brief finds the entry in the list 
     notice: inefficient, but who cares? 
  */ 
-static insertList* getEntry(insertList *lnlList, branch b )
+static insertList* getEntry(insertList *lnlList, Branch b )
 {
   for(insertList *iter = lnlList; iter ; iter = iter->next)
     {
-      if(branchEqualUndirected(iter->b, b))
+      if(iter->b.equalsUndirected( b))
 	return iter; 
     }
   return NULL; 
 }
 
 
-static void appendElem(insertList **list,  branch b , double lnl, double ratio, boolean isFirst  )
+static void appendElem(insertList **list,  Branch b , double lnl, double ratio, boolean isFirst  )
 {
   insertList *elem = (insertList*)exa_calloc(1,sizeof(insertList)); 
   elem->next = *list; 
@@ -58,12 +86,11 @@ static void appendElem(insertList **list,  branch b , double lnl, double ratio, 
     elem->containedInSecond = TRUE; 
 }
 
-static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
+static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
 { 
   tree *tr = traln.getTr();
 
-  /* insertList *la = *lnlList;  */
-  if(depthLeft == 0 || isTip(pruneBranch.thisNode,tr->mxtips) )
+  if( depthLeft == 0 || isTip(pruneBranch.getPrimNode(),tr->mxtips) )
     return; 
   
 #if DEBUG_GUIDED_SPR > 1 
@@ -71,11 +98,11 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
 #endif
 
   nodeptr
-    q = findNodeFromBranch(tr, pruneBranch), 
-    p = findNodeFromBranch(tr, subtree); 
+    q = pruneBranch.findNodePtr(traln ), 
+    p = subtree.findNodePtr(traln ); 
 
   /* first evaluation  */  
-  branch descendBranch = constructBranch(q->next->back->number, q->number); 
+  Branch descendBranch(q->next->back->number, q->number); 
   descendAndTestInsert(traln,descendBranch , subtree, 1  -  ratio, lnlList, depthLeft-1, isFirst ); 
   insertList *entry = NULL; 
   
@@ -86,7 +113,7 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
 	iP2 = q->next->back; 
       double zOld = traln.getBranchLength(iP, 0),
 	a,b; 
-      divideBranchLengthsWithRatio(tr, zOld, ratio, &a, &b); 
+      divideBranchLengthsWithRatio( zOld, ratio, a, b); 
       traln.clipNode(p->next,iP, a);   
       traln.clipNode(p->next->next,iP2, b); 
       traln.setBranchLengthBounded(a, 0, p->next );
@@ -95,7 +122,7 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
       newViewGenericWrapper(traln, p, FALSE); 
       evaluateGenericWrapper(traln, p, FALSE ); 
 
-      appendElem(lnlList, constructBranch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
+      appendElem(lnlList, Branch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 
       printf("test insert: inserting %d into {%d,%d}(%g) => %.3f \n", p->number, iP->number, iP2->number, branchLengthToReal(tr, traln.getBranchLength(  iP,0)), tr->likelihood); 
 #endif 
@@ -114,7 +141,7 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
 
 
   /* second evaluation  */
-  descendBranch = constructBranch(q->next->next->back->number, q->number); 
+  descendBranch = Branch(q->next->next->back->number, q->number); 
   descendAndTestInsert(traln, descendBranch, subtree, 1 - ratio, lnlList, depthLeft-1, isFirst ); 
   if( (entry = getEntry(*lnlList, descendBranch)) == NULL) /* we have not tested this branch  */
     {
@@ -123,7 +150,7 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
 
       double zOrig = traln.getBranchLength(iP,0),
 	a,b; 
-      divideBranchLengthsWithRatio(tr, zOrig, ratio, &a, &b); 
+      divideBranchLengthsWithRatio( zOrig, ratio, a, b); 
 
       traln.clipNode(p->next, iP, a); 
       traln.clipNode(p->next->next, iP2, b); 
@@ -133,7 +160,7 @@ static void descendAndTestInsert(TreeAln& traln, branch pruneBranch, branch subt
       newViewGenericWrapper(traln,p,FALSE); 
       evaluateGenericWrapper(traln,p,FALSE  ); 
 
-      appendElem(lnlList, constructBranch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
+      appendElem(lnlList, Branch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 
       printf("test insert: inserting %d into {%d,%d}(%g) => %.3f\n", p->number, iP->number, iP2->number, branchLengthToReal(tr, traln.getBranchLength(iP->number, 0)),  tr->likelihood);   
 #endif
@@ -197,8 +224,10 @@ static  void createWeights(tree  *tr, insertList **lnlList, boolean doFirst)
 
 
 
-static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, branch subtree, branch pruneBranch, int radius, boolean isFirst)
+
+static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, Branch subtree, Branch pruneBranch, int radius, boolean isFirst)
 {
+#if 0 
   tree *tr = traln.getTr();
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
@@ -208,7 +237,7 @@ static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, branch su
   /* prune it  */
   {
     nodeptr 
-      p = findNodeFromBranch(tr, subtree),
+      p = subtree.findNodePtr(traln ),
       q = p->next->back, 
       r = p->next->next->back; 
 
@@ -239,6 +268,7 @@ static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, branch su
   }
 
   debug_checkTreeConsistency(traln);
+#endif
 }
 
 
@@ -304,6 +334,7 @@ static void debug_checkHooks(tree *tr)
 
 void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
+#if 0 
   debug_printTree(traln);
 
   tree *tr = traln.getTr(); 
@@ -312,21 +343,21 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   /* find subtree to prune  */
   boolean accepted = FALSE;  
-  branch
+  Branch
     subtree, pruneBranch;   
   nodeptr p = NULL ; 
   double ratio = 0;
   
   while(NOT accepted) 
     {
-      subtree = rand.drawBranchUniform(traln); 
-      p = findNodeFromBranch(tr, subtree); 
+      subtree = traln.drawBranchUniform(rand); 
+      p = subtree.findNodePtr(traln ); 
       accepted = NOT isTip(p->number, tr->mxtips)
 	&& (NOT isTip(p->next->back->number,tr->mxtips ) && NOT isTip(p->next->next->back->number, tr->mxtips)); 
       if(accepted)
 	{
-	  pruneBranch.thisNode = p->next->back->number; 
-	  pruneBranch.thatNode = p->next->next->back->number; 	  
+	  pruneBranch.setPrimNode( p->next->back->number); 
+	  pruneBranch.setSecNode(p->next->next->back->number); 
 	  ratio = getRatio(tr,  traln.getBranchLength(p->next->back, 0 ) , traln.getBranchLength( p->next->next->back,0));
 	  /* printf("\nRATIO=%g\n", ratio) ; */
 	}
@@ -343,11 +374,11 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   createWeights(tr,&lnlList, TRUE); 
 
   insertList *sampledElem = sampleFromLnlArray(traln, rand, lnlList);
-  branch sampledBranch = sampledElem->b; 
+  Branch sampledBranch = sampledElem->b; 
 
   /* prune subtree and insert into new position  */
   {
-    nodeptr p = findNodeFromBranch(tr, subtree); 
+    nodeptr p = subtree.findNodePtr(traln ); 
     double z = combineBranchLengths(tr, traln.getBranchLength( p->next->back,0),   traln.getBranchLength( p->next->next->back,0)); 
     traln.clipNode(p->next->back, p->next->next->back, z); 
     
@@ -415,6 +446,7 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   debug_checkHooks( tr); 
   freeList(lnlList);   
+#endif
 } 
 
 
@@ -426,21 +458,19 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 */ 
 void RadiusMlSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
-  tree
-    *tr = traln.getTr(); 
-
-  nodeptr p = findNodeFromBranch(tr, path.at(1));
+  nodeptr p = path.at(1).findNodePtr(traln );
   evaluateGenericWrapper(traln, p, FALSE );
 } 
 
 
 void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior) 
 {
+#if 0 
   tree *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1); 
-
-  branch pruneBranch = path.at(0),
+  
+  Branch pruneBranch = path.at(0),
     subtreeBranch = path.at(1); 
 
   nodeptr p = findNodeFromBranch(tr, subtreeBranch ); 
@@ -467,6 +497,7 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
   printf("RESET:\t");      
 #endif
   debug_printTree(traln);
+#endif
 } 
 
 

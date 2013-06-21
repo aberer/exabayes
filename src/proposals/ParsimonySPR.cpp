@@ -8,7 +8,7 @@
 #include "output.h"
 #include "InsertionScore.hpp"
 #include "Branch.hpp"
-#include "branch.h"
+
 
 
 ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
@@ -118,8 +118,7 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
 
 void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
 {
-  vector<branch> branches; 
-  extractBranches(traln, branches); 
+  vector<Branch> branches = traln.extractBranches(); 
 
   scoreMap possibilities; 
 
@@ -127,15 +126,13 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   exa_evaluateParsimony(traln, traln.getTr()->start, TRUE, partitionParsimony);
 
   // BAD 
-  branch prunedTree; 
+  Branch prunedTree; 
   nodeptr p = nullptr, pn = nullptr , pnn = nullptr ; 
 
   do 
     {
-      Branch b  = rand.drawBranchWithInnerNode(traln); 
-      prunedTree = b.toLegacyBranch(); 
-
-      p = b.findNodePtr(traln);
+      prunedTree  = traln.drawBranchWithInnerNode(rand); 
+      p = prunedTree.findNodePtr(traln);
       pn = p->next->back; 
       pnn = p->next->next->back;         
 
@@ -186,11 +183,10 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 #endif
     for(auto &b : branches)    
       {
-    Branch bN ; 
-    bN.initFromLegacy(b); 
-    auto p = bN.findNodePtr(traln); 
-    traln.clipNode(p,p->back, b.length[0]); 
-  }
+	auto p = b.findNodePtr(traln); 
+	double tmp = b.getLength(); 
+	traln.clipNode(p,p->back, tmp); 
+      }
   }
 
   // important: save the move 

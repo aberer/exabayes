@@ -12,10 +12,10 @@
 #include "axml.h"
 #include "densities.h"
 
-#include "TreeAln.hpp"
 #include "Randomness.hpp"
 
 using namespace std; 
+
 
 class AbstractPrior
 {

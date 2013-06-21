@@ -1,5 +1,5 @@
 #include "PriorBelief.hpp"
-#include "branch.h"
+#include "Branch.hpp"
 #include "GlobalVariables.hpp"
 #include "Priors.hpp"
 
@@ -30,10 +30,9 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double
   assert(oldFc.size() == 1 && newFcs.size() == 1 );  
 
   double blInfluence = 0; 
-  vector<branch> branches; 
-  extractBranches(traln, branches) ;  
+  vector<Branch> branches = traln.extractBranches() ;  
   for(auto &b : branches)
-    blInfluence += log(b.length[0]); 
+    blInfluence += log(b.getLength()); 
 
   lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * blInfluence;
 }
@@ -56,11 +55,10 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 	case BRANCH_LENGTHS: 
 	  {
 	    assert(traln.getNumBranches() == 1); 
-	    vector<branch> bs; 
-	    extractBranches(traln,bs);
+	    vector<Branch> bs = traln.extractBranches(); 
 	    auto pr = v.getPrior();	    
 	    for(auto b : bs)
-	      partialResult += pr->getLogProb( { branchLengthToReal(traln.getTr(),b.length[0]) } );
+	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln)} );
 	  }
 	  break; 
 	case FREQUENCIES: 

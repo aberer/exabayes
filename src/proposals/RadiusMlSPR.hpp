@@ -6,7 +6,7 @@
 
 typedef struct  _insertWeight
 {
-  branch b; 
+  Branch b; 
   double lnl; 
   double weightInFirst; 
   double weightInSecond; 

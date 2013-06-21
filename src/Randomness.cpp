@@ -1,10 +1,6 @@
-#include "Randomness.hpp" 
-
-#include "TreeAln.hpp"
-#include "branch.h"
-
 #include <limits>
 
+#include "Randomness.hpp" 
 #include "densities.h"
 
 // TODO proper AND carefull make-over of randomness
@@ -113,141 +109,6 @@ double Randomness::drawMultiplier(double multiplier) //
 double Randomness::drawFromSlidingWindow(double value, double window)
 {
   return value + window * (drawRandDouble01() - 0.5); 
-}
-
-
-/**
-   @brief draws a branch with uniform probability.
-   
-   We have to treat inner and outer branches separatedly.
- */
-branch Randomness::drawBranchUniform(TreeAln &traln)
-{
-  tree *tr = traln.getTr(); 
-
-  bool accept = false; 
-  int randId = 0; 
-  while(not accept)
-    {
-      randId = drawIntegerClosed(traln.getNumberOfNodes() ) + 1 ; 
-      assert(randId > 0 && (nat)randId <= traln.getNumberOfNodes() + 1  ); 
-      double r = drawRandDouble01(); 
-      if(isTip(randId, tr->mxtips) )
-	accept = r < 0.25 ; 
-      else 
-	accept = r <= 0.75; 	
-    }
-
-  branch result; 
-  result.thisNode = randId; 
-  nodeptr p = tr->nodep[randId]; 
-  if(traln.isTipNode(p))
-    result.thatNode = p->back->number; 
-  else 
-    {
-      int r = drawRandInt(2); 
-      switch(r)
-	{
-	case 0 : 
-	  result.thatNode = p->back->number; 
-	  break; 
-	case 1 : 
-	  result.thatNode = p->next->back->number; 
-	  break; 
-	case 2: 
-	  result.thatNode = p->next->next->back->number; 
-	  break; 
-	default: assert(0); 
-	}
-    }
-  
-  return result; 
-}
-
-
-
-
-
-nat Randomness::drawInnerNode(const TreeAln &traln )
-{  
-  nat res = drawIntegerClosed(traln.getNumberOfTaxa() - 3 ) + traln.getNumberOfTaxa()  + 1 ;   
-  assert(traln.getNumberOfTaxa() < res  && res <= traln.getNumberOfNodes()  + 1 ); 
-  return res; 
-}
-
-
-
-/** 
-    @brief draw a branch that has an inner node as primary node   
- */ 
-Branch Randomness::drawBranchWithInnerNode(const TreeAln &traln)
-{
-  nat idA = drawInnerNode(traln); 
-  nat r = drawIntegerClosed(2);  
-  nodeptr p = traln.getNode(idA); 
-  assert(not traln.isTipNode(p)) ; 
-
-  Branch b; 
-  switch(r)
-    {
-    case 0: 
-      b = Branch(idA, p->back->number); 
-      break; 
-    case 1: 
-      b = Branch(idA, p->next->back->number); 
-      break; 
-    case 2: 
-      b = Branch(idA, p->next->next->back->number); 
-      break; 
-    default: assert(0); 
-    }
- 
-  return b; 
-}
-
-
-/** 
-    @brief samples an inner branch (including orientation), such that
-    each oriented inner branch is equally likely.
- */ 
-Branch Randomness::drawInnerBranchUniform(const TreeAln &traln )
-{
-  bool acc = false;   
-  int node = 0; 
-  nodeptr p = nullptr; 
-  while(not acc)
-    {      
-      node = drawInnerNode(traln); 
-      p = traln.getNode(node); 
-      
-      nat numTips = 0; 
-      if( traln.isTipNode(p->back) ) 
-	numTips++; 
-      if(traln.isTipNode(p->next->back))
-	numTips++;
-      if(traln.isTipNode(p->next->next->back))
-	numTips++; 
-      
-      assert(numTips != 3); 
-      
-      acc = numTips == 0 || drawRandDouble01() <  (3. - double(numTips)) / 3.;       
-    }
-  assert(node != 0); 
-  
-  vector<nat> options; 
-  if(not traln.isTipNode(p->back))
-    options.push_back(p->back->number); 
-  if(not traln.isTipNode(p->next->back))
-    options.push_back(p->next->back->number); 
-  if(not traln.isTipNode(p->next->next->back))
-    options.push_back(p->next->next->back->number); 
-
-  nat other = 0;
-  if(options.size() == 1 )
-    other = options[0]; 
-  else 
-    other = options.at(drawIntegerOpen(options.size()));   
-  return Branch(node, other); 
 }
 
 
@@ -430,4 +291,3 @@ ostream& operator<<(ostream& out, const Randomness &rhs)
   out << "key={" << rhs.key.v[0] << "," << rhs.key.v[1] << "},ctr={" << rhs.ctr.v[0] << ","<< rhs.ctr.v[1] << "}"; 
   return out; 
 } 
-

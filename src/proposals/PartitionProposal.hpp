@@ -35,7 +35,7 @@ private:
   double parameter; 		
   vector<double> values; 
 
-  vector<branch> storedBranches; 
+  // vector<Branch> storedBranches; 
 
 }; 
 

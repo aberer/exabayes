@@ -155,7 +155,8 @@ void Chain::printParams(FILE *fh)
 {
   tree *tr = traln->getTr(); 
 
-  double treeLength =  branchLengthToReal(tr, traln->getTreeLengthExpensive()); 
+  double treeLength = Branch(0,0,traln->getTreeLengthExpensive()).getInterpretedLength(*traln); 
+
   assert(treeLength != 0.); 
   fprintf(fh, "%d\t%f\t%f\t%.3f", currentGeneration,
 	  prior.getLnPrior(), 

@@ -2,13 +2,13 @@
 #define _INSERTION_SCORE 
 
 
+#include "Branch.hpp"
+
 class  InsertionScore
 {
 public: 
-  InsertionScore(branch _b, vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
-  branch getBranch() const  {return b; }
-
-  Branch getNewBranch() const {Branch br; br.initFromLegacy(b); return br; }
+  InsertionScore(Branch _b, vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
+  Branch getBranch() const  {return b; }
 
   double getWeight() const {return  logProb; }
   void setWeight(double w) { logProb = w; }
@@ -25,12 +25,12 @@ public:
 
 
 private: 
-  branch b; 
+  Branch b; 
   vector<nat> partitionParsimony; 
   double logProb;
 
   friend ostream& operator<< (ostream &out, const InsertionScore &rhs) { 
-    out <<  "(" << rhs.b.thisNode << "," << rhs.b.thatNode << ")" << "=" ; 
+    out <<  "(" << rhs.b << "=" ; 
     for(auto elem : rhs.partitionParsimony)
       out << elem << "," ; 
     return out; 

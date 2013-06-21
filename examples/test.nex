@@ -86,12 +86,15 @@ end;
  [ PROPOSAL configuration ]
  [================================================================]
 
-[
-      [ TOPOLOGY ]
       eSPR 0 
       stNNI 0
       eTBR  0
-      parsimonySPR 0
+      parsimonySPR 10
+
+[
+      [ TOPOLOGY ]
+
+
       guidedSPR 0
 ]
  

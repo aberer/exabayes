@@ -8,15 +8,14 @@ Branch::Branch(nat a , nat b, double length)
 }
 
 
-void Branch::initFromLegacy(branch b) 
-{
-  this->thisNode = b.thisNode; 
-  this->thatNode = b.thatNode; 
-  length = b.length[0]; 
+bool Branch::isTipBranch(const TreeAln &traln) const
+{ 
+  int num = traln.getTr()->mxtips ; 
+  return thisNode <= num || thatNode <= num;
 }
-  
 
-bool Branch::exists(TreeAln &traln) const
+
+bool Branch::exists(const TreeAln &traln) const
 {
   // nodeptr p = findNodeFromBranch(traln); 
   nodeptr p = traln.getTr()->nodep[thisNode]; 
@@ -67,12 +66,12 @@ double Branch::getInterpretedLength(const TreeAln &traln) const
 
 
 
-branch Branch::toLegacyBranch() const
-{
-  auto b = constructBranch(thisNode,thatNode) ; 
-  b.length[0] = length; 
-  return b;
-}
+// branch Branch::toLegacyBranch() const
+// {
+//   auto b = constructBranch(thisNode,thatNode) ; 
+//   b.length[0] = length; 
+//   return b;
+// }
 
 
 nat Branch::getCommonNode(const Branch &rhs ) const
@@ -94,3 +93,49 @@ void Branch::applyToTree( TreeAln &traln) const
   // =/ 
   traln.clipNode(p, p->back, tmp); 
 }
+
+
+
+Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
+{
+  int node = getIntersectingNode(rhs); 
+  assert(not traln.isTipNode(traln.getTr()->nodep[node])); 
+
+  nodeptr p = traln.getNode(node); 
+  nodeptr q = p->back,
+    q1 = p->next->back,
+    q2 = p->next->next->back; 
+  
+  int altA = q->number,
+    altB = q1->number,
+    altC = q2->number; 
+  
+  int pNumber = p->number; 
+  
+  if( not rhs.nodeIsInBranch(altA) &&   not nodeIsInBranch(altA ) )    
+    return Branch(altA, pNumber) ;
+  else if( not   rhs.nodeIsInBranch(altB) &&   not nodeIsInBranch(altB) )
+    return Branch(altB,pNumber) ;
+  else if( not   rhs.nodeIsInBranch(altC) &&   not nodeIsInBranch(altC) )
+    return Branch(altC, pNumber) ;
+  else 
+    {
+      assert(0); 
+      return Branch(0,0); 
+    }
+} 
+
+
+
+nat Branch::getIntersectingNode(const Branch  &rhs) const 
+{
+  if(rhs.nodeIsInBranch(   thisNode)  )
+    return thisNode; 
+  else if(rhs.nodeIsInBranch(thatNode))
+    return thatNode; 
+  else 
+    {
+      assert(0); 
+      return 0; 
+    }
+} 

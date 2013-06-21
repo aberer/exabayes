@@ -2,7 +2,6 @@
 #include <fstream>
 
 #include "Path.hpp"
-#include "branch.h"
 #include "Chain.hpp"
 #include "AbstractProposal.hpp"
 
@@ -39,7 +38,7 @@ void Path::clear()
   stack.clear(); 
 }
 
-void Path::append(branch value)
+void Path::append(Branch value)
 {
   stack.push_back(value);
 }
@@ -57,21 +56,21 @@ void Path::popFront()
 }
 
 
-void Path::pushToStackIfNovel(branch b, int numTip)
+void Path::pushToStackIfNovel(Branch b, const TreeAln &traln)
 {  
   assert(stack.size() >= 2 ); 
 
-  branch bPrev = at(size()-1); 
+  Branch bPrev = at(size()-1); 
   if(stack.size() == 2)
     {
-      if(NOT branchEqualUndirected(b, bPrev))
+      if(not b.equalsUndirected(bPrev))
 	append(b); 
     }
   else 
     {      
-      if(branchEqualUndirected(b,bPrev))
+      if(b.equalsUndirected(bPrev))
 	stack.pop_back();
-      else if(isTipBranch(bPrev, numTip))
+      else if(bPrev.isTipBranch(traln))
 	{
 	  stack.pop_back();
 	  append(b); 
@@ -103,16 +102,17 @@ void Path::saveBranchLengthsPath(const TreeAln& traln)
 {
   auto *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches() ;
+  assert(numBranches == 1 ); 
 
-  for(branch& b : stack)
+  for(auto& b : stack)
     {
-      nodeptr p = findNodeFromBranch(tr, b); 
+      nodeptr p = b.findNodePtr(traln); 
 
-      for(int j = 0; j < numBranches; ++j)
-	{
+      // for(int j = 0; j < numBranches; ++j)
+      // 	{
 	  double tmp = traln.getBranchLength( p,0); 
-	  b.length[j] = tmp ; 
-	}
+	  b.setLength( tmp) ; 
+	// }
     }
 }
 
@@ -120,7 +120,7 @@ void Path::saveBranchLengthsPath(const TreeAln& traln)
 bool Path::nodeIsOnPath(int node) const
 {
   for(auto b : stack)
-    if(nodeIsInBranch(node, b))
+    if(b.nodeIsInBranch(node))
       return true;       
 
   return false; 
@@ -130,16 +130,16 @@ bool Path::nodeIsOnPath(int node) const
 ostream& operator<<(ostream &out, const Path &rhs)  
 {
   for(auto b : rhs.stack)
-    out << "(" << b.thisNode << "," << b.thatNode << "),";       
+    out << "(" << b.getPrimNode() << "," << b.getSecNode() << "),";       
   return out; 
 }
 
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> brPr) const 
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> brPr) const 
 {  
   tree *tr = traln.getTr(); 
-  nodeptr p = findNodeFromBranch(tr, b); 
+  nodeptr p = b.findNodePtr(traln); 
   double multiplier = rand.drawMultiplier(parameter); 
 
   double oldZ = traln.getBranchLength(p,0);
@@ -160,8 +160,9 @@ void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior) const
   assert(numBranches == 1); 
   for(auto b : stack)
     {
-      nodeptr p = findNodeFromBranch(traln.getTr(), b); 
-      traln.clipNode(p, p->back, b.length[0]); 
+      nodeptr p = b.findNodePtr(traln); 
+      double tmp = b.getLength(); 
+      traln.clipNode(p, p->back, tmp); 
     }  
 }
 
@@ -176,36 +177,36 @@ int Path::getNthNodeInPath(nat num)   const
   
   if(num == 0)
     {
-      branch b = stack[0]; 
-      if(nodeIsInBranch(b.thisNode, stack[1]))
-	result= b.thatNode; 
+      Branch b = stack[0]; 
+      if(stack[1].nodeIsInBranch(b.getPrimNode()))
+	result= b.getSecNode(); 
       else 
 	{
-	  nodeIsInBranch(b.thatNode,stack[1]); 
-	  result= b.thisNode; 
+	  assert(stack[1].nodeIsInBranch(b.getSecNode())); 
+	  result= b.getPrimNode() ; 
 	}
     }
   else if(num == stack.size() )
     {
-      branch b = stack[num-1]; 
+      Branch b = stack[num-1]; 
       
-      if(nodeIsInBranch(b.thisNode, stack[num-2]))
-	result=  b.thatNode; 
+      if(stack[num-2].nodeIsInBranch(b.getPrimNode() ))
+	result=  b.getSecNode(); 
       else 
 	{
-	  assert(nodeIsInBranch(b.thatNode, stack[num-2])); 
-	  result= b.thisNode; 
+	  assert(stack[num-2].nodeIsInBranch(b.getSecNode() )); 
+	  result= b.getPrimNode(); 
 	}
     }
   else 
     {
-      branch b = stack[num]; 
-      if(nodeIsInBranch(b.thisNode, stack[num-1]))
-	result= b.thisNode; 
+      Branch b = stack[num]; 
+      if(stack[num-1].nodeIsInBranch(b.getPrimNode() ))
+	result= b.getPrimNode(); 
       else 
 	{
-	  assert(nodeIsInBranch(b.thatNode, stack[num-1])); 
-	  result= b.thatNode; 
+	  assert(stack[num-1].nodeIsInBranch(b.getPrimNode() )); 
+	  result= b.getSecNode(); 
 	}	
     }
 
@@ -227,10 +228,10 @@ void Path::reverse()
 
 
 
-bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const branch &target)
+bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const Branch &target)
 {
-  branch curBranch =  constructBranch(p->number, p->back->number); 
-  if( branchEqualUndirected(curBranch, target) ) 
+  Branch curBranch =  Branch(p->number, p->back->number); 
+  if( curBranch.equalsUndirected( target) ) 
     return true; 
   
   bool found = false; 
@@ -239,7 +240,7 @@ bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const branch &target)
       found = findPathHelper(traln, q->back, target); 
       if(found)	
 	{
-	  append(constructBranch(q->number, q->back->number));
+	  append(Branch(q->number, q->back->number));
 	  return found; 
 	}
     }
@@ -254,12 +255,12 @@ void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
   
   stack.clear();   
 
-  branch targetBranch = constructBranch(q->number, q->back->number ); 
+  Branch targetBranch = Branch(q->number, q->back->number ); 
 
   bool found = findPathHelper(traln, p->back, targetBranch); 
   if(found)  
     {      
-      append(constructBranch(p->number, p->back->number)); 
+      append(Branch(p->number, p->back->number)); 
       return ; 
     }
 
@@ -268,13 +269,13 @@ void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
   found = findPathHelper(traln, p->next->back, targetBranch); 
   if(found  )
     {
-      append(constructBranch(p->next->number, p->next->back->number)); 
+      append(Branch(p->next->number, p->next->back->number)); 
       return; 
     }
 
   assert(stack.size() == 0);   
   found = findPathHelper(traln, p->next->next->back, targetBranch); 
   if(found)
-    append(constructBranch(p->next->next->number, p->next->next->back->number)); 
+    append(Branch(p->next->next->number, p->next->next->back->number)); 
   assert(found);
 }

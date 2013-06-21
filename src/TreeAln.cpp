@@ -9,8 +9,6 @@
 
 #include "GlobalVariables.hpp"
 #include "output.h"
-#include "branch.h"
-
 
 // here we initialize the max/min values for our various
 // parameters. Static const is essentially like a global variable but
@@ -168,17 +166,41 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
 
 double TreeAln::getTreeLengthExpensive() const
 {
-  vector<branch> branches; 
-  extractBranches(*this, branches); 
+  vector<Branch> branches = extractBranches(); 
   
   assert(getNumBranches() == 1 ); 
 
   double result = 1; 
   for(auto b : branches)
-    result *= b.length[0]; 
+    result *= b.getLength(); 
 
   return result; 
 }
+
+
+
+void TreeAln::extractHelper( nodeptr p , vector<Branch> &result, bool isStart) const 
+{
+  Branch b = Branch(p->number, p->back->number,  p->back->z[0]);       
+  result.push_back(b);
+
+  if(not isStart && isTipNode(p))
+    return; 
+
+  assert(getNumBranches() == 1 ); 
+  
+  for(nodeptr q =  p->next; p != q ; q = q->next)        
+    extractHelper( q->back, result, false);    
+}
+
+
+vector<Branch> TreeAln::extractBranches() const 
+{
+  vector<Branch> result; 
+  extractHelper(tr->nodep[1]->back, result, true);
+  return result; 
+}
+
 
 void TreeAln::verifyTreeLength() const
 {
@@ -700,27 +722,27 @@ ostream& operator<< (ostream& out,  TreeAln&  traln)
 
 
 
-void TreeAln::collapseBranch(branch b)
+void TreeAln::collapseBranch(Branch b)
 {
   assert(getNumBranches() == 1 ); 
-  nodeptr p = findNodeFromBranch(  getTr(), b); 
+  nodeptr p = b.findNodePtr( *this); 
   p->z[0] = p->back->z[0] = TreeAln::zZero;   
 }
 
 
-bool TreeAln::isCollapsed(branch b ) 
+bool TreeAln::isCollapsed(Branch b ) 
 {
   assert(getNumBranches() == 1 ); 
-  nodeptr p = findNodeFromBranch(  getTr(), b); 
+  nodeptr p = b.findNodePtr(*this); 
   return p->z[0] >=  TreeAln::zMax ; 
 }
 
 
-void TreeAln::setBranchLengthUnsafe(branch b ) 
+void TreeAln::setBranchLengthUnsafe(Branch b ) 
 {
   assert(getNumBranches() == 1 ); 
-  nodeptr p = findNodeFromBranch(  getTr(), b);   
-  p->z[0] = p->back->z[0] = b.length[0];   
+  nodeptr p = b.findNodePtr(  *this);   
+  p->z[0] = p->back->z[0] = b.getLength();   
 } 
 
 
@@ -760,3 +782,141 @@ bool TreeAln::revMatIsImmutable(int model) const
   return partition->states == 20 && partition->protModels != GTR; 
 } 
 
+
+
+
+
+/** 
+    @brief samples an inner branch (including orientation), such that
+    each oriented inner branch is equally likely.
+ */ 
+Branch TreeAln::drawInnerBranchUniform( Randomness &rand) const 
+{
+  bool acc = false;   
+  int node = 0; 
+  nodeptr p = nullptr; 
+  while(not acc)
+    {      
+      node = drawInnerNode(rand); 
+      p = getNode(node); 
+      
+      nat numTips = 0; 
+      if(  isTipNode(p->back) ) 
+	numTips++; 
+      if(isTipNode(p->next->back))
+	numTips++;
+      if(isTipNode(p->next->next->back))
+	numTips++; 
+      
+      assert(numTips != 3); 
+      
+      acc = numTips == 0 || rand.drawRandDouble01() <  (3. - double(numTips)) / 3.;       
+    }
+  assert(node != 0); 
+  
+  vector<nat> options; 
+  if(not isTipNode(p->back))
+    options.push_back(p->back->number); 
+  if(not isTipNode(p->next->back))
+    options.push_back(p->next->back->number); 
+  if(not isTipNode(p->next->next->back))
+    options.push_back(p->next->next->back->number); 
+
+  nat other = 0;
+  if(options.size() == 1 )
+    other = options[0]; 
+  else 
+    other = options.at(rand.drawIntegerOpen(options.size()));   
+  return Branch(node, other); 
+}
+
+
+nat TreeAln::drawInnerNode(Randomness &rand ) const 
+{  
+  nat res = rand.drawIntegerClosed(getNumberOfTaxa() - 3 ) + getNumberOfTaxa()  + 1 ;   
+  assert(getNumberOfTaxa() < res  && res <= getNumberOfNodes()  + 1 ); 
+  return res; 
+}
+
+
+
+
+
+
+/** 
+    @brief draw a branch that has an inner node as primary node   
+ */ 
+Branch TreeAln::drawBranchWithInnerNode(Randomness &rand) const 
+{
+  nat idA = drawInnerNode(rand); 
+  nat r = rand.drawIntegerClosed(2);  
+  nodeptr p = getNode(idA); 
+  assert(not isTipNode(p)) ; 
+
+  Branch b; 
+  switch(r)
+    {
+    case 0: 
+      b = Branch(idA, p->back->number); 
+      break; 
+    case 1: 
+      b = Branch(idA, p->next->back->number); 
+      break; 
+    case 2: 
+      b = Branch(idA, p->next->next->back->number); 
+      break; 
+    default: assert(0); 
+    }
+ 
+  return b; 
+}
+
+
+/**
+   @brief draws a branch with uniform probability.
+   
+   We have to treat inner and outer branches separatedly.
+ */
+Branch TreeAln::drawBranchUniform(Randomness &rand) const 
+{
+  auto *tr = getTr(); 
+
+  bool accept = false; 
+  int randId = 0; 
+  while(not accept)
+    {
+      randId = rand.drawIntegerClosed(getNumberOfNodes() ) + 1 ; 
+      assert(randId > 0 && (nat)randId <= getNumberOfNodes() + 1  ); 
+      double r = rand.drawRandDouble01(); 
+      if(isTip(randId, tr->mxtips) )
+	accept = r < 0.25 ; 
+      else 
+	accept = r <= 0.75; 	
+    }
+
+  // Branch result; 
+  int thisNode = randId; 
+  int thatNode = 0; 
+  nodeptr p = tr->nodep[randId]; 
+  if(isTipNode(p))
+    thatNode = p->back->number; 
+  else 
+    {
+      int r = rand.drawRandInt(2); 
+      switch(r)
+	{
+	case 0 : 
+	  thatNode = p->back->number; 
+	  break; 
+	case 1 : 
+	  thatNode = p->next->back->number; 
+	  break; 
+	case 2: 
+	  thatNode = p->next->next->back->number; 
+	  break; 
+	default: assert(0); 
+	}
+    }
+  
+  return Branch(thisNode, thatNode); 
+}

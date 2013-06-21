@@ -1,6 +1,5 @@
 #include "ExtendedTBR.hpp"
 #include "output.h"
-#include "branch.h"
 #include "eval.h"
 
 
@@ -14,13 +13,13 @@ ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
 }
 
 
-static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomness &rand, double stopProb )
+static void buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, Randomness &rand, double stopProb )
 {
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
   tree *tr  = traln.getTr();
 
-  nodeptr p=  findNodeFromBranch(tr, bisectedBranch); 
+  nodeptr p= bisectedBranch.findNodePtr(traln ); 
   path.clear();
 
   nodeptr pn = p->next->back,
@@ -33,7 +32,7 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
   traln.clipNodeDefault(pn, pnn); 
   p->next->next->back = p->next->back = NULL; 
   path.append(bisectedBranch);
-  path.append(constructBranch(pn->number, pnn->number)); 
+  path.append(Branch(pn->number, pnn->number)); 
   nodeptr currentNode = rand.drawRandDouble01() ? pn : pnn;
   bool accepted = false; 
   while(NOT accepted )
@@ -43,7 +42,7 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
 	? currentNode->next->back
 	: currentNode->next->next->back; 
 
-      path.pushToStackIfNovel(constructBranch(currentNode->number, n->number),tr->mxtips); 
+      path.pushToStackIfNovel(Branch(currentNode->number, n->number),traln); 
       currentNode = n;       
       accepted = rand.drawRandDouble01() < stopProb && path.size() > 2 ; 
     }
@@ -53,16 +52,16 @@ static void buildPath(Path &path, branch bisectedBranch, TreeAln &traln, Randomn
   traln.clipNode(p->next->next, pnn, z2); 
 
   // a correction is necessary 
-  if(nodeIsInBranch(path.at(1).thisNode, path.at(2)))
-    path.at(1).thatNode = p->number; 
-  else if (nodeIsInBranch(path.at(1).thatNode, path.at(2)))
-    path.at(1).thisNode = p->number;     
+  if(path.at(2).nodeIsInBranch(path.at(1).getPrimNode() ))
+    path.at(1).setSecNode(p->number); 
+  else if (path.at(2).nodeIsInBranch(path.at(1).getSecNode() ))
+    path.at(1).setPrimNode(p->number); 
   else 
     assert(0); 
 
   // for reasons of resetting the first branch in the path must be
   // identifyable later
-  path.at(0) = getThirdBranch(tr, bisectedBranch, path.at(1)); 
+  path.at(0) = bisectedBranch.getThirdBranch(traln, path.at(1)); 
 }
 
 
@@ -72,7 +71,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
   assert(numBranches == 1 ) ; 
   tree *tr = traln.getTr();
 
-  branch bisectedBranch = {0,0}; 
+  Branch bisectedBranch = {0,0}; 
   
 
   assert(tr->mxtips > 8 ); 
@@ -82,11 +81,10 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   do
     {
-      Branch tmp  = rand.drawInnerBranchUniform(traln); 
-      bisectedBranch = tmp.toLegacyBranch();
+      Branch bisectedBranch  = traln.drawInnerBranchUniform(rand); 
 
-      p1 = findNodeFromBranch(tr, bisectedBranch); 
-      p2 = findNodeFromBranch(tr, invertBranch( bisectedBranch)); 
+      p1 = bisectedBranch.findNodePtr(traln ); 
+      p2 = bisectedBranch.getInverted().findNodePtr(traln); 
 
       assert(NOT isTip(p1->number, tr->mxtips) && NOT isTip(p2->number, tr->mxtips)); 
 
@@ -100,7 +98,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 #endif
 
   buildPath(modifiedPath1, bisectedBranch, traln, rand, extensionProbability); 
-  buildPath(modifiedPath2, invertBranch(bisectedBranch), traln, rand, extensionProbability); 
+  buildPath(modifiedPath2, bisectedBranch.getInverted(), traln, rand, extensionProbability); 
 }
 
 
@@ -109,16 +107,14 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
 {   
   tree *tr  = traln.getTr(); 
 
-  branch bisectedBranch = getThirdBranch(tr, path.at(0), path.at(1)); 
-  nodeptr disconnectedPtr = findNodeFromBranch(tr, bisectedBranch); 
-  // cout << "bisected is " << bisectedBranch << "empty ptr is " << disconnectedPtr->number << endl;  
+  Branch bisectedBranch = path.at(0).getThirdBranch(traln , path.at(1)); 
+  nodeptr disconnectedPtr = bisectedBranch.findNodePtr(traln ); 
 
-  branch b1 = constructBranch(path.getNthNodeInPath(0), path.getNthNodeInPath(1)); 
-  // cout << "trying to find " << b1  <<endl; 
-  nodeptr p1 = findNodeFromBranch(tr, b1); 
+  Branch b1(path.getNthNodeInPath(0), path.getNthNodeInPath(1)); 
+  nodeptr p1 = b1.findNodePtr(traln ); 
 
   int newConnect = path.getNthNodeInPath(2) ; 
-  nodeptr pConn1 = findNodeFromBranch( tr, constructBranch(newConnect, getOtherNode(newConnect, path.at(1)))) ;
+  nodeptr pConn1 = Branch(newConnect, path.at(1).getOtherNode(newConnect )).findNodePtr( traln ) ;
   double savedZ = pConn1->z[0]; 
   traln.clipNode(pConn1, p1, p1->z[0]);
   disconnectedPtr->next->back =  disconnectedPtr->next->next->back  = NULL; 
@@ -126,12 +122,12 @@ static void pruneAndInsertOneSide(Path &path, TreeAln &traln)
   cout << "hooking " << pConn1->number << "," <<p1->number << "(" << p1->z[0] << ")" << endl; 
 #endif
 
-  branch insertBranch  = constructBranch(path.getNthNodeInPath(path.getNumberOfNodes( )- 1 ), path.getNthNodeInPath(path.getNumberOfNodes()-2) );   
+  Branch insertBranch(path.getNthNodeInPath(path.getNumberOfNodes( )- 1 ), path.getNthNodeInPath(path.getNumberOfNodes()-2) );   
 #ifdef DEBUG_TBR
   cout << "insert branch is " << insertBranch << endl; 
 #endif
-  nodeptr iPtr = findNodeFromBranch(tr, insertBranch),
-    iPtr2 = findNodeFromBranch(tr, invertBranch(insertBranch)); 
+  nodeptr iPtr = insertBranch.findNodePtr(traln ),
+    iPtr2 = insertBranch.getInverted().findNodePtr(traln); 
 
   traln.clipNode(disconnectedPtr->next, iPtr, iPtr->z[0]); 
   traln.clipNode(disconnectedPtr->next->next, iPtr2, savedZ); 
@@ -198,12 +194,12 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
       auto brPr = secVar.at(0).getPrior();
       for(nat i = 0 ;i < modifiedPath1.size(); ++i)
 	{
-	  branch &b = modifiedPath1.at(i);  
+	  Branch &b = modifiedPath1.at(i);  
 	  modifiedPath1.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr);       
 	}
       for(nat i = 0; i < modifiedPath2.size(); ++i)
 	{
-	  branch &b = modifiedPath2.at(i); 
+	  Branch &b = modifiedPath2.at(i); 
 	  modifiedPath2.multiplyBranch(traln, rand, b, multiplier, hastings, prior, brPr); 
 	}
 
@@ -234,7 +230,7 @@ static void destroyOrientationAlongPath(TreeAln &traln, Path &path)
   // TODO necessary for the last node? 
   for(int i = 0 ; i < path.getNumberOfNodes()-1; ++i)
     {
-      nodeptr p = findNodeFromBranch(tr,  constructBranch(path.getNthNodeInPath(i) ,path.getNthNodeInPath(i+1) ));
+      nodeptr p = Branch(path.getNthNodeInPath(i) ,path.getNthNodeInPath(i+1) ).findNodePtr(traln );
       disorientHelper(traln, p); 
     }
   
@@ -248,20 +244,19 @@ static void destroyOrientationAlongPath(TreeAln &traln, Path &path)
 static void evalHelper(Path &path, TreeAln& traln )
 {  
   tree *tr = traln.getTr();
-  nodeptr p = findNodeFromBranch ( tr, constructBranch(path.getNthNodeInPath(path.getNumberOfNodes()-1), 
-						       path.getNthNodeInPath(1))); 		       
+  nodeptr p = Branch(path.getNthNodeInPath(path.getNumberOfNodes()-1), path.getNthNodeInPath(1)).findNodePtr ( traln ); 		       
   newViewGenericWrapper(traln, p, FALSE);  
 
   Path pathCopy(path); 
   pathCopy.pop();   
-  branch prunedBranch = constructBranch(pathCopy.getNthNodeInPath(0), pathCopy.getNthNodeInPath(2)); 
+  Branch prunedBranch(pathCopy.getNthNodeInPath(0), pathCopy.getNthNodeInPath(2)); 
   pathCopy.popFront();
   pathCopy.at(0) = prunedBranch; 
-  pathCopy.append(constructBranch(path.getNthNodeInPath(1),path.getNthNodeInPath(path.getNumberOfNodes()-2))); 
+  pathCopy.append(Branch(path.getNthNodeInPath(1),path.getNthNodeInPath(path.getNumberOfNodes()-2))); 
   pathCopy.reverse(); 
   // cout << "path for eval is " << pathCopy << endl; 
   destroyOrientationAlongPath(traln, pathCopy); 
-  p = findNodeFromBranch(tr, constructBranch( pathCopy.getNthNodeInPath(0), pathCopy.getNthNodeInPath(1))); 
+  p = Branch( pathCopy.getNthNodeInPath(0), pathCopy.getNthNodeInPath(1)).findNodePtr(traln ); 
   if(NOT traln.isTipNode(p))
     newViewGenericWrapper(traln, p,FALSE); 
 }
@@ -273,12 +268,12 @@ void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorBelief& prior)
 #if 1 
   tree *tr = traln.getTr(); 
 
-  branch bisectedBranch = constructBranch(modifiedPath1.getNthNodeInPath(1), modifiedPath2.getNthNodeInPath(1)); 
+  Branch bisectedBranch(modifiedPath1.getNthNodeInPath(1), modifiedPath2.getNthNodeInPath(1)); 
   
   // evaluate both ends of the paths 
   evalHelper(modifiedPath1, traln); 
   evalHelper(modifiedPath2, traln); 
-  nodeptr p = findNodeFromBranch(tr, bisectedBranch);
+  nodeptr p = bisectedBranch.findNodePtr(traln );
   evaluateGenericWrapper(traln, p, FALSE);
   
 #else 
@@ -307,10 +302,10 @@ static void resetOneSide(TreeAln &traln, Path& path)
   
   int lastNode = path.getNthNodeInPath(path.getNumberOfNodes() -1 ),
     s2lastNode =  path.getNthNodeInPath(path.getNumberOfNodes()-2);   
-  int subTreeNode = path.at(0).thisNode; 
+  int subTreeNode = path.at(0).getPrimNode(); 
 
-  nodeptr p1 = findNodeFromBranch(tr, constructBranch(lastNode, subTreeNode)),
-    p2 = findNodeFromBranch(tr, constructBranch(s2lastNode, subTreeNode));     
+  nodeptr p1 = Branch(lastNode, subTreeNode).findNodePtr(traln ),
+    p2 = Branch(s2lastNode, subTreeNode).findNodePtr(traln );     
 
   // double defaultVal = 0.123; 
 
@@ -329,9 +324,9 @@ static void resetOneSide(TreeAln &traln, Path& path)
   traln.clipNodeDefault(p1,p2); 
   
   // reinsert the subtree 
-  branch insertBranch = constructBranch(path.getNthNodeInPath(0), path.getNthNodeInPath(2)); 
-  nodeptr iPtr = findNodeFromBranch(tr, insertBranch),
-    iPtr2 = findNodeFromBranch(tr, invertBranch(insertBranch)); 
+  Branch insertBranch(path.getNthNodeInPath(0), path.getNthNodeInPath(2)); 
+  nodeptr iPtr = insertBranch.findNodePtr(traln ),
+    iPtr2 = insertBranch.getInverted().findNodePtr(traln); 
   
   traln.clipNodeDefault(iPtr, subTreePtr->next); 
   traln.clipNodeDefault(iPtr2, subTreePtr->next->next); 

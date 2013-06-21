@@ -22,7 +22,7 @@ public:
 private: 
   double multiplier;  
   
-  branch savedBranch; 
+  Branch savedBranch; 
 }; 
 
 

@@ -4,7 +4,7 @@
 #include "LnlRestorer.hpp" 
 
 
-#include "branch.h"
+#include "Branch.hpp"
 #include "TreeAln.hpp" 
 #include "GlobalVariables.hpp"
 
@@ -80,10 +80,10 @@ void LnlRestorer::loadOrientation(TreeAln &traln)
   for(int i = tr->mxtips+1; i < 2 * tr->mxtips-1; ++i)
     {
       int val = orientation[ctr]; 
-      branch b = constructBranch(tr->nodep[i]->number, val ); 
-      branchExists(tr, b); 
+      Branch b = Branch(tr->nodep[i]->number, val ); 
+      b.exists(traln); 
       
-      nodeptr q = findNodeFromBranch(tr, b);
+      nodeptr q = b.findNodePtr(traln);
       assert(q->back->number == val); 
       q->x = 1; q->next->x = 0; q->next->next->x = 0;
       

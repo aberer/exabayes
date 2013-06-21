@@ -157,8 +157,10 @@ void CoupledChains::chainInfo()
 
   const Chain& coldChain = *(sortedChains[0]); 
 
+  Branch fake(0,0,coldChain.getTraln().getTreeLengthExpensive()); 
+
   tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain.getGeneration() 
-       <<  "\tTL=" << setprecision(2)<< branchLengthToReal(coldChain.getTraln().getTr(), coldChain.getTraln().getTreeLengthExpensive())
+       <<  "\tTL=" << setprecision(2)<<  fake.getInterpretedLength(coldChain.getTraln())
        << "\tlnPr(1)=" << coldChain.getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain.getTraln().getTr()->likelihood << "\t" ; 
 
   for(nat i = 1 ; i < chains.size(); ++i)

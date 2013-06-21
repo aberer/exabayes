@@ -38,14 +38,13 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   assert(modifiedPath.size( ) == 0 ); 
   tree *tr  = traln.getTr();   
 
-  branch start; 
+  Branch start; 
   nodeptr p,q,r; 
   do 
     {
-      Branch startNew = rand.drawBranchWithInnerNode(traln); 
-      start = startNew.toLegacyBranch();
+      start = traln.drawBranchWithInnerNode(rand); 
 
-      p = findNodeFromBranch(tr, start);
+      p = start.findNodePtr(traln );
       q = p->next->back; 
       r = p->next->next->back;
     } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
@@ -58,7 +57,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 
   modifiedPath.append(start); 
-  modifiedPath.append(constructBranch(q->number, r->number)); 
+  modifiedPath.append(Branch(q->number, r->number)); 
 
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
@@ -69,7 +68,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 	? currentNode->next->back
 	: currentNode->next->next->back; 
 
-      modifiedPath.pushToStackIfNovel(constructBranch(currentNode->number, n->number),tr->mxtips); 
+      modifiedPath.pushToStackIfNovel(Branch(currentNode->number, n->number),traln); 
 
       currentNode = n; 
       
@@ -81,15 +80,15 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   traln.clipNode(p->next->next,r,zqr[0]);   
 
   /* now correct  */
-  if(nodeIsInBranch(modifiedPath.at(1).thisNode, modifiedPath.at(2) ))    
-    modifiedPath.at(1).thatNode = p->number; 
-  else if(nodeIsInBranch(modifiedPath.at(1).thatNode, modifiedPath.at(2) ))    
-    modifiedPath.at(1).thisNode = p->number; 
+  if( modifiedPath.at(2).nodeIsInBranch(modifiedPath.at(1).getPrimNode()))    
+    modifiedPath.at(1).setSecNode(p->number); 
+  else if(modifiedPath.at(2).nodeIsInBranch(modifiedPath.at(1).getSecNode()  ))    
+    modifiedPath.at(1).setPrimNode( p->number); 
   else 
     assert(0); 
 
   /* correct the incorrectly set first branch in the path */
-  modifiedPath.at(0) = getThirdBranch(tr, modifiedPath.at(0), modifiedPath.at(1)); 
+  modifiedPath.at(0) = modifiedPath.at(0).getThirdBranch(traln, modifiedPath.at(1)); 
   
 #ifdef DEBUG_ESPR
   cout << *modifiedPath << endl; 
@@ -101,8 +100,8 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   // move.
 
   // BEGIN  TODO remove modifiedPath
-  branch bla = modifiedPath.at(modifiedPath.size()-1); 
-  move.extractMoveInfo(traln, {Branch(p->number, p->back->number), Branch(bla.thisNode, bla.thatNode) }); 
+  Branch bla = modifiedPath.at(modifiedPath.size()-1); 
+  move.extractMoveInfo(traln, {Branch(p->number, p->back->number), Branch(bla.getPrimNode(), bla.getSecNode()) }); 
   modifiedPath.clear(); 
   // END
 }

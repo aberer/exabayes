@@ -11,10 +11,10 @@
 #include <vector>
 
 #include "axml.h"
-#include "branch.h"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"
+#include "Branch.hpp"
 
 class Path
 {
@@ -39,17 +39,17 @@ public:
 
   /** @brief only add a branch to the path, if it is novel. If the new
       branch cancels out an existing branch, the path is shortened again */ 
-  void pushToStackIfNovel(branch b, int numTip); 
+  void pushToStackIfNovel(Branch b, const TreeAln &traln ); 
 
   // straight-forward container methods 
-  void append(branch value); 
+  void append(Branch value); 
   void clear(); 
   /** @brief number of branches in the path */ 
   nat size() const {return stack.size(); }
 
   /** @brief yields the branch */  
-  branch& at(int num){return stack[num]; }
-  branch at(int num) const{return stack[num];}
+  Branch& at(int num){return stack[num]; }
+  Branch at(int num) const{return stack[num];}
 
   /** @brief reverse the path */ 
   void reverse(); 
@@ -67,19 +67,16 @@ public:
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
   void printWithBLs(TreeAln &traln ) const; 
 
-  void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> prBr) const; 
-
-  // // TODO this should return a new path instance  
-  // void multiplyBranch(TreeAln &traln, Randomness &rand, branch b, double parameter, double &hastings, PriorBelief &prior); 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> prBr) const; 
 
   void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
 
   friend ostream& operator<<(ostream &out, const Path &rhs)  ;
 
 private: 
-  vector<branch> stack; 
+  vector<Branch> stack; 
 
-  bool findPathHelper(const TreeAln &traln, nodeptr p, const branch &target);
+  bool findPathHelper(const TreeAln &traln, nodeptr p, const Branch &target);
 
 }; 
 

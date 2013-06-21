@@ -67,13 +67,13 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 		 "TL-Mult");
 
   storedBranches.clear();   
-  extractBranches(traln, storedBranches); 
+  storedBranches = traln.extractBranches(); 
   double initTreeLength = 1,
     newTreeLength = 1;   
   for(auto &b : storedBranches)
     {
-      initTreeLength *= b.length[0];
-      newTreeLength *= pow(b.length[0], rememMultiplier); 
+      initTreeLength *= b.getLength();
+      newTreeLength *= pow(b.getLength(), rememMultiplier); 
     }  
 
   multiplyBranchLengthsRecursively(traln , tr->start->back, rememMultiplier);   
@@ -85,8 +85,9 @@ void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)
 {
   for(auto &b : storedBranches)
     {
-      nodeptr p = findNodeFromBranch(traln.getTr(), b); 
-      traln.clipNode(p,p->back, b.length[0]);
+      nodeptr p = b.findNodePtr(traln); 
+      double tmp = b.getLength();  
+      traln.clipNode(p,p->back, tmp);
     }
 } 
 

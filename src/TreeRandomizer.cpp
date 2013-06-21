@@ -2,6 +2,7 @@
 #include "TreeAln.hpp"
 #include "treeRead.h"
 
+
 TreeRandomizer::TreeRandomizer(int seed, shared_ptr<TreeAln> _traln)
   : rand(seed)
   , traln(_traln)

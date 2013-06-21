@@ -1,37 +1,47 @@
 #ifndef _BRANCH_NEW_H
 #define _BRANCH_NEW_H
 
+#include <iostream>
 #include <cassert>
 #include "axml.h"
-#include "branch.h"
+
+class TreeAln; 
 
 class Branch
 {
 public: 
   Branch(nat a = 0, nat b = 0, double length = 0.0); 
-  void initFromLegacy(branch b) ; 
   double getInterpretedLength(const TreeAln &traln) const; 
-  branch toLegacyBranch() const ; 
-  void invert() { swap(thisNode, thatNode) ; }
+  void invert() { std::swap(thisNode, thatNode) ; }
   Branch getInverted() const { return Branch(thatNode, thisNode, length); }
   bool equalsUndirected(const Branch &rhs) const ;   
   nat getPrimNode() const {return thisNode; } 
   nat getSecNode() const {return thatNode; }
+  
+  void setPrimNode(nat node)  {thisNode = node; }
+  void setSecNode(nat node) {thatNode = node; }
+  
   void setLength(double intLength){length = intLength; }
   double getLength () const {return length; }
 
   void applyToTree( TreeAln &traln) const ; 
 
-  bool exists(TreeAln &traln) const ;  
+  bool exists(const TreeAln &traln) const; 
+
+  Branch getThirdBranch(const TreeAln &traln, const Branch& rhs ) const; 
+
+  nat getIntersectingNode(const Branch  &rhs) const ; 
 
   bool nodeIsInBranch(nat node) const {return (thisNode == node) || (thatNode == node) ;  }
 
   nodeptr findNodePtr(const TreeAln &traln) const; 
 
-  friend ostream& operator<<(ostream &out, const Branch& br); 
+  friend std::ostream& operator<<(std::ostream &out, const Branch& br); 
 
   nat getCommonNode(const Branch &rhs ) const; 
   nat getOtherNode(nat node) const {assert(node == thisNode || node ==  thatNode) ; return thisNode == node ? thatNode : thisNode; }
+
+  bool isTipBranch(const TreeAln &traln) const; 
 
 private: 
   nat thisNode; 
@@ -49,7 +59,7 @@ class BranchHashNoLength
 public: 
   size_t operator()(const Branch &b ) const 
   {
-    return hash<nat>()(b.getPrimNode()) ^ hash<nat>()( b.getSecNode()) ; 
+    return std::hash<nat>()(b.getPrimNode()) ^ std::hash<nat>()( b.getSecNode()) ; 
   }
 }; 
 

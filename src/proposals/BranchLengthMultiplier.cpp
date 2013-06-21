@@ -17,9 +17,9 @@ BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
 void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
   tree *tr = traln.getTr(); 
-  branch b =  rand.drawBranchUniform(traln); 
+  Branch b =  traln.drawBranchUniform(rand); 
   
-  nodeptr p = findNodeFromBranch(tr, b); 
+  nodeptr p = b.findNodePtr(traln); 
   savedBranch = b; 
 
   double
@@ -29,7 +29,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   assert(traln.getNumBranches() == 1); 
 
   double oldZ = traln.getBranchLength( p,0);
-  savedBranch.length[0] = oldZ; 
+  savedBranch.setLength( oldZ); 
 
   double newZ = oldZ; 
   if(not traln.isCollapsed(b))    
@@ -49,15 +49,16 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 
 void BranchLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
-  nodeptr p = findNodeFromBranch(traln.getTr(), savedBranch); 
+  nodeptr p = savedBranch.findNodePtr(traln); 
   evaluateGenericWrapper(traln,p, FALSE ); 
 }
 
  
 void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  nodeptr p = findNodeFromBranch(traln.getTr(), savedBranch); 
-  traln.setBranchLengthBounded(savedBranch.length[0], 0,p);  
+  nodeptr p = savedBranch.findNodePtr(traln); 
+  double tmp = savedBranch.getLength(); 
+  traln.setBranchLengthBounded(tmp , 0,p);  
 }
 
 

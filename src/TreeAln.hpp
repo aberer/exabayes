@@ -8,8 +8,9 @@
 using namespace std; 
 
 #include "Priors.hpp"
-#include "branch.h"
+#include "Branch.hpp"
 #include "axml.h"
+#include "Randomness.hpp"
 
 #include "TreePrinter.hpp"
 
@@ -43,9 +44,9 @@ public:
 
 
   // BEGIN collapse test 
-  void collapseBranch(branch b); 
-  bool isCollapsed(branch b) ; 
-  void setBranchLengthUnsafe(branch b ) ; 
+  void collapseBranch(Branch b); 
+  bool isCollapsed(Branch b) ; 
+  void setBranchLengthUnsafe(Branch b ) ; 
   // END
 
   nat getNumberOfTaxa() const {return getTr()->mxtips; }
@@ -127,8 +128,16 @@ public:
 
   double getConvertBranchLength(double length) const { return -log(length) * tr->fracchange; }
 
+  vector<Branch> extractBranches() const ; 
+
+  Branch drawInnerBranchUniform( Randomness &rand) const ; 
+  Branch drawBranchWithInnerNode(Randomness &rand) const ; 
+  nat drawInnerNode(Randomness &rand ) const ; 
+  Branch drawBranchUniform(Randomness &rand) const ; 
+
 private:   
   double getTreeLengthHelper(nodeptr p) const;
+  void extractHelper( nodeptr p , vector<Branch> &result, bool isStart) const ; 
   
   void initDefault();
   tree* tr;		// TODO replace with an object for cleanup 

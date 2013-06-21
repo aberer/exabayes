@@ -16,7 +16,7 @@ public:
   virtual AbstractProposal* clone() const ;  
 
 private: 
-  branch modifiedBranch;   
+  Branch modifiedBranch;   
 }; 
 
 

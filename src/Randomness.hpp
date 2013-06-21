@@ -1,10 +1,13 @@
 #ifndef ___RANDOMNESS_H
 #define ___RANDOMNESS_H
 
-#include "axml.h"
-#include "branch.h"
 #include <iostream>
-#include "Branch.hpp"
+#include <vector>
+
+#include "axml.h"
+// #include "TreeAln.hpp"
+
+// #include "Branch.hpp"
 
 // typedef struct _branch  branch; 
 class TreeAln; 
@@ -56,24 +59,24 @@ public:
   double drawRandGamma(double alpha, double beta); 
 
   //This function should be called if the alphas for the dirichlet distribution are given
-  void drawRandDirichlet( vector<double> &results, const vector<double> &alphas); 
+  void drawRandDirichlet( std::vector<double> &results, const std::vector<double> &alphas); 
 
 
   //This function should be called if the expected values for the dirichlet distribution are given
-  void drawDirichletExpected(vector<double> &results, const vector<double> &mean,double scale); 
+  void drawDirichletExpected(std::vector<double> &results, const std::vector<double> &mean,double scale); 
   
-  branch drawBranchUniform(TreeAln &traln); 
-  Branch drawInnerBranchUniform(const TreeAln &traln ); 
+  // Branch drawBranchUniform(TreeAln &traln); 
+  // Branch drawInnerBranchUniform(const TreeAln &traln ); 
   int drawIntegerOpen(int upperBound); 
 
   /** @brief prints the RNG state  */ 
-  friend ostream& operator<<( ostream& out, const Randomness &rhs ); 
+  friend std::ostream& operator<<( std::ostream& out, const Randomness &rhs ); 
 
-  Branch drawBranchWithInnerNode(const TreeAln &traln); 
+  // Branch drawBranchWithInnerNode(const TreeAln &traln); 
 
   int drawIntegerClosed(int upperBound); 
 
-  nat drawInnerNode(const TreeAln &traln ); 
+  // nat drawInnerNode(const TreeAln &traln ); 
 
 private:   
   randCtr_t ctr; 

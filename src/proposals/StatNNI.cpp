@@ -18,7 +18,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   int numBranches = traln.getNumBranches();
   assert(numBranches == 1); 
 
-  Branch b( rand.drawInnerBranchUniform(traln) ) ; 
+  Branch b( traln.drawInnerBranchUniform(rand) ) ; 
   nodeptr p = b.findNodePtr(traln); 
 
   Branch switchingBranch = Branch( 

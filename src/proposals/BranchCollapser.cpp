@@ -16,11 +16,11 @@ BranchCollapser::BranchCollapser()
 
 void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
-  branch b = rand.drawBranchUniform(traln); 
+  Branch b = traln.drawBranchUniform(rand); 
 
   modifiedBranch = b ; 
-  nodeptr p = findNodeFromBranch(traln.getTr(),b) ; 
-  modifiedBranch.length[0] = p->z[0];       
+  nodeptr p = b.findNodePtr(traln) ; 
+  modifiedBranch.setLength( p->z[0]); 
 
   auto brPr =   secVar[0].getPrior();
 
@@ -34,9 +34,13 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 #endif
 #endif
 
+#if 0 
+#if TODO 
       assert(zNews.size() == 1); 
-      b.length[0] = branchLengthToInternal(traln.getTr(), zNews[0]); 
+      b.setLength( branchLengthToInternal(traln.getTr(), zNews[0])) ; 
       traln.setBranchLengthUnsafe(b); 
+#endif
+#endif
 #if TODO 
       updateHastings(hastings,  1 / exp(brPr->getLogProb(zNews)), "branchCollapser"); 
 #endif
@@ -44,8 +48,8 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
     }
   else
     {      
-      nodeptr p = findNodeFromBranch(traln.getTr(), b);       
-      double realZ = branchLengthToReal(traln.getTr(), p->z[0]); 
+      nodeptr p = b.findNodePtr(traln);       
+      double realZ = b.getInterpretedLength(traln); 
       vector<double> tmp = {realZ}; 
 #if TODO 
       updateHastings(hastings, exp(brPr->getLogProb(tmp)) , "branchCollapser") ;
@@ -63,7 +67,7 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 
 void BranchCollapser::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
 {
-  nodeptr p = findNodeFromBranch(traln.getTr(), modifiedBranch); 
+  nodeptr p = modifiedBranch.findNodePtr(traln); 
   evaluateGenericWrapper(traln, p, FALSE);
 }
 

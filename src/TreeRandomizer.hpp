@@ -10,13 +10,13 @@
 class TreeRandomizer
 {
 public: 
-  TreeRandomizer(int seed, shared_ptr<TreeAln> traln);
-  shared_ptr<TreeAln> getTr(){return traln; }
+  TreeRandomizer(int seed, std::shared_ptr<TreeAln> traln);
+  std::shared_ptr<TreeAln> getTr(){return traln; }
   void randomizeTree();
   
 private: 
   Randomness rand; 
-  shared_ptr<TreeAln> traln; 
+  std::shared_ptr<TreeAln> traln; 
 
   int markBranches(nodeptr *branches, nodeptr p, int *counter, int numsp); 
   void insertTaxon ( nodeptr p, nodeptr q); 
