@@ -6,7 +6,7 @@ EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihoo
 
 WARN_FLAGS= -Wall --pedantic -Wno-vla -Wno-unused-function -Wno-write-strings  -Wsign-compare
 noinst_LIBRARIES=libbayes.a  libncl.a
-RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops
+RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops #  -D_SEQUENTIAL
 
 # TODO 
 # SIMD_FLAGS is potentially problematic: auto-avx vectorization was considered harmfull? 
@@ -27,10 +27,10 @@ include src.am
 PLLDIR=$(top_srcdir)/src/pll
 PLLINCLUDE=-I$(PLLDIR)
 libpll_a_SOURCES= $(PLLDIR)/evaluateGenericSpecial-pll.c $(PLLDIR)/axml-pll.c $(PLLDIR)/trash-pll.c $(PLLDIR)/vec_unit.h $(PLLDIR)/makenewzGenericSpecial-pll.c $(PLLDIR)/mem_alloc-pll.c $(PLLDIR)/restartHashTable-pll.c $(PLLDIR)/axml-pll.h $(PLLDIR)/mem_alloc.h $(PLLDIR)/recom-pll.c $(PLLDIR)/searchAlgo-pll.c $(PLLDIR)/phylip_parser/msa_sites.h $(PLLDIR)/phylip_parser/xalloc.h $(PLLDIR)/phylip_parser/phylip.h $(PLLDIR)/phylip_parser/lexer.h $(PLLDIR)/phylip_parser/ssort.h $(PLLDIR)/utils-pll.c $(PLLDIR)/treeIO-pll.c $(PLLDIR)/cycle.h $(PLLDIR)/aligned_buffer.h $(PLLDIR)/globalVariables.h $(PLLDIR)/topologies-pll.c $(PLLDIR)/utils.h $(PLLDIR)/evaluatePartialGenericSpecial-pll.c $(PLLDIR)/fastDNAparsimony-pll.c $(PLLDIR)/randomTree-pll.c $(PLLDIR)/optimizeModel-pll.c $(PLLDIR)/treeIO.h $(PLLDIR)/newviewGenericSpecial-pll.c $(PLLDIR)/bipartitionList-pll.c $(PLLDIR)/models-pll.c $(PLLDIR)/genericParallelization.h $(top_srcdir)/src/avxConditional.c
-libpll_a_CFLAGS= -w $(SIMD_FLAGS) $(PLLINCLUDE) -O2 $(RAX_FEATURE)    $(SRCINCLUDE)
+libpll_a_CFLAGS= -w $(SIMD_FLAGS) $(PLLINCLUDE) -O2 $(RAX_FEATURE)    $(SRCINCLUDE) 
 EXAMLDIR=$(top_srcdir)/src/examl
 EXAMLINCLUDE=-I$(EXMALDIR) 
-libexaml_a_SOURCES= $(EXAMLDIR)/searchAlgo.c $(EXAMLDIR)/treeIO.c $(EXAMLDIR)/restartHashTable.c $(EXAMLDIR)/optimizeModel.c $(EXAMLDIR)/newviewGenericSpecial.c $(EXAMLDIR)/trash.c $(EXAMLDIR)/topologies.c $(EXAMLDIR)/axml-examl.h $(EXAMLDIR)/globalVariables.h $(EXAMLDIR)/evaluatePartialGenericSpecial.c $(EXAMLDIR)/bipartitionList.c $(EXAMLDIR)/models.c $(EXAMLDIR)/makenewzGenericSpecial.c $(EXAMLDIR)/evaluateGenericSpecial.c $(EXAMLDIR)/axml.c $(top_srcdir)/src/avxConditional.c $(EXAMLDIR)/fastDNAparsimony.c
+libexaml_a_SOURCES= $(EXAMLDIR)/searchAlgo.c $(EXAMLDIR)/treeIO.c $(EXAMLDIR)/restartHashTable.c $(EXAMLDIR)/optimizeModel.c $(EXAMLDIR)/newviewGenericSpecial.c $(EXAMLDIR)/trash.c $(EXAMLDIR)/topologies.c $(EXAMLDIR)/axml-examl.h $(EXAMLDIR)/globalVariables.h $(EXAMLDIR)/evaluatePartialGenericSpecial.c $(EXAMLDIR)/bipartitionList.c $(EXAMLDIR)/models.c $(EXAMLDIR)/makenewzGenericSpecial.c $(EXAMLDIR)/evaluateGenericSpecial.c $(EXAMLDIR)/axml.c $(top_srcdir)/src/avxConditional.c $(EXAMLDIR)/fastDNAparsimony.c $(EXAMLDIR)/mpiMock.c
 libexaml_a_CFLAGS= -w $(SIMD_FLAGS)  -fgnu89-inline  $(EXAMLINCLUDE) -O2 $(RAX_FEATURE)    $(SRCINCLUDE)
 
 # configure examl/pll specific stuff 
@@ -47,11 +47,11 @@ noinst_LIBRARIES+=libpll.a
 endif 
 
 # AM_CXXFLAGS=-O3
-libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS)
+libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE)
 exabayes_LDADD= libncl.a libbayes.a 
 exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/CommandLine.cpp $(top_srcdir)/src/CommandLine.hpp 
 exabayes_LDADD+=$(LIBTOUSE)
-exabayes_CXXFLAGS= -O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS)
+exabayes_CXXFLAGS= -O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE)
 
 ################################################################
 # PRSF
@@ -63,15 +63,15 @@ prsf_SOURCES= $(top_srcdir)/src/prsf.cpp
 
 ################################################################
 # ASDSF 
-asdsf_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS) $(SRCINCLUDE)
+asdsf_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS) $(BAYES_INCLUDES)
 asdsf_LDADD=    libbayes.a $(LIBTOUSE)  libncl.a 
 asdsf_SOURCES= $(top_srcdir)/src/asdsf.cpp
 
 ################################################################
 # examl parser 
 pre1=$(top_srcdir)/lib/ExaML/parser/
-parserExaml_SOURCES=$(pre1)/axml.c $(pre1)/parsePartitions.c $(pre1)/axml.h  $(pre1)/globalVariables.h $(EXAMLDIR)/fastDNAparsimony.c
-parserExaml_CFLAGS=$(SIMD_FLAGS) $(SRCINCLUDE)
+parserExaml_SOURCES=$(pre1)/axml.c $(pre1)/parsePartitions.c $(pre1)/axml.h  $(pre1)/globalVariables.h 
+parserExaml_CFLAGS=$(SIMD_FLAGS) $(SRCINCLUDE) $(RAX_FEATURE)
 
 
 ################################################################

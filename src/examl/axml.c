@@ -54,7 +54,6 @@
 
 #endif
 
-#include <mpi.h>
 
 #if ! (defined(__ppc) || defined(__powerpc__) || defined(PPC))
 #include <xmmintrin.h>
@@ -2526,18 +2525,39 @@ void initializeTree(tree *tr, analdef *adef)
       
       empiricalFrequencies[model] = (double *)malloc(sizeof(double) * p->states);
       myBinFread(empiricalFrequencies[model], sizeof(double), p->states, byteFile);	   
-
-      /* BEGIN added by andre for parsimony  */
-      myBinFread(&(tr->partitionData[model].parsimonyLength), sizeof(size_t), 1 , byteFile); 
-
-      myBinFread(tr->partitionData[model].parsVect, sizeof(parsimonyNumber), 
-		 totalNodes * tr->partitionData[model].states
-		 * tr->partitionData[model].parsimonyLength, byteFile); 
-      /* END  */
-      
     }     
   
   initializePartitions(tr, byteFile);
+  
+  for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+    {
+      /* BEGIN added by andre for parsimony  */
+      myBinFread(&(tr->partitionData[model].parsimonyLength), sizeof(size_t), 1 , byteFile); 
+
+      int numBytes = totalNodes * tr->partitionData[model].states * tr->partitionData[model].parsimonyLength; 
+      
+      printf("numBytes=%d\ttotalNodes=%d, tr->partitionData[model].states=%d, parsimonyLength=%d\n", 
+	     numBytes,
+	     totalNodes,
+	     tr->partitionData[model].states,
+	     tr->partitionData[model].parsimonyLength);
+      
+      tr->partitionData[model].parsVect = malloc_aligned(numBytes * sizeof(parsimonyNumber));
+      /* tr->partitionData[model].parsVect = malloc(numBytes * sizeof(parsimonyNumber)); */
+
+      memset(tr->partitionData[model].parsVect, 0 , sizeof(parsimonyNumber) * numBytes) ;
+
+      myBinFread(tr->partitionData[model].parsVect, sizeof(parsimonyNumber), numBytes, byteFile); 
+      /* END  */
+    }
+
+  for(int i = 1 ; i < 2 * tr->mxtips; ++i)
+    {
+      nodeptr p = tr->nodep[i]; 
+      p->xPars = 1 ; 
+      p->next->xPars = 0; 
+      p->next->next->xPars = 0; 
+    }
 
   /* BEGIN added by andre for parsimony  */
   tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes);  

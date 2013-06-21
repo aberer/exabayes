@@ -24,7 +24,8 @@ if [ "$#" != 3 ]; then
     exit
 fi
 
-args="" 
+# args="--disable-silent-rules" 
+args=""
 dataset=$3
 
 pathtodata=$topdir/data/$dataset
@@ -48,8 +49,11 @@ codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
+    # CC="$ccompiler" 
+    # CXX="$cxxcompiler"  
     args="$args --disable-pll"
-    baseCall="mpirun -np 2 $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+    baseCall="mpirun -np 1  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+    # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"

@@ -84,32 +84,11 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
   for(int i = 0; i < 10; ++i)
     r.randomizeTree();
 
-  ofstream myfile; 
-  myfile.open("branches.txt") ; 
-
-  unordered_map<int, unordered_map<int,int>> mapmap; 
-
-  Randomness rand(123); 
-  for(int i = 0; i < 10000; ++i)
-    {
-      Branch b = rand.drawInnerBranchUniform(*traln); 
-      // myfile << b.getPrimNode() << "\t" << b.getSecNode() << endl;
-      
-      mapmap[b.getPrimNode()][b.getSecNode()]++; 
-      
-    }
-  myfile.close(); 
-
-  for(auto &submap : mapmap)
-    {
-      cout << submap.first << endl; 
-      for(auto & v : submap.second)
-	{
-	  cout << "\t" << v.first << ": "<< v.second << endl; 
-	}
-    }
-
+  tralns[0]->enableParsimony();
   
+  vector<nat> partitionPars; 
+  exa_evaluateParsimony(*(tralns[0]), tralns[0]->getTr()->start, TRUE , partitionPars); 
+
   exit(0); 
 
 

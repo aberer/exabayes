@@ -29,6 +29,7 @@
  *  Bioinformatics 2006; doi: 10.1093/bioinformatics/btl446
  */
 
+/* #include "mem_alloc.h" */
 
 #ifndef WIN32
 #include <sys/times.h>
@@ -45,51 +46,21 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 
-
-/* NOTE modification by andre  */
-#define __SIM_SSE3
-
-#ifdef __AVX
-
-#ifdef __SIM_SSE3
-
-#define _SSE3_WAS_DEFINED
-
-#undef __SIM_SSE3
-
-#endif
-
+#ifndef __SIM_SSE3
+#error "no sse3"
 #endif
 
 
-#ifdef __SIM_SSE3
+
+#if (defined(__SIM_SSE3) && !defined(__AVX))
 
 #include <xmmintrin.h>
 #include <pmmintrin.h>
   
-#endif
-
-#ifdef __AVX
-
-#include <xmmintrin.h>
-#include <immintrin.h>
-
-#endif
-
-#include "axml.h"
-
-/* #include "mem_alloc.h" */
-
-extern const unsigned int mask32[32]; 
-/* vector-specific stuff */
-
-extern char **globalArgv;
-extern int globalArgc;
-
-#ifdef __SIM_SSE3
-
 #define INTS_PER_VECTOR 4
+#define LONG_INTS_PER_VECTOR 2
 #define INT_TYPE __m128i
 #define CAST __m128i*
 #define SET_ALL_BITS_ONE _mm_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)
@@ -104,7 +75,12 @@ extern int globalArgc;
 
 #ifdef __AVX
 
+#include <xmmintrin.h>
+#include <immintrin.h>
+#include <pmmintrin.h>
+
 #define INTS_PER_VECTOR 8
+#define LONG_INTS_PER_VECTOR 4
 #define INT_TYPE __m256d
 #define CAST double*
 #define SET_ALL_BITS_ONE (__m256d)_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)
@@ -117,22 +93,112 @@ extern int globalArgc;
 
 #endif
 
+
+#include "axml.h"
+
+
+
+extern const unsigned int mask32[32]; 
+/* vector-specific stuff */
+
+
 extern double masterTime;
-extern char  workdir[1024];
-extern char run_id[128];
+/*extern char  workdir[1024];
+  extern char run_id[128];*/
+
+/************************************************ pop count stuff ***********************************************/
+
+ unsigned int bitcount_32_bit(unsigned int i)
+{
+  return ((unsigned int) __builtin_popcount(i));
+}
+
+/* bit count for 64 bit integers */
+
+inline unsigned int bitcount_64_bit(unsigned long i)
+{
+  return ((unsigned int) __builtin_popcountl(i));
+}
+
+/* bit count for 128 bit SSE3 and 256 bit AVX registers */
+
+#if (defined(__SIM_SSE3) || defined(__AVX))
+static inline unsigned int vectorPopcount(INT_TYPE v)
+{
+  unsigned long
+    counts[LONG_INTS_PER_VECTOR] __attribute__ ((aligned (BYTE_ALIGNMENT)));
+
+  int    
+    i,
+    sum = 0;
+  
+  VECTOR_STORE((CAST)counts, v);
+
+  for(i = 0; i < LONG_INTS_PER_VECTOR; i++)
+    sum += __builtin_popcountl(counts[i]);
+ 	     
+  return ((unsigned int)sum);
+}
+#endif
+
 
 
 /********************************DNA FUNCTIONS *****************************************************************/
+
+
+static int checkerPars(tree *tr, nodeptr p)
+{
+  int group = tr->constraintVector[p->number];
+
+  if(isTip(p->number, tr->mxtips))
+    {
+      group = tr->constraintVector[p->number];
+      return group;
+    }
+  else
+    {
+      if(group != -9) 
+	return group;
+
+      group = checkerPars(tr, p->next->back);
+      if(group != -9) 
+	return group;
+
+      group = checkerPars(tr, p->next->next->back);
+      if(group != -9) 
+	return group;
+
+      return -9;
+    }
+}
+
+static boolean tipHomogeneityCheckerPars(tree *tr, nodeptr p, int grouping)
+{
+  if(isTip(p->number, tr->mxtips))
+    {
+      if(tr->constraintVector[p->number] != grouping) 
+	return FALSE;
+      else 
+	return TRUE;
+    }
+  else
+    {   
+      return  (tipHomogeneityCheckerPars(tr, p->next->back, grouping) && tipHomogeneityCheckerPars(tr, p->next->next->back,grouping));      
+    }
+}
 
 static void getxnodeLocal (nodeptr p)
 {
   nodeptr  s;
 
-  if((s = p->next)->x || (s = s->next)->x)
+  if((s = p->next)->xPars || (s = s->next)->xPars)
     {
-      p->x = s->x;
-      s->x = 0;
+      p->xPars = s->xPars;
+      s->xPars = 0;
     }
+
+  assert(p->next->xPars || p->next->next->xPars || p->xPars);
+
 }
 
 static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int maxTips, boolean full)
@@ -141,7 +207,7 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
     q = p->next->back,
     r = p->next->next->back;
   
-  if(! p->x)
+  if(! p->xPars)
     getxnodeLocal(p);  
   
   if(full)
@@ -154,10 +220,10 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
     }
   else
     {
-      if(q->number > maxTips && !q->x) 
+      if(q->number > maxTips && !q->xPars) 
 	computeTraversalInfoParsimony(q, ti, counter, maxTips, full);
       
-      if(r->number > maxTips && !r->x) 
+      if(r->number > maxTips && !r->xPars) 
 	computeTraversalInfoParsimony(r, ti, counter, maxTips, full);
     }
   
@@ -170,142 +236,13 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
 
 
 
-#if (defined(__SIM_SSE3) || defined(__AVX))
-#define BIT_COUNT(x)  precomputed16_bitcount_bla(x)
 
-/* 
-   The critical speed of this function
-   is mostly a machine/architecure issue
-   Nontheless, I decided not to use 
-   __builtin_popcount(x)
-   for better general portability, albeit it's worth testing
-   on x86 64 bit architectures
-*/
-#else
-#define BIT_COUNT(x)  precomputed16_bitcount_bla(x, tr->bits_in_16bits)
-#endif
-
-/* int iterated_bitcount(unsigned int n);  */
-
-
-static char bits_in_16bits [0x1u << 16];
-
-
-static int iterated_bitcount(unsigned int n)
-{
-    int 
-      count=0;    
-    
-    while(n)
-      {
-        count += n & 0x1u ;    
-        n >>= 1 ;
-      }
-    
-    return count;
-}
-
-static void compute_bits_in_16bits(void)
-{
-    unsigned int i;    
-    
-    for (i = 0; i < (0x1u<<16); i++)
-      bits_in_16bits[i] = iterated_bitcount(i);
-    
-    return ;
-}
-
-/* TODO  */
-
-static unsigned int precomputed16_bitcount_bla (unsigned int n)
-{
-  /* works only for 32-bit int*/
-  assert(0);
-    
-    return bits_in_16bits [n         & 0xffffu]
-        +  bits_in_16bits [(n >> 16) & 0xffffu] ;
-}
 
 
 
 #if (defined(__SIM_SSE3) || defined(__AVX))
 
-#ifdef __SIM_SSE3
-
-static unsigned int vectorCount(__m128i b)
-{
-  const unsigned int 
-    mu1 = 0x55555555,
-    mu2 = 0x33333333,
-    mu3 = 0x0F0F0F0F,
-    mu4 = 0x0000003F;
-  
-  unsigned int 
-    tcnt[4] __attribute__ ((aligned (BYTE_ALIGNMENT)));
-  
-  __m128i 
-    m1 = _mm_set_epi32 (mu1, mu1, mu1, mu1),
-    m2 = _mm_set_epi32 (mu2, mu2, mu2, mu2),
-    m3 = _mm_set_epi32 (mu3, mu3, mu3, mu3),
-    m4 = _mm_set_epi32 (mu4, mu4, mu4, mu4),
-    tmp1, 
-    tmp2;
- 
-
-  /* b = (b & 0x55555555) + (b >> 1 & 0x55555555); */
-  tmp1 = _mm_srli_epi32(b, 1);                    /* tmp1 = (b >> 1 & 0x55555555)*/
-  tmp1 = _mm_and_si128(tmp1, m1); 
-  tmp2 = _mm_and_si128(b, m1);                    /* tmp2 = (b & 0x55555555) */
-  b    = _mm_add_epi32(tmp1, tmp2);               /*  b = tmp1 + tmp2 */
-
-  /* b = (b & 0x33333333) + (b >> 2 & 0x33333333); */
-  tmp1 = _mm_srli_epi32(b, 2);                    /* (b >> 2 & 0x33333333) */
-  tmp1 = _mm_and_si128(tmp1, m2); 
-  tmp2 = _mm_and_si128(b, m2);                    /* (b & 0x33333333) */
-  b    = _mm_add_epi32(tmp1, tmp2);               /* b = tmp1 + tmp2 */
-
-  /* b = (b + (b >> 4)) & 0x0F0F0F0F; */
-  tmp1 = _mm_srli_epi32(b, 4);                    /* tmp1 = b >> 4 */
-  b = _mm_add_epi32(b, tmp1);                     /* b = b + (b >> 4) */
-  b = _mm_and_si128(b, m3);                       /*           & 0x0F0F0F0F */
-
-  /* b = b + (b >> 8); */
-  tmp1 = _mm_srli_epi32 (b, 8);                   /* tmp1 = b >> 8 */
-  b = _mm_add_epi32(b, tmp1);                     /* b = b + (b >> 8) */
-  
-  /* b = (b + (b >> 16)) & 0x0000003F; */
-  tmp1 = _mm_srli_epi32 (b, 16);                  /* b >> 16 */
-  b = _mm_add_epi32(b, tmp1);                     /* b + (b >> 16) */
-  b = _mm_and_si128(b, m4);                       /* (b >> 16) & 0x0000003F; */
-   
-  _mm_store_si128((__m128i *)tcnt, b);
-
-  return tcnt[0] + tcnt[1] + tcnt[2] + tcnt[3];
-}
-
-#endif
-
-static inline unsigned int populationCount(INT_TYPE v_N)
-{
-#ifdef __AVX
-  {
-    unsigned long int
-      res[4] __attribute__ ((aligned (BYTE_ALIGNMENT)));
-    unsigned int a, b;
-    
-    _mm256_store_pd((double*)res, v_N);
-    
-    a = __builtin_popcountl(res[0]) + __builtin_popcountl(res[1]);
-    b = __builtin_popcountl(res[2]) + __builtin_popcountl(res[3]);
-    
-    return (a + b);	   
-  }
-#else	  
-  return (vectorCount(v_N)); 
-#endif
-}
-
-void newviewParsimonyIterativeFast(tree *tr)
+static void newviewParsimonyIterativeFast(tree *tr)
 {    
   INT_TYPE
     allOne = SET_ALL_BITS_ONE;
@@ -315,23 +252,29 @@ void newviewParsimonyIterativeFast(tree *tr)
     *ti = tr->ti,
     count = ti[0],
     index; 
-
+  
   for(index = 4; index < count; index += 4)
     {      
-      unsigned int
-	totalScore = 0;
-
       size_t
 	pNumber = (size_t)ti[index],
 	qNumber = (size_t)ti[index + 1],
 	rNumber = (size_t)ti[index + 2];
-      
+
       for(model = 0; model < tr->NumberOfModels; model++)
 	{
+	  unsigned int
+	    totalScore = 0;
+
+	  int numByte = tr->partitionData[model].parsimonyLength * tr->partitionData[model].states * 2 * tr->mxtips; 
+	  printf("content [%d]: ", numByte);
+	  for(int m = 0; m < numByte ; ++m )
+	    printf("%u,", tr->partitionData[model].parsVect[m]); 
+	  printf("\n");
+
 	  size_t
 	    k,
 	    states = tr->partitionData[model].states,
-	    width = tr->partitionData[model].parsimonyLength;	 
+	    width = tr->partitionData[model].parsimonyLength;
             
 	  unsigned int	
 	    i;      
@@ -376,7 +319,7 @@ void newviewParsimonyIterativeFast(tree *tr)
 		    
 		    v_N = VECTOR_AND_NOT(v_N, allOne);
 		    
-		    totalScore += populationCount(v_N);		  
+		    totalScore += vectorPopcount(v_N);		  
 		  }
 	      }
 	      break;
@@ -400,7 +343,7 @@ void newviewParsimonyIterativeFast(tree *tr)
 		      s_r, s_l, v_N,
 		      l_A, l_C, l_G, l_T,
 		      v_A, v_C, v_G, v_T;	    	 
-		    
+
 		    s_l = VECTOR_LOAD((CAST)(&left[0][i]));
 		    s_r = VECTOR_LOAD((CAST)(&right[0][i]));
 		    l_A = VECTOR_BIT_AND(s_l, s_r);
@@ -430,7 +373,7 @@ void newviewParsimonyIterativeFast(tree *tr)
 		    
 		    v_N = VECTOR_AND_NOT(v_N, allOne);
 		    
-		    totalScore += populationCount(v_N);	
+		    totalScore += vectorPopcount(v_N);	
 		  }
 	      }
 	      break;
@@ -442,7 +385,7 @@ void newviewParsimonyIterativeFast(tree *tr)
 		  *this[20];
 
 		for(k = 0; k < 20; k++)
-		  {
+		  {		    
 		    left[k]  = &(tr->partitionData[model].parsVect[(width * 20 * qNumber) + width * k]);
 		    right[k] = &(tr->partitionData[model].parsVect[(width * 20 * rNumber) + width * k]);
 		    this[k]  = &(tr->partitionData[model].parsVect[(width * 20 * pNumber) + width * k]);
@@ -473,7 +416,7 @@ void newviewParsimonyIterativeFast(tree *tr)
 		    
 		    v_N = VECTOR_AND_NOT(v_N, allOne);
 		    
-		    totalScore += populationCount(v_N);
+		    totalScore += vectorPopcount(v_N);
 		  }
 	      }
 	      break;
@@ -518,45 +461,19 @@ void newviewParsimonyIterativeFast(tree *tr)
 		    
 		    v_N = VECTOR_AND_NOT(v_N, allOne);
 		    
-		    totalScore += populationCount(v_N);
+		    totalScore += vectorPopcount(v_N);
 		  }	  			
 	      }
-	    }	  	 
-	}
+	    }
 
-      tr->parsimonyScore[pNumber] = totalScore + tr->parsimonyScore[rNumber] + tr->parsimonyScore[qNumber];      
+	  tr->parsimonyScore[pNumber * tr->NumberOfModels + model ]
+	    = totalScore + tr->parsimonyScore[rNumber * tr->NumberOfModels + model] 
+	    + tr->parsimonyScore[qNumber * tr->NumberOfModels + model]; 	      
+	}
     }
 }
 
-static inline unsigned int evaluatePopcount(INT_TYPE v_N)
-{
-#ifdef __AVX            	       	   	      
-  unsigned long int
-    res[4] __attribute__ ((aligned (BYTE_ALIGNMENT)));
-	     
-  unsigned int a, b;
-	     
-  _mm256_store_pd((double*)res, v_N);
-  
-  a = __builtin_popcountl(res[0]) + __builtin_popcountl(res[1]);
-  b = __builtin_popcountl(res[2]) + __builtin_popcountl(res[3]);
-	     
-  return (a + b);	            
-#else      	       
-  unsigned int
-    sum = 0,
-    counts[INTS_PER_VECTOR] __attribute__ ((aligned (BYTE_ALIGNMENT)));
-
-  VECTOR_STORE((CAST)counts, v_N);
-
-  sum += BIT_COUNT(counts[0]) + BIT_COUNT(counts[1]);
-  sum += BIT_COUNT(counts[2]) + BIT_COUNT(counts[3]);          
-
-  return sum;
-#endif
-}
-
-unsigned int evaluateParsimonyIterativeFast(tree *tr)
+static void evaluateParsimonyIterativeFast(tree *tr,  unsigned int *partitionParsimony)
 {
   INT_TYPE 
     allOne = SET_ALL_BITS_ONE;
@@ -568,21 +485,24 @@ unsigned int evaluateParsimonyIterativeFast(tree *tr)
   int
     model;
 
-  unsigned int 
-    bestScore = tr->bestParsimony,    
-    sum;
+  /* unsigned int  */
+  /*   bestScore = tr->bestParsimony;  */
+    /* sum; */
 
   if(tr->ti[0] > 4)
-    newviewParsimonyIterativeFast(tr); 
-
-  sum = tr->parsimonyScore[pNumber] + tr->parsimonyScore[qNumber];
+    newviewParsimonyIterativeFast(tr);
+  
+  for(int i = 0; i < tr->NumberOfModels; ++i)
+    partitionParsimony[i] = 
+      tr->parsimonyScore[pNumber * tr->NumberOfModels + i] 
+      + tr->parsimonyScore[qNumber * tr->NumberOfModels + i]; 
 
   for(model = 0; model < tr->NumberOfModels; model++)
     {
       size_t
 	k,
 	states = tr->partitionData[model].states,
-	width = tr->partitionData[model].parsimonyLength, 
+	width = tr->partitionData[model].parsimonyLength,
 	i;
 
        switch(states)
@@ -608,10 +528,9 @@ unsigned int evaluateParsimonyIterativeFast(tree *tr)
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 		 
-		 sum += evaluatePopcount(v_N);
-		 
-		 if(sum >= bestScore)
-		   return sum;		   	       
+		 partitionParsimony[model] += vectorPopcount(v_N); 
+		 /* sum += vectorPopcount(v_N); */
+
 	       }
 	   }
 	   break;
@@ -638,10 +557,7 @@ unsigned int evaluateParsimonyIterativeFast(tree *tr)
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 		 
-		 sum += evaluatePopcount(v_N);
-		 
-		 if(sum >= bestScore)		 
-		   return sum;	        
+		 partitionParsimony[model] += vectorPopcount(v_N);
 	       }	   	 
 	   }
 	   break;
@@ -674,10 +590,8 @@ unsigned int evaluateParsimonyIterativeFast(tree *tr)
 		  
 		  v_N = VECTOR_AND_NOT(v_N, allOne);
 		  
-		  sum += evaluatePopcount(v_N);	       
-		  
-		  if(sum >= bestScore)	    
-		    return sum;		    	       
+		  partitionParsimony[model] += vectorPopcount(v_N); 
+
 		}
 	   }
 	   break;
@@ -711,391 +625,16 @@ unsigned int evaluateParsimonyIterativeFast(tree *tr)
 		   }
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
-		 
-		 sum += evaluatePopcount(v_N);	       
-		 
-		 if(sum >= bestScore)	      
-		   return sum;		       
+
+		 partitionParsimony[model] += vectorPopcount(v_N); 
 	       }
 	   }
 	 }
     }
-  
-  return sum;
 }
 
 
 #else
-
-void newviewParsimonyIterativeFast(tree *tr)
-{    
-  int 
-    model,
-    *ti = tr->ti,
-    count = ti[0],
-    index; 
-
-  for(index = 4; index < count; index += 4)
-    {      
-      unsigned int
-	totalScore = 0;
-
-      size_t
-	pNumber = (size_t)ti[index],
-	qNumber = (size_t)ti[index + 1],
-	rNumber = (size_t)ti[index + 2];
-      
-      for(model = 0; model < tr->NumberOfModels; model++)
-	{
-	  size_t
-	    k,
-	    states = tr->partitionData[model].states,
-	    width = tr->partitionData[model].parsimonyLength;	 
-            
-	  unsigned int	
-	    i;      
-                 
-	  switch(states)
-	    {
-	    case 2:       
-	      {
-		parsimonyNumber
-		  *left[2],
-		  *right[2],
-		  *this[2];
-		
-		parsimonyNumber
-		   o_A,
-		   o_C,
-		   t_A,
-		   t_C,	
-		   t_N;
-		
-		for(k = 0; k < 2; k++)
-		  {
-		    left[k]  = &(tr->partitionData[model].parsVect[(width * 2 * qNumber) + width * k]);
-		    right[k] = &(tr->partitionData[model].parsVect[(width * 2 * rNumber) + width * k]);
-		    this[k]  = &(tr->partitionData[model].parsVect[(width * 2 * pNumber) + width * k]);
-		  }
-
-		for(i = 0; i < width; i++)
-		  {	 	  
-		    t_A = left[0][i] & right[0][i];
-		    t_C = left[1][i] & right[1][i];		   
-
-		    o_A = left[0][i] | right[0][i];
-		    o_C = left[1][i] | right[1][i];
-		  
-		    t_N = ~(t_A | t_C);	  
-
-		    this[0][i] = t_A | (t_N & o_A);
-		    this[1][i] = t_C | (t_N & o_C);		   
-		    
-		    totalScore += BIT_COUNT(t_N);   
-		  }
-	      }
-	      break;
-	    case 4:
-	      {
-		parsimonyNumber
-		  *left[4],
-		  *right[4],
-		  *this[4];
-
-		for(k = 0; k < 4; k++)
-		  {
-		    left[k]  = &(tr->partitionData[model].parsVect[(width * 4 * qNumber) + width * k]);
-		    right[k] = &(tr->partitionData[model].parsVect[(width * 4 * rNumber) + width * k]);
-		    this[k]  = &(tr->partitionData[model].parsVect[(width * 4 * pNumber) + width * k]);
-		  }
-
-		parsimonyNumber
-		   o_A,
-		   o_C,
-		   o_G,
-		   o_T,
-		   t_A,
-		   t_C,
-		   t_G,
-		   t_T,	
-		   t_N;
-
-		for(i = 0; i < width; i++)
-		  {	 	  
-		    t_A = left[0][i] & right[0][i];
-		    t_C = left[1][i] & right[1][i];
-		    t_G = left[2][i] & right[2][i];	  
-		    t_T = left[3][i] & right[3][i];
-
-		    o_A = left[0][i] | right[0][i];
-		    o_C = left[1][i] | right[1][i];
-		    o_G = left[2][i] | right[2][i];	  
-		    o_T = left[3][i] | right[3][i];
-
-		    t_N = ~(t_A | t_C | t_G | t_T);	  
-
-		    this[0][i] = t_A | (t_N & o_A);
-		    this[1][i] = t_C | (t_N & o_C);
-		    this[2][i] = t_G | (t_N & o_G);
-		    this[3][i] = t_T | (t_N & o_T); 
-		    
-		    totalScore += BIT_COUNT(t_N);   
-		  }
-	      }
-	      break;
-	    case 20:
-	      {
-		parsimonyNumber
-		  *left[20],
-		  *right[20],
-		  *this[20];
-
-		parsimonyNumber
-		  o_A[20],
-		  t_A[20],	  
-		  t_N;
-
-		for(k = 0; k < 20; k++)
-		  {
-		    left[k]  = &(tr->partitionData[model].parsVect[(width * 20 * qNumber) + width * k]);
-		    right[k] = &(tr->partitionData[model].parsVect[(width * 20 * rNumber) + width * k]);
-		    this[k]  = &(tr->partitionData[model].parsVect[(width * 20 * pNumber) + width * k]);
-		  }
-
-		for(i = 0; i < width; i++)
-		  {	 	  
-		    size_t k;
-		    
-		    t_N = 0;
-
-		    for(k = 0; k < 20; k++)
-		      {
-			t_A[k] = left[k][i] & right[k][i];
-			o_A[k] = left[k][i] | right[k][i];
-			t_N = t_N | t_A[k];
-		      }
-		    
-		    t_N = ~t_N;
-
-		    for(k = 0; k < 20; k++)		      
-		      this[k][i] = t_A[k] | (t_N & o_A[k]);		   
-		    
-		    totalScore += BIT_COUNT(t_N); 
-		  }
-	      }
-	      break;
-	    default:
-	      {		
-		parsimonyNumber
-		  *left[32],
-		  *right[32],
-		  *this[32];
-		
-		parsimonyNumber
-		  o_A[32],
-		  t_A[32],	  
-		  t_N;
-		
-		assert(states <= 32);
-		
-		for(k = 0; k < states; k++)
-		  {
-		    left[k]  = &(tr->partitionData[model].parsVect[(width * states * qNumber) + width * k]);
-		    right[k] = &(tr->partitionData[model].parsVect[(width * states * rNumber) + width * k]);
-		    this[k]  = &(tr->partitionData[model].parsVect[(width * states * pNumber) + width * k]);
-		  }
-		
-		for(i = 0; i < width; i++)
-		  {	 	  
-		    t_N = 0;
-		    
-		    for(k = 0; k < states; k++)
-		      {
-			t_A[k] = left[k][i] & right[k][i];
-			o_A[k] = left[k][i] | right[k][i];
-			t_N = t_N | t_A[k];
-		      }
-		    
-		    t_N = ~t_N;
-		    
-		    for(k = 0; k < states; k++)		      
-		      this[k][i] = t_A[k] | (t_N & o_A[k]);		   
-		    
-		    totalScore += BIT_COUNT(t_N); 
-		  }
-	      }			      
-	    } 
-	}
-
-      tr->parsimonyScore[pNumber] = totalScore + tr->parsimonyScore[rNumber] + tr->parsimonyScore[qNumber];      
-    }
-}
-
-
-
-unsigned int evaluateParsimonyIterativeFast(tree *tr)
-{
-  size_t 
-    pNumber = (size_t)tr->ti[1],
-    qNumber = (size_t)tr->ti[2];
-
-  int
-    model;
-
-  unsigned int 
-    bestScore = tr->bestParsimony,    
-    sum;
-
-  if(tr->ti[0] > 4)
-    newviewParsimonyIterativeFast(tr); 
-
-  sum = tr->parsimonyScore[pNumber] + tr->parsimonyScore[qNumber];
-
-  for(model = 0; model < tr->NumberOfModels; model++)
-    {
-      size_t
-	k,
-	states = tr->partitionData[model].states,
-	width = tr->partitionData[model].parsimonyLength, 
-	i;
-
-       switch(states)
-	 {
-	 case 2:
-	   {
-	     parsimonyNumber 
-	       t_A,
-	       t_C,	      
-	       t_N,
-	       *left[2],
-	       *right[2];
-	     
-	     for(k = 0; k < 2; k++)
-	       {
-		 left[k]  = &(tr->partitionData[model].parsVect[(width * 2 * qNumber) + width * k]);
-		 right[k] = &(tr->partitionData[model].parsVect[(width * 2 * pNumber) + width * k]);
-	       }     
-	     
-	     for(i = 0; i < width; i++)
-	       {                	                       
-		 t_A = left[0][i] & right[0][i];
-		 t_C = left[1][i] & right[1][i];
-		 
-		  t_N = ~(t_A | t_C);
-
-		  sum += BIT_COUNT(t_N);    
-		 
-		 if(sum >= bestScore)
-		   return sum;		   	       
-	       }
-	   }
-	   break;
-	 case 4:
-	   {
-	     parsimonyNumber
-	       t_A,
-	       t_C,
-	       t_G,
-	       t_T,
-	       t_N,
-	       *left[4],
-	       *right[4];
-      
-	     for(k = 0; k < 4; k++)
-	       {
-		 left[k]  = &(tr->partitionData[model].parsVect[(width * 4 * qNumber) + width * k]);
-		 right[k] = &(tr->partitionData[model].parsVect[(width * 4 * pNumber) + width * k]);
-	       }        
-
-	     for(i = 0; i < width; i++)
-	       {                	                        
-		  t_A = left[0][i] & right[0][i];
-		  t_C = left[1][i] & right[1][i];
-		  t_G = left[2][i] & right[2][i];	  
-		  t_T = left[3][i] & right[3][i];
-
-		  t_N = ~(t_A | t_C | t_G | t_T);
-
-		  sum += BIT_COUNT(t_N);     
-		 
-		 if(sum >= bestScore)		 
-		   return sum;	        
-	       }	   	 
-	   }
-	   break;
-	 case 20:
-	   {
-	     parsimonyNumber
-	       t_A,
-	       t_N,
-	       *left[20],
-	       *right[20];
-	     
-	      for(k = 0; k < 20; k++)
-		{
-		  left[k]  = &(tr->partitionData[model].parsVect[(width * 20 * qNumber) + width * k]);
-		  right[k] = &(tr->partitionData[model].parsVect[(width * 20 * pNumber) + width * k]);
-		}  
-	   
-	      for(i = 0; i < width; i++)
-		{ 
-		  t_N = 0;
-		  
-		  for(k = 0; k < 20; k++)
-		    {
-		      t_A = left[k][i] & right[k][i];
-		      t_N = t_N | t_A;
-		    }
-  	       
-		  t_N = ~t_N;
-
-		  sum += BIT_COUNT(t_N);      
-		  
-		  if(sum >= bestScore)	    
-		    return sum;		    	       
-		}
-	   }
-	   break;
-	 default:
-	   {
-	     parsimonyNumber
-	       t_A,
-	       t_N,
-	       *left[32], 
-	       *right[32];  
-
-	     assert(states <= 32);
-
-	     for(k = 0; k < states; k++)
-	       {
-		 left[k]  = &(tr->partitionData[model].parsVect[(width * states * qNumber) + width * k]);
-		 right[k] = &(tr->partitionData[model].parsVect[(width * states * pNumber) + width * k]);
-	       }  
-	   
-	     for(i = 0; i < width; i++)
-	       {                	       
-		 t_N = 0;
-		  
-		 for(k = 0; k < states; k++)
-		   {
-		     t_A = left[k][i] & right[k][i];
-		     t_N = t_N | t_A;
-		   }
-  	       
-		  t_N = ~t_N;
-
-		  sum += BIT_COUNT(t_N);      
-		  		  		 
-		 if(sum >= bestScore)			  
-		   return sum;			   
-	       }	     	     
-	   }
-	 }
-    }
-  
-  return sum;
-}
-
 #endif
 
 
@@ -1103,7 +642,7 @@ unsigned int evaluateParsimonyIterativeFast(tree *tr)
 
 
 
-unsigned int evaluateParsimony(tree *tr, nodeptr p, boolean full)
+void evaluateParsimony(tree *tr, nodeptr p, boolean full, unsigned int *partitionParsimony)
 {
   volatile unsigned int result;
   nodeptr q = p->back;
@@ -1123,21 +662,19 @@ unsigned int evaluateParsimony(tree *tr, nodeptr p, boolean full)
     }
   else
     {
-      if(p->number > tr->mxtips && !p->x)
+      if(p->number > tr->mxtips && !p->xPars)
 	computeTraversalInfoParsimony(p, ti, &counter, tr->mxtips, full);
-      if(q->number > tr->mxtips && !q->x)
+      if(q->number > tr->mxtips && !q->xPars)
 	computeTraversalInfoParsimony(q, ti, &counter, tr->mxtips, full); 
     }
 
   ti[0] = counter;
-
-  result = evaluateParsimonyIterativeFast(tr);    
-
-  return result;
+ 
+  evaluateParsimonyIterativeFast(tr, partitionParsimony);
 }
 
 
-void newviewParsimony(tree *tr, nodeptr  p)
+void newviewParsimony(tree *tr,  nodeptr  p)
 {     
   if(p->number <= tr->mxtips)
     return;
@@ -1149,7 +686,7 @@ void newviewParsimony(tree *tr, nodeptr  p)
     computeTraversalInfoParsimony(p, tr->ti, &counter, tr->mxtips, FALSE);              
     tr->ti[0] = counter;            
     
-    newviewParsimonyIterativeFast(tr);      
+    newviewParsimonyIterativeFast(tr);
   }
 }
 
@@ -1158,378 +695,6 @@ void newviewParsimony(tree *tr, nodeptr  p)
 
 
 /****************************************************************************************************************************************/
-
-/* static void insertParsimony (tree *tr, nodeptr p, nodeptr q) */
-/* { */
-/*   nodeptr  r; */
-  
-/*   r = q->back; */
-  
-/*   hookupDefault(p->next,       q, tr->numBranches); */
-/*   hookupDefault(p->next->next, r, tr->numBranches);  */
-   
-/*   newviewParsimony(tr, p);      */
-/* } */ 
-
-/*
-  static nodeptr buildNewTip (tree *tr, nodeptr p)
-  { 
-  nodeptr  q;
-  
-  q = tr->nodep[(tr->nextnode)++];
-  hookupDefault(p, q, tr->numBranches);
-  q->next->back = (nodeptr)NULL;
-  q->next->next->back = (nodeptr)NULL;
-  assert(q == q->next->next->next);
-  assert(q->x || q->next->x || q->next->next->x);
-  return  q;
-  } 
-*/
-
-/* static nodeptr buildNewTip (tree *tr, nodeptr p) */
-/* {  */
-/*   nodeptr  q; */
-
-/*   q = tr->nodep[(tr->nextnode)++]; */
-/*   hookupDefault(p, q, tr->numBranches); */
-/*   q->next->back = (nodeptr)NULL; */
-/*   q->next->next->back = (nodeptr)NULL; */
- 
-/*   return  q; */
-/* } */ 
-
-/* static void buildSimpleTree (tree *tr, int ip, int iq, int ir) */
-/* {     */
-/*   nodeptr  p, s; */
-/*   int  i; */
-  
-/*   i = MIN(ip, iq); */
-/*   if (ir < i)  i = ir;  */
-/*   tr->start = tr->nodep[i]; */
-/*   tr->ntips = 3; */
-/*   p = tr->nodep[ip]; */
-/*   hookupDefault(p, tr->nodep[iq], tr->numBranches); */
-/*   s = buildNewTip(tr, tr->nodep[ir]); */
-/*   insertParsimony(tr, s, p); */
-/* } */
-
-
-/* static void testInsertParsimony (tree *tr, nodeptr p, nodeptr q) */
-/* {  */
-/*   unsigned int  */
-/*     mp; */
- 
-/*   nodeptr   */
-/*     r = q->back;    */
-
-/*   boolean  */
-/*     doIt = TRUE; */
-    
-/*   if(tr->grouped) */
-/*     { */
-/*       int  */
-/* 	rNumber = tr->constraintVector[r->number], */
-/* 	qNumber = tr->constraintVector[q->number], */
-/* 	pNumber = tr->constraintVector[p->number]; */
-
-/*       doIt = FALSE; */
-     
-/*       if(pNumber == -9) */
-/* 	pNumber = checker(tr, p->back); */
-/*       if(pNumber == -9) */
-/* 	doIt = TRUE; */
-/*       else */
-/* 	{ */
-/* 	  if(qNumber == -9) */
-/* 	    qNumber = checker(tr, q); */
-
-/* 	  if(rNumber == -9) */
-/* 	    rNumber = checker(tr, r); */
-
-/* 	  if(pNumber == rNumber || pNumber == qNumber) */
-/* 	    doIt = TRUE;        */
-/* 	} */
-/*     } */
-
-/*   if(doIt) */
-/*     { */
-/*       insertParsimony(tr, p, q);    */
-  
-/*       mp = evaluateParsimony(tr, p->next->next, FALSE);           */
-      
-/*       if(mp < tr->bestParsimony) */
-/* 	{ */
-/* 	  tr->bestParsimony = mp; */
-/* 	  tr->insertNode = q; */
-/* 	  tr->removeNode = p; */
-/* 	} */
-  
-/*       hookupDefault(q, r, tr->numBranches); */
-/*       p->next->next->back = p->next->back = (nodeptr) NULL; */
-/*     } */
-       
-/*   return; */
-/* } */ 
-
-
-/* static void restoreTreeParsimony(tree *tr, nodeptr p, nodeptr q) */
-/* {  */
-/*   nodeptr */
-/*     r = q->back; */
-  
-/*   int counter = 4; */
-  
-/*   hookupDefault(p->next,       q, tr->numBranches); */
-/*   hookupDefault(p->next->next, r, tr->numBranches); */
-  
-/*   computeTraversalInfoParsimony(p, tr->ti, &counter, tr->mxtips, FALSE);               */
-/*   tr->ti[0] = counter; */
-    
-/*   newviewParsimonyIterativeFast(tr);  */
-/* } */
-
-
-/* static void addTraverseParsimony (tree *tr, nodeptr p, nodeptr q, int mintrav, int maxtrav, boolean doAll) */
-/* {         */
-/*   if (doAll || (--mintrav <= 0))                */
-/*     testInsertParsimony(tr, p, q);	                  */
-
-/*   if (((q->number > tr->mxtips)) && ((--maxtrav > 0) || doAll)) */
-/*     {	       */
-/*       addTraverseParsimony(tr, p, q->next->back, mintrav, maxtrav, doAll);	       */
-/*       addTraverseParsimony(tr, p, q->next->next->back, mintrav, maxtrav, doAll);              	      */
-/*     } */
-/* } */
-
-
-static nodeptr findAnyTipFast(nodeptr p, int numsp)
-{ 
-  return  (p->number <= numsp)? p : findAnyTipFast(p->next->back, numsp);
-} 
-
-
-/* static void makePermutationFast(int *perm, int n, analdef *adef) */
-/* {     */
-/*   int   */
-/*     i,  */
-/*     j,  */
-/*     k; */
-
-/*   checkSeed(adef);       */
-
-/*   for (i = 1; i <= n; i++)     */
-/*     perm[i] = i;                */
-
-/*   for (i = 1; i <= n; i++)  */
-/*     {       */
-/*       double d =  randum(&adef->parsimonySeed); */
-
-/*       k =  (int)((double)(n + 1 - i) * d); */
-      
-/*       j        = perm[i]; */
-
-/*       perm[i]     = perm[i + k]; */
-/*       perm[i + k] = j;  */
-/*     } */
-/* } */
-
-/* static nodeptr  removeNodeParsimony (nodeptr p, tree *tr) */
-/* {  */
-/*   nodeptr  q, r;          */
-
-/*   q = p->next->back; */
-/*   r = p->next->next->back;    */
-    
-/*   hookupDefault(q, r, tr->numBranches); */
-
-/*   p->next->next->back = p->next->back = (node *) NULL; */
-  
-/*   return  q; */
-/* } */
-
-/* static int rearrangeParsimony(tree *tr, nodeptr p, int mintrav, int maxtrav, boolean doAll)   */
-/* {    */
-/*   nodeptr   */
-/*     p1,  */
-/*     p2,  */
-/*     q,  */
-/*     q1,  */
-/*     q2; */
-  
-/*   int       */
-/*     mintrav2;  */
-
-/*   boolean  */
-/*     doP = TRUE, */
-/*     doQ = TRUE; */
-           
-/*   if (maxtrav > tr->ntips - 3)   */
-/*     maxtrav = tr->ntips - 3;  */
-
-/*   assert(mintrav == 1); */
-
-/*   if(maxtrav < mintrav) */
-/*     return 0; */
-
-/*   q = p->back; */
-
-/*   if(tr->constrained) */
-/*     {     */
-/*       if(! tipHomogeneityChecker(tr, p->back, 0)) */
-/* 	doP = FALSE; */
-	
-/*       if(! tipHomogeneityChecker(tr, q->back, 0)) */
-/* 	doQ = FALSE; */
-		        
-/*       if(doQ == FALSE && doP == FALSE) */
-/* 	return 0; */
-/*     }   */
-
-/*   if((p->number > tr->mxtips) && doP)  */
-/*     {      */
-/*       p1 = p->next->back; */
-/*       p2 = p->next->next->back; */
-      
-/*       if ((p1->number > tr->mxtips) || (p2->number > tr->mxtips))  */
-/* 	{	  	   */
-/* 	  removeNodeParsimony(p, tr);	  	  */
-
-/* 	  if ((p1->number > tr->mxtips))  */
-/* 	    { */
-/* 	      addTraverseParsimony(tr, p, p1->next->back, mintrav, maxtrav, doAll);          */
-/* 	      addTraverseParsimony(tr, p, p1->next->next->back, mintrav, maxtrav, doAll);           */
-/* 	    } */
-	 
-/* 	  if ((p2->number > tr->mxtips))  */
-/* 	    { */
-/* 	      addTraverseParsimony(tr, p, p2->next->back, mintrav, maxtrav, doAll); */
-/* 	      addTraverseParsimony(tr, p, p2->next->next->back, mintrav, maxtrav, doAll);           */
-/* 	    } */
-	    
-	   
-/* 	  hookupDefault(p->next,       p1, tr->numBranches);  */
-/* 	  hookupDefault(p->next->next, p2, tr->numBranches);	   	    	     */
-
-/* 	  newviewParsimony(tr, p); */
-/* 	} */
-/*     }   */
-       
-/*   if ((q->number > tr->mxtips) && (maxtrav > 0) && doQ)  */
-/*     { */
-/*       q1 = q->next->back; */
-/*       q2 = q->next->next->back; */
-
-/*       if ( */
-/* 	  ( */
-/* 	   (q1->number > tr->mxtips) &&  */
-/* 	   ((q1->next->back->number > tr->mxtips) || (q1->next->next->back->number > tr->mxtips)) */
-/* 	   ) */
-/* 	  || */
-/* 	  ( */
-/* 	   (q2->number > tr->mxtips) &&  */
-/* 	   ((q2->next->back->number > tr->mxtips) || (q2->next->next->back->number > tr->mxtips)) */
-/* 	   ) */
-/* 	  ) */
-/* 	{	    */
-
-/* 	  removeNodeParsimony(q, tr); */
-	  
-/* 	  mintrav2 = mintrav > 2 ? mintrav : 2; */
-	  
-/* 	  if ((q1->number > tr->mxtips))  */
-/* 	    { */
-/* 	      addTraverseParsimony(tr, q, q1->next->back, mintrav2 , maxtrav, doAll); */
-/* 	      addTraverseParsimony(tr, q, q1->next->next->back, mintrav2 , maxtrav, doAll);          */
-/* 	    } */
-	 
-/* 	  if ((q2->number > tr->mxtips))  */
-/* 	    { */
-/* 	      addTraverseParsimony(tr, q, q2->next->back, mintrav2 , maxtrav, doAll); */
-/* 	      addTraverseParsimony(tr, q, q2->next->next->back, mintrav2 , maxtrav, doAll);           */
-/* 	    }	    */
-	   
-/* 	  hookupDefault(q->next,       q1, tr->numBranches);  */
-/* 	  hookupDefault(q->next->next, q2, tr->numBranches); */
-	   
-/* 	  newviewParsimony(tr, q); */
-/* 	} */
-/*     } */
-
-/*   return 1; */
-/* } */ 
-
-
-/* static void restoreTreeRearrangeParsimony(tree *tr) */
-/* {     */
-/*   removeNodeParsimony(tr->removeNode, tr);   */
-/*   restoreTreeParsimony(tr, tr->removeNode, tr->insertNode);   */
-/* } */
-
-/*
-static boolean isInformative2(tree *tr, int site)
-{
-  int
-    informativeCounter = 0,
-    check[256],   
-    j,   
-    undetermined = 15;
-
-  unsigned char
-    nucleotide,
-    target = 0;
-  	
-  for(j = 0; j < 256; j++)
-    check[j] = 0;
-  
-  for(j = 1; j <= tr->mxtips; j++)
-    {	   
-      nucleotide = tr->yVector[j][site];	    
-      check[nucleotide] =  check[nucleotide] + 1;      	           
-    }
-  
-  
-  if(check[1] > 1)
-    {
-      informativeCounter++;    
-      target = target | 1;
-    }
-  if(check[2] > 1)
-    {
-      informativeCounter++; 
-      target = target | 2;
-    }
-  if(check[4] > 1)
-    {
-      informativeCounter++; 
-      target = target | 4;
-    }
-  if(check[8] > 1)
-    {
-      informativeCounter++; 
-      target = target | 8;
-    }
-	  
-  if(informativeCounter >= 2)
-    return TRUE;    
-  else
-    {        
-      for(j = 0; j < undetermined; j++)
-	{
-	  if(j == 3 || j == 5 || j == 6 || j == 7 || j == 9 || j == 10 || j == 11 || 
-	     j == 12 || j == 13 || j == 14)
-	    {
-	      if(check[j] > 1)
-		{
-		  if(!(target & j))
-		    return TRUE;
-		}
-	    }
-	} 
-    }
-     
-  return FALSE;	     
-}
-*/
 
 
 static boolean isInformative(tree *tr, int dataType, int site)
@@ -1578,7 +743,7 @@ static boolean isInformative(tree *tr, int dataType, int site)
 }
 
 
-static void determineUninformativeSites(tree *tr, int *informative)
+static void determineUninformativeSites(tree *tr,  int *informative)
 {
   int 
     model,
@@ -1603,7 +768,7 @@ static void determineUninformativeSites(tree *tr, int *informative)
     {
       for(i = tr->partitionData[model].lower; i < tr->partitionData[model].upper; i++)
 	{
-	  if(isInformative(tr , tr->partitionData[model].dataType, i))
+	   if(isInformative(tr, tr->partitionData[model].dataType, i))
 	     informative[i] = 1;
 	   else
 	     {
@@ -1613,69 +778,24 @@ static void determineUninformativeSites(tree *tr, int *informative)
 	}      
     }
 
- 
- 
   /* printf("Uninformative Patterns: %d\n", number); */
 }
 
 
-static void reorderNodes(tree *tr, nodeptr *np, nodeptr p, int *count)
-{
-  int i, found = 0;
-
-  if((p->number <= tr->mxtips))    
-    return;
-  else
-    {              
-      for(i = tr->mxtips + 1; (i <= (tr->mxtips + tr->mxtips - 1)) && (found == 0); i++)
-	{
-	  if (p == np[i] || p == np[i]->next || p == np[i]->next->next)
-	    {
-	      if(p == np[i])			       
-		tr->nodep[*count + tr->mxtips + 1] = np[i];		 		
-	      else
-		{
-		  if(p == np[i]->next)		  
-		    tr->nodep[*count + tr->mxtips + 1] = np[i]->next;		     	   
-		  else		   
-		    tr->nodep[*count + tr->mxtips + 1] = np[i]->next->next;		    		    
-		}
-
-	      found = 1;	      	     
-	      *count = *count + 1;
-	    }
-	}            
-     
-      assert(found != 0);
-
-      reorderNodes(tr, np, p->next->back, count);     
-      reorderNodes(tr, np, p->next->next->back, count);                
-    }
-}
-
-
-
-
-
-  
-static void compressDNA(tree *tr, int *informative, boolean saveMemory)
+static void compressDNA(tree *tr,  int *informative)
 {
   size_t
     totalNodes,
     i,
     model;
-
-  /* if(saveMemory) */
-  /*   totalNodes = (size_t)tr->innerNodes + 1 + (size_t)tr->mxtips; */
-  /* else */
-    totalNodes = 2 * (size_t)tr->mxtips;
-
+   
+  totalNodes = 2 * (size_t)tr->mxtips;
 
   for(model = 0; model < (size_t) tr->NumberOfModels; model++)
     {
       size_t
 	k,
-	states = (size_t)tr->partitionData[model].states,       
+	states = (size_t)tr->partitionData[model].states,
 	compressedEntries,
 	compressedEntriesPadded,
 	entries = 0, 
@@ -1683,8 +803,8 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
 	upper = tr->partitionData[model].upper;
 
       parsimonyNumber 
-	**compressedTips = (parsimonyNumber **)malloc(states * sizeof(parsimonyNumber*)),
-	*compressedValues = (parsimonyNumber *)malloc(states * sizeof(parsimonyNumber));
+	**compressedTips = (parsimonyNumber **)exa_malloc(states * sizeof(parsimonyNumber*)),
+	*compressedValues = (parsimonyNumber *)exa_malloc(states * sizeof(parsimonyNumber));
       
       for(i = lower; i < upper; i++)    
 	if(informative[i])
@@ -1703,11 +823,14 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
 #else
       compressedEntriesPadded = compressedEntries;
 #endif     
+
       
-      tr->partitionData[model].parsVect = (parsimonyNumber *)malloc_aligned((size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
+      int numByte = (size_t)compressedEntriesPadded * states * totalNodes; 
+
+      tr->partitionData[model].parsVect = (parsimonyNumber *)exa_malloc_aligned(numByte * sizeof(parsimonyNumber));
      
-      for(i = 0; i < compressedEntriesPadded * states * totalNodes; i++)      
-	tr->partitionData[model].parsVect[i] = 0;          
+      for(i = 0; i < numByte; i++)      
+	tr->partitionData[model].parsVect[i] = 0;
 
       for(i = 0; i < (size_t)tr->mxtips; i++)
 	{
@@ -1774,21 +897,25 @@ static void compressDNA(tree *tr, int *informative, boolean saveMemory)
 	    }	 	
 	}               
   
-      tr->partitionData[model].parsimonyLength = compressedEntriesPadded;   
+      tr->partitionData[model].parsimonyLength = compressedEntriesPadded;
 
-      free(compressedTips);
-      free(compressedValues);
+      exa_free(compressedTips);
+      exa_free(compressedValues);
+
+      for(int i = 0; i < numByte; ++i)
+	printf("%u,", tr->partitionData[model].parsVect[i]); 
+      printf("\n");
     }
-  
-  tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes);  
+
+  tr->parsimonyScore = (unsigned int*)exa_malloc_aligned(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
           
-  for(i = 0; i < totalNodes; i++) 
+  for(i = 0; i < totalNodes * tr->NumberOfModels; i++) 
     tr->parsimonyScore[i] = 0;
 }
 
 
 
-static void stepwiseAddition(tree *tr, nodeptr p, nodeptr q)
+static void stepwiseAddition(tree *tr,  nodeptr p, nodeptr q)
 {            
   nodeptr 
     r = q->back;
@@ -1809,8 +936,14 @@ static void stepwiseAddition(tree *tr, nodeptr p, nodeptr q)
   tr->ti[0] = counter;
   tr->ti[1] = p->number;
   tr->ti[2] = p->back->number;
-    
-  mp = evaluateParsimonyIterativeFast(tr);
+
+   
+  unsigned int* partitionParsimony = (unsigned int*) exa_calloc(tr->NumberOfModels,sizeof(unsigned int)) ; 
+  evaluateParsimonyIterativeFast(tr,  partitionParsimony);
+  mp = 0; 
+  for(int i = 0; i < tr->NumberOfModels; ++i)
+    mp += partitionParsimony[i]; 
+  exa_free(partitionParsimony); 
   
   if(mp < tr->bestParsimony)
     {    
@@ -1823,136 +956,10 @@ static void stepwiseAddition(tree *tr, nodeptr p, nodeptr q)
    
   if(q->number > tr->mxtips && tr->parsimonyScore[q->number] > 0)
     {	      
-      stepwiseAddition(tr, p, q->next->back);	      
-      stepwiseAddition(tr, p, q->next->next->back);              	     
+      stepwiseAddition(tr,  p, q->next->back);
+      stepwiseAddition(tr, p, q->next->next->back);
     }
 }
-
-static void markNodesInTree(nodeptr p, tree *tr, unsigned char *nodesInTree)
-{
-  if(isTip(p->number, tr->mxtips))
-    nodesInTree[p->number] = 1;
-  else
-    {
-      markNodesInTree(p->next->back, tr, nodesInTree);
-      markNodesInTree(p->next->next->back, tr, nodesInTree);
-    }
-
-}
-
- 
-/* static void insertRandom (nodeptr p, nodeptr q, int numBranches) */
-/* { */
-/*   nodeptr  r; */
-  
-/*   r = q->back; */
-  
-/*   hookupDefault(p->next,       q, numBranches); */
-/*   hookupDefault(p->next->next, r, numBranches);  */
-/* } */ 
-
-
-
-
-
-
-
-/* static void buildSimpleTreeRandom (tree *tr, int ip, int iq, int ir) */
-/* {     */
-/*   nodeptr  p, s; */
-/*   int  i; */
-  
-/*   i = MIN(ip, iq); */
-/*   if (ir < i)  i = ir;  */
-/*   tr->start = tr->nodep[i]; */
-/*   tr->ntips = 3; */
-/*   p = tr->nodep[ip]; */
-/*   hookupDefault(p, tr->nodep[iq], tr->numBranches); */
-/*   s = buildNewTip(tr, tr->nodep[ir]); */
-/*   insertRandom(s, p, tr->numBranches); */
-/* } */
-
-int checker(tree *tr, nodeptr p)
-{
-  int group = tr->constraintVector[p->number];
-
-  if(isTip(p->number, tr->mxtips))
-    {
-      group = tr->constraintVector[p->number];
-      return group;
-    }
-  else
-    {
-      if(group != -9) 
-	return group;
-
-      group = checker(tr, p->next->back);
-      if(group != -9) 
-	return group;
-
-      group = checker(tr, p->next->next->back);
-      if(group != -9) 
-	return group;
-
-      return -9;
-    }
-}
-
-
-
-
-
-
-
-static int markBranches(nodeptr *branches, nodeptr p, int *counter, int numsp)
-{
-  if(isTip(p->number, numsp))
-    return 0;
-  else
-    {
-      branches[*counter] = p->next;
-      branches[*counter + 1] = p->next->next;
-      
-      *counter = *counter + 2;
-      
-      return ((2 + markBranches(branches, p->next->back, counter, numsp) + 
-	       markBranches(branches, p->next->next->back, counter, numsp)));
-    }
-}
-
-
-
-nodeptr findAnyTip(nodeptr p, int numsp)
-{ 
-  return  isTip(p->number, numsp) ? p : findAnyTip(p->next->back, numsp);
-} 
-
-
-int randomInt(int n)
-{
-  return rand() %n;
-}
-
-
-boolean tipHomogeneityChecker(tree *tr, nodeptr p, int grouping)
-{
-  if(isTip(p->number, tr->mxtips))
-    {
-      if(tr->constraintVector[p->number] != grouping) 
-	return FALSE;
-      else 
-	return TRUE;
-    }
-  else
-    {   
-      return  (tipHomogeneityChecker(tr, p->next->back, grouping) && tipHomogeneityChecker(tr, p->next->next->back,grouping));      
-    }
-}
-
-
-
-
-
 
 
 
@@ -1960,11 +967,11 @@ void allocateParsimonyDataStructures(tree *tr)
 {
   int 
     i,
-    *informative = (int *)malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
+    *informative = (int *)exa_malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
  
   determineUninformativeSites(tr, informative);
 
-  compressDNA(tr, informative, FALSE);
+  compressDNA(tr, informative);
 
   for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 1; i++)
     {
@@ -1976,253 +983,21 @@ void allocateParsimonyDataStructures(tree *tr)
       p->next->next->xPars = 0;
     }
 
-  tr->ti = (int*)malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
+  tr->ti = (int*)exa_malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
 
-  free(informative); 
+  exa_free(informative); 
 }
 
-
-
-
-void nodeRectifier(tree *tr)
+void freeParsimonyDataStructures(tree *tr)
 {
-  nodeptr *np = (nodeptr *)malloc(2 * tr->mxtips * sizeof(nodeptr));
-  int i;
-  int count = 0;
-  
-  tr->start       = tr->nodep[1];
-  tr->rooted      = FALSE;
+  size_t 
+    model;
 
-  /* TODO why is tr->rooted set to FALSE here ?*/
+  exa_free(tr->parsimonyScore);
   
-  for(i = tr->mxtips + 1; i <= (tr->mxtips + tr->mxtips - 1); i++)
-    np[i] = tr->nodep[i];           
+  for(model = 0; model < (size_t) tr->NumberOfModels; ++model)
+    exa_free(tr->partitionData[model].parsVect);
   
-  reorderNodes(tr, np, tr->start->back, &count); 
-
- 
-  free(np);
+  exa_free(tr->ti);
 }
 
-
-/* static void setupBranchMetaInfo(tree *tr, nodeptr p, int nTips, branchInfo *bInf) */
-/* { */
-/*   int  */
-/*     countBranches = tr->branchCounter; */
-
-/*   if(isTip(p->number, tr->mxtips))     */
-/*     {       */
-/*       p->bInf       = &bInf[countBranches]; */
-/*       p->back->bInf = &bInf[countBranches];               	       */
-
-/*       bInf[countBranches].oP = p; */
-/*       bInf[countBranches].oQ = p->back; */
-      
-/*       bInf[countBranches].epa->leftNodeNumber = p->number; */
-/*       bInf[countBranches].epa->rightNodeNumber = p->back->number; */
-         
-/*       bInf[countBranches].epa->branchNumber = countBranches;	                  */
-/*       bInf[countBranches].epa->originalBranchLength = p->z[0]; */
-
-/*       tr->branchCounter =  tr->branchCounter + 1; */
-/*       return; */
-/*     } */
-/*   else */
-/*     { */
-/*       nodeptr q; */
-/*       assert(p == p->next->next->next); */
-
-/*       p->bInf       = &bInf[countBranches]; */
-/*       p->back->bInf = &bInf[countBranches]; */
-
-/*       bInf[countBranches].oP = p; */
-/*       bInf[countBranches].oQ = p->back; */
-
-/*       bInf[countBranches].epa->leftNodeNumber = p->number; */
-/*       bInf[countBranches].epa->rightNodeNumber = p->back->number; */
-
-               
-/*       bInf[countBranches].epa->branchNumber = countBranches; */
-/*       bInf[countBranches].epa->originalBranchLength = p->z[0]; */
-
-/*       tr->branchCounter =  tr->branchCounter + 1;       */
-
-/*       q = p->next; */
-
-/*       while(q != p) */
-/* 	{ */
-/* 	  setupBranchMetaInfo(tr, q->back, nTips, bInf);	 */
-/* 	  q = q->next; */
-/* 	} */
-     
-/*       return; */
-/*     } */
-/* } */
- 
-
-
-/* static void setupJointFormat(tree *tr, nodeptr p, int ntips, branchInfo *bInf, int *count) */
-/* { */
-/*   if(isTip(p->number, tr->mxtips))     */
-/*     {       */
-/*       p->bInf->epa->jointLabel = *count; */
-/*       *count = *count + 1; */
-           
-/*       return; */
-/*     } */
-/*   else */
-/*     {                            */
-/*       setupJointFormat(tr, p->next->back, ntips, bInf, count);             */
-/*       setupJointFormat(tr, p->next->next->back, ntips, bInf, count);      */
-      
-/*       p->bInf->epa->jointLabel = *count; */
-/*       *count = *count + 1;  */
-      
-/*       return; */
-/*     } */
-/* } */
- 
-
-
-
-
-
-/* static void setupBranchInfo(tree *tr, nodeptr q) */
-/* { */
-/*   nodeptr  */
-/*     originalNode = tr->nodep[tr->mxtips + 1]; */
-
-/*   int  */
-/*     count = 0; */
-
-/*   tr->branchCounter = 0; */
-
-/*   setupBranchMetaInfo(tr, q, tr->ntips, tr->bInf); */
-    
-/*   assert(tr->branchCounter == tr->numberOfBranches); */
-
-/*   if(tr->wasRooted) */
-/*     { */
-/*       assert(tr->leftRootNode->back == tr->rightRootNode); */
-/*       assert(tr->leftRootNode       == tr->rightRootNode->back);       */
-
-/*       if(!isTip(tr->leftRootNode->number, tr->mxtips)) */
-/* 	{ */
-/* 	  setupJointFormat(tr,  tr->leftRootNode->next->back, tr->ntips, tr->bInf, &count); */
-/* 	  setupJointFormat(tr,  tr->leftRootNode->next->next->back, tr->ntips, tr->bInf, &count); */
-/* 	} */
-      
-/*        tr->leftRootNode->bInf->epa->jointLabel = count; */
-/*        tr->rootLabel = count; */
-/*        count = count + 1; */
-
-/*        if(!isTip(tr->rightRootNode->number, tr->mxtips)) */
-/* 	 { */
-/* 	  setupJointFormat(tr,  tr->rightRootNode->next->back, tr->ntips, tr->bInf, &count); */
-/* 	  setupJointFormat(tr,  tr->rightRootNode->next->next->back, tr->ntips, tr->bInf, &count); */
-/* 	}	        */
-/*     } */
-/*   else */
-/*     { */
-/*       setupJointFormat(tr, originalNode->back, tr->ntips, tr->bInf, &count); */
-/*       setupJointFormat(tr, originalNode->next->back, tr->ntips, tr->bInf, &count); */
-/*       setupJointFormat(tr, originalNode->next->next->back, tr->ntips, tr->bInf, &count);       */
-/*     }   */
-
-/*   assert(count == tr->numberOfBranches); */
-/* } */
-
-/* static void testInsertFast(tree *tr, nodeptr r, nodeptr q) */
-/* { */
-/*   unsigned int */
-/*     result; */
-  
-/*   nodeptr   */
-/*     x = q->back;       */
-  
-/*   int  */
-/*     i, */
-/*     *inserts = tr->inserts; */
-    	           
-/*   assert(!tr->grouped);                              */
- 
-/*   hookupDefault(r->next,       q, tr->numBranches); */
-/*   hookupDefault(r->next->next, x, tr->numBranches);	                          */
-   
-/*   newviewParsimony(tr, r);    */
-    
-/*   for(i = 0; i < tr->numberOfTipsForInsertion; i++) */
-/*     {           	  	     */
-/*       hookupDefault(r, tr->nodep[inserts[i]], tr->numBranches); */
-      
-/*       tr->bestParsimony = INT_MAX; */
-
-/*       result = evaluateParsimony(tr, r, FALSE);             */
-      
-/*       r->back = (nodeptr) NULL; */
-/*       tr->nodep[inserts[i]]->back = (nodeptr) NULL; */
-      
-/*       tr->bInf[q->bInf->epa->branchNumber].epa->parsimonyScore[i] = result;	  	          */
-/*     } */
- 
-/*   hookupDefault(q, x, tr->numBranches); */
-  
-/*   r->next->next->back = r->next->back = (nodeptr) NULL; */
- 
-/* } */
-
-
-/* static void traverseTree(tree *tr, nodeptr r, nodeptr q) */
-/* {        */
-/*   testInsertFast(tr, r, q); */
-
-/*   if(!isTip(q->number, tr->numsp)) */
-/*     {    */
-/*       nodeptr  */
-/* 	a = q->next; */
-
-/*       while(a != q) */
-/* 	{ */
-/* 	  traverseTree(tr, r, a->back); */
-/* 	  a = a->next; */
-/* 	}       */
-/*     } */
-/* } */ 
-
-
-
-typedef struct
-  {
-    unsigned int parsimonyScore;  
-    int number;
-  }
-  infoMP;
-
-
-static int infoCompare(const void *p1, const void *p2)
-{
-  infoMP *rc1 = (infoMP *)p1;
-  infoMP *rc2 = (infoMP *)p2;
-
-  unsigned int i = rc1->parsimonyScore;
-  unsigned int j = rc2->parsimonyScore;
-
-  if (i > j)
-    return (1);
-  if (i < j)
-    return (-1);
-  return (0);
-}
-
-
-#ifdef __AVX
-
-#ifdef _SSE3_WAS_DEFINED
-
-#define __SIM_SSE3
-
-#undef _SSE3_WAS_DEFINED
-
-#endif
-
-#endif
