@@ -1,7 +1,7 @@
 #ifndef _PARALLEL_SETUP_H
 #define _PARALLEL_SETUP_H
 
-#include "CommandLine.hpp"
+#include "config/CommandLine.hpp"
 
 #if HAVE_PLL == 0
 

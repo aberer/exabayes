@@ -17,7 +17,7 @@
 #include "PartitionProposal.hpp"
 #include "AbstractProposal.hpp"
 #include "GlobalVariables.hpp"
-#include "BlockProposalConfig.hpp"
+#include "config/BlockProposalConfig.hpp"
 
 class ProposalRegistry
 {

@@ -27,7 +27,7 @@
 #include "tune.h"
 #include "output.h"
 
-#include "CommandLine.hpp"
+#include "config/CommandLine.hpp"
 #include "SampleMaster.hpp"
 #include "ParallelSetup.hpp"
 

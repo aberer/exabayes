@@ -49,7 +49,7 @@ endif
 # AM_CXXFLAGS=-O3
 libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE)
 exabayes_LDADD= libncl.a libbayes.a 
-exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/CommandLine.cpp $(top_srcdir)/src/CommandLine.hpp 
+exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp 
 exabayes_LDADD+=$(LIBTOUSE)
 exabayes_CXXFLAGS= -O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE)
 

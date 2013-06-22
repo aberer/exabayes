@@ -13,11 +13,11 @@
 #include <vector>
 
 #include "axml.h"
-#include "BlockRunParameters.hpp"
-#include "BlockProposalConfig.hpp"
-#include "CommandLine.hpp"
+#include "config/BlockRunParameters.hpp"
+#include "config/BlockProposalConfig.hpp"
+#include "config/CommandLine.hpp"
 #include "CoupledChains.hpp"
-#include "ConfigReader.hpp"
+#include "config/ConfigReader.hpp"
 #include "ParallelSetup.hpp"
 
 using namespace std; 

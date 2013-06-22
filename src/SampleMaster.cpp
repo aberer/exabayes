@@ -2,9 +2,9 @@
 #include <fstream>
 #include <memory>
 
-#include "BlockProposalConfig.hpp"
-#include "BlockRunParameters.hpp"
-#include "ConfigReader.hpp"
+#include "config/BlockProposalConfig.hpp"
+#include "config/BlockRunParameters.hpp"
+#include "config/ConfigReader.hpp"
 #include "output.h"
 #include "eval.h"
 #include "SampleMaster.hpp"

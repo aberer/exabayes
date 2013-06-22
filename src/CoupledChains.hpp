@@ -11,7 +11,7 @@
 
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
-#include "BlockRunParameters.hpp"
+#include "config/BlockRunParameters.hpp"
 #include "Chain.hpp"
 #include "SuccessCounter.hpp"
 

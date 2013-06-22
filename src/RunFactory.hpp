@@ -14,9 +14,9 @@
 
 #include <vector>
 
-#include "BlockProposalConfig.hpp"
-#include "BlockPrior.hpp"
-#include "BlockParams.hpp"
+#include "config/BlockProposalConfig.hpp"
+#include "config/BlockPrior.hpp"
+#include "config/BlockParams.hpp"
 #include "AbstractProposal.hpp"
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
