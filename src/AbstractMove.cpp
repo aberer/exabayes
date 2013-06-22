@@ -14,3 +14,4 @@ void AbstractMove::disorientHelper(const TreeAln &traln, nodeptr p) const
     {
     }
 }
+

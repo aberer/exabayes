@@ -16,7 +16,6 @@ public:
   virtual void disorientAtNode(TreeAln &traln, nodeptr p) const ; 
   virtual void extractMoveInfo(const TreeAln &traln, vector<Branch> description) ; 
   virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, vector<shared_ptr<AbstractPrior> > brPr) const ; 
-
   virtual Branch getEvalBranch(const TreeAln &traln) const {return innerBranch; }
   virtual AbstractMove* clone() const {return new NniMove();}  
 

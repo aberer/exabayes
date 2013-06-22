@@ -17,11 +17,6 @@ ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
 }
 
 
-ExtendedSPR::~ExtendedSPR()
-{
-}
-
-
 /**
    @brief draws a random set of branches in the tree that constitute a
    path
@@ -33,6 +28,7 @@ ExtendedSPR::~ExtendedSPR()
  */
 void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopProp )
 {
+  Path modifiedPath; 
   assert(0 < stopProp && stopProp < 1.0 ); 
 
   assert(modifiedPath.size( ) == 0 ); 
@@ -116,9 +112,6 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
   debug_printTree(traln);
-
-  modifiedPath.clear(); 
-  assert(modifiedPath.size() == 0); 
   drawPathForESPR( traln,rand ,stopProb); 
 
   move.applyToTree(traln); 

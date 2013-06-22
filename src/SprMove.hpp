@@ -28,7 +28,9 @@ public:
 
   friend ostream& operator<<(ostream &out, const SprMove& rhs); 
 
-private: 			// METHODS
+protected:			// METHODS
+  void sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto, Path &path ) const;
+  void sprDisorientPath(TreeAln &traln, nodeptr p, const Path &path) const ;
   void applyPath(TreeAln &traln, const Path &modifiedPath ) const; 
   void getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, Path &resultPath) const; 
 

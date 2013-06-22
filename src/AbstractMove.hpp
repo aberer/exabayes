@@ -7,6 +7,7 @@
 #include "PriorBelief.hpp"
 #include "Branch.hpp"
 #include "Priors.hpp"
+#include "Path.hpp"
 
 
 class AbstractMove
@@ -25,6 +26,7 @@ public:
 
 protected: 
   void disorientHelper(const TreeAln &traln, nodeptr p) const ; 
+
 
 }; 
 

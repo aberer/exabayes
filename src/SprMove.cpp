@@ -24,62 +24,20 @@ void SprMove::revertTree(TreeAln &traln, PriorBelief &prior) const
  
 void SprMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 {
-  int first = (int)path.getNthNodeInPath(0),
-    last = (int)path.getNthNodeInPath(path.getNumberOfNodes()-1); 
-
-  if(NOT path.nodeIsOnPath(p->number) || traln.isTipNode(p) || p->number == first || p->number == last )
-    return; 
-
-  disorientHelper(traln, p);
-  
-  disorientAtNode( traln, p->next->back); 
-  disorientAtNode( traln, p->next->next->back);
+  sprDisorientPath(traln,p, path);
 }
 
 
 void SprMove::extractMoveInfo(const TreeAln &traln, vector<Branch> description)
 {
-#ifdef EFFICIENT
-  // looks very clunky 
-  assert(0); 
-#endif
-
-  Branch chosen = description.at(1); 
-  Branch prunedTree = description.at(0); 
-
-  nodeptr p = prunedTree.findNodePtr(traln);
-  
-  path.clear();   
-  path.findPath(traln, p, chosen.findNodePtr(traln));
-  path.reverse();   
-
-  Branch Tmp = path.at(0); 
-
-  nodeptr aNode = Tmp.findNodePtr(traln); 
-  if(traln.isTipNode(aNode))
-    aNode = Tmp.getInverted().findNodePtr(traln);
-  assert(not traln.isTipNode(aNode)); 
-  Branch b = path.at(0); 
-  while(b.equalsUndirected( path.at(0)) || b.equalsUndirected(Branch(p->number, p->back->number))) 
-    {
-      aNode = aNode->next; 
-      b = Branch(aNode->number, aNode->back->number) ;
-    }
-  path.reverse();
-  path.append(b);  
-  path.reverse();
-
-  path.saveBranchLengthsPath(traln); 
-  // =/ 
+  sprCreatePath(traln, description.at(0), description.at(1), path);
 } 
 
 
 AbstractMove* SprMove::clone() const
 {
   return new SprMove; 
-} 
-
-
+}
 
 
 Branch SprMove::getEvalBranch(const TreeAln &traln) const
@@ -175,7 +133,6 @@ void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath ) const
 
   assert(Branch(sTPtr->number, s2lPtr->number).exists(traln)); 
   assert(Branch(sTPtr->number, lPtr->number).exists(traln )); 
-
 }
 
 
@@ -235,3 +192,60 @@ ostream& operator<<(ostream &out, const SprMove& rhs)
 {
   return out << rhs.path;   
 } 
+
+
+
+
+void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto, Path &pathHere ) const
+{
+#ifdef EFFICIENT
+  // looks very clunky 
+  assert(0); 
+#endif
+
+  Branch chosen = movedInto; // description.at(1); 
+  Branch prunedTree = mover; // description.at(0); 
+
+  nodeptr p = prunedTree.findNodePtr(traln);
+  
+  pathHere.clear();   
+  pathHere.findPath(traln, p, chosen.findNodePtr(traln));
+  pathHere.reverse();   
+
+  Branch Tmp = pathHere.at(0); 
+
+  nodeptr aNode = Tmp.findNodePtr(traln); 
+  if(traln.isTipNode(aNode))
+    aNode = Tmp.getInverted().findNodePtr(traln);
+  assert(not traln.isTipNode(aNode)); 
+  Branch b = pathHere.at(0); 
+  while(b.equalsUndirected( pathHere.at(0)) || b.equalsUndirected(Branch(p->number, p->back->number))) 
+    {
+      aNode = aNode->next; 
+      b = Branch(aNode->number, aNode->back->number) ;
+    }
+  pathHere.reverse();
+  pathHere.append(b);  
+  pathHere.reverse();
+
+  // TODO inefficient
+  pathHere.saveBranchLengthsPath(traln); 
+}
+
+
+void SprMove::sprDisorientPath(TreeAln &traln, nodeptr p, const Path &pathHere) const 
+{  
+  assert(pathHere.size() > 2) ; 
+  
+  int first = (int)pathHere.getNthNodeInPath(0),
+    last = (int)pathHere.getNthNodeInPath(pathHere.getNumberOfNodes()-1); 
+
+  if(not pathHere.nodeIsOnPath(p->number) || traln.isTipNode(p)
+     || p->number == first || p->number == last )
+    return; 
+
+  disorientHelper(traln, p);
+  
+  sprDisorientPath( traln, p->next->back, pathHere); 
+  sprDisorientPath( traln, p->next->next->back, pathHere);
+}

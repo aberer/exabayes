@@ -1,6 +1,7 @@
 
 #include "Path.hpp"
 #include "AbstractProposal.hpp"
+#include "TbrMove.hpp"
 
 class ExtendedTBR : public AbstractProposal
 {
@@ -15,13 +16,12 @@ public:
 
   virtual AbstractProposal* clone() const; 
 
-private: 
+private: 			// METHODS
   void drawPaths(TreeAln &traln, Randomness &rand); 
-  void executeTBR(TreeAln & traln); 
+  void buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, Randomness &rand );
 
-  double extensionProbability; 
-  
-  Path modifiedPath1; 
-  Path modifiedPath2; 
+private: 			// ATTRIBUTES
+  double extensionProbability;   
   double multiplier; 
+  TbrMove move; 
 }; 
