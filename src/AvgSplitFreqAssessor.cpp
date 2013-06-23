@@ -17,7 +17,7 @@
 #include "axml.h"
 #include "TreeAln.hpp"
 
-#include "output.h"
+// #include "output.h"
 #include "treeRead.h"
 
 #include "AvgSplitFreqAssessor.hpp"

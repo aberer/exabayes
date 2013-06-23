@@ -1,7 +1,7 @@
 #include <cassert>
 #include "axml.h"
 #include "GlobalVariables.hpp"
-#include "output.h"
+// #include "output.h"
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 
 #include "LikelihoodEvaluator.hpp" 

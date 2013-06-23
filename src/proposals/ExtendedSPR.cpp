@@ -1,5 +1,5 @@
 #include "ExtendedSPR.hpp"
-#include "output.h"
+// #include "output.h"
 #include "Path.hpp"
 #include "TreeAln.hpp"
 #include "eval.h"
@@ -111,7 +111,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
  */ 
 void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
-  debug_printTree(traln);
+  // debug_printTree(traln);
   drawPathForESPR( traln,rand ,stopProb); 
 
   move.applyToTree(traln); 
@@ -132,7 +132,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
       move.multiplyBranches(traln, rand, hastings, prior, multiplier, {brPr} ); 
     }
 
-  debug_checkTreeConsistency(traln); 
+  // debug_checkTreeConsistency(traln); 
 }
 
 
@@ -148,8 +148,8 @@ void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
 {
   move.revertTree(traln,prior); 
-  debug_checkTreeConsistency(traln);
-  debug_printTree(traln); 
+  // debug_checkTreeConsistency(traln);
+  // debug_printTree(traln); 
 }
 
 

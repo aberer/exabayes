@@ -5,7 +5,7 @@
 #include "GlobalVariables.hpp"
 #include "tune.h"
 #include "treeRead.h"
-#include "output.h"
+// #include "output.h"
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 

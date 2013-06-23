@@ -5,7 +5,7 @@
 #include "config/BlockProposalConfig.hpp"
 #include "config/BlockRunParameters.hpp"
 #include "config/ConfigReader.hpp"
-#include "output.h"
+// #include "output.h"
 #include "eval.h"
 #include "SampleMaster.hpp"
 #include "Chain.hpp"

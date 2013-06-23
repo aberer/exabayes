@@ -1,6 +1,6 @@
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
-#include "output.h"
+// #include "output.h"
 #include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"

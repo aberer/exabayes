@@ -25,7 +25,7 @@
 #undef _INCLUDE_DEFINITIONS
 
 #include "tune.h"
-#include "output.h"
+// #include "output.h"
 
 #include "config/CommandLine.hpp"
 #include "SampleMaster.hpp"

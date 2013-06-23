@@ -5,7 +5,7 @@
 #include "Topology.hpp"
 #include "eval.h"
 #include "treeRead.h"
-#include "output.h"
+// #include "output.h"
 #include "InsertionScore.hpp"
 #include "Branch.hpp"
 
@@ -225,7 +225,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
       move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 
-  debug_checkTreeConsistency(traln);   
+  // debug_checkTreeConsistency(traln);   
 }
 
 
@@ -255,7 +255,7 @@ void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   move.revertTree(traln,prior); 
-  debug_checkTreeConsistency(traln);
+  // debug_checkTreeConsistency(traln);
 }
  
 

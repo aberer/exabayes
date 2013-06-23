@@ -1,5 +1,5 @@
 #include "ExtendedTBR.hpp"
-#include "output.h"
+// #include "output.h"
 #include "eval.h"
 
 
@@ -155,8 +155,8 @@ void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
   assert(0); 
 #endif
 
-  debug_checkTreeConsistency(traln); 
-  debug_printTree(traln);   
+  // debug_checkTreeConsistency(traln); 
+  // debug_printTree(traln);   
 }
 
 

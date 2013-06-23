@@ -1,7 +1,7 @@
 #include "StatNNI.hpp"
 #include "eval.h"
 #include "Path.hpp"
-#include "output.h"
+// #include "output.h"
 
 
 StatNNI::StatNNI( double _multiplier)
@@ -50,7 +50,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
     move.multiplyBranches(traln, rand, hastings, prior, multiplier, priors); 
 
   move.applyToTree(traln);
-  debug_checkTreeConsistency(traln);
+  // debug_checkTreeConsistency(traln);
 }
 
 
@@ -68,7 +68,7 @@ void StatNNI::evaluateProposal(TreeAln &traln, PriorBelief &prior)
 void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)  
 {
   move.revertTree(traln,prior); 
-  debug_checkTreeConsistency(traln);
+  // debug_checkTreeConsistency(traln);
 }
 
 

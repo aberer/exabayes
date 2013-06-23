@@ -6,7 +6,7 @@
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
-#include "output.h"
+// #include "output.h"
 #include "GlobalVariables.hpp"
 #include "BipartitionHash.hpp"
 #include "tune.h"
@@ -314,7 +314,7 @@ void Chain::step()
   prior.verifyPrior(*traln);
 #endif
 
-  debug_checkTreeConsistency(this->getTraln());
+  // debug_checkTreeConsistency(this->getTraln());
 
   if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
     {

@@ -2,7 +2,7 @@
 
 
 #include "Topology.hpp"
-#include "output.h"
+// #include "output.h"
 
 
 
@@ -32,8 +32,6 @@ void Topology::restoreTopology(TreeAln &traln)
       double tmp = b.getLength(); 
       traln.clipNode(p,q,tmp ); 
       
-    }
-  
-  debug_checkTreeConsistency(traln); 
+    }  
 }
 

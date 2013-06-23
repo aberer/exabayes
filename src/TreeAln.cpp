@@ -8,7 +8,7 @@
 #include "TreeAln.hpp"
 
 #include "GlobalVariables.hpp"
-#include "output.h"
+// #include "output.h"
 
 // here we initialize the max/min values for our various
 // parameters. Static const is essentially like a global variable but
@@ -409,7 +409,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 #endif
 
   tr->start = tr->nodep[rhsTree->start->number]; 
-  debug_checkTreeConsistency(*this);
+  // debug_checkTreeConsistency(*this);
   
   return *this; 
 }
