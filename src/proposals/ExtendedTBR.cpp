@@ -8,7 +8,7 @@ ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
   , multiplier(_multiplier)
 {
   name = "eTBR"; 
-  category = TOPOLOGY; 
+  category = Category::TOPOLOGY; 
   relativeWeight = 5.;
 }
 
@@ -120,7 +120,7 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   
   bool modifiesBl = false;   
   for(auto v : secVar)
-    modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+    modifiesBl |= v.getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI
   modifiesBl = false; 

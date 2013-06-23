@@ -2,7 +2,7 @@
 #include "axml.h"
 
 
-void BlockParams::parseScheme(NxsToken& token, category_t cat, nat &idCtr)
+void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 {
   vector<bool> partAppeared(traln.getNumberOfPartitions(), false); 
 
@@ -57,9 +57,9 @@ void BlockParams::parseScheme(NxsToken& token, category_t cat, nat &idCtr)
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
       if(not partAppeared[i] && 
-	 (   ( cat == AA_MODEL && traln.getPartition(i)->dataType == AA_DATA ) 
-	     || (cat == SUBSTITUTION_RATES && traln.getPartition(i)->dataType == DNA_DATA) 
-	     || ( cat != SUBSTITUTION_RATES && cat != AA_MODEL) ))
+	 (   ( cat == Category::AA_MODEL && traln.getPartition(i)->dataType == AA_DATA ) 
+	     || (cat == Category::SUBSTITUTION_RATES && traln.getPartition(i)->dataType == DNA_DATA) 
+	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
 	{
 	  
 	  RandomVariable r(cat, idCtr); 
@@ -88,24 +88,24 @@ void BlockParams::Read(NxsToken &token)
 
 	  if(str.EqualsCaseInsensitive("stateFreq"))
 	    {
-	      parseScheme(token,  FREQUENCIES, idCtr); 
+	      parseScheme(token,  Category::FREQUENCIES, idCtr); 
 	    }
 	  else if(str.EqualsCaseInsensitive("rateHet"))
 	    {
-	      parseScheme(token, RATE_HETEROGENEITY, idCtr); 
+	      parseScheme(token, Category::RATE_HETEROGENEITY, idCtr); 
 	    }
 	  else if(str.EqualsCaseInsensitive("revMat"))
 	    {
-	      parseScheme(token, SUBSTITUTION_RATES, idCtr);
+	      parseScheme(token, Category::SUBSTITUTION_RATES, idCtr);
 	    }
 	  else if(str.EqualsCaseInsensitive("aaModel"))
 	    {
-	      parseScheme(token, AA_MODEL, idCtr); 
+	      parseScheme(token, Category::AA_MODEL, idCtr); 
 	      assert(NOT_IMPLEMENTED); 
 	    }	  
 	  else if(str.EqualsCaseInsensitive("branchLength"))
 	    {
-	      parseScheme(token, BRANCH_LENGTHS, idCtr); 
+	      parseScheme(token, Category::BRANCH_LENGTHS, idCtr); 
 	      assert(NOT_IMPLEMENTED);
 	    }
 	  else 

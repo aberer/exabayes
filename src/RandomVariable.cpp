@@ -1,18 +1,10 @@
 #include "RandomVariable.hpp"
 
-map<category_t, string> RandomVariable::nameMap = {
-    { TOPOLOGY, "topo" } , 
-    { BRANCH_LENGTHS, "bl" },
-    { FREQUENCIES , "pi" } ,
-    { SUBSTITUTION_RATES, "revMat"} , 
-    { RATE_HETEROGENEITY , "shape" } , 
-    { AA_MODEL, "aaModel" } 
-  } ; 
 
 
 ostream& operator<<(ostream &out, const RandomVariable& rhs)
 {
-  out << RandomVariable::nameMap[rhs.cat] ; 
+  out << getShortName(rhs.cat); 
 
   bool  isFirst = true; 
   out << "{" ; 
@@ -31,7 +23,7 @@ ostream& operator<<(ostream &out, const RandomVariable& rhs)
 
 ostream&  RandomVariable::printShort(ostream& out)
 {
-  out << nameMap[cat] << "{" ; 
+  out << getShortName(cat) << "{" ; 
   bool isFirst= true; 
   for(auto v : partitions)
     {

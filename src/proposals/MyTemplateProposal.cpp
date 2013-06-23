@@ -11,7 +11,7 @@
 MyTemplateProposal::MyTemplateProposal( double aVariable)
 {
   name = "MyTemplateProposal"; 	
-  category = TOPOLOGY ; 	// check out categoryType.h
+  category = Category::TOPOLOGY ; 	// check out categoryType.h
   
 
   // ptype = E_TBR; 		// actually not used any more... 

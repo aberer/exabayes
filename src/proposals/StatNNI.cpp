@@ -6,7 +6,7 @@ StatNNI::StatNNI( double _multiplier)
   :  multiplier(_multiplier)
 {
   this->name = "stNNI" ; 
-  this->category = TOPOLOGY; 
+  this->category = Category::TOPOLOGY; 
   relativeWeight = 5; 
 }
 
@@ -32,7 +32,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   bool multiplyBranches = false; 
   for(auto v : secVar)
     {
-      multiplyBranches |= v.getCategory() == BRANCH_LENGTHS; 
+      multiplyBranches |= v.getCategory() == Category::BRANCH_LENGTHS; 
       priors.push_back(v.getPrior()) ; 
 #ifdef UNSURE
       // fixed prior? 

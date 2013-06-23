@@ -32,13 +32,17 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
   , state(*traln)
   , chainRand(seed.v[0])
   , relWeightSum(0)
-  , prior(*_traln, variables)
+  , prior(*_traln, _variables)
   , bestState(numeric_limits<double>::lowest())
   , evaluator(eval)
   , variables(_variables)
 {
+
   for(auto &p : _proposals)
-    proposals.push_back(unique_ptr<AbstractProposal>(p->clone())); 
+    {
+      proposals.push_back(ProposalPtr(p->clone())); 
+    }
+
 
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);

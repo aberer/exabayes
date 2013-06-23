@@ -48,11 +48,11 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 
       switch(v.getCategory())			// TODO => category object 
 	{	  
-	case TOPOLOGY: 	  
+	case Category::TOPOLOGY: 	  
 	  // partialResult = v.getPrior()->getLogProb({});
 	  partialResult = 0; 	// well...
 	  break; 
-	case BRANCH_LENGTHS: 
+	case Category::BRANCH_LENGTHS: 
 	  {
 	    assert(traln.getNumBranches() == 1); 
 	    vector<Branch> bs = traln.extractBranches(); 
@@ -61,25 +61,25 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln)} );
 	  }
 	  break; 
-	case FREQUENCIES: 
+	case Category::FREQUENCIES: 
 	  {
 	    auto freqs = traln.getFrequencies(v.getPartitions()[0]); 
 	    partialResult = v.getPrior()->getLogProb( freqs) ; 
 	  } 
 	  break; 
-	case SUBSTITUTION_RATES: 
+	case Category::SUBSTITUTION_RATES: 
 	  {
 	    auto revMat = traln.getRevMat(v.getPartitions()[0]); 
 	    partialResult = v.getPrior()->getLogProb(revMat); 
 	  }
 	  break; 
-	case RATE_HETEROGENEITY: 
+	case Category::RATE_HETEROGENEITY: 
 	  {
 	    double alpha = traln.getAlpha(v.getPartitions()[0]) ;
 	    partialResult = v.getPrior()->getLogProb({ alpha }); 
 	  }
 	  break; 
-	case AA_MODEL: 
+	case Category::AA_MODEL: 
 	  assert(0); 
 	  break; 
 	default : assert(0); 

@@ -35,7 +35,7 @@ public:
   double getRelativeWeight() const { return relativeWeight; }
   void setRelativeWeight(double tmp) { relativeWeight = tmp; }
   
-  category_t getCategory() const {return category; }
+  Category getCategory() const {return category; }
   string getName() const {return name; }
   
   void accept() {sctr.accept();}
@@ -117,7 +117,7 @@ public:
 protected:   
   string name;   
   SuccessCounter sctr; 
-  category_t category; 
+  Category category; 
   
   vector<RandomVariable> primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
   vector<RandomVariable> secVar;  // as a by-product also these random variables are changed 

@@ -22,7 +22,7 @@
 class ProposalRegistry
 {
 public: 
-  void getProposals(category_t cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result) const ;
+  void getProposals(Category cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result) const ;
   
 
   static const double initFrequencySlidingWindow ; 

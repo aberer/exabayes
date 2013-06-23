@@ -6,7 +6,7 @@
 AminoModelJump::AminoModelJump(vector<aaMatrix_t> matrices)
 {
   name = "aaMat"; 	
-  category = AA_MODEL ; 
+  category = Category::AA_MODEL ; 
   relativeWeight = 0.0; // ??? TODO 
 }
 

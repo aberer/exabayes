@@ -16,7 +16,7 @@ RadiusMlSPR::RadiusMlSPR(  int _radius)
   : radius(_radius)
 {
   this->name = "radiusMLspr" ;
-  category = TOPOLOGY; 
+  category = Category::TOPOLOGY; 
   relativeWeight = 0.0;
   // ptype = GUIDED_SPR;   
 }

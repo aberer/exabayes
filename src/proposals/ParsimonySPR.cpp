@@ -14,7 +14,7 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
   , blMulti(_blMulti)    
 {
   this->name = "parsSPR"; 
-  this->category = TOPOLOGY ; 
+  this->category = Category::TOPOLOGY ; 
   relativeWeight = 5.;
 }
 
@@ -209,7 +209,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
   bool modifiesBl = false; 
   for(auto v : secVar)
-    modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+    modifiesBl |= v.getCategory() == Category::BRANCH_LENGTHS; 
 
   assert(traln.getNumBranches() == 1); 
 

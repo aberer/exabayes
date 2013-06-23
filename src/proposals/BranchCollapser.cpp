@@ -4,7 +4,7 @@
 BranchCollapser::BranchCollapser()
 {
   name = "BranchCollapser"; 	
-  category = BRANCH_LENGTHS ; 	// check out categoryType.h
+  category = Category::BRANCH_LENGTHS ; 	// check out categoryType.h
 
   relativeWeight = 0.0 ; 
 }

@@ -5,7 +5,7 @@ NodeSlider::NodeSlider( double _multiplier)
   : multiplier(_multiplier)
 {
   name = "nodeSlider"; 
-  this->category = BRANCH_LENGTHS; 
+  this->category = Category::BRANCH_LENGTHS; 
   relativeWeight = 5.; 
 }
 

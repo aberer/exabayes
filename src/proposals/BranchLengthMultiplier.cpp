@@ -8,7 +8,7 @@ BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
   :  multiplier(_multiplier)
 {
   this->name = "blMult"; 
-  this->category = BRANCH_LENGTHS; 
+  this->category = Category::BRANCH_LENGTHS; 
   relativeWeight = 20;
 }
 

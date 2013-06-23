@@ -175,24 +175,14 @@ void CoupledChains::chainInfo()
   tout << endl; 
   timeIncrement = gettime(); 	
 
-  map<category_t, vector< AbstractProposal* > > sortedProposals; 
+  map<Category, vector< AbstractProposal* > > sortedProposals; 
   auto& proposals = coldChain.getProposals();
   for(auto& p : proposals)
     sortedProposals[p->getCategory()].push_back(p.get()) ; 
 
-  map<category_t, string> names = 
-    {
-      { TOPOLOGY , "Topology"} , 
-      { BRANCH_LENGTHS, "BranchLen" } , 
-      { FREQUENCIES , "Frequencies" } , 
-      { SUBSTITUTION_RATES , "ReversiMatr" } , 
-      { RATE_HETEROGENEITY, "RateHetero" } , 
-      { AA_MODEL , "aaModel" } 
-    };  
-
-  for(auto &n : names)
+  for(auto &n : getAllCategories())
     {       
-      category_t cat = n.first; 
+      Category cat = n; 
 
       bool isThere = false; 
       for(auto &p : proposals)
@@ -200,7 +190,7 @@ void CoupledChains::chainInfo()
       
       if(isThere)
 	{
-	  tout << n.second << ":\t";
+	  tout << getLongName(n) << ":\t";
 	  for(auto &p : proposals)
 	    {
 	      if(p->getCategory() == cat)

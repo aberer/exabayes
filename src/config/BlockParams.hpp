@@ -8,6 +8,7 @@
 #include "GlobalVariables.hpp"
 #include "RandomVariable.hpp"
 #include "TreeAln.hpp"
+#include "Category.hpp"
 
 class BlockParams : public NxsBlock
 {
@@ -23,7 +24,7 @@ public:
   void initialize(const TreeAln &traln); 
 
 private: 
-  void parseScheme(NxsToken& token, category_t cat, nat &idCtr); 
+  void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
   vector<RandomVariable> parameters; 
   const TreeAln &traln; 
 }; 

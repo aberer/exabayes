@@ -1,5 +1,6 @@
 #include "BlockPrior.hpp"
 
+
 shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {
   auto value = token.GetToken(false); 
@@ -81,15 +82,6 @@ void BlockPrior::Read(NxsToken &token)
 {
   DemandEndSemicolon(token, "PRIOR");
 
-  map<string,category_t> categoryNameMap = 
-    {
-      {"TOPOPR", TOPOLOGY}, 
-      {"BRLENPR", BRANCH_LENGTHS}, 
-      {"STATEFREQPR" , FREQUENCIES}, 
-      {"REVMATPR", SUBSTITUTION_RATES}, 
-      {"SHAPEPR", RATE_HETEROGENEITY}
-    } ; 
-
   while(true)
     {
       token.GetNextToken();
@@ -100,8 +92,7 @@ void BlockPrior::Read(NxsToken &token)
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
 	{
 	  auto str = token.GetToken(false).ToUpper(); 
-	  category_t cat = categoryNameMap[str]; 
-
+	  Category cat = getCategoryByPriorName(str); 
 	  token.GetNextToken();
 
 	  int priorPartition = -1;  
@@ -122,12 +113,12 @@ void BlockPrior::Read(NxsToken &token)
 
 	  if(priorPartition == -1 )	  
 	    {
-	      assert(generalPriors[cat] == nullptr); 
-	      generalPriors[cat] = prior; 
+	      assert(generalPriors[int(cat)] == nullptr); // BAD
+	      generalPriors[int(cat)] = prior;		  // BAD
 	    }	    
 	  else 
 	    {
-	      map<nat, shared_ptr<AbstractPrior>>& priorsForPartition = specificPriors[cat]; 
+	      map<nat,PriorPtr> &priorsForPartition = specificPriors[int(cat)]; // BAD
 	      assert(priorsForPartition[priorPartition] == nullptr); 
 	      priorsForPartition[priorPartition] = prior; 
 	    }

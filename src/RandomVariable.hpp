@@ -14,33 +14,34 @@
 
 #include "Priors.hpp"
 #include "GlobalVariables.hpp"
+#include "Category.hpp"
 
 using namespace std; 
 
 class RandomVariable
 {
 public: 
-  RandomVariable(category_t cat, nat id)
+  RandomVariable(Category cat, nat id)
     : cat(cat) , id(id)  {} 
 
   void setPrior (shared_ptr<AbstractPrior> _prior) { prior = _prior; }  
   void addPartition(nat id) { partitions.push_back(id); }
   const vector<nat>& getPartitions() const {return partitions; }
-  category_t getCategory() const { return cat; }
+  Category getCategory() const { return cat; }
   nat getId() const { return id; }
   void setId(nat _id ) {id = _id; }
   PriorPtr getPrior() const {return prior; }
   ostream&  printShort(ostream& out); 
 
 private: 
-  category_t cat; 
+  Category cat; 
   vector<nat> partitions; 	// the partitions, this parameter
 				// applies to
   nat id ; 			//  which id does the  parameter have among all of its kind  
 
   PriorPtr prior; 
 
-  static map<category_t, string>  nameMap; 
+  // static map<Category, string>  nameMap; 
   
   friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
 };

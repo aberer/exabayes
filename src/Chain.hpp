@@ -35,7 +35,7 @@ public:
   void setCouplingId(int id) {couplingId = id; }
   
   /** @brief draws a proposal function. */ 
-  unique_ptr<AbstractProposal>& drawProposalFunction();
+  ProposalPtr& drawProposalFunction();
 
   /** @brief Saves all relevan information from the tree into the chain Chain. */ 
   void saveTreeStateToChain(); 

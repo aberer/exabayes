@@ -9,7 +9,7 @@ ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
   : stopProb(_stopProb), multiplier(_multiplier)    
 {
   this->name = "eSPR"; 
-  category = TOPOLOGY; 
+  category = Category::TOPOLOGY; 
   relativeWeight = 5.;
 }
 
@@ -117,7 +117,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   bool modifiesBl = false; 
   for(auto v : secVar)
-    modifiesBl |= v.getCategory() == BRANCH_LENGTHS; 
+    modifiesBl |= v.getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI
   modifiesBl = false; 

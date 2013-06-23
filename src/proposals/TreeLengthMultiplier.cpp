@@ -11,7 +11,7 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
   : multiplier(_multiplier)    
 {
   this->name = "TL-Mult"; 
-  category = BRANCH_LENGTHS; 
+  category = Category::BRANCH_LENGTHS; 
   relativeWeight = 2 ;
 }
 
