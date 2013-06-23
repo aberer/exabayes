@@ -1,7 +1,5 @@
 #include "StatNNI.hpp"
-#include "eval.h"
 #include "Path.hpp"
-// #include "output.h"
 
 
 StatNNI::StatNNI( double _multiplier)

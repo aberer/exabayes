@@ -1,5 +1,4 @@
 #include "NodeSlider.hpp"
-#include "eval.h"
 #include "LikelihoodEvaluator.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)

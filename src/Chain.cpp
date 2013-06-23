@@ -12,7 +12,6 @@
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
 #include "ParsimonySPR.hpp" 
-#include "eval.h"
 #include "TreeLengthMultiplier.hpp"
 #include "StatNNI.hpp"
 #include "PartitionProposal.hpp"
@@ -114,8 +113,8 @@ void Chain::applyChainStateToTree()
       traln->initRevMat(i);
       traln->discretizeGamma(i);	 
     } 
-
-  evaluateFullNoBackup(*traln); 
+  
+  evaluator->evaluateFullNoBackup(*traln); 
   prior.reinitPrior(*traln);
 }
 
@@ -304,7 +303,7 @@ void Chain::step()
       evaluator->resetToImprinted(*traln);
     }
 
-  expensiveVerify(*traln); 
+  evaluator->expensiveVerify(*traln); 
   
 #ifdef DEBUG_TREE_LENGTH  
   assert( fabs (traln->getTreeLengthExpensive() - traln->getTreeLength())  < 1e-6); 

@@ -3,9 +3,7 @@
 
 #include "ParsimonySPR.hpp"
 #include "Topology.hpp"
-#include "eval.h"
 #include "treeRead.h"
-// #include "output.h"
 #include "InsertionScore.hpp"
 #include "Branch.hpp"
 
@@ -29,10 +27,10 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
 
   Branch b(insertPos->number, insertBack->number); 
 
-  exa_newViewParsimony(traln, prunedTree);
+  // pEval.evaluate(traln, prunedTree);
   
   vector<nat> partitionParsimony ; 
-  exa_evaluateParsimony(traln, prunedTree->back, FALSE, partitionParsimony);
+  pEval.evaluate(traln, prunedTree->back, false, partitionParsimony); 
 
   assert(posses.find(b) == posses.end()) ;   
   posses[b] = partitionParsimony; 
@@ -123,7 +121,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   scoreMap possibilities; 
 
   vector<nat> partitionParsimony; 
-  exa_evaluateParsimony(traln, traln.getTr()->start, TRUE, partitionParsimony);
+  pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony);
 
   // BAD 
   Branch prunedTree; 

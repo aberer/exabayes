@@ -21,6 +21,7 @@
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
 #include "SprMove.hpp"
+#include "ParsimonyEvaluator.hpp"
 
 typedef unordered_map<Branch, double, BranchHashNoLength, BranchEqualNoLength> weightMap; 
 typedef unordered_map<Branch,vector<nat>, BranchHashNoLength, BranchEqualNoLength> scoreMap; 
@@ -48,7 +49,7 @@ protected:
   void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, unordered_map<Branch,vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses); 
   
   SprMove move; 
-  
+  ParsimonyEvaluator pEval;   
 }; 
 
 

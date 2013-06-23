@@ -1,8 +1,4 @@
 #include "BranchCollapser.hpp"
-#include "eval.h"
-
-
-
 
 
 BranchCollapser::BranchCollapser()

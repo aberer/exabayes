@@ -1,6 +1,4 @@
 #include "RadiusMlSPR.hpp"
-#include "eval.h"
-// #include "output.h"
 
 
 /* 
@@ -117,8 +115,10 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       traln.setBranchLengthBounded(a, 0, p->next );
       traln.setBranchLengthBounded(b, 0, p->next->next );
 
-      newViewGenericWrapper(traln, p, FALSE); 
+
+      
 #if 0 
+      newViewGenericWrapper(traln, p, FALSE); 
       evaluateGenericWrapper(traln, p, FALSE ); 
 #endif
 
@@ -128,8 +128,10 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
 #endif 
       /* remove the node again */
       traln.clipNode(iP, iP2, zOld); 
+#if 0 
       newViewGenericWrapper(traln, iP, FALSE); /* OKAY  */
       newViewGenericWrapper(traln, iP2, FALSE);
+#endif
       p->next->next->back = p->next->back = (nodeptr)NULL;       
     }
   else 
@@ -156,9 +158,9 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       traln.clipNode(p->next->next, iP2, b); 
       traln.setBranchLengthBounded(a,0,p->next);
       traln.setBranchLengthBounded(b,0,p->next->next);
-
-      newViewGenericWrapper(traln,p,FALSE); 
+      
 #if 0 
+      newViewGenericWrapper(traln,p,FALSE); 
       evaluateGenericWrapper(traln,p,FALSE  ); 
 #endif
 
@@ -167,8 +169,10 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       printf("test insert: inserting %d into {%d,%d}(%g) => %.3f\n", p->number, iP->number, iP2->number, branchLengthToReal(tr, traln.getBranchLength(iP->number, 0)),  tr->likelihood);   
 #endif
       traln.clipNode(iP, iP2, zOrig); 
+#if 0 
       newViewGenericWrapper(traln, iP, FALSE);
       newViewGenericWrapper(traln, iP2, FALSE);
+#endif
       p->next->next->back = p->next->back = (nodeptr) NULL; 
     }
   else
@@ -248,7 +252,10 @@ static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, Branch su
 
     traln.clipNode(q,r, tmp); 
     p->next->back = p->next->next->back = (nodeptr)NULL;     
+#if 0 
     newViewGenericWrapper(traln, q, FALSE); /* TODO no newview on r necessary?   */
+#endif
+
   }
 
   descendAndTestInsert(traln, pruneBranch, subtree, ratio, lnlList,  radius, isFirst); 
@@ -419,7 +426,9 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
     otherPart = branchLengthToInternal(tr, otherPart); 
     traln.clipNode(p->next, p->next->back, onePart); 
     traln.clipNode(p->next->next, p->next->next->back, otherPart); 
+#if 0 
     newViewGenericWrapper(traln, p, FALSE);
+#endif
   }
 
 #if DEBUG_GUIDED_SPR > 1  

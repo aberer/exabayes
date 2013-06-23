@@ -16,6 +16,8 @@
 
 
 
+
+
 #ifdef HAVE_AVX
 #define __AVX 
 #endif
@@ -55,8 +57,20 @@ extern "C"{
 #endif
 
 
+
+#if HAVE_PLL == 0
+  void newviewParsimony(tree *tr, nodeptr  p); 
+  nat evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony); 
+#else 
+  void newviewParsimony(tree *tr, partitionList *pr, nodeptr  p); 
+  nat evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, nat *partitionParsimony); 
+#endif
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+
+
+
