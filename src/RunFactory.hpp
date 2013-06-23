@@ -29,14 +29,14 @@ public:
   RunFactory(){}
  
   void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposalResult);   
-  vector<RandomVariable> getRandomVariables() const {return randomVariables; }
+  vector<RandomVariablePtr> getRandomVariables() const {return randomVariables; }
 
 private: 
-  vector<RandomVariable> randomVariables; 
+  vector<RandomVariablePtr> randomVariables; 
 
-  void addStandardParameters(vector<RandomVariable> &vars, const TreeAln &traln ); 
-  void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<RandomVariable> &variables); 
-  void addStandardPrior(RandomVariable &var, const TreeAln& traln ); 
+  void addStandardParameters(vector<RandomVariablePtr> &vars, const TreeAln &traln ); 
+  void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<RandomVariablePtr> &variables); 
+  void addStandardPrior(RandomVariablePtr &var, const TreeAln& traln ); 
 }; 
 
 #endif

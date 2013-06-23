@@ -16,14 +16,13 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   str = token.GetToken(false); 
 
   bool newLink = true; 
-  RandomVariable *curVar = nullptr; 
+  RandomVariablePtr curVar; 
   while(str.compare(")") != 0 )
     {
       int part = str.ConvertToInt() ; 
       if(newLink)
 	{
-	  RandomVariable r(cat, idCtr) ; 
-	  curVar = &r; 
+	  curVar = RandomVariablePtr(new RandomVariable(cat,idCtr)); 
 	  newLink = false; 
 	}
 
@@ -35,7 +34,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
       
       if(str.compare("/") == 0)
 	{
-	  parameters.push_back(*curVar); 
+	  parameters.push_back(curVar); 
 	  newLink = true; 
 	  token.GetNextToken();
 	  str = token.GetToken(false); 
@@ -48,7 +47,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
       else 
 	{
 	  assert(str.compare(")") == 0); 
-	  parameters.push_back(*curVar); 
+	  parameters.push_back(curVar); 
 	}
     }  
   
@@ -62,8 +61,8 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
 	{
 	  
-	  RandomVariable r(cat, idCtr); 
-	  r.addPartition(i);
+	  RandomVariablePtr r(new RandomVariable(cat, idCtr)); 
+	  r->addPartition(i);
 	  parameters.push_back(r); 
 	}
     }

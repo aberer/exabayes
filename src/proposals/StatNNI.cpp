@@ -30,10 +30,10 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 
   vector<shared_ptr<AbstractPrior> > priors; 
   bool multiplyBranches = false; 
-  for(auto v : secVar)
+  for(auto &v : secVar)
     {
-      multiplyBranches |= v.getCategory() == Category::BRANCH_LENGTHS; 
-      priors.push_back(v.getPrior()) ; 
+      multiplyBranches |= v->getCategory() == Category::BRANCH_LENGTHS; 
+      priors.push_back(v->getPrior()) ; 
 #ifdef UNSURE
       // fixed prior? 
       assert(0); 

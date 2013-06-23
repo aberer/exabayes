@@ -10,15 +10,15 @@
 
 // not to be confused with a fun factory...
 
-void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeAln &traln )
+void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const TreeAln &traln )
 {
   vector<bool> categoryIsActive( NUM_PROP_CATS, false );
   std::set<Category> categories; 
 
-  for(auto v : vars)
-    categories.insert(v.getCategory()); 
+  for(auto &v : vars)
+    categories.insert(v->getCategory()); 
 
-  nat highestId = vars.size() == 0 ? 0 : vars[vars.size()-1].getId(); 
+  nat highestId = vars.size() == 0 ? 0 : vars[vars.size()-1]->getId(); 
 
   // add standard stuff, if not defined yet
   for(auto &cat : getAllCategories())
@@ -32,9 +32,9 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 	case Category::TOPOLOGY: 
 	  {
 	    // deafult: everything linked 
-	    RandomVariable r(catIter,highestId);
+	    RandomVariablePtr r(new RandomVariable(catIter,highestId));
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      r.addPartition(j); 
+	      r->addPartition(j); 
 	    vars.push_back(r); 
 	    break; 
 	  }
@@ -42,9 +42,9 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 	case Category::BRANCH_LENGTHS: 
 	  {
 	    // default: everything is linked
-	    RandomVariable r(catIter,highestId);
+	    RandomVariablePtr r(new RandomVariable(catIter,highestId));
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      r.addPartition(j); 
+	      r->addPartition(j); 
 	    vars.push_back(r); 
 	    break; 
 	  }
@@ -53,8 +53,8 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      {		    
-		RandomVariable r(catIter, highestId);
-		r.addPartition(j); 
+		RandomVariablePtr r(new RandomVariable(catIter, highestId));
+		r->addPartition(j); 
 		vars.push_back(r);	   
 	      }
 
@@ -65,8 +65,8 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      {
-		RandomVariable r(catIter, highestId);
-		r.addPartition(j); 
+		RandomVariablePtr r(new RandomVariable(catIter, highestId));
+		r->addPartition(j); 
 		vars.push_back(r);	   
 	      }
 
@@ -77,8 +77,8 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions();++ j)
 	      {
-		RandomVariable r(catIter, highestId);
-		r.addPartition(j);
+		RandomVariablePtr r(new RandomVariable(catIter, highestId));
+		r->addPartition(j);
 		vars.push_back(r);
 	      }
 
@@ -92,8 +92,8 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 		pInfo* partition = traln.getPartition(j);
 		if(partition->dataType == AA_DATA)
 		  {
-		    RandomVariable r(catIter, highestId);
-		    r.addPartition(j); 
+		    RandomVariablePtr r(new RandomVariable(catIter, highestId));
+		    r->addPartition(j); 
 		    vars.push_back(r);
 		  }
 	      }
@@ -106,38 +106,38 @@ void RunFactory::addStandardParameters(vector<RandomVariable> &vars, const TreeA
 }
 
 
-void RunFactory::addStandardPrior(RandomVariable &var, const TreeAln& traln )
+void RunFactory::addStandardPrior(RandomVariablePtr &var, const TreeAln& traln )
 {
-  switch(var.getCategory())			// TODO such switches should be part of an object
+  switch(var->getCategory())			// TODO such switches should be part of an object
     {
     case Category::TOPOLOGY:  
-      var.setPrior(make_shared<UniformPrior>(0,0)); // TODO : proper topology prior? 
+      var->setPrior( PriorPtr(new UniformPrior(0,0))); // TODO : proper topology prior? 
       break; 
     case Category::BRANCH_LENGTHS: 
-      var.setPrior(shared_ptr<AbstractPrior>(new ExponentialPrior(10.0)));
+      var->setPrior(PriorPtr(new ExponentialPrior(10.0)));
       break; 
     case Category::FREQUENCIES: 
       {
-	pInfo *partition = traln.getPartition(var.getPartitions()[0]);
+	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
 	assert(partition->dataType == DNA_DATA || partition->dataType == AA_DATA); 
 
 	vector<double>badHardcoded; 
 	for(int i = 0; i < partition->states; ++i)
 	  badHardcoded.push_back(1.); 
-	var.setPrior(shared_ptr<AbstractPrior>(new DirichletPrior(badHardcoded ))); 
+	var->setPrior(PriorPtr(new DirichletPrior(badHardcoded ))); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
       {
-	pInfo *partition = traln.getPartition(var.getPartitions()[0]);
+	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
 	assert(partition->dataType == DNA_DATA); 
 	
 	vector<double> subAlpha = {1,1,1,1,1,1}; 
-	var.setPrior(shared_ptr<AbstractPrior>(new DirichletPrior( subAlpha ))); 
+	var->setPrior(PriorPtr(new DirichletPrior( subAlpha ))); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
-      var.setPrior(shared_ptr<AbstractPrior>(new UniformPrior(1e-6, 200)));     
+      var->setPrior(PriorPtr(new UniformPrior(1e-6, 200)));     
       break; 
     case Category::AA_MODEL : 
       assert(NOT_IMPLEMENTED); 
@@ -147,17 +147,17 @@ void RunFactory::addStandardPrior(RandomVariable &var, const TreeAln& traln )
 }
 
 
-void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<RandomVariable> &variables)
+void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<RandomVariablePtr> &variables)
 {
   auto generalPriors = priorInfo.getGeneralPriors();
   auto specificPriors = priorInfo.getSpecificPriors();
 
-  for(RandomVariable &v : variables)
+  for(auto &v : variables)
     {
-      auto partitionIds = v.getPartitions(); 
+      auto partitionIds = v->getPartitions(); 
 
       // try adding a partition specific prior 
-      auto idMap = specificPriors[ int(v.getCategory()) ]; 
+      auto idMap = specificPriors[ int(v->getCategory()) ]; 
       PriorPtr thePrior = nullptr; 
       for(nat partId : partitionIds)	
 	{	  	  
@@ -176,7 +176,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       // use a general prior, if we have not found anything
       if(thePrior == nullptr)	  
 	{
-	  thePrior = generalPriors.at(int(v.getCategory())); // BAD
+	  thePrior = generalPriors.at(int(v->getCategory())); // BAD
 	  if(thePrior != nullptr)
 	    cout << "using GENERAL prior for variable " <<  endl; 
 	}
@@ -186,11 +186,11 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	}
       
       if(thePrior != nullptr)
-	v.setPrior(thePrior);
+	v->setPrior(thePrior);
       else 
 	{	  
 	  addStandardPrior(v, traln);
-	  cout << "using STANDARD prior for variable "  << v << endl; 
+	  cout << "using STANDARD prior for variable "  << *v << endl; 
 	}
     }
 }
@@ -203,28 +203,28 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   ProposalRegistry reg; 
 
-  vector<RandomVariable> blRandVars; 
-  for(auto v : randomVariables)
-    if(v.getCategory() == Category::BRANCH_LENGTHS)
+  vector<RandomVariablePtr> blRandVars; 
+  for(auto &v : randomVariables)
+    if(v->getCategory() == Category::BRANCH_LENGTHS)
       blRandVars.push_back(v); 
 
   for(auto v : randomVariables)
     {
-      if(typeid(v.getPrior()) == typeid(shared_ptr<FixedPrior>))
+      if(typeid(v->getPrior()) == typeid(shared_ptr<FixedPrior>))
 	continue;
 
       vector<ProposalPtr> tmpResult;  
 
-      reg.getProposals(v.getCategory(), propConfig, tmpResult); 
+      reg.getProposals(v->getCategory(), propConfig, tmpResult); 
       for(auto  &p : tmpResult )
 	{
 	  p->addPrimVar(v);
-	  if(v.getCategory() == Category::TOPOLOGY)
+	  if(v->getCategory() == Category::TOPOLOGY)
 	    {
 	      for(auto blRandVar : blRandVars)
 		p->addSecVar(blRandVar); 
 	    }
-	  else if(v.getCategory() == Category::FREQUENCIES || v.getCategory() == Category::SUBSTITUTION_RATES)
+	  else if(v->getCategory() == Category::FREQUENCIES || v->getCategory() == Category::SUBSTITUTION_RATES)
 	    {
 	      for(auto blRandVar : blRandVars)
 		p->addSecVar(blRandVar); 
@@ -243,8 +243,8 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   // lets see if it worked 
   // seems to work....
   tout << endl << "RandomVariables to be integrated: " << endl; 
-  for(auto v : randomVariables)
-    tout << v  << endl; 
+  for(auto &v : randomVariables)
+    tout << *v  << endl; 
   tout << endl; 
   
 

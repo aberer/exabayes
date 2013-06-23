@@ -22,7 +22,7 @@
 
 // #define DEBUG_ACCEPTANCE
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariable> &_variables, LikelihoodEvaluatorPtr eval) 
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariablePtr> &_variables, LikelihoodEvaluatorPtr eval) 
   : traln(_traln)
   , runid(_runid)
   , tuneFrequency(_tuneFreq)
@@ -32,17 +32,12 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
   , state(*traln)
   , chainRand(seed.v[0])
   , relWeightSum(0)
-  , prior(*_traln, _variables)
   , bestState(numeric_limits<double>::lowest())
+  , prior(*_traln, _variables)
   , evaluator(eval)
-  , variables(_variables)
 {
-
   for(auto &p : _proposals)
-    {
       proposals.push_back(ProposalPtr(p->clone())); 
-    }
-
 
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
@@ -51,6 +46,16 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
 
   for(auto& elem : proposals)
     relWeightSum +=  elem->getRelativeWeight();
+
+  for(auto &v:  _variables) 
+    variables.push_back(v->clone()); 
+  
+  cout << "my random variables now are "<< endl; 
+  for(auto &v : variables)
+    {
+      cout << *v << endl; 
+    }
+
 }
 
 
@@ -58,7 +63,6 @@ ostream& Chain::addChainInfo(ostream &out)
 {
   return out << "[run " << runid << ",heat " << couplingId << "]" ; 
 }
-
 
 
 /**
@@ -120,13 +124,13 @@ void Chain::applyChainStateToTree()
     } 
   
   evaluator->evaluateFullNoBackup(*traln); 
-  prior.reinitPrior(*traln);
+  prior.reinitPrior(*traln, variables);
 }
 
 
 
 
-void Chain::debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) 
+void Chain::debug_printAccRejc(ProposalPtr &prob, bool accepted, double lnl, double lnPr ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
     tout << "[run=" << runid << ",heat="  << couplingId << ",gen="  << currentGeneration << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << setprecision(2) << fixed << lnl  << endl; //   "\t"<< lnPr << endl; 
@@ -136,7 +140,7 @@ void Chain::debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted
 
 
 
-unique_ptr<AbstractProposal>& Chain::drawProposalFunction()
+ProposalPtr& Chain::drawProposalFunction()
 { 
   double r = relWeightSum * chainRand.drawRandDouble01();   
 

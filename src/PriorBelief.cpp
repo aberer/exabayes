@@ -4,12 +4,11 @@
 #include "Priors.hpp"
 
 
-PriorBelief::PriorBelief(const TreeAln &traln, const vector<RandomVariable> &_variables)
+PriorBelief::PriorBelief(const TreeAln &traln, const vector<RandomVariablePtr> &variables)
   :lnPrior(0)
   , lnPriorRatio(0)
-  , variables(_variables)
 {
-  lnPrior = scoreEverything(traln);
+  lnPrior = scoreEverything(traln, variables);
 }
 
 
@@ -38,15 +37,15 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double
 }
 
 
-double PriorBelief::scoreEverything(const TreeAln &traln) const 
+double PriorBelief::scoreEverything(const TreeAln &traln, const vector<RandomVariablePtr> &variables) const 
 {
   double result = 0; 
 
-  for(auto v : variables)
+  for(auto &v : variables)
     {
       double partialResult = 0; 
 
-      switch(v.getCategory())			// TODO => category object 
+      switch(v->getCategory())			// TODO => category object 
 	{	  
 	case Category::TOPOLOGY: 	  
 	  // partialResult = v.getPrior()->getLogProb({});
@@ -56,27 +55,27 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 	  {
 	    assert(traln.getNumBranches() == 1); 
 	    vector<Branch> bs = traln.extractBranches(); 
-	    auto pr = v.getPrior();	    
+	    auto pr = v->getPrior();	    
 	    for(auto b : bs)
 	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln)} );
 	  }
 	  break; 
 	case Category::FREQUENCIES: 
 	  {
-	    auto freqs = traln.getFrequencies(v.getPartitions()[0]); 
-	    partialResult = v.getPrior()->getLogProb( freqs) ; 
+	    auto freqs = traln.getFrequencies(v->getPartitions()[0]); 
+	    partialResult = v->getPrior()->getLogProb( freqs) ; 
 	  } 
 	  break; 
 	case Category::SUBSTITUTION_RATES: 
 	  {
-	    auto revMat = traln.getRevMat(v.getPartitions()[0]); 
-	    partialResult = v.getPrior()->getLogProb(revMat); 
+	    auto revMat = traln.getRevMat(v->getPartitions()[0]); 
+	    partialResult = v->getPrior()->getLogProb(revMat); 
 	  }
 	  break; 
 	case Category::RATE_HETEROGENEITY: 
 	  {
-	    double alpha = traln.getAlpha(v.getPartitions()[0]) ;
-	    partialResult = v.getPrior()->getLogProb({ alpha }); 
+	    double alpha = traln.getAlpha(v->getPartitions()[0]) ;
+	    partialResult = v->getPrior()->getLogProb({ alpha }); 
 	  }
 	  break; 
 	case Category::AA_MODEL: 
@@ -93,10 +92,10 @@ double PriorBelief::scoreEverything(const TreeAln &traln) const
 } 
 
 
-void PriorBelief::verifyPrior(const TreeAln &traln) const 
+void PriorBelief::verifyPrior(const TreeAln &traln, const vector<RandomVariablePtr> &variables) const 
 {
   assert(lnPriorRatio == 0); 
-  double verified = scoreEverything(traln); 
+  double verified = scoreEverything(traln, variables); 
   if ( fabs(verified -  lnPrior ) >= ACCEPTED_LNPR_EPS)
     {
       cerr << setprecision(10) << "ln prior was " << lnPrior << " while it should be " << verified << endl; 

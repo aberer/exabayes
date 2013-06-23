@@ -26,7 +26,7 @@ using namespace std;
 class Chain
 {
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables, LikelihoodEvaluatorPtr eval) ; 
+  Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariablePtr> &variables, LikelihoodEvaluatorPtr eval) ; 
   
   // getters and setters 
   double getChainHeat(); 
@@ -85,7 +85,7 @@ private :
 
   LikelihoodEvaluatorPtr evaluator; 
   
-  vector<RandomVariable> variables; 
+  vector<RandomVariablePtr> variables; 
 }; 
 
 

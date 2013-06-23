@@ -18,6 +18,9 @@
 
 using namespace std; 
 
+class RandomVariable; 
+typedef std::shared_ptr<RandomVariable> RandomVariablePtr ; 
+
 class RandomVariable
 {
 public: 
@@ -33,17 +36,22 @@ public:
   PriorPtr getPrior() const {return prior; }
   ostream&  printShort(ostream& out); 
 
+  RandomVariablePtr clone() const ; 
+
+
+  RandomVariable(RandomVariable& rhs) = delete ; 
+  RandomVariable& operator=(RandomVariable &rhs) = delete; 
+
 private: 
   Category cat; 
   vector<nat> partitions; 	// the partitions, this parameter
 				// applies to
   nat id ; 			//  which id does the  parameter have among all of its kind  
-
   PriorPtr prior; 
 
-  // static map<Category, string>  nameMap; 
-  
   friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
 };
+
+
 
 #endif

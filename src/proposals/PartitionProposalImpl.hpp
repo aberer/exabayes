@@ -11,7 +11,7 @@ PartitionProposal<FUN,PARAM>::PartitionProposal( double _param, string _name)
 template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
-  auto oneModel = primVar[0].getPartitions()[0];
+  auto oneModel = primVar[0]->getPartitions()[0];
   assert(primVar.size() == 1 ) ; // <= TODO 
 
   values = PARAM::getParameters(traln, oneModel); 
@@ -23,7 +23,7 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
   assert(proposedValues.size() == values.size()); 
   assert(traln.getNumBranches() == 1 ); 
 
-  for(auto v : primVar[0].getPartitions())
+  for(auto v : primVar[0]->getPartitions())
     {
       PARAM::setParameters(traln, v, proposedValues);  
       PARAM::init(traln, v);  
@@ -36,11 +36,11 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
     {
       vector<shared_ptr<AbstractPrior> > blPriors; 
       for(auto v : secVar)
-	blPriors.push_back(v.getPrior()) ; 
+	blPriors.push_back(v->getPrior()) ; 
       prior.accountForFracChange(traln, {oldFracChange}, {newFracChange} , blPriors);
     }
  
-  auto thePrior = primVar[0].getPrior(); 
+  auto thePrior = primVar[0]->getPrior(); 
   prior.addToRatio( thePrior->getLogProb(proposedValues) -  thePrior->getLogProb(values) ) ;
 }
 
@@ -49,7 +49,7 @@ template<typename FUN, typename PARAM>
 void PartitionProposal<FUN,PARAM>::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
   assert(primVar.size() == 1 ); 
-  evaluator->evaluatePartitions(traln, primVar[0].getPartitions() ); 
+  evaluator->evaluatePartitions(traln, primVar[0]->getPartitions() ); 
 }
 
 
@@ -58,7 +58,7 @@ void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior
 {
   assert(primVar.size() == 1 ); 
 
-  for(auto elem : primVar[0].getPartitions())
+  for(auto elem : primVar[0]->getPartitions())
     {
       PARAM::setParameters(traln, elem, values);
       PARAM::init(traln,elem);  

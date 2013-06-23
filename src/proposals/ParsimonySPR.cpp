@@ -209,7 +209,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
   bool modifiesBl = false; 
   for(auto v : secVar)
-    modifiesBl |= v.getCategory() == Category::BRANCH_LENGTHS; 
+    modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
   assert(traln.getNumBranches() == 1); 
 
@@ -219,7 +219,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
   if( modifiesBl)
     {
-      auto brPr =  secVar[0].getPrior();
+      auto brPr =  secVar[0]->getPrior();
       move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 

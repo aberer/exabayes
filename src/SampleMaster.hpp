@@ -33,7 +33,7 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposalResult, vector<RandomVariable> &variableResult); 
+  void initWithConfigFile(string configFileName, const TreeAln &traln, vector<ProposalPtr > &proposalResult, vector<RandomVariablePtr> &variableResult); 
   void validateRunParams(); 	// TODO  
 
 private: 

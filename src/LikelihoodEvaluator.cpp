@@ -8,9 +8,6 @@ LikelihoodEvaluator::LikelihoodEvaluator(LnlRestorerPtr _restorer)
 } 
 
 
-// TODO const correctness  
-// TODO use move lnl restorer into this here 
-
 // must be partial 
 void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)   
 { 
@@ -44,7 +41,6 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)
     }
   restorer->traverseAndSwitchIfNecessary(traln, p, modelToEval, false); 
   coreEvalSubTree(traln,p,masked); // NEEDED
-  // newViewGenericWrapper(traln, evalBranch.findNodePtr(traln), false); 
 }
 
 
@@ -209,8 +205,8 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
 }
 
 
-void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
-{
+ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
+ {
 #ifdef DEBUG_LNL_VERIFY
   TreeAln &debugTraln = *(globals.debugTree);   
   double toVerify = traln.getTr()->likelihood; 
@@ -231,16 +227,16 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
-      tout << "WARNING: found in expensive evaluation: likelihood difference is " 
-	   << setprecision(8) <<   fabs (verifiedLnl - toVerify )
-	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
+  tout << "WARNING: found in expensive evaluation: likelihood difference is " 
+       << setprecision(8) <<   fabs (verifiedLnl - toVerify )
+       << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
-      tout << "current tree: " << traln << endl; 
-      tout << "help tree: " <<  debugTraln << endl; 	  
+  tout << "current tree: " << traln << endl; 
+  tout << "help tree: " <<  debugTraln << endl; 	  
 
-      evaluateFullNoBackup(traln);
-      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
-    }  
+  evaluateFullNoBackup(traln);
+  tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
+}  
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
 #endif
 }

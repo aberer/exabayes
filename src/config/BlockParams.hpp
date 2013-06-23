@@ -19,13 +19,13 @@ public:
     NCL_BLOCKTYPE_ATTR_NAME = "PARAMS";    
   }
 
-  vector<RandomVariable> getParameters() const{return parameters; }
+  vector<RandomVariablePtr> getParameters() const{return parameters; }
   virtual void Read(NxsToken &token); 
   void initialize(const TreeAln &traln); 
 
 private: 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
-  vector<RandomVariable> parameters; 
+  vector<RandomVariablePtr> parameters; 
   const TreeAln &traln; 
 }; 
 

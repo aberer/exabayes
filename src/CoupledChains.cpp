@@ -8,7 +8,7 @@
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 
-CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariable > &vars, LikelihoodEvaluatorPtr eval)
+CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariablePtr> &vars, LikelihoodEvaluatorPtr eval)
   : temperature(params.getHeatFactor())
   , rand(seed)
   , runid(runNum) 

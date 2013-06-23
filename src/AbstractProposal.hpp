@@ -45,8 +45,8 @@ public:
   
   int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
 
-  void addPrimVar(RandomVariable var) {primVar.push_back(var) ; }
-  void addSecVar(RandomVariable var) {secVar.push_back(var) ; }
+  void addPrimVar(RandomVariablePtr var) {primVar.emplace_back(std::move(var)) ; }
+  void addSecVar(RandomVariablePtr var) {secVar.push_back(std::move(var)) ; }
 
   static void updateHastings(double &hastings, double valToAdd, string whoDoneIt); 
 
@@ -71,7 +71,7 @@ public:
     out << name  << "(" ; 
     assert(primVar.size() == 1); 
     bool isFirst= true; 
-    for (auto v : primVar[0].getPartitions()) 
+    for (auto v : primVar[0]->getPartitions()) 
       {
 	if( not isFirst)
 	  out << ","; 
@@ -94,7 +94,7 @@ public:
 	  out << ","; 
 	else 
 	  isFirst = false; 
-	v.printShort(out); 
+	v->printShort(out); 
       }
 
     if(secVar.size() > 0)
@@ -107,7 +107,7 @@ public:
 	      out << ","; 
 	    else 
 	      isFirst = false; 
-	    v.printShort(out); 
+	    v->printShort(out); 
 	  }
       }
     out << " )"; 
@@ -119,8 +119,8 @@ protected:
   SuccessCounter sctr; 
   Category category; 
   
-  vector<RandomVariable> primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  vector<RandomVariable> secVar;  // as a by-product also these random variables are changed 
+  vector<RandomVariablePtr> primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  vector<RandomVariablePtr> secVar;  // as a by-product also these random variables are changed 
 
   double relativeWeight; 
 

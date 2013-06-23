@@ -117,7 +117,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   bool modifiesBl = false; 
   for(auto v : secVar)
-    modifiesBl |= v.getCategory() == Category::BRANCH_LENGTHS; 
+    modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI
   modifiesBl = false; 
@@ -125,7 +125,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   if(modifiesBl)
     {
-      auto brPr = secVar.at(0).getPrior();
+      auto brPr = secVar.at(0)->getPrior();
       move.multiplyBranches(traln, rand, hastings, prior, multiplier, {brPr} ); 
     }
 

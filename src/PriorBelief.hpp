@@ -23,7 +23,7 @@
 class PriorBelief
 {
 public:
-  PriorBelief(const TreeAln &traln, const vector<RandomVariable>  &variables);
+  PriorBelief(const TreeAln &traln, const vector<RandomVariablePtr> &variables);
 
   void accept()  { lnPrior += lnPriorRatio;  lnPriorRatio = 0; }  
   void reject() {lnPriorRatio = 0; }
@@ -34,16 +34,15 @@ public:
   void accountForFracChange(const TreeAln &traln, const vector<double> &oldFc, const vector<double> &newFcs,  const vector<shared_ptr<AbstractPrior> > &blPriors)  ; 
 
   void updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) ; 
-  void verifyPrior(const TreeAln &traln) const ;  
-  void reinitPrior(const TreeAln &traln ) {lnPrior = scoreEverything(traln); lnPriorRatio = 0; }
+  void verifyPrior(const TreeAln &traln, const vector<RandomVariablePtr> &variables) const ;  
+  void reinitPrior(const TreeAln &traln, const vector<RandomVariablePtr> &variables ) {lnPrior = scoreEverything(traln, variables); lnPriorRatio = 0; }
 
 private: 
-  double scoreEverything(const TreeAln &traln) const ; 
-
+  double scoreEverything(const TreeAln &traln, const vector<RandomVariablePtr> &variables) const ; 
+  
+  // having an internal state actually defies the logic of the randomVariables being external 
   double lnPrior; 
   double lnPriorRatio; 
-
-  const vector<RandomVariable> variables; 
 }; 
 
 #endif

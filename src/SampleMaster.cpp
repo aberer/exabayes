@@ -47,7 +47,7 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
   trees[0]->enableParsimony();
 
   vector<unique_ptr<AbstractProposal> > proposals; 
-  vector<RandomVariable> variables; 
+  vector<RandomVariablePtr> variables; 
 
   initWithConfigFile(cl.getConfigFileName(), *(trees[0]), proposals, variables);
   assert(runParams.getTuneFreq() > 0); 
@@ -244,7 +244,7 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposalResult, vector<RandomVariable> &variableResult)
+void SampleMaster::initWithConfigFile(string configFileName, const TreeAln &traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 

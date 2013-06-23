@@ -119,8 +119,8 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   // TODO replace by absence of prior 
   
   bool modifiesBl = false;   
-  for(auto v : secVar)
-    modifiesBl |= v.getCategory() == Category::BRANCH_LENGTHS; 
+  for(auto &v : secVar)
+    modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI
   modifiesBl = false; 
@@ -128,7 +128,7 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 
   if(modifiesBl)
     {
-      auto brPr = secVar.at(0).getPrior();
+      auto brPr = secVar.at(0)->getPrior();
       move.multiplyBranches(traln, rand, hastings, prior,  multiplier, {brPr}); 
     }
 
