@@ -29,36 +29,20 @@ public:
   category_t getCategory() const { return cat; }
   nat getId() const { return id; }
   void setId(nat _id ) {id = _id; }
-
-  shared_ptr<AbstractPrior> getPrior() const {return prior; }
-
-  ostream&  printShort(ostream& out)
-  {
-    out << nameMap[cat] << "{" ; 
-    bool isFirst= true; 
-    for(auto v : partitions)
-      {
-      if(not isFirst)
-	out << ","; 
-      else 
-	isFirst = false; 
-      out  << v ; 
-      }
-    out << "}";     
-    return out; 
-  }
+  PriorPtr getPrior() const {return prior; }
+  ostream&  printShort(ostream& out); 
 
 private: 
-  friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
-
   category_t cat; 
   vector<nat> partitions; 	// the partitions, this parameter
 				// applies to
   nat id ; 			//  which id does the  parameter have among all of its kind  
 
-  shared_ptr<AbstractPrior> prior; 
+  PriorPtr prior; 
 
   static map<category_t, string>  nameMap; 
+  
+  friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
 };
 
 #endif

@@ -8,9 +8,6 @@
 #include "PriorBelief.hpp"
 
 
-
-// #include 
-
 class FrequencyParameter
 {
 public: 
@@ -27,6 +24,7 @@ public:
   static bool modifiesBL;
 
 }; 
+
 
 class RevMatParameter
 {

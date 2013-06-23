@@ -34,6 +34,8 @@ public:
 }; 
 
 
+typedef shared_ptr<AbstractPrior> PriorPtr; 
+
  
 class DirichletPrior : public AbstractPrior
 {

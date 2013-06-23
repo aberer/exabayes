@@ -27,3 +27,20 @@ ostream& operator<<(ostream &out, const RandomVariable& rhs)
   out << "} \twith prior " << rhs.getPrior();   
   return out;
 }
+
+
+ostream&  RandomVariable::printShort(ostream& out)
+{
+  out << nameMap[cat] << "{" ; 
+  bool isFirst= true; 
+  for(auto v : partitions)
+    {
+      if(not isFirst)
+	out << ","; 
+      else 
+	isFirst = false; 
+      out  << v ; 
+    }
+  out << "}";     
+  return out; 
+}

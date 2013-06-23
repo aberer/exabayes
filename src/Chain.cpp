@@ -22,19 +22,20 @@
 
 // #define DEBUG_ACCEPTANCE
 
-Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables, LikelihoodEvaluatorPtr eval) 
+Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariable> &_variables, LikelihoodEvaluatorPtr eval) 
   : traln(_traln)
   , runid(_runid)
   , tuneFrequency(_tuneFreq)
   , hastings(0)
-    , currentGeneration(0)
-    , couplingId(id)
-    , state(*traln)
-    , chainRand(seed.v[0])
-    , relWeightSum(0)
-    , prior(*_traln, variables)
-    , bestState(numeric_limits<double>::lowest())
+  , currentGeneration(0)
+  , couplingId(id)
+  , state(*traln)
+  , chainRand(seed.v[0])
+  , relWeightSum(0)
+  , prior(*_traln, variables)
+  , bestState(numeric_limits<double>::lowest())
   , evaluator(eval)
+  , variables(_variables)
 {
   for(auto &p : _proposals)
     proposals.push_back(unique_ptr<AbstractProposal>(p->clone())); 

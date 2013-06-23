@@ -13,9 +13,6 @@
 #include "LikelihoodEvaluator.hpp"
 
 
-
-// void 
-
 class AbstractProposal
 {
 public: 
@@ -128,5 +125,7 @@ protected:
   double relativeWeight; 
 
 }; 
+
+typedef  std::unique_ptr<AbstractProposal> ProposalPtr; 
 
 #endif

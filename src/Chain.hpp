@@ -15,6 +15,7 @@
 #include "PriorBelief.hpp"
 #include "State.hpp"
 #include "LikelihoodEvaluator.hpp"
+#include "AbstractProposal.hpp"
 
 class TreeAln; 
 class Topology; 
@@ -25,7 +26,7 @@ using namespace std;
 class Chain
 {
 public: 
-  Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables, LikelihoodEvaluatorPtr eval) ; 
+  Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables, LikelihoodEvaluatorPtr eval) ; 
   
   // getters and setters 
   double getChainHeat(); 
@@ -59,31 +60,32 @@ public:
   const TreeAln& getTraln() const { return *traln; }
   TreeAln& getTraln()  { return *traln; }
 
-  const vector<unique_ptr<AbstractProposal>>& getProposals() const { return proposals;}
+  const vector<ProposalPtr>& getProposals() const { return proposals;}
 
   double getBestState() const {return bestState; }
 
   
 private : 
   void initParamDump(); 
-  void debug_printAccRejc(unique_ptr<AbstractProposal> &prob, bool accepted, double lnl, double lnPr ) ;
+  void debug_printAccRejc(ProposalPtr &prob, bool accepted, double lnl, double lnPr ) ;
 
-  shared_ptr<TreeAln> traln;  
+  TreeAlnPtr traln;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
   double hastings;/// the log hastings ratio  
   int currentGeneration;     
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  vector< unique_ptr<AbstractProposal> > proposals; 
+  vector<ProposalPtr> proposals; 
   State state; 
   Randomness chainRand;   
   double relWeightSum ; 	// sum of all relative weights
   PriorBelief prior; 
-
   double bestState; 
 
   LikelihoodEvaluatorPtr evaluator; 
+  
+  vector<RandomVariable> variables; 
 }; 
 
 
