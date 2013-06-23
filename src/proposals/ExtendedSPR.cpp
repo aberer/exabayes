@@ -136,12 +136,12 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 }
 
 
-void ExtendedSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior)
+void ExtendedSPR::evaluateProposal(LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior)
 {  
   Branch toEval = move.getEvalBranch(traln);
   auto p = toEval.findNodePtr(traln); 
   move.disorientAtNode(traln,p); 
-  evaluateGenericWrapper(traln, p, FALSE);
+  evaluator->evaluate(traln,toEval, false); 
 }
 
 

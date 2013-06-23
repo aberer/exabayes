@@ -87,6 +87,8 @@ public:
   int getNumberOfPartitions() const;   
   boolean& accessExecModel(int model); 
   double& accessPartitionLH(int model); 
+  int accessExecModel(int model) const; 
+  double accessPartitionLH(int model) const ; 
 
   // getters for various parameters. We should use them to reduce the
   // direct acceses to for instance branch lengths. Makes our code
@@ -116,9 +118,6 @@ public:
 
   friend ostream& operator<< (ostream& out,  TreeAln&  traln);
 
-  void setRestorer(shared_ptr<LnlRestorer> rest){ restorer = rest; }
-  auto getRestorer() const ->  shared_ptr<LnlRestorer> {return restorer;  }  
-  
   /** @brief the partition does not have a revmat */ 
   bool revMatIsImmutable(int model) const ; 
 
@@ -143,7 +142,7 @@ private:
   tree* tr;		// TODO replace with an object for cleanup 
   
   bool parsimonyEnabled;   
-  shared_ptr<LnlRestorer> restorer; 
+
 
 #if HAVE_PLL != 0
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 

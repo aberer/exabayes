@@ -3,8 +3,6 @@
 // #include "output.h"
 
 
-
-
 /* 
    important TODO
    i am not sure, but treating branch lengths this way may seriously distort the lnls. 
@@ -120,7 +118,9 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       traln.setBranchLengthBounded(b, 0, p->next->next );
 
       newViewGenericWrapper(traln, p, FALSE); 
+#if 0 
       evaluateGenericWrapper(traln, p, FALSE ); 
+#endif
 
       appendElem(lnlList, Branch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 
@@ -158,7 +158,9 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       traln.setBranchLengthBounded(b,0,p->next->next);
 
       newViewGenericWrapper(traln,p,FALSE); 
+#if 0 
       evaluateGenericWrapper(traln,p,FALSE  ); 
+#endif
 
       appendElem(lnlList, Branch(iP->number, iP2->number), tr->likelihood, ratio, isFirst); 
 #if DEBUG_GUIDED_SPR > 1 
@@ -456,10 +458,12 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
    actually this method should not do anything. Currently, we need
    it, to update the lnl arrays appropriatly. Pretty expensive.
 */ 
-void RadiusMlSPR::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
+void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
   nodeptr p = path.at(1).findNodePtr(traln );
+#if 0 
   evaluateGenericWrapper(traln, p, FALSE );
+#endif
 } 
 
 
@@ -507,3 +511,4 @@ AbstractProposal* RadiusMlSPR::clone() const
   // return new RadiusMlSPR( radius);
   return new RadiusMlSPR( *this );
 }
+

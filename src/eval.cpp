@@ -1,23 +1,11 @@
 #include <cassert>
 #include "axml.h"
 #include "GlobalVariables.hpp"
-// #include "output.h"
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp" 
 #include "LikelihoodEvaluator.hpp" 
 
 void evaluateFullNoBackup(TreeAln& traln); 
-
-
-static void exa_newViewGeneric( TreeAln& traln, nodeptr p, boolean masked)
-{
-#if HAVE_PLL != 0
-  newviewGeneric(traln.getTr(), traln.getPartitionsPtr(), p, masked); 
-#else 
-  newviewGeneric(traln.getTr(), p, masked); 
-#endif 
-}
-
 
 void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
@@ -27,6 +15,7 @@ void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
   evaluateGeneric(traln.getTr(), start, fullTraversal); 
 #endif  
 }
+
 
 // grml 
 #if HAVE_PLL == 0
@@ -137,67 +126,9 @@ void exa_evaluateParsimony(TreeAln &traln, nodeptr p, boolean fullTraversal, vec
   exa_free(tmp); 
 }
 
- 
-/**
-   @brief backs up arrays and executes the newView 
- */ 
-void newViewGenericWrapper( TreeAln &traln, nodeptr p, boolean masked)
-{
-  int numberToExecute = 0; 
-  int modelToEval = ALL_MODELS; 
-  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
-    {
-      if(traln.accessExecModel(i))
-	{
-	  numberToExecute++; 
-	  modelToEval = i; 
-	}
-    }
-
-  assert(numberToExecute == 1 || numberToExecute == traln.getNumberOfPartitions()); 
-  if(numberToExecute > 1)
-    modelToEval = ALL_MODELS; 
-
-#ifdef DEBUG_EVAL  
-  cout << "newViewGenericWrapper on " << p->number  << " and model " <<  modelToEval << endl; 
-#endif
-
-  if(p->x)
-    {
-      tree *tr = traln.getTr();
-      assert(NOT isTip(p->number, tr->mxtips)); 
-      p->x = 0; 
-      p->next->x = 1; 
-    }
-  traln.getRestorer()->traverseAndSwitchIfNecessary(traln, p, modelToEval, false); 
-  exa_newViewGeneric(traln,p,masked); // NEEDED
-}
-
-
 
 void evaluatePartialNoBackup(TreeAln& traln, nodeptr p)
 {  
   exa_evaluateGeneric(traln,p,FALSE );   
   expensiveVerify(traln);
 }
-
-
-void evaluateGenericWrapper(TreeAln &traln, nodeptr start, boolean fullTraversal)
-{
-#ifdef DEBUG_EVAL  
-  cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" )  << endl; 
-#endif
-
-  int model  = ALL_MODELS; 
-
-  traln.getRestorer()->traverseAndSwitchIfNecessary(traln, start, model, fullTraversal);
-  traln.getRestorer()->traverseAndSwitchIfNecessary(traln, start->back, model, fullTraversal);
-  
-  exa_evaluateGeneric(traln,start,fullTraversal);   
-#ifdef DEBUG_LNL_VERIFY
-  if(globals.verifyLnl)
-    expensiveVerify(traln);
-#endif
-}
-
-

@@ -14,6 +14,7 @@
 
 #include "PriorBelief.hpp"
 #include "State.hpp"
+#include "LikelihoodEvaluator.hpp"
 
 class TreeAln; 
 class Topology; 
@@ -24,7 +25,7 @@ using namespace std;
 class Chain
 {
 public: 
-  Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) ; 
+  Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables, LikelihoodEvaluatorPtr eval) ; 
   
   // getters and setters 
   double getChainHeat(); 
@@ -81,6 +82,8 @@ private :
   PriorBelief prior; 
 
   double bestState; 
+
+  LikelihoodEvaluatorPtr evaluator; 
 }; 
 
 

@@ -46,12 +46,10 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
 
 
 template<typename FUN, typename PARAM>
-void PartitionProposal<FUN,PARAM>::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
+void PartitionProposal<FUN,PARAM>::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
   assert(primVar.size() == 1 ); 
-
-  LikelihoodEvaluator eval ; 
-  eval.evaluatePartitions(traln, primVar[0].getPartitions() ); 
+  evaluator->evaluatePartitions(traln, primVar[0].getPartitions() ); 
 }
 
 

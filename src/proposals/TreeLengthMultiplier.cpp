@@ -108,9 +108,9 @@ void TreeLengthMultiplier::autotune()
 }
  
  
-void TreeLengthMultiplier::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
+void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
-  evaluateGenericWrapper(traln, traln.getTr()->start, TRUE);
+  evaluator->evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
 }
 
 

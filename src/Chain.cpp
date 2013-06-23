@@ -6,7 +6,6 @@
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
-// #include "output.h"
 #include "GlobalVariables.hpp"
 #include "BipartitionHash.hpp"
 #include "tune.h"
@@ -24,18 +23,19 @@
 
 // #define DEBUG_ACCEPTANCE
 
-Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables) 
+Chain::Chain(randKey_t seed, int id, int _runid, shared_ptr<TreeAln> _traln, const vector< unique_ptr<AbstractProposal> > &_proposals, int _tuneFreq ,const vector<RandomVariable> &variables, LikelihoodEvaluatorPtr eval) 
   : traln(_traln)
   , runid(_runid)
   , tuneFrequency(_tuneFreq)
   , hastings(0)
-  , currentGeneration(0)
-  , couplingId(id)
-  , state(*traln)
-  , chainRand(seed.v[0])
-  , relWeightSum(0)
-  , prior(*_traln, variables)
-  , bestState(numeric_limits<double>::lowest())
+    , currentGeneration(0)
+    , couplingId(id)
+    , state(*traln)
+    , chainRand(seed.v[0])
+    , relWeightSum(0)
+    , prior(*_traln, variables)
+    , bestState(numeric_limits<double>::lowest())
+  , evaluator(eval)
 {
   for(auto &p : _proposals)
     proposals.push_back(unique_ptr<AbstractProposal>(p->clone())); 
@@ -251,7 +251,7 @@ void Chain::step()
 
   currentGeneration++; 
   tree *tr = traln->getTr();   
-  traln->getRestorer()->resetRestorer(*traln);
+  evaluator->imprint(*traln);
 
   // inform the rng that we produce random numbers for generation x  
   chainRand.rebase(currentGeneration);
@@ -272,7 +272,7 @@ void Chain::step()
 #endif
 
   pfun->applyToState(*traln, prior, hastings, chainRand);
-  pfun->evaluateProposal(*traln, prior);
+  pfun->evaluateProposal(evaluator, *traln, prior);
   
   double priorRatio = prior.getLnPriorRatio();
   double lnlRatio = tr->likelihood - prevLnl; 
@@ -301,7 +301,7 @@ void Chain::step()
       pfun->reject();
       prior.reject();
 
-      traln->getRestorer()->restoreArrays(*traln);
+      evaluator->resetToImprinted(*traln);
     }
 
   expensiveVerify(*traln); 

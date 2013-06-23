@@ -35,7 +35,7 @@ public:
   AminoModelJump(vector<aaMatrix_t> matrices); 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) ; 
+  virtual void evaluateProposal(LikelihoodEvaluatorPtr &evaluator,TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  

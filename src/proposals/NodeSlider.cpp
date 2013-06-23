@@ -66,7 +66,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   prior.updateBranchLengthPrior(traln, oldB, newB, brPr);
 }
 
-void NodeSlider::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
+void NodeSlider::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
   nat middleNode = oneBranch.getCommonNode(otherBranch); 
   nat otherNode = oneBranch.getOtherNode(middleNode); 
@@ -75,8 +75,7 @@ void NodeSlider::evaluateProposal(TreeAln &traln, PriorBelief &prior)
   nodeptr p = b.findNodePtr(traln);    
   LikelihoodEvaluator::disorientNode( p); 
 
-  LikelihoodEvaluator eval; 
-  eval.evaluate(traln,b, false); 
+  evaluator->evaluate(traln,b, false); 
 }
 
 

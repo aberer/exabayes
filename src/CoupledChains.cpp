@@ -9,7 +9,7 @@
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 
-CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariable > &vars)
+CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, const vector<RandomVariable > &vars, LikelihoodEvaluatorPtr eval)
   : temperature(params.getHeatFactor())
   , rand(seed)
   , runid(runNum) 
@@ -25,7 +25,7 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
   for(int i = 0; i < numCoupled; ++i)
     {
 
-      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i],  proposals, params.getTuneFreq(), vars); 
+      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i],  proposals, params.getTuneFreq(), vars, eval); 
       chain->setDeltaT(temperature); 
       chains.push_back(chain);
     }

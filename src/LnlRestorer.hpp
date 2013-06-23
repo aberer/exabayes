@@ -23,7 +23,7 @@ public:
   ~LnlRestorer();
 
   /**@brief  resets the restorer, s.t. it is consistent with the current tree (and can restore it later) */ 
-  void resetRestorer(TreeAln &traln); 
+  void resetRestorer(const TreeAln &traln); 
 
   /// @brief restores the original Chain of the tree 
   void restoreArrays(TreeAln &traln);  
@@ -32,7 +32,7 @@ public:
   void traverseAndSwitchIfNecessary(TreeAln &traln, nodep virtualRoot, int model, bool fullTraversal); 
 
 private:   
-  void storeOrientation(TreeAln &traln); 
+  void storeOrientation(const TreeAln &traln); 
   void loadOrientation(TreeAln &traln);
   void swapArray(TreeAln& traln, int number, int model); 
 
@@ -53,7 +53,7 @@ private:
 }; 
 
 
-
+typedef shared_ptr<LnlRestorer> LnlRestorerPtr ; 
 
 
 #endif

@@ -3,19 +3,70 @@
 #include "GlobalVariables.hpp"
 #include "LnlRestorer.hpp"
 
+
+LikelihoodEvaluator::LikelihoodEvaluator(LnlRestorerPtr _restorer)
+  : restorer(_restorer)
+{
+} 
+
+
 // TODO const correctness  
 // TODO use move lnl restorer into this here 
 
 // must be partial 
 void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)   
 { 
-  newViewGenericWrapper(traln, evalBranch.findNodePtr(traln), false); 
+  bool masked = false; 
+  nodeptr p = evalBranch.findNodePtr(traln); 
+  int numberToExecute = 0; 
+  int modelToEval = ALL_MODELS; 
+  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+    {
+      if(traln.accessExecModel(i))
+	{
+	  numberToExecute++; 
+	  modelToEval = i; 
+	}
+    }
+
+  assert(numberToExecute == 1 || numberToExecute == traln.getNumberOfPartitions()); 
+  if(numberToExecute > 1)
+    modelToEval = ALL_MODELS; 
+
+#ifdef DEBUG_EVAL  
+  cout << "newViewGenericWrapper on " << p->number  << " and model " <<  modelToEval << endl; 
+#endif
+
+  if(p->x)
+    {
+      tree *tr = traln.getTr();
+      assert(NOT isTip(p->number, tr->mxtips)); 
+      p->x = 0; 
+      p->next->x = 1; 
+    }
+  restorer->traverseAndSwitchIfNecessary(traln, p, modelToEval, false); 
+  coreEvalSubTree(traln,p,masked); // NEEDED
+  // newViewGenericWrapper(traln, evalBranch.findNodePtr(traln), false); 
 }
 
 
 double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, bool fullTraversal )  
 {
-  evaluateGenericWrapper(traln, evalBranch.findNodePtr(traln), fullTraversal ? TRUE : FALSE );  
+#ifdef DEBUG_EVAL  
+  cout << "evaluateGeneric at " << start->number << "/" << start->back->number << " with " << (fullTraversal ? "TRUE" : "FALSE" )  << endl; 
+#endif
+
+  int model  = ALL_MODELS; 
+  nodeptr start = evalBranch.findNodePtr(traln) ; 
+
+  restorer->traverseAndSwitchIfNecessary(traln, start, model, fullTraversal);
+  restorer->traverseAndSwitchIfNecessary(traln, start->back, model, fullTraversal);
+  
+  exa_evaluateGeneric(traln,start,fullTraversal);   
+#ifdef DEBUG_LNL_VERIFY
+  if(globals.verifyLnl)
+    expensiveVerify(traln);
+#endif
   return traln.getTr()->likelihood;  
 }
 
@@ -122,8 +173,8 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat
   
   for(auto p : partitions)
     {
-      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, true ); 
-      traln.getRestorer()->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, true); 
+  restorer->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, true ); 
+  restorer->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, true); 
     }
 
   exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
@@ -148,3 +199,14 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat
   return tr->likelihood; 
 }
 
+
+
+
+ void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked)
+  {
+#if HAVE_PLL != 0
+    newviewGeneric(traln.getTr(), traln.getPartitionsPtr(), p, masked); 
+#else 
+    newviewGeneric(traln.getTr(), p, masked); 
+#endif 
+  }

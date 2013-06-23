@@ -29,7 +29,7 @@ public:
   // you to implement these methods, when you derive from
   // AbstractProposal.
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) = 0; 
-  virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) = 0; 
+  virtual void evaluateProposal(LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) = 0; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) = 0 ; 
   virtual void autotune() = 0  ;
 

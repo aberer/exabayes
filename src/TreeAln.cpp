@@ -453,6 +453,28 @@ pInfo* TreeAln::getPartition(int model)  const
 
 
 
+// this is BS 
+int TreeAln::accessExecModel(int model) const
+{
+#if HAVE_PLL != 0
+  return partitions->partitionData[model]->executeModel; 
+#else 
+  return tr->executeModel[model]; 
+#endif
+}
+
+
+double TreeAln::accessPartitionLH(int model) const 
+{
+#if HAVE_PLL != 0
+  return partitions->partitionData[model]->partitionLH; 
+#else  
+  return tr->perPartitionLH[model]; 
+#endif
+}
+
+
+
 
 // this is BS 
 int& TreeAln::accessExecModel(int model)

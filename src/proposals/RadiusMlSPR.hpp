@@ -1,6 +1,7 @@
 #ifndef _RADIUSMLSPR_H
 #define _RADIUSMLSPR_H
 
+
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
 
@@ -25,7 +26,7 @@ public:
   virtual ~RadiusMlSPR(){}
   
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(TreeAln &traln, PriorBelief &prior) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
 
   virtual void autotune() {}	// disabled 
@@ -43,3 +44,4 @@ private:
 
 
 #endif
+

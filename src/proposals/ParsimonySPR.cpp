@@ -244,18 +244,17 @@ void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
 }
 
 
-void ParsimonySPR::evaluateProposal(TreeAln &traln, PriorBelief &prior) 
+void ParsimonySPR::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
 {  
   Branch toEval = move.getEvalBranch(traln);
   nodeptr toEvalP = toEval.findNodePtr(traln) ; 
   move.disorientAtNode(traln,toEvalP);
-  evaluateGenericWrapper(traln,toEvalP, FALSE); 
+  evaluator->evaluate(traln,toEval, false); 
 }
 
 void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   move.revertTree(traln,prior); 
-  // debug_checkTreeConsistency(traln);
 }
  
 

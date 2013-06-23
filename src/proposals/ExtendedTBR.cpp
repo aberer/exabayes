@@ -138,12 +138,13 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 }
 
 
-void ExtendedTBR::evaluateProposal(TreeAln& traln, PriorBelief& prior)
+void ExtendedTBR::evaluateProposal(LikelihoodEvaluatorPtr &evaluator, TreeAln& traln, PriorBelief& prior)
 { 
   Branch toEval = move.getEvalBranch(traln);
   auto p = toEval.findNodePtr(traln); 
   move.disorientAtNode(traln,p->back);     
-  evaluateGenericWrapper(traln, p->back, FALSE);  
+
+  evaluator->evaluate(traln,toEval,false); 
 }
 
 

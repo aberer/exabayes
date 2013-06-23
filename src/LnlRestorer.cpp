@@ -92,9 +92,9 @@ void LnlRestorer::loadOrientation(TreeAln &traln)
 }
 
 
-void LnlRestorer::storeOrientation(TreeAln &traln)
+void LnlRestorer::storeOrientation(const TreeAln &traln)
 {
-  tree *tr = traln.getTr(); 
+  auto *tr = traln.getTr(); 
   int ctr = 0; 
   for(int i = tr->mxtips+1; i < 2 * tr->mxtips-1; ++i)
     {	
@@ -226,13 +226,13 @@ void LnlRestorer::traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRo
 }
 
 
-void LnlRestorer::resetRestorer(TreeAln &traln)
+void LnlRestorer::resetRestorer(const TreeAln &traln)
 {
 #ifdef DEBUG_ARRAY_SWAP
   cout << "RESETTING RESTORER" << endl; 
 #endif
 
-  tree *tr = traln.getTr();
+  auto *tr = traln.getTr();
   for(int i = 0 ; i < 2 * tr->mxtips; ++i)
     wasSwitched[i] = false;
   storeOrientation(traln); 

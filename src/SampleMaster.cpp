@@ -69,6 +69,10 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
       treeSeeds.push_back(r.v[1]); 
     }
 
+
+  LnlRestorerPtr restorer(new LnlRestorer(*(trees[0])));
+  LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
+
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {      
       if( i < numTreesAvailable)
@@ -77,7 +81,7 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
       if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
-	runs.push_back(CoupledChains(runSeeds[i], i, runParams, trees, cl.getWorkdir(), proposals, variables)); 
+	runs.push_back(CoupledChains(runSeeds[i], i, runParams, trees, cl.getWorkdir(), proposals, variables, eval)); 
     }
 
   if(runParams.getTuneHeat())
@@ -294,11 +298,6 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandL
 #endif
       trees.push_back(traln); 
     }
-  
-  // only use one restorer for all chains 
-  auto restorer = shared_ptr<LnlRestorer> (new LnlRestorer(*(trees[0])));
-  for(auto tree : trees)
-    tree->setRestorer(restorer);
 }
 
 
