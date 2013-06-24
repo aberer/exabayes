@@ -49,7 +49,7 @@
 #include <assert.h>
 
 #ifndef __SIM_SSE3
-#error "no sse3"
+#error "please activate sse3 "
 #endif
 
 
@@ -103,12 +103,11 @@ extern const unsigned int mask32[32];
 
 
 extern double masterTime;
-/*extern char  workdir[1024];
-  extern char run_id[128];*/
 
 /************************************************ pop count stuff ***********************************************/
 
- unsigned int bitcount_32_bit(unsigned int i)
+
+unsigned int bitcount_32_bit(unsigned int i)
 {
   return ((unsigned int) __builtin_popcount(i));
 }
@@ -120,10 +119,11 @@ inline unsigned int bitcount_64_bit(unsigned long i)
   return ((unsigned int) __builtin_popcountl(i));
 }
 
+
 /* bit count for 128 bit SSE3 and 256 bit AVX registers */
 
 #if (defined(__SIM_SSE3) || defined(__AVX))
-static inline unsigned int vectorPopcount(INT_TYPE v)
+unsigned int vectorPopcount(INT_TYPE v)
 {
   unsigned long
     counts[LONG_INTS_PER_VECTOR] __attribute__ ((aligned (BYTE_ALIGNMENT)));
@@ -140,6 +140,9 @@ static inline unsigned int vectorPopcount(INT_TYPE v)
   return ((unsigned int)sum);
 }
 #endif
+
+
+
 
 
 
@@ -262,14 +265,19 @@ static void newviewParsimonyIterativeFast(tree *tr)
 
       for(model = 0; model < tr->NumberOfModels; model++)
 	{
-	  unsigned int
-	    totalScore = 0;
+	  unsigned int totalScore = 0 ;
 
 	  int numByte = tr->partitionData[model].parsimonyLength * tr->partitionData[model].states * 2 * tr->mxtips; 
-	  printf("content [%d]: ", numByte);
-	  for(int m = 0; m < numByte ; ++m )
-	    printf("%u,", tr->partitionData[model].parsVect[m]); 
-	  printf("\n");
+	  parsimonyNumber *ptrStart = tr->partitionData[model].parsVect,
+	    *ptrEnd = ptrStart + numByte; 
+
+	  printf("memory region in evaluation: %p-%p\n", (void*)ptrStart ,  (void*)ptrEnd); 	  
+	  /* assert(0); */
+
+	  /* printf("content [%d]: ", numByte); */
+	  /* for(int m = 0; m < numByte ; ++m ) */
+	  /*   printf("%u,", tr->partitionData[model].parsVect[m]);  */
+	  /* printf("\n"); */
 
 	  size_t
 	    k,
@@ -325,19 +333,36 @@ static void newviewParsimonyIterativeFast(tree *tr)
 	      break;
 	    case 4:
 	      {
-		parsimonyNumber
-		  *left[4],
-		  *right[4],
-		  *this[4];
+		parsimonyNumber *left[4];
+		parsimonyNumber *right[4];
+		parsimonyNumber *this[4];
 
 		for(k = 0; k < 4; k++)
 		  {
-		    left[k]  = &(tr->partitionData[model].parsVect[(width * 4 * qNumber) + width * k]);
-		    right[k] = &(tr->partitionData[model].parsVect[(width * 4 * rNumber) + width * k]);
-		    this[k]  = &(tr->partitionData[model].parsVect[(width * 4 * pNumber) + width * k]);
+		    /* left[k]  = &(tr->partitionData[model].parsVect[(width * 4 * qNumber) + width * k]); */
+		    /* right[k] = &(tr->partitionData[model].parsVect[(width * 4 * rNumber) + width * k]); */
+		    /* this[k]  = &(tr->partitionData[model].parsVect[(width * 4 * pNumber) + width * k]); */
+
+		    int numL = (width * 4 * qNumber) + width * k; 
+		    int numR = (width * 4 * rNumber) + width * k; 
+		    int numT = (width * 4 * pNumber) + width * k; 
+
+		    left[k]  = ptrStart + numL;
+		    right[k] = ptrStart + numR;
+		    this[k]  = ptrStart + numT;
+
+		    /* printf ("assigning %p\n", &(ptrStart[(width * 4 * qNumber) + width * k])); */
+		    /* printf("start: %p\t+%d\t=>%p\n", ptrStart, numL , ptrStart + numL );  */
+		    /* printf("%p,%p,%p\n", left[k], right[k], this[k]); */
+
+		    /* assert( ptrStart <= left[k] &&  left[k] <= ptrEnd  );  */
+		    /* assert( ptrStart <= right[k] && right[k] <= ptrEnd );  */
+		    /* assert( ptrStart <= this[k] && this[k] <= ptrEnd );  */
 		  }
 
-		for(i = 0; i < width; i += INTS_PER_VECTOR)
+		printf("iterating over width=%d with %d ints/vect\n", width, INTS_PER_VECTOR); 
+
+		for(unsigned int i = 0; i < width; i += INTS_PER_VECTOR)
 		  {	 	  
 		    INT_TYPE
 		      s_r, s_l, v_N,
@@ -369,7 +394,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
 		    VECTOR_STORE((CAST)(&this[0][i]), VECTOR_BIT_OR(l_A, VECTOR_AND_NOT(v_N, v_A)));
 		    VECTOR_STORE((CAST)(&this[1][i]), VECTOR_BIT_OR(l_C, VECTOR_AND_NOT(v_N, v_C)));
 		    VECTOR_STORE((CAST)(&this[2][i]), VECTOR_BIT_OR(l_G, VECTOR_AND_NOT(v_N, v_G)));
-		    VECTOR_STORE((CAST)(&this[3][i]), VECTOR_BIT_OR(l_T, VECTOR_AND_NOT(v_N, v_T)));	  	 	 	  	  	  	
+		    VECTOR_STORE((CAST)(&this[3][i]), VECTOR_BIT_OR(l_T, VECTOR_AND_NOT(v_N, v_T))); 
 		    
 		    v_N = VECTOR_AND_NOT(v_N, allOne);
 		    
@@ -484,11 +509,7 @@ static void evaluateParsimonyIterativeFast(tree *tr,  unsigned int *partitionPar
 
   int
     model;
-
-  /* unsigned int  */
-  /*   bestScore = tr->bestParsimony;  */
-    /* sum; */
-
+ 
   if(tr->ti[0] > 4)
     newviewParsimonyIterativeFast(tr);
   
@@ -529,8 +550,6 @@ static void evaluateParsimonyIterativeFast(tree *tr,  unsigned int *partitionPar
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 		 
 		 partitionParsimony[model] += vectorPopcount(v_N); 
-		 /* sum += vectorPopcount(v_N); */
-
 	       }
 	   }
 	   break;
@@ -540,10 +559,15 @@ static void evaluateParsimonyIterativeFast(tree *tr,  unsigned int *partitionPar
 	       *left[4],
 	       *right[4];
       
+	     parsimonyNumber *start = tr->partitionData[model].parsVect;
+
 	     for(k = 0; k < 4; k++)
 	       {
-		 left[k]  = &(tr->partitionData[model].parsVect[(width * 4 * qNumber) + width * k]);
-		 right[k] = &(tr->partitionData[model].parsVect[(width * 4 * pNumber) + width * k]);
+		 int numL = (width * 4 * qNumber) + width * k,
+		   numR = (width * 4 * pNumber) + width * k; 
+		 
+		 left[k]  = start + numL;
+		 right[k] = start + numR;
 	       }        
 
 	     for(i = 0; i < width; i += INTS_PER_VECTOR)
@@ -699,6 +723,7 @@ void newviewParsimony(tree *tr,  nodeptr  p)
 
 static boolean isInformative(tree *tr, int dataType, int site)
 {
+  assert(0);
   int
     informativeCounter = 0,
     check[256],   

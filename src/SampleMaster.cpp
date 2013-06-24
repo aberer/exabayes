@@ -41,18 +41,18 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
   int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
   // initialize one tree 
-  vector<shared_ptr<TreeAln> > trees; 
-  trees.push_back(shared_ptr<TreeAln>(new TreeAln()));
+  vector<TreeAlnPtr > trees; 
+  trees.push_back(TreeAlnPtr(new TreeAln()));
   trees[0]->initializeFromByteFile(cl.getAlnFileName()); 
   trees[0]->enableParsimony();
 
-  vector<unique_ptr<AbstractProposal> > proposals; 
+  vector<ProposalPtr> proposals; 
   vector<RandomVariablePtr> variables; 
 
-  initWithConfigFile(cl.getConfigFileName(), *(trees[0]), proposals, variables);
+  initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables);
   assert(runParams.getTuneFreq() > 0); 
 
-  // init the rest of the trees 
+  // ORDER: must be after  initWithConfigFile
   initTrees(trees, cl);
 
   if( numTreesAvailable > 0 )
@@ -244,16 +244,16 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, const TreeAln &traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult)
+void SampleMaster::initWithConfigFile(string configFileName, TreeAlnPtr traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 
   NxsToken token(fh); 
 
-  BlockParams paramBlock(traln); 
+  paramBlock.setTree(traln); 
   reader.Add(&paramBlock); 
 
-  BlockPrior priorBlock(traln.getNumberOfPartitions());
+  BlockPrior priorBlock(traln->getNumberOfPartitions());
   reader.Add(&priorBlock);
 
   reader.Add(&runParams);
@@ -264,7 +264,7 @@ void SampleMaster::initWithConfigFile(string configFileName, const TreeAln &tral
   reader.Execute(token);
 
   RunFactory r; 
-  r.configureRuns(proposalConfig, priorBlock , paramBlock, traln, proposalResult);
+  r.configureRuns(proposalConfig, priorBlock , paramBlock, *traln, proposalResult);
   variableResult = r.getRandomVariables(); 
 }
 
@@ -277,11 +277,10 @@ void SampleMaster::validateRunParams()
 
 
 
-void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandLine &cl )
+void SampleMaster::initTrees(vector<TreeAlnPtr> &trees, const CommandLine &cl )
 {  
 
   tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl; 
-
 #ifdef DEBUG_LNL_VERIFY
   globals.debugTree = new TreeAln();   
   globals.debugTree->initializeFromByteFile(cl.getAlnFileName()); 
@@ -290,13 +289,12 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandL
 
   for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
     {
-      auto traln =  shared_ptr<TreeAln>(new TreeAln());
+      auto traln =  TreeAlnPtr(new TreeAln());
       traln->initializeFromByteFile(cl.getAlnFileName()); 
-#if HAVE_PLL != 0 
       traln->enableParsimony();
-#endif
       trees.push_back(traln); 
     }
+
 }
 
 

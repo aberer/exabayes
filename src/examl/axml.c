@@ -2542,11 +2542,14 @@ void initializeTree(tree *tr, analdef *adef)
 	     tr->partitionData[model].states,
 	     tr->partitionData[model].parsimonyLength);
       
-      tr->partitionData[model].parsVect = malloc_aligned(numBytes * sizeof(parsimonyNumber));
+      tr->partitionData[model].parsVect = malloc_aligned( numBytes * sizeof(parsimonyNumber));
 
       memset(tr->partitionData[model].parsVect, 0 , sizeof(parsimonyNumber) * numBytes) ;
 
       myBinFread(tr->partitionData[model].parsVect, sizeof(parsimonyNumber), numBytes, byteFile); 
+
+      parsimonyNumber *ptr = tr->partitionData[model].parsVect; 
+      printf("memory region: %p-%p\n", ptr ,  ptr +  numBytes); 
       /* END  */
     }
 

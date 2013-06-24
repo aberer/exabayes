@@ -33,7 +33,7 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, const TreeAln &traln, vector<ProposalPtr > &proposalResult, vector<RandomVariablePtr> &variableResult); 
+  void initWithConfigFile(string configFileName,  TreeAlnPtr traln, vector<ProposalPtr > &proposalResult, vector<RandomVariablePtr> &variableResult); 
   void validateRunParams(); 	// TODO  
 
 private: 
@@ -46,9 +46,9 @@ private:
 
   double initTime; 
 
+  BlockParams paramBlock; 
   BlockRunParameters runParams;  
-  BlockProposalConfig propConfig; 
-  
+  BlockProposalConfig propConfig;   
 };  
 
 #endif

@@ -134,6 +134,10 @@ public:
   nat drawInnerNode(Randomness &rand ) const ; 
   Branch drawBranchUniform(Randomness &rand) const ; 
 
+  
+  bool usingPerSiteRates() const { return tr->rateHetModel = GAMMA;  } 
+  void enablePerSiteRates() { tr->rateHetModel = CAT; } 
+
 private:   
   double getTreeLengthHelper(nodeptr p) const;
   void extractHelper( nodeptr p , vector<Branch> &result, bool isStart) const ; 

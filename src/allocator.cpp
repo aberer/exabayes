@@ -22,7 +22,7 @@ extern "C"
 }
 #endif
 
-
+#if 0 
 
 // TODO only compile when used with pll 
 
@@ -109,5 +109,5 @@ void operator delete[](void* p)  _GLIBCXX_USE_NOEXCEPT
 
 #endif
 
-
+#endif
 #endif

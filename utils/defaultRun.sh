@@ -10,7 +10,7 @@ numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l)
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=1		
+useGoogleProfiler=0		
 useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
@@ -66,6 +66,8 @@ codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
+    # CC="$ccompiler" 
+    # CXX="$cxxcompiler"  
     args="$args --disable-pll"
     baseCall="mpirun -np 1  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
     # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"

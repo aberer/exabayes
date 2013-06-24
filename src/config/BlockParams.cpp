@@ -1,10 +1,10 @@
 #include "BlockParams.hpp"
 #include "axml.h"
-
+#include <algorithm>
 
 void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 {
-  vector<bool> partAppeared(traln.getNumberOfPartitions(), false); 
+  vector<bool> partAppeared(traln->getNumberOfPartitions(), false); 
 
   token.GetNextToken();
   auto str = token.GetToken(false); 
@@ -53,11 +53,11 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   
   // maybe this should not be done here /= 
   // too clumsy -- must be tested 
-  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
       if(not partAppeared[i] && 
-	 (   ( cat == Category::AA_MODEL && traln.getPartition(i)->dataType == AA_DATA ) 
-	     || (cat == Category::SUBSTITUTION_RATES && traln.getPartition(i)->dataType == DNA_DATA) 
+	 (   ( cat == Category::AA_MODEL && traln->getPartition(i)->dataType == AA_DATA ) 
+	     || (cat == Category::SUBSTITUTION_RATES && traln->getPartition(i)->dataType == DNA_DATA) 
 	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
 	{
 	  
@@ -74,6 +74,8 @@ void BlockParams::Read(NxsToken &token)
   DemandEndSemicolon(token, "PARAMS");
   nat idCtr = 0; 
 
+  std::set<Category> catsFound; 
+
   while(true)
     {
       token.GetNextToken();
@@ -81,37 +83,34 @@ void BlockParams::Read(NxsToken &token)
 
       if (res == NxsBlock::NxsCommandResult(STOP_PARSING_BLOCK))
 	return;
+
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
-	{
+	{	  
 	  NxsString str = token.GetToken(false); 
 
-	  if(str.EqualsCaseInsensitive("stateFreq"))
+	  Category cat = CategoryFuns::getCategoryFromLinkLabel(str); 	  
+	  parseScheme(token, cat, idCtr); 
+
+	  
+	  if(catsFound.find(cat) != catsFound.end())
 	    {
-	      parseScheme(token,  Category::FREQUENCIES, idCtr); 
+	      cerr << "parsing error: found a linking scheme for category  " <<  CategoryFuns::getLongName(cat) << " twice. Aborting." ; 
+	      exit(1); 
 	    }
-	  else if(str.EqualsCaseInsensitive("rateHet"))
+
+	  if(cat == Category::RATE_HETEROGENEITY)
 	    {
-	      parseScheme(token, Category::RATE_HETEROGENEITY, idCtr); 
+	      string copy =  str; 
+	      std::transform(copy.begin(), copy.end(), copy.begin(), ::tolower); 
 	    }
-	  else if(str.EqualsCaseInsensitive("revMat"))
+
+	  if(cat == Category::AA_MODEL
+	     || cat == Category::BRANCH_LENGTHS
+	     || cat == Category::TOPOLOGY)
 	    {
-	      parseScheme(token, Category::SUBSTITUTION_RATES, idCtr);
-	    }
-	  else if(str.EqualsCaseInsensitive("aaModel"))
-	    {
-	      parseScheme(token, Category::AA_MODEL, idCtr); 
-	      assert(NOT_IMPLEMENTED); 
-	    }	  
-	  else if(str.EqualsCaseInsensitive("branchLength"))
-	    {
-	      parseScheme(token, Category::BRANCH_LENGTHS, idCtr); 
-	      assert(NOT_IMPLEMENTED);
-	    }
-	  else 
-	    {
-	      cerr << "parsing error at " << str  << endl; 
-	      exit(0);
-	    }
+	      cerr <<  "not implemented"; 
+	      assert(0); 
+	    }	    
 	}
     }
 }

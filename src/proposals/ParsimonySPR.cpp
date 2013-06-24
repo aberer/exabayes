@@ -214,11 +214,13 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   assert(traln.getNumBranches() == 1); 
 
 #ifdef  NO_SEC_BL_MULTI
-  modifiesBl = false;
+  modifiesBl = false;  
+  // assert(0);
 #endif
 
   if( modifiesBl)
     {
+      // assert(0); 
       auto brPr =  secVar[0]->getPrior();
       move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }

@@ -12,7 +12,6 @@
 
 void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const TreeAln &traln )
 {
-  vector<bool> categoryIsActive( NUM_PROP_CATS, false );
   std::set<Category> categories; 
 
   for(auto &v : vars)
@@ -21,7 +20,7 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
   nat highestId = vars.size() == 0 ? 0 : vars[vars.size()-1]->getId(); 
 
   // add standard stuff, if not defined yet
-  for(auto &cat : getAllCategories())
+  for(auto &cat : CategoryFuns::getAllCategories())
     {
       Category  catIter = cat; 
       if(categories.find(cat) != categories.end())
@@ -49,6 +48,8 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 	    break; 
 	  }
 
+	case Category::AA_MODEL: 
+	case Category::SUBSTITUTION_RATES: 
 	case Category::FREQUENCIES: 
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
@@ -60,19 +61,6 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 
 	    break; 
 	  }
-
-	case Category::SUBSTITUTION_RATES: 
-	  {
-	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      {
-		RandomVariablePtr r(new RandomVariable(catIter, highestId));
-		r->addPartition(j); 
-		vars.push_back(r);	   
-	      }
-
-	    break;  
-	  }
-
 	case Category::RATE_HETEROGENEITY: 
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions();++ j)
@@ -80,22 +68,6 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 		RandomVariablePtr r(new RandomVariable(catIter, highestId));
 		r->addPartition(j);
 		vars.push_back(r);
-	      }
-
-	    break; 
-	  }
-	  
-	case Category::AA_MODEL: 
-	  {
-	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      {
-		pInfo* partition = traln.getPartition(j);
-		if(partition->dataType == AA_DATA)
-		  {
-		    RandomVariablePtr r(new RandomVariable(catIter, highestId));
-		    r->addPartition(j); 
-		    vars.push_back(r);
-		  }
 	      }
 
 	    break; 
@@ -215,7 +187,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
       vector<ProposalPtr> tmpResult;  
 
-      reg.getProposals(v->getCategory(), propConfig, tmpResult); 
+      reg.getProposals(v->getCategory(), propConfig, tmpResult, traln); 
       for(auto  &p : tmpResult )
 	{
 	  p->addPrimVar(v);

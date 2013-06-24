@@ -35,8 +35,8 @@
 // #define TEST  
 
 #ifdef TEST
+#include "LnlRestorer.hpp"
 #include "TreeRandomizer.hpp"
-#include "eval.h"
 #endif
 
 
@@ -65,20 +65,35 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
 
 #ifdef TEST   
 
-  auto traln =  make_shared<TreeAln>( )  ; 
-  traln->initializeFromByteFile(cl.getAlnFileName());
+  auto t =  make_shared<TreeAln>( )  ; 
+  t->initializeFromByteFile(cl.getAlnFileName());
 
-  vector<shared_ptr<TreeAln> >  tralns = {traln}; 
+  vector<shared_ptr<TreeAln> >  tralns = {t}; 
 
-  TreeRandomizer r(123, traln ); 
+  TreeRandomizer r(123, t ); 
   
   for(int i = 0; i < 10; ++i)
     r.randomizeTree();
-
   tralns[0]->enableParsimony();
-  
-  vector<nat> partitionPars; 
-  exa_evaluateParsimony(*(tralns[0]), tralns[0]->getTr()->start, TRUE , partitionPars); 
+
+  auto traln = tralns[0]; 
+
+  nodeptr p = traln->getTr()->start; 
+  Branch b(p->number, p->back->number); 
+
+  cout << "the start is "<< p->number << "," << p->back->number << endl; 
+  double init = 0.1; 
+
+  double result = 0; 
+  // cout << "we have " << traln->getPartitionsPtr()->perGeneBranchLengths << endl; 
+
+  LikelihoodEvaluator eval(LnlRestorerPtr(new LnlRestorer(*traln))); 
+  eval.evaluate(*traln, b, true);
+
+
+  makenewzGeneric(traln->getTr(), traln->getPartitionsPtr(), p->back , p, p->z, 10, &result, FALSE); 
+
+  cout << "init was " << init<< " result is " << result << endl; 
 
   exit(0); 
 

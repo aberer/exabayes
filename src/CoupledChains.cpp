@@ -180,7 +180,7 @@ void CoupledChains::chainInfo()
   for(auto& p : proposals)
     sortedProposals[p->getCategory()].push_back(p.get()) ; 
 
-  for(auto &n : getAllCategories())
+  for(auto &n : CategoryFuns::getAllCategories())
     {       
       Category cat = n; 
 
@@ -190,7 +190,7 @@ void CoupledChains::chainInfo()
       
       if(isThere)
 	{
-	  tout << getLongName(n) << ":\t";
+	  tout << CategoryFuns::getLongName(n) << ":\t";
 	  for(auto &p : proposals)
 	    {
 	      if(p->getCategory() == cat)

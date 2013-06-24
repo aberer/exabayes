@@ -4,7 +4,7 @@
 
 ostream& operator<<(ostream &out, const RandomVariable& rhs)
 {
-  out << getShortName(rhs.cat); 
+  out << CategoryFuns::getShortName(rhs.cat); 
 
   bool  isFirst = true; 
   out << "{" ; 
@@ -23,7 +23,7 @@ ostream& operator<<(ostream &out, const RandomVariable& rhs)
 
 ostream&  RandomVariable::printShort(ostream& out)
 {
-  out << getShortName(cat) << "{" ; 
+  out << CategoryFuns::getShortName(cat) << "{" ; 
   bool isFirst= true; 
   for(auto v : partitions)
     {

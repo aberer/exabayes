@@ -22,9 +22,8 @@
 class ProposalRegistry
 {
 public: 
-  void getProposals(Category cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result) const ;
+  void getProposals(Category cat, const BlockProposalConfig &config, vector<ProposalPtr> &result, const TreeAln &traln ) const ;
   
-
   static const double initFrequencySlidingWindow ; 
   static const  double initBranchLengthMultiplier; 
   static const  double initRateSlidingWindow; 
@@ -35,8 +34,6 @@ public:
   static const double initGammaMultiplier; 
   static const double initNodeSliderMultiplier; 
   
-    
-
 private: 
 
 }; 

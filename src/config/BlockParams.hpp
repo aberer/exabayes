@@ -13,20 +13,19 @@
 class BlockParams : public NxsBlock
 {
 public: 
-  explicit BlockParams(const TreeAln& _traln)
-    :traln(_traln)
+  BlockParams()
   {
     NCL_BLOCKTYPE_ATTR_NAME = "PARAMS";    
   }
 
+  void setTree(TreeAlnPtr _traln){traln = _traln; }
   vector<RandomVariablePtr> getParameters() const{return parameters; }
   virtual void Read(NxsToken &token); 
-  void initialize(const TreeAln &traln); 
 
 private: 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
   vector<RandomVariablePtr> parameters; 
-  const TreeAln &traln; 
+  TreeAlnPtr traln; 
 }; 
 
 

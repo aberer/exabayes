@@ -77,6 +77,9 @@ begin runconfig;
  [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
  burninProportion 0.25 [ discard this proportion of all initial samples as burnin  ]
 
+[ TODO ]  
+[  parsimonyStartingTree  true  ] 
+
 end; 
  
  

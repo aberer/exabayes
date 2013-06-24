@@ -92,7 +92,7 @@ void BlockPrior::Read(NxsToken &token)
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
 	{
 	  auto str = token.GetToken(false).ToUpper(); 
-	  Category cat = getCategoryByPriorName(str); 
+	  Category cat = CategoryFuns::getCategoryByPriorName(str); 
 	  token.GetNextToken();
 
 	  int priorPartition = -1;  

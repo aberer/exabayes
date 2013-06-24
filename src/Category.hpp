@@ -19,11 +19,15 @@ enum class Category
 } ; 
 
 
-std::vector<Category> getAllCategories(); 
-std::string getLongName(Category cat); 
-std::string getShortName(Category cat); 
-std::string getPriorName(Category cat); 
-Category getCategoryByPriorName(std::string name); 
+namespace CategoryFuns 
+{
+  std::vector<Category> getAllCategories(); 
+  std::string getLongName(Category cat); 
+  std::string getShortName(Category cat); 
+  std::string getPriorName(Category cat); 
+  Category getCategoryByPriorName(std::string name); 
+  Category getCategoryFromLinkLabel(std::string name); 
+} 
 
 #endif
  

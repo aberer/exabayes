@@ -49,12 +49,6 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
 
   for(auto &v:  _variables) 
     variables.push_back(v->clone()); 
-  
-  cout << "my random variables now are "<< endl; 
-  for(auto &v : variables)
-    {
-      cout << *v << endl; 
-    }
 
 }
 
@@ -246,6 +240,7 @@ void Chain::printNexusTreeFileStart( FILE *fh  )
 void Chain::switchState(Chain &rhs)
 {
   swap(couplingId, rhs.couplingId); 
+  swap(bestState, rhs.bestState); 
   // swap(chainRand, rhs.chainRand); 
   swap(proposals, rhs.proposals); 
 }

@@ -38,7 +38,6 @@ extern "C"{
 #ifdef __cplusplus
 }
 #endif
-
 #else 
 #include "mpi.h"
 #endif
@@ -60,7 +59,7 @@ extern "C"{
 
 #if HAVE_PLL == 0
   void newviewParsimony(tree *tr, nodeptr  p); 
-  nat evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony); 
+  void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony); 
 #else 
   void newviewParsimony(tree *tr, partitionList *pr, nodeptr  p); 
   nat evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, nat *partitionParsimony); 
