@@ -62,7 +62,7 @@ extern "C"{
   void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony); 
 #else 
   void newviewParsimony(tree *tr, partitionList *pr, nodeptr  p); 
-  nat evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, nat *partitionParsimony); 
+  void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, nat *partitionParsimony); 
 #endif
 
 #ifdef __cplusplus

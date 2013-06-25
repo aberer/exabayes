@@ -27,10 +27,10 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
 
   Branch b(insertPos->number, insertBack->number); 
 
-  // pEval.evaluate(traln, prunedTree);
-  
   vector<nat> partitionParsimony ; 
-  pEval.evaluate(traln, prunedTree->back, false, partitionParsimony); 
+  pEval.evaluateSubtree(traln,  prunedTree); 
+  pEval.evaluateSubtree(traln,  prunedTree->back); // necessary? 
+  pEval.evaluate(traln, prunedTree, false, partitionParsimony); 
 
   assert(posses.find(b) == posses.end()) ;   
   posses[b] = partitionParsimony; 

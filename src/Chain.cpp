@@ -287,6 +287,8 @@ void Chain::step()
   tout  << endl << "(" << oldPrior<<  " - " << prior.getLnPriorRatio()  << ") + ( " << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
 #endif
 
+  // hastings = 0; 
+
   bool wasAccepted  = testr < acceptance; 
 
   debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior()); 
