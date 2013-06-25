@@ -51,10 +51,9 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   double realMultiplier = log(newZ) / log(oldZ); 
   updateHastings(hastings, realMultiplier, name); 
 
-  cout << "acessing "<< *(primVar[0] )   << endl; 
-
-  auto relPrior =  primVar[0]->getPrior(); 
-  prior.updateBranchLengthPrior(traln, oldZ, newZ,relPrior) ; 
+  // cout << "acessing "<< *(primVar[0] )   << endl; 
+  // auto relPrior =  primVar[0]->getPrior(); 
+  // prior.updateBranchLengthPrior(traln, oldZ, newZ,relPrior) ; 
 } 
 
 

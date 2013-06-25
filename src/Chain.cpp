@@ -50,11 +50,6 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
     relWeightSum +=  elem->getRelativeWeight();
 
   cout << "relative weight is "  << relWeightSum << endl; 
-
-  
-  // we could do that with unique_ptr later ... 
-  // for(auto &v:  _variables) 
-  //   variables.push_back(v); 
 }
 
 
