@@ -44,7 +44,9 @@ public:
   /** @brief Execute a portion of one run. */
   void executePart(int gensToRun); 
 
-  Chain* getChain(int i) {return chains[i]; }
+  vector<Chain*> getChains() {return chains; } 
+  
+  // Chain* getChain(int i) {return chains[i]; }
   int getNumberOfChains(){return chains.size();}
 
   void enableHeatTuning(int freq )

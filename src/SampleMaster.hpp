@@ -26,7 +26,7 @@ using namespace std;
 class SampleMaster
 {
 public: 
-  SampleMaster( const ParallelSetup &pl) ;   
+  SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
   ~SampleMaster(){};
 
   void initializeRuns(const CommandLine &cl ); 
@@ -35,6 +35,8 @@ public:
   void run(); 
   void initWithConfigFile(string configFileName,  TreeAlnPtr traln, vector<ProposalPtr > &proposalResult, vector<RandomVariablePtr> &variableResult); 
   void validateRunParams(); 	// TODO  
+
+  void branchLengthsIntegration()  ;  
 
 private: 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandLine &cl ); 
@@ -49,6 +51,8 @@ private:
   BlockParams paramBlock; 
   BlockRunParameters runParams;  
   BlockProposalConfig propConfig;   
+
+  Randomness masterRand; 
 };  
 
 #endif

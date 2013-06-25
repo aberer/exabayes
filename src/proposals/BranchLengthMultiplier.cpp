@@ -13,10 +13,19 @@ BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
 }
 
 
+Branch BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
+{
+  return traln.drawBranchUniform(rand); 
+}   
+
+
+
 void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
   tree *tr = traln.getTr(); 
-  Branch b =  traln.drawBranchUniform(rand); 
+
+  // Branch b =  traln.drawBranchUniform(rand); 
+  Branch b = proposeBranch(traln, rand); 
   
   nodeptr p = b.findNodePtr(traln); 
   savedBranch = b; 
@@ -42,7 +51,10 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   double realMultiplier = log(newZ) / log(oldZ); 
   updateHastings(hastings, realMultiplier, name); 
 
-  prior.updateBranchLengthPrior(traln, oldZ, newZ, primVar[0]->getPrior()); 
+  cout << "acessing "<< *(primVar[0] )   << endl; 
+
+  auto relPrior =  primVar[0]->getPrior(); 
+  prior.updateBranchLengthPrior(traln, oldZ, newZ,relPrior) ; 
 } 
 
 

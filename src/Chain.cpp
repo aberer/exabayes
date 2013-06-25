@@ -24,6 +24,7 @@
 
 Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariablePtr> &_variables, LikelihoodEvaluatorPtr eval) 
   : traln(_traln)
+  , deltaT(0)
   , runid(_runid)
   , tuneFrequency(_tuneFreq)
   , hastings(0)
@@ -35,9 +36,10 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
   , bestState(numeric_limits<double>::lowest())
   , prior(*_traln, _variables)
   , evaluator(eval)
+  , variables(_variables)
 {
   for(auto &p : _proposals)
-      proposals.push_back(ProposalPtr(p->clone())); 
+    proposals.push_back(ProposalPtr(p->clone())); 
 
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
@@ -47,9 +49,12 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
   for(auto& elem : proposals)
     relWeightSum +=  elem->getRelativeWeight();
 
-  for(auto &v:  _variables) 
-    variables.push_back(v->clone()); 
+  cout << "relative weight is "  << relWeightSum << endl; 
 
+  
+  // we could do that with unique_ptr later ... 
+  // for(auto &v:  _variables) 
+  //   variables.push_back(v); 
 }
 
 

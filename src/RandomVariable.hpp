@@ -27,7 +27,7 @@ public:
   RandomVariable(Category cat, nat id)
     : cat(cat) , id(id)  {} 
 
-  void setPrior (shared_ptr<AbstractPrior> _prior) { prior = _prior; }  
+  void setPrior (PriorPtr _prior) { prior = _prior; }  
   void addPartition(nat id) { partitions.push_back(id); }
   const vector<nat>& getPartitions() const {return partitions; }
   Category getCategory() const { return cat; }
@@ -36,7 +36,8 @@ public:
   PriorPtr getPrior() const {return prior; }
   ostream&  printShort(ostream& out); 
 
-  RandomVariablePtr clone() const ; 
+  // make cloneable, if there is information in it   
+  // RandomVariablePtr clone() const ; 
 
 
   RandomVariable(RandomVariable& rhs) = delete ; 

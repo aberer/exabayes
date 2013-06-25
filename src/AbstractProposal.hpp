@@ -53,14 +53,14 @@ public:
   friend ostream&  operator<< ( ostream& out , const unique_ptr<AbstractProposal> &rhs)
   {
     out << rhs->name <<  " primarily modifying " ; 
-    for(auto r : rhs->primVar)
-      out << r << ",\t"  ; 
+    for(auto &r : rhs->primVar)
+      out << *r << ",\t"  ; 
 
     if(not rhs->secVar.empty() )
       {
 	out << "\tand also modifying " ; 
-	for(auto r : rhs->secVar ) 
-	  out << r << ",\t" ; 
+	for(auto &r : rhs->secVar ) 
+	  out << *r << ",\t" ; 
       }
 
     return out; 

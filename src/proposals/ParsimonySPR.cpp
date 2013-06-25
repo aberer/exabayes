@@ -198,7 +198,6 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   possibilities.erase(chosen.first); 
   auto backWeights = getWeights(traln,possibilities);   
   updateHastings( hastings, backWeights[initBranch] /  chosen.second , name); 
-
 } 
 
 

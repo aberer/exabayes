@@ -26,11 +26,12 @@ static int countNumberOfTreesQuick(const char *fn );
 static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > tralns); 
 static void initTreeWithOneRandom(int seed, vector<shared_ptr<TreeAln> > tralns); 
 
-SampleMaster::SampleMaster(const ParallelSetup &pl) 
+SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) 
   : pl(pl)
   , initTime(gettime())
+  , masterRand(cl.getSeed())
 {
-
+  initializeRuns(cl); 
 }
 
 
@@ -58,7 +59,7 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
   
-  Randomness masterRand(cl.getSeed());   
+  // masterRand(cl.getSeed());   
   vector<int> runSeeds; 
   vector<int> treeSeeds; 
   for(int i = 0; i < runParams.getNumRunConv();++i)
@@ -154,7 +155,7 @@ bool SampleMaster::convergenceDiagnostic()
     }
   else 
     {
-      return runs[0].getChain(0)->getGeneration() > runParams.getNumGen();
+      return runs[0].getChains()[0]->getGeneration() > runParams.getNumGen();
     }
 }
 
@@ -298,6 +299,10 @@ void SampleMaster::initTrees(vector<TreeAlnPtr> &trees, const CommandLine &cl )
 }
 
 
+// a developmental mode to integrate over branch lengths
+#define _GO_TO_INTEGRATION_MODE
+
+
 void SampleMaster::run()
 {
   bool hasConverged = false;   
@@ -315,6 +320,10 @@ void SampleMaster::run()
       printPRSF(run_id);
 #endif
     }
+
+
+  // go into integration mode, if we want to do so 
+  branchLengthsIntegration();
 }
  
  
@@ -322,16 +331,87 @@ void SampleMaster::finalizeRuns()
 {
   for(auto run : runs)
     {
-      for(int i = 0; i < run.getNumberOfChains(); ++i)
+      auto chains = run.getChains(); 
+      for(auto &chain : chains)
 	{
-	  Chain *chain = run.getChain(0);
 	  if( chain->getChainHeat() == 1.f)
 	    chain->finalizeOutputFiles(run.getTopoFile());
 	  tout << "best state was: " << chain->getBestState( )<< endl; 
 	}
     }
 
-  tout << endl << "Converged after " << runs[0].getChain(0)->getGeneration() << " generations" << endl; 
+  tout << endl << "Converged/stopped after " << runs[0].getChains()[0]->getGeneration() << " generations" << endl; 
   tout << endl << "Total execution time: " << setprecision(2) <<  gettime() - initTime <<  " seconds" << endl; 
 }
 
+
+
+
+
+
+#define INTEGRATION_GENERATIONS 1000 
+
+#include "proposals/BranchIntegrator.hpp"
+#include "ProposalRegistry.hpp"
+
+void SampleMaster::branchLengthsIntegration()  
+{
+  assert(runs.size() == 1 );   
+  auto run = runs[0];   
+  auto chains = run.getChains(); 
+  assert(chains.size() == 1); 
+  auto chain = chains[0]; 
+  
+  ofstream tFile("tree.tre");   
+  TreePrinter tp(true, true, false); 
+  auto traln = chain->getTraln(); 
+
+  tFile << tp.printTree(traln) << endl; 
+  tFile.close(); 
+  ofstream sampled("samples"); 
+  
+  auto eval = chain->getEvaluator();
+
+  RandomVariablePtr r(new RandomVariable(Category::BRANCH_LENGTHS, 0));
+  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+    r->addPartition(i);
+
+  vector<RandomVariablePtr> vars =  {r} ; 
+
+  vars[0]->setPrior(PriorPtr (new ExponentialPrior(10)));
+
+  auto p = ProposalPtr(new BranchIntegrator(ProposalRegistry::initBranchLengthMultiplier));   
+  p->addPrimVar(vars[0]);
+  vector<ProposalPtr>  proposals;   
+  cout << "proposal " << p << endl; 
+
+  proposals.push_back( std::move(p) ); 
+
+  
+
+  Chain integrationChain(masterRand.generateSeed(), 
+  			 0, 
+  			 0, 
+  			 shared_ptr<TreeAln>(&(traln)), 
+  			 proposals, 
+  			 100,
+  			 vars, 
+  			 eval ); 
+
+  auto branches =  traln.extractBranches();
+  vector<ProposalPtr>& ps = integrationChain.getProposals(); 
+  assert(ps.size() == 1 );   
+  auto integrator = dynamic_cast<BranchIntegrator*>(ps[0].get()); 
+
+  for(auto branch : branches)
+    {
+      integrator->setToPropose(branch); 
+
+      for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
+	{
+	  integrationChain.step();
+	  auto p = branch.findNodePtr(traln); 
+	  cout << p->z[0] << endl; 
+	}
+    }    
+}

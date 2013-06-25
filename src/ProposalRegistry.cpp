@@ -102,7 +102,7 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
       if(proposal->getCategory() != cat || proposal->getRelativeWeight() == 0 )
 	delete proposal; 
       else 
-	result.push_back(unique_ptr<AbstractProposal>(proposal)); 
+	result.push_back(ProposalPtr(proposal)); 
     }
 } 
 

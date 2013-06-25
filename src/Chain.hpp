@@ -26,7 +26,10 @@ using namespace std;
 class Chain
 {
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariablePtr> &variables, LikelihoodEvaluatorPtr eval) ; 
+  Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, 
+	const vector<ProposalPtr> &_proposals, int _tuneFreq ,
+	const vector<RandomVariablePtr> &variables, 
+	LikelihoodEvaluatorPtr eval) ; 
   
   // getters and setters 
   double getChainHeat(); 
@@ -61,10 +64,12 @@ public:
   TreeAln& getTraln()  { return *traln; }
 
   const vector<ProposalPtr>& getProposals() const { return proposals;}
+  vector<ProposalPtr>& getProposals() {return proposals; }
 
   double getBestState() const {return bestState; }
 
-  
+  LikelihoodEvaluatorPtr getEvaluator(){return evaluator; }
+
 private : 
   void initParamDump(); 
   void debug_printAccRejc(ProposalPtr &prob, bool accepted, double lnl, double lnPr ) ;

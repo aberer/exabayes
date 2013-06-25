@@ -19,8 +19,13 @@ public:
 
   virtual AbstractProposal* clone() const;  
 
-private: 
+
+  virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
+
+protected: 
   double multiplier;  
+
+private: 
   
   Branch savedBranch; 
 }; 
