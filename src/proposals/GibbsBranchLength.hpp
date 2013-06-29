@@ -4,8 +4,9 @@
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
-  GibbsBranchLength(LikelihoodEvaluatorPtr eval)
+  GibbsBranchLength(LikelihoodEvaluatorPtr _eval)
     : BranchLengthMultiplier(0)
+    , eval(_eval)
   {
     name = "estGibbsBL"; 
     category = Category::BRANCH_LENGTHS; 
@@ -21,7 +22,7 @@ public:
 
     nodeptr p = b.findNodePtr(traln); 
     savedBranch = b;     
-    double newInterpretedLength = GibbsProposal::drawFromEsitmatedPosterior(b, traln, rand, 0.1, 5, hastings); 
+    double newInterpretedLength = GibbsProposal::drawFromEsitmatedPosterior(b, eval, traln, rand, 0.1, 5, hastings); 
 
     double newZ = b.getInternalLength(traln, newInterpretedLength); 
     

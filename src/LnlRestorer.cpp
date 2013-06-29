@@ -12,7 +12,6 @@
 #define GAMMA_CATS 4 
 
 
-
 LnlRestorer::LnlRestorer(TreeAln& traln)
   : numPart(traln.getNumberOfPartitions())
   , numTax(traln.getTr()->mxtips)

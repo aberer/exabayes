@@ -2,7 +2,6 @@
 
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
-#include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 

@@ -49,14 +49,12 @@ void SampleMaster::initializeRuns( )
 
   vector<ProposalPtr> proposals; 
   vector<RandomVariablePtr> variables; 
-  
-  LnlRestorerPtr restorer2(new LnlRestorer(*(trees[0])));
-  LikelihoodEvaluatorPtr eval2(new LikelihoodEvaluator(restorer2));
 
-  // auto restorer2();
-  // auto   eval2 = LikelihoodEvaluatorPtr(new LikelihoodEvaluator(LnLRestorerPtr(new LnlRestorer(*(trees[0])))));
+  LnlRestorerPtr restorer(new LnlRestorer(*(trees[0])));
+  LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
 
-  initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables, eval2);
+
+  initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables, eval);
   assert(runParams.getTuneFreq() > 0); 
 
   // ORDER: must be after  initWithConfigFile
@@ -64,8 +62,7 @@ void SampleMaster::initializeRuns( )
 
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
-  
-  // masterRand(cl.getSeed());   
+
   vector<int> runSeeds; 
   vector<int> treeSeeds; 
   for(int i = 0; i < runParams.getNumRunConv();++i)
@@ -74,13 +71,6 @@ void SampleMaster::initializeRuns( )
       runSeeds.push_back(r.v[0]); 
       treeSeeds.push_back(r.v[1]); 
     }
-
-  LnlRestorerPtr restorer(new LnlRestorer(*(trees[0])));
-  LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
-
-
-  // LnLRestorerPtr restorer(new LnlRestorer(*(trees[0])));
-  // LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
 
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {      
@@ -479,17 +469,28 @@ void SampleMaster::branchLengthsIntegration()
 
       double result = 0;  
       double curVal = branch.getInternalLength(traln,0.1); 
+      double secDerivative = 0; 
+      double firstDerivative = 0; 
 
+      double prevVal = curVal; 
       for(int i = 0; i < NR_STEPS; ++i )
 	{
-	  double secDerivative = 0; 
 	  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
 			  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-			  &curVal, 1, &result, &secDerivative, lambda, FALSE); 
+			  &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
 	  tmpBranch.setLength(result);
-	  thisOut << tmpBranch.getInterpretedLength(traln) << "\t" << secDerivative << endl; 	
+	  thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
+	  prevVal = tmpBranch.getInterpretedLength(traln); 
 	  curVal = result; 
 	} 
+
+      double something = tmpBranch.getInternalLength(traln, prevVal); 
+
+      makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
+		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
+		      &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
+      
+      thisOut << prevVal << "\t" << firstDerivative << "\t" << secDerivative << endl; 
 
       thisOut.close(); 
       

@@ -17,13 +17,15 @@ const double GibbsProposal::EST_FAC = 0.008067;
     @param Branch branch -- contains the initial branch length
     
  */ 
-double GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, TreeAln &traln, Randomness& rand, double initVal,  int maxIter, double &hastings) 
+double GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluatorPtr& eval, TreeAln &traln, Randomness& rand, double initVal,  int maxIter, double &hastings) 
 {
   auto p = branch.findNodePtr(traln); 
   double initLength = branch.getLength(); 
+
+  
   
   double nrD2 = 0; 
-  branch.optimise(traln, nrD2, maxIter);
+  optimiseBranch(traln, branch, eval, nrD2, maxIter);
 
   double nrOpt = branch.getLength(); 
   double c = EST_FAC * pow(-nrD2, EST_EXP); 
@@ -36,4 +38,34 @@ double GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, TreeAln &traln,
   branch.setLength(prop); 
   
   return 0 ; 
+}
+
+
+
+void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluatorPtr &eval, double &secDerivative, int maxIter)  
+{
+  auto p = b.findNodePtr(traln ), 
+    q = p->back; 
+
+  if(not p->x == 1 )
+    eval->evalSubtree(traln, b); 
+  if(not q->x == 1 )
+    eval->evalSubtree(traln,b.getInverted());
+  
+#ifdef TODO
+  // assert(0); 
+#endif
+
+  double lambda = 10; 		// unnecesary ? TODO   
+  double result = 0;   
+  double init = b.getLength(); 
+  double firstDerivative = 0 ; 
+
+#if HAVE_PLL != 0
+    makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &init, maxIter,  &result , &firstDerivative,  &secDerivative, lambda, FALSE) ;
+#else 
+  assert(0); 
+#endif
+
+  b.setLength(result); 
 }

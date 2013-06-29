@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cassert>
+
 #include "axml.h"
 
 class TreeAln; 
@@ -46,9 +47,6 @@ public:
 
   bool isTipBranch(const TreeAln &traln) const; 
   void updateLength(const TreeAln &traln) ; 
-
-  void optimise( TreeAln &traln, double &secDerivative, int maxIter)  ; 
-
 
 private: 
   nat thisNode; 

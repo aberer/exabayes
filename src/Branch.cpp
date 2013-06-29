@@ -142,29 +142,4 @@ void Branch::updateLength(const TreeAln &traln)
   auto p = findNodePtr(traln); 
   length = p->z[0]; 
 }
-
-
-
-void Branch::optimise( TreeAln &traln, double &secDerivative, int maxIter)  
-{
-  auto p = this->findNodePtr(traln ), 
-    q = p->back; 
-
-  
-#ifdef TODO
-  // assert(0); 
-#endif
-
-  double lambda = 10; 		// unnecesary ? TODO   
-
-  double result = 0; 
-  
-#if HAVE_PLL != 0
-  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &length, maxIter,  &result , &secDerivative, lambda, FALSE) ;
-#else 
-  assert(0); 
-#endif
-
-
-  length = result; 
-}
+ 
