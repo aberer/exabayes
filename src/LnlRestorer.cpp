@@ -1,3 +1,4 @@
+#include <cstring>
 
 #include <cassert>
 
@@ -9,6 +10,7 @@
 #include "GlobalVariables.hpp"
 
 #define GAMMA_CATS 4 
+
 
 
 LnlRestorer::LnlRestorer(TreeAln& traln)

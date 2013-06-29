@@ -2,6 +2,7 @@
 #include "TreeAln.hpp"
 #include "tune.h"
 
+#include "GibbsProposal.hpp"
 
 
 BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
@@ -12,19 +13,14 @@ BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
   relativeWeight = 20;
 }
 
-
 Branch BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
 {
   return traln.drawBranchUniform(rand); 
 }   
 
 
-
 void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
-  tree *tr = traln.getTr(); 
-
-  // Branch b =  traln.drawBranchUniform(rand); 
   Branch b = proposeBranch(traln, rand); 
   
   nodeptr p = b.findNodePtr(traln); 
@@ -39,7 +35,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   double oldZ = traln.getBranchLength( p,0);
   savedBranch.setLength( oldZ); 
 
-  double newZ = oldZ; 
+ double newZ = oldZ; 
   if(not traln.isCollapsed(b))    
     newZ = pow( oldZ, drawnMultiplier);
   else 
@@ -52,9 +48,9 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   updateHastings(hastings, realMultiplier, name); 
 
   // cout << "acessing "<< *(primVar[0] )   << endl; 
-  // auto relPrior =  primVar[0]->getPrior(); 
-  // prior.updateBranchLengthPrior(traln, oldZ, newZ,relPrior) ; 
-} 
+  auto relPrior =  primVar[0]->getPrior(); 
+  prior.updateBranchLengthPrior(traln, oldZ, newZ,relPrior) ; 
+}
 
 
 void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluatorPtr &evaluator,TreeAln &traln, PriorBelief &prior) 

@@ -10,12 +10,8 @@
 
 
 #define NOT_IMPLEMENTED  0
-/* #define PRINT printBothOpen */
-
 
 #include "config.h"
-
-/* #define PRINT printBothOpen */
 
 #if HAVE_PLL != 0
 #define exa_realloc rax_realloc  
@@ -25,7 +21,6 @@
 #define exa_calloc rax_calloc
 #else 
 
-#include <stdlib.h>
 #define exa_realloc realloc
 #define exa_malloc_aligned malloc_aligned
 #define exa_free free 
@@ -35,49 +30,9 @@
 
 #define TODO 0
 
-
-// TODO: we also need a header cleanup, just imported this from examl 
-#ifdef WIN32
-#include <direct.h>
-#endif
-
-#ifndef WIN32
-#include <sys/times.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
-#endif
-
-#include <math.h>
-#include <time.h>
-
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdarg.h>
-#include <limits.h>
-
-#if ! (defined(__ppc) || defined(__powerpc__) || defined(PPC))
-#include <xmmintrin.h>
-/*
-  special bug fix, enforces denormalized numbers to be flushed to zero,
-  without this program is a tiny bit faster though.
-  #include <emmintrin.h> 
-  #define MM_DAZ_MASK    0x0040
-  #define MM_DAZ_ON    0x0040
-  #define MM_DAZ_OFF    0x0000
-*/
-#endif
-
-
-#define ALL_MODELS -1 
-
 typedef  unsigned int nat ; 
 
-#define NOT ! 
-
-
-#define TARGET_RATIO 0.234    ///  the golden acceptance ratio, we want to achieve
+#define TARGET_RATIO 0.25    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
 #define ACCEPTED_LNPR_EPS 1e-6 
 
@@ -111,17 +66,15 @@ typedef  unsigned int nat ;
 /* #define DEBUG_PRINT_TUNE_INFO */
 
 /* #define ENABLE_PRSF */
-#define WEIGHT_EPS 1e-3  	/* guided spr    */
 
 /* #define CONTROL_ESPR */
-
 
 /* #define DEBUG_TREE_LENGTH */
 
 /* #define DEBUG_PARS_SPR */
 
 /* for debugging:  */
-#define STRETCH_FACTOR 2 
+
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */

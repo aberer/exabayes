@@ -19,6 +19,7 @@
 #include "CoupledChains.hpp"
 #include "config/ConfigReader.hpp"
 #include "ParallelSetup.hpp"
+#include "time.hpp"
 
 using namespace std; 
 
@@ -29,30 +30,32 @@ public:
   SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
   ~SampleMaster(){};
 
-  void initializeRuns(const CommandLine &cl ); 
+  void initializeRuns( ); 
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName,  TreeAlnPtr traln, vector<ProposalPtr > &proposalResult, vector<RandomVariablePtr> &variableResult); 
+  void initWithConfigFile(string configFileName, TreeAlnPtr traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult, LikelihoodEvaluatorPtr &eval); 
   void validateRunParams(); 	// TODO  
 
   void branchLengthsIntegration()  ;  
 
 private: 
-  void initTrees(vector<shared_ptr<TreeAln> > &trees, const CommandLine &cl ); 
+  void initTrees(vector<shared_ptr<TreeAln> > &trees ); 
   bool convergenceDiagnostic(); 
 
   vector<CoupledChains> runs; 
 
   ParallelSetup pl; 
 
-  double initTime; 
+  CLOCK::system_clock::time_point initTime; 
 
   BlockParams paramBlock; 
   BlockRunParameters runParams;  
   BlockProposalConfig propConfig;   
 
   Randomness masterRand; 
+
+  const CommandLine cl; 
 };  
 
 #endif

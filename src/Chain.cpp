@@ -39,7 +39,12 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
   , variables(_variables)
 {
   for(auto &p : _proposals)
-    proposals.push_back(ProposalPtr(p->clone())); 
+    {
+      ProposalPtr copy(p->clone()); 
+      assert(copy->getPrimVar().size() != 0); 
+      proposals.push_back(std::move(copy)); 
+
+    }
 
   for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
     traln->initRevMat(j);
@@ -49,7 +54,6 @@ Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector
   for(auto& elem : proposals)
     relWeightSum +=  elem->getRelativeWeight();
 
-  cout << "relative weight is "  << relWeightSum << endl; 
 }
 
 

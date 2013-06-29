@@ -18,7 +18,7 @@ const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ;
 /**
    @brief yields a set of proposls for integrating a category  
  */
-void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &config, vector<ProposalPtr>& result, const TreeAln &traln) const 
+void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &config, vector<ProposalPtr>& result, const TreeAln &traln, LikelihoodEvaluatorPtr &eval) const 
 {
   vector<aaMatrix_t> someMatrices; 
 
@@ -85,6 +85,9 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	case AMINO_MODEL_JUMP: 
 	  proposal = new AminoModelJump(someMatrices);
 	  break; 
+	case BRANCH_GIBBS: 
+	  proposal = new GibbsBranchLength(eval);
+	  break;
 	case UPDATE_SINGLE_BL_GUIDED: 
 	case BRANCH_SLIDER: 
 	  continue; 		// TODO implement  

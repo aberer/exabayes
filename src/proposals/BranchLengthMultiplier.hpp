@@ -24,10 +24,8 @@ public:
 
 protected: 
   double multiplier;  
+  Branch savedBranch;   
 
-private: 
-  
-  Branch savedBranch; 
 }; 
 
 

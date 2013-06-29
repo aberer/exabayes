@@ -8,6 +8,7 @@
    to numbers must always be the same 
  */
 
+#include <cstring>
 #include <cassert>
 
 #include "BipartitionHash.hpp"

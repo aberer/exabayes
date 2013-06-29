@@ -12,6 +12,9 @@ class Branch
 public: 
   Branch(nat a = 0, nat b = 0, double length = 0.0); 
   double getInterpretedLength(const TreeAln &traln) const; 
+
+  double getInternalLength(const TreeAln &traln, double length) const; 
+
   void invert() { std::swap(thisNode, thatNode) ; }
   Branch getInverted() const { return Branch(thatNode, thisNode, length); }
   bool equalsUndirected(const Branch &rhs) const ;   
@@ -42,6 +45,10 @@ public:
   nat getOtherNode(nat node) const {assert(node == thisNode || node ==  thatNode) ; return thisNode == node ? thatNode : thisNode; }
 
   bool isTipBranch(const TreeAln &traln) const; 
+  void updateLength(const TreeAln &traln) ; 
+
+  void optimise( TreeAln &traln, double &secDerivative, int maxIter)  ; 
+
 
 private: 
   nat thisNode; 

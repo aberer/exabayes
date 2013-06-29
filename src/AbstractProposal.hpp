@@ -114,6 +114,8 @@ public:
     return out; 
   }
 
+  vector<RandomVariablePtr>& getPrimVar(){return primVar; } 
+
 protected:   
   string name;   
   SuccessCounter sctr; 

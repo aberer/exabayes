@@ -1,9 +1,10 @@
 #include <cassert>
 #include <iostream>
 #include <iomanip>
+#include <cmath>
+#include <cstring>
 
 #include "GlobalVariables.hpp"
-
 
 #include "axml.h" 
 

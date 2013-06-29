@@ -60,8 +60,16 @@ bool Branch::equalsUndirected(const Branch &rhs) const
 
 double Branch::getInterpretedLength(const TreeAln &traln) const
 { 
+  assert(traln.getNumBranches() == 1 ); 
   return -log(length) * traln.getTr()->fracchange;  
 } 
+
+
+double Branch::getInternalLength(const TreeAln &traln, double length) const
+{
+  assert(traln.getNumBranches() == 1 ); 
+  return exp( - length / traln.getTr()->fracchange) ; 
+}
 
 
 nat Branch::getCommonNode(const Branch &rhs ) const
@@ -127,3 +135,36 @@ nat Branch::getIntersectingNode(const Branch  &rhs) const
       return 0; 
     }
 } 
+
+
+void Branch::updateLength(const TreeAln &traln) 
+{
+  auto p = findNodePtr(traln); 
+  length = p->z[0]; 
+}
+
+
+
+void Branch::optimise( TreeAln &traln, double &secDerivative, int maxIter)  
+{
+  auto p = this->findNodePtr(traln ), 
+    q = p->back; 
+
+  
+#ifdef TODO
+  // assert(0); 
+#endif
+
+  double lambda = 10; 		// unnecesary ? TODO   
+
+  double result = 0; 
+  
+#if HAVE_PLL != 0
+  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &length, maxIter,  &result , &secDerivative, lambda, FALSE) ;
+#else 
+  assert(0); 
+#endif
+
+
+  length = result; 
+}

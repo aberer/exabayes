@@ -1,4 +1,5 @@
 #include "axml.h"
+#include <cstring> 
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"

@@ -1,6 +1,6 @@
 #include "densities.h"
 #include "axml.h"
-
+#include <cmath>
 #include <cassert>
 
 using namespace std; 

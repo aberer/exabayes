@@ -21,7 +21,9 @@ public:
   
   void setToPropose(Branch b) { toPropose = b; }
 
-  virtual AbstractProposal* clone() const {return new BranchIntegrator(multiplier); }   
+  virtual AbstractProposal* clone() const {return new BranchIntegrator(*this); }   
+
+  virtual void autotune(){}
 
 private:
   Branch toPropose; 

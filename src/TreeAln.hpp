@@ -14,6 +14,8 @@ using namespace std;
 
 #include "TreePrinter.hpp"
 
+// #include "LikelihoodEvaluator.hpp"
+
 static int numStateToNumInTriangleMatrix(int numStates) 
 {  
   return (  numStates * numStates - numStates) / 2 ; 
@@ -41,7 +43,6 @@ public:
   void initializeFromByteFile(string  byteFileName); 
   
   void enableParsimony();
-
 
   // BEGIN collapse test 
   void collapseBranch(Branch b); 
@@ -133,7 +134,11 @@ public:
   Branch drawBranchWithInnerNode(Randomness &rand) const ; 
   nat drawInnerNode(Randomness &rand ) const ; 
   Branch drawBranchUniform(Randomness &rand) const ; 
-
+  
+  Branch getBranch(nodeptr p) const 
+  {
+    return Branch(p->number, p->back->number, p->z[0]); 
+  }
   
   bool usingPerSiteRates() const { return tr->rateHetModel = GAMMA;  } 
   void enablePerSiteRates() { tr->rateHetModel = CAT; } 

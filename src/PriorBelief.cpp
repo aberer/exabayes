@@ -104,7 +104,7 @@ void PriorBelief::verifyPrior(const TreeAln &traln, const vector<RandomVariableP
 }
 
 
-void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
+void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, PriorPtr brPr) 
 {
   if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
     {

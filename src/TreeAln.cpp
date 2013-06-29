@@ -1,14 +1,11 @@
-
 #include <sstream>
 #include <cassert>
+#include <cstring>
 
 #include "axml.h"
 
-#include "config.h"
 #include "TreeAln.hpp"
-
 #include "GlobalVariables.hpp"
-// #include "output.h"
 
 // here we initialize the max/min values for our various
 // parameters. Static const is essentially like a global variable but
@@ -942,3 +939,9 @@ Branch TreeAln::drawBranchUniform(Randomness &rand) const
   
   return Branch(thisNode, thatNode); 
 }
+
+
+
+// ================================================================
+
+

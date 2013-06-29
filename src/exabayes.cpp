@@ -24,7 +24,7 @@
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-#include "tune.h"
+#include "time.hpp"
 
 #include "config/CommandLine.hpp"
 #include "SampleMaster.hpp"
@@ -35,8 +35,6 @@
 // #define TEST  
 
 #ifdef TEST
-#include "LnlRestorer.hpp"
-#include "TreeRandomizer.hpp"
 #endif
 
 
@@ -52,6 +50,8 @@ double fastPow(double a, double b) {
 }
 
 
+#include <chrono>
+
 
 /**
    @brief the main ExaBayes function.
@@ -61,10 +61,15 @@ double fastPow(double a, double b) {
  */
 void exa_main (const CommandLine &cl, ParallelSetup &pl )
 {   
-  timeIncrement = gettime();
+  timeIncrement = CLOCK::system_clock::now(); 
 
-#ifdef TEST   
+#ifdef TEST     
+  Randomness rand(123); 
 
+  for(int i = 0; i < 10 ; ++i)
+    cout << "result: " << rand.drawRandGamma(2,200) << endl; 
+
+#if 0 
   auto t =  make_shared<TreeAln>( )  ; 
   t->initializeFromByteFile(cl.getAlnFileName());
 
@@ -91,9 +96,11 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
   eval.evaluate(*traln, b, true);
 
 
-  makenewzGeneric(traln->getTr(), traln->getPartitionsPtr(), p->back , p, p->z, 10, &result, FALSE); 
+  // makenewzGeneric(traln->getTr(), traln->getPartitionsPtr(), p->back , p, p->z, 10, &result, FALSE); 
 
   cout << "init was " << init<< " result is " << result << endl; 
+
+#endif
 
   exit(0); 
 

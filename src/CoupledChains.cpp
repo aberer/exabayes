@@ -8,6 +8,8 @@
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 
+#include "time.hpp"
+
 CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAlnPtr > trees, string workingdir, const vector<ProposalPtr> &proposals, const vector<RandomVariablePtr> &vars, LikelihoodEvaluatorPtr eval)
   : temperature(params.getHeatFactor())
   , rand(seed)
@@ -158,9 +160,12 @@ void CoupledChains::chainInfo()
 
   Branch fake(0,0,coldChain.getTraln().getTreeLengthExpensive()); 
 
-  tout << "[run: " << runid << "] [time " << setprecision(2) << gettime()- timeIncrement << "] gen: " << coldChain.getGeneration() 
-       <<  "\tTL=" << setprecision(2)<<  fake.getInterpretedLength(coldChain.getTraln())
-       << "\tlnPr(1)=" << coldChain.getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain.getTraln().getTr()->likelihood << "\t" ; 
+  tout << "[run: " << runid << "] "  ; 
+  tout << "[time " << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- timeIncrement   ).count()     << "] "; 
+  timeIncrement = CLOCK::system_clock::now();   
+  tout << "gen: " << coldChain.getGeneration() ; 
+  tout <<  "\tTL=" << setprecision(2)<<  fake.getInterpretedLength(coldChain.getTraln()); 
+  tout << "\tlnPr(1)=" << coldChain.getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain.getTraln().getTr()->likelihood << "\t" ; 
 
   for(nat i = 1 ; i < chains.size(); ++i)
     {
@@ -173,7 +178,6 @@ void CoupledChains::chainInfo()
 
   printSwapInfo();
   tout << endl; 
-  timeIncrement = gettime(); 	
 
   map<Category, vector< AbstractProposal* > > sortedProposals; 
   auto& proposals = coldChain.getProposals();

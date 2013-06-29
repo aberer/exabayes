@@ -1,5 +1,6 @@
 #include "axml.h" 
 #include "tune.h"
+#include <cmath>
 
 /**
    @brief log tuning for a parameter 

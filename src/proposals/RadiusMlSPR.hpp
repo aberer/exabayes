@@ -5,6 +5,9 @@
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
 
+#define STRETCH_FACTOR 2 
+#define WEIGHT_EPS 1e-3  	/* guided spr    */
+
 typedef struct  _insertWeight
 {
   Branch b; 

@@ -28,7 +28,7 @@ class RunFactory
 public: 
   RunFactory(){}
  
-  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposalResult);   
+  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<ProposalPtr> &proposals, LikelihoodEvaluatorPtr &eval );
   vector<RandomVariablePtr> getRandomVariables() const {return randomVariables; }
 
 private: 

@@ -20,23 +20,23 @@
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 
-extern double masterTime; 
 
 static int countNumberOfTreesQuick(const char *fn ); 
-static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > tralns); 
-static void initTreeWithOneRandom(int seed, vector<shared_ptr<TreeAln> > tralns); 
+static void initWithStartingTree(FILE *fh, vector<TreeAlnPtr > tralns); 
+static void initTreeWithOneRandom(int seed, vector<TreeAlnPtr > tralns); 
 
-SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) 
+SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
   : pl(pl)
-  , initTime(gettime())
+  , initTime(CLOCK::system_clock::now())
   , masterRand(cl.getSeed())
+  , cl(_cl)
 {
-  initializeRuns(cl); 
+  initializeRuns(); 
 }
 
 
 
-void SampleMaster::initializeRuns(const CommandLine &cl )
+void SampleMaster::initializeRuns( )
 {
   FILE *treeFH = NULL; 
   int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
@@ -49,12 +49,18 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
 
   vector<ProposalPtr> proposals; 
   vector<RandomVariablePtr> variables; 
+  
+  LnlRestorerPtr restorer2(new LnlRestorer(*(trees[0])));
+  LikelihoodEvaluatorPtr eval2(new LikelihoodEvaluator(restorer2));
 
-  initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables);
+  // auto restorer2();
+  // auto   eval2 = LikelihoodEvaluatorPtr(new LikelihoodEvaluator(LnLRestorerPtr(new LnlRestorer(*(trees[0])))));
+
+  initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables, eval2);
   assert(runParams.getTuneFreq() > 0); 
 
   // ORDER: must be after  initWithConfigFile
-  initTrees(trees, cl);
+  initTrees(trees);
 
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
@@ -69,9 +75,12 @@ void SampleMaster::initializeRuns(const CommandLine &cl )
       treeSeeds.push_back(r.v[1]); 
     }
 
-
   LnlRestorerPtr restorer(new LnlRestorer(*(trees[0])));
   LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
+
+
+  // LnLRestorerPtr restorer(new LnlRestorer(*(trees[0])));
+  // LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
 
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {      
@@ -245,7 +254,8 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, TreeAlnPtr traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult)
+void SampleMaster::initWithConfigFile(string configFileName, TreeAlnPtr traln, vector<ProposalPtr> &proposalResult, 
+				      vector<RandomVariablePtr> &variableResult, LikelihoodEvaluatorPtr &eval)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 
@@ -265,7 +275,7 @@ void SampleMaster::initWithConfigFile(string configFileName, TreeAlnPtr traln, v
   reader.Execute(token);
 
   RunFactory r; 
-  r.configureRuns(proposalConfig, priorBlock , paramBlock, *traln, proposalResult);
+  r.configureRuns(proposalConfig, priorBlock , paramBlock, *traln, proposalResult, eval);
   variableResult = r.getRandomVariables(); 
 }
 
@@ -278,7 +288,7 @@ void SampleMaster::validateRunParams()
 
 
 
-void SampleMaster::initTrees(vector<TreeAlnPtr> &trees, const CommandLine &cl )
+void SampleMaster::initTrees(vector<TreeAlnPtr> &trees )
 {  
 
   tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl; 
@@ -341,16 +351,17 @@ void SampleMaster::finalizeRuns()
     }
 
   tout << endl << "Converged/stopped after " << runs[0].getChains()[0]->getGeneration() << " generations" << endl; 
-  tout << endl << "Total execution time: " << setprecision(2) <<  gettime() - initTime <<  " seconds" << endl; 
+  
+  tout << endl << "Total execution time: " 
+       << CLOCK::duration_cast<CLOCK::duration<double> >( CLOCK::system_clock::now() - initTime   ).count() <<  " seconds" << endl; 
 }
 
 
+#define STEPS_FOR_LNL 1000
+#define INTEGRATION_GENERATIONS 10000
+#define NR_STEPS 6
 
-
-
-
-#define INTEGRATION_GENERATIONS 1000 
-
+#include <sstream>
 #include "proposals/BranchIntegrator.hpp"
 #include "ProposalRegistry.hpp"
 
@@ -362,13 +373,16 @@ void SampleMaster::branchLengthsIntegration()
   assert(chains.size() == 1); 
   auto chain = chains[0]; 
   
-  ofstream tFile("tree.tre");   
-  TreePrinter tp(true, true, false); 
-  auto traln = chain->getTraln(); 
+  stringstream ss; 
+  ss << cl.getRunid() << ".tree.tre" ; 
 
+  ofstream tFile( ss.str());   
+  TreePrinter tp(true, true, false);   
+  TreePrinter tp2(true, true, true); 
+  auto traln = chain->getTraln(); 
   tFile << tp.printTree(traln) << endl; 
+  tFile << tp2.printTree(traln) << endl; 
   tFile.close(); 
-  ofstream sampled("samples"); 
   
   auto eval = chain->getEvaluator();
 
@@ -378,21 +392,20 @@ void SampleMaster::branchLengthsIntegration()
 
   vector<RandomVariablePtr> vars =  {r} ; 
 
-  vars[0]->setPrior(PriorPtr (new ExponentialPrior(10)));
+  double lambda   =  10 ; 
+
+
+  vars[0]->setPrior(PriorPtr (new ExponentialPrior(lambda)));
 
   auto p = ProposalPtr(new BranchIntegrator(ProposalRegistry::initBranchLengthMultiplier));   
-  p->addPrimVar(vars[0]);
   vector<ProposalPtr>  proposals;   
-  cout << "proposal " << p << endl; 
-
   proposals.push_back( std::move(p) ); 
-
-  
+  proposals[0]->addPrimVar(vars[0]); 
 
   Chain integrationChain(masterRand.generateSeed(), 
   			 0, 
   			 0, 
-  			 shared_ptr<TreeAln>(&(traln)), 
+  			 TreeAlnPtr(&(traln)), 
   			 proposals, 
   			 100,
   			 vars, 
@@ -404,14 +417,86 @@ void SampleMaster::branchLengthsIntegration()
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0].get()); 
 
   for(auto branch : branches)
-    {
-      integrator->setToPropose(branch); 
+    {      
+      double minHere = 1000; 
+      double maxHere = 0; 
 
+      branch.updateLength(traln); 
+      
+      integrator->setToPropose(branch); 
+      
+      stringstream ss; 
+      ss << "samples." << cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
+      ofstream thisOut (ss.str()); 
+      
+      // run the chain to integrate 
+      cout << "integrating branch " << branch << endl; 
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
-	{
+	{	  
 	  integrationChain.step();
-	  auto p = branch.findNodePtr(traln); 
-	  cout << p->z[0] << endl; 
+	  auto p = branch.findNodePtr(traln); 	  
+	  branch.updateLength(traln); 
+
+	  double length = branch.getInterpretedLength(traln); 
+	  thisOut << length << endl; 
+	  
+	  if(length < minHere)
+	    minHere = length; 
+	  if(maxHere < length )
+	    maxHere = length; 
+	}      
+
+      thisOut.close();
+      
+      // get branch lengths 
+      ss.str(std::string()); 
+      ss << "lnl." << cl.getRunid() << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
+      thisOut.open(ss.str());
+
+      cout << "evaluating branch lengths for " << branch << endl; 
+      
+      if(maxHere != minHere)
+	{
+	  for(double i = minHere; i < maxHere+0.00000001 ; i+= (maxHere-minHere)/ STEPS_FOR_LNL)
+	    {
+	      double tmp = branch.getInternalLength(traln,i); 
+	      traln.setBranchLengthBounded(tmp, 0, branch.findNodePtr(traln)); 
+	      eval->evaluate(traln, branch, false);
+	      double lnl = traln.getTr()->likelihood; 
+	      
+	      thisOut << i << "\t" << setprecision(std::numeric_limits<double>::digits10) << lnl << endl; 
+	    }
 	}
-    }    
+      else
+	thisOut << minHere << "\t" << "NA" << endl; 
+      thisOut.close(); 
+
+      Branch tmpBranch = branch; 
+      cout << "optimizing the branch using nr" << endl; 
+      ss.str(std::string());
+      ss << "nr-length." << cl.getRunid() << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
+      thisOut.open(ss.str()); 
+
+      double result = 0;  
+      double curVal = branch.getInternalLength(traln,0.1); 
+
+      for(int i = 0; i < NR_STEPS; ++i )
+	{
+	  double secDerivative = 0; 
+	  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
+			  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
+			  &curVal, 1, &result, &secDerivative, lambda, FALSE); 
+	  tmpBranch.setLength(result);
+	  thisOut << tmpBranch.getInterpretedLength(traln) << "\t" << secDerivative << endl; 	
+	  curVal = result; 
+	} 
+
+      thisOut.close(); 
+      
+      // reset 
+      double tmp = branch.getLength();      
+      traln.setBranchLengthBounded(tmp , 0,branch.findNodePtr(traln) );
+    }
+
+  cout << "finished!" << endl; 
 }

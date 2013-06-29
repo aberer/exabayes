@@ -40,9 +40,11 @@ public:
   Randomness(int seed);
   randCtr_t generateSeed();   
   void rebase(int num){ ctr.v[1] = num; ctr.v[0] = 0; }
-
+  
   int drawRandInt(int upperBound); 
   double drawRandDouble01(); 
+
+  nat operator()() ; 
 
   double drawRandBiUnif(double x); 
   double drawRandExp(double lambda); 

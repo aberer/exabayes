@@ -12,7 +12,7 @@
 #include "axml.h"
 #include "TreeAln.hpp"
 
-typedef node* nodep;  
+#define ALL_MODELS  -1  
 
 class LnlRestorer
 {
@@ -29,7 +29,7 @@ public:
   void restoreArrays(TreeAln &traln);  
 
   /** @brief save any arrays that are recomputed, if they have not   already been flipped */ 
-  void traverseAndSwitchIfNecessary(TreeAln &traln, nodep virtualRoot, int model, bool fullTraversal); 
+  void traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRoot, int model, bool fullTraversal); 
 
 private:   
   void storeOrientation(const TreeAln &traln); 
@@ -38,9 +38,6 @@ private:
 
   int numPart; 
   int numTax; 
-  
-  // the original ptrs to the allocated stuff; only for cleanup
-  // double ***reserveArraysPtr; 
 
   vector<double> partitionLnl; 
 

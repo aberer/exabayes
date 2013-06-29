@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 
+#include "GibbsBranchLength.hpp"
 #include "ExtendedTBR.hpp"
 #include "ExtendedSPR.hpp"
 #include "ParsimonySPR.hpp"
@@ -22,7 +23,8 @@
 class ProposalRegistry
 {
 public: 
-  void getProposals(Category cat, const BlockProposalConfig &config, vector<ProposalPtr> &result, const TreeAln &traln ) const ;
+  // bad
+  void getProposals(Category cat, const BlockProposalConfig &config, vector<ProposalPtr>& result, const TreeAln &traln, LikelihoodEvaluatorPtr &eval) const ;  
   
   static const double initFrequencySlidingWindow ; 
   static const  double initBranchLengthMultiplier; 

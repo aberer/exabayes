@@ -10,8 +10,10 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
-#include "common.h"
 #include <string>
+#include <chrono> 
+
+#include "common.h"
 #include "config.h"
 #include "teestream.hpp"
 
@@ -24,7 +26,7 @@
 
 
 /* okay, so defining enums this way is rather save  */
-#define NUM_PROPOSALS (18) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
+#define NUM_PROPOSALS (19) //PROPOSALADD NUM_PROPOSALS NOTE Do not remove/modify  this line except for numerical value. The script addProposal.pl needs it as an identifier.
 typedef enum
   {    
     ST_NNI= 0, 
@@ -49,7 +51,9 @@ typedef enum
     FREQUENCY_SLIDER = 15, 
     FREQUENCY_DIRICHLET = 16, 
     
-    AMINO_MODEL_JUMP = 17
+    AMINO_MODEL_JUMP = 17,
+
+    BRANCH_GIBBS = 18
 
     //PROPOSALADD proposal_type NOTE Do not remove/modify  this line. The script addProposal.pl needs it as an identifier.
   } proposal_type;
@@ -84,11 +88,12 @@ public:
 GlobalVariables globals; 
 
 /* for crude performance measurements */
-double timeIncrement = 0;  
+// double timeIncrement = 0;  
+chrono::system_clock::time_point timeIncrement;  
 
 #else 
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 
-extern double timeIncrement;  
+extern chrono::system_clock::time_point timeIncrement;  
 
 #endif
