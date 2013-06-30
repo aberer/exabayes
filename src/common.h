@@ -83,7 +83,7 @@ typedef  unsigned int nat ;
 /* #define VERIFY_LNL_SUPER_EXPENSIVE */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
-#define DEBUG_VERIFY_LNPR	/* verify the log prior probability  */
-#define DEBUG_LNL_VERIFY
+/* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
+/* #define DEBUG_LNL_VERIFY */
 
 #endif

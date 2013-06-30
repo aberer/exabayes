@@ -5,23 +5,21 @@
 
 #include "axml.h" 
 #include "Randomness.hpp"
-
+#include "TreeAln.hpp"
 
 class TreeRandomizer
 {
 public: 
-  TreeRandomizer(int seed, std::shared_ptr<TreeAln> traln);
-  std::shared_ptr<TreeAln> getTr(){return traln; }
-  void randomizeTree();
+  TreeRandomizer(int seed);
+  void randomizeTree( TreeAlnPtr &traln);
   
 private: 
   Randomness rand; 
-  std::shared_ptr<TreeAln> traln; 
 
-  int markBranches(nodeptr *branches, nodeptr p, int *counter, int numsp); 
-  void insertTaxon ( nodeptr p, nodeptr q); 
-  void buildSimpleTreeRandom (int ip, int iq, int ir); 
-  nodeptr buildNewTip (nodeptr p); 
+  int markBranches(TreeAlnPtr &traln, nodeptr *branches, nodeptr p, int *counter, int numsp); 
+  void insertTaxon ( TreeAlnPtr &traln, nodeptr p, nodeptr q); 
+  void buildSimpleTreeRandom (TreeAlnPtr &traln, int ip, int iq, int ir); 
+  nodeptr buildNewTip (TreeAlnPtr &traln, nodeptr p); 
   
 
 

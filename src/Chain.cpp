@@ -131,7 +131,10 @@ void Chain::applyChainStateToTree()
 void Chain::debug_printAccRejc(ProposalPtr &prob, bool accepted, double lnl, double lnPr ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-    tout << "[run=" << runid << ",heat="  << couplingId << ",gen="  << currentGeneration << "]\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << setprecision(2) << fixed << lnl  << endl; //   "\t"<< lnPr << endl; 
+  tout << "[run=" << runid << ",heat="
+       << couplingId << ",gen="  << currentGeneration << "]\t" 
+       << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t"
+       << setprecision(2) << fixed << lnl  << endl; //   
 #endif
 }
 
@@ -291,10 +294,7 @@ void Chain::step()
   tout  << endl << "(" << oldPrior<<  " - " << prior.getLnPriorRatio()  << ") + ( " << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
 #endif
 
-  // hastings = 0; 
-
   bool wasAccepted  = testr < acceptance; 
-
   debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior()); 
 
   if(wasAccepted)

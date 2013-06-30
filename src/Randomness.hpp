@@ -38,6 +38,7 @@ class Randomness
 {
 public: 
   Randomness(int seed);
+  // ~Randomness(){assert(0); }
   randCtr_t generateSeed();   
   void rebase(int num){ ctr.v[1] = num; ctr.v[0] = 0; }
   

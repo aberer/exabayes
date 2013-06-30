@@ -53,6 +53,7 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
 
 CoupledChains::~CoupledChains()
 {
+  assert(0); 
   // IMPORTANT TODO 
   // for(auto chain : chains) 
   //   exa_free(chain); 

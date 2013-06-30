@@ -27,6 +27,8 @@ class CoupledChains
 public: 
   CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAlnPtr> trees, string workingdir, const vector<ProposalPtr> &proposals, const vector<RandomVariablePtr > &vars, LikelihoodEvaluatorPtr eval);
 
+
+
   /** @brief initializes all trees with a given starting tree */
   void initStartingTree(FILE *fh);
   /** @brief initializes all trees with ONE random tree */ 
@@ -97,7 +99,7 @@ private:
   FILE *paramFile; 
 }; 
 
-
+typedef unique_ptr<CoupledChains> CoupledChainsPtr; 
 
 #endif
 

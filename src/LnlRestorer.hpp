@@ -32,6 +32,9 @@ public:
   void traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRoot, int model, bool fullTraversal); 
 
 private:   
+  LnlRestorer(LnlRestorer &rhs)= delete ; 
+  LnlRestorer& operator=(LnlRestorer &rhs)= delete ; 
+
   void storeOrientation(const TreeAln &traln); 
   void loadOrientation(TreeAln &traln);
   void swapArray(TreeAln& traln, int number, int model); 

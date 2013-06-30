@@ -104,7 +104,7 @@ end;
  
       [ BRANCH LENGTHS ] 
 [       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
-      branchMulti 10 
+      branchMulti 0 
       treeLengthMult 2 
       nodeSlider  5 
       GuidedBL 0 []

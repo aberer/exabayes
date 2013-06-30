@@ -55,6 +55,8 @@ TreeAln::TreeAln()
 
 TreeAln::~TreeAln()
 {
+  assert(0);
+
   if(tr->aliaswgt != NULL)
     exa_free(tr->aliaswgt); 
   if(tr->rateCategory != NULL)

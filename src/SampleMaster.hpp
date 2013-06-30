@@ -34,16 +34,16 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, TreeAlnPtr traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult, LikelihoodEvaluatorPtr &eval); 
+  void initWithConfigFile(string configFileName, const TreeAlnPtr &traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult, LikelihoodEvaluatorPtr &eval); 
   void validateRunParams(); 	// TODO  
 
   void branchLengthsIntegration()  ;  
 
 private: 
-  void initTrees(vector<shared_ptr<TreeAln> > &trees ); 
+  void initTrees(vector<TreeAlnPtr> &trees ); 
   bool convergenceDiagnostic(); 
 
-  vector<CoupledChains> runs; 
+  vector<CoupledChainsPtr> runs; // TODO bad design: just want to avoid getting memory leaks
 
   ParallelSetup pl; 
 

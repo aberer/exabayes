@@ -30,6 +30,8 @@ public:
 	const vector<ProposalPtr> &_proposals, int _tuneFreq ,
 	const vector<RandomVariablePtr> &variables, 
 	LikelihoodEvaluatorPtr eval) ; 
+
+  ~Chain(){assert(0);}
   
   // getters and setters 
   double getChainHeat(); 
