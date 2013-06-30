@@ -300,7 +300,7 @@ void SampleMaster::initTrees(vector<TreeAlnPtr> &trees )
 
 
 // a developmental mode to integrate over branch lengths
-#define _GO_TO_INTEGRATION_MODE
+// #define _GO_TO_INTEGRATION_MODE
 
 
 void SampleMaster::run()
@@ -321,9 +321,10 @@ void SampleMaster::run()
 #endif
     }
 
-
+#ifdef _GO_TO_INTEGRATION_MODE
   // go into integration mode, if we want to do so 
   branchLengthsIntegration();
+#endif
 }
  
  
@@ -349,7 +350,7 @@ void SampleMaster::finalizeRuns()
 
 #define STEPS_FOR_LNL 1000
 #define INTEGRATION_GENERATIONS 10000
-#define NR_STEPS 6
+#define NR_STEPS 30
 
 #include <sstream>
 #include "proposals/BranchIntegrator.hpp"
@@ -406,6 +407,7 @@ void SampleMaster::branchLengthsIntegration()
   assert(ps.size() == 1 );   
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0].get()); 
 
+  int ctr = 0; 
   for(auto branch : branches)
     {      
       double minHere = 1000; 

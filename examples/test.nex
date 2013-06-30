@@ -57,7 +57,7 @@ begin runconfig;
  diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
  numRuns  1 		[ number of independant runs ]
- numGen 10000             [ if numRuns = 1, stop simulation after that many generations ] 
+ numGen 1000000             [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
  
@@ -104,7 +104,7 @@ end;
  
       [ BRANCH LENGTHS ] 
 [       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
-      branchMulti 20 
+      branchMulti 10 
       treeLengthMult 2 
       nodeSlider  5 
       GuidedBL 0 []

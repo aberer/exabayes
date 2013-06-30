@@ -27,4 +27,5 @@ double densityDirichlet(vector<double> values, const vector<double> &alphas);
 
 double exponentialDistribution(double value, double lambda); 
 
+double logGammaProb (double x, double alpha, double beta ); 
 #endif

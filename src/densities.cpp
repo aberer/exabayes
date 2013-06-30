@@ -52,6 +52,9 @@ double gammaFunction(double alpha)
 
 
 
+
+
+
 static void normalize( vector<double>  &vector, double normalizingConstant)
 {
   double sum=0;
@@ -105,3 +108,29 @@ double exponentialDensity(double value, double lambda)
 
 
 
+// bracen copy from mrb
+double logGamma (double alp)
+{
+  double 
+    x = alp, f = 0.0, z;
+	
+  if (x < 7) 
+    {
+      f = 1.0;
+      z = x-1.0;
+      while (++z < 7.0)  
+	f *= z;
+      x = z;   
+      f = -log(f);
+    }
+  z = 1.0 / (x*x);
+  return  (f + (x-0.5)*log(x) - x + 0.918938533204673 + 
+	   (((-0.000595238095238*z+0.000793650793651)*z-0.002777777777778)*z +
+	    0.083333333333333)/x);  
+
+}
+
+double logGammaProb (double x, double alpha, double beta )
+{    
+  return (alpha-1.0) * log(x) + alpha * log(beta) - x * beta - logGamma(alpha);  
+}

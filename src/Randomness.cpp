@@ -228,6 +228,7 @@ void Randomness::drawDirichletExpected(vector<double> &results, const vector<dou
 
 
 
+
 // TODO : this is a bracen copy from mrBayes code 
 #include <random>
 #define ETA (1E-30)
@@ -237,8 +238,8 @@ double Randomness::drawRandGamma(double alpha, double beta)
   // a hack, until we have our own gamma 
   std::default_random_engine generator;
   generator.seed((*this)());   
-  std::gamma_distribution<double> dist(alpha,beta);
-  
+  std::gamma_distribution<double> dist(alpha,1/beta);
+
   return dist(generator); 
 #else 
 
@@ -318,10 +319,10 @@ double Randomness::drawRandGamma(double alpha, double beta)
 
 
 
-// is there something wrong with the code below? quarantined it for
-// now...
+// // is there something wrong with the code below? quarantined it for
+// // now...
  
-// Gamma(alpha, beta) sampling
+// // Gamma(alpha, beta) sampling
 // double Randomness::drawRandGamma(double alpha, double beta)
 // {
 //   double alpha_min=0.0001;

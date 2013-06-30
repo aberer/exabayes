@@ -68,79 +68,79 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
 }
 
 
- void LikelihoodEvaluator::disorientTree(TreeAln &traln, const Branch &root) 
- {
+void LikelihoodEvaluator::disorientTree(TreeAln &traln, const Branch &root) 
+{
   disorientSubtree(traln,root);   
   disorientSubtree(traln, root.getInverted()); 
 }
 
 
- bool LikelihoodEvaluator::disorientNode( nodeptr p)
- {
+bool LikelihoodEvaluator::disorientNode( nodeptr p)
+{
   bool result =  ( p->x == 1 ) ; 
   if(p->x)
     {
-  p->x = 0; 
-  p->next->x = 1; 
-}
+      p->x = 0; 
+      p->next->x = 1; 
+    }
   return result; 
 }
 
 
- void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch) 
- {  
+void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch) 
+{  
   auto p = branch.findNodePtr(traln ); 
 
   disorientNode(p); 
 
   if(not traln.isTipNode(p))
     {
-  disorientSubtree(traln, Branch(p->next->back->number, p->number,0)); 
-  disorientSubtree(traln, Branch(p->next->next->back->number, p->number,0)); 
-}
+      disorientSubtree(traln, Branch(p->next->back->number, p->number,0)); 
+      disorientSubtree(traln, Branch(p->next->next->back->number, p->number,0)); 
+    }
 }
 
 
- // currently a bit expensive  
- void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) const 
- {
+// currently a bit expensive  
+void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) const 
+{
   auto tr = traln.getTr(); 
 
   Branch root; 
   for(int i = tr->mxtips +1 ; i < 2* tr->mxtips-1 ; ++i)
     {
-  nodeptr
-    p = tr->nodep[i],
-    q = p;       
-  do 
-    {
-  Branch newRoot(q->number, q->back->number); 
-  if(q->x && q->back->x && not root.equalsUndirected(newRoot))
-    {
-  if(root.getPrimNode() != 0 )
-    cout << "root already taken! " << root << " now at " << newRoot << endl; 
-  assert(root.getPrimNode( )== 0 ) ;
-  root = newRoot; 
-}
-  q = q->next; 
-} while(p != q); 
-}
+      nodeptr
+	p = tr->nodep[i],
+	q = p;       
+      do 
+	{
+	  Branch newRoot(q->number, q->back->number); 
+	  if(q->x && q->back->x && not root.equalsUndirected(newRoot))
+	    {
+	      if(root.getPrimNode() != 0 )
+		cout << "root already taken! " << root << " now at " << newRoot << endl; 
+	      assert(root.getPrimNode( )== 0 ) ;
+	      root = newRoot; 
+	    }
+	  q = q->next; 
+	} while(p != q); 
+    }
 
 
   for(int i = 1; i < tr->mxtips+1; ++i)
     {
-  nodeptr
-    p = tr->nodep[i]; 
-  if(p->back->x)
-    {
-  if(root.getPrimNode() != 0)
-    {	      
-  cout << "previous root was " << root << " now at " << Branch(p->number , p->back->number)  << endl; 	      
-}
-  assert(root.getPrimNode() == 0); 
-  root = Branch(p->number, p->back->number); 
-}
-}
+      nodeptr
+	p = tr->nodep[i]; 
+      if(p->back->x)
+	{
+	  if(root.getPrimNode() != 0)
+	    {	      
+	      cout << "previous root was " << root << " now at " << Branch(p->number , p->back->number)  << endl; 	      
+	    }
+	  assert(root.getPrimNode() == 0); 
+	  root = Branch(p->number, p->back->number); 
+	}
+    }
 
   assert(root.getPrimNode( )!= 0); 
 
@@ -150,8 +150,8 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
 
 
 
- double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)    
- {
+double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)    
+{
   Branch root; 
   findVirtualRoot(traln,root); 
   
@@ -172,9 +172,9 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
   
   for(auto p : partitions)
     {
-  restorer->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, true ); 
-  restorer->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, true); 
-}
+      restorer->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, true ); 
+      restorer->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, true); 
+    }
 
   exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
   
@@ -187,9 +187,9 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
   tr->likelihood = 0; 
   for(nat i = 0; i < numPart; ++i)
     {
-  tr->likelihood += traln.accessPartitionLH(i); 
-  traln.accessExecModel(i) = TRUE; 
-}  
+      tr->likelihood += traln.accessPartitionLH(i); 
+      traln.accessExecModel(i) = TRUE; 
+    }  
   
 #ifdef DEBUG_LNL_VERIFY
   expensiveVerify(traln);   
@@ -198,8 +198,8 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
   return tr->likelihood; 
 }
 
- void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked)
- {
+void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked)
+{
 #if HAVE_PLL != 0
   newviewGeneric(traln.getTr(), traln.getPartitionsPtr(), p, masked); 
 #else 
@@ -208,8 +208,8 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
 }
 
 
- void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
- {
+void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
+{
 #ifdef DEBUG_LNL_VERIFY
   TreeAln &debugTraln = *(globals.debugTree);   
   double toVerify = traln.getTr()->likelihood; 
@@ -230,16 +230,16 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
 
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
-  tout << "WARNING: found in expensive evaluation: likelihood difference is " 
-       << setprecision(8) <<   fabs (verifiedLnl - toVerify )
-       << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
+      tout << "WARNING: found in expensive evaluation: likelihood difference is " 
+	   << setprecision(8) <<   fabs (verifiedLnl - toVerify )
+	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
-  tout << "current tree: " << traln << endl; 
-  tout << "help tree: " <<  debugTraln << endl; 	  
+      tout << "current tree: " << traln << endl; 
+      tout << "help tree: " <<  debugTraln << endl; 	  
 
-  evaluateFullNoBackup(traln);
-  tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
-}  
+      evaluateFullNoBackup(traln);
+      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
+    }  
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
 #endif
 }

@@ -253,7 +253,7 @@ void Chain::switchState(Chain &rhs)
 void Chain::step()
 {
 #ifdef DEBUG_VERIFY_LNPR
-  prior.verifyPrior(*traln);
+  prior.verifyPrior(*traln, variables);
 #endif
 
   currentGeneration++; 
@@ -320,10 +320,8 @@ void Chain::step()
 #endif
 
 #ifdef DEBUG_VERIFY_LNPR
-  prior.verifyPrior(*traln);
+  prior.verifyPrior(*traln, variables);
 #endif
-
-  // debug_checkTreeConsistency(this->getTraln());
 
   if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
     {
