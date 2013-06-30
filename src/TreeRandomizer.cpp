@@ -16,8 +16,9 @@ void TreeRandomizer::randomizeTree(TreeAlnPtr &traln)
   nodeptr 
     p, 
     f, 
-    randomBranch,
-    *branches = (nodeptr *)exa_malloc(sizeof(nodeptr) * (2 * tr->mxtips));    
+    randomBranch; 
+
+  nodeptr* branches = (nodeptr *)exa_malloc(sizeof(nodeptr) * (2 * tr->mxtips));    
   
   int 
     nextsp, 
@@ -42,7 +43,7 @@ void TreeRandomizer::randomizeTree(TreeAlnPtr &traln)
     }
   }
 
-  
+
   tr->ntips = 0;       	       
   tr->nextnode = tr->mxtips + 1;    
   

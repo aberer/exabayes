@@ -46,7 +46,9 @@ const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0
 TreeAln::TreeAln()
   : parsimonyEnabled(true)
 {
-  tree *tre = (tree*)exa_calloc(1,sizeof(tree));
+  cout << "allocating tree" << endl; 
+  auto *tre = new tree;   
+  memset(tre,0,sizeof(tree));   
   this->tr = tre; 
   initDefault();
 }
@@ -248,6 +250,7 @@ void TreeAln::initDefault()
   tr->constrained = FALSE;
   tr->gapyness               = 0.0; 
   tr->useMedian = FALSE;
+  tr->mxtips = 0; 
 }
 
 

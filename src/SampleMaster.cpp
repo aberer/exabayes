@@ -42,12 +42,10 @@ void SampleMaster::initializeRuns( )
   int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
   // initialize one tree 
-  vector<TreeAlnPtr > trees; 
+  vector<TreeAlnPtr> trees; 
   trees.push_back(TreeAlnPtr(new TreeAln()));
   trees[0]->initializeFromByteFile(cl.getAlnFileName()); 
   trees[0]->enableParsimony();
-
-  // cout << "having " << trees[0]->getTr()->mxtips <<  " taxa" << endl; 
 
   vector<ProposalPtr> proposals; 
   vector<RandomVariablePtr> variables; 
@@ -86,11 +84,15 @@ void SampleMaster::initializeRuns( )
     }
 
   if(runParams.getTuneHeat())
-    for(CoupledChainsPtr& r : runs)
-      r->enableHeatTuning(runParams.getTuneFreq()); 
+    {
+      for(CoupledChainsPtr& r : runs)
+	r->enableHeatTuning(runParams.getTuneFreq()); 
+    }
 
   if(numTreesAvailable > 0)
-    fclose(treeFH); 
+     fclose(treeFH); 
+
+  cout << "we have " << trees[0]->getNumberOfPartitions() << " partitions"  << endl; 
 
   tout << endl; 
 }

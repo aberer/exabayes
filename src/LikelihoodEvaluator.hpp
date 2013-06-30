@@ -10,6 +10,10 @@ class LikelihoodEvaluator
 {
 public: 
   LikelihoodEvaluator(LnlRestorerPtr restorer); 
+  ~LikelihoodEvaluator()
+  { 
+    assert(0); 
+  }
   
   double evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)  ; 
   void evalSubtree( TreeAln &traln, const Branch &evalBranch)    ; 

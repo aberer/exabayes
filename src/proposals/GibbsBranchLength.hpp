@@ -10,7 +10,7 @@ public:
   {
     name = "estGibbsBL"; 
     category = Category::BRANCH_LENGTHS; 
-    // relativeWeight = 20 ; 
+    relativeWeight = 0 ; 
   } 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 

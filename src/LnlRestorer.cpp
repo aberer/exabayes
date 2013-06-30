@@ -52,6 +52,7 @@ LnlRestorer::LnlRestorer(TreeAln& traln)
 
 LnlRestorer::~LnlRestorer()  
 {
+  assert(0); 
   for(int i = 0; i <  numPart; ++i)
     {
 #if 0      

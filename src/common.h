@@ -14,19 +14,21 @@
 #include "config.h"
 
 #if HAVE_PLL != 0
-#define exa_realloc rax_realloc  
+/* #define exa_realloc rax_realloc   */
 #define exa_malloc_aligned  rax_malloc_aligned
-#define exa_malloc rax_malloc
-#define exa_free rax_free
-#define exa_calloc rax_calloc
+/* #define exa_malloc rax_malloc */
+/* #define exa_free rax_free */
+/* #define exa_calloc rax_calloc */
 #else 
+#define exa_malloc_aligned malloc_aligned
+#endif
 
 #define exa_realloc realloc
-#define exa_malloc_aligned malloc_aligned
+
 #define exa_free free 
 #define exa_malloc malloc
 #define exa_calloc calloc
-#endif
+/* #endif */
 
 #define TODO 0
 

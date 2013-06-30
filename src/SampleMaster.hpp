@@ -28,7 +28,7 @@ class SampleMaster
 {
 public: 
   SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
-  ~SampleMaster(){};
+  ~SampleMaster(){assert(0);}
 
   void initializeRuns( ); 
   void initRunParameters(string configFileName); 
@@ -36,11 +36,13 @@ public:
   void run(); 
   void initWithConfigFile(string configFileName, const TreeAlnPtr &traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult, LikelihoodEvaluatorPtr &eval); 
   void validateRunParams(); 	// TODO  
-
   void branchLengthsIntegration()  ;  
 
 private: 
-  void initTrees(vector<TreeAlnPtr> &trees ); 
+  void initTrees(vector<TreeAlnPtr> &trees ); // METHODS 
+
+
+private:			// ATTRIBUTES 
   bool convergenceDiagnostic(); 
 
   vector<CoupledChainsPtr> runs; // TODO bad design: just want to avoid getting memory leaks
@@ -54,7 +56,6 @@ private:
   BlockProposalConfig propConfig;   
 
   Randomness masterRand; 
-
   const CommandLine cl; 
 };  
 
