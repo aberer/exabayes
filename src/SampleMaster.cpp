@@ -192,7 +192,7 @@ static void initTreeWithOneRandom(int seed,  vector<TreeAlnPtr> &tralns)
   TreeRandomizer trRandomizer(seed);
   for(auto &traln : tralns)
     {
-      trRandomizer.randomizeTree(traln); 
+      trRandomizer.randomizeTree(*traln); 
       int count = 0; 
       traverseInitFixedBL( traln->getTr()->start->back, &count, traln, TreeAln::initBL);
       assert(count  == 2 * traln->getTr()->mxtips - 3);

@@ -54,7 +54,15 @@ public:
   nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
 
 
-  nodeptr getNode(nat elem) const {if( not (elem != 0 && elem < getNumberOfNodes() + 2 )) { cout << "bug: attempted to get node " << elem << endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;} return  getTr()->nodep[elem] ; }
+  nodeptr getNode(nat elem) const 
+  {
+    if( not (elem != 0 && elem < getNumberOfNodes() + 2 ))
+      { 
+	cout << "bug: attempted to get node " << elem << endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;
+      } 
+
+    return  getTr()->nodep[elem] ; 
+  }
 
 
   /** 
@@ -133,6 +141,7 @@ public:
   Branch drawInnerBranchUniform( Randomness &rand) const ; 
   Branch drawBranchWithInnerNode(Randomness &rand) const ; 
   nat drawInnerNode(Randomness &rand ) const ; 
+  Branch drawBranchUniform_helper(Randomness &rand, nat curNumTax) const ; 
   Branch drawBranchUniform(Randomness &rand) const ; 
   
   Branch getBranch(nodeptr p) const 

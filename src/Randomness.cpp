@@ -38,22 +38,29 @@ void Randomness::incrementNoLimit()
 
 
 /** 
-    @brief draw integer uniformly from [0,upperBound]
+    @brief draw integer uniformly from [0,n]
  */ 
 int Randomness::drawIntegerClosed(int upperBound)
 {
-  randCtr_t r = exa_rand(key, ctr); 
-  ctr.v[1]++;
-  return r.v[0] % (upperBound + 1 ) ; 
+  assert(upperBound >= 0 ); 
+  if(upperBound == 0)
+    return 0 ; 
+  else 
+    {
+      randCtr_t r = exa_rand(key, ctr); 
+      ctr.v[1]++;
+      return r.v[0] % (upperBound + 1 ) ; 
+    }
 }
 
 
 /** 
-    @brief for transition: draw integer uniformly from [0,upperBound)
+    @brief for transition: draw integer uniformly from [0,n)
  */ 
 int Randomness::drawIntegerOpen(int upperBound)
 {
-  assert(upperBound > 1); 
+  // cout << "drawing from [0," << upperBound << ")" << endl; 
+  assert(upperBound > 0); 
   return drawIntegerClosed(upperBound-1);   
 }
 

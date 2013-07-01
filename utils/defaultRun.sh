@@ -38,8 +38,8 @@ if [ "$#" != 3 ]; then
     exit
 fi
 
-# args="--disable-silent-rules" 
-args=""
+args="--disable-silent-rules" 
+# args=""
 dataset=$3
 
 pathtodata=$topdir/data/$dataset

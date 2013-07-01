@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "TreeRandomizer.hpp"
 #include "TreeAln.hpp"
 #include "treeRead.h"
@@ -8,135 +10,39 @@ TreeRandomizer::TreeRandomizer(int seed)
 {
 }
 
-
-void TreeRandomizer::randomizeTree(TreeAlnPtr &traln)
+void TreeRandomizer::randomizeTree(TreeAln &traln)
 {
-  tree *tr = traln->getTr();
-
-  nodeptr 
-    p, 
-    f, 
-    randomBranch; 
-
-  nodeptr* branches = (nodeptr *)exa_malloc(sizeof(nodeptr) * (2 * tr->mxtips));    
-  
-  int 
-    nextsp, 
-    *perm = (int *) exa_malloc((tr->mxtips + 1) * sizeof(int)), 
-    branchCounter;                      
-
-  // permutation 
-  {
-  for (int i = 1; i <= tr->mxtips; i++)
-    perm[i] = i;
-
-  
-  for (int i = 1; i <= tr->mxtips; i++)
+  for(int i = 1 ; i < traln.getNumberOfNodes() + 1 ; ++i)
     {
-      int k = rand.drawRandInt(tr->mxtips + 1 -i);
-
-      assert(i + k <= tr->mxtips);
-
-      int j = perm[i];
-      perm[i] = perm[i + k];
-      perm[i + k] = j;
+      auto p = traln.getNode(i);
+      p->back = NULL; 
+      p->next->back = NULL; 
+      p->next->next->back = NULL;       
     }
-  }
 
-
-  tr->ntips = 0;       	       
-  tr->nextnode = tr->mxtips + 1;    
+  // start with the simple tree 
+  auto a = traln.getNode(1 ),
+    b = traln.getNode(2 ), 
+    c = traln.getNode( 3 ), 
+    inner = traln.getNode(traln.getNumberOfTaxa() + 1); 
   
-  buildSimpleTreeRandom(traln, perm[1], perm[2], perm[3]);
-  
-  while(tr->ntips < tr->mxtips) 
-    {	             
-      nextsp = ++(tr->ntips);             
-      p = tr->nodep[perm[nextsp]];            
-      
-      buildNewTip(traln,p);  	
-      
-      f = findAnyTip(tr->start, tr->mxtips);
-      f = f->back;
-      
-      branchCounter = 1;
-      branches[0] = f;
-      markBranches(traln, branches, f, &branchCounter, tr->mxtips);
+  traln.clipNodeDefault(inner,a); 
+  traln.clipNodeDefault(inner->next, b); 
+  traln.clipNodeDefault(inner->next->next,c); 
 
-      assert(branchCounter == ((2 * (tr->ntips - 1)) - 3));
-      
-      randomBranch = branches[rand.drawRandInt(branchCounter)];
-      
-      insertTaxon( traln, p->back, randomBranch);      
-    }
-  
-  exa_free(perm); 
-  exa_free(branches);  
-}
-
-
-int TreeRandomizer::markBranches(TreeAlnPtr &traln, nodeptr *branches, nodeptr p, int *counter, int numsp)
-{
-  if(isTip(p->number, numsp))
-    return 0;
-  else
+  for(int i = 4; i < traln.getNumberOfTaxa() +1 ;  ++i)
     {
-      branches[*counter] = p->next;
-      branches[*counter + 1] = p->next->next;
+      inner = traln.getNode(traln.getNumberOfTaxa() + i-2 );       
+      auto taxonP = traln.getNode(i); 
+      traln.clipNodeDefault(taxonP, inner); 
       
-      *counter = *counter + 2;
+      auto b = traln.drawBranchUniform_helper(rand, i-1);
+      auto p1 = b.findNodePtr(traln),
+	p2 = p1->back; 
       
-      return ((2 + markBranches(traln, branches, p->next->back, counter, numsp) + 
-	       markBranches(traln, branches, p->next->next->back, counter, numsp)));
+      traln.clipNodeDefault(p1, inner->next); 
+      traln.clipNodeDefault(p2, inner->next->next); 
     }
+  
+  traln.getTr()->start = traln.getTr()->nodep[1];   
 }
-
-
-void TreeRandomizer::insertTaxon (TreeAlnPtr &traln, nodeptr p, nodeptr q)
-{
-  nodeptr  r;
-  r = q->back;
-  
-  traln->clipNodeDefault(  p->next,       q);
-  traln->clipNodeDefault( p->next->next, r); 
-}
-
-
-nodeptr TreeRandomizer::buildNewTip (TreeAlnPtr &traln, nodeptr p)
-{ 
-  nodeptr  q;
-  tree *tr = traln->getTr();
-
-  q = tr->nodep[(tr->nextnode)++];
-  traln->clipNodeDefault( p, q);
-  q->next->back = (nodeptr)NULL;
-  q->next->next->back = (nodeptr)NULL;
- 
-  return  q;
-} 
-
-
-void TreeRandomizer::buildSimpleTreeRandom (TreeAlnPtr &traln, int ip, int iq, int ir)
-{    
-  nodeptr  
-    p, 
-    s;
-  
-  int  
-    i;
-
-  tree *tr = traln->getTr();
-  
-  i = MIN(ip, iq);
-  if (ir < i)  i = ir; 
-  tr->start = tr->nodep[i];
-  tr->ntips = 3;
-  p = tr->nodep[ip];
-  
-  traln->clipNodeDefault( p, tr->nodep[iq]);
-  
-  s = buildNewTip( traln, tr->nodep[ir]);
-  
-  insertTaxon(traln, s, p);
-}
-

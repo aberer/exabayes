@@ -11,15 +11,7 @@
 // parameters. Static const is essentially like a global variable but
 // saver. You access it with e.g., TreeAln::zmin, since the variable
 // does not belong to an instance of the class, but the class in general. 
-// It is a bit over-engineering. 
 
-// most of it has been copied over from raxml. But maybe we want to differ? 
-
-
-
-// TODO these raxml values would allow for branch lengths up to 13,
-// I'll reduce it now because i ran into trouble there, but this
-// definitely needs to be discussed
 // #if 0 
 const double TreeAln::zMin = 1.0E-15 ; 
 const double TreeAln::zMax = (1.0 - 1.0E-6) ; 
@@ -148,7 +140,6 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
 
   for(int i = 0; i < getNumberOfPartitions(); ++i)
     {
-
       // TODO empirical freqs? 
 
       // TODO aa? 
@@ -252,8 +243,6 @@ void TreeAln::initDefault()
   tr->useMedian = FALSE;
   tr->mxtips = 0; 
 }
-
-
 
 
 void TreeAln::clipNodeDefault(nodeptr p, nodeptr q )
@@ -816,6 +805,7 @@ bool TreeAln::revMatIsImmutable(int model) const
  */ 
 Branch TreeAln::drawInnerBranchUniform( Randomness &rand) const 
 {
+  nat curNumTax = getNumberOfTaxa();
   bool acc = false;   
   int node = 0; 
   nodeptr p = nullptr; 
@@ -856,19 +846,17 @@ Branch TreeAln::drawInnerBranchUniform( Randomness &rand) const
 
 
 nat TreeAln::drawInnerNode(Randomness &rand ) const 
-{  
-  nat res = rand.drawIntegerClosed(getNumberOfTaxa() - 3 ) + getNumberOfTaxa()  + 1 ;   
-  assert(getNumberOfTaxa() < res  && res <= getNumberOfNodes()  + 1 ); 
+{    
+  nat curNumTax = getNumberOfTaxa(); 
+  nat res =  1 + curNumTax + rand.drawIntegerClosed(curNumTax - 3 );   
   return res; 
 }
 
 
-
-
-
-
 /** 
     @brief draw a branch that has an inner node as primary node   
+    
+    => equals draw subtree uniformly
  */ 
 Branch TreeAln::drawBranchWithInnerNode(Randomness &rand) const 
 {
@@ -903,50 +891,54 @@ Branch TreeAln::drawBranchWithInnerNode(Randomness &rand) const
  */
 Branch TreeAln::drawBranchUniform(Randomness &rand) const 
 {
-  auto *tr = getTr(); 
-
-  bool accept = false; 
-  int randId = 0; 
-  while(not accept)
-    {
-      randId = rand.drawIntegerClosed(getNumberOfNodes() ) + 1 ; 
-      assert(randId > 0 && (nat)randId <= getNumberOfNodes() + 1  ); 
-      double r = rand.drawRandDouble01(); 
-      if(isTip(randId, tr->mxtips) )
-	accept = r < 0.25 ; 
-      else 
-	accept = r <= 0.75; 	
-    }
-
-  // Branch result; 
-  int thisNode = randId; 
-  int thatNode = 0; 
-  nodeptr p = tr->nodep[randId]; 
-  if(isTipNode(p))
-    thatNode = p->back->number; 
-  else 
-    {
-      int r = rand.drawRandInt(2); 
-      switch(r)
-	{
-	case 0 : 
-	  thatNode = p->back->number; 
-	  break; 
-	case 1 : 
-	  thatNode = p->next->back->number; 
-	  break; 
-	case 2: 
-	  thatNode = p->next->next->back->number; 
-	  break; 
-	default: assert(0); 
-	}
-    }
-  
-  return Branch(thisNode, thatNode); 
+  return drawBranchUniform_helper(rand, getNumberOfTaxa()); 
 }
 
 
+/**
+   @brief currently just exists for the tree randomizer 
 
-// ================================================================
+   Notice that an inner branch has 3 nodes associated with it, thus
+   the probability of drawing a tip should be accordingly lower.
+*/ 
+Branch TreeAln::drawBranchUniform_helper(Randomness &rand, nat curNumTax) const 
+{ 
+  int randId = 0; 
+  double r = rand.drawRandDouble01(); 
 
+  // for the randomization part, i assume that when a tree is built
+  // successively, I assume that the inner nodes start with an offset
+  // in the nodeptr array that is the number of trees in the final
+  // tree
+  if( r <= 0.75) 		// draw an inner node 
+    randId = 1 + tr->mxtips + rand.drawIntegerClosed(curNumTax -3 )  ; 
+  else 				// draw a tip 
+    randId = rand.drawIntegerOpen(curNumTax) + 1 ;           
 
+  auto p = getNode(randId); 
+  nat thisNode = randId,
+    thatNode = 0;   
+  if(isTipNode(p))
+    {
+      thatNode = p->back->number; 
+    }
+  else 
+    {
+      int r = rand.drawIntegerOpen(3); 
+          switch(r)
+  	{
+  	case 0 : 
+  	  thatNode = p->back->number; 
+  	  break; 
+  	case 1 : 
+  	  thatNode = p->next->back->number; 
+  	  break; 
+  	case 2: 
+  	  thatNode = p->next->next->back->number; 
+  	  break; 
+  	default: assert(0); 
+  	}
+    }
+
+  return Branch(thisNode, thatNode); 
+}

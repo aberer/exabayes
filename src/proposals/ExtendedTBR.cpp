@@ -86,7 +86,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   do
     {
-      bisectedBranch  = traln.drawInnerBranchUniform(rand); 
+      bisectedBranch  = traln.drawInnerBranchUniform(rand ); 
 
       p1 = bisectedBranch.findNodePtr(traln ); 
       p2 = bisectedBranch.getInverted().findNodePtr(traln); 
