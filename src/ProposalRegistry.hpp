@@ -35,7 +35,8 @@ public:
   static const double initTreeLengthMultiplier ; 
   static const double initGammaMultiplier; 
   static const double initNodeSliderMultiplier; 
-  
+
+
 private: 
 
 }; 

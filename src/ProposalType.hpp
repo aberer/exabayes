@@ -50,6 +50,7 @@ namespace ProposalTypeFunc
   std::vector<ProposalType> getAllProposals(); 
 
   bool isValidName(std::string name); 
+  bool isReadyForProductiveUse(ProposalType p); 
 
 }; 
 

@@ -27,6 +27,20 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
     {     
       AbstractProposal *proposal = nullptr; 
 
+      double userWeight = 1; 
+      if(config.wasSetByUser(p))
+	{
+	  userWeight = config.getProposalWeight(p); 
+	  if(userWeight == 0)
+	    continue; 
+	}      
+      else if( not ProposalTypeFunc::isReadyForProductiveUse(p)  )	
+	{
+	  cout << "skipping proposal " << ProposalTypeFunc::getLongName(p) << endl; 
+	  continue;       
+	}
+
+
       switch(p)
 	{	      
 	case ProposalType::ST_NNI: 
@@ -97,12 +111,8 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	} 
 
       if(config.wasSetByUser(p))
-	proposal->setRelativeWeight(config.getProposalWeight(p)); 
-
-      if(proposal->getRelativeWeight() == 0 )
-	delete proposal; 
-      else 
-	result.push_back(ProposalPtr(proposal)); 
+	proposal->setRelativeWeight(userWeight);       
+      result.push_back(ProposalPtr(proposal)); 	
     }
 } 
 

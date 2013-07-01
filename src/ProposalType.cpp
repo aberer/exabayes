@@ -144,8 +144,6 @@ namespace ProposalTypeFunc
 
   bool isValidName(std::string name)
   {
-    std::cout << "checking, if " << name << " is a valid proposal name" << std::endl; 
-
     auto ps = getAllProposals();     
     for(auto &p : ps)
       {
@@ -154,4 +152,39 @@ namespace ProposalTypeFunc
       }
     return false; 
   } 
+
+
+  bool isReadyForProductiveUse(ProposalType p)
+  {
+    std::unordered_map<ProposalType, bool, ProposalTypeHash> map  = 
+    {
+	{ ProposalType::ST_NNI,  true } ,
+	{ ProposalType::E_SPR,  true } ,
+	{ ProposalType::E_TBR,  true } ,
+	{ ProposalType::PARSIMONY_SPR,  true } ,
+	{ ProposalType::GUIDED_SPR,  false } ,
+	{ ProposalType::BRANCH_SLIDER,  false } ,
+	{ ProposalType::BRANCH_COLLAPSER, false } , 
+	{ ProposalType::TL_MULT,  true } ,
+	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER,  true } ,
+	{ ProposalType::NODE_SLIDER,  true } ,
+	{ ProposalType::REVMAT_SLIDER,  true }  , 
+	{ ProposalType::REVMAT_DIRICHLET,  true } ,
+	{ ProposalType::RATE_HET_SLIDER,  false } ,
+	{ ProposalType::RATE_HET_MULTI,  true } ,
+	{ ProposalType::FREQUENCY_SLIDER,  true } ,
+	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
+	{ ProposalType::AMINO_MODEL_JUMP,  false } ,
+	{ ProposalType::BRANCH_GIBBS , false } 
+    };
+
+    if(map.find(p) == map.end())
+      {
+	std::cerr << "Error, could not find type >" << int(p) << 
+	  "< when trying to determine, if proposal is ready for productive use. Check ProposalType.cpp" << std::endl; 
+	exit(1); 
+      }
+
+    return map[p]; 
+  }
 }
