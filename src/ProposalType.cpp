@@ -1,0 +1,157 @@
+#include <iostream>
+#include <cassert>
+
+
+#include "ProposalType.hpp"
+
+
+namespace ProposalTypeFunc
+{
+  std::string getLongName(ProposalType type)
+  {
+    std::unordered_map<ProposalType, std::string, ProposalTypeHash> map = 
+      {
+	{ ProposalType::ST_NNI , "statistical NNI"  } , 
+	{ ProposalType::E_SPR , "extended SPR"}, 
+	{ ProposalType::E_TBR , "extended TBR"},
+	{ ProposalType::PARSIMONY_SPR, "parsimony-guided SPR"},
+	{ ProposalType::GUIDED_SPR , "ML-guided PSR"},
+	{ ProposalType::BRANCH_SLIDER , "branch length slider"},
+	{ ProposalType::TL_MULT , "tree length multiplier"},
+	{ ProposalType::BRANCH_COLLAPSER , "branch collapser"},
+	{ ProposalType::NODE_SLIDER , "node slider"},
+	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER , "branch length multiplier"},
+	{ ProposalType::REVMAT_SLIDER , "substition matrix slider"},
+	{ ProposalType::REVMAT_DIRICHLET , "substitution matrix dirchlet"},
+	{ ProposalType::RATE_HET_SLIDER , "rate heterogeneity slider"},
+	{ ProposalType::RATE_HET_MULTI , "rate heterogeneity multiplier"},
+	{ ProposalType::FREQUENCY_SLIDER , "frequency slider"},
+	{ ProposalType::FREQUENCY_DIRICHLET , "frequency dirichlet"},
+	{ ProposalType::AMINO_MODEL_JUMP , "amino acid model jump"},
+	{ ProposalType::BRANCH_GIBBS , "approximate Gibbs branch length"} 
+      }; 
+    
+    if(map.find(type) == map.end())
+      {
+	std::cerr << "you requested a proposal type for which no long name has been set. Correct that in ProposalType.hpp  " << std::endl; 
+	exit(1) ; 
+      }
+    return map[type]; 
+  }
+
+  std::string getConfigStringFromType(ProposalType p )
+  {
+    // notice: MUST be upper case!
+    std::unordered_map<ProposalType, std::string, ProposalTypeHash> proposal2name = 
+      {
+	{ ProposalType::ST_NNI,  "STNNI" } ,
+	{ ProposalType::E_SPR,  "ESPR" } ,
+	{ ProposalType::E_TBR,  "ETBR" } ,
+	{ ProposalType::PARSIMONY_SPR,  "PARSIMONYSPR" } ,
+	{ ProposalType::GUIDED_SPR,  "GUIDEDSPR" } ,
+	{ ProposalType::BRANCH_SLIDER,  "BRANCHSLIDER" } ,
+	{ ProposalType::BRANCH_COLLAPSER,  "BRANCHCOLLAPSER" } , 
+	{ ProposalType::TL_MULT,  "TREELENGTHMULT" } ,
+	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER,  "BRANCHMULTI" } ,
+	{ ProposalType::NODE_SLIDER,  "NODESLIDER" } ,
+	{ ProposalType::REVMAT_SLIDER,  "REVMATSLIDER" }  , 
+	{ ProposalType::REVMAT_DIRICHLET,  "REVMATDIRICHLET" } ,
+	{ ProposalType::RATE_HET_SLIDER,  "RATEHETSLIDER" } ,
+	{ ProposalType::RATE_HET_MULTI,  "RATEHETMULTI" } ,
+	{ ProposalType::FREQUENCY_SLIDER,  "FREQUENCYSLIDER" } ,
+	{ ProposalType::FREQUENCY_DIRICHLET,  "FREQUENCYDIRICHLET" } ,
+	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } 
+      }; 
+
+    return proposal2name[p];     
+  }
+
+  ProposalType getTypeFromConfigString(std::string name )
+  {
+    auto ps = getAllProposals();
+    for(auto p : ps)
+      {
+	if(getConfigStringFromType(p).compare(name) == 0)
+	  return p; 
+      }
+    
+    std::cerr << "something went wrong while trying to identify what kind of proposal >"  << name  << "< is. See ProposalType.hpp" << std::endl; 
+    exit(1); 
+    return ProposalType::ST_NNI; 
+  }
+
+
+  std::vector<ProposalType> getProposalsForCategory(Category c) 
+  {
+    switch(c)
+      {
+      case Category::TOPOLOGY: 
+	return { 
+	  ProposalType::ST_NNI, 
+	    ProposalType::E_SPR, 
+	    ProposalType::E_TBR, 
+	    ProposalType::PARSIMONY_SPR, 
+	    ProposalType::GUIDED_SPR 
+	    }; 
+      case Category::BRANCH_LENGTHS: 
+	return { 
+	  ProposalType::BRANCH_LENGTHS_MULTIPLIER, 
+	    ProposalType::BRANCH_SLIDER, 
+	    ProposalType::TL_MULT, 
+	    ProposalType::BRANCH_COLLAPSER, 
+	    ProposalType::BRANCH_GIBBS , 
+	    ProposalType::NODE_SLIDER
+	    }; 
+      case Category::FREQUENCIES: 
+	return { 
+	  ProposalType::FREQUENCY_SLIDER, 
+	    ProposalType::FREQUENCY_DIRICHLET
+	    } ; 
+      case Category::SUBSTITUTION_RATES: 
+	return { 
+	  ProposalType::REVMAT_SLIDER, 
+	    ProposalType::REVMAT_DIRICHLET
+	    }; 	
+      case Category::RATE_HETEROGENEITY: 
+	return { 
+	  ProposalType::RATE_HET_MULTI, 
+	    ProposalType::RATE_HET_SLIDER
+	    }; 
+      case Category::AA_MODEL: 
+	return { 
+	  ProposalType::AMINO_MODEL_JUMP
+	    }; 
+      default: 
+	{
+	  std::cerr << "no proposals for caterogy " << int(c) << std::endl; 	  
+	  assert(0); 
+	}
+      }
+  }
+
+
+  std::vector<ProposalType> getAllProposals()
+  {
+    std::vector<ProposalType> result; 
+    auto cs =   CategoryFuns::getAllCategories() ; 
+    for(auto c : cs)
+      {
+	auto someProposals = getProposalsForCategory(c) ; 
+	result.insert(result.end(), someProposals.begin(), someProposals.end()); 
+      }    
+    return result; 
+  }
+
+  bool isValidName(std::string name)
+  {
+    std::cout << "checking, if " << name << " is a valid proposal name" << std::endl; 
+
+    auto ps = getAllProposals();     
+    for(auto &p : ps)
+      {
+	if(getConfigStringFromType(p).compare(name) == 0)
+	  return true; 
+      }
+    return false; 
+  } 
+}

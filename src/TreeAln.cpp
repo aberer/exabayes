@@ -20,25 +20,18 @@ const double TreeAln::zMax = (1.0 - 1.0E-6) ;
 // const double TreeAln::zMax = (1.0 - 1.0E-3) ; 
 // #endif
 
-
 const double TreeAln::zZero = TreeAln::zMax + ( 1 - TreeAln::zMax) / 2 ; 
-
 const double TreeAln::rateMin = 0.0000001; 
 const double TreeAln::rateMax = 1000000.0; 
-
 const double TreeAln::alphaMin = 0.02; 
 const double TreeAln::alphaMax = 1000.0; 
-
 const double TreeAln::freqMin = 0.001; 
-
-
 const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
 
 
 TreeAln::TreeAln()
   : parsimonyEnabled(true)
 {
-  cout << "allocating tree" << endl; 
   auto *tre = new tree;   
   memset(tre,0,sizeof(tree));   
   this->tr = tre; 

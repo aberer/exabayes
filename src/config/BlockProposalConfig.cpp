@@ -1,20 +1,19 @@
-#include "BlockProposalConfig.hpp"
-
 #include <cassert>
 
+#include "BlockProposalConfig.hpp"
 
 BlockProposalConfig::BlockProposalConfig()
-  : setByUser(NUM_PROPOSALS, false)
-   ,userProposalWeights(NUM_PROPOSALS, 0)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "PROPOSALS"; 
-  setupMap();
+  // setupMap();
 }
 
 
 void BlockProposalConfig::Read(NxsToken &token)
-{ 
+{   
   DemandEndSemicolon(token, "PROPOSALS");
+  
+  auto ps = ProposalTypeFunc::getAllProposals(); 
 
   while(true)
     {
@@ -29,11 +28,17 @@ void BlockProposalConfig::Read(NxsToken &token)
 	  token.GetNextToken(); 
 	  NxsString value = token.GetToken(false); 	    
 
-	  if(name2proposal.find(key) != name2proposal.end() )
+	  if(ProposalTypeFunc::isValidName(key))
 	    {
 	      double val = value.ConvertToDouble(); 
-	      userProposalWeights[proposal_type(name2proposal[key])] = val;
-	      setByUser[proposal_type(name2proposal[key])] = true; 
+	      auto t = ProposalTypeFunc::getTypeFromConfigString(key); 
+	      if(userValue.find(t) != userValue.end())
+		{
+		  std::cerr << "encountered the value " << key << "twice in the config file" << std::endl; 
+		  exit(0); 
+		}
+	      else 
+		userValue[t] = val; 
 	    }
 	  else if(key.EqualsCaseInsensitive("esprstopprob"))	    
 	    esprStopProp = value.ConvertToDouble();	  
@@ -52,35 +57,4 @@ void BlockProposalConfig::Read(NxsToken &token)
 
 
 // NOTICE 
-void BlockProposalConfig::setupMap()
-{
 
-  // TODO 
-  name2proposal["STNNI"] =  ST_NNI;
-  name2proposal["ESPR"] =  E_SPR;
-  name2proposal["ETBR"] =  E_TBR;
-  name2proposal["PARSIMONYSPR"] =  PARSIMONY_SPR;
-  name2proposal["GUIDEDSPR"] =  GUIDED_SPR;
-  
-  // BL 
-  name2proposal["BRANCHSLIDER"] =  BRANCH_SLIDER;
-  name2proposal["BRANCHCOLLAPSER"] = BRANCH_COLLAPSER; 
-  name2proposal["TREELENGTHMULT"] =  TL_MULT;
-  name2proposal["BRANCHMULTI"] =  BRANCH_LENGTHS_MULTIPLIER;
-  name2proposal["GUIDEDBL"] =  UPDATE_SINGLE_BL_GUIDED;
-  name2proposal["NODESLIDER"] =  NODE_SLIDER;
-  
-  // revmat 
-  name2proposal["REVMATSLIDER"] = REVMAT_SLIDER; 
-  name2proposal["REVMATDIRICHLET"] =  REVMAT_DIRICHLET;
-  
-  // rate heterogeneity 
-  name2proposal["RATEHETSLIDER"] =  RATE_HET_SLIDER;
-  name2proposal["RATEHETMULTI"] =  RATE_HET_MULTI;
-
-  // state frequencies
-  name2proposal["FREQUENCYSLIDER"] =  FREQUENCY_SLIDER;
-  name2proposal["FREQUENCYDIRICHLET"] =  FREQUENCY_DIRICHLET;
-
-  name2proposal["AAMODELJUMP"] = AMINO_MODEL_JUMP; 
-}

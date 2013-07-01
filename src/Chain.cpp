@@ -7,20 +7,17 @@
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "GlobalVariables.hpp"
-#include "BipartitionHash.hpp"
+// #include "BipartitionHash.hpp"
 #include "tune.h"
-#include "ExtendedTBR.hpp"
-#include "ExtendedSPR.hpp"
-#include "ParsimonySPR.hpp" 
-#include "TreeLengthMultiplier.hpp"
-#include "StatNNI.hpp"
-#include "PartitionProposal.hpp"
+// #include "ExtendedTBR.hpp"
+// #include "ExtendedSPR.hpp"
+// #include "ParsimonySPR.hpp" 
+// #include "TreeLengthMultiplier.hpp"
+// #include "StatNNI.hpp"
+// #include "PartitionProposal.hpp"
 #include "ProposalFunctions.hpp"
-#include "Parameters.hpp"
+// #include "Parameters.hpp"
 #include "LikelihoodEvaluator.hpp" 
-
-
-// #define DEBUG_ACCEPTANCE
 
 Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariablePtr> &_variables, LikelihoodEvaluatorPtr eval) 
   : traln(_traln)

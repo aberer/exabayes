@@ -1,8 +1,8 @@
 #include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
+#include "ProposalType.hpp"
 
-// #define INIT_BL_SLID_WIN  0.075
 
 const double ProposalRegistry::initBranchLengthMultiplier = 1.386294; 
 const double ProposalRegistry::initRateSlidingWindow = 0.15 ;
@@ -22,87 +22,84 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 {
   vector<aaMatrix_t> someMatrices; 
 
-  // TODO: this is not terrible as a design ... but reflection of course would be cooler  
-  for(int i = 0; i < NUM_PROPOSALS; ++i)
-    {
+  auto proposals =  ProposalTypeFunc::getProposalsForCategory(cat); 
+  for(auto p : proposals)
+    {     
       AbstractProposal *proposal = nullptr; 
-  
-      proposal_type curProp = proposal_type(i); 
 
-      switch(curProp)
+      switch(p)
 	{	      
-	case ST_NNI: 
+	case ProposalType::ST_NNI: 
 	  proposal = new StatNNI(initSecondaryBranchLengthMultiplier);
 	  break; 
-	case BRANCH_LENGTHS_MULTIPLIER:	      
+	case ProposalType::BRANCH_LENGTHS_MULTIPLIER:	      
 	  proposal = new BranchLengthMultiplier( initBranchLengthMultiplier) ; 
 	  break; 
-	case NODE_SLIDER:
+	case ProposalType::NODE_SLIDER:
 	  proposal = new NodeSlider(initNodeSliderMultiplier); 
 	  break; 
-	case REVMAT_SLIDER: 
+	case ProposalType::REVMAT_SLIDER: 
 	  proposal = new PartitionProposal<SlidingProposal, RevMatParameter>( initRateSlidingWindow, "revMatSlider"); 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
-	case FREQUENCY_SLIDER:
+	case ProposalType::FREQUENCY_SLIDER:
 	  proposal = new PartitionProposal<SlidingProposal, FrequencyParameter>(  initFrequencySlidingWindow, "freqSlider"); 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 		  
-	case TL_MULT:
+	case ProposalType::TL_MULT:
 	  proposal = new TreeLengthMultiplier(  ProposalRegistry::initTreeLengthMultiplier); 
 	  break; 
-	case E_TBR: 
+	case ProposalType::E_TBR: 
 	  proposal = new ExtendedTBR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier); 
 	  break; 
-	case E_SPR: 
+	case ProposalType::E_SPR: 
 	  proposal = new ExtendedSPR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier); 
 	  break; 
-	case PARSIMONY_SPR:	
+	case ProposalType::PARSIMONY_SPR:	
 	  proposal = new ParsimonySPR(  config.getParsimonyWarp(), initSecondaryBranchLengthMultiplier); 
 	  break; 
-	case RATE_HET_MULTI: 
+	case ProposalType::RATE_HET_MULTI: 
 	  proposal = new PartitionProposal<MultiplierProposal,RateHetParameter>(  initGammaMultiplier, "rateHetMulti"); 
 	  proposal->setRelativeWeight(1); 
 	  break; 
-	case RATE_HET_SLIDER: 
+	case ProposalType::RATE_HET_SLIDER: 
 	  proposal = new PartitionProposal<SlidingProposal,RateHetParameter>(  initGammaSlidingWindow, "rateHetSlider"); 
 	  proposal->setRelativeWeight(0); 
 	  break; 
-	case FREQUENCY_DIRICHLET: 
+	case ProposalType::FREQUENCY_DIRICHLET: 
 	  proposal = new PartitionProposal<DirichletProposal,FrequencyParameter>(  initDirichletAlpha, "freqDirich"); 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
-	case REVMAT_DIRICHLET: 
+	case ProposalType::REVMAT_DIRICHLET: 
 	  proposal = new PartitionProposal<DirichletProposal,RevMatParameter>( initDirichletAlpha, "revMatDirich"); 	      
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
-	case GUIDED_SPR:
+	case ProposalType::GUIDED_SPR:
 	  proposal = new RadiusMlSPR(  config.getGuidedRadius() ); 
 	  break; 
-	case BRANCH_COLLAPSER:
+	case ProposalType::BRANCH_COLLAPSER:
 	  proposal = new BranchCollapser(); 
 	  break; 
-	case AMINO_MODEL_JUMP: 
+	case ProposalType::AMINO_MODEL_JUMP: 
 	  proposal = new AminoModelJump(someMatrices);
 	  break; 
-	case BRANCH_GIBBS: 
+	case ProposalType::BRANCH_GIBBS: 
 	  proposal = new GibbsBranchLength(eval);
 	  break;
-	case UPDATE_SINGLE_BL_GUIDED: 
-	case BRANCH_SLIDER: 
+	case ProposalType::BRANCH_SLIDER: 
 	  continue; 		// TODO implement  
 	  break; 
 	default : 
 	  {
-	    cerr << "you did not implement case " << i << endl; 
+	    cerr << "you did not implement case " << int(p) << " in ProposalRegistry.cpp" << endl; 
 	    assert(0); 
 	  }
-	}
-      
-      if(config.wasSetByUser(curProp) )
-	proposal->setRelativeWeight(config.getProposalWeight(curProp)); 
+	} 
 
-      if(proposal->getCategory() != cat || proposal->getRelativeWeight() == 0 )
+      if(config.wasSetByUser(p))
+	proposal->setRelativeWeight(config.getProposalWeight(p)); 
+
+      if(proposal->getRelativeWeight() == 0 )
 	delete proposal; 
       else 
 	result.push_back(ProposalPtr(proposal)); 
