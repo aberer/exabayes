@@ -11,7 +11,7 @@
 #include "LikelihoodEvaluator.hpp" 
 
 
-Chain:: Chain(randKey_t seed, TreeAlnPtr _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, LikelihoodEvaluatorPtr eval)
+Chain:: Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, shared_ptr<LikelihoodEvaluator> eval)
   : traln(_traln)
   , deltaT(0)
   , runid(0)
@@ -276,7 +276,7 @@ void Chain::step()
 #endif
 
   pfun->applyToState(*traln, prior, hastings, chainRand);
-  pfun->evaluateProposal(evaluator, *traln, prior);
+  pfun->evaluateProposal(*evaluator, *traln, prior);
   
   double priorRatio = prior.getLnPriorRatio();
   double lnlRatio = tr->likelihood - prevLnl; 

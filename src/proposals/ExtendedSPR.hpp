@@ -15,7 +15,7 @@ public:
   virtual ~ExtendedSPR(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(LikelihoodEvaluatorPtr &evaluator,TreeAln &traln, PriorBelief &prior) ; 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
   virtual void autotune() {}	// disabled 
   virtual AbstractProposal* clone() const;  

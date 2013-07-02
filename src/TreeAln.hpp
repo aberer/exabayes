@@ -172,6 +172,4 @@ private:
 };  
 
 
-typedef  shared_ptr<TreeAln> TreeAlnPtr; 
-
 #endif

@@ -118,7 +118,7 @@ void BlockPrior::Read(NxsToken &token)
 	    }	    
 	  else 
 	    {
-	      map<nat,PriorPtr> &priorsForPartition = specificPriors[int(cat)]; // BAD
+	      map<nat,shared_ptr<AbstractPrior> > &priorsForPartition = specificPriors[int(cat)]; // BAD
 	      assert(priorsForPartition[priorPartition] == nullptr); 
 	      priorsForPartition[priorPartition] = prior; 
 	    }

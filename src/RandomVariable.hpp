@@ -18,22 +18,19 @@
 
 using namespace std; 
 
-class RandomVariable; 
-// typedef std::shared_ptr<RandomVariable> RandomVariablePtr ; 
-
 class RandomVariable
 {
 public: 
   RandomVariable(Category cat, nat id)
     : cat(cat) , id(id)  {} 
 
-  void setPrior (PriorPtr _prior) { prior = _prior; }  
+  void setPrior (shared_ptr<AbstractPrior> _prior) { prior = _prior; }  
   void addPartition(nat id) { partitions.push_back(id); }
   const vector<nat>& getPartitions() const {return partitions; }
   Category getCategory() const { return cat; }
   nat getId() const { return id; }
   void setId(nat _id ) {id = _id; }
-  PriorPtr getPrior() const {return prior; }
+  shared_ptr<AbstractPrior> getPrior() const {return prior; }
   ostream&  printShort(ostream& out); 
 
   // make cloneable, if there is information in it   
@@ -48,7 +45,7 @@ private:
   vector<nat> partitions; 	// the partitions, this parameter
 				// applies to
   nat id ; 			//  which id does the  parameter have among all of its kind  
-  PriorPtr prior; 
+  shared_ptr<AbstractPrior> prior; 
 
   friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
 };

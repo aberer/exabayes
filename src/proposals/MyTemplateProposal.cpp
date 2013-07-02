@@ -69,7 +69,7 @@ void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double
 }
 
 
-void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
+void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
   // somehow determine where what should be evaluated
   // the prior is NOT changed here

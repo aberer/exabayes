@@ -82,10 +82,10 @@ void RunFactory::addStandardPrior(RandomVariable* var, const TreeAln& traln )
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
     case Category::TOPOLOGY:  
-      var->setPrior( PriorPtr(new UniformPrior(0,0))); // TODO : proper topology prior? 
+      var->setPrior( make_shared<UniformPrior>(0,0)); // TODO : proper topology prior? 
       break; 
     case Category::BRANCH_LENGTHS: 
-      var->setPrior(PriorPtr(new ExponentialPrior(10.0)));
+      var->setPrior(make_shared<ExponentialPrior>(10.0));
       break; 
     case Category::FREQUENCIES: 
       {
@@ -95,7 +95,7 @@ void RunFactory::addStandardPrior(RandomVariable* var, const TreeAln& traln )
 	vector<double>badHardcoded; 
 	for(int i = 0; i < partition->states; ++i)
 	  badHardcoded.push_back(1.); 
-	var->setPrior(PriorPtr(new DirichletPrior(badHardcoded ))); 
+	var->setPrior(make_shared<DirichletPrior>(badHardcoded)); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
@@ -104,11 +104,11 @@ void RunFactory::addStandardPrior(RandomVariable* var, const TreeAln& traln )
 	assert(partition->dataType == DNA_DATA); 
 	
 	vector<double> subAlpha = {1,1,1,1,1,1}; 
-	var->setPrior(PriorPtr(new DirichletPrior( subAlpha ))); 
+	var->setPrior(make_shared<DirichletPrior>( subAlpha )); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
-      var->setPrior(PriorPtr(new UniformPrior(1e-6, 200)));     
+      var->setPrior(make_shared<UniformPrior>(1e-6, 200));     
       break; 
     case Category::AA_MODEL : 
       assert(NOT_IMPLEMENTED); 
@@ -129,7 +129,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 
       // try adding a partition specific prior 
       auto idMap = specificPriors[ int(v->getCategory()) ]; 
-      PriorPtr thePrior = nullptr; 
+      shared_ptr<AbstractPrior> thePrior = nullptr; 
       for(nat partId : partitionIds)	
 	{	  	  
 	  if(idMap.find(partId) != idMap.end()) // found 
@@ -166,7 +166,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
     }
 }
 
-void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, LikelihoodEvaluatorPtr &eval )
+void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval )
 {
   randomVariables = partitionParams.getParameters();  
   addStandardParameters(randomVariables, traln);

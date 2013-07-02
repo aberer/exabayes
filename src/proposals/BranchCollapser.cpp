@@ -61,10 +61,9 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 }
 
 
-void BranchCollapser::evaluateProposal(LikelihoodEvaluatorPtr &evaluator,TreeAln &traln, PriorBelief &prior) 
+void BranchCollapser::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, PriorBelief &prior) 
 {
-  // nodeptr p = modifiedBranch.findNodePtr(traln); 
-  evaluator->evaluate(traln,modifiedBranch, false); 
+  evaluator.evaluate(traln,modifiedBranch, false); 
 }
 
 

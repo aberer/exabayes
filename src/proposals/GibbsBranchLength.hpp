@@ -4,7 +4,7 @@
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
-  GibbsBranchLength(LikelihoodEvaluatorPtr _eval)
+  GibbsBranchLength(shared_ptr<LikelihoodEvaluator> _eval)
     : BranchLengthMultiplier(0)
     , eval(_eval)
   {
@@ -24,7 +24,7 @@ public:
     savedBranch = b;     
 
     
-    GibbsProposal::drawFromEsitmatedPosterior(b, eval, traln, rand, initBl, 5, hastings); 
+    GibbsProposal::drawFromEsitmatedPosterior(b, *eval, traln, rand, initBl, 5, hastings); 
     double newZ = b.getLength();
     traln.setBranchLengthBounded(newZ, 0, b.findNodePtr(traln)); 
 
@@ -32,12 +32,11 @@ public:
     prior.updateBranchLengthPrior(traln,initBl, newZ, brPr);
   }
 
-  virtual ~GibbsBranchLength(){}  
   virtual void autotune(){}
 
   virtual AbstractProposal* clone() const  { return new GibbsBranchLength(*this); }  
   
 private: 
-  LikelihoodEvaluatorPtr eval; 
+  shared_ptr<LikelihoodEvaluator> eval; 
 
 }; 

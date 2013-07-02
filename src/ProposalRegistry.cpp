@@ -21,7 +21,7 @@ const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ;
 /**
    @brief yields a set of proposls for integrating a category  
  */
-void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result, const TreeAln &traln, LikelihoodEvaluatorPtr &eval) const 
+void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result, const TreeAln &traln, shared_ptr<LikelihoodEvaluator> eval) const 
 {
   vector<aaMatrix_t> someMatrices; 
 

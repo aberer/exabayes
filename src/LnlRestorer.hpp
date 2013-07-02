@@ -52,8 +52,4 @@ private:
   double prevLnl; 		// for DEBUG
 }; 
 
-
-typedef shared_ptr<LnlRestorer> LnlRestorerPtr ; 
-
-
 #endif

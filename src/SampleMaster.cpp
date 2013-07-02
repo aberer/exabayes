@@ -22,8 +22,8 @@
 
 
 static int countNumberOfTreesQuick(const char *fn ); 
-static void initWithStartingTree(FILE *fh, vector<TreeAlnPtr > tralns); 
-static void initTreeWithOneRandom(int seed,  vector<TreeAlnPtr > &tralns); 
+static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln>  > tralns); 
+static void initTreeWithOneRandom(int seed,  vector<shared_ptr<TreeAln> > &tralns); 
 
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
   : pl(pl)
@@ -42,16 +42,16 @@ void SampleMaster::initializeRuns( )
   int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
   // initialize one tree 
-  vector<TreeAlnPtr> trees; 
-  trees.push_back(TreeAlnPtr(new TreeAln()));
+  vector<shared_ptr<TreeAln> > trees; 
+  trees.push_back(make_shared<TreeAln>());
   trees[0]->initializeFromByteFile(cl.getAlnFileName()); 
   trees[0]->enableParsimony();
 
   vector<unique_ptr<AbstractProposal> > proposals; 
   vector<shared_ptr<RandomVariable> > variables; 
 
-  LnlRestorerPtr restorer(new LnlRestorer(*(trees[0])));
-  LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
+  auto restorer = make_shared<LnlRestorer>(*(trees[0]));
+  auto eval = make_shared<LikelihoodEvaluator>(restorer); 
 
   initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables, eval);
   assert(runParams.getTuneFreq() > 0); 
@@ -80,13 +80,13 @@ void SampleMaster::initializeRuns( )
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
       if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
-	runs.push_back(CoupledChainsPtr(new CoupledChains(runSeeds[i], i, runParams, trees, cl.getWorkdir(), proposals, variables, eval))); 
+	runs.push_back(CoupledChains(runSeeds[i], i, runParams, trees, cl.getWorkdir(), proposals, variables, eval)); 
     }
 
   if(runParams.getTuneHeat())
     {
-      for(CoupledChainsPtr& r : runs)
-	r->enableHeatTuning(runParams.getTuneFreq()); 
+      for(auto r : runs)
+	r.enableHeatTuning(runParams.getTuneFreq()); 
     }
 
   if(numTreesAvailable > 0)
@@ -156,7 +156,7 @@ bool SampleMaster::convergenceDiagnostic()
     }
   else 
     {
-      return runs[0]->getChains()[0]->getGeneration() > runParams.getNumGen();
+      return runs[0].getChains()[0]->getGeneration() > runParams.getNumGen();
     }
 }
 
@@ -185,7 +185,7 @@ static void traverseInitFixedBL(nodeptr p, int *count, shared_ptr<TreeAln> traln
 }
 
 
-static void initTreeWithOneRandom(int seed,  vector<TreeAlnPtr> &tralns)
+static void initTreeWithOneRandom(int seed,  vector<shared_ptr<TreeAln> > &tralns)
 {  
   TreeRandomizer trRandomizer(seed);
   for(auto &traln : tralns)
@@ -199,7 +199,7 @@ static void initTreeWithOneRandom(int seed,  vector<TreeAlnPtr> &tralns)
 
 
 
-static void initWithStartingTree(FILE *fh, vector<TreeAlnPtr> tralns)
+static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > tralns)
 {
   // fetch a tree 
   auto traln = tralns[0]; 
@@ -241,9 +241,9 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, const TreeAlnPtr &traln, 
+void SampleMaster::initWithConfigFile(string configFileName, shared_ptr<TreeAln> traln, 
 				      vector<unique_ptr<AbstractProposal> > &proposalResult, 
-				      vector<shared_ptr<RandomVariable> > &variableResult, LikelihoodEvaluatorPtr &eval)
+				      vector<shared_ptr<RandomVariable> > &variableResult, shared_ptr<LikelihoodEvaluator> eval)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 
@@ -276,7 +276,7 @@ void SampleMaster::validateRunParams()
 
 
 
-void SampleMaster::initTrees(vector<TreeAlnPtr> &trees )
+void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees )
 {  
   tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl; 
 #ifdef DEBUG_LNL_VERIFY
@@ -287,7 +287,7 @@ void SampleMaster::initTrees(vector<TreeAlnPtr> &trees )
 
   for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
     {
-      auto traln =  TreeAlnPtr(new TreeAln);
+      auto traln =  make_shared<TreeAln>();
       traln->initializeFromByteFile(cl.getAlnFileName()); 
       traln->enableParsimony();
       trees.push_back(traln); 
@@ -306,7 +306,7 @@ void SampleMaster::run()
   while(not hasConverged)   
     {      
       for(auto &run : runs)
-	run->executePart(runParams.getDiagFreq());
+	run.executePart(runParams.getDiagFreq());
 
       hasConverged = convergenceDiagnostic(); 
 
@@ -326,16 +326,16 @@ void SampleMaster::finalizeRuns()
 {
   for(auto &run : runs)
     {
-      auto chains = run->getChains(); 
+      auto chains = run.getChains(); 
       for(auto &chain : chains)
 	{
 	  if( chain->getChainHeat() == 1.f)
-	    chain->finalizeOutputFiles(run->getTopoFile());
+	    chain->finalizeOutputFiles(run.getTopoFile());
 	  tout << "best state was: " << chain->getBestState( )<< endl; 
 	}
     }
 
-  tout << endl << "Converged/stopped after " << runs[0]->getChains()[0]->getGeneration() << " generations" << endl;   
+  tout << endl << "Converged/stopped after " << runs[0].getChains()[0]->getGeneration() << " generations" << endl;   
   tout << endl << "Total execution time: " 
        << CLOCK::duration_cast<CLOCK::duration<double> >( CLOCK::system_clock::now() - initTime   ).count() <<  " seconds" << endl; 
 }
@@ -353,7 +353,7 @@ void SampleMaster::branchLengthsIntegration()
 {
   assert(runs.size() == 1 );   
   auto &run = runs[0];   
-  auto chains = run->getChains(); 
+  auto chains = run.getChains(); 
   assert(chains.size() == 1); 
   auto chain = chains[0]; 
   
@@ -363,12 +363,13 @@ void SampleMaster::branchLengthsIntegration()
   ofstream tFile( ss.str());   
   TreePrinter tp(true, true, false);   
   TreePrinter tp2(true, true, true); 
-  auto traln = chain->getTraln(); 
+  auto tralnPtr = chain->getTralnPtr(); 
+  auto traln  = *tralnPtr  ; 
   tFile << tp.printTree(traln) << endl; 
   tFile << tp2.printTree(traln) << endl; 
   tFile.close(); 
   
-  auto eval = chain->getEvaluator();
+  auto eval = chain->getEvaluatorPtr();
 
   auto r = make_shared<RandomVariable>(Category::BRANCH_LENGTHS, 0);
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
@@ -379,14 +380,14 @@ void SampleMaster::branchLengthsIntegration()
   double lambda   =  10 ; 
 
 
-  vars[0]->setPrior(PriorPtr (new ExponentialPrior(lambda)));
+  vars[0]->setPrior(make_shared< ExponentialPrior>(lambda));
 
   auto p = unique_ptr<BranchIntegrator>(new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 
   vector<unique_ptr<AbstractProposal> >  proposals;   
   proposals.push_back( std::move(p) ); 
   proposals[0]->addPrimVar(vars[0]); 
 
-  Chain integrationChain(masterRand.generateSeed(), TreeAlnPtr(&(traln)), proposals, eval );   
+  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval );   
 
   auto branches =  traln.extractBranches();
   auto ps = integrationChain.getProposalView(); 

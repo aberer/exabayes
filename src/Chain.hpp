@@ -25,7 +25,7 @@ using namespace std;
 class Chain
 {
 public: 
-  Chain(randKey_t seed, TreeAlnPtr _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, LikelihoodEvaluatorPtr eval); 
+  Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, shared_ptr<LikelihoodEvaluator> eval); 
 
   ~Chain(){assert(0);}
   
@@ -76,17 +76,19 @@ public:
 
   void printProposalState(ostream& out ) const ; 
 
-  LikelihoodEvaluatorPtr getEvaluator(){return evaluator; }
+  LikelihoodEvaluator& getEvaluator() {return *evaluator; }
+  shared_ptr<LikelihoodEvaluator> getEvaluatorPtr() {return evaluator; }
 
   vector<RandomVariable*> extractVariables() const ; 
-  
+
+  shared_ptr<TreeAln> getTralnPtr()   {return traln; }
 
 
 private : 
   void initParamDump(); 
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr ) ;
 
-  TreeAlnPtr traln;  
+  shared_ptr<TreeAln> traln;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
@@ -100,7 +102,7 @@ private :
   PriorBelief prior; 
   double bestState; 
 
-  LikelihoodEvaluatorPtr evaluator;   
+  shared_ptr<LikelihoodEvaluator> evaluator;   
 }; 
 
 

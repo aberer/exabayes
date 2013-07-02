@@ -107,9 +107,9 @@ void TreeLengthMultiplier::autotune()
 }
  
  
-void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluatorPtr &evaluator, TreeAln &traln, PriorBelief &prior) 
+void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
-  evaluator->evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
+  evaluator.evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
 }
 
 

@@ -17,7 +17,7 @@ const double GibbsProposal::EST_FAC = 0.015;
     @param Branch branch -- contains the initial branch length
     
  */ 
-void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluatorPtr& eval, TreeAln &traln, Randomness& rand, double initVal,  int maxIter, double &hastings) 
+void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand, double initVal,  int maxIter, double &hastings) 
 {
   auto p = branch.findNodePtr(traln); 
   double initLength = branch.getLength(); 
@@ -43,17 +43,17 @@ void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluat
 
 
 
-void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluatorPtr &eval, double &secDerivative, int maxIter)  
+void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluator& eval, double &secDerivative, int maxIter)  
 {
   auto p = b.findNodePtr(traln ), 
     q = p->back; 
 
   if(not p->x == 1 )
-    eval->evalSubtree(traln, b); 
+    eval.evalSubtree(traln, b); 
   if(not q->x == 1 )
-    eval->evalSubtree(traln,b.getInverted());
+    eval.evalSubtree(traln,b.getInverted());
     
-    eval->evaluate(traln,b, false);
+  eval.evaluate(traln,b, false);
 
 #ifdef TODO
   // assert(0); 

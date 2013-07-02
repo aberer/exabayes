@@ -111,7 +111,7 @@ ostream& operator<<(ostream &out, const Path &rhs)
 
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, PriorPtr brPr) const 
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> brPr) const 
 {  
   tree *tr = traln.getTr(); 
   nodeptr p = b.findNodePtr(traln); 

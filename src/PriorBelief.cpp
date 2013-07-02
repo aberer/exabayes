@@ -4,6 +4,8 @@
 #include "Priors.hpp"
 
 
+
+
 PriorBelief::PriorBelief()
   :lnPrior(0)
   ,lnPriorRatio(0)
@@ -113,7 +115,7 @@ void PriorBelief::verifyPrior(const TreeAln &traln, vector<RandomVariable*> vari
 }
 
 
-void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, PriorPtr brPr) 
+void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
 {
   assert(wasInitialized); 
   if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 

@@ -3,7 +3,7 @@
 #include "LnlRestorer.hpp"
 
 
-LikelihoodEvaluator::LikelihoodEvaluator(LnlRestorerPtr _restorer)
+LikelihoodEvaluator::LikelihoodEvaluator(shared_ptr<LnlRestorer> _restorer)
   : restorer(_restorer)
 {
 } 

@@ -18,14 +18,14 @@ public:
     NCL_BLOCKTYPE_ATTR_NAME = "PARAMS";    
   }
 
-  void setTree(TreeAlnPtr _traln){traln = _traln; }
+  void setTree(shared_ptr<TreeAln> _traln){traln = _traln; }
   vector<shared_ptr<RandomVariable> > getParameters() const{return parameters; }
   virtual void Read(NxsToken &token); 
 
 private: 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
   vector<shared_ptr<RandomVariable> > parameters; 
-  TreeAlnPtr traln; 
+  shared_ptr<TreeAln> traln; 
 }; 
 
 

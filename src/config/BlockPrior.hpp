@@ -28,13 +28,13 @@ public:
   shared_ptr<AbstractPrior> parsePrior(NxsToken &token)  ; 
   virtual void Read(NxsToken &token); 
 
-  vector< PriorPtr > getGeneralPriors() const {return generalPriors; }
-  vector< map<nat,PriorPtr>>  getSpecificPriors() const {return specificPriors; }
+  vector< shared_ptr<AbstractPrior> > getGeneralPriors() const {return generalPriors; }
+  vector< map<nat,shared_ptr<AbstractPrior>>>  getSpecificPriors() const {return specificPriors; }
 
 private: 
   nat numPart;   
-  vector<PriorPtr> generalPriors; 
-  vector< map<nat,PriorPtr>> specificPriors; // for each category
+  vector<shared_ptr<AbstractPrior>> generalPriors; 
+  vector< map<nat,shared_ptr<AbstractPrior>>> specificPriors; // for each category
 }; 
 
 

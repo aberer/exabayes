@@ -9,7 +9,7 @@
 class LikelihoodEvaluator
 {
 public: 
-  LikelihoodEvaluator(LnlRestorerPtr restorer); 
+  LikelihoodEvaluator(shared_ptr<LnlRestorer> restorer); 
   ~LikelihoodEvaluator()
   { 
     assert(0); 
@@ -54,11 +54,10 @@ private: 			// METHODS
 
 
 private: 			// ATTRIBUTES
-  LnlRestorerPtr restorer;    
+  shared_ptr<LnlRestorer> restorer;    
 
 }; 
 
-typedef shared_ptr<LikelihoodEvaluator> LikelihoodEvaluatorPtr; 
 
 #endif
 

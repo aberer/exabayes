@@ -5,11 +5,7 @@
 #include <vector>
 
 #include "axml.h"
-// #include "TreeAln.hpp"
 
-// #include "Branch.hpp"
-
-// typedef struct _branch  branch; 
 class TreeAln; 
 
 /* TODO is this correct? */

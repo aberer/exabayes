@@ -25,9 +25,9 @@
 class CoupledChains
 {
 public: 
-  CoupledChains(int seed, int runNum, const BlockRunParameters &params, 
-		vector<TreeAlnPtr> trees, string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, 
-		const vector<shared_ptr<RandomVariable> > &vars, LikelihoodEvaluatorPtr eval);
+  CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, 
+			     string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, 
+			     const vector<shared_ptr<RandomVariable> > &vars, shared_ptr<LikelihoodEvaluator> eval); 
 
   /** @brief initializes all trees with a given starting tree */
   void initStartingTree(FILE *fh);
@@ -98,8 +98,6 @@ private:
   FILE *topoFile; 
   FILE *paramFile; 
 }; 
-
-typedef unique_ptr<CoupledChains> CoupledChainsPtr; 
 
 #endif
 

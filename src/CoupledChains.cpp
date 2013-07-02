@@ -10,9 +10,9 @@
 
 #include "time.hpp"
 
-CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAlnPtr > trees, 
+CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, 
 			     string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, 
-			     const vector<shared_ptr<RandomVariable> > &vars, LikelihoodEvaluatorPtr eval)
+			     const vector<shared_ptr<RandomVariable> > &vars, shared_ptr<LikelihoodEvaluator> eval)
   : temperature(params.getHeatFactor()) 
   , rand(seed)
   , runid(runNum) 
