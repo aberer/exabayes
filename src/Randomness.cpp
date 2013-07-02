@@ -6,10 +6,10 @@
 // TODO proper AND carefull make-over of randomness
 
 
-Randomness::Randomness(int seed)
+Randomness::Randomness(randCtr_t seed)
 {
-  key.v[0] = seed; 
-  key.v[1] = 0; 
+  key.v[0] = seed.v[0]; 
+  key.v[1] = seed.v[1]; 
   ctr.v[0] = 0; 
   ctr.v[1] = 0; 
 }

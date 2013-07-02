@@ -10,31 +10,18 @@
 
 #include "time.hpp"
 
-CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, 
-			     string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, 
-			     const vector<shared_ptr<RandomVariable> > &vars, shared_ptr<LikelihoodEvaluator> eval)
-  : temperature(params.getHeatFactor()) 
+CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> _chains )
+  : chains(move(_chains))
+  , heatIncrement(0.1) 
   , rand(seed)
   , runid(runNum) 
-  , tuneHeat(params.getTuneHeat())
-  , printFreq(params.getPrintFreq())
-  , swapInterval(params.getSwapInterval())
-  , samplingFreq(params.getSamplingFreq())
-  , runname(params.getRunId())
+  , tuneHeat(false)
+  , printFreq(500)
+  , swapInterval(1)
+  , samplingFreq(100)
+  , runname("standardId") 
+  , numCoupled(numCoupled) 
 {
-  int numCoupled = params.getNumCoupledChains();  
-  assert((nat)numCoupled == trees.size());
-
-  for(int cplId = 0; cplId < numCoupled; ++cplId)
-    {
-      Chain *chain = new Chain(  rand.generateSeed(), trees[cplId],  proposals, eval  ); 
-      chain->setRunId(runid); 
-      chain->setTuneFreuqency(params.getTuneFreq()); 
-      chain->setHeatIncrement(cplId); 
-      chain->setDeltaT(temperature); 
-      chains.push_back(chain);
-    }
-
   // swap info matrix 
   for(int i = 0; i < numCoupled * numCoupled ; ++i)
     swapInfo.push_back(new SuccessCounter());       
@@ -48,20 +35,19 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
   topoFile = fopen(tNameBuilder.str().c_str(), "w"); 
   paramFile = fopen(pNameBuilder.str().c_str(), "w");   
 
-  chains[0]->printNexusTreeFileStart(topoFile);
-  chains[0]->printParamFileStart(paramFile) ;
+  // chains[0]->printNexusTreeFileStart(topoFile);
+  // chains[0]->printParamFileStart(paramFile) ;
+}
+
+void CoupledChains::seedChains()
+{
+  for(auto &c : chains)
+    c.reseed(rand.generateSeed()); 
 }
 
 
 CoupledChains::~CoupledChains()
 {
-  // assert(0); 
-  // IMPORTANT TODO 
-  // for(auto chain : chains) 
-  //   exa_free(chain); 
-
-  // for(auto swapI : swapInfo)
-  //   exa_free(swapI); 
 }
 
 
@@ -110,22 +96,22 @@ void CoupledChains::switchChainState()
   while(chainAId == chainBId)
     chainBId = rand.drawRandInt(numChain); 
 
-  int coupIdA = chains[chainAId]->getCouplingId(),
-    coupIdB = chains[chainBId]->getCouplingId();   
+  int coupIdA = chains[chainAId].getCouplingId(),
+    coupIdB = chains[chainBId].getCouplingId();   
 
   if(coupIdA > coupIdB)
     swap(coupIdB, coupIdA); 
 
-  double heatA = chains[chainAId]->getChainHeat(),
-    heatB = chains[chainBId]->getChainHeat(); 
+  double heatA = chains[chainAId].getChainHeat(),
+    heatB = chains[chainBId].getChainHeat(); 
 
   assert(heatA <= 1.f || heatB <= 1.f); 
 
-  double lnlA = chains[chainAId]->getTraln().getTr()->likelihood,
-    lnlB = chains[chainBId]->getTraln().getTr()->likelihood; 
+  double lnlA = chains[chainAId].getTraln().getTr()->likelihood,
+    lnlB = chains[chainBId].getTraln().getTr()->likelihood; 
 
-  double lnPrA = chains[chainAId]->getPrior().getLnPrior(), 
-    lnPrB = chains[chainBId]->getPrior().getLnPrior(); 
+  double lnPrA = chains[chainAId].getPrior().getLnPrior(), 
+    lnPrB = chains[chainBId].getPrior().getLnPrior(); 
 
   double 
     aB = (lnlA + lnPrA ) *  heatB,
@@ -135,8 +121,8 @@ void CoupledChains::switchChainState()
 
   double accRatio = exp(( aB + bA )  - (aA + bB )); 
 
-  Chain *a = chains[ chainAId],
-    *b = chains[ chainBId] ; 
+  Chain &a = chains[ chainAId],
+    &b = chains[ chainBId] ; 
 
   int r = MIN(coupIdA, coupIdB ); 
   int c = MAX(coupIdA, coupIdB); 
@@ -144,7 +130,7 @@ void CoupledChains::switchChainState()
   /* do the swap */
   if( rand.drawRandDouble01()  < accRatio)
     {
-      a->switchState(*b); 
+      a.switchState(b); 
       swapInfo[r * chains.size() + c]->accept(); 
     } 
   else 
@@ -156,23 +142,23 @@ void CoupledChains::chainInfo()
 {
   // print hot chains
   vector<Chain*> sortedChains(chains.size()); 
-  for(auto chain : chains)
-    sortedChains[chain->getCouplingId()] = chain; 
+  for(auto &chain : chains)
+    sortedChains[chain.getCouplingId()] = &chain; 
 
-  const Chain& coldChain = *(sortedChains[0]); 
+  auto coldChain = sortedChains[0]; 
 
-  Branch fake(0,0,coldChain.getTraln().getTreeLengthExpensive()); 
+  Branch fake(0,0,coldChain->getTraln().getTreeLengthExpensive()); 
 
   tout << "[run: " << runid << "] "  ; 
   tout << "[time " << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- timeIncrement   ).count()     << "] "; 
   timeIncrement = CLOCK::system_clock::now();   
-  tout << "gen: " << coldChain.getGeneration() ; 
-  tout <<  "\tTL=" << setprecision(2)<<  fake.getInterpretedLength(coldChain.getTraln()); 
-  tout << "\tlnPr(1)=" << coldChain.getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain.getTraln().getTr()->likelihood << "\t" ; 
+  tout << "gen: " << coldChain->getGeneration() ; 
+  tout <<  "\tTL=" << setprecision(2)<<  fake.getInterpretedLength(coldChain->getTraln()); 
+  tout << "\tlnPr(1)=" << coldChain->getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain->getTraln().getTr()->likelihood << "\t" ; 
 
   for(nat i = 1 ; i < chains.size(); ++i)
     {
-      Chain *chain = sortedChains[i]; 
+      auto &chain = sortedChains[i]; 
       double heat = chain->getChainHeat();
       assert(heat < 1.0f); 
       
@@ -182,7 +168,7 @@ void CoupledChains::chainInfo()
   printSwapInfo();
   tout << endl; 
 
-  coldChain.printProposalState(tout);
+  coldChain->printProposalState(tout);
 
   tout << endl; 
 }
@@ -192,26 +178,26 @@ void CoupledChains::executePart(int gensToRun)
 {  
   /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
   for(auto &c : chains)
-    c->resume();
+    c.resume();
 
   for(int genCtr = 0; genCtr < gensToRun; genCtr += swapInterval)
     {
       bool timeToPrint = false; 
 
-      for(auto chain : chains)
+      for(auto &chain : chains)
 	{
 	  for(int i = 0; i < swapInterval; ++i)
 	    {
-	      chain->step(); 	      
-	      if(chain->getChainHeat() == 1 
-		 && (chain->getGeneration() % samplingFreq)  == samplingFreq - 1
+	      chain.step(); 	      
+	      if(chain.getChainHeat() == 1 
+		 && (chain.getGeneration() % samplingFreq)  == samplingFreq - 1
 		 ) 
-		chain->printSample(topoFile, paramFile); 
+		chain.printSample(topoFile, paramFile); 
 		
 	      
 	      timeToPrint |= 
-		chain->getCouplingId() == 0 && printFreq > 0
-		&& (chain->getGeneration() % printFreq )  == (printFreq - 1) ;
+		chain.getCouplingId() == 0 && printFreq > 0
+		&& (chain.getGeneration() % printFreq )  == (printFreq - 1) ;
 	    }
 	}
 
@@ -228,8 +214,8 @@ void CoupledChains::executePart(int gensToRun)
       switchChainState();
     }
 
-  for(auto chain : chains)
-    chain->suspend();
+  for(auto &chain : chains)
+    chain.suspend();
 
 #ifdef _USE_GOOGLE_PROFILER
   ProfilerFlush();
@@ -243,13 +229,12 @@ void CoupledChains::tuneTemperature()
      with the coldest chain in 23.4% of all cases */
 
   auto c = swapInfo[1]; 
-
-  temperature = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), temperature, false); 
-  // tout << "new temperature " << setprecision(3) << temperature<< ". Ratio was "  << c->getRatioInLastInterval() << endl; 
+  double deltaT = chains[0].getDeltaT(); 
+  deltaT = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), deltaT, false); 
   c->nextBatch();
   
   // update the chains 
-  for(auto chain : chains)
-    chain->setDeltaT(temperature);   
+  for(auto& chain : chains)
+    chain.setDeltaT(deltaT);   
 }
 

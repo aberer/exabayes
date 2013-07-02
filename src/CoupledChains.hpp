@@ -25,15 +25,13 @@
 class CoupledChains
 {
 public: 
-  CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<shared_ptr<TreeAln> > trees, 
-			     string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, 
-			     const vector<shared_ptr<RandomVariable> > &vars, shared_ptr<LikelihoodEvaluator> eval); 
+  CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> _chains ); 
 
-  /** @brief initializes all trees with a given starting tree */
-  void initStartingTree(FILE *fh);
-  /** @brief initializes all trees with ONE random tree */ 
-  void initRandomOne(int seed); 
-  
+  void seedChains(); 
+
+  void initializeChains(vector<shared_ptr<TreeAln> > trees, const vector<unique_ptr<AbstractProposal> > &proposals, 
+			const vector<shared_ptr<RandomVariable> > &vars, shared_ptr<LikelihoodEvaluator> eval); 
+
   ~CoupledChains(); 
 
   /** @brief run for a given number of generations */
@@ -46,7 +44,17 @@ public:
   /** @brief Execute a portion of one run. */
   void executePart(int gensToRun); 
 
-  vector<Chain*> getChains() {return chains; } 
+  
+  void setPrintFreq(nat t){printFreq = t; }
+
+  void setSwapInterval(nat i) {swapInterval = i; }
+  void setSamplingFreq(nat i) {samplingFreq = i; }
+  void setHeatIncrement(double temp ) { heatIncrement = temp ; } 
+  void setTuneHeat(bool bla){tuneHeat = bla ; }
+  
+  void setTemperature(double temp ){heatIncrement = temp;  } 
+
+  vector<Chain>& getChains() {return chains; } 
   
   // Chain* getChain(int i) {return chains[i]; }
   int getNumberOfChains(){return chains.size();}
@@ -62,7 +70,8 @@ public:
   FILE* getTopoFile(){return topoFile; }
   FILE* getParamFile(){return paramFile; }
   
-  
+  void setRunName(string a) {runname = a;  }
+
 
 private: 
 
@@ -73,15 +82,14 @@ private:
 */
   void switchChainState(); 
 
-
   /** @brief tunes the temperature parameter */  
   void tuneTemperature();
 
 
-  vector<Chain*> chains; 
+  vector<Chain> chains; 
   vector<SuccessCounter*> swapInfo;  
 
-  double temperature; 
+  double heatIncrement; 
   // the mcmc specific randomness used to initialize chains and do the swapping 
   Randomness rand; 
 
@@ -97,6 +105,8 @@ private:
   // files for sampling the cold chain  
   FILE *topoFile; 
   FILE *paramFile; 
+  
+  nat  numCoupled; 
 }; 
 
 #endif

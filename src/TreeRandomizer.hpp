@@ -10,7 +10,7 @@
 class TreeRandomizer
 {
 public: 
-  TreeRandomizer(int seed);
+  TreeRandomizer(randCtr_t seed);
   void randomizeTree(TreeAln &traln);
   
 private: 

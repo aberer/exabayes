@@ -27,8 +27,39 @@ class Chain
 public: 
   Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, shared_ptr<LikelihoodEvaluator> eval); 
 
-  ~Chain(){assert(0);}
-  
+  Chain( const Chain& rhs)    
+    : traln(rhs.traln)
+    , deltaT(rhs.deltaT)
+    , runid(rhs.runid)
+    , tuneFrequency(rhs.tuneFrequency)
+    , currentGeneration(rhs.currentGeneration)
+    , couplingId(rhs.couplingId)      
+    , state(rhs.state)
+    , chainRand(rhs.chainRand) 
+    , evaluator(rhs.evaluator)
+  {
+    for(auto &p : rhs.proposals )
+      proposals.emplace_back(std::move(p->clone())); 
+
+    prior.initialize(*traln, extractVariables()); 
+
+    suspend();
+
+    // assert(0); 
+    cout << "attention: copy constructing chain" << endl; 
+  }
+
+
+  void reseed(randKey_t c)
+  {
+    chainRand = Randomness(c); 
+  }
+
+  Chain& operator=(Chain &rhs)
+  {
+    assert(0); 
+  }
+
   // getters and setters 
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
@@ -37,6 +68,11 @@ public:
   void setTuneFreuqency(nat _tuneFreq ) {tuneFrequency = _tuneFreq; }
   void setHeatIncrement(nat cplId) {couplingId = cplId  ;}
   void setRunId(nat id) {runid = id; }
+
+  // double getTemperature() {return temperature; } 
+  double getDeltaT() {return deltaT; }
+  // nat void getHeatIncrement() {couplingId = cplId  ;}
+
 
 
   void resume(); 
@@ -84,10 +120,13 @@ public:
   shared_ptr<TreeAln> getTralnPtr()   {return traln; }
 
 
-private : 
+private : 			// METHODS 
   void initParamDump(); 
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr ) ;
 
+
+
+private: 			// ATTRIBUTES
   shared_ptr<TreeAln> traln;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 
@@ -101,7 +140,6 @@ private :
   double relWeightSum ; 	// sum of all relative weights
   PriorBelief prior; 
   double bestState; 
-
   shared_ptr<LikelihoodEvaluator> evaluator;   
 }; 
 

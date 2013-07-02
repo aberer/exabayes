@@ -6,6 +6,8 @@
 
 #include "axml.h"
 
+#include "Randomness.hpp"
+
 using namespace std; 
 
 
@@ -13,7 +15,7 @@ class CommandLine
 {
 public: 
   CommandLine(int argc, char* argv[]);
-  int getSeed() const {return seed; }
+  randCtr_t getSeed() const { randCtr_t c; c.v[0] = seed;  return c; }
   string getConfigFileName() const {return configFileName; }
   string getAlnFileName() const{return alnFileName; }
   string getRunid() const {return runid; }

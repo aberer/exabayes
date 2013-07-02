@@ -20,7 +20,7 @@ Chain:: Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_pt
   , currentGeneration(0)
   , couplingId(0)
   , state(*traln)
-  , chainRand(seed.v[0])
+  , chainRand(seed)
   , relWeightSum(0)
   , bestState(numeric_limits<double>::lowest())
   , evaluator(eval)

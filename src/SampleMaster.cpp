@@ -23,7 +23,7 @@
 
 static int countNumberOfTreesQuick(const char *fn ); 
 static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln>  > tralns); 
-static void initTreeWithOneRandom(int seed,  vector<shared_ptr<TreeAln> > &tralns); 
+static void initTreeWithOneRandom(randCtr_t seed,  vector<shared_ptr<TreeAln> > &tralns); 
 
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
   : pl(pl)
@@ -62,32 +62,51 @@ void SampleMaster::initializeRuns( )
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
 
-  vector<int> runSeeds; 
-  vector<int> treeSeeds; 
+  vector<randCtr_t> runSeeds; 
+  vector<randCtr_t> treeSeeds; 
   for(int i = 0; i < runParams.getNumRunConv();++i)
     {
-      randCtr_t r = masterRand.generateSeed();
-      runSeeds.push_back(r.v[0]); 
-      treeSeeds.push_back(r.v[1]); 
+      runSeeds.push_back(masterRand.generateSeed()); 
+      treeSeeds.push_back(masterRand.generateSeed()); 
     }
 
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {      
-      assert(i < 1); 
+      // assert(i < 1); 
       if( i < numTreesAvailable)
 	initWithStartingTree(treeFH, trees); 
       else 
 	initTreeWithOneRandom(treeSeeds[i], trees);
 
       if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
-	runs.push_back(CoupledChains(runSeeds[i], i, runParams, trees, cl.getWorkdir(), proposals, variables, eval)); 
+	{
+	  vector<Chain> chains; 
+	  
+	  for(int i = 0; i < runParams.getNumCoupledChains(); ++i)
+	    {
+	      randCtr_t c; 
+	      Chain chain(  c, trees[i], proposals, eval ); 
+	      chain.setRunId(i); 
+	      chain.setTuneFreuqency(runParams.getTuneFreq()); 
+	      chain.setHeatIncrement(i); 
+	      chain.setDeltaT(runParams.getHeatFactor()); 
+	      chains.push_back(chain);
+	    }
+
+
+	  CoupledChains run(runSeeds[i], i,  cl.getWorkdir(), runParams.getNumCoupledChains(), chains); 
+	  run.setTemperature(runParams.getHeatFactor());
+	  run.setTuneHeat(runParams.getTuneHeat()); 
+	  run.setPrintFreq(runParams.getPrintFreq()); 
+	  run.setSwapInterval(runParams.getSwapInterval()); 
+	  run.setSamplingFreq(runParams.getSamplingFreq()); 
+	  run.setRunName(runParams.getRunId()); 
+	  run.seedChains(); 
+	  
+	  runs.push_back(run); 
+	}
     }
 
-  if(runParams.getTuneHeat())
-    {
-      for(auto r : runs)
-	r.enableHeatTuning(runParams.getTuneFreq()); 
-    }
 
   if(numTreesAvailable > 0)
      fclose(treeFH); 
@@ -156,7 +175,7 @@ bool SampleMaster::convergenceDiagnostic()
     }
   else 
     {
-      return runs[0].getChains()[0]->getGeneration() > runParams.getNumGen();
+      return runs[0].getChains()[0].getGeneration() > runParams.getNumGen();
     }
 }
 
@@ -185,7 +204,7 @@ static void traverseInitFixedBL(nodeptr p, int *count, shared_ptr<TreeAln> traln
 }
 
 
-static void initTreeWithOneRandom(int seed,  vector<shared_ptr<TreeAln> > &tralns)
+static void initTreeWithOneRandom(randCtr_t seed,  vector<shared_ptr<TreeAln> > &tralns)
 {  
   TreeRandomizer trRandomizer(seed);
   for(auto &traln : tralns)
@@ -329,13 +348,13 @@ void SampleMaster::finalizeRuns()
       auto chains = run.getChains(); 
       for(auto &chain : chains)
 	{
-	  if( chain->getChainHeat() == 1.f)
-	    chain->finalizeOutputFiles(run.getTopoFile());
-	  tout << "best state was: " << chain->getBestState( )<< endl; 
+	  if( chain.getChainHeat() == 1.f)
+	    chain.finalizeOutputFiles(run.getTopoFile());
+	  tout << "best state was: " << chain.getBestState( )<< endl; 
 	}
     }
 
-  tout << endl << "Converged/stopped after " << runs[0].getChains()[0]->getGeneration() << " generations" << endl;   
+  tout << endl << "Converged/stopped after " << runs[0].getChains()[0].getGeneration() << " generations" << endl;   
   tout << endl << "Total execution time: " 
        << CLOCK::duration_cast<CLOCK::duration<double> >( CLOCK::system_clock::now() - initTime   ).count() <<  " seconds" << endl; 
 }
@@ -355,7 +374,7 @@ void SampleMaster::branchLengthsIntegration()
   auto &run = runs[0];   
   auto chains = run.getChains(); 
   assert(chains.size() == 1); 
-  auto chain = chains[0]; 
+  auto &chain = chains[0]; 
   
   stringstream ss; 
   ss << cl.getRunid() << ".tree.tre" ; 
@@ -363,13 +382,13 @@ void SampleMaster::branchLengthsIntegration()
   ofstream tFile( ss.str());   
   TreePrinter tp(true, true, false);   
   TreePrinter tp2(true, true, true); 
-  auto tralnPtr = chain->getTralnPtr(); 
+  auto tralnPtr = chain.getTralnPtr(); 
   auto traln  = *tralnPtr  ; 
   tFile << tp.printTree(traln) << endl; 
   tFile << tp2.printTree(traln) << endl; 
   tFile.close(); 
   
-  auto eval = chain->getEvaluatorPtr();
+  auto eval = chain.getEvaluatorPtr();
 
   auto r = make_shared<RandomVariable>(Category::BRANCH_LENGTHS, 0);
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
@@ -395,7 +414,7 @@ void SampleMaster::branchLengthsIntegration()
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
 
   int ctr = 0; 
-  for(auto branch : branches)
+  for(auto &branch : branches)
     {      
       double minHere = 1000; 
       double maxHere = 0; 

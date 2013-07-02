@@ -5,7 +5,7 @@
 #include "treeRead.h"
 
 
-TreeRandomizer::TreeRandomizer(int seed)
+TreeRandomizer::TreeRandomizer(randCtr_t seed)
   : rand(seed)
 {
 }
