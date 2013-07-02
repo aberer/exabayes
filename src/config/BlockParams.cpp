@@ -16,13 +16,13 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   str = token.GetToken(false); 
 
   bool newLink = true; 
-  RandomVariablePtr curVar; 
+  shared_ptr<RandomVariable> curVar; 
   while(str.compare(")") != 0 )
     {
       int part = str.ConvertToInt() ; 
       if(newLink)
 	{
-	  curVar = RandomVariablePtr(new RandomVariable(cat,idCtr)); 
+	  curVar = make_shared<RandomVariable>(cat,idCtr); 
 	  newLink = false; 
 	}
 
@@ -61,7 +61,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
 	{
 	  
-	  RandomVariablePtr r(new RandomVariable(cat, idCtr)); 
+	  auto r = make_shared<RandomVariable>(cat, idCtr); 
 	  r->addPartition(i);
 	  parameters.push_back(r); 
 	}

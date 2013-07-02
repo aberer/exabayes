@@ -28,15 +28,15 @@ class RunFactory
 public: 
   RunFactory(){}
  
-  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<ProposalPtr> &proposals, LikelihoodEvaluatorPtr &eval );
-  vector<RandomVariablePtr> getRandomVariables() const {return randomVariables; }
+  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, LikelihoodEvaluatorPtr &eval );
+  vector<shared_ptr<RandomVariable> > getRandomVariables() const {return randomVariables; }
 
 private: 
-  vector<RandomVariablePtr> randomVariables; 
+  vector<shared_ptr<RandomVariable> > randomVariables; 
 
-  void addStandardParameters(vector<RandomVariablePtr> &vars, const TreeAln &traln ); 
-  void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<RandomVariablePtr> &variables); 
-  void addStandardPrior(RandomVariablePtr &var, const TreeAln& traln ); 
+  void addStandardParameters(vector<shared_ptr<RandomVariable> > &vars, const TreeAln &traln ); 
+  void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<shared_ptr<RandomVariable> > &variables); 
+  void addStandardPrior(RandomVariable* var, const TreeAln& traln ); 
 }; 
 
 #endif

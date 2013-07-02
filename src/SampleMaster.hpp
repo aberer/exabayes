@@ -28,13 +28,12 @@ class SampleMaster
 {
 public: 
   SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
-  ~SampleMaster(){assert(0);}
 
   void initializeRuns( ); 
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, const TreeAlnPtr &traln, vector<ProposalPtr> &proposalResult, vector<RandomVariablePtr> &variableResult, LikelihoodEvaluatorPtr &eval); 
+  void initWithConfigFile(string configFileName, const TreeAlnPtr &traln, vector<unique_ptr<AbstractProposal> > &proposalResult, vector<shared_ptr<RandomVariable> > &variableResult, LikelihoodEvaluatorPtr &eval); 
   void validateRunParams(); 	// TODO  
   void branchLengthsIntegration()  ;  
 

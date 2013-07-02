@@ -45,8 +45,8 @@ public:
   
   int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
 
-  void addPrimVar(RandomVariablePtr var) {primVar.emplace_back(std::move(var)) ; }
-  void addSecVar(RandomVariablePtr var) {secVar.push_back(std::move(var)) ; }
+  void addPrimVar(shared_ptr<RandomVariable> var) {primVar.push_back(var) ; }
+  void addSecVar(shared_ptr<RandomVariable> var) {secVar.push_back(var) ; }
 
   static void updateHastings(double &hastings, double valToAdd, string whoDoneIt); 
 
@@ -114,20 +114,22 @@ public:
     return out; 
   }
 
-  vector<RandomVariablePtr>& getPrimVar(){return primVar; } 
+  vector<RandomVariable*> getPrimVar() const; 
+  vector<RandomVariable*> getSecVar() const ; 
 
 protected:   
   string name;   
   SuccessCounter sctr; 
   Category category; 
-  
-  vector<RandomVariablePtr> primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  vector<RandomVariablePtr> secVar;  // as a by-product also these random variables are changed 
+
+  // will be a unique_ptr later 
+  vector<shared_ptr<RandomVariable> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  vector<shared_ptr<RandomVariable> > secVar;  // as a by-product also these random variables are changed 
 
   double relativeWeight; 
 
 }; 
 
-typedef  std::unique_ptr<AbstractProposal> ProposalPtr; 
+// typedef  std::unique_ptr<AbstractProposal> ProposalPtr; 
 
 #endif

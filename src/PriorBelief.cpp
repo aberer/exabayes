@@ -4,17 +4,25 @@
 #include "Priors.hpp"
 
 
-PriorBelief::PriorBelief(const TreeAln &traln, const vector<RandomVariablePtr> &variables)
+PriorBelief::PriorBelief()
   :lnPrior(0)
-  , lnPriorRatio(0)
+  ,lnPriorRatio(0)
+  , wasInitialized(false)
 {
-  lnPrior = scoreEverything(traln, variables);
 }
 
+
+void PriorBelief::initialize(const TreeAln &traln, vector<RandomVariable*> variables)
+{
+  lnPrior = scoreEverything(traln, variables); 
+  lnPriorRatio = 0; 
+  wasInitialized = true; 
+}
 
 
 void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double> &oldFc, const vector<double> &newFcs, const vector<shared_ptr<AbstractPrior> > &blPriors)  
 {
+  assert(wasInitialized); 
   assert(blPriors.size() == 1  &&  dynamic_cast<ExponentialPrior*>(blPriors[0].get()) != nullptr) ; 
 
   // TODO this is horrible, but let's go with that for now. 
@@ -37,11 +45,12 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double
 }
 
 
-double PriorBelief::scoreEverything(const TreeAln &traln, const vector<RandomVariablePtr> &variables) const 
+double PriorBelief::scoreEverything(const TreeAln &traln, vector<RandomVariable*> variables) const 
 {
   double result = 0; 
 
-  for(auto &v : variables)
+  // for(auto &v = variables.begin(); v < variables.end(); ++v)  
+       for( const auto v : variables)
     {
       double partialResult = 0; 
 
@@ -92,7 +101,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const vector<RandomVar
 } 
 
 
-void PriorBelief::verifyPrior(const TreeAln &traln, const vector<RandomVariablePtr> &variables) const 
+void PriorBelief::verifyPrior(const TreeAln &traln, vector<RandomVariable*> variables) const 
 {
   assert(lnPriorRatio == 0); 
   double verified = scoreEverything(traln, variables); 
@@ -106,6 +115,7 @@ void PriorBelief::verifyPrior(const TreeAln &traln, const vector<RandomVariableP
 
 void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, PriorPtr brPr) 
 {
+  assert(wasInitialized); 
   if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
     {
       auto casted = dynamic_cast<ExponentialPrior*> (brPr.get()); 

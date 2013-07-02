@@ -57,7 +57,7 @@ begin runconfig;
  diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
  numRuns  1 		[ number of independant runs ]
- numGen 1000000             [ if numRuns = 1, stop simulation after that many generations ] 
+ numGen 5000           [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
  
@@ -108,6 +108,8 @@ end;
       treeLengthMult 2 
       nodeSlider  5 
       branchCollapser 0 [ bug! ]
+      
+      aGibbsBL 0 
 
       [ RATE HETEROGENEITY ]
 [       rateHetSlider 0 ] 
@@ -128,7 +130,7 @@ end;
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
-       eSprStopProb 0.5 [ stopping probability for eSPR moves, 0.5 in mb! ] 
+      eSprStopProb 0.5 [ stopping probability for eSPR moves, 0.5 in mb! ] 
       parsimonyWarp 0.10 [ warp factor for parsimony based moves => if we set that to 10, it is a reference to the star trek voyager episode "threshold" ]  
 
 

@@ -10,7 +10,7 @@ public:
   {
     name = "estGibbsBL"; 
     category = Category::BRANCH_LENGTHS; 
-    relativeWeight = 0 ; 
+    relativeWeight = 20 ; 
   } 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
@@ -23,7 +23,8 @@ public:
     nodeptr p = b.findNodePtr(traln); 
     savedBranch = b;     
 
-    GibbsProposal::drawFromEsitmatedPosterior(b, eval, traln, rand, 0.1, 10, hastings); 
+    
+    GibbsProposal::drawFromEsitmatedPosterior(b, eval, traln, rand, initBl, 5, hastings); 
     double newZ = b.getLength();
     traln.setBranchLengthBounded(newZ, 0, b.findNodePtr(traln)); 
 

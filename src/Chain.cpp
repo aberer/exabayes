@@ -1,57 +1,41 @@
 #include <sstream>
 
-
 #include "Chain.hpp"
 #include "Topology.hpp"
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "GlobalVariables.hpp"
-// #include "BipartitionHash.hpp"
 #include "tune.h"
-// #include "ExtendedTBR.hpp"
-// #include "ExtendedSPR.hpp"
-// #include "ParsimonySPR.hpp" 
-// #include "TreeLengthMultiplier.hpp"
-// #include "StatNNI.hpp"
-// #include "PartitionProposal.hpp"
 #include "ProposalFunctions.hpp"
-// #include "Parameters.hpp"
 #include "LikelihoodEvaluator.hpp" 
 
-Chain::Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, const vector<ProposalPtr> &_proposals, int _tuneFreq ,const vector<RandomVariablePtr> &_variables, LikelihoodEvaluatorPtr eval) 
+
+Chain:: Chain(randKey_t seed, TreeAlnPtr _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, LikelihoodEvaluatorPtr eval)
   : traln(_traln)
   , deltaT(0)
-  , runid(_runid)
-  , tuneFrequency(_tuneFreq)
+  , runid(0)
+  , tuneFrequency(100)
   , hastings(0)
   , currentGeneration(0)
-  , couplingId(id)
+  , couplingId(0)
   , state(*traln)
   , chainRand(seed.v[0])
   , relWeightSum(0)
   , bestState(numeric_limits<double>::lowest())
-  , prior(*_traln, _variables)
   , evaluator(eval)
-  , variables(_variables)
 {
   for(auto &p : _proposals)
     {
-      ProposalPtr copy(p->clone()); 
+      unique_ptr<AbstractProposal> copy(p->clone()); 
       assert(copy->getPrimVar().size() != 0); 
       proposals.push_back(std::move(copy)); 
-
     }
-
-  for(int j = 0; j < traln->getNumberOfPartitions(); ++j)
-    traln->initRevMat(j);
-
-  saveTreeStateToChain(); 
-
-  for(auto& elem : proposals)
-    relWeightSum +=  elem->getRelativeWeight();
-
+  
+  // saving the tree state 
+  suspend(); 
 }
+
 
 
 ostream& Chain::addChainInfo(ostream &out)
@@ -72,31 +56,7 @@ double Chain::getChainHeat()
 }
 
 
-void Chain::saveTreeStateToChain()
-{
-  state.accessTopology().saveTopology(*(traln));
-
-  /* save model parameters */
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      Partition& partInfo =  state.accessPartition(i);       
-      pInfo *partitionTr = traln->getPartition(i); 
-      
-      partInfo.setAlpha( partitionTr->alpha) ; 
-
-      vector<double> tmp; 
-      for(int i = 0; i < numStateToNumInTriangleMatrix(partitionTr->states); ++i)
-	tmp.push_back(partitionTr->substRates[i]); 
-      partInfo.setRevMat(tmp); 
-      tmp.clear(); 
-      for(int i = 0; i < partitionTr->states ; ++i)
-	tmp.push_back(partitionTr->frequencies[i]); 
-      partInfo.setStateFreqs(tmp); 
-    }  
-}
-
-
-void Chain::applyChainStateToTree()
+void Chain::resume()
 {
   assert(traln->getNumBranches() == 1); 
   state.accessTopology().restoreTopology(*traln); 
@@ -119,13 +79,18 @@ void Chain::applyChainStateToTree()
     } 
   
   evaluator->evaluateFullNoBackup(*traln); 
-  prior.reinitPrior(*traln, variables);
+  
+  auto vs = extractVariables(); 
+  prior.initialize(*traln, vs);
+
+  // prepare proposals 
+  relWeightSum = 0; 
+  for(auto& elem : proposals)
+    relWeightSum +=  elem->getRelativeWeight();
 }
 
 
-
-
-void Chain::debug_printAccRejc(ProposalPtr &prob, bool accepted, double lnl, double lnPr ) 
+void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   tout << "[run=" << runid << ",heat="
@@ -138,7 +103,39 @@ void Chain::debug_printAccRejc(ProposalPtr &prob, bool accepted, double lnl, dou
 
 
 
-ProposalPtr& Chain::drawProposalFunction()
+void Chain::printProposalState(ostream& out ) const 
+{
+  map<Category, vector<AbstractProposal*> > sortedProposals; 
+  for(auto& p : proposals)
+    sortedProposals[p->getCategory()].push_back(p.get()) ; 
+  
+  for(auto &n : CategoryFuns::getAllCategories())
+    {       
+      Category cat = n; 
+
+      bool isThere = false; 
+      for(auto &p : proposals)
+	isThere |= p->getCategory() == cat ; 
+      
+      if(isThere)
+	{
+	  tout << CategoryFuns::getLongName(n) << ":\t";
+	  for(auto &p : proposals)
+	    {
+	      if(p->getCategory() == cat)
+		{
+		  p->printNamePartitions(tout); 
+		  tout  << ":"  << p->getSCtr() << "\t" ; 	      
+		}
+	    }
+	  tout << endl; 
+	}
+    }
+}
+
+
+
+AbstractProposal* Chain::drawProposalFunction()
 { 
   double r = relWeightSum * chainRand.drawRandDouble01();   
 
@@ -146,13 +143,13 @@ ProposalPtr& Chain::drawProposalFunction()
     {
       double w = c->getRelativeWeight(); 
       if(r < w )
-	return c;
+	return c.get();
       else 
 	r -= w; 
     }
 
   assert(0); 
-  return proposals[0]; 
+  return proposals[0].get(); 
 }
 
 
@@ -253,7 +250,7 @@ void Chain::switchState(Chain &rhs)
 void Chain::step()
 {
 #ifdef DEBUG_VERIFY_LNPR
-  prior.verifyPrior(*traln, variables);
+  prior.verifyPrior(*traln, extractVariables());
 #endif
 
   currentGeneration++; 
@@ -269,7 +266,7 @@ void Chain::step()
 
   double myHeat = getChainHeat();
 
-  auto& pfun = drawProposalFunction();
+  auto pfun = drawProposalFunction();
  
   /* reset proposal ratio  */
   hastings = 0; 
@@ -317,11 +314,66 @@ void Chain::step()
 #endif
 
 #ifdef DEBUG_VERIFY_LNPR
-  prior.verifyPrior(*traln, variables);
+  prior.verifyPrior(*traln, extractVariables());
 #endif
 
   if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
     {
       pfun->autotune();
     }
+
 }
+
+
+void Chain::suspend()
+{
+  state.accessTopology().saveTopology(*(traln));
+
+  /* save model parameters */
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+    {
+      Partition& partInfo =  state.accessPartition(i);       
+      pInfo *partitionTr = traln->getPartition(i); 
+      
+      partInfo.setAlpha( partitionTr->alpha) ; 
+
+      vector<double> tmp; 
+      for(int i = 0; i < numStateToNumInTriangleMatrix(partitionTr->states); ++i)
+	tmp.push_back(partitionTr->substRates[i]); 
+      partInfo.setRevMat(tmp); 
+      tmp.clear(); 
+      for(int i = 0; i < partitionTr->states ; ++i)
+	tmp.push_back(partitionTr->frequencies[i]); 
+      partInfo.setStateFreqs(tmp); 
+    }  
+}
+
+									   
+vector<RandomVariable*> Chain::extractVariables() const 
+{
+  unordered_set<RandomVariable*> result; 
+  for(auto &p : proposals)
+    {
+      for(auto &v : p->getPrimVar())
+	result.insert(v); 
+      for(auto &v : p->getSecVar())
+	result.insert(v); 
+    }
+  
+  vector<RandomVariable*> result2 ; 
+  for(auto v : result)
+    result2.push_back(v); 
+
+  return result2; 
+}
+
+
+const vector<AbstractProposal*> Chain::getProposalView() const 
+{
+  vector<AbstractProposal*> result;  
+  for(auto &elem: proposals)
+    result.push_back(elem.get()); 
+  return result; 
+}
+
+

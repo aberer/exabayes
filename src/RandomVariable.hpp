@@ -19,7 +19,7 @@
 using namespace std; 
 
 class RandomVariable; 
-typedef std::shared_ptr<RandomVariable> RandomVariablePtr ; 
+// typedef std::shared_ptr<RandomVariable> RandomVariablePtr ; 
 
 class RandomVariable
 {
@@ -52,6 +52,7 @@ private:
 
   friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
 };
+
 
 
 

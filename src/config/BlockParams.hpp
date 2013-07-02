@@ -19,12 +19,12 @@ public:
   }
 
   void setTree(TreeAlnPtr _traln){traln = _traln; }
-  vector<RandomVariablePtr> getParameters() const{return parameters; }
+  vector<shared_ptr<RandomVariable> > getParameters() const{return parameters; }
   virtual void Read(NxsToken &token); 
 
 private: 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
-  vector<RandomVariablePtr> parameters; 
+  vector<shared_ptr<RandomVariable> > parameters; 
   TreeAlnPtr traln; 
 }; 
 

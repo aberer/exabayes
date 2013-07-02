@@ -9,7 +9,7 @@
 
 // not to be confused with a fun factory...
 
-void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const TreeAln &traln )
+void RunFactory::addStandardParameters(vector<shared_ptr<RandomVariable> > &vars, const TreeAln &traln )
 {
   std::set<Category> categories; 
 
@@ -30,7 +30,7 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 	case Category::TOPOLOGY: 
 	  {
 	    // deafult: everything linked 
-	    RandomVariablePtr r(new RandomVariable(catIter,highestId));
+	    auto r = make_shared<RandomVariable>(catIter,highestId);
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
 	    vars.push_back(r); 
@@ -40,7 +40,7 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 	case Category::BRANCH_LENGTHS: 
 	  {
 	    // default: everything is linked
-	    RandomVariablePtr r(new RandomVariable(catIter,highestId));
+	    auto r = make_shared<RandomVariable>(catIter,highestId);
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
 	    vars.push_back(r); 
@@ -53,7 +53,7 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      {		    
-		RandomVariablePtr r(new RandomVariable(catIter, highestId));
+		auto r = make_shared< RandomVariable>(catIter, highestId);
 		r->addPartition(j); 
 		vars.push_back(r);	   
 	      }
@@ -64,7 +64,7 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions();++ j)
 	      {
-		RandomVariablePtr r(new RandomVariable(catIter, highestId));
+		auto r = make_shared<RandomVariable>(catIter, highestId);
 		r->addPartition(j);
 		vars.push_back(r);
 	      }
@@ -77,7 +77,7 @@ void RunFactory::addStandardParameters(vector<RandomVariablePtr> &vars, const Tr
 }
 
 
-void RunFactory::addStandardPrior(RandomVariablePtr &var, const TreeAln& traln )
+void RunFactory::addStandardPrior(RandomVariable* var, const TreeAln& traln )
 {
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
@@ -118,7 +118,7 @@ void RunFactory::addStandardPrior(RandomVariablePtr &var, const TreeAln& traln )
 }
 
 
-void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<RandomVariablePtr> &variables)
+void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<shared_ptr<RandomVariable> > &variables)
 {
   auto generalPriors = priorInfo.getGeneralPriors();
   auto specificPriors = priorInfo.getSpecificPriors();
@@ -160,13 +160,13 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	v->setPrior(thePrior);
       else 
 	{	  
-	  addStandardPrior(v, traln);
+	  addStandardPrior(v.get(), traln);
 	  cout << "using STANDARD prior for variable "  << *v << endl; 
 	}
     }
 }
 
-void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<ProposalPtr> &proposals, LikelihoodEvaluatorPtr &eval )
+void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, LikelihoodEvaluatorPtr &eval )
 {
   randomVariables = partitionParams.getParameters();  
   addStandardParameters(randomVariables, traln);
@@ -174,7 +174,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   ProposalRegistry reg; 
 
-  vector<RandomVariablePtr> blRandVars; 
+  std::vector<shared_ptr<RandomVariable> > blRandVars; 
   for(auto &v : randomVariables)
     if(v->getCategory() == Category::BRANCH_LENGTHS)
       blRandVars.push_back(v); 
@@ -184,7 +184,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
       if(typeid(v->getPrior()) == typeid(shared_ptr<FixedPrior>))
 	continue;
 
-      vector<ProposalPtr> tmpResult;  
+      vector<unique_ptr<AbstractProposal> > tmpResult;  
 
       reg.getProposals(v->getCategory(), propConfig, tmpResult, traln, eval); 
       for(auto  &p : tmpResult )

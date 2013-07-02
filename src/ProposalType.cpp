@@ -1,9 +1,7 @@
 #include <iostream>
 #include <cassert>
 
-
 #include "ProposalType.hpp"
-
 
 namespace ProposalTypeFunc
 {
@@ -60,7 +58,8 @@ namespace ProposalTypeFunc
 	{ ProposalType::RATE_HET_MULTI,  "RATEHETMULTI" } ,
 	{ ProposalType::FREQUENCY_SLIDER,  "FREQUENCYSLIDER" } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  "FREQUENCYDIRICHLET" } ,
-	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } 
+	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } ,
+	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} 
       }; 
 
     return proposal2name[p];     

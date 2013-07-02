@@ -10,8 +10,10 @@
 
 #include "time.hpp"
 
-CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAlnPtr > trees, string workingdir, const vector<ProposalPtr> &proposals, const vector<RandomVariablePtr> &vars, LikelihoodEvaluatorPtr eval)
-  : temperature(params.getHeatFactor())
+CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &params, vector<TreeAlnPtr > trees, 
+			     string workingdir, const vector<unique_ptr<AbstractProposal> > &proposals, 
+			     const vector<shared_ptr<RandomVariable> > &vars, LikelihoodEvaluatorPtr eval)
+  : temperature(params.getHeatFactor()) 
   , rand(seed)
   , runid(runNum) 
   , tuneHeat(params.getTuneHeat())
@@ -23,10 +25,12 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
   int numCoupled = params.getNumCoupledChains();  
   assert((nat)numCoupled == trees.size());
 
-  for(int i = 0; i < numCoupled; ++i)
+  for(int cplId = 0; cplId < numCoupled; ++cplId)
     {
-
-      Chain *chain = new Chain(rand.generateSeed(),i, runid, trees[i],  proposals, params.getTuneFreq(), vars, eval); 
+      Chain *chain = new Chain(  rand.generateSeed(), trees[cplId],  proposals, eval  ); 
+      chain->setRunId(runid); 
+      chain->setTuneFreuqency(params.getTuneFreq()); 
+      chain->setHeatIncrement(cplId); 
       chain->setDeltaT(temperature); 
       chains.push_back(chain);
     }
@@ -49,11 +53,9 @@ CoupledChains::CoupledChains(int seed, int runNum, const BlockRunParameters &par
 }
 
 
-
-
 CoupledChains::~CoupledChains()
 {
-  assert(0); 
+  // assert(0); 
   // IMPORTANT TODO 
   // for(auto chain : chains) 
   //   exa_free(chain); 
@@ -180,33 +182,8 @@ void CoupledChains::chainInfo()
   printSwapInfo();
   tout << endl; 
 
-  map<Category, vector< AbstractProposal* > > sortedProposals; 
-  auto& proposals = coldChain.getProposals();
-  for(auto& p : proposals)
-    sortedProposals[p->getCategory()].push_back(p.get()) ; 
+  coldChain.printProposalState(tout);
 
-  for(auto &n : CategoryFuns::getAllCategories())
-    {       
-      Category cat = n; 
-
-      bool isThere = false; 
-      for(auto &p : proposals)
-	isThere |= p->getCategory() == cat ; 
-      
-      if(isThere)
-	{
-	  tout << CategoryFuns::getLongName(n) << ":\t";
-	  for(auto &p : proposals)
-	    {
-	      if(p->getCategory() == cat)
-		{
-		  p->printNamePartitions(tout); 
-		  tout  << ":"  << p->getSCtr() << "\t" ; 	      
-		}
-	    }
-	  tout << endl; 
-	}
-    }
   tout << endl; 
 }
 
@@ -214,8 +191,8 @@ void CoupledChains::chainInfo()
 void CoupledChains::executePart(int gensToRun)
 {  
   /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
-  for(nat i = 0; i < chains.size(); ++i)
-    chains[i]->applyChainStateToTree();
+  for(auto &c : chains)
+    c->resume();
 
   for(int genCtr = 0; genCtr < gensToRun; genCtr += swapInterval)
     {
@@ -252,7 +229,7 @@ void CoupledChains::executePart(int gensToRun)
     }
 
   for(auto chain : chains)
-    chain->saveTreeStateToChain();
+    chain->suspend();
 
 #ifdef _USE_GOOGLE_PROFILER
   ProfilerFlush();

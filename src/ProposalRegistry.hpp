@@ -24,7 +24,9 @@ class ProposalRegistry
 {
 public: 
   // bad
-  void getProposals(Category cat, const BlockProposalConfig &config, vector<ProposalPtr>& result, const TreeAln &traln, LikelihoodEvaluatorPtr &eval) const ;  
+  void getProposals(Category cat, const BlockProposalConfig &config, 
+		    vector<unique_ptr<AbstractProposal> >& result, const TreeAln &traln, 
+		    LikelihoodEvaluatorPtr &eval) const ;  
   
   static const double initFrequencySlidingWindow ; 
   static const  double initBranchLengthMultiplier; 

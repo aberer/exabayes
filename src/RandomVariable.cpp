@@ -37,12 +37,3 @@ ostream&  RandomVariable::printShort(ostream& out)
   return out; 
 }
 
-
-// RandomVariablePtr RandomVariable::clone() const 
-// {
-//   RandomVariablePtr r(new RandomVariable(cat, id)) ; 
-//   r->setPrior(prior) ; 
-//   for(auto v : partitions)
-//     r->addPartition(v); 
-//   return r;  
-// }

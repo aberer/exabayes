@@ -5,11 +5,11 @@
    conversion. That's why we have two public regions. 
  */ 
 
-
-
 #ifndef _CHAIN_H
 #define  _CHAIN_H
+
 #include <vector>
+#include <unordered_set>
 #include <memory>
 
 #include "PriorBelief.hpp"
@@ -18,7 +18,6 @@
 #include "AbstractProposal.hpp"
 
 class TreeAln; 
-class Topology; 
 class AbstractProposal; 
 
 using namespace std; 
@@ -26,10 +25,7 @@ using namespace std;
 class Chain
 {
 public: 
-  Chain(randKey_t seed, int id, int _runid, TreeAlnPtr _traln, 
-	const vector<ProposalPtr> &_proposals, int _tuneFreq ,
-	const vector<RandomVariablePtr> &variables, 
-	LikelihoodEvaluatorPtr eval) ; 
+  Chain(randKey_t seed, TreeAlnPtr _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, LikelihoodEvaluatorPtr eval); 
 
   ~Chain(){assert(0);}
   
@@ -38,18 +34,28 @@ public:
   void setDeltaT(double dt){deltaT = dt; }
   int getCouplingId(){return couplingId; }
   void setCouplingId(int id) {couplingId = id; }
+  void setTuneFreuqency(nat _tuneFreq ) {tuneFrequency = _tuneFreq; }
+  void setHeatIncrement(nat cplId) {couplingId = cplId  ;}
+  void setRunId(nat id) {runid = id; }
+
+
+  void resume(); 
+  void suspend(); 
+  
   
   /** @brief draws a proposal function. */ 
-  ProposalPtr& drawProposalFunction();
+  AbstractProposal* drawProposalFunction();
 
   /** @brief Saves all relevan information from the tree into the chain Chain. */ 
-  void saveTreeStateToChain(); 
+  // void saveTreeStateToChain(); 
 
   /** @brief Applies the Chain of the chain to its tree. */ 
-  void applyChainStateToTree(); 
+  // void applyChainStateToTree(); 
   
   /** @brief Execute one generation of the chain. */
   void step();
+
+  const vector<AbstractProposal*> getProposalView() const  ; 
 
   int getGeneration() const {return currentGeneration; }
   const PriorBelief& getPrior() const  {return prior; } 
@@ -65,16 +71,20 @@ public:
   const TreeAln& getTraln() const { return *traln; }
   TreeAln& getTraln()  { return *traln; }
 
-  const vector<ProposalPtr>& getProposals() const { return proposals;}
-  vector<ProposalPtr>& getProposals() {return proposals; }
-
+  void printProposalSate(ostream& out ) const ; 
   double getBestState() const {return bestState; }
+
+  void printProposalState(ostream& out ) const ; 
 
   LikelihoodEvaluatorPtr getEvaluator(){return evaluator; }
 
+  vector<RandomVariable*> extractVariables() const ; 
+  
+
+
 private : 
   void initParamDump(); 
-  void debug_printAccRejc(ProposalPtr &prob, bool accepted, double lnl, double lnPr ) ;
+  void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr ) ;
 
   TreeAlnPtr traln;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
@@ -83,17 +93,17 @@ private :
   double hastings;/// the log hastings ratio  
   int currentGeneration;     
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  vector<ProposalPtr> proposals; 
+  vector<unique_ptr<AbstractProposal> > proposals; 
   State state; 
   Randomness chainRand;   
   double relWeightSum ; 	// sum of all relative weights
   PriorBelief prior; 
   double bestState; 
 
-  LikelihoodEvaluatorPtr evaluator; 
-  
-  vector<RandomVariablePtr> variables; 
+  LikelihoodEvaluatorPtr evaluator;   
 }; 
+
+
 
 
 #endif

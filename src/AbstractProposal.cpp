@@ -1,6 +1,24 @@
 #include "AbstractProposal.hpp"
 
 
+vector<RandomVariable*> AbstractProposal::getPrimVar() const
+{
+  vector<RandomVariable*> result; 
+  for(auto &v : primVar)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+ 
+vector<RandomVariable*> AbstractProposal::getSecVar() const 
+{
+  vector<RandomVariable*> result; 
+  for(auto &v : secVar)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+
 /**
    @brief valToAdd must not be on the log-scale 
  */ 

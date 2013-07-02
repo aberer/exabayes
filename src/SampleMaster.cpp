@@ -47,8 +47,8 @@ void SampleMaster::initializeRuns( )
   trees[0]->initializeFromByteFile(cl.getAlnFileName()); 
   trees[0]->enableParsimony();
 
-  vector<ProposalPtr> proposals; 
-  vector<RandomVariablePtr> variables; 
+  vector<unique_ptr<AbstractProposal> > proposals; 
+  vector<shared_ptr<RandomVariable> > variables; 
 
   LnlRestorerPtr restorer(new LnlRestorer(*(trees[0])));
   LikelihoodEvaluatorPtr eval(new LikelihoodEvaluator(restorer));
@@ -91,8 +91,6 @@ void SampleMaster::initializeRuns( )
 
   if(numTreesAvailable > 0)
      fclose(treeFH); 
-
-  cout << "we have " << trees[0]->getNumberOfPartitions() << " partitions"  << endl; 
 
   tout << endl; 
 }
@@ -243,8 +241,9 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, const TreeAlnPtr &traln, vector<ProposalPtr> &proposalResult, 
-				      vector<RandomVariablePtr> &variableResult, LikelihoodEvaluatorPtr &eval)
+void SampleMaster::initWithConfigFile(string configFileName, const TreeAlnPtr &traln, 
+				      vector<unique_ptr<AbstractProposal> > &proposalResult, 
+				      vector<shared_ptr<RandomVariable> > &variableResult, LikelihoodEvaluatorPtr &eval)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 
@@ -371,35 +370,28 @@ void SampleMaster::branchLengthsIntegration()
   
   auto eval = chain->getEvaluator();
 
-  RandomVariablePtr r(new RandomVariable(Category::BRANCH_LENGTHS, 0));
+  auto r = make_shared<RandomVariable>(Category::BRANCH_LENGTHS, 0);
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     r->addPartition(i);
 
-  vector<RandomVariablePtr> vars =  {r} ; 
+  vector<shared_ptr<RandomVariable> > vars =  {r} ; 
 
   double lambda   =  10 ; 
 
 
   vars[0]->setPrior(PriorPtr (new ExponentialPrior(lambda)));
 
-  auto p = ProposalPtr(new BranchIntegrator(ProposalRegistry::initBranchLengthMultiplier));   
-  vector<ProposalPtr>  proposals;   
+  auto p = unique_ptr<BranchIntegrator>(new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 
+  vector<unique_ptr<AbstractProposal> >  proposals;   
   proposals.push_back( std::move(p) ); 
   proposals[0]->addPrimVar(vars[0]); 
 
-  Chain integrationChain(masterRand.generateSeed(), 
-  			 0, 
-  			 0, 
-  			 TreeAlnPtr(&(traln)), 
-  			 proposals, 
-  			 100,
-  			 vars, 
-  			 eval ); 
+  Chain integrationChain(masterRand.generateSeed(), TreeAlnPtr(&(traln)), proposals, eval );   
 
   auto branches =  traln.extractBranches();
-  vector<ProposalPtr>& ps = integrationChain.getProposals(); 
+  auto ps = integrationChain.getProposalView(); 
   assert(ps.size() == 1 );   
-  auto integrator = dynamic_cast<BranchIntegrator*>(ps[0].get()); 
+  auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
 
   int ctr = 0; 
   for(auto branch : branches)
