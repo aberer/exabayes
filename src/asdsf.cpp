@@ -2,13 +2,9 @@
 
 #include "axml.h"
 
-
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
-
-// #undef PRINT 
-// #define PRINT printf
 
 #include "AvgSplitFreqAssessor.hpp"
 

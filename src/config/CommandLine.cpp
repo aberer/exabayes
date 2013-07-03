@@ -1,21 +1,29 @@
 #include <unistd.h>
 #include <iostream>
-
+#include <cstring>
 #include "CommandLine.hpp"
 #include "GlobalVariables.hpp"
 
+#include "getopt_pp.h"
+
 using namespace std; 
 
+using namespace GetOpt; 
 
-CommandLine::CommandLine(int argc, char *argv[])
-  : seed(0)
-  , configFileName("")
+
+
+
+CommandLine::CommandLine(int argc, char **argv)
+  : configFileName("")
   , alnFileName("")
   , runid("")
   , treeFile("")
   , workDir("")
   , runNumParallel(1)
 {
+  seed.v[0] = 0; 
+  seed.v[1] = 0; 
+  
   parse(argc, argv) ;
 }
 
@@ -68,6 +76,20 @@ void CommandLine::assertFileExists(string filename)
 
 
 
+void CommandLine::parseAlternative(int argc, char *argv[])
+{
+  GetOpt_pp args(argc, argv);
+
+  args >> Option('s' ,"seed" , seed.v[0]);
+  args >> Option('f', "file", alnFileName); 
+  args >> Option('n', "runid", runid); 
+  args >> Option('t', "tree-file", treeFile); 
+  args >> Option('w', "work-dir", workDir); 
+  args >> Option('R', "parallel-run", runNumParallel); 
+}
+
+
+
 /** 
     @brief parses the command line 
  */ 
@@ -84,17 +106,18 @@ void CommandLine::parse(int argc, char *argv[])
 	{
 	case 'C': 		// chain-level parallelism 
 	  {
-	    
+	    cerr << "not in use" << endl; 
+	    assert(0); 
 	  }
 	  break; 
 	case 'c': 		// config file 	  
 	  {
-	    configFileName = string(optarg); 
+	    configFileName = string(strdup(optarg)); 
 	    assertFileExists(configFileName);
 	  }
 	  break; 
 	case 'f': 		// aln file 
-	  alnFileName = string(optarg); 
+	  alnFileName = string(strdup(optarg)); 
 	  assertFileExists(alnFileName); 
 	  break; 
 	case 'v':  		// version 
@@ -108,13 +131,13 @@ void CommandLine::parse(int argc, char *argv[])
 	  runid = string(optarg); 	  
 	  break; 
 	case 't': 		// trees -- have that in the config file? 
-	  treeFile = string(optarg); 
+	  treeFile = string(strdup(optarg)); 
 	  break; 
 	case 'w':		// working dir  
-	  workDir = string(optarg); 
+	  workDir = string(strdup(optarg)); 
 	  break; 
 	case 's': 		// seed 
-	  seed = atoi(optarg);
+	  seed.v[0] = std::stoi(optarg);
 	  break; 
 	case 'R': 
 	  runNumParallel = atoi(optarg);
@@ -134,7 +157,7 @@ void CommandLine::parse(int argc, char *argv[])
       abort(); 
     }
 
-  if(seed == 0 )
+  if(seed.v[0] == 0 )
     {
       cerr << "please specify a seed via -s seed (must NOT be 0)"   << endl; 
       abort(); 
@@ -158,3 +181,9 @@ void CommandLine::parse(int argc, char *argv[])
 
 
 
+
+
+randCtr_t CommandLine::getSeed() const
+{
+  return seed ; 
+} 

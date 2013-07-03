@@ -96,7 +96,7 @@ void BipartitionHash::extractBipartitions(TreeAln &traln, nodeptr p, int *cnt, i
            
       newviewBipartitions( p);
 
-      if( NOT (isTip(p->back->number, tr->mxtips)))
+      if( not (isTip(p->back->number, tr->mxtips)))
 	{
 	  nat 
 	    *toInsert  = bitvectors[p->number];

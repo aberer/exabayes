@@ -10,7 +10,7 @@ numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l)
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=1		
+useGoogleProfiler=0		
 useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
@@ -48,11 +48,16 @@ if [ ! -d $pathtodata ]; then
     exit
 fi 
 
+cflags="-fno-common"
+cxxflags="-fno-common"
+
+
+
 
 default=$1
 if [ "$default" == "debug" ]; then 
-    cflags="$cflags -O1 -ggdb"
-    cxxflags="$cxxflags -O1 -ggdb"
+    cflags="$cflags -O0 -g"
+    cxxflags="$cxxflags -O0 -g"
     gdb="$TERM -e gdb -ex run --args "
 elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"

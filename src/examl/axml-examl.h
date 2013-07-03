@@ -1052,7 +1052,8 @@ extern double evaluatePartialGeneric (tree *, int i, double ki, int _model);
 extern void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal);
 extern void newviewGeneric (tree *tr, nodeptr p, boolean masked);
 extern void newviewGenericMulti (tree *tr, nodeptr p, int model);
-extern void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, boolean mask);
+void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask); 
+/* extern void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, boolean mask); */
 extern void makenewzGenericDistance(tree *tr, int maxiter, double *z0, double *result, int taxon1, int taxon2);
 extern double evaluatePartitionGeneric (tree *tr, nodeptr p, int model);
 extern void newviewPartitionGeneric (tree *tr, nodeptr p, int model);

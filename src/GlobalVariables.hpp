@@ -12,13 +12,16 @@
 
 #include <string>
 #include <chrono> 
+#include <memory>
 
 #include "common.h"
 #include "config.h"
 #include "teestream.hpp"
 
-#define tout ( *(globals.teeOut))
-#define toutPure (*(globals.teeOut))
+#define tout (*globals.teeOut)
+
+// #define tout ( *(globals.teeOut))
+// #define toutPure (*(globals.teeOut))
 
 class TreeAln; 
 class BipartitionHash; 
@@ -30,8 +33,11 @@ class GlobalVariables
 {
 public: 
   string logFile; 
-  ofstream *logStream;   
+  
   teestream* teeOut; 
+  ofstream* logStream;
+  
+
 
 #ifdef DEBUG_LNL_VERIFY
   TreeAln *debugTree; 
@@ -39,12 +45,13 @@ public:
 #endif
 };
 
+
 #endif
 
 #ifdef _INCLUDE_DEFINITIONS
 
-GlobalVariables globals; 
 
+GlobalVariables globals; 
 /* for crude performance measurements */
 // double timeIncrement = 0;  
 chrono::system_clock::time_point timeIncrement;  
@@ -53,5 +60,8 @@ chrono::system_clock::time_point timeIncrement;
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 
 extern chrono::system_clock::time_point timeIncrement;  
+// extern unique_ptr<teestream> teeOut; 
+// extern unique_ptr<ofstream> logStream ;
+
 
 #endif

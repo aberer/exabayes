@@ -19,7 +19,6 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
 
   int numBranches = traln.getNumBranches(); 
   assert(numBranches == 1 ); 
-  tree *tr  = traln.getTr();
 
   nodeptr p= bisectedBranch.findNodePtr(traln ); 
   path.clear();

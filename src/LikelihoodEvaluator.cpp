@@ -37,7 +37,7 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)
   if(p->x)
     {
       tree *tr = traln.getTr();
-      assert(NOT isTip(p->number, tr->mxtips)); 
+      assert(not isTip(p->number, tr->mxtips)); 
       p->x = 0; 
       p->next->x = 1; 
     }

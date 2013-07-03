@@ -46,10 +46,11 @@ private:
 
   int modelEvaluated; 
   double ***reserveArrays; 
-  int* orientation; 
-  bool *wasSwitched; 
-  nat **partitionScaler;   
+  vector<bool> wasSwitched; 
+  vector<nat> orientation; 
+  vector<vector<nat>> partitionScaler;   
   double prevLnl; 		// for DEBUG
+
 }; 
 
 #endif

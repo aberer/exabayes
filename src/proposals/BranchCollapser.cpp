@@ -44,7 +44,6 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
     }
   else
     {      
-      nodeptr p = b.findNodePtr(traln);       
       double realZ = b.getInterpretedLength(traln); 
       vector<double> tmp = {realZ}; 
 #if TODO 

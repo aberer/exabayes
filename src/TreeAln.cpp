@@ -29,12 +29,10 @@ const double TreeAln::freqMin = 0.001;
 const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
 
 
-TreeAln::TreeAln()
+TreeAln::TreeAln(int numA, int numB)
   : parsimonyEnabled(true)
 {
-  auto *tre = new tree;   
-  memset(tre,0,sizeof(tree));   
-  this->tr = tre; 
+  memset(&tr,0,sizeof(tree)); 
   initDefault();
 }
 
@@ -42,44 +40,82 @@ TreeAln::TreeAln()
 
 TreeAln::~TreeAln()
 {
-  // assert(0);
-
-  if(tr->aliaswgt != NULL)
-    exa_free(tr->aliaswgt); 
-  if(tr->rateCategory != NULL)
-    exa_free(tr->rateCategory); 
-  if(tr->patrat != NULL)
-    exa_free(tr->patrat);
-  if(tr->patratStored != NULL)
-    exa_free(tr->patratStored);
-  if(tr->lhs != NULL)
-    exa_free(tr->lhs);  
-  if(tr->yVector != NULL)
-    exa_free(tr->yVector); 
-  if(tr->nameList != NULL)
+  cout << "freeing tree " << endl; 
+  
+  if(tr.aliaswgt != NULL)
+    exa_free(tr.aliaswgt); 
+  if(tr.rateCategory != NULL)
+    exa_free(tr.rateCategory); 
+  if(tr.patrat != NULL)
+    exa_free(tr.patrat);
+  if(tr.patratStored != NULL)
+    exa_free(tr.patratStored);
+  if(tr.lhs != NULL)
+    exa_free(tr.lhs);  
+  if(tr.yVector != NULL)
+    exa_free(tr.yVector); 
+  if(tr.nameList != NULL)
     {
-      for(int i = 1; i <= tr->mxtips; ++i )
-	exa_free(tr->nameList[i]);
-      exa_free(tr->nameList);
+      for(int i = 1; i <= tr.mxtips; ++i )
+	exa_free(tr.nameList[i]);
+      exa_free(tr.nameList);
     }
 
-  if(tr->tree_string != NULL)
-    exa_free(tr->tree_string);
-  if(tr->tree0 != NULL)
-    exa_free(tr->tree0);
-  if(tr->tree1 != NULL)
-    exa_free(tr->tree1);
+  if(tr.tree_string != NULL)
+    exa_free(tr.tree_string);
+  if(tr.tree0 != NULL)
+    exa_free(tr.tree0);
+  if(tr.tree1 != NULL)
+    exa_free(tr.tree1);
   
-  if(tr->constraintVector != NULL)
-    exa_free(tr->constraintVector); 
-  if(tr->nodeBaseAddress != NULL)
-    exa_free(tr->nodeBaseAddress);
+  if(tr.constraintVector != NULL)
+    exa_free(tr.constraintVector); 
+  if(tr.nodeBaseAddress != NULL)
+    exa_free(tr.nodeBaseAddress);
+  
+#if HAVE_PLL != 0
+  if(parsimonyEnabled)
+    freeParsimonyDataStructures(&tr, &partitions);  
+
+  exa_free(tr.td[0].ti);    
+  exa_free(tr.td[0].executeModel);    
+  exa_free(tr.td[0].parameterValues);    
+
+  // exa_free(tr.td[0].parameterValues);   
+#endif
+
+  exa_free(tr.nodep); 
 
   
   int numPart = getNumberOfPartitions();
   for(int i = 0; i < numPart ;++i)
     {
       pInfo *partition = getPartition(i); 
+
+#if HAVE_PLL != 0      
+      exa_free(partition->frequencyGrouping); 
+      exa_free(partition->symmetryVector);
+      exa_free(partition->frequencies);
+      exa_free(partition->empiricalFrequencies); 
+      exa_free(partition->tipVector); 
+      exa_free(partition->perSiteRates); 
+      exa_free(partition->gammaRates); 
+      // TODO xvector 
+      exa_free(partition->yVector);
+      exa_free(partition->xSpaceVector); 
+      exa_free(partition->sumBuffer); 
+      exa_free(partition->ancestralBuffer); 
+      exa_free(partition->wgt); 
+      exa_free(partition->rateCategory); 
+      exa_free(partition->partitionName); 
+      exa_free(partition->EIGN); 
+      exa_free(partition->left); 
+      exa_free(partition->right); 
+      exa_free(partition->EI); 
+      exa_free(partition->EV); 
+      exa_free(partition->globalScaler);       
+      exa_free(partition->substRates);       
+#endif
       exa_free(partition); 
     }
   
@@ -87,29 +123,18 @@ TreeAln::~TreeAln()
     {
 #if HAVE_PLL != 0 
       if(getNumberOfPartitions() > 0 )
-	exa_free(partitions->partitionData); 
-      exa_free(partitions); 
+	exa_free(partitions.partitionData); 
+      // exa_free(partitions); 
 #else 
-      exa_free(tr->partitionData);
+      exa_free(tr.partitionData);
 #endif
     }
-
-  if(parsimonyEnabled)
-#if HAVE_PLL != 0
-    freeParsimonyDataStructures(tr, partitions);  
-#else 
-  ; 
-#endif
-
-  exa_free(tr);
 }
 
 
 void TreeAln::initializeFromByteFile(string _byteFileName)
 {
 #if HAVE_PLL != 0
-  partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
-  partitions = pl;
   this->initializeTreePLL(_byteFileName);
 #else 
   extern char byteFileName[1024]; 
@@ -128,7 +153,7 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
   adef.perGeneBranchLengths   = FALSE;   
   adef.useCheckpoint          = FALSE;
   
-  initializeTree(tr, &adef);   
+  initializeTree(&tr, &adef);   
 #endif  
 
   for(int i = 0; i < getNumberOfPartitions(); ++i)
@@ -182,7 +207,7 @@ void TreeAln::extractHelper( nodeptr p , vector<Branch> &result, bool isStart) c
 vector<Branch> TreeAln::extractBranches() const 
 {
   vector<Branch> result; 
-  extractHelper(tr->nodep[1]->back, result, true);
+  extractHelper(tr.nodep[1]->back, result, true);
   return result; 
 }
 
@@ -201,14 +226,14 @@ void TreeAln::enableParsimony()
   // assert the parsimony x-ints are set correctly 
   for(nat i = 1; i < getNumberOfNodes() + 1 ; ++i)
     {
-      tr->nodep[i]->xPars = 1; 
-      tr->nodep[i]->next->xPars = 0; 
-      tr->nodep[i]->next->next->xPars = 0; 
+      tr.nodep[i]->xPars = 1; 
+      tr.nodep[i]->next->xPars = 0; 
+      tr.nodep[i]->next->next->xPars = 0; 
     }
   
   // allocateParsimonyDataStructures(tr);   
 #else 
-  allocateParsimonyDataStructures(tr, partitions);   
+  allocateParsimonyDataStructures(&tr, &partitions);   
 #endif
 }
 
@@ -218,23 +243,24 @@ void TreeAln::enableParsimony()
 */ 
 void TreeAln::initDefault()
 {   
-  tr->doCutoff = TRUE;
-  tr->secondaryStructureModel = SEC_16; /* default setting */
-  tr->searchConvergenceCriterion = FALSE;
-  tr->rateHetModel = GAMMA; 
-  tr->multiStateModel  = GTR_MULTI_STATE;
+  tr.likelihood =  0 ; 
+  tr.doCutoff = TRUE;
+  tr.secondaryStructureModel = SEC_16; /* default setting */
+  tr.searchConvergenceCriterion = FALSE;
+  tr.rateHetModel = GAMMA; 
+  tr.multiStateModel  = GTR_MULTI_STATE;
 #if HAVE_PLL == 0 
-  tr->useGappedImplementation = FALSE;
-  tr->saveBestTrees          = 0;
+  tr.useGappedImplementation = FALSE;
+  tr.saveBestTrees          = 0;
 #endif
-  tr->saveMemory = FALSE;
-  tr->manyPartitions = FALSE;
-  tr->categories             = 25;
-  tr->grouped = FALSE;
-  tr->constrained = FALSE;
-  tr->gapyness               = 0.0; 
-  tr->useMedian = FALSE;
-  tr->mxtips = 0; 
+  tr.saveMemory = FALSE;
+  tr.manyPartitions = FALSE;
+  tr.categories             = 25;
+  tr.grouped = FALSE;
+  tr.constrained = FALSE;
+  tr.gapyness               = 0.0; 
+  tr.useMedian = FALSE;
+  tr.mxtips = 0; 
 }
 
 
@@ -263,15 +289,15 @@ void TreeAln::unlinkTree()
 #endif
 
   // unlink tips 
-  for(int i = 1; i < tr->mxtips+1; ++i)
+  for(int i = 1; i < tr.mxtips+1; ++i)
     {
-      nodeptr p = tr->nodep[i]; 
+      nodeptr p = tr.nodep[i]; 
       p->back = NULL; 
     }
 
-  for(int i = tr->mxtips + 1; i < 2 * tr->mxtips; ++i)
+  for(int i = tr.mxtips + 1; i < 2 * tr.mxtips; ++i)
     {      
-      nodeptr p = tr->nodep[i]; 
+      nodeptr p = tr.nodep[i]; 
       p->back = NULL; 
       p->next->back = NULL; 
       p->next->next->back = NULL; 
@@ -282,10 +308,9 @@ void TreeAln::unlinkTree()
 
 nodeptr TreeAln::getUnhookedNode(int number)
 {  
-  tree *tr = getTr();
-  nodeptr p = tr->nodep[number]; 
+  nodeptr p = tr.nodep[number]; 
 
-  if(isTip(number, tr->mxtips) )
+  if(isTip(number, tr.mxtips) )
     {
       assert(p->back == NULL); 
       return p; 
@@ -321,8 +346,13 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
     {
       pInfo *partitionRhs = rhs.getPartition(i); 
       pInfo *partitionLhs = this->getPartition(i); 
-      memcpy(partitionLhs->frequencies, partitionRhs->frequencies, partitionRhs->states * sizeof(double)); 
-      memcpy(partitionLhs->substRates, partitionRhs->substRates, numStateToNumInTriangleMatrix(partitionRhs->states) * sizeof(double)); 
+
+      for(int j = 0; j < partitionRhs->states; ++j )
+	partitionLhs->frequencies[i] = partitionRhs->frequencies[i]; 
+      
+      for(int j = 0 ; j < numStateToNumInTriangleMatrix(partitionRhs->states); ++j)
+	partitionLhs->substRates[j] = partitionRhs->substRates[j]; 
+
       partitionLhs->alpha = partitionRhs->alpha; 
       this->initRevMat(i);
       this->discretizeGamma(i);       
@@ -337,7 +367,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 
 #ifdef UNSAFE_EXACT_TREE_COPY
   // if this works, it is one of the most hackney things, I've ever done... 
-  for(int i = mxtips+1 ; i < 2* tr->mxtips-1; ++i)
+  for(int i = mxtips+1 ; i < 2* tr.mxtips-1; ++i)
     {
       nodeptr rhsNode = rhsTree->nodep[i],
 	lhsNode = thisTree->nodep[i];       
@@ -366,7 +396,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       hookup(this->getUnhookedNode(a->number), this->getUnhookedNode(b->number),a->z, getNumBranches()); 
     }
 
-  for(int i = mxtips+1; i < 2 * tr->mxtips-1; ++i)
+  for(int i = mxtips+1; i < 2 * tr.mxtips-1; ++i)
     {      
       nodeptr pRhs = rhsTree->nodep[i], 
 	q = pRhs; 
@@ -392,7 +422,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 
 #endif
 
-  tr->start = tr->nodep[rhsTree->start->number]; 
+  tr.start = tr.nodep[rhsTree->start->number]; 
   // debug_checkTreeConsistency(*this);
   
   return *this; 
@@ -403,9 +433,9 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 int TreeAln::getNumBranches() const
 {
 #if HAVE_PLL != 0
-  return partitions->perGeneBranchLengths  ? partitions->numberOfPartitions : 1 ; 
+  return partitions.perGeneBranchLengths  ? partitions.numberOfPartitions : 1 ; 
 #else 
-  return tr->numBranches; 
+  return tr.numBranches; 
 #endif
 }
 
@@ -414,9 +444,9 @@ int TreeAln::getNumBranches() const
 int TreeAln::getNumberOfPartitions() const
 {
 #if HAVE_PLL != 0
-  return partitions->numberOfPartitions; 
+  return partitions.numberOfPartitions; 
 #else 
-  return tr->NumberOfModels; 
+  return tr.NumberOfModels; 
 #endif
 }
 
@@ -428,9 +458,9 @@ pInfo* TreeAln::getPartition(int model)  const
   assert(model < getNumberOfPartitions()); 
   
 #if HAVE_PLL != 0  
-  return partitions->partitionData[model]; 
+  return partitions.partitionData[model]; 
 #else 
-  return tr->partitionData + model; 
+  return tr.partitionData + model; 
 #endif
 }
 
@@ -441,9 +471,9 @@ pInfo* TreeAln::getPartition(int model)  const
 int TreeAln::accessExecModel(int model) const
 {
 #if HAVE_PLL != 0
-  return partitions->partitionData[model]->executeModel; 
+  return partitions.partitionData[model]->executeModel; 
 #else 
-  return tr->executeModel[model]; 
+  return tr.executeModel[model]; 
 #endif
 }
 
@@ -451,9 +481,9 @@ int TreeAln::accessExecModel(int model) const
 double TreeAln::accessPartitionLH(int model) const 
 {
 #if HAVE_PLL != 0
-  return partitions->partitionData[model]->partitionLH; 
+  return partitions.partitionData[model]->partitionLH; 
 #else  
-  return tr->perPartitionLH[model]; 
+  return tr.perPartitionLH[model]; 
 #endif
 }
 
@@ -464,9 +494,9 @@ double TreeAln::accessPartitionLH(int model) const
 int& TreeAln::accessExecModel(int model)
 {
 #if HAVE_PLL != 0
-  return partitions->partitionData[model]->executeModel; 
+  return partitions.partitionData[model]->executeModel; 
 #else 
-  return tr->executeModel[model]; 
+  return tr.executeModel[model]; 
 #endif
 }
 
@@ -474,9 +504,9 @@ int& TreeAln::accessExecModel(int model)
 double& TreeAln::accessPartitionLH(int model)
 {
 #if HAVE_PLL != 0
-  return partitions->partitionData[model]->partitionLH; 
+  return partitions.partitionData[model]->partitionLH; 
 #else  
-  return tr->perPartitionLH[model]; 
+  return tr.perPartitionLH[model]; 
 #endif
 }
 
@@ -595,7 +625,7 @@ void TreeAln::setAlphaBounded(double &newValue, int model)
 void TreeAln::discretizeGamma(int model)
 {
   pInfo *partition =  getPartition(model); 
-  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr->useMedian);
+  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr.useMedian);
 }
 
 
@@ -617,73 +647,74 @@ void TreeAln::initializeTreePLL(string byteFileName)
 
   initializePartitionsSequential(getTr(), getPartitionsPtr());
   initModel(getTr(), empFreq, getPartitionsPtr());
+  
+  for(int i = 0; i < pl->numberOfPartitions; ++i)
+    exa_free(empFreq[i]);
+  exa_free(empFreq) ;
 } 
 
 
 void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFrequencies, bool multiBranch)
 {
-  tree *tr = getTr();
-  partitionList *partitions = getPartitionsPtr();
-
   unsigned char *y;
 
   FILE 
     *byteFile = myfopen(byteFileName.c_str(), "rb");	 
 
-  myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
-  myBinFread(&(tr->originalCrunchedLength), sizeof(int), 1, byteFile);
-  myBinFread(&(partitions->numberOfPartitions),  sizeof(int), 1, byteFile);
-  myBinFread(&(tr->gapyness),            sizeof(double), 1, byteFile);
+  myBinFread(&(tr.mxtips),                 sizeof(int), 1, byteFile);
+  myBinFread(&(tr.originalCrunchedLength), sizeof(int), 1, byteFile);
+  myBinFread(&(partitions.numberOfPartitions),  sizeof(int), 1, byteFile);
+  myBinFread(&(tr.gapyness),            sizeof(double), 1, byteFile);
 
 
-  partitions->perGeneBranchLengths = multiBranch ? 1 : 0 ;
+  partitions.perGeneBranchLengths = multiBranch ? 1 : 0 ;
 
   /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
      let's not worry about this right now, because it is indeed RAxML-specific */
 
-  tr->aliaswgt                   = (int *)exa_malloc((size_t)tr->originalCrunchedLength * sizeof(int));
-  myBinFread(tr->aliaswgt, sizeof(int), tr->originalCrunchedLength, byteFile);	       
+  tr.aliaswgt                   = (int *)exa_malloc((size_t)tr.originalCrunchedLength * sizeof(int));
+  myBinFread(tr.aliaswgt, sizeof(int), tr.originalCrunchedLength, byteFile);	       
 
-  tr->rateCategory    = (int *)    exa_malloc((size_t)tr->originalCrunchedLength * sizeof(int));	  
+  tr.rateCategory    = (int *)    exa_malloc((size_t)tr.originalCrunchedLength * sizeof(int));	  
 
-  tr->patrat          = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double));
-  tr->patratStored    = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
-  tr->lhs             = (double*)  exa_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
+  tr.patrat          = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double));
+  tr.patratStored    = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double)); 
+  tr.lhs             = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double)); 
 
-  *empiricalFrequencies = (double **)exa_malloc(sizeof(double *) * partitions->numberOfPartitions);
+  *empiricalFrequencies = (double **)exa_malloc(sizeof(double *) * partitions.numberOfPartitions);
 
-  y = (unsigned char *)exa_malloc(sizeof(unsigned char) * ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips));
-  tr->yVector = (unsigned char **)exa_malloc(sizeof(unsigned char *) * ((size_t)(tr->mxtips + 1)));
+  y = (unsigned char *)exa_malloc(sizeof(unsigned char) * ((size_t)tr.originalCrunchedLength) * ((size_t)tr.mxtips));
+  tr.yVector = (unsigned char **)exa_malloc(sizeof(unsigned char *) * ((size_t)(tr.mxtips + 1)));
 
-  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
-    tr->yVector[i] = &y[(i - 1) *  (size_t)tr->originalCrunchedLength]; 
+  for( nat i = 1; i <= (size_t)tr.mxtips; i++)
+    tr.yVector[i] = &y[(i - 1) *  (size_t)tr.originalCrunchedLength]; 
 
-  setupTree(tr, FALSE, partitions);
+  setupTree(&tr, FALSE, &partitions);
 
-  for(int i = 0; i < partitions->numberOfPartitions; i++)
-    partitions->partitionData[i]->executeModel = TRUE;
+  for(int i = 0; i < partitions.numberOfPartitions; i++)
+    partitions.partitionData[i]->executeModel = TRUE;
 
   /* data structures for convergence criterion need to be initialized after! setupTree */
 
-  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
+  for( nat i = 1; i <= (size_t)tr.mxtips; i++)
     {
       int len;
       myBinFread(&len, sizeof(int), 1, byteFile);
-      tr->nameList[i] = (char*)exa_malloc(sizeof(char) * (size_t)len);
-      myBinFread(tr->nameList[i], sizeof(char), len, byteFile);
-      /*printf("%s \n", tr->nameList[i]);*/
+      tr.nameList[i] = (char*)exa_malloc(sizeof(char) * (size_t)len);
+      myBinFread(tr.nameList[i], sizeof(char), len, byteFile);
+      /*printf("%s \n", tr.nameList[i]);*/
     }  
 
-  for( nat i = 1; i <= (size_t)tr->mxtips; i++)
-    addword(tr->nameList[i], tr->nameHash, i);
+  for( nat i = 1; i <= (size_t)tr.mxtips; i++)
+    addword(tr.nameList[i], tr.nameHash, i);
 
-  for(int model = 0; model < partitions->numberOfPartitions; model++)
+  for(int model = 0; model < partitions.numberOfPartitions; model++)
     {
       int 
 	len;
 
       pInfo 
-	*p = partitions->partitionData[model];
+	*p = partitions.partitionData[model];
 
       myBinFread(&(p->states),             sizeof(int), 1, byteFile);
       myBinFread(&(p->maxTipStates),       sizeof(int), 1, byteFile);
@@ -707,11 +738,11 @@ void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFr
       p->partitionName = (char*)exa_malloc(sizeof(char) * (size_t)len);
       myBinFread(p->partitionName, sizeof(char), len, byteFile);
 
-      (*empiricalFrequencies)[model] = (double *)exa_malloc(sizeof(double) * (size_t)partitions->partitionData[model]->states);
-      myBinFread((*empiricalFrequencies)[model], sizeof(double), partitions->partitionData[model]->states, byteFile);
+      (*empiricalFrequencies)[model] = (double *)exa_malloc(sizeof(double) * (size_t)partitions.partitionData[model]->states);
+      myBinFread((*empiricalFrequencies)[model], sizeof(double), partitions.partitionData[model]->states, byteFile);
     }
 
-  myBinFread(y, sizeof(unsigned char), ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips), byteFile);
+  myBinFread(y, sizeof(unsigned char), ((size_t)tr.originalCrunchedLength) * ((size_t)tr.mxtips), byteFile);
 
   fclose(byteFile);
 }
@@ -798,7 +829,6 @@ bool TreeAln::revMatIsImmutable(int model) const
  */ 
 Branch TreeAln::drawInnerBranchUniform( Randomness &rand) const 
 {
-  nat curNumTax = getNumberOfTaxa();
   bool acc = false;   
   int node = 0; 
   nodeptr p = nullptr; 
@@ -904,7 +934,7 @@ Branch TreeAln::drawBranchUniform_helper(Randomness &rand, nat curNumTax) const
   // in the nodeptr array that is the number of trees in the final
   // tree
   if( r <= 0.75) 		// draw an inner node 
-    randId = 1 + tr->mxtips + rand.drawIntegerClosed(curNumTax -3 )  ; 
+    randId = 1 + tr.mxtips + rand.drawIntegerClosed(curNumTax -3 )  ; 
   else 				// draw a tip 
     randId = rand.drawIntegerOpen(curNumTax) + 1 ;           
 

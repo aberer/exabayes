@@ -22,7 +22,7 @@
 
 
 static int countNumberOfTreesQuick(const char *fn ); 
-static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln>  > tralns); 
+static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln>  > &tralns); 
 static void initTreeWithOneRandom(randCtr_t seed,  vector<shared_ptr<TreeAln> > &tralns); 
 
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
@@ -31,9 +31,11 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
   , masterRand(cl.getSeed())
   , cl(_cl)
 {
-  initializeRuns(); 
+  // DO NOT DELETE THIS LINE: 
+  // it has cost me ~ 2 days, to figure out that this stupid line
+  // throws an increadible number of memory problems
+  masterRand = Randomness(cl.getSeed()); 
 }
-
 
 
 void SampleMaster::initializeRuns( )
@@ -43,7 +45,7 @@ void SampleMaster::initializeRuns( )
 
   // initialize one tree 
   vector<shared_ptr<TreeAln> > trees; 
-  trees.push_back(make_shared<TreeAln>());
+  trees.push_back(make_shared<TreeAln>(1,2));
   trees[0]->initializeFromByteFile(cl.getAlnFileName()); 
   trees[0]->enableParsimony();
 
@@ -70,6 +72,7 @@ void SampleMaster::initializeRuns( )
       treeSeeds.push_back(masterRand.generateSeed()); 
     }
 
+
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {      
       // assert(i < 1); 
@@ -85,14 +88,13 @@ void SampleMaster::initializeRuns( )
 	  for(int i = 0; i < runParams.getNumCoupledChains(); ++i)
 	    {
 	      randCtr_t c; 
-	      Chain chain(  c, trees[i], proposals, eval ); 
+	      chains.push_back(Chain(  c, trees[i], proposals, eval ) ); 
+	      auto &chain = chains[i]; 		
 	      chain.setRunId(i); 
 	      chain.setTuneFreuqency(runParams.getTuneFreq()); 
 	      chain.setHeatIncrement(i); 
 	      chain.setDeltaT(runParams.getHeatFactor()); 
-	      chains.push_back(chain);
 	    }
-
 
 	  CoupledChains run(runSeeds[i], i,  cl.getWorkdir(), runParams.getNumCoupledChains(), chains); 
 	  run.setTemperature(runParams.getHeatFactor());
@@ -218,7 +220,7 @@ static void initTreeWithOneRandom(randCtr_t seed,  vector<shared_ptr<TreeAln> > 
 
 
 
-static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > tralns)
+static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > &tralns)
 {
   // fetch a tree 
   auto traln = tralns[0]; 
@@ -306,10 +308,10 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees )
 
   for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
     {
-      auto traln =  make_shared<TreeAln>();
-      traln->initializeFromByteFile(cl.getAlnFileName()); 
-      traln->enableParsimony();
+      auto traln =  make_shared<TreeAln>(1,2);
       trees.push_back(traln); 
+      trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
+      trees[i]->enableParsimony();
     }
 
 }
@@ -383,7 +385,7 @@ void SampleMaster::branchLengthsIntegration()
   TreePrinter tp(true, true, false);   
   TreePrinter tp2(true, true, true); 
   auto tralnPtr = chain.getTralnPtr(); 
-  auto traln  = *tralnPtr  ; 
+  auto& traln  = *tralnPtr  ; 
   tFile << tp.printTree(traln) << endl; 
   tFile << tp2.printTree(traln) << endl; 
   tFile.close(); 
@@ -413,7 +415,6 @@ void SampleMaster::branchLengthsIntegration()
   assert(ps.size() == 1 );   
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
 
-  int ctr = 0; 
   for(auto &branch : branches)
     {      
       double minHere = 1000; 
@@ -432,7 +433,6 @@ void SampleMaster::branchLengthsIntegration()
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
 	{	  
 	  integrationChain.step();
-	  auto p = branch.findNodePtr(traln); 	  
 	  branch.updateLength(traln); 
 
 	  double length = branch.getInterpretedLength(traln); 

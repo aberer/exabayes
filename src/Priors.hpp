@@ -20,7 +20,8 @@ using namespace std;
 class AbstractPrior
 {
 public: 
-  virtual ~AbstractPrior(){assert(0);}
+  virtual ~AbstractPrior()
+  {}
 
   virtual vector<double> drawFromPrior(Randomness &rand)  const = 0; 
   virtual double getLogProb(vector<double> values ) const = 0; 

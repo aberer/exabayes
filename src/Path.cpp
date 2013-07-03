@@ -75,19 +75,14 @@ void Path::debug_assertPathExists(TreeAln& traln)
  */ 
 void Path::saveBranchLengthsPath(const TreeAln& traln)
 {
-  auto *tr = traln.getTr(); 
   int numBranches = traln.getNumBranches() ;
   assert(numBranches == 1 ); 
 
   for(auto& b : stack)
     {
-      nodeptr p = b.findNodePtr(traln); 
-
-      // for(int j = 0; j < numBranches; ++j)
-      // 	{
-	  double tmp = traln.getBranchLength( p,0); 
-	  b.setLength( tmp) ; 
-	// }
+      nodeptr p = b.findNodePtr(traln);  
+      double tmp = traln.getBranchLength( p,0); 
+      b.setLength( tmp) ; 
     }
 }
 
@@ -113,7 +108,6 @@ ostream& operator<<(ostream &out, const Path &rhs)
 
 void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> brPr) const 
 {  
-  tree *tr = traln.getTr(); 
   nodeptr p = b.findNodePtr(traln); 
   double multiplier = rand.drawMultiplier(parameter); 
 

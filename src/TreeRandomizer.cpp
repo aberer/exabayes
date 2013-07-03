@@ -12,7 +12,7 @@ TreeRandomizer::TreeRandomizer(randCtr_t seed)
 
 void TreeRandomizer::randomizeTree(TreeAln &traln)
 {
-  for(int i = 1 ; i < traln.getNumberOfNodes() + 1 ; ++i)
+  for(nat i = 1 ; i < traln.getNumberOfNodes() + 1 ; ++i)
     {
       auto p = traln.getNode(i);
       p->back = NULL; 
@@ -30,7 +30,7 @@ void TreeRandomizer::randomizeTree(TreeAln &traln)
   traln.clipNodeDefault(inner->next, b); 
   traln.clipNodeDefault(inner->next->next,c); 
 
-  for(int i = 4; i < traln.getNumberOfTaxa() +1 ;  ++i)
+  for(nat i = 4; i < traln.getNumberOfTaxa() +1 ;  ++i)
     {
       inner = traln.getNode(traln.getNumberOfTaxa() + i-2 );       
       auto taxonP = traln.getNode(i); 

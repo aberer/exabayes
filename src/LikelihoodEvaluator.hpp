@@ -10,11 +10,7 @@ class LikelihoodEvaluator
 {
 public: 
   LikelihoodEvaluator(shared_ptr<LnlRestorer> restorer); 
-  ~LikelihoodEvaluator()
-  { 
-    assert(0); 
-  }
-  
+
   double evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)  ; 
   void evalSubtree( TreeAln &traln, const Branch &evalBranch)    ; 
   double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 

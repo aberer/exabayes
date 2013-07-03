@@ -28,14 +28,12 @@ class TreeAln;
 typedef threefry2x32_key_t randKey_t; 
 typedef threefry2x32_ctr_t randCtr_t; 
 
-// class Branch; 
 
 class Randomness
 {
 public: 
   Randomness(randCtr_t seed); 
-  // Randomness(int seed);
-  // ~Randomness(){assert(0); }
+
   randCtr_t generateSeed();   
   void rebase(int num){ ctr.v[1] = num; ctr.v[0] = 0; }
   
@@ -78,18 +76,12 @@ public:
 
   // nat drawInnerNode(const TreeAln &traln ); 
 
-private:   
+private:  		// METHODS
+  void incrementNoLimit();
+
+private:   			// ATTRIBUTES
   randCtr_t ctr; 
   randKey_t key; 
-
-  void incrementNoLimit();
-  
-
-  //density for dirichlet distribution with parameters "alphas" at point "values".
-
-  // double gammaFunction(double alpha); 
-  // double betaFunction(double *alpha, int length); 
-  // void normalize(double * vector, int length, double normalizingConstant); 
 
 }; 
 

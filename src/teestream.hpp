@@ -9,7 +9,7 @@ using namespace std;
 
 class teestream : public std::ostream
 {
-public: 
+public:   
   teestream(ostream &o1, ostream &o2)
     : ostream(&tbuf)
     ,tbuf(o1.rdbuf(), o2.rdbuf())

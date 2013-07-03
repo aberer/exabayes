@@ -52,6 +52,6 @@ namespace ProposalTypeFunc
   bool isValidName(std::string name); 
   bool isReadyForProductiveUse(ProposalType p); 
 
-}; 
+}
 
 #endif

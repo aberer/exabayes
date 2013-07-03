@@ -29,7 +29,6 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   assert(0 < stopProp && stopProp < 1.0 ); 
 
   assert(modifiedPath.size( ) == 0 ); 
-  tree *tr  = traln.getTr();   
 
   Branch start; 
   nodeptr p,q,r; 

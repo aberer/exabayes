@@ -35,8 +35,10 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int 
   topoFile = fopen(tNameBuilder.str().c_str(), "w"); 
   paramFile = fopen(pNameBuilder.str().c_str(), "w");   
 
-  // chains[0]->printNexusTreeFileStart(topoFile);
-  // chains[0]->printParamFileStart(paramFile) ;
+  // TODO 
+
+  chains[0].printNexusTreeFileStart(topoFile);
+  chains[0].printParamFileStart(paramFile) ;
 }
 
 void CoupledChains::seedChains()

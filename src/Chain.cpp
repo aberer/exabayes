@@ -37,6 +37,25 @@ Chain:: Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_pt
 }
 
 
+Chain::Chain( const Chain& rhs)   
+  : traln(rhs.traln)
+  , deltaT(rhs.deltaT)
+  , runid(rhs.runid)
+  , tuneFrequency(rhs.tuneFrequency)
+  , currentGeneration(rhs.currentGeneration)
+  , couplingId(rhs.couplingId)      
+  , state(rhs.state)
+  , chainRand(rhs.chainRand) 
+  , bestState(rhs.bestState)
+  , evaluator(rhs.evaluator)
+{
+  for(auto &p : rhs.proposals )
+    proposals.emplace_back(std::move(p->clone())); 
+  prior.initialize(*traln, extractVariables()); 
+  suspend();
+}
+
+
 
 ostream& Chain::addChainInfo(ostream &out)
 {
@@ -375,5 +394,3 @@ const vector<AbstractProposal*> Chain::getProposalView() const
     result.push_back(elem.get()); 
   return result; 
 }
-
-

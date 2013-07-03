@@ -6,9 +6,7 @@
 #include "Parameters.hpp"
 
 
-
 // not to be confused with a fun factory...
-
 void RunFactory::addStandardParameters(vector<shared_ptr<RandomVariable> > &vars, const TreeAln &traln )
 {
   std::set<Category> categories; 

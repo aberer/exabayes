@@ -27,27 +27,23 @@ class Chain
 public: 
   Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, shared_ptr<LikelihoodEvaluator> eval); 
 
-  Chain( const Chain& rhs)    
-    : traln(rhs.traln)
-    , deltaT(rhs.deltaT)
-    , runid(rhs.runid)
-    , tuneFrequency(rhs.tuneFrequency)
-    , currentGeneration(rhs.currentGeneration)
-    , couplingId(rhs.couplingId)      
-    , state(rhs.state)
-    , chainRand(rhs.chainRand) 
-    , evaluator(rhs.evaluator)
-  {
-    for(auto &p : rhs.proposals )
-      proposals.emplace_back(std::move(p->clone())); 
-
-    prior.initialize(*traln, extractVariables()); 
-
-    suspend();
-
-    // assert(0); 
-    cout << "attention: copy constructing chain" << endl; 
-  }
+  Chain( const Chain& rhs)    ; 
+  //   : traln(rhs.traln)
+  //   , deltaT(rhs.deltaT)
+  //   , runid(rhs.runid)
+  //   , tuneFrequency(rhs.tuneFrequency)
+  //   , currentGeneration(rhs.currentGeneration)
+  //   , couplingId(rhs.couplingId)      
+  //   , state(rhs.state)
+  //   , chainRand(rhs.chainRand) 
+  //   , evaluator(rhs.evaluator)
+  //   , bestState(rhs.bestState)
+  // {
+  //   for(auto &p : rhs.proposals )
+  //     proposals.emplace_back(std::move(p->clone())); 
+  //   prior.initialize(*traln, extractVariables()); 
+  //   suspend();
+  // }
 
 
   void reseed(randKey_t c)
@@ -55,10 +51,9 @@ public:
     chainRand = Randomness(c); 
   }
 
-  Chain& operator=(Chain &rhs)
-  {
-    assert(0); 
-  }
+  Chain& operator=(Chain &rhs) = delete; 
+
+
 
   // getters and setters 
   double getChainHeat(); 

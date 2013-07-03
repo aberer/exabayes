@@ -4,7 +4,7 @@ EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihoo
 
 .PHONY: my-update-src doc 
 
-WARN_FLAGS= -Wall --pedantic -Wno-vla -Wno-unused-function -Wno-write-strings  -Wsign-compare
+WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized #  -Wno-write-strings  -Wsign-compare  -Wno-vla
 noinst_LIBRARIES=libbayes.a  libncl.a
 RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops #     -D_SEQUENTIAL #  
 
@@ -49,12 +49,11 @@ bin_PROGRAMS+= parserPll
 noinst_LIBRARIES+=libpll.a
 endif 
 
-# AM_CXXFLAGS=-O3
-libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE)
+libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) 
 exabayes_LDADD= libncl.a libbayes.a 
-exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp 
+exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
 exabayes_LDADD+=$(LIBTOUSE)
-exabayes_CXXFLAGS= -O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE)
+exabayes_CXXFLAGS= -O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)   -I$(top_srcdir)/lib/getopt_pp/ -I$(top_srcdir)/lib/getopt_pp/src/ 
 
 ################################################################
 # PRSF

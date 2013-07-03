@@ -1,5 +1,6 @@
 /*  RAxML-VI-HPC (version 2.2) a program for sequential and parallel estimation of phylogenetic trees
  *  Copyright August 2006 by Alexandros Stamatakis
+
  *
  *  Partially derived from
  *  fastDNAml, a program for estimation of phylogenetic trees from sequences by Gary J. Olsen
@@ -877,7 +878,7 @@ void execCore(tree *tr, volatile double *_dlnLdlz, volatile double *_d2lnLdlz2)
 
 */
 
-static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
+static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result,  double lambda, double *firstDerivative, double *secDerivative)
 {
   double   z[NUM_BRANCHES], zprev[NUM_BRANCHES], zstep[NUM_BRANCHES];
   double  dlnLdlz[NUM_BRANCHES], d2lnLdlz2[NUM_BRANCHES];
@@ -976,7 +977,7 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
 	}
       
       execCore(tr, dlnLdlz, d2lnLdlz2);
-
+      
       {
 	double 
 	  *send = (double *)malloc(sizeof(double) * tr->numBranches * 2),
@@ -1000,7 +1001,14 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
 	free(send);
 	free(recv);
       }
-     
+      
+      for(int i = 0; i < numBranches ; ++i)
+	{
+	  dlnLdlz[i] += ( ( lambda   * tr->fracchange)  );
+	  assert(i == 0); 
+	}
+      
+      
       /* do a NR step, if we are on the correct side of the maximum that's okay, otherwise 
 	 shorten branch */
 
@@ -1059,6 +1067,14 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
   while (!loopConverged);
 
 
+  if(numBranches > 1 )
+    assert(0); 
+  else 
+    {
+      *firstDerivative = (double) (dlnLdlz[0]); 
+      *secDerivative = (double)(d2lnLdlz2[0]); 
+    }
+
   /* reset  partition execution mask */
 
   for(model = 0; model < tr->NumberOfModels; model++)
@@ -1077,7 +1093,7 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
    between nodes p and q.
    The new branch lengths will be stored in result */
 
-void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, boolean mask)
+void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask)
 {
   int 
     i;
@@ -1113,7 +1129,7 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
 
   /* call the Newton-Raphson procedure */
   
-  topLevelMakenewz(tr, z0, maxiter, result);
+  topLevelMakenewz(tr, z0, maxiter, result, lambda, firstDerivative, secDerivative);
  
   /* fix eceuteModel this seems to be a bit redundant with topLevelMakenewz */ 
 

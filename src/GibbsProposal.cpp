@@ -19,7 +19,6 @@ const double GibbsProposal::EST_FAC = 0.015;
  */ 
 void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand, double initVal,  int maxIter, double &hastings) 
 {
-  auto p = branch.findNodePtr(traln); 
   double initLength = branch.getLength(); 
   
   double nrD2 = 0; 
@@ -67,7 +66,7 @@ void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluat
 #if HAVE_PLL != 0
   makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &init, maxIter,  &result , &firstDerivative,  &secDerivative, lambda, FALSE) ;
 #else 
-  assert(0); 
+  makenewzGeneric(traln.getTr(), p, q, &init, maxIter,  &result , &firstDerivative,  &secDerivative, lambda, FALSE) ;
 #endif
 
   b.setLength(result); 

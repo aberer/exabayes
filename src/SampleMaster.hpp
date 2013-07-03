@@ -39,22 +39,17 @@ public:
 
 private: 
   void initTrees(vector<shared_ptr<TreeAln> > &trees ); 
-
-private:			// ATTRIBUTES 
   bool convergenceDiagnostic(); 
 
+private:			// ATTRIBUTES 
   vector<CoupledChains> runs; // TODO bad design: just want to avoid getting memory leaks
-
   ParallelSetup pl; 
-
   CLOCK::system_clock::time_point initTime; 
-
   BlockParams paramBlock; 
   BlockRunParameters runParams;  
   BlockProposalConfig propConfig;   
-
   Randomness masterRand; 
-  const CommandLine cl; 
+  CommandLine cl; 
 };  
 
 #endif

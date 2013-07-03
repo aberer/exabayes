@@ -15,7 +15,7 @@ class CommandLine
 {
 public: 
   CommandLine(int argc, char* argv[]);
-  randCtr_t getSeed() const { randCtr_t c; c.v[0] = seed;  return c; }
+  randCtr_t getSeed() const; 
   string getConfigFileName() const {return configFileName; }
   string getAlnFileName() const{return alnFileName; }
   string getRunid() const {return runid; }
@@ -23,10 +23,13 @@ public:
   int getNumRunParallel() const {return runNumParallel; }
   string getWorkdir() const {return workDir; }
   void printVersion(bool toInfoFile);
-  int getChainNumParallel() const { return chainNumParallel; }
+  // int getChainNumParallel() const { return chainNumParallel; }
+
+  void parseAlternative(int argc, char *argv[]); 
 
 private: 
-  int seed; 
+  // int seed; 
+  randCtr_t seed; 
   string configFileName; 
   string alnFileName; 
   string runid; 

@@ -212,7 +212,7 @@ void AvgSplitFreqAssessor::fillTaxaInfo(string fileName)
  */ 
 void AvgSplitFreqAssessor::initializeTreeOnly(int numTax )
 {
-  traln = new TreeAln();
+  traln = new TreeAln(1,2);
   tree *tr = traln->getTr();
   tr->mxtips = numTax; 
 

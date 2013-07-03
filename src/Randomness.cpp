@@ -1,5 +1,7 @@
 #include <limits>
 
+#include <cstring>
+
 #include "Randomness.hpp" 
 #include "densities.h"
 

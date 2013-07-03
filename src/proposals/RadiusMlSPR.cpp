@@ -469,7 +469,6 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 */ 
 void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
-  nodeptr p = path.at(1).findNodePtr(traln );
 #if 0 
   evaluateGenericWrapper(traln, p, FALSE );
 #endif

@@ -15,11 +15,15 @@
 LnlRestorer::LnlRestorer(TreeAln& traln)
   : numPart(traln.getNumberOfPartitions())
   , numTax(traln.getTr()->mxtips)
+  , wasSwitched( 2 * traln.getTr()->mxtips, false)
+  , orientation( traln.getTr()->mxtips, 0)
+  , partitionScaler(numPart, vector<nat> (2 * traln.getTr()->mxtips, 0) )
 {
   tree *tr = traln.getTr(); 
 
   reserveArrays = (double***)exa_calloc(numPart, sizeof(double**)); 
-  partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 
+  // partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 
+  // partitionScaler()
   
   partitionLnl = vector<double>( numPart);
   
@@ -40,11 +44,8 @@ LnlRestorer::LnlRestorer(TreeAln& traln)
 	  memset(reserveArrays[i][j], 0, length * partition->states * GAMMA_CATS * sizeof(double)); 
 	}
 
-      partitionScaler[i] = (nat*)exa_calloc(2 * tr->mxtips , sizeof(nat)); 
+      // partitionScaler[i] = (nat*)exa_calloc(2 * tr->mxtips , sizeof(nat)); 
     }  
-  
-  orientation = (int*) exa_calloc(tr->mxtips, sizeof(int)); 
-  wasSwitched = (bool*)exa_calloc( 2 * tr->mxtips , sizeof(bool));
 }
 
 
@@ -52,7 +53,6 @@ LnlRestorer::LnlRestorer(TreeAln& traln)
 
 LnlRestorer::~LnlRestorer()  
 {
-  assert(0); 
   for(int i = 0; i <  numPart; ++i)
     {
 #if 0      
@@ -63,11 +63,11 @@ LnlRestorer::~LnlRestorer()
 
       exa_free(reserveArrays[i]); 
       
-      exa_free(partitionScaler[i]); 
+      // exa_free(partitionScaler[i]); 
     }
   exa_free(reserveArrays); 
-  exa_free(partitionScaler); 
-  exa_free(wasSwitched); 
+  // exa_free(partitionScaler); 
+  // exa_free(wasSwitched); 
 }
 
 
@@ -100,14 +100,13 @@ void LnlRestorer::storeOrientation(const TreeAln &traln)
   int ctr = 0; 
   for(int i = tr->mxtips+1; i < 2 * tr->mxtips-1; ++i)
     {	
-      int *val = orientation + ctr ; 
       nodeptr p = tr->nodep[i]; 
       if(p->x)
-	*val = p->back->number; 
+	orientation [ ctr] = p->back->number; 
       else if(p->next->x)
-	*val = p->next->back->number; 
+	orientation [ ctr] = p->next->back->number; 
       else if(p->next->next->x)
-	*val = p->next->next->back->number; 
+	orientation [ ctr] = p->next->next->back->number; 
       else 
 	assert(0); 
       ctr++; 
@@ -119,7 +118,7 @@ void LnlRestorer::storeOrientation(const TreeAln &traln)
 void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 {
   tree *tr = traln.getTr();   
-  assert(NOT isTip(nodeNumber, tr->mxtips)); 
+  assert(not isTip(nodeNumber, tr->mxtips)); 
   
   if(model == ALL_MODELS)
     {
@@ -136,7 +135,7 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 #ifdef DEBUG_ARRAY_SWAP	  
 	  cout << a << "," << b << "\t"; 
 #endif
-	  if(NOT b )
+	  if(not b )
 	    return; 
 	  swap(a,b); 	  
 	}
@@ -154,7 +153,7 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 #ifdef  DEBUG_ARRAY_SWAP
       cout << "swapped array for node " << nodeNumber <<  " and model " << model << ": " << a   << "," << b  << endl; 
 #endif
-      if(NOT b )
+      if(not b )
 	return; 
       swap(a,b );     
     }
@@ -179,7 +178,9 @@ void LnlRestorer::restoreArrays(TreeAln& traln)
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = traln.getPartition( i); 
-      memcpy(partition->globalScaler, partitionScaler[i], sizeof(nat) * 2 * traln.getTr()->mxtips);     
+      for(nat j = 0; j < 2 * traln.getNumberOfTaxa(); ++j)
+	partition->globalScaler[j] =  partitionScaler[i][j]; 
+      // memcpy(partition->globalScaler, partitionScaler[i], sizeof(nat) * 2 * traln.getTr()->mxtips);     
     }
 
   tr->likelihood = prevLnl; 
@@ -196,10 +197,10 @@ void LnlRestorer::traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRo
   if(isTip(virtualRoot->number, tr->mxtips))
     return; 
 
-  bool incorrect = NOT virtualRoot->x; 
+  bool incorrect = not virtualRoot->x; 
   if( ( incorrect
 	|| fullTraversal )      
-      && NOT wasSwitched[virtualRoot->number])
+      && not wasSwitched[virtualRoot->number])
     {
 #ifdef DEBUG_ARRAY_SWAP
       cout << "incorr, unseen " << virtualRoot->number << endl; 
@@ -241,7 +242,8 @@ void LnlRestorer::resetRestorer(const TreeAln &traln)
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = traln.getPartition( i); 
-      memcpy(partitionScaler[i], partition->globalScaler, sizeof(nat) * 2 * traln.getTr()->mxtips);     
+      for(nat j = 0; j < traln.getNumberOfTaxa(); ++j)
+	partitionScaler[i][j] = partition->globalScaler[j]; 
     }
   modelEvaluated = ALL_MODELS; 
   prevLnl = tr->likelihood;   

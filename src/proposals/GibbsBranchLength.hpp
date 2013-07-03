@@ -1,6 +1,7 @@
 #include "GibbsProposal.hpp" 
 #include "BranchLengthMultiplier.hpp"
 
+
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
@@ -19,10 +20,7 @@ public:
     b.setLength(b.findNodePtr(traln)->z[0]); 
     double initBl = b.getLength(); 
 
-
-    nodeptr p = b.findNodePtr(traln); 
     savedBranch = b;     
-
     
     GibbsProposal::drawFromEsitmatedPosterior(b, *eval, traln, rand, initBl, 5, hastings); 
     double newZ = b.getLength();

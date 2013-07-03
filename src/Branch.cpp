@@ -10,8 +10,8 @@ Branch::Branch(nat a , nat b, double length)
 
 bool Branch::isTipBranch(const TreeAln &traln) const
 { 
-  int num = traln.getTr()->mxtips ; 
-  return thisNode <= num || thatNode <= num;
+  nat  num = traln.getTr()->mxtips ; 
+  return (thisNode <= num) || (thatNode <= num);
 }
 
 

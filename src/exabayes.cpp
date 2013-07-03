@@ -35,6 +35,9 @@
 // #define TEST  
 
 #ifdef TEST
+#include "TreeRandomizer.hpp"
+#include "Chain.hpp"
+#include "BranchLengthMultiplier.hpp"
 #endif
 
 
@@ -59,26 +62,27 @@ double fastPow(double a, double b) {
   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
-void exa_main (const CommandLine &cl, ParallelSetup &pl )
+static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
 {   
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  Randomness rand(123); 
-
-  for(int i = 0; i < 10 ; ++i)
-    cout << "result: " << rand.drawRandGamma(2,200) << endl; 
-
-#if 0 
-  auto t =  make_shared<TreeAln>( )  ; 
+  auto t =  make_shared<TreeAln>( 1,2)  ; 
   t->initializeFromByteFile(cl.getAlnFileName());
 
   vector<shared_ptr<TreeAln> >  tralns = {t}; 
 
-  TreeRandomizer r(123, t ); 
+
+  randCtr_t c; 
+  c.v[0] = 123; 
+  TreeRandomizer r(c ); 
+
+  Randomness rand(c); 
+  auto r1 = rand.drawRandDouble01()  ; 
+  cout << r1 << endl;   
   
   for(int i = 0; i < 10; ++i)
-    r.randomizeTree();
+    r.randomizeTree(*(tralns[0]));
   tralns[0]->enableParsimony();
 
   auto traln = tralns[0]; 
@@ -92,24 +96,37 @@ void exa_main (const CommandLine &cl, ParallelSetup &pl )
   double result = 0; 
   // cout << "we have " << traln->getPartitionsPtr()->perGeneBranchLengths << endl; 
 
-  LikelihoodEvaluator eval(LnlRestorerPtr(new LnlRestorer(*traln))); 
-  eval.evaluate(*traln, b, true);
+  auto eval = make_shared<LikelihoodEvaluator>(make_shared<LnlRestorer>(*traln)); 
+  eval->evaluate(*traln, b, true);
 
+  vector<shared_ptr<RandomVariable> > vars =  {make_shared<RandomVariable>(Category::BRANCH_LENGTHS, 0)} ; 
 
-  // makenewzGeneric(traln->getTr(), traln->getPartitionsPtr(), p->back , p, p->z, 10, &result, FALSE); 
+  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+    vars[0]->addPartition(i);
+  vars[0]->setPrior(make_shared< ExponentialPrior>(10));
 
+  vector<unique_ptr<AbstractProposal> > ps ; 
+  ps.emplace_back(unique_ptr<AbstractProposal>(new BranchLengthMultiplier(0.16))); 
+  ps[0]->addPrimVar(vars[0]); 
+
+  Chain chain(c, traln, ps, eval);
+  chain.resume();
+
+  for(int i = 0; i < 1000; ++i)
+    {
+      cout << "step " << i << endl; 
+      chain.step();
+    }
+  
   cout << "init was " << init<< " result is " << result << endl; 
 
-#endif
-
-  exit(0); 
-
-
-#endif
+#else 
 
   SampleMaster master(  pl, cl );
+  master.initializeRuns(); 
   master.run();
   master.finalizeRuns();
+#endif
 }
 
 
@@ -150,14 +167,13 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
   // TODO maybe check for existance 
 
   globals.logFile = ss.str();   
-  globals.logStream = new ofstream (globals.logFile) ; 
-  globals.teeOut = new teestream(cout, *globals.logStream);
+  
+  globals.logStream =  new ofstream  (globals.logFile); 
+  globals.teeOut =  new teestream(cout, *globals.logStream);
 
   if(not pl.isReportingProcess())
     tout.disable(); 
 }
-
-
 
 
 void initializeProfiler()
@@ -181,7 +197,7 @@ void finalizeProfiler()
 }
 
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 { 
   ParallelSetup pl(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
 
@@ -211,8 +227,9 @@ int main(int argc, char *argv[])
   exa_main( cl, pl); 
 
   finalizeProfiler();
-
   pl.finalize();  
-
+  
+  delete globals.logStream; 
+  delete globals.teeOut;
   return 0;
 }

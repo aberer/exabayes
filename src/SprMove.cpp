@@ -99,8 +99,6 @@ void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hasting
  */
 void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath ) const 
 {
-  tree *tr = traln.getTr();
-
   assert(modifiedPath.size() > 2 ); 
 
   /* get the subtree ptr */

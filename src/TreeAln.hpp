@@ -30,10 +30,12 @@ class Partition;
 
 class TreeAln
 {
+
 public: 
-  explicit TreeAln();
+  TreeAln(int numA, int numB);
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
+  TreeAln(const TreeAln &tmp) = delete ; 
   
   void initRevMat(int model); 
   void unlinkTree();
@@ -82,16 +84,16 @@ public:
   void setBranchLengthBounded(double &newValue, int model, nodeptr p); 
   void setAlphaBounded(double &newValue, int model); 
   
-  void setTr(tree *newTr){ tr = newTr; }
+  // void setTr(tree *newTr){ tr = newTr; }
 #if HAVE_PLL != 0 
-  void setPartitionList(partitionList *pl) { partitions = pl; }
+  void setPartitionList(partitionList *pl) { partitions = *pl; }
 #endif
   
 
   // getters 
   pInfo* getPartition(int model) const;
-  tree* getTr() {return tr;}
-  const tree* getTr() const{return tr; }
+  tree* getTr() {return &tr;}
+  const tree* getTr() const{return &tr; }
   int getNumBranches() const; 
   int getNumberOfPartitions() const;   
   boolean& accessExecModel(int model); 
@@ -112,7 +114,7 @@ public:
   bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
 
 #if HAVE_PLL != 0
-  partitionList* getPartitionsPtr() const { return partitions; } 
+  partitionList* getPartitionsPtr()  { return &partitions; } 
 #endif
 
 
@@ -134,7 +136,7 @@ public:
 
   void verifyTreeLength() const; 
 
-  double getConvertBranchLength(double length) const { return -log(length) * tr->fracchange; }
+  double getConvertBranchLength(double length) const { return -log(length) * tr.fracchange; }
 
   vector<Branch> extractBranches() const ; 
 
@@ -149,22 +151,22 @@ public:
     return Branch(p->number, p->back->number, p->z[0]); 
   }
   
-  bool usingPerSiteRates() const { return tr->rateHetModel = GAMMA;  } 
-  void enablePerSiteRates() { tr->rateHetModel = CAT; } 
+  bool usingPerSiteRates()  { return tr.rateHetModel == GAMMA;  } 
+  void enablePerSiteRates() {  tr.rateHetModel = CAT; } 
 
 private:   
   double getTreeLengthHelper(nodeptr p) const;
   void extractHelper( nodeptr p , vector<Branch> &result, bool isStart) const ; 
   
   void initDefault();
-  tree* tr;		// TODO replace with an object for cleanup 
+  tree tr;		// TODO replace with an object for cleanup 
   
   bool parsimonyEnabled;   
 
 
 #if HAVE_PLL != 0
   // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
-  partitionList* partitions; 
+  partitionList partitions; 
   void initializeTreePLL(string byteFileName);
   void initializePartitionsPLL(string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
