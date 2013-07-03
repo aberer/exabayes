@@ -2859,15 +2859,15 @@ void allocateParsimonyDataStructures(tree *tr)
 
   compressDNA(tr, informative);
 
-  for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 1; i++)
-    {
-      nodeptr 
-	p = tr->nodep[i];
+  /* for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 1; i++) */
+  /*   { */
+      /* nodeptr  */
+      /* 	p = tr->nodep[i]; */
 
       /* p->xPars = 1;		/\*  *\/ */
       /* p->next->xPars = 0; */
       /* p->next->next->xPars = 0; */
-    }
+    /* } */
 
   tr->ti = (int*)malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
 

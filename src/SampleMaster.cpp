@@ -45,7 +45,7 @@ void SampleMaster::initializeRuns( )
 
   // initialize one tree 
   vector<shared_ptr<TreeAln> > trees; 
-  trees.push_back(make_shared<TreeAln>(1,2));
+  trees.push_back(make_shared<TreeAln>());
   trees[0]->initializeFromByteFile(cl.getAlnFileName()); 
   trees[0]->enableParsimony();
 
@@ -308,7 +308,7 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees )
 
   for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
     {
-      auto traln =  make_shared<TreeAln>(1,2);
+      auto traln =  make_shared<TreeAln>();
       trees.push_back(traln); 
       trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
       trees[i]->enableParsimony();
@@ -483,9 +483,15 @@ void SampleMaster::branchLengthsIntegration()
       double prevVal = curVal; 
       for(int i = 0; i < NR_STEPS; ++i )
 	{
+#if HAVE_PLL != 0 
 	  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
 			  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 			  &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
+#else 
+	  makenewzGeneric(traln.getTr(), 
+			  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
+			  &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 	  
+#endif
 	  tmpBranch.setLength(result);
 	  thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
 	  prevVal = tmpBranch.getInterpretedLength(traln); 
@@ -494,9 +500,15 @@ void SampleMaster::branchLengthsIntegration()
 
       double something = tmpBranch.getInternalLength(traln, prevVal); 
 
+#if HAVE_PLL != 0
       makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
 		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 		      &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
+#else 
+      makenewzGeneric(traln.getTr(), 
+		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
+		      &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
+#endif
       
       thisOut << prevVal << "\t" << firstDerivative << "\t" << secDerivative << endl; 
 

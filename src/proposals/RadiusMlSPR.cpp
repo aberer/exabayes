@@ -43,7 +43,7 @@ double getRatio(tree *tr, double a, double b )
   
   double ratio = realA / (realA + realB ); 
 
-  if(NOT (0 < ratio && ratio < 1.))
+  if(not (0 < ratio && ratio < 1.))
     {
       printf("\n\nWARNING: %g,%g (%g,%g) in ratio %g\n", a,b,branchLengthToReal(tr, a),branchLengthToReal(tr,b), ratio);
     }    
@@ -136,7 +136,7 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
     }
   else 
     {
-      assert(NOT isFirst); 
+      assert(not isFirst); 
       entry->containedInSecond = TRUE; 
       /* TODO assert this and that  */
     }
@@ -177,7 +177,7 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
     }
   else
     {
-      assert(NOT isFirst); 
+      assert(not isFirst); 
       entry->containedInSecond = TRUE; 
       /* TODO assert this and that  */
     }    
@@ -194,8 +194,8 @@ static  void createWeights(tree  *tr, insertList **lnlList, boolean doFirst)
   double best  = 1 ; 
   for(insertList *iter = la; iter; iter = iter->next)
     {
-      if( ( doFirst && NOT iter->containedInFirst  ) 
-	  || (NOT doFirst && NOT iter->containedInSecond) )
+      if( ( doFirst && not iter->containedInFirst  ) 
+	  || (not doFirst && not iter->containedInSecond) )
 	continue; 
 
       if(best == 1 )
@@ -212,7 +212,7 @@ static  void createWeights(tree  *tr, insertList **lnlList, boolean doFirst)
 	  iter->weightInFirst = exp(iter->lnl - best ) + WEIGHT_EPS;
 	  sum += iter->weightInFirst; 
 	}
-      else if(NOT doFirst && iter->containedInSecond)
+      else if(not doFirst && iter->containedInSecond)
 	{
 	  iter->weightInSecond = exp(iter->lnl - best ) + WEIGHT_EPS;
 	  sum += iter->weightInSecond; 
@@ -223,7 +223,7 @@ static  void createWeights(tree  *tr, insertList **lnlList, boolean doFirst)
     {
       if(doFirst && iter->containedInFirst) 
 	iter->weightInFirst /= sum; 
-      else if(NOT doFirst && iter->containedInSecond)
+      else if(not doFirst && iter->containedInSecond)
 	iter->weightInSecond /= sum; 
     }  
 }
@@ -295,7 +295,7 @@ static insertList* sampleFromLnlArray(TreeAln& traln, Randomness &rand, insertLi
       double weight =  iter->weightInFirst; 
       if(r < weight)
 	{
-	  assert(iter->containedInFirst && NOT iter->containedInSecond); /* cannot be */
+	  assert(iter->containedInFirst && not iter->containedInSecond); /* cannot be */
 	  return iter; 
 	}
       else 
@@ -357,12 +357,12 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   nodeptr p = NULL ; 
   double ratio = 0;
   
-  while(NOT accepted) 
+  while(not accepted) 
     {
       subtree = traln.drawBranchUniform(rand); 
       p = subtree.findNodePtr(traln ); 
-      accepted = NOT isTip(p->number, tr->mxtips)
-	&& (NOT isTip(p->next->back->number,tr->mxtips ) && NOT isTip(p->next->next->back->number, tr->mxtips)); 
+      accepted = not isTip(p->number, tr->mxtips)
+	&& (not isTip(p->next->back->number,tr->mxtips ) && not isTip(p->next->next->back->number, tr->mxtips)); 
       if(accepted)
 	{
 	  pruneBranch.setPrimNode( p->next->back->number); 

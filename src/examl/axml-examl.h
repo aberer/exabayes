@@ -31,6 +31,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #ifdef __AVX
 #define BYTE_ALIGNMENT 32

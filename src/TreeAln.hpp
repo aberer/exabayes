@@ -14,7 +14,6 @@ using namespace std;
 
 #include "TreePrinter.hpp"
 
-// #include "LikelihoodEvaluator.hpp"
 
 static int numStateToNumInTriangleMatrix(int numStates) 
 {  
@@ -32,7 +31,7 @@ class TreeAln
 {
 
 public: 
-  TreeAln(int numA, int numB);
+  TreeAln();
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
   TreeAln(const TreeAln &tmp) = delete ; 

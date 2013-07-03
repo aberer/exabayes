@@ -1002,7 +1002,7 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result,
 	free(recv);
       }
       
-      for(int i = 0; i < numBranches ; ++i)
+      for(int i = 0; i < tr->numBranches ; ++i)
 	{
 	  dlnLdlz[i] += ( ( lambda   * tr->fracchange)  );
 	  assert(i == 0); 
@@ -1067,7 +1067,7 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result,
   while (!loopConverged);
 
 
-  if(numBranches > 1 )
+  if(tr->numBranches > 1 )
     assert(0); 
   else 
     {
@@ -1129,7 +1129,7 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
 
   /* call the Newton-Raphson procedure */
   
-  topLevelMakenewz(tr, z0, maxiter, result, lambda, firstDerivative, secDerivative);
+  topLevelMakenewz(tr, z0, maxiter, result, lambda, nrD1, nrD2);
  
   /* fix eceuteModel this seems to be a bit redundant with topLevelMakenewz */ 
 

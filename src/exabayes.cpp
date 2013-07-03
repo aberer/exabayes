@@ -38,6 +38,7 @@
 #include "TreeRandomizer.hpp"
 #include "Chain.hpp"
 #include "BranchLengthMultiplier.hpp"
+#include "ParsimonyEvaluator.hpp"
 #endif
 
 
@@ -67,58 +68,25 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
+
   auto t =  make_shared<TreeAln>( 1,2)  ; 
   t->initializeFromByteFile(cl.getAlnFileName());
-
-  vector<shared_ptr<TreeAln> >  tralns = {t}; 
-
+  t->enableParsimony();
 
   randCtr_t c; 
-  c.v[0] = 123; 
-  TreeRandomizer r(c ); 
+  c.v[1] = 0; 
+  c.v[0] = 1; 
 
-  Randomness rand(c); 
-  auto r1 = rand.drawRandDouble01()  ; 
-  cout << r1 << endl;   
+  TreeRandomizer r(c); 
+  r.randomizeTree(*t);
   
-  for(int i = 0; i < 10; ++i)
-    r.randomizeTree(*(tralns[0]));
-  tralns[0]->enableParsimony();
-
-  auto traln = tralns[0]; 
-
-  nodeptr p = traln->getTr()->start; 
-  Branch b(p->number, p->back->number); 
-
-  cout << "the start is "<< p->number << "," << p->back->number << endl; 
-  double init = 0.1; 
-
-  double result = 0; 
-  // cout << "we have " << traln->getPartitionsPtr()->perGeneBranchLengths << endl; 
-
-  auto eval = make_shared<LikelihoodEvaluator>(make_shared<LnlRestorer>(*traln)); 
-  eval->evaluate(*traln, b, true);
-
-  vector<shared_ptr<RandomVariable> > vars =  {make_shared<RandomVariable>(Category::BRANCH_LENGTHS, 0)} ; 
-
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    vars[0]->addPartition(i);
-  vars[0]->setPrior(make_shared< ExponentialPrior>(10));
-
-  vector<unique_ptr<AbstractProposal> > ps ; 
-  ps.emplace_back(unique_ptr<AbstractProposal>(new BranchLengthMultiplier(0.16))); 
-  ps[0]->addPrimVar(vars[0]); 
-
-  Chain chain(c, traln, ps, eval);
-  chain.resume();
-
-  for(int i = 0; i < 1000; ++i)
-    {
-      cout << "step " << i << endl; 
-      chain.step();
-    }
+  vector<nat> partPars ; 
+  ParsimonyEvaluator p; 
+  p.evaluate(*t, t->getTr()->start, true,partPars);
   
-  cout << "init was " << init<< " result is " << result << endl; 
+  for(auto &v : partPars)
+    cout << v << "," ; 
+  cout << endl; 
 
 #else 
 

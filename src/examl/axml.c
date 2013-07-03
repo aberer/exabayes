@@ -2348,7 +2348,10 @@ static void initializePartitions(tree *tr, FILE *byteFile)
     }
 
   if(tr->rateHetModel == GAMMA)
-    free(tr->aliaswgt);
+    {      
+      free(tr->aliaswgt);
+      tr->aliaswgt = NULL; 
+    }
 
 
   y = (unsigned char *)malloc(sizeof(unsigned char) * tr->originalCrunchedLength);
@@ -2535,13 +2538,7 @@ void initializeTree(tree *tr, analdef *adef)
       myBinFread(&(tr->partitionData[model].parsimonyLength), sizeof(size_t), 1 , byteFile); 
 
       int numBytes = totalNodes * tr->partitionData[model].states * tr->partitionData[model].parsimonyLength; 
-      
-      printf("numBytes=%d\ttotalNodes=%d, tr->partitionData[model].states=%d, parsimonyLength=%d\n", 
-	     numBytes,
-	     totalNodes,
-	     tr->partitionData[model].states,
-	     tr->partitionData[model].parsimonyLength);
-      
+
       tr->partitionData[model].parsVect = malloc_aligned( numBytes * sizeof(parsimonyNumber));
 
       memset(tr->partitionData[model].parsVect, 0 , sizeof(parsimonyNumber) * numBytes) ;
@@ -2549,8 +2546,6 @@ void initializeTree(tree *tr, analdef *adef)
       myBinFread(tr->partitionData[model].parsVect, sizeof(parsimonyNumber), numBytes, byteFile); 
 
       parsimonyNumber *ptr = tr->partitionData[model].parsVect; 
-      printf("memory region: %p-%p\n", ptr ,  ptr +  numBytes); 
-      /* END  */
     }
 
   for(int i = 1 ; i < 2 * tr->mxtips; ++i)
@@ -2562,7 +2557,10 @@ void initializeTree(tree *tr, analdef *adef)
     }
 
   /* BEGIN added by andre for parsimony  */
-  tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes);  
+  tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
+  memset(tr->parsimonyScore, 0, totalNodes * tr->NumberOfModels * sizeof(unsigned int )); 
+  for(int i = 0; i < totalNodes * tr->NumberOfModels; ++i)
+    tr->parsimonyScore[i]; 
   tr->ti = (int*) malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
   /* END */
   

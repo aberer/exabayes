@@ -69,12 +69,14 @@ fi
 
 codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
+    args="$args --disable-pll"
+
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
+    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+
     # CC="$ccompiler" 
     # CXX="$cxxcompiler"  
-    args="$args --disable-pll"
-    baseCall="mpirun -np 1  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
     # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"

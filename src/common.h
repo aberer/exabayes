@@ -6,30 +6,27 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-#define NO_SEC_BL_MULTI
-
-
-#define NOT_IMPLEMENTED  0
 
 #include "config.h"
 
+
 #if HAVE_PLL != 0
-/* #define exa_realloc rax_realloc   */
+#define exa_realloc rax_realloc
 #define exa_malloc_aligned  rax_malloc_aligned
-/* #define exa_malloc rax_malloc */
-/* #define exa_free rax_free */
-/* #define exa_calloc rax_calloc */
+#define exa_free rax_free
+#define exa_malloc rax_malloc
+#define exa_calloc rax_calloc
 #else 
 #define exa_malloc_aligned malloc_aligned
-#endif
-
 #define exa_realloc realloc
-
-#define exa_free free 
+#define exa_free free
 #define exa_malloc malloc
 #define exa_calloc calloc
-/* #endif */
+#endif
 
+
+#define NO_SEC_BL_MULTI
+#define NOT_IMPLEMENTED  0
 #define TODO 0
 
 typedef  unsigned int nat ; 
@@ -79,7 +76,7 @@ typedef  unsigned int nat ;
 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define VERIFY_LNL_SUPER_EXPENSIVE */

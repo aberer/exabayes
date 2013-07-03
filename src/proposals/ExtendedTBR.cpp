@@ -36,7 +36,7 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
   path.append(Branch(pn->number, pnn->number)); 
   nodeptr currentNode = rand.drawRandDouble01() ? pn : pnn;
   bool accepted = false; 
-  while(NOT accepted )
+  while(not accepted )
     {
       nodeptr n = 
 	rand.drawRandDouble01()  < 0.5 
@@ -90,7 +90,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
       p1 = bisectedBranch.findNodePtr(traln ); 
       p2 = bisectedBranch.getInverted().findNodePtr(traln); 
 
-      assert(NOT isTip(p1->number, tr->mxtips) && NOT isTip(p2->number, tr->mxtips)); 
+      assert(not isTip(p1->number, tr->mxtips) && not isTip(p2->number, tr->mxtips)); 
 
     } while( (traln.isTipNode(p1->next->back) && traln.isTipNode(p1->next->next->back) ) 
 	     || (traln.isTipNode(p2->next->back)  && traln.isTipNode(p2->next->next->back) ) ) ; 

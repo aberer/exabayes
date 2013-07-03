@@ -113,10 +113,14 @@ boolean update(tree *tr, nodeptr p)
   for(i = 0; i < tr->numBranches; i++)
     z0[i] = q->z[i];    
 
+  double
+    spacerA = 0; 
+
+
   if(tr->numBranches > 1)
-    makenewzGeneric(tr, p, q, z0, newzpercycle, z, TRUE);  
+    makenewzGeneric(tr, p, q, z0, newzpercycle, z, &spacerA ,  &spacerA,  spacerA, TRUE);  
   else
-    makenewzGeneric(tr, p, q, z0, newzpercycle, z, FALSE);
+    makenewzGeneric(tr, p, q, z0, newzpercycle, z, &spacerA ,  &spacerA,  spacerA,  FALSE);
   
   for(i = 0; i < tr->numBranches; i++)    
     smoothedPartitions[i]  = tr->partitionSmoothed[i];
@@ -405,7 +409,9 @@ nodeptr  removeNodeBIG (tree *tr, nodeptr p, int numBranches)
   for(i = 0; i < numBranches; i++)
     zqr[i] = q->z[i] * r->z[i];        
    
-  makenewzGeneric(tr, q, r, zqr, iterations, result, FALSE);   
+  
+  double spacerA = 0; 
+  makenewzGeneric(tr, q, r, zqr, iterations, result, &spacerA ,  &spacerA,  spacerA, FALSE );   
 
   for(i = 0; i < numBranches; i++)        
     tr->zqr[i] = result[i];
@@ -458,9 +464,11 @@ boolean insertBIG (tree *tr, nodeptr p, nodeptr q, int numBranches)
       for(i = 0; i < numBranches; i++)
 	defaultArray[i] = defaultz;
       
-      makenewzGeneric(tr, q, r, qz, iterations, zqr, FALSE);           
-      makenewzGeneric(tr, q, s, defaultArray, iterations, zqs, FALSE);                  
-      makenewzGeneric(tr, r, s, defaultArray, iterations, zrs, FALSE);
+      double spaceA = 0; 
+      assert(0); 
+      makenewzGeneric(tr, q, r, qz, iterations, zqr, &spaceA, &spaceA, spaceA, FALSE);           
+      makenewzGeneric(tr, q, s, defaultArray, iterations, zqs, &spaceA, &spaceA, spaceA, FALSE);                  
+      makenewzGeneric(tr, r, s, defaultArray, iterations, zrs, &spaceA, &spaceA, spaceA, FALSE);
       
       
       for(i = 0; i < numBranches; i++)

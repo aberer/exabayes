@@ -29,7 +29,7 @@ const double TreeAln::freqMin = 0.001;
 const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
 
 
-TreeAln::TreeAln(int numA, int numB)
+TreeAln::TreeAln()
   : parsimonyEnabled(true)
 {
   memset(&tr,0,sizeof(tree)); 
@@ -39,9 +39,7 @@ TreeAln::TreeAln(int numA, int numB)
 
 
 TreeAln::~TreeAln()
-{
-  cout << "freeing tree " << endl; 
-  
+{  
   if(tr.aliaswgt != NULL)
     exa_free(tr.aliaswgt); 
   if(tr.rateCategory != NULL)
@@ -72,27 +70,32 @@ TreeAln::~TreeAln()
     exa_free(tr.constraintVector); 
   if(tr.nodeBaseAddress != NULL)
     exa_free(tr.nodeBaseAddress);
-  
-#if HAVE_PLL != 0
+
+
+  // free parsimony related stuff
   if(parsimonyEnabled)
-    freeParsimonyDataStructures(&tr, &partitions);  
+    {
+      exa_free(tr.parsimonyScore);
+      for(int i = 0; i < getNumberOfPartitions(); ++i)
+	{
+	  pInfo *partition = getPartition(i); 
+	  exa_free(partition->parsVect);
+	}
+      exa_free(tr.ti); 
+    }
+
 
   exa_free(tr.td[0].ti);    
   exa_free(tr.td[0].executeModel);    
   exa_free(tr.td[0].parameterValues);    
 
-  // exa_free(tr.td[0].parameterValues);   
-#endif
-
   exa_free(tr.nodep); 
 
-  
   int numPart = getNumberOfPartitions();
   for(int i = 0; i < numPart ;++i)
     {
       pInfo *partition = getPartition(i); 
 
-#if HAVE_PLL != 0      
       exa_free(partition->frequencyGrouping); 
       exa_free(partition->symmetryVector);
       exa_free(partition->frequencies);
@@ -104,7 +107,7 @@ TreeAln::~TreeAln()
       exa_free(partition->yVector);
       exa_free(partition->xSpaceVector); 
       exa_free(partition->sumBuffer); 
-      exa_free(partition->ancestralBuffer); 
+
       exa_free(partition->wgt); 
       exa_free(partition->rateCategory); 
       exa_free(partition->partitionName); 
@@ -115,20 +118,21 @@ TreeAln::~TreeAln()
       exa_free(partition->EV); 
       exa_free(partition->globalScaler);       
       exa_free(partition->substRates);       
-#endif
+#if HAVE_PLL != 0      
+      exa_free(partition->ancestralBuffer); 
       exa_free(partition); 
-    }
-  
-  if(numPart > 0)
-    {
-#if HAVE_PLL != 0 
-      if(getNumberOfPartitions() > 0 )
-	exa_free(partitions.partitionData); 
-      // exa_free(partitions); 
-#else 
-      exa_free(tr.partitionData);
 #endif
     }
+
+#if HAVE_PLL != 0 
+  exa_free(partitions.partitionData); 
+#else 
+  exa_free(tr.executeModel) ;  
+  exa_free(tr.partitionContributions); 
+  exa_free(tr.fracchanges); 
+
+#endif
+
 }
 
 

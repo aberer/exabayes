@@ -53,7 +53,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
-  while(NOT accepted)
+  while(not accepted)
     {      
       nodeptr n = 
 	rand.drawRandDouble01()  < 0.5 
