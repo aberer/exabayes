@@ -56,14 +56,14 @@ void TbrMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 } 
 
 
-void TbrMove::extractMoveInfo(const TreeAln &traln, vector<Branch> description) 
+void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) 
 {
   sprCreatePath(traln, description.at(0),description.at(1),path1); 
   sprCreatePath(traln, description.at(2),description.at(3),path2); 
 } 
 
 
-void TbrMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, vector<shared_ptr<AbstractPrior> > brPr) const 
+void TbrMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPr) const 
 {
   assert(0);
 } 
@@ -75,8 +75,8 @@ Branch TbrMove::getEvalBranch(const TreeAln &traln) const
 }
 
 
-ostream& operator<<(ostream &out, const TbrMove &rhs) 
+std::ostream& operator<<(std::ostream &out, const TbrMove &rhs) 
 {
-  return out <<  "path1:"  << rhs.path1 << endl
-	     << "path2:" << rhs.path2 << endl; 
+  return out <<  "path1:"  << rhs.path1 << std::endl
+	     << "path2:" << rhs.path2 << std::endl; 
 }  

@@ -16,7 +16,7 @@ void RevMatParameter::applyParameter(TreeAln& traln, std::vector<nat> model, Par
 } 
 
 
-ParameterContent RevMatParameter::extractParameter(const TreeAln &traln, vector<nat> model)  const
+ParameterContent RevMatParameter::extractParameter(const TreeAln &traln, std::vector<nat> model)  const
 {
   return ParameterContent();
 }   

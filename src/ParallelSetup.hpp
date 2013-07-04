@@ -12,7 +12,6 @@ extern int processes; 		// examl comm size
 #endif
 
 #include <iostream>
-using namespace std; 
 
 class ParallelSetup
 {

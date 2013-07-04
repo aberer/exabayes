@@ -9,9 +9,9 @@
 class LikelihoodEvaluator
 {
 public: 
-  LikelihoodEvaluator(shared_ptr<LnlRestorer> restorer); 
+  LikelihoodEvaluator(std::shared_ptr<LnlRestorer> restorer); 
 
-  double evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)  ; 
+  double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)  ; 
   void evalSubtree( TreeAln &traln, const Branch &evalBranch)    ; 
   double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
   void findVirtualRoot(const TreeAln &traln, Branch &result) const ; 
@@ -37,7 +37,7 @@ private: 			// METHODS
 
 
 private: 			// ATTRIBUTES
-  shared_ptr<LnlRestorer> restorer;    
+  std::shared_ptr<LnlRestorer> restorer;    
 #ifdef DEBUG_LNL_VERIFY
   shared_ptr<TreeAln> debugTraln;  
   bool verifyLnl; 

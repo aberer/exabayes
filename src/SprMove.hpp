@@ -20,13 +20,13 @@ public:
   virtual void applyToTree(TreeAln &traln) const; 
   virtual void revertTree(TreeAln &traln, PriorBelief &prior) const; 
   virtual void disorientAtNode(TreeAln &traln, nodeptr p) const; 
-  virtual void extractMoveInfo(const TreeAln &traln, vector<Branch> description); 
-  virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, vector<shared_ptr<AbstractPrior> > brPr ) const; 
+  virtual void extractMoveInfo(const TreeAln &traln, std::vector<Branch> description); 
+  virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPr ) const; 
   virtual Branch getEvalBranch(const TreeAln &traln) const; 
 
   virtual AbstractMove* clone() const; 
 
-  friend ostream& operator<<(ostream &out, const SprMove& rhs); 
+  friend std::ostream& operator<<(std::ostream &out, const SprMove& rhs); 
 
 protected:			// METHODS
   void sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto, Path &path ) const;

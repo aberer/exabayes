@@ -3,12 +3,11 @@
 
 #include <streambuf>
 
-using namespace std; 
 
-class teebuf : public streambuf
+class teebuf : public std::streambuf
 {
 public: 
-  teebuf(streambuf *_sb1, streambuf *_sb2)
+  teebuf(std::streambuf *_sb1, std::streambuf *_sb2)
     : sb1(_sb1)
     , sb2(_sb2)
     , isDisabled(false)
@@ -43,8 +42,8 @@ private:
     return 0; 
   }
 
-  streambuf *sb1; 
-  streambuf *sb2; 
+  std::streambuf *sb1; 
+  std::streambuf *sb2; 
   bool isDisabled; 
 }; 
 

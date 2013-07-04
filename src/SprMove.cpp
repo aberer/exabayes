@@ -28,7 +28,7 @@ void SprMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 }
 
 
-void SprMove::extractMoveInfo(const TreeAln &traln, vector<Branch> description)
+void SprMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description)
 {
   sprCreatePath(traln, description.at(0), description.at(1), path);
 } 
@@ -61,7 +61,7 @@ Branch SprMove::getEvalBranch(const TreeAln &traln) const
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, vector<shared_ptr<AbstractPrior> > brPrs)  const 
+void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPrs)  const 
 {  
   assert(path.size() >= 2); 
   int numBranches = traln.getNumBranches(); 
@@ -160,7 +160,7 @@ void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, P
   auto b1 = modifiedPath.at(0),
     b2  = modifiedPath.at(1); 
 
-  set<int> ids; 
+  std::set<int> ids; 
   ids.insert(b1.getPrimNode()); 
   ids.insert(b2.getPrimNode()); 
   ids.insert(b1.getSecNode()); 
@@ -186,7 +186,7 @@ void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, P
 }
 
 
-ostream& operator<<(ostream &out, const SprMove& rhs)
+std::ostream& operator<<(std::ostream &out, const SprMove& rhs)
 {
   return out << rhs.path;   
 } 

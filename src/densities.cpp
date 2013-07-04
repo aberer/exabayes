@@ -1,14 +1,11 @@
-#include "densities.h"
-#include "axml.h"
 #include <cmath>
 #include <cassert>
-
-using namespace std; 
 #include <iostream>
 
+#include "densities.h"
+#include "axml.h"
 
-
-static double betaFunctionLog(const vector<double> &alphas)
+static double betaFunctionLog(const std::vector<double> &alphas)
 {
   double beta=0;
   double sum=0;
@@ -24,7 +21,7 @@ static double betaFunctionLog(const vector<double> &alphas)
 
 
 
-static double betaFunction(const vector<double> &alphas)
+static double betaFunction(const std::vector<double> &alphas)
 {
   double beta=1.0;
   double sum=0;
@@ -55,7 +52,7 @@ double gammaFunction(double alpha)
 
 
 
-static void normalize( vector<double>  &vector, double normalizingConstant)
+static void normalize( std::vector<double> &vector, double normalizingConstant)
 {
   double sum=0;
   for(auto v: vector)
@@ -66,7 +63,7 @@ static void normalize( vector<double>  &vector, double normalizingConstant)
 }
 
 
-double densityDirichletLog(vector<double> values, const vector<double> &alphas)
+double densityDirichletLog(std::vector<double> values, const std::vector<double> &alphas)
 {
   double density=0;
   density -= betaFunctionLog(alphas);
@@ -86,7 +83,7 @@ double densityDirichletLog(vector<double> values, const vector<double> &alphas)
 
 
 
-double densityDirichlet(vector<double> values, const vector<double> &alphas)
+double densityDirichlet(std::vector<double> values, const std::vector<double> &alphas)
 {
   double density=1;
 

@@ -20,29 +20,17 @@
 
 #define tout (*globals.teeOut)
 
-// #define tout ( *(globals.teeOut))
-// #define toutPure (*(globals.teeOut))
-
 class TreeAln; 
 class BipartitionHash; 
-
-using namespace std; 
-
 
 class GlobalVariables
 {
 public: 
-  string logFile; 
+  std::string logFile; 
   
   teestream* teeOut; 
-  ofstream* logStream;
-  
+  std::ofstream* logStream;
 
-
-// #ifdef DEBUG_LNL_VERIFY
-//   TreeAln *debugTree; 
-//   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
-// #endif
 };
 
 
@@ -52,16 +40,11 @@ public:
 
 
 GlobalVariables globals; 
-/* for crude performance measurements */
-// double timeIncrement = 0;  
-chrono::system_clock::time_point timeIncrement;  
+std::chrono::system_clock::time_point timeIncrement;  
 
 #else 
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 
-extern chrono::system_clock::time_point timeIncrement;  
-// extern unique_ptr<teestream> teeOut; 
-// extern unique_ptr<ofstream> logStream ;
-
+extern std::chrono::system_clock::time_point timeIncrement;  
 
 #endif

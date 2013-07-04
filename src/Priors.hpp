@@ -14,19 +14,16 @@
 
 #include "Randomness.hpp"
 
-using namespace std; 
-
-
 class AbstractPrior
 {
 public: 
   virtual ~AbstractPrior()
   {}
 
-  virtual vector<double> drawFromPrior(Randomness &rand)  const = 0; 
-  virtual double getLogProb(vector<double> values ) const = 0; 
-  virtual void print(ostream &out) const = 0;
-  friend ostream& operator<<(ostream &out,  shared_ptr<AbstractPrior> rhs)
+  virtual std::vector<double> drawFromPrior(Randomness &rand)  const = 0; 
+  virtual double getLogProb(std::vector<double> values ) const = 0; 
+  virtual void print(std::ostream &out) const = 0;
+  friend std::ostream& operator<<(std::ostream &out,  std::shared_ptr<AbstractPrior> rhs)
   {
     rhs->print(out); 
     return out; 
@@ -37,12 +34,12 @@ public:
 class DirichletPrior : public AbstractPrior
 {
 public: 
-  DirichletPrior(vector<double> alphas) : alphas(alphas)
+  DirichletPrior(std::vector<double> alphas) : alphas(alphas)
   {
   }
 
 
-  virtual double getLogProb(vector<double> values) const 
+  virtual double getLogProb(std::vector<double> values) const 
   {
     assert(values.size() == alphas.size() ); 
     double sum = 0; 
@@ -55,7 +52,7 @@ public:
   }
  
   
-  virtual void print(ostream& out ) const 
+  virtual void print(std::ostream& out ) const 
   {
     out << "Dirichlet("   ; 
     bool first = true; 
@@ -68,15 +65,15 @@ public:
     out << ")";
   }
 
-  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
   {
-    vector<double> result; 
+    std::vector<double> result; 
     rand.drawRandDirichlet( result, alphas); 
     return result; 
   }
   
 private: 
-  vector<double> alphas; 
+  std::vector<double> alphas; 
 
 } ; 
 
@@ -88,7 +85,7 @@ public:
   {
   }
 
-  virtual double getLogProb(vector<double> values) const 
+  virtual double getLogProb(std::vector<double> values) const 
   {
     assert(values.size() == 1); 
     double value =  values[0]; 
@@ -97,14 +94,14 @@ public:
     return result ; 
   }
 
-  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
   {
     double drawn = rand.drawRandExp(lambda); 
-    vector<double> result = {drawn}; 
+    std::vector<double> result = {drawn}; 
     return result;  
   }
 
-  virtual void print(ostream& out ) const  
+  virtual void print(std::ostream& out ) const  
   {        
     out << "Exponential("  << lambda << ")" ;       
   }
@@ -123,7 +120,7 @@ public:
   {
   }
 
-  virtual double getLogProb(vector<double> values)  const 
+  virtual double getLogProb(std::vector<double> values)  const 
   {
     assert(values.size() == 1); 
     double value = values[0];
@@ -132,20 +129,20 @@ public:
       return log(1 / (maxVal - minVal)); 
     else  
       {
-	double result = numeric_limits<double>::lowest(); 
+	double result = std::numeric_limits<double>::lowest(); 
 	return result; 
       }
   }
 
 
-  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
   {
     double val = minVal + rand.drawRandDouble01() * (maxVal - minVal); 
-    vector<double> result = {val}; 
+    std::vector<double> result = {val}; 
     return result; 
   }
 
-  virtual void print(ostream& out ) const  
+  virtual void print(std::ostream& out ) const  
   { 
     out << "Uniform("  << minVal << "," << maxVal << ")" ; 
   }
@@ -159,11 +156,11 @@ private:
 class FixedPrior : public AbstractPrior
 {
 public: 
-  FixedPrior(vector<double> fixedValues) : fixedValues(fixedValues) 
+  FixedPrior(std::vector<double> fixedValues) : fixedValues(fixedValues) 
   {
   } 
   
-  virtual double getLogProb(vector<double> values)  const
+  virtual double getLogProb(std::vector<double> values)  const
   {    
     assert(values.size() == fixedValues.size()); 
     for(nat i = 0; i < fixedValues.size() ; ++i)
@@ -171,12 +168,12 @@ public:
     return 0; 
   }
 
-  virtual vector<double> drawFromPrior(Randomness &rand)  const
+  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
   {
     return fixedValues; 
   }
 
-  virtual void print(ostream &out) const 
+  virtual void print(std::ostream &out) const 
   {
     out << "Fixed(" ;     
     bool first = true; 
@@ -189,7 +186,7 @@ public:
   }
 
 private: 
-  vector<double> fixedValues; 
+  std::vector<double> fixedValues; 
 }; 
 
 #endif

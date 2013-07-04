@@ -29,7 +29,7 @@ public:
 
 private: 
   Topology topology; 
-  vector<Partition> partitions; 
+  std::vector<Partition> partitions; 
 }; 
 
 

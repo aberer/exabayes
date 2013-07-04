@@ -16,7 +16,7 @@ static int getTheX(nodeptr p)
 
 
 
-void TreePrinter::helper(const TreeAln &traln, stringstream &ss, nodeptr p, bool isFirst)
+void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss, nodeptr p, bool isFirst)
 {
   if(traln.isTipNode(p))
     {
@@ -40,21 +40,21 @@ void TreePrinter::helper(const TreeAln &traln, stringstream &ss, nodeptr p, bool
     ss << p->number ; 
 
   if(not isFirst && withBranchLengths)
-    ss << ":" << setprecision(7) << fixed  << Branch(p->number,p->back->number,p->z[0]).getInterpretedLength(traln); 
+    ss << ":" << std::setprecision(7) << std::fixed  << Branch(p->number,p->back->number,p->z[0]).getInterpretedLength(traln); 
 
   if(isFirst)
     {
       ss << "," << p->back->number; 
       if(withBranchLengths)
-	ss << ":" << setprecision(7) << fixed  << Branch(p->back->number, p->number, p->z[0]).getInterpretedLength(traln); 
+	ss << ":" << std::setprecision(7) << std::fixed  << Branch(p->back->number, p->number, p->z[0]).getInterpretedLength(traln); 
     }
 }
 
 
 // this is unrooted! 
-string TreePrinter::printTree(const TreeAln &traln)
+std::string TreePrinter::printTree(const TreeAln &traln)
 {
-  stringstream ss; 
+  std::stringstream ss; 
   ss << "("; 
   helper(traln, ss, traln.getTr()->start->back, true );   
   ss << "):0.0;"; 

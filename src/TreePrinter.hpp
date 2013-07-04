@@ -12,7 +12,7 @@ public:
   TreePrinter(bool withBranchLengths , bool withInternalNodes , bool withRealNames) 
     : withBranchLengths(withBranchLengths), withInternalNodes(withInternalNodes), withRealNames(withRealNames){}
 
-  string printTree(const TreeAln &traln ); 
+  std::string printTree(const TreeAln &traln ); 
 
 
 private: 
@@ -20,7 +20,7 @@ private:
   bool withInternalNodes; 
   bool withRealNames; 
 
-  void helper(const TreeAln &traln, stringstream &ss, nodeptr p, bool isFirst); 
+  void helper(const TreeAln &traln, std::stringstream &ss, nodeptr p, bool isFirst); 
   
 
 }; 

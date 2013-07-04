@@ -16,7 +16,6 @@
 #include "GlobalVariables.hpp"
 #include "Category.hpp"
 
-using namespace std; 
 
 class RandomVariable
 {
@@ -24,14 +23,14 @@ public:
   RandomVariable(Category cat, nat id)
     : cat(cat) , id(id)  {} 
 
-  void setPrior (shared_ptr<AbstractPrior> _prior) { prior = _prior; }  
+  void setPrior (std::shared_ptr<AbstractPrior> _prior) { prior = _prior; }  
   void addPartition(nat id) { partitions.push_back(id); }
-  const vector<nat>& getPartitions() const {return partitions; }
+  const std::vector<nat>& getPartitions() const {return partitions; }
   Category getCategory() const { return cat; }
   nat getId() const { return id; }
   void setId(nat _id ) {id = _id; }
-  shared_ptr<AbstractPrior> getPrior() const {return prior; }
-  ostream&  printShort(ostream& out); 
+  std::shared_ptr<AbstractPrior> getPrior() const {return prior; }
+  std::ostream&  printShort(std::ostream& out); 
 
   // make cloneable, if there is information in it   
   // RandomVariablePtr clone() const ; 
@@ -42,12 +41,12 @@ public:
 
 private: 
   Category cat; 
-  vector<nat> partitions; 	// the partitions, this parameter
+  std::vector<nat> partitions; 	// the partitions, this parameter
 				// applies to
   nat id ; 			//  which id does the  parameter have among all of its kind  
-  shared_ptr<AbstractPrior> prior; 
+  std::shared_ptr<AbstractPrior> prior; 
 
-  friend ostream& operator<<(ostream &out, const RandomVariable& rhs); 
+  friend std::ostream& operator<<(std::ostream &out, const RandomVariable& rhs); 
 };
 
 

@@ -9,7 +9,6 @@
 #define _DENSITIES_H
 
 #include <vector>
-using namespace std; 
 
 double exponentialDensity(double value, double lambda); 
 
@@ -22,8 +21,8 @@ double exponentialDensity(double value, double lambda);
 double gammaFunction(double alpha); 
 
 
-double densityDirichletLog(vector<double> values, const vector<double> &alphas); 
-double densityDirichlet(vector<double> values, const vector<double> &alphas); 
+double densityDirichletLog(std::vector<double> values, const std::vector<double> &alphas); 
+double densityDirichlet(std::vector<double> values, const std::vector<double> &alphas); 
 
 double exponentialDistribution(double value, double lambda); 
 

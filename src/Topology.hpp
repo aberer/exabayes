@@ -15,6 +15,6 @@ public:
   void restoreTopology(TreeAln &traln);   
 
 private: 
-  vector<Branch> branches;   
+  std::vector<Branch> branches;   
 }; 
  

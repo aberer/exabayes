@@ -16,7 +16,7 @@
 class AbstractProposal
 {
 public: 
-  AbstractProposal(){}
+  // AbstractProposal(){}
   virtual ~AbstractProposal(){}
 
   // you MUST implement all virtual methods in your derived
@@ -36,7 +36,7 @@ public:
   void setRelativeWeight(double tmp) { relativeWeight = tmp; }
   
   Category getCategory() const {return category; }
-  string getName() const {return name; }
+  std::string getName() const {return name; }
   
   void accept() {sctr.accept();}
   void reject() {sctr.reject();}
@@ -45,12 +45,12 @@ public:
   
   int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
 
-  void addPrimVar(shared_ptr<RandomVariable> var) {primVar.push_back(var) ; }
-  void addSecVar(shared_ptr<RandomVariable> var) {secVar.push_back(var) ; }
+  void addPrimVar(std::shared_ptr<RandomVariable> var) {primVar.push_back(var) ; }
+  void addSecVar(std::shared_ptr<RandomVariable> var) {secVar.push_back(var) ; }
 
-  static void updateHastings(double &hastings, double valToAdd, string whoDoneIt); 
+  static void updateHastings(double &hastings, double valToAdd, std::string whoDoneIt); 
 
-  friend ostream&  operator<< ( ostream& out , const unique_ptr<AbstractProposal> &rhs)
+  friend std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs)
   {
     out << rhs->name <<  " primarily modifying " ; 
     for(auto &r : rhs->primVar)
@@ -66,7 +66,7 @@ public:
     return out; 
   }
 
-  ostream& printNamePartitions(ostream &out)
+  std::ostream& printNamePartitions(std::ostream &out)
   {
     out << name  << "(" ; 
     assert(primVar.size() == 1); 
@@ -83,7 +83,7 @@ public:
     return out; 
   }
 
-  ostream& printShort(ostream &out) 
+  std::ostream& printShort(std::ostream &out) 
   {
     out << name << "( " ;  
     
@@ -114,17 +114,17 @@ public:
     return out; 
   }
 
-  vector<RandomVariable*> getPrimVar() const; 
-  vector<RandomVariable*> getSecVar() const ; 
+  std::vector<RandomVariable*> getPrimVar() const; 
+  std::vector<RandomVariable*> getSecVar() const ; 
 
 protected:   
-  string name;   
+  std::string name;   
   SuccessCounter sctr; 
   Category category; 
 
   // will be a unique_ptr later 
-  vector<shared_ptr<RandomVariable> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  vector<shared_ptr<RandomVariable> > secVar;  // as a by-product also these random variables are changed 
+  std::vector<std::shared_ptr<RandomVariable> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  std::vector<std::shared_ptr<RandomVariable> > secVar;  // as a by-product also these random variables are changed 
 
   double relativeWeight; 
 

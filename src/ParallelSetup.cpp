@@ -3,8 +3,6 @@
 
 #include <iostream> 
 
-using namespace std; 
-
 
 ParallelSetup::ParallelSetup(int argc, char **argv)
   : myRunBatch(0)

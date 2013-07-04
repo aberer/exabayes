@@ -7,22 +7,10 @@
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
 
-// here we initialize the max/min values for our various
-// parameters. Static const is essentially like a global variable but
-// saver. You access it with e.g., TreeAln::zmin, since the variable
-// does not belong to an instance of the class, but the class in general. 
+#include "BoundsChecker.hpp"
 
-const double TreeAln::zMin = 1.0E-15 ; 
-const double TreeAln::zMax = (1.0 - 1.0E-6) ; 
-
-const double TreeAln::zZero = TreeAln::zMax + ( 1 - TreeAln::zMax) / 2 ; 
-const double TreeAln::rateMin = 0.0000001; 
-const double TreeAln::rateMax = 1000000.0; 
-const double TreeAln::alphaMin = 0.02; 
-const double TreeAln::alphaMax = 1000.0; 
-const double TreeAln::freqMin = 0.001; 
+const double TreeAln::zZero = BoundsChecker::zMax + ( 1 - BoundsChecker::zMax) / 2 ; 
 const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
-
 
 TreeAln::TreeAln()
   : parsimonyEnabled(true)
@@ -134,7 +122,7 @@ TreeAln::~TreeAln()
 }
 
 
-void TreeAln::initializeFromByteFile(string _byteFileName)
+void TreeAln::initializeFromByteFile(std::string _byteFileName)
 {
 #if HAVE_PLL != 0
   this->initializeTreePLL(_byteFileName);
@@ -168,9 +156,9 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
 
       assert(partition->dataType == DNA_DATA);
 
-      vector<double> tmp(partition->states, 1.0 / (double)partition->states ); 
+      std::vector<double> tmp(partition->states, 1.0 / (double)partition->states ); 
       setFrequenciesBounded(tmp,i);
-      vector<double>tmp2( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)); 
+      std::vector<double>tmp2( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)); 
       setRevMatBounded(tmp2,i);
     }
 }
@@ -178,7 +166,7 @@ void TreeAln::initializeFromByteFile(string _byteFileName)
 
 double TreeAln::getTreeLengthExpensive() const
 {
-  vector<Branch> branches = extractBranches(); 
+  std::vector<Branch> branches = extractBranches(); 
   
   assert(getNumBranches() == 1 ); 
 
@@ -191,7 +179,7 @@ double TreeAln::getTreeLengthExpensive() const
 
 
 
-void TreeAln::extractHelper( nodeptr p , vector<Branch> &result, bool isStart) const 
+void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const 
 {
   Branch b = Branch(p->number, p->back->number,  p->back->z[0]);       
   result.push_back(b);
@@ -206,21 +194,21 @@ void TreeAln::extractHelper( nodeptr p , vector<Branch> &result, bool isStart) c
 }
 
 
-vector<Branch> TreeAln::extractBranches() const 
+std::vector<Branch> TreeAln::extractBranches() const 
 {
-  vector<Branch> result; 
+  std::vector<Branch> result; 
   extractHelper(tr.nodep[1]->back, result, true);
   return result; 
 }
 
 
-void TreeAln::verifyTreeLength() const
-{
-#if TODO 
-  double tlVerified = getTreeLengthExpensive() ;
-  assert(treeLength == tlVerified); 
-#endif
-}
+// void TreeAln::verifyTreeLength() const
+// {
+// #if TODO 
+//   double tlVerified = getTreeLengthExpensive() ;
+//   assert(treeLength == tlVerified); 
+// #endif
+// }
 
 void TreeAln::enableParsimony()
 {  
@@ -519,22 +507,22 @@ void TreeAln::initRevMat(int model)
 
 
 
-void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
+void TreeAln::setFrequenciesBounded(std::vector<double> &newValues, int model )
 {  
   int changed = 0; 
   double sum =0 ; 
   for(double &v : newValues)
-    if(v < freqMin)
+    if(v < BoundsChecker::freqMin)
       {
-	v = freqMin; 
+	v = BoundsChecker::freqMin; 
 	changed++; 
       }
     else 
       sum += v; 
 
-  sum += ( changed * freqMin ); 
+  sum += ( changed * BoundsChecker::freqMin ); 
   for(double &v : newValues)
-    if(v != freqMin)
+    if(v != BoundsChecker::freqMin)
       v /= sum; 
 
   pInfo *partition = getPartition(model); 
@@ -548,11 +536,9 @@ void TreeAln::setFrequenciesBounded(vector<double> &newValues, int model )
 }
 
 
-
-void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
+void TreeAln::setRevMatBounded(std::vector<double> &newValues, int model)
 { 
-
-  vector<double> normValues = newValues; 
+  std::vector<double> normValues = newValues; 
 
   for(auto &v : normValues)
     v /= normValues[normValues.size()-1]; 
@@ -560,10 +546,10 @@ void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
   double sum = 0; 
   for(double &v : normValues)
     {
-      if(v < rateMin)
-	v = rateMin; 
-      else if(rateMax < v )
-	v = rateMax; 
+      if(v < BoundsChecker::rateMin)
+	v = BoundsChecker::rateMin; 
+      else if(BoundsChecker::rateMax < v )
+	v = BoundsChecker::rateMax; 
       sum += v ; 
     }
 
@@ -571,7 +557,6 @@ void TreeAln::setRevMatBounded(vector<double> &newValues, int model)
   for(nat i = 0; i < newValues.size(); ++i)
     partition->substRates[i] = newValues[i]; 
 }
-
 
 /** 
     @brief save setting method for a branch length
@@ -583,10 +568,10 @@ void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
 #if TODO 
   double oldZ = p->z[model] ; 
 #endif
-  if(newValue < zMin)
-    newValue = zMin; 
-  if (zMax < newValue)
-    newValue = zMax; 
+  if(newValue < BoundsChecker::zMin)
+    newValue = BoundsChecker::zMin; 
+  if (BoundsChecker::zMax < newValue)
+    newValue = BoundsChecker::zMax; 
 
 #if TODO 
   if(newValue != oldZ)
@@ -604,10 +589,10 @@ void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
  */  
 void TreeAln::setAlphaBounded(double &newValue, int model)
 {
-  if(newValue < alphaMin)
-    newValue = alphaMin; 
-  if(alphaMax < newValue )
-    newValue = alphaMax; 
+  if(newValue < BoundsChecker::alphaMin)
+    newValue = BoundsChecker::alphaMin; 
+  if(BoundsChecker::alphaMax < newValue )
+    newValue = BoundsChecker::alphaMax; 
   
   pInfo *partition = getPartition(model);
   partition->alpha =  newValue; 
@@ -633,7 +618,7 @@ void TreeAln::discretizeGamma(int model)
 // it =/
 #if HAVE_PLL  != 0 
 
-void TreeAln::initializeTreePLL(string byteFileName)
+void TreeAln::initializeTreePLL(std::string byteFileName)
 {
   partitionList *pl = getPartitionsPtr();
   pl->partitionData = (pInfo**)exa_malloc(NUM_BRANCHES*sizeof(pInfo*));
@@ -651,7 +636,7 @@ void TreeAln::initializeTreePLL(string byteFileName)
 } 
 
 
-void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFrequencies, bool multiBranch)
+void TreeAln::initializePartitionsPLL(std::string byteFileName, double ***empiricalFrequencies, bool multiBranch)
 {
   unsigned char *y;
 
@@ -748,7 +733,7 @@ void TreeAln::initializePartitionsPLL(string byteFileName, double ***empiricalFr
 #endif
 
 
-ostream& operator<< (ostream& out,  TreeAln&  traln)
+std::ostream& operator<< (std::ostream& out,  TreeAln&  traln)
 {
   TreePrinter tp(true, false, false); 
   return out << tp.printTree(traln); 
@@ -768,7 +753,7 @@ bool TreeAln::isCollapsed(Branch b )
 {
   assert(getNumBranches() == 1 ); 
   nodeptr p = b.findNodePtr(*this); 
-  return p->z[0] >=  TreeAln::zMax ; 
+  return p->z[0] >=  BoundsChecker::zMax ; 
 }
 
 
@@ -780,9 +765,9 @@ void TreeAln::setBranchLengthUnsafe(Branch b )
 } 
 
 
-vector<double> TreeAln::getRevMat(int model) const 
+std::vector<double> TreeAln::getRevMat(int model) const 
 {
-  vector<double> result; 
+  std::vector<double> result; 
   pInfo *partition = getPartition(model); 
   double sum = 0; 
   for(nat i =0 ; i < numStateToNumInTriangleMatrix(partition->states); ++i)
@@ -796,9 +781,9 @@ vector<double> TreeAln::getRevMat(int model) const
   return result; 
 }
 
-vector<double> TreeAln::getFrequencies(int model) const
+std::vector<double> TreeAln::getFrequencies(int model) const
 {
-  vector<double> result; 
+  std::vector<double> result; 
   pInfo* partition = getPartition(model) ; 
   for(int i = 0; i < partition->states; ++i) 
     result.push_back(partition->frequencies[i]); 
@@ -848,7 +833,7 @@ Branch TreeAln::drawInnerBranchUniform( Randomness &rand) const
     }
   assert(node != 0); 
   
-  vector<nat> options; 
+  std::vector<nat> options; 
   if(not isTipNode(p->back))
     options.push_back(p->back->number); 
   if(not isTipNode(p->next->back))
@@ -975,7 +960,7 @@ nodeptr TreeAln::getNode(nat elem) const
 {
   if( not (elem != 0 && elem < getNumberOfNodes() + 2 ))
     { 
-      cout << "bug: attempted to get node " << elem << endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;
+      std::cout << "bug: attempted to get node " << elem << std::endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;
     } 
 
   return  getTr()->nodep[elem] ; 

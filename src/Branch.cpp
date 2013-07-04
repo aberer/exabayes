@@ -44,7 +44,7 @@ nodeptr Branch::findNodePtr(const TreeAln &traln) const
 
 
 
-ostream& operator<<(ostream &out, const Branch& br)
+std::ostream& operator<<(std::ostream &out, const Branch& br)
 { 
   return out << "(" << br.thisNode << "/" << br.thatNode << "):" << br.length; 
 }

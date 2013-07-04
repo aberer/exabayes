@@ -3,10 +3,6 @@
 // // #include "config.h"
 // // #include "common.h"
 
-
-// using namespace std; 
-
-
 // // we do not actually need any of this as long as we do not use memory saving features 
 
 // #if 0 

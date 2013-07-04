@@ -11,7 +11,7 @@
 #include "LikelihoodEvaluator.hpp" 
 
 
-Chain:: Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_ptr<AbstractProposal> > &_proposals, shared_ptr<LikelihoodEvaluator> eval)
+Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval)
   : traln(_traln)
   , deltaT(0)
   , runid(0)
@@ -22,12 +22,12 @@ Chain:: Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_pt
   , state(*traln)
   , chainRand(seed)
   , relWeightSum(0)
-  , bestState(numeric_limits<double>::lowest())
+  , bestState(std::numeric_limits<double>::lowest())
   , evaluator(eval)
 {
   for(auto &p : _proposals)
     {
-      unique_ptr<AbstractProposal> copy(p->clone()); 
+      std::unique_ptr<AbstractProposal> copy(p->clone()); 
       assert(copy->getPrimVar().size() != 0); 
       proposals.push_back(std::move(copy)); 
     }
@@ -62,7 +62,7 @@ Chain::Chain( const Chain& rhs)
 
 
 
-ostream& Chain::addChainInfo(ostream &out) const 
+std::ostream& Chain::addChainInfo(std::ostream &out) const 
 {
   return out << "[run " << runid << ",heat " << couplingId << "]" ; 
 }
@@ -92,10 +92,10 @@ void Chain::resume()
       double alpha = partInfo.getAlpha(); 
       traln->setAlphaBounded(alpha,i) ; 
       
-      vector<double> revMat = state.accessPartition(i).getRevMat();       
+      std::vector<double> revMat = state.accessPartition(i).getRevMat();       
       traln->setRevMatBounded(revMat, i); 
       
-      vector<double> stateFreqs = state.accessPartition(i).getStateFreqs(); 
+      std::vector<double> stateFreqs = state.accessPartition(i).getStateFreqs(); 
       traln->setFrequenciesBounded(stateFreqs, i); 
 
       traln->initRevMat(i);
@@ -106,8 +106,8 @@ void Chain::resume()
   
   if(fabs(likelihood - traln->getTr()->likelihood) > ACCEPTED_LIKELIHOOD_EPS)
     {
-      cerr << "While trying to resume chain: previous chain liklihood larger than " <<
-	"evaluated likelihood. This is a programming error." << endl; 
+      std::cerr << "While trying to resume chain: previous chain liklihood larger than " <<
+	"evaluated likelihood. This is a programming error." << std::endl; 
       assert(0);       
     }  
 
@@ -134,9 +134,9 @@ void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl
 
 
 
-void Chain::printProposalState(ostream& out ) const 
+void Chain::printProposalState(std::ostream& out ) const 
 {
-  map<Category, vector<AbstractProposal*> > sortedProposals; 
+  std::map<Category, std::vector<AbstractProposal*> > sortedProposals; 
   for(auto& p : proposals)
     sortedProposals[p->getCategory()].push_back(p.get()) ; 
   
@@ -159,7 +159,7 @@ void Chain::printProposalState(ostream& out ) const
 		  tout  << ":"  << p->getSCtr() << "\t" ; 	      
 		}
 	    }
-	  tout << endl; 
+	  tout << std::endl; 
 	}
     }
 }
@@ -252,7 +252,7 @@ void Chain::printTopology(FILE *fh)
   assert(couplingId == 0);
   
   TreePrinter tp(true, false, false);
-  string treeString = tp.printTree(*traln);
+  std::string treeString = tp.printTree(*traln);
 
   fprintf(fh,"\ttree gen.%d = [&U] %s\n", currentGeneration, treeString.c_str());
   fflush(fh);
@@ -271,10 +271,10 @@ void Chain::printNexusTreeFileStart( FILE *fh  )
 
 void Chain::switchState(Chain &rhs)
 {
-  swap(couplingId, rhs.couplingId); 
-  swap(bestState, rhs.bestState); 
+  std::swap(couplingId, rhs.couplingId); 
+  std::swap(bestState, rhs.bestState); 
   // swap(chainRand, rhs.chainRand); 
-  swap(proposals, rhs.proposals); 
+  std::swap(proposals, rhs.proposals); 
 }
 
 
@@ -370,7 +370,7 @@ void Chain::suspend()
       
       partInfo.setAlpha( partitionTr->alpha) ; 
 
-      vector<double> tmp; 
+      std::vector<double> tmp; 
       for(nat i = 0; i < numStateToNumInTriangleMatrix(partitionTr->states); ++i)
 	tmp.push_back(partitionTr->substRates[i]); 
       partInfo.setRevMat(tmp); 
@@ -384,9 +384,9 @@ void Chain::suspend()
 }
 
 									   
-vector<RandomVariable*> Chain::extractVariables() const 
+std::vector<RandomVariable*> Chain::extractVariables() const 
 {
-  unordered_set<RandomVariable*> result; 
+  std::unordered_set<RandomVariable*> result; 
   for(auto &p : proposals)
     {
       for(auto &v : p->getPrimVar())
@@ -395,7 +395,7 @@ vector<RandomVariable*> Chain::extractVariables() const
 	result.insert(v); 
     }
   
-  vector<RandomVariable*> result2 ; 
+  std::vector<RandomVariable*> result2 ; 
   for(auto v : result)
     result2.push_back(v); 
 
@@ -403,16 +403,16 @@ vector<RandomVariable*> Chain::extractVariables() const
 }
 
 
-const vector<AbstractProposal*> Chain::getProposalView() const 
+const std::vector<AbstractProposal*> Chain::getProposalView() const 
 {
-  vector<AbstractProposal*> result;  
+  std::vector<AbstractProposal*> result;  
   for(auto &elem: proposals)
     result.push_back(elem.get()); 
   return result; 
 }
 
 
-ostream& operator<<(ostream& out, const Chain &rhs)
+std::ostream& operator<<(std::ostream& out, const Chain &rhs)
 {
   rhs.addChainInfo(out); 
   out << "\tLnL: " << rhs.getLnLikelihood() << "\tLnPr: " << rhs.getLnPrior(); 

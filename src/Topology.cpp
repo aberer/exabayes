@@ -1,13 +1,12 @@
 #include <cassert>
 
-
 #include "Topology.hpp"
-// #include "output.h"
 
-
+// deprecated 
 
 Topology::Topology(int numTax)  
 {  
+  std::cout << "initializing deprecated topology  " << std::endl; 
 }
 
 

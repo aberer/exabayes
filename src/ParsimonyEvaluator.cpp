@@ -9,7 +9,7 @@ void ParsimonyEvaluator::evaluateSubtree(TreeAln &traln, nodeptr p)
 #endif
 }
  
-void ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool fullTraversal, vector<nat> &partitionParsimony)
+void ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool fullTraversal, std::vector<nat> &partitionParsimony)
 {
   partitionParsimony.clear();   
   partitionParsimony.insert(partitionParsimony.begin(), traln.getNumberOfPartitions(), 0); 

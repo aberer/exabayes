@@ -291,7 +291,7 @@ void BipartitionHash::addBipartitionsToHash(TreeAln &traln, nat slot)
     {
       taxonNames.push_back(""); 
       for(int i = 1; i < tr->mxtips+ 1 ; ++i)
-	taxonNames.push_back(string(tr->nameList[i])); 
+	taxonNames.push_back(std::string(tr->nameList[i])); 
     }
   else
     {

@@ -12,7 +12,7 @@
 class AvgSplitFreqAssessor
 {
 public: 
-  AvgSplitFreqAssessor(vector<string>fileNames);
+  AvgSplitFreqAssessor(std::vector<std::string>fileNames);
   ~AvgSplitFreqAssessor();
 
   /** @brief return the asdsf of the respective trees in the respective range */ 
@@ -29,19 +29,19 @@ public:
   void setEnd(int _end){end = _end; }
   void setStart(int _start){start = _start; }
 
-  int getNumTreeAvailable(string filename); 
+  int getNumTreeAvailable(std::string filename); 
 
   static double relativeWeight;
 
 private: 
-  void fillTaxaInfo(string fileName); 
-  bool fileIsCorrect(string fileName);   
+  void fillTaxaInfo(std::string fileName); 
+  bool fileIsCorrect(std::string fileName);   
   void nextTree(FILE *fh);
   void initializeTreeOnly(int numTax); 
 
   TreeAln *traln;
-  vector<string> fns; 
-  vector<string>  taxa; 
+  std::vector<std::string> fns; 
+  std::vector<std::string>  taxa; 
   int start; 
   int end; 
   

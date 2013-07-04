@@ -18,29 +18,29 @@ int main(int argc, char** argv)
 {
   if(argc < 4)
     {
-      cout << "Usage: " << argv[0] << " start end [file ...]  " << endl << endl
-	   << "where  " << endl
-	   << "start\t is first tree to include (potentially skipping a burnin) " << endl
-	   << "end\t is the last generation to include (file may be truncated)" << endl
-	   << "[file ...]\t are various ExaBayes_topology* files. " << endl; 
+      std::cout << "Usage: " << argv[0] << " start end [file ...]  " << std::endl << std::endl
+	   << "where  " << std::endl
+	   << "start\t is first tree to include (potentially skipping a burnin) " << std::endl
+	   << "end\t is the last generation to include (file may be truncated)" << std::endl
+	   << "[file ...]\t are various ExaBayes_topology* files. " << std::endl; 
       exit(0); 
     }
 
   int start = atoi(argv[1]); 
   int end = atoi(argv[2]); 
 
-  vector<string> tmp;
+  std::vector<std::string> tmp;
   for(int i = 3 ; i < argc; ++i)  
     {
       // check if the file exists 
       FILE *fh = fopen(argv[i],"r"); 
       if(fh == NULL)
 	{
-	  cerr << "could not find file >" << argv[i] << "<"<< endl; 
+	  std::cerr << "could not find file >" << argv[i] << "<"<< std::endl; 
 	  exit(0); 
 	}
-
-      tmp.push_back(string(argv[i]));
+      
+      tmp.push_back(std::string(argv[i]));
     }
 
   AvgSplitFreqAssessor asdsf(tmp); 
@@ -53,8 +53,8 @@ int main(int argc, char** argv)
 
   double ignoreFreq = 0.1; 
   
-  cout << "average deviation of split frequencies: " << asdsf.computeAsdsf(ignoreFreq) * 100  << "%" << endl; 
-  cout << "ignored splits that did not occur more than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << endl; 
+  std::cout << "average deviation of split frequencies: " << asdsf.computeAsdsf(ignoreFreq) * 100  << "%" << std::endl; 
+  std::cout << "ignored splits that did not occur more than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << std::endl; 
   return 0; 
 }
 

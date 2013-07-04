@@ -14,7 +14,7 @@ PriorBelief::PriorBelief()
 }
 
 
-void PriorBelief::initialize(const TreeAln &traln, vector<RandomVariable*> variables)
+void PriorBelief::initialize(const TreeAln &traln, std::vector<RandomVariable*> variables)
 {
   lnPrior = scoreEverything(traln, variables); 
   lnPriorRatio = 0; 
@@ -22,7 +22,7 @@ void PriorBelief::initialize(const TreeAln &traln, vector<RandomVariable*> varia
 }
 
 
-void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double> &oldFc, const vector<double> &newFcs, const vector<shared_ptr<AbstractPrior> > &blPriors)  
+void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, const std::vector<std::shared_ptr<AbstractPrior> > &blPriors)  
 {
   assert(wasInitialized); 
   assert(blPriors.size() == 1  &&  dynamic_cast<ExponentialPrior*>(blPriors[0].get()) != nullptr) ; 
@@ -39,7 +39,7 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double
   assert(oldFc.size() == 1 && newFcs.size() == 1 );  
 
   double blInfluence = 0; 
-  vector<Branch> branches = traln.extractBranches() ;  
+  std::vector<Branch> branches = traln.extractBranches() ;  
   for(auto &b : branches)
     blInfluence += log(b.getLength()); 
 
@@ -47,7 +47,7 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const vector<double
 }
 
 
-double PriorBelief::scoreEverything(const TreeAln &traln, vector<RandomVariable*> variables) const 
+double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<RandomVariable*> variables) const 
 {
   double result = 0; 
 
@@ -65,7 +65,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, vector<RandomVariable*
 	case Category::BRANCH_LENGTHS: 
 	  {
 	    assert(traln.getNumBranches() == 1); 
-	    vector<Branch> bs = traln.extractBranches(); 
+	    std::vector<Branch> bs = traln.extractBranches(); 
 	    auto pr = v->getPrior();	    
 	    for(auto b : bs)
 	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln)} );
@@ -103,19 +103,19 @@ double PriorBelief::scoreEverything(const TreeAln &traln, vector<RandomVariable*
 } 
 
 
-void PriorBelief::verifyPrior(const TreeAln &traln, vector<RandomVariable*> variables) const 
+void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<RandomVariable*> variables) const 
 {
   assert(lnPriorRatio == 0); 
   double verified = scoreEverything(traln, variables); 
   if ( fabs(verified -  lnPrior ) >= ACCEPTED_LNPR_EPS)
     {
-      cerr << setprecision(10) << "ln prior was " << lnPrior << " while it should be " << verified << endl; 
+      std::cerr << std::setprecision(10) << "ln prior was " << lnPrior << " while it should be " << verified << std::endl; 
       assert(fabs(verified -  lnPrior ) < ACCEPTED_LNPR_EPS); 
     }
 }
 
 
-void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, shared_ptr<AbstractPrior> brPr) 
+void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, std::shared_ptr<AbstractPrior> brPr) 
 {
   assert(wasInitialized); 
   if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 

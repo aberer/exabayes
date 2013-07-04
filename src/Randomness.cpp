@@ -200,7 +200,7 @@ int Randomness::drawSampleProportionally( double *weights, int numWeight )
 
 
 //This function should be called if the alphas for the dirichlet distribution are given
-void Randomness::drawRandDirichlet( vector<double> &results, const vector<double> &alphas)
+void Randomness::drawRandDirichlet( std::vector<double> &results, const std::vector<double> &alphas)
 {
   double sum=0;
   results.resize(alphas.size()); 
@@ -216,9 +216,9 @@ void Randomness::drawRandDirichlet( vector<double> &results, const vector<double
 
 
 //This function should be called if the expected values for the dirichlet distribution are given
-void Randomness::drawDirichletExpected(vector<double> &results, const vector<double> &mean,double scale)
+void Randomness::drawDirichletExpected(std::vector<double> &results, const std::vector<double> &mean,double scale)
 {
-  vector<double> alphas; 
+  std::vector<double> alphas; 
   double originalSum=0;
 
   for(nat i=0; i< mean.size();i++)
@@ -392,7 +392,7 @@ double Randomness::drawRandGamma(double alpha, double beta)
 
 
 
-ostream& operator<<(ostream& out, const Randomness &rhs)
+std::ostream& operator<<(std::ostream& out, const Randomness &rhs)
 {
   out << "key={" << rhs.key.v[0] << "," << rhs.key.v[1] << "},ctr={" << rhs.ctr.v[0] << ","<< rhs.ctr.v[1] << "}"; 
   return out; 

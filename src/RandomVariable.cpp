@@ -2,7 +2,7 @@
 
 
 
-ostream& operator<<(ostream &out, const RandomVariable& rhs)
+std::ostream& operator<<(std::ostream &out, const RandomVariable& rhs)
 {
   out << CategoryFuns::getShortName(rhs.cat); 
 
@@ -21,7 +21,7 @@ ostream& operator<<(ostream &out, const RandomVariable& rhs)
 }
 
 
-ostream&  RandomVariable::printShort(ostream& out)
+std::ostream&  RandomVariable::printShort(std::ostream& out)
 {
   out << CategoryFuns::getShortName(cat) << "{" ; 
   bool isFirst= true; 

@@ -7,7 +7,7 @@
 class  InsertionScore
 {
 public: 
-  InsertionScore(Branch _b, vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
+  InsertionScore(Branch _b, std::vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
   Branch getBranch() const  {return b; }
 
   double getWeight() const {return  logProb; }
@@ -26,10 +26,10 @@ public:
 
 private: 
   Branch b; 
-  vector<nat> partitionParsimony; 
+  std::vector<nat> partitionParsimony; 
   double logProb;
 
-  friend ostream& operator<< (ostream &out, const InsertionScore &rhs) { 
+  friend std::ostream& operator<< (std::ostream &out, const InsertionScore &rhs) { 
     out <<  "(" << rhs.b << "=" ; 
     for(auto elem : rhs.partitionParsimony)
       out << elem << "," ; 

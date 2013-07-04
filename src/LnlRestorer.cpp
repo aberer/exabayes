@@ -17,7 +17,7 @@ LnlRestorer::LnlRestorer(TreeAln& traln)
   , numTax(traln.getTr()->mxtips)
   , wasSwitched( 2 * traln.getTr()->mxtips, false)
   , orientation( traln.getTr()->mxtips, 0)
-  , partitionScaler(numPart, vector<nat> (2 * traln.getTr()->mxtips, 0) )
+  , partitionScaler(numPart, std::vector<nat> (2 * traln.getTr()->mxtips, 0) )
 {
   tree *tr = traln.getTr(); 
 
@@ -25,7 +25,7 @@ LnlRestorer::LnlRestorer(TreeAln& traln)
   // partitionScaler = (nat**)exa_calloc(numPart, sizeof(nat*)); 
   // partitionScaler()
   
-  partitionLnl = vector<double>( numPart);
+  partitionLnl = std::vector<double>( numPart);
   
   for(int i = 0; i < numPart; ++i)
     {
@@ -137,7 +137,7 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 #endif
 	  if(not b )
 	    return; 
-	  swap(a,b); 	  
+	  std::swap(a,b); 	  
 	}
 #ifdef DEBUG_ARRAY_SWAP
       cout << endl; 
@@ -155,7 +155,7 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 #endif
       if(not b )
 	return; 
-      swap(a,b );     
+      std::swap(a,b );     
     }
 }
 

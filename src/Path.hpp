@@ -60,14 +60,14 @@ public:
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
   void printWithBLs(TreeAln &traln ) const; 
 
-  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, shared_ptr<AbstractPrior> prBr) const; 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, std::shared_ptr<AbstractPrior> prBr) const; 
 
   void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
 
-  friend ostream& operator<<(ostream &out, const Path &rhs)  ;
+  friend std::ostream& operator<<(std::ostream &out, const Path &rhs)  ;
 
 private: 
-  vector<Branch> stack; 
+  std::vector<Branch> stack; 
 
   bool findPathHelper(const TreeAln &traln, nodeptr p, const Branch &target);
 

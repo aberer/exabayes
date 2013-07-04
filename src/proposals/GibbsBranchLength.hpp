@@ -5,7 +5,7 @@
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
-  GibbsBranchLength(shared_ptr<LikelihoodEvaluator> _eval)
+  GibbsBranchLength(std::shared_ptr<LikelihoodEvaluator> _eval)
     : BranchLengthMultiplier(0)
     , eval(_eval)
   {
@@ -35,6 +35,6 @@ public:
   virtual AbstractProposal* clone() const  { return new GibbsBranchLength(*this); }  
   
 private: 
-  shared_ptr<LikelihoodEvaluator> eval; 
+  std::shared_ptr<LikelihoodEvaluator> eval; 
 
 }; 

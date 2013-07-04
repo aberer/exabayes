@@ -47,7 +47,7 @@ void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double
   
   // since rand is an argument, we easily can draw random numbers:
   double r =  rand.drawRandDouble01();
-  cout << "the value was "<<  r << endl; 
+  std::cout << "the value was "<<  r << std::endl; 
 
 
   // maybe we need our private method as a helper
@@ -121,5 +121,5 @@ AbstractProposal* MyTemplateProposal::clone() const
 
 void MyTemplateProposal::privateMethod(TreeAln& traln, Randomness &rand)
 {
-  cout << "i am modifying the tree is some manner" << endl; 
+  std::cout << "i am modifying the tree is some manner" << std::endl; 
 }

@@ -21,6 +21,6 @@ private:
   
   void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 
 
-  vector<Branch> storedBranches; 
+  std::vector<Branch> storedBranches; 
 
 } ; 

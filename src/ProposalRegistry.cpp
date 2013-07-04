@@ -5,8 +5,6 @@
 #include <memory>
 
 
-using namespace std; 
-
 const double ProposalRegistry::initBranchLengthMultiplier = 1.386294; 
 const double ProposalRegistry::initRateSlidingWindow = 0.15 ;
 const double ProposalRegistry::initFrequencySlidingWindow = 0.2 ; 

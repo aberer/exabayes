@@ -5,8 +5,6 @@
 #include <iomanip>
 #include <list>
 
-using namespace std; 
-
 
 #define SIZE_OF_LAST 100 
 
@@ -27,11 +25,11 @@ public:
   void nextBatch(); 
   int getBatch(){return batch; }
 
-  friend ostream& operator<<(ostream& rhs, const SuccessCounter &b ); 
+  friend std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &b ); 
 
 private:   
-  list<bool> lastX ; 		// last x events. Only for debug, no functionality in tuning 
-
+  std::list<bool> lastX ; 		// last x events. Only for debug, no functionality in tuning 
+  
   int globalAcc; 
   int globalRej; 
   
@@ -44,9 +42,9 @@ private:
 }; 
 
 
-inline ostream& operator<<(ostream& rhs, const SuccessCounter &sctr)
+inline std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &sctr)
 {  
-  return  rhs <<  setprecision(1) <<  fixed << sctr.globalAcc  << "/" << sctr.globalRej << " (" <<  sctr.getRatioInLast100() * 100 << "%/"  << sctr.getRatioOverall() *  100    << "%)" ;  
+  return  rhs <<  std::setprecision(1) <<  std::fixed << sctr.globalAcc  << "/" << sctr.globalRej << " (" <<  sctr.getRatioInLast100() * 100 << "%/"  << sctr.getRatioOverall() *  100    << "%)" ;  
 }
 
 #endif

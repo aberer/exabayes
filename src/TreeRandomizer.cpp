@@ -15,7 +15,7 @@ TreeRandomizer::TreeRandomizer(randCtr_t seed)
 void TreeRandomizer::createParsimonyTree(TreeAln &traln)
 {
   nat r = rand();  
-  cout << r << endl; 
+  std::cout << r << std::endl; 
   traln.getTr()->randomNumberSeed = rand();
 
 #if HAVE_PLL != 0

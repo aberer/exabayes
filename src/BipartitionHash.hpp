@@ -30,8 +30,8 @@ private:
   nat numSlots; 
   nat vectorLength; 
   nat numTax; 
-  vector<nat> randomHash; 
-  vector<string> taxonNames; 
+  std::vector<nat> randomHash; 
+  std::vector<std::string> taxonNames; 
   
 }; 
 

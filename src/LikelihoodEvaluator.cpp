@@ -3,7 +3,7 @@
 #include "LnlRestorer.hpp"
 
 
-LikelihoodEvaluator::LikelihoodEvaluator(shared_ptr<LnlRestorer> _restorer)
+LikelihoodEvaluator::LikelihoodEvaluator(std::shared_ptr<LnlRestorer> _restorer)
   : restorer(_restorer)
 {
 }
@@ -141,7 +141,7 @@ void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) 
 	  if(q->x && q->back->x && not root.equalsUndirected(newRoot))
 	    {
 	      if(root.getPrimNode() != 0 )
-		cout << "root already taken! " << root << " now at " << newRoot << endl; 
+		std::cout << "root already taken! " << root << " now at " << newRoot << std::endl; 
 	      assert(root.getPrimNode( )== 0 ) ;
 	      root = newRoot; 
 	    }
@@ -158,7 +158,7 @@ void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) 
 	{
 	  if(root.getPrimNode() != 0)
 	    {	      
-	      cout << "previous root was " << root << " now at " << Branch(p->number , p->back->number)  << endl; 	      
+	      std::cout << "previous root was " << root << " now at " << Branch(p->number , p->back->number)  << std::endl; 	      
 	    }
 	  assert(root.getPrimNode() == 0); 
 	  root = Branch(p->number, p->back->number); 
@@ -173,7 +173,7 @@ void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) 
 
 
 
-double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat>& partitions)    
+double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)    
 {
   Branch root; 
   findVirtualRoot(traln,root); 
@@ -181,7 +181,7 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const vector<nat
   auto tr = traln.getTr(); 
   nat numPart = traln.getNumberOfPartitions(); 
 
-  vector<double> perPartitionLH; 
+  std::vector<double> perPartitionLH; 
   for(nat i = 0; i < numPart; ++i )
     perPartitionLH.push_back(traln.accessPartitionLH(i));
   

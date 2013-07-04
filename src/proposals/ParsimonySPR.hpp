@@ -23,8 +23,8 @@
 #include "SprMove.hpp"
 #include "ParsimonyEvaluator.hpp"
 
-typedef unordered_map<Branch, double, BranchHashNoLength, BranchEqualNoLength> weightMap; 
-typedef unordered_map<Branch,vector<nat>, BranchHashNoLength, BranchEqualNoLength> scoreMap; 
+typedef std::unordered_map<Branch, double, BranchHashNoLength, BranchEqualNoLength> weightMap; 
+typedef std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength> scoreMap; 
 
 class ParsimonySPR : public AbstractProposal
 {
@@ -46,7 +46,7 @@ protected:
   weightMap getWeights(const TreeAln& traln, const scoreMap &insertions) const; 
   void determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
   void traverse(const TreeAln &traln, nodeptr p, int distance ); 
-  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, unordered_map<Branch,vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses); 
+  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses); 
   
   SprMove move; 
   ParsimonyEvaluator pEval;   

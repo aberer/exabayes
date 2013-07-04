@@ -42,13 +42,13 @@ private:
   int numPart; 
   int numTax; 
 
-  vector<double> partitionLnl; 
+  std::vector<double> partitionLnl; 
 
   int modelEvaluated; 
   double ***reserveArrays; 
-  vector<bool> wasSwitched; 
-  vector<nat> orientation; 
-  vector<vector<nat>> partitionScaler;   
+  std::vector<bool> wasSwitched; 
+  std::vector<nat> orientation; 
+  std::vector<std::vector<nat>> partitionScaler;   
   double prevLnl; 		// for DEBUG
 
 }; 

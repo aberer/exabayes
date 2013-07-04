@@ -72,10 +72,10 @@ void NniMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 
 
 
-void NniMove::extractMoveInfo(const TreeAln &traln, vector<Branch> description) 
+void NniMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) 
 {
   assert(description.size() == 2 ) ; 
-  pair<int,int>  _switching = { description.at(0).findNodePtr(traln)->next->back->number , description.at(1).findNodePtr(traln)->number}; 
+  std::pair<int,int>  _switching = { description.at(0).findNodePtr(traln)->next->back->number , description.at(1).findNodePtr(traln)->number}; 
   Branch _innerBranch = description.at(0); 
 
   outerBranches.clear(); 
@@ -104,7 +104,7 @@ void NniMove::extractMoveInfo(const TreeAln &traln, vector<Branch> description)
     }
 } 
 
-void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, vector<shared_ptr<AbstractPrior> > brPr) const 
+void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPr) const 
 {
   multiplyBranch(innerBranch, traln, hastings, prior, rand, multiplier,brPr, "someNNI"); 
   for(auto &v : outerBranches)
@@ -112,7 +112,7 @@ void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hasting
 } 
 
 
-void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , vector<shared_ptr<AbstractPrior> > priors, string name) const 
+void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , std::vector<std::shared_ptr<AbstractPrior> > priors, std::string name) const 
 {
   nodeptr p = branch.findNodePtr(traln); 
 

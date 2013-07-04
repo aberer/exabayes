@@ -8,9 +8,6 @@
 
 #include "axml.h" 
 
-using namespace std; 
-
-
 
 /**
    @brief the estimated potential scale rate reduction, as described by Yang.  
@@ -76,7 +73,7 @@ double getPrsfForParameter(int paramNum, int numChain, int numGen, double ***mat
    @param result -- a matrix of parameter values  mChains x parameter x nGen
    
  */ 
-void parseFiles(int nGens, int mChains, int numParam, string runId, double ****resultPtr, char ***paramNamesPtr)
+void parseFiles(int nGens, int mChains, int numParam, std::string runId, double ****resultPtr, char ***paramNamesPtr)
 {
   (*resultPtr) = (double***)exa_calloc(mChains, sizeof(double**)); 
   *paramNamesPtr = (char**)exa_calloc(numParam, sizeof(char*)); 
@@ -326,7 +323,7 @@ void printPRSF(char *runId )
 
   parseFiles(numGen,numChain, numParam, runId,&matrix, &names);
 
-  tout << "PRSF by component: "  << endl;   
+  tout << "PRSF by component: "  << std::endl;   
   int window = 10; 
   for(int iter = 0 ; iter < numParam / window; ++iter)
     {
@@ -339,7 +336,7 @@ void printPRSF(char *runId )
 	  double localPrsf = getPrsfForParameter(i, numChain, numGen, matrix); 
 	  tout << std::setprecision(3) << localPrsf << "\t\t"; 
 	}	    
-      tout << endl << endl; 
+      tout << std::endl << std::endl; 
     }
 
   freeMatrix(numChain, numParam, matrix);

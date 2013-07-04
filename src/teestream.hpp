@@ -5,13 +5,12 @@
 
 #include <iostream>
 
-using namespace std; 
 
 class teestream : public std::ostream
 {
 public:   
-  teestream(ostream &o1, ostream &o2)
-    : ostream(&tbuf)
+  teestream(std::ostream &o1, std::ostream &o2)
+    : std::ostream(&tbuf)
     ,tbuf(o1.rdbuf(), o2.rdbuf())
   {}
   

@@ -6,8 +6,8 @@
 class BranchLengthsParameter : public AbstractParameter 
 {
 public: 
-  virtual void applyParameter(TreeAln& traln, vector<nat> model, ParameterContent &content) const; 
-  virtual ParameterContent extractParameter(const TreeAln &traln, vector<nat> model)  const;   
+  virtual void applyParameter(TreeAln& traln, std::vector<nat> model, ParameterContent &content) const; 
+  virtual ParameterContent extractParameter(const TreeAln &traln, std::vector<nat> model)  const;   
 }; 
 
 

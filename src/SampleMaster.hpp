@@ -21,8 +21,6 @@
 #include "ParallelSetup.hpp"
 #include "time.hpp"
 
-using namespace std; 
-
 
 class SampleMaster
 {

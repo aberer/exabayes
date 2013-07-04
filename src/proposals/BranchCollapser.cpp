@@ -23,7 +23,7 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
   if(traln.isCollapsed(b))
     {    
 
-      vector<double> zNews ; 
+      std::vector<double> zNews ; 
 #if 0 
 #if TODO
       zNews=  prior.drawFromPriorByCategory(BRANCH_LENGTHS, rand);
@@ -45,7 +45,7 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
   else
     {      
       double realZ = b.getInterpretedLength(traln); 
-      vector<double> tmp = {realZ}; 
+      std::vector<double> tmp = {realZ}; 
 #if TODO 
       updateHastings(hastings, exp(brPr->getLogProb(tmp)) , "branchCollapser") ;
 #endif

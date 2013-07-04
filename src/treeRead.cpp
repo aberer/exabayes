@@ -151,7 +151,7 @@ static int treeGetCh (FILE *fp)         /* get next nonblank, noncomment charact
 
 
 
-static boolean treeNeedCh (FILE *fp, int c1, string where)
+static boolean treeNeedCh (FILE *fp, int c1, std::string where)
 {
   int  c2;
   

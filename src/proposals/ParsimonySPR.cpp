@@ -19,7 +19,7 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
 }
 
 
-void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, unordered_map<Branch,vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses)
+void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses)
 {
   nodeptr insertBack =  insertPos->back;   
   traln.clipNodeDefault(insertPos, prunedTree->next);
@@ -27,7 +27,7 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
 
   Branch b(insertPos->number, insertBack->number); 
 
-  vector<nat> partitionParsimony ; 
+  std::vector<nat> partitionParsimony ; 
   pEval.evaluateSubtree(traln,  prunedTree); 
   pEval.evaluateSubtree(traln,  prunedTree->back); // necessary? 
   pEval.evaluate(traln, prunedTree, false, partitionParsimony); 
@@ -80,7 +80,7 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
 weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &insertions) const
 {
   weightMap result; 
-  double minWeight = numeric_limits<double>::max(); 
+  double minWeight = std::numeric_limits<double>::max(); 
 
   for(auto &elem : insertions)
     {
@@ -116,11 +116,11 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
 
 void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
 {
-  vector<Branch> branches = traln.extractBranches(); 
+  std::vector<Branch> branches = traln.extractBranches(); 
 
   scoreMap possibilities; 
 
-  vector<nat> partitionParsimony; 
+  std::vector<nat> partitionParsimony; 
   pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony);
 
   // BAD 
@@ -161,7 +161,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   auto weightedInsertions = getWeights(traln, possibilities) ; 
 
   double r = rand.drawRandDouble01(); 
-  pair<Branch,double> chosen; 
+  std::pair<Branch,double> chosen; 
   for(auto v : weightedInsertions)
     {
       if(r < v.second)
@@ -231,10 +231,10 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
 void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
 {
-  cout <<  "[" << distance << "] "; 
+  std::cout <<  "[" << distance << "] "; 
   for(int i = 0; i < distance; ++i)
-    cout << " " ; 
-  cout << p->number << endl; 
+    std::cout << " " ; 
+  std::cout << p->number << std::endl; 
   if(not traln.isTipNode(p) )
     {
       traverse(traln, p->next->back, distance+1); 
