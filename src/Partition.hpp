@@ -16,7 +16,7 @@ public:
     for(int i = 0; i < partition->states; ++i)
       stateFreqs.push_back(partition->frequencies[i]);     
 
-    for(int i = 0; i < numStateToNumInTriangleMatrix(partition->states); ++i)
+    for(nat i = 0; i < numStateToNumInTriangleMatrix(partition->states); ++i)
       revMat.push_back(partition->substRates[i]); 
   }
 

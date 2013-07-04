@@ -14,11 +14,7 @@ using namespace std;
 
 #include "TreePrinter.hpp"
 
-
-static int numStateToNumInTriangleMatrix(int numStates) 
-{  
-  return (  numStates * numStates - numStates) / 2 ; 
-}
+nat numStateToNumInTriangleMatrix(int numStates) ; 
 
 class LnlRestorer; 
 class Partition; 
@@ -31,11 +27,14 @@ class TreeAln
 {
 
 public: 
+  // LIFE CYCLE 
   TreeAln();
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
   TreeAln(const TreeAln &tmp) = delete ; 
+
   
+
   void initRevMat(int model); 
   void unlinkTree();
   nodeptr getUnhookedNode(int number);
@@ -45,26 +44,10 @@ public:
   
   void enableParsimony();
 
-  // BEGIN collapse test 
-  void collapseBranch(Branch b); 
-  bool isCollapsed(Branch b) ; 
-  void setBranchLengthUnsafe(Branch b ) ; 
-  // END
-
   nat getNumberOfTaxa() const {return getTr()->mxtips; }
   nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
 
-
-  nodeptr getNode(nat elem) const 
-  {
-    if( not (elem != 0 && elem < getNumberOfNodes() + 2 ))
-      { 
-	cout << "bug: attempted to get node " << elem << endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;
-      } 
-
-    return  getTr()->nodep[elem] ; 
-  }
-
+  nodeptr getNode(nat elem) const ; 
 
   /** 
       @brief clips two nodes together. Notice that z is a reference to
@@ -169,6 +152,17 @@ private:
   void initializeTreePLL(string byteFileName);
   void initializePartitionsPLL(string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
+
+
+
+
+  // EXPERIMENTAL
+public: 
+  // BEGIN collapse test 
+  void collapseBranch(Branch b); 
+  bool isCollapsed(Branch b) ; 
+  void setBranchLengthUnsafe(Branch b ) ; 
+  // END
 
 };  
 

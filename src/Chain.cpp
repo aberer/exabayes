@@ -108,7 +108,7 @@ void Chain::resume()
     {
       cerr << "While trying to resume chain: previous chain liklihood larger than " <<
 	"evaluated likelihood. This is a programming error." << endl; 
-      
+      assert(0);       
     }  
 
   auto vs = extractVariables(); 
@@ -371,7 +371,7 @@ void Chain::suspend()
       partInfo.setAlpha( partitionTr->alpha) ; 
 
       vector<double> tmp; 
-      for(int i = 0; i < numStateToNumInTriangleMatrix(partitionTr->states); ++i)
+      for(nat i = 0; i < numStateToNumInTriangleMatrix(partitionTr->states); ++i)
 	tmp.push_back(partitionTr->substRates[i]); 
       partInfo.setRevMat(tmp); 
       tmp.clear(); 

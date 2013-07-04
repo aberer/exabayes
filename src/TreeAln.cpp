@@ -352,7 +352,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       for(int j = 0; j < partitionRhs->states; ++j )
 	partitionLhs->frequencies[j] = partitionRhs->frequencies[j]; 
       
-      for(int j = 0 ; j < numStateToNumInTriangleMatrix(partitionRhs->states); ++j)
+      for(nat j = 0 ; j < numStateToNumInTriangleMatrix(partitionRhs->states); ++j)
 	partitionLhs->substRates[j] = partitionRhs->substRates[j]; 
 
       partitionLhs->alpha = partitionRhs->alpha; 
@@ -785,7 +785,7 @@ vector<double> TreeAln::getRevMat(int model) const
   vector<double> result; 
   pInfo *partition = getPartition(model); 
   double sum = 0; 
-  for(int i =0 ; i < numStateToNumInTriangleMatrix(partition->states); ++i)
+  for(nat i =0 ; i < numStateToNumInTriangleMatrix(partition->states); ++i)
     {
       result.push_back(partition->substRates[i]);
       sum += result[i]; 
@@ -961,4 +961,22 @@ Branch TreeAln::drawBranchUniform_helper(Randomness &rand, nat curNumTax) const
     }
 
   return Branch(thisNode, thatNode); 
+}
+
+nat numStateToNumInTriangleMatrix(int numStates)  
+{  
+  return (  numStates * numStates - numStates) / 2 ; 
+}
+
+
+
+
+nodeptr TreeAln::getNode(nat elem) const  
+{
+  if( not (elem != 0 && elem < getNumberOfNodes() + 2 ))
+    { 
+      cout << "bug: attempted to get node " << elem << endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;
+    } 
+
+  return  getTr()->nodep[elem] ; 
 }
