@@ -4,20 +4,14 @@
 void RevMatParameter::applyParameter(TreeAln& traln, std::vector<nat> model, ParameterContent &content) const
 {
   for(auto &m : model)
-    {
-      pInfo *partition = traln.getPartition(m);
-      assert(content.values.size() == numStateToNumInTriangleMatrix(partition->states)); 
-
-      for(nat i = 0; i < numStateToNumInTriangleMatrix(partition->states); ++i)
-	{
-	  // partition->substRates
-	}
-    }  
+    traln.setRevMat(content.values, m);
 } 
 
 
 ParameterContent RevMatParameter::extractParameter(const TreeAln &traln, std::vector<nat> model)  const
 {
-  return ParameterContent();
+  ParameterContent result; 
+  result.values = traln.getRevMat(model[0]); 
+  return result; 
 }   
 

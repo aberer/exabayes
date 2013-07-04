@@ -20,7 +20,6 @@ TreeAln::TreeAln()
 }
 
 
-
 TreeAln::~TreeAln()
 {  
   // this is slightly crazy, but we'll have to do the cleanup
@@ -538,47 +537,6 @@ void TreeAln::setAlpha(double alpha,  int model)
   p->alpha = alpha; 
   discretizeGamma(model); 
 }
-
-
-/** 
-    @brief save setting method for a branch length
-
-    @param newValue -- INTERNAL branch length
- */  
-// void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
-// {
-// #if TODO 
-//   double oldZ = p->z[model] ; 
-// #endif
-//   if(newValue < BoundsChecker::zMin)
-//     newValue = BoundsChecker::zMin; 
-//   if (BoundsChecker::zMax < newValue)
-//     newValue = BoundsChecker::zMax; 
-
-// #if TODO 
-//   if(newValue != oldZ)
-//     treeLength *= newValue / oldZ ; 
-// #endif
-  
-//   p->z[model] = p->back->z[model] = newValue; 
-// }
-
-
-/** 
-    @brief save setting method for an alpha value 
-    @return newValue after check 
-    
- */  
-// void TreeAln::setAlphaBounded(double &newValue, int model)
-// {
-//   if(newValue < BoundsChecker::alphaMin)
-//     newValue = BoundsChecker::alphaMin; 
-//   if(BoundsChecker::alphaMax < newValue )
-//     newValue = BoundsChecker::alphaMax; 
-  
-//   pInfo *partition = getPartition(model);
-//   partition->alpha =  newValue; 
-// }
 
 
 /**

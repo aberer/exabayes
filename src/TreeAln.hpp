@@ -42,20 +42,6 @@ public:
   int getNumberOfPartitions() const;   
   nat getNumberOfTaxa() const {return getTr()->mxtips; }
   nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
-
-  
-
-  ///////////////
-  // MODIFIERS //
-  ///////////////
-  void setFrequencies(const std::vector<double> &values, int model);
-  void setRevMat(const std::vector<double> &values, int model);
-  void setAlpha(double alpha,  int model);   
-  void setBranch(const Branch& b);   
-
-   
-
-  /** @notice returns the revmat, s.t. rates sum up to 1 */ 
   std::vector<double> getRevMat(int model) const ;   
   std::vector<double> getFrequencies(int model) const; 
   double getAlpha(int model) const {pInfo *partition = getPartition(model) ; return partition->alpha; } 
@@ -64,32 +50,26 @@ public:
   nodeptr getNode(nat elem) const ; 
   std::vector<Branch> extractBranches() const ; 
   double getTreeLengthExpensive() const;
+  
 
+  ///////////////
+  // MODIFIERS //
+  ///////////////
 #if HAVE_PLL != 0 
   void setPartitionList(partitionList *pl) { partitions = *pl; }
   partitionList* getPartitionsPtr()  { return &partitions; }   
 #endif  
-
-
-  // MODIFIERS 
+  void setFrequencies(const std::vector<double> &values, int model);
+  void setRevMat(const std::vector<double> &values, int model);
+  void setAlpha(double alpha,  int model);   
+  void setBranch(const Branch& b);   
   void clipNode(nodeptr p, nodeptr q, double z);   
   void clipNodeDefault(nodeptr p, nodeptr q); 
   void enableParsimony();
   void unlinkTree();
   void initializeFromByteFile(std::string  byteFileName);   
 
-  // TODO private 
-  void initRevMat(int model); 
-  void discretizeGamma(int model); 
-
-  nodeptr getUnhookedNode(int number);
-
-  // TODO 
-  // void setFrequenciesBounded(std::vector<double> &newValues, int model ); 
-  // void setRevMatBounded(std::vector<doub2le> &newValues, int model); 
-  // void setBranchLengthBounded(double &newValue, int model, nodeptr p); 
-  // void setAlphaBounded(double &newValue, int model); 
-
+  nodeptr getUnhookedNode(int number); // TODO remove later 
 
   ///////////////
   // observers //
@@ -111,6 +91,8 @@ private: 			// METHODS
   double getTreeLengthHelper(nodeptr p) const;
   void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const ; 
   void initDefault();
+  void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
+  void discretizeGamma(int model); 
 
 
 

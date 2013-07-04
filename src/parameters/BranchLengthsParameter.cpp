@@ -9,11 +9,6 @@ void BranchLengthsParameter::applyParameter(TreeAln& traln, std::vector<nat> mod
 
 ParameterContent BranchLengthsParameter::extractParameter(const TreeAln &traln, std::vector<nat> model)  const
 {
-  assert(0); 
-  // TODO assert 
-
-  // savedContent.branches.clear(); 
-  // savedContent.branches (traln.extractBranches()) ;
   ParameterContent result; 
   result.branches = traln.extractBranches(); 
   return result; 

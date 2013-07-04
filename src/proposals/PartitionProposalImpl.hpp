@@ -26,7 +26,7 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
   for(auto v : primVar[0]->getPartitions())
     {
       PARAM::setParameters(traln, v, proposedValues);  
-      PARAM::init(traln, v);  
+      // PARAM::init(traln, v);  
     }
 
   double newFracChange = traln.getTr()->fracchange;   
@@ -61,7 +61,7 @@ void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior
   for(auto elem : primVar[0]->getPartitions())
     {
       PARAM::setParameters(traln, elem, values);
-      PARAM::init(traln,elem);  
+      // PARAM::init(traln,elem);  
     }
 }
 
