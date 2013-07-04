@@ -1,15 +1,14 @@
-#include "RandomVariable.hpp"
+#include "AbstractParameter.hpp" 
+#include "Category.hpp"
 
 
-
-#if 0 
-std::ostream& operator<<(std::ostream &out, const RandomVariable& rhs)
+std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs)
 {
-  out << CategoryFuns::getShortName(rhs.cat); 
+  out << CategoryFuns::getShortName(rhs->cat); 
 
   bool  isFirst = true; 
   out << "{" ; 
-  for(auto v : rhs.partitions)
+  for(auto v : rhs->partitions)
     {
       if (not isFirst) 
 	out << "," ; 
@@ -17,12 +16,13 @@ std::ostream& operator<<(std::ostream &out, const RandomVariable& rhs)
 	isFirst = false; 
       out << v; 
     }
-  out << "} \twith prior " << rhs.getPrior();   
+  auto p = rhs->getPrior(); 
+  out << "} \twith prior " << p ; 
   return out;
 }
 
 
-std::ostream&  RandomVariable::printShort(std::ostream& out)
+std::ostream&  AbstractParameter::printShort(std::ostream& out)
 {
   out << CategoryFuns::getShortName(cat) << "{" ; 
   bool isFirst= true; 
@@ -37,6 +37,3 @@ std::ostream&  RandomVariable::printShort(std::ostream& out)
   out << "}";     
   return out; 
 }
-
-
-#endif

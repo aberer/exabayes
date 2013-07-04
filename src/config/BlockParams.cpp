@@ -16,13 +16,14 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   str = token.GetToken(false); 
 
   bool newLink = true; 
-  shared_ptr<RandomVariable> curVar; 
+  shared_ptr<AbstractParameter> curVar; 
   while(str.compare(")") != 0 )
     {
       int part = str.ConvertToInt() ; 
       if(newLink)
 	{
-	  curVar = make_shared<RandomVariable>(cat,idCtr); 
+	  curVar = CategoryFuns::getParameterFromCategory(cat, idCtr);
+	  idCtr++; 
 	  newLink = false; 
 	}
 
@@ -59,9 +60,9 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	 (   ( cat == Category::AA_MODEL && traln->getPartition(i)->dataType == AA_DATA ) 
 	     || (cat == Category::SUBSTITUTION_RATES && traln->getPartition(i)->dataType == DNA_DATA) 
 	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
-	{
-	  
-	  auto r = make_shared<RandomVariable>(cat, idCtr); 
+	{	  
+	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr); 
+	  ++idCtr; 
 	  r->addPartition(i);
 	  parameters.push_back(r); 
 	}

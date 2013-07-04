@@ -6,7 +6,7 @@
 #include <ncl/ncl.h>
 
 #include "GlobalVariables.hpp"
-#include "RandomVariable.hpp"
+#include "parameters/AbstractParameter.hpp" 
 #include "TreeAln.hpp"
 #include "Category.hpp"
 
@@ -19,12 +19,12 @@ public:
   }
 
   void setTree(shared_ptr<TreeAln> _traln){traln = _traln; }
-  vector<shared_ptr<RandomVariable> > getParameters() const{return parameters; }
+  vector<shared_ptr<AbstractParameter> > getParameters() const{return parameters; }
   virtual void Read(NxsToken &token); 
 
 private: 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
-  vector<shared_ptr<RandomVariable> > parameters; 
+  vector<shared_ptr<AbstractParameter> > parameters; 
   shared_ptr<TreeAln> traln; 
 }; 
 

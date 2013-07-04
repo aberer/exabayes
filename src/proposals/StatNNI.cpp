@@ -29,7 +29,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   
   move.extractMoveInfo(traln, {b, switchingBranch}); 
 
-  std::vector<std::shared_ptr<AbstractPrior> > priors; 
+  std::vector<AbstractPrior* > priors; 
   bool multiplyBranches = false; 
   for(auto &v : secVar)
     {

@@ -19,6 +19,7 @@
 #include "AbstractProposal.hpp"
 #include "GlobalVariables.hpp"
 #include "config/BlockProposalConfig.hpp"
+#include "ParameterProposal.hpp"
 
 class ProposalRegistry
 {

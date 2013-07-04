@@ -2,6 +2,15 @@
 #include <cassert>
 #include <algorithm>
 
+#include "parameters/AbstractParameter.hpp"
+#include "parameters/BranchLengthsParameter.hpp"
+#include "parameters/FrequencyParameter.hpp"
+#include "parameters/ParameterContent.hpp"
+#include "parameters/RateHetParameter.hpp"
+#include "parameters/RevMatParameter.hpp"
+#include "parameters/TopologyParameter.hpp"
+
+
 namespace CategoryFuns
 {
   std::string getLongName(Category cat)
@@ -112,4 +121,30 @@ namespace CategoryFuns
 	return Category::TOPOLOGY; 
       }
   }
+
+
+
+  std::shared_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id)
+  {
+    switch(cat)
+      {
+      case Category::TOPOLOGY :
+	return std::make_shared<TopologyParameter>(id);
+      case Category::BRANCH_LENGTHS:
+	return std::make_shared<BranchLengthsParameter>(id); 
+      case Category::FREQUENCIES :
+	return std::make_shared<FrequencyParameter>(id); 
+      case Category::SUBSTITUTION_RATES :
+	return std::make_shared<RevMatParameter>(id); 
+      case Category::RATE_HETEROGENEITY:
+	return std::make_shared<RateHetParameter>(id); 
+      case Category::AA_MODEL :
+      default : 
+	{
+	  assert(0); 
+	  return std::make_shared<TopologyParameter>(id);
+	}
+      }    
+  } 
+ 
 }

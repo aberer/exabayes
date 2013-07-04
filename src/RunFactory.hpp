@@ -21,22 +21,21 @@
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
 #include "RandomVariable.hpp"
+#include "parameters/AbstractParameter.hpp"
 
 
 class RunFactory
 {
-public: 
-  RunFactory(){}
- 
+public:  
   void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval);
-  vector<shared_ptr<RandomVariable> > getRandomVariables() const {return randomVariables; }
+  vector<shared_ptr<AbstractParameter> > getRandomVariables() const {return randomVariables; }
 
 private: 
-  vector<shared_ptr<RandomVariable> > randomVariables; 
+  vector<shared_ptr<AbstractParameter> > randomVariables; 
 
-  void addStandardParameters(vector<shared_ptr<RandomVariable> > &vars, const TreeAln &traln ); 
-  void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<shared_ptr<RandomVariable> > &variables); 
-  void addStandardPrior(RandomVariable* var, const TreeAln& traln ); 
+  void addStandardParameters(vector<shared_ptr<AbstractParameter> > &vars, const TreeAln &traln ); 
+  void addStandardPrior(AbstractParameter* var, const TreeAln& traln ); 
+  void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<shared_ptr<AbstractParameter> > &variables); 
 }; 
 
 #endif

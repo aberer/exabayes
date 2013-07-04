@@ -1,7 +1,7 @@
 #include "TopologyParameter.hpp"
 
 
-void TopologyParameter::applyParameter(TreeAln& traln, std::vector<nat> model, ParameterContent &content) const
+void TopologyParameter::applyParameter(TreeAln& traln , const ParameterContent &content) const
 {
   // this is not what we want! topology should be restored! 
   assert(0); 
@@ -10,9 +10,9 @@ void TopologyParameter::applyParameter(TreeAln& traln, std::vector<nat> model, P
 }
 
 
-ParameterContent TopologyParameter::extractParameter(const TreeAln &traln, std::vector<nat> model)  const
+ParameterContent TopologyParameter::extractParameter(const TreeAln &traln )  const
 {
-  assert(model.size() == 1 ); 
+  assert(partitions.size() == 1 ); 
 
   ParameterContent result; 
   result.branches = traln.extractBranches(); 

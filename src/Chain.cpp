@@ -126,7 +126,7 @@ void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl
   tout << "[run=" << runid << ",heat="
        << couplingId << ",gen="  << currentGeneration << "]\t" 
        << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t"
-       << setprecision(2) << fixed << lnl  << endl; //   
+       << std::setprecision(2) << std::fixed << lnl  << std::endl; //   
 #endif
 }
 
@@ -383,9 +383,9 @@ void Chain::suspend()
 }
 
 									   
-std::vector<RandomVariable*> Chain::extractVariables() const 
+std::vector<AbstractParameter*> Chain::extractVariables() const 
 {
-  std::unordered_set<RandomVariable*> result; 
+  std::unordered_set<AbstractParameter*> result; 
   for(auto &p : proposals)
     {
       for(auto &v : p->getPrimVar())
@@ -394,7 +394,7 @@ std::vector<RandomVariable*> Chain::extractVariables() const
 	result.insert(v); 
     }
   
-  std::vector<RandomVariable*> result2 ; 
+  std::vector<AbstractParameter*> result2 ; 
   for(auto v : result)
     result2.push_back(v); 
 

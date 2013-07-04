@@ -105,7 +105,7 @@ std::ostream& operator<<(std::ostream &out, const Path &rhs)
 
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, std::shared_ptr<AbstractPrior> brPr) const 
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, AbstractPrior* brPr) const 
 {  
   nodeptr p = b.findNodePtr(traln); 
   double multiplier = rand.drawMultiplier(parameter); 

@@ -1,16 +1,16 @@
 #include "RateHetParameter.hpp"
 
 
-void RateHetParameter::applyParameter(TreeAln& traln, std::vector<nat> model, ParameterContent &content) const
+void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
-  for(auto &m : model)
+  for(auto &m : partitions)
     traln.setAlpha(content.values[0], m); 
 }
  
 
-ParameterContent RateHetParameter::extractParameter(const TreeAln &traln, std::vector<nat> model)  const
+ParameterContent RateHetParameter::extractParameter(const TreeAln &traln )  const
 {
   ParameterContent result; 
-  result.values = {traln.getAlpha(model[0])} ;
+  result.values = {traln.getAlpha(partitions[0])} ;
   return result;  
 }   

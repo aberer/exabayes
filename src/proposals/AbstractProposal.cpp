@@ -1,18 +1,18 @@
 #include "AbstractProposal.hpp"
 
 
-std::vector<RandomVariable*> AbstractProposal::getPrimVar() const
+std::vector<AbstractParameter*> AbstractProposal::getPrimVar() const
 {
-  std::vector<RandomVariable*> result; 
+  std::vector<AbstractParameter*> result; 
   for(auto &v : primVar)
     result.push_back(v.get()); 
   return result; 
 }
 
  
-std::vector<RandomVariable*> AbstractProposal::getSecVar() const 
+std::vector<AbstractParameter*> AbstractProposal::getSecVar() const 
 {
-  std::vector<RandomVariable*> result; 
+  std::vector<AbstractParameter*> result; 
   for(auto &v : secVar)
     result.push_back(v.get()); 
   return result; 
@@ -35,4 +35,71 @@ void AbstractProposal::updateHastings(double &hastings, double valToAdd, std::st
   if(whoDoneIt.compare("branchCollapser") == 0)
     tout <<  " => " << hastings << endl; 
 #endif
+}
+
+
+std::ostream& AbstractProposal::printShort(std::ostream &out) 
+{
+  out << this->name << "( " ;  
+    
+  bool isFirst = true; 
+  for(auto &v : primVar)
+    {
+      if(not isFirst)
+	out << ","; 
+      else 
+	isFirst = false; 
+      v->printShort(out); 
+    }
+
+  if(secVar.size() > 0)
+    {
+      out << ";"; 
+      isFirst = true; 
+      for(auto &v : secVar)
+	{
+	  if(not isFirst)
+	    out << ","; 
+	  else 
+	    isFirst = false; 
+	  v->printShort(out); 
+	}
+    }
+  out << " )"; 
+  return out; 
+}
+
+
+
+std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
+{
+  out << name  << "(" ; 
+  assert(primVar.size() == 1); 
+  bool isFirst= true; 
+  for (auto v : primVar[0]->getPartitions()) 
+    {
+      if( not isFirst)
+	out << ","; 
+      else 
+	isFirst = false; 
+      out << v ; 
+    }
+  out << ")" ; 
+  return out; 
+}
+
+
+std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs) 
+{
+  out << rhs->name <<  " primarily modifying " ; 
+  for(auto &r : rhs->primVar)
+    out << r << ",\t"  ; 
+
+  if(not rhs->secVar.empty() )
+    {
+      out << "\tand also modifying " ; 
+      for(auto &r : rhs->secVar ) 
+	out << r << ",\t" ; 
+    }
+  return out; 
 }

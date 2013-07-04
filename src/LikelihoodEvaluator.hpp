@@ -29,7 +29,7 @@ public:
 #ifdef DEBUG_LNL_VERIFY
   // BAD
   void expensiveVerify(TreeAln &traln);
-  void setDebugTraln(shared_ptr<TreeAln> _debugTraln); 
+  void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
 #endif
 
 private: 			// METHODS
@@ -39,7 +39,7 @@ private: 			// METHODS
 private: 			// ATTRIBUTES
   std::shared_ptr<LnlRestorer> restorer;    
 #ifdef DEBUG_LNL_VERIFY
-  shared_ptr<TreeAln> debugTraln;  
+  std::shared_ptr<TreeAln> debugTraln;  
   bool verifyLnl; 
 #endif
 

@@ -27,7 +27,7 @@ public:
     traln.setBranch(b);    
 
     auto brPr = primVar[0]->getPrior();
-    prior.updateBranchLengthPrior(traln,initBl, newZ, brPr);
+    prior.updateBranchLengthPrior(traln,initBl, newZ, brPr); // 
   }
 
   virtual void autotune(){}

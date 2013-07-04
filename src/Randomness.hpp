@@ -47,11 +47,11 @@ public:
   double drawMultiplier(double multiplier); 
   double drawFromSlidingWindow(double param, double window); 
 
-  // branch drawSubtreeUniform(TreeAln &traln); 
-  // branch drawInnerBranchUniform(TreeAln &traln); 
-
   void drawPermutation( int* perm, int n); 
   int drawSampleProportionally( double *weights, int numWeight ); 
+
+  std::vector<double> drawRandDirichlet( const std::vector<double> &alphas); 
+  std::vector<double> drawDirichletExpected(const std::vector<double> &mean,double scale); 
 
   // Gamma(alpha, beta) sampling
   double drawRandGamma(double alpha, double beta); 

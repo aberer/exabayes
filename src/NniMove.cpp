@@ -104,7 +104,7 @@ void NniMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> descript
     }
 } 
 
-void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPr) const 
+void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior* > brPr) const 
 {
   multiplyBranch(innerBranch, traln, hastings, prior, rand, multiplier,brPr, "someNNI"); 
   for(auto &v : outerBranches)
@@ -112,7 +112,7 @@ void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hasting
 } 
 
 
-void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , std::vector<std::shared_ptr<AbstractPrior> > priors, std::string name) const 
+void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , std::vector<AbstractPrior* > priors, std::string name) const 
 {
   nodeptr p = branch.findNodePtr(traln); 
 

@@ -3,6 +3,7 @@
 #include "GlobalVariables.hpp"
 #include "Priors.hpp"
 
+#include "Category.hpp"
 
 
 
@@ -14,7 +15,7 @@ PriorBelief::PriorBelief()
 }
 
 
-void PriorBelief::initialize(const TreeAln &traln, std::vector<RandomVariable*> variables)
+void PriorBelief::initialize(const TreeAln &traln, std::vector<AbstractParameter*> variables)
 {
   lnPrior = scoreEverything(traln, variables); 
   lnPriorRatio = 0; 
@@ -22,14 +23,14 @@ void PriorBelief::initialize(const TreeAln &traln, std::vector<RandomVariable*> 
 }
 
 
-void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, const std::vector<std::shared_ptr<AbstractPrior> > &blPriors)  
+void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, const std::vector<AbstractPrior* > &blPriors)  
 {
   assert(wasInitialized); 
-  assert(blPriors.size() == 1  &&  dynamic_cast<ExponentialPrior*>(blPriors[0].get()) != nullptr) ; 
+  assert(blPriors.size() == 1  &&  dynamic_cast<ExponentialPrior*>(blPriors[0]) != nullptr) ; 
 
   // TODO this is horrible, but let's go with that for now. 
 
-  double lambda = dynamic_cast<ExponentialPrior*> (blPriors[0].get())->getLamda(); 
+  double lambda = dynamic_cast<ExponentialPrior*> (blPriors[0])->getLamda(); 
 
 #ifdef EFFICIENT
   // TODO investigate on more efficient tree length 
@@ -47,7 +48,7 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<d
 }
 
 
-double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<RandomVariable*> variables) const 
+double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<AbstractParameter*> variables) const 
 {
   double result = 0; 
 
@@ -103,7 +104,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<RandomVari
 } 
 
 
-void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<RandomVariable*> variables) const 
+void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> variables) const 
 {
   assert(lnPriorRatio == 0); 
   double verified = scoreEverything(traln, variables); 
@@ -115,12 +116,12 @@ void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<RandomVariable*>
 }
 
 
-void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, std::shared_ptr<AbstractPrior> brPr) 
+void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, AbstractPrior* brPr) 
 {
   assert(wasInitialized); 
-  if(dynamic_cast<ExponentialPrior*> (brPr.get()) != nullptr ) 
+  if(dynamic_cast<ExponentialPrior*> (brPr) != nullptr ) 
     {
-      auto casted = dynamic_cast<ExponentialPrior*> (brPr.get()); 
+      auto casted = dynamic_cast<ExponentialPrior*> (brPr); 
       lnPriorRatio += (log(newInternalZ /   oldInternalZ) ) * traln.getTr()->fracchange * casted->getLamda(); 
     }
   else 

@@ -50,7 +50,7 @@ public:
   std::ostream& addChainInfo(std::ostream &out) const; 
   void printProposalSate(std::ostream& out ) const ; 
   void printProposalState(std::ostream& out ) const ; 
-  std::vector<RandomVariable*> extractVariables() const ; 
+  std::vector<AbstractParameter*> extractVariables() const ; 
 
   // getters and setters 
   double getLnLikelihood() const {return   traln->getTr()->likelihood;} 

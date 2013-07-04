@@ -9,17 +9,39 @@
 #include "AbstractProposal.hpp"
 
 
-class DirichletProposal
+class AbstractProposer
+{
+public:   
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings) = 0; 
+
+  bool isTune() const {return tune; } 
+  bool isTuneup() const {return tuneup; }
+
+protected: 
+  bool tune; 
+  bool tuneup; 
+}; 
+
+
+class DirichletProposal : public AbstractProposer
 {				
-public: static std::vector<double> getNewValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+public: 
+  DirichletProposal() 
   {
+    tune = true ; 
+    tuneup = false; 
+  } 
+
+  
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+   {
     double sum = 0; 
     for(auto &v : oldValues)
       sum += v; 
     assert(fabs(sum - 1.0 ) < 1e-6); 
 
     std::vector<double> newValues; 
-    rand.drawDirichletExpected(newValues, oldValues, parameter * oldValues.size() );
+    newValues = rand.drawDirichletExpected( oldValues, parameter * oldValues.size() );
     AbstractProposal::updateHastings(hastings, densityDirichlet(oldValues, newValues) / densityDirichlet(newValues,oldValues) , "dirichlet"); 
 
     sum = 0; 
@@ -29,15 +51,20 @@ public: static std::vector<double> getNewValues(std::vector<double> oldValues, d
 
     return newValues; 
   }
-  
-  static bool tune; 
-  static bool tuneup; 
+
 }; 
 
 
-class ExponentialProposal
+class ExponentialProposal : public AbstractProposer
 {
-public: static std::vector<double> getNewValues(std::vector<double> oldValue, double parameter, Randomness &rand, double &hastings)
+public: 
+  ExponentialProposal()
+  {
+    tune = false; 
+    tuneup = false; 
+  }
+
+  virtual std::vector<double> proposeValues(std::vector<double> oldValue, double parameter, Randomness &rand, double &hastings)
   {
     // TODO @kassian: how to modify the hastings? 
     // assert(0); 
@@ -45,31 +72,41 @@ public: static std::vector<double> getNewValues(std::vector<double> oldValue, do
 
   }
 
-  static bool tune; 
-  static bool tuneup; 
-  
 };
 
 
-class BiunifProposal
+class BiunifProposal : public AbstractProposer
 {  
   // TODO incorporate the parametr 
-public: static std::vector<double> getNewValues(std::vector<double> oldValue, double parameter, Randomness &rand, double &hastings)
+public: 
+  BiunifProposal()
+  {
+    tune = true; 
+    tuneup = true; 
+  }
+
+  virtual std::vector<double> proposeValues(std::vector<double> oldValue, double parameter, Randomness &rand, double &hastings)
   {
     // TODO @ kassian: how to modify the hastings?  
     assert(0); 
     return std::vector<double>();
   }
-  
-  static bool tune; 
-  static bool tuneup; 
+
 };  
 
 
 
-class MultiplierProposal
+class MultiplierProposal : public AbstractProposer
 {
-public: static std::vector<double> getNewValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+public: 
+
+  MultiplierProposal()
+  {
+    tune = true; 
+    tuneup = true; 
+  }
+
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
   {    
     int position = rand.drawRandInt(oldValues.size()); 
     double multiplier =  rand.drawMultiplier( parameter); 
@@ -77,19 +114,21 @@ public: static std::vector<double> getNewValues(std::vector<double> oldValues, d
     oldValues[position] = oldValues[position] * multiplier; 
     return oldValues;
   }
-
-  static bool tune; 
-  static bool tuneup; 
 }; 
-
 
 
 #define ALT_SLIDER  
 
-
-class SlidingProposal
+class SlidingProposal : public AbstractProposer
 {
-public: static std::vector<double> getNewValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+public: 
+  SlidingProposal()
+  {
+    tune = true; 
+    tuneup = true; 
+  }
+
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
   {
     if(oldValues.size() == 1 )
       {
@@ -160,9 +199,6 @@ public: static std::vector<double> getNewValues(std::vector<double> oldValues, d
 
     return oldValues; 
   }  
-
-  static bool tune; 
-  static bool tuneup; 
 }; 
 
 

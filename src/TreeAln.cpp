@@ -153,8 +153,10 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
 
       pInfo *partition =  getPartition(i);
       assert(partition->dataType == DNA_DATA);
+
       setFrequencies(std::vector<double>(partition->states, 1.0 / (double)partition->states ), i); 
-      setRevMat(std::vector<double>( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)), i); 
+      int num = numStateToNumInTriangleMatrix(partition->states); 
+      setRevMat(std::vector<double>( num , 1.0 ), i); 
     }
 }
 
@@ -262,10 +264,8 @@ void TreeAln::clipNode(nodeptr p, nodeptr q, double z)
 {
   p->back = q; 
   q->back = p; 
-  assert(getNumBranches() == 1);   
-
-  Branch b(p->number, q->number, z); 
-  setBranch(b); 
+  assert(getNumBranches() == 1);     
+  p->z[0] = p->back->z[0]  = z; 
 }
 
 
@@ -514,6 +514,7 @@ void TreeAln::setFrequencies(const std::vector<double> &values, int model)
 
 void TreeAln::setRevMat(const std::vector<double> &values, int model)
 {
+  // std::cout << "checking "; for_each(values.begin(), values.end(), [](double d){std::cout << d << "," ;}) ; std::cout  << std::endl; 
   assert( BoundsChecker::checkRevmat(values) ); 
   auto partition = getPartition(model) ; 
   memcpy(partition->substRates, &(values[0]), numStateToNumInTriangleMatrix(  partition->states) * sizeof(double)); 

@@ -18,8 +18,8 @@ class BlockPrior : public NxsBlock
 public: 
   explicit BlockPrior(nat numPart) 
     : numPart(numPart) 
-    , generalPriors(NUM_PROP_CATS)
-    , specificPriors(NUM_PROP_CATS)
+    , generalPriors(CategoryFuns::getAllCategories().size())
+    , specificPriors(CategoryFuns::getAllCategories().size())
   {
     NCL_BLOCKTYPE_ATTR_NAME = "PRIOR"; 
   }

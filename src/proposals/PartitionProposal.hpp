@@ -14,12 +14,13 @@
 #include "tune.h"
 #include "Parameters.hpp"
 
+
 template<typename FUN, typename PARAM>
 class PartitionProposal : public AbstractProposal
 {
 public: 
   PartitionProposal(  double _param, string _name); 
-  
+
   virtual ~PartitionProposal(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
@@ -33,9 +34,6 @@ public:
 private: 
   double parameter; 		
   vector<double> values; 
-
-  // vector<Branch> storedBranches; 
-
 }; 
 
 #include "PartitionProposalImpl.hpp"

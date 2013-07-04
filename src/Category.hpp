@@ -3,9 +3,8 @@
 
 #include <vector>
 #include <string>
-
-// TODO remove 
-#define NUM_PROP_CATS  6 
+#include <memory>
+#include "parameters/AbstractParameter.hpp"
 
 enum class Category
 {  
@@ -27,6 +26,8 @@ namespace CategoryFuns
   std::string getPriorName(Category cat); 
   Category getCategoryByPriorName(std::string name); 
   Category getCategoryFromLinkLabel(std::string name); 
+
+  std::shared_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id ); 
 } 
 
 #endif

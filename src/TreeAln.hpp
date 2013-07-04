@@ -59,7 +59,9 @@ public:
   void setPartitionList(partitionList *pl) { partitions = *pl; }
   partitionList* getPartitionsPtr()  { return &partitions; }   
 #endif  
+  /** @brief sets the frequencies. Format is important, frequencies must add up to 1.0 */ 
   void setFrequencies(const std::vector<double> &values, int model);
+  /** @brief sets the parameters. Format is important, last rate must be 1.0  */ 
   void setRevMat(const std::vector<double> &values, int model);
   void setAlpha(double alpha,  int model);   
   void setBranch(const Branch& b);   

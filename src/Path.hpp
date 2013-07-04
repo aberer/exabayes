@@ -60,7 +60,7 @@ public:
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
   void printWithBLs(TreeAln &traln ) const; 
 
-  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, std::shared_ptr<AbstractPrior> prBr) const; 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, AbstractPrior* prBr) const; 
 
   void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
 

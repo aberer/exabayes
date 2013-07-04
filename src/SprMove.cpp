@@ -61,7 +61,7 @@ Branch SprMove::getEvalBranch(const TreeAln &traln) const
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
  */ 
-void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPrs)  const 
+void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior*> brPrs)  const 
 {  
   assert(path.size() >= 2); 
   int numBranches = traln.getNumBranches(); 

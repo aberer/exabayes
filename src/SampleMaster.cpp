@@ -104,7 +104,7 @@ void SampleMaster::initializeRuns( )
   trees[0]->enableParsimony();
 
   vector<unique_ptr<AbstractProposal> > proposals; 
-  vector<shared_ptr<RandomVariable> > variables; 
+  vector<shared_ptr<AbstractParameter> > variables; 
 
   auto restorer = make_shared<LnlRestorer>(*(trees[0]));
   auto eval = make_shared<LikelihoodEvaluator>(restorer); 
@@ -321,7 +321,7 @@ static int countNumberOfTreesQuick(const char *fn )
 
 void SampleMaster::initWithConfigFile(string configFileName, shared_ptr<TreeAln> traln, 
 				      vector<unique_ptr<AbstractProposal> > &proposalResult, 
-				      vector<shared_ptr<RandomVariable> > &variableResult, shared_ptr<LikelihoodEvaluator> eval)
+				      vector<shared_ptr<AbstractParameter> > &variableResult, shared_ptr<LikelihoodEvaluator> eval)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 

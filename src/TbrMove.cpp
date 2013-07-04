@@ -63,7 +63,7 @@ void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> descript
 } 
 
 
-void TbrMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPr) const 
+void TbrMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior*> brPr) const 
 {
   assert(0);
 } 

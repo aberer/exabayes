@@ -253,14 +253,14 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
       tout << "WARNING: found in expensive evaluation: likelihood difference is " 
-	   << setprecision(8) <<   fabs (verifiedLnl - toVerify )
-	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
+	   << std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
+	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
 
-      tout << "current tree: " << traln << endl; 
-      tout << "help tree: " <<  *debugTraln << endl; 	  
+      tout << "current tree: " << traln << std::endl; 
+      tout << "help tree: " <<  *debugTraln << std::endl; 	  
 
       evaluateFullNoBackup(traln);
-      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl;       
+      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << std::endl;       
     }  
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
 }
@@ -268,7 +268,7 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 
 
 #ifdef DEBUG_LNL_VERIFY
-void LikelihoodEvaluator::setDebugTraln(shared_ptr<TreeAln> _debugTraln)
+void LikelihoodEvaluator::setDebugTraln(std::shared_ptr<TreeAln> _debugTraln)
 {
   verifyLnl = true; 
   debugTraln = _debugTraln; 

@@ -15,12 +15,12 @@ public:
   virtual void revertTree(TreeAln &traln, PriorBelief &prior) const ; 
   virtual void disorientAtNode(TreeAln &traln, nodeptr p) const ; 
   virtual void extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) ; 
-  virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<std::shared_ptr<AbstractPrior> > brPr) const ; 
+  virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior* > brPr) const ; 
   virtual Branch getEvalBranch(const TreeAln &traln) const {return innerBranch; }
   virtual AbstractMove* clone() const {return new NniMove();}  
 
 private: 			// METHODS 
-  void multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , std::vector<std::shared_ptr<AbstractPrior> > priors, std::string name) const; 
+  void multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , std::vector<AbstractPrior* > priors, std::string name) const; 
   
 private: 			// ATTRIBUTES 
   Branch innerBranch; 

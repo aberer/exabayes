@@ -1,8 +1,10 @@
+#include <memory>
+
 #include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 #include "ProposalType.hpp"
-#include <memory>
+
 
 
 const double ProposalRegistry::initBranchLengthMultiplier = 1.386294; 
@@ -50,14 +52,6 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	case ProposalType::NODE_SLIDER:
 	  proposal = unique_ptr<NodeSlider>( new NodeSlider(initNodeSliderMultiplier)); 
 	  break; 
-	case ProposalType::REVMAT_SLIDER: 
-	  proposal = unique_ptr< PartitionProposal<SlidingProposal, RevMatParameter> > ( new PartitionProposal<SlidingProposal, RevMatParameter>( initRateSlidingWindow, "revMatSlider")) ; 
-	  proposal->setRelativeWeight(0.5); 
-	  break; 
-	case ProposalType::FREQUENCY_SLIDER:
-	  proposal = unique_ptr<PartitionProposal<SlidingProposal, FrequencyParameter> >( new PartitionProposal<SlidingProposal, FrequencyParameter> (  initFrequencySlidingWindow, "freqSlider")); 
-	  proposal->setRelativeWeight(0.5); 
-	  break; 		  
 	case ProposalType::TL_MULT:
 	  proposal = unique_ptr< TreeLengthMultiplier>( new TreeLengthMultiplier(  ProposalRegistry::initTreeLengthMultiplier)); 
 	  break; 
@@ -70,20 +64,35 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	case ProposalType::PARSIMONY_SPR:	
 	  proposal = unique_ptr<ParsimonySPR>( new ParsimonySPR(  config.getParsimonyWarp(), initSecondaryBranchLengthMultiplier)); 
 	  break; 
+	case ProposalType::REVMAT_SLIDER: 
+	  proposal = std::unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatSlider", 
+										true, make_shared<SlidingProposal>(),   initRateSlidingWindow )) ; 
+	  proposal->setRelativeWeight(0.5); 
+	  break; 
+	case ProposalType::FREQUENCY_SLIDER:
+	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqSlider", 
+									   true, make_shared<SlidingProposal>(),   initFrequencySlidingWindow )) ; 
+	  proposal->setRelativeWeight(0.5); 
+	  break; 		  
 	case ProposalType::RATE_HET_MULTI: 
-	  proposal = unique_ptr< PartitionProposal<MultiplierProposal,RateHetParameter> > (  new PartitionProposal<MultiplierProposal,RateHetParameter>(initGammaMultiplier, "rateHetMulti")); 
+	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::RATE_HETEROGENEITY, "rateHetMulti", 
+									   false, make_shared<MultiplierProposal>(),   initGammaMultiplier )) ; 
 	  proposal->setRelativeWeight(1); 
 	  break; 
 	case ProposalType::RATE_HET_SLIDER: 
-	  proposal = unique_ptr< PartitionProposal<SlidingProposal,RateHetParameter> > (  new PartitionProposal<SlidingProposal,RateHetParameter >(initGammaSlidingWindow, "rateHetSlider")); 
+	  proposal = 
+	    unique_ptr<ParameterProposal> ( new ParameterProposal(Category::RATE_HETEROGENEITY, "rateHetSlider", 
+								  false, make_shared<SlidingProposal>(),   initGammaSlidingWindow )) ; 
 	  proposal->setRelativeWeight(0); 
 	  break; 
 	case ProposalType::FREQUENCY_DIRICHLET: 
-	  proposal = unique_ptr< PartitionProposal<DirichletProposal,FrequencyParameter> > (  new  PartitionProposal<DirichletProposal,FrequencyParameter> (initDirichletAlpha, "freqDirich")); 
+	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqDirich", 
+									   true, make_shared<DirichletProposal>(),   initDirichletAlpha )) ; 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case ProposalType::REVMAT_DIRICHLET: 
-	  proposal = unique_ptr< PartitionProposal<DirichletProposal,RevMatParameter> > ( new  PartitionProposal<DirichletProposal,RevMatParameter> ( initDirichletAlpha, "revMatDirich")) ; 
+	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatDirich", 
+									   true, make_shared<DirichletProposal>(),    initDirichletAlpha)) ; 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case ProposalType::GUIDED_SPR:

@@ -5,9 +5,16 @@
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 
+#include "parameters/TopologyParameter.hpp"
+#include "parameters/BranchLengthsParameter.hpp"
+#include "parameters/FrequencyParameter.hpp"
+#include "parameters/RevMatParameter.hpp"
+#include "parameters/RateHetParameter.hpp"
+
+
 
 // not to be confused with a fun factory...
-void RunFactory::addStandardParameters(vector<shared_ptr<RandomVariable> > &vars, const TreeAln &traln )
+void RunFactory::addStandardParameters(vector<shared_ptr<AbstractParameter> > &vars, const TreeAln &traln )
 {
   std::set<Category> categories; 
 
@@ -25,57 +32,41 @@ void RunFactory::addStandardParameters(vector<shared_ptr<RandomVariable> > &vars
 
       switch(catIter)
 	{	  
+	  // force to have everything linked with those 
 	case Category::TOPOLOGY: 
-	  {
-	    // deafult: everything linked 
-	    auto r = make_shared<RandomVariable>(catIter,highestId);
-	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      r->addPartition(j); 
-	    vars.push_back(r); 
-	    break; 
-	  }
-
 	case Category::BRANCH_LENGTHS: 
 	  {
-	    // default: everything is linked
-	    auto r = make_shared<RandomVariable>(catIter,highestId);
+	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId); 
+	    ++highestId; 
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
-	    vars.push_back(r); 
-	    break; 
+	    vars.push_back(r); 	    
 	  }
-
-	case Category::AA_MODEL: 
+	  break; 
+	case Category::AA_MODEL:	
+	  std::cout << "TODO define,  when AA_MODLE should be added <= runfactory.cpp" << std::endl; 
+	  break; 	  
+	  // a new parameter per partition 
 	case Category::SUBSTITUTION_RATES: 
-	case Category::FREQUENCIES: 
+	case Category::RATE_HETEROGENEITY:
+	case Category::FREQUENCIES:
 	  {
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      {		    
-		auto r = make_shared< RandomVariable>(catIter, highestId);
-		r->addPartition(j); 
-		vars.push_back(r);	   
-	      }
-
-	    break; 
-	  }
-	case Category::RATE_HETEROGENEITY: 
-	  {
-	    for(int j = 0; j < traln.getNumberOfPartitions();++ j)
 	      {
-		auto r = make_shared<RandomVariable>(catIter, highestId);
-		r->addPartition(j);
-		vars.push_back(r);
-	      }
-
-	    break; 
+		auto r = CategoryFuns::getParameterFromCategory(catIter, highestId) ; 
+		++highestId; 
+		r->addPartition(j); 
+		vars.push_back(r); 
+	      }	    
 	  }
+	  break; 
 	default: assert(0); 
 	}
     }
 }
 
 
-void RunFactory::addStandardPrior(RandomVariable* var, const TreeAln& traln )
+void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
 {
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
@@ -116,7 +107,7 @@ void RunFactory::addStandardPrior(RandomVariable* var, const TreeAln& traln )
 }
 
 
-void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<shared_ptr<RandomVariable> > &variables)
+void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<shared_ptr<AbstractParameter> > &variables)
 {
   auto generalPriors = priorInfo.getGeneralPriors();
   auto specificPriors = priorInfo.getSpecificPriors();
@@ -159,20 +150,22 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       else 
 	{	  
 	  addStandardPrior(v.get(), traln);
-	  cout << "using STANDARD prior for variable "  << *v << endl; 
+	  cout << "using STANDARD prior for variable "  << v << endl; 
 	}
     }
 }
 
 void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval )
 {
-  randomVariables = partitionParams.getParameters();  
+  // randomVariables = partitionParams.getParameters();  
+
   addStandardParameters(randomVariables, traln);
+  
   addPriorsToVariables(traln, priorInfo, randomVariables);
 
   ProposalRegistry reg; 
 
-  std::vector<shared_ptr<RandomVariable> > blRandVars; 
+  std::vector<shared_ptr<AbstractParameter> > blRandVars; 
   for(auto &v : randomVariables)
     if(v->getCategory() == Category::BRANCH_LENGTHS)
       blRandVars.push_back(v); 
@@ -208,15 +201,11 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 	}
     }
 
-
-  // lets see if it worked 
-  // seems to work....
-  tout << endl << "RandomVariables to be integrated: " << endl; 
+  tout << endl << "Parameters to be integrated: " << endl; 
   for(auto &v : randomVariables)
-    tout << *v  << endl; 
+    tout << v  << endl; 
   tout << endl; 
   
-
   double sum = 0; 
   for(auto &p : proposals)
     sum += p->getRelativeWeight(); 

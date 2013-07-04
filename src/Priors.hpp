@@ -23,7 +23,7 @@ public:
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const = 0; 
   virtual double getLogProb(std::vector<double> values ) const = 0; 
   virtual void print(std::ostream &out) const = 0;
-  friend std::ostream& operator<<(std::ostream &out,  std::shared_ptr<AbstractPrior> rhs)
+  friend std::ostream& operator<<(std::ostream &out,  AbstractPrior* rhs)
   {
     rhs->print(out); 
     return out; 
@@ -68,7 +68,7 @@ public:
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const
   {
     std::vector<double> result; 
-    rand.drawRandDirichlet( result, alphas); 
+    result = rand.drawRandDirichlet(alphas); 
     return result; 
   }
   

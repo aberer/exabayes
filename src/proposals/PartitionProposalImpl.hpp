@@ -24,17 +24,14 @@ void PartitionProposal<FUN,PARAM>::applyToState(TreeAln &traln, PriorBelief &pri
   assert(traln.getNumBranches() == 1 ); 
 
   for(auto v : primVar[0]->getPartitions())
-    {
-      PARAM::setParameters(traln, v, proposedValues);  
-      // PARAM::init(traln, v);  
-    }
+    PARAM::setParameters(traln, v, proposedValues);  
 
   double newFracChange = traln.getTr()->fracchange;   
   assert(primVar.size() != 0);   
 
   if(PARAM::modifiesBL)
     {
-      vector<shared_ptr<AbstractPrior> > blPriors; 
+      vector<AbstractPrior* > blPriors; 
       for(auto v : secVar)
 	blPriors.push_back(v->getPrior()) ; 
       prior.accountForFracChange(traln, {oldFracChange}, {newFracChange} , blPriors);
@@ -61,7 +58,6 @@ void PartitionProposal<FUN,PARAM>::resetState(TreeAln &traln, PriorBelief &prior
   for(auto elem : primVar[0]->getPartitions())
     {
       PARAM::setParameters(traln, elem, values);
-      // PARAM::init(traln,elem);  
     }
 }
 

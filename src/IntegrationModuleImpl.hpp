@@ -9,6 +9,7 @@
 #include <sstream>
 #include "proposals/BranchIntegrator.hpp"
 #include "ProposalRegistry.hpp"
+#include "parameters/BranchLengthsParameter.hpp"
 
 void SampleMaster::branchLengthsIntegration()  
 {
@@ -32,11 +33,11 @@ void SampleMaster::branchLengthsIntegration()
   
   auto eval = chain.getEvaluatorPtr();
 
-  auto r = make_shared<RandomVariable>(Category::BRANCH_LENGTHS, 0);
+  auto r = make_shared<BranchLengthsParameter>( 0);
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     r->addPartition(i);
 
-  vector<shared_ptr<RandomVariable> > vars =  {r} ; 
+  vector<shared_ptr<AbstractParameter> > vars =  {r} ; 
 
   double lambda   =  10 ; 
 

@@ -35,91 +35,23 @@ public:
   virtual void autotune() = 0  ;
 
   virtual AbstractProposal* clone() const = 0;  
-
   double getRelativeWeight() const { return relativeWeight; }
   void setRelativeWeight(double tmp) { relativeWeight = tmp; }
-  
   Category getCategory() const {return category; }
   std::string getName() const {return name; }
-  
   void accept() {sctr.accept();}
   void reject() {sctr.reject();}
-  
   const SuccessCounter& getSCtr()  const { return sctr; }
-  
   int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
-
-  void addPrimVar(std::shared_ptr<RandomVariable> var) {primVar.push_back(var) ; }
-  void addSecVar(std::shared_ptr<RandomVariable> var) {secVar.push_back(var) ; }
-
+  void addPrimVar(std::shared_ptr<AbstractParameter> var) {primVar.push_back(var) ; }
+  void addSecVar(std::shared_ptr<AbstractParameter> var) {secVar.push_back(var) ; }
   static void updateHastings(double &hastings, double valToAdd, std::string whoDoneIt); 
+  friend std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs); 
+  std::ostream& printNamePartitions(std::ostream &out); 
+  std::ostream& printShort(std::ostream &out) ;
 
-  friend std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs)
-  {
-    out << rhs->name <<  " primarily modifying " ; 
-    for(auto &r : rhs->primVar)
-      out << *r << ",\t"  ; 
-
-    if(not rhs->secVar.empty() )
-      {
-	out << "\tand also modifying " ; 
-	for(auto &r : rhs->secVar ) 
-	  out << *r << ",\t" ; 
-      }
-
-    return out; 
-  }
-
-  std::ostream& printNamePartitions(std::ostream &out)
-  {
-    out << name  << "(" ; 
-    assert(primVar.size() == 1); 
-    bool isFirst= true; 
-    for (auto v : primVar[0]->getPartitions()) 
-      {
-	if( not isFirst)
-	  out << ","; 
-	else 
-	  isFirst = false; 
-	out << v ; 
-      }
-    out << ")" ; 
-    return out; 
-  }
-
-  std::ostream& printShort(std::ostream &out) 
-  {
-    out << name << "( " ;  
-    
-    bool isFirst = true; 
-    for(auto &v : primVar)
-      {
-	if(not isFirst)
-	  out << ","; 
-	else 
-	  isFirst = false; 
-	v->printShort(out); 
-      }
-
-    if(secVar.size() > 0)
-      {
-	out << ";"; 
-	isFirst = true; 
-	for(auto &v : secVar)
-	  {
-	    if(not isFirst)
-	      out << ","; 
-	    else 
-	      isFirst = false; 
-	    v->printShort(out); 
-	  }
-      }
-    out << " )"; 
-    return out; 
-  }
-
-  std::vector<RandomVariable*> getPrimVar() const; 
-  std::vector<RandomVariable*> getSecVar() const ; 
+  std::vector<AbstractParameter*> getPrimVar() const; 
+  std::vector<AbstractParameter*> getSecVar() const ; 
 
 protected:   
   std::string name;   
@@ -127,8 +59,8 @@ protected:
   Category category; 
 
   // will be a unique_ptr later 
-  std::vector<std::shared_ptr<RandomVariable> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  std::vector<std::shared_ptr<RandomVariable> > secVar;  // as a by-product also these random variables are changed 
+  std::vector<std::shared_ptr<AbstractParameter> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  std::vector<std::shared_ptr<AbstractParameter> > secVar;  // as a by-product also these random variables are changed 
 
   double relativeWeight; 
 
