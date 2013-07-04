@@ -8,7 +8,6 @@
 #include "Branch.hpp"
 
 
-
 ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
   : parsWarp(_parsWarp)    
   , blMulti(_blMulti)    
