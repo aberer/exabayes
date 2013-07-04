@@ -45,31 +45,20 @@ typedef  unsigned int nat ;
  */
 
 /* #define DEBUG_ACCEPTANCE */
-
 /* #define DEBUG_HASTINGS */
-
 /* #define UNSURE  */
 /* #define EFFICIENT  */
-
 /* #define INCORRECT */
-
-
 /* #define PRINT_MULT */
-
 /* #define DEBUG_EVAL */
 /* #define DEBUG_ARRAY_SWAP */
-
-
 
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
 /* #define DEBUG_PRINT_TUNE_INFO */
 
 /* #define ENABLE_PRSF */
-
 /* #define CONTROL_ESPR */
-
 /* #define DEBUG_TREE_LENGTH */
-
 /* #define DEBUG_PARS_SPR */
 
 /* for debugging:  */

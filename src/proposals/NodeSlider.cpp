@@ -14,7 +14,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 {
   oneBranch = traln.drawInnerBranchUniform(rand); 
   if(rand.drawRandDouble01() < 0.5 )
-    oneBranch.invert();
+    oneBranch = oneBranch.getInverted();
 
   nodeptr p = oneBranch.findNodePtr(traln); 
   nodeptr q = rand.drawRandDouble01() < 0.5  ? p->next->back : p->next->next->back; 

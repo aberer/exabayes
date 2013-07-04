@@ -6,6 +6,30 @@
 LikelihoodEvaluator::LikelihoodEvaluator(shared_ptr<LnlRestorer> _restorer)
   : restorer(_restorer)
 {
+}
+
+
+void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
+{
+#if HAVE_PLL != 0
+  evaluateGeneric(traln.getTr(), traln.getPartitionsPtr(), start, fullTraversal); 
+#else 
+  evaluateGeneric(traln.getTr(), start, fullTraversal); 
+#endif  
+}
+
+
+  // BAD
+void LikelihoodEvaluator::evaluateFullNoBackup(TreeAln& traln)
+{
+#ifdef DEBUG_EVAL  
+  cout << "conducting full evaluation, no backup created" << endl; 
+#endif
+  
+  exa_evaluateGeneric(traln,traln.getTr()->start,TRUE );   
+#ifdef DEBUG_LNL_VERIFY
+  expensiveVerify(traln);
+#endif
 } 
 
 
@@ -60,7 +84,7 @@ double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, b
   
   exa_evaluateGeneric(traln,start,fullTraversal);   
 #ifdef DEBUG_LNL_VERIFY
-  if(globals.verifyLnl)
+  if(verifyLnl)
     expensiveVerify(traln);
 #endif
   return traln.getTr()->likelihood;  
@@ -207,25 +231,24 @@ void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, nodeptr p, boolean mas
 }
 
 
+#ifdef DEBUG_LNL_VERIFY
 void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 {
-#ifdef DEBUG_LNL_VERIFY
-  TreeAln &debugTraln = *(globals.debugTree);   
   double toVerify = traln.getTr()->likelihood; 
 
-  debugTraln = traln; 
+  *debugTraln = traln; 
 
   // LikelihoodEvaluator eval; 
   Branch root ; 
   findVirtualRoot(traln, root); 
 
   nodeptr
-    p = root.findNodePtr(debugTraln ); 
+    p = root.findNodePtr(*debugTraln ); 
 
-  disorientTree(debugTraln, root); 
-  exa_evaluateGeneric(debugTraln, p , FALSE); 
+  disorientTree(*debugTraln, root); 
+  exa_evaluateGeneric(*debugTraln, p , FALSE); 
 
-  double verifiedLnl =  debugTraln.getTr()->likelihood; 
+  double verifiedLnl =  debugTraln->getTr()->likelihood; 
 
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
@@ -234,11 +257,25 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << endl; 
 
       tout << "current tree: " << traln << endl; 
-      tout << "help tree: " <<  debugTraln << endl; 	  
+      tout << "help tree: " <<  *debugTraln << endl; 	  
 
       evaluateFullNoBackup(traln);
-      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl; 
+      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << endl;       
     }  
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
-#endif
 }
+#endif
+
+
+#ifdef DEBUG_LNL_VERIFY
+void LikelihoodEvaluator::setDebugTraln(shared_ptr<TreeAln> _debugTraln)
+{
+  verifyLnl = true; 
+  debugTraln = _debugTraln; 
+}
+#endif
+
+
+
+
+

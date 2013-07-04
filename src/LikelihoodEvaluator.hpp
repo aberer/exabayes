@@ -23,27 +23,14 @@ public:
   static void disorientTree(TreeAln &traln, const Branch &root) ; 
   static void disorientSubtree(TreeAln &traln, const Branch &branch) ; 
 
-  // BAD
-  void evaluateFullNoBackup(TreeAln& traln)
-  {
-#ifdef DEBUG_EVAL  
-    cout << "conducting full evaluation, no backup created" << endl; 
-#endif
-  
-    exa_evaluateGeneric(traln,traln.getTr()->start,TRUE );   
-    expensiveVerify(traln);
-  }
+  void evaluateFullNoBackup(TreeAln& traln); 
+  void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
 
-void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
-{
-#if HAVE_PLL != 0
-  evaluateGeneric(traln.getTr(), traln.getPartitionsPtr(), start, fullTraversal); 
-#else 
-  evaluateGeneric(traln.getTr(), start, fullTraversal); 
-#endif  
-}
+#ifdef DEBUG_LNL_VERIFY
   // BAD
   void expensiveVerify(TreeAln &traln);
+  void setDebugTraln(shared_ptr<TreeAln> _debugTraln); 
+#endif
 
 private: 			// METHODS
   void coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked); 
@@ -51,8 +38,14 @@ private: 			// METHODS
 
 private: 			// ATTRIBUTES
   shared_ptr<LnlRestorer> restorer;    
+#ifdef DEBUG_LNL_VERIFY
+  shared_ptr<TreeAln> debugTraln;  
+  bool verifyLnl; 
+#endif
 
 }; 
+
+
 
 
 #endif

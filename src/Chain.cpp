@@ -31,7 +31,9 @@ Chain:: Chain(randKey_t seed, shared_ptr<TreeAln> _traln, const vector<unique_pt
       assert(copy->getPrimVar().size() != 0); 
       proposals.push_back(std::move(copy)); 
     }
-  
+
+  eval->evaluateFullNoBackup(*traln);  ; 
+
   // saving the tree state 
   suspend(); 
 }
@@ -52,12 +54,15 @@ Chain::Chain( const Chain& rhs)
   for(auto &p : rhs.proposals )
     proposals.emplace_back(std::move(p->clone())); 
   prior.initialize(*traln, extractVariables()); 
+  
   suspend();
+  
+  // cout << *traln<< endl; 
 }
 
 
 
-ostream& Chain::addChainInfo(ostream &out)
+ostream& Chain::addChainInfo(ostream &out) const 
 {
   return out << "[run " << runid << ",heat " << couplingId << "]" ; 
 }
@@ -75,7 +80,7 @@ double Chain::getChainHeat()
 }
 
 
-void Chain::resume()
+void Chain::resume()  
 {
   assert(traln->getNumBranches() == 1); 
   state.accessTopology().restoreTopology(*traln); 
@@ -99,6 +104,13 @@ void Chain::resume()
   
   evaluator->evaluateFullNoBackup(*traln); 
   
+  if(fabs(likelihood - traln->getTr()->likelihood) > ACCEPTED_LIKELIHOOD_EPS)
+    {
+      cerr << "While trying to resume chain: previous chain liklihood larger than " <<
+	"evaluated likelihood. This is a programming error." << endl; 
+      
+    }  
+
   auto vs = extractVariables(); 
   prior.initialize(*traln, vs);
 
@@ -326,7 +338,9 @@ void Chain::step()
       evaluator->resetToImprinted(*traln);
     }
 
+#ifdef DEBUG_LNL_VERIFY
   evaluator->expensiveVerify(*traln); 
+#endif
   
 #ifdef DEBUG_TREE_LENGTH  
   assert( fabs (traln->getTreeLengthExpensive() - traln->getTreeLength())  < 1e-6); 
@@ -344,7 +358,7 @@ void Chain::step()
 }
 
 
-void Chain::suspend()
+void Chain::suspend()  
 {
   state.accessTopology().saveTopology(*(traln));
 
@@ -365,6 +379,8 @@ void Chain::suspend()
 	tmp.push_back(partitionTr->frequencies[i]); 
       partInfo.setStateFreqs(tmp); 
     }  
+
+  likelihood = traln->getTr()->likelihood; 
 }
 
 									   
@@ -394,3 +410,12 @@ const vector<AbstractProposal*> Chain::getProposalView() const
     result.push_back(elem.get()); 
   return result; 
 }
+
+
+ostream& operator<<(ostream& out, const Chain &rhs)
+{
+  rhs.addChainInfo(out); 
+  out << "\tLnL: " << rhs.getLnLikelihood() << "\tLnPr: " << rhs.getLnPrior(); 
+  return out; 
+}
+

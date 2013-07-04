@@ -29,6 +29,8 @@ public:
   double getAsdsfIgnoreFreq() const { return asdsfIgnoreFreq; 	}
   int getDiagFreq() const { return diagFreq ; }
   double getAsdsfConvergence() const {return asdsfConvergence; }
+  bool isUseParsimonyStarting() const {return useParsimonyStarting; } 
+  bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
 
 private: 
   int diagFreq ; 
@@ -46,6 +48,8 @@ private:
   int swapInterval; 
   bool tuneHeat; 
   int tuneFreq;  
+  bool useParsimonyStarting; 
+  bool heatedChainsUseSame; 
 }; 
 
 

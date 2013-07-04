@@ -24,8 +24,6 @@ randCtr_t Randomness::generateSeed()
 }
 
 
-
-
 void Randomness::incrementNoLimit()
 {
   ctr.v[0]++; 

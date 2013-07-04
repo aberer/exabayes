@@ -10,8 +10,8 @@
 
 #include "time.hpp"
 
-CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> _chains )
-  : chains(move(_chains))
+CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains )
+  : chains(_chains)
   , heatIncrement(0.1) 
   , rand(seed)
   , runid(runNum) 
@@ -39,6 +39,12 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int 
 
   chains[0].printNexusTreeFileStart(topoFile);
   chains[0].printParamFileStart(paramFile) ;
+
+  // for(auto &c : getChains())
+  //   {
+  //     cout << c.getTraln() << endl; 
+  //   }
+
 }
 
 void CoupledChains::seedChains()

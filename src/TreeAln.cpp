@@ -12,13 +12,8 @@
 // saver. You access it with e.g., TreeAln::zmin, since the variable
 // does not belong to an instance of the class, but the class in general. 
 
-// #if 0 
 const double TreeAln::zMin = 1.0E-15 ; 
 const double TreeAln::zMax = (1.0 - 1.0E-6) ; 
-// #else 
-// const double TreeAln::zMin = 1.0E-8 ; 
-// const double TreeAln::zMax = (1.0 - 1.0E-3) ; 
-// #endif
 
 const double TreeAln::zZero = TreeAln::zMax + ( 1 - TreeAln::zMax) / 2 ; 
 const double TreeAln::rateMin = 0.0000001; 
@@ -40,6 +35,9 @@ TreeAln::TreeAln()
 
 TreeAln::~TreeAln()
 {  
+  // this is slightly crazy, but we'll have to do the cleanup
+  // somewhere.
+
   if(tr.aliaswgt != NULL)
     exa_free(tr.aliaswgt); 
   if(tr.rateCategory != NULL)
@@ -352,7 +350,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       pInfo *partitionLhs = this->getPartition(i); 
 
       for(int j = 0; j < partitionRhs->states; ++j )
-	partitionLhs->frequencies[i] = partitionRhs->frequencies[i]; 
+	partitionLhs->frequencies[j] = partitionRhs->frequencies[j]; 
       
       for(int j = 0 ; j < numStateToNumInTriangleMatrix(partitionRhs->states); ++j)
 	partitionLhs->substRates[j] = partitionRhs->substRates[j]; 
@@ -362,7 +360,6 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       this->discretizeGamma(i);       
     }
 
-  
   this->unlinkTree();
   int mxtips = rhs.getTr()->mxtips ;
   tree *rhsTree = rhs.getTr(),
@@ -386,8 +383,6 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
       hookup(lhsNode, lhsNode  -   (rhsNode - rhsNode->back), rhsNode->z, getNumBranches()) ; 
     }
 #else 
-
-
   for(int i = 1 ; i <= mxtips; ++i )
     {
       nodeptr a = rhsTree->nodep[i],
@@ -426,9 +421,7 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 
 #endif
 
-  tr.start = tr.nodep[rhsTree->start->number]; 
-  // debug_checkTreeConsistency(*this);
-  
+  tr.start = tr.nodep[rhsTree->start->number];   
   return *this; 
 }
 

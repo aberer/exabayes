@@ -51,9 +51,6 @@ fi
 cflags="-fno-common"
 cxxflags="-fno-common"
 
-
-
-
 default=$1
 if [ "$default" == "debug" ]; then 
     cflags="$cflags -O0 -g"
@@ -63,8 +60,6 @@ elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then
     echo "first argument must be either 'debug' or 'default'"
     exit 
 fi
-
-
 
 
 codeBase=$2

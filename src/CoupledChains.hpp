@@ -25,7 +25,7 @@
 class CoupledChains
 {
 public: 
-  CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> _chains ); 
+  CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain>& _chains ); 
 
   void seedChains(); 
 
@@ -50,30 +50,17 @@ public:
   void setSwapInterval(nat i) {swapInterval = i; }
   void setSamplingFreq(nat i) {samplingFreq = i; }
   void setHeatIncrement(double temp ) { heatIncrement = temp ; } 
-  void setTuneHeat(bool bla){tuneHeat = bla ; }
-  
+  void setTuneHeat(bool bla){tuneHeat = bla ; }  
   void setTemperature(double temp ){heatIncrement = temp;  } 
-
   vector<Chain>& getChains() {return chains; } 
-  
-  // Chain* getChain(int i) {return chains[i]; }
   int getNumberOfChains(){return chains.size();}
-
-  void enableHeatTuning(int freq )
-  {
-    tuneHeat = true; 
-    tuneFreq = freq; 
-  }
-  
-  void printNexusTreeFileStart(Chain &chain, FILE *fh  ); 
-  
+  void enableHeatTuning(int freq ) { tuneHeat = true; tuneFreq = freq; }  
+  void printNexusTreeFileStart(Chain &chain, FILE *fh  );   
   FILE* getTopoFile(){return topoFile; }
-  FILE* getParamFile(){return paramFile; }
-  
+  FILE* getParamFile(){return paramFile; }  
   void setRunName(string a) {runname = a;  }
 
-
-private: 
+private: 			// METHODS
 
 /**
    @brief attempt a MC3 switch of chains 
@@ -85,6 +72,8 @@ private:
   /** @brief tunes the temperature parameter */  
   void tuneTemperature();
 
+
+private: 			// ATTRIBUTES
 
   vector<Chain> chains; 
   vector<SuccessCounter*> swapInfo;  

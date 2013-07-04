@@ -10,6 +10,23 @@ TreeRandomizer::TreeRandomizer(randCtr_t seed)
 {
 }
 
+
+
+void TreeRandomizer::createParsimonyTree(TreeAln &traln)
+{
+  nat r = rand();  
+  cout << r << endl; 
+  traln.getTr()->randomNumberSeed = rand();
+
+#if HAVE_PLL != 0
+  makeParsimonyTreeFast(traln.getTr(), traln.getPartitionsPtr());
+#else 
+  assert(0); 
+#endif
+}
+
+
+
 void TreeRandomizer::randomizeTree(TreeAln &traln)
 {
   for(nat i = 1 ; i < traln.getNumberOfNodes() + 1 ; ++i)
@@ -37,6 +54,7 @@ void TreeRandomizer::randomizeTree(TreeAln &traln)
       traln.clipNodeDefault(taxonP, inner); 
       
       auto b = traln.drawBranchUniform_helper(rand, i-1);
+
       auto p1 = b.findNodePtr(traln),
 	p2 = p1->back; 
       

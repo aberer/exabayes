@@ -39,10 +39,10 @@ public:
   
 
 
-#ifdef DEBUG_LNL_VERIFY
-  TreeAln *debugTree; 
-  bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
-#endif
+// #ifdef DEBUG_LNL_VERIFY
+//   TreeAln *debugTree; 
+//   bool verifyLnl;  		/* a hack around an ExaML problem. Just used for debugging */
+// #endif
 };
 
 

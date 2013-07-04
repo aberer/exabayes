@@ -17,6 +17,8 @@ BlockRunParameters::BlockRunParameters()
   , swapInterval (1)
   , tuneHeat (false)
   , tuneFreq (100)
+  , useParsimonyStarting(false)
+  , heatedChainsUseSame(false)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "runconfig"; 
 }
@@ -56,12 +58,16 @@ void BlockRunParameters::Read(NxsToken &token)
 
 	  if(key.EqualsCaseInsensitive("numGen"))
 	    numGen = value.ConvertToInt(); 
+	  else if (key.EqualsCaseInsensitive("parsimonyStartingTree"))
+	    useParsimonyStarting = convertToBool(value); 
 	  else if(key.EqualsCaseInsensitive("samplingfrequency"))
 	    samplingFreq = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("numRuns"))
 	    numRunConv = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("diagFreq"))
 	    diagFreq = value.ConvertToInt(); 
+	  else if(key.EqualsCaseInsensitive("heatedChainsUseSame"))
+	    heatedChainsUseSame = convertToBool(value); 
 	  else if(key.EqualsCaseInsensitive("numcoupledChains"))
 	    numCoupledChains = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("printFreq") )	   

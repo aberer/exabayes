@@ -20,10 +20,8 @@
 #include "ProposalFunctions.hpp"
 #include "Parameters.hpp"
 
-
 static int countNumberOfTreesQuick(const char *fn ); 
 static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln>  > &tralns); 
-static void initTreeWithOneRandom(randCtr_t seed,  vector<shared_ptr<TreeAln> > &tralns); 
 
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
   : pl(pl)
@@ -38,10 +36,66 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
 }
 
 
+void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH)
+{
+  TreeRandomizer trRandomizer(seed);
+  
+  vector<shared_ptr<TreeAln> > treesToInitialize; 
+  treesToInitialize.push_back(trees[0]); 
+  if(not runParams.isHeatedChainsUseSame())
+    for(auto iter =  trees.begin() + 1  ; iter < trees.end(); ++iter)
+      treesToInitialize.push_back(*iter); 
+
+  // choose how to initialize the topology
+  for(auto &tralnPtr : treesToInitialize)
+    {
+      auto tr = tralnPtr->getTr();
+      bool hasBranchLength = false; 
+      if(treesConsumed < numTreesAvailable) // use a user defined starting tree 
+	{
+	  hasBranchLength = readTreeWithOrWithoutBL(tr, treeFH);
+	  ++treesConsumed; 
+	}
+      else
+	{	      
+	  if(runParams.isUseParsimonyStarting())
+	    trRandomizer.createParsimonyTree(*tralnPtr); 
+	  else
+	    trRandomizer.randomizeTree(*tralnPtr); 
+	}	  
+	  
+      // correct branches 
+      for(auto &b : tralnPtr->extractBranches())
+	{
+	  b.setLength( hasBranchLength ? 
+		       ( - exp(b.getLength() / tr->fracchange)) 
+		       : TreeAln::initBL ); 
+	  b.applyToTree(*tralnPtr); 
+	}
+    }
+
+  // cout << "ref tree now is "<< *(trees[0]) << endl; 
+  
+  // propagate the tree to the coupled chains, if necessar y
+  if(runParams.isHeatedChainsUseSame())
+    {
+      TreeAln &ref = *( trees[0]); 
+      bool isFirst = true; 
+      for(shared_ptr<TreeAln> &treePtr : trees)
+	{
+	  if(isFirst )
+	    isFirst = false; 
+	  else 
+	    (*treePtr) = ref; 
+	}
+    }
+}
+
+
 void SampleMaster::initializeRuns( )
 {
   FILE *treeFH = NULL; 
-  int numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
+  nat numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
 
   // initialize one tree 
   vector<shared_ptr<TreeAln> > trees; 
@@ -54,17 +108,31 @@ void SampleMaster::initializeRuns( )
 
   auto restorer = make_shared<LnlRestorer>(*(trees[0]));
   auto eval = make_shared<LikelihoodEvaluator>(restorer); 
-
+  
   initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables, eval);
   assert(runParams.getTuneFreq() > 0); 
+  
+#ifdef DEBUG_LNL_VERIFY
+  auto dT = make_shared<TreeAln>();
+  dT->initializeFromByteFile(cl.getAlnFileName()); 
+  dT->enableParsimony(); 
+  eval->setDebugTraln(dT);
+#endif
 
   // ORDER: must be after  initWithConfigFile
-  initTrees(trees);
+  tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl;   
+  for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
+    {
+      auto traln =  make_shared<TreeAln>();
+      trees.push_back(traln); 
+      trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
+      trees[i]->enableParsimony();
+    }
 
   if( numTreesAvailable > 0 )
     treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
 
-  vector<randCtr_t> runSeeds; 
+  vector<randCtr_t> runSeeds;
   vector<randCtr_t> treeSeeds; 
   for(int i = 0; i < runParams.getNumRunConv();++i)
     {
@@ -72,31 +140,27 @@ void SampleMaster::initializeRuns( )
       treeSeeds.push_back(masterRand.generateSeed()); 
     }
 
-
+  nat treesConsumed = 0; 
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
-    {      
-      // assert(i < 1); 
-      if( i < numTreesAvailable)
-	initWithStartingTree(treeFH, trees); 
-      else 
-	initTreeWithOneRandom(treeSeeds[i], trees);
+    {    
+      initTrees(trees, treeSeeds[i], treesConsumed, numTreesAvailable, treeFH); 
 
-      if( i %  pl.getRunsParallel() == pl.getMyRunBatch() )
+      if( i % pl.getRunsParallel() == pl.getMyRunBatch() )
 	{
 	  vector<Chain> chains; 
-	  
-	  for(int i = 0; i < runParams.getNumCoupledChains(); ++i)
+
+	  for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
 	    {
 	      randCtr_t c; 
-	      chains.push_back(Chain(  c, trees[i], proposals, eval ) ); 
-	      auto &chain = chains[i]; 		
+	      chains.push_back(Chain( c , trees[j], proposals, eval ) ); 
+	      auto &chain = chains[j]; 		
 	      chain.setRunId(i); 
 	      chain.setTuneFreuqency(runParams.getTuneFreq()); 
-	      chain.setHeatIncrement(i); 
+	      chain.setHeatIncrement(j); 
 	      chain.setDeltaT(runParams.getHeatFactor()); 
 	    }
-
-	  CoupledChains run(runSeeds[i], i,  cl.getWorkdir(), runParams.getNumCoupledChains(), chains); 
+	  
+	  CoupledChains run(runSeeds[i], i, cl.getWorkdir(), runParams.getNumCoupledChains(), chains) ; 
 	  run.setTemperature(runParams.getHeatFactor());
 	  run.setTuneHeat(runParams.getTuneHeat()); 
 	  run.setPrintFreq(runParams.getPrintFreq()); 
@@ -104,12 +168,36 @@ void SampleMaster::initializeRuns( )
 	  run.setSamplingFreq(runParams.getSamplingFreq()); 
 	  run.setRunName(runParams.getRunId()); 
 	  run.seedChains(); 
+	  runs.push_back(run); 	  
 	  
-	  runs.push_back(run); 
+	  cout << runs[runs.size()-1].getChains()[0].getTraln() << endl; 
 	}
+      cout << "================================================================"<< endl;
     }
 
 
+  // determine and print initial state for each chain  
+  tout << "initial state: " << endl; 
+  tout << "================================================================" << endl; 
+  for(auto &run: runs)
+    {
+      bool isFist = true; 
+      for(auto &chain :  run.getChains())
+	{
+	  if(isFist)
+	    {
+	      cout << chain.getTraln() << endl; 
+	      isFist = false ; 
+	    }
+
+	  chain.resume(); 
+	  tout << chain; 
+	  tout << "\tRNG(" << chain.getChainRand() << ")"<< endl; 	  
+	  // tout << chain.getTraln() << endl; 
+	}
+      tout << "================================================================" << endl; 
+    }
+  
   if(numTreesAvailable > 0)
      fclose(treeFH); 
 
@@ -182,62 +270,31 @@ bool SampleMaster::convergenceDiagnostic()
 }
 
 
-// LEGACY
-static void traverseInitFixedBL(nodeptr p, int *count, shared_ptr<TreeAln> traln,  double z )
-{
-  tree *tr = traln->getTr();
-  nodeptr q;
-  int i;
-  
-  for( i = 0; i < traln->getNumBranches(); i++)
-      traln->setBranchLengthBounded(z, i, p); 
-  
-  *count += 1;
-  
-  if (! isTip(p->number,tr->mxtips)) 
-    {                                  /*  Adjust descendants */
-      q = p->next;
-      while (q != p) 
-	{
-	  traverseInitFixedBL(q->back, count, traln, z);
-	  q = q->next;
-	} 
-    }
-}
+// static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > &tralns)
+// {
+//   // fetch a tree 
+//   auto traln = tralns[0]; 
+//   tree *tr = traln->getTr();
 
 
-static void initTreeWithOneRandom(randCtr_t seed,  vector<shared_ptr<TreeAln> > &tralns)
-{  
-  TreeRandomizer trRandomizer(seed);
-  for(auto &traln : tralns)
-    {
-      trRandomizer.randomizeTree(*traln); 
-      int count = 0; 
-      traverseInitFixedBL( traln->getTr()->start->back, &count, traln, TreeAln::initBL);
-      assert(count  == 2 * traln->getTr()->mxtips - 3);
-    }
-}
+//   int count = 0;       
 
 
+//   for(auto &b : extractBranches )
 
-static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > &tralns)
-{
-  // fetch a tree 
-  auto traln = tralns[0]; 
-  tree *tr = traln->getTr();
-  boolean hasBranchLength =  readTreeWithOrWithoutBL(tr, fh);
+//   // if(hasBranchLength)
 
-  int count = 0;       
-  if(hasBranchLength)
-    traverseInitCorrect(tr->start->back, &count, traln ) ;  
-  else      
-    traverseInitFixedBL(tr->start->back, &count, traln, TreeAln::initBL ); 
 
-  assert(count == 2 * tr->mxtips  -3);       
+//   if(hasBranchLength)
+//     traverseInitCorrect(tr->start->back, &count, traln ) ;  
+//   else      
+//     traverseInitFixedBL(tr->start->back, &count, traln, TreeAln::initBL ); 
 
-  for(nat i = 1 ; i < tralns.size(); ++i)
-    *(tralns[i]) = *traln; 
-}
+//   assert(count == 2 * tr->mxtips  -3);       
+
+//   for(nat i = 1 ; i < tralns.size(); ++i)
+//     *(tralns[i]) = *traln; 
+// }
 
 
 // TODO finalize output files  
@@ -296,27 +353,6 @@ void SampleMaster::validateRunParams()
 }
 
 
-
-void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees )
-{  
-  tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl; 
-#ifdef DEBUG_LNL_VERIFY
-  globals.debugTree = new TreeAln();   
-  globals.debugTree->initializeFromByteFile(cl.getAlnFileName()); 
-  globals.debugTree->enableParsimony();
-#endif
-
-  for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
-    {
-      auto traln =  make_shared<TreeAln>();
-      trees.push_back(traln); 
-      trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
-      trees[i]->enableParsimony();
-    }
-
-}
-
-
 // a developmental mode to integrate over branch lengths
 // #define _GO_TO_INTEGRATION_MODE
 
@@ -347,7 +383,7 @@ void SampleMaster::finalizeRuns()
 {
   for(auto &run : runs)
     {
-      auto chains = run.getChains(); 
+      auto &chains = run.getChains(); 
       for(auto &chain : chains)
 	{
 	  if( chain.getChainHeat() == 1.f)
@@ -362,162 +398,4 @@ void SampleMaster::finalizeRuns()
 }
 
 
-#define STEPS_FOR_LNL 1000
-#define INTEGRATION_GENERATIONS 10000
-#define NR_STEPS 30
-
-#include <sstream>
-#include "proposals/BranchIntegrator.hpp"
-#include "ProposalRegistry.hpp"
-
-void SampleMaster::branchLengthsIntegration()  
-{
-  assert(runs.size() == 1 );   
-  auto &run = runs[0];   
-  auto chains = run.getChains(); 
-  assert(chains.size() == 1); 
-  auto &chain = chains[0]; 
-  
-  stringstream ss; 
-  ss << cl.getRunid() << ".tree.tre" ; 
-
-  ofstream tFile( ss.str());   
-  TreePrinter tp(true, true, false);   
-  TreePrinter tp2(true, true, true); 
-  auto tralnPtr = chain.getTralnPtr(); 
-  auto& traln  = *tralnPtr  ; 
-  tFile << tp.printTree(traln) << endl; 
-  tFile << tp2.printTree(traln) << endl; 
-  tFile.close(); 
-  
-  auto eval = chain.getEvaluatorPtr();
-
-  auto r = make_shared<RandomVariable>(Category::BRANCH_LENGTHS, 0);
-  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
-    r->addPartition(i);
-
-  vector<shared_ptr<RandomVariable> > vars =  {r} ; 
-
-  double lambda   =  10 ; 
-
-
-  vars[0]->setPrior(make_shared< ExponentialPrior>(lambda));
-
-  auto p = unique_ptr<BranchIntegrator>(new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 
-  vector<unique_ptr<AbstractProposal> >  proposals;   
-  proposals.push_back( std::move(p) ); 
-  proposals[0]->addPrimVar(vars[0]); 
-
-  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval );   
-
-  auto branches =  traln.extractBranches();
-  auto ps = integrationChain.getProposalView(); 
-  assert(ps.size() == 1 );   
-  auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
-
-  for(auto &branch : branches)
-    {      
-      double minHere = 1000; 
-      double maxHere = 0; 
-
-      branch.updateLength(traln); 
-      
-      integrator->setToPropose(branch); 
-      
-      stringstream ss; 
-      ss << "samples." << cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
-      ofstream thisOut (ss.str()); 
-      
-      // run the chain to integrate 
-      cout << "integrating branch " << branch << endl; 
-      for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
-	{	  
-	  integrationChain.step();
-	  branch.updateLength(traln); 
-
-	  double length = branch.getInterpretedLength(traln); 
-	  thisOut << length << endl; 
-	  
-	  if(length < minHere)
-	    minHere = length; 
-	  if(maxHere < length )
-	    maxHere = length; 
-	}      
-
-      thisOut.close();
-      
-      // get branch lengths 
-      ss.str(std::string()); 
-      ss << "lnl." << cl.getRunid() << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
-      thisOut.open(ss.str());
-
-      cout << "evaluating branch lengths for " << branch << endl; 
-      
-      if(maxHere != minHere)
-	{
-	  for(double i = minHere; i < maxHere+0.00000001 ; i+= (maxHere-minHere)/ STEPS_FOR_LNL)
-	    {
-	      double tmp = branch.getInternalLength(traln,i); 
-	      traln.setBranchLengthBounded(tmp, 0, branch.findNodePtr(traln)); 
-	      eval->evaluate(traln, branch, false);
-	      double lnl = traln.getTr()->likelihood; 
-	      
-	      thisOut << i << "\t" << setprecision(std::numeric_limits<double>::digits10) << lnl << endl; 
-	    }
-	}
-      else
-	thisOut << minHere << "\t" << "NA" << endl; 
-      thisOut.close(); 
-
-      Branch tmpBranch = branch; 
-      cout << "optimizing the branch using nr" << endl; 
-      ss.str(std::string());
-      ss << "nr-length." << cl.getRunid() << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
-      thisOut.open(ss.str()); 
-
-      double result = 0;  
-      double curVal = branch.getInternalLength(traln,0.1); 
-      double secDerivative = 0; 
-      double firstDerivative = 0; 
-
-      double prevVal = curVal; 
-      for(int i = 0; i < NR_STEPS; ++i )
-	{
-#if HAVE_PLL != 0 
-	  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
-			  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-			  &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
-#else 
-	  makenewzGeneric(traln.getTr(), 
-			  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-			  &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 	  
-#endif
-	  tmpBranch.setLength(result);
-	  thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
-	  prevVal = tmpBranch.getInterpretedLength(traln); 
-	  curVal = result; 
-	} 
-
-      double something = tmpBranch.getInternalLength(traln, prevVal); 
-
-#if HAVE_PLL != 0
-      makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
-		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		      &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
-#else 
-      makenewzGeneric(traln.getTr(), 
-		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		      &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
-#endif
-      
-      thisOut << prevVal << "\t" << firstDerivative << "\t" << secDerivative << endl; 
-
-      thisOut.close(); 
-      
-      // reset 
-      double tmp = branch.getLength();      
-      traln.setBranchLengthBounded(tmp , 0,branch.findNodePtr(traln) );
-    }
-
-  cout << "finished!" << endl; 
-}
+#include "IntegrationModuleImpl.hpp"

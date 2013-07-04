@@ -38,8 +38,8 @@ public:
   void branchLengthsIntegration()  ;  
 
 private: 
-  void initTrees(vector<shared_ptr<TreeAln> > &trees ); 
   bool convergenceDiagnostic(); 
+  void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh); 
 
 private:			// ATTRIBUTES 
   vector<CoupledChains> runs; // TODO bad design: just want to avoid getting memory leaks
