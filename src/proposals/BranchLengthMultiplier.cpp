@@ -42,8 +42,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   else 
     drawnMultiplier = 1; 
 
-  /* just doing it for one right here */
-  traln.setBranchLengthBounded(newZ, 0, p); 
+  traln.setBranch(Branch(p->number, p->back->number, newZ)); 
 
   double realMultiplier = log(newZ) / log(oldZ); 
   updateHastings(hastings, realMultiplier, name); 
@@ -62,9 +61,7 @@ void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,Tre
  
 void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  nodeptr p = savedBranch.findNodePtr(traln); 
-  double tmp = savedBranch.getLength(); 
-  traln.setBranchLengthBounded(tmp , 0,p);  
+  traln.setBranch(savedBranch); 
 }
 
 

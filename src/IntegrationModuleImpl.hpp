@@ -59,8 +59,7 @@ void SampleMaster::branchLengthsIntegration()
       double minHere = 1000; 
       double maxHere = 0; 
 
-      branch.updateLength(traln); 
-      
+      traln.setBranch(branch); 
       integrator->setToPropose(branch); 
       
       stringstream ss; 
@@ -72,7 +71,7 @@ void SampleMaster::branchLengthsIntegration()
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
 	{	  
 	  integrationChain.step();
-	  branch.updateLength(traln); 
+	  traln.setBranch(branch); 	  
 
 	  double length = branch.getInterpretedLength(traln); 
 	  thisOut << length << endl; 
@@ -97,7 +96,11 @@ void SampleMaster::branchLengthsIntegration()
 	  for(double i = minHere; i < maxHere+0.00000001 ; i+= (maxHere-minHere)/ STEPS_FOR_LNL)
 	    {
 	      double tmp = branch.getInternalLength(traln,i); 
-	      traln.setBranchLengthBounded(tmp, 0, branch.findNodePtr(traln)); 
+	      Branch b = branch; 
+	      b.setLength(tmp); 
+	      traln.setBranch(b); 
+	      
+	      // traln.setBranchLengthBounded(tmp, 0, branch.findNodePtr(traln)); 
 	      eval->evaluate(traln, branch, false);
 	      double lnl = traln.getTr()->likelihood; 
 	      
@@ -154,8 +157,7 @@ void SampleMaster::branchLengthsIntegration()
       thisOut.close(); 
       
       // reset 
-      double tmp = branch.getLength();      
-      traln.setBranchLengthBounded(tmp , 0,branch.findNodePtr(traln) );
+      traln.setBranch(branch); 
     }
 
   cout << "finished!" << endl; 

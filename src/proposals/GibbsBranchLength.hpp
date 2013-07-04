@@ -24,7 +24,7 @@ public:
     
     GibbsProposal::drawFromEsitmatedPosterior(b, *eval, traln, rand, initBl, 5, hastings); 
     double newZ = b.getLength();
-    traln.setBranchLengthBounded(newZ, 0, b.findNodePtr(traln)); 
+    traln.setBranch(b);    
 
     auto brPr = primVar[0]->getPrior();
     prior.updateBranchLengthPrior(traln,initBl, newZ, brPr);

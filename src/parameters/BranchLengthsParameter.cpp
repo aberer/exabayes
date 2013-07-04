@@ -3,7 +3,7 @@
 void BranchLengthsParameter::applyParameter(TreeAln& traln, std::vector<nat> model, ParameterContent &content) const
 {
   for(auto &b : savedContent.branches)
-    b.applyToTree(traln);
+    traln.setBranch(b); 
 }
 
 

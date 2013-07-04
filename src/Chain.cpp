@@ -85,21 +85,20 @@ void Chain::resume()
   assert(traln->getNumBranches() == 1); 
   state.accessTopology().restoreTopology(*traln); 
 
+  // TODO replace this with the variable framework 
+
   /* restore model parameters */
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
       Partition& partInfo = state.accessPartition(i);
       double alpha = partInfo.getAlpha(); 
-      traln->setAlphaBounded(alpha,i) ; 
+      traln->setAlpha(alpha, i ); 
       
       std::vector<double> revMat = state.accessPartition(i).getRevMat();       
-      traln->setRevMatBounded(revMat, i); 
+      traln->setRevMat(revMat, i); 
       
       std::vector<double> stateFreqs = state.accessPartition(i).getStateFreqs(); 
-      traln->setFrequenciesBounded(stateFreqs, i); 
-
-      traln->initRevMat(i);
-      traln->discretizeGamma(i);	 
+      traln->setFrequencies(stateFreqs, i); 
     } 
   
   evaluator->evaluateFullNoBackup(*traln); 

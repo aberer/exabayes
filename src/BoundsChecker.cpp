@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "BoundsChecker.hpp"
 
 // here we initialize the max/min values for our various
@@ -16,7 +18,15 @@ const double BoundsChecker::freqMin = 0.001;
 
 bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )  
 {
-  return true; 
+  bool result = true; 
+  double sum = 0; 
+  for(auto &f : freqs)    
+    {
+      result &=  freqMin < f ; 
+      sum += f; 
+    }
+  assert( fabs(sum  - 1.0 ) < 1e-6 ); 
+  return result; 
 }
 
 bool BoundsChecker::checkBranch( const Branch &branch ) 
@@ -29,6 +39,7 @@ bool BoundsChecker::checkRevmat( const std::vector<double> &rates)
   bool result = true; 
   for(auto &r : rates)
     result &=  (  r  <=  BoundsChecker::rateMax)  && ( BoundsChecker::rateMin <= r ) ; 
+  assert(*(rates.rbegin()) == 1.0); 
   return result; 
 }
  

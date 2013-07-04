@@ -112,8 +112,11 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       divideBranchLengthsWithRatio( zOld, ratio, a, b); 
       traln.clipNode(p->next,iP, a);   
       traln.clipNode(p->next->next,iP2, b); 
+
+#if 0 
       traln.setBranchLengthBounded(a, 0, p->next );
       traln.setBranchLengthBounded(b, 0, p->next->next );
+#endif
 
 
       
@@ -156,10 +159,11 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
 
       traln.clipNode(p->next, iP, a); 
       traln.clipNode(p->next->next, iP2, b); 
-      traln.setBranchLengthBounded(a,0,p->next);
-      traln.setBranchLengthBounded(b,0,p->next->next);
       
 #if 0 
+      traln.setBranchLengthBounded(a,0,p->next);
+      traln.setBranchLengthBounded(b,0,p->next->next);
+
       newViewGenericWrapper(traln,p,FALSE); 
       evaluateGenericWrapper(traln,p,FALSE  ); 
 #endif

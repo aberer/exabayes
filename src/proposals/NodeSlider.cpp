@@ -80,8 +80,8 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &tra
 
 void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  oneBranch.applyToTree(traln); 
-  otherBranch.applyToTree(traln); 
+  traln.setBranch(oneBranch); 
+  traln.setBranch(otherBranch); 
 }
 
 

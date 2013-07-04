@@ -15,9 +15,6 @@
 
 nat numStateToNumInTriangleMatrix(int numStates) ; 
 
-class LnlRestorer; 
-class Partition; 
-
 /** 
     @brief mostly wraps the legacy tr and partition list     
 */
@@ -36,7 +33,7 @@ public:
 
 
   /////////////////////////////////////
-  // setters / getters / observers   //
+  //           OBSERVERS             //
   /////////////////////////////////////
   pInfo* getPartition(int model) const;
   tree* getTr() {return &tr;}
@@ -45,8 +42,18 @@ public:
   int getNumberOfPartitions() const;   
   nat getNumberOfTaxa() const {return getTr()->mxtips; }
   nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
-  // double getBranchLength(nodeptr p, int model) const {return p->z[model] ;  }
+
   
+
+  ///////////////
+  // MODIFIERS //
+  ///////////////
+  void setFrequencies(const std::vector<double> &values, int model);
+  void setRevMat(const std::vector<double> &values, int model);
+  void setAlpha(double alpha,  int model);   
+  void setBranch(const Branch& b);   
+
+   
 
   /** @notice returns the revmat, s.t. rates sum up to 1 */ 
   std::vector<double> getRevMat(int model) const ;   
@@ -55,7 +62,7 @@ public:
   bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
   Branch getBranch(nodeptr p) const { return Branch(p->number, p->back->number, p->z[0]); }
   nodeptr getNode(nat elem) const ; 
-std::vector<Branch> extractBranches() const ; 
+  std::vector<Branch> extractBranches() const ; 
   double getTreeLengthExpensive() const;
 
 #if HAVE_PLL != 0 
@@ -65,24 +72,28 @@ std::vector<Branch> extractBranches() const ;
 
 
   // MODIFIERS 
-  void clipNode(nodeptr p, nodeptr q, double &z); 
+  void clipNode(nodeptr p, nodeptr q, double z);   
   void clipNodeDefault(nodeptr p, nodeptr q); 
   void enableParsimony();
   void unlinkTree();
   void initializeFromByteFile(std::string  byteFileName);   
 
-
+  // TODO private 
   void initRevMat(int model); 
-  nodeptr getUnhookedNode(int number);
   void discretizeGamma(int model); 
 
-  // TODO 
-  void setFrequenciesBounded(std::vector<double> &newValues, int model ); 
-  void setRevMatBounded(std::vector<double> &newValues, int model); 
-  void setBranchLengthBounded(double &newValue, int model, nodeptr p); 
-  void setAlphaBounded(double &newValue, int model); 
+  nodeptr getUnhookedNode(int number);
 
-  // getters 
+  // TODO 
+  // void setFrequenciesBounded(std::vector<double> &newValues, int model ); 
+  // void setRevMatBounded(std::vector<doub2le> &newValues, int model); 
+  // void setBranchLengthBounded(double &newValue, int model, nodeptr p); 
+  // void setAlphaBounded(double &newValue, int model); 
+
+
+  ///////////////
+  // observers //
+  ///////////////
   boolean& accessExecModel(int model); 
   double& accessPartitionLH(int model); 
   int accessExecModel(int model) const; 
@@ -92,24 +103,30 @@ std::vector<Branch> extractBranches() const ;
   static const double initBL;  	// init values 
 
 
-private:   
-  double getTreeLengthHelper(nodeptr p) const;
-  void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const ; 
-  
-  void initDefault();
-  tree tr;		// TODO replace with an object for cleanup 
-  
-  bool parsimonyEnabled;   
-
+private: 			// METHODS
 #if HAVE_PLL != 0
-  // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
-  partitionList partitions; 
   void initializeTreePLL(std::string byteFileName);
   void initializePartitionsPLL(std::string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
+  double getTreeLengthHelper(nodeptr p) const;
+  void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const ; 
+  void initDefault();
 
+
+
+private: 			// ATTRIBUTES 
+#if HAVE_PLL != 0 
+  // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
+  partitionList partitions; 
+#endif
+  tree tr;		// TODO replace with an object for cleanup   
+  bool parsimonyEnabled;   
+
+
+
+  // friends 
   friend std::ostream& operator<< (std::ostream& out,  TreeAln&  traln);
-  
+
   //////////////////
   // EXPERIMENTAL //
   //////////////////

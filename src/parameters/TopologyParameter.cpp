@@ -3,8 +3,10 @@
 
 void TopologyParameter::applyParameter(TreeAln& traln, std::vector<nat> model, ParameterContent &content) const
 {
-  for(auto &b : savedContent.branches)
-    b.applyToTree(traln);
+  // this is not what we want! topology should be restored! 
+  assert(0); 
+  for(auto & b : savedContent.branches)
+    traln.setBranch(b); 
 }
 
 

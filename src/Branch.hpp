@@ -11,10 +11,16 @@ class TreeAln;
 class Branch
 {
 public: 
+  /////////////////
+  // life cycle  //
+  /////////////////
   Branch(nat a = 0, nat b = 0, double length = 0.0); 
+
+  ///////////////
+  // observers //
+  ///////////////
   double getInterpretedLength(const TreeAln &traln) const; 
   double getInternalLength(const TreeAln &traln, double length) const; 
-
   Branch getInverted() const { return Branch(thatNode, thisNode, length); }
   bool equalsUndirected(const Branch &rhs) const ;   
   nat getPrimNode() const {return thisNode; } 
@@ -23,8 +29,6 @@ public:
   void setSecNode(nat node) {thatNode = node; }  
   void setLength(double intLength){length = intLength; }
   double getLength () const {return length; }
-
-  void applyToTree( TreeAln &traln) const ; 
   bool exists(const TreeAln &traln) const; 
   Branch getThirdBranch(const TreeAln &traln, const Branch& rhs ) const; 
   nat getIntersectingNode(const Branch  &rhs) const ; 
@@ -33,16 +37,20 @@ public:
   nat getCommonNode(const Branch &rhs ) const; 
   nat getOtherNode(nat node) const {assert(node == thisNode || node ==  thatNode) ; return thisNode == node ? thatNode : thisNode; }
   bool isTipBranch(const TreeAln &traln) const; 
-  void updateLength(const TreeAln &traln) ; 
 
+  ////////////////
+  // modifiers  //
+  ////////////////
+  // void applyToTree( TreeAln &traln) const ; 
+
+
+  // friends 
   friend std::ostream& operator<<(std::ostream &out, const Branch& br); 
 
 private: 
   nat thisNode; 
-  nat thatNode; 
-  
+  nat thatNode;   
   double length; 
-
 }; 
 
 

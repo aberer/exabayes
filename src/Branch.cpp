@@ -58,6 +58,8 @@ bool Branch::equalsUndirected(const Branch &rhs) const
 }
 
 
+
+// TODO replace as well 
 double Branch::getInterpretedLength(const TreeAln &traln) const
 { 
   assert(traln.getNumBranches() == 1 ); 
@@ -81,15 +83,6 @@ nat Branch::getCommonNode(const Branch &rhs ) const
   else 
     return 0;   
 } 
-
-
-void Branch::applyToTree( TreeAln &traln) const
-{
-  nodeptr p = findNodePtr(traln); 
-  double tmp = length; 
-  // =/ 
-  traln.clipNode(p, p->back, tmp); 
-}
 
 
 Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
@@ -135,11 +128,3 @@ nat Branch::getIntersectingNode(const Branch  &rhs) const
       return 0; 
     }
 } 
-
-
-void Branch::updateLength(const TreeAln &traln) 
-{
-  auto p = findNodePtr(traln); 
-  length = p->z[0]; 
-}
- 

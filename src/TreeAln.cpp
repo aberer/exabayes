@@ -153,13 +153,9 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
       // TODO aa? 
 
       pInfo *partition =  getPartition(i);
-
       assert(partition->dataType == DNA_DATA);
-
-      std::vector<double> tmp(partition->states, 1.0 / (double)partition->states ); 
-      setFrequenciesBounded(tmp,i);
-      std::vector<double>tmp2( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)); 
-      setRevMatBounded(tmp2,i);
+      setFrequencies(std::vector<double>(partition->states, 1.0 / (double)partition->states ), i); 
+      setRevMat(std::vector<double>( numStateToNumInTriangleMatrix(partition->states), 1.0 / (double) numStateToNumInTriangleMatrix(partition->states)), i); 
     }
 }
 
@@ -228,6 +224,9 @@ void TreeAln::enableParsimony()
 }
 
 
+
+
+
 /** 
     @brief standard values for the tree 
 */ 
@@ -256,19 +255,18 @@ void TreeAln::initDefault()
 
 void TreeAln::clipNodeDefault(nodeptr p, nodeptr q )
 {
-  double tmp = TreeAln::initBL; 
-  clipNode(p,q, tmp);
+  clipNode(p,q, TreeAln::initBL);
 }
 
 
-void TreeAln::clipNode(nodeptr p, nodeptr q, double &z)
+void TreeAln::clipNode(nodeptr p, nodeptr q, double z)
 {
   p->back = q; 
   q->back = p; 
   assert(getNumBranches() == 1);   
 
-  setBranchLengthBounded(z,0,p);
-  setBranchLengthBounded(z,0,q);
+  Branch b(p->number, q->number, z); 
+  setBranch(b); 
 }
 
 
@@ -506,80 +504,64 @@ void TreeAln::initRevMat(int model)
 }
 
 
-
-void TreeAln::setFrequenciesBounded(std::vector<double> &newValues, int model )
-{  
-  int changed = 0; 
-  double sum =0 ; 
-  for(double &v : newValues)
-    if(v < BoundsChecker::freqMin)
-      {
-	v = BoundsChecker::freqMin; 
-	changed++; 
-      }
-    else 
-      sum += v; 
-
-  sum += ( changed * BoundsChecker::freqMin ); 
-  for(double &v : newValues)
-    if(v != BoundsChecker::freqMin)
-      v /= sum; 
-
-  pInfo *partition = getPartition(model); 
-  for(nat i = 0; i < newValues.size(); ++i)
-    partition->frequencies[i] = newValues[i];   
-  
-  sum = 0; 
-  for(auto &v : newValues)
-    sum += v; 
-  assert(fabs (sum - 1.0) < 1e-6  );  
+void TreeAln::setFrequencies(const std::vector<double> &values, int model)
+{
+  assert( BoundsChecker::checkFrequencies(values) ) ;    
+  auto partition = getPartition(model); 
+  memcpy( partition->frequencies, &(values[0]), partition->states * sizeof(double)); 
+  initRevMat(model);   
 }
 
 
-void TreeAln::setRevMatBounded(std::vector<double> &newValues, int model)
-{ 
-  std::vector<double> normValues = newValues; 
-
-  for(auto &v : normValues)
-    v /= normValues[normValues.size()-1]; 
-  
-  double sum = 0; 
-  for(double &v : normValues)
-    {
-      if(v < BoundsChecker::rateMin)
-	v = BoundsChecker::rateMin; 
-      else if(BoundsChecker::rateMax < v )
-	v = BoundsChecker::rateMax; 
-      sum += v ; 
-    }
-
-  pInfo *partition = getPartition(model); 
-  for(nat i = 0; i < newValues.size(); ++i)
-    partition->substRates[i] = newValues[i]; 
+void TreeAln::setRevMat(const std::vector<double> &values, int model)
+{
+  assert( BoundsChecker::checkRevmat(values) ); 
+  auto partition = getPartition(model) ; 
+  memcpy(partition->substRates, &(values[0]), numStateToNumInTriangleMatrix(  partition->states) * sizeof(double)); 
+  initRevMat(model); 
 }
+
+
+
+void TreeAln::setBranch(const Branch& branch)
+{
+  assert(BoundsChecker::checkBranch(branch)); 
+  auto p = branch.findNodePtr(*this);
+  p->z[0] = p->back->z[0] = branch.getLength();
+}
+
+
+void TreeAln::setAlpha(double alpha,  int model)
+{
+  assert(BoundsChecker::checkAlpha(alpha)); 
+  auto p = getPartition(model); 
+  p->alpha = alpha; 
+  discretizeGamma(model); 
+}
+
 
 /** 
     @brief save setting method for a branch length
 
     @param newValue -- INTERNAL branch length
  */  
-void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
-{
-#if TODO 
-  double oldZ = p->z[model] ; 
-#endif
-  if(newValue < BoundsChecker::zMin)
-    newValue = BoundsChecker::zMin; 
-  if (BoundsChecker::zMax < newValue)
-    newValue = BoundsChecker::zMax; 
+// void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
+// {
+// #if TODO 
+//   double oldZ = p->z[model] ; 
+// #endif
+//   if(newValue < BoundsChecker::zMin)
+//     newValue = BoundsChecker::zMin; 
+//   if (BoundsChecker::zMax < newValue)
+//     newValue = BoundsChecker::zMax; 
 
-#if TODO 
-  if(newValue != oldZ)
-    treeLength *= newValue / oldZ ; 
-#endif
+// #if TODO 
+//   if(newValue != oldZ)
+//     treeLength *= newValue / oldZ ; 
+// #endif
   
-  p->z[model] = p->back->z[model] = newValue; 
-}
+//   p->z[model] = p->back->z[model] = newValue; 
+// }
 
 
 /** 
@@ -587,16 +569,16 @@ void TreeAln::setBranchLengthBounded(double &newValue, int model, nodeptr p)
     @return newValue after check 
     
  */  
-void TreeAln::setAlphaBounded(double &newValue, int model)
-{
-  if(newValue < BoundsChecker::alphaMin)
-    newValue = BoundsChecker::alphaMin; 
-  if(BoundsChecker::alphaMax < newValue )
-    newValue = BoundsChecker::alphaMax; 
+// void TreeAln::setAlphaBounded(double &newValue, int model)
+// {
+//   if(newValue < BoundsChecker::alphaMin)
+//     newValue = BoundsChecker::alphaMin; 
+//   if(BoundsChecker::alphaMax < newValue )
+//     newValue = BoundsChecker::alphaMax; 
   
-  pInfo *partition = getPartition(model);
-  partition->alpha =  newValue; 
-}
+//   pInfo *partition = getPartition(model);
+//   partition->alpha =  newValue; 
+// }
 
 
 /**
@@ -765,7 +747,6 @@ void TreeAln::setBranchLengthUnsafe(Branch b )
 } 
 
 
-
 std::vector<double> TreeAln::getRevMat(int model) const 
 {
   std::vector<double> result; 
@@ -782,6 +763,7 @@ std::vector<double> TreeAln::getRevMat(int model) const
   return result; 
 }
 
+
 std::vector<double> TreeAln::getFrequencies(int model) const
 {
   std::vector<double> result; 
@@ -790,6 +772,8 @@ std::vector<double> TreeAln::getFrequencies(int model) const
     result.push_back(partition->frequencies[i]); 
   return result; 
 }
+
+
 
 bool TreeAln::revMatIsImmutable(int model) const
 {
@@ -801,11 +785,6 @@ bool TreeAln::revMatIsImmutable(int model) const
     
   return partition->states == 20 && partition->protModels != GTR; 
 } 
-
-
-
-
-
 
 
 nat numStateToNumInTriangleMatrix(int numStates)  
@@ -825,3 +804,6 @@ nodeptr TreeAln::getNode(nat elem) const
 
   return  getTr()->nodep[elem] ; 
 }
+
+
+

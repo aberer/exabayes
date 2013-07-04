@@ -70,7 +70,7 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 	  b.setLength( hasBranchLength ? 
 		       ( - exp(b.getLength() / tr->fracchange)) 
 		       : TreeAln::initBL ); 
-	  b.applyToTree(*tralnPtr); 
+	  tralnPtr->setBranch(b); 
 	}
     }
 

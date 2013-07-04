@@ -120,7 +120,7 @@ void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hasti
   double oldV = traln.getBranch(p).getLength(); 
   double newV = pow(oldV, multi); 
 
-  traln.setBranchLengthBounded(newV, 0, p); 
+  traln.setBranch(Branch(p->number, p->back->number, newV));
   
   double realM = log(newV) /  log(oldV);   
   AbstractProposal::updateHastings(hastings, realM, name); 

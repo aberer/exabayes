@@ -21,7 +21,8 @@ void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, node
   tree *tr = traln.getTr();
   double newZ = pow( traln.getBranch(p).getLength(),multiHere); 
 
-  traln.setBranchLengthBounded(newZ, 0, p); 
+  Branch tmp(p->number, p->back->number, newZ); 
+  traln.setBranch(tmp); 
 
   if(isTip(p->number, tr->mxtips))
     return; 
