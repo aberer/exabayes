@@ -19,7 +19,7 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
 void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere)
 {
   tree *tr = traln.getTr();
-  double newZ = pow( traln.getBranchLength( p,0),multiHere); 
+  double newZ = pow( traln.getBranch(p).getLength(),multiHere); 
 
   traln.setBranchLengthBounded(newZ, 0, p); 
 

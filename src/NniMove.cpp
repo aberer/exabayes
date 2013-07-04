@@ -117,7 +117,7 @@ void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hasti
   nodeptr p = branch.findNodePtr(traln); 
 
   double multi = rand.drawMultiplier(parameter); 
-  double oldV = traln.getBranchLength( p,0); 
+  double oldV = traln.getBranch(p).getLength(); 
   double newV = pow(oldV, multi); 
 
   traln.setBranchLengthBounded(newV, 0, p); 

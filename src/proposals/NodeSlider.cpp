@@ -18,8 +18,8 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 
   nodeptr p = oneBranch.findNodePtr(traln); 
   nodeptr q = rand.drawRandDouble01() < 0.5  ? p->next->back : p->next->next->back; 
-  oneBranch.setLength(traln.getBranchLength(p,0)); 
-  otherBranch = Branch(p->number, q->number, traln.getBranchLength(q,0)); 
+  oneBranch.setLength(traln.getBranch(p).getLength()); 
+  otherBranch = Branch(p->number, q->number, traln.getBranch(q).getLength()); 
   
   double oldA = oneBranch.getLength(),
     oldB = otherBranch.getLength();

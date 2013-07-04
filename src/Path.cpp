@@ -80,9 +80,8 @@ void Path::saveBranchLengthsPath(const TreeAln& traln)
 
   for(auto& b : stack)
     {
-      nodeptr p = b.findNodePtr(traln);  
-      double tmp = traln.getBranchLength( p,0); 
-      b.setLength( tmp) ; 
+      nodeptr p = b.findNodePtr(traln);        
+      b.setLength( traln.getBranch(p).getLength()) ; 
     }
 }
 
@@ -111,7 +110,7 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double par
   nodeptr p = b.findNodePtr(traln); 
   double multiplier = rand.drawMultiplier(parameter); 
 
-  double oldZ = traln.getBranchLength(p,0);
+  double oldZ = traln.getBranch(p).getLength(); 
   double newZ = multiplier * oldZ; 
 
   traln.clipNode(p,p->back, newZ);   
@@ -121,6 +120,7 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double par
   double realMultiplier = log(newZ) / log(oldZ);    
   AbstractProposal::updateHastings(hastings, realMultiplier, "pathMod");; 
 }
+
 
 
 void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior) const 

@@ -44,7 +44,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
   for(int i = 0; i < traln.getNumBranches(); ++i)
-    zqr[i] = traln.getBranchLength( r,0);   
+    zqr[i] = traln.getBranch(r).getLength();   
   traln.clipNode(q,r, q->z[0]);
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 

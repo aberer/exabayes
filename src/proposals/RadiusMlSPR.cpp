@@ -107,7 +107,7 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       nodeptr 
 	iP = q->next,    
 	iP2 = q->next->back; 
-      double zOld = traln.getBranchLength(iP, 0),
+      double zOld = traln.getBranch(iP).getLength(),
 	a,b; 
       divideBranchLengthsWithRatio( zOld, ratio, a, b); 
       traln.clipNode(p->next,iP, a);   
@@ -150,7 +150,7 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       nodeptr iP = q->next->next, 
 	iP2 = q->next->next->back; 
 
-      double zOrig = traln.getBranchLength(iP,0),
+      double zOrig = traln.getBranch(iP).getLength(),
 	a,b; 
       divideBranchLengthsWithRatio( zOrig, ratio, a, b); 
 

@@ -32,7 +32,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 
   assert(traln.getNumBranches() == 1); 
 
-  double oldZ = traln.getBranchLength( p,0);
+  double oldZ = traln.getBranch(p).getLength();
   savedBranch.setLength( oldZ); 
 
  double newZ = oldZ; 

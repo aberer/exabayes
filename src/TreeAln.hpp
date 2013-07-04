@@ -26,14 +26,18 @@ class TreeAln
 {
 
 public: 
-  // LIFE CYCLE 
+   /////////////////
+   // life cycle  //
+   /////////////////
   TreeAln();
   ~TreeAln();
   TreeAln& operator=( TreeAln &rhs); 
   TreeAln(const TreeAln &tmp) = delete ; 
 
 
-  // setters / getters / observers  
+  /////////////////////////////////////
+  // setters / getters / observers   //
+  /////////////////////////////////////
   pInfo* getPartition(int model) const;
   tree* getTr() {return &tr;}
   const tree* getTr() const{return &tr; }
@@ -41,8 +45,11 @@ public:
   int getNumberOfPartitions() const;   
   nat getNumberOfTaxa() const {return getTr()->mxtips; }
   nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
-  double getBranchLength(nodeptr p, int model) const {return p->z[model] ;  }
-  std::vector<double> getRevMat(int model) const ; 
+  // double getBranchLength(nodeptr p, int model) const {return p->z[model] ;  }
+  
+
+  /** @notice returns the revmat, s.t. rates sum up to 1 */ 
+  std::vector<double> getRevMat(int model) const ;   
   std::vector<double> getFrequencies(int model) const; 
   double getAlpha(int model) const {pInfo *partition = getPartition(model) ; return partition->alpha; } 
   bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
@@ -59,15 +66,12 @@ public:
   void clipNodeDefault(nodeptr p, nodeptr q); 
   void enableParsimony();
   void unlinkTree();
-
+  void initializeFromByteFile(std::string  byteFileName);   
 
 
   void initRevMat(int model); 
   nodeptr getUnhookedNode(int number);
   void discretizeGamma(int model); 
-  void initializeFromByteFile(std::string  byteFileName);   
-
-
 
   // TODO 
   void setFrequenciesBounded(std::vector<double> &newValues, int model ); 
@@ -94,9 +98,6 @@ public:
   Branch drawBranchUniform_helper(Randomness &rand, nat curNumTax) const ; 
   Branch drawBranchUniform(Randomness &rand) const ; 
 
-  bool usingPerSiteRates()  { return tr.rateHetModel == GAMMA;  } 
-  void enablePerSiteRates() {  tr.rateHetModel = CAT; } 
-
 private:   
   double getTreeLengthHelper(nodeptr p) const;
   void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const ; 
@@ -115,14 +116,19 @@ private:
 
 
   friend std::ostream& operator<< (std::ostream& out,  TreeAln&  traln);
-
-  // EXPERIMENTAL
+  
+  //////////////////
+  // EXPERIMENTAL //
+  //////////////////
 public: 
   // BEGIN collapse test 
   void collapseBranch(Branch b); 
   bool isCollapsed(Branch b) ; 
   void setBranchLengthUnsafe(Branch b ) ; 
   // END
+
+  bool usingPerSiteRates()  { return tr.rateHetModel == GAMMA;  } 
+  void enablePerSiteRates() {  tr.rateHetModel = CAT; } 
 
 };  
 

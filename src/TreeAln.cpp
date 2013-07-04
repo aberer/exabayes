@@ -765,6 +765,7 @@ void TreeAln::setBranchLengthUnsafe(Branch b )
 } 
 
 
+
 std::vector<double> TreeAln::getRevMat(int model) const 
 {
   std::vector<double> result; 
