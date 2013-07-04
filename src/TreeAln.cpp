@@ -450,47 +450,78 @@ pInfo* TreeAln::getPartition(int model)  const
 
 
 // this is BS 
-int TreeAln::accessExecModel(int model) const
-{
-#if HAVE_PLL != 0
-  return partitions.partitionData[model]->executeModel; 
-#else 
-  return tr.executeModel[model]; 
-#endif
-}
+// int TreeAln::accessExecModel(int model) const
+// {
+// #if HAVE_PLL != 0
+//   return partitions.partitionData[model]->executeModel; 
+// #else 
+//   return tr.executeModel[model]; 
+// #endif
+// }
 
 
-double TreeAln::accessPartitionLH(int model) const 
-{
-#if HAVE_PLL != 0
-  return partitions.partitionData[model]->partitionLH; 
+// double TreeAln::accessPartitionLH(int model) const 
+// {
+// #if HAVE_PLL != 0
+//   return partitions.partitionData[model]->partitionLH; 
+// #else  
+//   return tr.perPartitionLH[model]; 
+// #endif
+// }
+
+
+
+std::vector<bool> TreeAln::getExecModel() const 
+{ 
+  std::vector<bool> result; 
+  for(int i = 0; i < getNumberOfPartitions(); ++i)
+    {
+#if HAVE_PLL != 0  
+      result.push_back(partitions.partitionData[i]->executeModel); 
 #else  
-  return tr.perPartitionLH[model]; 
+      result.push_back(tr.executeModel[i]); 
 #endif
+    }
+   return result; 
 }
-
-
-
-
-// this is BS 
-int& TreeAln::accessExecModel(int model)
+ 
+void TreeAln::setExecModel(const std::vector<bool>  &modelInfo)
 {
-#if HAVE_PLL != 0
-  return partitions.partitionData[model]->executeModel; 
+  for(int i = 0; i < getNumberOfPartitions(); ++i)
+    {
+#if HAVE_PLL != 0 
+      partitions.partitionData[i]->executeModel =  modelInfo[i] ?  true : false; 
 #else 
-  return tr.executeModel[model]; 
+      tr.executeModel[i] = modelInfo[i]; 
 #endif
+    }
 }
 
-
-double& TreeAln::accessPartitionLH(int model)
+std::vector<double> TreeAln::getPartitionLnls() const
 {
-#if HAVE_PLL != 0
-  return partitions.partitionData[model]->partitionLH; 
-#else  
-  return tr.perPartitionLH[model]; 
+  std::vector<double> result; 
+  for(int i = 0; i < getNumberOfPartitions(); ++i)
+    {
+#if HAVE_PLL != 0 
+      result.push_back(partitions.partitionData[i]->partitionLH); 
+#else 
+      result.push_back(tr->perPartitionLH[i]); 
 #endif
+    }
+  return result; 
 }
+ 
+void TreeAln::setPartitionLnls(const std::vector<double> partitionLnls)  
+{
+  for(int i = 0; i < getNumberOfPartitions(); ++i)
+    {
+#if HAVE_PLL != 0
+      partitions.partitionData[i]->partitionLH = partitionLnls[i]; 
+#else 
+      tr.perPartitionLH[i];  = partitionLnls[i]; 
+#endif
+    }
+} 
 
 
 void TreeAln::initRevMat(int model)
@@ -763,6 +794,3 @@ nodeptr TreeAln::getNode(nat elem) const
 
   return  getTr()->nodep[elem] ; 
 }
-
-
-

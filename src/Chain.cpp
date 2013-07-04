@@ -198,7 +198,11 @@ void Chain::printParams(FILE *fh)
 
   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
-      fprintf(fh, "\t%f\t%f", traln->accessPartitionLH( i),traln->getAlpha(i)) ; 
+      // TODO rewrite 
+      fprintf(fh, "\t%f\t%f", 
+	      0.,
+// traln->accessPartitionLH( i),
+	      traln->getAlpha(i)) ; 
 
       auto revMat = traln->getRevMat(i);
       for(auto r : revMat)

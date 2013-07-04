@@ -76,10 +76,10 @@ public:
   ///////////////
   // observers //
   ///////////////
-  boolean& accessExecModel(int model); 
-  double& accessPartitionLH(int model); 
-  int accessExecModel(int model) const; 
-  double accessPartitionLH(int model) const ; 
+  std::vector<bool> getExecModel() const ; 
+  std::vector<double> getPartitionLnls() const; 
+  void setPartitionLnls(const std::vector<double> partitionLnls) ; 
+  void setExecModel(const std::vector<bool>  &modelInfo); 
 
   static const double zZero;   
   static const double initBL;  	// init values 

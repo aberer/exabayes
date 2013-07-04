@@ -41,14 +41,17 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)
   nodeptr p = evalBranch.findNodePtr(traln); 
   int numberToExecute = 0; 
   int modelToEval = ALL_MODELS; 
+
+  auto execModel = traln.getExecModel();
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      if(traln.accessExecModel(i))
+      if(execModel[i])
 	{
-	  numberToExecute++; 
+	  numberToExecute++;
 	  modelToEval = i; 
 	}
     }
+
 
   assert(numberToExecute == 1 || numberToExecute == traln.getNumberOfPartitions()); 
   if(numberToExecute > 1)
@@ -180,16 +183,12 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vecto
   
   auto tr = traln.getTr(); 
   nat numPart = traln.getNumberOfPartitions(); 
+  auto perPartitionLH = traln.getPartitionLnls();
 
-  std::vector<double> perPartitionLH; 
-  for(nat i = 0; i < numPart; ++i )
-    perPartitionLH.push_back(traln.accessPartitionLH(i));
-  
-  for(nat i = 0; i < numPart; ++i)
-    traln.accessExecModel(i) = FALSE; 
-  
+  std::vector<bool> toExecute(numPart, false );   
   for(auto m : partitions)
-    traln.accessExecModel(m) = TRUE; 
+    toExecute[m] = true; 
+  traln.setExecModel(toExecute); 
 
   disorientTree(traln, root); 
   
@@ -201,19 +200,16 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vecto
 
   exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
   
+  auto pLnl = traln.getPartitionLnls();
   for(auto m : partitions )
-    perPartitionLH[m] = traln.accessPartitionLH(m); 
+    perPartitionLH[m] = pLnl[m]; 
 
-  for(nat i = 0; i < numPart; ++i )
-    traln.accessPartitionLH(i) = perPartitionLH[i]; 
+  traln.setPartitionLnls(perPartitionLH); 
 
   tr->likelihood = 0; 
-  for(nat i = 0; i < numPart; ++i)
-    {
-      tr->likelihood += traln.accessPartitionLH(i); 
-      traln.accessExecModel(i) = TRUE; 
-    }  
-  
+  for_each(perPartitionLH.begin(), perPartitionLH.end(), [&](double d){ tr->likelihood += d; }); 
+  traln.setExecModel(std::vector<bool>(numPart, true));
+
 #ifdef DEBUG_LNL_VERIFY
   expensiveVerify(traln);   
 #endif

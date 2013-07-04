@@ -175,17 +175,17 @@ void LnlRestorer::restoreArrays(TreeAln& traln)
 
   loadOrientation(traln);
 
+
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = traln.getPartition( i); 
       for(nat j = 0; j < 2 * traln.getNumberOfTaxa(); ++j)
 	partition->globalScaler[j] =  partitionScaler[i][j]; 
-      // memcpy(partition->globalScaler, partitionScaler[i], sizeof(nat) * 2 * traln.getTr()->mxtips);     
     }
 
   tr->likelihood = prevLnl; 
-  for(int i = 0; i < numPart; ++i)
-    traln.accessPartitionLH(i) = partitionLnl[i]; 
+
+  traln.setPartitionLnls(partitionLnl); 
 }
 
 
@@ -247,8 +247,7 @@ void LnlRestorer::resetRestorer(const TreeAln &traln)
     }
   modelEvaluated = ALL_MODELS; 
   prevLnl = tr->likelihood;   
-  
-  for(int i = 0; i < numPart; ++i)
-    partitionLnl[i] = traln.accessPartitionLH(i); 
+
+  partitionLnl = traln.getPartitionLnls();
 }
 
