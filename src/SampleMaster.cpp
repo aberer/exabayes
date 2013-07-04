@@ -38,7 +38,7 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
 
 void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH)
 {
-  TreeRandomizer trRandomizer(seed);
+  Randomness treeRandomness(seed);
   
   vector<shared_ptr<TreeAln> > treesToInitialize; 
   treesToInitialize.push_back(trees[0]); 
@@ -59,9 +59,9 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
       else
 	{	      
 	  if(runParams.isUseParsimonyStarting())
-	    trRandomizer.createParsimonyTree(*tralnPtr); 
+	    TreeRandomizer::createParsimonyTree(*tralnPtr, treeRandomness); 
 	  else
-	    trRandomizer.randomizeTree(*tralnPtr); 
+	    TreeRandomizer::randomizeTree(*tralnPtr, treeRandomness); 
 	}	  
 	  
       // correct branches 

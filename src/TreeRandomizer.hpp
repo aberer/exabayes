@@ -8,22 +8,25 @@
 class TreeRandomizer
 {
 public: 
-  TreeRandomizer(randCtr_t seed);
 
   /**
      @brief creates a random tree 
    */   
-  void randomizeTree(TreeAln &traln);
+  static void randomizeTree( TreeAln &traln, Randomness &rand);
 
+
+  static Branch drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  ; 
+  static Branch drawBranchUniform(const TreeAln & traln, Randomness &rand )  ; 
+  static Branch drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  ; 
+  static Branch drawBranchWithInnerNode(const TreeAln& traln, Randomness &rand)  ; 
+  static nat drawInnerNode(const TreeAln& traln, Randomness &rand )  ; 
 
   /**
      @brief creates a parsimony tree and applies it to the specfilied tree.      
      the routine does not enforce treatment of branch lengths.  
    */ 
-  void createParsimonyTree(TreeAln &traln); 
-  
-private: 
-  Randomness rand; 
+  static void createParsimonyTree(TreeAln &traln, Randomness& rand); 
+
 }; 
 
 

@@ -12,7 +12,7 @@ NodeSlider::NodeSlider( double _multiplier)
 
 void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
-  oneBranch = traln.drawInnerBranchUniform(rand); 
+  oneBranch = TreeRandomizer::drawInnerBranchUniform(traln,rand); 
   if(rand.drawRandDouble01() < 0.5 )
     oneBranch = oneBranch.getInverted();
 

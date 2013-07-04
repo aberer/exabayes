@@ -13,6 +13,10 @@
 #include "LikelihoodEvaluator.hpp"
 
 
+// lazyness 
+#include "TreeRandomizer.hpp"
+
+
 class AbstractProposal
 {
 public: 

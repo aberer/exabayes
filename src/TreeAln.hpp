@@ -55,12 +55,15 @@ public:
   bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
   Branch getBranch(nodeptr p) const { return Branch(p->number, p->back->number, p->z[0]); }
   nodeptr getNode(nat elem) const ; 
+std::vector<Branch> extractBranches() const ; 
+  double getTreeLengthExpensive() const;
+
 #if HAVE_PLL != 0 
   void setPartitionList(partitionList *pl) { partitions = *pl; }
   partitionList* getPartitionsPtr()  { return &partitions; }   
 #endif  
-  std::vector<Branch> extractBranches() const ; 
-  
+
+
   // MODIFIERS 
   void clipNode(nodeptr p, nodeptr q, double &z); 
   void clipNodeDefault(nodeptr p, nodeptr q); 
@@ -88,15 +91,6 @@ public:
   static const double zZero;   
   static const double initBL;  	// init values 
 
-  /** @brief the partition does not have a revmat */ 
-  bool revMatIsImmutable(int model) const ; 
-  double getTreeLengthExpensive() const;
-  double getConvertBranchLength(double length) const { return -log(length) * tr.fracchange; }
-  Branch drawInnerBranchUniform( Randomness &rand) const ; 
-  Branch drawBranchWithInnerNode(Randomness &rand) const ; 
-  nat drawInnerNode(Randomness &rand ) const ; 
-  Branch drawBranchUniform_helper(Randomness &rand, nat curNumTax) const ; 
-  Branch drawBranchUniform(Randomness &rand) const ; 
 
 private:   
   double getTreeLengthHelper(nodeptr p) const;
@@ -114,7 +108,6 @@ private:
   void initializePartitionsPLL(std::string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
 
-
   friend std::ostream& operator<< (std::ostream& out,  TreeAln&  traln);
   
   //////////////////
@@ -126,6 +119,8 @@ public:
   bool isCollapsed(Branch b) ; 
   void setBranchLengthUnsafe(Branch b ) ; 
   // END
+
+  bool revMatIsImmutable(int model) const ; 
 
   bool usingPerSiteRates()  { return tr.rateHetModel == GAMMA;  } 
   void enablePerSiteRates() {  tr.rateHetModel = CAT; } 

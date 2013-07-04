@@ -1,5 +1,6 @@
 #include "StatNNI.hpp"
 #include "Path.hpp"
+#include "TreeRandomizer.hpp"
 
 
 StatNNI::StatNNI( double _multiplier)
@@ -16,7 +17,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   int numBranches = traln.getNumBranches();
   assert(numBranches == 1); 
 
-  Branch b( traln.drawInnerBranchUniform(rand) ) ; 
+  Branch b( TreeRandomizer::drawInnerBranchUniform(traln, rand) ) ; 
   nodeptr p = b.findNodePtr(traln); 
 
   Branch switchingBranch = Branch( 

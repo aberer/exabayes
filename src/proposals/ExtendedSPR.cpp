@@ -34,7 +34,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   nodeptr p,q,r; 
   do 
     {
-      start = traln.drawBranchWithInnerNode(rand); 
+      start = TreeRandomizer::drawBranchWithInnerNode(traln, rand); 
 
       p = start.findNodePtr(traln );
       q = p->next->back; 

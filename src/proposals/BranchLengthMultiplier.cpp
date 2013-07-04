@@ -1,6 +1,7 @@
 #include "BranchLengthMultiplier.hpp"
 #include "TreeAln.hpp"
 #include "tune.h"
+#include "TreeRandomizer.hpp"
 
 #include "GibbsProposal.hpp"
 
@@ -15,7 +16,7 @@ BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
 
 Branch BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
 {
-  return traln.drawBranchUniform(rand); 
+  return TreeRandomizer::drawBranchUniform(traln, rand); 
 }   
 
 

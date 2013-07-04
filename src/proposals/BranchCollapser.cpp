@@ -1,4 +1,5 @@
 #include "BranchCollapser.hpp"
+#include "TreeRandomizer.hpp"
 
 
 BranchCollapser::BranchCollapser()
@@ -12,7 +13,7 @@ BranchCollapser::BranchCollapser()
 
 void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
-  Branch b = traln.drawBranchUniform(rand); 
+  Branch b = TreeRandomizer::drawBranchUniform(traln, rand); 
 
   modifiedBranch = b ; 
   nodeptr p = b.findNodePtr(traln) ; 

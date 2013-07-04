@@ -1,4 +1,5 @@
 #include "ExtendedTBR.hpp"
+#include "TreeRandomizer.hpp"
 
 
 // TODO the disorient is still  very inefficient 
@@ -85,7 +86,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   do
     {
-      bisectedBranch  = traln.drawInnerBranchUniform(rand ); 
+      bisectedBranch  = TreeRandomizer::drawInnerBranchUniform(traln, rand ); 
 
       p1 = bisectedBranch.findNodePtr(traln ); 
       p2 = bisectedBranch.getInverted().findNodePtr(traln); 

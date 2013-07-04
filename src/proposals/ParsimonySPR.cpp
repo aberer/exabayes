@@ -128,7 +128,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 
   do 
     {
-      prunedTree  = traln.drawBranchWithInnerNode(rand); 
+      prunedTree  = TreeRandomizer::drawBranchWithInnerNode(traln,rand); 
       p = prunedTree.findNodePtr(traln);
       pn = p->next->back; 
       pnn = p->next->next->back;         
