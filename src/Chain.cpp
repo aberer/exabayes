@@ -31,7 +31,9 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
     }
 
   eval->evaluateFullNoBackup(*traln);  ; 
-
+  
+  const std::vector<AbstractParameter*> vars = extractVariables(); 
+  prior.initialize(*traln, vars);
   // saving the tree state 
   suspend(); 
 }
@@ -89,9 +91,6 @@ void Chain::resume()
     v->applyParameter(*traln, v->getSavedContent()); 
 
   evaluator->evaluateFullNoBackup(*traln); 
-  
-  // addChainInfo(tout); 
-  // tout << " RESUME " << traln->getTr()->likelihood << std::endl; 
 
   if(fabs(likelihood - traln->getTr()->likelihood) > ACCEPTED_LIKELIHOOD_EPS)
     {
@@ -101,6 +100,14 @@ void Chain::resume()
     }  
 
   prior.initialize(*traln, vs);
+  double prNow = prior.getLnPrior(); 
+  
+  if(fabs(lnPr - prNow) > ACCEPTED_LNPR_EPS)
+    {
+      std::cerr << "While trying to resume chain: previous log prior for chain larger than" <<
+	"re-evaluated prior. This is a programming error." << std::endl; 
+      assert(0);       
+    }
 
   // prepare proposals 
   relWeightSum = 0; 
@@ -356,14 +363,37 @@ void Chain::suspend()
   for(auto & v : variables)    
     v-> setSavedContent(v->extractParameter(*traln)) ; 
   likelihood = traln->getTr()->likelihood; 
+  lnPr = prior.getLnPrior();
   
   // addChainInfo(tout);
   // tout << " SUSPEND " << likelihood << std::endl; 
 }
 
 
-									   
-std::vector<AbstractParameter*> Chain::extractVariables() const 
+// TODO not too much thought went into this  
+namespace  std			
+{
+  template<>
+  struct hash<AbstractParameter*>
+  {
+    size_t operator()(const AbstractParameter* rhs) const 
+    {
+       return rhs->getId(); 
+    }
+  } ;
+
+  template<>
+  struct equal_to<AbstractParameter*>
+  {
+    bool operator()(const AbstractParameter* a, const AbstractParameter* b ) const 
+    {
+      return a->getId() == b->getId(); 
+    }
+  }; 
+}
+				
+					   
+const std::vector<AbstractParameter*> Chain::extractVariables() const 
 {
   std::unordered_set<AbstractParameter*> result; 
   for(auto &p : proposals)
@@ -375,8 +405,13 @@ std::vector<AbstractParameter*> Chain::extractVariables() const
     }
   
   std::vector<AbstractParameter*> result2 ; 
+  // tout << "extracted variables: " << std::endl; 
   for(auto v : result)
-    result2.push_back(v); 
+    {
+      
+      result2.push_back(v); 
+      // tout << v << std::endl; 
+    }
 
   return result2; 
 }

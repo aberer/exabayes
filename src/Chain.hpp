@@ -54,7 +54,7 @@ public:
   std::ostream& addChainInfo(std::ostream &out) const; 
   void printProposalSate(std::ostream& out ) const ; 
   void printProposalState(std::ostream& out ) const ; 
-  std::vector<AbstractParameter*> extractVariables() const ; 
+  const std::vector<AbstractParameter*> extractVariables() const ; 
 
   // getters and setters 
   double getLnLikelihood() const {return   traln->getTr()->likelihood;} 
@@ -95,7 +95,9 @@ private: 			// ATTRIBUTES
   PriorBelief prior; 
   double bestState; 
   std::shared_ptr<LikelihoodEvaluator> evaluator;   
+  
   double likelihood; 
+  double lnPr; 
 
   // friends 
   friend std::ostream& operator<<(std::ostream& out, const Chain &rhs); 

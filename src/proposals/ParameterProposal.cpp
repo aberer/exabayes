@@ -33,10 +33,15 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   double newFracChange = traln.getTr()->fracchange; 
   if(modifiesBL)
     {
-      // std::cout   << "we are modifying the bl "<< std::endl; 
+      // std::cout   << "we are modifying the bl with priors "; 
+      
       std::vector<AbstractPrior*> blPriors; 
       for(auto &v : secVar)
-	blPriors.push_back(v->getPrior()); 
+	{
+	  // std::cout << v.get() << "\t"; 
+	  blPriors.push_back(v->getPrior()); 
+	}
+      // std::cout << std::endl; 
 
       // tout << std::setprecision(6) << "old frac= " << oldFracChange << "\tnew"<< newFracChange << std::endl;
       

@@ -24,7 +24,7 @@ class PriorBelief
 public:
   PriorBelief();
   
-  void initialize(const TreeAln &traln, std::vector<AbstractParameter*> variables); 
+  void initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables); 
   
   void accept()  { assert(wasInitialized); lnPrior += lnPriorRatio;  lnPriorRatio = 0; }  
   void reject() { assert(wasInitialized) ; lnPriorRatio = 0; }

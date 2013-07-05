@@ -15,7 +15,7 @@ PriorBelief::PriorBelief()
 }
 
 
-void PriorBelief::initialize(const TreeAln &traln, std::vector<AbstractParameter*> variables)
+void PriorBelief::initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables)
 {
   lnPrior = scoreEverything(traln, variables); 
   lnPriorRatio = 0; 
@@ -111,7 +111,7 @@ void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParamete
   if ( fabs(verified -  lnPrior ) >= ACCEPTED_LNPR_EPS)
     {
       std::cerr << std::setprecision(10) << "ln prior was " << lnPrior << " while it should be " << verified << std::endl; 
-      // assert(fabs(verified -  lnPrior ) < ACCEPTED_LNPR_EPS); 
+      assert(fabs(verified -  lnPrior ) < ACCEPTED_LNPR_EPS); 
     }
 }
 
