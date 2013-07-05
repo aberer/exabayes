@@ -30,7 +30,8 @@ public:
   void seedChains(); 
 
   void initializeChains(vector<shared_ptr<TreeAln> > trees, const vector<unique_ptr<AbstractProposal> > &proposals, 
-			const vector<shared_ptr<AbstractParameter> > &vars, shared_ptr<LikelihoodEvaluator> eval); 
+			const vector<unique_ptr<AbstractParameter> > &vars, 
+			shared_ptr<LikelihoodEvaluator> eval); 
 
   ~CoupledChains(); 
 

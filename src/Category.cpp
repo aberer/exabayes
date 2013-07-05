@@ -1,5 +1,6 @@
 #include "Category.hpp"
 #include <cassert>
+#include <memory>
 #include <algorithm>
 
 #include "parameters/AbstractParameter.hpp"
@@ -124,25 +125,25 @@ namespace CategoryFuns
 
 
 
-  std::shared_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id)
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id)
   {
     switch(cat)
       {
       case Category::TOPOLOGY :
-	return std::make_shared<TopologyParameter>(id);
+	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id));
       case Category::BRANCH_LENGTHS:
-	return std::make_shared<BranchLengthsParameter>(id); 
+	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id));
       case Category::FREQUENCIES :
-	return std::make_shared<FrequencyParameter>(id); 
+	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id));
       case Category::SUBSTITUTION_RATES :
-	return std::make_shared<RevMatParameter>(id); 
+	return  std::unique_ptr<RevMatParameter>( new RevMatParameter(id));
       case Category::RATE_HETEROGENEITY:
-	return std::make_shared<RateHetParameter>(id); 
+	return  std::unique_ptr<RateHetParameter>( new RateHetParameter(id));
       case Category::AA_MODEL :
       default : 
 	{
 	  assert(0); 
-	  return std::make_shared<TopologyParameter>(id);
+	  return std::unique_ptr<RateHetParameter>( new RateHetParameter(id));
 	}
       }    
   } 

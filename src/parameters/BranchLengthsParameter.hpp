@@ -17,6 +17,7 @@ public:
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
   virtual ParameterContent extractParameter(const TreeAln &traln )  const;   
+  virtual AbstractParameter* clone () const {return new BranchLengthsParameter(*this) ;  }
 }; 
 
 

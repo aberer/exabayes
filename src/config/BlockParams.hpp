@@ -19,12 +19,18 @@ public:
   }
 
   void setTree(shared_ptr<TreeAln> _traln){traln = _traln; }
-  vector<shared_ptr<AbstractParameter> > getParameters() const{return parameters; }
+  vector<unique_ptr<AbstractParameter> > getParameters() const
+  {
+    vector<unique_ptr<AbstractParameter> > result; 
+    for(auto &p : parameters	)
+      result.push_back(std::unique_ptr<AbstractParameter>(p->clone() )); 
+    return result; 
+  }
   virtual void Read(NxsToken &token); 
 
 private: 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
-  vector<shared_ptr<AbstractParameter> > parameters; 
+  vector<unique_ptr<AbstractParameter> > parameters; 
   shared_ptr<TreeAln> traln; 
 }; 
 

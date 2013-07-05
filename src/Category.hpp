@@ -27,7 +27,7 @@ namespace CategoryFuns
   Category getCategoryByPriorName(std::string name); 
   Category getCategoryFromLinkLabel(std::string name); 
 
-  std::shared_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id ); 
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id ); 
 } 
 
 #endif

@@ -33,11 +33,11 @@ void SampleMaster::branchLengthsIntegration()
   
   auto eval = chain.getEvaluatorPtr();
 
-  auto r = make_shared<BranchLengthsParameter>( 0);
+  vector<unique_ptr<AbstractParameter> > vars; 
+  vars.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0))); 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
-    r->addPartition(i);
+    vars[0]->addPartition(i);
 
-  vector<shared_ptr<AbstractParameter> > vars =  {r} ; 
 
   double lambda   =  10 ; 
 
@@ -46,7 +46,7 @@ void SampleMaster::branchLengthsIntegration()
   auto p = unique_ptr<BranchIntegrator>(new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 
   vector<unique_ptr<AbstractProposal> >  proposals;   
   proposals.push_back( std::move(p) ); 
-  proposals[0]->addPrimVar(vars[0]); 
+  proposals[0]->addPrimVar( std::move(vars[0])); 
 
   Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval );   
 

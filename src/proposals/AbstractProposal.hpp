@@ -20,7 +20,10 @@
 class AbstractProposal
 {
 public: 
-  // AbstractProposal(){}
+  // for copying the non-trivial types 
+  AbstractProposal(){} 
+  AbstractProposal( const AbstractProposal& rhs); 
+  
   virtual ~AbstractProposal(){}
 
   // you MUST implement all virtual methods in your derived
@@ -43,8 +46,8 @@ public:
   void reject() {sctr.reject();}
   const SuccessCounter& getSCtr()  const { return sctr; }
   int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
-  void addPrimVar(std::shared_ptr<AbstractParameter> var) {primVar.push_back(var) ; }
-  void addSecVar(std::shared_ptr<AbstractParameter> var) {secVar.push_back(var) ; }
+  void addPrimVar(std::unique_ptr<AbstractParameter> var) {primVar.push_back(std::move(var)) ; }
+  void addSecVar(std::unique_ptr<AbstractParameter> var) {secVar.push_back(std::move(var)) ; }
   static void updateHastings(double &hastings, double valToAdd, std::string whoDoneIt); 
   friend std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs); 
   std::ostream& printNamePartitions(std::ostream &out); 
@@ -59,8 +62,8 @@ protected:
   Category category; 
 
   // will be a unique_ptr later 
-  std::vector<std::shared_ptr<AbstractParameter> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  std::vector<std::shared_ptr<AbstractParameter> > secVar;  // as a by-product also these random variables are changed 
+  std::vector<std::unique_ptr<AbstractParameter> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  std::vector<std::unique_ptr<AbstractParameter> > secVar;  // as a by-product also these random variables are changed 
 
   double relativeWeight; 
 

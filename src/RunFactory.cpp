@@ -14,7 +14,7 @@
 
 
 // not to be confused with a fun factory...
-void RunFactory::addStandardParameters(vector<shared_ptr<AbstractParameter> > &vars, const TreeAln &traln )
+void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &vars, const TreeAln &traln )
 {
   std::set<Category> categories; 
 
@@ -40,7 +40,7 @@ void RunFactory::addStandardParameters(vector<shared_ptr<AbstractParameter> > &v
 	    ++highestId; 
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
-	    vars.push_back(r); 	    
+	    vars.push_back(std::move(r)); 
 	  }
 	  break; 
 	case Category::AA_MODEL:	
@@ -56,7 +56,7 @@ void RunFactory::addStandardParameters(vector<shared_ptr<AbstractParameter> > &v
 		auto r = CategoryFuns::getParameterFromCategory(catIter, highestId) ; 
 		++highestId; 
 		r->addPartition(j); 
-		vars.push_back(r); 
+		vars.push_back(std::move(r)); 
 	      }	    
 	  }
 	  break; 
@@ -107,7 +107,7 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
 }
 
 
-void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<shared_ptr<AbstractParameter> > &variables)
+void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<unique_ptr<AbstractParameter> > &variables)
 {
   auto generalPriors = priorInfo.getGeneralPriors();
   auto specificPriors = priorInfo.getSpecificPriors();
@@ -125,7 +125,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	    {
 	      if(thePrior != nullptr)
 		{
-		  cerr << "while setting prior for random variable " << v << ": it seems you have defined a prior for more than one partition of a set of partitions that is linked for a specific variable to estimate. Please only specify exactly one prior per variable for a set of linked partitions."  << endl; 
+		  cerr << "while setting prior for random variable " << v.get() << ": it seems you have defined a prior for more than one partition of a set of partitions that is linked for a specific variable to estimate. Please only specify exactly one prior per variable for a set of linked partitions."  << endl; 
 		  exit(1); 
 		}
 	      else 
@@ -150,7 +150,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       else 
 	{	  
 	  addStandardPrior(v.get(), traln);
-	  cout << "using STANDARD prior for variable "  << v << endl; 
+	  cout << "using STANDARD prior for variable "  << v.get() << endl; 
 	}
     }
 }
@@ -165,12 +165,12 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   ProposalRegistry reg; 
 
-  std::vector<shared_ptr<AbstractParameter> > blRandVars; 
+  std::vector<unique_ptr<AbstractParameter> > blRandVars; 
   for(auto &v : randomVariables)
     if(v->getCategory() == Category::BRANCH_LENGTHS)
-      blRandVars.push_back(v); 
+      blRandVars.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
 
-  for(auto v : randomVariables)
+  for(auto &v : randomVariables)
     {
       if(typeid(v->getPrior()) == typeid(shared_ptr<FixedPrior>))
 	continue;
@@ -180,16 +180,16 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
       reg.getProposals(v->getCategory(), propConfig, tmpResult, traln, eval); 
       for(auto  &p : tmpResult )
 	{
-	  p->addPrimVar(v);
+	  p->addPrimVar(std::unique_ptr<AbstractParameter>(v->clone()));
 	  if(v->getCategory() == Category::TOPOLOGY)
 	    {
-	      for(auto blRandVar : blRandVars)
-		p->addSecVar(blRandVar); 
+	      for(auto &blRandVar : blRandVars)
+		p->addSecVar(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
 	    }
 	  else if(v->getCategory() == Category::FREQUENCIES || v->getCategory() == Category::SUBSTITUTION_RATES)
 	    {
-	      for(auto blRandVar : blRandVars)
-		p->addSecVar(blRandVar); 
+	      for(auto &blRandVar : blRandVars)
+		p->addSecVar(std::unique_ptr<AbstractParameter>(blRandVar->clone())) ; 
 	    }	  
 	}
 
@@ -203,7 +203,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   tout << endl << "Parameters to be integrated: " << endl; 
   for(auto &v : randomVariables)
-    tout << v  << endl; 
+    tout << v.get()  << endl; 
   tout << endl; 
   
   double sum = 0; 

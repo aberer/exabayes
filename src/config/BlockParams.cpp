@@ -16,7 +16,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   str = token.GetToken(false); 
 
   bool newLink = true; 
-  shared_ptr<AbstractParameter> curVar; 
+  std::unique_ptr<AbstractParameter> curVar; 
   while(str.compare(")") != 0 )
     {
       int part = str.ConvertToInt() ; 
@@ -35,7 +35,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
       
       if(str.compare("/") == 0)
 	{
-	  parameters.push_back(curVar); 
+	  parameters.push_back(std::move(curVar)); 
 	  newLink = true; 
 	  token.GetNextToken();
 	  str = token.GetToken(false); 
@@ -48,7 +48,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
       else 
 	{
 	  assert(str.compare(")") == 0); 
-	  parameters.push_back(curVar); 
+	  parameters.push_back(std::move(curVar)); 
 	}
     }  
   
@@ -64,7 +64,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr); 
 	  ++idCtr; 
 	  r->addPartition(i);
-	  parameters.push_back(r); 
+	  parameters.push_back(std::move(r)); 
 	}
     }
 }

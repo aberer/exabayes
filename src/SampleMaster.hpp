@@ -31,7 +31,9 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, shared_ptr<TreeAln> traln, vector<unique_ptr<AbstractProposal> > &proposalResult, vector<shared_ptr<AbstractParameter> > &variableResult, shared_ptr<LikelihoodEvaluator> eval); 
+  void initWithConfigFile(string configFileName, shared_ptr<TreeAln> traln, 
+			  vector<unique_ptr<AbstractProposal> > &proposalResult, vector<unique_ptr<AbstractParameter> > &variableResult, 
+			  shared_ptr<LikelihoodEvaluator> eval); 
   void validateRunParams(); 	// TODO  
   void branchLengthsIntegration()  ;  
 

@@ -18,6 +18,8 @@ public:
       cat(cat) 
   { }
 
+  virtual AbstractParameter* clone () const =  0; 
+
   virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const = 0; 
   virtual ParameterContent extractParameter(const TreeAln &traln)  const  = 0;   
 

@@ -93,13 +93,28 @@ std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractPr
 {
   out << rhs->name <<  " primarily modifying " ; 
   for(auto &r : rhs->primVar)
-    out << r << ",\t"  ; 
+    out << r.get() << ",\t"  ; 
 
   if(not rhs->secVar.empty() )
     {
       out << "\tand also modifying " ; 
       for(auto &r : rhs->secVar ) 
-	out << r << ",\t" ; 
+	out << r.get() << ",\t" ; 
     }
   return out; 
 }
+
+
+AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
+  : name(rhs.name)
+  , sctr(rhs.sctr)
+  , category(rhs.category)
+  , relativeWeight(rhs.relativeWeight)
+{
+  for(auto &v : rhs.primVar)
+    primVar.emplace_back(v->clone()); 
+  for(auto &v : rhs.secVar)
+    secVar.emplace_back(v->clone()); 
+} 
+
+

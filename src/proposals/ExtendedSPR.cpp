@@ -115,7 +115,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   assert(traln.getNumBranches() == 1 ); 
 
   bool modifiesBl = false; 
-  for(auto v : secVar)
+  for(auto &v : secVar)
     modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI
