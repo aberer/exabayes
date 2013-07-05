@@ -1,5 +1,6 @@
 #include "axml.h"
 
+#include "BoundsChecker.hpp"
 #include "TreeLengthMultiplier.hpp"
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
@@ -39,15 +40,22 @@ void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, node
 void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
   tree *tr = traln.getTr(); 
-  rememMultiplier  = rand.drawMultiplier( multiplier);
 
-#ifdef UNSURE
-  // for doing this properly, we MUST check, if in any case the
-  // multiplier would result in branch lengths that are out of bound
-  // and then redraw.
+  storedBranches.clear();   
+  storedBranches = traln.extractBranches();
 
-  assert(0); 
-#endif
+  
+  bool blOkay = true; 
+  do 
+    {
+      rememMultiplier  = rand.drawMultiplier( multiplier);
+
+      for(auto &b : storedBranches)
+	{
+	  double zNew =  pow(b.getLength(), rememMultiplier); 
+	  blOkay &= BoundsChecker::zMin <= zNew && zNew <= BoundsChecker::zMax   ; 
+	}
+    } while( not blOkay ); 
 
 #ifdef EFFICIENT
   // this whole tree length stuff is still highly unsatisfactory 
@@ -55,19 +63,11 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 #endif
 
   auto brPr = primVar[0]->getPrior(); 
-  
-#ifdef UNSURE
-  // how  to calcluate the hastings? 
-  assert(0); 
-#endif
 
   updateHastings(hastings, 
 		 pow(rememMultiplier, 2 * traln.getTr()->mxtips - 3  ) , 
-		 // rememMultiplier, 
 		 "TL-Mult");
-
-  storedBranches.clear();   
-  storedBranches = traln.extractBranches(); 
+  
   double initTreeLength = 1,
     newTreeLength = 1;   
   for(auto &b : storedBranches)

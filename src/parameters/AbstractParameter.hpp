@@ -14,8 +14,9 @@ class AbstractParameter
 public: 
   
   AbstractParameter(Category cat, nat id)
-    : id(id),
-      cat(cat) 
+    : id(id)
+    , cat(cat) 
+    // , modifiesBL (false)
   { }
 
   virtual AbstractParameter* clone () const =  0; 

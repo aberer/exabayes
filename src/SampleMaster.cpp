@@ -18,7 +18,7 @@
 #include "LnlRestorer.hpp"
 #include "AvgSplitFreqAssessor.hpp"
 #include "ProposalFunctions.hpp"
-#include "Parameters.hpp"
+
 
 static int countNumberOfTreesQuick(const char *fn ); 
 static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln>  > &tralns); 

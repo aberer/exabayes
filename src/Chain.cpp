@@ -1,7 +1,6 @@
 #include <sstream>
 
 #include "Chain.hpp"
-#include "Topology.hpp"
 #include "LnlRestorer.hpp"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
@@ -91,8 +90,8 @@ void Chain::resume()
 
   evaluator->evaluateFullNoBackup(*traln); 
   
-  addChainInfo(tout); 
-  tout << " RESUME " << traln->getTr()->likelihood << std::endl; 
+  // addChainInfo(tout); 
+  // tout << " RESUME " << traln->getTr()->likelihood << std::endl; 
 
   if(fabs(likelihood - traln->getTr()->likelihood) > ACCEPTED_LIKELIHOOD_EPS)
     {
@@ -358,8 +357,8 @@ void Chain::suspend()
     v-> setSavedContent(v->extractParameter(*traln)) ; 
   likelihood = traln->getTr()->likelihood; 
   
-  addChainInfo(tout);
-  tout << " SUSPEND " << likelihood << std::endl; 
+  // addChainInfo(tout);
+  // tout << " SUSPEND " << likelihood << std::endl; 
 }
 
 

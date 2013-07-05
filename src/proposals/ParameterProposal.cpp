@@ -9,8 +9,7 @@ ParameterProposal::ParameterProposal(Category cat, std::string _name, bool modif
 {
   category = cat; 
   name = _name ; 
-  relativeWeight = 0; 
-  
+  relativeWeight = 0;   
 } 
 
 
@@ -34,9 +33,12 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   double newFracChange = traln.getTr()->fracchange; 
   if(modifiesBL)
     {
+      // std::cout   << "we are modifying the bl "<< std::endl; 
       std::vector<AbstractPrior*> blPriors; 
       for(auto &v : secVar)
 	blPriors.push_back(v->getPrior()); 
+
+      // tout << std::setprecision(6) << "old frac= " << oldFracChange << "\tnew"<< newFracChange << std::endl;
       
       prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
     }

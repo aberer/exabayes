@@ -6,8 +6,8 @@ AC_INIT([exabayes],[0.3],[exabayes@googlegroups.com])
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 
-AM_INIT_AUTOMAKE([exabayes],[0.3])
 AC_CONFIG_SRCDIR([src/])
+AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([src/config.h])
 
 AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])

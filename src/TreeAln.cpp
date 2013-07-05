@@ -536,6 +536,10 @@ void TreeAln::initRevMat(int model)
 
 void TreeAln::setFrequencies(const std::vector<double> &values, int model)
 {
+  // tout << "setting frequencies "; 
+  // for_each(values.begin(), values.end(), [](double d) {tout << std::setprecision(3) << d << "," ;  } );
+  // tout << std::endl; 
+
   assert( BoundsChecker::checkFrequencies(values) ) ;    
   auto partition = getPartition(model); 
   memcpy( partition->frequencies, &(values[0]), partition->states * sizeof(double)); 

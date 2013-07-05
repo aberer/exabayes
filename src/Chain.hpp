@@ -90,7 +90,6 @@ private: 			// ATTRIBUTES
   int currentGeneration;     
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   std::vector<std::unique_ptr<AbstractProposal> > proposals; 
-  // State state; 
   Randomness chainRand;   
   double relWeightSum ; 	// sum of all relative weights
   PriorBelief prior; 

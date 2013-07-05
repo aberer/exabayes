@@ -1,5 +1,6 @@
 #include "NodeSlider.hpp"
 #include "LikelihoodEvaluator.hpp"
+#include "BoundsChecker.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
   : multiplier(_multiplier)
@@ -29,16 +30,25 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 
   double drawnMultiplier = 0,
     newZ = 0;  
-
-  drawnMultiplier  =rand.drawMultiplier( multiplier);  
-  newZ = pow(bothZ, drawnMultiplier);       
   
+  // TODO : problematic?  
+  do 
+    {
+      drawnMultiplier  =rand.drawMultiplier( multiplier);  
+      newZ = pow(bothZ, drawnMultiplier); 
+    } while ( 2 * BoundsChecker::zMax < newZ || newZ < 2 * BoundsChecker::zMin); 
+    
   double uniScaler = 0, 
     newA = 0,
     newB = 0; 
-  uniScaler = rand.drawRandDouble01();
-  newA = pow(newZ, uniScaler ) ; 
-  newB = pow(newZ, 1-uniScaler); 
+
+  // TODO: problematic? 
+  do 
+    {
+      uniScaler = rand.drawRandDouble01();
+      newA = pow(newZ, uniScaler ) ; 
+      newB = pow(newZ, 1-uniScaler); 
+    } while (newA < BoundsChecker::zMin || newB < BoundsChecker::zMin || BoundsChecker::zMax < newA || BoundsChecker::zMax < newB ); 
 
   traln.clipNode(oneBranch.findNodePtr(traln), 
 		oneBranch.getInverted().findNodePtr(traln),
@@ -53,12 +63,9 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   // extremely unsure about all that 
 #endif
 
-  double realBoth = newA * newB; 
-  
-  double realMulti = realBoth / oldBoth ; 
-  
+  double realBoth = newA * newB;   
+  double realMulti = realBoth / oldBoth ;   
   updateHastings(hastings, ( log(realBoth) / log(oldBoth)) * realMulti, name ); 
-
   auto brPr = primVar[0]->getPrior(); 
 
   prior.updateBranchLengthPrior(traln, oldA, newA, brPr);

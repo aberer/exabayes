@@ -3,7 +3,6 @@
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
-#include "Parameters.hpp"
 
 #include "parameters/TopologyParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"

@@ -10,6 +10,7 @@ public:
   FrequencyParameter(nat id)
     : AbstractParameter(Category::FREQUENCIES, id )
   {    
+    // modifiesBL = true; 
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 

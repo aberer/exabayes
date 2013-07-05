@@ -12,7 +12,7 @@
 
 #include "AbstractProposal.hpp"
 #include "tune.h"
-#include "Parameters.hpp"
+// #include "Parameters.hpp"
 
 
 template<typename FUN, typename PARAM>

@@ -1,5 +1,6 @@
 #include "BranchLengthMultiplier.hpp"
 #include "TreeAln.hpp"
+#include "BoundsChecker.hpp"
 #include "tune.h"
 #include "TreeRandomizer.hpp"
 
@@ -27,20 +28,27 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   nodeptr p = b.findNodePtr(traln); 
   savedBranch = b; 
 
-  double
-    drawnMultiplier = rand.drawMultiplier( multiplier); 
-  assert(drawnMultiplier > 0.); 
-
-  assert(traln.getNumBranches() == 1); 
-
   double oldZ = traln.getBranch(p).getLength();
   savedBranch.setLength( oldZ); 
+  assert(traln.getNumBranches() == 1); 
+  
+  double
+    drawnMultiplier = 0 ,
+    newZ = oldZ; 
+  
+  do 
+    {
+      drawnMultiplier= rand.drawMultiplier( multiplier); 
+      assert(drawnMultiplier > 0.); 
+      newZ = pow( oldZ, drawnMultiplier);
+    } while(newZ < BoundsChecker::zMin || BoundsChecker::zMax < newZ ) ; 
 
- double newZ = oldZ; 
-  if(not traln.isCollapsed(b))    
-    newZ = pow( oldZ, drawnMultiplier);
-  else 
-    drawnMultiplier = 1; 
+  // TODO 
+ // double newZ = oldZ; 
+ //  if(not traln.isCollapsed(b))    
+
+ //  else 
+ //    dra wnMultiplier = 1; 
 
   traln.setBranch(Branch(p->number, p->back->number, newZ)); 
 

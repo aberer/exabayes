@@ -11,6 +11,7 @@ public:
   RateHetParameter(nat id)
     : AbstractParameter(Category::RATE_HETEROGENEITY, id)
   {
+    // modifiesBL = false; 
   }
   
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 

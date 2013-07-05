@@ -11,6 +11,7 @@ public:
   RevMatParameter(nat id) 
     : AbstractParameter(Category::SUBSTITUTION_RATES, id)
   {
+    // modifiesBL = true; 
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
