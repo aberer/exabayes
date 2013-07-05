@@ -3,10 +3,9 @@
 
 void TopologyParameter::applyParameter(TreeAln& traln , const ParameterContent &content) const
 {
-  // this is not what we want! topology should be restored! 
-  assert(0); 
-  for(auto & b : savedContent.branches)
-    traln.setBranch(b); 
+  traln.unlinkTree();
+  for(auto &b : savedContent.branches)
+    traln.clipNode(traln.getUnhookedNode(b.getPrimNode()), traln.getUnhookedNode(b.getSecNode()), b.getLength()); 
 }
 
 

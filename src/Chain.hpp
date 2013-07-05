@@ -13,7 +13,7 @@
 #include <memory>
 
 #include "PriorBelief.hpp"
-#include "State.hpp"
+// #include "State.hpp"
 #include "LikelihoodEvaluator.hpp"
 #include "AbstractProposal.hpp"
 
@@ -30,7 +30,11 @@ public:
   Chain& operator=(Chain &rhs) = delete; 
 
   void reseed(randKey_t c) { chainRand = Randomness(c); }
+
+  
   void resume(); 
+
+  /** @brief saves the current model state in the parameter objecets that integrate over this */ 
   void suspend(); 
   
   /** @brief draws a proposal function. */ 
@@ -86,7 +90,7 @@ private: 			// ATTRIBUTES
   int currentGeneration;     
   int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
   std::vector<std::unique_ptr<AbstractProposal> > proposals; 
-  State state; 
+  // State state; 
   Randomness chainRand;   
   double relWeightSum ; 	// sum of all relative weights
   PriorBelief prior; 

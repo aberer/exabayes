@@ -21,7 +21,7 @@ public:
   virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const = 0; 
   virtual ParameterContent extractParameter(const TreeAln &traln)  const  = 0;   
 
-  void setSavedContent(ParameterContent& content) { savedContent = content; }
+  void setSavedContent(const ParameterContent& content) { savedContent = content; }
   ParameterContent& getSavedContent() {return savedContent; }
 
   void addPartition(nat id){ partitions.push_back(id); }

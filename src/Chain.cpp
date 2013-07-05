@@ -19,7 +19,6 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
   , hastings(0)
   , currentGeneration(0)
   , couplingId(0)
-  , state(*traln)
   , chainRand(seed)
   , relWeightSum(0)
   , bestState(std::numeric_limits<double>::lowest())
@@ -46,7 +45,7 @@ Chain::Chain( const Chain& rhs)
   , tuneFrequency(rhs.tuneFrequency)
   , currentGeneration(rhs.currentGeneration)
   , couplingId(rhs.couplingId)      
-  , state(rhs.state)
+  // , state(rhs.state)
   , chainRand(rhs.chainRand) 
   , bestState(rhs.bestState)
   , evaluator(rhs.evaluator)
@@ -80,29 +79,22 @@ double Chain::getChainHeat()
 }
 
 
+
+
 void Chain::resume()  
 {
-  assert(traln->getNumBranches() == 1); 
-  state.accessTopology().restoreTopology(*traln); 
+  auto vs = extractVariables(); 
 
-  // TODO replace this with the variable framework 
+  // topology must be dealt with first   
+  sort(vs.begin(), vs.end(), [] (const AbstractParameter* a,const AbstractParameter* b ){ return a->getCategory() == Category::TOPOLOGY ;   } ); 
+  for(auto & v : vs)
+    v->applyParameter(*traln, v->getSavedContent()); 
 
-  /* restore model parameters */
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      Partition& partInfo = state.accessPartition(i);
-      double alpha = partInfo.getAlpha(); 
-      traln->setAlpha(alpha, i ); 
-      
-      std::vector<double> revMat = state.accessPartition(i).getRevMat();       
-      traln->setRevMat(revMat, i); 
-      
-      std::vector<double> stateFreqs = state.accessPartition(i).getStateFreqs(); 
-      traln->setFrequencies(stateFreqs, i); 
-    } 
-  
   evaluator->evaluateFullNoBackup(*traln); 
   
+  addChainInfo(tout); 
+  tout << " RESUME " << traln->getTr()->likelihood << std::endl; 
+
   if(fabs(likelihood - traln->getTr()->likelihood) > ACCEPTED_LIKELIHOOD_EPS)
     {
       std::cerr << "While trying to resume chain: previous chain liklihood larger than " <<
@@ -110,7 +102,6 @@ void Chain::resume()
       assert(0);       
     }  
 
-  auto vs = extractVariables(); 
   prior.initialize(*traln, vs);
 
   // prepare proposals 
@@ -363,28 +354,15 @@ void Chain::step()
 
 void Chain::suspend()  
 {
-  state.accessTopology().saveTopology(*(traln));
-
-  /* save model parameters */
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      Partition& partInfo =  state.accessPartition(i);       
-      pInfo *partitionTr = traln->getPartition(i); 
-      
-      partInfo.setAlpha( partitionTr->alpha) ; 
-
-      std::vector<double> tmp; 
-      for(nat i = 0; i < numStateToNumInTriangleMatrix(partitionTr->states); ++i)
-	tmp.push_back(partitionTr->substRates[i]); 
-      partInfo.setRevMat(tmp); 
-      tmp.clear(); 
-      for(int i = 0; i < partitionTr->states ; ++i)
-	tmp.push_back(partitionTr->frequencies[i]); 
-      partInfo.setStateFreqs(tmp); 
-    }  
-
+  auto variables = extractVariables();
+  for(auto & v : variables)    
+    v-> setSavedContent(v->extractParameter(*traln)) ; 
   likelihood = traln->getTr()->likelihood; 
+  
+  addChainInfo(tout);
+  tout << " SUSPEND " << likelihood << std::endl; 
 }
+
 
 									   
 std::vector<AbstractParameter*> Chain::extractVariables() const 
