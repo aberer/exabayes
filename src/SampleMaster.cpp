@@ -59,7 +59,11 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
       else
 	{	      
 	  if(runParams.isUseParsimonyStarting())
+#if HAVE_PLL == 0 
+	    assert(0); 
+#else 
 	    TreeRandomizer::createParsimonyTree(*tralnPtr, treeRandomness); 
+#endif
 	  else
 	    TreeRandomizer::randomizeTree(*tralnPtr, treeRandomness); 
 	}	  

@@ -505,7 +505,7 @@ std::vector<double> TreeAln::getPartitionLnls() const
 #if HAVE_PLL != 0 
       result.push_back(partitions.partitionData[i]->partitionLH); 
 #else 
-      result.push_back(tr->perPartitionLH[i]); 
+      result.push_back(tr.perPartitionLH[i]); 
 #endif
     }
   return result; 
@@ -518,7 +518,7 @@ void TreeAln::setPartitionLnls(const std::vector<double> partitionLnls)
 #if HAVE_PLL != 0
       partitions.partitionData[i]->partitionLH = partitionLnls[i]; 
 #else 
-      tr.perPartitionLH[i];  = partitionLnls[i]; 
+      tr.perPartitionLH[i]  = partitionLnls[i]; 
 #endif
     }
 } 

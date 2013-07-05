@@ -141,7 +141,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	}
       else 
 	{
-	  cout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
+	  tout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
 	}
       
       if(thePrior != nullptr)
@@ -149,7 +149,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       else 
 	{	  
 	  addStandardPrior(v.get(), traln);
-	  cout << "using STANDARD prior for variable "  << v.get() << endl; 
+	  tout << "using STANDARD prior for variable "  << v.get() << endl; 
 	}
     }
 }

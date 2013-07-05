@@ -68,7 +68,7 @@ void SampleMaster::branchLengthsIntegration()
       ofstream thisOut (ss.str()); 
       
       // run the chain to integrate 
-      cout << "integrating branch " << branch << endl; 
+      tout << "integrating branch " << branch << endl; 
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
 	{	  
 	  integrationChain.step();
@@ -90,7 +90,7 @@ void SampleMaster::branchLengthsIntegration()
       ss << "lnl." << cl.getRunid() << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
       thisOut.open(ss.str());
 
-      cout << "evaluating branch lengths for " << branch << endl; 
+      tout << "evaluating branch lengths for " << branch << endl; 
       
       if(maxHere != minHere)
 	{
@@ -113,7 +113,7 @@ void SampleMaster::branchLengthsIntegration()
       thisOut.close(); 
 
       Branch tmpBranch = branch; 
-      cout << "optimizing the branch using nr" << endl; 
+      tout << "optimizing the branch using nr" << endl; 
       ss.str(std::string());
       ss << "nr-length." << cl.getRunid() << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
       thisOut.open(ss.str()); 
@@ -161,5 +161,5 @@ void SampleMaster::branchLengthsIntegration()
       traln.setBranch(branch); 
     }
 
-  cout << "finished!" << endl; 
+  tout << "finished!" << endl; 
 }

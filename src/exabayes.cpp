@@ -83,10 +83,6 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   vector<nat> partPars ; 
   ParsimonyEvaluator p; 
   p.evaluate(*t, t->getTr()->start, true,partPars);
-  
-  for(auto &v : partPars)
-    cout << v << "," ; 
-  cout << endl; 
 
 #else 
 

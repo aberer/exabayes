@@ -18,10 +18,10 @@ ParallelSetup::ParallelSetup(int argc, char **argv)
 #if HAVE_PLL == 0 
 void ParallelSetup::initializeExaml(const CommandLine &cl)
 {  
-  runsParallel = cl.getNumRunParallel();
-
   MPI_Comm_rank(MPI_COMM_WORLD, &globalRank);
-  MPI_Comm_size(MPI_COMM_WORLD, &globalSize);
+  MPI_Comm_size(MPI_COMM_WORLD, &globalSize);  
+
+  runsParallel = cl.getNumRunParallel();
 
   if(globalRank == 0 )
     cout << endl << endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << endl; 

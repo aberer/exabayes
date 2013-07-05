@@ -9,9 +9,9 @@ void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
 {
   nat r = rand();  
   std::cout << r << std::endl; 
-  traln.getTr()->randomNumberSeed = rand();
 
 #if HAVE_PLL != 0
+  traln.getTr()->randomNumberSeed = rand();
   makeParsimonyTreeFast(traln.getTr(), traln.getPartitionsPtr());
 #else 
   assert(0); 
