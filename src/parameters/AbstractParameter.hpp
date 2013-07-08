@@ -6,7 +6,6 @@
 #include "Priors.hpp"
 
 
-
 enum class Category; 
 
 class AbstractParameter
@@ -16,13 +15,16 @@ public:
   AbstractParameter(Category cat, nat id)
     : id(id)
     , cat(cat) 
-    // , modifiesBL (false)
-  { }
+    , printToParamFile(true)
+  {
+  }
 
   virtual AbstractParameter* clone () const =  0; 
 
   virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const = 0; 
   virtual ParameterContent extractParameter(const TreeAln &traln)  const  = 0;   
+  virtual void printSample(std::ostream& fileHandle, const TreeAln &traln ) const = 0; 
+  virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  = 0; 
 
   void setSavedContent(const ParameterContent& content) { savedContent = content; }
   ParameterContent& getSavedContent() {return savedContent; }
@@ -35,15 +37,18 @@ public:
   std::vector<nat> getPartitions() const {return partitions; }
   AbstractPrior* getPrior() const { return prior.get(); }
 
+  bool isPrintToParamFile() const {return printToParamFile; }
+
   std::ostream&  printShort(std::ostream& out); 
   friend std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs); 
-  
+
 protected: 
   nat id; 
   Category cat; 
   std::vector<nat> partitions; 
   ParameterContent savedContent; 
   std::shared_ptr<AbstractPrior> prior; 
+  bool printToParamFile; 
 }; 
 
 #endif

@@ -63,7 +63,13 @@ begin runconfig;
  numGen 500000           [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
- 
+
+
+[ TODO ]  
+  parsimonyStartingTree		false		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
+  heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
+  [  sampledHeated false ] [ also take samples from the heated chains ]
+
  [ CONVERGENCE ]
  asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
  asdsfConvergence  0.005    [ indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence ] 
@@ -80,9 +86,7 @@ begin runconfig;
  [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
   burninProportion 	  	0.25   	  	[ discard this proportion of all initial samples as burnin  ]
 
-[ TODO ]  
-  parsimonyStartingTree		false		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
-  heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
+
 end; 
 
 

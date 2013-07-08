@@ -164,15 +164,16 @@ void SampleMaster::initializeRuns( )
 	      chain.setDeltaT(runParams.getHeatFactor()); 
 	    }
 	  
-	  CoupledChains run(runSeeds[i], i, cl.getWorkdir(), runParams.getNumCoupledChains(), chains) ; 
+	  runs.emplace_back(runSeeds[i], i, cl.getWorkdir(), runParams.getNumCoupledChains(), chains); 
+	  auto &run = *(runs.rbegin()); 
 	  run.setTemperature(runParams.getHeatFactor());
 	  run.setTuneHeat(runParams.getTuneHeat()); 
 	  run.setPrintFreq(runParams.getPrintFreq()); 
 	  run.setSwapInterval(runParams.getSwapInterval()); 
 	  run.setSamplingFreq(runParams.getSamplingFreq()); 
 	  run.setRunName(runParams.getRunId()); 
-	  run.seedChains(); 
-	  runs.push_back(run); 	  
+	  run.seedChains(); 	  
+	  run.initializeOutputFiles ();
 	  
 	  cout << runs[runs.size()-1].getChains()[0].getTraln() << endl; 
 	}
@@ -386,17 +387,21 @@ void SampleMaster::run()
  
 void SampleMaster::finalizeRuns()
 {
+
+
+  // TODO finalize output files  
+  assert(0); 
   for(auto &run : runs)
     {
-      auto &chains = run.getChains(); 
-      for(auto &chain : chains)
+      for(auto &chain : run.getChains())
 	{
-	  if( chain.getChainHeat() == 1.f)
-	    chain.finalizeOutputFiles(run.getTopoFile());
-	  tout << "best state was: " << chain.getBestState( )<< endl; 
+	  if(chain.getChainHeat() == 1. )
+	    {
+	      tout << "best state was: " << chain.getBestState( )<< endl;       
+	    }
 	}
     }
-
+  
   tout << endl << "Converged/stopped after " << runs[0].getChains()[0].getGeneration() << " generations" << endl;   
   tout << endl << "Total execution time: " 
        << CLOCK::duration_cast<CLOCK::duration<double> >( CLOCK::system_clock::now() - initTime   ).count() <<  " seconds" << endl; 

@@ -127,6 +127,7 @@ namespace CategoryFuns
 
   std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id)
   {
+
     switch(cat)
       {
       case Category::TOPOLOGY :
@@ -136,14 +137,14 @@ namespace CategoryFuns
       case Category::FREQUENCIES :
 	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id));
       case Category::SUBSTITUTION_RATES :
-	return  std::unique_ptr<RevMatParameter>( new RevMatParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id));
       case Category::RATE_HETEROGENEITY:
-	return  std::unique_ptr<RateHetParameter>( new RateHetParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id));
       case Category::AA_MODEL :
       default : 
 	{
 	  assert(0); 
-	  return std::unique_ptr<RateHetParameter>( new RateHetParameter(id));
+	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id));
 	}
       }    
   } 

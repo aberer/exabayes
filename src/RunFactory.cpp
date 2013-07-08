@@ -35,7 +35,7 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	case Category::TOPOLOGY: 
 	case Category::BRANCH_LENGTHS: 
 	  {
-	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId); 
+	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId );
 	    ++highestId; 
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 

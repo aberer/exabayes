@@ -13,9 +13,12 @@
 #include <memory>
 
 #include "PriorBelief.hpp"
-// #include "State.hpp"
 #include "LikelihoodEvaluator.hpp"
 #include "AbstractProposal.hpp"
+
+#include "TopologyFile.hpp"
+#include "ParameterFile.hpp"
+
 
 class TreeAln; 
 class AbstractProposal; 
@@ -44,16 +47,13 @@ public:
   void step();
 
   const std::vector<AbstractProposal*> getProposalView() const  ; 
-  void printNexusTreeFileStart( FILE *fh  ); 
-  void printParams(FILE *fh); 
-  void printParamFileStart(FILE *fh); 
-  void finalizeOutputFiles(FILE *fh); 
-  void printSample(FILE *topofile, FILE *paramFile); 
-  void printTopology(FILE *fh); 
   void switchState(Chain &rhs);
   std::ostream& addChainInfo(std::ostream &out) const; 
   void printProposalSate(std::ostream& out ) const ; 
   void printProposalState(std::ostream& out ) const ; 
+  /** 
+      @brief extracts the variables of a chain into a sorted array      
+   */ 
   const std::vector<AbstractParameter*> extractVariables() const ; 
 
   // getters and setters 
@@ -76,6 +76,15 @@ public:
   double getDeltaT() {return deltaT; }
   int getGeneration() const {return currentGeneration; }
   const PriorBelief& getPrior() const  {return prior; } 
+
+
+  void sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const ; 
+  // {
+  //   tFile.sample( *traln, getGeneration() ); 
+  //   pFile.sample( *traln, extractVariables(), getGeneration(), prior.getLnPrior()); 
+  // }
+
+
 
 private : 			// METHODS 
   void initParamDump(); 	// BAD

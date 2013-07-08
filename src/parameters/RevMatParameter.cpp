@@ -31,3 +31,45 @@ ParameterContent RevMatParameter::extractParameter(const TreeAln &traln )  const
   return result; 
 }   
 
+
+
+void RevMatParameter::printSample(std::ostream& fileHandle, const TreeAln &traln) const 
+{
+  auto content = extractParameter(traln);
+
+  bool isFirst = true; 
+  for(auto &v : content.values)
+    {
+      fileHandle << (isFirst ?  "" : "\t" ) << v ; 
+      isFirst = false; 
+    }
+}
+ 
+void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const 
+{
+  auto content = extractParameter(traln); 
+  std::vector<std::string> names; 
+  
+  switch(content.values.size())
+    {
+    case 6 : 
+      names = { "A<->C", "A<->G", "A<->T", "C<->G" , "C<->T", "G<->T"}; 
+      break; 
+    default : assert(0); 
+    }
+
+  bool isFirstG = true; 
+  for(int i = 0; i < content.values.size() ; ++i)
+    {
+      fileHandle << (isFirstG ? "" : "\t" ) << "pi{" ;
+      isFirstG = false; 
+	
+      bool isFirst = true; 
+      for(auto &p : partitions)
+	{
+	  fileHandle  << (isFirst ? "": "," ) << p ; 
+	  isFirst = false; 
+	}	    
+      fileHandle  << "}("  << names.at(i) << ")"; 
+    }  
+}

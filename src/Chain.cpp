@@ -160,7 +160,6 @@ void Chain::printProposalState(std::ostream& out ) const
 }
 
 
-
 AbstractProposal* Chain::drawProposalFunction()
 { 
   double r = relWeightSum * chainRand.drawRandDouble01();   
@@ -179,93 +178,55 @@ AbstractProposal* Chain::drawProposalFunction()
 }
 
 
+// void Chain::printParams(FILE *fh)
+// {
+//   tree *tr = traln->getTr(); 
 
-void Chain::printParams(FILE *fh)
-{
-  tree *tr = traln->getTr(); 
+//   double treeLength = Branch(0,0,traln->getTreeLengthExpensive()).getInterpretedLength(*traln); 
 
-  double treeLength = Branch(0,0,traln->getTreeLengthExpensive()).getInterpretedLength(*traln); 
+//   assert(treeLength != 0.); 
+//   fprintf(fh, "%d\t%f\t%f\t%.3f", currentGeneration,
+// 	  prior.getLnPrior(), 
+// 	  tr->likelihood,  
+// 	  treeLength); 
 
-  assert(treeLength != 0.); 
-  fprintf(fh, "%d\t%f\t%f\t%.3f", currentGeneration,
-	  prior.getLnPrior(), 
-	  tr->likelihood,  
-	  treeLength); 
+//   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+//     {
+//       // TODO rewrite 
+//       fprintf(fh, "\t%f\t%f", 
+// 	      0.,
+// // traln->accessPartitionLH( i),
+// 	      traln->getAlpha(i)) ; 
 
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      // TODO rewrite 
-      fprintf(fh, "\t%f\t%f", 
-	      0.,
-// traln->accessPartitionLH( i),
-	      traln->getAlpha(i)) ; 
-
-      auto revMat = traln->getRevMat(i);
-      for(auto r : revMat)
-	fprintf(fh, "\t%.2f", r); 
+//       auto revMat = traln->getRevMat(i);
+//       for(auto r : revMat)
+// 	fprintf(fh, "\t%.2f", r); 
       
-      auto freqs = traln->getFrequencies(i); 
-      for(auto f : freqs)
-	fprintf(fh, "\t%.2f", f); 
-    }
+//       auto freqs = traln->getFrequencies(i); 
+//       for(auto f : freqs)
+// 	fprintf(fh, "\t%.2f", f); 
+//     }
 
-  fprintf(fh, "\n"); 
-  fflush(fh); 
-}
-
-
-void Chain::printParamFileStart(FILE *fh)
-{
-  fprintf(fh, "[ID: %s]\n", "TODO");
-  fprintf(fh, "Gen\tLnPr\tLnL\tTL"); 
-
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-    {
-      fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
-      fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
-      fprintf(fh, "\tpi(A).%d\tpi(C).%d\tpi(G).%d\tpi(T).%d", i,i,i,i); 
-    }
-
-  fprintf(fh, "\n"); 
-  fflush(fh); 
-}
+//   fprintf(fh, "\n"); 
+//   fflush(fh); 
+// }
 
 
-void Chain::finalizeOutputFiles(FILE *fh)
-{
-  /* topo file  */
-  fprintf(fh, "end;\n"); 
-}
+// void Chain::printParamFileStart(FILE *fh)
+// {
+//   fprintf(fh, "[ID: %s]\n", "TODO");
+//   fprintf(fh, "Gen\tLnPr\tLnL\tTL"); 
 
+//   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+//     {
+//       fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
+//       fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
+//       fprintf(fh, "\tpi(A).%d\tpi(C).%d\tpi(G).%d\tpi(T).%d", i,i,i,i); 
+//     }
 
-void Chain::printSample(FILE *topofile, FILE *paramFile)
-{
-  this->printTopology(topofile);
-  this->printParams(paramFile);
-}
-
-
-  /* TODO what about per model brach lengths? how does mrB do this? */
-void Chain::printTopology(FILE *fh)
-{  
-  assert(couplingId == 0);
-  
-  TreePrinter tp(true, false, false);
-  std::string treeString = tp.printTree(*traln);
-
-  fprintf(fh,"\ttree gen.%d = [&U] %s\n", currentGeneration, treeString.c_str());
-  fflush(fh);
-}
-
-
-void Chain::printNexusTreeFileStart( FILE *fh  )
-{
-  fprintf(fh, "#NEXUS\n[ID: %s]\n[Param: tree]\nbegin trees;\n\ttranslate\n", "TODO" ); 
-
-  for(int i = 0; i < traln->getTr()->mxtips-1; ++i)
-    fprintf(fh, "\t\t%d %s,\n", i+1, traln->getTr()->nameList[i+1]); 
-  fprintf(fh, "\t\t%d %s;\n", traln->getTr()->mxtips, traln->getTr()->nameList[traln->getTr()->mxtips]);
-}
+//   fprintf(fh, "\n"); 
+//   fflush(fh); 
+// }
 
 
 void Chain::switchState(Chain &rhs)
@@ -373,9 +334,9 @@ void Chain::suspend()
 // TODO not too much thought went into this  
 namespace  std			
 {
-  template<>
-  struct hash<AbstractParameter*>
+  template<> class hash<AbstractParameter*>
   {
+  public: 
     size_t operator()(const AbstractParameter* rhs) const 
     {
        return rhs->getId(); 
@@ -391,8 +352,10 @@ namespace  std
     }
   }; 
 }
-				
-					   
+
+
+
+
 const std::vector<AbstractParameter*> Chain::extractVariables() const 
 {
   std::unordered_set<AbstractParameter*> result; 
@@ -405,13 +368,10 @@ const std::vector<AbstractParameter*> Chain::extractVariables() const
     }
   
   std::vector<AbstractParameter*> result2 ; 
-  // tout << "extracted variables: " << std::endl; 
-  for(auto v : result)
-    {
-      
-      result2.push_back(v); 
-      // tout << v << std::endl; 
-    }
+  result2.resize(result.size()); 
+  
+  for(auto &v : result)      
+    result2[v->getId()] = v ; 
 
   return result2; 
 }
@@ -433,3 +393,11 @@ std::ostream& operator<<(std::ostream& out, const Chain &rhs)
   return out; 
 }
 
+
+
+
+void Chain::sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const
+{
+  tFile.sample( *traln, getGeneration() ); 
+  pFile.sample( *traln, extractVariables(), getGeneration(), prior.getLnPrior()); 
+}

@@ -34,7 +34,7 @@ void SampleMaster::branchLengthsIntegration()
   auto eval = chain.getEvaluatorPtr();
 
   vector<unique_ptr<AbstractParameter> > vars; 
-  vars.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0))); 
+  vars.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0 ))); 
   for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
     vars[0]->addPartition(i);
 

@@ -1,16 +1,16 @@
 #include <sstream>
 
-#include "CoupledChains.hpp"
+#include "CoupledChains.hpp"   
 #include "Chain.hpp"
 #include "GlobalVariables.hpp"
 #include "tune.h"
 #include "treeRead.h"
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
-
 #include "time.hpp"
 
-CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains )
+
+CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains   )
   : chains(_chains)
   , heatIncrement(0.1) 
   , rand(seed)
@@ -20,42 +20,59 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int 
   , swapInterval(1)
   , samplingFreq(100)
   , runname("standardId") 
-  , numCoupled(numCoupled) 
+  , workdir(workingdir)
 {
   // swap info matrix 
   for(int i = 0; i < numCoupled * numCoupled ; ++i)
-    swapInfo.push_back(new SuccessCounter());       
-  
-  stringstream tNameBuilder,
-    pNameBuilder;
-  tNameBuilder << workingdir << PROGRAM_NAME << "_topologies." << runname << "."  << runid ; 
-  pNameBuilder << workingdir << PROGRAM_NAME << "_parameters." << runname << "."  << runid  ; 
-  
-  /* todo binary Chain file?  */
-  topoFile = fopen(tNameBuilder.str().c_str(), "w"); 
-  paramFile = fopen(pNameBuilder.str().c_str(), "w");   
-
-  // TODO 
-
-  chains[0].printNexusTreeFileStart(topoFile);
-  chains[0].printParamFileStart(paramFile) ;
-
-  // for(auto &c : getChains())
-  //   {
-  //     cout << c.getTraln() << endl; 
-  //   }
-
+    swapInfo.push_back(new SuccessCounter()); 
 }
+
+
+CoupledChains::CoupledChains(CoupledChains&& rhs)   
+  : chains(std::move(rhs.chains))
+  , swapInfo(std::move(rhs.swapInfo))    
+  , heatIncrement(rhs.heatIncrement)
+  , rand(std::move(rhs.rand))
+  , runid(rhs.runid)
+  , tuneHeat(rhs.tuneHeat)
+  , printFreq(rhs.printFreq)
+  , swapInterval(rhs.swapInterval)
+  , samplingFreq(rhs.samplingFreq)
+  , runname(std::move(rhs.runname))
+  , workdir(std::move(workdir))
+  , tFile(std::move(rhs.tFile))
+  , pFile(std::move(rhs.pFile))
+{
+  
+}
+
+CoupledChains& CoupledChains::operator=(CoupledChains rhs)
+{
+  std::swap(*this, rhs); 
+  return *this; 
+} 
+
+
+void CoupledChains::initializeOutputFiles()  
+{
+
+  // TODO sampling file for every chain possibly 
+  auto &traln = chains[0].getTraln(); 
+  auto &params = chains[0].extractVariables();
+
+  tFile.emplace_back(workdir, runname, runid, 0); 
+  pFile.emplace_back(workdir, runname,runid, 0); 
+  
+  nat id = rand(); 		// meh 
+  tFile[0].initialize(traln, id ); 
+  pFile[0].initialize(traln, params, id ); 
+}
+
 
 void CoupledChains::seedChains()
 {
   for(auto &c : chains)
     c.reseed(rand.generateSeed()); 
-}
-
-
-CoupledChains::~CoupledChains()
-{
 }
 
 
@@ -146,6 +163,8 @@ void CoupledChains::switchChainState()
 }
 
 
+
+
 void CoupledChains::chainInfo()
 {
   // print hot chains
@@ -184,7 +203,6 @@ void CoupledChains::chainInfo()
 
 void CoupledChains::executePart(int gensToRun)
 {  
-  /* if we have ample space, then we'll have to use the apply and save functions only at the beginning and end of each run for all chains  */
   for(auto &c : chains)
     c.resume();
 
@@ -197,12 +215,15 @@ void CoupledChains::executePart(int gensToRun)
 	  for(int i = 0; i < swapInterval; ++i)
 	    {
 	      chain.step(); 	      
-	      if(chain.getChainHeat() == 1 
-		 && (chain.getGeneration() % samplingFreq)  == samplingFreq - 1
-		 ) 
-		chain.printSample(topoFile, paramFile); 
+	      if(chain.getChainHeat() == 1 && (chain.getGeneration() % samplingFreq)  == samplingFreq - 1 ) 
+		{
+		  for(auto &c : chains)
+		    {
+		      if( c.getChainHeat() == 1. )
+			c.sample(tFile[0], pFile[0]); 
+		    }
+		}
 		
-	      
 	      timeToPrint |= 
 		chain.getCouplingId() == 0 && printFreq > 0
 		&& (chain.getGeneration() % printFreq )  == (printFreq - 1) ;

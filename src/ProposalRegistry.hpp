@@ -15,7 +15,6 @@
 #include "AminoModelJump.hpp"
 #include "NodeSlider.hpp"
 #include "TreeLengthMultiplier.hpp"
-#include "PartitionProposal.hpp"
 #include "AbstractProposal.hpp"
 #include "GlobalVariables.hpp"
 #include "config/BlockProposalConfig.hpp"

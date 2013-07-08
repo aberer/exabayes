@@ -61,7 +61,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	     || (cat == Category::SUBSTITUTION_RATES && traln->getPartition(i)->dataType == DNA_DATA) 
 	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
 	{	  
-	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr); 
+	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr);
 	  ++idCtr; 
 	  r->addPartition(i);
 	  parameters.push_back(std::move(r)); 

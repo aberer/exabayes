@@ -14,6 +14,9 @@
 #include "config/BlockRunParameters.hpp"
 #include "Chain.hpp"
 #include "SuccessCounter.hpp"
+#include "TopologyFile.hpp"
+#include "ParameterFile.hpp"
+
 
 
 /**
@@ -26,26 +29,19 @@ class CoupledChains
 {
 public: 
   CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain>& _chains ); 
-
-  void seedChains(); 
-
-  void initializeChains(vector<shared_ptr<TreeAln> > trees, const vector<unique_ptr<AbstractProposal> > &proposals, 
-			const vector<unique_ptr<AbstractParameter> > &vars, 
-			shared_ptr<LikelihoodEvaluator> eval); 
-
-  ~CoupledChains(); 
+  CoupledChains(CoupledChains&& rhs); 
+  CoupledChains& operator=(CoupledChains rhs); 
+  // CoupledChains(CoupledChains &rhs) = delete; 
+  // CoupledChains& operator=(CoupledChains& rhs) = delete; 
 
   /** @brief run for a given number of generations */
   void run(int numGen); 
-
   void printSwapInfo();
-
   void chainInfo(); 
+  void seedChains(); 
 
   /** @brief Execute a portion of one run. */
-  void executePart(int gensToRun); 
-
-  
+  void executePart(int gensToRun);   
   void setPrintFreq(nat t){printFreq = t; }
 
   void setSwapInterval(nat i) {swapInterval = i; }
@@ -57,10 +53,11 @@ public:
   int getNumberOfChains(){return chains.size();}
   void enableHeatTuning(int freq ) { tuneHeat = true; tuneFreq = freq; }  
   void printNexusTreeFileStart(Chain &chain, FILE *fh  );   
-  FILE* getTopoFile(){return topoFile; }
-  FILE* getParamFile(){return paramFile; }  
   void setRunName(string a) {runname = a;  }
+  void initializeOutputFiles()  ; 
 
+  
+  
 private: 			// METHODS
 
 /**
@@ -75,28 +72,22 @@ private: 			// METHODS
 
 
 private: 			// ATTRIBUTES
-
   vector<Chain> chains; 
   vector<SuccessCounter*> swapInfo;  
-
   double heatIncrement; 
-  // the mcmc specific randomness used to initialize chains and do the swapping 
   Randomness rand; 
-
   int runid; 
-
   int tuneFreq; 
   bool tuneHeat; 
   int printFreq; 
   int swapInterval; 
   int samplingFreq; 
   string runname; 
+  string workdir; 
 
-  // files for sampling the cold chain  
-  FILE *topoFile; 
-  FILE *paramFile; 
-  
-  nat  numCoupled; 
+  // order is coupled to the heat id  
+  std::vector<TopologyFile> tFile; 
+  std::vector<ParameterFile> pFile; 
 }; 
 
 #endif
