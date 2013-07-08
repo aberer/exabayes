@@ -57,10 +57,10 @@ begin runconfig;
  [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
 
  [ RUN PARAMETERS ]
- diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
+ diagFreq 10000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
- numRuns  1 		[ number of independant runs ]
- numGen 500000           [ if numRuns = 1, stop simulation after that many generations ] 
+ numRuns  2 	   	[ number of independant runs ]
+ numGen 500000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 

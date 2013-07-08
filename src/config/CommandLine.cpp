@@ -4,9 +4,9 @@
 #include "CommandLine.hpp"
 #include "GlobalVariables.hpp"
 
-#include "getopt_pp.h"
+#include "getoptpp/getopt_pp.h"
 
-using namespace std; 
+// using namespace std; 
 
 using namespace GetOpt; 
 

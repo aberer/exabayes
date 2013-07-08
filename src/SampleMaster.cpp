@@ -78,8 +78,6 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 	}
     }
 
-  // cout << "ref tree now is "<< *(trees[0]) << endl; 
-  
   // propagate the tree to the coupled chains, if necessar y
   if(runParams.isHeatedChainsUseSame())
     {
@@ -174,10 +172,7 @@ void SampleMaster::initializeRuns( )
 	  run.setRunName(runParams.getRunId()); 
 	  run.seedChains(); 	  
 	  run.initializeOutputFiles ();
-	  
-	  cout << runs[runs.size()-1].getChains()[0].getTraln() << endl; 
 	}
-      cout << "================================================================"<< endl;
     }
 
 
@@ -190,10 +185,7 @@ void SampleMaster::initializeRuns( )
       for(auto &chain :  run.getChains())
 	{
 	  if(isFist)
-	    {
-	      cout << chain.getTraln() << endl; 
-	      isFist = false ; 
-	    }
+	    isFist = false ; 
 
 	  chain.resume(); 
 	  tout << chain; 
@@ -273,33 +265,6 @@ bool SampleMaster::convergenceDiagnostic()
       return runs[0].getChains()[0].getGeneration() > runParams.getNumGen();
     }
 }
-
-
-// static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln> > &tralns)
-// {
-//   // fetch a tree 
-//   auto traln = tralns[0]; 
-//   tree *tr = traln->getTr();
-
-
-//   int count = 0;       
-
-
-//   for(auto &b : extractBranches )
-
-//   // if(hasBranchLength)
-
-
-//   if(hasBranchLength)
-//     traverseInitCorrect(tr->start->back, &count, traln ) ;  
-//   else      
-//     traverseInitFixedBL(tr->start->back, &count, traln, TreeAln::initBL ); 
-
-//   assert(count == 2 * tr->mxtips  -3);       
-
-//   for(nat i = 1 ; i < tralns.size(); ++i)
-//     *(tralns[i]) = *traln; 
-// }
 
 
 // TODO finalize output files  
@@ -387,8 +352,6 @@ void SampleMaster::run()
  
 void SampleMaster::finalizeRuns()
 {
-
-
   // TODO finalize output files  
   assert(0); 
   for(auto &run : runs)

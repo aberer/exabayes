@@ -28,7 +28,7 @@ GetOpt_pp: Yet another C++ version of getopt.
 #include <unistd.h>
 #endif
 
-#include "getopt_pp.h"
+#include "getoptpp/getopt_pp.h"
 
 namespace GetOpt
 {

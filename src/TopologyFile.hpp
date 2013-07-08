@@ -16,8 +16,7 @@ public:
     if(couplingId != 0 )
       ss << ".hot-"<<  couplingId; 
     fullFilename = ss.str();
-    
-    std::cout << "full file name is " << fullFilename << std::endl; 
+
     std::ofstream fh (fullFilename); 
     fh << "" ; 
     fh.close(); 
