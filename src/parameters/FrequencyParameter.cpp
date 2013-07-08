@@ -36,7 +36,7 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
   switch(content.values.size())
     {
     case 4:       
-      names = { "A" , "C", "T", "G"}; 
+      names = { "A" , "C", "G", "T"}; 
       break; 
     default: 
       assert(0); 

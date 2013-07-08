@@ -11,8 +11,8 @@
 
 const double BoundsChecker::zMin = 1.0E-15 ; 
 const double BoundsChecker::zMax = (1.0 - BoundsChecker::zMin) ;  // 1.0E-6
-const double BoundsChecker::rateMin = 0.0000001; 
-const double BoundsChecker::rateMax = 1000000.0; 
+const double BoundsChecker::rateMin = 1e-7; 
+const double BoundsChecker::rateMax = 1e6; 
 const double BoundsChecker::alphaMin = 0.02; 
 const double BoundsChecker::alphaMax = 1000.0; 
 const double BoundsChecker::freqMin = 0.001; 
