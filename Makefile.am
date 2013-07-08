@@ -4,9 +4,11 @@ EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihoo
 
 .PHONY: my-update-src doc 
 
-WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized #  -Wno-write-strings  -Wsign-compare  -Wno-vla
+WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized
+#  -Wno-write-strings  -Wsign-compare  -Wno-vla
 noinst_LIBRARIES=libbayes.a libncl.a 
-RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops #  -D_SEQUENTIAL #  
+RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops
+#  -D_SEQUENTIAL #  
 
 
 # SIMD_FLAGS=-msse3
@@ -49,13 +51,13 @@ bin_PROGRAMS+= parserPll
 noinst_LIBRARIES+=libpll.a
 endif 
 
-GETOPTPP_INCLUDE=-I$(top_srcdir)/lib/getoptpp/
-libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) 
-libbayes_a_SOURCES+=$(top_srcdir)/lib/getoptpp/src/getopt_pp.cpp
+
+GETOPT=-I$(top_srcdir)/lib/getoptpp/getoptpp/ -I$(top_srcdir)/lib/getoptpp/
+libbayes_a_CXXFLAGS=-O3 $(GETOPT) $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)  
 exabayes_LDADD= libncl.a libbayes.a 
-exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
 exabayes_LDADD+=$(LIBTOUSE)
-exabayes_CXXFLAGS= -O3 $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)   -I$(top_srcdir)/lib/getopt_pp/ -I$(top_srcdir)/lib/getopt_pp/src/   $(GETOPTPP_INCLUDE)
+exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp $(top_srcdir)/lib/getoptpp/src/getopt_pp.cpp
+exabayes_CXXFLAGS=-O3 $(GETOPT) $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) 
 
 ################################################################
 # PRSF

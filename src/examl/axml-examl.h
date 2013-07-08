@@ -781,6 +781,8 @@ typedef  struct  {
   double *likelihoods;
 
   boolean fastTreeEvaluation;
+
+  parsimonyNumber randomNumberSeed; 
 } tree;
 
 
@@ -984,6 +986,7 @@ extern boolean tipHomogeneityChecker ( tree *tr, nodeptr p, int grouping );
 extern void makeRandomTree ( tree *tr);
 extern void nodeRectifier ( tree *tr );
 extern void makeParsimonyTreeFast(tree *tr);
+void makeParsimonyTreeFast(tree *tr); 
 extern void allocateParsimonyDataStructures(tree *tr);
 extern void freeParsimonyDataStructures(tree *tr);
 extern void parsimonySPR(nodeptr p, tree *tr);

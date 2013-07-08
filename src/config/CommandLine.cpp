@@ -6,11 +6,7 @@
 
 #include "getoptpp/getopt_pp.h"
 
-// using namespace std; 
-
 using namespace GetOpt; 
-
-
 
 
 CommandLine::CommandLine(int argc, char **argv)

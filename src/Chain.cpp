@@ -332,7 +332,7 @@ void Chain::suspend()
 
 
 // TODO not too much thought went into this  
-namespace  std			
+namespace std 
 {
   template<> class hash<AbstractParameter*>
   {

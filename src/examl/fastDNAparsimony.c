@@ -1018,3 +1018,164 @@ void freeParsimonyDataStructures(tree *tr)
   exa_free(tr->ti);
 }
 
+
+static nodeptr buildNewTip (tree *tr, nodeptr p)
+{ 
+  nodeptr  q;
+
+  q = tr->nodep[(tr->nextnode)++];
+  hookupDefault(p, q, 0.65);
+  q->next->back = (nodeptr)NULL;
+  q->next->next->back = (nodeptr)NULL;
+ 
+  return  q;
+}
+
+static void insertParsimony (tree *tr, nodeptr p, nodeptr q)
+{
+  nodeptr  r;
+  
+  r = q->back;
+  
+  hookupDefault(p->next,       q, 0.65);
+  hookupDefault(p->next->next, r, 0.65);
+   
+  newviewParsimony(tr, p);
+}
+
+
+static void buildSimpleTree (tree *tr, int ip, int iq, int ir)
+{    
+  nodeptr  p, s;
+  int  i;
+  
+  i = MIN(ip, iq);
+  if (ir < i)  i = ir; 
+  tr->start = tr->nodep[i];
+  tr->ntips = 3;
+  p = tr->nodep[ip];
+  hookupDefault(p, tr->nodep[iq], 0.65); /* whatever */
+  s = buildNewTip(tr, tr->nodep[ir]);
+  insertParsimony(tr, s, p);
+}
+
+
+
+static void makePermutationFast(int *perm, int n, tree *tr)
+{    
+  int  
+    i, 
+    j, 
+    k;
+
+  for (i = 1; i <= n; i++)    
+    perm[i] = i;               
+
+  for (i = 1; i <= n; i++) 
+    {      
+      double d =  randum(&tr->randomNumberSeed);
+
+      k =  (int)((double)(n + 1 - i) * d);
+      
+      j        = perm[i];
+
+      perm[i]     = perm[i + k];
+      perm[i + k] = j; 
+    }
+}
+
+void makeParsimonyTreeFast(tree *tr)
+{   
+  nodeptr  
+    p, 
+    f;    
+
+  int 
+    i, 
+    nextsp,
+    *perm        = (int *)exa_malloc((size_t)(tr->mxtips + 1) * sizeof(int));  
+
+  unsigned int 
+    randomMP, 
+    startMP;         
+  
+  assert(!tr->constrained);
+
+  makePermutationFast(perm, tr->mxtips, tr);
+  
+  tr->ntips = 0;    
+  
+  tr->nextnode = tr->mxtips + 1;       
+  
+  buildSimpleTree(tr, perm[1], perm[2], perm[3]);
+  
+  f = tr->start;       
+  
+  while(tr->ntips < tr->mxtips) 
+    {	
+      nodeptr q;
+      
+      tr->bestParsimony = INT_MAX;
+      nextsp = ++(tr->ntips);             
+      p = tr->nodep[perm[nextsp]];                 
+      q = tr->nodep[(tr->nextnode)++];
+      p->back = q;
+      q->back = p;
+        
+      if(tr->grouped)
+	{
+	  int 
+	    number = p->back->number;	  	 
+
+	  tr->constraintVector[number] = -9;
+	}
+          
+      stepwiseAddition(tr, q, f->back);
+      
+      {
+	nodeptr	  
+	  r = tr->insertNode->back;
+	
+	int counter = 4;
+	
+	hookupDefault(q->next, tr->insertNode, 0.65);
+	hookupDefault(q->next->next, r, 0.65);
+	
+	computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, FALSE);              
+	tr->ti[0] = counter;
+	
+	newviewParsimonyIterativeFast(tr);
+      }
+    }    
+
+  /* printf("ADD: %d\n", tr->bestParsimony);  */
+
+  /* nodeRectifierPars(tr); */
+
+  randomMP = tr->bestParsimony;        
+
+  /* TODO removed the spr moves... does not work otherwise */
+
+#if 0
+  do
+    {
+      startMP = randomMP;
+      nodeRectifierPars(tr);
+      for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
+	{
+	  rearrangeParsimony(tr, pr, tr->nodep[i], 1, 20, FALSE);
+	  
+	  if(tr->bestParsimony < randomMP)
+	    {		
+	      restoreTreeRearrangeParsimony(tr, pr);
+	      randomMP = tr->bestParsimony;
+	    }
+	}      		  	   
+    }
+  while(randomMP < startMP); 
+#endif
+
+  /* andre: i do not know, why the following line is necesary...   */
+  /* nodeRectifierPars(tr); */
+  /* tr->start = tr->nodep[1]; */
+}
