@@ -199,14 +199,6 @@ std::vector<Branch> TreeAln::extractBranches() const
 }
 
 
-// void TreeAln::verifyTreeLength() const
-// {
-// #if TODO 
-//   double tlVerified = getTreeLengthExpensive() ;
-//   assert(treeLength == tlVerified); 
-// #endif
-// }
-
 void TreeAln::enableParsimony()
 {  
 #if HAVE_PLL == 0
@@ -223,9 +215,6 @@ void TreeAln::enableParsimony()
   allocateParsimonyDataStructures(&tr, &partitions);   
 #endif
 }
-
-
-
 
 
 /** 

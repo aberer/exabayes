@@ -11,7 +11,7 @@ void TopologyParameter::applyParameter(TreeAln& traln , const ParameterContent &
 
 ParameterContent TopologyParameter::extractParameter(const TreeAln &traln )  const
 {
-  assert(partitions.size() == 1 ); 
+  // assert(partitions.size() == 1 ); 
 
   ParameterContent result; 
   result.branches = traln.extractBranches(); 

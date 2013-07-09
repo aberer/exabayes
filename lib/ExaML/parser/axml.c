@@ -2743,14 +2743,14 @@ static void compressDNA(tree *tr, int *informative)
 
       tr->partitionData[model].parsimonyLength = compressedEntriesPadded;
 
-      printf("length finally is %d\n", compressedEntriesPadded);
+      /* printf("length finally is %d\n", compressedEntriesPadded); */
 
       free(compressedTips);
       free(compressedValues);
 
-      for(int i = 0; i < numByte; ++i)
-	printf("%u,", tr->partitionData[model].parsVect[i]); 
-      printf("\n");
+      /* for(int i = 0; i < numByte; ++i) */
+      /* 	printf("%u,", tr->partitionData[model].parsVect[i]);  */
+      /* printf("\n"); */
     }
 
   tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
@@ -2951,7 +2951,7 @@ int main (int argc, char *argv[])
   
   baseFrequenciesGTR(tr->rdta, tr->cdta, tr); 
   
-  printf("okay\n"); 
+  /* printf("okay\n");  */
   
   allocateParsimonyDataStructures(tr)  ; 
 
@@ -3019,13 +3019,13 @@ int main (int argc, char *argv[])
 	int numBytes =tr->partitionData[model].parsimonyLength * tr->partitionData[model].states * 2 * tr->mxtips ; 
 	/* printf("now writing %d bytes of size %d\n", numBytes, sizeof(parsimonyNumber));  */
 
-	printf("parsLength=%d\tnumByets=%d\n", tr->partitionData[model].parsimonyLength, numBytes); 
+	/* printf("parsLength=%d\tnumByets=%d\n", tr->partitionData[model].parsimonyLength, numBytes);  */
 	
 	/* printf("will write %d\n", numBytes);  */
 
-	for(int i = 0; i < numBytes ; ++i)
-	  printf("%u,", tr->partitionData[model].parsVect[i]);
-	printf("\n");
+	/* for(int i = 0; i < numBytes ; ++i) */
+	/*   printf("%u,", tr->partitionData[model].parsVect[i]); */
+	/* printf("\n"); */
 
     	myBinFwrite( tr->partitionData[model].parsVect, sizeof(parsimonyNumber),numBytes );
       }    

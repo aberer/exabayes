@@ -17,78 +17,44 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
 }
 
 
-void TreeLengthMultiplier::multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere)
-{
-  tree *tr = traln.getTr();
-  double newZ = pow( traln.getBranch(p).getLength(),multiHere); 
-
-  Branch tmp(p->number, p->back->number, newZ); 
-  traln.setBranch(tmp); 
-
-  if(isTip(p->number, tr->mxtips))
-    return; 
-
-  nodeptr q = p->next; 
-  while(p != q)
-    {
-      multiplyBranchLengthsRecursively(traln, q->back,multiHere); 
-      q = q->next; 
-    }
-}
-
-
 void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
-  tree *tr = traln.getTr(); 
-
-  storedBranches.clear();   
+  storedBranches.clear(); 
   storedBranches = traln.extractBranches();
 
+  std::vector<Branch> newBranches = storedBranches; 
   
-  bool blOkay = true; 
-  do 
+  double treeScaler = rand.drawMultiplier(multiplier); 
+  double initTL = 1; 
+  double newTL = 1; 
+
+  for(auto &b : newBranches)
     {
-      rememMultiplier  = rand.drawMultiplier( multiplier);
+      auto initLength = b.getLength();
+      initTL *= initLength; 
 
-      for(auto &b : storedBranches)
-	{
-	  double zNew =  pow(b.getLength(), rememMultiplier); 
-	  blOkay &= BoundsChecker::zMin <= zNew && zNew <= BoundsChecker::zMax   ; 
-	}
-    } while( not blOkay ); 
-
-#ifdef EFFICIENT
-  // this whole tree length stuff is still highly unsatisfactory 
-  assert(0); 
-#endif
+      b.setLength(  pow(initLength, treeScaler) ); 
+      
+      if( not BoundsChecker::checkBranch(b))
+	BoundsChecker::correctBranch(b);
+      
+      double realScaling = log(b.getLength())  /  log(initLength);       
+      updateHastings(hastings, realScaling, "TL-multi"); 
+      newTL *= b.getLength(); 
+    }
+  
+  for(auto &b : newBranches)
+    traln.setBranch(b);
 
   auto brPr = primVar[0]->getPrior(); 
-
-  updateHastings(hastings, 
-		 pow(rememMultiplier, 2 * traln.getTr()->mxtips - 3  ) , 
-		 "TL-Mult");
-  
-  double initTreeLength = 1,
-    newTreeLength = 1;   
-  for(auto &b : storedBranches)
-    {
-      initTreeLength *= b.getLength();
-      newTreeLength *= pow(b.getLength(), rememMultiplier); 
-    }  
-
-  multiplyBranchLengthsRecursively(traln , tr->start->back, rememMultiplier);   
-  prior.updateBranchLengthPrior(traln, initTreeLength, newTreeLength, brPr);
+  prior.updateBranchLengthPrior(traln, initTL, newTL, brPr);
 }
 
 
 void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
 {
   for(auto &b : storedBranches)
-    {
-      nodeptr p = b.findNodePtr(traln); 
-      double tmp = b.getLength();  
-      traln.clipNode(p,p->back, tmp);
-    }
+    traln.setBranch(b); 
 } 
 
 

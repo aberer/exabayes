@@ -178,57 +178,6 @@ AbstractProposal* Chain::drawProposalFunction()
 }
 
 
-// void Chain::printParams(FILE *fh)
-// {
-//   tree *tr = traln->getTr(); 
-
-//   double treeLength = Branch(0,0,traln->getTreeLengthExpensive()).getInterpretedLength(*traln); 
-
-//   assert(treeLength != 0.); 
-//   fprintf(fh, "%d\t%f\t%f\t%.3f", currentGeneration,
-// 	  prior.getLnPrior(), 
-// 	  tr->likelihood,  
-// 	  treeLength); 
-
-//   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-//     {
-//       // TODO rewrite 
-//       fprintf(fh, "\t%f\t%f", 
-// 	      0.,
-// // traln->accessPartitionLH( i),
-// 	      traln->getAlpha(i)) ; 
-
-//       auto revMat = traln->getRevMat(i);
-//       for(auto r : revMat)
-// 	fprintf(fh, "\t%.2f", r); 
-      
-//       auto freqs = traln->getFrequencies(i); 
-//       for(auto f : freqs)
-// 	fprintf(fh, "\t%.2f", f); 
-//     }
-
-//   fprintf(fh, "\n"); 
-//   fflush(fh); 
-// }
-
-
-// void Chain::printParamFileStart(FILE *fh)
-// {
-//   fprintf(fh, "[ID: %s]\n", "TODO");
-//   fprintf(fh, "Gen\tLnPr\tLnL\tTL"); 
-
-//   for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
-//     {
-//       fprintf(fh, "\tlnl.%d\talhpa.%d", i,i); 
-//       fprintf(fh, "\tr.%d(A<->C)\tr.%d(A<->G)\tr.%d(A<->T)\tr.%d(C<->G)\tr.%d(C<->T)\tr.%d(G<->T)",i, i,i,i,i,i); 
-//       fprintf(fh, "\tpi(A).%d\tpi(C).%d\tpi(G).%d\tpi(T).%d", i,i,i,i); 
-//     }
-
-//   fprintf(fh, "\n"); 
-//   fflush(fh); 
-// }
-
-
 void Chain::switchState(Chain &rhs)
 {
   std::swap(couplingId, rhs.couplingId); 
@@ -268,6 +217,8 @@ void Chain::step()
 
   pfun->applyToState(*traln, prior, hastings, chainRand);
   pfun->evaluateProposal(*evaluator, *traln, prior);
+
+  // tout << hastings << std::endl; 
   
   double priorRatio = prior.getLnPriorRatio();
   double lnlRatio = tr->likelihood - prevLnl; 

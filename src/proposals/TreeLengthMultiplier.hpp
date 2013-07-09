@@ -16,7 +16,7 @@ public:
 
 private: 
   double multiplier; 		// the tuning variable  
-  double rememMultiplier; 	// for resetting 
+  // double rememMultiplier; 	// for resetting 
   double initTreeLength; 
   
   void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 

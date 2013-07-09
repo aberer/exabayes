@@ -59,14 +59,14 @@ begin runconfig;
  [ RUN PARAMETERS ]
  diagFreq 10000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
- numRuns  1 	   	[ number of independant runs ]
+ numRuns  4 	   	[ number of independant runs ]
  numGen 500000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
 
 [ TODO ]  
-  parsimonyStartingTree		false		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
+  parsimonyStartingTree		true		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
   heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
   [  sampledHeated false ] [ also take samples from the heated chains ]
 

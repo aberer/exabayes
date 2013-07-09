@@ -18,7 +18,7 @@ fi
 
 
 
-tail -n +3 $theFile | cut -f $pos   > tmp 
+tail -n +2 $theFile | cut -f $pos   > tmp 
 
 # echo my dir is  $(dirname $0)
 $(dirname $0)/distributionPlotter.R tmp $1.col$2.plot.pdf $histOpt
