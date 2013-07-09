@@ -16,6 +16,7 @@
 #include "SuccessCounter.hpp"
 #include "TopologyFile.hpp"
 #include "ParameterFile.hpp"
+#include "ParallelSetup.hpp"
 
 
 
@@ -31,8 +32,6 @@ public:
   CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain>& _chains ); 
   CoupledChains(CoupledChains&& rhs); 
   CoupledChains& operator=(CoupledChains rhs); 
-  // CoupledChains(CoupledChains &rhs) = delete; 
-  // CoupledChains& operator=(CoupledChains& rhs) = delete; 
 
   /** @brief run for a given number of generations */
   void run(int numGen); 
@@ -41,7 +40,7 @@ public:
   void seedChains(); 
 
   /** @brief Execute a portion of one run. */
-  void executePart(int gensToRun);   
+  void executePart(int gensToRun, const ParallelSetup &pl);   
   void setPrintFreq(nat t){printFreq = t; }
 
   void setSwapInterval(nat i) {swapInterval = i; }

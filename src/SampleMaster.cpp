@@ -150,7 +150,7 @@ void SampleMaster::initializeRuns( )
 	  for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
 	    {
 	      randCtr_t c; 
-	      chains.push_back(Chain( c , trees[j], proposals, eval ) ); 
+	      chains.emplace_back( c , trees[j], proposals, eval  ); 
 	      auto &chain = chains[j]; 		
 	      chain.setRunId(i); 
 	      chain.setTuneFreuqency(runParams.getTuneFreq()); 
@@ -167,7 +167,9 @@ void SampleMaster::initializeRuns( )
 	  run.setSamplingFreq(runParams.getSamplingFreq()); 
 	  run.setRunName(runParams.getRunId()); 
 	  run.seedChains(); 	  
-	  run.initializeOutputFiles ();
+	  
+	  if(pl.isReportingProcess())
+	    run.initializeOutputFiles ();
 	}
     }
 
@@ -330,7 +332,7 @@ void SampleMaster::run()
   while(not hasConverged)   
     {      
       for(auto &run : runs)
-	run.executePart(runParams.getDiagFreq());
+	run.executePart(runParams.getDiagFreq(), pl );
 
       hasConverged = convergenceDiagnostic(); 
 

@@ -8,10 +8,11 @@
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 #include "time.hpp"
+#include "ParallelSetup.hpp"
 
 
 CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains   )
-  : chains(_chains)
+  : chains(std::move(_chains))
   , heatIncrement(0.1) 
   , rand(seed)
   , runid(runNum) 
@@ -201,7 +202,7 @@ void CoupledChains::chainInfo()
 }
 
 
-void CoupledChains::executePart(int gensToRun)
+void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
 {  
   for(auto &c : chains)
     c.resume();
@@ -219,7 +220,7 @@ void CoupledChains::executePart(int gensToRun)
 		{
 		  for(auto &c : chains)
 		    {
-		      if( c.getChainHeat() == 1. )
+		      if( c.getChainHeat() == 1. && pl.isReportingProcess() )
 			c.sample(tFile[0], pFile[0]); 
 		    }
 		}

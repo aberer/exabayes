@@ -29,8 +29,9 @@ class Chain
 public: 
   // life cycle related   
   Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval); 
-  Chain(  const Chain& rhs)    ; 
-  Chain& operator=(Chain &rhs) = delete; 
+  
+  Chain( Chain&& rhs) ; 
+  Chain& operator=(Chain rhs) ; 
 
   void reseed(randKey_t c) { chainRand = Randomness(c); }
 

@@ -39,7 +39,7 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
 }
 
 
-Chain::Chain( const Chain& rhs)   
+Chain::Chain( Chain&& rhs)   
   : traln(rhs.traln)
   , deltaT(rhs.deltaT)
   , runid(rhs.runid)
@@ -59,6 +59,12 @@ Chain::Chain( const Chain& rhs)
   // cout << *traln<< endl; 
 }
 
+
+Chain& Chain::operator=(Chain rhs)
+{
+  std::swap(*this, rhs); 
+  return *this; 
+}
 
 
 std::ostream& Chain::addChainInfo(std::ostream &out) const 
@@ -343,8 +349,6 @@ std::ostream& operator<<(std::ostream& out, const Chain &rhs)
   out << "\tLnL: " << rhs.getLnLikelihood() << "\tLnPr: " << rhs.getLnPrior(); 
   return out; 
 }
-
-
 
 
 void Chain::sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const
