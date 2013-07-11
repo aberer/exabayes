@@ -51,7 +51,7 @@ typedef  unsigned int nat ;
 /* #define INCORRECT */
 /* #define PRINT_MULT */
 /* #define DEBUG_EVAL */
-/* #define DEBUG_ARRAY_SWAP */
+#define DEBUG_ARRAY_SWAP
 
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
 /* #define DEBUG_PRINT_TUNE_INFO */

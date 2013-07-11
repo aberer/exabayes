@@ -18,7 +18,7 @@ class LnlRestorer
 {
 public: 
   LnlRestorer(TreeAln& traln); 
-  ~LnlRestorer();
+  // ~LnlRestorer();
 
   void resetRestorer(const TreeAln &traln); 
   void restoreArrays(TreeAln &traln);  
@@ -38,7 +38,8 @@ private:
   std::vector<double> partitionLnl; 
 
   int modelEvaluated; 
-  double ***reserveArrays; 
+  // TODO eventually use unique ptrs there as well 
+  std::vector<std::vector<double* > > reservePerPartition; 
   std::vector<bool> wasSwitched; 
   std::vector<nat> orientation; 
   std::vector<std::vector<nat>> partitionScaler;   
