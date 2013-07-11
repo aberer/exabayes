@@ -51,7 +51,7 @@ typedef  unsigned int nat ;
 /* #define INCORRECT */
 /* #define PRINT_MULT */
 /* #define DEBUG_EVAL */
-#define DEBUG_ARRAY_SWAP
+/* #define DEBUG_ARRAY_SWAP */
 
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
 /* #define DEBUG_PRINT_TUNE_INFO */
@@ -65,7 +65,7 @@ typedef  unsigned int nat ;
 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define VERIFY_LNL_SUPER_EXPENSIVE */
@@ -73,7 +73,7 @@ typedef  unsigned int nat ;
 
 
 
-#define DEBUG_LNL_VERIFY
+/* #define DEBUG_LNL_VERIFY */
 /* BAD BAD BAD  */
 /* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
 

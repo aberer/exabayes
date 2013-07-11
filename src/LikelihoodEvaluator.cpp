@@ -226,8 +226,22 @@ void LikelihoodEvaluator::resetToImprinted(TreeAln &traln)
 {
   restorer->restoreArrays(traln); 
   Branch root = findVirtualRoot(traln); 
-  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
-  assert(fabs(prevLnl - traln.getTr()->likelihood) < 1e-6);   
+
+  auto p = root.findNodePtr(traln), 
+    q = p->back; 
+
+  assert( (traln.isTipNode(p) ||  p->x) 
+	  && (traln.isTipNode(q) || q->x ) );
+
+#ifdef DEBUG_LNL_VERIFY
+  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE );   
+  if(fabs(prevLnl - traln.getTr()->likelihood) > 1e-6)
+    {
+      std::cout << "error while resetting lnl arrays. Likelihood should be " 
+		<< prevLnl << " but was " << traln.getTr()->likelihood << std::endl; 
+      assert(0); 
+    }
+#endif
 }
 
 

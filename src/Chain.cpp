@@ -89,7 +89,7 @@ double Chain::getChainHeat()
 
 void Chain::resume()  
 {
-  std::cout << "trying to resume" << std::endl; 
+  // std::cout << "trying to resume" << std::endl; 
   
   auto vs = extractVariables(); 
 
@@ -223,7 +223,7 @@ void Chain::step()
   double oldPrior = prior.getLnPrior();
 #endif
 
-  tout << pfun->getName() << std::endl; 
+  // tout << pfun->getName() << std::endl; 
 
   pfun->applyToState(*traln, prior, hastings, chainRand);
   pfun->evaluateProposal(*evaluator, *traln, prior);
@@ -286,7 +286,7 @@ void Chain::suspend()
   for(auto &v : variables)
     if(maxV < v->getId()) 
       maxV = v->getId(); 
-  tout << "highest id: " << maxV << std::endl; 
+  // tout << "highest id: " << maxV << std::endl; 
   savedContent.resize(maxV + 1 ); 
   for(auto& v : variables)
     savedContent[v->getId()] = v->extractParameter(*traln);
@@ -295,7 +295,7 @@ void Chain::suspend()
   lnPr = prior.getLnPrior();
   
   // addChainInfo(tout);
-  tout << " SUSPEND " << likelihood << std::endl; 
+  // tout << " SUSPEND " << likelihood << std::endl; 
 }
 
 

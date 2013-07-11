@@ -18,7 +18,7 @@ class LnlRestorer
 {
 public: 
   LnlRestorer(TreeAln& traln); 
-  // ~LnlRestorer();
+  ~LnlRestorer();
 
   void resetRestorer(const TreeAln &traln); 
   void restoreArrays(TreeAln &traln);  
