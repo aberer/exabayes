@@ -128,8 +128,8 @@ void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch)
 
 
 // currently a bit expensive  
-void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) const 
-{
+Branch LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln) const 
+{  
   auto tr = traln.getTr(); 
 
   Branch root; 
@@ -170,7 +170,7 @@ void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) 
 
   assert(root.getPrimNode( )!= 0); 
 
-  result = root; 
+  return root; 
 }
 
 
@@ -178,8 +178,7 @@ void LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln, Branch &result) 
 
 double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)    
 {
-  Branch root; 
-  findVirtualRoot(traln,root); 
+  Branch root = findVirtualRoot(traln); 
   
   auto tr = traln.getTr(); 
   nat numPart = traln.getNumberOfPartitions(); 
@@ -217,6 +216,21 @@ double LikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vecto
   return tr->likelihood; 
 }
 
+void LikelihoodEvaluator::imprint(const TreeAln &traln)
+{ 
+  prevLnl = traln.getTr()->likelihood; 
+  restorer->resetRestorer(traln);   
+}
+
+void LikelihoodEvaluator::resetToImprinted(TreeAln &traln)
+{
+  restorer->restoreArrays(traln); 
+  Branch root = findVirtualRoot(traln); 
+  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
+  assert(fabs(prevLnl - traln.getTr()->likelihood) < 1e-6);   
+}
+
+
 void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked)
 {
 #if HAVE_PLL != 0
@@ -234,9 +248,7 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 
   *debugTraln = traln; 
 
-  // LikelihoodEvaluator eval; 
-  Branch root ; 
-  findVirtualRoot(traln, root); 
+  Branch root = findVirtualRoot(traln); 
 
   nodeptr
     p = root.findNodePtr(*debugTraln ); 
@@ -270,8 +282,3 @@ void LikelihoodEvaluator::setDebugTraln(std::shared_ptr<TreeAln> _debugTraln)
   debugTraln = _debugTraln; 
 }
 #endif
-
-
-
-
-

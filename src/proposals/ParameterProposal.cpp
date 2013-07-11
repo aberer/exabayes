@@ -18,7 +18,8 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   assert(primVar.size() == 1); 
   
   ParameterContent content = primVar[0]->extractParameter(traln); 
-  primVar[0]->setSavedContent(content); 
+  // primVar[0]->setSavedContent(savedContent); 
+  savedContent = content; 
   
   double oldFracChange = traln.getTr()->fracchange; 
   
@@ -49,7 +50,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
     }
 
   auto thePrior = primVar[0]->getPrior();
-  prior.addToRatio(thePrior->getLogProb(newValues) - thePrior->getLogProb(primVar[0]->getSavedContent().values)); 
+  prior.addToRatio(thePrior->getLogProb(newValues) - thePrior->getLogProb(savedContent.values)); 
 } 
 
 
@@ -62,7 +63,7 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
 void ParameterProposal::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   assert(primVar.size() == 1 ); 
-  primVar[0]->applyParameter(traln, primVar[0]->getSavedContent());
+  primVar[0]->applyParameter(traln, savedContent);
 }
 
 

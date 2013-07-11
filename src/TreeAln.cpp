@@ -560,7 +560,6 @@ void TreeAln::setAlpha(double alpha,  int model)
   assert(BoundsChecker::checkAlpha(alpha)); 
   auto p = getPartition(model); 
   p->alpha = alpha; 
-  std::cout << "setting alpha=" << alpha << std::endl; 
   discretizeGamma(model); 
 }
 

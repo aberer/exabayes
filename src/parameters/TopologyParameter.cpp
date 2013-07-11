@@ -4,7 +4,7 @@
 void TopologyParameter::applyParameter(TreeAln& traln , const ParameterContent &content) const
 {
   traln.unlinkTree();
-  for(auto &b : savedContent.branches)
+  for(auto &b : content.branches)
     traln.clipNode(traln.getUnhookedNode(b.getPrimNode()), traln.getUnhookedNode(b.getSecNode()), b.getLength()); 
 }
 

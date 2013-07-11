@@ -26,9 +26,6 @@ public:
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln ) const = 0; 
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  = 0; 
 
-  void setSavedContent(const ParameterContent& content) { savedContent = content; }
-  ParameterContent& getSavedContent() {return savedContent; }
-
   void addPartition(nat id){ partitions.push_back(id); }
   void setPrior(std::shared_ptr<AbstractPrior> _prior){prior = _prior; }
 
@@ -46,7 +43,6 @@ protected:
   nat id; 
   Category cat; 
   std::vector<nat> partitions; 
-  ParameterContent savedContent; 
   std::shared_ptr<AbstractPrior> prior; 
   bool printToParamFile; 
 }; 

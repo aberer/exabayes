@@ -14,10 +14,11 @@ public:
   double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)  ; 
   void evalSubtree( TreeAln &traln, const Branch &evalBranch)    ; 
   double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
-  void findVirtualRoot(const TreeAln &traln, Branch &result) const ; 
+  Branch findVirtualRoot(const TreeAln &traln) const ; 
 
-  void imprint(const TreeAln &traln) { restorer->resetRestorer(traln); }
-  void resetToImprinted(TreeAln &traln){restorer->restoreArrays(traln); }
+
+  void imprint(const TreeAln &traln); 
+  void resetToImprinted(TreeAln &traln) ; 
 
   static bool disorientNode( nodeptr p); 
   static void disorientTree(TreeAln &traln, const Branch &root) ; 
@@ -43,6 +44,7 @@ private: 			// ATTRIBUTES
   bool verifyLnl; 
 #endif
 
+  double prevLnl; 
 }; 
 
 

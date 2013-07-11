@@ -88,7 +88,6 @@ public:
 
 
 private : 			// METHODS 
-  void initParamDump(); 	// BAD
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr, double hastings ) ;
 
 private: 			// ATTRIBUTES
@@ -106,8 +105,12 @@ private: 			// ATTRIBUTES
   double bestState; 
   std::shared_ptr<LikelihoodEvaluator> evaluator;   
   
+
+  // suspending and resuming the chain   
   double likelihood; 
   double lnPr; 
+  std::vector<ParameterContent> savedContent; // maps parameter-id to content
+  
 
   // friends 
   friend std::ostream& operator<<(std::ostream& out, const Chain &rhs); 

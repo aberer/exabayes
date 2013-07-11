@@ -175,7 +175,6 @@ void LnlRestorer::restoreArrays(TreeAln& traln)
 
   loadOrientation(traln);
 
-
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = traln.getPartition( i); 

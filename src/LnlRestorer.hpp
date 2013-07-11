@@ -17,18 +17,11 @@
 class LnlRestorer
 {
 public: 
-  /** @brief initializes the arrays (expensive memory-wise) */
   LnlRestorer(TreeAln& traln); 
-
   ~LnlRestorer();
 
-  /**@brief  resets the restorer, s.t. it is consistent with the current tree (and can restore it later) */ 
   void resetRestorer(const TreeAln &traln); 
-
-  /// @brief restores the original Chain of the tree 
   void restoreArrays(TreeAln &traln);  
-
-  /** @brief save any arrays that are recomputed, if they have not   already been flipped */ 
   void traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRoot, int model, bool fullTraversal); 
 
 private:   
@@ -50,7 +43,6 @@ private:
   std::vector<nat> orientation; 
   std::vector<std::vector<nat>> partitionScaler;   
   double prevLnl; 		// for DEBUG
-
 }; 
 
 #endif

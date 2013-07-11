@@ -4,7 +4,7 @@
 
 void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
-  for(auto &b : savedContent.branches)
+  for(auto &b : content.branches)
     traln.setBranch(b); 
 }
 

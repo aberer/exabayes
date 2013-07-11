@@ -69,7 +69,7 @@ Chain& Chain::operator=(Chain rhs)
 
 std::ostream& Chain::addChainInfo(std::ostream &out) const 
 {
-  return out << "[run " << runid << ",heat " << couplingId << "]" ; 
+  return out << "[run=" << runid << ",heat=" << couplingId << ",gen=" << getGeneration() << "]" ; 
 }
 
 
@@ -89,12 +89,14 @@ double Chain::getChainHeat()
 
 void Chain::resume()  
 {
+  std::cout << "trying to resume" << std::endl; 
+  
   auto vs = extractVariables(); 
 
   // topology must be dealt with first   
   sort(vs.begin(), vs.end(), [] (const AbstractParameter* a,const AbstractParameter* b ){ return a->getCategory() == Category::TOPOLOGY ;   } ); 
-  for(auto & v : vs)
-    v->applyParameter(*traln, v->getSavedContent()); 
+  for(auto &v : vs)
+    v->applyParameter(*traln, savedContent[v->getId()]); 
 
   evaluator->evaluateFullNoBackup(*traln); 
 
@@ -127,12 +129,8 @@ void Chain::resume()
 void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr, double hastings ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-  tout << "[run=" << runid << ",heat="
-       << couplingId << ",gen="  << currentGeneration << "]\t" 
-       << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t"
-       << std::setprecision(2) << std::fixed << lnl
-       << "\t" << hastings 
-       << std::endl; 
+  addChainInfo(tout); 
+  tout << "\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\t" << hastings << std::endl; 
 #endif
 }
 
@@ -225,6 +223,8 @@ void Chain::step()
   double oldPrior = prior.getLnPrior();
 #endif
 
+  tout << pfun->getName() << std::endl; 
+
   pfun->applyToState(*traln, prior, hastings, chainRand);
   pfun->evaluateProposal(*evaluator, *traln, prior);
 
@@ -282,8 +282,15 @@ void Chain::step()
 void Chain::suspend()  
 {
   auto variables = extractVariables();
-  for(auto & v : variables)    
-    v-> setSavedContent(v->extractParameter(*traln)) ; 
+  nat maxV = 0; 
+  for(auto &v : variables)
+    if(maxV < v->getId()) 
+      maxV = v->getId(); 
+  tout << "highest id: " << maxV << std::endl; 
+  savedContent.resize(maxV + 1 ); 
+  for(auto& v : variables)
+    savedContent[v->getId()] = v->extractParameter(*traln);
+
   likelihood = traln->getTr()->likelihood; 
   lnPr = prior.getLnPrior();
   

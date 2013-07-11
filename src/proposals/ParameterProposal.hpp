@@ -25,6 +25,7 @@ private:
   bool modifiesBL; 
   double parameter; 
   std::shared_ptr<AbstractProposer> proposer; 
+  ParameterContent savedContent; 
 }; 
 
 

@@ -66,7 +66,6 @@ protected:
   std::vector<std::unique_ptr<AbstractParameter> > secVar;  // as a by-product also these random variables are changed 
 
   double relativeWeight; 
-
 }; 
 
 #endif
