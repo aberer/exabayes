@@ -115,7 +115,6 @@ TreeAln::~TreeAln()
   exa_free(tr.executeModel) ;  
   exa_free(tr.partitionContributions); 
   exa_free(tr.fracchanges); 
-
 #endif
 
 }
@@ -157,6 +156,7 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
       setFrequencies(std::vector<double>(partition->states, 1.0 / (double)partition->states ), i); 
       int num = numStateToNumInTriangleMatrix(partition->states); 
       setRevMat(std::vector<double>( num , 1.0 ), i); 
+      setAlpha(1, i); 
     }
 }
 
@@ -560,6 +560,7 @@ void TreeAln::setAlpha(double alpha,  int model)
   assert(BoundsChecker::checkAlpha(alpha)); 
   auto p = getPartition(model); 
   p->alpha = alpha; 
+  std::cout << "setting alpha=" << alpha << std::endl; 
   discretizeGamma(model); 
 }
 

@@ -17,7 +17,6 @@ const double BoundsChecker::alphaMin = 0.02;
 const double BoundsChecker::alphaMax = 1000.0; 
 const double BoundsChecker::freqMin = 0.001;
 
-
 // const double BoundsChecker::rateMin = 1e-12; 
 // const double BoundsChecker::rateMax = 1e12; 
  

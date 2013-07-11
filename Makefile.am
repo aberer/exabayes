@@ -54,6 +54,7 @@ endif
 
 GETOPT=-I$(top_srcdir)/lib/getoptpp/getoptpp/ -I$(top_srcdir)/lib/getoptpp/
 libbayes_a_CXXFLAGS=-O3 $(GETOPT) $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)  
+libbayes_a_CFLAGS=-O2 $(GETOPT) $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)  
 exabayes_LDADD= libncl.a libbayes.a 
 exabayes_LDADD+=$(LIBTOUSE)
 exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp $(top_srcdir)/lib/getoptpp/src/getopt_pp.cpp

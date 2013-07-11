@@ -89,7 +89,7 @@ public:
 
 private : 			// METHODS 
   void initParamDump(); 	// BAD
-  void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr ) ;
+  void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr, double hastings ) ;
 
 private: 			// ATTRIBUTES
   std::shared_ptr<TreeAln> traln;  

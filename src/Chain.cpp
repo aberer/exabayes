@@ -102,6 +102,8 @@ void Chain::resume()
     {
       std::cerr << "While trying to resume chain: previous chain liklihood larger than " <<
 	"evaluated likelihood. This is a programming error." << std::endl; 
+      std::cerr << "prev=" << likelihood << "\tnow=" << traln->getTr()->likelihood << std::endl; 
+
       assert(0);       
     }  
 
@@ -122,13 +124,15 @@ void Chain::resume()
 }
 
 
-void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr ) 
+void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr, double hastings ) 
 {
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   tout << "[run=" << runid << ",heat="
        << couplingId << ",gen="  << currentGeneration << "]\t" 
        << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t"
-       << std::setprecision(2) << std::fixed << lnl  << std::endl; //   
+       << std::setprecision(2) << std::fixed << lnl
+       << "\t" << hastings 
+       << std::endl; 
 #endif
 }
 
@@ -237,7 +241,7 @@ void Chain::step()
 #endif
 
   bool wasAccepted  = testr < acceptance; 
-  debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior()); 
+  debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior(), hastings); 
 
   if(wasAccepted)
     {
@@ -284,7 +288,7 @@ void Chain::suspend()
   lnPr = prior.getLnPrior();
   
   // addChainInfo(tout);
-  // tout << " SUSPEND " << likelihood << std::endl; 
+  tout << " SUSPEND " << likelihood << std::endl; 
 }
 
 
