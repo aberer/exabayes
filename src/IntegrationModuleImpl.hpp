@@ -59,8 +59,10 @@ void SampleMaster::branchLengthsIntegration()
     {      
       double minHere = 1000; 
       double maxHere = 0; 
+      Branch initBranch = branch; 
 
       traln.setBranch(branch); 
+      eval->evaluateFull(traln, branch);
       integrator->setToPropose(branch); 
       
       stringstream ss; 
@@ -72,15 +74,13 @@ void SampleMaster::branchLengthsIntegration()
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
 	{	  
 	  integrationChain.step();
-	  traln.setBranch(branch); 	  
-
-	  double length = branch.getInterpretedLength(traln); 
-	  thisOut << length << endl; 
-	  
-	  if(length < minHere)
-	    minHere = length; 
-	  if(maxHere < length )
-	    maxHere = length; 
+	  auto elem = traln.getBranch(branch.findNodePtr(traln)); 
+	  auto iLen = elem.getInterpretedLength(traln);
+	  thisOut << iLen << endl; 
+	  if(iLen < minHere)
+	    minHere = iLen; 
+	  if(maxHere < iLen)
+	    maxHere = iLen; 
 	}      
 
       thisOut.close();
@@ -158,8 +158,9 @@ void SampleMaster::branchLengthsIntegration()
       thisOut.close(); 
       
       // reset 
-      traln.setBranch(branch); 
+      traln.setBranch(initBranch); 
     }
 
   tout << "finished!" << endl; 
 }
+

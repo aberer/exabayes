@@ -127,7 +127,10 @@ double logGamma (double alp)
 
 }
 
-double logGammaProb (double x, double alpha, double beta )
+double logGammaDensity (double x, double alpha, double beta )
 {    
-  return (alpha-1.0) * log(x) + alpha * log(beta) - x * beta - logGamma(alpha);  
+  double result =  (alpha-1.0) * log(x) + alpha * log(beta) - x * beta - logGamma(alpha);  
+
+  // std::cout << "Gamma("<< x << ";" <<  alpha << "," << beta << ") = " << result << std::endl; 
+  return result; 
 }

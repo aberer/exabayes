@@ -3,8 +3,9 @@
 #include "densities.h"
 
 const double GibbsProposal::EST_EXP = -1; 
-const double GibbsProposal::EST_FAC = 0.015; 
+// const double GibbsProposal::EST_FAC = 0.015; 
 
+const double GibbsProposal::EST_FAC = 0.15; 
 
 /** 
     @brief draws a branch from the estimated posterior probability   
@@ -17,12 +18,20 @@ const double GibbsProposal::EST_FAC = 0.015;
     @param Branch branch -- contains the initial branch length
     
  */ 
-void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand, double initVal,  int maxIter, double &hastings) 
+void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings) 
 {
   double initLength = branch.getLength(); 
+
+  // std::cout <<  << std::endl; 
   
   double nrD2 = 0; 
   optimiseBranch(traln, branch, eval, nrD2, maxIter);
+
+  if( nrD2 > 0 )
+    {
+      std::cerr << "2nd derivate > 0. HACK: setting it to negative value. Resolve this!" << std::endl; 
+      nrD2 = - nrD2; 
+    }
 
   double nrOpt = branch.getInterpretedLength(traln); 
   double c = EST_FAC  / -nrD2 ; 
@@ -33,16 +42,21 @@ void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluat
   double prop = branch.getInternalLength(traln, proposal );   
 
   branch.setLength(initLength); 
-  double lnBackP = logGammaProb(branch.getInterpretedLength(traln), alpha, beta); 
-  double lnForP = logGammaProb(proposal, alpha, beta); 
+  double lnBackP = logGammaDensity(branch.getInterpretedLength(traln), alpha, beta); 
+  double lnForP = logGammaDensity(proposal, alpha, beta); 
 
+  // std::cout << std::endl <<  "initL=" << branch.getInterpretedLength(traln) << "\tnrOpt=" << nrOpt << "\tnrD2=" << nrD2 << "\tproposal=" 
+  // 	    << proposal <<  "\thastings=" << lnBackP - lnForP   <<std::endl; 
+
+  
+  // hastings += (lnBackP - lnForP); 
   AbstractProposal::updateHastings(hastings,   exp(lnBackP - lnForP) , "theGibbs");
   branch.setLength(prop); 
 }
 
 
 
-void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluator& eval, double &secDerivative, int maxIter)  
+void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluator& eval, double &secDerivative, int maxIter)
 {
   auto p = b.findNodePtr(traln ), 
     q = p->back; 
@@ -51,12 +65,6 @@ void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluat
     eval.evalSubtree(traln, b); 
   if(not q->x == 1 )
     eval.evalSubtree(traln,b.getInverted());
-    
-  eval.evaluate(traln,b, false);
-
-#ifdef TODO
-  // assert(0); 
-#endif
 
   double lambda = 10;
   double result = 0;   
@@ -70,4 +78,6 @@ void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluat
 #endif
 
   b.setLength(result); 
+  
+  // std::cout<< "result=" << result << "\tresult_iter=" << b.getInterpretedLength(traln) << "\tfirst=" << firstDerivative<< "\tsecond="<< secDerivative << "\tafter " << maxIter << std::endl; 
 }

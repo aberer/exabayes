@@ -2,6 +2,8 @@
 #include "BranchLengthMultiplier.hpp"
 
 
+#define MAX_ITER 30 
+
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
@@ -16,13 +18,13 @@ public:
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
   {
-    Branch  b = proposeBranch(traln, rand);     
+    Branch b = proposeBranch(traln, rand);     
     b.setLength(b.findNodePtr(traln)->z[0]); 
     double initBl = b.getLength(); 
 
     savedBranch = b;     
     
-    GibbsProposal::drawFromEsitmatedPosterior(b, *eval, traln, rand, initBl, 5, hastings); 
+    GibbsProposal::drawFromEsitmatedPosterior(b, *eval, traln, rand,  MAX_ITER, hastings); 
     double newZ = b.getLength();
     traln.setBranch(b);    
 

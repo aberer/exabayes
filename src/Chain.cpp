@@ -126,13 +126,13 @@ void Chain::resume()
 }
 
 
-void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr, double hastings ) 
-{
-#ifdef DEBUG_SHOW_EACH_PROPOSAL
-  addChainInfo(tout); 
-  tout << "\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\t" << hastings << std::endl; 
-#endif
-}
+// void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr, double hastings ) 
+// {
+// #ifdef DEBUG_SHOW_EACH_PROPOSAL
+//   addChainInfo(tout); 
+//   tout << "\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\t" << hastings << std::endl; 
+// #endif
+// }
 
 
 
@@ -241,7 +241,15 @@ void Chain::step()
 #endif
 
   bool wasAccepted  = testr < acceptance; 
-  debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior(), hastings); 
+  
+#ifdef DEBUG_SHOW_EACH_PROPOSAL
+  {
+  double lnl = tr->likelihood; 
+  addChainInfo(tout); 
+  tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\tdelta=" << lnlRatio << "\t" << hastings << std::endl; 
+  }
+#endif
+  // debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior(), hastings); 
 
   if(wasAccepted)
     {
@@ -271,11 +279,8 @@ void Chain::step()
   prior.verifyPrior(*traln, extractVariables());
 #endif
 
-  if(this->tuneFrequency <  pfun->getNumCallSinceTuning() )
-    {
-      pfun->autotune();
-    }
-
+  if(this->tuneFrequency <  pfun->getNumCallSinceTuning() ) 
+    pfun->autotune();
 }
 
 
