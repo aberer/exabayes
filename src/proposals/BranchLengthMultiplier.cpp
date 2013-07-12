@@ -35,29 +35,22 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   double
     drawnMultiplier = 0 ,
     newZ = oldZ; 
-  
-  do 
-    {
-      drawnMultiplier= rand.drawMultiplier( multiplier); 
-      assert(drawnMultiplier > 0.); 
-      newZ = pow( oldZ, drawnMultiplier);
-    } while(newZ < BoundsChecker::zMin || BoundsChecker::zMax < newZ ) ; 
 
-  // TODO 
- // double newZ = oldZ; 
- //  if(not traln.isCollapsed(b))    
+  drawnMultiplier= rand.drawMultiplier( multiplier); 
+  assert(drawnMultiplier > 0.); 
+  newZ = pow( oldZ, drawnMultiplier);
 
- //  else 
- //    dra wnMultiplier = 1; 
+  b.setLength(newZ); 
+  if(not BoundsChecker::checkBranch(b))
+    BoundsChecker::correctBranch(b); 
 
-  traln.setBranch(Branch(p->number, p->back->number, newZ)); 
+  traln.setBranch( b ); 
 
-  double realMultiplier = log(newZ) / log(oldZ); 
+  double realMultiplier = log(b.getLength()) / log(oldZ); 
   updateHastings(hastings, realMultiplier, name); 
 
-  // cout << "acessing "<< *(primVar[0] )   << endl; 
   auto relPrior =  primVar[0]->getPrior(); 
-  prior.updateBranchLengthPrior(traln, oldZ, newZ,relPrior) ; 
+  prior.updateBranchLengthPrior(traln, oldZ, b.getLength(),relPrior) ; 
 }
 
 

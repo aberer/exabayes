@@ -156,7 +156,7 @@ void LnlRestorer::restoreArrays(TreeAln& traln)
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = traln.getPartition( i); 
-      for(nat j = 0; j < 2 * traln.getNumberOfTaxa(); ++j)
+      for(nat j = 0; j < traln.getNumberOfNodes(); ++j)
 	partition->globalScaler[j] =  partitionScaler[i][j]; 
     }
 
@@ -205,9 +205,7 @@ void LnlRestorer::resetRestorer(const TreeAln &traln)
     {
       pInfo *partition = traln.getPartition( i); 
       for(nat j = 0; j < traln.getNumberOfNodes() ; ++j )
-	{
-	  partitionScaler[i][j] = partition->globalScaler[j]; 
-	}
+	partitionScaler[i][j] = partition->globalScaler[j]; 
     }
   modelEvaluated = ALL_MODELS; 
   prevLnl = tr->likelihood;   

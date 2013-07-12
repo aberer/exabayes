@@ -104,8 +104,6 @@ end;
       parsimonySPR 0
       guidedSPR 0
 ] 
- 
- 
 
 [
       [ BRANCH LENGTHS ] 
@@ -122,12 +120,12 @@ end;
 [       rateHetMulti 1 ] 
 
       [ REVMAT ] 
-[       revMatSlider 0  ] 
-[       revMatDirichlet 0 ] 
+[        revMatSlider 0  ] 
+[        revMatDirichlet 4 ] 
 
       [ FREQUENIES ]
-[      FrequencySlider 0 ]
-[       FrequencyDirichlet 0 ]
+[       FrequencySlider 0 ] 
+[       FrequencyDirichlet 4 ] 
 
       [ AA models ]
 [       aaModelJump 0  [ todo ] ] 

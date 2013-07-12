@@ -27,6 +27,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   double treeScaler = rand.drawMultiplier(multiplier); 
   double initTL = 1; 
   double newTL = 1; 
+  // std::cout << "drew " <<  treeScaler << std::endl; 
 
   for(auto &b : newBranches)
     {
@@ -36,9 +37,12 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
       b.setLength(  pow(initLength, treeScaler) ); 
       
       if( not BoundsChecker::checkBranch(b))
-	BoundsChecker::correctBranch(b);
+	{
+	  std::cout << "correction!" << std::endl; 
+	  BoundsChecker::correctBranch(b);
+	}
       
-      double realScaling = log(b.getLength())  /  log(initLength);       
+      double realScaling = log(b.getLength())  /  log(initLength); 
       updateHastings(hastings, realScaling, "TL-multi"); 
       newTL *= b.getLength(); 
     }
@@ -65,7 +69,8 @@ void TreeLengthMultiplier::autotune()
   double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, FALSE);
 
 #ifdef DEBUG_PRINT_TUNE_INFO
-  cout << name << ": with ratio " << sctr.getRatioInLastInterval() << ": "<< ((newParam < parameter ) ? "reducing" : "increasing") <<  "\t" << parameter << "," << newParam << endl; 
+  std::cout << name << ": with ratio " << sctr.getRatioInLastInterval()
+	    << ": "<< ((newParam < parameter ) ? "reducing" : "increasing") <<  "\t" << parameter << "=>" << newParam << std::endl; 
 #endif
 
   multiplier = newParam; 
