@@ -3,9 +3,11 @@
 #include "densities.h"
 
 const double GibbsProposal::EST_EXP = -1; 
-// const double GibbsProposal::EST_FAC = 0.015; 
 
-const double GibbsProposal::EST_FAC = 0.15; 
+// const double GibbsProposal::EST_FAC = 0.015; 
+const double GibbsProposal::EST_FAC = 1; 
+
+
 
 /** 
     @brief draws a branch from the estimated posterior probability   
@@ -65,6 +67,9 @@ void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluat
     eval.evalSubtree(traln, b); 
   if(not q->x == 1 )
     eval.evalSubtree(traln,b.getInverted());
+
+  // eval.evaluate(traln,b, false);
+
 
   double lambda = 10;
   double result = 0;   

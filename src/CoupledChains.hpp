@@ -54,7 +54,8 @@ public:
   void printNexusTreeFileStart(Chain &chain, FILE *fh  );   
   void setRunName(string a) {runname = a;  }
   void initializeOutputFiles()  ; 
-
+  
+  void finalizeOutputFiles() const ; 
   
   
 private: 			// METHODS

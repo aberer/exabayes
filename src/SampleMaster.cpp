@@ -323,7 +323,7 @@ void SampleMaster::validateRunParams()
 
 
 // a developmental mode to integrate over branch lengths
-#define _GO_TO_INTEGRATION_MODE
+// #define _GO_TO_INTEGRATION_MODE
 
 
 void SampleMaster::run()
@@ -351,7 +351,7 @@ void SampleMaster::run()
 void SampleMaster::finalizeRuns()
 {
   // TODO finalize output files  
-  assert(0); 
+  // assert(0); 
   for(auto &run : runs)
     {
       for(auto &chain : run.getChains())
@@ -361,6 +361,7 @@ void SampleMaster::finalizeRuns()
 	      tout << "best state was: " << chain.getBestState( )<< endl;       
 	    }
 	}
+      run.finalizeOutputFiles();
     }
   
   tout << endl << "Converged/stopped after " << runs[0].getChains()[0].getGeneration() << " generations" << endl;   

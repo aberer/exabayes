@@ -268,3 +268,11 @@ void CoupledChains::tuneTemperature()
     chain.setDeltaT(deltaT);   
 }
 
+
+void CoupledChains::finalizeOutputFiles() const 
+{
+  for(auto &t : tFile)
+    t.finalize();
+  for(auto &p : pFile)
+    p.finalize();
+}
