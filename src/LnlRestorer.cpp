@@ -15,7 +15,7 @@
 LnlRestorer::LnlRestorer(TreeAln& traln)
   : numPart(traln.getNumberOfPartitions())
   , numTax(traln.getTr()->mxtips)
-  , wasSwitched( 2 * traln.getTr()->mxtips, false)
+  , wasSwitched( traln.getNumberOfNodes(), false)
   , orientation( traln.getTr()->mxtips, 0)
   , partitionScaler(numPart )
 {
@@ -198,8 +198,8 @@ void LnlRestorer::resetRestorer(const TreeAln &traln)
 #endif
 
   auto *tr = traln.getTr();
-  for(int i = 0 ; i < 2 * tr->mxtips; ++i)
-    wasSwitched[i] = false;
+  wasSwitched = std::vector<bool>(traln.getNumberOfNodes(), false); 
+
   storeOrientation(traln); 
   for(int i = 0; i < numPart; ++i)
     {

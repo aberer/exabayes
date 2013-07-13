@@ -49,6 +49,7 @@ public:
   void setTuneHeat(bool bla){tuneHeat = bla ; }  
   void setTemperature(double temp ){heatIncrement = temp;  } 
   vector<Chain>& getChains() {return chains; } 
+  const vector<Chain>& getChains() const {return chains; }
   int getNumberOfChains(){return chains.size();}
   void enableHeatTuning(int freq ) { tuneHeat = true; tuneFreq = freq; }  
   void printNexusTreeFileStart(Chain &chain, FILE *fh  );   

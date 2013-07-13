@@ -33,18 +33,10 @@ public:
   Chain( Chain&& rhs) ; 
   Chain& operator=(Chain rhs) ; 
 
-  void reseed(randKey_t c) { chainRand = Randomness(c); }
-
-  
+  void reseed(randKey_t c) { chainRand = Randomness(c); }  
   void resume(); 
-
-  /** @brief saves the current model state in the parameter objecets that integrate over this */ 
   void suspend(); 
-  
-  /** @brief draws a proposal function. */ 
-  AbstractProposal* drawProposalFunction();
 
-  /** @brief Execute one generation of the chain. */
   void step();
 
   const std::vector<AbstractProposal*> getProposalView() const  ; 
@@ -69,28 +61,23 @@ public:
   std::shared_ptr<TreeAln> getTralnPtr()   {return traln; }
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
-  int getCouplingId(){return couplingId; }
+  int getCouplingId() const {return couplingId; }
   void setCouplingId(int id) {couplingId = id; }
   void setTuneFreuqency(nat _tuneFreq ) {tuneFrequency = _tuneFreq; }
   void setHeatIncrement(nat cplId) {couplingId = cplId  ;}
   void setRunId(nat id) {runid = id; }
   double getDeltaT() {return deltaT; }
   int getGeneration() const {return currentGeneration; }
+  double getLikelihood() const {return likelihood; }
   const PriorBelief& getPrior() const  {return prior; } 
-
-
   void sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const ; 
-  // {
-  //   tFile.sample( *traln, getGeneration() ); 
-  //   pFile.sample( *traln, extractVariables(), getGeneration(), prior.getLnPrior()); 
-  // }
-
-
 
 private : 			// METHODS 
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr, double hastings ) ;
+  AbstractProposal* drawProposalFunction();
 
 private: 			// ATTRIBUTES
+
   std::shared_ptr<TreeAln> traln;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 

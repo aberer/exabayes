@@ -11,6 +11,8 @@
 #include "ParallelSetup.hpp"
 
 
+// #define PRINT_MUCH
+
 CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains   )
   : chains(std::move(_chains))
   , heatIncrement(0.1) 
@@ -231,8 +233,10 @@ void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
 	    }
 	}
 
+#ifdef PRINT_MUCH
       if(timeToPrint)
       	chainInfo(); 
+#endif
 
       if(chains.size()  > 1 
 	 && tuneHeat

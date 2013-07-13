@@ -40,6 +40,7 @@ public:
 private: 
   bool convergenceDiagnostic(); 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh); 
+  void printDuringRun(nat gen); 
 
 private:			// ATTRIBUTES 
   vector<CoupledChains> runs; // TODO bad design: just want to avoid getting memory leaks
@@ -48,8 +49,9 @@ private:			// ATTRIBUTES
   BlockParams paramBlock; 
   BlockRunParameters runParams;  
   BlockProposalConfig propConfig;   
-  Randomness masterRand; 
+  Randomness masterRand;   
   CommandLine cl; 
+  CLOCK::system_clock::time_point timeIncrement; 
 };  
 
 #endif

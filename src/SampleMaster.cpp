@@ -28,6 +28,7 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
   , initTime(CLOCK::system_clock::now())
   , masterRand(cl.getSeed())
   , cl(_cl)
+  , timeIncrement(CLOCK::system_clock::now())
 {
   // DO NOT DELETE THIS LINE: 
   // it has cost me ~ 2 days, to figure out that this stupid line
@@ -249,7 +250,7 @@ bool SampleMaster::convergenceDiagnostic()
 #if HAVE_PLL == 0      
 	  if(processID == 0)
 #endif 
-	    tout  << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << endl; 
+	    tout << std::endl  << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << std::endl << std::endl; 
 
 	  return asdsfVal < runParams.getAsdsfConvergence(); 
 
@@ -260,7 +261,8 @@ bool SampleMaster::convergenceDiagnostic()
     }
   else 
     {
-      return runs[0].getChains()[0].getGeneration() > runParams.getNumGen();
+      return true; 
+      // return runs[0].getChains()[0].getGeneration() > runParams.getNumGen();
     }
 }
 
@@ -322,6 +324,39 @@ void SampleMaster::validateRunParams()
 }
 
 
+void SampleMaster::printDuringRun(nat gen)
+{
+  tout << "[" << gen << "," << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- timeIncrement   ).count()     << "s]\t"; 
+  timeIncrement = CLOCK::system_clock::now(); 
+
+  bool isFirst = true; 
+  for(auto &run : runs)
+    {
+      if(isFirst)
+	isFirst = false; 
+      else 
+	tout << " === " ; 
+
+      auto &chains = run.getChains();
+      std::vector<const Chain*> chainPtrs; 
+      for(auto &c : chains)
+	chainPtrs.push_back(&c);       
+      sort(chainPtrs.begin(), chainPtrs.end(), [] (const Chain* a , const Chain* b ) {return a->getCouplingId() < b->getCouplingId(); }); 
+
+      bool isFirstL = true;  
+      for(auto &c: chainPtrs)
+	{
+	  if(isFirstL)
+	    isFirstL = false; 
+	  else 
+	    tout << " "; 
+	  tout << c->getLikelihood(); 	  
+	}
+    }  
+  tout << std::endl; 
+}
+
+
 // a developmental mode to integrate over branch lengths
 // #define _GO_TO_INTEGRATION_MODE
 
@@ -329,22 +364,46 @@ void SampleMaster::validateRunParams()
 void SampleMaster::run()
 {
   bool hasConverged = false;   
-  while(not hasConverged)   
-    {      
+  int curGen = 0;  
+  int lastPrint = 0; 
+  int lastDiag = 0; 
+
+  printDuringRun(curGen); 
+
+  while(curGen < runParams.getNumGen() || not hasConverged)   
+    { 
+      int nextPrint =  lastPrint + runParams.getPrintFreq(); 
+      int nextDiag = lastDiag + runParams.getDiagFreq(); 
+      int toExecute = min(nextPrint, nextDiag) -  curGen; 
+      
+      // tout << toExecute <<  std::endl; 
+
       for(auto &run : runs)
-	run.executePart(runParams.getDiagFreq(), pl );
+	run.executePart(toExecute, pl );
 
-      hasConverged = convergenceDiagnostic(); 
+      curGen += toExecute; 
 
+      if(curGen % runParams.getDiagFreq() == 0 )
+	{
+	  hasConverged = convergenceDiagnostic(); 
 #ifdef ENABLE_PRSF      
-      printPRSF(run_id);
+	  printPRSF(run_id);
 #endif
+	  lastDiag = curGen; 
+	}
+	
+      if(curGen % runParams.getPrintFreq() == 0 )
+	{
+	  printDuringRun(curGen); 
+	  lastPrint = curGen; 
+	}
     }
 
 #ifdef _GO_TO_INTEGRATION_MODE
   // go into integration mode, if we want to do so 
   branchLengthsIntegration();
 #endif
+  
 }
  
  

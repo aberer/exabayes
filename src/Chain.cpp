@@ -257,6 +257,7 @@ void Chain::step()
       prior.accept();
       if(bestState < traln->getTr()->likelihood  )
 	bestState = traln->getTr()->likelihood; 
+      likelihood = traln->getTr()->likelihood; 
     }
   else
     {
