@@ -1,5 +1,5 @@
 #include <cstring>
-
+#include <algorithm>
 #include <cassert>
 
 #include "LnlRestorer.hpp" 
@@ -155,9 +155,12 @@ void LnlRestorer::restoreArrays(TreeAln& traln)
 
   for(int i = 0; i < numPart; ++i)
     {
-      pInfo *partition = traln.getPartition( i); 
-      for(nat j = 0; j < traln.getNumberOfNodes(); ++j)
-	partition->globalScaler[j] =  partitionScaler[i][j]; 
+      pInfo *partition = traln.getPartition( i);       
+      memcpy(partition->globalScaler, &(partitionScaler[i][0]) , 
+	     sizeof(nat)
+	     // * traln.getNumberOfNodes()
+	     * traln.getNumberOfTaxa() * 2 
+);
     }
 
   tr->likelihood = prevLnl; 
@@ -204,8 +207,8 @@ void LnlRestorer::resetRestorer(const TreeAln &traln)
   for(int i = 0; i < numPart; ++i)
     {
       pInfo *partition = traln.getPartition( i); 
-      for(nat j = 0; j < traln.getNumberOfNodes() ; ++j )
-	partitionScaler[i][j] = partition->globalScaler[j]; 
+      partitionScaler[i].assign(partition->globalScaler, 
+				partition->globalScaler + traln.getNumberOfTaxa() * 2 ); 
     }
   modelEvaluated = ALL_MODELS; 
   prevLnl = tr->likelihood;   
