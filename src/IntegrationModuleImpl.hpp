@@ -3,7 +3,7 @@
 // experimental code that should not directly mix with production level code. 
 
 #define STEPS_FOR_LNL 1000
-#define INTEGRATION_GENERATIONS 10000
+#define INTEGRATION_GENERATIONS 100000
 #define NR_STEPS 30
 
 #include <sstream>
@@ -76,7 +76,8 @@ void SampleMaster::branchLengthsIntegration()
 	  integrationChain.step();
 	  auto elem = traln.getBranch(branch.findNodePtr(traln)); 
 	  auto iLen = elem.getInterpretedLength(traln);
-	  thisOut << iLen << endl; 
+	  if (i % 10 == 0)
+	    thisOut << iLen << endl; 
 	  if(iLen < minHere)
 	    minHere = iLen; 
 	  if(maxHere < iLen)

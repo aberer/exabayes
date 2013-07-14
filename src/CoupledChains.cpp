@@ -10,9 +10,6 @@
 #include "time.hpp"
 #include "ParallelSetup.hpp"
 
-
-// #define PRINT_MUCH
-
 CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains   )
   : chains(std::move(_chains))
   , heatIncrement(0.1) 

@@ -77,5 +77,7 @@ typedef  unsigned int nat ;
 /* BAD BAD BAD  */
 /* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
 
+#define PRINT_MUCH
+
 
 #endif

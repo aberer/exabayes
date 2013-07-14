@@ -59,8 +59,8 @@ begin runconfig;
  [ RUN PARAMETERS ]
  diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
- numRuns  4 	   	[ number of independant runs ]
- numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
+ numRuns  1 	   	[ number of independant runs ]
+ numGen 30000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
@@ -104,8 +104,6 @@ end;
       guidedSPR 0
 ] 
 
-
-[ 
   
       [ BRANCH LENGTHS ] 
 [       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
@@ -115,7 +113,6 @@ end;
       branchCollapser 0 [ bug! ]      
     aGibbsBL 20 
   
-] 
       [ RATE HETEROGENEITY ]
 [       rateHetSlider 0 ] 
 [       rateHetMulti 1 ] 

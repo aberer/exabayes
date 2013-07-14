@@ -39,12 +39,12 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<d
 
   assert(oldFc.size() == 1 && newFcs.size() == 1 );  
 
-  double blInfluence = 0; 
+  double blInfluence = 1; 
   std::vector<Branch> branches = traln.extractBranches() ;  
   for(auto &b : branches)
-    blInfluence += log(b.getLength()); 
+    blInfluence *= b.getLength(); 
 
-  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * blInfluence;
+  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * log(blInfluence);
 }
 
 

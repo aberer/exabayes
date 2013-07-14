@@ -33,21 +33,13 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   double newFracChange = traln.getTr()->fracchange; 
   if(modifiesBL)
     {
-      // std::cout   << "we are modifying the bl with priors "; 
-      
       std::vector<AbstractPrior*> blPriors; 
       for(auto &v : secVar)
-	{
-	  // std::cout << v.get() << "\t"; 
-	  blPriors.push_back(v->getPrior()); 
-	}
-      // std::cout << std::endl; 
-
-      // tout << std::setprecision(6) << "old frac= " << oldFracChange << "\tnew"<< newFracChange << std::endl;
-      
+	blPriors.push_back(v->getPrior()); 
       prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
+      updateHastings(hastings, pow(newFracChange / oldFracChange, traln.getNumberOfBranches()), name); 
     }
-
+  
   auto thePrior = primVar[0]->getPrior();
   prior.addToRatio(thePrior->getLogProb(newValues) - thePrior->getLogProb(savedContent.values)); 
 } 

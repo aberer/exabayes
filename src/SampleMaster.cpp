@@ -358,7 +358,7 @@ void SampleMaster::printDuringRun(nat gen)
 
 
 // a developmental mode to integrate over branch lengths
-// #define _GO_TO_INTEGRATION_MODE
+#define _GO_TO_INTEGRATION_MODE
 
 
 void SampleMaster::run()

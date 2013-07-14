@@ -39,6 +39,7 @@ public:
   tree* getTr() {return &tr;}
   const tree* getTr() const{return &tr; }
   int getNumBranches() const; 
+  nat getNumberOfBranches() const {return getNumberOfNodes() - 1 ; }
   int getNumberOfPartitions() const;   
   nat getNumberOfTaxa() const {return getTr()->mxtips; }
   nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
