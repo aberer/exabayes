@@ -1,5 +1,4 @@
 #include <limits>
-
 #include <cstring>
 
 #include "Randomness.hpp" 
@@ -33,8 +32,6 @@ void Randomness::incrementNoLimit()
       ctr.v[0] = 0;     
     }
 }
-
-
 
 
 /** 
@@ -386,4 +383,17 @@ std::ostream& operator<<(std::ostream& out, const Randomness &rhs)
 {
   out << "key={" << rhs.key.v[0] << "," << rhs.key.v[1] << "},ctr={" << rhs.ctr.v[0] << ","<< rhs.ctr.v[1] << "}"; 
   return out; 
+} 
+
+
+
+void Randomness::readFromCheckpoint( std::ifstream &in )  
+{
+  in >> key.v[0]; 
+  in >> key.v[1]; 
+}
+ 
+void Randomness::writeToCheckpoint( std::ofstream &out) const
+{
+  out << key.v[0]  << key.v[1] ; 
 } 

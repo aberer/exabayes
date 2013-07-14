@@ -77,22 +77,21 @@ private : 			// METHODS
   AbstractProposal* drawProposalFunction();
 
 private: 			// ATTRIBUTES
-
   std::shared_ptr<TreeAln> traln;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
-  double hastings;/// the log hastings ratio  
-  int currentGeneration;     
-  int couplingId;  /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  std::vector<std::unique_ptr<AbstractProposal> > proposals; 
-  Randomness chainRand;   
-  double relWeightSum ; 	// sum of all relative weights
+  double hastings;  		// logged!
+  int currentGeneration;     	
+  /// indicates how hot the chain is (i = 0 => cold chain), may change!
+  int couplingId;		// TODO CHECKPOINT
+  std::vector<std::unique_ptr<AbstractProposal> > proposals; // TODO CHECKPOINT
+  Randomness chainRand;		// TODO CHECKPOINT
+  double relWeightSum; 	// sum of all relative weights
   PriorBelief prior; 
   double bestState; 
   std::shared_ptr<LikelihoodEvaluator> evaluator;   
   
-
   // suspending and resuming the chain   
   double likelihood; 
   double lnPr; 

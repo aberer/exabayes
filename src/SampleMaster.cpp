@@ -21,7 +21,6 @@
 
 
 static int countNumberOfTreesQuick(const char *fn ); 
-static void initWithStartingTree(FILE *fh, vector<shared_ptr<TreeAln>  > &tralns); 
 
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
   : pl(pl)
@@ -38,9 +37,9 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
 
 
 void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH)
-{
-  Randomness treeRandomness(seed);
-  
+{  
+  Randomness treeRandomness(seed); 
+
   vector<shared_ptr<TreeAln> > treesToInitialize; 
   treesToInitialize.push_back(trees[0]); 
   if(not runParams.isHeatedChainsUseSame())
@@ -75,7 +74,7 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 	}
     }
 
-  // propagate the tree to the coupled chains, if necessar y
+  // propagate the tree to the coupled chains, if necessaroy
   if(runParams.isHeatedChainsUseSame())
     {
       TreeAln &ref = *( trees[0]); 
@@ -260,14 +259,9 @@ bool SampleMaster::convergenceDiagnostic()
       
     }
   else 
-    {
-      return true; 
-      // return runs[0].getChains()[0].getGeneration() > runParams.getNumGen();
-    }
+    return true; 
 }
 
-
-// TODO finalize output files  
 
 static int countNumberOfTreesQuick(const char *fn )
 {
@@ -358,7 +352,7 @@ void SampleMaster::printDuringRun(nat gen)
 
 
 // a developmental mode to integrate over branch lengths
-#define _GO_TO_INTEGRATION_MODE
+// #define _GO_TO_INTEGRATION_MODE
 
 
 void SampleMaster::run()
@@ -397,6 +391,11 @@ void SampleMaster::run()
 	  printDuringRun(curGen); 
 	  lastPrint = curGen; 
 	}
+
+      if(curGen % runParams.getChkpntFreq() == 0)
+	{
+	  
+	}
     }
 
 #ifdef _GO_TO_INTEGRATION_MODE
@@ -427,6 +426,18 @@ void SampleMaster::finalizeRuns()
   tout << endl << "Total execution time: " 
        << CLOCK::duration_cast<CLOCK::duration<double> >( CLOCK::system_clock::now() - initTime   ).count() <<  " seconds" << endl; 
 }
+
+
+void SampleMaster::readFromCheckpoint( std::ifstream &in ) 
+{
+  
+}
+ 
+void SampleMaster::writeToCheckpoint( std::ofstream &out) const
+{
+  
+}
+
 
 
 #include "IntegrationModuleImpl.hpp"

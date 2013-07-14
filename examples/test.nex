@@ -60,15 +60,15 @@ begin runconfig;
  diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
  numRuns  1 	   	[ number of independant runs ]
- numGen 30000          [ if numRuns = 1, stop simulation after that many generations ] 
+ numGen 1000000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
-
-[ TODO ]  
   parsimonyStartingTree		true		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
   heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
   [  sampledHeated false ] [ also take samples from the heated chains ]
+
+  checkPointInterval   1000  [ defines how often a checkpoint is written ]
 
  [ CONVERGENCE ]
  asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
@@ -76,7 +76,7 @@ begin runconfig;
 
 
  [ MCMCMC ]
- numCoupledChains 1	   [ number of chains per independent run (only one is cold)  => must be > 0] 
+ numCoupledChains 4	   [ number of chains per independent run (only one is cold)  => must be > 0] 
  heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
  swapInterval 1 	   [ attempt a swap between chains every n generations ]
  tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
@@ -104,14 +104,16 @@ end;
       guidedSPR 0
 ] 
 
-  
+
+[   
       [ BRANCH LENGTHS ] 
 [       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
       branchMulti 0 
-[       treeLengthMult 0 ] 
+       treeLengthMult 2  
       nodeSlider  0 
       branchCollapser 0 [ bug! ]      
     aGibbsBL 20 
+ ]
   
       [ RATE HETEROGENEITY ]
 [       rateHetSlider 0 ] 

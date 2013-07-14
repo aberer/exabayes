@@ -26,8 +26,8 @@ CommandLine::CommandLine(int argc, char **argv)
 
 void CommandLine::printVersion(bool toInfofile )
 {   
-  (toInfofile ? tout : cout )  << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << endl << endl
-    			       << "For bugs reports and feature inquiries, please send an email to " << PACKAGE_BUGREPORT << endl; 
+  (toInfofile ? tout : std::cout )  << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << std::endl << std::endl
+				    << "For bugs reports and feature inquiries, please send an email to " << PACKAGE_BUGREPORT << std::endl; 
 }
 
 
@@ -41,7 +41,7 @@ void CommandLine::printHelp()
 
   printVersion(false); 
 
-  cout << "\n\n" 
+  std::cout << "\n\n" 
        <<  "Options:\n" 
        << "\t-f binFile\t\ta binary alignment file that has been created by the appropriate parser before (see manual for help) [mandatory] \n"
        << "\t-c confFile\t\ta config file. For a template see the examples/ folder [mandatory]\n"
@@ -51,20 +51,20 @@ void CommandLine::printHelp()
        << "\t-s seed\t\ta master seed for the MCMC [mandatory]\n"
        << "\t-n ruid\t\ta run id [mandatory]\n"
        << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel"
-       << endl; 
+	    << std::endl; 
 
   exit(0); 
 }
 
 
-void CommandLine::assertFileExists(string filename)
+void CommandLine::assertFileExists(std::string filename)
 {
   FILE *fh = myfopen(filename.c_str(), "r");
 
   if(fh == NULL )
     {
       fclose(fh); 
-      cerr << "could not file file " << filename << ". Aborting." << endl; 
+      std::cerr << "could not file file " << filename << ". Aborting." << std::endl; 
       exit(0);
     }
   fclose(fh); 
@@ -102,18 +102,18 @@ void CommandLine::parse(int argc, char *argv[])
 	{
 	case 'C': 		// chain-level parallelism 
 	  {
-	    cerr << "not in use" << endl; 
+	    std::cerr << "not in use" << std::endl; 
 	    assert(0); 
 	  }
 	  break; 
 	case 'c': 		// config file 	  
 	  {
-	    configFileName = string(strdup(optarg)); 
+	    configFileName = std::string(strdup(optarg)); 
 	    assertFileExists(configFileName);
 	  }
 	  break; 
 	case 'f': 		// aln file 
-	  alnFileName = string(strdup(optarg)); 
+	  alnFileName = std::string(strdup(optarg)); 
 	  assertFileExists(alnFileName); 
 	  break; 
 	case 'v':  		// version 
@@ -124,13 +124,13 @@ void CommandLine::parse(int argc, char *argv[])
 	  printHelp();
 	  break; 
 	case 'n': 		// runid 
-	  runid = string(optarg); 	  
+	  runid = std::string(optarg); 	  
 	  break; 
 	case 't': 		// trees -- have that in the config file? 
-	  treeFile = string(strdup(optarg)); 
+	  treeFile = std::string(strdup(optarg)); 
 	  break; 
 	case 'w':		// working dir  
-	  workDir = string(strdup(optarg)); 
+	  workDir = std::string(strdup(optarg)); 
 	  break; 
 	case 's': 		// seed 
 	  seed.v[0] = std::stoi(optarg);
@@ -149,26 +149,26 @@ void CommandLine::parse(int argc, char *argv[])
   
   if(runid.compare("") == 0 )
     {
-      cerr << "please specify a runid with -n runid" << endl; 
+      std::cerr << "please specify a runid with -n runid" << std::endl; 
       abort(); 
     }
 
   if(seed.v[0] == 0 )
     {
-      cerr << "please specify a seed via -s seed (must NOT be 0)"   << endl; 
+      std::cerr << "please specify a seed via -s seed (must NOT be 0)"   << std::endl; 
       abort(); 
     }
 
   if( configFileName.compare("") == 0)
     {
-      cerr << "please specify a config file via -c configfile" << endl << "You find a template in the examples/ folder" << endl; 
+      std::cerr << "please specify a config file via -c configfile" << std::endl << "You find a template in the examples/ folder" << std::endl; 
       abort(); 
     }
 
   if(alnFileName.compare("") == 0 )
     {
-      cerr << "please specify a binary alignment file via -f file" <<  endl 
-	   << "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << endl; 
+      std::cerr << "please specify a binary alignment file via -f file" <<  std::endl 
+		<< "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << std::endl; 
       abort();
     }
 

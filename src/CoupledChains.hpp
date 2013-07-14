@@ -17,7 +17,7 @@
 #include "TopologyFile.hpp"
 #include "ParameterFile.hpp"
 #include "ParallelSetup.hpp"
-
+#include "SwapMatrix.hpp"
 
 
 /**
@@ -35,13 +35,12 @@ public:
 
   /** @brief run for a given number of generations */
   void run(int numGen); 
-  void printSwapInfo();
   void chainInfo(); 
-  void seedChains(); 
 
   /** @brief Execute a portion of one run. */
   void executePart(int gensToRun, const ParallelSetup &pl);   
   void setPrintFreq(nat t){printFreq = t; }
+  void seedChains(); 
 
   void setSwapInterval(nat i) {swapInterval = i; }
   void setSamplingFreq(nat i) {samplingFreq = i; }
@@ -74,7 +73,8 @@ private: 			// METHODS
 
 private: 			// ATTRIBUTES
   vector<Chain> chains; 
-  vector<SuccessCounter*> swapInfo;  
+  // vector<SuccessCounter*> swapInfo;  
+  SwapMatrix swapInfo; 
   double heatIncrement; 
   Randomness rand; 
   int runid; 

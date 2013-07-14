@@ -12,6 +12,7 @@
 
 CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains   )
   : chains(std::move(_chains))
+  , swapInfo(chains.size())
   , heatIncrement(0.1) 
   , rand(seed)
   , runid(runNum) 
@@ -22,9 +23,6 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int 
   , runname("standardId") 
   , workdir(workingdir)
 {
-  // swap info matrix 
-  for(int i = 0; i < numCoupled * numCoupled ; ++i)
-    swapInfo.push_back(new SuccessCounter()); 
 }
 
 
@@ -76,39 +74,6 @@ void CoupledChains::seedChains()
 }
 
 
-void CoupledChains::printSwapInfo()
-{
-  if(chains.size( )== 1 )
-    return ; 
-  
-  int numCoupledChains = chains.size(); 
-  
-  int cnt = 0; 
-  for(int i = 0; i < numCoupledChains; ++i)
-    {
-      bool isFirst = true; 
-
-      if(i < numCoupledChains - 1 )
-	tout << "(";      
-
-      for(int j = 0; j < numCoupledChains; ++j)
-	{	  
-	  SuccessCounter *ctr = swapInfo[cnt]; 
-	  if(i < j )
-	    {
-	      tout <<  (isFirst ? "" : "," ) << setprecision(1) << 100 * ctr->getRatioOverall() << "%";
-	      isFirst = false; 
-	    }
-	  cnt++; 
-	}
-      if(i < numCoupledChains - 1 )
-	tout << ")";
-    }
-  
-  tout << "\tbaseSwap: " << setprecision(1)<< swapInfo[1]->getRatioInLast100() * 100 << "%,"; 
-}
-
-
 void CoupledChains::switchChainState()
 {  
   int numChain = chains.size(); 
@@ -149,17 +114,22 @@ void CoupledChains::switchChainState()
   Chain &a = chains[ chainAId],
     &b = chains[ chainBId] ; 
 
-  int r = MIN(coupIdA, coupIdB ); 
-  int c = MAX(coupIdA, coupIdB); 
+  // int r = MIN(coupIdA, coupIdB ); 
+  // int c = MAX(coupIdA, coupIdB); 
   
   /* do the swap */
   if( rand.drawRandDouble01()  < accRatio)
     {
       a.switchState(b); 
-      swapInfo[r * chains.size() + c]->accept(); 
+      swapInfo.update(coupIdA,coupIdB,true); 
+      // swapInfo[r * chains.size() + c]->accept(); 
     } 
   else 
-    swapInfo[r * chains.size() + c]->reject(); 
+    {
+      // swapInfo[r * chains.size() + c]->reject(); 
+      swapInfo.update(coupIdA,coupIdB,false); 
+    }
+  
 }
 
 
@@ -192,8 +162,7 @@ void CoupledChains::chainInfo()
       tout << "lnl(" << setprecision(2)<< heat << ")=" << setprecision(2)<< chain->getTraln().getTr()->likelihood << "\t" ;  
     }
 
-  printSwapInfo();
-  tout << endl; 
+  tout  << swapInfo << endl; 
 
   coldChain->printProposalState(tout);
 
@@ -235,12 +204,17 @@ void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
       	chainInfo(); 
 #endif
 
+      
+      // TODO
+      assert(not tuneHeat); 
+#if 0 
       if(chains.size()  > 1 
 	 && tuneHeat
 	 && tuneFreq < swapInfo[1]->getRecentlySeen()  )
 	{	  
 	  tuneTemperature();      	  
 	}
+#endif
       
       switchChainState();
     }
@@ -259,6 +233,8 @@ void CoupledChains::tuneTemperature()
   /* naive strategy: tune, s.t. the coldest hot chain swaps
      with the coldest chain in 23.4% of all cases */
 
+  assert(0); 
+#if  0
   auto c = swapInfo[1]; 
   double deltaT = chains[0].getDeltaT(); 
   deltaT = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), deltaT, false); 
@@ -267,6 +243,7 @@ void CoupledChains::tuneTemperature()
   // update the chains 
   for(auto& chain : chains)
     chain.setDeltaT(deltaT);   
+#endif
 }
 
 

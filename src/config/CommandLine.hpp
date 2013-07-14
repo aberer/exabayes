@@ -8,20 +8,18 @@
 
 #include "Randomness.hpp"
 
-using namespace std; 
-
 
 class CommandLine
 {
 public: 
   CommandLine(int argc, char* argv[]);
   randCtr_t getSeed() const; 
-  string getConfigFileName() const {return configFileName; }
-  string getAlnFileName() const{return alnFileName; }
-  string getRunid() const {return runid; }
-  string getTreeFile() const {return treeFile; }
+  std::string getConfigFileName() const {return configFileName; }
+  std::string getAlnFileName() const{return alnFileName; }
+  std::string getRunid() const {return runid; }
+  std::string getTreeFile() const {return treeFile; }
   int getNumRunParallel() const {return runNumParallel; }
-  string getWorkdir() const {return workDir; }
+  std::string getWorkdir() const {return workDir; }
   void printVersion(bool toInfoFile);
   // int getChainNumParallel() const { return chainNumParallel; }
 
@@ -30,15 +28,15 @@ public:
 private: 
   // int seed; 
   randCtr_t seed; 
-  string configFileName; 
-  string alnFileName; 
-  string runid; 
-  string treeFile; 
-  string workDir;
+  std::string configFileName; 
+  std::string alnFileName; 
+  std::string runid; 
+  std::string treeFile; 
+  std::string workDir;
   int runNumParallel; 
   int chainNumParallel; 
 
-  void assertFileExists(string filename); 
+  void assertFileExists(std::string filename); 
   void parse(int argc, char *argv[]); 
   void printHelp();
 }; 

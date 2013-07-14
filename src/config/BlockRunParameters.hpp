@@ -5,6 +5,8 @@
 #include <cassert>
 #include <ncl/ncl.h>
 
+#include "common.h"
+
 
 class BlockRunParameters : public NxsBlock
 {
@@ -31,6 +33,7 @@ public:
   double getAsdsfConvergence() const {return asdsfConvergence; }
   bool isUseParsimonyStarting() const {return useParsimonyStarting; } 
   bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
+  nat getChkpntFreq() const {return chkpntFreq; }
 
 private: 
   int diagFreq ; 
@@ -50,6 +53,7 @@ private:
   int tuneFreq;  
   bool useParsimonyStarting; 
   bool heatedChainsUseSame; 
+  nat chkpntFreq; 
 }; 
 
 

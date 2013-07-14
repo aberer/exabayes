@@ -6,7 +6,6 @@
     Despite of its modest name, this is in fact the master class.  
  */ 
 
-
 #ifndef _SAMPLING_H
 #define _SAMPLING_H
 
@@ -20,9 +19,10 @@
 #include "config/ConfigReader.hpp"
 #include "ParallelSetup.hpp"
 #include "time.hpp"
+#include "Checkpointable.hpp"
 
 
-class SampleMaster
+class SampleMaster : Checkpointable
 {
 public: 
   SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
@@ -37,19 +37,22 @@ public:
   void validateRunParams(); 	// TODO  
   void branchLengthsIntegration()  ;  
 
+  virtual void readFromCheckpoint( std::ifstream &in ) ; 
+  virtual void writeToCheckpoint( std::ofstream &out) const ;   
+
 private: 
   bool convergenceDiagnostic(); 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh); 
   void printDuringRun(nat gen); 
 
 private:			// ATTRIBUTES 
-  vector<CoupledChains> runs; // TODO bad design: just want to avoid getting memory leaks
+  vector<CoupledChains> runs; 
   ParallelSetup pl; 
   CLOCK::system_clock::time_point initTime; 
   BlockParams paramBlock; 
   BlockRunParameters runParams;  
   BlockProposalConfig propConfig;   
-  Randomness masterRand;   
+  Randomness masterRand;   	// not checkpointed
   CommandLine cl; 
   CLOCK::system_clock::time_point timeIncrement; 
 };  
