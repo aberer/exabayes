@@ -209,19 +209,19 @@ std::vector<double> Randomness::drawRandDirichlet( const std::vector<double> &al
 
 
 //This function should be called if the expected values for the dirichlet distribution are given
-std::vector<double> Randomness::drawDirichletExpected(const std::vector<double> &mean,double scale)
-{
-  std::vector<double> alphas; 
-  double originalSum=0;
-  for(nat i=0; i< mean.size();i++)
-    {
-      originalSum+=mean[i];
-      alphas.push_back( mean[i]*scale ) ;
-    }
-  assert(fabs(originalSum - 1.0 ) < 1e-6);   
+// std::vector<double> Randomness::drawDirichletExpected(const std::vector<double> &mean,double scale)
+// {
+//   std::vector<double> alphas; 
+//   double originalSum=0;
+//   for(nat i=0; i< mean.size();i++)
+//     {
+//       originalSum+=mean[i];
+//       alphas.push_back( mean[i]*scale ) ;
+//     }
+//   assert(fabs(originalSum - 1.0 ) < 1e-6);   
   
-  return  drawRandDirichlet( alphas);
-}
+//   return  drawRandDirichlet( alphas);
+// }
 
 
 

@@ -61,7 +61,7 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
   bool isFirstG = true; 
   for(nat i = 0; i < content.values.size() ; ++i)
     {
-      fileHandle << (isFirstG ? "" : "\t" ) << "pi{" ;
+      fileHandle << (isFirstG ? "" : "\t" ) << "r{" ;
       isFirstG = false; 
 	
       bool isFirst = true; 

@@ -4,7 +4,7 @@
 topdir=$(dirname  $0 )/../
 
 model=GAMMA
-seed=12
+seed=$RANDOM
 
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 

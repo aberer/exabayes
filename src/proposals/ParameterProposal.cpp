@@ -18,7 +18,6 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   assert(primVar.size() == 1); 
   
   ParameterContent content = primVar[0]->extractParameter(traln); 
-  // primVar[0]->setSavedContent(savedContent); 
   savedContent = content; 
   
   double oldFracChange = traln.getTr()->fracchange; 

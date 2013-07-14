@@ -52,7 +52,12 @@ public:
     assert(fabs(std::accumulate(oldValues.begin(), oldValues.end(), 0. ) - 1.0 ) < 1e-6); // sum of rates equals 1 ? 
 
     std::vector<double> newValues; 
-    newValues = rand.drawDirichletExpected( oldValues, parameter * oldValues.size() );
+    
+    std::vector<double> scaledOld = oldValues; 
+    for_each(scaledOld.begin(), scaledOld.end(), [&](double &d) { return d *= parameter * oldValues.size() ; }) ; 
+    newValues = rand.drawRandDirichlet(scaledOld); 
+    
+    // newValues = rand.drawDirichletExpected( oldValues, parameter * oldValues.size() );
 
     // correct for problematic values 
     int numHigh = 0,
@@ -159,6 +164,7 @@ public:
   {
 #ifdef ALT_SLIDER
     int posA = rand.drawRandInt(oldValues.size()); 
+
     double oldVal = oldValues[posA] ; 
     double newVal = rand.drawFromSlidingWindow(oldVal, parameter); 
 
@@ -169,7 +175,6 @@ public:
 
     oldValues[posA] = newVal; 
 
-    // double sum = 0; 
     double normer = 0; 
     nat numHigh = 0,
       numLow = 0; 
@@ -189,24 +194,22 @@ public:
 	else 
 	  normer += v; 
       }
-
+    
     normer = (1 - (minVal * numLow  +  maxVal * numHigh)) / normer ;
-
-    // std::cout << " normer is "<< std::setprecision(8) << normer << std::endl; 
+    // if(oldValues.size()  == 6 )
+    //   std::cout << normer << std::endl; 
 
     for(auto &v : oldValues)
       if(v != minVal && v != maxVal)
 	v *= normer; 
 
-    // tout << "after norm, values are " ; 
-    // for(auto &v : oldValues)
-    //   {
-    // 	tout << std::setprecision(8) << v << "," ; 
-    //   }
-    // tout << std::endl; 
-    
     assert(fabs(std::accumulate(oldValues.begin(), oldValues.end(), 0.)  - 1.0 ) < 1e-6 ); 
-
+    
+    // if(oldValues.size() == 4)
+    //   {
+    // 	for_each(oldValues.begin(), oldValues.end(), [] (double &d ){tout << std::setprecision(4)  << d << "," ; }) ; 
+    // 	tout << std::endl; 
+    //   }
 #else 
 
     // NOT WORKING

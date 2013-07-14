@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #include "densities.h"
 #include "axml.h"
@@ -47,50 +48,25 @@ double gammaFunction(double alpha)
 }
 
 
-
-
-
-
-
-static void normalize( std::vector<double> &vector, double normalizingConstant)
-{
-  double sum=0;
-  for(auto v: vector)
-    sum+=v; 
-  
-  for(auto &v : vector)
-    v *= normalizingConstant/sum;   
-}
-
-
 double densityDirichletLog(std::vector<double> values, const std::vector<double> &alphas)
 {
   double density=0;
   density -= betaFunctionLog(alphas);
 
-  normalize(values, 1);
+  assert(fabs(std::accumulate(values.begin(), values.end(), 0. ) -  1.0 )  < 1e-6); 
 
   for(nat i=0; i<values.size(); i++)
-    {      
-      double val =  pow(values[i],alphas[i]-1); 
-      density += log(val);
-    }
+    density += (alphas[i] - 1 ) * log(values[i]); 
 
   return density; 
 }
 
-
-
-
-
 double densityDirichlet(std::vector<double> values, const std::vector<double> &alphas)
 {
-  double density=1;
+  double density=1;  
+  density /= betaFunction(alphas);  
+  assert(fabs(std::accumulate(values.begin(), values.end(), 0.) -  1.0 )  < 1e-6); 
 
-  density /= betaFunction(alphas);
-  
-  normalize(values, 1);
-  
   for(nat i=0; i< values.size(); i++)
     density *= pow( values[i],alphas[i]-1);
   

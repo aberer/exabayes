@@ -126,17 +126,6 @@ void Chain::resume()
 }
 
 
-// void Chain::debug_printAccRejc(AbstractProposal *prob, bool accepted, double lnl, double lnPr, double hastings ) 
-// {
-// #ifdef DEBUG_SHOW_EACH_PROPOSAL
-//   addChainInfo(tout); 
-//   tout << "\t" << (accepted ? "ACC" : "rej" )  << "\t"<< prob->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\t" << hastings << std::endl; 
-// #endif
-// }
-
-
-
-
 void Chain::printProposalState(std::ostream& out ) const 
 {
   std::map<Category, std::vector<AbstractProposal*> > sortedProposals; 

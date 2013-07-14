@@ -46,7 +46,7 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
   bool isFirstG = true; 
   for(nat i = 0; i < content.values.size() ; ++i)
     {
-      fileHandle << (isFirstG ? "" : "\t" ) << "f{" ;
+      fileHandle << (isFirstG ? "" : "\t" ) << "pi{" ;
       isFirstG = false; 
 	
       bool isFirst = true; 

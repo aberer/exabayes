@@ -13,11 +13,11 @@ NodeSlider::NodeSlider( double _multiplier)
 
 void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
+  // TODO outer branches have a lower probability of getting drawn? =/ 
   oneBranch = TreeRandomizer::drawInnerBranchUniform(traln,rand); 
-  if(rand.drawRandDouble01() < 0.5 )
-    oneBranch = oneBranch.getInverted();
 
   nodeptr p = oneBranch.findNodePtr(traln); 
+  // TODO correct here for the problem mentioned above   
   nodeptr q = rand.drawRandDouble01() < 0.5  ? p->next->back : p->next->next->back; 
   oneBranch.setLength(traln.getBranch(p).getLength()); 
   otherBranch = Branch(p->number, q->number, traln.getBranch(q).getLength()); 
@@ -26,29 +26,38 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
     oldB = otherBranch.getLength();
 
   double bothZ = oldA * oldB; 
-  double oldBoth = bothZ; 
 
-  double drawnMultiplier = 0,
-    newZ = 0;  
+  // correct the multiplier 
+  double drawnMultiplier = rand.drawMultiplier(multiplier); 
+  double newZ = pow(bothZ, drawnMultiplier); 
+  auto testBranch = oneBranch; 
+  testBranch.setLength(sqrt(newZ)); 
+  if(not BoundsChecker::checkBranch(testBranch))
+    {
+      BoundsChecker::correctBranch(testBranch); 
+      newZ = pow(testBranch.getLength(),2); 
+      drawnMultiplier = log(newZ)   / log(bothZ); 
+    }
+
+  double uniScaler = rand.drawRandDouble01(), 
+    newA = pow(newZ, uniScaler ),
+    newB = pow(newZ, 1-uniScaler); 
   
-  // TODO : problematic?  
-  do 
+  bool problemWithA = false; 
+  testBranch.setLength(newA); 
+  if(not BoundsChecker::checkBranch(testBranch))
     {
-      drawnMultiplier  =rand.drawMultiplier( multiplier);  
-      newZ = pow(bothZ, drawnMultiplier); 
-    } while ( 2 * BoundsChecker::zMax < newZ || newZ < 2 * BoundsChecker::zMin); 
-    
-  double uniScaler = 0, 
-    newA = 0,
-    newB = 0; 
-
-  // TODO: problematic? 
-  do 
+      BoundsChecker::correctBranch(testBranch); 
+      newA = testBranch.getLength(); 
+      problemWithA = true; 
+    }
+  testBranch.setLength(newB); 
+  if(not BoundsChecker::checkBranch(testBranch))
     {
-      uniScaler = rand.drawRandDouble01();
-      newA = pow(newZ, uniScaler ) ; 
-      newB = pow(newZ, 1-uniScaler); 
-    } while (newA < BoundsChecker::zMin || newB < BoundsChecker::zMin || BoundsChecker::zMax < newA || BoundsChecker::zMax < newB ); 
+      BoundsChecker::correctBranch(testBranch); 
+      newB = testBranch.getLength(); 
+      assert(not problemWithA); // should have been detected, when we checked the multiplier 
+    }
 
   traln.clipNode(oneBranch.findNodePtr(traln), 
 		oneBranch.getInverted().findNodePtr(traln),
@@ -57,15 +66,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   traln.clipNode(otherBranch.findNodePtr(traln),
 		 otherBranch.getInverted().findNodePtr(traln),
 		 newB); 
-
-#ifdef UNSURE
-  assert(0); 
-  // extremely unsure about all that 
-#endif
-
-  double realBoth = newA * newB;   
-  double realMulti = realBoth / oldBoth ;   
-  updateHastings(hastings, ( log(realBoth) / log(oldBoth)) * realMulti, name ); 
+  updateHastings(hastings, drawnMultiplier * drawnMultiplier, name); 
   auto brPr = primVar[0]->getPrior(); 
 
   prior.updateBranchLengthPrior(traln, oldA, newA, brPr);

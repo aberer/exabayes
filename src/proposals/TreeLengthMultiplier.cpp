@@ -38,7 +38,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
       
       if( not BoundsChecker::checkBranch(b))
 	{
-	  std::cout << "correction!" << std::endl; 
+	  // std::cout << "correction!" << std::endl; 
 	  BoundsChecker::correctBranch(b);
 	}
       
@@ -46,7 +46,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
       updateHastings(hastings, realScaling, "TL-multi"); 
       newTL *= b.getLength(); 
     }
-  
+
   for(auto &b : newBranches)
     traln.setBranch(b);
 
