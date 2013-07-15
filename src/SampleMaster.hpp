@@ -22,7 +22,7 @@
 #include "Checkpointable.hpp"
 
 
-class SampleMaster : Checkpointable
+class SampleMaster : public Checkpointable
 {
 public: 
   SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 

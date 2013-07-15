@@ -514,13 +514,11 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
 #endif
   debug_printTree(traln);
 #endif
-} 
-
+}
 
 
 AbstractProposal* RadiusMlSPR::clone() const
 {
-  // return new RadiusMlSPR( radius);
   return new RadiusMlSPR( *this );
 }
 

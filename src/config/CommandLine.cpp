@@ -4,10 +4,6 @@
 #include "CommandLine.hpp"
 #include "GlobalVariables.hpp"
 
-#include "getoptpp/getopt_pp.h"
-
-using namespace GetOpt; 
-
 
 CommandLine::CommandLine(int argc, char **argv)
   : configFileName("")
@@ -16,6 +12,7 @@ CommandLine::CommandLine(int argc, char **argv)
   , treeFile("")
   , workDir("")
   , runNumParallel(1)
+  , checkpointId("")
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -71,21 +68,6 @@ void CommandLine::assertFileExists(std::string filename)
 }
 
 
-
-void CommandLine::parseAlternative(int argc, char *argv[])
-{
-  GetOpt_pp args(argc, argv);
-
-  args >> Option('s' ,"seed" , seed.v[0]);
-  args >> Option('f', "file", alnFileName); 
-  args >> Option('n', "runid", runid); 
-  args >> Option('t', "tree-file", treeFile); 
-  args >> Option('w', "work-dir", workDir); 
-  args >> Option('R', "parallel-run", runNumParallel); 
-}
-
-
-
 /** 
     @brief parses the command line 
  */ 
@@ -135,6 +117,10 @@ void CommandLine::parse(int argc, char *argv[])
 	case 's': 		// seed 
 	  seed.v[0] = std::stoi(optarg);
 	  break; 
+	case 'r': 
+	  
+	  
+	  break; 
 	case 'R': 
 	  runNumParallel = atoi(optarg);
 	  break; 	  
@@ -173,10 +159,6 @@ void CommandLine::parse(int argc, char *argv[])
     }
 
 }
-
-
-
-
 
 
 randCtr_t CommandLine::getSeed() const

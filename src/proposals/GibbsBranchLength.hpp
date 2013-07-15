@@ -35,8 +35,7 @@ public:
   virtual void autotune(){}
 
   virtual AbstractProposal* clone() const  { return new GibbsBranchLength(*this); }  
-  
+
 private: 
   std::shared_ptr<LikelihoodEvaluator> eval; 
-
 }; 

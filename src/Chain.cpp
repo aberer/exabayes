@@ -1,4 +1,5 @@
 #include <sstream>
+#include <unordered_map>
 
 #include "Chain.hpp"
 #include "LnlRestorer.hpp"
@@ -10,7 +11,7 @@
 #include "LikelihoodEvaluator.hpp" 
 
 
-Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval)
+Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval) 
   : traln(_traln)
   , deltaT(0)
   , runid(0)
@@ -362,3 +363,35 @@ void Chain::sample( const TopologyFile &tFile, const ParameterFile &pFile  ) con
   tFile.sample( *traln, getGeneration() ); 
   pFile.sample( *traln, extractVariables(), getGeneration(), prior.getLnPrior()); 
 }
+
+
+void Chain::readFromCheckpoint( std::ifstream &in ) 
+{
+  chainRand.readFromCheckpoint(in); 
+  
+  std::unordered_map<std::string, AbstractProposal*> name2proposal; 
+  for(auto &p :proposals)
+    {
+      std::stringstream ss; 
+      p->printShort(ss); 
+      tout << "hashing " << ss.str() << std::endl; 	     
+      assert(name2proposal.find(ss.str()) == name2proposal.end()); // not yet there 
+      name2proposal[ss.str()] = p.get();
+    }
+
+  
+  nat ctr = 0; 
+  while(ctr < proposals.size())
+    {
+      std::string name; 
+      std::getline(in, name, DELIM); 
+      name2proposal[name]->readFromCheckpoint(in);
+    }
+}
+ 
+void Chain::writeToCheckpoint( std::ofstream &out) const
+{
+  chainRand.writeToCheckpoint(out);   
+  for(auto &p : proposals)
+    p->writeToCheckpoint(out);
+}   

@@ -173,7 +173,11 @@ void SampleMaster::initializeRuns( )
 	}
     }
 
-
+  if(cl.getCheckpointId().compare("") != 0)
+    {
+      assert(0); 
+    }
+  
   // determine and print initial state for each chain  
   tout << "initial state: " << endl; 
   tout << "================================================================" << endl; 
@@ -361,6 +365,7 @@ void SampleMaster::run()
   int curGen = 0;  
   int lastPrint = 0; 
   int lastDiag = 0; 
+  int lastChkpnt = 0; 
 
   printDuringRun(curGen); 
 
@@ -368,7 +373,9 @@ void SampleMaster::run()
     { 
       int nextPrint =  lastPrint + runParams.getPrintFreq(); 
       int nextDiag = lastDiag + runParams.getDiagFreq(); 
-      int toExecute = min(nextPrint, nextDiag) -  curGen; 
+      int nextChkpnt = lastChkpnt + runParams.getChkpntFreq(); 
+      int toExecute = min(nextChkpnt, 
+			  min(nextPrint, nextDiag)) -  curGen; 
       
       // tout << toExecute <<  std::endl; 
 
@@ -376,6 +383,8 @@ void SampleMaster::run()
 	run.executePart(toExecute, pl );
 
       curGen += toExecute; 
+
+
 
       if(curGen % runParams.getDiagFreq() == 0 )
 	{
@@ -394,8 +403,15 @@ void SampleMaster::run()
 
       if(curGen % runParams.getChkpntFreq() == 0)
 	{
-	  
+	  stringstream ss; 
+	  ss <<  PROGRAM_NAME << "_checkpoint."  
+	     << runParams.getRunId()  << "." << curGen ; 
+	  ofstream chkpnt(ss.str()); 
+	  writeToCheckpoint(chkpnt);
+	  chkpnt.close(); 	  
+	  lastChkpnt = curGen; 
 	}
+ 
     }
 
 #ifdef _GO_TO_INTEGRATION_MODE
@@ -430,12 +446,22 @@ void SampleMaster::finalizeRuns()
 
 void SampleMaster::readFromCheckpoint( std::ifstream &in ) 
 {
-  
+  for(auto &run : runs)
+    run.readFromCheckpoint(in); 
+  long start = 0; 
+  in >> start; 
+  CLOCK::duration<long> durationSinceStart{start};   
+  initTime = CLOCK::system_clock::now() -  durationSinceStart; 
 }
  
 void SampleMaster::writeToCheckpoint( std::ofstream &out) const
 {
+  tout << "writing checkpoint " << std::endl; 
+  for(auto & run : runs)    
+    run.writeToCheckpoint(out);
   
+  long duration = CLOCK::duration_cast<CLOCK::duration<long> >(CLOCK::system_clock::now() - initTime).count();
+  out << duration << DELIM; 
 }
 
 

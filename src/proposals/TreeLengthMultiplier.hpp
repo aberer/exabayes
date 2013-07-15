@@ -14,9 +14,11 @@ public:
 
   virtual AbstractProposal* clone() const;  
 
+  virtual void readFromCheckpointCore(std::ifstream &in) { in >> multiplier;  } 
+  virtual void writeToCheckpointCore(std::ofstream &out)const {out << multiplier << DELIM; } 
+
 private: 
   double multiplier; 		// the tuning variable  
-  // double rememMultiplier; 	// for resetting 
   double initTreeLength; 
   
   void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 

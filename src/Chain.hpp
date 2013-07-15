@@ -18,13 +18,15 @@
 
 #include "TopologyFile.hpp"
 #include "ParameterFile.hpp"
+#include "Checkpointable.hpp"
+
 
 
 class TreeAln; 
 class AbstractProposal; 
 
 
-class Chain
+class Chain : public Checkpointable
 {
 public: 
   // life cycle related   
@@ -71,6 +73,9 @@ public:
   double getLikelihood() const {return likelihood; }
   const PriorBelief& getPrior() const  {return prior; } 
   void sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const ; 
+
+  virtual void readFromCheckpoint( std::ifstream &in ) ; 
+  virtual void writeToCheckpoint( std::ofstream &out) const;   
 
 private : 			// METHODS 
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr, double hastings ) ;

@@ -254,3 +254,21 @@ void CoupledChains::finalizeOutputFiles() const
   for(auto &p : pFile)
     p.finalize();
 }
+
+
+void CoupledChains::readFromCheckpoint( std::ifstream &in ) 
+{
+  rand.readFromCheckpoint(in); 
+  for(auto &chain : chains)
+    chain.readFromCheckpoint(in);
+} 
+
+
+void CoupledChains::writeToCheckpoint( std::ofstream &out) const 
+{
+  rand.writeToCheckpoint(out);
+  swapInfo.writeToCheckpoint(out);
+  for(auto &chain : chains)
+    chain.writeToCheckpoint(out); 
+}   
+

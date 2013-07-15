@@ -22,6 +22,9 @@ public:
 
   virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
 
+  virtual void readFromCheckpointCore(std::ifstream &in) {in >> multiplier ; } 
+  virtual void writeToCheckpointCore(std::ofstream &out) const {out << multiplier << DELIM; } 
+
 protected: 
   double multiplier;  
   Branch savedBranch;   

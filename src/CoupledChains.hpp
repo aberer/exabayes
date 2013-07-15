@@ -26,7 +26,7 @@
  */ 
 
 
-class CoupledChains
+class CoupledChains : public Checkpointable
 {
 public: 
   CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain>& _chains ); 
@@ -56,6 +56,9 @@ public:
   void initializeOutputFiles()  ; 
   
   void finalizeOutputFiles() const ; 
+
+  virtual void readFromCheckpoint( std::ifstream &in ) ; 
+  virtual void writeToCheckpoint( std::ofstream &out) const ;   
   
   
 private: 			// METHODS
@@ -73,9 +76,8 @@ private: 			// METHODS
 
 private: 			// ATTRIBUTES
   vector<Chain> chains; 
-  // vector<SuccessCounter*> swapInfo;  
   SwapMatrix swapInfo; 
-  double heatIncrement; 
+  double heatIncrement; 	// not checkpointed 
   Randomness rand; 
   int runid; 
   int tuneFreq; 

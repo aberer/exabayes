@@ -11,13 +11,11 @@
 #include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"
 #include "LikelihoodEvaluator.hpp"
-
-
-// lazyness 
 #include "TreeRandomizer.hpp"
+#include "Checkpointable.hpp"
 
 
-class AbstractProposal
+class AbstractProposal : public Checkpointable
 {
 public: 
   // for copying the non-trivial types 
@@ -51,10 +49,29 @@ public:
   static void updateHastings(double &hastings, double valToAdd, std::string whoDoneIt); 
   friend std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs); 
   std::ostream& printNamePartitions(std::ostream &out); 
-  std::ostream& printShort(std::ostream &out) ;
+  std::ostream& printShort(std::ostream &out)  const ;
 
   std::vector<AbstractParameter*> getPrimVar() const; 
   std::vector<AbstractParameter*> getSecVar() const ; 
+
+  virtual void readFromCheckpointCore(std::ifstream &in) = 0; 
+  virtual void writeToCheckpointCore(std::ofstream &out) const = 0; 
+
+
+  virtual void readFromCheckpoint( std::ifstream &in )
+  {
+    // notice: name has already been read 
+    sctr.readFromCheckpoint(in); 
+    readFromCheckpointCore(in); 
+  }
+
+  virtual void writeToCheckpoint( std::ofstream &out) const
+  {
+    printShort(out); 
+    out << DELIM; 
+    sctr.writeToCheckpoint(out) ; 
+    writeToCheckpointCore(out); 
+  } 
 
 protected:   
   std::string name;   

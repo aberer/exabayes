@@ -19,7 +19,9 @@ public:
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
   virtual void autotune() {}	// disabled 
   virtual AbstractProposal* clone() const;  
-
+  
+  virtual void readFromCheckpointCore(std::ifstream &in) {   } 
+  virtual void writeToCheckpointCore(std::ofstream &out)const { }  
 
 protected: 			// METHODS
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 

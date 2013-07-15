@@ -37,6 +37,10 @@ public:
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
+  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
+  virtual void writeToCheckpointCore(std::ofstream &out)const { } //disabled
+
+
 private: 
   void privateMethod(TreeAln &traln, Randomness& rand)  ; 	// some helper method. It is in the private sector, s.t. it cannot be accessed from the outside 
 

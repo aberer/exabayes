@@ -395,5 +395,6 @@ void Randomness::readFromCheckpoint( std::ifstream &in )
  
 void Randomness::writeToCheckpoint( std::ofstream &out) const
 {
-  out << key.v[0]  << key.v[1] ; 
+  out << key.v[0] << DELIM
+      << key.v[1]  << DELIM; 
 } 

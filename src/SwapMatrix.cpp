@@ -65,3 +65,15 @@ std::ostream&  operator<<(std::ostream &out, SwapMatrix& rhs )
 }
 
 
+void SwapMatrix::readFromCheckpoint( std::ifstream &in )   
+{  
+  for(auto &s : matrix)
+    s.readFromCheckpoint(in);
+} 
+
+void SwapMatrix::writeToCheckpoint( std::ofstream &out) const
+{
+  for(auto &s : matrix)
+    s.writeToCheckpoint(out); 
+}
+   

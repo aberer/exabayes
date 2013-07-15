@@ -16,6 +16,7 @@
 #define __AVX
 #endif
 
+#include <iostream>
 #include <sstream>
 
 #include "axml.h" 
@@ -68,22 +69,28 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-
-  auto t =  make_shared<TreeAln>( 1,2)  ; 
-  t->initializeFromByteFile(cl.getAlnFileName());
-  t->enableParsimony();
-
-  randCtr_t c; 
-  c.v[1] = 0; 
-  c.v[0] = 1; 
-
-  TreeRandomizer r(c); 
-  r.randomizeTree(*t);
   
-  vector<nat> partPars ; 
-  ParsimonyEvaluator p; 
-  p.evaluate(*t, t->getTr()->start, true,partPars);
-
+  std::ofstream fh("file.txt"); 
+  fh <<  1 ; 
+     // << ","; 
+  fh <<  123909 << "," ; 
+  fh <<  3 << "," ; 
+  fh <<  0.123 << "," ; 
+  fh << 23 << ","; 
+  fh.close(); 
+  
+  std::ifstream ifh("file.txt"); 
+  int a = 0; 
+  char c ; 
+  ifh >> a ; 
+  // ifh >> c ; 
+  std::cout << ">" << a << "<" << std::endl; 
+  ifh >> a ;   ifh >> c ; 
+  std::cout << ">" << a << "<" << std::endl; 
+  ifh >> a ;   ifh >> c ; 
+  std::cout << ">" << a << "<" << std::endl; 
+  
+  exit(0); 
 #else 
 
   SampleMaster master(  pl, cl );

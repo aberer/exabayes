@@ -23,10 +23,16 @@ public:
   void printVersion(bool toInfoFile);
   // int getChainNumParallel() const { return chainNumParallel; }
 
+  std::string getCheckpointId()const {return checkpointId; }
   void parseAlternative(int argc, char *argv[]); 
 
-private: 
-  // int seed; 
+private: 			// METHODS
+
+  void assertFileExists(std::string filename); 
+  void parse(int argc, char *argv[]); 
+  void printHelp();
+
+private: 			// ATTRIBUTES
   randCtr_t seed; 
   std::string configFileName; 
   std::string alnFileName; 
@@ -35,10 +41,7 @@ private:
   std::string workDir;
   int runNumParallel; 
   int chainNumParallel; 
-
-  void assertFileExists(std::string filename); 
-  void parse(int argc, char *argv[]); 
-  void printHelp();
+  std::string checkpointId; 
 }; 
 
 

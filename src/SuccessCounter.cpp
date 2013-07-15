@@ -73,3 +73,22 @@ void SuccessCounter::addOrReplace(bool acc)
     }
   lastX.push_back(acc); 
 }
+
+
+void SuccessCounter::readFromCheckpoint( std::ifstream &in )   
+{
+  in >> globalAcc; 
+  in >> globalRej; 
+  in >> localAcc; 
+  in >> localRej; 
+  in >> batch; 
+}
+ 
+void SuccessCounter::writeToCheckpoint( std::ofstream &out) const
+{
+  out << globalAcc << DELIM
+      << globalRej << DELIM
+      << localAcc << DELIM 
+      << localRej << DELIM 
+      << batch << DELIM ; 
+} 

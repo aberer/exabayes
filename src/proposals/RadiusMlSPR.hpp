@@ -34,6 +34,9 @@ public:
 
   virtual void autotune() {}	// disabled 
 
+  virtual void readFromCheckpointCore(std::ifstream &in) {   } 
+  virtual void writeToCheckpointCore(std::ofstream &out)const { }  
+
   virtual AbstractProposal* clone() const;  
 
 private: 

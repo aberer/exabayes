@@ -38,7 +38,7 @@ void AbstractProposal::updateHastings(double &hastings, double valToAdd, std::st
 }
 
 
-std::ostream& AbstractProposal::printShort(std::ostream &out) 
+std::ostream& AbstractProposal::printShort(std::ostream &out)  const 
 {
   out << this->name << "( " ;  
     
