@@ -89,17 +89,17 @@ private: 			// ATTRIBUTES
   double hastings;  		// logged!
   int currentGeneration;     	
   /// indicates how hot the chain is (i = 0 => cold chain), may change!
-  int couplingId;		// TODO CHECKPOINT
+  int couplingId;					     // CHECKPOINTED 
   std::vector<std::unique_ptr<AbstractProposal> > proposals; // TODO CHECKPOINT
-  Randomness chainRand;		// TODO CHECKPOINT
+  Randomness chainRand;		//  CHECKPOINTED
   double relWeightSum; 	// sum of all relative weights
   PriorBelief prior; 
   double bestState; 
   std::shared_ptr<LikelihoodEvaluator> evaluator;   
   
   // suspending and resuming the chain   
-  double likelihood; 
-  double lnPr; 
+  double likelihood; 		// CHECKPOINTED (for assertions)
+  double lnPr; 			// CHECKPOINTED (for assertions)
   std::vector<ParameterContent> savedContent; // maps parameter-id to content
   
 

@@ -388,13 +388,23 @@ std::ostream& operator<<(std::ostream& out, const Randomness &rhs)
 
 
 void Randomness::readFromCheckpoint( std::ifstream &in )  
-{
+{  
   in >> key.v[0]; 
+  readDelimiter(in); 
   in >> key.v[1]; 
+  readDelimiter(in); 
+  in >> ctr.v[0]; 
+  readDelimiter(in); 
+  in >> ctr.v[1]; 
+  readDelimiter(in); 
+
 }
  
 void Randomness::writeToCheckpoint( std::ofstream &out) const
 {
   out << key.v[0] << DELIM
-      << key.v[1]  << DELIM; 
+      << key.v[1]  << DELIM
+      << ctr.v[0] << DELIM
+      << ctr.v[1] << DELIM;   
+
 } 

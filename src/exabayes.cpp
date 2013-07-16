@@ -44,8 +44,10 @@
 
 
 // have ae look at that later again 
-double fastPow(double a, double b) {
-  union {
+double fastPow(double a, double b)
+{
+  union 
+  {
     double d;
     int x[2];
   } u = { a };
@@ -69,26 +71,17 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  
-  std::ofstream fh("file.txt"); 
-  fh <<  1 ; 
-     // << ","; 
-  fh <<  123909 << "," ; 
-  fh <<  3 << "," ; 
-  fh <<  0.123 << "," ; 
-  fh << 23 << ","; 
-  fh.close(); 
-  
-  std::ifstream ifh("file.txt"); 
-  int a = 0; 
-  char c ; 
-  ifh >> a ; 
-  // ifh >> c ; 
-  std::cout << ">" << a << "<" << std::endl; 
-  ifh >> a ;   ifh >> c ; 
-  std::cout << ">" << a << "<" << std::endl; 
-  ifh >> a ;   ifh >> c ; 
-  std::cout << ">" << a << "<" << std::endl; 
+  std::ofstream out("test.txt"); 
+  out << "hi my name is& slimshade\n" << endl;   
+  out.close();
+
+  std::ifstream in("test.txt"); 
+  std::string tmp;
+  std::getline(in, tmp, '&');
+  std::cout << "result is >" << tmp << "<"  << std::endl; 
+
+  std::getline(in, tmp, '&');
+  std::cout << "result is >" << tmp << "<"  << std::endl; 
   
   exit(0); 
 #else 
@@ -134,6 +127,13 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
   if(workdir.compare("") != 0 )
     ss << "/" ; 
   ss << PROGRAM_NAME << "_info."  << cl.getRunid() ;
+
+  if(std::ifstream(ss.str()))
+    {
+      std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
+		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
+	exit(0); 
+    }
 
   // TODO maybe check for existance 
 

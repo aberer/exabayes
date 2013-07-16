@@ -14,7 +14,7 @@ public:
 
   virtual AbstractProposal* clone() const;  
 
-  virtual void readFromCheckpointCore(std::ifstream &in) { in >> multiplier;  } 
+  virtual void readFromCheckpointCore(std::ifstream &in) { in >> multiplier; readDelimiter(in);  } 
   virtual void writeToCheckpointCore(std::ofstream &out)const {out << multiplier << DELIM; } 
 
 private: 

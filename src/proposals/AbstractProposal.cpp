@@ -118,3 +118,21 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
 } 
 
 
+
+
+
+void AbstractProposal::writeToCheckpoint( std::ofstream &out) const 
+{
+  printShort(out); 
+  out << DELIM; 
+  sctr.writeToCheckpoint(out) ; 
+  writeToCheckpointCore(out); 
+}
+
+
+void AbstractProposal::readFromCheckpoint( std::ifstream &in )
+{
+  // notice: name has already been read 
+  sctr.readFromCheckpoint(in); 
+  readFromCheckpointCore(in); 
+}

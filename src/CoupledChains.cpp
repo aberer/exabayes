@@ -53,7 +53,6 @@ CoupledChains& CoupledChains::operator=(CoupledChains rhs)
 
 void CoupledChains::initializeOutputFiles()  
 {
-
   // TODO sampling file for every chain possibly 
   auto &traln = chains[0].getTraln(); 
   auto &params = chains[0].extractVariables();
@@ -259,6 +258,7 @@ void CoupledChains::finalizeOutputFiles() const
 void CoupledChains::readFromCheckpoint( std::ifstream &in ) 
 {
   rand.readFromCheckpoint(in); 
+  swapInfo.readFromCheckpoint(in);
   for(auto &chain : chains)
     chain.readFromCheckpoint(in);
 } 
@@ -272,3 +272,12 @@ void CoupledChains::writeToCheckpoint( std::ofstream &out) const
     chain.writeToCheckpoint(out); 
 }   
 
+
+void CoupledChains::regenerateOutputFiles(std::string prevId) 
+{
+  nat gen = chains[0].getGeneration();
+  for(auto &pF : pFile)
+    pF.regenerate(prevId, gen); 
+  for(auto &pF : tFile)
+    pF.regenerate(prevId, gen);
+} 

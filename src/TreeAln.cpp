@@ -3,10 +3,8 @@
 #include <cstring>
 
 #include "axml.h"
-
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
-
 #include "BoundsChecker.hpp"
 
 const double TreeAln::zZero = BoundsChecker::zMax + ( 1 - BoundsChecker::zMax) / 2 ; 

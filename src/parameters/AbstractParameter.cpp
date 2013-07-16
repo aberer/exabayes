@@ -37,3 +37,19 @@ std::ostream&  AbstractParameter::printShort(std::ostream& out)
   out << "}";     
   return out; 
 }
+
+
+// virtual void AbstractParameter::readFromCheckpoint( std::ifstream &in )   
+// {
+//   // name has already been read
+//   readFromCheckpointCore(in);
+// }
+ 
+// virtual void AbstractParameter::writeToCheckpoint( std::ofstream &out) const
+// {
+//   printShort(out); 
+//   out << DELIM; 
+//   writeToCheckpointCore(out);
+// }
+
+

@@ -368,30 +368,95 @@ void Chain::sample( const TopologyFile &tFile, const ParameterFile &pFile  ) con
 void Chain::readFromCheckpoint( std::ifstream &in ) 
 {
   chainRand.readFromCheckpoint(in); 
+  in >> couplingId; 
+  readDelimiter(in);
+  in >> likelihood; 
+  readDelimiter(in); 
+  in >> lnPr; 
+  readDelimiter(in); 
+  in >> currentGeneration; 
+  readDelimiter(in); 
   
   std::unordered_map<std::string, AbstractProposal*> name2proposal; 
   for(auto &p :proposals)
     {
       std::stringstream ss; 
       p->printShort(ss); 
-      tout << "hashing " << ss.str() << std::endl; 	     
       assert(name2proposal.find(ss.str()) == name2proposal.end()); // not yet there 
       name2proposal[ss.str()] = p.get();
     }
 
-  
   nat ctr = 0; 
   while(ctr < proposals.size())
     {
       std::string name; 
       std::getline(in, name, DELIM); 
+      if(name2proposal.find(name) == name2proposal.end())
+	{
+	  std::cerr << "Could not parse the checkpoint file.  A reason for this may be that\n"
+		    << "you used a different configuration or alignment file in combination\n"
+		    << "with this checkpoint file. Fatality." << std::endl; 
+	  exit(0); 
+	}
       name2proposal[name]->readFromCheckpoint(in);
+      ++ctr; 
     }
+
+
+  std::unordered_map<std::string, AbstractParameter*> name2parameter; 
+  for(auto &p : extractVariables())
+    {
+      std::stringstream ss;       
+      p->printShort(ss);
+      assert(name2parameter.find(ss.str()) == name2parameter.end()); // not yet there 
+      name2parameter[ss.str()] = p;
+    }  
+
+  ctr = 0; 
+  while(ctr < name2parameter.size())
+    {
+      std::string name; 
+      std::getline(in, name, DELIM); 
+      if(name2parameter.find(name) == name2parameter.end())
+	{
+	  std::cerr << "Could not parse the checkpoint file. A reason for this may be that\n"
+		    << "you used a different configuration or alignment file in combination\n"
+		    << "with this checkpoint file. Fatality." << std::endl; 
+	  exit(0); 
+	}
+      auto param  = name2parameter[name]; 
+      auto content = param->extractParameter(*traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
+      content.readFromCheckpoint(in);
+      param->applyParameter(*traln, content); 
+      ++ctr;
+    }  
+  
+  // resume the chain and thereby assert that everything could be
+  // restored correctly
+  auto vars = extractVariables(); 
+  savedContent.resize(vars.size()); 
+  for(auto &v : vars)
+    savedContent[v->getId()] = v->extractParameter(*traln);
+  resume();
 }
  
 void Chain::writeToCheckpoint( std::ofstream &out) const
 {
   chainRand.writeToCheckpoint(out);   
+  out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );
+  out << couplingId << DELIM; 
+  out << likelihood << DELIM; 
+  out << lnPr << DELIM; 
+  out << currentGeneration << DELIM; // well ... 
+
   for(auto &p : proposals)
     p->writeToCheckpoint(out);
+  
+  for(auto &var: extractVariables())
+    {
+      auto compo = var->extractParameter(*traln); 
+      var->printShort(out); 
+      out << DELIM; 
+      compo.writeToCheckpoint(out);
+    }  
 }   

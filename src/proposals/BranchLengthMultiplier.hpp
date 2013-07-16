@@ -3,6 +3,7 @@
 
 #include "AbstractProposal.hpp"
 
+#include <limits>
 
 
 class BranchLengthMultiplier : public AbstractProposal
@@ -22,8 +23,8 @@ public:
 
   virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
 
-  virtual void readFromCheckpointCore(std::ifstream &in) {in >> multiplier ; } 
-  virtual void writeToCheckpointCore(std::ofstream &out) const {out << multiplier << DELIM; } 
+  virtual void readFromCheckpointCore(std::ifstream &in)  {in >> multiplier ; readDelimiter(in) ; } 
+  virtual void writeToCheckpointCore(std::ofstream &out) const {out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 ) << multiplier << DELIM; } 
 
 protected: 
   double multiplier;  

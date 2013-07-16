@@ -22,7 +22,7 @@ public:
   double getHeatFactor() const { return heatFactor ; }
   int getPrintFreq() const { return printFreq; }
   int getNumCoupledChains() const { return numCoupledChains; }
-  string getRunId() const { return runId; }
+  // string getRunId() const { return runId; }
   int getNumGen() const { return numGen; }
   int getNumRunConv() const { return numRunConv; }
   int getSamplingFreq() const { return samplingFreq; }
@@ -44,7 +44,7 @@ private:
   int samplingFreq; 
   int numRunConv; 
   int numGen; 
-  string runId; 
+  // string runId; 
   int numCoupledChains; 
   int printFreq; 
   double heatFactor ; 

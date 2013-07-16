@@ -59,7 +59,8 @@ public:
 
   virtual void readFromCheckpoint( std::ifstream &in ) ; 
   virtual void writeToCheckpoint( std::ofstream &out) const ;   
-  
+
+  void regenerateOutputFiles(std::string prevId) ; 
   
 private: 			// METHODS
 
@@ -72,7 +73,6 @@ private: 			// METHODS
 
   /** @brief tunes the temperature parameter */  
   void tuneTemperature();
-
 
 private: 			// ATTRIBUTES
   vector<Chain> chains; 

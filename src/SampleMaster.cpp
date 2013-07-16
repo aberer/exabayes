@@ -90,10 +90,56 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 }
 
 
-void SampleMaster::initializeRuns( )
+// a quick hack that gets the file with the highest generation count
+#include <glob.h>
+static std::string findMostRecentFile(std::string id)
 {
+  stringstream ss; 
+  ss << PROGRAM_NAME << "_checkpoint." << id << ".*"; 
+
+  glob_t globResult; 
+  glob(ss.str().c_str(), GLOB_TILDE, NULL, &globResult); 
+  std::vector<std::string> files; 
+  for(nat i = 0; i < globResult.gl_pathc; ++i)
+    files.push_back(std::string(globResult.gl_pathv[i])); 
+  globfree(&globResult); 
+
+  std::string result = ""; 
+
+  nat highest = 0; 
+  for(auto& file: files)
+    {
+      char *dup = strdup(file.c_str()); 
+      char *tmp = strtok(dup, "."); 
+      tmp = strtok(NULL, "."); 
+      tmp = strtok(NULL, ".");
+      nat gen = std::stoi(tmp); 
+      if(highest < gen)
+	highest = gen;       
+      free(dup); 
+    }
+  
+  if(highest != 0 )
+    {
+      stringstream tmp; 
+      tmp <<  PROGRAM_NAME << "_checkpoint." << id << "." << highest; 
+      result = tmp.str(); 
+    }
+
+  return result; 
+}
+
+
+void SampleMaster::initializeRuns( )
+{  
   FILE *treeFH = NULL; 
   nat numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
+
+  if(cl.getCheckpointId().compare(cl.getRunid()) == 0)
+    {
+      std::cerr << "You specified >" << cl.getRunid() << "< as runid and inteded to restart from a previous run with id >" << cl.getCheckpointId() << "<. Please specify a new runid for the restart. " << std::endl; 
+      exit(0); 
+    }
 
   // initialize one tree 
   vector<shared_ptr<TreeAln> > trees; 
@@ -165,17 +211,46 @@ void SampleMaster::initializeRuns( )
 	  run.setPrintFreq(runParams.getPrintFreq()); 
 	  run.setSwapInterval(runParams.getSwapInterval()); 
 	  run.setSamplingFreq(runParams.getSamplingFreq()); 
-	  run.setRunName(runParams.getRunId()); 
+	  run.setRunName(cl.getRunid()); 
 	  run.seedChains(); 	  
 	  
 	  if(pl.isReportingProcess())
 	    run.initializeOutputFiles ();
 	}
     }
-
+  
+  // continue from checkpoint  
   if(cl.getCheckpointId().compare("") != 0)
     {
-      assert(0); 
+      auto prevId = cl.getCheckpointId(); 
+
+      std::stringstream ss ; 
+      ss << PROGRAM_NAME << "_checkpoint." << cl.getCheckpointId();       
+      auto checkPointFile = ss.str(); 
+      std::ifstream chkpnt(checkPointFile); 
+      if( not chkpnt )
+	{
+	  tout  << "Warning! Could not open / find file " << checkPointFile << std::endl; 
+	  tout << "Although extremely unlikely, the previous run may have been killed\n"
+		    << "during the writing process of the checkpoint. Will try to recover from backup..." << std::endl; 
+	  
+	  ss.str(""); 
+	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getCheckpointId();
+	  checkPointFile = ss.str();
+	  chkpnt.open(checkPointFile); 
+	  
+	  if( not chkpnt)
+	    {
+	      tout << "Could not recover checkpoint file backup either. Probably there is no backup, since not enough generations have completed. Giving up. Please start a new run." << std::endl; 
+	      exit(0); 
+	    }
+	  else 
+	    tout << "Success! You lost one checkpoint, but we can continue from the backup. " << std::endl; 	  
+	}
+
+      readFromCheckpoint(chkpnt); 
+      for(auto &run : runs)
+	run.regenerateOutputFiles(cl.getCheckpointId());
     }
   
   // determine and print initial state for each chain  
@@ -192,7 +267,6 @@ void SampleMaster::initializeRuns( )
 	  chain.resume(); 
 	  tout << chain; 
 	  tout << "\tRNG(" << chain.getChainRand() << ")"<< endl; 	  
-	  // tout << chain.getTraln() << endl; 
 	}
       tout << "================================================================" << endl; 
     }
@@ -213,7 +287,7 @@ bool SampleMaster::convergenceDiagnostic()
       for(int i = 0; i < runParams.getNumRunConv(); ++i)
 	{
 	  stringstream ss; 
-	  ss <<  PROGRAM_NAME << "_topologies." << runParams.getRunId() << "." << i; 
+	  ss <<  PROGRAM_NAME << "_topologies." << cl.getRunid() << "." << i; 
 	  fns.push_back(ss.str());
 	}
      
@@ -362,11 +436,12 @@ void SampleMaster::printDuringRun(nat gen)
 void SampleMaster::run()
 {
   bool hasConverged = false;   
-  int curGen = 0;  
-  int lastPrint = 0; 
-  int lastDiag = 0; 
-  int lastChkpnt = 0; 
-
+  int curGen = runs[0].getChains()[0].getGeneration(); 
+  
+  int lastPrint = (curGen / runParams.getPrintFreq() )  * runParams.getPrintFreq() ; 
+  int lastDiag =  (curGen / runParams.getDiagFreq() ) * runParams.getDiagFreq(); 
+  int lastChkpnt = ( curGen / runParams.getChkpntFreq() )* runParams.getChkpntFreq() ; 
+  
   printDuringRun(curGen); 
 
   while(curGen < runParams.getNumGen() || not hasConverged)   
@@ -376,14 +451,11 @@ void SampleMaster::run()
       int nextChkpnt = lastChkpnt + runParams.getChkpntFreq(); 
       int toExecute = min(nextChkpnt, 
 			  min(nextPrint, nextDiag)) -  curGen; 
-      
-      // tout << toExecute <<  std::endl; 
 
       for(auto &run : runs)
 	run.executePart(toExecute, pl );
 
       curGen += toExecute; 
-
 
 
       if(curGen % runParams.getDiagFreq() == 0 )
@@ -404,14 +476,35 @@ void SampleMaster::run()
       if(curGen % runParams.getChkpntFreq() == 0)
 	{
 	  stringstream ss; 
-	  ss <<  PROGRAM_NAME << "_checkpoint."  
-	     << runParams.getRunId()  << "." << curGen ; 
-	  ofstream chkpnt(ss.str()); 
+	  ss <<  PROGRAM_NAME << "_newCheckpoint." << cl.getRunid()  ; 
+	  std::string newName = ss.str();
+	  ofstream chkpnt(newName); 
 	  writeToCheckpoint(chkpnt);
-	  chkpnt.close(); 	  
+	  chkpnt.close(); 
+
+	  ss.str("");
+	  ss << PROGRAM_NAME << "_checkpoint." << cl.getRunid(); 
+	  std::string curName = ss.str();
+	  if( std::ifstream(curName) )
+	    {
+	      ss.str("");
+	      ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getRunid(); 
+	      std::string prevName =  ss.str();
+	      if( std::ifstream(prevName) )
+		{
+		  int ret = remove(prevName.c_str()); 
+		  assert(ret == 0); 
+		}
+	      
+	      int ret = rename(curName.c_str(), prevName.c_str()); 
+	      assert(ret == 0); 
+	    }
+	  
+	  int ret = rename(newName.c_str(), curName.c_str()); 
+	  assert(ret == 0); 
+	  
 	  lastChkpnt = curGen; 
-	}
- 
+	} 
     }
 
 #ifdef _GO_TO_INTEGRATION_MODE
@@ -424,8 +517,6 @@ void SampleMaster::run()
  
 void SampleMaster::finalizeRuns()
 {
-  // TODO finalize output files  
-  // assert(0); 
   for(auto &run : runs)
     {
       for(auto &chain : run.getChains())
@@ -455,8 +546,9 @@ void SampleMaster::readFromCheckpoint( std::ifstream &in )
 }
  
 void SampleMaster::writeToCheckpoint( std::ofstream &out) const
-{
-  tout << "writing checkpoint " << std::endl; 
+{  
+  // tout << "writing checkpoint " << std::endl; 
+  out << std::setprecision(std::numeric_limits<double>::digits10 + 2 ); // max precision
   for(auto & run : runs)    
     run.writeToCheckpoint(out);
   

@@ -38,18 +38,26 @@ void CommandLine::printHelp()
 
   printVersion(false); 
 
-  std::cout << "\n\n" 
-       <<  "Options:\n" 
-       << "\t-f binFile\t\ta binary alignment file that has been created by the appropriate parser before (see manual for help) [mandatory] \n"
-       << "\t-c confFile\t\ta config file. For a template see the examples/ folder [mandatory]\n"
-       << "\t-v\t\tprint version and exit\n"
-       << "\t-h\t\tprint this help\n" 
-       << "\t-w dir\t\tspecify a working directory for output files (NOT IMPLEMENTED)\n"
-       << "\t-s seed\t\ta master seed for the MCMC [mandatory]\n"
-       << "\t-n ruid\t\ta run id [mandatory]\n"
-       << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel"
+  std::cout << std::endl << "./exabayes -f binFile -c confFile -s seed -n id [options..] "
 	    << std::endl; 
 
+  std::cout << "\n\n"
+	    << "Mandatory Arguments: \n"
+	    << "\t-f binFile\t\ta binary alignment file that has been created by the appropriate parser before (see manual for help)\n"
+	    << "\t-c confFile\t\ta config file. For a template see the examples/ folder\n"
+	    << "\t-s seed\t\ta master seed for the MCMC\n"
+	    << "\t-n ruid\t\ta run id\n" 
+	    << std::endl; 
+
+  std::cout << "\n" 
+	    <<  "Options:\n" 
+	    << "\t-v\t\tprint version and exit\n"
+	    << "\t-h\t\tprint this help\n" 
+	    << "\t-w dir\t\tspecify a working directory for output files (NOT IMPLEMENTED)\n"
+	    << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel\n"
+	    << "\t-r id\t\trestart from checkpoint. Just specify the id of the previous run here. \n"
+	    << "\t\t\tMake sure, ExaBayes can access all files from this previous run.\n"
+	    << std::endl; 
   exit(0); 
 }
 
@@ -78,7 +86,7 @@ void CommandLine::parse(int argc, char *argv[])
   // TODO threads/ processes? 
   // TODO implement working directory 
   
-  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:")) != EOF)
+  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:")) != EOF)
     {
       switch(c)
 	{
@@ -118,8 +126,7 @@ void CommandLine::parse(int argc, char *argv[])
 	  seed.v[0] = std::stoi(optarg);
 	  break; 
 	case 'r': 
-	  
-	  
+	  checkpointId = strdup(optarg);   
 	  break; 
 	case 'R': 
 	  runNumParallel = atoi(optarg);

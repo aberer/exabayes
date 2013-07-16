@@ -78,10 +78,15 @@ void SuccessCounter::addOrReplace(bool acc)
 void SuccessCounter::readFromCheckpoint( std::ifstream &in )   
 {
   in >> globalAcc; 
+  readDelimiter(in); 
   in >> globalRej; 
+  readDelimiter(in); 
   in >> localAcc; 
+  readDelimiter(in); 
   in >> localRej; 
+  readDelimiter(in); 
   in >> batch; 
+  readDelimiter(in); 
 }
  
 void SuccessCounter::writeToCheckpoint( std::ofstream &out) const

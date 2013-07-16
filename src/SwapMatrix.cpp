@@ -11,6 +11,7 @@ SwapMatrix::SwapMatrix(nat numChains)
   for(nat i = 0; i < numEntries-1; ++i)
     for(nat j = i  + 1 ; j < numEntries; ++j)
       matrix.push_back(SuccessCounter()); 
+
 }
 
 

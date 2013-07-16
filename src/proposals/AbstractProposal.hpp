@@ -54,24 +54,11 @@ public:
   std::vector<AbstractParameter*> getPrimVar() const; 
   std::vector<AbstractParameter*> getSecVar() const ; 
 
+  void writeToCheckpoint( std::ofstream &out) const ; 
+  void readFromCheckpoint( std::ifstream &in ); 
+
+  virtual void writeToCheckpointCore(std::ofstream &out) const = 0 ;  
   virtual void readFromCheckpointCore(std::ifstream &in) = 0; 
-  virtual void writeToCheckpointCore(std::ofstream &out) const = 0; 
-
-
-  virtual void readFromCheckpoint( std::ifstream &in )
-  {
-    // notice: name has already been read 
-    sctr.readFromCheckpoint(in); 
-    readFromCheckpointCore(in); 
-  }
-
-  virtual void writeToCheckpoint( std::ofstream &out) const
-  {
-    printShort(out); 
-    out << DELIM; 
-    sctr.writeToCheckpoint(out) ; 
-    writeToCheckpointCore(out); 
-  } 
 
 protected:   
   std::string name;   

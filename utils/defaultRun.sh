@@ -4,7 +4,8 @@
 topdir=$(dirname  $0 )/../
 
 model=GAMMA
-seed=$RANDOM
+seed=123
+runid=testRun
 
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
@@ -69,15 +70,15 @@ if [ "$codeBase" == "examl" ]; then
 
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
-    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed -c $topdir/examples/test.nex"
 
     # CC="$ccompiler" 
     # CXX="$cxxcompiler"  
-    # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+    # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed -c $topdir/examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n testRun -c $topdir/examples/test.nex " 
+    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid -c $topdir/examples/test.nex " 
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -132,5 +133,6 @@ make -j $numCores
 if [ -f ./exabayes ]; then
     echo "calling exabayes as   $baseCall"
     wait 
+    rm ExaBayes_*.${runid}*
     $baseCall    
 fi

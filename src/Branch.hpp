@@ -5,10 +5,11 @@
 #include <cassert>
 
 #include "axml.h"
+#include "Checkpointable.hpp"
 
 class TreeAln; 
 
-class Branch
+class Branch : public Checkpointable
 {
 public: 
   /////////////////
@@ -38,11 +39,8 @@ public:
   nat getOtherNode(nat node) const {assert(node == thisNode || node ==  thatNode) ; return thisNode == node ? thatNode : thisNode; }
   bool isTipBranch(const TreeAln &traln) const; 
 
-  ////////////////
-  // modifiers  //
-  ////////////////
-  // void applyToTree( TreeAln &traln) const ; 
-
+  virtual void readFromCheckpoint( std::ifstream &in ) ; 
+  virtual void writeToCheckpoint( std::ofstream &out) const ;   
 
   // friends 
   friend std::ostream& operator<<(std::ostream &out, const Branch& br); 

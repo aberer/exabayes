@@ -128,3 +128,23 @@ nat Branch::getIntersectingNode(const Branch  &rhs) const
       return 0; 
     }
 } 
+
+
+void Branch::readFromCheckpoint( std::ifstream &in )
+{
+  in >> thisNode; 
+  readDelimiter(in);
+  in >> thatNode; 
+  readDelimiter(in); 
+  in >> length; 
+  readDelimiter(in); 
+} 
+
+void Branch::writeToCheckpoint( std::ofstream &out)  const
+{
+  out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );  
+  out << thisNode << DELIM
+      << thatNode << DELIM
+      << length << DELIM; 
+}  
+
