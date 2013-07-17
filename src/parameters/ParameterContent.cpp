@@ -9,10 +9,7 @@ void ParameterContent::readFromCheckpoint( std::ifstream &in )
   assert(not (values.size() > 0 && branches.size() > 0) ); 
   
   for(auto &v : values)
-    {
-      in >> v ; 
-      readDelimiter(in);
-    }
+    v = cRead<double>(in); 
 
   for(auto &b : branches)
     b.readFromCheckpoint(in);
@@ -22,12 +19,11 @@ void ParameterContent::readFromCheckpoint( std::ifstream &in )
 void ParameterContent::writeToCheckpoint( std::ofstream &out) 
 {
   assert(not (values.size() > 0 && branches.size() > 0) ); 
-  out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );
-  
-  for(auto &v : values)
-    out << v << DELIM; 
 
-  for(auto &b :branches)
+  for(auto &v : values)
+    cWrite(out, v); 
+
+  for(auto &b :branches)    
     b.writeToCheckpoint(out);
 }   
 

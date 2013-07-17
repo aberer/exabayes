@@ -362,14 +362,10 @@ void Chain::sample( const TopologyFile &tFile, const ParameterFile &pFile  ) con
 void Chain::readFromCheckpoint( std::ifstream &in ) 
 {
   chainRand.readFromCheckpoint(in); 
-  in >> couplingId; 
-  readDelimiter(in);
-  in >> likelihood; 
-  readDelimiter(in); 
-  in >> lnPr; 
-  readDelimiter(in); 
-  in >> currentGeneration; 
-  readDelimiter(in); 
+  couplingId = cRead<int>(in);   
+  likelihood = cRead<double>(in); 
+  lnPr = cRead<double>(in);   
+  currentGeneration = cRead<int>(in); 
   
   std::unordered_map<std::string, AbstractProposal*> name2proposal; 
   for(auto &p :proposals)
@@ -383,8 +379,8 @@ void Chain::readFromCheckpoint( std::ifstream &in )
   nat ctr = 0; 
   while(ctr < proposals.size())
     {
-      std::string name; 
-      std::getline(in, name, DELIM); 
+      std::string name = cRead<std::string>(in); 
+
       if(name2proposal.find(name) == name2proposal.end())
 	{
 	  std::cerr << "Could not parse the checkpoint file.  A reason for this may be that\n"
@@ -410,8 +406,7 @@ void Chain::readFromCheckpoint( std::ifstream &in )
   ctr = 0; 
   while(ctr < name2parameter.size())
     {
-      std::string name; 
-      std::getline(in, name, DELIM); 
+      std::string name = cRead<std::string>(in) ; 
       if(name2parameter.find(name) == name2parameter.end())
 	{
 	  std::cerr << "Could not parse the checkpoint file. A reason for this may be that\n"
@@ -422,15 +417,11 @@ void Chain::readFromCheckpoint( std::ifstream &in )
       auto param  = name2parameter[name]; 
 
       ParameterContent content = param->extractParameter(*traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
-      // tout << "content before: " << content << std::endl; 
       content.readFromCheckpoint(in);
-      // tout << std::scientific << std::setprecision(10) << "content after: " << content << std::endl; 
       
       param->applyParameter(*traln, content); 
       ++ctr;
     }
-
-  // tout << *traln << std::endl; 
 
   // resume the chain and thereby assert that everything could be
   // restored correctly
@@ -446,23 +437,29 @@ void Chain::readFromCheckpoint( std::ifstream &in )
 void Chain::writeToCheckpoint( std::ofstream &out) 
 {
   chainRand.writeToCheckpoint(out);   
-  out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );
-  out << couplingId << DELIM; 
-  out << likelihood << DELIM; 
-  out << lnPr << DELIM; 
-  out << currentGeneration << DELIM; // well ... 
+  cWrite(out, couplingId); 
+  cWrite(out, likelihood); 
+  cWrite(out, lnPr); 
+  cWrite(out, currentGeneration); 
 
   for(auto &p : proposals)
     p->writeToCheckpoint(out);
   
-  // TODO expensive 
+  // TODO expensive, but necessary for determinism. 
   resume();      
 
   for(auto &var: extractVariables())
     {
       auto compo = var->extractParameter(*traln); 
-      var->printShort(out); 
-      out << DELIM; 
+      
+      std::stringstream ss; 
+      var->printShort(ss); 
+      std::string name = ss.str(); 
+      
+      cWrite(out, name); 
+
       compo.writeToCheckpoint(out);
     }  
+
+  suspend();
 }   

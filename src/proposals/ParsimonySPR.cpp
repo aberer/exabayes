@@ -160,7 +160,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   auto weightedInsertions = getWeights(traln, possibilities) ; 
 
   double r = rand.drawRandDouble01(); 
-  tout << "deciding on parsSpr move. drawn " << r << std::endl; 
+  // tout << "deciding on parsSpr move. drawn " << r << std::endl; 
   std::pair<Branch,double> chosen; 
   for(auto v : weightedInsertions)
     {

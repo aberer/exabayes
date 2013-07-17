@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <list>
 
+typedef  unsigned int nat ; 
+
 #include "Checkpointable.hpp"
 
 #define SIZE_OF_LAST 100 
@@ -36,11 +38,11 @@ private: 			// METHODS
 private:		  // ATTRIBUTES
 // last x events. Only for debug, no functionality in tuning 
   std::list<bool> lastX ;	// not checkpointed     
-  int globalAcc; 
-  int globalRej;   
-  int localAcc; 
-  int localRej; 
-  int batch; 
+  nat globalAcc; 
+  nat globalRej;   
+  nat localAcc; 
+  nat localRej; 
+  nat  batch; 			
 
   friend std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &b ); 
 }; 

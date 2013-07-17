@@ -73,3 +73,16 @@ void ParameterProposal::autotune()
   
   sctr.nextBatch();
 }
+
+
+
+void ParameterProposal::readFromCheckpointCore(std::ifstream &in)
+{
+  parameter = cRead<double>(in); 
+} 
+
+
+void ParameterProposal::writeToCheckpointCore(std::ofstream &out) 
+{
+  cWrite(out, parameter); 
+} 

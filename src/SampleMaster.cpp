@@ -541,6 +541,7 @@ void SampleMaster::readFromCheckpoint( std::ifstream &in )
 {
   for(auto &run : runs)
     run.readFromCheckpoint(in); 
+
   long start = 0; 
   in >> start; 
   CLOCK::duration<long> durationSinceStart{start};   
@@ -549,13 +550,11 @@ void SampleMaster::readFromCheckpoint( std::ifstream &in )
  
 void SampleMaster::writeToCheckpoint( std::ofstream &out) 
 {  
-  // tout << "writing checkpoint " << std::endl; 
-  out << std::setprecision(std::numeric_limits<double>::digits10 + 2 ); // max precision
   for(auto & run : runs)    
     run.writeToCheckpoint(out);
-  
+
   long duration = CLOCK::duration_cast<CLOCK::duration<long> >(CLOCK::system_clock::now() - initTime).count();
-  out << duration << DELIM; 
+  cWrite(out, duration); 
 }
 
 

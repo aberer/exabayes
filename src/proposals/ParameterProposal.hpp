@@ -21,8 +21,8 @@ public:
 
   virtual AbstractProposal* clone() const {return new ParameterProposal(*this) ;   }
 
-  virtual void readFromCheckpointCore(std::ifstream &in) { in >> parameter; readDelimiter(in);    } 
-  virtual void writeToCheckpointCore(std::ofstream &out)  {out << parameter << DELIM; } 
+  virtual void readFromCheckpointCore(std::ifstream &in) ; //  { in >> parameter; readDelimiter(in);    } 
+  virtual void writeToCheckpointCore(std::ofstream &out) ; //   {out << parameter << DELIM; } 
 
 private: 
   bool modifiesBL; 

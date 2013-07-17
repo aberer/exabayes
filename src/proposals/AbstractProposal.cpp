@@ -123,8 +123,10 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
 
 void AbstractProposal::writeToCheckpoint( std::ofstream &out)  
 {
-  printShort(out); 
-  out << DELIM; 
+  std::stringstream ss ; 
+  printShort(ss); 
+  std::string name = ss.str();
+  cWrite<std::string>(out, name);   
   sctr.writeToCheckpoint(out) ; 
   writeToCheckpointCore(out); 
 }

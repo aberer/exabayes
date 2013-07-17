@@ -85,3 +85,14 @@ AbstractProposal* BranchLengthMultiplier::clone() const
   return new BranchLengthMultiplier(*this);
 // multiplier
 }
+
+
+void BranchLengthMultiplier::readFromCheckpointCore(std::ifstream &in) 
+{
+  multiplier = cRead<double>(in);
+} 
+
+void BranchLengthMultiplier::writeToCheckpointCore(std::ofstream &out)  
+{
+  cWrite(out, multiplier); 
+} 

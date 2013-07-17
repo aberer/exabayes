@@ -118,7 +118,7 @@ Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
 
 nat Branch::getIntersectingNode(const Branch  &rhs) const 
 {
-  if(rhs.nodeIsInBranch(   thisNode)  )
+  if(rhs.nodeIsInBranch( thisNode ) )
     return thisNode; 
   else if(rhs.nodeIsInBranch(thatNode))
     return thatNode; 
@@ -132,19 +132,15 @@ nat Branch::getIntersectingNode(const Branch  &rhs) const
 
 void Branch::readFromCheckpoint( std::ifstream &in )
 {
-  in >> thisNode; 
-  readDelimiter(in);
-  in >> thatNode; 
-  readDelimiter(in); 
-  in >> length; 
-  readDelimiter(in); 
+  thisNode = cRead<nat>(in); 
+  thatNode = cRead<nat>(in);   
+  length = cRead<double>(in); 
 } 
 
 void Branch::writeToCheckpoint( std::ofstream &out)  
 {
-  out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );  
-  out << thisNode << DELIM
-      << thatNode << DELIM
-      << length << DELIM; 
+  cWrite(out, thisNode); 
+  cWrite(out, thatNode); 
+  cWrite(out, length); 
 }  
 
