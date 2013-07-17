@@ -76,7 +76,7 @@ begin runconfig;
 
 
  [ MCMCMC ]
- numCoupledChains 4	   [ number of chains per independent run (only one is cold)  => must be > 0] 
+ numCoupledChains 1	   [ number of chains per independent run (only one is cold)  => must be > 0] 
  heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
  swapInterval 1 	   [ attempt a swap between chains every n generations ]
  tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 

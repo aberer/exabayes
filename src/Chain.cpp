@@ -234,9 +234,9 @@ void Chain::step()
   
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
   {
-  double lnl = tr->likelihood; 
-  addChainInfo(tout); 
-  tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\tdelta=" << lnlRatio << "\t" << hastings << std::endl; 
+    double lnl = tr->likelihood; 
+    addChainInfo(tout); 
+    tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\tdelta=" << lnlRatio << "\t" << hastings << std::endl; 
   }
 #endif
   // debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior(), hastings); 
@@ -248,6 +248,7 @@ void Chain::step()
       if(bestState < traln->getTr()->likelihood  )
 	bestState = traln->getTr()->likelihood; 
       likelihood = traln->getTr()->likelihood; 
+      lnPr = prior.getLnPrior();
     }
   else
     {
@@ -412,6 +413,7 @@ void Chain::readFromCheckpoint( std::ifstream &in )
       name2parameter[ss.str()] = p;
     }  
 
+
   ctr = 0; 
   while(ctr < name2parameter.size())
     {
@@ -425,21 +427,29 @@ void Chain::readFromCheckpoint( std::ifstream &in )
 	  exit(0); 
 	}
       auto param  = name2parameter[name]; 
-      auto content = param->extractParameter(*traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
+
+      ParameterContent content = param->extractParameter(*traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
+      tout << "content before: " << content << std::endl; 
+
       content.readFromCheckpoint(in);
+      tout << "content after: " << content << std::endl; 
+      
       param->applyParameter(*traln, content); 
       ++ctr;
     }  
-  
+
   // resume the chain and thereby assert that everything could be
   // restored correctly
   auto vars = extractVariables(); 
   savedContent.resize(vars.size()); 
   for(auto &v : vars)
     savedContent[v->getId()] = v->extractParameter(*traln);
+
+  tout << "RESUMING" << std::endl ; 
   resume();
 }
  
+
 void Chain::writeToCheckpoint( std::ofstream &out) const
 {
   chainRand.writeToCheckpoint(out);   
