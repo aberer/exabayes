@@ -17,7 +17,7 @@ public:
   virtual AbstractProposal* clone() const; 
 
   virtual void readFromCheckpointCore(std::ifstream &in) {   } 
-  virtual void writeToCheckpointCore(std::ofstream &out)const { }  
+  virtual void writeToCheckpointCore(std::ofstream &out) { }  
 
 private: 			// METHODS
   void drawPaths(TreeAln &traln, Randomness &rand); 

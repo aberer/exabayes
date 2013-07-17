@@ -58,7 +58,7 @@ public:
   void finalizeOutputFiles() const ; 
 
   virtual void readFromCheckpoint( std::ifstream &in ) ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const ;   
+  virtual void writeToCheckpoint( std::ofstream &out)  ;   
 
   void regenerateOutputFiles(std::string prevId) ; 
   

@@ -88,7 +88,7 @@ double Chain::getChainHeat()
 
 
 
-void Chain::resume()  
+void Chain::resume()    
 {
   // std::cout << "trying to resume" << std::endl; 
   
@@ -101,7 +101,7 @@ void Chain::resume()
 
   evaluator->evaluateFullNoBackup(*traln); 
 
-  if(fabs(likelihood - traln->getTr()->likelihood) > ACCEPTED_LIKELIHOOD_EPS)
+  if(fabs(likelihood - traln->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
     {
       std::cerr << "While trying to resume chain: previous chain liklihood larger than " <<
 	"evaluated likelihood. This is a programming error." << std::endl; 
@@ -198,10 +198,7 @@ void Chain::step()
   // inform the rng that we produce random numbers for generation x  
   chainRand.rebase(currentGeneration);
 
-  assert(tr->fracchange > 0); 
-
-  double prevLnl = tr->likelihood;     
-
+  double prevLnl = tr->likelihood; 
   double myHeat = getChainHeat();
 
   auto pfun = drawProposalFunction();
@@ -212,14 +209,10 @@ void Chain::step()
 #ifdef DEBUG_ACCEPTANCE
   double oldPrior = prior.getLnPrior();
 #endif
-
-  // tout << pfun->getName() << std::endl; 
-
+  
   pfun->applyToState(*traln, prior, hastings, chainRand);
   pfun->evaluateProposal(*evaluator, *traln, prior);
 
-  // tout << hastings << std::endl; 
-  
   double priorRatio = prior.getLnPriorRatio();
   double lnlRatio = tr->likelihood - prevLnl; 
 
@@ -227,7 +220,7 @@ void Chain::step()
   double acceptance = exp(( priorRatio + lnlRatio) * myHeat + hastings) ; 
 
 #ifdef DEBUG_ACCEPTANCE
-  tout  << endl << "(" << oldPrior<<  " - " << prior.getLnPriorRatio()  << ") + ( " << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
+  tout  << endl << "(" << oldPrior<<  " - " << prior.getLnPriorRatio()  << ") + ( " << std::setprecision(std::numeric_limits<double>::digits10 ) << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
 #endif
 
   bool wasAccepted  = testr < acceptance; 
@@ -236,10 +229,10 @@ void Chain::step()
   {
     double lnl = tr->likelihood; 
     addChainInfo(tout); 
-    tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" << std::setprecision(2) << std::fixed << lnl << "\tdelta=" << lnlRatio << "\t" << hastings << std::endl; 
+    tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" << std::setprecision(std::numeric_limits<double>::digits10) << std::scientific << lnl << "\tdelta=" << lnlRatio << "\t" << hastings << std::endl; 
   }
 #endif
-  // debug_printAccRejc( pfun, wasAccepted, tr->likelihood, prior.getLnPrior(), hastings); 
+
 
   if(wasAccepted)
     {
@@ -429,14 +422,15 @@ void Chain::readFromCheckpoint( std::ifstream &in )
       auto param  = name2parameter[name]; 
 
       ParameterContent content = param->extractParameter(*traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
-      tout << "content before: " << content << std::endl; 
-
+      // tout << "content before: " << content << std::endl; 
       content.readFromCheckpoint(in);
-      tout << "content after: " << content << std::endl; 
+      // tout << std::scientific << std::setprecision(10) << "content after: " << content << std::endl; 
       
       param->applyParameter(*traln, content); 
       ++ctr;
-    }  
+    }
+
+  // tout << *traln << std::endl; 
 
   // resume the chain and thereby assert that everything could be
   // restored correctly
@@ -445,12 +439,11 @@ void Chain::readFromCheckpoint( std::ifstream &in )
   for(auto &v : vars)
     savedContent[v->getId()] = v->extractParameter(*traln);
 
-  tout << "RESUMING" << std::endl ; 
   resume();
 }
  
 
-void Chain::writeToCheckpoint( std::ofstream &out) const
+void Chain::writeToCheckpoint( std::ofstream &out) 
 {
   chainRand.writeToCheckpoint(out);   
   out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );
@@ -462,6 +455,9 @@ void Chain::writeToCheckpoint( std::ofstream &out) const
   for(auto &p : proposals)
     p->writeToCheckpoint(out);
   
+  // TODO expensive 
+  resume();      
+
   for(auto &var: extractVariables())
     {
       auto compo = var->extractParameter(*traln); 

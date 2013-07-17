@@ -140,7 +140,7 @@ void Branch::readFromCheckpoint( std::ifstream &in )
   readDelimiter(in); 
 } 
 
-void Branch::writeToCheckpoint( std::ofstream &out)  const
+void Branch::writeToCheckpoint( std::ofstream &out)  
 {
   out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );  
   out << thisNode << DELIM

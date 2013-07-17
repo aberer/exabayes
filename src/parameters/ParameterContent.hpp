@@ -14,11 +14,11 @@ public:
   std::vector<Branch> branches; 
 
   virtual void readFromCheckpoint( std::ifstream &in )  ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const;   
+  virtual void writeToCheckpoint( std::ofstream &out) ;   
 
   // AA model? 
 
-  friend std::ofstream& operator<<(std::ofstream& out,  const ParameterContent &rhs); 
+  friend std::ostream& operator<<(std::ostream& out,  const ParameterContent &rhs); 
 }; 
 
 #endif

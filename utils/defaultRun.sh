@@ -4,15 +4,15 @@
 topdir=$(dirname  $0 )/../
 
 model=GAMMA
-seed=123
+seed=1234
 runid=testRun
 
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0		
-useClang=1
+useGoogleProfiler=0 
+useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
@@ -31,7 +31,6 @@ fi
 if [ $useGoogleProfiler -eq 1 ]; then
     libs="-lprofiler"
 fi
-
 
 
 if [ "$#" != 3 ]; then

@@ -89,7 +89,7 @@ void SuccessCounter::readFromCheckpoint( std::ifstream &in )
   readDelimiter(in); 
 }
  
-void SuccessCounter::writeToCheckpoint( std::ofstream &out) const
+void SuccessCounter::writeToCheckpoint( std::ofstream &out) 
 {
   out << globalAcc << DELIM
       << globalRej << DELIM

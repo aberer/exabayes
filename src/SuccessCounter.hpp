@@ -27,7 +27,7 @@ public:
   int getBatch(){return batch; }
 
   virtual void readFromCheckpoint( std::ifstream &in )   ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const;   
+  virtual void writeToCheckpoint( std::ofstream &out) ;   
   
 private: 			// METHODS
   void reset();  

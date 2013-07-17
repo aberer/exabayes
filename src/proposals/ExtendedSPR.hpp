@@ -21,7 +21,7 @@ public:
   virtual AbstractProposal* clone() const;  
   
   virtual void readFromCheckpointCore(std::ifstream &in) {   } 
-  virtual void writeToCheckpointCore(std::ofstream &out)const { }  
+  virtual void writeToCheckpointCore(std::ofstream &out) { }  
 
 protected: 			// METHODS
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 

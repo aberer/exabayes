@@ -71,18 +71,28 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  std::ofstream out("test.txt"); 
-  out << "hi my name is& slimshade\n" << endl;   
-  out.close();
 
-  std::ifstream in("test.txt"); 
-  std::string tmp;
-  std::getline(in, tmp, '&');
-  std::cout << "result is >" << tmp << "<"  << std::endl; 
-
-  std::getline(in, tmp, '&');
-  std::cout << "result is >" << tmp << "<"  << std::endl; 
+  std::ofstream fh("file.txt"); 
+  double a = 1. / 3 ; 
+  fh << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 10) << a  << std::endl; 
+  std::cout << std::scientific  << std::setprecision(std::numeric_limits<double>::digits10 + 10) << a << std::endl; 
   
+
+  std::ifstream ifh("file.txt"); 
+  double b; 
+  ifh >> b; 
+
+  std::cout << std::scientific  << std::setprecision(std::numeric_limits<double>::digits10 + 10) << b << std::endl; 
+  
+
+  fh.close(); 
+
+  // std::ofstream fh("file.txt", std::ios::binary); 
+  // fh.write("bla lba bla ") ; 
+  // double a = 1. / 3 ; 
+  // fh.write(a ); 
+  // fh.close(); 
+
   exit(0); 
 #else 
 

@@ -6,7 +6,6 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-
 #include "config.h"
 
 
@@ -65,7 +64,7 @@ typedef  unsigned int nat ;
 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-/* #define DEBUG_SHOW_EACH_PROPOSAL */
+#define DEBUG_SHOW_EACH_PROPOSAL
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define VERIFY_LNL_SUPER_EXPENSIVE */

@@ -121,7 +121,7 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
 
 
 
-void AbstractProposal::writeToCheckpoint( std::ofstream &out) const 
+void AbstractProposal::writeToCheckpoint( std::ofstream &out)  
 {
   printShort(out); 
   out << DELIM; 

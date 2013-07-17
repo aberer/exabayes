@@ -4,8 +4,6 @@
 #include "ParameterContent.hpp"
 #include "TreeAln.hpp"
 #include "Priors.hpp"
-// #include "Checkpointable.hpp"
-
 
 enum class Category; 
 

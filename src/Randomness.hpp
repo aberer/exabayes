@@ -45,7 +45,7 @@ public:
   nat operator()() ; 
 
   virtual void readFromCheckpoint( std::ifstream &in )  ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const; 
+  virtual void writeToCheckpoint( std::ofstream &out) ; 
 
   double drawRandBiUnif(double x); 
   double drawRandExp(double lambda); 

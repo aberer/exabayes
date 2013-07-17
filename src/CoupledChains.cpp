@@ -113,22 +113,14 @@ void CoupledChains::switchChainState()
   Chain &a = chains[ chainAId],
     &b = chains[ chainBId] ; 
 
-  // int r = MIN(coupIdA, coupIdB ); 
-  // int c = MAX(coupIdA, coupIdB); 
-  
   /* do the swap */
   if( rand.drawRandDouble01()  < accRatio)
     {
       a.switchState(b); 
       swapInfo.update(coupIdA,coupIdB,true); 
-      // swapInfo[r * chains.size() + c]->accept(); 
     } 
   else 
-    {
-      // swapInfo[r * chains.size() + c]->reject(); 
-      swapInfo.update(coupIdA,coupIdB,false); 
-    }
-  
+    swapInfo.update(coupIdA,coupIdB,false);   
 }
 
 
@@ -264,7 +256,7 @@ void CoupledChains::readFromCheckpoint( std::ifstream &in )
 } 
 
 
-void CoupledChains::writeToCheckpoint( std::ofstream &out) const 
+void CoupledChains::writeToCheckpoint( std::ofstream &out)  
 {
   rand.writeToCheckpoint(out);
   swapInfo.writeToCheckpoint(out);

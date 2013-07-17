@@ -36,7 +36,7 @@ public:
   Chain& operator=(Chain rhs) ; 
 
   void reseed(randKey_t c) { chainRand = Randomness(c); }  
-  void resume(); 
+  void resume()  ; 
   void suspend(); 
 
   void step();
@@ -75,7 +75,7 @@ public:
   void sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const ; 
 
   virtual void readFromCheckpoint( std::ifstream &in ) ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const;   
+  virtual void writeToCheckpoint( std::ofstream &out) ;   
 
 private : 			// METHODS 
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr, double hastings ) ;

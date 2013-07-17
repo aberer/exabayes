@@ -54,10 +54,10 @@ public:
   std::vector<AbstractParameter*> getPrimVar() const; 
   std::vector<AbstractParameter*> getSecVar() const ; 
 
-  void writeToCheckpoint( std::ofstream &out) const ; 
+  void writeToCheckpoint( std::ofstream &out)  ; 
   void readFromCheckpoint( std::ifstream &in ); 
 
-  virtual void writeToCheckpointCore(std::ofstream &out) const = 0 ;  
+  virtual void writeToCheckpointCore(std::ofstream &out)  = 0 ;  
   virtual void readFromCheckpointCore(std::ifstream &in) = 0; 
 
 protected:   

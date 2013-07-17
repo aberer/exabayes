@@ -160,6 +160,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   auto weightedInsertions = getWeights(traln, possibilities) ; 
 
   double r = rand.drawRandDouble01(); 
+  tout << "deciding on parsSpr move. drawn " << r << std::endl; 
   std::pair<Branch,double> chosen; 
   for(auto v : weightedInsertions)
     {
@@ -200,6 +201,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 } 
 
 
+
 void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 { 
   determineSprPath(traln, rand, hastings, prior); 
@@ -218,11 +220,18 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
   if( modifiesBl)
     {
-      // assert(0); 
+      assert(0); 
       auto brPr =  secVar[0]->getPrior();
       move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 
+  // if(hastings == 0)
+  //   {
+  //     tout << "proposing move: " << move  << std::endl; 
+  //     assert(hastings != 0); 
+  //   }
+  
+  // assert(hastings != 0); 
   // debug_checkTreeConsistency(traln);   
 }
 

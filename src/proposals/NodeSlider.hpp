@@ -20,7 +20,7 @@ public:
   virtual AbstractProposal* clone() const;  
 
   virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out)const { } //disabled
+  virtual void writeToCheckpointCore(std::ofstream &out) { } //disabled
 
 protected: 
   double multiplier; 

@@ -19,7 +19,7 @@ void ParameterContent::readFromCheckpoint( std::ifstream &in )
 } 
 
 
-void ParameterContent::writeToCheckpoint( std::ofstream &out) const
+void ParameterContent::writeToCheckpoint( std::ofstream &out) 
 {
   assert(not (values.size() > 0 && branches.size() > 0) ); 
   out << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 2 );
@@ -33,7 +33,7 @@ void ParameterContent::writeToCheckpoint( std::ofstream &out) const
 
 
 
-std::ofstream& operator<<(std::ofstream& out, const ParameterContent &rhs)
+std::ostream& operator<<(std::ostream& out, const ParameterContent &rhs)
 {
   if(rhs.values.size() > 0)
     for_each(rhs.values.begin(), rhs.values.end(), [&](const double &d) {out << d << "," ; }) ; 

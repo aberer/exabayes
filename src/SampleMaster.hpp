@@ -38,7 +38,7 @@ public:
   void branchLengthsIntegration()  ;  
 
   virtual void readFromCheckpoint( std::ifstream &in ) ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const ;   
+  virtual void writeToCheckpoint( std::ofstream &out)  ;   
 
 private: 
   bool convergenceDiagnostic(); 

@@ -17,7 +17,7 @@ public:
   const SuccessCounter& getCounter(nat a, nat b ) const; 
 
   virtual void readFromCheckpoint( std::ifstream &in )   ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const;   
+  virtual void writeToCheckpoint( std::ofstream &out) ;   
 
 private: 
   nat mapToIndex(nat a, nat b) const ;

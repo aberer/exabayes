@@ -91,43 +91,43 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 
 
 // a quick hack that gets the file with the highest generation count
-#include <glob.h>
-static std::string findMostRecentFile(std::string id)
-{
-  stringstream ss; 
-  ss << PROGRAM_NAME << "_checkpoint." << id << ".*"; 
+// #include <glob.h>
+// static std::string findMostRecentFile(std::string id)
+// {
+//   stringstream ss; 
+//   ss << PROGRAM_NAME << "_checkpoint." << id << ".*"; 
 
-  glob_t globResult; 
-  glob(ss.str().c_str(), GLOB_TILDE, NULL, &globResult); 
-  std::vector<std::string> files; 
-  for(nat i = 0; i < globResult.gl_pathc; ++i)
-    files.push_back(std::string(globResult.gl_pathv[i])); 
-  globfree(&globResult); 
+//   glob_t globResult; 
+//   glob(ss.str().c_str(), GLOB_TILDE, NULL, &globResult); 
+//   std::vector<std::string> files; 
+//   for(nat i = 0; i < globResult.gl_pathc; ++i)
+//     files.push_back(std::string(globResult.gl_pathv[i])); 
+//   globfree(&globResult); 
 
-  std::string result = ""; 
+//   std::string result = ""; 
 
-  nat highest = 0; 
-  for(auto& file: files)
-    {
-      char *dup = strdup(file.c_str()); 
-      char *tmp = strtok(dup, "."); 
-      tmp = strtok(NULL, "."); 
-      tmp = strtok(NULL, ".");
-      nat gen = std::stoi(tmp); 
-      if(highest < gen)
-	highest = gen;       
-      free(dup); 
-    }
+//   nat highest = 0; 
+//   for(auto& file: files)
+//     {
+//       char *dup = strdup(file.c_str()); 
+//       char *tmp = strtok(dup, "."); 
+//       tmp = strtok(NULL, "."); 
+//       tmp = strtok(NULL, ".");
+//       nat gen = std::stoi(tmp); 
+//       if(highest < gen)
+// 	highest = gen;       
+//       free(dup); 
+//     }
   
-  if(highest != 0 )
-    {
-      stringstream tmp; 
-      tmp <<  PROGRAM_NAME << "_checkpoint." << id << "." << highest; 
-      result = tmp.str(); 
-    }
+//   if(highest != 0 )
+//     {
+//       stringstream tmp; 
+//       tmp <<  PROGRAM_NAME << "_checkpoint." << id << "." << highest; 
+//       result = tmp.str(); 
+//     }
 
-  return result; 
-}
+//   return result; 
+// }
 
 
 void SampleMaster::initializeRuns( )
@@ -227,7 +227,8 @@ void SampleMaster::initializeRuns( )
       std::stringstream ss ; 
       ss << PROGRAM_NAME << "_checkpoint." << cl.getCheckpointId();       
       auto checkPointFile = ss.str(); 
-      std::ifstream chkpnt(checkPointFile); 
+      std::ifstream chkpnt; 
+      Checkpointable::getIfstream(checkPointFile, chkpnt); 
       if( not chkpnt )
 	{
 	  tout  << "Warning! Could not open / find file " << checkPointFile << std::endl; 
@@ -236,8 +237,8 @@ void SampleMaster::initializeRuns( )
 	  
 	  ss.str(""); 
 	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getCheckpointId();
-	  checkPointFile = ss.str();
-	  chkpnt.open(checkPointFile); 
+	  checkPointFile = ss.str();	  
+	  Checkpointable::getIfstream(checkPointFile, chkpnt); 
 	  
 	  if( not chkpnt)
 	    {
@@ -478,10 +479,11 @@ void SampleMaster::run()
 	  stringstream ss; 
 	  ss <<  PROGRAM_NAME << "_newCheckpoint." << cl.getRunid()  ; 
 	  std::string newName = ss.str();
-	  ofstream chkpnt(newName); 
+	  ofstream chkpnt; 
+	  Checkpointable::getOfstream(newName, chkpnt); 
 	  writeToCheckpoint(chkpnt);
 	  chkpnt.close(); 
-
+	  
 	  ss.str("");
 	  ss << PROGRAM_NAME << "_checkpoint." << cl.getRunid(); 
 	  std::string curName = ss.str();
@@ -545,7 +547,7 @@ void SampleMaster::readFromCheckpoint( std::ifstream &in )
   initTime = CLOCK::system_clock::now() -  durationSinceStart; 
 }
  
-void SampleMaster::writeToCheckpoint( std::ofstream &out) const
+void SampleMaster::writeToCheckpoint( std::ofstream &out) 
 {  
   // tout << "writing checkpoint " << std::endl; 
   out << std::setprecision(std::numeric_limits<double>::digits10 + 2 ); // max precision

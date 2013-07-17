@@ -72,7 +72,7 @@ void SwapMatrix::readFromCheckpoint( std::ifstream &in )
     s.readFromCheckpoint(in);
 } 
 
-void SwapMatrix::writeToCheckpoint( std::ofstream &out) const
+void SwapMatrix::writeToCheckpoint( std::ofstream &out) 
 {
   for(auto &s : matrix)
     s.writeToCheckpoint(out); 

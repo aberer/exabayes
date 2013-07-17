@@ -40,7 +40,7 @@ public:
   bool isTipBranch(const TreeAln &traln) const; 
 
   virtual void readFromCheckpoint( std::ifstream &in ) ; 
-  virtual void writeToCheckpoint( std::ofstream &out) const ;   
+  virtual void writeToCheckpoint( std::ofstream &out)  ;   
 
   // friends 
   friend std::ostream& operator<<(std::ostream &out, const Branch& br); 
