@@ -74,15 +74,16 @@ double Branch::getInternalLength(const TreeAln &traln, double length) const
 }
 
 
-nat Branch::getCommonNode(const Branch &rhs ) const
-{
-  if(thisNode == rhs.thisNode || thatNode == rhs.thisNode)
-    return rhs.thisNode;
-  else if(thatNode == rhs.thatNode || thisNode == rhs.thatNode)
-    return rhs.thatNode; 
-  else 
-    return 0;   
-} 
+// nat Branch::getCommonNode(const Branch &rhs ) const
+// {
+//   if(thisNode == rhs.thisNode || thatNode == rhs.thisNode)
+//     return rhs.thisNode;
+//   else if(thatNode == rhs.thatNode || thisNode == rhs.thatNode)
+//     return rhs.thatNode; 
+//   else 
+//     return 0;   
+// }
+
 
 
 Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const

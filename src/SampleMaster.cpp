@@ -230,6 +230,7 @@ void SampleMaster::initializeRuns( )
 	    isFist = false ; 
 
 	  chain.resume(true); 
+	  chain.suspend(false); 
 	  tout << chain; 
 	  tout << "\tRNG(" << chain.getChainRand() << ")"<< endl; 	  
 	}

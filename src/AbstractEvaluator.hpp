@@ -1,6 +1,0 @@
-#ifndef _ABSTRACT_EVALUATOR
-#define _ABSTRACT_EVALUATOR
-
-
-
-#endif

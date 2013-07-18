@@ -20,7 +20,15 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
   for(auto &v : vars)
     categories.insert(v->getCategory()); 
 
-  nat highestId = vars.size() == 0 ? 0 : vars[vars.size()-1]->getId(); 
+  int highestId = -1; 
+  for(auto &v : vars )
+    {
+      v->printShort(tout); 
+      int id = v->getId(); 
+      if(highestId < id)
+	highestId = id; 
+    }
+  ++highestId;
 
   // add standard stuff, if not defined yet
   for(auto &cat : CategoryFuns::getAllCategories())
@@ -36,6 +44,7 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	case Category::BRANCH_LENGTHS: 
 	  {
 	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId );
+	    tout << "spawned " << highestId << std::endl; 
 	    ++highestId; 
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
@@ -70,29 +79,22 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
     case Category::TOPOLOGY:  
-      var->setPrior( make_shared<UniformPrior>(0,0)); // TODO : proper topology prior? 
+      var->setPrior( make_shared<UniformPrior>(0,0) ); // TODO : proper topology prior? 
       break; 
     case Category::BRANCH_LENGTHS: 
-      var->setPrior(make_shared<ExponentialPrior>(10.0));
+      var->setPrior( make_shared<ExponentialPrior>(10.0) );
       break; 
     case Category::FREQUENCIES: 
       {
 	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
 	assert(partition->dataType == DNA_DATA || partition->dataType == AA_DATA); 
-
-	vector<double>badHardcoded; 
-	for(int i = 0; i < partition->states; ++i)
-	  badHardcoded.push_back(1.); 
-	var->setPrior(make_shared<DirichletPrior>(badHardcoded)); 
+	var->setPrior(make_shared<DirichletPrior>(vector<double>(partition->states * 1.))); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
       {
-	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
-	assert(partition->dataType == DNA_DATA); 
-	
-	vector<double> subAlpha = {1,1,1,1,1,1}; 
-	var->setPrior(make_shared<DirichletPrior>( subAlpha )); 
+	pInfo *partition = traln.getPartition(var->getPartitions()[0]);	;
+	var->setPrior(make_shared<DirichletPrior>( vector<double> (numStateToNumInTriangleMatrix(partition->states), 1.) )); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
@@ -156,6 +158,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 
 void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval )
 {
+  randomVariables = partitionParams.getParameters(); 
   addStandardParameters(randomVariables, traln);  
   addPriorsToVariables(traln, priorInfo, randomVariables);
 
@@ -199,7 +202,9 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   tout << endl << "Parameters to be integrated: " << endl; 
   for(auto &v : randomVariables)
-    tout << v.get()  << endl; 
+    {
+      tout << v->getId() << "\t" << v.get()  << endl; 
+    }
   tout << endl; 
   
   double sum = 0; 

@@ -2,6 +2,9 @@
 #include "axml.h"
 #include <algorithm>
 
+
+
+
 void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 {
   vector<bool> partAppeared(traln->getNumberOfPartitions(), false); 
@@ -92,7 +95,6 @@ void BlockParams::Read(NxsToken &token)
 	  Category cat = CategoryFuns::getCategoryFromLinkLabel(str); 	  
 	  parseScheme(token, cat, idCtr); 
 
-	  
 	  if(catsFound.find(cat) != catsFound.end())
 	    {
 	      cerr << "parsing error: found a linking scheme for category  " <<  CategoryFuns::getLongName(cat) << " twice. Aborting." ; 
@@ -114,4 +116,15 @@ void BlockParams::Read(NxsToken &token)
 	    }	    
 	}
     }
+}
+
+
+
+
+vector<unique_ptr<AbstractParameter> > BlockParams::getParameters() const
+{
+  vector<unique_ptr<AbstractParameter> > result; 
+  for(auto &p : parameters	)
+    result.push_back(std::unique_ptr<AbstractParameter>(p->clone() )); 
+  return result; 
 }

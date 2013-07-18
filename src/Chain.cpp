@@ -92,10 +92,25 @@ void Chain::resume(bool evaluate)
 {    
   auto vs = extractVariables(); 
 
-  // topology must be dealt with first   
-  sort(vs.begin(), vs.end(), [] (const AbstractParameter* a,const AbstractParameter* b ){ return a->getCategory() == Category::TOPOLOGY ;   } ); 
+  // set the topology first 
+  bool topoFound = false; 
   for(auto &v : vs)
-    v->applyParameter(*traln, savedContent[v->getId()]); 
+    {
+      if(v->getCategory( ) == Category::TOPOLOGY)	
+	{
+	  assert(not topoFound);
+	  topoFound = true; 
+	  v->applyParameter(*traln, savedContent[v->getId()]); 
+	}
+    }
+
+  // now deal with all the other parameters 
+  for(auto &v : vs)
+    if(v->getCategory() != Category::TOPOLOGY)
+      {
+	assert(topoFound); 
+	v->applyParameter(*traln, savedContent[v->getId()]); 
+      }
 
   if(evaluate)
     {
@@ -279,7 +294,11 @@ void Chain::suspend(bool paramsOnly)
       maxV = v->getId(); 
   savedContent.resize(maxV + 1 ); 
   for(auto& v : variables)
-    savedContent[v->getId()] = v->extractParameter(*traln);
+    {
+      auto content =    v->extractParameter(*traln); 
+      // tout << "suspending parameter "  << v << "\t" << content << std::endl;  
+      savedContent[v->getId()] = v->extractParameter(*traln);
+    }
 
   if(not paramsOnly)
     {

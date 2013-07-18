@@ -8,9 +8,9 @@ begin params;
   then you have an additional parameter to integrate ]
 
 
-[ stateFreq = (0,1,2,3)  ]   [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
-[ rateHet = (0,2,1,3) ] 
-[ revMat = (0,1,2,3)  ] 
+stateFreq = (0/1,2,3)     [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
+rateHet = (0,2/1,3)  
+revMat = (0,1,2,3)   
 
 [ TODO: branch lengths ]
 end;  
@@ -57,7 +57,7 @@ begin runconfig;
  [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
 
  [ RUN PARAMETERS ]
- diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
+ diagFreq 10000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
  numRuns  4 	   	[ number of independant runs ]
  numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
@@ -68,7 +68,7 @@ begin runconfig;
   heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
   [  sampledHeated false ] [ also take samples from the heated chains ]
 
-  checkPointInterval   1000  [ defines how often a checkpoint is written ]
+  checkPointInterval   100000  [ defines how often a checkpoint is written ]
 
  [ CONVERGENCE ]
  asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]

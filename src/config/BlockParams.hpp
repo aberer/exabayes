@@ -19,13 +19,7 @@ public:
   }
 
   void setTree(shared_ptr<TreeAln> _traln){traln = _traln; }
-  vector<unique_ptr<AbstractParameter> > getParameters() const
-  {
-    vector<unique_ptr<AbstractParameter> > result; 
-    for(auto &p : parameters	)
-      result.push_back(std::unique_ptr<AbstractParameter>(p->clone() )); 
-    return result; 
-  }
+  vector<unique_ptr<AbstractParameter> > getParameters() const; 
   virtual void Read(NxsToken &token); 
 
 private: 

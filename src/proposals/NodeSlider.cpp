@@ -75,7 +75,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 
 void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
-  nat middleNode = oneBranch.getCommonNode(otherBranch); 
+  nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
   
   Branch b(middleNode, otherNode); 

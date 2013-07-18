@@ -22,7 +22,7 @@ const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ;
  */
 void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result, const TreeAln &traln, shared_ptr<LikelihoodEvaluator> eval) const 
 {
-  vector<aaMatrix_t> someMatrices; 
+  vector<aaMatrix_t> someMatrices; // TODO 
 
   auto proposals =  ProposalTypeFunc::getProposalsForCategory(cat); 
   for(auto p : proposals)
