@@ -11,90 +11,68 @@
 MyTemplateProposal::MyTemplateProposal( double aVariable)
 {
   name = "MyTemplateProposal"; 	
-  category = Category::TOPOLOGY ; 	// check out categoryType.h
+
+  // check out Category.hpp and Category.cpp
+  category = Category::TOPOLOGY; 
   
-
-  // ptype = E_TBR; 		// actually not used any more... 
-
   relativeWeight = 2.0; 
-
 }
-
-
 
 
 void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
-  tree *tr = traln.getTr(); 	// our beloved tree
+  // i do not have an idea what to write here, maybe check out
+  // ParameterProposal, I documented the apply-funciton there .
   
-  // just writing nonsense here, s.t. the compiler does not complain 
-  tr->likelihood = 0; 
-
-  // do some fancy stuff that basically is the proposal. 
-
-  // NOTICE: the argument is double &hastings. This is a specific c++
-  // construct called reference. It behaves like a pointer (i.e., if
-  // you modify this value, the hastings value OUTSIDE the function
-  // will also be modified), but syntactically it is handled like a
-  // raw value (no de-referencing needed) => hastings = 1; works!
-
-  // for changing the hastings, use this function: 
-  double somethingToAddToTheHastings = 3 ; 
-  updateHastings(hastings, somethingToAddToTheHastings , name);
-  // internally the hastings is on log-scale. Your value to be added
-  // should NOT be on the log-scale
-
-  
-  // since rand is an argument, we easily can draw random numbers:
-  double r =  rand.drawRandDouble01();
-  std::cout << "the value was "<<  r << std::endl; 
-
-
-  // maybe we need our private method as a helper
-  privateMethod(traln,rand);
-
-
-#if 0 
-  // assume we have changed the branch lengths. Then we have to modify the prior as well.   
-  double oldBL = 0; 		// the REAL vaule 
-  double newBL = 0; 	
-
-  prior.updateBranchLength(oldBL, newBL); // updates the prior, also
-					  // check out the other
-					  // methods for modification.
-#endif
-
-  // for verifying that your prior modifications are correct, check
-  // out the DEBUG_LNPR in common.h
 }
 
 
 void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
 {
-  // somehow determine where what should be evaluated
-  // the prior is NOT changed here
+  // the previous evluation scheme has been replaced with the
+  // LikelihoodEvaluator class. 
+
+  // let's assume, we have 4 partitions and this proposal proposes for
+  // 2 frequency parameters that have 2 partitions each => the scheme is (1,2/3,4)
+
+  // if we want to evaluate all four partitions (but not necessarily
+  // the entire aligment), then we'd have to do this:
+  
+  std::vector<nat> allRelevantPartitions; 
+  for(nat i = 0; i < primVar.size(); ++i)  
+    {
+      std::vector<nat> partitionsHere = primVar[i]->getPartitions(); 
+      for(nat j = 0; j < partitionsHere.size(); ++j)
+	allRelevantPartitions.push_back(partitionsHere[j]); 
+    }
+
+  
+  evaluator.evaluatePartitions(traln, allRelevantPartitions); 
+  
+  
+  // let's do it again and use some c++ conveniences 
+  std::vector<nat> allRelevantPartitions2; 
+  // range-iteration over the vector primvar. Due to the auto-keyword,
+  // you do not have to remember the exact type (could be
+  // difficult). However, here, you MUST add a "&". This means that
+  // you do not want a copy of the parameter object, but the actual
+  // object
+  for(auto &var : primVar)	
+    for(auto p : var->getPartitions()) // iterate over all partitions in this parameter 
+      allRelevantPartitions2.push_back(p); 
+  evaluator.evaluatePartitions(traln, allRelevantPartitions2); 
+
+  // when in doubt, there is always 
+  tree *tr = traln.getTr(); 
+  Branch toEval(tr->start->number, tr->start->back->number); // a bit clunky 
+  evaluator.evaluate(traln, toEval, true); 
 }
 
 
 
 void MyTemplateProposal::resetState(TreeAln &traln, PriorBelief &prior)
 {  
-  // reset your modifications to the tree   
 
-#if 0    
-  // dont forget to update the prior: 
-  double newBL = 0; 		// we probably have stored that as a private member variable
-  double oldBL = 0; 
-  
-
-  prior.updateBranchLength(newBL, oldBL); // values are switched this time  
-#endif
-
-  
-  // NOTICE: always call this update prior methods AFTER you have
-  // called the respective setBounded-method. setBounded will modify
-  // the original value, if it is not within the bound and thus the
-  // prior remains correctly set.
 }
 
 
@@ -122,4 +100,22 @@ AbstractProposal* MyTemplateProposal::clone() const
 void MyTemplateProposal::privateMethod(TreeAln& traln, Randomness &rand)
 {
   std::cout << "i am modifying the tree is some manner" << std::endl; 
+}
+
+
+
+// checkpointing stuff 
+void MyTemplateProposal::readFromCheckpointCore(std::ifstream &in)
+{  
+  // assume our aTuningParamer needs to be tuned. Then, we have to
+  // read it from the previous checkpointing file: 
+  
+  aTuningParamer = cRead<double>(in); 
+}
+
+
+void MyTemplateProposal::writeToCheckpointCore(std::ofstream &out)
+{ 
+  // and we have to write it to the filen, once we checkpoint 
+  cWrite<double>(out, aTuningParamer); 	  
 }

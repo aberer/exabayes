@@ -62,7 +62,7 @@ void SampleMaster::branchLengthsIntegration()
       Branch initBranch = branch; 
 
       traln.setBranch(branch); 
-      eval->evaluateFull(traln, branch);
+      eval->evaluate(traln, branch, true); 
       integrator->setToPropose(branch); 
       
       stringstream ss; 

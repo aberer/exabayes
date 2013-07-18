@@ -3,7 +3,6 @@
 
 #include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
-// #include "Parameters.hpp"
 #include "ProposalType.hpp"
 #include "BoundsChecker.hpp"
 

@@ -215,9 +215,6 @@ void TreeAln::enableParsimony()
 }
 
 
-/** 
-    @brief standard values for the tree 
-*/ 
 void TreeAln::initDefault()
 {   
   tr.likelihood =  0 ; 
@@ -305,12 +302,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
 
 #define UNSAFE_EXACT_TREE_COPY
 
-/**
-   @brief copies the entire state from the rhs to this tree/alignment.
-   
-   all parameters are copied and initialized, topology and branch
-   lengths are copied.
- */ 
+
 TreeAln& TreeAln::operator=( TreeAln& rhs)
 {  
   assert(&rhs != this); 
@@ -548,6 +540,7 @@ void TreeAln::setRevMat(const std::vector<double> &values, int model)
 void TreeAln::setBranch(const Branch& branch)
 {
   assert(BoundsChecker::checkBranch(branch)); 
+  assert(branch.exists(*this)); 
   auto p = branch.findNodePtr(*this);
   p->z[0] = p->back->z[0] = branch.getLength();
 }

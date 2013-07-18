@@ -3,6 +3,8 @@
 
 #include "ProposalType.hpp"
 
+
+
 namespace ProposalTypeFunc
 {
   std::string getLongName(ProposalType type)

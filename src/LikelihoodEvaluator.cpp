@@ -74,14 +74,6 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)
 
 
 
-double LikelihoodEvaluator::evaluateFull(TreeAln& traln, const Branch &evalBranch)
-{
-  if( not traln.isTipNode(evalBranch.findNodePtr(traln)))
-    disorientTree(traln, evalBranch);
-  evaluate(traln,evalBranch, false ); 
-  return traln.getTr()->likelihood; 
-}
-
 double LikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, bool fullTraversal )  
 {
 #ifdef DEBUG_EVAL  

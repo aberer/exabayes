@@ -3,17 +3,6 @@
 
 #include "AbstractProposal.hpp"
 
-// NOTICE: in addition to this stuff here, you need to register your
-// proposal in method setupProposals in SampleMaster.cpp
-// also add #include "MyTemplateProposal.hpp" in SampleMaster.cpp
-
-
-
-// also add a keyword in Block.cpp to let the parser know about your new proposal  
-
-
-// finally, GlobalVariables.h must be updated. That's it!
-
 
 // if you created a new source file (=> .cpp), then inform automake
 // about it. that's done with the
@@ -21,6 +10,16 @@
 // command. Probably it will run configure again. 
 // If for any reason nothing works any more after it, have a look, if the source files are correct in 
 // src.am (you can also manually modify this source, s.t. it works). 
+
+
+
+// if you do not use the namespace below, you have to
+// add the std:: prefix to many things (e.g., the vector is std::vector then). 
+// using the qualifier is better practice, but inconvenient. 
+// using namespace std; 
+
+
+
 
 
 class MyTemplateProposal : public AbstractProposal
@@ -37,8 +36,10 @@ public:
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out) { } //disabled
+  
+  // if your proposal has  parameters that are tuned   
+  virtual void readFromCheckpointCore(std::ifstream &in); 
+  virtual void writeToCheckpointCore(std::ofstream &out); 
 
 
 private: 

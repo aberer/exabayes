@@ -156,10 +156,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 
 void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval )
 {
-  // randomVariables = partitionParams.getParameters();  
-
-  addStandardParameters(randomVariables, traln);
-  
+  addStandardParameters(randomVariables, traln);  
   addPriorsToVariables(traln, priorInfo, randomVariables);
 
   ProposalRegistry reg; 

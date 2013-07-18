@@ -37,7 +37,6 @@ public:
   static const double initGammaMultiplier; 
   static const double initNodeSliderMultiplier; 
 
-
 private: 
 
 }; 

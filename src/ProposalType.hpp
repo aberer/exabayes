@@ -6,6 +6,11 @@
 
 #include "Category.hpp" 
 
+
+// add your new proposal here and update accordingly in everything in
+// ProposalType.cpp .  if you missed something, then exabayes usually
+// complains with an > assert(0);
+
 enum class ProposalType
 {
     ST_NNI= 0, 
@@ -42,14 +47,35 @@ public:
 
 namespace ProposalTypeFunc
 {
+  /** 
+      @brief gets the verbose name of the proposal 
+   */ 
   std::string getLongName(ProposalType type); 
+  /** 
+      @brief gets the proposal type from the name in the config file   
+   */ 
   ProposalType getTypeFromConfigString(std::string s); 
+  /** 
+      @brief gets the name of the proposal by type 
+   */ 
   std::string getConfigStringFromType(ProposalType p ); 
-
+  /** 
+      @brief IMPORTANT get all relevant proposals for a category  
+   */ 
   std::vector<ProposalType> getProposalsForCategory(Category c) ; 
-  std::vector<ProposalType> getAllProposals(); 
-
+  /** 
+      @brief gets all relevant proposals 
+   */ 
+  std::vector<ProposalType> getAllProposals();   
+  /**
+     @brief indicates, if the string specifies a valid proposal name 
+   */ 
   bool isValidName(std::string name); 
+  /** 
+      @brief indicates, if the proposal is ready for productive use
+      (if this is not the case, then the proposal can only be
+      activated by explicitly specifying it in the config file)
+   */ 
   bool isReadyForProductiveUse(ProposalType p); 
 
 }

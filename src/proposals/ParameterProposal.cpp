@@ -15,21 +15,36 @@ ParameterProposal::ParameterProposal(Category cat, std::string _name, bool modif
 
 void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
-  assert(primVar.size() == 1); 
+  assert(primVar.size() == 1); 	// we only have one parameter to integrate over 
+  // this parameter proposal works with any kind of parameters (rate
+  // heterogeneity, freuqencies, revmat ... could also be extended to
+  // work with AA)
   
+
+  // extract the parameter (a handy std::vector<double> that for
+  // instance contains all the frequencies)
   ParameterContent content = primVar[0]->extractParameter(traln); 
   savedContent = content; 
   
+  // nasty, we have to correct for the fracchange 
   double oldFracChange = traln.getTr()->fracchange; 
+  
+  // we have a proposer object, that does the proposing (check out
+  // ProposalFunctions.hpp) It should take care of the hastings as
+  // well (to some degree )
   
   auto newValues = proposer->proposeValues(content.values, parameter, rand, hastings); 
   assert(newValues.size() == content.values.size()); 
   assert(traln.getNumBranches() == 1 ); 
-  
+
+  // create a copy 
   ParameterContent newContent; 
   newContent.values = newValues; 
+  // use our parameter object to set the frequencies or revtmat rates
+  // or what ever (for all partitions)
   primVar[0]->applyParameter(traln, newContent); 
   
+  // now take care of the fracchange 
   double newFracChange = traln.getTr()->fracchange; 
   if(modifiesBL)
     {
@@ -39,7 +54,8 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
       prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
       updateHastings(hastings, pow(newFracChange / oldFracChange, traln.getNumberOfBranches()), name); 
     }
-  
+
+  // a generic prior updates the prior rate 
   auto thePrior = primVar[0]->getPrior();
   prior.addToRatio(thePrior->getLogProb(newValues) - thePrior->getLogProb(savedContent.values)); 
 } 
