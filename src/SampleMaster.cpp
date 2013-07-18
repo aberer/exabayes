@@ -20,6 +20,9 @@
 #include "ProposalFunctions.hpp"
 
 
+// a developmental mode to integrate over branch lengths
+// #define _GO_TO_INTEGRATION_MODE
+
 static int countNumberOfTreesQuick(const char *fn ); 
 
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
@@ -89,45 +92,6 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
     }
 }
 
-
-// a quick hack that gets the file with the highest generation count
-// #include <glob.h>
-// static std::string findMostRecentFile(std::string id)
-// {
-//   stringstream ss; 
-//   ss << PROGRAM_NAME << "_checkpoint." << id << ".*"; 
-
-//   glob_t globResult; 
-//   glob(ss.str().c_str(), GLOB_TILDE, NULL, &globResult); 
-//   std::vector<std::string> files; 
-//   for(nat i = 0; i < globResult.gl_pathc; ++i)
-//     files.push_back(std::string(globResult.gl_pathv[i])); 
-//   globfree(&globResult); 
-
-//   std::string result = ""; 
-
-//   nat highest = 0; 
-//   for(auto& file: files)
-//     {
-//       char *dup = strdup(file.c_str()); 
-//       char *tmp = strtok(dup, "."); 
-//       tmp = strtok(NULL, "."); 
-//       tmp = strtok(NULL, ".");
-//       nat gen = std::stoi(tmp); 
-//       if(highest < gen)
-// 	highest = gen;       
-//       free(dup); 
-//     }
-  
-//   if(highest != 0 )
-//     {
-//       stringstream tmp; 
-//       tmp <<  PROGRAM_NAME << "_checkpoint." << id << "." << highest; 
-//       result = tmp.str(); 
-//     }
-
-//   return result; 
-// }
 
 
 void SampleMaster::initializeRuns( )
@@ -430,9 +394,6 @@ void SampleMaster::printDuringRun(nat gen)
 }
 
 
-// a developmental mode to integrate over branch lengths
-// #define _GO_TO_INTEGRATION_MODE
-
 
 void SampleMaster::run()
 {
@@ -474,7 +435,7 @@ void SampleMaster::run()
 	  lastPrint = curGen; 
 	}
 
-      if(curGen % runParams.getChkpntFreq() == 0)
+      if(curGen % runParams.getChkpntFreq() == 0  && pl.isMasterReporter() )
 	{
 	  stringstream ss; 
 	  ss <<  PROGRAM_NAME << "_newCheckpoint." << cl.getRunid()  ; 

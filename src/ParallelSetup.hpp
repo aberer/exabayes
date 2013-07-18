@@ -28,6 +28,7 @@ public:
   nat getProcessesPerBatch() const {return globalSize / runsParallel; }
   nat getMyIdOnRunLevel() const {return globalRank  % getProcessesPerBatch();  }
   bool isReportingProcess() const {  return globalRank == 0 ; }
+  bool isMasterReporter() const {return globalRank == 0 ; } // TODO different from the one above!  
   
 private: 
   int myRunBatch; 

@@ -24,21 +24,21 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   runsParallel = cl.getNumRunParallel();
 
   if(globalRank == 0 )
-    cout << endl << endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << endl; 
+    std::cout << std::endl << std::endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << std::endl; 
   MPI_Barrier(MPI_COMM_WORLD);
   
   if(globalSize <  runsParallel)
     {
       if(globalRank == 0)
 	{
-	  cout << "You requested to run "  << runsParallel << " in parallel, however there are only " 
-	       << globalSize << " processes (we need at least 1 process per run, see command line option -R )"  << endl; 
+	  std::cout << "You requested to run "  << runsParallel << " in parallel, however there are only " 
+		    << globalSize << " processes (we need at least 1 process per run, see command line option -R )"  << std::endl; 
 	}
       MPI_Abort(MPI_COMM_WORLD, 1);
     }  
 
   if(globalRank == 0)
-    cout << endl << runsParallel <<  " runs will be run in parallel." << endl; 
+    std::cout << std::endl << runsParallel <<  " runs will be run in parallel." << std::endl; 
 
   // comm is the communicator used by the legacy axml-stuff in order to compute the likelihood.  
   int processesPerBatch = globalSize / runsParallel; 
@@ -54,7 +54,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   MPI_Comm_rank(comm, &processID); 
   MPI_Comm_size(comm, &processes); 
   
-  cout << endl <<  "\t\tprocess with global id "<< globalRank  << " works on batch "  << myRunBatch << " and has new rank " << processID << endl; 
+  std::cout << std::endl <<  "\t\tprocess with global id "<< globalRank  << " works on batch "  << myRunBatch << " and has new rank " << processID << std::endl; 
 
 }
 #endif
