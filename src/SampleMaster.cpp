@@ -492,8 +492,7 @@ void SampleMaster::writeToCheckpoint( std::ofstream &out)
 
 
 void SampleMaster::writeCheckpointMaster()
-{
-  
+{  
   if(pl.isMasterReporter() )
     {
       stringstream ss; 

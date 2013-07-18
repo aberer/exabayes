@@ -148,7 +148,7 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
     ss << "/" ; 
   ss << PROGRAM_NAME << "_info."  << cl.getRunid() ;
 
-  if(std::ifstream(ss.str()))
+  if( pl.isMasterReporter() && std::ifstream(ss.str()))
     {
       std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 

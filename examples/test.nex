@@ -59,8 +59,8 @@ begin runconfig;
  [ RUN PARAMETERS ]
  diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
- numRuns  2 	   	[ number of independant runs ]
- numGen 1000000          [ if numRuns = 1, stop simulation after that many generations ] 
+ numRuns  1 	   	[ number of independant runs ]
+ numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
@@ -76,7 +76,7 @@ begin runconfig;
 
 
  [ MCMCMC ]
- numCoupledChains 2	   [ number of chains per independent run (only one is cold)  => must be > 0] 
+ numCoupledChains 4	   [ number of chains per independent run (only one is cold)  => must be > 0] 
  heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
  swapInterval 1 	   [ attempt a swap between chains every n generations ]
  tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
