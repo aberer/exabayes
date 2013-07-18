@@ -41,6 +41,7 @@ public:
   virtual void writeToCheckpoint( std::ofstream &out)  ;   
 
 private: 
+  void writeCheckpointMaster(); 
   bool convergenceDiagnostic(); 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh); 
   void printDuringRun(nat gen); 

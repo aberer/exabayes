@@ -57,7 +57,7 @@ begin runconfig;
  [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
 
  [ RUN PARAMETERS ]
- diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
+ diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
  numRuns  2 	   	[ number of independant runs ]
  numGen 1000000          [ if numRuns = 1, stop simulation after that many generations ] 

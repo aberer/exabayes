@@ -164,7 +164,7 @@ void CoupledChains::chainInfo()
 void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
 {  
   for(auto &c : chains)
-    c.resume();
+    c.resume(true);
 
   for(int genCtr = 0; genCtr < gensToRun; genCtr += swapInterval)
     {
@@ -211,7 +211,7 @@ void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
     }
 
   for(auto &chain : chains)
-    chain.suspend();
+    chain.suspend(false);
 
 #ifdef _USE_GOOGLE_PROFILER
   ProfilerFlush();

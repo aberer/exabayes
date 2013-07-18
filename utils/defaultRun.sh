@@ -131,7 +131,7 @@ make -j $numCores
 
 if [ -f ./exabayes ]; then
     echo "calling exabayes as   $baseCall"
-    wait 
     rm ExaBayes_*.${runid}*
+    wait 
     $baseCall    
 fi

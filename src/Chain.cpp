@@ -36,7 +36,7 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
   const std::vector<AbstractParameter*> vars = extractVariables(); 
   prior.initialize(*traln, vars);
   // saving the tree state 
-  suspend(); 
+  suspend(false); 
 }
 
 
@@ -55,7 +55,7 @@ Chain::Chain( Chain&& rhs)
     proposals.emplace_back(std::move(p->clone())); 
   prior.initialize(*traln, extractVariables()); 
   
-  suspend();
+  suspend(false);
   
   // cout << *traln<< endl; 
 }
@@ -88,10 +88,8 @@ double Chain::getChainHeat()
 
 
 
-void Chain::resume()    
-{
-  // std::cout << "trying to resume" << std::endl; 
-  
+void Chain::resume(bool evaluate) 
+{    
   auto vs = extractVariables(); 
 
   // topology must be dealt with first   
@@ -99,25 +97,28 @@ void Chain::resume()
   for(auto &v : vs)
     v->applyParameter(*traln, savedContent[v->getId()]); 
 
-  evaluator->evaluateFullNoBackup(*traln); 
-
-  if(fabs(likelihood - traln->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
+  if(evaluate)
     {
-      std::cerr << "While trying to resume chain: previous chain liklihood larger than " <<
-	"evaluated likelihood. This is a programming error." << std::endl; 
-      std::cerr << "prev=" << likelihood << "\tnow=" << traln->getTr()->likelihood << std::endl; 
+      evaluator->evaluateFullNoBackup(*traln); 
 
-      assert(0);       
-    }  
+      if(fabs(likelihood - traln->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
+	{
+	  std::cerr << "While trying to resume chain: previous chain liklihood larger than " <<
+	    "evaluated likelihood. This is a programming error." << std::endl; 
+	  std::cerr << "prev=" << likelihood << "\tnow=" << traln->getTr()->likelihood << std::endl; 
 
-  prior.initialize(*traln, vs);
-  double prNow = prior.getLnPrior(); 
+	  assert(0);       
+	}  
+
+      prior.initialize(*traln, vs);
+      double prNow = prior.getLnPrior(); 
   
-  if(fabs(lnPr - prNow) > ACCEPTED_LNPR_EPS)
-    {
-      std::cerr << "While trying to resume chain: previous log prior for chain larger than" <<
-	"re-evaluated prior. This is a programming error." << std::endl; 
-      assert(0);       
+      if(fabs(lnPr - prNow) > ACCEPTED_LNPR_EPS)
+	{
+	  std::cerr << "While trying to resume chain: previous log prior for chain larger than" <<
+	    "re-evaluated prior. This is a programming error." << std::endl; 
+	  assert(0);       
+	}
     }
 
   // prepare proposals 
@@ -269,23 +270,22 @@ void Chain::step()
 }
 
 
-void Chain::suspend()  
+void Chain::suspend(bool paramsOnly)  
 {
   auto variables = extractVariables();
   nat maxV = 0; 
   for(auto &v : variables)
     if(maxV < v->getId()) 
       maxV = v->getId(); 
-  // tout << "highest id: " << maxV << std::endl; 
   savedContent.resize(maxV + 1 ); 
   for(auto& v : variables)
     savedContent[v->getId()] = v->extractParameter(*traln);
 
-  likelihood = traln->getTr()->likelihood; 
-  lnPr = prior.getLnPrior();
-  
-  // addChainInfo(tout);
-  // tout << " SUSPEND " << likelihood << std::endl; 
+  if(not paramsOnly)
+    {
+      likelihood = traln->getTr()->likelihood; 
+      lnPr = prior.getLnPrior();
+    }
 }
 
 
@@ -432,7 +432,7 @@ void Chain::readFromCheckpoint( std::ifstream &in )
   for(auto &v : vars)
     savedContent[v->getId()] = v->extractParameter(*traln);
 
-  resume();
+  resume(false);
 }
  
 
@@ -448,7 +448,7 @@ void Chain::writeToCheckpoint( std::ofstream &out)
     p->writeToCheckpoint(out);
   
   // TODO expensive, but necessary for determinism. 
-  resume();      
+  resume(false);      
 
   for(auto &var: extractVariables())
     {
@@ -464,5 +464,5 @@ void Chain::writeToCheckpoint( std::ofstream &out)
       compo.writeToCheckpoint(out);
     }  
 
-  suspend();
+  suspend(true);
 }   

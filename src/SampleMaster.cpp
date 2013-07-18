@@ -229,7 +229,7 @@ void SampleMaster::initializeRuns( )
 	  if(isFist)
 	    isFist = false ; 
 
-	  chain.resume(); 
+	  chain.resume(true); 
 	  tout << chain; 
 	  tout << "\tRNG(" << chain.getChainRand() << ")"<< endl; 	  
 	}
@@ -435,37 +435,9 @@ void SampleMaster::run()
 	  lastPrint = curGen; 
 	}
 
-      if(curGen % runParams.getChkpntFreq() == 0  && pl.isMasterReporter() )
+      if(curGen % runParams.getChkpntFreq() == 0 )
 	{
-	  stringstream ss; 
-	  ss <<  PROGRAM_NAME << "_newCheckpoint." << cl.getRunid()  ; 
-	  std::string newName = ss.str();
-	  ofstream chkpnt; 
-	  Checkpointable::getOfstream(newName, chkpnt); 
-	  writeToCheckpoint(chkpnt);
-	  chkpnt.close(); 
-	  
-	  ss.str("");
-	  ss << PROGRAM_NAME << "_checkpoint." << cl.getRunid(); 
-	  std::string curName = ss.str();
-	  if( std::ifstream(curName) )
-	    {
-	      ss.str("");
-	      ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getRunid(); 
-	      std::string prevName =  ss.str();
-	      if( std::ifstream(prevName) )
-		{
-		  int ret = remove(prevName.c_str()); 
-		  assert(ret == 0); 
-		}
-	      
-	      int ret = rename(curName.c_str(), prevName.c_str()); 
-	      assert(ret == 0); 
-	    }
-	  
-	  int ret = rename(newName.c_str(), curName.c_str()); 
-	  assert(ret == 0); 
-	  
+	  writeCheckpointMaster();
 	  lastChkpnt = curGen; 
 	} 
     }
@@ -519,5 +491,55 @@ void SampleMaster::writeToCheckpoint( std::ofstream &out)
 }
 
 
+void SampleMaster::writeCheckpointMaster()
+{
+  
+  if(pl.isMasterReporter() )
+    {
+      stringstream ss; 
+      ss <<  PROGRAM_NAME << "_newCheckpoint." << cl.getRunid()  ; 
+      std::string newName = ss.str();
+      ofstream chkpnt; 
+      Checkpointable::getOfstream(newName, chkpnt); 
+      writeToCheckpoint(chkpnt);
+      chkpnt.close(); 
+	  
+      ss.str("");
+      ss << PROGRAM_NAME << "_checkpoint." << cl.getRunid(); 
+      std::string curName = ss.str();
+      if( std::ifstream(curName) )
+	{
+	  ss.str("");
+	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getRunid(); 
+	  std::string prevName =  ss.str();
+	  if( std::ifstream(prevName) )
+	    {
+	      int ret = remove(prevName.c_str()); 
+	      assert(ret == 0); 
+	    }
+	      
+	  int ret = rename(curName.c_str(), prevName.c_str()); 
+	  assert(ret == 0); 
+	}
+	  
+      int ret = rename(newName.c_str(), curName.c_str()); 
+      assert(ret == 0); 
+    }
+  else 
+    {
+      for(auto &run : runs)
+	{
+	  for(auto &chain : run.getChains())
+	    {	    
+	      chain.resume(false); 
+	      chain.suspend(true); 
+	    }
+	}
+    }
+} 
+
+
 
 #include "IntegrationModuleImpl.hpp"
+
+

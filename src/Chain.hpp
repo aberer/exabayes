@@ -36,8 +36,8 @@ public:
   Chain& operator=(Chain rhs) ; 
 
   void reseed(randKey_t c) { chainRand = Randomness(c); }  
-  void resume()  ; 
-  void suspend(); 
+  void resume(bool eval)  ; 
+  void suspend(bool paramsOnly)  ; 
 
   void step();
 
