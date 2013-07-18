@@ -77,18 +77,18 @@ void SuccessCounter::addOrReplace(bool acc)
 
 void SuccessCounter::readFromCheckpoint( std::ifstream &in )   
 {
-  globalAcc = cRead<nat>(in); 
-  globalRej = cRead<nat>(in); 
-  localAcc = cRead<nat>(in); 
-  localRej = cRead<nat>(in); 
-  batch = cRead<nat>(in); 
+  globalAcc = cRead<int>(in); 
+  globalRej = cRead<int>(in); 
+  localAcc = cRead<int>(in); 
+  localRej = cRead<int>(in); 
+  batch = cRead<int>(in); 
 }
  
 void SuccessCounter::writeToCheckpoint( std::ofstream &out) 
 {
-  cWrite(out, globalAcc); 
-  cWrite(out, globalRej); 
-  cWrite(out, localAcc); 
-  cWrite(out, localRej); 
-  cWrite(out, batch); 
+  cWrite<int>(out, globalAcc); 
+  cWrite<int>(out, globalRej); 
+  cWrite<int>(out, localAcc); 
+  cWrite<int>(out, localRej); 
+  cWrite<int>(out, batch); 
 } 

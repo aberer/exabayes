@@ -38,11 +38,11 @@ private: 			// METHODS
 private:		  // ATTRIBUTES
 // last x events. Only for debug, no functionality in tuning 
   std::list<bool> lastX ;	// not checkpointed     
-  nat globalAcc; 
-  nat globalRej;   
-  nat localAcc; 
-  nat localRej; 
-  nat  batch; 			
+  int globalAcc; 
+  int globalRej;   
+  int localAcc; 
+  int localRej; 
+  int batch; 			
 
   friend std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &b ); 
 }; 

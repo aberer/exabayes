@@ -68,7 +68,7 @@ begin runconfig;
   heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
   [  sampledHeated false ] [ also take samples from the heated chains ]
 
-  checkPointInterval   1000  [ defines how often a checkpoint is written ]
+  checkPointInterval   500  [ defines how often a checkpoint is written ]
 
  [ CONVERGENCE ]
  asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]

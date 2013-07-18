@@ -71,27 +71,37 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-
-  std::ofstream fh("file.txt"); 
-  double a = 1. / 3 ; 
-  fh << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 10) << a  << std::endl; 
-  std::cout << std::scientific  << std::setprecision(std::numeric_limits<double>::digits10 + 10) << a << std::endl; 
   
+  std::string bla = "aeae"; 
+  bla += '\0'; 
+  std::cout <<  bla.size() << std::endl;  
 
-  std::ifstream ifh("file.txt"); 
-  double b; 
-  ifh >> b; 
 
-  std::cout << std::scientific  << std::setprecision(std::numeric_limits<double>::digits10 + 10) << b << std::endl; 
+  std::ofstream fh("file.txt", std::ios::binary); 
+  string test = "bla"; 
+  test += "\0"; 
+  int number = 123; 
+
+  fh.write(test.c_str(), test.size()); 
+  fh.write((char*)&number, sizeof(int)); 
+  fh.close();
   
+  std::ifstream ifh("file.txt", std::ios::binary); 
+  char *reread = new char[100]; 
+  char *iter = reread; 
+  memset(reread, '\0', 100); 
+  char c = 'a'; 
+  while(c != '\0')
+    {
+      ifh.read(&c,1); 
+      *iter = c; 
+      ++iter; 
+    }
+  // ifh.read(reread, 3); 
+  
+  std::cout << "i read >" << reread << "<" << std::endl; 
 
   fh.close(); 
-
-  // std::ofstream fh("file.txt", std::ios::binary); 
-  // fh.write("bla lba bla ") ; 
-  // double a = 1. / 3 ; 
-  // fh.write(a ); 
-  // fh.close(); 
 
   exit(0); 
 #else 

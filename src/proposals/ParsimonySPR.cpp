@@ -2,7 +2,6 @@
 #include <functional>
 
 #include "ParsimonySPR.hpp"
-#include "Topology.hpp"
 #include "treeRead.h"
 #include "InsertionScore.hpp"
 #include "Branch.hpp"

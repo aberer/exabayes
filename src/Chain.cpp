@@ -379,7 +379,8 @@ void Chain::readFromCheckpoint( std::ifstream &in )
   nat ctr = 0; 
   while(ctr < proposals.size())
     {
-      std::string name = cRead<std::string>(in); 
+      // std::string name = cRead<std::string>(in); 
+      std::string name = readString(in);
 
       if(name2proposal.find(name) == name2proposal.end())
 	{
@@ -406,7 +407,8 @@ void Chain::readFromCheckpoint( std::ifstream &in )
   ctr = 0; 
   while(ctr < name2parameter.size())
     {
-      std::string name = cRead<std::string>(in) ; 
+      // std::string name = cRead<std::string>(in) ; 
+      std::string name = readString(in); 
       if(name2parameter.find(name) == name2parameter.end())
 	{
 	  std::cerr << "Could not parse the checkpoint file. A reason for this may be that\n"
@@ -456,7 +458,8 @@ void Chain::writeToCheckpoint( std::ofstream &out)
       var->printShort(ss); 
       std::string name = ss.str(); 
       
-      cWrite(out, name); 
+      writeString(out,name); 
+      // cWrite(out, name); 
 
       compo.writeToCheckpoint(out);
     }  

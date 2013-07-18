@@ -126,7 +126,8 @@ void AbstractProposal::writeToCheckpoint( std::ofstream &out)
   std::stringstream ss ; 
   printShort(ss); 
   std::string name = ss.str();
-  cWrite<std::string>(out, name);   
+  // cWrite<std::string>(out, name);   
+  writeString(out, name); 
   sctr.writeToCheckpoint(out) ; 
   writeToCheckpointCore(out); 
 }
