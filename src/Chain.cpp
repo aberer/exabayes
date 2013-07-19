@@ -1,4 +1,5 @@
 #include <sstream>
+#include <map> 
 #include <unordered_map>
 
 #include "Chain.hpp"
@@ -9,6 +10,8 @@
 #include "tune.h"
 #include "ProposalFunctions.hpp"
 #include "LikelihoodEvaluator.hpp" 
+
+#include "Category.hpp"
 
 
 Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval) 
@@ -37,6 +40,7 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
   prior.initialize(*traln, vars);
   // saving the tree state 
   suspend(false); 
+
 }
 
 
@@ -54,10 +58,7 @@ Chain::Chain( Chain&& rhs)
   for(auto &p : rhs.proposals )
     proposals.emplace_back(std::move(p->clone())); 
   prior.initialize(*traln, extractVariables()); 
-  
   suspend(false);
-  
-  // cout << *traln<< endl; 
 }
 
 
@@ -100,6 +101,7 @@ void Chain::resume(bool evaluate)
 	{
 	  assert(not topoFound);
 	  topoFound = true; 
+	  // tout << "resuming "  << savedContent[v->getId()] << std::endl ; 
 	  v->applyParameter(*traln, savedContent[v->getId()]); 
 	}
     }
@@ -109,6 +111,7 @@ void Chain::resume(bool evaluate)
     if(v->getCategory() != Category::TOPOLOGY)
       {
 	assert(topoFound); 
+	// tout << "resuming "  << savedContent[v->getId()] << std::endl; ; 
 	v->applyParameter(*traln, savedContent[v->getId()]); 
       }
 

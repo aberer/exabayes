@@ -6,7 +6,7 @@
 #include "TreeAln.hpp"
 #include "PriorBelief.hpp"
 #include "Branch.hpp"
-#include "Priors.hpp"
+#include "priors/AbstractPrior.hpp"
 #include "Path.hpp"
 
 

@@ -401,7 +401,6 @@ int TreeAln::getNumBranches() const
 }
 
 
-
 int TreeAln::getNumberOfPartitions() const
 {
 #if HAVE_PLL != 0
@@ -412,8 +411,6 @@ int TreeAln::getNumberOfPartitions() const
 }
 
 
-
-// usefull stuff 
 pInfo* TreeAln::getPartition(int model)  const
 {
   assert(model < getNumberOfPartitions()); 
@@ -424,30 +421,6 @@ pInfo* TreeAln::getPartition(int model)  const
   return tr.partitionData + model; 
 #endif
 }
-
-
-
-
-// this is BS 
-// int TreeAln::accessExecModel(int model) const
-// {
-// #if HAVE_PLL != 0
-//   return partitions.partitionData[model]->executeModel; 
-// #else 
-//   return tr.executeModel[model]; 
-// #endif
-// }
-
-
-// double TreeAln::accessPartitionLH(int model) const 
-// {
-// #if HAVE_PLL != 0
-//   return partitions.partitionData[model]->partitionLH; 
-// #else  
-//   return tr.perPartitionLH[model]; 
-// #endif
-// }
-
 
 
 std::vector<bool> TreeAln::getExecModel() const 

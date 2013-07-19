@@ -5,8 +5,7 @@
 #include <iostream>
 #include <memory>
 
-
-#include "Priors.hpp"
+#include "priors/AbstractPrior.hpp"
 #include "Branch.hpp"
 #include "axml.h"
 #include "Randomness.hpp"

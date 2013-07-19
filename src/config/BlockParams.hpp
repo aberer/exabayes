@@ -23,6 +23,7 @@ public:
   virtual void Read(NxsToken &token); 
 
 private: 
+  void partitionError(nat partition, nat totalPart) const ; 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
   vector<unique_ptr<AbstractParameter> > parameters; 
   shared_ptr<TreeAln> traln; 

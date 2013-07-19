@@ -1,6 +1,7 @@
 #include "MyTemplateProposal.hpp"
 
 
+
 // this MUST be initialized like that here. It defines the relative
 // weight for all proposals of this type. This variable can be
 // overridden in the config file.

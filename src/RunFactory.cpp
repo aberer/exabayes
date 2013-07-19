@@ -10,6 +10,13 @@
 #include "parameters/RevMatParameter.hpp"
 #include "parameters/RateHetParameter.hpp"
 
+#include "priors/AbstractPrior.hpp"
+#include "priors/ExponentialPrior.hpp"
+#include "priors/UniformPrior.hpp"
+#include "priors/DirichletPrior.hpp"
+#include "priors/FixedPrior.hpp"
+
+
 
 
 // not to be confused with a fun factory...
@@ -44,7 +51,6 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	case Category::BRANCH_LENGTHS: 
 	  {
 	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId );
-	    tout << "spawned " << highestId << std::endl; 
 	    ++highestId; 
 	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
@@ -79,16 +85,16 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
     case Category::TOPOLOGY:  
-      var->setPrior( make_shared<UniformPrior>(0,0) ); // TODO : proper topology prior? 
+      var->setPrior( std::make_shared<UniformPrior>(0,0) ); // TODO : proper topology prior? 
       break; 
     case Category::BRANCH_LENGTHS: 
-      var->setPrior( make_shared<ExponentialPrior>(10.0) );
+      var->setPrior( std::make_shared<ExponentialPrior>(10.0) );
       break; 
     case Category::FREQUENCIES: 
       {
 	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
 	assert(partition->dataType == DNA_DATA || partition->dataType == AA_DATA); 
-	var->setPrior(make_shared<DirichletPrior>(vector<double>(partition->states * 1.))); 
+	var->setPrior(make_shared<DirichletPrior>(vector<double>(partition->states , 1.))); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
@@ -204,6 +210,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   for(auto &v : randomVariables)
     {
       tout << v->getId() << "\t" << v.get()  << endl; 
+      tout << "\t with prior " << v->getPrior() << std::endl; 
     }
   tout << endl; 
   

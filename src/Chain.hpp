@@ -29,22 +29,47 @@ class AbstractProposal;
 class Chain : public Checkpointable
 {
 public: 
-  // life cycle related   
-  Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval); 
-  
+  ////////////////
+  // LIFE CYCLE //
+  ////////////////
+  Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval);   
   Chain( Chain&& rhs) ; 
   Chain& operator=(Chain rhs) ; 
-
+  
+  /** 
+      @brief set seet for the chain specific RNG 
+   */ 
   void reseed(randKey_t c) { chainRand = Randomness(c); }  
+  /** 
+      @brief apply saved parameter contents to the tree structure 
+      @param eval indicates whether an evaluation should be performed after resuming    
+   */   
   void resume(bool eval)  ; 
+  /**
+     @brief saves the all parameters that are integrated over,
+     s.t. the tree can be used by another chain     
+     @param paramsOnly indicates whether the likelihood and prior density should be saved as well   
+   */ 
   void suspend(bool paramsOnly)  ; 
-
+  /** 
+      @brief proceed by one generation 
+   */ 
   void step();
-
+  /** 
+      @brief gets the proposals of this chain
+   */ 
   const std::vector<AbstractProposal*> getProposalView() const  ; 
+  /** 
+      @brief switch state with chain rhs
+   */ 
   void switchState(Chain &rhs);
+  /** 
+      @brief add a representation of the chain to the stream    
+   */ 
   std::ostream& addChainInfo(std::ostream &out) const; 
-  void printProposalSate(std::ostream& out ) const ; 
+  /** 
+      @brief print success rates of proposals 
+   */ 
   void printProposalState(std::ostream& out ) const ; 
   /** 
       @brief extracts the variables of a chain into a sorted array      
@@ -90,16 +115,16 @@ private: 			// ATTRIBUTES
   int currentGeneration;     	
   /// indicates how hot the chain is (i = 0 => cold chain), may change!
   int couplingId;					     // CHECKPOINTED 
-  std::vector<std::unique_ptr<AbstractProposal> > proposals; // TODO CHECKPOINT
-  Randomness chainRand;		//  CHECKPOINTED
+  std::vector<std::unique_ptr<AbstractProposal> > proposals; 
+  Randomness chainRand;
   double relWeightSum; 	// sum of all relative weights
   PriorBelief prior; 
   double bestState; 
   std::shared_ptr<LikelihoodEvaluator> evaluator;   
   
   // suspending and resuming the chain   
-  double likelihood; 		// CHECKPOINTED (for assertions)
-  double lnPr; 			// CHECKPOINTED (for assertions)
+  double likelihood;
+  double lnPr; 	
   std::vector<ParameterContent> savedContent; // maps parameter-id to content
   
 

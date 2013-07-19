@@ -46,7 +46,7 @@ nodeptr Branch::findNodePtr(const TreeAln &traln) const
 
 std::ostream& operator<<(std::ostream &out, const Branch& br)
 { 
-  return out << "(" << br.thisNode << "/" << br.thatNode << "):" << br.length; 
+  return out << "(" << br.thisNode << "/" << br.thatNode << "):" <<  std::setprecision(std::numeric_limits<double>::digits10 ) << br.length; 
 }
 
 

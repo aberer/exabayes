@@ -4,8 +4,9 @@
 #include <string>
 #include <vector>
 
+
+#include "Category.hpp"
 #include "axml.h"
-#include "RandomVariable.hpp"
 #include "SuccessCounter.hpp" 
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"

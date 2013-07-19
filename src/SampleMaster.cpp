@@ -223,14 +223,11 @@ void SampleMaster::initializeRuns( )
   tout << "================================================================" << endl; 
   for(auto &run: runs)
     {
-      bool isFist = true; 
       for(auto &chain :  run.getChains())
 	{
-	  if(isFist)
-	    isFist = false ; 
-
 	  chain.resume(true); 
-	  chain.suspend(false); 
+	  chain.suspend(false);
+	  
 	  tout << chain; 
 	  tout << "\tRNG(" << chain.getChainRand() << ")"<< endl; 	  
 	}

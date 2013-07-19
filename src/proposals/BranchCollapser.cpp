@@ -1,4 +1,5 @@
 #include "BranchCollapser.hpp"
+#include "Category.hpp"
 #include "TreeRandomizer.hpp"
 
 

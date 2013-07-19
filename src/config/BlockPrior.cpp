@@ -1,5 +1,10 @@
 #include "BlockPrior.hpp"
 
+#include "../priors/UniformPrior.hpp"
+#include "../priors/ExponentialPrior.hpp"
+#include "../priors/DirichletPrior.hpp"
+#include "../priors/FixedPrior.hpp"
+
 
 shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {

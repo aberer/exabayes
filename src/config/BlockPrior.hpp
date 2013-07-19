@@ -8,7 +8,7 @@
 #include <ncl/ncl.h>
 
 #include "GlobalVariables.hpp"
-#include "Priors.hpp"
+#include "priors/AbstractPrior.hpp"
 #include "axml.h"
 
 #include "Category.hpp"

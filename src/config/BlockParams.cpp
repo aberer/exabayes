@@ -1,13 +1,21 @@
 #include "BlockParams.hpp"
 #include "axml.h"
+#include "GlobalVariables.hpp"
+
 #include <algorithm>
 
 
+void BlockParams::partitionError(nat partition, nat totalPart) const
+{
+  std::cerr << "In the parameter block of the configuration file you specified partition " << partition << ". However, there are only " << totalPart << " partitions in total in your alignment." << std::endl; 
+  exit(0); 
+}
 
 
 void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 {
-  vector<bool> partAppeared(traln->getNumberOfPartitions(), false); 
+  nat numPart = traln->getNumberOfPartitions();
+  vector<bool> partAppeared(numPart, false); 
 
   token.GetNextToken();
   auto str = token.GetToken(false); 
@@ -22,13 +30,16 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   std::unique_ptr<AbstractParameter> curVar; 
   while(str.compare(")") != 0 )
     {
-      int part = str.ConvertToInt() ; 
+      nat part = str.ConvertToInt() ; 
       if(newLink)
 	{
 	  curVar = CategoryFuns::getParameterFromCategory(cat, idCtr);
 	  idCtr++; 
 	  newLink = false; 
 	}
+
+      if(not (part < numPart ))
+	partitionError(part, numPart); 
 
       curVar->addPartition(part); 
       partAppeared[part] = true; 
@@ -66,6 +77,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	{	  
 	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr);
 	  ++idCtr; 
+
 	  r->addPartition(i);
 	  parameters.push_back(std::move(r)); 
 	}

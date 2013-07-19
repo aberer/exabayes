@@ -6,7 +6,9 @@
 #define INTEGRATION_GENERATIONS 100000
 #define NR_STEPS 30
 
+
 #include <sstream>
+#include "priors/ExponentialPrior.hpp"
 #include "proposals/BranchIntegrator.hpp"
 #include "ProposalRegistry.hpp"
 #include "parameters/BranchLengthsParameter.hpp"

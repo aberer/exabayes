@@ -1,5 +1,6 @@
 #include "GibbsProposal.hpp" 
 #include "BranchLengthMultiplier.hpp"
+#include "Category.hpp"
 
 
 #define MAX_ITER 30 

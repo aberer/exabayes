@@ -3,7 +3,7 @@
 
 #include "ParameterContent.hpp"
 #include "TreeAln.hpp"
-#include "Priors.hpp"
+#include "priors/AbstractPrior.hpp"
 
 enum class Category; 
 

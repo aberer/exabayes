@@ -1,4 +1,5 @@
 #include "AminoModelJump.hpp"
+#include "Category.hpp"
 
 
 

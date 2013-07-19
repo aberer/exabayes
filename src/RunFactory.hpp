@@ -20,7 +20,6 @@
 #include "AbstractProposal.hpp"
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
-#include "RandomVariable.hpp"
 #include "parameters/AbstractParameter.hpp"
 
 
