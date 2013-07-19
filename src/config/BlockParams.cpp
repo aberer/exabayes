@@ -1,14 +1,17 @@
 #include "BlockParams.hpp"
 #include "axml.h"
 #include "GlobalVariables.hpp"
+#include "ParallelSetup.hpp"
 
 #include <algorithm>
+
+extern void genericExit(int code); 
 
 
 void BlockParams::partitionError(nat partition, nat totalPart) const
 {
   std::cerr << "In the parameter block of the configuration file you specified partition " << partition << ". However, there are only " << totalPart << " partitions in total in your alignment." << std::endl; 
-  exit(0); 
+  ParallelSetup::genericExit(-1); 
 }
 
 
@@ -110,7 +113,7 @@ void BlockParams::Read(NxsToken &token)
 	  if(catsFound.find(cat) != catsFound.end())
 	    {
 	      cerr << "parsing error: found a linking scheme for category  " <<  CategoryFuns::getLongName(cat) << " twice. Aborting." ; 
-	      exit(1); 
+	      ParallelSetup::genericExit(-1); 
 	    }
 
 	  if(cat == Category::RATE_HETEROGENEITY)

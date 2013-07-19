@@ -29,6 +29,8 @@ public:
   nat getMyIdOnRunLevel() const {return globalRank  % getProcessesPerBatch();  }
   bool isReportingProcess() const {  return globalRank == 0 ; }
   bool isMasterReporter() const {return globalRank == 0 ; } // TODO different from the one above!  
+
+  static void genericExit(int code); 
   
 private: 
   int myRunBatch; 

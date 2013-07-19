@@ -11,7 +11,11 @@
 #include "ProposalFunctions.hpp"
 #include "LikelihoodEvaluator.hpp" 
 
+#include "ParallelSetup.hpp"
+
 #include "Category.hpp"
+
+void genericExit(int code); 
 
 
 Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval) 
@@ -40,7 +44,6 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
   prior.initialize(*traln, vars);
   // saving the tree state 
   suspend(false); 
-
 }
 
 
@@ -89,7 +92,7 @@ double Chain::getChainHeat()
 
 
 
-void Chain::resume(bool evaluate) 
+void Chain::resume(bool evaluate, bool checkLnl) 
 {    
   auto vs = extractVariables(); 
 
@@ -119,12 +122,13 @@ void Chain::resume(bool evaluate)
     {
       evaluator->evaluateFullNoBackup(*traln); 
 
-      if(fabs(likelihood - traln->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
+      if(checkLnl && fabs(likelihood - traln->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
 	{
-	  std::cerr << "While trying to resume chain: previous chain liklihood larger than " <<
-	    "evaluated likelihood. This is a programming error." << std::endl; 
-	  std::cerr << "prev=" << likelihood << "\tnow=" << traln->getTr()->likelihood << std::endl; 
-
+	  addChainInfo(std::cerr); 
+	  std::cerr << "While trying to resume chain: previous chain liklihood"
+		    <<  " could not be exactly reproduced. Please report this issue." << std::endl; 
+	  std::cerr << MAX_SCI_PRECISION << 
+	    "prev=" << likelihood << "\tnow=" << traln->getTr()->likelihood << std::endl; 	  
 	  assert(0);       
 	}  
 
@@ -299,12 +303,19 @@ void Chain::suspend(bool paramsOnly)
   for(auto& v : variables)
     {
       auto content =    v->extractParameter(*traln); 
+      savedContent[v->getId()] = v->extractParameter(*traln);      
       // tout << "suspending parameter "  << v << "\t" << content << std::endl;  
-      savedContent[v->getId()] = v->extractParameter(*traln);
     }
 
   if(not paramsOnly)
     {
+#ifdef EFFICIENT
+      // too expensive 
+      assert(0); 
+#endif
+      resume(false, true ); 
+      Branch rootBranch(traln->getTr()->start->number, traln->getTr()->start->back->number);
+      evaluator->evaluate(*traln, rootBranch, true);
       likelihood = traln->getTr()->likelihood; 
       lnPr = prior.getLnPrior();
     }
@@ -409,7 +420,7 @@ void Chain::readFromCheckpoint( std::ifstream &in )
 	  std::cerr << "Could not parse the checkpoint file.  A reason for this may be that\n"
 		    << "you used a different configuration or alignment file in combination\n"
 		    << "with this checkpoint file. Fatality." << std::endl; 
-	  exit(0); 
+	  ParallelSetup::genericExit(-1); 
 	}
       name2proposal[name]->readFromCheckpoint(in);
       ++ctr; 
@@ -436,7 +447,7 @@ void Chain::readFromCheckpoint( std::ifstream &in )
 	  std::cerr << "Could not parse the checkpoint file. A reason for this may be that\n"
 		    << "you used a different configuration or alignment file in combination\n"
 		    << "with this checkpoint file. Fatality." << std::endl; 
-	  exit(0); 
+	  ParallelSetup::genericExit(-1); 
 	}
       auto param  = name2parameter[name]; 
 
@@ -454,23 +465,27 @@ void Chain::readFromCheckpoint( std::ifstream &in )
   for(auto &v : vars)
     savedContent[v->getId()] = v->extractParameter(*traln);
 
-  resume(false);
+  resume(false, true);
 }
  
 
 void Chain::writeToCheckpoint( std::ofstream &out) 
 {
+  resume(false, true);      
+  suspend(false);
+
   chainRand.writeToCheckpoint(out);   
   cWrite(out, couplingId); 
   cWrite(out, likelihood); 
+
+  // addChainInfo(tout); 
+  // tout << "  saving lnl " << MAX_SCI_PRECISION << likelihood << std::endl << std::endl; 
+
   cWrite(out, lnPr); 
   cWrite(out, currentGeneration); 
 
   for(auto &p : proposals)
     p->writeToCheckpoint(out);
-  
-  // TODO expensive, but necessary for determinism. 
-  resume(false);      
 
   for(auto &var: extractVariables())
     {
@@ -481,10 +496,6 @@ void Chain::writeToCheckpoint( std::ofstream &out)
       std::string name = ss.str(); 
       
       writeString(out,name); 
-      // cWrite(out, name); 
-
       compo.writeToCheckpoint(out);
     }  
-
-  suspend(true);
 }   

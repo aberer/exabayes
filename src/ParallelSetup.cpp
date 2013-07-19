@@ -23,8 +23,6 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
 
   runsParallel = cl.getNumRunParallel();
 
-  if(globalRank == 0 )
-    std::cout << std::endl << std::endl << "This is " << PROGRAM_NAME << " process number: " << globalRank << " / " << globalSize << std::endl; 
   MPI_Barrier(MPI_COMM_WORLD);
   
   if(globalSize <  runsParallel)
@@ -46,16 +44,12 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   int newRank = globalRank  % processesPerBatch; 
   
   myRunBatch = myColor; 
-  // cout << "my color is " << myRunBatch <<  <endl; 
 
-
-  MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm); 
-  
+  MPI_Comm_split(MPI_COMM_WORLD, myColor, newRank, &comm);   
   MPI_Comm_rank(comm, &processID); 
   MPI_Comm_size(comm, &processes); 
   
   std::cout << std::endl <<  "\t\tprocess with global id "<< globalRank  << " works on batch "  << myRunBatch << " and has new rank " << processID << std::endl; 
-
 }
 #endif
 
@@ -67,3 +61,16 @@ void ParallelSetup::finalize()
   MPI_Finalize();
 #endif
 }
+
+
+
+void ParallelSetup::genericExit(int code)
+{
+#if HAVE_PLL == 0
+  MPI_Abort(MPI_COMM_WORLD, code); 
+  exit(code); 
+#else 
+  exit(code);   
+#endif
+}
+

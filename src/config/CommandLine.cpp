@@ -3,6 +3,7 @@
 #include <cstring>
 #include "CommandLine.hpp"
 #include "GlobalVariables.hpp"
+#include "ParallelSetup.hpp"
 
 
 CommandLine::CommandLine(int argc, char **argv)
@@ -31,11 +32,6 @@ void CommandLine::printVersion(bool toInfofile )
 
 void CommandLine::printHelp()
 {
-#if HAVE_PLL == 0
-  if(processID != 0)
-    exit(0); 
-#endif
-
   printVersion(false); 
 
   std::cout << std::endl << "./exabayes -f binFile -c confFile -s seed -n id [options..] "
@@ -51,14 +47,15 @@ void CommandLine::printHelp()
 
   std::cout << "\n" 
 	    <<  "Options:\n" 
-	    << "\t-v\t\tprint version and exit\n"
+	    << "\t-v\t\tprint version and quit\n"
 	    << "\t-h\t\tprint this help\n" 
 	    << "\t-w dir\t\tspecify a working directory for output files (NOT IMPLEMENTED)\n"
 	    << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel\n"
 	    << "\t-r id\t\trestart from checkpoint. Just specify the id of the previous run here. \n"
 	    << "\t\t\tMake sure, ExaBayes can access all files from this previous run.\n"
 	    << std::endl; 
-  exit(0); 
+
+  ParallelSetup::genericExit(-1); 
 }
 
 
@@ -70,7 +67,7 @@ void CommandLine::assertFileExists(std::string filename)
     {
       fclose(fh); 
       std::cerr << "could not file file " << filename << ". Aborting." << std::endl; 
-      exit(0);
+      ParallelSetup::genericExit(-1); 
     }
   fclose(fh); 
 }
@@ -108,7 +105,7 @@ void CommandLine::parse(int argc, char *argv[])
 	  break; 
 	case 'v':  		// version 
 	  printVersion(false );
-	  exit(0); 
+	  ParallelSetup::genericExit(-1); 
 	  break; 
 	case 'h': 		// help 
 	  printHelp();

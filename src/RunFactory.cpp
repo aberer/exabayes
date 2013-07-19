@@ -3,6 +3,7 @@
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
 #include "ProposalFunctions.hpp"
+#include "ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -16,6 +17,8 @@
 #include "priors/DirichletPrior.hpp"
 #include "priors/FixedPrior.hpp"
 
+
+void genericExit(int code); 
 
 
 
@@ -133,7 +136,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	      if(thePrior != nullptr)
 		{
 		  cerr << "while setting prior for random variable " << v.get() << ": it seems you have defined a prior for more than one partition of a set of partitions that is linked for a specific variable to estimate. Please only specify exactly one prior per variable for a set of linked partitions."  << endl; 
-		  exit(1); 
+		  ParallelSetup::genericExit(-1); 
 		}
 	      else 
 		thePrior = idMap.at(partId); 
@@ -144,12 +147,12 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       if(thePrior == nullptr)	  
 	{
 	  thePrior = generalPriors.at(int(v->getCategory())); // BAD
-	  if(thePrior != nullptr)
-	    cout << "using GENERAL prior for variable " <<  endl; 
+	  // if(thePrior != nullptr)
+	  //   cout << "using GENERAL prior for variable " <<  endl; 
 	}
       else 
 	{
-	  tout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
+	  // tout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
 	}
       
       if(thePrior != nullptr)
@@ -157,7 +160,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       else 
 	{	  
 	  addStandardPrior(v.get(), traln);
-	  tout << "using STANDARD prior for variable "  << v.get() << endl; 
+	  // tout << "using STANDARD prior for variable "  << v.get() << endl; 
 	}
     }
 }

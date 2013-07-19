@@ -24,6 +24,9 @@
 #endif
 
 
+#define MAX_SCI_PRECISION  std::scientific << std::setprecision(std::numeric_limits<double>::digits10)   
+
+
 #define NO_SEC_BL_MULTI
 #define NOT_IMPLEMENTED  0
 #define TODO 0
@@ -42,6 +45,11 @@ typedef  unsigned int nat ;
    be user variables later (for development lets just keep them here).
 
  */
+
+
+
+#define _DISABLE_INIT_LNL_CHECK
+
 
 /* #define DEBUG_ACCEPTANCE */
 /* #define DEBUG_HASTINGS */

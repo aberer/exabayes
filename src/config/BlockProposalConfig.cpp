@@ -1,6 +1,11 @@
 #include <cassert>
 
 #include "BlockProposalConfig.hpp"
+#include "ParallelSetup.hpp"
+
+
+extern void genericExit(int code); 
+
 
 BlockProposalConfig::BlockProposalConfig()
 {
@@ -35,7 +40,7 @@ void BlockProposalConfig::Read(NxsToken &token)
 	      if(userValue.find(t) != userValue.end())
 		{
 		  std::cerr << "encountered the value " << key << "twice in the config file" << std::endl; 
-		  exit(0); 
+		  ParallelSetup::genericExit(-1); 
 		}
 	      else 
 		userValue[t] = val; 

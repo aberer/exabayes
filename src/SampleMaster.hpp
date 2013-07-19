@@ -37,6 +37,8 @@ public:
   void validateRunParams(); 	// TODO  
   void branchLengthsIntegration()  ;  
 
+  void printAlignmentInfo(const TreeAln &traln); 
+
   virtual void readFromCheckpoint( std::ifstream &in ) ; 
   virtual void writeToCheckpoint( std::ofstream &out)  ;   
 

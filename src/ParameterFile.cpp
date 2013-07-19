@@ -1,7 +1,11 @@
 #include "ParameterFile.hpp"
 #include "GlobalVariables.hpp"
 
+#include "ParallelSetup.hpp"
+
 #include <cassert>
+
+void genericExit(int code); 
 
 
 ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid, nat couplingId)
@@ -19,7 +23,11 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid
     {
       std::cerr << std::endl <<  "File " << fullFilename << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      exit(0); 
+      ParallelSetup::genericExit(-1);
+    }
+  else 
+    {
+      tout << "initialized parameter file >" << fullFilename << "<" << std::endl; 
     }
 
   std::ofstream fh(fullFilename); 
@@ -98,7 +106,7 @@ void ParameterFile::regenerate(std::string prevId, nat gen)
     {
       std::cerr << "Error: could not find the parameter file from previous run. \n"
 		<< "The assumed name of this file was >" <<  ss.str() << "<. Aborting." << std::endl; 
-      exit(0);
+      ParallelSetup::genericExit(0); 
     }
 
   nat genFound = 0; 

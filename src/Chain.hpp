@@ -41,10 +41,11 @@ public:
    */ 
   void reseed(randKey_t c) { chainRand = Randomness(c); }  
   /** 
-      @brief apply saved parameter contents to the tree structure 
-      @param eval indicates whether an evaluation should be performed after resuming    
+      @brief apply saved parameter contents to the tree structure
+      @param eval indicates whether an evaluation should be performed after resuming
+      @param checkLnl a hack: disable check for the exact same likelihood. Reason for this is resuming a run from a checkpoint with ExaML. It is just extremely hard to get the exact same likelihood 
    */   
-  void resume(bool eval)  ; 
+  void resume(bool eval, bool checkLnl)  ; 
   /**
      @brief saves the all parameters that are integrated over,
      s.t. the tree can be used by another chain     

@@ -5,6 +5,10 @@
 #include "../priors/DirichletPrior.hpp"
 #include "../priors/FixedPrior.hpp"
 
+#include "ParallelSetup.hpp"
+
+
+// extern void genericExit(int code); 
 
 shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {
@@ -49,7 +53,7 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       if(token.GetToken().EqualsCaseInsensitive("empirical"))
 	{
 	  cerr << "not implemented yet " << endl; // TODO 
-	  exit(1);
+	  ParallelSetup::genericExit(-1); 
 	  return nullptr; 
 	} 
       else 
@@ -76,7 +80,7 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
   else 
     {
       cerr << "attempted to parse prior. Did not recognize keyword " <<  value << endl; 
-      exit(1);
+      ParallelSetup::genericExit(-1); 
     }
 
   return nullptr; 

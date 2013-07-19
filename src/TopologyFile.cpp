@@ -1,7 +1,10 @@
 #include "TopologyFile.hpp"
 #include "GlobalVariables.hpp"
+#include "ParallelSetup.hpp"
 
 #include <cassert>
+
+void genericExit(int code); 
 
 
 TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId) 
@@ -10,7 +13,7 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, 
 { 
   std::stringstream ss ; 
   // TODO portability 
-  ss << workdir <<  ( workdir.compare("") == 0  ? "" :  "/" )  << "ExaBayes_topologies." << runname << "." << runid ; 
+  ss << workdir <<  ( workdir.compare("") == 0  ? "" :  "/" )  << PROGRAM_NAME << "_topologies." << runname << "." << runid ; 
   if(couplingId != 0 )
     ss << ".hot-"<<  couplingId; 
   fullFilename = ss.str();
@@ -19,7 +22,11 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, 
     {
       std::cerr << std::endl <<  "File " << fullFilename << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      exit(0); 
+      ParallelSetup::genericExit(-1); 
+    }
+  else 
+    {
+      tout << "initialized topology file >" <<  fullFilename << "<" << std::endl; 
     }
 
   std::ofstream fh (fullFilename); 
@@ -82,8 +89,9 @@ void TopologyFile::regenerate(std::string prevId, nat gen)
     {
       std::cerr << "Error: could not find the topology file from previous run. \n"
 		<< "The assumed name of this file was >" <<  ss.str() << "<. Aborting." << std::endl; 
-      exit(0);
+      ParallelSetup::genericExit(0); 
     }
+
 
   nat genFound = 0; 
   while(genFound < gen && not prevFile.eof())

@@ -57,6 +57,10 @@ double fastPow(double a, double b)
 }
 
 
+
+
+void genericExit(int code); 
+
 #include <chrono>
 
 
@@ -103,7 +107,7 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
 
   fh.close(); 
 
-  exit(0); 
+  genericExit(0); 
 #else 
 
   SampleMaster master(  pl, cl );
@@ -152,7 +156,7 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
     {
       std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-	exit(0); 
+      ParallelSetup::genericExit(-1); 
     }
 
   // TODO maybe check for existance 

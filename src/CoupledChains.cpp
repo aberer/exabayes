@@ -164,7 +164,7 @@ void CoupledChains::chainInfo()
 void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
 {  
   for(auto &c : chains)
-    c.resume(true);
+    c.resume(true, true);
 
   for(int genCtr = 0; genCtr < gensToRun; genCtr += swapInterval)
     {
