@@ -19,6 +19,8 @@
 #include "AvgSplitFreqAssessor.hpp"
 #include "ProposalFunctions.hpp"
 
+#include "RestoringLnlEvaluator.hpp"
+
 
 // a developmental mode to integrate over branch lengths
 // #define _GO_TO_INTEGRATION_MODE
@@ -151,8 +153,8 @@ void SampleMaster::initializeRuns( )
   vector<unique_ptr<AbstractProposal> > proposals; 
   vector<unique_ptr<AbstractParameter> > variables; 
 
-  auto restorer = make_shared<LnlRestorer>(*(trees[0]));
-  auto eval = make_shared<LikelihoodEvaluator>(restorer); 
+  auto restorer = make_shared<LnlRestorer>(*(trees[0]));  
+  auto eval = make_shared<RestoringLnlEvaluator>(restorer); 
   
   initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables, eval);
   assert(runParams.getTuneFreq() > 0); 
@@ -233,7 +235,7 @@ void SampleMaster::initializeRuns( )
 	{
 	  tout  << "Warning! Could not open / find file " << checkPointFile << std::endl; 
 	  tout << "Although extremely unlikely, the previous run may have been killed\n"
-		    << "during the writing process of the checkpoint. Will try to recover from backup..." << std::endl; 
+	       << "during the writing process of the checkpoint. Will try to recover from backup..." << std::endl; 
 	  
 	  ss.str(""); 
 	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getCheckpointId();
@@ -254,6 +256,8 @@ void SampleMaster::initializeRuns( )
 	{
 	  for(auto &run : runs)
 	    run.regenerateOutputFiles(cl.getCheckpointId());
+	  nat curGen = runs[0].getChains()[0].getGeneration();
+	  diagFile.regenerate(  cl.getWorkdir(), cl.getRunid(),  cl.getCheckpointId(), curGen, runs[0].getSwapInfo().getMatrix().size());
 	}
 
 #ifdef _DISABLE_INIT_LNL_CHECK
@@ -263,6 +267,10 @@ void SampleMaster::initializeRuns( )
 	   << "seed may not result in the exact same run" << std::endl;       
 #endif
     }
+
+
+  if(not diagFile.isInitialized())
+    diagFile.initialize(cl.getWorkdir(), cl.getRunid(), runs);
 
   tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl;   
 
@@ -289,14 +297,14 @@ void SampleMaster::initializeRuns( )
     }
 
   if(numTreesAvailable > 0)
-     fclose(treeFH); 
+    fclose(treeFH); 
 
   tout << endl; 
 }
 
 
 //STAY 
-bool SampleMaster::convergenceDiagnostic()
+double SampleMaster::convergenceDiagnostic()
 {
   if(runParams.getNumRunConv() > 1)    
     { 
@@ -346,15 +354,15 @@ bool SampleMaster::convergenceDiagnostic()
 #endif 
 	    tout << std::endl  << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << std::endl << std::endl; 
 
-	  return asdsfVal < runParams.getAsdsfConvergence(); 
+	  return asdsfVal; 
 
 	}
       else 
-	return false; 
+	return 0; 
       
     }
   else 
-    return true; 
+    return 0; 
 }
 
 
@@ -482,7 +490,9 @@ void SampleMaster::run()
 
       if(curGen % runParams.getDiagFreq() == 0 )
 	{
-	  hasConverged = convergenceDiagnostic(); 
+	  double asdsf = convergenceDiagnostic(); 
+	  hasConverged = asdsf < runParams.getAsdsfConvergence();  
+	  diagFile.printDiagnostics(curGen, asdsf, runs);
 #ifdef ENABLE_PRSF      
 	  printPRSF(run_id);
 #endif
@@ -497,7 +507,7 @@ void SampleMaster::run()
 
       if(curGen % runParams.getChkpntFreq() == 0 )
 	{
-	  tout << "writing checkpoint" << std::endl; 
+	  // tout << "writing checkpoint" << std::endl; 
 	  writeCheckpointMaster();
 	  lastChkpnt = curGen; 
 	} 

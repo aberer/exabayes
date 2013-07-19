@@ -12,14 +12,10 @@
 // src.am (you can also manually modify this source, s.t. it works). 
 
 
-
 // if you do not use the namespace below, you have to
 // add the std:: prefix to many things (e.g., the vector is std::vector then). 
 // using the qualifier is better practice, but inconvenient. 
 // using namespace std; 
-
-
-
 
 
 class MyTemplateProposal : public AbstractProposal
@@ -38,6 +34,7 @@ public:
 
   
   // if your proposal has  parameters that are tuned   
+  // this is very straight forward, just check out the other proposals 
   virtual void readFromCheckpointCore(std::ifstream &in); 
   virtual void writeToCheckpointCore(std::ofstream &out); 
 

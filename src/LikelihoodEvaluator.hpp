@@ -9,22 +9,20 @@
 class LikelihoodEvaluator
 {
 public: 
-  LikelihoodEvaluator(std::shared_ptr<LnlRestorer> restorer); 
-
   /**
      @brief: evaluate a list of partitions. This is always a full traversal 
    */
-  double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)  ; 
+  virtual double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions) = 0; 
   /** 
       @brief evaluate a subtree. This used to be the
       newview-command. The this-node is the important part, the
       that-node of the branch only specifies the orientation.
    */ 
-  void evalSubtree( TreeAln &traln, const Branch &evalBranch)    ; 
+  virtual void evalSubtree( TreeAln &traln, const Branch &evalBranch)  = 0   ; 
   /** 
       @brief evaluation at a given branch  
    */ 
-  double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
+  virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ) = 0; 
   /** 
       @brief find the root branch in the current tree    
    */
@@ -63,11 +61,11 @@ public:
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
 #endif
 
-private: 			// METHODS
+protected: 			// METHODS
   void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
   void coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked); 
 
-private: 			// ATTRIBUTES
+protected: 			// ATTRIBUTES
   std::shared_ptr<LnlRestorer> restorer;    
 #ifdef DEBUG_LNL_VERIFY
   std::shared_ptr<TreeAln> debugTraln;  

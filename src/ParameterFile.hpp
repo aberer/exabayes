@@ -1,6 +1,7 @@
 #ifndef _PARAMETER_FILE
 #define _PARAMETER_FILE
 
+
 #include <sstream>
 #include <string>
 #include <iostream> 
@@ -9,7 +10,7 @@
 
 #include "parameters/AbstractParameter.hpp"
 #include "Branch.hpp"
-
+#include "OutputFile.hpp"
 
 /**
    @notice opening and closing the stream all the time may appear
@@ -18,19 +19,17 @@
    as implemented below.
  */
 
-class  ParameterFile 
+class  ParameterFile  : public OutputFile
 {
 public: 
   ParameterFile(std::string workdir, std::string runname, nat runid, nat couplingId); 
   void initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId ) const ; 
   void sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr) const ; 
 
-  void finalize() const  { }	// NO IMPLEMENT
-  
+  void finalize() const  { }	// NO IMPLEMENT  
   void regenerate(std::string prevId, nat gen) ; 
   
 private: 
-  std::string fullFilename; 
   nat runid; 
   nat couplingId; 
 }; 

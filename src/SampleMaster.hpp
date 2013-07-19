@@ -20,6 +20,7 @@
 #include "ParallelSetup.hpp"
 #include "time.hpp"
 #include "Checkpointable.hpp"
+#include "DiagnosticsFile.hpp"
 
 
 class SampleMaster : public Checkpointable
@@ -44,7 +45,7 @@ public:
 
 private: 
   void writeCheckpointMaster(); 
-  bool convergenceDiagnostic(); 
+  double convergenceDiagnostic(); 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh); 
   void printDuringRun(nat gen); 
 
@@ -58,6 +59,7 @@ private:			// ATTRIBUTES
   Randomness masterRand;   	// not checkpointed
   CommandLine cl; 
   CLOCK::system_clock::time_point timeIncrement; 
+  DiagnosticsFile diagFile; 
 };  
 
 #endif

@@ -16,20 +16,12 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, 
   ss << workdir <<  ( workdir.compare("") == 0  ? "" :  "/" )  << PROGRAM_NAME << "_topologies." << runname << "." << runid ; 
   if(couplingId != 0 )
     ss << ".hot-"<<  couplingId; 
-  fullFilename = ss.str();
+  fullFileName = ss.str();
 
-  if( std::ifstream (fullFilename) ) 
-    {
-      std::cerr << std::endl <<  "File " << fullFilename << " already exists (probably \n"
-		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      ParallelSetup::genericExit(-1); 
-    }
-  else 
-    {
-      tout << "initialized topology file >" <<  fullFilename << "<" << std::endl; 
-    }
+  rejectIfExists(fullFileName); 
+  tout << "initialized topology file >" <<  fullFileName << "<" << std::endl; 
 
-  std::ofstream fh (fullFilename); 
+  std::ofstream fh (fullFileName); 
   fh << "" ; 
   fh.close(); 
 }
@@ -37,7 +29,7 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, 
 
 void TopologyFile::initialize(const TreeAln& traln, nat someId) const 
 {    
-  std::ofstream fh(fullFilename,std::fstream::out );  // std::fstream::app    
+  std::ofstream fh(fullFileName,std::fstream::out );  // std::fstream::app    
     
   fh << "#NEXUS" << std::endl
      << "[ID: " << someId <<  "]" << std::endl
@@ -61,7 +53,7 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId) const
 
 void TopologyFile::sample(const TreeAln &traln, nat gen) const 
 {    
-  std::ofstream fh(fullFilename,std::fstream::app|std::fstream::out ); 
+  std::ofstream fh(fullFileName,std::fstream::app|std::fstream::out ); 
   TreePrinter tp(true, false, false);
   std::string treeString = tp.printTree(traln);
   fh << "\ttree gen." << gen << " = [&U] " << treeString << std::endl; 
@@ -70,7 +62,7 @@ void TopologyFile::sample(const TreeAln &traln, nat gen) const
 
 void TopologyFile::finalize() const 
 {
-  std::ofstream fh(fullFilename, std::fstream::app|std::fstream::out ); 
+  std::ofstream fh(fullFileName, std::fstream::app|std::fstream::out ); 
   fh << "end;" << std::endl; 
   fh.close(); 
 }
@@ -79,19 +71,12 @@ void TopologyFile::finalize() const
 
 void TopologyFile::regenerate(std::string prevId, nat gen) 
 {
-  std::ofstream fh(fullFilename, std::fstream::out); 
+  std::ofstream fh(fullFileName, std::fstream::out); 
 
   std::stringstream ss; 
   ss << PROGRAM_NAME << "_topologies." << prevId << "." << runid ; 
   std::ifstream prevFile(ss.str()); 
-  
-  if(not prevFile)
-    {
-      std::cerr << "Error: could not find the topology file from previous run. \n"
-		<< "The assumed name of this file was >" <<  ss.str() << "<. Aborting." << std::endl; 
-      ParallelSetup::genericExit(0); 
-    }
-
+  rejectIfNonExistant(ss.str()); 
 
   nat genFound = 0; 
   while(genFound < gen && not prevFile.eof())

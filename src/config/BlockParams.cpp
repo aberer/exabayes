@@ -134,8 +134,6 @@ void BlockParams::Read(NxsToken &token)
 }
 
 
-
-
 vector<unique_ptr<AbstractParameter> > BlockParams::getParameters() const
 {
   vector<unique_ptr<AbstractParameter> > result; 

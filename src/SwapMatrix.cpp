@@ -8,10 +8,12 @@
 SwapMatrix::SwapMatrix(nat numChains)
   : numEntries(numChains)
 {
-  for(nat i = 0; i < numEntries-1; ++i)
+  for(nat i = 0; i < numEntries; ++i)
     for(nat j = i  + 1 ; j < numEntries; ++j)
-      matrix.push_back(SuccessCounter()); 
-
+      {
+	tout << "init " << i <<  "," << j << std::endl; 
+	matrix.push_back(SuccessCounter()); 
+      }
 }
 
 
@@ -27,7 +29,7 @@ void SwapMatrix::update(nat a, nat b, bool acc)
 
 const SuccessCounter& SwapMatrix::getCounter(nat a, nat b ) const
 {
-  return matrix[mapToIndex(a,b)]; 
+  return matrix.at(mapToIndex(a,b)); 
 } 
 
 

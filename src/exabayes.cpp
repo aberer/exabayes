@@ -159,8 +159,6 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
       ParallelSetup::genericExit(-1); 
     }
 
-  // TODO maybe check for existance 
-
   globals.logFile = ss.str();   
   
   globals.logStream =  new ofstream  (globals.logFile); 

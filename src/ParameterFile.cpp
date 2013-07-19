@@ -5,8 +5,6 @@
 
 #include <cassert>
 
-void genericExit(int code); 
-
 
 ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid, nat couplingId)
   : runid(runid)
@@ -14,23 +12,15 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid
 {
   std::stringstream ss ; 
   // TODO portability 
-  ss << workdir << (workdir.compare("") == 0 ? "" : "/")  << "ExaBayes_parameters." << runname << "." << runid ; 
+  ss << workdir << (workdir.compare("") == 0 ? "" : "/")  << PROGRAM_NAME << "_parameters." << runname << "." << runid ; 
   if(couplingId != 0 )
     ss << ".hot-"<<  couplingId; 
-  fullFilename = ss.str();
+  fullFileName = ss.str();
 
-  if( std::ifstream(fullFilename) ) 
-    {
-      std::cerr << std::endl <<  "File " << fullFilename << " already exists (probably \n"
-		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      ParallelSetup::genericExit(-1);
-    }
-  else 
-    {
-      tout << "initialized parameter file >" << fullFilename << "<" << std::endl; 
-    }
+  rejectIfExists(fullFileName); 
+  tout << "initialized parameter file >" << fullFileName << "<" << std::endl; 
 
-  std::ofstream fh(fullFilename); 
+  std::ofstream fh(fullFileName); 
   fh << "" ; 
   fh.close(); 
 }
@@ -38,7 +28,7 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid
 
 void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId ) const 
 {        
-  std::ofstream fh(fullFilename,std::fstream::out);  // std::fstream::app|
+  std::ofstream fh(fullFileName,std::fstream::out);  // std::fstream::app|
 
   fh << "[ID: " << someId << "]" << std::endl; 
 
@@ -68,7 +58,7 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
 
 void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr) const 
 {
-  std::ofstream fh(fullFilename, std::fstream::app|std::fstream::out); 
+  std::ofstream fh(fullFileName, std::fstream::app|std::fstream::out); 
     
   fh << gen << "\t"; 
   fh << std::setprecision(std::numeric_limits<double>::digits10)  << std::scientific; 
@@ -96,18 +86,12 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
 
 void ParameterFile::regenerate(std::string prevId, nat gen) 
 {
-  std::ofstream fh(fullFilename, std::fstream::out); 
+  std::ofstream fh(fullFileName, std::fstream::out); 
 
   std::stringstream ss; 
   ss << PROGRAM_NAME << "_parameters." << prevId << "." << runid ; 
   std::ifstream prevFile(ss.str()); 
-
-  if(not prevFile)
-    {
-      std::cerr << "Error: could not find the parameter file from previous run. \n"
-		<< "The assumed name of this file was >" <<  ss.str() << "<. Aborting." << std::endl; 
-      ParallelSetup::genericExit(0); 
-    }
+  rejectIfNonExistant(ss.str()); 
 
   nat genFound = 0; 
   nat lineCtr = 0; 

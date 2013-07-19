@@ -29,31 +29,38 @@
 class CoupledChains : public Checkpointable
 {
 public: 
+  ////////////////
+  // LIFE CYCLE //
+  ////////////////
   CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain>& _chains ); 
   CoupledChains(CoupledChains&& rhs); 
   CoupledChains& operator=(CoupledChains rhs); 
 
-  /** @brief run for a given number of generations */
+  /**
+     @brief run for a given number of generations
+  */
   void run(int numGen); 
   void chainInfo(); 
-
-  /** @brief Execute a portion of one run. */
+  /** 
+      @brief Execute a portion of one run. 
+  */
   void executePart(int gensToRun, const ParallelSetup &pl);   
   void setPrintFreq(nat t){printFreq = t; }
   void seedChains(); 
-
   void setSwapInterval(nat i) {swapInterval = i; }
   void setSamplingFreq(nat i) {samplingFreq = i; }
   void setHeatIncrement(double temp ) { heatIncrement = temp ; } 
   void setTuneHeat(bool bla){tuneHeat = bla ; }  
   void setTemperature(double temp ){heatIncrement = temp;  } 
   vector<Chain>& getChains() {return chains; } 
+  nat getRunid()  const {return runid; }
   const vector<Chain>& getChains() const {return chains; }
   int getNumberOfChains(){return chains.size();}
   void enableHeatTuning(int freq ) { tuneHeat = true; tuneFreq = freq; }  
   void printNexusTreeFileStart(Chain &chain, FILE *fh  );   
   void setRunName(string a) {runname = a;  }
   void initializeOutputFiles()  ; 
+  SwapMatrix getSwapInfo() const {return swapInfo; }
   
   void finalizeOutputFiles() const ; 
 

@@ -7,8 +7,9 @@
 
 #include "common.h"
 #include "TreeAln.hpp"
+#include "OutputFile.hpp"
 
-class TopologyFile
+class TopologyFile : public OutputFile
 {
 public: 
   TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId); 
@@ -18,7 +19,6 @@ public:
   void regenerate(std::string prevId, nat gen) ; 
 
 private: 
-  std::string fullFilename; 
   nat runid; 
   nat couplingId; 
 }; 

@@ -26,8 +26,9 @@ public:
   double getRatioInLastInterval() const ; 
   double getRatioOverall() const ; 
   void nextBatch(); 
-  int getBatch(){return batch; }
-
+  int getBatch() const {return batch; }
+  nat getTotalSeen()const  {return globalAcc + globalRej; }
+  
   virtual void readFromCheckpoint( std::ifstream &in )   ; 
   virtual void writeToCheckpoint( std::ofstream &out) ;   
   

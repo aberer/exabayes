@@ -89,7 +89,7 @@ std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 }
 
 
-std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs) 
+std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs) 
 {
   out << rhs->name <<  " primarily modifying " ; 
   for(auto &r : rhs->primVar)

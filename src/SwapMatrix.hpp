@@ -19,6 +19,8 @@ public:
   virtual void readFromCheckpoint( std::ifstream &in )   ; 
   virtual void writeToCheckpoint( std::ofstream &out) ;   
 
+  std::vector<SuccessCounter> getMatrix() const {return matrix; }
+
 private: 
   nat mapToIndex(nat a, nat b) const ;
 
