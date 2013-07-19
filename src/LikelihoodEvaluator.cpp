@@ -13,20 +13,6 @@ void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, nodeptr start, boo
 }
 
 
-  // BAD
-void LikelihoodEvaluator::evaluateFullNoBackup(TreeAln& traln)
-{
-#ifdef DEBUG_EVAL  
-  cout << "conducting full evaluation, no backup created" << endl; 
-#endif
-  
-  exa_evaluateGeneric(traln,traln.getTr()->start,TRUE );   
-#ifdef DEBUG_LNL_VERIFY
-  expensiveVerify(traln);
-#endif
-} 
-
-
 void LikelihoodEvaluator::disorientTree(TreeAln &traln, const Branch &root) 
 {
   disorientSubtree(traln,root);   
@@ -107,35 +93,6 @@ Branch LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln) const
 }
 
 
-void LikelihoodEvaluator::imprint(const TreeAln &traln)
-{ 
-  prevLnl = traln.getTr()->likelihood; 
-  restorer->resetRestorer(traln);   
-}
-
-void LikelihoodEvaluator::resetToImprinted(TreeAln &traln)
-{
-  restorer->restoreArrays(traln); 
-  Branch root = findVirtualRoot(traln); 
-
-  auto p = root.findNodePtr(traln), 
-    q = p->back; 
-
-  assert( (traln.isTipNode(p) ||  p->x) 
-	  && (traln.isTipNode(q) || q->x ) );
-
-#ifdef DEBUG_LNL_VERIFY
-  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE );   
-  if(fabs(prevLnl - traln.getTr()->likelihood) > 1e-6)
-    {
-      std::cout << "error while resetting lnl arrays. Likelihood should be " 
-		<< prevLnl << " but was " << traln.getTr()->likelihood << std::endl; 
-      assert(0); 
-    }
-#endif
-}
-
-
 void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked)
 {
 #if HAVE_PLL != 0
@@ -187,3 +144,17 @@ void LikelihoodEvaluator::setDebugTraln(std::shared_ptr<TreeAln> _debugTraln)
   debugTraln = _debugTraln; 
 }
 #endif
+
+
+double LikelihoodEvaluator::evaluateNoBack(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  
+{
+  auto evalP = evalBranch.findNodePtr(traln);
+
+  exa_evaluateGeneric(traln,evalP,TRUE );   
+#ifdef DEBUG_LNL_VERIFY
+  if(verifyLnl)
+    exopensiveVerify(traln);
+#endif
+
+  return traln.getTr()->likelihood; 
+}

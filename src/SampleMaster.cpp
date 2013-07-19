@@ -166,7 +166,7 @@ void SampleMaster::initializeRuns( )
   eval->setDebugTraln(dT);
 #endif
 
-  // ORDER: must be after  initWithConfigFile
+  // ORDER: must be after initWithConfigFile
   for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
     {
       auto traln =  make_shared<TreeAln>();

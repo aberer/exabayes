@@ -22,7 +22,7 @@ public:
   /** 
       @brief evaluation at a given branch  
    */ 
-  virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ) = 0; 
+  virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ) = 0 ; 
   /** 
       @brief find the root branch in the current tree    
    */
@@ -30,11 +30,11 @@ public:
   /** 
       @brief make the current state in the tree resettable (only needed for chain.cpp)
    */ 
-  void imprint(const TreeAln &traln); 
+  virtual void imprint(const TreeAln &traln) = 0; 
   /**
      @brief use backup likelihood arrays to reset the state 
    */ 
-  void resetToImprinted(TreeAln &traln) ; 
+  virtual void resetToImprinted(TreeAln &traln) = 0;  
   /** 
       @brief invalidate the orientation at a given node 
    */ 
@@ -53,7 +53,7 @@ public:
       @brief conduct full traversal and evaluation on tree, do not use
       likelihood backup arrays (rarely useful)
    */ 
-  void evaluateFullNoBackup(TreeAln& traln); 
+  double evaluateNoBack(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
 
 #ifdef DEBUG_LNL_VERIFY
   // BAD
@@ -66,7 +66,6 @@ protected: 			// METHODS
   void coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked); 
 
 protected: 			// ATTRIBUTES
-  std::shared_ptr<LnlRestorer> restorer;    
 #ifdef DEBUG_LNL_VERIFY
   std::shared_ptr<TreeAln> debugTraln;  
   bool verifyLnl; 

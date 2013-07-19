@@ -1,5 +1,4 @@
 #include "SwapMatrix.hpp"
-
 #include "GlobalVariables.hpp"
 
 #include <iostream>
@@ -10,10 +9,7 @@ SwapMatrix::SwapMatrix(nat numChains)
 {
   for(nat i = 0; i < numEntries; ++i)
     for(nat j = i  + 1 ; j < numEntries; ++j)
-      {
-	tout << "init " << i <<  "," << j << std::endl; 
-	matrix.push_back(SuccessCounter()); 
-      }
+      matrix.push_back(SuccessCounter()); 
 }
 
 
@@ -31,7 +27,6 @@ const SuccessCounter& SwapMatrix::getCounter(nat a, nat b ) const
 {
   return matrix.at(mapToIndex(a,b)); 
 } 
-
 
 
 nat SwapMatrix::mapToIndex(nat a, nat b) const 

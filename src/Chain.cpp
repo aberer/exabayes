@@ -2,8 +2,9 @@
 #include <map> 
 #include <unordered_map>
 
-#include "Chain.hpp"
-#include "LnlRestorer.hpp"
+#include "PlainLikelihoodEvaluator.hpp"
+#include "Chain.hpp"		
+// #include "LnlRestorer.hpp"
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "GlobalVariables.hpp"
@@ -38,7 +39,9 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
       proposals.push_back(std::move(copy)); 
     }
 
-  eval->evaluateFullNoBackup(*traln);  ; 
+  Branch root(traln->getTr()->start->number, traln->getTr()->start->back->number); 
+  // auto evalPtr = dynamic_cast<PlainLikelihoodEvaluator*>(eval.get()); 
+  eval->evaluateNoBack(*traln, root, true); // the non-restoring eval  
   
   const std::vector<AbstractParameter*> vars = extractVariables(); 
   prior.initialize(*traln, vars);
@@ -120,7 +123,8 @@ void Chain::resume(bool evaluate, bool checkLnl)
 
   if(evaluate)
     {
-      evaluator->evaluateFullNoBackup(*traln); 
+      Branch root(traln->getTr()->start->number, traln->getTr()->start->back->number); 
+      evaluator->evaluateNoBack(*traln, root, true);
 
       if(checkLnl && fabs(likelihood - traln->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
 	{

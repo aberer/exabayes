@@ -7,6 +7,7 @@
 #include "axml.h"
 
 #include "Randomness.hpp"
+#include "MemoryMode.hpp"
 
 
 class CommandLine
@@ -21,8 +22,8 @@ public:
   int getNumRunParallel() const {return runNumParallel; }
   std::string getWorkdir() const {return workDir; }
   void printVersion(bool toInfoFile);
-  // int getChainNumParallel() const { return chainNumParallel; }
 
+  // int getChainNumParallel() const { return chainNumParallel; }
   std::string getCheckpointId()const {return checkpointId; }
   void parseAlternative(int argc, char *argv[]); 
 
@@ -42,6 +43,7 @@ private: 			// ATTRIBUTES
   int runNumParallel; 
   int chainNumParallel; 
   std::string checkpointId; 
+  MemoryMode memoryMode; 
 }; 
 
 

@@ -13,7 +13,7 @@
 
 enum class ProposalType
 {
-    ST_NNI= 0, 
+  ST_NNI= 0, 
     E_SPR = 1,
     E_TBR = 2,
     PARSIMONY_SPR= 3 , 

@@ -751,3 +751,13 @@ nodeptr TreeAln::getNode(nat elem) const
 
   return  getTr()->nodep[elem] ; 
 }
+
+
+
+std::pair<Branch,Branch> TreeAln::getDescendingBranches(const Branch &b) const
+{
+  auto p = b.findNodePtr(*this); 
+  return std::pair<Branch,Branch>
+    { Branch(p->next->number, p->next->back->number), Branch(p->next->next->number, p->next->next->back->number) }; 
+} 
+

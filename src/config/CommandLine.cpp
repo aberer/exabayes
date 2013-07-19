@@ -53,6 +53,10 @@ void CommandLine::printHelp()
 	    << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel\n"
 	    << "\t-r id\t\trestart from checkpoint. Just specify the id of the previous run here. \n"
 	    << "\t\t\tMake sure, ExaBayes can access all files from this previous run.\n"
+	    << "\t-M mode\t\tspecifies the memory versus runtime trade\n"
+	    << "\t\t\t0\tfastest\n" 
+	    << "\t\t\t1\tstandard\n"
+	    << "\t\t\t1\tTODO\n"
 	    << std::endl; 
 
   ParallelSetup::genericExit(-1); 
@@ -124,6 +128,9 @@ void CommandLine::parse(int argc, char *argv[])
 	  break; 
 	case 'r': 
 	  checkpointId = strdup(optarg);   
+	  break; 
+	case 'M': 
+	  memoryMode = MemoryMode(std::stoi(optarg)); 
 	  break; 
 	case 'R': 
 	  runNumParallel = atoi(optarg);

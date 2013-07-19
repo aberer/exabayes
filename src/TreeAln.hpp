@@ -155,6 +155,10 @@ public:
   ///////////////
   // observers //
   ///////////////
+  /** 
+      @brief gets the branches that are below one branch 
+   */
+  std::pair<Branch,Branch> getDescendingBranches(const Branch &b) const; 
   std::vector<bool> getExecModel() const ; 
   std::vector<double> getPartitionLnls() const; 
   void setPartitionLnls(const std::vector<double> partitionLnls) ; 
@@ -162,7 +166,6 @@ public:
 
   static const double zZero;   
   static const double initBL;  	// init values 
-
 
 private: 			// METHODS  
 #if HAVE_PLL != 0
@@ -175,8 +178,6 @@ private: 			// METHODS
   void initDefault();
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
-
-
 
 private: 			// ATTRIBUTES 
 #if HAVE_PLL != 0 
