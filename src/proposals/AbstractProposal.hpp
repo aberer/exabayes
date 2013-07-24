@@ -40,7 +40,7 @@ public:
      @brief evaluates the proposal 
      @todo remove the prior, we should not need it here 
    */ 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) = 0; 
+  virtual void evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) = 0; 
   /** 
       @brief resets the tree to its previous state; corrects the prior, if necessary (@todo is this the case?)
    */ 

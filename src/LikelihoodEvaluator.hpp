@@ -9,10 +9,13 @@
 class LikelihoodEvaluator
 {
 public: 
+  LikelihoodEvaluator(){}
+  virtual ~LikelihoodEvaluator() {} 
+
   /**
      @brief: evaluate a list of partitions. This is always a full traversal 
    */
-  virtual double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions) = 0; 
+  virtual double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)  = 0; 
   /** 
       @brief evaluate a subtree. This used to be the
       newview-command. The this-node is the important part, the
@@ -48,30 +51,20 @@ public:
    */ 
   static void disorientSubtree(TreeAln &traln, const Branch &branch) ; 
 
+  virtual std::unique_ptr<LikelihoodEvaluator> clone() const = 0; 
 
-  /** 
-      @brief conduct full traversal and evaluation on tree, do not use
-      likelihood backup arrays (rarely useful)
-   */ 
-  double evaluateNoBack(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
-
-#ifdef DEBUG_LNL_VERIFY
-  // BAD
   void expensiveVerify(TreeAln &traln);
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
-#endif
 
 protected: 			// METHODS
   void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
   void coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked); 
 
 protected: 			// ATTRIBUTES
-#ifdef DEBUG_LNL_VERIFY
   std::shared_ptr<TreeAln> debugTraln;  
   bool verifyLnl; 
-#endif
-
   double prevLnl; 
+  std::vector<double> partitionLnls;  
 }; 
 
 #endif

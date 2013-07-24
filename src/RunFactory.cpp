@@ -1,8 +1,13 @@
 #include <set>
+#include <iostream>
 
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
-#include "ProposalFunctions.hpp"
+
+#include "proposers/AbstractProposer.hpp"
+#include "proposers/MultiplierProposal.hpp"
+#include "proposers/DirichletProposal.hpp"
+#include "proposers/SlidingProposal.hpp"
 #include "ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
@@ -165,7 +170,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
     }
 }
 
-void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval )
+void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, const unique_ptr<LikelihoodEvaluator> &eval )
 {
   randomVariables = partitionParams.getParameters(); 
   addStandardParameters(randomVariables, traln);  
@@ -180,7 +185,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   for(auto &v : randomVariables)
     {
-      if(typeid(v->getPrior()) == typeid(shared_ptr<FixedPrior>))
+      if(dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr ) // is it a fixed prior?
 	continue;
 
       vector<unique_ptr<AbstractProposal> > tmpResult;  

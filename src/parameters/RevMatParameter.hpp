@@ -8,12 +8,9 @@
 class RevMatParameter : public AbstractParameter
 {
 public: 
-  RevMatParameter(nat id// , nat numComponents
-		  ) 
-    : AbstractParameter(Category::SUBSTITUTION_RATES, id// , numComponents
-			)
+  RevMatParameter(nat id ) 
+    : AbstractParameter(Category::SUBSTITUTION_RATES, id )
   {
-    // modifiesBL = true; 
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 

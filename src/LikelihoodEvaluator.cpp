@@ -103,12 +103,11 @@ void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, nodeptr p, boolean mas
 }
 
 
-#ifdef DEBUG_LNL_VERIFY
 void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 {
   double toVerify = traln.getTr()->likelihood; 
 
-  *debugTraln = traln; 
+  debugTraln->copyModel(traln); 
 
   Branch root = findVirtualRoot(traln); 
 
@@ -123,18 +122,20 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
       tout << "WARNING: found in expensive evaluation: likelihood difference is " 
-	   << std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
+	   <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
 	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
 
       tout << "current tree: " << traln << std::endl; 
-      tout << "help tree: " <<  *debugTraln << std::endl; 	  
-
-      evaluateFullNoBackup(traln);
-      tout << "full evaluation on original tree yields: "  << traln.getTr()->likelihood << std::endl;       
+      tout << "help tree: " <<  *debugTraln << std::endl; 	        
     }  
-  assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS);   
+  assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS); 
+
+  // tout << "VERIFIED " << traln.getTr()->likelihood << std::endl; 
+
+  // TODO remove 
+  // disorientTree(traln, root); 
+  // exa_evaluateGeneric(traln, root.findNodePtr(traln) , FALSE);   
 }
-#endif
 
 
 #ifdef DEBUG_LNL_VERIFY
@@ -145,16 +146,3 @@ void LikelihoodEvaluator::setDebugTraln(std::shared_ptr<TreeAln> _debugTraln)
 }
 #endif
 
-
-double LikelihoodEvaluator::evaluateNoBack(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  
-{
-  auto evalP = evalBranch.findNodePtr(traln);
-
-  exa_evaluateGeneric(traln,evalP,TRUE );   
-#ifdef DEBUG_LNL_VERIFY
-  if(verifyLnl)
-    exopensiveVerify(traln);
-#endif
-
-  return traln.getTr()->likelihood; 
-}

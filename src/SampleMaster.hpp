@@ -32,9 +32,9 @@ public:
   void initRunParameters(string configFileName); 
   void finalizeRuns();  
   void run(); 
-  void initWithConfigFile(string configFileName, shared_ptr<TreeAln> traln, 
+  void initWithConfigFile(string configFileName, const TreeAln* tralnPtr, 
 			  vector<unique_ptr<AbstractProposal> > &proposalResult, vector<unique_ptr<AbstractParameter> > &variableResult, 
-			  shared_ptr<LikelihoodEvaluator> eval); 
+			  const std::unique_ptr<LikelihoodEvaluator> &eval); 
   void validateRunParams(); 	// TODO  
   void branchLengthsIntegration()  ;  
 
@@ -47,6 +47,7 @@ private:
   void writeCheckpointMaster(); 
   double convergenceDiagnostic(); 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh); 
+  void initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness); 
   void printDuringRun(nat gen); 
 
 private:			// ATTRIBUTES 

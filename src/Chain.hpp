@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 #include <memory>
 
 #include "PriorBelief.hpp"
@@ -32,7 +33,7 @@ public:
   ////////////////
   // LIFE CYCLE //
   ////////////////
-  Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::shared_ptr<LikelihoodEvaluator> eval);   
+  Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::unique_ptr<LikelihoodEvaluator> eval);   
   Chain( Chain&& rhs) ; 
   Chain& operator=(Chain rhs) ; 
   
@@ -78,15 +79,14 @@ public:
   const std::vector<AbstractParameter*> extractVariables() const ; 
 
   // getters and setters 
-  double getLnLikelihood() const {return   traln->getTr()->likelihood;} 
+  double getLnLikelihood() const {return   tralnPtr->getTr()->likelihood;} 
   double getLnPrior() const {return prior.getLnPrior(); }
   double getBestState() const {return bestState; }
-  LikelihoodEvaluator& getEvaluator() {return *evaluator; }
-  std::shared_ptr<LikelihoodEvaluator> getEvaluatorPtr() {return evaluator; }
-  const TreeAln& getTraln() const { return *traln; }
-  TreeAln& getTraln()  { return *traln; }
+  LikelihoodEvaluator* getEvaluator() {return evaluator.get(); }
+  const TreeAln& getTraln() const { return *tralnPtr; }
+  TreeAln& getTraln()  { return *tralnPtr; }
   Randomness& getChainRand(){return chainRand;}
-  std::shared_ptr<TreeAln> getTralnPtr()   {return traln; }
+  std::shared_ptr<TreeAln> getTralnPtr()   {return tralnPtr; } // BAD 
   double getChainHeat(); 
   void setDeltaT(double dt){deltaT = dt; }
   int getCouplingId() const {return couplingId; }
@@ -107,8 +107,11 @@ private : 			// METHODS
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr, double hastings ) ;
   AbstractProposal* drawProposalFunction();
 
+  void printArrayStart(); 
+
+
 private: 			// ATTRIBUTES
-  std::shared_ptr<TreeAln> traln;  
+  std::shared_ptr<TreeAln> tralnPtr;  
   double deltaT; 		// this is the global heat parameter that defines the heat increments  
   int runid; 
   int tuneFrequency; 		// TODO should be have per-proposal tuning?   
@@ -121,12 +124,13 @@ private: 			// ATTRIBUTES
   double relWeightSum; 	// sum of all relative weights
   PriorBelief prior; 
   double bestState; 
-  std::shared_ptr<LikelihoodEvaluator> evaluator;   
+  std::unique_ptr<LikelihoodEvaluator> evaluator;   
   
   // suspending and resuming the chain   
   double likelihood;
   double lnPr; 	
-  std::vector<ParameterContent> savedContent; // maps parameter-id to content
+
+  std::unordered_map<nat, ParameterContent> savedContent; // maps parameter-id to content
   
 
   // friends 

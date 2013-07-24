@@ -1,3 +1,13 @@
+/** 
+    @file Branch.hpp 
+
+    @brief represents a branch 
+
+    Furthermore, Branch may also represent (depending on context) a
+    sub-tree or be equivalent to a nodeptr. In these cases, a
+    secondary node defines the orientation of the branch. 
+ */ 
+
 #ifndef _BRANCH_NEW_H
 #define _BRANCH_NEW_H
 

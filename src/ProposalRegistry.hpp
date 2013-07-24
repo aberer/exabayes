@@ -25,7 +25,7 @@ class ProposalRegistry
 public: 
   void getProposals(Category cat, const BlockProposalConfig &config, 
 		    vector<unique_ptr<AbstractProposal> > &result, 
-		    const TreeAln &traln, shared_ptr<LikelihoodEvaluator> eval) const ; 
+		    const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval) const ; 
   
   static const double initFrequencySlidingWindow ; 
   static const  double initBranchLengthMultiplier; 

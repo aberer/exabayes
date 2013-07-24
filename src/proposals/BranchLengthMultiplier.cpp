@@ -53,9 +53,9 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 }
 
 
-void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, PriorBelief &prior) 
+void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) 
 {
-  evaluator.evaluate(traln,savedBranch, false); 
+  evaluator->evaluate(traln,savedBranch, false); 
 }
 
  

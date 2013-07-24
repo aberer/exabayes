@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstring>
 
+#include "TreeRandomizer.hpp"
 #include "axml.h"
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
@@ -15,6 +16,7 @@ TreeAln::TreeAln()
 {
   memset(&tr,0,sizeof(tree)); 
   initDefault();
+
 }
 
 
@@ -142,12 +144,10 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
   initializeTree(&tr, &adef);   
 #endif  
 
+
+  // set default values (will be overwritten later, if necessary )
   for(int i = 0; i < getNumberOfPartitions(); ++i)
     {
-      // TODO empirical freqs? 
-
-      // TODO aa? 
-
       pInfo *partition =  getPartition(i);
       assert(partition->dataType == DNA_DATA);
 
@@ -156,6 +156,21 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
       setRevMat(std::vector<double>( num , 1.0 ), i); 
       setAlpha(1, i); 
     }
+
+  // HACK: initialize the tree somehow 
+  randCtr_t s; 
+  s.v[0] = 0 ; 
+  s.v[1] = 1 ; 
+  Randomness r(s); 
+  TreeRandomizer::randomizeTree(*this,r ); 
+
+  // evaluate once, to activate the likelihood arrays  
+  auto start = tr.start; 
+#if HAVE_PLL != 0  
+  evaluateGeneric(&tr, getPartitionsPtr(), start, true); 
+#else 
+  evaluateGeneric(&tr, start, true); 
+#endif   
 }
 
 
@@ -303,7 +318,8 @@ nodeptr TreeAln::getUnhookedNode(int number)
 #define UNSAFE_EXACT_TREE_COPY
 
 
-TreeAln& TreeAln::operator=( TreeAln& rhs)
+// TreeAln& TreeAln::operator=( TreeAln& rhs)
+ void TreeAln::copyModel(const TreeAln& rhs)
 {  
   assert(&rhs != this); 
 
@@ -326,8 +342,8 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 
   this->unlinkTree();
   int mxtips = rhs.getTr()->mxtips ;
-  tree *rhsTree = rhs.getTr(),
-    *thisTree = getTr();
+  auto *rhsTree = rhs.getTr(); 
+  auto *thisTree = getTr();
 
 
 #ifdef UNSAFE_EXACT_TREE_COPY
@@ -386,7 +402,6 @@ TreeAln& TreeAln::operator=( TreeAln& rhs)
 #endif
 
   tr.start = tr.nodep[rhsTree->start->number];   
-  return *this; 
 }
 
 
@@ -761,3 +776,40 @@ std::pair<Branch,Branch> TreeAln::getDescendingBranches(const Branch &b) const
     { Branch(p->next->number, p->next->back->number), Branch(p->next->next->number, p->next->next->back->number) }; 
 } 
 
+
+ 
+// for debug 
+void TreeAln::printArrayStart(std::ostream &out, nat length )
+{
+  out << SOME_SCI_PRECISION; 
+  auto numTax = getNumberOfTaxa(); 
+  for(nat i =   0  ; i < getNumberOfInnerNodes( )   ; ++i)
+    {
+      out << "[ array " << i + numTax  <<  " ]"; 
+	
+      for(nat ctr = 0 ; ctr < length  ; ++ctr)
+	{
+	  for(nat j = 0 ; j < 4; ++j)
+	    {
+	      auto partition = getPartition(0); 
+	      out << partition->xVector[i][ctr * 4 + j] << "," ; 
+	    }
+	  out << "\t" ;
+	}
+      out << std::endl; 
+    } 
+}
+
+
+
+
+std::ostream& operator<<(std::ostream& out, pInfo& rhs)
+{
+  assert(rhs.dataType == DNA_DATA); 
+  out << "{DNA,pi=(" ; 
+  std::copy(rhs.frequencies, rhs.frequencies + 4, std::ostream_iterator<double>(tout,",")); 
+  out << "),r=("; 
+  std::copy(rhs.substRates, rhs.substRates+ 6, std::ostream_iterator<double> (tout, ",")); 
+  out << "),alpha=" << rhs.alpha << "}"; 
+  return out ; 
+}

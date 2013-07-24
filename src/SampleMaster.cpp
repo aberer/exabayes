@@ -6,6 +6,10 @@
 #include "config/BlockRunParameters.hpp"
 #include "config/ConfigReader.hpp"
 
+#include "priors/FixedPrior.hpp"
+#include "parameters/TopologyParameter.hpp"
+
+#include "config/MemoryMode.hpp"
 #include "SampleMaster.hpp"
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
@@ -17,8 +21,12 @@
 
 #include "LnlRestorer.hpp"
 #include "AvgSplitFreqAssessor.hpp"
-#include "ProposalFunctions.hpp"
 
+#include "proposers/AbstractProposer.hpp"
+#include "proposers/SlidingProposal.hpp"
+#include "proposers/MultiplierProposal.hpp"
+
+#include "PlainLikelihoodEvaluator.hpp"
 #include "RestoringLnlEvaluator.hpp"
 
 
@@ -42,6 +50,36 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
 }
 
 
+
+void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness)
+{  
+  auto tr = traln.getTr();
+  bool hasBranchLength = false; 
+  if(treesConsumed < numTreesAvailable) // use a user defined starting tree 
+    {
+      hasBranchLength = readTreeWithOrWithoutBL(tr, treeFH);
+      ++treesConsumed; 
+    }
+  else
+    {	      
+      if(runParams.isUseParsimonyStarting())
+	TreeRandomizer::createParsimonyTree(traln, treeRandomness); 
+      else
+	TreeRandomizer::randomizeTree(traln, treeRandomness); 
+    }
+
+  // correct branches 
+  for(auto &b : traln.extractBranches())
+    {
+      b.setLength( hasBranchLength ? 
+		   ( - exp(b.getLength() / tr->fracchange)) 
+		   : TreeAln::initBL ); 
+      traln.setBranch(b); 
+    }
+}
+
+
+
 void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH)
 {  
   Randomness treeRandomness(seed); 
@@ -54,33 +92,9 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 
   // choose how to initialize the topology
   for(auto &tralnPtr : treesToInitialize)
-    {
-      auto tr = tralnPtr->getTr();
-      bool hasBranchLength = false; 
-      if(treesConsumed < numTreesAvailable) // use a user defined starting tree 
-	{
-	  hasBranchLength = readTreeWithOrWithoutBL(tr, treeFH);
-	  ++treesConsumed; 
-	}
-      else
-	{	      
-	  if(runParams.isUseParsimonyStarting())
-	    TreeRandomizer::createParsimonyTree(*tralnPtr, treeRandomness); 
-	  else
-	    TreeRandomizer::randomizeTree(*tralnPtr, treeRandomness); 
-	}
+    initializeTree(*tralnPtr,  treesConsumed, numTreesAvailable, treeFH, treeRandomness); 
 
-      // correct branches 
-      for(auto &b : tralnPtr->extractBranches())
-	{
-	  b.setLength( hasBranchLength ? 
-		       ( - exp(b.getLength() / tr->fracchange)) 
-		       : TreeAln::initBL ); 
-	  tralnPtr->setBranch(b); 
-	}
-    }
-
-  // propagate the tree to the coupled chains, if necessaroy
+  // propagate the tree to the coupled chains, if necessary
   if(runParams.isHeatedChainsUseSame())
     {
       TreeAln &ref = *( trees[0]); 
@@ -90,11 +104,10 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 	  if(isFirst )
 	    isFirst = false; 
 	  else 
-	    (*treePtr) = ref; 
+	    treePtr->copyModel(ref); 
 	}
     }
 }
-
 
 
 void SampleMaster::printAlignmentInfo(const TreeAln &traln)
@@ -143,22 +156,39 @@ void SampleMaster::initializeRuns( )
     }
 
   // initialize one tree 
-  vector<shared_ptr<TreeAln> > trees; 
-  trees.push_back(make_shared<TreeAln>());
-  trees[0]->initializeFromByteFile(cl.getAlnFileName()); 
-  trees[0]->enableParsimony();
+  unique_ptr<TreeAln> initTreePtr = std::unique_ptr<TreeAln>(new TreeAln()); 
 
-  printAlignmentInfo(*(trees[0])); 
+  std::vector<std::shared_ptr<TreeAln> > trees; 
+  initTreePtr->initializeFromByteFile(cl.getAlnFileName()); 
+  initTreePtr->enableParsimony();
+  const TreeAln& initTree = *initTreePtr; 
+
+  printAlignmentInfo(initTree); 
 
   vector<unique_ptr<AbstractProposal> > proposals; 
   vector<unique_ptr<AbstractParameter> > variables; 
 
-  auto restorer = make_shared<LnlRestorer>(*(trees[0]));  
-  auto eval = make_shared<RestoringLnlEvaluator>(restorer); 
-  
-  initWithConfigFile(cl.getConfigFileName(), trees[0], proposals, variables, eval);
-  assert(runParams.getTuneFreq() > 0); 
-  
+  std::unique_ptr<LikelihoodEvaluator> eval; 
+
+  switch(cl.getMemoryMode())
+    {
+    case MemoryMode::RESTORING: 
+      {
+	auto restorer = make_shared<LnlRestorer>(initTree);  
+	eval = std::unique_ptr<RestoringLnlEvaluator>( new RestoringLnlEvaluator(restorer)); 
+      }
+      break; 
+    case MemoryMode::PLAIN:
+      {
+	// NOT IMPLEMENTED YET 
+	assert(0); 
+	// eval = make_shared<PlainLikelihoodEvaluator>();
+      }
+      break; 
+    default : 
+      assert(0);       
+    }
+
 #ifdef DEBUG_LNL_VERIFY
   auto dT = make_shared<TreeAln>();
   dT->initializeFromByteFile(cl.getAlnFileName()); 
@@ -166,11 +196,13 @@ void SampleMaster::initializeRuns( )
   eval->setDebugTraln(dT);
 #endif
 
+  initWithConfigFile(cl.getConfigFileName(), &initTree, proposals, variables, eval);
+  assert(runParams.getTuneFreq() > 0); 
+
   // ORDER: must be after initWithConfigFile
-  for(int i = trees.size(); i < runParams.getNumCoupledChains(); ++i)
-    {
-      auto traln =  make_shared<TreeAln>();
-      trees.push_back(traln); 
+  for(int i = 0 ; i < runParams.getNumCoupledChains(); ++i)
+    {      
+      trees.push_back(make_shared<TreeAln>()); 
       trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
       trees[i]->enableParsimony();
     }
@@ -186,11 +218,50 @@ void SampleMaster::initializeRuns( )
       treeSeeds.push_back(masterRand.generateSeed()); 
     }
 
+  // determine if topology is fixed 
+  bool topoIsFixed = false; 
+  for(auto &v :variables)
+    {
+      if( dynamic_cast<TopologyParameter*>(v.get())  != nullptr
+	  && dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr )
+	topoIsFixed = true; 
+    }
+
+
+  if(numTreesAvailable > 1 )
+    {
+      tout << "You provided " << numTreesAvailable << " starting trees" << std::endl; 
+      if(topoIsFixed)
+	tout << "Since the topology is fixed, only the first one will be used." << std::endl; 
+    }
+
+  // TODO use a topology parameter here. It is nasty to always work with those trees  
+  if(topoIsFixed)
+    {
+      nat tmp = 0; 
+      Randomness treeRandomness(treeSeeds[0]); 
+      // BAD!
+      TreeAln &something = *initTreePtr; 
+      initializeTree(something, tmp, numTreesAvailable, treeFH, treeRandomness); 
+    }
+
+
   nat treesConsumed = 0; 
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
     {    
-      initTrees(trees, treeSeeds[i], treesConsumed, numTreesAvailable, treeFH); 
-
+      if(topoIsFixed)
+	{
+	  for(auto &t : trees)
+	    {
+	      tout << "copying tree " << std::endl; 
+	      t->copyModel(*initTreePtr); 
+	    }
+	}
+      else 
+	{
+	  initTrees(trees, treeSeeds[i], treesConsumed, numTreesAvailable, treeFH); 
+	}
+      
       if( i % pl.getRunsParallel() == pl.getMyRunBatch() )
 	{
 	  vector<Chain> chains; 
@@ -198,7 +269,7 @@ void SampleMaster::initializeRuns( )
 	  for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
 	    {
 	      randCtr_t c; 
-	      chains.emplace_back( c , trees[j], proposals, eval  ); 
+	      chains.emplace_back( c , trees[j], proposals, std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
 	      auto &chain = chains[j]; 		
 	      chain.setRunId(i); 
 	      chain.setTuneFreuqency(runParams.getTuneFreq()); 
@@ -269,7 +340,7 @@ void SampleMaster::initializeRuns( )
     }
 
 
-  if(not diagFile.isInitialized())
+  if(pl.isMasterReporter() && not diagFile.isInitialized())
     diagFile.initialize(cl.getWorkdir(), cl.getRunid(), runs);
 
   tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl;   
@@ -386,19 +457,19 @@ static int countNumberOfTreesQuick(const char *fn )
 }
 
 
-void SampleMaster::initWithConfigFile(string configFileName, shared_ptr<TreeAln> traln, 
-				      vector<unique_ptr<AbstractProposal> > &proposalResult, 
-				      vector<unique_ptr<AbstractParameter> > &variableResult, 
-				      shared_ptr<LikelihoodEvaluator> eval)
+void SampleMaster::initWithConfigFile(string configFileName, const TreeAln* tralnPtr,
+				      std::vector<std::unique_ptr<AbstractProposal> > &proposalResult, 
+				      std::vector<std::unique_ptr<AbstractParameter> > &variableResult, 
+				      const std::unique_ptr<LikelihoodEvaluator> &eval)
 {
   ConfigReader reader; 
   ifstream fh(configFileName); 
   NxsToken token(fh); 
 
-  paramBlock.setTree(traln); 
+  paramBlock.setTree(tralnPtr); 
   reader.Add(&paramBlock); 
 
-  BlockPrior priorBlock(traln->getNumberOfPartitions());
+  BlockPrior priorBlock(tralnPtr->getNumberOfPartitions());
   reader.Add(&priorBlock);
 
   reader.Add(&runParams);
@@ -409,7 +480,7 @@ void SampleMaster::initWithConfigFile(string configFileName, shared_ptr<TreeAln>
   reader.Execute(token);
 
   RunFactory r; 
-  r.configureRuns(proposalConfig, priorBlock , paramBlock, *traln, proposalResult, eval);
+  r.configureRuns(proposalConfig, priorBlock , paramBlock, *tralnPtr, proposalResult, eval);
   variableResult = r.getRandomVariables(); 
 }
 
@@ -492,7 +563,8 @@ void SampleMaster::run()
 	{
 	  double asdsf = convergenceDiagnostic(); 
 	  hasConverged = asdsf < runParams.getAsdsfConvergence();  
-	  diagFile.printDiagnostics(curGen, asdsf, runs);
+	  if(pl.isMasterReporter())
+	    diagFile.printDiagnostics(curGen, asdsf, runs);
 #ifdef ENABLE_PRSF      
 	  printPRSF(run_id);
 #endif

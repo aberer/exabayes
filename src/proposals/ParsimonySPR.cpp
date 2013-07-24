@@ -224,14 +224,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
       move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 
-  // if(hastings == 0)
-  //   {
-  //     tout << "proposing move: " << move  << std::endl; 
-  //     assert(hastings != 0); 
-  //   }
-  
-  // assert(hastings != 0); 
-  // debug_checkTreeConsistency(traln);   
+  // tout << "proposing move: " << move  << std::endl; 
 }
 
 
@@ -250,12 +243,16 @@ void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
 }
 
 
-void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
+#include "TreePrinter.hpp"
+
+void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
 {  
   Branch toEval = move.getEvalBranch(traln);
+  TreePrinter tp(false, true, false);
+  
   nodeptr toEvalP = toEval.findNodePtr(traln) ; 
   move.disorientAtNode(traln,toEvalP);
-  evaluator.evaluate(traln,toEval, false); 
+  evaluator->evaluate(traln,toEval, false); 
 }
 
 void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior) 

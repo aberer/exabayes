@@ -1,23 +1,33 @@
 #include <algorithm>
 #include <functional>
 
+#include "GlobalVariables.hpp"
+
 #include "RevMatParameter.hpp"
 #include "axml.h"
 
 void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
-  std::vector<double> tmp = content.values; 
-  for_each(tmp.begin(), tmp.end(), [&](double &d){return d /= *(tmp.rbegin()) ;  } );
+  auto tmp = content.values; 
 
+  for_each(tmp.begin(), tmp.end(), [&](double &d){return d /= *(tmp.rbegin()) ;  } );
+  
   for(auto &m : partitions)
     traln.setRevMat(tmp, m);
+
+  auto newStuff = traln.getRevMat(partitions[0]);
+  
+  // tout << "applying new values " ;  
+  // std::copy(newStuff.begin(), newStuff.end(), std::ostream_iterator<double>(tout, ",")); 
+  // tout << std::endl;   
+  // tout << "fracchange = " << traln.getTr()->fracchange << std::endl; 
 } 
 
 
 ParameterContent RevMatParameter::extractParameter(const TreeAln &traln )  const
 {
   ParameterContent result; 
-  result.values = traln.getRevMat(partitions[0]); 
+  result.values = traln.getRevMat(partitions.at(0)); 
   double sum = 0; 
   for(auto &v : result.values )
     sum += v;  

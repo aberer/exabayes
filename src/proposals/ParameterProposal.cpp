@@ -2,15 +2,26 @@
 #include "tune.h"
 
 ParameterProposal::ParameterProposal(Category cat, std::string _name, bool modifiesBL,  
-				     std::shared_ptr<AbstractProposer> _proposer, double parameter )
+				     std::unique_ptr<AbstractProposer> _proposer, double parameter )
   : modifiesBL(modifiesBL)
   , parameter(parameter)
-  , proposer(_proposer)  
+  , proposer(std::move(_proposer))  
 {
   category = cat; 
   name = _name ; 
   relativeWeight = 0;   
 } 
+
+
+
+ParameterProposal::ParameterProposal(const ParameterProposal &rhs) 
+  : AbstractProposal(rhs)  
+  , modifiesBL(rhs.modifiesBL)
+  , parameter(rhs.parameter)
+  , proposer(std::unique_ptr<AbstractProposer>(rhs.proposer->clone()))
+{
+  
+}
 
 
 void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
@@ -34,6 +45,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   // well (to some degree )
   
   auto newValues = proposer->proposeValues(content.values, parameter, rand, hastings); 
+
   assert(newValues.size() == content.values.size()); 
   assert(traln.getNumBranches() == 1 ); 
 
@@ -43,7 +55,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   // use our parameter object to set the frequencies or revtmat rates
   // or what ever (for all partitions)
   primVar[0]->applyParameter(traln, newContent); 
-  
+
   // now take care of the fracchange 
   double newFracChange = traln.getTr()->fracchange; 
   if(modifiesBL)
@@ -61,16 +73,17 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 } 
 
 
-void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior)
+void ParameterProposal::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
 {
   assert(primVar.size() == 1 ); 
-  evaluator.evaluatePartitions(traln, primVar[0]->getPartitions() ); 
+  evaluator->evaluatePartitions(traln, primVar[0]->getPartitions() , true); 
 }
  
 void ParameterProposal::resetState(TreeAln &traln, PriorBelief &prior) 
 {
   assert(primVar.size() == 1 ); 
   primVar[0]->applyParameter(traln, savedContent);
+  // tout << "resetting to " << savedContent << std::endl; 
 }
 
 

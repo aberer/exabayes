@@ -30,8 +30,9 @@ public:
   
   teestream* teeOut; 
   std::ofstream* logStream;
-
 };
+
+
 
 
 #endif
@@ -41,10 +42,11 @@ public:
 
 GlobalVariables globals; 
 std::chrono::system_clock::time_point timeIncrement;  
+int debugPrint = 0; 
 
 #else 
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 
 extern std::chrono::system_clock::time_point timeIncrement;  
-
+extern int debugPrint; 
 #endif

@@ -26,7 +26,7 @@
 class RunFactory
 {
 public:  
-  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval);
+  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, const std::unique_ptr<LikelihoodEvaluator> &eval);
   vector<unique_ptr<AbstractParameter> > getRandomVariables() const
   {
     vector<unique_ptr<AbstractParameter> > result; 

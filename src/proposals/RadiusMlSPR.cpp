@@ -472,7 +472,7 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
    actually this method should not do anything. Currently, we need
    it, to update the lnl arrays appropriatly. Pretty expensive.
 */ 
-void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
+void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
 {
 #if 0 
   evaluateGenericWrapper(traln, p, FALSE );

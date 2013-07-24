@@ -18,7 +18,7 @@ public:
     NCL_BLOCKTYPE_ATTR_NAME = "PARAMS";    
   }
 
-  void setTree(shared_ptr<TreeAln> _traln){traln = _traln; }
+  void setTree(const TreeAln* _traln){traln = _traln; }
   vector<unique_ptr<AbstractParameter> > getParameters() const; 
   virtual void Read(NxsToken &token); 
 
@@ -26,7 +26,7 @@ private:
   void partitionError(nat partition, nat totalPart) const ; 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
   vector<unique_ptr<AbstractParameter> > parameters; 
-  shared_ptr<TreeAln> traln; 
+  const TreeAln* traln;  	// NON-owning
 }; 
 
 

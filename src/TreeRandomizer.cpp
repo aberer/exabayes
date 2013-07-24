@@ -20,7 +20,6 @@ void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
 }
 
 
-
 void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
 {
   for(nat i = 1 ; i < traln.getNumberOfNodes() + 1 ; ++i)

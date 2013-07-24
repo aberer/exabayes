@@ -5,6 +5,8 @@
 #include "GlobalVariables.hpp"
 #include "ParallelSetup.hpp"
 
+#include "MemoryMode.hpp"
+
 
 CommandLine::CommandLine(int argc, char **argv)
   : configFileName("")
@@ -14,6 +16,7 @@ CommandLine::CommandLine(int argc, char **argv)
   , workDir("")
   , runNumParallel(1)
   , checkpointId("")
+  , memoryMode(MemoryMode::RESTORING)
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -87,7 +90,7 @@ void CommandLine::parse(int argc, char *argv[])
   // TODO threads/ processes? 
   // TODO implement working directory 
   
-  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:")) != EOF)
+  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:M:")) != EOF)
     {
       switch(c)
 	{

@@ -10,7 +10,7 @@ double PlainLikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBran
   exa_evaluateGeneric(traln,evalP,TRUE );   
 #ifdef DEBUG_LNL_VERIFY
   if(verifyLnl)
-    exopensiveVerify(traln);
+    expensiveVerify(traln);
 #endif
 
   return traln.getTr()->likelihood; 

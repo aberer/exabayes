@@ -42,6 +42,8 @@
 #include <assert.h>
 #include "axml.h"
 
+extern int debugPrint; 
+
 /* the set of functions in here computes the log likelihood at a given branch (the virtual root of a tree) */
 
 /* includes for using SSE3 intrinsics */
@@ -771,20 +773,23 @@ void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraver
       computeTraversal(tr, q, TRUE, numBranches);
   }
 
-#if 0
-  printf("need to recompute: "); 
-  for(int i = 0; i < tr->td[0].count ; ++i)
+/* #if 0 */
+  if(debugPrint)
     {
-      if(tr->td[0].ti != NULL )
+      printf("need to recompute: "); 
+      for(int i = 0; i < tr->td[0].count ; ++i)
 	{
-	  if(i == 0)
-	    printf("(%d=%d+%d),",  tr->td[0].ti[i].rNumber, tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber  );       
-	  else 
-	    printf("(%d=%d+%d),",  tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber, tr->td[0].ti[i].rNumber ); 
+	  if(tr->td[0].ti != NULL )
+	    {
+	      if(i == 0)
+		printf("(%d=%d+%d),",  tr->td[0].ti[i].rNumber, tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber  );       
+	      else 
+		printf("(%d=%d+%d),",  tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber, tr->td[0].ti[i].rNumber ); 
+	    }
 	}
-    }
-  printf("\n"); 
-#endif
+      printf("\n"); 
+    } 
+/* #endif */
 
   /* now we copy this partition execute mask into the traversal descriptor which must come from the 
      calling program, the logic of this should not form part of the library */

@@ -1,4 +1,4 @@
-folders=./src ./src/proposals  ./src/parameters ./src/config ./src/priors
+folders=./src ./src/proposals ./src/parameters ./src/config ./src/priors ./src/proposers
 my-update-src:
 	@echo "" > src.am 
 	@echo "libbayes_a_SOURCES=" $(shell find $(folders)  -maxdepth 1   -name "*.[ch]" )  $(shell find $(folders)  -maxdepth 1   -name "*.[ch]pp" ) >> src.am

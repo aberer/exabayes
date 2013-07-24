@@ -27,6 +27,8 @@ public:
   std::string getCheckpointId()const {return checkpointId; }
   void parseAlternative(int argc, char *argv[]); 
 
+  MemoryMode getMemoryMode()const {return memoryMode ;  }
+
 private: 			// METHODS
 
   void assertFileExists(std::string filename); 

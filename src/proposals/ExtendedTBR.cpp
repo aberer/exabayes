@@ -133,17 +133,22 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
       move.multiplyBranches(traln, rand, hastings, prior,  multiplier, {brPr}); 
     }
 
+  // tout << "Move: "<< std::endl; 
+  // tout << move << std::endl; 
+
   move.applyToTree(traln);
 }
 
 
-void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& traln, PriorBelief& prior)
+void ExtendedTBR::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln& traln, PriorBelief& prior)
 { 
   Branch toEval = move.getEvalBranch(traln);
+  // tout <<  "eval " << toEval << std::endl; 
+  // tout << "TREE " << traln << std::endl; 
   auto p = toEval.findNodePtr(traln); 
   move.disorientAtNode(traln,p->back);     
 
-  evaluator.evaluate(traln,toEval,false); 
+  evaluator->evaluate(traln,toEval,false); 
 }
 
 

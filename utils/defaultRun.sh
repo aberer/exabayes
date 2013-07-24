@@ -3,11 +3,30 @@
 
 topdir=$(dirname  $0 )/../
 
-model=GAMMA
-seed=123
-runid=testRun
 
+
+
+
+model=GAMMA
+# seed=$RANDOM
+seed=20916
+
+# lakner-27
+# seed=28233
+
+# small dna 
+# seed=5594
+
+runid=testRun
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
+
+
+# use cgdb, if available 
+GDB=gdb
+if [ "$(which cgdb )" != ""   ]; then
+    GDB="gdb"
+fi
+
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
@@ -56,7 +75,7 @@ default=$1
 if [ "$default" == "debug" ]; then 
     cflags="$cflags -O0 -g"
     cxxflags="$cxxflags -O0 -g"
-    gdb="$TERM -e gdb -ex run --args "
+    gdb="$TERM -e $GDB -ex run --args "
 elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"
     exit 

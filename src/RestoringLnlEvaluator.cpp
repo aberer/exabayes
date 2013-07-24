@@ -1,7 +1,9 @@
 #include "RestoringLnlEvaluator.hpp"
 
+#include "GlobalVariables.hpp"
 
-RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<LnlRestorer> _restorer)
+
+RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<LnlRestorer> _restorer)  
 {
   this->restorer = _restorer; 
 }
@@ -12,10 +14,13 @@ double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch,
   int model  = ALL_MODELS; 
   nodeptr start = evalBranch.findNodePtr(traln) ; 
 
+  if(fullTraversal)
+    disorientTree(traln, evalBranch); 
+  
   restorer->traverseAndSwitchIfNecessary(traln, start, model, fullTraversal);
   restorer->traverseAndSwitchIfNecessary(traln, start->back, model, fullTraversal);
   
-  exa_evaluateGeneric(traln,start,fullTraversal);   
+  exa_evaluateGeneric(traln,start,FALSE); // must be FALSE
 #ifdef DEBUG_LNL_VERIFY
   if(verifyLnl)
     expensiveVerify(traln);
@@ -59,8 +64,12 @@ void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranc
 
 
 
-double RestoringLnlEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)    
+
+double RestoringLnlEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)    
 {
+  // per-partition stuff not implemented yet (would be needed for per-partition bls)
+  assert(fullTraversal); 
+
   Branch root = findVirtualRoot(traln); 
   
   auto tr = traln.getTr(); 
@@ -76,8 +85,8 @@ double RestoringLnlEvaluator::evaluatePartitions( TreeAln &traln, const std::vec
   
   for(auto p : partitions)
     {
-      restorer->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, true ); 
-      restorer->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, true); 
+      restorer->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, fullTraversal ); 
+      restorer->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, fullTraversal); 
     }
 
   exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
@@ -100,6 +109,9 @@ double RestoringLnlEvaluator::evaluatePartitions( TreeAln &traln, const std::vec
 }
 
 
+
+
+
 void RestoringLnlEvaluator::resetToImprinted(TreeAln &traln)
 {
   restorer->restoreArrays(traln); 
@@ -111,19 +123,40 @@ void RestoringLnlEvaluator::resetToImprinted(TreeAln &traln)
   assert( (traln.isTipNode(p) ||  p->x) 
 	  && (traln.isTipNode(q) || q->x ) );
 
+#if 0 
 #ifdef DEBUG_LNL_VERIFY
-  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE );   
+  auto evalP = root.findNodePtr(traln); 
+
+  disorientTree(traln, root) ;
+  exa_evaluateGeneric(traln, evalP,  FALSE  );   
+
+  traln.printArrayStart(tout);
+
   if(fabs(prevLnl - traln.getTr()->likelihood) > 1e-6)
-    {
+    {                  
       std::cout << "error while resetting lnl arrays. Likelihood should be " 
-		<< prevLnl << " but was " << traln.getTr()->likelihood << std::endl; 
+  		<< prevLnl << " but was " << traln.getTr()->likelihood << std::endl; 
+
+      // tout << traln << std::endl;
+      for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+  	{
+  	  auto p = traln.getPartition(i);
+  	  tout << *p << std::endl; 
+  	}
       assert(0); 
     }
 #endif
+#endif
+
+  traln.getTr()->likelihood = prevLnl; 
+  traln.setPartitionLnls(partitionLnls);   
 }
+
 
 void RestoringLnlEvaluator::imprint(const TreeAln &traln)
 { 
   prevLnl = traln.getTr()->likelihood; 
+  partitionLnls = traln.getPartitionLnls(); 
+  // tout << "imprinting lnl=" << prevLnl << std::endl; 
   restorer->resetRestorer(traln);   
 }

@@ -32,8 +32,8 @@ void SampleMaster::branchLengthsIntegration()
   tFile << tp.printTree(traln) << endl; 
   tFile << tp2.printTree(traln) << endl; 
   tFile.close(); 
-  
-  auto eval = chain.getEvaluatorPtr();
+
+  auto eval = chain.getEvaluator()->clone(); 
 
   vector<unique_ptr<AbstractParameter> > vars; 
   vars.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0 ))); 
@@ -50,7 +50,7 @@ void SampleMaster::branchLengthsIntegration()
   proposals.push_back( std::move(p) ); 
   proposals[0]->addPrimVar( std::move(vars[0])); 
 
-  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval );   
+  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval->clone() );   
 
   auto branches =  traln.extractBranches();
   auto ps = integrationChain.getProposalView(); 

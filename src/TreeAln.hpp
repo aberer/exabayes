@@ -9,8 +9,10 @@
 #include "Branch.hpp"
 #include "axml.h"
 #include "Randomness.hpp"
-
+#include "GlobalVariables.hpp"
 #include "TreePrinter.hpp"
+
+std::ostream& operator<<(std::ostream& out, pInfo& rhs); 
 
 nat numStateToNumInTriangleMatrix(int numStates) ; 
 
@@ -31,7 +33,7 @@ public:
      @brief copies the entire state from the rhs to this tree/alignment.
      Important: likelihood arrays are not concerned
   */ 
-  TreeAln& operator=( TreeAln &rhs); 
+  TreeAln& operator=( TreeAln &rhs) = delete ; 
   TreeAln(const TreeAln &tmp) = delete ; 
 
 
@@ -69,7 +71,7 @@ public:
   /** 
       @brief get the number of nodes in the unrooted tree 
    */ 
-  nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 3 ;  } // excluding the virtual root 
+  nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 2 ;  } // excluding the virtual root 
   /** 
       @brief get the substitution matrix for partition "model"
    */ 
@@ -101,7 +103,11 @@ public:
   /**
      @brief determines the (internal representation of the) tree length
    */ 
-  double getTreeLengthExpensive() const;
+  double getTreeLengthExpensive() const;  
+  /** 
+      @brief gets the number of inner nodes in the tree 
+   */ 
+  nat getNumberOfInnerNodes() const { return getNumberOfNodes()  - getNumberOfTaxa()  ;   } 
   
 
   ///////////////
@@ -144,7 +150,9 @@ public:
    */ 
   void unlinkTree();
   /** 
-      @brief initializes the tree from a binary file 
+      @brief initializes the tree from a binary file.  It guarantees
+      that the tree is in a usable state afterwards (and thus, this
+      method may me rather expensive)
   */ 
   void initializeFromByteFile(std::string  byteFileName); 
   /**
@@ -166,6 +174,16 @@ public:
 
   static const double zZero;   
   static const double initBL;  	// init values 
+
+  // DEBUG 
+  void printArrayStart(std::ostream &out, nat length = 2 ); 
+
+  /** 
+      @brief copies the entire model from the rhs.
+      Mostly for debugging purposes. 
+   */ 
+  void copyModel(const TreeAln& rhs); 
+
 
 private: 			// METHODS  
 #if HAVE_PLL != 0
