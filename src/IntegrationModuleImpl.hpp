@@ -2,8 +2,9 @@
 
 // experimental code that should not directly mix with production level code. 
 
+// TODO! 
 #define STEPS_FOR_LNL 1000
-#define INTEGRATION_GENERATIONS 100000
+#define INTEGRATION_GENERATIONS 10000
 #define NR_STEPS 30
 
 
@@ -57,14 +58,22 @@ void SampleMaster::branchLengthsIntegration()
   assert(ps.size() == 1 );   
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
 
+  integrationChain.suspend(false); 
+
   for(auto &branch : branches)
     {      
       double minHere = 1000; 
       double maxHere = 0; 
       Branch initBranch = branch; 
 
+      // integrator.resume(true); 
+      integrationChain.resume(false, false ); 
+
       traln.setBranch(branch); 
+
       eval->evaluate(traln, branch, true); 
+      integrationChain.reinitPrior();
+
       integrator->setToPropose(branch); 
       
       stringstream ss; 
@@ -84,7 +93,7 @@ void SampleMaster::branchLengthsIntegration()
 	    minHere = iLen; 
 	  if(maxHere < iLen)
 	    maxHere = iLen; 
-	}      
+	} 
 
       thisOut.close();
       

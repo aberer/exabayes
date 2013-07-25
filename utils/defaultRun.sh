@@ -8,8 +8,8 @@ topdir=$(dirname  $0 )/../
 
 
 model=GAMMA
-# seed=$RANDOM
-seed=20916
+seed=$RANDOM
+# seed=20916
 
 # lakner-27
 # seed=28233

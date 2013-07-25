@@ -100,6 +100,8 @@ public:
   const PriorBelief& getPrior() const  {return prior; } 
   void sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const ; 
 
+  void reinitPrior() { prior.initialize(*tralnPtr, extractVariables()); }
+
   virtual void readFromCheckpoint( std::ifstream &in ) ; 
   virtual void writeToCheckpoint( std::ofstream &out) ;   
 
