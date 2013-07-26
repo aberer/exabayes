@@ -1146,7 +1146,7 @@ typedef  struct  {
  
   unsigned int bestParsimony;
   unsigned int *parsimonyScore;
-  
+
   double bestOfNode;
   nodeptr removeNode;   /**< the node that has been removed. Together with \a insertNode represents an SPR move */
   nodeptr insertNode;   /**< the node where insertion should take place . Together with \a removeNode represents an SPR move*/

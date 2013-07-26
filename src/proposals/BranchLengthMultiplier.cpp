@@ -28,6 +28,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   savedBranch = b; 
 
   double oldZ = traln.getBranch(p).getLength();
+  // tout << "oldZ=" << MAX_SCI_PRECISION  << oldZ << std::endl; 
   savedBranch.setLength( oldZ); 
   assert(traln.getNumBranches() == 1); 
   

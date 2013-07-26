@@ -769,7 +769,7 @@ nodeptr TreeAln::getNode(nat elem) const
 
 
 
-std::pair<Branch,Branch> TreeAln::getDescendingBranches(const Branch &b) const
+std::pair<Branch,Branch> TreeAln::getDescendants(const Branch &b) const
 {
   auto p = b.findNodePtr(*this); 
   return std::pair<Branch,Branch>
@@ -812,4 +812,11 @@ std::ostream& operator<<(std::ostream& out, pInfo& rhs)
   std::copy(rhs.substRates, rhs.substRates+ 6, std::ostream_iterator<double> (tout, ",")); 
   out << "),alpha=" << rhs.alpha << "}"; 
   return out ; 
+}
+
+
+
+Branch TreeAln::getBranch(const Branch &b) const
+{
+  return  getBranch(b.findNodePtr(*this)); 
 }

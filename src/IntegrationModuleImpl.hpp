@@ -2,17 +2,37 @@
 
 // experimental code that should not directly mix with production level code. 
 
-// TODO! 
-#define STEPS_FOR_LNL 1000
+#define STEPS_FOR_LNL  1000 
 #define INTEGRATION_GENERATIONS 10000
+
+// #define STEPS_FOR_LNL  10 
+// #define INTEGRATION_GENERATIONS 
 #define NR_STEPS 30
 
 
+#include "BoundsChecker.hpp"
 #include <sstream>
 #include "priors/ExponentialPrior.hpp"
 #include "proposals/BranchIntegrator.hpp"
 #include "ProposalRegistry.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
+
+std::pair<double,double> getMeanAndVar (const std::vector<double> &data )
+{
+  double mean = 0; 
+  for(auto d: data)
+    mean += d; 
+  mean /= data.size(); 
+  
+  double var = 0; 
+  for(auto d : data)
+    var += pow(d - mean, 2); 
+  var /= data.size(); 
+
+  return std::pair<double,double>(mean,var);  
+}
+
+
 
 void SampleMaster::branchLengthsIntegration()  
 {
@@ -62,24 +82,24 @@ void SampleMaster::branchLengthsIntegration()
 
   for(auto &branch : branches)
     {      
+      // setup 
+      integrationChain.resume(false, false ); 
+      traln.setBranch(branch); 
+      eval->evaluate(traln, branch, true); 
+      integrationChain.reinitPrior();
+
       double minHere = 1000; 
       double maxHere = 0; 
       Branch initBranch = branch; 
 
-      // integrator.resume(true); 
-      integrationChain.resume(false, false ); 
-
-      traln.setBranch(branch); 
-
-      eval->evaluate(traln, branch, true); 
-      integrationChain.reinitPrior();
-
       integrator->setToPropose(branch); 
-      
+
+      ////////////////////////
+      // integrate branch   //
+      ////////////////////////      
       stringstream ss; 
       ss << "samples." << cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
-      ofstream thisOut (ss.str()); 
-      
+      ofstream thisOut (ss.str());       
       // run the chain to integrate 
       tout << "integrating branch " << branch << endl; 
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
@@ -94,10 +114,12 @@ void SampleMaster::branchLengthsIntegration()
 	  if(maxHere < iLen)
 	    maxHere = iLen; 
 	} 
-
       thisOut.close();
-      
-      // get branch lengths 
+
+
+      /////////////////////////////////////
+      // get branch length likelihoods   //
+      /////////////////////////////////////
       ss.str(std::string()); 
       ss << "lnl." << cl.getRunid() << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
       thisOut.open(ss.str());
@@ -112,8 +134,7 @@ void SampleMaster::branchLengthsIntegration()
 	      Branch b = branch; 
 	      b.setLength(tmp); 
 	      traln.setBranch(b); 
-	      
-	      // traln.setBranchLengthBounded(tmp, 0, branch.findNodePtr(traln)); 
+
 	      eval->evaluate(traln, branch, false);
 	      double lnl = traln.getTr()->likelihood; 
 	      
@@ -124,6 +145,10 @@ void SampleMaster::branchLengthsIntegration()
 	thisOut << minHere << "\t" << "NA" << endl; 
       thisOut.close(); 
 
+
+      /////////////////////////
+      // optimize the branch //
+      /////////////////////////
       Branch tmpBranch = branch; 
       tout << "optimizing the branch using nr" << endl; 
       ss.str(std::string());
@@ -166,11 +191,122 @@ void SampleMaster::branchLengthsIntegration()
 #endif
       
       thisOut << prevVal << "\t" << firstDerivative << "\t" << secDerivative << endl; 
-
       thisOut.close(); 
+
+
+      ///////////////////////////
+      // BRANCH CHANGE IMPACT  //
+      ///////////////////////////
+      ss.str(""); 
+      ss << "branchImpact." << cl.getRunid()<< "." << tmpBranch.getPrimNode() << "-" << tmpBranch.getSecNode()   <<  ".tab" ;
+      thisOut.open(ss.str()); 
+      
+      tmpBranch.setLength(result);       
+      traln.setBranch(tmpBranch);
+      
+      std::vector<Branch> firstOrderDesc; 
+      if(not traln.isTipNode(tmpBranch.findNodePtr(traln) ))
+	{
+	  auto res = traln.getDescendants(tmpBranch); 
+	  firstOrderDesc.push_back(res.first.getInverted()); 
+	  firstOrderDesc.push_back(res.second.getInverted()); 
+	}
+      if(not traln.isTipNode(tmpBranch.getInverted().findNodePtr(traln)) )
+	{
+	  auto res = traln.getDescendants(tmpBranch.getInverted()); 
+	  firstOrderDesc.push_back(res.first.getInverted()); 	  
+	  firstOrderDesc.push_back(res.second.getInverted()); 	  
+	}
+
+      std::vector<Branch> secOrderDesc; 
+      for(auto &b : firstOrderDesc)
+	{
+	  if(not b.isTipBranch(traln))
+	    {
+	      auto res = traln.getDescendants(b);
+	      secOrderDesc.push_back(res.first.getInverted()); 
+	      secOrderDesc.push_back(res.second.getInverted()); 
+	    }
+	}
+
+      // get the real branch lengths 
+      for(auto &b : firstOrderDesc)
+	b = traln.getBranch(b); 
+      for(auto &b : secOrderDesc)
+	b = traln.getBranch(b);       
+
+      std::vector<Branch> allDescendants; 
+      allDescendants.insert(allDescendants.end(), firstOrderDesc.begin(), firstOrderDesc.end()); 
+      allDescendants.insert(allDescendants.end(), secOrderDesc.begin(), secOrderDesc.end()); 
+
+      // meaning of vector: 
+      // (mean_opt, var_opt), (mean_half, var_half), (mean_double, var_double)
+      std::unordered_map<Branch,std::vector<double>,BranchHashNoLength, BranchEqualNoLength> branch2sampleStat; 
+      for(auto &b : allDescendants)
+	branch2sampleStat[b]= std::vector<double>(); 
+      
+      // try out these branch lengths for the main branch 
+      for(auto alt: {tmpBranch.getLength(), sqrt(tmpBranch.getLength()), pow(tmpBranch.getLength(),2) })
+	{      
+	  // tout << "tree is " << traln << std::endl; 
+	  tmpBranch.setLength(alt) ; 
+	  if(not BoundsChecker::checkBranch(tmpBranch))
+	    BoundsChecker::correctBranch(tmpBranch); 
+	  // tout << "setting branch under examination to " << tmpBranch << std::endl; 
+	  
+	  traln.setBranch(tmpBranch); 
+	  
+	  for(const Branch &b :allDescendants)
+	    {
+	      traln.setBranch(b); 
+	
+	      eval->evaluate(traln,b, true); 
+	      integrationChain.reinitPrior(); 
+
+	      std::vector<double> samples; 
+
+	      integrator->setToPropose(b);
+	      for(int i = 0; i < INTEGRATION_GENERATIONS; ++i )
+		{
+		  integrationChain.step();
+		  auto result = traln.getBranch(b); 
+		  auto iLen = result.getInterpretedLength(traln);
+		  if(i  % 10  == 0)
+		    samples.push_back(iLen);
+		}
+	  
+	      auto res = getMeanAndVar(samples); 	  
+	      branch2sampleStat[b].push_back(res.first); 
+	      branch2sampleStat[b].push_back(res.second); 
+	  
+	      traln.setBranch(b);
+	    }
+	}
+
+      Branch::printLength = false;  
+      for(auto &f : firstOrderDesc )
+	{
+	  assert(branch2sampleStat[f].size() == 6 ); 
+	  assert(branch2sampleStat.find(f) != branch2sampleStat.end());
+	  thisOut << "FIRST\t" << f << "\tOPT\t"  <<  branch2sampleStat[f][0]  << "\t" << branch2sampleStat[f][1] << std::endl; 
+	  thisOut << "FIRST\t" << f << "\tHALF\t"  << branch2sampleStat[f][2]  << "\t" << branch2sampleStat[f][3] << std::endl; 
+	  thisOut << "FIRST\t" << f << "\tDOUBLE\t"  << branch2sampleStat[f][4]  << "\t" << branch2sampleStat[f][5] << std::endl; 
+	}
+      for(auto &s : secOrderDesc )
+	{
+	  assert(branch2sampleStat[s].size() == 6 ); 
+	  assert(branch2sampleStat.find(s) != branch2sampleStat.end());
+	  thisOut << "SECOND\t" << s << "\tOPT\t"  << branch2sampleStat[s][0]  << "\t" << branch2sampleStat[s][1] << std::endl; 
+	  thisOut << "SECOND\t" << s << "\tHALF\t"  << branch2sampleStat[s][2]  << "\t" << branch2sampleStat[s][3] << std::endl; 
+	  thisOut << "SECOND\t" << s << "\tDOUBLE\t"  << branch2sampleStat[s][4]  << "\t" << branch2sampleStat[s][5] << std::endl; 
+	}
+      thisOut.close();
+      
+      Branch::printLength = true; 
       
       // reset 
       traln.setBranch(initBranch); 
+      tout << std::endl; 
     }
 
   tout << "finished!" << endl; 

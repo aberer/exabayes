@@ -65,10 +65,10 @@ begin runconfig;
  [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
 
  [ RUN PARAMETERS ]
- diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
+ diagFreq 500		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
- numRuns  1 	   	[ number of independant runs ]
- numGen 30000          [ if numRuns = 1, stop simulation after that many generations ] 
+ numRuns  4 	   	[ number of independant runs ]
+ numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
@@ -122,15 +122,17 @@ end;
       stNNI 0
 ]  
 
-[   
+
+
       [ BRANCH LENGTHS ] 
-[       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
-      branchMulti 0 
-       treeLengthMult 2  
-      nodeSlider  0 
-      branchCollapser 0 [ bug! ]      
-          aGibbsBL 20 
- ]
+      [ branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
+ 	branchMulti 0 
+ 	treeLengthMult 0  
+ 	nodeSlider  0 
+ 	branchCollapser 0 [ not maintained ]      
+ 	aGibbsBL 10 
+
+ 
   
       [ RATE HETEROGENEITY ]
 [       rateHetSlider 0 ] 
@@ -147,7 +149,6 @@ end;
       [ AA models ]
 [       aaModelJump 0  [ todo ] ] 
 
- 
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 

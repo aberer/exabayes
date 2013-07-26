@@ -1,6 +1,8 @@
 #include "Branch.hpp"
 #include "TreeAln.hpp"
 
+bool  Branch::printLength = true; 
+
 
 Branch::Branch(nat a , nat b, double length) 
   : thisNode(a), thatNode(b), length(length)
@@ -46,7 +48,10 @@ nodeptr Branch::findNodePtr(const TreeAln &traln) const
 
 std::ostream& operator<<(std::ostream &out, const Branch& br)
 { 
-  return out << "(" << br.thisNode << "/" << br.thatNode << "):" <<  std::setprecision(std::numeric_limits<double>::digits10 ) << br.length; 
+  if(Branch::printLength)
+    return out << "(" << br.thisNode << "/" << br.thatNode << "):" <<  MAX_SCI_PRECISION << br.length; 
+  else     
+    return out << "(" << br.thisNode << "/" << br.thatNode << ")";     
 }
 
 

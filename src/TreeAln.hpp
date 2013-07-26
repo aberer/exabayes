@@ -158,15 +158,20 @@ public:
   /**
      @brief gets a node with given id that is not connected to the tree right now 
    */ 
-  nodeptr getUnhookedNode(int number);
-
+  nodeptr getUnhookedNode(int number);  
+  /** 
+      @brief gets another branch (useful for updating the length)
+      @return a branch with correct length 
+   */ 
+  Branch getBranch(const Branch &b) const; 
+  
   ///////////////
   // observers //
   ///////////////
   /** 
       @brief gets the branches that are below one branch 
    */
-  std::pair<Branch,Branch> getDescendingBranches(const Branch &b) const; 
+  std::pair<Branch,Branch> getDescendants(const Branch &b) const; 
   std::vector<bool> getExecModel() const ; 
   std::vector<double> getPartitionLnls() const; 
   void setPartitionLnls(const std::vector<double> partitionLnls) ; 

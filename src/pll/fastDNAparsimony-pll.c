@@ -464,7 +464,7 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 }
 
 
-static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned int *partitionParsimony)
+static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned int *partitionParsimony, unsigned int *pLengthAtBranch)
 {
   INT_TYPE 
     allOne = SET_ALL_BITS_ONE;
@@ -627,7 +627,7 @@ static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned
 
 
 
-void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, unsigned int *partitionParsimony)
+void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, unsigned int *partitionParsimony, unsigned int *pLengthAtBranch)
 {
   volatile unsigned int result;
   nodeptr q = p->back;
@@ -656,7 +656,7 @@ void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, uns
   ti[0] = counter;
  
   
-  evaluateParsimonyIterativeFast(tr, pr ,partitionParsimony);
+  evaluateParsimonyIterativeFast(tr, pr ,partitionParsimony, pLengthAtBranch);
 }
 
 

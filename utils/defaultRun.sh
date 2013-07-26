@@ -1,11 +1,6 @@
 #! /bin/bash
 
-
 topdir=$(dirname  $0 )/../
-
-
-
-
 
 model=GAMMA
 seed=$RANDOM
