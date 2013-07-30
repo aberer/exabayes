@@ -16,13 +16,9 @@
 
 #include "axml.h"
 #include "TreeAln.hpp"
-
-// #include "output.h"
 #include "treeRead.h"
 
 #include "AvgSplitFreqAssessor.hpp"
-
-
 
 /**
    @brief checks, if everything is in order with the files and the trees it contains  

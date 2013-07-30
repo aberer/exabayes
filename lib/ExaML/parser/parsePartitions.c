@@ -604,11 +604,11 @@ void parsePartitions(analdef *adef, rawdata *rdta, tree *tr)
 	}
       else
 	{	  
-	  if(tr->NumberOfModels != NUM_BRANCHES)
-	    {
-	      printf("\nWarning: for better performance under this partition scheme replace the line \"#define NUM_BRANCHES   %d\" in file \"axml.h\" \n", NUM_BRANCHES);
-	      printf("by \"#define NUM_BRANCHES   %d\" and then re-compile RAxML.\n", tr->NumberOfModels);
-	    }
+	  /* if(tr->NumberOfModels != NUM_BRANCHES) */
+	  /*   { */
+	  /*     printf("\nWarning: for better performance under this partition scheme replace the line \"#define NUM_BRANCHES   %d\" in file \"axml.h\" \n", NUM_BRANCHES); */
+	  /*     printf("by \"#define NUM_BRANCHES   %d\" and then re-compile RAxML.\n", tr->NumberOfModels); */
+	  /*   } */
 
 	  tr->numBranches = tr->NumberOfModels;
 	}

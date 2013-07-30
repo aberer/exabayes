@@ -35,8 +35,8 @@ public:
   
   // if your proposal has  parameters that are tuned   
   // this is very straight forward, just check out the other proposals 
-  virtual void readFromCheckpointCore(std::ifstream &in); 
-  virtual void writeToCheckpointCore(std::ofstream &out); 
+  virtual void readFromCheckpointCore(std::istream &in); 
+  virtual void writeToCheckpointCore(std::ostream &out) const; 
 
 
 private: 

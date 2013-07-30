@@ -4,18 +4,22 @@
 topdir=$(dirname  $0 )/../
 
 
-
-
-
 model=GAMMA
 # seed=$RANDOM
 seed=20916
+
+numProc=4
+# extraArgs="-R 2 -C 2"
 
 # lakner-27
 # seed=28233
 
 # small dna 
 # seed=5594
+
+
+# find additional arguments for the call   
+# *=$bak
 
 runid=testRun
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
@@ -52,11 +56,10 @@ if [ $useGoogleProfiler -eq 1 ]; then
 fi
 
 
-if [ "$#" != 3 ]; then
+if [ "$#" -lt 3 ]; then
     echo -e  "$0 debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
     exit
 fi
-
 
 # args="--disable-silent-rules" 
 args=""
@@ -81,14 +84,22 @@ elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then
     exit 
 fi
 
-
 codeBase=$2
+
+# poor...
+shift  
+shift  
+shift  
+extra=$*
+# echo "extra would be $extra"
+
+
 if [ "$codeBase" == "examl" ]; then    
     args="$args --disable-pll"
 
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
-    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed -c $topdir/examples/test.nex"
+    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed  $extraArgs -c $topdir/examples/test.nex $extra"
 
     # CC="$ccompiler" 
     # CXX="$cxxcompiler"  
@@ -96,7 +107,7 @@ if [ "$codeBase" == "examl" ]; then
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid -c $topdir/examples/test.nex " 
+    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid $extraArgs -c $topdir/examples/test.nex $extra "  
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -154,3 +165,4 @@ if [ -f ./exabayes ]; then
     wait 
     $baseCall    
 fi
+

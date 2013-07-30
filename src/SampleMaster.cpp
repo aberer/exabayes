@@ -2,6 +2,8 @@
 #include <fstream>
 #include <memory>
 
+#include "common.h"
+
 #include "config/BlockProposalConfig.hpp"
 #include "config/BlockRunParameters.hpp"
 #include "config/ConfigReader.hpp"
@@ -30,6 +32,13 @@
 #include "RestoringLnlEvaluator.hpp"
 
 
+// TODO 
+// * reactivate swapping 
+// * diagnostics file needs more exchange 
+// * check restart 
+
+
+
 // a developmental mode to integrate over branch lengths
 // #define _GO_TO_INTEGRATION_MODE
 
@@ -41,7 +50,7 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
   , initTime(CLOCK::system_clock::now())
   , masterRand(cl.getSeed())
   , cl(_cl)
-  , timeIncrement(CLOCK::system_clock::now())
+  , lastPrintTime(CLOCK::system_clock::now())
 {
   // DO NOT DELETE THIS LINE: 
   // it has cost me ~ 2 days, to figure out that this stupid line
@@ -93,7 +102,7 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
   // choose how to initialize the topology
   for(auto &tralnPtr : treesToInitialize)
     initializeTree(*tralnPtr,  treesConsumed, numTreesAvailable, treeFH, treeRandomness); 
-
+  
   // propagate the tree to the coupled chains, if necessary
   if(runParams.isHeatedChainsUseSame())
     {
@@ -144,32 +153,94 @@ void SampleMaster::printAlignmentInfo(const TreeAln &traln)
 }
 
 
-void SampleMaster::initializeRuns( )
-{  
-  FILE *treeFH = NULL; 
-  nat numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
-
-  if(cl.getCheckpointId().compare(cl.getRunid()) == 0)
+void SampleMaster::informPrint()
+{
+  if(pl.getRunsParallel()  > 1 )
     {
-      std::cerr << "You specified >" << cl.getRunid() << "< as runid and inteded to restart from a previous run with id >" << cl.getCheckpointId() << "<. Please specify a new runid for the restart. " << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      tout << "Will execute "<< pl.getRunsParallel() << " runs in parallel." << std::endl;       
+      if(nat (runParams.getNumRunConv()) < pl.getRunsParallel())
+	{
+	  tout 
+	    << "Error: in the configuration file you specified to run" <<  runParams.getNumRunConv() << " independent\n" 
+	    << "runs. Your command line indicates, that you want to run " << pl.getRunsParallel() << " of them\n"
+	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< std::endl; 
+	  ParallelSetup::genericExit(-1); 
+	}
     }
+  if(pl.getChainsParallel() > 1)
+    {
+      tout << "Will execute " << pl.getChainsParallel() << " chains in parallel."<< std::endl; 
+      if(nat(runParams.getNumCoupledChains()) < pl.getChainsParallel())	
+	{
+	  tout
+	    << "Error: in the configuration file you specified to run" <<  runParams.getNumCoupledChains() << " coupled\n" 
+	    << "chains per run. Your command line indicates, that you want to run " << pl.getChainsParallel() << " of them\n"
+	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< std::endl; 
+	  ParallelSetup::genericExit(-1); 
+	}
+    }
+}
 
-  // initialize one tree 
-  unique_ptr<TreeAln> initTreePtr = std::unique_ptr<TreeAln>(new TreeAln()); 
 
-  std::vector<std::shared_ptr<TreeAln> > trees; 
-  initTreePtr->initializeFromByteFile(cl.getAlnFileName()); 
-  initTreePtr->enableParsimony();
-  const TreeAln& initTree = *initTreePtr; 
 
-  printAlignmentInfo(initTree); 
+void SampleMaster::initializeFromCheckpoint()
+{
+  // continue from checkpoint  
+  if(cl.getCheckpointId().compare("") != 0)
+    {
+      auto prevId = cl.getCheckpointId(); 
+      
+      std::stringstream ss ;       
+      ss << cl.getWorkdir() << ( cl.getWorkdir().compare("") == 0  ? "" : "/") 
+	 << PROGRAM_NAME << "_checkpoint." << cl.getCheckpointId();       
+      auto checkPointFile = ss.str(); 
+      std::ifstream chkpnt; 
+      Checkpointable::getIfstream(checkPointFile, chkpnt); 
+      if( not chkpnt )
+	{
+	  tout  << "Warning! Could not open / find file " << checkPointFile << std::endl; 
+	  tout << "Although extremely unlikely, the previous run may have been killed\n"
+	       << "during the writing process of the checkpoint. Will try to recover from backup..." << std::endl; 
+	  
+	  ss.str(""); 
+	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getCheckpointId();
+	  checkPointFile = ss.str();	  
+	  Checkpointable::getIfstream(checkPointFile, chkpnt); 
+	  
+	  if( not chkpnt)
+	    {
+	      tout << "Could not recover checkpoint file backup either. Probably there is no backup, since not enough generations have completed. Giving up. Please start a new run." << std::endl; 
+	      ParallelSetup::genericExit(-1); 
+	    }
+	  else 
+	    tout << "Success! You lost one checkpoint, but we can continue from the backup. " << std::endl; 	  
+	}
 
-  vector<unique_ptr<AbstractProposal> > proposals; 
-  vector<unique_ptr<AbstractParameter> > variables; 
+      readFromCheckpoint(chkpnt); 
+      if(pl.isGlobalMaster())
+	{
+	  for(auto &run : runs)
+	    run.regenerateOutputFiles(cl.getWorkdir(), cl.getCheckpointId());
+	  nat curGen = runs[0].getChains()[0].getGeneration();
+	  diagFile.regenerate(  cl.getWorkdir(), cl.getRunid(),  cl.getCheckpointId(), 
+				curGen, runs[0].getSwapInfo().getMatrix().size() * runs.size());
+	}
 
+      // #ifdef _DISABLE_INIT_LNL_CHECK
+      //       tout << std::endl << "DEVEL: I will not check, if resuming the chains yields the exact same\n" 
+      // 	   << "likelihood (that we had when writing the checkpoint). For sequential\n"
+      // 	   << "runs, this should be fine, but if you built with MPI, you the same\n"
+      // 	   << "seed may not result in the exact same run" << std::endl;       
+      // #endif
+    }
+}
+
+
+// TODO could move this method somewhere else  
+std::unique_ptr<LikelihoodEvaluator> 
+SampleMaster::createEvaluatorPrototype(const TreeAln &initTree)
+{
   std::unique_ptr<LikelihoodEvaluator> eval; 
-
   switch(cl.getMemoryMode())
     {
     case MemoryMode::RESTORING: 
@@ -187,7 +258,7 @@ void SampleMaster::initializeRuns( )
       break; 
     default : 
       assert(0);       
-    }
+    }  
 
 #ifdef DEBUG_LNL_VERIFY
   auto dT = make_shared<TreeAln>();
@@ -196,10 +267,47 @@ void SampleMaster::initializeRuns( )
   eval->setDebugTraln(dT);
 #endif
 
+  return eval; 
+}
+
+
+void SampleMaster::initializeRuns( )
+{  
+  FILE *treeFH = NULL; 
+  nat numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
+
+  if(cl.getCheckpointId().compare(cl.getRunid()) == 0)
+    {
+      std::cerr << "You specified >" << cl.getRunid() << "< as runid and inteded to restart from a previous run with id >" << cl.getCheckpointId() << "<. Please specify a new runid for the restart. " << std::endl; 
+      ParallelSetup::genericExit(-1); 
+    }
+
+  // initialize one tree 
+  unique_ptr<TreeAln> initTreePtr = std::unique_ptr<TreeAln>(new TreeAln()); 
+  
+  std::vector<std::shared_ptr<TreeAln> > trees; 
+  initTreePtr->initializeFromByteFile(cl.getAlnFileName()); 
+  initTreePtr->enableParsimony();
+  const TreeAln& initTree = *initTreePtr; 
+
+  printAlignmentInfo(initTree); 
+
+  vector<unique_ptr<AbstractProposal> > proposals; 
+  vector<unique_ptr<AbstractParameter> > variables; 
+
+  std::unique_ptr<LikelihoodEvaluator> eval = createEvaluatorPrototype(initTree); 
+
   initWithConfigFile(cl.getConfigFileName(), &initTree, proposals, variables, eval);
   assert(runParams.getTuneFreq() > 0); 
 
   // ORDER: must be after initWithConfigFile
+
+#ifdef UNSURE
+  // TODO 
+  // ambivalent: do we save the memory here regardless? 
+  assert(0); 
+#endif
+
   for(int i = 0 ; i < runParams.getNumCoupledChains(); ++i)
     {      
       trees.push_back(make_shared<TreeAln>()); 
@@ -227,7 +335,6 @@ void SampleMaster::initializeRuns( )
 	topoIsFixed = true; 
     }
 
-
   if(numTreesAvailable > 1 )
     {
       tout << "You provided " << numTreesAvailable << " starting trees" << std::endl; 
@@ -245,6 +352,7 @@ void SampleMaster::initializeRuns( )
       initializeTree(something, tmp, numTreesAvailable, treeFH, treeRandomness); 
     }
 
+  informPrint();
 
   nat treesConsumed = 0; 
   for(int i = 0; i < runParams.getNumRunConv() ; ++i)
@@ -252,188 +360,143 @@ void SampleMaster::initializeRuns( )
       if(topoIsFixed)
 	{
 	  for(auto &t : trees)
-	    {
-	      tout << "copying tree " << std::endl; 
-	      t->copyModel(*initTreePtr); 
-	    }
+	    t->copyModel(*initTreePtr); 
 	}
       else 
 	{
 	  initTrees(trees, treeSeeds[i], treesConsumed, numTreesAvailable, treeFH); 
 	}
+
+      vector<Chain> chains; 
       
-      if( i % pl.getRunsParallel() == pl.getMyRunBatch() )
+      for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
 	{
-	  vector<Chain> chains; 
-
-	  for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
-	    {
-	      randCtr_t c; 
-	      chains.emplace_back( c , trees[j], proposals, std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
-	      auto &chain = chains[j]; 		
-	      chain.setRunId(i); 
-	      chain.setTuneFreuqency(runParams.getTuneFreq()); 
-	      chain.setHeatIncrement(j); 
-	      chain.setDeltaT(runParams.getHeatFactor()); 
-	    }
-	  
-	  runs.emplace_back(runSeeds[i], i, cl.getWorkdir(), runParams.getNumCoupledChains(), chains); 
-	  auto &run = *(runs.rbegin()); 
-	  run.setTemperature(runParams.getHeatFactor());
-	  run.setTuneHeat(runParams.getTuneHeat()); 
-	  run.setPrintFreq(runParams.getPrintFreq()); 
-	  run.setSwapInterval(runParams.getSwapInterval()); 
-	  run.setSamplingFreq(runParams.getSamplingFreq()); 
-	  run.setRunName(cl.getRunid()); 
-	  run.seedChains(); 	  
-	  
-	  if(pl.isReportingProcess())
-	    run.initializeOutputFiles ();
+	  randCtr_t c; 
+	  chains.emplace_back( c , trees[j], proposals, std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
+	  auto &chain = chains[j]; 		
+	  chain.setRunId(i); 
+	  chain.setTuneFreuqency(runParams.getTuneFreq()); 
+	  chain.setHeatIncrement(j); 
+	  chain.setDeltaT(runParams.getHeatFactor()); 
 	}
+	  
+      runs.emplace_back(runSeeds[i], i, cl.getWorkdir(), cl.getRunid(), runParams.getNumCoupledChains(), chains); 
+      auto &run = *(runs.rbegin()); 
+      run.setTemperature(runParams.getHeatFactor());
+      run.setTuneHeat(runParams.getTuneHeat()); 
+      run.setPrintFreq(runParams.getPrintFreq()); 
+      run.setSwapInterval(runParams.getSwapInterval()); 
+      run.setSamplingFreq(runParams.getSamplingFreq()); 
+      run.seedChains(); 	  
+      
+      if(pl.isRunLeader() && pl.isMyRun(run.getRunid()))
+	run.initializeOutputFiles();
     }
+
+  initializeFromCheckpoint(); 
   
-  // continue from checkpoint  
-  if(cl.getCheckpointId().compare("") != 0)
-    {
-      auto prevId = cl.getCheckpointId(); 
-
-      std::stringstream ss ; 
-      ss << PROGRAM_NAME << "_checkpoint." << cl.getCheckpointId();       
-      auto checkPointFile = ss.str(); 
-      std::ifstream chkpnt; 
-      Checkpointable::getIfstream(checkPointFile, chkpnt); 
-      if( not chkpnt )
-	{
-	  tout  << "Warning! Could not open / find file " << checkPointFile << std::endl; 
-	  tout << "Although extremely unlikely, the previous run may have been killed\n"
-	       << "during the writing process of the checkpoint. Will try to recover from backup..." << std::endl; 
-	  
-	  ss.str(""); 
-	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getCheckpointId();
-	  checkPointFile = ss.str();	  
-	  Checkpointable::getIfstream(checkPointFile, chkpnt); 
-	  
-	  if( not chkpnt)
-	    {
-	      tout << "Could not recover checkpoint file backup either. Probably there is no backup, since not enough generations have completed. Giving up. Please start a new run." << std::endl; 
-	      ParallelSetup::genericExit(-1); 
-	    }
-	  else 
-	    tout << "Success! You lost one checkpoint, but we can continue from the backup. " << std::endl; 	  
-	}
-
-      readFromCheckpoint(chkpnt); 
-      if(pl.isMasterReporter())
-	{
-	  for(auto &run : runs)
-	    run.regenerateOutputFiles(cl.getCheckpointId());
-	  nat curGen = runs[0].getChains()[0].getGeneration();
-	  diagFile.regenerate(  cl.getWorkdir(), cl.getRunid(),  cl.getCheckpointId(), curGen, runs[0].getSwapInfo().getMatrix().size());
-	}
-
-#ifdef _DISABLE_INIT_LNL_CHECK
-      tout << std::endl << "DEVEL: I will not check, if resuming the chains yields the exact same\n" 
-	   << "likelihood (that we had when writing the checkpoint). For sequential\n"
-	   << "runs, this should be fine, but if you built with MPI, you the same\n"
-	   << "seed may not result in the exact same run" << std::endl;       
-#endif
-    }
-
-
-  if(pl.isMasterReporter() && not diagFile.isInitialized())
+  if(pl.isGlobalMaster() && not diagFile.isInitialized())
     diagFile.initialize(cl.getWorkdir(), cl.getRunid(), runs);
 
-  tout << endl << "Will run " << runParams.getNumRunConv() << " runs in total with "<<  runParams.getNumCoupledChains() << " coupled chains" << endl << endl;   
+  printInitialState(pl); 
 
-  // determine and print initial state for each chain  
+  if(numTreesAvailable > 0)
+    fclose(treeFH); 
+}
+
+
+
+void SampleMaster::printInitialState(const ParallelSetup &pl)
+{    
+  // compute the initial state 
+  for(auto &run: runs)
+    {    
+      for(nat i = 0; i < run.getChains().size(); ++i)	
+	{
+	  auto &chain = run.getChains()[i]; 
+	  if(pl.isMyChain(run.getRunid(), i))
+	    {
+	      chain.resume(true, 
+#ifdef _DISABLE_INIT_LNL_CHECK
+			   false
+#else 
+			   true 
+#endif
+			   ); 
+	      chain.suspend();
+	    }
+	}
+    }
+
+
+  // if we are parallel, we must inform the master about what we
+  // computed
+  pl.synchronizeChainsAtMaster(runs, CommFlag::PrintStat);
+
   tout << std::endl << "initial state: " << endl; 
   tout << "================================================================" << endl; 
   for(auto &run: runs)
     {
-      for(auto &chain :  run.getChains())
+      for(auto &chain: run.getChains())
 	{
-	  chain.resume(true, 
-#ifdef _DISABLE_INIT_LNL_CHECK
-		       false
-#else 
-		       true 
-#endif
-		       ); 
-	  chain.suspend(false);
-	  
-	  tout << chain; 
-	  tout << "\tRNG(" << chain.getChainRand() << ")"<< endl; 	  
+	  tout << chain ; 
+	  tout << "\tRNG(" << chain.getChainRand() << ")" << std::endl; 
 	}
       tout << "================================================================" << endl; 
     }
-
-  if(numTreesAvailable > 0)
-    fclose(treeFH); 
-
   tout << endl; 
-}
+
+}  
 
 
-//STAY 
-double SampleMaster::convergenceDiagnostic()
+double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
 {
-  if(runParams.getNumRunConv() > 1)    
-    { 
-      vector<string> fns; 
-      for(int i = 0; i < runParams.getNumRunConv(); ++i)
-	{
-	  stringstream ss; 
-	  ss <<  PROGRAM_NAME << "_topologies." << cl.getRunid() << "." << i; 
-	  fns.push_back(ss.str());
-	}
+  if(runParams.getNumRunConv() == 1)
+    return std::numeric_limits<double>::max();
+
+  vector<string> fns; 
+  for(int i = 0; i < runParams.getNumRunConv(); ++i)
+    {
+      stringstream ss; 
+      ss << OutputFile::getFileBaseName(cl.getWorkdir())  << "_topologies." << cl.getRunid() << "." << i; 
+      fns.push_back(ss.str());
+    }
      
-      AvgSplitFreqAssessor asdsf(fns);
+  AvgSplitFreqAssessor asdsf(fns);
 
-      int end = asdsf.getEnd();
+  end = asdsf.getEnd();
       
-      int treesInBatch = runParams.getDiagFreq() / runParams.getSamplingFreq(); 
+  int treesInBatch = runParams.getDiagFreq() / runParams.getSamplingFreq(); 
 
-      end /= treesInBatch; 
-      end *= treesInBatch;       
+  end /= treesInBatch; 
+  end *= treesInBatch;       
 
-      if(end > 0)
-	{	  
-	  asdsf.setEnd(end);
-	  if( runParams.getBurninGen() > 0 )
-	    {
-	      assert(runParams.getBurninProportion() == 0.); 
+  if(end == 0)
+    return std::numeric_limits<double>::max();
 
-	      int treesToDiscard =  runParams.getBurninGen() / runParams.getSamplingFreq(); 
+  asdsf.setEnd(end);
+  if( runParams.getBurninGen() > 0 )
+    {
+      assert(runParams.getBurninProportion() == 0.); 
 
-	      if(end < treesToDiscard + 2 )
-		return false; 
-	      else 
-		asdsf.setStart(treesToDiscard);  
-	    }
-	  else 
-	    {
-	      assert(runParams.getBurninGen() == 0); 
-	      int start = (int)((double)end * runParams.getBurninProportion()  ); 
-	      asdsf.setStart(start);
-	    } 
+      int treesToDiscard =  runParams.getBurninGen() / runParams.getSamplingFreq(); 
 
-	  asdsf.extractBips();
-	  double asdsfVal = asdsf.computeAsdsf(runParams.getAsdsfIgnoreFreq());
-
-#if HAVE_PLL == 0      
-	  if(processID == 0)
-#endif 
-	    tout << std::endl  << "ASDSF for trees " << asdsf.getStart() << "-" << asdsf.getEnd() << ": " <<setprecision(2) << asdsfVal * 100 << "%" << std::endl << std::endl; 
-
-	  return asdsfVal; 
-
-	}
+      if(int(end) < treesToDiscard + 2 )
+	return false; 
       else 
-	return 0; 
-      
+	asdsf.setStart(treesToDiscard);  
     }
   else 
-    return 0; 
+    {
+      assert(runParams.getBurninGen() == 0); 
+      start = (int)((double)end * runParams.getBurninProportion()  ); 
+      asdsf.setStart(start);
+    } 
+
+  asdsf.extractBips();
+  double asdsfVal = asdsf.computeAsdsf(runParams.getAsdsfIgnoreFreq());
+
+  return asdsfVal; 
 }
 
 
@@ -485,17 +548,14 @@ void SampleMaster::initWithConfigFile(string configFileName, const TreeAln* tral
 }
 
 
-void SampleMaster::validateRunParams()
+CLOCK::system_clock::time_point 
+SampleMaster::printDuringRun(nat gen,  ParallelSetup &pl)   
 {
-  assert(runParams.getNumCoupledChains() > 0); 
-  // TODO 
-}
-
-
-void SampleMaster::printDuringRun(nat gen)
-{
-  tout << "[" << gen << "," << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- timeIncrement   ).count()     << "s]\t"; 
-  timeIncrement = CLOCK::system_clock::now(); 
+  pl.synchronizeChainsAtMaster(runs, CommFlag::PrintStat);
+  
+  stringstream ss ; 
+  ss << SOME_FIXED_PRECISION; 
+  ss << "[" << gen << "," << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- lastPrintTime   ).count()     << "s]\t"; 
 
   bool isFirst = true; 
   for(auto &run : runs)
@@ -503,25 +563,18 @@ void SampleMaster::printDuringRun(nat gen)
       if(isFirst)
 	isFirst = false; 
       else 
-	tout << " === " ; 
+	ss << " ==="; 
 
-      auto &chains = run.getChains();
-      std::vector<const Chain*> chainPtrs; 
-      for(auto &c : chains)
-	chainPtrs.push_back(&c);       
-      sort(chainPtrs.begin(), chainPtrs.end(), [] (const Chain* a , const Chain* b ) {return a->getCouplingId() < b->getCouplingId(); }); 
-
-      bool isFirstL = true;  
-      for(auto &c: chainPtrs)
+      for(auto &c : run.getChains())
 	{
-	  if(isFirstL)
-	    isFirstL = false; 
-	  else 
-	    tout << " "; 
-	  tout << c->getLikelihood(); 	  
+	  ss << " " << c.getLikelihood() ; 
 	}
-    }  
-  tout << std::endl; 
+    }
+
+  // print it 
+  tout << ss.str() << std::endl; 
+
+  return CLOCK::system_clock::now(); 
 }
 
 
@@ -535,17 +588,21 @@ void SampleMaster::run()
   tout << "First column indicates generation number (completed by all\n"
        << "chains) and the time elapsed while computing these generations "
        << std::endl << std::endl; 
+  tout << pl << std::endl; 
 
   bool hasConverged = false;   
-  int curGen = runs[0].getChains()[0].getGeneration(); 
-  
+  nat curGen = runs[0].getChains()[0].getGeneration(); // dangerous 
+  for(auto & run: runs)
+    for(auto &c : run.getChains())
+      assert( nat(c.getGeneration()) == curGen );       
+
   int lastPrint = (curGen / runParams.getPrintFreq() )  * runParams.getPrintFreq() ; 
   int lastDiag =  (curGen / runParams.getDiagFreq() ) * runParams.getDiagFreq(); 
   int lastChkpnt = ( curGen / runParams.getChkpntFreq() )* runParams.getChkpntFreq() ; 
   
-  printDuringRun(curGen); 
+  lastPrintTime = printDuringRun(curGen,pl); 
 
-  while(curGen < runParams.getNumGen() || not hasConverged)   
+  while(curGen < nat(runParams.getNumGen()) || not hasConverged)   
     { 
       int nextPrint =  lastPrint + runParams.getPrintFreq(); 
       int nextDiag = lastDiag + runParams.getDiagFreq(); 
@@ -553,33 +610,41 @@ void SampleMaster::run()
       int toExecute = min(nextChkpnt, 
 			  min(nextPrint, nextDiag)) -  curGen; 
 
+      // main part execute 
       for(auto &run : runs)
-	run.executePart(toExecute, pl );
-
+	{
+	  if(pl.isMyRun(run.getRunid()))
+	    run.executePart(curGen, toExecute, pl );
+	}
       curGen += toExecute; 
-
 
       if(curGen % runParams.getDiagFreq() == 0 )
 	{
-	  double asdsf = convergenceDiagnostic(); 
+	  nat start = 0, 
+	    end = 0; 
+	  double asdsf = convergenceDiagnostic(start, end); 
 	  hasConverged = asdsf < runParams.getAsdsfConvergence();  
-	  if(pl.isMasterReporter())
-	    diagFile.printDiagnostics(curGen, asdsf, runs);
-#ifdef ENABLE_PRSF      
-	  printPRSF(run_id);
-#endif
+
+	  pl.synchronizeChainsAtMaster(runs, CommFlag::PrintStat | CommFlag::Swap | CommFlag::Proposals); 
+	  if(pl.isGlobalMaster()) 
+	    {
+	      diagFile.printDiagnostics(curGen, asdsf, runs);
+	      if( not (runs.size() == 1))
+		tout << std::endl  << "ASDSF for trees " << start << "-" << end  << ":\t"
+		     << PERC_PRECISION << asdsf * 100 << "%" << std::endl << std::endl; 
+	    }
+
 	  lastDiag = curGen; 
 	}
 	
       if(curGen % runParams.getPrintFreq() == 0 )
 	{
-	  printDuringRun(curGen); 
+	  lastPrintTime = printDuringRun(curGen,pl); 
 	  lastPrint = curGen; 
 	}
 
-      if(curGen % runParams.getChkpntFreq() == 0 )
+      if(curGen % runParams.getChkpntFreq() == 0)
 	{
-	  // tout << "writing checkpoint" << std::endl; 
 	  writeCheckpointMaster();
 	  lastChkpnt = curGen; 
 	} 
@@ -613,7 +678,7 @@ void SampleMaster::finalizeRuns()
 }
 
 
-void SampleMaster::readFromCheckpoint( std::ifstream &in ) 
+void SampleMaster::readFromCheckpoint( std::istream &in ) 
 {
   for(auto &run : runs)
     run.readFromCheckpoint(in); 
@@ -622,9 +687,10 @@ void SampleMaster::readFromCheckpoint( std::ifstream &in )
   in >> start; 
   CLOCK::duration<long> durationSinceStart{start};   
   initTime = CLOCK::system_clock::now() -  durationSinceStart; 
+
 }
  
-void SampleMaster::writeToCheckpoint( std::ofstream &out) 
+void SampleMaster::writeToCheckpoint( std::ostream &out) const
 {  
   for(auto & run : runs)    
     run.writeToCheckpoint(out);
@@ -634,12 +700,15 @@ void SampleMaster::writeToCheckpoint( std::ofstream &out)
 }
 
 
+
 void SampleMaster::writeCheckpointMaster()
-{  
-  if(pl.isMasterReporter() )
+{
+  pl.synchronizeChainsAtMaster(runs, CommFlag::PrintStat | CommFlag::Proposals | CommFlag::Tree | CommFlag::Swap); 
+
+  if(pl.isGlobalMaster() )
     {
       stringstream ss; 
-      ss <<  PROGRAM_NAME << "_newCheckpoint." << cl.getRunid()  ; 
+      ss <<  OutputFile::getFileBaseName(cl.getWorkdir()) << "_newCheckpoint." << cl.getRunid()  ; 
       std::string newName = ss.str();
       ofstream chkpnt; 
       Checkpointable::getOfstream(newName, chkpnt); 
@@ -647,12 +716,12 @@ void SampleMaster::writeCheckpointMaster()
       chkpnt.close(); 
 	  
       ss.str("");
-      ss << PROGRAM_NAME << "_checkpoint." << cl.getRunid(); 
+      ss << OutputFile::getFileBaseName(cl.getWorkdir()) << "_checkpoint." << cl.getRunid(); 
       std::string curName = ss.str();
       if( std::ifstream(curName) )
 	{
 	  ss.str("");
-	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << cl.getRunid(); 
+	  ss << OutputFile::getFileBaseName(cl.getWorkdir())  << "_prevCheckpointBackup." << cl.getRunid(); 
 	  std::string prevName =  ss.str();
 	  if( std::ifstream(prevName) )
 	    {
@@ -669,7 +738,7 @@ void SampleMaster::writeCheckpointMaster()
     }
   else 
     {
-      std::ofstream nullstream("/dev/zero"); 
+      std::ofstream nullstream("/dev/null"); 
       writeToCheckpoint(nullstream); 
       nullstream.close(); 
     }

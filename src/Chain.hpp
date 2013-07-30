@@ -17,11 +17,11 @@
 #include "LikelihoodEvaluator.hpp"
 #include "AbstractProposal.hpp"
 
-#include "TopologyFile.hpp"
-#include "ParameterFile.hpp"
+#include "file/TopologyFile.hpp"
+#include "file/ParameterFile.hpp"
 #include "Checkpointable.hpp"
 
-
+#include "ParallelSetup.hpp"
 
 class TreeAln; 
 class AbstractProposal; 
@@ -36,7 +36,8 @@ public:
   Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::unique_ptr<LikelihoodEvaluator> eval);   
   Chain( Chain&& rhs) ; 
   Chain& operator=(Chain rhs) ; 
-  
+
+
   /** 
       @brief set seet for the chain specific RNG 
    */ 
@@ -52,7 +53,7 @@ public:
      s.t. the tree can be used by another chain     
      @param paramsOnly indicates whether the likelihood and prior density should be saved as well   
    */ 
-  void suspend(bool paramsOnly)  ; 
+  void suspend()  ; 
   /** 
       @brief proceed by one generation 
    */ 
@@ -64,7 +65,7 @@ public:
   /** 
       @brief switch state with chain rhs
    */ 
-  void switchState(Chain &rhs);
+  void switchState(Chain &rhs, ParallelSetup &pl);
   /** 
       @brief add a representation of the chain to the stream    
    */ 
@@ -79,8 +80,6 @@ public:
   const std::vector<AbstractParameter*> extractVariables() const ; 
 
   // getters and setters 
-  double getLnLikelihood() const {return   tralnPtr->getTr()->likelihood;} 
-  double getLnPrior() const {return prior.getLnPrior(); }
   double getBestState() const {return bestState; }
   LikelihoodEvaluator* getEvaluator() {return evaluator.get(); }
   const TreeAln& getTraln() const { return *tralnPtr; }
@@ -97,17 +96,21 @@ public:
   double getDeltaT() {return deltaT; }
   int getGeneration() const {return currentGeneration; }
   double getLikelihood() const {return likelihood; }
+  double getLnPr() const {return lnPr; }
   const PriorBelief& getPrior() const  {return prior; } 
-  void sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const ; 
+  void sample( TopologyFile &tFile, ParameterFile &pFile  ) const ; 
 
-  virtual void readFromCheckpoint( std::ifstream &in ) ; 
-  virtual void writeToCheckpoint( std::ofstream &out) ;   
+  void deserializeConditionally(std::string str, CommFlag commFlags); 
+  std::string serializeConditionally( CommFlag commFlags) const ; 
+
+  virtual void readFromCheckpoint( std::istream &in ) ; 
+  virtual void writeToCheckpoint( std::ostream &out) const ;   
 
 private : 			// METHODS 
   void debug_printAccRejc(AbstractProposal* prob, bool accepted, double lnl, double lnPr, double hastings ) ;
   AbstractProposal* drawProposalFunction();
-
   void printArrayStart(); 
+  void initProposalsFromStream(std::istream& in);
 
 
 private: 			// ATTRIBUTES

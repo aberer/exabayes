@@ -49,7 +49,7 @@ begin PRIOR;
 [  stateFreqPr fixed(1,2,3,4) ] 
 
 [ rate heterogeneity: alpha parameter ]
-[ shapePr exponential(1) ]
+shapePr exponential(2)
 [ shapePr uniform(0.0000001,200) ] 
 [ shapePr fixed(1)   ] 
 
@@ -69,13 +69,13 @@ begin runconfig;
  numRuns  2 	   	[ number of independant runs ]
  numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
- printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+ printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
   parsimonyStartingTree		true		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
   heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
   [  sampledHeated false ] [ also take samples from the heated chains ]
 
-  checkPointInterval   1000  [ defines how often a checkpoint is written ]
+ checkPointInterval   1000  [ defines how often a checkpoint is written ]
 
  [ CONVERGENCE ]
  asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
@@ -145,8 +145,6 @@ end;
 
       [ AA models ]
 [       aaModelJump 0  [ todo ] ] 
-
- 
 
       [ PARAMETERS for various moves ]
       guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 

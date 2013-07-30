@@ -26,7 +26,8 @@
 
 #define SOME_SCI_PRECISION std::scientific << std::setprecision(2)   
 #define MAX_SCI_PRECISION  std::scientific << std::setprecision(std::numeric_limits<double>::digits10)   
-#define PERC_PRECCISION std::fixed << std::setprecision(2) 
+#define SOME_FIXED_PRECISION std::fixed << std::setprecision(2)   
+#define PERC_PRECISION std::fixed << std::setprecision(2) 
 
 
 #define NO_SEC_BL_MULTI

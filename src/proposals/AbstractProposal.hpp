@@ -104,17 +104,17 @@ public:
   std::vector<AbstractParameter*> getSecVar() const ; 
 
   // we need to implement these 
-  void writeToCheckpoint( std::ofstream &out)  ; 
-  void readFromCheckpoint( std::ifstream &in ); 
+  void writeToCheckpoint( std::ostream &out)  const; 
+  void readFromCheckpoint( std::istream &in ); 
   
   /** 
       @brief writes proposal specific (tuned) parameters
    */ 
-  virtual void writeToCheckpointCore(std::ofstream &out)  = 0 ;  
+  virtual void writeToCheckpointCore(std::ostream &out)const  = 0 ;  
   /** 
       @brief reads proposal specific (tuned) parameters 
    */ 
-  virtual void readFromCheckpointCore(std::ifstream &in) = 0; 
+  virtual void readFromCheckpointCore(std::istream &in) = 0; 
 
 protected:   
   std::string name;   

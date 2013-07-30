@@ -34,8 +34,8 @@ class AminoModelJump : public AbstractProposal
 public: 
   AminoModelJump(vector<aaMatrix_t> matrices); 
 
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out)  { } //disabled
+  virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
+  virtual void writeToCheckpointCore(std::ostream &out) const  { } //disabled
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
   virtual void evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) ; 

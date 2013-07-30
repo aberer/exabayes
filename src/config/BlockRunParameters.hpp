@@ -44,7 +44,6 @@ private:
   int samplingFreq; 
   int numRunConv; 
   int numGen; 
-  // string runId; 
   int numCoupledChains; 
   int printFreq; 
   double heatFactor ; 

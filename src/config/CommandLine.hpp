@@ -22,8 +22,7 @@ public:
   int getNumRunParallel() const {return runNumParallel; }
   std::string getWorkdir() const {return workDir; }
   void printVersion(bool toInfoFile);
-
-  // int getChainNumParallel() const { return chainNumParallel; }
+  nat getNumChainsParallel() const {return chainNumParallel; }
   std::string getCheckpointId()const {return checkpointId; }
   void parseAlternative(int argc, char *argv[]); 
 
@@ -42,7 +41,7 @@ private: 			// ATTRIBUTES
   std::string runid; 
   std::string treeFile; 
   std::string workDir;
-  int runNumParallel; 
+  int runNumParallel;   
   int chainNumParallel; 
   std::string checkpointId; 
   MemoryMode memoryMode; 

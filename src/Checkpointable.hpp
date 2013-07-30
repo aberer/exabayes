@@ -18,20 +18,20 @@ public:
     , checkpointIsBinary(true)
   {}
 
-  virtual void readFromCheckpoint( std::ifstream &in )  = 0 ; 
-  virtual void writeToCheckpoint( std::ofstream &out) = 0;   
+  virtual void readFromCheckpoint( std::istream &in )  = 0 ; 
+  virtual void writeToCheckpoint( std::ostream &out) const = 0;   
 
   void getOfstream(std::string name, std::ofstream &result); 
   void getIfstream(std::string name, std::ifstream &result ); 
 
-  template<typename T> void cWrite(std::ofstream &out, T &toWrite); 
-  template<typename T> T cRead(std::ifstream &in); 
+  template<typename T> void cWrite(std::ostream &out, const T &toWrite) const; 
+  template<typename T> T cRead(std::istream &in); 
 
-  std::string readString(std::ifstream &in ); 
-  void writeString(std::ofstream &out, std::string toWrite); 
+  std::string readString(std::istream &in ); 
+  void writeString(std::ostream &out, std::string toWrite) const; 
 
 private: 			// METHODS
-  void readDelimiter(std::ifstream &in) ; 
+  void readDelimiter(std::istream &in) ; 
 
 private: 			// ATTRIBUTES 
   char DELIM; 
@@ -40,7 +40,7 @@ private: 			// ATTRIBUTES
 
 
 template<typename T>
-void Checkpointable::cWrite(std::ofstream &out, T& toWrite)
+void Checkpointable::cWrite(std::ostream &out, const T& toWrite) const 
 {
   static_assert(not std::is_same<T, std::string>::value, "Do NOT use the cWrite funciton with strings (there is a specific function for that)");
 
@@ -58,7 +58,7 @@ void Checkpointable::cWrite(std::ofstream &out, T& toWrite)
 
 
 template<typename T>
-T Checkpointable::cRead(std::ifstream &in )
+T Checkpointable::cRead(std::istream &in )
 {
   T result; 
 

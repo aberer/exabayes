@@ -39,8 +39,8 @@ public:
 
   AbstractProposal* clone() const; 
 
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out) { } //disabled
+  virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
+  virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
 protected: 
   double parsWarp; 

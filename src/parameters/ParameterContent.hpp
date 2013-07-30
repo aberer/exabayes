@@ -13,8 +13,8 @@ public:
   std::vector<double> values; 
   std::vector<Branch> branches; 
 
-  virtual void readFromCheckpoint( std::ifstream &in )  ; 
-  virtual void writeToCheckpoint( std::ofstream &out) ;   
+  virtual void readFromCheckpoint( std::istream &in )  ; 
+  virtual void writeToCheckpoint( std::ostream &out)  const;   
 
   // AA model? 
 

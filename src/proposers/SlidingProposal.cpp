@@ -21,7 +21,7 @@ double SlidingProposal::proposeOneValue(double oldVal, double parameter, Randomn
 
 std::vector<double> SlidingProposal::proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
 {
-  int posA = rand.drawRandInt(oldValues.size()); 
+  int posA = rand.drawIntegerOpen(oldValues.size()); 
 
   double oldVal = oldValues.at(posA) ; 
   double newVal = rand.drawFromSlidingWindow(oldVal, parameter); 

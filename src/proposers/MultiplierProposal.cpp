@@ -14,7 +14,7 @@ std::vector<double> MultiplierProposal::proposeValues(std::vector<double> oldVal
 {    
   double newVal = 0, position = 0, multiplier = 0; 
 
-  position = rand.drawRandInt(oldValues.size()); // dont like 
+  position = rand.drawIntegerOpen(oldValues.size()); 
   multiplier =  rand.drawMultiplier( parameter);     
   newVal = oldValues[position] * multiplier; 
 

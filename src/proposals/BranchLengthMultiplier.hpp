@@ -23,8 +23,8 @@ public:
 
   virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
 
-  virtual void readFromCheckpointCore(std::ifstream &in); 
-  virtual void writeToCheckpointCore(std::ofstream &out) ; 
+  virtual void readFromCheckpointCore(std::istream &in); 
+  virtual void writeToCheckpointCore(std::ostream &out) const; 
 
 protected: 
   double multiplier;  

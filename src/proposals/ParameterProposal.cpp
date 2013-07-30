@@ -105,13 +105,13 @@ void ParameterProposal::autotune()
 
 
 
-void ParameterProposal::readFromCheckpointCore(std::ifstream &in)
+void ParameterProposal::readFromCheckpointCore(std::istream &in)
 {
   parameter = cRead<double>(in); 
 } 
 
 
-void ParameterProposal::writeToCheckpointCore(std::ofstream &out) 
+void ParameterProposal::writeToCheckpointCore(std::ostream &out)  const
 {
   cWrite(out, parameter); 
 } 

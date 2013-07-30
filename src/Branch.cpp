@@ -131,14 +131,14 @@ nat Branch::getIntersectingNode(const Branch  &rhs) const
 } 
 
 
-void Branch::readFromCheckpoint( std::ifstream &in )
+void Branch::readFromCheckpoint( std::istream &in )
 {
   thisNode = cRead<nat>(in); 
   thatNode = cRead<nat>(in);   
   length = cRead<double>(in); 
 } 
 
-void Branch::writeToCheckpoint( std::ofstream &out)  
+void Branch::writeToCheckpoint( std::ostream &out)  const
 {
   cWrite(out, thisNode); 
   cWrite(out, thatNode); 

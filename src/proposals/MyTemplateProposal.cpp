@@ -106,7 +106,7 @@ void MyTemplateProposal::privateMethod(TreeAln& traln, Randomness &rand)
 
 
 // checkpointing stuff 
-void MyTemplateProposal::readFromCheckpointCore(std::ifstream &in)
+void MyTemplateProposal::readFromCheckpointCore(std::istream &in)
 {  
   // assume our aTuningParamer needs to be tuned. Then, we have to
   // read it from the previous checkpointing file: 
@@ -115,7 +115,7 @@ void MyTemplateProposal::readFromCheckpointCore(std::ifstream &in)
 }
 
 
-void MyTemplateProposal::writeToCheckpointCore(std::ofstream &out)
+void MyTemplateProposal::writeToCheckpointCore(std::ostream &out) const
 { 
   // and we have to write it to the filen, once we checkpoint 
   cWrite<double>(out, aTuningParamer); 	  

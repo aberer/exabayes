@@ -3,10 +3,33 @@
 #include "SuccessCounter.hpp"
 
 SuccessCounter::SuccessCounter() 
-  : globalAcc(0),globalRej(0)
-  , localAcc(0), localRej(0), batch(0)
+  : globalAcc(0)
+  , globalRej(0)
+  , localAcc(0)
+  , localRej(0)
+  , batch(0)
 {
 }
+
+
+SuccessCounter::SuccessCounter(const SuccessCounter& rhs)
+  : globalAcc(rhs.globalAcc)
+  , globalRej(rhs.globalRej)
+  , localAcc(rhs.localAcc)
+  , localRej(rhs.localRej)
+  , batch(rhs.batch)
+{  
+}
+
+
+SuccessCounter SuccessCounter::operator=( const SuccessCounter &rhs) 
+{
+  if(&rhs == this)
+    return *this; 
+  else 
+    return SuccessCounter(rhs);   
+} 
+
 
 
 void SuccessCounter::accept() 
@@ -75,7 +98,7 @@ void SuccessCounter::addOrReplace(bool acc)
 }
 
 
-void SuccessCounter::readFromCheckpoint( std::ifstream &in )   
+void SuccessCounter::readFromCheckpoint( std::istream &in )   
 {
   globalAcc = cRead<int>(in); 
   globalRej = cRead<int>(in); 
@@ -84,7 +107,7 @@ void SuccessCounter::readFromCheckpoint( std::ifstream &in )
   batch = cRead<int>(in); 
 }
  
-void SuccessCounter::writeToCheckpoint( std::ofstream &out) 
+void SuccessCounter::writeToCheckpoint( std::ostream &out)  const
 {
   cWrite<int>(out, globalAcc); 
   cWrite<int>(out, globalRej); 
@@ -92,3 +115,25 @@ void SuccessCounter::writeToCheckpoint( std::ofstream &out)
   cWrite<int>(out, localRej); 
   cWrite<int>(out, batch); 
 } 
+
+
+
+SuccessCounter SuccessCounter::operator+(const SuccessCounter &rhs) const 
+{
+#ifdef UNSURE
+  // this whole addition thing is not really consistent. It does its job for swap matrices, I guess. 
+  assert(0); 
+#endif
+
+  SuccessCounter result; 
+  result.globalAcc = rhs.globalAcc + globalAcc; 
+  result.globalRej = rhs.globalRej + globalRej; 
+  result.localAcc = rhs.localAcc + localAcc; 
+  result.localRej = rhs.localRej + localRej; 
+  result.batch = rhs.batch + batch; 
+
+  return result; 
+} 
+
+
+

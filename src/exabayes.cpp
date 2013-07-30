@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <chrono>
 
 #include "axml.h" 
 
@@ -57,13 +58,6 @@ double fastPow(double a, double b)
 }
 
 
-
-
-void genericExit(int code); 
-
-#include <chrono>
-
-
 /**
    @brief the main ExaBayes function.
 
@@ -75,41 +69,27 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
+  std::stringstream ss; 
+
+  int myInt = 3; 
+  ss.write(reinterpret_cast<char*>(&myInt), sizeof(int)); 
   
-  std::string bla = "aeae"; 
-  bla += '\0'; 
-  std::cout <<  bla.size() << std::endl;  
+  int result = 0; 
+  ss.read(reinterpret_cast<char*>(&result), sizeof(result)); 
+
+  std::cout << "res= " << result << std::endl; 
+
+  myInt = 4; 
+  ss.write(reinterpret_cast<char*>(&myInt), sizeof(int)); 
+  ss.read(reinterpret_cast<char*>(&result), sizeof(result)); 
 
 
-  std::ofstream fh("file.txt", std::ios::binary); 
-  string test = "bla"; 
-  test += "\0"; 
-  int number = 123; 
+  std::cout << "res= " << result << std::endl; 
 
-  fh.write(test.c_str(), test.size()); 
-  fh.write((char*)&number, sizeof(int)); 
-  fh.close();
-  
-  std::ifstream ifh("file.txt", std::ios::binary); 
-  char *reread = new char[100]; 
-  char *iter = reread; 
-  memset(reread, '\0', 100); 
-  char c = 'a'; 
-  while(c != '\0')
-    {
-      ifh.read(&c,1); 
-      *iter = c; 
-      ++iter; 
-    }
-  // ifh.read(reread, 3); 
-  
-  std::cout << "i read >" << reread << "<" << std::endl; 
 
-  fh.close(); 
-
-  genericExit(0); 
+  exit(0); 
+  // genericExit(); 
 #else 
-
   SampleMaster master(  pl, cl );
   master.initializeRuns(); 
   master.run();
@@ -136,24 +116,16 @@ void ignoreExceptionsDenormFloat()
 #include "globalVariables.h"
 #endif
 
-#if HAVE_PLL == 0 
-extern int processID; 
-extern int processes;
-extern MPI_Comm comm; 
-#endif
-
 
 void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 {
   stringstream ss; 
-  string workdir =  cl.getWorkdir(); 
-  ss << workdir ; 
-  if(workdir.compare("") != 0 )
-    ss << "/" ; 
-  ss << PROGRAM_NAME << "_info."  << cl.getRunid() ;
 
-  if( pl.isMasterReporter() && std::ifstream(ss.str()))
+  ss << OutputFile::getFileBaseName(cl.getWorkdir()) << "_info."  << cl.getRunid() ;
+
+  if( pl.isGlobalMaster() && std::ifstream(ss.str()))
     {
+      std::cerr << pl << std::endl; 
       std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
       ParallelSetup::genericExit(-1); 
@@ -164,7 +136,7 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
   globals.logStream =  new ofstream  (globals.logFile); 
   globals.teeOut =  new teestream(cout, *globals.logStream);
 
-  if(not pl.isReportingProcess())
+  if(not pl.isGlobalMaster())
     tout.disable(); 
 }
 

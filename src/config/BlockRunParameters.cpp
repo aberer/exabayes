@@ -2,15 +2,14 @@
 
 
 BlockRunParameters::BlockRunParameters()  
-  : diagFreq(1000) 
+  : diagFreq(5000) 
   , asdsfIgnoreFreq(0.1)
   , asdsfConvergence (0.001)
   , burninGen(0)
   , burninProportion(0.25)
-  , samplingFreq (100)
+  , samplingFreq (500)
   , numRunConv(1)
-  , numGen(50000)
-  // , runId("standardId")
+  , numGen(1000000)
   , numCoupledChains(1)
   , printFreq (500)
   , heatFactor(0.1)

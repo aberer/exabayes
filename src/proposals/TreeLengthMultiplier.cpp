@@ -91,12 +91,12 @@ AbstractProposal* TreeLengthMultiplier::clone() const
 }  
 
 
-void TreeLengthMultiplier::readFromCheckpointCore(std::ifstream &in)
+void TreeLengthMultiplier::readFromCheckpointCore(std::istream &in)
 {
   multiplier = cRead<double>(in); 
 } 
 
-void TreeLengthMultiplier::writeToCheckpointCore(std::ofstream &out) 
+void TreeLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
   cWrite(out, multiplier); 
 } 

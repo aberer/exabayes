@@ -121,11 +121,12 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
 
 
 
-void AbstractProposal::writeToCheckpoint( std::ofstream &out)  
+void AbstractProposal::writeToCheckpoint( std::ostream &out)   const
 {
   std::stringstream ss ; 
   printShort(ss); 
   std::string name = ss.str();
+  // tout << "wrote "  << name << std::endl; 
   // cWrite<std::string>(out, name);   
   writeString(out, name); 
   sctr.writeToCheckpoint(out) ; 
@@ -133,7 +134,7 @@ void AbstractProposal::writeToCheckpoint( std::ofstream &out)
 }
 
 
-void AbstractProposal::readFromCheckpoint( std::ifstream &in )
+void AbstractProposal::readFromCheckpoint( std::istream &in )
 {
   // notice: name has already been read 
   sctr.readFromCheckpoint(in); 
