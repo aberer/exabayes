@@ -4,6 +4,40 @@
 #include "teebuf.hpp"
 
 #include <iostream>
+#include <unordered_set>
+#include <vector>
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, std::vector<T> elems)
+{
+  bool isFirst = true; 
+  for(auto &elem : elems)
+    {
+      if(isFirst) 
+	isFirst = false; 
+      else 
+	out << "," ; 
+      out << elem ; 
+    }
+  return out; 
+}
+
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, std::unordered_set<T> elems)
+{
+  bool isFirst = true; 
+  for(auto &elem : elems)
+    {
+      if(isFirst)
+	isFirst = false; 
+      else 
+	out << "," ; 
+      out << elem; 
+    }
+
+  return out; 
+}
 
 
 class teestream : public std::ostream

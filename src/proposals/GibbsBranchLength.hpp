@@ -37,7 +37,7 @@ public:
     double newZ = b.getLength();
     traln.setBranch(b);    
 
-    auto brPr = primVar[0]->getPrior();
+    auto brPr = primaryParameters[0]->getPrior();
     prior.updateBranchLengthPrior(traln,initBl, newZ, brPr); // 
   }
 

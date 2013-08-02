@@ -7,7 +7,6 @@
 #include "tune.h"
 
 
-
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
   : multiplier(_multiplier)    
 {
@@ -50,7 +49,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   for(auto &b : newBranches)
     traln.setBranch(b);
 
-  auto brPr = primVar[0]->getPrior(); 
+  auto brPr = primaryParameters[0]->getPrior(); 
   prior.updateBranchLengthPrior(traln, initTL, newTL, brPr);
 }
 

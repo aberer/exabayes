@@ -12,6 +12,12 @@
 #include "parameters/TopologyParameter.hpp"
 
 
+std::ostream&  operator<<(std::ostream& out, const Category &rhs)
+{
+  return out << CategoryFuns::getLongName(rhs) ; 
+}
+
+
 namespace CategoryFuns
 {
   std::string getLongName(Category cat)
@@ -21,7 +27,7 @@ namespace CategoryFuns
       case Category::TOPOLOGY :
 	return "Topology";
       case Category::BRANCH_LENGTHS:
-	return "BranchLen" ;
+	return "BranchLengths" ;
       case Category::FREQUENCIES :
 	return "Frequencies" ;
       case Category::SUBSTITUTION_RATES :
@@ -46,11 +52,11 @@ namespace CategoryFuns
       case Category::TOPOLOGY:
 	return "topo" ;
       case Category::BRANCH_LENGTHS:
-	return "bl" ;
+	return "v" ;
       case Category::FREQUENCIES :
 	return "pi" ;
       case Category::SUBSTITUTION_RATES:
-	return "revMat";
+	return "r";
       case Category::RATE_HETEROGENEITY :
 	return "shape" ;
       case Category::AA_MODEL:
@@ -147,6 +153,5 @@ namespace CategoryFuns
 	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id));
 	}
       }    
-  } 
- 
+  }  
 }

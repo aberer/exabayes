@@ -43,7 +43,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 
   /* save branches and prune */
   double zqr[NUM_BRANCHES]; 
-  for(int i = 0; i < traln.getNumBranches(); ++i)
+  for(nat i = 0; i < traln.getNumBranches(); ++i)
     zqr[i] = traln.getBranch(r).getLength();   
   traln.clipNode(q,r, q->z[0]);
   p->next->back = p->next->next->back = (nodeptr)NULL; 
@@ -115,7 +115,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   assert(traln.getNumBranches() == 1 ); 
 
   bool modifiesBl = false; 
-  for(auto &v : secVar)
+  for(auto &v : secondaryParameters)
     modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI
@@ -124,7 +124,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 
   if(modifiesBl)
     {
-      auto brPr = secVar.at(0)->getPrior();
+      auto brPr = secondaryParameters.at(0)->getPrior();
       move.multiplyBranches(traln, rand, hastings, prior, multiplier, {brPr} ); 
     }
 

@@ -3,7 +3,7 @@
 #include "GlobalVariables.hpp"
 
 
-RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<LnlRestorer> _restorer)  
+RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<ArrayRestorer> _restorer)  
 {
   this->restorer = _restorer; 
 }
@@ -11,15 +11,18 @@ RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<LnlRestorer> _resto
 
 double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, bool fullTraversal )  
 {
-  int model  = ALL_MODELS; 
+  std::vector<nat> partitionsToEvaluate; 
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
+    partitionsToEvaluate.push_back(i); 
+
   nodeptr start = evalBranch.findNodePtr(traln) ; 
 
   if(fullTraversal)
     disorientTree(traln, evalBranch); 
   
-  restorer->traverseAndSwitchIfNecessary(traln, start, model, fullTraversal);
-  restorer->traverseAndSwitchIfNecessary(traln, start->back, model, fullTraversal);
-  
+  Branch root(start->number, start->back->number);
+  restorer->toplevelSwitch(traln, root, partitionsToEvaluate, fullTraversal);
+
   exa_evaluateGeneric(traln,start,FALSE); // must be FALSE
 #ifdef DEBUG_LNL_VERIFY
   if(verifyLnl)
@@ -32,24 +35,16 @@ double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch,
 // must be partial 
 void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)   
 { 
+  assert(0); 
+
+  // TODO does this do what you want? 
+  
   bool masked = false; 
   nodeptr p = evalBranch.findNodePtr(traln); 
-  int numberToExecute = 0; 
-  int modelToEval = ALL_MODELS; 
-
-  auto execModel = traln.getExecModel();
-  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
-    {
-      if(execModel[i])
-	{
-	  numberToExecute++;
-	  modelToEval = i; 
-	}
-    }
-
-  assert(numberToExecute == 1 || numberToExecute == traln.getNumberOfPartitions()); 
-  if(numberToExecute > 1)
-    modelToEval = ALL_MODELS; 
+  // int numberToExecute = 0; 
+  std::vector<nat> modelsToEval; 
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
+    modelsToEval.push_back(i); 
 
   if(p->x)
     {
@@ -58,8 +53,8 @@ void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranc
       p->x = 0; 
       p->next->x = 1; 
     }
-  restorer->traverseAndSwitchIfNecessary(traln, p, modelToEval, false); 
-  coreEvalSubTree(traln,p,masked); // NEEDED
+  restorer->traverseAndSwitchIfNecessary(traln, p, modelsToEval, false); 
+  coreEvalSubTree(traln,p,masked); 
 }
 
 
@@ -83,11 +78,7 @@ double RestoringLnlEvaluator::evaluatePartitions( TreeAln &traln, const std::vec
 
   disorientTree(traln, root); 
   
-  for(auto p : partitions)
-    {
-      restorer->traverseAndSwitchIfNecessary(traln,root.findNodePtr(traln), p, fullTraversal ); 
-      restorer->traverseAndSwitchIfNecessary(traln,root.getInverted().findNodePtr(traln), p, fullTraversal); 
-    }
+  restorer->toplevelSwitch(traln, root, partitions, fullTraversal);    
 
   exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
   
@@ -159,4 +150,10 @@ void RestoringLnlEvaluator::imprint(const TreeAln &traln)
   partitionLnls = traln.getPartitionLnls(); 
   // tout << "imprinting lnl=" << prevLnl << std::endl; 
   restorer->resetRestorer(traln);   
+}
+
+
+void RestoringLnlEvaluator::resetSomePartitionsToImprinted(TreeAln &traln, std::vector<nat> partitions) 
+{
+  restorer->restoreSomePartitions(traln, partitions); 
 }

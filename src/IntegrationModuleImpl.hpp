@@ -37,9 +37,8 @@ void SampleMaster::branchLengthsIntegration()
 
   vector<unique_ptr<AbstractParameter> > vars; 
   vars.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0 ))); 
-  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     vars[0]->addPartition(i);
-
 
   double lambda   =  10 ; 
 
@@ -48,9 +47,11 @@ void SampleMaster::branchLengthsIntegration()
   auto p = unique_ptr<BranchIntegrator>(new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 
   vector<unique_ptr<AbstractProposal> >  proposals;   
   proposals.push_back( std::move(p) ); 
-  proposals[0]->addPrimVar( std::move(vars[0])); 
+  proposals[0]->addPrimaryParameter( std::move(vars[0])); 
 
-  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval->clone() );   
+  std::vector<ProposalSet> pSets; 
+
+  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, pSets, eval->clone() );   
 
   auto branches =  traln.extractBranches();
   auto ps = integrationChain.getProposalView(); 

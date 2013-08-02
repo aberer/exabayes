@@ -59,7 +59,7 @@ void CoupledChains::initializeOutputFiles()
 {  
   // TODO sampling file for every chain possibly 
   auto &traln = chains[0].getTraln(); 
-  auto &params = chains[0].extractVariables();
+  auto &params = chains[0].extractParameters();
 
   auto tag =  rand.getKey();
 

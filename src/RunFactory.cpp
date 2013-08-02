@@ -1,5 +1,6 @@
 #include <set>
 #include <iostream>
+#include <unordered_map>
 
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
@@ -23,11 +24,6 @@
 #include "priors/FixedPrior.hpp"
 
 
-void genericExit(int code); 
-
-
-
-// not to be confused with a fun factory...
 void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &vars, const TreeAln &traln )
 {
   std::set<Category> categories; 
@@ -60,7 +56,7 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	  {
 	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId );
 	    ++highestId; 
-	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
+	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
 	    vars.push_back(std::move(r)); 
 	  }
@@ -73,7 +69,7 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	case Category::RATE_HETEROGENEITY:
 	case Category::FREQUENCIES:
 	  {
-	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
+	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      {
 		auto r = CategoryFuns::getParameterFromCategory(catIter, highestId) ; 
 		++highestId; 
@@ -170,40 +166,66 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
     }
 }
 
-void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, const unique_ptr<LikelihoodEvaluator> &eval )
+
+
+
+void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters)
 {
+  bool needsBl = false; 
+  for(auto &v: proposal->getPrimaryParameterView())
+    {
+      needsBl |= ( v->getCategory() == Category::FREQUENCIES 
+		   || v->getCategory() == Category::SUBSTITUTION_RATES
+		   || v->getCategory() == Category::TOPOLOGY
+		   ); 
+    }
+
+  if(needsBl)
+    {
+      // get all branch length pararemeters   
+      std::vector<unique_ptr<AbstractParameter> > blParameters; 
+      for(auto &v : allParameters)
+	if(v->getCategory() == Category::BRANCH_LENGTHS)
+	  blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
+
+      for(auto &blRandVar : blParameters)
+	proposal->addSecondaryParameter(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
+    }
+}
+
+
+std::vector<std::unique_ptr<AbstractProposal> >  
+RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+			     const BlockParams& partitionParams, const TreeAln &traln, 
+			     const unique_ptr<LikelihoodEvaluator> &eval, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet)
+{
+  std::vector<std::unique_ptr<AbstractProposal> > proposals; 
+
   randomVariables = partitionParams.getParameters(); 
   addStandardParameters(randomVariables, traln);  
   addPriorsToVariables(traln, priorInfo, randomVariables);
 
   ProposalRegistry reg; 
 
-  std::vector<unique_ptr<AbstractParameter> > blRandVars; 
-  for(auto &v : randomVariables)
-    if(v->getCategory() == Category::BRANCH_LENGTHS)
-      blRandVars.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
-
+  // instantiate all proposals that integrate over one parameter 
   for(auto &v : randomVariables)
     {
       if(dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr ) // is it a fixed prior?
 	continue;
-
-      vector<unique_ptr<AbstractProposal> > tmpResult;  
-
-      reg.getProposals(v->getCategory(), propConfig, tmpResult, traln, eval); 
-      for(auto  &p : tmpResult )
+      
+      // TODO bls and aa-models as well later 
+      if( componentWiseMH && 
+	 ( v->getCategory() == Category::FREQUENCIES
+	   || v->getCategory() == Category::SUBSTITUTION_RATES
+	   || v->getCategory() == Category::RATE_HETEROGENEITY))
+	continue; 
+	
+      std::vector<std::unique_ptr<AbstractProposal> > 
+	tmpResult = reg.getSingleParameterProposals(v->getCategory(), propConfig,  traln, eval); 
+      for(auto &p : tmpResult )
 	{
-	  p->addPrimVar(std::unique_ptr<AbstractParameter>(v->clone()));
-	  if(v->getCategory() == Category::TOPOLOGY)
-	    {
-	      for(auto &blRandVar : blRandVars)
-		p->addSecVar(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
-	    }
-	  else if(v->getCategory() == Category::FREQUENCIES || v->getCategory() == Category::SUBSTITUTION_RATES)
-	    {
-	      for(auto &blRandVar : blRandVars)
-		p->addSecVar(std::unique_ptr<AbstractParameter>(blRandVar->clone())) ; 
-	    }	  
+	  p->addPrimaryParameter(std::unique_ptr<AbstractParameter>(v->clone()));
+	  addSecondaryParameters(p.get(), randomVariables); 
 	}
 
       // dammit...
@@ -214,7 +236,72 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 	}
     }
 
-  tout << endl << "Parameters to be integrated: " << endl; 
+  // instantiate proposals that integrate over multiple over an entire
+  // category gather all parameters that we can integrate over
+  // together in a partitioned manner and output a good set of
+  // proposals
+  std::vector<AbstractParameter*> mashableParameters; 
+  for(auto &v : randomVariables)
+    {
+      if(dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr ) // is it a fixed prior?
+	continue;
+
+      // those are prototypes! non-owning pointers 
+      switch(v->getCategory())
+	{
+	case Category::SUBSTITUTION_RATES: 
+	case Category::FREQUENCIES:
+	case Category::RATE_HETEROGENEITY: 
+	  mashableParameters.push_back(v.get()); 
+	default: 
+	  ;
+	}
+    }  
+  
+#ifdef UNSURE
+  // what about fixed priors? 
+  assert(0); 
+#endif
+  // TODO that's all a bit cumbersome, has to be re-designed a bit 
+
+  if(componentWiseMH)
+    {
+      std::unordered_map<Category, std::vector<AbstractParameter*>, CategoryHash > cat2param; 
+      for(auto &p:  mashableParameters)
+	cat2param[p->getCategory()].push_back(p); 
+
+      for(auto &elem : cat2param)
+	{
+	  auto proposalsForSet = reg.getSingleParameterProposals(elem.first, propConfig, traln,eval);
+	  
+	  // this and the above for-loop essentially produce all
+	  // proposals, that we'd also obtain in the default case =>
+	  // but we need a set of it
+	  for(auto &proposalType : proposalsForSet)
+	    {
+	      std::vector<std::unique_ptr<AbstractProposal> > lP; 	      
+	      for(auto &p : elem.second)
+		{
+		  auto proposalClone = std::unique_ptr<AbstractProposal>(proposalType->clone()); 
+		  proposalClone->addPrimaryParameter(std::unique_ptr<AbstractParameter>(p->clone()));
+		  addSecondaryParameters(proposalClone.get(), randomVariables); 
+		  lP.push_back(std::move(proposalClone));		  
+		} 
+	      resultPropSet.emplace_back(lP[0]->getRelativeWeight(), std::move(lP)); 
+	    }
+	}
+    }
+  // enable, if you want to enable AlignmentProposal	
+  // std::vector<std::unique_ptr<AbstractProposal>> multiPartitionProposals = 
+  //   reg.getMultiParameterProposals( mashableParameters, propConfig, traln, eval)  ; 
+  // for(auto &elem : multiPartitionProposals)    
+  //   addSecondaryParameters(elem.get(), randomVariables);
+
+  // for(auto &elem : multiPartitionProposals )
+  //   proposals.emplace_back(std::move(elem)); 
+  
+  // merely some printing and we are done  
+  tout << std::endl << "Parameters to be integrated: " << endl; 
   for(auto &v : randomVariables)
     {
       tout << v->getId() << "\t" << v.get()  << endl; 
@@ -225,14 +312,38 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
   double sum = 0; 
   for(auto &p : proposals)
     sum += p->getRelativeWeight(); 
+  for(auto &p : resultPropSet)
+    sum += p.getRelativeWeight();
   
   tout << "Will employ the following proposal mixture (frequency,type,affected variables): " << endl; 
   for(auto &p : proposals )
     {
-      tout << setprecision(2) << p->getRelativeWeight() / sum * 100 <<   "%\t" ; 
+      tout << PERC_PRECISION << p->getRelativeWeight() / sum * 100 <<   "%\t" ; 
       p->printShort(tout ) ; 
       tout << endl; 
     }
-  tout << setprecision(2) << fixed << endl ; 
+  tout << std::endl; 
+
+  if(componentWiseMH)
+    {
+      tout << "In addition to that, the following sets below will be executed \n"
+	   << "in a sequential manner (for efficiency, see manual for how to\n"
+	   << "disable)." << std::endl; 
+	for(auto &p : resultPropSet )
+	  {
+	    p.printVerboseAbbreviated(tout, sum);
+	    tout << std::endl;       
+	  }
+    }
+
+  return proposals; 
 }
 
+
+std::vector<std::unique_ptr<AbstractParameter> > RunFactory::getRandomVariables() const 
+{
+  vector<unique_ptr<AbstractParameter> > result; 
+  for(auto &r : randomVariables)
+    result.push_back(std::unique_ptr<AbstractParameter>(r->clone()));
+  return result; 
+}

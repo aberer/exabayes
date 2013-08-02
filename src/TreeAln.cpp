@@ -9,7 +9,7 @@
 #include "BoundsChecker.hpp"
 
 const double TreeAln::zZero = BoundsChecker::zMax + ( 1 - BoundsChecker::zMax) / 2 ; 
-const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
+const double TreeAln::initBL = 0.75;
 
 TreeAln::TreeAln()
   : parsimonyEnabled(true)
@@ -61,7 +61,7 @@ TreeAln::~TreeAln()
   if(parsimonyEnabled)
     {
       exa_free(tr.parsimonyScore);
-      for(int i = 0; i < getNumberOfPartitions(); ++i)
+      for(nat i = 0; i < getNumberOfPartitions(); ++i)
 	{
 	  pInfo *partition = getPartition(i); 
 	  exa_free(partition->parsVect);
@@ -146,7 +146,7 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
 
 
   // set default values (will be overwritten later, if necessary )
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
       pInfo *partition =  getPartition(i);
       assert(partition->dataType == DNA_DATA);
@@ -324,7 +324,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
   assert(&rhs != this); 
 
   // copy partition parameters 
-  for(int i = 0; i < rhs.getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < rhs.getNumberOfPartitions(); ++i)
     {
       pInfo *partitionRhs = rhs.getPartition(i); 
       pInfo *partitionLhs = this->getPartition(i); 
@@ -406,7 +406,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
 
 
 
-int TreeAln::getNumBranches() const
+nat TreeAln::getNumBranches() const
 {
 #if HAVE_PLL != 0
   return partitions.perGeneBranchLengths  ? partitions.numberOfPartitions : 1 ; 
@@ -416,7 +416,7 @@ int TreeAln::getNumBranches() const
 }
 
 
-int TreeAln::getNumberOfPartitions() const
+nat TreeAln::getNumberOfPartitions() const
 {
 #if HAVE_PLL != 0
   return partitions.numberOfPartitions; 
@@ -426,7 +426,7 @@ int TreeAln::getNumberOfPartitions() const
 }
 
 
-pInfo* TreeAln::getPartition(int model)  const
+pInfo* TreeAln::getPartition(nat model)  const
 {
   assert(model < getNumberOfPartitions()); 
   
@@ -441,7 +441,7 @@ pInfo* TreeAln::getPartition(int model)  const
 std::vector<bool> TreeAln::getExecModel() const 
 { 
   std::vector<bool> result; 
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0  
       result.push_back(partitions.partitionData[i]->executeModel); 
@@ -454,7 +454,7 @@ std::vector<bool> TreeAln::getExecModel() const
  
 void TreeAln::setExecModel(const std::vector<bool>  &modelInfo)
 {
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0 
       partitions.partitionData[i]->executeModel =  modelInfo[i] ?  true : false; 
@@ -467,7 +467,7 @@ void TreeAln::setExecModel(const std::vector<bool>  &modelInfo)
 std::vector<double> TreeAln::getPartitionLnls() const
 {
   std::vector<double> result; 
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0 
       result.push_back(partitions.partitionData[i]->partitionLH); 
@@ -480,7 +480,7 @@ std::vector<double> TreeAln::getPartitionLnls() const
  
 void TreeAln::setPartitionLnls(const std::vector<double> partitionLnls)  
 {
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0
       partitions.partitionData[i]->partitionLH = partitionLnls[i]; 

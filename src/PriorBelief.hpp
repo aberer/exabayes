@@ -22,17 +22,47 @@
 class PriorBelief
 {
 public:
-  PriorBelief();
-  
+  PriorBelief();  
+  /** 
+      @brief intializes and scores the prior each parameter    
+   */ 
   void initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables);   
+  /** 
+      @brief informs the prior about acceptance of the new state    
+   */ 
   void accept()  { assert(wasInitialized); lnPrior += lnPriorRatio;  lnPriorRatio = 0; }  
+  /** 
+      @brief informs the prior about rejection of the new state 
+   */
   void reject() { assert(wasInitialized) ; lnPriorRatio = 0; }
+  /** 
+      @brief adds a (logarithmic!) value to the prior ratio
+   */ 
+  void addToRatio(double val)  { assert(wasInitialized) ;  lnPriorRatio += val; }
+  /** 
+      @brief deals with modification of the secondary parameters
+      (currently this only applies to branch lengths that are
+      modified, when we modify parameters) 
+      @notice this is very pedastrian, but I do not see how to avoid this
+   */ 
+  void accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs,  const std::vector<AbstractPrior*> &blPriors)  ; 
+  /** 
+      @brief updates the branch length prior 
+      @notice the reason, we have a specific function for that is to avoid some conversions back and forth with the internal representation 
+      @param oldInternalZ the old branch length in internal representation 
+      @param newInternalZ the new branch length in internal representation 
+   */ 
+  void updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, AbstractPrior* brPr) ; 
+  /** 
+      @brief verifies the prior 
+   */ 
+  void verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> variables) const ;  
+
+  ///////////////
+  // OBSERVERS //
+  ///////////////
   double getLnPrior () const {assert(wasInitialized); return lnPrior; } 
   double getLnPriorRatio() const {assert(wasInitialized) ; return lnPriorRatio; }
-  void addToRatio(double val)  { assert(wasInitialized) ;  lnPriorRatio += val; }
-  void accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs,  const std::vector<AbstractPrior*> &blPriors)  ; 
-  void updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, AbstractPrior* brPr) ; 
-  void verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> variables) const ;  
 
 private: 
   double scoreEverything(const TreeAln &traln, std::vector<AbstractParameter*> variables) const ; 

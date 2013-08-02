@@ -48,7 +48,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   double realMultiplier = log(b.getLength()) / log(oldZ); 
   updateHastings(hastings, realMultiplier, name); 
 
-  auto relPrior =  primVar[0]->getPrior(); 
+  auto relPrior = primaryParameters[0]->getPrior(); 
   prior.updateBranchLengthPrior(traln, oldZ, b.getLength(),relPrior) ; 
 }
 

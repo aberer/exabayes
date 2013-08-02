@@ -67,7 +67,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 		 otherBranch.getInverted().findNodePtr(traln),
 		 newB); 
   updateHastings(hastings, drawnMultiplier * drawnMultiplier, name); 
-  auto brPr = primVar[0]->getPrior(); 
+  auto brPr = primaryParameters[0]->getPrior(); 
 
   prior.updateBranchLengthPrior(traln, oldA, newA, brPr);
   prior.updateBranchLengthPrior(traln, oldB, newB, brPr);

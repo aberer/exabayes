@@ -2,6 +2,14 @@
 #include "Category.hpp"
 
 
+AbstractParameter::AbstractParameter(Category cat, nat id)
+  : id(id)
+  , cat(cat) 
+  , printToParamFile(true)
+{
+}
+
+
 std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs)
 {
   out << CategoryFuns::getShortName(rhs->cat); 

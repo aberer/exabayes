@@ -43,7 +43,7 @@ public:
   /**
      @brief get the raxml representation of the partition  
    */ 
-  pInfo* getPartition(int model) const;
+  pInfo* getPartition(nat model) const;
   /** 
       @brief get the internal raxml tree representation 
    */ 
@@ -54,8 +54,10 @@ public:
   const tree* getTr() const{return &tr; }
   /** 
       @brief get the number of per-partition branch lengths
+      @notice do NOT confuse with getNumberOfBranches 
+      @todo remodel this function / deal with the general problem 
    */ 
-  int getNumBranches() const; 
+  nat getNumBranches() const; 
   /** 
       @brief get the number of branches in the tree (not counting per-partition branch lengths)
    */ 
@@ -63,7 +65,7 @@ public:
   /** 
       @brief get the number of partitions in the alignment
    */ 
-  int getNumberOfPartitions() const;   
+  nat getNumberOfPartitions() const;   
   /** 
       @brief get the number of taxa in the tree 
    */ 

@@ -23,6 +23,8 @@ public:
   virtual void imprint(const TreeAln &traln) {} // NOOP 
   virtual void resetToImprinted(TreeAln &traln) {} // NOOP
 
+  virtual void resetSomePartitionsToImprinted(TreeAln &traln, std::vector<nat> partitions) ; 
+
   virtual std::unique_ptr<LikelihoodEvaluator> clone() const {return std::unique_ptr<LikelihoodEvaluator>(new PlainLikelihoodEvaluator(*this)); }
 
 private: 

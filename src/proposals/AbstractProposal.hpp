@@ -19,8 +19,8 @@
 class AbstractProposal : public Checkpointable
 {
 public: 
-  // for copying the non-trivial types 
-  AbstractProposal(){} 
+  AbstractProposal()		
+  {} 
   AbstractProposal( const AbstractProposal& rhs); 
   
   virtual ~AbstractProposal(){}
@@ -86,11 +86,11 @@ public:
   /** 
       @brief add a parameter to be integrated over to the proposal 
    */ 
-  void addPrimVar(std::unique_ptr<AbstractParameter> var) {primVar.push_back(std::move(var)) ; }
+  void addPrimaryParameter(std::unique_ptr<AbstractParameter> var) {primaryParameters.push_back(std::move(var)) ; }
   /** 
       @brief add a parameter  that is integrated over as a by-product of this proposal 
    */ 
-  void addSecVar(std::unique_ptr<AbstractParameter> var) {secVar.push_back(std::move(var)) ; }
+  void addSecondaryParameter(std::unique_ptr<AbstractParameter> var) {secondaryParameters.push_back(std::move(var)) ; }
   /** 
       @brief update the hatsings
       @param valToAdd is the absolute proposal ratio that shall be added 
@@ -100,8 +100,8 @@ public:
   std::ostream& printNamePartitions(std::ostream &out); 
   std::ostream& printShort(std::ostream &out)  const ;
 
-  std::vector<AbstractParameter*> getPrimVar() const; 
-  std::vector<AbstractParameter*> getSecVar() const ; 
+  std::vector<AbstractParameter*> getPrimaryParameterView() const; 
+  std::vector<AbstractParameter*> getSecondaryParameterView() const ; 
 
   // we need to implement these 
   void writeToCheckpoint( std::ostream &out)  const; 
@@ -120,12 +120,10 @@ protected:
   std::string name;   
   SuccessCounter sctr; 
   Category category; 
-
-  std::vector<std::unique_ptr<AbstractParameter> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  std::vector<std::unique_ptr<AbstractParameter> > secVar;  // as a by-product also these random variables are changed 
-
+  std::vector<std::unique_ptr<AbstractParameter> > primaryParameters; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  std::vector<std::unique_ptr<AbstractParameter> > secondaryParameters;  // as a by-product also these random variables are changed 
   double relativeWeight; 
-  
+
   friend std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs); 
 }; 
 

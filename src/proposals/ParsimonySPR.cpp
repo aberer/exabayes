@@ -83,7 +83,7 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
   for(auto &elem : insertions)
     {
       double score = 0; 
-      for(int i = 0 ; i < traln.getNumberOfPartitions(); ++i)
+      for(nat i = 0 ; i < traln.getNumberOfPartitions(); ++i)
 	{
 	  double states  = double(traln.getPartition(i)->states); 
 	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05)) / states)) ;  //  * tr->fracchange
@@ -207,7 +207,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   move.applyToTree(traln); 
 
   bool modifiesBl = false; 
-  for(auto &v : secVar)
+  for(auto &v : secondaryParameters)
     modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
   assert(traln.getNumBranches() == 1); 
@@ -220,7 +220,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   if( modifiesBl)
     {
       assert(0); 
-      auto brPr =  secVar[0]->getPrior();
+      auto brPr =  secondaryParameters[0]->getPrior();
       move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 

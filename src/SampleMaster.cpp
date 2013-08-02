@@ -2,6 +2,8 @@
 #include <fstream>
 #include <memory>
 
+#include "ProposalSet.hpp"
+
 #include "common.h"
 
 #include "config/BlockProposalConfig.hpp"
@@ -21,7 +23,7 @@
 
 #include "GlobalVariables.hpp"
 
-#include "LnlRestorer.hpp"
+#include "ArrayRestorer.hpp"
 #include "AvgSplitFreqAssessor.hpp"
 
 #include "proposers/AbstractProposer.hpp"
@@ -125,7 +127,7 @@ void SampleMaster::printAlignmentInfo(const TreeAln &traln)
        << "partitions:" 
        << std::endl;
   
-  for(int i = 0 ;i < traln.getNumberOfPartitions() ;++i)
+  for(nat i = 0 ;i < traln.getNumberOfPartitions() ;++i)
     {
       auto partition = traln.getPartition(i);       
       nat length = partition->upper - partition->lower; 
@@ -245,7 +247,7 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree)
     {
     case MemoryMode::RESTORING: 
       {
-	auto restorer = make_shared<LnlRestorer>(initTree);  
+	auto restorer = make_shared<ArrayRestorer>(initTree);  
 	eval = std::unique_ptr<RestoringLnlEvaluator>( new RestoringLnlEvaluator(restorer)); 
       }
       break; 
@@ -278,7 +280,9 @@ void SampleMaster::initializeRuns( )
 
   if(cl.getCheckpointId().compare(cl.getRunid()) == 0)
     {
-      std::cerr << "You specified >" << cl.getRunid() << "< as runid and inteded to restart from a previous run with id >" << cl.getCheckpointId() << "<. Please specify a new runid for the restart. " << std::endl; 
+      std::cerr << "You specified >" << cl.getRunid() << "< as runid and inteded\n"
+		<< "to restart from a previous run with id >" << cl.getCheckpointId() << "<."
+		<< "Please specify a new runid for the restart. " << std::endl; 
       ParallelSetup::genericExit(-1); 
     }
 
@@ -297,7 +301,8 @@ void SampleMaster::initializeRuns( )
 
   std::unique_ptr<LikelihoodEvaluator> eval = createEvaluatorPrototype(initTree); 
 
-  initWithConfigFile(cl.getConfigFileName(), &initTree, proposals, variables, eval);
+  std::vector<ProposalSet> proposalSets;  
+  initWithConfigFile(cl.getConfigFileName(), &initTree, proposals, variables, proposalSets, eval);
   assert(runParams.getTuneFreq() > 0); 
 
   // ORDER: must be after initWithConfigFile
@@ -372,7 +377,7 @@ void SampleMaster::initializeRuns( )
       for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
 	{
 	  randCtr_t c; 
-	  chains.emplace_back( c , trees[j], proposals, std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
+	  chains.emplace_back( c , trees[j], proposals, proposalSets, std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
 	  auto &chain = chains[j]; 		
 	  chain.setRunId(i); 
 	  chain.setTuneFreuqency(runParams.getTuneFreq()); 
@@ -523,6 +528,7 @@ static int countNumberOfTreesQuick(const char *fn )
 void SampleMaster::initWithConfigFile(string configFileName, const TreeAln* tralnPtr,
 				      std::vector<std::unique_ptr<AbstractProposal> > &proposalResult, 
 				      std::vector<std::unique_ptr<AbstractParameter> > &variableResult, 
+				      std::vector<ProposalSet> &proposalSets,
 				      const std::unique_ptr<LikelihoodEvaluator> &eval)
 {
   ConfigReader reader; 
@@ -543,7 +549,7 @@ void SampleMaster::initWithConfigFile(string configFileName, const TreeAln* tral
   reader.Execute(token);
 
   RunFactory r; 
-  r.configureRuns(proposalConfig, priorBlock , paramBlock, *tralnPtr, proposalResult, eval);
+  proposalResult = r.produceProposals(proposalConfig, priorBlock , paramBlock, *tralnPtr, eval, runParams.isComponentWiseMH(),  proposalSets);
   variableResult = r.getRandomVariables(); 
 }
 

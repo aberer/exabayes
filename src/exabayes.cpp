@@ -69,24 +69,11 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  std::stringstream ss; 
 
-  int myInt = 3; 
-  ss.write(reinterpret_cast<char*>(&myInt), sizeof(int)); 
+  int c = 0; 
+  assert(c < (c++)); 
+  assert(c < (++c)); 
   
-  int result = 0; 
-  ss.read(reinterpret_cast<char*>(&result), sizeof(result)); 
-
-  std::cout << "res= " << result << std::endl; 
-
-  myInt = 4; 
-  ss.write(reinterpret_cast<char*>(&myInt), sizeof(int)); 
-  ss.read(reinterpret_cast<char*>(&result), sizeof(result)); 
-
-
-  std::cout << "res= " << result << std::endl; 
-
-
   exit(0); 
   // genericExit(); 
 #else 
@@ -183,6 +170,17 @@ int main(int argc, char **argv)
 
   // cl.printVersion(true);  
   tout << endl; 
+
+  tout << "This is " << PROGRAM_NAME << " version "
+       << VERSION
+       << ", a tool for Bayesian MCMC sampling of phylogenetic trees." 
+#if HAVE_PLL == 0 
+       << "\nbuild with the ExaML code base and MPI-support."
+#else 
+       << "\nbuild with the (Phylogenetic Likelihood Library) PLL code base for sequential execution."
+#endif
+       << "\nPlease send any feature requests and inquiries to exabayes-at-googlemail-dot-com"    
+       << std::endl << std::endl; 
 
   tout << PROGRAM_NAME << " was called as follows: " << endl; 
   for(int i = 0; i < argc; ++i)

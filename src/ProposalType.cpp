@@ -7,7 +7,6 @@
 void genericExit(int code); 
 
 
-
 namespace ProposalTypeFunc
 {
   std::string getLongName(ProposalType type)
@@ -64,7 +63,8 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER,  "FREQUENCYSLIDER" } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  "FREQUENCYDIRICHLET" } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } ,
-	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} 
+	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} , 
+	{ ProposalType::DIRICH_REVMAT_ALL , "DIRICHREVMATALL"} 	
       }; 
 
     return proposal2name[p];     
@@ -85,7 +85,16 @@ namespace ProposalTypeFunc
   }
 
 
-  std::vector<ProposalType> getProposalsForCategory(Category c) 
+
+  std::vector<ProposalType> getMultiParameterProposals()
+  {
+    std::vector<ProposalType> result; 
+    result.push_back(ProposalType::DIRICH_REVMAT_ALL);
+    return result; 
+  }
+
+
+  std::vector<ProposalType> getSingleParameterProposalsForCategory(Category c) 
   {
     switch(c)
       {
@@ -140,9 +149,19 @@ namespace ProposalTypeFunc
     auto cs =   CategoryFuns::getAllCategories() ; 
     for(auto c : cs)
       {
-	auto someProposals = getProposalsForCategory(c) ; 
+	// auto someProposals = getProposalsForCategory(c) ; 
+
+	auto someProposals =  getSingleParameterProposalsForCategory( c) ; 
+	
+	// do we need the multi-parameter proposals here as
+	// well?
+	// assert(0); 
 	result.insert(result.end(), someProposals.begin(), someProposals.end()); 
-      }    
+      } 
+
+    std::vector<ProposalType> multiParamProps =  getMultiParameterProposals();
+    result.insert(result.end(), multiParamProps.begin(), multiParamProps.end()); 
+    
     return result; 
   }
 
@@ -179,13 +198,15 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER,  true } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  false } ,
-	{ ProposalType::BRANCH_GIBBS , false } 
+	{ ProposalType::BRANCH_GIBBS , false } , 
+	{ ProposalType::DIRICH_REVMAT_ALL , false } 	
     };
 
     if(map.find(p) == map.end())
       {
 	std::cerr << "Error, could not find type >" << int(p) << 
 	  "< when trying to determine, if proposal is ready for productive use. Check ProposalType.cpp" << std::endl; 
+	assert(0);
 	ParallelSetup::genericExit(-1); 
       }
 

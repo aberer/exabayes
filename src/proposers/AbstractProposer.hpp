@@ -23,10 +23,6 @@ public:
   bool isTuneup() const {return tuneup; }
 
   virtual AbstractProposer* clone() const = 0; 
-  // AbstractProposer* clone() const {return new AbstractProposer(*this) ; } 
-
-  // TODO would be cool 
-  // void setTunedParameter(double param ) { tunedParameter = param; }
 
 protected: 
   bool tune; 

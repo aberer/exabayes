@@ -1,10 +1,12 @@
 #ifndef _TREE_EVALUATOR_HPP
 #define _TREE_EVALUATOR_HPP
 
+#include <vector>
+
 #include "axml.h"
 #include "TreeAln.hpp"
 #include "Branch.hpp"
-#include "LnlRestorer.hpp"
+#include "ArrayRestorer.hpp"
 
 class LikelihoodEvaluator
 {
@@ -37,7 +39,11 @@ public:
   /**
      @brief use backup likelihood arrays to reset the state 
    */ 
-  virtual void resetToImprinted(TreeAln &traln) = 0;  
+  virtual void resetToImprinted(TreeAln &traln) = 0;    
+  /** 
+      @brief use backup likelihood
+   */ 
+  virtual void resetSomePartitionsToImprinted(TreeAln &traln, std::vector<nat> partitions) = 0; 
   /** 
       @brief invalidate the orientation at a given node 
    */ 

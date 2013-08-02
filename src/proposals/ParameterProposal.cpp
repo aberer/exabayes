@@ -26,7 +26,7 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
 
 void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
-  assert(primVar.size() == 1); 	// we only have one parameter to integrate over 
+  assert(primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
   // this parameter proposal works with any kind of parameters (rate
   // heterogeneity, freuqencies, revmat ... could also be extended to
   // work with AA)
@@ -34,7 +34,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
   // extract the parameter (a handy std::vector<double> that for
   // instance contains all the frequencies)
-  ParameterContent content = primVar[0]->extractParameter(traln); 
+  ParameterContent content = primaryParameters[0]->extractParameter(traln); 
   savedContent = content; 
   
   // nasty, we have to correct for the fracchange 
@@ -54,35 +54,38 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   newContent.values = newValues; 
   // use our parameter object to set the frequencies or revtmat rates
   // or what ever (for all partitions)
-  primVar[0]->applyParameter(traln, newContent); 
+  primaryParameters[0]->applyParameter(traln, newContent); 
 
   // now take care of the fracchange 
   double newFracChange = traln.getTr()->fracchange; 
   if(modifiesBL)
     {
       std::vector<AbstractPrior*> blPriors; 
-      for(auto &v : secVar)
-	blPriors.push_back(v->getPrior()); 
+      for(auto &v : secondaryParameters)
+	{
+	  assert(v->getCategory() == Category::BRANCH_LENGTHS); 
+	  blPriors.push_back(v->getPrior()); 
+	}
       prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
       updateHastings(hastings, pow(newFracChange / oldFracChange, traln.getNumberOfBranches()), name); 
     }
 
   // a generic prior updates the prior rate 
-  auto thePrior = primVar[0]->getPrior();
+  auto thePrior = primaryParameters[0]->getPrior();
   prior.addToRatio(thePrior->getLogProb(newValues) - thePrior->getLogProb(savedContent.values)); 
 } 
 
 
 void ParameterProposal::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
 {
-  assert(primVar.size() == 1 ); 
-  evaluator->evaluatePartitions(traln, primVar[0]->getPartitions() , true); 
+  assert(primaryParameters.size() == 1 ); 
+  evaluator->evaluatePartitions(traln, primaryParameters[0]->getPartitions() , true); 
 }
  
 void ParameterProposal::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  assert(primVar.size() == 1 ); 
-  primVar[0]->applyParameter(traln, savedContent);
+  assert(primaryParameters.size() == 1 ); 
+  primaryParameters[0]->applyParameter(traln, savedContent);
   // tout << "resetting to " << savedContent << std::endl; 
 }
 

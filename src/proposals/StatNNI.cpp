@@ -31,7 +31,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 
   std::vector<AbstractPrior* > priors; 
   bool multiplyBranches = false; 
-  for(auto &v : secVar)
+  for(auto &v : secondaryParameters)
     {
       multiplyBranches |= v->getCategory() == Category::BRANCH_LENGTHS; 
       priors.push_back(v->getPrior()) ; 

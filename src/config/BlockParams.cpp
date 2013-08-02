@@ -71,7 +71,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   
   // maybe this should not be done here /= 
   // too clumsy -- must be tested 
-  for(int i = 0; i < traln->getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < traln->getNumberOfPartitions(); ++i)
     {
       if(not partAppeared[i] && 
 	 (   ( cat == Category::AA_MODEL && traln->getPartition(i)->dataType == AA_DATA ) 

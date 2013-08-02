@@ -53,12 +53,16 @@ double PlainLikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::
  
 void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const Branch &evalBranch)
 { 
+  // meh 
+  assert(0); 
+
+#if 0 
   bool masked = false; 
   nodeptr p = evalBranch.findNodePtr(traln); 
   int numberToExecute = 0; 
 
   auto execModel = traln.getExecModel();
-  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
       if(execModel[i])
 	numberToExecute++;
@@ -75,6 +79,7 @@ void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const Branch &evalBr
     }
 
   coreEvalSubTree(traln,p,masked); // NEEDED
+#endif
 } 
 
 
@@ -96,3 +101,10 @@ bool PlainLikelihoodEvaluator::traverseAndTouch(const TreeAln &traln, const Bran
   return result; 
 } 
 
+
+
+void PlainLikelihoodEvaluator::resetSomePartitionsToImprinted(TreeAln &traln, std::vector<nat> partitions) 
+{
+  assert(0); 
+  // TODO 
+}

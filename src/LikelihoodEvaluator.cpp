@@ -1,6 +1,6 @@
 #include "LikelihoodEvaluator.hpp"
 #include "GlobalVariables.hpp"
-#include "LnlRestorer.hpp"
+#include "ArrayRestorer.hpp"
 
 
 void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)

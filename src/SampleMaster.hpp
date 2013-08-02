@@ -11,6 +11,7 @@
 
 #include <vector>
 
+#include "ProposalSet.hpp"
 #include "axml.h"
 #include "config/BlockRunParameters.hpp"
 #include "config/BlockProposalConfig.hpp"
@@ -43,7 +44,9 @@ public:
   /** 
       @brief initializes the config file 
    */ 
-  void initWithConfigFile(string configFileName, const TreeAln* tralnPtr, vector<unique_ptr<AbstractProposal> > &proposalResult, vector<unique_ptr<AbstractParameter> > &variableResult, const std::unique_ptr<LikelihoodEvaluator> &eval); 
+  void initWithConfigFile(string configFileName, const TreeAln* tralnPtr, vector<unique_ptr<AbstractProposal> > &proposalResult, 
+			  vector<unique_ptr<AbstractParameter> > &variableResult, std::vector<ProposalSet> &proposalSets, 
+			  const std::unique_ptr<LikelihoodEvaluator> &eval); 
   /** 
       @brief EXPERIMENTAL 
    */ 
