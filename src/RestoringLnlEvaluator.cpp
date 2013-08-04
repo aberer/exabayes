@@ -11,9 +11,6 @@ RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<ArrayRestorer> _res
 
 double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, bool fullTraversal )  
 {
-
-  assert(traln.getPartitionsPtr()->perGeneBranchLengths == TRUE ); 
-
   std::vector<nat> partitionsToEvaluate; 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     partitionsToEvaluate.push_back(i); 
