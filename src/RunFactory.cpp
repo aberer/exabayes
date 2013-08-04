@@ -34,7 +34,6 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
   int highestId = -1; 
   for(auto &v : vars )
     {
-      v->printShort(tout); 
       int id = v->getId(); 
       if(highestId < id)
 	highestId = id; 
@@ -54,7 +53,7 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	case Category::TOPOLOGY: 
 	case Category::BRANCH_LENGTHS: 
 	  {
-	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId );
+	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId, 0 );
 	    ++highestId; 
 	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      r->addPartition(j); 
@@ -70,8 +69,8 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	case Category::FREQUENCIES:
 	  {
 	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      {
-		auto r = CategoryFuns::getParameterFromCategory(catIter, highestId) ; 
+	      {		
+		auto r = CategoryFuns::getParameterFromCategory(catIter, highestId,j) ; 
 		++highestId; 
 		r->addPartition(j); 
 		vars.push_back(std::move(r)); 
@@ -171,25 +170,33 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 
 void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters)
 {
+  // get all branch length pararemeters   
+  std::vector<unique_ptr<AbstractParameter> > blParameters; 
+  for(auto &v : allParameters)
+    if(v->getCategory() == Category::BRANCH_LENGTHS)
+      blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
+
   bool needsBl = false; 
+  std::unordered_set<nat> myPartitions; 
   for(auto &v: proposal->getPrimaryParameterView())
     {
       needsBl |= ( v->getCategory() == Category::FREQUENCIES 
 		   || v->getCategory() == Category::SUBSTITUTION_RATES
 		   || v->getCategory() == Category::TOPOLOGY
 		   ); 
+      auto ps = v->getPartitions();
+      myPartitions.insert(ps.begin(), ps.end()); 
     }
 
   if(needsBl)
     {
-      // get all branch length pararemeters   
-      std::vector<unique_ptr<AbstractParameter> > blParameters; 
-      for(auto &v : allParameters)
-	if(v->getCategory() == Category::BRANCH_LENGTHS)
-	  blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
-
       for(auto &blRandVar : blParameters)
-	proposal->addSecondaryParameter(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
+	{
+	  auto partitions =  blRandVar->getPartitions();
+	  if(std::any_of(partitions.begin(),partitions.end(), 
+			 [&](nat i){ return myPartitions.find(i) != myPartitions.end(); }))
+	    proposal->addSecondaryParameter(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
+	}
     }
 }
 
@@ -213,9 +220,10 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
       if(dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr ) // is it a fixed prior?
 	continue;
       
-      // TODO bls and aa-models as well later 
+      // TODO  aa-models as well later 
       if( componentWiseMH && 
 	 ( v->getCategory() == Category::FREQUENCIES
+	   || v->getCategory() == Category::BRANCH_LENGTHS
 	   || v->getCategory() == Category::SUBSTITUTION_RATES
 	   || v->getCategory() == Category::RATE_HETEROGENEITY))
 	continue; 
@@ -240,6 +248,7 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
   // category gather all parameters that we can integrate over
   // together in a partitioned manner and output a good set of
   // proposals
+  nat blCtr = 0; 
   std::vector<AbstractParameter*> mashableParameters; 
   for(auto &v : randomVariables)
     {
@@ -253,6 +262,12 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
 	case Category::FREQUENCIES:
 	case Category::RATE_HETEROGENEITY: 
 	  mashableParameters.push_back(v.get()); 
+	  break; 
+	case Category::BRANCH_LENGTHS:
+	  {
+	    mashableParameters.push_back(v.get()); 
+	    ++blCtr; 
+	  }
 	default: 
 	  ;
 	}
@@ -287,10 +302,24 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
 		  addSecondaryParameters(proposalClone.get(), randomVariables); 
 		  lP.push_back(std::move(proposalClone));		  
 		} 
+	      proposalType->setInSetExecution(true);
+
 	      resultPropSet.emplace_back(lP[0]->getRelativeWeight(), std::move(lP)); 
 	    }
 	}
     }
+  else 
+    {
+      if(blCtr > 1 )
+	{
+	  tout << std::endl << "You disabled componentWiseMH and tried to integrate over multiple\n"
+	       << "branch lengths paramaeters. Due to performance reasons,\n"
+	       << "componentWiseMH must be set to true, when multiple branch lengths\n"
+	       << "shall be integrated. Aborting." << std::endl; 
+	  ParallelSetup::genericExit(-1);
+	}
+    }
+
   // enable, if you want to enable AlignmentProposal	
   // std::vector<std::unique_ptr<AbstractProposal>> multiPartitionProposals = 
   //   reg.getMultiParameterProposals( mashableParameters, propConfig, traln, eval)  ; 
@@ -301,11 +330,12 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
   //   proposals.emplace_back(std::move(elem)); 
   
   // merely some printing and we are done  
-  tout << std::endl << "Parameters to be integrated: " << endl; 
+  tout << std::endl << "Parameters to be integrated: " << std::endl; 
   for(auto &v : randomVariables)
     {
-      tout << v->getId() << "\t" << v.get()  << endl; 
-      tout << "\t with prior " << v->getPrior() << std::endl; 
+      tout << v->getId() << "\t" << v.get()  << std::endl; 
+      tout << "\tsub-id:\t" << v->getIdOfMyKind() << std::endl; 
+      tout << "\tprior:\t" << v->getPrior() << std::endl; 
     }
   tout << endl; 
   
@@ -322,6 +352,9 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
       p->printShort(tout ) ; 
       tout << endl; 
     }
+  if(proposals.size() == 0)
+    tout << "None." << std::endl; 
+
   tout << std::endl; 
 
   if(componentWiseMH)

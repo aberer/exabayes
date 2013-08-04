@@ -8,8 +8,8 @@
 class RevMatParameter : public AbstractParameter
 {
 public: 
-  RevMatParameter(nat id ) 
-    : AbstractParameter(Category::SUBSTITUTION_RATES, id )
+  RevMatParameter(nat id, nat idOfMyKind   ) 
+    : AbstractParameter(Category::SUBSTITUTION_RATES, id, idOfMyKind )
   {
   }
 

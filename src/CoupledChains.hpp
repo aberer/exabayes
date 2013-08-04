@@ -40,7 +40,9 @@ public:
      @brief run for a given number of generations
   */
   void run(int numGen); 
+#if 0 
   void chainInfo(); 
+#endif
 
   /** 
       @brief indicates whether this run is executed by the process

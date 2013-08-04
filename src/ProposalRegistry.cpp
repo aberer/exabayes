@@ -197,6 +197,3 @@ ProposalRegistry::getMultiParameterProposals(std::vector<AbstractParameter*> par
 
   return result; 
 }
-
-
-

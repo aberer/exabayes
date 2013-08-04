@@ -11,6 +11,9 @@ RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<ArrayRestorer> _res
 
 double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, bool fullTraversal )  
 {
+
+  assert(traln.getPartitionsPtr()->perGeneBranchLengths == TRUE ); 
+
   std::vector<nat> partitionsToEvaluate; 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     partitionsToEvaluate.push_back(i); 
@@ -59,14 +62,15 @@ void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranc
 
 
 
+// double RestoringLnlEvaluator::evaluatePartitions(TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)
+// {
+//   return evaluatePartitions(traln, findVirtualRoot(traln), partitions, fullTraversal);
+// }
 
-double RestoringLnlEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)    
-{
-  // per-partition stuff not implemented yet (would be needed for per-partition bls)
-  assert(fullTraversal); 
 
-  Branch root = findVirtualRoot(traln); 
-  
+// double RestoringLnlEvaluator::evaluatePartitions(TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)
+double RestoringLnlEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Branch &root , const std::vector<nat>& partitions, bool fullTraversal)    
+{  
   auto tr = traln.getTr(); 
   nat numPart = traln.getNumberOfPartitions(); 
   auto perPartitionLH = traln.getPartitionLnls();
@@ -76,7 +80,8 @@ double RestoringLnlEvaluator::evaluatePartitions( TreeAln &traln, const std::vec
     toExecute[m] = true; 
   traln.setExecModel(toExecute); 
 
-  disorientTree(traln, root); 
+  if(fullTraversal)
+    disorientTree(traln, root); 
   
   restorer->toplevelSwitch(traln, root, partitions, fullTraversal);    
 

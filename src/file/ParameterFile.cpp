@@ -1,5 +1,6 @@
 #include "ParameterFile.hpp"
 #include "GlobalVariables.hpp"
+#include "Category.hpp"
 
 #include "ParallelSetup.hpp"
 
@@ -32,7 +33,14 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
   fh << "Gen\t";
   fh << "LnPr\t"; 
   fh << "LnL\t" ; 
-  fh << "TL\t" ; 
+
+  std::vector<AbstractParameter*>  blParams; 
+  for(auto &param : parameters)
+    if(param->getCategory() == Category::BRANCH_LENGTHS)
+      blParams.push_back(param); 
+
+  for(auto &param : parameters)
+    fh << "TL{" << param->getPartitions()   << "}\t"; 
 
   bool isFirst = true; 
   for(auto &p : parameters)
@@ -58,10 +66,20 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
   std::ofstream fh(fullFileName, std::fstream::app|std::fstream::out); 
     
   fh << gen << "\t"; 
-  fh << std::setprecision(std::numeric_limits<double>::digits10)  << std::scientific; 
+  fh << MAX_SCI_PRECISION; 
   fh << lnPr << "\t"; 
   fh << traln.getTr()->likelihood << "\t" ; 
-  fh << Branch(0,0,traln.getTreeLengthExpensive()).getInterpretedLength(traln) << "\t"; 
+
+  std::vector<AbstractParameter*> blParams ; 
+  for(auto &p : parameters)
+    {
+      if(p->getCategory() == Category::BRANCH_LENGTHS)
+	blParams.push_back(p);
+    }
+  // should be possible 
+  // copy_if(  parameters.begin(), parameters.end(), blParams.begin(), [=](AbstractParameter* p){ return p->getCategory() == Category::BRANCH_LENGTHS;  }); 
+
+  // fh << Branch(0,0,traln.getTreeLengthExpensive()).getInterpretedLength(traln) << "\t"; 
 
   bool isFirst = true; 
   for(auto &p : parameters)

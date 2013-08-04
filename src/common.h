@@ -80,11 +80,10 @@ typedef  unsigned int nat ;
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
-
-
 /* #define DEBUG_LNL_VERIFY */
-/* BAD BAD BAD */
+
 /* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
+/* BAD BAD BAD */
 
 /* #define PRINT_MUCH */
 

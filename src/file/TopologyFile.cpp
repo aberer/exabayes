@@ -1,6 +1,7 @@
 #include "TopologyFile.hpp"
 #include "GlobalVariables.hpp"
 #include "ParallelSetup.hpp"
+#include "parameters/AbstractParameter.hpp"
 
 #include <cassert>
 
@@ -47,12 +48,29 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId)
 
 
 
-void TopologyFile::sample(const TreeAln &traln, nat gen)  
+void TopologyFile::sample(const TreeAln &traln, nat gen, 
+			  const std::vector<AbstractParameter*> &blParams)  
 {    
   std::ofstream fh(fullFileName,std::fstream::app|std::fstream::out ); 
   TreePrinter tp(true, false, false);
-  std::string treeString = tp.printTree(traln);
-  fh << "\ttree gen." << gen << " = [&U] " << treeString << std::endl; 
+
+  for(auto &param : blParams)
+    {
+      std::vector<AbstractParameter*> a; 
+      a.push_back(param); 
+
+      auto treeString = tp.printTree(traln, a)  ; 
+      fh << "\ttree gen."<< gen
+	 << ".{" <<  param->getPartitions()  << "}"
+	 << " = [&U] " << treeString << std::endl; 
+    }
+  
+  // TODO print each tree 
+  // assert(0);
+
+
+  // std::string treeString = tp.printTree(traln);
+  // fh << "\ttree gen." << gen << " = [&U] " << treeString << std::endl; 
   fh.close(); 
 }
 

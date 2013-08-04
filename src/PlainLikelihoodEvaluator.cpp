@@ -17,39 +17,39 @@ double PlainLikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBran
 }
 
 
-double PlainLikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)
-{
-  Branch root = findVirtualRoot(traln); 
+// double PlainLikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)
+// {
+//   Branch root = findVirtualRoot(traln); 
   
-  auto tr = traln.getTr(); 
-  nat numPart = traln.getNumberOfPartitions(); 
-  auto perPartitionLH = traln.getPartitionLnls();
+//   auto tr = traln.getTr(); 
+//   nat numPart = traln.getNumberOfPartitions(); 
+//   auto perPartitionLH = traln.getPartitionLnls();
 
-  std::vector<bool> toExecute(numPart, false );   
-  for(auto m : partitions)
-    toExecute[m] = true; 
-  traln.setExecModel(toExecute); 
+//   std::vector<bool> toExecute(numPart, false );   
+//   for(auto m : partitions)
+//     toExecute[m] = true; 
+//   traln.setExecModel(toExecute); 
 
-  disorientTree(traln, root); 
+//   disorientTree(traln, root); 
 
-  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
+//   exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
   
-  auto pLnl = traln.getPartitionLnls();
-  for(auto m : partitions )
-    perPartitionLH[m] = pLnl[m]; 
+//   auto pLnl = traln.getPartitionLnls();
+//   for(auto m : partitions )
+//     perPartitionLH[m] = pLnl[m]; 
 
-  traln.setPartitionLnls(perPartitionLH); 
+//   traln.setPartitionLnls(perPartitionLH); 
 
-  tr->likelihood = 0; 
-  for_each(perPartitionLH.begin(), perPartitionLH.end(), [&](double d){ tr->likelihood += d; }); 
-  traln.setExecModel(std::vector<bool>(numPart, true));
+//   tr->likelihood = 0; 
+//   for_each(perPartitionLH.begin(), perPartitionLH.end(), [&](double d){ tr->likelihood += d; }); 
+//   traln.setExecModel(std::vector<bool>(numPart, true));
 
-#ifdef DEBUG_LNL_VERIFY
-  expensiveVerify(traln);   
-#endif
+// #ifdef DEBUG_LNL_VERIFY
+//   expensiveVerify(traln);   
+// #endif
   
-  return tr->likelihood; 
-}
+//   return tr->likelihood; 
+// }
  
 void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const Branch &evalBranch)
 { 

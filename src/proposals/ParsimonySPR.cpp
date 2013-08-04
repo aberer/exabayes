@@ -14,6 +14,7 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
   this->name = "parsSPR"; 
   this->category = Category::TOPOLOGY ; 
   relativeWeight = 5.;
+  needsFullTraversal = false; 
 }
 
 
@@ -114,8 +115,8 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
 
 void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
 {
-  std::vector<Branch> branches = traln.extractBranches(); 
-
+  auto params = getBranchLengthsParameterView();
+  auto branches = traln.extractBranches(getSecondaryParameterView()); 
   scoreMap possibilities; 
 
   std::vector<nat> partitionParsimony; 
@@ -181,15 +182,15 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
     for(auto &b : branches)    
       {
 	auto p = b.findNodePtr(traln); 
-	double tmp = b.getLength(); 
-	traln.clipNode(p,p->back, tmp); 
+	traln.clipNode(p,p->back); 
+	traln.setBranch(b, params);
       }
   }
 
   // important: save the move 
   Branch pruned(p->number,p->back->number); 
 
-  move.extractMoveInfo(traln, {pruned,chosen.first});
+  move.extractMoveInfo(traln, {pruned,chosen.first}, getSecondaryParameterView() );
 
   // update the hastings  
   assert(possibilities.find(initBranch) == possibilities.end()); 
@@ -204,13 +205,11 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 { 
   determineSprPath(traln, rand, hastings, prior); 
-  move.applyToTree(traln); 
+  move.applyToTree(traln, getSecondaryParameterView() ); 
 
   bool modifiesBl = false; 
   for(auto &v : secondaryParameters)
     modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
-
-  assert(traln.getNumBranches() == 1); 
 
 #ifdef  NO_SEC_BL_MULTI
   modifiesBl = false;  
@@ -220,8 +219,8 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   if( modifiesBl)
     {
       assert(0); 
-      auto brPr =  secondaryParameters[0]->getPrior();
-      move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
+      // auto brPr =  secondaryParameters[0]->getPrior();
+      // move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 
   // tout << "proposing move: " << move  << std::endl; 
@@ -257,7 +256,7 @@ void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &t
 
 void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  move.revertTree(traln,prior); 
+  move.revertTree(traln,prior, getSecondaryParameterView() ); 
 }
  
 

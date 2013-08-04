@@ -13,13 +13,25 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
   this->name = "TL-Mult"; 
   category = Category::BRANCH_LENGTHS; 
   relativeWeight = 2 ;
+  needsFullTraversal = true; 
 }
+
+
+// TreeLengthMultiplier::TreeLengthMultiplier(const TreeLengthMultiplier& rhs)
+//   : AbstractProposal(rhs)
+// {
+// }
 
 
 void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {
   storedBranches.clear(); 
-  storedBranches = traln.extractBranches();
+  
+  auto blParam = primaryParameters[0].get(); 
+
+  assert(primaryParameters.size() == 1); 
+
+  storedBranches = traln.extractBranches(blParam);
 
   std::vector<Branch> newBranches = storedBranches; 
   
@@ -30,34 +42,36 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
   for(auto &b : newBranches)
     {
-      auto initLength = b.getLength();
+      auto initLength = b.getLength( blParam);
       initTL *= initLength; 
 
-      b.setLength(  pow(initLength, treeScaler) ); 
+      b.setLength(  pow(initLength, treeScaler), blParam ); 
       
       if( not BoundsChecker::checkBranch(b))
 	{
 	  // std::cout << "correction!" << std::endl; 
-	  BoundsChecker::correctBranch(b);
+	  BoundsChecker::correctBranch(b, blParam);
 	}
       
-      double realScaling = log(b.getLength())  /  log(initLength); 
+      double realScaling = log(b.getLength(blParam)) / log(initLength); 
       updateHastings(hastings, realScaling, "TL-multi"); 
-      newTL *= b.getLength(); 
+      newTL *= b.getLength(blParam); 
     }
 
   for(auto &b : newBranches)
-    traln.setBranch(b);
+    {
+      std::vector<AbstractParameter*> tmp = {blParam}; 
+      traln.setBranch(b, tmp);
+    }
 
-  auto brPr = primaryParameters[0]->getPrior(); 
-  prior.updateBranchLengthPrior(traln, initTL, newTL, brPr);
+  prior.updateBranchLengthPrior(traln, initTL, newTL, blParam);
 }
 
 
 void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
 {
   for(auto &b : storedBranches)
-    traln.setBranch(b); 
+    traln.setBranch(b, getPrimaryParameterView()); 
 } 
 
 

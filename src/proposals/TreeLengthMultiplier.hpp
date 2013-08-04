@@ -14,15 +14,17 @@ public:
 
   virtual AbstractProposal* clone() const;  
 
-  virtual void readFromCheckpointCore(std::istream &in); //  { in >> multiplier; readDelimiter(in);  } 
-  virtual void writeToCheckpointCore(std::ostream &out) const; //  {out << multiplier << DELIM; } 
+  virtual void readFromCheckpointCore(std::istream &in);
+  virtual void writeToCheckpointCore(std::ostream &out) const;
 
-private: 
-  double multiplier; 		// the tuning variable  
-  double initTreeLength; 
-  
+  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+
+private: 			// METHODS
   void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 
 
+private: 			// ATTRIBUTES
+  double multiplier; 		// the tuning variable  
+  double initTreeLength; 
   std::vector<Branch> storedBranches; 
-
 } ; 

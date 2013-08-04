@@ -5,7 +5,7 @@
 
 #include "parameters/AbstractParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
-#include "parameters/FrequencyParameter.hpp"
+#include "parameters/FrequencyParameter.hpp" 
 #include "parameters/ParameterContent.hpp"
 #include "parameters/RateHetParameter.hpp"
 #include "parameters/RevMatParameter.hpp"
@@ -104,6 +104,8 @@ namespace CategoryFuns
 	  return c; 
       }
 
+    tout << "Error in config file: did not find >" << name << "<" << std::endl; 
+
     assert(0); 
     return cats[0]; 
   }
@@ -120,7 +122,7 @@ namespace CategoryFuns
       return Category::SUBSTITUTION_RATES; 
     else if(name.compare("aamodel") == 0)
       return Category::AA_MODEL; 
-    else if(name.compare("branchlength") == 0)
+    else if(name.compare("brlens") == 0)
       return Category::BRANCH_LENGTHS; 
     else
       {
@@ -131,26 +133,26 @@ namespace CategoryFuns
 
 
 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id)
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind)
   {
 
     switch(cat)
       {
       case Category::TOPOLOGY :
-	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind	));
       case Category::BRANCH_LENGTHS:
-	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id, idOfMyKind));
       case Category::FREQUENCIES :
-	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id, idOfMyKind));
       case Category::SUBSTITUTION_RATES :
-	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id, idOfMyKind));
       case Category::RATE_HETEROGENEITY:
-	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind));
       case Category::AA_MODEL :
       default : 
 	{
 	  assert(0); 
-	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id));
+	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind));
 	}
       }    
   }  

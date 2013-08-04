@@ -1,8 +1,9 @@
 #include "NniMove.hpp"
 #include "LikelihoodEvaluator.hpp"
+#include "TreePrinter.hpp"
 #include "AbstractProposal.hpp"
 
-void NniMove::applyToTree(TreeAln &traln) const 
+void NniMove::applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const 
 {
   Branch a(switching.first, innerBranch.getPrimNode()); 
   Branch b; 
@@ -24,24 +25,29 @@ void NniMove::applyToTree(TreeAln &traln) const
     pABack = pA->back,
     pBBack = pB->back; 
 
-  traln.clipNode(pA,pBBack, pA->z[0]); 
-  traln.clipNode(pB, pABack, pB->z[0]);
+  traln.clipNode(pA,pBBack);  
+  traln.setBranch(traln.getBranch(pA, params),params); 
+  traln.clipNode(pB, pABack); 
+  traln.setBranch(traln.getBranch(pB, params),params); 
+
 } 
 
-void NniMove::revertTree(TreeAln &traln, PriorBelief &prior) const 
+void NniMove::revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<AbstractParameter*> &params) const 
 {
-  applyToTree(traln);
+  applyToTree(traln, params);
 
   // revert branch lengths 
   nodeptr p = innerBranch.findNodePtr(traln); 
-  double tmp = innerBranch.getLength(); 
-  traln.clipNode(p,p->back, tmp); 
+
+  // reset inner branch 
+  traln.clipNode(p,p->back); 
+  traln.setBranch(innerBranch, params); 
 
   for(auto &elem : outerBranches)
     {
       nodeptr q = elem.findNodePtr(traln); 
-      tmp =  elem.getLength(); 
-      traln.clipNode(q,q->back, tmp); 
+      traln.clipNode(q,q->back); 
+      traln.setBranch(elem,params);
     }
 } 
 
@@ -72,7 +78,7 @@ void NniMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 
 
 
-void NniMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) 
+void NniMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description, const std::vector<AbstractParameter*> &params) 
 {
   assert(description.size() == 2 ) ; 
   std::pair<int,int>  _switching = { description.at(0).findNodePtr(traln)->next->back->number , description.at(1).findNodePtr(traln)->number}; 
@@ -82,18 +88,17 @@ void NniMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> descript
 
   innerBranch = _innerBranch; 
   switching = _switching; 
-  nodeptr p = innerBranch.findNodePtr(traln); 
-  assert(traln.getNumBranches() == 1 ); 
-  innerBranch.setLength(p->z[0]); 
-  
-  nodeptr q =p->next->back; 
-  outerBranches.push_back(Branch(q->number, q->back->number, q->z[0])); 
-  q = p->next->next->back; 
-  outerBranches.push_back(Branch(q->number, q->back->number, q->z[0])); 
-  q = p->back->next->back; 
-  outerBranches.push_back(Branch(q->number, q->back->number, q->z[0])); 
-  q = p->back->next->next->back; 
-  outerBranches.push_back(Branch(q->number, q->back->number, q->z[0])); 
+
+  innerBranch = traln.getBranch(innerBranch.findNodePtr(traln), params);
+
+  auto p = innerBranch.findNodePtr(traln); 
+
+  for(auto &ptr : {p->next->back, p->next->next->back, 
+	p->back->next->back, p->back->next->next->back })    
+    {
+      Branch b = traln.getBranch(Branch(ptr->number, ptr->back->number), params); 
+      outerBranches.push_back(b);   
+    }
 
   bool foundA = false; 
   bool foundB = false; 
@@ -104,15 +109,18 @@ void NniMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> descript
     }
 } 
 
-void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior* > brPr) const 
+#if 0 
+void NniMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, const std::vector<AbstractParameter*> &params) const 
 {
   multiplyBranch(innerBranch, traln, hastings, prior, rand, multiplier,brPr, "someNNI"); 
   for(auto &v : outerBranches)
     multiplyBranch(v,traln, hastings, prior, rand, multiplier, brPr, "someNNI"); 
 } 
+#endif
 
-
-void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , std::vector<AbstractPrior* > priors, std::string name) const 
+#if 0 
+void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, 
+			     Randomness &rand, double parameter , std::vector<AbstractPrior* > priors, std::string name) const 
 {
   nodeptr p = branch.findNodePtr(traln); 
 
@@ -129,5 +137,6 @@ void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hasti
   auto brPr = priors[0]; 
   prior.updateBranchLengthPrior(traln,oldV, newV, brPr);
 }
+#endif
 
 

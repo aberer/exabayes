@@ -10,7 +10,7 @@ enum class Category;
 class AbstractParameter
 {
 public:   
-  AbstractParameter(Category cat, nat id); 
+  AbstractParameter(Category cat, nat id, nat idOfMyKind); 
   /** 
       @brief applies the parameter content to the tree 
    */ 
@@ -35,6 +35,8 @@ public:
       @brief sets the prior for this parameter 
    */ 
   void setPrior(std::shared_ptr<AbstractPrior> _prior){prior = _prior; }
+  nat getIdOfMyKind() const {return idOfMyKind; }
+
   ///////////////
   // OBSERVERS //
   ///////////////
@@ -44,12 +46,13 @@ public:
   AbstractPrior* getPrior() const { return prior.get(); }
   bool isPrintToParamFile() const {return printToParamFile; }
 
-  std::ostream&  printShort(std::ostream& out); 
+  std::ostream&  printShort(std::ostream& out) const;  
   friend std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs); 
   virtual AbstractParameter* clone() const = 0 ; 
 
 protected: 
   nat id; 
+  nat  idOfMyKind;
   Category cat; 
   std::vector<nat> partitions; 
   std::shared_ptr<AbstractPrior> prior; 

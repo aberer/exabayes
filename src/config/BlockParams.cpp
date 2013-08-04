@@ -36,7 +36,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
       nat part = str.ConvertToInt() ; 
       if(newLink)
 	{
-	  curVar = CategoryFuns::getParameterFromCategory(cat, idCtr);
+	  curVar = CategoryFuns::getParameterFromCategory(cat, idCtr, getNumSeen(cat));
 	  idCtr++; 
 	  newLink = false; 
 	}
@@ -78,7 +78,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	     || (cat == Category::SUBSTITUTION_RATES && traln->getPartition(i)->dataType == DNA_DATA) 
 	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
 	{	  
-	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr);
+	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr, getNumSeen(cat));
 	  ++idCtr; 
 
 	  r->addPartition(i);
@@ -123,7 +123,6 @@ void BlockParams::Read(NxsToken &token)
 	    }
 
 	  if(cat == Category::AA_MODEL
-	     || cat == Category::BRANCH_LENGTHS
 	     || cat == Category::TOPOLOGY)
 	    {
 	      cerr <<  "not implemented"; 
@@ -141,3 +140,14 @@ vector<unique_ptr<AbstractParameter> > BlockParams::getParameters() const
     result.push_back(std::unique_ptr<AbstractParameter>(p->clone() )); 
   return result; 
 }
+
+
+
+nat BlockParams::getNumSeen(Category cat) 
+{
+  nat result = 0; 
+  for(auto &p : parameters)
+    if(p->getCategory() == cat )
+      ++result;
+  return result; 
+} 

@@ -1,8 +1,6 @@
 #! /bin/bash
 
-
 topdir=$(dirname  $0 )/../
-
 
 model=GAMMA
 # seed=$RANDOM
@@ -34,7 +32,7 @@ fi
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0 
+useGoogleProfiler=1
 useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then

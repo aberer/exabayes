@@ -9,7 +9,7 @@
 enum class Category :  int  
 {  
   TOPOLOGY = 0, 
-  BRANCH_LENGTHS = 1, 
+    BRANCH_LENGTHS = 1, 
   FREQUENCIES = 2,
   SUBSTITUTION_RATES = 3,
   RATE_HETEROGENEITY = 4,	
@@ -63,7 +63,7 @@ namespace CategoryFuns
       @brief gets the category by name of the linking parameter in the config file 
    */   
   Category getCategoryFromLinkLabel(std::string name); 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id); 
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind); 
 } 
 
 

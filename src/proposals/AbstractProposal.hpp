@@ -20,9 +20,12 @@ class AbstractProposal : public Checkpointable
 {
 public: 
   AbstractProposal()		
-  {} 
+  {
+    needsFullTraversal = true; 
+    inSetExecution = false; 
+  } 
   AbstractProposal( const AbstractProposal& rhs); 
-  
+  AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
   virtual ~AbstractProposal(){}
 
   // you MUST implement all virtual methods in your derived
@@ -92,21 +95,37 @@ public:
    */ 
   void addSecondaryParameter(std::unique_ptr<AbstractParameter> var) {secondaryParameters.push_back(std::move(var)) ; }
   /** 
+      @brief indicates whether this proposal needs a full traversal 
+   */ 
+  bool isNeedsFullTraversal() const {return needsFullTraversal; }
+  std::vector<AbstractParameter*> getBranchLengthsParameterView() const ; 
+
+  /** 
       @brief update the hatsings
       @param valToAdd is the absolute proposal ratio that shall be added 
    */ 
   static void updateHastings(double &hastings, double valToAdd, std::string whoDoneIt); 
+  
 
   std::ostream& printNamePartitions(std::ostream &out); 
   std::ostream& printShort(std::ostream &out)  const ;
 
   std::vector<AbstractParameter*> getPrimaryParameterView() const; 
   std::vector<AbstractParameter*> getSecondaryParameterView() const ; 
+  /** 
+      @brief prepare for set execution (only relevant for branch length + node slider)
+   */ 
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  = 0; 
 
   // we need to implement these 
   void writeToCheckpoint( std::ostream &out)  const; 
   void readFromCheckpoint( std::istream &in ); 
   
+  void setPreparedBranch(Branch b ) {preparedBranch = b;  }
+  // this is very bad =( 
+  void setOtherPreparedBranch(Branch b){preparedOtherBranch = b; }
+
+  void setInSetExecution(bool exec) { inSetExecution = exec;  }
   /** 
       @brief writes proposal specific (tuned) parameters
    */ 
@@ -123,6 +142,12 @@ protected:
   std::vector<std::unique_ptr<AbstractParameter> > primaryParameters; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
   std::vector<std::unique_ptr<AbstractParameter> > secondaryParameters;  // as a by-product also these random variables are changed 
   double relativeWeight; 
+  bool needsFullTraversal; 
+  bool inSetExecution;
+
+  // meh 
+  Branch preparedBranch; 
+  Branch preparedOtherBranch; 
 
   friend std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs); 
 }; 

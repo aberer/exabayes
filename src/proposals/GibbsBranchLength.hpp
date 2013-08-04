@@ -28,20 +28,29 @@ public:
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
   {
     Branch b = proposeBranch(traln, rand);     
-    b.setLength(b.findNodePtr(traln)->z[0]); 
-    double initBl = b.getLength(); 
 
-    savedBranch = b;     
+
+    assert(0);
+    // TODO 
+    // b.setLength(b.findNodePtr(traln)->z[0]); 
+    // double initBl = b.getLength( ); 
+    double initBl = 0; 
     
-    GibbsProposal::drawFromEsitmatedPosterior(b, *eval, traln, rand,  MAX_ITER, hastings); 
-    double newZ = b.getLength();
-    traln.setBranch(b);    
+    assert(primaryParameters.size() == 1); 
+    savedBranch = b; 
+    
+    auto param = primaryParameters[0].get();
+    GibbsProposal::drawFromEsitmatedPosterior(b, *eval, traln, rand,  MAX_ITER, hastings, param); 
+    double newZ = b.getLength(param);
+    traln.setBranch(b, getSecondaryParameterView());    
 
-    auto brPr = primaryParameters[0]->getPrior();
-    prior.updateBranchLengthPrior(traln,initBl, newZ, brPr); // 
+    prior.updateBranchLengthPrior(traln,initBl, newZ, param);  
   }
 
   virtual void autotune(){}
+
+  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
 
   virtual AbstractProposal* clone() const  { return new GibbsBranchLength(*this); }  
 

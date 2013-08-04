@@ -26,6 +26,8 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
 
 void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
+  auto blParams = getBranchLengthsParameterView(); 
+
   assert(primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
   // this parameter proposal works with any kind of parameters (rate
   // heterogeneity, freuqencies, revmat ... could also be extended to
@@ -38,16 +40,22 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   savedContent = content; 
   
   // nasty, we have to correct for the fracchange 
-  double oldFracChange = traln.getTr()->fracchange; 
-  
+  std::vector<double> oldFCs; 
+  std::vector<double> newFCs;
+  for(auto &param : blParams)
+    {
+      nat id = param->getIdOfMyKind();
+      if(oldFCs.size() < id + 1  ) // meh
+	oldFCs.resize(id+1); 
+      oldFCs[id] = traln.getMeanSubstitutionRate(param->getPartitions()); 
+    }
+
   // we have a proposer object, that does the proposing (check out
   // ProposalFunctions.hpp) It should take care of the hastings as
   // well (to some degree )
   
   auto newValues = proposer->proposeValues(content.values, parameter, rand, hastings); 
-
   assert(newValues.size() == content.values.size()); 
-  assert(traln.getNumBranches() == 1 ); 
 
   // create a copy 
   ParameterContent newContent; 
@@ -55,19 +63,22 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   // use our parameter object to set the frequencies or revtmat rates
   // or what ever (for all partitions)
   primaryParameters[0]->applyParameter(traln, newContent); 
-
-  // now take care of the fracchange 
-  double newFracChange = traln.getTr()->fracchange; 
+  
   if(modifiesBL)
     {
-      std::vector<AbstractPrior*> blPriors; 
-      for(auto &v : secondaryParameters)
+      for(auto &param : blParams)
 	{
-	  assert(v->getCategory() == Category::BRANCH_LENGTHS); 
-	  blPriors.push_back(v->getPrior()); 
+	  nat id = param->getIdOfMyKind();
+	  if(newFCs.size() < id + 1  ) // meh
+	    newFCs.resize(id+1); 
+	  newFCs[id] = traln.getMeanSubstitutionRate(param->getPartitions()); 
 	}
-      prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
-      updateHastings(hastings, pow(newFracChange / oldFracChange, traln.getNumberOfBranches()), name); 
+
+      prior.accountForFracChange(traln, oldFCs, newFCs, blParams); 
+      
+      for(auto &p : blParams)
+	updateHastings(hastings, pow(newFCs[p->getIdOfMyKind()] / oldFCs[p->getIdOfMyKind()],
+				     traln.getNumberOfBranches() ), name); 
     }
 
   // a generic prior updates the prior rate 
@@ -78,15 +89,13 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
 void ParameterProposal::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
 {
-  assert(primaryParameters.size() == 1 ); 
+  // assert(primaryParameters.size() == 1 ); 
   evaluator->evaluatePartitions(traln, primaryParameters[0]->getPartitions() , true); 
 }
  
 void ParameterProposal::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  assert(primaryParameters.size() == 1 ); 
   primaryParameters[0]->applyParameter(traln, savedContent);
-  // tout << "resetting to " << savedContent << std::endl; 
 }
 
 

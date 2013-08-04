@@ -2,6 +2,7 @@
 #include <map> 
 #include <unordered_map>
 
+#include "NodeSlider.hpp"
 #include "Chain.hpp"		
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
@@ -43,8 +44,9 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln,
 
   Branch root(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number); 
   evaluator->evaluate(*tralnPtr, root, true); 
-  
+
   const std::vector<AbstractParameter*> vars = extractParameters(); 
+
   prior.initialize(*tralnPtr, vars);
 
   // saving the tree state 
@@ -159,7 +161,6 @@ void Chain::resume(bool evaluate, bool checkLnl)
   relWeightSumSets = 0; 
   for(auto &set : proposalSets)
     relWeightSumSets += set.getRelativeWeight();
-
 }
 
 
@@ -255,7 +256,6 @@ Chain::serializeConditionally( CommFlag commFlags)  const
 
   if(commFlags & CommFlag::Proposals)
     {
-      assert(proposals.size() > 0);  
       for(auto& p : proposals)
 	p->writeToCheckpoint(ss); 
     }
@@ -381,9 +381,6 @@ void Chain::stepSingleProposal()
 
   pfun->applyToState(*tralnPtr, prior, hastings, chainRand);
 
-  if(debugPrint)
-    tout << TreePrinter(false, true, false).printTree(*tralnPtr) << std::endl; 
-
   pfun->evaluateProposal(evaluator.get(), *tralnPtr, prior);
   
   double priorRatio = prior.getLnPriorRatio();
@@ -435,15 +432,19 @@ void Chain::stepSetProposal()
   std::unordered_map<AbstractProposal*, double> p2OldLnl; 
 
   std::vector<nat> affectedPartitions; 
+  
+  auto branches = pSet.getProposalView()[0]->prepareForSetExecution(*tralnPtr, chainRand);
 
+  bool isNodeSlider = true; 
   for(auto &proposal : pSet.getProposalView())
     {
+      proposal->setPreparedBranch(branches.first);
+      proposal->setOtherPreparedBranch(branches.second);
+
       double lHast = 0;       
-      // double oldPr = prior.getLnPriorRatio();
       prior.reject();
       proposal->applyToState(*tralnPtr, prior, lHast, chainRand); 
       p2LnPriorRatio[proposal] = prior.getLnPriorRatio(); 
-
       p2Hastings[proposal] = lHast; 
 
       for(auto &p : proposal->getPrimaryParameterView())
@@ -456,6 +457,8 @@ void Chain::stepSetProposal()
 	    lnl += oldPartitionLnls[partition]; 
 	  p2OldLnl[proposal] = lnl; 
 	}
+      
+      isNodeSlider &=  ( dynamic_cast<NodeSlider*>(proposal) != nullptr ) ;
     }
 
   // no partition must occur twice!
@@ -466,13 +469,29 @@ void Chain::stepSetProposal()
       uniquePartitions.insert(p); 
     }
 
-  evaluator->evaluatePartitions(*tralnPtr, affectedPartitions, true );
-  std::vector<double> newPLnls = tralnPtr->getPartitionLnls();
+  bool fullTraversalNecessary = pSet.needsFullTraversal();
+
+  if( branches.first.equalsUndirected(Branch(0,0)) ) // TODO another HACK
+    {
+      evaluator->evaluatePartitions(*tralnPtr , affectedPartitions, fullTraversalNecessary );
+    }
+  else 
+    {
+      // this should be polymorphic...i just dont have the nerve right
+      // now
+      if(isNodeSlider)
+	dynamic_cast<NodeSlider*>(pSet.getProposalView()[0])->prepareForEvaluation(*tralnPtr);
+      evaluator->evaluatePartitionsWithRoot(*tralnPtr, branches.first , affectedPartitions, fullTraversalNecessary );
+    }
+
+  auto newPLnls = tralnPtr->getPartitionLnls();
 
   prior.reject();		// slight abuse 
   std::vector<nat> partitionsToReset; 
   nat accCtr = 0; 
   nat total = 0; 
+  // std::vector<bool> wasAcceptedArray; 
+  std::unordered_map<AbstractProposal*, bool> p2WasAccepted; 
   for(auto &proposal : pSet.getProposalView())
     {
       ++total; 
@@ -487,21 +506,31 @@ void Chain::stepSetProposal()
 	{
 	  ++accCtr;
 	  proposal->accept();
+	  p2WasAccepted[proposal] = true; 
 	}
       else 
 	{
 	  // TODO prior more efficient 
-
 	  proposal->resetState(*tralnPtr, prior);
 	  proposal->reject();	  
-	  for(auto& var: proposal->getPrimaryParameterView())
+
+	  for(auto& param: proposal->getPrimaryParameterView())
 	    {
-	      auto partitions = var->getPartitions();
+	      auto partitions = param->getPartitions();
 	      partitionsToReset.insert(partitionsToReset.end(), partitions.begin(), partitions.end());
 	    }
+	  p2WasAccepted[proposal] = false; 
 	}      
     }
-  evaluator->resetSomePartitionsToImprinted(*tralnPtr, partitionsToReset); 
+
+
+  if(fullTraversalNecessary)
+    evaluator->resetSomePartitionsToImprinted(*tralnPtr, partitionsToReset); 
+
+  if(isNodeSlider)
+    {
+      evaluator-> evaluate(*tralnPtr, evaluator->findVirtualRoot(*tralnPtr),true );
+    }
 
   newPLnls = tralnPtr->getPartitionLnls();
   for(auto &partition : partitionsToReset)
@@ -526,8 +555,17 @@ void Chain::stepSetProposal()
     if(this->tuneFrequency < proposal->getNumCallSinceTuning()) // meh
       proposal->autotune(); 
 
-  // double meh 
-  prior.initialize(*tralnPtr, extractParameters());
+  prior.reject();
+  tout << MAX_SCI_PRECISION; 
+  for(auto &proposal : pSet.getProposalView())
+    {
+      if(p2WasAccepted[proposal])
+	{
+	  double tmp = p2LnPriorRatio.at(proposal); 
+	  prior.addToRatio(tmp); 
+	}
+    }
+  prior.accept();
 }
 
 
@@ -568,30 +606,21 @@ void Chain::step()
  
 void Chain::suspend()  
 {
-  auto variables = extractParameters();
+  auto params = extractParameters();
   savedContent.clear(); 
 
-  for(auto& v : variables)
+  for(auto& v : params)
     {
       assert(savedContent.find(v->getId()) == savedContent.end()); 
       savedContent[v->getId()] = v->extractParameter(*tralnPtr); 
     }
 
-  // if(not paramsOnly)
-  //   {
 #ifdef EFFICIENT
   // too expensive 
   assert(0); 
 #endif
-  // resume(false, true ); 
-  // Branch rootBranch(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number);
-      // evaluator->evaluate(*tralnPtr, rootBranch, true);
   likelihood = tralnPtr->getTr()->likelihood; 
   lnPr = prior.getLnPrior();
-  // }
-  
-  // addChainInfo(tout); 
-  // tout << " SUSPEND " << likelihood << "\t" << lnPr << std::endl; 
 }
 
 
@@ -673,7 +702,11 @@ std::ostream& operator<<(std::ostream& out, const Chain &rhs)
 
 void Chain::sample(  TopologyFile &tFile,  ParameterFile &pFile  )  const
 {
-  tFile.sample( *tralnPtr, getGeneration() ); 
+  std::vector<AbstractParameter*> blParams; 
+  for(auto &param : extractParameters()) 
+    blParams.push_back(param); 
+
+  tFile.sample( *tralnPtr, getGeneration() , blParams ); 
   pFile.sample( *tralnPtr, extractParameters(), getGeneration(), prior.getLnPrior()); 
 }
 

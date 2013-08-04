@@ -8,8 +8,8 @@ class RateHetParameter : public AbstractParameter
 {
 public: 
 
-  RateHetParameter(nat id )
-    : AbstractParameter(Category::RATE_HETEROGENEITY, id )
+  RateHetParameter(nat id, nat idOfMyKind )
+    : AbstractParameter(Category::RATE_HETEROGENEITY, id, idOfMyKind )
   {
   }
   

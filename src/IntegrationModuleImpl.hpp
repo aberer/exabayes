@@ -24,36 +24,39 @@ void SampleMaster::branchLengthsIntegration()
   stringstream ss; 
   ss << cl.getRunid() << ".tree.tre" ; 
 
-  ofstream tFile( ss.str());   
+  // ofstream tFile( ss.str());   
   TreePrinter tp(true, true, false);   
   TreePrinter tp2(true, true, true); 
   auto tralnPtr = chain.getTralnPtr(); 
   auto& traln  = *tralnPtr  ; 
-  tFile << tp.printTree(traln) << endl; 
-  tFile << tp2.printTree(traln) << endl; 
-  tFile.close(); 
+  // tFile << tp.printTree(traln) << endl; 
+  // tFile << tp2.printTree(traln) << endl; 
+  // tFile.close(); 
 
   auto eval = chain.getEvaluator()->clone(); 
 
-  vector<unique_ptr<AbstractParameter> > vars; 
-  vars.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0 ))); 
+  vector<unique_ptr<AbstractParameter> > params; 
+  params.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0 ,0))); 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
-    vars[0]->addPartition(i);
+    params[0]->addPartition(i);
 
   double lambda   =  10 ; 
 
-  vars[0]->setPrior(make_shared< ExponentialPrior>(lambda));
+  params[0]->setPrior(make_shared< ExponentialPrior>(lambda));
 
   auto p = unique_ptr<BranchIntegrator>(new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 
   vector<unique_ptr<AbstractProposal> >  proposals;   
   proposals.push_back( std::move(p) ); 
-  proposals[0]->addPrimaryParameter( std::move(vars[0])); 
+  proposals[0]->addPrimaryParameter( std::move(params[0])); 
+  std::vector<AbstractParameter*> paramView; 
+  for(auto &v : params)
+    paramView.push_back(v.get());
 
   std::vector<ProposalSet> pSets; 
 
   Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, pSets, eval->clone() );   
 
-  auto branches =  traln.extractBranches();
+  auto branches =  traln.extractBranches(paramView);
   auto ps = integrationChain.getProposalView(); 
   assert(ps.size() == 1 );   
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
@@ -64,7 +67,7 @@ void SampleMaster::branchLengthsIntegration()
       double maxHere = 0; 
       Branch initBranch = branch; 
 
-      traln.setBranch(branch); 
+      traln.setBranch(branch, paramView); 
       eval->evaluate(traln, branch, true); 
       integrator->setToPropose(branch); 
       
@@ -77,8 +80,8 @@ void SampleMaster::branchLengthsIntegration()
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 
 	{	  
 	  integrationChain.step();
-	  auto elem = traln.getBranch(branch.findNodePtr(traln)); 
-	  auto iLen = elem.getInterpretedLength(traln);
+	  auto elem = traln.getBranch(branch.findNodePtr(traln), paramView); 
+	  auto iLen = elem.getInterpretedLength(traln, paramView[0]);
 	  if (i % 10 == 0)
 	    thisOut << iLen << endl; 
 	  if(iLen < minHere)
@@ -100,10 +103,11 @@ void SampleMaster::branchLengthsIntegration()
 	{
 	  for(double i = minHere; i < maxHere+0.00000001 ; i+= (maxHere-minHere)/ STEPS_FOR_LNL)
 	    {
-	      double tmp = branch.getInternalLength(traln,i); 
+	      assert(0);
+	      // double tmp = branch.getInternalLength(traln,i); 
 	      Branch b = branch; 
-	      b.setLength(tmp); 
-	      traln.setBranch(b); 
+	      // b.setLength(tmp); 
+	      traln.setBranch(b, paramView[0]); 
 	      
 	      // traln.setBranchLengthBounded(tmp, 0, branch.findNodePtr(traln)); 
 	      eval->evaluate(traln, branch, false);
@@ -123,7 +127,9 @@ void SampleMaster::branchLengthsIntegration()
       thisOut.open(ss.str()); 
 
       double result = 0;  
-      double curVal = branch.getInternalLength(traln,0.1); 
+      // double curVal = branch.getInternalLength(traln,0.1);
+      double curVal = 0; 
+      // TODO 
       double secDerivative = 0; 
       double firstDerivative = 0; 
 
@@ -139,13 +145,17 @@ void SampleMaster::branchLengthsIntegration()
 			  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 			  &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 	  
 #endif
-	  tmpBranch.setLength(result);
+	  tmpBranch.setLength(result, paramView[0]);
 	  thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
-	  prevVal = tmpBranch.getInterpretedLength(traln); 
+	  prevVal = tmpBranch.getInterpretedLength(traln, paramView[0]); 
 	  curVal = result; 
 	} 
 
-      double something = tmpBranch.getInternalLength(traln, prevVal); 
+      // double something = tmpBranch.getInternalLength(traln, prevVal); 
+      // TODO 
+      double something = 0; 
+      assert(0);
+
 
 #if HAVE_PLL != 0
       makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
@@ -162,7 +172,7 @@ void SampleMaster::branchLengthsIntegration()
       thisOut.close(); 
       
       // reset 
-      traln.setBranch(initBranch); 
+      traln.setBranch(initBranch, paramView); 
     }
 
   tout << "finished!" << endl; 

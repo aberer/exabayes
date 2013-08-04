@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstring>
 
+#include "parameters/AbstractParameter.hpp"
 #include "TreeRandomizer.hpp"
 #include "axml.h"
 #include "TreeAln.hpp"
@@ -10,13 +11,13 @@
 
 const double TreeAln::zZero = BoundsChecker::zMax + ( 1 - BoundsChecker::zMax) / 2 ; 
 const double TreeAln::initBL = 0.75;
+const double TreeAln::problematicBL = std::numeric_limits<double>::max();
 
 TreeAln::TreeAln()
   : parsimonyEnabled(true)
 {
   memset(&tr,0,sizeof(tree)); 
   initDefault();
-
 }
 
 
@@ -138,7 +139,9 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
   adef.mode                   = BIG_RAPID_MODE; 
   adef.likelihoodEpsilon      = 0.1; 
   adef.permuteTreeoptimize    = FALSE; 
-  adef.perGeneBranchLengths   = FALSE;   
+
+  adef.perGeneBranchLengths   = TRUE;   
+
   adef.useCheckpoint          = FALSE;
   
   initializeTree(&tr, &adef);   
@@ -174,40 +177,66 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
 }
 
 
-double TreeAln::getTreeLengthExpensive() const
+std::vector<double> TreeAln::getTreeLengthsExpensive(const std::vector<AbstractParameter*> &params) const
 {
-  std::vector<Branch> branches = extractBranches(); 
-  
-  assert(getNumBranches() == 1 ); 
+  std::vector<Branch> branches = extractBranches(params); 
 
-  double result = 1; 
-  for(auto b : branches)
-    result *= b.getLength(); 
+  std::vector<double> result(params.size(),  1); 
+  for(auto &b : branches)
+    {
+      for(auto &param : params)
+	result.at(param->getIdOfMyKind()) += b.getLength(param); 
+    }
 
   return result; 
 }
 
 
 
-void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const 
+void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result, 
+			     bool isStart, AbstractParameter* param ) const 
 {
-  Branch b = Branch(p->number, p->back->number,  p->back->z[0]);       
+  Branch b = getBranch(p, param);
+
   result.push_back(b);
 
   if(not isStart && isTipNode(p))
     return; 
 
-  assert(getNumBranches() == 1 ); 
-  
   for(nodeptr q =  p->next; p != q ; q = q->next)        
-    extractHelper( q->back, result, false);    
+    extractHelper( q->back, result, false, param);
 }
 
 
-std::vector<Branch> TreeAln::extractBranches() const 
+
+
+void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result, 
+			     bool isStart, const std::vector<AbstractParameter*> &params ) const 
+{
+  Branch b = getBranch(p, params);
+
+  result.push_back(b);
+  
+  if(not isStart && isTipNode(p))
+    return; 
+
+  for(nodeptr q =  p->next; p != q ; q = q->next)        
+    extractHelper( q->back, result, false, params);    
+}
+
+
+std::vector<Branch> TreeAln::extractBranches( AbstractParameter* param) const 
 {
   std::vector<Branch> result; 
-  extractHelper(tr.nodep[1]->back, result, true);
+  // std::vector<AbstractParameter*> params = {param}; 
+  extractHelper(tr.nodep[1]->back, result, true, param);
+  return result; 
+} 
+
+std::vector<Branch> TreeAln::extractBranches(const std::vector<AbstractParameter*> &params) const 
+{
+  std::vector<Branch> result; 
+  extractHelper(tr.nodep[1]->back, result, true, params);
   return result; 
 }
 
@@ -241,9 +270,15 @@ void TreeAln::initDefault()
 #if HAVE_PLL == 0 
   tr.useGappedImplementation = FALSE;
   tr.saveBestTrees          = 0;
+  tr.numBranches = getNumberOfPartitions();
+#else 
+  partitions.perGeneBranchLengths = TRUE; 
 #endif
-  tr.saveMemory = FALSE;
+
+  // TODO 
   tr.manyPartitions = FALSE;
+  tr.saveMemory = FALSE;
+
   tr.categories             = 25;
   tr.grouped = FALSE;
   tr.constrained = FALSE;
@@ -255,16 +290,26 @@ void TreeAln::initDefault()
 
 void TreeAln::clipNodeDefault(nodeptr p, nodeptr q )
 {
-  clipNode(p,q, TreeAln::initBL);
+  clipNode(p,q);  
+  // use a problematic branch length to ensure, that it was overridden
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
+    p->z[i] = p->back->z[i] = TreeAln::initBL; 
 }
 
 
-void TreeAln::clipNode(nodeptr p, nodeptr q, double z)
+void TreeAln::clipNode(nodeptr p, nodeptr q)
 {
   p->back = q; 
   q->back = p; 
-  assert(getNumBranches() == 1);     
-  p->z[0] = p->back->z[0]  = z; 
+
+#ifdef EFFICIENT
+  // the following only done for error checking 
+  assert(0);
+#endif
+  
+  // would be cooler, if we could keep that 
+  // for(nat i = 0; i < getNumberOfPartitions(); ++i )
+  //   p->z[i] = p->back->z[i]  = std::numeric_limits<double>::max(); 
 }
 
 
@@ -525,12 +570,25 @@ void TreeAln::setRevMat(const std::vector<double> &values, int model)
 
 
 
-void TreeAln::setBranch(const Branch& branch)
+void TreeAln::setBranch(const Branch& branch, AbstractParameter* param)
 {
   assert(BoundsChecker::checkBranch(branch)); 
   assert(branch.exists(*this)); 
+
   auto p = branch.findNodePtr(*this);
-  p->z[0] = p->back->z[0] = branch.getLength();
+  for(auto &partition : param->getPartitions() )
+    {
+      double length = branch.getLength(param); 
+      p->z[partition] = p->back->z[partition] = length; 
+    }
+}
+
+
+void TreeAln::setBranch(const Branch& branch, const std::vector<AbstractParameter*>params)
+{
+  // tout << "setting branch " << branch << std::endl; 
+  for(auto &param : params)
+    setBranch(branch, param); 
 }
 
 
@@ -564,11 +622,12 @@ void TreeAln::discretizeGamma(int model)
 
 void TreeAln::initializeTreePLL(std::string byteFileName)
 {
+  // partitions.perGeneBranchLengths = TRUE; 
   partitionList *pl = getPartitionsPtr();
   pl->partitionData = (pInfo**)exa_malloc(NUM_BRANCHES*sizeof(pInfo*));
 
   double **empFreq = NULL; 
-  bool perGeneBL = false; 
+  bool perGeneBL = true; 
   initializePartitionsPLL(byteFileName, &empFreq, perGeneBL );
 
   initializePartitionsSequential(getTr(), getPartitionsPtr());
@@ -577,6 +636,7 @@ void TreeAln::initializeTreePLL(std::string byteFileName)
   for(int i = 0; i < pl->numberOfPartitions; ++i)
     exa_free(empFreq[i]);
   exa_free(empFreq) ;
+  partitions.perGeneBranchLengths = TRUE; 
 } 
 
 
@@ -591,7 +651,6 @@ void TreeAln::initializePartitionsPLL(std::string byteFileName, double ***empiri
   myBinFread(&(tr.originalCrunchedLength), sizeof(int), 1, byteFile);
   myBinFread(&(partitions.numberOfPartitions),  sizeof(int), 1, byteFile);
   myBinFread(&(tr.gapyness),            sizeof(double), 1, byteFile);
-
 
   partitions.perGeneBranchLengths = multiBranch ? 1 : 0 ;
 
@@ -682,31 +741,6 @@ std::ostream& operator<< (std::ostream& out,  TreeAln&  traln)
   TreePrinter tp(true, false, false); 
   return out << tp.printTree(traln); 
 }
-
-
-
-void TreeAln::collapseBranch(Branch b)
-{
-  assert(getNumBranches() == 1 ); 
-  nodeptr p = b.findNodePtr( *this); 
-  p->z[0] = p->back->z[0] = TreeAln::zZero;   
-}
-
-
-bool TreeAln::isCollapsed(Branch b ) 
-{
-  assert(getNumBranches() == 1 ); 
-  nodeptr p = b.findNodePtr(*this); 
-  return p->z[0] >=  BoundsChecker::zMax ; 
-}
-
-
-void TreeAln::setBranchLengthUnsafe(Branch b ) 
-{
-  assert(getNumBranches() == 1 ); 
-  nodeptr p = b.findNodePtr(  *this);   
-  p->z[0] = p->back->z[0] = b.getLength();   
-} 
 
 
 std::vector<double> TreeAln::getRevMat(int model) const 
@@ -813,3 +847,71 @@ std::ostream& operator<<(std::ostream& out, pInfo& rhs)
   out << "),alpha=" << rhs.alpha << "}"; 
   return out ; 
 }
+
+
+double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) const 
+{
+  double result = 0; 
+  // TODO  
+  // tout << "not sure about this" << std::endl; 
+
+#if HAVE_PLL == 0
+  for(auto &p :partitions)
+    result += tr.fracchanges[p] * tr.partitionContributions[p];   
+#else 
+  for(auto &p : partitions)
+    {
+      auto partition =  getPartition(p);
+      result += partition->fracchange * partition->partitionContribution;  
+    }
+#endif
+  // tout << "fracchange " << result << " for partitions " << partitions << std::endl; 
+  return result; 
+}
+
+
+
+Branch TreeAln::getBranch(const Branch& b, AbstractParameter* param)
+{
+  return getBranch(b.findNodePtr(*this) , param);
+}
+
+
+Branch TreeAln::getBranch(const Branch &b , const std::vector<AbstractParameter*> params) const 
+{
+  return getBranch(b.findNodePtr(*this),params);
+}
+
+
+
+Branch TreeAln::getBranch(nodeptr p, const AbstractParameter* param) const
+{
+  nat id = param->getIdOfMyKind();
+  std::vector<double> l(id+1, TreeAln::problematicBL); // =/ 
+
+  nat aPartition = param->getPartitions()[0];
+  l.at(id) = p->z[aPartition];
+  return Branch(p->number,p->back->number, l);
+}
+
+Branch TreeAln::getBranch(nodeptr p, const std::vector<AbstractParameter*> &params) const 
+{
+  nat highest = 0; 
+  for(auto &p : params )
+    {
+      nat elem = p->getIdOfMyKind(); 
+      if(highest < elem )
+	highest = elem; 
+    }
+
+  std::vector<double> l(highest + 1 , TreeAln::problematicBL);  
+  
+  for(auto &param: params)
+    {
+      nat aPartition = param->getPartitions()[0];
+      nat id = param->getIdOfMyKind(); 
+      l.at(id) = p->z[aPartition];
+    }
+  return Branch(p->number, p->back->number, l); 
+}
+

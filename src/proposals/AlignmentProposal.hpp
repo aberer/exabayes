@@ -22,6 +22,7 @@ public:
   virtual AbstractProposal* clone() const ; 
   virtual void readFromCheckpointCore(std::istream &in); 
   virtual void writeToCheckpointCore(std::ostream &out) const; 
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch,Branch>(Branch(0,0),Branch(0,0));}
 
 private: 
   std::vector<std::unique_ptr<AbstractProposer> > partitionProposer; 

@@ -25,11 +25,20 @@
 class ProposalSet : public Checkpointable
 {
 public: 
+  // life cycle 
   ProposalSet(double relWeight, std::vector<std::unique_ptr<AbstractProposal>> proposals); 
   ProposalSet(const ProposalSet &rhs);
   ProposalSet& operator=(ProposalSet rhs); 
-  
+  /** 
+      @brief prints the proposal set    
+   */ 
   void printVerboseAbbreviated(std::ostream &out, double sum); 
+  /** 
+      @brief indicates whether for this proposal set a full tree
+      traversal is necessary
+   */ 
+  bool needsFullTraversal(); 
+
   double getRelativeWeight() const {return relativeWeight; }
   std::vector<AbstractProposal*> getProposalView() const;  
 

@@ -26,36 +26,49 @@ void PriorBelief::initialize(const TreeAln &traln, const std::vector<AbstractPar
 }
 
 
-void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, const std::vector<AbstractPrior* > &blPriors)  
+void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, 
+				       const std::vector<AbstractParameter*> &affectedBlParams )  
 {
-  assert(wasInitialized); 
-  assert(blPriors.size() == 1  &&  dynamic_cast<ExponentialPrior*>(blPriors[0]) != nullptr) ; 
-
   // TODO this is horrible, but let's go with that for now. 
 
-  double lambda = dynamic_cast<ExponentialPrior*> (blPriors[0])->getLamda(); 
+  assert(wasInitialized); 
+
+  for(auto &p :  affectedBlParams)
+    {
+      // TODO if fixed, we really have to go through all branch lengths
+      // and change them      
+      // => disabled currently  
+      auto tmp = p->getPrior();
+      assert(dynamic_cast<ExponentialPrior*>(tmp) != nullptr) ; 
+    }
 
 #ifdef EFFICIENT
   // TODO investigate on more efficient tree length 
   assert(0); 
 #endif
 
-  assert(oldFc.size() == 1 && newFcs.size() == 1 );  
+  auto branches = traln.extractBranches(affectedBlParams); 
 
-  double blInfluence = 1; 
-  std::vector<Branch> branches = traln.extractBranches() ;  
-  for(auto &b : branches)
-    blInfluence *= b.getLength(); 
+  for(auto &param : affectedBlParams)
+    {
+      double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
+      double myOld = oldFc.at(param->getIdOfMyKind()); 
+      double myNew = newFcs.at(param->getIdOfMyKind()); 
 
-  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * log(blInfluence);
+      double blInfluence = 1; 
+      for(auto &b : branches)
+	blInfluence *= b.getLength(param);
+
+	lnPriorRatio += (myNew - myOld) * lambda * log(blInfluence);
+    }
 }
 
 
-double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<AbstractParameter*> variables) const 
+double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<AbstractParameter*> &parameters) const 
 {
   double result = 0; 
 
-  for( auto& v : variables)
+  for( auto& v : parameters)
     {
       double partialResult = 0; 
 
@@ -66,11 +79,12 @@ double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<AbstractPa
 	  break; 
 	case Category::BRANCH_LENGTHS: 
 	  {
-	    assert(traln.getNumBranches() == 1); 
-	    std::vector<Branch> bs = traln.extractBranches(); 
+	    std::vector<Branch> bs = traln.extractBranches(v); 
 	    auto pr = v->getPrior();	    
-	    for(auto b : bs)
-	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln) }); 	  
+	    for(auto &b : bs)	      
+	      {
+		partialResult += pr->getLogProb( {  b.getInterpretedLength(traln,v) }); 
+	      }
 	  }
 	  break; 
 	case Category::FREQUENCIES: 
@@ -100,35 +114,39 @@ double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<AbstractPa
       // std::cout << "pr(" <<  v << ") = "<< partialResult << std::endl ; 
       result += partialResult; 
     }
-
   return result; 
 } 
 
 
-void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> variables) const 
+void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> parameters) const 
 {
   assert(lnPriorRatio == 0); 
-  double verified = scoreEverything(traln, variables); 
-  if ( fabs(verified -  lnPrior ) >= ACCEPTED_LNPR_EPS)
+  double verified = scoreEverything(traln, parameters); 
+  if ( fabs(verified - lnPrior) >= ACCEPTED_LNPR_EPS)
     {
-      std::cerr << std::setprecision(10) << "ln prior was " << lnPrior << " while it should be " << verified << std::endl; 
+      tout << MAX_SCI_PRECISION << "ln prior was " << lnPrior << " while it should be " << verified << std::endl; 
+      tout << "difference: "<< fabs(verified - lnPrior) << std::endl; 
       assert(fabs(verified -  lnPrior ) < ACCEPTED_LNPR_EPS); 
     }
 }
 
 
-void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,double newInternalZ, AbstractPrior* brPr) 
+void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,
+					  double newInternalZ, const AbstractParameter* param ) 
 {
+  auto prior = param->getPrior();
   assert(wasInitialized); 
-  if(dynamic_cast<ExponentialPrior*> (brPr) != nullptr ) 
+  if(dynamic_cast<ExponentialPrior*> (prior) != nullptr ) 
     {
-      auto casted = dynamic_cast<ExponentialPrior*> (brPr); 
-      lnPriorRatio += (log(newInternalZ /   oldInternalZ) ) * traln.getTr()->fracchange * casted->getLamda(); 
+      auto casted = dynamic_cast<ExponentialPrior*> (prior); 
+      lnPriorRatio += 
+	(log(newInternalZ /   oldInternalZ) ) 
+	* traln.getMeanSubstitutionRate(param->getPartitions()) * casted->getLamda(); 
     }
   else 
     {
       assert(0);		// very artificial
-      lnPriorRatio += brPr->getLogProb({newInternalZ}) - brPr->getLogProb({oldInternalZ}) ; 
+      lnPriorRatio += prior->getLogProb({newInternalZ}) - prior->getLogProb({oldInternalZ}) ; 
     }
 }
 

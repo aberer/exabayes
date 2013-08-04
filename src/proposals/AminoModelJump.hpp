@@ -43,6 +43,8 @@ public:
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+
 private: 
   vector<aaMatrix_t> matrices; 
 }; 

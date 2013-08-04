@@ -144,6 +144,7 @@ void CoupledChains::attemptSwap(ParallelSetup &pl)
 
 
 
+#if 0 
 void CoupledChains::chainInfo()
 {
   // print hot chains
@@ -153,7 +154,11 @@ void CoupledChains::chainInfo()
 
   auto coldChain = sortedChains[0]; 
 
-  Branch fake(0,0,coldChain->getTraln().getTreeLengthExpensive()); 
+  // Branch fake(0,0,coldChain->getTraln().getTreeLengthExpensive()); 
+  coldChain->extractParameters()
+  coldChain->getTraln().getTreeLengthExpensive()
+  
+  // chains[0]->
 
   tout << "[run: " << runid << "] "  ; 
   tout << "[time " << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- timeIncrement   ).count()     << "] "; 
@@ -177,6 +182,7 @@ void CoupledChains::chainInfo()
 
   tout << endl; 
 }
+#endif
 
 
 void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)

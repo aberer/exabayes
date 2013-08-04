@@ -174,7 +174,13 @@ void AlignmentProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 	  assert(v->getCategory() == Category::BRANCH_LENGTHS); 
 	  blPriors.push_back(v->getPrior()); 
 	}
-      prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
+
+      // meh 
+#if 1 
+      assert(0);
+#else 
+      // prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
+#endif
       updateHastings(hastings, pow(newFracChange / oldFracChange, traln.getNumberOfBranches()), name); 
     }
 

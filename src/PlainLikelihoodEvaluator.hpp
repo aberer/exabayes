@@ -13,11 +13,9 @@ class PlainLikelihoodEvaluator : public LikelihoodEvaluator
 {  
 public: 
   virtual ~PlainLikelihoodEvaluator(){}
-  
 
-  virtual double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal) ; 
   virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ); 
-  virtual double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions); 
+  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const Branch& root,  const std::vector<nat>& partitions, bool fullTraversal)  {assert(0); return 0; }
   virtual void evalSubtree( TreeAln &traln, const Branch &evalBranch); 
 
   virtual void imprint(const TreeAln &traln) {} // NOOP 

@@ -43,7 +43,7 @@ public:
    */ 
   void toplevelSwitch(TreeAln &traln, Branch virtualRoot, std::vector<nat> models, bool fullTraversal); 
 
-private:   
+private:   			// METHODS
   ArrayRestorer(ArrayRestorer &rhs)= delete ; 
   ArrayRestorer& operator=(ArrayRestorer &rhs)= delete ; 
 
@@ -51,6 +51,7 @@ private:
   void loadOrientation(TreeAln &traln);
   void swapArray(TreeAln& traln, int number, std::vector<nat> model); 
 
+private: 			// ATTRIBUTES
   nat numPart; 
   nat numTax; 
 

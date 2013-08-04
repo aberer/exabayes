@@ -13,9 +13,13 @@
 
 #include <iostream>
 #include <cassert>
+#include <vector>
 
 #include "axml.h"
 #include "Checkpointable.hpp"
+// #include "parameters/AbstractParameter.hpp"
+
+class AbstractParameter; 
 
 class TreeAln; 
 
@@ -25,7 +29,7 @@ public:
   /////////////////
   // life cycle  //
   /////////////////
-  Branch(nat a = 0, nat b = 0, double length = 0.0); 
+  Branch(nat a = 0, nat b = 0, std::vector<double> lengths = {}); 
 
   ///////////////
   // observers //
@@ -33,16 +37,14 @@ public:
   /** 
       @brief gets the absolute (true) length of the branch
    */ 
-  double getInterpretedLength(const TreeAln &traln) const; 
-  /**
-     @brief converts the absolute length "length" into the internal
-     respresentation and sets it
-   */
-  double getInternalLength(const TreeAln &traln, double length) const; 
+  double getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const; 
+
+  // double getInternalLength(const TreeAln &traln, double length) const; 
+  void setConvertedInternalLength(const TreeAln& traln, const AbstractParameter* param, double length) ; 
   /**
      @brief switches the orientation of the branch (i.e., the reference node )
    */ 
-  Branch getInverted() const { return Branch(thatNode, thisNode, length); }
+  Branch getInverted() const { return Branch(thatNode, thisNode, lengths); }
   /**
      @brief indicates whether two branches are equal disregarding branch lengths and orientation     
    */ 
@@ -55,6 +57,10 @@ public:
      @brief gets the secondary node (that is there for orientation purposes)
    */ 
   nat getSecNode() const {return thatNode; }  
+  /** 
+      @brief gets all lengths stored in the branch
+   */ 
+  const std::vector<double>& getAllLengths() const {return lengths; }
   /**
      @brief sets the primary node
    */ 
@@ -66,11 +72,11 @@ public:
   /**
      @brief sets the branch length (internal representation)
    */ 
-  void setLength(double intLength){length = intLength; }
+  void setLength(double intLength, const AbstractParameter* param);
   /**
      @brief gets the (internal) branch length
    */ 
-  double getLength () const {return length; }
+  double getLength (const AbstractParameter* param) const;
   /**
      @brief indicates whether the branch exists in tree traln
    */ 
@@ -82,7 +88,7 @@ public:
   /**
      @brief gets the intersecting node of two branches
      @notice triggers assertion, if there is no intersection 
-   */ 
+  */ 
   nat getIntersectingNode(const Branch  &rhs) const ; 
   /** 
       @brief indicates whether a node is part of this branch 
@@ -111,7 +117,7 @@ public:
 private: 
   nat thisNode; 
   nat thatNode;   
-  double length; 
+  std::vector<double> lengths; 
 }; 
 
 

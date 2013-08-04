@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "ProposalSet.hpp"
+// #include "Category.hpp"
 
 #include "common.h"
 
@@ -62,7 +63,7 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
 
 
 
-void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness)
+void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params)
 {  
   auto tr = traln.getTr();
   bool hasBranchLength = false; 
@@ -79,19 +80,24 @@ void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTre
 	TreeRandomizer::randomizeTree(traln, treeRandomness); 
     }
 
-  // correct branches 
-  for(auto &b : traln.extractBranches())
+  if(hasBranchLength)
+    tout << "TODO use branch lengths" << std::endl; 
+
+
+  for(auto &b : traln.extractBranches(params))
     {
-      b.setLength( hasBranchLength ? 
-		   ( - exp(b.getLength() / tr->fracchange)) 
-		   : TreeAln::initBL ); 
-      traln.setBranch(b); 
+      for(auto &param : params)
+	{
+	  b.setLength( hasBranchLength ? ( - exp(b.getLength(param) / tr->fracchange)) : TreeAln::initBL 
+		       , param); 
+	  traln.setBranch(b, param); 
+	}
     }
 }
 
 
 
-void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH)
+void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, const std::vector<AbstractParameter*> &params)
 {  
   Randomness treeRandomness(seed); 
 
@@ -103,7 +109,7 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 
   // choose how to initialize the topology
   for(auto &tralnPtr : treesToInitialize)
-    initializeTree(*tralnPtr,  treesConsumed, numTreesAvailable, treeFH, treeRandomness); 
+    initializeTree(*tralnPtr,  treesConsumed, numTreesAvailable, treeFH, treeRandomness, params); 
   
   // propagate the tree to the coupled chains, if necessary
   if(runParams.isHeatedChainsUseSame())
@@ -297,12 +303,12 @@ void SampleMaster::initializeRuns( )
   printAlignmentInfo(initTree); 
 
   vector<unique_ptr<AbstractProposal> > proposals; 
-  vector<unique_ptr<AbstractParameter> > variables; 
+  vector<unique_ptr<AbstractParameter> > params; 
 
   std::unique_ptr<LikelihoodEvaluator> eval = createEvaluatorPrototype(initTree); 
 
   std::vector<ProposalSet> proposalSets;  
-  initWithConfigFile(cl.getConfigFileName(), &initTree, proposals, variables, proposalSets, eval);
+  initWithConfigFile(cl.getConfigFileName(), &initTree, proposals, params, proposalSets, eval);
   assert(runParams.getTuneFreq() > 0); 
 
   // ORDER: must be after initWithConfigFile
@@ -333,12 +339,19 @@ void SampleMaster::initializeRuns( )
 
   // determine if topology is fixed 
   bool topoIsFixed = false; 
-  for(auto &v :variables)
+  for(auto &v :params)
     {
       if( dynamic_cast<TopologyParameter*>(v.get())  != nullptr
 	  && dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr )
 	topoIsFixed = true; 
     }
+  
+  // gather branch length parameters
+  std::vector<AbstractParameter*> blParams;
+  for(auto &v : params)
+    if(v->getCategory() == Category::BRANCH_LENGTHS)
+      blParams.push_back(v.get());
+
 
   if(numTreesAvailable > 1 )
     {
@@ -354,7 +367,8 @@ void SampleMaster::initializeRuns( )
       Randomness treeRandomness(treeSeeds[0]); 
       // BAD!
       TreeAln &something = *initTreePtr; 
-      initializeTree(something, tmp, numTreesAvailable, treeFH, treeRandomness); 
+      initializeTree(something, tmp, numTreesAvailable, treeFH, 
+		     treeRandomness, blParams); 
     }
 
   informPrint();
@@ -369,7 +383,7 @@ void SampleMaster::initializeRuns( )
 	}
       else 
 	{
-	  initTrees(trees, treeSeeds[i], treesConsumed, numTreesAvailable, treeFH); 
+	  initTrees(trees, treeSeeds[i], treesConsumed, numTreesAvailable, treeFH, blParams); 
 	}
 
       vector<Chain> chains; 
@@ -377,7 +391,9 @@ void SampleMaster::initializeRuns( )
       for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
 	{
 	  randCtr_t c; 
-	  chains.emplace_back( c , trees[j], proposals, proposalSets, std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
+	  auto &t = trees.at(j);
+	  chains.emplace_back( c , t, proposals, proposalSets, 
+			       std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
 	  auto &chain = chains[j]; 		
 	  chain.setRunId(i); 
 	  chain.setTuneFreuqency(runParams.getTuneFreq()); 

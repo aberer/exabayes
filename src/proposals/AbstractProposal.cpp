@@ -1,21 +1,18 @@
 #include "AbstractProposal.hpp"
 
 
-std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() const
+AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
+  : name(rhs.name)
+  , sctr(rhs.sctr)
+  , category(rhs.category)
+  , relativeWeight(rhs.relativeWeight)
+  , needsFullTraversal(rhs.needsFullTraversal)
+  , inSetExecution(rhs.inSetExecution)
 {
-  std::vector<AbstractParameter*> result; 
-  for(auto &v : primaryParameters)
-    result.push_back(v.get()); 
-  return result; 
-}
-
- 
-std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() const 
-{
-  std::vector<AbstractParameter*> result; 
-  for(auto &v : secondaryParameters)
-    result.push_back(v.get()); 
-  return result; 
+  for(auto &v : rhs.primaryParameters)
+    primaryParameters.emplace_back(v->clone()); 
+  for(auto &v : rhs.secondaryParameters)
+    secondaryParameters.emplace_back(v->clone()); 
 }
 
 
@@ -104,30 +101,12 @@ std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs)
   return out; 
 }
 
-
-AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
-  : name(rhs.name)
-  , sctr(rhs.sctr)
-  , category(rhs.category)
-  , relativeWeight(rhs.relativeWeight)
-{
-  for(auto &v : rhs.primaryParameters)
-    primaryParameters.emplace_back(v->clone()); 
-  for(auto &v : rhs.secondaryParameters)
-    secondaryParameters.emplace_back(v->clone()); 
-} 
-
-
-
-
-
+ 
 void AbstractProposal::writeToCheckpoint( std::ostream &out)   const
 {
   std::stringstream ss ; 
   printShort(ss); 
   std::string name = ss.str();
-  // tout << "wrote "  << name << std::endl; 
-  // cWrite<std::string>(out, name);   
   writeString(out, name); 
   sctr.writeToCheckpoint(out) ; 
   writeToCheckpointCore(out); 
@@ -140,3 +119,35 @@ void AbstractProposal::readFromCheckpoint( std::istream &in )
   sctr.readFromCheckpoint(in); 
   readFromCheckpointCore(in); 
 }
+
+
+std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() const
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &v : primaryParameters)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+ 
+std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() const 
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &v : secondaryParameters)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+
+std::vector<AbstractParameter*> AbstractProposal::getBranchLengthsParameterView() const 
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &p : primaryParameters)
+    if(p->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(p.get()); 
+
+  for(auto &p : secondaryParameters ) 
+    if(p->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(p.get());
+  return result; 
+} 

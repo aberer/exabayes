@@ -85,6 +85,7 @@ static void appendElem(insertList **list,  Branch b , double lnl, double ratio, 
 
 static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
 { 
+#if 0 
   tree *tr = traln.getTr();
 
   if( depthLeft == 0 || isTip(pruneBranch.getPrimNode(),tr->mxtips) )
@@ -186,6 +187,7 @@ static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subt
       entry->containedInSecond = TRUE; 
       /* TODO assert this and that  */
     }    
+#endif
 }
 
 
