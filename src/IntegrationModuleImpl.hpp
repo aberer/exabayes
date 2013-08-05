@@ -82,7 +82,10 @@ void SampleMaster::branchLengthsIntegration()
       integrationChain.resume(false, false ); 
       traln.setBranch(branch, paramView); 
       eval->evaluate(traln, branch, true); 
-      integrationChain.reinitPrior();
+
+      // TODO prior? 
+      assert(0); 
+
 
       double minHere = 1000; 
       double maxHere = 0; 

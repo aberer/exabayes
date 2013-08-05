@@ -29,6 +29,10 @@ public:
    /////////////////
   TreeAln();
   ~TreeAln();
+  /** 
+      @brief copies the entire model from the rhs.
+      Mostly for debugging purposes. 
+   */ 
   void copyModel(const TreeAln& rhs)  ; 
   /**
      @brief copies the entire state from the rhs to this tree/alignment.
@@ -181,11 +185,6 @@ public:
      @brief gets a node with given id that is not connected to the tree right now 
    */ 
   nodeptr getUnhookedNode(int number);
-  /** 
-      @brief copies the entire model from the rhs.
-      Mostly for debugging purposes. 
-   */ 
-  void copyModel(const TreeAln& rhs); 
   ///////////////
   // observers //
   ///////////////
