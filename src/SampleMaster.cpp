@@ -319,7 +319,7 @@ void SampleMaster::initializeRuns( )
   assert(0); 
 #endif
 
-  for(int i = 0 ; i < runParams.getNumCoupledChains(); ++i)
+  for(nat i = 0 ; i < runParams.getNumCoupledChains(); ++i)
     {      
       trees.push_back(make_shared<TreeAln>()); 
       trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
@@ -331,7 +331,7 @@ void SampleMaster::initializeRuns( )
 
   vector<randCtr_t> runSeeds;
   vector<randCtr_t> treeSeeds; 
-  for(int i = 0; i < runParams.getNumRunConv();++i)
+  for(nat i = 0; i < runParams.getNumRunConv();++i)
     {
       runSeeds.push_back(masterRand.generateSeed()); 
       treeSeeds.push_back(masterRand.generateSeed()); 
@@ -374,7 +374,7 @@ void SampleMaster::initializeRuns( )
   informPrint();
 
   nat treesConsumed = 0; 
-  for(int i = 0; i < runParams.getNumRunConv() ; ++i)
+  for(nat i = 0; i < runParams.getNumRunConv() ; ++i)
     {    
       if(topoIsFixed)
 	{
@@ -388,7 +388,7 @@ void SampleMaster::initializeRuns( )
 
       vector<Chain> chains; 
       
-      for(int j = 0; j < runParams.getNumCoupledChains(); ++j)
+      for(nat j = 0; j < runParams.getNumCoupledChains(); ++j)
 	{
 	  randCtr_t c; 
 	  auto &t = trees.at(j);
@@ -473,10 +473,10 @@ void SampleMaster::printInitialState(const ParallelSetup &pl)
 double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
 {
   if(runParams.getNumRunConv() == 1)
-    return std::numeric_limits<double>::max();
+    return std::numeric_limits<double>::min();
 
   vector<string> fns; 
-  for(int i = 0; i < runParams.getNumRunConv(); ++i)
+  for(nat i = 0; i < runParams.getNumRunConv(); ++i)
     {
       stringstream ss; 
       ss << OutputFile::getFileBaseName(cl.getWorkdir())  << "_topologies." << cl.getRunid() << "." << i; 
@@ -599,8 +599,6 @@ SampleMaster::printDuringRun(nat gen,  ParallelSetup &pl)
   return CLOCK::system_clock::now(); 
 }
 
-
-
 void SampleMaster::run()
 {
   tout << "Starting MCMC sampling. Will print the log-likelihoods of\n"
@@ -626,11 +624,13 @@ void SampleMaster::run()
 
   while(curGen < nat(runParams.getNumGen()) || not hasConverged)   
     { 
-      int nextPrint =  lastPrint + runParams.getPrintFreq(); 
-      int nextDiag = lastDiag + runParams.getDiagFreq(); 
-      int nextChkpnt = lastChkpnt + runParams.getChkpntFreq(); 
-      int toExecute = min(nextChkpnt, 
-			  min(nextPrint, nextDiag)) -  curGen; 
+      nat nextPrint =  lastPrint + runParams.getPrintFreq(); 
+      nat nextDiag = lastDiag + runParams.getDiagFreq(); 
+      nat nextChkpnt = lastChkpnt + runParams.getChkpntFreq(); 
+
+      std::vector<nat> stopPoints = { nextChkpnt , nextPrint, nextDiag, runParams.getNumGen() } ; 
+      nat nextStop = *(std::min_element(stopPoints.begin(), stopPoints.end())); 
+      int toExecute = nextStop - curGen; 
 
       // main part execute 
       for(auto &run : runs)
@@ -640,11 +640,17 @@ void SampleMaster::run()
 	}
       curGen += toExecute; 
 
+
+      hasConverged = ( runs[0].getChains().size() == 1) 
+	&& (curGen >= runParams.getNumGen()); 
+	
+
       if(curGen % runParams.getDiagFreq() == 0 )
 	{
 	  nat start = 0, 
 	    end = 0; 
 	  double asdsf = convergenceDiagnostic(start, end); 
+
 	  hasConverged = asdsf < runParams.getAsdsfConvergence();  
 
 	  pl.synchronizeChainsAtMaster(runs, CommFlag::PrintStat | CommFlag::Swap | CommFlag::Proposals); 

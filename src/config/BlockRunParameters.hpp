@@ -16,20 +16,20 @@ public:
   virtual void Read(NxsToken &token); 
 
   // getters 
-  int getTuneFreq() const { return tuneFreq;  }
+  nat getTuneFreq() const { return tuneFreq;  }
   bool getTuneHeat() const { return tuneHeat; }
-  int getSwapInterval() const { return swapInterval; }
+  nat getSwapInterval() const { return swapInterval; }
   double getHeatFactor() const { return heatFactor ; }
-  int getPrintFreq() const { return printFreq; }
-  int getNumCoupledChains() const { return numCoupledChains; }
+  nat getPrintFreq() const { return printFreq; }
+  nat getNumCoupledChains() const { return numCoupledChains; }
   // string getRunId() const { return runId; }
-  int getNumGen() const { return numGen; }
-  int getNumRunConv() const { return numRunConv; }
-  int getSamplingFreq() const { return samplingFreq; }
+  nat getNumGen() const { return numGen; }
+  nat getNumRunConv() const { return numRunConv; }
+  nat getSamplingFreq() const { return samplingFreq; }
   double getBurninProportion() const { return burninProportion; }
-  int getBurninGen() const { return burninGen; }
+  nat getBurninGen() const { return burninGen; }
   double getAsdsfIgnoreFreq() const { return asdsfIgnoreFreq; 	}
-  int getDiagFreq() const { return diagFreq ; }
+  nat getDiagFreq() const { return diagFreq ; }
   double getAsdsfConvergence() const {return asdsfConvergence; }
   bool isUseParsimonyStarting() const {return useParsimonyStarting; } 
   bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
@@ -37,20 +37,20 @@ public:
   bool isComponentWiseMH() const {return componentWiseMH; }
 
 private: 
-  int diagFreq ; 
+  nat diagFreq ; 
   double asdsfIgnoreFreq; 	
   double asdsfConvergence; 
-  int burninGen; 
+  nat burninGen; 
   double burninProportion; 
-  int samplingFreq; 
-  int numRunConv; 
-  int numGen; 
-  int numCoupledChains; 
-  int printFreq; 
+  nat samplingFreq; 
+  nat numRunConv; 
+  nat numGen; 
+  nat numCoupledChains; 
+  nat printFreq; 
   double heatFactor ; 
-  int swapInterval; 
+  nat swapInterval; 
   bool tuneHeat; 
-  int tuneFreq;  
+  nat tuneFreq;  
   bool useParsimonyStarting; 
   bool heatedChainsUseSame; 
   nat chkpntFreq; 
