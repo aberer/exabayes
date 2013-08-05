@@ -13,11 +13,14 @@ void ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool fullTraversal,
 {
   partitionParsimony.clear();   
   partitionParsimony.insert(partitionParsimony.begin(), traln.getNumberOfPartitions(), 0); 
-  
+  nat localLength = 0; 
+
 #if HAVE_PLL != 0 
-  evaluateParsimony(traln.getTr(), traln.getPartitionsPtr(), p, fullTraversal ? TRUE : FALSE , &(partitionParsimony[0])); 
-#else 
-  evaluateParsimony(traln.getTr(), p, fullTraversal ? TRUE  : FALSE, &(partitionParsimony[0])); 
+  evaluateParsimony(traln.getTr(), traln.getPartitionsPtr(), p,
+		    fullTraversal ? TRUE : FALSE , 
+		    &(partitionParsimony[0]), &localLength);
+#else   
+  evaluateParsimony(traln.getTr(), p, fullTraversal ? TRUE  : FALSE, &(partitionParsimony[0]), &localLength); 
 #endif
 
 }

@@ -29,11 +29,12 @@ public:
    /////////////////
   TreeAln();
   ~TreeAln();
+  void copyModel(const TreeAln& rhs)  ; 
   /**
      @brief copies the entire state from the rhs to this tree/alignment.
      Important: likelihood arrays are not concerned
   */ 
-  TreeAln& operator=( TreeAln &rhs) = delete ; 
+  TreeAln& operator=( TreeAln &rhs) = delete ;     
   TreeAln(const TreeAln &tmp) = delete ; 
 
 
@@ -191,7 +192,7 @@ public:
   /** 
       @brief gets the branches that are below one branch 
    */
-  std::pair<Branch,Branch> getDescendingBranches(const Branch &b) const; 
+  std::pair<Branch,Branch> getDescendents(const Branch &b) const; 
   std::vector<bool> getExecModel() const ; 
   std::vector<double> getPartitionLnls() const; 
   void setPartitionLnls(const std::vector<double> partitionLnls) ; 

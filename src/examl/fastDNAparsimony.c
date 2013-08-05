@@ -652,9 +652,9 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 
 
 
-void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony)
+void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony, nat *pAtBranch )
 {
-  volatile nat result;
+  /* volatile nat   */
   nodeptr q = p->back;
   int
     *ti = tr->ti,

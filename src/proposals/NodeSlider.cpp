@@ -24,7 +24,7 @@ std::pair<Branch,Branch> NodeSlider::prepareForSetExecution(TreeAln& traln, Rand
 #endif
   
   Branch a = TreeRandomizer::drawInnerBranchUniform(traln,rand); 
-  auto descendents = traln.getDescendingBranches(a); 
+  auto descendents = traln.getDescendents(a); 
   Branch b = rand.drawRandDouble01() < 0.5 ? descendents.first : descendents.second; 	
   return std::pair<Branch,Branch>(a,b); 
 }
@@ -49,7 +49,7 @@ Branch NodeSlider::proposeOtherBranch(const Branch &firstBranch, const TreeAln& 
     return preparedOtherBranch; 
   else 
     {
-      auto descendents = traln.getDescendingBranches(firstBranch); 
+      auto descendents = traln.getDescendents(firstBranch); 
       return rand.drawRandDouble01() < 0.5 ? descendents.first : descendents.second; 	
     }
 }

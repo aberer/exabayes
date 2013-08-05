@@ -35,13 +35,11 @@ double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch,
 // must be partial 
 void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)   
 { 
-  assert(0); 
+  // must evaluate on all partitions. Otherwise, we get problems with
+  // per-partition roots 
 
-  // TODO does this do what you want? 
-  
   bool masked = false; 
   nodeptr p = evalBranch.findNodePtr(traln); 
-  // int numberToExecute = 0; 
   std::vector<nat> modelsToEval; 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     modelsToEval.push_back(i); 
@@ -58,14 +56,6 @@ void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranc
 }
 
 
-
-// double RestoringLnlEvaluator::evaluatePartitions(TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)
-// {
-//   return evaluatePartitions(traln, findVirtualRoot(traln), partitions, fullTraversal);
-// }
-
-
-// double RestoringLnlEvaluator::evaluatePartitions(TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)
 double RestoringLnlEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Branch &root , const std::vector<nat>& partitions, bool fullTraversal)    
 {  
   auto tr = traln.getTr(); 
@@ -116,6 +106,7 @@ void RestoringLnlEvaluator::resetToImprinted(TreeAln &traln)
   assert( (traln.isTipNode(p) ||  p->x) 
 	  && (traln.isTipNode(q) || q->x ) );
 
+  // the stuff below is excessive and merely for some nasty bugs  
 #if 0 
 #ifdef DEBUG_LNL_VERIFY
   auto evalP = root.findNodePtr(traln); 
@@ -139,7 +130,7 @@ void RestoringLnlEvaluator::resetToImprinted(TreeAln &traln)
       assert(0); 
     }
 #endif
-#endif
+#endif 
 
   traln.getTr()->likelihood = prevLnl; 
   traln.setPartitionLnls(partitionLnls);   
@@ -150,7 +141,6 @@ void RestoringLnlEvaluator::imprint(const TreeAln &traln)
 { 
   prevLnl = traln.getTr()->likelihood; 
   partitionLnls = traln.getPartitionLnls(); 
-  // tout << "imprinting lnl=" << prevLnl << std::endl; 
   restorer->resetRestorer(traln);   
 }
 

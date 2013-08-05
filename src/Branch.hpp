@@ -114,6 +114,9 @@ public:
   // friends 
   friend std::ostream& operator<<(std::ostream &out, const Branch& br); 
 
+
+  static bool printLength; 
+
 private: 
   nat thisNode; 
   nat thatNode;   

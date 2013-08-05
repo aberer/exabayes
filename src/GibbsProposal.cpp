@@ -24,8 +24,7 @@ void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluat
 {
   double initLength = branch.getLength(blParam); 
 
-  // std::cout <<  << std::endl; 
-  
+ 
   double nrD2 = 0; 
   optimiseBranch(traln, branch, eval, nrD2, maxIter ,blParam);
 
@@ -41,7 +40,6 @@ void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluat
   double alpha = nrOpt * beta + 1 ; 
 
   double proposal = rand.drawRandGamma(alpha,   beta);
-  // double prop = branch.getInternalLength(traln, proposal );   
 
   branch.setConvertedInternalLength(traln,blParam, proposal);
   double prop = branch.getLength(blParam);
@@ -54,7 +52,6 @@ void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluat
   // 	    << proposal <<  "\thastings=" << lnBackP - lnForP   <<std::endl; 
 
   
-  // hastings += (lnBackP - lnForP); 
   AbstractProposal::updateHastings(hastings,   exp(lnBackP - lnForP) , "theGibbs");
   branch.setLength(prop, blParam); 
 }
@@ -71,7 +68,7 @@ void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluat
   if(not q->x == 1 )
     eval.evalSubtree(traln,b.getInverted());
 
-  // eval.evaluate(traln,b, false);
+  eval.evaluate(traln,b, false);
 
 
   double lambda = 10;

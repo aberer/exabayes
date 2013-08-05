@@ -13,6 +13,23 @@
 #include "ProposalRegistry.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 
+std::pair<double,double> getMeanAndVar (const std::vector<double> &data )
+{
+  double mean = 0; 
+  for(auto d: data)
+    mean += d; 
+  mean /= data.size(); 
+  
+  double var = 0; 
+  for(auto d : data)
+    var += pow(d - mean, 2); 
+  var /= data.size(); 
+
+  return std::pair<double,double>(mean,var);  
+}
+
+
+
 void SampleMaster::branchLengthsIntegration()  
 {
   assert(runs.size() == 1 );   
@@ -24,14 +41,10 @@ void SampleMaster::branchLengthsIntegration()
   stringstream ss; 
   ss << cl.getRunid() << ".tree.tre" ; 
 
-  // ofstream tFile( ss.str());   
   TreePrinter tp(true, true, false);   
   TreePrinter tp2(true, true, true); 
   auto tralnPtr = chain.getTralnPtr(); 
   auto& traln  = *tralnPtr  ; 
-  // tFile << tp.printTree(traln) << endl; 
-  // tFile << tp2.printTree(traln) << endl; 
-  // tFile.close(); 
 
   auto eval = chain.getEvaluator()->clone(); 
 
@@ -61,8 +74,16 @@ void SampleMaster::branchLengthsIntegration()
   assert(ps.size() == 1 );   
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
 
+  integrationChain.suspend(); 
+
   for(auto &branch : branches)
     {      
+      // setup 
+      integrationChain.resume(false, false ); 
+      traln.setBranch(branch, paramView); 
+      eval->evaluate(traln, branch, true); 
+      integrationChain.reinitPrior();
+
       double minHere = 1000; 
       double maxHere = 0; 
       Branch initBranch = branch; 
@@ -70,11 +91,13 @@ void SampleMaster::branchLengthsIntegration()
       traln.setBranch(branch, paramView); 
       eval->evaluate(traln, branch, true); 
       integrator->setToPropose(branch); 
-      
+
+      ////////////////////////
+      // integrate branch   //
+      ////////////////////////      
       stringstream ss; 
       ss << "samples." << cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
-      ofstream thisOut (ss.str()); 
-      
+      ofstream thisOut (ss.str());       
       // run the chain to integrate 
       tout << "integrating branch " << branch << endl; 
       for(int i = 0; i < INTEGRATION_GENERATIONS; ++i) 

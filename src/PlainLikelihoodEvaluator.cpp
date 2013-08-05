@@ -91,7 +91,7 @@ bool PlainLikelihoodEvaluator::traverseAndTouch(const TreeAln &traln, const Bran
   auto p = b.findNodePtr(traln); 
   bool result =  ( p->x == 1  ) ; 
   
-  auto descending = traln.getDescendingBranches(b); 
+  auto descending = traln.getDescendents(b); 
   result &= traverseAndTouch(traln,descending.first);
   result &= traverseAndTouch(traln,descending.second);
 

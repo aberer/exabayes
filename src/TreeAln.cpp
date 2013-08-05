@@ -362,9 +362,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
 
 #define UNSAFE_EXACT_TREE_COPY
 
-
-// TreeAln& TreeAln::operator=( TreeAln& rhs)
- void TreeAln::copyModel(const TreeAln& rhs)
+void TreeAln::copyModel(const TreeAln& rhs)  
 {  
   assert(&rhs != this); 
 
@@ -803,7 +801,7 @@ nodeptr TreeAln::getNode(nat elem) const
 
 
 
-std::pair<Branch,Branch> TreeAln::getDescendingBranches(const Branch &b) const
+std::pair<Branch,Branch> TreeAln::getDescendents(const Branch &b) const
 {
   auto p = b.findNodePtr(*this); 
   return std::pair<Branch,Branch>

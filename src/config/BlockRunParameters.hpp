@@ -42,11 +42,12 @@ private:
   double asdsfConvergence; 
   nat burninGen; 
   double burninProportion; 
-  nat samplingFreq; 
-  nat numRunConv; 
-  nat numGen; 
-  nat numCoupledChains; 
-  nat printFreq; 
+  int samplingFreq; 
+  int numRunConv; 
+  int numGen; 
+  // string runId; 
+  int numCoupledChains; 
+  int printFreq; 
   double heatFactor ; 
   nat swapInterval; 
   bool tuneHeat; 

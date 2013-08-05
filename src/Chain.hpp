@@ -114,7 +114,7 @@ public:
   double getLikelihood() const {return likelihood; }
   double getLnPr() const {return lnPr; }
   const PriorBelief& getPrior() const  {return prior; } 
-
+ 
   virtual void readFromCheckpoint( std::istream &in ) ; 
   virtual void writeToCheckpoint( std::ostream &out) const ;   
 
