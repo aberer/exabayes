@@ -41,14 +41,10 @@ void SampleMaster::branchLengthsIntegration()
   stringstream ss; 
   ss << cl.getRunid() << ".tree.tre" ; 
 
-  // ofstream tFile( ss.str());   
   TreePrinter tp(true, true, false);   
   TreePrinter tp2(true, true, true); 
   auto tralnPtr = chain.getTralnPtr(); 
   auto& traln  = *tralnPtr  ; 
-  // tFile << tp.printTree(traln) << endl; 
-  // tFile << tp2.printTree(traln) << endl; 
-  // tFile.close(); 
 
   auto eval = chain.getEvaluator()->clone(); 
 
