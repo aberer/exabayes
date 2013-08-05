@@ -14,6 +14,7 @@ BranchCollapser::BranchCollapser()
 
 void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
+#if 0 
   Branch b = TreeRandomizer::drawBranchUniform(traln, rand); 
 
   modifiedBranch = b ; 
@@ -22,6 +23,7 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 
   // auto brPr =   secVar[0]->getPrior();
 
+#if 0
   if(traln.isCollapsed(b))
     {    
 
@@ -44,6 +46,7 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 #endif
 
     }
+
   else
     {      
       double realZ = b.getInterpretedLength(traln); 
@@ -53,11 +56,13 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 #endif
       traln.collapseBranch(b); 
 
-    }  
+    }
+#endif  
 
 #if 0 
   prior.updateBranchLength(branchLengthToReal(traln.getTr(), modifiedBranch.length[0]) ,
 			   branchLengthToReal(traln.getTr(), p->z[0] ) );
+#endif
 #endif
 }
 
@@ -79,7 +84,9 @@ void BranchCollapser::resetState(TreeAln &traln, PriorBelief &prior)
 #endif
 #endif
 
+#if 0 
   traln.setBranchLengthUnsafe(modifiedBranch);
+#endif
 }
 
 

@@ -1,7 +1,7 @@
 #ifndef _SUCCESSCTR_H
 #define _SUCCESSCTR_H
 
-#include <fstream>
+#include <iostream>
 #include <iomanip>
 #include <list>
 
@@ -18,6 +18,8 @@ class SuccessCounter : public Checkpointable
 {
 public: 
   SuccessCounter();  
+  SuccessCounter(const SuccessCounter& rhs); 
+  SuccessCounter operator=( const SuccessCounter &rhs) ; 
 
   void accept(); 
   void reject();
@@ -29,8 +31,11 @@ public:
   int getBatch() const {return batch; }
   nat getTotalSeen()const  {return globalAcc + globalRej; }
   
-  virtual void readFromCheckpoint( std::ifstream &in )   ; 
-  virtual void writeToCheckpoint( std::ofstream &out) ;   
+  virtual void readFromCheckpoint( std::istream &in )   ; 
+  virtual void writeToCheckpoint( std::ostream &out) const ;   
+
+
+  SuccessCounter operator+(const SuccessCounter &rhs) const ; 
   
 private: 			// METHODS
   void reset();  

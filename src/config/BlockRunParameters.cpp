@@ -2,15 +2,14 @@
 
 
 BlockRunParameters::BlockRunParameters()  
-  : diagFreq(1000) 
+  : diagFreq(5000) 
   , asdsfIgnoreFreq(0.1)
   , asdsfConvergence (0.001)
   , burninGen(0)
   , burninProportion(0.25)
-  , samplingFreq (100)
+  , samplingFreq (500)
   , numRunConv(1)
-  , numGen(50000)
-  // , runId("standardId")
+  , numGen(1000000)
   , numCoupledChains(1)
   , printFreq (500)
   , heatFactor(0.1)
@@ -20,6 +19,7 @@ BlockRunParameters::BlockRunParameters()
   , useParsimonyStarting(false)
   , heatedChainsUseSame(false)
   , chkpntFreq(1000)
+  , componentWiseMH(true)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "runconfig"; 
 }
@@ -65,7 +65,9 @@ void BlockRunParameters::Read(NxsToken &token)
 	    chkpntFreq = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("samplingfrequency"))
 	    samplingFreq = value.ConvertToInt(); 
-	  else if(key.EqualsCaseInsensitive("numRuns"))
+	  else if(key.EqualsCaseInsensitive("componentWiseMH"))
+	    componentWiseMH = convertToBool(value); 
+	  else if(key.EqualsCaseInsensitive("numRuns"))	    
 	    numRunConv = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("diagFreq"))
 	    diagFreq = value.ConvertToInt(); 

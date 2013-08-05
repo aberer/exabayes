@@ -103,7 +103,11 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
 
   for(auto &name : names) 
     {
-      assert(name2proposal.find(name) != name2proposal.end() ); 
+      if(name2proposal.find(name) == name2proposal.end())
+	{
+	  tout << "could not find proposal " << name << std::endl; 
+	  assert(0); 
+	}
       auto& p = name2proposal[name]; 
       auto &sctr = p->getSCtr();
       fh << "\t" << sctr.getRatioInLast100() << "," << sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
@@ -151,9 +155,9 @@ void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::st
 	      isEmpty = not ret; 
 	      
 	      // skipping over the swap matrix and additional info 
-	      if(not (ctr < numSwapEntries + 2  ))
+	      if( not (ctr < numSwapEntries + 2  ))
 		{
-		  tout << "parsed " << part << std::endl; 
+		  // tout << "parsed " << part << std::endl; 
 		  names.push_back(part); 
 		}
 
@@ -161,7 +165,11 @@ void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::st
 	    }while(part.compare("") !=  0 && not isEmpty); 	  
 	}
 
-      if(lineCtr > 0)
+      // TODO: all this comparing against empty lines only is needed,
+      // because we could not have any data lines (and only the
+      // header). Come up with a better solution. 
+      if(lineCtr > 0 &&  not line.compare("") == 0
+	 )
       	{
 	  std::stringstream ss; 
 	  ss.str(line); 
@@ -170,7 +178,7 @@ void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::st
 	  genFound = std::stoi(part); 
 	}
 
-      if(genFound < gen )
+      if(genFound < gen && not line.compare("") == 0)
 	fh << line << std::endl; 
       ++lineCtr;
     }

@@ -727,6 +727,7 @@ static void buildSimpleTree (tree *tr, partitionList *pr, int ip, int iq, int ir
 
 static void testInsertParsimony (tree *tr, partitionList *pr, nodeptr p, nodeptr q, boolean saveBranches)
 { 
+#if 0 
   unsigned int 
     mp = 0;
 
@@ -783,7 +784,7 @@ static void testInsertParsimony (tree *tr, partitionList *pr, nodeptr p, nodeptr
       insertParsimony(tr, pr, p, q);
   
       mp = 0;       
-      evaluateParsimony(tr, pr, p->next->next, FALSE,partPars);      
+      evaluateParsimony(tr, pr, p->next->next, FALSE,partPars); 
       for(int i = 0; i < pr->numberOfPartitions; ++i)
 	mp += partPars[i]; 
       /* printf("%d\n", mp);  */
@@ -804,7 +805,9 @@ static void testInsertParsimony (tree *tr, partitionList *pr, nodeptr p, nodeptr
     }
        
   return;
+#endif 
 }
+
 
 
 
@@ -1380,8 +1383,9 @@ static void stepwiseAddition(tree *tr, partitionList *pr, nodeptr p, nodeptr q)
   tr->ti[2] = p->back->number;
 
    
+  nat pAtBranch = 0; 
   unsigned int* partitionParsimony = (unsigned int*) rax_calloc(pr->numberOfPartitions,sizeof(unsigned int)) ; 
-  evaluateParsimonyIterativeFast(tr, pr, partitionParsimony);
+  evaluateParsimonyIterativeFast(tr, pr, partitionParsimony, pAtBranch);
   mp = 0; 
   for(int i = 0; i < pr->numberOfPartitions; ++i)
     mp += partitionParsimony[i]; 

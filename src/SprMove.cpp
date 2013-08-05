@@ -7,18 +7,17 @@
 
 // TODO constructor instead of extract move info 
 
-
-void SprMove::applyToTree(TreeAln &traln) const
+void SprMove::applyToTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams) const
 {
-  applyPath(traln, path); 
+  applyPath(traln, path, blParams); 
 }
 
-void SprMove::revertTree(TreeAln &traln, PriorBelief &prior) const
+void SprMove::revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<AbstractParameter*> &params) const
 {
   Path anotherPath ; 
   getPathAfterMove(traln, path, anotherPath);
-  applyPath(traln, anotherPath); 
-  path.restoreBranchLengthsPath(traln, prior); 
+  applyPath(traln, anotherPath, params); 
+  path.restoreBranchLengthsPath(traln, prior, params); 
 }
 
  
@@ -28,9 +27,9 @@ void SprMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 }
 
 
-void SprMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description)
+void SprMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description, const std::vector<AbstractParameter*> &params)
 {
-  sprCreatePath(traln, description.at(0), description.at(1), path);
+  sprCreatePath(traln, description.at(0), description.at(1), path, params);
 } 
 
 
@@ -56,7 +55,7 @@ Branch SprMove::getEvalBranch(const TreeAln &traln) const
 }
 
 
-
+#if 0 
 /**
    @brief applies the branch length multiplier along the path
    (considering the spr has already been applied to the tree)
@@ -89,7 +88,7 @@ void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hasting
   path.multiplyBranch(traln, rand, Branch(sTNode, lastNode), multiplier, hastings, prior, brPr); 
   path.multiplyBranch(traln, rand, Branch(sTNode, s2LastNode), multiplier, hastings, prior, brPr); 
 } 
-
+#endif
 
 /**
    @brief applies the path onto the tree 
@@ -97,7 +96,8 @@ void SprMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hasting
    first two branches in path define subtree, all further branches are
    traversed, last branch is the insertion branch. 
  */
-void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath ) const 
+void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath, 
+			const std::vector<AbstractParameter*> &params) const 
 {
   assert(modifiedPath.size() > 2 ); 
 
@@ -106,9 +106,7 @@ void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath ) const
   Branch third =  modifiedPath.at(0).getThirdBranch(traln, modifiedPath.at(1)); 
   nodeptr sTPtr = third.findNodePtr(traln); 
   assert(modifiedPath.at(1).nodeIsInBranch(sTPtr->number )); 
-
   
-
   // finds the two nodeptrs adjacent to the subtree  
   nodeptr prOuterPtr = Branch(modifiedPath.getNthNodeInPath(0) ,modifiedPath.getNthNodeInPath(1)).findNodePtr(traln ),
     prInnerPtr = Branch(modifiedPath.getNthNodeInPath(2), modifiedPath.getNthNodeInPath(1)).findNodePtr(traln ); 
@@ -120,14 +118,20 @@ void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath ) const
 
   nodeptr toBeInserted = prInnerPtr->back;   
   nodeptr toBeInsertedPath = prOuterPtr->back;  
+
   assert(toBeInserted->number == sTPtr->number && sTPtr->number == toBeInsertedPath->number); 
 
   /* prune sTPtr */
-  traln.clipNode(prInnerPtr, prOuterPtr, prOuterPtr->z[0]); 
+  traln.clipNode(prInnerPtr, prOuterPtr); 		 
+  traln.setBranch(traln.getBranch(prOuterPtr, params), params); 
   sTPtr->next->back = sTPtr->next->next->back = (nodeptr) NULL; 
+  
+  // and hook up at the reattachment point, mapping the branches 
+  traln.clipNode(toBeInsertedPath, lPtr);
+  traln.setBranch(traln.getBranch(lPtr, params), params);
 
-  traln.clipNode(toBeInsertedPath, lPtr, lPtr->z[0]); 
-  traln.clipNode(toBeInserted, s2lPtr, toBeInserted->z[0]); 
+  traln.clipNode(toBeInserted, s2lPtr); 
+  traln.setBranch(traln.getBranch(toBeInserted, params), params); 
 
   assert(Branch(sTPtr->number, s2lPtr->number).exists(traln)); 
   assert(Branch(sTPtr->number, lPtr->number).exists(traln )); 
@@ -171,17 +175,12 @@ void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, P
   
   assert(ids.size() == 2); 
 
-  
   auto it = ids.begin(); 
   int a = *it; 
   ++it; 
   int b = *it;   
-  
-  // auto newBranch = Branch(a,b); 
-  // if(branchesAreConnected(newBranch,  resultPath.at(resultPath.size()-1)
 
   resultPath.append(Branch(a,b)); 
-
   assert(modifiedPath.size() == resultPath.size()); 
 }
 
@@ -194,7 +193,8 @@ std::ostream& operator<<(std::ostream &out, const SprMove& rhs)
 
 
 
-void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto, Path &pathHere ) const
+void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto, 
+			    Path &pathHere,  const std::vector<AbstractParameter*> &params) const
 {
 #ifdef EFFICIENT
   // looks very clunky 
@@ -227,7 +227,7 @@ void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto
   pathHere.reverse();
 
   // TODO inefficient
-  pathHere.saveBranchLengthsPath(traln); 
+  pathHere.saveBranchLengthsPath(traln, params); 
 }
 
 

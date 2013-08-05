@@ -26,7 +26,9 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
 
 void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
 {
-  assert(primVar.size() == 1); 	// we only have one parameter to integrate over 
+  auto blParams = getBranchLengthsParameterView(); 
+
+  assert(primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
   // this parameter proposal works with any kind of parameters (rate
   // heterogeneity, freuqencies, revmat ... could also be extended to
   // work with AA)
@@ -34,56 +36,66 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
   // extract the parameter (a handy std::vector<double> that for
   // instance contains all the frequencies)
-  ParameterContent content = primVar[0]->extractParameter(traln); 
+  ParameterContent content = primaryParameters[0]->extractParameter(traln); 
   savedContent = content; 
   
   // nasty, we have to correct for the fracchange 
-  double oldFracChange = traln.getTr()->fracchange; 
-  
+  std::vector<double> oldFCs; 
+  std::vector<double> newFCs;
+  for(auto &param : blParams)
+    {
+      nat id = param->getIdOfMyKind();
+      if(oldFCs.size() < id + 1  ) // meh
+	oldFCs.resize(id+1); 
+      oldFCs[id] = traln.getMeanSubstitutionRate(param->getPartitions()); 
+    }
+
   // we have a proposer object, that does the proposing (check out
   // ProposalFunctions.hpp) It should take care of the hastings as
   // well (to some degree )
   
   auto newValues = proposer->proposeValues(content.values, parameter, rand, hastings); 
-
   assert(newValues.size() == content.values.size()); 
-  assert(traln.getNumBranches() == 1 ); 
 
   // create a copy 
   ParameterContent newContent; 
   newContent.values = newValues; 
   // use our parameter object to set the frequencies or revtmat rates
   // or what ever (for all partitions)
-  primVar[0]->applyParameter(traln, newContent); 
-
-  // now take care of the fracchange 
-  double newFracChange = traln.getTr()->fracchange; 
+  primaryParameters[0]->applyParameter(traln, newContent); 
+  
   if(modifiesBL)
     {
-      std::vector<AbstractPrior*> blPriors; 
-      for(auto &v : secVar)
-	blPriors.push_back(v->getPrior()); 
-      prior.accountForFracChange(traln, {oldFracChange}, {newFracChange}, blPriors); 
-      updateHastings(hastings, pow(newFracChange / oldFracChange, traln.getNumberOfBranches()), name); 
+      for(auto &param : blParams)
+	{
+	  nat id = param->getIdOfMyKind();
+	  if(newFCs.size() < id + 1  ) // meh
+	    newFCs.resize(id+1); 
+	  newFCs[id] = traln.getMeanSubstitutionRate(param->getPartitions()); 
+	}
+
+      prior.accountForFracChange(traln, oldFCs, newFCs, blParams); 
+      
+      for(auto &p : blParams)
+	updateHastings(hastings, pow(newFCs[p->getIdOfMyKind()] / oldFCs[p->getIdOfMyKind()],
+				     traln.getNumberOfBranches() ), name); 
     }
 
   // a generic prior updates the prior rate 
-  auto thePrior = primVar[0]->getPrior();
+  auto thePrior = primaryParameters[0]->getPrior();
   prior.addToRatio(thePrior->getLogProb(newValues) - thePrior->getLogProb(savedContent.values)); 
 } 
 
 
 void ParameterProposal::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
 {
-  assert(primVar.size() == 1 ); 
-  evaluator->evaluatePartitions(traln, primVar[0]->getPartitions() , true); 
+  // assert(primaryParameters.size() == 1 ); 
+  evaluator->evaluatePartitions(traln, primaryParameters[0]->getPartitions() , true); 
 }
  
 void ParameterProposal::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  assert(primVar.size() == 1 ); 
-  primVar[0]->applyParameter(traln, savedContent);
-  // tout << "resetting to " << savedContent << std::endl; 
+  primaryParameters[0]->applyParameter(traln, savedContent);
 }
 
 
@@ -105,13 +117,13 @@ void ParameterProposal::autotune()
 
 
 
-void ParameterProposal::readFromCheckpointCore(std::ifstream &in)
+void ParameterProposal::readFromCheckpointCore(std::istream &in)
 {
   parameter = cRead<double>(in); 
 } 
 
 
-void ParameterProposal::writeToCheckpointCore(std::ofstream &out) 
+void ParameterProposal::writeToCheckpointCore(std::ostream &out)  const
 {
   cWrite(out, parameter); 
 } 

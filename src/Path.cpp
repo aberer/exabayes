@@ -73,15 +73,13 @@ void Path::debug_assertPathExists(TreeAln& traln)
 /**
     @brief saves all branch lengths along the path in s. 
  */ 
-void Path::saveBranchLengthsPath(const TreeAln& traln)
+void Path::saveBranchLengthsPath(const TreeAln& traln, const std::vector<AbstractParameter*> &params)
 {
-  int numBranches = traln.getNumBranches() ;
-  assert(numBranches == 1 ); 
-
   for(auto& b : stack)
     {
-      nodeptr p = b.findNodePtr(traln);        
-      b.setLength( traln.getBranch(p).getLength()) ; 
+      nodeptr p = b.findNodePtr(traln); 
+      b = traln.getBranch(p, params); 
+      // b.setLength( traln.getBranch(p, params).getLength()) ; 
     }
 }
 
@@ -104,34 +102,33 @@ std::ostream& operator<<(std::ostream &out, const Path &rhs)
 }
 
 
-
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, AbstractPrior* brPr) const 
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, const AbstractParameter* param) const 
 {  
   nodeptr p = b.findNodePtr(traln); 
   double multiplier = rand.drawMultiplier(parameter); 
 
-  double oldZ = traln.getBranch(p).getLength(); 
+  double oldZ = traln.getBranch(p, param).getLength(param); 
+  
   double newZ = multiplier * oldZ; 
 
-  traln.clipNode(p,p->back, newZ);   
+  assert(0);
+  // , newZ
+  traln.clipNode(p,p->back);   
 
-  prior.updateBranchLengthPrior(traln, oldZ, newZ, brPr);
+  prior.updateBranchLengthPrior(traln, oldZ, newZ, param);
 
   double realMultiplier = log(newZ) / log(oldZ);    
   AbstractProposal::updateHastings(hastings, realMultiplier, "pathMod");; 
 }
 
 
-
-void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior) const 
+void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior, const std::vector<AbstractParameter*> &blParams) const 
 {
-  int numBranches = traln.getNumBranches();
-  assert(numBranches == 1); 
   for(auto b : stack)
     {
       nodeptr p = b.findNodePtr(traln); 
-      double tmp = b.getLength(); 
-      traln.clipNode(p, p->back, tmp); 
+      traln.clipNode(p, p->back); 
+      traln.setBranch(b, blParams); 
     }  
 }
 

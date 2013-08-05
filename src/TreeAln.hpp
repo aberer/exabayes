@@ -29,11 +29,12 @@ public:
    /////////////////
   TreeAln();
   ~TreeAln();
+  void copyModel(const TreeAln& rhs)  ; 
   /**
      @brief copies the entire state from the rhs to this tree/alignment.
      Important: likelihood arrays are not concerned
   */ 
-  TreeAln& operator=( TreeAln &rhs) = delete ; 
+  TreeAln& operator=( TreeAln &rhs) = delete ;     
   TreeAln(const TreeAln &tmp) = delete ; 
 
 
@@ -43,7 +44,7 @@ public:
   /**
      @brief get the raxml representation of the partition  
    */ 
-  pInfo* getPartition(int model) const;
+  pInfo* getPartition(nat model) const;
   /** 
       @brief get the internal raxml tree representation 
    */ 
@@ -54,8 +55,10 @@ public:
   const tree* getTr() const{return &tr; }
   /** 
       @brief get the number of per-partition branch lengths
+      @notice do NOT confuse with getNumberOfBranches 
+      @todo remodel this function / deal with the general problem 
    */ 
-  int getNumBranches() const; 
+  nat getNumBranches() const; 
   /** 
       @brief get the number of branches in the tree (not counting per-partition branch lengths)
    */ 
@@ -63,7 +66,7 @@ public:
   /** 
       @brief get the number of partitions in the alignment
    */ 
-  int getNumberOfPartitions() const;   
+  nat getNumberOfPartitions() const;   
   /** 
       @brief get the number of taxa in the tree 
    */ 
@@ -90,8 +93,20 @@ public:
   bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
   /** 
       @brief gets the branch from a node pointer (including branch length)
+      
+      @notice if only one parameter is provided, the resulting branch
+      will ONLY contain the branch length for this one parameter
+      (bogus parameters for other branch lengths, if you have
+      per-partition branch lengths). For setting this branch, the same
+      parameter must be used (and only this one).
+      
+      If you call this function with an existing Branch b, this
+      function is usefull to get the actual branch length.
    */ 
-  Branch getBranch(nodeptr p) const { return Branch(p->number, p->back->number, p->z[0]); }
+  Branch getBranch(nodeptr p, const std::vector<AbstractParameter*> &param) const; 
+  Branch getBranch(const Branch& b, AbstractParameter* param); 
+  Branch getBranch(nodeptr p, const AbstractParameter* param) const; 
+  Branch getBranch(const Branch &b , const std::vector<AbstractParameter*> params) const ; 
   /** 
       @brief gets a nodepointer with specified id 
    */ 
@@ -99,16 +114,21 @@ public:
   /** 
       @brief extract all branches from the tree (including branch lengths)
    */ 
-  std::vector<Branch> extractBranches() const ; 
+  std::vector<Branch> extractBranches(const std::vector<AbstractParameter*> &params) const ; 
+  std::vector<Branch> extractBranches( AbstractParameter* params) const ; 
   /**
      @brief determines the (internal representation of the) tree length
    */ 
-  double getTreeLengthExpensive() const;  
+  std::vector<double> getTreeLengthsExpensive(const std::vector<AbstractParameter*> &params) const;  
   /** 
       @brief gets the number of inner nodes in the tree 
    */ 
   nat getNumberOfInnerNodes() const { return getNumberOfNodes()  - getNumberOfTaxa()  ;   } 
   
+  /** 
+      @brief gets the mean substitution rate overall specified partitions
+   */ 
+  double getMeanSubstitutionRate(const std::vector<nat> &partitions) const ;
 
   ///////////////
   // MODIFIERS //
@@ -132,11 +152,13 @@ public:
   /** 
       @brief sets a branch. Topology is NOT modified! 
    */ 
-  void setBranch(const Branch& b);   
+  void setBranch(const Branch& b, const std::vector<AbstractParameter*> params);   
+  void setBranch(const Branch& branch, AbstractParameter* param); 
   /** 
-      @brief hooks up two nodes with given branch length
+      @brief hooks up two nodes. Branch lengths must be set
+      separately.
    */ 
-  void clipNode(nodeptr p, nodeptr q, double z);   
+  void clipNode(nodeptr p, nodeptr q);   
   /** 
       @brief hooks up two nodes with default branch length
    */ 
@@ -158,20 +180,15 @@ public:
   /**
      @brief gets a node with given id that is not connected to the tree right now 
    */ 
-  nodeptr getUnhookedNode(int number);  
-  /** 
-      @brief gets another branch (useful for updating the length)
-      @return a branch with correct length 
-   */ 
-  Branch getBranch(const Branch &b) const; 
-  
+  nodeptr getUnhookedNode(int number);
+
   ///////////////
   // observers //
   ///////////////
   /** 
       @brief gets the branches that are below one branch 
    */
-  std::pair<Branch,Branch> getDescendants(const Branch &b) const; 
+  std::pair<Branch,Branch> getDescendents(const Branch &b) const; 
   std::vector<bool> getExecModel() const ; 
   std::vector<double> getPartitionLnls() const; 
   void setPartitionLnls(const std::vector<double> partitionLnls) ; 
@@ -179,16 +196,10 @@ public:
 
   static const double zZero;   
   static const double initBL;  	// init values 
+  static const double problematicBL; 
 
   // DEBUG 
   void printArrayStart(std::ostream &out, nat length = 2 ); 
-
-  /** 
-      @brief copies the entire model from the rhs.
-      Mostly for debugging purposes. 
-   */ 
-  void copyModel(const TreeAln& rhs); 
-
 
 private: 			// METHODS  
 #if HAVE_PLL != 0
@@ -197,7 +208,8 @@ private: 			// METHODS
 #endif  
 
   double getTreeLengthHelper(nodeptr p) const;
-  void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const ; 
+  void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart, const std::vector<AbstractParameter*> &params) const ; 
+  void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart, AbstractParameter* param ) const ; 
   void initDefault();
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
@@ -219,12 +231,6 @@ private: 			// ATTRIBUTES
   // EXPERIMENTAL //
   //////////////////
 public: 
-  // BEGIN collapse test 
-  void collapseBranch(Branch b); 
-  bool isCollapsed(Branch b) ; 
-  void setBranchLengthUnsafe(Branch b ) ; 
-  // END
-
   bool revMatIsImmutable(int model) const ; 
 
   bool usingPerSiteRates()  { return tr.rateHetModel == GAMMA;  } 

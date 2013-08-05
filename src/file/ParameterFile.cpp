@@ -1,5 +1,6 @@
 #include "ParameterFile.hpp"
 #include "GlobalVariables.hpp"
+#include "Category.hpp"
 
 #include "ParallelSetup.hpp"
 
@@ -11,23 +12,20 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid
   , couplingId(couplingId)
 {
   std::stringstream ss ; 
-  // TODO portability 
-  ss << workdir << (workdir.compare("") == 0 ? "" : "/")  << PROGRAM_NAME << "_parameters." << runname << "." << runid ; 
+
+  ss << OutputFile::getFileBaseName(workdir) << "_parameters." << runname << "." << runid ; 
   if(couplingId != 0 )
     ss << ".hot-"<<  couplingId; 
   fullFileName = ss.str();
 
-  rejectIfExists(fullFileName); 
-  tout << "initialized parameter file >" << fullFileName << "<" << std::endl; 
-
-  std::ofstream fh(fullFileName); 
-  fh << "" ; 
-  fh.close(); 
 }
 
 
-void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId ) const 
+void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId )  
 {        
+  rejectIfExists(fullFileName); 
+  tout << "initialized parameter file >" << fullFileName << "<" << std::endl; 
+
   std::ofstream fh(fullFileName,std::fstream::out);  // std::fstream::app|
 
   fh << "[ID: " << someId << "]" << std::endl; 
@@ -35,7 +33,14 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
   fh << "Gen\t";
   fh << "LnPr\t"; 
   fh << "LnL\t" ; 
-  fh << "TL\t" ; 
+
+  std::vector<AbstractParameter*>  blParams; 
+  for(auto &param : parameters)
+    if(param->getCategory() == Category::BRANCH_LENGTHS)
+      blParams.push_back(param); 
+
+  for(auto &param : parameters)
+    fh << "TL{" << param->getPartitions()   << "}\t"; 
 
   bool isFirst = true; 
   for(auto &p : parameters)
@@ -56,15 +61,25 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
 }
 
 
-void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr) const 
+void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr)  
 {
   std::ofstream fh(fullFileName, std::fstream::app|std::fstream::out); 
     
   fh << gen << "\t"; 
-  fh << std::setprecision(std::numeric_limits<double>::digits10)  << std::scientific; 
+  fh << MAX_SCI_PRECISION; 
   fh << lnPr << "\t"; 
   fh << traln.getTr()->likelihood << "\t" ; 
-  fh << Branch(0,0,traln.getTreeLengthExpensive()).getInterpretedLength(traln) << "\t"; 
+
+  std::vector<AbstractParameter*> blParams ; 
+  for(auto &p : parameters)
+    {
+      if(p->getCategory() == Category::BRANCH_LENGTHS)
+	blParams.push_back(p);
+    }
+  // should be possible 
+  // copy_if(  parameters.begin(), parameters.end(), blParams.begin(), [=](AbstractParameter* p){ return p->getCategory() == Category::BRANCH_LENGTHS;  }); 
+
+  // fh << Branch(0,0,traln.getTreeLengthExpensive()).getInterpretedLength(traln) << "\t"; 
 
   bool isFirst = true; 
   for(auto &p : parameters)
@@ -84,12 +99,12 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
 }
 
 
-void ParameterFile::regenerate(std::string prevId, nat gen) 
+void ParameterFile::regenerate(std::string workdir, std::string prevId, nat gen) 
 {
   std::ofstream fh(fullFileName, std::fstream::out); 
 
   std::stringstream ss; 
-  ss << PROGRAM_NAME << "_parameters." << prevId << "." << runid ; 
+  ss << OutputFile::getFileBaseName(workdir) << "_parameters." << prevId << "." << runid ; 
   std::ifstream prevFile(ss.str()); 
   rejectIfNonExistant(ss.str()); 
 
@@ -107,7 +122,6 @@ void ParameterFile::regenerate(std::string prevId, nat gen)
 	{
 	  std::stringstream ss; 
 	  ss.str(line); 
-	  // tout << "line=" << line << std::endl; 
 	  std::string part; 
 	  getline( ss ,part, '\t'  );       
 	  genFound = std::stoi(part); 

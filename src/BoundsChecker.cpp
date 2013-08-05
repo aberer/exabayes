@@ -4,6 +4,8 @@
 #include "BoundsChecker.hpp"
 #include "GlobalVariables.hpp"
 
+#include "TreeAln.hpp"
+
 // here we initialize the max/min values for our various
 // parameters. Static const is essentially like a global variable but
 // saver. You access it with e.g., BoundsChecker::zmin, since the variable
@@ -33,10 +35,16 @@ bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )
   return result; 
 }
 
-bool BoundsChecker::checkBranch( const Branch &branch ) 
+bool BoundsChecker::checkBranch( const Branch &branch) 
 {
-  // tout << "checking branch " << std::setprecision(6) << branch << std::endl; 
-  return BoundsChecker::zMin <= branch.getLength() && branch.getLength()  <= BoundsChecker::zMax ; 
+  bool okay = true; 
+  for(auto &v : branch.getAllLengths())
+    {
+      // TODO what a hack!  
+      if(v != TreeAln::problematicBL)
+	okay &= BoundsChecker::zMin <= v && v <= BoundsChecker::zMax; 
+    }
+  return okay; 
 }
 
 bool BoundsChecker::checkRevmat( const std::vector<double> &rates) 
@@ -63,14 +71,21 @@ void BoundsChecker::correctAlpha(double &alpha)
 }
 
 
-void BoundsChecker::correctBranch( Branch &branch ) 
+void BoundsChecker::correctBranch(Branch &branch, const AbstractParameter* param)
 {
-  double length = branch.getLength(); 
+  double length = branch.getLength(param); 
   if(length < BoundsChecker::zMin )
     length = BoundsChecker::zMin;
   if(BoundsChecker::zMax < length)
     length = BoundsChecker::zMax; 
-  branch.setLength(length); 
+  branch.setLength(length, param);   
+}
+
+
+void BoundsChecker::correctBranch( Branch &branch, const std::vector<AbstractParameter*> &params ) 
+{
+  for(auto &param : params)
+    BoundsChecker::correctBranch(branch, param); 
 }
  
 void BoundsChecker::correctRevMat( std::vector<double> &rates)

@@ -12,15 +12,15 @@ ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
   name = "eTBR"; 
   category = Category::TOPOLOGY; 
   relativeWeight = 5.;
+  needsFullTraversal = false;
 }
 
 
 void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, Randomness &rand )
 {
-  double stopProb = extensionProbability; 
+  auto params = getBranchLengthsParameterView();
 
-  int numBranches = traln.getNumBranches(); 
-  assert(numBranches == 1 ); 
+  double stopProb = extensionProbability; 
 
   nodeptr p= bisectedBranch.findNodePtr(traln ); 
   path.clear();
@@ -28,12 +28,14 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
   nodeptr pn = p->next->back,
     pnn = p->next->next->back; 
   
-  double z1 = pn->z[0],
-    z2 = pnn->z[0]; 
+  
+  Branch pnBranch = traln.getBranch(pn, params),
+    pnnBranch = traln.getBranch(pnn, params);
 
   // prune  
   traln.clipNodeDefault(pn, pnn); 
   p->next->next->back = p->next->back = NULL; 
+
   path.append(bisectedBranch);
   path.append(Branch(pn->number, pnn->number)); 
   nodeptr currentNode = rand.drawRandDouble01() ? pn : pnn;
@@ -51,8 +53,10 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
     }
 
   // reset
-  traln.clipNode(p->next, pn, z1); 
-  traln.clipNode(p->next->next, pnn, z2); 
+  traln.clipNode(p->next, pn); 
+  traln.setBranch(pnBranch, params);
+  traln.clipNode(p->next->next, pnn); 
+  traln.setBranch(pnnBranch, params);
 
   // a correction is necessary 
   if(path.at(2).nodeIsInBranch(path.at(1).getPrimNode() ))
@@ -73,13 +77,11 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
   Path modifiedPath1, 
     modifiedPath2; 
 
-  int numBranches = traln.getNumBranches(); 
-  assert(numBranches == 1 ) ; 
+  // int numBranches = traln.getNumBranches(); 
+  // assert(numBranches == 1 ) ; 
   tree *tr = traln.getTr();
 
   Branch bisectedBranch = {0,0}; 
-  
-
   assert(tr->mxtips > 8 ); 
 
   nodeptr
@@ -108,7 +110,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   move.extractMoveInfo(traln, {			 
       bisectedBranch, modifiedPath1.at(modifiedPath1.size() -1 ),
-	bisectedBranch.getInverted(), modifiedPath2.at(modifiedPath2.size()-1) } ); 
+	bisectedBranch.getInverted(), modifiedPath2.at(modifiedPath2.size()-1) } , getSecondaryParameterView()); 
 }
 
 
@@ -116,11 +118,10 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 { 
   drawPaths(traln,rand);
 
-  assert(traln.getNumBranches() == 1); 
   // TODO replace by absence of prior 
   
   bool modifiesBl = false;   
-  for(auto &v : secVar)
+  for(auto &v : secondaryParameters)
     modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI
@@ -129,14 +130,15 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 
   if(modifiesBl)
     {
-      auto brPr = secVar.at(0)->getPrior();
-      move.multiplyBranches(traln, rand, hastings, prior,  multiplier, {brPr}); 
+      // auto brPr = secondaryParameters.at(0)->getPrior();
+      // move.multiplyBranches(traln, rand, hastings, prior,  multiplier, {brPr}); 
+      assert(0); 
     }
 
   // tout << "Move: "<< std::endl; 
   // tout << move << std::endl; 
 
-  move.applyToTree(traln);
+  move.applyToTree(traln, getSecondaryParameterView() );
 }
 
 
@@ -154,7 +156,7 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln& tral
 
 void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
 {
-  move.revertTree(traln,prior);
+  move.revertTree(traln,prior, getSecondaryParameterView() );
 
 #ifdef EFFICIENT
   assert(0); 

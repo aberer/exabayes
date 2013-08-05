@@ -2,10 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.4],[exabayes@googlegroups.com]) 
+AC_INIT([exabayes],[0.6],[exabayes@googlegroups.com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
-# m4_include([./m4/ax_ext.m4])
 
 AC_CONFIG_SRCDIR([src/])
 AM_INIT_AUTOMAKE

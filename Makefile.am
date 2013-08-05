@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign
 
-EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/* 
+EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/*
 
 .PHONY: my-update-src doc 
 

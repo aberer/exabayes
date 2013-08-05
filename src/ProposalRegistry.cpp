@@ -1,5 +1,6 @@
 #include <memory>
 #include <limits>
+#include <unordered_map>
 
 #include "ProposalRegistry.hpp"
 
@@ -25,11 +26,14 @@ const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ;
 /**
    @brief yields a set of proposls for integrating a category  
  */
-void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result, const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval) const 
+vector<unique_ptr<AbstractProposal> >
+ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval) const 
 {
+  vector<unique_ptr<AbstractProposal> > result; 
+  
   vector<aaMatrix_t> someMatrices; // TODO 
 
-  auto proposals =  ProposalTypeFunc::getProposalsForCategory(cat); 
+  auto proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
   for(auto p : proposals)
     {     
 
@@ -39,7 +43,7 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	  userWeight = config.getProposalWeight(p); 
 	  if(userWeight == 0)
 	    continue; 
-	}      
+	} 
       else if( not ProposalTypeFunc::isReadyForProductiveUse(p)  )		
 	continue;       
 
@@ -132,5 +136,64 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	proposal->setRelativeWeight(userWeight);       
       result.push_back((std::move(proposal))); 	
     }
+
+  return result; 
 } 
 
+
+
+#define MULTI_PARTITION_WEIGHT 1 
+
+// TODO remodel this entire function for productive use 
+vector<unique_ptr<AbstractProposal> >  
+ProposalRegistry::getMultiParameterProposals(std::vector<AbstractParameter*> params, const BlockProposalConfig &config, 
+					     const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval)
+{
+  std::vector<std::unique_ptr<AbstractProposal> >  result; 
+
+  // TODO this function should become more intelligent. Here I'll just
+  // hard code that we could have proposal per category 
+
+  std::unordered_map<Category, std::vector<AbstractParameter*>, CategoryHash > paramsPerCategory; 
+  for(auto &p : params)
+    {
+      auto &v =  paramsPerCategory[p->getCategory()]; 
+      v.push_back(p); 
+    }
+
+  for(auto &elem : paramsPerCategory)
+    {
+      tout << "for category " << elem.first << " we have " << std::endl; 
+      for(auto &e : elem.second)
+	tout << e << std::endl;       
+    }
+  
+  // initialize a revmat proposal 
+  std::unique_ptr<DirichletProposal> p(new DirichletProposal(BoundsChecker::rateMin, BoundsChecker::rateMax));
+
+  auto proposal =  new AlignmentProposal(Category::SUBSTITUTION_RATES, 
+					 "revMatDirichAll", 
+					 initDirichletAlpha, 
+					 paramsPerCategory[Category::SUBSTITUTION_RATES].size(), // 
+					 p.get(), eval->clone()); 
+
+  // BAD =/ 
+  double userWeight = 1; 
+  ProposalType myType = ProposalType::DIRICH_REVMAT_ALL; 
+  if(config.wasSetByUser(myType))	
+    {
+      userWeight = config.getProposalWeight(myType); 
+      proposal->setRelativeWeight(userWeight); 
+      if(userWeight == 0)
+	return {}; 			// in lieu of continue 
+    }
+  else if( not ProposalTypeFunc::isReadyForProductiveUse(myType) )
+    return {}; 
+
+
+  for(auto &p : paramsPerCategory[Category::SUBSTITUTION_RATES])
+    proposal->addPrimaryParameter(std::unique_ptr<AbstractParameter>(p->clone())); 
+  result.emplace_back(proposal);
+
+  return result; 
+}

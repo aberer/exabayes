@@ -40,9 +40,9 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, Tree
   // the entire aligment), then we'd have to do this:
   
   std::vector<nat> allRelevantPartitions; 
-  for(nat i = 0; i < primVar.size(); ++i)  
+  for(nat i = 0; i < primaryParameters.size(); ++i)  
     {
-      std::vector<nat> partitionsHere = primVar[i]->getPartitions(); 
+      std::vector<nat> partitionsHere = primaryParameters[i]->getPartitions(); 
       for(nat j = 0; j < partitionsHere.size(); ++j)
 	allRelevantPartitions.push_back(partitionsHere[j]); 
     }
@@ -58,7 +58,7 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, Tree
   // difficult). However, here, you MUST add a "&". This means that
   // you do not want a copy of the parameter object, but the actual
   // object
-  for(auto &var : primVar)	
+  for(auto &var : primaryParameters)	
     for(auto p : var->getPartitions()) // iterate over all partitions in this parameter 
       allRelevantPartitions2.push_back(p); 
   evaluator->evaluatePartitions(traln, allRelevantPartitions2,true); 
@@ -106,7 +106,7 @@ void MyTemplateProposal::privateMethod(TreeAln& traln, Randomness &rand)
 
 
 // checkpointing stuff 
-void MyTemplateProposal::readFromCheckpointCore(std::ifstream &in)
+void MyTemplateProposal::readFromCheckpointCore(std::istream &in)
 {  
   // assume our aTuningParamer needs to be tuned. Then, we have to
   // read it from the previous checkpointing file: 
@@ -115,7 +115,7 @@ void MyTemplateProposal::readFromCheckpointCore(std::ifstream &in)
 }
 
 
-void MyTemplateProposal::writeToCheckpointCore(std::ofstream &out)
+void MyTemplateProposal::writeToCheckpointCore(std::ostream &out) const
 { 
   // and we have to write it to the filen, once we checkpoint 
   cWrite<double>(out, aTuningParamer); 	  

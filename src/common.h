@@ -26,7 +26,8 @@
 
 #define SOME_SCI_PRECISION std::scientific << std::setprecision(2)   
 #define MAX_SCI_PRECISION  std::scientific << std::setprecision(std::numeric_limits<double>::digits10)   
-#define PERC_PRECCISION std::fixed << std::setprecision(2) 
+#define SOME_FIXED_PRECISION std::fixed << std::setprecision(2)   
+#define PERC_PRECISION std::fixed << std::setprecision(2) 
 
 
 #define NO_SEC_BL_MULTI
@@ -74,16 +75,15 @@ typedef  unsigned int nat ;
 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-/* #define DEBUG_SHOW_EACH_PROPOSAL */
+#define DEBUG_SHOW_EACH_PROPOSAL
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
+#define DEBUG_LNL_VERIFY
 
-
-/* #define DEBUG_LNL_VERIFY */
+#define DEBUG_VERIFY_LNPR	/* verify the log prior probability  */
 /* BAD BAD BAD */
-/* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
 
 /* #define PRINT_MUCH */
 

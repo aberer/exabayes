@@ -8,6 +8,8 @@ extern void genericExit(int code);
 
 
 BlockProposalConfig::BlockProposalConfig()
+  : esprStopProp(0.3)    
+  , parsimonyWarp(0.1)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "PROPOSALS"; 
   // setupMap();

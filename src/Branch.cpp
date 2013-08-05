@@ -1,11 +1,13 @@
 #include "Branch.hpp"
 #include "TreeAln.hpp"
 
-bool  Branch::printLength = true; 
 
 
-Branch::Branch(nat a , nat b, double length) 
-  : thisNode(a), thatNode(b), length(length)
+#include "parameters/AbstractParameter.hpp"
+
+
+Branch::Branch(nat a , nat b, std::vector<double> _lengths) 
+  : thisNode(a), thatNode(b), lengths(_lengths)
 {
 }
 
@@ -46,12 +48,15 @@ nodeptr Branch::findNodePtr(const TreeAln &traln) const
 
 
 
-std::ostream& operator<<(std::ostream &out, const Branch& br)
+std::ostream& operator<<(std::ostream &out, const Branch& rhs)
 { 
-  if(Branch::printLength)
-    return out << "(" << br.thisNode << "/" << br.thatNode << "):" <<  MAX_SCI_PRECISION << br.length; 
-  else     
-    return out << "(" << br.thisNode << "/" << br.thatNode << ")";     
+  out << MAX_SCI_PRECISION; 
+  out << "(" << rhs.thisNode << "/" << rhs.thatNode
+	     << "):[" ; 
+  for(auto &v : rhs.lengths)
+    out << v << ","; 
+  out << "]";
+  return out; 
 }
 
 
@@ -63,32 +68,19 @@ bool Branch::equalsUndirected(const Branch &rhs) const
 }
 
 
-
-// TODO replace as well 
-double Branch::getInterpretedLength(const TreeAln &traln) const
+double Branch::getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const
 { 
-  assert(traln.getNumBranches() == 1 ); 
-  return -log(length) * traln.getTr()->fracchange;  
+  double fracC = traln.getMeanSubstitutionRate(param->getPartitions()); 
+
+  // TODO that's potentially dangerous 
+  double length = 0; 
+  if(lengths.size() == 1 )
+    length = lengths.at(0);
+  else 
+    length = lengths.at(param->getIdOfMyKind()); 
+  
+  return -log(length)* fracC; 
 } 
-
-
-double Branch::getInternalLength(const TreeAln &traln, double length) const
-{
-  assert(traln.getNumBranches() == 1 ); 
-  return exp( - length / traln.getTr()->fracchange) ; 
-}
-
-
-// nat Branch::getCommonNode(const Branch &rhs ) const
-// {
-//   if(thisNode == rhs.thisNode || thatNode == rhs.thisNode)
-//     return rhs.thisNode;
-//   else if(thatNode == rhs.thatNode || thisNode == rhs.thatNode)
-//     return rhs.thatNode; 
-//   else 
-//     return 0;   
-// }
-
 
 
 Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
@@ -136,17 +128,49 @@ nat Branch::getIntersectingNode(const Branch  &rhs) const
 } 
 
 
-void Branch::readFromCheckpoint( std::ifstream &in )
+void Branch::readFromCheckpoint( std::istream &in )
 {
   thisNode = cRead<nat>(in); 
   thatNode = cRead<nat>(in);   
-  length = cRead<double>(in); 
+  
+  nat num = cRead<nat>(in);
+  for(nat i = 0; i < num ; ++i)
+    lengths.push_back(cRead<double>(in));
 } 
 
-void Branch::writeToCheckpoint( std::ofstream &out)  
+void Branch::writeToCheckpoint( std::ostream &out)  const
 {
   cWrite(out, thisNode); 
   cWrite(out, thatNode); 
-  cWrite(out, length); 
+  cWrite(out, lengths.size());
+  for(auto &v : lengths)
+    cWrite(out, v); 
 }  
 
+
+
+
+// double Branch::getInternalLength(const TreeAln &traln, double length, AbstractParameter* param ) const
+// {
+//   return exp( - length / traln.getMeanSubstitutionRate(param->getPartitions())) ;   
+// }
+
+void Branch::setConvertedInternalLength(const TreeAln& traln, 
+					const AbstractParameter* param, double length) 
+{
+  double fracC = traln.getMeanSubstitutionRate(param->getPartitions());  
+  double internalLength = exp(- length / fracC); 
+  setLength(internalLength, param);
+} 
+
+void Branch::setLength(double intLength, const AbstractParameter* param)
+{
+  lengths.resize(MAX(lengths.size(), param->getIdOfMyKind() + 1 ), TreeAln::initBL); 
+  lengths.at(param->getIdOfMyKind()) = intLength; 
+}
+
+
+double Branch::getLength (const AbstractParameter* param) const
+{
+  return lengths.at(param->getIdOfMyKind());
+}

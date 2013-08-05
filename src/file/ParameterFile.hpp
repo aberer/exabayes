@@ -23,11 +23,11 @@ class  ParameterFile  : public OutputFile
 {
 public: 
   ParameterFile(std::string workdir, std::string runname, nat runid, nat couplingId); 
-  void initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId ) const ; 
-  void sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr) const ; 
+  void initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId )  ; 
+  void sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr)  ; 
 
   void finalize() const  { }	// NO IMPLEMENT  
-  void regenerate(std::string prevId, nat gen) ; 
+  void regenerate(std::string workdir, std::string prevId, nat gen) ; 
   
 private: 
   nat runid; 

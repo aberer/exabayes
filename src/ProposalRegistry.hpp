@@ -19,17 +19,25 @@
 #include "GlobalVariables.hpp"
 #include "config/BlockProposalConfig.hpp"
 #include "ParameterProposal.hpp"
+#include "proposals/AlignmentProposal.hpp"
 
 class ProposalRegistry
 {
 public: 
-  void getProposals(Category cat, const BlockProposalConfig &config, 
-		    vector<unique_ptr<AbstractProposal> > &result, 
-		    const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval) const ; 
-  
+  /** 
+      @brief get all proposals that integrate over a single parameter   
+  */ 
+  vector<unique_ptr<AbstractProposal> >
+  getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval) const ; 
+  /** 
+      @brief get proposals that integrate over multiple parameters 
+   */ 
+  vector<unique_ptr<AbstractProposal> >  
+  getMultiParameterProposals(std::vector<AbstractParameter*> params, const BlockProposalConfig &config, const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval); 
+
   static const double initFrequencySlidingWindow ; 
-  static const  double initBranchLengthMultiplier; 
-  static const  double initRateSlidingWindow; 
+  static const double initBranchLengthMultiplier; 
+  static const double initRateSlidingWindow; 
   static const double initGammaSlidingWindow; 
   static const double initSecondaryBranchLengthMultiplier; 
   static const double initDirichletAlpha; 

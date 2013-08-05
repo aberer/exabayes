@@ -9,6 +9,7 @@
 BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
   :  multiplier(_multiplier)
 {
+  needsFullTraversal = false; 
   this->name = "blMult"; 
   this->category = Category::BRANCH_LENGTHS; 
   relativeWeight = 20;
@@ -16,7 +17,10 @@ BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
 
 Branch BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
 {
-  return TreeRandomizer::drawBranchUniform(traln, rand); 
+  if(inSetExecution)
+    return preparedBranch;
+  else  
+    return TreeRandomizer::drawBranchUniform(traln, rand); 
 }   
 
 
@@ -25,13 +29,13 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   Branch b = proposeBranch(traln, rand); 
   
   nodeptr p = b.findNodePtr(traln); 
-  savedBranch = b; 
+  assert(primaryParameters.size() == 1); 
+  auto param = primaryParameters[0].get(); 
 
-  double oldZ = traln.getBranch(p).getLength();
-  // tout << "oldZ=" << MAX_SCI_PRECISION  << oldZ << std::endl; 
-  savedBranch.setLength( oldZ); 
-  assert(traln.getNumBranches() == 1); 
-  
+  savedBranch = traln.getBranch(p, param); 
+
+  double oldZ = savedBranch.getLength(param);
+
   double
     drawnMultiplier = 0 ,
     newZ = oldZ; 
@@ -39,18 +43,18 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   drawnMultiplier= rand.drawMultiplier( multiplier); 
   assert(drawnMultiplier > 0.); 
   newZ = pow( oldZ, drawnMultiplier);
+  
+  b.setLength(newZ, param); 
 
-  b.setLength(newZ); 
   if(not BoundsChecker::checkBranch(b))
-    BoundsChecker::correctBranch(b); 
+    BoundsChecker::correctBranch(b, param); 
+  traln.setBranch(b, param); 
 
-  traln.setBranch(b); 
-
-  double realMultiplier = log(b.getLength()) / log(oldZ); 
+  double realMultiplier = log(b.getLength(param)) / log(oldZ); 
   updateHastings(hastings, realMultiplier, name); 
 
-  auto relPrior =  primVar[0]->getPrior(); 
-  prior.updateBranchLengthPrior(traln, oldZ, b.getLength(),relPrior) ; 
+  prior.updateBranchLengthPrior(traln, oldZ, 
+				b.getLength(primaryParameters[0].get()), param) ; 
 }
 
 
@@ -62,7 +66,8 @@ void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator *evaluator,Tre
  
 void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior) 
 {
-  traln.setBranch(savedBranch); 
+  assert(primaryParameters.size() == 1)  ; 
+  traln.setBranch(savedBranch, getPrimaryParameterView()); 
 }
 
 
@@ -70,11 +75,6 @@ void BranchLengthMultiplier::autotune()
 {
   double ratio = sctr.getRatioInLastInterval(); 
   double newParam = tuneParameter(sctr.getBatch(), ratio , multiplier, false);
-
-  // bool up = multiplier  < newParam; 
-
-  // cout << "tuned " << ( up ? " UP ":  " DOWN " )  <<  multiplier << " => " << newParam << "\t ratio=" << setprecision(3) << ratio << endl; 
-  
   multiplier = newParam; 
   sctr.nextBatch();
 }
@@ -82,18 +82,24 @@ void BranchLengthMultiplier::autotune()
 
 AbstractProposal* BranchLengthMultiplier::clone() const
 {
-  // tout << "cloning "  << name << endl;
   return new BranchLengthMultiplier(*this);
-// multiplier
 }
 
 
-void BranchLengthMultiplier::readFromCheckpointCore(std::ifstream &in) 
+void BranchLengthMultiplier::readFromCheckpointCore(std::istream &in) 
 {
   multiplier = cRead<double>(in);
 } 
 
-void BranchLengthMultiplier::writeToCheckpointCore(std::ofstream &out)  
+void BranchLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
   cWrite(out, multiplier); 
 } 
+
+
+std::pair<Branch,Branch> BranchLengthMultiplier::prepareForSetExecution(TreeAln &traln, Randomness &rand) 
+{
+  assert(inSetExecution); 
+  return std::pair<Branch,Branch>(TreeRandomizer::drawBranchUniform(traln, rand), Branch(0,0)); 
+}
+

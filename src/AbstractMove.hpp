@@ -16,12 +16,10 @@ public:
   virtual AbstractMove* clone() const = 0; 
   virtual ~AbstractMove(){}
   
-  virtual void applyToTree(TreeAln &traln) const = 0; 
-  virtual void revertTree(TreeAln &traln, PriorBelief &prior) const = 0; 
+  virtual void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const = 0; 
+  virtual void revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<AbstractParameter*> &params) const = 0; 
   virtual void disorientAtNode(TreeAln &traln, nodeptr p) const = 0; 
-  virtual void extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) = 0; 
-  virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior*> brPr) const = 0; 
-
+  virtual void extractMoveInfo(const TreeAln &traln, std::vector<Branch> description, const std::vector<AbstractParameter*> &params ) = 0; 
   virtual Branch getEvalBranch(const TreeAln &traln) const = 0; 
 
 protected: 

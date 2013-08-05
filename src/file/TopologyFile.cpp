@@ -1,6 +1,7 @@
 #include "TopologyFile.hpp"
 #include "GlobalVariables.hpp"
 #include "ParallelSetup.hpp"
+#include "parameters/AbstractParameter.hpp"
 
 #include <cassert>
 
@@ -12,23 +13,19 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, 
   , couplingId(couplingId)
 { 
   std::stringstream ss ; 
-  // TODO portability 
-  ss << workdir <<  ( workdir.compare("") == 0  ? "" :  "/" )  << PROGRAM_NAME << "_topologies." << runname << "." << runid ; 
+  
+  ss <<  OutputFile::getFileBaseName(workdir) << "_topologies." << runname << "." << runid ; 
   if(couplingId != 0 )
     ss << ".hot-"<<  couplingId; 
   fullFileName = ss.str();
-
-  rejectIfExists(fullFileName); 
-  tout << "initialized topology file >" <<  fullFileName << "<" << std::endl; 
-
-  std::ofstream fh (fullFileName); 
-  fh << "" ; 
-  fh.close(); 
 }
 
 
-void TopologyFile::initialize(const TreeAln& traln, nat someId) const 
+void TopologyFile::initialize(const TreeAln& traln, nat someId)  
 {    
+  rejectIfExists(fullFileName);   
+  tout << "initialized topology file >" <<  fullFileName << "<" << std::endl;   
+
   std::ofstream fh(fullFileName,std::fstream::out );  // std::fstream::app    
     
   fh << "#NEXUS" << std::endl
@@ -51,16 +48,33 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId) const
 
 
 
-void TopologyFile::sample(const TreeAln &traln, nat gen) const 
+void TopologyFile::sample(const TreeAln &traln, nat gen, 
+			  const std::vector<AbstractParameter*> &blParams)  
 {    
   std::ofstream fh(fullFileName,std::fstream::app|std::fstream::out ); 
   TreePrinter tp(true, false, false);
-  std::string treeString = tp.printTree(traln);
-  fh << "\ttree gen." << gen << " = [&U] " << treeString << std::endl; 
+
+  for(auto &param : blParams)
+    {
+      std::vector<AbstractParameter*> a; 
+      a.push_back(param); 
+
+      auto treeString = tp.printTree(traln, a)  ; 
+      fh << "\ttree gen."<< gen
+	 << ".{" <<  param->getPartitions()  << "}"
+	 << " = [&U] " << treeString << std::endl; 
+    }
+  
+  // TODO print each tree 
+  // assert(0);
+
+
+  // std::string treeString = tp.printTree(traln);
+  // fh << "\ttree gen." << gen << " = [&U] " << treeString << std::endl; 
   fh.close(); 
 }
 
-void TopologyFile::finalize() const 
+void TopologyFile::finalize()  
 {
   std::ofstream fh(fullFileName, std::fstream::app|std::fstream::out ); 
   fh << "end;" << std::endl; 
@@ -69,12 +83,13 @@ void TopologyFile::finalize() const
 
 
 
-void TopologyFile::regenerate(std::string prevId, nat gen) 
+void TopologyFile::regenerate(std::string workdir, std::string prevId, nat gen) 
 {
   std::ofstream fh(fullFileName, std::fstream::out); 
 
   std::stringstream ss; 
-  ss << PROGRAM_NAME << "_topologies." << prevId << "." << runid ; 
+  
+  ss << OutputFile::getFileBaseName(workdir) << "_topologies." << prevId << "." << runid ; 
   std::ifstream prevFile(ss.str()); 
   rejectIfNonExistant(ss.str()); 
 

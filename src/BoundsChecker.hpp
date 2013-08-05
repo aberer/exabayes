@@ -21,7 +21,8 @@ public:
   
 
   static void correctAlpha(double &alpha) ;   
-  static void correctBranch( Branch &branch ) ; 
+  static void correctBranch( Branch &branch, const std::vector<AbstractParameter*> &params ) ; 
+  static void correctBranch(Branch &branch, const AbstractParameter* param); 
   static void correctRevMat( std::vector<double> &rates); 
   static void correctFrequencies( std::vector<double> &frequencies); 
 

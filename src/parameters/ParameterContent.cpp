@@ -4,7 +4,7 @@
 #include <algorithm> 
 
 
-void ParameterContent::readFromCheckpoint( std::ifstream &in )  
+void ParameterContent::readFromCheckpoint( std::istream &in )  
 {
   assert(not (values.size() > 0 && branches.size() > 0) ); 
   
@@ -16,7 +16,7 @@ void ParameterContent::readFromCheckpoint( std::ifstream &in )
 } 
 
 
-void ParameterContent::writeToCheckpoint( std::ofstream &out) 
+void ParameterContent::writeToCheckpoint( std::ostream &out) const 
 {
   assert(not (values.size() > 0 && branches.size() > 0) ); 
 

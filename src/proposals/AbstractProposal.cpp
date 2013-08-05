@@ -1,21 +1,18 @@
 #include "AbstractProposal.hpp"
 
 
-std::vector<AbstractParameter*> AbstractProposal::getPrimVar() const
+AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
+  : name(rhs.name)
+  , sctr(rhs.sctr)
+  , category(rhs.category)
+  , relativeWeight(rhs.relativeWeight)
+  , needsFullTraversal(rhs.needsFullTraversal)
+  , inSetExecution(rhs.inSetExecution)
 {
-  std::vector<AbstractParameter*> result; 
-  for(auto &v : primVar)
-    result.push_back(v.get()); 
-  return result; 
-}
-
- 
-std::vector<AbstractParameter*> AbstractProposal::getSecVar() const 
-{
-  std::vector<AbstractParameter*> result; 
-  for(auto &v : secVar)
-    result.push_back(v.get()); 
-  return result; 
+  for(auto &v : rhs.primaryParameters)
+    primaryParameters.emplace_back(v->clone()); 
+  for(auto &v : rhs.secondaryParameters)
+    secondaryParameters.emplace_back(v->clone()); 
 }
 
 
@@ -43,7 +40,7 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
   out << this->name << "( " ;  
     
   bool isFirst = true; 
-  for(auto &v : primVar)
+  for(auto &v : primaryParameters)
     {
       if(not isFirst)
 	out << ","; 
@@ -52,11 +49,11 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
       v->printShort(out); 
     }
 
-  if(secVar.size() > 0)
+  if(secondaryParameters.size() > 0)
     {
       out << ";"; 
       isFirst = true; 
-      for(auto &v : secVar)
+      for(auto &v : secondaryParameters)
 	{
 	  if(not isFirst)
 	    out << ","; 
@@ -70,13 +67,12 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
 }
 
 
-
 std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 {
   out << name  << "(" ; 
-  assert(primVar.size() == 1); 
+  assert(primaryParameters.size() == 1); 
   bool isFirst= true; 
-  for (auto v : primVar[0]->getPartitions()) 
+  for (auto v : primaryParameters[0]->getPartitions()) 
     {
       if( not isFirst)
 	out << ","; 
@@ -91,51 +87,67 @@ std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 
 std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs) 
 {
-  out << rhs->name <<  " primarily modifying " ; 
-  for(auto &r : rhs->primVar)
-    out << r.get() << ",\t"  ; 
-
-  if(not rhs->secVar.empty() )
+  out << rhs->name  << std::endl
+      << "\tintegrating:\t"; 
+  for(auto &r : rhs->primaryParameters)
+    out << r.get() << ", "  ; 
+  
+  if(not rhs->secondaryParameters.empty() )
     {
-      out << "\tand also modifying " ; 
-      for(auto &r : rhs->secVar ) 
+      out << std::endl << "\talso modifying:\t" ; 
+      for(auto &r : rhs->secondaryParameters ) 
 	out << r.get() << ",\t" ; 
     }
   return out; 
 }
 
-
-AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
-  : name(rhs.name)
-  , sctr(rhs.sctr)
-  , category(rhs.category)
-  , relativeWeight(rhs.relativeWeight)
-{
-  for(auto &v : rhs.primVar)
-    primVar.emplace_back(v->clone()); 
-  for(auto &v : rhs.secVar)
-    secVar.emplace_back(v->clone()); 
-} 
-
-
-
-
-
-void AbstractProposal::writeToCheckpoint( std::ofstream &out)  
+ 
+void AbstractProposal::writeToCheckpoint( std::ostream &out)   const
 {
   std::stringstream ss ; 
   printShort(ss); 
   std::string name = ss.str();
-  // cWrite<std::string>(out, name);   
   writeString(out, name); 
   sctr.writeToCheckpoint(out) ; 
   writeToCheckpointCore(out); 
 }
 
 
-void AbstractProposal::readFromCheckpoint( std::ifstream &in )
+void AbstractProposal::readFromCheckpoint( std::istream &in )
 {
   // notice: name has already been read 
   sctr.readFromCheckpoint(in); 
   readFromCheckpointCore(in); 
 }
+
+
+std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() const
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &v : primaryParameters)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+ 
+std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() const 
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &v : secondaryParameters)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+
+std::vector<AbstractParameter*> AbstractProposal::getBranchLengthsParameterView() const 
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &p : primaryParameters)
+    if(p->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(p.get()); 
+
+  for(auto &p : secondaryParameters ) 
+    if(p->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(p.get());
+  return result; 
+} 

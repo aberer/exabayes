@@ -14,8 +14,8 @@
 #include "config/BlockRunParameters.hpp"
 #include "Chain.hpp"
 #include "SuccessCounter.hpp"
-#include "TopologyFile.hpp"
-#include "ParameterFile.hpp"
+#include "file/TopologyFile.hpp"
+#include "file/ParameterFile.hpp"
 #include "ParallelSetup.hpp"
 #include "SwapMatrix.hpp"
 
@@ -32,7 +32,7 @@ public:
   ////////////////
   // LIFE CYCLE //
   ////////////////
-  CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain>& _chains ); 
+  CoupledChains(randCtr_t seed, int runNum, string workingdir, std::string runname, int numCoupled,  vector<Chain>& _chains ); 
   CoupledChains(CoupledChains&& rhs); 
   CoupledChains& operator=(CoupledChains rhs); 
 
@@ -40,11 +40,19 @@ public:
      @brief run for a given number of generations
   */
   void run(int numGen); 
+#if 0 
   void chainInfo(); 
+#endif
+
+  /** 
+      @brief indicates whether this run is executed by the process
+   */ 
+  bool isMyRun (ParallelSetup &pl) const ; 
+
   /** 
       @brief Execute a portion of one run. 
   */
-  void executePart(int gensToRun, const ParallelSetup &pl);   
+  void executePart(nat startGen, nat numGen,  ParallelSetup &pl);   
   void setPrintFreq(nat t){printFreq = t; }
   void seedChains(); 
   void setSwapInterval(nat i) {swapInterval = i; }
@@ -61,25 +69,22 @@ public:
   void setRunName(string a) {runname = a;  }
   void initializeOutputFiles()  ; 
   SwapMatrix getSwapInfo() const {return swapInfo; }
-  
-  void finalizeOutputFiles() const ; 
+  void addToSwapMatrix(SwapMatrix toAdd){ swapInfo = swapInfo + toAdd;  }
+  const Randomness& getRandomness() const {return rand; }
+  void setRandomness(Randomness _rand){rand = _rand; } 
 
-  virtual void readFromCheckpoint( std::ifstream &in ) ; 
-  virtual void writeToCheckpoint( std::ofstream &out)  ;   
+  void finalizeOutputFiles()  ; 
 
-  void regenerateOutputFiles(std::string prevId) ; 
+  virtual void readFromCheckpoint( std::istream &in ) ; 
+  virtual void writeToCheckpoint( std::ostream &out) const ;   
+
+  void regenerateOutputFiles(std::string workdir, std::string prevId) ; 
   
 private: 			// METHODS
-
-/**
-   @brief attempt a MC3 switch of chains 
-   @param chains -- the pointer to the first chain struct in the chain-array.      
-   NOTICE does not work with priors yet 
-*/
-  void switchChainState(); 
-
-  /** @brief tunes the temperature parameter */  
-  void tuneTemperature();
+  /**
+     @brief attempt to swap two chains
+  */ 
+  void attemptSwap( ParallelSetup &pl); 
 
 private: 			// ATTRIBUTES
   vector<Chain> chains; 

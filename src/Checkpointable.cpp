@@ -1,5 +1,4 @@
 #include "Checkpointable.hpp"
-
 #include "GlobalVariables.hpp"
 
 
@@ -23,7 +22,7 @@ void Checkpointable::getIfstream(std::string name, std::ifstream &result )
 
 
 
-void Checkpointable::readDelimiter(std::ifstream &in)  
+void Checkpointable::readDelimiter(std::istream &in)  
 {
   char c; 
   in >> c ; 
@@ -31,7 +30,7 @@ void Checkpointable::readDelimiter(std::ifstream &in)
 }
 
 
-std::string Checkpointable::readString(std::ifstream &in )
+std::string Checkpointable::readString(std::istream &in )
 {
   std::string result; 
 
@@ -54,8 +53,8 @@ std::string Checkpointable::readString(std::ifstream &in )
   return result; 
 }
 
-void Checkpointable::writeString(std::ofstream &out, std::string toWrite)
-{
+void Checkpointable::writeString(std::ostream &out, std::string toWrite) const 
+{  
   if(checkpointIsBinary)
     {
       toWrite += '\0'; 

@@ -562,13 +562,21 @@ of the current partition.
       }
 
 
-      /* if we are using a per-partition branch length estimate, the branch has an index, otherwise, for a joint branch length
-         estimate over all partitions we just use the branch length value with index 0 */
+      /* if we are using a per-partition branch length estimate, the
+         branch has an index, otherwise, for a joint branch length
+         estimate over all partitions we just use the branch length
+         value with index 0 */
 
       if(pr->perGeneBranchLengths)
-        z = pz[model];
+	{
+	  z = pz[model];
+	  /* printf("EVAL(%d) %f\n", model, pz[model]); */
+	}
       else
-        z = pz[0];
+	{
+	  z = pz[0];
+	  assert(0);
+	}
 
       /* calc P-Matrix at root for branch z connecting nodes p and q */
 

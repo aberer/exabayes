@@ -2,28 +2,22 @@
 #include "Category.hpp"
 
 
-std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs)
+AbstractParameter::AbstractParameter(Category cat, nat id, nat _idOfMyKind)
+  : id(id)
+  , idOfMyKind(_idOfMyKind)
+  , cat(cat) 
+  , printToParamFile(true)
 {
-  out << CategoryFuns::getShortName(rhs->cat); 
-
-  bool  isFirst = true; 
-  out << "{" ; 
-  for(auto v : rhs->partitions)
-    {
-      if (not isFirst) 
-	out << "," ; 
-      else 
-	isFirst = false; 
-      out << v; 
-    }
-  // auto p = rhs->getPrior(); 
-  out << "}" ; 
-  // out << \twith prior " << p ; 
-  return out;
 }
 
 
-std::ostream&  AbstractParameter::printShort(std::ostream& out)
+std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs)
+{
+  return rhs->printShort(out);
+}
+
+
+std::ostream&  AbstractParameter::printShort(std::ostream& out) const
 {
   out << CategoryFuns::getShortName(cat) << "{" ; 
   bool isFirst= true; 

@@ -15,8 +15,10 @@ public:
   virtual void autotune()  { }
   virtual AbstractProposal* clone() const ;  
 
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out)  { } //disabled
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+
+  virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
+  virtual void writeToCheckpointCore(std::ostream &out)  const { } //disabled
 
 private: 
   Branch modifiedBranch;   

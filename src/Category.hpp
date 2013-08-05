@@ -6,10 +6,10 @@
 #include <memory>
 #include "parameters/AbstractParameter.hpp"
 
-enum class Category
+enum class Category :  int  
 {  
   TOPOLOGY = 0, 
-  BRANCH_LENGTHS = 1, 
+    BRANCH_LENGTHS = 1, 
   FREQUENCIES = 2,
   SUBSTITUTION_RATES = 3,
   RATE_HETEROGENEITY = 4,	
@@ -17,6 +17,25 @@ enum class Category
 
 } ; 
 
+
+class CategoryHash
+{
+public: 
+  size_t operator() (const Category &a) const 
+  {
+    return std::hash<int>()(static_cast<const int>(a)); 
+  }
+  
+}; 
+
+class CategoryEqual
+{
+public: 
+  size_t operator() (const Category  &a, const Category &b) const
+  {
+    return a == b ; 
+  }
+}; 
 
 namespace CategoryFuns 
 {
@@ -44,8 +63,17 @@ namespace CategoryFuns
       @brief gets the category by name of the linking parameter in the config file 
    */   
   Category getCategoryFromLinkLabel(std::string name); 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id); 
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind); 
 } 
+
+
+std::ostream&  operator<<(std::ostream& out, const Category &rhs); 
+// {
+//   return out << CategoryFuns::getLongName(rhs) ; 
+// }
+
 
 #endif
  
+
+

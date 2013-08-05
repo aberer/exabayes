@@ -1,6 +1,8 @@
 #ifndef OUTPUT_FILE_H 
 #define OUTPUT_FILE_H 
 
+#include <sys/stat.h>
+#include <sstream>
 
 #include "ParallelSetup.hpp"
 
@@ -27,6 +29,26 @@ public:
 	ParallelSetup::genericExit(0); 
       }
   }
+
+// TODO portability 
+  
+  static std::string getFileBaseName(std::string workdir )
+  {
+    std::stringstream ss; 
+    ss << workdir << ( workdir.compare("") == 0  ? "" : "/") << PROGRAM_NAME; 
+    return ss.str(); 
+  }
+
+
+  static bool directoryExists(std::string name)
+  {
+    struct stat st;
+    if(stat(name.c_str(),&st) == 0)
+      if((st.st_mode & S_IFDIR) != 0)
+	return true; 
+    return false; 
+  }
+
 
 
 protected:   

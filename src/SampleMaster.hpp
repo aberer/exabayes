@@ -11,6 +11,7 @@
 
 #include <vector>
 
+#include "ProposalSet.hpp"
 #include "axml.h"
 #include "config/BlockRunParameters.hpp"
 #include "config/BlockProposalConfig.hpp"
@@ -20,35 +21,58 @@
 #include "ParallelSetup.hpp"
 #include "time.hpp"
 #include "Checkpointable.hpp"
-#include "DiagnosticsFile.hpp"
+#include "file/DiagnosticsFile.hpp"
 
 
 class SampleMaster : public Checkpointable
 {
-public: 
+public:   
   SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
-
+  /** 
+      @brief initializes the runs  
+      @notice this is the top-level function 
+   */ 
   void initializeRuns( ); 
-  void initRunParameters(string configFileName); 
+  /** 
+      @brief cleanup, once finished
+   */ 
   void finalizeRuns();  
+  /** 
+      @brief starts the MCMC sampling   
+   */ 
   void run(); 
-  void initWithConfigFile(string configFileName, const TreeAln* tralnPtr, 
-			  vector<unique_ptr<AbstractProposal> > &proposalResult, vector<unique_ptr<AbstractParameter> > &variableResult, 
+  /** 
+      @brief initializes the config file 
+   */ 
+  void initWithConfigFile(string configFileName, const TreeAln* tralnPtr, vector<unique_ptr<AbstractProposal> > &proposalResult, 
+			  vector<unique_ptr<AbstractParameter> > &variableResult, std::vector<ProposalSet> &proposalSets, 
 			  const std::unique_ptr<LikelihoodEvaluator> &eval); 
-  void validateRunParams(); 	// TODO  
+  /** 
+      @brief EXPERIMENTAL 
+   */ 
   void branchLengthsIntegration()  ;  
-
-  void printAlignmentInfo(const TreeAln &traln); 
-
-  virtual void readFromCheckpoint( std::ifstream &in ) ; 
-  virtual void writeToCheckpoint( std::ofstream &out)  ;   
+  /** 
+      @brief print information about the alignment  
+   */ 
+  void printAlignmentInfo(const TreeAln &traln);   
+  /** 
+      @brief gets the runs 
+   */ 
+  const std::vector<CoupledChains>& getRuns() const {return runs; }
+  
+  virtual void readFromCheckpoint( std::istream &in ) ; 
+  virtual void writeToCheckpoint( std::ostream &out) const ;
 
 private: 
+  void informPrint(); 
+  void printInitialState(const ParallelSetup &pl); 
+  std::unique_ptr<LikelihoodEvaluator> createEvaluatorPrototype(const TreeAln &initTree); 
   void writeCheckpointMaster(); 
-  double convergenceDiagnostic(); 
-  void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh); 
-  void initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness); 
-  void printDuringRun(nat gen); 
+  void initializeFromCheckpoint(); 
+  double convergenceDiagnostic(nat &begin, nat &end); 
+  void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh, const std::vector<AbstractParameter*> &params); 
+  void initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
+  CLOCK::system_clock::time_point printDuringRun(nat gen,  ParallelSetup &pl) ; 
 
 private:			// ATTRIBUTES 
   vector<CoupledChains> runs; 
@@ -59,7 +83,7 @@ private:			// ATTRIBUTES
   BlockProposalConfig propConfig;   
   Randomness masterRand;   	// not checkpointed
   CommandLine cl; 
-  CLOCK::system_clock::time_point timeIncrement; 
+  CLOCK::system_clock::time_point lastPrintTime; 
   DiagnosticsFile diagFile; 
 };  
 

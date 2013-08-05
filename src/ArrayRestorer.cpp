@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "LnlRestorer.hpp" 
+#include "ArrayRestorer.hpp" 
 #include "Branch.hpp"
 #include "TreeAln.hpp" 
 #include "GlobalVariables.hpp"
@@ -10,16 +10,15 @@
 #define GAMMA_CATS 4 
 
 
-LnlRestorer::LnlRestorer(const TreeAln& traln)
+ArrayRestorer::ArrayRestorer(const TreeAln& traln)
   : numPart(traln.getNumberOfPartitions())
   , numTax(traln.getNumberOfTaxa())
-  , wasSwitched(traln.getNumberOfInnerNodes(), false)
   , orientation( traln.getNumberOfTaxa(),  0)
   , partitionScaler(numPart )
 {
   reservePerPartition.resize(numPart);   
 
-  for(int i = 0; i < numPart; ++i)
+  for(nat i = 0; i < numPart; ++i)
     {
       partitionScaler[i] = std::vector<nat> (traln.getNumberOfNodes(), 0);
       auto *partition = traln.getPartition(i);      
@@ -40,21 +39,22 @@ LnlRestorer::LnlRestorer(const TreeAln& traln)
 	  reserve.push_back(array);
 	}      
     }  
+  
+  std::vector<bool> wasSwitched( traln.getNumberOfInnerNodes(), false); 
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
+    wasSwitchedByPartition.push_back(wasSwitched); 
 }
 
 
-
-LnlRestorer::~LnlRestorer()
+ArrayRestorer::~ArrayRestorer()
 {
   for(auto &elem : reservePerPartition)
     for(auto &e : elem)
       exa_free(e); 
 }
 
-/**
-   @brief loads the saved orientation of the x-vectors
- */
-void LnlRestorer::loadOrientation(TreeAln &traln)
+
+void ArrayRestorer::loadOrientation(TreeAln &traln)
 {
   tree *tr = traln.getTr(); 
   nat numTax = traln.getNumberOfTaxa(); 
@@ -76,7 +76,7 @@ void LnlRestorer::loadOrientation(TreeAln &traln)
 }
 
 
-void LnlRestorer::storeOrientation(const TreeAln &traln)
+void ArrayRestorer::storeOrientation(const TreeAln &traln)
 {
   auto *tr = traln.getTr(); 
   nat numTax = traln.getNumberOfTaxa(); 
@@ -99,40 +99,23 @@ void LnlRestorer::storeOrientation(const TreeAln &traln)
 
 
 
-void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
+void ArrayRestorer::swapArray(TreeAln &traln, int nodeNumber, std::vector<nat> model)
 {
   tree *tr = traln.getTr();   
   nat numTax = traln.getNumberOfTaxa();
   assert(not isTip(nodeNumber, tr->mxtips)); 
 
-  if(model == ALL_MODELS)
+  for(auto &p : model )
     {
-#ifdef DEBUG_ARRAY_SWAP
-      if(debugPrint)
-	std::cout << "swapped array for node " << nodeNumber <<   " and all  models; pos= " << nodeNumber - (numTax + 1 ) << std::endl;       
-#endif
-
-      for(int i = 0; i < numPart; ++i)
-	{
-	  pInfo *partition = traln.getPartition( i);
-	  int posInArray = nodeNumber -( numTax + 1); 
-	  double *&a = reservePerPartition.at(i).at(posInArray), 
-	    *&b  = partition->xVector[posInArray] ; 
-
-	  std::swap(a,b); 	  
-	}
-    }
-  else 
-    {
-      auto partition = traln.getPartition( model); 
+      auto partition = traln.getPartition(p); 
       auto posInArray = nodeNumber - (numTax+1); 
 
 #ifdef DEBUG_ARRAY_SWAP
       if(debugPrint)
-	std::cout << "swapped array for node " << nodeNumber <<  " and model " << model << std::endl; 
+	std::cout << "swapped array for node " << nodeNumber <<  " and model " << p << std::endl; 
 #endif
 
-      double *&a = reservePerPartition.at(model).at(posInArray),
+      double *&a = reservePerPartition.at(p).at(posInArray),
 	*&b = partition->xVector[posInArray]; 
 
       std::swap(a,b );     
@@ -140,75 +123,93 @@ void LnlRestorer::swapArray(TreeAln &traln, int nodeNumber, int model)
 }
 
 
-void LnlRestorer::restoreArrays(TreeAln& traln)
+void ArrayRestorer::restoreSomePartitions(TreeAln &traln, std::vector<nat> partitions)
 {
-#ifdef DEBUG_ARRAY_SWAP
-  if(debugPrint)
-    std::cout << "RESTORE for model" << modelEvaluated << std::endl; 
-#endif
-
-  // switch arrays 
-  for(nat i = 0 ; i < traln.getNumberOfInnerNodes() ; ++i)
+  for(auto &partitionIndex : partitions)
     {
-      nat nodeNumber = i + 1 + traln.getNumberOfTaxa(); 
-      if(wasSwitched[i])
-	swapArray(traln, nodeNumber , modelEvaluated); 
+      for(nat i = 0 ; i < traln.getNumberOfInnerNodes() ; ++i)
+	{
+	  nat nodeNumber = i + 1 + traln.getNumberOfTaxa(); 
+	  if(wasSwitchedByPartition[partitionIndex][i])
+	    swapArray(traln, nodeNumber , {partitionIndex}); 
+	}
+      
+      // forget that we evaluated this partition 
+      modelsEvaluated.erase(partitionIndex); 
+
+      // restore the partition scaler 
+      pInfo *partition = traln.getPartition( partitionIndex);       
+      memcpy(partition->globalScaler, &(partitionScaler[partitionIndex][0]), sizeof(nat) * traln.getNumberOfTaxa() * 2 );
     }
-
-  loadOrientation(traln);
-
-
-  for(int i = 0; i < numPart; ++i)
-    {
-      pInfo *partition = traln.getPartition( i);       
-      memcpy(partition->globalScaler, &(partitionScaler[i][0]) , 
-	     sizeof(nat) * traln.getNumberOfTaxa() * 2 );
-    }
-
 }
 
 
-void LnlRestorer::traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRoot, int model, bool fullTraversal)
-{  
-  this->modelEvaluated = model; 
+void ArrayRestorer::restoreArrays(TreeAln& traln)
+{
+  std::vector<nat> listOfEvaluated; 
+  for(auto &p: modelsEvaluated)
+    listOfEvaluated.push_back(p);
+  restoreSomePartitions(traln, listOfEvaluated);  
+  loadOrientation(traln);
+}
 
+
+void ArrayRestorer::toplevelSwitch(TreeAln &traln, Branch virtualRoot, std::vector<nat> models, bool fullTraversal)
+{  
+  modelsEvaluated.insert(models.begin(),models.end() ); 
+
+  traverseAndSwitchIfNecessary(traln, virtualRoot.findNodePtr(traln), models, fullTraversal); 
+  traverseAndSwitchIfNecessary(traln, virtualRoot.getInverted().findNodePtr(traln), models, fullTraversal); 
+}
+
+
+void ArrayRestorer::traverseAndSwitchIfNecessary(TreeAln &traln, nodeptr virtualRoot, std::vector<nat> models, bool fullTraversal)
+{  
+  
+  modelsEvaluated.insert(models.begin(), models.end()); 
+  
   if(traln.isTipNode(virtualRoot))
     return; 
 
   bool incorrect = not virtualRoot->x; 
   nat index = virtualRoot->number - 1 - traln.getNumberOfTaxa(); 
 
-  if( ( incorrect || fullTraversal )      
-      && not wasSwitched[index ])
+  
+  for(auto &partition : models)
     {
-      wasSwitched.at(index) = true;       
-      swapArray(traln, virtualRoot->number, model); 
+      if( ( incorrect || fullTraversal )      
+	  && not wasSwitchedByPartition[partition][index ])
+	{
+	  wasSwitchedByPartition[partition][index] = true;       
+	  swapArray(traln, virtualRoot->number, {partition}); 
+	}
     }
 
   if(incorrect || fullTraversal)
     {
-      traverseAndSwitchIfNecessary(traln, virtualRoot->next->back, model, fullTraversal); 
-      traverseAndSwitchIfNecessary(traln, virtualRoot->next->next->back, model, fullTraversal); 
+      traverseAndSwitchIfNecessary(traln, virtualRoot->next->back, models, fullTraversal); 
+      traverseAndSwitchIfNecessary(traln, virtualRoot->next->next->back, models, fullTraversal); 
     }
 }
 
 
-void LnlRestorer::resetRestorer(const TreeAln &traln)
+void ArrayRestorer::resetRestorer(const TreeAln &traln)
 {
   if(debugPrint)
     std::cout << "RESETTING RESTORER" << std::endl; 
 
-  wasSwitched = std::vector<bool>(traln.getNumberOfInnerNodes() , false); 
+  modelsEvaluated.clear(); 
+
+  std::vector<bool> wasSwitched(traln.getNumberOfInnerNodes() , false); 
+  for(auto &elem : wasSwitchedByPartition)
+    elem = wasSwitched; 
+  
   storeOrientation(traln); 
 
-  for(int i = 0; i < numPart; ++i)
+  for(nat i = 0; i < numPart; ++i)
     {
       pInfo *partition = traln.getPartition( i); 
       partitionScaler[i].assign(partition->globalScaler, 
 				partition->globalScaler + traln.getNumberOfTaxa() * 2 ); 
     }
-
-  modelEvaluated = ALL_MODELS; 
 }
-
-

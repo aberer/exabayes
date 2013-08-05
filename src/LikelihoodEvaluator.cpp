@@ -1,6 +1,6 @@
 #include "LikelihoodEvaluator.hpp"
 #include "GlobalVariables.hpp"
-#include "LnlRestorer.hpp"
+#include "ArrayRestorer.hpp"
 
 
 void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
@@ -10,6 +10,13 @@ void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, nodeptr start, boo
 #else 
   evaluateGeneric(traln.getTr(), start, fullTraversal); 
 #endif  
+}
+
+double LikelihoodEvaluator::evaluatePartitions(TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)
+{
+  Branch root = findVirtualRoot(traln);
+  // notice: cannot overload a virtual function?  
+  return evaluatePartitionsWithRoot(traln, root, partitions,fullTraversal); 
 }
 
 
@@ -40,8 +47,8 @@ void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch)
 
   if(not traln.isTipNode(p))
     {
-      disorientSubtree(traln, Branch(p->next->back->number, p->number,0)); 
-      disorientSubtree(traln, Branch(p->next->next->back->number, p->number,0)); 
+      disorientSubtree(traln, Branch(p->next->back->number, p->number)); 
+      disorientSubtree(traln, Branch(p->next->next->back->number, p->number)); 
     }
 }
 
@@ -124,9 +131,11 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
       tout << "WARNING: found in expensive evaluation: likelihood difference is " 
 	   <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
 	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
-
-      tout << "current tree: " << traln << std::endl; 
-      tout << "help tree: " <<  *debugTraln << std::endl; 	        
+      
+      // what to print? 
+      assert(0);
+      // tout << "current tree: " << traln << std::endl; 
+      // tout << "help tree: " <<  *debugTraln << std::endl; 	        
     }  
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS); 
 
@@ -146,3 +155,14 @@ void LikelihoodEvaluator::setDebugTraln(std::shared_ptr<TreeAln> _debugTraln)
 }
 #endif
 
+
+bool LikelihoodEvaluator::isDirty(nat partition,nat nodeId)  const 
+{
+  return dirty[partition][nodeId]; 
+}
+
+
+void LikelihoodEvaluator::setDirty(nat partition, nat nodeId, bool isDirty)
+{
+  dirty[partition][nodeId] = isDirty ; 
+}

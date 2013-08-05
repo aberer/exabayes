@@ -10,7 +10,9 @@
 #include "time.hpp"
 #include "ParallelSetup.hpp"
 
-CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int numCoupled,  vector<Chain> &_chains   )
+
+// TODO 
+CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, std::string runname, int numCoupled,  vector<Chain> &_chains   )
   : chains(std::move(_chains))
   , swapInfo(chains.size())
   , heatIncrement(0.1) 
@@ -20,9 +22,11 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, int 
   , printFreq(500)
   , swapInterval(1)
   , samplingFreq(100)
-  , runname("standardId") 
+  , runname(runname) 
   , workdir(workingdir)
-{
+{  
+  tFile.emplace_back(workdir, runname, runid, 0); 
+  pFile.emplace_back(workdir, runname,runid, 0); 
 }
 
 
@@ -52,17 +56,16 @@ CoupledChains& CoupledChains::operator=(CoupledChains rhs)
 
 
 void CoupledChains::initializeOutputFiles()  
-{
+{  
   // TODO sampling file for every chain possibly 
   auto &traln = chains[0].getTraln(); 
-  auto &params = chains[0].extractVariables();
+  auto &params = chains[0].extractParameters();
 
-  tFile.emplace_back(workdir, runname, runid, 0); 
-  pFile.emplace_back(workdir, runname,runid, 0); 
+  auto tag =  rand.getKey();
+
+  tFile[0].initialize(traln, tag.v[0] ); 
+  pFile[0].initialize(traln, params, tag.v[0] ); 
   
-  nat id = rand(); 		// meh 
-  tFile[0].initialize(traln, id ); 
-  pFile[0].initialize(traln, params, id ); 
 }
 
 
@@ -70,62 +73,78 @@ void CoupledChains::seedChains()
 {
   for(auto &c : chains)
     c.reseed(rand.generateSeed()); 
+  // std::cout << rand  << " after RESEEDING " << std::endl; 
 }
 
 
-void CoupledChains::switchChainState()
+void CoupledChains::attemptSwap(ParallelSetup &pl)
 {  
+  CommFlag flags = CommFlag::PrintStat | CommFlag::Proposals; 
+  
   int numChain = chains.size(); 
 
   if(numChain == 1)
     return;   
 
-  int chainAId = rand.drawRandInt(numChain),
-    chainBId = chainAId; 
-  while(chainAId == chainBId)
-    chainBId = rand.drawRandInt(numChain); 
+  int cAIndex = rand.drawIntegerOpen(numChain); 
+  int cBIndex = rand.drawIntegerOpen(numChain-1) ; 
+  if(cBIndex == cAIndex)
+    cBIndex = numChain-1; 
+  // std::cout << rand  << " attempting swap between indices " << cAIndex << " and " << cBIndex; 
+  if( not pl.isMyChain(runid, cAIndex) && not pl.isMyChain(runid,cBIndex))
+    {
+      rand.drawRandDouble01();	// need to waste one value...  
+      // std::cout << " NOT MINE " << std::endl; 
+      return;
+    }
+  // std::cout << std::endl; 
 
-  int coupIdA = chains[chainAId].getCouplingId(),
-    coupIdB = chains[chainBId].getCouplingId();   
+  
+  if(not pl.isMyChain(runid, cAIndex))
+    std::swap(cAIndex, cBIndex); 
 
-  if(coupIdA > coupIdB)
-    swap(coupIdB, coupIdA); 
+  Chain& a = chains[cAIndex]; 
+  Chain& b = chains[cBIndex]; 
 
-  double heatA = chains[chainAId].getChainHeat(),
-    heatB = chains[chainBId].getChainHeat(); 
+  bool mineHasSmallerId = a.getCouplingId() < b.getCouplingId(); 
 
-  assert(heatA <= 1.f || heatB <= 1.f); 
+  auto aSer = a.serializeConditionally( flags ); 
+  auto bSer = pl.sendRecvChain(*this, cAIndex, cBIndex, aSer, flags);
+  
+  if(not pl.isMyChain(runid, cBIndex))
+    b.deserializeConditionally(bSer, flags); 
 
-  double lnlA = chains[chainAId].getTraln().getTr()->likelihood,
-    lnlB = chains[chainBId].getTraln().getTr()->likelihood; 
+  assert(b.getChainHeat() <= 1. && a.getChainHeat() <= 1.); 
 
-  double lnPrA = chains[chainAId].getPrior().getLnPrior(), 
-    lnPrB = chains[chainBId].getPrior().getLnPrior(); 
-
-  double 
-    aB = (lnlA + lnPrA ) *  heatB,
-    bA = ( lnlB + lnPrB ) *  heatA,
-    aA = ( lnlA + lnPrA ) * heatA,
-    bB =  ( lnlB + lnPrB ) *  heatB; 
+  double aB = (a.getLikelihood() + a.getLnPr()) * b.getChainHeat(),
+    bA = (b.getLikelihood() + b.getLnPr()) * a.getChainHeat(),
+    aA = (a.getLikelihood() + a.getLnPr())* a.getChainHeat(),
+    bB = (b.getLikelihood() + b.getLnPr())* b.getChainHeat();
 
   double accRatio = exp(( aB + bA )  - (aA + bB )); 
 
-  Chain &a = chains[ chainAId],
-    &b = chains[ chainBId] ; 
+  bool bothAreMine = pl.isMyChain(runid, cAIndex) && pl.isMyChain(runid, cBIndex); 
+  nat coupIdA = a.getCouplingId(), 
+    coupIdB = b.getCouplingId(); 
 
   /* do the swap */
-  if( rand.drawRandDouble01()  < accRatio)
+  bool didAccept = rand.drawRandDouble01()  < accRatio; 
+  if( didAccept )
     {
-      a.switchState(b); 
-      swapInfo.update(coupIdA,coupIdB,true); 
+      a.deserializeConditionally(bSer,flags); 
+      b.deserializeConditionally(aSer, flags); 
     } 
-  else 
-    swapInfo.update(coupIdA,coupIdB,false);   
+  
+  // update swap matrix: if the other chain did not belong to us and
+  // our id was greater, do not store the info
+  if(bothAreMine || mineHasSmallerId)
+    swapInfo.update(coupIdA,coupIdB,didAccept); 
 }
 
 
 
 
+#if 0 
 void CoupledChains::chainInfo()
 {
   // print hot chains
@@ -135,7 +154,11 @@ void CoupledChains::chainInfo()
 
   auto coldChain = sortedChains[0]; 
 
-  Branch fake(0,0,coldChain->getTraln().getTreeLengthExpensive()); 
+  // Branch fake(0,0,coldChain->getTraln().getTreeLengthExpensive()); 
+  coldChain->extractParameters()
+  coldChain->getTraln().getTreeLengthExpensive()
+  
+  // chains[0]->
 
   tout << "[run: " << runid << "] "  ; 
   tout << "[time " << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- timeIncrement   ).count()     << "] "; 
@@ -159,19 +182,27 @@ void CoupledChains::chainInfo()
 
   tout << endl; 
 }
+#endif
 
 
-void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
-{  
-  for(auto &c : chains)
-    c.resume(true, true);
+void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
+{ 
+  assert(pl.isMyRun(getRunid())); 
 
-  for(int genCtr = 0; genCtr < gensToRun; genCtr += swapInterval)
+  for(nat i = 0; i < chains.size(); ++i)
     {
-      bool timeToPrint = false; 
+      if(pl.isMyChain(runid, i))
+	chains[i].resume(true,true);
+    }
 
-      for(auto &chain : chains)
+  for(nat genCtr = startGen; genCtr < startGen + numGen; genCtr += swapInterval)
+    {
+      for(nat j = 0; j < chains.size(); ++j)
 	{
+	  auto &chain = chains[j];
+	  if(not pl.isMyChain(runid, j))
+	    continue; 
+
 	  for(int i = 0; i < swapInterval; ++i)
 	    {
 	      chain.step(); 	      
@@ -179,39 +210,27 @@ void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
 		{
 		  for(auto &c : chains)
 		    {
-		      if( c.getChainHeat() == 1. && pl.isReportingProcess() )
+		      if( c.getChainHeat() == 1. && pl.isChainLeader() )
 			c.sample(tFile[0], pFile[0]); 
 		    }
 		}
-		
-	      timeToPrint |= 
-		chain.getCouplingId() == 0 && printFreq > 0
-		&& (chain.getGeneration() % printFreq )  == (printFreq - 1) ;
 	    }
 	}
-
-#ifdef PRINT_MUCH
-      if(timeToPrint)
-      	chainInfo(); 
-#endif
-
-      
-      // TODO
-      assert(not tuneHeat); 
-#if 0 
-      if(chains.size()  > 1 
-	 && tuneHeat
-	 && tuneFreq < swapInfo[1]->getRecentlySeen()  )
-	{	  
-	  tuneTemperature();      	  
-	}
+#ifdef UNSURE  
+      assert(0);
 #endif
       
-      switchChainState();
+      rand.rebase(startGen); 
+      attemptSwap(pl);
     }
 
-  for(auto &chain : chains)
-    chain.suspend(false);
+
+  for(nat i = 0; i < chains.size(); ++i)
+    {
+      auto &chain = chains[i]; 
+      if(pl.isMyChain(runid,i))
+	chain.suspend();
+    }
 
 #ifdef _USE_GOOGLE_PROFILER
   ProfilerFlush();
@@ -219,26 +238,7 @@ void CoupledChains::executePart(int gensToRun, const ParallelSetup &pl)
 }
 
 
-void CoupledChains::tuneTemperature()
-{
-  /* naive strategy: tune, s.t. the coldest hot chain swaps
-     with the coldest chain in 23.4% of all cases */
-
-  assert(0); 
-#if  0
-  auto c = swapInfo[1]; 
-  double deltaT = chains[0].getDeltaT(); 
-  deltaT = tuneParameter(  c->getBatch() , c->getRatioInLastInterval(), deltaT, false); 
-  c->nextBatch();
-  
-  // update the chains 
-  for(auto& chain : chains)
-    chain.setDeltaT(deltaT);   
-#endif
-}
-
-
-void CoupledChains::finalizeOutputFiles() const 
+void CoupledChains::finalizeOutputFiles()   
 {
   for(auto &t : tFile)
     t.finalize();
@@ -247,7 +247,7 @@ void CoupledChains::finalizeOutputFiles() const
 }
 
 
-void CoupledChains::readFromCheckpoint( std::ifstream &in ) 
+void CoupledChains::readFromCheckpoint( std::istream &in ) 
 {
   rand.readFromCheckpoint(in); 
   swapInfo.readFromCheckpoint(in);
@@ -256,7 +256,7 @@ void CoupledChains::readFromCheckpoint( std::ifstream &in )
 } 
 
 
-void CoupledChains::writeToCheckpoint( std::ofstream &out)  
+void CoupledChains::writeToCheckpoint( std::ostream &out)   const
 {
   rand.writeToCheckpoint(out);
   swapInfo.writeToCheckpoint(out);
@@ -265,11 +265,12 @@ void CoupledChains::writeToCheckpoint( std::ofstream &out)
 }   
 
 
-void CoupledChains::regenerateOutputFiles(std::string prevId) 
+void CoupledChains::regenerateOutputFiles(std::string workdir, std::string prevId) 
 {
   nat gen = chains[0].getGeneration();
   for(auto &pF : pFile)
-    pF.regenerate(prevId, gen); 
+    pF.regenerate(workdir, prevId, gen); 
   for(auto &pF : tFile)
-    pF.regenerate(prevId, gen);
+    pF.regenerate(workdir, prevId, gen);
 } 
+

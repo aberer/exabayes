@@ -30,7 +30,8 @@ enum class ProposalType
     FREQUENCY_SLIDER = 14, 
     FREQUENCY_DIRICHLET = 15,     
     AMINO_MODEL_JUMP = 16,
-    BRANCH_GIBBS = 17  
+    BRANCH_GIBBS = 17,
+    DIRICH_REVMAT_ALL = 18
 }; 
 
 
@@ -60,9 +61,13 @@ namespace ProposalTypeFunc
    */ 
   std::string getConfigStringFromType(ProposalType p ); 
   /** 
+      @brief gets all proposals for a category that integrate only over one parameter (primarily) 
+   */ 
+  std::vector<ProposalType> getSingleParameterProposalsForCategory(Category c) ; 
+  /** 
       @brief IMPORTANT get all relevant proposals for a category  
    */ 
-  std::vector<ProposalType> getProposalsForCategory(Category c) ; 
+  // std::vector<ProposalType> getProposalsForCategory(Category c) ; 
   /** 
       @brief gets all relevant proposals 
    */ 

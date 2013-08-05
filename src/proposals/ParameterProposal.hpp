@@ -24,8 +24,11 @@ public:
 
   virtual AbstractProposal* clone() const {return new ParameterProposal(*this) ;   }
 
-  virtual void readFromCheckpointCore(std::ifstream &in) ; //  { in >> parameter; readDelimiter(in);    } 
-  virtual void writeToCheckpointCore(std::ofstream &out) ; //   {out << parameter << DELIM; } 
+  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+
+  virtual void readFromCheckpointCore(std::istream &in) ; 
+  virtual void writeToCheckpointCore(std::ostream &out) const;
 
 private: 
   bool modifiesBL; 

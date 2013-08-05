@@ -9,8 +9,8 @@
 class TopologyParameter : public AbstractParameter
 {
 public: 
-  TopologyParameter(nat id )
-    : AbstractParameter(Category::TOPOLOGY, id)
+  TopologyParameter(nat id, nat idOfMyKind )
+    : AbstractParameter(Category::TOPOLOGY, id, idOfMyKind)
   {
     printToParamFile = false; 
   }

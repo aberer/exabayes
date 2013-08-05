@@ -27,6 +27,4 @@ private: 			// ATTRIBUTES
   bool initialized; 
 }; 
 
-
-
 #endif

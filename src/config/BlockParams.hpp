@@ -22,9 +22,12 @@ public:
   vector<unique_ptr<AbstractParameter> > getParameters() const; 
   virtual void Read(NxsToken &token); 
 
-private: 
+private:   			// METHODS
   void partitionError(nat partition, nat totalPart) const ; 
   void parseScheme(NxsToken& token, Category cat, nat &idCtr); 
+  nat getNumSeen(Category cat) ; 
+  
+private: 			// ATTRIBUTES
   vector<unique_ptr<AbstractParameter> > parameters; 
   const TreeAln* traln;  	// NON-owning
 }; 

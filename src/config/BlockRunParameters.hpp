@@ -34,6 +34,7 @@ public:
   bool isUseParsimonyStarting() const {return useParsimonyStarting; } 
   bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
   nat getChkpntFreq() const {return chkpntFreq; }
+  bool isComponentWiseMH() const {return componentWiseMH; }
 
 private: 
   int diagFreq ; 
@@ -44,7 +45,6 @@ private:
   int samplingFreq; 
   int numRunConv; 
   int numGen; 
-  // string runId; 
   int numCoupledChains; 
   int printFreq; 
   double heatFactor ; 
@@ -54,6 +54,7 @@ private:
   bool useParsimonyStarting; 
   bool heatedChainsUseSame; 
   nat chkpntFreq; 
+  bool componentWiseMH; 
 }; 
 
 

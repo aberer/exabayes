@@ -14,6 +14,7 @@
 
 #include <vector>
 
+#include "ProposalSet.hpp"
 #include "config/BlockProposalConfig.hpp"
 #include "config/BlockPrior.hpp"
 #include "config/BlockParams.hpp"
@@ -26,21 +27,29 @@
 class RunFactory
 {
 public:  
-  void configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, const std::unique_ptr<LikelihoodEvaluator> &eval);
-  vector<unique_ptr<AbstractParameter> > getRandomVariables() const
-  {
-    vector<unique_ptr<AbstractParameter> > result; 
-    for(auto &r : randomVariables)
-      result.push_back(std::unique_ptr<AbstractParameter>(r->clone()));
-    return result; 
-  }
+  /** 
+      @brief configures the proposals 
+  */ 
+  std::vector<std::unique_ptr<AbstractProposal> >  
+  produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+		   const BlockParams& partitionParams, const TreeAln &traln, 
+		   const unique_ptr<LikelihoodEvaluator> &eval, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet); 
+  /** 
+      @brief get a copy of the random variables to be integrated  
+   */ 
+  vector<unique_ptr<AbstractParameter> > getRandomVariables() const; 
+  /** 
+      @brief adds secondary parameters to proposals, if necessary (currently only branch lengths)
+   */ 
+  void addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters); 
 
-private: 
-  vector<unique_ptr<AbstractParameter> > randomVariables; 
-
-  void addStandardParameters(vector<unique_ptr<AbstractParameter> > &vars, const TreeAln &traln ); 
+private: 			// METHODS 
+  void addStandardParameters(std::vector<std::unique_ptr<AbstractParameter> > &vars, const TreeAln &traln ); 
   void addStandardPrior(AbstractParameter* var, const TreeAln& traln ); 
   void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<unique_ptr<AbstractParameter> > &variables); 
+
+private: 			// ATTRIBUTES 
+  vector<unique_ptr<AbstractParameter> > randomVariables; 
 }; 
 
 #endif

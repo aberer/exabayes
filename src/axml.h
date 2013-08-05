@@ -55,7 +55,7 @@ extern "C"{
 
 #if HAVE_PLL == 0
   void newviewParsimony(tree *tr, nodeptr  p); 
-  void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony , nat *pLengthAtBranch, nat *pLengthAtBranch); 
+  void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony , nat *pLengthAtBranch); 
 #else 
   void newviewParsimony(tree *tr, partitionList *pr, nodeptr  p); 
   void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, nat *partitionParsimony, nat *pLengthAtBranch); 

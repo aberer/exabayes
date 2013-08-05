@@ -1,0 +1,43 @@
+#+TITLE: ExaBayes User's Manual
+#+AUTHOR: 
+* Quick Start
+* Installation
+  After downloading the software package (e.g., exabayes-0.4.tar.gz),
+  you will have to compile the source code. The following sections
+  explain, how to do so. After compiling you obtain an executable
+  called exabayes.    
+** General compilation instructions 
+   ExaBayes requires a moderately recent c/c++ compiler that supports
+   c++11 features. ExaBayes is confirmed to work with 
+   1. GCC version 4.6 or greater 
+   2. Clang version 3.2 or greater 
+** Compiling the Sequential Version 
+   To compile a sequential version of ExaBayes, type 
+   #+BEGIN_SRC sh 
+$ ./configure && make 
+   #+END_SRC  
+   If you have a multi-core machine, you can speed up the build
+   process by adding -j<numProc> to the make command.
+** Compiling the Parallel Version 
+   For running ExaBayes on a cluster, you need to have a working
+   installation of a library that implement the Message Passing
+   Interface (MPI).
+
+   You have to use a slightly different configure call and inform the
+   configure script about your mpi compiler wrapper. These are usually
+   called mpicc (c compiler) and mpicxx or mpic++ (c++ compiler). For instance: 
+   #+BEGIN_SRC sh
+$ ./configure --disable-pll CC=mpicc CXX mpicxx 
+   #+END_SRC
+   
+* Command Line Options Explained
+  
+* The Configuration File 
+
+* On Bayesian Analyses
+
+* ExaBayes at Large: Invocations on Clusters/Supercomputers
+  
+
+
+* Notes on Reproducibility 

@@ -1,10 +1,12 @@
 #ifndef _TREE_EVALUATOR_HPP
 #define _TREE_EVALUATOR_HPP
 
+#include <vector>
+
 #include "axml.h"
 #include "TreeAln.hpp"
 #include "Branch.hpp"
-#include "LnlRestorer.hpp"
+#include "ArrayRestorer.hpp"
 
 class LikelihoodEvaluator
 {
@@ -15,7 +17,8 @@ public:
   /**
      @brief: evaluate a list of partitions. This is always a full traversal 
    */
-  virtual double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)  = 0; 
+  double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)  ;
+  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const Branch& root,  const std::vector<nat>& partitions, bool fullTraversal)  = 0; 
   /** 
       @brief evaluate a subtree. This used to be the
       newview-command. The this-node is the important part, the
@@ -31,13 +34,26 @@ public:
    */
   Branch findVirtualRoot(const TreeAln &traln) const ;   
   /** 
+      @brief mark a node as dirty  
+   */ 
+  void markDirty(nat partition, nat nodeId); 
+  /** 
+      @brief marks a node as clean
+   */ 
+  void markClean(nat partition, nat nodeId); 
+
+  /** 
       @brief make the current state in the tree resettable (only needed for chain.cpp)
    */ 
   virtual void imprint(const TreeAln &traln) = 0; 
   /**
      @brief use backup likelihood arrays to reset the state 
    */ 
-  virtual void resetToImprinted(TreeAln &traln) = 0;  
+  virtual void resetToImprinted(TreeAln &traln) = 0;    
+  /** 
+      @brief use backup likelihood
+   */ 
+  virtual void resetSomePartitionsToImprinted(TreeAln &traln, std::vector<nat> partitions) = 0; 
   /** 
       @brief invalidate the orientation at a given node 
    */ 
@@ -55,6 +71,16 @@ public:
 
   void expensiveVerify(TreeAln &traln);
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
+  /** 
+      @brief sets a flag that a likelihood array for a node and a
+      partition is invalid
+  */ 
+  void setDirty(nat partition, nat nodeId, bool isDirty); 
+  /** 
+      @brief indicates whether a likelihood array for a given node and
+      partition is invalid
+  */ 
+  bool isDirty(nat partition,nat nodeId)  const ; 
 
 protected: 			// METHODS
   void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
@@ -65,6 +91,8 @@ protected: 			// ATTRIBUTES
   bool verifyLnl; 
   double prevLnl; 
   std::vector<double> partitionLnls;  
+
+  std::vector<std::vector<bool> > dirty; 
 }; 
 
 #endif

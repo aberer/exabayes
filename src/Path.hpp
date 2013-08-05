@@ -22,14 +22,13 @@ public:
 /** @brief returns true, if the node with a given id is part of this branch */ 
   bool nodeIsOnPath(int node) const;  
   /** @brief for all branches in the path, copy over the branch lengths */ 
-  void saveBranchLengthsPath(const TreeAln& traln); 
+  void saveBranchLengthsPath(const TreeAln& traln, const std::vector<AbstractParameter*> &params); 
 
   /** @brief asserts that this path exists in a given tree */ 
   void debug_assertPathExists(TreeAln& traln); 
 
   /** @brief assigns stored branch lengths of a path to a given tree  */ 
-  void restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior) const ; 
-
+  void restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior, const std::vector<AbstractParameter*> &blParams) const ; 
   /** @brief only add a branch to the path, if it is novel. If the new
       branch cancels out an existing branch, the path is shortened again */ 
   void pushToStackIfNovel(Branch b, const TreeAln &traln ); 
@@ -60,10 +59,9 @@ public:
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
   void printWithBLs(TreeAln &traln ) const; 
 
-  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, AbstractPrior* prBr) const; 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, const AbstractParameter* param) const ; 
 
   void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
-
   friend std::ostream& operator<<(std::ostream &out, const Path &rhs)  ;
 
 private: 

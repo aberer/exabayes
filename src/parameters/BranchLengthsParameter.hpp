@@ -9,8 +9,8 @@ class BranchLengthsParameter : public AbstractParameter
 {
 public: 
   
-  BranchLengthsParameter(nat id )    
-    : AbstractParameter(Category::BRANCH_LENGTHS, id )
+  BranchLengthsParameter(nat id, nat idOfMyKind )    
+    : AbstractParameter(Category::BRANCH_LENGTHS, id, idOfMyKind )
   {    
     printToParamFile = false; 
   }

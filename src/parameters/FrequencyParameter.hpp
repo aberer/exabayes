@@ -7,8 +7,8 @@
 class FrequencyParameter : public AbstractParameter
 {
 public: 
-  FrequencyParameter(nat id )
-    : AbstractParameter(Category::FREQUENCIES, id )
+  FrequencyParameter(nat id, nat idOfMyKind )
+    : AbstractParameter(Category::FREQUENCIES, id , idOfMyKind)
   { 
   }
 

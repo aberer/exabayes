@@ -1,28 +1,25 @@
 #include "TbrMove.hpp"
 
 
-void TbrMove::applyToTree(TreeAln &traln) const 
+void TbrMove::applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
-  int numBranches = traln.getNumBranches(); 
-  assert(numBranches == 1); 
-
-  applyPath(traln,path1); 
-  applyPath(traln,path2); 
+  applyPath(traln,path1, blParams); 
+  applyPath(traln,path2, blParams); 
 } 
 
 
-void TbrMove::revertTree(TreeAln &traln, PriorBelief &prior) const 
+void TbrMove::revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<AbstractParameter*> &blParams) const 
 {
   Path path1r ; 
   Path path2r ; 
   getPathAfterMove(traln,path1, path1r);
   getPathAfterMove(traln,path2, path2r);
   
-  applyPath(traln,path1r);
-  applyPath(traln,path2r);
+  applyPath(traln,path1r, blParams);
+  applyPath(traln,path2r, blParams);
 
-  path1.restoreBranchLengthsPath(traln, prior); 
-  path2.restoreBranchLengthsPath(traln, prior); 
+  path1.restoreBranchLengthsPath(traln, prior, blParams); 
+  path2.restoreBranchLengthsPath(traln, prior, blParams); 
 } 
 
 
@@ -56,17 +53,19 @@ void TbrMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 } 
 
 
-void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) 
+void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description,const std::vector<AbstractParameter*> &params) 
 {
-  sprCreatePath(traln, description.at(0),description.at(1),path1); 
-  sprCreatePath(traln, description.at(2),description.at(3),path2); 
+  sprCreatePath(traln, description.at(0),description.at(1),path1, params); 
+  sprCreatePath(traln, description.at(2),description.at(3),path2, params); 
 } 
 
 
+#if 0 
 void TbrMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior*> brPr) const 
 {
   assert(0);
-} 
+}
+#endif 
 
 
 Branch TbrMove::getEvalBranch(const TreeAln &traln) const 

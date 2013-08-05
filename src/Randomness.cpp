@@ -4,8 +4,6 @@
 #include "Randomness.hpp" 
 #include "densities.h"
 
-// TODO proper AND carefull make-over of randomness
-
 
 Randomness::Randomness(randCtr_t seed)
 {
@@ -34,9 +32,6 @@ void Randomness::incrementNoLimit()
 }
 
 
-/** 
-    @brief draw integer uniformly from [0,n]
- */ 
 int Randomness::drawIntegerClosed(int upperBound)
 {
   assert(upperBound >= 0 ); 
@@ -51,26 +46,11 @@ int Randomness::drawIntegerClosed(int upperBound)
 }
 
 
-/** 
-    @brief for transition: draw integer uniformly from [0,n)
- */ 
 int Randomness::drawIntegerOpen(int upperBound)
 {
   // cout << "drawing from [0," << upperBound << ")" << endl; 
   assert(upperBound > 0); 
   return drawIntegerClosed(upperBound-1);   
-}
-
-
-
-/** 
-    @brief draw integer uniformly from [0,upperBound)
- */ 
-int Randomness::drawRandInt(int upperBound )
-{
-  randCtr_t r = exa_rand(key, ctr); 
-  ctr.v[1]++;   
-  return r.v[0] % upperBound; 
 }
 
 
@@ -105,9 +85,6 @@ double Randomness::drawRandBiUnif(double x)
 }
 
 
-
-
-/** @brief gets a multiplier for updating a parameter or branch length */
 double Randomness::drawMultiplier(double multiplier) // 
 {
 
@@ -117,14 +94,12 @@ double Randomness::drawMultiplier(double multiplier) //
 }
 
 
-// alternative slider as used in mrBayes
 double Randomness::drawFromSlidingWindow(double value, double window)
 {
   return value + window * (drawRandDouble01() - 0.5); 
 }
 
 
-//get random permutation of [0,n-1]
 void Randomness::drawPermutation( int* perm, int n)
 {
   int i;
@@ -133,7 +108,7 @@ void Randomness::drawPermutation( int* perm, int n)
   
   for(i=1 ; i<n ; i++){
   
-    randomNumber = drawRandInt(i+1);
+    randomNumber = drawIntegerOpen(i+1);
     // randomNumber=rand() % (i+1);
     // randomNumber=rand();
 
@@ -148,14 +123,6 @@ void Randomness::drawPermutation( int* perm, int n)
 }
 
 
-
-
-
-/**
-   @brief draw r according to distribution given by weights. 
-
-   NOTE sum of weights is not required to be 1.0
-*/
 int Randomness::drawSampleProportionally( double *weights, int numWeight )
 {
   double r = drawRandDouble01();
@@ -202,25 +169,6 @@ std::vector<double> Randomness::drawRandDirichlet( const std::vector<double> &al
 
   return result; 
 }
-
-
-
-//This function should be called if the expected values for the dirichlet distribution are given
-// std::vector<double> Randomness::drawDirichletExpected(const std::vector<double> &mean,double scale)
-// {
-//   std::vector<double> alphas; 
-//   double originalSum=0;
-//   for(nat i=0; i< mean.size();i++)
-//     {
-//       originalSum+=mean[i];
-//       alphas.push_back( mean[i]*scale ) ;
-//     }
-//   assert(fabs(originalSum - 1.0 ) < 1e-6);   
-  
-//   return  drawRandDirichlet( alphas);
-// }
-
-
 
 
 // TODO : this is a bracen copy from mrBayes code 
@@ -387,19 +335,28 @@ std::ostream& operator<<(std::ostream& out, const Randomness &rhs)
 
 
 
-void Randomness::readFromCheckpoint( std::ifstream &in )  
+void Randomness::readFromCheckpoint( std::istream &in )  
 { 
   key.v[0] = cRead<nat>(in); 
   key.v[1] = cRead<nat>(in) ; 
   ctr.v[0] = cRead<nat>(in); 
   ctr.v[1] = cRead<nat>(in); 
-
 }
  
-void Randomness::writeToCheckpoint( std::ofstream &out) 
+void Randomness::writeToCheckpoint( std::ostream &out)  const
 {
   cWrite(out, key.v[0]); 
   cWrite(out, key.v[1]); 
   cWrite(out, ctr.v[0]); 
   cWrite(out, ctr.v[1]); 
 } 
+
+
+void Randomness::rebase(int num)
+{
+  // tout << "rebasing to " << num << std::endl; 
+  // std::cout << "rebasing to " << num << std::endl; 
+  ctr.v[1] = num; 
+  ctr.v[0] = 0; 
+}
+

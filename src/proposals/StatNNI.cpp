@@ -9,15 +9,13 @@ StatNNI::StatNNI( double _multiplier)
   this->name = "stNNI" ; 
   this->category = Category::TOPOLOGY; 
   relativeWeight = 5; 
+  needsFullTraversal = false; 
 }
 
 
 void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {    
-  int numBranches = traln.getNumBranches();
-  assert(numBranches == 1); 
-
-  Branch b( TreeRandomizer::drawInnerBranchUniform(traln, rand) ) ; 
+  Branch b =  TreeRandomizer::drawInnerBranchUniform(traln, rand) ; 
   nodeptr p = b.findNodePtr(traln); 
 
   Branch switchingBranch = Branch( 
@@ -27,11 +25,11 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 				  p->back->number
 				   ); 
   
-  move.extractMoveInfo(traln, {b, switchingBranch}); 
+  move.extractMoveInfo(traln, {b, switchingBranch}, getSecondaryParameterView()); 
 
   std::vector<AbstractPrior* > priors; 
   bool multiplyBranches = false; 
-  for(auto &v : secVar)
+  for(auto &v : secondaryParameters)
     {
       multiplyBranches |= v->getCategory() == Category::BRANCH_LENGTHS; 
       priors.push_back(v->getPrior()) ; 
@@ -46,9 +44,12 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 #endif
 
   if(multiplyBranches)
-    move.multiplyBranches(traln, rand, hastings, prior, multiplier, priors); 
+    {
+      // move.multiplyBranches(traln, rand, hastings, prior, multiplier, priors); 
+      assert(0);
+    }
 
-  move.applyToTree(traln);
+  move.applyToTree(traln, getSecondaryParameterView());
   // debug_checkTreeConsistency(traln);
 }
 
@@ -67,7 +68,7 @@ void StatNNI::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln,
 
 void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)  
 {
-  move.revertTree(traln,prior); 
+  move.revertTree(traln,prior, getSecondaryParameterView()); 
   // debug_checkTreeConsistency(traln);
 }
 

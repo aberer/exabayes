@@ -17,48 +17,52 @@ double PlainLikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBran
 }
 
 
-double PlainLikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)
-{
-  Branch root = findVirtualRoot(traln); 
+// double PlainLikelihoodEvaluator::evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)
+// {
+//   Branch root = findVirtualRoot(traln); 
   
-  auto tr = traln.getTr(); 
-  nat numPart = traln.getNumberOfPartitions(); 
-  auto perPartitionLH = traln.getPartitionLnls();
+//   auto tr = traln.getTr(); 
+//   nat numPart = traln.getNumberOfPartitions(); 
+//   auto perPartitionLH = traln.getPartitionLnls();
 
-  std::vector<bool> toExecute(numPart, false );   
-  for(auto m : partitions)
-    toExecute[m] = true; 
-  traln.setExecModel(toExecute); 
+//   std::vector<bool> toExecute(numPart, false );   
+//   for(auto m : partitions)
+//     toExecute[m] = true; 
+//   traln.setExecModel(toExecute); 
 
-  disorientTree(traln, root); 
+//   disorientTree(traln, root); 
 
-  exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
+//   exa_evaluateGeneric(traln, root.findNodePtr(traln),  FALSE ); 
   
-  auto pLnl = traln.getPartitionLnls();
-  for(auto m : partitions )
-    perPartitionLH[m] = pLnl[m]; 
+//   auto pLnl = traln.getPartitionLnls();
+//   for(auto m : partitions )
+//     perPartitionLH[m] = pLnl[m]; 
 
-  traln.setPartitionLnls(perPartitionLH); 
+//   traln.setPartitionLnls(perPartitionLH); 
 
-  tr->likelihood = 0; 
-  for_each(perPartitionLH.begin(), perPartitionLH.end(), [&](double d){ tr->likelihood += d; }); 
-  traln.setExecModel(std::vector<bool>(numPart, true));
+//   tr->likelihood = 0; 
+//   for_each(perPartitionLH.begin(), perPartitionLH.end(), [&](double d){ tr->likelihood += d; }); 
+//   traln.setExecModel(std::vector<bool>(numPart, true));
 
-#ifdef DEBUG_LNL_VERIFY
-  expensiveVerify(traln);   
-#endif
+// #ifdef DEBUG_LNL_VERIFY
+//   expensiveVerify(traln);   
+// #endif
   
-  return tr->likelihood; 
-}
+//   return tr->likelihood; 
+// }
  
 void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const Branch &evalBranch)
 { 
+  // meh 
+  assert(0); 
+
+#if 0 
   bool masked = false; 
   nodeptr p = evalBranch.findNodePtr(traln); 
   int numberToExecute = 0; 
 
   auto execModel = traln.getExecModel();
-  for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
       if(execModel[i])
 	numberToExecute++;
@@ -75,6 +79,7 @@ void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const Branch &evalBr
     }
 
   coreEvalSubTree(traln,p,masked); // NEEDED
+#endif
 } 
 
 
@@ -86,7 +91,7 @@ bool PlainLikelihoodEvaluator::traverseAndTouch(const TreeAln &traln, const Bran
   auto p = b.findNodePtr(traln); 
   bool result =  ( p->x == 1  ) ; 
   
-  auto descending = traln.getDescendants(b); 
+  auto descending = traln.getDescendents(b); 
   result &= traverseAndTouch(traln,descending.first);
   result &= traverseAndTouch(traln,descending.second);
 
@@ -96,3 +101,10 @@ bool PlainLikelihoodEvaluator::traverseAndTouch(const TreeAln &traln, const Bran
   return result; 
 } 
 
+
+
+void PlainLikelihoodEvaluator::resetSomePartitionsToImprinted(TreeAln &traln, std::vector<nat> partitions) 
+{
+  assert(0); 
+  // TODO 
+}

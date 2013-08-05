@@ -32,11 +32,13 @@ public:
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
+  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
   
   // if your proposal has  parameters that are tuned   
   // this is very straight forward, just check out the other proposals 
-  virtual void readFromCheckpointCore(std::ifstream &in); 
-  virtual void writeToCheckpointCore(std::ofstream &out); 
+  virtual void readFromCheckpointCore(std::istream &in); 
+  virtual void writeToCheckpointCore(std::ostream &out) const; 
 
 
 private: 

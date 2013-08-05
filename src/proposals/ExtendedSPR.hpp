@@ -20,8 +20,11 @@ public:
   virtual void autotune() {}	// disabled 
   virtual AbstractProposal* clone() const;  
   
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } 
-  virtual void writeToCheckpointCore(std::ofstream &out) { }  
+  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
+  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+
+  virtual void readFromCheckpointCore(std::istream &in) {   } 
+  virtual void writeToCheckpointCore(std::ostream &out) const { }  
 
 protected: 			// METHODS
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 

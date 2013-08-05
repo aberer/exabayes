@@ -13,10 +13,11 @@ class TopologyFile : public OutputFile
 {
 public: 
   TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId); 
-  void initialize(const TreeAln& traln, nat someId) const ;     
-  void sample(const TreeAln &traln, nat gen) const ; 
-  void finalize() const ; 
-  void regenerate(std::string prevId, nat gen) ; 
+  void initialize(const TreeAln& traln, nat someId)  ;     
+  void sample(const TreeAln &traln, nat gen, const std::vector<AbstractParameter*> &blParams)  ; 
+  void finalize()  ; 
+  void regenerate(std::string workdir, std::string prevId, nat gen) ; 
+  void verifyNonExistance();
 
 private: 
   nat runid; 
