@@ -18,6 +18,7 @@ CommandLine::CommandLine(int argc, char **argv)
   , chainNumParallel(1)
   , checkpointId("")
   , memoryMode(MemoryMode::RESTORING)
+  , perPartitionDataDistribution(false)
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -55,13 +56,15 @@ void CommandLine::printHelp()
 	    << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the examples/ folder\n"
 	    << "    -w dir           specify a working directory for output files\n"
 	    << "    -r id            restart from checkpoint. Just specify the id of the previous run here. \n"
-	    << "                      Make sure, ExaBayes can access all files from this previous run.\n"
+	    << "                       Make sure, ExaBayes can access all files from this previous run.\n"
 	    << "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n"
 	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n"
+	    << "    -Q               per-partition data distribution (use this only with many partitions, check manual\n"
+	    << "                       for detailed explanation)\n"
 	    << "    -M mode          specifies the memory versus runtime trade (NOT IMPLEMENTED)\n"
-	    << "            0         fastest\n" 
-	    << "            1         standard\n"
-	    << "            2         TODO\n"
+	    << "            0          fastest\n" 
+	    << "            1          standard\n"
+	    << "            2          TODO\n"
 	    << std::endl; 
 
   ParallelSetup::genericExit(-1); 
@@ -91,7 +94,7 @@ void CommandLine::parse(int argc, char *argv[])
 
   // TODO threads/ processes? 
   
-  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:M:C:")) != EOF)
+  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:M:C:Q")) != EOF)
     {
       try
 	{	  
@@ -137,6 +140,8 @@ void CommandLine::parse(int argc, char *argv[])
 	      break; 
 	    case 'R': 
 	      runNumParallel = std::stoi(optarg);
+	    case 'Q': 
+	      perPartitionDataDistribution = true; 
 	      break; 	  
 	    default: 
 	      {
@@ -180,6 +185,13 @@ void CommandLine::parse(int argc, char *argv[])
       std::cout << std::endl << "Your command line indicates that you intend to execute multiple runs\n"
 		<< "or chains in parallel. This is the sequential version of" << PROGRAM_NAME << "\n"
 		<< "and thus these command line flags will be ignored." << std::endl; 
+    }
+
+  if(perPartitionDataDistribution)
+    {
+      std::cout << std::endl << "Noticed your intent to enable per-partition data distribution (-Q). \n"
+		<< "Since this is the sequential version of " << PROGRAM_NAME << "this option is ignored.\n"
+		<< "For a detailed explanation of the -Q option, please consult the manual." << std::endl; 
     }
 #endif
 

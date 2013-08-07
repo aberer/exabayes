@@ -24,6 +24,7 @@ public:
   void printVersion(bool toInfoFile);
   nat getNumChainsParallel() const {return chainNumParallel; }
   std::string getCheckpointId()const {return checkpointId; }
+  bool isPerPartitionDataDistribution() const {return perPartitionDataDistribution; }
   void parseAlternative(int argc, char *argv[]); 
 
   MemoryMode getMemoryMode()const {return memoryMode ;  }
@@ -45,6 +46,7 @@ private: 			// ATTRIBUTES
   int chainNumParallel; 
   std::string checkpointId; 
   MemoryMode memoryMode; 
+  bool perPartitionDataDistribution; 
 }; 
 
 

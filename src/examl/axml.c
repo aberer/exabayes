@@ -790,11 +790,6 @@ static void initAdef(analdef *adef)
   adef->perGeneBranchLengths   = FALSE;  
  
   adef->useCheckpoint          = FALSE;
-   
-#ifdef _BAYESIAN 
-  adef->bayesian               = FALSE;
-#endif
-
 }
 
 

@@ -6,7 +6,8 @@ model=GAMMA
 # seed=$RANDOM
 seed=20916
 
-numProc=4
+numProc=2
+extraArgs="-Q"
 # extraArgs="-R 2 -C 2"
 
 # lakner-27

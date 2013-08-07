@@ -299,11 +299,11 @@ void SampleMaster::initializeRuns( )
   const TreeAln& initTree = *initTreePtr; 
 
   // START integrator
-  std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
-  aTree->initializeFromByteFile(cl.getAlnFileName()); 
-  aTree->enableParsimony();
-  TreeRandomizer::randomizeTree(*aTree, masterRand); 
-  ahInt = new AdHocIntegrator(aTree, masterRand.generateSeed());
+  // std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
+  // aTree->initializeFromByteFile(cl.getAlnFileName()); 
+  // aTree->enableParsimony();
+  // TreeRandomizer::randomizeTree(*aTree, masterRand); 
+  // ahInt = new AdHocIntegrator(aTree, masterRand.generateSeed());
   // END
 
   printAlignmentInfo(initTree); 
@@ -330,6 +330,14 @@ void SampleMaster::initializeRuns( )
       trees.push_back(make_shared<TreeAln>()); 
       trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
       trees[i]->enableParsimony();
+
+#if HAVE_PLL == 0
+      if(cl.isPerPartitionDataDistribution())
+	{
+	  auto tr = trees[i]->getTr(); 
+	  tr->manyPartitions = TRUE; 
+	}
+#endif
     }
 
   if( numTreesAvailable > 0 )
