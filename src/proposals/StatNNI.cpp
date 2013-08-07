@@ -1,6 +1,7 @@
 #include "StatNNI.hpp"
 #include "Path.hpp"
 #include "TreeRandomizer.hpp"
+#include "AdHocIntegrator.hpp"
 
 
 StatNNI::StatNNI( double _multiplier)
@@ -15,15 +16,20 @@ StatNNI::StatNNI( double _multiplier)
 
 void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
 {    
+  // ahInt->copyTree(traln); 
+
   Branch b =  TreeRandomizer::drawInnerBranchUniform(traln, rand) ; 
+  b = traln.getBranch(b, getBranchLengthsParameterView()); 
+
+  // ahInt->prepareForBranch(b, traln);
+  // ahInt->integrate(traln, "bla", b, 10000);
+
   nodeptr p = b.findNodePtr(traln); 
 
-  Branch switchingBranch = Branch( 
-				  rand.drawRandDouble01() < 0.5  
+  Branch switchingBranch = Branch( rand.drawRandDouble01() < 0.5  
 				  ? p->back->next->back->number
 				  : p->back->next->next->back->number, 
-				  p->back->number
-				   ); 
+				  p->back->number ); 
   
   move.extractMoveInfo(traln, {b, switchingBranch}, getSecondaryParameterView()); 
 
@@ -50,7 +56,6 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
     }
 
   move.applyToTree(traln, getSecondaryParameterView());
-  // debug_checkTreeConsistency(traln);
 }
 
 
@@ -61,6 +66,7 @@ void StatNNI::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln,
   Branch evalBranch = move.getEvalBranch(traln); 
   nodeptr p = evalBranch.findNodePtr(traln);
   move.disorientAtNode(traln, p);
+
   evaluator->evaluate(traln, evalBranch, false); 
 }
 

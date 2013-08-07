@@ -1,13 +1,23 @@
 #include "Branch.hpp"
 #include "TreeAln.hpp"
-
-
 #include "parameters/AbstractParameter.hpp"
 
 
 Branch::Branch(nat a , nat b, std::vector<double> _lengths) 
   : thisNode(a), thatNode(b), lengths(_lengths)
 {
+}
+
+
+BranchEqualFlag operator|( BranchEqualFlag a, BranchEqualFlag b) 
+{
+  return static_cast<BranchEqualFlag>(static_cast<int>(a) | static_cast<int>(b)); 
+}
+
+
+BranchEqualFlag operator&( BranchEqualFlag a, BranchEqualFlag b)
+{
+  return static_cast<BranchEqualFlag>(static_cast<int>(a) & static_cast<int>(b)); 
 }
 
 
@@ -26,7 +36,6 @@ bool Branch::exists(const TreeAln &traln) const
     || (nat)p->next->back->number == thatNode
     || (nat)p->next->next->back->number == thatNode; 
 }
-
 
 
 nodeptr Branch::findNodePtr(const TreeAln &traln) const
@@ -60,10 +69,30 @@ std::ostream& operator<<(std::ostream &out, const Branch& rhs)
 
 
 
+bool Branch::equals(const Branch &rhs, BranchEqualFlag flags) const 
+{
+  bool result = true; 
+
+  // dir a 
+  result &= (rhs.thisNode == thisNode)  && (rhs.thatNode == thatNode); 
+  
+  if((flags & BranchEqualFlag::WITH_DIRECTION) == BranchEqualFlag::WITHOUT_ANYTHING )
+    result |= (rhs.thatNode == thisNode) && (rhs.thisNode == thatNode); 
+
+  if( (flags & BranchEqualFlag::WITH_LENGTH) != BranchEqualFlag::WITHOUT_ANYTHING)
+    {
+      for(nat i = 0; i < rhs.lengths.size(); ++i)
+	result &= (rhs.lengths[i] == lengths[i]) ;  
+    }
+
+  return result; 
+}
+
+
+
 bool Branch::equalsUndirected(const Branch &rhs) const 
 { 
-  return ( rhs.getPrimNode() == thisNode && rhs.getSecNode() == thatNode  ) 
-    ||  ( rhs.getPrimNode( )== thatNode && rhs.getSecNode() == thisNode ) ; 
+  return equals(rhs, BranchEqualFlag::WITHOUT_ANYTHING); 
 }
 
 
@@ -146,13 +175,6 @@ void Branch::writeToCheckpoint( std::ostream &out)  const
     cWrite(out, v); 
 }  
 
-
-
-
-// double Branch::getInternalLength(const TreeAln &traln, double length, AbstractParameter* param ) const
-// {
-//   return exp( - length / traln.getMeanSubstitutionRate(param->getPartitions())) ;   
-// }
 
 void Branch::setConvertedInternalLength(const TreeAln& traln, 
 					const AbstractParameter* param, double length) 

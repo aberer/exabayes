@@ -85,7 +85,7 @@ void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss,
   if(not isFirst && withInternalNodes && not traln.isTipNode(p))
     ss << p->number ; 
 
-  if(not isFirst && withBranchLengths)
+  if(not isFirst && withBranchLengths && params.size() != 0 )
     printBranchLength(traln, ss, p, params);
 
   if(isFirst)
@@ -98,17 +98,5 @@ void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss,
 
 std::string TreePrinter::printTree(const TreeAln& traln)
 {
-  return printTree(traln);
+  return printTree(traln, {});
 } 
-
-
-// std::string TreePrinter::printTree(const TreeAln &traln, const AbstractParameter* param)
-// {
-//   std::stringstream ss; 
-//   ss << "("; 
-//   helper(traln, ss, traln.getTr()->start->back, true, param );   
-//   ss << "):0.0;"; 
-
-//   return ss.str();
-
-// }

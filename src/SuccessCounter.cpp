@@ -2,6 +2,8 @@
 #include <cassert>
 #include "SuccessCounter.hpp"
 
+#include "common.h"
+
 SuccessCounter::SuccessCounter() 
   : globalAcc(0)
   , globalRej(0)

@@ -7,10 +7,10 @@
 class GibbsProposal
 {
 public: 
-  static void drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings, const AbstractParameter* param) ; 
+  static void drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings,  AbstractParameter const* param) ; 
 
 private: 
-  static void optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluator &eval, double &secDerivative, int maxIter, const AbstractParameter* param)  ; 
+  static void optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluator &eval, double &firstDerivative, double &secDerivative, int maxIter, const AbstractParameter* param)  ; 
 
   const static double EST_EXP; 
   const static double EST_FAC; 

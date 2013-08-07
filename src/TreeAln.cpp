@@ -360,11 +360,82 @@ nodeptr TreeAln::getUnhookedNode(int number)
   return NULL;
 }
 
+#include "parameters/BranchLengthsParameter.hpp"
+
+#include <unordered_set>
+
+bool TreeAln::operator==(const TreeAln& rhs)
+{
+  // notice: this is untested! 
+  assert(0); 
+
+  bool result = true; 
+
+  // create some artificial parameters 
+  std::vector<BranchLengthsParameter> realParams; 
+  std::vector<AbstractParameter*> params; 
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
+    {
+      realParams.emplace_back(i, i);
+      auto &param  =  *(realParams.rbegin()); 
+      param.addPartition(i);
+    }
+  for(auto & p: realParams)
+    params.push_back(&p); 
+
+
+  auto rBranches = rhs.extractBranches(params); 
+  auto lBranches = extractBranches(params); 
+
+  auto equals = [](const Branch& a, const Branch &b ) { return a.equals(b, BranchEqualFlag::WITH_LENGTH) ;}; 
+  auto theHash = [](const Branch &a) { return std::hash<nat>()(a.getPrimNode()) ^ std::hash<nat>()(a.getSecNode()); }; 
+  std::unordered_set<Branch, decltype(theHash), decltype(equals)> lSet(lBranches.size(), theHash, equals); 
+  std::unordered_set<Branch, decltype(theHash), decltype(equals)> rSet(rBranches.size(), theHash, equals); 
+  for(auto &b : rBranches)
+    rSet.insert(b); 
+  for(auto &b : lBranches)
+    lSet.insert(b); 
+  
+  for(auto &b : lBranches)
+    result &= rSet.find(b)!= rSet.end(); 
+  result &= lBranches.size() == rBranches.size(); 
+
+  
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
+    {
+      const auto rp =  rhs.getPartition(i); 
+      const auto lp = getPartition(i); 
+
+      result &= rp->dataType == lp->dataType; 
+
+      if(result)
+	{
+	  // check frequencies 
+	  for(int j = 0; j < lp->states; ++j)
+	    result &= rp->frequencies[j] == lp->frequencies[j]; 
+      
+	  // check revmat 
+	  for(nat j = 0; j < numStateToNumInTriangleMatrix(lp->states) ; ++j) 
+	    result &= lp->substRates[j] == rp->substRates[j]; 
+	}
+
+      // check alpha
+      result &= rp->alpha == lp->alpha; 
+
+    }
+
+  return result; 
+}
+
+
+
 #define UNSAFE_EXACT_TREE_COPY
 
 void TreeAln::copyModel(const TreeAln& rhs)  
 {  
-  assert(&rhs != this); 
+  // assert(&rhs != this); 
+  if(&rhs == this)
+    return; 
 
   // copy partition parameters 
   for(nat i = 0; i < rhs.getNumberOfPartitions(); ++i)
@@ -734,7 +805,7 @@ void TreeAln::initializePartitionsPLL(std::string byteFileName, double ***empiri
 #endif
 
 
-std::ostream& operator<< (std::ostream& out,  TreeAln&  traln)
+std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln)
 {
   TreePrinter tp(true, false, false); 
   return out << tp.printTree(traln); 

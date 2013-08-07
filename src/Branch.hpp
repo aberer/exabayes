@@ -17,11 +17,22 @@
 
 #include "axml.h"
 #include "Checkpointable.hpp"
-// #include "parameters/AbstractParameter.hpp"
 
 class AbstractParameter; 
-
 class TreeAln; 
+
+
+enum class BranchEqualFlag : int 
+{
+  WITHOUT_ANYTHING = 0,
+  WITH_LENGTH = 1, 
+    WITH_DIRECTION = 2
+}; 
+
+
+BranchEqualFlag operator|( BranchEqualFlag a, BranchEqualFlag b); 
+BranchEqualFlag operator&( BranchEqualFlag a, BranchEqualFlag b); 
+
 
 class Branch : public Checkpointable
 {
@@ -49,6 +60,10 @@ public:
      @brief indicates whether two branches are equal disregarding branch lengths and orientation     
    */ 
   bool equalsUndirected(const Branch &rhs) const ;   
+  /** 
+      @brief gets the equality of this branch and rhs in a generic manner. 
+   */ 
+  bool equals(const Branch &rhs, BranchEqualFlag flags) const ;  
   /**
      @brief gets the primary node (i.e., reference node) of the branch
    */ 
@@ -107,7 +122,7 @@ public:
       @brief indicates whether a branch is a tip branch  
    */ 
   bool isTipBranch(const TreeAln &traln) const; 
-  
+
   virtual void readFromCheckpoint( std::istream &in ) ; 
   virtual void writeToCheckpoint( std::ostream &out) const  ;   
 

@@ -483,7 +483,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
     }
 }
 
-static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
+static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony, nat *pLengthAtBranch)
 {
   INT_TYPE 
     allOne = SET_ALL_BITS_ONE;
@@ -521,6 +521,8 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 left[k]  = &(tr->partitionData[model].parsVect[(width * 2 * qNumber) + width * k]);
 		 right[k] = &(tr->partitionData[model].parsVect[(width * 2 * pNumber) + width * k]);
 	       }     
+
+	     nat sum = 0; 
 	     
 	     for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 	       {                	                       
@@ -531,8 +533,10 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 		 
-		 partitionParsimony[model] += vectorPopcount(v_N); 
+		 sum += vectorPopcount(v_N); ;
 	       }
+	     pLengthAtBranch[model] = sum; 
+	     partitionParsimony[model] += sum; 
 	   }
 	   break;
 	 case 4:
@@ -552,6 +556,8 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 right[k] = start + numR;
 	       }        
 
+	     nat sum = 0; 
+
 	     for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 	       {                	                        
 		 INT_TYPE      
@@ -563,11 +569,12 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 		 
-		 nat tmp = vectorPopcount(v_N);
+		 /* nat tmp = vectorPopcount(v_N); */
+		 sum += vectorPopcount(v_N); 
+	       }
 
-		 partitionParsimony[model] += tmp ; 
-
-	       }	   	 
+	     pLengthAtBranch[model] = sum;
+	     partitionParsimony[model] += sum; 
 	   }
 	   break;
 	 case 20:
@@ -582,6 +589,9 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		  right[k] = &(tr->partitionData[model].parsVect[(width * 20 * pNumber) + width * k]);
 		}  
 	   
+
+	      nat sum = 0; 
+
 	      for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 		{                	       
 		  int 
@@ -598,10 +608,12 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		    }
 		  
 		  v_N = VECTOR_AND_NOT(v_N, allOne);
-		  
-		  partitionParsimony[model] += vectorPopcount(v_N); 
-
+	
+		  sum += vectorPopcount(v_N); ;
+		  /* partitionParsimony[model] += vectorPopcount(v_N);  */
 		}
+	      pLengthAtBranch[model] = sum;
+	      partitionParsimony[model] += sum; 
 	   }
 	   break;
 	 default:
@@ -618,6 +630,8 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 right[k] = &(tr->partitionData[model].parsVect[(width * states * pNumber) + width * k]);
 	       }  
 	   
+	     nat sum = 0; 
+
 	     for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 	       {                	       
 		 size_t
@@ -635,8 +649,10 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 
-		 partitionParsimony[model] += vectorPopcount(v_N); 
+		 sum += vectorPopcount(v_N); 
 	       }
+	     pLengthAtBranch[model] = sum; 
+	     partitionParsimony[model] += sum; 
 	   }
 	 }
     }
@@ -652,7 +668,7 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 
 
 
-void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony, nat *pAtBranch )
+void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony, nat *pLengthAtBranch )
 {
   /* volatile nat   */
   nodeptr q = p->back;
@@ -682,8 +698,8 @@ void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimon
 
   /* for(int i = 0; i < tr->NumberOfModels; ++i) */
   /*   partitionParsimony[i] = 0;  */
- 
-  evaluateParsimonyIterativeFast(tr, partitionParsimony);
+  
+  evaluateParsimonyIterativeFast(tr, partitionParsimony, pLengthAtBranch);
 }
 
 
@@ -956,7 +972,9 @@ static void stepwiseAddition(tree *tr,  nodeptr p, nodeptr q)
 
    
   nat* partitionParsimony = (nat*) exa_calloc(tr->NumberOfModels,sizeof(nat)) ; 
-  evaluateParsimonyIterativeFast(tr,  partitionParsimony);
+  nat* pLengthAtBranch = (nat*) exa_calloc(tr->NumberOfModels, sizeof(nat));
+  evaluateParsimonyIterativeFast(tr,  partitionParsimony, pLengthAtBranch);
+  exa_free(pLengthAtBranch);
   mp = 0; 
   for(int i = 0; i < tr->NumberOfModels; ++i)
     mp += partitionParsimony[i]; 

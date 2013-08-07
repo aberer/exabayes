@@ -27,9 +27,10 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
   Branch b(insertPos->number, insertBack->number); 
 
   std::vector<nat> partitionParsimony ; 
+  std::vector<nat> pLengthAtBranch; 
   pEval.evaluateSubtree(traln,  prunedTree); 
   pEval.evaluateSubtree(traln,  prunedTree->back); // necessary? 
-  pEval.evaluate(traln, prunedTree, false, partitionParsimony); 
+  pEval.evaluate(traln, prunedTree, false, partitionParsimony, pLengthAtBranch); 
 
   assert(posses.find(b) == posses.end()) ;   
   posses[b] = partitionParsimony; 
@@ -87,7 +88,10 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
       for(nat i = 0 ; i < traln.getNumberOfPartitions(); ++i)
 	{
 	  double states  = double(traln.getPartition(i)->states); 
-	  double divFactor = - (parsWarp *  log((1.0/states) - exp(-(states/(states-1) * 0.05)) / states)) ;  //  * tr->fracchange
+	  double divFactor = - (parsWarp 
+				* log((1.0/states)
+				      - exp(-(states/(states-1) * 0.05)) 
+				      / states));
 	  score += divFactor * elem.second[i];
 	}
 
@@ -120,7 +124,8 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   scoreMap possibilities; 
 
   std::vector<nat> partitionParsimony; 
-  pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony);
+  std::vector<nat> pLengthAtBranch; 
+  pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony, pLengthAtBranch);
 
   // BAD 
   Branch prunedTree; 

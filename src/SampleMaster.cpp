@@ -2,8 +2,8 @@
 #include <fstream>
 #include <memory>
 
+#include "AdHocIntegrator.hpp"
 #include "ProposalSet.hpp"
-// #include "Category.hpp"
 
 #include "common.h"
 
@@ -41,9 +41,8 @@
 // * check restart 
 
 
-
 // a developmental mode to integrate over branch lengths
-// #define _GO_TO_INTEGRATION_MODE
+#define _GO_TO_INTEGRATION_MODE
 
 void genericExit(int code); 
 static int countNumberOfTreesQuick(const char *fn ); 
@@ -110,7 +109,7 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
   // choose how to initialize the topology
   for(auto &tralnPtr : treesToInitialize)
     initializeTree(*tralnPtr,  treesConsumed, numTreesAvailable, treeFH, treeRandomness, params); 
-  
+
   // propagate the tree to the coupled chains, if necessary
   if(runParams.isHeatedChainsUseSame())
     {
@@ -156,7 +155,6 @@ void SampleMaster::printAlignmentInfo(const TreeAln &traln)
 	  assert(0); 
 	}      
     }
-
   tout << "\nParameter names will reference the above partition numbers."<< std::endl  ; 
 }
 
@@ -286,7 +284,7 @@ void SampleMaster::initializeRuns( )
 
   if(cl.getCheckpointId().compare(cl.getRunid()) == 0)
     {
-      std::cerr << "You specified >" << cl.getRunid() << "< as runid and inteded\n"
+      std::cerr << "You specified >" << cl.getRunid() << "< as runid and intended\n"
 		<< "to restart from a previous run with id >" << cl.getCheckpointId() << "<."
 		<< "Please specify a new runid for the restart. " << std::endl; 
       ParallelSetup::genericExit(-1); 
@@ -299,6 +297,14 @@ void SampleMaster::initializeRuns( )
   initTreePtr->initializeFromByteFile(cl.getAlnFileName()); 
   initTreePtr->enableParsimony();
   const TreeAln& initTree = *initTreePtr; 
+
+  // START integrator
+  std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
+  aTree->initializeFromByteFile(cl.getAlnFileName()); 
+  aTree->enableParsimony();
+  TreeRandomizer::randomizeTree(*aTree, masterRand); 
+  ahInt = new AdHocIntegrator(aTree, masterRand.generateSeed());
+  // END
 
   printAlignmentInfo(initTree); 
 
@@ -773,4 +779,4 @@ void SampleMaster::writeCheckpointMaster()
 } 
 
 
-#include "IntegrationModuleImpl.hpp"
+ #include "IntegrationModuleImpl.hpp"

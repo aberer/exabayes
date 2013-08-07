@@ -51,6 +51,7 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln,
 
   // saving the tree state 
   suspend(); 
+  updateProposalWeights();
 }
 
 
@@ -96,6 +97,19 @@ double Chain::getChainHeat()
   assert(couplingId == 0 || inverseHeat < 1.); 
   return inverseHeat; 
 }
+
+void Chain::updateProposalWeights()
+{
+  // prepare proposals 
+  relWeightSumSingle = 0; 
+  for(auto& elem : proposals)
+    relWeightSumSingle +=  elem->getRelativeWeight();
+  
+  relWeightSumSets = 0; 
+  for(auto &set : proposalSets)
+    relWeightSumSets += set.getRelativeWeight();
+}
+
 
 
 void Chain::resume(bool evaluate, bool checkLnl) 
@@ -153,14 +167,7 @@ void Chain::resume(bool evaluate, bool checkLnl)
 	}
     }
 
-  // prepare proposals 
-  relWeightSumSingle = 0; 
-  for(auto& elem : proposals)
-    relWeightSumSingle +=  elem->getRelativeWeight();
-  
-  relWeightSumSets = 0; 
-  for(auto &set : proposalSets)
-    relWeightSumSets += set.getRelativeWeight();
+  updateProposalWeights();
 }
 
 
@@ -394,7 +401,7 @@ void Chain::stepSingleProposal()
 #ifdef DEBUG_SHOW_EACH_PROPOSAL 
   addChainInfo(tout); 
   tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" 
-       << SOME_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)" << priorRatio << "\t" << hastings << std::endl; 
+       << SOME_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << hastings << std::endl; 
 #endif
 
   if(wasAccepted)

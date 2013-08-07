@@ -11,7 +11,7 @@
 // saver. You access it with e.g., BoundsChecker::zmin, since the variable
 // does not belong to an instance of the class, but the class in general. 
 
-const double BoundsChecker::zMin = 1.0e-16 ; // 1e-16
+const double BoundsChecker::zMin = 1.0e-15 ; // 1e-16
 const double BoundsChecker::zMax = (1.0 - 1.0e-6) ; // 1-1e-6
 const double BoundsChecker::rateMin = 1e-7; 
 const double BoundsChecker::rateMax = 1e6; 
@@ -19,9 +19,7 @@ const double BoundsChecker::alphaMin = 0.02;
 const double BoundsChecker::alphaMax = 1000.0; 
 const double BoundsChecker::freqMin = 0.001;
 
-// const double BoundsChecker::rateMin = 1e-12; 
-// const double BoundsChecker::rateMax = 1e12; 
- 
+
 bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )  
 {
   bool result = true; 

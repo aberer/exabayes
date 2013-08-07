@@ -40,6 +40,12 @@ public:
   */ 
   TreeAln& operator=( TreeAln &rhs) = delete ;     
   TreeAln(const TreeAln &tmp) = delete ; 
+  
+  /** 
+      @brief indicates whether this TreeAln is equal to rhs (with
+      regard to all model parameters)
+   */   
+  bool operator==(const TreeAln& rhs); 
 
 
   /////////////////////////////////////
@@ -225,10 +231,8 @@ private: 			// ATTRIBUTES
   tree tr;		// TODO replace with an object for cleanup   
   bool parsimonyEnabled;   
 
-
-
   // friends 
-  friend std::ostream& operator<< (std::ostream& out,  TreeAln&  traln);
+  friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
 
   //////////////////
   // EXPERIMENTAL //

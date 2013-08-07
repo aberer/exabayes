@@ -6,8 +6,7 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
-
-#define PRECISION (std::setprecision(std::numeric_limits<double>::digits10 + 2)) 
+#include "common.h"
 
 
 class Checkpointable
@@ -51,7 +50,7 @@ void Checkpointable::cWrite(std::ostream &out, const T& toWrite) const
     }
   else 
     {
-      out << std::scientific << PRECISION;      
+      out << std::scientific << MAX_SCI_PRECISION; 
       out << toWrite << DELIM; 
     }
 }

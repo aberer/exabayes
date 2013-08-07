@@ -95,6 +95,8 @@ public:
    */ 
   std::string serializeConditionally( CommFlag commFlags) const ; 
 
+  void reinitPrior(){prior.initialize(*tralnPtr, extractParameters());}
+
   // getters and setters 
   double getBestState() const {return bestState; }
   LikelihoodEvaluator* getEvaluator() {return evaluator.get(); }
@@ -114,6 +116,7 @@ public:
   double getLikelihood() const {return likelihood; }
   double getLnPr() const {return lnPr; }
   const PriorBelief& getPrior() const  {return prior; } 
+  void updateProposalWeights(); 
  
   virtual void readFromCheckpoint( std::istream &in ) ; 
   virtual void writeToCheckpoint( std::ostream &out) const ;   
