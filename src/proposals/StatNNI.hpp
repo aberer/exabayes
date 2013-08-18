@@ -23,9 +23,9 @@ public:
   StatNNI( double multiplier);
   virtual ~StatNNI(){}
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
+  virtual void resetState(TreeAln &traln) ; 
 
   // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
   virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
@@ -37,12 +37,17 @@ public:
   virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
   virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
-private:
+
+private: 			// METHODS
+  void treatOneBranch(nodeptr p, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand); 
+
+private:			// ATTRIBUTES
   double multiplier; 
   Path path; 
   NniMove move; 
-
-  void treatOneBranch(nodeptr p, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand); 
+#ifdef _EXPERIMENTAL_INTEGRATION_MODE
+  nat invocations; 
+#endif
 };
 
 #endif

@@ -14,20 +14,20 @@ AminoModelJump::AminoModelJump(vector<aaMatrix_t> matrices)
 
 
 
-void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
+void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator &eval)
 {
   assert(NOT_IMPLEMENTED); 
 }
 
 
-void AminoModelJump::evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) 
+void AminoModelJump::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) 
 {
   assert(NOT_IMPLEMENTED); 
 }
 
 
 
-void AminoModelJump::resetState(TreeAln &traln, PriorBelief &prior)
+void AminoModelJump::resetState(TreeAln &traln)
 {  
   assert(NOT_IMPLEMENTED); 
 }

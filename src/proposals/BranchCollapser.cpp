@@ -12,7 +12,7 @@ BranchCollapser::BranchCollapser()
 }
 
 
-void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
+void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator &eval)
 {
 #if 0 
   Branch b = TreeRandomizer::drawBranchUniform(traln, rand); 
@@ -67,14 +67,14 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 }
 
 
-void BranchCollapser::evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) 
+void BranchCollapser::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) 
 {
-  evaluator->evaluate(traln,modifiedBranch, false); 
+  evaluator.evaluate(traln,modifiedBranch, false); 
 }
 
 
 
-void BranchCollapser::resetState(TreeAln &traln, PriorBelief &prior)
+void BranchCollapser::resetState(TreeAln &traln)
 {  
 #if 0 
 #if TODO 

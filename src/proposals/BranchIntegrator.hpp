@@ -16,6 +16,7 @@ public:
 
   virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const
   {
+    
     return toPropose; 
   } 
   

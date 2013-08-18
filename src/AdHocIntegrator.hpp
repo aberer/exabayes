@@ -8,8 +8,10 @@
 #include "parameters/BranchLengthsParameter.hpp"
 #include "ParsimonyEvaluator.hpp"
 #include "RestoringLnlEvaluator.hpp"
+#include "common.h"
 
 
+// HACK 
 struct noDeleter
 {
   void operator ()(void *) {} 
@@ -19,18 +21,19 @@ struct noDeleter
 class AdHocIntegrator
 {
 public: 
-  AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, randCtr_t seed ); 
+  AdHocIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed); 
   std::vector<AbstractParameter*> getBlParamView() const ;
-  void prepareForBranch( Branch branch, TreeAln &traln); 
-  std::pair<double,double> integrate(TreeAln &traln, std::string runid, Branch branch, nat intGens); 
+  void prepareForBranch( const Branch &branch, const TreeAln &traln); 
+  std::vector<double> integrate(const Branch &branch, const TreeAln &otherTree, nat intGens, nat thinning); 
   void createLnlCurve(Branch branch, std::string runid, TreeAln & traln , double minHere, double maxHere, nat numSteps); 
+  bool decideUponAcceptance(const TreeAln &traln, double prevLnl); 
   double getParsimonyLength(TreeAln &traln, const Branch &b );
-  double printOptimizationProcess(Branch branch, TreeAln &traln, std::string runid, double lambda, nat nrSteps); 
-
+  double printOptimizationProcess(const Branch& branch, std::string runid, double lambda, nat nrSteps); 
   void copyTree(const TreeAln &traln); 
+  std::pair<double,double> getMeanAndVar (const std::vector<double> &data );
 
 private: 			// METHODS 
-  std::pair<double,double> getMeanAndVar (const std::vector<double> &data ); 
+
 
 private: 			// ATTRIBUTES
   std::unique_ptr<Chain> integrationChain; 

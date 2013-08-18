@@ -11,9 +11,9 @@ public:
   NodeSlider( double multiplier);
   virtual ~NodeSlider(){}
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
+  virtual void resetState(TreeAln &traln) ; 
   
   Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ; 
   Branch proposeOtherBranch(const Branch &firstBranch, const TreeAln& traln, Randomness& rand) const ; 

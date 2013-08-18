@@ -44,7 +44,7 @@ void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss,
 {
   if(params.size() == 1 )
     {
-      const AbstractParameter* param = params[0]; 
+      auto param = params[0]; 
       ss << ":" << traln.getBranch(p,param).getInterpretedLength(traln, param); 
     }
   else 

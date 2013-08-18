@@ -8,11 +8,9 @@
 
 
 AlignmentProposal::AlignmentProposal(Category cat, std::string name, double parameter, 
-				     nat numParamExpected, AbstractProposer* proposalPrototype, 
-				     std::unique_ptr<LikelihoodEvaluator> _eval) 
+				     nat numParamExpected, AbstractProposer* proposalPrototype ) 
   : AbstractProposal()
   , partitionParameter(numParamExpected, parameter)    
-  , eval(std::move(_eval))
 {
   this->name = name; 
   this->category = cat; 
@@ -23,7 +21,6 @@ AlignmentProposal::AlignmentProposal(Category cat, std::string name, double para
 AlignmentProposal::AlignmentProposal(const AlignmentProposal& rhs )  
   : AbstractProposal(rhs)
   , partitionParameter(rhs.partitionParameter)
-  , eval(std::move(rhs.eval->clone()))
 {
   for(auto &p : rhs.partitionProposer)
     partitionProposer.emplace_back(p->clone());   
@@ -37,7 +34,7 @@ AlignmentProposal& AlignmentProposal::operator=(AlignmentProposal rhs)
 }
 
 
-void AlignmentProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+void AlignmentProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {  
   assert(partitionProposer.size()== primaryParameters.size() 
 	 && primaryParameters.size() == partitionParameter.size() ); 
@@ -88,7 +85,7 @@ void AlignmentProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
     }
 
   // the expensive eval-call   
-  eval->evaluatePartitions(traln, affectedPartitions, true);
+  eval.evaluatePartitions(traln, affectedPartitions, true);
 
   // get the new lnls per parameter 
   auto newLnls = traln.getPartitionLnls(); 
@@ -154,7 +151,7 @@ void AlignmentProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
     }
 
   // reset all partitions for which we do not propose a new setting
-  eval->resetSomePartitionsToImprinted(traln, partitionsToReset);
+  eval.resetSomePartitionsToImprinted(traln, partitionsToReset);
   std::vector<double> pLnlsNow = traln.getPartitionLnls();   
   for(auto &p : partitionsToReset)
     pLnlsNow.at(p) = partitionLnls.at(p);
@@ -193,7 +190,7 @@ void AlignmentProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
 
 
-void AlignmentProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void AlignmentProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
   // this is a NOOP  
 
@@ -205,7 +202,7 @@ void AlignmentProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeA
 }
 
 
-void AlignmentProposal::resetState(TreeAln &traln, PriorBelief &prior)
+void AlignmentProposal::resetState(TreeAln &traln)
 {
   nat ctr  = 0; 
   for(auto &p : primaryParameters)

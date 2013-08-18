@@ -114,7 +114,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 }
 
 
-void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hastings, Randomness &rand)
+void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 { 
   drawPaths(traln,rand);
 
@@ -142,7 +142,7 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 }
 
 
-void ExtendedTBR::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln& traln, PriorBelief& prior)
+void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& traln)
 { 
   Branch toEval = move.getEvalBranch(traln);
   // tout <<  "eval " << toEval << std::endl; 
@@ -150,13 +150,13 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln& tral
   auto p = toEval.findNodePtr(traln); 
   move.disorientAtNode(traln,p->back);     
 
-  evaluator->evaluate(traln,toEval,false); 
+  evaluator.evaluate(traln,toEval,false); 
 }
 
 
-void ExtendedTBR::resetState(TreeAln &traln, PriorBelief& prior)
+void ExtendedTBR::resetState(TreeAln &traln)
 {
-  move.revertTree(traln,prior, getSecondaryParameterView() );
+  move.revertTree(traln, getSecondaryParameterView() );
 
 #ifdef EFFICIENT
   assert(0); 

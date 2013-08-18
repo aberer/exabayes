@@ -32,15 +32,15 @@ void NniMove::applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> 
 
 } 
 
-void NniMove::revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<AbstractParameter*> &params) const 
+void NniMove::revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const 
 {
   applyToTree(traln, params);
 
   // revert branch lengths 
-  nodeptr p = innerBranch.findNodePtr(traln); 
+  // nodeptr p = innerBranch.findNodePtr(traln); 
 
   // reset inner branch 
-  traln.clipNode(p,p->back); 
+  // traln.clipNode(p,p->back); 
   traln.setBranch(innerBranch, params); 
 
   for(auto &elem : outerBranches)
@@ -140,3 +140,9 @@ void NniMove::multiplyBranch(const Branch &branch, TreeAln &traln, double &hasti
 #endif
 
 
+
+
+NniMove NniMove::getInvertseMove() const 
+{
+  return NniMove(*this); 
+} 

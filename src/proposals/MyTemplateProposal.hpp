@@ -26,9 +26,9 @@ public:
   // everything copied over from AbstractProposal that has a = 0
   // there. This declares the methods pure virtual, and the derived
   // proposal HAS to implement theese methods.
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior); 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
+  virtual void resetState(TreeAln &traln); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 

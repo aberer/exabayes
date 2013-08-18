@@ -24,7 +24,7 @@ Branch BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &r
 }   
 
 
-void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   Branch b = proposeBranch(traln, rand); 
   
@@ -58,13 +58,13 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 }
 
 
-void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) 
+void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) 
 {
-  evaluator->evaluate(traln,savedBranch, false); 
+  evaluator.evaluate(traln,savedBranch, false); 
 }
 
  
-void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior) 
+void BranchLengthMultiplier::resetState(TreeAln &traln) 
 {
   assert(primaryParameters.size() == 1)  ; 
   traln.setBranch(savedBranch, getPrimaryParameterView()); 

@@ -66,7 +66,7 @@ void NodeSlider::prepareForEvaluation( TreeAln &traln) const
 }
 
 
-void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   auto blParams = getPrimaryParameterView(); 
   auto param = blParams[0];
@@ -130,7 +130,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   prior.updateBranchLengthPrior(traln, oldB, newB, param);
 }
 
-void NodeSlider::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
@@ -139,11 +139,11 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &tra
   nodeptr p = b.findNodePtr(traln);    
   LikelihoodEvaluator::disorientNode( p); 
 
-  evaluator->evaluate(traln,b, false); 
+  evaluator.evaluate(traln,b, false); 
 }
 
 
-void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior) 
+void NodeSlider::resetState(TreeAln &traln) 
 {
   auto view = getPrimaryParameterView();
   assert(view.size() == 1); 

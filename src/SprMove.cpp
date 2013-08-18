@@ -12,12 +12,12 @@ void SprMove::applyToTree(TreeAln &traln,const std::vector<AbstractParameter*> &
   applyPath(traln, path, blParams); 
 }
 
-void SprMove::revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<AbstractParameter*> &params) const
+void SprMove::revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const
 {
   Path anotherPath ; 
   getPathAfterMove(traln, path, anotherPath);
   applyPath(traln, anotherPath, params); 
-  path.restoreBranchLengthsPath(traln, prior, params); 
+  path.restoreBranchLengthsPath(traln, params); 
 }
 
  

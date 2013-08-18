@@ -2,6 +2,7 @@
 #include <map> 
 #include <unordered_map>
 
+#include "StatNNI.hpp"
 #include "NodeSlider.hpp"
 #include "Chain.hpp"		
 #include "TreeAln.hpp"
@@ -386,9 +387,10 @@ void Chain::stepSingleProposal()
   /* reset proposal ratio  */
   hastings = 0; 
 
-  pfun->applyToState(*tralnPtr, prior, hastings, chainRand);
+  auto &eva = *(evaluator.get()); 
 
-  pfun->evaluateProposal(evaluator.get(), *tralnPtr, prior);
+  pfun->applyToState(*tralnPtr, prior, hastings, chainRand, eva);
+  pfun->evaluateProposal(eva, *tralnPtr);
   
   double priorRatio = prior.getLnPriorRatio();
   double lnlRatio = tralnPtr->getTr()->likelihood - prevLnl; 
@@ -397,7 +399,7 @@ void Chain::stepSingleProposal()
   double acceptance = exp(( priorRatio + lnlRatio) * myHeat + hastings) ; 
 
   bool wasAccepted  = testr < acceptance; 
-  
+
 #ifdef DEBUG_SHOW_EACH_PROPOSAL 
   addChainInfo(tout); 
   tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" 
@@ -415,7 +417,7 @@ void Chain::stepSingleProposal()
     }
   else
     {
-      pfun->resetState(*tralnPtr, prior);
+      pfun->resetState(*tralnPtr);
       pfun->reject();
       prior.reject();
 
@@ -450,7 +452,7 @@ void Chain::stepSetProposal()
 
       double lHast = 0;       
       prior.reject();
-      proposal->applyToState(*tralnPtr, prior, lHast, chainRand); 
+      proposal->applyToState(*tralnPtr, prior, lHast, chainRand, *(evaluator)); 
       p2LnPriorRatio[proposal] = prior.getLnPriorRatio(); 
       p2Hastings[proposal] = lHast; 
 
@@ -518,7 +520,7 @@ void Chain::stepSetProposal()
       else 
 	{
 	  // TODO prior more efficient 
-	  proposal->resetState(*tralnPtr, prior);
+	  proposal->resetState(*tralnPtr);
 	  proposal->reject();	  
 
 	  for(auto& param: proposal->getPrimaryParameterView())
@@ -580,6 +582,9 @@ void Chain::step()
 {
   currentGeneration++; 
 
+  if(INTEGRATION_GENERATION < currentGeneration )
+    startIntegration = true; 
+
 #ifdef DEBUG_VERIFY_LNPR
   prior.verifyPrior(*tralnPtr, extractParameters());
 #endif
@@ -604,7 +609,6 @@ void Chain::step()
 
   if( currentGeneration == VERIFY_GEN  )
     {      
-      tout << "EVAL" << std::endl; 
       evaluator->evaluate(*tralnPtr, evaluator->findVirtualRoot(*tralnPtr), true); 
     }
 }

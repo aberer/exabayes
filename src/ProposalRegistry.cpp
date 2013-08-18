@@ -120,7 +120,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  proposal = unique_ptr<AminoModelJump>( new AminoModelJump(someMatrices));
 	  break; 
 	case ProposalType::BRANCH_GIBBS: 
-	  proposal = unique_ptr<GibbsBranchLength>( new GibbsBranchLength(std::unique_ptr<LikelihoodEvaluator>(eval->clone())));
+	  proposal = unique_ptr<GibbsBranchLength>( new GibbsBranchLength());
 	  break;
 	case ProposalType::BRANCH_SLIDER: 
 	  continue; 		// TODO implement  
@@ -175,7 +175,9 @@ ProposalRegistry::getMultiParameterProposals(std::vector<AbstractParameter*> par
 					 "revMatDirichAll", 
 					 initDirichletAlpha, 
 					 paramsPerCategory[Category::SUBSTITUTION_RATES].size(), // 
-					 p.get(), eval->clone()); 
+					 p.get() 
+					 // ,eval->clone()
+); 
 
   // BAD =/ 
   double userWeight = 1; 

@@ -207,7 +207,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 
 
 
-void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 { 
   determineSprPath(traln, rand, hastings, prior); 
   move.applyToTree(traln, getSecondaryParameterView() ); 
@@ -249,19 +249,19 @@ void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
 
 #include "TreePrinter.hpp"
 
-void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {  
   Branch toEval = move.getEvalBranch(traln);
   TreePrinter tp(false, true, false);
   
   nodeptr toEvalP = toEval.findNodePtr(traln) ; 
   move.disorientAtNode(traln,toEvalP);
-  evaluator->evaluate(traln,toEval, false); 
+  evaluator.evaluate(traln,toEval, false); 
 }
 
-void ParsimonySPR::resetState(TreeAln &traln, PriorBelief &prior) 
+void ParsimonySPR::resetState(TreeAln &traln) 
 {
-  move.revertTree(traln,prior, getSecondaryParameterView() ); 
+  move.revertTree(traln, getSecondaryParameterView() ); 
 }
  
 

@@ -23,7 +23,7 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
 // }
 
 
-void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   storedBranches.clear(); 
   
@@ -68,7 +68,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 }
 
 
-void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
+void TreeLengthMultiplier::resetState(TreeAln &traln)  
 {
   for(auto &b : storedBranches)
     traln.setBranch(b, getPrimaryParameterView()); 
@@ -92,9 +92,9 @@ void TreeLengthMultiplier::autotune()
 }
  
  
-void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
-  evaluator->evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
+  evaluator.evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
 }
 
 

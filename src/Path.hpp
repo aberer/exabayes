@@ -28,7 +28,7 @@ public:
   void debug_assertPathExists(TreeAln& traln); 
 
   /** @brief assigns stored branch lengths of a path to a given tree  */ 
-  void restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior, const std::vector<AbstractParameter*> &blParams) const ; 
+  void restoreBranchLengthsPath(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const ; 
   /** @brief only add a branch to the path, if it is novel. If the new
       branch cancels out an existing branch, the path is shortened again */ 
   void pushToStackIfNovel(Branch b, const TreeAln &traln ); 
@@ -59,7 +59,7 @@ public:
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
   void printWithBLs(TreeAln &traln ) const; 
 
-  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, const AbstractParameter* param) const ; 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior,  AbstractParameter* const param) const ; 
 
   void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
   friend std::ostream& operator<<(std::ostream &out, const Path &rhs)  ;

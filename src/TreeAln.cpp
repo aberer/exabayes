@@ -1,7 +1,9 @@
 #include <sstream>
 #include <cassert>
 #include <cstring>
+#include <unordered_set>
 
+#include "parameters/BranchLengthsParameter.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "TreeRandomizer.hpp"
 #include "axml.h"
@@ -360,9 +362,6 @@ nodeptr TreeAln::getUnhookedNode(int number)
   return NULL;
 }
 
-#include "parameters/BranchLengthsParameter.hpp"
-
-#include <unordered_set>
 
 bool TreeAln::operator==(const TreeAln& rhs)
 {
@@ -876,7 +875,8 @@ std::pair<Branch,Branch> TreeAln::getDescendents(const Branch &b) const
 {
   auto p = b.findNodePtr(*this); 
   return std::pair<Branch,Branch>
-    { Branch(p->next->number, p->next->back->number), Branch(p->next->next->number, p->next->next->back->number) }; 
+    { Branch(p->next->number, p->next->back->number), 
+	Branch(p->next->next->number, p->next->next->back->number) }; 
 } 
 
 
@@ -940,20 +940,20 @@ double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) cons
 
 
 
-Branch TreeAln::getBranch(const Branch& b, AbstractParameter* param)
+Branch TreeAln::getBranch(const Branch& b, AbstractParameter* const &param) const
 {
   return getBranch(b.findNodePtr(*this) , param);
 }
 
 
-Branch TreeAln::getBranch(const Branch &b , const std::vector<AbstractParameter*> params) const 
+Branch TreeAln::getBranch(const Branch &b , const std::vector<AbstractParameter*> &params) const 
 {
   return getBranch(b.findNodePtr(*this),params);
 }
 
 
 
-Branch TreeAln::getBranch(nodeptr p, const AbstractParameter* param) const
+Branch TreeAln::getBranch(nodeptr p, AbstractParameter* const &param) const
 {
   nat id = param->getIdOfMyKind();
   std::vector<double> l(id+1, TreeAln::problematicBL); // =/ 

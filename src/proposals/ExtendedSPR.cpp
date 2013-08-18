@@ -119,14 +119,31 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 
 
 
+
+static void gatherData(const SprMove &move )
+{
+
+  // tout  << move  << std::endl; 
+
+}
+
+
+
+
 /**
    @brief applies an extended spr move (our version)
    
    the same function as below, but I cleaned the other flavour, since so much stuff has changed. 
  */ 
-void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
+void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   drawPathForESPR( traln,rand ,stopProb); 
+
+#ifdef _EXPERIMENTAL_INTEGRATION_MODE
+  gatherData(move); 
+  
+  
+#endif
 
   move.applyToTree(traln, getSecondaryParameterView() ); 
 
@@ -149,18 +166,18 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 }
 
 
-void ExtendedSPR::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
+void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln)
 {  
   Branch toEval = move.getEvalBranch(traln);
   auto p = toEval.findNodePtr(traln); 
   move.disorientAtNode(traln,p); 
-  evaluator->evaluate(traln,toEval, false); 
+  evaluator.evaluate(traln,toEval, false); 
 }
 
 
-void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
+void ExtendedSPR::resetState(TreeAln &traln )
 {
-  move.revertTree(traln,prior, getSecondaryParameterView() ); 
+  move.revertTree(traln, getSecondaryParameterView() ); 
 }
 
 

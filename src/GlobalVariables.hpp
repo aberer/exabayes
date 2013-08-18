@@ -14,6 +14,7 @@
 #include <chrono> 
 #include <memory>
 
+#include <fstream>
 #include "common.h"
 #include "config.h"
 #include "teestream.hpp"
@@ -38,13 +39,20 @@ public:
 
 #ifdef _INCLUDE_DEFINITIONS
 
+std::ofstream nniOut; 
+std::ofstream sprOut; 
+
 GlobalVariables globals; 
 std::chrono::system_clock::time_point timeIncrement;  
 int debugPrint = 0; 
+bool startIntegration = false; 
 
 AdHocIntegrator* ahInt; 
 
 #else 
+extern std::ofstream nniOut; 
+extern std::ofstream sprOut; 
+extern bool startIntegration; 
 extern AdHocIntegrator* ahInt; 
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 

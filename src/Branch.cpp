@@ -60,10 +60,14 @@ std::ostream& operator<<(std::ostream &out, const Branch& rhs)
 { 
   out << MAX_SCI_PRECISION; 
   out << "(" << rhs.thisNode << "/" << rhs.thatNode
-	     << "):[" ; 
-  for(auto &v : rhs.lengths)
-    out << v << ","; 
-  out << "]";
+	     << ")" ; 
+  if(rhs.lengths.size() > 0 )
+    {
+      out << ":["; 
+      out <<rhs.lengths ; 
+      out << "]"; 
+    }
+
   return out; 
 }
 

@@ -348,7 +348,7 @@ static void debug_checkHooks(tree *tr)
 
 
 
-void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
 #if 0 
   debug_printTree(traln);
@@ -474,7 +474,7 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
    actually this method should not do anything. Currently, we need
    it, to update the lnl arrays appropriatly. Pretty expensive.
 */ 
-void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
 #if 0 
   evaluateGenericWrapper(traln, p, FALSE );
@@ -482,7 +482,7 @@ void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &tr
 } 
 
 
-void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior) 
+void RadiusMlSPR::resetState(TreeAln &traln) 
 {
 #if 0 
   tree *tr = traln.getTr(); 

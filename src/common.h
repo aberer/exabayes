@@ -51,7 +51,11 @@ typedef  unsigned int nat ;
 
 
 
+#define _EXPERIMENTAL_INTEGRATION_MODE
 #define _DISABLE_INIT_LNL_CHECK
+/* #define INTEGRATION_GENERATION 3e4 */
+#define INTEGRATION_GENERATION 1e6
+
 
 
 /* #define DEBUG_ACCEPTANCE */
@@ -75,7 +79,7 @@ typedef  unsigned int nat ;
 
 #define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
 /* #define DEBUG_SHOW_TREE */
-#define DEBUG_SHOW_EACH_PROPOSAL
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */

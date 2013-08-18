@@ -20,7 +20,7 @@ MyTemplateProposal::MyTemplateProposal( double aVariable)
 }
 
 
-void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
+void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   // i do not have an idea what to write here, maybe check out
   // ParameterProposal, I documented the apply-funciton there .
@@ -28,7 +28,7 @@ void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double
 }
 
 
-void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
   // the previous evluation scheme has been replaced with the
   // LikelihoodEvaluator class. 
@@ -48,7 +48,7 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, Tree
     }
 
   
-  evaluator->evaluatePartitions(traln, allRelevantPartitions, true); 
+  evaluator.evaluatePartitions(traln, allRelevantPartitions, true); 
   
   
   // let's do it again and use some c++ conveniences 
@@ -61,17 +61,17 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, Tree
   for(auto &var : primaryParameters)	
     for(auto p : var->getPartitions()) // iterate over all partitions in this parameter 
       allRelevantPartitions2.push_back(p); 
-  evaluator->evaluatePartitions(traln, allRelevantPartitions2,true); 
+  evaluator.evaluatePartitions(traln, allRelevantPartitions2,true); 
 
   // when in doubt, there is always 
   tree *tr = traln.getTr(); 
   Branch toEval(tr->start->number, tr->start->back->number); // a bit clunky 
-  evaluator->evaluate(traln, toEval, true); 
+  evaluator.evaluate(traln, toEval, true); 
 }
 
 
 
-void MyTemplateProposal::resetState(TreeAln &traln, PriorBelief &prior)
+void MyTemplateProposal::resetState(TreeAln &traln)
 {  
 
 }

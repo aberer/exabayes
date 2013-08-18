@@ -7,9 +7,9 @@ public:
   TreeLengthMultiplier( double _multiplier) ; 
   virtual ~TreeLengthMultiplier(){}
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior)  ; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
+  virtual void resetState(TreeAln &traln)  ; 
   virtual void autotune() ;
 
   virtual AbstractProposal* clone() const;  

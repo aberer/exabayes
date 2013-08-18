@@ -42,7 +42,16 @@
 
 
 // a developmental mode to integrate over branch lengths
-#define _GO_TO_INTEGRATION_MODE
+
+
+
+
+// #define _GO_TO_INTEGRATION_MODE
+
+
+#ifndef _EXPERIMENTAL_INTEGRATION_MODE
+#undef _GO_TO_INTEGRATION_MODE
+#endif
 
 void genericExit(int code); 
 static int countNumberOfTreesQuick(const char *fn ); 
@@ -299,11 +308,27 @@ void SampleMaster::initializeRuns( )
   const TreeAln& initTree = *initTreePtr; 
 
   // START integrator
-  // std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
-  // aTree->initializeFromByteFile(cl.getAlnFileName()); 
-  // aTree->enableParsimony();
-  // TreeRandomizer::randomizeTree(*aTree, masterRand); 
-  // ahInt = new AdHocIntegrator(aTree, masterRand.generateSeed());
+#ifdef _EXPERIMENTAL_INTEGRATION_MODE
+  std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
+  aTree->initializeFromByteFile(cl.getAlnFileName()); 
+  aTree->enableParsimony();
+
+  // let's have another tree for debug
+  auto dT = make_shared<TreeAln>();
+  dT->initializeFromByteFile(cl.getAlnFileName()); 
+  dT->enableParsimony(); 
+
+  TreeRandomizer::randomizeTree(*aTree, masterRand); 
+  ahInt = new AdHocIntegrator(aTree, dT, masterRand.generateSeed());
+
+  std::stringstream  ss; 
+  ss << "nniBranchLengths." << cl.getRunid() << ".txt" ; 
+  nniOut.open(ss.str());
+
+  ss.str() = "" ; 
+  ss << "sprBranchLengths." << cl.getRunid() << ".txt"; 
+  sprOut.open(ss.str()); 
+#endif
   // END
 
   printAlignmentInfo(initTree); 
@@ -487,7 +512,8 @@ void SampleMaster::printInitialState(const ParallelSetup &pl)
 double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
 {
   if(runParams.getNumRunConv() == 1)
-    return std::numeric_limits<double>::min();
+    return nan("") ; 
+    // return std::numeric_limits<double>::min();
 
   vector<string> fns; 
   for(nat i = 0; i < runParams.getNumRunConv(); ++i)
@@ -507,7 +533,8 @@ double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
   end *= treesInBatch;       
 
   if(end == 0)
-    return std::numeric_limits<double>::max();
+    // return std::numeric_limits<double>::max();
+    return nan("");
 
   asdsf.setEnd(end);
   if( runParams.getBurninGen() > 0 )

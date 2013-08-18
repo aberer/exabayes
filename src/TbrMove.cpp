@@ -8,7 +8,7 @@ void TbrMove::applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> 
 } 
 
 
-void TbrMove::revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<AbstractParameter*> &blParams) const 
+void TbrMove::revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
   Path path1r ; 
   Path path2r ; 
@@ -18,8 +18,8 @@ void TbrMove::revertTree(TreeAln &traln, PriorBelief &prior, const std::vector<A
   applyPath(traln,path1r, blParams);
   applyPath(traln,path2r, blParams);
 
-  path1.restoreBranchLengthsPath(traln, prior, blParams); 
-  path2.restoreBranchLengthsPath(traln, prior, blParams); 
+  path1.restoreBranchLengthsPath(traln, blParams); 
+  path2.restoreBranchLengthsPath(traln, blParams); 
 } 
 
 

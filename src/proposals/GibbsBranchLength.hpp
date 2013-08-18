@@ -8,10 +8,11 @@
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
-  GibbsBranchLength(std::unique_ptr<LikelihoodEvaluator> _eval); 
+  // GibbsBranchLength(std::unique_ptr<LikelihoodEvaluator> _eval); 
+  GibbsBranchLength();
   GibbsBranchLength(const GibbsBranchLength& rhs); 
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
   virtual void autotune(){}
 
   virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { assert(0); return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
@@ -19,5 +20,5 @@ public:
   virtual AbstractProposal* clone() const  { return new GibbsBranchLength(*this); }  
 
 private: 
-  std::unique_ptr<LikelihoodEvaluator> eval; 
+  // std::unique_ptr<LikelihoodEvaluator> eval; 
 }; 

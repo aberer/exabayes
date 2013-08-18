@@ -102,7 +102,7 @@ std::ostream& operator<<(std::ostream &out, const Path &rhs)
 }
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, const AbstractParameter* param) const 
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, AbstractParameter* const param) const 
 {  
   nodeptr p = b.findNodePtr(traln); 
   double multiplier = rand.drawMultiplier(parameter); 
@@ -122,7 +122,7 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double par
 }
 
 
-void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior, const std::vector<AbstractParameter*> &blParams) const 
+void Path::restoreBranchLengthsPath(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
   for(auto b : stack)
     {

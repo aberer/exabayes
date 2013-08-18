@@ -1,12 +1,19 @@
 #include "AdHocIntegrator.hpp"
 #include "ArrayRestorer.hpp"
 
+/* 
+   TODO: also print out likelihood ratios 
+ */ 
 
 
-AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, randCtr_t seed)
+AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
   auto restorer = make_shared<ArrayRestorer>(*tralnPtr);  
   auto eval = std::unique_ptr<LikelihoodEvaluator>( new RestoringLnlEvaluator(restorer)); 
+
+#ifdef DEBUG_LNL_VERIFY
+  eval->setDebugTraln(debugTree);
+#endif
   
   // s.t. we do not have to care about the branch length linking problem 
   assert(tralnPtr->getNumberOfPartitions() == 1 ); 
@@ -31,14 +38,13 @@ AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, randCtr_t s
 }
 
 
-
 std::pair<double,double> AdHocIntegrator::getMeanAndVar (const std::vector<double> &data )
 {
   double mean = 0; 
   for(auto d: data)
     mean += d; 
   mean /= data.size(); 
-  
+
   double var = 0; 
   for(auto d : data)
     var += pow(d - mean, 2); 
@@ -54,26 +60,21 @@ void AdHocIntegrator::copyTree(const TreeAln &traln)
   myTree.copyModel(traln);
   auto eval = integrationChain->getEvaluator();
   auto tr = myTree.getTr(); 
-
   eval->evaluate(myTree, Branch(tr->start->number,tr->start->back->number ), true );
-
-  // tout << "copied tree " << traln << std::endl; 
-  tout << "copied tree " << TreePrinter(true, true ,false).printTree(myTree) << std::endl; 
-  // exit(0); 
 }
 
 
-void AdHocIntegrator::prepareForBranch( Branch branch, TreeAln &traln)
+void AdHocIntegrator::prepareForBranch( const Branch &branch,  const TreeAln &otherTree)
 {
-  copyTree(traln); 
+  copyTree(otherTree); 
+
+  auto &traln = integrationChain->getTraln();
 
   auto ps = integrationChain->getProposalView(); 
   auto paramView = ps[0]->getBranchLengthsParameterView();
   assert(ps.size() == 1 );   
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
   integrator->setToPropose(branch);      
-
-  tout << "my param view is " << paramView << std::endl;
 
   // setup 
   traln.setBranch(branch, paramView); 
@@ -92,46 +93,50 @@ std::vector<AbstractParameter*> AdHocIntegrator::getBlParamView() const
 }
 
 
-std::pair<double,double> AdHocIntegrator::integrate(TreeAln &traln, std::string runid, Branch branch, nat intGens)
+bool AdHocIntegrator::decideUponAcceptance(const TreeAln &traln, double prevLnl)
 {
-  double minHere = 1000,
-    maxHere = 0; 
+  copyTree(traln); 
+  double nowLnl = integrationChain->getTraln().getTr()->likelihood; 
+  double acc = integrationChain->getChainRand().drawRandDouble01(); 
+  
+  return acc < exp(nowLnl - prevLnl); 
+}
 
+
+
+std::vector<double> AdHocIntegrator::integrate( const Branch &branch, const TreeAln &otherTree , nat intGens, nat thinning)
+{
+  std::vector<double> result; 
+  auto& traln = integrationChain->getTraln(); 
+
+  // tout << "integrating " << branch << std::endl; 
+
+  prepareForBranch(branch, otherTree); 
   auto paramView = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
-
-  ////////////////////////
-  // integrate branch   //
-  ////////////////////////      
-  stringstream ss; 
-  ss << "samples." << runid<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
-  ofstream thisOut (ss.str());       
-
-  // run the chain to integrate 
-  // tout << "integrating branch " << branch << endl; 
+  
+  Branch backup = otherTree.getBranch(branch, paramView); 
   for(nat i = 0; i < intGens; ++i) 
     {	  
       integrationChain->step();
-      auto elem = traln.getBranch(branch.findNodePtr(traln), paramView); 
+      auto elem = traln.getBranch(branch, paramView); 
       auto iLen = elem.getInterpretedLength(traln, paramView[0]);
-      if (i % 10 == 0)
-	thisOut << iLen << endl; 
-      if(iLen < minHere)
-	minHere = iLen; 
-      if(maxHere < iLen)
-	maxHere = iLen; 
+      if (i % thinning == 0)
+	result.push_back(iLen); ; 
     }      
 
-  thisOut.close();
-  
-  return std::pair<double,double>(minHere, maxHere);    
+  traln.setBranch(backup, paramView); 
+
+  return result;   
 }
 
 
 /** 
     @brief gets the optimimum 
  */ 
-double AdHocIntegrator::printOptimizationProcess(Branch branch, TreeAln &traln, std::string runid, double lambda, nat nrSteps)
+double AdHocIntegrator::printOptimizationProcess(const Branch& branch, std::string runid, double lambda, nat nrSteps)
 {
+  auto &traln = integrationChain->getTraln(); 
+
   auto paramView = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
   Branch tmpBranch = branch; 
   // tout << "optimizing the branch using nr" << endl; 

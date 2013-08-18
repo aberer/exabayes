@@ -114,9 +114,9 @@ public:
       function is usefull to get the actual branch length.
    */ 
   Branch getBranch(nodeptr p, const std::vector<AbstractParameter*> &param) const; 
-  Branch getBranch(const Branch& b, AbstractParameter* param); 
-  Branch getBranch(nodeptr p, const AbstractParameter* param) const; 
-  Branch getBranch(const Branch &b , const std::vector<AbstractParameter*> params) const ; 
+  Branch getBranch(const Branch& b, AbstractParameter* const &param) const ;   
+  Branch getBranch(nodeptr p,  AbstractParameter* const &param) const; 
+  Branch getBranch(const Branch &b , const std::vector<AbstractParameter*> &params) const ; 
   /** 
       @brief gets a nodepointer with specified id 
    */ 

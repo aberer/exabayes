@@ -24,7 +24,7 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
 }
 
 
-void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
+void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   auto blParams = getBranchLengthsParameterView(); 
 
@@ -87,13 +87,13 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 } 
 
 
-void ParameterProposal::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
+void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln)
 {
   // assert(primaryParameters.size() == 1 ); 
-  evaluator->evaluatePartitions(traln, primaryParameters[0]->getPartitions() , true); 
+  evaluator.evaluatePartitions(traln, primaryParameters[0]->getPartitions() , true); 
 }
  
-void ParameterProposal::resetState(TreeAln &traln, PriorBelief &prior) 
+void ParameterProposal::resetState(TreeAln &traln) 
 {
   primaryParameters[0]->applyParameter(traln, savedContent);
 }
