@@ -44,6 +44,9 @@
 // a developmental mode to integrate over branch lengths
 
 
+#define _USE_NEW_BIPHASH
+
+
 
 
 // #define _GO_TO_INTEGRATION_MODE
@@ -533,7 +536,6 @@ double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
   end *= treesInBatch;       
 
   if(end == 0)
-    // return std::numeric_limits<double>::max();
     return nan("");
 
   asdsf.setEnd(end);
@@ -555,8 +557,13 @@ double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
       asdsf.setStart(start);
     } 
 
+#ifdef _USE_NEW_BIPHASH
+  asdsf.extractBipsNew();
+  auto asdsfVal = asdsf.computeAsdsfNew(runParams.getAsdsfIgnoreFreq());
+#else 
   asdsf.extractBips();
   double asdsfVal = asdsf.computeAsdsf(runParams.getAsdsfIgnoreFreq());
+#endif
 
   return asdsfVal; 
 }

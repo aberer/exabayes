@@ -78,3 +78,17 @@ BipartitionHashNew::getBranchLengths(const Bipartition& bip) const
     result = iter->second; 
   return result;
 }
+
+
+Bipartition 
+BipartitionHashNew::getPresence(const Bipartition &bip) const 
+{
+  auto result = Bipartition{}; 
+  auto iter = bipPresence.find(bip); 
+  if(iter != bipPresence.end())
+    result = iter->second; 
+  return result;   
+}
+
+
+

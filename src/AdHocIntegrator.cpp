@@ -1,6 +1,8 @@
 #include "AdHocIntegrator.hpp"
 #include "ArrayRestorer.hpp"
 
+#include "Arithmetics.hpp"
+
 /* 
    TODO: also print out likelihood ratios 
  */ 
@@ -35,22 +37,6 @@ AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared
 
   integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval) ));
   integrationChain->getEvaluator()->imprint(*tralnPtr);
-}
-
-
-std::pair<double,double> AdHocIntegrator::getMeanAndVar (const std::vector<double> &data )
-{
-  double mean = 0; 
-  for(auto d: data)
-    mean += d; 
-  mean /= data.size(); 
-
-  double var = 0; 
-  for(auto d : data)
-    var += pow(d - mean, 2); 
-  var /= data.size(); 
-
-  return std::pair<double,double>(mean,var);  
 }
 
 

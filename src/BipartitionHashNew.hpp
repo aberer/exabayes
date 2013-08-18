@@ -7,7 +7,6 @@
 #include "TreeAln.hpp"
 #include "Bipartition.hpp"
 
-// template by branch length 
 
 class BipartitionHashNew
 {
@@ -19,7 +18,10 @@ public:
   std::unordered_map<Bipartition, Bipartition>::const_iterator end() const{return bipPresence.end(); }
 
   std::vector<double> getBranchLengths(const Bipartition& bip) const;
-  
+  Bipartition getPresence(const Bipartition &bip) const; 
+
+  nat getTreesAdded() const {return treesAdded; }
+
 private: 			// METHODS
   Bipartition addElement(const TreeAln &traln, nodeptr p, bool withBranch); 
 

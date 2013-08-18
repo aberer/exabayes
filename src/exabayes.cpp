@@ -34,7 +34,7 @@
 
 #include "teestream.hpp"
 
-#define TEST  
+// #define TEST  
 
 #ifdef TEST
 #include "parameters/BranchLengthsParameter.hpp"

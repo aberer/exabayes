@@ -3,6 +3,7 @@
 
 #include "axml.h"
 #include "BipartitionHash.hpp"
+#include "BipartitionHashNew.hpp"
 
 /**
    @brief a one-time object that computes the ASDSF for the trees
@@ -14,15 +15,25 @@ class AvgSplitFreqAssessor
 public: 
   AvgSplitFreqAssessor(std::vector<std::string>fileNames);
   ~AvgSplitFreqAssessor();
-
-  /** @brief return the asdsf of the respective trees in the respective range */ 
+  /** 
+      @brief return the asdsf of the respective trees in the respective range 
+  */ 
   double computeAsdsf(double ignoreFreq); 
-  
-  /** @brief add bipartitions in the current traln structure into the bipartition hash */
+  /** 
+      @brief add bipartitions in the current traln structure into the
+      bipartition hash
+  */
   void extractBips(); 
-
-  /** @brief gets the minimum number of trees present in all of the files */ 
+  /** 
+      @brief use the new bipartition hash for extracting bipartitions 
+   */ 
+  void extractBipsNew(); 
+  /** 
+      @brief gets the minimum number of trees present in all of the files 
+  */ 
   int getMinNumTrees(); 
+  
+  double computeAsdsfNew(double ignoreFreq);
 
   int getEnd(){return end; } 
   int getStart(){return start; }
@@ -46,6 +57,8 @@ private:
   int end; 
   
   BipartitionHash* bipHash;
+
+  std::vector<BipartitionHashNew> newBipHashes;   
 }; 
 
 #endif

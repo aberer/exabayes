@@ -18,6 +18,8 @@
 #include "TreeAln.hpp"
 #include "treeRead.h"
 
+#include "Arithmetics.hpp"
+
 #include "AvgSplitFreqAssessor.hpp"
 
 /**
@@ -62,6 +64,28 @@ void AvgSplitFreqAssessor::nextTree(FILE *fh )
 
 
 
+void AvgSplitFreqAssessor::extractBipsNew()
+{
+  int ctr = 0; 
+  for (auto filename : fns)
+    {
+      FILE *fh = fopen(filename.c_str(), "r"); 
+
+      for(int i = 0; i < start; ++i)
+	nextTree(fh);
+
+      auto bipHash = BipartitionHashNew(traln->getNumberOfTaxa()); 
+      for(int i = start ; i < end; ++i)
+	{
+	  nextTree(fh);
+	  bipHash.addTree(*traln,false);
+	}
+      newBipHashes.push_back(bipHash);
+      
+      fclose(fh);
+      ++ctr; 
+    }
+}
 
 void AvgSplitFreqAssessor::extractBips()
 {
@@ -119,7 +143,47 @@ double AvgSplitFreqAssessor::computeAsdsf(double ignoreFreq)
 }
 
 
+double AvgSplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
+{
+  std::unordered_set<Bipartition> allBips; 
 
+  nat numTrees = newBipHashes[0].getTreesAdded();
+  for(auto &elem : newBipHashes)
+    assert(numTrees == elem.getTreesAdded()); 
+  
+  for(auto &h : newBipHashes)
+    for(auto &elem : h)
+      allBips.insert(elem.first);
+
+  std::unordered_map<Bipartition,std::vector<double> > numOccs; 
+
+  for(auto &elem : allBips)
+    {
+      auto tmp = std::vector<double>{};
+      for(auto &h : newBipHashes)
+	tmp.push_back( double(h.getPresence(elem).count()) );
+      numOccs[elem] = tmp; 
+    }
+  
+  auto asdsfPart = std::vector<double>{};
+  for(auto &elem : allBips)
+    {
+      bool isRelevant = false;  
+      for(auto &v : numOccs[elem])
+	{
+	  v /= numTrees; 
+	  isRelevant |= (ignoreFreq < v); 
+	}
+
+      auto meanVar = Arithmetics::getMeanAndVar(numOccs[elem]); 
+      // std::cout << "for bip " << elem << "\t" << numOccs[elem] << "\t" <<  meanVar.first << "," << sqrt(meanVar.second) << std::endl; 
+      if(isRelevant)
+	asdsfPart.push_back(sqrt(meanVar.second));
+    }
+
+  auto asdsfMain = Arithmetics::getMeanAndVar(asdsfPart); 
+  return asdsfMain.first; 
+}
 
 int AvgSplitFreqAssessor::getNumTreeAvailable(string fileName)
 {  

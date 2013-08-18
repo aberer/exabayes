@@ -10,7 +10,6 @@
 #include "RestoringLnlEvaluator.hpp"
 #include "common.h"
 
-
 // HACK 
 struct noDeleter
 {
@@ -30,7 +29,6 @@ public:
   double getParsimonyLength(TreeAln &traln, const Branch &b );
   double printOptimizationProcess(const Branch& branch, std::string runid, double lambda, nat nrSteps); 
   void copyTree(const TreeAln &traln); 
-  std::pair<double,double> getMeanAndVar (const std::vector<double> &data );
 
 private: 			// METHODS 
 

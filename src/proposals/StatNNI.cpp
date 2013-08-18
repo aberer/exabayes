@@ -1,6 +1,7 @@
 #include "StatNNI.hpp"
 #include "Path.hpp"
 #include "TreeRandomizer.hpp"
+#include "Arithmetics.hpp"
 #include "AdHocIntegrator.hpp"
 
 // #define _EXPERIMENTAL_GIBBS
@@ -57,7 +58,7 @@ getStatisticsInEnvironment( const Branch &refBranch, const TreeAln &traln, nat n
     {
       auto samples = ahInt->integrate(b,traln, numStep, thinning); 
       assert(map.find(b) == map.end()); 
-      map[b] = ahInt->getMeanAndVar(samples); 
+      map[b] = Arithmetics::getMeanAndVar(samples); 
     }
 
   return map; 
