@@ -27,7 +27,7 @@ public:
    /////////////////
    // life cycle  //
    /////////////////
-  TreeAln();
+  explicit TreeAln();
   ~TreeAln();
   /** 
       @brief copies the entire model from the rhs.
@@ -196,12 +196,20 @@ public:
   ///////////////
   /** 
       @brief gets the branches that are below one branch 
+
+      This function is handy for traversing the tree and relying less
+      on raw pointers. For traversing, it is often necessary to invert
+      the resulting branch.      
    */
   std::pair<Branch,Branch> getDescendents(const Branch &b) const; 
   std::vector<bool> getExecModel() const ; 
   std::vector<double> getPartitionLnls() const; 
   void setPartitionLnls(const std::vector<double> partitionLnls) ; 
   void setExecModel(const std::vector<bool>  &modelInfo); 
+  /** 
+      @brief gets a list of of sequence names  
+   */ 
+  std::vector<std::string> getNameMap() const; 
 
   static const double zZero;   
   static const double initBL;  	// init values 

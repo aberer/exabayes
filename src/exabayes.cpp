@@ -34,13 +34,15 @@
 
 #include "teestream.hpp"
 
-// #define TEST  
+#define TEST  
 
 #ifdef TEST
+#include "parameters/BranchLengthsParameter.hpp"
 #include "TreeRandomizer.hpp"
 #include "Chain.hpp"
 #include "BranchLengthMultiplier.hpp"
 #include "ParsimonyEvaluator.hpp"
+#include "BipartitionHashNew.hpp"
 #endif
 
 
@@ -69,13 +71,48 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
+  // auto traln = TreeAln{};
+  TreeAln traln; 
+  traln.initializeFromByteFile(cl.getAlnFileName());
+  auto seed = randCtr_t{123,456};
+  Randomness rand(seed); 
 
-  int c = 0; 
-  assert(c < (c++)); 
-  assert(c < (++c)); 
-  
+  auto map = traln.getNameMap(); 
+  std::cout << "map: " << map << std::endl; 
+
+  TreeRandomizer::randomizeTree(traln, rand); 
+  auto blParam = BranchLengthsParameter(0,0);
+  blParam.addPartition(0);
+  auto ap = dynamic_cast<AbstractParameter*>(&blParam); 
+  auto branches = traln.extractBranches(ap); 
+
+  double ctr = 0.001; 
+  for(auto &b : branches)
+    {
+      b.setLength(ctr, ap);
+      traln.setBranch(b, ap);
+      ctr += 0.001;
+    }
+
+  auto theHash = BipartitionHashNew{traln.getNumberOfTaxa()}; 
+
+  theHash.addTree(traln, true);
+  TreeRandomizer::randomizeTree(traln,rand);
+  theHash.addTree(traln,true);
+  theHash.addTree(traln,true);
+
+  for(auto &elem : theHash)
+    {
+      auto &bip = elem.first; 
+      std::cout << bip << "\t" << elem.second << std::endl; 
+      std::cout << theHash.getBranchLengths(elem.first) << std::endl;
+      std::cout << "\t=>" << bip.count() << std::endl; 
+      std::cout << "full: "; 
+      bip.printVerbose(std::cout, map);
+      std::cout << std::endl; 
+    }
+
   exit(0); 
-  // genericExit(); 
 #else 
   SampleMaster master(  pl, cl );
   master.initializeRuns(); 

@@ -59,14 +59,14 @@ static int countNumberOfTreesQuick(const char *fn );
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
   : pl(pl)
   , initTime(CLOCK::system_clock::now())
-  , masterRand(cl.getSeed())
   , cl(_cl)
   , lastPrintTime(CLOCK::system_clock::now())
+  , masterRand(cl.getSeed())
 {
   // DO NOT DELETE THIS LINE: 
   // it has cost me ~ 2 days, to figure out that this stupid line
   // throws an increadible number of memory problems
-  masterRand = Randomness(cl.getSeed()); 
+  // masterRand = Randomness(cl.getSeed()); 
 }
 
 

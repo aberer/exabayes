@@ -984,3 +984,15 @@ Branch TreeAln::getBranch(nodeptr p, const std::vector<AbstractParameter*> &para
   return Branch(p->number, p->back->number, l); 
 }
 
+
+std::vector<std::string> TreeAln::getNameMap() const
+{
+  auto result = std::vector<std::string>{};
+  auto tr = getTr();   
+
+  result.push_back("error"); 
+  for(nat i = 1 ; i < getNumberOfTaxa()+1; ++i)
+    result.push_back(tr->nameList[i]);
+
+  return result; 
+} 

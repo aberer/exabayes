@@ -81,10 +81,10 @@ private:			// ATTRIBUTES
   BlockParams paramBlock; 
   BlockRunParameters runParams;  
   BlockProposalConfig propConfig;   
-  Randomness masterRand;   	// not checkpointed
   CommandLine cl; 
   CLOCK::system_clock::time_point lastPrintTime; 
   DiagnosticsFile diagFile; 
+  Randomness masterRand;   	// not checkpointed
 };  
 
 #endif
