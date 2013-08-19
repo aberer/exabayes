@@ -2,7 +2,6 @@
 #include <map> 
 #include <unordered_map>
 
-#include "StatNNI.hpp"
 #include "NodeSlider.hpp"
 #include "Chain.hpp"		
 #include "TreeAln.hpp"
@@ -583,7 +582,10 @@ void Chain::step()
   currentGeneration++; 
 
   if(INTEGRATION_GENERATION < currentGeneration )
-    startIntegration = true; 
+    {
+      startIntegration = true; 
+      assert(0); 
+    }
 
 #ifdef DEBUG_VERIFY_LNPR
   prior.verifyPrior(*tralnPtr, extractParameters());
@@ -608,7 +610,8 @@ void Chain::step()
 #endif
 
   if( currentGeneration == VERIFY_GEN  )
-    {      
+    { 
+	  tout << "EVAL" << std::endl; 
       evaluator->evaluate(*tralnPtr, evaluator->findVirtualRoot(*tralnPtr), true); 
     }
 }

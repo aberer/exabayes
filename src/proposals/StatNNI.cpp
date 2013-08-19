@@ -257,7 +257,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   //     prior.updateBranchLengthPrior(traln , branch.getLength(params[0]), newBranch.getLength(params[0]), params[0]); 
   //   }
 
-  // tout << "hastings " << hastings << std::endl; 
+  // // tout << "hastings " << hastings << std::endl; 
   // LikelihoodEvaluator::disorientNode( b.findNodePtr(traln)); 
   // LikelihoodEvaluator::disorientNode( b.getInverted().findNodePtr(traln)); 
 #endif

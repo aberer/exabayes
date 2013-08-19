@@ -64,18 +64,18 @@ begin runconfig;
  [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
 
  [ RUN PARAMETERS ]
- diagFreq 1000		[ check for convergence of multiple independent runs after this many generations ]
+ diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
  samplingFrequency 500 	[ take a sample every n generations ]
- numRuns  4 	   	[ number of independant runs ]
- numGen 1000000          [ if numRuns = 1, stop simulation after that many generations ] 
+ numRuns  1 	   	[ number of independant runs ]
+ numGen 1000          [ if numRuns = 1, stop simulation after that many generations ] 
  tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
- parsimonyStartingTree		true		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
- heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
- [ sampledHeated false ] [ also take samples from the heated chains ]
+  parsimonyStartingTree		true		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
+  heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
+  [  sampledHeated false ] [ also take samples from the heated chains ]
 
- checkPointInterval   1000  [ defines how often a checkpoint is written ]
+  checkPointInterval   1000  [ defines how often a checkpoint is written ]
 
  [ CONVERGENCE ]
  asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
@@ -97,7 +97,6 @@ begin runconfig;
   		         all proposals except topology proposals will
   		         be executed one partition after another for
   		         all proposals except topological proposls ]
- end; 
 
 end; 
 
@@ -123,6 +122,7 @@ parsimonySPR 10
  
 
 [
+eTBR 0  
 eTBR 0  
 eSPR 0  
 stNNI 0 

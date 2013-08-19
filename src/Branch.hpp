@@ -40,7 +40,7 @@ public:
   /////////////////
   // life cycle  //
   /////////////////
-  Branch(nat a = 0, nat b = 0, std::vector<double> lengths = {}); 
+  Branch(nat a = 0, nat b = 0, std::vector<double> lengths =std::vector<double>{}); 
 
   ///////////////
   // observers //
