@@ -7,18 +7,19 @@ void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterConte
 
   // TODO so it has gotten to this ... => const correctness! 
   
-  for(auto &b : content.branches)
+  for(auto &b : content.branchLengths)
     traln.setBranch(b, const_cast<AbstractParameter*>(dynamic_cast<const AbstractParameter* const >(this))); 
 }
 
 ParameterContent BranchLengthsParameter::extractParameter(const TreeAln &traln)  const
 {
-  ParameterContent result; 
+  auto result = ParameterContent{}; 
 
   // TODO bad 
   AbstractParameter* param = const_cast<AbstractParameter*>(dynamic_cast<const AbstractParameter* const>(this)); 
-  
-  result.branches = traln.extractBranches(param); 
+
+  result.branchLengths = traln.extractBranches(param); 
+
   return result; 
 }   
 

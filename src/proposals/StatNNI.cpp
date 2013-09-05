@@ -3,6 +3,23 @@
 #include "TreeRandomizer.hpp"
 #include "Arithmetics.hpp"
 #include "AdHocIntegrator.hpp"
+#include "GibbsProposal.hpp"
+
+
+
+// #define QUICK_HACK
+
+#if defined(QUICK_HACK ) && not defined(_EXPERIMENTAL_INTEGRATION_MODE)
+#error "need integration mode "
+#endif
+
+// #define _NNI_GIBBS
+// #define _EXPERIMENTAL_GIBBS
+// #define _EXPERIMENTAL_GIBBS_EXTRA
+
+#if not defined(_EXPERIMENTAL_GIBBS) &&  defined(_EXPERIMENTAL_GIBBS_EXTRA)
+#error "define _EXPERIMENTAL_GIBBS as well!"
+#endif
 
 // #define _EXPERIMENTAL_GIBBS
 
@@ -61,134 +78,22 @@ getStatisticsInEnvironment( const Branch &refBranch, const TreeAln &traln, nat n
       map[b] = Arithmetics::getMeanAndVar(samples); 
     }
 
-  return map; 
-}
-
-static void printBeforeAndAfter(const Branch& refBranch, const TreeAln& traln, LOCALMAP &mapBefore , LOCALMAP &mapAfter, nat depth, const std::vector<AbstractParameter*> &params, nat invocations, bool accepted, std::ostream &out)
-{ 
-  assert(params.size() == 1); 
-
-  auto before =  mapBefore.at(refBranch),
-    after = mapAfter.at(refBranch); 
-
-  out << "DEG-0\t"   <<  invocations << "\t" << (accepted ? "ACC" : "rej") << "\t"
-       << traln.getBranch(refBranch, params[0]).getInterpretedLength(traln, params[0])
-       << "\t" << before.first << "\t" << after.first
-       << "\t" << before.second << "\t" << after.second << std::endl; 
-
-  std::vector<Branch>current = { refBranch, refBranch.getInverted() };
-  std::vector<Branch>next;
-  for(auto &b : current)
-    {
-      auto desc = traln.getDescendents(b); 
-      next.push_back(desc.first.getInverted()); 
-      next.push_back(desc.second.getInverted()); 
-    }
-  current = next ; 
-  next.clear(); 
-
-  // first order 
-  for(auto &b : current)
-    {
-      std::pair<double,double> 
-	before, 
-	after; 
-
-      if(mapBefore.find(b) != mapBefore.end())
-	before = mapBefore.at(b); 
-      else
-	{
-	  auto tmp = b ; 
-	  tmp.setSecNode(refBranch.getOtherNode(tmp.getSecNode()));
-	  assert(mapBefore.find(tmp) != mapBefore.end());
-	  before = mapBefore.at(tmp);
-	}
-      
-      Branch afterBranch ;  
-
-      if(mapAfter.find(b) != mapAfter.end())
-	{
-	  after = mapAfter.at(b);
-	  afterBranch = b; 
-	}
-      else 
-	{
-	  auto tmp = b; 
-	  tmp.setSecNode(refBranch.getOtherNode(tmp.getSecNode())); 
-	  assert(mapAfter.find(tmp) != mapAfter.end()); 
-	  after = mapAfter.at(tmp);
-	  afterBranch = tmp; 
-	}
-
-      out << "DEG-1\t"   << invocations << "\t"  << (accepted ? "ACC" : "rej") << "\t"
-	  << traln.getBranch(b,params[0]).getInterpretedLength(traln, params[0]) 
-	  << "\t"  << before.first << "\t" << after.first
-	  << "\t" << before.second << "\t" << after.second << std::endl; 
-
-      if(not b.isTipBranch(traln))
-	{
-	  auto desc = traln.getDescendents(b);
-	  // tout << desc.first << "\t" << desc.second << std::endl; 
-	  next.push_back(desc.first.getInverted());
-	  next.push_back(desc.second.getInverted());
-	}
-    }
-
-  for(nat i = 2 ; i < depth+1; ++i)
-    {
-      current = next ; 
-      next.clear();
-
-      // second order  
-      for(auto &b : current)
-	{
-	  auto before = mapBefore.at(b); 
-	  auto after = mapAfter.at(b);
-	 
-	  out << "DEG-"  << i  << "\t"   << invocations << "\t" << (accepted ? "ACC" : "rej") << "\t"
-	       << traln.getBranch(b,params[0]).getInterpretedLength(traln, params[0]) 
-	       << "\t"  << before.first << "\t" << after.first
-	       << "\t" << before.second << "\t" << after.second << std::endl;       
-
-	  if(not b.isTipBranch(traln))
-	    {
-	      auto desc = traln.getDescendents(b); 
-	      next.push_back(desc.first.getInverted());
-	      next.push_back(desc.second.getInverted());
-	    }
-	}
-    }
-}
-
-
-
-#endif
+// #endif
 
 void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {    
   auto params = getBranchLengthsParameterView(); 
+  assert(params.size( )== 1) ; 
+  auto param = params[0]; 
 
-  Branch b =  TreeRandomizer::drawInnerBranchUniform(traln, rand) ; 
-  b = traln.getBranch(b, params); 
-
+  auto b = traln.getBranch(TreeRandomizer::drawInnerBranchUniform(traln, rand), param); 
   nodeptr p = b.findNodePtr(traln); 
-
-  Branch switchingBranch = Branch( rand.drawRandDouble01() < 0.5  
+  auto switchingBranch = BranchPlain( rand.drawRandDouble01() < 0.5  
 				   ? p->back->next->back->number
 				   : p->back->next->next->back->number, 
-				   p->back->number ); 
-  
-  move.extractMoveInfo(traln, {b, switchingBranch}, params); 
-
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE
-  nat numGen = 5e3; 
-  nat step = 1e1; 
-  nat depth = 3; 
-  LOCALMAP samplesBefore; 
-  if(startIntegration)
-    samplesBefore = getStatisticsInEnvironment(b, traln, numGen, step, depth, params); 
-  double prevLnl = traln.getTr()->likelihood; 
-#endif
+						      p->back->number ); 
+  auto bls = std::vector<BranchPlain>{b.toPlain(), switchingBranch}; 
+  move.extractMoveInfo(traln, bls, params); 
 
   std::vector<AbstractPrior* > priors; 
   bool multiplyBranches = false; 
@@ -214,65 +119,73 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 
   // tout << sctr << std::endl; 
 
+#ifdef QUICK_HACK
+  auto branch = move.getEvalBranch(traln); 
+  auto samples = ahInt->integrate(branch, traln, 10000, 10); 
+  auto meanBefore =  Arithmetics::getMeanAndVar(samples).first; 
+  auto lnlBefore = eval.evaluate(traln, traln.getAnyBranch(), true); 
   
   move.applyToTree(traln, params);
+  
+  samples  = ahInt->integrate(branch, traln, 10000, 10); 
+  auto meanAfter = Arithmetics::getMeanAndVar(samples).first; 
+  auto lnlAfter = eval.evaluate(traln, traln.getAnyBranch(), true); 
 
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE
-  // simulate acceptance rejection decision 
-
-  bool accepted = ahInt->decideUponAcceptance(traln, prevLnl ); 
-
-  if(startIntegration)
-    {
-      auto samplesAfter = getStatisticsInEnvironment(b, traln, numGen, step, depth, params); 
-      tout << MAX_SCI_PRECISION; 
-      printBeforeAndAfter(b, traln, samplesBefore, samplesAfter, depth, params, invocations, accepted, nniOut);
-    }
-  ++invocations; 
+  tout << "NNI\t" << meanAfter / meanBefore << "\t" << lnlAfter - lnlBefore << std::endl; 
+  
+#else 
+  move.applyToTree(traln, params);
 #endif
 
-
-#ifdef _EXPERIMENTAL_GIBBS
+#if defined( _EXPERIMENTAL_GIBBS) && defined(_NNI_GIBBS)
   nat numIter =20; 
   assert(params.size() == 1 ); 
-  eval.evaluate(traln, b, true);
+  double afterMoveLnl = eval.evaluate(traln, b, true);
+
   auto newBranch = GibbsProposal::drawFromEsitmatedPosterior(b, eval, traln, rand, numIter, hastings,  params[0]); 
   traln.setBranch(newBranch, params[0]);
+
   prior.updateBranchLengthPrior(traln, b.getLength(params[0]), newBranch.getLength(params[0]), params[0]);
-
-  // auto desc = traln.getDescendents(b); 
-  // std::vector<Branch> bs ; 
-  // bs.push_back(desc.first); 
-  // bs.push_back(desc.second); 
-  // desc = traln.getDescendents(b.getInverted()); 
-  // bs.push_back(desc.first); 
-  // bs.push_back(desc.second); 
   
-  // for(auto &branch : bs)
-  //   {
-  //     branch = traln.getBranch(branch, params[0]); 
-  //     eval.evaluate(traln, branch, false ); 
-  //     auto newBranch = GibbsProposal::drawFromEsitmatedPosterior(branch, eval, traln, rand, numIter, hastings, params[0]); 
-  //     traln.setBranch(newBranch, params[0]); 
-  //     prior.updateBranchLengthPrior(traln , branch.getLength(params[0]), newBranch.getLength(params[0]), params[0]); 
-  //   }
+  // tout << "\t" << prevLnl << "\t" << afterMoveLnl << "\t" << eval.evaluate(traln,b,true) <<  "\t" << hastings << std::endl; 
 
-  // // tout << "hastings " << hastings << std::endl; 
-  // LikelihoodEvaluator::disorientNode( b.findNodePtr(traln)); 
-  // LikelihoodEvaluator::disorientNode( b.getInverted().findNodePtr(traln)); 
+#ifdef _EXPERIMENTAL_GIBBS_EXTRA
+  auto desc = traln.getDescendents(b); 
+  std::vector<Branch> bs ; 
+  bs.push_back(desc.first); 
+  bs.push_back(desc.second); 
+  desc = traln.getDescendents(b.getInverted()); 
+  bs.push_back(desc.first); 
+  bs.push_back(desc.second); 
+  
+  for(auto &branch : bs)
+    {
+      branch = traln.getBranch(branch, params[0]); 
+      eval.evaluate(traln, branch, false ); 
+      auto newBranch = GibbsProposal::drawFromEsitmatedPosterior(branch, eval, traln, rand, numIter, hastings, params[0]); 
+      traln.setBranch(newBranch, params[0]); 
+      prior.updateBranchLengthPrior(traln , branch.getLength(params[0]), newBranch.getLength(params[0]), params[0]); 
+    }
+
+  // tout << "hastings " << hastings << std::endl; 
+  LikelihoodEvaluator::disorientNode( b.findNodePtr(traln)); 
+  LikelihoodEvaluator::disorientNode( b.getInverted().findNodePtr(traln)); 
+#endif
+
 #endif
 }
 
 
 void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln)
 {
-  Branch evalBranch = move.getEvalBranch(traln); 
+  auto evalBranch = move.getEvalBranch(traln); 
   nodeptr p = evalBranch.findNodePtr(traln);
   move.disorientAtNode(traln, p);
-
   evaluator.evaluate(traln, evalBranch, false); 
 }
 
+  evaluator.evaluate(traln, evalBranch, false); 
+}
 
 void StatNNI::resetState(TreeAln &traln)  
 {

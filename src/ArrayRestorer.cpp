@@ -4,7 +4,6 @@
 
 #include "ArrayRestorer.hpp" 
 #include "Branch.hpp"
-#include "TreeAln.hpp" 
 #include "GlobalVariables.hpp"
 
 #define GAMMA_CATS 4 
@@ -63,7 +62,7 @@ void ArrayRestorer::loadOrientation(TreeAln &traln)
     {
       nat index = i + numTax + 1 ;  
       int val = orientation.at(i); 
-      Branch b(tr->nodep[index]->number, val ); 
+      auto b = BranchPlain(tr->nodep[index]->number, val ); 
       assert(b.exists(traln)); 
       
       nodeptr q = b.findNodePtr(traln);
@@ -154,7 +153,7 @@ void ArrayRestorer::restoreArrays(TreeAln& traln)
 }
 
 
-void ArrayRestorer::toplevelSwitch(TreeAln &traln, Branch virtualRoot, std::vector<nat> models, bool fullTraversal)
+void ArrayRestorer::toplevelSwitch(TreeAln &traln, BranchPlain virtualRoot, std::vector<nat> models, bool fullTraversal)
 {  
   modelsEvaluated.insert(models.begin(),models.end() ); 
 

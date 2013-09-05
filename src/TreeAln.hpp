@@ -1,28 +1,32 @@
+/** 
+    @brief mostly wraps the legacy tr and partition list     
+*/
+
+
 #ifndef _TREEALN_H
 #define _TREEALN_H
 
 #include <vector>
 #include <iostream>
+#include <array>
 #include <memory>
 
-#include "priors/AbstractPrior.hpp"
-#include "Branch.hpp"
 #include "axml.h"
-#include "Randomness.hpp"
 #include "GlobalVariables.hpp"
-#include "TreePrinter.hpp"
+
+#include "BranchFwd.hpp"
+
+
+class AbstractPrior; 
+class Randomness; 
+class TreePrinter; 
+class AbstractParameter; 
 
 std::ostream& operator<<(std::ostream& out, pInfo& rhs); 
-
 nat numStateToNumInTriangleMatrix(int numStates) ; 
-
-/** 
-    @brief mostly wraps the legacy tr and partition list     
-*/
 
 class TreeAln
 {
-
 public: 
    /////////////////
    // life cycle  //
@@ -113,10 +117,12 @@ public:
       If you call this function with an existing Branch b, this
       function is usefull to get the actual branch length.
    */ 
-  Branch getBranch(nodeptr p, const std::vector<AbstractParameter*> &param) const; 
-  Branch getBranch(const Branch& b, AbstractParameter* const &param) const ;   
-  Branch getBranch(nodeptr p,  AbstractParameter* const &param) const; 
-  Branch getBranch(const Branch &b , const std::vector<AbstractParameter*> &params) const ; 
+  BranchLength getBranch(const BranchPlain &branch,  const AbstractParameter *param) const; 
+  BranchLengths getBranch(const BranchPlain& branch, const std::vector<AbstractParameter*> &params) const ; 
+
+  BranchLength getBranch(const nodeptr &branch,  const AbstractParameter *param) const; 
+  BranchLengths getBranch(const nodeptr &branch, const std::vector<AbstractParameter*> &params) const ; 
+
   /** 
       @brief gets a nodepointer with specified id 
    */ 
@@ -124,12 +130,22 @@ public:
   /** 
       @brief extract all branches from the tree (including branch lengths)
    */ 
-  std::vector<Branch> extractBranches(const std::vector<AbstractParameter*> &params) const ; 
-  std::vector<Branch> extractBranches( AbstractParameter* params) const ; 
+  std::vector<BranchLengths> extractBranches(const std::vector<AbstractParameter*> &params) const ; 
+  std::vector<BranchLength> extractBranches( const AbstractParameter* params) const ; 
+  std::vector<BranchPlain> extractBranches() const ; 
+
+  // TODO this woudl be nice, but for now this really leads us too
+  // deep into the rabbit hole of template meta-programming
+
+  // template<typename BTYPE = BranchLength, 
+  // 	   typename PTYPE = typename std::conditional< std::is_same<BTYPE,double>::value, AbstractParameter*, std::vector<AbstractParameter*> >  > 
+  // BTYPE getBranch( const BranchPlain& branch, const PTYPE &elem ) const ; 
+
+
   /**
      @brief determines the (internal representation of the) tree length
    */ 
-  std::vector<double> getTreeLengthsExpensive(const std::vector<AbstractParameter*> &params) const;  
+  // std::vector<double> getTreeLengthsExpensive(const std::vector<AbstractParameter*> &params) const;  
   /** 
       @brief gets the number of inner nodes in the tree 
    */ 
@@ -139,7 +155,18 @@ public:
       @brief gets the mean substitution rate overall specified partitions
    */ 
   double getMeanSubstitutionRate(const std::vector<nat> &partitions) const ;
-
+  /** 
+      @brief unlinks a node 
+   */ 
+  void unlinkNode(nodeptr p); 
+  /** 
+      @brief gets the three nodes adjacent to the given node  
+   */ 
+  std::vector<nat> getNeighborsOfNode( nat node ) const ; 
+  /** 
+      @brief prunes the node from the tree 
+   */ 
+  void detachNode(nodeptr p); 
   ///////////////
   // MODIFIERS //
   ///////////////
@@ -147,6 +174,8 @@ public:
   void setPartitionList(partitionList *pl) { partitions = *pl; }
   partitionList* getPartitionsPtr()  { return &partitions; }   
 #endif  
+  BranchPlain getAnyBranch() const ;//  {return BranchPlain(tr.nodep[1]->number, tr.nodep[1]->back->number); } 
+  
   /**
      @brief sets the frequencies. Format is important, frequencies must add up to 1.0 
   */ 
@@ -162,8 +191,8 @@ public:
   /** 
       @brief sets a branch. Topology is NOT modified! 
    */ 
-  void setBranch(const Branch& b, const std::vector<AbstractParameter*> params);   
-  void setBranch(const Branch& branch, AbstractParameter* param); 
+  void setBranch(const BranchLengths& b, const std::vector<AbstractParameter*> params);   
+  void setBranch(const BranchLength& branch, const AbstractParameter* param); 
   /** 
       @brief hooks up two nodes. Branch lengths must be set
       separately.
@@ -181,6 +210,14 @@ public:
      @brief resets/destroys the topology in the tree 
    */ 
   void unlinkTree();
+  /** 
+      @brief gets the maximum length of paths below this branch 
+   */ 
+  nat getDepth(const BranchPlain  &b) const ; 
+  /** 
+      @brief gets the longest path 
+   */ 
+  std::vector<nat> getLongestPathBelowBranch(const BranchPlain &b) const ; 
   /** 
       @brief initializes the tree from a binary file.  It guarantees
       that the tree is in a usable state afterwards (and thus, this
@@ -201,7 +238,8 @@ public:
       on raw pointers. For traversing, it is often necessary to invert
       the resulting branch.      
    */
-  std::pair<Branch,Branch> getDescendents(const Branch &b) const; 
+  std::pair<BranchPlain,BranchPlain> getDescendents(const BranchPlain &b) const; 
+
   std::vector<bool> getExecModel() const ; 
   std::vector<double> getPartitionLnls() const; 
   void setPartitionLnls(const std::vector<double> partitionLnls) ; 
@@ -225,8 +263,24 @@ private: 			// METHODS
 #endif  
 
   double getTreeLengthHelper(nodeptr p) const;
-  void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart, const std::vector<AbstractParameter*> &params) const ; 
-  void extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart, AbstractParameter* param ) const ; 
+
+  template<typename BTYPE = void>
+  void whatever( nodeptr p , std::vector<Branch<BTYPE> > &result, bool isStart,
+			  const 
+			  std::conditional < 
+			  std::is_same<BTYPE,void>::value, void, 
+			  std::conditional<
+			  std::is_same<BTYPE,double>::value, 
+			  AbstractParameter*, 
+			  std::vector<AbstractParameter*>> > 
+			  &param ) const 
+  {
+  } 
+
+  
+  void extractHelper( nodeptr p , std::vector<BranchPlain> &result, bool isStart ) const ; 
+  void extractHelper( nodeptr p , std::vector<BranchLengths> &result, bool isStart, const std::vector<AbstractParameter*> &params) const ; 
+  void extractHelper( nodeptr p , std::vector<BranchLength> &result, bool isStart, const AbstractParameter* param ) const ; 
   void initDefault();
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
@@ -255,3 +309,8 @@ public:
 
 
 #endif
+
+
+
+
+

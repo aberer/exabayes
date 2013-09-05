@@ -15,12 +15,12 @@ public:
   virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
   virtual void resetState(TreeAln &traln) ; 
   
-  Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ; 
-  Branch proposeOtherBranch(const Branch &firstBranch, const TreeAln& traln, Randomness& rand) const ; 
+  BranchPlain proposeBranch(const TreeAln &traln, Randomness &rand) const ; 
+  BranchPlain proposeOtherBranch(const BranchPlain &firstBranch, const TreeAln& traln, Randomness& rand) const ; 
   
   // or have a generic set-evaluation method? 
   void prepareForEvaluation( TreeAln &traln) const ; 
-  std::pair<Branch,Branch> prepareForSetExecution(TreeAln& traln, Randomness &rand) ; 
+  std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln& traln, Randomness &rand) ; 
   virtual void autotune() {}	// disabled 
 
   virtual AbstractProposal* clone() const;  
@@ -30,8 +30,8 @@ public:
 
 protected: 
   double multiplier; 
-  Branch oneBranch; 
-  Branch otherBranch; 
+  BranchLength oneBranch; 
+  BranchLength otherBranch; 
 };  
 
 #endif

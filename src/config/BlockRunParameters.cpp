@@ -20,6 +20,7 @@ BlockRunParameters::BlockRunParameters()
   , heatedChainsUseSame(false)
   , chkpntFreq(1000)
   , componentWiseMH(true)
+  , useAsdsfMax(false)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "runconfig"; 
 }
@@ -93,6 +94,8 @@ void BlockRunParameters::Read(NxsToken &token)
 	    burninGen = value.ConvertToInt();
 	  else if(key.EqualsCaseInsensitive("burninProportion"))
 	    burninProportion = value.ConvertToDouble();
+	  else if(key.EqualsCaseInsensitive("asdsfusemax"))
+	    useAsdsfMax = convertToBool(value);
 	  else 	      
 	    cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	}

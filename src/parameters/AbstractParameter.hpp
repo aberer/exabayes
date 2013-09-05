@@ -2,8 +2,10 @@
 #define _ABSTRACT_PARAMETER
 
 #include "ParameterContent.hpp"
-#include "TreeAln.hpp"
-#include "priors/AbstractPrior.hpp"
+// #include "priors/AbstractPrior.hpp"
+
+class AbstractPrior; 
+class TreeAln; 
 
 enum class Category; 
 

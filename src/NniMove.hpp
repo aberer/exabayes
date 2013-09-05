@@ -14,20 +14,27 @@ public:
   virtual void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const ; 
   virtual void revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const ; 
   virtual void disorientAtNode(TreeAln &traln, nodeptr p) const ; 
-  virtual void extractMoveInfo(const TreeAln &traln, std::vector<Branch> description, const std::vector<AbstractParameter*> &params) ; 
+  virtual void extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description, const std::vector<AbstractParameter*> &params) ; 
   // virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior* > brPr) const ; 
-  virtual Branch getEvalBranch(const TreeAln &traln) const {return innerBranch; }
+  virtual BranchPlain getEvalBranch(const TreeAln &traln) const { return innerBranch.toPlain(); }
   virtual AbstractMove* clone() const {return new NniMove();}  
 
-  virtual NniMove getInvertseMove() const ; 
+  friend std::ostream& operator<<(std::ostream& out, const NniMove &move); 
 
+  /**
+     @brief maps a branch that exists in the tree after executing the
+     move to the respective branch in the tree before the move was
+     executed.
+   */ 
+  template<typename BT>
+  BranchPlain mapToBranchBeforeMove(const BT &b) const ; 
   
 private: 			// METHODS 
   // void multiplyBranch(const Branch &branch, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand, double parameter , std::vector<AbstractPrior* > priors, std::string name) const; 
   
 private: 			// ATTRIBUTES 
-  Branch innerBranch; 
-  std::vector<Branch> outerBranches; 
+  BranchLengths innerBranch; 
+  std::vector<BranchLengths> outerBranches; 
   std::pair<int,int> switching; 
 }; 
 

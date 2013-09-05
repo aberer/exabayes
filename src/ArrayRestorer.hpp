@@ -41,7 +41,7 @@ public:
   /** 
       @brief traverses the entire tree and switches arrays, where necessary 
    */ 
-  void toplevelSwitch(TreeAln &traln, Branch virtualRoot, std::vector<nat> models, bool fullTraversal); 
+  void toplevelSwitch(TreeAln &traln, BranchPlain virtualRoot, std::vector<nat> models, bool fullTraversal); 
 
 private:   			// METHODS
   ArrayRestorer(ArrayRestorer &rhs)= delete ; 

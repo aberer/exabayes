@@ -2,7 +2,9 @@
 
 #include "axml.h"
 #include "GlobalVariables.hpp"
-#include "TreeAln.hpp"
+// #include "TreeAln.hpp"
+
+class TreeAln; 
 
 static void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
 {
@@ -498,32 +500,3 @@ boolean readTreeWithOrWithoutBL(tree *tr, FILE *fh)
  
   return hasBL; 
 }
-
-
-// TODO HACK 
-// void traverseInitCorrect(nodeptr p, int *count, shared_ptr<TreeAln> traln )
-// {
-//   tree *tr = traln->getTr();
-//   nodeptr q;
-//   int i;
-
-//   for( i = 0; i < traln->getNumBranches(); i++)
-//     {
-//       double val = traln->getBranchLength(p, i); 
-//       {
-// 	double tmp = exp( - val  / tr->fracchange); 
-// 	traln->setBranchLengthBounded(tmp , i,p); 
-//       }
-//     }
-//   *count += 1;
-  
-//   if (! isTip(p->number,tr->mxtips)) 
-//     {                                  /*  Adjust descendants */
-//       q = p->next;
-//       while (q != p) 
-// 	{
-// 	  traverseInitCorrect(q->back, count, traln);
-// 	  q = q->next;
-// 	} 
-//     }
-// }

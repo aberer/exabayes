@@ -1,10 +1,14 @@
 #include "LikelihoodEvaluator.hpp"
 #include "GlobalVariables.hpp"
 #include "ArrayRestorer.hpp"
+#include "Branch.hpp"
 
 
 void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal)
 {
+  if(fullTraversal)
+    tout << "FULL TRAVERSAL" << std::endl; 
+
 #if HAVE_PLL != 0
   evaluateGeneric(traln.getTr(), traln.getPartitionsPtr(), start, fullTraversal); 
 #else 
@@ -14,13 +18,13 @@ void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, nodeptr start, boo
 
 double LikelihoodEvaluator::evaluatePartitions(TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)
 {
-  Branch root = findVirtualRoot(traln);
+  auto root = findVirtualRoot(traln);
   // notice: cannot overload a virtual function?  
   return evaluatePartitionsWithRoot(traln, root, partitions,fullTraversal); 
 }
 
 
-void LikelihoodEvaluator::disorientTree(TreeAln &traln, const Branch &root) 
+void LikelihoodEvaluator::disorientTree(TreeAln &traln, const BranchPlain& root) 
 {
   disorientSubtree(traln,root);   
   disorientSubtree(traln, root.getInverted()); 
@@ -39,7 +43,7 @@ bool LikelihoodEvaluator::disorientNode( nodeptr p)
 }
 
 
-void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch) 
+void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const BranchPlain &branch) 
 {  
   auto p = branch.findNodePtr(traln ); 
 
@@ -47,18 +51,18 @@ void LikelihoodEvaluator::disorientSubtree(TreeAln &traln, const Branch &branch)
 
   if(not traln.isTipNode(p))
     {
-      disorientSubtree(traln, Branch(p->next->back->number, p->number)); 
-      disorientSubtree(traln, Branch(p->next->next->back->number, p->number)); 
+      disorientSubtree(traln, BranchPlain(p->next->back->number, p->number)); 
+      disorientSubtree(traln, BranchPlain(p->next->next->back->number, p->number)); 
     }
 }
 
 
 // currently a bit expensive  
-Branch LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln) const 
+BranchPlain LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln) const 
 {  
   auto tr = traln.getTr(); 
 
-  Branch root; 
+  BranchPlain root; 
   for(int i = tr->mxtips +1 ; i < 2* tr->mxtips-1 ; ++i)
     {
       nodeptr
@@ -66,11 +70,17 @@ Branch LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln) const
 	q = p;       
       do 
 	{
-	  Branch newRoot(q->number, q->back->number); 
+	  auto newRoot = BranchPlain(q->number, q->back->number); 
 	  if(q->x && q->back->x && not root.equalsUndirected(newRoot))
 	    {
 	      if(root.getPrimNode() != 0 )
-		std::cout << "root already taken! " << root << " now at " << newRoot << std::endl; 
+		{
+#if 0 
+		  std::cout << "root already taken! " << root << " now at " << newRoot << std::endl; 
+#else 
+		  assert(0); 
+#endif
+		}
 	      assert(root.getPrimNode( )== 0 ) ;
 	      root = newRoot; 
 	    }
@@ -87,10 +97,14 @@ Branch LikelihoodEvaluator::findVirtualRoot(const TreeAln &traln) const
 	{
 	  if(root.getPrimNode() != 0)
 	    {	      
+#if 0 
 	      std::cout << "previous root was " << root << " now at " << Branch(p->number , p->back->number)  << std::endl; 	      
+#else 
+	      assert(0); 
+#endif
 	    }
 	  assert(root.getPrimNode() == 0); 
-	  root = Branch(p->number, p->back->number); 
+	  root = BranchPlain(p->number, p->back->number); 
 	}
     }
 
@@ -116,9 +130,9 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 
   debugTraln->copyModel(traln); 
 
-  Branch root = findVirtualRoot(traln); 
+  auto root = findVirtualRoot(traln); 
 
-  nodeptr
+  auto
     p = root.findNodePtr(*debugTraln ); 
 
   disorientTree(*debugTraln, root); 

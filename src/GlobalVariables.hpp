@@ -20,11 +20,10 @@
 #include "teestream.hpp"
 
 class AdHocIntegrator; 
+class TreeIntegrator; 
 
 #define tout (*globals.teeOut)
 
-class TreeAln; 
-class BipartitionHash; 
 
 class GlobalVariables
 {
@@ -48,12 +47,14 @@ int debugPrint = 0;
 bool startIntegration = false; 
 
 AdHocIntegrator* ahInt; 
+TreeIntegrator* tInt; 
 
 #else 
 extern std::ofstream nniOut; 
 extern std::ofstream sprOut; 
 extern bool startIntegration; 
 extern AdHocIntegrator* ahInt; 
+extern TreeIntegrator* tInt; 
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 
 extern std::chrono::system_clock::time_point timeIncrement;  

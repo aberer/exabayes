@@ -1,9 +1,11 @@
 #include "PlainLikelihoodEvaluator.hpp"
 
+#include "Branch.hpp"
+
 #include <cassert>
 
 
-double PlainLikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  
+double PlainLikelihoodEvaluator::evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal )  
 {
   auto evalP = evalBranch.findNodePtr(traln);
 
@@ -51,7 +53,7 @@ double PlainLikelihoodEvaluator::evaluate(TreeAln &traln, const Branch &evalBran
 //   return tr->likelihood; 
 // }
  
-void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const Branch &evalBranch)
+void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const BranchPlain &evalBranch)
 { 
   // meh 
   assert(0); 
@@ -83,7 +85,7 @@ void PlainLikelihoodEvaluator::evalSubtree( TreeAln &traln, const Branch &evalBr
 } 
 
 
-bool PlainLikelihoodEvaluator::traverseAndTouch(const TreeAln &traln, const Branch &b)
+bool PlainLikelihoodEvaluator::traverseAndTouch(const TreeAln &traln, const BranchPlain &b)
 {
   if(b.isTipBranch(traln))
     return true; 

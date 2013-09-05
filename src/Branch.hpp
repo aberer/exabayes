@@ -3,24 +3,35 @@
 
     @brief represents a branch 
 
-    Furthermore, Branch may also represent (depending on context) a
-    sub-tree or be equivalent to a nodeptr. In these cases, a
-    secondary node defines the orientation of the branch. 
+    Branch comes in three variants: without branch length
+    (BranchPlain), with a single branch length (BranchLength, usefull
+    when e.g. operating on a single partition) and all branch lengths
+    possible for this branch (BranchLengths, usefull when backing up
+    data)
+
+    The current implementation relies on some hard-coding for the
+    three instances -- this could be improved by using more templates.
+
  */ 
 
-#ifndef _BRANCH_NEW_H
-#define _BRANCH_NEW_H
+#ifndef _BRANCH_NEW_NEW_H
+#define _BRANCH_NEW_NEW_H
 
 #include <iostream>
+#include <sstream>
 #include <cassert>
 #include <vector>
+#include <unordered_set>
+
+#include <type_traits>
 
 #include "axml.h"
 #include "Checkpointable.hpp"
 
-class AbstractParameter; 
-class TreeAln; 
+#include "TreeAln.hpp"
 
+
+class AbstractParameter; 
 
 enum class BranchEqualFlag : int 
 {
@@ -29,33 +40,36 @@ enum class BranchEqualFlag : int
     WITH_DIRECTION = 2
 }; 
 
-
 BranchEqualFlag operator|( BranchEqualFlag a, BranchEqualFlag b); 
 BranchEqualFlag operator&( BranchEqualFlag a, BranchEqualFlag b); 
 
+template<typename TYPE>
+class LengthPart; 
 
-class Branch : public Checkpointable
+template<typename TYPE = void>
+class Branch : public Checkpointable, public LengthPart<TYPE>
 {
 public: 
   /////////////////
   // life cycle  //
   /////////////////
-  Branch(nat a = 0, nat b = 0, std::vector<double> lengths =std::vector<double>{}); 
+  Branch(nat a = 0, nat b = 0)
+    : thisNode(a)
+    , thatNode(b)
+  {
+  };
 
   ///////////////
   // observers //
   ///////////////
-  /** 
-      @brief gets the absolute (true) length of the branch
-   */ 
-  double getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const; 
+  // double getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const; 
 
   // double getInternalLength(const TreeAln &traln, double length) const; 
-  void setConvertedInternalLength(const TreeAln& traln, const AbstractParameter* param, double length) ; 
+  // void setConvertedInternalLength(const TreeAln& traln, const AbstractParameter* param, double length) ; 
   /**
      @brief switches the orientation of the branch (i.e., the reference node )
    */ 
-  Branch getInverted() const { return Branch(thatNode, thisNode, lengths); }
+  Branch getInverted() const ; 
   /**
      @brief indicates whether two branches are equal disregarding branch lengths and orientation     
    */ 
@@ -75,7 +89,7 @@ public:
   /** 
       @brief gets all lengths stored in the branch
    */ 
-  const std::vector<double>& getAllLengths() const {return lengths; }
+  // const std::vector<double>& getLengths() const {return lengths; }
   /**
      @brief sets the primary node
    */ 
@@ -85,21 +99,13 @@ public:
    */ 
   void setSecNode(nat node) {thatNode = node; }  
   /**
-     @brief sets the branch length (internal representation)
-   */ 
-  void setLength(double intLength, const AbstractParameter* param);
-  /**
-     @brief gets the (internal) branch length
-   */ 
-  double getLength (const AbstractParameter* param) const;
-  /**
      @brief indicates whether the branch exists in tree traln
    */ 
   bool exists(const TreeAln &traln) const; 
   /**
      @brief gets the branch adjacent to the branch "this" and "rhs"
    */ 
-  Branch getThirdBranch(const TreeAln &traln, const Branch& rhs ) const; 
+  Branch<void> getThirdBranch(const TreeAln &traln, const Branch& rhs ) const; 
   /**
      @brief gets the intersecting node of two branches
      @notice triggers assertion, if there is no intersection 
@@ -107,8 +113,8 @@ public:
   nat getIntersectingNode(const Branch  &rhs) const ; 
   /** 
       @brief indicates whether a node is part of this branch 
-   */ 
-  bool nodeIsInBranch(nat node) const {return (thisNode == node) || (thatNode == node) ;  }
+  */ 
+  bool hasNode(nat node) const {return (thisNode == node) || (thatNode == node) ;  }
   /** 
       @brief finds the nodeptr in the tree that is described by this
       branch
@@ -122,41 +128,114 @@ public:
       @brief indicates whether a branch is a tip branch  
    */ 
   bool isTipBranch(const TreeAln &traln) const; 
+  /**
+     @brief gets the distance to another branch
+   */ 
+  nat getDistance(const Branch &bOther, const TreeAln &traln) const ; 
+  /** 
+      @brief gets the taxon ids on one side of a branch (which equals one partition of a bipartition)
+   */ 
+  std::vector<nat> getBipartition(const TreeAln &traln ) const ; 
 
   virtual void readFromCheckpoint( std::istream &in ) ; 
   virtual void writeToCheckpoint( std::ostream &out) const  ;   
 
-  // friends 
-  friend std::ostream& operator<<(std::ostream &out, const Branch& br); 
 
+  Branch<double> toBlDummy() const; 
+  Branch<std::vector<double>> toBlsDummy() const ; 
+  Branch<void> toPlain() const ; 
 
-  static bool printLength; 
+  //   friends 
+  friend std::ostream& operator<< (std::ostream &out, const Branch<TYPE>& rhs)
+  {
+    out << "(" << rhs.getPrimNode() << "," << rhs.getSecNode() << ")"; 
+    rhs.lengthToString(out); 
+    return out; 
+  } 
+ 
 
-private: 
+  // TODO replace this with the string variant 
+  // void print(std::ostream &out) const { std::stingstream ss ; ss  << "("<< thisNode << "," << thatNode << ")" ; } 
+
+private: 			// METHODS 
+  std::unordered_set<nat> getBipartitionHelper(const TreeAln &traln  ) const ; 
+  nat getDistanceHelper(const Branch &bOther, const TreeAln &traln, nat distSoFar ) const ; 
+
+private: 			// ATTRIBUTES 
   nat thisNode; 
   nat thatNode;   
   std::vector<double> lengths; 
-}; 
-
-
-
-
-class BranchHashNoLength
-{ 
-public: 
-  size_t operator()(const Branch &b ) const 
-  {
-    return std::hash<nat>()(b.getPrimNode()) ^ std::hash<nat>()( b.getSecNode()) ; 
-  }
-}; 
-
-class BranchEqualNoLength
-{
-public:
-  bool operator() (const Branch &b, const Branch &a) const 
-  {
-    return a.equalsUndirected(b); 
-  }
 };
+
+#include "LengthPart.hpp"
+
+
+// template<typename ATYPE> std::ostream& operator<<(std::ostream &out, const Branch<ATYPE>& br); 
+
+
+typedef Branch<void> BranchPlain; 
+typedef Branch<double> BranchLength; 
+typedef Branch<std::vector<double>> BranchLengths; 
+
+
+namespace std 
+{
+  template<> 
+  struct hash<Branch<void>>
+  {
+    size_t operator()(const Branch<void> & x) const
+    {
+      return std::hash<nat>()(x.getSecNode()) 
+	^ std::hash<nat>()(x.getPrimNode()); 
+    }
+  };
+
+  template<>
+  struct hash<Branch<double>>
+  {
+    size_t operator()(const Branch<double> & x) const
+    {
+      return hash<Branch<void>>()(x.toPlain());
+    }
+  }; 
+
+  template<>
+  struct hash<Branch<std::vector<double>>>
+  {
+    size_t operator()(const Branch<std::vector<double>> & x) const
+    {
+      return hash<Branch<void>>()(x.toPlain());
+    }
+  }; 
+
+  template<>
+  struct equal_to<Branch<void>>
+  {
+    bool operator()(const Branch<void> &a, const Branch<void> &b)  const
+    {
+      return a.equalsUndirected(b); 
+    }
+  }; 
+
+  template<>
+  struct equal_to<Branch<double>>
+  {
+    bool operator()(const Branch<double> &a, const Branch<double> &b)const
+    {
+      return a.equalsUndirected(b); 
+    }
+  }; 
+
+  template<>
+  struct equal_to<Branch<std::vector<double>>>
+  {
+    bool operator()(const Branch<std::vector<double>> &a, const Branch<std::vector<double>> &b)const
+    {
+      return a.equalsUndirected(b); 
+    }
+  }; 
+}
+
+#include "BranchImpl.hpp"
 
 #endif

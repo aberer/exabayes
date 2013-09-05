@@ -37,15 +37,15 @@ void SampleMaster::branchLengthsIntegration()
   auto paramView = runs[0].getChains()[0].getProposalView()[0]->getBranchLengthsParameterView();
 
   std::vector<std::pair<double,double> > parsAndMLBlen; 
-  for(auto &branch : traln.extractBranches(ahInt.getBlParamView()))
+  for(auto &branch : traln.extractBranches(ahInt.getBlParamView()[0]))
     {      
       tout << branch << std::endl; 
-      Branch initBranch = branch; 
+      auto initBranch = branch; 
 
-      ahInt.prepareForBranch( branch, traln); 
+      ahInt.prepareForBranch( branch.toPlain(), traln); 
 
       // sampling 
-      auto samples = ahInt.integrate( branch, traln, 10000, 10 );
+      auto samples = ahInt.integrate( branch.toPlain(), traln, 10000, 10 );
 
       double minHere = *( std::min_element(samples.begin(), samples.end()) ) ; 
       double maxHere = *( std::max_element(samples.begin(), samples.end()) ) ; 
@@ -56,17 +56,17 @@ void SampleMaster::branchLengthsIntegration()
       std::copy(samples.begin(), samples.end(), std::ostream_iterator<double>(thisOut, "\n")); 
 
       // lnl curve 
-      ahInt.createLnlCurve(branch, cl.getRunid(), traln, minHere, maxHere, STEPS_FOR_LNL);
+      ahInt.createLnlCurve(branch.toPlain(), cl.getRunid(), traln, minHere, maxHere, STEPS_FOR_LNL);
 
       // optimization 
       double nrOpt = ahInt.printOptimizationProcess(branch,  cl.getRunid(), lambda, NR_STEPS);
 
       // print parsimony length  
-      double pLength = ahInt.getParsimonyLength(traln, branch); 
+      double pLength = ahInt.getParsimonyLength(traln, branch.toPlain()); 
       parsAndMLBlen.push_back({pLength, nrOpt});
 
       // reset 
-      traln.setBranch(initBranch, paramView);
+      traln.setBranch(initBranch, paramView[0]);
     }
 
   

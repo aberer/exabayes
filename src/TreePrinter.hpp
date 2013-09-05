@@ -5,6 +5,8 @@
 #include "TreeAln.hpp"
 #include <sstream>
 
+class AbstractParameter; 
+
 
 class TreePrinter
 {

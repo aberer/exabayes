@@ -1,5 +1,4 @@
 #include <cassert>
-
 #include "axml.h"
 
 #define _INCLUDE_DEFINITIONS
@@ -11,9 +10,6 @@
 #if HAVE_PLL != 0 
 #include "globalVariables.h" 
 #endif
-
-
-void genericExit(int code); 
 
 
 int main(int argc, char** argv)
@@ -31,7 +27,7 @@ int main(int argc, char** argv)
   int start = atoi(argv[1]); 
   int end = atoi(argv[2]); 
 
-  std::vector<std::string> tmp;
+  auto tmp = std::vector<std::string>();
   for(int i = 3 ; i < argc; ++i)  
     {
       // check if the file exists 
@@ -51,11 +47,14 @@ int main(int argc, char** argv)
   asdsf.setEnd(end);
 
   // cout << "all files contain at least " << asdsf.getMinNumTrees() << " trees" << endl; ;
-  asdsf.extractBips();
+  asdsf.extractBipsNew();
 
   double ignoreFreq = 0.1; 
   
-  std::cout << "average deviation of split frequencies: " << asdsf.computeAsdsf(ignoreFreq) * 100  << "%" << std::endl; 
+  auto asdsfResult = asdsf.computeAsdsfNew(ignoreFreq); 
+
+  std::cout << "average deviation of split frequencies: " <<  asdsfResult.first * 100  << "%" << std::endl; 
+  std::cout  << "maximum deviation of split frequencies: " << asdsfResult.second * 100 << "%" << std::endl; 
   std::cout << "ignored splits that did not occur more than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << std::endl; 
   return 0; 
 }

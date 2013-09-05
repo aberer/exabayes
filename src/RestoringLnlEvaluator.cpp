@@ -1,6 +1,7 @@
 #include "RestoringLnlEvaluator.hpp"
 
 #include "GlobalVariables.hpp"
+#include "Branch.hpp"
 
 
 RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<ArrayRestorer> _restorer)  
@@ -9,7 +10,7 @@ RestoringLnlEvaluator::RestoringLnlEvaluator(std::shared_ptr<ArrayRestorer> _res
 }
 
 
-double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch, bool fullTraversal )  
+double RestoringLnlEvaluator::evaluate(TreeAln &traln, const BranchPlain &evalBranch, bool fullTraversal )  
 {
   std::vector<nat> partitionsToEvaluate; 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
@@ -20,7 +21,7 @@ double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch,
   if(fullTraversal)
     disorientTree(traln, evalBranch); 
   
-  Branch root(start->number, start->back->number);
+  auto root = BranchPlain(start->number, start->back->number);
   restorer->toplevelSwitch(traln, root, partitionsToEvaluate, fullTraversal);
 
   exa_evaluateGeneric(traln,start,FALSE); // must be FALSE
@@ -33,7 +34,7 @@ double RestoringLnlEvaluator::evaluate(TreeAln &traln, const Branch &evalBranch,
 
 
 // must be partial 
-void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranch)   
+void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const BranchPlain &evalBranch)   
 { 
   // must evaluate on all partitions. Otherwise, we get problems with
   // per-partition roots 
@@ -56,7 +57,7 @@ void RestoringLnlEvaluator::evalSubtree(TreeAln  &traln, const Branch &evalBranc
 }
 
 
-double RestoringLnlEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Branch &root , const std::vector<nat>& partitions, bool fullTraversal)    
+double RestoringLnlEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions, bool fullTraversal)    
 {  
   auto tr = traln.getTr(); 
   nat numPart = traln.getNumberOfPartitions(); 
@@ -98,7 +99,7 @@ double RestoringLnlEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const 
 void RestoringLnlEvaluator::resetToImprinted(TreeAln &traln)
 {
   restorer->restoreArrays(traln); 
-  Branch root = findVirtualRoot(traln); 
+  BranchPlain root = findVirtualRoot(traln); 
 
   auto p = root.findNodePtr(traln), 
     q = p->back; 

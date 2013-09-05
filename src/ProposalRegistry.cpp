@@ -4,6 +4,20 @@
 
 #include "ProposalRegistry.hpp"
 
+#include "LikelihoodSPR.hpp"
+#include "GibbsBranchLength.hpp"
+#include "ExtendedTBR.hpp"
+#include "ExtendedSPR.hpp"
+#include "ParsimonySPR.hpp"
+#include "StatNNI.hpp"
+#include "RadiusMlSPR.hpp"
+#include "BranchLengthMultiplier.hpp"
+#include "BranchCollapser.hpp"
+#include "AminoModelJump.hpp"
+#include "NodeSlider.hpp"
+#include "TreeLengthMultiplier.hpp"
+#include "AbstractProposal.hpp"
+
 #include "proposers/AbstractProposer.hpp"
 #include "proposers/SlidingProposal.hpp"
 #include "proposers/MultiplierProposal.hpp"
@@ -21,6 +35,12 @@ const double ProposalRegistry::initTreeLengthMultiplier = 1.386294;
 const double ProposalRegistry::initDirichletAlpha = 100 ; 
 const double ProposalRegistry::initGammaMultiplier = 0.811 ; 
 const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ; 
+
+
+const int ProposalRegistry::likeSprMinRadius = 1; 
+// const int ProposalRegistry::likeSprMaxRadius = std::numeric_limits<int>::max(); 
+const int ProposalRegistry::likeSprMaxRadius = 4; 
+const double ProposalRegistry::likeSpWarp = 1; 
 
 
 /**
@@ -75,13 +95,13 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	case ProposalType::REVMAT_SLIDER: 
 	  proposal = 
 	    std::unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatSlider", true, 
-								       std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::rateMin, BoundsChecker::rateMax)),
+								       std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::rateMin, BoundsChecker::rateMax, true)),
 								       initRateSlidingWindow )) ; 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case ProposalType::FREQUENCY_SLIDER:
 	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqSlider", true, 
-									   std::unique_ptr<SlidingProposal>( new SlidingProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max())), 
+									   std::unique_ptr<SlidingProposal>( new SlidingProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max(), false)), 
 									   initFrequencySlidingWindow )) ; 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 		  
@@ -94,24 +114,27 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	case ProposalType::RATE_HET_SLIDER: 
 	  proposal = 
 	    unique_ptr<ParameterProposal> ( new ParameterProposal(Category::RATE_HETEROGENEITY, "rateHetSlider", false, 
-								  std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::alphaMin, BoundsChecker::alphaMax)),   
+								  std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::alphaMin, BoundsChecker::alphaMax, false)),   
 								  initGammaSlidingWindow )) ; 
 	  proposal->setRelativeWeight(0); 
 	  break; 
 	case ProposalType::FREQUENCY_DIRICHLET: 
 	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqDirich", true, 
-									   std::unique_ptr<DirichletProposal>(new DirichletProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max())), 
+									   std::unique_ptr<DirichletProposal>(new DirichletProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max(), false)), 
 									   initDirichletAlpha )) ; 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case ProposalType::REVMAT_DIRICHLET: 
 	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatDirich", true, 
-									   std::unique_ptr<DirichletProposal>(new DirichletProposal (BoundsChecker::rateMin, BoundsChecker::rateMax)), 
+									   std::unique_ptr<DirichletProposal>(new DirichletProposal (BoundsChecker::rateMin, BoundsChecker::rateMax, true)), 
 									   initDirichletAlpha)) ; 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
 	case ProposalType::GUIDED_SPR:
 	  proposal = unique_ptr<RadiusMlSPR>( new RadiusMlSPR(  config.getGuidedRadius() )); 
+	  break; 
+	case ProposalType::LIKE_SPR: 
+	  proposal = unique_ptr<LikelihoodSPR>(new LikelihoodSPR(  likeSprMinRadius, likeSprMaxRadius, likeSpWarp));
 	  break; 
 	case ProposalType::BRANCH_COLLAPSER:
 	  proposal = unique_ptr<BranchCollapser>( new BranchCollapser()); 
@@ -169,7 +192,7 @@ ProposalRegistry::getMultiParameterProposals(std::vector<AbstractParameter*> par
     }
   
   // initialize a revmat proposal 
-  std::unique_ptr<DirichletProposal> p(new DirichletProposal(BoundsChecker::rateMin, BoundsChecker::rateMax));
+  std::unique_ptr<DirichletProposal> p(new DirichletProposal(BoundsChecker::rateMin, BoundsChecker::rateMax, true));
 
   auto proposal =  new AlignmentProposal(Category::SUBSTITUTION_RATES, 
 					 "revMatDirichAll", 

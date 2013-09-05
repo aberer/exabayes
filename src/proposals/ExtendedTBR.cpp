@@ -16,7 +16,7 @@ ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
 }
 
 
-void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, Randomness &rand )
+void ExtendedTBR::buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &traln, Randomness &rand )
 {
   auto params = getBranchLengthsParameterView();
 
@@ -29,7 +29,7 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
     pnn = p->next->next->back; 
   
   
-  Branch pnBranch = traln.getBranch(pn, params),
+  auto pnBranch = traln.getBranch(pn, params),
     pnnBranch = traln.getBranch(pnn, params);
 
   // prune  
@@ -37,7 +37,7 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
   p->next->next->back = p->next->back = NULL; 
 
   path.append(bisectedBranch);
-  path.append(Branch(pn->number, pnn->number)); 
+  path.append(BranchPlain(pn->number, pnn->number)); 
   nodeptr currentNode = rand.drawRandDouble01() ? pn : pnn;
   bool accepted = false; 
   while(not accepted )
@@ -47,7 +47,7 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
 	? currentNode->next->back
 	: currentNode->next->next->back; 
 
-      path.pushToStackIfNovel(Branch(currentNode->number, n->number),traln); 
+      path.pushToStackIfNovel(BranchPlain(currentNode->number, n->number),traln); 
       currentNode = n;       
       accepted = rand.drawRandDouble01() < stopProb && path.size() > 2 ; 
     }
@@ -59,9 +59,9 @@ void ExtendedTBR::buildPath(Path &path, Branch bisectedBranch, TreeAln &traln, R
   traln.setBranch(pnnBranch, params);
 
   // a correction is necessary 
-  if(path.at(2).nodeIsInBranch(path.at(1).getPrimNode() ))
+  if(path.at(2).hasNode(path.at(1).getPrimNode() ))
     path.at(1).setSecNode(p->number); 
-  else if (path.at(2).nodeIsInBranch(path.at(1).getSecNode() ))
+  else if (path.at(2).hasNode(path.at(1).getSecNode() ))
     path.at(1).setPrimNode(p->number); 
   else 
     assert(0); 
@@ -81,7 +81,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
   // assert(numBranches == 1 ) ; 
   tree *tr = traln.getTr();
 
-  Branch bisectedBranch = {0,0}; 
+  auto bisectedBranch = BranchPlain{0,0}; 
   assert(tr->mxtips > 8 ); 
 
   nodeptr
@@ -89,7 +89,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   do
     {
-      bisectedBranch  = TreeRandomizer::drawInnerBranchUniform(traln, rand ); 
+      bisectedBranch = TreeRandomizer::drawInnerBranchUniform(traln, rand ); 
 
       p1 = bisectedBranch.findNodePtr(traln ); 
       p2 = bisectedBranch.getInverted().findNodePtr(traln); 
@@ -144,7 +144,7 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
 
 void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& traln)
 { 
-  Branch toEval = move.getEvalBranch(traln);
+  auto toEval = move.getEvalBranch(traln);
   // tout <<  "eval " << toEval << std::endl; 
   // tout << "TREE " << traln << std::endl; 
   auto p = toEval.findNodePtr(traln); 

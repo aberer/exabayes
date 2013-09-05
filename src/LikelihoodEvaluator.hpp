@@ -5,7 +5,6 @@
 
 #include "axml.h"
 #include "TreeAln.hpp"
-#include "Branch.hpp"
 #include "ArrayRestorer.hpp"
 
 class LikelihoodEvaluator
@@ -18,21 +17,21 @@ public:
      @brief: evaluate a list of partitions. This is always a full traversal 
    */
   double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)  ;
-  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const Branch& root,  const std::vector<nat>& partitions, bool fullTraversal)  = 0; 
+  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain& root,  const std::vector<nat>& partitions, bool fullTraversal)  = 0; 
   /** 
       @brief evaluate a subtree. This used to be the
       newview-command. The this-node is the important part, the
       that-node of the branch only specifies the orientation.
    */ 
-  virtual void evalSubtree( TreeAln &traln, const Branch &evalBranch)  = 0   ; 
+  virtual void evalSubtree( TreeAln &traln, const BranchPlain &evalBranch)  = 0   ; 
   /** 
       @brief evaluation at a given branch  
    */ 
-  virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ) = 0 ; 
+  virtual double evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal ) = 0 ; 
   /** 
       @brief find the root branch in the current tree    
    */
-  Branch findVirtualRoot(const TreeAln &traln) const ;   
+  BranchPlain findVirtualRoot(const TreeAln &traln) const ;   
   /** 
       @brief mark a node as dirty  
    */ 
@@ -61,11 +60,11 @@ public:
   /**
      @brief destroy the orientation of the entire tree (e.g., to enforce re-evaluation)
    */
-  static void disorientTree(TreeAln &traln, const Branch &root) ; 
+  static void disorientTree(TreeAln &traln, const BranchPlain &root) ; 
   /** 
       @brief destroy the orientation of a subtree 
    */ 
-  static void disorientSubtree(TreeAln &traln, const Branch &branch) ; 
+  static void disorientSubtree(TreeAln &traln, const BranchPlain &branch) ; 
 
   virtual std::unique_ptr<LikelihoodEvaluator> clone() const = 0; 
 

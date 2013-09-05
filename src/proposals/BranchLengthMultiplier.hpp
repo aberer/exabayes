@@ -21,16 +21,16 @@ public:
   virtual AbstractProposal* clone() const;  
 
   // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  ;
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand) ;
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand) ;
 
-  virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
+  virtual BranchPlain proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
 
   virtual void readFromCheckpointCore(std::istream &in); 
   virtual void writeToCheckpointCore(std::ostream &out) const; 
 
 protected: 
   double multiplier;  
-  Branch savedBranch;   
+  BranchLength savedBranch;   
 
 }; 
 

@@ -1,4 +1,5 @@
 #include "AlignmentProposal.hpp"
+#include "priors/AbstractPrior.hpp"
 
 #define HEAT 0.5
 

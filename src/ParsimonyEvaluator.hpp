@@ -14,7 +14,7 @@ public:
       @param parsimonyLength the per partition parsimony score for the
       transition between the descendent nodes
    */ 
-  void evaluate(TreeAln &traln, nodeptr p, bool fullTraversal, std::vector<nat> &partitionParsimony, std::vector<nat> &parsimonyLength);   
+  void evaluate(TreeAln &traln, nodeptr p, bool fullTraversal, std::vector<nat> &partitionParsimony, std::vector<nat> &parsimonyLength); 
 
 private: 
 

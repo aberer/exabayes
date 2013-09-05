@@ -7,11 +7,14 @@
 #include "Branch.hpp"
 #include "Checkpointable.hpp"
 
+ 
+
 class  ParameterContent : public Checkpointable
 {
 public:   
   std::vector<double> values; 
-  std::vector<Branch> branches; 
+  std::vector<BranchPlain> topology;
+  std::vector<BranchLength> branchLengths; 
 
   virtual void readFromCheckpoint( std::istream &in )  ; 
   virtual void writeToCheckpoint( std::ostream &out)  const;   

@@ -1,5 +1,6 @@
+#include "Branch.hpp"
 #include "TbrMove.hpp"
-
+#include "Path.hpp"
 
 void TbrMove::applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
@@ -53,7 +54,7 @@ void TbrMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 } 
 
 
-void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description,const std::vector<AbstractParameter*> &params) 
+void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description,const std::vector<AbstractParameter*> &params) 
 {
   sprCreatePath(traln, description.at(0),description.at(1),path1, params); 
   sprCreatePath(traln, description.at(2),description.at(3),path2, params); 
@@ -68,9 +69,9 @@ void TbrMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hasting
 #endif 
 
 
-Branch TbrMove::getEvalBranch(const TreeAln &traln) const 
+BranchPlain TbrMove::getEvalBranch(const TreeAln &traln) const 
 {   
-  return  Branch(path1.getNthNodeInPath(1) , path2.getNthNodeInPath(1)); 
+  return  BranchPlain(path1.getNthNodeInPath(1) , path2.getNthNodeInPath(1)); 
 }
 
 

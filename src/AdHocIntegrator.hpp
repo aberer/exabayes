@@ -22,12 +22,12 @@ class AdHocIntegrator
 public: 
   AdHocIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed); 
   std::vector<AbstractParameter*> getBlParamView() const ;
-  void prepareForBranch( const Branch &branch, const TreeAln &traln); 
-  std::vector<double> integrate(const Branch &branch, const TreeAln &otherTree, nat intGens, nat thinning); 
-  void createLnlCurve(Branch branch, std::string runid, TreeAln & traln , double minHere, double maxHere, nat numSteps); 
+  void prepareForBranch( const BranchPlain &branch, const TreeAln &traln); 
+  std::vector<double> integrate(const BranchPlain &branch, const TreeAln &otherTree, nat intGens, nat thinning); 
+  void createLnlCurve(BranchPlain branch, std::string runid, TreeAln & traln , double minHere, double maxHere, nat numSteps); 
   bool decideUponAcceptance(const TreeAln &traln, double prevLnl); 
-  double getParsimonyLength(TreeAln &traln, const Branch &b );
-  double printOptimizationProcess(const Branch& branch, std::string runid, double lambda, nat nrSteps); 
+  double getParsimonyLength(TreeAln &traln, const BranchPlain &b );
+  double printOptimizationProcess(const BranchLength& branch, std::string runid, double lambda, nat nrSteps); 
   void copyTree(const TreeAln &traln); 
 
 private: 			// METHODS 

@@ -14,20 +14,20 @@ public:
     this->category = Category::BRANCH_LENGTHS;     
   }
 
-  virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const
+  virtual BranchPlain proposeBranch(const TreeAln &traln, Randomness &rand) const
   {
     
     return toPropose; 
   } 
   
-  void setToPropose(Branch b) { toPropose = b; }
+  void setToPropose(BranchPlain b) { toPropose = b; }
 
   virtual AbstractProposal* clone() const {return new BranchIntegrator(*this); }   
 
   virtual void autotune(){}
 
 private:
-  Branch toPropose; 
+  BranchPlain toPropose; 
   
 
 }; 

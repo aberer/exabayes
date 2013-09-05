@@ -1,10 +1,14 @@
-#include <cmath>
 
+#include <cmath>
+#include <cassert>
 #include <iomanip>
+
+#include "Branch.hpp"
+
 #include "BoundsChecker.hpp"
 #include "GlobalVariables.hpp"
 
-#include "TreeAln.hpp"
+// #include "TreeAln.hpp"
 
 // here we initialize the max/min values for our various
 // parameters. Static const is essentially like a global variable but
@@ -33,15 +37,17 @@ bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )
   return result; 
 }
 
-bool BoundsChecker::checkBranch( const Branch &branch) 
+bool BoundsChecker::checkBranch( const BranchLength &branch) 
+{
+  auto v = branch.getLength() ; 
+  return BoundsChecker::zMin <= v && v <= BoundsChecker::zMax ; 
+}
+
+bool BoundsChecker::checkBranch( const BranchLengths &branch) 
 {
   bool okay = true; 
-  for(auto &v : branch.getAllLengths())
-    {
-      // TODO what a hack!  
-      if(v != TreeAln::problematicBL)
-	okay &= BoundsChecker::zMin <= v && v <= BoundsChecker::zMax; 
-    }
+  for(auto &v : branch.getLengths())
+    okay &= BoundsChecker::zMin <= v && v <= BoundsChecker::zMax; 
   return okay; 
 }
 
@@ -49,7 +55,13 @@ bool BoundsChecker::checkRevmat( const std::vector<double> &rates)
 {
   bool result = true; 
   for(auto &r : rates)
-    result &=  (  r  <=  BoundsChecker::rateMax)  && ( BoundsChecker::rateMin <= r ) ; 
+    {
+      auto prob =  (r - BoundsChecker::rateMax < 1e-6 )  && ( BoundsChecker::rateMin <= r ); 
+      if(not prob)
+	tout << MAX_SCI_PRECISION << "attention: problem  with " << r << std::endl; 
+      result &=  prob ; 
+    }
+
   assert(*(rates.rbegin()) == 1.0); 
   return result; 
 }
@@ -69,31 +81,48 @@ void BoundsChecker::correctAlpha(double &alpha)
 }
 
 
-void BoundsChecker::correctBranch(Branch &branch, const AbstractParameter* param)
+void BoundsChecker::correctBranch( BranchLengths &branch ) 
 {
-  double length = branch.getLength(param); 
+  auto lengths = branch.getLengths(); 
+
+  for(auto &length : lengths )
+    {
+      if(length < BoundsChecker::zMin )
+	length = BoundsChecker::zMin;
+      if(BoundsChecker::zMax < length)
+	length = BoundsChecker::zMax; 
+    }
+
+  branch.setLengths(lengths);   
+} 
+
+
+void BoundsChecker::correctBranch(BranchLength &branch)
+{
+  double length = branch.getLength(); 
   if(length < BoundsChecker::zMin )
     length = BoundsChecker::zMin;
   if(BoundsChecker::zMax < length)
     length = BoundsChecker::zMax; 
-  branch.setLength(length, param);   
+  branch.setLength(length);   
 }
 
 
-void BoundsChecker::correctBranch( Branch &branch, const std::vector<AbstractParameter*> &params ) 
-{
-  for(auto &param : params)
-    BoundsChecker::correctBranch(branch, param); 
-}
- 
 void BoundsChecker::correctRevMat( std::vector<double> &rates)
 {
+  // because we have to convert the revmat from relative
+  // representation to rate representation, this is more tricky.
+
+  // note: rates are relative to last value here 
+
+  // double sum = std::accumulate(rates.begin(), rates.end(), 0.); 
+
   for(auto &r : rates )
     {
-      if( r < BoundsChecker::rateMin)
-	r = BoundsChecker::rateMin; 
-      else if(BoundsChecker::rateMax < r  )
-	r = BoundsChecker::rateMax; 
+      if( r <= BoundsChecker::rateMin)
+	r = BoundsChecker::rateMin + std::numeric_limits<double>::epsilon();
+      else if(BoundsChecker::rateMax <= r  ) 
+	r = BoundsChecker::rateMax - std::numeric_limits<double>::epsilon();
     }  
 }
  
@@ -124,3 +153,4 @@ void BoundsChecker::correctFrequencies( std::vector<double> &frequencies)
     sum += f; 
   assert(abs(sum - 1.0 ) < 1e-6); 
 } 
+

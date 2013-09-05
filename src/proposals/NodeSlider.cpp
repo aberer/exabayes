@@ -13,7 +13,7 @@ NodeSlider::NodeSlider( double _multiplier)
 }
 
 
-std::pair<Branch,Branch> NodeSlider::prepareForSetExecution(TreeAln& traln, Randomness &rand) 
+std::pair<BranchPlain,BranchPlain> NodeSlider::prepareForSetExecution(TreeAln& traln, Randomness &rand) 
 {
   assert(inSetExecution); 
 #ifdef EFFICIENT
@@ -23,14 +23,14 @@ std::pair<Branch,Branch> NodeSlider::prepareForSetExecution(TreeAln& traln, Rand
   assert(0); 
 #endif
   
-  Branch a = TreeRandomizer::drawInnerBranchUniform(traln,rand); 
+  auto a = TreeRandomizer::drawInnerBranchUniform(traln,rand); 
   auto descendents = traln.getDescendents(a); 
-  Branch b = rand.drawRandDouble01() < 0.5 ? descendents.first : descendents.second; 	
-  return std::pair<Branch,Branch>(a,b); 
+  auto b = rand.drawRandDouble01() < 0.5 ? descendents.first : descendents.second; 	
+  return std::pair<BranchPlain,BranchPlain>(a,b); 
 }
 
 
-Branch NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) const 
+BranchPlain NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) const 
 {
   if(inSetExecution)
     {
@@ -43,7 +43,7 @@ Branch NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) const
 }
 
 
-Branch NodeSlider::proposeOtherBranch(const Branch &firstBranch, const TreeAln& traln, Randomness& rand) const 
+BranchPlain NodeSlider::proposeOtherBranch(const BranchPlain &firstBranch, const TreeAln& traln, Randomness& rand) const 
 {
   if(inSetExecution)
     return preparedOtherBranch; 
@@ -60,7 +60,7 @@ void NodeSlider::prepareForEvaluation( TreeAln &traln) const
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
   
-  Branch b(middleNode, otherNode); 
+  auto b = BranchPlain(middleNode, otherNode); 
   nodeptr p = b.findNodePtr(traln);    
   LikelihoodEvaluator::disorientNode( p); 
 }
@@ -73,14 +73,11 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   assert(blParams.size() == 1); 
 
   // TODO outer branches have a lower probability of getting drawn? =/ 
-  oneBranch = proposeBranch(traln, rand);
-  otherBranch = proposeOtherBranch(oneBranch, traln, rand);
+  oneBranch = traln.getBranch(proposeBranch(traln, rand),param); 
+  otherBranch = traln.getBranch(proposeOtherBranch(oneBranch.toPlain(), traln, rand),param); 
 
-  oneBranch = traln.getBranch(oneBranch,param); 
-  otherBranch = traln.getBranch(otherBranch,param); 
-
-  double oldA = oneBranch.getLength(param),
-    oldB = otherBranch.getLength(param);
+  double oldA = oneBranch.getLength(),
+    oldB = otherBranch.getLength();
 
   double bothZ = oldA * oldB; 
 
@@ -88,11 +85,11 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   double drawnMultiplier = rand.drawMultiplier(multiplier); 
   double newZ = pow(bothZ, drawnMultiplier); 
   auto testBranch = oneBranch; 
-  testBranch.setLength(sqrt(newZ), param); 
+  testBranch.setLength(sqrt(newZ)); 
   if(not BoundsChecker::checkBranch(testBranch))
     {
-      BoundsChecker::correctBranch(testBranch, param); 
-      newZ = pow(testBranch.getLength( param),2); 
+      BoundsChecker::correctBranch(testBranch); 
+      newZ = pow(testBranch.getLength( ),2); 
       drawnMultiplier = log(newZ)   / log(bothZ); 
     }
 
@@ -101,27 +98,27 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
     newB = pow(newZ, 1-uniScaler); 
 
   bool problemWithA = false; 
-  testBranch.setLength(newA, param); 
+  testBranch.setLength(newA); 
   if(not BoundsChecker::checkBranch(testBranch))
     {
-      BoundsChecker::correctBranch(testBranch, param); 
-      newA = testBranch.getLength(param); 
+      BoundsChecker::correctBranch(testBranch); 
+      newA = testBranch.getLength(); 
       problemWithA = true; 
     }
-  testBranch.setLength(newB, param); 
+  testBranch.setLength(newB); 
   if(not BoundsChecker::checkBranch(testBranch))
     {
-      BoundsChecker::correctBranch(testBranch, param); 
-      newB = testBranch.getLength(param); 
+      BoundsChecker::correctBranch(testBranch); 
+      newB = testBranch.getLength(); 
       assert(not problemWithA); // should have been detected, when we checked the multiplier 
     }
 
   testBranch = oneBranch; 
-  testBranch.setLength(newA, param); 
+  testBranch.setLength(newA); 
   traln.setBranch(testBranch, param); 
   
   testBranch = otherBranch; 
-  testBranch.setLength(newB, param); 
+  testBranch.setLength(newB); 
   traln.setBranch(testBranch, param); 
 
   updateHastings(hastings, pow(drawnMultiplier,2), name); 
@@ -135,7 +132,7 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &tra
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
   
-  Branch b(middleNode, otherNode); 
+  auto b = BranchPlain(middleNode, otherNode); 
   nodeptr p = b.findNodePtr(traln);    
   LikelihoodEvaluator::disorientNode( p); 
 
@@ -146,10 +143,10 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &tra
 void NodeSlider::resetState(TreeAln &traln) 
 {
   auto view = getPrimaryParameterView();
-  assert(view.size() == 1); 
+  assert(view.size() == 1);
 
-  traln.setBranch(oneBranch, view); 
-  traln.setBranch(otherBranch, view); 
+  traln.setBranch(oneBranch, view[0]); 
+  traln.setBranch(otherBranch, view[0]); 
 }
 
 

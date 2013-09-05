@@ -20,10 +20,15 @@ $ make my-update-src
      #+BEGIN_SRC c
      std::string getConfigStringFromType(ProposalType p )
      #+END_SRC
-  8. when you call exabayes now, your proposal can be
-     instantiated. You have to add your proposal to a few additional
-     places. The easiest thing is to just call the program and check,
-     where assertions fail.
+  8. in ProposalType.cpp: add your proposal to getSingleParameterProposalsForCategory
+  9. in ProposalType.cpp: by adding your proposal to you can control,
+     whether using the proposal is suppressed. By default new
+     proposals are only instantiated, if this function returns true
+     for the respective proposal.
+  10. when you call exabayes now, your proposal can be
+      instantiated. You have to add your proposal to a few additional
+      places. The easiest thing is to just call the program and check,
+      where assertions fail.
 * Build Process Caveats
   1. on some of our group servers the clock is not set properly. If
      the build system complains about times, simply touch everything

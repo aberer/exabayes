@@ -1,3 +1,7 @@
+#include <cassert>
+#include <iomanip>
+
+#include "Branch.hpp"
 #include "TreePrinter.hpp"
 
 // TODO replace with ostream 
@@ -42,6 +46,8 @@ std::string TreePrinter::printTree(const TreeAln& traln, const std::vector<Abstr
 
 void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss, nodeptr p , const std::vector<AbstractParameter*> &params)
 {
+  ss << MAX_SCI_PRECISION; 
+
   if(params.size() == 1 )
     {
       auto param = params[0]; 
@@ -53,7 +59,7 @@ void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss,
       bool isFirst = true ; 
       for(auto &param : params)
 	{
-	  ss << (isFirst ? "" : ",") <<  traln.getBranch(p,param).getInterpretedLength(traln, param); 
+	  ss << (isFirst ? "" : ",")  << traln.getBranch(p,param).getInterpretedLength(traln, param); 
 	  isFirst = false; 
 	}
       ss << "]"; 

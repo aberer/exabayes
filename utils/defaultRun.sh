@@ -3,11 +3,13 @@
 topdir=$(dirname  $0 )/../
 
 model=GAMMA
-# seed=$RANDOM
-seed=20916
+seed=$RANDOM
+# seed=23252
+# seed=5594
+# examples/
 
 numProc=2
-extraArgs="-Q"
+# extraArgs="-Q"
 # extraArgs="-R 2 -C 2"
 
 # lakner-27
@@ -15,6 +17,8 @@ extraArgs="-Q"
 
 # small dna 
 # seed=5594
+
+startFromBest=0
 
 
 # find additional arguments for the call   
@@ -111,6 +115,18 @@ else
     echo "second argument must be either 'pll' or 'examl'"
     exit
 fi
+
+
+if [ $startFromBest == 1 ]; then 
+    if [ ! -f  $pathtodata/best.tre ] ; then 
+	echo "tried to start from best tree, but could not find $pathtodata/best.tre"
+	echo "if you do not have such a tree, deactivate startFromBest" 
+	exit 
+    fi 
+	
+    baseCall="$baseCall -t $pathtodata/best.tre"
+fi 
+
 
 if [ "$(which ccache)" != "" ]  ; then 
     CC="ccache $CC"

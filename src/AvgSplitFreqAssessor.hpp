@@ -1,16 +1,21 @@
+/** 
+    @file AvgSplitFreqAssessor.hpp
+
+    @brief Calculates the asdsf. 
+
+    @notice This file is full of hacks, to get this somehow going. 
+ */ 
+
 #ifndef _AVGSPLITFREQASSESSOR_H
 #define _AVGSPLITFREQASSESSOR_H
 
 #include "axml.h"
-#include "BipartitionHash.hpp"
-#include "BipartitionHashNew.hpp"
+// #include "BipartitionHash.hpp"
 
-/**
-   @brief a one-time object that computes the ASDSF for the trees
-   contained in a bunch of files.
+#include "TreeProcessor.hpp"
+class BipartitionHashNew; 
 
- */ 
-class AvgSplitFreqAssessor
+class AvgSplitFreqAssessor : public TreeProcessor 
 {
 public: 
   AvgSplitFreqAssessor(std::vector<std::string>fileNames);
@@ -18,12 +23,12 @@ public:
   /** 
       @brief return the asdsf of the respective trees in the respective range 
   */ 
-  double computeAsdsf(double ignoreFreq); 
+  // double computeAsdsf(double ignoreFreq); 
   /** 
       @brief add bipartitions in the current traln structure into the
       bipartition hash
   */
-  void extractBips(); 
+  // void extractBips(); 
   /** 
       @brief use the new bipartition hash for extracting bipartitions 
    */ 
@@ -33,8 +38,8 @@ public:
   */ 
   int getMinNumTrees(); 
   
-  double computeAsdsfNew(double ignoreFreq);
-
+  std::pair<double,double> computeAsdsfNew(double ignoreFreq);
+  
   int getEnd(){return end; } 
   int getStart(){return start; }
   void setEnd(int _end){end = _end; }
@@ -42,22 +47,9 @@ public:
 
   int getNumTreeAvailable(std::string filename); 
 
-  static double relativeWeight;
-
-private: 
-  void fillTaxaInfo(std::string fileName); 
-  bool fileIsCorrect(std::string fileName);   
-  void nextTree(FILE *fh);
-  void initializeTreeOnly(int numTax); 
-
-  TreeAln *traln;
-  std::vector<std::string> fns; 
-  std::vector<std::string>  taxa; 
+private: 			// ATTRIBUTES
   int start; 
   int end; 
-  
-  BipartitionHash* bipHash;
-
   std::vector<BipartitionHashNew> newBipHashes;   
 }; 
 

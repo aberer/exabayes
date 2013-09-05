@@ -2,8 +2,7 @@
 #define _BOUNDS_CHECKER
 
 #include <vector>
-
-#include "Branch.hpp"
+#include "BranchFwd.hpp"
 
 
 class BoundsChecker
@@ -15,18 +14,20 @@ public:
     freqMin; 
 
   static bool checkFrequencies( const std::vector<double> &freqs )  ; 
-  static bool checkBranch( const Branch &branch ) ; 
+  static bool checkBranch( const BranchLength &branch ) ; 
+  static bool checkBranch( const BranchLengths &branch ) ; 
   static bool checkRevmat( const std::vector<double> &rates) ; 
   static bool checkAlpha( double alpha) ; 
   
 
   static void correctAlpha(double &alpha) ;   
-  static void correctBranch( Branch &branch, const std::vector<AbstractParameter*> &params ) ; 
-  static void correctBranch(Branch &branch, const AbstractParameter* param); 
+  static void correctBranch( BranchLengths &branch ) ; 
+  static void correctBranch(BranchLength &branch); 
   static void correctRevMat( std::vector<double> &rates); 
   static void correctFrequencies( std::vector<double> &frequencies); 
 
-} ; 
+}
+ ; 
 
 
 #endif

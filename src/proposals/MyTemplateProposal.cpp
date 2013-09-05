@@ -65,7 +65,7 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, Tree
 
   // when in doubt, there is always 
   tree *tr = traln.getTr(); 
-  Branch toEval(tr->start->number, tr->start->back->number); // a bit clunky 
+  auto toEval = BranchPlain(tr->start->number, tr->start->back->number); // a bit clunky 
   evaluator.evaluate(traln, toEval, true); 
 }
 

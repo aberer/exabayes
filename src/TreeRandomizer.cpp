@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "TreeRandomizer.hpp"
-#include "TreeAln.hpp"
+#include "Branch.hpp"
 #include "treeRead.h"
 
 
@@ -59,7 +59,7 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
 }
 
 
-Branch TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  
+BranchPlain TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  
 {
   bool acc = false;   
   int node = 0; 
@@ -96,7 +96,7 @@ Branch TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness 
     other = options[0]; 
   else 
     other = options.at(rand.drawIntegerOpen(options.size()));   
-  return Branch(node, other); 
+  return BranchPlain(node, other); 
 }
 
 
@@ -113,24 +113,24 @@ nat TreeRandomizer::drawInnerNode(const TreeAln& traln, Randomness &rand )
     
     => equals draw subtree uniformly
  */ 
-Branch TreeRandomizer::drawBranchWithInnerNode(const TreeAln& traln,Randomness &rand)  
+BranchPlain TreeRandomizer::drawBranchWithInnerNode(const TreeAln& traln,Randomness &rand)  
 {
   nat idA = drawInnerNode(traln, rand); 
   nat r = rand.drawIntegerClosed(2);  
   nodeptr p = traln.getNode(idA); 
   assert(not traln.isTipNode(p)) ; 
 
-  Branch b; 
+  BranchPlain b; 
   switch(r)
     {
     case 0: 
-      b = Branch(idA, p->back->number); 
+      b = BranchPlain(idA, p->back->number); 
       break; 
     case 1: 
-      b = Branch(idA, p->next->back->number); 
+      b = BranchPlain(idA, p->next->back->number); 
       break; 
     case 2: 
-      b = Branch(idA, p->next->next->back->number); 
+      b = BranchPlain(idA, p->next->next->back->number); 
       break; 
     default: assert(0); 
     }
@@ -140,12 +140,12 @@ Branch TreeRandomizer::drawBranchWithInnerNode(const TreeAln& traln,Randomness &
 
 
 
-Branch TreeRandomizer::drawBranchUniform(const TreeAln & traln, Randomness &rand )  
+BranchPlain TreeRandomizer::drawBranchUniform(const TreeAln & traln, Randomness &rand )  
 {
   return drawBranchUniform_helper(traln, rand, traln.getNumberOfTaxa()); 
 }
 
-Branch TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  
+BranchPlain TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  
 { 
   int randId = 0; 
   double r = rand.drawRandDouble01(); 
@@ -184,5 +184,5 @@ Branch TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness
   	}
     }
 
-  return Branch(thisNode, thatNode); 
+  return BranchPlain(thisNode, thatNode); 
 }

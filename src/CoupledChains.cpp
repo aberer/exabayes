@@ -195,6 +195,15 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
 	chains[i].resume(true,true);
     }
 
+  // additional sampling, if we are in the very first generation 
+  if(startGen == 0)
+    {
+      for(auto &c : chains)
+	if( c.getChainHeat() == 1. && pl.isChainLeader() )
+	  c.sample(tFile[0], pFile[0]); 
+    }
+
+
   for(nat genCtr = startGen; genCtr < startGen + numGen; genCtr += swapInterval)
     {
       for(nat j = 0; j < chains.size(); ++j)

@@ -4,18 +4,6 @@
 #include <vector>
 #include <memory>
 
-#include "GibbsBranchLength.hpp"
-#include "ExtendedTBR.hpp"
-#include "ExtendedSPR.hpp"
-#include "ParsimonySPR.hpp"
-#include "StatNNI.hpp"
-#include "RadiusMlSPR.hpp"
-#include "BranchLengthMultiplier.hpp"
-#include "BranchCollapser.hpp"
-#include "AminoModelJump.hpp"
-#include "NodeSlider.hpp"
-#include "TreeLengthMultiplier.hpp"
-#include "AbstractProposal.hpp"
 #include "GlobalVariables.hpp"
 #include "config/BlockProposalConfig.hpp"
 #include "ParameterProposal.hpp"
@@ -44,6 +32,9 @@ public:
   static const double initTreeLengthMultiplier ; 
   static const double initGammaMultiplier; 
   static const double initNodeSliderMultiplier; 
+  static const int likeSprMinRadius; 
+  static const int likeSprMaxRadius; 
+  static const double likeSpWarp; 
 
 private: 
 

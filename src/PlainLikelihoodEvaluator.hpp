@@ -2,6 +2,7 @@
 #define _PLAIN_LNL_EVAL
 
 #include "LikelihoodEvaluator.hpp"
+#include <cassert>
 
 
 /** 
@@ -14,9 +15,9 @@ class PlainLikelihoodEvaluator : public LikelihoodEvaluator
 public: 
   virtual ~PlainLikelihoodEvaluator(){}
 
-  virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ); 
-  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const Branch& root,  const std::vector<nat>& partitions, bool fullTraversal)  {assert(0); return 0; }
-  virtual void evalSubtree( TreeAln &traln, const Branch &evalBranch); 
+  virtual double evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal ); 
+  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain& root,  const std::vector<nat>& partitions, bool fullTraversal)  {assert(0); return 0; }
+  virtual void evalSubtree( TreeAln &traln, const BranchPlain &evalBranch); 
 
   virtual void imprint(const TreeAln &traln) {} // NOOP 
   virtual void resetToImprinted(TreeAln &traln) {} // NOOP
@@ -31,7 +32,7 @@ private:
       oriented correctly
       @return indicates whether entire subtree was oriented correctly 
    */
-  bool traverseAndTouch(const TreeAln &traln, const Branch &b); 
+  bool traverseAndTouch(const TreeAln &traln, const BranchPlain &b); 
 
 
 }; 

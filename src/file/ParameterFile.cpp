@@ -39,7 +39,7 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
     if(param->getCategory() == Category::BRANCH_LENGTHS)
       blParams.push_back(param); 
 
-  for(auto &param : parameters)
+  for(auto &param : blParams)    
     fh << "TL{" << param->getPartitions()   << "}\t"; 
 
   bool isFirst = true; 

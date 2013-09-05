@@ -1,13 +1,6 @@
 #include "Branch.hpp"
-#include "TreeAln.hpp"
 #include "parameters/AbstractParameter.hpp"
-
-
-Branch::Branch(nat a , nat b, std::vector<double> _lengths) 
-  : thisNode(a), thatNode(b), lengths(_lengths)
-{
-}
-
+#include <limits>
 
 BranchEqualFlag operator|( BranchEqualFlag a, BranchEqualFlag b) 
 {
@@ -21,181 +14,116 @@ BranchEqualFlag operator&( BranchEqualFlag a, BranchEqualFlag b)
 }
 
 
-bool Branch::isTipBranch(const TreeAln &traln) const
-{ 
-  nat  num = traln.getTr()->mxtips ; 
-  return (thisNode <= num) || (thatNode <= num);
+// std::ostream& operator<<(std::ostream &out, const Branch<void>& br)
+// {
+//   out << "(" << br.getPrimNode() << "/" << br.getSecNode() << ")"; 
+//   return out; 
+// }
+
+// std::ostream& operator<<(std::ostream &out, const Branch<double>& br)
+// {
+//   out << "(" << br.getPrimNode() << "/" << br.getSecNode() << ")"; 
+//   out << ":"  << br.getLength(); 
+//   return out; 
+// }
+
+// std::ostream& operator<<(std::ostream &out, const Branch<std::vector<double>>& br)
+// {
+//   out << "(" << br.getPrimNode() << "/" << br.getSecNode() << ")"; 
+//   out << ":[" ; 
+//   bool isFirst = true; 
+//   for(auto &v : br.getLengths())
+//     {
+//       if(isFirst)
+// 	isFirst = false; 
+//       else 
+// 	out << ","; 
+//       out << v ; 
+//     }
+//   out << "]"; 
+//   return out; 
+// }
+
+
+
+
+
+
+template<>
+void Branch<std::vector<double>>::readFromCheckpoint( std::istream &in )
+{
+  thisNode = cRead<decltype(thisNode)>(in); 
+  thatNode = cRead<decltype(thatNode)>(in);   
+
+  assert(0); 
+  // TODO lengths 
 }
 
-
-bool Branch::exists(const TreeAln &traln) const
+template<>
+void Branch<double>::readFromCheckpoint( std::istream &in )
 {
-  nodeptr p = traln.getTr()->nodep[thisNode]; 
-  return
-    (nat)p->back->number == thatNode
-    || (nat)p->next->back->number == thatNode
-    || (nat)p->next->next->back->number == thatNode; 
-}
-
-
-nodeptr Branch::findNodePtr(const TreeAln &traln) const
-{
-  auto tr = traln.getTr(); 
-  
-  nodeptr p = tr->nodep[thisNode]; 
-  if(p->back->number == (int)thatNode)
-    return p ; 
-  else if(p->next->back->number == (int)thatNode) 
-    return p->next; 
-  else 
-    {
-      assert(p->next->next->back->number == (int)thatNode); 
-      return p->next->next; 
-    }  
+  thisNode = cRead<decltype(thisNode)>(in); 
+  thatNode = cRead<decltype(thatNode)>(in);   
+  length =  cRead<decltype(length)>(in);
 } 
 
 
+template<>
+void Branch<void>::readFromCheckpoint( std::istream &in )
+{
+  thisNode = cRead<decltype(thisNode)>(in); 
+  thatNode = cRead<decltype(thatNode)>(in);   
+}
 
-std::ostream& operator<<(std::ostream &out, const Branch& rhs)
-{ 
-  out << MAX_SCI_PRECISION; 
-  out << "(" << rhs.thisNode << "/" << rhs.thatNode
-	     << ")" ; 
-  if(rhs.lengths.size() > 0 )
-    {
-      out << ":["; 
-      out <<rhs.lengths ; 
-      out << "]"; 
-    }
+template<>
+void Branch<double>::writeToCheckpoint( std::ostream &out)  const
+{
+  cWrite<decltype(thisNode)>(out, thisNode); 
+  cWrite<decltype(thatNode)>(out, thatNode); 
+  cWrite<decltype(length)>(out, length); 
+}
 
-  return out; 
+template<>
+void Branch<std::vector<double>>::writeToCheckpoint( std::ostream &out)  const
+{
+  assert(0); 
 }
 
 
-
-bool Branch::equals(const Branch &rhs, BranchEqualFlag flags) const 
+template<>
+void Branch<void>::writeToCheckpoint( std::ostream &out)  const
 {
-  bool result = true; 
+  cWrite<decltype(thisNode)>(out, thisNode); 
+  cWrite<decltype(thatNode)>(out, thatNode); 
+}  
 
-  // dir a 
-  result &= (rhs.thisNode == thisNode)  && (rhs.thatNode == thatNode); 
+
+
+template<>
+Branch<void> Branch<void>::getInverted() const
+{
+  auto result = Branch<void>(thatNode,thisNode); 
+  return result; 
+}
+
+template<>
+Branch<double> Branch<double>::getInverted() const
+{
+  auto result = Branch<double>(thatNode,thisNode); 
+  result.length = this->length; 
   
-  if((flags & BranchEqualFlag::WITH_DIRECTION) == BranchEqualFlag::WITHOUT_ANYTHING )
-    result |= (rhs.thatNode == thisNode) && (rhs.thisNode == thatNode); 
+  // if(std::is_same<BT, std::vector<double>>::value)
+  //   result.lengths = this->lengths; 
 
-  if( (flags & BranchEqualFlag::WITH_LENGTH) != BranchEqualFlag::WITHOUT_ANYTHING)
-    {
-      for(nat i = 0; i < rhs.lengths.size(); ++i)
-	result &= (rhs.lengths[i] == lengths[i]) ;  
-    }
+  return result; 
+} 
 
+template<>
+Branch<std::vector<double>> Branch<std::vector<double>>::getInverted() const
+{
+  auto result = Branch<std::vector<double>>(thatNode,thisNode); 
+  result.lengths = this->lengths; 
   return result; 
 }
 
 
-
-bool Branch::equalsUndirected(const Branch &rhs) const 
-{ 
-  return equals(rhs, BranchEqualFlag::WITHOUT_ANYTHING); 
-}
-
-
-double Branch::getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const
-{ 
-  double fracC = traln.getMeanSubstitutionRate(param->getPartitions()); 
-
-  // TODO that's potentially dangerous 
-  double length = 0; 
-  if(lengths.size() == 1 )
-    length = lengths.at(0);
-  else 
-    length = lengths.at(param->getIdOfMyKind()); 
-  
-  return -log(length)* fracC; 
-} 
-
-
-Branch Branch::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
-{
-  // TODO efficiency 
-  int node = getIntersectingNode(rhs); 
-  assert(not traln.isTipNode(traln.getTr()->nodep[node])); 
-
-  nodeptr p = traln.getNode(node); 
-  nodeptr q = p->back,
-    q1 = p->next->back,
-    q2 = p->next->next->back; 
-  
-  int altA = q->number,
-    altB = q1->number,
-    altC = q2->number; 
-  
-  int pNumber = p->number; 
-  
-  if( not rhs.nodeIsInBranch(altA) &&   not nodeIsInBranch(altA ) )    
-    return Branch(pNumber, altA) ; 
-  else if( not   rhs.nodeIsInBranch(altB) &&   not nodeIsInBranch(altB) )
-    return Branch(pNumber,altB) ;
-  else if( not   rhs.nodeIsInBranch(altC) &&   not nodeIsInBranch(altC) )
-    return Branch(pNumber, altC) ;
-  else 
-    {
-      assert(0); 
-      return Branch(0,0); 
-    }
-} 
-
-
-nat Branch::getIntersectingNode(const Branch  &rhs) const 
-{
-  if(rhs.nodeIsInBranch( thisNode ) )
-    return thisNode; 
-  else if(rhs.nodeIsInBranch(thatNode))
-    return thatNode; 
-  else 
-    {
-      assert(0); 
-      return 0; 
-    }
-} 
-
-
-void Branch::readFromCheckpoint( std::istream &in )
-{
-  thisNode = cRead<nat>(in); 
-  thatNode = cRead<nat>(in);   
-  
-  nat num = cRead<nat>(in);
-  for(nat i = 0; i < num ; ++i)
-    lengths.push_back(cRead<double>(in));
-} 
-
-void Branch::writeToCheckpoint( std::ostream &out)  const
-{
-  cWrite(out, thisNode); 
-  cWrite(out, thatNode); 
-  cWrite(out, lengths.size());
-  for(auto &v : lengths)
-    cWrite(out, v); 
-}  
-
-
-void Branch::setConvertedInternalLength(const TreeAln& traln, 
-					const AbstractParameter* param, double length) 
-{
-  double fracC = traln.getMeanSubstitutionRate(param->getPartitions());  
-  double internalLength = exp(- length / fracC); 
-  setLength(internalLength, param);
-} 
-
-void Branch::setLength(double intLength, const AbstractParameter* param)
-{
-  lengths.resize(MAX(lengths.size(), param->getIdOfMyKind() + 1 ), TreeAln::initBL); 
-  lengths.at(param->getIdOfMyKind()) = intLength; 
-}
-
-
-double Branch::getLength (const AbstractParameter* param) const
-{
-  return lengths.at(param->getIdOfMyKind());
-}

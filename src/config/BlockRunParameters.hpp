@@ -22,7 +22,7 @@ public:
   double getHeatFactor() const { return heatFactor ; }
   nat getPrintFreq() const { return printFreq; }
   nat getNumCoupledChains() const { return numCoupledChains; }
-  // string getRunId() const { return runId; }
+  bool isUseAsdsfMax() const { return useAsdsfMax; }
   nat getNumGen() const { return numGen; }
   nat getNumRunConv() const { return numRunConv; }
   nat getSamplingFreq() const { return samplingFreq; }
@@ -45,7 +45,6 @@ private:
   int samplingFreq; 
   int numRunConv; 
   int numGen; 
-  // string runId; 
   int numCoupledChains; 
   int printFreq; 
   double heatFactor ; 
@@ -56,6 +55,7 @@ private:
   bool heatedChainsUseSame; 
   nat chkpntFreq; 
   bool componentWiseMH; 
+  bool useAsdsfMax; 
 }; 
 
 

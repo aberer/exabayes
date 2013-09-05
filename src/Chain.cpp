@@ -2,6 +2,7 @@
 #include <map> 
 #include <unordered_map>
 
+#include "StatNNI.hpp"
 #include "NodeSlider.hpp"
 #include "Chain.hpp"		
 #include "TreeAln.hpp"
@@ -42,7 +43,7 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln,
       proposals.push_back(std::move(copy)); 
     }
 
-  Branch root(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number); 
+  auto root = BranchPlain(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number); 
   evaluator->evaluate(*tralnPtr, root, true); 
 
   const std::vector<AbstractParameter*> vars = extractParameters(); 
@@ -141,7 +142,8 @@ void Chain::resume(bool evaluate, bool checkLnl)
 
   if(evaluate)
     {
-      Branch root(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number); 
+      auto tr = tralnPtr->getTr(); 
+      auto root = BranchPlain(tr->start->number, tr->start->back->number); 
       evaluator->evaluate(*tralnPtr, root, true);
 
       if(fabs(likelihood - tralnPtr->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
@@ -297,8 +299,8 @@ Chain::deserializeConditionally(std::string str, CommFlag commFlags)
       ss.read(reinterpret_cast<char*>(&likelihood), sizeof(likelihood)); 
       ss.read(reinterpret_cast<char*>(&lnPr), sizeof(lnPr)); 
       ss.read(reinterpret_cast<char*>(&currentGeneration), sizeof(currentGeneration)); 
-      std::cout << MAX_SCI_PRECISION; 
 
+      // std::cout << MAX_SCI_PRECISION; 
       // std::cout << "READ " << couplingId << std::endl; 
       // std::cout << "READ " << bestState << std::endl; 
       // std::cout << "READ " << likelihood << std::endl; 
@@ -307,7 +309,7 @@ Chain::deserializeConditionally(std::string str, CommFlag commFlags)
 
   if(commFlags & CommFlag::Proposals)
     initProposalsFromStream(ss);
-  
+
   if(commFlags & CommFlag::Tree)
     {
       std::unordered_map<std::string, AbstractParameter*> name2parameter; 
@@ -315,6 +317,7 @@ Chain::deserializeConditionally(std::string str, CommFlag commFlags)
 	{
 	  std::stringstream ss;       
 	  p->printShort(ss);
+
 	  assert(name2parameter.find(ss.str()) == name2parameter.end()); // not yet there 
 	  name2parameter[ss.str()] = p;
 	}  
@@ -322,8 +325,7 @@ Chain::deserializeConditionally(std::string str, CommFlag commFlags)
       nat ctr = 0; 
       while(ctr < name2parameter.size())
 	{
-	  // std::string name = cRead<std::string>(in) ; 
-	  std::string name = readString(ss); 
+	  std::string name = readString(ss);
 	  if(name2parameter.find(name) == name2parameter.end())
 	    {
 	      std::cerr << "Could not parse the checkpoint file. A reason for this may be that\n"
@@ -479,7 +481,7 @@ void Chain::stepSetProposal()
 
   bool fullTraversalNecessary = pSet.needsFullTraversal();
 
-  if( branches.first.equalsUndirected(Branch(0,0)) ) // TODO another HACK
+  if( branches.first.equalsUndirected(BranchPlain(0,0)) ) // TODO another HACK
     {
       evaluator->evaluatePartitions(*tralnPtr , affectedPartitions, fullTraversalNecessary );
     }
@@ -583,8 +585,8 @@ void Chain::step()
 
   if(INTEGRATION_GENERATION < currentGeneration )
     {
-      startIntegration = true; 
-      assert(0); 
+      // startIntegration = true; 
+      // assert(0); 
     }
 
 #ifdef DEBUG_VERIFY_LNPR
@@ -610,8 +612,7 @@ void Chain::step()
 #endif
 
   if( currentGeneration == VERIFY_GEN  )
-    { 
-	  tout << "EVAL" << std::endl; 
+    {      
       evaluator->evaluate(*tralnPtr, evaluator->findVirtualRoot(*tralnPtr), true); 
     }
 }

@@ -14,11 +14,11 @@
 #include <vector>
 #include <iostream>
 
-#include "TreeAln.hpp"
-#include "priors/AbstractPrior.hpp"
 #include "GlobalVariables.hpp"
-#include "parameters/AbstractParameter.hpp"
 
+class AbstractPrior; 
+class AbstractParameter; 
+class TreeAln;
 class PriorBelief
 {
 public:

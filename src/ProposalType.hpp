@@ -31,7 +31,8 @@ enum class ProposalType
     FREQUENCY_DIRICHLET = 15,     
     AMINO_MODEL_JUMP = 16,
     BRANCH_GIBBS = 17,
-    DIRICH_REVMAT_ALL = 18
+    DIRICH_REVMAT_ALL = 18, 
+    LIKE_SPR = 19 
 }; 
 
 

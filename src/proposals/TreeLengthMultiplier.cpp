@@ -33,7 +33,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
   storedBranches = traln.extractBranches(blParam);
 
-  std::vector<Branch> newBranches = storedBranches; 
+  auto  newBranches = storedBranches; 
   
   double treeScaler = rand.drawMultiplier(multiplier); 
   double initTL = 1; 
@@ -42,27 +42,21 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
   for(auto &b : newBranches)
     {
-      auto initLength = b.getLength( blParam);
+      auto initLength = b.getLength();
       initTL *= initLength; 
 
-      b.setLength(  pow(initLength, treeScaler), blParam ); 
+      b.setLength(  pow(initLength, treeScaler) ); 
       
       if( not BoundsChecker::checkBranch(b))
-	{
-	  // std::cout << "correction!" << std::endl; 
-	  BoundsChecker::correctBranch(b, blParam);
-	}
-      
-      double realScaling = log(b.getLength(blParam)) / log(initLength); 
+	BoundsChecker::correctBranch(b);
+
+      double realScaling = log(b.getLength()) / log(initLength); 
       updateHastings(hastings, realScaling, "TL-multi"); 
-      newTL *= b.getLength(blParam); 
+      newTL *= b.getLength(); 
     }
 
   for(auto &b : newBranches)
-    {
-      std::vector<AbstractParameter*> tmp = {blParam}; 
-      traln.setBranch(b, tmp);
-    }
+    traln.setBranch(b, blParam);
 
   prior.updateBranchLengthPrior(traln, initTL, newTL, blParam);
 }
@@ -70,8 +64,11 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
 void TreeLengthMultiplier::resetState(TreeAln &traln)  
 {
+  auto blParams = getPrimaryParameterView(); 
+  assert(blParams.size( )== 1 ) ;
+  auto blParam = blParams[0]; 
   for(auto &b : storedBranches)
-    traln.setBranch(b, getPrimaryParameterView()); 
+    traln.setBranch(b, blParam); 
 } 
 
 
@@ -94,7 +91,8 @@ void TreeLengthMultiplier::autotune()
  
 void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
-  evaluator.evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
+  auto b = BranchPlain(traln.getTr()->start->number,traln.getTr()->start->back->number); 
+  evaluator.evaluate(traln,b, true); 
 }
 
 

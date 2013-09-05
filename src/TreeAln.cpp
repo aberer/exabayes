@@ -10,6 +10,7 @@
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
 #include "BoundsChecker.hpp"
+#include "TreePrinter.hpp"
 
 const double TreeAln::zZero = BoundsChecker::zMax + ( 1 - BoundsChecker::zMax) / 2 ; 
 const double TreeAln::initBL = 0.75;
@@ -179,26 +180,14 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
 }
 
 
-std::vector<double> TreeAln::getTreeLengthsExpensive(const std::vector<AbstractParameter*> &params) const
+void TreeAln::extractHelper( nodeptr p , std::vector<BranchLength> &result, bool isStart, const AbstractParameter* param ) const 
 {
-  std::vector<Branch> branches = extractBranches(params); 
-
-  std::vector<double> result(params.size(),  1); 
-  for(auto &b : branches)
-    {
-      for(auto &param : params)
-	result.at(param->getIdOfMyKind()) += b.getLength(param); 
-    }
-
-  return result; 
-}
-
-
-
-void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result, 
-			     bool isStart, AbstractParameter* param ) const 
-{
-  Branch b = getBranch(p, param);
+  // TODO inefficient 
+#ifdef EFFICIENT
+  assert(0); 
+#endif
+  auto tmp = BranchPlain(p->number, p->back->number); 
+  auto b = getBranch(tmp, param);
 
   result.push_back(b);
 
@@ -209,37 +198,39 @@ void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result,
     extractHelper( q->back, result, false, param);
 }
 
-
-
-
-void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result, 
-			     bool isStart, const std::vector<AbstractParameter*> &params ) const 
+void TreeAln::extractHelper( nodeptr p , std::vector<BranchLengths> &result, bool isStart, const std::vector<AbstractParameter*> &params ) const 
 {
-  Branch b = getBranch(p, params);
+  // TODO inefficient 
+#ifdef EFFICIENT
+  assert(0); 
+#endif
+  auto tmp = BranchPlain(p->number, p->back->number); 
+  auto b = getBranch(tmp, params);
 
   result.push_back(b);
-  
+
   if(not isStart && isTipNode(p))
     return; 
 
   for(nodeptr q =  p->next; p != q ; q = q->next)        
-    extractHelper( q->back, result, false, params);    
+    extractHelper( q->back, result, false, params);
 }
 
-
-std::vector<Branch> TreeAln::extractBranches( AbstractParameter* param) const 
+void TreeAln::extractHelper( nodeptr p , std::vector<BranchPlain> &result, bool isStart ) const 
 {
-  std::vector<Branch> result; 
-  // std::vector<AbstractParameter*> params = {param}; 
-  extractHelper(tr.nodep[1]->back, result, true, param);
-  return result; 
-} 
+  // TODO inefficient 
+#ifdef EFFICIENT
+  assert(0); 
+#endif
+  auto tmp = BranchPlain(p->number, p->back->number); 
 
-std::vector<Branch> TreeAln::extractBranches(const std::vector<AbstractParameter*> &params) const 
-{
-  std::vector<Branch> result; 
-  extractHelper(tr.nodep[1]->back, result, true, params);
-  return result; 
+  // auto b = getBranch(tmp);
+
+  result.push_back(tmp);
+  if(not isStart && isTipNode(p))
+    return; 
+  for(nodeptr q =  p->next; p != q ; q = q->next)        
+    extractHelper( q->back, result, false);
 }
 
 
@@ -315,6 +306,19 @@ void TreeAln::clipNode(nodeptr p, nodeptr q)
 }
 
 
+void TreeAln::detachNode(nodeptr p)
+{
+  p->next->back = NULL; 
+  p->next->next->back = NULL; 
+}
+
+void TreeAln::unlinkNode(nodeptr p )
+{
+  p->back = NULL; 
+  detachNode(p); 
+}
+
+
 void TreeAln::unlinkTree()
 {
 #ifdef DEBUG_LINK_INFO
@@ -329,13 +333,7 @@ void TreeAln::unlinkTree()
     }
 
   for(int i = tr.mxtips + 1; i < 2 * tr.mxtips; ++i)
-    {      
-      nodeptr p = tr.nodep[i]; 
-      p->back = NULL; 
-      p->next->back = NULL; 
-      p->next->next->back = NULL; 
-    }
-
+    unlinkNode(tr.nodep[i]); 
 }
 
 
@@ -365,6 +363,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
 
 bool TreeAln::operator==(const TreeAln& rhs)
 {
+#if 0 
   // notice: this is untested! 
   assert(0); 
 
@@ -424,6 +423,10 @@ bool TreeAln::operator==(const TreeAln& rhs)
     }
 
   return result; 
+#else 
+  assert(0); 
+  return false; 
+#endif
 }
 
 
@@ -630,15 +633,21 @@ void TreeAln::setFrequencies(const std::vector<double> &values, int model)
 void TreeAln::setRevMat(const std::vector<double> &values, int model)
 {
   // std::cout << "checking "; for_each(values.begin(), values.end(), [](double d){std::cout << d << "," ;}) ; std::cout  << std::endl; 
-  assert( BoundsChecker::checkRevmat(values) ); 
+
+  bool valuesOkay = BoundsChecker::checkRevmat(values); 
+  if(not valuesOkay)
+    {
+      tout << "Problem with substitution parameter: "  << MAX_SCI_PRECISION << values << std::endl;  
+      assert( valuesOkay ); 
+    }
+
   auto partition = getPartition(model) ; 
   memcpy(partition->substRates, &(values[0]), numStateToNumInTriangleMatrix(  partition->states) * sizeof(double)); 
   initRevMat(model); 
 }
 
 
-
-void TreeAln::setBranch(const Branch& branch, AbstractParameter* param)
+void TreeAln::setBranch(const BranchLength& branch, const AbstractParameter* param)
 {
   assert(BoundsChecker::checkBranch(branch)); 
   assert(branch.exists(*this)); 
@@ -646,17 +655,25 @@ void TreeAln::setBranch(const Branch& branch, AbstractParameter* param)
   auto p = branch.findNodePtr(*this);
   for(auto &partition : param->getPartitions() )
     {
-      double length = branch.getLength(param); 
+      double length = branch.getLength(); 
       p->z[partition] = p->back->z[partition] = length; 
     }
 }
 
 
-void TreeAln::setBranch(const Branch& branch, const std::vector<AbstractParameter*>params)
+void TreeAln::setBranch(const BranchLengths& branch, const std::vector<AbstractParameter*>params)
 {
-  // tout << "setting branch " << branch << std::endl; 
+  assert(BoundsChecker::checkBranch(branch)); 
+  assert(branch.exists(*this)); 
+
+  auto p = branch.findNodePtr(*this); 
+  
   for(auto &param : params)
-    setBranch(branch, param); 
+    {
+      double length = branch.getLengths().at(param->getIdOfMyKind());
+      for(auto &partition : param->getPartitions())
+	p->z[partition] = p->back->z[partition] = length; 
+    }
 }
 
 
@@ -870,13 +887,12 @@ nodeptr TreeAln::getNode(nat elem) const
 }
 
 
-
-std::pair<Branch,Branch> TreeAln::getDescendents(const Branch &b) const
+std::pair<BranchPlain,BranchPlain> TreeAln::getDescendents(const BranchPlain &b) const
 {
   auto p = b.findNodePtr(*this); 
-  return std::pair<Branch,Branch>
-    { Branch(p->next->number, p->next->back->number), 
-	Branch(p->next->next->number, p->next->next->back->number) }; 
+  return 
+    std::make_pair ( BranchPlain(p->next->number, p->next->back->number), 
+		     BranchPlain(p->next->next->number, p->next->next->back->number) ); 
 } 
 
 
@@ -940,48 +956,184 @@ double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) cons
 
 
 
-Branch TreeAln::getBranch(const Branch& b, AbstractParameter* const &param) const
-{
-  return getBranch(b.findNodePtr(*this) , param);
-}
+// Branch TreeAln::getBranch(const Branch& b, AbstractParameter* const &param) const
+// {
+//   return getBranch(b.findNodePtr(*this) , param);
+// }
 
 
-Branch TreeAln::getBranch(const Branch &b , const std::vector<AbstractParameter*> &params) const 
-{
-  return getBranch(b.findNodePtr(*this),params);
-}
+// Branch TreeAln::getBranch(const Branch &b , const std::vector<AbstractParameter*> &params) const 
+// {
+//   return getBranch(b.findNodePtr(*this),params);
+// }
 
 
-
-Branch TreeAln::getBranch(nodeptr p, AbstractParameter* const &param) const
-{
-  nat id = param->getIdOfMyKind();
-  std::vector<double> l(id+1, TreeAln::problematicBL); // =/ 
-
-  nat aPartition = param->getPartitions()[0];
-  l.at(id) = p->z[aPartition];
-  return Branch(p->number,p->back->number, l);
-}
-
-Branch TreeAln::getBranch(nodeptr p, const std::vector<AbstractParameter*> &params) const 
-{
-  nat highest = 0; 
-  for(auto &p : params )
-    {
-      nat elem = p->getIdOfMyKind(); 
-      if(highest < elem )
-	highest = elem; 
-    }
-
-  std::vector<double> l(highest + 1 , TreeAln::problematicBL);  
+// // Branch TreeAln::getBranch(nodeptr p, AbstractParameter* const &param) const
+// // {
+// //   nat id = param->getIdOfMyKind();
+// //   // std::vector<double> l(id+1, TreeAln::problematicBL); // =/ 
   
-  for(auto &param: params)
+// //   auto l = 
+
+// //   nat aPartition = param->getPartitions()[0];
+// //   l.at(id) = p->z[aPartition];
+// //   return Branch(p->number,p->back->number, l);
+// // }
+
+
+// Branch TreeAln::getBranch(nodeptr p, AbstractParameter* const &param) const 
+// {
+//   auto params = std::vector<AbstractParameter*> {param}; 
+//   return getBranch(p, params); 
+// }
+
+
+// Branch TreeAln::getBranch(nodeptr p, const std::vector<AbstractParameter*> &params) const 
+// {
+//   nat highest = 0; 
+//   for(auto &p : params )
+//     {
+//       nat elem = p->getIdOfMyKind(); 
+//       if(highest < elem )
+// 	highest = elem; 
+//     }
+
+//   auto l = std::vector<double>{}; 
+//   for(auto &param: params)
+//     {
+//       nat aPartition = param->getPartitions()[0];
+//       nat id = param->getIdOfMyKind(); 
+//       if(id >= l.size())
+// 	l.resize(id + 1); 
+//       l.at(id) = p->z[aPartition];
+//     } 
+//   return Branch(p->number, p->back->number, l); 
+// }
+
+
+
+std::vector<std::string> TreeAln::getNameMap() const
+{
+  auto result = std::vector<std::string>{};
+  auto tr = getTr();   
+
+  result.push_back("error"); 
+  for(nat i = 1 ; i < getNumberOfTaxa()+1; ++i)
+    result.push_back(tr->nameList[i]);
+
+  return result; 
+} 
+
+
+nat TreeAln::getDepth(const BranchPlain &b) const 
+{
+  if(b.isTipBranch(*this))
+    return 1; 
+  else 
     {
-      nat aPartition = param->getPartitions()[0];
-      nat id = param->getIdOfMyKind(); 
-      l.at(id) = p->z[aPartition];
+      auto desc = getDescendents(b.getInverted());
+      return std::max(getDepth(desc.first), getDepth(desc.second)) + 1; 
     }
-  return Branch(p->number, p->back->number, l); 
+}
+
+
+std::vector<nat> TreeAln::getLongestPathBelowBranch(const BranchPlain &b) const 
+{
+  if(b.isTipBranch(*this))
+    return std::vector<nat>{b.getSecNode()}; 
+  else 
+    {
+      auto desc = getDescendents(b.getInverted());
+      auto resA = getLongestPathBelowBranch(desc.first);
+      auto resB = getLongestPathBelowBranch(desc.second);
+      if(resA.size() > resB.size())
+	{
+	  resA.push_back(b.getSecNode()); 
+	  return resA; 
+	}
+      else 
+	{
+	  resB.push_back(b.getSecNode()); 
+	  return resB; 
+	}
+    }
+}
+
+
+std::vector<nat> TreeAln::getNeighborsOfNode( nat node ) const 
+{
+  auto result = std::vector<nat>{};
+  auto nodePtr = getNode(node); 
+  if(isTipNode(nodePtr))
+    result.push_back(nodePtr->back->number);
+  else 
+    {
+      result = 
+	{
+	  nat(nodePtr->back->number), 
+	  nat(nodePtr->next->back->number), 
+	  nat(nodePtr->next->next->back->number)
+	} ; 
+    }
+  
+  return result; 
+} 
+
+
+std::vector<BranchPlain> TreeAln::extractBranches() const 
+{
+  auto result = std::vector<BranchPlain>{}; 
+  extractHelper(tr.nodep[1]->back, result, true);
+  return result;
+}
+
+
+std::vector<BranchLength> TreeAln::extractBranches(const AbstractParameter* param) const 
+{
+  auto result = std::vector<BranchLength>{}; 
+  extractHelper(tr.nodep[1]->back, result, true, param);
+  return result;
+}
+
+
+std::vector<BranchLengths> TreeAln::extractBranches(const std::vector<AbstractParameter*> &params) const 
+{
+  auto result = std::vector<BranchLengths>{}; 
+  extractHelper(tr.nodep[1]->back, result, true, params);
+  return result;
+}
+
+
+BranchPlain TreeAln::getAnyBranch() const 
+{
+  return BranchPlain(tr.nodep[1]->number, tr.nodep[1]->back->number); 
+} 
+
+BranchLength TreeAln::getBranch(const nodeptr &p,  const AbstractParameter *param) const
+{
+  return getBranch(BranchPlain(p->number,p->back->number), param); 
+}
+
+
+BranchLengths TreeAln::getBranch(const nodeptr& p, const std::vector<AbstractParameter*> &params) const 
+{
+  return getBranch(BranchPlain(p->number, p->back->number), params); 
+}
+
+
+BranchLength TreeAln::getBranch(const BranchPlain &branch,  const AbstractParameter *param) const
+{
+  auto result = branch.toBlDummy();
+  result.extractLength(*this, branch, param); 
+  return result; 
+}
+
+
+BranchLengths TreeAln::getBranch(const BranchPlain& branch, const std::vector<AbstractParameter*> &params) const 
+{
+  auto result = branch.toBlsDummy();
+  result.extractLength(*this, branch, params);
+  return result; 
 }
 
 

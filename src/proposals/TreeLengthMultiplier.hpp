@@ -17,8 +17,7 @@ public:
   virtual void readFromCheckpointCore(std::istream &in);
   virtual void writeToCheckpointCore(std::ostream &out) const;
 
-  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair (BranchPlain(0,0),BranchPlain(0,0) );}
 
 private: 			// METHODS
   void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 
@@ -26,5 +25,5 @@ private: 			// METHODS
 private: 			// ATTRIBUTES
   double multiplier; 		// the tuning variable  
   double initTreeLength; 
-  std::vector<Branch> storedBranches; 
+  std::vector<BranchLength> storedBranches; 
 } ; 

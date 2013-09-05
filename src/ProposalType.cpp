@@ -30,7 +30,8 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER , "frequency slider"},
 	{ ProposalType::FREQUENCY_DIRICHLET , "frequency dirichlet"},
 	{ ProposalType::AMINO_MODEL_JUMP , "amino acid model jump"},
-	{ ProposalType::BRANCH_GIBBS , "approximate Gibbs branch length"} 
+	{ ProposalType::BRANCH_GIBBS , "approximate Gibbs branch length"} ,
+	{ ProposalType::LIKE_SPR, "likelihood-guided SPR move"}
       }; 
     
     if(map.find(type) == map.end())
@@ -64,7 +65,8 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_DIRICHLET,  "FREQUENCYDIRICHLET" } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } ,
 	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} , 
-	{ ProposalType::DIRICH_REVMAT_ALL , "DIRICHREVMATALL"} 	
+	{ ProposalType::DIRICH_REVMAT_ALL , "DIRICHREVMATALL"} 	, 
+	{ ProposalType::LIKE_SPR, "LIKESPR"}
       }; 
 
     return proposal2name[p];     
@@ -104,7 +106,8 @@ namespace ProposalTypeFunc
 	    ProposalType::E_SPR, 
 	    ProposalType::E_TBR, 
 	    ProposalType::PARSIMONY_SPR, 
-	    ProposalType::GUIDED_SPR 
+	    ProposalType::GUIDED_SPR ,
+	    ProposalType::LIKE_SPR
 	    }; 
       case Category::BRANCH_LENGTHS: 
 	return { 
@@ -199,7 +202,8 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  false } ,
 	{ ProposalType::BRANCH_GIBBS , false } , 
-	{ ProposalType::DIRICH_REVMAT_ALL , false } 	
+	{ ProposalType::DIRICH_REVMAT_ALL , false } 	, 
+	{ ProposalType::LIKE_SPR , false}
     };
 
     if(map.find(p) == map.end())

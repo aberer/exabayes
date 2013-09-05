@@ -1,11 +1,6 @@
 #include "AdHocIntegrator.hpp"
 #include "ArrayRestorer.hpp"
-
 #include "Arithmetics.hpp"
-
-/* 
-   TODO: also print out likelihood ratios 
- */ 
 
 
 AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
@@ -36,7 +31,7 @@ AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared
   std::vector<ProposalSet> pSets; 
 
   integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval) ));
-  integrationChain->getEvaluator()->imprint(*tralnPtr);
+  integrationChain->getEvaluator().imprint(*tralnPtr);
 }
 
 
@@ -44,13 +39,13 @@ void AdHocIntegrator::copyTree(const TreeAln &traln)
 {
   TreeAln &myTree = integrationChain->getTraln();
   myTree.copyModel(traln);
-  auto eval = integrationChain->getEvaluator();
+  auto& eval = integrationChain->getEvaluator();
   auto tr = myTree.getTr(); 
-  eval->evaluate(myTree, Branch(tr->start->number,tr->start->back->number ), true );
+  eval.evaluate(myTree, BranchPlain(tr->start->number,tr->start->back->number ), true );
 }
 
 
-void AdHocIntegrator::prepareForBranch( const Branch &branch,  const TreeAln &otherTree)
+void AdHocIntegrator::prepareForBranch( const BranchPlain &branch,  const TreeAln &otherTree)
 {
   copyTree(otherTree); 
 
@@ -62,10 +57,12 @@ void AdHocIntegrator::prepareForBranch( const Branch &branch,  const TreeAln &ot
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
   integrator->setToPropose(branch);      
 
-  // setup 
-  traln.setBranch(branch, paramView); 
+  std::cout << "important TODO: has the branch been reset? will not do that here" << std::endl; 
 
-  integrationChain->getEvaluator()->evaluate(traln, branch, true); 
+  // setup 
+  // traln.setBranch(branch, paramView); 
+
+  integrationChain->getEvaluator().evaluate(traln, branch, true); 
   integrationChain->reinitPrior(); 
 }
 
@@ -90,27 +87,29 @@ bool AdHocIntegrator::decideUponAcceptance(const TreeAln &traln, double prevLnl)
 
 
 
-std::vector<double> AdHocIntegrator::integrate( const Branch &branch, const TreeAln &otherTree , nat intGens, nat thinning)
+
+std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const TreeAln &otherTree , nat intGens, nat thinning)
 {
-  std::vector<double> result; 
+  auto result =  std::vector<double>{}; 
   auto& traln = integrationChain->getTraln(); 
 
   // tout << "integrating " << branch << std::endl; 
 
   prepareForBranch(branch, otherTree); 
   auto paramView = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
-  
-  Branch backup = otherTree.getBranch(branch, paramView); 
+  assert(paramView.size( )== 1 ); 
+
+  auto backup = otherTree.getBranch(branch, paramView[0]); 
   for(nat i = 0; i < intGens; ++i) 
     {	  
       integrationChain->step();
-      auto elem = traln.getBranch(branch, paramView); 
+      auto elem = traln.getBranch(branch, paramView[0]); 
       auto iLen = elem.getInterpretedLength(traln, paramView[0]);
       if (i % thinning == 0)
 	result.push_back(iLen); ; 
     }      
 
-  traln.setBranch(backup, paramView); 
+  traln.setBranch(backup, paramView[0]); 
 
   return result;   
 }
@@ -119,12 +118,12 @@ std::vector<double> AdHocIntegrator::integrate( const Branch &branch, const Tree
 /** 
     @brief gets the optimimum 
  */ 
-double AdHocIntegrator::printOptimizationProcess(const Branch& branch, std::string runid, double lambda, nat nrSteps)
+double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std::string runid, double lambda, nat nrSteps)
 {
   auto &traln = integrationChain->getTraln(); 
 
   auto paramView = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
-  Branch tmpBranch = branch; 
+  auto tmpBranch = branch; 
   // tout << "optimizing the branch using nr" << endl; 
   std::stringstream ss; 
   ss << "nr-length." << runid  << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
@@ -137,7 +136,7 @@ double AdHocIntegrator::printOptimizationProcess(const Branch& branch, std::stri
   double firstDerivative = 0; 
 
   double prevVal = curVal; 
-  curVal = tmpBranch.getLength(paramView[0]);
+  curVal = tmpBranch.getLength();
   
   for(nat i = 0; i < nrSteps; ++i )
     {
@@ -150,14 +149,14 @@ double AdHocIntegrator::printOptimizationProcess(const Branch& branch, std::stri
 		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 	  
 #endif
-      tmpBranch.setLength(result, paramView[0]);
+      tmpBranch.setLength(result);
       thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
       prevVal = tmpBranch.getInterpretedLength(traln, paramView[0]); 
       curVal = result; 
     } 
 
   tmpBranch.setConvertedInternalLength(traln, paramView[0], prevVal); 
-  double something = tmpBranch.getLength(paramView[0]); 
+  double something = tmpBranch.getLength(); 
 
 #if HAVE_PLL != 0
   makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
@@ -178,23 +177,25 @@ double AdHocIntegrator::printOptimizationProcess(const Branch& branch, std::stri
 
 
 
-void AdHocIntegrator::createLnlCurve(Branch branch, std::string runid, TreeAln & traln , double minHere, double maxHere, nat numSteps)
+void AdHocIntegrator::createLnlCurve(BranchPlain branch, std::string runid, TreeAln & traln , double minHere, double maxHere, nat numSteps)
 {
   auto paramView  = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
+  assert(paramView.size( )== 1 ); 
+  auto param = paramView[0]; 
   std::stringstream ss; 
   ss << "lnl." << runid << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
   std::ofstream thisOut(ss.str());
 
-  auto eval = integrationChain->getEvaluator();
+  auto& eval = integrationChain->getEvaluator();
 
   if(maxHere != minHere)
     {
       for(double i = minHere; i < maxHere+0.00000001 ; i+= (maxHere-minHere)/ numSteps)
 	{
-	  Branch b = branch; 
+	  auto b = traln.getBranch(branch, param); 
 	  b.setConvertedInternalLength(traln, paramView[0], i); 
 	  traln.setBranch(b, paramView[0]); 
-	  eval->evaluate(traln, branch, false);
+	  eval.evaluate(traln, branch, false);
 	  double lnl = traln.getTr()->likelihood; 
 	  thisOut << i << "\t" << setprecision(std::numeric_limits<double>::digits10) << lnl << endl; 
 	}
@@ -205,7 +206,7 @@ void AdHocIntegrator::createLnlCurve(Branch branch, std::string runid, TreeAln &
 }
 
 
-double AdHocIntegrator::getParsimonyLength(TreeAln &traln, const Branch &b )
+double AdHocIntegrator::getParsimonyLength(TreeAln &traln, const BranchPlain &b )
 {
   ParsimonyEvaluator pEval; 
   std::vector<nat> partitionParsimony; 

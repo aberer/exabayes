@@ -24,8 +24,7 @@ ParallelSetup::ParallelSetup(int argc, char **argv)
 void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, CommFlag commFlags) const
 {  
   std::stringstream ss; 
-#if 0 
-  
+#if 0   
   ss << "Communicating " ; 
   if(commFlags & CommFlag::Swap)
     ss << " SWAP, " ; 
@@ -162,10 +161,14 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
 		}
 	    }
 	}
-    } 
+    }
 #endif  
-}
 
+  // std::cout << << "made it!!"
+  // ss.str("") ;
+  // ss << "made it" << std::endl; 
+  // blockingPrint(chainLeaderComm, ss.str()); 
+}
 
 void ParallelSetup::finalize()
 {

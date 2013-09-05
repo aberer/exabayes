@@ -115,15 +115,15 @@ public:
   /** 
       @brief prepare for set execution (only relevant for branch length + node slider)
    */ 
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  = 0; 
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  = 0; 
 
   // we need to implement these 
   void writeToCheckpoint( std::ostream &out)  const; 
   void readFromCheckpoint( std::istream &in ); 
   
-  void setPreparedBranch(Branch b ) {preparedBranch = b;  }
+  void setPreparedBranch(BranchPlain b ) {preparedBranch = b;  }
   // this is very bad =( 
-  void setOtherPreparedBranch(Branch b){preparedOtherBranch = b; }
+  void setOtherPreparedBranch(BranchPlain b){preparedOtherBranch = b; }
 
   void setInSetExecution(bool exec) { inSetExecution = exec;  }
   /** 
@@ -146,10 +146,11 @@ protected:
   bool inSetExecution;
 
   // meh 
-  Branch preparedBranch; 
-  Branch preparedOtherBranch; 
+  BranchPlain preparedBranch; 
+  BranchPlain preparedOtherBranch; 
 
   friend std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs); 
 }; 
 
 #endif
+

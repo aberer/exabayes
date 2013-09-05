@@ -2,6 +2,7 @@
 #include "GlobalVariables.hpp"
 #include "ParallelSetup.hpp"
 #include "parameters/AbstractParameter.hpp"
+#include "TreePrinter.hpp"
 
 #include <cassert>
 
@@ -47,6 +48,8 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId)
 
 
 
+#include "parameters/BranchLengthsParameter.hpp"
+
 
 void TopologyFile::sample(const TreeAln &traln, nat gen, 
 			  const std::vector<AbstractParameter*> &blParams)  
@@ -56,13 +59,16 @@ void TopologyFile::sample(const TreeAln &traln, nat gen,
 
   for(auto &param : blParams)
     {
-      std::vector<AbstractParameter*> a; 
-      a.push_back(param); 
+      if(dynamic_cast<BranchLengthsParameter*>(param) != nullptr )
+	{
+	  std::vector<AbstractParameter*> a; 
+	  a.push_back(param); 
 
-      auto treeString = tp.printTree(traln, a)  ; 
-      fh << "\ttree gen."<< gen
-	 << ".{" <<  param->getPartitions()  << "}"
-	 << " = [&U] " << treeString << std::endl; 
+	  auto treeString = tp.printTree(traln, a)  ; 
+	  fh << "\ttree gen."<< gen
+	     << ".{" <<  param->getPartitions()  << "}"
+	     << " = [&U] " << treeString << std::endl; 
+	}
     }
   
   // TODO print each tree 

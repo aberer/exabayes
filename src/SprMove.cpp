@@ -1,7 +1,14 @@
-#include <set>
+#include <array> 
 
+#include "GibbsProposal.hpp"
+#include "AdHocIntegrator.hpp"
 #include "SprMove.hpp"
-#include "Branch.hpp"
+#include "Arithmetics.hpp"
+#include "BoundsChecker.hpp"
+
+#define NUM_ITER 3 
+// #define ONLY_FIRST  
+
 
 // TODO make branch stuff more optional (performance)
 
@@ -27,7 +34,7 @@ void SprMove::disorientAtNode(TreeAln &traln, nodeptr p) const
 }
 
 
-void SprMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description, const std::vector<AbstractParameter*> &params)
+void SprMove::extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description, const std::vector<AbstractParameter*> &params)
 {
   sprCreatePath(traln, description.at(0), description.at(1), path, params);
 } 
@@ -39,17 +46,65 @@ AbstractMove* SprMove::clone() const
 }
 
 
-Branch SprMove::getEvalBranch(const TreeAln &traln) const
-{    
-  Branch b = path.at(0).getThirdBranch(traln, path.at(1)); 
-  Branch lastBranch = path.at(path.size()-1); 
 
-  Branch bA = Branch(b.getPrimNode(), lastBranch.getPrimNode()), 
-    bB = Branch(b.getPrimNode(),lastBranch.getSecNode()); 
+BranchPlain SprMove::getPruningBranchAfterPrune()const 
+{
+  return BranchPlain(path.getNthNodeInPath(0), path.getNthNodeInPath(2)); 
+}
+
+BranchPlain SprMove::getPruningBranchBeforeOuter() const
+{
+  return path.at(0); 
+}
+
+BranchPlain SprMove::getPruningBranchBeforeInner() const 
+{
+  return path.at(1); 
+}
+
+BranchPlain SprMove::getSubtreeBranchBefore(const TreeAln &traln ) const 
+{
+  return path.at(0).getThirdBranch(traln, path.at(1)); 
+}
+
+BranchPlain SprMove::getSubtreeBranchAfter(const TreeAln &traln ) const 
+{
+  auto numNodes = path.getNumberOfNodes(); 
+  
+  auto a =   BranchPlain (path.getNthNodeInPath(1) ,path.getNthNodeInPath(numNodes - 1)); 
+  auto b = BranchPlain(path.getNthNodeInPath(1), path.getNthNodeInPath(numNodes-2)); 
+  
+  return a.getThirdBranch(traln,b); 
+}
+
+BranchPlain SprMove::getInsertionBranchBefore() const 
+{
+  return path.at(path.size() -1 ); 
+}
+
+BranchPlain SprMove::getInsertionBranchAfterOuter()  const 
+{
+  return BranchPlain(path.getNthNodeInPath(1), path.getNthNodeInPath(path.getNumberOfNodes()-1)); 
+}
+
+
+BranchPlain SprMove::getInsertionBranchAfterInner() const 
+{
+  return BranchPlain(path.getNthNodeInPath(1), path.getNthNodeInPath(path.getNumberOfNodes()-2));
+}
+
+
+BranchPlain SprMove::getEvalBranch(const TreeAln &traln) const
+{    
+  auto b = path.at(0).getThirdBranch(traln, path.at(1)); 
+  auto lastBranch = path.at(path.size()-1); 
+
+  auto bA = BranchPlain(b.getPrimNode(), lastBranch.getPrimNode()), 
+    bB = BranchPlain(b.getPrimNode(),lastBranch.getSecNode()); 
 
   assert(bA.exists(traln) && bB.exists(traln)); 
 
-  Branch futureRoot = bA.getThirdBranch(traln, bB ); 
+  auto futureRoot = bA.getThirdBranch(traln, bB ); 
   
   return futureRoot; 
 }
@@ -103,18 +158,18 @@ void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath,
 
   /* get the subtree ptr */
   
-  Branch third =  modifiedPath.at(0).getThirdBranch(traln, modifiedPath.at(1)); 
+  auto third =  modifiedPath.at(0).getThirdBranch(traln, modifiedPath.at(1)); 
   nodeptr sTPtr = third.findNodePtr(traln); 
-  assert(modifiedPath.at(1).nodeIsInBranch(sTPtr->number )); 
+  assert(modifiedPath.at(1).hasNode(sTPtr->number )); 
   
   // finds the two nodeptrs adjacent to the subtree  
-  nodeptr prOuterPtr = Branch(modifiedPath.getNthNodeInPath(0) ,modifiedPath.getNthNodeInPath(1)).findNodePtr(traln ),
-    prInnerPtr = Branch(modifiedPath.getNthNodeInPath(2), modifiedPath.getNthNodeInPath(1)).findNodePtr(traln ); 
+  auto prOuterPtr = BranchPlain(modifiedPath.getNthNodeInPath(0) ,modifiedPath.getNthNodeInPath(1)).findNodePtr(traln ),
+    prInnerPtr = BranchPlain(modifiedPath.getNthNodeInPath(2), modifiedPath.getNthNodeInPath(1)).findNodePtr(traln ); 
 
   int lastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-1),
     s2LastNode = modifiedPath.getNthNodeInPath(modifiedPath.getNumberOfNodes()-2); 
-  nodeptr s2lPtr = Branch(s2LastNode, lastNode).findNodePtr(traln ), // s2l 
-    lPtr = Branch(lastNode, s2LastNode).findNodePtr(traln ); // l
+  nodeptr s2lPtr = BranchPlain(s2LastNode, lastNode).findNodePtr(traln ), // s2l 
+    lPtr = BranchPlain(lastNode, s2LastNode).findNodePtr(traln ); // l
 
   nodeptr toBeInserted = prInnerPtr->back;   
   nodeptr toBeInsertedPath = prOuterPtr->back;  
@@ -133,8 +188,8 @@ void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath,
   traln.clipNode(toBeInserted, s2lPtr); 
   traln.setBranch(traln.getBranch(toBeInserted, params), params); 
 
-  assert(Branch(sTPtr->number, s2lPtr->number).exists(traln)); 
-  assert(Branch(sTPtr->number, lPtr->number).exists(traln )); 
+  assert(BranchPlain(sTPtr->number, s2lPtr->number).exists(traln)); 
+  assert(BranchPlain(sTPtr->number, lPtr->number).exists(traln )); 
 }
 
 
@@ -149,10 +204,10 @@ void SprMove::applyPath(TreeAln &traln, const Path &modifiedPath,
 void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, Path &resultPath) const 
 {  
   int subTreeNode =  modifiedPath.getNthNodeInPath(1);   
-  Branch lastBranch = modifiedPath.at(modifiedPath.size()-1); 
+  auto lastBranch = modifiedPath.at(modifiedPath.size()-1); 
 
-  resultPath.append(Branch( lastBranch.getSecNode() , subTreeNode ) )  ; 
-  resultPath.append(Branch( lastBranch.getPrimNode() , subTreeNode ) )  ; 
+  resultPath.append(BranchPlain( lastBranch.getSecNode() , subTreeNode ) )  ; 
+  resultPath.append(BranchPlain( lastBranch.getPrimNode() , subTreeNode ) )  ; 
   
   assert(modifiedPath.size() > 2); 
   
@@ -180,7 +235,7 @@ void SprMove::getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, P
   ++it; 
   int b = *it;   
 
-  resultPath.append(Branch(a,b)); 
+  resultPath.append(BranchPlain(a,b)); 
   assert(modifiedPath.size() == resultPath.size()); 
 }
 
@@ -193,7 +248,7 @@ std::ostream& operator<<(std::ostream &out, const SprMove& rhs)
 
 
 
-void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto, 
+void SprMove::sprCreatePath(const TreeAln &traln, BranchPlain mover, BranchPlain movedInto, 
 			    Path &pathHere,  const std::vector<AbstractParameter*> &params) const
 {
 #ifdef EFFICIENT
@@ -201,8 +256,8 @@ void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto
   assert(0); 
 #endif
 
-  Branch chosen = movedInto; // description.at(1); 
-  Branch prunedTree = mover; // description.at(0); 
+  auto chosen = movedInto; // description.at(1); 
+  auto prunedTree = mover; // description.at(0); 
 
   nodeptr p = prunedTree.findNodePtr(traln);
   
@@ -210,17 +265,17 @@ void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto
   pathHere.findPath(traln, p, chosen.findNodePtr(traln));
   pathHere.reverse();   
 
-  Branch Tmp = pathHere.at(0); 
+  auto Tmp = pathHere.at(0); 
 
   nodeptr aNode = Tmp.findNodePtr(traln); 
   if(traln.isTipNode(aNode))
     aNode = Tmp.getInverted().findNodePtr(traln);
   assert(not traln.isTipNode(aNode)); 
-  Branch b = pathHere.at(0); 
-  while(b.equalsUndirected( pathHere.at(0)) || b.equalsUndirected(Branch(p->number, p->back->number))) 
+  auto b = pathHere.at(0); 
+  while(b.equalsUndirected( pathHere.at(0)) || b.equalsUndirected(BranchPlain(p->number, p->back->number))) 
     {
       aNode = aNode->next; 
-      b = Branch(aNode->number, aNode->back->number) ;
+      b = BranchPlain(aNode->number, aNode->back->number) ;
     }
   pathHere.reverse();
   pathHere.append(b);  
@@ -228,6 +283,191 @@ void SprMove::sprCreatePath(const TreeAln &traln, Branch mover, Branch movedInto
 
   // TODO inefficient
   pathHere.saveBranchLengthsPath(traln, params); 
+}
+
+std::vector<BranchLength> SprMove::proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &blParams, 
+					     LikelihoodEvaluator& eval, double &hastings, Randomness& rand, bool isForward)
+{
+
+  bool printVerbose = false; 
+
+  auto result=  std::vector<BranchLength>{};
+  // notice: move must have been applied already
+  assert(blParams.size() == 1); 
+  auto param = blParams[0]; 
+
+  tout << MAX_SCI_PRECISION; 
+
+  // pruning point 
+  auto branchPrimer =  std::vector<BranchLength>{};
+
+  if(isForward)
+    {
+      branchPrimer = 
+	{ 
+	  traln.getBranch(getSubtreeBranchAfter(traln), param) 
+#ifndef ONLY_FIRST
+	  , traln.getBranch( getPruningBranchAfterPrune()   ,param)
+	  , traln.getBranch( getInsertionBranchAfterInner() , param)
+	  , traln.getBranch( getInsertionBranchAfterOuter() , param)
+	  , traln.getBranch( getOppositeBranch(traln), param)
+#endif
+	} ; 
+    }
+  else 
+    {
+      branchPrimer = 
+	{
+	  traln.getBranch( getSubtreeBranchBefore(traln), param)
+#ifndef ONLY_FIRST
+	  , traln.getBranch( getPruningBranchBeforeOuter(), param)
+	  , traln.getBranch( getPruningBranchBeforeInner(), param)
+	  , traln.getBranch( getInsertionBranchBefore(), param) 
+	  , traln.getBranch( getOppositeBranch(traln) , param )
+#endif
+	}; 
+    } 
+  const auto branches = branchPrimer; 
+
+  auto branchNames = std::unordered_map<BranchLength, std::string>{}; 
+
+  if(isForward)
+    {
+      branchNames = 
+	{
+	  make_pair(branches[0], "subtree")
+#ifndef ONLY_FIRST
+	  ,make_pair(branches[1], "pruning"), 
+	  make_pair(branches[2], "insertionInner"), 
+	  make_pair(branches[3], "insertionOuter"),
+	  make_pair(branches[4], "opposite")
+#endif
+
+	}; 
+    }
+  else 
+    {
+      branchNames = 
+	{
+	  make_pair(branches[0], "subtree") 
+#ifndef ONLY_FIRST
+	  ,make_pair(branches[1], "pruningOuter"),
+	  make_pair(branches[2], "pruningInner"),
+	  make_pair(branches[3], "insertion"),
+	  make_pair(branches[4], "opposite")
+#endif
+	}; 
+    }
+
+  auto optimaMap = std::unordered_map< BranchLength, double >{}; 
+
+  for(int i = 0; i < NUM_ITER; ++i)
+    {
+      for( auto branch : branches )
+	{
+	  double nrd1 = 0; 
+	  double nrd2 = 0; 
+	  auto tmp = traln.getBranch(branch.toPlain(), param); 
+	  auto result = GibbsProposal::optimiseBranch(traln,branch,eval, nrd1, nrd2, 30, param  ); 
+	  traln.setBranch(result, param); 
+	  // auto before = tmp.getInterpretedLength(traln,param); 
+	  // auto after = result.getInterpretedLength(traln, param); 
+	  // auto ratio = after / before;  
+#if 0 
+	  if(printVerbose)
+	    tout << i << "\tbefore,after,ratio:\t" << before  << "\t" << after << "\t" <<  PERC_PRECISION << ratio * 100 << "%"  << MAX_SCI_PRECISION << "\t" << branchNames[branch] << std::endl; 
+#els 
+	  assert(0); 
+#endif
+	  
+	  if(optimaMap.find(result) != optimaMap.end())
+	    optimaMap.erase(optimaMap.find(result)); 
+	  optimaMap[result] = nrd2; 
+	}
+      if(printVerbose)
+	tout << std::endl; 
+    }
+  if(printVerbose)
+    tout << std::endl; 
+
+  
+  if(printVerbose)
+    tout << "before: " << std::endl; 
+  for(auto branch:  branches)
+    {
+#if 0 
+      if(printVerbose)
+	tout << branch << "\t" << branch.getInterpretedLength(traln, param) <<  "\t" << branchNames[branch] << std::endl; 
+#else 
+      assert(0); 
+#endif
+    }
+  
+  if(printVerbose)
+    tout << "after: " << std::endl; 
+  for(auto elem : optimaMap)
+    {
+#if 0 
+      if(printVerbose)
+	tout << elem.first << "\t" << elem.first.getInterpretedLength(traln, param) << "\t" << branchNames[elem.first] << std::endl; 
+#else 
+      assert(0); 
+#endif
+    }
+  
+  
+  if(printVerbose)
+    {
+      if(isForward)
+	tout << "proposing: " << std::endl; 
+      else 
+	tout << "evaluating: " << std::endl; 
+    }
+    
+  for(auto &branch : branches)
+    {
+      auto iter = optimaMap.find(branch); 
+      auto proposalResult = GibbsProposal::propose(iter->first.getInterpretedLength(traln, param), iter->second, rand); 
+      auto tmp = branch; 
+      tmp.setConvertedInternalLength(traln, param, proposalResult[0]);
+      if( not BoundsChecker::checkBranch(tmp))
+	BoundsChecker::correctBranch(tmp); 
+
+      result.push_back(tmp); 
+
+      auto alpha = proposalResult[1]; 
+      auto beta = proposalResult[2]; 
+
+      double hastPart = 0; 
+      if(isForward)
+	{
+	  hastPart -= logGammaDensity(tmp.getInterpretedLength(traln,param), alpha, beta) ; 
+#if 0 
+	  if(printVerbose)
+	    tout << tmp << "\t" << tmp.getInterpretedLength(traln, param) << "\t" << branchNames[branch] <<  "\t" << SOME_SCI_PRECISION << hastPart << MAX_SCI_PRECISION   <<std::endl; 
+#else 
+	  assert(0); 
+#endif
+	}
+      else 
+	{
+	  hastPart += logGammaDensity(branch.getInterpretedLength(traln, param), alpha, beta); 
+#if 0 
+	  if(printVerbose)
+	    tout << tmp << "\t" << branch.getInterpretedLength(traln, param) << "\t" << branchNames[branch] <<  "\t" << SOME_SCI_PRECISION << hastPart << MAX_SCI_PRECISION   <<std::endl; 
+#else 
+	  assert(0); 
+#endif
+	}
+      
+      hastings += hastPart;       
+    }
+
+  // reset 
+  for(auto &branch : branches)
+    traln.setBranch(branch, param); 
+
+  return result; 
 }
 
 
@@ -246,4 +486,104 @@ void SprMove::sprDisorientPath(TreeAln &traln, nodeptr p, const Path &pathHere) 
   
   sprDisorientPath( traln, p->next->back, pathHere); 
   sprDisorientPath( traln, p->next->next->back, pathHere);
+}
+
+
+// #define DO_INTEGRATE 
+
+void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParameter*> blParams, LikelihoodEvaluator &eval, double &hastings ) const 
+{
+  double prevLnl = traln.getTr()->likelihood;  
+
+  assert(blParams.size() == 1); 
+  auto blParam = blParams[0]; 
+
+  double oldHastings = hastings; 
+
+  auto means = std::vector<double>(); 
+
+  auto prunedSubtree = path.at(0).getThirdBranch(traln, path.at(1)); 
+
+  // branches before 
+  auto beforeBranches = std::vector<BranchPlain>(); 
+  beforeBranches.push_back(path.at(0));
+  beforeBranches.push_back(path.at(1));
+  beforeBranches.push_back(prunedSubtree); 
+  beforeBranches.push_back(path.at(path.size()-1));
+
+  auto resultVec = std::vector<double>(); 
+  for(auto b : beforeBranches)
+    {
+      BranchLength bl = traln.getBranch(b, blParam); 
+#ifdef DO_INTEGRATE
+      auto samples = ahInt->integrate(bl, traln, 1000, 10);
+      auto result = Arithmetics::getMeanAndVar(samples); 
+      resultVec.push_back(result.first); 
+#else 
+      double d1 = 0., d2 = 0. ; 
+      eval.evaluate(traln, b, true); 
+      auto result = GibbsProposal::optimiseBranch(traln, bl, eval, d1,d2, 30, blParam); 
+      traln.setBranch(bl, blParam); 
+      eval.evaluate(traln, b, true); 
+      resultVec.push_back(result.getInterpretedLength(traln, blParam)); 
+#endif
+      // tout << result.first << "\t" ; 
+
+    }
+
+  applyToTree(traln, blParams);
+
+  auto afterBranches = std::vector<BranchPlain>();
+  afterBranches.emplace_back(path.getNthNodeInPath(0), path.getNthNodeInPath(2)); 
+  afterBranches.emplace_back(path.getNthNodeInPath(1), path.getNthNodeInPath(path.getNumberOfNodes()-2)); 
+  afterBranches.emplace_back(path.getNthNodeInPath(1), path.getNthNodeInPath(path.getNumberOfNodes()-1)); 
+  afterBranches.emplace_back(prunedSubtree); 
+  
+  for(auto b : afterBranches)
+    {
+      BranchLength bl = traln.getBranch(b,blParam); 
+#ifdef DO_INTEGRATE
+      auto samples = ahInt->integrate(b,traln,1000,10); 
+      auto result = Arithmetics::getMeanAndVar(samples); 
+      resultVec.push_back(result.first); 
+#else 
+      double d1 = 0., d2 = 0. ; 
+      eval.evaluate(traln, b, true); 
+      auto result = GibbsProposal::optimiseBranch(traln, bl , eval, d1,d2, 30, blParam); 
+      traln.setBranch(bl, blParam); 
+      eval.evaluate(traln, b, true); 
+      resultVec.push_back(result.getInterpretedLength(traln, blParam)); 
+#endif
+    }
+
+  double newLnl = eval.evaluate(traln, prunedSubtree, true); 
+
+  revertTree(traln, blParams); 
+  hastings = oldHastings; 
+
+  auto bip= path.at(0).getThirdBranch(traln, path.at(1)).getBipartition(traln);
+  tout << "PARS\t" << getNniDistance() << "\t" << MAX_SCI_PRECISION <<  newLnl - prevLnl << "\t"; 
+  for(auto &v : resultVec)
+    tout << v << "\t"; 
+  tout << bip << std::endl; 
+} 
+
+
+
+
+BranchPlain SprMove::getOppositeBranch(const TreeAln &traln ) const 
+{
+  auto oneNode = path.getNthNodeInPath(path.getNumberOfNodes()-2); 
+  auto nodes = traln.getNeighborsOfNode(oneNode); 
+  auto otherNode = 0; 
+  for(auto node : nodes)
+    {
+      if(not path.nodeIsOnPath(node) )
+	{
+	  assert(otherNode == 0); 
+	  otherNode = node; 
+	}
+    }
+
+  return BranchPlain(oneNode, otherNode); 
 }

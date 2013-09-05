@@ -10,12 +10,12 @@ public:
   
   virtual ~RestoringLnlEvaluator(){}; 
 
-  double evaluateNoBack(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
+  double evaluateNoBack(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal )  ; 
 
-  virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ) ;  
-  virtual void evalSubtree( TreeAln &traln, const Branch &evalBranch); 
+  virtual double evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal ) ;  
+  virtual void evalSubtree( TreeAln &traln, const BranchPlain &evalBranch); 
 
-  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const Branch &root , const std::vector<nat>& partitions, bool fullTraversal);
+  virtual double evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions, bool fullTraversal);
 
   virtual void resetSomePartitionsToImprinted(TreeAln &traln, std::vector<nat> partitions) ; 
 

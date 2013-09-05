@@ -99,7 +99,7 @@ public:
 
   // getters and setters 
   double getBestState() const {return bestState; }
-  LikelihoodEvaluator* getEvaluator() {return evaluator.get(); }
+  LikelihoodEvaluator& getEvaluator() {return *(evaluator.get()); }
   const TreeAln& getTraln() const { return *tralnPtr; }
   TreeAln& getTraln()  { return *tralnPtr; }
   Randomness& getChainRand(){return chainRand;}

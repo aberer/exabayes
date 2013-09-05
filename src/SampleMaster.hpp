@@ -69,7 +69,7 @@ private:
   std::unique_ptr<LikelihoodEvaluator> createEvaluatorPrototype(const TreeAln &initTree); 
   void writeCheckpointMaster(); 
   void initializeFromCheckpoint(); 
-  double convergenceDiagnostic(nat &begin, nat &end); 
+  std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *fh, const std::vector<AbstractParameter*> &params); 
   void initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
   CLOCK::system_clock::time_point printDuringRun(nat gen,  ParallelSetup &pl) ; 

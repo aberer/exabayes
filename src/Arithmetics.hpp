@@ -5,6 +5,29 @@
 
 namespace Arithmetics
 {
-  std::pair<double,double> getMeanAndVar (const std::vector<double> &data );
+  /**
+     @brief gets the mean of the data 
+   */
+  double getMean(const std::vector<double> &data); 
+  /** 
+      @brief gets the variance of the data 
+   */ 
+  double getVariance(const std::vector<double> &data); 
+  /** 
+      @brief gets the potential scale reduction factor of data (data per chain)
+   */ 
+  double PRSF(const std::vector<std::vector<double> > data); 
+  /**
+     @brief gets the n-th percentile of the data  
+   */ 
+  double getPercentile(double percentile, const std::vector<double> &data); 
+  /** 
+      @brief gets the effective sampling size of the data 
+   */ 
+  double getEffectiveSamplingSize(const std::vector<double> & data);
+  /** 
+      @brief gets the pearson correlation coefficient between two samples 
+   */ 
+  double getPearsonCorrelationCoefficient(const std::vector<double> &sampleA, const std::vector<double> &sampleB); 
 }
 #endif

@@ -19,13 +19,13 @@ public:
      
      We have to treat inner and outer branches separatedly.
   */
-  static Branch drawBranchUniform(const TreeAln & traln, Randomness &rand )  ; 
+  static BranchPlain drawBranchUniform(const TreeAln & traln, Randomness &rand )  ; 
   /** 
       @brief samples an inner branch (including orientation), such that
       each oriented inner branch is equally likely.
   */ 
-  static Branch drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  ; 
-  static Branch drawBranchWithInnerNode(const TreeAln& traln, Randomness &rand)  ; 
+  static BranchPlain drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  ; 
+  static BranchPlain drawBranchWithInnerNode(const TreeAln& traln, Randomness &rand)  ; 
   static nat drawInnerNode(const TreeAln& traln, Randomness &rand )  ; 
 
   /**
@@ -41,7 +41,7 @@ private:
      Notice that an inner branch has 3 nodes associated with it, thus
      the probability of drawing a tip should be accordingly lower.
   */ 
-  static Branch drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  ; 
+  static BranchPlain drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  ; 
 
 }; 
 

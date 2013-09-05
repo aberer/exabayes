@@ -24,6 +24,8 @@
 
 #include "GlobalVariables.hpp"
 
+
+#include "BoundsChecker.hpp"
 #include "ArrayRestorer.hpp"
 #include "AvgSplitFreqAssessor.hpp"
 
@@ -34,6 +36,8 @@
 #include "PlainLikelihoodEvaluator.hpp"
 #include "RestoringLnlEvaluator.hpp"
 
+#include "TreeIntegrator.hpp"
+
 
 // TODO 
 // * reactivate swapping 
@@ -43,18 +47,12 @@
 
 // a developmental mode to integrate over branch lengths
 
-
-#define _USE_NEW_BIPHASH
-
-
-
-
 // #define _GO_TO_INTEGRATION_MODE
 
 
-#ifndef _EXPERIMENTAL_INTEGRATION_MODE
-#undef _GO_TO_INTEGRATION_MODE
-#endif
+// #ifndef _EXPERIMENTAL_INTEGRATION_MODE
+// #undef _GO_TO_INTEGRATION_MODE
+// #endif
 
 void genericExit(int code); 
 static int countNumberOfTreesQuick(const char *fn ); 
@@ -91,17 +89,25 @@ void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTre
 	TreeRandomizer::randomizeTree(traln, treeRandomness); 
     }
 
-  if(hasBranchLength)
-    tout << "TODO use branch lengths" << std::endl; 
-
-
-  for(auto &b : traln.extractBranches(params))
+  for(auto &b : traln.extractBranches())
     {
       for(auto &param : params)
 	{
-	  b.setLength( hasBranchLength ? ( - exp(b.getLength(param) / tr->fracchange)) : TreeAln::initBL 
-		       , param); 
-	  traln.setBranch(b, param); 
+	  double initLen =  TreeAln::initBL ; 
+
+	  if(hasBranchLength)
+	    initLen = traln.getBranch(b,param).getLength() ; 
+
+	  auto bl = b.toBlDummy(); 
+	  bl.setConvertedInternalLength(traln, param, initLen); 
+
+	  if(not BoundsChecker::checkBranch(bl))
+	    {
+	      tout << "WARNING: initial branch length already out of bounds. Relative representation: "
+		   << bl.getLength() << "\treal length=" << bl.getInterpretedLength(traln, param) << std::endl; 
+	      BoundsChecker::correctBranch(bl); 	      
+	    }
+	  traln.setBranch(bl, param); 
 	}
     }
 }
@@ -110,7 +116,7 @@ void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTre
 
 void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, const std::vector<AbstractParameter*> &params)
 {  
-  Randomness treeRandomness(seed); 
+  auto treeRandomness = Randomness(seed); 
 
   vector<shared_ptr<TreeAln> > treesToInitialize; 
   treesToInitialize.push_back(trees[0]); 
@@ -324,13 +330,15 @@ void SampleMaster::initializeRuns( )
   TreeRandomizer::randomizeTree(*aTree, masterRand); 
   ahInt = new AdHocIntegrator(aTree, dT, masterRand.generateSeed());
 
-  std::stringstream  ss; 
-  ss << "nniBranchLengths." << cl.getRunid() << ".txt" ; 
-  nniOut.open(ss.str());
+  tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed()); 
 
-  ss.str() = "" ; 
-  ss << "sprBranchLengths." << cl.getRunid() << ".txt"; 
-  sprOut.open(ss.str()); 
+  // std::stringstream  ss; 
+  // ss << "nniBranchLengths." << cl.getRunid() << ".txt" ; 
+  // nniOut.open(ss.str());
+
+  // ss.str() = "" ; 
+  // ss << "sprBranchLengths." << cl.getRunid() << ".txt"; 
+  // sprOut.open(ss.str()); 
 #endif
   // END
 
@@ -512,11 +520,11 @@ void SampleMaster::printInitialState(const ParallelSetup &pl)
 }  
 
 
-double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
+std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &end)
 {
   if(runParams.getNumRunConv() == 1)
-    return nan("") ; 
-    // return std::numeric_limits<double>::min();
+    // return nan("") ; 
+    return std::pair<double,double>(std::numeric_limits<double>::min(),std::numeric_limits<double>::min());
 
   vector<string> fns; 
   for(nat i = 0; i < runParams.getNumRunConv(); ++i)
@@ -536,7 +544,7 @@ double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
   end *= treesInBatch;       
 
   if(end == 0)
-    return nan("");
+    return make_pair(nan(""), nan(""));   
 
   asdsf.setEnd(end);
   if( runParams.getBurninGen() > 0 )
@@ -546,7 +554,7 @@ double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
       int treesToDiscard =  runParams.getBurninGen() / runParams.getSamplingFreq(); 
 
       if(int(end) < treesToDiscard + 2 )
-	return false; 
+	return make_pair(nan(""), nan("")); 
       else 
 	asdsf.setStart(treesToDiscard);  
     }
@@ -557,15 +565,10 @@ double SampleMaster::convergenceDiagnostic(nat &start, nat &end)
       asdsf.setStart(start);
     } 
 
-#ifdef _USE_NEW_BIPHASH
   asdsf.extractBipsNew();
-  auto asdsfVal = asdsf.computeAsdsfNew(runParams.getAsdsfIgnoreFreq());
-#else 
-  asdsf.extractBips();
-  double asdsfVal = asdsf.computeAsdsf(runParams.getAsdsfIgnoreFreq());
-#endif
+  auto asdsfVals = asdsf.computeAsdsfNew(runParams.getAsdsfIgnoreFreq());
 
-  return asdsfVal; 
+  return asdsfVals;
 }
 
 
@@ -676,7 +679,11 @@ void SampleMaster::run()
       nat nextDiag = lastDiag + runParams.getDiagFreq(); 
       nat nextChkpnt = lastChkpnt + runParams.getChkpntFreq(); 
 
-      std::vector<nat> stopPoints = { nextChkpnt , nextPrint, nextDiag, runParams.getNumGen() } ; 
+      std::vector<nat> stopPoints = { nextChkpnt , nextPrint, nextDiag } ; 
+
+      if(curGen < runParams.getNumGen())
+	stopPoints.push_back(runParams.getNumGen());
+
       nat nextStop = *(std::min_element(stopPoints.begin(), stopPoints.end())); 
       int toExecute = nextStop - curGen; 
 
@@ -688,31 +695,34 @@ void SampleMaster::run()
 	}
       curGen += toExecute; 
 
-
-      hasConverged = ( runs[0].getChains().size() == 1) 
-	&& (curGen >= runParams.getNumGen()); 
-	
+      hasConverged = (  runs.size() == 1) && (curGen >= runParams.getNumGen()); 
 
       if(curGen % runParams.getDiagFreq() == 0 )
 	{
-	  nat start = 0, 
-	    end = 0; 
-	  double asdsf = convergenceDiagnostic(start, end); 
+	  auto asdsf = make_pair(nan(""), nan("")); 
 
-	  hasConverged = asdsf < runParams.getAsdsfConvergence();  
+	  if(runs.size() > 1)
+	    {
+	      nat start = 0, 
+		end = 0; 
+	      asdsf = convergenceDiagnostic(start, end); 
+
+	      double convCrit = runParams.getAsdsfConvergence();  
+	      if(runParams.isUseAsdsfMax())
+		hasConverged = asdsf.second < convCrit;  
+	      else 
+		hasConverged = asdsf.first < convCrit;  
+
+	      tout << std::endl  << "ASDSF for trees " << start << "-" << end  << " (avg/max):\t"
+		   << PERC_PRECISION << asdsf.first * 100 << "%\t" << asdsf.second * 100 << "%"   << std::endl << std::endl; 
+	    }
 
 	  pl.synchronizeChainsAtMaster(runs, CommFlag::PrintStat | CommFlag::Swap | CommFlag::Proposals); 
 	  if(pl.isGlobalMaster()) 
-	    {
-	      diagFile.printDiagnostics(curGen, asdsf, runs);
-	      if( not (runs.size() == 1))
-		tout << std::endl  << "ASDSF for trees " << start << "-" << end  << ":\t"
-		     << PERC_PRECISION << asdsf * 100 << "%" << std::endl << std::endl; 
-	    }
-
+	    diagFile.printDiagnostics(curGen, asdsf.first, runs);
 	  lastDiag = curGen; 
 	}
-	
+      
       if(curGen % runParams.getPrintFreq() == 0 )
 	{
 	  lastPrintTime = printDuringRun(curGen,pl); 
@@ -726,11 +736,16 @@ void SampleMaster::run()
 	} 
     }
 
-#ifdef _GO_TO_INTEGRATION_MODE
+#if defined( _EXPERIMENTAL_INTEGRATION_MODE ) && defined(_GO_TO_INTEGRATION_MODE)
+
   // go into integration mode, if we want to do so 
   branchLengthsIntegration();
 #endif
-  
+
+#if defined(_EXPERIMENTAL_INTEGRATION_MODE)  && defined(_GO_TO_TREE_MOVE_INTEGARTION)
+  tInt->integrateAllBranches(*(runs[0].getChains()[0].getTralnPtr()), cl.getRunid());
+#endif
+
 }
  
  
@@ -783,6 +798,7 @@ void SampleMaster::writeCheckpointMaster()
 
   if(pl.isGlobalMaster() )
     {
+
       stringstream ss; 
       ss <<  OutputFile::getFileBaseName(cl.getWorkdir()) << "_newCheckpoint." << cl.getRunid()  ; 
       std::string newName = ss.str();
@@ -790,7 +806,7 @@ void SampleMaster::writeCheckpointMaster()
       Checkpointable::getOfstream(newName, chkpnt); 
       writeToCheckpoint(chkpnt);
       chkpnt.close(); 
-	  
+
       ss.str("");
       ss << OutputFile::getFileBaseName(cl.getWorkdir()) << "_checkpoint." << cl.getRunid(); 
       std::string curName = ss.str();

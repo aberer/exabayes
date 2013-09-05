@@ -1,7 +1,7 @@
-#include "GibbsProposal.hpp" 
 #include "BranchLengthMultiplier.hpp"
-#include "Category.hpp"
 
+
+// #define _EXPERIMENTAL
 
 #define MAX_ITER 30 
 
@@ -13,12 +13,17 @@ public:
   GibbsBranchLength(const GibbsBranchLength& rhs); 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+#ifdef  _EXPERIMENTAL
+  virtual void resetState(TreeAln &traln) ; 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) ; 
+#endif
+  
   virtual void autotune(){}
 
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { assert(0); return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { assert(0); return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
 
   virtual AbstractProposal* clone() const  { return new GibbsBranchLength(*this); }  
 
 private: 
-  // std::unique_ptr<LikelihoodEvaluator> eval; 
+  BranchLength extraBranch; 
 }; 

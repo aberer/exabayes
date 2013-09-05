@@ -1,12 +1,10 @@
 #include "PriorBelief.hpp"
+
 #include "Branch.hpp"
 #include "GlobalVariables.hpp"
 #include "priors/AbstractPrior.hpp"
-
 #include "priors/ExponentialPrior.hpp"
-
 #include "Category.hpp"
-
 
 
 PriorBelief::PriorBelief()
@@ -47,20 +45,36 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<d
   assert(0); 
 #endif
 
-  auto branches = traln.extractBranches(affectedBlParams); 
 
   for(auto &param : affectedBlParams)
     {
+      auto branches = traln.extractBranches(param); 
+
       double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
       double myOld = oldFc.at(param->getIdOfMyKind()); 
       double myNew = newFcs.at(param->getIdOfMyKind()); 
 
       double blInfluence = 1; 
       for(auto &b : branches)
-	blInfluence *= b.getLength(param);
-
+	blInfluence *= b.getLength();
 	lnPriorRatio += (myNew - myOld) * lambda * log(blInfluence);
+      
     }
+
+  // auto branches = traln.extractBranches(affectedBlParams); 
+
+  // for(auto &param : affectedBlParams)
+  //   {
+  //     double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
+  //     double myOld = oldFc.at(param->getIdOfMyKind()); 
+  //     double myNew = newFcs.at(param->getIdOfMyKind()); 
+
+  //     double blInfluence = 1; 
+  //     for(auto &b : branches)
+  // 	blInfluence *= b.getLength(param);
+
+  // 	lnPriorRatio += (myNew - myOld) * lambda * log(blInfluence);
+  //   }
 }
 
 
@@ -79,7 +93,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	  break; 
 	case Category::BRANCH_LENGTHS: 
 	  {
-	    std::vector<Branch> bs = traln.extractBranches(v); 
+	    std::vector<BranchLength> bs = traln.extractBranches(v); 
 	    auto pr = v->getPrior();	    
 	    for(auto &b : bs)	      
 	      {

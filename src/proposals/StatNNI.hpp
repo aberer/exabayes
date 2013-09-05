@@ -28,7 +28,10 @@ public:
   virtual void resetState(TreeAln &traln) ; 
 
   // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)
+  { 
+    return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );
+  }
 
   virtual void autotune() {}	// disabled 
 
@@ -45,9 +48,6 @@ private:			// ATTRIBUTES
   double multiplier; 
   Path path; 
   NniMove move; 
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE
-  nat invocations; 
-#endif
 };
 
 #endif

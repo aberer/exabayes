@@ -1,7 +1,6 @@
 #ifndef _RADIUSMLSPR_H
 #define _RADIUSMLSPR_H
 
-
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
 
@@ -10,7 +9,7 @@
 
 typedef struct  _insertWeight
 {
-  Branch b; 
+  BranchPlain b; 
   double lnl; 
   double weightInFirst; 
   double weightInSecond; 
@@ -33,7 +32,10 @@ public:
   virtual void resetState(TreeAln &traln) ; 
   
   // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand) 
+  {
+    return std::make_pair(BranchPlain(0,0), BranchPlain(0,0));
+  }
 
   virtual void autotune() {}	// disabled 
 

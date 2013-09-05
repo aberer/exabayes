@@ -19,24 +19,30 @@ public:
   virtual void resetState(TreeAln &traln) ; 
   virtual void autotune() {}	// disabled 
   virtual AbstractProposal* clone() const;  
-  
-  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return 
+      std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
 
   virtual void readFromCheckpointCore(std::istream &in) {   } 
   virtual void writeToCheckpointCore(std::ostream &out) const { }  
 
 protected: 			// METHODS
+  /**
+     @brief draws a random set of branches in the tree that constitute a
+     path
+   
+     This function employs the eSPR strategy 
+   
+     @param s -- the result : the first two branches in the stack define
+     the root of the pruned subtree
+  */
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 
 
 protected: 			// ATTRIBUTES
   double stopProb; 
   double multiplier; 
   SprMove move; 
-
-
-
-
+  BranchPlain subtreeBranch; 
+  BranchPlain oppositeBranch; 
 }; 
 
 

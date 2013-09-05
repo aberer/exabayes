@@ -108,7 +108,9 @@ extern "C" {
 
 #define badRear         -1
 
-#define NUM_BRANCHES     16
+
+  /* really problematic */
+#define NUM_BRANCHES     1024
 
 #define TRUE             1
 #define FALSE            0

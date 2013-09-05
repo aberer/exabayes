@@ -7,10 +7,14 @@
 class SlidingProposal : public AbstractProposer
 {
 public: 
-  SlidingProposal(double minVal, double maxVal); 
+  SlidingProposal(double minVal, double maxVal, bool minMaxIsRelative); 
   virtual ~SlidingProposal(){}
 
-  SlidingProposal(const SlidingProposal &rhs) : AbstractProposer(rhs){}
+  SlidingProposal(const SlidingProposal &rhs) 
+    : AbstractProposer(rhs)
+    , minMaxIsRelative(rhs.minMaxIsRelative)
+  {
+  }
 
   double proposeOneValue(double oldVal, double parameter, Randomness &rand, double &hastings); 
 
@@ -21,6 +25,9 @@ public:
 
   virtual AbstractProposer* clone() const  {return new SlidingProposal(*this);  }
 
+
+private: 
+  bool minMaxIsRelative ; 
 }; 
 
 #endif

@@ -1,5 +1,5 @@
 #include "AbstractMove.hpp"
-
+#include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
 
 void AbstractMove::disorientHelper(const TreeAln &traln, nodeptr p) const 

@@ -57,7 +57,7 @@ double getRatio(tree *tr, double a, double b )
     @brief finds the entry in the list 
     notice: inefficient, but who cares? 
  */ 
-static insertList* getEntry(insertList *lnlList, Branch b )
+static insertList* getEntry(insertList *lnlList, BranchPlain b )
 {
   for(insertList *iter = lnlList; iter ; iter = iter->next)
     {
@@ -68,7 +68,7 @@ static insertList* getEntry(insertList *lnlList, Branch b )
 }
 
 
-static void appendElem(insertList **list,  Branch b , double lnl, double ratio, boolean isFirst  )
+static void appendElem(insertList **list,  BranchPlain b , double lnl, double ratio, boolean isFirst  )
 {
   insertList *elem = (insertList*)exa_calloc(1,sizeof(insertList)); 
   elem->next = *list; 
@@ -83,7 +83,7 @@ static void appendElem(insertList **list,  Branch b , double lnl, double ratio, 
     elem->containedInSecond = TRUE; 
 }
 
-static void descendAndTestInsert(TreeAln& traln, Branch pruneBranch, Branch subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
+static void descendAndTestInsert(TreeAln& traln, BranchPlain pruneBranch, BranchPlain subtree, double ratio, insertList **lnlList, int depthLeft, boolean isFirst)
 { 
 #if 0 
   tree *tr = traln.getTr();
@@ -238,7 +238,7 @@ static  void createWeights(tree  *tr, insertList **lnlList, boolean doFirst)
 
 
 
-static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, Branch subtree, Branch pruneBranch, int radius, boolean isFirst)
+static void testInsertWithRadius(TreeAln &traln, insertList **lnlList, BranchPlain subtree, BranchPlain pruneBranch, int radius, boolean isFirst)
 {
 #if 0 
   tree *tr = traln.getTr();

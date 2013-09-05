@@ -19,7 +19,7 @@ RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE 
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS= exabayes prsf asdsf
+bin_PROGRAMS= exabayes asdsf extractBips consense credibleSet postProcParam #  prsf
 
 SRCINCLUDE=-I$(top_srcdir)/src
 
@@ -61,9 +61,9 @@ exabayes_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATU
 ################################################################
 # PRSF
 
-prsf_LDADD = libbayes.a $(LIBTOUSE) 
-prsf_CXXFLAGS=-O3 $(LIBINCLUDE) $(SIMD_FLAGS) $(SRCINCLUDE) $(RAX_FEATURE)
-prsf_SOURCES= $(top_srcdir)/src/prsf.cpp
+# prsf_LDADD = libbayes.a $(LIBTOUSE) 
+# prsf_CXXFLAGS=-O3 $(LIBINCLUDE) $(SIMD_FLAGS) $(SRCINCLUDE) $(RAX_FEATURE)
+# prsf_SOURCES= $(top_srcdir)/src/prsf.cpp
 
 
 ################################################################
@@ -77,6 +77,34 @@ asdsf_SOURCES= $(top_srcdir)/src/asdsf.cpp
 pre1=$(top_srcdir)/lib/ExaML/parser/
 parserExaml_SOURCES=$(pre1)/axml.c $(pre1)/parsePartitions.c $(pre1)/axml-parser.h  $(pre1)/globalVariables.h 
 parserExaml_CFLAGS=$(SIMD_FLAGS) $(SRCINCLUDE) $(RAX_FEATURE)
+
+
+################################################################
+# extractBips 
+extractBips_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
+extractBips_LDADD= libbayes.a $(LIBTOUSE)
+extractBips_SOURCES=./src/extractBips.cpp  
+
+
+################################################################
+# consense 
+consense_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
+consense_LDADD= libbayes.a $(LIBTOUSE)
+consense_SOURCES=./src/consense.cpp
+
+
+################################################################
+# credibleSet 
+credibleSet_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
+credibleSet_LDADD= libbayes.a $(LIBTOUSE)
+credibleSet_SOURCES=./src/credibleSet.cpp
+
+################################################################
+# postProcParam 
+postProcParam_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
+postProcParam_LDADD= libbayes.a $(LIBTOUSE)
+postProcParam_SOURCES=./src/postProcParam.cpp
+
 
 
 ################################################################

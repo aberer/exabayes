@@ -13,13 +13,34 @@ class Bipartition
 {
 public: 
   explicit Bipartition();
-
+  // Bipartition& operator=(Bipartition rhs); 
+  // Bipartition(const Bipartition &rhs); 
+  
+  /** 
+      @brief gets the number of elements that currently can be
+      represented via this bipartition.
+   */ 
+  nat getElemsReserved() const { return bip.size() * 32 ; } 
+  
   void setHash(nat h) {assert(h != 0 ) ; hash = h; }
-  nat getHash() const {assert(hash != 0 ) ; return hash; }
+  nat getHash() const ; 
+  /** 
+      @brief indicates whether two bipartitions are compatible (i.e.,
+      they can occur in a tree together)
+   */ 
+  bool isCompatible(const Bipartition& rhs, nat maxElem) const; 
+  /** 
+      @brief gets the complement of a bipartition
+   */ 
+  Bipartition getComplement( nat maxElem) const; 
   /**
      @brief checks equality of two bipartitions
    */
   bool operator==(const Bipartition &rhs) const; 
+  /** 
+      @brief indicates whether this bipartition equals rhs.  
+   */
+  bool operator!=(const Bipartition &rhs) const {return not (  *this == rhs ) ; }
   /** 
       @brief performs an or-operation on two bipartitions and returns
       the result
@@ -28,6 +49,16 @@ public:
       or-ed that have an intersection.
    */ 
   Bipartition operator| (const Bipartition &rhs) const;
+  /** 
+      @brief performs an and-operaton on two bipartitions and results
+      the result
+   */ 
+  Bipartition operator& (const Bipartition &rhs)const ; 
+  /** 
+      @brief indicates whether this bipartition is a subset of bipartition rhs. 
+      @notice this method takes bipartitions as is and does not perform conversions (i.e., complement)      
+  */ 
+  bool isSubset(const Bipartition& rhs) const ; 
   /** 
       @brief sets the bit at position pos 
    */ 
@@ -53,7 +84,7 @@ public:
       @brief prints the bipartition in a readable manner
    */ 
   void printVerbose(std::ostream &outt, const std::vector<std::string> nameMap) const; 
-
+  
   static std::vector<nat> perBitMask;
   static nat numBits;
   static nat numBitsMinusOne; 

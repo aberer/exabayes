@@ -23,8 +23,8 @@
 #include "SprMove.hpp"
 #include "ParsimonyEvaluator.hpp"
 
-typedef std::unordered_map<Branch, double, BranchHashNoLength, BranchEqualNoLength> weightMap; 
-typedef std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength> scoreMap; 
+typedef std::unordered_map<BranchPlain, double> weightMap; 
+typedef std::unordered_map<BranchPlain,std::vector<nat> > scoreMap; 
 
 class ParsimonySPR : public AbstractProposal
 {
@@ -38,7 +38,7 @@ public:
   virtual void autotune() ;
   
   // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
-  virtual std::pair<Branch,Branch> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::pair<Branch, Branch> (Branch(0,0),Branch(0,0) );}
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
 
   AbstractProposal* clone() const; 
 
@@ -52,10 +52,11 @@ protected:
   weightMap getWeights(const TreeAln& traln, const scoreMap &insertions) const; 
   void determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
   void traverse(const TreeAln &traln, nodeptr p, int distance ); 
-  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses); 
+  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<BranchPlain,std::vector<nat> > &posses); 
   
   SprMove move; 
   ParsimonyEvaluator pEval;   
+  BranchPlain subtreeBranch; 
 }; 
 
 

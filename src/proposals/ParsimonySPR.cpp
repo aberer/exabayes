@@ -6,6 +6,8 @@
 #include "InsertionScore.hpp"
 #include "Branch.hpp"
 
+#include "TreePrinter.hpp"
+
 
 ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
   : parsWarp(_parsWarp)    
@@ -18,13 +20,13 @@ ParsimonySPR::ParsimonySPR(  double _parsWarp, double _blMulti)
 }
 
 
-void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses)
+void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<BranchPlain,std::vector<nat> > &posses)
 {
   nodeptr insertBack =  insertPos->back;   
   traln.clipNodeDefault(insertPos, prunedTree->next);
   traln.clipNodeDefault( insertBack, prunedTree->next->next); 
 
-  Branch b(insertPos->number, insertBack->number); 
+  auto b = BranchPlain(insertPos->number, insertBack->number); 
 
   std::vector<nat> partitionParsimony ; 
   std::vector<nat> pLengthAtBranch; 
@@ -128,7 +130,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony, pLengthAtBranch);
 
   // BAD 
-  Branch prunedTree; 
+  BranchPlain prunedTree; 
   nodeptr p = nullptr, pn = nullptr , pnn = nullptr ; 
 
   do 
@@ -140,7 +142,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 
     } while( (traln.isTipNode(pn) &&  traln.isTipNode(pnn))     ); 
 
-  Branch initBranch = Branch(pn->number, pnn->number); 
+  auto initBranch = BranchPlain(pn->number, pnn->number); 
   
   // prune the subtree 
   traln.clipNodeDefault( pn, pnn); 
@@ -166,7 +168,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 
   double r = rand.drawRandDouble01(); 
   // tout << "deciding on parsSpr move. drawn " << r << std::endl; 
-  std::pair<Branch,double> chosen; 
+  std::pair<BranchPlain,double> chosen; 
   for(auto v : weightedInsertions)
     {
       if(r < v.second)
@@ -193,7 +195,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   }
 
   // important: save the move 
-  Branch pruned(p->number,p->back->number); 
+  auto pruned = BranchPlain(p->number,p->back->number); 
 
   move.extractMoveInfo(traln, {pruned,chosen.first}, getSecondaryParameterView() );
 
@@ -209,8 +211,46 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 
 void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 { 
+  // IMPORTANT 
+  bool multiplyBranchesUsingPosterior =  
+#ifdef PROPOSE_BRANCHES_FOR_SPR 
+    true; 
+#else 
+  false ; 
+#endif
+
+
+  // double lnlInit = traln.getTr()->likelihood; 
+  
+  auto blParams = getBranchLengthsParameterView(); 
+  auto param = blParams[0] ; 
+  assert(blParams.size( )== 1 ); 
+
+  // double prevLnl = traln.getTr()->likelihood;  
+  
   determineSprPath(traln, rand, hastings, prior); 
+
+  // tout << "PATH\t"   << move << std::endl; 
+  
+  // move.integrateBranches(traln, blParams, eval, hastings);
+
+  if(multiplyBranchesUsingPosterior)
+    {  
+      // NOTICE: extended! 
+      move.proposeBranches(traln, blParams, eval, hastings, rand, false); 
+    }
+
+
   move.applyToTree(traln, getSecondaryParameterView() ); 
+  
+  // double lnlAftermove = eval.evaluate(traln,move.getEvalBranch(traln), true); 
+  
+
+  // { 
+  //   double accRatio = eval.evaluate(traln, move.getEvalBranch(traln), true) - prevLnl + hastings; 
+  //   auto good =  rand.drawRandDouble01() < exp(accRatio) ? "ACC" : "rej";
+  //   tout << "PARS\t" << move.getNniDistance() <<  "\t" << accRatio << "\t" << good  << std::endl; 
+  // } 
 
   bool modifiesBl = false; 
   for(auto &v : secondaryParameters)
@@ -227,6 +267,22 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
       // auto brPr =  secondaryParameters[0]->getPrior();
       // move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
+
+  // getBranch before 
+  subtreeBranch = move.getSubtreeBranchAfter(traln);
+
+  if(multiplyBranchesUsingPosterior)
+    {
+      auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastings, rand, true  );
+      for(auto b : proposedBranches)
+	{
+	  prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(), param); 
+	  traln.setBranch(b,param);
+	}
+    }
+
+  // double lnlAfterbranch = eval.evaluate(traln, move.getEvalBranch(traln), true); 
+  // tout << "PARS\t" << lnlInit << "\t" << lnlAftermove << "\t" << lnlAfterbranch << "\t" << hastings  << std::endl; 
 
   // tout << "proposing move: " << move  << std::endl; 
 }
@@ -246,12 +302,9 @@ void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
     }    
 }
 
-
-#include "TreePrinter.hpp"
-
 void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {  
-  Branch toEval = move.getEvalBranch(traln);
+  auto toEval = move.getEvalBranch(traln);
   TreePrinter tp(false, true, false);
   
   nodeptr toEvalP = toEval.findNodePtr(traln) ; 
@@ -261,7 +314,10 @@ void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &t
 
 void ParsimonySPR::resetState(TreeAln &traln) 
 {
+  auto params = getBranchLengthsParameterView();
+  assert(params.size() == 1); 
   move.revertTree(traln, getSecondaryParameterView() ); 
+  // traln.setBranch( subtreeBranch, param);
 }
  
 

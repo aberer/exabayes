@@ -1,5 +1,6 @@
 #include "ParameterProposal.hpp"
 #include "tune.h"
+#include "priors/AbstractPrior.hpp"
 
 ParameterProposal::ParameterProposal(Category cat, std::string _name, bool modifiesBL,  
 				     std::unique_ptr<AbstractProposer> _proposer, double parameter )

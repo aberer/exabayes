@@ -2,13 +2,13 @@
 #define _INSERTION_SCORE 
 
 
-#include "Branch.hpp"
+// #include "Branch.hpp"
 
 class  InsertionScore
 {
 public: 
-  InsertionScore(Branch _b, std::vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
-  Branch getBranch() const  {return b; }
+  InsertionScore(BranchPlain _b, std::vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
+  BranchPlain getBranch() const  {return b; }
 
   double getWeight() const {return  logProb; }
   void setWeight(double w) { logProb = w; }
@@ -25,7 +25,7 @@ public:
 
 
 private: 
-  Branch b; 
+  BranchPlain b; 
   std::vector<nat> partitionParsimony; 
   double logProb;
 
