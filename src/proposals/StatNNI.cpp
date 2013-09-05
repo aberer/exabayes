@@ -21,13 +21,9 @@
 #error "define _EXPERIMENTAL_GIBBS as well!"
 #endif
 
-// #define _EXPERIMENTAL_GIBBS
 
 StatNNI::StatNNI( double _multiplier)
   :  multiplier(_multiplier)
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE
-  , invocations(0)
-#endif
 {
   this->name = "stNNI" ; 
   this->category = Category::TOPOLOGY; 
@@ -35,48 +31,6 @@ StatNNI::StatNNI( double _multiplier)
   needsFullTraversal = false; 
 }
 
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE
-
-#define LOCALMAP std::unordered_map<Branch, std::pair<double,double>, BranchHashNoLength, BranchEqualNoLength>  
-
-
-
-static LOCALMAP
-getStatisticsInEnvironment( const Branch &refBranch, const TreeAln &traln, nat numStep, nat thinning, nat depth, const std::vector<AbstractParameter*> params )
-{
-  std::unordered_map<Branch, std::pair<double,double>, BranchHashNoLength, BranchEqualNoLength> map; 
-
-  std::vector<Branch> branches; 
-  branches.push_back(refBranch); 
-  // tout << "start: " << refBranch << std::endl; 
-  std::vector<Branch> nextGuys = {refBranch, refBranch.getInverted()}; 
-  for(nat i = 0; i < depth; ++i)
-    {
-      auto copy = nextGuys; 
-      nextGuys.clear(); 
-      for(auto &b : copy)
-	{
-	  if(not b.isTipBranch(traln))
-	    {
-	      auto desc = traln.getDescendents(b); 	  
-	      nextGuys.push_back(desc.first.getInverted());
-	      nextGuys.push_back(desc.second.getInverted());
-	    }
-	}
-      branches.insert(branches.end(), nextGuys.begin(), nextGuys.end()); 
-    }
-
-  for(auto &b : branches)
-    {
-      b = traln.getBranch(b, params);
-    }
-
-  for(auto &b : branches)    
-    {
-      auto samples = ahInt->integrate(b,traln, numStep, thinning); 
-      assert(map.find(b) == map.end()); 
-      map[b] = Arithmetics::getMeanAndVar(samples); 
-    }
 
 // #endif
 
@@ -184,8 +138,6 @@ void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln)
   evaluator.evaluate(traln, evalBranch, false); 
 }
 
-  evaluator.evaluate(traln, evalBranch, false); 
-}
 
 void StatNNI::resetState(TreeAln &traln)  
 {

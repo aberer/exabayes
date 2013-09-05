@@ -1136,15 +1136,3 @@ BranchLengths TreeAln::getBranch(const BranchPlain& branch, const std::vector<Ab
   return result; 
 }
 
-
-std::vector<std::string> TreeAln::getNameMap() const
-{
-  auto result = std::vector<std::string>{};
-  auto tr = getTr();   
-
-  result.push_back("error"); 
-  for(nat i = 1 ; i < getNumberOfTaxa()+1; ++i)
-    result.push_back(tr->nameList[i]);
-
-  return result; 
-} 
