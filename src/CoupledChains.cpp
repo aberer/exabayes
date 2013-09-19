@@ -25,7 +25,15 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, std:
   , runname(runname) 
   , workdir(workingdir)
 {  
-  tFile.emplace_back(workdir, runname, runid, 0); 
+  auto params = chains[0].extractParameters(); 
+  nat ctr = 0; 
+  for( auto &param : params)
+    if(param->getCategory() == Category::BRANCH_LENGTHS)
+      ++ctr; 
+
+  for(nat i = 0; i < ctr ; ++i)
+    paramId2TopFile.emplace(i, TopologyFile(workingdir, runname, runid,0, i, ctr > 1)); 
+
   pFile.emplace_back(workdir, runname,runid, 0); 
 }
 
@@ -42,7 +50,8 @@ CoupledChains::CoupledChains(CoupledChains&& rhs)
   , samplingFreq(rhs.samplingFreq)
   , runname(std::move(rhs.runname))
   , workdir(std::move(workdir))
-  , tFile(std::move(rhs.tFile))
+  // , tFile(std::move(rhs.tFile))
+  , paramId2TopFile(std::move(rhs.paramId2TopFile))
   , pFile(std::move(rhs.pFile))
 {
   
@@ -63,7 +72,9 @@ void CoupledChains::initializeOutputFiles()
 
   auto tag =  rand.getKey();
 
-  tFile[0].initialize(traln, tag.v[0] ); 
+  for(auto &elem : paramId2TopFile)
+    elem.second.initialize(traln, tag.v[0]); 
+  
   pFile[0].initialize(traln, params, tag.v[0] ); 
   
 }
@@ -80,7 +91,7 @@ void CoupledChains::seedChains()
 void CoupledChains::attemptSwap(ParallelSetup &pl)
 {  
   CommFlag flags = CommFlag::PrintStat | CommFlag::Proposals; 
-  
+
   int numChain = chains.size(); 
 
   if(numChain == 1)
@@ -128,7 +139,8 @@ void CoupledChains::attemptSwap(ParallelSetup &pl)
     coupIdB = b.getCouplingId(); 
 
   /* do the swap */
-  bool didAccept = rand.drawRandDouble01()  < accRatio; 
+  double r = rand.drawRandDouble01(); 
+  bool didAccept = r < accRatio;   
   if( didAccept )
     {
       a.deserializeConditionally(bSer,flags); 
@@ -142,51 +154,9 @@ void CoupledChains::attemptSwap(ParallelSetup &pl)
 }
 
 
-
-
-#if 0 
-void CoupledChains::chainInfo()
-{
-  // print hot chains
-  vector<Chain*> sortedChains(chains.size()); 
-  for(auto &chain : chains)
-    sortedChains[chain.getCouplingId()] = &chain; 
-
-  auto coldChain = sortedChains[0]; 
-
-  // Branch fake(0,0,coldChain->getTraln().getTreeLengthExpensive()); 
-  coldChain->extractParameters()
-  coldChain->getTraln().getTreeLengthExpensive()
-  
-  // chains[0]->
-
-  tout << "[run: " << runid << "] "  ; 
-  tout << "[time " << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- timeIncrement   ).count()     << "] "; 
-  timeIncrement = CLOCK::system_clock::now();   
-  tout << "gen: " << coldChain->getGeneration() ; 
-  tout <<  "\tTL=" << setprecision(2)<<  fake.getInterpretedLength(coldChain->getTraln()); 
-  tout << "\tlnPr(1)=" << coldChain->getPrior().getLnPrior() << "\tlnl(1)=" << setprecision(2)<< coldChain->getTraln().getTr()->likelihood << "\t" ; 
-
-  for(nat i = 1 ; i < chains.size(); ++i)
-    {
-      auto &chain = sortedChains[i]; 
-      double heat = chain->getChainHeat();
-      assert(heat < 1.0f); 
-      
-      tout << "lnl(" << setprecision(2)<< heat << ")=" << setprecision(2)<< chain->getTraln().getTr()->likelihood << "\t" ;  
-    }
-
-  tout  << swapInfo << endl; 
-
-  coldChain->printProposalState(tout);
-
-  tout << endl; 
-}
-#endif
-
-
 void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
 { 
+
   assert(pl.isMyRun(getRunid())); 
 
   for(nat i = 0; i < chains.size(); ++i)
@@ -200,7 +170,7 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
     {
       for(auto &c : chains)
 	if( c.getChainHeat() == 1. && pl.isChainLeader() )
-	  c.sample(tFile[0], pFile[0]); 
+	  c.sample(paramId2TopFile, pFile[0]); 
     }
 
 
@@ -215,12 +185,12 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
 	  for(int i = 0; i < swapInterval; ++i)
 	    {
 	      chain.step(); 	      
-	      if(chain.getChainHeat() == 1 && (chain.getGeneration() % samplingFreq)  == samplingFreq - 1 ) 
+	      if(chain.getChainHeat() == 1 && (chain.getGeneration() % samplingFreq)  == 0 ) 
 		{
 		  for(auto &c : chains)
 		    {
 		      if( c.getChainHeat() == 1. && pl.isChainLeader() )
-			c.sample(tFile[0], pFile[0]); 
+			c.sample(paramId2TopFile, pFile[0]); 
 		    }
 		}
 	    }
@@ -229,7 +199,8 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
       assert(0);
 #endif
       
-      rand.rebase(startGen); 
+      rand.rebase(genCtr); 
+
       attemptSwap(pl);
     }
 
@@ -249,8 +220,8 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
 
 void CoupledChains::finalizeOutputFiles()   
 {
-  for(auto &t : tFile)
-    t.finalize();
+  for(auto &elem : paramId2TopFile)
+    elem.second.finalize(); 
   for(auto &p : pFile)
     p.finalize();
 }
@@ -279,7 +250,7 @@ void CoupledChains::regenerateOutputFiles(std::string workdir, std::string prevI
   nat gen = chains[0].getGeneration();
   for(auto &pF : pFile)
     pF.regenerate(workdir, prevId, gen); 
-  for(auto &pF : tFile)
-    pF.regenerate(workdir, prevId, gen);
+  for(auto &elem : paramId2TopFile)
+    elem.second.regenerate(workdir, prevId, gen); 
 } 
 

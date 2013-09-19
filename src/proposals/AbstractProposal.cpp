@@ -141,7 +141,7 @@ std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() co
 
 std::vector<AbstractParameter*> AbstractProposal::getBranchLengthsParameterView() const 
 {
-  std::vector<AbstractParameter*> result; 
+  auto result = std::vector<AbstractParameter*> {}; 
   for(auto &p : primaryParameters)
     if(p->getCategory() == Category::BRANCH_LENGTHS)
       result.push_back(p.get()); 

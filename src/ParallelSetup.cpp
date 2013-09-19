@@ -183,7 +183,8 @@ void ParallelSetup::finalize()
 void ParallelSetup::genericExit(int code)
 {
 #if HAVE_PLL == 0
-  MPI_Abort(MPI_COMM_WORLD, code); 
+  // MPI_(MPI_COMM_WORLD, code); 
+  MPI_Finalize(); 
   exit(code); 
 #else 
   exit(code);   

@@ -6,6 +6,8 @@
 #include "priors/ExponentialPrior.hpp"
 #include "Category.hpp"
 
+#include "TreePrinter.hpp"
+
 
 PriorBelief::PriorBelief()
   :lnPrior(0)
@@ -45,36 +47,51 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<d
   assert(0); 
 #endif
 
+  // tout << "accounting for fc: old=" << oldFc << ", new=" << newFcs << std::endl ; 
+  // auto string = TreePrinter(true, false , false).printTree(traln, affectedBlParams);
+  // tout << string   << std::endl; 
 
+
+
+#if 1 
+  nat ctr = 0; 
   for(auto &param : affectedBlParams)
     {
-      auto branches = traln.extractBranches(param); 
-
       double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
-      double myOld = oldFc.at(param->getIdOfMyKind()); 
-      double myNew = newFcs.at(param->getIdOfMyKind()); 
+      double myOld = oldFc.at(ctr); 
+      double myNew = newFcs.at(ctr); 
 
       double blInfluence = 1; 
-      for(auto &b : branches)
-	blInfluence *= b.getLength();
-	lnPriorRatio += (myNew - myOld) * lambda * log(blInfluence);
-      
+      for(auto &b : traln.extractBranches(param))
+	{
+	  // tout << "length=" << b.getLength() << "\t"  << b.getInterpretedLength(traln, param) << std::endl; 
+	  blInfluence *= b.getLength();
+	}
+      // tout << myNew << " - " << myOld << " * " << lambda << " * log("  << blInfluence << ")" << std::endl; 
+      double result = (myNew - myOld) * lambda * log(blInfluence); 
+      lnPriorRatio += result;
+      ++ctr; 
     }
+#else 
+  nat ctr = 0; 
+  for(auto &param : affectedBlParams)
+    {
+      double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
+      double myOld = oldFc.at(ctr); 
+      double myNew = newFcs.at(ctr); 
 
-  // auto branches = traln.extractBranches(affectedBlParams); 
+      double blInfluence = 0; 
+      for(auto &b : traln.extractBranches(param))
+	{
+	  blInfluence += log(b.getLength());
+	}
 
-  // for(auto &param : affectedBlParams)
-  //   {
-  //     double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
-  //     double myOld = oldFc.at(param->getIdOfMyKind()); 
-  //     double myNew = newFcs.at(param->getIdOfMyKind()); 
-
-  //     double blInfluence = 1; 
-  //     for(auto &b : branches)
-  // 	blInfluence *= b.getLength(param);
-
-  // 	lnPriorRatio += (myNew - myOld) * lambda * log(blInfluence);
-  //   }
+      double result = (myNew - myOld) * lambda * blInfluence; 
+      tout << "(" << myNew << " - " << myOld << ") * " << lambda << " * log("  << blInfluence << ")" << std::endl; 
+      lnPriorRatio += result;
+      ++ctr; 
+    }
+#endif
 }
 
 
@@ -154,7 +171,7 @@ void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInter
     {
       auto casted = dynamic_cast<ExponentialPrior*> (prior); 
       lnPriorRatio += 
-	(log(newInternalZ /   oldInternalZ) ) 
+	(log(newInternalZ ) - log( oldInternalZ) ) 
 	* traln.getMeanSubstitutionRate(param->getPartitions()) * casted->getLamda(); 
     }
   else 

@@ -13,7 +13,7 @@
 #include "TreePrinter.hpp"
 
 const double TreeAln::zZero = BoundsChecker::zMax + ( 1 - BoundsChecker::zMax) / 2 ; 
-const double TreeAln::initBL = 0.75;
+const double TreeAln::initBL = 0.1;
 const double TreeAln::problematicBL = std::numeric_limits<double>::max();
 
 TreeAln::TreeAln()
@@ -120,7 +120,6 @@ TreeAln::~TreeAln()
   exa_free(tr.partitionContributions); 
   exa_free(tr.fracchanges); 
 #endif
-
 }
 
 
@@ -168,7 +167,7 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
   s.v[0] = 0 ; 
   s.v[1] = 1 ; 
   Randomness r(s); 
-  TreeRandomizer::randomizeTree(*this,r ); 
+  TreeRandomizer::randomizeTree(*this, r); 
 
   // evaluate once, to activate the likelihood arrays  
   auto start = tr.start; 
@@ -953,63 +952,6 @@ double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) cons
   // tout << "fracchange " << result << " for partitions " << partitions << std::endl; 
   return result; 
 }
-
-
-
-// Branch TreeAln::getBranch(const Branch& b, AbstractParameter* const &param) const
-// {
-//   return getBranch(b.findNodePtr(*this) , param);
-// }
-
-
-// Branch TreeAln::getBranch(const Branch &b , const std::vector<AbstractParameter*> &params) const 
-// {
-//   return getBranch(b.findNodePtr(*this),params);
-// }
-
-
-// // Branch TreeAln::getBranch(nodeptr p, AbstractParameter* const &param) const
-// // {
-// //   nat id = param->getIdOfMyKind();
-// //   // std::vector<double> l(id+1, TreeAln::problematicBL); // =/ 
-  
-// //   auto l = 
-
-// //   nat aPartition = param->getPartitions()[0];
-// //   l.at(id) = p->z[aPartition];
-// //   return Branch(p->number,p->back->number, l);
-// // }
-
-
-// Branch TreeAln::getBranch(nodeptr p, AbstractParameter* const &param) const 
-// {
-//   auto params = std::vector<AbstractParameter*> {param}; 
-//   return getBranch(p, params); 
-// }
-
-
-// Branch TreeAln::getBranch(nodeptr p, const std::vector<AbstractParameter*> &params) const 
-// {
-//   nat highest = 0; 
-//   for(auto &p : params )
-//     {
-//       nat elem = p->getIdOfMyKind(); 
-//       if(highest < elem )
-// 	highest = elem; 
-//     }
-
-//   auto l = std::vector<double>{}; 
-//   for(auto &param: params)
-//     {
-//       nat aPartition = param->getPartitions()[0];
-//       nat id = param->getIdOfMyKind(); 
-//       if(id >= l.size())
-// 	l.resize(id + 1); 
-//       l.at(id) = p->z[aPartition];
-//     } 
-//   return Branch(p->number, p->back->number, l); 
-// }
-
 
 
 std::vector<std::string> TreeAln::getNameMap() const

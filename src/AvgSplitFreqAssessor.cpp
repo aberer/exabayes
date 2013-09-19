@@ -55,32 +55,6 @@ void AvgSplitFreqAssessor::extractBipsNew()
     }
 }
 
-// void AvgSplitFreqAssessor::extractBips()
-// {
-//   int ctr = 0; 
-//   for (auto filename : fns)
-//     {
-//       FILE *fh = fopen(filename.c_str(), "r"); 
-
-//       for(int i = 0; i < start; ++i)
-// 	nextTree(fh);
-
-//       for(int i = start ; i < end; ++i)
-// 	{
-// 	  nextTree(fh);
-// 	  // bipHash->addBipartitionsToHash(*traln, ctr);      
-// 	}
-      
-//       fclose(fh);
-//       ++ctr; 
-//     }
-// }
-
-
-// double AvgSplitFreqAssessor::computeAsdsf(double ignoreFreq)
-// {
-//   return bipHash->averageDeviationOfSplitFrequencies(ignoreFreq); 
-// }
 
 auto AvgSplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
  -> std::pair<double,double> 

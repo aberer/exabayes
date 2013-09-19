@@ -114,10 +114,8 @@ void NniMove::extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> des
   assert(description.size() == 2 ) ; 
   std::pair<int,int>  _switching = { description.at(0).findNodePtr(traln)->next->back->number , description.at(1).findNodePtr(traln)->number}; 
   auto _innerBranch = description.at(0);
-					     
-  outerBranches.clear(); 
 
-  assert(params.size() == 1 ); 
+  outerBranches.clear(); 
 
   switching = _switching; 
   innerBranch = traln.getBranch(_innerBranch, params);

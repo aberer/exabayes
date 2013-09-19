@@ -25,7 +25,7 @@ public:
   virtual void extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description,const std::vector<AbstractParameter*> &params); 
   virtual BranchPlain getEvalBranch(const TreeAln &traln) const; 
 
-  std::vector<BranchLength> proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &blParams, LikelihoodEvaluator& eval, double &hastings, Randomness& rand, bool isForward); 
+  std::vector<BranchLengths> proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &blParams, LikelihoodEvaluator& eval, double &hastings, Randomness& rand, bool isForward); 
   virtual AbstractMove* clone() const; 
   /** 
       @brief gets the number of nni moves to be executed in order to

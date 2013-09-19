@@ -2,7 +2,6 @@
 #include "Path.hpp"
 #include "TreeAln.hpp"
 
-
 // #define DEBUG_ESPR
 
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
@@ -13,7 +12,6 @@ ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
   relativeWeight = 5.;
   needsFullTraversal = false; 
 }
-
 
 
 // IMPORTANT TODO: is the number of branches that CAN get chosen for
@@ -127,8 +125,8 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 #endif
   
   auto blParams = getBranchLengthsParameterView(); 
-  auto param = blParams[0] ; 
-  assert(blParams.size( )== 1 ); 
+  // auto param = blParams[0] ; 
+  // assert(blParams.size( )== 1 ); 
 
   drawPathForESPR( traln,rand ,stopProb); 
 
@@ -176,12 +174,13 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
       hastings += hastPart; 
       for(auto b : proposedBranches)
 	{
-	  // blAfter =  b.getInterpretedLength(traln, blParams[0]); 
-	  
-	  prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(), param); 
-	  traln.setBranch(b,param);
+	  for(auto param : blParams)
+	    {
+	      auto bl = traln.getBranch(b.toPlain(), param); 
+	      prior.updateBranchLengthPrior(traln, bl.getLength(), b.getLength(param), param); 
+	      traln.setBranch(b,blParams);
+	    }
 	}
-      
     }
   // double hastForward = hastPart; 
 

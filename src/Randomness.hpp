@@ -24,8 +24,7 @@ class TreeAln;
  */
 
 #include "Random123/threefry.h"
-#include "Random123/u01.h"
-
+#include "../examples/uniform.hpp"
 #define exa_rand(c,k) threefry2x32(c,k)
 
 typedef threefry2x32_key_t randKey_t; 
@@ -36,6 +35,16 @@ class Randomness : public Checkpointable
 {
 public: 
   Randomness(randCtr_t seed); 
+
+  // Randomness(Randomness &&rhs); 
+  // Randomness& operator=(Randomness &&rhs); 
+
+  // Randomness(const Randomness &&rhs) = delete ; 
+  // Randomness& operator=(Randomness rhs) = delete; 
+
+  
+  void setKey(randKey_t key) ; 
+
   randCtr_t generateSeed();     
   /** 
       @brief rebase a random number generator for a given generation 

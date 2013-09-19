@@ -45,7 +45,9 @@ public:
   /** 
       @brief set seet for the chain specific RNG 
    */ 
-  void reseed(randKey_t c) { chainRand = Randomness(c); }  
+  void reseed(randKey_t c) 
+  { chainRand.setKey(c); }  
+  // { chainRand = Randomness(c); }  
   /** 
       @brief apply saved parameter contents to the tree structure
       @param eval indicates whether an evaluation should be performed after resuming
@@ -85,7 +87,7 @@ public:
   /** 
       @brief take a sample from the chain 
    */ 
-  void sample( TopologyFile &tFile, ParameterFile &pFile  ) const ; 
+  void sample( std::unordered_map<nat,TopologyFile> &tFile, ParameterFile &pFile  ) const ; 
   /** 
       @brief deserialize the input string based on the flags 
    */ 

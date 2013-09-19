@@ -70,6 +70,7 @@ protected:
 template<> class LengthPart<std::vector<double>>
 {
  public: 
+  double getLength(const AbstractParameter* param) const ; 
   const std::vector<double>& getLengths() const {return lengths; }
   void setLengths(std::vector<double> _lengths) { lengths = _lengths; } 
 

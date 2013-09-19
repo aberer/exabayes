@@ -337,6 +337,7 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
       tout << "\tsub-id:\t" << v->getIdOfMyKind() << std::endl; 
       tout << "\tprior:\t" << v->getPrior() << std::endl; 
     }
+  tout << "================================================================" << std::endl;
   tout << endl; 
   
   double sum = 0; 

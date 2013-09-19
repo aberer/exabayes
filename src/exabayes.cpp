@@ -200,7 +200,9 @@ int main(int argc, char **argv)
   tout << PROGRAM_NAME << " was called as follows: " << endl; 
   for(int i = 0; i < argc; ++i)
     tout << argv[i] << " " ; 
-  tout << endl << endl; 
+  tout << endl 
+       << "================================================================"
+       << endl; 
 
   exa_main( cl, pl); 
 

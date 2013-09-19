@@ -17,12 +17,6 @@ TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
 }
 
 
-// TreeLengthMultiplier::TreeLengthMultiplier(const TreeLengthMultiplier& rhs)
-//   : AbstractProposal(rhs)
-// {
-// }
-
-
 void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   storedBranches.clear(); 
@@ -36,14 +30,14 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   auto  newBranches = storedBranches; 
   
   double treeScaler = rand.drawMultiplier(multiplier); 
-  double initTL = 1; 
-  double newTL = 1; 
+  double initTL = 0; 
+  double newTL = 0; 
   // std::cout << "drew " <<  treeScaler << std::endl; 
 
   for(auto &b : newBranches)
     {
       auto initLength = b.getLength();
-      initTL *= initLength; 
+      initTL += log(initLength); 
 
       b.setLength(  pow(initLength, treeScaler) ); 
       
@@ -52,11 +46,17 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 
       double realScaling = log(b.getLength()) / log(initLength); 
       updateHastings(hastings, realScaling, "TL-multi"); 
-      newTL *= b.getLength(); 
+      newTL += log(b.getLength()); 
     }
 
   for(auto &b : newBranches)
     traln.setBranch(b, blParam);
+
+  // well ... =/ 
+  initTL = exp(initTL); 
+  newTL = exp(newTL); 
+
+  // tout  << MAX_SCI_PRECISION << "treeScaler=" << treeScaler << "\tinitTL=" << initTL << "\tnewTL="  << newTL << std::endl; 
 
   prior.updateBranchLengthPrior(traln, initTL, newTL, blParam);
 }

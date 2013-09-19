@@ -13,6 +13,7 @@
 #include "LikelihoodEvaluator.hpp" 
 #include "ParallelSetup.hpp"
 #include "Category.hpp"
+#include "TreePrinter.hpp"
 
 // #define VERIFY_GEN 4
 #define VERIFY_GEN 1000000
@@ -402,9 +403,12 @@ void Chain::stepSingleProposal()
   bool wasAccepted  = testr < acceptance; 
 
 #ifdef DEBUG_SHOW_EACH_PROPOSAL 
-  addChainInfo(tout); 
-  tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" 
-       << SOME_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << hastings << std::endl; 
+  auto& output = std::cout ; 
+  // auto output = tout ; 
+
+  addChainInfo(output); 
+  output << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" 
+	    << SOME_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << hastings << std::endl; 
 #endif
 
   if(wasAccepted)
@@ -435,13 +439,13 @@ void Chain::stepSetProposal()
   double myHeat = getChainHeat(); 
   auto pSet = drawProposalSet(); 
 
-  std::vector<double> oldPartitionLnls = tralnPtr->getPartitionLnls(); 
+  auto oldPartitionLnls = tralnPtr->getPartitionLnls(); 
+  
+  auto p2Hastings =  std::unordered_map<AbstractProposal*, double>{} ; 
+  auto p2LnPriorRatio = std::unordered_map<AbstractProposal*, double>{}; 
+  auto p2OldLnl = std::unordered_map<AbstractProposal*, double>{} ; 
 
-  std::unordered_map<AbstractProposal*, double> p2Hastings; 
-  std::unordered_map<AbstractProposal*, double> p2LnPriorRatio; 
-  std::unordered_map<AbstractProposal*, double> p2OldLnl; 
-
-  std::vector<nat> affectedPartitions; 
+  auto affectedPartitions = std::vector<nat>{}; 
   
   auto branches = pSet.getProposalView()[0]->prepareForSetExecution(*tralnPtr, chainRand);
 
@@ -450,6 +454,9 @@ void Chain::stepSetProposal()
     {
       proposal->setPreparedBranch(branches.first);
       proposal->setOtherPreparedBranch(branches.second);
+
+
+      // tout << "applying " << proposal << std::endl; 
 
       double lHast = 0;       
       prior.reject();
@@ -468,11 +475,25 @@ void Chain::stepSetProposal()
 	  p2OldLnl[proposal] = lnl; 
 	}
       
-      isNodeSlider &=  ( dynamic_cast<NodeSlider*>(proposal) != nullptr ) ;
+      isNodeSlider &= ( dynamic_cast<NodeSlider*>(proposal) != nullptr ) ;
+    }
+
+  // TODO remove for efficiency 
+  for(auto elem : p2LnPriorRatio)
+    {
+      // assert(not std::isinf(elem.second)); 
+      if(std::isinf(elem.second))
+	{
+	  tout << "warning: prior for param " <<elem.first << " is " <<  elem.second << "\thastings=" << p2Hastings[elem.first] << std::endl; 
+	  // assert(0); 
+	  
+	  // tout << TreePrinter(true, false, false ).printTree(*tralnPtr, elem.first->getBranchLengthsParameterView()) << std::endl; 
+
+	}
     }
 
   // no partition must occur twice!
-  std::unordered_set<nat> uniquePartitions; 
+  auto uniquePartitions =  std::unordered_set<nat>{}; 
   for(auto &p : affectedPartitions)
     {
       assert(uniquePartitions.find(p) == uniquePartitions.end());
@@ -497,11 +518,10 @@ void Chain::stepSetProposal()
   auto newPLnls = tralnPtr->getPartitionLnls();
 
   prior.reject();		// slight abuse 
-  std::vector<nat> partitionsToReset; 
+  auto partitionsToReset = std::vector<nat>{}; 
   nat accCtr = 0; 
   nat total = 0; 
-  // std::vector<bool> wasAcceptedArray; 
-  std::unordered_map<AbstractProposal*, bool> p2WasAccepted; 
+  auto p2WasAccepted = std::unordered_map<AbstractProposal*, bool>{} ; 
   for(auto &proposal : pSet.getProposalView())
     {
       ++total; 
@@ -557,8 +577,11 @@ void Chain::stepSetProposal()
     bestState = lnl; 
 
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-  addChainInfo(tout);
-  tout << "\t" << accCtr << "/"  << total << "\t" << pSet << "\t" << likelihood << std::endl; 
+  auto &output = std::cout ; 
+  // auto output = tout ; 
+
+  addChainInfo(output);
+  output << "\t" << accCtr << "/"  << total << "\t" << pSet << "\t" << likelihood << std::endl; 
 #endif
 
   for(auto &proposal : pSet.getProposalView())
@@ -715,13 +738,20 @@ std::ostream& operator<<(std::ostream& out, const Chain &rhs)
 }
 
 
-void Chain::sample(  TopologyFile &tFile,  ParameterFile &pFile  )  const
+void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile  )  const
 {
   std::vector<AbstractParameter*> blParams; 
   for(auto &param : extractParameters()) 
-    blParams.push_back(param); 
+    if(param->getCategory() == Category::BRANCH_LENGTHS)
+      blParams.push_back(param); 
 
-  tFile.sample( *tralnPtr, getGeneration() , blParams ); 
+  for(auto &param : blParams)
+    {
+      nat myId = param->getIdOfMyKind(); 
+      TopologyFile &f = paramId2TopFile.at(myId); 
+      f.sample(*tralnPtr, getGeneration(), param); 
+    }
+
   pFile.sample( *tralnPtr, extractParameters(), getGeneration(), prior.getLnPrior()); 
 }
 

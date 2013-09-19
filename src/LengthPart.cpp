@@ -3,12 +3,6 @@
 #include "parameters/AbstractParameter.hpp"
 
 
-// // template<>
-// void LengthPart<void>::extractLength(const TreeAln &traln, const BranchPlain &branch)
-// {
-// }
-
-
 void LengthPart<double>::extractLength(const TreeAln &traln, const BranchPlain& branch, const AbstractParameter*  param)
 {
   auto p = branch.findNodePtr(traln); 
@@ -28,7 +22,7 @@ void LengthPart<std::vector<double>>::extractLength(const TreeAln &traln, const 
 double LengthPart<double>::getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const
 { 
   double fracC = traln.getMeanSubstitutionRate(param->getPartitions()); 
-  return -log(length)* fracC; 
+  return -log(length) * fracC; 
 }
 
 
@@ -40,3 +34,9 @@ void LengthPart<double>::setConvertedInternalLength(const TreeAln& traln, const 
 } 
 
 
+
+
+double LengthPart<std::vector<double> >::getLength (const AbstractParameter* param) const 
+{
+  return lengths.at(param->getIdOfMyKind()) ;
+}

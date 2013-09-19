@@ -71,7 +71,6 @@ public:
   SwapMatrix getSwapInfo() const {return swapInfo; }
   void addToSwapMatrix(SwapMatrix toAdd){ swapInfo = swapInfo + toAdd;  }
   const Randomness& getRandomness() const {return rand; }
-  void setRandomness(Randomness _rand){rand = _rand; } 
 
   void finalizeOutputFiles()  ; 
 
@@ -101,7 +100,8 @@ private: 			// ATTRIBUTES
   string workdir; 
 
   // order is coupled to the heat id  
-  std::vector<TopologyFile> tFile; 
+  // std::vector<TopologyFile> tFile; 
+  std::unordered_map<nat,TopologyFile> paramId2TopFile; 
   std::vector<ParameterFile> pFile; 
 }; 
 

@@ -37,29 +37,26 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
   // extract the parameter (a handy std::vector<double> that for
   // instance contains all the frequencies)
-  ParameterContent content = primaryParameters[0]->extractParameter(traln); 
+  auto content = primaryParameters[0]->extractParameter(traln); 
   savedContent = content; 
   
   // nasty, we have to correct for the fracchange 
-  std::vector<double> oldFCs; 
-  std::vector<double> newFCs;
+  auto oldFCs = std::vector<double>{}; 
+  auto newFCs = std::vector<double>{};
   for(auto &param : blParams)
-    {
-      nat id = param->getIdOfMyKind();
-      if(oldFCs.size() < id + 1  ) // meh
-	oldFCs.resize(id+1); 
-      oldFCs[id] = traln.getMeanSubstitutionRate(param->getPartitions()); 
-    }
+    oldFCs.push_back(traln.getMeanSubstitutionRate(param->getPartitions())); 
 
   // we have a proposer object, that does the proposing (check out
   // ProposalFunctions.hpp) It should take care of the hastings as
-  // well (to some degree )
+  // well (to some degree)
   
   auto newValues = proposer->proposeValues(content.values, parameter, rand, hastings); 
+
+  // tout << "proposing "  << newValues << std::endl; 
   assert(newValues.size() == content.values.size()); 
 
   // create a copy 
-  ParameterContent newContent; 
+  auto newContent = ParameterContent{}; 
   newContent.values = newValues; 
   // use our parameter object to set the frequencies or revtmat rates
   // or what ever (for all partitions)
@@ -68,18 +65,12 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   if(modifiesBL)
     {
       for(auto &param : blParams)
-	{
-	  nat id = param->getIdOfMyKind();
-	  if(newFCs.size() < id + 1  ) // meh
-	    newFCs.resize(id+1); 
-	  newFCs[id] = traln.getMeanSubstitutionRate(param->getPartitions()); 
-	}
+	newFCs.push_back(traln.getMeanSubstitutionRate(param->getPartitions())); 
 
       prior.accountForFracChange(traln, oldFCs, newFCs, blParams); 
-      
-      for(auto &p : blParams)
-	updateHastings(hastings, pow(newFCs[p->getIdOfMyKind()] / oldFCs[p->getIdOfMyKind()],
-				     traln.getNumberOfBranches() ), name); 
+
+      for(nat i = 0; i < blParams.size();++i)
+	  updateHastings(hastings, pow(newFCs.at(i) / oldFCs.at(i), traln.getNumberOfBranches() ), name); 
     }
 
   // a generic prior updates the prior rate 

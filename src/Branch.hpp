@@ -63,7 +63,6 @@ public:
   // observers //
   ///////////////
   // double getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const; 
-
   // double getInternalLength(const TreeAln &traln, double length) const; 
   // void setConvertedInternalLength(const TreeAln& traln, const AbstractParameter* param, double length) ; 
   /**
@@ -86,10 +85,6 @@ public:
      @brief gets the secondary node (that is there for orientation purposes)
    */ 
   nat getSecNode() const {return thatNode; }  
-  /** 
-      @brief gets all lengths stored in the branch
-   */ 
-  // const std::vector<double>& getLengths() const {return lengths; }
   /**
      @brief sets the primary node
    */ 
@@ -144,6 +139,8 @@ public:
   Branch<double> toBlDummy() const; 
   Branch<std::vector<double>> toBlsDummy() const ; 
   Branch<void> toPlain() const ; 
+
+  Branch<double> toOneLength(const AbstractParameter* param) const; 
 
   //   friends 
   friend std::ostream& operator<< (std::ostream &out, const Branch<TYPE>& rhs)

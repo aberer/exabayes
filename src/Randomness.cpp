@@ -13,6 +13,7 @@ Randomness::Randomness(randCtr_t seed)
   ctr.v[1] = 0; 
 }
 
+
 randCtr_t Randomness::generateSeed()
 {
   randCtr_t r =  exa_rand(ctr, key);   
@@ -66,7 +67,9 @@ double Randomness::drawRandDouble01()
 {
   randCtr_t r = exa_rand(key, ctr); 
   ctr.v[1]++; 
-  return u01_closed_open_32_53(r.v[1]); 
+
+  return r123::u01<double>(r.v[1]);
+  // return u01_closed_open_32_53(r.v[1]); 
 }
 
 
@@ -360,3 +363,9 @@ void Randomness::rebase(int num)
   ctr.v[0] = 0; 
 }
 
+
+
+void Randomness::setKey(randKey_t _key) 
+{
+  key = _key; 
+}

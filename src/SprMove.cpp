@@ -285,32 +285,33 @@ void SprMove::sprCreatePath(const TreeAln &traln, BranchPlain mover, BranchPlain
   pathHere.saveBranchLengthsPath(traln, params); 
 }
 
-std::vector<BranchLength> SprMove::proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &blParams, 
+std::vector<BranchLengths> SprMove::proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &params, 
 					     LikelihoodEvaluator& eval, double &hastings, Randomness& rand, bool isForward)
 {
+#if 0 
 
   bool printVerbose = false; 
 
   auto result=  std::vector<BranchLength>{};
   // notice: move must have been applied already
-  assert(blParams.size() == 1); 
-  auto param = blParams[0]; 
+  // assert(blParams.size() == 1); 
+  // auto param = blParams[0]; 
 
   tout << MAX_SCI_PRECISION; 
 
   // pruning point 
-  auto branchPrimer =  std::vector<BranchLength>{};
+  auto branchPrimer =  std::vector<BranchLengths>{};
 
   if(isForward)
     {
       branchPrimer = 
 	{ 
-	  traln.getBranch(getSubtreeBranchAfter(traln), param) 
+	  traln.getBranch(getSubtreeBranchAfter(traln), params) 
 #ifndef ONLY_FIRST
-	  , traln.getBranch( getPruningBranchAfterPrune()   ,param)
-	  , traln.getBranch( getInsertionBranchAfterInner() , param)
-	  , traln.getBranch( getInsertionBranchAfterOuter() , param)
-	  , traln.getBranch( getOppositeBranch(traln), param)
+	  , traln.getBranch( getPruningBranchAfterPrune()   ,params)
+	  , traln.getBranch( getInsertionBranchAfterInner() , params)
+	  , traln.getBranch( getInsertionBranchAfterOuter() , params)
+	  , traln.getBranch( getOppositeBranch(traln), params)
 #endif
 	} ; 
     }
@@ -318,18 +319,18 @@ std::vector<BranchLength> SprMove::proposeBranches(TreeAln &traln, const std::ve
     {
       branchPrimer = 
 	{
-	  traln.getBranch( getSubtreeBranchBefore(traln), param)
+	  traln.getBranch( getSubtreeBranchBefore(traln), params)
 #ifndef ONLY_FIRST
-	  , traln.getBranch( getPruningBranchBeforeOuter(), param)
-	  , traln.getBranch( getPruningBranchBeforeInner(), param)
-	  , traln.getBranch( getInsertionBranchBefore(), param) 
-	  , traln.getBranch( getOppositeBranch(traln) , param )
+	  , traln.getBranch( getPruningBranchBeforeOuter(), params)
+	  , traln.getBranch( getPruningBranchBeforeInner(), params)
+	  , traln.getBranch( getInsertionBranchBefore(), params) 
+	  , traln.getBranch( getOppositeBranch(traln) , params )
 #endif
 	}; 
     } 
   const auto branches = branchPrimer; 
 
-  auto branchNames = std::unordered_map<BranchLength, std::string>{}; 
+  auto branchNames = std::unordered_map<BranchLengths, std::string>{}; 
 
   if(isForward)
     {
@@ -359,27 +360,22 @@ std::vector<BranchLength> SprMove::proposeBranches(TreeAln &traln, const std::ve
 	}; 
     }
 
-  auto optimaMap = std::unordered_map< BranchLength, double >{}; 
-
+  
+  // various optima 
+  auto optimaMap = std::unordered_map< BranchLengths, double >{}; 
   for(int i = 0; i < NUM_ITER; ++i)
     {
       for( auto branch : branches )
 	{
-	  double nrd1 = 0; 
-	  double nrd2 = 0; 
-	  auto tmp = traln.getBranch(branch.toPlain(), param); 
-	  auto result = GibbsProposal::optimiseBranch(traln,branch,eval, nrd1, nrd2, 30, param  ); 
-	  traln.setBranch(result, param); 
-	  // auto before = tmp.getInterpretedLength(traln,param); 
-	  // auto after = result.getInterpretedLength(traln, param); 
-	  // auto ratio = after / before;  
-#if 0 
-	  if(printVerbose)
-	    tout << i << "\tbefore,after,ratio:\t" << before  << "\t" << after << "\t" <<  PERC_PRECISION << ratio * 100 << "%"  << MAX_SCI_PRECISION << "\t" << branchNames[branch] << std::endl; 
-#els 
-	  assert(0); 
-#endif
-	  
+	  auto tmp = traln.getBranch(branch.toPlain(), params); 
+	  for(auto &param : params)
+	    {
+	      double nrd1 = 0; 
+	      double nrd2 = 0; 
+	      auto result = GibbsProposal::optimiseBranch(traln,branch.toOneLength(param),eval, nrd1, nrd2, 30, param  ); 
+	      traln.setBranch(result, param); 
+	    }
+
 	  if(optimaMap.find(result) != optimaMap.end())
 	    optimaMap.erase(optimaMap.find(result)); 
 	  optimaMap[result] = nrd2; 
@@ -397,7 +393,7 @@ std::vector<BranchLength> SprMove::proposeBranches(TreeAln &traln, const std::ve
     {
 #if 0 
       if(printVerbose)
-	tout << branch << "\t" << branch.getInterpretedLength(traln, param) <<  "\t" << branchNames[branch] << std::endl; 
+	tout << branch << "\t" << branch.getInterpretedLength(traln, params) <<  "\t" << branchNames.at(branch) << std::endl; 
 #else 
       assert(0); 
 #endif
@@ -409,7 +405,7 @@ std::vector<BranchLength> SprMove::proposeBranches(TreeAln &traln, const std::ve
     {
 #if 0 
       if(printVerbose)
-	tout << elem.first << "\t" << elem.first.getInterpretedLength(traln, param) << "\t" << branchNames[elem.first] << std::endl; 
+	tout << elem.first << "\t" << elem.first.getInterpretedLength(traln, params) << "\t" << branchNames[elem.first] << std::endl; 
 #else 
       assert(0); 
 #endif
@@ -465,9 +461,15 @@ std::vector<BranchLength> SprMove::proposeBranches(TreeAln &traln, const std::ve
 
   // reset 
   for(auto &branch : branches)
-    traln.setBranch(branch, param); 
+    traln.setBranch(branch, params); 
 
   return result; 
+#else 
+
+  // this is a big todo, do not have time right now 
+  assert(0); 
+  return std::vector<BranchLengths>{};  
+#endif
 }
 
 
@@ -522,10 +524,12 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
 #else 
       double d1 = 0., d2 = 0. ; 
       eval.evaluate(traln, b, true); 
+      auto bCpy = b.toBlDummy(); 
       auto result = GibbsProposal::optimiseBranch(traln, bl, eval, d1,d2, 30, blParam); 
+      bCpy.setLength(result); 
       traln.setBranch(bl, blParam); 
       eval.evaluate(traln, b, true); 
-      resultVec.push_back(result.getInterpretedLength(traln, blParam)); 
+      resultVec.push_back(bCpy.getInterpretedLength(traln, blParam)); 
 #endif
       // tout << result.first << "\t" ; 
 
@@ -549,10 +553,11 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
 #else 
       double d1 = 0., d2 = 0. ; 
       eval.evaluate(traln, b, true); 
-      auto result = GibbsProposal::optimiseBranch(traln, bl , eval, d1,d2, 30, blParam); 
+      auto resultLength = GibbsProposal::optimiseBranch(traln, bl , eval, d1,d2, 30, blParam); 
+      bl.setLength(resultLength); 
       traln.setBranch(bl, blParam); 
       eval.evaluate(traln, b, true); 
-      resultVec.push_back(result.getInterpretedLength(traln, blParam)); 
+      resultVec.push_back(bl.getInterpretedLength(traln, blParam)); 
 #endif
     }
 

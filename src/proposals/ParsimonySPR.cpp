@@ -223,8 +223,6 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   // double lnlInit = traln.getTr()->likelihood; 
   
   auto blParams = getBranchLengthsParameterView(); 
-  auto param = blParams[0] ; 
-  assert(blParams.size( )== 1 ); 
 
   // double prevLnl = traln.getTr()->likelihood;  
   
@@ -276,8 +274,9 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
       auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastings, rand, true  );
       for(auto b : proposedBranches)
 	{
-	  prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(), param); 
-	  traln.setBranch(b,param);
+	  for(auto &param : blParams)
+	    prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
+	  traln.setBranch(b,blParams);
 	}
     }
 
@@ -315,7 +314,7 @@ void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &t
 void ParsimonySPR::resetState(TreeAln &traln) 
 {
   auto params = getBranchLengthsParameterView();
-  assert(params.size() == 1); 
+  // assert(params.size() == 1); 
   move.revertTree(traln, getSecondaryParameterView() ); 
   // traln.setBranch( subtreeBranch, param);
 }

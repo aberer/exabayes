@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign
 
-EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/*
+EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/*
 
 .PHONY: my-update-src doc 
 
@@ -19,11 +19,11 @@ RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE 
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS= exabayes asdsf extractBips consense credibleSet postProcParam #  prsf
+bin_PROGRAMS= exabayes #  asdsf extractBips consense credibleSet postProcParam
 
 SRCINCLUDE=-I$(top_srcdir)/src
 
-BAYES_INCLUDES=-I$(top_srcdir)/lib/Random123-1.07/include -I$(top_srcdir)/lib/ncl-2.1.18/ -I$(top_srcdir)/src/proposals $(SRCINCLUDE)
+BAYES_INCLUDES=-I$(top_srcdir)/lib/Random123-1.08/include -I$(top_srcdir)/lib/ncl-2.1.18/ -I$(top_srcdir)/src/proposals $(SRCINCLUDE)
 
 include src-helper.am
 include src.am 

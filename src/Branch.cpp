@@ -127,3 +127,11 @@ Branch<std::vector<double>> Branch<std::vector<double>>::getInverted() const
 }
 
 
+
+template<>
+Branch<double> Branch<std::vector<double>>::toOneLength(const AbstractParameter* param) const
+{
+  auto result = Branch<double>(thisNode,thatNode); 
+  result.setLength(getLength(param)); 
+  return result; 
+} 

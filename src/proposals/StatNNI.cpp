@@ -5,8 +5,6 @@
 #include "AdHocIntegrator.hpp"
 #include "GibbsProposal.hpp"
 
-
-
 // #define QUICK_HACK
 
 #if defined(QUICK_HACK ) && not defined(_EXPERIMENTAL_INTEGRATION_MODE)
@@ -37,10 +35,8 @@ StatNNI::StatNNI( double _multiplier)
 void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {    
   auto params = getBranchLengthsParameterView(); 
-  assert(params.size( )== 1) ; 
-  auto param = params[0]; 
 
-  auto b = traln.getBranch(TreeRandomizer::drawInnerBranchUniform(traln, rand), param); 
+  auto b = traln.getBranch(TreeRandomizer::drawInnerBranchUniform(traln, rand), params); 
   nodeptr p = b.findNodePtr(traln); 
   auto switchingBranch = BranchPlain( rand.drawRandDouble01() < 0.5  
 				   ? p->back->next->back->number

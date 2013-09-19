@@ -33,14 +33,16 @@ BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branc
 {
   double nrD2 = 0; 
   double nrD1 = 0; 
-  auto optimizedBranch = optimiseBranch(traln, branch, eval, nrD1, nrD2, maxIter ,blParam);
+  auto optLen = optimiseBranch(traln, branch, eval, nrD1, nrD2, maxIter ,blParam);
+  auto resultBranch = branch; 
+  resultBranch.setLength(optLen); 
 
-  auto proposalResult = propose(optimizedBranch.getInterpretedLength(traln, blParam), nrD2, rand ); 
+  auto proposalResult = propose(resultBranch.getInterpretedLength(traln, blParam), nrD2, rand ); 
   auto proposal = proposalResult[0];  
   auto alpha = proposalResult[1]; 
   auto beta = proposalResult[2]; 
 
-  auto resultBranch = optimizedBranch; 
+  // auto resultBranch = optimizedBranch; 
   resultBranch.setConvertedInternalLength(traln,blParam, proposal);
   
 // #ifdef _EXPERIMENTAL_INTEGRATION_MODE
@@ -97,7 +99,7 @@ std::array<double,3> GibbsProposal::propose(double nrOpt, double nrd2, Randomnes
 }
 
 
-BranchLength GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, double &firstDerivative, double &secDerivative, int maxIter,  AbstractParameter const  *param)
+double GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, double &firstDerivative, double &secDerivative, int maxIter,  AbstractParameter const  *param)
 {
   auto resultBranch = b; 
   auto p = b.findNodePtr(traln ), 
@@ -126,7 +128,7 @@ BranchLength GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& 
 
   resultBranch.setLength(result); 
   
-  return resultBranch; 
+  return result; 
   // std::cout<< "result=" << result << "\tresult_iter=" << b.getInterpretedLength(traln) << "\tfirst=" << firstDerivative<< "\tsecond="<< secDerivative << "\tafter " << maxIter << std::endl; 
 }
 

@@ -16,6 +16,7 @@ public:
       @brief prints the tree belonging to model
    */ 
   std::string printTree(const TreeAln& traln, const std::vector<AbstractParameter*> &params); 
+  std::string printTree(const TreeAln& traln,  AbstractParameter* params); 
   std::string printTree(const TreeAln& traln); 
   
 private: 			// METHODS

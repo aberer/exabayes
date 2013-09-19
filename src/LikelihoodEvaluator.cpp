@@ -142,7 +142,7 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
 
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
-      tout << "WARNING: found in expensive evaluation: likelihood difference is " 
+      std::cerr  << "WARNING: found in expensive evaluation: likelihood difference is " 
 	   <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
 	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
       
@@ -152,12 +152,6 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln)
       // tout << "help tree: " <<  *debugTraln << std::endl; 	        
     }  
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS); 
-
-  // tout << "VERIFIED " << traln.getTr()->likelihood << std::endl; 
-
-  // TODO remove 
-  // disorientTree(traln, root); 
-  // exa_evaluateGeneric(traln, root.findNodePtr(traln) , FALSE);   
 }
 
 

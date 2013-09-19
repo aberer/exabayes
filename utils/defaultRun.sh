@@ -3,14 +3,16 @@
 topdir=$(dirname  $0 )/../
 
 model=GAMMA
-seed=$RANDOM
-# seed=23252
+# seed=1234
+# seed=20051
+# seed=$RANDOM
+seed=23252
 # seed=5594
 # examples/
 
 numProc=2
 # extraArgs="-Q"
-# extraArgs="-R 2 -C 2"
+extraArgs="-C 2 "
 
 # lakner-27
 # seed=28233
@@ -38,7 +40,7 @@ fi
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=0
+useClang=1
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
@@ -97,12 +99,14 @@ extra=$*
 # echo "extra would be $extra"
 
 
+configFile=$pathtodata/config.nex
+
 if [ "$codeBase" == "examl" ]; then    
     args="$args --disable-pll"
 
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
-    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed  $extraArgs -c $topdir/examples/test.nex $extra"
+    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
     # CC="$ccompiler" 
     # CXX="$cxxcompiler"  
@@ -110,7 +114,7 @@ if [ "$codeBase" == "examl" ]; then
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid $extraArgs -c $topdir/examples/test.nex $extra "  
+    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid $extraArgs -c $configFile $extra "  
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -176,7 +180,7 @@ make -j $numCores
 
 if [ -f ./exabayes ]; then
     echo "calling exabayes as   $baseCall"
-    rm ExaBayes_*.${runid}*
+    rm -f  ExaBayes_*.${runid}*
     wait 
     $baseCall    
 fi

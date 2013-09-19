@@ -134,18 +134,6 @@ public:
   std::vector<BranchLength> extractBranches( const AbstractParameter* params) const ; 
   std::vector<BranchPlain> extractBranches() const ; 
 
-  // TODO this woudl be nice, but for now this really leads us too
-  // deep into the rabbit hole of template meta-programming
-
-  // template<typename BTYPE = BranchLength, 
-  // 	   typename PTYPE = typename std::conditional< std::is_same<BTYPE,double>::value, AbstractParameter*, std::vector<AbstractParameter*> >  > 
-  // BTYPE getBranch( const BranchPlain& branch, const PTYPE &elem ) const ; 
-
-
-  /**
-     @brief determines the (internal representation of the) tree length
-   */ 
-  // std::vector<double> getTreeLengthsExpensive(const std::vector<AbstractParameter*> &params) const;  
   /** 
       @brief gets the number of inner nodes in the tree 
    */ 
@@ -262,20 +250,19 @@ private: 			// METHODS
   void initializePartitionsPLL(std::string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
 
-  double getTreeLengthHelper(nodeptr p) const;
-
-  template<typename BTYPE = void>
-  void whatever( nodeptr p , std::vector<Branch<BTYPE> > &result, bool isStart,
-			  const 
-			  std::conditional < 
-			  std::is_same<BTYPE,void>::value, void, 
-			  std::conditional<
-			  std::is_same<BTYPE,double>::value, 
-			  AbstractParameter*, 
-			  std::vector<AbstractParameter*>> > 
-			  &param ) const 
-  {
-  } 
+  // this was merely a test 
+  // template<typename BTYPE = void>
+  // void whatever( nodeptr p , std::vector<Branch<BTYPE> > &result, bool isStart,
+  // 			  const 
+  // 			  std::conditional < 
+  // 			  std::is_same<BTYPE,void>::value, void, 
+  // 			  std::conditional<
+  // 			  std::is_same<BTYPE,double>::value, 
+  // 			  AbstractParameter*, 
+  // 			  std::vector<AbstractParameter*>> > 
+  // 			  &param ) const 
+  // {
+  // } 
 
   
   void extractHelper( nodeptr p , std::vector<BranchPlain> &result, bool isStart ) const ; 

@@ -4,9 +4,6 @@
 #include "Branch.hpp"
 #include "TreePrinter.hpp"
 
-// TODO replace with ostream 
-
-
 TreePrinter::TreePrinter(bool withBranchLengths , bool withInternalNodes , bool withRealNames) 
   : withBranchLengths(withBranchLengths)
   , withInternalNodes(withInternalNodes)
@@ -26,6 +23,14 @@ static int getTheX(nodeptr p)
   else 
     assert(0) ; 
   return 0;     
+}
+
+
+std::string TreePrinter::printTree(const TreeAln& traln, AbstractParameter* param)
+{
+  auto vect = std::vector<AbstractParameter*>{}; 
+  vect.push_back(param); 
+  return printTree(traln, vect);   
 }
 
 

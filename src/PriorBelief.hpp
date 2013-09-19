@@ -52,7 +52,7 @@ public:
       @notice this is very pedastrian, but I do not see how to avoid this
    */ 
   void accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, 
-					 const std::vector<AbstractParameter*> &affectedBlParams )  ; 
+			    const std::vector<AbstractParameter*> &affectedBlParams )  ; 
   /** 
       @brief updates the branch length prior 
       @notice the reason, we have a specific function for that is to avoid some conversions back and forth with the internal representation 

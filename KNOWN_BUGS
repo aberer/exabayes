@@ -1,3 +1,0 @@
-* multiple revmat sliders in a row lead to trouble, when the
-  likelihood is reset.  This is an extremely rare bug and I have not
-  seen it to pop up during usual verification (with DEBUG_LNL_VERIFY)

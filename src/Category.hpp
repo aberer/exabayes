@@ -10,10 +10,10 @@ enum class Category :  int
 {  
   TOPOLOGY = 0, 
     BRANCH_LENGTHS = 1, 
-  FREQUENCIES = 2,
-  SUBSTITUTION_RATES = 3,
-  RATE_HETEROGENEITY = 4,	
-  AA_MODEL= 5  
+    FREQUENCIES = 2,
+    SUBSTITUTION_RATES = 3,
+    RATE_HETEROGENEITY = 4,	
+    AA_MODEL= 5  
 
 } ; 
 

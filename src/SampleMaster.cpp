@@ -173,19 +173,23 @@ void SampleMaster::printAlignmentInfo(const TreeAln &traln)
 	  assert(0); 
 	}      
     }
-  tout << "\nParameter names will reference the above partition numbers."<< std::endl  ; 
+  tout << "\nParameter names will reference the above partition numbers."
+       << std::endl
+       << "================================================================"
+       << std::endl  ; 
 }
 
 
 void SampleMaster::informPrint()
 {
+#if HAVE_PLL == 0
   if(pl.getRunsParallel()  > 1 )
     {
       tout << "Will execute "<< pl.getRunsParallel() << " runs in parallel." << std::endl;       
       if(nat (runParams.getNumRunConv()) < pl.getRunsParallel())
 	{
 	  tout 
-	    << "Error: in the configuration file you specified to run" <<  runParams.getNumRunConv() << " independent\n" 
+	    << "Error: in the configuration file you specified to run " <<  runParams.getNumRunConv() << " independent\n" 
 	    << "runs. Your command line indicates, that you want to run " << pl.getRunsParallel() << " of them\n"
 	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< std::endl; 
 	  ParallelSetup::genericExit(-1); 
@@ -197,12 +201,15 @@ void SampleMaster::informPrint()
       if(nat(runParams.getNumCoupledChains()) < pl.getChainsParallel())	
 	{
 	  tout
-	    << "Error: in the configuration file you specified to run" <<  runParams.getNumCoupledChains() << " coupled\n" 
+	    << "Error: in the configuration file you specified to run " <<  runParams.getNumCoupledChains() << " coupled\n" 
 	    << "chains per run. Your command line indicates, that you want to run " << pl.getChainsParallel() << " of them\n"
 	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< std::endl; 
 	  ParallelSetup::genericExit(-1); 
 	}
     }
+
+  tout << std::endl; 
+#endif
 }
 
 
@@ -402,6 +409,8 @@ void SampleMaster::initializeRuns( )
     if(v->getCategory() == Category::BRANCH_LENGTHS)
       blParams.push_back(v.get());
 
+  informPrint();
+
 
   if(numTreesAvailable > 1 )
     {
@@ -409,6 +418,8 @@ void SampleMaster::initializeRuns( )
       if(topoIsFixed)
 	tout << "Since the topology is fixed, only the first one will be used." << std::endl; 
     }
+
+  
 
   // TODO use a topology parameter here. It is nasty to always work with those trees  
   if(topoIsFixed)
@@ -420,8 +431,6 @@ void SampleMaster::initializeRuns( )
       initializeTree(something, tmp, numTreesAvailable, treeFH, 
 		     treeRandomness, blParams); 
     }
-
-  informPrint();
 
   nat treesConsumed = 0; 
   for(nat i = 0; i < runParams.getNumRunConv() ; ++i)
@@ -523,18 +532,25 @@ void SampleMaster::printInitialState(const ParallelSetup &pl)
 std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &end)
 {
   if(runParams.getNumRunConv() == 1)
-    // return nan("") ; 
     return std::pair<double,double>(std::numeric_limits<double>::min(),std::numeric_limits<double>::min());
 
-  vector<string> fns; 
+  auto fns = vector<string>{}; 
   for(nat i = 0; i < runParams.getNumRunConv(); ++i)
     {
-      stringstream ss; 
+      auto &&ss = stringstream{}; 
       ss << OutputFile::getFileBaseName(cl.getWorkdir())  << "_topologies." << cl.getRunid() << "." << i; 
+      
+      // if we do not find the file, let's assume we have multiple branch lengths 
+      if (not std::ifstream(ss.str()) ) 
+	{
+	  ss.str(""); 
+	  ss << OutputFile::getFileBaseName(cl.getWorkdir())  << "_topologies." << cl.getRunid() << "." << i << ".tree.0"; 
+	}
+
       fns.push_back(ss.str());
     }
      
-  AvgSplitFreqAssessor asdsf(fns);
+  auto&& asdsf = AvgSplitFreqAssessor(fns);
 
   end = asdsf.getEnd();
       

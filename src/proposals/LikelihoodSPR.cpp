@@ -406,13 +406,14 @@ void LikelihoodSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &has
   proposeBranches(traln, prior, hastings, rand, eval);
 #else 
   auto params = getBranchLengthsParameterView();
-  assert(params.size() == 1 ); 
-  auto param = params[0]; 
+  // assert(params.size() == 1 ); 
+  // auto param = params[0]; 
   auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastings, rand, true   );
-  for(auto b : proposedBranches)
+  for(auto &b : proposedBranches)
     {
-      prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(), param); 
-      traln.setBranch(b,param);
+      for(auto &param : params )
+	prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
+      traln.setBranch(b,params);
     }
 #endif
 }

@@ -28,7 +28,7 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
 
   std::ofstream fh(fullFileName,std::fstream::out);  // std::fstream::app|
 
-  fh << "[ID: " << someId << "]" << std::endl; 
+  fh << "[ID: " << someId << "]\n"; 
 
   fh << "Gen\t";
   fh << "LnPr\t"; 
@@ -63,7 +63,7 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
 
 void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr)  
 {
-  std::ofstream fh(fullFileName, std::fstream::app|std::fstream::out); 
+  auto&& fh = std::ofstream(fullFileName, std::fstream::app|std::fstream::out);  
     
   fh << gen << "\t"; 
   fh << MAX_SCI_PRECISION; 
@@ -76,10 +76,15 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
       if(p->getCategory() == Category::BRANCH_LENGTHS)
 	blParams.push_back(p);
     }
-  // should be possible 
-  // copy_if(  parameters.begin(), parameters.end(), blParams.begin(), [=](AbstractParameter* p){ return p->getCategory() == Category::BRANCH_LENGTHS;  }); 
 
-  // fh << Branch(0,0,traln.getTreeLengthExpensive()).getInterpretedLength(traln) << "\t"; 
+  // print tree lengths 
+  for(auto &param :  blParams)
+    {
+      double tl = 0; 
+      for(auto &b : traln.extractBranches(param))
+	tl += b.getInterpretedLength(traln, param);
+      fh << tl << "\t"; 
+    }
 
   bool isFirst = true; 
   for(auto &p : parameters)

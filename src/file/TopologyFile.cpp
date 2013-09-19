@@ -3,19 +3,24 @@
 #include "ParallelSetup.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "TreePrinter.hpp"
+#include "parameters/BranchLengthsParameter.hpp"
 
 #include <cassert>
 
 void genericExit(int code); 
 
-
-TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId) 
+TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId, nat _paramNum, bool _hasManyTopoloFiles) 
   : runid(runid)
   , couplingId(couplingId)
+  , paramNum(_paramNum)
+  , hasManyTopoloFiles(_hasManyTopoloFiles)
 { 
-  std::stringstream ss ; 
+  auto&& ss = std::stringstream{}; 
   
   ss <<  OutputFile::getFileBaseName(workdir) << "_topologies." << runname << "." << runid ; 
+  if(hasManyTopoloFiles)
+    ss << ".tree." << paramNum; 
+  
   if(couplingId != 0 )
     ss << ".hot-"<<  couplingId; 
   fullFileName = ss.str();
@@ -46,37 +51,16 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId)
   fh.close(); 
 }
 
-
-
-#include "parameters/BranchLengthsParameter.hpp"
-
-
-void TopologyFile::sample(const TreeAln &traln, nat gen, 
-			  const std::vector<AbstractParameter*> &blParams)  
+void TopologyFile::sample(const TreeAln &traln, nat gen,  AbstractParameter* param)  
 {    
-  std::ofstream fh(fullFileName,std::fstream::app|std::fstream::out ); 
-  TreePrinter tp(true, false, false);
-
-  for(auto &param : blParams)
-    {
-      if(dynamic_cast<BranchLengthsParameter*>(param) != nullptr )
-	{
-	  std::vector<AbstractParameter*> a; 
-	  a.push_back(param); 
-
-	  auto treeString = tp.printTree(traln, a)  ; 
-	  fh << "\ttree gen."<< gen
-	     << ".{" <<  param->getPartitions()  << "}"
-	     << " = [&U] " << treeString << std::endl; 
-	}
-    }
+  auto&& fh = std::ofstream(fullFileName,std::fstream::app|std::fstream::out ); 
+  auto tp = TreePrinter(true, false, false);
   
-  // TODO print each tree 
-  // assert(0);
+  auto treeString = tp.printTree(traln, param); 
+  fh << "\ttree gen."<< gen
+     << ".{" <<  param->getPartitions()  << "}"
+     << " = [&U] " << treeString << std::endl; 
 
-
-  // std::string treeString = tp.printTree(traln);
-  // fh << "\ttree gen." << gen << " = [&U] " << treeString << std::endl; 
   fh.close(); 
 }
 
@@ -96,6 +80,9 @@ void TopologyFile::regenerate(std::string workdir, std::string prevId, nat gen)
   std::stringstream ss; 
   
   ss << OutputFile::getFileBaseName(workdir) << "_topologies." << prevId << "." << runid ; 
+  if(hasManyTopoloFiles)
+    ss << ".tree." << paramNum; 
+
   std::ifstream prevFile(ss.str()); 
   rejectIfNonExistant(ss.str()); 
 
