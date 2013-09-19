@@ -19,7 +19,7 @@ RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE 
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS= exabayes #  asdsf extractBips consense credibleSet postProcParam
+bin_PROGRAMS= exabayes asdsf extractBips consense credibleSet postProcParam
 
 SRCINCLUDE=-I$(top_srcdir)/src
 
