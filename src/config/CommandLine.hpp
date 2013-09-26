@@ -47,6 +47,7 @@ private: 			// ATTRIBUTES
   std::string checkpointId; 
   MemoryMode memoryMode; 
   bool perPartitionDataDistribution; 
+  bool saveMemorySEV; 
 }; 
 
 

@@ -36,14 +36,12 @@
 #include "PlainLikelihoodEvaluator.hpp"
 #include "RestoringLnlEvaluator.hpp"
 
+#include "NewRestoringEvaluator.hpp"
+
 #include "TreeIntegrator.hpp"
 
-
 // TODO 
-// * reactivate swapping 
-// * diagnostics file needs more exchange 
 // * check restart 
-
 
 // a developmental mode to integrate over branch lengths
 
@@ -55,7 +53,7 @@
 // #endif
 
 void genericExit(int code); 
-static int countNumberOfTreesQuick(const char *fn ); 
+
 
 SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl ) 
   : pl(pl)
@@ -64,23 +62,15 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
   , lastPrintTime(CLOCK::system_clock::now())
   , masterRand(cl.getSeed())
 {
-  // DO NOT DELETE THIS LINE: 
-  // it has cost me ~ 2 days, to figure out that this stupid line
-  // throws an increadible number of memory problems
-  // masterRand = Randomness(cl.getSeed()); 
 }
 
 
-
-void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params)
+void SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params)
 {  
   auto tr = traln.getTr();
   bool hasBranchLength = false; 
-  if(treesConsumed < numTreesAvailable) // use a user defined starting tree 
-    {
-      hasBranchLength = readTreeWithOrWithoutBL(tr, treeFH);
-      ++treesConsumed; 
-    }
+  if(startingTree.compare("") != 0 ) // meh 
+    hasBranchLength = readTreeWithOrWithoutBL(tr, startingTree);
   else
     {	      
       if(runParams.isUseParsimonyStarting())
@@ -114,7 +104,7 @@ void SampleMaster::initializeTree(TreeAln &traln, nat &treesConsumed, nat numTre
 
 
 
-void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, nat numTreesAvailable, FILE *treeFH, const std::vector<AbstractParameter*> &params)
+void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params)
 {  
   auto treeRandomness = Randomness(seed); 
 
@@ -126,7 +116,12 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 
   // choose how to initialize the topology
   for(auto &tralnPtr : treesToInitialize)
-    initializeTree(*tralnPtr,  treesConsumed, numTreesAvailable, treeFH, treeRandomness, params); 
+    {
+      auto stTr = 
+	treesConsumed < startingTreeStrings.size() ? startingTreeStrings.at(treesConsumed) : std::string{""}; 
+      ++treesConsumed; 		// TODO re-engineer!
+      initializeTree(*tralnPtr, stTr, treeRandomness, params); 
+    }
 
   // propagate the tree to the coupled chains, if necessary
   if(runParams.isHeatedChainsUseSame())
@@ -256,24 +251,22 @@ void SampleMaster::initializeFromCheckpoint()
 	  diagFile.regenerate(  cl.getWorkdir(), cl.getRunid(),  cl.getCheckpointId(), 
 				curGen, runs[0].getSwapInfo().getMatrix().size() * runs.size());
 	}
-
-      // #ifdef _DISABLE_INIT_LNL_CHECK
-      //       tout << std::endl << "DEVEL: I will not check, if resuming the chains yields the exact same\n" 
-      // 	   << "likelihood (that we had when writing the checkpoint). For sequential\n"
-      // 	   << "runs, this should be fine, but if you built with MPI, you the same\n"
-      // 	   << "seed may not result in the exact same run" << std::endl;       
-      // #endif
     }
 }
+
 
 
 // TODO could move this method somewhere else  
 std::unique_ptr<LikelihoodEvaluator> 
 SampleMaster::createEvaluatorPrototype(const TreeAln &initTree)
 {
-  std::unique_ptr<LikelihoodEvaluator> eval; 
+  auto eval = std::unique_ptr<LikelihoodEvaluator>{}; 
+#ifdef _MY_NEW_EVALUATOR
+  eval =  std::unique_ptr<NewRestoringEvaluator> { new NewRestoringEvaluator() }; 
+#else 
   switch(cl.getMemoryMode())
     {
+      
     case MemoryMode::RESTORING: 
       {
 	auto restorer = make_shared<ArrayRestorer>(initTree);  
@@ -290,10 +283,14 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree)
     default : 
       assert(0);       
     }  
+#endif
+
 
 #ifdef DEBUG_LNL_VERIFY
   auto dT = make_shared<TreeAln>();
-  dT->initializeFromByteFile(cl.getAlnFileName()); 
+  dT->initializeFromByteFile(cl.getAlnFileName(), RunModes::NOTHING ); 
+  // even less efficient, but safer 
+
   dT->enableParsimony(); 
   eval->setDebugTraln(dT);
 #endif
@@ -302,10 +299,110 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree)
 }
 
 
-void SampleMaster::initializeRuns( )
+void SampleMaster::initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &tralns , const std::vector<AbstractParameter*> &params ) const 
+{
+  for(auto &param : params)
+    {
+      // no need to do anything for the branch lengths parameter =>
+      // that's done via tree initialization
+      if(dynamic_cast<BranchLengthsParameter*>(param) != nullptr 
+	 ||  dynamic_cast<TopologyParameter*>(param) != nullptr)
+	continue; 
+
+      auto&& prior = param->getPrior(); 
+
+      auto content = ParameterContent{}; 
+      content = prior->getInitialValue();
+	  
+      auto &bla = *(tralns[0].get()); 
+      param->verifyContent(bla, content); 
+      
+      for(auto &traln : tralns)
+	param->applyParameter(*traln, content); 
+      
+      auto result = param->extractParameter(*(tralns[0])); 
+    }
+}
+
+
+
+std::vector<std::string> SampleMaster::getStartingTreeStrings()
+{
+  auto result =  std::vector<std::string>{};
+
+  auto&& ifh = std::ifstream{cl.getTreeFile()}; 
+  if(ifh)
+    {
+      auto aString = std::string{}; 
+      while(std::getline(ifh, aString))
+	result.push_back(aString); 
+    }
+
+  return result; 
+}
+
+
+
+void SampleMaster::printProposals(const std::vector<unique_ptr<AbstractProposal> > &proposals, const std::vector<ProposalSet> &proposalSets  ) const 
+{
+  double sum = 0; 
+  for(auto &p : proposals)
+    sum += p->getRelativeWeight(); 
+  for(auto &p : proposalSets)
+    sum += p.getRelativeWeight();
+  
+  tout << "Will employ the following proposal mixture (frequency,type,affected variables): " << endl; 
+  for(auto &p : proposals )
+    {
+      tout << PERC_PRECISION << p->getRelativeWeight() / sum * 100 <<   "%\t" ; 
+      p->printShort(tout ) ; 
+      tout << endl; 
+    }
+  if(proposals.size() == 0)
+    tout << "None." << std::endl; 
+
+  tout << std::endl; 
+
+  if(runParams.isComponentWiseMH())
+    {
+      tout << "In addition to that, the following sets below will be executed \n"
+	   << "in a sequential manner (for efficiency, see manual for how to\n"
+	   << "disable)." << std::endl; 
+	for(auto &p : proposalSets )
+	  {
+	    p.printVerboseAbbreviated(tout, sum);
+	    tout << std::endl;       
+	  }
+    }
+}
+
+
+void SampleMaster::printParameters(const TreeAln &traln, const std::vector<unique_ptr<AbstractParameter> > &params) const 
+{
+  // merely some printing and we are done  
+  tout << std::endl << "Parameters to be integrated (initial values derived from prior): " << std::endl; 
+  tout << SOME_FIXED_PRECISION; 
+  for(auto &v : params)
+    {
+      tout << v->getId() << "\t" << v.get()  << std::endl; 
+      tout << "\tsub-id:\t" << v->getIdOfMyKind() << std::endl; 
+      tout << "\tprior:\t" << v->getPrior() << std::endl; 
+
+      if(dynamic_cast<TopologyParameter*>(v.get())  != nullptr )
+	tout << "\tinit value:\tgiven (if tree file available) / random" <<  std::endl; 	
+      else if(dynamic_cast<BranchLengthsParameter*>(v.get()) != nullptr)
+	tout << "\tinit value:\tgiven (if in tree file) / random" <<  std::endl; 
+      else 
+	tout << "\tinit value:\t" << v->getPrior()->getInitialValue() << std::endl; 
+    }
+  tout << "================================================================" << std::endl;
+  tout << endl; 
+}
+
+
+void SampleMaster::initializeRuns()
 {  
-  FILE *treeFH = NULL; 
-  nat numTreesAvailable = countNumberOfTreesQuick(cl.getTreeFile().c_str()); 
+  auto startingTrees = getStartingTreeStrings(); 
 
   if(cl.getCheckpointId().compare(cl.getRunid()) == 0)
     {
@@ -316,22 +413,26 @@ void SampleMaster::initializeRuns( )
     }
 
   // initialize one tree 
-  unique_ptr<TreeAln> initTreePtr = std::unique_ptr<TreeAln>(new TreeAln()); 
-  
-  std::vector<std::shared_ptr<TreeAln> > trees; 
-  initTreePtr->initializeFromByteFile(cl.getAlnFileName()); 
+  auto&& initTreePtr = std::unique_ptr<TreeAln>(new TreeAln()); 
+
+  auto runmodes = RunModes::NOTHING; 
+  if(cl.isPerPartitionDataDistribution())
+    runmodes = runmodes | RunModes::PARTITION_DISTRIBUTION; 
+
+  auto trees =  std::vector<std::shared_ptr<TreeAln> >{}; 
+  initTreePtr->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
   initTreePtr->enableParsimony();
-  const TreeAln& initTree = *initTreePtr; 
+  const auto& initTree = *initTreePtr; 
 
   // START integrator
 #ifdef _EXPERIMENTAL_INTEGRATION_MODE
   std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
-  aTree->initializeFromByteFile(cl.getAlnFileName()); 
+  aTree->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
   aTree->enableParsimony();
 
   // let's have another tree for debug
   auto dT = make_shared<TreeAln>();
-  dT->initializeFromByteFile(cl.getAlnFileName()); 
+  dT->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
   dT->enableParsimony(); 
 
   TreeRandomizer::randomizeTree(*aTree, masterRand); 
@@ -339,39 +440,25 @@ void SampleMaster::initializeRuns( )
 
   tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed()); 
 
-  // std::stringstream  ss; 
-  // ss << "nniBranchLengths." << cl.getRunid() << ".txt" ; 
-  // nniOut.open(ss.str());
-
-  // ss.str() = "" ; 
-  // ss << "sprBranchLengths." << cl.getRunid() << ".txt"; 
-  // sprOut.open(ss.str()); 
 #endif
   // END
 
-  printAlignmentInfo(initTree); 
+  auto proposals =  std::vector<unique_ptr<AbstractProposal> >{} ; 
+  auto params = std::vector<unique_ptr<AbstractParameter> >{} ; 
 
-  vector<unique_ptr<AbstractProposal> > proposals; 
-  vector<unique_ptr<AbstractParameter> > params; 
+  auto evalUptr = createEvaluatorPrototype(initTree); 
+  
+  auto proposalSets =  std::vector<ProposalSet>{};  
+  processConfigFile(cl.getConfigFileName(), &initTree, proposals, params, proposalSets, evalUptr);
 
-  std::unique_ptr<LikelihoodEvaluator> eval = createEvaluatorPrototype(initTree); 
-
-  std::vector<ProposalSet> proposalSets;  
-  initWithConfigFile(cl.getConfigFileName(), &initTree, proposals, params, proposalSets, eval);
   assert(runParams.getTuneFreq() > 0); 
 
   // ORDER: must be after initWithConfigFile
 
-#ifdef UNSURE
-  // TODO 
-  // ambivalent: do we save the memory here regardless? 
-  assert(0); 
-#endif
-
   for(nat i = 0 ; i < runParams.getNumCoupledChains(); ++i)
     {      
       trees.push_back(make_shared<TreeAln>()); 
-      trees[i]->initializeFromByteFile(cl.getAlnFileName()); 
+      trees[i]->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
       trees[i]->enableParsimony();
 
 #if HAVE_PLL == 0
@@ -383,11 +470,8 @@ void SampleMaster::initializeRuns( )
 #endif
     }
 
-  if( numTreesAvailable > 0 )
-    treeFH = myfopen(cl.getTreeFile().c_str(), "r"); 
-
-  vector<randCtr_t> runSeeds;
-  vector<randCtr_t> treeSeeds; 
+  auto runSeeds = vector<randCtr_t>{};
+  auto treeSeeds = vector<randCtr_t>{}; 
   for(nat i = 0; i < runParams.getNumRunConv();++i)
     {
       runSeeds.push_back(masterRand.generateSeed()); 
@@ -409,26 +493,19 @@ void SampleMaster::initializeRuns( )
     if(v->getCategory() == Category::BRANCH_LENGTHS)
       blParams.push_back(v.get());
 
-  informPrint();
-
-
-  if(numTreesAvailable > 1 )
+  if(startingTrees.size() > 1 )
     {
-      tout << "You provided " << numTreesAvailable << " starting trees" << std::endl; 
+      tout << "You provided " << startingTrees.size() << " starting trees" << std::endl;       
       if(topoIsFixed)
 	tout << "Since the topology is fixed, only the first one will be used." << std::endl; 
     }
 
-  
-
-  // TODO use a topology parameter here. It is nasty to always work with those trees  
   if(topoIsFixed)
     {
-      nat tmp = 0; 
       Randomness treeRandomness(treeSeeds[0]); 
-      // BAD!
       TreeAln &something = *initTreePtr; 
-      initializeTree(something, tmp, numTreesAvailable, treeFH, 
+      initializeTree(something, 
+		     startingTrees.size() > 0  ? startingTrees.at(0): std::string(""), // meh 
 		     treeRandomness, blParams); 
     }
 
@@ -440,19 +517,22 @@ void SampleMaster::initializeRuns( )
 	  for(auto &t : trees)
 	    t->copyModel(*initTreePtr); 
 	}
-      else 
-	{
-	  initTrees(trees, treeSeeds[i], treesConsumed, numTreesAvailable, treeFH, blParams); 
-	}
+      else 	
+	initTrees(trees, treeSeeds[i], treesConsumed, startingTrees, blParams); 
 
-      vector<Chain> chains; 
-      
+      auto paramView = std::vector<AbstractParameter*>{}; 
+      for(auto &param : params)
+	paramView.push_back(param.get()); 
+
+      initializeWithParamInitValues(trees, paramView );
+
+      auto chains = vector<Chain>{};       
       for(nat j = 0; j < runParams.getNumCoupledChains(); ++j)
 	{
 	  randCtr_t c; 
 	  auto &t = trees.at(j);
 	  chains.emplace_back( c , t, proposals, proposalSets, 
-			       std::unique_ptr<LikelihoodEvaluator>(eval->clone())  ); 
+			       std::unique_ptr<LikelihoodEvaluator>(evalUptr->clone())  ); 
 	  auto &chain = chains[j]; 		
 	  chain.setRunId(i); 
 	  chain.setTuneFreuqency(runParams.getTuneFreq()); 
@@ -474,16 +554,39 @@ void SampleMaster::initializeRuns( )
     }
 
   initializeFromCheckpoint(); 
-  
+
   if(pl.isGlobalMaster() && not diagFile.isInitialized())
     diagFile.initialize(cl.getWorkdir(), cl.getRunid(), runs);
 
+  // post-pone all printing to the end  
+  printAlignmentInfo(initTree);   
+  printParameters(initTree, params);
+  printProposals(proposals, proposalSets); 
+  informPrint();
+  printInitializedFiles(); 
   printInitialState(pl); 
 
-  if(numTreesAvailable > 0)
-    fclose(treeFH); 
+  pl.printLoadBalance(initTree);
 }
 
+
+
+
+void SampleMaster::printInitializedFiles() const 
+{
+  bool isRestart = cl.getCheckpointId().compare("") != 0;
+  auto initString = isRestart ? "regenerated" : "initialized" ; 
+
+  tout << initString  << " diagnostics file " << diagFile.getFileName()  << std::endl; 
+
+  for(auto &run : runs)
+    {
+      for(auto &elem : run.getAllFileNames())
+	{
+	  tout << initString << " file " << elem << std::endl; 
+	}
+    }
+} 
 
 
 void SampleMaster::printInitialState(const ParallelSetup &pl)
@@ -588,27 +691,7 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
 }
 
 
-static int countNumberOfTreesQuick(const char *fn )
-{
-  FILE *fh = fopen(fn, "r"); 
-
-  if(fh == 0)
-    return 0; 
-
-  int c = 0; 
-  int result = 0; 
-  while( ( c = getc(fh) ) != EOF)
-    {
-      if(c == ';')
-	++result; 	
-    }
-  
-  fclose(fh);
-  return result; 
-}
-
-
-void SampleMaster::initWithConfigFile(string configFileName, const TreeAln* tralnPtr,
+void SampleMaster::processConfigFile(string configFileName, const TreeAln* tralnPtr,
 				      std::vector<std::unique_ptr<AbstractProposal> > &proposalResult, 
 				      std::vector<std::unique_ptr<AbstractParameter> > &variableResult, 
 				      std::vector<ProposalSet> &proposalSets,
@@ -631,7 +714,7 @@ void SampleMaster::initWithConfigFile(string configFileName, const TreeAln* tral
 
   reader.Execute(token);
 
-  RunFactory r; 
+  auto r = RunFactory{}; 
   proposalResult = r.produceProposals(proposalConfig, priorBlock , paramBlock, *tralnPtr, eval, runParams.isComponentWiseMH(),  proposalSets);
   variableResult = r.getRandomVariables(); 
 }
@@ -761,7 +844,7 @@ void SampleMaster::run()
 #if defined(_EXPERIMENTAL_INTEGRATION_MODE)  && defined(_GO_TO_TREE_MOVE_INTEGARTION)
   tInt->integrateAllBranches(*(runs[0].getChains()[0].getTralnPtr()), cl.getRunid());
 #endif
-
+  
 }
  
  

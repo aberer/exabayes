@@ -1,6 +1,7 @@
 #include <sstream>
 #include <string.h>
 #include <cassert>
+#include <iostream>
 #include <cmath>
 
 #include "TreeProcessor.hpp"
@@ -33,13 +34,16 @@ TreeProcessor& TreeProcessor::operator=(TreeProcessor &&rhs)
 } 
 
 
-void TreeProcessor::nextTree(FILE *fh)
+void TreeProcessor::nextTree(std::istream &treefile) 
 {
   tree *tr = traln->getTr();
-  int c = 0; 
-  while( (c = getc(fh)) != '('); 
-  ungetc(c, fh);   
-  myTreeReadLen(fh, tr , TRUE); 
+  while( treefile.get() != '('); 
+  treefile.unget();
+
+  treefile.unget();
+  auto treestring = std::string {}; 
+  std::getline(treefile, treestring); 
+  myTreeReadLen(treestring, tr , TRUE); 
 }
 
 

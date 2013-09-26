@@ -33,6 +33,14 @@ public:
 
   virtual double getLamda()  const  { return lambda; } 
 
+  virtual ParameterContent getInitialValue() const
+  {
+    auto result = ParameterContent{}; 
+    result.values.push_back( 1. / lambda); 
+    return result; 
+  } 
+
+
 private: 
   double lambda; 
 }; 

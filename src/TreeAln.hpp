@@ -16,11 +16,21 @@
 
 #include "BranchFwd.hpp"
 
+#include "FlagType.hpp"
+
 
 class AbstractPrior; 
 class Randomness; 
 class TreePrinter; 
 class AbstractParameter; 
+
+enum class RunModes : int
+{
+NOTHING = 0, 
+  PARTITION_DISTRIBUTION = 1, 
+  MEMORY_SEV = 2
+}; 
+
 
 std::ostream& operator<<(std::ostream& out, pInfo& rhs); 
 nat numStateToNumInTriangleMatrix(int numStates) ; 
@@ -211,7 +221,7 @@ public:
       that the tree is in a usable state afterwards (and thus, this
       method may me rather expensive)
   */ 
-  void initializeFromByteFile(std::string  byteFileName); 
+  void initializeFromByteFile(std::string  byteFileName, RunModes); 
   /**
      @brief gets a node with given id that is not connected to the tree right now 
    */ 
@@ -263,12 +273,10 @@ private: 			// METHODS
   // 			  &param ) const 
   // {
   // } 
-
   
   void extractHelper( nodeptr p , std::vector<BranchPlain> &result, bool isStart ) const ; 
   void extractHelper( nodeptr p , std::vector<BranchLengths> &result, bool isStart, const std::vector<AbstractParameter*> &params) const ; 
   void extractHelper( nodeptr p , std::vector<BranchLength> &result, bool isStart, const AbstractParameter* param ) const ; 
-  void initDefault();
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
 

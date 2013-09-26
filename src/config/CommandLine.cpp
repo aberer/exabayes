@@ -19,6 +19,7 @@ CommandLine::CommandLine(int argc, char **argv)
   , checkpointId("")
   , memoryMode(MemoryMode::RESTORING)
   , perPartitionDataDistribution(false)
+  , saveMemorySEV(false)
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -39,7 +40,7 @@ void CommandLine::printHelp()
 {
   printVersion(false); 
 
-  std::cout << std::endl << "./exabayes -f binFile -s seed -n id [options..] "
+  std::cout << std::endl << "./exabayes -f binFile [ -s seed | -r id ]  -n id [options..] "
 	    << std::endl; 
 
   std::cout << "\n\n"
@@ -61,6 +62,8 @@ void CommandLine::printHelp()
 	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n"
 	    << "    -Q               per-partition data distribution (use this only with many partitions, check manual\n"
 	    << "                       for detailed explanation)\n"
+	    << "    -m               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
+	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
 	    << "    -M mode          specifies the memory versus runtime trade (NOT IMPLEMENTED)\n"
 	    << "            0          fastest\n" 
 	    << "            1          standard\n"
@@ -94,7 +97,7 @@ void CommandLine::parse(int argc, char *argv[])
 
   // TODO threads/ processes? 
   
-  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:M:C:Q")) != EOF)
+  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:M:C:Qm")) != EOF)
     {
       try
 	{	  
@@ -131,6 +134,9 @@ void CommandLine::parse(int argc, char *argv[])
 	      break; 
 	    case 'r': 
 	      checkpointId = strdup(optarg);   
+	      break; 
+	    case 'm': 
+	      saveMemorySEV = true; 
 	      break; 
 	    case 'M': 
 	      memoryMode = MemoryMode(std::stoi(optarg)); 

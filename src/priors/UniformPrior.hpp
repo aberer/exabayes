@@ -37,6 +37,15 @@ public:
     out << "Uniform("  << minVal << "," << maxVal << ")" ; 
   }
 
+  virtual ParameterContent getInitialValue() const
+  {
+    auto result = ParameterContent{}; 
+
+    assert(minVal < maxVal); 
+    result.values.push_back( minVal + ( maxVal - minVal ) / 2  ) ; 
+    return result; 
+  } 
+
 private: 
   double minVal; 
   double maxVal; 

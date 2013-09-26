@@ -20,7 +20,29 @@ TreeAln::TreeAln()
   : parsimonyEnabled(true)
 {
   memset(&tr,0,sizeof(tree)); 
-  initDefault();
+
+  tr.likelihood =  0 ; 
+  tr.doCutoff = TRUE;
+  tr.secondaryStructureModel = SEC_16; /* default setting */
+  tr.searchConvergenceCriterion = FALSE;
+  tr.rateHetModel = GAMMA; 
+  tr.multiStateModel  = GTR_MULTI_STATE;
+#if HAVE_PLL == 0 
+  tr.useGappedImplementation = FALSE;
+  tr.saveBestTrees          = 0;
+  tr.numBranches = getNumberOfPartitions();
+#else 
+  partitions.perGeneBranchLengths = TRUE; 
+#endif
+
+  tr.manyPartitions = FALSE;
+  tr.saveMemory = FALSE;
+  tr.categories             = 25;
+  tr.grouped = FALSE;
+  tr.constrained = FALSE;
+  tr.gapyness               = 0.0; 
+  tr.useMedian = FALSE;
+  tr.mxtips = 0; 
 }
 
 
@@ -123,7 +145,7 @@ TreeAln::~TreeAln()
 }
 
 
-void TreeAln::initializeFromByteFile(std::string _byteFileName)
+void TreeAln::initializeFromByteFile(std::string _byteFileName, RunModes flags)
 {
 #if HAVE_PLL != 0
   this->initializeTreePLL(_byteFileName);
@@ -142,6 +164,12 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName)
   adef.likelihoodEpsilon      = 0.1; 
   adef.permuteTreeoptimize    = FALSE; 
 
+  if( ( flags & RunModes::PARTITION_DISTRIBUTION)  !=  RunModes::NOTHING)
+    tr.manyPartitions = TRUE; 
+  
+  if( (flags & RunModes::MEMORY_SEV) != RunModes::NOTHING)
+    tr.saveMemory = TRUE; 
+  
   adef.perGeneBranchLengths   = TRUE;   
 
   adef.useCheckpoint          = FALSE;
@@ -248,35 +276,6 @@ void TreeAln::enableParsimony()
 #else 
   allocateParsimonyDataStructures(&tr, &partitions);   
 #endif
-}
-
-
-void TreeAln::initDefault()
-{   
-  tr.likelihood =  0 ; 
-  tr.doCutoff = TRUE;
-  tr.secondaryStructureModel = SEC_16; /* default setting */
-  tr.searchConvergenceCriterion = FALSE;
-  tr.rateHetModel = GAMMA; 
-  tr.multiStateModel  = GTR_MULTI_STATE;
-#if HAVE_PLL == 0 
-  tr.useGappedImplementation = FALSE;
-  tr.saveBestTrees          = 0;
-  tr.numBranches = getNumberOfPartitions();
-#else 
-  partitions.perGeneBranchLengths = TRUE; 
-#endif
-
-  // TODO 
-  tr.manyPartitions = FALSE;
-  tr.saveMemory = FALSE;
-
-  tr.categories             = 25;
-  tr.grouped = FALSE;
-  tr.constrained = FALSE;
-  tr.gapyness               = 0.0; 
-  tr.useMedian = FALSE;
-  tr.mxtips = 0; 
 }
 
 

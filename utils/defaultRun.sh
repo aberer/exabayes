@@ -12,7 +12,7 @@ seed=23252
 
 numProc=2
 # extraArgs="-Q"
-extraArgs="-C 2 "
+# extraArgs="-m"
 
 # lakner-27
 # seed=28233
@@ -114,7 +114,7 @@ if [ "$codeBase" == "examl" ]; then
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid $extraArgs -c $configFile $extra "  
+    baseCall="$gdb ./yggdrasil -s $seed -f $pathtodata/aln.pll.binary -n $runid $extraArgs -c $configFile $extra "  
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -151,7 +151,7 @@ if [ "$libs" != "" ]; then
     args="$args LIBS=\""$libs"\""
 fi
 
-rm -f exabayes
+rm -f exabayes yggdrasil
 if [ -f status ] ; then 
     prevStat=$(cat status)
 else    
@@ -178,10 +178,9 @@ fi
 
 make -j $numCores
 
-if [ -f ./exabayes ]; then
+if [ -f ./exabayes -o -f ./yggdrasil ]; then
     echo "calling exabayes as   $baseCall"
     rm -f  ExaBayes_*.${runid}*
     wait 
     $baseCall    
 fi
-

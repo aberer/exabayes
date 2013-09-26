@@ -21,7 +21,8 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
 
   fullFileName = createName(name, workdir);     
   rejectIfExists(fullFileName); 
-  tout << "initialized diagnostics file >" << fullFileName << "<" << std::endl; 
+
+  // tout << "initialized diagnostics file >" << fullFileName << "<" << std::endl; 
 
   std::ofstream fh(fullFileName); 
 

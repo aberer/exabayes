@@ -50,7 +50,6 @@ CoupledChains::CoupledChains(CoupledChains&& rhs)
   , samplingFreq(rhs.samplingFreq)
   , runname(std::move(rhs.runname))
   , workdir(std::move(workdir))
-  // , tFile(std::move(rhs.tFile))
   , paramId2TopFile(std::move(rhs.paramId2TopFile))
   , pFile(std::move(rhs.pFile))
 {
@@ -143,6 +142,7 @@ void CoupledChains::attemptSwap(ParallelSetup &pl)
   bool didAccept = r < accRatio;   
   if( didAccept )
     {
+      // tout << rand << "\t" << coupIdA << " and " << coupIdB << " swap" << std::endl; 
       a.deserializeConditionally(bSer,flags); 
       b.deserializeConditionally(aSer, flags); 
     } 
@@ -254,3 +254,15 @@ void CoupledChains::regenerateOutputFiles(std::string workdir, std::string prevI
     elem.second.regenerate(workdir, prevId, gen); 
 } 
 
+
+
+std::vector<std::string> CoupledChains::getAllFileNames() const 
+{
+  auto result = std::vector<std::string>{}; 
+  for(auto &elem : paramId2TopFile)
+    result.push_back(elem.second.getFileName());
+  for(auto &elem : pFile)
+    result.push_back(elem.getFileName()); 
+  
+  return result; 
+} 

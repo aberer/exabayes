@@ -2,17 +2,6 @@
 #include "parameters/AbstractParameter.hpp"
 #include <limits>
 
-BranchEqualFlag operator|( BranchEqualFlag a, BranchEqualFlag b) 
-{
-  return static_cast<BranchEqualFlag>(static_cast<int>(a) | static_cast<int>(b)); 
-}
-
-
-BranchEqualFlag operator&( BranchEqualFlag a, BranchEqualFlag b)
-{
-  return static_cast<BranchEqualFlag>(static_cast<int>(a) & static_cast<int>(b)); 
-}
-
 
 // std::ostream& operator<<(std::ostream &out, const Branch<void>& br)
 // {

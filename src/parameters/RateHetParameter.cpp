@@ -1,4 +1,5 @@
 #include "RateHetParameter.hpp"
+#include "BoundsChecker.hpp"
 
 
 void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
@@ -35,3 +36,16 @@ void RateHetParameter::printAllComponentNames(std::ostream &fileHandle, const Tr
     }
   fileHandle<< "}" ; 
 } 
+
+
+
+
+void RateHetParameter::verifyContent(const TreeAln&traln, const ParameterContent &content) const  
+{
+  if(content.values.size() > 1  || not BoundsChecker::checkAlpha(content.values[0]) ) 
+    {
+      tout << "Wrong content " << content << " for parameter "  << this << ". Did you mis-specify a fixed prior or are your input values to extreme?" << std::endl; 
+      assert(0); 
+    }
+  
+}

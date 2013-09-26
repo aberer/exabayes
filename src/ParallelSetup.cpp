@@ -1,4 +1,5 @@
 #include <iostream> 
+#include <sstream>
 
 #include "ParallelSetup.hpp"
 #include "GlobalVariables.hpp"
@@ -14,6 +15,40 @@ ParallelSetup::ParallelSetup(int argc, char **argv)
 {  
 #if HAVE_PLL == 0 
   MPI_Init(&argc, &argv);
+#endif
+}
+
+
+
+
+void ParallelSetup::printLoadBalance(const TreeAln& traln ) const 
+{
+#if HAVE_PLL == 0 
+  auto &&ss = std::stringstream{};
+
+  if(isGlobalMaster())
+    ss << "load distribution (rank,#pattern):" << std::endl; 
+  
+  double sumA = 0;   
+
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
+    {
+      auto partition = traln.getPartition(i); 
+      sumA += partition->width; 
+    }
+  
+  if(isGlobalMaster())
+    ss << "[ " << globalRank << " ] " ; 
+  ss  << globalRank<< "\t" << sumA << std::endl; 
+
+  if(sumA == 0)
+    {
+      ss << std::endl << "WARNING: there is a process that does not evaluate any portion of the\n"
+	 << "data. Consider enabling or disabling the '-Q' option"  << std::endl; 
+    }
+  
+  blockingPrint(MPI::COMM_WORLD, ss.str() );
+  MPI_Barrier(MPI::COMM_WORLD); 
 #endif
 }
 

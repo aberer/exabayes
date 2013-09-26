@@ -10,7 +10,6 @@
 #define _AVGSPLITFREQASSESSOR_H
 
 #include "axml.h"
-// #include "BipartitionHash.hpp"
 
 #include "TreeProcessor.hpp"
 class BipartitionHashNew; 
@@ -20,15 +19,6 @@ class AvgSplitFreqAssessor : public TreeProcessor
 public: 
   AvgSplitFreqAssessor(std::vector<std::string>fileNames);
   ~AvgSplitFreqAssessor();
-  /** 
-      @brief return the asdsf of the respective trees in the respective range 
-  */ 
-  // double computeAsdsf(double ignoreFreq); 
-  /** 
-      @brief add bipartitions in the current traln structure into the
-      bipartition hash
-  */
-  // void extractBips(); 
   /** 
       @brief use the new bipartition hash for extracting bipartitions 
    */ 

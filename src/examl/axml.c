@@ -2052,9 +2052,6 @@ static void multiprocessorScheduling(tree *tr, int tid)
       assert(exists);
     }
 
-  if(tid == 0)
-    printBothOpen("\nMulti-processor partition data distribution enabled (-Q option)\n");
-
   for(s = 0; s < arrayLength; s++)
     {
       if(numberOfPartitions[s] > 0)
@@ -2109,14 +2106,6 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	      assert(pt[i].partitionNumber >= 0 && pt[i].partitionNumber < tr->NumberOfModels);
 	      tr->partitionAssignment[pt[i].partitionNumber] = minIndex;
 	    }
-	  
-	  if(tid == 0)
-	    {
-	      for(i = 0; i < n; i++)	       
-		printBothOpen("Process %d has %d sites for %d state model \n", i, assignments[i], modelStates[s]);		  		
-	      
-	      printBothOpen("\n");
-	    }
 
 	  for(i = 0; i < n; i++)
 	    checkSum += (size_t)assignments[i];
@@ -2127,9 +2116,6 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	  free(pt);
 	}
     }
-
-
- 
 }
 
 
@@ -2459,6 +2445,7 @@ void initializeTree(tree *tr, analdef *adef)
   
   if(tr->rateHetModel == CAT)
     {
+      assert(0); 		/* not ready yet */
       tr->rateCategory    = (int *)    calloc(tr->originalCrunchedLength, sizeof(int));	    
       tr->patrat          = (double*)  malloc(tr->originalCrunchedLength * sizeof(double));
       tr->patratStored    = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 

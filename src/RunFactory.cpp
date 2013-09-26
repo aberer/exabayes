@@ -201,10 +201,10 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::v
 }
 
 
-std::vector<std::unique_ptr<AbstractProposal> >  
-RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
 			     const BlockParams& partitionParams, const TreeAln &traln, 
 			     const unique_ptr<LikelihoodEvaluator> &eval, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet)
+  -> std::vector<std::unique_ptr<AbstractProposal> >  
 {
   std::vector<std::unique_ptr<AbstractProposal> > proposals; 
 
@@ -320,55 +320,6 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
 	}
     }
 
-  // enable, if you want to enable AlignmentProposal	
-  // std::vector<std::unique_ptr<AbstractProposal>> multiPartitionProposals = 
-  //   reg.getMultiParameterProposals( mashableParameters, propConfig, traln, eval)  ; 
-  // for(auto &elem : multiPartitionProposals)    
-  //   addSecondaryParameters(elem.get(), randomVariables);
-
-  // for(auto &elem : multiPartitionProposals )
-  //   proposals.emplace_back(std::move(elem)); 
-  
-  // merely some printing and we are done  
-  tout << std::endl << "Parameters to be integrated: " << std::endl; 
-  for(auto &v : randomVariables)
-    {
-      tout << v->getId() << "\t" << v.get()  << std::endl; 
-      tout << "\tsub-id:\t" << v->getIdOfMyKind() << std::endl; 
-      tout << "\tprior:\t" << v->getPrior() << std::endl; 
-    }
-  tout << "================================================================" << std::endl;
-  tout << endl; 
-  
-  double sum = 0; 
-  for(auto &p : proposals)
-    sum += p->getRelativeWeight(); 
-  for(auto &p : resultPropSet)
-    sum += p.getRelativeWeight();
-  
-  tout << "Will employ the following proposal mixture (frequency,type,affected variables): " << endl; 
-  for(auto &p : proposals )
-    {
-      tout << PERC_PRECISION << p->getRelativeWeight() / sum * 100 <<   "%\t" ; 
-      p->printShort(tout ) ; 
-      tout << endl; 
-    }
-  if(proposals.size() == 0)
-    tout << "None." << std::endl; 
-
-  tout << std::endl; 
-
-  if(componentWiseMH)
-    {
-      tout << "In addition to that, the following sets below will be executed \n"
-	   << "in a sequential manner (for efficiency, see manual for how to\n"
-	   << "disable)." << std::endl; 
-	for(auto &p : resultPropSet )
-	  {
-	    p.printVerboseAbbreviated(tout, sum);
-	    tout << std::endl;       
-	  }
-    }
 
   return proposals; 
 }

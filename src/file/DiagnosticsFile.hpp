@@ -17,6 +17,8 @@ public:
   void printDiagnostics(nat gen, double asdsf, const std::vector<CoupledChains> &runs );  
 
   bool isInitialized() const {return initialized; }
+
+  
   
 private:   			// METHODS
   std::string createName(std::string runname, std::string workdir); 

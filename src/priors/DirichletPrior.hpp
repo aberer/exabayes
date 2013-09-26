@@ -44,7 +44,17 @@ public:
     result = rand.drawRandDirichlet(alphas); 
     return result; 
   }
+
   
+  virtual ParameterContent getInitialValue() const
+  {
+    double sum = std::accumulate(alphas.begin(), alphas.end(), 0.); 
+    auto result = ParameterContent{}; 
+    for(auto v : alphas)
+      result.values.push_back(v / sum); 
+    return result; 
+  } 
+
 private: 
   std::vector<double> alphas; 
 

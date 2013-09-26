@@ -52,6 +52,9 @@ typedef  unsigned int nat ;
 
 
 
+/* #define _MY_NEW_EVALUATOR */
+
+
 /* #define _GO_TO_TREE_MOVE_INTEGARTION */
 /* #define _GO_TO_INTEGRATION_MODE */
 /* #define _EXPERIMENTAL_INTEGRATION_MODE */

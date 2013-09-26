@@ -82,7 +82,7 @@ void BipartitionExtractor::extractBipsNew()
   int ctr = 0; 
   for (auto filename : fns)
     {
-      FILE *fh = fopen(filename.c_str(), "r"); 
+      auto &&ifh = std::ifstream(filename); 
 
       nat end = getNumTreesInFile(filename); 
 
@@ -90,12 +90,12 @@ void BipartitionExtractor::extractBipsNew()
 
       for(nat i = 0 ; i < end; ++i)
 	{
-	  nextTree(fh);
+	  nextTree(ifh);
 	  bipHash.addTree(*traln,true);
 	}
       bipHashes.push_back(bipHash);
       
-      fclose(fh);
+      // fclose(fh);
       ++ctr; 
     }
 

@@ -93,9 +93,6 @@ double RestoringLnlEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const 
 }
 
 
-
-
-
 void RestoringLnlEvaluator::resetToImprinted(TreeAln &traln)
 {
   restorer->restoreArrays(traln); 
@@ -106,32 +103,6 @@ void RestoringLnlEvaluator::resetToImprinted(TreeAln &traln)
 
   assert( (traln.isTipNode(p) ||  p->x) 
 	  && (traln.isTipNode(q) || q->x ) );
-
-  // the stuff below is excessive and merely for some nasty bugs  
-#if 0 
-#ifdef DEBUG_LNL_VERIFY
-  auto evalP = root.findNodePtr(traln); 
-
-  disorientTree(traln, root) ;
-  exa_evaluateGeneric(traln, evalP,  FALSE  );   
-
-  traln.printArrayStart(tout);
-
-  if(fabs(prevLnl - traln.getTr()->likelihood) > 1e-6)
-    {                  
-      std::cout << "error while resetting lnl arrays. Likelihood should be " 
-  		<< prevLnl << " but was " << traln.getTr()->likelihood << std::endl; 
-
-      // tout << traln << std::endl;
-      for(int i = 0; i < traln.getNumberOfPartitions(); ++i)
-  	{
-  	  auto p = traln.getPartition(i);
-  	  tout << *p << std::endl; 
-  	}
-      assert(0); 
-    }
-#endif
-#endif 
 
   traln.getTr()->likelihood = prevLnl; 
   traln.setPartitionLnls(partitionLnls);   
@@ -150,3 +121,4 @@ void RestoringLnlEvaluator::resetSomePartitionsToImprinted(TreeAln &traln, std::
 {
   restorer->restoreSomePartitions(traln, partitions); 
 }
+

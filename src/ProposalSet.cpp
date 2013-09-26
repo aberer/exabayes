@@ -47,7 +47,7 @@ std::vector<AbstractProposal*> ProposalSet::getProposalView() const
 }  
 
 
-void ProposalSet::printVerboseAbbreviated(std::ostream &out, double sum)
+void ProposalSet::printVerboseAbbreviated(std::ostream &out, double sum) const
 {
   out << relativeWeight / sum * 100 <<   "%\tSET(totalNumber=" << proposals.size() << "):" << std::endl;
   for(auto &p : proposals)

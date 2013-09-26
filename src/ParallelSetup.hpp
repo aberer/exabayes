@@ -132,6 +132,8 @@ public:
   static void blockingPrint(const MPI::Comm &comm,std::string ss );  
 #endif
 
+  void printLoadBalance(const TreeAln& traln ) const ; 
+
   /** 
       @brief indicates whether the chain belongs to a process
    */ 

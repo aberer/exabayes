@@ -455,7 +455,6 @@ void Chain::stepSetProposal()
       proposal->setPreparedBranch(branches.first);
       proposal->setOtherPreparedBranch(branches.second);
 
-
       // tout << "applying " << proposal << std::endl; 
 
       double lHast = 0;       
@@ -559,6 +558,7 @@ void Chain::stepSetProposal()
 
   if(isNodeSlider)
     {
+      // TODO 
       evaluator-> evaluate(*tralnPtr, evaluator->findVirtualRoot(*tralnPtr),true );
     }
 

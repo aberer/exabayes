@@ -1,4 +1,5 @@
 #include "BranchLengthsParameter.hpp"
+#include "BoundsChecker.hpp"
 
 void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
@@ -23,3 +24,16 @@ ParameterContent BranchLengthsParameter::extractParameter(const TreeAln &traln) 
   return result; 
 }   
 
+
+
+void BranchLengthsParameter::verifyContent(const TreeAln &traln, const ParameterContent &content) const 
+{
+  for(auto &bl : content.branchLengths)
+    {
+      if(not BoundsChecker::checkBranch(bl)) 
+	{
+	  tout << "observed invalid branch " << bl << " that must not be there." << std::endl; 
+	  assert(0); 
+	}
+    } 
+} 

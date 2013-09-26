@@ -1,4 +1,5 @@
 #include "FrequencyParameter.hpp"
+#include "BoundsChecker.hpp"
 
 
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
@@ -58,3 +59,18 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
       fileHandle  << "}("  << names.at(i) << ")"; 
     }  
 } 
+
+
+void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterContent &content) const 
+{
+  auto partition = traln.getPartition(partitions[0]);
+  bool ok = true; 
+  ok &= BoundsChecker::checkFrequencies(content.values); 
+  ok &= (content.values.size() ==  nat(partition->states)); 
+  
+  if(not ok)
+    {
+      tout << "ERROR: we had " << content << " for parameter " << this << ". Did you mis-specify a fixed prior?"  << std::endl; 
+      assert(0); 
+    }  
+}

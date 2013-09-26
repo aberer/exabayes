@@ -51,12 +51,14 @@ void ParameterContent::writeToCheckpoint( std::ostream &out) const
 
 std::ostream& operator<<(std::ostream& out, const ParameterContent &rhs)
 {
-  assert(0); 
-
-  // if(rhs.values.size() > 0)
-  //   for_each(rhs.values.begin(), rhs.values.end(), [&](const double &d) {out << d << "," ; }) ; 
-  // else if(rhs.branchLengths.size() > 0)
-  //   for_each(rhs.branchLengths.begin(), rhs.branchLengths.end(), [&](const BranchLength &b) {out << b << "," ; }) ; 
+  if(rhs.values.size() > 0)
+    out << rhs.values; 
+  else if(rhs.branchLengths.size( )> 0)
+    out << rhs.branchLengths; 
+  else if(rhs.topology.size() > 0)
+    out << rhs.topology ; 
+  else 
+    assert(0); 
 
   return out; 
 } 

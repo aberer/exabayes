@@ -34,6 +34,14 @@ public:
     out << ")"; 
   }
 
+  virtual ParameterContent getInitialValue() const
+  {
+    auto result = ParameterContent{}; 
+    result.values = fixedValues; 
+    return result; 
+  } 
+
+
 private: 
   std::vector<double> fixedValues; 
 }; 

@@ -13,6 +13,8 @@ public:
   void rejectIfNonExistant(std::string fileName); 
   // TODO portability 
   static std::string getFileBaseName(std::string workdir ); 
+  std::string getFileName() const  {return fullFileName; }
+  
   static bool directoryExists(std::string name); 
 
 protected:   

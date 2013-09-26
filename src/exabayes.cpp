@@ -188,13 +188,17 @@ int main(int argc, char **argv)
 
   tout << "This is " << PROGRAM_NAME << " version "
        << VERSION
-       << ", a tool for Bayesian MCMC sampling of phylogenetic trees." 
+       << ", a tool for Bayesian MCMC sampling of phylogenetic trees," 
 #if HAVE_PLL == 0 
        << "\nbuild with the ExaML code base and MPI-support."
 #else 
        << "\nbuild with the (Phylogenetic Likelihood Library) PLL code base for sequential execution."
 #endif
-       << "\nPlease send any feature requests and inquiries to exabayes-at-googlemail-dot-com"    
+
+       << std::endl <<  "This software has been releasd by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis" << std::endl 
+       << "in ?" << std::endl 
+
+       << "\nPlease send any feature requests and inquiries to " << PACKAGE_BUGREPORT
        << std::endl << std::endl; 
 
   tout << PROGRAM_NAME << " was called as follows: " << endl; 

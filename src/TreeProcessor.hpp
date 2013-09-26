@@ -15,7 +15,7 @@ public:
 
 protected: 			// METHODS
   void fillTaxaInfo(std::string fileName); 
-  void nextTree(FILE *fh );
+  void nextTree(std::istream &treefile); 
   /** 
       @brief only initializes a raw tree, no partitions or alignment information. 
       important: does NOT need a bytefile 

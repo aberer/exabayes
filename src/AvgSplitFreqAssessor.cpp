@@ -21,36 +21,29 @@ AvgSplitFreqAssessor::AvgSplitFreqAssessor(vector<string> fileNames)
 
   this->start = 0; 
   this->end = getMinNumTrees();
-
-  // bipHash = new BipartitionHash(taxa.size(), fileNames.size());
 }
-
 
 AvgSplitFreqAssessor::~AvgSplitFreqAssessor()
 {
-  // delete bipHash; 
 }
-
 
 void AvgSplitFreqAssessor::extractBipsNew()
 {
   int ctr = 0; 
   for (auto filename : fns)
     {
-      FILE *fh = fopen(filename.c_str(), "r"); 
+      auto&& ifh = std::ifstream{filename}; 
 
       for(int i = 0; i < start; ++i)
-	nextTree(fh);
+	nextTree(ifh);
 
       auto bipHash = BipartitionHashNew(traln->getNumberOfTaxa()); 
       for(int i = start ; i < end; ++i)
 	{
-	  nextTree(fh);
+	  nextTree(ifh);
 	  bipHash.addTree(*traln,false);
 	}
       newBipHashes.push_back(bipHash);
-      
-      fclose(fh);
       ++ctr; 
     }
 }

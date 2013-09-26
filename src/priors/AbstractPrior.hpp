@@ -14,11 +14,19 @@
 
 #include "Randomness.hpp"
 
+#include "parameters/ParameterContent.hpp"
+
 class AbstractPrior
 {
 public: 
   virtual ~AbstractPrior()
   {}
+
+  /** 
+      @brief obtains a pre-defined initial value, depending on the
+      prior.
+  */
+  virtual ParameterContent getInitialValue() const = 0; 
 
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const = 0; 
   virtual double getLogProb(std::vector<double> values ) const = 0; 

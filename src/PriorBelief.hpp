@@ -10,6 +10,7 @@
 #define _PRIORMANAGER_H
 
 #include <cassert>
+#include <cmath>
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -68,7 +69,7 @@ public:
   ///////////////
   // OBSERVERS //
   ///////////////
-  double getLnPrior () const {assert(wasInitialized); return lnPrior; } 
+  double getLnPrior () const {assert(not std::isinf(lnPrior)) ; assert(wasInitialized); return lnPrior; } 
   double getLnPriorRatio() const {assert(wasInitialized) ; return lnPriorRatio; }
 
 private: 

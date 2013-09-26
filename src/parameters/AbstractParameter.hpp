@@ -2,7 +2,6 @@
 #define _ABSTRACT_PARAMETER
 
 #include "ParameterContent.hpp"
-// #include "priors/AbstractPrior.hpp"
 
 class AbstractPrior; 
 class TreeAln; 
@@ -38,6 +37,12 @@ public:
    */ 
   void setPrior(std::shared_ptr<AbstractPrior> _prior){prior = _prior; }
   nat getIdOfMyKind() const {return idOfMyKind; }
+  /** 
+      @brief veriffies that content is compatible to this parameter (e.g., not too many rates). 
+
+      This is a crude method merely for initialization (user input validation)
+   */ 
+  virtual void verifyContent(const TreeAln &traln, const ParameterContent &content) const  =  0; 
 
   ///////////////
   // OBSERVERS //

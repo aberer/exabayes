@@ -1,8 +1,10 @@
 #include <cassert>
+#include <sstream> 
+#include <algorithm>
 
 #include "axml.h"
 #include "GlobalVariables.hpp"
-// #include "TreeAln.hpp"
+
 
 class TreeAln; 
 
@@ -15,14 +17,14 @@ static void exa_hookupDefault(tree *tr, nodeptr p, nodeptr q)
 #endif
 }
 
-static void  treeEchoContext (FILE *fp1, FILE *fp2, int n)
-{ /* treeEchoContext */
+static void  treeEchoContext ( std::istringstream &iss , int n)
+{
   int      ch;
   boolean  waswhite;
   
   waswhite = TRUE;
   
-  while (n > 0 && ((ch = getc(fp1)) != EOF)) {
+  while (n > 0 && ((ch = iss.get()) != EOF)) {
     if (whitechar(ch)) {
       ch = waswhite ? '\0' : ' ';
       waswhite = TRUE;
@@ -31,7 +33,11 @@ static void  treeEchoContext (FILE *fp1, FILE *fp2, int n)
       waswhite = FALSE;
     }
     
-    if (ch > '\0') {putc(ch, fp2); n--;}
+    if (ch > '\0' ) 
+      {
+	std::cout << ch ; 
+	--n; 	
+      }
   }
 }
 
@@ -60,7 +66,7 @@ static boolean treeLabelEnd (int ch)
 }
 
 
-static boolean  treeGetLabel (FILE *fp, char *lblPtr, int maxlen)
+static boolean  treeGetLabel (std::istringstream &iss , char *lblPtr, int maxlen)
 {
   int      ch;
   boolean  done, quoted, lblfound;
@@ -71,14 +77,14 @@ static boolean  treeGetLabel (FILE *fp, char *lblPtr, int maxlen)
     if (lblPtr == NULL) 
       maxlen = 0;
 
-  ch = getc(fp);
+  ch = iss.get();
   done = treeLabelEnd(ch);
 
   lblfound = ! done;
   quoted = (ch == '\'');
   if (quoted && ! done) 
     {
-      ch = getc(fp); 
+      ch = iss.get(); 
       done = (ch == EOF);
     }
 
@@ -88,7 +94,7 @@ static boolean  treeGetLabel (FILE *fp, char *lblPtr, int maxlen)
 	{
 	  if (ch == '\'') 
 	    {
-	      ch = getc(fp); 
+	      ch = iss.get(); 
 	      if (ch != '\'') 
 		break;
 	    }
@@ -97,11 +103,11 @@ static boolean  treeGetLabel (FILE *fp, char *lblPtr, int maxlen)
 	if (treeLabelEnd(ch)) break;     
 
       if (--maxlen >= 0) *lblPtr++ = ch;
-      ch = getc(fp);
+      ch = iss.get();
       if (ch == EOF) break;
     }
 
-  if (ch != EOF)  (void) ungetc(ch, fp);
+  if (ch != EOF)   iss.unget();
 
   if (lblPtr != NULL) *lblPtr = '\0';
 
@@ -109,43 +115,44 @@ static boolean  treeGetLabel (FILE *fp, char *lblPtr, int maxlen)
 }
 
 
-static boolean  treeFlushLabel (FILE *fp)
+static boolean  treeFlushLabel (std::istringstream &iss)
 { 
-  return  treeGetLabel(fp, (char *) NULL, (int) 0);
+  return  treeGetLabel(iss, (char *) NULL, (int) 0);
 }
 
 
 
 
 
-static int treeFinishCom (FILE *fp, char **strp)
+static int treeFinishCom ( std::istringstream &iss, char **strp)
 {
   int  ch;
   
-  while ((ch = getc(fp)) != EOF && ch != ']') {
+  while ((ch = iss.get()) != EOF && ch != ']') {
     if (strp != NULL) *(*strp)++ = ch;    /* save character  */
     if (ch == '[') {                      /* nested comment; find its end */
-      if ((ch = treeFinishCom(fp, strp)) == EOF)  break;
+      if ((ch = treeFinishCom(iss, strp)) == EOF)  break;
       if (strp != NULL) *(*strp)++ = ch;  /* save closing ]  */
     }
   }
   
   if (strp != NULL) **strp = '\0';        /* terminate string  */
   return  ch;
-} /* treeFinishCom */
+} 
 
-
-
-static int treeGetCh (FILE *fp)         /* get next nonblank, noncomment character */
-{ /* treeGetCh */
+static int treeGetCh ( std::istringstream &iss )         /* get next nonblank, noncomment character */
+{
   int  ch;
 
-  while ((ch = getc(fp)) != EOF) {
+  while ((ch = iss.get() ) != EOF) {
     if (whitechar(ch)) ;
-    else if (ch == '[') {                   /* comment; find its end */
-      if ((ch = treeFinishCom(fp, (char **) NULL)) == EOF)  break;
-    }
-    else  break;
+    else if (ch == '[')
+      {
+	if ((ch = treeFinishCom(iss, (char **) NULL)) == EOF)  
+	  break;
+      }
+    else  
+      break;
   }
   
   return  ch;
@@ -153,11 +160,11 @@ static int treeGetCh (FILE *fp)         /* get next nonblank, noncomment charact
 
 
 
-static boolean treeNeedCh (FILE *fp, int c1, std::string where)
+static boolean treeNeedCh ( std::istringstream &iss , int c1, std::string where)
 {
   int  c2;
   
-  if ((c2 = treeGetCh(fp)) == c1)  return TRUE;
+  if ((c2 = treeGetCh(iss)) == c1)  return TRUE;
   
   printf("ERROR: Expecting '%c' %s tree; found:", c1, where.c_str());
   if (c2 == EOF) 
@@ -166,8 +173,8 @@ static boolean treeNeedCh (FILE *fp, int c1, std::string where)
     }
   else 
     {      	
-      ungetc(c2, fp);
-      treeEchoContext(fp, stdout, 40);
+      iss.unget();
+      treeEchoContext(iss, 40);
     }
   putchar('\n');
 
@@ -199,12 +206,12 @@ static int treeFindTipByLabelString(char  *str, tree *tr)
 }
 
 
-static int treeFindTipName(FILE *fp, tree *tr)
+static int treeFindTipName(std::istringstream &iss , tree *tr)
 {
   char    str[nmlngth+2];
   int      n;
 
-  if(treeGetLabel(fp, str, nmlngth+2))
+  if(treeGetLabel(iss, str, nmlngth+2))
     n = treeFindTipByLabelString(str, tr);
   else
     n = 0;
@@ -214,54 +221,59 @@ static int treeFindTipName(FILE *fp, tree *tr)
 }
 
 
-static boolean treeProcessLength (FILE *fp, double *dptr)
+static boolean treeProcessLength (std::istringstream &iss, double *dptr)
 {
   int  ch;
   
-  if ((ch = treeGetCh(fp)) == EOF)  return FALSE;    /*  Skip comments */
-  (void) ungetc(ch, fp);
+  if ((ch = treeGetCh(iss)) == EOF)  return FALSE;    /*  Skip comments */
+  iss.unget();
   
-  if (fscanf(fp, "%lf", dptr) != 1) {
-    printf("ERROR: treeProcessLength: Problem reading branch length\n");
-    treeEchoContext(fp, stdout, 40);
-    printf("\n");
-    return  FALSE;
-  }
-  
+
+  if ( iss >> *dptr ) 
+    {
+      return TRUE; 
+    } 
+  else 
+    {
+      printf("ERROR: treeProcessLength: Problem reading branch length\n");
+      treeEchoContext(iss, 40);
+      printf("\n");
+      return  FALSE;
+    } 
+
   return  TRUE;
 }
 
 
 
-static int treeFlushLen (FILE  *fp)
+static int treeFlushLen (std::istringstream &iss)
 {
   double  dummy;  
   int     ch;
   
-  ch = treeGetCh(fp);
+  ch = treeGetCh(iss);
   
   if (ch == ':') 
     {
-      ch = treeGetCh(fp);
-      
-      ungetc(ch, fp);
-      if(!treeProcessLength(fp, & dummy)) return 0;
+      ch = treeGetCh(iss);
+
+      iss.unget();
+      if(!treeProcessLength(iss, & dummy)) return 0;
       return 1;	  
     }
   
-  
-  
-  if (ch != EOF) (void) ungetc(ch, fp);
+  if (ch != EOF) 
+    iss.unget();
   return 1;
 }
 
 
-static boolean addElementLen (FILE *fp, tree *tr, nodeptr p, boolean readBranchLengths, boolean readNodeLabels, int *lcount)
+static boolean addElementLen (std::istringstream &iss, tree *tr, nodeptr p, boolean readBranchLengths, boolean readNodeLabels, int *lcount)
 {   
   nodeptr  q;
   int      n, ch, fres;
   
-  if ((ch = treeGetCh(fp)) == '(') 
+  if ((ch = treeGetCh(iss)) == '(') 
     { 
       n = (tr->nextnode)++;
       if (n > 2*(tr->mxtips) - 2) 
@@ -281,17 +293,17 @@ static boolean addElementLen (FILE *fp, tree *tr, nodeptr p, boolean readBranchL
       
       q = tr->nodep[n];
 
-      if (! addElementLen(fp, tr, q->next, readBranchLengths, readNodeLabels, lcount))        return FALSE;
-      if (! treeNeedCh(fp, ',', "in"))             return FALSE;
-      if (! addElementLen(fp, tr, q->next->next, readBranchLengths, readNodeLabels, lcount))  return FALSE;
-      if (! treeNeedCh(fp, ')', "in"))             return FALSE;
+      if (! addElementLen(iss, tr, q->next, readBranchLengths, readNodeLabels, lcount))        return FALSE;
+      if (! treeNeedCh(iss, ',', "in"))             return FALSE;
+      if (! addElementLen(iss, tr, q->next->next, readBranchLengths, readNodeLabels, lcount))  return FALSE;
+      if (! treeNeedCh(iss, ')', "in"))             return FALSE;
       
       if(readNodeLabels)
 	{
 	  char label[64];
 	  int support;
 
-	  if(treeGetLabel (fp, label, 10))
+	  if(treeGetLabel (iss, label, 10))
 	    {	
 	      int val = sscanf(label, "%d", &support);
       
@@ -305,12 +317,12 @@ static boolean addElementLen (FILE *fp, tree *tr, nodeptr p, boolean readBranchL
 	    }
 	}
       else	
-	(void) treeFlushLabel(fp);
+	treeFlushLabel(iss);
     }
   else 
     {   
-      ungetc(ch, fp);
-      if ((n = treeFindTipName(fp, tr)) <= 0)          return FALSE;
+      iss.unget();
+      if ((n = treeFindTipName(iss, tr)) <= 0)          return FALSE;
       q = tr->nodep[n];
       if (tr->start->number > n)  tr->start = q;
       (tr->ntips)++;
@@ -319,15 +331,15 @@ static boolean addElementLen (FILE *fp, tree *tr, nodeptr p, boolean readBranchL
   if(readBranchLengths)
     {
       double branch;
-      if (! treeNeedCh(fp, ':', "in"))                 return FALSE;
-      if (! treeProcessLength(fp, &branch))            return FALSE;
+      if (! treeNeedCh(iss, ':', "in"))                 return FALSE;
+      if (! treeProcessLength(iss, &branch))            return FALSE;
 
       // TODO only works for 1 trbl
       hookup(p, q, &branch, 1 );
     }
   else
     {
-      fres = treeFlushLen(fp);
+      fres = treeFlushLen(iss);
       if(!fres) return FALSE;
       
       exa_hookupDefault(tr, p, q);
@@ -338,8 +350,10 @@ static boolean addElementLen (FILE *fp, tree *tr, nodeptr p, boolean readBranchL
 
 
 
-void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
+void myTreeReadLen(std::string treeString , tree *tr, boolean hasBL)
 {
+  auto&& iss = std::istringstream{treeString}; 
+
   boolean 
     readBranches = FALSE,  
     readNodeLabels = FALSE, 
@@ -380,10 +394,10 @@ void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
 
       /*if(topologyOnly)
 	{
-	  tr->nodep[i]->support = -2;
-	  tr->nodep[i]->next->support = -2;
-	  tr->nodep[i]->next->next->support = -2;
-	  }*/
+	tr->nodep[i]->support = -2;
+	tr->nodep[i]->next->support = -2;
+	tr->nodep[i]->next->next->support = -2;
+	}*/
     }
 
   if(topologyOnly)
@@ -403,48 +417,49 @@ void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
 
   p = tr->nodep[(tr->nextnode)++]; 
   
-  while((ch = treeGetCh(fp)) != '(');
+  while((ch = treeGetCh(iss)) != '(');
 
 
   /* if(!topologyOnly) */
   /*   assert(readBranches == FALSE && readNodeLabels == FALSE); */
   
        
-  if (! addElementLen(fp, tr, p, readBranches, readNodeLabels, &lcount))                 
+  if (! addElementLen(iss, tr, p, readBranches, readNodeLabels, &lcount))                 
     assert(0);
-  if (! treeNeedCh(fp, ',', "in"))                
+  if (! treeNeedCh(iss, ',', "in"))                
     assert(0);
-  if (! addElementLen(fp, tr, p->next, readBranches, readNodeLabels, &lcount))
+  if (! addElementLen(iss, tr, p->next, readBranches, readNodeLabels, &lcount))
     assert(0);
   if (! tr->rooted) 
     {
-      if ((ch = treeGetCh(fp)) == ',') 
+      if ((ch = treeGetCh(iss)) == ',') 
 	{ 
-	  if (! addElementLen(fp, tr, p->next->next, readBranches, readNodeLabels, &lcount))
+	  if (! addElementLen(iss, tr, p->next->next, readBranches, readNodeLabels, &lcount))
 	    assert(0);	    
 	}
       else 
 	{                                    /*  A rooted format */
 	  tr->rooted = TRUE;
-	  if (ch != EOF)  (void) ungetc(ch, fp);
+	  if (ch != EOF) 
+	    iss.unget();
 	}	
     }
   else 
     {      
       p->next->next->back = (nodeptr) NULL;
     }
-  if (! treeNeedCh(fp, ')', "in"))                
+  if (! treeNeedCh(iss, ')', "in"))                
     assert(0);
 
   if(topologyOnly)
     assert(!(tr->rooted && readNodeLabels));
 
-  (void) treeFlushLabel(fp);
+  treeFlushLabel(iss);
   
-  if (! treeFlushLen(fp))                         
+  if (! treeFlushLen(iss))                         
     assert(0);
  
-  if (! treeNeedCh(fp, ';', "at end of"))       
+  if (! treeNeedCh(iss, ';', "at end of"))       
     assert(0);
 
   tr->start = findAnyTip(p, tr->mxtips);    
@@ -453,50 +468,10 @@ void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL)
 }
 
 
-
-/* I have no clue, why getc does not work here...
-   this is not extensively tested
- */
-boolean nextTreeHasBranchLength(FILE *fp)
-{
-  boolean foundBL = FALSE; 
-  long oldPos = ftell(fp); 
-
-  int c = 0; 
-  while(( c = getc(fp)) != EOF)
-    {
-      if(c == ':')
-	{
-	  foundBL = TRUE; 
-	  break; 
-	}
-      if(c == '\n')
-	break; 
-    }
-
-  fseek(fp,oldPos, SEEK_SET ); 
-  return foundBL;  
-}
-
-
-
-
-boolean readTreeWithOrWithoutBL(tree *tr, FILE *fh)
+boolean readTreeWithOrWithoutBL(tree *tr, std::string treeString)
 {  
-  boolean hasBL = nextTreeHasBranchLength(fh); 
+  bool hasBL = std::any_of(treeString.begin(), treeString.end(), [](char c){ return c == ':' ; }); 
+  myTreeReadLen(treeString, tr, hasBL); 
 
-  myTreeReadLen(fh, tr, hasBL); 
-
-  /* 
-     TODO this is a horrible hack
-     if the last char left after reading a tree is a newline, the next tree read would stop immediately. 
-
-     Still: this only works, if we have one tree per line (something
-     the user really should be able to accomplish).
-   */  
-  int c = getc(fh); 
-  if(c != EOF && c != '\n')
-    ungetc(c, fh); 
- 
   return hasBL; 
 }

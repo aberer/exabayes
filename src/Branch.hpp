@@ -29,7 +29,7 @@
 #include "Checkpointable.hpp"
 
 #include "TreeAln.hpp"
-
+#include "FlagType.hpp" 
 
 class AbstractParameter; 
 
@@ -40,8 +40,8 @@ enum class BranchEqualFlag : int
     WITH_DIRECTION = 2
 }; 
 
-BranchEqualFlag operator|( BranchEqualFlag a, BranchEqualFlag b); 
-BranchEqualFlag operator&( BranchEqualFlag a, BranchEqualFlag b); 
+// BranchEqualFlag operator|( BranchEqualFlag a, BranchEqualFlag b); 
+// BranchEqualFlag operator&( BranchEqualFlag a, BranchEqualFlag b); 
 
 template<typename TYPE>
 class LengthPart; 

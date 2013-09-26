@@ -90,7 +90,6 @@ protected: 			// ATTRIBUTES
   bool verifyLnl; 
   double prevLnl; 
   std::vector<double> partitionLnls;  
-
   std::vector<std::vector<bool> > dirty; 
 }; 
 

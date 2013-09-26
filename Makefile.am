@@ -19,7 +19,7 @@ RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE 
 # TODO threads
   #  $(srcppre)/genericParallelization-pll.c
 
-bin_PROGRAMS= exabayes asdsf extractBips consense credibleSet postProcParam
+bin_PROGRAMS= # asdsf extractBips consense credibleSet postProcParam #  exabayes 
 
 SRCINCLUDE=-I$(top_srcdir)/src
 
@@ -43,12 +43,12 @@ if WITH_EXAML
 LIBTOUSE=libexaml.a
 LIBINCLUDE=$(EXAMLINCLUDE)
 noinst_LIBRARIES+=libexaml.a
-bin_PROGRAMS+= parserExaml
+bin_PROGRAMS+= parserExaml exabayes 
 else
 LIBTOUSE=libpll.a
 LIBINCLUDE=$(PLLINCLUDE) 
-bin_PROGRAMS+= parserPll
-noinst_LIBRARIES+=libpll.a
+bin_PROGRAMS+= parserPll yggdrasil 
+noinst_LIBRARIES+=libpll.a 
 endif 
 
 libbayes_a_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)  
@@ -58,12 +58,17 @@ exabayes_LDADD+=$(LIBTOUSE)
 exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
 exabayes_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) 
 
-################################################################
-# PRSF
+yggdrasil_LDADD= libncl.a libbayes.a 
+yggdrasil_LDADD+=$(LIBTOUSE)
+yggdrasil_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
+yggdrasil_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) 
 
-# prsf_LDADD = libbayes.a $(LIBTOUSE) 
-# prsf_CXXFLAGS=-O3 $(LIBINCLUDE) $(SIMD_FLAGS) $(SRCINCLUDE) $(RAX_FEATURE)
-# prsf_SOURCES= $(top_srcdir)/src/prsf.cpp
+
+if WITH_EXAML
+cleanobjs=$(exabayes_OBJECTS)
+else 
+cleanobjs=$(yggdrasil_OBJECTS)
+endif
 
 
 ################################################################

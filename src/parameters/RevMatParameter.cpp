@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <functional>
 
+
+#include "BoundsChecker.hpp"
 #include "GlobalVariables.hpp"
 
 #include "RevMatParameter.hpp"
@@ -77,3 +79,40 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
       fileHandle  << "}("  << names.at(i) << ")"; 
     }  
 }
+
+
+
+
+
+void RevMatParameter::verifyContent(const TreeAln&traln, const ParameterContent &content) const 
+{
+  auto partition = traln.getPartition(partitions[0]); 
+  auto num = numStateToNumInTriangleMatrix(partition->states);
+  
+  // auto sum = std::accumulate(content.values.begin(), content.values.end(), 0.); 
+
+  bool ok = true; 
+  // ok &= fabs(sum - 1.0 )  < 1e-2 ; 
+
+  ok &= content.values.size( )== num ; 
+
+  auto newValues = content.values; 
+  for(auto &v : newValues)
+    v /= *(newValues.rbegin()); 
+  
+  if(ok)
+    ok &= BoundsChecker::checkRevmat(newValues); 
+
+  if(not ok )
+    {
+      tout << "Wrong content " << content << " for parameter "
+      << this << ". Did you mis-specify a fixed prior or are your input values to extreme?" << std::endl; 
+      assert(0); 
+    }
+} 
+
+
+
+
+
+

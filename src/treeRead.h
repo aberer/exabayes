@@ -9,9 +9,9 @@
 #ifndef _TREE_READ_H
 #define _TREE_READ_H
 
-boolean readTreeWithOrWithoutBL(tree *tr, FILE *treeFile); 
-void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL); 
-
-/* void traverseInitCorrect(nodeptr p, int *count, shared_ptr<TreeAln> traln );  */
+/* boolean readTreeWithOrWithoutBL(tree *tr, std::string treeString);  */
+/* void myTreeReadLen(FILE *fp, tree *tr, boolean hasBL); */
+boolean readTreeWithOrWithoutBL(tree *tr, std::string treeString); 
+void myTreeReadLen(std::string treeString , tree *tr, boolean hasBL); 
 
 #endif

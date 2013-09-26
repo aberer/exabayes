@@ -32,7 +32,7 @@ public:
   /** 
       @brief prints the proposal set    
    */ 
-  void printVerboseAbbreviated(std::ostream &out, double sum); 
+  void printVerboseAbbreviated(std::ostream &out, double sum) const; 
   /** 
       @brief indicates whether for this proposal set a full tree
       traversal is necessary

@@ -14,7 +14,7 @@ revMat = (0,1,2,3)
 ] 
 
 
-[   brlens = (0/1/2/3)  ] 
+[ brlens = (0/1/2/3)  ] 
 
 [ 
 stateFreq = (0/1,2,3)     [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
@@ -31,14 +31,13 @@ end;
 [================================================================]
 begin PRIOR; 
 [ topology: constraints not enabled currently  ]
-[   topoPr fixed()  ] 
+[ topoPr fixed() ] 
 [ topoPr uniform(0,1) ]
-
 [ topoPr uniform(0,1)] 
 
-[ branch lengths: TODO per-partition,clock ]
-[  brlenpr uniform(0.0000001,4)   ] 
-[ brlenpr fixed()  ]      [ you should have provided a user tree with branch lengths ]  
+[ branch lengths: ]
+[ brlenpr uniform(0.0000001,4)   ] 
+brlenpr fixed()  [ you should have provided a user tree with branch lengths ]  
 [  brlenpr{3} exponential(10.0) ] 
 [ brlenpr exponential(10) ] 
 

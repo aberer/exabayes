@@ -2,11 +2,14 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.7],[exabayes@googlegroups.com]) 
+AC_INIT([exabayes],[0.7],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_CONFIG_SRCDIR([src/])
+
+dnl todo-ish 
+# AM_INIT_AUTOMAKE( [ subdir-objects ] ) 
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([src/config.h])
 

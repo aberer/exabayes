@@ -65,12 +65,13 @@ public:
   const vector<Chain>& getChains() const {return chains; }
   int getNumberOfChains(){return chains.size();}
   void enableHeatTuning(int freq ) { tuneHeat = true; tuneFreq = freq; }  
-  void printNexusTreeFileStart(Chain &chain, FILE *fh  );   
   void setRunName(string a) {runname = a;  }
   void initializeOutputFiles()  ; 
   SwapMatrix getSwapInfo() const {return swapInfo; }
   void addToSwapMatrix(SwapMatrix toAdd){ swapInfo = swapInfo + toAdd;  }
   const Randomness& getRandomness() const {return rand; }
+
+  std::vector<std::string> getAllFileNames() const ; 
 
   void finalizeOutputFiles()  ; 
 
@@ -100,7 +101,6 @@ private: 			// ATTRIBUTES
   string workdir; 
 
   // order is coupled to the heat id  
-  // std::vector<TopologyFile> tFile; 
   std::unordered_map<nat,TopologyFile> paramId2TopFile; 
   std::vector<ParameterFile> pFile; 
 }; 
