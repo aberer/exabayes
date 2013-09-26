@@ -26,7 +26,7 @@
 
 void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &vars, const TreeAln &traln )
 {
-  std::set<Category> categories; 
+  auto categories =  std::set<Category>{}; 
 
   for(auto &v : vars)
     categories.insert(v->getCategory()); 
@@ -201,10 +201,8 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::v
 }
 
 
-auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
-			     const BlockParams& partitionParams, const TreeAln &traln, 
-			     const unique_ptr<LikelihoodEvaluator> &eval, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet)
-  -> std::vector<std::unique_ptr<AbstractProposal> >  
+auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet)
+  -> std::vector<std::unique_ptr<AbstractProposal> > 
 {
   std::vector<std::unique_ptr<AbstractProposal> > proposals; 
 
@@ -229,7 +227,7 @@ auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const B
 	continue; 
 	
       std::vector<std::unique_ptr<AbstractProposal> > 
-	tmpResult = reg.getSingleParameterProposals(v->getCategory(), propConfig,  traln, eval); 
+	tmpResult = reg.getSingleParameterProposals(v->getCategory(), propConfig,  traln); 
       for(auto &p : tmpResult )
 	{
 	  p->addPrimaryParameter(std::unique_ptr<AbstractParameter>(v->clone()));
@@ -281,20 +279,20 @@ auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const B
 
   if(componentWiseMH)
     {
-      std::unordered_map<Category, std::vector<AbstractParameter*>, CategoryHash > cat2param; 
+      auto cat2param = std::unordered_map<Category, std::vector<AbstractParameter*>, CategoryHash >{}; 
       for(auto &p:  mashableParameters)
 	cat2param[p->getCategory()].push_back(p); 
 
       for(auto &elem : cat2param)
 	{
-	  auto proposalsForSet = reg.getSingleParameterProposals(elem.first, propConfig, traln,eval);
+	  auto proposalsForSet = reg.getSingleParameterProposals(elem.first, propConfig, traln);
 	  
 	  // this and the above for-loop essentially produce all
 	  // proposals, that we'd also obtain in the default case =>
 	  // but we need a set of it
 	  for(auto &proposalType : proposalsForSet)
 	    {
-	      std::vector<std::unique_ptr<AbstractProposal> > lP; 	      
+	      auto lP = std::vector<std::unique_ptr<AbstractProposal> >{}; 	      
 	      for(auto &p : elem.second)
 		{
 		  auto proposalClone = std::unique_ptr<AbstractProposal>(proposalType->clone()); 
@@ -308,18 +306,6 @@ auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const B
 	    }
 	}
     }
-  else 
-    {
-      if(blCtr > 1 )
-	{
-	  tout << std::endl << "You disabled componentWiseMH and tried to integrate over multiple\n"
-	       << "branch lengths paramaeters. Due to performance reasons,\n"
-	       << "componentWiseMH must be set to true, when multiple branch lengths\n"
-	       << "shall be integrated. Aborting." << std::endl; 
-	  ParallelSetup::genericExit(-1);
-	}
-    }
-
 
   return proposals; 
 }

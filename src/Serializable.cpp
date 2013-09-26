@@ -1,8 +1,8 @@
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 #include "GlobalVariables.hpp"
 
 
-void Checkpointable::getOfstream(std::string name, std::ofstream &result)
+void Serializable::getOfstream(std::string name, std::ofstream &result)
 {
   if(checkpointIsBinary)
     result.open(name, std::ios::binary); 
@@ -12,7 +12,7 @@ void Checkpointable::getOfstream(std::string name, std::ofstream &result)
 
 
 
-void Checkpointable::getIfstream(std::string name, std::ifstream &result )
+void Serializable::getIfstream(std::string name, std::ifstream &result )
 {
   if(checkpointIsBinary)
     result.open(name, std::ios::binary); 
@@ -22,7 +22,7 @@ void Checkpointable::getIfstream(std::string name, std::ifstream &result )
 
 
 
-void Checkpointable::readDelimiter(std::istream &in)  
+void Serializable::readDelimiter(std::istream &in)  
 {
   char c; 
   in >> c ; 
@@ -30,9 +30,9 @@ void Checkpointable::readDelimiter(std::istream &in)
 }
 
 
-std::string Checkpointable::readString(std::istream &in )
+std::string Serializable::readString(std::istream &in )
 {
-  std::string result; 
+  auto result = std::string{}; 
 
   if(checkpointIsBinary)
     {
@@ -43,17 +43,15 @@ std::string Checkpointable::readString(std::istream &in )
       char *aString  = new char[length]; 
       in.read(aString, length * sizeof(char));       
       result = aString; 
-      // std::cout << "read string >" << result << "< of length "<< result.size() << std::endl; 
     }
   else 
     {      
       getline(in, result, DELIM); 
     }
-
   return result; 
 }
 
-void Checkpointable::writeString(std::ostream &out, std::string toWrite) const 
+void Serializable::writeString(std::ostream &out, std::string toWrite) const 
 {  
   if(checkpointIsBinary)
     {
@@ -61,8 +59,9 @@ void Checkpointable::writeString(std::ostream &out, std::string toWrite) const
       int length = toWrite.size(); 
       out.write((char*)&length, sizeof(int)); 
       out.write(toWrite.c_str(), length * sizeof(char)); 
-      // std::cout << "wrote string >"<< toWrite << "<  of length "  << toWrite.size() << std::endl; 
     }
   else  
-    out << toWrite << DELIM; 
+    {
+      out << toWrite << DELIM; 
+    }
 }

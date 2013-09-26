@@ -11,50 +11,13 @@ public:
   {
   }
 
+  virtual double getLogProb(std::vector<double> values) const ; 
+  virtual void print(std::ostream& out ) const ; 
+  virtual std::vector<double> drawFromPrior(Randomness &rand)  const; 
+  virtual ParameterContent getInitialValue() const; 
 
-  virtual double getLogProb(std::vector<double> values) const 
-  {
-    assert(values.size() == alphas.size() ); 
-    double sum = 0; 
-    for(auto v: values)
-      sum += v; 
-    assert(fabs(sum - 1.0) < 1e-6); 
-
-    double result = densityDirichletLog(values, alphas ); 
-    return result; 
-  }
- 
+  virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const {return 0 ; } 
   
-  virtual void print(std::ostream& out ) const 
-  {
-    out << "Dirichlet("   ; 
-    bool first = true; 
-    for(auto v : alphas)
-      {      
-	out << ( first ? "" : "," )  << v ;
-	if(first)
-	  first = false;
-      }    
-    out << ")";
-  }
-
-  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
-  {
-    std::vector<double> result; 
-    result = rand.drawRandDirichlet(alphas); 
-    return result; 
-  }
-
-  
-  virtual ParameterContent getInitialValue() const
-  {
-    double sum = std::accumulate(alphas.begin(), alphas.end(), 0.); 
-    auto result = ParameterContent{}; 
-    for(auto v : alphas)
-      result.values.push_back(v / sum); 
-    return result; 
-  } 
-
 private: 
   std::vector<double> alphas; 
 

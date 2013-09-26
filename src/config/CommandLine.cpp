@@ -6,7 +6,7 @@
 #include "ParallelSetup.hpp"
 #include "file/OutputFile.hpp"
 #include "MemoryMode.hpp"
-
+#include "FlagType.hpp"
 
 CommandLine::CommandLine(int argc, char **argv)
   : configFileName("")
@@ -17,9 +17,10 @@ CommandLine::CommandLine(int argc, char **argv)
   , runNumParallel(1)
   , chainNumParallel(1)
   , checkpointId("")
-  , memoryMode(MemoryMode::RESTORING)
+  , memoryMode(MemoryMode::RESTORE_ALL)
   , perPartitionDataDistribution(false)
   , saveMemorySEV(false)
+  , dryRun (false)
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -35,7 +36,6 @@ void CommandLine::printVersion(bool toInfofile )
 }
 
 
-
 void CommandLine::printHelp()
 {
   printVersion(false); 
@@ -48,26 +48,28 @@ void CommandLine::printHelp()
 	    << "    -f binFile       a binary alignment file that has been created by the appropriate parser before (see manual for help)\n"
 	    << "    -s seed          a master seed for the MCMC\n"
 	    << "    -n ruid          a run id\n" 
+	    << "    -r id            restart from checkpoint. Just specify the id of the previous run here. \n"
+	    << "                       Make sure, ExaBayes can access all files from this previous run. Notice\n"
+	    << "                       that this option is not mandatory for the start-up.\n "
 	    << std::endl;     
 
   std::cout << "\n" 
 	    <<  "Options:\n" 
 	    << "    -v               print version and quit\n"
 	    << "    -h               print this help\n" 
+	    << "    -d               execute a dry-run. Procesess the input, but does not execute any sampling.\n"
 	    << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the examples/ folder\n"
 	    << "    -w dir           specify a working directory for output files\n"
-	    << "    -r id            restart from checkpoint. Just specify the id of the previous run here. \n"
-	    << "                       Make sure, ExaBayes can access all files from this previous run.\n"
 	    << "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n"
 	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n"
 	    << "    -Q               per-partition data distribution (use this only with many partitions, check manual\n"
 	    << "                       for detailed explanation)\n"
 	    << "    -m               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
 	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
-	    << "    -M mode          specifies the memory versus runtime trade (NOT IMPLEMENTED)\n"
-	    << "            0          fastest\n" 
-	    << "            1          standard\n"
-	    << "            2          TODO\n"
+	    << "                       On very gappy alignments this option yields considerable runtime improvements. \n"
+	    << "    -M mode          specifies the memory versus runtime trade (see manual for detailed discussion).\n"
+	    << "                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,\n"
+	    << "                       least memory consumption)\n"
 	    << std::endl; 
 
   ParallelSetup::genericExit(-1); 
@@ -97,7 +99,7 @@ void CommandLine::parse(int argc, char *argv[])
 
   // TODO threads/ processes? 
   
-  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:M:C:Qm")) != EOF)
+  while( (c = getopt(argc,argv, "c:df:vhn:w:s:t:R:r:M:C:Qm")) != EOF)
     {
       try
 	{	  
@@ -116,6 +118,9 @@ void CommandLine::parse(int argc, char *argv[])
 	    case 'v':  		// version 
 	      printVersion(false );
 	      ParallelSetup::genericExit(0); 
+	      break; 
+	    case 'd': 
+	      dryRun = true; 
 	      break; 
 	    case 'h': 		// help 
 	      printHelp();
@@ -170,18 +175,17 @@ void CommandLine::parse(int argc, char *argv[])
       std::cerr << "please specify a runid with -n runid" << std::endl; 
       abort(); 
     }
-
-  if(seed.v[0] == 0 && not checkpointId.compare("") == 0 )
-    {
-      std::cerr << "please specify a seed via -s seed (must NOT be 0)"   << std::endl; 
-      abort(); 
-    }
-
-
+  
   if(seed.v[0] != 0 && checkpointId.compare("") != 0 )
     {
       std::cout << std::endl << "You provided a seed and run-id for a restart from a checkpoint.\n"
 		<< "Please be aware that the seed will be ignored." << std::endl; 
+    }
+
+  if(checkpointId.compare("") == 0 && seed.v[0] == 0 )
+    {
+      std::cerr << "please specify a seed via -s seed (must NOT be 0)"   << std::endl; 
+      abort(); 
     }
 
   
@@ -217,6 +221,17 @@ void CommandLine::parse(int argc, char *argv[])
     }
 
 }
+
+RunModes CommandLine::getTreeInitRunMode() const 
+{
+  auto runmodes = RunModes::NOTHING; 
+  if(isPerPartitionDataDistribution())
+    runmodes = runmodes | RunModes::PARTITION_DISTRIBUTION; 
+  if(isSaveMemorySEV())
+    runmodes = runmodes | RunModes::MEMORY_SEV; 
+  return runmodes; 
+} 
+
 
 
 randCtr_t CommandLine::getSeed() const

@@ -37,7 +37,7 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
 	{
 	  for(nat j = i+1; j < numElem; ++j )
 	    {
-	      auto sctr = info.getCounter(i,j); 
+	      // auto sctr = info.getCounter(i,j); 
 	      fh << "\tsw("  << i << "," << j << ")$run" << run.getRunid(); 
 	    }
 	}
@@ -74,7 +74,7 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
       auto m = run.getSwapInfo().getMatrix();
       for(auto &elem  : m)
 	{
-	  fh << "\t" << elem.getRatioInLast100() 
+	  fh << "\t" << elem.getRatioInLastInterval()
 	     << "," << elem.getRatioOverall() 
 	     << "," << elem.getTotalSeen();
 	}
@@ -111,7 +111,10 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
 	}
       auto& p = name2proposal[name]; 
       auto &sctr = p->getSCtr();
-      fh << "\t" << sctr.getRatioInLast100() << "," << sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
+      fh << "\t" << 
+	// sctr.getRatioInLast100()
+	sctr.getRatioInLastInterval()
+	 << "," << sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
     }	  
 
   fh << std::endl; 

@@ -23,6 +23,7 @@ public:
   virtual void autotune()  ;
 
   virtual AbstractProposal* clone() const {return new ParameterProposal(*this) ;   }
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln ) const ; 
 
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  
   { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}

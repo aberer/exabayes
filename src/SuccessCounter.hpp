@@ -7,14 +7,14 @@
 
 typedef  unsigned int nat ; 
 
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 
 #define SIZE_OF_LAST 100 
 
 // TODO  an success interval would be nice 
 
 
-class SuccessCounter : public Checkpointable
+class SuccessCounter : public Serializable
 {
 public: 
   SuccessCounter();  
@@ -24,26 +24,23 @@ public:
   void accept(); 
   void reject();
   int getRecentlySeen() const {return localAcc + localRej; }
-  double getRatioInLast100() const ; 
   double getRatioInLastInterval() const ; 
   double getRatioOverall() const ; 
   void nextBatch(); 
   int getBatch() const {return batch; }
   nat getTotalSeen()const  {return globalAcc + globalRej; }
   
-  virtual void readFromCheckpoint( std::istream &in )   ; 
-  virtual void writeToCheckpoint( std::ostream &out) const ;   
+  virtual void deserialize( std::istream &in )   ; 
+  virtual void serialize( std::ostream &out) const ;   
 
 
   SuccessCounter operator+(const SuccessCounter &rhs) const ; 
   
 private: 			// METHODS
   void reset();  
-  void addOrReplace(bool acc); 
+  // void addOrReplace(bool acc); 
 
 private:		  // ATTRIBUTES
-// last x events. Only for debug, no functionality in tuning 
-  std::list<bool> lastX ;	// not checkpointed     
   int globalAcc; 
   int globalRej;   
   int localAcc; 
@@ -52,11 +49,5 @@ private:		  // ATTRIBUTES
 
   friend std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &b ); 
 }; 
-
-
-inline std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &sctr)
-{  
-  return  rhs <<  std::setprecision(1) <<  std::fixed << sctr.globalAcc  << "/" << sctr.globalRej << " (" <<  sctr.getRatioInLast100() * 100 << "%/"  << sctr.getRatioOverall() *  100    << "%)" ;  
-}
 
 #endif

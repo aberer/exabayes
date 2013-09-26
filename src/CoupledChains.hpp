@@ -26,7 +26,7 @@
  */ 
 
 
-class CoupledChains : public Checkpointable
+class CoupledChains : public Serializable
 {
 public: 
   ////////////////
@@ -58,15 +58,14 @@ public:
   void setSwapInterval(nat i) {swapInterval = i; }
   void setSamplingFreq(nat i) {samplingFreq = i; }
   void setHeatIncrement(double temp ) { heatIncrement = temp ; } 
-  void setTuneHeat(bool bla){tuneHeat = bla ; }  
   void setTemperature(double temp ){heatIncrement = temp;  } 
   vector<Chain>& getChains() {return chains; } 
   nat getRunid()  const {return runid; }
   const vector<Chain>& getChains() const {return chains; }
   int getNumberOfChains(){return chains.size();}
-  void enableHeatTuning(int freq ) { tuneHeat = true; tuneFreq = freq; }  
+  void setNumSwaps(nat ns) {numSwaps = ns; }
   void setRunName(string a) {runname = a;  }
-  void initializeOutputFiles()  ; 
+  void initializeOutputFiles(bool isDryRun)  ; 
   SwapMatrix getSwapInfo() const {return swapInfo; }
   void addToSwapMatrix(SwapMatrix toAdd){ swapInfo = swapInfo + toAdd;  }
   const Randomness& getRandomness() const {return rand; }
@@ -75,8 +74,8 @@ public:
 
   void finalizeOutputFiles()  ; 
 
-  virtual void readFromCheckpoint( std::istream &in ) ; 
-  virtual void writeToCheckpoint( std::ostream &out) const ;   
+  virtual void deserialize( std::istream &in ) ; 
+  virtual void serialize( std::ostream &out) const ;   
 
   void regenerateOutputFiles(std::string workdir, std::string prevId) ; 
   
@@ -93,7 +92,6 @@ private: 			// ATTRIBUTES
   Randomness rand; 
   int runid; 
   int tuneFreq; 
-  bool tuneHeat; 
   int printFreq; 
   int swapInterval; 
   int samplingFreq; 
@@ -103,6 +101,8 @@ private: 			// ATTRIBUTES
   // order is coupled to the heat id  
   std::unordered_map<nat,TopologyFile> paramId2TopFile; 
   std::vector<ParameterFile> pFile; 
+
+  nat numSwaps; 
 }; 
 
 #endif

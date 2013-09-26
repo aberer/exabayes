@@ -4,14 +4,14 @@
 #include "tune.h"
 #include "TreeRandomizer.hpp"
 #include "GibbsProposal.hpp"
+#include "priors/AbstractPrior.hpp"
 
 
-BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
-  :  multiplier(_multiplier)
+BranchLengthMultiplier::BranchLengthMultiplier(  double _multiplier)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult")
+  ,  multiplier(_multiplier)
 {
   needsFullTraversal = false; 
-  this->name = "blMult"; 
-  this->category = Category::BRANCH_LENGTHS; 
   relativeWeight = 20;
 }
 
@@ -27,8 +27,6 @@ BranchPlain BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomne
 void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   auto b = proposeBranch(traln, rand).toBlDummy(); 
-  
-  // nodeptr p = b.findNodePtr(traln); 
 
   assert(primaryParameters.size() == 1); 
   auto param = primaryParameters[0].get(); 
@@ -47,20 +45,27 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   
   b.setLength(newZ); 
 
+  // tout << "proposing " << newZ << " for "  << b  << "\twith multiplier=" << drawnMultiplier << std::endl; 
+
   if(not BoundsChecker::checkBranch(b))
     BoundsChecker::correctBranch(b); 
   traln.setBranch(b, param); 
 
   double realMultiplier = log(b.getLength()) / log(oldZ); 
-  updateHastings(hastings, realMultiplier, name); 
+  AbstractProposal::updateHastingsLog(hastings, log(realMultiplier), name); 
 
-  prior.updateBranchLengthPrior(traln, oldZ, b.getLength(), param) ; 
+  double prNew = param->getPrior()->getLogProb( { b.getInterpretedLength(traln, param) } ); 
+  double prOld = param->getPrior()->getLogProb( { savedBranch.getInterpretedLength(traln, param) } );
+  
+  prior.addToRatio(prNew - prOld );
 }
 
 
 void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) 
 {
-  evaluator.evaluate(traln,savedBranch.toPlain(), false); 
+  assert(primaryParameters.size() == 1 ); 
+  auto parts = primaryParameters[0]->getPartitions();
+  evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false); 
 }
 
  

@@ -1,14 +1,15 @@
 #include "ExtendedSPR.hpp"
 #include "Path.hpp"
 #include "TreeAln.hpp"
+#include "priors/AbstractPrior.hpp"
 
 // #define DEBUG_ESPR
 
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
-  : stopProb(_stopProb), multiplier(_multiplier)    
+  : AbstractProposal(Category::TOPOLOGY,  "eSPR")
+  , stopProb(_stopProb) 
+  , multiplier(_multiplier)    
 {
-  this->name = "eSPR"; 
-  category = Category::TOPOLOGY; 
   relativeWeight = 5.;
   needsFullTraversal = false; 
 }
@@ -101,7 +102,10 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 
   // BEGIN  TODO remove modifiedPath
   auto bla = modifiedPath.at(modifiedPath.size()-1); 
-  move.extractMoveInfo(traln, {BranchPlain(p->number, p->back->number), BranchPlain(bla.getPrimNode(), bla.getSecNode()) }, getSecondaryParameterView() ); 
+  move.extractMoveInfo(traln, 
+		       {  BranchPlain(p->number, p->back->number), 
+			   BranchPlain(bla.getPrimNode(), bla.getSecNode()) },
+		       getSecondaryParameterView() ); 
   modifiedPath.clear(); 
   // END
 }
@@ -145,7 +149,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   move.applyToTree(traln, getSecondaryParameterView() ); 
 
   // double lnlAftermove = eval.evaluate(traln,move.getEvalBranch(traln), true); 
-
+  
   bool modifiesBl = false; 
   for(auto &v : secondaryParameters)
     modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
@@ -174,12 +178,24 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
       hastings += hastPart; 
       for(auto b : proposedBranches)
 	{
+	  // for(auto param : blParams)
+	  //   {
+	  //     auto bl = traln.getBranch(b.toPlain(), param); 
+	  //     prior.updateBranchLengthPrior(traln, bl.getLength(), b.getLength(param), param); 
+	  //   }
+
 	  for(auto param : blParams)
 	    {
-	      auto bl = traln.getBranch(b.toPlain(), param); 
-	      prior.updateBranchLengthPrior(traln, bl.getLength(), b.getLength(param), param); 
-	      traln.setBranch(b,blParams);
+	      auto dummy = traln.getBranch(b.toPlain(), param); 
+	      auto prevLen = dummy.getInterpretedLength(traln, param); 
+	      dummy.setLength(b.getLength(param)); 
+	      auto curLen = dummy.getInterpretedLength(traln,param); 
+	      
+	      auto ratio = param->getPrior()->getLogProb( { curLen } ) - param->getPrior()->getLogProb( {prevLen } ); 
+	      prior.addToRatio(ratio); 
 	    }
+
+	  traln.setBranch(b,blParams);
 	}
     }
   // double hastForward = hastPart; 
@@ -198,8 +214,9 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln)
 {  
   auto toEval = move.getEvalBranch(traln);
-  auto p = toEval.findNodePtr(traln); 
-  move.disorientAtNode(traln,p); 
+  for(auto &elem : move.getDirtyNodes())
+    evaluator.markDirty( traln, elem); 
+
   evaluator.evaluate(traln,toEval, false); 
 }
 
@@ -219,4 +236,10 @@ void ExtendedSPR::resetState(TreeAln &traln )
 AbstractProposal* ExtendedSPR::clone() const
 {
   return new ExtendedSPR( *this); 
+}
+
+
+std::vector<nat> ExtendedSPR::getInvalidatedNodes(const TreeAln& traln) const
+{
+  return move.getDirtyNodes();
 }

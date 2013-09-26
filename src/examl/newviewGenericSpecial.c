@@ -1364,18 +1364,18 @@ void newviewGeneric (tree *tr, nodeptr p, boolean masked)
   */
 
 
-  if(masked)
-    {
-      int model;
+  /* if(masked) */
+  /*   { */
+  /*     int model; */
       
-      for(model = 0; model < tr->NumberOfModels; model++)
-	{
-	  if(tr->partitionConverged[model])
-	    tr->executeModel[model] = FALSE;
-	  else
-	    tr->executeModel[model] = TRUE;
-	}
-    }
+  /*     for(model = 0; model < tr->NumberOfModels; model++) */
+  /* 	{ */
+  /* 	  if(tr->partitionConverged[model]) */
+  /* 	    tr->executeModel[model] = FALSE; */
+  /* 	  else */
+  /* 	    tr->executeModel[model] = TRUE; */
+  /* 	} */
+  /*   } */
 
   /* if there is something to re-compute */
 
@@ -1393,13 +1393,13 @@ void newviewGeneric (tree *tr, nodeptr p, boolean masked)
 
   /* clean up */
 
-  if(masked)
-    {
-      int model;
+  /* if(masked) */
+  /*   { */
+  /*     int model; */
       
-      for(model = 0; model < tr->NumberOfModels; model++)
-	tr->executeModel[model] = TRUE;
-    }
+  /*     for(model = 0; model < tr->NumberOfModels; model++) */
+  /* 	tr->executeModel[model] = TRUE; */
+  /*   } */
 
   tr->td[0].traversalHasChanged = FALSE;
 }

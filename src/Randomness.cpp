@@ -2,7 +2,7 @@
 #include <cstring>
 
 #include "Randomness.hpp" 
-#include "densities.h"
+#include "Density.hpp"
 
 
 Randomness::Randomness(randCtr_t seed)
@@ -338,7 +338,7 @@ std::ostream& operator<<(std::ostream& out, const Randomness &rhs)
 
 
 
-void Randomness::readFromCheckpoint( std::istream &in )  
+void Randomness::deserialize( std::istream &in )  
 { 
   key.v[0] = cRead<nat>(in); 
   key.v[1] = cRead<nat>(in) ; 
@@ -346,7 +346,7 @@ void Randomness::readFromCheckpoint( std::istream &in )
   ctr.v[1] = cRead<nat>(in); 
 }
  
-void Randomness::writeToCheckpoint( std::ostream &out)  const
+void Randomness::serialize( std::ostream &out)  const
 {
   cWrite(out, key.v[0]); 
   cWrite(out, key.v[1]); 

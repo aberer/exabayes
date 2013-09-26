@@ -7,7 +7,7 @@
 #include "axml.h"
 
 #include "GlobalVariables.hpp"
-#include "Checkpointable.hpp" 
+#include "Serializable.hpp" 
 
 class TreeAln; 
 
@@ -31,7 +31,7 @@ typedef threefry2x32_key_t randKey_t;
 typedef threefry2x32_ctr_t randCtr_t; 
 
 
-class Randomness : public Checkpointable
+class Randomness : public Serializable
 {
 public: 
   Randomness(randCtr_t seed); 
@@ -108,8 +108,8 @@ public:
   */ 
   int drawIntegerClosed(int upperBound); 
 
-  virtual void readFromCheckpoint( std::istream &in )  ; 
-  virtual void writeToCheckpoint( std::ostream &out) const; 
+  virtual void deserialize( std::istream &in )  ; 
+  virtual void serialize( std::ostream &out) const; 
 
   friend std::ostream& operator<<( std::ostream& out, const Randomness &rhs ); 
 

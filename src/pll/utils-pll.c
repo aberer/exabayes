@@ -941,8 +941,8 @@ boolean setupTree (tree *tr, boolean doInit, partitionList *partitions)
   tr->ntips       = 0;
   tr->nextnode    = 0;
 
-  for(i = 0; i < NUM_BRANCHES; i++)
-    tr->partitionSmoothed[i] = FALSE;
+  /* for(i = 0; i < NUM_BRANCHES; i++) */
+  /*   tr->partitionSmoothed[i] = FALSE; */
 
   tr->bitVectors = (unsigned int **)NULL;
 
@@ -953,10 +953,10 @@ boolean setupTree (tree *tr, boolean doInit, partitionList *partitions)
   tr->nameHash = initStringHashTable(10 * tr->mxtips);
 
   for (i = 0; i < partitions->numberOfPartitions; i++) {
-	partitions->partitionData[i] = (pInfo*)rax_malloc (sizeof(pInfo));
-	partitions->partitionData[i]->partitionContribution = -1.0;
-	partitions->partitionData[i]->partitionLH = 0.0;
-	partitions->partitionData[i]->fracchange = 1.0;
+    partitions->partitionData[i] = (pInfo*)rax_malloc (sizeof(pInfo));
+    partitions->partitionData[i]->partitionContribution = -1.0;
+    partitions->partitionData[i]->partitionLH = 0.0;
+    partitions->partitionData[i]->fracchange = 1.0;
   }
 
   return TRUE;
@@ -1250,7 +1250,7 @@ void initializePartitionData(tree *localTree, partitionList * localPartitions)
 	  localPartitions->partitionData[model]->gapVector = (unsigned int*)rax_calloc((size_t)localPartitions->partitionData[model]->gapVectorLength * 2 * (size_t)localTree->mxtips, sizeof(unsigned int));
 	  localPartitions->partitionData[model]->gapColumn = (double *)rax_malloc_aligned(((size_t)localTree->mxtips) *
 									       ((size_t)(localPartitions->partitionData[model]->states)) *
-									       discreteRateCategories(localTree->rateHetModel) * sizeof(double));
+											  discreteRateCategories(localTree->rateHetModel) * sizeof(double));
 	}
       else
 	{

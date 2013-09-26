@@ -21,10 +21,9 @@
 
 
 StatNNI::StatNNI( double _multiplier)
-  :  multiplier(_multiplier)
+  : AbstractProposal(Category::TOPOLOGY,  "stNNI")
+  ,   multiplier(_multiplier)
 {
-  this->name = "stNNI" ; 
-  this->category = Category::TOPOLOGY; 
   relativeWeight = 5; 
   needsFullTraversal = false; 
 }
@@ -129,8 +128,10 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln)
 {
   auto evalBranch = move.getEvalBranch(traln); 
-  nodeptr p = evalBranch.findNodePtr(traln);
-  move.disorientAtNode(traln, p);
+
+  for (auto &elem : move.getDirtyNodes())
+    evaluator.markDirty( traln, elem); 
+
   evaluator.evaluate(traln, evalBranch, false); 
 }
 
@@ -145,4 +146,10 @@ void StatNNI::resetState(TreeAln &traln)
 AbstractProposal* StatNNI::clone()  const
 {
   return new StatNNI( *this );
+}
+
+
+std::vector<nat> StatNNI::getInvalidatedNodes(const TreeAln& traln) const
+{
+  return move.getDirtyNodes();
 }

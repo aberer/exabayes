@@ -26,7 +26,7 @@
 #include <type_traits>
 
 #include "axml.h"
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 
 #include "TreeAln.hpp"
 #include "FlagType.hpp" 
@@ -47,7 +47,7 @@ template<typename TYPE>
 class LengthPart; 
 
 template<typename TYPE = void>
-class Branch : public Checkpointable, public LengthPart<TYPE>
+class Branch : public Serializable, public LengthPart<TYPE>
 {
 public: 
   /////////////////
@@ -62,9 +62,6 @@ public:
   ///////////////
   // observers //
   ///////////////
-  // double getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const; 
-  // double getInternalLength(const TreeAln &traln, double length) const; 
-  // void setConvertedInternalLength(const TreeAln& traln, const AbstractParameter* param, double length) ; 
   /**
      @brief switches the orientation of the branch (i.e., the reference node )
    */ 
@@ -132,8 +129,8 @@ public:
    */ 
   std::vector<nat> getBipartition(const TreeAln &traln ) const ; 
 
-  virtual void readFromCheckpoint( std::istream &in ) ; 
-  virtual void writeToCheckpoint( std::ostream &out) const  ;   
+  virtual void deserialize( std::istream &in ) ; 
+  virtual void serialize( std::ostream &out) const  ;   
 
 
   Branch<double> toBlDummy() const; 

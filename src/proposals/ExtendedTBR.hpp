@@ -23,6 +23,8 @@ public:
   virtual void readFromCheckpointCore(std::istream &in) {   } 
   virtual void writeToCheckpointCore(std::ostream &out) const { }  
 
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
+
 private: 			// METHODS
   void drawPaths(TreeAln &traln, Randomness &rand); 
   void buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &traln, Randomness &rand );

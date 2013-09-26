@@ -15,7 +15,7 @@ class Chain;
 #include "TreeAln.hpp"
 #include "Path.hpp"
 #include "AbstractProposal.hpp"
-#include "NniMove.hpp"
+#include "SprMove.hpp"
 
 class StatNNI : public AbstractProposal
 {
@@ -41,13 +41,16 @@ public:
   virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
 
+  std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const;  
+
 private: 			// METHODS
   void treatOneBranch(nodeptr p, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand); 
 
 private:			// ATTRIBUTES
   double multiplier; 
   Path path; 
-  NniMove move; 
+  // NniMove move; 
+  SprMove move; 
 };
 
 #endif

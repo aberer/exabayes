@@ -26,6 +26,8 @@ void ParallelSetup::printLoadBalance(const TreeAln& traln ) const
 #if HAVE_PLL == 0 
   auto &&ss = std::stringstream{};
 
+  ss << SOME_FIXED_PRECISION; 
+
   if(isGlobalMaster())
     ss << "load distribution (rank,#pattern):" << std::endl; 
   
@@ -109,7 +111,7 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
 	  if(isMyRun(run.getRunid()))
 	    {
 	      std::stringstream part; 
-	      run.getSwapInfo().writeToCheckpoint(part); 
+	      run.getSwapInfo().serialize(part); 
 	      // run.getRandomness().writeToCheckpoint(part); 
 	      // std::cout << "WROTE randomness " << run.getRandomness() << std::endl; 
 	      auto asString = part.str();
@@ -180,8 +182,8 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
 		      ss.str() = std::string(streamIter, streamIter + lengthOfSwap); 
 		      streamIter += lengthOfSwap; 
 
-		      SwapMatrix sw(run.getChains().size()); 
-		      sw.readFromCheckpoint(ss); 
+		       auto sw = SwapMatrix(run.getChains().size()); 
+		      sw.deserialize(ss); 
 		      // randCtr_t v = {0,0} ; 		      
 		      // Randomness rand(v);  
 		      // rand.readFromCheckpoint(ss);

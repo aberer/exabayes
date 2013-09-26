@@ -1,6 +1,5 @@
 #include <iostream> 
 #include <unordered_map> 
-#include <set>
 #include <fstream>
 #include <algorithm>
 #include <sstream>
@@ -26,7 +25,11 @@ std::unordered_map<std::string, std::vector<double>> readFile(std::string file)
   while(getline(istr, elem, '\t'))
     headers.push_back(elem); 
 
-  auto values = std::vector<std::vector<double>>(headers.size()); 
+  auto values = std::vector<std::vector<double>>(); 
+
+  for(nat i = 0; i < headers.size(); ++i)
+    values.push_back(std::vector<double>{}); 
+
   while(getline(fh, line))
     {
       nat ctr = 0; 
@@ -34,17 +37,12 @@ std::unordered_map<std::string, std::vector<double>> readFile(std::string file)
       auto elem = std::string{}; 
       while(getline(istr, elem, '\t'))
 	{
-	  std::istringstream elemHelper(elem); 
+	  auto &&elemHelper = std::istringstream(elem); 
 	  double value = 0; 
 	  elemHelper >> value; 
-	  values[ctr].push_back(value);
+	  values.at(ctr).push_back(value);
 	  ++ctr; 
 	}
-      getline(istr,elem,'\t'); 
-      std::istringstream elemHelper(elem); 
-      double value = 0; 
-      elemHelper >> value; 
-      values[ctr].push_back(value); 
     }
 
   // TODO watch out for amino acid stuff 
@@ -71,7 +69,10 @@ int main(int argc, char **argv)
 
   auto headerToValues = std::vector<std::unordered_map<std::string,std::vector<double>>>{};
   for(auto &file : files )
-    headerToValues.push_back(readFile(file));
+    {
+      std::cout << "reading file " << file  << std::endl; 
+      headerToValues.push_back(readFile(file));
+    }
 
   auto headers = std::vector<std::string>{}; 
   for (auto elem :  headerToValues[0]) 

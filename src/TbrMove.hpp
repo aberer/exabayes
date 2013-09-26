@@ -9,10 +9,11 @@ public:
   virtual ~TbrMove(){}   
   virtual void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const ; 
   virtual void revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const ; 
-  virtual void disorientAtNode(TreeAln &traln, nodeptr p) const ; 
   virtual void extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description, const std::vector<AbstractParameter*> &params) ; 
   virtual BranchPlain getEvalBranch(const TreeAln &traln) const ; 
   virtual AbstractMove* clone() const {return new TbrMove;}  
+
+  virtual std::vector<nat> getDirtyNodes() const; 
 
   friend std::ostream& operator<<(std::ostream &out, const TbrMove &rhs) ;  
 

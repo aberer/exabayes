@@ -1,9 +1,10 @@
 #include "GibbsBranchLength.hpp"
 #include "BoundsChecker.hpp"
 #include "GibbsProposal.hpp"
+#include "priors/AbstractPrior.hpp"
 
 GibbsBranchLength::GibbsBranchLength()
-  : BranchLengthMultiplier(0)
+  : BranchLengthMultiplier( 0)
 {
   name = "estGibbsBL"; 
   category = Category::BRANCH_LENGTHS; 
@@ -129,14 +130,16 @@ void GibbsBranchLength::applyToState(TreeAln &traln, PriorBelief &prior, double 
   auto param = params[0]; 
 
   b = traln.getBranch(b.toPlain(),param); 
-  double initBl = b.getLength(); 
   savedBranch = b; 
 
   auto newBranch = GibbsProposal::drawFromEsitmatedPosterior(b, eval, traln, rand,  MAX_ITER, hastings, param); 
   traln.setBranch(newBranch, param); 
 
-  // tout << "\t"  << newBranch.getInterpretedLength(traln,param) << std::endl; 
+  
+  double oldPr = param->getPrior()->getLogProb( { b.getInterpretedLength(traln,param) } ); 
+  double newPr = param->getPrior()->getLogProb( { newBranch.getInterpretedLength(traln,param) } ); 
 
-  prior.updateBranchLengthPrior(traln,initBl, newBranch.getLength(), param);  
+  prior.addToRatio( newPr - oldPr); 
+
 }
 #endif

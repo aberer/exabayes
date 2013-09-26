@@ -74,6 +74,7 @@ public:
       @brief gets the number of runs executed in parallel  
    */ 
   nat getRunsParallel() const {return runsParallel ; }
+  nat getGlobalRank() const {return globalRank; }
   /** 
       @brief gets the number of (coupled) chains executed in paralel (in addition to run-level parallelism)
    */ 

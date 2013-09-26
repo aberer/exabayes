@@ -3,43 +3,8 @@
 #include <limits>
 
 
-// std::ostream& operator<<(std::ostream &out, const Branch<void>& br)
-// {
-//   out << "(" << br.getPrimNode() << "/" << br.getSecNode() << ")"; 
-//   return out; 
-// }
-
-// std::ostream& operator<<(std::ostream &out, const Branch<double>& br)
-// {
-//   out << "(" << br.getPrimNode() << "/" << br.getSecNode() << ")"; 
-//   out << ":"  << br.getLength(); 
-//   return out; 
-// }
-
-// std::ostream& operator<<(std::ostream &out, const Branch<std::vector<double>>& br)
-// {
-//   out << "(" << br.getPrimNode() << "/" << br.getSecNode() << ")"; 
-//   out << ":[" ; 
-//   bool isFirst = true; 
-//   for(auto &v : br.getLengths())
-//     {
-//       if(isFirst)
-// 	isFirst = false; 
-//       else 
-// 	out << ","; 
-//       out << v ; 
-//     }
-//   out << "]"; 
-//   return out; 
-// }
-
-
-
-
-
-
 template<>
-void Branch<std::vector<double>>::readFromCheckpoint( std::istream &in )
+void Branch<std::vector<double>>::deserialize( std::istream &in )
 {
   thisNode = cRead<decltype(thisNode)>(in); 
   thatNode = cRead<decltype(thatNode)>(in);   
@@ -49,7 +14,7 @@ void Branch<std::vector<double>>::readFromCheckpoint( std::istream &in )
 }
 
 template<>
-void Branch<double>::readFromCheckpoint( std::istream &in )
+void Branch<double>::deserialize( std::istream &in )
 {
   thisNode = cRead<decltype(thisNode)>(in); 
   thatNode = cRead<decltype(thatNode)>(in);   
@@ -58,14 +23,14 @@ void Branch<double>::readFromCheckpoint( std::istream &in )
 
 
 template<>
-void Branch<void>::readFromCheckpoint( std::istream &in )
+void Branch<void>::deserialize( std::istream &in )
 {
   thisNode = cRead<decltype(thisNode)>(in); 
   thatNode = cRead<decltype(thatNode)>(in);   
 }
 
 template<>
-void Branch<double>::writeToCheckpoint( std::ostream &out)  const
+void Branch<double>::serialize( std::ostream &out)  const
 {
   cWrite<decltype(thisNode)>(out, thisNode); 
   cWrite<decltype(thatNode)>(out, thatNode); 
@@ -73,14 +38,14 @@ void Branch<double>::writeToCheckpoint( std::ostream &out)  const
 }
 
 template<>
-void Branch<std::vector<double>>::writeToCheckpoint( std::ostream &out)  const
+void Branch<std::vector<double>>::serialize( std::ostream &out)  const
 {
   assert(0); 
 }
 
 
 template<>
-void Branch<void>::writeToCheckpoint( std::ostream &out)  const
+void Branch<void>::serialize( std::ostream &out)  const
 {
   cWrite<decltype(thisNode)>(out, thisNode); 
   cWrite<decltype(thatNode)>(out, thatNode); 

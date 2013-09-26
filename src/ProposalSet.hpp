@@ -22,7 +22,7 @@
 #include <iostream>
 #include "AbstractProposal.hpp"
 
-class ProposalSet : public Checkpointable
+class ProposalSet : public Serializable
 {
 public: 
   // life cycle 
@@ -38,12 +38,14 @@ public:
       traversal is necessary
    */ 
   bool needsFullTraversal(); 
+  
+  nat numerateProposals(nat ctr); 
 
   double getRelativeWeight() const {return relativeWeight; }
   std::vector<AbstractProposal*> getProposalView() const;  
 
-  virtual void readFromCheckpoint( std::istream &in ); 
-  virtual void writeToCheckpoint( std::ostream &out) const;   
+  virtual void deserialize( std::istream &in ); 
+  virtual void serialize( std::ostream &out) const;   
 
   friend std::ostream& operator<<(std::ostream& out, const ProposalSet &rhs); 
 

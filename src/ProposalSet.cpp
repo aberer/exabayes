@@ -10,6 +10,7 @@ ProposalSet::ProposalSet(double relWeight, std::vector<std::unique_ptr<AbstractP
 #ifdef UNSURE
   assert(0);
 #endif
+
   // TODO should not be necessary  
   for(auto &p : proposals)
     p->setInSetExecution(true);
@@ -52,26 +53,42 @@ void ProposalSet::printVerboseAbbreviated(std::ostream &out, double sum) const
   out << relativeWeight / sum * 100 <<   "%\tSET(totalNumber=" << proposals.size() << "):" << std::endl;
   for(auto &p : proposals)
     {
-      // out << p.get() << std::endl << std::endl;   
       out << "\t"; 
+      out << p->getId() << "\t"; 
       p->printShort(out); 
       out << std::endl; 
     }
 }
 
 
-
-void ProposalSet::readFromCheckpoint( std::istream &in )
+nat ProposalSet::numerateProposals(nat ctr)
 {
   for(auto &p : proposals)
-    p->readFromCheckpoint(in);    
+    {
+      p->setId(ctr); 
+      ++ctr; 
+    }
+
+  return ctr; 
+} 
+
+
+
+void ProposalSet::deserialize( std::istream &in )
+{
+  for(auto &p : proposals)
+    {
+      nat num = cRead<int>(in); 
+      assert(p->getId() == num); 
+      p->deserialize(in);    
+    }
 }
 
 
-void ProposalSet::writeToCheckpoint( std::ostream &out) const
+void ProposalSet::serialize( std::ostream &out) const
 {
   for(auto &p : proposals)
-    p->writeToCheckpoint(out); 
+    p->serialize(out); 
 }   
 
 

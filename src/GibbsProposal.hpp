@@ -2,7 +2,7 @@
 #define _GIBBS_PROPOSAL 
 
 #include <array>
-#include "LikelihoodEvaluator.hpp"
+#include "eval/LikelihoodEvaluator.hpp"
 
 
 class GibbsProposal

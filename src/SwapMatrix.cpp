@@ -91,16 +91,16 @@ std::ostream&  operator<<(std::ostream &out, SwapMatrix& rhs )
 }
 
 
-void SwapMatrix::readFromCheckpoint( std::istream &in )   
+void SwapMatrix::deserialize( std::istream &in )   
 {  
   for(auto &s : matrix)
-    s.readFromCheckpoint(in);
+    s.deserialize(in);
 } 
 
-void SwapMatrix::writeToCheckpoint( std::ostream &out)  const
+void SwapMatrix::serialize( std::ostream &out)  const
 {
   for(auto &s : matrix)
-    s.writeToCheckpoint(out); 
+    s.serialize(out); 
 }
    
 

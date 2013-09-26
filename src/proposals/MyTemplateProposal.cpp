@@ -10,12 +10,9 @@
 
 // we need a constructor!  
 MyTemplateProposal::MyTemplateProposal( double aVariable)
+  : AbstractProposal( Category::TOPOLOGY, "MyTemplateProposal")
 {
-  name = "MyTemplateProposal"; 	
 
-  // check out Category.hpp and Category.cpp
-  category = Category::TOPOLOGY; 
-  
   relativeWeight = 2.0; 
 }
 
@@ -48,7 +45,7 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, Tree
     }
 
   
-  evaluator.evaluatePartitions(traln, allRelevantPartitions, true); 
+  // evaluator->evaluatePartitions(traln, allRelevantPartitions, true); 
   
   
   // let's do it again and use some c++ conveniences 
@@ -61,7 +58,7 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, Tree
   for(auto &var : primaryParameters)	
     for(auto p : var->getPartitions()) // iterate over all partitions in this parameter 
       allRelevantPartitions2.push_back(p); 
-  evaluator.evaluatePartitions(traln, allRelevantPartitions2,true); 
+  // evaluator.evaluatePartitions(traln, allRelevantPartitions2,true); 
 
   // when in doubt, there is always 
   tree *tr = traln.getTr(); 

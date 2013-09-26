@@ -60,34 +60,16 @@ std::vector<double> SlidingProposal::proposeRelativeMany(std::vector<double> old
     }
   else 
     {
-      double normer = 0; 
-      nat numHigh = 0,
-	numLow = 0; 
-      for(auto &v : oldValues)
-	{
-	  assert(v > 0); 	    
-	  if( v < minVal)
-	    {
-	      v = minVal; 
-	      ++numLow; 
-	    }
-	  else if(maxVal < v)
-	    {
-	      v = maxVal; 
-	      ++numHigh;
-	    }
-	  else 
-	    normer += v; 
-	}
-
-      normer = (1 - (minVal * numLow  +  maxVal * numHigh)) / normer ;
-
-      for(auto &v : oldValues)
-	if(v != minVal && v != maxVal)
-	  v *= normer; 
+      correctAbsoluteRates(oldValues);
     }
 
-  assert(fabs(std::accumulate(oldValues.begin(), oldValues.end(), 0.)  - 1.0 ) < 1e-6 ); 
+
+  double sum = std::accumulate(oldValues.begin(), oldValues.end(), 0.); 
+  if( fabs(sum - 1.0 ) > 1e-6 )
+    {
+      std::cerr << "Danger: while proposing values,  sum was " << sum << ". values: "   << oldValues  << std::endl; 
+      assert(0); 
+    }
 
   return oldValues; 
 }

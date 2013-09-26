@@ -24,7 +24,7 @@ std::vector<double> MultiplierProposal::proposeValues(std::vector<double> oldVal
   else if(maxVal < newVal)
     newVal = maxVal; 
 
-  AbstractProposal::updateHastings(hastings, multiplier, "multiplier"); 
+  AbstractProposal::updateHastingsLog(hastings, log(multiplier), "multiplier"); 
   oldValues[position] = newVal; 
   return oldValues;
 }

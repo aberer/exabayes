@@ -1,14 +1,13 @@
 #include "NodeSlider.hpp"
-#include "LikelihoodEvaluator.hpp"
+#include "eval/LikelihoodEvaluator.hpp"
 #include "BoundsChecker.hpp"
+#include "priors/AbstractPrior.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
-  : multiplier(_multiplier)
+  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider")
+  , multiplier(_multiplier)
 {
-  name = "nodeSlider"; 
-  this->category = Category::BRANCH_LENGTHS; 
   relativeWeight = 5.; 
-
   needsFullTraversal = false; 
 }
 
@@ -55,14 +54,15 @@ BranchPlain NodeSlider::proposeOtherBranch(const BranchPlain &firstBranch, const
 }
 
 
-void NodeSlider::prepareForEvaluation( TreeAln &traln) const 
+void NodeSlider::prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const 
 {
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
   
   auto b = BranchPlain(middleNode, otherNode); 
   nodeptr p = b.findNodePtr(traln);    
-  LikelihoodEvaluator::disorientNode( p); 
+
+  eval.markDirty( traln, p->number); 
 }
 
 
@@ -115,28 +115,39 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
 
   testBranch = oneBranch; 
   testBranch.setLength(newA); 
+  // tout << "changing " << oneBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
-  
+  double lnPrA = param->getPrior()->getLogProb( { testBranch.getInterpretedLength(traln,param)  } )
+    -   param->getPrior()->getLogProb( { oneBranch.getInterpretedLength(traln,param)  } ); 
+
   testBranch = otherBranch; 
   testBranch.setLength(newB); 
+  // tout << "changing " << otherBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
+  double lnPrB = param->getPrior()->getLogProb( { testBranch.getInterpretedLength(traln,param)  } )
+    -   param->getPrior()->getLogProb( { otherBranch.getInterpretedLength(traln,param)  } ); 
 
-  updateHastings(hastings, pow(drawnMultiplier,2), name); 
+  AbstractProposal::updateHastingsLog(hastings, log(pow(drawnMultiplier,2)), name); 
 
-  prior.updateBranchLengthPrior(traln, oldA, newA, param);
-  prior.updateBranchLengthPrior(traln, oldB, newB, param);
+  prior.addToRatio(lnPrA + lnPrB); 
 }
 
 void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
-  
+  assert(primaryParameters.size() == 1); 
   auto b = BranchPlain(middleNode, otherNode); 
-  nodeptr p = b.findNodePtr(traln);    
-  LikelihoodEvaluator::disorientNode( p); 
 
-  evaluator.evaluate(traln,b, false); 
+  auto parts =  primaryParameters[0]->getPartitions(); 
+
+  for(auto node : getInvalidatedNodes(traln) ) 
+    { 
+      for(auto part : parts)
+	evaluator.markDirty(traln, part, node); 
+    }
+
+  evaluator.evaluatePartitionsWithRoot(traln,b, parts, false); 
 }
 
 
@@ -154,3 +165,13 @@ AbstractProposal* NodeSlider::clone() const
 {
   return new NodeSlider(*this); 
 }  
+
+
+std::vector<nat> NodeSlider::getInvalidatedNodes(const TreeAln& traln) const
+{
+  nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
+  return { middleNode } ; 
+}
+
+
+ 

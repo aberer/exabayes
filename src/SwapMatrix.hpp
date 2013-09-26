@@ -7,9 +7,9 @@
 #include "common.h"
 #include "SuccessCounter.hpp"
 
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 
-class SwapMatrix : public Checkpointable
+class SwapMatrix : public Serializable
 {
 public: 
   SwapMatrix(nat numChains); 
@@ -19,8 +19,8 @@ public:
   void update(nat a, nat b, bool acc); 
   const SuccessCounter& getCounter(nat a, nat b ) const; 
 
-  virtual void readFromCheckpoint( std::istream &in )   ; 
-  virtual void writeToCheckpoint( std::ostream &out) const;   
+  virtual void deserialize( std::istream &in )   ; 
+  virtual void serialize( std::ostream &out) const;   
 
   std::vector<SuccessCounter> getMatrix() const {return matrix; }
 

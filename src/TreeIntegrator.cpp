@@ -1,21 +1,22 @@
 #include "TreeIntegrator.hpp"
 #include "BranchLengthMultiplier.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
-#include "RestoringLnlEvaluator.hpp"
 #include "Branch.hpp"
 #include "priors/ExponentialPrior.hpp"
 #include "ProposalRegistry.hpp"
 #include "proposals/BranchLengthMultiplier.hpp"
-#include "NniMove.hpp"
+#include "SprMove.hpp"
 #include "Arithmetics.hpp"
+#include "eval/FullCachePolicy.hpp"
 
 TreeIntegrator::TreeIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
-  auto restorer = std::make_shared<ArrayRestorer>(*tralnPtr);  
-  auto eval = std::unique_ptr<LikelihoodEvaluator>( new RestoringLnlEvaluator(restorer)); 
+  // auto eval = std::unique_ptr<LikelihoodEvaluator>(new RestoringLnlEvaluator(*tralnPtr)); 
+  auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(*tralnPtr, true, true ));
+auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get());
 
 #ifdef DEBUG_LNL_VERIFY
-  eval->setDebugTraln(debugTree);
+  eval.setDebugTraln(debugTree);
 #endif
 
   // s.t. we do not have to care about the branch length linking problem 
@@ -34,12 +35,12 @@ TreeIntegrator::TreeIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_pt
 
 
   std::vector<std::unique_ptr<AbstractProposal> >  proposals;   
-  proposals.emplace_back(new BranchLengthMultiplier(ProposalRegistry::initBranchLengthMultiplier)); 
+  proposals.emplace_back(new BranchLengthMultiplier( ProposalRegistry::initBranchLengthMultiplier)); 
   proposals[0]->addPrimaryParameter( std::move(params[0])); 
 
   std::vector<ProposalSet> pSets; 
 
-  integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval) ));
+  integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval), false ));
   integrationChain->getEvaluator().imprint(*tralnPtr);  
 }
 
@@ -135,17 +136,18 @@ void TreeIntegrator::integrateAllBranches(const TreeAln &otherTree, std::string 
   auto initBranch2Stat = integrateTree(numGen , thinning);
   
 
-  double initLnl = integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
+  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
+  double initLnl = traln.getTr()->likelihood; 
   for(auto elem : initBranch2Stat)
     {
       auto branch = elem.first; 
       branch.setConvertedInternalLength( traln, param, elem.second.first );
       traln.setBranch(branch, param); 
     }
-  double optLnl = integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
-  
 
-  
+  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
+  double optLnl = traln.getTr()->likelihood; 
+    
   // print 
   for(auto branch : traln.extractBranches(param))
     {
@@ -177,7 +179,8 @@ void TreeIntegrator::integrateAllBranches(const TreeAln &otherTree, std::string 
       bool isFirst = true; 
       for(auto nniAlternativeBranch : nniAlternativeBranches)
 	{
-	  auto move = NniMove{}; 
+	  // auto move = NniMove{}; 
+	  auto move = SprMove{}; 
 	  move.extractMoveInfo(traln, {moveBranch.toPlain(), nniAlternativeBranch.toPlain() } , params); 
 
 	  move.applyToTree(traln, params);
@@ -185,18 +188,27 @@ void TreeIntegrator::integrateAllBranches(const TreeAln &otherTree, std::string 
 
 	  auto afterMove = integrateTree(numGen, thinning); 
 
-	  double initLnl = integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
+	  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
+	  double initLnl = traln.getTr()->likelihood; 
 	  for(auto elem : afterMove)
 	    {
 	      auto branch = elem.first; 
 	      branch.setConvertedInternalLength( traln, param, elem.second.first );
 	      traln.setBranch(branch, param);
 	    }
-	  double optLnl = integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
+	  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
+	  double optLnl = traln.getTr()->likelihood; 
 
 	  for(auto b : traln.extractBranches(param))
 	    {
+#if 0 
 	      auto b4 = move.mapToBranchBeforeMove(b); // that's not a bad variable name, but a star trek:nemesis  reference
+	      
+#else 
+	      // TODO  cannot implement function from above right now  
+	      auto b4 = BranchPlain(); 
+	      assert(0); 
+#endif
 	      auto dist = b.toPlain().getDistance(moveBranch.toPlain(), traln) ; 
 	 
 	      if(branch2id.find(b4.toBlDummy()) == branch2id.end())

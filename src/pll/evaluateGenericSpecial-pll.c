@@ -431,17 +431,17 @@ void evaluateIterative(tree *tr, partitionList *pr)
     /* 
        Important part of the tarversal descriptor: 
        figure out if we need to recalculate the likelihood of this 
-partition: 
+       partition: 
 
-The reasons why this is important in terms of performance are given in this paper 
-here which you should actually read:
+       The reasons why this is important in terms of performance are given in this paper 
+       here which you should actually read:
 
-A. Stamatakis, M. Ott: "Load Balance in the Phylogenetic Likelihood Kernel". Proceedings of ICPP 2009, accepted for publication, Vienna, Austria, September 2009
+       A. Stamatakis, M. Ott: "Load Balance in the Phylogenetic Likelihood Kernel". Proceedings of ICPP 2009, accepted for publication, Vienna, Austria, September 2009
 
-The width > 0 check is for checking if under the cyclic data distribution of per-partition sites to threads this thread does indeed have a site 
-of the current partition.
+       The width > 0 check is for checking if under the cyclic data distribution of per-partition sites to threads this thread does indeed have a site 
+       of the current partition.
 
-*/
+    */
 
     if(tr->td[0].executeModel[model] && width > 0)
     {	
@@ -782,21 +782,21 @@ void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraver
   }
 
 /* #if 0 */
-  if(debugPrint)
-    {
-      printf("need to recompute: "); 
-      for(int i = 0; i < tr->td[0].count ; ++i)
-	{
-	  if(tr->td[0].ti != NULL )
-	    {
-	      if(i == 0)
-		printf("(%d=%d+%d),",  tr->td[0].ti[i].rNumber, tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber  );       
-	      else 
-		printf("(%d=%d+%d),",  tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber, tr->td[0].ti[i].rNumber ); 
-	    }
-	}
-      printf("\n"); 
-    } 
+  /* if(debugPrint) */
+  /*   { */
+  /*     printf("need to recompute: ");  */
+  /*     for(int i = 0; i < tr->td[0].count ; ++i) */
+  /* 	{ */
+  /* 	  if(tr->td[0].ti != NULL ) */
+  /* 	    { */
+  /* 	      if(i == 0) */
+  /* 		printf("(%d=%d+%d),",  tr->td[0].ti[i].rNumber, tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber  );        */
+  /* 	      else  */
+  /* 		printf("(%d=%d+%d),",  tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber, tr->td[0].ti[i].rNumber );  */
+  /* 	    } */
+  /* 	} */
+  /*     printf("\n");  */
+  /*   } */ 
 /* #endif */
 
   /* now we copy this partition execute mask into the traversal descriptor which must come from the 
@@ -1431,10 +1431,10 @@ static double evaluateGTRCAT_SAVE (int *cptr, int *wptr,
 
 
 static double evaluateGTRGAMMA_GAPPED_SAVE(int *wptr,
-    double *x1_start, double *x2_start, 
-    double *tipVector, 
-    unsigned char *tipX1, const int n, double *diagptable,
-    double *x1_gapColumn, double *x2_gapColumn, unsigned int *x1_gap, unsigned int *x2_gap)
+					   double *x1_start, double *x2_start, 
+					   double *tipVector, 
+					   unsigned char *tipX1, const int n, double *diagptable,
+					   double *x1_gapColumn, double *x2_gapColumn, unsigned int *x1_gap, unsigned int *x2_gap)
 {
   double   sum = 0.0, term;    
   int     i, j;

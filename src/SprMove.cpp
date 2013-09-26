@@ -27,12 +27,6 @@ void SprMove::revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &
   path.restoreBranchLengthsPath(traln, params); 
 }
 
- 
-void SprMove::disorientAtNode(TreeAln &traln, nodeptr p) const
-{
-  sprDisorientPath(traln,p, path);
-}
-
 
 void SprMove::extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description, const std::vector<AbstractParameter*> &params)
 {
@@ -473,6 +467,7 @@ std::vector<BranchLengths> SprMove::proposeBranches(TreeAln &traln, const std::v
 }
 
 
+#if 0 
 void SprMove::sprDisorientPath(TreeAln &traln, nodeptr p, const Path &pathHere) const 
 {  
   assert(pathHere.size() > 2) ; 
@@ -489,6 +484,7 @@ void SprMove::sprDisorientPath(TreeAln &traln, nodeptr p, const Path &pathHere) 
   sprDisorientPath( traln, p->next->back, pathHere); 
   sprDisorientPath( traln, p->next->next->back, pathHere);
 }
+#endif
 
 
 // #define DO_INTEGRATE 
@@ -523,7 +519,9 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
       resultVec.push_back(result.first); 
 #else 
       double d1 = 0., d2 = 0. ; 
+
       eval.evaluate(traln, b, true); 
+
       auto bCpy = b.toBlDummy(); 
       auto result = GibbsProposal::optimiseBranch(traln, bl, eval, d1,d2, 30, blParam); 
       bCpy.setLength(result); 
@@ -561,7 +559,8 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
 #endif
     }
 
-  double newLnl = eval.evaluate(traln, prunedSubtree, true); 
+  eval.evaluate(traln, prunedSubtree, true); 
+  double newLnl = traln.getTr()->likelihood; 
 
   revertTree(traln, blParams); 
   hastings = oldHastings; 
@@ -592,3 +591,16 @@ BranchPlain SprMove::getOppositeBranch(const TreeAln &traln ) const
 
   return BranchPlain(oneNode, otherNode); 
 }
+
+
+std::vector<nat> SprMove::getDirtyNodes() const 
+{
+  auto result = std::vector<nat>(); 
+  result.reserve(path.getNumberOfNodes()); 
+  for(int i = 1; i < path.getNumberOfNodes() -1 ; ++i)
+    result.push_back(path.getNthNodeInPath(i)) ;
+  
+  // tout << "for path " << path << " we have these dirty nodes "  << result << std::endl; 
+
+  return result; 
+} 

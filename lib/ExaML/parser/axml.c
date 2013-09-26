@@ -84,8 +84,8 @@
 #define _PORTABLE_PTHREADS
 
 
-/* carefull!  */
-#define INTS_PER_VECTOR 4
+/* nasty, but works */
+#define INTS_PER_VECTOR 8
 
 
 

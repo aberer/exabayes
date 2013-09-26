@@ -87,7 +87,7 @@
 
 #define badRear         -1
 
-#define NUM_BRANCHES     16
+/* #define NUM_BRANCHES     16 */
 
 #define TRUE             1
 #define FALSE            0
@@ -387,8 +387,8 @@ typedef struct
   int pNumber;
   int qNumber;
   int rNumber;
-  double qz[NUM_BRANCHES];
-  double rz[NUM_BRANCHES];
+  double *qz/* [NUM_BRANCHES] */;
+  double *rz/* [NUM_BRANCHES] */;
 } traversalInfo;
 
 typedef struct
@@ -441,10 +441,7 @@ typedef struct
 
 typedef  struct noderec
 {
-  double           z[NUM_BRANCHES];
-#ifdef _BAYESIAN 
-  double           z_tmp[NUM_BRANCHES];
-#endif 
+  double           *z/* [NUM_BRANCHES] */;
   struct noderec  *next;
   struct noderec  *back;
   hashNumberType   hash;
@@ -675,7 +672,7 @@ typedef  struct  {
   int              maxCategories;
   int              categories;
   
-  double           coreLZ[NUM_BRANCHES];
+  double           *coreLZ/* [NUM_BRANCHES] */;
   int              numBranches;
   
   
@@ -685,7 +682,7 @@ typedef  struct  {
   int              multiStateModel;
 
 
-  boolean curvatOK[NUM_BRANCHES];
+  boolean *curvatOK/* [NUM_BRANCHES] */;
   /* the stuff below is shared among DNA and AA, span does
      not change depending on datatype */
 
@@ -730,8 +727,8 @@ typedef  struct  {
   int              NumberOfModels;    
 
   boolean          bigCutoff;
-  boolean          partitionSmoothed[NUM_BRANCHES];
-  boolean          partitionConverged[NUM_BRANCHES];
+  boolean          *partitionSmoothed/* [NUM_BRANCHES] */;
+  boolean          *partitionConverged/* [NUM_BRANCHES] */;
   boolean          rooted;
   boolean          doCutoff;
  
@@ -750,17 +747,17 @@ typedef  struct  {
   nodeptr removeNode;
   nodeptr insertNode;
 
-  double zqr[NUM_BRANCHES];
-  double currentZQR[NUM_BRANCHES];
+  double *zqr/* [NUM_BRANCHES] */;
+  double *currentZQR/* [NUM_BRANCHES] */;
 
-  double currentLZR[NUM_BRANCHES];
-  double currentLZQ[NUM_BRANCHES];
-  double currentLZS[NUM_BRANCHES];
-  double currentLZI[NUM_BRANCHES];
-  double lzs[NUM_BRANCHES];
-  double lzq[NUM_BRANCHES];
-  double lzr[NUM_BRANCHES];
-  double lzi[NUM_BRANCHES];
+  double *currentLZR/* [NUM_BRANCHES] */;
+  double *currentLZQ/* [NUM_BRANCHES] */;
+  double *currentLZS/* [NUM_BRANCHES] */;
+  double *currentLZI/* [NUM_BRANCHES] */;
+  double *lzs/* [NUM_BRANCHES] */;
+  double *lzq/* [NUM_BRANCHES] */;
+  double *lzr/* [NUM_BRANCHES] */;
+  double *lzi/* [NUM_BRANCHES] */;
 
  
  
@@ -795,7 +792,7 @@ typedef struct {
 
 typedef struct
 {
-  double z[NUM_BRANCHES];
+  double *z/* [NUM_BRANCHES] */;
   nodeptr p, q;
   int cp, cq;
 }
@@ -823,7 +820,7 @@ typedef  struct
 
 
 typedef struct conntyp {
-    double           z[NUM_BRANCHES];           /* branch length */
+    double           *z/* [NUM_BRANCHES] */;           /* branch length */
     node            *p, *q;       /* parent and child sectors */
     void            *valptr;      /* pointer to value of subtree */
     int              descend;     /* pointer to first connect of child */

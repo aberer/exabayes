@@ -35,6 +35,7 @@ public:
   bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
   nat getChkpntFreq() const {return chkpntFreq; }
   bool isComponentWiseMH() const {return componentWiseMH; }
+  nat getNumSwaps() const {return numSwaps;}
 
 private: 
   nat diagFreq ; 
@@ -56,6 +57,7 @@ private:
   nat chkpntFreq; 
   bool componentWiseMH; 
   bool useAsdsfMax; 
+  nat numSwaps; 
 }; 
 
 

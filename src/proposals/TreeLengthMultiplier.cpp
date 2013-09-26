@@ -1,17 +1,18 @@
 #include "axml.h"
 
+
 #include "BoundsChecker.hpp"
 #include "TreeLengthMultiplier.hpp"
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
 #include "tune.h"
-
+#include "priors/UniformPrior.hpp"
+#include "priors/AbstractPrior.hpp"
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
-  : multiplier(_multiplier)    
+  : AbstractProposal(Category::BRANCH_LENGTHS, "TL-Mult")
+  , multiplier(_multiplier)    
 {
-  this->name = "TL-Mult"; 
-  category = Category::BRANCH_LENGTHS; 
   relativeWeight = 2 ;
   needsFullTraversal = true; 
 }
@@ -34,10 +35,12 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   double newTL = 0; 
   // std::cout << "drew " <<  treeScaler << std::endl; 
 
+  bool haveUniformPrior = dynamic_cast<UniformPrior*>(blParam->getPrior());
+
   for(auto &b : newBranches)
     {
       auto initLength = b.getLength();
-      initTL += log(initLength); 
+      initTL += b.getInterpretedLength(traln, blParam);
 
       b.setLength(  pow(initLength, treeScaler) ); 
       
@@ -45,20 +48,22 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 	BoundsChecker::correctBranch(b);
 
       double realScaling = log(b.getLength()) / log(initLength); 
-      updateHastings(hastings, realScaling, "TL-multi"); 
-      newTL += log(b.getLength()); 
+      AbstractProposal::updateHastingsLog(hastings, log(realScaling), "TL-multi"); 
+      double tmp = b.getInterpretedLength(traln, blParam); 
+      newTL += tmp;
+
+      if(haveUniformPrior && blParam->getPrior()->getLogProb({tmp})  == - std::numeric_limits<double>::infinity())
+	{
+	  // tout << "danger: problematic length " << tmp << std::endl; 
+	  prior.addToRatio( - std::numeric_limits<double>::infinity()); 
+	}
     }
 
   for(auto &b : newBranches)
     traln.setBranch(b, blParam);
 
-  // well ... =/ 
-  initTL = exp(initTL); 
-  newTL = exp(newTL); 
-
-  // tout  << MAX_SCI_PRECISION << "treeScaler=" << treeScaler << "\tinitTL=" << initTL << "\tnewTL="  << newTL << std::endl; 
-
-  prior.updateBranchLengthPrior(traln, initTL, newTL, blParam);
+  if(not haveUniformPrior)
+    prior.addToRatio(blParam->getPrior()->getLogProb( { newTL }  )  - blParam->getPrior()->getLogProb( { initTL } )  ); 
 }
 
 
@@ -92,7 +97,10 @@ void TreeLengthMultiplier::autotune()
 void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
   auto b = BranchPlain(traln.getTr()->start->number,traln.getTr()->start->back->number); 
-  evaluator.evaluate(traln,b, true); 
+
+  assert(primaryParameters.size( )== 1); 
+  auto parts = primaryParameters[0]->getPartitions(); 
+  evaluator.evaluatePartitionsWithRoot(traln,b, parts, true); 
 }
 
 
@@ -110,6 +118,15 @@ void TreeLengthMultiplier::readFromCheckpointCore(std::istream &in)
 void TreeLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
   cWrite(out, multiplier); 
+} 
+
+
+std::vector<nat> TreeLengthMultiplier::getInvalidatedNodes(const TreeAln& traln) const
+{
+  auto result = std::vector<nat>{}; 
+  for(nat i = traln.getNumberOfTaxa() + 1 ; i < traln.getNumberOfNodes() + 1  ; ++i)
+    result.push_back(i); 
+  return result; 
 } 
 
 

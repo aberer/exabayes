@@ -9,6 +9,8 @@
 #include "Randomness.hpp"
 #include "MemoryMode.hpp"
 
+#include "RunModes.hpp"
+
 
 class CommandLine
 {
@@ -26,8 +28,11 @@ public:
   std::string getCheckpointId()const {return checkpointId; }
   bool isPerPartitionDataDistribution() const {return perPartitionDataDistribution; }
   void parseAlternative(int argc, char *argv[]); 
+  bool isSaveMemorySEV() const {return saveMemorySEV; }
 
   MemoryMode getMemoryMode()const {return memoryMode ;  }
+  bool isDryRun() const {return dryRun; }
+  RunModes getTreeInitRunMode() const ; 
 
 private: 			// METHODS
 
@@ -48,6 +53,7 @@ private: 			// ATTRIBUTES
   MemoryMode memoryMode; 
   bool perPartitionDataDistribution; 
   bool saveMemorySEV; 
+  bool dryRun; 
 }; 
 
 

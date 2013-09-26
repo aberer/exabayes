@@ -82,21 +82,6 @@ bool Bipartition::operator==(const Bipartition &rhs) const
 }
 
 
-// Bipartition::Bipartition(const Bipartition &rhs) 
-//   : bip(rhs.bip)
-//   , hash(rhs.hash)
-// {
-// }
-
-
-// Bipartition& Bipartition::operator=(Bipartition rhs)
-// {
-//   if(this != &rhs)
-//     std::swap(*this, rhs); 
-//   return *this; 
-// }
-
-
 Bipartition Bipartition::operator| (const Bipartition &rhs) const
 {
   auto result = Bipartition{}; 

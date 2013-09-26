@@ -110,7 +110,7 @@ extern "C" {
 
 
   /* really problematic */
-#define NUM_BRANCHES     1024
+/* #define NUM_BRANCHES     1024 */
 
 #define TRUE             1
 #define FALSE            0
@@ -482,8 +482,8 @@ typedef struct
   int pNumber;                  /**< should exist in some nodeptr p->number */
   int qNumber;/**< should exist in some nodeptr q->number */
   int rNumber;/**< should exist in some nodeptr r->number */
-  double qz[NUM_BRANCHES];
-  double rz[NUM_BRANCHES];
+  double *qz/* [NUM_BRANCHES] */;
+  double *rz/* [NUM_BRANCHES] */;
   /* recom */
   int slot_p;                   /**< In recomputation mode, the RAM slot index for likelihood vector of node p, otherwise unused */
   int slot_q;                   /**< In recomputation mode, the RAM slot index for likelihood vector of node q, otherwise unused */
@@ -764,10 +764,7 @@ typedef  struct noderec
 {
  
   branchInfo      *bInf;
-  double           z[NUM_BRANCHES];
-#ifdef _BAYESIAN 
-  double           z_tmp[NUM_BRANCHES];
-#endif 
+  double           *z/* [NUM_BRANCHES] */;
   struct noderec  *next;        
   struct noderec  *back;       
   hashNumberType   hash;
@@ -895,7 +892,7 @@ typedef struct {
   unsigned char   **yVector;          /* Tip entries (sequence) for tip nodes */
   unsigned int     *globalScaler;     /* Counters for scaling operations done at node i */
   /* These are for the saveMemory option (tracking gaps to skip computations and memory) */
-  size_t           *xSpaceVector;     
+  size_t           *xSpaceVector; 
   int               gapVectorLength;
   unsigned int     *gapVector;
   double           *gapColumn; 
@@ -1082,7 +1079,7 @@ typedef  struct  {
   int              maxCategories;
   int              categories;
 
-  double           coreLZ[NUM_BRANCHES];
+  double           *coreLZ/* [NUM_BRANCHES] */;
   
  
   branchInfo	   *bInf;
@@ -1090,7 +1087,7 @@ typedef  struct  {
   int              multiStateModel;
 
 
-  boolean curvatOK[NUM_BRANCHES];
+  boolean *curvatOK/* [NUM_BRANCHES] */;
   /* the stuff below is shared among DNA and AA, span does
      not change depending on datatype */
 
@@ -1133,8 +1130,8 @@ typedef  struct  {
 
 
   boolean          bigCutoff;
-  boolean          partitionSmoothed[NUM_BRANCHES];
-  boolean          partitionConverged[NUM_BRANCHES];
+  boolean          *partitionSmoothed/* [NUM_BRANCHES] */;
+  boolean          *partitionConverged/* [NUM_BRANCHES] */;
   boolean          rooted;
   boolean          doCutoff;
  
@@ -1153,17 +1150,17 @@ typedef  struct  {
   nodeptr removeNode;   /**< the node that has been removed. Together with \a insertNode represents an SPR move */
   nodeptr insertNode;   /**< the node where insertion should take place . Together with \a removeNode represents an SPR move*/
 
-  double zqr[NUM_BRANCHES];
-  double currentZQR[NUM_BRANCHES];
+  double *zqr/* [NUM_BRANCHES] */;
+  double *currentZQR/* [NUM_BRANCHES] */;
 
-  double currentLZR[NUM_BRANCHES];
-  double currentLZQ[NUM_BRANCHES];
-  double currentLZS[NUM_BRANCHES];
-  double currentLZI[NUM_BRANCHES];
-  double lzs[NUM_BRANCHES];
-  double lzq[NUM_BRANCHES];
-  double lzr[NUM_BRANCHES];
-  double lzi[NUM_BRANCHES];
+  double *currentLZR/* [NUM_BRANCHES] */;
+  double *currentLZQ/* [NUM_BRANCHES] */;
+  double *currentLZS/* [NUM_BRANCHES] */;
+  double *currentLZI/* [NUM_BRANCHES] */;
+  double *lzs/* [NUM_BRANCHES] */;
+  double *lzq/* [NUM_BRANCHES] */;
+  double *lzr/* [NUM_BRANCHES] */;
+  double *lzi/* [NUM_BRANCHES] */;
 
 
   unsigned int **bitVectors;
@@ -1190,7 +1187,7 @@ typedef struct {
 
 typedef struct
 {
-  double z[NUM_BRANCHES];
+  double *z/* [NUM_BRANCHES] */;
   nodeptr p, q;
   int cp, cq;
 }
@@ -1223,7 +1220,7 @@ typedef  struct
 /** @brief Connection within a topology.
 *   */
 typedef struct conntyp {
-    double           z[NUM_BRANCHES];           /**< branch length */
+    double           *z/* [NUM_BRANCHES] */;           /**< branch length */
     node            *p, *q;       /**< parent and child sectors */
     void            *valptr;      /**< pointer to value of subtree */
     int              descend;     /**< pointer to first connect of child */

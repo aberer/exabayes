@@ -20,6 +20,9 @@
 #include <sstream>
 #include <chrono>
 
+
+int NUM_BRANCHES; 
+
 #include "axml.h" 
 
 #define _INCLUDE_DEFINITIONS
@@ -79,7 +82,7 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   
   randCtr_t r; 
   r.v[0] = 123; 
-  Randomness rand(r); 
+  auto&&  rand = Randomness(r); 
 
   TreeRandomizer::randomizeTree(traln, rand);
 
@@ -92,10 +95,18 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   
   exit(0); 
 #else 
-  SampleMaster master(  pl, cl );
+  auto&& master = SampleMaster(  pl, cl );
   master.initializeRuns(); 
-  master.run();
-  master.finalizeRuns();
+  if( cl.isDryRun())
+    {
+      std::cout << "Command line, input data and config file is okay. Exiting gracefully." << std::endl; 
+      exit(0); 
+    }
+  else 
+    {
+      master.run();
+      master.finalizeRuns();
+    }
 #endif
 }
 
@@ -114,18 +125,16 @@ void ignoreExceptionsDenormFloat()
 }
 
 
-#if HAVE_PLL != 0
-#include "globalVariables.h"
-#endif
-
-
 void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 {
-  stringstream ss; 
+  auto &&ss = stringstream{}; 
 
-  ss << OutputFile::getFileBaseName(cl.getWorkdir()) << "_info."  << cl.getRunid() ;
+  if(cl.isDryRun())
+    ss << "/dev/null" ; 
+  else 
+    ss << OutputFile::getFileBaseName(cl.getWorkdir()) << "_info."  << cl.getRunid() ;
 
-  if( pl.isGlobalMaster() && std::ifstream(ss.str()))
+  if( not cl.isDryRun() && pl.isGlobalMaster() && std::ifstream(ss.str()))
     {
       std::cerr << pl << std::endl; 
       std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
@@ -143,17 +152,28 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 }
 
 
-void initializeProfiler()
+static void initializeProfiler(const ParallelSetup& pl)
 {
   // see this page for info 
   // http://google-perftools.googlecode.com/svn/trunk/doc/cpuprofile.html  
   // that option is important
   // CPUPROFILE_FREQUENCY=x
 #ifdef _USE_GOOGLE_PROFILER
-  ProfilerStart("profile.out");
+
+#if HAVE_PLL != 0 
+  auto myProfileFile = "profile.out"; 
+  remove(myProfileFile);
+  ProfilerStart(myProfileFile);
+#else  
+  auto&& ss = std::stringstream {}; 
+  ss << "profile.out." << pl.getGlobalRank() ; 
+  auto myProfileFile = ss.str(); 
+  remove(myProfileFile.c_str()); 
+  ProfilerStart(myProfileFile.c_str()); 
+#endif
+
 #endif
 }
- 
 
  
 void finalizeProfiler()
@@ -164,30 +184,16 @@ void finalizeProfiler()
 }
 
 
-int main(int argc, char **argv)
-{ 
-  ParallelSetup pl(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
-
-  initializeProfiler();
-
-#if HAVE_PLL != 0 && ( (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS)))
-  assert(0); 
-#endif
-
-  ignoreExceptionsDenormFloat(); 
-  CommandLine cl(argc, argv); 
-
-#if HAVE_PLL == 0 
-  pl.initializeExaml(cl);
-#endif
-
-  makeInfoFile(cl, pl);
-
-  // cl.printVersion(true);  
+static void printInfoHeader(int argc, char **argv)
+{  
   tout << endl; 
 
-  tout << "This is " << PROGRAM_NAME << " version "
-       << VERSION
+  tout << "This is "
+#if HAVE_PLL != 0
+       << "Yggdrasil, the sequential variant of "
+#endif
+       << PROGRAM_NAME
+       << " version " << VERSION
        << ", a tool for Bayesian MCMC sampling of phylogenetic trees," 
 #if HAVE_PLL == 0 
        << "\nbuild with the ExaML code base and MPI-support."
@@ -207,6 +213,29 @@ int main(int argc, char **argv)
   tout << endl 
        << "================================================================"
        << endl; 
+}
+
+
+int main(int argc, char **argv)
+{ 
+  auto pl = ParallelSetup(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
+
+#if HAVE_PLL != 0 && ( (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS)))
+  assert(0); 
+#endif
+
+  ignoreExceptionsDenormFloat(); 
+  auto cl = CommandLine(argc, argv); 
+
+#if HAVE_PLL == 0 
+  pl.initializeExaml(cl);
+#endif
+
+  initializeProfiler(pl);
+
+  makeInfoFile(cl, pl);
+
+  printInfoHeader(argc,argv); 
 
   exa_main( cl, pl); 
 

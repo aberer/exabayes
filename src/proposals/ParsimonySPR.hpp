@@ -45,6 +45,8 @@ public:
   virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
   virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
+
 protected: 
   double parsWarp; 
   double blMulti;   

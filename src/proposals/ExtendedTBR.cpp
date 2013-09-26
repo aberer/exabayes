@@ -6,11 +6,10 @@
 // TODO the disorient is still  very inefficient 
 
 ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
-  :  extensionProbability(_extensionProb)
+  : AbstractProposal(Category::TOPOLOGY , "eTBR")
+  , extensionProbability(_extensionProb)
   , multiplier(_multiplier)
 {
-  name = "eTBR"; 
-  category = Category::TOPOLOGY; 
   relativeWeight = 5.;
   needsFullTraversal = false;
 }
@@ -147,8 +146,11 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& tral
   auto toEval = move.getEvalBranch(traln);
   // tout <<  "eval " << toEval << std::endl; 
   // tout << "TREE " << traln << std::endl; 
-  auto p = toEval.findNodePtr(traln); 
-  move.disorientAtNode(traln,p->back);     
+
+  auto dirtyNodes = move.getDirtyNodes();
+  
+  for(auto &elem : dirtyNodes)
+    evaluator.markDirty(traln,elem); 
 
   evaluator.evaluate(traln,toEval,false); 
 }
@@ -173,3 +175,9 @@ AbstractProposal* ExtendedTBR::clone() const
   return new ExtendedTBR( *this );
 }
 
+
+
+std::vector<nat> ExtendedTBR::getInvalidatedNodes(const TreeAln& traln) const
+{
+  return move.getDirtyNodes();
+} 

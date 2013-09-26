@@ -84,10 +84,11 @@ begin runconfig;
 
  [ MCMCMC ]
  numCoupledChains  2	[ number of chains per independent run (only one is cold)  => must be > 0] 
- heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
- swapInterval 1 	   [ attempt a swap between chains every n generations ]
- tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
- 
+ heatFactor 0.1   	[ the heat increment added to each hotter chain (this is not the inverse heat)   ]
+ swapInterval 1 	[ attempt a swap between chains every n generations ]
+ numSwaps     1         [  number of swaps to attempt between coupled chains for the swap interval ] 
+
+
  [ BURNIN ] 
  [ comment out one of the two options ]      
  [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  

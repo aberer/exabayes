@@ -21,7 +21,6 @@ class SprMove : public AbstractMove
 public:    		
   virtual void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const; 
   virtual void revertTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams ) const; 
-  virtual void disorientAtNode(TreeAln &traln, nodeptr p) const; 
   virtual void extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description,const std::vector<AbstractParameter*> &params); 
   virtual BranchPlain getEvalBranch(const TreeAln &traln) const; 
 
@@ -35,7 +34,7 @@ public:
 
   void integrateBranches( TreeAln &traln,  const std::vector<AbstractParameter*> blParam, LikelihoodEvaluator &eval, double &hastings ) const ; 
 
-  // std::vector<BranchLength> proposeBranches(TreeAln &traln); 
+  virtual std::vector<nat> getDirtyNodes() const ; 
 
   BranchPlain getInsertionBranchAfterInner() const ; 
   BranchPlain getInsertionBranchAfterOuter()  const ; 
@@ -51,7 +50,6 @@ public:
 
 protected:			// METHODS
   void sprCreatePath(const TreeAln &traln, BranchPlain mover, BranchPlain movedInto, Path &path, const std::vector<AbstractParameter*> &params ) const;
-  void sprDisorientPath(TreeAln &traln, nodeptr p, const Path &path) const ;
   void applyPath(TreeAln &traln, const Path &modifiedPath, const std::vector<AbstractParameter*> &params ) const; 
   void getPathAfterMove(const TreeAln &traln, const Path &modifiedPath, Path &resultPath) const; 
 

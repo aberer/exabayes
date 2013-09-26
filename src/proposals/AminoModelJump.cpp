@@ -4,10 +4,9 @@
 
 
 
-AminoModelJump::AminoModelJump(vector<aaMatrix_t> matrices)
+AminoModelJump::AminoModelJump( vector<aaMatrix_t> matrices)
+  : AbstractProposal( Category::AA_MODEL, "aaMat")
 {
-  name = "aaMat"; 	
-  category = Category::AA_MODEL ; 
   relativeWeight = 0.0; // ??? TODO 
 }
 

@@ -27,10 +27,12 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, 
 }
 
 
-void TopologyFile::initialize(const TreeAln& traln, nat someId)  
+void TopologyFile::initialize(const TreeAln& traln, nat someId, bool isDryRun)  
 {    
   rejectIfExists(fullFileName);   
-  // tout << "initialized topology file >" <<  fullFileName << "<" << std::endl;   
+
+  if(isDryRun)
+    return; 
 
   std::ofstream fh(fullFileName,std::fstream::out );  // std::fstream::app    
     

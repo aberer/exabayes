@@ -4,47 +4,29 @@
 #include <algorithm> 
 
 
-void ParameterContent::readFromCheckpoint( std::istream &in )  
+void ParameterContent::deserialize( std::istream &in )  
 {
-  nat found = 0; 
-  if(values.size() > 0 )
-    ++found; 
-  if(branchLengths.size() > 0)
-    ++found; 
-  if(topology.size() > 0)
-    ++found; 
-  assert(found == 1 ); 
-
   for(auto &v : values)
     v = cRead<double>(in); 
 
   for(auto &b : branchLengths)
-    b.readFromCheckpoint(in);
+    b.deserialize(in);
 
   for(auto &b : topology)
-    b.readFromCheckpoint(in); 
+    b.deserialize(in); 
 } 
 
 
-void ParameterContent::writeToCheckpoint( std::ostream &out) const 
+void ParameterContent::serialize( std::ostream &out) const 
 {
-  nat found = 0; 
-  if(values.size() > 0 )
-    ++found; 
-  if(branchLengths.size() > 0)
-    ++found; 
-  if(topology.size() > 0)
-    ++found; 
-  assert(found == 1 ); 
-
   for(auto &v : values)
     cWrite(out, v); 
 
   for(auto &b : branchLengths)    
-    b.writeToCheckpoint(out);
+    b.serialize(out);
 
   for(auto &b : topology)
-    b.writeToCheckpoint(out); 
+    b.serialize(out); 
 }   
 
 

@@ -8,6 +8,7 @@ AbstractParameter::AbstractParameter(Category cat, nat id, nat _idOfMyKind)
   , cat(cat) 
   , printToParamFile(true)
 {
+  
 }
 
 

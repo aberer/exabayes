@@ -1,15 +1,17 @@
 #include "AdHocIntegrator.hpp"
-#include "ArrayRestorer.hpp"
+#include "eval/ArrayRestorer.hpp"
 #include "Arithmetics.hpp"
+#include "eval/FullCachePolicy.hpp"
 
 
 AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
-  auto restorer = make_shared<ArrayRestorer>(*tralnPtr);  
-  auto eval = std::unique_ptr<LikelihoodEvaluator>( new RestoringLnlEvaluator(restorer)); 
+  // auto eval = std::unique_ptr<LikelihoodEvaluator>( new RestoringLnlEvaluator(*tralnPtr)); 
+  auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(*tralnPtr, true, true));
+  auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get() );
 
 #ifdef DEBUG_LNL_VERIFY
-  eval->setDebugTraln(debugTree);
+  eval.setDebugTraln(debugTree);
 #endif
   
   // s.t. we do not have to care about the branch length linking problem 
@@ -30,7 +32,7 @@ AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared
 
   std::vector<ProposalSet> pSets; 
 
-  integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval) ));
+  integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval), false ));
   integrationChain->getEvaluator().imprint(*tralnPtr);
 }
 

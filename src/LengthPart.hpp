@@ -13,28 +13,30 @@ class AbstractParameter;
 
 template<typename TYPE = void> class LengthPart
 {
+  // using paramType = void; 
 public: 
+  // trait-like (could be better...)
+  
   friend std::ostream& operator<<(std::ostream &out, const LengthPart& rhs)
   {
     return out; 
   }
-
-  // this could be a solution to the parameter dilemma. 
-  // but let's do more hard-coding for now 
-  static typename std::conditional< std::is_same<TYPE,double>::value, AbstractParameter* , std::vector<AbstractParameter*> >::type PARAM; 
 
   void extractLength(const TreeAln &traln ){} 
 
   void lengthToString(std::ostream &out)  const
   {
   }
-
 }; 
+
+
 
 
 template<> class LengthPart<double>
 {
 public: 
+  // using paramType = const AbstractParameter*; 
+
   /** 
       @brief gets the absolute (true) length of the branch
    */ 
@@ -61,7 +63,7 @@ public:
   }
 
   void extractLength(const TreeAln &traln, const BranchPlain& branch, const AbstractParameter*  param); 
-
+  
 protected: 
   double length; 
 }; 
@@ -70,6 +72,8 @@ protected:
 template<> class LengthPart<std::vector<double>>
 {
  public: 
+  // using paramType = const std::vector<AbstractParameter*>&; 
+
   double getLength(const AbstractParameter* param) const ; 
   const std::vector<double>& getLengths() const {return lengths; }
   void setLengths(std::vector<double> _lengths) { lengths = _lengths; } 

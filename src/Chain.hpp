@@ -15,12 +15,12 @@
 
 #include "ProposalSet.hpp"
 #include "PriorBelief.hpp"
-#include "LikelihoodEvaluator.hpp"
+#include "eval/LikelihoodEvaluator.hpp"
 #include "AbstractProposal.hpp"
 
 #include "file/TopologyFile.hpp"
 #include "file/ParameterFile.hpp"
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 
 #include "ParallelSetup.hpp"
 
@@ -28,7 +28,7 @@ class TreeAln;
 class AbstractProposal; 
 
 
-class Chain : public Checkpointable
+class Chain : public Serializable
 {
 public: 
   ////////////////
@@ -36,10 +36,10 @@ public:
   ////////////////
   Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, 
 	const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, 
-	std::vector<ProposalSet> proposalSets,
-	std::unique_ptr<LikelihoodEvaluator> eval);   
+	std::vector<ProposalSet> proposalSets, LikelihoodEvaluator eval, bool isDryRun);   
+  Chain( const Chain& rhs)   ; 
   Chain( Chain&& rhs) ; 
-  Chain& operator=(Chain rhs) ; 
+  Chain& operator=( Chain rhs) ; 
 
 
   /** 
@@ -71,7 +71,7 @@ public:
   /** 
       @brief switch state with chain rhs
    */ 
-  void switchState(Chain &rhs, ParallelSetup &pl);
+  // void switchState(Chain &rhs, ParallelSetup &pl);
   /** 
       @brief add a representation of the chain to the stream    
    */ 
@@ -79,7 +79,7 @@ public:
   /** 
       @brief print success rates of proposals 
    */ 
-  void printProposalState(std::ostream& out ) const ; 
+  // void printProposalState(std::ostream& out ) const ; 
   /** 
       @brief extracts the variables of a chain into a sorted array      
    */ 
@@ -101,12 +101,12 @@ public:
 
   // getters and setters 
   double getBestState() const {return bestState; }
-  LikelihoodEvaluator& getEvaluator() {return *(evaluator.get()); }
+  LikelihoodEvaluator& getEvaluator() {return evaluator; }
   const TreeAln& getTraln() const { return *tralnPtr; }
   TreeAln& getTraln()  { return *tralnPtr; }
   Randomness& getChainRand(){return chainRand;}
   std::shared_ptr<TreeAln> getTralnPtr()   {return tralnPtr; } // BAD 
-  double getChainHeat(); 
+  double getChainHeat() const; 
   void setDeltaT(double dt){deltaT = dt; }
   int getCouplingId() const {return couplingId; }
   void setCouplingId(int id) {couplingId = id; }
@@ -116,15 +116,20 @@ public:
   double getDeltaT() {return deltaT; }
   int getGeneration() const {return currentGeneration; }
   double getLikelihood() const {return likelihood; }
+  void setLikelihood(double lnl) { likelihood = lnl; } 
+  void setLnPr(double _lnPr) { lnPr = _lnPr;  }
   double getLnPr() const {return lnPr; }
   const PriorBelief& getPrior() const  {return prior; } 
   void updateProposalWeights(); 
  
-  virtual void readFromCheckpoint( std::istream &in ) ; 
-  virtual void writeToCheckpoint( std::ostream &out) const ;   
+  virtual void deserialize( std::istream &in ) ; 
+  virtual void serialize( std::ostream &out) const ;   
+
+  friend void swap(Chain &lhs, Chain &rhs); 
+  friend void swapHeatAndProposals(Chain &chainA, Chain& chainB) ; 
 
 private : 			// METHODS 
-  AbstractProposal* drawProposalFunction();
+  AbstractProposal& drawProposalFunction();
   ProposalSet& drawProposalSet(); 
   void printArrayStart(); 
   void initProposalsFromStream(std::istream& in);
@@ -148,7 +153,7 @@ private: 			// ATTRIBUTES
   double relWeightSumSets;   
   PriorBelief prior; 
   double bestState; 
-  std::unique_ptr<LikelihoodEvaluator> evaluator;   
+  LikelihoodEvaluator evaluator;   
   
   // suspending and resuming the chain   
   double likelihood;
@@ -159,8 +164,5 @@ private: 			// ATTRIBUTES
   // friends 
   friend std::ostream& operator<<(std::ostream& out, const Chain &rhs); 
 }; 
-
-
-
 
 #endif

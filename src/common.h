@@ -34,11 +34,11 @@
 #define NOT_IMPLEMENTED  0
 #define TODO 0
 
-typedef  unsigned int nat ; 
+typedef unsigned int nat; 
 
 #define TARGET_RATIO 0.25    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
-#define ACCEPTED_LNPR_EPS 1e-6 
+#define ACCEPTED_LNPR_EPS 1e-6
 
 
 /* ABOVE: stuff that is needed by everyone and can be defined
@@ -50,8 +50,6 @@ typedef  unsigned int nat ;
  */
 
 
-
-
 /* #define _MY_NEW_EVALUATOR */
 
 
@@ -61,6 +59,8 @@ typedef  unsigned int nat ;
 #define _DISABLE_INIT_LNL_CHECK
 /* #define INTEGRATION_GENERATION 3e4 */
 #define INTEGRATION_GENERATION 1e6
+
+#define DEBUG_SERIALIZE
 
 /* #define PROPOSE_BRANCHES_FOR_SPR */
 
@@ -76,26 +76,16 @@ typedef  unsigned int nat ;
 /* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
 /* #define DEBUG_PRINT_TUNE_INFO */
 
-/* #define ENABLE_PRSF */
 /* #define CONTROL_ESPR */
 /* #define DEBUG_TREE_LENGTH */
 /* #define DEBUG_PARS_SPR */
 
-/* for debugging:  */
+/* #define EVAL_DEBUG */
 
-#define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
-/* #define DEBUG_SHOW_TREE */
+/* debugging */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
-/* #define DEBUG_CHECK_TREE_CONSISTENCY */
-/* #define DEBUG_SHOW_TOPO_CHANGES */
-/* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
-
 /* #define DEBUG_LNL_VERIFY */
-/* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
-/* BAD BAD BAD */
-
+/* #define DEBUG_VERIFY_LNPR */
 
 /* #define PRINT_MUCH */
-
-
 #endif

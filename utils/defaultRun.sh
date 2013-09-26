@@ -2,16 +2,18 @@
 
 topdir=$(dirname  $0 )/../
 
-model=GAMMA
 # seed=1234
-# seed=20051
+# seed=20051 # parsimony prbolem 
 # seed=$RANDOM
-seed=23252
+
+
+seed=20051 
 # seed=5594
 # examples/
 
 numProc=2
 # extraArgs="-Q"
+# extraArgs="-M 1"
 # extraArgs="-m"
 
 # lakner-27
@@ -19,8 +21,9 @@ numProc=2
 
 # small dna 
 # seed=5594
+# seed=9127
 
-startFromBest=0
+startFromBest=1
 
 
 # find additional arguments for the call   
@@ -39,7 +42,7 @@ fi
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0
+useGoogleProfiler=1
 useClang=1
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
@@ -102,7 +105,7 @@ extra=$*
 configFile=$pathtodata/config.nex
 
 if [ "$codeBase" == "examl" ]; then    
-    args="$args --disable-pll"
+    args="$args --enable-mpi"
 
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  

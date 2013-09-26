@@ -11,20 +11,16 @@
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"
-#include "LikelihoodEvaluator.hpp"
+#include "eval/LikelihoodEvaluator.hpp"
 #include "TreeRandomizer.hpp"
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 
 
-class AbstractProposal : public Checkpointable
+class AbstractProposal : public Serializable
 {
 public: 
-  AbstractProposal()		
-  {
-    needsFullTraversal = true; 
-    inSetExecution = false; 
-  } 
-  AbstractProposal( const AbstractProposal& rhs); 
+  AbstractProposal( Category cat, const std::string& _name )  ; 
+  AbstractProposal( const AbstractProposal& rhs)  ;   
   AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
   virtual ~AbstractProposal(){}
 
@@ -71,6 +67,10 @@ public:
    */ 
   std::string getName() const {return name; }
   /** 
+      @brief gets nodes that are invalid by executed the proposal 
+   */ 
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln) const = 0;  
+  /** 
       @brief inform proposal about acceptance
    */ 
   void accept() {sctr.accept();}
@@ -104,8 +104,9 @@ public:
       @brief update the hatsings
       @param valToAdd is the absolute proposal ratio that shall be added 
    */ 
-  static void updateHastings(double &hastings, double valToAdd, std::string whoDoneIt); 
-  
+  static void updateHastingsLog(double &hastings, double valToAdd, std::string whoDoneIt); 
+
+  std::vector<nat> getAffectedPartitions() const ; 
 
   std::ostream& printNamePartitions(std::ostream &out); 
   std::ostream& printShort(std::ostream &out)  const ;
@@ -118,14 +119,16 @@ public:
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  = 0; 
 
   // we need to implement these 
-  void writeToCheckpoint( std::ostream &out)  const; 
-  void readFromCheckpoint( std::istream &in ); 
+  virtual void serialize( std::ostream &out)  const;  
+  virtual void deserialize( std::istream &in ) ; 
   
   void setPreparedBranch(BranchPlain b ) {preparedBranch = b;  }
-  // this is very bad =( 
   void setOtherPreparedBranch(BranchPlain b){preparedOtherBranch = b; }
 
   void setInSetExecution(bool exec) { inSetExecution = exec;  }
+  void setId(nat _id){id = _id; }
+  nat getId() const {return id; }
+
   /** 
       @brief writes proposal specific (tuned) parameters
    */ 
@@ -134,6 +137,8 @@ public:
       @brief reads proposal specific (tuned) parameters 
    */ 
   virtual void readFromCheckpointCore(std::istream &in) = 0; 
+
+  virtual void prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const  {} 
 
 protected:   
   std::string name;   
@@ -148,8 +153,10 @@ protected:
   // meh 
   BranchPlain preparedBranch; 
   BranchPlain preparedOtherBranch; 
+  
+  nat id; 
 
-  friend std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs); 
+  friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
 }; 
 
 #endif

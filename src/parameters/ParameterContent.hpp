@@ -5,19 +5,19 @@
 #include <vector>
 
 #include "Branch.hpp"
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 
  
 
-class  ParameterContent : public Checkpointable
+class  ParameterContent : public Serializable
 {
 public:   
   std::vector<double> values; 
   std::vector<BranchPlain> topology;
   std::vector<BranchLength> branchLengths; 
 
-  virtual void readFromCheckpoint( std::istream &in )  ; 
-  virtual void writeToCheckpoint( std::ostream &out)  const;   
+  virtual void deserialize( std::istream &in )  ; 
+  virtual void serialize( std::ostream &out)  const;   
 
   // AA model? 
 

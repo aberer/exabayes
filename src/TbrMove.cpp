@@ -24,35 +24,34 @@ void TbrMove::revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &
 } 
 
 
-void TbrMove::disorientAtNode(TreeAln &traln, nodeptr p) const 
-{
-  // limitation: must be the bisecting branch currently 
+// void TbrMove::disorientAtNode(TreeAln &traln, nodeptr p) const 
+// {
+//   // limitation: must be the bisecting branch currently 
 
-  int nodeA = path1.getNthNodeInPath(1),
-    nodeB = path2.getNthNodeInPath(1); 
+//   int nodeA = path1.getNthNodeInPath(1),
+//     nodeB = path2.getNthNodeInPath(1); 
 
-  nodeptr  q = nullptr, r = nullptr ; 
-  if(nodeA == p->number)
-    {
-      assert(nodeB == p->back->number); 
-      q = p; 
-      r = p->back; 
-    }
-  else if( nodeB  == p->number)
-    {
-      assert(nodeA == p->back->number); 
-      q = p->back; 
-      r = p ; 
-    }
-  else 
-    {
-      assert(0);
-    }
+//   nodeptr  q = nullptr, r = nullptr ; 
+//   if(nodeA == p->number)
+//     {
+//       assert(nodeB == p->back->number); 
+//       q = p; 
+//       r = p->back; 
+//     }
+//   else if( nodeB  == p->number)
+//     {
+//       assert(nodeA == p->back->number); 
+//       q = p->back; 
+//       r = p ; 
+//     }
+//   else 
+//     {
+//       assert(0);
+//     }
 
-  sprDisorientPath(traln,q, path1);
-  sprDisorientPath(traln,r, path2);
-} 
-
+//   // sprDisorientPath(traln,q, path1);
+//   // sprDisorientPath(traln,r, path2);
+// }
 
 void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description,const std::vector<AbstractParameter*> &params) 
 {
@@ -80,3 +79,19 @@ std::ostream& operator<<(std::ostream &out, const TbrMove &rhs)
   return out <<  "path1:"  << rhs.path1 << std::endl
 	     << "path2:" << rhs.path2 << std::endl; 
 }  
+
+
+std::vector<nat> TbrMove::getDirtyNodes() const
+{
+  auto result = std::vector<nat>(); 
+  result.reserve(path1.getNumberOfNodes() + path2.getNumberOfNodes() );
+  
+  for(int i = 1; i < path1.getNumberOfNodes()- 1; ++i)
+    result.push_back ( path1.getNthNodeInPath(i)) ;
+
+  for(int i = 1 ; i < path2.getNumberOfNodes() - 1 ; ++i)
+    result.push_back( path2.getNthNodeInPath(i)) ; 
+
+  return result; 
+} 
+

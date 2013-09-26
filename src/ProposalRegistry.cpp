@@ -10,9 +10,9 @@
 #include "ExtendedSPR.hpp"
 #include "ParsimonySPR.hpp"
 #include "StatNNI.hpp"
-#include "RadiusMlSPR.hpp"
+// #include "RadiusMlSPR.hpp"
 #include "BranchLengthMultiplier.hpp"
-#include "BranchCollapser.hpp"
+// #include "BranchCollapser.hpp"
 #include "AminoModelJump.hpp"
 #include "NodeSlider.hpp"
 #include "TreeLengthMultiplier.hpp"
@@ -38,7 +38,6 @@ const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ;
 
 
 const int ProposalRegistry::likeSprMinRadius = 1; 
-// const int ProposalRegistry::likeSprMaxRadius = std::numeric_limits<int>::max(); 
 const int ProposalRegistry::likeSprMaxRadius = 4; 
 const double ProposalRegistry::likeSpWarp = 1; 
 
@@ -47,7 +46,7 @@ const double ProposalRegistry::likeSpWarp = 1;
    @brief yields a set of proposls for integrating a category  
  */
 vector<unique_ptr<AbstractProposal> >
-ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval) const 
+ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln) const 
 {
   vector<unique_ptr<AbstractProposal> > result; 
   
@@ -130,14 +129,8 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 									   initDirichletAlpha)) ; 
 	  proposal->setRelativeWeight(0.5); 
 	  break; 
-	case ProposalType::GUIDED_SPR:
-	  proposal = unique_ptr<RadiusMlSPR>( new RadiusMlSPR(  config.getGuidedRadius() )); 
-	  break; 
 	case ProposalType::LIKE_SPR: 
 	  proposal = unique_ptr<LikelihoodSPR>(new LikelihoodSPR(  likeSprMinRadius, likeSprMaxRadius, likeSpWarp));
-	  break; 
-	case ProposalType::BRANCH_COLLAPSER:
-	  proposal = unique_ptr<BranchCollapser>( new BranchCollapser()); 
 	  break; 
 	case ProposalType::AMINO_MODEL_JUMP: 
 	  proposal = unique_ptr<AminoModelJump>( new AminoModelJump(someMatrices));
@@ -162,63 +155,3 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 
   return result; 
 } 
-
-
-
-#define MULTI_PARTITION_WEIGHT 1 
-
-// TODO remodel this entire function for productive use 
-vector<unique_ptr<AbstractProposal> >  
-ProposalRegistry::getMultiParameterProposals(std::vector<AbstractParameter*> params, const BlockProposalConfig &config, 
-					     const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval)
-{
-  std::vector<std::unique_ptr<AbstractProposal> >  result; 
-
-  // TODO this function should become more intelligent. Here I'll just
-  // hard code that we could have proposal per category 
-
-  std::unordered_map<Category, std::vector<AbstractParameter*>, CategoryHash > paramsPerCategory; 
-  for(auto &p : params)
-    {
-      auto &v =  paramsPerCategory[p->getCategory()]; 
-      v.push_back(p); 
-    }
-
-  for(auto &elem : paramsPerCategory)
-    {
-      tout << "for category " << elem.first << " we have " << std::endl; 
-      for(auto &e : elem.second)
-	tout << e << std::endl;       
-    }
-  
-  // initialize a revmat proposal 
-  std::unique_ptr<DirichletProposal> p(new DirichletProposal(BoundsChecker::rateMin, BoundsChecker::rateMax, true));
-
-  auto proposal =  new AlignmentProposal(Category::SUBSTITUTION_RATES, 
-					 "revMatDirichAll", 
-					 initDirichletAlpha, 
-					 paramsPerCategory[Category::SUBSTITUTION_RATES].size(), // 
-					 p.get() 
-					 // ,eval->clone()
-); 
-
-  // BAD =/ 
-  double userWeight = 1; 
-  ProposalType myType = ProposalType::DIRICH_REVMAT_ALL; 
-  if(config.wasSetByUser(myType))	
-    {
-      userWeight = config.getProposalWeight(myType); 
-      proposal->setRelativeWeight(userWeight); 
-      if(userWeight == 0)
-	return {}; 			// in lieu of continue 
-    }
-  else if( not ProposalTypeFunc::isReadyForProductiveUse(myType) )
-    return {}; 
-
-
-  for(auto &p : paramsPerCategory[Category::SUBSTITUTION_RATES])
-    proposal->addPrimaryParameter(std::unique_ptr<AbstractParameter>(p->clone())); 
-  result.emplace_back(proposal);
-
-  return result; 
-}

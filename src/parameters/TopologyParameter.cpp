@@ -13,7 +13,7 @@ ParameterContent TopologyParameter::extractParameter(const TreeAln &traln )  con
 {
   auto result = ParameterContent{}; 
   auto params = std::vector<AbstractParameter*>{};
-  result.topology = traln.extractBranches(); 
+  result.topology = traln.extractBranches(  ); 
   return result; 
 }   
 

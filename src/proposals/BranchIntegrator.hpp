@@ -6,10 +6,10 @@
 class BranchIntegrator  : public BranchLengthMultiplier
 {
 public: 
-  BranchIntegrator(double _mult )
-    : BranchLengthMultiplier(_mult)
+  BranchIntegrator( double _mult )
+    : BranchLengthMultiplier( _mult)
   {
-    name =  "blInt"; 
+    this->name =  "blInt"; 
     relativeWeight = 20; 
     this->category = Category::BRANCH_LENGTHS;     
   }
@@ -23,6 +23,8 @@ public:
   void setToPropose(BranchPlain b) { toPropose = b; }
 
   virtual AbstractProposal* clone() const {return new BranchIntegrator(*this); }   
+
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln ) const  {return {}; }
 
   virtual void autotune(){}
 

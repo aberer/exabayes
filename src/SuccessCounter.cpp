@@ -36,30 +36,30 @@ SuccessCounter SuccessCounter::operator=( const SuccessCounter &rhs)
 
 void SuccessCounter::accept() 
 {
-  globalAcc++;
-  localAcc++; 
-  addOrReplace(true); 
+  ++globalAcc;
+  ++localAcc; 
+  // addOrReplace(true); 
 }
 
 
 void SuccessCounter::reject()
 {
-  globalRej++;
-  localRej++; 
-  addOrReplace(false); 
+  ++globalRej;
+  ++localRej; 
+  // addOrReplace(false); 
 }
 
 
-double SuccessCounter::getRatioInLast100() const 
-{
-  double acc = 0, rej = 0 ; 
-  for(auto b : lastX )
-    if(b)
-      acc++;
-    else 
-      rej++; 
-  return acc / (acc+rej) ; 
-}
+// double SuccessCounter::getRatioInLast100() const 
+// {
+//   double acc = 0, rej = 0 ; 
+//   for(auto b : lastX )
+//     if(b)
+//       acc++;
+//     else 
+//       rej++; 
+//   return acc / (acc+rej) ; 
+// }
 
 
 
@@ -90,17 +90,17 @@ void SuccessCounter::reset()
 }
 
 
-void SuccessCounter::addOrReplace(bool acc)
-{ 
-  if(lastX.size() ==  SIZE_OF_LAST) 
-    {
-      lastX.pop_front(); 
-    }
-  lastX.push_back(acc); 
-}
+// void SuccessCounter::addOrReplace(bool acc)
+// { 
+//   if(lastX.size() ==  SIZE_OF_LAST) 
+//     {
+//       lastX.pop_front(); 
+//     }
+//   lastX.push_back(acc); 
+// }
 
 
-void SuccessCounter::readFromCheckpoint( std::istream &in )   
+void SuccessCounter::deserialize( std::istream &in )   
 {
   globalAcc = cRead<int>(in); 
   globalRej = cRead<int>(in); 
@@ -109,7 +109,7 @@ void SuccessCounter::readFromCheckpoint( std::istream &in )
   batch = cRead<int>(in); 
 }
  
-void SuccessCounter::writeToCheckpoint( std::ostream &out)  const
+void SuccessCounter::serialize( std::ostream &out)  const
 {
   cWrite<int>(out, globalAcc); 
   cWrite<int>(out, globalRej); 

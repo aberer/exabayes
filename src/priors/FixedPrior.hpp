@@ -1,46 +1,21 @@
 #ifndef _FIXE_PRIOR
 #define  _FIXE_PRIOR
 
+#include "AbstractPrior.hpp"
+
 
 class FixedPrior : public AbstractPrior
 {
 public: 
-  FixedPrior(std::vector<double> fixedValues) : fixedValues(fixedValues) 
-  {
-  } 
-  
-  virtual double getLogProb(std::vector<double> values)  const
-  {    
-    assert(values.size() == fixedValues.size()); 
-    for(nat i = 0; i < fixedValues.size() ; ++i)
-      assert(fixedValues[i] == values[i]);
-    return 0; 
-  }
+  FixedPrior(std::vector<double> fixedValues)   ; 
 
-  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
-  {
-    return fixedValues; 
-  }
+  virtual double getLogProb(std::vector<double> values)  const; 
+  virtual std::vector<double> drawFromPrior(Randomness &rand)  const ; 
 
-  virtual void print(std::ostream &out) const 
-  {
-    out << "Fixed(" ;     
-    bool first = true; 
-    for(auto v : fixedValues)
-      {
-	out << (first ? "" : ",") << v ; 
-	if(first) first = false; 
-      }
-    out << ")"; 
-  }
-
-  virtual ParameterContent getInitialValue() const
-  {
-    auto result = ParameterContent{}; 
-    result.values = fixedValues; 
-    return result; 
-  } 
-
+  virtual void print(std::ostream &out) const ; 
+  virtual ParameterContent getInitialValue() const; 
+ 
+  virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const; 
 
 private: 
   std::vector<double> fixedValues; 

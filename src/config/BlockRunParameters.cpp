@@ -21,6 +21,7 @@ BlockRunParameters::BlockRunParameters()
   , chkpntFreq(1000)
   , componentWiseMH(true)
   , useAsdsfMax(false)
+  , numSwaps(1)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "runconfig"; 
 }
@@ -54,9 +55,9 @@ void BlockRunParameters::Read(NxsToken &token)
 	return;
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
 	{
-	  NxsString key = token.GetToken(false);
+	  auto key = token.GetToken(false);
 	  token.GetNextToken(); 
-	  NxsString value = token.GetToken(false); 	    
+	  auto value = token.GetToken(false); 	    
 
 	  if(key.EqualsCaseInsensitive("numGen"))
 	    numGen = value.ConvertToInt(); 
@@ -68,6 +69,8 @@ void BlockRunParameters::Read(NxsToken &token)
 	    samplingFreq = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("componentWiseMH"))
 	    componentWiseMH = convertToBool(value); 
+	  else if(key.EqualsCaseInsensitive("numswaps"))
+	    numSwaps = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("numRuns"))	    
 	    numRunConv = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("diagFreq"))

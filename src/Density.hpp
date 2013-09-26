@@ -18,13 +18,16 @@ double exponentialDensity(double value, double lambda);
 
 
 /** @brief the gamma function */ 
-double gammaFunction(double alpha); 
+// double gammaFunction(double alpha); 
 
+namespace Density
+{
+  double lnDirichlet(std::vector<double> values, const std::vector<double> &alphas); 
+  // double dirichlet(std::vector<double> values, const std::vector<double> &alphas); 
 
-double densityDirichletLog(std::vector<double> values, const std::vector<double> &alphas); 
-double densityDirichlet(std::vector<double> values, const std::vector<double> &alphas); 
+  // double exponential(double value, double lambda); 
+  double lnExponential(double value, double lambda); 
 
-double exponentialDistribution(double value, double lambda); 
-
-double logGammaDensity (double x, double alpha, double beta ); 
+  double lnGamma(double x, double alpha, double beta ); 
+} 
 #endif

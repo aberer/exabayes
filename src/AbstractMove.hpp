@@ -20,14 +20,10 @@ public:
   
   virtual void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const = 0; 
   virtual void revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const = 0; 
-  virtual void disorientAtNode(TreeAln &traln, nodeptr p) const = 0; 
   virtual void extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description, const std::vector<AbstractParameter*> &params ) = 0; 
   virtual BranchPlain getEvalBranch(const TreeAln &traln) const = 0; 
 
-protected: 
-  void disorientHelper(const TreeAln &traln, nodeptr p) const ; 
-
-
+  virtual std::vector<nat> getDirtyNodes() const = 0; 
 }; 
 
 

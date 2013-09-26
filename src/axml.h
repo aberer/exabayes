@@ -10,7 +10,7 @@
 #include "config.h"
 #include "common.h"
 
-
+extern int NUM_BRANCHES; 
 
 #ifdef _USE_GOOGLE_PROFILER
 #include <google/profiler.h>
@@ -19,7 +19,6 @@
 #ifdef HAVE_AVX
 #define __AVX 
 #endif
-
 
 #if HAVE_PLL != 0
 
@@ -66,6 +65,3 @@ extern "C"{
 #endif
 
 #endif
-
-
-

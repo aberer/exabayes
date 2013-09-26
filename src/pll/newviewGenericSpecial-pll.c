@@ -81,6 +81,8 @@ extern const char genericStateNames[32];
 
 extern const unsigned int mask32[32];
 
+extern int debugPrint; 
+
 
 /* generic function for computing the P matrices, for computing the conditional likelihood at a node p, given child nodes q and r 
    we compute P(z1) and P(z2) here */
@@ -1070,431 +1072,454 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex)
      nodes in RAxML */
 
   for(i = startIndex; i < tr->td[0].count; i++)
-  {
-
-    traversalInfo *tInfo = &ti[i];
-    /* Note that the slots refer to different things if recomputation is applied */
-    if(tr->useRecom)
     {
-      /* a slot has been assigned while computing the traversal descriptor  */
-      p_slot = tInfo->slot_p;
-      q_slot = tInfo->slot_q;
-      r_slot = tInfo->slot_r;
-    }
-    else
-    {
-      /* a fixed slot is always given for each inner node, we only need an offset to get the right index */
-      p_slot = tInfo->pNumber - tr->mxtips - 1;
-      q_slot = tInfo->qNumber - tr->mxtips - 1;
-      r_slot = tInfo->rNumber - tr->mxtips - 1;
-    }
 
-    /* printf("evaluating %d <= %d,%d\n", tInfo->pNumber, tInfo->qNumber, tInfo->rNumber);  */
+      traversalInfo *tInfo = &ti[i];
+      /* Note that the slots refer to different things if recomputation is applied */
+      if(tr->useRecom)
+	{
+	  /* a slot has been assigned while computing the traversal descriptor  */
+	  p_slot = tInfo->slot_p;
+	  q_slot = tInfo->slot_q;
+	  r_slot = tInfo->slot_r;
+	}
+      else
+	{
+	  /* a fixed slot is always given for each inner node, we only need an offset to get the right index */
+	  p_slot = tInfo->pNumber - tr->mxtips - 1;
+	  q_slot = tInfo->qNumber - tr->mxtips - 1;
+	  r_slot = tInfo->rNumber - tr->mxtips - 1;
+	}
 
-    /* now loop over all partitions for nodes p, q, and r of the current traversal vector entry */
+      /* if(  debugPrint) */
+      /* printf("evaluating %d <= %d,%d\n", tInfo->pNumber, tInfo->qNumber, tInfo->rNumber); */
 
-    for(model = 0; model < pr->numberOfPartitions; model++)
-    {
-      /* number of sites in this partition */
-      size_t		
-        width  = (size_t)pr->partitionData[model]->width;
+      /* now loop over all partitions for nodes p, q, and r of the current traversal vector entry */
 
-      /* this conditional statement is exactly identical to what we do in evaluateIterative */
+      for(model = 0; model < pr->numberOfPartitions; model++)
+	{
+	  /* number of sites in this partition */
+	  size_t		
+	    width  = (size_t)pr->partitionData[model]->width;
 
-      if(tr->td[0].executeModel[model] && width > 0)
-      {	      
-        double
-          *x1_start = (double*)NULL,
-          *x2_start = (double*)NULL,
-          *x3_start = pr->partitionData[model]->xVector[p_slot],
-          *left     = (double*)NULL,
-          *right    = (double*)NULL,		
-          *x1_gapColumn = (double*)NULL,
-          *x2_gapColumn = (double*)NULL,
-          *x3_gapColumn = (double*)NULL,
-          *rateCategories = (double*)NULL;
+	  /* this conditional statement is exactly identical to what we do in evaluateIterative */
 
-        int
-          categories,
-          scalerIncrement = 0,
+	  if(tr->td[0].executeModel[model] && width > 0)
+	    {	      
+	      double
+		*x1_start = (double*)NULL,
+		*x2_start = (double*)NULL,
+		*x3_start = pr->partitionData[model]->xVector[p_slot],
+		*left     = (double*)NULL,
+		*right    = (double*)NULL,		
+		*x1_gapColumn = (double*)NULL,
+		*x2_gapColumn = (double*)NULL,
+		*x3_gapColumn = (double*)NULL,
+		*rateCategories = (double*)NULL;
 
-          /* integer wieght vector with pattern compression weights */
+	      int
+		categories,
+		scalerIncrement = 0,
 
-          *wgt = pr->partitionData[model]->wgt;
+		/* integer wieght vector with pattern compression weights */
 
-        unsigned int
-          *x1_gap = (unsigned int*)NULL,
-          *x2_gap = (unsigned int*)NULL,
-          *x3_gap = (unsigned int*)NULL;
+		*wgt = pr->partitionData[model]->wgt;
 
-        unsigned char
-          *tipX1 = (unsigned char *)NULL,
-          *tipX2 = (unsigned char *)NULL;
+	      unsigned int
+		*x1_gap = (unsigned int*)NULL,
+		*x2_gap = (unsigned int*)NULL,
+		*x3_gap = (unsigned int*)NULL;
 
-        double 
-          qz, 
-          rz;	     
+	      unsigned char
+		*tipX1 = (unsigned char *)NULL,
+		*tipX2 = (unsigned char *)NULL;
 
-        size_t
-          gapOffset = 0,
-                    rateHet = discreteRateCategories(tr->rateHetModel),
+	      double 
+		qz, 
+		rz;	     
 
-                    /* get the number of states in the data stored in partition model */
+	      size_t
+		gapOffset = 0,
+		rateHet = discreteRateCategories(tr->rateHetModel),
 
-                    states = (size_t)pr->partitionData[model]->states,
+		/* get the number of states in the data stored in partition model */
 
-                    /* get the length of the current likelihood array stored at node p. This is 
-                       important mainly for the SEV-based memory saving option described in here:
+		states = (size_t)pr->partitionData[model]->states,
 
-                       F. Izquierdo-Carrasco, S.A. Smith, A. Stamatakis: "Algorithms, Data Structures, and Numerics for Likelihood-based Phylogenetic Inference of Huge Trees".
+		/* get the length of the current likelihood array stored at node p. This is 
+		   important mainly for the SEV-based memory saving option described in here:
 
-                       So pr->partitionData[model]->xSpaceVector[i] provides the length of the allocated conditional array of partition model
-                       and node i 
-                       */
+		   F. Izquierdo-Carrasco, S.A. Smith, A. Stamatakis: "Algorithms, Data Structures, and Numerics for Likelihood-based Phylogenetic Inference of Huge Trees".
 
-                    availableLength = pr->partitionData[model]->xSpaceVector[p_slot],
-                    requiredLength = 0;	     
+		   So pr->partitionData[model]->xSpaceVector[i] provides the length of the allocated conditional array of partition model
+		   and node i 
+		*/
 
-        /* figure out what kind of rate heterogeneity approach we are using */
+		availableLength = pr->partitionData[model]->xSpaceVector[p_slot],
+		requiredLength = 0;	     
 
-        if(tr->rateHetModel == CAT)
-        {		 
-          rateCategories = pr->partitionData[model]->perSiteRates;
-          categories = pr->partitionData[model]->numberOfCategories;
-        }
-        else
-        {		  		 
-          rateCategories = pr->partitionData[model]->gammaRates;
-          categories = 4;
-        }
+	      /* figure out what kind of rate heterogeneity approach we are using */
 
-
-        /* memory saving stuff, not important right now, but if you are interested ask Fernando */
-
-        if(tr->saveMemory)
-        {
-          size_t
-            j,
-            setBits = 0;		  
-
-          gapOffset = states * (size_t)getUndetermined(pr->partitionData[model]->dataType);
-
-          x1_gap = &(pr->partitionData[model]->gapVector[tInfo->qNumber * pr->partitionData[model]->gapVectorLength]);
-          x2_gap = &(pr->partitionData[model]->gapVector[tInfo->rNumber * pr->partitionData[model]->gapVectorLength]);
-          x3_gap = &(pr->partitionData[model]->gapVector[tInfo->pNumber * pr->partitionData[model]->gapVectorLength]);
-
-          for(j = 0; j < (size_t)pr->partitionData[model]->gapVectorLength; j++)
-          {		     
-            x3_gap[j] = x1_gap[j] & x2_gap[j];
-            setBits += (size_t)(bitcount_32_bit(x3_gap[j])); 
-          }
-
-          requiredLength = (width - setBits)  * rateHet * states * sizeof(double);		
-        }
-        else
-        {
-          /* if we are not trying to save memory the space required to store an inner likelihood array 
-             is the number of sites in the partition times the number of states of the data type in the partition 
-             times the number of discrete GAMMA rates (1 for CAT essentially) times 8 bytes */
-          requiredLength  =  virtual_width( width ) * rateHet * states * sizeof(double);
-
-          //                   printf( "req: %d %d %d %d\n", requiredLength, width, virtual_width(width), model );
-        }
-        /* Initially, even when not using memory saving no space is allocated for inner likelihood arrats hence 
-           availableLength will be zero at the very first time we traverse the tree.
-           Hence we need to allocate something here */
-
-        if(requiredLength != availableLength)
-        {		  
-          /* if there is a vector of incorrect length assigned here i.e., x3 != NULL we must free 
-             it first */
-          if(x3_start)
-            rax_free(x3_start);
-
-          /* allocate memory: note that here we use a byte-boundary aligned malloc, because we need the vectors
-             to be aligned at 16 BYTE (SSE3) or 32 BYTE (AVX) boundaries! */
-
-          x3_start = (double*)rax_malloc_aligned(requiredLength);		 
-
-          /* update the data structures for consistent bookkeeping */
-          pr->partitionData[model]->xVector[p_slot] = x3_start;
-          pr->partitionData[model]->xSpaceVector[p_slot] = requiredLength;
-        }
-
-        /* now just set the pointers for data accesses in the newview() implementations above to the corresponding values 
-           according to the tip case */
-
-        switch(tInfo->tipCase)
-        {
-          case TIP_TIP:		  
-            tipX1    = pr->partitionData[model]->yVector[tInfo->qNumber];
-            tipX2    = pr->partitionData[model]->yVector[tInfo->rNumber];
-
-            if(tr->saveMemory)
-            {
-              x1_gapColumn   = &(pr->partitionData[model]->tipVector[gapOffset]);
-              x2_gapColumn   = &(pr->partitionData[model]->tipVector[gapOffset]);
-              x3_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
-            }
-
-            break;
-          case TIP_INNER:		 
-            tipX1    =  pr->partitionData[model]->yVector[tInfo->qNumber];
-            x2_start = pr->partitionData[model]->xVector[r_slot];
-            assert(r_slot != p_slot);
+	      if(tr->rateHetModel == CAT)
+		{		 
+		  rateCategories = pr->partitionData[model]->perSiteRates;
+		  categories = pr->partitionData[model]->numberOfCategories;
+		}
+	      else
+		{		  		 
+		  rateCategories = pr->partitionData[model]->gammaRates;
+		  categories = 4;
+		}
 
 
-            if(tr->saveMemory)
-	    {	
-              x1_gapColumn   = &(pr->partitionData[model]->tipVector[gapOffset]);
-              x2_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
-              x3_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
-            }
+	      /* memory saving stuff, not important right now, but if you are interested ask Fernando */
 
-            break;
-          case INNER_INNER:		 		 
-            x1_start       = pr->partitionData[model]->xVector[q_slot];
-            x2_start       = pr->partitionData[model]->xVector[r_slot];
-            assert(r_slot != p_slot);
-            assert(q_slot != p_slot);
-            assert(q_slot != r_slot);
+	      if(tr->saveMemory)
+		{
+		  size_t
+		    j,
+		    setBits = 0;		  
 
-            if(tr->saveMemory)
-            {
-              x1_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->qNumber - tr->mxtips - 1) * states * rateHet];
-              x2_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
-              x3_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
-            }
+		  gapOffset = states * (size_t)getUndetermined(pr->partitionData[model]->dataType);
 
-            break;
-          default:
-            assert(0);
-        }
+		  x1_gap = &(pr->partitionData[model]->gapVector[tInfo->qNumber * pr->partitionData[model]->gapVectorLength]);
+		  x2_gap = &(pr->partitionData[model]->gapVector[tInfo->rNumber * pr->partitionData[model]->gapVectorLength]);
+		  x3_gap = &(pr->partitionData[model]->gapVector[tInfo->pNumber * pr->partitionData[model]->gapVectorLength]);
 
-        /* set the pointers to the left and right P matrices to the pre-allocated memory space for storing them */
+		  size_t prevBits1 =  0,
+		    prevBits2 = 0; 
 
-        left  = pr->partitionData[model]->left;
-        right = pr->partitionData[model]->right;
+		  for(j = 0; j < (size_t)pr->partitionData[model]->gapVectorLength; j++)
+		    {		     
+		      x3_gap[j] = x1_gap[j] & x2_gap[j];
+		      setBits += (size_t)(bitcount_32_bit(x3_gap[j])); 
 
-        /* if we use per-partition branch length optimization 
-           get the branch length of partition model and take the log otherwise 
-           use the joint branch length among all partitions that is always stored 
-           at index [0] */
+		      prevBits1 += bitcount_32_bit(x1_gap[j]); 
+		      prevBits2 += bitcount_32_bit(x2_gap[j]); 
+		    }
+		  
+		  int len1 = ( width - prevBits1) * rateHet * states * sizeof(double),
+		    len2 = ( width - prevBits2) * rateHet * states * sizeof(double); 
+		  
+		  if(  tInfo->qNumber > tr->mxtips &&   len1  != pr->partitionData[model]->xSpaceVector[q_slot] )
+		    {
+		      printf("warning: length of %d should be %d, but is %d\n", tInfo->qNumber, len1, pr->partitionData[model]->xSpaceVector[q_slot]); 
+		    }
 
-        if(pr->perGeneBranchLengths)
-        {
-          qz = tInfo->qz[model];		  		    
-          rz = tInfo->rz[model];		  
-        }
-        else
-        {
-          qz = tInfo->qz[0];
-          rz = tInfo->rz[0];
-        }
+		  if(  tInfo->rNumber > tr->mxtips && len2  != pr->partitionData[model]->xSpaceVector[r_slot] )
+		    {
+		      printf("warning: length of %d should be %d, but is %d\n", tInfo->rNumber, len2, pr->partitionData[model]->xSpaceVector[r_slot]); 
+		    }
 
-        qz = (qz > zmin) ? log(qz) : log(zmin);		  	       
-        rz = (rz > zmin) ? log(rz) : log(zmin);	          	      
+		  requiredLength = (width - setBits)  * rateHet * states * sizeof(double); 
+		}
+	      else
+		{
+		  /* if we are not trying to save memory the space required to store an inner likelihood array 
+		     is the number of sites in the partition times the number of states of the data type in the partition 
+		     times the number of discrete GAMMA rates (1 for CAT essentially) times 8 bytes */
+		  requiredLength  =  virtual_width( width ) * rateHet * states * sizeof(double);
 
-        /* compute the left and right P matrices */
+		  //                   printf( "req: %d %d %d %d\n", requiredLength, width, virtual_width(width), model );
+		}
+	      /* Initially, even when not using memory saving no space is allocated for inner likelihood arrats hence 
+		 availableLength will be zero at the very first time we traverse the tree.
+		 Hence we need to allocate something here */
 
-        makeP(qz, rz, rateCategories,   pr->partitionData[model]->EI,
-            pr->partitionData[model]->EIGN, categories,
-            left, right, tr->saveMemory, tr->maxCategories, states);
+	      /* assert(availableLength == 0 ); */
+
+	      if(requiredLength != availableLength)
+		{		  
+		  /* if there is a vector of incorrect length assigned here i.e., x3 != NULL we must free 
+		     it first */
+		  if(x3_start)
+		    rax_free(x3_start);
+
+		  /* allocate memory: note that here we use a byte-boundary aligned malloc, because we need the vectors
+		     to be aligned at 16 BYTE (SSE3) or 32 BYTE (AVX) boundaries! */
+
+		  x3_start = (double*)rax_malloc_aligned(requiredLength); 
+		  /* printf("allocating %d for %d\n", requiredLength, p_slot + tr->mxtips + 1 );  */
+
+		  /* update the data structures for consistent bookkeeping */
+		  pr->partitionData[model]->xVector[p_slot] = x3_start;
+		  pr->partitionData[model]->xSpaceVector[p_slot] = requiredLength;
+		}
+
+	      /* now just set the pointers for data accesses in the newview() implementations above to the corresponding values 
+		 according to the tip case */
+
+	      switch(tInfo->tipCase)
+		{
+		case TIP_TIP:		  
+		  tipX1    = pr->partitionData[model]->yVector[tInfo->qNumber];
+		  tipX2    = pr->partitionData[model]->yVector[tInfo->rNumber];
+
+		  if(tr->saveMemory)
+		    {
+		      x1_gapColumn   = &(pr->partitionData[model]->tipVector[gapOffset]);
+		      x2_gapColumn   = &(pr->partitionData[model]->tipVector[gapOffset]);
+		      x3_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
+		    }
+
+		  break;
+		case TIP_INNER:		 
+		  tipX1    =  pr->partitionData[model]->yVector[tInfo->qNumber];
+		  x2_start = pr->partitionData[model]->xVector[r_slot];
+		  assert(r_slot != p_slot);
+
+
+		  if(tr->saveMemory)
+		    {	
+		      x1_gapColumn   = &(pr->partitionData[model]->tipVector[gapOffset]);
+		      x2_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
+		      x3_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
+		    }
+
+		  break;
+		case INNER_INNER:		 		 
+		  x1_start       = pr->partitionData[model]->xVector[q_slot];
+		  x2_start       = pr->partitionData[model]->xVector[r_slot];
+		  assert(r_slot != p_slot);
+		  assert(q_slot != p_slot);
+		  assert(q_slot != r_slot);
+
+		  if(tr->saveMemory)
+		    {
+		      x1_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->qNumber - tr->mxtips - 1) * states * rateHet];
+		      x2_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
+		      x3_gapColumn   = &pr->partitionData[model]->gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
+		    }
+
+		  break;
+		default:
+		  assert(0);
+		}
+
+	      /* set the pointers to the left and right P matrices to the pre-allocated memory space for storing them */
+
+	      left  = pr->partitionData[model]->left;
+	      right = pr->partitionData[model]->right;
+
+	      /* if we use per-partition branch length optimization 
+		 get the branch length of partition model and take the log otherwise 
+		 use the joint branch length among all partitions that is always stored 
+		 at index [0] */
+
+	      if(pr->perGeneBranchLengths)
+		{
+		  qz = tInfo->qz[model];		  		    
+		  rz = tInfo->rz[model];		  
+		}
+	      else
+		{
+		  qz = tInfo->qz[0];
+		  rz = tInfo->rz[0];
+		}
+
+	      qz = (qz > zmin) ? log(qz) : log(zmin);		  	       
+	      rz = (rz > zmin) ? log(rz) : log(zmin);	          	      
+
+	      /* compute the left and right P matrices */
+
+	      makeP(qz, rz, rateCategories,   pr->partitionData[model]->EI,
+		    pr->partitionData[model]->EIGN, categories,
+		    left, right, tr->saveMemory, tr->maxCategories, states);
 
 
 #ifndef _OPTIMIZED_FUNCTIONS
-        /* FER for the gpu-impl. we consider only GAMMA + DNA*/
-        assert(tr->rateHetModel == GAMMA);
-        assert( states == 4 );
+	      /* FER for the gpu-impl. we consider only GAMMA + DNA*/
+	      assert(tr->rateHetModel == GAMMA);
+	      assert( states == 4 );
 
-        /* memory saving not implemented */
+	      /* memory saving not implemented */
 
-        assert(!tr->saveMemory);
+	      assert(!tr->saveMemory);
 
-        /* figure out if we need to compute the CAT or GAMMA model of rate heterogeneity */
+	      /* figure out if we need to compute the CAT or GAMMA model of rate heterogeneity */
 
-        if(tr->rateHetModel == CAT) {
-          ticks t1 = getticks();
+	      if(tr->rateHetModel == CAT) {
+		ticks t1 = getticks();
 
-          assert( states == 4 );
-          //		newviewCAT_FLEX(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-          //				x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-          //				0, tipX1, tipX2,
-          //				width, left, right, wgt, &scalerIncrement, states);
+		assert( states == 4 );
+		//		newviewCAT_FLEX(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+		//				x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+		//				0, tipX1, tipX2,
+		//				width, left, right, wgt, &scalerIncrement, states);
 
-          newviewGTRCAT(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-              x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-              tipX1, tipX2,
-              width, left, right, wgt, &scalerIncrement);
+		newviewGTRCAT(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+			      x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+			      tipX1, tipX2,
+			      width, left, right, wgt, &scalerIncrement);
 
 
 
-          ticks t2 = getticks();
-          if( tInfo->tipCase == TIP_TIP ) {
-            newviewCAT_FLEX_reorder(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-                x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-                0, tipX1, tipX2,
-                width, left, right, wgt, &scalerIncrement, states);
-          }
-          ticks t3 = getticks();
+		ticks t2 = getticks();
+		if( tInfo->tipCase == TIP_TIP ) {
+		  newviewCAT_FLEX_reorder(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+					  x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+					  0, tipX1, tipX2,
+					  width, left, right, wgt, &scalerIncrement, states);
+		}
+		ticks t3 = getticks();
 
-          double d1 = elapsed(t2, t1);
-          double d2 = elapsed(t3, t2);
+		double d1 = elapsed(t2, t1);
+		double d2 = elapsed(t3, t2);
 
-          printf( "ticks: %f %f\n", d1, d2 );
+		printf( "ticks: %f %f\n", d1, d2 );
 
-        } else {
-          ticks t1 = getticks();
-          int old_scale = scalerIncrement;
+	      } else {
+		ticks t1 = getticks();
+		int old_scale = scalerIncrement;
 
-          ticks t2 = getticks();
-          if( 1 || tInfo->tipCase == TIP_TIP || tInfo->tipCase == INNER_INNER ) {
-            /* FER this is what we want to compute in the GPU device */
-            newviewGAMMA_FLEX_reorder(tInfo->tipCase,
-                x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
-                0, tipX1, tipX2,
-                width, left, right, wgt, &scalerIncrement, states, getUndetermined(pr->partitionData[model]->dataType) + 1);
-          }
+		ticks t2 = getticks();
+		if( 1 || tInfo->tipCase == TIP_TIP || tInfo->tipCase == INNER_INNER ) {
+		  /* FER this is what we want to compute in the GPU device */
+		  newviewGAMMA_FLEX_reorder(tInfo->tipCase,
+					    x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+					    0, tipX1, tipX2,
+					    width, left, right, wgt, &scalerIncrement, states, getUndetermined(pr->partitionData[model]->dataType) + 1);
+		}
 
-          ticks t3 = getticks();
+		ticks t3 = getticks();
 
-          //                 double d1 = elapsed(t2, t1);
-          double d2 = elapsed(t3, t2);
+		//                 double d1 = elapsed(t2, t1);
+		double d2 = elapsed(t3, t2);
 
-          const char *scaling_text = scalerIncrement != old_scale ? " *****" : "";
-          //  printf( "d: %d %d %f %s\n", nvc++, tInfo->tipCase, d2, scaling_text );
-          //                 printf( "ticks: %d %f %f%s\n", tInfo->tipCase, d1, d2, scaling_text );
-          //last_x3 = x3_start;
-          //last_width = width;
+		const char *scaling_text = scalerIncrement != old_scale ? " *****" : "";
+		//  printf( "d: %d %d %f %s\n", nvc++, tInfo->tipCase, d2, scaling_text );
+		//                 printf( "ticks: %d %f %f%s\n", tInfo->tipCase, d1, d2, scaling_text );
+		//last_x3 = x3_start;
+		//last_width = width;
 
-        }
+	      }
 #else
-        /* dedicated highly optimized functions. Analogously to the functions in evaluateGeneric() 
-           we also siwtch over the state number */
+	      /* dedicated highly optimized functions. Analogously to the functions in evaluateGeneric() 
+		 we also siwtch over the state number */
 
-        switch(states)
-        {		
-          case 4:	/* DNA */
-            if(tr->rateHetModel == CAT)
-            {		    		     
+	      switch(states)
+		{		
+		case 4:	/* DNA */
+		  if(tr->rateHetModel == CAT)
+		    {		    		     
 
-              if(tr->saveMemory)
-                newviewGTRCAT_SAVE(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-                    x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-                    tipX1, tipX2,
-                    width, left, right, wgt, &scalerIncrement, x1_gap, x2_gap, x3_gap,
-                    x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
-              else
+		      if(tr->saveMemory)
+			newviewGTRCAT_SAVE(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+					   x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+					   tipX1, tipX2,
+					   width, left, right, wgt, &scalerIncrement, x1_gap, x2_gap, x3_gap,
+					   x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
+		      else
 #ifdef __AVX
-                newviewGTRCAT_AVX(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-                    x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-                    tipX1, tipX2,
-                    width, left, right, wgt, &scalerIncrement);
+			newviewGTRCAT_AVX(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+					  x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+					  tipX1, tipX2,
+					  width, left, right, wgt, &scalerIncrement);
 #else
-              newviewGTRCAT(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-                  x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-                  tipX1, tipX2,
-                  width, left, right, wgt, &scalerIncrement);
+		      newviewGTRCAT(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+				    x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+				    tipX1, tipX2,
+				    width, left, right, wgt, &scalerIncrement);
 #endif
-            }
-            else
-            {
+		    }
+		  else
+		    {
 
 
-              if(tr->saveMemory)
-                newviewGTRGAMMA_GAPPED_SAVE(tInfo->tipCase,
-                    x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
-                    tipX1, tipX2,
-                    width, left, right, wgt, &scalerIncrement, 
-                    x1_gap, x2_gap, x3_gap, 
-                    x1_gapColumn, x2_gapColumn, x3_gapColumn);
-              else
+		      if(tr->saveMemory)
+			newviewGTRGAMMA_GAPPED_SAVE(tInfo->tipCase,
+						    x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+						    tipX1, tipX2,
+						    width, left, right, wgt, &scalerIncrement, 
+						    x1_gap, x2_gap, x3_gap, 
+						    x1_gapColumn, x2_gapColumn, x3_gapColumn);
+		      else
 #ifdef __AVX
-                newviewGTRGAMMA_AVX(tInfo->tipCase,
-                    x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
-                    tipX1, tipX2,
-                    width, left, right, wgt, &scalerIncrement);
+			newviewGTRGAMMA_AVX(tInfo->tipCase,
+					    x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+					    tipX1, tipX2,
+					    width, left, right, wgt, &scalerIncrement);
 #else
-              newviewGTRGAMMA(tInfo->tipCase,
-                  x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
-                  tipX1, tipX2,
-                  width, left, right, wgt, &scalerIncrement);
+		      newviewGTRGAMMA(tInfo->tipCase,
+				      x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+				      tipX1, tipX2,
+				      width, left, right, wgt, &scalerIncrement);
 #endif
-            }
+		    }
 
-            break;		    
-          case 20: /* proteins */
+		  break;		    
+		case 20: /* proteins */
 
-            if(tr->rateHetModel == CAT)
-            {
+		  if(tr->rateHetModel == CAT)
+		    {
 
 
-              if(tr->saveMemory)
-                newviewGTRCATPROT_SAVE(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-                    x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-                    tipX1, tipX2, width, left, right, wgt, &scalerIncrement, x1_gap, x2_gap, x3_gap,
-                    x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
-              else
+		      if(tr->saveMemory)
+			newviewGTRCATPROT_SAVE(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+					       x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+					       tipX1, tipX2, width, left, right, wgt, &scalerIncrement, x1_gap, x2_gap, x3_gap,
+					       x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
+		      else
 #ifdef __AVX
-                newviewGTRCATPROT_AVX(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-                    x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-                    tipX1, tipX2, width, left, right, wgt, &scalerIncrement);
+			newviewGTRCATPROT_AVX(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+					      x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+					      tipX1, tipX2, width, left, right, wgt, &scalerIncrement);
 #else
-              newviewGTRCATPROT(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-                  x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-                  tipX1, tipX2, width, left, right, wgt, &scalerIncrement);			
+		      newviewGTRCATPROT(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
+					x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
+					tipX1, tipX2, width, left, right, wgt, &scalerIncrement);			
 #endif
-            }
-            else
-            {
+		    }
+		  else
+		    {
 
 
 
-              if(tr->saveMemory)
-                newviewGTRGAMMAPROT_GAPPED_SAVE(tInfo->tipCase,
-                    x1_start, x2_start, x3_start,
-                    pr->partitionData[model]->EV,
-                    pr->partitionData[model]->tipVector,
-                    tipX1, tipX2,
-                    width, left, right, wgt, &scalerIncrement,
-                    x1_gap, x2_gap, x3_gap,
-                    x1_gapColumn, x2_gapColumn, x3_gapColumn);
-              else
+		      if(tr->saveMemory)
+			newviewGTRGAMMAPROT_GAPPED_SAVE(tInfo->tipCase,
+							x1_start, x2_start, x3_start,
+							pr->partitionData[model]->EV,
+							pr->partitionData[model]->tipVector,
+							tipX1, tipX2,
+							width, left, right, wgt, &scalerIncrement,
+							x1_gap, x2_gap, x3_gap,
+							x1_gapColumn, x2_gapColumn, x3_gapColumn);
+		      else
 #ifdef __AVX
-                newviewGTRGAMMAPROT_AVX(tInfo->tipCase,
-                    x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
-                    tipX1, tipX2,
-                    width, left, right, wgt, &scalerIncrement);
+			newviewGTRGAMMAPROT_AVX(tInfo->tipCase,
+						x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+						tipX1, tipX2,
+						width, left, right, wgt, &scalerIncrement);
 #else
-              newviewGTRGAMMAPROT(tInfo->tipCase,
-                  x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
-                  tipX1, tipX2,
-                  width, left, right, wgt, &scalerIncrement);
+		      newviewGTRGAMMAPROT(tInfo->tipCase,
+					  x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+					  tipX1, tipX2,
+					  width, left, right, wgt, &scalerIncrement);
 #endif		       
-            }		  
-            break;	
-          default:
-            assert(0);
-        }
+		    }		  
+		  break;	
+		default:
+		  assert(0);
+		}
 #endif
 
 
-        /* important step, here we essentiallt recursively compute the number of scaling multiplications 
-           at node p: it's the sum of the number of scaling multiplications already conducted 
-           for computing nodes q and r plus the scaling multiplications done at node p */
+	      /* important step, here we essentiallt recursively compute the number of scaling multiplications 
+		 at node p: it's the sum of the number of scaling multiplications already conducted 
+		 for computing nodes q and r plus the scaling multiplications done at node p */
 
-        pr->partitionData[model]->globalScaler[tInfo->pNumber] =
-          pr->partitionData[model]->globalScaler[tInfo->qNumber] +
-          pr->partitionData[model]->globalScaler[tInfo->rNumber] +
-          (unsigned int)scalerIncrement;
+	      pr->partitionData[model]->globalScaler[tInfo->pNumber] =
+		pr->partitionData[model]->globalScaler[tInfo->qNumber] +
+		pr->partitionData[model]->globalScaler[tInfo->rNumber] +
+		(unsigned int)scalerIncrement;
 
-        /* check that we are not getting an integer overflow ! */
+	      /* check that we are not getting an integer overflow ! */
 
-        assert(pr->partitionData[model]->globalScaler[tInfo->pNumber] < INT_MAX);
-        /* show the output vector */
-      }	
+	      assert(pr->partitionData[model]->globalScaler[tInfo->pNumber] < INT_MAX);
+	      /* show the output vector */
+	    }	
+	}
     }
-  }
 }
 
 /** @brief Compute traversal descriptor
@@ -1565,18 +1590,18 @@ void newviewGeneric (tree *tr, partitionList *pr, nodeptr p, boolean masked)
 */
 
 
-  if(masked)
-  {
-    int model;
+  /* if(masked) */
+  /* { */
+  /*   int model; */
 
-    for(model = 0; model < pr->numberOfPartitions; model++)
-    {
-      if(tr->partitionConverged[model])
-        pr->partitionData[model]->executeModel = FALSE;
-      else
-        pr->partitionData[model]->executeModel = TRUE;
-    }
-  }
+  /*   for(model = 0; model < pr->numberOfPartitions; model++) */
+  /*   { */
+  /*     if(tr->partitionConverged[model]) */
+  /*       pr->partitionData[model]->executeModel = FALSE; */
+  /*     else */
+  /*       pr->partitionData[model]->executeModel = TRUE; */
+  /*   } */
+  /* } */
 
   /* if there is something to re-compute */
 
@@ -1602,13 +1627,13 @@ void newviewGeneric (tree *tr, partitionList *pr, nodeptr p, boolean masked)
 
   /* clean up */
 
-  if(masked)
-  {
-    int model;
+  /* if(masked) */
+  /* { */
+  /*   int model; */
 
-    for(model = 0; model < pr->numberOfPartitions; model++)
-      pr->partitionData[model]->executeModel = TRUE;
-  }
+  /*   for(model = 0; model < pr->numberOfPartitions; model++) */
+  /*     pr->partitionData[model]->executeModel = TRUE; */
+  /* } */
 
   tr->td[0].traversalHasChanged = FALSE;
 }

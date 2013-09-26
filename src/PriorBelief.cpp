@@ -3,6 +3,7 @@
 #include "Branch.hpp"
 #include "GlobalVariables.hpp"
 #include "priors/AbstractPrior.hpp"
+#include "priors/UniformPrior.hpp"
 #include "priors/ExponentialPrior.hpp"
 #include "Category.hpp"
 
@@ -26,72 +27,17 @@ void PriorBelief::initialize(const TreeAln &traln, const std::vector<AbstractPar
 }
 
 
-void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, 
+void PriorBelief::accountForFracChange(TreeAln &traln, const std::vector<double> &oldFcs, const std::vector<double> &newFcs, 
 				       const std::vector<AbstractParameter*> &affectedBlParams )  
 {
-  // TODO this is horrible, but let's go with that for now. 
-
   assert(wasInitialized); 
 
-  for(auto &p :  affectedBlParams)
-    {
-      // TODO if fixed, we really have to go through all branch lengths
-      // and change them      
-      // => disabled currently  
-      auto tmp = p->getPrior();
-      assert(dynamic_cast<ExponentialPrior*>(tmp) != nullptr) ; 
-    }
-
-#ifdef EFFICIENT
-  // TODO investigate on more efficient tree length 
-  assert(0); 
-#endif
-
-  // tout << "accounting for fc: old=" << oldFc << ", new=" << newFcs << std::endl ; 
-  // auto string = TreePrinter(true, false , false).printTree(traln, affectedBlParams);
-  // tout << string   << std::endl; 
-
-
-
-#if 1 
   nat ctr = 0; 
   for(auto &param : affectedBlParams)
     {
-      double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
-      double myOld = oldFc.at(ctr); 
-      double myNew = newFcs.at(ctr); 
-
-      double blInfluence = 1; 
-      for(auto &b : traln.extractBranches(param))
-	{
-	  // tout << "length=" << b.getLength() << "\t"  << b.getInterpretedLength(traln, param) << std::endl; 
-	  blInfluence *= b.getLength();
-	}
-      // tout << myNew << " - " << myOld << " * " << lambda << " * log("  << blInfluence << ")" << std::endl; 
-      double result = (myNew - myOld) * lambda * log(blInfluence); 
-      lnPriorRatio += result;
+      lnPriorRatio += param->getPrior()->accountForMeanSubstChange(traln,  param, oldFcs.at(ctr), newFcs.at(ctr));
       ++ctr; 
     }
-#else 
-  nat ctr = 0; 
-  for(auto &param : affectedBlParams)
-    {
-      double lambda = dynamic_cast<ExponentialPrior*> (param->getPrior())->getLamda();
-      double myOld = oldFc.at(ctr); 
-      double myNew = newFcs.at(ctr); 
-
-      double blInfluence = 0; 
-      for(auto &b : traln.extractBranches(param))
-	{
-	  blInfluence += log(b.getLength());
-	}
-
-      double result = (myNew - myOld) * lambda * blInfluence; 
-      tout << "(" << myNew << " - " << myOld << ") * " << lambda << " * log("  << blInfluence << ")" << std::endl; 
-      lnPriorRatio += result;
-      ++ctr; 
-    }
-#endif
 }
 
 
@@ -110,12 +56,11 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	  break; 
 	case Category::BRANCH_LENGTHS: 
 	  {
-	    std::vector<BranchLength> bs = traln.extractBranches(v); 
+	    // std::vector<BranchLength> 
+	    auto bs = traln.extractBranches(v); 
 	    auto pr = v->getPrior();	    
 	    for(auto &b : bs)	      
-	      {
-		partialResult += pr->getLogProb( {  b.getInterpretedLength(traln,v) }); 
-	      }
+	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln,v) }); 
 	  }
 	  break; 
 	case Category::FREQUENCIES: 
@@ -160,26 +105,4 @@ void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParamete
       assert(fabs(verified -  lnPrior ) < ACCEPTED_LNPR_EPS); 
     }
 }
-
-
-void PriorBelief::updateBranchLengthPrior(const TreeAln &traln , double oldInternalZ,
-					  double newInternalZ, const AbstractParameter* param ) 
-{
-  auto prior = param->getPrior();
-  assert(wasInitialized); 
-  if(dynamic_cast<ExponentialPrior*> (prior) != nullptr ) 
-    {
-      auto casted = dynamic_cast<ExponentialPrior*> (prior); 
-      lnPriorRatio += 
-	(log(newInternalZ ) - log( oldInternalZ) ) 
-	* traln.getMeanSubstitutionRate(param->getPartitions()) * casted->getLamda(); 
-    }
-  else 
-    {
-      assert(0);		// very artificial
-      lnPriorRatio += prior->getLogProb({newInternalZ}) - prior->getLogProb({oldInternalZ}) ; 
-    }
-}
-
-
 

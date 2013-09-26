@@ -32,8 +32,7 @@ public:
   */ 
   std::vector<std::unique_ptr<AbstractProposal> >  
   produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
-		   const BlockParams& partitionParams, const TreeAln &traln, 
-		   const unique_ptr<LikelihoodEvaluator> &eval, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet); 
+		   const BlockParams& partitionParams, const TreeAln &traln, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet); 
   /** 
       @brief get a copy of the random variables to be integrated  
    */ 

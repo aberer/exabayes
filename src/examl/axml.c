@@ -747,8 +747,8 @@ boolean setupTree (tree *tr)
   tr->ntips       = 0;
   tr->nextnode    = 0;
  
-  for(i = 0; i < tr->numBranches; i++)
-    tr->partitionSmoothed[i] = FALSE;
+  /* for(i = 0; i < tr->numBranches; i++) */
+  /*   tr->partitionSmoothed[i] = FALSE; */
 
   tr->bitVectors = (unsigned int **)NULL;
 
@@ -2541,8 +2541,8 @@ void initializeTree(tree *tr, analdef *adef)
   /* BEGIN added by andre for parsimony  */
   tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
   memset(tr->parsimonyScore, 0, totalNodes * tr->NumberOfModels * sizeof(unsigned int )); 
-  for(int i = 0; i < totalNodes * tr->NumberOfModels; ++i)
-    tr->parsimonyScore[i]; 
+  /* for(int i = 0; i < totalNodes * tr->NumberOfModels; ++i) */
+  /*   tr->parsimonyScore[i];  */
   tr->ti = (int*) malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
   /* END */
   

@@ -15,21 +15,14 @@
 #include "GlobalVariables.hpp"
 
 #include "BranchFwd.hpp"
-
 #include "FlagType.hpp"
+#include "RunModes.hpp"
 
 
 class AbstractPrior; 
 class Randomness; 
 class TreePrinter; 
 class AbstractParameter; 
-
-enum class RunModes : int
-{
-NOTHING = 0, 
-  PARTITION_DISTRIBUTION = 1, 
-  MEMORY_SEV = 2
-}; 
 
 
 std::ostream& operator<<(std::ostream& out, pInfo& rhs); 
@@ -74,6 +67,10 @@ public:
    */ 
   tree* getTr() {return &tr;}
   /** 
+      @brief frees all likelihood arrays 
+   */   
+  void clearMemory(); 
+  /** 
       @brief get a constant internal raxml tree representation  
    */ 
   const tree* getTr() const{return &tr; }
@@ -115,6 +112,7 @@ public:
       @brief indicates whether a nodepointer is a tip 
    */ 
   bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
+  bool isTipNode(nat node) const { return isTip(node, getTr()->mxtips) ; }
   /** 
       @brief gets the branch from a node pointer (including branch length)
       
@@ -132,7 +130,6 @@ public:
 
   BranchLength getBranch(const nodeptr &branch,  const AbstractParameter *param) const; 
   BranchLengths getBranch(const nodeptr &branch, const std::vector<AbstractParameter*> &params) const ; 
-
   /** 
       @brief gets a nodepointer with specified id 
    */ 
@@ -140,10 +137,10 @@ public:
   /** 
       @brief extract all branches from the tree (including branch lengths)
    */ 
-  std::vector<BranchLengths> extractBranches(const std::vector<AbstractParameter*> &params) const ; 
-  std::vector<BranchLength> extractBranches( const AbstractParameter* params) const ; 
-  std::vector<BranchPlain> extractBranches() const ; 
-
+  // template<typename RESULT>
+  std::vector<BranchLength> extractBranches( const AbstractParameter* param ) const; 
+  std::vector<BranchLengths> extractBranches( const std::vector<AbstractParameter*> &param ) const;  
+  std::vector<BranchPlain> extractBranches() const; 
   /** 
       @brief gets the number of inner nodes in the tree 
    */ 
@@ -221,7 +218,10 @@ public:
       that the tree is in a usable state afterwards (and thus, this
       method may me rather expensive)
   */ 
-  void initializeFromByteFile(std::string  byteFileName, RunModes); 
+  void initializeFromByteFile(std::string byteFileName, RunModes mode); 
+  void initializeNumBranchRelated(); 
+  nat readNUM_BRANCHES(std::string byteFileName); 
+  
   /**
      @brief gets a node with given id that is not connected to the tree right now 
    */ 
@@ -251,8 +251,12 @@ public:
   static const double initBL;  	// init values 
   static const double problematicBL; 
 
-  // DEBUG 
-  void printArrayStart(std::ostream &out, nat length = 2 ); 
+  nat getNumberOfAssignedSites(nat model) const ; 
+
+  bool revMatIsImmutable(int model) const; 
+
+  RunModes getMode() const { return mode; }
+ 
 
 private: 			// METHODS  
 #if HAVE_PLL != 0
@@ -260,52 +264,49 @@ private: 			// METHODS
   void initializePartitionsPLL(std::string byteFileName, double ***empFreq, bool multiBranch);
 #endif  
 
-  // this was merely a test 
-  // template<typename BTYPE = void>
-  // void whatever( nodeptr p , std::vector<Branch<BTYPE> > &result, bool isStart,
-  // 			  const 
-  // 			  std::conditional < 
-  // 			  std::is_same<BTYPE,void>::value, void, 
-  // 			  std::conditional<
-  // 			  std::is_same<BTYPE,double>::value, 
-  // 			  AbstractParameter*, 
-  // 			  std::vector<AbstractParameter*>> > 
-  // 			  &param ) const 
-  // {
-  // } 
-  
-  void extractHelper( nodeptr p , std::vector<BranchPlain> &result, bool isStart ) const ; 
-  void extractHelper( nodeptr p , std::vector<BranchLengths> &result, bool isStart, const std::vector<AbstractParameter*> &params) const ; 
-  void extractHelper( nodeptr p , std::vector<BranchLength> &result, bool isStart, const AbstractParameter* param ) const ; 
+  // template<class BRANCH> void extractHelper(nodeptr p, std::vector<BRANCH> &result, bool isStart) const; 
+
+
+
+  // void extractHelper( nodeptr p , std::vector<BranchPlain> &result, bool isStart ) const ; 
+  // void extractHelper( nodeptr p , std::vector<BranchLengths> &result, bool isStart, const std::vector<AbstractParameter*> &params) const ; 
+  // void extractHelper( nodeptr p , std::vector<BranchLength> &result, bool isStart, const AbstractParameter* param ) const ; 
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
 
 private: 			// ATTRIBUTES 
 #if HAVE_PLL != 0 
-  // horrible hacks, that we cannot get rid of before  upgrading to more recent versions of the PLL 
   partitionList partitions; 
 #endif
   tree tr;		// TODO replace with an object for cleanup   
   bool parsimonyEnabled;   
-
-  // friends 
+  RunModes mode; 
+  
   friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
-
-  //////////////////
-  // EXPERIMENTAL //
-  //////////////////
-public: 
-  bool revMatIsImmutable(int model) const ; 
-
-  bool usingPerSiteRates()  { return tr.rateHetModel == GAMMA;  } 
-  void enablePerSiteRates() {  tr.rateHetModel = CAT; } 
-
 };  
 
 
+// template<class BRANCH> void TreeAln::extractHelper(nodeptr p, std::vector<BRANCH> &result, bool isStart, typename BRANCH::paramType params ) const; 
+// {
+//   // TODO inefficient 
+// #ifdef EFFICIENT
+//   assert(0); 
+// #endif
+//   auto tmp = BranchPlain(p->number, p->back->number); 
+//   auto b = getBranch(tmp, params);
+
+//   result.push_back(b);
+
+//   if(not isStart && isTipNode(p))
+//     return; 
+
+//   for(nodeptr q =  p->next; p != q ; q = q->next)        
+//     extractHelper( q->back, result, false, params);
+// }
+
+
+
+
+
+
 #endif
-
-
-
-
-

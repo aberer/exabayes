@@ -21,10 +21,12 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid
 }
 
 
-void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId )  
+void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId, bool isDryRun )  
 {        
   rejectIfExists(fullFileName); 
-  // tout << "initialized parameter file >" << fullFileName << "<" << std::endl; 
+
+  if(isDryRun)
+    return; 
 
   std::ofstream fh(fullFileName,std::fstream::out);  // std::fstream::app|
 
@@ -99,8 +101,6 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
 	}
     }
   fh << std::endl; 
-    
-  fh.close(); 
 }
 
 

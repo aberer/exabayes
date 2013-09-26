@@ -9,16 +9,16 @@
 #include "common.h"
 
 
-class Checkpointable
+class Serializable
 {
 public: 
-  Checkpointable()
+  Serializable()
     : DELIM('&')
     , checkpointIsBinary(true)
   {}
 
-  virtual void readFromCheckpoint( std::istream &in )  = 0 ; 
-  virtual void writeToCheckpoint( std::ostream &out) const = 0;   
+  virtual void deserialize( std::istream &in )  = 0 ; 
+  virtual void serialize( std::ostream &out) const = 0;   
 
   void getOfstream(std::string name, std::ofstream &result); 
   void getIfstream(std::string name, std::ifstream &result ); 
@@ -39,7 +39,7 @@ private: 			// ATTRIBUTES
 
 
 template<typename T>
-void Checkpointable::cWrite(std::ostream &out, const T& toWrite) const 
+void Serializable::cWrite(std::ostream &out, const T& toWrite) const 
 {
   static_assert(not std::is_same<T, std::string>::value, "Do NOT use the cWrite funciton with strings (there is a specific function for that)");
 
@@ -57,7 +57,7 @@ void Checkpointable::cWrite(std::ostream &out, const T& toWrite) const
 
 
 template<typename T>
-T Checkpointable::cRead(std::istream &in )
+T Serializable::cRead(std::istream &in )
 {
   T result; 
 

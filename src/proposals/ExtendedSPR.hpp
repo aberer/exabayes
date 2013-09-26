@@ -25,6 +25,8 @@ public:
   virtual void readFromCheckpointCore(std::istream &in) {   } 
   virtual void writeToCheckpointCore(std::ostream &out) const { }  
 
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
+
 protected: 			// METHODS
   /**
      @brief draws a random set of branches in the tree that constitute a

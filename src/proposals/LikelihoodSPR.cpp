@@ -3,19 +3,19 @@
 #include "BoundsChecker.hpp"
 #include "LikelihoodSPR.hpp"
 #include "TreeRandomizer.hpp"
+#include "priors/AbstractPrior.hpp"
 #include "GibbsProposal.hpp" 
-#include "densities.h"
+#include "Density.hpp"
 
 
 #define NUM_ITER 30   
 #define NUM_BRANCH_OPT 3 
 LikelihoodSPR::LikelihoodSPR(nat _minStep, nat _maxStep, double _likeWarp)
-  : minStep(_minStep)
+  : AbstractProposal(Category::TOPOLOGY, "likeSpr")
+  ,  minStep(_minStep)
   , maxStep(_maxStep)
   , likeWarp(_likeWarp)
 {
-  this->name = "likeSpr" ; 
-  this->category = Category::TOPOLOGY; 
   relativeWeight = 5 ; 
   needsFullTraversal = false;
 }
@@ -71,7 +71,8 @@ double LikelihoodSPR::scoreReattachment(TreeAln& traln, const BranchLength &reat
   map[reattachmentBranch] = mapPart; 
 
   // tout << std::endl; 
-  result =  eval.evaluate(traln, toOptimise[0].toPlain(), false); 
+  eval.evaluate(traln, toOptimise[0].toPlain(), false); 
+  result =  traln.getTr()->likelihood;
   
   // revert 
   if(doRevert)
@@ -316,15 +317,22 @@ void LikelihoodSPR::proposeBranches(TreeAln& traln, PriorBelief &prior, double &
   // handle the outer pruning branch first  
   {
     auto afterPrune = traln.getBranch(move.getPruningBranchAfterPrune(), param); 
-    // double before = afterPrune.getInterpretedLength(traln,param); 
-    double beforeInternal = afterPrune.getLength(); 
+
+    // double beforeInternal = afterPrune.getLength(); 
+    double prevLen = afterPrune.getInterpretedLength(traln, param);
     double hastingsPart = 0; 
     auto optBranch = GibbsProposal::drawFromEsitmatedPosterior(afterPrune, eval, traln, rand, NUM_ITER, hastingsPart, param);
     hastings += hastingsPart;  
-    // tout << "POST-DRAW pruning branch: " << before << "\t" << optBranch.getInterpretedLength(traln,param)  <<  "\thastings=" << hastingsPart << std::endl; ; 
+
+
     traln.setBranch(optBranch, param); 
-    double afterInternal = optBranch.getLength(); 
-    prior.updateBranchLengthPrior(traln, beforeInternal,afterInternal, param);
+    // double afterInternal = optBranch.getLength(); 
+    double curLen = optBranch.getInterpretedLength(traln,param); 
+    
+    prior.addToRatio( 
+		     param->getPrior()->getLogProb( { curLen } )
+		     - param->getPrior()->getLogProb( { prevLen } )
+		      ); 
   }
 
   // first one is the branch existing after move 
@@ -340,7 +348,6 @@ void LikelihoodSPR::proposeBranches(TreeAln& traln, PriorBelief &prior, double &
     {
       auto bl = traln.getBranch(branch, param ); 
       auto lengthBefore = bl.getInterpretedLength(traln,param); 
-      auto beforeInternal = bl.getLength();
       auto iter = relMap.find(bl); 
       double nropt = iter->first.getInterpretedLength(traln, param);
       // double afterInternal = iter->first.getLength(param); 
@@ -356,17 +363,25 @@ void LikelihoodSPR::proposeBranches(TreeAln& traln, PriorBelief &prior, double &
       if(not BoundsChecker::checkBranch(newBranch))
 	BoundsChecker::correctBranch(newBranch); 
       traln.setBranch(newBranch, param); 
-      prior.updateBranchLengthPrior(traln, beforeInternal,newBranch.getLength(), param);
+
+
+      auto prevLen = bl.getInterpretedLength(traln, param); 
+      auto curLen = newBranch.getInterpretedLength(traln, param); 
+
+      auto pr = param->getPrior(); 
+      prior.addToRatio( pr-> getLogProb( { curLen} )  -  pr->getLogProb( { prevLen} ) ) ; 
       
-      double lnBackP = logGammaDensity(lengthBefore, alpha, beta); 
-      double lnForP = logGammaDensity(proposal, alpha, beta); 
+      // prior.updateBranchLengthPrior(traln, beforeInternal,newBranch.getLength(), param);
+      
+      double lnBackP = Density::lnGamma(lengthBefore, alpha, beta); 
+      double lnForP = Density::lnGamma(proposal, alpha, beta); 
 
       double hastingsHere = lnBackP - lnForP; 
       // tout << "lengthBefore=" << lengthBefore << "\tproposal="  << proposal << "\thastings=" << hastingsHere << std::endl; 
       hastings += hastingsHere; 
     }
-
-  move.disorientAtNode(traln, move.getEvalBranch(traln).findNodePtr(traln));
+  
+  // move.disorientAtNode(traln, move.getEvalBranch(traln).findNodePtr(traln));
   // eval.evaluate(traln, move.getEvalBranch(traln), false);
 }
 
@@ -400,7 +415,12 @@ void LikelihoodSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &has
   
   // tout << "nni-dist=" << move.getNniDistance() << std::endl; 
   move.applyToTree(traln, blParams);
-  move.disorientAtNode(traln,move.getSubtreeBranchAfter(traln).findNodePtr(traln));
+  
+
+  assert(0); 
+  // why did we disorient here? 
+  // for(auto &elem : move.get)
+  // move.disorientAtNode(traln,move.getSubtreeBranchAfter(traln).findNodePtr(traln));
 
 #if  0 
   proposeBranches(traln, prior, hastings, rand, eval);
@@ -412,7 +432,18 @@ void LikelihoodSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &has
   for(auto &b : proposedBranches)
     {
       for(auto &param : params )
-	prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
+	{
+	  auto prevLen = traln.getBranch(b.toPlain(), param).getInterpretedLength(traln , param); 
+	  auto dummy = BranchLength(); 
+	  dummy.setLength(b.getLength(param));
+	  auto curLen = dummy.getInterpretedLength(traln, param); 
+	  
+	  auto pr = param->getPrior(); 
+	  auto ratio =  pr->getLogProb( { curLen } ) - pr->getLogProb( { prevLen } ) ; 
+	  prior.addToRatio(ratio );
+	  
+	  // prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
+	}
       traln.setBranch(b,params);
     }
 #endif
@@ -459,6 +490,9 @@ void  LikelihoodSPR::scoreReattachmentInRadius(TreeAln &traln, BranchLength atta
 
 void LikelihoodSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln) 
 {
+  for(auto &elem : move.getDirtyNodes())
+    evaluator.markDirty( traln, elem);
+
   auto  eval = BranchPlain(traln.getTr()->nodep[1]->number, traln.getTr()->nodep[1]->back->number); 
 
   // TODO inefficient 
@@ -493,3 +527,9 @@ AbstractProposal* LikelihoodSPR::clone() const
   return new LikelihoodSPR(*this);
 }
 
+
+
+std::vector<nat> LikelihoodSPR::getInvalidatedNodes(const TreeAln& traln) const
+{
+  return move.getDirtyNodes();
+} 

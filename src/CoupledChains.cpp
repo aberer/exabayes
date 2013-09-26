@@ -18,12 +18,12 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, std:
   , heatIncrement(0.1) 
   , rand(seed)
   , runid(runNum) 
-  , tuneHeat(false)
   , printFreq(500)
   , swapInterval(1)
   , samplingFreq(100)
   , runname(runname) 
   , workdir(workingdir)
+  , numSwaps(1)
 {  
   auto params = chains[0].extractParameters(); 
   nat ctr = 0; 
@@ -32,7 +32,7 @@ CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, std:
       ++ctr; 
 
   for(nat i = 0; i < ctr ; ++i)
-    paramId2TopFile.emplace(i, TopologyFile(workingdir, runname, runid,0, i, ctr > 1)); 
+    paramId2TopFile.insert(std::make_pair(i, TopologyFile(workingdir, runname, runid,0, i, ctr > 1))); 
 
   pFile.emplace_back(workdir, runname,runid, 0); 
 }
@@ -44,7 +44,6 @@ CoupledChains::CoupledChains(CoupledChains&& rhs)
   , heatIncrement(rhs.heatIncrement)
   , rand(std::move(rhs.rand))
   , runid(rhs.runid)
-  , tuneHeat(rhs.tuneHeat)
   , printFreq(rhs.printFreq)
   , swapInterval(rhs.swapInterval)
   , samplingFreq(rhs.samplingFreq)
@@ -52,6 +51,7 @@ CoupledChains::CoupledChains(CoupledChains&& rhs)
   , workdir(std::move(workdir))
   , paramId2TopFile(std::move(rhs.paramId2TopFile))
   , pFile(std::move(rhs.pFile))
+  , numSwaps(rhs.numSwaps)
 {
   
 }
@@ -63,7 +63,7 @@ CoupledChains& CoupledChains::operator=(CoupledChains rhs)
 } 
 
 
-void CoupledChains::initializeOutputFiles()  
+void CoupledChains::initializeOutputFiles(bool isDryRun)  
 {  
   // TODO sampling file for every chain possibly 
   auto &traln = chains[0].getTraln(); 
@@ -72,9 +72,9 @@ void CoupledChains::initializeOutputFiles()
   auto tag =  rand.getKey();
 
   for(auto &elem : paramId2TopFile)
-    elem.second.initialize(traln, tag.v[0]); 
+    elem.second.initialize(traln, tag.v[0], isDryRun); 
   
-  pFile[0].initialize(traln, params, tag.v[0] ); 
+  pFile[0].initialize(traln, params, tag.v[0] ,isDryRun); 
   
 }
 
@@ -89,7 +89,7 @@ void CoupledChains::seedChains()
 
 void CoupledChains::attemptSwap(ParallelSetup &pl)
 {  
-  CommFlag flags = CommFlag::PrintStat | CommFlag::Proposals; 
+  auto flags = CommFlag::PrintStat | CommFlag::Proposals; 
 
   int numChain = chains.size(); 
 
@@ -100,40 +100,42 @@ void CoupledChains::attemptSwap(ParallelSetup &pl)
   int cBIndex = rand.drawIntegerOpen(numChain-1) ; 
   if(cBIndex == cAIndex)
     cBIndex = numChain-1; 
-  // std::cout << rand  << " attempting swap between indices " << cAIndex << " and " << cBIndex; 
   if( not pl.isMyChain(runid, cAIndex) && not pl.isMyChain(runid,cBIndex))
     {
       rand.drawRandDouble01();	// need to waste one value...  
-      // std::cout << " NOT MINE " << std::endl; 
       return;
     }
-  // std::cout << std::endl; 
 
-  
   if(not pl.isMyChain(runid, cAIndex))
     std::swap(cAIndex, cBIndex); 
 
-  Chain& a = chains[cAIndex]; 
-  Chain& b = chains[cBIndex]; 
+  auto& a = chains[cAIndex]; 
+  auto& b = chains[cBIndex]; 
 
   bool mineHasSmallerId = a.getCouplingId() < b.getCouplingId(); 
-
-  auto aSer = a.serializeConditionally( flags ); 
-  auto bSer = pl.sendRecvChain(*this, cAIndex, cBIndex, aSer, flags);
+  bool bothAreMine = pl.isMyChain(runid, cAIndex) && pl.isMyChain(runid, cBIndex); 
   
-  if(not pl.isMyChain(runid, cBIndex))
-    b.deserializeConditionally(bSer, flags); 
+  auto aSer = std::string{}; 
+  auto bSer = std::string{}; 
+
+  if(not bothAreMine)
+    {
+      aSer = a.serializeConditionally( flags ); 
+      bSer = pl.sendRecvChain(*this, cAIndex, cBIndex, aSer, flags);
+  
+      if(not pl.isMyChain(runid, cBIndex))
+	b.deserializeConditionally(bSer, flags); 
+    }
 
   assert(b.getChainHeat() <= 1. && a.getChainHeat() <= 1.); 
 
   double aB = (a.getLikelihood() + a.getLnPr()) * b.getChainHeat(),
     bA = (b.getLikelihood() + b.getLnPr()) * a.getChainHeat(),
-    aA = (a.getLikelihood() + a.getLnPr())* a.getChainHeat(),
-    bB = (b.getLikelihood() + b.getLnPr())* b.getChainHeat();
+    aA = (a.getLikelihood() + a.getLnPr()) * a.getChainHeat(),
+    bB = (b.getLikelihood() + b.getLnPr()) * b.getChainHeat();
 
-  double accRatio = exp(( aB + bA )  - (aA + bB )); 
+  double accRatio = min(exp(( aB + bA )  - (aA + bB )),1.0); 
 
-  bool bothAreMine = pl.isMyChain(runid, cAIndex) && pl.isMyChain(runid, cBIndex); 
   nat coupIdA = a.getCouplingId(), 
     coupIdB = b.getCouplingId(); 
 
@@ -142,11 +144,34 @@ void CoupledChains::attemptSwap(ParallelSetup &pl)
   bool didAccept = r < accRatio;   
   if( didAccept )
     {
-      // tout << rand << "\t" << coupIdA << " and " << coupIdB << " swap" << std::endl; 
-      a.deserializeConditionally(bSer,flags); 
-      b.deserializeConditionally(aSer, flags); 
+      if( bothAreMine)
+      	{
+	  // tout << a.getCouplingId()  << "," << b.getCouplingId() << " => " ; 
+	  // std::swap(a,b);
+	  // tout << "\t" << a.getCouplingId()  << "," << b.getCouplingId() << std::endl; 
+      	  // std::swap(chains[cAIndex], chains[cBIndex]); 
+	  
+	  swapHeatAndProposals(a,b);
+
+      	}
+      else 
+      	{
+	  double lnlA = a.getLikelihood(), 
+	    lnPrA = a.getLnPr() ,
+	    lnlB = b.getLikelihood(), 
+	    lnPrB = b.getLnPr(); 
+
+	  a.deserializeConditionally(bSer,flags); 
+	  b.deserializeConditionally(aSer, flags); 
+
+	  // BAAAAD 
+	  a.setLikelihood(lnlA); 
+	  b.setLikelihood(lnlB); 
+	  a.setLnPr(lnPrA); 
+	  b.setLnPr(lnPrB); 
+	}
     } 
-  
+
   // update swap matrix: if the other chain did not belong to us and
   // our id was greater, do not store the info
   if(bothAreMine || mineHasSmallerId)
@@ -201,7 +226,8 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
       
       rand.rebase(genCtr); 
 
-      attemptSwap(pl);
+      for(nat i = 0; i < numSwaps; ++i)
+	attemptSwap(pl);
     }
 
 
@@ -227,21 +253,21 @@ void CoupledChains::finalizeOutputFiles()
 }
 
 
-void CoupledChains::readFromCheckpoint( std::istream &in ) 
+void CoupledChains::deserialize( std::istream &in ) 
 {
-  rand.readFromCheckpoint(in); 
-  swapInfo.readFromCheckpoint(in);
+  rand.deserialize(in); 
+  swapInfo.deserialize(in);
   for(auto &chain : chains)
-    chain.readFromCheckpoint(in);
+    chain.deserialize(in);
 } 
 
 
-void CoupledChains::writeToCheckpoint( std::ostream &out)   const
+void CoupledChains::serialize( std::ostream &out)   const
 {
-  rand.writeToCheckpoint(out);
-  swapInfo.writeToCheckpoint(out);
+  rand.serialize(out);
+  swapInfo.serialize(out);
   for(auto &chain : chains)
-    chain.writeToCheckpoint(out); 
+    chain.serialize(out); 
 }   
 
 

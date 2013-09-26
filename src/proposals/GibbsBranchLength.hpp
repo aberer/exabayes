@@ -8,7 +8,6 @@
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
-  // GibbsBranchLength(std::unique_ptr<LikelihoodEvaluator> _eval); 
   GibbsBranchLength();
   GibbsBranchLength(const GibbsBranchLength& rhs); 
 

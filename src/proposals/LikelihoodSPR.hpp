@@ -28,6 +28,8 @@ public:
 
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand) { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0)); }
   
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
+
   void proposeBranches(TreeAln& traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval ); 
     
 private: 			// METHODS 

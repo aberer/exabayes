@@ -20,11 +20,11 @@
 #include "config/ConfigReader.hpp"
 #include "ParallelSetup.hpp"
 #include "time.hpp"
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 #include "file/DiagnosticsFile.hpp"
 
 
-class SampleMaster : public Checkpointable
+class SampleMaster : public Serializable
 {
 public:   
   SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
@@ -45,8 +45,7 @@ public:
       @brief initializes the config file 
    */ 
   void processConfigFile(string configFileName, const TreeAln* tralnPtr, vector<unique_ptr<AbstractProposal> > &proposalResult, 
-			  vector<unique_ptr<AbstractParameter> > &variableResult, std::vector<ProposalSet> &proposalSets, 
-			  const std::unique_ptr<LikelihoodEvaluator> &eval); 
+			  vector<unique_ptr<AbstractParameter> > &variableResult, std::vector<ProposalSet> &proposalSets); 
   void initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &trees , const std::vector<AbstractParameter*> &params ) const ; 
   /** 
       @brief EXPERIMENTAL 
@@ -61,8 +60,8 @@ public:
    */ 
   const std::vector<CoupledChains>& getRuns() const {return runs; }
   
-  virtual void readFromCheckpoint( std::istream &in ) ; 
-  virtual void writeToCheckpoint( std::ostream &out) const ;
+  virtual void deserialize( std::istream &in ) ; 
+  virtual void serialize( std::ostream &out) const ;
 
 private: 
   void printParameters(const TreeAln &traln, const std::vector<unique_ptr<AbstractParameter> > &params) const; 
@@ -71,7 +70,7 @@ private:
   std::vector<std::string> getStartingTreeStrings(); 
   void informPrint(); 
   void printInitialState(const ParallelSetup &pl); 
-  std::unique_ptr<LikelihoodEvaluator> createEvaluatorPrototype(const TreeAln &initTree); 
+  LikelihoodEvaluator createEvaluatorPrototype(const TreeAln &initTree); 
   void writeCheckpointMaster(); 
   void initializeFromCheckpoint(); 
   std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 

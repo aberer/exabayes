@@ -2,7 +2,7 @@
 #include "AbstractProposal.hpp"
 #include "priors/ExponentialPrior.hpp"
 #include "BoundsChecker.hpp"
-#include "densities.h"
+#include "Density.hpp"
 #include "AdHocIntegrator.hpp"
 #include "Arithmetics.hpp"
 
@@ -60,12 +60,12 @@ BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branc
     BoundsChecker::correctBranch(resultBranch); 
 
 
-  double lnBackP = logGammaDensity(branch.getInterpretedLength(traln, blParam), alpha, beta); 
-  double lnForP = logGammaDensity(proposal, alpha, beta); 
+  double lnBackP = Density::lnGamma(branch.getInterpretedLength(traln, blParam), alpha, beta); 
+  double lnForP = Density::lnGamma(proposal, alpha, beta); 
 
   assert(lnBackP != 0 && lnForP != 0 ); 
 
-  AbstractProposal::updateHastings(hastings,   exp(lnBackP - lnForP) , "theGibbs");
+  AbstractProposal::updateHastingsLog(hastings,   lnBackP - lnForP , "theGibbs");
   return resultBranch; 
 }
 
@@ -104,13 +104,13 @@ double GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& b, Lik
   auto resultBranch = b; 
   auto p = b.findNodePtr(traln ), 
     q = p->back; 
+  
+  assert(traln.getNumberOfPartitions() == 1 ); 
 
   if( p->x != 1 )
-    eval.evalSubtree(traln, b.toPlain()); 
+    eval.evalSubtree(traln, 0, b.toPlain() ); 
   if( q->x != 1 )
-    eval.evalSubtree(traln,b.toPlain().getInverted());
-
-  // eval.evaluate(traln,b, false);
+    eval.evalSubtree(traln, 0, b.toPlain().getInverted());
 
   auto prior = param->getPrior(); 
   assert(dynamic_cast<ExponentialPrior*> (prior) != nullptr); 

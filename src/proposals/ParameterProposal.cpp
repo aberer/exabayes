@@ -1,15 +1,16 @@
 #include "ParameterProposal.hpp"
 #include "tune.h"
 #include "priors/AbstractPrior.hpp"
+#include "priors/FixedPrior.hpp"
+#include "BoundsChecker.hpp"
 
 ParameterProposal::ParameterProposal(Category cat, std::string _name, bool modifiesBL,  
 				     std::unique_ptr<AbstractProposer> _proposer, double parameter )
-  : modifiesBL(modifiesBL)
+  : AbstractProposal( cat, _name)
+  , modifiesBL(modifiesBL)
   , parameter(parameter)
   , proposer(std::move(_proposer))  
 {
-  category = cat; 
-  name = _name ; 
   relativeWeight = 0;   
 } 
 
@@ -70,24 +71,51 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
       prior.accountForFracChange(traln, oldFCs, newFCs, blParams); 
 
       for(nat i = 0; i < blParams.size();++i)
-	  updateHastings(hastings, pow(newFCs.at(i) / oldFCs.at(i), traln.getNumberOfBranches() ), name); 
+	{
+	  auto value = traln.getNumberOfBranches() * log(newFCs.at(i) / oldFCs.at(i))   ; 
+	  AbstractProposal::updateHastingsLog(hastings, value, name); 
+	}
     }
 
   // a generic prior updates the prior rate 
-  auto thePrior = primaryParameters[0]->getPrior();
-  prior.addToRatio(thePrior->getLogProb(newValues) - thePrior->getLogProb(savedContent.values)); 
+  auto pr = primaryParameters[0]->getPrior();
+  prior.addToRatio(pr->getLogProb(newValues) - pr->getLogProb(savedContent.values)); 
 } 
 
 
 void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln)
 {
-  // assert(primaryParameters.size() == 1 ); 
-  evaluator.evaluatePartitions(traln, primaryParameters[0]->getPartitions() , true); 
+  auto prts = primaryParameters[0]->getPartitions(); 
+  evaluator.evaluatePartitionsWithRoot(traln, traln.getAnyBranch(), prts , true); 
 }
  
+
+
 void ParameterProposal::resetState(TreeAln &traln) 
 {
   primaryParameters[0]->applyParameter(traln, savedContent);
+
+  // for a fixed bl parameter, we have to re-scale the branch lengths after rejection again. 
+  // NOTICE: this is very inefficient 
+  if(modifiesBL)
+    {
+      for(auto &param : getBranchLengthsParameterView() )
+	{
+	  auto pr = dynamic_cast<FixedPrior*>(param->getPrior()); 
+	  if(pr != nullptr)
+	    {
+	      for(auto &b : traln.extractBranches(param))
+		{
+		  auto content = pr->getInitialValue(); 
+		  b.setConvertedInternalLength(traln,param, content.values[0]); 
+		  tout << "resetting to " << b << "\t"  << b.getInterpretedLength(traln,param); 
+		  if(not BoundsChecker::checkBranch(b))
+		    BoundsChecker::correctBranch(b); 
+		  traln.setBranch(b,param); 
+		}
+	    }
+      	}
+    }
 }
 
 
@@ -118,4 +146,13 @@ void ParameterProposal::readFromCheckpointCore(std::istream &in)
 void ParameterProposal::writeToCheckpointCore(std::ostream &out)  const
 {
   cWrite(out, parameter); 
+} 
+
+
+std::vector<nat> ParameterProposal::getInvalidatedNodes(const TreeAln &traln) const 
+{
+  auto result = std::vector<nat>{}; 
+  for(nat i = traln.getNumberOfTaxa() + 1 ; i < traln.getNumberOfNodes() + 1  ; ++i)
+    result.push_back(i); 
+  return result; 
 } 

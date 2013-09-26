@@ -21,7 +21,7 @@
 class MyTemplateProposal : public AbstractProposal
 {
 public: 
-  MyTemplateProposal( double aVariable);
+  MyTemplateProposal( double aVariable); 
 
   // everything copied over from AbstractProposal that has a = 0
   // there. This declares the methods pure virtual, and the derived
@@ -32,7 +32,8 @@ public:
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
-  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const{return {}; }
+
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
   
   // if your proposal has  parameters that are tuned   
