@@ -24,8 +24,6 @@ static void rejectIfExists(std::string filename)
 
 
 // does not include length of tips currently   
-
-
 BipartitionExtractor::BipartitionExtractor(std::vector<std::string> files)
   : TreeProcessor(files)
 {
@@ -62,6 +60,9 @@ nat BipartitionExtractor::getNumTreesInFile(std::string file) const
   auto line = std::string();
   while(getline(fh, line))
     {
+      if(line.compare("end;") == 0 )
+	break;
+
       if(line.find(";") != std::string::npos) 
 	++result; 
     }
@@ -94,8 +95,7 @@ void BipartitionExtractor::extractBipsNew()
 	  bipHash.addTree(*traln,true);
 	}
       bipHashes.push_back(bipHash);
-      
-      // fclose(fh);
+ 
       ++ctr; 
     }
 
@@ -126,36 +126,54 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
 {
   assert(uniqueBips.size() != 0); 
 
-  std::stringstream ss; 
+  auto && ss = std::stringstream{}; 
   ss << PROGRAM_NAME << "_bipartitionStatistics." << id ; 
   rejectIfExists(ss.str()); 
 
-  std::ofstream freqFile(ss.str()); 
+  auto && freqFile = std::ofstream (ss.str()); 
   freqFile << "id\t";
   for(auto &fn : fns)
     freqFile
       << "freq." << fn 
       << "\tbl.mean." << fn
       << "\tbl.sd." << fn
+      << "\tbl.ESS."<< fn
       << "\t" ; 
+
+  if(fns.size() > 1)
+    freqFile << "prsf" ; 
   freqFile << std::endl; 
+
+  auto allBlSets = std::vector<std::vector<double>>{};
 
   for(auto &bipElem: uniqueBips)
     {
       freqFile << bipElem.second << "\t" ; 
       for(auto &bipHash : bipHashes )
 	{
-	  auto mean = Arithmetics::getMean(bipHash.getBranchLengths(bipElem.first));
-	  auto var = Arithmetics::getVariance(bipHash.getBranchLengths(bipElem.first)); 
+	  auto bls = bipHash.getBranchLengths(bipElem.first); 
+	  allBlSets.push_back(bls); 
+
+	  auto mean = Arithmetics::getMean(bls);
+	  auto var = Arithmetics::getVariance(bls); 
+	  auto ess = Arithmetics::getEffectiveSamplingSize(bls);
 
 	  freqFile << bipHash.getPresence(bipElem.first).count()
 		   << "\t"  << mean
 		   << "\t" << sqrt(var)
+		   << "\t" << ess 
 		   << "\t"
 	    ; 
 	}
+      
+      if(fns.size() > 1)
+	freqFile << Arithmetics::PRSF(allBlSets); 
+
       freqFile << std::endl; 
     }
+
+  
+  std::cout << "printed bipartition statistics to file " << ss.str() << std::endl; 
 }
 
 
@@ -165,8 +183,8 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
 void BipartitionExtractor::printBranchLengths(std::string id) const 
 {
   assert(uniqueBips.size() != 0); 
-
-  std::stringstream ss; 
+  
+  auto &&ss = std::stringstream {}; 
   ss << PROGRAM_NAME << "_bipartitionBranchLengths."  << id; 
   rejectIfExists(ss.str()); 
 
@@ -182,17 +200,19 @@ void BipartitionExtractor::printBranchLengths(std::string id) const
 	  blFile << uniqueBips.at(bip.first) << "\t"  << ctr  << "\t" << length << std::endl; 
       ++ctr ; 
     }
+
+  std::cout << "printed branch lengths associated with bipartitions to " << ss.str() << std::endl; 
 }
 
 void BipartitionExtractor::printFileNames(std::string id) const 
 {
   assert(uniqueBips.size() != 0); 
 
-  std::stringstream ss; 
+  auto &&ss = std::stringstream{}; 
   ss << PROGRAM_NAME << "_fileNames." << id; 
   rejectIfExists(ss.str()); 
 
-  std::ofstream ff(ss.str());
+  auto  &&ff = std::ofstream(ss.str());
   ff << "id\tfileName" << std::endl; 
   nat ctr = 0; 
   for(auto &fn : fns)
@@ -200,6 +220,8 @@ void BipartitionExtractor::printFileNames(std::string id) const
       ff << ctr << "\t" << fn << std::endl; 
       ++ctr; 
     }
+
+  std::cout << "printed file name identifiers (for future reference) to "<< ss.str() << std::endl; 
 }
 
 
@@ -219,6 +241,8 @@ void BipartitionExtractor::printBipartitions(std::string id) const
       bipElem.first.printVerbose(out, taxa);
       out << std::endl;       
     }
+
+  std::cout << "printed bipartitions and identifiers to file " << ss.str() << std::endl; 
 }
 
 

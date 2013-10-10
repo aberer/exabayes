@@ -2,13 +2,12 @@
 
 topdir=$(dirname  $0 )/../
 
-# seed=1234
-# seed=20051 # parsimony prbolem 
+
+seed=20051 # parsimony prbolem 
 # seed=$RANDOM
 
-
-seed=20051 
-# seed=5594
+# seed=$RANDOM
+# seed=123
 # examples/
 
 numProc=2
@@ -20,10 +19,10 @@ numProc=2
 # seed=28233
 
 # small dna 
-# seed=5594
+seed=5594
 # seed=9127
 
-startFromBest=1
+startFromBest=0
 
 
 # find additional arguments for the call   
@@ -42,13 +41,13 @@ fi
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=1
-useClang=1
+useGoogleProfiler=0
+useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
     cxxcompiler="clang++"
-    cppflags="-Qunused-arguments -D__STRICT_ANSI__"
+    cppflags="-Qunused-arguments "
 else 
     ccompiler="gcc"
     cxxcompiler="g++"
@@ -109,7 +108,7 @@ if [ "$codeBase" == "examl" ]; then
 
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
-    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
+    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
     # CC="$ccompiler" 
     # CXX="$cxxcompiler"  
@@ -117,7 +116,7 @@ if [ "$codeBase" == "examl" ]; then
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./yggdrasil -s $seed -f $pathtodata/aln.pll.binary -n $runid $extraArgs -c $configFile $extra "  
+    baseCall="$gdb ./yggdrasil -s $seed -f $pathtodata/aln.binary -n $runid $extraArgs -c $configFile $extra "  
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit

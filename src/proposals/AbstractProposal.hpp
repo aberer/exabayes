@@ -39,7 +39,7 @@ public:
      @brief evaluates the proposal 
      @todo remove the prior, we should not need it here 
    */ 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln) = 0; 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) = 0; 
   /** 
       @brief resets the tree to its previous state; corrects the prior, if necessary (@todo is this the case?)
    */ 
@@ -48,7 +48,7 @@ public:
       @brief tunes proposal parameters, if available  
    */ 
   virtual void autotune() = 0  ;
-
+  
   virtual AbstractProposal* clone() const = 0;  
   /** 
       @brief gets the relative weight of this proposal 
@@ -58,6 +58,8 @@ public:
      @brief sets the relative weight of this proposal 
    */ 
   void setRelativeWeight(double tmp) { relativeWeight = tmp; }
+  
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const = 0; 
   /** 
       @brief gets the category 
    */ 

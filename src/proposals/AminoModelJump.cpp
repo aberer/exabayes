@@ -19,7 +19,7 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &ha
 }
 
 
-void AminoModelJump::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) 
+void AminoModelJump::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   assert(NOT_IMPLEMENTED); 
 }

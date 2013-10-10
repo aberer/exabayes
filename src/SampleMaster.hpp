@@ -70,13 +70,14 @@ private:
   std::vector<std::string> getStartingTreeStrings(); 
   void informPrint(); 
   void printInitialState(const ParallelSetup &pl); 
-  LikelihoodEvaluator createEvaluatorPrototype(const TreeAln &initTree); 
+  LikelihoodEvaluator createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile); 
   void writeCheckpointMaster(); 
   void initializeFromCheckpoint(); 
   std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 
   void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
   void initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
   CLOCK::system_clock::time_point printDuringRun(nat gen,  ParallelSetup &pl) ; 
+  std::string getOrCreateBinaryFile() const ; 
 
 private:			// ATTRIBUTES 
   vector<CoupledChains> runs; 

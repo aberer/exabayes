@@ -17,7 +17,8 @@ public:
       @brief optimises the branch
       @return the optimised branch 
    */ 
-  static double optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, double &firstDerivative, double &secDerivative, int maxIter,  const AbstractParameter*  param); 
+  // static double optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, double &firstDerivative, double &secDerivative, int maxIter,  const AbstractParameter*  param); 
+  static std::array<double,3> optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, int maxIter,  AbstractParameter const  *param); 
 
 private: 
   const static double EST_EXP; 

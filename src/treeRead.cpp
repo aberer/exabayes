@@ -410,8 +410,8 @@ void myTreeReadLen(std::string treeString , tree *tr, boolean hasBL)
  
 
   // assert numbranches == 1  
-  for(i = 0; i < 1; i++)
-    tr->partitionSmoothed[i] = FALSE;
+  // for(i = 0; i < 1; i++)
+  //   tr->partitionSmoothed[i] = FALSE;
   
   tr->rooted      = FALSE;     
 

@@ -112,13 +112,10 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
 	    {
 	      std::stringstream part; 
 	      run.getSwapInfo().serialize(part); 
-	      // run.getRandomness().writeToCheckpoint(part); 
-	      // std::cout << "WROTE randomness " << run.getRandomness() << std::endl; 
 	      auto asString = part.str();
 	      
 	      if(isFirst )
 		lengthOfSwap = asString.size(); 
-	      // std::cout << "lengthOfSwap=" << lengthOfSwap << std::endl; 
 
 	      isFirst = false; 
 	      assert(lengthOfSwap == int(asString.size())); 

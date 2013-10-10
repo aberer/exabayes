@@ -22,10 +22,9 @@ extern int NUM_BRANCHES;
 
 #if HAVE_PLL != 0
 
-#else 
+#else
 
 #ifdef _SEQUENTIAL
-
 #ifdef __cplusplus
 extern "C"{
 #endif
@@ -33,7 +32,7 @@ extern "C"{
 #ifdef __cplusplus
 }
 #endif
-#else 
+#else
 #include "mpi.h"
 #endif
 

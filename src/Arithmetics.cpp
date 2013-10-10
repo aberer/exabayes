@@ -1,6 +1,7 @@
-
 #include "Arithmetics.hpp"
 #include "common.h"
+
+#include <iostream>
 #include <cmath>
 #include <algorithm>
 #include <functional>
@@ -116,10 +117,58 @@ namespace Arithmetics
   // makes some sense 
   // http://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_introbayes_sect008.htm
 
-  double getEffectiveSamplingSize(const std::vector<double> & data)
+  double getAutoCorrelation(const std::vector<double> &data, nat lag)
   {
-    assert(0); 
-    return 0; 
+    auto mean = getMean(data); 
+
+    double denominator = 0.; 
+    for(auto v : data )
+      denominator += (v - mean) * (v - mean); 
+
+    double result = 0.f; 
+    for(int i = 0; i < int(data.size() - lag); ++i)
+      result += ( data[i] - mean ) * (data[i+lag] - mean) ; 
+    
+    result /= denominator; 
+    return result; 
   }
 
+
+  double getEffectiveSamplingSize(const std::vector<double> &data)
+  {
+    if(data.size() == 0)
+      return 0; 
+
+    double gammaStat[2000];
+    double mean = getMean(data) ; 
+    nat maxLag = data.size()-1; 
+
+    if(data.size()  - 1 > 2000)
+      maxLag = 2000; 
+    double varStat = 0; 
+    
+    for (nat lag = 0; lag < maxLag; lag++)
+      {
+	gammaStat[lag]=0;
+	for (nat j = 0; j < data.size() - lag; j++) 
+	  {
+	    double del1 = data[j] - mean;
+	    double del2 = data[j + lag] - mean;
+	    gammaStat[lag] += (del1 * del2);
+	  }
+
+	gammaStat[lag] /= ((double) (data.size() - lag));
+
+	if (lag == 0) 
+	  varStat = gammaStat[0];
+	else if (lag % 2 == 0) 
+	  {
+	    if (gammaStat[lag - 1] + gammaStat[lag] > 0) 
+	      varStat += 2.0 * (gammaStat[lag - 1] + gammaStat[lag]);
+	    else
+	      maxLag = lag;
+	  }
+      }
+    return (gammaStat[0] * data.size()) / varStat;
+  }
 }

@@ -21,13 +21,14 @@
 class MyTemplateProposal : public AbstractProposal
 {
 public: 
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const {return BranchPlain(); }
   MyTemplateProposal( double aVariable); 
 
   // everything copied over from AbstractProposal that has a = 0
   // there. This declares the methods pure virtual, and the derived
   // proposal HAS to implement theese methods.
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
   virtual void resetState(TreeAln &traln); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  

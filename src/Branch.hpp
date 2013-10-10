@@ -73,6 +73,7 @@ public:
   /** 
       @brief gets the equality of this branch and rhs in a generic manner. 
    */ 
+  // TODO replace this with a proper operator== once in a while ... 
   bool equals(const Branch &rhs, BranchEqualFlag flags) const ;  
   /**
      @brief gets the primary node (i.e., reference node) of the branch

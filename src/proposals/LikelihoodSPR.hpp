@@ -16,9 +16,11 @@ class LikelihoodSPR : public AbstractProposal
 {
 public: 
   LikelihoodSPR(nat minStep, nat maxStep, double likeWarp); 
+
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
   
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
   virtual void resetState(TreeAln &traln)  ; 
   virtual AbstractProposal* clone() const ;  
   virtual void autotune()   {}

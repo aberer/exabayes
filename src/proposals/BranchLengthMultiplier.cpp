@@ -20,8 +20,14 @@ BranchPlain BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomne
   if(inSetExecution)
     return preparedBranch;
   else  
-    return TreeRandomizer::drawBranchUniform(traln, rand); 
+    return determinePrimeBranch(traln,rand); 
 }   
+
+
+BranchPlain BranchLengthMultiplier::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const 
+{
+  return TreeRandomizer::drawBranchUniform(traln, rand); 
+} 
 
 
 void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
@@ -45,8 +51,6 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   
   b.setLength(newZ); 
 
-  // tout << "proposing " << newZ << " for "  << b  << "\twith multiplier=" << drawnMultiplier << std::endl; 
-
   if(not BoundsChecker::checkBranch(b))
     BoundsChecker::correctBranch(b); 
   traln.setBranch(b, param); 
@@ -61,10 +65,14 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 }
 
 
-void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) 
+void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   assert(primaryParameters.size() == 1 ); 
   auto parts = primaryParameters[0]->getPartitions();
+  
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL: " << savedBranch << std::endl; 
+#endif
   evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false); 
 }
 
@@ -108,6 +116,8 @@ void BranchLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 std::pair<BranchPlain,BranchPlain> BranchLengthMultiplier::prepareForSetExecution(TreeAln &traln, Randomness &rand) 
 {
   assert(inSetExecution); 
-  return std::pair<BranchPlain,BranchPlain>(TreeRandomizer::drawBranchUniform(traln, rand), BranchPlain(0,0)); 
+  return std::pair<BranchPlain,BranchPlain>( 
+					    determinePrimeBranch(traln,rand),
+					    BranchPlain(0,0)); 
 }
 

@@ -3809,8 +3809,8 @@ void initModel(tree *tr, double **empiricalFrequencies, partitionList * partitio
   /* PSR (CAT) model init */
   for(model = 0; model < partitions->numberOfPartitions; model++)
     {            
-	  partitions->partitionData[model]->numberOfCategories = 1;
-	  partitions->partitionData[model]->perSiteRates[0] = 1.0;
+      partitions->partitionData[model]->numberOfCategories = 1;
+      partitions->partitionData[model]->perSiteRates[0] = 1.0;
     }
     
   updatePerSiteRates(tr, partitions, FALSE);
@@ -3823,9 +3823,9 @@ void initModel(tree *tr, double **empiricalFrequencies, partitionList * partitio
   
   for(model = 0; model < partitions->numberOfPartitions; model++)
     {
-	  partitions->partitionData[model]->alpha = 1.0;
+      partitions->partitionData[model]->alpha = 1.0;
       if(partitions->partitionData[model]->protModels == AUTO)
-    	  partitions->partitionData[model]->autoProtModels = WAG; /* initialize by WAG per default */
+	partitions->partitionData[model]->autoProtModels = WAG; /* initialize by WAG per default */
       
       initReversibleGTR(tr, partitions, model); /* Decomposition of Q matrix */
       /* GAMMA model init */

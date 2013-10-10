@@ -21,6 +21,8 @@ CommandLine::CommandLine(int argc, char **argv)
   , perPartitionDataDistribution(false)
   , saveMemorySEV(false)
   , dryRun (false)
+  , modelFile("")
+  , singleModel("")
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -40,17 +42,21 @@ void CommandLine::printHelp()
 {
   printVersion(false); 
 
-  std::cout << std::endl << "./exabayes -f binFile [ -s seed | -r id ]  -n id [options..] "
+  std::cout << std::endl << "./exabayes   -f alnFile [ -q modelFile ] [ -m model ] [ -s seed | -r id ]  -n id [options..] "
 	    << std::endl; 
 
   std::cout << "\n\n"
 	    << "Mandatory Arguments: \n"
-	    << "    -f binFile       a binary alignment file that has been created by the appropriate parser before (see manual for help)\n"
+	    << "    -f alnFile       a alignment file (either binary and created by parser or plain-text phylip)\n"
 	    << "    -s seed          a master seed for the MCMC\n"
 	    << "    -n ruid          a run id\n" 
-	    << "    -r id            restart from checkpoint. Just specify the id of the previous run here. \n"
-	    << "                       Make sure, ExaBayes can access all files from this previous run. Notice\n"
-	    << "                       that this option is not mandatory for the start-up.\n "
+	    << "    -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. \n"
+	    << "                       Make sure, that all files created by the previous run are in the working directory.\n"
+	    << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n "
+	    << "    -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed \n"
+	    << "                       with binary files."
+	    << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
+	    << "                       (valid values: DNA or PROT)\n"
 	    << std::endl;     
 
   std::cout << "\n" 
@@ -64,7 +70,7 @@ void CommandLine::printHelp()
 	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n"
 	    << "    -Q               per-partition data distribution (use this only with many partitions, check manual\n"
 	    << "                       for detailed explanation)\n"
-	    << "    -m               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
+	    << "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
 	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
 	    << "                       On very gappy alignments this option yields considerable runtime improvements. \n"
 	    << "    -M mode          specifies the memory versus runtime trade (see manual for detailed discussion).\n"
@@ -99,7 +105,7 @@ void CommandLine::parse(int argc, char *argv[])
 
   // TODO threads/ processes? 
   
-  while( (c = getopt(argc,argv, "c:df:vhn:w:s:t:R:r:M:C:Qm")) != EOF)
+  while( (c = getopt(argc,argv, "c:df:vhn:w:s:t:R:r:M:C:Qm:Sq:")) != EOF)
     {
       try
 	{	  
@@ -138,9 +144,15 @@ void CommandLine::parse(int argc, char *argv[])
 	      seed.v[0] = std::stoi(optarg);
 	      break; 
 	    case 'r': 
-	      checkpointId = strdup(optarg);   
+	      checkpointId = std::string{strdup(optarg)};   
+	      break; 
+	    case 'q':
+	      modelFile = std::string{strdup(optarg)}; 
 	      break; 
 	    case 'm': 
+	      singleModel = std::string{strdup(optarg)}; 
+	      break; 
+	    case 'S': 
 	      saveMemorySEV = true; 
 	      break; 
 	    case 'M': 
@@ -151,6 +163,7 @@ void CommandLine::parse(int argc, char *argv[])
 	      break; 
 	    case 'R': 
 	      runNumParallel = std::stoi(optarg);
+	      break; 
 	    case 'Q': 
 	      perPartitionDataDistribution = true; 
 	      break; 	  
@@ -188,7 +201,8 @@ void CommandLine::parse(int argc, char *argv[])
       abort(); 
     }
 
-  
+
+
 #if HAVE_PLL != 0
   if(runNumParallel > 1 || chainNumParallel > 1 )
     {
@@ -215,11 +229,36 @@ void CommandLine::parse(int argc, char *argv[])
 
   if(alnFileName.compare("") == 0 )
     {
-      std::cerr << "please specify a binary alignment file via -f file" <<  std::endl 
+      std::cerr << "please specify an alignment file via -f file" <<  std::endl 
 		<< "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << std::endl; 
       abort();
     }
 
+  if(alnFileIsBinary())
+    {
+      if(singleModel.compare("") != 0 || modelFile.compare("") != 0 )
+	{
+	  std::cout << "Found binary alignment file. Additionally, you provided a model file\n"
+	    "(-q) or specified a data type for a single partiton. This information\n"
+	    "will be ignored.\n"; 
+	  modelFile = ""; 
+	  singleModel = ""; 
+	}
+    }
+  else 
+    {
+      // std::cout << "singleModel=" << singleModel << "\t modelFile=>" << modelFile << "<" << std::endl; 
+
+      if(singleModel.compare("") == 0 && modelFile.compare("") == 0 )
+	{
+	  std::cout << "Found a phylip-style alignment file. However, you did not provide a\n"
+	       << "model file (see -q) or a data type specification for a single\n"
+	       << "partition (-m). Cannot proceed.\n" ; 
+	  abort(); 
+	}
+    }
+  
+  // assert(0); 
 }
 
 RunModes CommandLine::getTreeInitRunMode() const 
@@ -238,3 +277,17 @@ randCtr_t CommandLine::getSeed() const
 {
   return seed ; 
 } 
+
+
+bool CommandLine::alnFileIsBinary() const
+{
+  auto&& in =std::ifstream (alnFileName, std::ios::binary); 
+
+  auto fileId = std::string{"BINARY"} ; 
+  char firstBytes[1024]; 
+  in.read(firstBytes, fileId.size() * sizeof(char));
+  auto readString = std::string(firstBytes); 
+  
+  bool result = readString.compare(fileId) == 0 ;
+  return result; 
+}  

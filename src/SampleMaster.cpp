@@ -26,7 +26,7 @@
 
 #include "BoundsChecker.hpp"
 #include "eval/ArrayRestorer.hpp"
-#include "AvgSplitFreqAssessor.hpp"
+#include "SplitFreqAssessor.hpp"
 
 #include "eval/FullCachePolicy.hpp"
 #include "eval/NoCachePolicy.hpp"
@@ -36,6 +36,8 @@
 #include "proposers/MultiplierProposal.hpp"
 
 #include "TreeIntegrator.hpp"
+
+#include "parser/PhylipParser.hpp"
 
 // a developmental mode to integrate over branch lengths
 // #define _GO_TO_INTEGRATION_MODE
@@ -250,7 +252,7 @@ void SampleMaster::initializeFromCheckpoint()
 
 // TODO could move this method somewhere else  
 LikelihoodEvaluator
-SampleMaster::createEvaluatorPrototype(const TreeAln &initTree)
+SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile )
 {
   auto &&plcy =  std::unique_ptr<ArrayPolicy>();
 
@@ -286,12 +288,11 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree)
       assert(0); 
     }
 
-  // auto&& eval = std::unique_ptr<LikelihoodEvaluator>(new LikelihoodEvaluator(initTree, plcy.get())); 
   auto eval = LikelihoodEvaluator(initTree, plcy.get()); 
 
 #ifdef DEBUG_LNL_VERIFY
   auto dT = make_shared<TreeAln>();
-  dT->initializeFromByteFile(cl.getAlnFileName(), RunModes::NOTHING ); 
+  dT->initializeFromByteFile(binaryFile, RunModes::NOTHING ); 
 
   dT->enableParsimony(); 
   eval.setDebugTraln(dT);
@@ -438,6 +439,44 @@ void SampleMaster::printParameters(const TreeAln &traln, const std::vector<uniqu
 }
 
 
+std::string SampleMaster::getOrCreateBinaryFile() const 
+{
+  auto binaryAlnFile =std::string{}; 
+  if( not cl.alnFileIsBinary())
+    {
+      bool haveModelFile = cl.getModelFile().compare("") != 0; 
+      auto modelInfo = haveModelFile ? cl.getModelFile( ): cl.getSingleModel(); 
+
+      auto parser = PhylipParser{ cl.getAlnFileName() , modelInfo, haveModelFile}; 
+      
+      binaryAlnFile = std::string(cl.getWorkdir() 
+					+  ( cl.getWorkdir().compare("") == 0 ? "" : "/"   ) 
+					+   "ExaBayes_binaryAlignment" + "." + cl.getRunid()) ;
+      if(std::ifstream(binaryAlnFile))
+	{
+	  tout << "removing previous binary alignment representation " << binaryAlnFile << std::endl; 
+	  remove(std::string(binaryAlnFile).c_str()); 
+	}
+      
+      parser.parse(); 
+      parser.writeToFile(binaryAlnFile); 
+      // tout << "wrote to "<< binaryAlnFile << std::endl; 
+      
+      if(not std::ifstream(binaryAlnFile))
+	{
+	  tout << "Error: tried to create intermediate file "<< binaryAlnFile << ", but did not succeed!"  << std::endl; 
+	  exit(-1); 
+	}
+    }
+  else 
+    {
+      binaryAlnFile = cl.getAlnFileName();   
+    }
+  
+  return binaryAlnFile; 
+}
+
+
 void SampleMaster::initializeRuns()
 {  
   auto startingTrees = getStartingTreeStrings(); 
@@ -455,34 +494,35 @@ void SampleMaster::initializeRuns()
 
   auto runmodes = cl.getTreeInitRunMode();
 
+  auto binaryAlnFile = getOrCreateBinaryFile(); 
+
   auto trees =  std::vector<std::shared_ptr<TreeAln> >{}; 
-  initTreePtr->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
+  initTreePtr->initializeFromByteFile(binaryAlnFile, runmodes); 
   initTreePtr->enableParsimony();
   const auto& initTree = *initTreePtr; 
 
   // START integrator
 #ifdef _EXPERIMENTAL_INTEGRATION_MODE
   std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
-  aTree->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
+  aTree->initializeFromByteFile(binaryAlnFile, runmodes); 
   aTree->enableParsimony();
 
   // let's have another tree for debug
   auto dT = make_shared<TreeAln>();
-  dT->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
+  dT->initializeFromByteFile(binaryAlnFile, runmodes); 
   dT->enableParsimony(); 
 
   TreeRandomizer::randomizeTree(*aTree, masterRand); 
   ahInt = new AdHocIntegrator(aTree, dT, masterRand.generateSeed());
 
   tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed()); 
-
 #endif
   // END
 
   auto proposals =  std::vector<unique_ptr<AbstractProposal> >{} ; 
   auto params = std::vector<unique_ptr<AbstractParameter> >{} ; 
 
-  auto evalUptr = createEvaluatorPrototype(initTree); 
+  auto evalUptr = createEvaluatorPrototype(initTree,  binaryAlnFile); 
   
   auto proposalSets =  std::vector<ProposalSet>{};  
   processConfigFile(cl.getConfigFileName(), &initTree, proposals, params, proposalSets);
@@ -494,7 +534,7 @@ void SampleMaster::initializeRuns()
   for(nat i = 0 ; i < runParams.getNumCoupledChains(); ++i)
     {      
       trees.push_back(make_shared<TreeAln>()); 
-      trees[i]->initializeFromByteFile(cl.getAlnFileName(), runmodes); 
+      trees[i]->initializeFromByteFile(binaryAlnFile, runmodes); 
       trees[i]->enableParsimony();
 
 #if HAVE_PLL == 0
@@ -688,7 +728,7 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
       fns.push_back(ss.str());
     }
      
-  auto&& asdsf = AvgSplitFreqAssessor(fns);
+  auto&& asdsf = SplitFreqAssessor(fns);
 
   end = asdsf.getEnd();
       
@@ -731,9 +771,9 @@ void SampleMaster::processConfigFile(string configFileName, const TreeAln* traln
 				     std::vector<std::unique_ptr<AbstractParameter> > &variableResult, 
 				     std::vector<ProposalSet> &proposalSets )
 {
-  ConfigReader reader; 
-  ifstream fh(configFileName); 
-  NxsToken token(fh); 
+  auto reader = ConfigReader{}; 
+  auto && fh = ifstream(configFileName); 
+  auto token = NxsToken(fh); 
 
   paramBlock.setTree(tralnPtr); 
   reader.Add(&paramBlock); 

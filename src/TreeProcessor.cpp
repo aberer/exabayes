@@ -63,12 +63,17 @@ void TreeProcessor::initializeTreeOnly(int numTax )
   setupTree(tr);
 #endif
 
+  for(int i = 0; i < numTax + 3 * ( numTax - 1  ) ; ++i ) 
+    {
+      tr->nodeBaseAddress[i].z = (double*)exa_malloc(1 * sizeof(double)); 
+    }
+
   int space = int(log(numTax) * 10 ) ;
   // initialize the name hash, s.t. we can read trees 
   for(int i = 1; i <= tr->mxtips; i++)
     {      
       tr->nameList[i] = (char*)malloc(sizeof(char) * space );      
-      std::stringstream ss; 
+      auto &&ss = std::stringstream{}; 
       ss << i ;
       strcpy(tr->nameList[i], ss.str().c_str()); 
       addword(tr->nameList[i] , tr->nameHash, i); 

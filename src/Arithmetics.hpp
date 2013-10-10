@@ -2,6 +2,7 @@
 #define ARITHMETICS_HPP
 
 #include <vector>
+#include "common.h"
 
 namespace Arithmetics
 {
@@ -29,5 +30,7 @@ namespace Arithmetics
       @brief gets the pearson correlation coefficient between two samples 
    */ 
   double getPearsonCorrelationCoefficient(const std::vector<double> &sampleA, const std::vector<double> &sampleB); 
+
+  double getAutoCorrelation(const std::vector<double> &data, nat lag); 
 }
 #endif

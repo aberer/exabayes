@@ -57,6 +57,7 @@ extern AdHocIntegrator* ahInt;
 extern TreeIntegrator* tInt; 
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 
+extern int processes; 
 extern std::chrono::system_clock::time_point timeIncrement;  
 extern int debugPrint; 
 #endif

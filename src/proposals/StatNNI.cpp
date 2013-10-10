@@ -29,13 +29,23 @@ StatNNI::StatNNI( double _multiplier)
 }
 
 
-// #endif
+
+
+
+BranchPlain StatNNI::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const
+{
+  return TreeRandomizer::drawInnerBranchUniform(traln, rand); 
+}
+
+
 
 void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {    
   auto params = getBranchLengthsParameterView(); 
 
-  auto b = traln.getBranch(TreeRandomizer::drawInnerBranchUniform(traln, rand), params); 
+  auto bTmp =  determinePrimeBranch(traln, rand); 
+  auto b = traln.getBranch( bTmp, params); 
+
   nodeptr p = b.findNodePtr(traln); 
   auto switchingBranch = BranchPlain( rand.drawRandDouble01() < 0.5  
 				   ? p->back->next->back->number
@@ -125,12 +135,18 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 }
 
 
-void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln)
+void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {
   auto evalBranch = move.getEvalBranch(traln); 
 
-  for (auto &elem : move.getDirtyNodes())
+  auto dNodes = move.getDirtyNodes(); 
+
+  for (auto &elem : dNodes)
     evaluator.markDirty( traln, elem); 
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL " << evalBranch << std::endl; 
+#endif
 
   evaluator.evaluate(traln, evalBranch, false); 
 }
@@ -139,7 +155,6 @@ void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln)
 void StatNNI::resetState(TreeAln &traln)  
 {
   move.revertTree(traln, getSecondaryParameterView()); 
-  // debug_checkTreeConsistency(traln);
 }
 
 
@@ -147,8 +162,7 @@ AbstractProposal* StatNNI::clone()  const
 {
   return new StatNNI( *this );
 }
-
-
+ 
 std::vector<nat> StatNNI::getInvalidatedNodes(const TreeAln& traln) const
 {
   return move.getDirtyNodes();

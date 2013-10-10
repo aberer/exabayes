@@ -1,15 +1,20 @@
-#include "ConsensusTree.hpp"
-
 #include <sstream>
 #include <iosfwd>
+
+int NUM_BRANCHES; 	
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
+#include "ConsensusTree.hpp"
+
 
 int main(int argc, char **argv)
 {
+  // BAD
+  NUM_BRANCHES = 1; 
+
   if(argc != 4 ) 
     {
       std::cout << "Usage: ./consense id threshold file" << std::endl; 

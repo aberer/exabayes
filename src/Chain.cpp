@@ -239,9 +239,9 @@ void Chain::resume(bool evaluate, bool checkLnl)
 }
 
 
-ProposalSet& Chain::drawProposalSet()
+ProposalSet& Chain::drawProposalSet(Randomness &rand)
 {
-  double r = relWeightSumSets * chainRand.drawRandDouble01(); 
+  double r = relWeightSumSets * rand.drawRandDouble01(); 
 
   for(auto &c : proposalSets )
     {
@@ -257,9 +257,9 @@ ProposalSet& Chain::drawProposalSet()
 }
 
 
-AbstractProposal& Chain::drawProposalFunction()
+AbstractProposal& Chain::drawProposalFunction(Randomness &rand)
 { 
-  double r = relWeightSumSingle * chainRand.drawRandDouble01();   
+  double r = relWeightSumSingle * rand.drawRandDouble01();   
 
   for(auto& c : proposals)
     {
@@ -371,6 +371,57 @@ void Chain::deserializeConditionally(std::string str, CommFlag commFlags)
 }
 
 
+
+
+BranchPlain Chain::peekNextVirtualRoot(TreeAln &traln, Randomness rand)  
+{
+  nat curGen = rand.getGeneration();
+  // tout << rand << std::endl; 
+
+  rand.rebaseForGeneration(curGen + 1 ); 
+
+  // tout << rand << std::endl; 
+
+  double sum = relWeightSumSingle + relWeightSumSets; 
+  
+  auto branch = BranchPlain(); 
+
+  // return traln.getAnyBranch();
+
+  if( rand.drawRandDouble01() * sum <  relWeightSumSingle) 
+    {
+      auto &pfun = drawProposalFunction(rand); 
+      branch = pfun.determinePrimeBranch(traln, rand); 
+    }
+  else 
+    {
+      auto pset = drawProposalSet(rand); 
+      branch = pset.getProposalView()[0]->determinePrimeBranch(traln, rand); 
+    }
+
+  if(branch.getPrimNode() == 0 || branch.getSecNode() == 0)
+    {
+      // TODO better draw  
+      branch = TreeRandomizer::drawInnerBranchUniform(traln, rand); 
+#ifdef PRINT_EVAL_CHOICE
+      tout << "RANDOM " << branch<< std::endl; 
+#endif
+      // tout << "no prediction, just returning a somewhat inner branch " << branch  << std::endl; 
+    }
+  else 
+    {
+#ifdef PRINT_EVAL_CHOICE
+      tout << "PREDICT " << branch << std::endl; 
+#endif
+      // tout << "predicted " << branch << std::endl;       
+    }
+  
+
+  return branch; 
+}
+
+
+
 void Chain::stepSingleProposal()
 {
   auto &traln = *tralnPtr; 
@@ -378,13 +429,22 @@ void Chain::stepSingleProposal()
   double prevLnl = likelihood ; 
   double myHeat = getChainHeat();
 
-  auto& pfun = drawProposalFunction();
+  auto& pfun = drawProposalFunction(chainRand);
 
   /* reset proposal ratio  */
   hastings = 0; 
 
   pfun.applyToState(*tralnPtr, prior, hastings, chainRand, evaluator);
-  pfun.evaluateProposal(evaluator, *tralnPtr);
+
+
+  // tout << " have "  << pfun << std::endl; 
+
+  // tout << chainRand << std::endl; 
+  auto suggestion = peekNextVirtualRoot(traln,chainRand); 
+  // auto suggestion = traln.getAnyBranch() ; 
+  // assert(0);  
+
+  pfun.evaluateProposal(evaluator, *tralnPtr, suggestion);
   
   double priorRatio = prior.getLnPriorRatio();
   double lnlRatio = traln.getTr()->likelihood - prevLnl; 
@@ -437,7 +497,9 @@ void Chain::stepSetProposal()
   auto& traln = *tralnPtr; 
 
   double myHeat = getChainHeat(); 
-  auto pSet = drawProposalSet(); 
+  auto &pSet = drawProposalSet(chainRand); 
+
+  // tout << "have " << pSet << std::endl; 
 
   auto oldPartitionLnls = traln.getPartitionLnls(); 
   
@@ -463,7 +525,7 @@ void Chain::stepSetProposal()
       for(auto &p : proposal->getPrimaryParameterView())
 	{
 	  auto partitions = p->getPartitions(); 
-	  affectedPartitions.insert(affectedPartitions.end(), partitions.begin(), partitions.end()); 
+	  affectedPartitions.insert(end(affectedPartitions), begin(partitions), end(partitions)); 
 	  
 	  double lnl = 0; 
 	  for(auto &partition : partitions)
@@ -476,8 +538,9 @@ void Chain::stepSetProposal()
 
   if( branches.first.equalsUndirected(BranchPlain(0,0)) ) // TODO another HACK
     {
-      auto root = traln.getAnyBranch(); // meh, could be cheaper 
-      evaluator.evaluatePartitionsWithRoot(traln, root, affectedPartitions, fullTraversalNecessary); 
+      // this should be a reasonable suggestion 
+      auto nextRoot = peekNextVirtualRoot(traln, chainRand); 
+      evaluator.evaluatePartitionsWithRoot(traln, nextRoot, affectedPartitions, fullTraversalNecessary); 
     }
   else 
     {
@@ -576,7 +639,7 @@ void Chain::step()
 
   evaluator.imprint(traln);
   // inform the rng that we produce random numbers for generation x  
-  chainRand.rebase(currentGeneration);
+  chainRand.rebaseForGeneration(currentGeneration);
 
   double sum = relWeightSumSingle + relWeightSumSets; 
   if(chainRand.drawRandDouble01() * sum < relWeightSumSingle)
@@ -592,17 +655,7 @@ void Chain::step()
   prior.verifyPrior(traln, extractParameters());
 #endif
 
-
-#ifdef EVAL_DEBUG 
-  tout << "arrays: " << std::endl; 
-  for(nat i = 0; i < traln.getNumberOfInnerNodes() ; ++i)
-    {
-      auto partition = traln.getPartition(0); 
-      tout << i << "\t" << i + traln.getNumberOfTaxa() + 1  << "\t" << ((void*)partition->xVector[i]) <<  "\t" << partition->xSpaceVector[i] << std::endl; 
-    }
-  
-  tout << "================================================================" << std::endl; 
-#endif
+  // tout << "================================================================" << std::endl; 
 }
 
 
@@ -649,8 +702,8 @@ namespace std
 
 const std::vector<AbstractParameter*> Chain::extractParameters() const 
 {
-  std::unordered_set<AbstractParameter*> result; 
-
+  auto result = std::unordered_set<AbstractParameter*>{}; 
+  
   // add parameters in the default proposals 
   for(auto &p : proposals)
     {
@@ -672,7 +725,7 @@ const std::vector<AbstractParameter*> Chain::extractParameters() const
 	}
     }
 
-  std::vector<AbstractParameter*> result2 ;   
+  auto result2 = std::vector<AbstractParameter*> {}; 
   for(auto &v : result) 
     result2.push_back(v); 
 
@@ -724,12 +777,10 @@ void Chain::initProposalsFromStream(std::istream& in)
       nat elem = cRead<int>(in); 
       assert(p->getId() == elem); 
       p->deserialize(in);
-      
     }
 
   for(auto &p : proposalSets)
     p.deserialize(in);
-
 
   // auto name2proposal = std::unordered_map<std::string, AbstractProposal*>{}; 
   // for(auto &p :proposals)
@@ -829,3 +880,4 @@ void Chain::serialize( std::ostream &out) const
 }   
 
 // c++<3
+

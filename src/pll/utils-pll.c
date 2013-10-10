@@ -246,7 +246,6 @@ void read_msa(tree *tr, partitionList *pr, const char *filename)
     FILE
       *byteFile = myfopen(filename, "rb");
 
-
     /* read the alignment info */
     myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
     myBinFread(&(tr->originalCrunchedLength), sizeof(int), 1, byteFile);
@@ -514,14 +513,13 @@ void printResult(tree *tr, partitionList *pr, analdef *adef, boolean finalPrint)
 
 
 
-/* Marked for deletion 
-boolean getSmoothFreqs(int dataType)
-{
-  assert(MIN_MODEL < dataType && dataType < MAX_MODEL);
 
-  return pLengths[dataType].smoothFrequencies;
-}
-*/
+/* boolean getSmoothFreqs(int dataType) */
+/* { */
+/*   assert(MIN_MODEL < dataType && dataType < MAX_MODEL); */
+
+/*   return pLengths[dataType].smoothFrequencies; */
+/* } */
 
 const unsigned int *getBitVector(int dataType)
 {

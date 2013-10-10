@@ -15,18 +15,18 @@ NodeSlider::NodeSlider( double _multiplier)
 std::pair<BranchPlain,BranchPlain> NodeSlider::prepareForSetExecution(TreeAln& traln, Randomness &rand) 
 {
   assert(inSetExecution); 
-#ifdef EFFICIENT
-  // this is really not okay, we need a generic
-  // "prepareforevaluation"method and do not want to care about
-  // returned branches
-  assert(0); 
-#endif
-  
-  auto a = TreeRandomizer::drawInnerBranchUniform(traln,rand); 
+
+  auto a = determinePrimeBranch(traln, rand); 
   auto descendents = traln.getDescendents(a); 
   auto b = rand.drawRandDouble01() < 0.5 ? descendents.first : descendents.second; 	
   return std::pair<BranchPlain,BranchPlain>(a,b); 
 }
+
+
+BranchPlain NodeSlider::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const
+{
+  return TreeRandomizer::drawInnerBranchUniform(traln,rand); 
+} 
 
 
 BranchPlain NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) const 
@@ -37,7 +37,7 @@ BranchPlain NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) co
     }
   else  
     {
-      return TreeRandomizer::drawInnerBranchUniform(traln,rand); 
+      return determinePrimeBranch(traln, rand); 
     }
 }
 
@@ -132,7 +132,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   prior.addToRatio(lnPrA + lnPrB); 
 }
 
-void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
+void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
@@ -146,6 +146,10 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &tra
       for(auto part : parts)
 	evaluator.markDirty(traln, part, node); 
     }
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL "  << b << std::endl; 
+#endif
 
   evaluator.evaluatePartitionsWithRoot(traln,b, parts, false); 
 }
@@ -172,6 +176,3 @@ std::vector<nat> NodeSlider::getInvalidatedNodes(const TreeAln& traln) const
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   return { middleNode } ; 
 }
-
-
- 

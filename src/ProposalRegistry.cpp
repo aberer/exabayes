@@ -136,7 +136,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  proposal = unique_ptr<AminoModelJump>( new AminoModelJump(someMatrices));
 	  break; 
 	case ProposalType::BRANCH_GIBBS: 
-	  proposal = unique_ptr<GibbsBranchLength>( new GibbsBranchLength());
+	  proposal = unique_ptr<GibbsBranchLength>( new GibbsBranchLength(false));
 	  break;
 	case ProposalType::BRANCH_SLIDER: 
 	  continue; 		// TODO implement  

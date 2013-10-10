@@ -18,15 +18,18 @@
 #include "FlagType.hpp"
 #include "RunModes.hpp"
 
-
 class AbstractPrior; 
 class Randomness; 
 class TreePrinter; 
 class AbstractParameter; 
 
-
 std::ostream& operator<<(std::ostream& out, pInfo& rhs); 
 nat numStateToNumInTriangleMatrix(int numStates) ; 
+
+
+#if HAVE_PLL == 0 
+struct partitionList; 
+#endif
 
 class TreeAln
 {
@@ -220,7 +223,7 @@ public:
   */ 
   void initializeFromByteFile(std::string byteFileName, RunModes mode); 
   void initializeNumBranchRelated(); 
-  nat readNUM_BRANCHES(std::string byteFileName); 
+  // nat readNUM_BRANCHES(std::string byteFileName); 
   
   /**
      @brief gets a node with given id that is not connected to the tree right now 
@@ -256,21 +259,14 @@ public:
   bool revMatIsImmutable(int model) const; 
 
   RunModes getMode() const { return mode; }
- 
 
 private: 			// METHODS  
 #if HAVE_PLL != 0
-  void initializeTreePLL(std::string byteFileName);
-  void initializePartitionsPLL(std::string byteFileName, double ***empFreq, bool multiBranch);
+
 #endif  
 
   // template<class BRANCH> void extractHelper(nodeptr p, std::vector<BRANCH> &result, bool isStart) const; 
 
-
-
-  // void extractHelper( nodeptr p , std::vector<BranchPlain> &result, bool isStart ) const ; 
-  // void extractHelper( nodeptr p , std::vector<BranchLengths> &result, bool isStart, const std::vector<AbstractParameter*> &params) const ; 
-  // void extractHelper( nodeptr p , std::vector<BranchLength> &result, bool isStart, const AbstractParameter* param ) const ; 
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
 
@@ -284,29 +280,6 @@ private: 			// ATTRIBUTES
   
   friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
 };  
-
-
-// template<class BRANCH> void TreeAln::extractHelper(nodeptr p, std::vector<BRANCH> &result, bool isStart, typename BRANCH::paramType params ) const; 
-// {
-//   // TODO inefficient 
-// #ifdef EFFICIENT
-//   assert(0); 
-// #endif
-//   auto tmp = BranchPlain(p->number, p->back->number); 
-//   auto b = getBranch(tmp, params);
-
-//   result.push_back(b);
-
-//   if(not isStart && isTipNode(p))
-//     return; 
-
-//   for(nodeptr q =  p->next; p != q ; q = q->next)        
-//     extractHelper( q->back, result, false, params);
-// }
-
-
-
-
 
 
 #endif

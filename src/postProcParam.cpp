@@ -5,6 +5,10 @@
 #include <sstream>
 #include <iomanip> 
 
+#define _INCLUDE_DEFINITIONS
+#include "GlobalVariables.hpp"
+#undef _INCLUDE_DEFINITIONS
+
 #include "Arithmetics.hpp"
 #include "common.h"
 
@@ -12,7 +16,7 @@
 std::unordered_map<std::string, std::vector<double>> readFile(std::string file)
 {
   auto result = std::unordered_map<std::string, std::vector<double>>{}; 
-  std::ifstream fh(file); 
+  auto&& fh = std::ifstream(file); 
 
   auto line = std::string{}; 
   getline(fh, line);
@@ -20,7 +24,7 @@ std::unordered_map<std::string, std::vector<double>> readFile(std::string file)
   auto headers = std::vector<std::string>{} ; 
   getline(fh,line); 
 
-  std::istringstream istr(line); 
+  auto&& istr = std::istringstream(line); 
   auto elem = std::string{}; 
   while(getline(istr, elem, '\t'))
     headers.push_back(elem); 
@@ -33,7 +37,7 @@ std::unordered_map<std::string, std::vector<double>> readFile(std::string file)
   while(getline(fh, line))
     {
       nat ctr = 0; 
-      std::istringstream istr(line); 
+      auto &&istr = std::istringstream(line); 
       auto elem = std::string{}; 
       while(getline(istr, elem, '\t'))
 	{
@@ -84,8 +88,12 @@ int main(int argc, char **argv)
       "LnPr",
       "LnL"
     }; 
+  
+  std::cout << "paramName\tmean\tsd\tperc5\tperc25\tmedian\tperc75\tper95\tESS\t" ;
 
-  std::cout << "paramName\tmean\tsd\tperc5\tperc25\tmedian\tperc75\tper95\tprsf" << std::endl; 
+  if(files.size() > 1)
+    std::cout << "prsf"; 
+  std::cout << std::endl; 
   
   for(auto header : headers)
     {
@@ -102,13 +110,8 @@ int main(int argc, char **argv)
 	  relevant.push_back(headerToSomeValues[header]); 
 	  auto someVals = headerToSomeValues[header]; 
 	  valuesConcat.reserve(valuesConcat.size() + someVals.size()); 
-	  valuesConcat.insert(valuesConcat.end(), someVals.begin(),someVals.end());
+	  valuesConcat.insert(end(valuesConcat), begin(someVals),end(someVals));
 	}
-
-      // std::cout << "concat: " ; 
-      // for(auto &v : valuesConcat)
-      // 	std::cout << v << ","; 
-      // std::cout << std::endl; 
 
       std::cout << MAX_SCI_PRECISION ; 
 
@@ -119,6 +122,7 @@ int main(int argc, char **argv)
       auto perc50 = Arithmetics::getPercentile(.50, valuesConcat); 
       auto perc25 = Arithmetics::getPercentile(.25, valuesConcat); 
       auto perc75 = Arithmetics::getPercentile(.75, valuesConcat); 
+      auto ess = Arithmetics::getEffectiveSamplingSize(valuesConcat); 
       auto mean = Arithmetics::getMean(valuesConcat); 
       std::cout << header
 		<< "\t" << mean
@@ -128,10 +132,13 @@ int main(int argc, char **argv)
 		<< "\t" << perc50
 		<< "\t" << perc75
 		<< "\t" << perc95
-		<< "\t" << prsf
-		<< std::endl; 
+		<< "\t" << ess ; 
+      
+      if(relevant.size()  > 1)
+	std::cout << "\t" << prsf; 
+      std::cout << std::endl; 
+
     }
   
   return 0; 
 }
-

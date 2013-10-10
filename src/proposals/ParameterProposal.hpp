@@ -18,9 +18,11 @@ public:
 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval); 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln); 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion); 
   virtual void resetState(TreeAln &traln) ; 
   virtual void autotune()  ;
+
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const {return BranchPlain(); }
 
   virtual AbstractProposal* clone() const {return new ParameterProposal(*this) ;   }
   virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln ) const ; 

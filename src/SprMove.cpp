@@ -245,13 +245,8 @@ std::ostream& operator<<(std::ostream &out, const SprMove& rhs)
 void SprMove::sprCreatePath(const TreeAln &traln, BranchPlain mover, BranchPlain movedInto, 
 			    Path &pathHere,  const std::vector<AbstractParameter*> &params) const
 {
-#ifdef EFFICIENT
-  // looks very clunky 
-  assert(0); 
-#endif
-
-  auto chosen = movedInto; // description.at(1); 
-  auto prunedTree = mover; // description.at(0); 
+  auto chosen = movedInto; 
+  auto prunedTree = mover; 
 
   nodeptr p = prunedTree.findNodePtr(traln);
   
@@ -275,7 +270,6 @@ void SprMove::sprCreatePath(const TreeAln &traln, BranchPlain mover, BranchPlain
   pathHere.append(b);  
   pathHere.reverse();
 
-  // TODO inefficient
   pathHere.saveBranchLengthsPath(traln, params); 
 }
 
@@ -518,12 +512,12 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
       auto result = Arithmetics::getMeanAndVar(samples); 
       resultVec.push_back(result.first); 
 #else 
-      double d1 = 0., d2 = 0. ; 
-
       eval.evaluate(traln, b, true); 
 
       auto bCpy = b.toBlDummy(); 
-      auto result = GibbsProposal::optimiseBranch(traln, bl, eval, d1,d2, 30, blParam); 
+      auto resultTmp = GibbsProposal::optimiseBranch(traln, bl, eval,  30, blParam); 
+      auto result = resultTmp[0]; 
+
       bCpy.setLength(result); 
       traln.setBranch(bl, blParam); 
       eval.evaluate(traln, b, true); 
@@ -549,9 +543,9 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
       auto result = Arithmetics::getMeanAndVar(samples); 
       resultVec.push_back(result.first); 
 #else 
-      double d1 = 0., d2 = 0. ; 
       eval.evaluate(traln, b, true); 
-      auto resultLength = GibbsProposal::optimiseBranch(traln, bl , eval, d1,d2, 30, blParam); 
+      auto resultLength = GibbsProposal::optimiseBranch(traln, bl , eval, 30, blParam)[0]; 
+
       bl.setLength(resultLength); 
       traln.setBranch(bl, blParam); 
       eval.evaluate(traln, b, true); 

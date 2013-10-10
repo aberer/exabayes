@@ -24,15 +24,11 @@ public:
   virtual ~StatNNI(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
   virtual void resetState(TreeAln &traln) ; 
 
-  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
-  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)
-  { 
-    return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );
-  }
-
+  BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const; 
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) ); }
   virtual void autotune() {}	// disabled 
 
   virtual AbstractProposal* clone() const;  

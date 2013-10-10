@@ -16,8 +16,7 @@ class TreeAln;
 #define UINT64_C
 #endif
 
-/* TODO
-   
+/* 
    we could mess around here a lot with 64-bit or the even cooler
    alternative to threefry (aesni). For the time being that's hardly
    worth it, threefry is already much better than the default RNG.
@@ -36,20 +35,14 @@ class Randomness : public Serializable
 public: 
   Randomness(randCtr_t seed); 
 
-  // Randomness(Randomness &&rhs); 
-  // Randomness& operator=(Randomness &&rhs); 
-
-  // Randomness(const Randomness &&rhs) = delete ; 
-  // Randomness& operator=(Randomness rhs) = delete; 
-
-  
   void setKey(randKey_t key) ; 
 
   randCtr_t generateSeed();     
   /** 
-      @brief rebase a random number generator for a given generation 
+      @brief sets the generation for the RNG.
    */ 
-  void rebase(int num); 
+  void rebaseForGeneration(nat generation); 
+  nat getGeneration() const ; 
   /** 
       @brief draw a floating point random  number in [0,1)
    */ 

@@ -83,24 +83,22 @@ void TreeLengthMultiplier::autotune()
 
   double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, FALSE);
 
-#ifdef DEBUG_PRINT_TUNE_INFO
-  std::cout << name << ": with ratio " << sctr.getRatioInLastInterval()
-	    << ": "<< ((newParam < parameter ) ? "reducing" : "increasing") <<  "\t" << parameter << "=>" << newParam << std::endl; 
-#endif
-
   multiplier = newParam; 
 
   sctr.nextBatch();
 }
  
  
-void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
+void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  auto b = BranchPlain(traln.getTr()->start->number,traln.getTr()->start->back->number); 
-
   assert(primaryParameters.size( )== 1); 
   auto parts = primaryParameters[0]->getPartitions(); 
-  evaluator.evaluatePartitionsWithRoot(traln,b, parts, true); 
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL-CHOICE " << branchSuggestion << std::endl; 
+#endif
+
+  evaluator.evaluatePartitionsWithRoot(traln,branchSuggestion, parts, true); 
 }
 
 

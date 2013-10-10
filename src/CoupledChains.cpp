@@ -224,7 +224,8 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
       assert(0);
 #endif
       
-      rand.rebase(genCtr); 
+      // rand.rebase(genCtr); 
+      rand.rebaseForGeneration(genCtr); 
 
       for(nat i = 0; i < numSwaps; ++i)
 	attemptSwap(pl);

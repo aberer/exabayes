@@ -124,13 +124,18 @@ public:
  
   virtual void deserialize( std::istream &in ) ; 
   virtual void serialize( std::ostream &out) const ;   
+  /**
+     @brief the chains determines the virtual root needed by the next
+     generation
+   */
+  BranchPlain peekNextVirtualRoot(TreeAln &traln, Randomness rand) ; 
 
   friend void swap(Chain &lhs, Chain &rhs); 
   friend void swapHeatAndProposals(Chain &chainA, Chain& chainB) ; 
 
 private : 			// METHODS 
-  AbstractProposal& drawProposalFunction();
-  ProposalSet& drawProposalSet(); 
+  AbstractProposal& drawProposalFunction(Randomness &rand);
+  ProposalSet& drawProposalSet( Randomness &rand); 
   void printArrayStart(); 
   void initProposalsFromStream(std::istream& in);
 

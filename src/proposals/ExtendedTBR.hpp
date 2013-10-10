@@ -9,8 +9,10 @@ public:
   ExtendedTBR( double _extensionProb, double _multiplier); 
   virtual ~ExtendedTBR()  { }
 
+  BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
+
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval); 
-  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln); 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion); 
   virtual void resetState(TreeAln& traln); 
   virtual void autotune() {} 
 

@@ -35,11 +35,13 @@ class AminoModelJump : public AbstractProposal
 public: 
   AminoModelJump(vector<aaMatrix_t> matrices); 
 
+  virtual BranchPlain determinePrimeBranch(const TreeAln& traln, Randomness &rand) const  { return BranchPlain(); } 
+
   virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
   virtual void writeToCheckpointCore(std::ostream &out) const  { } //disabled
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand , LikelihoodEvaluator& eval) ; 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) ; 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) ; 
   virtual void resetState(TreeAln &traln); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  

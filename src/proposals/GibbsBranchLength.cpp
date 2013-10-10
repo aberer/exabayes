@@ -3,8 +3,9 @@
 #include "GibbsProposal.hpp"
 #include "priors/AbstractPrior.hpp"
 
-GibbsBranchLength::GibbsBranchLength()
+GibbsBranchLength::GibbsBranchLength(bool _doTwo)
   : BranchLengthMultiplier( 0)
+  , doTwo(_doTwo)
 {
   name = "estGibbsBL"; 
   category = Category::BRANCH_LENGTHS; 
@@ -12,22 +13,13 @@ GibbsBranchLength::GibbsBranchLength()
 } 
 
 
-
-GibbsBranchLength::GibbsBranchLength(const GibbsBranchLength& rhs) 
-  : BranchLengthMultiplier(rhs)
-{
-}
-
-
-
-
-
 #ifdef _EXPERIMENTAL 
 
 #define NUM_ITER 1
 
 
-
+#if 0 
+// with two 
 void GibbsBranchLength::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   // this is a bl proposal that integrates over two branch lengths. 
@@ -96,9 +88,10 @@ void GibbsBranchLength::applyToState(TreeAln &traln, PriorBelief &prior, double 
   savedBranch = origBranches[0]; 
   extraBranch = origBranches[1]; 
 }
- 
+#endif
 
-void GibbsBranchLength::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln) 
+
+void GibbsBranchLength::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   nat middleNode = savedBranch.getIntersectingNode(extraBranch) ;
   nat otherNode = savedBranch.getOtherNode(middleNode); 

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.9],[exabayes-at-googlegroups-dot-com]) 
+AC_INIT([exabayes],[0.9.1],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 
@@ -11,6 +11,7 @@ AC_CONFIG_SRCDIR([src/])
 dnl todo-ish 
 # AM_INIT_AUTOMAKE( [ subdir-objects ] ) 
 AM_INIT_AUTOMAKE
+# AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_HEADERS([src/config.h])
 
 AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])
@@ -28,6 +29,8 @@ AC_PROG_CC
 AC_PROG_CXX
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
+
+# AX_MPI
 
 AX_CXX_COMPILE_STDCXX_11
 AC_PROG_CC_STDC
@@ -69,12 +72,6 @@ if test "x$CODE" = "xyes" ; then
    AC_DEFINE([HAVE_PLL], [0], "")
 elif test "x$CODE" = "xno" ; then 
    AC_DEFINE([HAVE_PLL], [1], "")
-dnl elif test "x$CODE" = "xyes" ; then 
-dnl    AC_DEFINE([HAVE_PLL], [1], "")
-dnl elif test "x$CODE" = "xthreads" ; then 
-dnl    AC_DEFINE([HAVE_PLL], [2], "")
-dnl elif test "x$CODE" = "xmpi" ; then 
-dnl    AC_DEFINE([HAVE_PLL], [3], "")
 else 
    AC_MSG_ERROR(bad value --enable-pll) 
 fi 

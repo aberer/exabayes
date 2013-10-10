@@ -33,9 +33,13 @@ public:
   MemoryMode getMemoryMode()const {return memoryMode ;  }
   bool isDryRun() const {return dryRun; }
   RunModes getTreeInitRunMode() const ; 
+  
+  bool alnFileIsBinary() const; 
+
+  std::string getSingleModel() const {return singleModel; }
+  std::string getModelFile() const {return modelFile; }
 
 private: 			// METHODS
-
   void assertFileExists(std::string filename); 
   void parse(int argc, char *argv[]); 
   void printHelp();
@@ -54,6 +58,8 @@ private: 			// ATTRIBUTES
   bool perPartitionDataDistribution; 
   bool saveMemorySEV; 
   bool dryRun; 
+  std::string modelFile; 
+  std::string singleModel; 
 }; 
 
 

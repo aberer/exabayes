@@ -71,6 +71,29 @@ void ExtendedTBR::buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &tra
 }
 
 
+BranchPlain ExtendedTBR::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const 
+{
+
+  nodeptr
+    p1, p2;  
+
+  auto bisectedBranch = BranchPlain(); 
+  do
+    {
+      bisectedBranch = TreeRandomizer::drawInnerBranchUniform(traln, rand ); 
+
+      p1 = bisectedBranch.findNodePtr(traln ); 
+      p2 = bisectedBranch.getInverted().findNodePtr(traln); 
+
+      assert(not traln.isTipNode(p1) && not traln.isTipNode(p2)); 
+
+    } while( (traln.isTipNode(p1->next->back) && traln.isTipNode(p1->next->next->back) ) 
+	     || (traln.isTipNode(p2->next->back)  && traln.isTipNode(p2->next->next->back) ) ) ;   
+  
+  return bisectedBranch; 
+}
+
+
 void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 {
   Path modifiedPath1, 
@@ -82,21 +105,10 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   auto bisectedBranch = BranchPlain{0,0}; 
   assert(tr->mxtips > 8 ); 
-
-  nodeptr
-    p1, p2;  
-
-  do
-    {
-      bisectedBranch = TreeRandomizer::drawInnerBranchUniform(traln, rand ); 
-
-      p1 = bisectedBranch.findNodePtr(traln ); 
-      p2 = bisectedBranch.getInverted().findNodePtr(traln); 
-
-      assert(not isTip(p1->number, tr->mxtips) && not isTip(p2->number, tr->mxtips)); 
-
-    } while( (traln.isTipNode(p1->next->back) && traln.isTipNode(p1->next->next->back) ) 
-	     || (traln.isTipNode(p2->next->back)  && traln.isTipNode(p2->next->next->back) ) ) ; 
+  
+  bisectedBranch = determinePrimeBranch(traln, rand); 
+  // auto p1 = bisectedBranch.findNodePtr(traln); 
+  // auto p2 = bisectedBranch.getInverted().findNodePtr(traln); 
 
   // variables otherwise
 
@@ -134,18 +146,17 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
       assert(0); 
     }
 
-  // tout << "Move: "<< std::endl; 
-  // tout << move << std::endl; 
-
   move.applyToTree(traln, getSecondaryParameterView() );
 }
 
 
-void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& traln)
+void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& traln, const BranchPlain &branchSuggestion)
 { 
   auto toEval = move.getEvalBranch(traln);
-  // tout <<  "eval " << toEval << std::endl; 
-  // tout << "TREE " << traln << std::endl; 
+  
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL " << toEval << std::endl; 
+#endif
 
   auto dirtyNodes = move.getDirtyNodes();
   
@@ -159,13 +170,6 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& tral
 void ExtendedTBR::resetState(TreeAln &traln)
 {
   move.revertTree(traln, getSecondaryParameterView() );
-
-#ifdef EFFICIENT
-  assert(0); 
-#endif
-
-  // debug_checkTreeConsistency(traln); 
-  // debug_printTree(traln);   
 }
 
 
@@ -174,7 +178,6 @@ AbstractProposal* ExtendedTBR::clone() const
 {
   return new ExtendedTBR( *this );
 }
-
 
 
 std::vector<nat> ExtendedTBR::getInvalidatedNodes(const TreeAln& traln) const

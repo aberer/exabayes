@@ -83,10 +83,13 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 } 
 
 
-void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln)
+void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {
   auto prts = primaryParameters[0]->getPartitions(); 
-  evaluator.evaluatePartitionsWithRoot(traln, traln.getAnyBranch(), prts , true); 
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL-CHOICE "  << branchSuggestion << std::endl; 
+#endif
+  evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion, prts , true); 
 }
  
 
@@ -126,12 +129,7 @@ void ParameterProposal::autotune()
 
   double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, not proposer->isTuneup());
   
-#ifdef DEBUG_PRINT_TUNE_INFO
-  cout << name << ": with ratio " << sctr.getRatioInLastInterval() << ": "<< ((newParam < parameter ) ? "reducing" : "increasing") <<  "\t" << parameter << "," << newParam << endl; 
-#endif
-  
   parameter = newParam; 
-  
   sctr.nextBatch();
 }
 

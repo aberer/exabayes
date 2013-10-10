@@ -146,35 +146,17 @@ void ArrayRestorer::traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat mo
       
       bool innerinner = not tiptip && not tipinner;   
 
-#ifdef EVAL_DEBUG      
-      auto &&ss = std::stringstream{}; 
-      ss << virtualRoot->number << " = "  << pnb->number << "," << pnnb->number ; 
-      if(tiptip)
-	ss << " is tiptip"; 
-      else if(tipinner)
-	ss <<  " is tipinner"; 
-      else
-	ss << " is inner-inner"; 
-#endif
-
       partitionLikelihoods.at(model).isCached[index] = true; 
 	  
       if( ( tiptip && cacheTipTip ) 
 	  || ( tipinner && cacheTipInner ) 
 	  || innerinner )
 	{
-#ifdef EVAL_DEBUG
-	  tout << "CACHING: " << ss.str() << std::endl; 
-#endif
 	  cache(traln, virtualRoot->number , model, curOrient); 
 	}
       else 
 	{
-#ifdef EVAL_DEBUG
-	  tout << "FORGETTING " << ss.str() << std::endl; 
-#endif
 	  destroyAndForget(traln,virtualRoot->number, model);
-
 	}
     }
 

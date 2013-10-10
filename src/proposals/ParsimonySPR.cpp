@@ -92,20 +92,11 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
 
 
 
-void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
+BranchPlain ParsimonySPR::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const
 {
-  auto branches = traln.extractBranches( ); 
-  auto possibilities = scoreMap{}; 
+  auto prunedTree = BranchPlain();
 
-  auto partitionParsimony =  std::vector<nat>{}; 
-  auto pLengthAtBranch =  std::vector<nat>{}; 
-  pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony, pLengthAtBranch);
-
-  auto prunedTree = BranchPlain{}; 
-  nodeptr
-    p = nullptr, 
-    pn = nullptr , 
-    pnn = nullptr ; 
+  nodeptr p, pn, pnn;  
 
   do 
     {
@@ -115,6 +106,28 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
       pnn = p->next->next->back;         
 
     } while( (traln.isTipNode(pn) &&  traln.isTipNode(pnn))     ); 
+
+  return prunedTree; 
+}
+
+
+void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
+{
+  auto branches = traln.extractBranches( ); 
+  auto possibilities = scoreMap{}; 
+
+  auto partitionParsimony =  std::vector<nat>{}; 
+  auto pLengthAtBranch =  std::vector<nat>{}; 
+  pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony, pLengthAtBranch);
+
+  auto prunedTree = determinePrimeBranch(traln, rand); 
+
+  // needed? 
+  nodeptr
+    p = prunedTree.findNodePtr(traln), 
+    pn = p->next->back , 
+    pnn = p->next->next->back ; 
+
 
   auto initBranch = BranchPlain(pn->number, pnn->number); 
   
@@ -273,13 +286,17 @@ void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
     }    
 }
 
-void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
+void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {  
   auto toEval = move.getEvalBranch(traln);
   TreePrinter tp(false, true, false);
 
   for(auto &elem : move.getDirtyNodes())
     evaluator.markDirty(traln, elem); 
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL " << toEval << std::endl; 
+#endif
 
   evaluator.evaluate(traln,toEval, false); 
 }

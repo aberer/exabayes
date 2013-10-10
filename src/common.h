@@ -40,17 +40,7 @@ typedef unsigned int nat;
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
 #define ACCEPTED_LNPR_EPS 1e-6
 
-
-/* ABOVE: stuff that is needed by everyone and can be defined
-   repeatedly
-
-   BELOW: some switches (e.g., debugging) and constants that are could
-   be user variables later (for development lets just keep them here).
-
- */
-
-
-/* #define _MY_NEW_EVALUATOR */
+/* some global switches */
 
 
 /* #define _GO_TO_TREE_MOVE_INTEGARTION */
@@ -60,32 +50,18 @@ typedef unsigned int nat;
 /* #define INTEGRATION_GENERATION 3e4 */
 #define INTEGRATION_GENERATION 1e6
 
-#define DEBUG_SERIALIZE
-
 /* #define PROPOSE_BRANCHES_FOR_SPR */
 
-/* #define DEBUG_ACCEPTANCE */
-/* #define DEBUG_HASTINGS */
 /* #define UNSURE  */
 /* #define EFFICIENT  */
-/* #define INCORRECT */
-/* #define PRINT_MULT */
-/* #define DEBUG_EVAL */
-/* #define DEBUG_ARRAY_SWAP */
 
-/* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
-/* #define DEBUG_PRINT_TUNE_INFO */
 
-/* #define CONTROL_ESPR */
-/* #define DEBUG_TREE_LENGTH */
-/* #define DEBUG_PARS_SPR */
+/* #define PRINT_EVAL_CHOICE */
 
-/* #define EVAL_DEBUG */
 
 /* debugging */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_VERIFY_LNPR */
 
-/* #define PRINT_MUCH */
 #endif

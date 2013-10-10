@@ -53,11 +53,12 @@ double LikelihoodSPR::scoreReattachment(TreeAln& traln, const BranchLength &reat
       // tout << "iter " << i << std::endl; 
       for(auto b : toOptimise)
 	{
-	  // double curLen = traln.getBranch(b,blParams).getInterpretedLength(traln, blParams[0]);
-	  double nrd1 = 0, nrd2 = 0;  
 	  assert(blParams.size( )== 1 ); 
-	  auto optBranch = GibbsProposal::optimiseBranch(traln,b, eval, nrd1, nrd2, NUM_ITER , blParams[0]);   
-
+	  
+	  auto result = GibbsProposal::optimiseBranch(traln,b, eval, NUM_ITER , blParams[0]);   
+	  auto optBranch = result[0] ; 
+	  auto nrd2 = result[2]; 
+	  
 	  // eval.evaluate(traln, b,true); 
 
 	  // double optLen = optBranch.getInterpretedLength(traln, blParams[0]); 
@@ -174,44 +175,65 @@ BranchToLnlMap LikelihoodSPR::scoreOnBothSides(TreeAln &traln, const BranchLengt
 }
 
 
+BranchPlain LikelihoodSPR::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const 
+{
+  auto prunedSubtree = BranchPlain();
+  nat depth = 0; 
+
+  // determine pruned branch and neighbors 
+  do
+    {
+      prunedSubtree = TreeRandomizer::drawBranchWithInnerNode(traln, rand);
+
+      // // save brances adjacent to pruning point for restoration later. 
+      // auto tmp  = traln.getDescendents(prunedSubtree.toPlain()); 
+      // adjBranches.first = traln.getBranch(tmp.first, blParam).getInverted(); 
+      // adjBranches.second = traln.getBranch(tmp.second, blParam).getInverted(); 
+      
+      // p = prunedSubtree.findNodePtr(traln);
+      // q = adjBranches.first.findNodePtr(traln); 
+      // r = adjBranches.second.findNodePtr(traln); 
+
+      depth = traln.getDepth(prunedSubtree.getInverted().toPlain()); 
+    } while( int(depth)-2 < int(minStep)  );
+  // TODO (really) think the stop condition through again 
+
+  assert(depth > 2 ); 
+
+  return prunedSubtree; 
+} 
+
+
 void LikelihoodSPR::determineMove(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   // tout << "tree before: " << TreePrinter(false, true, false).printTree(traln) << std::endl; 
   // tout << MAX_SCI_PRECISION << "initLnl=" << traln.getTr()->likelihood << std::endl;  
 
   auto blParams = getBranchLengthsParameterView();   
-  auto prunedSubtree = BranchLength(0,0); 
-  auto q = nodeptr(nullptr); 
-  auto r = nodeptr(nullptr); 
-  auto p = nodeptr(nullptr);
-  auto adjBranches = std::make_pair(BranchLength(0,0), BranchLength(0,0)); 
-  nat depth = 0; 
-
   assert(blParams.size( )== 1 ); 
   auto blParam = blParams[0]; 
-  
-  // determine pruned branch and neighbors 
-  do
-    {
-      prunedSubtree = traln.getBranch(TreeRandomizer::drawBranchWithInnerNode(traln, rand), blParam);
 
-      // save brances adjacent to pruning point for restoration later. 
-      auto tmp  = traln.getDescendents(prunedSubtree.toPlain()); 
-      adjBranches.first = traln.getBranch(tmp.first, blParam).getInverted(); 
-      adjBranches.second = traln.getBranch(tmp.second, blParam).getInverted(); 
+  auto prunedSubtreeTmp = determinePrimeBranch(traln, rand); 
+  auto prunedSubtree = traln.getBranch(prunedSubtreeTmp, blParam); 
+
+  // save brances adjacent to pruning point for restoration later. 
+  auto tmp  = traln.getDescendents(prunedSubtree.toPlain()); 
+  auto adjBranches = std::make_pair(BranchLength(0,0), BranchLength(0,0)); 
+  adjBranches.first = traln.getBranch(tmp.first, blParam).getInverted(); 
+  adjBranches.second = traln.getBranch(tmp.second, blParam).getInverted(); 
       
-      p = prunedSubtree.findNodePtr(traln);
-      q = adjBranches.first.findNodePtr(traln); 
-      r = adjBranches.second.findNodePtr(traln); 
+  auto p = prunedSubtree.findNodePtr(traln);
+  auto q = adjBranches.first.findNodePtr(traln); 
+  auto r = adjBranches.second.findNodePtr(traln); 
 
-      depth = traln.getDepth(prunedSubtree.getInverted().toPlain()); 
-    } while( int(depth)-2 < int(minStep)  );
-  // TODO (really) think the stop condition through again 
+  // auto q = nodeptr(nullptr); 
+  // auto r = nodeptr(nullptr); 
+  // auto p = nodeptr(nullptr);
 
   // tout << "pruning " << prunedSubtree <<  " from " << adjBranches.first << "\t" << adjBranches.second << std::endl; 
   // tout << "depth below  " << prunedSubtree << " is " << depth << std::endl; 
   // tout << "path: " << traln.getLongestPathBelowBranch(prunedSubtree.getInverted()) << std::endl; 
-  assert(depth > 2 ); 
+
   
   // initial prune 
   traln.clipNode(q,r);
@@ -228,10 +250,11 @@ void LikelihoodSPR::determineMove(TreeAln &traln, PriorBelief &prior, double &ha
   
   // somehow treat the branch after pruning  
   {
-    double nrd1 = 0, nrd2 = 0; 
+
     assert(blParams.size() == 1); 
     auto blParam =  blParams[0]; 
-    auto optBranch = GibbsProposal::optimiseBranch( traln, branchAfterPrune, eval, nrd1, nrd2, 30,  blParam); 
+    auto result = GibbsProposal::optimiseBranch( traln, branchAfterPrune, eval, 30,  blParam); 
+    auto optBranch = result[0]; 
     traln.setBranch(optBranch, blParam) ;
   }
 
@@ -253,12 +276,14 @@ void LikelihoodSPR::determineMove(TreeAln &traln, PriorBelief &prior, double &ha
   // optimise for the backward move 
   {
     // auto optBranch = GibbsProposal::optimiseBranch(traln,drawnPos, eval, NUM_ITER, blParams); 
-    double nrd1 = 0, nrd2 = 0; 
+    // double nrd1 = 0, nrd2 = 0; 
 
     // HACK 
     auto bl = traln.getBranch(drawnPos.toPlain(),blParam); 
 
-    auto optBranch = GibbsProposal::optimiseBranch( traln, bl, eval, nrd1, nrd2, NUM_ITER,  blParam); 
+    auto result = GibbsProposal::optimiseBranch( traln, bl, eval, NUM_ITER,  blParam); 
+    auto optBranch = result[0]; 
+    // , nrd1, nrd2
     
     traln.setBranch(optBranch, blParam) ;
   }
@@ -401,7 +426,7 @@ void LikelihoodSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &has
   map.clear(); 
 
   determineMove(traln, prior, hastings, rand, eval);
-
+  
   if(multiplyBranchesUsingPosterior)
     {  
       // NOTICE: extended! 
@@ -488,7 +513,7 @@ void  LikelihoodSPR::scoreReattachmentInRadius(TreeAln &traln, BranchLength atta
 }
 
 
-void LikelihoodSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln) 
+void LikelihoodSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   for(auto &elem : move.getDirtyNodes())
     evaluator.markDirty( traln, elem);

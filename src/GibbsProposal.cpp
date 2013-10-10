@@ -14,26 +14,15 @@
 // const double GibbsProposal::EST_FAC = 0.015; 
 // const double GibbsProposal::EST_FAC = 1.5; 
 
-const double GibbsProposal::EST_EXP = -1; 
+// const double GibbsProposal::EST_EXP = -1; 
 const double GibbsProposal::EST_FAC = 1.5; 
 
 
-/** 
-    @brief draws a branch from the estimated posterior probability   
-    
-    internal length used as a starting point for newton-raphson
-    optimization
-
-    important: uses the current length for the hastings
-
-    @param Branch branch -- contains the initial branch length
-    
- */ 
 BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings,  const AbstractParameter*  blParam) 
 {
-  double nrD2 = 0; 
-  double nrD1 = 0; 
-  auto optLen = optimiseBranch(traln, branch, eval, nrD1, nrD2, maxIter ,blParam);
+  auto result = optimiseBranch(traln, branch, eval, maxIter ,blParam);
+  auto optLen = result[0]; 
+  auto nrD2 = result[2]; 
   auto resultBranch = branch; 
   resultBranch.setLength(optLen); 
 
@@ -42,19 +31,7 @@ BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branc
   auto alpha = proposalResult[1]; 
   auto beta = proposalResult[2]; 
 
-  // auto resultBranch = optimizedBranch; 
   resultBranch.setConvertedInternalLength(traln,blParam, proposal);
-  
-// #ifdef _EXPERIMENTAL_INTEGRATION_MODE
-  // ahInt->prepareForBranch(branch, traln); 
-  // auto samples = ahInt->integrate(branch, traln, 1000, 10); 
-  // auto meanVar = Arithmetics::getMeanAndVar(samples); 
-  // double var = meanVar.second; 
-
-  // tout << "INT\t"  << MAX_SCI_PRECISION << nrOpt << "\t" 
-  //      << nrD2 << "\t"
-  //      <<  var; 
-// #endif
 
   if(not BoundsChecker::checkBranch(resultBranch))
     BoundsChecker::correctBranch(resultBranch); 
@@ -83,11 +60,10 @@ std::array<double,3> GibbsProposal::propose(double nrOpt, double nrd2, Randomnes
       alpha = FIXED_SMALL_ALPHA; 
       beta = FIXED_SMALL_BETA; 
       proposal = rand.drawRandGamma(alpha, beta); 
-      tout << "GIBBS-BAD" << std::endl;
+      // tout << "GIBBS-BAD" << std::endl;
     }
   else 
     {
-      // nrOpt = optimizedBranch.getInterpretedLength(traln, blParam); 
       double c = EST_FAC  / nrd2 ; 
       beta =  ((nrOpt + sqrt(nrOpt * nrOpt + 4 * c)) / (2 * c )) ; 
       alpha = nrOpt * beta + 1 ; 
@@ -95,58 +71,37 @@ std::array<double,3> GibbsProposal::propose(double nrOpt, double nrd2, Randomnes
       proposal = rand.drawRandGamma(alpha,   beta);
     }
 
-  return std::array<double,3>{{proposal, alpha, beta}}; 
+  auto result = std::array<double,3>{{ proposal, alpha, beta} }; 
+
+  return result; 
 }
 
 
-double GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, double &firstDerivative, double &secDerivative, int maxIter,  AbstractParameter const  *param)
+std::array<double,3> GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, int maxIter,  AbstractParameter const  *param)
 {
-  auto resultBranch = b; 
+  double nrD1 = 0; 
+  double nrD2 = 0; 
+
   auto p = b.findNodePtr(traln ), 
     q = p->back; 
-  
+
   assert(traln.getNumberOfPartitions() == 1 ); 
 
-  if( p->x != 1 )
-    eval.evalSubtree(traln, 0, b.toPlain() ); 
-  if( q->x != 1 )
-    eval.evalSubtree(traln, 0, b.toPlain().getInverted());
-
+  eval.evalSubtree(traln, 0, b.toPlain() ); 
+  eval.evalSubtree(traln, 0, b.toPlain().getInverted());
+  
   auto prior = param->getPrior(); 
   assert(dynamic_cast<ExponentialPrior*> (prior) != nullptr); 
   double lambda = dynamic_cast<ExponentialPrior*>(param->getPrior())->getLamda(); 
 
   double result = 0;   
   double init = b.getLength(); 
-  // double firstDerivative = 0 ; 
 
 #if HAVE_PLL != 0
-  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &init, maxIter,  &result , &firstDerivative,  &secDerivative, lambda, FALSE) ;
+  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, lambda, FALSE) ;
 #else 
-  makenewzGeneric(traln.getTr(), p, q, &init, maxIter,  &result , &firstDerivative,  &secDerivative, lambda, FALSE) ;
+  makenewzGeneric(traln.getTr(), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, lambda, FALSE) ;
 #endif
 
-  resultBranch.setLength(result); 
-  
-  return result; 
-  // std::cout<< "result=" << result << "\tresult_iter=" << b.getInterpretedLength(traln) << "\tfirst=" << firstDerivative<< "\tsecond="<< secDerivative << "\tafter " << maxIter << std::endl; 
+  return std::array<double,3>{{result, nrD1, nrD2}}; 
 }
-
-
-// BranchLength GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval,  int maxIter,  const std::vector<AbstractParameter*> &params)
-// {
-//   auto result = b; 
-  
-//   for(auto param : params)
-//     {
-//       double a,c; 
-//       auto partResult = optimiseBranch(traln, b, eval, a,c, maxIter, param); 
-//       result.setLength(partResult.getLength(param),param);
-//     }
-
-//   return result; 
-// }
-
-
-
-

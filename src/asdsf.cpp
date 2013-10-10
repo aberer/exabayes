@@ -1,19 +1,30 @@
 #include <cassert>
+
 #include "axml.h"
+
+int NUM_BRANCHES; 
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-#include "AvgSplitFreqAssessor.hpp"
+#include "common.h"
 
-#if HAVE_PLL != 0 
-#include "globalVariables.h" 
-#endif
+#include "SplitFreqAssessor.hpp"
+
+
+
+// #if HAVE_PLL != 0 
+// #include "globalVariables.h" 
+// #endif
 
 
 int main(int argc, char** argv)
 {
+  // BAD
+  NUM_BRANCHES = 1; 
+
+
   if(argc < 4)
     {
       std::cout << "Usage: " << argv[0] << " start end [file ...]  " << std::endl << std::endl
@@ -41,7 +52,7 @@ int main(int argc, char** argv)
       tmp.push_back(std::string(argv[i]));
     }
 
-  AvgSplitFreqAssessor asdsf(tmp); 
+  auto &&asdsf = SplitFreqAssessor(tmp); 
 
   asdsf.setStart(start);
   asdsf.setEnd(end);

@@ -1901,7 +1901,7 @@ boolean isThisMyPartition(tree *tr, int tid, int model)
     return FALSE;
 }
 
-static void computeFractionMany(tree *tr, int tid)
+void computeFractionMany(tree *tr, int tid)
 {
   int
     sites = 0;
@@ -1927,7 +1927,7 @@ static void computeFractionMany(tree *tr, int tid)
 
 
 
-static void computeFraction(tree *tr, int tid, int n)
+void computeFraction(tree *tr, int tid, int n)
 {
   int
     model;
@@ -2023,7 +2023,7 @@ static int partCompare(const void *p1, const void *p2)
 	 and are cheap to compute 
 */
 
-static void multiprocessorScheduling(tree *tr, int tid)
+void multiprocessorScheduling(tree *tr, int tid)
 {
   int 
     s,
@@ -2120,7 +2120,7 @@ static void multiprocessorScheduling(tree *tr, int tid)
 
 
 
-static void initializePartitions(tree *tr, FILE *byteFile)
+void initializePartitions(tree *tr, FILE *byteFile)
 { 
   size_t
     i,

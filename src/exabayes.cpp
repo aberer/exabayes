@@ -23,7 +23,6 @@
 
 int NUM_BRANCHES; 
 
-#include "axml.h" 
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
@@ -39,7 +38,10 @@ int NUM_BRANCHES;
 
 // #define TEST  
 
+#include "axml.h" 
+
 #ifdef TEST
+#include "RealParser.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "TreeRandomizer.hpp"
 #include "Chain.hpp"
@@ -76,25 +78,17 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  TreeAln traln;
-  traln.enableParsimony();
-  traln.initializeFromByteFile(cl.getAlnFileName());
+  auto parser =  RealParser("/lhome/labererae/proj/exa-bayes/data/tiny-parted/aln.phy",
+	       "/lhome/labererae/proj/exa-bayes/data/tiny-parted/aln.model");  
+  parser.parse();
+
+  std::cout << "helllo" << std::endl; 
   
-  randCtr_t r; 
-  r.v[0] = 123; 
-  auto&&  rand = Randomness(r); 
+  parser.writeToFile("/lhome/labererae/proj/exa-bayes/test.binary");
 
-  TreeRandomizer::randomizeTree(traln, rand);
-
-  auto pEval = ParsimonyEvaluator();
-  auto bla =std::vector<nat>{}; 
-  auto len = std::vector<nat>{}; 
-  pEval.evaluate(traln, traln.getAnyBranch().findNodePtr(traln), true, bla,len);
-
-  std::cout << std::accumulate(bla.begin(), bla.end(), 0) << std::endl; ; 
-  
   exit(0); 
 #else 
+  // assert(0); 
   auto&& master = SampleMaster(  pl, cl );
   master.initializeRuns(); 
   if( cl.isDryRun())

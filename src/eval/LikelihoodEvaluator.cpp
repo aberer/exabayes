@@ -84,6 +84,7 @@ bool LikelihoodEvaluator::applyDirtynessToSubtree(TreeAln &traln, nat partId, co
 
 void LikelihoodEvaluator::evaluate( TreeAln &traln, const BranchPlain &root, bool fullTraversal)    
 {
+  // tout << "evaluate with root " << root << " and " << ( fullTraversal ? "full" : "partial" ) << std::endl; 
   auto partitions = std::vector<nat>{}; 
   nat numPart = traln.getNumberOfPartitions(); 
   partitions.reserve(numPart);
@@ -95,11 +96,12 @@ void LikelihoodEvaluator::evaluate( TreeAln &traln, const BranchPlain &root, boo
 
 void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions, bool fullTraversal)    
 {
-#ifdef EVAL_DEBUG
-  tout << "evaluatePartitionsWithRoot " << partitions << " and " << (fullTraversal ? "full" : "partial")  << " and root " << root  << std::endl; 
-#endif
+  // tout << "evaluatePartitions with root " << root << " and " << ( fullTraversal ? "full" : "partial" )  << " and partitons " << partitions << std::endl; 
 
   nat numPart = traln.getNumberOfPartitions(); 
+
+  // tout << "in total we have " << numPart << " partitions" << std::endl; 
+
   auto perPartitionLH = traln.getPartitionLnls();
 
   auto toExecute = std::vector<bool>(numPart, false);   
@@ -142,17 +144,20 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
 
 void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const BranchPlain &evalBranch)   
 {
+  // tout << "eval subtree for " << partition << std::endl; 
+
   if(traln.isTipNode(evalBranch.getPrimNode()))
-    return; 
+    {
+      // tout << evalBranch << " is a tip node " << std::endl; 
+      return; 
+    }
 
   arrayPolicy->prepareForEvaluation(traln, evalBranch,  partition , arrayOrientation); 
   applyDirtynessToSubtree(traln, partition, evalBranch);
 
-  if(
-#ifndef EVAL_DEBUG
-     false &&
-#endif
-     evalBranch.findNodePtr(traln)->x != 1 )
+  if( 
+     false && 
+      evalBranch.findNodePtr(traln)->x != 1 )
     {
       tout << "computing "; 
       debugPrintToComputeHelper(traln, evalBranch); 
@@ -177,6 +182,8 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const Bran
   assert(p->x || traln.isTipNode(p->number)); 
 
   p =  evalBranch.findNodePtr(traln) ; 
+  // tout << "setting root from " << p->number << " to "<< p->back->number << std::endl; 
+
   p->x = 1; 
   p->next->x  = 0; 
   p->next->next->x = 0; 
@@ -185,10 +192,21 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const Bran
 
 void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root )
 {
+  // tout << "calling exa_evaluate "  << std::endl; 
+
   auto start = root.findNodePtr(traln);
 
-  assert( ( start->x == 1 || traln.isTipNode(start->number)   )
-	  && ( start->back->x == 1 || traln.isTipNode(start->back->number) )  ); 
+  if(not ( ( start->x == 1 || traln.isTipNode(start)   )
+	   && ( start->back->x == 1 || traln.isTipNode(start->back) )  ) )
+    {
+      tout << "at evaluation at " << root << ": " ; 
+
+      if( not ( start->x == 1 || traln.isTipNode(start)  ))
+	{
+	  tout << " problem with " << start->number << std::endl; 
+	  assert(0); 
+	}
+    }
 
 #if HAVE_PLL != 0
   evaluateGeneric(traln.getTr(), traln.getPartitionsPtr(), start, FALSE); 

@@ -1100,7 +1100,6 @@ typedef  struct  {
   int              secondaryStructureModel;
   int              originalCrunchedLength;
  
- 
   int              *secondaryStructurePairs;
 
 
@@ -1359,7 +1358,7 @@ extern void set_branch_length(tree *tr, nodeptr p, int partition_id, double bl);
 extern size_t discreteRateCategories(int rateHetModel);
 
 extern const partitionLengths * getPartitionLengths(pInfo *p);
-extern boolean getSmoothFreqs(int dataType);
+/* extern boolean getSmoothFreqs(int dataType); */
 extern const unsigned int *getBitVector(int dataType);
 extern int getUndetermined(int dataType);
 extern int getStates(int dataType);

@@ -1,5 +1,7 @@
 #include <iosfwd>
 
+int NUM_BRANCHES ; 
+
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
@@ -9,6 +11,9 @@
 
 int main(int argc, char** argv)
 {
+  // BAD
+  NUM_BRANCHES = 1; 
+
   if(argc < 3) 
     {
       std::cout << "USAGE: ./extractBips id file[..]" << std::endl; 
@@ -19,7 +24,7 @@ int main(int argc, char** argv)
   
   for(int i = 2; i < argc; ++i)
     {
-      std::ifstream file(argv[i]);
+      auto && file = std::ifstream(argv[i]);
       if(not file)
 	{
 	  std::cerr << "could not open file >" << argv[i] << "<" << std::endl; 
@@ -28,10 +33,8 @@ int main(int argc, char** argv)
       files.push_back(std::string(argv[i])); 
     }
   
-  BipartitionExtractor  bipEx(files);
-
-  std::string id = argv[1]; 
-
+  auto bipEx = BipartitionExtractor(files);
+  auto id = argv[1]; 
   bipEx.extractBipsNew();
   bipEx.printBipartitions(id);
   bipEx.printBipartitionStatistics(id); 

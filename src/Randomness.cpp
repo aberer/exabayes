@@ -24,7 +24,7 @@ randCtr_t Randomness::generateSeed()
 
 void Randomness::incrementNoLimit()
 {
-  ctr.v[0]++; 
+  ++ctr.v[0]; 
   if(ctr.v[0] == std::numeric_limits<unsigned int>::max())
     {
       ctr.v[1]++; 
@@ -41,7 +41,7 @@ int Randomness::drawIntegerClosed(int upperBound)
   else 
     {
       randCtr_t r = exa_rand(key, ctr); 
-      ctr.v[1]++;
+      ++ctr.v[0]; 
       return r.v[0] % (upperBound + 1 ) ; 
     }
 }
@@ -58,7 +58,7 @@ int Randomness::drawIntegerOpen(int upperBound)
 nat Randomness::operator()() 
 {
   randCtr_t r = exa_rand(key,ctr); 
-  ctr.v[1]++;
+  ++ctr.v[0];
   return r.v[0];  
 }
 
@@ -66,10 +66,9 @@ nat Randomness::operator()()
 double Randomness::drawRandDouble01()
 {
   randCtr_t r = exa_rand(key, ctr); 
-  ctr.v[1]++; 
+  ++ctr.v[0]; 
 
   return r123::u01<double>(r.v[1]);
-  // return u01_closed_open_32_53(r.v[1]); 
 }
 
 
@@ -355,14 +354,18 @@ void Randomness::serialize( std::ostream &out)  const
 } 
 
 
-void Randomness::rebase(int num)
+void Randomness::rebaseForGeneration(nat generation)
 {
-  // tout << "rebasing to " << num << std::endl; 
-  // std::cout << "rebasing to " << num << std::endl; 
-  ctr.v[1] = num; 
+  ctr.v[1] = generation; 
   ctr.v[0] = 0; 
 }
 
+
+
+nat Randomness::getGeneration() const 
+{
+  return ctr.v[1]; 
+}
 
 
 void Randomness::setKey(randKey_t _key) 

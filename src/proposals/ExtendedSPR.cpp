@@ -14,6 +14,22 @@ ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
   needsFullTraversal = false; 
 }
 
+BranchPlain ExtendedSPR::determinePrimeBranch(const TreeAln &traln, Randomness &rand) const 
+{
+  auto  start = BranchPlain(); 
+  nodeptr p,q,r; 
+  do 
+    {
+      start = TreeRandomizer::drawBranchWithInnerNode(traln, rand); 
+      
+      p = start.findNodePtr(traln );
+      q = p->next->back; 
+      r = p->next->next->back;
+    } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
+  return start; 
+} 
+
+
 
 // IMPORTANT TODO: is the number of branches that CAN get chosen for
 // the move the same with the forward and the backward move? if not,
@@ -24,21 +40,26 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 {
   auto params =  getBranchLengthsParameterView();
 
-  Path modifiedPath; 
+  auto modifiedPath = Path{}; 
   assert(0 < stopProp && stopProp < 1.0 ); 
 
   assert(modifiedPath.size( ) == 0 ); 
 
-  auto  start = BranchPlain(); 
-  nodeptr p,q,r; 
-  do 
-    {
-      start = TreeRandomizer::drawBranchWithInnerNode(traln, rand); 
+  auto start = determinePrimeBranch(traln,rand); 
+  auto p = start.findNodePtr(traln) ; 
+  auto q = p->next->back; 
+  auto r = p->next->next->back; 
 
-      p = start.findNodePtr(traln );
-      q = p->next->back; 
-      r = p->next->next->back;
-    } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
+  // auto  start = BranchPlain(); 
+  // nodeptr p,q,r; 
+  // do 
+  //   {
+  //     start = TreeRandomizer::drawBranchWithInnerNode(traln, rand); 
+
+  //     p = start.findNodePtr(traln );
+  //     q = p->next->back; 
+  //     r = p->next->next->back;
+  //   } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
 
 
   auto lengthR = traln.getBranch(r, params); 
@@ -211,12 +232,15 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 }
 
 
-void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln)
+void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {  
   auto toEval = move.getEvalBranch(traln);
   for(auto &elem : move.getDirtyNodes())
     evaluator.markDirty( traln, elem); 
 
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL " << toEval << std::endl; 
+#endif
   evaluator.evaluate(traln,toEval, false); 
 }
 

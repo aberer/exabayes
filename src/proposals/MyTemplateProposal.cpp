@@ -25,7 +25,7 @@ void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double
 }
 
 
-void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln) 
+void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   // the previous evluation scheme has been replaced with the
   // LikelihoodEvaluator class. 
