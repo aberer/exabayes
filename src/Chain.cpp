@@ -484,8 +484,10 @@ void Chain::stepSingleProposal()
       auto nodes = pfun.getInvalidatedNodes(traln); 
       evaluator.accountForRejection(traln, myRejected, nodes); 
     }
-
+  
+  // tout << "ORIENT at end: " << evaluator.getOrientation() << std::endl; 
   evaluator.freeMemory();
+
 
   if(this->tuneFrequency <  pfun.getNumCallSinceTuning() ) 
     pfun.autotune();
@@ -648,7 +650,7 @@ void Chain::step()
     stepSetProposal();
 
 #ifdef DEBUG_LNL_VERIFY
-  evaluator.expensiveVerify(traln, likelihood); 
+  evaluator.expensiveVerify(traln, traln.getAnyBranch() , likelihood); 
 #endif
 
 #ifdef DEBUG_VERIFY_LNPR

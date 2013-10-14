@@ -44,6 +44,8 @@
 #include <string.h>
 #include "axml.h"
 
+#include <mpi.h>
+
 #ifdef __SIM_SSE3
 #include <xmmintrin.h>
 #include <pmmintrin.h>

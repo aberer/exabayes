@@ -13,7 +13,7 @@ cd build
 rm -rf obj-mpi/* obj-seq/* 
 cd obj-seq
 
-../../configure CC="ccache clang" CXX="ccache clang++ -Qunused-arguments -D__STRICT_ANSI__" 
+../../configure # CC="ccache clang" CXX="ccache clang++ -Qunused-arguments -D__STRICT_ANSI__" 
 make -j $numCores 
 
 mv yggdrasil  postProcParam asdsf credibleSet extractBips consense  parser  .. 
@@ -22,7 +22,7 @@ if [ $# -gt 1 ]; then
     cd ../../
     make distclean
     cd build/obj-mpi  
-    ../../configure  --enable-obj-mpi $* 
+    ../../configure  --enable-mpi $* 
     make -j $numCores
     mv exabayes ..    
 fi

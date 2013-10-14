@@ -45,15 +45,6 @@ auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get());
 }
 
 
-// void TreeIntegrator::copyTree(const TreeAln &traln)
-// {
-//   TreeAln &myTree = integrationChain->getTraln();
-//   myTree.copyModel(traln);
-//   auto eval = integrationChain->getEvaluator();
-//   auto tr = myTree.getTr(); 
-//   eval->evaluate(myTree, Branch(tr->start->number,tr->start->back->number ), true );
-// }
-
 void TreeIntegrator::prepareChain( const TreeAln &otherTree, bool copyEverything)
 {
   auto &traln = integrationChain->getTraln();
@@ -63,8 +54,6 @@ void TreeIntegrator::prepareChain( const TreeAln &otherTree, bool copyEverything
   integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(), true); 
   integrationChain->reinitPrior(); 
 }
-
-
 
 
 // tree must be prepared! 

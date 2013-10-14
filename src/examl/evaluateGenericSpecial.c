@@ -39,6 +39,8 @@
 #include <string.h>
 #include "axml.h"
 
+#include <mpi.h>
+
 /* the set of functions in here computes the log likelihood at a given branch (the virtual root of a tree) */
 
 /* includes for using SSE3 intrinsics */

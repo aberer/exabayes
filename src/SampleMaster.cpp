@@ -444,6 +444,8 @@ std::string SampleMaster::getOrCreateBinaryFile() const
   auto binaryAlnFile =std::string{}; 
   if( not cl.alnFileIsBinary())
     {
+      tout << "You provided an alignment file in phylip format. Trying to parse it..." << std::endl; 
+      
       bool haveModelFile = cl.getModelFile().compare("") != 0; 
       auto modelInfo = haveModelFile ? cl.getModelFile( ): cl.getSingleModel(); 
 

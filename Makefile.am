@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign
 
-EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/*
+EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/* build.sh
 
 .PHONY: my-update-src doc 
 
@@ -46,7 +46,7 @@ bin_PROGRAMS+= exabayes
 else
 LIBTOUSE=libpll.a
 LIBINCLUDE=$(PLLINCLUDE) 
-bin_PROGRAMS+= yggdrasil  postProcParam asdsf credibleSet extractBips consense  parser 
+bin_PROGRAMS+= yggdrasil #   postProcParam asdsf credibleSet extractBips consense  parser 
 noinst_LIBRARIES+=libpll.a 
 endif 
 

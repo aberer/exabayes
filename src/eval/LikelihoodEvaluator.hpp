@@ -63,7 +63,9 @@ public:
    */ 
   void accountForRejection(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat> &invalidNodes); 
 
-  void expensiveVerify(TreeAln &traln, double toVerify);
+  ArrayOrientation getOrientation() const {return arrayOrientation;   }
+
+  void expensiveVerify(TreeAln &traln, const BranchPlain& root, double toVerify);
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
 
 private: 			// METHODS 

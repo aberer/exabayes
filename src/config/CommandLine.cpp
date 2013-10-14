@@ -283,11 +283,23 @@ bool CommandLine::alnFileIsBinary() const
 {
   auto&& in =std::ifstream (alnFileName, std::ios::binary); 
 
+  assert(in) ; 
+
   auto fileId = std::string{"BINARY"} ; 
-  char firstBytes[1024]; 
-  in.read(firstBytes, fileId.size() * sizeof(char));
+  char firstBytes[7]; 
+  memset(firstBytes, '\0', 7 * sizeof(char)); 
+  in.read(firstBytes, 6 * sizeof(char));
   auto readString = std::string(firstBytes); 
-  
+
   bool result = readString.compare(fileId) == 0 ;
+  if(not result)
+    {
+      std::cout << "wanted to read >" << fileId << "< instead got >" << readString << "<" << std::endl; 
+    }
+  else 
+    {
+      std::cout << "Determined alignment file to be binary" << std::endl; 
+    }
+
   return result; 
 }  

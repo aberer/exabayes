@@ -12,18 +12,8 @@ TreePrinter::TreePrinter(bool withBranchLengths , bool withInternalNodes , bool 
 }
 
 
-static int getTheX(nodeptr p)
-{
-  if(p->x)
-    return p->back->number; 
-  else if(p->next->x)
-    return p->next->back->number; 
-  else if(p->next->next->x)
-    return p->next->next->back->number; 
-  else 
-    assert(0) ; 
-  return 0;     
-}
+
+
 
 
 std::string TreePrinter::printTree(const TreeAln& traln, AbstractParameter* param)

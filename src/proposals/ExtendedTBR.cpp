@@ -124,11 +124,9 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 	bisectedBranch.getInverted(), modifiedPath2.at(modifiedPath2.size()-1) } , getSecondaryParameterView()); 
 }
 
-
 void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 { 
   drawPaths(traln,rand);
-
   // TODO replace by absence of prior 
   
   bool modifiesBl = false;   
@@ -147,6 +145,9 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
     }
 
   move.applyToTree(traln, getSecondaryParameterView() );
+
+  // tout << "MOVE "  << move << std::endl; 
+
 }
 
 
@@ -160,6 +161,8 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& tral
 
   auto dirtyNodes = move.getDirtyNodes();
   
+  // tout << "dirtyNodes: " << dirtyNodes << std::endl; 
+
   for(auto &elem : dirtyNodes)
     evaluator.markDirty(traln,elem); 
 

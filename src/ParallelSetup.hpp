@@ -7,13 +7,15 @@
 #define _PARALLEL_SETUP_H
 
 #include <unordered_map>
-
+#include "config.h"
 #include "config/CommandLine.hpp"
 
 class SampleMaster;
 class CoupledChains; 
 
 #if HAVE_PLL == 0
+#include <mpi.h>
+
 extern MPI_Comm comm; 		// the examl communicator 
 extern int processID; 		// examl rank 
 extern int processes; 		// examl comm size 

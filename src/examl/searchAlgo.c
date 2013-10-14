@@ -42,6 +42,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <mpi.h>
+
 #ifdef _USE_ZLIB
 
 #include <zlib.h>

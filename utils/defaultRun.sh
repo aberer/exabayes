@@ -2,28 +2,17 @@
 
 topdir=$(dirname  $0 )/../
 
-
-seed=20051 # parsimony prbolem 
 # seed=$RANDOM
-
-# seed=$RANDOM
-# seed=123
-# examples/
 
 numProc=2
 # extraArgs="-Q"
-# extraArgs="-M 1"
+# extraArgs="-M 3"
 # extraArgs="-m"
 
-# lakner-27
-# seed=28233
-
-# small dna 
-seed=5594
-# seed=9127
+# early with 150 , VERIFIED 
+# seed=31853
 
 startFromBest=0
-
 
 # find additional arguments for the call   
 # *=$bak

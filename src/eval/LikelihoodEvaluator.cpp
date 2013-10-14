@@ -47,21 +47,23 @@ bool LikelihoodEvaluator::applyDirtynessToSubtree(TreeAln &traln, nat partId, co
   if(traln.isTipNode(branch.getPrimNode()))
     return true; 
 
-  auto desc = traln.getDescendents(branch); 
   nat id = branch.getPrimNode() - traln.getNumberOfTaxa( ) -1 ; 
 
   auto p = branch.findNodePtr(traln); 
 
   auto partition = traln.getPartition(partId);
-  bool isClean = arrayOrientation.isCorrect(partId, id, p->back->number)   
-    && partition->xSpaceVector[id] != 0; 
+  bool isClean = arrayOrientation.isCorrect(partId, id, p->back->number) && partition->xSpaceVector[id] != 0; 
 
-  // afterwards it is correct! 
-  if(not isClean)
-    arrayOrientation.setOrientation(partId, id, p->back->number); 
-  
-  if(not isClean)
+  if( isClean)
     {
+      p->x = 1; 
+      p->next->x = 0 ; 
+      p->next->next->x = 0; 
+    }
+  else 
+    { 
+      arrayOrientation.setOrientation(partId, id, p->back->number); 
+
       assert(not traln.isTipNode(p->number)); 
       p->x = 0; 
       p->next->x = 1 ; 
@@ -70,12 +72,6 @@ bool LikelihoodEvaluator::applyDirtynessToSubtree(TreeAln &traln, nat partId, co
       auto descs = traln.getDescendents(branch); 
       applyDirtynessToSubtree(traln, partId, descs.first.getInverted()); 
       applyDirtynessToSubtree(traln, partId, descs.second.getInverted());     
-    }
-  else 
-    {      
-      p->x = 1; 
-      p->next->x = 0 ; 
-      p->next->next->x = 0; 
     }
 
   return isClean; 
@@ -137,7 +133,7 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
   traln.setExecModel(std::vector<bool>(numPart, true));
 
 #ifdef DEBUG_LNL_VERIFY
-  expensiveVerify(traln, traln.getTr()->likelihood);   
+  expensiveVerify(traln, root ,traln.getTr()->likelihood);   
 #endif
 }
 
@@ -154,14 +150,22 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const Bran
 
   arrayPolicy->prepareForEvaluation(traln, evalBranch,  partition , arrayOrientation); 
   applyDirtynessToSubtree(traln, partition, evalBranch);
-
+  
   if( 
      false && 
-      evalBranch.findNodePtr(traln)->x != 1 )
+     true  
+      )
     {
-      tout << "computing "; 
-      debugPrintToComputeHelper(traln, evalBranch); 
-      tout << std::endl; 
+      if(evalBranch.findNodePtr(traln)->x != 1)
+	{
+	  tout << "computing "; 
+	  debugPrintToComputeHelper(traln, evalBranch); 
+	  tout << std::endl; 
+	}
+      else 
+	{
+	  tout << "nothing to compute" << std::endl; 
+	}      
     }
   
   // abort, if everything is okay 
@@ -252,13 +256,11 @@ void LikelihoodEvaluator::disorientDebug(TreeAln &traln, const BranchPlain& root
 
 
 
-void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, double toVerify)
+void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, const BranchPlain& root, double toVerify)
 {
   debugPrint = 0 ; 
 
   debugTraln->copyModel(traln); 
-
-  auto root = traln.getAnyBranch();
 
   disorientDebug(*debugTraln, root); 
   
@@ -272,6 +274,37 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, double toVerify)
 
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
+
+#if 1 
+  auto partition = debugTraln->getPartition(0); 
+  auto sc = partition->globalScaler; 
+  tout << "scCorr=" ; 
+  nat ctr = 0; 
+  for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
+    {
+      if(sc[i] != 0 )
+	{
+	  tout << ctr <<  "=" << sc[i] << ","; 
+	}
+      ++ctr; 
+    }
+  tout << std::endl; 
+
+  partition = traln.getPartition(0); 
+  sc = partition->globalScaler; 
+  tout << "scReal=" ; 
+  ctr = 0; 
+  for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
+    {
+      if(sc[i] != 0)
+	{
+	  tout << ctr << "=" << sc[i] << " "; 
+	}
+      ++ctr; 
+    }
+  tout << std::endl; 
+#endif
+
       std::cerr  << "WARNING: found in expensive evaluation: likelihood difference is " 
 	   <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
 	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
@@ -288,8 +321,6 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, double toVerify)
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS); 
   debugPrint = 1;  
 }
-
-
 #ifdef DEBUG_LNL_VERIFY
 void LikelihoodEvaluator::setDebugTraln(std::shared_ptr<TreeAln> _debugTraln)
 {

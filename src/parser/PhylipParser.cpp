@@ -1571,7 +1571,7 @@ void PhylipParser::sitecombcrunch ()
       tr->patternPosition = (int*)malloc(sizeof(int) * numSites);
       tr->columnPosition  = (int*)malloc(sizeof(int) * numSites);
 
-      for(i = 0; i < numSites; i++)
+      for( i = 0; i < int(numSites); i++)
 	{
 	  tr->patternPosition[i] = -1;
 	  tr->columnPosition[i]  = -1;
@@ -1647,13 +1647,13 @@ void PhylipParser::sitecombcrunch ()
     {
       assert(0);
 
-      for(i = 0; i < numSites; i++)
+      for(i = 0; i < int(numSites); i++)
 	{
 	  int p  = tr->patternPosition[i];
 	  int c  = tr->columnPosition[i];
 
 	  assert(p >= 0 && p < cdta->endsite);
-	  assert(c >= 1 && c <= numSites);
+	  assert(c >= 1 && c <= int(numSites));
 	}
     }
 

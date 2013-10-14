@@ -41,6 +41,8 @@
 #include <string.h>
 #include "axml.h"
 
+#include <mpi.h>
+
 static const double MNBRAK_GOLD =    1.618034;
 static const double MNBRAK_TINY =      1.e-20;
 static const double MNBRAK_GLIMIT =     100.0;

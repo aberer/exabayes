@@ -744,7 +744,7 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
       q = p->next->back,
       r = p->next->next->back;   
     
-    /* printf("adding %d,%d to traversal descriptor\n", q->number, r->number);  */
+    /* printf("adding %d,%d to traversal descriptor\n", q->number, r->number); */
     
 
     /* if the left and right children are tips there is not that much to do */
@@ -1042,6 +1042,8 @@ void newviewGAMMA_FLEX_reorder(int tipCase, double *x1, double *x2, double *x3, 
  * 
  */
 
+extern int debugPrint; 
+
 void newviewIterative (tree *tr, partitionList *pr, int startIndex)
 {
   traversalInfo 
@@ -1092,7 +1094,7 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex)
 	}
 
       /* if(  debugPrint) */
-      /* printf("evaluating %d <= %d,%d\n", tInfo->pNumber, tInfo->qNumber, tInfo->rNumber); */
+	/* printf("evaluating %d <= %d,%d\n", tInfo->pNumber, tInfo->qNumber, tInfo->rNumber); */
 
       /* now loop over all partitions for nodes p, q, and r of the current traversal vector entry */
 
@@ -1512,6 +1514,21 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex)
 		pr->partitionData[model]->globalScaler[tInfo->qNumber] +
 		pr->partitionData[model]->globalScaler[tInfo->rNumber] +
 		(unsigned int)scalerIncrement;
+	      
+	      if(
+		 FALSE &&
+		 pr->partitionData[model]->globalScaler[tInfo->pNumber] != 0)
+	      	{
+	      	  if(! debugPrint)
+	      	    printf("DEBUG ");
+		  printf("scaler(%d): %d = %d(%d) + %d(%d) + %d\n", tInfo->pNumber,
+			 pr->partitionData[model]->globalScaler[tInfo->pNumber],
+			 pr->partitionData[model]->globalScaler[tInfo->qNumber],
+			 tInfo->qNumber,
+			 pr->partitionData[model]->globalScaler[tInfo->rNumber],
+			 tInfo->rNumber,
+			 scalerIncrement);
+	      	}
 
 	      /* check that we are not getting an integer overflow ! */
 
@@ -3004,7 +3021,9 @@ static void newviewGTRGAMMA_GAPPED_SAVE(int tipCase,
             _mm_store_pd(&x3[12], _mm_mul_pd(values[6], sv));
             _mm_store_pd(&x3[14], _mm_mul_pd(values[7], sv));	     
 
-
+	    
+	    printf("scale\n"); 
+	    
             addScale += wgt[i];
 
           }
@@ -3344,12 +3363,13 @@ static void newviewGTRGAMMA(int tipCase,
             _mm_store_pd(&x3[12], _mm_mul_pd(values[6], sv));
             _mm_store_pd(&x3[14], _mm_mul_pd(values[7], sv));	     
 
-
+	    /* printf("tip/inner scale: %g\t%g\tat\t%d\n", max, minlikelihood, i); */
             addScale += wgt[i];
 
           }
           else
           {
+	    /* printf("no scale: %f\t%f\n",max, minlikelihood );  */
             _mm_store_pd(&x3[0], values[0]);	   
             _mm_store_pd(&x3[2], values[1]);
             _mm_store_pd(&x3[4], values[2]);
@@ -3363,185 +3383,186 @@ static void newviewGTRGAMMA(int tipCase,
       }
       break;
     case INNER_INNER:
-
-      for (i = 0; i < n; i++)
       {
-        __m128d maxv =_mm_setzero_pd();
+	for (i = 0; i < n; i++)
+	  {
+	    __m128d maxv =_mm_setzero_pd();
 
 
-        x1 = &x1_start[i * 16];
-        x2 = &x2_start[i * 16];
-        x3 = &x3_start[i * 16];
+	    x1 = &x1_start[i * 16];
+	    x2 = &x2_start[i * 16];
+	    x3 = &x3_start[i * 16];
 
-        for (j = 0; j < 4; j++)
-        {
+	    for (j = 0; j < 4; j++)
+	      {
 
-          double *x1_p = &x1[j*4];
-          double *left_k0_p = &left[j*16];
-          double *left_k1_p = &left[j*16 + 1*4];
-          double *left_k2_p = &left[j*16 + 2*4];
-          double *left_k3_p = &left[j*16 + 3*4];
+		double *x1_p = &x1[j*4];
+		double *left_k0_p = &left[j*16];
+		double *left_k1_p = &left[j*16 + 1*4];
+		double *left_k2_p = &left[j*16 + 2*4];
+		double *left_k3_p = &left[j*16 + 3*4];
 
-          __m128d x1_0 = _mm_load_pd( &x1_p[0] );
-          __m128d x1_2 = _mm_load_pd( &x1_p[2] );
+		__m128d x1_0 = _mm_load_pd( &x1_p[0] );
+		__m128d x1_2 = _mm_load_pd( &x1_p[2] );
 
-          __m128d left_k0_0 = _mm_load_pd( &left_k0_p[0] );
-          __m128d left_k0_2 = _mm_load_pd( &left_k0_p[2] );
-          __m128d left_k1_0 = _mm_load_pd( &left_k1_p[0] );
-          __m128d left_k1_2 = _mm_load_pd( &left_k1_p[2] );
-          __m128d left_k2_0 = _mm_load_pd( &left_k2_p[0] );
-          __m128d left_k2_2 = _mm_load_pd( &left_k2_p[2] );
-          __m128d left_k3_0 = _mm_load_pd( &left_k3_p[0] );
-          __m128d left_k3_2 = _mm_load_pd( &left_k3_p[2] );
+		__m128d left_k0_0 = _mm_load_pd( &left_k0_p[0] );
+		__m128d left_k0_2 = _mm_load_pd( &left_k0_p[2] );
+		__m128d left_k1_0 = _mm_load_pd( &left_k1_p[0] );
+		__m128d left_k1_2 = _mm_load_pd( &left_k1_p[2] );
+		__m128d left_k2_0 = _mm_load_pd( &left_k2_p[0] );
+		__m128d left_k2_2 = _mm_load_pd( &left_k2_p[2] );
+		__m128d left_k3_0 = _mm_load_pd( &left_k3_p[0] );
+		__m128d left_k3_2 = _mm_load_pd( &left_k3_p[2] );
 
-          left_k0_0 = _mm_mul_pd(x1_0, left_k0_0);
-          left_k0_2 = _mm_mul_pd(x1_2, left_k0_2);
+		left_k0_0 = _mm_mul_pd(x1_0, left_k0_0);
+		left_k0_2 = _mm_mul_pd(x1_2, left_k0_2);
 
-          left_k1_0 = _mm_mul_pd(x1_0, left_k1_0);
-          left_k1_2 = _mm_mul_pd(x1_2, left_k1_2);
+		left_k1_0 = _mm_mul_pd(x1_0, left_k1_0);
+		left_k1_2 = _mm_mul_pd(x1_2, left_k1_2);
 
-          left_k0_0 = _mm_hadd_pd( left_k0_0, left_k0_2 );
-          left_k1_0 = _mm_hadd_pd( left_k1_0, left_k1_2);
-          left_k0_0 = _mm_hadd_pd( left_k0_0, left_k1_0);
+		left_k0_0 = _mm_hadd_pd( left_k0_0, left_k0_2 );
+		left_k1_0 = _mm_hadd_pd( left_k1_0, left_k1_2);
+		left_k0_0 = _mm_hadd_pd( left_k0_0, left_k1_0);
 
-          left_k2_0 = _mm_mul_pd(x1_0, left_k2_0);
-          left_k2_2 = _mm_mul_pd(x1_2, left_k2_2);
+		left_k2_0 = _mm_mul_pd(x1_0, left_k2_0);
+		left_k2_2 = _mm_mul_pd(x1_2, left_k2_2);
 
-          left_k3_0 = _mm_mul_pd(x1_0, left_k3_0);
-          left_k3_2 = _mm_mul_pd(x1_2, left_k3_2);
+		left_k3_0 = _mm_mul_pd(x1_0, left_k3_0);
+		left_k3_2 = _mm_mul_pd(x1_2, left_k3_2);
 
-          left_k2_0 = _mm_hadd_pd( left_k2_0, left_k2_2);
-          left_k3_0 = _mm_hadd_pd( left_k3_0, left_k3_2);
-          left_k2_0 = _mm_hadd_pd( left_k2_0, left_k3_0);
-
-
-          //
-          // multiply/add right side
-          //
-          double *x2_p = &x2[j*4];
-          double *right_k0_p = &right[j*16];
-          double *right_k1_p = &right[j*16 + 1*4];
-          double *right_k2_p = &right[j*16 + 2*4];
-          double *right_k3_p = &right[j*16 + 3*4];
-          __m128d x2_0 = _mm_load_pd( &x2_p[0] );
-          __m128d x2_2 = _mm_load_pd( &x2_p[2] );
-
-          __m128d right_k0_0 = _mm_load_pd( &right_k0_p[0] );
-          __m128d right_k0_2 = _mm_load_pd( &right_k0_p[2] );
-          __m128d right_k1_0 = _mm_load_pd( &right_k1_p[0] );
-          __m128d right_k1_2 = _mm_load_pd( &right_k1_p[2] );
-          __m128d right_k2_0 = _mm_load_pd( &right_k2_p[0] );
-          __m128d right_k2_2 = _mm_load_pd( &right_k2_p[2] );
-          __m128d right_k3_0 = _mm_load_pd( &right_k3_p[0] );
-          __m128d right_k3_2 = _mm_load_pd( &right_k3_p[2] );
-
-          right_k0_0 = _mm_mul_pd( x2_0, right_k0_0);
-          right_k0_2 = _mm_mul_pd( x2_2, right_k0_2);
-
-          right_k1_0 = _mm_mul_pd( x2_0, right_k1_0);
-          right_k1_2 = _mm_mul_pd( x2_2, right_k1_2);
-
-          right_k0_0 = _mm_hadd_pd( right_k0_0, right_k0_2);
-          right_k1_0 = _mm_hadd_pd( right_k1_0, right_k1_2);
-          right_k0_0 = _mm_hadd_pd( right_k0_0, right_k1_0);
-
-          right_k2_0 = _mm_mul_pd( x2_0, right_k2_0);
-          right_k2_2 = _mm_mul_pd( x2_2, right_k2_2);
+		left_k2_0 = _mm_hadd_pd( left_k2_0, left_k2_2);
+		left_k3_0 = _mm_hadd_pd( left_k3_0, left_k3_2);
+		left_k2_0 = _mm_hadd_pd( left_k2_0, left_k3_0);
 
 
-          right_k3_0 = _mm_mul_pd( x2_0, right_k3_0);
-          right_k3_2 = _mm_mul_pd( x2_2, right_k3_2);
+		//
+		// multiply/add right side
+		//
+		double *x2_p = &x2[j*4];
+		double *right_k0_p = &right[j*16];
+		double *right_k1_p = &right[j*16 + 1*4];
+		double *right_k2_p = &right[j*16 + 2*4];
+		double *right_k3_p = &right[j*16 + 3*4];
+		__m128d x2_0 = _mm_load_pd( &x2_p[0] );
+		__m128d x2_2 = _mm_load_pd( &x2_p[2] );
 
-          right_k2_0 = _mm_hadd_pd( right_k2_0, right_k2_2);
-          right_k3_0 = _mm_hadd_pd( right_k3_0, right_k3_2);
-          right_k2_0 = _mm_hadd_pd( right_k2_0, right_k3_0);	   
+		__m128d right_k0_0 = _mm_load_pd( &right_k0_p[0] );
+		__m128d right_k0_2 = _mm_load_pd( &right_k0_p[2] );
+		__m128d right_k1_0 = _mm_load_pd( &right_k1_p[0] );
+		__m128d right_k1_2 = _mm_load_pd( &right_k1_p[2] );
+		__m128d right_k2_0 = _mm_load_pd( &right_k2_p[0] );
+		__m128d right_k2_2 = _mm_load_pd( &right_k2_p[2] );
+		__m128d right_k3_0 = _mm_load_pd( &right_k3_p[0] );
+		__m128d right_k3_2 = _mm_load_pd( &right_k3_p[2] );
 
-          //
-          // multiply left * right
-          //
+		right_k0_0 = _mm_mul_pd( x2_0, right_k0_0);
+		right_k0_2 = _mm_mul_pd( x2_2, right_k0_2);
 
-          __m128d x1px2_k0 = _mm_mul_pd( left_k0_0, right_k0_0 );
-          __m128d x1px2_k2 = _mm_mul_pd( left_k2_0, right_k2_0 );
+		right_k1_0 = _mm_mul_pd( x2_0, right_k1_0);
+		right_k1_2 = _mm_mul_pd( x2_2, right_k1_2);
 
+		right_k0_0 = _mm_hadd_pd( right_k0_0, right_k0_2);
+		right_k1_0 = _mm_hadd_pd( right_k1_0, right_k1_2);
+		right_k0_0 = _mm_hadd_pd( right_k0_0, right_k1_0);
 
-          //
-          // multiply with EV matrix (!?)
-          //	     
-
-          __m128d EV_t_l0_k0 = EVV[0];
-          __m128d EV_t_l0_k2 = EVV[1];
-          __m128d EV_t_l1_k0 = EVV[2];
-          __m128d EV_t_l1_k2 = EVV[3];
-          __m128d EV_t_l2_k0 = EVV[4];
-          __m128d EV_t_l2_k2 = EVV[5];
-          __m128d EV_t_l3_k0 = EVV[6]; 
-          __m128d EV_t_l3_k2 = EVV[7];
-
-
-          EV_t_l0_k0 = _mm_mul_pd( x1px2_k0, EV_t_l0_k0 );
-          EV_t_l0_k2 = _mm_mul_pd( x1px2_k2, EV_t_l0_k2 );
-          EV_t_l0_k0 = _mm_hadd_pd( EV_t_l0_k0, EV_t_l0_k2 );
-
-          EV_t_l1_k0 = _mm_mul_pd( x1px2_k0, EV_t_l1_k0 );
-          EV_t_l1_k2 = _mm_mul_pd( x1px2_k2, EV_t_l1_k2 );
-
-          EV_t_l1_k0 = _mm_hadd_pd( EV_t_l1_k0, EV_t_l1_k2 );
-          EV_t_l0_k0 = _mm_hadd_pd( EV_t_l0_k0, EV_t_l1_k0 );
-
-          EV_t_l2_k0 = _mm_mul_pd( x1px2_k0, EV_t_l2_k0 );
-          EV_t_l2_k2 = _mm_mul_pd( x1px2_k2, EV_t_l2_k2 );
-          EV_t_l2_k0 = _mm_hadd_pd( EV_t_l2_k0, EV_t_l2_k2 );
+		right_k2_0 = _mm_mul_pd( x2_0, right_k2_0);
+		right_k2_2 = _mm_mul_pd( x2_2, right_k2_2);
 
 
-          EV_t_l3_k0 = _mm_mul_pd( x1px2_k0, EV_t_l3_k0 );
-          EV_t_l3_k2 = _mm_mul_pd( x1px2_k2, EV_t_l3_k2 );
-          EV_t_l3_k0 = _mm_hadd_pd( EV_t_l3_k0, EV_t_l3_k2 );
+		right_k3_0 = _mm_mul_pd( x2_0, right_k3_0);
+		right_k3_2 = _mm_mul_pd( x2_2, right_k3_2);
 
-          EV_t_l2_k0 = _mm_hadd_pd( EV_t_l2_k0, EV_t_l3_k0 );
+		right_k2_0 = _mm_hadd_pd( right_k2_0, right_k2_2);
+		right_k3_0 = _mm_hadd_pd( right_k3_0, right_k3_2);
+		right_k2_0 = _mm_hadd_pd( right_k2_0, right_k3_0);	   
 
+		//
+		// multiply left * right
+		//
 
-          values[j * 2] = EV_t_l0_k0;
-          values[j * 2 + 1] = EV_t_l2_k0;            	   	    
-
-          maxv = _mm_max_pd(maxv, _mm_and_pd(EV_t_l0_k0, absMask.m));
-          maxv = _mm_max_pd(maxv, _mm_and_pd(EV_t_l2_k0, absMask.m));
-        }
-
-
-        _mm_store_pd(maxima, maxv);
-
-        max = MAX(maxima[0], maxima[1]);
-
-        if(max < minlikelihood)
-        {
-          __m128d sv = _mm_set1_pd(twotothe256);
-
-          _mm_store_pd(&x3[0], _mm_mul_pd(values[0], sv));	   
-          _mm_store_pd(&x3[2], _mm_mul_pd(values[1], sv));
-          _mm_store_pd(&x3[4], _mm_mul_pd(values[2], sv));
-          _mm_store_pd(&x3[6], _mm_mul_pd(values[3], sv));
-          _mm_store_pd(&x3[8], _mm_mul_pd(values[4], sv));	   
-          _mm_store_pd(&x3[10], _mm_mul_pd(values[5], sv));
-          _mm_store_pd(&x3[12], _mm_mul_pd(values[6], sv));
-          _mm_store_pd(&x3[14], _mm_mul_pd(values[7], sv));	     
+		__m128d x1px2_k0 = _mm_mul_pd( left_k0_0, right_k0_0 );
+		__m128d x1px2_k2 = _mm_mul_pd( left_k2_0, right_k2_0 );
 
 
-          addScale += wgt[i];
+		//
+		// multiply with EV matrix (!?)
+		//	     
 
-          //printf( "scale INNER/INNER\n" );
-          //	     getchar();
-        }
-        else
-        {
-          _mm_store_pd(&x3[0], values[0]);	   
-          _mm_store_pd(&x3[2], values[1]);
-          _mm_store_pd(&x3[4], values[2]);
-          _mm_store_pd(&x3[6], values[3]);
-          _mm_store_pd(&x3[8], values[4]);	   
-          _mm_store_pd(&x3[10], values[5]);
-          _mm_store_pd(&x3[12], values[6]);
-          _mm_store_pd(&x3[14], values[7]);
-        }	 
+		__m128d EV_t_l0_k0 = EVV[0];
+		__m128d EV_t_l0_k2 = EVV[1];
+		__m128d EV_t_l1_k0 = EVV[2];
+		__m128d EV_t_l1_k2 = EVV[3];
+		__m128d EV_t_l2_k0 = EVV[4];
+		__m128d EV_t_l2_k2 = EVV[5];
+		__m128d EV_t_l3_k0 = EVV[6]; 
+		__m128d EV_t_l3_k2 = EVV[7];
+
+
+		EV_t_l0_k0 = _mm_mul_pd( x1px2_k0, EV_t_l0_k0 );
+		EV_t_l0_k2 = _mm_mul_pd( x1px2_k2, EV_t_l0_k2 );
+		EV_t_l0_k0 = _mm_hadd_pd( EV_t_l0_k0, EV_t_l0_k2 );
+
+		EV_t_l1_k0 = _mm_mul_pd( x1px2_k0, EV_t_l1_k0 );
+		EV_t_l1_k2 = _mm_mul_pd( x1px2_k2, EV_t_l1_k2 );
+
+		EV_t_l1_k0 = _mm_hadd_pd( EV_t_l1_k0, EV_t_l1_k2 );
+		EV_t_l0_k0 = _mm_hadd_pd( EV_t_l0_k0, EV_t_l1_k0 );
+
+		EV_t_l2_k0 = _mm_mul_pd( x1px2_k0, EV_t_l2_k0 );
+		EV_t_l2_k2 = _mm_mul_pd( x1px2_k2, EV_t_l2_k2 );
+		EV_t_l2_k0 = _mm_hadd_pd( EV_t_l2_k0, EV_t_l2_k2 );
+
+
+		EV_t_l3_k0 = _mm_mul_pd( x1px2_k0, EV_t_l3_k0 );
+		EV_t_l3_k2 = _mm_mul_pd( x1px2_k2, EV_t_l3_k2 );
+		EV_t_l3_k0 = _mm_hadd_pd( EV_t_l3_k0, EV_t_l3_k2 );
+
+		EV_t_l2_k0 = _mm_hadd_pd( EV_t_l2_k0, EV_t_l3_k0 );
+
+
+		values[j * 2] = EV_t_l0_k0;
+		values[j * 2 + 1] = EV_t_l2_k0;            	   	    
+
+		maxv = _mm_max_pd(maxv, _mm_and_pd(EV_t_l0_k0, absMask.m));
+		maxv = _mm_max_pd(maxv, _mm_and_pd(EV_t_l2_k0, absMask.m));
+	      }
+
+
+	    _mm_store_pd(maxima, maxv);
+
+	    max = MAX(maxima[0], maxima[1]);
+	
+	    if(max < minlikelihood)
+	      {
+		__m128d sv = _mm_set1_pd(twotothe256);
+
+		_mm_store_pd(&x3[0], _mm_mul_pd(values[0], sv));	   
+		_mm_store_pd(&x3[2], _mm_mul_pd(values[1], sv));
+		_mm_store_pd(&x3[4], _mm_mul_pd(values[2], sv));
+		_mm_store_pd(&x3[6], _mm_mul_pd(values[3], sv));
+		_mm_store_pd(&x3[8], _mm_mul_pd(values[4], sv));	   
+		_mm_store_pd(&x3[10], _mm_mul_pd(values[5], sv));
+		_mm_store_pd(&x3[12], _mm_mul_pd(values[6], sv));
+		_mm_store_pd(&x3[14], _mm_mul_pd(values[7], sv));	     
+
+		addScale += wgt[i];
+	  
+		/* printf( "scale INNER/INNER\t%g\t%g\tat\t%d\n" , max, minlikelihood, i); */
+		//	     getchar();
+	      }
+	    else
+	      {          
+		/* printf( "no scale\t%g\t%g\n" , max, minlikelihood); */
+		_mm_store_pd(&x3[0], values[0]);	   
+		_mm_store_pd(&x3[2], values[1]);
+		_mm_store_pd(&x3[4], values[2]);
+		_mm_store_pd(&x3[6], values[3]);
+		_mm_store_pd(&x3[8], values[4]);	   
+		_mm_store_pd(&x3[10], values[5]);
+		_mm_store_pd(&x3[12], values[6]);
+		_mm_store_pd(&x3[14], values[7]);
+	      }	 
+	  }
       }
 
       break;

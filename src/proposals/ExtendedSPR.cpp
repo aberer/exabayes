@@ -3,6 +3,9 @@
 #include "TreeAln.hpp"
 #include "priors/AbstractPrior.hpp"
 
+
+#include "TreePrinter.hpp"
+
 // #define DEBUG_ESPR
 
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
@@ -49,18 +52,6 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   auto p = start.findNodePtr(traln) ; 
   auto q = p->next->back; 
   auto r = p->next->next->back; 
-
-  // auto  start = BranchPlain(); 
-  // nodeptr p,q,r; 
-  // do 
-  //   {
-  //     start = TreeRandomizer::drawBranchWithInnerNode(traln, rand); 
-
-  //     p = start.findNodePtr(traln );
-  //     q = p->next->back; 
-  //     r = p->next->next->back;
-  //   } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
-
 
   auto lengthR = traln.getBranch(r, params); 
   auto lengthQ = traln.getBranch(q, params); 
@@ -139,8 +130,9 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
  */ 
 void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
-  // double lnlInit = traln.getTr()->likelihood; 
-  
+  // auto blParam = getBranchLengthsParameterView()[0]; 
+  // tout << "before move " << TreePrinter(true, true, false).printTree(traln, blParam) << std::endl;  
+
   // IMPORTANT 
   bool multiplyBranchesUsingPosterior = 
 #ifdef PROPOSE_BRANCHES_FOR_SPR 
@@ -168,6 +160,9 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   // double hastBackward =  hastPart; 
 
   move.applyToTree(traln, getSecondaryParameterView() ); 
+
+  // tout << "MOVE " << move << std::endl; 
+  // tout << "after move " << TreePrinter(true, true, false).printTree(traln, blParam) << std::endl;  
 
   // double lnlAftermove = eval.evaluate(traln,move.getEvalBranch(traln), true); 
   
@@ -235,8 +230,13 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {  
   auto toEval = move.getEvalBranch(traln);
-  for(auto &elem : move.getDirtyNodes())
+  auto dirtyNodes = move.getDirtyNodes(); 
+
+  // tout << "marking nodes dirty: " << dirtyNodes << std::endl; 
+
+  for(auto &elem : dirtyNodes)
     evaluator.markDirty( traln, elem); 
+
 
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL " << toEval << std::endl; 

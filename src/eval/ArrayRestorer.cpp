@@ -41,7 +41,7 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
 
       // restore the partition scaler 
       auto partition = traln.getPartition( partitionIndex);       
-      memcpy(partition->globalScaler, partitionLikelihoods.at(partitionIndex).scaler.data(), sizeof(nat) * traln.getNumberOfNodes() ); 
+      // memcpy(partition->globalScaler, partitionLikelihoods.at(partitionIndex).scaler.data(), sizeof(nat) * (2 * traln.getNumberOfTaxa()  ) ); 
 
       if(restoresGapVector)
 	{
@@ -67,6 +67,9 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
 
   partitionLikelihoods[partitionId].cachedArrays[id] = arrayAndLength.first; 
   partitionLikelihoods[partitionId].lengths[id] = arrayAndLength.second; 
+  
+  auto partition = traln.getPartition(partitionId); 
+  partitionLikelihoods[partitionId].scaler[nodeNumber] = partition->globalScaler[nodeNumber]; 
 
   if(restoresGapVector)
     {
@@ -117,6 +120,8 @@ void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, Arr
   // backup orientation 
   auto tmp = arrayOrientation.getOrientation(partitionId, id);
   curOrient.setOrientation(partitionId, id, tmp);
+
+  partition->globalScaler[nodeNumber] = backup.scaler[nodeNumber]  ; 
   
   if(restoresGapVector)
     {
@@ -178,7 +183,7 @@ void ArrayRestorer::resetRestorer(const TreeAln &traln, ArrayOrientation &curOri
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
       auto partition = traln.getPartition( i); 
-      partitionLikelihoods.at(i).scaler.assign(partition->globalScaler, partition->globalScaler + traln.getNumberOfNodes()); 
+      // partitionLikelihoods.at(i).scaler.assign(partition->globalScaler, partition->globalScaler + (2 * traln.getNumberOfTaxa() ) ); 
       
       if(restoresGapVector)
 	{

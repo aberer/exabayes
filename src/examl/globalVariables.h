@@ -29,6 +29,8 @@
  */
 
 
+#include <mpi.h>
+
 
 int processes;
 double *globalResult;

@@ -11,7 +11,7 @@ public:
     : model(model)
     , cachedArrays(traln.getNumberOfInnerNodes()) 
     , lengths(traln.getNumberOfInnerNodes(), 0)
-    , scaler(traln.getNumberOfNodes(), 0)
+    , scaler( 2 * traln.getNumberOfTaxa() , 0)
     , isCached(traln.getNumberOfInnerNodes(),false)
   {
     if(useSEV)

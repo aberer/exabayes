@@ -30,7 +30,6 @@ AC_PROG_CXX
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
 
-# AX_MPI
 
 AX_CXX_COMPILE_STDCXX_11
 AC_PROG_CC_STDC
@@ -56,7 +55,7 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([clock_gettime getcwd getpagesize gettimeofday memset pow sqrt strcasecmp strchr])
 
 
-AC_DEFINE([HAVE_PLL], [0], "")
+# AC_DEFINE([HAVE_PLL], [0], "")
 AC_ARG_ENABLE( [mpi], 	      
 	   [  --enable-mpi  compiles ExaBayes with MPI support ],
 [  case "${enableval}" in 
@@ -73,7 +72,7 @@ if test "x$CODE" = "xyes" ; then
 elif test "x$CODE" = "xno" ; then 
    AC_DEFINE([HAVE_PLL], [1], "")
 else 
-   AC_MSG_ERROR(bad value --enable-pll) 
+   AC_MSG_ERROR(bad value --enable-mpi) 
 fi 
 
 AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xyes" ])

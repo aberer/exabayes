@@ -20,23 +20,9 @@ extern int NUM_BRANCHES;
 #define __AVX 
 #endif
 
-#if HAVE_PLL != 0
-
-#else
-
-#ifdef _SEQUENTIAL
-#ifdef __cplusplus
-extern "C"{
-#endif
-#include "examl/mpiMock.h"
-#ifdef __cplusplus
-}
-#endif
-#else
-#include "mpi.h"
-#endif
-
-#endif
+/* #if HAVE_PLL == 0 */
+/* #include "mpi.h" */
+/* #endif */
 
 
 #ifdef __cplusplus
@@ -48,7 +34,6 @@ extern "C"{
 #else 
 #include "examl/axml-examl.h"
 #endif
-
 
 
 #if HAVE_PLL == 0
