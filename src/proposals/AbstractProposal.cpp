@@ -157,3 +157,47 @@ std::vector<nat> AbstractProposal::getAffectedPartitions() const
   assert(primaryParameters.size() == 1); 
   return primaryParameters[0]->getPartitions();
 } 
+
+
+std::array<bool,3>
+AbstractProposal::getBranchProposalMode() const 
+{
+  bool outer = false; 
+  bool multiply = false; 
+  bool sequential = false; 
+
+  auto branchOpt = std::getenv("PROPOSE_BRANCHES"); 
+  if(branchOpt != NULL )
+    {
+      auto &&iss =  std::istringstream(branchOpt); 
+      int mode = 0; 
+      iss >> mode; 
+      if(mode == 0)
+	{
+	}
+      else if(mode == 1)
+	{
+	  multiply = true ; 
+	}
+      else if(mode == 2)
+	{
+	  multiply = true; 
+	  outer = true; 
+	}
+      else if(mode == 3 )
+	{
+	  multiply = true; 
+	  sequential = true; 
+	}
+      else if(mode == 4 )
+	{
+	  multiply = true; 
+	  outer = true; 
+	  sequential = true; 
+	}
+      else 
+	assert(0);
+    }
+
+  return {{multiply, outer, sequential }}; 
+}

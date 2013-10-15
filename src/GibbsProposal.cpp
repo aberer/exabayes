@@ -7,14 +7,10 @@
 #include "Arithmetics.hpp"
 
 // between .85 and 1 
-#define FIXED_SMALL_ALPHA  0.95
 // could be between 300 and 500 
-#define FIXED_SMALL_BETA  450
 
-// const double GibbsProposal::EST_FAC = 0.015; 
-// const double GibbsProposal::EST_FAC = 1.5; 
+#define VERBOSE_INFO
 
-// const double GibbsProposal::EST_EXP = -1; 
 const double GibbsProposal::EST_FAC = 1.5; 
 
 
@@ -22,11 +18,12 @@ BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branc
 {
   auto result = optimiseBranch(traln, branch, eval, maxIter ,blParam);
   auto optLen = result[0]; 
+  auto nrD1  = result[1]; 
   auto nrD2 = result[2]; 
   auto resultBranch = branch; 
   resultBranch.setLength(optLen); 
 
-  auto proposalResult = propose(resultBranch.getInterpretedLength(traln, blParam), nrD2, rand ); 
+  auto proposalResult = propose(resultBranch.getInterpretedLength(traln, blParam), nrD1, nrD2, rand); 
   auto proposal = proposalResult[0];  
   auto alpha = proposalResult[1]; 
   auto beta = proposalResult[2]; 
@@ -36,9 +33,8 @@ BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branc
   if(not BoundsChecker::checkBranch(resultBranch))
     BoundsChecker::correctBranch(resultBranch); 
 
-
   double lnBackP = Density::lnGamma(branch.getInterpretedLength(traln, blParam), alpha, beta); 
-  double lnForP = Density::lnGamma(proposal, alpha, beta); 
+  double lnForP = Density::lnGamma(resultBranch.getInterpretedLength(traln, blParam), alpha, beta);
 
   assert(lnBackP != 0 && lnForP != 0 ); 
 
@@ -47,32 +43,48 @@ BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branc
 }
 
 
-std::array<double,3> GibbsProposal::propose(double nrOpt, double nrd2, Randomness &rand)
-{
-  bool d2isPositive = nrd2 > 0 ; 
-  if(not d2isPositive) 
-    nrd2 = -nrd2; 
 
-  double proposal = 0; 
+std::pair<double,double> GibbsProposal::getGammaParams(double nrOpt, double nrD1, double nrD2)
+{
+#ifdef VERBOSE_INFO
+  // tout << MAX_SCI_PRECISION << nrOpt << "\t" << nrD2 << std::endl; 
+#endif
+
+  bool hasConverged = not (nrOpt < 1e-5 && 1e-1 < fabs(nrD1)) ; 
+
   double alpha = 0,  beta = 0; 
-  if(d2isPositive)
+  if(not hasConverged)
     {
-      alpha = FIXED_SMALL_ALPHA; 
-      beta = FIXED_SMALL_BETA; 
-      proposal = rand.drawRandGamma(alpha, beta); 
-      // tout << "GIBBS-BAD" << std::endl;
+      alpha = 1 ; 
+      beta = nrD1 ; 
+
+// #ifdef VERBOSE_INFO
+//       tout << "GIBBS-BAD" << std::endl;
+// #endif
     }
   else 
     {
-      double c = EST_FAC  / nrd2 ; 
+      double c = EST_FAC  /  (- nrD2) ; 
       beta =  ((nrOpt + sqrt(nrOpt * nrOpt + 4 * c)) / (2 * c )) ; 
       alpha = nrOpt * beta + 1 ; 
-
-      proposal = rand.drawRandGamma(alpha,   beta);
     }
 
-  auto result = std::array<double,3>{{ proposal, alpha, beta} }; 
+  // if(nrD1 > 1e-1 && nrOpt < 1e-5)
+    // tout << "DANGER" << std::endl; 
+  // tout << MAX_SCI_PRECISION <<  "(" << nrOpt << ","  << nrD1 << "," << nrD2 << ") <=> " << SOME_FIXED_PRECISION << alpha << "," << beta << std::endl; 
 
+  assert(nrD2 < 0 || not hasConverged ); 
+
+  return make_pair(alpha, beta);
+}
+
+
+std::array<double,3> GibbsProposal::propose(double nrOpt, double nrd1, double nrd2, Randomness &rand)
+{
+  auto params = getGammaParams(nrOpt, nrd1, nrd2); 
+  double proposal = rand.drawRandGamma(params.first, params.second); 
+  
+  auto result = std::array<double,3>{{ proposal, params.first, params.second} }; 
   return result; 
 }
 

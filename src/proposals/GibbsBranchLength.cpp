@@ -3,9 +3,9 @@
 #include "GibbsProposal.hpp"
 #include "priors/AbstractPrior.hpp"
 
-GibbsBranchLength::GibbsBranchLength(bool _doTwo)
+GibbsBranchLength::GibbsBranchLength()
   : BranchLengthMultiplier( 0)
-  , doTwo(_doTwo)
+  // , doTwo(_doTwo)
 {
   name = "estGibbsBL"; 
   category = Category::BRANCH_LENGTHS; 

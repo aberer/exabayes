@@ -45,7 +45,7 @@ namespace Arithmetics
     
     for(auto &v : data)
       result += pow(mean - v,2 ); 
-    result /= data.size(); 
+    result /= (data.size() -1);  
     
     return result; 
   }

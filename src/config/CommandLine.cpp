@@ -172,7 +172,7 @@ void CommandLine::parse(int argc, char *argv[])
 		std::cerr << "Encountered unknown command line option " <<  c 
 			  << "\n\nFor an overview of program options, please use -h" << std::endl ; 
 		// TODO mpi-finalize stuff 
-		abort();
+		exit(-1); 
 	      }
 	    }
 	}
@@ -186,7 +186,7 @@ void CommandLine::parse(int argc, char *argv[])
   if(runid.compare("") == 0 )
     {
       std::cerr << "please specify a runid with -n runid" << std::endl; 
-      abort(); 
+      exit(-1); 
     }
   
   if(seed.v[0] != 0 && checkpointId.compare("") != 0 )
@@ -198,7 +198,7 @@ void CommandLine::parse(int argc, char *argv[])
   if(checkpointId.compare("") == 0 && seed.v[0] == 0 )
     {
       std::cerr << "please specify a seed via -s seed (must NOT be 0)"   << std::endl; 
-      abort(); 
+      exit(-1); 
     }
 
 
@@ -231,7 +231,7 @@ void CommandLine::parse(int argc, char *argv[])
     {
       std::cerr << "please specify an alignment file via -f file" <<  std::endl 
 		<< "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << std::endl; 
-      abort();
+      exit(-1); 
     }
 
   if(alnFileIsBinary())
@@ -254,7 +254,7 @@ void CommandLine::parse(int argc, char *argv[])
 	  std::cout << "Found a phylip-style alignment file. However, you did not provide a\n"
 	       << "model file (see -q) or a data type specification for a single\n"
 	       << "partition (-m). Cannot proceed.\n" ; 
-	  abort(); 
+	  exit(-1); 
 	}
     }
   

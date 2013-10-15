@@ -2,9 +2,9 @@
 #include "Path.hpp"
 #include "TreeAln.hpp"
 #include "priors/AbstractPrior.hpp"
-
-
 #include "TreePrinter.hpp"
+
+// #define MOVE_INFO
 
 // #define DEBUG_ESPR
 
@@ -31,7 +31,6 @@ BranchPlain ExtendedSPR::determinePrimeBranch(const TreeAln &traln, Randomness &
     } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
   return start; 
 } 
-
 
 
 // IMPORTANT TODO: is the number of branches that CAN get chosen for
@@ -130,110 +129,90 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
  */ 
 void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
-  // auto blParam = getBranchLengthsParameterView()[0]; 
-  // tout << "before move " << TreePrinter(true, true, false).printTree(traln, blParam) << std::endl;  
+  auto bMode = getBranchProposalMode();
+  bool multiplyBranchesUsingPosterior = bMode[0]; 
+  bool outer = bMode[1]; 
+  bool sequential = bMode[2]; 
 
-  // IMPORTANT 
-  bool multiplyBranchesUsingPosterior = 
-#ifdef PROPOSE_BRANCHES_FOR_SPR 
-    true; 
-#else 
-  false ; 
-#endif
-  
   auto blParams = getBranchLengthsParameterView(); 
-  // auto param = blParams[0] ; 
-  // assert(blParams.size( )== 1 ); 
-
   drawPathForESPR( traln,rand ,stopProb); 
 
-  // tout << "ESPR\t" << move.getNniDistance() << std::endl; 
+  double oldLnl = traln.getTr()->likelihood; 
+  double topoLnl = 0; 
+  double branchLnl = 0; 
 
-  double hastPart = 0; 
+  double impact = 0; 
   if(multiplyBranchesUsingPosterior)
-    {  
-      // NOTICE: extended! 
-      
-      move.proposeBranches(traln, blParams, eval, hastPart, rand, false); 
-      hastings += hastPart; 
-    }
-  // double hastBackward =  hastPart; 
+    {
+      auto result = move.moveBranchProposal(traln, blParams, eval, rand, outer, 0.05, sequential);
+      hastings += std::get<1>(result); 
 
-  move.applyToTree(traln, getSecondaryParameterView() ); 
+      move.applyToTree(traln, getSecondaryParameterView() , eval, outer); 
 
-  // tout << "MOVE " << move << std::endl; 
-  // tout << "after move " << TreePrinter(true, true, false).printTree(traln, blParam) << std::endl;  
-
-  // double lnlAftermove = eval.evaluate(traln,move.getEvalBranch(traln), true); 
-  
-  bool modifiesBl = false; 
-  for(auto &v : secondaryParameters)
-    modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
-
-#ifdef NO_SEC_BL_MULTI
-  modifiesBl = false; 
+      // BEGIN REPORT 
+#ifdef MOVE_INFO
+      eval.evaluate(traln, move.getEvalBranch(traln), false); 
+      topoLnl = traln.getTr()->likelihood; 
 #endif
-
-  if(modifiesBl)
-    {
-      assert(0);
-      // auto brPr = secondaryParameters.at(0)->getPrior();
-      // move.multiplyBranches(traln, rand, hastings, prior, multiplier, {brPr} ); 
-    }
-
-  subtreeBranch = move.getSubtreeBranchAfter(traln);
-  oppositeBranch = move.getOppositeBranch(traln); 
-  
-  // double blBefore = subtreeBranch.getInterpretedLength(traln, blParams[0]); 
-  // double blAfter = 0; 
-
-  if(multiplyBranchesUsingPosterior)
-    {
-      hastPart = 0; 
-      auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastPart, rand, true  );
-      hastings += hastPart; 
-      for(auto b : proposedBranches)
+      // END
+      
+      // save and apply the branches 
+      branchesSaved = true; 
+      savedBls.clear(); 
+      impact = std::get<2>(result);
+      for(auto elem : std::get<0>(result))
 	{
-	  // for(auto param : blParams)
-	  //   {
-	  //     auto bl = traln.getBranch(b.toPlain(), param); 
-	  //     prior.updateBranchLengthPrior(traln, bl.getLength(), b.getLength(param), param); 
-	  //   }
-
+	  auto curBranch = traln.getBranch(elem.toPlain(), blParams); 
+	  savedBls.push_back(curBranch); 
+	  
+	  // inform prior 
 	  for(auto param : blParams)
 	    {
-	      auto dummy = traln.getBranch(b.toPlain(), param); 
-	      auto prevLen = dummy.getInterpretedLength(traln, param); 
-	      dummy.setLength(b.getLength(param)); 
-	      auto curLen = dummy.getInterpretedLength(traln,param); 
-	      
-	      auto ratio = param->getPrior()->getLogProb( { curLen } ) - param->getPrior()->getLogProb( {prevLen } ); 
-	      prior.addToRatio(ratio); 
+	      auto priorHere = param->getPrior(); 
+
+	      auto b = elem.toBlDummy(); 
+	      b.setLength(elem.getLength(param)); 
+	      double lenAfterInterpret = b.getInterpretedLength(traln, param); 
+
+	      b.setLength(curBranch.getLength(param)); 
+	      double lenBeforeInterpret = b.getInterpretedLength(traln, param ); 
+
+	      auto newPr = priorHere->getLogProb( { lenAfterInterpret} ) ; 
+	      auto oldPr = priorHere->getLogProb( {  lenBeforeInterpret}); 
+
+	      prior.addToRatio(newPr - oldPr); 
 	    }
 
-	  traln.setBranch(b,blParams);
+	  // set the branch
+	  traln.setBranch(elem, blParams);
 	}
+      
+      // BEGIN
+      for(auto n : move.getDirtyNodes(traln, outer))
+	eval.markDirty(traln, n);
+      eval.evaluate(traln,move.getEvalBranch(traln), false); 
+      branchLnl = traln.getTr()->likelihood; 
+      // END
     }
-  // double hastForward = hastPart; 
+  else 
+    {
+      branchesSaved = false; 
+      move.applyToTree(traln, getSecondaryParameterView() ); 
+    }
 
-  // tout << hastBackward << " -  " << hastForward << " => " << hastings << std::endl; 
-  
-
-  // double lnlAfterbranch = eval.evaluate(traln, move.getEvalBranch(traln), true); 
-  // tout << SOME_FIXED_PRECISION; 
-  // tout << "ESPR\t" << blBefore << "\t" << blAfter << "\t"  << lnlAftermove - lnlInit << "\t" << lnlAfterbranch - lnlInit << "\t" << prior.getLnPriorRatio() << "\t" << hastBackward << "\t" << hastForward << " = " << hastings <<  "\t"  << move     << std::endl; 
-
-  // debug_checkTreeConsistency(traln); 
+#ifdef MOVE_INFO
+  tout << "ESPR\t" << move.getNniDistance() 
+       << "\t" << oldLnl <<  "\t" << topoLnl - oldLnl << "\t" << branchLnl - oldLnl << "\t"
+       << hastings << "\t" << prior.getLnPriorRatio()<< "\t" << impact << std::endl;  
+  // tout << "================================================================" << std::endl; 
+#endif
 }
 
 
 void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {  
   auto toEval = move.getEvalBranch(traln);
-  auto dirtyNodes = move.getDirtyNodes(); 
-
-  // tout << "marking nodes dirty: " << dirtyNodes << std::endl; 
-
+  auto dirtyNodes = move.getDirtyNodes(traln, false); 
   for(auto &elem : dirtyNodes)
     evaluator.markDirty( traln, elem); 
 
@@ -247,13 +226,14 @@ void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &tral
 
 void ExtendedSPR::resetState(TreeAln &traln )
 {
-  move.revertTree(traln, getSecondaryParameterView() ); 
-  // TODO 
   auto params = getSecondaryParameterView(); 
-  // auto param = params[0]; 
-  // assert(params.size( )== 1 ); 
-  // traln.setBranch( subtreeBranch, param);
-  // traln.setBranch( oppositeBranch, param); 
+  if(branchesSaved)
+    {
+      for(auto elem : savedBls)
+	traln.setBranch(elem, params); 
+    }
+
+  move.revertTree(traln, getSecondaryParameterView() ); 
 }
 
 
@@ -265,5 +245,5 @@ AbstractProposal* ExtendedSPR::clone() const
 
 std::vector<nat> ExtendedSPR::getInvalidatedNodes(const TreeAln& traln) const
 {
-  return move.getDirtyNodes();
+  return move.getDirtyNodes(traln, false);
 }

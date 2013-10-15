@@ -44,9 +44,10 @@ private: 			// METHODS
 
 private:			// ATTRIBUTES
   double multiplier; 
-  Path path; 
-  // NniMove move; 
+  // Path path; 
   SprMove move; 
+  bool branchesSaved; 
+  std::vector<BranchLengths> savedBls;
 };
 
 #endif

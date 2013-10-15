@@ -2,7 +2,8 @@
 
 topdir=$(dirname  $0 )/../
 
-# seed=$RANDOM
+seed=$RANDOM
+# seed=19840
 
 numProc=2
 # extraArgs="-Q"
@@ -13,6 +14,12 @@ numProc=2
 # seed=31853
 
 startFromBest=0
+
+# important: if you do not have google-perftools (and the respective
+# *-dev ) package installed, then you should turn this off
+useGoogleProfiler=0
+useClang=0
+
 
 # find additional arguments for the call   
 # *=$bak
@@ -26,12 +33,6 @@ GDB=gdb
 if [ "$(which cgdb )" != ""   ]; then
     GDB="gdb"
 fi
-
-
-# important: if you do not have google-perftools (and the respective
-# *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0
-useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"

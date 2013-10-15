@@ -14,7 +14,7 @@ public:
   virtual double getLamda()  const  { return lambda; } 
   virtual ParameterContent getInitialValue() const; 
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew )  const ; 
- 
+
 private: 
   double lambda; 
 }; 

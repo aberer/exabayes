@@ -45,8 +45,9 @@ protected: 			// ATTRIBUTES
   double stopProb; 
   double multiplier; 
   SprMove move; 
-  BranchPlain subtreeBranch; 
-  BranchPlain oppositeBranch; 
+
+  bool branchesSaved; 
+  std::vector<BranchLengths> savedBls; 
 }; 
 
 

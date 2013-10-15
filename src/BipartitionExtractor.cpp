@@ -78,7 +78,7 @@ nat BipartitionExtractor::getNumTreesInFile(std::string file) const
 }
 
 
-void BipartitionExtractor::extractBipsNew()
+void BipartitionExtractor::extractBipsNew(bool readBl)
 {
   int ctr = 0; 
   for (auto filename : fns)
@@ -91,8 +91,8 @@ void BipartitionExtractor::extractBipsNew()
 
       for(nat i = 0 ; i < end; ++i)
 	{
-	  nextTree(ifh);
-	  bipHash.addTree(*traln,true);
+	  nextTree(ifh, readBl);
+	  bipHash.addTree(*traln,true, true);
 	}
       bipHashes.push_back(bipHash);
  

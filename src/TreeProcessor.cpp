@@ -34,16 +34,17 @@ TreeProcessor& TreeProcessor::operator=(TreeProcessor &&rhs)
 } 
 
 
-void TreeProcessor::nextTree(std::istream &treefile) 
+void TreeProcessor::nextTree(std::istream &treefile, bool readBL) 
 {
   tree *tr = traln->getTr();
   while( treefile.get() != '('); 
   treefile.unget();
-
   treefile.unget();
+
   auto treestring = std::string {}; 
   std::getline(treefile, treestring); 
-  myTreeReadLen(treestring, tr , TRUE); 
+  // std::cout << "reading " << treestring << std::endl; 
+  myTreeReadLen(treestring, tr , readBL ? TRUE : FALSE); 
 }
 
 

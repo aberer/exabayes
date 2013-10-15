@@ -46,18 +46,15 @@ typedef unsigned int nat;
 /* #define _GO_TO_TREE_MOVE_INTEGARTION */
 /* #define _GO_TO_INTEGRATION_MODE */
 /* #define _EXPERIMENTAL_INTEGRATION_MODE */
+
 #define _DISABLE_INIT_LNL_CHECK
 /* #define INTEGRATION_GENERATION 3e4 */
 #define INTEGRATION_GENERATION 1e6
 
-/* #define PROPOSE_BRANCHES_FOR_SPR */
-
 /* #define UNSURE  */
 /* #define EFFICIENT  */
 
-
 /* #define PRINT_EVAL_CHOICE */
-
 
 /* debugging */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */

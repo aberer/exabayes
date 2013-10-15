@@ -184,12 +184,12 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 { 
   // IMPORTANT 
-  bool multiplyBranchesUsingPosterior =  
-#ifdef PROPOSE_BRANCHES_FOR_SPR 
-    true; 
-#else 
-  false ; 
-#endif
+//   bool multiplyBranchesUsingPosterior =  
+// #ifdef PROPOSE_BRANCHES_FOR_SPR 
+//     true; 
+// #else 
+//   false ; 
+// #endif
 
   // double lnlInit = traln.getTr()->likelihood; 
   
@@ -203,11 +203,11 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   
   // move.integrateBranches(traln, blParams, eval, hastings);
 
-  if(multiplyBranchesUsingPosterior)
-    {  
-      // NOTICE: extended! 
-      move.proposeBranches(traln, blParams, eval, hastings, rand, false); 
-    }
+  // // if(multiplyBranchesUsingPosterior)
+  //   {  
+  //     // NOTICE: extended! 
+  //     move.proposeBranches(traln, blParams, eval, hastings, rand, false); 
+  //   }
 
   // tout << move << std::endl; 
 
@@ -238,32 +238,35 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
       // move.multiplyBranches(traln, rand, hastings, prior,  blMulti,{ brPr}); 
     }
 
+#if 0 
   // getBranch before 
   subtreeBranch = move.getSubtreeBranchAfter(traln);
 
-  if(multiplyBranchesUsingPosterior)
-    {
-      auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastings, rand, true  );
-      for(auto b : proposedBranches)
-	{
-	  for(auto &param : blParams)
-	    {
-	      assert(0); 	// is this correct??? 
-	      auto pr =  param->getPrior(); 
-	      auto prevAbsLen = traln.getBranch(b.toPlain(),param).getInterpretedLength(traln, param) ; 
 
-	      auto dummy = b.toBlDummy();
-	      dummy.setLength(b.getLength(param)); 
+  // if(multiplyBranchesUsingPosterior)
+  //   {
+  //     auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastings, rand, true  );
+  //     for(auto b : proposedBranches)
+  // 	{
+  // 	  for(auto &param : blParams)
+  // 	    {
+  // 	      assert(0); 	// is this correct??? 
+  // 	      auto pr =  param->getPrior(); 
+  // 	      auto prevAbsLen = traln.getBranch(b.toPlain(),param).getInterpretedLength(traln, param) ; 
 
-	      auto curAbsLen = dummy.getInterpretedLength(traln,param); 
-	      auto ratio = pr->getLogProb({ curAbsLen}) - pr->getLogProb({ prevAbsLen }) ; 
-	      prior.addToRatio(ratio); 
+  // 	      auto dummy = b.toBlDummy();
+  // 	      dummy.setLength(b.getLength(param)); 
 
-	      // prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
-	    }
-	  traln.setBranch(b,blParams);
-	}
-    }
+  // 	      auto curAbsLen = dummy.getInterpretedLength(traln,param); 
+  // 	      auto ratio = pr->getLogProb({ curAbsLen}) - pr->getLogProb({ prevAbsLen }) ; 
+  // 	      prior.addToRatio(ratio); 
+
+  // 	      // prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
+  // 	    }
+  // 	  traln.setBranch(b,blParams);
+  // 	}
+  //   }
+#endif
 
   // double lnlAfterbranch = eval.evaluate(traln, move.getEvalBranch(traln), true); 
   // tout << "PARS\t" << lnlInit << "\t" << lnlAftermove << "\t" << lnlAfterbranch << "\t" << hastings  << std::endl; 
@@ -291,7 +294,7 @@ void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &t
   auto toEval = move.getEvalBranch(traln);
   TreePrinter tp(false, true, false);
 
-  for(auto &elem : move.getDirtyNodes())
+  for(auto &elem : move.getDirtyNodes(traln, false))
     evaluator.markDirty(traln, elem); 
 
 #ifdef PRINT_EVAL_CHOICE
@@ -322,5 +325,5 @@ AbstractProposal* ParsimonySPR::clone() const
 
 std::vector<nat> ParsimonySPR::getInvalidatedNodes(const TreeAln& traln) const
 {
-  return move.getDirtyNodes(); 
+  return move.getDirtyNodes(traln, false); 
 } 

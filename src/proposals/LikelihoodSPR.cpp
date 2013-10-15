@@ -329,6 +329,7 @@ void LikelihoodSPR::determineMove(TreeAln &traln, PriorBelief &prior, double &ha
 
 void LikelihoodSPR::proposeBranches(TreeAln& traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval )
 {
+#if 0 
   auto blParams = getBranchLengthsParameterView(); 
   auto& relMap = map.at(move.getInsertionBranchBefore().toBlDummy());
 
@@ -408,6 +409,7 @@ void LikelihoodSPR::proposeBranches(TreeAln& traln, PriorBelief &prior, double &
   
   // move.disorientAtNode(traln, move.getEvalBranch(traln).findNodePtr(traln));
   // eval.evaluate(traln, move.getEvalBranch(traln), false);
+#endif
 }
 
 
@@ -430,13 +432,15 @@ void LikelihoodSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &has
   if(multiplyBranchesUsingPosterior)
     {  
       // NOTICE: extended! 
-      move.proposeBranches(traln, blParams, eval, hastings, rand, false); 
+      // move.proposeBranches(traln, blParams, eval, hastings, rand, false); 
     }
 
-  auto blParam = blParams[0]; 
-  assert(blParams.size() == 1); 
+  // auto blParam = blParams[0]; 
+  // assert(blParams.size() == 1); 
 
+#if 0 
   savedSubtreeBranch = traln.getBranch(move.getSubtreeBranchBefore(traln),blParam); 
+#endif
   
   // tout << "nni-dist=" << move.getNniDistance() << std::endl; 
   move.applyToTree(traln, blParams);
@@ -453,24 +457,24 @@ void LikelihoodSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &has
   auto params = getBranchLengthsParameterView();
   // assert(params.size() == 1 ); 
   // auto param = params[0]; 
-  auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastings, rand, true   );
-  for(auto &b : proposedBranches)
-    {
-      for(auto &param : params )
-	{
-	  auto prevLen = traln.getBranch(b.toPlain(), param).getInterpretedLength(traln , param); 
-	  auto dummy = BranchLength(); 
-	  dummy.setLength(b.getLength(param));
-	  auto curLen = dummy.getInterpretedLength(traln, param); 
+    // auto proposedBranches = move.proposeBranches(traln, blParams, eval, hastings, rand, true   );
+  // for(auto &b : proposedBranches)
+  //   {
+  //     for(auto &param : params )
+  // 	{
+  // 	  auto prevLen = traln.getBranch(b.toPlain(), param).getInterpretedLength(traln , param); 
+  // 	  auto dummy = BranchLength(); 
+  // 	  dummy.setLength(b.getLength(param));
+  // 	  auto curLen = dummy.getInterpretedLength(traln, param); 
 	  
-	  auto pr = param->getPrior(); 
-	  auto ratio =  pr->getLogProb( { curLen } ) - pr->getLogProb( { prevLen } ) ; 
-	  prior.addToRatio(ratio );
+  // 	  auto pr = param->getPrior(); 
+  // 	  auto ratio =  pr->getLogProb( { curLen } ) - pr->getLogProb( { prevLen } ) ; 
+  // 	  prior.addToRatio(ratio );
 	  
-	  // prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
-	}
-      traln.setBranch(b,params);
-    }
+  // 	  // prior.updateBranchLengthPrior(traln, traln.getBranch(b.toPlain(), param).getLength(), b.getLength(param), param); 
+  // 	}
+  //     traln.setBranch(b,params);
+  //   }
 #endif
 }
 
@@ -515,7 +519,7 @@ void  LikelihoodSPR::scoreReattachmentInRadius(TreeAln &traln, BranchLength atta
 
 void LikelihoodSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  for(auto &elem : move.getDirtyNodes())
+  for(auto &elem : move.getDirtyNodes(traln, false))
     evaluator.markDirty( traln, elem);
 
   auto  eval = BranchPlain(traln.getTr()->nodep[1]->number, traln.getTr()->nodep[1]->back->number); 
@@ -556,5 +560,5 @@ AbstractProposal* LikelihoodSPR::clone() const
 
 std::vector<nat> LikelihoodSPR::getInvalidatedNodes(const TreeAln& traln) const
 {
-  return move.getDirtyNodes();
+  return move.getDirtyNodes(traln, false);
 } 

@@ -1,19 +1,28 @@
 #include "TreeIntegrator.hpp"
 #include "BranchLengthMultiplier.hpp"
+#include "GibbsProposal.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "Branch.hpp"
 #include "priors/ExponentialPrior.hpp"
+#include "proposals/TreeLengthMultiplier.hpp"
 #include "ProposalRegistry.hpp"
+#include "proposals/GibbsBranchLength.hpp"
 #include "proposals/BranchLengthMultiplier.hpp"
 #include "SprMove.hpp"
 #include "Arithmetics.hpp"
 #include "eval/FullCachePolicy.hpp"
 
+// #define NUM_GEN_BASE 1000
+// #define THINNING 10 
+
+#define ESS_THRESH 100.
+
+
+
 TreeIntegrator::TreeIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
-  // auto eval = std::unique_ptr<LikelihoodEvaluator>(new RestoringLnlEvaluator(*tralnPtr)); 
   auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(*tralnPtr, true, true ));
-auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get());
+  auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get());
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
@@ -28,15 +37,18 @@ auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get());
   for(nat i = 0; i < tralnPtr->getNumberOfPartitions(); ++i)
     params[0]->addPartition(i);
 
-
-
   double lambda = 10;
   params[0]->setPrior(std::make_shared< ExponentialPrior>(lambda));
 
-
   std::vector<std::unique_ptr<AbstractProposal> >  proposals;   
-  proposals.emplace_back(new BranchLengthMultiplier( ProposalRegistry::initBranchLengthMultiplier)); 
-  proposals[0]->addPrimaryParameter( std::move(params[0])); 
+
+  // proposals.emplace_back(new BranchLengthMultiplier( ProposalRegistry::initBranchLengthMultiplier)); 
+  proposals.emplace_back(new GibbsBranchLength()); 
+  // proposals.emplace_back(new TreeLengthMultiplier(ProposalRegistry::initTreeLengthMultiplier)); 
+
+  proposals[0]->addPrimaryParameter( std::move(std::unique_ptr<AbstractParameter>(params[0]->clone()))); 
+  // proposals[1]->addPrimaryParameter( std::move(std::unique_ptr<AbstractParameter>(params[0]->clone()))); 
+  // proposals[2]->addPrimaryParameter( std::move(std::unique_ptr<AbstractParameter>(params[0]->clone()))); 
 
   std::vector<ProposalSet> pSets; 
 
@@ -56,27 +68,71 @@ void TreeIntegrator::prepareChain( const TreeAln &otherTree, bool copyEverything
 }
 
 
+#include "TreeRandomizer.hpp"
+
+
 // tree must be prepared! 
-Branch2Stat TreeIntegrator::integrateTree(nat numgen, nat thinning)
+Branch2Stat TreeIntegrator::integrateTree(double essThresh, LikelihoodEvaluator &eval )
 {
+  // tout << "integrating tree " << numgen << " generations" << std::endl; 
   auto samples = std::unordered_map<BranchLength, std::vector<double>>{}; 
   auto params = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
   auto& traln = *(integrationChain->getTralnPtr()); 
   assert(params.size( )== 1); 
   auto param = params[0]; 
 
-  for(nat i = 0; i < numgen; ++i)
-    {
-      integrationChain->step();
+  
+  eval.evaluate(traln, traln.getAnyBranch(),true); 
+  eval.freeMemory(); 
+  integrationChain->setLikelihood(traln.getTr()->likelihood); 
+  integrationChain->suspend(); 
+  integrationChain->resume(true, false ); 
 
-      if(i % thinning == 0)
+  bool converged = false; 
+  while(not converged )
+    {
+      tout << "doing 10000 "  << std::endl; 
+      
+      for(nat i = 0; i < 10000; ++i)
 	{
-	  for(auto branch : integrationChain->getTralnPtr()->extractBranches(param))
+	  integrationChain->step();
+
+	  if(i % ( traln.getNumberOfBranches( )* 5 )  == 0)
 	    {
-	      branch = traln.getBranch(branch.toPlain(), param); 
-	      samples[branch].push_back(branch.getInterpretedLength(traln,param)); 
+	      for(auto branch : traln.extractBranches(param))
+		{
+		  branch = traln.getBranch(branch.toPlain(), param); 
+		  samples[branch].push_back(branch.getInterpretedLength(traln,param)); 
+		}
 	    }
 	}
+
+      converged = true; 
+      
+      double least = std::numeric_limits<double>::infinity(); 
+      double mean = 0.; 
+
+      auto worstSample = std::vector<double> {}; 
+      for(auto &elem : samples)
+	{
+	  double ess = Arithmetics::getEffectiveSamplingSize(elem.second); 
+
+	  if(std::isnan(ess))
+	    {
+	      tout << "for elem "  << elem.first << " the ess was " << ess << "\tsamples: " << elem.second << std::endl; 
+	    }
+	  
+	  converged &= ess > ESS_THRESH ; 
+	  mean += ess; 
+	  if(ess < least)
+	    {
+	      least = ess; 
+	      worstSample = elem.second;  
+	    }
+	}
+      
+      tout << "least ESS: " << SOME_FIXED_PRECISION << least << "\tmean(ess)=" << mean / double(traln.getNumberOfBranches())  << std::endl; 
+      // tout << "worst was: " << MAX_SCI_PRECISION << worstSample << std::endl; 
     }
 
   auto result = Branch2Stat{}; 
@@ -91,138 +147,90 @@ Branch2Stat TreeIntegrator::integrateTree(nat numgen, nat thinning)
 
 
 
-#define NUM_GEN_BASE 10000
 
 
-void TreeIntegrator::integrateAllBranches(const TreeAln &otherTree, std::string runid )
+
+void TreeIntegrator::integrateAllBranchesNew(const TreeAln &otherTree, std::string runid, nat sprDistance)
 {
   auto&& ss = std::stringstream{}; 
-  ss << PROGRAM_NAME << "_nniIntegration." << runid ; 
-  std::ofstream outfile(ss.str());
-  
-  outfile << MAX_SCI_PRECISION; 
+  ss << PROGRAM_NAME ; 
+  ss << "_sprIntegration-" << sprDistance << "." << runid; 
+  auto&& outfile =  std::ofstream (ss.str());
+  outfile << MAX_SCI_PRECISION ; 
 
-  prepareChain(otherTree,true); 
-  auto& traln = *(integrationChain->getTralnPtr());
+  outfile
+    << "moveId\t"
+    << "move\t" 
+    << "branch\t" 
+    << "bl.mean.orig\t" 
+    << "lnlRatio\t"  
+    << "nniCat\t" 
+    << "nniId\t"
+    << "bl.ratio.nni\t"
+    << "mrbCat\t"
+    << "mrbId\t"
+    << "bl.ratio.mrb" << std::endl; 
+  
+  prepareChain(otherTree, true); 
+
+  auto& traln  = *(integrationChain->getTralnPtr()); 
+  auto &eval = integrationChain->getEvaluator(); 
+  eval.freeMemory();
+  
   auto params = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
-  assert(params.size() == 1 ) ;
+  assert(params.size() == 1 );
   auto param = params[0]; 
+ 
+  auto allBranchesBefore = traln.extractBranches();
+  auto allBranchLengthsBefore = traln.extractBranches(param) ;
 
-  auto branch2id = std::unordered_map<BranchLength,nat>{};
+  auto initBranch2Stat = integrateTree(ESS_THRESH, eval); 
+  double initLnl = traln.getTr()->likelihood;  
 
-  nat ctr = 0; 
-  for(auto branch : traln.extractBranches(param))
+  auto moves = SprMove::getAllUniqueMoves(traln,sprDistance); 
+
+  nat moveCtr = 0; 
+  for(auto move : moves)
     {
-      branch2id[branch] = ctr; 
-      ++ctr; 
-    }
+      // tout << "integrating " << move << std::endl; 
+      auto nameMapNni = move.getNames(traln, true); 
+      auto nameMapMrb = move.getNames(traln, false); 
 
-  auto numBr =  traln.getNumberOfBranches(); 
-  auto numGen =  numBr * NUM_GEN_BASE;   
-  auto thinning = numBr * 10 ; 
+      move.applyToTree(traln, params);
+      // eval.evaluate(traln, traln.getAnyBranch(), true); 
+      // eval.freeMemory();
 
-  prepareChain(otherTree, false); 
-  auto initBranch2Stat = integrateTree(numGen , thinning);
-  
 
-  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
-  double initLnl = traln.getTr()->likelihood; 
-  for(auto elem : initBranch2Stat)
-    {
-      auto branch = elem.first; 
-      branch.setConvertedInternalLength( traln, param, elem.second.first );
-      traln.setBranch(branch, param); 
-    }
-
-  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
-  double optLnl = traln.getTr()->likelihood; 
-    
-  // print 
-  for(auto branch : traln.extractBranches(param))
-    {
-      outfile << branch2id.at(branch)
-	      << "\t" << branch.toPlain(); 
-
-      outfile << "\t0"  ; 
+      auto branchStatAfter = integrateTree(ESS_THRESH, eval); 
       
-      auto stat = initBranch2Stat[branch]; 
-      outfile << "\t" << stat.first ; 
-      outfile << "\t" << stat.second ; 
-      
-      outfile << "\tINIT" << "\tINIT"
-	      << "\t" << initLnl 
-	      << "\t" << optLnl 
-	      << std::endl; 
-    }
+      auto lnlAfter = traln.getTr()->likelihood; 
 
-  for(auto moveBranch : traln.extractBranches(param))
-    {
-      if( moveBranch.isTipBranch(traln))
-	continue; 
-
-      // the 2 NNI alternatives 
-      auto backP = moveBranch.findNodePtr(traln)->back; 
-      auto nniAlternativeBranches = { BranchPlain(backP->next->back->number, backP->number) ,
-				      BranchPlain(backP->next->next->back->number, backP->number )} ; 
-
-      bool isFirst = true; 
-      for(auto nniAlternativeBranch : nniAlternativeBranches)
+      nat blCtr = 0; 
+      for(auto b : allBranchesBefore)
 	{
-	  // auto move = NniMove{}; 
-	  auto move = SprMove{}; 
-	  move.extractMoveInfo(traln, {moveBranch.toPlain(), nniAlternativeBranch.toPlain() } , params); 
+	  auto beforeStat = initBranch2Stat.at(b.toBlDummy()); 
+	  auto afterStatMrb = branchStatAfter.at(move.mapBranchSingleMapAfter(b).toBlDummy());
+	  auto afterStatNni = branchStatAfter.at(move.mapBranchNniStepsAfter(b).toBlDummy()); 
 
-	  move.applyToTree(traln, params);
-	  prepareChain(otherTree, false); 
+	  auto nameTupleMrb = nameMapMrb[b]; 
+	  auto nameTupleNni = nameMapNni[b]; 
 
-	  auto afterMove = integrateTree(numGen, thinning); 
-
-	  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
-	  double initLnl = traln.getTr()->likelihood; 
-	  for(auto elem : afterMove)
-	    {
-	      auto branch = elem.first; 
-	      branch.setConvertedInternalLength( traln, param, elem.second.first );
-	      traln.setBranch(branch, param);
-	    }
-	  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(),  true); 
-	  double optLnl = traln.getTr()->likelihood; 
-
-	  for(auto b : traln.extractBranches(param))
-	    {
-#if 0 
-	      auto b4 = move.mapToBranchBeforeMove(b); // that's not a bad variable name, but a star trek:nemesis  reference
-	      
-#else 
-	      // TODO  cannot implement function from above right now  
-	      auto b4 = BranchPlain(); 
-	      assert(0); 
-#endif
-	      auto dist = b.toPlain().getDistance(moveBranch.toPlain(), traln) ; 
-	 
-	      if(branch2id.find(b4.toBlDummy()) == branch2id.end())
-		{
-		  outfile << "could not find " << b4 << " mapped from " << b<< std::endl; 
-		  assert(0); 
-		}
-     
-	      outfile << branch2id.at(b4.toBlDummy()) 
-		      << "\t" << b4.toPlain()
-		      << "\t" << dist 
-		      << "\t" << afterMove[b].first
-		      << "\t" << afterMove[b].second
-		      << "\t" << (isFirst ? "A" : "B") 
-		      << "\t" << branch2id.at(moveBranch)
-		      << "\t" << initLnl 
-		      << "\t" << optLnl
-		   << std::endl ; 
-
-	    }
-	  
-	  move.revertTree(traln,params); 
-
-	  isFirst = false; 
+	  outfile << moveCtr <<  "\t"
+		  << move << "\t"
+		  << b << "\t"
+		  << beforeStat.first << "\t"
+		  << lnlAfter - initLnl << "\t"
+		  << nameTupleNni.first << "\t"
+		  << nameTupleNni.second << "\t"
+		  << afterStatNni.first / beforeStat.first << "\t"
+		  << nameTupleMrb.first << "\t"
+		  << nameTupleMrb.second << "\t"
+		  << afterStatMrb.first / beforeStat.first << "\t"
+		  << std::endl; 	  
+	  ++blCtr; 
 	}
+      
+      ++moveCtr; 
+      move.revertTree(traln,params); 
     }
 }
-

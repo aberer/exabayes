@@ -9,9 +9,7 @@ m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 AC_CONFIG_SRCDIR([src/])
 
 dnl todo-ish 
-# AM_INIT_AUTOMAKE( [ subdir-objects ] ) 
 AM_INIT_AUTOMAKE
-# AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_HEADERS([src/config.h])
 
 AC_DEFINE([PROGRAM_NAME], ["ExaBayes"], ["name used for log files"])

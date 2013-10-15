@@ -16,9 +16,9 @@ public:
   TreeIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed);
   void prepareChain( const TreeAln &otherTree, bool copyEverything); 
 
-  void integrateAllBranches(const TreeAln &traln, std::string runid);   
-  Branch2Stat integrateTree(nat numgen, nat thinning); 
-   
+  void integrateAllBranchesNew(const TreeAln &otherTree, std::string runid, nat sprDistance); 
+  Branch2Stat integrateTree(double essThresh, LikelihoodEvaluator &eval ); 
+
 private: 
   std::unique_ptr<Chain> integrationChain; 
 

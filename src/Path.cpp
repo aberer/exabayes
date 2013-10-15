@@ -77,7 +77,9 @@ void Path::saveBranchLengthsPath(const TreeAln& traln, const std::vector<Abstrac
   for(auto &b : stack)
     {
       auto p = b.findNodePtr(traln);
-      bls.push_back(traln.getBranch(p,params)); 
+      auto bl = traln.getBranch(p,params); 
+      // tout << "saving " << bl << std::endl; 
+      bls.push_back(bl); 
     }
 }
 
@@ -127,7 +129,10 @@ void Path::multiplyBranch(TreeAln &traln, Randomness &rand, BranchLength b, doub
 void Path::restoreBranchLengthsPath(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
   for(auto &bl : bls )
-    traln.setBranch(bl,blParams); 
+    {
+      // tout << "restore " << bl << std::endl; 
+      traln.setBranch(bl,blParams); 
+    }
 }
 
 

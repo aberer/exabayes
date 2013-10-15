@@ -147,8 +147,10 @@ public:
     rhs.lengthToString(out); 
     return out; 
   } 
- 
 
+  bool isAdjacent(const BranchPlain &rhs) const ;  
+
+  
   // TODO replace this with the string variant 
   // void print(std::ostream &out) const { std::stingstream ss ; ss  << "("<< thisNode << "," << thatNode << ")" ; } 
 

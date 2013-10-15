@@ -12,7 +12,7 @@ class BipartitionHashNew
 {
 public: 
   BipartitionHashNew(nat numTax); 
-  void addTree(const TreeAln &traln, bool withBranch); 
+  void addTree(const TreeAln &traln, bool withBranch, bool withTrivial); 
 
   std::unordered_map<Bipartition, Bipartition>::const_iterator begin() const{return bipPresence.begin(); }
   std::unordered_map<Bipartition, Bipartition>::const_iterator end() const{return bipPresence.end(); }
@@ -22,8 +22,9 @@ public:
 
   nat getTreesAdded() const {return treesAdded; }
 
+    // , bool withTrivial
 private: 			// METHODS
-  Bipartition addElement(const TreeAln &traln, nodeptr p, bool withBranch); 
+  Bipartition addElement(const TreeAln &traln, nodeptr p, bool withBranch, bool withTrivial); 
 
 private: 			// ATTRIBUTES
   std::unordered_map<Bipartition, Bipartition> bipPresence; 

@@ -13,7 +13,7 @@ public:
   BipartitionExtractor( BipartitionExtractor&& rhs) ; 
   BipartitionExtractor& operator=(BipartitionExtractor rhs); 
 
-  void extractBipsNew(); 
+  void extractBipsNew(bool readBL); 
   void printBipartitions(std::string id) const ;
   void printBipartitionStatistics(std::string id) const ; 
   void printFileNames(std::string id) const ; 

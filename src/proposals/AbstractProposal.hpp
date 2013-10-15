@@ -24,6 +24,8 @@ public:
   AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
   virtual ~AbstractProposal(){}
 
+  std::array<bool,3> getBranchProposalMode() const ; 
+
   // you MUST implement all virtual methods in your derived
   // proposal. Here, the signatures are set to 0, this must not
   // be the case in the derived proposal. This 0 keyword makes it

@@ -45,6 +45,7 @@ brlenpr fixed()  [ you should have provided a user tree with branch lengths ]
 [  revMatPr dirichlet(1,2,3,4,5,6)    ] 
 [ revMatPr fixed(1,2,3,4,5,6) ] 
 
+
 [ state frequencies ] 
 [  stateFreqPr{0}  dirichlet(0.25,0.25,0.25,0.25)  ] 
 [ stateFreqPr fixed(empirical) ] [ NOT implemented yet ] 

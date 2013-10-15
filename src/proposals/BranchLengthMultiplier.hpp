@@ -34,7 +34,7 @@ public:
 protected: 
   double multiplier;  
   BranchLength savedBranch;   
-
+  
 }; 
 
 

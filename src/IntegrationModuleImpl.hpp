@@ -45,12 +45,12 @@ void SampleMaster::branchLengthsIntegration()
       ahInt.prepareForBranch( branch.toPlain(), traln); 
 
       // sampling 
-      auto samples = ahInt.integrate( branch.toPlain(), traln, 10000, 10 );
+      auto samples = ahInt.integrate( branch.toPlain(), traln );
 
       double minHere = *( std::min_element(samples.begin(), samples.end()) ) ; 
       double maxHere = *( std::max_element(samples.begin(), samples.end()) ) ; 
 
-      stringstream ss;
+      auto &&ss =stringstream{};
       ss << "samples." << cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
       ofstream thisOut (ss.str());
       std::copy(samples.begin(), samples.end(), std::ostream_iterator<double>(thisOut, "\n")); 

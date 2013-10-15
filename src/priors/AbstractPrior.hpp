@@ -28,7 +28,6 @@ public:
   */
   virtual ParameterContent getInitialValue() const = 0; 
 
-
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param , double myOld, double myNew ) const = 0; 
 
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const = 0; 

@@ -89,3 +89,4 @@ Branch<double> Branch<std::vector<double>>::toOneLength(const AbstractParameter*
   result.setLength(getLength(param)); 
   return result; 
 } 
+

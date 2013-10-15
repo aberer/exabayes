@@ -46,7 +46,7 @@ bin_PROGRAMS+= exabayes
 else
 LIBTOUSE=libpll.a
 LIBINCLUDE=$(PLLINCLUDE) 
-bin_PROGRAMS+= yggdrasil #   postProcParam asdsf credibleSet extractBips consense  parser 
+bin_PROGRAMS+= yggdrasil postProcParam asdsf credibleSet extractBips consense  parser 
 noinst_LIBRARIES+=libpll.a 
 endif 
 
@@ -74,7 +74,8 @@ endif
 ################################################################
 # ASDSF 
 asdsf_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS)  $(RAX_FEATURE) -D__STRICT_ANSI__
-asdsf_LDADD= libbayes.a $(LIBTOUSE)  libncl.a 
+asdsf_LDADD= libbayes.a $(LIBTOUSE)  libncl.a #  -lprofiler
+# asdsf_LIBS= -lprofiler
 asdsf_SOURCES= $(top_srcdir)/src/asdsf.cpp 
 
 ################################################################

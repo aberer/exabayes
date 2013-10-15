@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   
   auto bipEx = BipartitionExtractor(files);
   auto id = argv[1]; 
-  bipEx.extractBipsNew();
+  bipEx.extractBipsNew(true);
   bipEx.printBipartitions(id);
   bipEx.printBipartitionStatistics(id); 
   bipEx.printFileNames(id);

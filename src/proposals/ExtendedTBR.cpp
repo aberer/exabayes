@@ -107,10 +107,6 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
   assert(tr->mxtips > 8 ); 
   
   bisectedBranch = determinePrimeBranch(traln, rand); 
-  // auto p1 = bisectedBranch.findNodePtr(traln); 
-  // auto p2 = bisectedBranch.getInverted().findNodePtr(traln); 
-
-  // variables otherwise
 
 #ifdef DEBUG_TBR
   cout << "bisected branch is " << bisectedBranch << endl; 
@@ -159,7 +155,7 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& tral
   tout << "EVAL " << toEval << std::endl; 
 #endif
 
-  auto dirtyNodes = move.getDirtyNodes();
+  auto dirtyNodes = move.getDirtyNodes(traln, false);
   
   // tout << "dirtyNodes: " << dirtyNodes << std::endl; 
 
@@ -185,5 +181,5 @@ AbstractProposal* ExtendedTBR::clone() const
 
 std::vector<nat> ExtendedTBR::getInvalidatedNodes(const TreeAln& traln) const
 {
-  return move.getDirtyNodes();
+  return move.getDirtyNodes(traln, false);
 } 

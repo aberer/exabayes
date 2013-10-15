@@ -72,7 +72,6 @@ bool Branch<TYPE>::equalsUndirected(const Branch &rhs) const
 template<typename TYPE>
 BranchPlain Branch<TYPE>::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
 {
-  // TODO efficiency 
   int node = getIntersectingNode(rhs); 
   assert(not traln.isTipNode(traln.getTr()->nodep[node])); 
 
@@ -238,3 +237,10 @@ Branch<std::vector<double>> Branch<T>::toBlsDummy() const
   return Branch<std::vector<double>> {thisNode, thatNode}; 
 }
 
+  
+
+template<typename T>
+bool Branch<T>::isAdjacent(const BranchPlain &rhs) const 
+{
+  return rhs.hasNode(thisNode) || rhs.hasNode(thatNode); 
+}

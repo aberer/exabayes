@@ -260,6 +260,9 @@ public:
 
   RunModes getMode() const { return mode; }
 
+  std::vector<BranchPlain> getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const;   
+
+
 private: 			// METHODS  
 #if HAVE_PLL != 0
 

@@ -7,7 +7,6 @@
 #include "ProposalRegistry.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "ParsimonyEvaluator.hpp"
-// #include "RestoringLnlEvaluator.hpp"
 #include "common.h"
 
 // HACK 
@@ -23,9 +22,9 @@ public:
   AdHocIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed); 
   std::vector<AbstractParameter*> getBlParamView() const ;
   void prepareForBranch( const BranchPlain &branch, const TreeAln &traln); 
-  std::vector<double> integrate(const BranchPlain &branch, const TreeAln &otherTree, nat intGens, nat thinning); 
+  std::vector<double> integrate(const BranchPlain &branch, const TreeAln &otherTree); 
   void createLnlCurve(BranchPlain branch, std::string runid, TreeAln & traln , double minHere, double maxHere, nat numSteps); 
-  bool decideUponAcceptance(const TreeAln &traln, double prevLnl); 
+  // bool decideUponAcceptance(const TreeAln &traln, double prevLnl); 
   double getParsimonyLength(TreeAln &traln, const BranchPlain &b );
   double printOptimizationProcess(const BranchLength& branch, std::string runid, double lambda, nat nrSteps); 
   void copyTree(const TreeAln &traln); 

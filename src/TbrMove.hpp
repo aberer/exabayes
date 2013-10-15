@@ -13,7 +13,7 @@ public:
   virtual BranchPlain getEvalBranch(const TreeAln &traln) const ; 
   virtual AbstractMove* clone() const {return new TbrMove;}  
 
-  virtual std::vector<nat> getDirtyNodes() const; 
+  virtual std::vector<nat> getDirtyNodes(const TreeAln &traln, bool considerOuter) const; 
 
   friend std::ostream& operator<<(std::ostream &out, const TbrMove &rhs) ;  
 

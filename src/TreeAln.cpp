@@ -725,6 +725,9 @@ nodeptr TreeAln::getNode(nat elem) const
 std::pair<BranchPlain,BranchPlain> TreeAln::getDescendents(const BranchPlain &b) const
 {
   auto p = b.findNodePtr(*this); 
+  
+  assert(not isTipNode(p)); 
+
   auto pn = p->next,
     pnn = p->next->next; 
 
@@ -946,3 +949,35 @@ std::vector<BranchLengths> TreeAln::extractBranches( const std::vector<AbstractP
   return result;
 }
 
+
+std::vector<BranchPlain> TreeAln::getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const 
+{
+  if(distance == 0)
+    return { branch };
+
+  auto toCheck = std::vector<BranchPlain>{}; 
+  
+  if(not isTipNode(branch.findNodePtr(*this))) 
+    {
+      auto desc = getDescendents(branch); 
+      toCheck.push_back(desc.first.getInverted()); 
+      toCheck.push_back(desc.second.getInverted()); 
+    }
+
+  if(bothSides
+     && not isTipNode(branch.getInverted().findNodePtr(*this)))
+    {
+      auto desc2 = getDescendents(branch.getInverted()); 
+      toCheck.push_back(desc2.first.getInverted()); 
+      toCheck.push_back(desc2.second.getInverted()); 
+    }
+
+  auto myResult = std::vector<BranchPlain>{}; 
+  for(auto b : toCheck)
+    {
+      auto result = getBranchesByDistance(b, distance-1, false); 
+      myResult.insert(end(myResult), begin(result), end(result)); 
+    }
+
+  return myResult; 
+}

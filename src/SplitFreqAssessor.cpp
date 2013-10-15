@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <algorithm>
 #include <sstream> 
@@ -13,37 +12,40 @@
 #include "BipartitionHash.hpp"
 
 
-SplitFreqAssessor::SplitFreqAssessor(vector<string> fileNames)
+SplitFreqAssessor::SplitFreqAssessor(std::vector<string> fileNames)
   : TreeProcessor(fileNames)
 {
-  for(string fn : fileNames)
-    getNumTreeAvailable (fn); 
-
-  this->start = 0; 
-  this->end = getMinNumTrees();
+  for(auto file : fileNames)
+    {
+      file2numTree[file] = getNumTreeAvailable(file);
+      newBipHashes.emplace_back(taxa.size());
+    }
 }
 
-SplitFreqAssessor::~SplitFreqAssessor()
-{
-}
 
-void SplitFreqAssessor::extractBipsNew()
+void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
 {
   int ctr = 0; 
+
   for (auto filename : fns)
     {
+      nat endhere = end; 
+      if(takeAll)
+	endhere = file2numTree[filename]; 
+
+      // std::cout << "for file " << filename <<  " using trees " << start << " - " << endhere << std::endl;
+       
       auto&& ifh = std::ifstream{filename}; 
 
-      for(int i = 0; i < start; ++i)
-	nextTree(ifh);
+      for(nat i = 0; i < start; ++i)
+	nextTree(ifh, false);
 
-      auto bipHash = BipartitionHashNew(traln->getNumberOfTaxa()); 
-      for(int i = start ; i < end; ++i)
+      auto &bipHash  = newBipHashes.at(ctr);
+      for(nat i = start ; i < endhere; ++i)
 	{
-	  nextTree(ifh);
-	  bipHash.addTree(*traln,false);
+	  nextTree(ifh, false);
+	  bipHash.addTree(*traln,false, false);
 	}
-      newBipHashes.push_back(bipHash);
       ++ctr; 
     }
 }
@@ -54,16 +56,18 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
 {
   auto allBips = std::unordered_set<Bipartition>(); 
 
-  nat numTrees = newBipHashes[0].getTreesAdded();
-  for(auto &elem : newBipHashes)
-    assert(numTrees == elem.getTreesAdded()); 
-  
   for(auto &h : newBipHashes)
     for(auto &elem : h)
       allBips.insert(elem.first);
 
-  std::unordered_map<Bipartition,std::vector<double> > numOccs; 
+  auto numTrees = std::vector<double>{}; 
+  for(auto &elem : newBipHashes)
+    {
+      nat tn = elem.getTreesAdded() ; 
+      numTrees.push_back(tn);
+    }
 
+  auto numOccs = std::unordered_map<Bipartition,std::vector<double> >{}; 
   for(auto &elem : allBips)
     {
       auto tmp = std::vector<double>{};
@@ -71,21 +75,24 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
 	tmp.push_back( double(h.getPresence(elem).count()) );
       numOccs[elem] = tmp; 
     }
-  
+
   auto asdsfPart = std::vector<double>{};
   for(auto &elem : allBips)
     {
+      nat ctr = 0; 
       bool isRelevant = false;  
       for(auto &v : numOccs[elem])
 	{
-	  v /= numTrees; 
-	  isRelevant |= (ignoreFreq < v); 
+	  v /= numTrees.at(ctr) ; 
+	  isRelevant |= ( ignoreFreq <= v); 
+	  ++ctr; 
 	}
-
-      auto var = Arithmetics::getVariance(numOccs[elem]); 
+      
+      auto sd = sqrt ( Arithmetics::getVariance(numOccs[elem]) ) ; 
+      // std::cout << sd << " = " << numOccs[elem] <<  ( isRelevant ? "" : "\tIGNORED" ) << std::endl;  
 
       if(isRelevant)
-	asdsfPart.push_back(sqrt(var));
+	asdsfPart.push_back( sd );
     }
 
   auto asdsfMax = std::max_element(asdsfPart.begin(), asdsfPart.end()); 
@@ -94,7 +101,7 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
   return make_pair(mean, *asdsfMax); 
 }
 
-int SplitFreqAssessor::getNumTreeAvailable(string fileName)
+nat SplitFreqAssessor::getNumTreeAvailable(string fileName)
 {  
   string whitespace = " \t"; 
   ifstream infile(fileName); 
@@ -105,7 +112,7 @@ int SplitFreqAssessor::getNumTreeAvailable(string fileName)
 
   while(getline(infile, line))
     {
-      std::string cleanline = this->trim(line); 
+      std::string cleanline = trim(line); 
 
       if(foundTreeStart)	// check number of trees 
 	{
@@ -142,30 +149,12 @@ int SplitFreqAssessor::getNumTreeAvailable(string fileName)
 
 int SplitFreqAssessor::getMinNumTrees()
 {
-  int minimum = -1; 
-  for(auto fn : fns )
+  nat minimum = std::numeric_limits<nat>::max(); 
+  for(auto elem : file2numTree)
     {
-      FILE *fh = fopen(fn.c_str(), "r"); 
-
-      // the following is moderately evil: assuming, there is no '('
-      // except for the first tree and no ';' char except for tree
-      // delimitation, after we found a 
-
-      int numTreesHere = 0; 
-
-      int c; 
-      while( ( c = getc(fh) ) != EOF && c != '('); 
-      
-      
-      while( (c = getc(fh) )  != EOF )
-	if(c == ';')
-	  numTreesHere++;
-
-      if(minimum == -1 || numTreesHere < minimum)
-	minimum = numTreesHere; 
-
-      fclose(fh); 
+      nat avHere = elem.second; 
+      if(avHere < minimum)
+	minimum = avHere;       
     }
-  
   return minimum; 
 } 

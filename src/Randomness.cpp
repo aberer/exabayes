@@ -182,7 +182,7 @@ double Randomness::drawRandGamma(double alpha, double beta)
   // a hack, until we have our own gamma 
   std::default_random_engine generator;
   generator.seed((*this)());   
-  std::gamma_distribution<double> dist(alpha,1/beta);
+  std::gamma_distribution<double> dist(alpha,1./beta);
 
   return dist(generator); 
 #else 

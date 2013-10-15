@@ -6,7 +6,7 @@
 CredibleSet::CredibleSet(std::string file)
   : bipEx(std::vector<std::string>{file})
 {
-  bipEx.extractBipsNew();
+  bipEx.extractBipsNew(true);
   const auto &hash = bipEx.getBipartitionHashes()[0]; 
   totalTrees = hash.getTreesAdded(); 
 } 

@@ -59,10 +59,7 @@ void AdHocIntegrator::prepareForBranch( const BranchPlain &branch,  const TreeAl
   auto integrator = dynamic_cast<BranchIntegrator*>(ps[0]); 
   integrator->setToPropose(branch);      
 
-  std::cout << "important TODO: has the branch been reset? will not do that here" << std::endl; 
-
-  // setup 
-  // traln.setBranch(branch, paramView); 
+  // std::cout << "important TODO: has the branch been reset? will not do that here" << std::endl; 
 
   integrationChain->getEvaluator().evaluate(traln, branch, true); 
   integrationChain->reinitPrior(); 
@@ -78,19 +75,7 @@ std::vector<AbstractParameter*> AdHocIntegrator::getBlParamView() const
 }
 
 
-bool AdHocIntegrator::decideUponAcceptance(const TreeAln &traln, double prevLnl)
-{
-  copyTree(traln); 
-  double nowLnl = integrationChain->getTraln().getTr()->likelihood; 
-  double acc = integrationChain->getChainRand().drawRandDouble01(); 
-  
-  return acc < exp(nowLnl - prevLnl); 
-}
-
-
-
-
-std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const TreeAln &otherTree , nat intGens, nat thinning)
+std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const TreeAln &otherTree)
 {
   auto result =  std::vector<double>{}; 
   auto& traln = integrationChain->getTraln(); 
@@ -102,17 +87,24 @@ std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const
   assert(paramView.size( )== 1 ); 
 
   auto backup = otherTree.getBranch(branch, paramView[0]); 
-  for(nat i = 0; i < intGens; ++i) 
-    {	  
-      integrationChain->step();
-      auto elem = traln.getBranch(branch, paramView[0]); 
-      auto iLen = elem.getInterpretedLength(traln, paramView[0]);
-      if (i % thinning == 0)
-	result.push_back(iLen); ; 
-    }      
+
+  bool converged = false; 
+  while(not converged)
+    {
+      for(nat i = 0; i < 10000; ++i) 
+	{	  
+	  integrationChain->step();
+	  auto elem = traln.getBranch(branch, paramView[0]); 
+	  auto iLen = elem.getInterpretedLength(traln, paramView[0]);
+	  if (i % 10 == 0)
+	    result.push_back(iLen); ; 
+	}
+      
+      auto ess = Arithmetics::getEffectiveSamplingSize(result); 
+      converged = ess > 200; 
+    }
 
   traln.setBranch(backup, paramView[0]); 
-
   return result;   
 }
 

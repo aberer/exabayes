@@ -166,7 +166,7 @@ static boolean treeNeedCh ( std::istringstream &iss , int c1, std::string where)
   
   if ((c2 = treeGetCh(iss)) == c1)  return TRUE;
   
-  printf("ERROR: Expecting '%c' %s tree; found:", c1, where.c_str());
+  printf("ERROR: Expecting '%c' %s tree; found: ", c1, where.c_str());
   if (c2 == EOF) 
     {
       printf("End-of-File");
@@ -179,7 +179,7 @@ static boolean treeNeedCh ( std::istringstream &iss , int c1, std::string where)
   putchar('\n');
 
   if(c1 == ':')    
-    printf("RAxML may be expecting to read a tree that contains branch lengths\n");
+    printf("expecting to read a tree that contains branch lengths\n");
 
   return FALSE;
 }
@@ -221,25 +221,37 @@ static int treeFindTipName(std::istringstream &iss , tree *tr)
 }
 
 
-static boolean treeProcessLength (std::istringstream &iss, double *dptr)
+static boolean treeProcessLength (std::istringstream &iss, double *dptr, bool flush)
 {
   int  ch;
   
   if ((ch = treeGetCh(iss)) == EOF)  return FALSE;    /*  Skip comments */
   iss.unget();
   
-
-  if ( iss >> *dptr ) 
+  if(false && flush)
     {
+      do 
+	{
+	  ch  = iss.get(); 
+	} 
+      while( isdigit(ch) ||  ch == '.' || ch == 'e' || ch == 'E' || ch == '-' ); 
+      iss.unget();
       return TRUE; 
-    } 
+    }
   else 
     {
-      printf("ERROR: treeProcessLength: Problem reading branch length\n");
-      treeEchoContext(iss, 40);
-      printf("\n");
-      return  FALSE;
-    } 
+      if ( iss >> *dptr ) 
+	{
+	  return TRUE; 
+	} 
+      else 
+	{
+	  printf("ERROR: treeProcessLength: Problem reading branch length\n");
+	  treeEchoContext(iss, 40);
+	  printf("\n");
+	  return  FALSE;
+	} 
+    }
 
   return  TRUE;
 }
@@ -248,20 +260,21 @@ static boolean treeProcessLength (std::istringstream &iss, double *dptr)
 
 static int treeFlushLen (std::istringstream &iss)
 {
-  double  dummy;  
-  int     ch;
+  int ch;
   
   ch = treeGetCh(iss);
   
   if (ch == ':') 
     {
+      double  dummy;  
       ch = treeGetCh(iss);
-
       iss.unget();
-      if(!treeProcessLength(iss, & dummy)) return 0;
-      return 1;	  
+      if(!treeProcessLength(iss, & dummy, true)) 
+	return 0;
+      else 
+	return 1;	  
     }
-  
+
   if (ch != EOF) 
     iss.unget();
   return 1;
@@ -332,7 +345,7 @@ static boolean addElementLen (std::istringstream &iss, tree *tr, nodeptr p, bool
     {
       double branch;
       if (! treeNeedCh(iss, ':', "in"))                 return FALSE;
-      if (! treeProcessLength(iss, &branch))            return FALSE;
+      if (! treeProcessLength(iss, &branch, false))            return FALSE;
 
       // TODO only works for 1 trbl
       hookup(p, q, &branch, 1 );
@@ -471,7 +484,7 @@ void myTreeReadLen(std::string treeString , tree *tr, boolean hasBL)
 boolean readTreeWithOrWithoutBL(tree *tr, std::string treeString)
 {  
   bool hasBL = std::any_of(treeString.begin(), treeString.end(), [](char c){ return c == ':' ; }); 
+  // std::cout << "reading "<< treeString << std::endl; 
   myTreeReadLen(treeString, tr, hasBL); 
-
   return hasBL; 
 }

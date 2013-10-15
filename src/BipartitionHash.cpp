@@ -22,20 +22,20 @@ BipartitionHashNew::BipartitionHashNew(nat numTax)
 }
 
 
-void BipartitionHashNew::addTree(const TreeAln &traln, bool withBranch)
+void BipartitionHashNew::addTree(const TreeAln &traln, bool withBranch, bool withTrivial)
 {
   auto pStart = traln.getTr()->nodep[1]->back; 
   auto desc = traln.getDescendents(BranchPlain(pStart->number, pStart->back->number)); 
 
-  addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch); 
-  addElement(traln, desc.second.getInverted().findNodePtr(traln), withBranch); 
+  addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch, withTrivial); 
+  addElement(traln, desc.second.getInverted().findNodePtr(traln), withBranch, withTrivial); 
   // tout << "added tree "<< treesAdded << std::endl; 
 
   ++treesAdded;
 }
 
 
-Bipartition BipartitionHashNew::addElement(const TreeAln &traln, nodeptr p, bool withBranch)
+Bipartition BipartitionHashNew::addElement(const TreeAln &traln, nodeptr p, bool withBranch, bool withTrivial)
 {
   auto curBranch = BranchPlain(p->number, p->back->number);
 
@@ -46,25 +46,28 @@ Bipartition BipartitionHashNew::addElement(const TreeAln &traln, nodeptr p, bool
 
       result.initializeWithTaxon(p->number-1, bipMeaning[p->number-1]); 
 
-      if(withBranch)
+      if(withTrivial)
 	{
-	  assert(traln.getNumBranches() == 1); 
-	  auto bl = p->z[0]; 
-	  bipBranchLengths[result].push_back(bl); 
-	}
+	  if(withBranch)
+	    {
+	      assert(traln.getNumBranches() == 1); 
+	      auto bl = p->z[0]; 
+	      bipBranchLengths[result].push_back(bl); 
+	    }
 
-      auto &precBip = bipPresence[result]; 
-      precBip = bipPresence[result]; 
-      precBip.reserve(treesAdded); 
-      precBip.set(treesAdded); 
+	  auto &precBip = bipPresence[result]; 
+	  precBip = bipPresence[result]; 
+	  precBip.reserve(treesAdded); 
+	  precBip.set(treesAdded); 
+	}
 
       return result;  
     }
   
   auto desc = traln.getDescendents(curBranch);
 
-  auto bipA = addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch); 
-  auto bipB = addElement(traln, desc.second.getInverted().findNodePtr(traln), withBranch) ; 
+  auto bipA = addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch, withTrivial); 
+  auto bipB = addElement(traln, desc.second.getInverted().findNodePtr(traln), withBranch, withTrivial) ; 
 
   auto result = bipA | bipB; 
 

@@ -15,6 +15,10 @@ BranchLengthMultiplier::BranchLengthMultiplier(  double _multiplier)
   relativeWeight = 20;
 }
 
+
+
+
+
 BranchPlain BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
 {
   if(inSetExecution)

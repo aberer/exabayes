@@ -8,7 +8,7 @@
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
-  GibbsBranchLength(bool doTwo);
+  GibbsBranchLength();
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
 #ifdef  _EXPERIMENTAL
@@ -24,5 +24,5 @@ public:
 
 private: 
   BranchLength extraBranch; 
-  bool doTwo ;  
+  // bool doTwo ;  
 }; 

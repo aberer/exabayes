@@ -366,6 +366,7 @@ void LikelihoodEvaluator::debugPrintToCompute(const TreeAln &traln, const Branch
 void LikelihoodEvaluator::markDirty(const TreeAln &traln, nat partitionId, nat nodeId) 
 {
   nat id = nodeId - traln.getNumberOfTaxa()  - 1; 
+  // tout << "marking " << nodeId << " (" << id << ") dirty" <<  std::endl; 
   arrayOrientation.setOrientation(partitionId,id, INVALID); 
 } 
 

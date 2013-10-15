@@ -40,12 +40,12 @@
 #include "parser/PhylipParser.hpp"
 
 // a developmental mode to integrate over branch lengths
-// #define _GO_TO_INTEGRATION_MODE
+#define _GO_TO_INTEGRATION_MODE
 
 
-// #ifndef _EXPERIMENTAL_INTEGRATION_MODE
-// #undef _GO_TO_INTEGRATION_MODE
-// #endif
+#ifndef _EXPERIMENTAL_INTEGRATION_MODE
+#undef _GO_TO_INTEGRATION_MODE
+#endif
 
 void genericExit(int code); 
 
@@ -517,7 +517,7 @@ void SampleMaster::initializeRuns()
   TreeRandomizer::randomizeTree(*aTree, masterRand); 
   ahInt = new AdHocIntegrator(aTree, dT, masterRand.generateSeed());
 
-  tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed()); 
+tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed()); 
 #endif
   // END
 
@@ -732,17 +732,15 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
      
   auto&& asdsf = SplitFreqAssessor(fns);
 
-  end = asdsf.getEnd();
-      
-  int treesInBatch = runParams.getDiagFreq() / runParams.getSamplingFreq(); 
+  end = asdsf.getMinNumTrees();   
 
+  int treesInBatch = runParams.getDiagFreq() / runParams.getSamplingFreq(); 
   end /= treesInBatch; 
   end *= treesInBatch;       
 
   if(end == 0)
     return make_pair(nan(""), nan(""));   
 
-  asdsf.setEnd(end);
   if( runParams.getBurninGen() > 0 )
     {
       assert(runParams.getBurninProportion() == 0.); 
@@ -752,16 +750,15 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
       if(int(end) < treesToDiscard + 2 )
 	return make_pair(nan(""), nan("")); 
       else 
-	asdsf.setStart(treesToDiscard);  
+	start = treesToDiscard; 
     }
   else 
     {
       assert(runParams.getBurninGen() == 0); 
       start = (int)((double)end * runParams.getBurninProportion()  ); 
-      asdsf.setStart(start);
     } 
 
-  asdsf.extractBipsNew();
+  asdsf.extractBipsNew(start, end, false);
   auto asdsfVals = asdsf.computeAsdsfNew(runParams.getAsdsfIgnoreFreq());
 
   return asdsfVals;
@@ -931,8 +928,16 @@ void SampleMaster::run()
 #endif
 
 #if defined(_EXPERIMENTAL_INTEGRATION_MODE)  && defined(_GO_TO_TREE_MOVE_INTEGARTION)
-  tInt->integrateAllBranches(*(runs[0].getChains()[0].getTralnPtr()), cl.getRunid());
+  auto sprLengthStr = std::string(std::getenv("SPR_LENGTH")); 
+  auto && iss  = std::istringstream{sprLengthStr}; 
+  nat sprLen = 0;  
+  iss >> sprLen; 
+  
+  tInt->integrateAllBranchesNew(*(runs[0].getChains()[0].getTralnPtr()), 
+				cl.getRunid(),
+				sprLen );
 #endif
+
   
 }
 
