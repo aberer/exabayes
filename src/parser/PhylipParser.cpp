@@ -229,24 +229,21 @@ static void analyzeIdentifier(char **ch, int modelNumber, tree *tr)
 {
   char ident[2048] = "";
   char model[128] = "";  
-  char thisModel[1024];
-  int i = 0, n, j;
+  int  j;
   int containsComma = 0;
-
+  
+  int n = 0; 
   while(**ch != '=')
     {
       if(**ch != ' ' && **ch != '\t')
 	{
-	  ident[i] = **ch;      
-	  i++;
+	  ident[n] = **ch;      
+	  n++;
 	}
       *ch = *ch + 1;
     }
-  
-  n = i;
-  i = 0;
-  
-  for(i = 0; i < n; i++)
+
+  for(int i = 0; i < n; i++)
     if(ident[i] == ',') 
       containsComma = 1;
 
@@ -255,131 +252,64 @@ static void analyzeIdentifier(char **ch, int modelNumber, tree *tr)
       printf("Error, model file must have format: DNA or AA model, then a comma, and then the partition name\n");
       exit(-1);
     }
-  else
+
+  int i = 0;
+  while(ident[i] != ',')
     {
-      boolean found = FALSE;
-      i = 0;
-      while(ident[i] != ',')
-	{
-	  model[i] = ident[i];
-	  i++;
-	}      
-      
-      /* AA */
+      model[i] = ident[i];
+      i++;
+    }      
 
-      for(i = 0; i < NUM_PROT_MODELS && !found; i++)
-	{	
-	  strcpy(thisModel, protModels[i]);
-	  
-	  if(strcasecmp(model, thisModel) == 0)
-	    {	      	      
-	      tr->initialPartitionData[modelNumber].protModels = i;		  
-	      tr->initialPartitionData[modelNumber].protFreqs  = 0;
-	      tr->initialPartitionData[modelNumber].dataType   = AA_DATA;
-	      found = TRUE;
-	    }
-	  	  
-	  strcpy(thisModel, protModels[i]);
-	  strcat(thisModel, "F");
-	  
-	  if(strcasecmp(model, thisModel) == 0)
-	    {	      
-	      tr->initialPartitionData[modelNumber].protModels = i;		  
-	      tr->initialPartitionData[modelNumber].protFreqs  = 1;
-	      tr->initialPartitionData[modelNumber].dataType   = AA_DATA;
-	      found = TRUE;
-	    }	
-
-	  strcpy(thisModel, protModels[i]);
-	  strcat(thisModel, "X");
-
-	  if(strcasecmp(model, thisModel) == 0)
-	    {	      
-	      tr->initialPartitionData[modelNumber].protModels = i;		  
-	      tr->initialPartitionData[modelNumber].protFreqs  = 0;
-	      tr->initialPartitionData[modelNumber].optimizeBaseFrequencies = TRUE;
-	      tr->initialPartitionData[modelNumber].dataType   = AA_DATA;
-	      found = TRUE;
-	    }	
-
-	  /*if(found)
-	    printf("%s %d\n", model, i);*/
-	}
-      
-      if(!found)
-	{		  	  
-	  if(strcasecmp(model, "DNA") == 0)
-	    {	     	      
-	      tr->initialPartitionData[modelNumber].protModels = -1;		  
-	      tr->initialPartitionData[modelNumber].protFreqs  = -1;
-	      tr->initialPartitionData[modelNumber].dataType   = DNA_DATA;
-	      tr->initialPartitionData[modelNumber].optimizeBaseFrequencies = FALSE;
-	      found = TRUE;
-	    }
-	  else
-	    {
-	      if(strcasecmp(model, "DNAX") == 0)
-		{	     	      
-		  tr->initialPartitionData[modelNumber].protModels = -1;		  
-		  tr->initialPartitionData[modelNumber].protFreqs  = -1;
-		  tr->initialPartitionData[modelNumber].dataType   = DNA_DATA;
-		  tr->initialPartitionData[modelNumber].optimizeBaseFrequencies = TRUE;
-		  found = TRUE;
-		}	      	    
-	      else
-		{	    	  
-		  if(strcasecmp(model, "BIN") == 0)
-		    {	     	      
-		      tr->initialPartitionData[modelNumber].protModels = -1;		  
-		      tr->initialPartitionData[modelNumber].protFreqs  = -1;
-		      tr->initialPartitionData[modelNumber].dataType   = BINARY_DATA;
-		      
-		      found = TRUE;
-		    }
-		  else
-		    {
-		      if(strcasecmp(model, "MULTI") == 0)
-			{	     	      
-			  tr->initialPartitionData[modelNumber].protModels = -1;		  
-			  tr->initialPartitionData[modelNumber].protFreqs  = -1;
-			  tr->initialPartitionData[modelNumber].dataType   = GENERIC_32;
-			  
-			  found = TRUE;
-			}
-		      else
-			{
-			  if(strcasecmp(model, "CODON") == 0)
-			    {	     	      
-			      tr->initialPartitionData[modelNumber].protModels = -1;		  
-			      tr->initialPartitionData[modelNumber].protFreqs  = -1;
-			      tr->initialPartitionData[modelNumber].dataType   = GENERIC_64;
-			      
-			      found = TRUE;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-
-      if(!found)
-	{
-	  printf("ERROR: you specified the unknown model %s for partition %d\n", model, modelNumber);
-	  exit(-1);
-	}
-           
-
-      i = 0;
-      while(ident[i++] != ',');      
-
-      tr->initialPartitionData[modelNumber].partitionName = (char*)malloc((n - i + 1) * sizeof(char));          
-
-      j = 0;
-      while(i < n)	
-	tr->initialPartitionData[modelNumber].partitionName[j++] =  ident[i++];
-
-      tr->initialPartitionData[modelNumber].partitionName[j] = '\0';                      
+  /* AA */
+  if( strcasecmp(model, "PROT") == 0 )
+    {
+      tr->initialPartitionData[modelNumber].protModels = i;		  
+      tr->initialPartitionData[modelNumber].protFreqs  = 0;
+      tr->initialPartitionData[modelNumber].optimizeBaseFrequencies = FALSE;
+      tr->initialPartitionData[modelNumber].dataType   = AA_DATA;
     }
+  else if(strcasecmp(model, "DNA") == 0)
+    {	     	      
+      tr->initialPartitionData[modelNumber].protModels = -1;		  
+      tr->initialPartitionData[modelNumber].protFreqs  = -1;
+      tr->initialPartitionData[modelNumber].dataType   = DNA_DATA;
+      tr->initialPartitionData[modelNumber].optimizeBaseFrequencies = FALSE;
+    }
+  else if (strcasecmp(model, "BIN") == 0)
+    {	     	      
+      std::cout << "model >BIN< is not supported yet." << std::endl; 
+      exit(-1); 
+	
+      tr->initialPartitionData[modelNumber].protModels = -1;		  
+      tr->initialPartitionData[modelNumber].protFreqs  = -1;
+      tr->initialPartitionData[modelNumber].dataType   = BINARY_DATA;
+    }
+  else if(strcasecmp(model, "MULTI") == 0)
+    {	     	
+      std::cout << "model >MULTI< is not supported yet." << std::endl; 
+      exit(-1); 
+      
+      tr->initialPartitionData[modelNumber].protModels = -1;		  
+      tr->initialPartitionData[modelNumber].protFreqs  = -1;
+      tr->initialPartitionData[modelNumber].dataType   = GENERIC_32;
+    }
+  else if(strcasecmp(model, "CODON") == 0)
+    {	     	      
+      std::cout << "model >CODON< is not supported yet." << std::endl; 
+      exit(-1); 
+
+      tr->initialPartitionData[modelNumber].protModels = -1;		  
+      tr->initialPartitionData[modelNumber].protFreqs  = -1;
+      tr->initialPartitionData[modelNumber].dataType   = GENERIC_64;
+    }
+
+  i = 0; 
+  while(ident[i++] != ',');      
+  tr->initialPartitionData[modelNumber].partitionName = (char*)malloc((n - i + 1) * sizeof(char));          
+  j = 0;
+  while(i < n)	
+    tr->initialPartitionData[modelNumber].partitionName[j++] =  ident[i++];
+  tr->initialPartitionData[modelNumber].partitionName[j] = '\0';                      
 }
 
 
@@ -2234,12 +2164,7 @@ void PhylipParser::parse()
       int 
 	states = -1,
 	maxTipStates = getUndetermined(tr->partitionData[model].dataType) + 1;  	      
-      
-      // const 
-      // 	partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
-      
-      // tr->partitionData[model].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double)); 
-            
+
       switch(tr->partitionData[model].dataType)
 	{
 	case DNA_DATA:

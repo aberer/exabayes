@@ -9,11 +9,12 @@ int NUM_BRANCHES ;
 
 void helpMessage()
 {
-  std::cout << ">parser< produces a binary output file, that you can feed into\n"
+  std::cout << ">parser< produces a binary output file, that can be fed into\n"
 	    << "ExaBayes/Yggdrasil. This is recommendable for large runs with hundreds\n"
 	    << "of processes.\n\n" ; 
 
-  std::cout << "./parser -s alnFile [  -q modelFile | -m [ DNA | PROT ] ] -n outputFile\n\n\n" 
+  std::cout << "./parser -s alnFile -q modelFile -n outputFile\n"
+	    << "./parser -s alnFile -m {DNA|PROT} -n outputFile\n\n\n" 
 	    << "     -s alnFile             a phylip-style alignment file\n\n"
 	    << "     -q modelFile           a RAxML-style model file\n\n"
 	    << "     -m dataType            specifies a datatype (either DNA or PROT) for a\n"
