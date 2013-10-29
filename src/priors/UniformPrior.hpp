@@ -7,8 +7,9 @@ class UniformPrior : public AbstractPrior
 {
 public: 
   UniformPrior(double minVal, double maxVal); 
-  virtual double getLogProb(std::vector<double> values)  const ; 
+  virtual double getLogProb(const ParameterContent& content)  const ; 
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const; 
+  virtual bool needsIntegration() const {return true; } 
   virtual void print(std::ostream& out ) const  ; 
   virtual ParameterContent getInitialValue() const; 
 

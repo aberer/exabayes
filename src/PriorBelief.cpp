@@ -60,7 +60,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	    auto bs = traln.extractBranches(v); 
 	    auto pr = v->getPrior();	    
 	    for(auto &b : bs)	      
-	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln,v) }); 
+	      partialResult += pr->getLogProb( ParameterContent {  { b.getInterpretedLength(traln,v) }  }); 
 	  }
 	  break; 
 	case Category::FREQUENCIES: 
@@ -78,7 +78,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	case Category::RATE_HETEROGENEITY: 
 	  {
 	    double alpha = traln.getAlpha(v->getPartitions()[0]) ;
-	    partialResult = v->getPrior()->getLogProb({ alpha }); 
+	    partialResult = v->getPrior()->getLogProb( ParameterContent{{ alpha} }); 
 	  }
 	  break; 
 	case Category::AA_MODEL: 

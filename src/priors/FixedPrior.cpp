@@ -8,8 +8,10 @@ FixedPrior::FixedPrior(std::vector<double> _fixedValues)  : fixedValues(_fixedVa
 }
 
 
-double FixedPrior::getLogProb(std::vector<double> values)  const
+double FixedPrior::getLogProb(const ParameterContent& content)  const
 {    
+  auto &values = content.values; 
+
   // branch lengths case! 
   if(fixedValues.size( )== 1 )
     {

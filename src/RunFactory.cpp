@@ -17,6 +17,7 @@
 #include "parameters/RevMatParameter.hpp"
 #include "parameters/RateHetParameter.hpp"
 
+#include "priors/DiscreteModelPrior.hpp"
 #include "priors/AbstractPrior.hpp"
 #include "priors/ExponentialPrior.hpp"
 #include "priors/UniformPrior.hpp"
@@ -43,7 +44,7 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
   // add standard stuff, if not defined yet
   for(auto &cat : CategoryFuns::getAllCategories())
     {
-      Category  catIter = cat; 
+      auto  catIter = cat; 
       if(categories.find(cat) != categories.end())
 	continue; 
 
@@ -61,12 +62,25 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	  }
 	  break; 
 	case Category::AA_MODEL:	
-	  std::cout << "TODO define,  when AA_MODLE should be added <= runfactory.cpp" << std::endl; 
-	  break; 	  
+	  {
+	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
+	      { 
+		auto partition = traln.getPartition(j); 
+		if( partition->dataType == AA_DATA  )
+		  {
+		    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId,j) ; 
+		    ++highestId; 
+		    r->addPartition(j); 
+		    vars.push_back(std::move(r)); 
+		  }
+	      }
+	    
+	  } 
+	  break; 
+	  // std::cout << "\n\nTODO define,  when AA_MODLE should be added <= runfactory.cpp\n\n" << std::endl; 
+	  // break; 	  
 	  // a new parameter per partition 
-	case Category::SUBSTITUTION_RATES: 
 	case Category::RATE_HETEROGENEITY:
-	case Category::FREQUENCIES:
 	  {
 	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      {		
@@ -74,6 +88,22 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 		++highestId; 
 		r->addPartition(j); 
 		vars.push_back(std::move(r)); 
+	      }
+	  }
+	  break; 
+	case Category::SUBSTITUTION_RATES: 
+	case Category::FREQUENCIES:
+	  {
+	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
+	      {		
+		auto partition = traln.getPartition(j); 
+		if(partition->dataType != AA_DATA)
+		  {
+		    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId,j) ; 
+		    ++highestId; 
+		    r->addPartition(j); 
+		    vars.push_back(std::move(r)); 
+		  }
 	      }	    
 	  }
 	  break; 
@@ -110,9 +140,16 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
       var->setPrior(make_shared<UniformPrior>(1e-6, 200));     
       break; 
     case Category::AA_MODEL : 
-      assert(NOT_IMPLEMENTED); 
+      {
+	auto modelProbs = std::unordered_map<ProtModel,double>{}; 
+	for(auto model : ProtModelFun::getAllModels())
+	  modelProbs[model] = 1.; 
+	auto prior = std::make_shared<DiscreteModelPrior>(modelProbs);
+	var->setPrior(prior);
+      }
       break; 
-    default: assert(0); 
+    default: 
+      assert(0); 
     }
 }
 

@@ -5,6 +5,8 @@
 #include "AdHocIntegrator.hpp"
 #include "ProposalSet.hpp"
 
+
+#include "tree-parse/BasicTreeReader.hpp"
 #include "common.h"
 
 #include "config/BlockProposalConfig.hpp"
@@ -18,7 +20,6 @@
 #include "SampleMaster.hpp"
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
-#include "treeRead.h"
 #include "tune.h"
 #include "RunFactory.hpp"	
 
@@ -60,12 +61,44 @@ SampleMaster::SampleMaster(const ParallelSetup &pl, const CommandLine& _cl )
 }
 
 
-void SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params)
+bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params)
 {  
-  auto tr = traln.getTr();
   bool hasBranchLength = false; 
-  if(startingTree.compare("") != 0 ) // meh 
-    hasBranchLength = readTreeWithOrWithoutBL(tr, startingTree);
+  if(startingTree.compare("") != 0 )
+    {
+      hasBranchLength = std::any_of(startingTree.begin(), startingTree.end(), [](const char c ){ return c == ':'; }  ); 
+
+      auto &&iss = std::istringstream {startingTree };
+      auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
+
+      auto mapAsVect = traln.getNameMap(); 
+      mapAsVect.erase(mapAsVect.begin()); 
+      auto map = std::unordered_map<std::string,nat>{}; 
+      nat ctr = 1; 
+      for(auto elem : mapAsVect)
+	{
+	  map[elem] = ctr; 
+	  ++ctr; 
+	}
+      reader.setLabelMap(map);
+      auto branches = reader.extractBranches(iss);
+      assert(branches.size() == traln.getNumberOfBranches() ); 
+
+      traln.unlinkTree();
+      for(auto b : branches)
+	{
+	  traln.clipNode(traln.getUnhookedNode(b.getPrimNode()) , traln.getUnhookedNode(b.getSecNode())); 
+	  if(hasBranchLength)
+	    {
+	      for(auto param : params)
+		{
+		  auto bCopy = b; 
+		  bCopy.setConvertedInternalLength(traln, param, b.getLength()); 
+		  traln.setBranch(bCopy, param); 
+		}
+	    }
+	}
+    }
   else
     {	      
       if(runParams.isUseParsimonyStarting())
@@ -74,33 +107,16 @@ void SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 	TreeRandomizer::randomizeTree(traln, treeRandomness); 
     }
 
-  for(auto &b : traln.extractBranches( ))
-    {
-      for(auto &param : params)
-	{
-	  double initLen =  TreeAln::initBL ; 
-
-	  if(hasBranchLength)
-	    initLen = traln.getBranch(b,param).getLength() ; 
-
-	  auto bl = b.toBlDummy(); 
-	  bl.setConvertedInternalLength(traln, param, initLen); 
-
-	  if(not BoundsChecker::checkBranch(bl))
-	    {
-	      tout << "WARNING: initial branch length already out of bounds. Relative representation: "
-		   << bl.getLength() << "\treal length=" << bl.getInterpretedLength(traln, param) << std::endl; 
-	      BoundsChecker::correctBranch(bl); 	      
-	    }
-	  traln.setBranch(bl, param); 
-	}
-    }
+  return hasBranchLength; 
 }
 
 
 
-void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params)
+std::vector<bool> SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params)
 {  
+  auto hasBl = std::vector<bool>{}; 
+
+  nat treesConsumed = 0; 
   auto treeRandomness = Randomness(seed); 
 
   vector<shared_ptr<TreeAln> > treesToInitialize; 
@@ -112,10 +128,11 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
   // choose how to initialize the topology
   for(auto &tralnPtr : treesToInitialize)
     {
-      auto stTr = 
-	treesConsumed < startingTreeStrings.size() ? startingTreeStrings.at(treesConsumed) : std::string{""}; 
+      auto stTr = treesConsumed < startingTreeStrings.size() ? startingTreeStrings.at(treesConsumed) : std::string{""}; 
       ++treesConsumed;
-      initializeTree(*tralnPtr, stTr, treeRandomness, params); 
+      
+      auto hadBl = initializeTree(*tralnPtr, stTr, treeRandomness, params); 
+      hasBl.push_back(hadBl); 
     }
 
   // propagate the tree to the coupled chains, if necessary
@@ -131,6 +148,8 @@ void SampleMaster::initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed
 	    treePtr->copyModel(ref); 
 	}
     }
+  
+  return hasBl; 
 }
 
 
@@ -302,7 +321,9 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string bina
 }
 
 
-void SampleMaster::initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &tralns , const std::vector<AbstractParameter*> &params ) const 
+void SampleMaster::initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &tralns , 
+						 const std::vector<AbstractParameter*> &params,
+						 const std::vector<bool> hasBls) const 
 {
   //  do normal parameters first 
   for(auto &param : params)
@@ -328,25 +349,27 @@ void SampleMaster::initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>
       auto cat = param->getCategory(); 
       if(cat == Category::BRANCH_LENGTHS)
 	{
-
 	  auto &&prior = param->getPrior();
 	  auto content = prior->getInitialValue();
 	  
+	  auto ctr = nat{0};
 	  for(auto &tralnPtr : tralns)
 	    {
-	      for(auto &b : tralnPtr->extractBranches(param))
+	      if( not hasBls[ctr])
 		{
-		  b.setConvertedInternalLength( *tralnPtr,param,  content.values[0] );
+		  for(auto &b : tralnPtr->extractBranches(param))
+		    {
+		      b.setConvertedInternalLength( *tralnPtr,param,  content.values[0] );
 
-		  if(not BoundsChecker::checkBranch(b))
-		    BoundsChecker::correctBranch(b); 
+		      if(not BoundsChecker::checkBranch(b))
+			BoundsChecker::correctBranch(b); 
 
-		  tralnPtr->setBranch(b, param);
+		      tralnPtr->setBranch(b, param);
+		    }
 		}
 	    }
 	}
     }
-
 }
 
 
@@ -580,29 +603,29 @@ tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed());
 
   if(topoIsFixed)
     {
-      Randomness treeRandomness(treeSeeds[0]); 
-      TreeAln &something = *initTreePtr; 
+      auto treeRandomness = Randomness(treeSeeds[0]); 
+      auto &something = *initTreePtr; 
       initializeTree(something, 
 		     startingTrees.size() > 0  ? startingTrees.at(0): std::string(""), // meh 
 		     treeRandomness, blParams); 
     }
 
-  nat treesConsumed = 0; 
   for(nat i = 0; i < runParams.getNumRunConv() ; ++i)
     {    
+      auto hadBls = std::vector<bool>(trees.size() , false);
       if(topoIsFixed)
 	{
 	  for(auto &t : trees)
 	    t->copyModel(*initTreePtr); 
 	}
       else 	
-	initTrees(trees, treeSeeds[i], treesConsumed, startingTrees, blParams); 
+	hadBls = initTrees(trees, treeSeeds[i],  startingTrees, blParams); 
 
       auto paramView = std::vector<AbstractParameter*>{}; 
       for(auto &param : params)
 	paramView.push_back(param.get()); 
 
-      initializeWithParamInitValues(trees, paramView );
+      initializeWithParamInitValues(trees, paramView, hadBls );
       
       auto chains = vector<Chain>{};       
       for(nat j = 0; j < runParams.getNumCoupledChains(); ++j)

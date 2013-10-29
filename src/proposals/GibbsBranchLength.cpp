@@ -129,8 +129,8 @@ void GibbsBranchLength::applyToState(TreeAln &traln, PriorBelief &prior, double 
   traln.setBranch(newBranch, param); 
 
   
-  double oldPr = param->getPrior()->getLogProb( { b.getInterpretedLength(traln,param) } ); 
-  double newPr = param->getPrior()->getLogProb( { newBranch.getInterpretedLength(traln,param) } ); 
+  double oldPr = param->getPrior()->getLogProb( ParameterContent{{ b.getInterpretedLength(traln,param) }} ); 
+  double newPr = param->getPrior()->getLogProb( ParameterContent{{ newBranch.getInterpretedLength(traln,param) }} ); 
 
   prior.addToRatio( newPr - oldPr); 
 

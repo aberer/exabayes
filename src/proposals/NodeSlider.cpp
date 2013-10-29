@@ -117,15 +117,15 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   testBranch.setLength(newA); 
   // tout << "changing " << oneBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
-  double lnPrA = param->getPrior()->getLogProb( { testBranch.getInterpretedLength(traln,param)  } )
-    -   param->getPrior()->getLogProb( { oneBranch.getInterpretedLength(traln,param)  } ); 
+  double lnPrA = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(traln,param) } } )
+    -   param->getPrior()->getLogProb( ParameterContent{{ oneBranch.getInterpretedLength(traln,param) } } ); 
 
   testBranch = otherBranch; 
   testBranch.setLength(newB); 
   // tout << "changing " << otherBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
-  double lnPrB = param->getPrior()->getLogProb( { testBranch.getInterpretedLength(traln,param)  } )
-    -   param->getPrior()->getLogProb( { otherBranch.getInterpretedLength(traln,param)  } ); 
+  double lnPrB = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(traln,param) } } )
+    -   param->getPrior()->getLogProb( ParameterContent{{ otherBranch.getInterpretedLength(traln,param) } } ); 
 
   AbstractProposal::updateHastingsLog(hastings, log(pow(drawnMultiplier,2)), name); 
 

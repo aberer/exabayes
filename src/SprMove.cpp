@@ -14,7 +14,6 @@
 
 // #define VERBOSE_INFO
 
-// TODO make branch stuff more optional (performance)
 // TODO constructor instead of extract move info 
 
 void SprMove::applyToTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams) const
@@ -52,22 +51,16 @@ void SprMove::revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &
 }
 
 
-void SprMove::extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description, const std::vector<AbstractParameter*> &params)
+void SprMove::extractMoveInfo(const TreeAln &traln, std::tuple<BranchPlain,BranchPlain> description, const std::vector<AbstractParameter*> &params)
 {
-  sprCreatePath(traln, description.at(0), description.at(1), path, params);
+  sprCreatePath(traln, std::get<0>(description), std::get<1>(description), path, params);
 } 
 
 
-AbstractMove* SprMove::clone() const
+BranchPlain SprMove::getEvalBranchFromPath(const TreeAln &traln, const Path &pathHere ) const 
 {
-  return new SprMove; 
-}
-
-
-BranchPlain SprMove::getEvalBranch(const TreeAln &traln) const
-{    
-  auto b = path.at(0).getThirdBranch(traln, path.at(1)); 
-  auto lastBranch = path.at(path.size()-1); 
+  auto b = pathHere.at(0).getThirdBranch(traln, pathHere.at(1)); 
+  auto lastBranch = pathHere.at(pathHere.size()-1); 
 
   auto bA = BranchPlain(b.getPrimNode(), lastBranch.getPrimNode()), 
     bB = BranchPlain(b.getPrimNode(),lastBranch.getSecNode()); 
@@ -77,6 +70,13 @@ BranchPlain SprMove::getEvalBranch(const TreeAln &traln) const
   auto futureRoot = bA.getThirdBranch(traln, bB ); 
   
   return futureRoot; 
+}
+
+
+
+BranchPlain SprMove::getEvalBranch(const TreeAln &traln) const
+{    
+  return getEvalBranchFromPath(traln, path); 
 }
 
 

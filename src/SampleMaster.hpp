@@ -46,7 +46,7 @@ public:
    */ 
   void processConfigFile(string configFileName, const TreeAln* tralnPtr, vector<unique_ptr<AbstractProposal> > &proposalResult, 
 			  vector<unique_ptr<AbstractParameter> > &variableResult, std::vector<ProposalSet> &proposalSets); 
-  void initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &trees , const std::vector<AbstractParameter*> &params ) const ; 
+  void initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &trees , const std::vector<AbstractParameter*> &params , const std::vector<bool> hasBls ) const ; 
   /** 
       @brief EXPERIMENTAL 
    */ 
@@ -74,8 +74,8 @@ private:
   void writeCheckpointMaster(); 
   void initializeFromCheckpoint(); 
   std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 
-  void initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, nat &treesConsumed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
-  void initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
+  std::vector<bool> initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
+  bool initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
   CLOCK::system_clock::time_point printDuringRun(nat gen,  ParallelSetup &pl) ; 
   std::string getOrCreateBinaryFile() const ; 
 

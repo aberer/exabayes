@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <functional>
 
+#include "DnaAlphabet.hpp"
+#include "AminoAcidAlphabet.hpp"
 
 #include "BoundsChecker.hpp"
 #include "GlobalVariables.hpp"
@@ -56,12 +58,20 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
   auto content = extractParameter(traln); 
   std::vector<std::string> names; 
   
-  switch(content.values.size())
+  auto size = content.values.size(); 
+  switch(size)
     {
     case 6 : 
-      names = { "A<->C", "A<->G", "A<->T", "C<->G" , "C<->T", "G<->T"}; 
+      names = DnaAlphabet().getCombinations();
       break; 
-    default : assert(0); 
+    case 190: 			// really? 
+      names = AminoAcidAlphabet().getCombinations(); 
+      break; 
+    default : 
+      {
+	std::cerr << "error in revMatParameter: encountered case >" <<  size << std::endl; 
+	assert(0); 
+      }
     }
 
   bool isFirstG = true; 
@@ -81,18 +91,12 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
 }
 
 
-
-
-
 void RevMatParameter::verifyContent(const TreeAln&traln, const ParameterContent &content) const 
 {
   auto partition = traln.getPartition(partitions[0]); 
   auto num = numStateToNumInTriangleMatrix(partition->states);
-  
-  // auto sum = std::accumulate(content.values.begin(), content.values.end(), 0.); 
 
   bool ok = true; 
-  // ok &= fabs(sum - 1.0 )  < 1e-2 ; 
 
   ok &= content.values.size( )== num ; 
 
@@ -110,9 +114,4 @@ void RevMatParameter::verifyContent(const TreeAln&traln, const ParameterContent 
       assert(0); 
     }
 } 
-
-
-
-
-
 

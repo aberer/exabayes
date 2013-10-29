@@ -114,8 +114,8 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   // BEGIN  TODO remove modifiedPath
   auto bla = modifiedPath.at(modifiedPath.size()-1); 
   move.extractMoveInfo(traln, 
-		       {  BranchPlain(p->number, p->back->number), 
-			   BranchPlain(bla.getPrimNode(), bla.getSecNode()) },
+		       std::make_tuple(   BranchPlain(p->number, p->back->number), 
+					  BranchPlain(bla.getPrimNode(), bla.getSecNode()) ),
 		       getSecondaryParameterView() ); 
   modifiedPath.clear(); 
   // END
@@ -177,8 +177,8 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 	      b.setLength(curBranch.getLength(param)); 
 	      double lenBeforeInterpret = b.getInterpretedLength(traln, param ); 
 
-	      auto newPr = priorHere->getLogProb( { lenAfterInterpret} ) ; 
-	      auto oldPr = priorHere->getLogProb( {  lenBeforeInterpret}); 
+	      auto newPr = priorHere->getLogProb( ParameterContent{{ lenAfterInterpret}} ) ; 
+	      auto oldPr = priorHere->getLogProb( ParameterContent{{  lenBeforeInterpret}}); 
 
 	      prior.addToRatio(newPr - oldPr); 
 	    }

@@ -1,5 +1,5 @@
 #include "GibbsProposal.hpp"
-#include "AbstractProposal.hpp"
+#include "proposals/AbstractProposal.hpp"
 #include "priors/ExponentialPrior.hpp"
 #include "BoundsChecker.hpp"
 #include "Density.hpp"

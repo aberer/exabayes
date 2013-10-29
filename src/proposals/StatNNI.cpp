@@ -47,7 +47,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 				   ? p->back->next->back->number
 				   : p->back->next->next->back->number, 
 						      p->back->number ); 
-  auto bls = std::vector<BranchPlain>{b.toPlain(), switchingBranch}; 
+  auto bls = std::make_tuple(b.toPlain(), switchingBranch); 
   move.extractMoveInfo(traln, bls, blParams); 
 
   auto priors =  std::vector<AbstractPrior* >{}; 
@@ -85,8 +85,8 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 	      b.setLength(curBranch.getLength(param)); 
 	      double lenBeforeInterpret = b.getInterpretedLength(traln, param ); 
 
-	      auto newPr = priorHere->getLogProb( { lenAfterInterpret} ) ; 
-	      auto oldPr = priorHere->getLogProb( {  lenBeforeInterpret}); 
+	      auto newPr = priorHere->getLogProb( ParameterContent{{ lenAfterInterpret}} ) ; 
+	      auto oldPr = priorHere->getLogProb( ParameterContent{{  lenBeforeInterpret}}); 
 
 	      // tout << "prRatio=" << newPr - oldPr << std::endl; 
 	      // tout << "bl: " << lenBeforeInterpret << " => " << lenAfterInterpret << "\t" << newPr - oldPr << std::endl; 

@@ -3,6 +3,7 @@
 #include <memory>
 #include <algorithm>
 
+#include "parameters/ProtModelParameter.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "parameters/FrequencyParameter.hpp" 
@@ -79,6 +80,8 @@ namespace CategoryFuns
 	return "STATEFREQPR";
       case Category::SUBSTITUTION_RATES: 
 	return "REVMATPR";
+      case Category::AA_MODEL:
+	return "AAPR"; 
       case Category::RATE_HETEROGENEITY: 
 	return "SHAPEPR"; 
       default: 
@@ -89,14 +92,16 @@ namespace CategoryFuns
 
   std::vector<Category> getAllCategories()
   {
-    return {  Category::TOPOLOGY, Category::BRANCH_LENGTHS, Category::FREQUENCIES, Category::SUBSTITUTION_RATES, Category::RATE_HETEROGENEITY} ; 
+    return {  Category::TOPOLOGY, Category::BRANCH_LENGTHS, Category::FREQUENCIES, 
+	Category::AA_MODEL,
+	Category::SUBSTITUTION_RATES, Category::RATE_HETEROGENEITY} ; 
   }
 
 
   Category getCategoryByPriorName(std::string name)
   {
     // bad but this is a bit exhausting... 
-    std::vector<Category> cats = getAllCategories();
+    auto cats = getAllCategories();
 
     for(auto c : cats)
       {
@@ -139,7 +144,7 @@ namespace CategoryFuns
     switch(cat)
       {
       case Category::TOPOLOGY :
-	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind	));
+	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind ));
       case Category::BRANCH_LENGTHS:
 	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id, idOfMyKind));
       case Category::FREQUENCIES :
@@ -149,6 +154,7 @@ namespace CategoryFuns
       case Category::RATE_HETEROGENEITY:
 	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind));
       case Category::AA_MODEL :
+	return std::unique_ptr<AbstractParameter>( new ProtModelParameter(id, idOfMyKind));
       default : 
 	{
 	  assert(0); 

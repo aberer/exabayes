@@ -1,7 +1,6 @@
 #ifndef _BLOCK_PRIOR_H
 #define _BLOCK_PRIOR_H
 
-#include <map>
 #include <memory>
 #include <unordered_map>
 
@@ -29,12 +28,12 @@ public:
   virtual void Read(NxsToken &token); 
 
   vector< shared_ptr<AbstractPrior> > getGeneralPriors() const {return generalPriors; }
-  vector< map<nat,shared_ptr<AbstractPrior>>>  getSpecificPriors() const {return specificPriors; }
+  std::vector< std::unordered_map<nat,std::shared_ptr<AbstractPrior>>>  getSpecificPriors() const {return specificPriors; }
 
 private: 
   nat numPart;   
-  vector<shared_ptr<AbstractPrior>> generalPriors; 
-  vector< map<nat,shared_ptr<AbstractPrior>>> specificPriors; // for each category
+  std::vector<shared_ptr<AbstractPrior>> generalPriors; 
+  std::vector< std::unordered_map<nat,std::shared_ptr<AbstractPrior>>> specificPriors; // for each category
 }; 
 
 

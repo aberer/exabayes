@@ -73,57 +73,72 @@ void ExtendedTBR::buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &tra
 
 BranchPlain ExtendedTBR::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const 
 {
+  auto canMove = [&](const BranchPlain &b)
+    { 
+      auto desc = traln.getDescendents(b) ; 
+      auto result = not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln) ); 
+      // tout << b << " with children " << std::get<0>(desc) << "," << std::get<1>(desc)<< std::endl ; 
+      return result; 
+    }; 
 
-  nodeptr
-    p1, p2;  
-
-  auto bisectedBranch = BranchPlain(); 
-  do
+  auto bisectedBranch = BranchPlain{}; 
+  auto movableA = bool{false}; 
+  auto movableB = bool{false}; 
+    
+  while(not movableA && not movableB )
     {
       bisectedBranch = TreeRandomizer::drawInnerBranchUniform(traln, rand ); 
 
-      p1 = bisectedBranch.findNodePtr(traln ); 
-      p2 = bisectedBranch.getInverted().findNodePtr(traln); 
+      movableA = canMove(bisectedBranch); 
+      movableB = canMove(bisectedBranch.getInverted()); 
+    }
 
-      assert(not traln.isTipNode(p1) && not traln.isTipNode(p2)); 
-
-    } while( (traln.isTipNode(p1->next->back) && traln.isTipNode(p1->next->next->back) ) 
-	     || (traln.isTipNode(p2->next->back)  && traln.isTipNode(p2->next->next->back) ) ) ;   
-  
   return bisectedBranch; 
 }
 
 
 void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 {
-  Path modifiedPath1, 
-    modifiedPath2; 
+  auto modifiedPath1 = Path{}; 
+  auto modifiedPath2 = Path{}; 
 
-  // int numBranches = traln.getNumBranches(); 
-  // assert(numBranches == 1 ) ; 
-  tree *tr = traln.getTr();
+  auto bisectedBranch = determinePrimeBranch(traln, rand); 
 
-  auto bisectedBranch = BranchPlain{0,0}; 
-  assert(tr->mxtips > 8 ); 
-  
-  bisectedBranch = determinePrimeBranch(traln, rand); 
+  // determine, if a true TBR move can be executed
+  auto canMove = [&](const BranchPlain &b){ auto desc = traln.getDescendents(b) ; return not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln)) ; }; 
+  auto oneMovable = canMove(bisectedBranch);
+  auto otherMovable = canMove(bisectedBranch.getInverted()); 
 
 #ifdef DEBUG_TBR
   cout << "bisected branch is " << bisectedBranch << endl; 
 #endif
+  
+  auto descOne = BranchPlain{}; 
+  if(oneMovable)
+    {
+      buildPath(modifiedPath1, bisectedBranch, traln, rand); 
+      descOne = modifiedPath1.at(modifiedPath1.size() -1 ); 
+    }
 
-  buildPath(modifiedPath1, bisectedBranch, traln, rand); 
-  buildPath(modifiedPath2, bisectedBranch.getInverted(), traln, rand); 
-
-  move.extractMoveInfo(traln, {			 
-      bisectedBranch, modifiedPath1.at(modifiedPath1.size() -1 ),
-	bisectedBranch.getInverted(), modifiedPath2.at(modifiedPath2.size()-1) } , getSecondaryParameterView()); 
+  auto descOther = BranchPlain{}; 
+  if(otherMovable)
+    {
+      
+      buildPath(modifiedPath2, bisectedBranch.getInverted(), traln, rand); 
+      descOther = modifiedPath2.at(modifiedPath2.size()-1); 
+    }
+  
+  auto moveDescription = std::make_tuple( bisectedBranch, descOne, descOther); 
+  move.extractMoveInfo(traln, moveDescription , getSecondaryParameterView()); 
 }
+
 
 void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 { 
   drawPaths(traln,rand);
   // TODO replace by absence of prior 
+
+  // tout << "move is " << move << std::endl; 
   
   bool modifiesBl = false;   
   for(auto &v : secondaryParameters)
@@ -141,15 +156,14 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
     }
 
   move.applyToTree(traln, getSecondaryParameterView() );
-
-  // tout << "MOVE "  << move << std::endl; 
-
 }
 
 
 void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& traln, const BranchPlain &branchSuggestion)
 { 
   auto toEval = move.getEvalBranch(traln);
+
+  assert(toEval.exists(traln)); 
   
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL " << toEval << std::endl; 

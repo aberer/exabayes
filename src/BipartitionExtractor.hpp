@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-#include "TreeProcessor.hpp"
+#include "tree-parse/TreeProcessor.hpp"
 #include "BipartitionHash.hpp"
 
 class BipartitionExtractor : public TreeProcessor
@@ -13,7 +13,8 @@ public:
   BipartitionExtractor( BipartitionExtractor&& rhs) ; 
   BipartitionExtractor& operator=(BipartitionExtractor rhs); 
 
-  void extractBipsNew(bool readBL); 
+  template<bool readBL>
+  void extractBipsNew(); 
   void printBipartitions(std::string id) const ;
   void printBipartitionStatistics(std::string id) const ; 
   void printFileNames(std::string id) const ; 

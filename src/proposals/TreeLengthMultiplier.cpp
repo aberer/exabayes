@@ -52,7 +52,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
       double tmp = b.getInterpretedLength(traln, blParam); 
       newTL += tmp;
 
-      if(haveUniformPrior && blParam->getPrior()->getLogProb({tmp})  == - std::numeric_limits<double>::infinity())
+      if(haveUniformPrior && blParam->getPrior()->getLogProb(ParameterContent{{tmp}})  == - std::numeric_limits<double>::infinity())
 	{
 	  // tout << "danger: problematic length " << tmp << std::endl; 
 	  prior.addToRatio( - std::numeric_limits<double>::infinity()); 
@@ -63,7 +63,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
     traln.setBranch(b, blParam);
 
   if(not haveUniformPrior)
-    prior.addToRatio(blParam->getPrior()->getLogProb( { newTL }  )  - blParam->getPrior()->getLogProb( { initTL } )  ); 
+    prior.addToRatio(blParam->getPrior()->getLogProb( ParameterContent{{ newTL} }  )  - blParam->getPrior()->getLogProb( ParameterContent{{ initTL} } )  ); 
 }
 
 

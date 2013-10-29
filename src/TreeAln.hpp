@@ -14,6 +14,7 @@
 #include "axml.h"
 #include "GlobalVariables.hpp"
 
+#include "ProtModel.hpp"
 #include "BranchFwd.hpp"
 #include "FlagType.hpp"
 #include "RunModes.hpp"
@@ -250,9 +251,7 @@ public:
    */ 
   std::vector<std::string> getNameMap() const; 
 
-  static const double zZero;   
   static const double initBL;  	// init values 
-  static const double problematicBL; 
 
   nat getNumberOfAssignedSites(nat model) const ; 
 
@@ -262,14 +261,7 @@ public:
 
   std::vector<BranchPlain> getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const;   
 
-
 private: 			// METHODS  
-#if HAVE_PLL != 0
-
-#endif  
-
-  // template<class BRANCH> void extractHelper(nodeptr p, std::vector<BRANCH> &result, bool isStart) const; 
-
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
 

@@ -4,19 +4,17 @@
 
 #include "ProposalRegistry.hpp"
 
-#include "LikelihoodSPR.hpp"
-#include "GibbsBranchLength.hpp"
-#include "ExtendedTBR.hpp"
-#include "ExtendedSPR.hpp"
-#include "ParsimonySPR.hpp"
-#include "StatNNI.hpp"
-// #include "RadiusMlSPR.hpp"
-#include "BranchLengthMultiplier.hpp"
-// #include "BranchCollapser.hpp"
-#include "AminoModelJump.hpp"
-#include "NodeSlider.hpp"
-#include "TreeLengthMultiplier.hpp"
-#include "AbstractProposal.hpp"
+#include "proposals/LikelihoodSPR.hpp"
+#include "proposals/GibbsBranchLength.hpp"
+#include "proposals/ExtendedTBR.hpp" 
+#include "proposals/ExtendedSPR.hpp"
+#include "proposals/ParsimonySPR.hpp"
+#include "proposals/StatNNI.hpp"
+#include "proposals/BranchLengthMultiplier.hpp"
+#include "proposals/AminoModelJump.hpp"
+#include "proposals/NodeSlider.hpp"
+#include "proposals/TreeLengthMultiplier.hpp"
+#include "proposals/AbstractProposal.hpp"
 
 #include "proposers/AbstractProposer.hpp"
 #include "proposers/SlidingProposal.hpp"
@@ -48,9 +46,9 @@ const double ProposalRegistry::likeSpWarp = 1;
 vector<unique_ptr<AbstractProposal> >
 ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln) const 
 {
-  vector<unique_ptr<AbstractProposal> > result; 
+  std::vector<unique_ptr<AbstractProposal> > result; 
   
-  vector<aaMatrix_t> someMatrices; // TODO 
+  std::vector<ProtModel> someMatrices; // TODO 
 
   auto proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
   for(auto p : proposals)

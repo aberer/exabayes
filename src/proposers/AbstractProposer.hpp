@@ -7,7 +7,7 @@
 #include "Randomness.hpp"
 #include "Density.hpp"
 #include "Chain.hpp"
-#include "AbstractProposal.hpp"
+#include "proposals/AbstractProposal.hpp"
 
 //////////////
 // ABSTRACT //

@@ -3,9 +3,11 @@
 #include <cassert>
 #include <iostream>
 #include <cmath>
-
+#include "Branch.hpp"
+#include "BasicTreeReader.hpp"
 #include "TreeProcessor.hpp"
-#include "treeRead.h"
+#include "parameters/BranchLengthsParameter.hpp"
+
 
 TreeProcessor::TreeProcessor(std::vector<std::string> fileNames)  
 {
@@ -17,11 +19,10 @@ TreeProcessor::TreeProcessor(std::vector<std::string> fileNames)
 
 
 TreeProcessor::TreeProcessor(TreeProcessor&& tp) 
-  : traln(std::move(tp.traln))
+  : tralnPtr(std::move(tp.tralnPtr))
   , fns(tp.fns)
   , taxa(tp.taxa)
 {
-  
 }  
 
 
@@ -34,31 +35,64 @@ TreeProcessor& TreeProcessor::operator=(TreeProcessor &&rhs)
 } 
 
 
-void TreeProcessor::nextTree(std::istream &treefile, bool readBL) 
+// static nodeptr getUnlinkedNode(const TreeAln &traln, nat id)
+// {
+//   auto p  = traln.getNode(id); 
+//   if(p->back == NULL)
+//     return p; 
+//   else if(p->next->back == NULL)
+//     return p->next; 
+//   else if(p->next->next->back == NULL)
+//     return p->next->next; 
+//   else 
+//     assert(0);
+//   return NULL; 
+// }
+
+
+
+template<bool readBl>
+void TreeProcessor::nextTree(std::istream &treefile) 
 {
-  tree *tr = traln->getTr();
+  auto paramPtr = std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0));   
+  paramPtr->addPartition(0);
+
   while( treefile.get() != '('); 
   treefile.unget();
-  treefile.unget();
 
-  auto treestring = std::string {}; 
-  std::getline(treefile, treestring); 
-  // std::cout << "reading " << treestring << std::endl; 
-  myTreeReadLen(treestring, tr , readBL ? TRUE : FALSE); 
+  auto bt = BasicTreeReader<IntegerLabelReader,
+			    typename std::conditional<readBl,
+						      ReadBranchLength,
+						      IgnoreBranchLength>::type>(taxa.size());
+
+  auto branches = bt.extractBranches(treefile);
+
+  tralnPtr->unlinkTree();
+  for(auto b :branches)
+    {
+      tralnPtr->clipNode(tralnPtr->getUnhookedNode(b.getPrimNode()), tralnPtr->getUnhookedNode(b.getSecNode()) );
+      if(readBl)
+      	tralnPtr->setBranch(b, paramPtr.get());
+    }
+}
+
+void TreeProcessor::skipTree(std::istream &iss)
+{
+  while( iss &&  iss.get() != ';'); 
 }
 
 
 void TreeProcessor::initializeTreeOnly(int numTax )
 {
-  traln = std::unique_ptr<TreeAln>(new TreeAln());
-  tree *tr = traln->getTr();
+  tralnPtr = std::unique_ptr<TreeAln>(new TreeAln());
+  tree *tr = tralnPtr->getTr();
   tr->mxtips = numTax; 
 
 #if HAVE_PLL != 0
   partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
   // pl->numberOfPartitions = 1; 	// BAD!!!! needed for extractBips
   setupTree(tr, false, pl);  
-  traln->setPartitionList(pl); 
+  tralnPtr->setPartitionList(pl); 
 #else 
   tr->NumberOfModels = 0; 
   setupTree(tr);
@@ -93,7 +127,6 @@ std::string TreeProcessor::trim(const std::string& str, const std::string& white
   return str.substr(strBegin, strRange);
 }
 
-
 void TreeProcessor::fillTaxaInfo(std::string fileName)
 {
   std::string whiteSpace = " \t"; 
@@ -124,3 +157,8 @@ void TreeProcessor::fillTaxaInfo(std::string fileName)
 
   assert(foundStart); 
 }
+
+
+
+template void TreeProcessor::nextTree<true>(std::istream &treefile) ; 
+template void TreeProcessor::nextTree<false>(std::istream &treefile) ;

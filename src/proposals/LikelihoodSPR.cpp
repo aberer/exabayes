@@ -316,7 +316,7 @@ void LikelihoodSPR::determineMove(TreeAln &traln, PriorBelief &prior, double &ha
   // tout  << "tree after: " << traln << std::endl; ; 
   // eval.evaluate(traln, prunedSubtree, treu); 
   // tout << "extracting from " << prunedSubtree << "\t" << drawnPos << std::endl; 
-  auto bls = std::vector<BranchPlain>{prunedSubtree.toPlain(), drawnPos.toPlain() }; 
+  auto bls = std::make_tuple(prunedSubtree.toPlain(), drawnPos.toPlain() ); 
   move.extractMoveInfo(traln, bls , blParams);
   // tout << "determined move: " << move << std::endl; 
   // tout << "lnl after: " << eval.evaluate(traln, prunedSubtree, true) << std::endl;

@@ -16,7 +16,7 @@
 #include "ProposalSet.hpp"
 #include "PriorBelief.hpp"
 #include "eval/LikelihoodEvaluator.hpp"
-#include "AbstractProposal.hpp"
+#include "proposals/AbstractProposal.hpp"
 
 #include "file/TopologyFile.hpp"
 #include "file/ParameterFile.hpp"

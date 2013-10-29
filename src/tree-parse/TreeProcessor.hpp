@@ -15,7 +15,9 @@ public:
 
 protected: 			// METHODS
   void fillTaxaInfo(std::string fileName); 
-  void nextTree(std::istream &treefile, bool readBL); 
+  template<bool readBl>
+  void nextTree(std::istream &treefile); 
+  void skipTree(std::istream &iss); 
   /** 
       @brief only initializes a raw tree, no partitions or alignment information. 
       important: does NOT need a bytefile 
@@ -24,7 +26,7 @@ protected: 			// METHODS
   static std::string trim(const std::string& str, const std::string& whitespace  = " \t"); 
 
 protected: 			// ATTRIBUTES
-  std::unique_ptr<TreeAln> traln;
+  std::unique_ptr<TreeAln> tralnPtr;
   std::vector<std::string> fns; 
   std::vector<std::string> taxa; 
 }; 

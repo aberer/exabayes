@@ -62,8 +62,8 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   double realMultiplier = log(b.getLength()) / log(oldZ); 
   AbstractProposal::updateHastingsLog(hastings, log(realMultiplier), name); 
 
-  double prNew = param->getPrior()->getLogProb( { b.getInterpretedLength(traln, param) } ); 
-  double prOld = param->getPrior()->getLogProb( { savedBranch.getInterpretedLength(traln, param) } );
+  double prNew = param->getPrior()->getLogProb( ParameterContent{{ b.getInterpretedLength(traln, param)} } ); 
+  double prOld = param->getPrior()->getLogProb( ParameterContent{{ savedBranch.getInterpretedLength(traln, param) }} );
   
   prior.addToRatio(prNew - prOld );
 }

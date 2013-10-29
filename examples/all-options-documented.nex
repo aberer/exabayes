@@ -53,7 +53,9 @@ shapePr exponential(2)
 [ shapePr uniform(0.0000001,200) ] 
 [ shapePr fixed(1)   ] 
 
-[ todo: prior in substitution matrices ]
+[ models for amino acid partitions ] 
+[ aaPr disc( WAG=3, REMAINDER=1 ) ] 
+[ aaPr fixed(WAG) ] 
 
 end; 
 

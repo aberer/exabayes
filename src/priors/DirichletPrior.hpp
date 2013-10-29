@@ -11,10 +11,12 @@ public:
   {
   }
 
-  virtual double getLogProb(std::vector<double> values) const ; 
+  virtual double getLogProb( const ParameterContent& content) const ; 
   virtual void print(std::ostream& out ) const ; 
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const; 
   virtual ParameterContent getInitialValue() const; 
+
+  virtual bool needsIntegration() const {return true; } 
 
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const {return 0 ; } 
   

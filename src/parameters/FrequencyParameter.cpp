@@ -1,5 +1,7 @@
 #include "FrequencyParameter.hpp"
 #include "BoundsChecker.hpp"
+#include "DnaAlphabet.hpp"
+#include "AminoAcidAlphabet.hpp"
 
 
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
@@ -37,13 +39,15 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
   switch(content.values.size())
     {
     case 4:       
-      names = { "A" , "C", "G", "T"}; 
+      names = DnaAlphabet().getStates() ; 
+      break; 
+    case 20: 
+      names = AminoAcidAlphabet().getStates(); 
       break; 
     default: 
       assert(0); 
     }
 
-  
   bool isFirstG = true; 
   for(nat i = 0; i < content.values.size() ; ++i)
     {

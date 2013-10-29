@@ -12,9 +12,9 @@
 
 
 
-// #ifdef _USE_GOOGLE_PROFILER
-// #include <google/profiler.h>
-// #endif
+#ifdef _USE_GOOGLE_PROFILER
+#include <google/profiler.h>
+#endif
 
 
 int NUM_BRANCHES; 
@@ -133,6 +133,14 @@ int main(int argc, char** argv)
   if(argc == 0 || files.size() == 0 )
     printUsage(); 
 
+  for(auto file : files)
+    {
+      if(not std::ifstream(file)) 
+	{
+	  std::cout << "error: could not open file >" << file << "<" << std::endl; 
+	  exit(-1); 
+	}
+    }
 
   if(constBurninWasSet && relBurninWasSet)
     {

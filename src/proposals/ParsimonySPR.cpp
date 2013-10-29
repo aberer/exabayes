@@ -4,8 +4,6 @@
 #include "priors/AbstractPrior.hpp"
 
 #include "ParsimonySPR.hpp"
-#include "treeRead.h"
-#include "InsertionScore.hpp"
 #include "Branch.hpp"
 
 #include "TreePrinter.hpp"
@@ -118,7 +116,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 
   auto partitionParsimony =  std::vector<nat>{}; 
   auto pLengthAtBranch =  std::vector<nat>{}; 
-  pEval.evaluate(traln, traln.getTr()->start, true, partitionParsimony, pLengthAtBranch);
+  pEval.evaluate(traln, traln.getAnyBranch().findNodePtr(traln), true, partitionParsimony, pLengthAtBranch);
 
   auto prunedTree = determinePrimeBranch(traln, rand); 
 
@@ -169,7 +167,7 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   // important: save the move 
   auto pruned = BranchPlain(p->number,p->back->number); 
 
-  move.extractMoveInfo(traln, {pruned,chosen.first}, getSecondaryParameterView() );
+  move.extractMoveInfo(traln, std::make_tuple(pruned,chosen.first), getSecondaryParameterView() );
 
   // update the hastings  
   assert(possibilities.find(initBranch) == possibilities.end()); 

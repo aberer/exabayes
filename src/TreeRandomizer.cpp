@@ -1,9 +1,7 @@
-#include <vector>
-
 #include "TreeRandomizer.hpp"
-#include "Branch.hpp"
-#include "treeRead.h"
 
+#include <vector>
+#include "Branch.hpp"
 
 void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
 {
@@ -54,8 +52,7 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
       traln.clipNodeDefault(p1, inner->next); 
       traln.clipNodeDefault(p2, inner->next->next); 
     }
-  
-  traln.getTr()->start = traln.getTr()->nodep[1];   
+ 
 }
 
 

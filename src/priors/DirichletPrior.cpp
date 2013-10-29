@@ -2,8 +2,9 @@
 
 
 
-double DirichletPrior::getLogProb(std::vector<double> values) const 
+double DirichletPrior::getLogProb(const ParameterContent& content) const 
 {
+  auto &values = content.values; 
   assert(values.size() == alphas.size() ); 
   double sum = 0; 
   for(auto v: values)

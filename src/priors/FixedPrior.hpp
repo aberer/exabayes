@@ -1,7 +1,7 @@
 #ifndef _FIXE_PRIOR
 #define  _FIXE_PRIOR
 
-#include "AbstractPrior.hpp"
+#include "priors/AbstractPrior.hpp"
 
 
 class FixedPrior : public AbstractPrior
@@ -9,8 +9,9 @@ class FixedPrior : public AbstractPrior
 public: 
   FixedPrior(std::vector<double> fixedValues)   ; 
 
-  virtual double getLogProb(std::vector<double> values)  const; 
-  virtual std::vector<double> drawFromPrior(Randomness &rand)  const ; 
+  virtual bool needsIntegration() const {return false; } 
+  virtual double getLogProb(const ParameterContent &content )  const; 
+  virtual std::vector<double> drawFromPrior(Randomness &rand )  const ; 
 
   virtual void print(std::ostream &out) const ; 
   virtual ParameterContent getInitialValue() const; 

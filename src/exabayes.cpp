@@ -41,14 +41,7 @@ int NUM_BRANCHES;
 #include "axml.h" 
 
 #ifdef TEST
-#include "parameters/BranchLengthsParameter.hpp"
-#include "TreeRandomizer.hpp"
-#include "Chain.hpp"
-#include "BranchLengthMultiplier.hpp"
-#include "ParsimonyEvaluator.hpp"
-#include "BoundsChecker.hpp"
-#include "Bipartition.hpp"
-#include "TreeAln.hpp"
+#include "BasicTreeReader.hpp"
 #endif
 
 
@@ -65,7 +58,6 @@ double fastPow(double a, double b)
   return u.d;
 }
 
-
 /**
    @brief the main ExaBayes function.
 
@@ -77,14 +69,12 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  randCtr_t r; 
-  r.v[0] = 123; 
-  auto rand = Randomness (r);
-  
-  for(nat i = 0; i < 1000; ++i)
-    {
-      std::cout << rand.drawRandGamma(1,1000000) << std::endl;
-    }
+  auto &&iss = std::istringstream("(1:1.E-3,2:0.3,(3:0.2,4:0.1):0.5):0.0;");
+
+  auto&& bt =  BasicTreeReader( 4, false);
+  auto branches = bt.extractBranches(iss);
+  for(auto b : branches)
+    std::cout << b << std::endl; 
 
   exit(0); 
 #else 

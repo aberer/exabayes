@@ -1,15 +1,13 @@
 /** 
     @brief a helper object making the code concerning a SPR move
     re-usable.
-    
-    @todo still could use some cleanup.
  */ 
+
 
 #ifndef _SPR_MOVE_H
 #define _SPR_MOVE_H
 
 #include "axml.h"
-#include "AbstractMove.hpp"
 #include "Path.hpp"
 
 #include <unordered_map>
@@ -20,16 +18,16 @@ class LikelihoodEvaluator;
 
 typedef std::unordered_map<BranchPlain,std::pair<std::string,nat>> branch2PairNameNum; 
 
-class SprMove : public AbstractMove
+class SprMove
 {
 public:    		
-  virtual void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const; 
+  void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const; 
   void applyToTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams, LikelihoodEvaluator& eval, bool considerOuter) const; 
-  virtual void revertTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams ) const; 
+  void revertTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams ) const; 
   void revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator& eval, bool considerOuter) const; 
-  virtual void extractMoveInfo(const TreeAln &traln, std::vector<BranchPlain> description,const std::vector<AbstractParameter*> &params); 
+  void extractMoveInfo(const TreeAln &traln, std::tuple<BranchPlain,BranchPlain> description, const std::vector<AbstractParameter*> &params); 
   void extractBranchesOnly(const TreeAln &traln, BranchPlain mover, BranchPlain movedInto, Path &pathHere) const ; 
-  virtual BranchPlain getEvalBranch(const TreeAln &traln) const; 
+  BranchPlain getEvalBranch(const TreeAln &traln) const; 
   auto moveBranchProposal(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator& eval, Randomness& rand, bool proposeOuter, double thresh, bool sequential)
     -> std::tuple<std::vector<BranchLengths>,double,double> ; 
 
@@ -40,7 +38,6 @@ public:
      false, the mrBayes-mapping (single mapping) isi implied.
    */
   branch2PairNameNum getNames(const TreeAln &traln, bool isNni ) const ; 
-  virtual AbstractMove* clone() const; 
   /** 
       @brief gets the number of nni moves to be executed in order to
       achieve this move
@@ -49,7 +46,7 @@ public:
 
   void integrateBranches( TreeAln &traln,  const std::vector<AbstractParameter*> blParam, LikelihoodEvaluator &eval, double &hastings ) const ; 
 
-  virtual std::vector<nat> getDirtyNodes(const TreeAln& traln, bool considerOuter) const ; 
+  std::vector<nat> getDirtyNodes(const TreeAln& traln, bool considerOuter) const ; 
 
   Path& getPathHandle(){return path; }
   
@@ -67,6 +64,7 @@ public:
   void setPath(Path _path){path=  _path; }
 
 protected:			// METHODS
+  BranchPlain getEvalBranchFromPath(const TreeAln &traln, const Path &pathHere ) const ; 
   std::tuple<std::vector<BranchLengths>,double, double> proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator &eval, Randomness& rand, bool proposeOuter, double thresh, bool forward); 
   auto proposeBranchesSequentially(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator &eval, 
 					  Randomness& rand, bool proposeOuter, double thresh, bool forward )

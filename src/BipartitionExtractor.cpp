@@ -78,7 +78,8 @@ nat BipartitionExtractor::getNumTreesInFile(std::string file) const
 }
 
 
-void BipartitionExtractor::extractBipsNew(bool readBl)
+template<bool readBl>
+void BipartitionExtractor::extractBipsNew()
 {
   int ctr = 0; 
   for (auto filename : fns)
@@ -87,12 +88,12 @@ void BipartitionExtractor::extractBipsNew(bool readBl)
 
       nat end = getNumTreesInFile(filename); 
 
-      auto bipHash = BipartitionHashNew(traln->getNumberOfTaxa()); 
+      auto bipHash = BipartitionHashNew(tralnPtr->getNumberOfTaxa()); 
 
       for(nat i = 0 ; i < end; ++i)
 	{
-	  nextTree(ifh, readBl);
-	  bipHash.addTree(*traln,true, true);
+	  nextTree<readBl>(ifh);
+	  bipHash.addTree(*tralnPtr,true, true);
 	}
       bipHashes.push_back(bipHash);
  
@@ -357,3 +358,8 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
   else 
     result << ");"; 
 }
+
+
+template void BipartitionExtractor::extractBipsNew<true>(); 
+template void BipartitionExtractor::extractBipsNew<false>(); 
+

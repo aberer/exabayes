@@ -4,8 +4,9 @@ ExponentialPrior::ExponentialPrior(double lambda) : lambda(lambda)
 {
 }
 
-double ExponentialPrior::getLogProb(std::vector<double> values) const 
+double ExponentialPrior::getLogProb(const ParameterContent& content) const 
 {
+  auto& values = content.values; 
   assert(values.size() == 1); 
   return Density::lnExponential(values[0], lambda); 
 }

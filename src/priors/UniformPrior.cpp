@@ -4,8 +4,9 @@ UniformPrior::UniformPrior(double minVal, double maxVal) : minVal(minVal), maxVa
 {
 }
 
-double UniformPrior::getLogProb(std::vector<double> values)  const 
+double UniformPrior::getLogProb(const ParameterContent& content)  const 
 {
+  auto &values = content.values; 
   assert(values.size() == 1); 
   double value = values[0];
 

@@ -3,7 +3,7 @@
 
 #include "Path.hpp"
 #include "Chain.hpp"
-#include "AbstractProposal.hpp"
+#include "proposals/AbstractProposal.hpp"
 
 
 void Path::clear()

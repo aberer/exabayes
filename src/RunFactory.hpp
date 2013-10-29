@@ -18,7 +18,7 @@
 #include "config/BlockProposalConfig.hpp"
 #include "config/BlockPrior.hpp"
 #include "config/BlockParams.hpp"
-#include "AbstractProposal.hpp"
+#include "proposals/AbstractProposal.hpp"
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
 #include "parameters/AbstractParameter.hpp"

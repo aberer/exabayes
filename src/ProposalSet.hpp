@@ -20,7 +20,7 @@
 #define PROPOSAL_SET
 
 #include <iostream>
-#include "AbstractProposal.hpp"
+#include "proposals/AbstractProposal.hpp"
 
 class ProposalSet : public Serializable
 {

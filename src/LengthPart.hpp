@@ -13,7 +13,6 @@ class AbstractParameter;
 
 template<typename TYPE = void> class LengthPart
 {
-  // using paramType = void; 
 public: 
   // trait-like (could be better...)
   
@@ -35,8 +34,6 @@ public:
 template<> class LengthPart<double>
 {
 public: 
-  // using paramType = const AbstractParameter*; 
-
   /** 
       @brief gets the absolute (true) length of the branch
    */ 
@@ -72,8 +69,6 @@ protected:
 template<> class LengthPart<std::vector<double>>
 {
  public: 
-  // using paramType = const std::vector<AbstractParameter*>&; 
-
   double getLength(const AbstractParameter* param) const ; 
   const std::vector<double>& getLengths() const {return lengths; }
   void setLengths(std::vector<double> _lengths) { lengths = _lengths; } 

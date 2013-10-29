@@ -1,5 +1,5 @@
 #include "TreeIntegrator.hpp"
-#include "BranchLengthMultiplier.hpp"
+#include "proposals/BranchLengthMultiplier.hpp"
 #include "GibbsProposal.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "Branch.hpp"

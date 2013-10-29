@@ -6,8 +6,7 @@
 
 #include "GlobalVariables.hpp"
 #include "config/BlockProposalConfig.hpp"
-#include "ParameterProposal.hpp"
-// #include "proposals/AlignmentProposal.hpp"
+#include "proposals/ParameterProposal.hpp"
 
 class ProposalRegistry
 {

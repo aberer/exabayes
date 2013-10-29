@@ -6,7 +6,7 @@
 ConsensusTree::ConsensusTree(std::string file )
   : bipEx(std::vector<std::string>{file})
 {
-  bipEx.extractBipsNew(false); 
+  bipEx.extractBipsNew<false>(); 
   const auto &hash = bipEx.getBipartitionHashes()[0]; 
   totalTrees = hash.getTreesAdded();
 }

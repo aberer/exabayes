@@ -1,13 +1,11 @@
 #ifndef _PRIORS_H
 #define _PRIORS_H
 
-#include <memory>
 #include <vector>
 #include <limits>
 #include <cassert>
 #include <cmath>
 #include <iostream>
-#include <iomanip>
 
 #include "axml.h"
 #include "Density.hpp"
@@ -27,12 +25,14 @@ public:
       prior.
   */
   virtual ParameterContent getInitialValue() const = 0; 
-
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param , double myOld, double myNew ) const = 0; 
-
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const = 0; 
-  virtual double getLogProb(std::vector<double> values ) const = 0; 
+  virtual double getLogProb( const ParameterContent &content ) const = 0; 
   virtual void print(std::ostream &out) const = 0;
+
+  virtual bool needsIntegration() const = 0; 
+ 
+  
   friend std::ostream& operator<<(std::ostream &out,  AbstractPrior* rhs)
   {
     rhs->print(out); 

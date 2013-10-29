@@ -12,13 +12,9 @@ TreePrinter::TreePrinter(bool withBranchLengths , bool withInternalNodes , bool 
 }
 
 
-
-
-
-
 std::string TreePrinter::printTree(const TreeAln& traln, AbstractParameter* param)
 {
-  auto vect = std::vector<AbstractParameter*>{}; 
+  auto vect = std::vector<AbstractParameter*>{};
   vect.push_back(param); 
   return printTree(traln, vect);   
 }
@@ -26,11 +22,11 @@ std::string TreePrinter::printTree(const TreeAln& traln, AbstractParameter* para
 
 std::string TreePrinter::printTree(const TreeAln& traln, const std::vector<AbstractParameter*> &params)
 {
-  std::stringstream ss; 
+  auto &&ss = std::stringstream{}; 
   ss << SOME_FIXED_PRECISION; 
 
   ss << "("; 
-  helper(traln, ss, traln.getTr()->start->back, true, params );   
+  helper(traln, ss, traln.getNode(1)->back, true, params );   
   ss << ")" ; 
   if(withBranchLengths)
     ss << ":0.0"; 

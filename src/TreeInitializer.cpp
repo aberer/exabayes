@@ -17,11 +17,6 @@ template<typename T>
 static void byteRead(std::ifstream& in, T* result, nat num)
 {
   in.read((char*)result, sizeof(T) * num ); 
-  
-  // tout << "READ "; 
-  // for(nat i = 0; i < num; ++i)
-  //   tout <<  result[i] << " " ; 
-  // tout << std::endl; 
 }
 
 

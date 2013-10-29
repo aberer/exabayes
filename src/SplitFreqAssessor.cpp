@@ -38,13 +38,13 @@ void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
       auto&& ifh = std::ifstream{filename}; 
 
       for(nat i = 0; i < start; ++i)
-	nextTree(ifh, false);
+	skipTree(ifh);
 
       auto &bipHash  = newBipHashes.at(ctr);
       for(nat i = start ; i < endhere; ++i)
 	{
-	  nextTree(ifh, false);
-	  bipHash.addTree(*traln,false, false);
+	  nextTree<false>(ifh);
+	  bipHash.addTree(*tralnPtr,false, false);
 	}
       ++ctr; 
     }

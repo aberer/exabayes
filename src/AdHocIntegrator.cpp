@@ -42,8 +42,7 @@ void AdHocIntegrator::copyTree(const TreeAln &traln)
   TreeAln &myTree = integrationChain->getTraln();
   myTree.copyModel(traln);
   auto& eval = integrationChain->getEvaluator();
-  auto tr = myTree.getTr(); 
-  eval.evaluate(myTree, BranchPlain(tr->start->number,tr->start->back->number ), true );
+  eval.evaluate(myTree, traln.getAnyBranch(), true );
 }
 
 

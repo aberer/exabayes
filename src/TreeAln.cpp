@@ -200,8 +200,6 @@ TreeAln::~TreeAln()
 }
 
 
-
-
 void TreeAln::initializeFromByteFile(std::string _byteFileName, RunModes flags)
 {
   mode = flags; 
@@ -219,7 +217,7 @@ void TreeAln::initializeFromByteFile(std::string _byteFileName, RunModes flags)
   for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
       pInfo *partition =  getPartition(i);
-      assert(partition->dataType == DNA_DATA);
+      // assert(partition->dataType == DNA_DATA);
 
       setFrequencies(std::vector<double>(partition->states, 1.0 / (double)partition->states ), i); 
       int num = numStateToNumInTriangleMatrix(partition->states); 
@@ -305,7 +303,6 @@ nodeptr TreeAln::getUnhookedNode(int number)
       return p; 
     }
 
-
   nodeptr q = p ; 
   do 
     {
@@ -314,6 +311,8 @@ nodeptr TreeAln::getUnhookedNode(int number)
       q = q->next; 
     } while(p != q); 
 
+  
+  std::cerr << "Error: did not find unlinked node for " << number << std::endl; 
   assert(0);
   return NULL;
 }
@@ -393,6 +392,7 @@ bool TreeAln::operator==(const TreeAln& rhs)
 
 void TreeAln::copyModel(const TreeAln& rhs)  
 {  
+  assert(0);
   // assert(&rhs != this); 
   if(&rhs == this)
     return; 
@@ -474,8 +474,6 @@ void TreeAln::copyModel(const TreeAln& rhs)
     }
 
 #endif
-
-  tr.start = tr.nodep[rhsTree->start->number];   
 }
 
 
@@ -577,10 +575,6 @@ void TreeAln::initRevMat(int model)
 
 void TreeAln::setFrequencies(const std::vector<double> &values, int model)
 {
-  // tout << "setting frequencies "; 
-  // for_each(values.begin(), values.end(), [](double d) {tout << std::setprecision(3) << d << "," ;  } );
-  // tout << std::endl; 
-
   assert( BoundsChecker::checkFrequencies(values) ) ;    
   auto partition = getPartition(model); 
   memcpy( partition->frequencies, &(values[0]), partition->states * sizeof(double)); 
@@ -590,8 +584,6 @@ void TreeAln::setFrequencies(const std::vector<double> &values, int model)
 
 void TreeAln::setRevMat(const std::vector<double> &values, int model)
 {
-  // std::cout << "checking "; for_each(values.begin(), values.end(), [](double d){std::cout << d << "," ;}) ; std::cout  << std::endl; 
-
   bool valuesOkay = BoundsChecker::checkRevmat(values); 
   if(not valuesOkay)
     {
@@ -658,7 +650,7 @@ void TreeAln::discretizeGamma(int model)
 
 std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln)
 {
-  TreePrinter tp(true, false, false); 
+  auto tp = TreePrinter(true, false, false); 
   return out << tp.printTree(traln); 
 }
 

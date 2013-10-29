@@ -4,6 +4,9 @@
 #include <algorithm> 
 
 
+
+
+
 void ParameterContent::deserialize( std::istream &in )  
 {
   for(auto &v : values)
@@ -14,6 +17,9 @@ void ParameterContent::deserialize( std::istream &in )
 
   for(auto &b : topology)
     b.deserialize(in); 
+  
+  for(auto &v :  protModel)
+    v = ProtModel(cRead<int>(in));
 } 
 
 
@@ -27,6 +33,12 @@ void ParameterContent::serialize( std::ostream &out) const
 
   for(auto &b : topology)
     b.serialize(out); 
+
+  for(auto &v : protModel)
+    {
+      auto tmp = int(v);
+      cWrite<int>(out,tmp); 
+    }
 }   
 
 
@@ -39,7 +51,9 @@ std::ostream& operator<<(std::ostream& out, const ParameterContent &rhs)
     out << rhs.branchLengths; 
   else if(rhs.topology.size() > 0)
     out << rhs.topology ; 
-  else 
+  else if(rhs.protModel.size()  > 0)
+    out << rhs.protModel; 
+  else     
     assert(0); 
 
   return out; 

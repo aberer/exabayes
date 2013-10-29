@@ -3,8 +3,9 @@
 topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
-# seed=19840
+seed=27159
 
+# src/proposals/
 numProc=2
 # extraArgs="-Q"
 # extraArgs="-M 3"
@@ -18,7 +19,7 @@ startFromBest=0
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=0
+useClang=1
 
 
 # find additional arguments for the call   

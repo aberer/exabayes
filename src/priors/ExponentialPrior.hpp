@@ -8,7 +8,8 @@ class ExponentialPrior : public AbstractPrior
 {
 public: 
   ExponentialPrior(double lambda) ; 
-  virtual double getLogProb(std::vector<double> values) const  ; 
+  virtual bool needsIntegration() const {return true; } 
+  virtual double getLogProb(const ParameterContent& content) const  ; 
   virtual std::vector<double> drawFromPrior(Randomness &rand)  const; 
   virtual void print(std::ostream& out ) const  ; 
   virtual double getLamda()  const  { return lambda; } 

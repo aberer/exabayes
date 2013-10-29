@@ -2,6 +2,7 @@
 #define _INSERTION_SCORE 
 
 
+
 // #include "Branch.hpp"
 
 class  InsertionScore

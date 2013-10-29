@@ -11,7 +11,7 @@
 
 #include "axml.h"
 
-#include "TreeProcessor.hpp"
+#include "tree-parse/TreeProcessor.hpp"
 #include "BipartitionHash.hpp"
 
 class SplitFreqAssessor : public TreeProcessor 

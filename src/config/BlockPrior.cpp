@@ -1,14 +1,50 @@
 #include "BlockPrior.hpp"
 
-#include "../priors/UniformPrior.hpp"
-#include "../priors/ExponentialPrior.hpp"
-#include "../priors/DirichletPrior.hpp"
-#include "../priors/FixedPrior.hpp"
+#include <sstream>
+#include <limits>
+
+#include "priors/DiscreteModelPrior.hpp"
+#include "priors/UniformPrior.hpp"
+#include "priors/ExponentialPrior.hpp"
+#include "priors/DirichletPrior.hpp"
+#include "priors/FixedPrior.hpp"
 
 #include "ParallelSetup.hpp"
 
 
-// extern void genericExit(int code); 
+static void expectString( std::string expectation, NxsToken& token)
+{
+  bool okay = token.GetToken().EqualsCaseInsensitive(expectation.c_str()); 
+  if(not okay)
+    {
+      std::cerr << "error while parsing the config file: expected " << expectation << " but got " << token.GetToken() << std::endl; 
+      exit(-1); 
+    }
+}
+
+
+
+static std::vector<double> parseValues(NxsToken &token)
+{
+  auto result = std::vector<double>{}; 
+  
+  // assumption: we have already seen the ')'
+
+  while(token.GetToken().compare(")") != 0)
+    {
+      auto &&iss = std::istringstream{token.GetToken()}; 
+      auto value = double{0.};
+      iss >> value; 
+      result.push_back(value);
+      token.GetNextToken();
+      if(token.GetToken().compare(",") == 0)
+	token.GetNextToken();
+    }
+  
+  return result; 
+}
+
+
 
 shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {
@@ -34,17 +70,80 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       assert(token.GetToken().compare(")") == 0);
       return shared_ptr<AbstractPrior> (new UniformPrior(n1,n2));  
     }
-  else if(value.EqualsCaseInsensitive("dirichlet"))
-    {      
-      vector<double> alphas; 
-      while(token.GetToken().compare(")") != 0 )
+  else if(value.EqualsCaseInsensitive("disc"))
+    {
+      // token.GetNextToken(); 
+      expectString("(", token);
+      
+      auto modelsProbs = std::unordered_map<ProtModel, double>{};
+
+      auto remainder = std::numeric_limits<double>::infinity();
+
+      while(token.GetToken().compare(")") != 0)
 	{
 	  token.GetNextToken();
-	  alphas.push_back(atof(token.GetToken().c_str())); 
-	  token.GetNextToken();
-	  assert(token.GetToken().compare(",") == 0 
-		 || token.GetToken().compare(")") == 0); 
-	} 
+
+	  auto foundRemainder = token.GetToken().EqualsCaseInsensitive("remainder"); 
+	  if(foundRemainder)	// keep track of the weight 
+	    {
+	      if(remainder != std::numeric_limits<double>::infinity())
+		{
+		  std::cerr << "Encountered 'remainder' twice while defining aaPr" << std::endl; 
+		  exit(-1);
+		}
+
+	      token.GetNextToken();
+	      expectString("=", token); 
+	      token.GetNextToken();
+
+	      auto &&iss = std::istringstream{token.GetToken()};
+	      iss >> remainder ; 
+	      token.GetNextToken();
+	    } 
+	  else 			// simply parse that model 
+	    {
+	      auto modelRes = ProtModelFun::getModelFromStringIfPossible(token.GetToken()); 
+	      if(not std::get<0>(modelRes) )
+		{
+		  std::cerr << "Error: expected " << token.GetToken() << "to be a valid protein model name" << std::endl; 
+		  exit(-1); 
+		}
+	      auto model = std::get<1>(modelRes);
+
+	      token.GetNextToken();
+	      expectString("=", token); 
+
+	      token.GetNextToken(); 
+	      auto &&iss = std::istringstream{token.GetToken()}; 
+	      auto weight = double{0.}; 
+	      iss >> weight; 
+
+	      if(modelsProbs.find(model) != modelsProbs.end())
+		{
+		  std::cerr << "Error: model " <<  model << "occurred more than once in your specification of a discrete amino acid model prior."  << std::endl; 
+		  exit(-1); 
+		}
+
+	      modelsProbs[model] = weight; 
+
+	      token.GetNextToken();
+	    }
+	}
+
+      if(remainder != std::numeric_limits<double>::infinity())
+	{
+	  for(auto model : ProtModelFun::getAllModels())
+	    {
+	      if( modelsProbs.find(model) == modelsProbs.end()  )
+		modelsProbs[model] = remainder; 
+	    }
+	}
+
+      return shared_ptr<AbstractPrior>(new DiscreteModelPrior(modelsProbs));
+    }
+  else if(value.EqualsCaseInsensitive("dirichlet"))
+    {      
+      auto alphas = parseValues(token); 
       return shared_ptr<AbstractPrior>(new DirichletPrior(alphas)); 
     }
   else if(value.EqualsCaseInsensitive("fixed"))
@@ -56,17 +155,30 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	  ParallelSetup::genericExit(-1); 
 	  return nullptr; 
 	} 
-      else 
+      else
 	{
-	  vector<double> fixedValues; 	  
-	  while(token.GetToken().compare(")") != 0)
+	  auto res = ProtModelFun::getModelFromStringIfPossible(token.GetToken()); 
+	  auto foundProt = std::get<0>(res); 
+
+	  if( foundProt )
 	    {
-	      fixedValues.push_back(atof(token.GetToken().c_str()));
+	      auto model = std::get<1>(res);
+
 	      token.GetNextToken();
-	      if(token.GetToken().compare(",") == 0)
-		token.GetNextToken();
+	      assert(token.GetToken().compare(")" ) == 0 ); 
+
+	      auto result = std::shared_ptr<AbstractPrior>(new DiscreteModelPrior( { {model, 1.}  } ));
+	      return result;
 	    }
-	  return shared_ptr<AbstractPrior>(new FixedPrior(fixedValues));
+	  else 
+	    {
+	      // auto fixedValues = std::vector<double>{}; 
+	      auto fixedValues = parseValues(token);
+
+	      std::cout << "found fixed values " << fixedValues << std::endl; 
+
+	      return shared_ptr<AbstractPrior>(new FixedPrior(fixedValues));
+	    }
 	}
     }
   else if(value.EqualsCaseInsensitive("exponential"))
@@ -94,14 +206,14 @@ void BlockPrior::Read(NxsToken &token)
   while(true)
     {
       token.GetNextToken();
-      NxsBlock::NxsCommandResult res = HandleBasicBlockCommands(token); 
+      auto  res = HandleBasicBlockCommands(token); 
 
       if (res == NxsBlock::NxsCommandResult(STOP_PARSING_BLOCK))
 	return;
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
 	{
 	  auto str = token.GetToken(false).ToUpper(); 
-	  Category cat = CategoryFuns::getCategoryByPriorName(str); 
+	  auto cat = CategoryFuns::getCategoryByPriorName(str); 
 	  token.GetNextToken();
 
 	  int priorPartition = -1;  
@@ -127,7 +239,7 @@ void BlockPrior::Read(NxsToken &token)
 	    }	    
 	  else 
 	    {
-	      map<nat,shared_ptr<AbstractPrior> > &priorsForPartition = specificPriors[int(cat)]; // BAD
+	      std::unordered_map<nat,std::shared_ptr<AbstractPrior> > &priorsForPartition = specificPriors[int(cat)]; // BAD
 	      assert(priorsForPartition[priorPartition] == nullptr); 
 	      priorsForPartition[priorPartition] = prior; 
 	    }

@@ -2,8 +2,8 @@
 #include <map> 
 #include <unordered_map>
 
-#include "StatNNI.hpp"
-#include "NodeSlider.hpp"
+#include "proposals/StatNNI.hpp"
+#include "proposals/NodeSlider.hpp"
 #include "Chain.hpp"		
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
@@ -42,7 +42,7 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
       proposals.push_back(std::move(copy)); 
     }
 
-  auto root = BranchPlain(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number); 
+  auto root = tralnPtr->getAnyBranch();
   const std::vector<AbstractParameter*> vars = extractParameters(); 
 
   if(not isDryRun)
@@ -179,8 +179,6 @@ void Chain::updateProposalWeights()
 
 void Chain::resume(bool evaluate, bool checkLnl) 
 {    
-  // tout << "resuming " << getCouplingId() << std::endl; 
-
   auto vs = extractParameters(); 
 
   // set the topology first 
@@ -191,7 +189,6 @@ void Chain::resume(bool evaluate, bool checkLnl)
 	{
 	  assert(not topoFound);
 	  topoFound = true; 
-	  // tout << "RESUME: APPLY " << v << "\t" << savedContent[v->getId()] << std::endl; 
 	  v->applyParameter(*tralnPtr, savedContent[v->getId()]); 
 	}
     }
@@ -200,16 +197,12 @@ void Chain::resume(bool evaluate, bool checkLnl)
   for(auto &v : vs)
     {
       if(v->getCategory() != Category::TOPOLOGY)
-	{
-	  // tout << "RESUME: APPLY " << v << "\t" << savedContent[v->getId()] << std::endl; 
-	  v->applyParameter(*tralnPtr, savedContent[v->getId()]); 
-	}
+	v->applyParameter(*tralnPtr, savedContent[v->getId()]); 
     }
 
   if(evaluate)
     {
-      auto tr = tralnPtr->getTr(); 
-      auto root = BranchPlain(tr->start->number, tr->start->back->number); 
+      auto root = tralnPtr->getAnyBranch(); 
       evaluator.evaluate(*tralnPtr, root, true);
 
       if(fabs(likelihood - tralnPtr->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )

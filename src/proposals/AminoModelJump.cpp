@@ -4,7 +4,7 @@
 
 
 
-AminoModelJump::AminoModelJump( vector<aaMatrix_t> matrices)
+AminoModelJump::AminoModelJump( std::vector<ProtModel> matrices)
   : AbstractProposal( Category::AA_MODEL, "aaMat")
 {
   relativeWeight = 0.0; // ??? TODO 
