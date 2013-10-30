@@ -67,10 +67,10 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
 
 void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterContent &content) const 
 {
-  auto partition = traln.getPartition(partitions[0]);
+  auto& partition = traln.getPartition(partitions[0]);
   bool ok = true; 
   ok &= BoundsChecker::checkFrequencies(content.values); 
-  ok &= (content.values.size() ==  nat(partition->states)); 
+  ok &= (content.values.size() ==  nat(partition.states)); 
   
   if(not ok)
     {

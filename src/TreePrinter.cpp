@@ -64,7 +64,7 @@ void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss,
   if(traln.isTipNode(p))
     {
       if(withRealNames)
-	ss << traln.getTr()->nameList[p->number]; 
+	ss << traln.getTrHandle().nameList[p->number]; 
       else 
 	ss << p->number; 
     }

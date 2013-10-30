@@ -93,8 +93,8 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
 
 void RevMatParameter::verifyContent(const TreeAln&traln, const ParameterContent &content) const 
 {
-  auto partition = traln.getPartition(partitions[0]); 
-  auto num = numStateToNumInTriangleMatrix(partition->states);
+  auto& partition = traln.getPartition(partitions[0]); 
+  auto num = numStateToNumInTriangleMatrix(partition.states);
 
   bool ok = true; 
 

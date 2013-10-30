@@ -135,8 +135,12 @@ nat SplitFreqAssessor::getNumTreeAvailable(string fileName)
 	  int index; 
 	  istringstream(num) >> index ; 
 	  index--; 
-	  assert(name.compare(taxa[index]) == 0); // assert same taxa names 
-	  
+
+	  if(name.compare(taxa.at(index)) != 0)
+	    {
+	      std::cout << "expected " << name << " but got " << taxa.at(index) << std::endl; 
+	      assert(0); // assert same taxa names 
+	    }
 	} 
       else if(cleanline.compare("translate") == 0)
 	foundTaxaStart = true; 

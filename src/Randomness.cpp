@@ -27,10 +27,11 @@ void Randomness::incrementNoLimit()
   ++ctr.v[0]; 
   if(ctr.v[0] == std::numeric_limits<unsigned int>::max())
     {
-      ctr.v[1]++; 
+      ++ctr.v[1]; 
       ctr.v[0] = 0;     
     }
 }
+
 
 
 int Randomness::drawIntegerClosed(int upperBound)

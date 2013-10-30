@@ -40,14 +40,14 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
 	}
 
       // restore the partition scaler 
-      auto partition = traln.getPartition( partitionIndex);       
-      // memcpy(partition->globalScaler, partitionLikelihoods.at(partitionIndex).scaler.data(), sizeof(nat) * (2 * traln.getNumberOfTaxa()  ) ); 
+      auto& partition = traln.getPartition( partitionIndex);       
+      // memcpy(partition.globalScaler, partitionLikelihoods.at(partitionIndex).scaler.data(), sizeof(nat) * (2 * traln.getNumberOfTaxa()  ) ); 
 
       if(restoresGapVector)
 	{
 	  std::copy(partitionLikelihoods.at(partitionIndex).gapColumn.begin(), 
 		    partitionLikelihoods.at(partitionIndex).gapColumn.end(), 
-		    partition->gapColumn ); 
+		    partition.gapColumn ); 
 	}
     }
 }
@@ -68,15 +68,15 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
   partitionLikelihoods[partitionId].cachedArrays[id] = arrayAndLength.first; 
   partitionLikelihoods[partitionId].lengths[id] = arrayAndLength.second; 
   
-  auto partition = traln.getPartition(partitionId); 
-  partitionLikelihoods[partitionId].scaler[nodeNumber] = partition->globalScaler[nodeNumber]; 
+  auto& partition = traln.getPartition(partitionId); 
+  partitionLikelihoods[partitionId].scaler[nodeNumber] = partition.globalScaler[nodeNumber]; 
 
   if(restoresGapVector)
     {
-      auto partition = traln.getPartition(partitionId); 
-      auto vec = partition->gapVector + nodeNumber * partition->gapVectorLength; 
-      auto iter = partitionLikelihoods[partitionId].gapVector.begin() + id * partition->gapVectorLength ; 
-      std::copy(vec , vec + partition->gapVectorLength, iter ); 
+      auto& partition = traln.getPartition(partitionId); 
+      auto vec = partition.gapVector + nodeNumber * partition.gapVectorLength; 
+      auto iter = partitionLikelihoods[partitionId].gapVector.begin() + id * partition.gapVectorLength ; 
+      std::copy(vec , vec + partition.gapVectorLength, iter ); 
     }
 }
 
@@ -98,18 +98,18 @@ void ArrayRestorer::destroyAndForget(TreeAln &traln, nat nodeNumber, nat partiti
 
 void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, ArrayOrientation &curOrient )
 {
-  auto partition = traln.getPartition(partitionId); 
+  auto& partition = traln.getPartition(partitionId); 
   auto id = nodeNumber - ( traln.getNumberOfTaxa() + 1) ; 
 
   auto &backup = partitionLikelihoods[partitionId]; 
   auto arrayAndLength = std::make_pair(backup.cachedArrays.at(id) , 
 				       backup.lengths.at(id)); 
 
-  if(partition->xVector[id] != NULL)
+  if(partition.xVector[id] != NULL)
     {
-      exa_free(partition->xVector[id]); 
-      partition->xVector[id] = NULL; 
-      partition->xSpaceVector[id] = 0; 
+      exa_free(partition.xVector[id]); 
+      partition.xVector[id] = NULL; 
+      partition.xSpaceVector[id] = 0; 
     }
 
   insertArray(traln, nodeNumber, partitionId, arrayAndLength); 
@@ -121,14 +121,14 @@ void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, Arr
   auto tmp = arrayOrientation.getOrientation(partitionId, id);
   curOrient.setOrientation(partitionId, id, tmp);
 
-  partition->globalScaler[nodeNumber] = backup.scaler[nodeNumber]  ; 
+  partition.globalScaler[nodeNumber] = backup.scaler[nodeNumber]  ; 
   
   if(restoresGapVector)
     {
-      auto partition = traln.getPartition(partitionId); 
-      auto vec = partition->gapVector + nodeNumber * partition->gapVectorLength; 
-      auto iter = backup.gapVector.begin() + id * partition->gapVectorLength; 
-      std::copy(iter, iter + partition->gapVectorLength, vec); 
+      auto& partition = traln.getPartition(partitionId); 
+      auto vec = partition.gapVector + nodeNumber * partition.gapVectorLength; 
+      auto iter = backup.gapVector.begin() + id * partition.gapVectorLength; 
+      std::copy(iter, iter + partition.gapVectorLength, vec); 
     }
 }
 
@@ -182,14 +182,14 @@ void ArrayRestorer::resetRestorer(const TreeAln &traln, ArrayOrientation &curOri
 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      auto partition = traln.getPartition( i); 
-      // partitionLikelihoods.at(i).scaler.assign(partition->globalScaler, partition->globalScaler + (2 * traln.getNumberOfTaxa() ) ); 
+      auto& partition = traln.getPartition( i); 
+      // partitionLikelihoods.at(i).scaler.assign(partition.globalScaler, partition.globalScaler + (2 * traln.getNumberOfTaxa() ) ); 
       
       if(restoresGapVector)
 	{
 	  // problematic? 
-	  std::copy(partition->gapColumn ,
-		    partition->gapColumn + traln.getNumberOfTaxa() * partition->states * 4, 		    
+	  std::copy(partition.gapColumn ,
+		    partition.gapColumn + traln.getNumberOfTaxa() * partition.states * 4, 		    
 		    partitionLikelihoods.at(i).gapColumn.begin() ); 
 	}
     }
@@ -212,15 +212,15 @@ void ArrayRestorer::clearMemory()
 
 std::pair<double*,nat> ArrayRestorer::removeArray(TreeAln &traln, nat num, nat pid)
 {
-  auto partition = traln.getPartition(pid);
+  auto& partition = traln.getPartition(pid);
 
   nat id = num - traln.getNumberOfTaxa() - 1; 
 
-  double *array = partition->xVector[id];
-  double length = partition->xSpaceVector[id]; 
+  double *array = partition.xVector[id];
+  double length = partition.xSpaceVector[id]; 
   
-  partition->xVector[id] = NULL; 
-  partition->xSpaceVector[id] = 0; 
+  partition.xVector[id] = NULL; 
+  partition.xSpaceVector[id] = 0; 
 
   return std::make_pair(array, length); 
 }
@@ -228,11 +228,11 @@ std::pair<double*,nat> ArrayRestorer::removeArray(TreeAln &traln, nat num, nat p
 
 void ArrayRestorer::insertArray(TreeAln &traln, nat num, nat pid, std::pair<double*,nat> toInsert)
 {
-  auto partition = traln.getPartition(pid);
+  auto& partition = traln.getPartition(pid);
   nat id = num - traln.getNumberOfTaxa() - 1 ; 
 
-  assert(partition->xVector[id] == NULL); 
+  assert(partition.xVector[id] == NULL); 
   
-  partition->xVector[id] = toInsert.first; 
-  partition->xSpaceVector[id] = toInsert.second; 
+  partition.xVector[id] = toInsert.first; 
+  partition.xSpaceVector[id] = toInsert.second; 
 }

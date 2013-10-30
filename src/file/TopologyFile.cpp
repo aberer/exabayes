@@ -41,15 +41,17 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId, bool isDryRun)
      << "[Param: tree]" << std::endl 
      <<  "begin trees;" << std::endl
      << "\ttranslate" <<  std::endl; 
-    
-  bool isList = false; 
-  nat numTax = traln.getNumberOfTaxa(); 
-  for(nat i = 0; i < numTax; ++i)
+
+  auto taxa =  traln.getTaxa(); 
+  nat ctr = 1; 
+  for(auto taxon : taxa)
     {
-      isList = ( i == numTax - 1 )  ; 
-      fh << "\t" <<  i+1 << "\t"
-	 << traln.getTr()->nameList[i+1]  << (isList ? ";" : ",")<< std::endl; 
-    }    
+      auto isLast = taxon.compare( taxa.back() )  == 0 ; 
+      fh << "\t" <<  ctr << "\t"
+  	 << taxon  << (isLast ? ";" : ",")<< std::endl; 
+      ++ctr; 
+    }
+
   fh.close(); 
 }
 

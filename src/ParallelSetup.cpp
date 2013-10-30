@@ -35,8 +35,8 @@ void ParallelSetup::printLoadBalance(const TreeAln& traln ) const
 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      auto partition = traln.getPartition(i); 
-      sumA += partition->width; 
+      auto& partition = traln.getPartition(i); 
+      sumA += partition.width; 
     }
   
   if(isGlobalMaster())

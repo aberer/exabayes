@@ -2,9 +2,11 @@
 #include <fstream>
 #include <memory>
 
+#include "TreeResource.hpp"
+#include "ByteFileResource.hpp"
+
 #include "AdHocIntegrator.hpp"
 #include "ProposalSet.hpp"
-
 
 #include "tree-parse/BasicTreeReader.hpp"
 #include "common.h"
@@ -15,6 +17,8 @@
 
 #include "priors/FixedPrior.hpp"
 #include "parameters/TopologyParameter.hpp"
+
+#include "TreeInitializer.hpp"
 
 #include "config/MemoryMode.hpp"
 #include "SampleMaster.hpp"
@@ -71,7 +75,7 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
       auto &&iss = std::istringstream {startingTree };
       auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
 
-      auto mapAsVect = traln.getNameMap(); 
+      auto mapAsVect = traln.getTaxa(); 
       mapAsVect.erase(mapAsVect.begin()); 
       auto map = std::unordered_map<std::string,nat>{}; 
       nat ctr = 1; 
@@ -161,16 +165,16 @@ void SampleMaster::printAlignmentInfo(const TreeAln &traln)
   
   for(nat i = 0 ;i < traln.getNumberOfPartitions() ;++i)
     {
-      auto partition = traln.getPartition(i);       
-      nat length = partition->upper - partition->lower; 
+      auto& partition = traln.getPartition(i);       
+      nat length = partition.upper - partition.lower; 
       
       tout << std::endl; 
 
       tout << "number:\t\t" << i << std::endl;     
-      tout << "name:\t\t" << partition->partitionName << std::endl; 
+      tout << "name:\t\t" << partition.partitionName << std::endl; 
       tout << "#patterns:\t" << length << std::endl;       
 
-      switch(partition->dataType)
+      switch(partition.dataType)
 	{
 	case DNA_DATA: 
 	  tout << "type:\t\tDNA" << std::endl; 
@@ -502,6 +506,31 @@ std::string SampleMaster::getOrCreateBinaryFile() const
 }
 
 
+
+nat SampleMaster::peekNumTax(std::string filePath)
+{
+  nat result = 0; 
+  auto &&in = std::ifstream{filePath, std::ios::binary}; 
+  auto initId = std::string{"BINARY"}; 
+  
+  for(nat i = 0; i < initId.size(); ++i)
+    {
+      int ch = 0; 
+      ch = in.get(); 
+
+      if(ch != int(initId[i]))
+	{
+	  tout << "error: expected >" << char(initId[i])  << "< but got >" << ch << "<"  << std::endl; 
+	  exit(-1); 
+	}
+    }
+
+  in.read((char*)&result, sizeof(result)) ; 
+
+  return result ;
+}
+
+
 void SampleMaster::initializeRuns()
 {  
   auto startingTrees = getStartingTreeStrings(); 
@@ -514,16 +543,18 @@ void SampleMaster::initializeRuns()
       ParallelSetup::genericExit(-1); 
     }
 
+  auto binaryAlnFile = getOrCreateBinaryFile(); 
+  auto numTax = peekNumTax(binaryAlnFile); 
+
   // initialize one tree 
-  auto&& initTreePtr = std::unique_ptr<TreeAln>(new TreeAln()); 
+  auto&& initTreePtr = std::unique_ptr<TreeAln>(new TreeAln(numTax)); 
 
   auto runmodes = cl.getTreeInitRunMode();
 
-  auto binaryAlnFile = getOrCreateBinaryFile(); 
-
   auto trees =  std::vector<std::shared_ptr<TreeAln> >{}; 
-  initTreePtr->initializeFromByteFile(binaryAlnFile, runmodes); 
-  initTreePtr->enableParsimony();
+  
+  auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new ByteFileResource(binaryAlnFile))); 
+  ti.initializeWithAlignmentInfo(*initTreePtr, runmodes); 
   const auto& initTree = *initTreePtr; 
 
   // START integrator
@@ -558,15 +589,18 @@ tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed());
 
   for(nat i = 0 ; i < runParams.getNumCoupledChains(); ++i)
     {      
-      trees.push_back(make_shared<TreeAln>()); 
-      trees[i]->initializeFromByteFile(binaryAlnFile, runmodes); 
-      trees[i]->enableParsimony();
+      trees.push_back(make_shared<TreeAln>(numTax)); 
+
+      // TODO make it a copy 
+      auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new ByteFileResource(binaryAlnFile)));
+      // auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new TreeResource(initTreePtr.get())));
+      ti.initializeWithAlignmentInfo(*(trees[i]), runmodes); 
 
 #if HAVE_PLL == 0
       if(cl.isPerPartitionDataDistribution())
 	{
-	  auto tr = trees[i]->getTr(); 
-	  tr->manyPartitions = TRUE; 
+	  auto &tr = trees[i]->getTrHandle(); 
+	  tr.manyPartitions = TRUE; 
 	}
 #endif
     }

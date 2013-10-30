@@ -51,8 +51,8 @@ bool LikelihoodEvaluator::applyDirtynessToSubtree(TreeAln &traln, nat partId, co
 
   auto p = branch.findNodePtr(traln); 
 
-  auto partition = traln.getPartition(partId);
-  bool isClean = arrayOrientation.isCorrect(partId, id, p->back->number) && partition->xSpaceVector[id] != 0; 
+  auto& partition = traln.getPartition(partId);
+  bool isClean = arrayOrientation.isCorrect(partId, id, p->back->number) && partition.xSpaceVector[id] != 0; 
 
   if( isClean)
     {
@@ -129,7 +129,7 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
     perPartitionLH[m] = pLnl[m]; 
   traln.setPartitionLnls(perPartitionLH); 
 
-  traln.getTr()->likelihood = std::accumulate(perPartitionLH.begin(), perPartitionLH.end(), 0.); 
+  traln.getTrHandle().likelihood = std::accumulate(perPartitionLH.begin(), perPartitionLH.end(), 0.); 
   traln.setExecModel(std::vector<bool>(numPart, true));
 
 #ifdef DEBUG_LNL_VERIFY
@@ -213,9 +213,9 @@ void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, const BranchPlain&
     }
 
 #if HAVE_PLL != 0
-  evaluateGeneric(traln.getTr(), traln.getPartitionsPtr(), start, FALSE); 
+  evaluateGeneric(&traln.getTrHandle(), &traln.getPartitionsHandle(), start, FALSE); 
 #else 
-  evaluateGeneric(traln.getTr(), start, FALSE); 
+  evaluateGeneric(&traln.getTrHandle(), start, FALSE); 
 #endif  
 }
 
@@ -224,9 +224,9 @@ void LikelihoodEvaluator::coreEvalSubTree(TreeAln& traln, const BranchPlain &roo
 {
   auto p = root.findNodePtr(traln); 
 #if HAVE_PLL != 0
-  newviewGeneric(traln.getTr(), traln.getPartitionsPtr(), p, TRUE   ); 
+  newviewGeneric(&traln.getTrHandle(), &traln.getPartitionsHandle(), p, TRUE   ); 
 #else 
-  newviewGeneric(traln.getTr(), p, TRUE  ); 
+  newviewGeneric(&traln.getTrHandle(), p, TRUE  ); 
 #endif 
 }
 
@@ -265,19 +265,19 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, const BranchPlain& roo
   disorientDebug(*debugTraln, root); 
   
 #if HAVE_PLL != 0
-  evaluateGeneric(debugTraln->getTr(), debugTraln->getPartitionsPtr(), root.findNodePtr(*debugTraln), FALSE); 
+  evaluateGeneric(&debugTraln->getTrHandle(), &debugTraln->getPartitionsHandle(), root.findNodePtr(*debugTraln), FALSE); 
 #else 
-  evaluateGeneric(debugTraln->getTr() , root.findNodePtr(*debugTraln), FALSE); 
+  evaluateGeneric(&debugTraln->getTrHandle() , root.findNodePtr(*debugTraln), FALSE); 
 #endif  
 
-  double verifiedLnl =  debugTraln->getTr()->likelihood; 
+  double verifiedLnl =  debugTraln->getTrHandle().likelihood; 
 
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
 
 #if 1 
-  auto partition = debugTraln->getPartition(0); 
-  auto sc = partition->globalScaler; 
+  auto& partition = debugTraln->getPartition(0); 
+  auto sc = partition.globalScaler; 
   tout << "scCorr=" ; 
   nat ctr = 0; 
   for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
@@ -290,8 +290,8 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, const BranchPlain& roo
     }
   tout << std::endl; 
 
-  partition = traln.getPartition(0); 
-  sc = partition->globalScaler; 
+  auto partition2 = traln.getPartition(0); 
+  sc = partition2.globalScaler; 
   tout << "scReal=" ; 
   ctr = 0; 
   for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)

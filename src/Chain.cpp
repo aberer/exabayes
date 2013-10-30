@@ -50,7 +50,7 @@ Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector
 
   prior.initialize(*tralnPtr, vars);
   
-  likelihood = tralnPtr->getTr()->likelihood; 
+  likelihood = tralnPtr->getTrHandle().likelihood; 
   suspend(); 
   updateProposalWeights();
 }
@@ -205,13 +205,13 @@ void Chain::resume(bool evaluate, bool checkLnl)
       auto root = tralnPtr->getAnyBranch(); 
       evaluator.evaluate(*tralnPtr, root, true);
 
-      if(fabs(likelihood - tralnPtr->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
+      if(fabs(likelihood - tralnPtr->getTrHandle().likelihood) >  ACCEPTED_LIKELIHOOD_EPS ) 
 	{
 	  addChainInfo(std::cerr); 
 	  std::cerr << "While trying to resume chain: previous chain liklihood"
 		    <<  " could not be exactly reproduced. Please report this issue." << std::endl; 
 	  std::cerr << MAX_SCI_PRECISION << 
-	    "prev=" << likelihood << "\tnow=" << tralnPtr->getTr()->likelihood << std::endl; 	  
+	    "prev=" << likelihood << "\tnow=" << tralnPtr->getTrHandle().likelihood << std::endl; 	  
 	  assert(0);       
 	}  
       
@@ -440,7 +440,7 @@ void Chain::stepSingleProposal()
   pfun.evaluateProposal(evaluator, *tralnPtr, suggestion);
   
   double priorRatio = prior.getLnPriorRatio();
-  double lnlRatio = traln.getTr()->likelihood - prevLnl; 
+  double lnlRatio = traln.getTrHandle().likelihood - prevLnl; 
 
   double testr = chainRand.drawRandDouble01();
   double acceptance = exp(( priorRatio + lnlRatio) * myHeat + hastings) ; 
@@ -448,20 +448,21 @@ void Chain::stepSingleProposal()
   bool wasAccepted  = testr < acceptance; 
 
 #ifdef DEBUG_SHOW_EACH_PROPOSAL 
-  auto& output = std::cout ; 
+  auto& output = tout  ; 
+// std::cout ; 
 
   addChainInfo(output); 
   output << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun.getName() << "\t" 
-	 << SOME_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << hastings << std::endl; 
+	 << MORE_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << hastings << std::endl; 
 #endif
 
   if(wasAccepted)
     {
       pfun.accept();      
       prior.accept();
-      if(bestState < traln.getTr()->likelihood  )
-	bestState = traln.getTr()->likelihood; 
-      likelihood = traln.getTr()->likelihood; 
+      if(bestState < traln.getTrHandle().likelihood  )
+	bestState = traln.getTrHandle().likelihood; 
+      likelihood = traln.getTrHandle().likelihood; 
       lnPr = prior.getLnPrior();
     }
   else
@@ -584,7 +585,7 @@ void Chain::stepSetProposal()
   auto nodes = pSet.getProposalView()[0]->getInvalidatedNodes(traln); 
   evaluator.accountForRejection(traln, partitionsToReset, nodes); 
 
-  likelihood = traln.getTr()->likelihood; 
+  likelihood = traln.getTrHandle().likelihood; 
   lnPr = prior.getLnPrior();
   
   if(bestState < likelihood)

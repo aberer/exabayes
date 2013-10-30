@@ -1,6 +1,7 @@
 #include <sstream>
 #include <string.h>
 #include <cassert>
+#include "TreeInitializer.hpp"
 #include <iostream>
 #include <cmath>
 #include "Branch.hpp"
@@ -13,7 +14,12 @@ TreeProcessor::TreeProcessor(std::vector<std::string> fileNames)
 {
   fillTaxaInfo(fileNames[0]); 
 
-  initializeTreeOnly(taxa.size() );
+  nat numTax = taxa.size(); 
+
+  tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(numTax));
+  // auto tInit = TreeInitializer(); 
+  TreeInitializer::initializeBranchLengths(tralnPtr->getTrHandle(), 1,numTax); 
+
   fns = fileNames; 
 }
 
@@ -33,22 +39,6 @@ TreeProcessor& TreeProcessor::operator=(TreeProcessor &&rhs)
   else 
     assert(0); 
 } 
-
-
-// static nodeptr getUnlinkedNode(const TreeAln &traln, nat id)
-// {
-//   auto p  = traln.getNode(id); 
-//   if(p->back == NULL)
-//     return p; 
-//   else if(p->next->back == NULL)
-//     return p->next; 
-//   else if(p->next->next->back == NULL)
-//     return p->next->next; 
-//   else 
-//     assert(0);
-//   return NULL; 
-// }
-
 
 
 template<bool readBl>
@@ -79,40 +69,6 @@ void TreeProcessor::nextTree(std::istream &treefile)
 void TreeProcessor::skipTree(std::istream &iss)
 {
   while( iss &&  iss.get() != ';'); 
-}
-
-
-void TreeProcessor::initializeTreeOnly(int numTax )
-{
-  tralnPtr = std::unique_ptr<TreeAln>(new TreeAln());
-  tree *tr = tralnPtr->getTr();
-  tr->mxtips = numTax; 
-
-#if HAVE_PLL != 0
-  partitionList *pl = (partitionList*)exa_calloc(1,sizeof(partitionList)); 
-  // pl->numberOfPartitions = 1; 	// BAD!!!! needed for extractBips
-  setupTree(tr, false, pl);  
-  tralnPtr->setPartitionList(pl); 
-#else 
-  tr->NumberOfModels = 0; 
-  setupTree(tr);
-#endif
-
-  for(int i = 0; i < numTax + 3 * ( numTax - 1  ) ; ++i ) 
-    {
-      tr->nodeBaseAddress[i].z = (double*)exa_malloc(1 * sizeof(double)); 
-    }
-
-  int space = int(log(numTax) * 10 ) ;
-  // initialize the name hash, s.t. we can read trees 
-  for(int i = 1; i <= tr->mxtips; i++)
-    {      
-      tr->nameList[i] = (char*)malloc(sizeof(char) * space );      
-      auto &&ss = std::stringstream{}; 
-      ss << i ;
-      strcpy(tr->nameList[i], ss.str().c_str()); 
-      addword(tr->nameList[i] , tr->nameHash, i); 
-    }
 }
 
 

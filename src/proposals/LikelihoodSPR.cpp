@@ -73,7 +73,7 @@ double LikelihoodSPR::scoreReattachment(TreeAln& traln, const BranchLength &reat
 
   // tout << std::endl; 
   eval.evaluate(traln, toOptimise[0].toPlain(), false); 
-  result =  traln.getTr()->likelihood;
+  result =  traln.getTrHandle().likelihood;
   
   // revert 
   if(doRevert)
@@ -522,10 +522,10 @@ void LikelihoodSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &tr
   for(auto &elem : move.getDirtyNodes(traln, false))
     evaluator.markDirty( traln, elem);
 
-  auto  eval = BranchPlain(traln.getTr()->nodep[1]->number, traln.getTr()->nodep[1]->back->number); 
+  auto evalBranch = traln.getAnyBranch(); 
 
   // TODO inefficient 
-  evaluator.evaluate(traln, eval, true);
+  evaluator.evaluate(traln, evalBranch, true);
 } 
 
 

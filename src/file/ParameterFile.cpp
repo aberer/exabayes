@@ -70,7 +70,7 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
   fh << gen << "\t"; 
   fh << MAX_SCI_PRECISION; 
   fh << lnPr << "\t"; 
-  fh << traln.getTr()->likelihood << "\t" ; 
+  fh << traln.getTrHandle().likelihood << "\t" ; 
 
   std::vector<AbstractParameter*> blParams ; 
   for(auto &p : parameters)

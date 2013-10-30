@@ -17,7 +17,7 @@ void BlockParams::partitionError(nat partition, nat totalPart) const
 
 void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 {
-  nat numPart = traln->getNumberOfPartitions();
+  nat numPart = tralnPtr->getNumberOfPartitions();
   vector<bool> partAppeared(numPart, false); 
 
   token.GetNextToken();
@@ -71,11 +71,11 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   
   // maybe this should not be done here /= 
   // too clumsy -- must be tested 
-  for(nat i = 0; i < traln->getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < tralnPtr->getNumberOfPartitions(); ++i)
     {
       if(not partAppeared[i] && 
-	 (   ( cat == Category::AA_MODEL && traln->getPartition(i)->dataType == AA_DATA ) 
-	     || (cat == Category::SUBSTITUTION_RATES && traln->getPartition(i)->dataType == DNA_DATA) 
+	 (   ( cat == Category::AA_MODEL && tralnPtr->getPartition(i).dataType == AA_DATA ) 
+	     || (cat == Category::SUBSTITUTION_RATES && tralnPtr->getPartition(i).dataType == DNA_DATA) 
 	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
 	{	  
 	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr, getNumSeen(cat));

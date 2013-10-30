@@ -24,7 +24,7 @@ BipartitionHashNew::BipartitionHashNew(nat numTax)
 
 void BipartitionHashNew::addTree(const TreeAln &traln, bool withBranch, bool withTrivial)
 {
-  auto pStart = traln.getTr()->nodep[1]->back; 
+  auto pStart = traln.getTrHandle().nodep[1]->back; 
   auto desc = traln.getDescendents(BranchPlain(pStart->number, pStart->back->number)); 
 
   addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch, withTrivial); 

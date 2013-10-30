@@ -8,12 +8,12 @@ void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
   nat r = rand();  
 
   traln.unlinkTree();
-  traln.getTr()->randomNumberSeed = r; 
+  traln.getTrHandle().randomNumberSeed = r; 
 
 #if HAVE_PLL != 0
-  makeParsimonyTreeFast(traln.getTr(), traln.getPartitionsPtr());
+  makeParsimonyTreeFast(&(traln.getTrHandle()), &(traln.getPartitionsHandle()));
 #else 
-  makeParsimonyTreeFast(traln.getTr()); 
+  makeParsimonyTreeFast(&(traln.getTrHandle())); 
 #endif
 }
 
@@ -152,7 +152,7 @@ BranchPlain TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Rando
   // in the nodeptr array that is the number of trees in the final
   // tree
   if( r <= 0.75) 		// draw an inner node 
-    randId = 1 + traln.getTr()->mxtips + rand.drawIntegerClosed(curNumTax -3 )  ; 
+    randId = 1 + traln.getTrHandle().mxtips + rand.drawIntegerClosed(curNumTax -3 )  ; 
   else 				// draw a tip 
     randId = rand.drawIntegerOpen(curNumTax) + 1 ;           
 

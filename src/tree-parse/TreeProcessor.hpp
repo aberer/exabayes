@@ -18,11 +18,6 @@ protected: 			// METHODS
   template<bool readBl>
   void nextTree(std::istream &treefile); 
   void skipTree(std::istream &iss); 
-  /** 
-      @brief only initializes a raw tree, no partitions or alignment information. 
-      important: does NOT need a bytefile 
-  */ 
-  void initializeTreeOnly(int numTax);  
   static std::string trim(const std::string& str, const std::string& whitespace  = " \t"); 
 
 protected: 			// ATTRIBUTES

@@ -61,8 +61,8 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, Tree
   // evaluator.evaluatePartitions(traln, allRelevantPartitions2,true); 
 
   // when in doubt, there is always 
-  tree *tr = traln.getTr(); 
-  auto toEval = BranchPlain(tr->start->number, tr->start->back->number); // a bit clunky 
+  auto& tr = traln.getTrHandle(); 
+  auto toEval = BranchPlain(tr.start->number, tr.start->back->number); // a bit clunky 
   evaluator.evaluate(traln, toEval, true); 
 }
 

@@ -84,7 +84,7 @@ Branch2Stat TreeIntegrator::integrateTree(double essThresh, LikelihoodEvaluator 
   
   eval.evaluate(traln, traln.getAnyBranch(),true); 
   eval.freeMemory(); 
-  integrationChain->setLikelihood(traln.getTr()->likelihood); 
+  integrationChain->setLikelihood(traln.getTrHandle().likelihood); 
   integrationChain->suspend(); 
   integrationChain->resume(true, false ); 
 
@@ -185,7 +185,7 @@ void TreeIntegrator::integrateAllBranchesNew(const TreeAln &otherTree, std::stri
   auto allBranchLengthsBefore = traln.extractBranches(param) ;
 
   auto initBranch2Stat = integrateTree(ESS_THRESH, eval); 
-  double initLnl = traln.getTr()->likelihood;  
+  double initLnl = traln.getTrHandle().likelihood;  
 
   auto moves = SprMove::getAllUniqueMoves(traln,sprDistance); 
 
@@ -203,7 +203,7 @@ void TreeIntegrator::integrateAllBranchesNew(const TreeAln &otherTree, std::stri
 
       auto branchStatAfter = integrateTree(ESS_THRESH, eval); 
       
-      auto lnlAfter = traln.getTr()->likelihood; 
+      auto lnlAfter = traln.getTrHandle().likelihood; 
 
       nat blCtr = 0; 
       for(auto b : allBranchesBefore)

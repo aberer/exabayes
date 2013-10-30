@@ -17,10 +17,10 @@
 class  ParameterContent : public Serializable
 {
 public: 
-  ParameterContent(std::vector<double> valuesI = {}, 
-		   std::vector<BranchPlain> topoI = {}, 
-		   std::vector<BranchLength> blI = {}, 
-		   std::vector<ProtModel>  pmI = {})
+  ParameterContent(std::vector<double> valuesI = std::vector<double>{}, 
+		   std::vector<BranchPlain> topoI = std::vector<BranchPlain>{}, 
+		   std::vector<BranchLength> blI = std::vector<BranchLength>{}, 
+		   std::vector<ProtModel>  pmI = std::vector<ProtModel>{})
     : values{valuesI}
     , topology{topoI}
     , branchLengths{blI}

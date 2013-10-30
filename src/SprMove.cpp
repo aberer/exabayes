@@ -521,7 +521,7 @@ SprMove SprMove::getInverseMove(const TreeAln &traln, const std::vector<Abstract
 
 void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParameter*> blParams, LikelihoodEvaluator &eval, double &hastings ) const 
 {
-  double prevLnl = traln.getTr()->likelihood;  
+  double prevLnl = traln.getTrHandle().likelihood;  
 
   assert(blParams.size() == 1); 
   auto blParam = blParams[0]; 
@@ -590,7 +590,7 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
     }
 
   eval.evaluate(traln, prunedSubtree, true); 
-  double newLnl = traln.getTr()->likelihood; 
+  double newLnl = traln.getTrHandle().likelihood; 
 
   revertTree(traln, blParams); 
   hastings = oldHastings; 

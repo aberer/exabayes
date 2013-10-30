@@ -38,7 +38,10 @@ public:
    /////////////////
    // life cycle  //
    /////////////////
-  explicit TreeAln();
+  explicit TreeAln(nat numTax);
+  TreeAln(const TreeAln& rhs);
+  friend void swap(TreeAln &lhs, TreeAln& rhs); 
+  friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
   ~TreeAln();
   /** 
       @brief copies the entire model from the rhs.
@@ -49,15 +52,7 @@ public:
      @brief copies the entire state from the rhs to this tree/alignment.
      Important: likelihood arrays are not concerned
   */ 
-  TreeAln& operator=( TreeAln &rhs) = delete ;     
-  TreeAln(const TreeAln &tmp) = delete ; 
-  
-  /** 
-      @brief indicates whether this TreeAln is equal to rhs (with
-      regard to all model parameters)
-   */   
-  bool operator==(const TreeAln& rhs); 
-
+  TreeAln& operator=(TreeAln rhs);
 
   /////////////////////////////////////
   //           OBSERVERS             //
@@ -65,19 +60,19 @@ public:
   /**
      @brief get the raxml representation of the partition  
    */ 
-  pInfo* getPartition(nat model) const;
+  pInfo& getPartition(nat model) const;
+  
+  // TODO 
+  // const pInfo& getPartition(nat model) const ;
   /** 
       @brief get the internal raxml tree representation 
    */ 
-  tree* getTr() {return &tr;}
+  tree& getTrHandle() {return tr;}
+  const tree& getTrHandle() const {return tr; }
   /** 
       @brief frees all likelihood arrays 
    */   
   void clearMemory(); 
-  /** 
-      @brief get a constant internal raxml tree representation  
-   */ 
-  const tree* getTr() const{return &tr; }
   /** 
       @brief get the number of per-partition branch lengths
       @notice do NOT confuse with getNumberOfBranches 
@@ -95,7 +90,7 @@ public:
   /** 
       @brief get the number of taxa in the tree 
    */ 
-  nat getNumberOfTaxa() const {return getTr()->mxtips; }
+  nat getNumberOfTaxa() const {return getTrHandle().mxtips; }
   /** 
       @brief get the number of nodes in the unrooted tree 
    */ 
@@ -111,12 +106,12 @@ public:
   /**
      @brief gets the alpha parameter of the gamma distribution  
    */ 
-  double getAlpha(int model) const {pInfo *partition = getPartition(model) ; return partition->alpha; } 
+  double getAlpha(int model) const {auto& partition = getPartition(model) ; return partition.alpha; } 
   /** 
       @brief indicates whether a nodepointer is a tip 
    */ 
-  bool isTipNode(nodeptr p) const {return isTip(p->number, getTr()->mxtips );}
-  bool isTipNode(nat node) const { return isTip(node, getTr()->mxtips) ; }
+  bool isTipNode(nodeptr p) const {return isTip(p->number, getTrHandle().mxtips );}
+  bool isTipNode(nat node) const { return isTip(node, getTrHandle().mxtips) ; }
   /** 
       @brief gets the branch from a node pointer (including branch length)
       
@@ -134,6 +129,9 @@ public:
 
   BranchLength getBranch(const nodeptr &branch,  const AbstractParameter *param) const; 
   BranchLengths getBranch(const nodeptr &branch, const std::vector<AbstractParameter*> &params) const ; 
+
+  void setNumberOfPartitions(nat numPart);
+
   /** 
       @brief gets a nodepointer with specified id 
    */ 
@@ -170,8 +168,8 @@ public:
   // MODIFIERS //
   ///////////////
 #if HAVE_PLL != 0 
-  void setPartitionList(partitionList *pl) { partitions = *pl; }
-  partitionList* getPartitionsPtr()  { return &partitions; }   
+  // void setPartitionList(partitionList *pl) { partitions = *pl; }
+  partitionList& getPartitionsHandle()  { return partitions; }   
 #endif  
   BranchPlain getAnyBranch() const ;//  {return BranchPlain(tr.nodep[1]->number, tr.nodep[1]->back->number); } 
   
@@ -202,10 +200,6 @@ public:
    */ 
   void clipNodeDefault(nodeptr p, nodeptr q); 
   /**
-     @brief activite parsimony 
-   */ 
-  void enableParsimony();
-  /**
      @brief resets/destroys the topology in the tree 
    */ 
   void unlinkTree();
@@ -222,10 +216,8 @@ public:
       that the tree is in a usable state afterwards (and thus, this
       method may me rather expensive)
   */ 
-  void initializeFromByteFile(std::string byteFileName, RunModes mode); 
-  void initializeNumBranchRelated(); 
-  // nat readNUM_BRANCHES(std::string byteFileName); 
-  
+  // void initializeFromByteFile(std::string byteFileName, RunModes mode); 
+
   /**
      @brief gets a node with given id that is not connected to the tree right now 
    */ 
@@ -249,7 +241,7 @@ public:
   /** 
       @brief gets a list of of sequence names  
    */ 
-  std::vector<std::string> getNameMap() const; 
+  // std::vector<std::string> getNameMap() const; 
 
   static const double initBL;  	// init values 
 
@@ -259,21 +251,27 @@ public:
 
   RunModes getMode() const { return mode; }
 
+  void setTaxa(std::vector<std::string> map){ _taxa = map; }
+  std::vector<std::string> getTaxa() const {return _taxa; }
+
   std::vector<BranchPlain> getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const;   
 
-private: 			// METHODS  
+
+  void setMode(RunModes modeI){mode = modeI; }
+
+private: // METHODS  
   void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(int model); 
+  void createStandardTree(nat numTax); 
 
 private: 			// ATTRIBUTES 
 #if HAVE_PLL != 0 
   partitionList partitions; 
 #endif
   tree tr;		// TODO replace with an object for cleanup   
-  bool parsimonyEnabled;   
   RunModes mode; 
-  
-  friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
+  std::vector<std::string> _taxa; 
+
 };  
 
 

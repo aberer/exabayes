@@ -137,8 +137,10 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   auto blParams = getBranchLengthsParameterView(); 
   drawPathForESPR( traln,rand ,stopProb); 
 
-  double oldLnl = traln.getTr()->likelihood; 
+#ifdef MOVE_INFO
   double topoLnl = 0; 
+  double oldLnl = traln.getTr()->likelihood; 
+#endif
   double branchLnl = 0; 
 
   double impact = 0; 
@@ -191,7 +193,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
       for(auto n : move.getDirtyNodes(traln, outer))
 	eval.markDirty(traln, n);
       eval.evaluate(traln,move.getEvalBranch(traln), false); 
-      branchLnl = traln.getTr()->likelihood; 
+      branchLnl = traln.getTrHandle().likelihood; 
       // END
     }
   else 

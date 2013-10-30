@@ -1014,71 +1014,6 @@ static void restoreTreeRearrangeParsimony(tree *tr, partitionList *pr)
   restoreTreeParsimony(tr, pr, tr->removeNode, tr->insertNode);
 }
 
-/*
-static boolean isInformative2(tree *tr, int site)
-{
-  int
-    informativeCounter = 0,
-    check[256],   
-    j,   
-    undetermined = 15;
-
-  unsigned char
-    nucleotide,
-    target = 0;
-  	
-  for(j = 0; j < 256; j++)
-    check[j] = 0;
-  
-  for(j = 1; j <= tr->mxtips; j++)
-    {	   
-      nucleotide = tr->yVector[j][site];	    
-      check[nucleotide] =  check[nucleotide] + 1;      	           
-    }
-  
-  
-  if(check[1] > 1)
-    {
-      informativeCounter++;    
-      target = target | 1;
-    }
-  if(check[2] > 1)
-    {
-      informativeCounter++; 
-      target = target | 2;
-    }
-  if(check[4] > 1)
-    {
-      informativeCounter++; 
-      target = target | 4;
-    }
-  if(check[8] > 1)
-    {
-      informativeCounter++; 
-      target = target | 8;
-    }
-	  
-  if(informativeCounter >= 2)
-    return TRUE;    
-  else
-    {        
-      for(j = 0; j < undetermined; j++)
-	{
-	  if(j == 3 || j == 5 || j == 6 || j == 7 || j == 9 || j == 10 || j == 11 || 
-	     j == 12 || j == 13 || j == 14)
-	    {
-	      if(check[j] > 1)
-		{
-		  if(!(target & j))
-		    return TRUE;
-		}
-	    }
-	} 
-    }
-     
-  return FALSE;	     
-}
-*/
 
 static boolean isInformative(tree *tr, int dataType, int site)
 {
@@ -1246,10 +1181,14 @@ static void compressDNA(tree *tr, partitionList *pr, int *informative)
       parsimonyNumber 
 	**compressedTips = (parsimonyNumber **)rax_malloc(states * sizeof(parsimonyNumber*)),
 	*compressedValues = (parsimonyNumber *)rax_malloc(states * sizeof(parsimonyNumber));
-      
-      for(i = lower; i < upper; i++)    
-	if(informative[i])
-	  entries += (size_t)tr->aliaswgt[i];     
+
+      nat localCnt = 0;
+      for(nat i = lower ; i < upper; ++i)
+      	{
+      	  if(informative[i])
+      	    entries += pr->partitionData[model]->wgt[localCnt];
+      	  ++localCnt;
+      	}
 
       compressedEntries = entries / PCF;
 
@@ -1291,15 +1230,20 @@ static void compressDNA(tree *tr, partitionList *pr, int *informative)
 	      
 	  for(index = lower; index < (size_t)upper; index++)
 	    {
+	      nat ctrInPartition = 0; 
+
 	      if(informative[index])
 		{
 		  const unsigned int 
 		    *bitValue = getBitVector(pr->partitionData[model]->dataType);
 
 		  parsimonyNumber 
-		    value = bitValue[tr->yVector[i + 1][index]];	  
+		    value = bitValue[tr->yVector[i + 1][index]];
+		    /* value = bitValue[  pr->partitionData[model]->yVector[i + 1 ][ ctrInPartition] ]; */
+
+		  /* printf("nr=%u\n", value); */
 	      
-		  for(w = 0; w < (size_t)tr->aliaswgt[index]; w++)
+		  for(w = 0; w < (size_t) pr->partitionData[model]->wgt[ctrInPartition]; w++) 
 		    {	   
 		      for(k = 0; k < states; k++)
 			{
@@ -1322,6 +1266,7 @@ static void compressDNA(tree *tr, partitionList *pr, int *informative)
 			}
 		    }
 		}
+	      ++ctrInPartition; 
 	    }
                            
 	  for(;compressedIndex < compressedEntriesPadded; compressedIndex++)

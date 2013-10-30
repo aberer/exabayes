@@ -33,6 +33,7 @@ public:
       @notice this is the top-level function 
    */ 
   void initializeRuns( ); 
+  nat peekNumTax(std::string filePath); 
   /** 
       @brief cleanup, once finished
    */ 

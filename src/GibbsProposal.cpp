@@ -110,9 +110,9 @@ std::array<double,3> GibbsProposal::optimiseBranch( TreeAln &traln, const Branch
   double init = b.getLength(); 
 
 #if HAVE_PLL != 0
-  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, lambda, FALSE) ;
+  makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, lambda, FALSE) ;
 #else 
-  makenewzGeneric(traln.getTr(), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, lambda, FALSE) ;
+  makenewzGeneric(&(traln.getTrHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, lambda, FALSE) ;
 #endif
 
   return std::array<double,3>{{result, nrD1, nrD2}}; 

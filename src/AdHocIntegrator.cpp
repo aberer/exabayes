@@ -134,11 +134,11 @@ double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std
   for(nat i = 0; i < nrSteps; ++i )
     {
 #if HAVE_PLL != 0 
-      makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
+      makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), 
 		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
 #else 
-      makenewzGeneric(traln.getTr(), 
+      makenewzGeneric(&(traln.getTrHandle()), 
 		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 	  
 #endif
@@ -152,11 +152,11 @@ double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std
   double something = tmpBranch.getLength(); 
 
 #if HAVE_PLL != 0
-  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), 
+  makenewzGeneric(&traln.getTrHandle(), &traln.getPartitionsHandle(), 
 		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
 #else 
-  makenewzGeneric(traln.getTr(), 
+  makenewzGeneric(&traln.getTrHandle(), 
 		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
 		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
 #endif
@@ -189,7 +189,7 @@ void AdHocIntegrator::createLnlCurve(BranchPlain branch, std::string runid, Tree
 	  b.setConvertedInternalLength(traln, paramView[0], i); 
 	  traln.setBranch(b, paramView[0]); 
 	  eval.evaluate(traln, branch, false);
-	  double lnl = traln.getTr()->likelihood; 
+	  double lnl = traln.getTrHandle().likelihood; 
 	  thisOut << i << "\t" << setprecision(std::numeric_limits<double>::digits10) << lnl << endl; 
 	}
     }
@@ -207,8 +207,8 @@ double AdHocIntegrator::getParsimonyLength(TreeAln &traln, const BranchPlain &b 
   pEval.evaluate(traln, b.findNodePtr(traln), true, partitionParsimony, branchLength );
 
   assert(traln.getNumberOfPartitions() == 1 ); 
-  auto *partition =  traln.getPartition(0);
-  auto length = partition->upper - partition->lower; 
+  auto& partition =  traln.getPartition(0);
+  auto length = partition.upper - partition.lower; 
 
   double result =  double(branchLength[0])  / double(length); 
   return result; 

@@ -16,7 +16,7 @@ public:
 
   void imprint(const TreeAln &traln, ArrayOrientation &arrayOrient) 
   {
-    prevLnl = traln.getTr()->likelihood; 
+    prevLnl = traln.getTrHandle().likelihood; 
     partitionLnls = traln.getPartitionLnls(); 
     imprintPolicy(traln, arrayOrient); 
   }
@@ -40,7 +40,7 @@ public:
 	sum += lnls[i]; 
       }
     traln.setPartitionLnls(lnls); 
-    traln.getTr()->likelihood = sum;  
+    traln.getTrHandle().likelihood = sum;  
   }
 
   virtual void accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient)  = 0; 

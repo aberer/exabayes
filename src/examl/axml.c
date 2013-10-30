@@ -637,13 +637,9 @@ boolean setupTree (tree *tr)
   tr->maxCategories = MAX(4, tr->categories);
   
   tr->partitionContributions = (double *)malloc(sizeof(double) * tr->NumberOfModels);
-  
   for(i = 0; i < tr->NumberOfModels; i++)
     tr->partitionContributions[i] = -1.0;
-  
   tr->perPartitionLH = (double *)malloc(sizeof(double) * tr->NumberOfModels);
-  
-  
   for(i = 0; i < tr->NumberOfModels; i++)    
     tr->perPartitionLH[i] = 0.0;	    
   
@@ -683,7 +679,6 @@ boolean setupTree (tree *tr)
   tr->constraintVector = (int *)malloc((2 * tr->mxtips) * sizeof(int));
   
   tr->nameList = (char **)malloc(sizeof(char *) * (tips + 1));
-   
 
   if (!(p0 = (nodeptr) malloc((tips + 3*inter) * sizeof(node))))
     {

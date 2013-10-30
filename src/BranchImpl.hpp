@@ -4,7 +4,7 @@
 template<typename TYPE>
 bool Branch<TYPE>::isTipBranch(const TreeAln &traln) const
 { 
-  nat  num = traln.getTr()->mxtips ; 
+  nat  num = traln.getTrHandle().mxtips ; 
   return (thisNode <= num) || (thatNode <= num);
 }
 
@@ -12,7 +12,7 @@ bool Branch<TYPE>::isTipBranch(const TreeAln &traln) const
 template<typename TYPE>
 bool Branch<TYPE>::exists(const TreeAln &traln) const
 {
-  nodeptr p = traln.getTr()->nodep[thisNode]; 
+  nodeptr p = traln.getTrHandle().nodep[thisNode]; 
   return
     (nat)p->back->number == thatNode
     || (nat)p->next->back->number == thatNode
@@ -22,9 +22,9 @@ bool Branch<TYPE>::exists(const TreeAln &traln) const
 template<typename TYPE>
 nodeptr Branch<TYPE>::findNodePtr(const TreeAln &traln) const
 {
-  auto tr = traln.getTr(); 
+  auto& tr = traln.getTrHandle(); 
   
-  nodeptr p = tr->nodep[thisNode]; 
+  nodeptr p = tr.nodep[thisNode]; 
   if(p->back->number == (int)thatNode)
     return p ; 
   else if(p->next->back->number == (int)thatNode) 
@@ -73,7 +73,7 @@ template<typename TYPE>
 BranchPlain Branch<TYPE>::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
 {
   int node = getIntersectingNode(rhs); 
-  assert(not traln.isTipNode(traln.getTr()->nodep[node])); 
+  assert(not traln.isTipNode(traln.getTrHandle().nodep[node])); 
 
   nodeptr p = traln.getNode(node); 
   nodeptr q = p->back,

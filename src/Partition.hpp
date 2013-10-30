@@ -14,7 +14,7 @@ public:
   {
     std::cout << "initializing deprecated partiion" << std::endl; 
 
-    pInfo *partition = traln.getPartition(model);
+    auto &partition = traln.getPartition(model);
     for(int i = 0; i < partition->states; ++i)
       stateFreqs.push_back(partition->frequencies[i]);     
 

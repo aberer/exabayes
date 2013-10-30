@@ -14,8 +14,8 @@ void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent 
  
 ParameterContent ProtModelParameter::extractParameter(const TreeAln &traln)  const  
 {
-  auto partition = traln.getPartition(partitions.at(0)); 
-  auto model = ProtModel(partition->protModels); 
+  auto& partition = traln.getPartition(partitions.at(0)); 
+  auto model = ProtModel(partition.protModels); 
   auto result =   ParameterContent{} ; 
   result.protModel = {model}; 
   return result; 
@@ -23,8 +23,8 @@ ParameterContent ProtModelParameter::extractParameter(const TreeAln &traln)  con
    
 void ProtModelParameter::printSample(std::ostream& fileHandle, const TreeAln &traln ) const 
 {
-  auto partition = traln.getPartition(partitions.at(0)); 
-  auto name = ProtModelFun::getName(ProtModel(partition->protModels )); 
+  auto& partition = traln.getPartition(partitions.at(0)); 
+  auto name = ProtModelFun::getName(ProtModel(partition.protModels )); 
   fileHandle << name << "\t" ; 
 }
  

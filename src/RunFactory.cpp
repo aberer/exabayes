@@ -65,8 +65,8 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	  {
 	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      { 
-		auto partition = traln.getPartition(j); 
-		if( partition->dataType == AA_DATA  )
+		auto& partition = traln.getPartition(j); 
+		if( partition.dataType == AA_DATA  )
 		  {
 		    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId,j) ; 
 		    ++highestId; 
@@ -96,8 +96,8 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
 	  {
 	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
 	      {		
-		auto partition = traln.getPartition(j); 
-		if(partition->dataType != AA_DATA)
+		auto& partition = traln.getPartition(j); 
+		if(partition.dataType != AA_DATA)
 		  {
 		    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId,j) ; 
 		    ++highestId; 
@@ -125,15 +125,15 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
       break; 
     case Category::FREQUENCIES: 
       {
-	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
-	assert(partition->dataType == DNA_DATA || partition->dataType == AA_DATA); 
-	var->setPrior(make_shared<DirichletPrior>(vector<double>(partition->states , 1.))); 
+	auto& partition = traln.getPartition(var->getPartitions()[0]);
+	assert(partition.dataType == DNA_DATA || partition.dataType == AA_DATA); 
+	var->setPrior(make_shared<DirichletPrior>(vector<double>(partition.states , 1.))); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
       {
-	pInfo *partition = traln.getPartition(var->getPartitions()[0]);	;
-	var->setPrior(make_shared<DirichletPrior>( vector<double> (numStateToNumInTriangleMatrix(partition->states), 1.) )); 
+	auto& partition = traln.getPartition(var->getPartitions()[0]);	;
+	var->setPrior(make_shared<DirichletPrior>( vector<double> (numStateToNumInTriangleMatrix(partition.states), 1.) )); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 

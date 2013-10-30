@@ -57,8 +57,8 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
   double typicalBL = 0.05; 
   for(nat i = 0; i < traln.getNumberOfPartitions( ); ++i )
     {
-      auto partition = traln.getPartition(i); 
-      nat states = partition->states; 
+      auto& partition = traln.getPartition(i); 
+      nat states = partition.states; 
       factors[i] =  - (parsWarp * log((1.0/states) - exp(-(states/(states-1) * typicalBL)) / states));
     }	  
   

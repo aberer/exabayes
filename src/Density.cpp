@@ -68,8 +68,6 @@ static double betaFunction(const std::vector<double> &alphas)
   return beta;
 }
 
-
-
 namespace Density
 {
   double lnDirichlet(std::vector<double> values, const std::vector<double> &alphas)

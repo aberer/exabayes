@@ -33,7 +33,7 @@ void UniformPrior::print(std::ostream& out ) const
 
 ParameterContent UniformPrior::getInitialValue() const
 {
-  auto result = ParameterContent{}; 
+  auto result = ParameterContent(); 
 
   assert(minVal < maxVal); 
   result.values.push_back( minVal + ( maxVal - minVal ) / 2  ) ; 

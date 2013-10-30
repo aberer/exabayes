@@ -1,8 +1,20 @@
+/**
+   @file TreeInitializer.hpp
+   
+   @brief basic functionality to set up a tree. 
+
+   The initialization of raxml's tree-struct is somewhat involved.
+ */ 
+
+
 #ifndef _TREE_INITIALIZER_HPP
 #define _TREE_INITIALIZER_HPP
 
+#include <memory>
 #include <string>
+#include "InitializationResource.hpp"
 #include "common.h"
+#include "RunModes.hpp"
 #include "axml.h"
 
 class TreeAln; 
@@ -10,20 +22,22 @@ class TreeAln;
 class TreeInitializer
 {
 public: 
-  TreeInitializer(); 
+  TreeInitializer(std::unique_ptr<InitializationResource> initRes); 
 
-  void unifiedInitializePartitions(TreeAln &traln, std::string byteFileName); 
+  void initializeWithAlignmentInfo(TreeAln &traln, RunModes flags); 
+  static void setupTheTree(tree &tr); 
+  static void initializeBranchLengths(tree &tr, nat numPart, nat numTax ); 
 
 private:			// METHODS
+  void unifiedInitializePartitions(TreeAln &traln); 
 #if HAVE_PLL == 0  
-  void initializePartitionsExaml(TreeAln &traln, std::ifstream &byteStream); 
-  void initializeTreeExaML(TreeAln &traln, std::string byteFileName ); 
+  void initializePartitionsExaml(TreeAln &traln); 
+  void initializeTreeExaML(TreeAln &traln ); 
 #else 
-  void initializeTreePLL(TreeAln &traln, std::string byteFileName);
-  void initializePartitionsPLL(TreeAln &traln, std::string byteFileName);
+  void initializeTreePLL(TreeAln &traln);
+  void initializePartitionsPLL(TreeAln &traln);
 #endif
-  void initializeParsimonyVectors(TreeAln &traln, std::ifstream& byteStream); 
-  void readPartitions(TreeAln & traln, std::ifstream &byteStream); 
+  void initializeParsimonyVectors(TreeAln &traln); 
   void parseMagicNumber(std::ifstream& in); 
   void unifiedModelInit(TreeAln &traln); 
 
@@ -32,6 +46,8 @@ private:  			// ATTRIBUTES
   analdef adef; 
 #endif
   unsigned int mask32[32]; 
+
+  std::unique_ptr<InitializationResource> _initResPtr; 
 }; 
 
 #endif
