@@ -4,16 +4,16 @@
 
 void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content) const 
 {
-  assert(content.protModel.size() == 1); 
-  // auto raxmlValue = int(content.protModel); 
-  // assert(0);
-  // TODO  
-
-  std::cerr << "\n\nTODO apply the aa parameter! (ProtModelParameter.cpp)\n\n" << std::endl; 
+  for(auto &m : partitions)
+    {
+      assert(content.protModel.size() == 1); 
+      traln.setModelAssignment(m, content.protModel[0]);
+    }
 }
  
 ParameterContent ProtModelParameter::extractParameter(const TreeAln &traln)  const  
 {
+
   auto& partition = traln.getPartition(partitions.at(0)); 
   auto model = ProtModel(partition.protModels); 
   auto result =   ParameterContent{} ; 
@@ -25,7 +25,7 @@ void ProtModelParameter::printSample(std::ostream& fileHandle, const TreeAln &tr
 {
   auto& partition = traln.getPartition(partitions.at(0)); 
   auto name = ProtModelFun::getName(ProtModel(partition.protModels )); 
-  fileHandle << name << "\t" ; 
+  fileHandle << name; 
 }
  
 void ProtModelParameter::printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  

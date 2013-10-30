@@ -39,10 +39,10 @@ ParameterContent FixedPrior::getInitialValue() const
 } 
 
 
-std::vector<double> FixedPrior::drawFromPrior(Randomness &rand)  const 
-{
-  return fixedValues; 
-}
+// std::vector<double> FixedPrior::drawFromPrior(Randomness &rand)  const 
+// {
+//   return fixedValues; 
+// }
 
 
 void FixedPrior::print(std::ostream &out) const 

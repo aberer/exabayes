@@ -34,7 +34,7 @@ enum class ProtModel : int
 namespace ProtModelFun
 {
   std::string getName(ProtModel mod); 
-  std::vector<ProtModel> getAllModels(); 
+  std::vector<ProtModel> getAllModels();
   std::tuple<bool,ProtModel> getModelFromStringIfPossible(const std::string & modelString); 
 }
 

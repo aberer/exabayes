@@ -11,12 +11,12 @@ double ExponentialPrior::getLogProb(const ParameterContent& content) const
   return Density::lnExponential(values[0], lambda); 
 }
 
-std::vector<double> ExponentialPrior::drawFromPrior(Randomness &rand)  const
-{
-  double drawn = rand.drawRandExp(lambda); 
-  std::vector<double> result = {drawn}; 
-  return result;  
-}
+// std::vector<double> ExponentialPrior::drawFromPrior(Randomness &rand)  const
+// {
+//   double drawn = rand.drawRandExp(lambda); 
+//   std::vector<double> result = {drawn}; 
+//   return result;  
+// }
 
 void ExponentialPrior::print(std::ostream& out ) const  
 {        

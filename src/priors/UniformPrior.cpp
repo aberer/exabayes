@@ -19,12 +19,12 @@ double UniformPrior::getLogProb(const ParameterContent& content)  const
 }
 
 
-std::vector<double> UniformPrior::drawFromPrior(Randomness &rand)  const
-{
-  double val = minVal + rand.drawRandDouble01() * (maxVal - minVal); 
-  std::vector<double> result = {val}; 
-  return result; 
-}
+// std::vector<double> UniformPrior::drawFromPrior(Randomness &rand)  const
+// {
+//   double val = minVal + rand.drawRandDouble01() * (maxVal - minVal); 
+//   std::vector<double> result = {val}; 
+//   return result; 
+// }
 
 void UniformPrior::print(std::ostream& out ) const  
 { 

@@ -133,7 +133,7 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
   traln.setExecModel(std::vector<bool>(numPart, true));
 
 #ifdef DEBUG_LNL_VERIFY
-  expensiveVerify(traln, root ,traln.getTr()->likelihood);   
+  expensiveVerify(traln, root ,traln.getTrHandle().likelihood);   
 #endif
 }
 

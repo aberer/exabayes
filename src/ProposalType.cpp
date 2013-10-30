@@ -200,7 +200,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::RATE_HET_MULTI,  true } ,
 	{ ProposalType::FREQUENCY_SLIDER,  true } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
-	{ ProposalType::AMINO_MODEL_JUMP,  false } ,
+	{ ProposalType::AMINO_MODEL_JUMP,  true } ,
 	{ ProposalType::BRANCH_GIBBS , false } , 
 	{ ProposalType::DIRICH_REVMAT_ALL , false } 	, 
 	{ ProposalType::LIKE_SPR , false}

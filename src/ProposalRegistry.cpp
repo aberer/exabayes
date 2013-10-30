@@ -47,8 +47,6 @@ vector<unique_ptr<AbstractProposal> >
 ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln) const 
 {
   std::vector<unique_ptr<AbstractProposal> > result; 
-  
-  std::vector<ProtModel> someMatrices; // TODO 
 
   auto proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
   for(auto p : proposals)
@@ -131,7 +129,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  proposal = unique_ptr<LikelihoodSPR>(new LikelihoodSPR(  likeSprMinRadius, likeSprMaxRadius, likeSpWarp));
 	  break; 
 	case ProposalType::AMINO_MODEL_JUMP: 
-	  proposal = unique_ptr<AminoModelJump>( new AminoModelJump(someMatrices));
+	  proposal = unique_ptr<AminoModelJump>( new AminoModelJump());
 	  break; 
 	case ProposalType::BRANCH_GIBBS: 
 	  proposal = unique_ptr<GibbsBranchLength>( new GibbsBranchLength());

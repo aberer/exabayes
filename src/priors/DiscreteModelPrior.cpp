@@ -24,17 +24,26 @@ double DiscreteModelPrior::accountForMeanSubstChange( TreeAln &traln, const Abst
 }
 
  
-std::vector<double> DiscreteModelPrior::drawFromPrior(Randomness &rand)  const 
+// TODO bool uniform 
+ParameterContent DiscreteModelPrior::drawFromPrior(Randomness &rand, bool uniform)  const 
 {
-  assert(0);
-  // do we still need this routine? 
+  auto modelList = std::vector<ProtModel>{}; 
+  for(auto &v : _modelProbs)
+    modelList.push_back(std::get<0>(v)); 
+
+  nat index = rand.drawIntegerOpen(modelList.size())  ; 
+  
+  auto result = ParameterContent{}; 
+  result.protModel.push_back(modelList.at(index));
+  return result; 
 }
 
 double DiscreteModelPrior::getLogProb( const ParameterContent& content ) const 
 {
-  assert(content.values.size() == 1 ); 
+  assert(content.protModel.size() == 1 ); 
   
-  auto model = ProtModel(content.values[0]); 
+  auto model = ProtModel(content.protModel[0]);
+  // auto model = ProtModel(content.values[0]); 
   assert(_modelProbs.find(model) != _modelProbs.end()); 
 
   return log(_modelProbs.at(model));

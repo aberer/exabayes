@@ -256,6 +256,8 @@ public:
 
   std::vector<BranchPlain> getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const;   
 
+  void setModelAssignment(int part, ProtModel model) ; 
+  ProtModel getModelAssignment(int part) const; 
 
   void setMode(RunModes modeI){mode = modeI; }
 

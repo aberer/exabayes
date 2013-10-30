@@ -12,8 +12,7 @@
 class AminoModelJump : public AbstractProposal
 {
 public: 
-
-  AminoModelJump(std::vector<ProtModel> matrices); 
+  AminoModelJump( ); 
 
   virtual BranchPlain determinePrimeBranch(const TreeAln& traln, Randomness &rand) const  { return BranchPlain(); } 
 
@@ -30,7 +29,7 @@ public:
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0)); }
 
 private: 
-  std::vector<ProtModel> matrices; 
+  ProtModel savedMod;
 }; 
 
 #endif

@@ -290,10 +290,10 @@ nodeptr TreeAln::getUnhookedNode(int number)
 
 void TreeAln::copyModel(const TreeAln& rhs)  
 {  
-  assert(0);
-  // assert(&rhs != this); 
-  if(&rhs == this)
-    return; 
+  // assert(0);
+  assert(&rhs != this); 
+  // if(&rhs == this)
+  //   return; 
 
   // copy partition parameters 
   for(nat i = 0; i < rhs.getNumberOfPartitions(); ++i)
@@ -307,6 +307,8 @@ void TreeAln::copyModel(const TreeAln& rhs)
       for(nat j = 0 ; j < numStateToNumInTriangleMatrix(partitionRhs.states); ++j)
 	partitionLhs.substRates[j] = partitionRhs.substRates[j]; 
 
+      partitionLhs.protModels = partitionRhs.protModels; 	
+
       partitionLhs.alpha = partitionRhs.alpha; 
       initRevMat(i);
       discretizeGamma(i);       
@@ -316,7 +318,6 @@ void TreeAln::copyModel(const TreeAln& rhs)
   int mxtips = rhs.getTrHandle().mxtips ;
   auto &rhsTree = rhs.getTrHandle(); 
   auto &thisTree = getTrHandle();
-
 
 #ifdef UNSAFE_EXACT_TREE_COPY
   // if this works, it is one of the most hackney things, I've ever done... 
@@ -642,19 +643,30 @@ std::ostream& operator<<(std::ostream& out, pInfo& rhs)
 double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) const 
 {
   double result = 0; 
+  auto sum = double{0.}; 
+
+#if UNSURE
+  // TDOO is this really correct?
+  assert(0);
+#endif
+
 
 #if HAVE_PLL == 0
   for(auto &p :partitions)
-    result += tr.fracchanges[p] * tr.partitionContributions[p];   
+    {
+      result += tr.fracchanges[p] * tr.partitionContributions[p];   
+      sum += tr.partitionContributions[p]; 
+    }
 #else 
   for(auto &p : partitions)
     {
       auto& partition =  getPartition(p);
       result += partition.fracchange * partition.partitionContribution;  
+      sum += partition.partitionContribution; 
     }
 #endif
 
-  return result; 
+  return result / sum ; 
 }
 
 
@@ -867,4 +879,22 @@ void TreeAln::setNumberOfPartitions(nat numPart)
 #else 
   partitions.numberOfPartitions = numPart; 
 #endif
+}
+
+
+void TreeAln::setModelAssignment(int part, ProtModel model) 
+{
+  auto& pData = getPartition(part) ; 
+  
+  // tout << "setting model " << ProtModelFun::getName(model) << std::endl; 
+
+  pData.protModels=int(model);
+  initRevMat(part); 
+}
+
+
+ProtModel TreeAln::getModelAssignment(int part) const
+{
+  auto& pData = getPartition(part) ; 
+  return ProtModel(pData.protModels); 
 }

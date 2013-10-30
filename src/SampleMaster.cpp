@@ -314,10 +314,16 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string bina
   auto eval = LikelihoodEvaluator(initTree, plcy.get()); 
 
 #ifdef DEBUG_LNL_VERIFY
-  auto dT = make_shared<TreeAln>();
-  dT->initializeFromByteFile(binaryFile, RunModes::NOTHING ); 
 
-  dT->enableParsimony(); 
+  auto dT = make_shared<TreeAln>(initTree.getNumberOfTaxa());
+  auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new ByteFileResource(binaryFile))); 
+  ti.initializeWithAlignmentInfo(*dT, RunModes::NOTHING); 
+
+
+
+  // dT->initializeFromByteFile(binaryFile, RunModes::NOTHING ); 
+
+  // dT->enableParsimony(); 
   eval.setDebugTraln(dT);
 #endif
 

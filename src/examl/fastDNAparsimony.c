@@ -384,7 +384,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
 	    case 20:
 	      {
 		/* check carefully, if we have trouble with the indices  */
-		assert(0); 
+		/* assert(0);  */
 
 		parsimonyNumber
 		  *left[20],

@@ -18,7 +18,6 @@ PriorBelief::PriorBelief()
 }
 
 
-
 void PriorBelief::initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables)
 {
   lnPrior = scoreEverything(traln, variables); 
@@ -56,7 +55,6 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	  break; 
 	case Category::BRANCH_LENGTHS: 
 	  {
-	    // std::vector<BranchLength> 
 	    auto bs = traln.extractBranches(v); 
 	    auto pr = v->getPrior();	    
 	    for(auto &b : bs)	      
@@ -82,7 +80,13 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	  }
 	  break; 
 	case Category::AA_MODEL: 
-	  assert(0); 
+	  {
+	    auto p = v->getPartitions()[0]; 
+	    auto model = traln.getModelAssignment(p); 
+	    auto content =  ParameterContent(); 
+	    content.protModel.push_back(model); 
+	    partialResult = v->getPrior()->getLogProb(content);
+	  }
 	  break; 
 	default : assert(0); 
 	}

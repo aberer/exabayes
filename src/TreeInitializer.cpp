@@ -354,9 +354,10 @@ void TreeInitializer::initializePartitionsExaml(TreeAln &traln)
 	    }     
 	}
     }
-
-  exa_free(tr.aliaswgt);
-  tr.aliaswgt = NULL; 
+  
+  // TODO 
+  // exa_free(tr.aliaswgt);
+  // tr.aliaswgt = NULL; 
 }
 
 
@@ -432,8 +433,8 @@ void TreeInitializer::initializeTreePLL(TreeAln &traln)
 
   allocateParsimonyDataStructures(&tr, &ptr);   
 
-  exa_free(tr.aliaswgt); 
-  tr.aliaswgt = NULL; 
+  // exa_free(tr.aliaswgt); 
+  // tr.aliaswgt = NULL; 
 } 
 
 

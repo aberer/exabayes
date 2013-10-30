@@ -373,3 +373,7 @@ void Randomness::setKey(randKey_t _key)
 {
   key = _key; 
 }
+
+
+
+// proposals/R

@@ -203,8 +203,6 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 }
 
 
-
-
 void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters)
 {
   // get all branch length pararemeters   
@@ -220,6 +218,7 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::v
       needsBl |= ( v->getCategory() == Category::FREQUENCIES 
 		   || v->getCategory() == Category::SUBSTITUTION_RATES
 		   || v->getCategory() == Category::TOPOLOGY
+		   || v->getCategory() == Category::AA_MODEL
 		   ); 
       auto ps = v->getPartitions();
       myPartitions.insert(ps.begin(), ps.end()); 
@@ -252,6 +251,7 @@ auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const B
   // instantiate all proposals that integrate over one parameter 
   for(auto &v : randomVariables)
     {
+      // TODO  
       if(dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr ) // is it a fixed prior?
 	continue;
       
