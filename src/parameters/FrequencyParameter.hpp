@@ -1,6 +1,7 @@
 #ifndef FREQ_PARAMETER
 #define FREQ_PARAMETER
 
+#include "TreeAln.hpp"
 #include "AbstractParameter.hpp"
 #include "Category.hpp"
   
@@ -8,7 +9,7 @@ class FrequencyParameter : public AbstractParameter
 {
 public: 
   FrequencyParameter(nat id, nat idOfMyKind, std::vector<nat> partitions )
-    : AbstractParameter(Category::FREQUENCIES, id , idOfMyKind, partitions)
+    : AbstractParameter(Category::FREQUENCIES, id , idOfMyKind, partitions, 1 )
   { 
   }
 
@@ -27,6 +28,13 @@ public:
   virtual void verifyContent(const TreeAln &traln, const ParameterContent &content) const;
 
   virtual void checkSanityPartitionsAndPrior(const TreeAln& traln) const ; 
+  
+  virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const
+  {
+    auto content = prior.getInitialValue();
+    auto& partition = traln.getPartition(_partitions.at(0));
+    return content.values.size() == nat(partition.states); 
+  } 
 }; 
 
 

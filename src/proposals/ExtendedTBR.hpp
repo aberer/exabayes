@@ -7,7 +7,7 @@ class ExtendedTBR : public AbstractProposal
 {
 public: 
   ExtendedTBR( double _extensionProb, double _multiplier); 
-  virtual ~ExtendedTBR()  { }
+  // virtual ~ExtendedTBR()  { }
 
   BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
 

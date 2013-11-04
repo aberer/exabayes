@@ -28,12 +28,11 @@ void SampleMaster::branchLengthsIntegration(Randomness &rand)
   assert(chains.size() == 1); 
   auto &chain = chains[0]; 
 
-  auto tralnPtr = chain.getTralnPtr(); 
-  auto& traln  = *tralnPtr  ; 
+  auto& traln  = chain.getTralnHandle(); 
   
   double lambda = 10 ; 
   
-  auto&& ahInt = AdHocIntegrator (tralnPtr, nullptr ,rand.generateSeed()); 
+  auto&& ahInt = AdHocIntegrator (traln, nullptr ,rand.generateSeed()); 
   auto paramView = _runs[0].getChains()[0].getProposalView()[0]->getBranchLengthsParameterView();
 
   std::vector<std::pair<double,double> > parsAndMLBlen; 

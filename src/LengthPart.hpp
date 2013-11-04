@@ -1,9 +1,16 @@
 #ifndef _LENGTH_PART_H
 #define _LENGTH_PART_H
 
+#include <vector>
 #include <iostream>
 
-#include "BranchFwd.hpp"
+// #include "BranchFwd.hpp"
+
+
+template<typename TYPE> class Branch; 
+typedef Branch<double> BranchLength; 
+typedef Branch<std::vector<double>> BranchLengths; 
+typedef Branch<void> BranchPlain; 
 
 
 

@@ -21,8 +21,8 @@ class AbstractProposal : public Serializable
 public: 
   AbstractProposal( Category cat, std::string  _name, double weight, bool needsFullTraversal = true)  ; 
   AbstractProposal( const AbstractProposal& rhs)  ;   
-  AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
   virtual ~AbstractProposal(){}
+  AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
 
   std::array<bool,3> getBranchProposalMode() const ; 
 
@@ -143,6 +143,9 @@ public:
   virtual void readFromCheckpointCore(std::istream &in) = 0; 
 
   virtual void prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const  {} 
+
+
+  virtual void printParams(std::ostream &out)  const {} 
 
   friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
 

@@ -33,7 +33,7 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
     }; 
   std::sort(sortedBipOcc.begin(), sortedBipOcc.end(), sortFun ); 
 
-  auto hashFun = [](const std::vector<nat> &tree)
+  auto hashFun = [](const std::vector<nat> &tree) -> nat 
     {
       nat result = 0; 
       for(nat i = 0; i < tree.size() ;++i)
@@ -41,7 +41,7 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
       return result; 
     }; 
 
-  auto equalFun = [] (const std::vector<nat> &treeA,  const std::vector<nat> &treeB)
+  auto equalFun = [] (const std::vector<nat> &treeA,  const std::vector<nat> &treeB)  -> bool 
     {
       bool equal = true;  
       for(nat i = 0; equal && i < treeA.size() ; ++i)

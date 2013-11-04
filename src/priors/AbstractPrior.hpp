@@ -11,14 +11,13 @@
 #include "Density.hpp"
 
 #include "Randomness.hpp"
+#include "TreeAln.hpp"
 
 #include "parameters/ParameterContent.hpp"
 
 class AbstractPrior
 {
 public: 
-  
-  
   virtual ~AbstractPrior()
   {}
 
@@ -34,7 +33,7 @@ public:
   virtual void print(std::ostream &out) const = 0;
 
   virtual bool needsIntegration() const = 0; 
- 
+
   virtual AbstractPrior* clone() const = 0;
 
   friend std::ostream& operator<<(std::ostream &out,  AbstractPrior* rhs)

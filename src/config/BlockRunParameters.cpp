@@ -104,3 +104,57 @@ void BlockRunParameters::Read(NxsToken &token)
 	}
     }
 }
+
+
+static void verifyProbability(double value, bool lowerIncluded, bool upperIncluded, std::string name)
+{
+  auto lowOkay = 0 < value || ( lowerIncluded &&  0 ==  value) ; 
+  auto upperOkay = value < 1. || (upperIncluded && value == 1); 
+
+  char lowBracket = lowerIncluded ? '[': '('; 
+  char upperBracket = upperIncluded ? ']' : ')' ; 
+
+  if( not ( lowOkay && upperOkay ) )
+    {
+      std::cerr << "Error: >" << name << "< must be in the interval " << lowBracket  << "0,1" << upperBracket << std::endl; 
+      exit(-1); 
+    }
+
+}
+
+static void verifyGreaterZero(int value, std::string name )
+{
+  if( not ( value > 0 )   )
+    {
+      std::cout << "Error: >name< must be > 0 "  << std::endl; 
+      exit(-1); 
+    }  
+}
+
+
+
+
+void BlockRunParameters::verify() const 
+{
+  verifyGreaterZero(diagFreq, "diagFreq"); 
+  
+  verifyProbability(asdsfIgnoreFreq, true, true , "asdsfIgnoreFreq" ); 
+  verifyProbability(asdsfConvergence, false, false, "asdsfConvergence"); 
+  verifyProbability(burninProportion, false, false, "burninProportion"); 
+  verifyProbability(heatFactor, false, false, "heatFactor"); 
+
+  verifyGreaterZero(numSwaps, "numSwaps"); 
+  verifyGreaterZero(samplingFreq,"samplingFreq" ); 
+  verifyGreaterZero(numRunConv, "numRunConv"); 
+  verifyGreaterZero(numGen, "numGen"); 
+  verifyGreaterZero(numCoupledChains, "numCoupledChains"); 
+  verifyGreaterZero(printFreq, "printFreq"); 
+  verifyGreaterZero(swapInterval, "swapInterval"); 
+  verifyGreaterZero(tuneFreq, "tuneFreq");  
+
+  if( diagFreq <= nat(samplingFreq)  ) 
+    {
+      std::cerr << "diagFreq < samplingFreq. Please choose the sampling frequency smaller than the diagnosis frequency.  " << std::endl; 
+      exit(-1);
+    }
+}

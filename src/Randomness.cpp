@@ -58,9 +58,8 @@ int Randomness::drawIntegerOpen(int upperBound)
 
 nat Randomness::operator()() 
 {
-  randCtr_t r = exa_rand(key,ctr); 
-  ++ctr.v[0];
-  return r.v[0];  
+  auto seed = generateSeed(); 
+  return seed.v[0]; 
 }
 
 
@@ -160,15 +159,21 @@ int Randomness::drawSampleProportionally( double *weights, int numWeight )
 //This function should be called if the alphas for the dirichlet distribution are given
 std::vector<double> Randomness::drawRandDirichlet( const std::vector<double> &alphas)
 {
-  double sum=0;
-  std::vector<double> result; 
+  auto sum= double{0};
+  auto result = std::vector<double>{}; 
   for(nat i=0; i< alphas.size();i++)
     {
-      result.push_back(drawRandGamma(alphas[i], 1.0)); 
-      sum += result[i];
+      double val = drawRandGamma(alphas[i], 1.0); 
+      result.push_back(val); 
+      sum += val;
     }
-  for(nat i=0; i< alphas.size();i++)
-    result[i] /= sum;
+  for_each(result.begin(), result.end(), [&](double &v) {  v /= sum; }); 
+
+  // if( 1e-6 <  fabs(std::accumulate(result.begin(), result.end(), 0.)  - 1.0  ) )
+  //   {
+  //     tout << "error: sum was " << std::accumulate(result.begin(), result.end(), 0.) << std::endl; 
+  //     assert(0); 
+  //   }
 
   return result; 
 }

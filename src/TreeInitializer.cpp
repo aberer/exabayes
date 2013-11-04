@@ -149,9 +149,6 @@ void TreeInitializer::distributeData(TreeAln &traln)
 
 void TreeInitializer::copyWeightsAndAln(TreeAln &traln )
 {
-  // assert(0); 
-  // TODO initialize memory first  
-
   _initResPtr->initWeightsAndAln(traln);
 }
 
@@ -215,7 +212,7 @@ void TreeInitializer::unifiedInitializePartitions(TreeAln &traln)
 #if HAVE_PLL != 0
   initializeTreePLL(traln);
 #else 
-  initializeTreeExaML(traln);
+  initializeTreeExaML(traln );
 #endif  
 }
 
@@ -226,16 +223,16 @@ void TreeInitializer::initializeParsimonyVectors(TreeAln &traln)
   nat totalNodes = 2 * tr.mxtips; 
   nat numPart = traln.getNumberOfPartitions(); 
 
-  nat ctr = 0; 
-  for(nat model = 0; model < numPart; model++)
+  for(nat model = 0; model < numPart; ++model)
     {
       auto& partition = traln.getPartition(model); 
-      _initResPtr->fillParsVect(partition.parsVect, partition.parsimonyLength, totalNodes * partition.states, ctr);
+      std::tie(partition.parsVect, partition.parsimonyLength) =  _initResPtr->fillParsVect( totalNodes, partition.states, model);
+      // tout << "model=" << model << "\tlen=" << partition.parsimonyLength << std::endl; 
     }
 
   for(int i = 1 ; i < 2 * tr.mxtips; ++i)
     {
-      nodeptr p = tr.nodep[i]; 
+      auto p = tr.nodep[i]; 
       p->xPars = 1 ; 
       p->next->xPars = 0; 
       p->next->next->xPars = 0; 
@@ -410,7 +407,7 @@ void TreeInitializer::initializePartitionsExaml(TreeAln &traln)
 }
 
 
-void TreeInitializer::initializeTreeExaML(TreeAln &traln )
+void TreeInitializer::initializeTreeExaML(TreeAln &traln  )
 {
   auto& tr = traln.getTrHandle();  
 
@@ -444,7 +441,8 @@ void TreeInitializer::initializeTreeExaML(TreeAln &traln )
   for(decltype(tr.NumberOfModels) i = 0; i < tr.NumberOfModels; i++)    
     tr.perPartitionLH[i] = 0.0;	    
 
-  traln.setTaxa(_initResPtr->getTaxonNames(tr.mxtips)); 
+  auto taxa = _initResPtr->getTaxonNames(tr.mxtips); 
+  traln.setTaxa(taxa); 
 
   auto partConts = _initResPtr->getPartitionContributions(traln.getNumberOfPartitions());
   tr.partitionContributions = (double *)malloc(sizeof(double) * tr.NumberOfModels);
@@ -470,23 +468,20 @@ void TreeInitializer::initializeTreePLL(TreeAln &traln)
   initializePartitionsPLL(traln );
   unifiedModelInit(traln);
   auto &ptr = traln.getPartitionsHandle(); 
-  auto &tr =  traln.getTrHandle(); 
+  // auto &tr =  traln.getTrHandle(); 
   ptr.perGeneBranchLengths = TRUE; 
   initializeParsimonyVectors(traln);
-  
-  if(tr.aliaswgt)
-    {
-      exa_free(tr.aliaswgt); 
-      tr.aliaswgt = NULL; 
-    }
-  exa_free(tr.yVector); 
-  tr.yVector = NULL; 
+
+  // exa_free(tr.yVector); 
+  // tr.yVector = NULL; 
 } 
 
 
 void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
 {
-  unsigned char *y;
+  // unsigned char *y;
+  auto y = std::vector<unsigned char>{}; 
+  
 
   auto& partitions = traln.getPartitionsHandle(); 
   auto& tr = traln.getTrHandle(); 
@@ -507,7 +502,7 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
   tr.patrat          = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double));
   tr.patratStored    = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double)); 
 
-  y = (unsigned char *)exa_malloc(sizeof(unsigned char) * ((size_t)tr.originalCrunchedLength) * ((size_t)tr.mxtips));
+  y.resize(((size_t)tr.originalCrunchedLength) * ((size_t)tr.mxtips));
   tr.yVector = (unsigned char **)exa_malloc(sizeof(unsigned char *) * ((size_t)(tr.mxtips + 1)));
 
   for( nat i = 1; i <= (size_t)tr.mxtips; i++)
@@ -523,7 +518,8 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
       partition.executeModel = TRUE;
     }
 
-  traln.setTaxa(_initResPtr->getTaxonNames(tr.mxtips));
+  auto taxa = _initResPtr->getTaxonNames(tr.mxtips); 
+  traln.setTaxa(taxa);
 
   auto partConts = _initResPtr->getPartitionContributions(traln.getNumberOfPartitions());
   for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
@@ -541,7 +537,7 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
   if(not _initResPtr->isDataAreDistributed())
     {
       nat ctr = 0; 
-      _initResPtr->fillAlnPart(y,tr.originalCrunchedLength * tr.mxtips, ctr); 
+      _initResPtr->fillAlnPart(y.data(),tr.originalCrunchedLength * tr.mxtips, ctr); 
     }
 
   auto& pr = traln.getPartitionsHandle();
@@ -635,6 +631,9 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
 	    }     
 	}
     }
+
+  exa_free(tr.yVector); 
+  tr.yVector = NULL; 
 }
 
 #endif
@@ -642,7 +641,7 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
 
 void TreeInitializer::unifiedModelInit(TreeAln &traln)
 {
-  double** empFreqs = new double*[traln.getNumberOfPartitions()]; 
+  auto empFreqs = std::vector<double*>(traln.getNumberOfPartitions()); 
   for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
     {
       auto& partition = traln.getPartition(i); 
@@ -652,9 +651,9 @@ void TreeInitializer::unifiedModelInit(TreeAln &traln)
     }
 
 #if HAVE_PLL == 0 
-  initModel(&(traln.getTrHandle()), empFreqs);
+  initModel(&(traln.getTrHandle()), empFreqs.data());
 #else 
-  initModel(&(traln.getTrHandle()), empFreqs, &(traln.getPartitionsHandle()));
+  initModel(&(traln.getTrHandle()), empFreqs.data(), &(traln.getPartitionsHandle()));
 #endif
   
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
@@ -682,10 +681,6 @@ void TreeInitializer::setupTheTree(tree &tr)
 
   tr.td[0].count = 0;
   tr.td[0].ti    = (traversalInfo *)exa_malloc(sizeof(traversalInfo) * (size_t)tr.mxtips);
-  tr.td[0].executeModel = (boolean *)exa_malloc(sizeof(boolean) * (size_t)NUM_BRANCHES);
-  tr.td[0].parameterValues = (double *)exa_malloc(sizeof(double) * (size_t)NUM_BRANCHES);
-
-  // tr.fracchange = -1.0;
 
   tr.constraintVector = (int *)exa_malloc((2 * (size_t)tr.mxtips) * sizeof(int));
 
@@ -793,4 +788,10 @@ void TreeInitializer::initializeWithAlignmentInfo(TreeAln &traln, RunModes flags
 
   unifiedInitializePartitions(traln ); 
   initializeBranchLengths(tr, traln.getNumberOfPartitions(), traln.getNumberOfTaxa());
+  
+  assert(NUM_BRANCHES > 0 ); 
+  tr.td[0].executeModel = (boolean *)exa_malloc(sizeof(boolean) * (size_t)NUM_BRANCHES);
+  
+  traln.setHasAlignment(); 
 }
+

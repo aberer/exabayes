@@ -30,6 +30,9 @@ public:
     NCL_BLOCKTYPE_ATTR_NAME = "PRIOR"; 
   }
   
+  void verify() const; 
+
+  
   virtual void Read(NxsToken &token); 
   const multiMapCategory2TuplePartitionsPrior& getPriors()const  {return _parsedPriors; } 
 

@@ -2,7 +2,7 @@
 
 
 AbstractProposal::AbstractProposal( Category cat, std::string name,double weight, bool needsFullTraversal )  
-  : _name (name)
+  : _name(name)
   , _category(cat)
   , _relativeWeight(weight)
   , _needsFullTraversal(needsFullTraversal)
@@ -12,14 +12,15 @@ AbstractProposal::AbstractProposal( Category cat, std::string name,double weight
 
 
 AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
-  : _name(rhs._name)
-  , _sctr(rhs._sctr)
+  : _sctr(rhs._sctr)
   , _category(rhs._category)
   , _relativeWeight(rhs._relativeWeight)
   , _needsFullTraversal(rhs._needsFullTraversal)
   , _inSetExecution(rhs._inSetExecution)
   , _id(rhs._id)
 {
+  this->_name = rhs._name; 
+
   for(auto &v : rhs._primaryParameters)
     _primaryParameters.emplace_back(v->clone()); 
   for(auto &v : rhs._secondaryParameters)
@@ -60,6 +61,9 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
 	  v->printShort(out); 
 	}
     }
+
+  printParams(out);
+
   out << " )"; 
   return out; 
 }

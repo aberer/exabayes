@@ -30,10 +30,10 @@ public:
   /** 
       @brief configures the proposals 
   */ 
-  auto produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+  std::tuple<std::vector<std::unique_ptr<AbstractProposal> >, std::vector<ProposalSet> >
+  produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
 		   std::vector<std::unique_ptr<AbstractParameter>>  & params, 
-		   const TreeAln &traln, bool componentWiseMH  )
-    -> std::tuple<std::vector<std::unique_ptr<AbstractProposal> >, std::vector<ProposalSet> >; 
+		   const TreeAln &traln, bool componentWiseMH  ); 
   /** 
       @brief get a copy of the random variables to be integrated  
    */ 
@@ -41,7 +41,7 @@ public:
   void addStandardParameters(std::vector<std::unique_ptr<AbstractParameter> > &vars, const TreeAln &traln ) const; 
 private: 			// METHODS 
   void addStandardPrior(AbstractParameter* var, const TreeAln& traln ); 
-  void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<unique_ptr<AbstractParameter> > &variables); 
+  void addPriorsToParameters(const TreeAln &traln,  const BlockPrior &priorInfo, vector<unique_ptr<AbstractParameter> > &variables); 
   /** 
       @brief adds secondary parameters to proposals, if necessary (currently only branch lengths)
   */ 

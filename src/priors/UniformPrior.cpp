@@ -1,5 +1,6 @@
 #include "priors/UniformPrior.hpp"
 
+
 UniformPrior::UniformPrior(double minVal, double maxVal) : minVal(minVal), maxVal(maxVal)
 {
 }

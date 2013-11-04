@@ -71,7 +71,7 @@ void ExtendedTBR::buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &tra
 
 BranchPlain ExtendedTBR::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const 
 {
-  auto canMove = [&](const BranchPlain &b)
+  auto canMove = [&](const BranchPlain &b) -> bool 
     { 
       auto desc = traln.getDescendents(b) ; 
       auto result = not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln) ); 
@@ -103,7 +103,8 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
   auto bisectedBranch = determinePrimeBranch(traln, rand); 
 
   // determine, if a true TBR move can be executed
-  auto canMove = [&](const BranchPlain &b){ auto desc = traln.getDescendents(b) ; return not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln)) ; }; 
+  auto canMove = [&](const BranchPlain &b) -> bool 
+    { auto desc = traln.getDescendents(b) ; return not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln)) ; }; 
   auto oneMovable = canMove(bisectedBranch);
   auto otherMovable = canMove(bisectedBranch.getInverted()); 
 

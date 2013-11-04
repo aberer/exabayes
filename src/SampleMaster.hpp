@@ -27,7 +27,7 @@
 class SampleMaster : public Serializable
 {
 public:   
-  SampleMaster(const ParallelSetup &pl, const CommandLine& cl ) ; 
+  SampleMaster(ParallelSetup pl, const CommandLine& cl ) ; 
   /** 
       @brief initializes the runs  
       @notice this is the top-level function 
@@ -45,9 +45,9 @@ public:
   /** 
       @brief initializes the config file 
    */ 
-  auto processConfigFile(string configFileName, const TreeAln &tralnPtr )
-    ->   std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  ; 
-  void initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &trees , const std::vector<AbstractParameter*> &params , const std::vector<bool> hasBls ) const ; 
+  std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
+  processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
+  void initializeWithParamInitValues(std::vector<TreeAln> &trees , const std::vector<AbstractParameter*> &params , const std::vector<bool> hasBls ) const ; 
   /** 
       @brief EXPERIMENTAL 
    */ 
@@ -75,7 +75,7 @@ private:
   void writeCheckpointMaster(); 
   void initializeFromCheckpoint(); 
   std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 
-  std::vector<bool> initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
+  std::vector<bool> initTrees(std::vector<TreeAln> &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
   bool initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
   CLOCK::system_clock::time_point printDuringRun(nat gen) ; 
   std::string getOrCreateBinaryFile() const ; 

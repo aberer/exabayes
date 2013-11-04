@@ -32,7 +32,7 @@ public:
   ////////////////
   // LIFE CYCLE //
   ////////////////
-  CoupledChains(randCtr_t seed, int runNum, string workingdir, std::string runname, int numCoupled,  vector<Chain>& _chains ); 
+  CoupledChains(Randomness rand, int runNum, string workingdir, std::string runname, int numCoupled,  vector<Chain>& _chains ); 
   CoupledChains(CoupledChains&& rhs); 
   CoupledChains& operator=(CoupledChains rhs); 
 
@@ -54,7 +54,6 @@ public:
   */
   void executePart(nat startGen, nat numGen,  ParallelSetup &pl);   
   void setPrintFreq(nat t){printFreq = t; }
-  void seedChains(); 
   void setSwapInterval(nat i) {swapInterval = i; }
   void setSamplingFreq(nat i) {samplingFreq = i; }
   void setHeatIncrement(double temp ) { heatIncrement = temp ; } 

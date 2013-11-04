@@ -10,13 +10,10 @@
 #ifndef __PARSIMONY_SPR
 #define __PARSIMONY_SPR
 
-
-
 // why not evaluate stuff only on a few partitions and use that for guidance? 
 
 
 #include <unordered_map>
-
 #include "axml.h"
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
@@ -24,12 +21,13 @@
 #include "ParsimonyEvaluator.hpp"
 
 typedef std::unordered_map<BranchPlain, double> weightMap; 
-typedef std::unordered_map<BranchPlain,std::vector<nat> > scoreMap; 
+typedef std::unordered_map<BranchPlain,std::array<parsimonyNumber,2> > branch22states2score;
+
 
 class ParsimonySPR : public AbstractProposal
 {
 public: 
-  ParsimonySPR( double parsWarp, double blMulti); 
+  ParsimonySPR( double parsWarp, double blMulti, int depth); 
   virtual ~ParsimonySPR(){}
 
   virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const; 
@@ -45,13 +43,15 @@ public:
 
   virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
 
+  virtual void printParams(std::ostream &out)  const ; 
+
   virtual AbstractProposal* clone() const; 
 
 protected:			// METHODS
-  weightMap getWeights(const TreeAln& traln, const scoreMap &insertions) const; 
-  void determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
+  weightMap getWeights(const TreeAln& traln,  branch22states2score insertions) const; 
+  branch22states2score determineScoresOfInsertions(TreeAln& traln, BranchPlain primeBranch, Randomness &rand, const branch22states2score &alreadyComputed ); 
   void traverse(const TreeAln &traln, nodeptr p, int distance ); 
-  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<BranchPlain,std::vector<nat> > &posses); 
+  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, branch22states2score &result, int curDepth,  const branch22states2score& alreadyComputed); 
 
 protected: 			// ATTRIBUTES
   double _parsWarp; 
@@ -59,7 +59,10 @@ protected: 			// ATTRIBUTES
   SprMove _move; 
   ParsimonyEvaluator _pEval;   
   BranchPlain _subtreeBranch; 
-}; 
+  int _depth;
+  bool _parallelReduceAtEnd;
 
+  static std::array<double,2> factors; 
+}; 
 
 #endif

@@ -10,10 +10,8 @@ class BranchLengthMultiplier : public AbstractProposal
 {
 public: 
   BranchLengthMultiplier(  double multiplier); 
-  virtual ~BranchLengthMultiplier(){}
 
   virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
-  // { return proposeBranch(traln, rand);  } 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
   virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) ; 

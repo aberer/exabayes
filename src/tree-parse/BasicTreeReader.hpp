@@ -8,7 +8,7 @@
 #include "tree-parse/BranchLengthPolicy.hpp"
 #include "tree-parse/LabelPolicy.hpp"
 #include <iosfwd>
-#include "BranchFwd.hpp"
+#include "Branch.hpp"
 
 typedef unsigned int nat; 
 

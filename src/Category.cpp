@@ -106,6 +106,8 @@ namespace CategoryFuns
   {
     // bad but this is a bit exhausting... 
     auto cats = getAllCategories();
+    
+    std::transform(begin(name), end(name), begin(name), ::toupper);
 
     for(auto c : cats)
       {

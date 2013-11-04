@@ -20,13 +20,7 @@ public:
   ParameterContent(std::vector<double> valuesI = std::vector<double>{}, 
 		   std::vector<BranchPlain> topoI = std::vector<BranchPlain>{}, 
 		   std::vector<BranchLength> blI = std::vector<BranchLength>{}, 
-		   std::vector<ProtModel>  pmI = std::vector<ProtModel>{})
-    : values{valuesI}
-    , topology{topoI}
-    , branchLengths{blI}
-    , protModel{pmI}
-  {}  
-      
+		   std::vector<ProtModel>  pmI = std::vector<ProtModel>{}) ; 
 
 public:   			// public stuff that should be private 
   std::vector<double> values; 

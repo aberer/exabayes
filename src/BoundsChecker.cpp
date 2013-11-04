@@ -19,9 +19,9 @@ const double BoundsChecker::zMin = 1.0e-15 ; // 1e-16
 const double BoundsChecker::zMax = (1.0 - 1.0e-6) ; // 1-1e-6
 const double BoundsChecker::rateMin = 1e-7; 
 const double BoundsChecker::rateMax = 1e6; 
-const double BoundsChecker::alphaMin = 0.02; 
-const double BoundsChecker::alphaMax = 1000.0; 
-const double BoundsChecker::freqMin = 0.001;
+const double BoundsChecker::alphaMin = 2e-2; 
+const double BoundsChecker::alphaMax = 1e3; 
+const double BoundsChecker::freqMin = 1e-3;
 
 
 bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )  

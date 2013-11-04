@@ -3,11 +3,6 @@
 
 void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
-  // auto view = getPrimaryParameterView();
-  // assert(view.size() == 1); 
-
-  // TODO so it has gotten to this ... => const correctness! 
-  
   for(auto &b : content.branchLengths)
     traln.setBranch(b, const_cast<AbstractParameter*>(dynamic_cast<const AbstractParameter* const >(this))); 
 }
@@ -31,4 +26,11 @@ void BranchLengthsParameter::verifyContent(const TreeAln &traln, const Parameter
 	  assert(0); 
 	}
     } 
+} 
+
+
+bool BranchLengthsParameter::priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const
+{
+  auto content = prior.getInitialValue();
+  return content.values .size() == 1 ; 
 } 

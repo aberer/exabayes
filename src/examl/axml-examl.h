@@ -982,8 +982,8 @@ extern int checker ( tree *tr, nodeptr p );
 extern boolean tipHomogeneityChecker ( tree *tr, nodeptr p, int grouping );
 extern void makeRandomTree ( tree *tr);
 extern void nodeRectifier ( tree *tr );
-extern void makeParsimonyTreeFast(tree *tr);
-void makeParsimonyTreeFast(tree *tr); 
+/* extern void makeParsimonyTreeFast(tree *tr); */
+void makeParsimonyTreeFast(tree *tr, unsigned int seed); 
 extern void allocateParsimonyDataStructures(tree *tr);
 extern void freeParsimonyDataStructures(tree *tr);
 extern void parsimonySPR(nodeptr p, tree *tr);
@@ -1158,9 +1158,6 @@ extern void updatePerSiteRates(tree *tr, boolean scaleRates);
 extern void restart(tree *tr, analdef *adef);
 
 extern void writeCheckpoint(tree *tr);
-
-/* inline boolean isGap(unsigned int *x, int pos); */
-/* inline boolean noGap(unsigned int *x, int pos); */
 
 void myBinFwrite(void *ptr, size_t size, size_t nmemb, FILE *byteFile);
 void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile);

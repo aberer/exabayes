@@ -1,11 +1,11 @@
 #include "DirichletProposal.hpp"
 #include "BoundsChecker.hpp" 
 
-DirichletProposal::DirichletProposal( double minVal, double maxVal, bool _minMaxIsRelative ) 
+DirichletProposal::DirichletProposal( double minValI, double maxValI, bool _minMaxIsRelative ) 
   : minMaxIsRelative(_minMaxIsRelative)
 {
-  this->minVal = minVal; 
-  this->maxVal = maxVal; 
+  minVal = minValI; 
+  maxVal = maxValI; 
   tune = true ; 
   tuneup = false; 
 } 

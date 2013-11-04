@@ -1,9 +1,19 @@
 #include "ParameterContent.hpp"
+#include "Branch.hpp"
 #include <limits>
 #include <iomanip>
 #include <algorithm> 
 
 
+
+ParameterContent::ParameterContent(std::vector<double> valuesI, std::vector<BranchPlain> topoI,
+				   std::vector<BranchLength> blI, std::vector<ProtModel>  pmI) 
+  : values{valuesI}
+  , topology{topoI}
+  , branchLengths{blI}
+  , protModel{pmI}
+  {
+  }  
 
 
 
@@ -45,14 +55,38 @@ void ParameterContent::serialize( std::ostream &out) const
 
 std::ostream& operator<<(std::ostream& out, const ParameterContent &rhs)
 {
+  auto isFirst = bool{true}; 
+ 
+
   if(rhs.values.size() > 0)
-    out << rhs.values; 
+    {
+      for(auto &v : rhs.values)
+	{
+	  out << (isFirst ? "" : ","  )<< v; 
+	  isFirst = false; 
+	}
+    }
   else if(rhs.branchLengths.size( )> 0)
-    out << rhs.branchLengths; 
+    {
+      for(auto &b : rhs.branchLengths)
+	{
+	  out << (isFirst ? "" : ",") << b ; 
+	  isFirst = false; 
+	}
+    }
   else if(rhs.topology.size() > 0)
-    out << rhs.topology ; 
+    {
+      for(auto &b : rhs.topology)
+	{
+	  out << (isFirst ? "" : ",") << b; 
+	  isFirst = false; 
+	}
+    }
   else if(rhs.protModel.size()  > 0)
-    out << rhs.protModel; 
+    {
+      for(auto &p : rhs.protModel)
+      	out << p ; 
+    }
   else     
     assert(0); 
 

@@ -9,7 +9,7 @@ class RevMatParameter : public AbstractParameter
 {
 public: 
   RevMatParameter(nat id, nat idOfMyKind, std::vector<nat> partitions ) 
-    : AbstractParameter(Category::SUBSTITUTION_RATES, id, idOfMyKind, partitions )
+    : AbstractParameter(Category::SUBSTITUTION_RATES, id, idOfMyKind, partitions, 1  )
   {
   }
 
@@ -30,6 +30,13 @@ public:
   virtual void verifyContent(const TreeAln&traln, const ParameterContent &content) const ; 
   
   virtual void checkSanityPartitionsAndPrior(const TreeAln &traln) const ; 
+
+  virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const
+  {
+    auto content = prior.getInitialValue();
+    auto& partition = traln.getPartition(_partitions.at(0));
+    return content.values.size()  ==  numStateToNumInTriangleMatrix(partition.states); 
+  }
 }; 
 
 #endif

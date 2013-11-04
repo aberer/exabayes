@@ -25,8 +25,6 @@ std::vector<double> SlidingProposal::proposeRelativeMany(std::vector<double> old
 {
   int posA = rand.drawIntegerOpen(oldValues.size()); 
 
-  // tout << "proposing for " << oldValues << std::endl; 
-
   double oldVal = oldValues.at(posA) ; 
   double newVal = rand.drawFromSlidingWindow(oldVal, parameter); 
 
@@ -43,9 +41,7 @@ std::vector<double> SlidingProposal::proposeRelativeMany(std::vector<double> old
       assert(newVal >= 0 && newVal < 1); 
     }
 
-
   oldValues[posA] = newVal; 
-
 
   if(minMaxIsRelative)
     {
@@ -60,6 +56,11 @@ std::vector<double> SlidingProposal::proposeRelativeMany(std::vector<double> old
     }
   else 
     {
+      // sum may not be one 
+      auto sum = std::accumulate(oldValues.begin(), oldValues.end(), 0.) ; 
+      for(auto &v : oldValues)
+	v /= sum; 
+
       correctAbsoluteRates(oldValues);
     }
 
@@ -78,8 +79,6 @@ std::vector<double> SlidingProposal::proposeRelativeMany(std::vector<double> old
 
 std::vector<double> SlidingProposal::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
 {
-  // tout << "slider" << std::endl; 
-
 
   if(oldValues.size() == 1 )
     return {proposeOneValue(oldValues[0], parameter,rand, hastings)}; 

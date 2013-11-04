@@ -30,15 +30,6 @@ void DirichletPrior::print(std::ostream& out ) const
 }
 
 
-
-// std::vector<double> DirichletPrior::drawFromPrior(Randomness &rand)  const
-// {
-//   std::vector<double> result; 
-//   result = rand.drawRandDirichlet(alphas); 
-//   return result; 
-// }
-
-
 ParameterContent DirichletPrior::getInitialValue() const
 {
   double sum = std::accumulate(alphas.begin(), alphas.end(), 0.); 

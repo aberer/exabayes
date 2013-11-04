@@ -8,13 +8,10 @@
 
 
 BranchLengthMultiplier::BranchLengthMultiplier(  double _multiplier)
-  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 20., false)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., false)
   , multiplier(_multiplier)
 {
 }
-
-
-
 
 
 BranchPlain BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
@@ -50,6 +47,8 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   drawnMultiplier= rand.drawMultiplier( multiplier); 
   assert(drawnMultiplier > 0.); 
   newZ = pow( oldZ, drawnMultiplier);
+
+  // tout << MAX_SCI_PRECISION << "proposed " << newZ <<  " from " << multiplier << " and oldBranch=" << savedBranch << std::endl; 
   
   b.setLength(newZ); 
 

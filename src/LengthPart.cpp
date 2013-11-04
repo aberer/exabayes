@@ -1,5 +1,5 @@
 #include "LengthPart.hpp"
-
+#include "TreeAln.hpp"
 #include "parameters/AbstractParameter.hpp"
 
 
@@ -40,3 +40,6 @@ double LengthPart<std::vector<double> >::getLength (const AbstractParameter* par
 {
   return lengths.at(param->getIdOfMyKind()) ;
 }
+
+
+

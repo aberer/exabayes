@@ -13,7 +13,7 @@ typedef std::unordered_map<BranchLength,std::pair<double,double>> Branch2Stat;
 class TreeIntegrator
 {
 public: 
-  TreeIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed);
+  TreeIntegrator(TreeAln& tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed);
   void prepareChain( const TreeAln &otherTree, bool copyEverything); 
 
   void integrateAllBranchesNew(const TreeAln &otherTree, std::string runid, nat sprDistance); 

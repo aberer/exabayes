@@ -12,7 +12,7 @@ T operator|( T a, T b)
 }
 
 template<typename T>
-T operator&( T a, T b)
+T operator&( T a,  T b)
 {
   static_assert(std::is_enum<T>::value, "type must be an enum!\n"); 
   return static_cast<T>(static_cast<int>(a) & static_cast<int>(b)); 

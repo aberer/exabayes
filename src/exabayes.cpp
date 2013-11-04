@@ -64,7 +64,7 @@ double fastPow(double a, double b)
   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
-static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
+static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
 {   
   timeIncrement = CLOCK::system_clock::now(); 
 
@@ -118,12 +118,15 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
   else 
     ss << OutputFile::getFileBaseName(cl.getWorkdir()) << "_info."  << cl.getRunid() ;
 
-  if( not cl.isDryRun() && pl.isGlobalMaster() && std::ifstream(ss.str()))
+  if( not cl.isDryRun() && pl.isGlobalMaster() )
     {
-      std::cerr << pl << std::endl; 
-      std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
-		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      if(std::ifstream(ss.str()))
+	{
+	  std::cerr << pl << std::endl; 
+	  std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
+		    << "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
+	  ParallelSetup::genericExit(-1); 
+	}
     }
 
   globals.logFile = ss.str();   
@@ -200,7 +203,9 @@ static void printInfoHeader(int argc, char **argv)
 }
 
 
-int main(int argc, char **argv)
+
+// just having this, because of mpi_finalize
+static int innerMain(int argc, char **argv)
 { 
   auto pl = ParallelSetup(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
 
@@ -222,11 +227,19 @@ int main(int argc, char **argv)
   printInfoHeader(argc,argv); 
 
   exa_main( cl, pl); 
-
-  finalizeProfiler();
-  pl.finalize();  
   
+  finalizeProfiler();
+
   delete globals.logStream; 
   delete globals.teeOut;
   return 0;
+}
+
+
+int main(int argc, char **argv)
+{ 
+  ParallelSetup::initialize(argc, argv);
+  innerMain(argc, argv); 
+  ParallelSetup::finalize(); 
+  return 0 ; 
 }

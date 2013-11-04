@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "LikelihoodEvaluator.hpp"
 #include "GlobalVariables.hpp"
 #include "ArrayRestorer.hpp"
@@ -258,7 +260,7 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, const BranchPlain& roo
 {
   debugPrint = 0 ; 
 
-  debugTraln->copyModel(traln); 
+  *debugTraln = traln; 
 
   disorientDebug(*debugTraln, root); 
   

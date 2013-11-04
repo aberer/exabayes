@@ -27,9 +27,9 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
   int highestParamId = -1; 
   if(params.size() > 0 )
     {
-      auto ids = std::vector<nat>(0, params.size());
-      ids.reserve(params.size());
-      std::transform(params.begin(),params.end(), ids.begin(), [](const std::unique_ptr<AbstractParameter> &param){ return param->getId();  }); 
+      auto ids = std::vector<nat>{};
+      for(auto &param : params )
+	ids.push_back(param->getId() ); 
       highestParamId = * (std::max_element(ids.begin(), ids.end())) ; 
     } 
 
@@ -95,7 +95,6 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	  break; 
 	case Category::AA_MODEL:	
 	  {
-	    // auto partsUnused = std::vector<nat>{}; 
 	    for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
 	      {
 		if( traln.getPartition(i).dataType == AA_DATA
@@ -202,7 +201,7 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
 }
 
 
-void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, std::vector<unique_ptr<AbstractParameter> > &variables)
+void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &priorInfo, std::vector<unique_ptr<AbstractParameter> > &variables)
 {
   auto& priors = priorInfo.getPriors();
 
@@ -218,9 +217,18 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	{
 	  auto &partitionsOfPrior = std::get<0>(iter->second); 
 	  foundPrior = std::any_of(partitionIds.begin(), partitionIds.end(), [&]( nat tmp ){  return partitionsOfPrior.find(tmp) != partitionsOfPrior.end(); } ); 
+	  
+	  auto& prior = *(std::get<1>(iter->second).get()); 
+
 	  if(foundPrior)
 	    {
-	      v->setPrior( std::unique_ptr<AbstractPrior>(std::get<1>(iter->second)->clone()) ) ; 
+	      if(not v->priorIsFitting(prior, traln))
+		{
+		  tout  << "You forced prior " << &prior << " to be applied to parameter  "  << v.get() << ". This is not possible. "  << std::endl; 
+		  exit(-1); 
+		}
+
+	      v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
 	      break; 
 	    }
 	}
@@ -230,11 +238,16 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	{
 	  for(auto iter = priors.find(cat) ; iter != priors.end() ; ++iter)
 	    {
+	      auto &prior = *(std::get<1>(iter->second).get()); 
+
+	      if(not v->priorIsFitting(prior, traln))
+		continue; 
+
 	      auto &partitionsOfPrior = std::get<0>(iter->second); 
 	      foundPrior = partitionsOfPrior.size() ==  0; 
 	      if(foundPrior)
 		{
-		  v->setPrior( std::unique_ptr<AbstractPrior>(std::get<1>(iter->second)->clone()) ) ; 
+		  v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
 		  break; 
 		}
 	    }
@@ -281,13 +294,13 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::v
 
 
 
-auto RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
-				  std::vector<std::unique_ptr<AbstractParameter> > &params, const TreeAln &traln, bool componentWiseMH)
-  -> std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSet> > 
+std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSet> > 
+ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+			      std::vector<std::unique_ptr<AbstractParameter> > &params, const TreeAln &traln, bool componentWiseMH)
 {
   auto proposals = std::vector<std::unique_ptr<AbstractProposal> >{} ; 
   auto resultPropSet = std::vector<ProposalSet >{} ; 
-  addPriorsToVariables(traln, priorInfo, params);
+  addPriorsToParameters(traln, priorInfo, params);
 
   auto reg = ProposalRegistry{}; 
 

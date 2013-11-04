@@ -1,17 +1,16 @@
 #ifndef _ABSTRACT_PARAMETER
 #define _ABSTRACT_PARAMETER
 
+#include "TreeAln.hpp"
 #include "ParameterContent.hpp"
 #include "priors/AbstractPrior.hpp"
-
-class TreeAln; 
 
 enum class Category; 
 
 class AbstractParameter
 {
 public:   
-  AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions); 
+  AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio); 
   AbstractParameter(const AbstractParameter& rhs); 
   /** 
       @brief applies the parameter content to the tree 
@@ -58,7 +57,12 @@ public:
   friend std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs); 
   virtual AbstractParameter* clone() const = 0 ; 
 
+
+  virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const; 
+
   virtual void checkSanityPartitionsAndPrior(const TreeAln &traln) const ; 
+
+  nat getParamPriority() const {return _paramPriority; } 
 
 protected: 			// METHODS
   void checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &traln) const ; 
@@ -70,6 +74,7 @@ protected: 			// ATTRIBUTES
   std::unique_ptr<AbstractPrior> _prior; 
   bool _printToParamFile; 
   std::vector<nat> _partitions; 
+  nat _paramPriority; 
 }; 
 
 #endif
