@@ -26,7 +26,7 @@ static void expectString( std::string expectation, NxsToken& token)
 static std::vector<double> parseValues(NxsToken &token)
 {
   auto result = std::vector<double>{}; 
-  
+
   // assumption: we have already seen the ')'
 
   while(token.GetToken().compare(")") != 0)
@@ -71,7 +71,6 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
     }
   else if(value.EqualsCaseInsensitive("disc"))
     {
-      // token.GetNextToken(); 
       expectString("(", token);
       
       auto modelsProbs = std::unordered_map<ProtModel, double>{};
@@ -141,9 +140,14 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       return std::unique_ptr<AbstractPrior>(new DiscreteModelPrior(modelsProbs));
     }
   else if(value.EqualsCaseInsensitive("dirichlet"))
-    {      
+    {
+      expectString("(",token);
+      token.GetNextToken();
+      
       auto alphas = parseValues(token); 
-      return std::unique_ptr<AbstractPrior>(new DirichletPrior(alphas)); 
+      auto pr = new DirichletPrior(alphas);
+
+      return std::unique_ptr<AbstractPrior>(pr); 
     }
   else if(value.EqualsCaseInsensitive("fixed"))
     { 
@@ -198,33 +202,33 @@ void BlockPrior::Read(NxsToken &token)
 	return;
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
 	{
-	  auto str = token.GetToken(false).ToUpper(); 
-	  auto cat = CategoryFuns::getCategoryByPriorName(str); 
+	  auto cat = CategoryFuns::getCategoryByPriorName(token.GetToken()); 
 	  token.GetNextToken();
 
 	  auto partitions  = std::unordered_set<nat> {}; 
 	  if(token.GetToken().compare("{") == 0)
 	    {
-	      token.GetNextToken();
-	      str = token.GetToken(false);
-	      
-	      auto val = str.ConvertToInt(); 
-	      
-	      if( _numPart <= nat(val)  )
+	      while(not token.GetToken().EqualsCaseInsensitive("}"))
 		{
-		  tout << "Error while parsing priors: you specified partition id " << val << " while ExaBayes assumes, that you only have " << _numPart << " partitions" << std::endl; 
-		  exit(-1);
-		}
+		  token.GetNextToken();
+		  auto val = token.GetToken().ConvertToInt(); 
 	      
-	      partitions.insert(val);
-	      token.GetNextToken();
-	      str = token.GetToken(false); 
-	      assert(str.compare("}") == 0) ;
+		  if( _numPart <= nat(val)  )
+		    {
+		      tout << "Error while parsing priors: you specified partition id " << val << " while ExaBayes assumes, that you only have " << _numPart << " partitions" << std::endl; 
+		      exit(-1);
+		    }
+	      
+		  partitions.insert(val);
+		  token.GetNextToken();
+		}
+
+	      assert(token.GetToken().compare("}") == 0) ;
 	      token.GetNextToken();
 	    }
 
 	  auto prior = parsePrior(token);
-	  _parsedPriors.emplace( cat, std::make_tuple(partitions,std::move(prior))  );
+	  _parsedPriors.insert(std::make_pair( cat, std::make_tuple(partitions,std::move(prior))  ));
 	}
     }  
 } 

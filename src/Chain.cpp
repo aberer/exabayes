@@ -287,7 +287,10 @@ std::string Chain::serializeConditionally( CommFlag commFlags)  const
 	p->serialize(ss); 
 
       for(auto& p: proposalSets)
-	p.serialize(ss);
+	{
+	  tout << "serializing "  << p << std::endl; 
+	  p.serialize(ss);
+	}
     }
 
   if(commFlags & CommFlag::Tree)
@@ -424,9 +427,10 @@ void Chain::stepSingleProposal()
   /* reset proposal ratio  */
   hastings = 0; 
 
-  pfun.applyToState(*tralnPtr, prior, hastings, chainRand, evaluator);
-
   // tout << " have "  << pfun << std::endl; 
+
+
+  pfun.applyToState(*tralnPtr, prior, hastings, chainRand, evaluator);
 
   auto suggestion = peekNextVirtualRoot(traln,chainRand); 
 
@@ -767,7 +771,10 @@ void Chain::initProposalsFromStream(std::istream& in)
     }
 
   for(auto &p : proposalSets)
-    p.deserialize(in);
+    {
+      tout << "deserializing set " << p << std::endl; 
+      p.deserialize(in);
+    }
 }
 
 
@@ -827,11 +834,14 @@ void Chain::serialize( std::ostream &out) const
   for(auto &p : proposals)
     p->serialize(out);
 
+  for(auto &p : proposalSets)
+    p.serialize(out); 
+    
   for(auto &var: extractParameters())
     {
       const auto &compo = savedContent.at(var->getId()); 
 
-      std::stringstream ss; 
+      auto &&ss = std::stringstream{}; 
       var->printShort(ss); 
 
       std::string name = ss.str(); 

@@ -74,3 +74,9 @@ void AbstractParameter::checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &
       exit(-1); 
     }
 }
+
+
+bool AbstractParameter::priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const
+{
+  return true;   
+}

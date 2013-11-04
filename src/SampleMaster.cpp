@@ -261,6 +261,7 @@ void SampleMaster::initializeFromCheckpoint()
 	}
 
       deserialize(chkpnt); 
+
       if(_pl.isGlobalMaster())
 	{
 	  for(auto &run : _runs)
@@ -627,18 +628,8 @@ void SampleMaster::initializeRuns(Randomness rand)
     {      
       trees.push_back(std::make_shared<TreeAln>(numTax)); 
 
-      tout << "\n\n copying a tree\n\n " ; 
-
       auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new TreeResource(initTreePtr.get())));
       ti.initializeWithAlignmentInfo(*(trees[i]), runmodes); 
-
-#if HAVE_PLL == 0
-      if(_cl.isPerPartitionDataDistribution())
-	{
-	  auto &tr = trees[i]->getTrHandle(); 
-	  tr.manyPartitions = TRUE; 
-	}
-#endif
     }
 
   auto runSeeds = vector<randCtr_t>{};
@@ -696,13 +687,14 @@ void SampleMaster::initializeRuns(Randomness rand)
 	paramView.push_back(param.get()); 
 
       initializeWithParamInitValues(trees, paramView, hadBls );
+
+      auto runRand =  Randomness(runSeeds[i]); 
       
       auto chains = vector<Chain>{};       
       for(nat j = 0; j < _runParams.getNumCoupledChains(); ++j)
 	{
-	  randCtr_t c; 
 	  auto &t = trees.at(j);
-	  chains.emplace_back( c , t, proposals, proposalSets, evalUptr, _cl.isDryRun() ); 
+	  chains.emplace_back( runRand.generateSeed() , t, proposals, proposalSets, evalUptr, _cl.isDryRun() ); 
 	  auto &chain = chains[j]; 		
 	  chain.setRunId(i); 
 	  chain.setTuneFreuqency(_runParams.getTuneFreq()); 
@@ -710,15 +702,14 @@ void SampleMaster::initializeRuns(Randomness rand)
 	  chain.setDeltaT(_runParams.getHeatFactor()); 
 	}
 	  
-      _runs.emplace_back(runSeeds[i], i, _cl.getWorkdir(), _cl.getRunid(), _runParams.getNumCoupledChains(), chains); 
-      auto &run = *(_runs.rbegin()); 
+      _runs.emplace_back(runRand, i, _cl.getWorkdir(), _cl.getRunid(), _runParams.getNumCoupledChains(), chains); 
+      auto &run = _runs.back(); 
       run.setTemperature(_runParams.getHeatFactor());
       run.setPrintFreq(_runParams.getPrintFreq()); 
       run.setSwapInterval(_runParams.getSwapInterval()); 
       run.setSamplingFreq(_runParams.getSamplingFreq()); 
       run.setNumSwaps(_runParams.getNumSwaps());
-      run.seedChains(); 	  
-      
+
       if(_pl.isRunLeader() && _pl.isMyRun(run.getRunid()))
 	run.initializeOutputFiles(_cl.isDryRun());
     }
@@ -858,8 +849,8 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
 }
 
 
-auto SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
-  ->   std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
+std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
+SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )  
 {
   auto reader = ConfigReader{}; 
   auto && fh = ifstream(configFileName); 
@@ -874,6 +865,9 @@ auto SampleMaster::processConfigFile(string configFileName, const TreeAln &traln
   reader.Add(&_runParams);
   reader.Add(&proposalConfig);   
   reader.Execute(token);
+
+  
+  proposalConfig.verify(); 
 
   auto r = RunFactory{}; 
   auto paramResult = paramBlock.getParameters();
@@ -1087,8 +1081,7 @@ void SampleMaster::writeCheckpointMaster()
 
   if(_pl.isGlobalMaster() )
     {
-
-      stringstream ss; 
+      auto &&ss = stringstream{}; 
       ss <<  OutputFile::getFileBaseName(_cl.getWorkdir()) << "_newCheckpoint." << _cl.getRunid()  ; 
       std::string newName = ss.str();
       ofstream chkpnt; 

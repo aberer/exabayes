@@ -41,13 +41,6 @@ public:
   Chain( Chain&& rhs) ; 
   Chain& operator=( Chain rhs) ; 
 
-
-  /** 
-      @brief set seet for the chain specific RNG 
-   */ 
-  void reseed(randKey_t c) 
-  { chainRand.setKey(c); }  
-  // { chainRand = Randomness(c); }  
   /** 
       @brief apply saved parameter contents to the tree structure
       @param eval indicates whether an evaluation should be performed after resuming

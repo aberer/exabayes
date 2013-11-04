@@ -37,11 +37,14 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	{
 	  startingNext = false; 
 	  // check if the separation item is an expasion item (-)
-	  auto doExpand = token.GetToken().EqualsCaseInsensitive("-"); 
+	  auto isLinkedRange =  token.GetToken().EqualsCaseInsensitive("-") ; 
+	  auto isUnlinkedRange = token.GetToken().EqualsCaseInsensitive(":") ; 
+
 	  token.GetNextToken();
 	  nat part = token.GetToken().ConvertToInt();
-	  nat start = doExpand ? schemePart.back() +1  : part; 
+	  nat start = ( isLinkedRange || isUnlinkedRange )  ? schemePart.back() +1  : part; 
 	  nat end = part + 1 ;  
+
 	  for(nat i = start ;  i < end ; ++i )
 	    {
 	      if(not (i < numPart))
@@ -52,9 +55,16 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 		  exit(-1); 
 		}
 	      partAppeared.at(i) = true; 
-	      schemePart.push_back(i); 
+
+	      if(isUnlinkedRange)
+		{
+		  scheme.push_back(schemePart);
+		  schemePart = {i}; 
+		}
+	      else 
+		schemePart.push_back(i); 
 	    }
-	  
+
 	  token.GetNextToken(); 
 	}
 
@@ -67,7 +77,6 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
       assert(schemePart.size()  > 0 ); 
       parameters.push_back(CategoryFuns::getParameterFromCategory(cat,idCtr,getNumSeen(cat), schemePart));
       ++idCtr; 
-      tout << "initialized " << parameters.back().get() << std::endl; 
     }
 }
 
@@ -77,7 +86,7 @@ void BlockParams::Read(NxsToken &token)
   DemandEndSemicolon(token, "PARAMS");
   nat idCtr = 0; 
 
-  std::set<Category> catsFound; 
+  auto catsFound = std::unordered_set<Category>{}; 
 
   while(true)
     {
@@ -91,7 +100,7 @@ void BlockParams::Read(NxsToken &token)
 	{	  
 	  auto str = token.GetToken(false); 
 
-	  Category cat = CategoryFuns::getCategoryFromLinkLabel(str); 	  
+	  auto cat = CategoryFuns::getCategoryFromLinkLabel(str); 	  
 	  parseScheme(token, cat, idCtr); 
 
 	  if(catsFound.find(cat) != catsFound.end())

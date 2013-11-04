@@ -37,6 +37,8 @@ public:
   bool isComponentWiseMH() const {return componentWiseMH; }
   nat getNumSwaps() const {return numSwaps;}
 
+  void verify() const ; 
+
 private: 
   nat diagFreq ; 
   double asdsfIgnoreFreq; 	

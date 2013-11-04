@@ -30,6 +30,13 @@ public:
   virtual void verifyContent(const TreeAln&traln, const ParameterContent &content) const ; 
   
   virtual void checkSanityPartitionsAndPrior(const TreeAln &traln) const ; 
+
+  virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const
+  {
+    auto content = prior.getInitialValue();
+    auto& partition = traln.getPartition(_partitions.at(0));
+    return content.values.size()  ==  numStateToNumInTriangleMatrix(partition.states); 
+  }
 }; 
 
 #endif

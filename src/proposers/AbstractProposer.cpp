@@ -4,12 +4,15 @@
 
 void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const 
 {
+  // tout << MAX_SCI_PRECISION << "to be normalized " << values << std::endl; 
+
+
   nat prevFixed = -1; 
   nat nowFixed = 0; 
   
   auto fixedHigh = std::vector<bool>(values.size(), false);
   auto fixedLow = std::vector<bool>(values.size(), false);
-  
+
   nat iter = 0; 
   while(prevFixed != nowFixed)
     {
@@ -20,13 +23,15 @@ void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const
 	  assert(v > 0); 	    
 	  if( v <= minVal)
 	    {
+	      // tout << "value too small!" << std::endl; 
 	      v = minVal; 
-	      fixedLow[ctr] = true; 
+	      fixedLow.at(ctr) = true; 
 	    }
 	  else if(maxVal <= v)
 	    {
+	      // tout << "value too high!" << std::endl; 
 	      v = maxVal; 
-	      fixedHigh[ctr] = true; 
+	      fixedHigh.at(ctr) = true; 
 	    }
 	  else 
 	    normer += v; 
@@ -35,13 +40,13 @@ void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const
 
       nat numHigh = std::count_if(fixedHigh.begin(), fixedHigh.end(), [](bool elem) {return elem; }); 
       nat numLow = std::count_if(fixedLow.begin(), fixedLow.end(), [](bool elem){return elem; }); 
-
+      
       normer = ( 1 - (minVal * numLow  +  maxVal * numHigh))    / normer  ;
 
       ctr = 0; 
       for(auto &v : values)
 	{
-	  if(not  fixedHigh[ctr]  && not  fixedLow[ctr] )
+	  if(not  ( fixedHigh.at(ctr)  ||  fixedLow.at(ctr))  )
 	    v *= normer; 
 	  ++ctr; 
 	}
@@ -50,5 +55,7 @@ void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const
       nowFixed = numHigh + numLow; 
       ++iter; 
     }
+
+  // tout << "iterations necessary: " <<  iter << "\tminval="<< minVal << std::endl; 
 } 
 

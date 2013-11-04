@@ -58,6 +58,9 @@ public:
   friend std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs); 
   virtual AbstractParameter* clone() const = 0 ; 
 
+
+  virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const; 
+
   virtual void checkSanityPartitionsAndPrior(const TreeAln &traln) const ; 
 
 protected: 			// METHODS

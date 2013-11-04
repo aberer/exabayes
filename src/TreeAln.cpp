@@ -586,16 +586,17 @@ std::vector<double> TreeAln::getFrequencies(nat model) const
 }
 
 
-bool TreeAln::revMatIsImmutable(nat model) const
-{
-#ifdef UNSURE
-  assert(0); 
-#endif
+// bool TreeAln::revMatIsImmutable(nat model) const
+// {
+// #ifdef UNSURE
+//   assert(0); 
+// #endif
     
-  auto& partition = getPartition(model); 
+//   auto& partition = getPartition(model); 
     
-  return partition.states == 20 && partition.protModels != GTR; 
-} 
+//   return partition.states == 20 && partition.protModels != GTR; 
+// }
+
 
 
 nat numStateToNumInTriangleMatrix(int numStates)  

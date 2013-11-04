@@ -10,12 +10,11 @@
 #include "ParallelSetup.hpp"
 
 
-// TODO 
-CoupledChains::CoupledChains(randCtr_t seed, int runNum, string workingdir, std::string runname, int numCoupled,  vector<Chain> &_chains   )
+CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir, std::string runname, int numCoupled,  std::vector<Chain> &_chains   )
   : chains(std::move(_chains))
   , swapInfo(chains.size())
   , heatIncrement(0.1) 
-  , rand(seed)
+  , rand(randI)
   , runid(runNum) 
   , printFreq(500)
   , swapInterval(1)
@@ -75,14 +74,6 @@ void CoupledChains::initializeOutputFiles(bool isDryRun)
   
   pFile[0].initialize(traln, params, tag.v[0] ,isDryRun); 
   
-}
-
-
-void CoupledChains::seedChains()
-{
-  for(auto &c : chains)
-    c.reseed(rand.generateSeed()); 
-  // std::cout << rand  << " after RESEEDING " << std::endl; 
 }
 
 

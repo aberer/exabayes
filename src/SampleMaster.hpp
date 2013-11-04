@@ -45,8 +45,8 @@ public:
   /** 
       @brief initializes the config file 
    */ 
-  auto processConfigFile(string configFileName, const TreeAln &tralnPtr )
-    ->   std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  ; 
+  std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
+  processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
   void initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &trees , const std::vector<AbstractParameter*> &params , const std::vector<bool> hasBls ) const ; 
   /** 
       @brief EXPERIMENTAL 

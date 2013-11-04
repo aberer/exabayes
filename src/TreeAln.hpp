@@ -244,7 +244,7 @@ public:
 
   nat getNumberOfAssignedSites(nat model) const ; 
 
-  bool revMatIsImmutable(nat model) const; 
+  // bool revMatIsImmutable(nat model) const; 
 
   RunModes getMode() const { return _mode; }
 

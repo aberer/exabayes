@@ -19,7 +19,7 @@ startFromBest=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0
+useGoogleProfiler=1
 useClang=1
 
 

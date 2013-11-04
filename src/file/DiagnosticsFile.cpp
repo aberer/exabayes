@@ -22,12 +22,12 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
   fullFileName = createName(name, workdir);     
   rejectIfExists(fullFileName); 
 
-  // tout << "initialized diagnostics file >" << fullFileName << "<" << std::endl; 
-
   std::ofstream fh(fullFileName); 
 
-  fh << "GEN"
-     << "\tasdsf"; 
+  fh << "GEN" ;
+
+  if(runs.size() > 1)
+    fh << "\tasdsf"; 
   
   for(auto& run : runs)
     {
@@ -37,7 +37,6 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
 	{
 	  for(nat j = i+1; j < numElem; ++j )
 	    {
-	      // auto sctr = info.getCounter(i,j); 
 	      fh << "\tsw("  << i << "," << j << ")$run" << run.getRunid(); 
 	    }
 	}
@@ -66,7 +65,10 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
 {
   std::ofstream fh(fullFileName, std::fstream::app); 
 
-  fh << gen << "\t" << asdsf;   
+  fh << gen ; 
+  
+  if(runs.size() > 1)
+    fh << "\t" << asdsf;   
 
   // print swapping info (if applicable)
   for(auto &run : runs)
@@ -74,8 +76,9 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
       auto m = run.getSwapInfo().getMatrix();
       for(auto &elem  : m)
 	{
-	  fh << "\t" << elem.getRatioInLastInterval()
-	     << "," << elem.getRatioOverall() 
+	  fh << "\t"
+	     // << elem.getRatioInLastInterval()<< ","
+	     << elem.getRatioOverall() 
 	     << "," << elem.getTotalSeen();
 	}
     }
@@ -113,8 +116,8 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
       auto &sctr = p->getSCtr();
       fh << "\t" << 
 	// sctr.getRatioInLast100()
-	sctr.getRatioInLastInterval()
-	 << "," << sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
+	// sctr.getRatioInLastInterval() << ","
+	sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
     }	  
 
   fh << std::endl; 

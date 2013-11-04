@@ -247,8 +247,6 @@ void CommandLine::parse(int argc, char *argv[])
     }
   else 
     {
-      // std::cout << "singleModel=" << singleModel << "\t modelFile=>" << modelFile << "<" << std::endl; 
-
       if(singleModel.compare("") == 0 && modelFile.compare("") == 0 )
 	{
 	  std::cout << "Found a phylip-style alignment file. However, you did not provide a\n"
@@ -257,8 +255,6 @@ void CommandLine::parse(int argc, char *argv[])
 	  exit(-1); 
 	}
     }
-  
-  // assert(0); 
 }
 
 RunModes CommandLine::getTreeInitRunMode() const 
@@ -292,14 +288,17 @@ bool CommandLine::alnFileIsBinary() const
   auto readString = std::string(firstBytes); 
 
   bool result = readString.compare(fileId) == 0 ;
-  if(not result)
-    {
-      std::cout << "wanted to read >" << fileId << "< instead got >" << readString << "<" << std::endl; 
-    }
-  else 
-    {
-      std::cout << "Determined alignment file to be binary" << std::endl; 
-    }
+  // if(not result)
+  //   {
+  //     // std::cout << "wanted to read >" << fileId << "< instead got >" << readString << "<" << std::endl; 
+      
+  //   }
+  // else 
+  //   {
+  //     // std::cout << "Determined alignment file to be binary" << std::endl; 
+  //   }
 
   return result; 
 }  
+
+

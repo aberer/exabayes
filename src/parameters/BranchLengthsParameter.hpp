@@ -29,6 +29,8 @@ public:
 
   virtual void verifyContent(const TreeAln&traln, const ParameterContent &content) const ; 
 
+  virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const; 
+
 }; 
 
 

@@ -48,8 +48,8 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 {
   std::vector<unique_ptr<AbstractProposal> > result; 
 
-  auto proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
-  for(auto p : proposals)
+  auto&& proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
+  for(auto& p : proposals)
     {     
 
       double userWeight = 1; 
@@ -62,7 +62,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
       else if( not ProposalTypeFunc::isReadyForProductiveUse(p)  )		
 	continue;       
 
-      unique_ptr<AbstractProposal> proposal; 
+      auto&& proposal = std::unique_ptr<AbstractProposal>{}; 
 
       switch(p)
 	{	      
@@ -79,7 +79,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  proposal = unique_ptr< TreeLengthMultiplier>( new TreeLengthMultiplier(  ProposalRegistry::initTreeLengthMultiplier)); 
 	  break; 
 	case ProposalType::E_TBR: 
-	  proposal = unique_ptr< ExtendedTBR>( new ExtendedTBR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier)); 
+	  proposal = unique_ptr< ExtendedTBR>( new ExtendedTBR(  config.getEtbrStopProb(), initSecondaryBranchLengthMultiplier)); 
 	  break; 
 	case ProposalType::E_SPR: 
 	  proposal = unique_ptr<ExtendedSPR>( new ExtendedSPR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier)); 
