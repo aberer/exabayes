@@ -82,7 +82,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	case Category::AA_MODEL: 
 	  {
 	    auto p = v->getPartitions()[0]; 
-	    auto model = traln.getModelAssignment(p); 
+	    auto model = traln.getProteinModel(p); 
 	    auto content =  ParameterContent(); 
 	    content.protModel.push_back(model); 
 	    partialResult = v->getPrior()->getLogProb(content);

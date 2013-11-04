@@ -18,13 +18,13 @@ AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared
   assert(tralnPtr->getNumberOfPartitions() == 1 ); 
 
   std::vector<std::unique_ptr<AbstractParameter> > params; 
-  params.emplace_back(std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0))); 
+  params.emplace_back(std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0, {0}))); 
   for(nat i = 0; i < tralnPtr->getNumberOfPartitions(); ++i)
     params[0]->addPartition(i);
 
   double lambda = 10;
 
-  params[0]->setPrior(make_shared< ExponentialPrior>(lambda));
+  params[0]->setPrior(std::unique_ptr<AbstractPrior>(new ExponentialPrior(lambda)));
 
   vector<unique_ptr<AbstractProposal> >  proposals;   
   proposals.emplace_back( new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 

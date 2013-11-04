@@ -16,10 +16,10 @@ void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &con
 
   for_each(tmp.begin(), tmp.end(), [&](double &d){return d /= *(tmp.rbegin()) ;  } );
   
-  for(auto &m : partitions)
+  for(auto &m : _partitions)
     traln.setRevMat(tmp, m);
 
-  auto newStuff = traln.getRevMat(partitions[0]);
+  auto newStuff = traln.getRevMat(_partitions[0]);
   
   // tout << "applying new values " ;  
   // std::copy(newStuff.begin(), newStuff.end(), std::ostream_iterator<double>(tout, ",")); 
@@ -31,7 +31,7 @@ void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &con
 ParameterContent RevMatParameter::extractParameter(const TreeAln &traln )  const
 {
   ParameterContent result; 
-  result.values = traln.getRevMat(partitions.at(0)); 
+  result.values = traln.getRevMat(_partitions.at(0)); 
   double sum = 0; 
   for(auto &v : result.values )
     sum += v;  
@@ -81,7 +81,7 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
       isFirstG = false; 
 	
       bool isFirst = true; 
-      for(auto &p : partitions)
+      for(auto &p : _partitions)
 	{
 	  fileHandle  << (isFirst ? "": "," ) << p ; 
 	  isFirst = false; 
@@ -93,7 +93,7 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
 
 void RevMatParameter::verifyContent(const TreeAln&traln, const ParameterContent &content) const 
 {
-  auto& partition = traln.getPartition(partitions[0]); 
+  auto& partition = traln.getPartition(_partitions[0]); 
   auto num = numStateToNumInTriangleMatrix(partition.states);
 
   bool ok = true; 
@@ -115,3 +115,18 @@ void RevMatParameter::verifyContent(const TreeAln&traln, const ParameterContent 
     }
 } 
 
+
+void RevMatParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const 
+{
+  checkSanityPartitionsAndPrior_FreqRevMat(traln);
+  nat numStates = traln.getPartition(_partitions[0]).states; 
+  
+  auto initVal = _prior->getInitialValue(); 
+  if( initVal.values.size() != numStateToNumInTriangleMatrix(numStates) && 
+      initVal.protModel.size() == 0 )
+    {
+      tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
+      printShort(tout) << " that is not applicable." << std::endl; 
+      exit(-1); 
+    }
+}

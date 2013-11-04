@@ -32,8 +32,11 @@ nat numStateToNumInTriangleMatrix(int numStates) ;
 struct partitionList; 
 #endif
 
+class TreeInitializer; 
+
 class TreeAln
 {
+  friend class TreeInitializer; 
 public: 
    /////////////////
    // life cycle  //
@@ -67,18 +70,12 @@ public:
   /** 
       @brief get the internal raxml tree representation 
    */ 
-  tree& getTrHandle() {return tr;}
-  const tree& getTrHandle() const {return tr; }
+  tree& getTrHandle() {return _tr;}
+  const tree& getTrHandle() const {return _tr; }
   /** 
       @brief frees all likelihood arrays 
    */   
   void clearMemory(); 
-  /** 
-      @brief get the number of per-partition branch lengths
-      @notice do NOT confuse with getNumberOfBranches 
-      @todo remodel this function / deal with the general problem 
-   */ 
-  nat getNumBranches() const; 
   /** 
       @brief get the number of branches in the tree (not counting per-partition branch lengths)
    */ 
@@ -98,15 +95,15 @@ public:
   /** 
       @brief get the substitution matrix for partition "model"
    */ 
-  std::vector<double> getRevMat(int model) const ;   
+  std::vector<double> getRevMat(nat model) const ;   
   /** 
       @brief gets the state frequencies for partition "model" 
    */ 
-  std::vector<double> getFrequencies(int model) const; 
+  std::vector<double> getFrequencies(nat model) const; 
   /**
      @brief gets the alpha parameter of the gamma distribution  
    */ 
-  double getAlpha(int model) const {auto& partition = getPartition(model) ; return partition.alpha; } 
+  double getAlpha(nat model) const {auto& partition = getPartition(model) ; return partition.alpha; } 
   /** 
       @brief indicates whether a nodepointer is a tip 
    */ 
@@ -169,22 +166,22 @@ public:
   ///////////////
 #if HAVE_PLL != 0 
   // void setPartitionList(partitionList *pl) { partitions = *pl; }
-  partitionList& getPartitionsHandle()  { return partitions; }   
+  partitionList& getPartitionsHandle()  { return _partitions; }   
 #endif  
   BranchPlain getAnyBranch() const ;//  {return BranchPlain(tr.nodep[1]->number, tr.nodep[1]->back->number); } 
   
   /**
      @brief sets the frequencies. Format is important, frequencies must add up to 1.0 
   */ 
-  void setFrequencies(const std::vector<double> &values, int model);
+  void setFrequencies(const std::vector<double> &values, nat model);
   /** 
       @brief sets the parameters. Format is important, last rate must be 1.0  
   */ 
-  void setRevMat(const std::vector<double> &values, int model);
+  void setRevMat(const std::vector<double> &values, nat model);
   /** 
       @brief sets the alpha for partition "model"
    */ 
-  void setAlpha(double alpha,  int model);   
+  void setAlpha(double alpha,  nat model);   
   /** 
       @brief sets a branch. Topology is NOT modified! 
    */ 
@@ -247,31 +244,33 @@ public:
 
   nat getNumberOfAssignedSites(nat model) const ; 
 
-  bool revMatIsImmutable(int model) const; 
+  bool revMatIsImmutable(nat model) const; 
 
-  RunModes getMode() const { return mode; }
+  RunModes getMode() const { return _mode; }
 
   void setTaxa(std::vector<std::string> map){ _taxa = map; }
   std::vector<std::string> getTaxa() const {return _taxa; }
 
   std::vector<BranchPlain> getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const;   
 
-  void setModelAssignment(int part, ProtModel model) ; 
-  ProtModel getModelAssignment(int part) const; 
+  void setProteinModel(int part, ProtModel model) ; 
+  ProtModel getProteinModel(int part) const; 
 
-  void setMode(RunModes modeI){mode = modeI; }
+  void setBranchUnchecked(const BranchLength &bl); 
+  
+  void setMode(RunModes modeI){_mode = modeI; }
 
 private: // METHODS  
-  void initRevMat(int model); 	// these functions are not needed any more: directly use the respective setter function     
-  void discretizeGamma(int model); 
+  void initRevMat(nat model); 	// these functions are not needed any more: directly use the respective setter function     
+  void discretizeGamma(nat model); 
   void createStandardTree(nat numTax); 
 
 private: 			// ATTRIBUTES 
 #if HAVE_PLL != 0 
-  partitionList partitions; 
+  partitionList _partitions; 
 #endif
-  tree tr;		// TODO replace with an object for cleanup   
-  RunModes mode; 
+  tree _tr;		// TODO replace with an object for cleanup   
+  RunModes _mode; 
   std::vector<std::string> _taxa; 
 
 };  

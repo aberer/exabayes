@@ -11,14 +11,13 @@ public:
 
   virtual bool needsIntegration() const {return false; } 
   virtual double getLogProb(const ParameterContent &content )  const; 
-  // virtual std::vector<double> drawFromPrior(Randomness &rand )  const ; 
-
 
   virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const {assert(0); return ParameterContent{}; } ; 
 
   virtual void print(std::ostream &out) const ; 
   virtual ParameterContent getInitialValue() const; 
- 
+
+  virtual AbstractPrior* clone() const { return new  FixedPrior(*this) ; }
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const; 
 
 private: 

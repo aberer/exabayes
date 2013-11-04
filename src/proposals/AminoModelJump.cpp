@@ -4,9 +4,8 @@
 
 
 AminoModelJump::AminoModelJump()
-  : AbstractProposal( Category::AA_MODEL, "aaMat")
+  : AbstractProposal( Category::AA_MODEL, "aaMat", 1.)
 {
-  relativeWeight = 1. ;
 }
 
 
@@ -23,7 +22,7 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &ha
   assert(primVar.size() == 1); 
   auto partitions = primVar[0]->getPartitions();
 
-  savedMod = traln.getModelAssignment(partitions[0]);
+  savedMod = traln.getProteinModel(partitions[0]);
 
   auto newModel = savedMod; 
   while(  newModel == savedMod )
@@ -32,13 +31,9 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &ha
       newModel = content.protModel[0];
     }
 
-  // tout << "new model is "<< ProtModelFun::getName(newModel)<< " old was "<< ProtModelFun::getName(savedMod) << std::endl; 
-  // auto freqs =  traln.getFrequencies(partitions[0]);
-  // tout << "frequencies are " << freqs << std::endl;  
-
   auto newFcs = std::vector<double>{}; 
   for(auto p : partitions)
-    traln.setModelAssignment(p, newModel);
+    traln.setProteinModel(p, newModel);
   for(auto blParam : blParams)
     newFcs.push_back(traln.getMeanSubstitutionRate(blParam->getPartitions()));
 
@@ -58,7 +53,7 @@ void AminoModelJump::resetState(TreeAln &traln)
   assert(primVar.size() == 1 ); 
   auto partitions = primVar[0]->getPartitions();
   for(auto p: partitions )
-    traln.setModelAssignment(p,savedMod);
+    traln.setProteinModel(p,savedMod);
 }
 
 

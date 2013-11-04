@@ -1760,8 +1760,10 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
       for(model = 0; model < pr->numberOfPartitions; model++)
 	{
 	  int 	       
+	    width = pr->partitionData[model]->width,
 	    lower = pr->partitionData[model]->lower,
 	    upper = pr->partitionData[model]->upper;
+	  
 	  
 	  if(scaleRates)
 	    {
@@ -1772,10 +1774,11 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
 	      int 
 		accWgt     = 0;
 	      
-	      for(i = lower; i < upper; i++)
+	      for(i = 0; i < width; i++)
 		{
 		  int 
-		    w = tr->aliaswgt[i];
+		    /* w = tr->aliaswgt[i]; */
+		    w = pr->partitionData[model]->wgt[i]; 
 		  
 		  double
 		    rate = pr->partitionData[model]->perSiteRates[tr->rateCategory[i]];
@@ -1796,10 +1799,11 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
 
 	      accRat = 0.0;	 
 	      
-	      for(i = lower; i < upper; i++)
+	      for(i = 0; i < width; i++)
 		{
 		  int 
-		    w = tr->aliaswgt[i];
+		    /* w = tr->[i]; */
+		    w = pr->partitionData[model]->wgt[i]; 
 		  
 		  double
 		    rate = pr->partitionData[model]->perSiteRates[tr->rateCategory[i]];
@@ -1821,10 +1825,11 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
 	      int 
 		accWgt     = 0;
 	      
-	      for(i = lower; i < upper; i++)
+	      for(i = 0; i < width; i++)
 		{
 		  int 
-		    w = tr->aliaswgt[i];
+		    /* w = tr->aliaswgt[i]; */
+		    w = pr->partitionData[model]->wgt[i]; 
 		  
 		  double
 		    rate = pr->partitionData[model]->perSiteRates[tr->rateCategory[i]];
@@ -1857,6 +1862,7 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
     }
   else
     {
+      /* assert(0);  */
       int
 	accWgt = 0;
 
@@ -1870,13 +1876,15 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
 	    {
 	      int 
 		localCount = 0,
+		width = pr->partitionData[model]->width,
 		lower = pr->partitionData[model]->lower,
 		upper = pr->partitionData[model]->upper;
 	      
-	      for(i = lower, localCount = 0; i < upper; i++, localCount++)
+	      for(i = lower ; i < upper; i++)
 		{
 		  int 
-		    w = tr->aliaswgt[i];
+		    /* w = tr->aliaswgt[i]; */
+		    w = pr->partitionData[model]->wgt[i]; 
 		  
 		  double
 		    rate = pr->partitionData[model]->perSiteRates[tr->rateCategory[i]];
@@ -1886,6 +1894,7 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
 		  accWgt += w;
 		  
 		  accRat += (w * rate);
+		  ++localCount; 
 		}
 	    }
 	  
@@ -1930,13 +1939,15 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
 	    {
 	      int 
 		localCount = 0,
+		width = pr->partitionData[model]->width,
 		lower = pr->partitionData[model]->lower,
 		upper = pr->partitionData[model]->upper;
 	      
-	      for(i = lower, localCount = 0; i < upper; i++, localCount++)
+	      for(i = 0; i < width; i++)
 		{
 		  int 
-		    w = tr->aliaswgt[i];
+		    /* w = tr->aliaswgt[i]; */
+		    w = pr->partitionData[model]->wgt[i]; 
 		  
 		  double
 		    rate = pr->partitionData[model]->perSiteRates[tr->rateCategory[i]];
@@ -1946,6 +1957,7 @@ void updatePerSiteRates(tree *tr, partitionList *pr, boolean scaleRates)
 		  accWgt += w;
 		  
 		  accRat += (w * rate);
+		  ++localCount; 
 		}
 	    }
 	  

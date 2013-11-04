@@ -20,6 +20,7 @@ public:
   virtual double getLogProb(const ParameterContent& content ) const ; 
   virtual void print(std::ostream &out) const ;
 
+  virtual AbstractPrior* clone()const { return new  DiscreteModelPrior(*this) ; }
 private: 
   std::unordered_map<ProtModel,double> _modelProbs; 
 }; 

@@ -4,7 +4,7 @@
 
 void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
-  for(auto &m : partitions)
+  for(auto &m : _partitions)
     traln.setAlpha(content.values[0], m); 
 }
  
@@ -12,7 +12,7 @@ void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &co
 ParameterContent RateHetParameter::extractParameter(const TreeAln &traln )  const
 {
   ParameterContent result; 
-  result.values = {traln.getAlpha(partitions[0])} ;
+  result.values = {traln.getAlpha(_partitions[0])} ;
   return result;  
 }   
 
@@ -29,7 +29,7 @@ void RateHetParameter::printAllComponentNames(std::ostream &fileHandle, const Tr
 {
   fileHandle << "alpha{"  ;
   bool isFirst = true; 
-  for(auto &p : partitions) 
+  for(auto &p : _partitions) 
     {
       fileHandle << (isFirst ? "" : "," ) << p ; 
       isFirst = false; 

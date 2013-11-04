@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <ncl/ncl.h>
 
@@ -12,28 +13,32 @@
 
 #include "Category.hpp"
 
+
+// if the set is empty, then we have a general "fall-back" prior
+typedef std::unordered_multimap<Category, 
+				std::tuple<std::unordered_set<nat>,
+					   std::unique_ptr<AbstractPrior> > >  
+multiMapCategory2TuplePartitionsPrior ; 
+
+
 class BlockPrior : public NxsBlock
 {
 public: 
   explicit BlockPrior(nat numPart) 
-    : numPart(numPart) 
-    , generalPriors(CategoryFuns::getAllCategories().size())
-    , specificPriors(CategoryFuns::getAllCategories().size())
+    : _numPart(numPart)
   {
     NCL_BLOCKTYPE_ATTR_NAME = "PRIOR"; 
   }
- 
-
-  shared_ptr<AbstractPrior> parsePrior(NxsToken &token)  ; 
+  
   virtual void Read(NxsToken &token); 
+  const multiMapCategory2TuplePartitionsPrior& getPriors()const  {return _parsedPriors; } 
 
-  vector< shared_ptr<AbstractPrior> > getGeneralPriors() const {return generalPriors; }
-  std::vector< std::unordered_map<nat,std::shared_ptr<AbstractPrior>>>  getSpecificPriors() const {return specificPriors; }
-
-private: 
-  nat numPart;   
-  std::vector<shared_ptr<AbstractPrior>> generalPriors; 
-  std::vector< std::unordered_map<nat,std::shared_ptr<AbstractPrior>>> specificPriors; // for each category
+private: 			// METHODS
+  std::unique_ptr<AbstractPrior> parsePrior(NxsToken &token)  ; 
+  
+private: 			// ATTRIBUTES
+  multiMapCategory2TuplePartitionsPrior _parsedPriors; 
+  nat _numPart;
 }; 
 
 

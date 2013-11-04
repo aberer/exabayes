@@ -8,11 +8,8 @@
 
 #include <cassert>
 
-// #include "config.h"
 #include "common.h"
-
 #include <cstring>
-
 #include <iostream>
 #include <fstream>
 
@@ -2107,6 +2104,8 @@ void PhylipParser::writeToFile(std::string fileName)
       myWrite(out, tr->nameList[i], len); 
     } 
 
+  myWrite(out, tr->partitionContributions, tr->NumberOfModels); 
+
   for(model = 0; model < (size_t)tr->NumberOfModels; model++)
     {
       int 
@@ -2180,6 +2179,21 @@ void PhylipParser::parse()
       tr->partitionData[model].maxTipStates = maxTipStates;
     }   
 
+
+  // create the partition contributions 
+  tr->partitionContributions = (double*)calloc(tr->NumberOfModels, sizeof(double)); 
+  double total = 0; 
+  for(int i = 0; i < tr->NumberOfModels; ++i)
+    {
+      double contribution = 0 ; 
+      auto &partition = tr->partitionData[i]; 
+      for(int j = partition.lower; j < partition.upper ;++j)
+	contribution += tr->cdta->aliaswgt[j] ; 
+      tr->partitionContributions[i] = contribution; 
+      total += contribution; 
+    }
+  for(int i = 0; i < tr->NumberOfModels; ++i)
+    tr->partitionContributions[i] /= total; 
 
   allocateParsimonyDataStructures()  ; 
 }

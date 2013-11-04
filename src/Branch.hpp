@@ -182,8 +182,8 @@ namespace std
   {
     size_t operator()(const Branch<void> & x) const
     {
-      return std::hash<nat>()(x.getSecNode()) 
-	^ std::hash<nat>()(x.getPrimNode()); 
+      return std::hash<size_t>()(x.getSecNode()) 
+	^ std::hash<size_t>()(x.getPrimNode()); 
     }
   };
 

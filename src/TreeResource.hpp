@@ -1,5 +1,6 @@
 #ifndef TREE_RESOURCE_HPP
 #define TREE_RESOURCE_HPP
+#include <cassert>
 
 #include "InitializationResource.hpp"
 class TreeAln; 
@@ -17,6 +18,10 @@ public:
   virtual void fillParsVect(parsimonyNumber*& ptr, size_t &len, nat mult, nat model) ; 
 
   virtual bool isDataAreDistributed() { return true; }
+  
+  virtual std::vector<double> getPartitionContributions(nat num) ; 
+  
+  virtual void initWeightsAndAln(TreeAln &traln)  ; 
 
 private: 
   const TreeAln * _tralnPtr;

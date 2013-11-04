@@ -9,10 +9,15 @@ class BranchLengthsParameter : public AbstractParameter
 {
 public: 
   
-  BranchLengthsParameter(nat id, nat idOfMyKind )    
-    : AbstractParameter(Category::BRANCH_LENGTHS, id, idOfMyKind )
+  BranchLengthsParameter(nat id, nat idOfMyKind, std::vector<nat> partitions)    
+    : AbstractParameter(Category::BRANCH_LENGTHS, id, idOfMyKind, partitions )
   {    
-    printToParamFile = false; 
+    _printToParamFile = false; 
+  }
+
+  BranchLengthsParameter(const BranchLengthsParameter& rhs)
+    : AbstractParameter(rhs)
+  {
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 

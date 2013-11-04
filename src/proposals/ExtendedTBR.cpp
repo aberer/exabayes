@@ -6,12 +6,10 @@
 // TODO the disorient is still  very inefficient 
 
 ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
-  : AbstractProposal(Category::TOPOLOGY , "eTBR")
+  : AbstractProposal(Category::TOPOLOGY , "eTBR", 5., false)
   , extensionProbability(_extensionProb)
   , multiplier(_multiplier)
 {
-  relativeWeight = 5.;
-  needsFullTraversal = false;
 }
 
 
@@ -141,7 +139,7 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
   // tout << "move is " << move << std::endl; 
   
   bool modifiesBl = false;   
-  for(auto &v : secondaryParameters)
+  for(auto &v : _secondaryParameters)
     modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
 
 #ifdef NO_SEC_BL_MULTI

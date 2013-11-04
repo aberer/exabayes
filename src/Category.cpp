@@ -92,9 +92,13 @@ namespace CategoryFuns
 
   std::vector<Category> getAllCategories()
   {
-    return {  Category::TOPOLOGY, Category::BRANCH_LENGTHS, Category::FREQUENCIES, 
+    return {  
+      Category::TOPOLOGY, 
+	Category::BRANCH_LENGTHS, 
+	Category::FREQUENCIES, 
 	Category::AA_MODEL,
-	Category::SUBSTITUTION_RATES, Category::RATE_HETEROGENEITY} ; 
+	Category::SUBSTITUTION_RATES, 
+	Category::RATE_HETEROGENEITY} ; 
   }
 
 
@@ -138,27 +142,26 @@ namespace CategoryFuns
 
 
 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind)
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions)
   {
-
     switch(cat)
       {
       case Category::TOPOLOGY :
-	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind ));
+	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind,partitions ));
       case Category::BRANCH_LENGTHS:
-	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id, idOfMyKind));
+	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id, idOfMyKind, partitions));
       case Category::FREQUENCIES :
-	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id, idOfMyKind));
+	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id, idOfMyKind,partitions));
       case Category::SUBSTITUTION_RATES :
-	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id, idOfMyKind));
+	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id, idOfMyKind,partitions));
       case Category::RATE_HETEROGENEITY:
-	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind));
+	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind,partitions));
       case Category::AA_MODEL :
-	return std::unique_ptr<AbstractParameter>( new ProtModelParameter(id, idOfMyKind));
+	return std::unique_ptr<AbstractParameter>( new ProtModelParameter(id, idOfMyKind,partitions));
       default : 
 	{
 	  assert(0); 
-	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind));
+	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind, partitions));
 	}
       }    
   }  

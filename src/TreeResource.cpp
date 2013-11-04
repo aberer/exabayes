@@ -17,8 +17,9 @@ std::vector<std::string> TreeResource::getTaxonNames(nat numTax)
  
 void TreeResource::fillAliasWgt(int *pos, nat length) 
 {
-  auto &tr = _tralnPtr->getTrHandle();
-  memcpy(pos, tr.aliaswgt, length * sizeof(int)); 
+  
+  // auto &tr = _tralnPtr->getTrHandle();
+  // memcpy(pos, tr.aliaswgt, length * sizeof(int)); 
 }
 
    
@@ -55,9 +56,7 @@ void TreeResource::fillPartition(pInfo &partition, nat model)
 
 void TreeResource::fillAlnPart(unsigned char* ptr, nat length, nat &ctr) 
 {
-  
-  // assert(0);
-  
+  assert(0);
   ++ctr; 
 }
 
@@ -70,3 +69,41 @@ void TreeResource::fillParsVect(parsimonyNumber*& ptr, size_t &len, nat mult, na
   ptr = (parsimonyNumber*)exa_malloc_aligned( numBytes * sizeof(parsimonyNumber));
   memcpy(ptr, partition.parsVect,numBytes * sizeof(parsimonyNumber));
 }
+
+
+void TreeResource::initWeightsAndAln(TreeAln &traln)  
+{
+  for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
+    {
+      auto &partitionLhs = traln.getPartition(i); 
+      auto &partitionRhs = _tralnPtr->getPartition(i); 
+      nat width = partitionRhs.width; 
+      
+      std::copy(partitionRhs.wgt, partitionRhs.wgt + width, partitionLhs.wgt); 
+      
+      for(nat j = 1; j < traln.getNumberOfTaxa() + 1 ; ++j)
+	std::copy(partitionRhs.yVector[j] , partitionRhs.yVector[j] + width ,partitionLhs.yVector[j]);
+    }
+} 
+
+
+std::vector<double> TreeResource::getPartitionContributions(nat num) 
+{
+  auto result = std::vector<double>(num, 0);
+#if HAVE_PLL == 0
+  auto start = _tralnPtr->getTrHandle().partitionContributions; 
+  std::copy(start, start + num ,result.begin()); 
+#else 
+  for(nat i = 0; i< num ; ++i)
+    {
+      auto &partition = _tralnPtr->getPartition(i);
+      assert(partition.partitionContribution > 0 ); 
+      result.at(i) = partition.partitionContribution; 
+    }
+#endif
+  return result; 
+} 
+
+
+
+

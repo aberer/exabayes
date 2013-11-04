@@ -30,25 +30,22 @@ public:
   /** 
       @brief configures the proposals 
   */ 
-  std::vector<std::unique_ptr<AbstractProposal> >  
-  produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
-		   const BlockParams& partitionParams, const TreeAln &traln, bool componentWiseMH, std::vector<ProposalSet> &resultPropSet); 
+  auto produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+		   std::vector<std::unique_ptr<AbstractParameter>>  & params, 
+		   const TreeAln &traln, bool componentWiseMH  )
+    -> std::tuple<std::vector<std::unique_ptr<AbstractProposal> >, std::vector<ProposalSet> >; 
   /** 
       @brief get a copy of the random variables to be integrated  
    */ 
-  vector<unique_ptr<AbstractParameter> > getRandomVariables() const; 
-  /** 
-      @brief adds secondary parameters to proposals, if necessary (currently only branch lengths)
-   */ 
-  void addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters); 
-
+  std::vector<std::unique_ptr<AbstractParameter> > getParametersToIntegrate() const; 
+  void addStandardParameters(std::vector<std::unique_ptr<AbstractParameter> > &vars, const TreeAln &traln ) const; 
 private: 			// METHODS 
-  void addStandardParameters(std::vector<std::unique_ptr<AbstractParameter> > &vars, const TreeAln &traln ); 
   void addStandardPrior(AbstractParameter* var, const TreeAln& traln ); 
   void addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<unique_ptr<AbstractParameter> > &variables); 
-
-private: 			// ATTRIBUTES 
-  vector<unique_ptr<AbstractParameter> > randomVariables; 
+  /** 
+      @brief adds secondary parameters to proposals, if necessary (currently only branch lengths)
+  */ 
+  void addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters); 
 }; 
 
 #endif

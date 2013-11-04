@@ -4,17 +4,15 @@
 #include "priors/AbstractPrior.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
-  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider")
+  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 5., false)
   , multiplier(_multiplier)
 {
-  relativeWeight = 5.; 
-  needsFullTraversal = false; 
 }
 
 
 std::pair<BranchPlain,BranchPlain> NodeSlider::prepareForSetExecution(TreeAln& traln, Randomness &rand) 
 {
-  assert(inSetExecution); 
+  assert(_inSetExecution); 
 
   auto a = determinePrimeBranch(traln, rand); 
   auto descendents = traln.getDescendents(a); 
@@ -31,9 +29,9 @@ BranchPlain NodeSlider::determinePrimeBranch(const TreeAln &traln, Randomness& r
 
 BranchPlain NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) const 
 {
-  if(inSetExecution)
+  if(_inSetExecution)
     {
-      return preparedBranch;
+      return _preparedBranch;
     }
   else  
     {
@@ -44,8 +42,8 @@ BranchPlain NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) co
 
 BranchPlain NodeSlider::proposeOtherBranch(const BranchPlain &firstBranch, const TreeAln& traln, Randomness& rand) const 
 {
-  if(inSetExecution)
-    return preparedOtherBranch; 
+  if(_inSetExecution)
+    return _preparedOtherBranch; 
   else 
     {
       auto descendents = traln.getDescendents(firstBranch); 
@@ -127,7 +125,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   double lnPrB = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(traln,param) } } )
     -   param->getPrior()->getLogProb( ParameterContent{{ otherBranch.getInterpretedLength(traln,param) } } ); 
 
-  AbstractProposal::updateHastingsLog(hastings, log(pow(drawnMultiplier,2)), name); 
+  AbstractProposal::updateHastingsLog(hastings, log(pow(drawnMultiplier,2)), _name); 
 
   prior.addToRatio(lnPrA + lnPrB); 
 }
@@ -136,10 +134,10 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &tra
 {
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
-  assert(primaryParameters.size() == 1); 
+  assert(_primaryParameters.size() == 1); 
   auto b = BranchPlain(middleNode, otherNode); 
 
-  auto parts =  primaryParameters[0]->getPartitions(); 
+  auto parts = _primaryParameters[0]->getPartitions(); 
 
   for(auto node : getInvalidatedNodes(traln) ) 
     { 

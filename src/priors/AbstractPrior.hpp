@@ -17,6 +17,8 @@
 class AbstractPrior
 {
 public: 
+  
+  
   virtual ~AbstractPrior()
   {}
 
@@ -33,7 +35,8 @@ public:
 
   virtual bool needsIntegration() const = 0; 
  
-  
+  virtual AbstractPrior* clone() const = 0;
+
   friend std::ostream& operator<<(std::ostream &out,  AbstractPrior* rhs)
   {
     rhs->print(out); 

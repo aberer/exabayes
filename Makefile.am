@@ -29,7 +29,7 @@ noinst_LIBRARIES+=libexaml.a
 bin_PROGRAMS = exabayes 
 else
 LIBTOUSE=libpll.a
-bin_PROGRAMS = yggdrasil postProcParam asdsf credibleSet extractBips consense  parser 
+bin_PROGRAMS = yggdrasil   postProcParam asdsf credibleSet extractBips consense  parser 
 noinst_LIBRARIES+=libpll.a 
 endif 
 

@@ -4,6 +4,7 @@ topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
 seed=27159
+# seed=28978
 
 # src/proposals/
 numProc=2

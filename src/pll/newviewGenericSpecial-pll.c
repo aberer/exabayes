@@ -271,7 +271,7 @@ static void newviewCAT_FLEX(int tipCase, double *extEV,
     case TIP_TIP:     
       /* loop over sites */
       for (i = 0; i < n; i++)
-      {
+	{
         /* set a pointer to the P-Matrices for the rate category of this site */
         le = &left[cptr[i] * statesSquare];
         ri = &right[cptr[i] * statesSquare];
@@ -322,7 +322,7 @@ static void newviewCAT_FLEX(int tipCase, double *extEV,
          */
 
       for (i = 0; i < n; i++)
-      {
+	{
         le = &left[cptr[i] * statesSquare];
         ri = &right[cptr[i] * statesSquare];
 
@@ -389,7 +389,7 @@ static void newviewCAT_FLEX(int tipCase, double *extEV,
       /* same as above, only that the two child nodes q and r are now inner nodes */
 
       for(i = 0; i < n; i++)
-      {
+	{
         le = &left[cptr[i] * statesSquare];
         ri = &right[cptr[i] * statesSquare];
 
@@ -1094,7 +1094,7 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex)
 	}
 
       /* if(  debugPrint) */
-	/* printf("evaluating %d <= %d,%d\n", tInfo->pNumber, tInfo->qNumber, tInfo->rNumber); */
+      /* 	printf("evaluating %d <= %d,%d\n", tInfo->pNumber, tInfo->qNumber, tInfo->rNumber); */
 
       /* now loop over all partitions for nodes p, q, and r of the current traversal vector entry */
 

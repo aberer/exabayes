@@ -19,7 +19,7 @@
 class AbstractProposal : public Serializable
 {
 public: 
-  AbstractProposal( Category cat, const std::string& _name )  ; 
+  AbstractProposal( Category cat, std::string  _name, double weight, bool needsFullTraversal = true)  ; 
   AbstractProposal( const AbstractProposal& rhs)  ;   
   AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
   virtual ~AbstractProposal(){}
@@ -55,21 +55,21 @@ public:
   /** 
       @brief gets the relative weight of this proposal 
    */ 
-  double getRelativeWeight() const { return relativeWeight; }
+  double getRelativeWeight() const { return _relativeWeight; }
   /**
      @brief sets the relative weight of this proposal 
    */ 
-  void setRelativeWeight(double tmp) { relativeWeight = tmp; }
+  void setRelativeWeight(double tmp) { _relativeWeight = tmp; }
   
   virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const = 0; 
   /** 
       @brief gets the category 
    */ 
-  Category getCategory() const {return category; }
+  Category getCategory() const {return _category; }
   /** 
       @brief gets the name of the proposal 
    */ 
-  std::string getName() const {return name; }
+  std::string getName() const {return _name; }
   /** 
       @brief gets nodes that are invalid by executed the proposal 
    */ 
@@ -77,31 +77,31 @@ public:
   /** 
       @brief inform proposal about acceptance
    */ 
-  void accept() {sctr.accept();}
+  void accept() {_sctr.accept();}
   /**
      @brief inform proposal about rejection 
    */ 
-  void reject() {sctr.reject();}
+  void reject() {_sctr.reject();}
   /** 
       @brief gets the success counter 
    */ 
-  const SuccessCounter& getSCtr()  const { return sctr; }
+  const SuccessCounter& getSCtr()  const { return _sctr; }
   /** 
       @brief gets the number of proposal invocation, since it has been tune the last time 
    */ 
-  int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
+  int  getNumCallSinceTuning() const { return _sctr.getRecentlySeen(); }
   /** 
       @brief add a parameter to be integrated over to the proposal 
    */ 
-  void addPrimaryParameter(std::unique_ptr<AbstractParameter> var) {primaryParameters.push_back(std::move(var)) ; }
+  void addPrimaryParameter(std::unique_ptr<AbstractParameter> var) {_primaryParameters.push_back(std::move(var)) ; }
   /** 
       @brief add a parameter  that is integrated over as a by-product of this proposal 
    */ 
-  void addSecondaryParameter(std::unique_ptr<AbstractParameter> var) {secondaryParameters.push_back(std::move(var)) ; }
+  void addSecondaryParameter(std::unique_ptr<AbstractParameter> var) {_secondaryParameters.push_back(std::move(var)) ; }
   /** 
       @brief indicates whether this proposal needs a full traversal 
    */ 
-  bool isNeedsFullTraversal() const {return needsFullTraversal; }
+  bool isNeedsFullTraversal() const {return _needsFullTraversal; }
   std::vector<AbstractParameter*> getBranchLengthsParameterView() const ; 
 
   /** 
@@ -126,12 +126,12 @@ public:
   virtual void serialize( std::ostream &out)  const;  
   virtual void deserialize( std::istream &in ) ; 
   
-  void setPreparedBranch(BranchPlain b ) {preparedBranch = b;  }
-  void setOtherPreparedBranch(BranchPlain b){preparedOtherBranch = b; }
+  void setPreparedBranch(BranchPlain b ) {_preparedBranch = b;  }
+  void setOtherPreparedBranch(BranchPlain b){_preparedOtherBranch = b; }
 
-  void setInSetExecution(bool exec) { inSetExecution = exec;  }
-  void setId(nat _id){id = _id; }
-  nat getId() const {return id; }
+  void setInSetExecution(bool exec) { _inSetExecution = exec;  }
+  void setId(nat id){_id = id; }
+  nat getId() const {return _id; }
 
   /** 
       @brief writes proposal specific (tuned) parameters
@@ -144,23 +144,23 @@ public:
 
   virtual void prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const  {} 
 
+  friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
+
 protected:   
-  std::string name;   
-  SuccessCounter sctr; 
-  Category category; 
-  std::vector<std::unique_ptr<AbstractParameter> > primaryParameters; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  std::vector<std::unique_ptr<AbstractParameter> > secondaryParameters;  // as a by-product also these random variables are changed 
-  double relativeWeight; 
-  bool needsFullTraversal; 
-  bool inSetExecution;
+  std::string _name;   
+  SuccessCounter _sctr; 
+  Category _category; 
+  std::vector<std::unique_ptr<AbstractParameter> > _primaryParameters; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  std::vector<std::unique_ptr<AbstractParameter> > _secondaryParameters;  // as a by-product also these random variables are changed 
+  double _relativeWeight; 
+  bool _needsFullTraversal; 
+  bool _inSetExecution;
 
   // meh 
-  BranchPlain preparedBranch; 
-  BranchPlain preparedOtherBranch; 
+  BranchPlain _preparedBranch; 
+  BranchPlain _preparedOtherBranch; 
   
-  nat id; 
-
-  friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
+  nat _id; 
 }; 
 
 #endif

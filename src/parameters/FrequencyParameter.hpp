@@ -7,9 +7,14 @@
 class FrequencyParameter : public AbstractParameter
 {
 public: 
-  FrequencyParameter(nat id, nat idOfMyKind )
-    : AbstractParameter(Category::FREQUENCIES, id , idOfMyKind)
+  FrequencyParameter(nat id, nat idOfMyKind, std::vector<nat> partitions )
+    : AbstractParameter(Category::FREQUENCIES, id , idOfMyKind, partitions)
   { 
+  }
+
+  FrequencyParameter(const FrequencyParameter &rhs )
+    : AbstractParameter(rhs)
+  {    
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
@@ -20,6 +25,8 @@ public:
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  ; 
 
   virtual void verifyContent(const TreeAln &traln, const ParameterContent &content) const;
+
+  virtual void checkSanityPartitionsAndPrior(const TreeAln& traln) const ; 
 }; 
 
 

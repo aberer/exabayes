@@ -3,7 +3,8 @@
 #include "Category.hpp"
 #include "BoundsChecker.hpp"
 
-FixedPrior::FixedPrior(std::vector<double> _fixedValues)  : fixedValues(_fixedValues) 
+FixedPrior::FixedPrior(std::vector<double> _fixedValues)
+  : fixedValues(_fixedValues) 
 {
 }
 

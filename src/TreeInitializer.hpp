@@ -28,8 +28,14 @@ public:
   static void setupTheTree(tree &tr); 
   static void initializeBranchLengths(tree &tr, nat numPart, nat numTax ); 
 
+  void determinePartitionContribution(TreeAln &traln); 
+
 private:			// METHODS
   void unifiedInitializePartitions(TreeAln &traln); 
+  /** 
+      @brief sets the weights and yVectors 
+   */ 
+  void distributeData(TreeAln &traln);
 #if HAVE_PLL == 0  
   void initializePartitionsExaml(TreeAln &traln); 
   void initializeTreeExaML(TreeAln &traln ); 
@@ -38,6 +44,7 @@ private:			// METHODS
   void initializePartitionsPLL(TreeAln &traln);
 #endif
   void initializeParsimonyVectors(TreeAln &traln); 
+  void copyWeightsAndAln(TreeAln &traln );
   void parseMagicNumber(std::ifstream& in); 
   void unifiedModelInit(TreeAln &traln); 
 

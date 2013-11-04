@@ -18,24 +18,24 @@ enum class Category :  int
 } ; 
 
 
-class CategoryHash
+namespace std
 {
-public: 
-  size_t operator() (const Category &a) const 
+  template<> struct less<Category>
   {
-    return std::hash<int>()(static_cast<const int>(a)); 
-  }
-  
-}; 
-
-class CategoryEqual
-{
-public: 
-  size_t operator() (const Category  &a, const Category &b) const
+    bool operator()(const Category& a, const Category& b) const 
+    {
+      return  int(a) < int(b); 
+    }
+  };
+    
+  template<> struct hash<Category>
   {
-    return a == b ; 
-  }
-}; 
+    size_t operator()(const Category& a) const 
+    {
+      return std::hash<size_t>()(size_t(a)); 
+    }
+  }; 
+}
 
 namespace CategoryFuns 
 {
@@ -63,15 +63,11 @@ namespace CategoryFuns
       @brief gets the category by name of the linking parameter in the config file 
    */   
   Category getCategoryFromLinkLabel(std::string name); 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind); 
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions); 
+  
 } 
 
-
 std::ostream&  operator<<(std::ostream& out, const Category &rhs); 
-// {
-//   return out << CategoryFuns::getLongName(rhs) ; 
-// }
-
 
 #endif
  

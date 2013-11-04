@@ -17,6 +17,8 @@ public:
 
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const; 
 
+  virtual AbstractPrior* clone() const { return new  UniformPrior(*this) ; }
+
   double getMin() const {return minVal; }
   double getMax() const {return maxVal; }
 

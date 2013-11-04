@@ -4,6 +4,8 @@
 #include "common.h"
 #include "axml.h"
 
+#include "TreeAln.hpp"
+
 #include <algorithm>
 
 class InitializationResource 
@@ -15,8 +17,9 @@ public:
   virtual void fillPartition(pInfo &partition, nat model)  = 0;
   virtual void fillAlnPart(unsigned char* ptr, nat length, nat &ctr) = 0; 
   virtual void fillParsVect(parsimonyNumber*& ptr, size_t &len, nat mult, nat model) = 0; 
-  
+  virtual std::vector<double> getPartitionContributions(nat num)  = 0; 
   virtual bool isDataAreDistributed() = 0; 
+  virtual void initWeightsAndAln(TreeAln &traln)  = 0; 
 }; 
 
 

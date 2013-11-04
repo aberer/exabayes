@@ -23,7 +23,6 @@ static void expectString( std::string expectation, NxsToken& token)
 }
 
 
-
 static std::vector<double> parseValues(NxsToken &token)
 {
   auto result = std::vector<double>{}; 
@@ -46,7 +45,7 @@ static std::vector<double> parseValues(NxsToken &token)
 
 
 
-shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
+std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {
   auto value = token.GetToken(false); 
   token.GetNextToken();
@@ -59,7 +58,7 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 
       // for non-continuous variables (e.g., topology)
       if(token.GetToken().compare(")") == 0) 
-	return shared_ptr<AbstractPrior> (new UniformPrior(0,0)); 
+	return std::unique_ptr<AbstractPrior> (new UniformPrior(0,0)); 
 
       double n1 = atof(token.GetToken().c_str()); 
       token.GetNextToken();
@@ -68,7 +67,7 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       double n2 = atof(token.GetToken().c_str());
       token.GetNextToken();
       assert(token.GetToken().compare(")") == 0);
-      return shared_ptr<AbstractPrior> (new UniformPrior(n1,n2));  
+      return std::unique_ptr<AbstractPrior> (new UniformPrior(n1,n2));  
     }
   else if(value.EqualsCaseInsensitive("disc"))
     {
@@ -139,46 +138,34 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	    }
 	}
 
-      return shared_ptr<AbstractPrior>(new DiscreteModelPrior(modelsProbs));
+      return std::unique_ptr<AbstractPrior>(new DiscreteModelPrior(modelsProbs));
     }
   else if(value.EqualsCaseInsensitive("dirichlet"))
     {      
       auto alphas = parseValues(token); 
-      return shared_ptr<AbstractPrior>(new DirichletPrior(alphas)); 
+      return std::unique_ptr<AbstractPrior>(new DirichletPrior(alphas)); 
     }
   else if(value.EqualsCaseInsensitive("fixed"))
     { 
       token.GetNextToken();
-      if(token.GetToken().EqualsCaseInsensitive("empirical"))
+
+      auto res = ProtModelFun::getModelFromStringIfPossible(token.GetToken()); 
+      auto foundProt = std::get<0>(res); 
+
+      if( foundProt )
 	{
-	  cerr << "not implemented yet " << endl; // TODO 
-	  ParallelSetup::genericExit(-1); 
-	  return nullptr; 
-	} 
-      else
+	  auto model = std::get<1>(res);
+
+	  token.GetNextToken();
+	  assert(token.GetToken().compare(")" ) == 0 ); 
+
+	  return std::unique_ptr<AbstractPrior>(new DiscreteModelPrior( { {model, 1.}  } ));
+	}
+      else 
 	{
-	  auto res = ProtModelFun::getModelFromStringIfPossible(token.GetToken()); 
-	  auto foundProt = std::get<0>(res); 
-
-	  if( foundProt )
-	    {
-	      auto model = std::get<1>(res);
-
-	      token.GetNextToken();
-	      assert(token.GetToken().compare(")" ) == 0 ); 
-
-	      auto result = std::shared_ptr<AbstractPrior>(new DiscreteModelPrior( { {model, 1.}  } ));
-	      return result;
-	    }
-	  else 
-	    {
-	      // auto fixedValues = std::vector<double>{}; 
-	      auto fixedValues = parseValues(token);
-
-	      std::cout << "found fixed values " << fixedValues << std::endl; 
-
-	      return shared_ptr<AbstractPrior>(new FixedPrior(fixedValues));
-	    }
+	  auto fixedValues = parseValues(token);
+	  std::cout << "found fixed values " << fixedValues << std::endl; 
+	  return std::unique_ptr<AbstractPrior>(new FixedPrior(fixedValues));
 	}
     }
   else if(value.EqualsCaseInsensitive("exponential"))
@@ -187,15 +174,14 @@ shared_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       double n1 = atof(token.GetToken().c_str());
       token.GetNextToken();
       assert(token.GetToken().compare(")") == 0);
-      return shared_ptr<AbstractPrior>(new ExponentialPrior(n1));
+      return std::unique_ptr<AbstractPrior>(new ExponentialPrior(n1));
     }
   else 
     {
       cerr << "attempted to parse prior. Did not recognize keyword " <<  value << endl; 
       ParallelSetup::genericExit(-1); 
+      return std::unique_ptr<AbstractPrior>(new ExponentialPrior(0));
     }
-
-  return nullptr; 
 }
 
 
@@ -216,33 +202,29 @@ void BlockPrior::Read(NxsToken &token)
 	  auto cat = CategoryFuns::getCategoryByPriorName(str); 
 	  token.GetNextToken();
 
-	  int priorPartition = -1;  
+	  auto partitions  = std::unordered_set<nat> {}; 
 	  if(token.GetToken().compare("{") == 0)
 	    {
 	      token.GetNextToken();
 	      str = token.GetToken(false);
-	      priorPartition = str.ConvertToInt();
+	      
+	      auto val = str.ConvertToInt(); 
+	      
+	      if( _numPart <= nat(val)  )
+		{
+		  tout << "Error while parsing priors: you specified partition id " << val << " while ExaBayes assumes, that you only have " << _numPart << " partitions" << std::endl; 
+		  exit(-1);
+		}
+	      
+	      partitions.insert(val);
 	      token.GetNextToken();
 	      str = token.GetToken(false); 
 	      assert(str.compare("}") == 0) ;
 	      token.GetNextToken();
 	    }
 
-	  assert(priorPartition < (int)numPart); 
-
 	  auto prior = parsePrior(token);
-
-	  if(priorPartition == -1 )	  
-	    {
-	      assert(generalPriors[int(cat)] == nullptr); // BAD
-	      generalPriors[int(cat)] = prior;		  // BAD
-	    }	    
-	  else 
-	    {
-	      std::unordered_map<nat,std::shared_ptr<AbstractPrior> > &priorsForPartition = specificPriors[int(cat)]; // BAD
-	      assert(priorsForPartition[priorPartition] == nullptr); 
-	      priorsForPartition[priorPartition] = prior; 
-	    }
+	  _parsedPriors.emplace( cat, std::make_tuple(partitions,std::move(prior))  );
 	}
     }  
 } 

@@ -96,8 +96,6 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
 
   nat numPart = traln.getNumberOfPartitions(); 
 
-  // tout << "in total we have " << numPart << " partitions" << std::endl; 
-
   auto perPartitionLH = traln.getPartitionLnls();
 
   auto toExecute = std::vector<bool>(numPart, false);   
@@ -274,44 +272,50 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, const BranchPlain& roo
 
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
-
 #if 1 
-  auto& partition = debugTraln->getPartition(0); 
-  auto sc = partition.globalScaler; 
-  tout << "scCorr=" ; 
-  nat ctr = 0; 
-  for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
-    {
-      if(sc[i] != 0 )
+      auto& partition = debugTraln->getPartition(0); 
+      auto sc = partition.globalScaler; 
+      tout << "scCorr=" ; 
+      nat ctr = 0; 
+      for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
 	{
-	  tout << ctr <<  "=" << sc[i] << ","; 
+	  if(sc[i] != 0 )
+	    {
+	      tout << ctr <<  "=" << sc[i] << ","; 
+	    }
+	  ++ctr; 
 	}
-      ++ctr; 
-    }
-  tout << std::endl; 
+      tout << std::endl; 
 
-  auto partition2 = traln.getPartition(0); 
-  sc = partition2.globalScaler; 
-  tout << "scReal=" ; 
-  ctr = 0; 
-  for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
-    {
-      if(sc[i] != 0)
+      auto& partition2 = traln.getPartition(0); 
+      sc = partition2.globalScaler; 
+      tout << "scReal=" ; 
+      ctr = 0; 
+      for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
 	{
-	  tout << ctr << "=" << sc[i] << " "; 
+	  if(sc[i] != 0)
+	    {
+	      tout << ctr << "=" << sc[i] << " "; 
+	    }
+	  ++ctr; 
 	}
-      ++ctr; 
-    }
-  tout << std::endl; 
+      tout << std::endl; 
 #endif
 
       std::cerr  << "WARNING: found in expensive evaluation: likelihood difference is " 
-	   <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
-	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
-      
+		 <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
+		 << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
 
       tout << "partitionLnls= " << traln.getPartitionLnls() << "\n"
 	   << "verifiedPartLnls="  << debugTraln->getPartitionLnls() << "\n"; 
+
+#if HAVE_PLL != 0
+      evaluateGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), traln.getAnyBranch().findNodePtr(traln), TRUE); 
+#else 
+      evaluateGeneric(&(traln.getTrHandle()),  traln.getAnyBranch().findNodePtr(traln), TRUE); 
+#endif  
+
+      tout << "after full traversal on orig=" << traln.getTrHandle().likelihood << std::endl; 
 
       // what to print? 
       assert(0);

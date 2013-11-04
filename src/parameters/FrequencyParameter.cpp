@@ -6,7 +6,7 @@
 
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {  
-  for(auto &m : partitions)    
+  for(auto &m : _partitions)    
     traln.setFrequencies(content.values, m); 
 }
 
@@ -14,7 +14,7 @@ void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &
 ParameterContent FrequencyParameter::extractParameter(const TreeAln &traln )  const
 {
   ParameterContent result; 
-  result.values = traln.getFrequencies(partitions[0]); 
+  result.values = traln.getFrequencies(_partitions[0]); 
   return result; 
 }   
 
@@ -55,7 +55,7 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
       isFirstG = false; 
 	
       bool isFirst = true; 
-      for(auto &p : partitions)
+      for(auto &p : _partitions)
 	{
 	  fileHandle  << (isFirst ? "": "," ) << p ; 
 	  isFirst = false; 
@@ -67,7 +67,7 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
 
 void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterContent &content) const 
 {
-  auto& partition = traln.getPartition(partitions[0]);
+  auto& partition = traln.getPartition(_partitions[0]);
   bool ok = true; 
   ok &= BoundsChecker::checkFrequencies(content.values); 
   ok &= (content.values.size() ==  nat(partition.states)); 
@@ -78,3 +78,20 @@ void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterCont
       assert(0); 
     }  
 }
+
+
+
+void FrequencyParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const 
+{
+  auto numStates = traln.getPartition(_partitions.at(0)).states;
+  checkSanityPartitionsAndPrior_FreqRevMat(traln);
+  auto initVal = _prior->getInitialValue(); 
+  if( int(initVal.values.size()) != numStates && 
+      initVal.protModel.size() == 0 )
+    {
+      tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
+      printShort(tout) << " that is not applicable." << std::endl; 
+      exit(-1); 
+    }
+}
+

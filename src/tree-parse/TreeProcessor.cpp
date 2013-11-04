@@ -13,13 +13,9 @@
 TreeProcessor::TreeProcessor(std::vector<std::string> fileNames)  
 {
   fillTaxaInfo(fileNames[0]); 
-
   nat numTax = taxa.size(); 
-
   tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(numTax));
-  // auto tInit = TreeInitializer(); 
   TreeInitializer::initializeBranchLengths(tralnPtr->getTrHandle(), 1,numTax); 
-
   fns = fileNames; 
 }
 
@@ -44,7 +40,7 @@ TreeProcessor& TreeProcessor::operator=(TreeProcessor &&rhs)
 template<bool readBl>
 void TreeProcessor::nextTree(std::istream &treefile) 
 {
-  auto paramPtr = std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0));   
+  auto paramPtr = std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0, {0}));   
   paramPtr->addPartition(0);
 
   while( treefile.get() != '('); 
@@ -54,7 +50,6 @@ void TreeProcessor::nextTree(std::istream &treefile)
 			    typename std::conditional<readBl,
 						      ReadBranchLength,
 						      IgnoreBranchLength>::type>(taxa.size());
-
   auto branches = bt.extractBranches(treefile);
 
   tralnPtr->unlinkTree();
@@ -62,7 +57,9 @@ void TreeProcessor::nextTree(std::istream &treefile)
     {
       tralnPtr->clipNode(tralnPtr->getUnhookedNode(b.getPrimNode()), tralnPtr->getUnhookedNode(b.getSecNode()) );
       if(readBl)
-      	tralnPtr->setBranch(b, paramPtr.get());
+	{
+	  tralnPtr->setBranchUnchecked(b);
+	}
     }
 }
 

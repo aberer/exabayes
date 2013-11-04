@@ -21,6 +21,8 @@ public:
   virtual bool needsIntegration() const {return true; } 
 
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const {return 0 ; } 
+
+  virtual AbstractPrior* clone() const { return new  DirichletPrior(*this) ; }
   
 private: 
   std::vector<double> alphas; 

@@ -38,29 +38,27 @@ public:
   virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
   virtual void resetState(TreeAln &traln) ; 
   virtual void autotune() ;
-  
-  // virtual Branch prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return Branch(0,0);}
+
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
-
-  AbstractProposal* clone() const; 
-
   virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
   virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
   virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
 
-protected: 
-  double parsWarp; 
-  double blMulti;   
+  virtual AbstractProposal* clone() const; 
 
+protected:			// METHODS
   weightMap getWeights(const TreeAln& traln, const scoreMap &insertions) const; 
   void determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
   void traverse(const TreeAln &traln, nodeptr p, int distance ); 
   void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<BranchPlain,std::vector<nat> > &posses); 
-  
-  SprMove move; 
-  ParsimonyEvaluator pEval;   
-  BranchPlain subtreeBranch; 
+
+protected: 			// ATTRIBUTES
+  double _parsWarp; 
+  double _blMulti;   
+  SprMove _move; 
+  ParsimonyEvaluator _pEval;   
+  BranchPlain _subtreeBranch; 
 }; 
 
 

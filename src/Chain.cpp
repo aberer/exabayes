@@ -76,7 +76,6 @@ Chain::Chain(  Chain&& rhs)
   , lnPr(rhs.lnPr)
   , savedContent(std::move(rhs.savedContent))
 {
-  // tout << "move constructing" << std::endl; 
 }
 
 
@@ -101,8 +100,6 @@ Chain::Chain(  const Chain& rhs)
 {
   for(auto &p : rhs.proposals)
     proposals.emplace_back(p->clone());
-
-  // tout << "copy constructing" << std::endl; 
 }
 
 
@@ -429,13 +426,9 @@ void Chain::stepSingleProposal()
 
   pfun.applyToState(*tralnPtr, prior, hastings, chainRand, evaluator);
 
-
   // tout << " have "  << pfun << std::endl; 
 
-  // tout << chainRand << std::endl; 
   auto suggestion = peekNextVirtualRoot(traln,chainRand); 
-  // auto suggestion = traln.getAnyBranch() ; 
-  // assert(0);  
 
   pfun.evaluateProposal(evaluator, *tralnPtr, suggestion);
   
@@ -449,8 +442,6 @@ void Chain::stepSingleProposal()
 
 #ifdef DEBUG_SHOW_EACH_PROPOSAL 
   auto& output = tout  ; 
-// std::cout ; 
-
   addChainInfo(output); 
   output << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun.getName() << "\t" 
 	 << MORE_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << hastings << std::endl; 
@@ -757,7 +748,7 @@ void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  Pa
   for(auto &param : blParams)
     {
       nat myId = param->getIdOfMyKind(); 
-      TopologyFile &f = paramId2TopFile.at(myId); 
+      auto &f = paramId2TopFile.at(myId); 
       f.sample(*tralnPtr, getGeneration(), param); 
     }
 
@@ -777,31 +768,6 @@ void Chain::initProposalsFromStream(std::istream& in)
 
   for(auto &p : proposalSets)
     p.deserialize(in);
-
-  // auto name2proposal = std::unordered_map<std::string, AbstractProposal*>{}; 
-  // for(auto &p :proposals)
-  //   {
-  //     std::stringstream ss; 
-  //     p->printShort(ss); 
-  //     assert(name2proposal.find(ss.str()) == name2proposal.end()); // not yet there 
-  //     name2proposal[ss.str()] = p.get();
-  //   }
-
-  // nat ctr = 0; 
-  // while(ctr < proposals.size())
-  //   {
-  //     std::string name = readString(in);
-  //     if(name2proposal.find(name) == name2proposal.end())
-  // 	{
-  // 	  std::cerr << "Could not parse the checkpoint file.  A reason for this may be that\n"
-  // 		    << "you used a different configuration or alignment file in combination\n"
-  // 		    << "with this checkpoint file. Fatality." << std::endl; 
-  // 	  ParallelSetup::genericExit(-1); 
-  // 	}
-  //     name2proposal[name]->readFromCheckpoint(in);
-  //     ++ctr; 
-  //   }
-  
 }
 
 

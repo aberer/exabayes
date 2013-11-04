@@ -180,6 +180,9 @@ int countTips(nodeptr p, int numsp)
 
 double getBranchLength(tree *tr, partitionList *pr, int perGene, nodeptr p)
 {
+
+  assert(0) ; 
+#if 0 
   double 
     z = 0.0,
     x = 0.0;
@@ -189,6 +192,7 @@ double getBranchLength(tree *tr, partitionList *pr, int perGene, nodeptr p)
 	      
   if(numBranches == 1)
     {
+
       assert(tr->fracchange != -1.0);
       z = p->z[0];
       if (z < zmin) 
@@ -234,6 +238,8 @@ double getBranchLength(tree *tr, partitionList *pr, int perGene, nodeptr p)
     }
 
   return x;
+#endif
+  return 0;  
 }
 
 

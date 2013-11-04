@@ -9,12 +9,10 @@
 // #define DEBUG_ESPR
 
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
-  : AbstractProposal(Category::TOPOLOGY,  "eSPR")
+  : AbstractProposal(Category::TOPOLOGY,  "eSPR", 5., false)
   , stopProb(_stopProb) 
   , multiplier(_multiplier)    
 {
-  relativeWeight = 5.;
-  needsFullTraversal = false; 
 }
 
 BranchPlain ExtendedSPR::determinePrimeBranch(const TreeAln &traln, Randomness &rand) const 

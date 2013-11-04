@@ -8,8 +8,8 @@ class RateHetParameter : public AbstractParameter
 {
 public: 
 
-  RateHetParameter(nat id, nat idOfMyKind )
-    : AbstractParameter(Category::RATE_HETEROGENEITY, id, idOfMyKind )
+  RateHetParameter(nat id, nat idOfMyKind, std::vector<nat> partitions )
+    : AbstractParameter(Category::RATE_HETEROGENEITY, id, idOfMyKind, partitions )
   {
   }
   

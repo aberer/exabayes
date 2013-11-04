@@ -32,7 +32,7 @@ public:
       @brief initializes the runs  
       @notice this is the top-level function 
    */ 
-  void initializeRuns( ); 
+  void initializeRuns(Randomness rand); 
   nat peekNumTax(std::string filePath); 
   /** 
       @brief cleanup, once finished
@@ -45,13 +45,13 @@ public:
   /** 
       @brief initializes the config file 
    */ 
-  void processConfigFile(string configFileName, const TreeAln* tralnPtr, vector<unique_ptr<AbstractProposal> > &proposalResult, 
-			  vector<unique_ptr<AbstractParameter> > &variableResult, std::vector<ProposalSet> &proposalSets); 
+  auto processConfigFile(string configFileName, const TreeAln &tralnPtr )
+    ->   std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  ; 
   void initializeWithParamInitValues(std::vector<shared_ptr<TreeAln>> &trees , const std::vector<AbstractParameter*> &params , const std::vector<bool> hasBls ) const ; 
   /** 
       @brief EXPERIMENTAL 
    */ 
-  void branchLengthsIntegration()  ;  
+  void branchLengthsIntegration(Randomness &rand)  ;  
   /** 
       @brief print information about the alignment  
    */ 
@@ -59,7 +59,7 @@ public:
   /** 
       @brief gets the runs 
    */ 
-  const std::vector<CoupledChains>& getRuns() const {return runs; }
+  const std::vector<CoupledChains>& getRuns() const {return _runs; }
   
   virtual void deserialize( std::istream &in ) ; 
   virtual void serialize( std::ostream &out) const ;
@@ -70,27 +70,24 @@ private:
   void printInitializedFiles() const; 
   std::vector<std::string> getStartingTreeStrings(); 
   void informPrint(); 
-  void printInitialState(const ParallelSetup &pl); 
+  void printInitialState(); 
   LikelihoodEvaluator createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile); 
   void writeCheckpointMaster(); 
   void initializeFromCheckpoint(); 
   std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 
   std::vector<bool> initTrees(vector<shared_ptr<TreeAln> > &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
   bool initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
-  CLOCK::system_clock::time_point printDuringRun(nat gen,  ParallelSetup &pl) ; 
+  CLOCK::system_clock::time_point printDuringRun(nat gen) ; 
   std::string getOrCreateBinaryFile() const ; 
 
 private:			// ATTRIBUTES 
-  vector<CoupledChains> runs; 
-  ParallelSetup pl; 
-  CLOCK::system_clock::time_point initTime; 
-  BlockParams paramBlock; 
-  BlockRunParameters runParams;  
-  BlockProposalConfig propConfig;   
-  CommandLine cl; 
-  CLOCK::system_clock::time_point lastPrintTime; 
-  DiagnosticsFile diagFile; 
-  Randomness masterRand;   	// not checkpointed
+  std::vector<CoupledChains> _runs; 
+  ParallelSetup _pl; 
+  CLOCK::system_clock::time_point _initTime; 
+  BlockRunParameters _runParams;  
+  CommandLine _cl; 
+  CLOCK::system_clock::time_point _lastPrintTime; 
+  DiagnosticsFile _diagFile; 
 };  
 
 #endif

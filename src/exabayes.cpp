@@ -80,7 +80,7 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
 #else 
   // assert(0); 
   auto&& master = SampleMaster(  pl, cl );
-  master.initializeRuns(); 
+  master.initializeRuns(Randomness(cl.getSeed())); 
   if( cl.isDryRun())
     {
       std::cout << "Command line, input data and config file is okay. Exiting gracefully." << std::endl; 

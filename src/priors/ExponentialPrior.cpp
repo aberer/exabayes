@@ -11,18 +11,11 @@ double ExponentialPrior::getLogProb(const ParameterContent& content) const
   return Density::lnExponential(values[0], lambda); 
 }
 
-// std::vector<double> ExponentialPrior::drawFromPrior(Randomness &rand)  const
-// {
-//   double drawn = rand.drawRandExp(lambda); 
-//   std::vector<double> result = {drawn}; 
-//   return result;  
-// }
 
 void ExponentialPrior::print(std::ostream& out ) const  
 {        
   out << "Exponential("  << lambda << ")" ;       
 }
-
 
 
 double ExponentialPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const 
@@ -35,7 +28,6 @@ double ExponentialPrior::accountForMeanSubstChange( TreeAln &traln, const Abstra
 
   return result; 
 }
-
 
 
 ParameterContent ExponentialPrior::getInitialValue() const

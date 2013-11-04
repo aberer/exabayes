@@ -52,9 +52,9 @@ namespace std
 
   template<> struct hash<ProtModel>
   {
-    unsigned int operator() (const ProtModel& rhs) const 
+    size_t operator() (const ProtModel& rhs) const 
     {
-      return std::hash<int>()(int(rhs));
+      return std::hash<size_t>()(size_t(rhs));
     }
   }; 
 }

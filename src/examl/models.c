@@ -2853,8 +2853,8 @@ static void updateFracChange(tree *tr)
 
       tr->fracchange = 0.0;	                     
  	        
-      for(model = 0; model < tr->NumberOfModels; model++)                   
-	tr->fracchange +=  tr->partitionContributions[model] * tr->fracchanges[model];	
+      /* for(model = 0; model < tr->NumberOfModels; model++)                    */
+      /* 	tr->fracchange +=  tr->partitionContributions[model] * tr->fracchanges[model];	 */
     }
 }
 
@@ -3266,9 +3266,7 @@ void initReversibleGTR(tree *tr, int model)
    *frequencies      = tr->partitionData[model].frequencies,
    *ext_initialRates = tr->partitionData[model].substRates,
    *tipVector        = tr->partitionData[model].tipVector;
-
  
-  
  int states = tr->partitionData[model].states;
 
  switch(tr->partitionData[model].dataType)
@@ -3320,10 +3318,7 @@ void initReversibleGTR(tree *tr, int model)
 	       initProtMat(f, tr->partitionData[model].autoProtModels, ext_initialRates, 0);
 	     else	  
 	       initProtMat(f, tr->partitionData[model].protModels, ext_initialRates, 0); 		   
-	     
-	     /*if(adef->protEmpiricalFreqs && tr->NumberOfModels == 1)
-	       assert(tr->partitionData[model].protFreqs);*/
-	     
+
 	     if(!tr->partitionData[model].protFreqs)	       	  
 	       {	     	    
 		 for(l = 0; l < 20; l++)		
@@ -3370,7 +3365,7 @@ void initReversibleGTR(tree *tr, int model)
      assert(0);
    } 
 
- updateFracChange(tr);    
+ /* updateFracChange(tr);     */
 }
 
 

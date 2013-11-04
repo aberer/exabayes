@@ -10,10 +10,8 @@
 
 // we need a constructor!  
 MyTemplateProposal::MyTemplateProposal( double aVariable)
-  : AbstractProposal( Category::TOPOLOGY, "MyTemplateProposal")
+  : AbstractProposal( Category::TOPOLOGY, "MyTemplateProposal", 2.)
 {
-
-  relativeWeight = 2.0; 
 }
 
 
@@ -37,9 +35,9 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, Tree
   // the entire aligment), then we'd have to do this:
   
   std::vector<nat> allRelevantPartitions; 
-  for(nat i = 0; i < primaryParameters.size(); ++i)  
+  for(nat i = 0; i < _primaryParameters.size(); ++i)  
     {
-      std::vector<nat> partitionsHere = primaryParameters[i]->getPartitions(); 
+      std::vector<nat> partitionsHere = _primaryParameters[i]->getPartitions(); 
       for(nat j = 0; j < partitionsHere.size(); ++j)
 	allRelevantPartitions.push_back(partitionsHere[j]); 
     }
@@ -55,7 +53,7 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, Tree
   // difficult). However, here, you MUST add a "&". This means that
   // you do not want a copy of the parameter object, but the actual
   // object
-  for(auto &var : primaryParameters)	
+  for(auto &var : _primaryParameters)	
     for(auto p : var->getPartitions()) // iterate over all partitions in this parameter 
       allRelevantPartitions2.push_back(p); 
   // evaluator.evaluatePartitions(traln, allRelevantPartitions2,true); 

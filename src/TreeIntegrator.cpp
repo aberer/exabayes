@@ -33,12 +33,12 @@ TreeIntegrator::TreeIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_pt
 
 
   std::vector<std::unique_ptr<AbstractParameter> > params; 
-  params.emplace_back(std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0))); 
+  params.emplace_back(std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0, {0}))); 
   for(nat i = 0; i < tralnPtr->getNumberOfPartitions(); ++i)
     params[0]->addPartition(i);
 
   double lambda = 10;
-  params[0]->setPrior(std::make_shared< ExponentialPrior>(lambda));
+  params[0]->setPrior(std::unique_ptr< AbstractPrior>(new ExponentialPrior(lambda)));
 
   std::vector<std::unique_ptr<AbstractProposal> >  proposals;   
 

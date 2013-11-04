@@ -17,7 +17,9 @@ public:
   virtual void fillAlnPart(unsigned char* ptr, nat length, nat &ctr);
   virtual void fillParsVect(parsimonyNumber*& ptr, size_t &len, nat mult, nat model); 
 
-  virtual bool isDataAreDistributed() { return false; }
+  virtual std::vector<double> getPartitionContributions(nat num) ; 
+  virtual void initWeightsAndAln(TreeAln &traln) {assert(0) ; }
+  virtual bool isDataAreDistributed() { return false; } 
 private: 
   std::ifstream byteFile; 
 }; 

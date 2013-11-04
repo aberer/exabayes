@@ -10,11 +10,9 @@
 #include "priors/AbstractPrior.hpp"
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
-  : AbstractProposal(Category::BRANCH_LENGTHS, "TL-Mult")
+  : AbstractProposal(Category::BRANCH_LENGTHS, "TL-Mult", 2.)
   , multiplier(_multiplier)    
 {
-  relativeWeight = 2 ;
-  needsFullTraversal = true; 
 }
 
 
@@ -22,9 +20,9 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
 {
   storedBranches.clear(); 
   
-  auto blParam = primaryParameters[0].get(); 
+  auto blParam = _primaryParameters[0].get(); 
 
-  assert(primaryParameters.size() == 1); 
+  assert(_primaryParameters.size() == 1); 
 
   storedBranches = traln.extractBranches(blParam);
 
@@ -33,9 +31,8 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
   double treeScaler = rand.drawMultiplier(multiplier); 
   double initTL = 0; 
   double newTL = 0; 
-  // std::cout << "drew " <<  treeScaler << std::endl; 
 
-  bool haveUniformPrior = dynamic_cast<UniformPrior*>(blParam->getPrior());
+  auto haveUniformPrior = dynamic_cast<UniformPrior*>(blParam->getPrior()) != nullptr;
 
   for(auto &b : newBranches)
     {
@@ -81,18 +78,18 @@ void TreeLengthMultiplier::autotune()
 {
   double parameter = multiplier; 
 
-  double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, FALSE);
+  double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, FALSE);
 
   multiplier = newParam; 
 
-  sctr.nextBatch();
+  _sctr.nextBatch();
 }
  
  
 void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  assert(primaryParameters.size( )== 1); 
-  auto parts = primaryParameters[0]->getPartitions(); 
+  assert(_primaryParameters.size( )== 1); 
+  auto parts = _primaryParameters[0]->getPartitions(); 
 
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL-CHOICE " << branchSuggestion << std::endl; 

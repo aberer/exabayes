@@ -9,9 +9,9 @@ public:
   BranchIntegrator( double _mult )
     : BranchLengthMultiplier( _mult)
   {
-    this->name =  "blInt"; 
-    relativeWeight = 20; 
-    this->category = Category::BRANCH_LENGTHS;     
+    _name =  "blInt"; 
+    _relativeWeight = 20; 
+    _category = Category::BRANCH_LENGTHS;     
   }
 
   virtual BranchPlain proposeBranch(const TreeAln &traln, Randomness &rand) const

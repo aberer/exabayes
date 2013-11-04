@@ -20,10 +20,10 @@
 #include "AdHocIntegrator.hpp"
 
 
-void SampleMaster::branchLengthsIntegration()  
+void SampleMaster::branchLengthsIntegration(Randomness &rand)  
 {
-  assert(runs.size() == 1 );   
-  auto &run = runs[0];   
+  assert(_runs.size() == 1 );   
+  auto &run = _runs[0];   
   auto &chains = run.getChains(); 
   assert(chains.size() == 1); 
   auto &chain = chains[0]; 
@@ -32,9 +32,9 @@ void SampleMaster::branchLengthsIntegration()
   auto& traln  = *tralnPtr  ; 
   
   double lambda = 10 ; 
-
-  AdHocIntegrator ahInt(tralnPtr, nullptr, masterRand.generateSeed()); 
-  auto paramView = runs[0].getChains()[0].getProposalView()[0]->getBranchLengthsParameterView();
+  
+  auto&& ahInt = AdHocIntegrator (tralnPtr, nullptr ,rand.generateSeed()); 
+  auto paramView = _runs[0].getChains()[0].getProposalView()[0]->getBranchLengthsParameterView();
 
   std::vector<std::pair<double,double> > parsAndMLBlen; 
   for(auto &branch : traln.extractBranches(ahInt.getBlParamView()[0]))
@@ -51,15 +51,15 @@ void SampleMaster::branchLengthsIntegration()
       double maxHere = *( std::max_element(samples.begin(), samples.end()) ) ; 
 
       auto &&ss =stringstream{};
-      ss << "samples." << cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
+      ss << "samples." << _cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
       ofstream thisOut (ss.str());
       std::copy(samples.begin(), samples.end(), std::ostream_iterator<double>(thisOut, "\n")); 
 
       // lnl curve 
-      ahInt.createLnlCurve(branch.toPlain(), cl.getRunid(), traln, minHere, maxHere, STEPS_FOR_LNL);
+      ahInt.createLnlCurve(branch.toPlain(), _cl.getRunid(), traln, minHere, maxHere, STEPS_FOR_LNL);
 
       // optimization 
-      double nrOpt = ahInt.printOptimizationProcess(branch,  cl.getRunid(), lambda, NR_STEPS);
+      double nrOpt = ahInt.printOptimizationProcess(branch,  _cl.getRunid(), lambda, NR_STEPS);
 
       // print parsimony length  
       double pLength = ahInt.getParsimonyLength(traln, branch.toPlain()); 
@@ -71,7 +71,7 @@ void SampleMaster::branchLengthsIntegration()
 
   
   std::stringstream ss; 
-  ss << "parsLengthVsML." << cl.getRunid() << ".tab"; 
+  ss << "parsLengthVsML." << _cl.getRunid() << ".tab"; 
   std::ofstream out(ss.str());
   for(auto elem : parsAndMLBlen)
     out << elem.first << "\t" << elem.second << std::endl; 

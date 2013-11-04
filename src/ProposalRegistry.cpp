@@ -91,39 +91,33 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  proposal = 
 	    std::unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatSlider", true, 
 								       std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::rateMin, BoundsChecker::rateMax, true)),
-								       initRateSlidingWindow )) ; 
-	  proposal->setRelativeWeight(0.5); 
+								       initRateSlidingWindow,0.5 )) ; 
 	  break; 
 	case ProposalType::FREQUENCY_SLIDER:
 	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqSlider", true, 
 									   std::unique_ptr<SlidingProposal>( new SlidingProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max(), false)), 
-									   initFrequencySlidingWindow )) ; 
-	  proposal->setRelativeWeight(0.5); 
+									   initFrequencySlidingWindow,0.5 )) ; 
 	  break; 		  
 	case ProposalType::RATE_HET_MULTI: 
 	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::RATE_HETEROGENEITY, "rateHetMulti", false, 
 									   std::unique_ptr<MultiplierProposal>(new MultiplierProposal(BoundsChecker::alphaMin, BoundsChecker::alphaMax)),
-									   initGammaMultiplier )) ; 
-	  proposal->setRelativeWeight(1); 
+									   initGammaMultiplier,1. )) ; 
 	  break; 
 	case ProposalType::RATE_HET_SLIDER: 
 	  proposal = 
 	    unique_ptr<ParameterProposal> ( new ParameterProposal(Category::RATE_HETEROGENEITY, "rateHetSlider", false, 
 								  std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::alphaMin, BoundsChecker::alphaMax, false)),   
-								  initGammaSlidingWindow )) ; 
-	  proposal->setRelativeWeight(0); 
+								  initGammaSlidingWindow,0 )) ; 
 	  break; 
 	case ProposalType::FREQUENCY_DIRICHLET: 
 	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqDirich", true, 
 									   std::unique_ptr<DirichletProposal>(new DirichletProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max(), false)), 
-									   initDirichletAlpha )) ; 
-	  proposal->setRelativeWeight(0.5); 
+									   initDirichletAlpha,0.5 )) ; 
 	  break; 
 	case ProposalType::REVMAT_DIRICHLET: 
 	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatDirich", true, 
 									   std::unique_ptr<DirichletProposal>(new DirichletProposal (BoundsChecker::rateMin, BoundsChecker::rateMax, true)), 
-									   initDirichletAlpha)) ; 
-	  proposal->setRelativeWeight(0.5); 
+									   initDirichletAlpha,0.5)) ; 
 	  break; 
 	case ProposalType::LIKE_SPR: 
 	  proposal = unique_ptr<LikelihoodSPR>(new LikelihoodSPR(  likeSprMinRadius, likeSprMaxRadius, likeSpWarp));

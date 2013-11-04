@@ -2658,8 +2658,6 @@ static void initProtMat(double f[20], int proteinMatrix, double *ext_initialRate
     assert(acc == 1.0);  
   }
   */
- 
-
 
   for (i=0; i<20; i++)  
     for (j=0; j<i; j++)               
@@ -2698,7 +2696,6 @@ static void initProtMat(double f[20], int proteinMatrix, double *ext_initialRate
   scaler = AA_SCALE / max;
    
   /* SCALING HAS BEEN RE-INTRODUCED TO RESOLVE NUMERICAL  PROBLEMS */   
-
   r = 0;
   for(i = 0; i < 19; i++)
     {      
@@ -2719,52 +2716,29 @@ static void initProtMat(double f[20], int proteinMatrix, double *ext_initialRate
 static void updateFracChange(tree *tr, partitionList *pr)
 {   
   int numberOfModels = pr->numberOfPartitions;
-  if(numberOfModels == 1)
-    {   
-      assert(pr->partitionData[0]->fracchange != -1.0);
-      tr->fracchange = pr->partitionData[0]->fracchange;
-      pr->partitionData[0]->fracchange = -1.0;
-    }      
-  else
+
+  int model;
+  double *modelWeights = (double *)rax_calloc((size_t)numberOfModels, sizeof(double));
+  double wgtsum = 0.0;  
+
+  for(model = 0; model < numberOfModels; model++)
     {
-      int model;
-      double *modelWeights = (double *)rax_calloc((size_t)numberOfModels, sizeof(double));
-      double wgtsum = 0.0;  
-     
-      assert(numberOfModels > 1);
-
-      tr->fracchange = 0.0;	         
-      
-       for(model = 0; model < numberOfModels; model++)
-	 {
-	   size_t
-	     lower = pr->partitionData[model]->lower,
-	     upper = pr->partitionData[model]->upper,
-	     i;
+      size_t
+	lower = pr->partitionData[model]->lower,
+	upper = pr->partitionData[model]->upper,
+	i;
 	   
-	   for(i = lower; i < upper; i++)
-	     {
-	       modelWeights[model] += (double)tr->aliaswgt[i];
-	       wgtsum              += (double)tr->aliaswgt[i];
-	     }
-	 }
-
-       /*for(i = 0; i < tr->originalCrunchedLength; i++)
+      for(i = lower; i < upper; i++)
 	{
-	  modelWeights[tr->model[i]]  += (double)tr->aliaswgt[i];
-	  wgtsum                      += (double)tr->aliaswgt[i];
-	  }*/  
-
-      
- 	        
-      for(model = 0; model < numberOfModels; model++)
-	{	      	  	 
-	  pr->partitionData[model]->partitionContribution = modelWeights[model] / wgtsum;
-	  tr->fracchange +=  pr->partitionData[model]->partitionContribution * pr->partitionData[model]->fracchange;
-	}	      
-    
-      rax_free(modelWeights);
+	  modelWeights[model] += (double)tr->aliaswgt[i];
+	  wgtsum              += (double)tr->aliaswgt[i];
+	}
     }
+
+  for(model = 0; model < numberOfModels; model++)
+    pr->partitionData[model]->partitionContribution = modelWeights[model] / wgtsum;
+
+  rax_free(modelWeights);
 }
 
 static void mytred2(double **a, const int n, double *d, double *e)
@@ -3091,25 +3065,6 @@ static void initGeneric(const int n, const unsigned int *valueVector, int valueV
 	else
 	  EI[i * n + j] = EV[i * n + j] * invfreq[i];   /* EV = Eigenvector, EI = Inverse Eigenvector,   $ u_{i,x}^{-1} = \pi_x u_{x,i} */
       }
-  
-  /* 
-     printf("EIGN\n");
-
-     for(i = 0; i < n; i++)
-     printf("%f ", ext_EIGN[i]);
-     printf("\n");
-
-     printf("EI\n");
-     for(i = 0; i < n; i++)
-     {
-     for(j = 0; j < n; j++)
-     {
-     printf("%f ", EI[i * n + j]);             
-     }
-     printf("\n");
-    }
-  */
-  
 
 
   for(i=0; i < valueVectorLength; i++)
@@ -3139,9 +3094,6 @@ static void initGeneric(const int n, const unsigned int *valueVector, int valueV
 	 if(tipVector[i * n + j] > MAX_TIP_EV)
 	   tipVector[i * n + j] = MAX_TIP_EV;
     }
-
-
-  
 
   for(i = 0; i < n; i++)
     {
@@ -3203,24 +3155,20 @@ void initReversibleGTR(tree * tr, partitionList * pr, int model)
        {
 	 double f[20];
 	 int l;
-
 	 
 	 if(pr->partitionData[model]->protModels == AUTO)
 	   initProtMat(f, pr->partitionData[model]->autoProtModels, ext_initialRates);
 	 else 
 	   initProtMat(f, pr->partitionData[model]->protModels, ext_initialRates);
-	 
-	 /*if(adef->protEmpiricalFreqs && tr->NumberOfModels == 1)
-	   assert(tr->partitionData[model].protFreqs);*/
-	 
-	 if(!pr->partitionData[model]->protFreqs)
+
+	 if( ! pr->partitionData[model]->protFreqs)
 	   {	     	    
 	     for(l = 0; l < 20; l++)		
 	       frequencies[l] = f[l];
 	   } 
        }  
-               
 
+               
      initGeneric(states, bitVectorAA, 23, fracchange,
 		 ext_EIGN, EV, EI, frequencies, ext_initialRates,
 		 tipVector);
@@ -3228,8 +3176,6 @@ void initReversibleGTR(tree * tr, partitionList * pr, int model)
    default:
      assert(0);
    } 
-
- updateFracChange(tr, pr);
 }
 
 
@@ -3831,17 +3777,6 @@ void initModel(tree *tr, double **empiricalFrequencies, partitionList * partitio
       /* GAMMA model init */
       makeGammaCats(partitions->partitionData[model]->alpha, partitions->partitionData[model]->gammaRates, 4, tr->useMedian);
     }                   		       
-  
-   
-
-  if(partitions->numberOfPartitions > 1)
-    {
-      tr->fracchange = 0;
-      for(model = 0; model < partitions->numberOfPartitions; model++)
-	tr->fracchange += partitions->partitionData[model]->fracchange;
-      
-      tr->fracchange /= ((double)partitions->numberOfPartitions);
-    }  
 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
   masterBarrier(THREAD_COPY_INIT_MODEL, tr, partitions);

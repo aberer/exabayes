@@ -27,6 +27,167 @@ void TreeInitializer::parseMagicNumber(std::ifstream& in)
 }
 
 
+#if HAVE_PLL == 0
+void TreeInitializer::distributeData(TreeAln &traln)
+{
+  auto &tr = traln.getTrHandle();
+
+  /* figure in data */
+  if(tr.manyPartitions)
+    {
+      for(int model = 0; model < tr.NumberOfModels; model++)
+	{
+	  if(isThisMyPartition(&tr, processID, model))
+	    {
+	      int width = tr.partitionData[model].upper - tr.partitionData[model].lower;	     
+
+	      memcpy(&(tr.partitionData[model].wgt[0]), &(tr.aliaswgt[tr.partitionData[model].lower]), sizeof(int) * width);
+	    }
+	}
+    }
+  else
+    {
+      size_t 	   
+	globalCounter = 0, 
+	r, 
+	localCounter;
+      
+       for(int model = 0; model < tr.NumberOfModels; model++)
+	{
+	  for(localCounter = 0, r = (size_t)tr.partitionData[model].lower;  r < (size_t)tr.partitionData[model].upper; r++)
+	    {
+	      if(r % (size_t)processes == (size_t)processID)
+		{
+		  tr.partitionData[model].wgt[localCounter] = tr.aliaswgt[globalCounter]; 
+		  
+		  localCounter++;
+		}
+	      globalCounter++;
+	    }
+	  assert(localCounter == nat(tr.partitionData[model].width));
+	}   
+      assert(globalCounter == nat(tr.originalCrunchedLength));
+    }
+
+  unsigned char *y = (unsigned char *)malloc(sizeof(unsigned char) * tr.originalCrunchedLength);
+
+  nat ctr = 0; 
+  for(int i = 1; i <= tr.mxtips; i++)
+    {
+      _initResPtr->fillAlnPart(y,tr.originalCrunchedLength,ctr);
+	
+      if(tr.manyPartitions)
+	{
+	  for(int model = 0; model < tr.NumberOfModels; model++)
+	    {
+	      if(isThisMyPartition(&tr, processID, model))	  
+		{
+		  memcpy(tr.partitionData[model].yVector[i], &(y[tr.partitionData[model].lower]), sizeof(unsigned char) * tr.partitionData[model].width);					    
+		  assert(tr.partitionData[model].width == tr.partitionData[model].upper - tr.partitionData[model].lower);
+		}
+	      else
+		assert(tr.partitionData[model].width == 0);
+	    }
+	}
+      else
+	{
+	  size_t 	  
+	    globalCounter = 0, 
+	    r, 
+	    localCounter;
+
+	  for(int model = 0 ; model < tr.NumberOfModels; model++)
+	    {
+	      for(localCounter = 0, r = (size_t)tr.partitionData[model].lower;  r < (size_t)tr.partitionData[model].upper; r++)
+		{
+		  if(r % (size_t)processes == (size_t)processID)
+		    {		      
+		      tr.partitionData[model].yVector[i][localCounter] = y[globalCounter]; 	     
+		      
+		      localCounter++;
+		    }
+		  globalCounter++;
+		}
+	      
+	      assert(localCounter == nat(tr.partitionData[model].width));
+	    }
+
+	  assert(globalCounter == nat(tr.originalCrunchedLength));
+	}
+    }
+  free(y);
+}
+
+
+#else 
+
+void TreeInitializer::distributeData(TreeAln &traln)
+{
+  auto &tr = traln.getTrHandle(); 
+
+  for(nat model = 0; model < traln.getNumberOfPartitions(); model++)
+    {
+      auto &partition = traln.getPartition(model);
+      size_t
+  	j;
+      size_t lower = partition.lower;
+      size_t width = partition.upper - lower;
+
+      for(j = 1; j <= (size_t)tr.mxtips; j++)
+	{
+	  // partition.yVector[j] = (unsigned char*)exa_calloc(width , sizeof(unsigned char)); 
+	  auto start = tr.yVector[j] + lower   ; 
+	  std::copy(start , start + width , partition.yVector[j]);
+	}
+
+      memcpy((void*)(partition.wgt),         (void*)(&(tr.aliaswgt[lower])),      sizeof(int) * width);
+    }
+}
+
+#endif
+
+
+void TreeInitializer::copyWeightsAndAln(TreeAln &traln )
+{
+  // assert(0); 
+  // TODO initialize memory first  
+
+  _initResPtr->initWeightsAndAln(traln);
+}
+
+
+
+void TreeInitializer::determinePartitionContribution(TreeAln &traln)
+{
+  auto &tr = traln.getTrHandle();
+
+  auto localSums = std::vector<nat>{}; 
+  for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i )
+    {
+      auto& partition = traln.getPartition(i); 
+      auto localSum = nat{0} ;
+      for(nat j = partition.lower; j < nat(partition.upper); ++j)
+	localSum += tr.aliaswgt[j]; 
+      localSums.push_back(localSum); 
+    }    
+  auto totalSum = std::accumulate(localSums.begin(), localSums.end(), 0.);
+  
+  for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
+    {
+#if HAVE_PLL == 0
+      tr.partitionContributions[i] = double(localSums[i])  / double(totalSum); 
+#else 
+      auto &partition = traln.getPartition(i); 
+      partition.partitionContribution = double(localSums[i])  / double(totalSum);
+#endif
+    }
+}
+
+
+
+
+
+
 TreeInitializer::TreeInitializer(std::unique_ptr<InitializationResource> initRes)
   : _initResPtr(std::move(initRes))
 {
@@ -60,7 +221,7 @@ void TreeInitializer::unifiedInitializePartitions(TreeAln &traln)
 
 
 void TreeInitializer::initializeParsimonyVectors(TreeAln &traln)
-{
+{ 
   auto& tr = traln.getTrHandle(); 
   nat totalNodes = 2 * tr.mxtips; 
   nat numPart = traln.getNumberOfPartitions(); 
@@ -82,6 +243,7 @@ void TreeInitializer::initializeParsimonyVectors(TreeAln &traln)
 
   tr.parsimonyScore = (unsigned int*)exa_malloc_aligned(sizeof(unsigned int) * totalNodes * numPart);  
   memset(tr.parsimonyScore, 0, totalNodes * numPart * sizeof(unsigned int )); 
+  tr.ti = (int*) malloc(sizeof(int) * 4 * (size_t)tr.mxtips);  
 }
 
 
@@ -89,9 +251,6 @@ void TreeInitializer::initializeParsimonyVectors(TreeAln &traln)
 void TreeInitializer::initializePartitionsExaml(TreeAln &traln)
 { 
   auto& tr = traln.getTrHandle(); 
-
-  unsigned char 
-    *y;
 
   for(int model = 0; model < tr.NumberOfModels; model++)
     tr.partitionData[model].width = 0;
@@ -146,7 +305,6 @@ void TreeInitializer::initializePartitionsExaml(TreeAln &traln)
 	      tr.partitionData[model].tipVector_LG4[k]         = (double *)malloc_aligned(pl->tipVectorLength * sizeof(double));
 	    }
 	}
-
 
       tr.partitionData[model].symmetryVector    = (int *)malloc(pl->symmetryVectorLength  * sizeof(int));
       tr.partitionData[model].frequencyGrouping = (int *)malloc(pl->frequencyGroupingLength  * sizeof(int));
@@ -204,137 +362,18 @@ void TreeInitializer::initializePartitionsExaml(TreeAln &traln)
 
   /* assign local memory for storing sequence data */
 
-  tr.y_ptr = (unsigned char *)malloc(myLength * (size_t)(tr.mxtips) * sizeof(unsigned char));
-  assert(tr.y_ptr != NULL);
-
+  // reserve the memory for the alignment   
   for(int i = 0; i < tr.mxtips; i++)
     {
-      nat countOffset = 0; 
       for(int model = 0 ; model < tr.NumberOfModels; model++)
-	{
-	  tr.partitionData[model].yVector[i+1]   = &tr.y_ptr[i * myLength + countOffset];
-	  countOffset +=  tr.partitionData[model].width;
-	}
-      assert(countOffset == myLength);
+	tr.partitionData[model].yVector[i+1] = (unsigned char*) exa_calloc(tr.partitionData[model].width, sizeof(unsigned char));
     }
 
-  /* figure in data */
-
-  if(tr.manyPartitions)
-    {
-      for(int model = 0; model < tr.NumberOfModels; model++)
-	{
-	  if(isThisMyPartition(&tr, processID, model))
-	    {
-	      int width = tr.partitionData[model].upper - tr.partitionData[model].lower;	     
-
-	      memcpy(&(tr.partitionData[model].wgt[0]), &(tr.aliaswgt[tr.partitionData[model].lower]), sizeof(int) * width);
-	    }
-	}
-    }
-  else
-    {
-      size_t 	   
-	globalCounter = 0, 
-	r, 
-	localCounter;
-      
-      for(int model = 0; model < tr.NumberOfModels; model++)
-	{
-	  for(localCounter = 0, r = (size_t)tr.partitionData[model].lower;  r < (size_t)tr.partitionData[model].upper; r++)
-	    {
-	      if(r % (size_t)processes == (size_t)processID)
-		{
-		  tr.partitionData[model].wgt[localCounter] = tr.aliaswgt[globalCounter]; 
-		  
-		  localCounter++;
-		}
-	      globalCounter++;
-	    }
-	  assert(localCounter == nat(tr.partitionData[model].width));
-	}   
-      assert(globalCounter == nat(tr.originalCrunchedLength));
-    }
-   
-  /* set up the averaged frac changes per partition such that no further reading accesses to aliaswgt are necessary
-     and we can free the array for the GAMMA model */
-
-  if(tr.NumberOfModels > 1)
-    {        
-      size_t
-	*modelWeights = (size_t *)calloc(tr.NumberOfModels, sizeof(size_t)),
-	wgtsum = 0;  
-      
-      for(int model = 0; model < tr.NumberOfModels; model++)      
-	{
-	  size_t
-	    lower = tr.partitionData[model].lower,
-	    upper = tr.partitionData[model].upper,
-	    i;
-	   
-	  for(i = lower; i < upper; i++)
-	    {
-	      modelWeights[model] += (size_t)tr.aliaswgt[i];
-	      wgtsum              += (size_t)tr.aliaswgt[i];
-	    }
-	}
-       
-      for(int model = 0; model < tr.NumberOfModels; model++)      	
-	tr.partitionContributions[model] = ((double)modelWeights[model]) / ((double)wgtsum); 
-       
-      free(modelWeights);
-    }
-
-  y = (unsigned char *)malloc(sizeof(unsigned char) * tr.originalCrunchedLength);
-
-  // TODO alternatively just copy   
-  // assert(0); 
-  nat ctr = 0; 
-  for(int i = 1; i <= tr.mxtips; i++)
-    {
-      _initResPtr->fillAlnPart(y,tr.originalCrunchedLength,ctr);
-	
-      if(tr.manyPartitions)
-	{
-	  for(int model = 0; model < tr.NumberOfModels; model++)
-	    {
-	      if(isThisMyPartition(&tr, processID, model))	  
-		{
-		  memcpy(tr.partitionData[model].yVector[i], &(y[tr.partitionData[model].lower]), sizeof(unsigned char) * tr.partitionData[model].width);					    
-		  assert(tr.partitionData[model].width == tr.partitionData[model].upper - tr.partitionData[model].lower);
-		}
-	      else
-		assert(tr.partitionData[model].width == 0);
-	    }
-	}
-      else
-	{
-	  size_t 	  
-	    globalCounter = 0, 
-	    r, 
-	    localCounter;
-
-	  for(int model = 0 ; model < tr.NumberOfModels; model++)
-	    {
-	      for(localCounter = 0, r = (size_t)tr.partitionData[model].lower;  r < (size_t)tr.partitionData[model].upper; r++)
-		{
-		  if(r % (size_t)processes == (size_t)processID)
-		    {		      
-		      tr.partitionData[model].yVector[i][localCounter] = y[globalCounter]; 	     
-		      
-		      localCounter++;
-		    }
-		  globalCounter++;
-		}
-	      
-	      assert(localCounter == nat(tr.partitionData[model].width));
-	    }
-
-	  assert(globalCounter == nat(tr.originalCrunchedLength));
-	}
-    }
-
-  free(y);
+  // distribute the actual alignment 
+  if(_initResPtr->isDataAreDistributed())
+    copyWeightsAndAln(traln); 
+  else 
+    distributeData(traln);
 
   if(tr.saveMemory)
     {
@@ -354,10 +393,20 @@ void TreeInitializer::initializePartitionsExaml(TreeAln &traln)
 	    }     
 	}
     }
-  
-  // TODO 
-  // exa_free(tr.aliaswgt);
-  // tr.aliaswgt = NULL; 
+
+  if(not _initResPtr->isDataAreDistributed()) 
+    {
+      exa_free(tr.aliaswgt);
+      tr.aliaswgt = NULL; 
+    }
+
+  if(tr.yVector)
+    {
+      // should not be the case 
+      assert(0); 
+      exa_free(tr.yVector); 
+      tr.yVector = NULL; 
+    }
 }
 
 
@@ -374,8 +423,11 @@ void TreeInitializer::initializeTreeExaML(TreeAln &traln )
   NUM_BRANCHES = tr.NumberOfModels; 
   tr.numBranches = tr.NumberOfModels;
 
-  tr.aliaswgt                   = (int *)malloc(tr.originalCrunchedLength * sizeof(int));
-  _initResPtr->fillAliasWgt(tr.aliaswgt, tr.originalCrunchedLength);
+  if( not _initResPtr->isDataAreDistributed())
+    {
+      tr.aliaswgt                   = (int *)malloc(tr.originalCrunchedLength * sizeof(int));
+      _initResPtr->fillAliasWgt(tr.aliaswgt, tr.originalCrunchedLength);
+    }
 
   tr.executeModel   = (boolean *)malloc(sizeof(boolean) * tr.NumberOfModels);
   for(i = 0; i < (size_t)tr.NumberOfModels; i++)
@@ -388,15 +440,17 @@ void TreeInitializer::initializeTreeExaML(TreeAln &traln )
 
   tr.partitionData = (pInfo*)calloc(tr.NumberOfModels, sizeof(pInfo));
 
-  tr.partitionContributions = (double *)malloc(sizeof(double) * tr.NumberOfModels);
-  for(decltype(tr.NumberOfModels) i = 0; i < tr.NumberOfModels; i++)
-    tr.partitionContributions[i] = -1.0;
   tr.perPartitionLH = (double *)malloc(sizeof(double) * tr.NumberOfModels);
   for(decltype(tr.NumberOfModels) i = 0; i < tr.NumberOfModels; i++)    
     tr.perPartitionLH[i] = 0.0;	    
 
   traln.setTaxa(_initResPtr->getTaxonNames(tr.mxtips)); 
 
+  auto partConts = _initResPtr->getPartitionContributions(traln.getNumberOfPartitions());
+  tr.partitionContributions = (double *)malloc(sizeof(double) * tr.NumberOfModels);
+  for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
+    tr.partitionContributions[i] = partConts[i]; 
+  
   for(nat model = 0; model < traln.getNumberOfPartitions() ; model++)
     {      
       auto& p = traln.getPartition(model); 
@@ -405,18 +459,8 @@ void TreeInitializer::initializeTreeExaML(TreeAln &traln )
 
   initializePartitionsExaml(traln);
   initializeParsimonyVectors(traln);
-
-  tr.ti = (int*) malloc(sizeof(int) * 4 * (size_t)tr.mxtips);  
-
+  
   unifiedModelInit(traln);
-
-
-  for(nat i = 1; i < traln.getNumberOfNodes() + 1 ; ++i)
-    {
-      tr.nodep[i]->xPars = 1; 
-      tr.nodep[i]->next->xPars = 0; 
-      tr.nodep[i]->next->next->xPars = 0; 
-    }
 }
 
 #else  
@@ -424,17 +468,19 @@ void TreeInitializer::initializeTreeExaML(TreeAln &traln )
 void TreeInitializer::initializeTreePLL(TreeAln &traln)
 {
   initializePartitionsPLL(traln );
-
   unifiedModelInit(traln);
-
   auto &ptr = traln.getPartitionsHandle(); 
   auto &tr =  traln.getTrHandle(); 
   ptr.perGeneBranchLengths = TRUE; 
-
-  allocateParsimonyDataStructures(&tr, &ptr);   
-
-  // exa_free(tr.aliaswgt); 
-  // tr.aliaswgt = NULL; 
+  initializeParsimonyVectors(traln);
+  
+  if(tr.aliaswgt)
+    {
+      exa_free(tr.aliaswgt); 
+      tr.aliaswgt = NULL; 
+    }
+  exa_free(tr.yVector); 
+  tr.yVector = NULL; 
 } 
 
 
@@ -479,14 +525,24 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
 
   traln.setTaxa(_initResPtr->getTaxonNames(tr.mxtips));
 
+  auto partConts = _initResPtr->getPartitionContributions(traln.getNumberOfPartitions());
+  for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
+    {
+      auto& partition = traln.getPartition(i); 
+      partition.partitionContribution = partConts.at(i); 
+    }
+
   for(nat model = 0; model < traln.getNumberOfPartitions() ; model++)
     {      
       auto& p = traln.getPartition(model); 
       _initResPtr->fillPartition(p, model); 
     }
 
-  nat ctr = 0; 
-  _initResPtr->fillAlnPart(y,tr.originalCrunchedLength * tr.mxtips, ctr); 
+  if(not _initResPtr->isDataAreDistributed())
+    {
+      nat ctr = 0; 
+      _initResPtr->fillAlnPart(y,tr.originalCrunchedLength * tr.mxtips, ctr); 
+    }
 
   auto& pr = traln.getPartitionsHandle();
 
@@ -542,20 +598,23 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
 	}              
     }
 
-  for(int model = 0; model < pr.numberOfPartitions; model++)
+
+  for(int i = 0; i < tr.mxtips; i++)
     {
-      auto &partition = traln.getPartition(model);
-      size_t
-	j;
-      size_t lower = partition.lower;
-      size_t width = partition.upper - lower;
+      for(nat model = 0 ; model < traln.getNumberOfPartitions(); ++model)
+	{
+	  auto &partition = traln.getPartition(model);
+	  partition.yVector[i+1] = (unsigned char*) exa_calloc(partition.width, sizeof(unsigned char));
+	}
+    }
 
-      for(j = 1; j <= (size_t)tr.mxtips; j++)
-	partition.yVector[j] = &(tr.yVector[j][partition.lower]);
+  
+  if(_initResPtr->isDataAreDistributed())
+    copyWeightsAndAln(traln); 
+  else 
+    distributeData(traln);
 
-      memcpy((void*)(partition.wgt),         (void*)(&(tr.aliaswgt[lower])),      sizeof(int) * width);
-    }  
-
+  
   /* initialize gap bit vectors at tips when memory saving option is enabled */
   if(tr.saveMemory)
     {
@@ -626,7 +685,7 @@ void TreeInitializer::setupTheTree(tree &tr)
   tr.td[0].executeModel = (boolean *)exa_malloc(sizeof(boolean) * (size_t)NUM_BRANCHES);
   tr.td[0].parameterValues = (double *)exa_malloc(sizeof(double) * (size_t)NUM_BRANCHES);
 
-  tr.fracchange = -1.0;
+  // tr.fracchange = -1.0;
 
   tr.constraintVector = (int *)exa_malloc((2 * (size_t)tr.mxtips) * sizeof(int));
 
@@ -722,8 +781,6 @@ void TreeInitializer::initializeBranchLengths(tree &tr, nat numPart, nat numTax 
     }
 }
 
-
-
 void TreeInitializer::initializeWithAlignmentInfo(TreeAln &traln, RunModes flags)
 {
   auto &tr= traln.getTrHandle(); 
@@ -737,5 +794,3 @@ void TreeInitializer::initializeWithAlignmentInfo(TreeAln &traln, RunModes flags
   unifiedInitializePartitions(traln ); 
   initializeBranchLengths(tr, traln.getNumberOfPartitions(), traln.getNumberOfTaxa());
 }
-
-

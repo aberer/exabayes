@@ -1314,7 +1314,7 @@ static void writeCheckpoint(tree *tr, partitionList *pr, int state)
   tr->ckp.rateHetModel =  tr->rateHetModel;
   tr->ckp.maxCategories =  tr->maxCategories;
   tr->ckp.NumberOfModels = pr->numberOfPartitions;
-  tr->ckp.numBranches = pr->perGeneBranchLengths?pr->numberOfPartitions:1;
+  /* tr->ckp.numBranches = pr->perGeneBranchLengths?pr->numberOfPartitions:1; */
   tr->ckp.originalCrunchedLength = tr->originalCrunchedLength;
   tr->ckp.mxtips = tr->mxtips;
   strcpy(tr->ckp.seq_file, seq_file);
@@ -1336,7 +1336,9 @@ static void writeCheckpoint(tree *tr, partitionList *pr, int state)
 
   //TODO: We have to change the way to store the fracchanges
   //myfwrite(tr->fracchanges,  sizeof(double), pr->numberOfPartitions, f);
+#if 0 
   myfwrite(&(tr->fracchange),   sizeof(double), 1, f);
+#endif
 
 
   /* pInfo */
@@ -1476,11 +1478,11 @@ static void readCheckpoint(tree *tr, partitionList *pr)
     restartErrors++;      
   }
 
-  if(tr->ckp.numBranches != pr->perGeneBranchLengths?pr->numberOfPartitions:1)
-  {
-    printf("restart error, you are trying to re-start a run where independent per-site branch length estimates were turned %s\n", (tr->ckp.numBranches > 1)?"ON":"OFF");
-    restartErrors++;
-  }
+  /* if(tr->ckp.numBranches != pr->perGeneBranchLengths?pr->numberOfPartitions:1) */
+  /* { */
+  /*   printf("restart error, you are trying to re-start a run where independent per-site branch length estimates were turned %s\n", (tr->ckp.numBranches > 1)?"ON":"OFF"); */
+  /*   restartErrors++; */
+  /* } */
 
   if(tr->ckp.originalCrunchedLength != tr->originalCrunchedLength)
   {
@@ -1588,7 +1590,9 @@ static void readCheckpoint(tree *tr, partitionList *pr)
 
   //TODO: Same problem as writing the checkpoint
   //myfread(tr->fracchanges,  sizeof(double), pr->numberOfPartitions, f);
+#if 0 
   myfread(&(tr->fracchange),   sizeof(double), 1, f);
+#endif
 
   /* pInfo */
 

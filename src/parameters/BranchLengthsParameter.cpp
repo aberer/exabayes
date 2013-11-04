@@ -15,12 +15,7 @@ void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterConte
 ParameterContent BranchLengthsParameter::extractParameter(const TreeAln &traln)  const
 {
   auto result = ParameterContent{}; 
-
-  // TODO bad 
-  AbstractParameter* param = const_cast<AbstractParameter*>(dynamic_cast<const AbstractParameter* const>(this)); 
-
-  result.branchLengths = traln.extractBranches(param); 
-
+  result.branchLengths = traln.extractBranches(this); 
   return result; 
 }   
 

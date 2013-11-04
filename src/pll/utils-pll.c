@@ -346,12 +346,8 @@ void read_msa(tree *tr, partitionList *pr, const char *filename)
 
     myBinFread(y, sizeof(unsigned char), ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips), byteFile);
 
-    /* Initialize the model */
-    //printf("Here 1!\n");
     initializePartitionsSequential(tr, pr);
-    //printf("Here 2!\n");
     initModel(tr, empiricalFrequencies, pr);
-
 
     fclose(byteFile);
   }
@@ -874,7 +870,7 @@ boolean setupTree (tree *tr, boolean doInit, partitionList *partitions)
   tr->td[0].executeModel = (boolean *)rax_malloc(sizeof(boolean) * (size_t)NUM_BRANCHES);
   tr->td[0].parameterValues = (double *)rax_malloc(sizeof(double) * (size_t)NUM_BRANCHES);
 
-  tr->fracchange = -1.0;
+  /* tr->fracchange = -1.0; */
 
   tr->constraintVector = (int *)rax_malloc((2 * (size_t)tr->mxtips) * sizeof(int));
 
@@ -1306,26 +1302,31 @@ void initMemorySavingAndRecom(tree *tr, partitionList *pr)
 
 double get_branch_length(tree *tr, nodeptr p, int partition_id)
 {
+  assert(0); 
+#if  0 
   //assert(partition_id < tr->numBranches);
   assert(partition_id < NUM_BRANCHES);
   assert(partition_id >= 0);
-  assert(tr->fracchange != -1.0);
+  /* assert(tr->fracchange != -1.0); */
   double z = p->z[partition_id];
   if(z < zmin) z = zmin;
   if(z > zmax) z = zmax;
   return (-log(z) * tr->fracchange);
+#endif
 }
 void set_branch_length(tree *tr, nodeptr p, int partition_id, double bl)
 {
+  #if 0 
   //assert(partition_id < tr->numBranches);
   assert(partition_id < NUM_BRANCHES);
   assert(partition_id >= 0);
-  assert(tr->fracchange != -1.0);
+  /* assert(tr->fracchange != -1.0); */
   double z;
   z = exp((-1 * bl)/tr->fracchange);
   if(z < zmin) z = zmin;
   if(z > zmax) z = zmax;
   p->z[partition_id] = z;
+#endif
 }
 
 void initializePartitionsSequential(tree *tr, partitionList *pr)

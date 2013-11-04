@@ -50,7 +50,6 @@ Bipartition BipartitionHashNew::addElement(const TreeAln &traln, nodeptr p, bool
 	{
 	  if(withBranch)
 	    {
-	      assert(traln.getNumBranches() == 1); 
 	      auto bl = p->z[0]; 
 	      bipBranchLengths[result].push_back(bl); 
 	    }
@@ -73,10 +72,6 @@ Bipartition BipartitionHashNew::addElement(const TreeAln &traln, nodeptr p, bool
 
   if(withBranch)
     {
-      // assert(0); 
-      assert(traln.getNumBranches() == 1); 
-      // notice: if we read, we only want to have one branch length
-      // there => non-issue, but be careful
       auto bl = p->z[0]; 	// TODO 
       bipBranchLengths[result].push_back(bl); 
     }

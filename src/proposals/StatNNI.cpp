@@ -21,11 +21,9 @@
 
 
 StatNNI::StatNNI( double _multiplier)
-  : AbstractProposal(Category::TOPOLOGY,  "stNNI")
+  : AbstractProposal(Category::TOPOLOGY,  "stNNI", 5., false)
   ,   multiplier(_multiplier)
 {
-  relativeWeight = 5; 
-  needsFullTraversal = false; 
 }
 
 

@@ -1,17 +1,15 @@
 #include "ParameterProposal.hpp"
 #include "tune.h"
 #include "priors/AbstractPrior.hpp"
-#include "priors/FixedPrior.hpp"
 #include "BoundsChecker.hpp"
 
-ParameterProposal::ParameterProposal(Category cat, std::string _name, bool modifiesBL,  
-				     std::unique_ptr<AbstractProposer> _proposer, double parameter )
-  : AbstractProposal( cat, _name)
+ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL,  
+				     std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight )
+  : AbstractProposal( cat, name, weight)
   , modifiesBL(modifiesBL)
   , parameter(parameter)
   , proposer(std::move(_proposer))  
 {
-  relativeWeight = 0;   
 } 
 
 
@@ -30,7 +28,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 {
   auto blParams = getBranchLengthsParameterView(); 
 
-  assert(primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
+  assert(_primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
   // this parameter proposal works with any kind of parameters (rate
   // heterogeneity, freuqencies, revmat ... could also be extended to
   // work with AA)
@@ -38,7 +36,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
   // extract the parameter (a handy std::vector<double> that for
   // instance contains all the frequencies)
-  auto content = primaryParameters[0]->extractParameter(traln); 
+  auto content = _primaryParameters[0]->extractParameter(traln); 
   savedContent = content; 
   
   // nasty, we have to correct for the fracchange 
@@ -61,7 +59,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
   newContent.values = newValues; 
   // use our parameter object to set the frequencies or revtmat rates
   // or what ever (for all partitions)
-  primaryParameters[0]->applyParameter(traln, newContent); 
+  _primaryParameters[0]->applyParameter(traln, newContent); 
   
   if(modifiesBL)
     {
@@ -73,19 +71,19 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
       for(nat i = 0; i < blParams.size();++i)
 	{
 	  auto value = traln.getNumberOfBranches() * log(newFCs.at(i) / oldFCs.at(i))   ; 
-	  AbstractProposal::updateHastingsLog(hastings, value, name); 
+	  AbstractProposal::updateHastingsLog(hastings, value, _name); 
 	}
     }
 
   // a generic prior updates the prior rate 
-  auto pr = primaryParameters[0]->getPrior();
+  auto pr = _primaryParameters[0]->getPrior();
   prior.addToRatio(pr->getLogProb(newValues) - pr->getLogProb(savedContent.values)); 
 } 
 
 
 void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {
-  auto prts = primaryParameters[0]->getPartitions(); 
+  auto prts = _primaryParameters[0]->getPartitions(); 
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL-CHOICE "  << branchSuggestion << std::endl; 
 #endif
@@ -96,7 +94,7 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
 
 void ParameterProposal::resetState(TreeAln &traln) 
 {
-  primaryParameters[0]->applyParameter(traln, savedContent);
+  _primaryParameters[0]->applyParameter(traln, savedContent);
 
   // for a fixed bl parameter, we have to re-scale the branch lengths after rejection again. 
   // NOTICE: this is very inefficient 
@@ -104,12 +102,12 @@ void ParameterProposal::resetState(TreeAln &traln)
     {
       for(auto &param : getBranchLengthsParameterView() )
 	{
-	  auto pr = dynamic_cast<FixedPrior*>(param->getPrior()); 
-	  if(pr != nullptr)
+	  if( not param->getPrior()->needsIntegration() )
 	    {
+	      auto prior = param->getPrior() ;
 	      for(auto &b : traln.extractBranches(param))
 		{
-		  auto content = pr->getInitialValue(); 
+		  auto content = prior->getInitialValue(); 
 		  b.setConvertedInternalLength(traln,param, content.values[0]); 
 		  tout << "resetting to " << b << "\t"  << b.getInterpretedLength(traln,param); 
 		  if(not BoundsChecker::checkBranch(b))
@@ -127,10 +125,10 @@ void ParameterProposal::autotune()
   if(not proposer->isTune() )
       return; 
 
-  double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, not proposer->isTuneup());
+  double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, not proposer->isTuneup());
   
   parameter = newParam; 
-  sctr.nextBatch();
+  _sctr.nextBatch();
 }
 
 

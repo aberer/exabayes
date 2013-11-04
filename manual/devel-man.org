@@ -109,3 +109,68 @@ $ git reset --hard
 $ git stash 
 $ git stash pop # restore 
    #+END_SRC
+* ExaBayes style guide 
+Due to the size of the code-base and a rapidly changing style, these
+guidelines have not been implemented at all places in the code. Please
+extend, if you come across outdated sections.
+** initialization:
+   the favored (i.e., most save) form of variable initialization is:
+#+BEGIN_SRC C++
+auto Object = Object{}; 
+auto Object = Object{1,2,3};
+
+auto &&iss = std::istringstream{ fileName };
+
+// also holds for constructors
+Object::Object(int i, int j)
+ :  _i{i}
+ ,  _j{j}
+{
+}
+
+// maybe let's go to primitive types for consistency as well: 
+auto isTrue = bool{true}; 
+
+// only use the round brackets, when there really is a  reason for that: 
+auto myInts = std:vector<int>(3,7);
+auto myInt = int(3.7);
+
+#+END_SRC
+Check out herb sutter's respective site:  
+http://herbsutter.com/2013/08/12/gotw-94-solution-aaa-style-almost-always-auto/
+** make protected / private variables visible: 
+   Use an initial dash to underline the scope of the variables
+#+BEGIN_SRC c++
+class Object
+{
+  private: 
+  int _i; 
+  int _j; 
+}; 
+#+END_SRC
+** always return return values
+if your function has a true output parameter, then return it (as a tuple) and catch it with a std::tie when calling the function
+#+BEGIN_SRC c++
+auto function()
+  -> std::tuple<std::unique_ptr<int>,int>
+{
+  // auto&& tmp = std::unique_ptr<int>{ new int }; 
+  int foo = 3; 
+  *tmp = 4; 
+  return std::make_tuple(std::move(tmp),foo);
+}
+
+int main(int argc, char **argv)
+{
+  int myFoo; 
+  auto &&myTmp = std::unique_ptr<int>{}; 
+
+  std::tie(myTmp,myFoo) = function(); 
+  std::cout << myFoo << "\t"  << *myTmp << std::endl; 
+}
+#+END_SRC
+Still, input-output parameters should not be returned.   
+** don't use "using namespace std;"
+** objects 
+1. construct your objects as light-weight as possible (w.r.t. member variables and functions)
+2. favor composition over inheritance

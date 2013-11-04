@@ -5,11 +5,10 @@
 
 GibbsBranchLength::GibbsBranchLength()
   : BranchLengthMultiplier( 0)
-  // , doTwo(_doTwo)
 {
-  name = "estGibbsBL"; 
-  category = Category::BRANCH_LENGTHS; 
-  relativeWeight = 20 ; 
+  _name = "estGibbsBL"; 
+  _category = Category::BRANCH_LENGTHS; 
+  _relativeWeight = 20 ; 
 } 
 
 

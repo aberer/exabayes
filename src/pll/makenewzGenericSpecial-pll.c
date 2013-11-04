@@ -880,7 +880,7 @@ void execCore(tree *tr, partitionList *pr, volatile double *_dlnLdlz, volatile d
 */
 
 
-static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxiter, double *result,  double lambda, double *firstDerivative, double *secDerivative)
+static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxiter, double *result,  double add2nrd1, double *firstDerivative, double *secDerivative)
 {  
   double   z[NUM_BRANCHES], zprev[NUM_BRANCHES], zstep[NUM_BRANCHES];
   volatile double  dlnLdlz[NUM_BRANCHES], d2lnLdlz2[NUM_BRANCHES];
@@ -1006,7 +1006,7 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
 
       for(int i = 0; i < numBranches ; ++i)
 	{
-	  dlnLdlz[i] += ( ( lambda   * tr->fracchange)  );
+	  dlnLdlz[i] += add2nrd1;
 	  assert(i == 0); 
 	}
 
@@ -1122,7 +1122,7 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
  * @sa typical values for \a maxiter are constants \a iterations and \a newzpercycle
  * @note Requirement: q->z == p->z
  */
-void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double lambda, boolean mask)
+void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double add2nrd1, boolean mask)
 {
   int i;
   //boolean originalExecute[NUM_BRANCHES];
@@ -1185,8 +1185,8 @@ void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double 
 
   /* printf("lambda=%f\n", lambda);  */
 
-  topLevelMakenewz(tr, pr, z0, maxiter, result, lambda, firstDerivative, secDerivative); 
-
+  topLevelMakenewz(tr, pr, z0, maxiter, result, add2nrd1, firstDerivative, secDerivative); 
+  
   /* Mark node as unpinnable */
   if(tr->useRecom)
   {

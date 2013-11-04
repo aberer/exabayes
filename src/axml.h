@@ -20,10 +20,6 @@ extern int NUM_BRANCHES;
 #define __AVX 
 #endif
 
-/* #if HAVE_PLL == 0 */
-/* #include "mpi.h" */
-/* #endif */
-
 
 #ifdef __cplusplus
 extern "C"{

@@ -997,7 +997,7 @@ typedef struct {
   int rateHetModel;
   int maxCategories;
   int NumberOfModels;
-  int numBranches;
+  /* int numBranches; */
   int originalCrunchedLength;    
   int mxtips;
   char seq_file[1024];
@@ -1103,7 +1103,7 @@ typedef  struct  {
   int              *secondaryStructurePairs;
 
 
-  double            fracchange;
+  /* double            fracchange; */
   double            lhCutoff;
   double            lhAVG;
   unsigned long     lhDEC;

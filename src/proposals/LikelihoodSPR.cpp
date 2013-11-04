@@ -11,13 +11,11 @@
 #define NUM_ITER 30   
 #define NUM_BRANCH_OPT 3 
 LikelihoodSPR::LikelihoodSPR(nat _minStep, nat _maxStep, double _likeWarp)
-  : AbstractProposal(Category::TOPOLOGY, "likeSpr")
+  : AbstractProposal(Category::TOPOLOGY, "likeSpr", 5.)
   ,  minStep(_minStep)
   , maxStep(_maxStep)
   , likeWarp(_likeWarp)
 {
-  relativeWeight = 5 ; 
-  needsFullTraversal = false;
 }
 
 

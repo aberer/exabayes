@@ -103,3 +103,16 @@ void ByteFileResource::fillParsVect(parsimonyNumber*& ptr, size_t &len, nat mult
   memset(ptr, 0 , sizeof(parsimonyNumber) * numBytes) ;
   byteRead(byteFile, ptr, numBytes); 
 }
+
+
+std::vector<double> ByteFileResource::getPartitionContributions(nat num) 
+{
+  auto result = std::vector<double>{}; 
+  for(nat i = 0; i < num; ++i)
+    {
+      double elem = 0; 
+      byteRead(byteFile, &elem,1); 
+      result.push_back(elem); 
+    }
+  return result; 
+} 

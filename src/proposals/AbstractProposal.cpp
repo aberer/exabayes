@@ -1,28 +1,29 @@
 #include "AbstractProposal.hpp"
 
 
-AbstractProposal::AbstractProposal( Category cat, const std::string& _name )  
-  : name (_name)
-  , category(cat)
-  , needsFullTraversal(true)
-  , inSetExecution(false)
+AbstractProposal::AbstractProposal( Category cat, std::string name,double weight, bool needsFullTraversal )  
+  : _name (name)
+  , _category(cat)
+  , _relativeWeight(weight)
+  , _needsFullTraversal(needsFullTraversal)
+  , _inSetExecution(false)
 {
 } 
 
 
 AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
-  : name(rhs.name)
-  , sctr(rhs.sctr)
-  , category(rhs.category)
-  , relativeWeight(rhs.relativeWeight)
-  , needsFullTraversal(rhs.needsFullTraversal)
-  , inSetExecution(rhs.inSetExecution)
-  , id(rhs.id)
+  : _name(rhs._name)
+  , _sctr(rhs._sctr)
+  , _category(rhs._category)
+  , _relativeWeight(rhs._relativeWeight)
+  , _needsFullTraversal(rhs._needsFullTraversal)
+  , _inSetExecution(rhs._inSetExecution)
+  , _id(rhs._id)
 {
-  for(auto &v : rhs.primaryParameters)
-    primaryParameters.emplace_back(v->clone()); 
-  for(auto &v : rhs.secondaryParameters)
-    secondaryParameters.emplace_back(v->clone()); 
+  for(auto &v : rhs._primaryParameters)
+    _primaryParameters.emplace_back(v->clone()); 
+  for(auto &v : rhs._secondaryParameters)
+    _secondaryParameters.emplace_back(v->clone()); 
 }
 
 
@@ -34,10 +35,10 @@ void AbstractProposal::updateHastingsLog(double &hastings, double logValueToAdd,
 
 std::ostream& AbstractProposal::printShort(std::ostream &out)  const 
 {
-  out << this->name << "( " ;  
+  out << _name << "( " ;  
     
   bool isFirst = true; 
-  for(auto &v : primaryParameters)
+  for(auto &v : _primaryParameters)
     {
       if(not isFirst)
 	out << ","; 
@@ -46,11 +47,11 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
       v->printShort(out); 
     }
 
-  if(secondaryParameters.size() > 0)
+  if(_secondaryParameters.size() > 0)
     {
       out << ";"; 
       isFirst = true; 
-      for(auto &v : secondaryParameters)
+      for(auto &v : _secondaryParameters)
 	{
 	  if(not isFirst)
 	    out << ","; 
@@ -66,10 +67,10 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
 
 std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 {
-  out << name  << "(" ; 
-  assert(primaryParameters.size() == 1); 
+  out << _name  << "(" ; 
+  assert(_primaryParameters.size() == 1); 
   bool isFirst= true; 
-  for (auto v : primaryParameters[0]->getPartitions()) 
+  for (auto v : _primaryParameters[0]->getPartitions()) 
     {
       if( not isFirst)
 	out << ","; 
@@ -84,15 +85,15 @@ std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 
 std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs) 
 {
-  out << rhs.name  << std::endl
+  out << rhs._name  << std::endl
       << "\tintegrating:\t"; 
-  for(auto &r : rhs.primaryParameters)
+  for(auto &r : rhs._primaryParameters)
     out << r.get() << ", "  ; 
   
-  if(not rhs.secondaryParameters.empty() )
+  if(not rhs._secondaryParameters.empty() )
     {
       out << std::endl << "\talso modifying:\t" ; 
-      for(auto &r : rhs.secondaryParameters ) 
+      for(auto &r : rhs._secondaryParameters ) 
 	out << r.get() << ",\t" ; 
     }
   return out; 
@@ -106,8 +107,8 @@ void AbstractProposal::serialize( std::ostream &out)   const
   // std::string name = ss.str();
   // writeString(out, name); 
 
-  cWrite(out, id);
-  sctr.serialize(out) ; 
+  cWrite(out, _id);
+  _sctr.serialize(out) ; 
   writeToCheckpointCore(out); 
 }
 
@@ -115,7 +116,7 @@ void AbstractProposal::serialize( std::ostream &out)   const
 void AbstractProposal::deserialize( std::istream &in )
 {
   // notice: name has already been read 
-  sctr.deserialize(in); 
+  _sctr.deserialize(in); 
   readFromCheckpointCore(in); 
 }
 
@@ -123,7 +124,7 @@ void AbstractProposal::deserialize( std::istream &in )
 std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() const
 {
   std::vector<AbstractParameter*> result; 
-  for(auto &v : primaryParameters)
+  for(auto &v : _primaryParameters)
     result.push_back(v.get()); 
   return result; 
 }
@@ -132,7 +133,7 @@ std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() cons
 std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() const 
 {
   std::vector<AbstractParameter*> result; 
-  for(auto &v : secondaryParameters)
+  for(auto &v : _secondaryParameters)
     result.push_back(v.get()); 
   return result; 
 }
@@ -141,11 +142,11 @@ std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() co
 std::vector<AbstractParameter*> AbstractProposal::getBranchLengthsParameterView() const 
 {
   auto result = std::vector<AbstractParameter*> {}; 
-  for(auto &p : primaryParameters)
+  for(auto &p : _primaryParameters)
     if(p->getCategory() == Category::BRANCH_LENGTHS)
       result.push_back(p.get()); 
 
-  for(auto &p : secondaryParameters ) 
+  for(auto &p : _secondaryParameters ) 
     if(p->getCategory() == Category::BRANCH_LENGTHS)
       result.push_back(p.get());
   return result; 
@@ -154,8 +155,8 @@ std::vector<AbstractParameter*> AbstractProposal::getBranchLengthsParameterView(
 
 std::vector<nat> AbstractProposal::getAffectedPartitions() const 
 {
-  assert(primaryParameters.size() == 1); 
-  return primaryParameters[0]->getPartitions();
+  assert(_primaryParameters.size() == 1); 
+  return _primaryParameters[0]->getPartitions();
 } 
 
 

@@ -17,6 +17,8 @@ public:
   virtual ParameterContent getInitialValue() const; 
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew )  const ; 
 
+
+  virtual AbstractPrior* clone() const { return new  ExponentialPrior(*this) ; }
 private: 
   double lambda; 
 }; 

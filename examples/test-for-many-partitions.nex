@@ -14,11 +14,11 @@ revMat = (0,1,2,3)
 ] 
 
 
-[   brlens = (0/1/2/3)  ] 
+[   brlens = (0+1+2+3)  ] 
 
 [ 
-stateFreq = (0/1,2,3)     [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
-rateHet = (0,2/1,3)  
+stateFreq = (0+1,2,3)     [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
+rateHet = (0,2+1,3)  
 revMat = (0,1,2,3)   
 ] 
 

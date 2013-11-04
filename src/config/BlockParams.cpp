@@ -18,72 +18,56 @@ void BlockParams::partitionError(nat partition, nat totalPart) const
 void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 {
   nat numPart = tralnPtr->getNumberOfPartitions();
-  vector<bool> partAppeared(numPart, false); 
+  auto partAppeared = std::vector<bool>(numPart, false); 
 
   token.GetNextToken();
-  auto str = token.GetToken(false); 
-  assert(str.compare("=") == 0); 
+  assert(token.GetToken().EqualsCaseInsensitive("=")); 
   token.GetNextToken();
-  str = token.GetToken(false); 
-  assert(str.compare("(") == 0); 
-  token.GetNextToken();
-  str = token.GetToken(false); 
+  assert(token.GetToken().EqualsCaseInsensitive("(")); 
 
-  bool newLink = true; 
-  std::unique_ptr<AbstractParameter> curVar; 
-  while(str.compare(")") != 0 )
+  auto scheme = std::vector<std::vector<nat>>{}; 
+  while(not token.GetToken().EqualsCaseInsensitive(")") )
     {
-      nat part = str.ConvertToInt() ; 
-      if(newLink)
+      auto schemePart = std::vector<nat>{}; 
+      bool startingNext = true; 
+      
+      // parse one partition part 
+      while( not token.GetToken().EqualsCaseInsensitive(")") 	     
+	     && (startingNext || not token.GetToken().EqualsCaseInsensitive(",")) )
 	{
-	  curVar = CategoryFuns::getParameterFromCategory(cat, idCtr, getNumSeen(cat));
-	  idCtr++; 
-	  newLink = false; 
+	  startingNext = false; 
+	  // check if the separation item is an expasion item (-)
+	  auto doExpand = token.GetToken().EqualsCaseInsensitive("-"); 
+	  token.GetNextToken();
+	  nat part = token.GetToken().ConvertToInt();
+	  nat start = doExpand ? schemePart.back() +1  : part; 
+	  nat end = part + 1 ;  
+	  for(nat i = start ;  i < end ; ++i )
+	    {
+	      if(not (i < numPart))
+		partitionError(i, numPart); 
+	      if(partAppeared.at(i))
+		{
+		  tout << "error: partition " << i << " occurring twice in the same scheme. Check your parameter-block!" << std::endl; 
+		  exit(-1); 
+		}
+	      partAppeared.at(i) = true; 
+	      schemePart.push_back(i); 
+	    }
+	  
+	  token.GetNextToken(); 
 	}
 
-      if(not (part < numPart ))
-	partitionError(part, numPart); 
+      scheme.push_back(schemePart); 
+    }
 
-      curVar->addPartition(part); 
-      partAppeared[part] = true; 
-      
-      token.GetNextToken();
-      str = token.GetToken(false);
-      
-      if(str.compare("/") == 0)
-	{
-	  parameters.push_back(std::move(curVar)); 
-	  newLink = true; 
-	  token.GetNextToken();
-	  str = token.GetToken(false); 
-	}
-      else if(str.compare(",") == 0)
-	{
-	  token.GetNextToken();
-	  str = token.GetToken(false); 
-	}
-      else 
-	{
-	  assert(str.compare(")") == 0); 
-	  parameters.push_back(std::move(curVar)); 
-	}
-    }  
-  
-  // maybe this should not be done here /= 
-  // too clumsy -- must be tested 
-  for(nat i = 0; i < tralnPtr->getNumberOfPartitions(); ++i)
+  // instantiate the parameters 
+  for(auto schemePart : scheme )
     {
-      if(not partAppeared[i] && 
-	 (   ( cat == Category::AA_MODEL && tralnPtr->getPartition(i).dataType == AA_DATA ) 
-	     || (cat == Category::SUBSTITUTION_RATES && tralnPtr->getPartition(i).dataType == DNA_DATA) 
-	     || ( cat != Category::SUBSTITUTION_RATES && cat != Category::AA_MODEL) ))
-	{	  
-	  auto r = CategoryFuns::getParameterFromCategory(cat, idCtr, getNumSeen(cat));
-	  ++idCtr; 
-
-	  r->addPartition(i);
-	  parameters.push_back(std::move(r)); 
-	}
+      assert(schemePart.size()  > 0 ); 
+      parameters.push_back(CategoryFuns::getParameterFromCategory(cat,idCtr,getNumSeen(cat), schemePart));
+      ++idCtr; 
+      tout << "initialized " << parameters.back().get() << std::endl; 
     }
 }
 
@@ -105,7 +89,7 @@ void BlockParams::Read(NxsToken &token)
 
       if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
 	{	  
-	  NxsString str = token.GetToken(false); 
+	  auto str = token.GetToken(false); 
 
 	  Category cat = CategoryFuns::getCategoryFromLinkLabel(str); 	  
 	  parseScheme(token, cat, idCtr); 
@@ -116,14 +100,7 @@ void BlockParams::Read(NxsToken &token)
 	      ParallelSetup::genericExit(-1); 
 	    }
 
-	  if(cat == Category::RATE_HETEROGENEITY)
-	    {
-	      string copy =  str; 
-	      std::transform(copy.begin(), copy.end(), copy.begin(), ::tolower); 
-	    }
-
-	  if(cat == Category::AA_MODEL
-	     || cat == Category::TOPOLOGY)
+	  if( cat == Category::TOPOLOGY)
 	    {
 	      cerr <<  "not implemented"; 
 	      assert(0); 
@@ -133,10 +110,10 @@ void BlockParams::Read(NxsToken &token)
 }
 
 
-vector<unique_ptr<AbstractParameter> > BlockParams::getParameters() const
+std::vector<std::unique_ptr<AbstractParameter> > BlockParams::getParameters() const
 {
-  vector<unique_ptr<AbstractParameter> > result; 
-  for(auto &p : parameters	)
+  std::vector<std::unique_ptr<AbstractParameter> > result; 
+  for(auto &p : parameters )
     result.push_back(std::unique_ptr<AbstractParameter>(p->clone() )); 
   return result; 
 }
