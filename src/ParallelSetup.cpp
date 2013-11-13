@@ -13,12 +13,91 @@ ParallelSetup::ParallelSetup(int argc, char **argv)
   , globalRank(0)
   , globalSize(1)
 {  
+}
+
+
+ParallelSetup::ParallelSetup(const ParallelSetup &rhs)
+  : runsParallel(rhs.runsParallel)
+  , chainsParallel(rhs.chainsParallel)
+  , globalRank(rhs.globalRank)
+  , globalSize(rhs.globalSize)
+  , _hasResource(rhs._hasResource)
+{
 #if HAVE_PLL == 0 
-  MPI_Init(&argc, &argv);
+  if(rhs._hasResource)
+    {
+      chainLeaderComm = rhs.chainLeaderComm.Dup();	
+      chainComm = rhs.chainComm.Dup();
+      runComm = rhs.runComm.Dup();
+      for(auto &elem : rhs.commToChains)
+	{
+	  commToChains.insert(std::make_pair(
+					     std::get<0>(elem), 
+					     std::get<1>(elem).Dup()
+					     ));
+	}
+    }
 #endif
 }
 
 
+ParallelSetup::ParallelSetup(ParallelSetup &&rhs)
+{
+  swap(*this, rhs);   
+}
+
+ParallelSetup& ParallelSetup::operator=(ParallelSetup rhs)
+{
+  swap(*this, rhs); 
+  return *this; 
+}
+
+
+void swap(ParallelSetup &lhs, ParallelSetup &rhs)
+{
+  using std::swap; 
+  swap(lhs.runsParallel, rhs.runsParallel); 
+  swap(lhs.chainsParallel, rhs.chainsParallel); 
+  swap(lhs.globalRank, rhs.globalRank); 
+  swap(lhs.globalSize, rhs.globalSize); 
+  swap(lhs._hasResource, rhs._hasResource); 
+#if HAVE_PLL == 0
+  swap(lhs.chainLeaderComm, rhs.chainLeaderComm); 
+  swap(lhs.chainComm, rhs.chainComm); 
+  swap(lhs.runComm, rhs.runComm); 
+  swap(lhs.commToChains, rhs.commToChains); 
+#endif
+}
+
+
+void ParallelSetup::freeResource()
+{
+#if HAVE_PLL == 0
+  chainLeaderComm.Free();
+  chainComm.Free();
+  runComm.Free();
+  for(auto &elem : commToChains)
+    std::get<1>(elem).Free();
+#endif
+}
+
+ParallelSetup::~ParallelSetup()
+{
+#if HAVE_PLL == 0
+  if(_hasResource)
+    freeResource();
+#endif
+  _hasResource = false; 
+}
+
+
+void ParallelSetup::initialize(int argc, char **argv)
+{
+#if HAVE_PLL == 0 
+  MPI_Init(&argc, &argv);
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+}
 
 
 void ParallelSetup::printLoadBalance(const TreeAln& traln ) const 
@@ -58,10 +137,14 @@ void ParallelSetup::printLoadBalance(const TreeAln& traln ) const
 // TODO asserts with generations 
 
 
-void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, CommFlag commFlags) const
-{  
-  std::stringstream ss; 
+void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs, CommFlag commFlags) const
+{ 
+#if HAVE_PLL == 0
+  auto&& ss =  std::stringstream{} ;
+#endif
+
 #if 0   
+  
   ss << "Communicating " ; 
   if(commFlags & CommFlag::Swap)
     ss << " SWAP, " ; 
@@ -76,7 +159,7 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
   ss.str(""); 
 #endif
 
-  std::vector<char> serialized; 
+  auto serialized = std::vector<char>{}; 
 
 #if HAVE_PLL == 0  
   // serializing all chains that are assigned to me  
@@ -103,7 +186,7 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
   assert(not isFirst); 
 
   int lengthOfSwap = 0;   
-  if(commFlags & CommFlag::Swap)
+  if( ( commFlags & CommFlag::Swap ) != CommFlag::NOTHING )
     {
       isFirst = true; 
       for(auto &run : runs)
@@ -130,12 +213,12 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
   assert(0); 
 #endif
 
-  std::string allMyChains (serialized.begin(), serialized.end());   
+  auto allMyChains = std::string (serialized.begin(), serialized.end());   
   assert(allMyChains.size( )== serialized.size()); 
   nat lengthPerProcess = allMyChains.size(); 
 
   nat totalLength = chainLeaderComm.Get_size() * lengthPerProcess; 
-  std::vector<char> allChainsSerialized;
+  auto allChainsSerialized = std::vector<char>{};
   allChainsSerialized.resize(totalLength); 
 
   // communicate 
@@ -163,7 +246,7 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
 		}
 	    }
 	  
-	  if(commFlags & CommFlag::Swap)
+	  if( ( commFlags & CommFlag::Swap ) != CommFlag::NOTHING )
 	    {
 #ifdef UNSURE
 	      // this is not perfect: we only get the global acc/rej
@@ -179,7 +262,7 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
 		      ss.str() = std::string(streamIter, streamIter + lengthOfSwap); 
 		      streamIter += lengthOfSwap; 
 
-		       auto sw = SwapMatrix(run.getChains().size()); 
+		      auto sw = SwapMatrix(run.getChains().size()); 
 		      sw.deserialize(ss); 
 		      // randCtr_t v = {0,0} ; 		      
 		      // Randomness rand(v);  
@@ -196,18 +279,26 @@ void ParallelSetup::synchronizeChainsAtMaster( vector<CoupledChains>& runs, Comm
 	    }
 	}
     }
+#else 
+  
+  // just for comparability to examl 
+  for(auto &run : runs)
+    {
+      for(auto &chain : run.getChains())
+	{
+	  // auto &&ss = std::stringstream{};
+	  auto str =  chain.serializeConditionally(commFlags );
+	  chain.deserializeConditionally(str,  commFlags);
+	}
+    }
 #endif  
-
-  // std::cout << << "made it!!"
-  // ss.str("") ;
-  // ss << "made it" << std::endl; 
-  // blockingPrint(chainLeaderComm, ss.str()); 
 }
+
+
 
 void ParallelSetup::finalize()
 {
 #if HAVE_PLL == 0
-  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
 #endif
 }
@@ -217,8 +308,8 @@ void ParallelSetup::finalize()
 void ParallelSetup::genericExit(int code)
 {
 #if HAVE_PLL == 0
-  // MPI_(MPI_COMM_WORLD, code); 
-  MPI_Finalize(); 
+  // MPI_Finalize(); 
+  MPI_Abort(MPI_COMM_WORLD, -1);
   exit(code); 
 #else 
   exit(code);   
@@ -406,5 +497,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   ss.str(""); 
   ss << *this << std::endl; 
   blockingPrint(MPI::COMM_WORLD,  ss.str() ); 
+
+  _hasResource = true; 
 }
 #endif

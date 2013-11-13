@@ -111,7 +111,7 @@ static void verifyProbability(double value, bool lowerIncluded, bool upperInclud
   auto lowOkay = 0 < value || ( lowerIncluded &&  0 ==  value) ; 
   auto upperOkay = value < 1. || (upperIncluded && value == 1); 
 
-  char lowBracket = lowerIncluded ? '[': ')'; 
+  char lowBracket = lowerIncluded ? '[': '('; 
   char upperBracket = upperIncluded ? ']' : ')' ; 
 
   if( not ( lowOkay && upperOkay ) )
@@ -137,7 +137,7 @@ static void verifyGreaterZero(int value, std::string name )
 void BlockRunParameters::verify() const 
 {
   verifyGreaterZero(diagFreq, "diagFreq"); 
-
+  
   verifyProbability(asdsfIgnoreFreq, true, true , "asdsfIgnoreFreq" ); 
   verifyProbability(asdsfConvergence, false, false, "asdsfConvergence"); 
   verifyProbability(burninProportion, false, false, "burninProportion"); 
@@ -151,4 +151,10 @@ void BlockRunParameters::verify() const
   verifyGreaterZero(printFreq, "printFreq"); 
   verifyGreaterZero(swapInterval, "swapInterval"); 
   verifyGreaterZero(tuneFreq, "tuneFreq");  
+
+  if( diagFreq <= nat(samplingFreq)  ) 
+    {
+      std::cerr << "diagFreq < samplingFreq. Please choose the sampling frequency smaller than the diagnosis frequency.  " << std::endl; 
+      exit(-1);
+    }
 }

@@ -79,9 +79,7 @@ void ProposalSet::deserialize( std::istream &in )
   for(auto &p : proposals)
     {
       nat num = cRead<int>(in); 
-      
-      tout << "deserializing proposal "  << p->getId( )<< " and saw  "<< num << std::endl; 
-      
+
       assert(p->getId() == num);       
       p->deserialize(in); 
     }

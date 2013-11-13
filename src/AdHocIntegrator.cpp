@@ -4,22 +4,21 @@
 #include "eval/FullCachePolicy.hpp"
 
 
-AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
+AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
-  // auto eval = std::unique_ptr<LikelihoodEvaluator>( new RestoringLnlEvaluator(*tralnPtr)); 
-  auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(*tralnPtr, true, true));
-  auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get() );
+  auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(traln, true, true));
+  auto eval = LikelihoodEvaluator(traln, plcy.get() );
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
 #endif
   
   // s.t. we do not have to care about the branch length linking problem 
-  assert(tralnPtr->getNumberOfPartitions() == 1 ); 
+  assert(traln.getNumberOfPartitions() == 1 ); 
 
   std::vector<std::unique_ptr<AbstractParameter> > params; 
   params.emplace_back(std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0, {0}))); 
-  for(nat i = 0; i < tralnPtr->getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     params[0]->addPartition(i);
 
   double lambda = 10;
@@ -32,15 +31,17 @@ AdHocIntegrator::AdHocIntegrator(std::shared_ptr<TreeAln>  tralnPtr, std::shared
 
   std::vector<ProposalSet> pSets; 
 
-  integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval), false ));
-  integrationChain->getEvaluator().imprint(*tralnPtr);
+  integrationChain = std::unique_ptr<Chain>( new Chain(seed, traln, proposals, pSets, std::move(eval), false ));
+  integrationChain->getEvaluator().imprint(traln);
 }
 
 
 void AdHocIntegrator::copyTree(const TreeAln &traln)
 {
-  TreeAln &myTree = integrationChain->getTraln();
-  myTree.copyModel(traln);
+  auto &myTree = integrationChain->getTralnHandle();
+
+  myTree = traln; 
+  
   auto& eval = integrationChain->getEvaluator();
   eval.evaluate(myTree, traln.getAnyBranch(), true );
 }
@@ -50,7 +51,7 @@ void AdHocIntegrator::prepareForBranch( const BranchPlain &branch,  const TreeAl
 {
   copyTree(otherTree); 
 
-  auto &traln = integrationChain->getTraln();
+  auto &traln = integrationChain->getTralnHandle();
 
   auto ps = integrationChain->getProposalView(); 
   auto paramView = ps[0]->getBranchLengthsParameterView();
@@ -77,7 +78,7 @@ std::vector<AbstractParameter*> AdHocIntegrator::getBlParamView() const
 std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const TreeAln &otherTree)
 {
   auto result =  std::vector<double>{}; 
-  auto& traln = integrationChain->getTraln(); 
+  auto& traln = integrationChain->getTralnHandle(); 
 
   // tout << "integrating " << branch << std::endl; 
 
@@ -113,7 +114,7 @@ std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const
  */ 
 double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std::string runid, double lambda, nat nrSteps)
 {
-  auto &traln = integrationChain->getTraln(); 
+  auto &traln = integrationChain->getTralnHandle(); 
 
   auto paramView = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
   auto tmpBranch = branch; 
@@ -201,14 +202,17 @@ void AdHocIntegrator::createLnlCurve(BranchPlain branch, std::string runid, Tree
 
 double AdHocIntegrator::getParsimonyLength(TreeAln &traln, const BranchPlain &b )
 {
-  ParsimonyEvaluator pEval; 
-  std::vector<nat> partitionParsimony; 
-  std::vector<nat> branchLength; 
-  pEval.evaluate(traln, b.findNodePtr(traln), true, partitionParsimony, branchLength );
+  auto pEval =  ParsimonyEvaluator{}; 
+  auto branchLength = std::vector<nat>{} ; 
+  // auto state2pars = 
+  pEval.evaluate(traln, b.findNodePtr(traln), true, true  );
 
   assert(traln.getNumberOfPartitions() == 1 ); 
   auto& partition =  traln.getPartition(0);
   auto length = partition.upper - partition.lower; 
+  
+  // TODO this is incorrect!
+  assert(0); 
 
   double result =  double(branchLength[0])  / double(length); 
   return result; 

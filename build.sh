@@ -8,21 +8,24 @@ fi
 
 numCores=$(grep "cpu cores" /proc/cpuinfo  | head -n 1 | cut -f 2 -d ':')
 
-rm -f build/* 
 cd build
-rm -rf obj-mpi/* obj-seq/* 
-cd obj-seq
-
-../../configure
-make -j $numCores 
-
-mv yggdrasil  postProcParam asdsf credibleSet extractBips consense  parser  .. 
 
 if [ $# -gt 1 ]; then
-    cd ../../
-    make distclean
-    cd build/obj-mpi  
+    rm -rf obj-mpi/*
+    cd obj-mpi  
+
     ../../configure  --enable-mpi $* 
     make -j $numCores
+
     mv exabayes ..    
+
+else 
+    rm -rf obj-seq/*
+    cd obj-seq
+
+    ../../configure
+    make -j $numCores 
+
+    mv yggdrasil  postProcParam asdsf credibleSet extractBips consense  parser  .. 
+
 fi

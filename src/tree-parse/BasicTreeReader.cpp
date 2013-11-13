@@ -2,6 +2,7 @@
 #include "Branch.hpp"
 #include "tree-parse/LabelPolicy.hpp"
 
+#include <tuple>
 #include <cassert>
 
 

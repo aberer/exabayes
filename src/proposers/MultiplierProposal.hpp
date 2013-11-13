@@ -13,11 +13,7 @@ public:
   
   MultiplierProposal(const MultiplierProposal& rhs): AbstractProposer(rhs) {}
 
-  virtual ~MultiplierProposal() {}
-
   virtual AbstractProposer* clone() const  {return new MultiplierProposal(*this);  }
-
-
   virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
 }; 
 

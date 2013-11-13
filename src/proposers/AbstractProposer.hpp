@@ -15,8 +15,6 @@
 class AbstractProposer
 {
 public:   
-  virtual ~AbstractProposer(){}
-
   virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings) = 0; 
 
   bool isTune() const {return tune; } 

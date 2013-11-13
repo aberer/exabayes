@@ -28,7 +28,9 @@
 #include "axml.h"
 #include "Serializable.hpp"
 
-#include "TreeAln.hpp"
+// #include "TreeAln.hpp"
+
+class TreeAln; 
 #include "FlagType.hpp" 
 
 class AbstractParameter; 
@@ -125,6 +127,7 @@ public:
      @brief gets the distance to another branch
    */ 
   nat getDistance(const Branch &bOther, const TreeAln &traln) const ; 
+  nat getDistanceHelper(const Branch &bOther, const TreeAln &traln, nat distSoFar ) const ; 
   /** 
       @brief gets the taxon ids on one side of a branch (which equals one partition of a bipartition)
    */ 
@@ -140,23 +143,18 @@ public:
 
   Branch<double> toOneLength(const AbstractParameter* param) const; 
 
-  //   friends 
   friend std::ostream& operator<< (std::ostream &out, const Branch<TYPE>& rhs)
   {
     out << "(" << rhs.getPrimNode() << "," << rhs.getSecNode() << ")"; 
     rhs.lengthToString(out); 
     return out; 
-  } 
-
-  bool isAdjacent(const BranchPlain &rhs) const ;  
-
-  
-  // TODO replace this with the string variant 
-  // void print(std::ostream &out) const { std::stingstream ss ; ss  << "("<< thisNode << "," << thatNode << ")" ; } 
+  }
+ 
+  bool isAdjacent(const Branch<void> &rhs) const ;  
 
 private: 			// METHODS 
   std::unordered_set<nat> getBipartitionHelper(const TreeAln &traln  ) const ; 
-  nat getDistanceHelper(const Branch &bOther, const TreeAln &traln, nat distSoFar ) const ; 
+
 
 private: 			// ATTRIBUTES 
   nat thisNode; 
@@ -167,9 +165,6 @@ private: 			// ATTRIBUTES
 #include "LengthPart.hpp"
 
 
-// template<typename ATYPE> std::ostream& operator<<(std::ostream &out, const Branch<ATYPE>& br); 
-
-
 typedef Branch<void> BranchPlain; 
 typedef Branch<double> BranchLength; 
 typedef Branch<std::vector<double>> BranchLengths; 
@@ -177,18 +172,15 @@ typedef Branch<std::vector<double>> BranchLengths;
 
 namespace std 
 {
-  template<> 
-  struct hash<Branch<void>>
+  template<> struct hash<Branch<void>>
   {
     size_t operator()(const Branch<void> & x) const
     {
-      return std::hash<size_t>()(x.getSecNode()) 
-	^ std::hash<size_t>()(x.getPrimNode()); 
+      return std::hash<size_t>()(x.getSecNode()) ^ std::hash<size_t>()(x.getPrimNode()); 
     }
   };
 
-  template<>
-  struct hash<Branch<double>>
+  template<> struct hash<Branch<double>>
   {
     size_t operator()(const Branch<double> & x) const
     {
@@ -196,8 +188,7 @@ namespace std
     }
   }; 
 
-  template<>
-  struct hash<Branch<std::vector<double>>>
+  template<> struct hash<Branch<std::vector<double>>>
   {
     size_t operator()(const Branch<std::vector<double>> & x) const
     {
@@ -205,8 +196,7 @@ namespace std
     }
   }; 
 
-  template<>
-  struct equal_to<Branch<void>>
+  template<> struct equal_to<Branch<void>>
   {
     bool operator()(const Branch<void> &a, const Branch<void> &b)  const
     {
@@ -233,6 +223,8 @@ namespace std
   }; 
 }
 
-#include "BranchImpl.hpp"
+std::ostream& operator<< (std::ostream &out, const Branch<void>& rhs); 
+std::ostream& operator<< (std::ostream &out, const Branch<double>& rhs); 
+std::ostream& operator<< (std::ostream &out, const Branch<std::vector<double>>& rhs); 
 
 #endif

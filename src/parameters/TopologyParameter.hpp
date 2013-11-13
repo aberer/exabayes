@@ -9,7 +9,7 @@ class TopologyParameter : public AbstractParameter
 {
 public: 
   TopologyParameter(nat id, nat idOfMyKind, std::vector<nat> partitions )
-    : AbstractParameter(Category::TOPOLOGY, id, idOfMyKind, partitions)
+    : AbstractParameter(Category::TOPOLOGY, id, idOfMyKind, partitions, 1)
   {
     _printToParamFile = false; 
   }

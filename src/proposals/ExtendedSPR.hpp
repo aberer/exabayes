@@ -12,7 +12,7 @@ class ExtendedSPR : public AbstractProposal
 {
 public: 
   ExtendedSPR(  double stopProb, double multiplier); 
-  virtual ~ExtendedSPR(){}
+  // virtual ~ExtendedSPR(){}
 
   virtual BranchPlain determinePrimeBranch( const TreeAln &traln, Randomness &rand) const ; 
 

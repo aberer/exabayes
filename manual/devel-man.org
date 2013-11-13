@@ -148,7 +148,7 @@ class Object
   int _j; 
 }; 
 #+END_SRC
-** always return return values
+** always return tuple return values
 if your function has a true output parameter, then return it (as a tuple) and catch it with a std::tie when calling the function
 #+BEGIN_SRC c++
 auto function()
@@ -170,6 +170,9 @@ int main(int argc, char **argv)
 }
 #+END_SRC
 Still, input-output parameters should not be returned.   
+*** Don't use std::pair. 
+    Having tuples and pairs only makes things more complicated, when a
+    tuple is a super-set of a pair.
 ** don't use "using namespace std;"
 ** objects 
 1. construct your objects as light-weight as possible (w.r.t. member variables and functions)

@@ -728,7 +728,6 @@ void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal)
     i,
     model;
 
- 
   /* set the first entry of the traversal descriptor to contain the indices
      of nodes p and q */
 

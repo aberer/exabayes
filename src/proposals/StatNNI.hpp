@@ -21,7 +21,6 @@ class StatNNI : public AbstractProposal
 {
 public: 
   StatNNI( double multiplier);
-  virtual ~StatNNI(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
   virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
@@ -44,7 +43,6 @@ private: 			// METHODS
 
 private:			// ATTRIBUTES
   double multiplier; 
-  // Path path; 
   SprMove move; 
   bool branchesSaved; 
   std::vector<BranchLengths> savedBls;

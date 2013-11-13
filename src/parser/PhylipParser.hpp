@@ -34,11 +34,6 @@ private: 			// METHODS
   void myWrite(std::ostream& out, T* ptr, nat length)
   {
     out.write((char*) ptr, sizeof(T) * length) ; 
-    
-    // std::cout << "WROTE " ; 
-    // for(nat i = 0; i < length; ++i)
-    //   std::cout << ptr[i] << " ";  
-    // std::cout << std::endl; 
   }
 
   void getyspace();

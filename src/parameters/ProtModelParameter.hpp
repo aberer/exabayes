@@ -8,7 +8,7 @@ class ProtModelParameter : public AbstractParameter
 {
 public: 
   ProtModelParameter(nat id, nat idOfMyKind, std::vector<nat> partitions)
-    : AbstractParameter(Category::AA_MODEL, id, idOfMyKind, partitions)
+    : AbstractParameter(Category::AA_MODEL, id, idOfMyKind, partitions,1)
   {
   }
   

@@ -232,3 +232,24 @@ void BlockPrior::Read(NxsToken &token)
 	}
     }  
 } 
+
+
+void BlockPrior::verify() const
+{
+  // TODO actually it seems the things below are not really necessary... 
+  auto range =  _parsedPriors.equal_range(Category::BRANCH_LENGTHS); 
+  for(auto iter = std::get<0>(range) ; iter != std::get<1>(range) ; ++iter )
+    {
+      auto &elem = std::get<1>(*iter); 
+      auto &setOfParts = std::get<0>(elem); 
+      auto priorPtr = std::get<1>(elem).get(); 
+      if( setOfParts.size() > 0 && dynamic_cast<FixedPrior*>(priorPtr)  != nullptr) 
+	  {
+	    tout << "You attempted to set a fixed branch lengths prior to one or more\n"
+		 << "partitions (but not all of them). Currently, this option is not\n"
+		 << "supported. If you urgently need this feature, please contact us." << std::endl; 
+	    ParallelSetup::genericExit(-1);
+	  }
+    }
+} 
+

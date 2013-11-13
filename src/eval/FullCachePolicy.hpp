@@ -9,6 +9,7 @@ class FullCachePolicy : public ArrayPolicy
 {
 public: 
   FullCachePolicy(const TreeAln& traln, bool cacheTipTip, bool cacheTipInner  ); 
+  virtual ~FullCachePolicy(){}
 
   virtual void imprintPolicy(const TreeAln &traln, ArrayOrientation &arrayOrient) ; 
   virtual void freeMemory() ;  

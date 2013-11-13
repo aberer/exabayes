@@ -9,7 +9,7 @@ class RevMatParameter : public AbstractParameter
 {
 public: 
   RevMatParameter(nat id, nat idOfMyKind, std::vector<nat> partitions ) 
-    : AbstractParameter(Category::SUBSTITUTION_RATES, id, idOfMyKind, partitions )
+    : AbstractParameter(Category::SUBSTITUTION_RATES, id, idOfMyKind, partitions, 1  )
   {
   }
 

@@ -11,15 +11,13 @@ TreeResource::TreeResource(const TreeAln * tralnPtr)
 
 std::vector<std::string> TreeResource::getTaxonNames(nat numTax) 
 {
-  return _tralnPtr->getTaxa();
+  auto taxa = _tralnPtr->getTaxa() ; 
+  return taxa;
 }
 
  
 void TreeResource::fillAliasWgt(int *pos, nat length) 
 {
-  
-  // auto &tr = _tralnPtr->getTrHandle();
-  // memcpy(pos, tr.aliaswgt, length * sizeof(int)); 
 }
 
    
@@ -61,13 +59,21 @@ void TreeResource::fillAlnPart(unsigned char* ptr, nat length, nat &ctr)
 }
 
  
-void TreeResource::fillParsVect(parsimonyNumber*& ptr, size_t &len, nat mult, nat model)
+std::tuple<parsimonyNumber*, nat> TreeResource::fillParsVect(nat numNodes, nat states, nat model) 
 {
+  nat len = 0; 
+  parsimonyNumber* ptr; 
+
   auto& partition  = _tralnPtr->getPartition(model);
+  nat theseStates = partition.states; 
+  assert(theseStates == states); 
   len = partition.parsimonyLength; 
-  nat numBytes = mult * len; 
+  nat numBytes = numNodes * len * states; 
+  // tout << "model=" << model << "\tcopying " << numBytes << std::endl; 
   ptr = (parsimonyNumber*)exa_malloc_aligned( numBytes * sizeof(parsimonyNumber));
   memcpy(ptr, partition.parsVect,numBytes * sizeof(parsimonyNumber));
+
+  return std::make_tuple(ptr, len) ; 
 }
 
 

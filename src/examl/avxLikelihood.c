@@ -21,6 +21,11 @@
 
 extern const unsigned int mask32[32];
 
+boolean isGap(unsigned int *x, int pos); 
+boolean noGap(unsigned int *x, int pos); 
+
+extern const unsigned int mask32[32];
+
 const union __attribute__ ((aligned (BYTE_ALIGNMENT)))
 {
   uint64_t i[4];

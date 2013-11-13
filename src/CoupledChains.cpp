@@ -64,8 +64,8 @@ CoupledChains& CoupledChains::operator=(CoupledChains rhs)
 void CoupledChains::initializeOutputFiles(bool isDryRun)  
 {  
   // TODO sampling file for every chain possibly 
-  auto &traln = chains[0].getTraln(); 
-  auto &params = chains[0].extractParameters();
+  auto &traln = chains[0].getTralnHandle(); 
+  auto params = chains[0].extractParameters();
 
   auto tag =  rand.getKey();
 
@@ -177,7 +177,7 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
   for(nat i = 0; i < chains.size(); ++i)
     {
       if(pl.isMyChain(runid, i))
-	chains[i].resume(true,true);
+	chains[i].resume();
     }
 
   // additional sampling, if we are in the very first generation 

@@ -109,7 +109,7 @@ void ParameterProposal::resetState(TreeAln &traln)
 		{
 		  auto content = prior->getInitialValue(); 
 		  b.setConvertedInternalLength(traln,param, content.values[0]); 
-		  tout << "resetting to " << b << "\t"  << b.getInterpretedLength(traln,param); 
+		  // tout << "resetting to " << b << "\t"  << b.getInterpretedLength(traln,param); 
 		  if(not BoundsChecker::checkBranch(b))
 		    BoundsChecker::correctBranch(b); 
 		  traln.setBranch(b,param); 

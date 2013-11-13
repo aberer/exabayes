@@ -11,6 +11,7 @@
 #include "Density.hpp"
 
 #include "Randomness.hpp"
+#include "TreeAln.hpp"
 
 #include "parameters/ParameterContent.hpp"
 

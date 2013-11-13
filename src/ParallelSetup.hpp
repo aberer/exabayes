@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include "config.h"
 #include "config/CommandLine.hpp"
+#include "FlagType.hpp" 
 
 class SampleMaster;
 class CoupledChains; 
@@ -30,6 +31,7 @@ extern int processes; 		// examl comm size
  */ 
 enum class CommFlag : int
 {
+  NOTHING = 0, 
   PrintStat    =  1 , 		// stats for printing  
     Proposals  =  2 , 		// all proposal data  
     Tree       =  4 ,		// the tree state 
@@ -37,27 +39,25 @@ enum class CommFlag : int
 }; 
 
 
-inline CommFlag operator|(CommFlag a, CommFlag b)
-{
-  return static_cast<CommFlag>(static_cast<int>(a) | static_cast<int>(b)); 
-}
-
-
-inline bool operator&(CommFlag a, CommFlag b)
-{
-  return (static_cast<int>(a) & static_cast<int>(b)) != 0 ; 
-}
 
 
 class ParallelSetup
 {
 public: 
   ParallelSetup(int argc, char **argv);
+  ParallelSetup(ParallelSetup &&rhs); 
+  ParallelSetup(const ParallelSetup& rhs) ; 
+  ParallelSetup& operator=( ParallelSetup rhs) ; 
+  friend void swap(ParallelSetup &lhs, ParallelSetup &rhs); 
+  ~ParallelSetup();
 
+
+  static void initialize(int argc, char **argv); 
+  
   /** 
       @brief finalize the parallel environment 
    */ 
-  void finalize(); 
+  static void finalize(); 
   /** 
       @brief gets the number of procesess working on this chain batch 
    */   
@@ -153,6 +153,8 @@ public:
   static void genericExit(int code); 
   friend std::ostream& operator<<(std::ostream& out, const ParallelSetup &pl);
 
+  void freeResource(); 
+
 private:   
   nat runsParallel;
   nat chainsParallel; 
@@ -165,6 +167,8 @@ private:
   MPI::Intracomm runComm; 
   std::unordered_map<int,MPI::Intercomm> commToChains;   
 #endif
+
+  bool _hasResource; 
 }; 
 
 

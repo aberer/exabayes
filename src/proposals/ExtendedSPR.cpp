@@ -138,10 +138,10 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 #ifdef MOVE_INFO
   double topoLnl = 0; 
   double oldLnl = traln.getTr()->likelihood; 
-#endif
   double branchLnl = 0; 
-
   double impact = 0; 
+#endif
+
   if(multiplyBranchesUsingPosterior)
     {
       auto result = move.moveBranchProposal(traln, blParams, eval, rand, outer, 0.05, sequential);
@@ -159,7 +159,9 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
       // save and apply the branches 
       branchesSaved = true; 
       savedBls.clear(); 
+#ifdef MOVE_INFO
       impact = std::get<2>(result);
+#endif
       for(auto elem : std::get<0>(result))
 	{
 	  auto curBranch = traln.getBranch(elem.toPlain(), blParams); 
@@ -186,13 +188,15 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 	  // set the branch
 	  traln.setBranch(elem, blParams);
 	}
-      
+     
+#ifdef MOVE_INFO 
       // BEGIN
       for(auto n : move.getDirtyNodes(traln, outer))
 	eval.markDirty(traln, n);
       eval.evaluate(traln,move.getEvalBranch(traln), false); 
       branchLnl = traln.getTrHandle().likelihood; 
       // END
+#endif
     }
   else 
     {

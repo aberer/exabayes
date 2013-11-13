@@ -2,12 +2,13 @@
 #include "Category.hpp"
 
 
-AbstractParameter::AbstractParameter(Category cat, nat id, nat _idOfMyKind, std::vector<nat> partitions)
+AbstractParameter::AbstractParameter(Category cat, nat id, nat _idOfMyKind, std::vector<nat> partitions, nat paramPrio)
   : _id(id)
   , _idOfMyKind(_idOfMyKind)
   , _cat(cat) 
   , _printToParamFile(true)
   , _partitions(partitions)
+  , _paramPriority(paramPrio)
 {
   assert(_partitions.size() > 0); 
 }
@@ -18,6 +19,7 @@ AbstractParameter::AbstractParameter(const AbstractParameter& rhs)
   , _cat(rhs._cat)
   , _printToParamFile(rhs._printToParamFile)
   , _partitions(rhs._partitions)
+  , _paramPriority(rhs._paramPriority)
 {
   if(rhs._prior.get() != nullptr)
     _prior = std::unique_ptr<AbstractPrior>(rhs._prior->clone()); 

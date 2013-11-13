@@ -10,10 +10,12 @@ void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
   traln.unlinkTree();
   traln.getTrHandle().randomNumberSeed = r; 
 
+  // tout << "parsimony number seed is "<< r << std::endl; 
+  
 #if HAVE_PLL != 0
-  makeParsimonyTreeFast(&(traln.getTrHandle()), &(traln.getPartitionsHandle()));
+  makeParsimonyTreeFast(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), r);
 #else 
-  makeParsimonyTreeFast(&(traln.getTrHandle())); 
+  makeParsimonyTreeFast(&(traln.getTrHandle()), r); 
 #endif
 }
 

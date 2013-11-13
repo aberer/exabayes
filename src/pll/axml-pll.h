@@ -1405,8 +1405,8 @@ extern int checker ( tree *tr, nodeptr p );
 extern boolean tipHomogeneityChecker ( tree *tr, nodeptr p, int grouping );
 extern void makeRandomTree ( tree *tr);
 extern void nodeRectifier ( tree *tr );
-extern void makeParsimonyTreeFast(tree *tr, partitionList *pr);
-extern void allocateParsimonyDataStructures(tree *tr, partitionList *pr);
+  extern void makeParsimonyTreeFast(tree *tr, partitionList *pr, unsigned int);
+  extern void allocateParsimonyDataStructures(tree *tr, partitionList *pr);
 extern void freeParsimonyDataStructures(tree *tr, partitionList *pr);
 extern void parsimonySPR(nodeptr p, partitionList *pr, tree *tr);
 

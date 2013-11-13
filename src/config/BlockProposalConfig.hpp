@@ -25,6 +25,7 @@ public:
   double getParsimonyWarp() const {return parsimonyWarp; }
   int getGuidedRadius() const {return guidedRadius; }  
   void verify(); 
+  int getParsSPRRadius() const { return parsSPRRadius; }
 
 private: 
   std::unordered_map<ProposalType, double, ProposalTypeHash> userValue; 
@@ -33,6 +34,7 @@ private:
   double esprStopProp; 
   double parsimonyWarp;   
   int guidedRadius; 
+  int parsSPRRadius; 
 }; 
 
 

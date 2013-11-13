@@ -12,6 +12,8 @@ class TreeAln;
 class ArrayPolicy
 {
 public: 
+  virtual ~ArrayPolicy(){}
+
   virtual void imprintPolicy(const TreeAln &traln, ArrayOrientation &arrayOrient)  = 0; 
 
   void imprint(const TreeAln &traln, ArrayOrientation &arrayOrient) 

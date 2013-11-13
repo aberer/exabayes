@@ -1,7 +1,7 @@
-/** 
-    @brief mostly wraps the legacy tr and partition list     
-*/
+/**
+   @brief represents a tree and the associated alignment 
 
+ */
 
 #ifndef _TREEALN_H
 #define _TREEALN_H
@@ -15,7 +15,7 @@
 #include "GlobalVariables.hpp"
 
 #include "ProtModel.hpp"
-#include "BranchFwd.hpp"
+#include "Branch.hpp"
 #include "FlagType.hpp"
 #include "RunModes.hpp"
 
@@ -43,19 +43,11 @@ public:
    /////////////////
   explicit TreeAln(nat numTax);
   TreeAln(const TreeAln& rhs);
-  friend void swap(TreeAln &lhs, TreeAln& rhs); 
-  friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
+  TreeAln(TreeAln &&rhs); 
   ~TreeAln();
-  /** 
-      @brief copies the entire model from the rhs.
-      Mostly for debugging purposes. 
-   */ 
-  void copyModel(const TreeAln& rhs)  ; 
-  /**
-     @brief copies the entire state from the rhs to this tree/alignment.
-     Important: likelihood arrays are not concerned
-  */ 
   TreeAln& operator=(TreeAln rhs);
+
+  friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
 
   /////////////////////////////////////
   //           OBSERVERS             //
@@ -64,9 +56,6 @@ public:
      @brief get the raxml representation of the partition  
    */ 
   pInfo& getPartition(nat model) const;
-  
-  // TODO 
-  // const pInfo& getPartition(nat model) const ;
   /** 
       @brief get the internal raxml tree representation 
    */ 
@@ -165,7 +154,6 @@ public:
   // MODIFIERS //
   ///////////////
 #if HAVE_PLL != 0 
-  // void setPartitionList(partitionList *pl) { partitions = *pl; }
   partitionList& getPartitionsHandle()  { return _partitions; }   
 #endif  
   BranchPlain getAnyBranch() const ;//  {return BranchPlain(tr.nodep[1]->number, tr.nodep[1]->back->number); } 
@@ -204,16 +192,11 @@ public:
       @brief gets the maximum length of paths below this branch 
    */ 
   nat getDepth(const BranchPlain  &b) const ; 
+  void setHasAlignment(){_hasAlignment = true;  }
   /** 
       @brief gets the longest path 
    */ 
   std::vector<nat> getLongestPathBelowBranch(const BranchPlain &b) const ; 
-  /** 
-      @brief initializes the tree from a binary file.  It guarantees
-      that the tree is in a usable state afterwards (and thus, this
-      method may me rather expensive)
-  */ 
-  // void initializeFromByteFile(std::string byteFileName, RunModes mode); 
 
   /**
      @brief gets a node with given id that is not connected to the tree right now 
@@ -235,16 +218,8 @@ public:
   std::vector<double> getPartitionLnls() const; 
   void setPartitionLnls(const std::vector<double> partitionLnls) ; 
   void setExecModel(const std::vector<bool>  &modelInfo); 
-  /** 
-      @brief gets a list of of sequence names  
-   */ 
-  // std::vector<std::string> getNameMap() const; 
-
-  static const double initBL;  	// init values 
 
   nat getNumberOfAssignedSites(nat model) const ; 
-
-  // bool revMatIsImmutable(nat model) const; 
 
   RunModes getMode() const { return _mode; }
 
@@ -255,10 +230,16 @@ public:
 
   void setProteinModel(int part, ProtModel model) ; 
   ProtModel getProteinModel(int part) const; 
+  void setHasTopology( ) { _hasTopology = true; }
 
   void setBranchUnchecked(const BranchLength &bl); 
-  
   void setMode(RunModes modeI){_mode = modeI; }
+
+  void copyTopologyAndBl(const TreeAln &rhs); 
+  void copyAlnModel(const TreeAln& rhs); 
+
+  
+  friend void swap(TreeAln& lhs, TreeAln& rhs ); 
 
 private: // METHODS  
   void initRevMat(nat model); 	// these functions are not needed any more: directly use the respective setter function     
@@ -272,7 +253,9 @@ private: 			// ATTRIBUTES
   tree _tr;		// TODO replace with an object for cleanup   
   RunModes _mode; 
   std::vector<std::string> _taxa; 
-
+  bool _hasLnlArrays; 
+  bool _hasAlignment; 
+  bool _hasTopology; 
 };  
 
 

@@ -58,9 +58,8 @@ int Randomness::drawIntegerOpen(int upperBound)
 
 nat Randomness::operator()() 
 {
-  randCtr_t r = exa_rand(key,ctr); 
-  ++ctr.v[0];
-  return r.v[0];  
+  auto seed = generateSeed(); 
+  return seed.v[0]; 
 }
 
 

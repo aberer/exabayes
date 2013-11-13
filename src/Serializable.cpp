@@ -41,8 +41,11 @@ std::string Serializable::readString(std::istream &in )
       
       result.resize(length) ;
       char *aString  = new char[length]; 
+      // auto aString = std::vector<char> (length, '\0');
       in.read(aString, length * sizeof(char));       
-      result = aString; 
+      result = std::string(aString); 
+      delete [] aString; 
+      // result = std::string(aString.begin(), aString.end());
     }
   else 
     {      

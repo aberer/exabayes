@@ -1,6 +1,7 @@
 #ifndef FREQ_PARAMETER
 #define FREQ_PARAMETER
 
+#include "TreeAln.hpp"
 #include "AbstractParameter.hpp"
 #include "Category.hpp"
   
@@ -8,7 +9,7 @@ class FrequencyParameter : public AbstractParameter
 {
 public: 
   FrequencyParameter(nat id, nat idOfMyKind, std::vector<nat> partitions )
-    : AbstractParameter(Category::FREQUENCIES, id , idOfMyKind, partitions)
+    : AbstractParameter(Category::FREQUENCIES, id , idOfMyKind, partitions, 1 )
   { 
   }
 

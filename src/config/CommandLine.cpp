@@ -113,12 +113,12 @@ void CommandLine::parse(int argc, char *argv[])
 	    {
 	    case 'c': 		// config file 	  
 	      {
-		configFileName = std::string(strdup(optarg)); 
+		configFileName = std::string(optarg); 
 		assertFileExists(configFileName);
 	      }
 	      break; 
 	    case 'f': 		// aln file 
-	      alnFileName = std::string(strdup(optarg)); 
+	      alnFileName = std::string(optarg); 
 	      assertFileExists(alnFileName); 
 	      break; 
 	    case 'v':  		// version 
@@ -135,22 +135,22 @@ void CommandLine::parse(int argc, char *argv[])
 	      runid = std::string(optarg); 	  
 	      break; 
 	    case 't': 		// trees -- have that in the config file? 
-	      treeFile = std::string(strdup(optarg)); 
+	      treeFile = std::string(optarg); 
 	      break; 
 	    case 'w':		// working dir  
-	      workDir = std::string(strdup(optarg)); 
+	      workDir = std::string(optarg); 
 	      break; 
 	    case 's': 		// seed 
 	      seed.v[0] = std::stoi(optarg);
 	      break; 
 	    case 'r': 
-	      checkpointId = std::string{strdup(optarg)};   
+	      checkpointId = std::string{optarg};   
 	      break; 
 	    case 'q':
-	      modelFile = std::string{strdup(optarg)}; 
+	      modelFile = std::string{optarg}; 
 	      break; 
 	    case 'm': 
-	      singleModel = std::string{strdup(optarg)}; 
+	      singleModel = std::string{optarg}; 
 	      break; 
 	    case 'S': 
 	      saveMemorySEV = true; 

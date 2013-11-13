@@ -10,7 +10,7 @@ class BranchLengthsParameter : public AbstractParameter
 public: 
   
   BranchLengthsParameter(nat id, nat idOfMyKind, std::vector<nat> partitions)    
-    : AbstractParameter(Category::BRANCH_LENGTHS, id, idOfMyKind, partitions )
+    : AbstractParameter(Category::BRANCH_LENGTHS, id, idOfMyKind, partitions,0 )
   {    
     _printToParamFile = false; 
   }

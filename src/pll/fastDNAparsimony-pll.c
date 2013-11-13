@@ -93,6 +93,19 @@
 #include "axml.h"
 
 
+static inline int states2pos (int states)
+{
+  switch(states)
+    {
+    case 4 :
+      return 0; 
+    case 20: 
+      return 1; 
+    default : assert(0); 
+    }
+}
+
+
 
 extern const unsigned int mask32[32]; 
 /* vector-specific stuff */
@@ -464,7 +477,8 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 }
 
 
-static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned int *partitionParsimony, unsigned int *pLengthAtBranch)
+
+static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned int *state2parsimony)
 {
   INT_TYPE 
     allOne = SET_ALL_BITS_ONE;
@@ -480,9 +494,10 @@ static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned
     newviewParsimonyIterativeFast(tr, pr);
   
   for(int i = 0; i < pr->numberOfPartitions; ++i)
-    partitionParsimony[i] = 
-      tr->parsimonyScore[pNumber * pr->numberOfPartitions + i] 
-      + tr->parsimonyScore[qNumber * pr->numberOfPartitions + i]; 
+    {
+      nat states = pr->partitionData[i]->states; 
+      state2parsimony[ states2pos( states )] = tr->parsimonyScore[pNumber * pr->numberOfPartitions + i] + tr->parsimonyScore[qNumber * pr->numberOfPartitions + i]; 
+    }
 
   for(model = 0; model < pr->numberOfPartitions; model++)
     {
@@ -519,9 +534,9 @@ static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned
 		
 		sum +=  vectorPopcount(v_N);
 	      }
-	    
-	    pLengthAtBranch[model] = sum; 
-	    partitionParsimony[model] += sum; 
+
+	    /* pLengthAtBranch[model] = sum;  */
+	    state2parsimony[ states2pos (states) ] += sum; 
 	  }
 	  break;
 	case 4:
@@ -550,8 +565,8 @@ static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned
 		sum += vectorPopcount(v_N);
 	      }	   	 
 
-	    pLengthAtBranch[model]= sum ; 
-	    partitionParsimony[model] += sum; 
+	    /* pLengthAtBranch[model]= sum ;  */
+	    state2parsimony[states2pos(states)] += sum; 
 	  }
 	  break;
 	case 20:
@@ -585,8 +600,8 @@ static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned
 
 		sum += vectorPopcount(v_N); 
 	      }
-	    pLengthAtBranch[model] = sum;
-	    partitionParsimony[model] += sum;
+	    /* pLengthAtBranch[model] = sum; */
+	    state2parsimony[states2pos(states)] += sum;
 	  }
 	  break;
 	default:
@@ -622,8 +637,8 @@ static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned
 		sum += vectorPopcount(v_N); 
 
 	      }
-	    pLengthAtBranch[model] = sum ; 
-	    partitionParsimony[model] += sum; 
+	    /* pLengthAtBranch[model] = sum ;  */
+	    state2parsimony[states2pos(states)] += sum; 
 	  }
 	}
     }
@@ -634,11 +649,7 @@ static void evaluateParsimonyIterativeFast(tree *tr, partitionList *pr, unsigned
 #endif
 
 
-
-
-
-
-void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, unsigned int *partitionParsimony, unsigned int *pLengthAtBranch)
+void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, unsigned int *state2parsimony)
 {
   volatile unsigned int result;
   nodeptr q = p->back;
@@ -667,7 +678,7 @@ void evaluateParsimony(tree *tr, partitionList *pr, nodeptr p, boolean full, uns
   ti[0] = counter;
  
   
-  evaluateParsimonyIterativeFast(tr, pr ,partitionParsimony, pLengthAtBranch);
+  evaluateParsimonyIterativeFast(tr, pr ,state2parsimony);
 }
 
 
@@ -855,8 +866,9 @@ static void addTraverseParsimony (tree *tr, partitionList *pr, nodeptr p, nodept
 
 
 
-static void makePermutationFast(int *perm, int n, tree *tr)
+static void makePermutationFast(int *perm, int n, tree *tr, nat seed)
 {    
+  tr->randomNumberSeed = seed; 
   int  
     i, 
     j, 
@@ -1338,17 +1350,13 @@ static void stepwiseAddition(tree *tr, partitionList *pr, nodeptr p, nodeptr q)
   tr->ti[1] = p->number;
   tr->ti[2] = p->back->number;
 
-  nat* partitionParsimony =  (nat*) rax_calloc(pr->numberOfPartitions,sizeof(nat)) ; 
-  nat* pLengthAtBranch = (nat*) rax_calloc(pr->numberOfPartitions,sizeof(nat)) ; 
-  
-  evaluateParsimonyIterativeFast(tr, pr, partitionParsimony, pLengthAtBranch);
-  
-  rax_free(pLengthAtBranch);
-  mp = 0; 
-  for(int i = 0; i < pr->numberOfPartitions; ++i)
-    mp += partitionParsimony[i]; 
-  rax_free(partitionParsimony); 
+  nat state2parsimony[2] = {0,0}; 
+  evaluateParsimonyIterativeFast(tr, pr, state2parsimony);
 
+  mp = 0; 
+  for(int i = 0; i < 2; ++i)
+    mp += state2parsimony[i]; 
+ 
   if(mp < tr->bestParsimony)
     {    
       tr->bestParsimony = mp;
@@ -1358,7 +1366,10 @@ static void stepwiseAddition(tree *tr, partitionList *pr, nodeptr p, nodeptr q)
   q->back = r;
   r->back = q;
    
-  if(q->number > tr->mxtips && tr->parsimonyScore[q->number] > 0)
+  if(q->number > tr->mxtips
+     /* PROBLEMATIC??? */
+     /* && tr->parsimonyScore[q->number] > 0 */
+     )
     {	      
       stepwiseAddition(tr, pr, p, q->next->back);
       stepwiseAddition(tr, pr, p, q->next->next->back);
@@ -1406,7 +1417,7 @@ void freeParsimonyDataStructures(tree *tr, partitionList *pr)
 }
 
 
-void makeParsimonyTreeFast(tree *tr, partitionList *pr)
+void makeParsimonyTreeFast(tree *tr, partitionList *pr, nat seed)
 {   
   nodeptr  
     p, 
@@ -1423,7 +1434,7 @@ void makeParsimonyTreeFast(tree *tr, partitionList *pr)
   
   assert(!tr->constrained);
 
-  makePermutationFast(perm, tr->mxtips, tr);
+  makePermutationFast(perm, tr->mxtips, tr, seed);
   
   tr->ntips = 0;    
   

@@ -19,50 +19,44 @@
 
 
 
-TreeIntegrator::TreeIntegrator(std::shared_ptr<TreeAln> tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
+TreeIntegrator::TreeIntegrator(TreeAln& traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
-  auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(*tralnPtr, true, true ));
-  auto eval = LikelihoodEvaluator(*tralnPtr, plcy.get());
+  auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(traln, true, true ));
+  auto eval = LikelihoodEvaluator(traln, plcy.get());
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
 #endif
 
   // s.t. we do not have to care about the branch length linking problem 
-  assert(tralnPtr->getNumberOfPartitions() == 1 ); 
+  assert(traln.getNumberOfPartitions() == 1 ); 
 
 
-  std::vector<std::unique_ptr<AbstractParameter> > params; 
+  auto params = std::vector<std::unique_ptr<AbstractParameter> >{} ; 
   params.emplace_back(std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0, {0}))); 
-  for(nat i = 0; i < tralnPtr->getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     params[0]->addPartition(i);
 
   double lambda = 10;
   params[0]->setPrior(std::unique_ptr< AbstractPrior>(new ExponentialPrior(lambda)));
 
-  std::vector<std::unique_ptr<AbstractProposal> >  proposals;   
-
-  // proposals.emplace_back(new BranchLengthMultiplier( ProposalRegistry::initBranchLengthMultiplier)); 
+  auto &&proposals  = std::vector<std::unique_ptr<AbstractProposal> > {};   
   proposals.emplace_back(new GibbsBranchLength()); 
-  // proposals.emplace_back(new TreeLengthMultiplier(ProposalRegistry::initTreeLengthMultiplier)); 
-
   proposals[0]->addPrimaryParameter( std::move(std::unique_ptr<AbstractParameter>(params[0]->clone()))); 
-  // proposals[1]->addPrimaryParameter( std::move(std::unique_ptr<AbstractParameter>(params[0]->clone()))); 
-  // proposals[2]->addPrimaryParameter( std::move(std::unique_ptr<AbstractParameter>(params[0]->clone()))); 
 
-  std::vector<ProposalSet> pSets; 
+  auto pSets = std::vector<ProposalSet>{}; 
 
-  integrationChain = std::unique_ptr<Chain>( new Chain(seed, tralnPtr, proposals, pSets, std::move(eval), false ));
-  integrationChain->getEvaluator().imprint(*tralnPtr);  
+  integrationChain = std::unique_ptr<Chain>( new Chain(seed, traln, proposals, pSets, std::move(eval), false ));
+  integrationChain->getEvaluator().imprint(traln);  
 }
 
 
 void TreeIntegrator::prepareChain( const TreeAln &otherTree, bool copyEverything)
 {
-  auto &traln = integrationChain->getTraln();
+  auto &traln = integrationChain->getTralnHandle();
   if(copyEverything)
-    traln.copyModel(otherTree); 
-  
+    traln = otherTree; 
+
   integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(), true); 
   integrationChain->reinitPrior(); 
 }
@@ -77,7 +71,7 @@ Branch2Stat TreeIntegrator::integrateTree(double essThresh, LikelihoodEvaluator 
   // tout << "integrating tree " << numgen << " generations" << std::endl; 
   auto samples = std::unordered_map<BranchLength, std::vector<double>>{}; 
   auto params = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
-  auto& traln = *(integrationChain->getTralnPtr()); 
+  auto& traln = integrationChain->getTralnHandle(); 
   assert(params.size( )== 1); 
   auto param = params[0]; 
 
@@ -86,7 +80,7 @@ Branch2Stat TreeIntegrator::integrateTree(double essThresh, LikelihoodEvaluator 
   eval.freeMemory(); 
   integrationChain->setLikelihood(traln.getTrHandle().likelihood); 
   integrationChain->suspend(); 
-  integrationChain->resume(true, false ); 
+  integrationChain->resume( ); 
 
   bool converged = false; 
   while(not converged )
@@ -173,7 +167,7 @@ void TreeIntegrator::integrateAllBranchesNew(const TreeAln &otherTree, std::stri
   
   prepareChain(otherTree, true); 
 
-  auto& traln  = *(integrationChain->getTralnPtr()); 
+  auto& traln  = integrationChain->getTralnHandle(); 
   auto &eval = integrationChain->getEvaluator(); 
   eval.freeMemory();
   

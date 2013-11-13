@@ -7,6 +7,7 @@ class NoCachePolicy : public ArrayPolicy
 {
 public: 
   NoCachePolicy(const TreeAln &traln ); 
+  virtual ~NoCachePolicy(){}
 
   virtual void imprintPolicy(const TreeAln &traln, ArrayOrientation &arrayOrient) {} 
   virtual void freeMemory()  {} 

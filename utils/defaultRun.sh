@@ -3,13 +3,14 @@
 topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
-seed=27159
+seed=1450
+# seed=27159
 # seed=28978
 
 # src/proposals/
 numProc=2
 # extraArgs="-Q"
-# extraArgs="-M 3"
+# extraArgs="-M 3 -S "
 # extraArgs="-m"
 
 # early with 150 , VERIFIED 

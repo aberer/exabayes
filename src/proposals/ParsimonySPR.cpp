@@ -1,4 +1,4 @@
-#include <unordered_map>
+#include <unordered_map>	
 #include <functional>
 
 #include "priors/AbstractPrior.hpp"
@@ -8,31 +8,64 @@
 
 #include "TreePrinter.hpp"
 
+#if HAVE_PLL == 0
+#include <mpi.h>
+extern MPI_Comm comm; 
+#endif
 
-ParsimonySPR::ParsimonySPR( double parsWarp, double blMulti)
-  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. , false)
-  , _parsWarp(parsWarp)    
-  , _blMulti(blMulti)    
+
+static double state2factor(nat states)
 {
+  static double typicalBL = 0.05; 
+  return log((1.0/states) - exp(-(states/(states-1) * typicalBL)) / states);
 }
 
 
-void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<BranchPlain,std::vector<nat> > &posses)
+std::array<double,2> ParsimonySPR::factors = 
+  {
+    {
+      state2factor(4),		// DNA
+      state2factor(20)		// AA
+    }
+  }; 
+
+
+// #define PRINT_DEBUG_PARS
+
+ParsimonySPR::ParsimonySPR( double parsWarp, double blMulti, int depth)
+  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. , false)
+  , _parsWarp(parsWarp)    
+  , _blMulti(blMulti)    
+  , _depth(depth)
 {
+  // very relevant to efficient, setting this as a varaible, s.t. we do not get lo t
+  _parallelReduceAtEnd = true; 
+}
+
+
+void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, branch22states2score &result, int curDepth,  const branch22states2score& alreadyComputed)
+{
+  if(curDepth == 0 )
+    return; 
+  --curDepth; 
+
   nodeptr insertBack =  insertPos->back;   
   traln.clipNode(insertPos, prunedTree->next);
   traln.clipNode( insertBack, prunedTree->next->next); 
-
+  
   auto b = BranchPlain(insertPos->number, insertBack->number); 
 
-  auto partitionParsimony = std::vector<nat> {}; 
-  auto pLengthAtBranch = std::vector<nat> {}; 
-  _pEval.evaluateSubtree(traln, prunedTree); 
-  _pEval.evaluateSubtree(traln, prunedTree->back); // necessary? 
-  _pEval.evaluate(traln, prunedTree, false, partitionParsimony, pLengthAtBranch); 
-
-  assert(posses.find(b) == posses.end()) ;   
-  posses[b] = partitionParsimony; 
+  if(alreadyComputed.size() > 0 && alreadyComputed.find(b) != alreadyComputed.end()) 
+    {
+      result[b] = alreadyComputed.at(b); 
+    }
+  else 
+    {
+      ParsimonyEvaluator::disorientNode(prunedTree); 
+      auto states2parsimony =   _pEval.evaluate(traln, prunedTree, false , not _parallelReduceAtEnd ); 
+      // assert(result.find(b) == result.end()) ;   
+      result[b] = states2parsimony; 
+    }
 
   traln.clipNode(insertPos, insertBack); 
   prunedTree->next->back = prunedTree->next->next->back = NULL; 
@@ -40,36 +73,57 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
   // recursively descend 
   if(not traln.isTipNode(insertPos))
     {
-      testInsertParsimony(traln, insertPos->next->back, prunedTree, posses); 
-      testInsertParsimony(traln, insertPos->next->next->back, prunedTree, posses); 
+      testInsertParsimony(traln, insertPos->next->back, prunedTree, result, curDepth, alreadyComputed); 
+      testInsertParsimony(traln, insertPos->next->next->back, prunedTree, result, curDepth, alreadyComputed); 
     }
 }
 
 
-weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &insertions) const
+
+
+weightMap ParsimonySPR::getWeights(const TreeAln& traln, branch22states2score insertions) const
 {
   auto result = weightMap{}; 
   double minWeight = std::numeric_limits<double>::max(); 
 
-  auto factors = std::vector<double>(traln.getNumberOfPartitions()); 
-  double typicalBL = 0.05; 
-  for(nat i = 0; i < traln.getNumberOfPartitions( ); ++i )
+#if HAVE_PLL == 0
+  if(_parallelReduceAtEnd)
     {
-      auto& partition = traln.getPartition(i); 
-      nat states = partition.states; 
-      factors[i] =  - (_parsWarp * log((1.0/states) - exp(-(states/(states-1) * typicalBL)) / states));
-    }	  
-  
+      auto data = std::vector<parsimonyNumber>{}; 
+      data.reserve(insertions.size()  * 2 );
+      for(auto &pair : insertions)
+	{
+	  auto &values = std::get<1>(pair); 
+	  for(auto& v : values)
+	    data.push_back(v);
+	}
+      
+      // could be encapsulated in <chain>
+      MPI_Allreduce(MPI_IN_PLACE, data.data(), data.size(), MPI_UNSIGNED, MPI_SUM, comm);
+
+      nat ctr = 0; 
+      for(auto &pair :insertions)
+	{
+	  auto &values = std::get<1>(pair); 
+	  for(auto &v : values)
+	    v = data[ctr++]; 
+	}
+      
+    }
+#endif
+
   for(auto &elem : insertions)
     {
       double score = 0; 
-      for(nat i = 0 ; i < traln.getNumberOfPartitions(); ++i)
-	score += factors[i] * elem.second[i];
+
+      auto& scoreArray= std::get<1>(elem); 
+      for(nat i = 0 ; i < scoreArray.size() ; ++i)
+	score += - ( factors[i]  * _parsWarp) * scoreArray[i]; 
 
       if(score < minWeight)
 	minWeight = score; 
 
-      result[elem.first] = score; 
+      result[std::get<0>(elem)] = score; 
     }
 
   double sum = 0; 
@@ -81,7 +135,7 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
     }
 
   for(auto &elem : result)
-    elem.second /= sum; 
+    std::get<1>(elem) /= sum; 
 
   return result; 
 } 
@@ -91,9 +145,7 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, const scoreMap &inserti
 BranchPlain ParsimonySPR::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const
 {
   auto prunedTree = BranchPlain();
-
   nodeptr p, pn, pnn;  
-
   do 
     {
       prunedTree  = TreeRandomizer::drawBranchWithInnerNode(traln,rand); 
@@ -107,26 +159,15 @@ BranchPlain ParsimonySPR::determinePrimeBranch(const TreeAln &traln, Randomness&
 }
 
 
-void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior )
+branch22states2score ParsimonySPR::determineScoresOfInsertions(TreeAln& traln, BranchPlain prunedTree, Randomness &rand, const branch22states2score &alreadyComputed  )
 {
-  auto branches = traln.extractBranches( ); 
-  auto possibilities = scoreMap{}; 
+  auto result = branch22states2score{}; 
 
-  auto partitionParsimony =  std::vector<nat>{}; 
-  auto pLengthAtBranch =  std::vector<nat>{}; 
-  _pEval.evaluate(traln, traln.getAnyBranch().findNodePtr(traln), true, partitionParsimony, pLengthAtBranch);
-
-  auto prunedTree = determinePrimeBranch(traln, rand); 
-
-  // needed? 
   nodeptr
     p = prunedTree.findNodePtr(traln), 
     pn = p->next->back , 
     pnn = p->next->next->back ; 
 
-
-  auto initBranch = BranchPlain(pn->number, pnn->number); 
-  
   // prune the subtree 
   traln.clipNode( pn, pnn); 
   p->next->back = p->next->next->back = NULL; 
@@ -134,24 +175,46 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
   // fetch all parsimony scores   
   if(not traln.isTipNode(pn)) 
     {
-      testInsertParsimony(traln, pn->next->back, p, possibilities);
-      testInsertParsimony(traln, pn->next->next->back, p, possibilities); 
+      testInsertParsimony(traln, pn->next->back, p, result, _depth, alreadyComputed);
+      testInsertParsimony(traln, pn->next->next->back, p, result, _depth, alreadyComputed); 
     }
   if(not traln.isTipNode(pnn))
     {
-      testInsertParsimony(traln, pnn->next->back,p, possibilities); 
-      testInsertParsimony(traln, pnn->next->next->back,p, possibilities); 
+      testInsertParsimony(traln, pnn->next->back,p, result, _depth, alreadyComputed); 
+      testInsertParsimony(traln, pnn->next->next->back,p, result, _depth, alreadyComputed); 
     }
 
-  // probably not even necessary 
   traln.clipNode( p->next, pn ); 
   traln.clipNode( p->next->next, pnn); 
 
-  auto weightedInsertions = getWeights(traln, possibilities) ; 
+  return result; 
+} 
 
-  double r = rand.drawRandDouble01(); 
-  std::pair<BranchPlain,double> chosen; 
-  for(auto v : weightedInsertions)
+
+void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
+{ 
+  auto blParams = getBranchLengthsParameterView(); 
+  auto prunedTree = determinePrimeBranch(traln, rand); 
+
+#ifdef PRINT_DEBUG_PARS 
+  tout << "prime branch =" << prunedTree << std::endl; 
+#endif
+
+  _pEval.evaluate(traln, prunedTree.findNodePtr(traln), true, not _parallelReduceAtEnd );
+
+  // decide upon an spr move 
+  auto alreadyComputed = branch22states2score {}; 
+  alreadyComputed = determineScoresOfInsertions(traln, prunedTree, rand, alreadyComputed); // #, hastings, prior
+  auto weightedInsertions = getWeights(traln, alreadyComputed); 
+
+#ifdef PRINT_DEBUG_PARS
+  for(auto &v : weightedInsertions)
+    tout << "(" << std::get<0>(v) <<  "," << std::get<1>(v) << ")" << std::endl; 
+#endif
+
+  auto r = rand.drawRandDouble01(); 
+  auto chosen = std::pair<BranchPlain,double>{}; 
+  for(auto &v : weightedInsertions)
     {
       if(r < v.second)
 	{
@@ -162,44 +225,40 @@ void ParsimonySPR::determineSprPath(TreeAln& traln, Randomness &rand, double &ha
 	r -= v.second; 
     }
 
-  // important: save the move 
-  auto pruned = BranchPlain(p->number,p->back->number); 
-
-  _move.extractMoveInfo(traln, std::make_tuple(pruned,chosen.first), getSecondaryParameterView() );
-
-  // update the hastings  
-  assert(possibilities.find(initBranch) == possibilities.end()); 
-  possibilities[initBranch] = partitionParsimony; 
-  possibilities.erase(chosen.first); 
-  auto backWeights = getWeights(traln,possibilities);   
-  AbstractProposal::updateHastingsLog( hastings, log(backWeights[initBranch]) - log(chosen.second) , _name); 
-} 
-
-
-
-void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
-{ 
-  auto blParams = getBranchLengthsParameterView(); 
-
-  determineSprPath(traln, rand, hastings, prior); 
-
-  _move.applyToTree(traln, getSecondaryParameterView() ); 
-
-  bool modifiesBl = false; 
-  for(auto &v : _secondaryParameters)
-    modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
-
-#ifdef  NO_SEC_BL_MULTI
-  modifiesBl = false;  
-  // assert(0);
+#ifdef PRINT_DEBUG_PARS
+  tout << "chose " << std::get<0>(chosen) << std::endl;
 #endif
 
-  if( modifiesBl)
-    {
-      assert(0); 
-    }
-}
+  // determine the branch, we pruned from 
+  auto desc = traln.getDescendents(prunedTree);
+  auto prunedFromBranch = BranchPlain{std::get<0>(desc).getSecNode() , std::get<1>(desc).getSecNode()}; 
 
+#ifdef PRINT_DEBUG_PARS
+  tout << " prime branch was pruned from " << prunedFromBranch << " (with neighbors: " << std::get<0>(desc) << " and " << std::get<1>(desc)<< ")"  << std::endl; 
+#endif
+
+  // important: save the move 
+  _move.extractMoveInfo(traln, std::make_tuple(prunedTree,chosen.first), getSecondaryParameterView() );
+  _move.applyToTree(traln, getSecondaryParameterView() ); 
+  
+  ParsimonyEvaluator::disorientNode(prunedTree.findNodePtr(traln)); 
+  _pEval.evaluateSubtree(traln, prunedTree.findNodePtr(traln));
+  
+  auto backScores = determineScoresOfInsertions(traln, prunedTree,rand, alreadyComputed); 
+  auto weightedInsertionsBack = getWeights(traln, backScores); 
+  
+  assert(weightedInsertionsBack.find(prunedFromBranch) != weightedInsertionsBack.end()); 
+  auto backProb = weightedInsertionsBack[prunedFromBranch]; 
+  auto forwProb = std::get<1>(chosen);
+
+#ifdef PRINT_DEBUG_PARS
+  for(auto &v : weightedInsertionsBack)
+    tout << "(" << std::get<0>(v) << "," << std::get<1>(v) << ")" << std::endl; 
+  tout << "backProb=" << backProb << " forwProb=" << forwProb << std::endl; 
+#endif
+  
+  AbstractProposal::updateHastingsLog( hastings, log(backProb) - log(forwProb),  _name); 
+}
 
 
 void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
@@ -215,10 +274,10 @@ void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )
     }    
 }
 
+
 void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {  
   auto toEval = _move.getEvalBranch(traln);
-  // auto tp =  TreePrinter{false, true, false};
 
   for(auto &elem : _move.getDirtyNodes(traln, false))
     evaluator.markDirty(traln, elem); 
@@ -229,6 +288,7 @@ void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &t
 
   evaluator.evaluate(traln,toEval, false); 
 }
+
 
 void ParsimonySPR::resetState(TreeAln &traln) 
 {
@@ -247,6 +307,11 @@ AbstractProposal* ParsimonySPR::clone() const
 {
   return new ParsimonySPR(*this); 
 } 
+
+void ParsimonySPR::printParams(std::ostream &out)  const 
+{
+  out << " ; radius=" << _depth ; 
+}
 
 
 std::vector<nat> ParsimonySPR::getInvalidatedNodes(const TreeAln& traln) const
