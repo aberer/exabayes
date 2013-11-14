@@ -4,13 +4,13 @@
 #include "AbstractProposer.hpp"
 
 
-class SlidingProposal : public AbstractProposer
+class SlidingProposer : public AbstractProposer
 {
 public: 
-  SlidingProposal(double minVal, double maxVal, bool minMaxIsRelative); 
-  virtual ~SlidingProposal(){}
+  SlidingProposer(double minVal, double maxVal, bool minMaxIsRelative); 
+  virtual ~SlidingProposer(){}
 
-  SlidingProposal(const SlidingProposal &rhs) 
+  SlidingProposer(const SlidingProposer &rhs) 
     : AbstractProposer(rhs)
     , minMaxIsRelative(rhs.minMaxIsRelative)
   {
@@ -23,7 +23,7 @@ public:
 
   virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
 
-  virtual AbstractProposer* clone() const  {return new SlidingProposal(*this);  }
+  virtual AbstractProposer* clone() const  {return new SlidingProposer(*this);  }
 
 
 private: 

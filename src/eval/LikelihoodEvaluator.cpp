@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <numeric>
 
 #include "LikelihoodEvaluator.hpp"
 #include "GlobalVariables.hpp"
@@ -80,7 +81,7 @@ bool LikelihoodEvaluator::applyDirtynessToSubtree(TreeAln &traln, nat partId, co
 }
 
 
-void LikelihoodEvaluator::evaluate( TreeAln &traln, const BranchPlain &root, bool fullTraversal)    
+void LikelihoodEvaluator::evaluate( TreeAln &traln, const BranchPlain &root, bool fullTraversal, bool debug)    
 {
   // tout << "evaluate with root " << root << " and " << ( fullTraversal ? "full" : "partial" ) << std::endl; 
   auto partitions = std::vector<nat>{}; 
@@ -88,16 +89,15 @@ void LikelihoodEvaluator::evaluate( TreeAln &traln, const BranchPlain &root, boo
   partitions.reserve(numPart);
   for(nat i = 0 ; i < numPart; ++i)
     partitions.push_back(i); 
-  evaluatePartitionsWithRoot(traln, root, partitions, fullTraversal);    
+  evaluatePartitionsWithRoot(traln, root, partitions, fullTraversal, debug);    
 }
 
 
-void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions, bool fullTraversal)    
+void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions, bool fullTraversal, bool debug)    
 {
   // tout << "evaluatePartitions with root " << root << " and " << ( fullTraversal ? "full" : "partial" )  << " and partitons " << partitions << std::endl; 
 
   nat numPart = traln.getNumberOfPartitions(); 
-
   auto perPartitionLH = traln.getPartitionLnls();
 
   auto toExecute = std::vector<bool>(numPart, false);   
@@ -132,9 +132,12 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
   traln.getTrHandle().likelihood = std::accumulate(perPartitionLH.begin(), perPartitionLH.end(), 0.); 
   traln.setExecModel(std::vector<bool>(numPart, true));
 
+  if(debug)
+    {
 #ifdef DEBUG_LNL_VERIFY
-  expensiveVerify(traln, root ,traln.getTrHandle().likelihood);   
+      expensiveVerify(traln, root ,traln.getTrHandle().likelihood);   
 #endif
+    }
 }
 
 
@@ -197,9 +200,7 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const Bran
 void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root )
 {
   // tout << "calling exa_evaluate "  << std::endl; 
-
   auto start = root.findNodePtr(traln);
-
   if(not ( ( start->x == 1 || traln.isTipNode(start)   )
 	   && ( start->back->x == 1 || traln.isTipNode(start->back) )  ) )
     {
@@ -217,6 +218,7 @@ void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, const BranchPlain&
 #else 
   evaluateGeneric(&traln.getTrHandle(), start, FALSE); 
 #endif  
+
 }
 
 
@@ -256,7 +258,7 @@ void LikelihoodEvaluator::disorientDebug(TreeAln &traln, const BranchPlain& root
 
 
 
-void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, const BranchPlain& root, double toVerify)
+void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, BranchPlain root, double toVerify)
 {
   debugPrint = 0 ; 
 
@@ -275,35 +277,36 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, const BranchPlain& roo
   if(fabs (verifiedLnl - toVerify ) > ACCEPTED_LIKELIHOOD_EPS)
     {
 #if 1 
-      auto& partition = debugTraln->getPartition(0); 
-      auto sc = partition.globalScaler; 
-      tout << "scCorr=" ; 
-      nat ctr = 0; 
-      for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
+      for(nat j = 0; j < traln.getNumberOfPartitions() ; ++j )
 	{
-	  if(sc[i] != 0 )
+	  auto& partition = debugTraln->getPartition(j); 
+	  auto sc = partition.globalScaler; 
+	  tout << "scCorr=" ; 
+	  nat ctr = 0; 
+	  for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
 	    {
-	      tout << ctr <<  "=" << sc[i] << ","; 
+	      if(sc[i] != 0 )
+		tout << ctr <<  "=" << sc[i] << ","; 
+	      ++ctr; 
 	    }
-	  ++ctr; 
-	}
-      tout << std::endl; 
+	  tout << std::endl; 
 
-      auto& partition2 = traln.getPartition(0); 
-      sc = partition2.globalScaler; 
-      tout << "scReal=" ; 
-      ctr = 0; 
-      for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
-	{
-	  if(sc[i] != 0)
+	  auto& partition2 = traln.getPartition(j); 
+	  sc = partition2.globalScaler; 
+	  tout << "scReal=" ; 
+	  ctr = 0; 
+	  for(nat i = 0; i < 2 * traln.getNumberOfTaxa(); ++i)
 	    {
-	      tout << ctr << "=" << sc[i] << " "; 
+	      if(sc[i] != 0)
+		{
+		  tout << ctr << "=" << sc[i] << " "; 
+		}
+	      ++ctr; 
 	    }
-	  ++ctr; 
-	}
-      tout << std::endl; 
+	  tout << std::endl; 
+	} 
+
 #endif
-
       std::cerr  << "WARNING: found in expensive evaluation: likelihood difference is " 
 		 <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
 		 << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
@@ -372,7 +375,6 @@ void LikelihoodEvaluator::debugPrintToCompute(const TreeAln &traln, const Branch
 void LikelihoodEvaluator::markDirty(const TreeAln &traln, nat partitionId, nat nodeId) 
 {
   nat id = nodeId - traln.getNumberOfTaxa()  - 1; 
-  // tout << "marking " << nodeId << " (" << id << ") dirty" <<  std::endl; 
   arrayOrientation.setOrientation(partitionId,id, INVALID); 
 } 
 

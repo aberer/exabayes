@@ -21,7 +21,7 @@ namespace Arithmetics
   /**
      @brief gets the n-th percentile of the data  
    */ 
-  double getPercentile(double percentile, const std::vector<double> &data); 
+  double getPercentile(double percentile,  std::vector<double> data); 
   /** 
       @brief gets the effective sampling size of the data 
    */ 

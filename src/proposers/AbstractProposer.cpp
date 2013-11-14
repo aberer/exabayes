@@ -1,11 +1,25 @@
 #include <algorithm>
 #include "AbstractProposer.hpp"
 
+AbstractProposer::AbstractProposer(bool tune, bool tuneup, double minVal, double maxVal)
+  : _tune{tune}
+  , _tuneup{tuneup}
+  , _minVal{minVal}
+  , _maxVal{maxVal}
+{
+  
+} 
+
 
 void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const 
 {
   // tout << MAX_SCI_PRECISION << "to be normalized " << values << std::endl; 
 
+
+  // tout << MAX_SCI_PRECISION << "before correction: " ; 
+  // for(auto &v : values)
+  //   tout << v << ","; 
+  // tout << std::endl; 
 
   nat prevFixed = -1; 
   nat nowFixed = 0; 
@@ -14,23 +28,24 @@ void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const
   auto fixedLow = std::vector<bool>(values.size(), false);
 
   nat iter = 0; 
-  while(prevFixed != nowFixed)
+  bool valuesNotOkay = true; 
+  while(prevFixed != nowFixed && valuesNotOkay)
     {
       double normer = 0; 
       nat ctr = 0; 
       for(auto &v : values)
 	{
 	  assert(v > 0); 	    
-	  if( v <= minVal)
+	  if( v <= _minVal)
 	    {
-	      // tout << "value too small!" << std::endl; 
-	      v = minVal; 
+	      // tout << "================ value too small!" << std::endl; 
+	      v = _minVal; 
 	      fixedLow.at(ctr) = true; 
 	    }
-	  else if(maxVal <= v)
+	  else if(_maxVal <= v)
 	    {
-	      // tout << "value too high!" << std::endl; 
-	      v = maxVal; 
+	      // tout << "================ value too high!" << std::endl; 
+	      v = _maxVal; 
 	      fixedHigh.at(ctr) = true; 
 	    }
 	  else 
@@ -38,16 +53,23 @@ void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const
 	  ++ctr ; 
 	}
 
-      nat numHigh = std::count_if(fixedHigh.begin(), fixedHigh.end(), [](bool elem) {return elem; }); 
-      nat numLow = std::count_if(fixedLow.begin(), fixedLow.end(), [](bool elem){return elem; }); 
-      
-      normer = ( 1 - (minVal * numLow  +  maxVal * numHigh))    / normer  ;
+      nat numHigh = std::count_if(begin(fixedHigh), end(fixedHigh), [](bool elem) {return elem; }); 
+      nat numLow = std::count_if(begin(fixedLow), end(fixedLow), [](bool elem){return elem; }); 
 
+      normer = ( 1. - (_minVal * numLow  +  _maxVal * numHigh))    / normer  ;
+
+      
+      valuesNotOkay = false; 
       ctr = 0; 
       for(auto &v : values)
 	{
 	  if(not  ( fixedHigh.at(ctr)  ||  fixedLow.at(ctr))  )
-	    v *= normer; 
+	    {
+	      v *= normer; 
+
+	      // meh: could simplify everything alltogether again 
+	      valuesNotOkay |= ( v <= _minVal || _maxVal <= v) ; 
+	    }
 	  ++ctr; 
 	}
 
@@ -57,5 +79,10 @@ void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const
     }
 
   // tout << "iterations necessary: " <<  iter << "\tminval="<< minVal << std::endl; 
+
+  // tout << "after correction: " ; 
+  // for(auto &v : values)
+  //   tout << v << ","; 
+  // tout << std::endl; 
 } 
 

@@ -16,9 +16,9 @@ double FixedPrior::getLogProb(const ParameterContent& content)  const
   // branch lengths case! 
   if(fixedValues.size( )== 1 )
     {
-      if(fabs (values[0] - fixedValues[0] ) > 1e-6)
+      if(fabs (values[0] - fixedValues.at(0) ) > 1e-6)
 	{
-	  tout << "Fatal: for fixed prior, value should be "   << fixedValues[0] << " but actually is " << values[0] << std::endl; 
+	  tout << "Fatal: for fixed prior, value should be "   << fixedValues.at(0) << " but actually is " << values[0] << std::endl; 
 	  assert(0); 
 	}
     }
@@ -35,7 +35,12 @@ double FixedPrior::getLogProb(const ParameterContent& content)  const
 ParameterContent FixedPrior::getInitialValue() const
 {
   auto result = ParameterContent{}; 
-  result.values = fixedValues; 
+
+  if(not _keepInitData) 
+    result.values = fixedValues; 
+  else 
+    result.values = {0.1}; 
+       
   return result; 
 } 
 
@@ -67,7 +72,16 @@ double FixedPrior::accountForMeanSubstChange(TreeAln  &traln, const AbstractPara
       auto bls = traln.extractBranches(param); 
 
       for(auto &b : bls)
-	b.setConvertedInternalLength(traln, param, fixedValues[0]);
+	{
+	  if(_keepInitData)
+	    {
+	      auto len = b.getLength();
+	      double frac = myNew / myOld; 
+	      b.setLength( pow(len, 1. / frac ) );
+	    }
+	  else 
+	    b.setConvertedInternalLength(traln, param, fixedValues.at(0));
+	}
       
       if( std::any_of(bls.begin(), bls.end(), 
 		      [](BranchLength &b){ return not BoundsChecker::checkBranch(b) ;  }) ) 

@@ -1,34 +1,28 @@
-#include "DirichletProposal.hpp"
+#include "DirichletProposer.hpp"
 #include "BoundsChecker.hpp" 
+#include <numeric>
 
-DirichletProposal::DirichletProposal( double minValI, double maxValI, bool _minMaxIsRelative ) 
-  : minMaxIsRelative(_minMaxIsRelative)
+DirichletProposer::DirichletProposer( double minValI, double maxValI, bool _minMaxIsRelative ) 
+  : AbstractProposer{true, false, minValI, maxValI}
+  , minMaxIsRelative{_minMaxIsRelative}
 {
-  minVal = minValI; 
-  maxVal = maxValI; 
-  tune = true ; 
-  tuneup = false; 
 } 
 
 
-std::vector<double> DirichletProposal::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+std::vector<double> DirichletProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
 {
   assert(fabs(std::accumulate(oldValues.begin(), oldValues.end(), 0. ) - 1.0 ) < 1e-6); // sum of rates equals 1 ? 
 
   auto newValues = std::vector<double> (); 
-  auto scalingFactor = parameter * oldValues.size(); 
-  
-  auto scaledOld = oldValues; 
-  for(auto &v : scaledOld)
-    v *= scalingFactor; 
-  
-  newValues = rand.drawRandDirichlet(scaledOld); 
+  auto scaledOld = _rateHelper.getScaledValues(oldValues, parameter); 
 
+  newValues = rand.drawRandDirichlet(scaledOld); 
+  
   if( minMaxIsRelative)		// for revmat 
     {
       for(auto &v : newValues)
-      	v /= *(newValues.rbegin()); 
-      
+	v /= newValues.back(); 
+
       BoundsChecker::correctRevMat(newValues);       
 
       double sum = std::accumulate(newValues.begin(), newValues.end(), 0.); 
@@ -40,9 +34,7 @@ std::vector<double> DirichletProposal::proposeValues(std::vector<double> oldValu
       correctAbsoluteRates(newValues); 
     }  
 
-  auto scaledNew = newValues; 
-  for(auto &v : scaledNew)
-    v *= scalingFactor; 
+  auto scaledNew = _rateHelper.getScaledValues(newValues, parameter);
 
   auto backP = Density::lnDirichlet(oldValues, scaledNew); 
   auto forP = Density::lnDirichlet(newValues, scaledOld); 

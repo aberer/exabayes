@@ -1,5 +1,6 @@
 #include "TreeInitializer.hpp"
 
+#include <numeric>
 #include <cstring>
 #include <cassert>
 #include "TreeAln.hpp"
@@ -468,7 +469,6 @@ void TreeInitializer::initializeTreePLL(TreeAln &traln)
   initializePartitionsPLL(traln );
   unifiedModelInit(traln);
   auto &ptr = traln.getPartitionsHandle(); 
-  // auto &tr =  traln.getTrHandle(); 
   ptr.perGeneBranchLengths = TRUE; 
   initializeParsimonyVectors(traln);
 
@@ -567,7 +567,7 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
 
       partition.substRates        = (double *)exa_malloc((size_t)pl->substRatesLength * sizeof(double));
       partition.frequencies       = (double*)exa_malloc((size_t)pl->frequenciesLength * sizeof(double));
-      partition.empiricalFrequencies       = (double*)exa_malloc((size_t)pl->frequenciesLength * sizeof(double));
+      partition.empiricalFrequencies       = (double*)exa_calloc((size_t)pl->frequenciesLength,   sizeof(double));
       partition.tipVector         = (double *)exa_malloc_aligned((size_t)pl->tipVectorLength * sizeof(double));
 
       partition.perSiteRates      = (double *)exa_malloc(sizeof(double) * maxCategories);

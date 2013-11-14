@@ -3,6 +3,8 @@
 #include <cstring>
 #include <unordered_set>
 
+
+#include "RateHelper.hpp"
 #include "TreeResource.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "parameters/AbstractParameter.hpp"
@@ -409,7 +411,7 @@ void TreeAln::copyAlnModel(const TreeAln& rhs)
       for(int j = 0; j < partitionRhs.states; ++j )
 	partitionLhs.frequencies[j] = partitionRhs.frequencies[j]; 
       
-      for(nat j = 0 ; j < numStateToNumInTriangleMatrix(partitionRhs.states); ++j)
+      for(nat j = 0 ; j < RateHelper::numStateToNumInTriangleMatrix(partitionRhs.states); ++j)
 	partitionLhs.substRates[j] = partitionRhs.substRates[j]; 
 
       partitionLhs.protModels = partitionRhs.protModels; 	
@@ -515,11 +517,12 @@ void TreeAln::setRevMat(const std::vector<double> &values, nat model)
       tout << "Problem with substitution parameter: "  << MAX_SCI_PRECISION << values << std::endl;  
       assert( valuesOkay ); 
     }
-  
+
   auto& partition = getPartition(model) ; 
+
   assert(partition.dataType != AA_DATA || partition.protModels == GTR); 
 
-  memcpy(partition.substRates, &(values[0]), numStateToNumInTriangleMatrix(  partition.states) * sizeof(double)); 
+  memcpy(partition.substRates, values.data(), RateHelper::numStateToNumInTriangleMatrix(  partition.states) * sizeof(double)); 
   initRevMat(model); 
 }
 
@@ -588,7 +591,7 @@ std::vector<double> TreeAln::getRevMat(nat model) const
   auto& partition = getPartition(model); 
   assert(partition.dataType != AA_DATA || partition.protModels == GTR); 
   double sum = 0; 
-  for(nat i =0 ; i < numStateToNumInTriangleMatrix(partition.states); ++i)
+  for(nat i =0 ; i < RateHelper::numStateToNumInTriangleMatrix(partition.states); ++i)
     {
       result.push_back(partition.substRates[i]);
       sum += result[i]; 
@@ -621,12 +624,6 @@ std::vector<double> TreeAln::getFrequencies(nat model) const
   for(int i = 0; i < partition.states; ++i) 
     result.push_back(partition.frequencies[i]); 
   return result; 
-}
-
-
-nat numStateToNumInTriangleMatrix(int numStates)  
-{  
-  return (  numStates * numStates - numStates) / 2 ; 
 }
 
 
@@ -673,22 +670,19 @@ double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) cons
   double result = 0; 
   auto sum = double{0.}; 
 
-#if HAVE_PLL == 0
   for(auto &p :partitions)
     {
+#if HAVE_PLL == 0
       result += _tr.fracchanges[p] * _tr.partitionContributions[p];   
       assert(_tr.partitionContributions[p] > 0 && _tr.fracchanges[p] > 0  ); 
       sum += _tr.partitionContributions[p]; 
-    }
 #else 
-  for(auto &p : partitions)
-    {
       auto& partition =  getPartition(p);
       result += partition.fracchange * partition.partitionContribution;  
       sum += partition.partitionContribution; 
       assert(partition.partitionContribution > 0 && partition.fracchange > 0  ); 
-    }
 #endif
+    }
 
   return result / sum   ; 
 }

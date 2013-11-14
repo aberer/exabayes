@@ -27,6 +27,33 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
 void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   auto blParams = getBranchLengthsParameterView(); 
+  
+  // TODO remove 
+  // if(modifiesBL)
+  //   {
+  //     for(auto param : blParams)
+  // 	{
+  // 	  tout << "BL_before:" ; 
+  // 	  for (auto b : traln.extractBranches(param))
+  // 	    {
+  // 	      // tout << b << "," ; 
+  // 	      assert(BoundsChecker::checkBranch(b)); 
+  // 	      tout << b.getInterpretedLength(traln,param ) << ","; 
+  // 	    }
+  // 	  tout << std::endl; 
+  // 	}
+
+  //     for(nat i = 0 ; i < traln.getNumberOfPartitions(); ++i)
+  // 	{
+  // 	  // auto &partition = traln.getPartition(i); 
+  // 	  // partition.
+  // 	  auto freq = traln.getFrequencies(i); 
+  // 	  tout << MAX_SCI_PRECISION << "freq[" << i << "] " ; 
+  // 	  for(auto &v : freq)
+  // 	    tout << v  << ","; 
+  // 	  tout << std::endl; 
+  // 	}
+  //   } 
 
   assert(_primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
   // this parameter proposal works with any kind of parameters (rate
@@ -87,14 +114,18 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL-CHOICE "  << branchSuggestion << std::endl; 
 #endif
-  evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion, prts , true); 
+  
+  
+  evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion , prts , true, true); 
 }
  
 
 
 void ParameterProposal::resetState(TreeAln &traln) 
 {
+  assert(_primaryParameters.size() == 1 ); 
   _primaryParameters[0]->applyParameter(traln, savedContent);
+
 
   // for a fixed bl parameter, we have to re-scale the branch lengths after rejection again. 
   // NOTICE: this is very inefficient 
@@ -109,7 +140,6 @@ void ParameterProposal::resetState(TreeAln &traln)
 		{
 		  auto content = prior->getInitialValue(); 
 		  b.setConvertedInternalLength(traln,param, content.values[0]); 
-		  // tout << "resetting to " << b << "\t"  << b.getInterpretedLength(traln,param); 
 		  if(not BoundsChecker::checkBranch(b))
 		    BoundsChecker::correctBranch(b); 
 		  traln.setBranch(b,param); 
@@ -126,7 +156,7 @@ void ParameterProposal::autotune()
       return; 
 
   double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, not proposer->isTuneup());
-  
+
   parameter = newParam; 
   _sctr.nextBatch();
 }

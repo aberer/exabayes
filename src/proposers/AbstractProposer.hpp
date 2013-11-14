@@ -15,20 +15,18 @@
 class AbstractProposer
 {
 public:   
+  AbstractProposer(bool tune, bool tuneup, double minVal, double maxVal); 
   virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings) = 0; 
-
-  bool isTune() const {return tune; } 
-  bool isTuneup() const {return tuneup; }
-
+  bool isTune() const {return _tune; } 
+  bool isTuneup() const {return _tuneup; }
   void correctAbsoluteRates(std::vector<double> &values) const ; 
-
   virtual AbstractProposer* clone() const = 0; 
 
 protected: 
-  bool tune; 
-  bool tuneup; 
-  double minVal; 
-  double maxVal; 
+  bool _tune; 
+  bool _tuneup; 
+  double _minVal; 
+  double _maxVal; 
 }; 
 
 

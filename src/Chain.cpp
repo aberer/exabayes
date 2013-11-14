@@ -2,6 +2,9 @@
 #include <map> 
 #include <unordered_map>
 
+// TODO remove 
+#include "parameters/BranchLengthsParameter.hpp" 
+
 #include "proposals/StatNNI.hpp"
 #include "proposals/NodeSlider.hpp"
 #include "Chain.hpp"		
@@ -309,6 +312,8 @@ void Chain::deserializeConditionally(std::string str, CommFlag commFlags)
 
 BranchPlain Chain::peekNextVirtualRoot(TreeAln &traln, Randomness rand)  
 {
+  // TODO go beyond next step  
+
   nat curGen = rand.getGeneration();
   // tout << rand << std::endl; 
 
@@ -361,6 +366,8 @@ void Chain::stepSingleProposal()
 
   auto& pfun = drawProposalFunction(_chainRand);
 
+  // tout << "have "  << pfun << std::endl; 
+
   /* reset proposal ratio  */
   _hastings = 0; 
 
@@ -391,7 +398,6 @@ void Chain::stepSingleProposal()
       _prior.accept();
       if(_bestState < traln.getTrHandle().likelihood  )
 	_bestState = traln.getTrHandle().likelihood; 
-      // _lnl = traln.getTrHandle().likelihood; 
       _lnPr = _prior.getLnPrior();
     }
   else
@@ -406,14 +412,39 @@ void Chain::stepSingleProposal()
 
       auto nodes = pfun.getInvalidatedNodes(traln); 
       _evaluator.accountForRejection(traln, myRejected, nodes); 
+
     }
+
+// #ifdef DEBUG_LNL_VERIFY
+//   double supposedLnl = getLikelihood(); 
+//   tout << MAX_SCI_PRECISION << "assumed_lnl: " << supposedLnl << std::endl; 
+
+//   bool problem = false; 
+
+//   auto blList = _traln.extractBranches(); 
+//   std::reverse(begin(blList), end(blList)) ; 
+  
+//   for(auto b :  blList)
+//     {
+//       _evaluator.evaluate(_traln, b, false, false); 
+//       auto lnl = getLikelihood(); 
+//       tout << lnl << std::endl ; 
+//       problem |=  fabs(lnl - supposedLnl) - 1.0 > 1e-6 ; 
+//     }
+  
+//   if(problem)
+//     {
+//       assert(0); 
+//     }
+// #endif
   
   // tout << "ORIENT at end: " << evaluator.getOrientation() << std::endl; 
   _evaluator.freeMemory();
 
 
-  if(this->_tuneFrequency <  pfun.getNumCallSinceTuning() ) 
+  if(_tuneFrequency <  pfun.getNumCallSinceTuning() ) 
     pfun.autotune();
+  
 }
 
 
@@ -465,12 +496,12 @@ void Chain::stepSetProposal()
     {
       // this should be a reasonable suggestion 
       auto nextRoot = peekNextVirtualRoot(traln, _chainRand); 
-      _evaluator.evaluatePartitionsWithRoot(traln, nextRoot, affectedPartitions, fullTraversalNecessary); 
+      _evaluator.evaluatePartitionsWithRoot(traln, nextRoot, affectedPartitions, fullTraversalNecessary, true); 
     }
   else 
     {
       pSet.getProposalView()[0]->prepareForSetEvaluation(traln, _evaluator);
-      _evaluator.evaluatePartitionsWithRoot(traln, branches.first , affectedPartitions, fullTraversalNecessary );
+      _evaluator.evaluatePartitionsWithRoot(traln, branches.first , affectedPartitions, fullTraversalNecessary, true );
     }
 
   auto newPLnls = traln.getPartitionLnls();
@@ -550,20 +581,13 @@ void Chain::stepSetProposal()
 
 void Chain::step()
 {
-  auto &traln = _traln; 
-  _currentGeneration++; 
-
-  if(INTEGRATION_GENERATION < _currentGeneration )
-    {
-      // startIntegration = true; 
-      // assert(0); 
-    }
+  ++_currentGeneration; 
 
 #ifdef DEBUG_VERIFY_LNPR
-  _prior.verifyPrior(traln, extractParameters());
+  _prior.verifyPrior(_traln, extractParameters());
 #endif
 
-  _evaluator.imprint(traln);
+  _evaluator.imprint(_traln);
   // inform the rng that we produce random numbers for generation x  
   _chainRand.rebaseForGeneration(_currentGeneration);
 
@@ -574,14 +598,12 @@ void Chain::step()
     stepSetProposal();
 
 #ifdef DEBUG_LNL_VERIFY
-  _evaluator.expensiveVerify(traln, traln.getAnyBranch() , getLikelihood()); 
+  _evaluator.expensiveVerify(_traln, _traln.getAnyBranch() , getLikelihood()); 
 #endif
 
 #ifdef DEBUG_VERIFY_LNPR
-  _prior.verifyPrior(traln, extractParameters());
+  _prior.verifyPrior(_traln, extractParameters());
 #endif
-
-  // tout << "================================================================" << std::endl; 
 }
 
 
@@ -683,18 +705,32 @@ std::ostream& operator<<(std::ostream& out, const Chain &rhs)
 }
 
 
-void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile  )  const
+void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile ) const
 {
-  std::vector<AbstractParameter*> blParams; 
+  auto blParamsUnfixed=  std::vector<AbstractParameter*>{} ; 
+  AbstractParameter *topoParamUnfixed = nullptr; 
+  
   for(auto &param : extractParameters()) 
-    if(param->getCategory() == Category::BRANCH_LENGTHS)
-      blParams.push_back(param); 
-
-  for(auto &param : blParams)
     {
-      nat myId = param->getIdOfMyKind(); 
-      auto &f = paramId2TopFile.at(myId); 
-      f.sample(_traln, getGeneration(), param); 
+      if(param->getCategory() == Category::BRANCH_LENGTHS && param->getPrior()->needsIntegration() )
+	blParamsUnfixed.push_back(param); 
+      else if(param->getCategory() == Category::TOPOLOGY && param->getPrior()->needsIntegration() )
+	topoParamUnfixed = param  ; 
+    }
+
+  if(blParamsUnfixed.size() > 0)
+    {
+      for(auto &param : blParamsUnfixed)
+	{
+	  nat myId = param->getId(); 
+	  auto &f = paramId2TopFile.at(myId); 
+	  f.sample(_traln, getGeneration(), param); 
+	}
+    }
+  else if(topoParamUnfixed != nullptr)
+    {
+      auto &f = paramId2TopFile.at(topoParamUnfixed->getId()); 
+      f.sample(_traln, getGeneration(), topoParamUnfixed); 
     }
 
   pFile.sample( _traln, extractParameters(), getGeneration(), _prior.getLnPrior()); 

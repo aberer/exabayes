@@ -44,7 +44,7 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &ha
 
 void AminoModelJump::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  evaluator.evaluate(traln,traln.getAnyBranch(), true); //TODO evaluate one partition
+  evaluator.evaluate(traln,traln.getAnyBranch(), true, true); //TODO evaluate one partition
 }
 
 void AminoModelJump::resetState(TreeAln &traln)

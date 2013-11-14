@@ -3,6 +3,8 @@
 #include <sstream>
 #include <limits>
 
+#include "extensions.hpp"
+
 #include "priors/DiscreteModelPrior.hpp"
 #include "priors/UniformPrior.hpp"
 #include "priors/ExponentialPrior.hpp"
@@ -58,7 +60,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 
       // for non-continuous variables (e.g., topology)
       if(token.GetToken().compare(")") == 0) 
-	return std::unique_ptr<AbstractPrior> (new UniformPrior(0,0)); 
+	return make_unique<UniformPrior>(0,0); 
 
       double n1 = atof(token.GetToken().c_str()); 
       token.GetNextToken();
@@ -67,7 +69,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       double n2 = atof(token.GetToken().c_str());
       token.GetNextToken();
       assert(token.GetToken().compare(")") == 0);
-      return std::unique_ptr<AbstractPrior> (new UniformPrior(n1,n2));  
+      return make_unique<UniformPrior>(n1,n2);  
     }
   else if(value.EqualsCaseInsensitive("disc"))
     {
@@ -137,7 +139,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	    }
 	}
 
-      return std::unique_ptr<AbstractPrior>(new DiscreteModelPrior(modelsProbs));
+      return make_unique<DiscreteModelPrior>(modelsProbs);
     }
   else if(value.EqualsCaseInsensitive("dirichlet"))
     {
@@ -163,13 +165,14 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	  token.GetNextToken();
 	  assert(token.GetToken().compare(")" ) == 0 ); 
 
-	  return std::unique_ptr<AbstractPrior>(new DiscreteModelPrior( { {model, 1.}  } ));
+	  std::unordered_map<ProtModel,double> tmp = {{model,1.}}; 
+	  return make_unique<DiscreteModelPrior>( tmp  );
 	}
       else 
 	{
 	  auto fixedValues = parseValues(token);
-	  std::cout << "found fixed values " << fixedValues << std::endl; 
-	  return std::unique_ptr<AbstractPrior>(new FixedPrior(fixedValues));
+	  auto &&result = make_unique<FixedPrior>(fixedValues); 
+	  return std::move(result);
 	}
     }
   else if(value.EqualsCaseInsensitive("exponential"))
@@ -178,13 +181,13 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       double n1 = atof(token.GetToken().c_str());
       token.GetNextToken();
       assert(token.GetToken().compare(")") == 0);
-      return std::unique_ptr<AbstractPrior>(new ExponentialPrior(n1));
+      return make_unique<ExponentialPrior>(n1);
     }
   else 
     {
       cerr << "attempted to parse prior. Did not recognize keyword " <<  value << endl; 
       ParallelSetup::genericExit(-1); 
-      return std::unique_ptr<AbstractPrior>(new ExponentialPrior(0));
+      return make_unique<ExponentialPrior>(0);
     }
 }
 
@@ -228,6 +231,13 @@ void BlockPrior::Read(NxsToken &token)
 	    }
 
 	  auto prior = parsePrior(token);
+	  tout << "parsed prior " << prior.get() << " for category " << cat  << std::endl; 
+
+	  // account for fixed bl prior that may not have any value at all 
+
+	  if(cat == Category::BRANCH_LENGTHS && prior->getInitialValue().values.size() == 0)
+	    prior->setKeepInitData(); 
+
 	  _parsedPriors.insert(std::make_pair( cat, std::make_tuple(partitions,std::move(prior))  ));
 	}
     }  

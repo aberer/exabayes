@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "RateHelper.hpp"
 #include "DnaAlphabet.hpp"
 #include "AminoAcidAlphabet.hpp"
 
@@ -13,14 +14,12 @@
 void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
   auto tmp = content.values; 
-
-  for_each(tmp.begin(), tmp.end(), [&](double &d){return d /= *(tmp.rbegin()) ;  } );
+  RateHelper::convertRelativeToLast(tmp); 
   
   for(auto &m : _partitions)
     traln.setRevMat(tmp, m);
 
-  auto newStuff = traln.getRevMat(_partitions[0]);
-  
+  // auto newStuff = traln.getRevMat(_partitions[0]);
   // tout << "applying new values " ;  
   // std::copy(newStuff.begin(), newStuff.end(), std::ostream_iterator<double>(tout, ",")); 
   // tout << std::endl;   
@@ -91,18 +90,20 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
 }
 
 
-void RevMatParameter::verifyContent(const TreeAln&traln, const ParameterContent &content) const 
+void RevMatParameter::verifyContent(const TreeAln&traln,  const ParameterContent &content) const 
 {
   auto& partition = traln.getPartition(_partitions[0]); 
-  auto num = numStateToNumInTriangleMatrix(partition.states);
+  auto num = RateHelper::numStateToNumInTriangleMatrix(partition.states);
 
   bool ok = true; 
 
   ok &= content.values.size( )== num ; 
-
+  
   auto newValues = content.values; 
-  for(auto &v : newValues)
-    v /= *(newValues.rbegin()); 
+  RateHelper::convertRelativeToLast(newValues); 
+
+  // for(auto &v : newValues)
+  //   v /= *(newValues.rbegin()); 
   
   if(ok)
     ok &= BoundsChecker::checkRevmat(newValues); 
@@ -122,7 +123,8 @@ void RevMatParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const
   nat numStates = traln.getPartition(_partitions[0]).states; 
   
   auto initVal = _prior->getInitialValue(); 
-  if( initVal.values.size() != numStateToNumInTriangleMatrix(numStates) && 
+  
+  if( initVal.values.size() != RateHelper::numStateToNumInTriangleMatrix(numStates) && 
       initVal.protModel.size() == 0 )
     {
       tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 

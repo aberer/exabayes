@@ -1,4 +1,5 @@
 #include <limits>
+#include <random>
 #include <cstring>
 
 #include "Randomness.hpp" 
@@ -159,180 +160,56 @@ int Randomness::drawSampleProportionally( double *weights, int numWeight )
 //This function should be called if the alphas for the dirichlet distribution are given
 std::vector<double> Randomness::drawRandDirichlet( const std::vector<double> &alphas)
 {
+  // we have to set some lower bound. If the gamma distribution
+  // proposes 0 (and it will), everythings falls apart if the
+  // normalization rate (the last one) becomes too small.
+  // 
+  // The boundary is a rather small value anyway.
+  static double lowerBound = 1e-32; 
+  
   auto sum= double{0};
   auto result = std::vector<double>{}; 
-  for(nat i=0; i< alphas.size();i++)
+
+  for(auto alpha : alphas)
     {
-      double val = drawRandGamma(alphas[i], 1.0); 
+      double val = drawRandGamma(alpha, 1.0); 
+      if(val <= lowerBound)
+	val = lowerBound; 
+
       result.push_back(val); 
       sum += val;
     }
-  for_each(result.begin(), result.end(), [&](double &v) {  v /= sum; }); 
 
-  // if( 1e-6 <  fabs(std::accumulate(result.begin(), result.end(), 0.)  - 1.0  ) )
-  //   {
-  //     tout << "error: sum was " << std::accumulate(result.begin(), result.end(), 0.) << std::endl; 
-  //     assert(0); 
-  //   }
+  for_each(begin(result), end(result), [&](double &v) {  v /= sum; }); 
 
   return result; 
 }
 
 
-// TODO : this is a bracen copy from mrBayes code 
-#include <random>
-#define ETA (1E-30)
 double Randomness::drawRandGamma(double alpha, double beta)
 {
-#if 1
   // a hack, until we have our own gamma 
-  std::default_random_engine generator;
+  auto generator = std::default_random_engine{} ;
   generator.seed((*this)());   
-  std::gamma_distribution<double> dist(alpha,1./beta);
-
+  auto dist = std::gamma_distribution<double>(alpha,1./beta); // 1/beta necessary?
   return dist(generator); 
-#else 
-
-
-  double r= 0.0;
-	
-  if (alpha <= 0.0)    
-    puts ("Gamma parameter less than zero\n");
-  else if (alpha < 1.0)  
-    {
-      double r, x=0.0, small=1e-37, w;
-      static double a, p, uf, ss=10.0, d;
-	
-      if (fabs(alpha-ss)>ETA) /* s != ss */ 
-	{
-	  a  = 1.0 - alpha;
-	  p  = a / (a + alpha * exp(-a));
-	  uf = p * pow(small / a, alpha);
-	  d  = a * log(a);
-	  ss = alpha;
-	}
-      for (;;) 
-	{
-	  cout << "stuck in first" << endl; 
-	  r = drawRandDouble01();	  
-	  if (r > p)        
-	    x = a - log((1.0 - r) / (1.0 - p)), w = a * log(x) - d;
-	  else if (r>uf)  
-	    x = a * pow(r / p, 1.0 / alpha), w = x;
-	  else            
-	    {
-	      x  = 0; 
-	      break; 
-	    }
-	  r = drawRandDouble01();
-	  if (1.0 - r <= w && r > 0.0)
-	    if (r*(w + 1.0) >= 1.0 || -log(r) <= w)  
-	      continue;
-	  break;
-	}
-
-      r = x ; 
-    }
-  else if (alpha > 1.0)  
-    {
-      double r , d, f, g, x;
-      static double	b, h, ss=0.0;
-
-      if (fabs(alpha-ss)>ETA) /* s != ss */
-	{
-	  b  = alpha - 1.0;
-	  h  = sqrt(3.0 * alpha - 0.75);
-	  ss = alpha;
-	}
-      for (;;) 
-	{
-	  r = drawRandDouble01();
-	  g = r - r * r;
-	  f = (r - 0.5) * h / sqrt(g);
-	  x = b + f;
-	  if (x <= 0.0) 
-	    continue;
-	  r = drawRandDouble01();
-	  d = 64 * r * r * g * g * g;
-	  if ( d * x < x - 2.0 * f * f || log(d) < 2.0 * (b * log(x / b) - f))  
-	    break;
-	}
-		
-      r = x ; 
-    }
-  else    
-    r -= log(drawRandDouble01());
-		
-  return (r / beta);
-#endif
 }
 
 
+nat Randomness::drawGeometric(double prop)  
+{
+  auto gen = std::default_random_engine{} ; 
+  gen.seed((*this)());
+  auto dist = std::geometric_distribution<nat>(prop);
+  return dist(gen); 
+}
 
-// // is there something wrong with the code below? quarantined it for
-// // now...
- 
-// // Gamma(alpha, beta) sampling
-// double Randomness::drawRandGamma(double alpha, double beta)
-// {
-//   double alpha_min=0.0001;
-//   if(alpha<alpha_min)
-//     alpha=alpha_min;
-  
-//   if(beta<0)
-//     beta=0;
-  
-//   double gamma=0;
-   
-//   int escape=0, limit=2000;
-//   bool alert=false;
-   
-//   if (alpha < 1) {
-//     double r;
-//     boolean done=false;
-//     double b=1+1/alpha;
-//     while(!done) {
-//       r=drawRandDouble01();
-//       if (r>1/b) {
-// 	gamma=-log((b-r)/alpha);
-// 	if (drawRandDouble01()<=pow(gamma,alpha-1)) 
-// 	  done=true;
-//       }
-//       else {
-// 	gamma=pow(r,1/alpha);
-// 	if (drawRandDouble01()<=exp(-gamma)) 
-// 	  done=true;
-//       }
-        
-        
-        
-//       escape++;
-//       if(alert && escape>limit)
-// 	{
-// 	  printf("r>1/b==%.2f>%.2f\n",r,1/b);
-// 	  printf("FREQ_MIN==%f alpha==%f gamma==%.2f\n",FREQ_MIN, alpha, gamma);
-// 	  alert=false; 
-// 	  //assert(0);
-// 	}	
-//     }
-//   } 
-//   else if (alpha == 1) {//GAMMA(1,1)=EXP(1)
-//     gamma = -log (drawRandDouble01());
-//   } else {    
-//     double y = -log (drawRandDouble01());
-//     while (drawRandDouble01() > pow (y * exp (1 - y), alpha - 1)){
-//       y = -log (drawRandDouble01());
-//       escape++;
-//       if(alert && escape>limit){
-// 	printf("in second\n");
-// 	alert=false; 
-//       }
-//     }
-//     gamma = alpha * y;
-//   }
-//   return beta*gamma;//scale from GAMMA(alpha,1) to GAMMA(alpha,beta)
-// }
 
+nat Randomness::drawBinomial(double prop, nat trials )
+{
+  auto dist = std::binomial_distribution<nat>(trials,prop);
+  return dist(*this);
+}
 
 
 std::ostream& operator<<(std::ostream& out, const Randomness &rhs)
@@ -378,7 +255,3 @@ void Randomness::setKey(randKey_t _key)
 {
   key = _key; 
 }
-
-
-
-// proposals/R

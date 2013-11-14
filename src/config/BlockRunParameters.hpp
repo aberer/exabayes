@@ -18,7 +18,7 @@ public:
   // getters 
   nat getTuneFreq() const { return tuneFreq;  }
   bool getTuneHeat() const { return tuneHeat; }
-  nat getSwapInterval() const { return swapInterval; }
+  double getNumSwapsPerGen() const {return numSwapsPerGen; }
   double getHeatFactor() const { return heatFactor ; }
   nat getPrintFreq() const { return printFreq; }
   nat getNumCoupledChains() const { return numCoupledChains; }
@@ -35,7 +35,6 @@ public:
   bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
   nat getChkpntFreq() const {return chkpntFreq; }
   bool isComponentWiseMH() const {return componentWiseMH; }
-  nat getNumSwaps() const {return numSwaps;}
 
   void verify() const ; 
 
@@ -51,7 +50,6 @@ private:
   int numCoupledChains; 
   int printFreq; 
   double heatFactor ; 
-  nat swapInterval; 
   bool tuneHeat; 
   nat tuneFreq;  
   bool useParsimonyStarting; 
@@ -59,7 +57,7 @@ private:
   nat chkpntFreq; 
   bool componentWiseMH; 
   bool useAsdsfMax; 
-  nat numSwaps; 
+  double numSwapsPerGen;   
 }; 
 
 

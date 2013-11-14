@@ -1,30 +1,57 @@
 #+TITLE: ExaBayes User's Manual
-#+AUTHOR: 
+#+LaTeX_CLASS: koma-article
+#+LaTeX_CLASS_OPTIONS: [a4paper]
+#+OPTIONS: ^:nil
+#+AUTHOR: for support, please contact exabayes-at-googlegroups-dot-com
 * Quick Start
+  To the impatient user that wants to give ExaBayes a quick try, I recommend: 
+
+  1. download and unpack the software package.
+  2. run the *build.sh* script and check for the compiled binaries in
+     the ~build~ directory
+  3. if necessary, convert your alignment file to phylip-format (e.g., using ~seaview~)
+  4. run the sequential version of ExaBayes, where alignmentFile.phy
+     is the alignment file, -m PROT is the equivalent command for an
+     unpartitioned protein alignment and $RANDOM could be any random
+     number seed.
+     #+BEGIN_SRC
+     $ ./yggdrasil -f alignmentFile.phy -m DNA -s $RANDOM 
+     #+END_SRC
+  5. After some time, ExaBayes should finish or you may abort at any
+     time.  You can now examine the two output files
+     ExaBayes_topology* and ExaBayes_parameters* using the
+     post-processing tools ~consense~, ~postProcParam~, ~credibleSet~
+     and ~extractBips~. Call the respective programs with ~-h~ to
+     access the help.  
 * Installation
   After downloading the software package (e.g., exabayes-0.4.tar.gz),
   you will have to compile the source code. The following sections
   explain, how to do so. After compiling you obtain an executable
   called exabayes.    
 ** Requirements 
-   ExaBayes requires a relatively recent c/c++ compiler that supports
-   c++11 features. ExaBayes is confirmed to work with
+   ExaBayes requires a relatively recent ~c/c++~ compiler that supports
+   ~c++11~ features. ExaBayes is confirmed to work with
    1. GCC version 4.6 or greater 
    2. Clang version 3.2 or greater
       
-   For running ExaBayes, you need 
-      
-
-** Comfort build 
+   For running ExaBayes in parallel (using MPI), you need a working
+   MPI installation. If you merely want to make most of your local
+   multi-core machine (e.g., laptop), simply install OpenMPI or
+   Mpich2. On Debian/Ubuntu, this should be as simple as (choose one):
+#+BEGIN_SRC
+   $ sudo apt-get install mpich2 libmpich2-dev
+   $ sudo apt-get install openmpi-bin libopenmpi-dev
+#+END_SRC
+** Comfort build on Linux/Unix
    The preferred way of compiling ExaBayes is to use the small
    *build.sh* script. If you need to have more control over the build
    process, consider the next two sections.
 
    Simple execution of the build script creates the sequential version
-   of ExaBayes (called yggdrasil) and all pre- and post-processing
+   of ExaBayes (called Yggdrasil) and all pre- and post-processing
    tools in a build-folder.
 
-#+BEGIN_SRC
+#+BEGIN_SRC sh
   $ ./build.sh 
    [...] 
   $ ls build 
@@ -36,14 +63,15 @@
    (usually mpicc) and mpi-C++ compiler (mpicxx,mpiCC or mpic++) as
    environment variable arguments. For instance: 
 
-#+BEGIN_SRC
+#+BEGIN_SRC sh
   $ ./build.sh CC=mpicc CXX=mpic++
   [...]
   $ ls build 
   exabayes
 #+END_SRC
-
-** Manual: Compiling the Sequential Version 
+   
+** Manual build on Linux/Unix
+*** Configuring and  Compiling the Sequential Version 
    To compile a sequential version of ExaBayes (called yggdrasil) and
    various pre- and post-processing tools, type
    #+BEGIN_SRC sh 
@@ -51,7 +79,7 @@ $ ./configure && make
    #+END_SRC  
    If you have a multi-core machine, you can speed up the build
    process by adding -j<numProc> to the make command.
-** Manual: Compiling the Parallel Version 
+*** Configuring and Compiling the Parallel Version 
    For compiling the parallel mpi-version using the configure script,
    employ the command line below.
 
@@ -63,8 +91,539 @@ $ ./configure && make
 $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make 
    #+END_SRC
    
-* Command Line Options Explained
-* The Configuration File 
-* On Bayesian Analyses
-* ExaBayes at Large: Invocations on Clusters/Supercomputers
-* Notes on Reproducibility 
+<<<<<<< HEAD
+** Installation on Mac OS X
+   For installation on an Apple system, you ideally should have set up
+   an environment that allows you to compile (MPI-)applications in the
+   terminal. This should not be too difficult, but we cannot provide
+   an extensive tutorial here.
+
+   First, you need to download and install [[http://en.wikipedia.org/wiki/Xcode][Xcode]] and [[http://www.macports.org/][MacPorts]]. Then,
+   open a terminal and install further programs (if you do not want
+   the parallel version, omit openmpi):
+#+BEGIN_SRC
+   $ sudo port install gcc 
+   $ sudo port install openmpi 
+#+END_SRC
+
+   In the best case, you now can run the *apple-build.sh*-script and
+   use the automated build:
+   
+#+BEGIN_SRC 
+   $ ./apple-build.sh CC=openmpicc CXX=openmpicxx
+#+END_SRC
+
+   If this does not work out, please try it the manual way and
+   modify the command line, if necessary (resp. ask us for support):
+   
+#+BEGIN_SRC
+   $ ./configure CXXFLAGS="-stdlib=libc++" && make 
+   $ ./configure --enable-mpi CC=openmpicc CXX=openmpicxx CXXFLAGS="-stdlib=libc++" && make 
+#+END_SRC
+
+   ExaBayes is confirmed to work with 
+   1. clang/ clang++ LLVM version 5.0 (based on LLVM 3.3svn),
+   2. openmpi 1.7.2,
+   3. on OS X "Mountain Lion".
+      
+   There may be different ways of building ExaBayes on Apple
+   systems. For suggestions and support requests, please contact our
+   google group.
+
+* TODO Scope of ExaBayes: What is it? What is it not?
+** parameters to be integrated
+** proposals
+   Most proposals implemented in ExaBayes are very similar to the
+   proposals in MrBayes. For a discussion of deviations, we would like
+   to refer you to the supplement of /paper submitted/.
+* Command Line Options 
+  The essential arguments for ExaBayes are provided on the command
+  line. Aside from that, all options that affect how the MCMC
+  computation is carried out is specified here.
+** Mandatory Arguments 
+
+   + *-f alignmentFile* 
+
+     provides a binary alignment file, that has been
+     created with the ~parser~ utility (see Section [[#parser]]). If the ~-m~ or
+     ~-q~ option is used, then alignmentFile has to be a plain
+     (un-processed) [[http://evolution.genetics.washington.edu/phylip/doc/sequence.html][Phylip file]]. 
+
+   + *-m DNA | PROT* 
+
+     specifies the data type used, when a
+     Phylip-formatted alignment has been passed via ~-f~. This way, the
+     alignment is parsed as a single partition with either DNA or amino
+     acid (~PROT~) data.
+
+   + *-q modelFile* 
+
+     specifies a raxml-style partitioning/model scheme
+     for the alignment. For this option, a Phylip-formatted alignment
+     must be passed via ~-f~. See Section [[#partitionfile]] for a description of
+     the file format. 
+     
+   + *-s seed* 
+
+     provides a random seed. This number makes the run
+     reproducible. The same seed, data set configuration file will
+     result in the exact same result (apart from some exceptions, see Section
+     [[#reproducibility]]).  If you restart from a checkpoint file, this
+     option will be ignored.
+     
+   + *-n id* 
+
+     provides a run id used for naming output files 
+
+   + *-r runid* 
+     
+     restarts your run from a previous run id. If your previous
+     ExaBayes-run did not finish (because of a manual abort or
+     walltime restrictions), this option can be used for continuing
+     the run. It is essential, that you pass the same configuration
+     and alignment file. Apart from that command line options that
+     govern how the run is carried out, may change.
+
+     Example:
+     #+BEGIN_SRC 
+     $ mpirun ./exabayes -s $RANDOM -n myId -c myConfig -f myBinaryAlnFile.bin 
+     $ [runnig....] -> aborted!
+     $ mpirun ./exabayes -r myId -n myIdContinued -c myConfig -f myBinaryAlnFile.bin 
+     #+END_SRC
+     
+** Optional Arguments 
+   + *-d* 
+     
+     carries out a dry-run. Very recommendable, before
+     submitting a large run to a cluster. 
+
+   + *-c configFile* 
+
+     passes a configuration file that specifies how
+     the MCMC will be carried out (see
+     ./examples/all-options-documented.nex and Section [[#config]] for details)
+     
+   + *-w workDir* 
+
+     specifies a location for output files
+
+   + *-R num* 
+
+     (~exabayes~-only) specifies the number of runs (i.e.,
+     independent chains) to be executed in parallel. Large runs should
+     be carried out as separate runs, see Section [[#cluster]] for further
+     details.
+
+   + *-C num* 
+
+     (~exabayes~-only) specifies the number of chains (i.e.,
+     coupled chains per independent run) to be executed in
+     parallel. Employing this option may be less efficient in terms of
+     runtime and memory than data-level parallelism, see Section [[#cluster]] for
+     further details.
+
+   + *-Q* 
+
+     (~exabayes~-only) enables per-partition data
+     distribution. This option assigns entire partitions to
+     processors.  Thus, If your alignment comprises more partitions
+     than you have processors available, this option is likely to
+     speed up calculations substantially. You should check the
+     print-out right before the start of MCMC sampling about whether
+     load is distributed equally.
+
+   + *-S* 
+
+     try to save memory using the SEV-technique for gap columns
+     on large gappy alignments Please refer to
+     http://www.biomedcentral.com/1471-2105/12/470 On very gappy
+     alignments this option yields considerable runtime improvements.
+     
+   + *-M mode* 
+
+     specifies the memory versus runtime trade-off.  <mode>
+     is a value between 0 (fastest, highest memory consumption) and 3
+     (slowest, least memory consumption). See Section [[#memory]] for details.
+
+* Configuration File
+  :PROPERTIES:
+  :CUSTOM_ID: config
+  :END:
+  In this Section, we describe all available options of the
+  configuration file in detail. The configuration file is a file in
+  nexus-format that is divided into sections. See
+  examples/all-options-documented.nex for a complete version (and
+  maybe copy and customize this file).
+  
+  None of the blocks in mandatory. The parameter file itself is not
+  mandatory and the default values mentioned below are used instead.
+
+** Declaring and Linking Parameters 
+  :PROPERTIES:
+  :CUSTOM_ID: param-block
+  :END:
+
+   keyword: ~params~ 
+
+   This section allows to declare and link parameters (e.g., branch
+   lengths) across partitions. You should have declared partitions in
+   the partition file (passed via ~-q~). If you provided a partition
+   file to the ~parser~ tool, then the binary output file already
+   contains information about partitions. Partition ids start with 0
+   and refer to the order provided in the partition file.
+
+   Currently the following keywords can be used to specify a parameter
+   linking scheme (case does not matter):
+
+|-------------+------------------------------------------------------------------------------------------|
+| param       | explanation                                                                              |
+|-------------+------------------------------------------------------------------------------------------|
+| ~stateFreq~ | link the equilibrium state frequencies (4 for DNA, 20 for AA) for partitions             |
+| ~rateHet~   | link the alpha parameter of the $\Gamma$  distribution of rate heterogeneity among sites |
+| ~revMat~    | link the substitution rates in the GTR matrix (6 for DNA, 190 for AA) across partitions  |
+| ~brlens~    | link branch lengths across partitions                                                    |
+| ~aaModel~   | link the fixed rate substitution matrix across partitions (if applicable)                |
+|-------------+------------------------------------------------------------------------------------------|
+
+   Note that, by default all parameters are unlinked for all
+   partitions. Specifically regarding branch lengths, most people will
+   to have only branch length parameter. If a partition id is omitted
+   from the scheme, the default behaviour of ExaBayes is to
+   instantiate a new parameter for this partition (i.e., it is
+   unlinked). 
+   
+   You have the following options for specifying linkage (here
+   demonstrated for the branch length parameter):
+   
+   + use /comma/ to declare separate parameters \\ 
+     /example:/ ~brlens  = (0,1,2,3)~ \\ 
+     /result:/ v{0}, v{1}, v{2}, v{3} \\ 
+
+   + use /plus/ to link two parameters \\ 
+      /example:/ ~brlens = (0 + 1 , 2 , 3)~ \\ 
+      /result:/  v{0,1}, v{2}, v{3} \\ 
+
+   + use /colon/ to declare a range of unlinked parameters \\ 
+      /example:/ ~brlens = (0:3)~ \\ 
+      /result:/  v{0}, v{1}, v{2}, v{3}  \\ 
+
+   + use /dash/ to declare a range of linked parameters \\ 
+      /example:/ ~brlens = (0-3)~\\ 
+      /result:/ v{0,1,2,3} \\ 
+
+  For most use cases, you probably will only want to link all branch
+  lengths. However, in case you work with protein partitions, please
+  consider:
+
+  + By default ExaBayes creates one ~aaModel~ parameter for each of
+    your amino acid partitions. As state frequencies, ExaBayes uses
+    the empirical frequencies provided by the respective amino acid
+    substitution matrix.
+  + Instead of using the empirical frequencies, you may want to let
+    ExaBayes integrate over these state frequencies. For doing so, you
+    simply have to mention one of the respective partitions when
+    specifying the ~stateFreq~ parameter scheme. If you have two AA
+    partitions, then ~stateFreq = (0)~ instructs ExaBayes to integrate
+    over the state frequencies of the first amino acid model
+    parameter. 
+  + As an alternative to proposing AA substitution matrices for AA
+    partitions, you can use ExaBayes to integrate over amino acid GTR
+    matrices (189 free parameters).  For doing so, mention (and link)
+    the respective AA partitions in the ~revMat~ linking scheme (e.g.,
+    ~revMat = (0+1)~ for 1 shared GTR matrix across 2 AA partitions).
+** Declaring Priors for Parameters
+
+   keyword: ~prior~
+   
+   Using prior block, you can declare your prior belief in values the
+   parameters ExaBayes integrates over can assume. This affects
+   parameters implicitly instantiated by ExaBayes or explicitly
+   defined in a param block (see Section [[#param-block]]).
+   
+   By default priors specifications are applied to all matching
+   parameters. You can overwrite these /general/ priors by specifying
+   parameter-specific priors. For doing so, list all at least one
+   partition that is assigned to your target parameter in curly
+   brackets after the prior keyword. For instance:
+   #+BEGIN_SRC
+   brlenPr exponential(10)
+   brlenPr{0,2,10} uniform(1e-6,10)
+   #+END_SRC
+   applies a uniform prior with $[1e-6,10]$ to all branch length
+   parameters that contain the partitions 0,2 or 10 and applies an
+   exponential prior with $\lambda = 10$ to all remaining branch
+   length parameters.
+
+*** Topology Prior
+     keyword: ~topoPr~, \\ 
+     default: ~topoPr uniform()~ \\ 
+     valid values: 
+     - ~fixed()~ \\ 
+       topology is kept fixed
+     - ~uniform()~ \\ 
+       all topologies have the same prior probability 
+*** Branch Lengths Prior
+     keyword: ~brlenPr~ , \\ 
+     default: ~brlenpr exponential(10)~\\ 
+     valid values:
+     - ~exponential(~ $\lambda$ ~)~ \\ 
+       exponential prior with parameter $\lambda$, 
+     - ~uniform(start,end)~ \\ 
+       uniform probability in the range $[start,end]$ \\ 
+     - ~fixed(~ $val$ ~)~ \\
+       all branch lengths will be assigned the value $val$ that is
+       kept fixed during the analysis (not meaningful, you still
+       integrate over the topology)
+     - ~fixed()~ \\
+       all branch lengths keep original branch length provided via a
+       starting tree. If no starting tree is available, a default
+       value (currently 0.1) is assigned and kept fix during MCMC
+       sampling.
+*** Reversible Matrix Prior
+    keyword: ~revMatPr~  \\
+    default: ~revMatPr dirichlet(1,...,1)~\\ 
+     valid values: 
+     - ~dirichlet(~ $x_1,x_2,\ldots, x_n$ ~)~\\
+       where for a dirichlet prior $x_i$ are the substitution rates in
+       a GTR matrix and thus $n = 6$ for DNA GTR matrices and $n =
+       190$ (yes, that is much, use with care) for AA GTR matrices).\\
+     - ~fixed(~ $x_1,x_2, \ldots, x_n$ ~)~\\
+       fixed rates are assigned to the matrix and kept fix during MCMC
+       sampling. The values $x_i$ may be expressed as relative rates
+       (i.e, ExaBayes will normalize the rates, s.t. they sum up to
+       1.0)
+*** Rate Heterogeneity Prior
+     keyword: ~shapePr~, \\ 
+     default: ~shapePr uniform(0,200)~  \\ 
+     valid values: \\ 
+     - ~exponential(~ $\lambda$ ~)~ \\
+       prior probability of $\alpha$ values have an exponential
+       distribution with parameter $\lambda$
+     - ~uniform( start, end )~ \\
+       $\alpha$ values have uniform prior probability in the range
+       $[ start, end ]$ 
+*** State Frequencies Prior
+    keyword: ~stateFreqPr~ , \\ 
+    default: dirichlet(1,1,$\ldots$,1)\\ 
+    valid values: \\ 
+     - ~dirichlet(~ $x_1,x_2, \ldots, x_n$ ~)~ \\
+       where for a dirichlet prior $x_i$ are the state frequencies in
+       a GTR matri nad thus $n =4$ for DNA and $n = 20$ in a protein
+       GTR matrix.
+     - ~fixed(~ $x_1,x_2, \ldots, x_n$ ~)~ \\
+       fixed values are assigned to the state frequencies and not
+       changed during MCMC sampling. $x_i$ can be expressed as
+       relative rates (i.e., if the sum is $\geq 1$, ExaBayes does the
+       normalizing for you)
+
+*** Amino Acid Model Prior
+    keyword: ~aaPr~, \\ 
+    default: ~aaPr disc(remainder=1.0)~ \\ 
+    valid values: \\ 
+     - ~disc(~ $m_1$ = $w_1$, $m_2$ = $w_2$, $\ldots$, $m_n$ = $w_n$ ~)~  \\
+       a discrete probability distribution assigning weights $w_i$ to
+       protein substitution matrices $m_i$. If only one model is
+       specified, this is equivalent to a fixed prior.
+       
+       $m$ may be one of the following models: DAYHOFF, DCMUT, JTT,
+       MTREV, WAG, RTREV, CPREV, VT, BLOSUM62, MTMAM, LG, MTART,
+       MTZOA, PMB, HIVB, HIVW, JTTDCMUT, FLU.
+       
+       By default, if a model is not mentioned in the list, then its
+       prior probability is 0 and thus is not considered during MCMC
+       sampling.
+       
+       Additionally, you can include remainder value (i.e.,
+       ~remainder=~ $w_i$). This means that all matrices not mentioned
+       have a prior probability of $w_i$.
+     - ~fixed(~ $m$ ~)~\\ 
+       fix the value of the parameter to one of the models listed above 
+** RunConfig Block
+   
+*** MC3 options 
+    
+** TODO Proposals Block
+* Pre-/post-processing utilities
+  For all utilities, please use the -h option, the documentation is
+  mostly sufficient to execute the programs. In this section, we
+  provide additional hints and caveats about employment of these
+  tools.
+** parser
+:PROPERTIES:
+:CUSTOM_ID: parser
+:END:
+   This utility parses an phylip-formatted alignment and creates a
+   binary representation of this alignment. You either have to
+   indicate the data type of a single partition alignment (via ~-m~)
+   or provide a model file via ~-q~ (see Section [[#partitionfile]]).
+
+   Parsing large alignment can take a considerable amount of time that
+   is lost manifold when ExaBayes is executed in parallel.
+
+** postProcParam
+   This utility can be used to summarize (similar to sump in MrBayes
+   or the summary statistics in Tracer) all sampled parameters. 
+   
+   This is straight-forward for continuous parameters (such as
+   substitution rates). If you integrate over fixed protein model
+   matrices (e.g, WAG, LG,...), you are integrating over a discrete
+   parameter. The output in the ExaBayes_parameters* will list the
+   respective matrices. In this case, postProcParam will create an
+   extra column that contains the discrete distribution. 
+** asdsf
+   This utility computes deviations of split frequencies (either
+   maximum or average, abbrev. as ASDSF/MSDSF). If you are integrating
+   over topologies (you usually are), ASDSF/MSDSF are an essential
+   convergence criterion. The authors of MrBayes recommend an ASDSF of
+   0.5-1% to be considered "good convergence" and values between 1-3%
+   to be acceptable.
+
+   According to our experience, you will encounter strongest
+   deviations for branches with low posterior probability. 
+
+   The stand-alone ~asdsf~ tool is identical to the convergence
+   diagnostic that is carried out, when multiple independent runs are
+   carried out. If you run an exceptionally large analysis with
+   multiple independent runs and plan on sampling a very large number
+   of trees, it is highly recommendable to launch each independent run
+   as a distinct ExaBayes session. You could have a master-script that
+   launches the independent runs (to be run for e.g., 2 h), then
+   checks for convergence and restarts the runs from the respective
+   checkpoints, if not converged yet. If an immense number of
+   processes is involved and your cpu-h budget is tight, this saves
+   you some sequential overhead. 
+   
+** credibleSet
+   This utility computes the credible set of topologies (up to a
+   specified percentile) in one or many tree sets. Use it for
+   post-analyses of your tree samples. 
+   
+** extractBips
+   This utility extracts bipartitions (AKA splits or edges) from tree
+   sets and the branch lengths associated with these
+   bipartitions. Note that, this utility also examines trivial
+   bipartitions (these correspond to outer branches in a tree).
+   
+   extractBips produces the following files: 
+   + *ExaBayes_bipartitions.** lists the smaller partition of a
+     bipartition (i.e., all taxa omitted are in the complementary
+     partition) and assigns a unique identifier to the bipartition.
+     
+   + *ExaBayes_fileNames.** lists the file names of the input topology
+     files and assigns a for reference in the remaining two files.
+
+   + *ExaBayes_bipartitionBranchLengths.** contains all unique branch
+     lengths samples associated with a specific bipartition in a
+     specific file. The file id and bipartition id from the previous
+     two files are used for that.
+
+   + *ExaBayes_bipartitionStatistics.** contains summary statistics
+     for the branch lengths associated with bipartitions (similar to
+     the output of postProcParam). The ESS value indicates, whether
+     you have sufficiently sampled the branch length associated with a
+     branch and the PRSF value can be used to judge, if the samples
+     from different chains converged against the same distribution.
+
+   If a bipartition occurs only in one chain, extractBips will produce
+   ~-nan~-values.
+     
+** consense
+   This utility allows to build consensus trees from one or more tree
+   sets. If computing the consensus tree (specifically the extended MR
+   consensus) becomes computationally challenging, you may want to
+   give the parallelized consensus tree algorithm in [[https://github.com/stamatak/standard-RAxML][RAxML]] a try (use
+   ~-J MRE~).
+* TODO ExaBayes on Clusters/Supercomputers
+:PROPERTIES:
+:CUSTOM_ID: cluster
+:END:
+** General
+** Caveats
+** Choosing the right kind of parallelism 
+** About Memory
+:PROPERTIES:
+:CUSTOM_ID: memory
+:END:
+* Note on Reproducibility
+:PROPERTIES:
+:CUSTOM_ID: reproducibility
+:END:
+  ExaBayes comes with a relatively strong guarantee of
+  reproducibility.
+
+  Ideally, the same seed, configuration file and alignment file have
+  to result in the exact same outcome (e.g., topology/parameter
+  samples) regardless whether yggdrasil or exabayes were
+  employed. This should hold for any kind of command line parameter
+  governing the specifics of how calculations are to be
+  performed. Furthermore, repeated continuations from a checkpoint
+  file should not influence the output either.
+
+  Any change in the configuration file potentially interferes with
+  perfect reproducibility (e.g., increasing the checkpoint frequency).
+  
+  When parallelism is involved, this guarantee does not hold
+  necessarily. The reason for this is indeterminism in the calculation
+  of the likelihood, when conducted on multiple
+  processors. Compensating for this problem comes at the cost of
+  runtime performance, thus this has not been implement in ExaBayes. 
+  
+  In other words: running ExaBayes with a different number of
+  processes may yield different results.
+
+  All of the above does not influence the correctness of the results,
+  however it limits the guarantee that the chain is in the exact same
+  state.
+  
+* File Format: Model/Partitioning file
+:PROPERTIES:
+:CUSTOM_ID: partitionfile
+:END:
+  If you want to partition your data, you have to provide a model file
+  either to the ~parser~ utility or to ~yggdrasil/exabayes~ (via
+  ~-q~). In brief, this format is identical to the raxml model-file
+  format, except that instead of specifying specific protein
+  substitution matrices, you must identify a protein partition with
+  *PROT* instead of a matrix name such as *LG*. 
+
+  The example file below demonstrates the syntax of this file format: 
+
+  #+BEGIN_SRC
+DNA, gene1=1-300
+DNA, gene2-codonPos1=301-500\3
+DNA, gene2-codonPos2=302-500\3
+DNA, gene2-codonPos3=303-500\3
+PROT, protId=501-800
+DNA, composure=801-1000,1101-1200
+DNA, gene3=1000-1100
+  #+END_SRC
+
+  The bottom line is: 
+  + data type identifier: *DNA* or *PROT* (followed by comma)
+  + partitionName (followed by equal sign)
+  + alignment positions:
+    + range component, see "gene1"
+    + strided range (useful for codon positions), see
+      "gene2-codonPos1", "gene2-codonPos2" and "gene2-codonPos3". Notice
+      that the starting position of the range is incremented for the
+      second and third codon position. 
+    + combining elements, see "composure". You can combine any
+      element using a comma.  
+
+ For concatenating a large number of alignments efficiently, we
+ distribute this [[https://github.com/aberer/concat-aln][tool]] separately from ExaBayes. It automatically
+ creates the appropriate model file, although you will have to
+ manually set the data type for amino acid partitions. Please use
+ with caution.
+
+ A side note on efficiency: partitioning your data makes likelihood
+ calculation less efficient. If for instance you partition your data
+ and link all parameters across all partitions, then you could have
+ provided an unpartitioned alignment and the MCMC sampling would
+ require less computational resources. 
+
+* Disclaimer
+  None of the statements regarding personal communication have been
+  approved by the person referred to. Thus, we take full
+  responsibility for incorrectly propagated statements.
+---------------------------------

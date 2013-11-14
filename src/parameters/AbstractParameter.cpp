@@ -2,9 +2,9 @@
 #include "Category.hpp"
 
 
-AbstractParameter::AbstractParameter(Category cat, nat id, nat _idOfMyKind, std::vector<nat> partitions, nat paramPrio)
+AbstractParameter::AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio)
   : _id(id)
-  , _idOfMyKind(_idOfMyKind)
+  , _idOfMyKind(idOfMyKind)
   , _cat(cat) 
   , _printToParamFile(true)
   , _partitions(partitions)
@@ -49,10 +49,10 @@ std::ostream&  AbstractParameter::printShort(std::ostream& out) const
 }
 
 
-
 void AbstractParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const 
 {
 }
+
 
 void AbstractParameter::checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &traln) const 
 {

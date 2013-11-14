@@ -2,8 +2,9 @@
 #define DIRICHLETPROPOSAL_H
 
 #include "AbstractProposer.hpp"
+#include "RateHelper.hpp"
 
-class DirichletProposal : public AbstractProposer
+class DirichletProposer : public AbstractProposer
 {				
 public: 
   /** 
@@ -13,21 +14,22 @@ public:
       indicates whether the previous two boundary arguments are
       relative to a value (e.g., revmat) or whether they sum up to 1.
    */ 
-  DirichletProposal( double minVal, double maxVal, bool minMaxIsRelative); 
+  DirichletProposer( double minVal, double maxVal, bool minMaxIsRelative); 
 
-  DirichletProposal(const DirichletProposal& rhs) 
+  DirichletProposer(const DirichletProposer& rhs) 
     : AbstractProposer(rhs)
   {
     minMaxIsRelative = rhs.minMaxIsRelative; 
   }
 
-  virtual ~DirichletProposal(){}
+  virtual ~DirichletProposer(){}
   virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
-  virtual AbstractProposer* clone() const  {return new DirichletProposal(*this);  }
+  virtual AbstractProposer* clone() const  {return new DirichletProposer(*this);  }
 
 private: 
   bool minMaxIsRelative;
 
+  RateHelper _rateHelper; 
 }; 
 
 #endif

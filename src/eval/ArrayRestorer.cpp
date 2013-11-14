@@ -35,13 +35,14 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
       for(nat i = traln.getNumberOfTaxa() + 1  ; i < lastNode ; ++i)
 	{
 	  if(partitionLikelihoods[partitionIndex].isCached.at(ctr))
-	    uncache(traln, i, partitionIndex, evalOrientation); 
+	    {
+	      uncache(traln, i, partitionIndex, evalOrientation); 
+	    }
 	  ++ctr; 
 	}
 
       // restore the partition scaler 
       auto& partition = traln.getPartition( partitionIndex);       
-      // memcpy(partition.globalScaler, partitionLikelihoods.at(partitionIndex).scaler.data(), sizeof(nat) * (2 * traln.getNumberOfTaxa()  ) ); 
 
       if(restoresGapVector)
 	{
@@ -55,6 +56,8 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
 
 void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, const ArrayOrientation &curOrient )
 {
+  // tout << "caching node=" << nodeNumber << ", partition=" << partitionId << std::endl; 
+
   auto id = nodeNumber - ( traln.getNumberOfTaxa() + 1 ) ; 
 
   if(partitionLikelihoods[partitionId].cachedArrays.at(id) != nullptr)
@@ -98,6 +101,8 @@ void ArrayRestorer::destroyAndForget(TreeAln &traln, nat nodeNumber, nat partiti
 
 void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, ArrayOrientation &curOrient )
 {
+  // tout << "uncaching node=" << nodeNumber << ", partition=" << partitionId << std::endl; 
+
   auto& partition = traln.getPartition(partitionId); 
   auto id = nodeNumber - ( traln.getNumberOfTaxa() + 1) ; 
 
@@ -183,13 +188,12 @@ void ArrayRestorer::resetRestorer(const TreeAln &traln, ArrayOrientation &curOri
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
       auto& partition = traln.getPartition( i); 
-      // partitionLikelihoods.at(i).scaler.assign(partition.globalScaler, partition.globalScaler + (2 * traln.getNumberOfTaxa() ) ); 
-      
+
       if(restoresGapVector)
 	{
 	  // problematic? 
 	  std::copy(partition.gapColumn ,
-		    partition.gapColumn + traln.getNumberOfTaxa() * partition.states * 4, 		    
+		    partition.gapColumn + traln.getNumberOfTaxa() * partition.states * 4, 
 		    partitionLikelihoods.at(i).gapColumn.begin() ); 
 	}
     }

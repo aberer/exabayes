@@ -28,31 +28,32 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
   if(isDryRun)
     return; 
 
-  std::ofstream fh(fullFileName,std::fstream::out);  // std::fstream::app|
+  auto&& fh =  std::ofstream{fullFileName,std::fstream::out}; 
 
   fh << "[ID: " << someId << "]\n"; 
 
-  fh << "Gen\t";
-  fh << "LnPr\t"; 
-  fh << "LnL\t" ; 
+  fh << "Gen";
+  fh << "\tLnPr"; 
+  fh << "\tLnL" ; 
 
-  std::vector<AbstractParameter*>  blParams; 
+  auto blParams = std::vector<AbstractParameter*> {}; 
   for(auto &param : parameters)
-    if(param->getCategory() == Category::BRANCH_LENGTHS)
+    if(param->getCategory() == Category::BRANCH_LENGTHS
+       && param->getPrior()->needsIntegration() )
       blParams.push_back(param); 
 
   for(auto &param : blParams)    
-    fh << "TL{" << param->getPartitions()   << "}\t"; 
+    fh << "\tTL{" << param->getPartitions()   << "}"; 
 
-  bool isFirst = true; 
+  // bool isFirst = true; 
   for(auto &p : parameters)
     {
       if(p->isPrintToParamFile())
 	{
-	  if(isFirst) 
-	    isFirst = false; 
-	  else 
-	    fh << "\t" ; 
+	  // if(isFirst) 
+	  //   isFirst = false; 
+	  // else 
+	  fh << "\t" ; 
 	  p->printAllComponentNames(fh, traln); 
 	}
     }
@@ -65,7 +66,7 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
 
 void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr)  
 {
-  auto&& fh = std::ofstream(fullFileName, std::fstream::app|std::fstream::out);  
+  auto&& fh = std::ofstream(fullFileName, std::fstream::app);  
     
   fh << gen << "\t"; 
   fh << MAX_SCI_PRECISION; 

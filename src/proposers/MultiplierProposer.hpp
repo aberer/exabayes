@@ -6,14 +6,14 @@
 ////////////////
 // MULTIPLIER //
 ////////////////
-class MultiplierProposal : public AbstractProposer
+class MultiplierProposer : public AbstractProposer
 {
 public: 
-  MultiplierProposal(double minVal, double maxVal); 
+  MultiplierProposer(double minVal, double maxVal); 
   
-  MultiplierProposal(const MultiplierProposal& rhs): AbstractProposer(rhs) {}
+  MultiplierProposer(const MultiplierProposer& rhs): AbstractProposer(rhs) {}
 
-  virtual AbstractProposer* clone() const  {return new MultiplierProposal(*this);  }
+  virtual AbstractProposer* clone() const  {return new MultiplierProposer(*this);  }
   virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
 }; 
 

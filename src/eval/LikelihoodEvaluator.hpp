@@ -21,7 +21,7 @@ public:
   /**
      @brief: evaluate a list of partitions. This is always a full traversal 
    */
-  void evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain& root,  const std::vector<nat>& partitions, bool fullTraversal)  ; 
+  void evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain& root,  const std::vector<nat>& partitions, bool fullTraversal, bool debug)  ; 
   /** 
       @brief evaluate a subtree. This used to be the
       newview-command. The this-node is the important part, the
@@ -31,7 +31,7 @@ public:
   /** 
       @brief evaluation at a given branch  
    */ 
-  void evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal )  ; 
+  void evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal, bool debug )  ; 
   /** 
       @brief mark a node as dirty  
    */ 
@@ -65,7 +65,7 @@ public:
 
   ArrayOrientation getOrientation() const {return arrayOrientation;   }
 
-  void expensiveVerify(TreeAln &traln, const BranchPlain& root, double toVerify);
+  void expensiveVerify(TreeAln &traln,  BranchPlain root, double toVerify);
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
 
 private: 			// METHODS 

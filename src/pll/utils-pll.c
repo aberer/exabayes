@@ -241,7 +241,7 @@ void read_msa(tree *tr, partitionList *pr, const char *filename)
       model;
 
     unsigned char *y;
-  double **empiricalFrequencies;
+  double **empiricalFrequencies; /*  */
 
     FILE
       *byteFile = myfopen(filename, "rb");
@@ -364,41 +364,41 @@ void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
   assert(bytes_read == nmemb);
 }
 
-#if 0
-void *malloc_aligned(size_t size) 
-{
-  void 
-    *ptr = (void *)NULL;
+/* #if 0 */
+/* void *malloc_aligned(size_t size)  */
+/* { */
+/*   void  */
+/*     *ptr = (void *)NULL; */
 
-  int 
-    res;
+/*   int  */
+/*     res; */
 
 
-#if defined (__APPLE__)
-  /* 
-     presumably malloc on MACs always returns 
-     a 16-byte aligned pointer
-     */
+/* #if defined (__APPLE__) */
+/*   /\*  */
+/*      presumably malloc on MACs always returns  */
+/*      a 16-byte aligned pointer */
+/*      *\/ */
 
-  ptr = rax_malloc(size);
+/*   ptr = rax_malloc(size); */
 
-  if(ptr == (void*)NULL) 
-    assert(0);
+/*   if(ptr == (void*)NULL)  */
+/*     assert(0); */
 
-#ifdef __AVX
-  assert(0);
-#endif
+/* #ifdef __AVX */
+/*   assert(0); */
+/* #endif */
 
-#else
-  res = posix_memalign( &ptr, BYTE_ALIGNMENT, size );
+/* #else */
+/*   res = posix_memalign( &ptr, BYTE_ALIGNMENT, size ); */
 
-  if(res != 0) 
-    assert(0);
-#endif 
+/*   if(res != 0)  */
+/*     assert(0); */
+/* #endif  */
 
-  return ptr;
-}
-#endif
+/*   return ptr; */
+/* } */
+/* #endif */
 
 
 
@@ -1196,7 +1196,7 @@ void initializePartitionData(tree *localTree, partitionList * localPartitions)
 
       localPartitions->partitionData[model]->substRates        = (double *)rax_malloc((size_t)pl->substRatesLength * sizeof(double));
       localPartitions->partitionData[model]->frequencies       = (double*)rax_malloc((size_t)pl->frequenciesLength * sizeof(double));
-      localPartitions->partitionData[model]->empiricalFrequencies       = (double*)rax_malloc((size_t)pl->frequenciesLength * sizeof(double));
+      localPartitions->partitionData[model]->empiricalFrequencies       = (double*)rax_calloc((size_t)pl->frequenciesLength,  sizeof(double));
       localPartitions->partitionData[model]->tipVector         = (double *)rax_malloc_aligned((size_t)pl->tipVectorLength * sizeof(double));
       localPartitions->partitionData[model]->symmetryVector    = (int *)rax_malloc((size_t)pl->symmetryVectorLength  * sizeof(int));
       localPartitions->partitionData[model]->frequencyGrouping = (int *)rax_malloc((size_t)pl->frequencyGroupingLength  * sizeof(int));

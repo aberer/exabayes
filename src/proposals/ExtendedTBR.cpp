@@ -175,7 +175,7 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& tral
   for(auto &elem : dirtyNodes)
     evaluator.markDirty(traln,elem); 
 
-  evaluator.evaluate(traln,toEval,false); 
+  evaluator.evaluate(traln,toEval,false, true); 
 }
 
 

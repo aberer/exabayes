@@ -2,6 +2,7 @@
 #define REV_MAT_PARAMETER
 
 
+#include "RateHelper.hpp"
 #include "Category.hpp"
 #include "AbstractParameter.hpp"
   
@@ -12,7 +13,6 @@ public:
     : AbstractParameter(Category::SUBSTITUTION_RATES, id, idOfMyKind, partitions, 1  )
   {
   }
-
 
   RevMatParameter(const RevMatParameter &rhs )
     : AbstractParameter(rhs)
@@ -35,7 +35,7 @@ public:
   {
     auto content = prior.getInitialValue();
     auto& partition = traln.getPartition(_partitions.at(0));
-    return content.values.size()  ==  numStateToNumInTriangleMatrix(partition.states); 
+    return content.values.size()  ==  RateHelper::numStateToNumInTriangleMatrix(partition.states); 
   }
 }; 
 

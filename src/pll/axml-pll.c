@@ -1114,7 +1114,7 @@ int main (int argc, char *argv[])
     tr->patratStored    = (double*)  rax_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
     tr->lhs             = (double*)  rax_malloc((size_t)tr->originalCrunchedLength * sizeof(double)); 
 
-    empiricalFrequencies = (double **)rax_malloc(sizeof(double *) * partitions->numberOfPartitions);
+    empiricalFrequencies = (double **)rax_calloc( partitions->numberOfPartitions,sizeof(double *));
 
     y = (unsigned char *)rax_malloc(sizeof(unsigned char) * ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips));
     tr->yVector = (unsigned char **)rax_malloc(sizeof(unsigned char *) * ((size_t)(tr->mxtips + 1)));
@@ -1177,7 +1177,7 @@ int main (int argc, char *argv[])
       p->partitionName = (char*)rax_malloc(sizeof(char) * (size_t)len);
       myBinFread(p->partitionName, sizeof(char), len, byteFile);
 
-      empiricalFrequencies[model] = (double *)rax_malloc(sizeof(double) * (size_t)partitions->partitionData[model]->states);
+      empiricalFrequencies[model] = (double *)rax_calloc( (size_t)partitions->partitionData[model]->states, sizeof(double));
       myBinFread(empiricalFrequencies[model], sizeof(double), partitions->partitionData[model]->states, byteFile);
     }
 

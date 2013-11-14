@@ -1514,14 +1514,14 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex)
 		pr->partitionData[model]->globalScaler[tInfo->qNumber] +
 		pr->partitionData[model]->globalScaler[tInfo->rNumber] +
 		(unsigned int)scalerIncrement;
-	      
+
 	      if(
 		 FALSE &&
 		 pr->partitionData[model]->globalScaler[tInfo->pNumber] != 0)
 	      	{
 	      	  if(! debugPrint)
 	      	    printf("DEBUG ");
-		  printf("scaler(%d): %d = %d(%d) + %d(%d) + %d\n", tInfo->pNumber,
+		  printf("\n\nscaler(%d): %d = %d(%d) + %d(%d) + %d\n\n\n", tInfo->pNumber,
 			 pr->partitionData[model]->globalScaler[tInfo->pNumber],
 			 pr->partitionData[model]->globalScaler[tInfo->qNumber],
 			 tInfo->qNumber,

@@ -55,6 +55,10 @@ void CommandLine::printHelp()
 	    << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n"
 	    << "    -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed \n"
 	    << "                       with binary files.\n"
+	    << "    -t treeFile      a file containing starting trees (in Newick format) for chains. If the file provides less\n"
+	    << "                       starting trees than chains to be initialized, parsimony/random trees will be used for\n"
+	    << "                       remaining chains. If a tree contains branch lengths, these branch lengths will be used\n"
+	    << "                       as initial values.\n"
 	    << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
 	    << "                       (valid values: DNA or PROT)\n"
 	    << std::endl;     
@@ -73,7 +77,7 @@ void CommandLine::printHelp()
 	    << "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
 	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
 	    << "                       On very gappy alignments this option yields considerable runtime improvements. \n"
-	    << "    -M mode          specifies the memory versus runtime trade (see manual for detailed discussion).\n"
+	    << "    -M mode          specifies the memory versus runtime trade-off (see manual for detailed discussion).\n"
 	    << "                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,\n"
 	    << "                       least memory consumption)\n"
 	    << std::endl; 

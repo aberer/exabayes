@@ -18,8 +18,11 @@
 class AbstractPrior
 {
 public: 
-  virtual ~AbstractPrior()
-  {}
+  AbstractPrior()
+    : _keepInitData{false}
+  { }
+  
+  virtual ~AbstractPrior() {}
 
   /** 
       @brief obtains a pre-defined initial value, depending on the
@@ -41,6 +44,12 @@ public:
     rhs->print(out); 
     return out; 
   }
+  
+  bool isKeepInitData() const {return _keepInitData; }
+  void setKeepInitData()  { _keepInitData = true; }
+
+protected: 
+  bool _keepInitData;
 
 }; 
 

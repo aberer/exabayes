@@ -41,7 +41,8 @@ int NUM_BRANCHES;
 #include "axml.h" 
 
 #ifdef TEST
-#include "BasicTreeReader.hpp"
+#include "Arithmetics.hpp"
+// #include "BasicTreeReader.hpp"
 #endif
 
 
@@ -69,12 +70,21 @@ static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  auto &&iss = std::istringstream("(1:1.E-3,2:0.3,(3:0.2,4:0.1):0.5):0.0;");
+  auto r = randCtr_t{}; 
+  r.v[0] = 112 ; 
+  auto rand =   Randomness {r} ; 
+  auto data = std::vector<double> {}; 
+  for(nat i = 0; i < 100; ++i)
+    data.push_back(rand.drawBinomial(0.1, 20));
 
-  auto&& bt =  BasicTreeReader( 4, false);
-  auto branches = bt.extractBranches(iss);
-  for(auto b : branches)
-    std::cout << b << std::endl; 
+  for(auto &v : data)
+    {
+      tout << v << std::endl;  
+    }
+
+  std::cout << MAX_SCI_PRECISION   << "mean: " <<  Arithmetics::getMean(data) << std::endl; 
+
+  
 
   exit(0); 
 #else 

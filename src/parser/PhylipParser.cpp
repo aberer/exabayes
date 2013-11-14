@@ -6,7 +6,7 @@
    approach to integrating the parser into the main code
  */ 
 
-#include <cassert>
+#include <assert.h>
 
 #include "common.h"
 #include <cstring>

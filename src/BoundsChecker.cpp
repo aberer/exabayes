@@ -8,8 +8,6 @@
 #include "BoundsChecker.hpp"
 #include "GlobalVariables.hpp"
 
-// #include "TreeAln.hpp"
-
 // here we initialize the max/min values for our various
 // parameters. Static const is essentially like a global variable but
 // saver. You access it with e.g., BoundsChecker::zmin, since the variable
@@ -17,20 +15,31 @@
 
 const double BoundsChecker::zMin = 1.0e-15 ; // 1e-16
 const double BoundsChecker::zMax = (1.0 - 1.0e-6) ; // 1-1e-6
+
+
+//  these values would be okay according to raxml, but it takes things too far ... 
 const double BoundsChecker::rateMin = 1e-7; 
 const double BoundsChecker::rateMax = 1e6; 
+// const double BoundsChecker::rateMin = 1e-6; 
+// const double BoundsChecker::rateMax = 1e4; 
+
 const double BoundsChecker::alphaMin = 2e-2; 
 const double BoundsChecker::alphaMax = 1e3; 
 const double BoundsChecker::freqMin = 1e-3;
 
 
+
+
+
 bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )  
 {
+  static double dirtyThresh = 1e-6; 
+
   bool result = true; 
   double sum = 0; 
   for(auto &f : freqs)    
     {
-      result &= freqMin <= f ; 
+      result &= ( freqMin <= f || fabs(freqMin - f)  <   dirtyThresh) ; 
       sum += f; 
     }
   assert( fabs(sum  - 1.0 ) < 1e-6 ); 
@@ -53,16 +62,20 @@ bool BoundsChecker::checkBranch( const BranchLengths &branch)
 
 bool BoundsChecker::checkRevmat( const std::vector<double> &rates) 
 {
+  static double dirtyThresh = 1e-6;
+
   bool result = true; 
   for(auto &r : rates)
     {
-      auto prob =  (r - BoundsChecker::rateMax < 1e-6 )  && ( BoundsChecker::rateMin <= r ); 
+      auto prob =  ( r <= BoundsChecker::rateMax || fabs(BoundsChecker::rateMax - r ) < dirtyThresh ) 
+	&&  ( BoundsChecker::rateMin <= r  || fabs(BoundsChecker::rateMin - r ) < dirtyThresh ) ; 
+      
       if(not prob)
-	tout << MAX_SCI_PRECISION << "attention: problem  with " << r << std::endl; 
+      	tout << MAX_SCI_PRECISION << "attention: problem  with " << r << std::endl; 
       result &=  prob ; 
     }
 
-  assert(*(rates.rbegin()) == 1.0); 
+  assert(rates.back() == 1.) ;
   return result; 
 }
  
@@ -119,15 +132,19 @@ void BoundsChecker::correctRevMat( std::vector<double> &rates)
 
   for(auto &r : rates )
     {
-      if( r <= BoundsChecker::rateMin)
-	r = BoundsChecker::rateMin + std::numeric_limits<double>::epsilon();
-      else if(BoundsChecker::rateMax <= r  ) 
-	r = BoundsChecker::rateMax - std::numeric_limits<double>::epsilon();
+      if( r < BoundsChecker::rateMin)
+	r = BoundsChecker::rateMin; 
+      else if(BoundsChecker::rateMax < r  ) 
+	r = BoundsChecker::rateMax; 
     }  
 }
  
 void BoundsChecker::correctFrequencies( std::vector<double> &frequencies)
 {
+  // TODO 
+  assert(0); 
+  // used anywhere? 
+
   // determine number of freqs that are not okay 
   int numberOkay = 0; 
   double sum = 0;  
@@ -136,11 +153,10 @@ void BoundsChecker::correctFrequencies( std::vector<double> &frequencies)
       if(f < BoundsChecker::freqMin) 
 	f = BoundsChecker::freqMin; 
       else 
-	{
 	  ++numberOkay; 
-	  sum += f ; 
-	}
     }
+
+  sum = 1 - (frequencies.size() - numberOkay )  * BoundsChecker::freqMin; 
 
   // renormalize again 
   for(auto &f : frequencies)

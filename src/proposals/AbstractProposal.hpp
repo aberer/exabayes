@@ -149,6 +149,9 @@ public:
 
   friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
 
+  void enableForProteins() {_suitsProteinPartitions = true; }
+  bool isSuitsProteinPartitions() const {return _suitsProteinPartitions;  } 
+
 protected:   
   std::string _name;   
   SuccessCounter _sctr; 
@@ -164,6 +167,8 @@ protected:
   BranchPlain _preparedOtherBranch; 
   
   nat _id; 
+
+  bool _suitsProteinPartitions; // TODO try to get rid of it   
 }; 
 
 #endif

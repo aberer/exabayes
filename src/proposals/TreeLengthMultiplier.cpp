@@ -95,7 +95,7 @@ void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, Tr
   tout << "EVAL-CHOICE " << branchSuggestion << std::endl; 
 #endif
 
-  evaluator.evaluatePartitionsWithRoot(traln,branchSuggestion, parts, true); 
+  evaluator.evaluatePartitionsWithRoot(traln,branchSuggestion, parts, true, true); 
 }
 
 

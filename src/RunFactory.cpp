@@ -1,13 +1,14 @@
 #include <set>
 #include <iostream>
 
+#include "extensions.hpp"
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
 
 #include "proposers/AbstractProposer.hpp"
-#include "proposers/MultiplierProposal.hpp"
-#include "proposers/DirichletProposal.hpp"
-#include "proposers/SlidingProposal.hpp"
+#include "proposers/MultiplierProposer.hpp"
+#include "proposers/DirichletProposer.hpp"
+#include "proposers/SlidingProposer.hpp"
 #include "ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
@@ -180,7 +181,7 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
     case Category::SUBSTITUTION_RATES: 
       {
 	auto& partition = traln.getPartition(var->getPartitions()[0]);	;
-	var->setPrior(std::unique_ptr<AbstractPrior>(new DirichletPrior( std::vector<double>(numStateToNumInTriangleMatrix(partition.states), 1.) ))); 
+	var->setPrior( make_unique<DirichletPrior>( std::vector<double>(RateHelper::numStateToNumInTriangleMatrix(partition.states), 1.) )); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
@@ -216,7 +217,7 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
       for(auto iter = priors.find(cat) ; iter != priors.end() ; ++iter)
 	{
 	  auto &partitionsOfPrior = std::get<0>(iter->second); 
-	  foundPrior = std::any_of(partitionIds.begin(), partitionIds.end(), [&]( nat tmp ){  return partitionsOfPrior.find(tmp) != partitionsOfPrior.end(); } ); 
+	  foundPrior = std::any_of(begin(partitionIds), end(partitionIds), [&]( nat tmp ){  return partitionsOfPrior.find(tmp) != partitionsOfPrior.end(); } ); 
 	  
 	  auto& prior = *(std::get<1>(iter->second).get()); 
 
@@ -227,6 +228,9 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 		  tout  << "You forced prior " << &prior << " to be applied to parameter  "  << v.get() << ". This is not possible. "  << std::endl; 
 		  exit(-1); 
 		}
+
+	      tout << "setting prior " << &prior << 
+		" for param "<< v.get() << std::endl; 
 
 	      v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
 	      break; 
@@ -247,6 +251,7 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 	      foundPrior = partitionsOfPrior.size() ==  0; 
 	      if(foundPrior)
 		{
+		  tout << "setting prior " << &prior << " for param "<< v.get() << std::endl; 
 		  v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
 		  break; 
 		}
@@ -314,6 +319,21 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 	continue; 
       
       auto tmpResult = reg.getSingleParameterProposals(v->getCategory(), propConfig,  traln); 
+
+      // remove proposals that are not meant for DNA/AA
+      if(v->getCategory() == Category::SUBSTITUTION_RATES)
+	{
+	  bool isProtPartition = traln.getPartition(v->getPartitions().at(0)).dataType == AA_DATA; 
+	  auto tmp = decltype(tmpResult){}; 
+	  for(auto &elem : tmpResult )
+	    {
+	      if( elem->isSuitsProteinPartitions () == isProtPartition)
+		tmp.push_back(std::move(elem)); 
+	    }
+	  tmpResult.clear(); 
+	  tmpResult = std::move( tmp ) ; 
+	}
+      
       for(auto &p : tmpResult )
 	{
 	  p->addPrimaryParameter(std::unique_ptr<AbstractParameter>(v->clone()));
@@ -345,6 +365,7 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 	case Category::SUBSTITUTION_RATES: 
 	case Category::FREQUENCIES:
 	case Category::RATE_HETEROGENEITY: 
+	case Category::AA_MODEL:	
 	  mashableParameters.push_back(v.get()); 
 	  break; 
 	case Category::BRANCH_LENGTHS:
@@ -367,6 +388,22 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
       for(auto &elem : cat2param)
 	{
 	  auto proposalsForSet = reg.getSingleParameterProposals(elem.first, propConfig, traln);
+
+	  // filter out proposals that do not fit the current data
+	  // type of
+	  // TODO improve the setup here 
+	  if(std::get<0>(elem) == Category::SUBSTITUTION_RATES)
+	    {
+	      bool isProtPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == AA_DATA; 
+	      auto tmp = decltype(proposalsForSet){}; 
+	      for(auto &elem : proposalsForSet )
+		{
+		  if( elem->isSuitsProteinPartitions () == isProtPartition)
+		    tmp.push_back(std::move(elem)); 
+		}
+	      proposalsForSet.clear(); 
+	      proposalsForSet = std::move( tmp ) ; 
+	    }	  
 	  
 	  // this and the above for-loop essentially produce all
 	  // proposals, that we'd also obtain in the default case =>

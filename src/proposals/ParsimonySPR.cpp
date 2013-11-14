@@ -286,7 +286,7 @@ void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &t
   tout << "EVAL " << toEval << std::endl; 
 #endif
 
-  evaluator.evaluate(traln,toEval, false); 
+  evaluator.evaluate(traln,toEval, false, true); 
 }
 
 

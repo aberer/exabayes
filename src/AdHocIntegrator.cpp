@@ -43,7 +43,7 @@ void AdHocIntegrator::copyTree(const TreeAln &traln)
   myTree = traln; 
   
   auto& eval = integrationChain->getEvaluator();
-  eval.evaluate(myTree, traln.getAnyBranch(), true );
+  eval.evaluate(myTree, traln.getAnyBranch(), true , true);
 }
 
 
@@ -61,7 +61,7 @@ void AdHocIntegrator::prepareForBranch( const BranchPlain &branch,  const TreeAl
 
   // std::cout << "important TODO: has the branch been reset? will not do that here" << std::endl; 
 
-  integrationChain->getEvaluator().evaluate(traln, branch, true); 
+  integrationChain->getEvaluator().evaluate(traln, branch, true, true); 
   integrationChain->reinitPrior(); 
 }
 
@@ -189,7 +189,7 @@ void AdHocIntegrator::createLnlCurve(BranchPlain branch, std::string runid, Tree
 	  auto b = traln.getBranch(branch, param); 
 	  b.setConvertedInternalLength(traln, paramView[0], i); 
 	  traln.setBranch(b, paramView[0]); 
-	  eval.evaluate(traln, branch, false);
+	  eval.evaluate(traln, branch, false, true);
 	  double lnl = traln.getTrHandle().likelihood; 
 	  thisOut << i << "\t" << setprecision(std::numeric_limits<double>::digits10) << lnl << endl; 
 	}

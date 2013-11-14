@@ -2,18 +2,22 @@
 #include "BoundsChecker.hpp"
 #include "DnaAlphabet.hpp"
 #include "AminoAcidAlphabet.hpp"
+#include "RateHelper.hpp"
 
 
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
-{  
+{ 
+  auto tmp = content.values; 
+  RateHelper::convertToSum1(tmp); 
+
   for(auto &m : _partitions)    
-    traln.setFrequencies(content.values, m); 
+    traln.setFrequencies(tmp, m); 
 }
 
 
 ParameterContent FrequencyParameter::extractParameter(const TreeAln &traln )  const
 {
-  ParameterContent result; 
+  auto result = ParameterContent{}; 
   result.values = traln.getFrequencies(_partitions[0]); 
   return result; 
 }   
@@ -69,9 +73,15 @@ void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterCont
 {
   auto& partition = traln.getPartition(_partitions[0]);
   bool ok = true; 
-  ok &= BoundsChecker::checkFrequencies(content.values); 
+  // ok &= BoundsChecker::checkFrequencies(content.values); 
   ok &= (content.values.size() ==  nat(partition.states)); 
   
+  auto newValues = content.values; 
+  RateHelper::convertToSum1(newValues);
+  
+  if(ok)
+    ok &= BoundsChecker::checkFrequencies(newValues);
+
   if(not ok)
     {
       tout << "ERROR: we had " << content << " for parameter " << this << ". Did you mis-specify a fixed prior?"  << std::endl; 

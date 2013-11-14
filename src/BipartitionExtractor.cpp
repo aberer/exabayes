@@ -38,6 +38,8 @@ BipartitionExtractor::BipartitionExtractor( BipartitionExtractor&& rhs)
   , _uniqueBips(std::move(rhs._uniqueBips))
   , _extractToOneHash(std::move(_extractToOneHash))
 {
+  // should work, but am skeptic
+  assert(0); 
 }
 
 
@@ -140,42 +142,59 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
 
   auto && freqFile = std::ofstream (ss.str()); 
   freqFile << "id\t";
-  for(auto &fn : fns)
-    freqFile
-      << "freq." << fn 
-      << "\tbl.mean." << fn
-      << "\tbl.sd." << fn
-      << "\tbl.ESS."<< fn
-      << "\t" ; 
+
+  freqFile
+    << "freq"
+    << "\tbl.mean"
+    << "\tbl.sd"
+    << "\tbl.ESS"
+    << "\tbl.perc5"
+    << "\tbl.perc25"
+    << "\tbl.perc50"
+    << "\tbl.perc75"
+    << "\tbl.perc95"
+    ; 
 
   if(fns.size() > 1)
-    freqFile << "prsf" ; 
+    freqFile << "\tbl.prsf" ; 
   freqFile << std::endl; 
-
-  auto allBlSets = std::vector<std::vector<double>>{};
 
   for(auto &bipElem: _uniqueBips)
     {
-      freqFile << bipElem.second << "\t" ; 
+      auto allBls = std::vector<std::vector<double>>{};      
       for(auto &bipHash : _bipHashes )
-	{
-	  auto bls = bipHash.getBranchLengths(bipElem.first); 
-	  allBlSets.push_back(bls); 
+	allBls.push_back(bipHash.getBranchLengths(bipElem.first)); 
 
-	  auto mean = Arithmetics::getMean(bls);
-	  auto var = Arithmetics::getVariance(bls); 
-	  auto ess = Arithmetics::getEffectiveSamplingSize(bls);
-
-	  freqFile << bipHash.getPresence(bipElem.first).count()
-		   << "\t"  << mean
-		   << "\t" << sqrt(var)
-		   << "\t" << ess 
-		   << "\t"
-	    ; 
-	}
+      auto allBlsConcat = std::vector<double>{}; 
+      for(auto &allBl : allBls)
+	allBlsConcat.insert(end(allBlsConcat), begin(allBl), end(allBl));
       
+      assert(allBls.size() >  0); 
+
+      auto num = allBlsConcat.size() ; 
+      auto mean = Arithmetics::getMean(allBlsConcat) ; 
+      auto sd = sqrt(Arithmetics::getVariance(allBlsConcat) ); 
+      auto ess = Arithmetics::getEffectiveSamplingSize(allBlsConcat) ; 
+      auto perc5= Arithmetics::getPercentile(0.05,allBlsConcat) ; 
+      auto perc25 = Arithmetics::getPercentile(0.25,allBlsConcat)  ; 
+      auto perc50 = Arithmetics::getPercentile(0.50,allBlsConcat) ; 
+      auto perc75 = Arithmetics::getPercentile(0.75,allBlsConcat) ; 
+      auto perc95 = Arithmetics::getPercentile(0.95,allBlsConcat) ; 
+
+      freqFile << bipElem.second // the id 
+	       << "\t" << num 
+	       << "\t" << mean
+	       << "\t" << sd 
+	       << "\t" << ess 
+	       << "\t" << perc5 
+	       << "\t" << perc25
+	       << "\t" << perc50 
+	       << "\t" << perc75
+	       << "\t" << perc95
+	; 
+	
       if(fns.size() > 1)
-	freqFile << Arithmetics::PRSF(allBlSets); 
+	freqFile << "\t" << Arithmetics::PRSF(allBls); 
 
       freqFile << std::endl; 
     }
@@ -303,7 +322,8 @@ std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartiti
 
 
 
-void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<std::vector<nat> >& directSubBips, const std::vector<Bipartition> &bips, std::stringstream &result, bool printSupport) const
+void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<std::vector<nat> >& directSubBips, 
+					      const std::vector<Bipartition> &bips, std::stringstream &result, bool printSupport) const
 {
   nat totalTrees = 0;
   for(auto &bipHash : _bipHashes)

@@ -10,21 +10,28 @@
 
 namespace Arithmetics
 {
-  double getPercentile(double percentile, const std::vector<double> &data)
+  double getPercentile(double percentile, std::vector<double> data)
   {
     assert(percentile < 1.);
-    auto cpy = data; 
-    sort(cpy.begin(), cpy.end(), std::less<double>()); 
+    assert(data.size() > 0 ); 
+
+    if(data.size() == 1)
+      return data.at(0); 
+
+    sort(begin(data), end(data), std::less<double>()); 
 
     nat idx = nat(double(data.size()) * percentile); 
 
-    if( fabs(double(idx) / percentile - data.size()) > 1e-6   ) // dirty
+    if( fabs(double(idx) / percentile - data.size()) > 0   ) // dirty
       ++idx;
 
     if(data.size() < idx + 1 )	// meh 
       idx = data.size() -1 ; 
     
-    return cpy[idx]; 
+    auto result = data.at(idx); 
+    // return ; 
+    assert(not std::isinf(result) );
+    return result; 
   }
 
   double getMean(const std::vector<double> &data)
@@ -40,6 +47,9 @@ namespace Arithmetics
 
   double getVariance(const std::vector<double> &data)
   {
+    if(data.size() == 1)
+      return 0 ; 
+
     double result = 0; 
     auto mean = Arithmetics::getMean(data);
     
@@ -138,6 +148,8 @@ namespace Arithmetics
   {
     if(data.size() == 0)
       return 0; 
+    if(data.size() == 1)
+      return 1; 
 
     double gammaStat[2000];
     double mean = getMean(data) ; 

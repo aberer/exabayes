@@ -121,7 +121,7 @@ std::tuple<parsimonyNumber*,nat> ByteFileResource::fillParsVect( nat numNode, na
 
   nat numBytes =  mult * len; 
   ptr = (parsimonyNumber*)exa_malloc_aligned( numBytes * sizeof(parsimonyNumber));
-  memset(ptr, 0 , sizeof(parsimonyNumber) * numBytes) ;
+  // memset(ptr, 0 , sizeof(parsimonyNumber) * numBytes) ;
 
   // tout << "reading  " <<  numBytes << std::endl; 
   byteRead(_byteFile, ptr, numBytes); 

@@ -1,5 +1,5 @@
 #include "priors/DirichletPrior.hpp"
-
+#include <numeric>
 
 
 double DirichletPrior::getLogProb(const ParameterContent& content) const 

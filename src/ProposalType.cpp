@@ -31,7 +31,9 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_DIRICHLET , "frequency dirichlet"},
 	{ ProposalType::AMINO_MODEL_JUMP , "amino acid model jump"},
 	{ ProposalType::BRANCH_GIBBS , "approximate Gibbs branch length"} ,
-	{ ProposalType::LIKE_SPR, "likelihood-guided SPR move"}
+	{ ProposalType::LIKE_SPR, "likelihood-guided SPR move"}, 
+	{ ProposalType::DIRICH_REVMAT_PER_RATE, "rate orientated dirichlet proposal on RevMat" } ,
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, "rate orientated sliding proposal on RevMat"} 
       }; 
     
     if(map.find(type) == map.end())
@@ -66,7 +68,9 @@ namespace ProposalTypeFunc
 	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } ,
 	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} , 
 	{ ProposalType::DIRICH_REVMAT_ALL , "DIRICHREVMATALL"} 	, 
-	{ ProposalType::LIKE_SPR, "LIKESPR"}
+	{ ProposalType::LIKE_SPR, "LIKESPR"},
+	{ ProposalType::DIRICH_REVMAT_PER_RATE, "REVMATRATEDIRICH" } ,
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, "REVMATRATESLIDER"} 
       }; 
 
     return proposal2name[p];     
@@ -126,7 +130,9 @@ namespace ProposalTypeFunc
       case Category::SUBSTITUTION_RATES: 
 	return { 
 	  ProposalType::REVMAT_SLIDER, 
-	    ProposalType::REVMAT_DIRICHLET
+	    ProposalType::REVMAT_DIRICHLET, 
+	    ProposalType::DIRICH_REVMAT_PER_RATE,
+	    ProposalType::SLIDING_REVMAT_PER_RATE
 	    }; 	
       case Category::RATE_HETEROGENEITY: 
 	return { 
@@ -203,7 +209,9 @@ namespace ProposalTypeFunc
 	{ ProposalType::AMINO_MODEL_JUMP,  true } ,
 	{ ProposalType::BRANCH_GIBBS , false } , 
 	{ ProposalType::DIRICH_REVMAT_ALL , false } 	, 
-	{ ProposalType::LIKE_SPR , false}
+	{ ProposalType::LIKE_SPR , false}, 
+	{ ProposalType::DIRICH_REVMAT_PER_RATE, true } ,
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, false} 
     };
 
     if(map.find(p) == map.end())

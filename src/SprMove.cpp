@@ -548,7 +548,7 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
       auto result = Arithmetics::getMeanAndVar(samples); 
       resultVec.push_back(result.first); 
 #else 
-      eval.evaluate(traln, b, true); 
+      eval.evaluate(traln, b, true, true); 
 
       auto bCpy = b.toBlDummy(); 
       auto resultTmp = GibbsProposal::optimiseBranch(traln, bl, eval,  30, blParam); 
@@ -556,7 +556,7 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
 
       bCpy.setLength(result); 
       traln.setBranch(bl, blParam); 
-      eval.evaluate(traln, b, true); 
+      eval.evaluate(traln, b, true, true); 
       resultVec.push_back(bCpy.getInterpretedLength(traln, blParam)); 
 #endif
       // tout << result.first << "\t" ; 
@@ -579,17 +579,17 @@ void SprMove::integrateBranches( TreeAln &traln, const std::vector<AbstractParam
       auto result = Arithmetics::getMeanAndVar(samples); 
       resultVec.push_back(result.first); 
 #else 
-      eval.evaluate(traln, b, true); 
+      eval.evaluate(traln, b, true, true); 
       auto resultLength = GibbsProposal::optimiseBranch(traln, bl , eval, 30, blParam)[0]; 
 
       bl.setLength(resultLength); 
       traln.setBranch(bl, blParam); 
-      eval.evaluate(traln, b, true); 
+      eval.evaluate(traln, b, true, true); 
       resultVec.push_back(bl.getInterpretedLength(traln, blParam)); 
 #endif
     }
 
-  eval.evaluate(traln, prunedSubtree, true); 
+  eval.evaluate(traln, prunedSubtree, true, true); 
   double newLnl = traln.getTrHandle().likelihood; 
 
   revertTree(traln, blParams); 

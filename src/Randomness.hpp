@@ -100,11 +100,24 @@ public:
       @brief draw integer uniformly from [0,n]
   */ 
   int drawIntegerClosed(int upperBound); 
+  nat drawGeometric(double prop)  ; 
+
+  nat drawBinomial(double prop, nat trials );
 
   virtual void deserialize( std::istream &in )  ; 
   virtual void serialize( std::ostream &out) const; 
 
   friend std::ostream& operator<<( std::ostream& out, const Randomness &rhs ); 
+
+  nat max()
+  {
+    return std::numeric_limits<nat>::max();
+  }
+
+  nat min()
+  {
+    return std::numeric_limits<nat>::min();
+  }
 
 private:  		// METHODS
   void incrementNoLimit();

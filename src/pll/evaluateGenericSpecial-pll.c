@@ -649,11 +649,10 @@ void evaluateIterative(tree *tr, partitionList *pr)
             else
             {		    		    		      
               if(tr->saveMemory)
-                partitionLikelihood = evaluateGTRGAMMAPROT_GAPPED_SAVE(pr->partitionData[model]->wgt,
-                    x1_start, x2_start, pr->partitionData[model]->tipVector,
-                    tip, width, diagptable,
-                    x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
-
+		partitionLikelihood = evaluateGTRGAMMAPROT_GAPPED_SAVE(pr->partitionData[model]->wgt,
+								       x1_start, x2_start, pr->partitionData[model]->tipVector,
+								       tip, width, diagptable,
+								       x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
               else
                 partitionLikelihood = evaluateGTRGAMMAPROT(pr->partitionData[model]->wgt,
                     x1_start, x2_start, pr->partitionData[model]->tipVector,
@@ -1074,9 +1073,9 @@ static double evaluateGTRGAMMAPROT_GAPPED_SAVE (int *wptr,
 
 
 static double evaluateGTRGAMMAPROT (int *wptr,
-    double *x1, double *x2,  
-    double *tipVector, 
-    unsigned char *tipX1, int n, double *diagptable)
+				    double *x1,  double *x2,  
+				    double *tipVector, 
+				    unsigned char *tipX1, int n, double *diagptable)
 {
   double   sum = 0.0, term;        
   int     i, j, l;   

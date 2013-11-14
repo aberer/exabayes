@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iostream>
 #include <algorithm>
-
+#include <numeric>
 #include "Density.hpp"
 #include "axml.h"
 
@@ -74,8 +74,14 @@ namespace Density
   {
     double density=0;
     density -= betaFunctionLog(alphas);
-
-    assert(fabs(std::accumulate(values.begin(), values.end(), 0. ) -  1.0 )  < 1e-6); 
+    
+    // double sum = 0; 
+    if( fabs( std::accumulate(begin(values), end(values), 0. )    - 1. )  > 1e-6)
+      {
+	double sum = std::accumulate(begin(values), end(values), 0. ); 
+	std::cout << "error: expected sum of 1, got " << sum << std::endl; 
+	assert(0); 
+      }      
 
     for(nat i=0; i<values.size(); i++)
       density += (alphas[i] - 1 ) * log(values[i]); 

@@ -32,7 +32,9 @@ enum class ProposalType
     AMINO_MODEL_JUMP = 16,
     BRANCH_GIBBS = 17,
     DIRICH_REVMAT_ALL = 18, 
-    LIKE_SPR = 19 
+    LIKE_SPR = 19 ,
+    DIRICH_REVMAT_PER_RATE = 20,
+    SLIDING_REVMAT_PER_RATE = 21
 }; 
 
 

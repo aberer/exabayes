@@ -12,7 +12,8 @@
 
 TreeProcessor::TreeProcessor(std::vector<std::string> fileNames)  
 {
-  fillTaxaInfo(fileNames[0]); 
+  assert(fileNames.size() > 0); 
+  fillTaxaInfo(fileNames.at(0)); 
   nat numTax = taxa.size(); 
   tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(numTax));
   TreeInitializer::initializeBranchLengths(tralnPtr->getTrHandle(), 1,numTax); 

@@ -57,7 +57,7 @@ void TreeIntegrator::prepareChain( const TreeAln &otherTree, bool copyEverything
   if(copyEverything)
     traln = otherTree; 
 
-  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(), true); 
+  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(), true, true); 
   integrationChain->reinitPrior(); 
 }
 
@@ -76,7 +76,7 @@ Branch2Stat TreeIntegrator::integrateTree(double essThresh, LikelihoodEvaluator 
   auto param = params[0]; 
 
   
-  eval.evaluate(traln, traln.getAnyBranch(),true); 
+  eval.evaluate(traln, traln.getAnyBranch(),true, true); 
   eval.freeMemory(); 
   integrationChain->setLikelihood(traln.getTrHandle().likelihood); 
   integrationChain->suspend(); 

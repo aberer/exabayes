@@ -29,6 +29,7 @@ public:
   static const int likeSprMinRadius; 
   static const int likeSprMaxRadius; 
   static const double likeSpWarp; 
+  static const double initDirichletProtAlpha; 
 
 private: 
 

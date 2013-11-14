@@ -13,7 +13,6 @@ BlockRunParameters::BlockRunParameters()
   , numCoupledChains(1)
   , printFreq (500)
   , heatFactor(0.1)
-  , swapInterval (1)
   , tuneHeat (false)
   , tuneFreq (100)
   , useParsimonyStarting(false)
@@ -21,7 +20,7 @@ BlockRunParameters::BlockRunParameters()
   , chkpntFreq(1000)
   , componentWiseMH(true)
   , useAsdsfMax(false)
-  , numSwaps(1)
+  , numSwapsPerGen(1.)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "runconfig"; 
 }
@@ -39,6 +38,14 @@ static bool convertToBool(NxsString &string)
       assert(0); 
       return false; 
     }  
+}
+
+
+
+
+static int myConvertToInt(NxsString &elem)
+{
+  return int(elem.ConvertToDouble());
 }
 
 
@@ -60,41 +67,39 @@ void BlockRunParameters::Read(NxsToken &token)
 	  auto value = token.GetToken(false); 	    
 
 	  if(key.EqualsCaseInsensitive("numGen"))
-	    numGen = value.ConvertToInt(); 
+	    numGen = myConvertToInt(value);
 	  else if (key.EqualsCaseInsensitive("parsimonyStartingTree"))
 	    useParsimonyStarting = convertToBool(value); 
 	  else if (key.EqualsCaseInsensitive("checkpointinterval"))
-	    chkpntFreq = value.ConvertToInt(); 
+	    chkpntFreq = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("samplingfrequency"))
-	    samplingFreq = value.ConvertToInt(); 
+	    samplingFreq = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("componentWiseMH"))
 	    componentWiseMH = convertToBool(value); 
-	  else if(key.EqualsCaseInsensitive("numswaps"))
-	    numSwaps = value.ConvertToInt(); 
 	  else if(key.EqualsCaseInsensitive("numRuns"))	    
-	    numRunConv = value.ConvertToInt(); 
+	    numRunConv = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("diagFreq"))
-	    diagFreq = value.ConvertToInt(); 
+	    diagFreq = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("heatedChainsUseSame"))
 	    heatedChainsUseSame = convertToBool(value); 
 	  else if(key.EqualsCaseInsensitive("numcoupledChains"))
-	    numCoupledChains = value.ConvertToInt(); 
+	    numCoupledChains = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("printFreq") )	   
-	    printFreq = value.ConvertToInt();
+	    printFreq = myConvertToInt(value);
 	  else if (key.EqualsCaseInsensitive("asdsfIgnoreFreq"))
 	    asdsfIgnoreFreq = value.ConvertToDouble(); 
 	  else if (key.EqualsCaseInsensitive("asdsfConvergence"))
 	    asdsfConvergence = value.ConvertToDouble();
 	  else if (key.EqualsCaseInsensitive("heatFactor"))
 	    heatFactor = value.ConvertToDouble();
-	  else if(key.EqualsCaseInsensitive("swapInterval"))
-	    swapInterval = value.ConvertToInt();
+	  else if(key.EqualsCaseInsensitive("numSwapsPerGen"))
+	    numSwapsPerGen = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("tuneHeat"))
 	    tuneHeat = convertToBool(value);
 	  else if(key.EqualsCaseInsensitive("tuneFreq"))
-	    tuneFreq = value.ConvertToInt();
+	    tuneFreq = myConvertToInt(value);
 	  else if(key.EqualsCaseInsensitive("burninGen"))
-	    burninGen = value.ConvertToInt();
+	    burninGen = myConvertToInt(value);
 	  else if(key.EqualsCaseInsensitive("burninProportion"))
 	    burninProportion = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("asdsfusemax"))
@@ -142,14 +147,20 @@ void BlockRunParameters::verify() const
   verifyProbability(asdsfConvergence, false, false, "asdsfConvergence"); 
   verifyProbability(burninProportion, false, false, "burninProportion"); 
   verifyProbability(heatFactor, false, false, "heatFactor"); 
+  
+  if(numSwapsPerGen < 0.)
+    {
+      std::cerr << "Error: >numSwapsPerGen< must be in > 0."  << std::endl; 
+      exit(-1); 
+    }
 
-  verifyGreaterZero(numSwaps, "numSwaps"); 
+  // verifyGreaterZero(numSwaps, "numSwaps"); 
   verifyGreaterZero(samplingFreq,"samplingFreq" ); 
   verifyGreaterZero(numRunConv, "numRunConv"); 
   verifyGreaterZero(numGen, "numGen"); 
   verifyGreaterZero(numCoupledChains, "numCoupledChains"); 
   verifyGreaterZero(printFreq, "printFreq"); 
-  verifyGreaterZero(swapInterval, "swapInterval"); 
+  // verifyGreaterZero(swapInterval, "swapInterval"); 
   verifyGreaterZero(tuneFreq, "tuneFreq");  
 
   if( diagFreq <= nat(samplingFreq)  ) 

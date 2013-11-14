@@ -224,7 +224,7 @@ void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &tral
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL " << toEval << std::endl; 
 #endif
-  evaluator.evaluate(traln,toEval, false); 
+  evaluator.evaluate(traln,toEval, false, true); 
 }
 
 

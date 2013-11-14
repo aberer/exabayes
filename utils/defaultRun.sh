@@ -3,14 +3,30 @@
 topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
-seed=1450
+
+seed=11436
+
+# seed=31342  			# problematic on tiny-aa
+# seed=4045
+# seed=1450
 # seed=27159
 # seed=28978
+# seed=6929
+
+# seed=10115 # aa-test
+# seed=19180 #aa-test
+
+# seed=2807 # aa-test-one  <= most research so far 
+
+# seed=13290 # tiny-aa
+
+# seed=24066 # problematic with tiny-aa
+# seed=32090 # problematic with  143 (on DNA!)
 
 # src/proposals/
 numProc=2
 # extraArgs="-Q"
-# extraArgs="-M 3 -S "
+# extraArgs="-S  "
 # extraArgs="-m"
 
 # early with 150 , VERIFIED 
@@ -28,19 +44,24 @@ useClang=1
 # *=$bak
 
 runid=testRun
-numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
+
+if [ -f /proc/cpuinfo ] ; then 
+    numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
+else 
+    numCores=1
+fi 
 
 
 # use cgdb, if available 
-GDB=gdb
+GDB=cgdb
 if [ "$(which cgdb )" != ""   ]; then
-    GDB="gdb"
+    GDB="cgdb"
 fi
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
     cxxcompiler="clang++"
-    cppflags="-Qunused-arguments "
+    cppflags="-Qunused-arguments"  
 else 
     ccompiler="gcc"
     cxxcompiler="g++"
@@ -71,14 +92,14 @@ if [ ! -d $pathtodata ]; then
     exit
 fi 
 
-cflags="-fno-common"
-cxxflags="-fno-common"
+cflags=""
+cxxflags=""  #  -stdlib=libc++ 
 
 default=$1
 if [ "$default" == "debug" ]; then 
     cflags="$cflags -O0 -g"
     cxxflags="$cxxflags -O0 -g"
-    gdb="$TERM -e $GDB -ex run --args "
+    gdb="$TERM -e  $GDB -ex run --args "
 elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"
     exit 
@@ -99,7 +120,7 @@ configFile=$pathtodata/config.nex
 if [ "$codeBase" == "examl" ]; then    
     args="$args --enable-mpi"
 
-    CC="mpicc -cc=$ccompiler" 
+    CC="mpicc -cc=$ccompiler"  
     CXX="mpicxx -cxx=$cxxcompiler"  
     baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
 

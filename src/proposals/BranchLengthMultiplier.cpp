@@ -74,7 +74,7 @@ void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,Tre
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL: " << savedBranch << std::endl; 
 #endif
-  evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false); 
+  evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false, true); 
 }
 
  
@@ -121,4 +121,31 @@ std::pair<BranchPlain,BranchPlain> BranchLengthMultiplier::prepareForSetExecutio
 					    determinePrimeBranch(traln,rand),
 					    BranchPlain(0,0)); 
 }
+
+
+std::vector<nat> BranchLengthMultiplier::getInvalidatedNodes(const TreeAln &traln ) const 
+{
+  // auto tmp = std::vector<nat>{}; 
+  // if(not traln.isTipNode(savedBranch.getPrimNode()))
+  //   {
+  //     auto desc1 = traln.getDescendents(savedBranch.toPlain());
+  //     tmp.push_back(std::get<0>(desc1).getSecNode());
+  //     tmp.push_back(std::get<1>(desc1).getSecNode());
+  //   }
+
+  // if(not traln.isTipNode(savedBranch.getSecNode()))
+  //   {
+  //     auto desc2 = traln.getDescendents(savedBranch.getInverted().toPlain());
+  //     tmp.push_back(std::get<0>(desc2).getSecNode());
+  //     tmp.push_back(std::get<1>(desc2).getSecNode());
+  //   }
+
+  // return { 
+  //   savedBranch.getPrimNode() , 
+  //     savedBranch.getSecNode() 
+  //     } ; 
+  return {}; 
+}
+
+
 

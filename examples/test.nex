@@ -37,7 +37,7 @@ begin PRIOR;
 
 [ branch lengths: ]
 [ brlenpr uniform(0.0000001,4)   ] 
-brlenpr fixed()  [ you should have provided a user tree with branch lengths ]  
+[ brlenpr fixed() ]  [ you should have provided a user tree with branch lengths ]  
 [  brlenpr{3} exponential(10.0) ] 
 [ brlenpr exponential(10) ] 
 

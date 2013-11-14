@@ -7,6 +7,7 @@ AbstractProposal::AbstractProposal( Category cat, std::string name,double weight
   , _relativeWeight(weight)
   , _needsFullTraversal(needsFullTraversal)
   , _inSetExecution(false)
+  , _suitsProteinPartitions(false)
 {
 } 
 
@@ -18,6 +19,7 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
   , _needsFullTraversal(rhs._needsFullTraversal)
   , _inSetExecution(rhs._inSetExecution)
   , _id(rhs._id)
+  , _suitsProteinPartitions(rhs._suitsProteinPartitions)
 {
   this->_name = rhs._name; 
 

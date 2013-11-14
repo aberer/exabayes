@@ -7,6 +7,8 @@
 
 #include "AdHocIntegrator.hpp"
 #include "ProposalSet.hpp"
+#include "RateHelper.hpp"
+
 
 #include "tree-parse/BasicTreeReader.hpp"
 #include "common.h"
@@ -16,6 +18,8 @@
 #include "config/ConfigReader.hpp"
 
 #include "parameters/TopologyParameter.hpp"
+#include "parameters/RevMatParameter.hpp"
+#include "parameters/FrequencyParameter.hpp"
 
 #include "TreeInitializer.hpp"
 
@@ -34,10 +38,6 @@
 
 #include "eval/FullCachePolicy.hpp"
 #include "eval/NoCachePolicy.hpp"
-
-#include "proposers/AbstractProposer.hpp"
-#include "proposers/SlidingProposal.hpp"
-#include "proposers/MultiplierProposal.hpp"
 
 #include "TreeIntegrator.hpp"
 
@@ -70,11 +70,16 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
     {
       hasBranchLength = std::any_of(startingTree.begin(), startingTree.end(), [](const char c ){ return c == ':'; }  ); 
 
+      // tout << "initializing from tree >" << startingTree << "<" << std::endl; 
+
       auto &&iss = std::istringstream {startingTree };
       auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
 
       auto mapAsVect = traln.getTaxa(); 
-      mapAsVect.erase(mapAsVect.begin()); 
+      
+      // TODO WHY WAS THAT HERE? 
+      // mapAsVect.erase(mapAsVect.begin()); 
+
       auto map = std::unordered_map<std::string,nat>{}; 
       nat ctr = 1; 
       for(auto elem : mapAsVect)
@@ -336,12 +341,12 @@ void SampleMaster::initializeWithParamInitValues(std::vector<TreeAln> &tralns ,
   for(auto &param : params)
     {
       auto cat = param->getCategory( ); 
+      auto datatype =  tralns[0].getPartition(param->getPartitions()[0] ).dataType; 
+      
       if( cat != Category::TOPOLOGY && cat != Category::BRANCH_LENGTHS)
 	{
-
 	  // :NOTICE: treat prot frequencies differently!
-	  if(cat == Category::FREQUENCIES 
-	     && tralns[0].getPartition(param->getPartitions()[0] ) .dataType == AA_DATA ) 
+	  if(cat == Category::FREQUENCIES && datatype == AA_DATA ) 
 	    {
 	      for(auto p : param->getPartitions())
 		{
@@ -354,8 +359,7 @@ void SampleMaster::initializeWithParamInitValues(std::vector<TreeAln> &tralns ,
 	    }
 	  
 	  // :NOTICE: rev mat parameters for aa-partitions must be prepared here! 
-	  if(cat == Category::SUBSTITUTION_RATES
-	     && tralns[0].getPartition(param->getPartitions()[0]).dataType == AA_DATA)
+	  if(cat == Category::SUBSTITUTION_RATES && datatype == AA_DATA)
 	    {
 	      for(auto p : param->getPartitions())
 		{
@@ -369,14 +373,17 @@ void SampleMaster::initializeWithParamInitValues(std::vector<TreeAln> &tralns ,
 
 	  auto&& prior = param->getPrior(); 
 	  auto content = prior->getInitialValue();
-	  
+
+	  // tout << "initializing parameter " << param << " with " << content << std::endl; 
+
 	  auto &bla = tralns[0]; 
 	  param->verifyContent(bla, content); 
 
 	  for(auto &traln : tralns)
 	    param->applyParameter(traln, content); 
 
-	  auto result = param->extractParameter(tralns[0]); 
+	  // auto result = param->extractParameter(tralns[0]); 
+	  // tout << "result: " << result << std::endl; 
 	}
     }
 
@@ -387,15 +394,16 @@ void SampleMaster::initializeWithParamInitValues(std::vector<TreeAln> &tralns ,
 	{
 	  auto &&prior = param->getPrior();
 	  auto content = prior->getInitialValue();
+	  auto initVal = content.values.at(0); 
 
 	  auto ctr = nat{0};
 	  for(auto &traln : tralns)
 	    {
-	      if( not hasBls[ctr])
+	      if( not hasBls[ctr] || not prior->isKeepInitData() )
 		{
 		  for(auto &b : traln.extractBranches(param))
 		    {
-		      b.setConvertedInternalLength( traln,param,  content.values[0] );
+		      b.setConvertedInternalLength( traln,param,   initVal);
 
 		      if(not BoundsChecker::checkBranch(b))
 			BoundsChecker::correctBranch(b); 
@@ -490,8 +498,18 @@ void SampleMaster::printParameters(const TreeAln &traln, const std::vector<uniqu
 	    tout << " or given (tree file)" ; 
 	  tout << std::endl; 
 	}
+      else if ( dynamic_cast<RevMatParameter*>(v.get())  || dynamic_cast<FrequencyParameter*>(v.get()) )
+	{
+	  auto content = v->getPrior()->getInitialValue(); 
+	  RateHelper().convertToSum1(content.values);
+	  tout << content << std::endl; 
+	}
       else 
-	tout << v->getPrior()->getInitialValue() << std::endl; 
+	{
+	  if(v->getPrior() ->isKeepInitData())
+	    tout << "original value (if available) / " ; 
+	  tout << v->getPrior()->getInitialValue()  << std::endl; 
+	}
     }
   tout << "================================================================" << std::endl;
   tout << endl; 
@@ -580,18 +598,19 @@ void SampleMaster::initializeRuns(Randomness rand)
   auto runmodes = _cl.getTreeInitRunMode();
 
   auto initTree  = TreeAln (numTax);
-  auto timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
-  tout << " [ " << timePassed <<  "s ] starting byte file init " << std::endl; 
+  // auto timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
+  // tout << " [ " << timePassed <<  "s ] starting byte file init " << std::endl; 
   
   auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new ByteFileResource(binaryAlnFile, _pl))); 
   ti.initializeWithAlignmentInfo(initTree, runmodes); 
 
-  timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
-  tout << "[ " << timePassed <<  "s ] initialized from byte file " << std::endl; 
+  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
+  // tout << "[ " << timePassed <<  "s ] initialized from byte file " << std::endl; 
 
   // START integrator
 #ifdef _EXPERIMENTAL_INTEGRATION_MODE
   std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
+
   aTree->initializeFromByteFile(binaryAlnFile, runmodes); 
   aTree->enableParsimony();
 
@@ -609,15 +628,14 @@ void SampleMaster::initializeRuns(Randomness rand)
 
  auto evalUptr = createEvaluatorPrototype(initTree,  binaryAlnFile); 
   
-  auto&& proposals =  std::vector<unique_ptr<AbstractProposal> >{} ; 
-  auto&& params = std::vector<unique_ptr<AbstractParameter> >{} ; 
+ auto&& proposals =  std::vector<std::unique_ptr<AbstractProposal> >{} ; 
+  auto&& params = std::vector<std::unique_ptr<AbstractParameter> >{} ; 
   auto&& proposalSets =  std::vector<ProposalSet>{};  
   std::tie(params, proposals, proposalSets) = processConfigFile(_cl.getConfigFileName(), initTree);
 
   assert(_runParams.getTuneFreq() > 0); 
 
-  timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
-  tout << "[ " << timePassed << "s ] starting to initialize further trees " << std::endl; 
+  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
 
   auto runSeeds = std::vector<randCtr_t>{};
   auto treeSeeds = std::vector<randCtr_t>{}; 
@@ -647,6 +665,7 @@ void SampleMaster::initializeRuns(Randomness rand)
   if(startingTrees.size() > 1 )
     {
       tout << "You provided " << startingTrees.size() << " starting trees" << std::endl;       
+
       if(topoIsFixed)
 	tout << "Since the topology is fixed, only the first one will be used." << std::endl; 
     }
@@ -692,17 +711,15 @@ void SampleMaster::initializeRuns(Randomness rand)
       _runs.emplace_back(runRand, i, _cl.getWorkdir(), _cl.getRunid(), _runParams.getNumCoupledChains(), chains); 
       auto &run = _runs.back(); 
       run.setTemperature(_runParams.getHeatFactor());
-      run.setPrintFreq(_runParams.getPrintFreq()); 
-      run.setSwapInterval(_runParams.getSwapInterval()); 
       run.setSamplingFreq(_runParams.getSamplingFreq()); 
-      run.setNumSwaps(_runParams.getNumSwaps());
+      run.setNumSwapsPerGen(_runParams.getNumSwapsPerGen());
 
       if(_pl.isRunLeader() && _pl.isMyRun(run.getRunid()))
 	run.initializeOutputFiles(_cl.isDryRun());
     }
 
-  timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
-  tout << "[ " << timePassed << "s ] done initializing trees" << std::endl; 
+  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
+  // tout << "[ " << timePassed << "s ] done initializing trees" << std::endl; 
 
   initializeFromCheckpoint(); 
   
@@ -711,24 +728,25 @@ void SampleMaster::initializeRuns(Randomness rand)
 
   // post-pone all printing to the end  
   printAlignmentInfo(initTree);   
+
   printParameters(initTree, params);
   printProposals(proposals, proposalSets); 
   informPrint();
 
   tout.flush();
-
+  
   printInitializedFiles(); 
 
-  timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now() - _initTime   ).count(); 
-  tout << "[ " << timePassed<< "] further setup. performing first evaluation"  << std::endl; 
+  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now() - _initTime   ).count(); 
+  // tout << "[ " << timePassed<< "] further setup. performing first evaluation"  << std::endl; 
 
   if(not _cl.isDryRun())
     printInitialState(); 
   
   _pl.printLoadBalance(initTree);
 
-  timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now() - _initTime   ).count(); 
-  tout << "[ " << timePassed << "s ] completed initialization " << std::endl; 
+  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now() - _initTime   ).count(); 
+  // tout << "[ " << timePassed << "s ] completed initialization " << std::endl; 
   tout.flush();
 }
 
@@ -761,7 +779,7 @@ void SampleMaster::printInitialState()
 	  auto &eval = chain.getEvaluator(); 
 	  auto &traln  = chain.getTralnHandle();
 	  chain.setLikelihood(traln.getTrHandle().likelihood);
-	  eval.evaluate(traln, traln.getAnyBranch(), true);
+	  eval.evaluate(traln, traln.getAnyBranch(), true, true);
 	  eval.freeMemory(); 
 	  traln.clearMemory(); 
 
@@ -869,9 +887,7 @@ SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
   
   _runParams.verify();
   proposalConfig.verify(); 
-  // priorBlock.verify();
 
-  
   proposalConfig.verify(); 
 
   auto r = RunFactory{}; 
@@ -905,7 +921,7 @@ SampleMaster::printDuringRun(nat gen)
 {
   _pl.synchronizeChainsAtMaster(_runs, CommFlag::PrintStat);
   
-  stringstream ss ; 
+  auto && ss = std::stringstream{} ; 
   ss << SOME_FIXED_PRECISION; 
   ss << "[" << gen << "," << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _lastPrintTime   ).count()     << "s]\t"; 
 

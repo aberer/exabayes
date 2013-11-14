@@ -32,5 +32,6 @@ void BranchLengthsParameter::verifyContent(const TreeAln &traln, const Parameter
 bool BranchLengthsParameter::priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const
 {
   auto content = prior.getInitialValue();
-  return content.values .size() == 1 ; 
+  return content.values .size() < 2  ; 
 } 
+

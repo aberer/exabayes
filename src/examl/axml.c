@@ -213,35 +213,11 @@ void *malloc_aligned(size_t size)
   void 
     *ptr = (void *)NULL;
  
-  int 
-    res;
-  
-
-#if defined (__APPLE__)
-  /* 
-     presumably malloc on MACs always returns 
-     a 16-byte aligned pointer
-  */
-
-  ptr = malloc(size);
-  
-  if(ptr == (void*)NULL) 
-   assert(0);
-  
-#ifdef __AVX
-  assert(0);
-#endif
-
-
-#else
-  
   /* printf("trying to allocate %d\n", size);  */
-  res = posix_memalign( &ptr, BYTE_ALIGNMENT, size );
+  posix_memalign( &ptr, BYTE_ALIGNMENT, size );
 
-  if(res != 0) 
-    assert(0);
-#endif 
-   
+  assert(ptr != NULL);
+    
   return ptr;
 }
 

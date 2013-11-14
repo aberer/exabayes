@@ -58,6 +58,7 @@ typedef unsigned int nat;
 /* #define PRINT_EVAL_CHOICE */
 
 /* debugging */
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_VERIFY_LNPR */
 

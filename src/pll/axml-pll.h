@@ -890,7 +890,7 @@ typedef struct {
   /* partial LH Inner vectors  ancestral vectors, we have 2*tips - 3 inner nodes */
   double          **xVector;          /* Probability entries for inner nodes */
   unsigned char   **yVector;          /* Tip entries (sequence) for tip nodes */
-  unsigned int     *globalScaler;     /* Counters for scaling operations done at node i */
+  unsigned int     *globalScaler; /* Counters for scaling operations done at node i */
   /* These are for the saveMemory option (tracking gaps to skip computations and memory) */
   size_t           *xSpaceVector; 
   int               gapVectorLength;
@@ -1102,8 +1102,6 @@ typedef  struct  {
  
   int              *secondaryStructurePairs;
 
-
-  /* double            fracchange; */
   double            lhCutoff;
   double            lhAVG;
   unsigned long     lhDEC;
@@ -1128,7 +1126,7 @@ typedef  struct  {
   int              nextnode;  
 
 
-  boolean          bigCutoff;
+  boolean          bigCutoff; 
   boolean          *partitionSmoothed/* [NUM_BRANCHES] */;
   boolean          *partitionConverged/* [NUM_BRANCHES] */;
   boolean          rooted;

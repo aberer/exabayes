@@ -1,6 +1,8 @@
 #ifndef INTEGER_LABEL_READER
 #define INTEGER_LABEL_READER
 
+
+#include "GlobalVariables.hpp"
 #include <unordered_map>
 #include <iostream>
 #include <cassert>
@@ -31,7 +33,13 @@ public:
     auto label = std::string{}; 
     label.reserve( 1 << 10 );
     assert(_name2id.size() > 0 ); 
-    
+
+    // tout << "comparing against elems: " ; 
+    // for(auto elem : _name2id)
+    //   {
+    // 	tout << std::get<0>(elem) << "," << std::get<1>(elem) << std::endl; 
+    //   }
+
     bool foundDelim = false; 
     while(not foundDelim)
       {

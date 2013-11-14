@@ -19,7 +19,8 @@ public:
 
   virtual void autotune();
 
-  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln ) const  {return {}; }
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln ) const ; 
+  // {return {}; }
 
   virtual AbstractProposal* clone() const;  
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand) ;

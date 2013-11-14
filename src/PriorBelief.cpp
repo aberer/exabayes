@@ -1,5 +1,7 @@
 #include "PriorBelief.hpp"
 
+#include <cmath>
+
 #include "Branch.hpp"
 #include "GlobalVariables.hpp"
 #include "priors/AbstractPrior.hpp"
@@ -94,6 +96,11 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
       // std::cout << "pr(" <<  v << ") = "<< partialResult << std::endl ; 
       result += partialResult; 
     }
+
+  
+  // the lnPriorRatio may be infinite. But never the assumed value 
+  assert(not std::isinf(result) && not std::isnan(result)); 
+  
   return result; 
 } 
 

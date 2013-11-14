@@ -57,8 +57,9 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId, bool isDryRun)
 
 void TopologyFile::sample(const TreeAln &traln, nat gen,  AbstractParameter* param)  
 {    
-  auto&& fh = std::ofstream(fullFileName,std::fstream::app|std::fstream::out ); 
-  auto tp = TreePrinter(true, false, false);
+  auto&& fh = std::ofstream{fullFileName,std::fstream::app }; 
+  
+  auto tp = TreePrinter( param->getCategory() == Category::BRANCH_LENGTHS , false, false);
   
   auto treeString = tp.printTree(traln, param); 
   fh << "\ttree gen."<< gen

@@ -29,7 +29,7 @@
  *  Bioinformatics 2006; doi: 10.1093/bioinformatics/btl446
  */
 
-#include <assert.h>
+
 #include <stdint.h>
 
 typedef  int boolean;

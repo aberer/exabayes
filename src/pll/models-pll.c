@@ -2715,6 +2715,7 @@ static void initProtMat(double f[20], int proteinMatrix, double *ext_initialRate
           
 static void updateFracChange(tree *tr, partitionList *pr)
 {   
+  assert(0); 
   int numberOfModels = pr->numberOfPartitions;
 
   int model;
