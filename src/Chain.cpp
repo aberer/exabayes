@@ -66,7 +66,6 @@ Chain::Chain(  Chain&& rhs)
   , _prior(std::move(rhs._prior))
   , _bestState(rhs._bestState)
   , _evaluator(std::move(rhs._evaluator))
-  // , _lnl(rhs._lnl)
   , _lnPr(rhs._lnPr)
 {
 }
@@ -87,7 +86,6 @@ Chain::Chain(  const Chain& rhs)
   , _prior(std::move(rhs._prior))
   , _bestState(rhs._bestState)
   , _evaluator(std::move(rhs._evaluator))
-  // , _lnl(rhs._lnl)
   , _lnPr(rhs._lnPr)
 {
   for(auto &p : rhs._proposals)
@@ -125,7 +123,6 @@ void swap(Chain &lhs, Chain &rhs)
   swap(lhs._prior,rhs._prior);
   swap(lhs._bestState,rhs._bestState);
   swap(lhs._evaluator,rhs._evaluator);
-  // swap(lhs._lnl,rhs._lnl);
   swap(lhs._lnPr,rhs._lnPr);
 }
 
@@ -179,18 +176,6 @@ void Chain::resume()
       std::cerr << "Prior was " << _lnPr << "\t now we have " << prNow << std::endl; 
       assert(0);       
     }
-
-
-  // double lnl = getLikelihood();
-  // _evaluator.evaluate(_traln, _traln.getAnyBranch(), true);
-  // _evaluator.freeMemory();
-  // _traln.clearMemory();
-  
-  // if( fabs( lnl - getLikelihood() ) > ACCEPTED_LIKELIHOOD_EPS)
-  //   {
-  //     std::cerr << "Problem with likelihood " << std::endl; 
-  //     assert(0);
-  //   }
 
   updateProposalWeights();
 }

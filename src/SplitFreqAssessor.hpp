@@ -31,7 +31,7 @@ public:
 
 private: 			// ATTRIBUTES
   nat getNumTreeAvailable(std::string filename); 
-  std::vector<BipartitionHashNew> newBipHashes;   
+  std::vector<BipartitionHash> newBipHashes;   
   std::unordered_map<std::string, nat> file2numTree; 
 }; 
 

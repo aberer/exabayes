@@ -4,19 +4,19 @@
 #include <algorithm>
 #include <map>
 
-CredibleSet::CredibleSet(std::string file)
-  : bipEx(std::vector<std::string>{file})
+CredibleSet::CredibleSet(std::vector<std::string> files)
+  : _bipEx(files, true)
 {
-  bipEx.extractBipsNew<true>();
-  const auto &hash = bipEx.getBipartitionHashes()[0]; 
-  totalTrees = hash.getTreesAdded(); 
+  _bipEx.extractBips<true>(0);
+  // const auto &hash = _bipEx.getBipartitionHashes()[0]; 
+  // _totalTrees = hash.getTreesAdded(); 
 } 
 
 
 void CredibleSet::printCredibleSet(std::string filename, double thresh)
 {
-  const auto& hash = bipEx.getBipartitionHashes()[0]; 
-  auto numBip = bipEx.getTaxa().size() - 3; 
+  const auto& hash = _bipEx.getBipartitionHashes()[0]; 
+  auto numBip = _bipEx.getTaxa().size() - 3; 
 
   // sort the elems in the hash by number of occurrences of the bipartition 
   auto sortedBipOcc = std::vector<std::pair<Bipartition,Bipartition>>{}; 
@@ -49,7 +49,10 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
       return equal; 
     }; 
 
-  auto trees =  std::unordered_map<std::vector<nat>,nat, decltype(hashFun), decltype(equalFun)>{0,hashFun, equalFun}; 
+  auto trees =  std::unordered_map<std::vector<nat>,nat, decltype(hashFun), decltype(equalFun)> {0,hashFun, equalFun}; 
+  
+  nat totalTrees = _bipEx.getBipartitionHashes().at(0).getTreesAdded(); 
+
   for(nat i = 0; i < totalTrees; ++i )
     {
       auto oneTree = std::vector<nat>{}; 
@@ -93,11 +96,11 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
       for(auto &id : tree)
 	bips.push_back(sortedBipOcc[id].first); 
 
-      auto result = bipEx.bipartitionsToTreeString(bips, false ); 
+      auto result = _bipEx.bipartitionsToTreeString(bips, false ); 
       treeStrings.push_back(make_pair(result, elem.second)); 
     }
 
-  nat absThreshold = nat(totalTrees * thresh); 
+  nat absThreshold = nat( totalTrees * thresh); 
   std::sort(treeStrings.begin(), treeStrings.end(), [](const std::pair<std::string,nat> &elemA, const std::pair<std::string, nat> &elemB)
 	    {
 	      return elemA.second > elemB.second; 

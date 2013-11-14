@@ -24,8 +24,9 @@ static void rejectIfExists(std::string filename)
 
 
 // does not include length of tips currently   
-BipartitionExtractor::BipartitionExtractor(std::vector<std::string> files)
+BipartitionExtractor::BipartitionExtractor(std::vector<std::string> files, bool extractToOneHash)
   : TreeProcessor(files)
+  , _extractToOneHash(extractToOneHash)
 {
   assert(taxa.size( ) != 0); 
 }
@@ -33,8 +34,9 @@ BipartitionExtractor::BipartitionExtractor(std::vector<std::string> files)
 
 BipartitionExtractor::BipartitionExtractor( BipartitionExtractor&& rhs) 
   : TreeProcessor(std::move(rhs))
-  , bipHashes(std::move(rhs.bipHashes))
-  , uniqueBips(std::move(rhs.uniqueBips))
+  , _bipHashes(std::move(rhs._bipHashes))
+  , _uniqueBips(std::move(rhs._uniqueBips))
+  , _extractToOneHash(std::move(_extractToOneHash))
 {
 }
 
@@ -79,7 +81,7 @@ nat BipartitionExtractor::getNumTreesInFile(std::string file) const
 
 
 template<bool readBl>
-void BipartitionExtractor::extractBipsNew()
+void BipartitionExtractor::extractBips(nat burnin)
 {
   int ctr = 0; 
   for (auto filename : fns)
@@ -88,15 +90,21 @@ void BipartitionExtractor::extractBipsNew()
 
       nat end = getNumTreesInFile(filename); 
 
-      auto bipHash = BipartitionHashNew(tralnPtr->getNumberOfTaxa()); 
+      if( not _extractToOneHash || _bipHashes.size() == 0)
+	_bipHashes.emplace_back(tralnPtr->getNumberOfTaxa());
+      auto &bipHash = _bipHashes.back(); 
 
-      for(nat i = 0 ; i < end; ++i)
+      // skip the burnin 
+      nat i = 0; 
+      for( ; i < burnin; ++i)
+	skipTree(ifh); 
+
+      for( ; i < end; ++i)
 	{
 	  nextTree<readBl>(ifh);
 	  bipHash.addTree(*tralnPtr,true, true);
 	}
-      bipHashes.push_back(bipHash);
- 
+      
       ++ctr; 
     }
 
@@ -108,24 +116,23 @@ void BipartitionExtractor::extractUniqueBipartitions()
 {
   auto set = std::unordered_set<Bipartition>();
 
-  for(auto &bipHash : bipHashes)
+  for(auto &bipHash : _bipHashes)
     for(auto &bip : bipHash)
       set.insert(bip.first); 
   
-  uniqueBips.clear();
+  _uniqueBips.clear();
   nat ctr = 0; 
   for(auto &bip :set)
     {
-      uniqueBips[bip] = ctr; 
+      _uniqueBips[bip] = ctr; 
       ++ctr; 
     }
 }
 
 
-
 void BipartitionExtractor::printBipartitionStatistics(std::string id) const 
 {
-  assert(uniqueBips.size() != 0); 
+  assert(_uniqueBips.size() != 0); 
 
   auto && ss = std::stringstream{}; 
   ss << PROGRAM_NAME << "_bipartitionStatistics." << id ; 
@@ -147,10 +154,10 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
 
   auto allBlSets = std::vector<std::vector<double>>{};
 
-  for(auto &bipElem: uniqueBips)
+  for(auto &bipElem: _uniqueBips)
     {
       freqFile << bipElem.second << "\t" ; 
-      for(auto &bipHash : bipHashes )
+      for(auto &bipHash : _bipHashes )
 	{
 	  auto bls = bipHash.getBranchLengths(bipElem.first); 
 	  allBlSets.push_back(bls); 
@@ -178,12 +185,9 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
 }
 
 
-
-
-
 void BipartitionExtractor::printBranchLengths(std::string id) const 
 {
-  assert(uniqueBips.size() != 0); 
+  assert(_uniqueBips.size() != 0); 
   
   auto &&ss = std::stringstream {}; 
   ss << PROGRAM_NAME << "_bipartitionBranchLengths."  << id; 
@@ -194,11 +198,11 @@ void BipartitionExtractor::printBranchLengths(std::string id) const
   blFile << MAX_SCI_PRECISION; 
   blFile  << "bipId\tfileId\tlength"  << std::endl;
   nat ctr = 0; 
-  for(auto &bipHash : bipHashes)
+  for(auto &bipHash : _bipHashes)
     {
       for(auto &bip : bipHash)
 	for(auto length : bipHash.getBranchLengths(bip.first) )
-	  blFile << uniqueBips.at(bip.first) << "\t"  << ctr  << "\t" << length << std::endl; 
+	  blFile << _uniqueBips.at(bip.first) << "\t"  << ctr  << "\t" << length << std::endl; 
       ++ctr ; 
     }
 
@@ -207,7 +211,7 @@ void BipartitionExtractor::printBranchLengths(std::string id) const
 
 void BipartitionExtractor::printFileNames(std::string id) const 
 {
-  assert(uniqueBips.size() != 0); 
+  assert(_uniqueBips.size() != 0); 
 
   auto &&ss = std::stringstream{}; 
   ss << PROGRAM_NAME << "_fileNames." << id; 
@@ -228,7 +232,7 @@ void BipartitionExtractor::printFileNames(std::string id) const
 
 void BipartitionExtractor::printBipartitions(std::string id) const 
 {
-  assert(uniqueBips.size() != 0); 
+  assert(_uniqueBips.size() != 0); 
 
   std::stringstream ss; 
   ss << PROGRAM_NAME << "_bipartitions." << id; 
@@ -236,7 +240,7 @@ void BipartitionExtractor::printBipartitions(std::string id) const
 
   std::ofstream out(ss.str());
 
-  for(auto &bipElem :  uniqueBips)
+  for(auto &bipElem :  _uniqueBips)
     {
       out << bipElem.second << "\t" ; 
       bipElem.first.printVerbose(out, taxa);
@@ -301,8 +305,9 @@ std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartiti
 
 void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<std::vector<nat> >& directSubBips, const std::vector<Bipartition> &bips, std::stringstream &result, bool printSupport) const
 {
-  assert(getBipartitionHashes().size() == 1); 
-  nat totalTrees = getBipartitionHashes()[0].getTreesAdded(); 
+  nat totalTrees = 0;
+  for(auto &bipHash : _bipHashes)
+    totalTrees += bipHash.getTreesAdded(); 
 
   const auto& curBip = bips.at(currentId); 
   const auto& taxa = getTaxa();	// meh: efficiency 
@@ -350,7 +355,13 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
 
   if(currentId != bips.size()  -1 )
     {
-      double mySupport = double(getBipartitionHashes()[0].getPresence(curBip).count()) / double(totalTrees); 
+      double mySupport = 0; 
+      for(auto &bipHash : _bipHashes)
+	mySupport += bipHash.getPresence(curBip).count() ; 
+      mySupport /= double(totalTrees); 
+
+      assert(mySupport > 0. && mySupport <= 1.); 
+
       result << ")" ; 
       if(printSupport)
       	result << ":[" << std::fixed << std::setprecision(3) << mySupport << "]"; 
@@ -360,6 +371,6 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
 }
 
 
-template void BipartitionExtractor::extractBipsNew<true>(); 
-template void BipartitionExtractor::extractBipsNew<false>(); 
+template void BipartitionExtractor::extractBips<true>(nat burnin); 
+template void BipartitionExtractor::extractBips<false>(nat burnin); 
 

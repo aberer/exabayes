@@ -14,7 +14,7 @@ if [ $# -gt 1 ]; then
     rm -rf obj-mpi/*
     cd obj-mpi  
 
-    ../../configure  --enable-mpi $* 
+    ../../configure --enable-mpi $* 
     make -j $numCores
 
     mv exabayes ..    

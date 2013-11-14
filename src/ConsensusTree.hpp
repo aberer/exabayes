@@ -8,13 +8,12 @@
 class ConsensusTree 
 {
 public: 
-  ConsensusTree(std::string file); 
+  ConsensusTree(std::vector<std::string> files, nat burnin = 0  ); 
   std::string getConsensusTreeString(double threshold, bool isMRE); 
   std::vector<Bipartition>  getRefinedConsensusTree(const std::vector<Bipartition> &consensusBips, const std::vector<Bipartition> &minorityBips) const ; 
 
 private:   
   BipartitionExtractor bipEx; 
-  nat totalTrees; 
 }; 
 
 

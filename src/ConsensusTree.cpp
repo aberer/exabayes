@@ -2,13 +2,12 @@
 #include <map> 
 #include <cassert> 
 #include <algorithm>
- 
-ConsensusTree::ConsensusTree(std::string file )
-  : bipEx(std::vector<std::string>{file})
+
+
+ConsensusTree::ConsensusTree(std::vector<std::string> files, nat burnin  )
+  : bipEx(files, false)
 {
-  bipEx.extractBipsNew<false>(); 
-  const auto &hash = bipEx.getBipartitionHashes()[0]; 
-  totalTrees = hash.getTreesAdded();
+  bipEx.extractBips<false>(burnin); 
 }
 
 
@@ -43,41 +42,59 @@ std::string ConsensusTree::getConsensusTreeString(double threshold, bool isMRE)
 {
   auto result = std::string{}; 
   const auto& bipHashes = bipEx.getBipartitionHashes();
-  assert(bipHashes.size() == 1 ); 
-  const auto& bipHash = bipHashes[0]; 
-  auto bip2Occ = std::vector<std::pair<Bipartition,nat> >{}; 
+
+  auto bip2Occ = std::unordered_map<Bipartition,nat>{}; 
   nat maxBip = bipEx.getTaxa().size() - 3; 
+
+  nat totalTreesAdded = 0; 
+  for(auto &bipHash : bipHashes)
+    totalTreesAdded += bipHash.getTreesAdded(); 
 
   nat absThreshold = 0; 
   if(isMRE)
-    absThreshold = nat(bipHash.getTreesAdded() * .5);
+    absThreshold = nat(totalTreesAdded * .5);
   else 
-    absThreshold = nat(bipHash.getTreesAdded() * threshold); 
+    absThreshold = nat(totalTreesAdded * threshold); 
 
   assert(absThreshold > 0. ); 
 
-  for(auto bip : bipHash)
+
+  // determine unique bipartitions  
+  for(auto &bipHash : bipHashes)
     {
-      auto cpy = bip.first ; 
-      auto pair = std::make_pair(cpy, bipHash.getPresence(cpy).count()); 
-      bip2Occ.push_back(pair);
+      for(auto &bipOccPair : bipHash)
+	{
+	  auto &bip = std::get<0>(bipOccPair); 
+	  if( bip2Occ.find(bip) == bip2Occ.end())
+	    bip2Occ[bip] = 0; 
+	}
     }
   
+  for(auto &bipOccPair : bip2Occ)
+    {
+      auto &bip = std::get<0>(bipOccPair); 
+      auto &occ = std::get<1>(bipOccPair); 
+      for(auto bipHash : bipHashes)
+	occ += bipHash.getPresence(bip).count(); 
+    }
+
   // sort the bipartitions 
   auto sortBySecond = [](const std::pair<Bipartition,nat> &elemA, const std::pair<Bipartition,nat> &elemB)
     { 
       return elemA.second < elemB.second; 
     }; 
-  std::sort(bip2Occ.begin(), bip2Occ.end(), sortBySecond); 
+
+  auto bip2occVect = std::vector<std::pair<Bipartition,nat> >{bip2Occ.begin(), bip2Occ.end()}; 
+  std::sort(bip2occVect.begin(), bip2occVect.end(), sortBySecond); 
 
   auto consensus = std::vector<Bipartition>{}; 
   auto minorityBips = std::vector<Bipartition>{}; 
 
-  for(auto &bipPair : bip2Occ)
+  for(auto &bipPair : bip2occVect)
     {
       if(bipPair.first.count() == 1 )
-	continue; 
-      else if(absThreshold < bipPair.second )
+      	continue; 
+      else if(absThreshold <= bipPair.second )
 	consensus.push_back(bipPair.first); 
       else 
 	minorityBips.push_back(bipPair.first); 

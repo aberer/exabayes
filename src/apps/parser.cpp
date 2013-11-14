@@ -9,7 +9,7 @@ int NUM_BRANCHES ;
 
 void helpMessage()
 {
-  std::cout << ">parser< produces a binary output file, that can be fed into\n"
+  std::cout << "parser produces a binary output file, that can be fed into\n"
 	    << "ExaBayes/Yggdrasil. This is recommendable for large runs with hundreds\n"
 	    << "of processes.\n\n" ; 
 
@@ -92,6 +92,20 @@ int main(int argc, char **argv)
       exit(-1); 
     }
 
+  if(modelFile.compare("") != 0 && not std::ifstream{modelFile})
+    {
+      std::cout << "Error: model file provided, but could not open model file >"  << modelFile << "<" << std::endl; 
+      exit(-1); 
+    }
+
+  
+  if(not std::ifstream{alignmentFile})
+    {
+      std::cout << "Error: could not open alignment file >" << alignmentFile << "<" << std::endl; 
+      exit(-1); 
+    }
+
+  
   bool useSinglePartition =  modelFile.compare("") == 0; 
 
   auto parser = PhylipParser(alignmentFile, 

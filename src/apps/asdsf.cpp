@@ -6,16 +6,7 @@
 #include <string>
 #include <vector>
 
-// #define _USE_GOOGLE_PROFILER
-
 #include "axml.h"
-
-
-
-#ifdef _USE_GOOGLE_PROFILER
-#include <google/profiler.h>
-#endif
-
 
 int NUM_BRANCHES; 
 
@@ -53,11 +44,11 @@ void printUsage()
 int main(int argc, char** argv)
 {
 
-#ifdef _USE_GOOGLE_PROFILER
-  auto myProfileFile = "profile.out"; 
-  remove(myProfileFile);
-  ProfilerStart(myProfileFile);
-#endif
+// #ifdef _USE_GOOGLE_PROFILER
+//   auto myProfileFile = "profile.out"; 
+//   remove(myProfileFile);
+//   ProfilerStart(myProfileFile);
+// #endif
 
 
   NUM_BRANCHES = 1; 
@@ -175,9 +166,9 @@ int main(int argc, char** argv)
   std::cout  << "maximum deviation of split frequencies: " << asdsfResult.second * 100 << "%" << std::endl; 
   std::cout << "ignored splits that occurred in less than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << std::endl; 
 
-#ifdef _USE_GOOGLE_PROFILER
-  ProfilerStop();
-#endif
+// #ifdef _USE_GOOGLE_PROFILER
+//   ProfilerStop();
+// #endif
 
   return 0; 
 }

@@ -52,9 +52,9 @@ void CommandLine::printHelp()
 	    << "    -n ruid          a run id\n" 
 	    << "    -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. \n"
 	    << "                       Make sure, that all files created by the previous run are in the working directory.\n"
-	    << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n "
+	    << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n"
 	    << "    -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed \n"
-	    << "                       with binary files."
+	    << "                       with binary files.\n"
 	    << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
 	    << "                       (valid values: DNA or PROT)\n"
 	    << std::endl;     

@@ -7,15 +7,13 @@
 class CredibleSet
 {
 public: 
-  CredibleSet(std::string file); 
+  CredibleSet(std::vector<std::string> file); 
   void printCredibleSet(std::string filename, double thresh)  ; 
 
 private: 
-  BipartitionExtractor bipEx ; 
-  nat totalTrees;   
+  BipartitionExtractor _bipEx ; 
+  // nat _totalTrees;   
 }; 
-
-
 
 
 #endif

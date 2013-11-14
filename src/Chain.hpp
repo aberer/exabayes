@@ -142,7 +142,6 @@ private: 			// ATTRIBUTES
   LikelihoodEvaluator _evaluator;   
   
   // suspending and resuming the chain   
-  // double _lnl;
   double _lnPr; 	
 
   // friends 

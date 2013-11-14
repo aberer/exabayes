@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.9.5],[exabayes-at-googlegroups-dot-com]) 
+AC_INIT([exabayes],[0.9.7],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 

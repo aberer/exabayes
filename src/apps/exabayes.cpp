@@ -101,11 +101,18 @@ static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
    substantial run-time differences for vectors of equal length.
 */
 
-void ignoreExceptionsDenormFloat()
+static void ignoreExceptionsDenormFloat()
 {
 #if ! (defined(__ppc) || defined(__powerpc__) || defined(PPC))
   _mm_setcsr( _mm_getcsr() | _MM_FLUSH_ZERO_ON);
 #endif   
+}
+
+
+static bool fileExists(const std::string &name)
+{
+  FILE *fh = fopen(name.c_str(), "r"); 
+  return fh != nullptr; 
 }
 
 
@@ -120,7 +127,8 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 
   if( not cl.isDryRun() && pl.isGlobalMaster() )
     {
-      if(std::ifstream(ss.str()))
+      // auto &&iss = std::ifstream(ss.str()); 
+      if(fileExists(ss.str()))
 	{
 	  std::cerr << pl << std::endl; 
 	  std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"

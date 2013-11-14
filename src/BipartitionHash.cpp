@@ -4,10 +4,9 @@
 #include <algorithm>
 #include <iostream>
 
-// #include "Branch.hpp"
 #include "Randomness.hpp"
 
-BipartitionHashNew::BipartitionHashNew(nat numTax)   
+BipartitionHash::BipartitionHash(nat numTax)   
   :bipMeaning(numTax)
   , treesAdded(0)
 {
@@ -22,20 +21,19 @@ BipartitionHashNew::BipartitionHashNew(nat numTax)
 }
 
 
-void BipartitionHashNew::addTree(const TreeAln &traln, bool withBranch, bool withTrivial)
+void BipartitionHash::addTree(const TreeAln &traln, bool withBranch, bool withTrivial)
 {
   auto pStart = traln.getTrHandle().nodep[1]->back; 
   auto desc = traln.getDescendents(BranchPlain(pStart->number, pStart->back->number)); 
 
   addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch, withTrivial); 
   addElement(traln, desc.second.getInverted().findNodePtr(traln), withBranch, withTrivial); 
-  // tout << "added tree "<< treesAdded << std::endl; 
 
   ++treesAdded;
 }
 
 
-Bipartition BipartitionHashNew::addElement(const TreeAln &traln, nodeptr p, bool withBranch, bool withTrivial)
+Bipartition BipartitionHash::addElement(const TreeAln &traln, nodeptr p, bool withBranch, bool withTrivial)
 {
   auto curBranch = BranchPlain(p->number, p->back->number);
 
@@ -85,7 +83,7 @@ Bipartition BipartitionHashNew::addElement(const TreeAln &traln, nodeptr p, bool
 
 
 std::vector<double>
-BipartitionHashNew::getBranchLengths(const Bipartition& bip) const
+BipartitionHash::getBranchLengths(const Bipartition& bip) const
 {
   auto result = std::vector<double>{}; 
   auto iter = bipBranchLengths.find(bip); 
@@ -96,7 +94,7 @@ BipartitionHashNew::getBranchLengths(const Bipartition& bip) const
 
 
 Bipartition
-BipartitionHashNew::getPresence(const Bipartition &bip) const 
+BipartitionHash::getPresence(const Bipartition &bip) const 
 {
   auto result = Bipartition{}; 
   auto iter = bipPresence.find(bip); 

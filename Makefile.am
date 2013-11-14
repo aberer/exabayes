@@ -40,13 +40,13 @@ libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN
 libbayes_a_CFLAGS=-O2  $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)
 exabayes_LDADD= libncl.a libbayes.a 
 exabayes_LDADD+=$(LIBTOUSE)
-exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
+exabayes_SOURCES = $(top_srcdir)/src/apps/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
 exabayes_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)
 
 
 yggdrasil_LDADD= libncl.a libbayes.a 
 yggdrasil_LDADD+=$(LIBTOUSE)
-yggdrasil_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
+yggdrasil_SOURCES = $(top_srcdir)/src/apps/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
 yggdrasil_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) 
 
 
@@ -61,11 +61,11 @@ endif
 # ASDSF 
 asdsf_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) 
 asdsf_LDADD= libbayes.a $(LIBTOUSE) libncl.a
-asdsf_SOURCES= $(top_srcdir)/src/asdsf.cpp 
+asdsf_SOURCES= $(top_srcdir)/src/apps/asdsf.cpp 
 
 ################################################################
 # the parser 
-parser_SOURCES=$(top_srcdir)/src/parser.cpp
+parser_SOURCES=$(top_srcdir)/src/apps/parser.cpp
 parser_LDADD= libbayes.a $(LIBTOUSE)  
 parser_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) -Wno-deprecated-writable-strings 
 
@@ -73,27 +73,27 @@ parser_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) -Wno-depre
 # extractBips 
 extractBips_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) 
 extractBips_LDADD= libbayes.a $(LIBTOUSE)
-extractBips_SOURCES=$(top_srcdir)/src/extractBips.cpp  
+extractBips_SOURCES=$(top_srcdir)/src/apps/extractBips.cpp  
 
 
 ################################################################
 # consense 
 consense_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
 consense_LDADD= libbayes.a $(LIBTOUSE)
-consense_SOURCES=$(top_srcdir)/src/consense.cpp
+consense_SOURCES=$(top_srcdir)/src/apps/consense.cpp
 
 
 ################################################################
 # credibleSet 
 credibleSet_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
 credibleSet_LDADD= libbayes.a $(LIBTOUSE)
-credibleSet_SOURCES=$(top_srcdir)/src/credibleSet.cpp
+credibleSet_SOURCES=$(top_srcdir)/src/apps/credibleSet.cpp
 
 ################################################################
 # postProcParam 
 postProcParam_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
 postProcParam_LDADD= libbayes.a $(LIBTOUSE)
-postProcParam_SOURCES=$(top_srcdir)/src/postProcParam.cpp
+postProcParam_SOURCES=$(top_srcdir)/src/apps/postProcParam.cpp
 
 ################################################################
 # ncl 

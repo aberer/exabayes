@@ -8,10 +8,10 @@
 #include "Bipartition.hpp"
 
 
-class BipartitionHashNew
+class BipartitionHash
 {
 public: 
-  BipartitionHashNew(nat numTax); 
+  BipartitionHash(nat numTax); 
   void addTree(const TreeAln &traln, bool withBranch, bool withTrivial); 
 
   std::unordered_map<Bipartition, Bipartition>::const_iterator begin() const{return bipPresence.begin(); }
@@ -22,7 +22,6 @@ public:
 
   nat getTreesAdded() const {return treesAdded; }
 
-    // , bool withTrivial
 private: 			// METHODS
   Bipartition addElement(const TreeAln &traln, nodeptr p, bool withBranch, bool withTrivial); 
 
