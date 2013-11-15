@@ -1,114 +1,50 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
 <head>
 <title>ExaBayes User's Manual</title>
-<!-- 2013-11-14 Do 13:11 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
 <meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2013-11-15 21:24:43 CET"/>
+<meta name="author" content=""/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
 <style type="text/css">
  <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
   .title  { text-align: center; }
-  .todo   { font-family: monospace; color: red; }
+  .todo   { color: red; }
   .done   { color: green; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
   .timestamp { color: #bebebe; }
   .timestamp-kwd { color: #5f9ea0; }
-  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
+  p.verse { margin-left: 3% }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
   }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  pre.src-sh:before    { content: 'sh'; }
-  pre.src-bash:before  { content: 'sh'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-R:before     { content: 'R'; }
-  pre.src-perl:before  { content: 'Perl'; }
-  pre.src-java:before  { content: 'Java'; }
-  pre.src-sql:before   { content: 'SQL'; }
-
-  table { border-collapse:collapse; }
-  td, th { vertical-align:top;  }
-  th.right  { text-align: center;  }
-  th.left   { text-align: center;   }
-  th.center { text-align: center; }
-  td.right  { text-align: right;  }
-  td.left   { text-align: left;   }
-  td.center { text-align: center; }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
   dt { font-weight: bold; }
-  .footpara:nth-child(2) { display: inline; }
-  .footpara { display: block; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
   /*]]>*/-->
 </style>
 <script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012  Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
 <!--/*--><![CDATA[/*><!--*/
  function CodeHighlightOn(elem, id)
  {
@@ -133,78 +69,109 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+
 <h1 class="title">ExaBayes User's Manual</h1>
+
+
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. Quick Start</a></li>
-<li><a href="#sec-2">2. Installation</a>
+<li><a href="#sec-1">1 Quick Start </a></li>
+<li><a href="#sec-2">2 Installation </a>
 <ul>
-<li><a href="#sec-2-1">2.1. General compilation instructions</a></li>
-<li><a href="#sec-2-2">2.2. Comfort build</a></li>
-<li><a href="#sec-2-3">2.3. Manual: Compiling the Sequential Version</a></li>
-<li><a href="#sec-2-4">2.4. Manual: Compiling the Parallel Version</a></li>
+<li><a href="#sec-2.1">2.1 Requirements </a></li>
+<li><a href="#sec-2.2">2.2 Comfort build </a></li>
+<li><a href="#sec-2.3">2.3 Manual: Compiling the Sequential Version </a></li>
+<li><a href="#sec-2.4">2.4 Manual: Compiling the Parallel Version </a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. Command Line Options Explained</a></li>
-<li><a href="#sec-4">4. The Configuration File</a></li>
-<li><a href="#sec-5">5. On Bayesian Analyses</a></li>
-<li><a href="#sec-6">6. ExaBayes at Large: Invocations on Clusters/Supercomputers</a></li>
-<li><a href="#sec-7">7. Notes on Reproducibility</a></li>
+<li><a href="#sec-3">3 Command Line Options Explained </a>
+<ul>
+<li><a href="#sec-3.1">3.1 Mandatory Arguments </a></li>
+</ul>
+</li>
+<li><a href="#sec-4">4 The Configuration File </a>
+<ul>
+<li><a href="#sec-4.1">4.1 Parameter Linkage </a></li>
+<li><a href="#sec-4.2">4.2 Priors </a></li>
+<li><a href="#sec-4.3">4.3 General Settings </a></li>
+<li><a href="#sec-4.4">4.4 Proposals </a></li>
+</ul>
+</li>
+<li><a href="#sec-5">5 On Bayesian Analyses </a></li>
+<li><a href="#sec-6">6 ExaBayes at Large: Invocations on Clusters/Supercomputers </a></li>
+<li><a href="#sec-7">7 Notes on Reproducibility </a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-sec-1" class="outline-2">
-<h2 id="sec-1"><span class="section-number-2">1</span> Quick Start</h2>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Quick Start </h2>
+<div class="outline-text-2" id="text-1">
+
 </div>
-<div id="outline-container-sec-2" class="outline-2">
-<h2 id="sec-2"><span class="section-number-2">2</span> Installation</h2>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Installation </h2>
 <div class="outline-text-2" id="text-2">
-<p>
-After downloading the software package (e.g., exabayes-0.4.tar.gz),
+
+<p>After downloading the software package (e.g., exabayes-0.4.tar.gz),
 you will have to compile the source code. The following sections
 explain, how to do so. After compiling you obtain an executable
 called exabayes.    
 </p>
 </div>
-<div id="outline-container-sec-2-1" class="outline-3">
-<h3 id="sec-2-1"><span class="section-number-3">2.1</span> General compilation instructions</h3>
-<div class="outline-text-3" id="text-2-1">
-<p>
-ExaBayes requires a relatively recent c/c++ compiler that supports
+
+<div id="outline-container-2.1" class="outline-3">
+<h3 id="sec-2.1"><span class="section-number-3">2.1</span> Requirements </h3>
+<div class="outline-text-3" id="text-2.1">
+
+<p>ExaBayes requires a relatively recent c/c++ compiler that supports
 c++11 features. ExaBayes is confirmed to work with
-</p>
-<ol class="org-ol">
-<li>GCC version 4.6 or greater 
+</p><ol>
+<li>
+GCC version 4.6 or greater 
 </li>
-<li>Clang version 3.2 or greater
+<li>
+Clang version 3.2 or greater
+
 </li>
 </ol>
-</div>
+
+<p>For running ExaBayes, you need 
+</p>
+
 </div>
 
-<div id="outline-container-sec-2-2" class="outline-3">
-<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Comfort build</h3>
-<div class="outline-text-3" id="text-2-2">
-<p>
-The preferred way of compiling ExaBayes is to use the small
+</div>
+
+<div id="outline-container-2.2" class="outline-3">
+<h3 id="sec-2.2"><span class="section-number-3">2.2</span> Comfort build </h3>
+<div class="outline-text-3" id="text-2.2">
+
+<p>The preferred way of compiling ExaBayes is to use the small
 <b>build.sh</b> script. If you need to have more control over the build
 process, consider the next two sections.
 </p>
-
 <p>
 Simple execution of the build script creates the sequential version
-of ExaBayes (called yggdrasil) and all pre- and post-processing
+of ExaBayes (called Yggdrasil) and all pre- and post-processing
 tools in a build-folder.
 </p>
 
-<pre class="example">
-$ ./build.sh 
+
+
+<pre class="example">$ ./build.sh 
  [...] 
 $ ls build 
 asdsf  consense  credibleSet extractBips  obj-mpi  obj-seq  parser  postProcParam  yggdrasil
 </pre>
+
+
+
 
 <p>
 For building the (parallel) mpi-version of ExaBayes (executable is
@@ -213,76 +180,483 @@ called exabayes), please provide the name of the mpi-C compiler
 environment variable arguments. For instance: 
 </p>
 
-<pre class="example">
-$ ./build.sh CC=mpicc CXX=mpic++
+
+
+<pre class="example">$ ./build.sh CC=mpicc CXX=mpic++
 [...]
 $ ls build 
 exabayes
 </pre>
+
+
+
+
 </div>
+
 </div>
-<div id="outline-container-sec-2-3" class="outline-3">
-<h3 id="sec-2-3"><span class="section-number-3">2.3</span> Manual: Compiling the Sequential Version</h3>
-<div class="outline-text-3" id="text-2-3">
-<p>
-To compile a sequential version of ExaBayes (called yggdrasil) and
+
+<div id="outline-container-2.3" class="outline-3">
+<h3 id="sec-2.3"><span class="section-number-3">2.3</span> Manual: Compiling the Sequential Version </h3>
+<div class="outline-text-3" id="text-2.3">
+
+<p>To compile a sequential version of ExaBayes (called yggdrasil) and
 various pre- and post-processing tools, type
 </p>
-<div class="org-src-container">
 
-<pre class="src src-sh">$ ./configure &amp;&amp; make
+
+<pre class="example">$ ./configure &amp;&amp; make 
 </pre>
-</div>
+
+
+
 <p>
 If you have a multi-core machine, you can speed up the build
 process by adding -j&lt;numProc&gt; to the make command.
-</p>
-</div>
+</p></div>
+
 </div>
 
-<div id="outline-container-sec-2-4" class="outline-3">
-<h3 id="sec-2-4"><span class="section-number-3">2.4</span> Manual: Compiling the Parallel Version</h3>
-<div class="outline-text-3" id="text-2-4">
-<p>
-For running ExaBayes on a cluster, you need to have a working
-installation of a library that implement the Message Passing
-Interface (MPI).
-</p>
+<div id="outline-container-2.4" class="outline-3">
+<h3 id="sec-2.4"><span class="section-number-3">2.4</span> Manual: Compiling the Parallel Version </h3>
+<div class="outline-text-3" id="text-2.4">
 
+<p>For compiling the parallel mpi-version using the configure script,
+employ the command line below.
+</p>
 <p>
 You have to use a slightly different configure call and inform the
 configure script about your mpi compiler wrapper. These are usually
 called mpicc (c compiler) and mpicxx/mpiCC or mpic++ (c++
 compiler). For instance:
 </p>
-<div class="org-src-container">
 
-<pre class="src src-sh">$ ./configure --enable-mpi CC=mpicc CXX mpicxx
+
+<pre class="example">$ ./configure --enable-mpi CC=mpicc CXX mpicxx  &amp;&amp; make 
 </pre>
+
+
+
+
 </div>
 </div>
+
+</div>
+
+<div id="outline-container-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Command Line Options Explained </h2>
+<div class="outline-text-2" id="text-3">
+
+<p>The syntax for starting ExaBayes is as follows:
+</p>
+
+
+<pre class="example">./exabayes   -f alnFile [ -q modelFile ] [ -m model ] [ -s seed | -r id ]  -n id [options..] 
+</pre>
+
+
+
+
+
+
+<pre class="example">Mandatory Arguments: 
+  -f alnFile       an alignment file (either binary and created by parser or plain-text phylip)
+  -s seed          a master seed for the MCMC
+  -n ruid          a run id
+  -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. 
+                     Make sure, that all files created by the previous run are in the working directory.
+                     This option is not mandatory for the start-up, seed (via -s) will be ignored.
+   -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed 
+                     with binary files.
+   -m model         indicates the type of data for a single partition non-binary alignment file
+                     (valid values: DNA or PROT)
+
+
+Options:
+  -v               print version and quit
+  -h               print this help
+  -d               execute a dry-run. Procesess the input, but does not execute any sampling.
+  -c confFile      a file configuring your ExaBayes run. For a template see the examples/ folder
+  -w dir           specify a working directory for output files
+  -R num           the number of runs (i.e., independent chains) to be executed in parallel
+  -C num           number of chains (i.e., coupled chains) to be executed in parallel
+  -Q               per-partition data distribution (use this only with many partitions, check manual
+                     for detailed explanation)
+  -S               try to save memory using the SEV-technique for gap columns on large gappy alignments
+                     Please refer to  http://www.biomedcentral.com/1471-2105/12/470
+                     On very gappy alignments this option yields considerable runtime improvements. 
+  -M mode          specifies the memory versus runtime trade (see manual for detailed discussion).
+                     &lt;mode&gt; is a value between 0 (fastest, highest memory consumption) and 3 (slowest,
+                     least memory consumption)
+</pre>
+
+
+
+
+
+</div>
+
+<div id="outline-container-3.1" class="outline-3">
+<h3 id="sec-3.1"><span class="section-number-3">3.1</span> Mandatory Arguments </h3>
+<div class="outline-text-3" id="text-3.1">
+
+
+
+
+<pre class="example">-f alnFile       
+</pre>
+
+
+
+<p>
+Specifies an alignment file, either a binary created by the parser or a plain-text phylip. A plain text phylip file requires either a model file or a model definition. These two are given by the following arguments:
+</p>
+
+
+
+<pre class="example">-m model 
+-q modelfile         
+</pre>
+
+
+
+
+<p>
+The model must either be DNA (for dna data) or PROT (for protein data) and is only usable for a single partition alignment.
+The modelfile must define all partitions and give their data types in the following form: 
+</p>
+
+
+
+<pre class="example">DNA, gene1=1-300
+PROT, gene3=301-1100
+....
+DNA, geneN=7601-8149      
+</pre>
+
+
+
+<p>
+For a binary alignment file neither of the options is needed.
+</p>
+
+
+
+<pre class="example">-n ruid  
+-r id 
+</pre>
+
+
+
+<p>
+Each ExaBayes run must be assignmed its unique id via this argument.
+When restarting a run from a checkpoint, the original id must be given with -r and a new unique id must be assignemd with -n.
+</p>
 </div>
 </div>
-<div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3"><span class="section-number-2">3</span> Command Line Options Explained</h2>
+
 </div>
-<div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4"><span class="section-number-2">4</span> The Configuration File</h2>
+
+<div id="outline-container-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> The Configuration File </h2>
+<div class="outline-text-2" id="text-4">
+
+
+<p>
+Most of the advanced options, settings for priors and proposal frequencies can be set in a NEXUS config file. Such a file is passed with the -c argument. If no config file is specified, default values are used.
+</p>
+<p>
+The basic setup of such a config file is as follows:
+</p>
+
+
+<pre class="example">
+#NEXUS [Each config file must start with this header]
+
+[Note that any text enclosed in "[ ]" is ignored by ExaBayes.]
+[Please do not use scientific notation for numbers (e.g., 1e-6).] 
+
+[================================================================]
+[ LINKING of parameters across partitions ]
+[================================================================]
+begin params; 
+
+[Here we define how and if parameters are linked across partitions.]
+
+end;  
+
+
+[================================================================]
+[ PRIOR configuration ]
+[================================================================]
+begin PRIOR; 
+
+[The priors are defined in this block.]
+
+end; 
+
+[================================================================]
+[                               GENERAL                          ] 
+[================================================================]
+begin runconfig; 
+
+[General settings about the run and chain configuration go here.]
+
+end; 
+
+[================================================================]
+[ PROPOSAL configuration ]
+[================================================================]
+
+begin proposals; 
+
+[List of proposal frequencies and advanced options.]
+
+end ; 
+</pre>
+
+
+
+
+
 </div>
-<div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5"><span class="section-number-2">5</span> On Bayesian Analyses</h2>
+
+<div id="outline-container-4.1" class="outline-3">
+<h3 id="sec-4.1"><span class="section-number-3">4.1</span> Parameter Linkage </h3>
+<div class="outline-text-3" id="text-4.1">
+
+<p>Parameters, such as model of evolution or branch lengths can be linked across partitions. Two partitions that are linked with respect to a parameter always have the same parameter assigned to them. Notice that everything (except branch lengths) is unlinked by default.
+An examplary code block, for an alignment with 4 partitions, in the config file looks as follows:
+</p>
+
+
+<pre class="example">[================================================================]
+[ LINKING of parameters across partitions ]
+[================================================================]
+ begin params; 
+
+brlens = (0+1+2+3)  [ Links branch lengths across all 4 partitions ]
+stateFreq = (0+1,2,3)     [ &lt;= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
+rateHet = (0,2+1,3)  [ &lt;= 1,2 are linked, we have separate rate heterogeneity parameters for 0 and 3 ]
+revMat = (0,1,2,3)   [ Keeps the  revMat parameter unlinked (default state)]
+ 
+
+end;  
+</pre>
+
+
+
+
 </div>
-<div id="outline-container-sec-6" class="outline-2">
-<h2 id="sec-6"><span class="section-number-2">6</span> ExaBayes at Large: Invocations on Clusters/Supercomputers</h2>
+
 </div>
-<div id="outline-container-sec-7" class="outline-2">
-<h2 id="sec-7"><span class="section-number-2">7</span> Notes on Reproducibility</h2>
+
+<div id="outline-container-4.2" class="outline-3">
+<h3 id="sec-4.2"><span class="section-number-3">4.2</span> Priors </h3>
+<div class="outline-text-3" id="text-4.2">
+
+<p>Priors can, with a few exceptions, be either fixed, to take a constant value, be uniformly, exponentially or dirichlet distributed. Priors can be defined as a default for all partitions or on a per partition basis.
+</p>
+
+
+
+<pre class="example">[================================================================]
+[ PRIOR configuration ]
+[================================================================]
+begin PRIOR; 
+[ topology: ]
+[ topoPr fixed() ] [Must provide a starting tree] 
+topoPr uniform(0,1) [Uniform prior]
+
+
+[ branch lengths: ]
+[ brlenpr uniform(0.0000001,4)   ] [Uniform between 0.0000001 and 4] 
+[ brlenpr fixed() ] [ Needs a user tree with branch lengths. Only aplicable in conjunction with a fixed topology. ]  
+[ brlenpr exponential(10) ] [Exponential prior with lambda=10]
+  brlenpr{3} exponential(10.0) [Sets the prior for partition 3 only (!). All others use default values.] 
+
+
+[ substitution matrix ]
+  revMatPr dirichlet(2,1,1,1,1,1) [Sets the prior to dirichlet D(2,1,1,1,1,1) (6 values for a DNA substitution matrix)]
+[ revMatPr fixed(2,1,1,1,1,1) ] [Sets the revMat parameter to a constant (2,1,1,1,1,1)]
+
+
+[ state frequencies ] 
+[  stateFreqPr{0}  dirichlet(0.25,0.25,0.25,0.25)  ]  [Sets the prior for partition 0 (!) to dirichlet D(0.25,0.25,0.25,0.25) (4 values for a DNA)]
+[  stateFreqPr fixed(0.25,0.25,0.25,0.25) ] [Sets the state frequencies to a constant (0.25,0.25,0.25,0.25)] 
+
+[ rate heterogeneity: alpha parameter ]
+[ shapePr exponential(1) ]
+[ shapePr uniform(0.0000001,200) ] 
+[ shapePr fixed(1) ] 
+
+[ models for amino acid partitions: ] 
+ aaPr disc( WAG=3 , JTT=2 ) [Sets the prior for all amino acid partitions to 0.6 WAG and 0.4 JTT. All models implemented in RAxML may be used here. When the discrete prior is enabled for a partition, the revMat prior (and proposal) is deactivated.] 
+[ aaPr disc( WAG=3 , JTT=2 , REMAINDER=1 ) ] [Sets the weight for all unmentioned models to 1 and for WAG to 3 and JTT to 2.]
+[ aaPr fixed(WAG) ] [Always choose the WAG model]
+
+end; 
+
+</pre>
+
+
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-4.3" class="outline-3">
+<h3 id="sec-4.3"><span class="section-number-3">4.3</span> General Settings </h3>
+<div class="outline-text-3" id="text-4.3">
+
+
+<p>
+Most settings for the run and chain configuration are also defined in the config file.
+</p>
+
+
+<pre class="example">[================================================================]
+[                               GENERAL                          ] 
+[================================================================]
+begin runconfig; 
+
+ [ RUN PARAMETERS ]
+ diagFreq 5000          [ check for convergence of multiple independent runs after this many generations ]
+ samplingFrequency 500  [ take a sample every n generations ]
+ numRuns  2             [ number of independant runs ]
+ numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
+ tuneFreq 100           [ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
+ printFreq 1000         [ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+
+  parsimonyStartingTree         true            [ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
+  heatedChainsUseSame           false           [ should heated chains start with the same tree as the cold chain? default: false] 
+  [  sampledHeated false ] [ also take samples from the heated chains ]
+
+ checkPointInterval   1000  [ defines how often a checkpoint is written ]
+
+ [ CONVERGENCE ]
+ asdsfIgnoreFreq  0.1   [ ignore clades for which the relative  frequency in no chain exceeds this value ]
+ asdsfConvergence  0.005    [ indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence ] 
+
+
+ [ MCMCMC ]
+ numCoupledChains  2    [ number of chains per independent run (only one is cold)  =&gt; must be &gt; 0] 
+ heatFactor 0.1         [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
+ swapInterval 1         [ attempt a swap between chains every n generations ]
+ numSwaps     1         [  number of swaps to attempt between coupled chains for the swap interval ] 
+
+
+ [ BURNIN ] 
+ [ comment out one of the two options ]      
+ [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
+  burninProportion              0.25            [ discard this proportion of all initial samples as burnin  ]
+
+
+end; 
+</pre>
+
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-4.4" class="outline-3">
+<h3 id="sec-4.4"><span class="section-number-3">4.4</span> Proposals </h3>
+<div class="outline-text-3" id="text-4.4">
+
+
+
+
+<pre class="example"> [================================================================]
+ [ PROPOSAL configuration ]
+ [================================================================]
+ begin proposals; 
+      [ TOPOLOGY ]
+      eTBR  10 [extended TBR]
+      eSPR 10 [extended SPR]
+      stNNI 10 [statistical NNI]
+      parsimonySPR 2 [parsimony guided SPR]
+      guidedSPR 0 [ML guided SPR]
+
+
+  
+      [ BRANCH LENGTHS ] 
+      branchMulti 0 
+      treeLengthMult 2  
+      nodeSlider  0  
+      aGibbsBL 20 
+ 
+  
+      [ RATE HETEROGENEITY ]
+       rateHetSlider 0  
+       rateHetMulti 1  
+
+      [ REVMAT ] 
+         revMatSlider 1    
+         revMatDirichlet 0  
+
+      [ FREQUENIES ]
+        FrequencySlider    
+        FrequencyDirichlet 0   
+
+      [ AA models ]
+[       aaModelJump 0  ] 
+
+      [ PARAMETERS for various moves ]
+      guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
+      eSprStopProb 0.5 [ stopping probability for eSPR moves ] 
+      etbrStopProb 0.5 [ stopping probability for eTBR moves ] 
+      parsimonyWarp 0.10 [ warp factor for parsimony based moves ]  
+      parsSPRRadius  10 
+
+      [================================================================]
+
+end ; 
+</pre>
+
+
+
 </div>
 </div>
-<div id="postamble" class="status">
-<p class="date">Created: 2013-11-14 Do 13:11</p>
-<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.0.6)</p>
-<p class="xhtml-validation"><a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a></p>
+
+</div>
+
+<div id="outline-container-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> On Bayesian Analyses </h2>
+<div class="outline-text-2" id="text-5">
+
+
+</div>
+
+</div>
+
+<div id="outline-container-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> ExaBayes at Large: Invocations on Clusters/Supercomputers </h2>
+<div class="outline-text-2" id="text-6">
+
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Notes on Reproducibility </h2>
+<div class="outline-text-2" id="text-7">
+
+</div>
+</div>
+<div id="postamble">
+<p class="author"> Author: 
+<a href="mailto:lkobertkn@RH01887">&lt;lkobertkn@RH01887&gt;</a>
+</p>
+<p class="date"> Date: 2013-11-15 21:24:43 CET</p>
+<p class="creator">HTML generated by org-mode 6.33x in emacs 23</p>
+</div>
 </div>
 </body>
 </html>

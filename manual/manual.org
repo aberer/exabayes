@@ -21,10 +21,10 @@
    process, consider the next two sections.
 
    Simple execution of the build script creates the sequential version
-   of ExaBayes (called yggdrasil) and all pre- and post-processing
+   of ExaBayes (called Yggdrasil) and all pre- and post-processing
    tools in a build-folder.
 
-#+BEGIN_SRC
+#+BEGIN_SRC sh
   $ ./build.sh 
    [...] 
   $ ls build 
@@ -36,7 +36,7 @@
    (usually mpicc) and mpi-C++ compiler (mpicxx,mpiCC or mpic++) as
    environment variable arguments. For instance: 
 
-#+BEGIN_SRC
+#+BEGIN_SRC sh
   $ ./build.sh CC=mpicc CXX=mpic++
   [...]
   $ ls build 
@@ -64,7 +64,282 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    #+END_SRC
    
 * Command Line Options Explained
+  The syntax for starting ExaBayes is as follows:
+   #+BEGIN_SRC sh
+  ./exabayes   -f alnFile [ -q modelFile ] [ -m model ] [ -s seed | -r id ]  -n id [options..] 
+   #+END_SRC
+
+
+   #+BEGIN_SRC sh
+  Mandatory Arguments: 
+    -f alnFile       an alignment file (either binary and created by parser or plain-text phylip)
+    -s seed          a master seed for the MCMC
+    -n ruid          a run id
+    -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. 
+                       Make sure, that all files created by the previous run are in the working directory.
+                       This option is not mandatory for the start-up, seed (via -s) will be ignored.
+     -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed 
+                       with binary files.
+     -m model         indicates the type of data for a single partition non-binary alignment file
+                       (valid values: DNA or PROT)
+
+
+  Options:
+    -v               print version and quit
+    -h               print this help
+    -d               execute a dry-run. Procesess the input, but does not execute any sampling.
+    -c confFile      a file configuring your ExaBayes run. For a template see the examples/ folder
+    -w dir           specify a working directory for output files
+    -R num           the number of runs (i.e., independent chains) to be executed in parallel
+    -C num           number of chains (i.e., coupled chains) to be executed in parallel
+    -Q               per-partition data distribution (use this only with many partitions, check manual
+                       for detailed explanation)
+    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments
+                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470
+                       On very gappy alignments this option yields considerable runtime improvements. 
+    -M mode          specifies the memory versus runtime trade (see manual for detailed discussion).
+                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,
+                       least memory consumption)
+   #+END_SRC
+
+** Mandatory Arguments
+   #+BEGIN_SRC sh
+      -f alnFile       
+   #+END_SRC
+  Specifies an alignment file, either a binary created by the parser or a plain-text phylip. A plain text phylip file requires either a model file or a model definition. These two are given by the following arguments:
+  
+  #+BEGIN_SRC sh
+     -m model 
+     -q modelfile         
+   #+END_SRC
+
+  The model must either be DNA (for dna data) or PROT (for protein data) and is only usable for a single partition alignment.
+  The modelfile must define all partitions and give their data types in the following form: 
+
+  #+BEGIN_SRC sh
+   DNA, gene1=1-300
+   PROT, gene3=301-1100
+   ....
+   DNA, geneN=7601-8149      
+   #+END_SRC
+  For a binary alignment file neither of the options is needed.
+
+  #+BEGIN_SRC sh
+      -n ruid  
+      -r id 
+   #+END_SRC
+  Each ExaBayes run must be assignmed its unique id via this argument.
+  When restarting a run from a checkpoint, the original id must be given with -r and a new unique id must be assignemd with -n.
+
 * The Configuration File 
+
+Most of the advanced options, settings for priors and proposal frequencies can be set in a NEXUS config file. Such a file is passed with the -c argument. If no config file is specified, default values are used.
+
+The basic setup of such a config file is as follows:
+  #+BEGIN_SRC sh
+
+#NEXUS [Each config file must start with this header]
+
+[Note that any text enclosed in "[ ]" is ignored by ExaBayes.]
+[Please do not use scientific notation for numbers (e.g., 1e-6).] 
+
+[================================================================]
+[ LINKING of parameters across partitions ]
+[================================================================]
+begin params; 
+
+[Here we define how and if parameters are linked across partitions.]
+
+end;  
+
+
+[================================================================]
+[ PRIOR configuration ]
+[================================================================]
+begin PRIOR; 
+
+[The priors are defined in this block.]
+
+end; 
+
+[================================================================]
+[                               GENERAL                          ] 
+[================================================================]
+begin runconfig; 
+
+[General settings about the run and chain configuration go here.]
+
+end; 
+
+[================================================================]
+[ PROPOSAL configuration ]
+[================================================================]
+
+begin proposals; 
+
+[List of proposal frequencies and advanced options.]
+
+end ; 
+   #+END_SRC
+
+** Parameter Linkage
+  Parameters, such as model of evolution or branch lengths can be linked across partitions. Two partitions that are linked with respect to a parameter always have the same parameter assigned to them. Notice that everything (except branch lengths) is unlinked by default.
+  An examplary code block, for an alignment with 4 partitions, in the config file looks as follows:
+  #+BEGIN_SRC sh
+[================================================================]
+[ LINKING of parameters across partitions ]
+[================================================================]
+ begin params; 
+
+brlens = (0+1+2+3)  [ Links branch lengths across all 4 partitions ]
+stateFreq = (0+1,2,3)     [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
+rateHet = (0,2+1,3)  [ <= 1,2 are linked, we have separate rate heterogeneity parameters for 0 and 3 ]
+revMat = (0,1,2,3)   [ Keeps the  revMat parameter unlinked (default state)]
+ 
+
+end;  
+   #+END_SRC
+
+** Priors
+Priors can, with a few exceptions, be either fixed, to take a constant value, be uniformly, exponentially or dirichlet distributed. Priors can be defined as a default for all partitions or on a per partition basis.
+
+  #+BEGIN_SRC sh
+[================================================================]
+[ PRIOR configuration ]
+[================================================================]
+begin PRIOR; 
+[ topology: ]
+[ topoPr fixed() ] [Must provide a starting tree] 
+topoPr uniform(0,1) [Uniform prior]
+
+
+[ branch lengths: ]
+[ brlenpr uniform(0.0000001,4)   ] [Uniform between 0.0000001 and 4] 
+[ brlenpr fixed() ] [ Needs a user tree with branch lengths. Only aplicable in conjunction with a fixed topology. ]  
+[ brlenpr exponential(10) ] [Exponential prior with lambda=10]
+  brlenpr{3} exponential(10.0) [Sets the prior for partition 3 only (!). All others use default values.] 
+
+
+[ substitution matrix ]
+  revMatPr dirichlet(2,1,1,1,1,1) [Sets the prior to dirichlet D(2,1,1,1,1,1) (6 values for a DNA substitution matrix)]
+[ revMatPr fixed(2,1,1,1,1,1) ] [Sets the revMat parameter to a constant (2,1,1,1,1,1)]
+
+
+[ state frequencies ] 
+[  stateFreqPr{0}  dirichlet(0.25,0.25,0.25,0.25)  ]  [Sets the prior for partition 0 (!) to dirichlet D(0.25,0.25,0.25,0.25) (4 values for a DNA)]
+[  stateFreqPr fixed(0.25,0.25,0.25,0.25) ] [Sets the state frequencies to a constant (0.25,0.25,0.25,0.25)] 
+
+[ rate heterogeneity: alpha parameter ]
+[ shapePr exponential(1) ]
+[ shapePr uniform(0.0000001,200) ] 
+[ shapePr fixed(1) ] 
+
+[ models for amino acid partitions: ] 
+ aaPr disc( WAG=3 , JTT=2 ) [Sets the prior for all amino acid partitions to 0.6 WAG and 0.4 JTT. All models implemented in RAxML may be used here. When the discrete prior is enabled for a partition, the revMat prior (and proposal) is deactivated.] 
+[ aaPr disc( WAG=3 , JTT=2 , REMAINDER=1 ) ] [Sets the weight for all unmentioned models to 1 and for WAG to 3 and JTT to 2.]
+[ aaPr fixed(WAG) ] [Always choose the WAG model]
+
+end; 
+
+   #+END_SRC
+
+
+** General Settings
+
+Most settings for the run and chain configuration are also defined in the config file.
+  #+BEGIN_SRC sh
+[================================================================]
+[                               GENERAL                          ] 
+[================================================================]
+begin runconfig; 
+
+ [ RUN PARAMETERS ]
+ diagFreq 5000		[ check for convergence of multiple independent runs after this many generations ]
+ samplingFrequency 500 	[ take a sample every n generations ]
+ numRuns  2 	   	[ number of independant runs ]
+ numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
+ tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
+ printFreq 1000		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+
+  parsimonyStartingTree		true		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
+  heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
+  [  sampledHeated false ] [ also take samples from the heated chains ]
+
+ checkPointInterval   1000  [ defines how often a checkpoint is written ]
+
+ [ CONVERGENCE ]
+ asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
+ asdsfConvergence  0.005    [ indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence ] 
+
+
+ [ MCMCMC ]
+ numCoupledChains  2	[ number of chains per independent run (only one is cold)  => must be > 0] 
+ heatFactor 0.1   	[ the heat increment added to each hotter chain (this is not the inverse heat)   ]
+ swapInterval 1 	[ attempt a swap between chains every n generations ]
+ numSwaps     1         [  number of swaps to attempt between coupled chains for the swap interval ] 
+
+
+ [ BURNIN ] 
+ [ comment out one of the two options ]      
+ [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
+  burninProportion 	  	0.25   	  	[ discard this proportion of all initial samples as burnin  ]
+
+
+end; 
+ #+END_SRC
+
+** Proposals
+  #+BEGIN_SRC sh
+ [================================================================]
+ [ PROPOSAL configuration ]
+ [================================================================]
+ begin proposals; 
+      [ TOPOLOGY ]
+      eTBR  10 [extended TBR]
+      eSPR 10 [extended SPR]
+      stNNI 10 [statistical NNI]
+      parsimonySPR 2 [parsimony guided SPR]
+      guidedSPR 0 [ML guided SPR]
+
+
+  
+      [ BRANCH LENGTHS ] 
+      branchMulti 0 
+      treeLengthMult 2  
+      nodeSlider  0  
+      aGibbsBL 20 
+ 
+  
+      [ RATE HETEROGENEITY ]
+       rateHetSlider 0  
+       rateHetMulti 1  
+
+      [ REVMAT ] 
+         revMatSlider 1    
+         revMatDirichlet 0  
+
+      [ FREQUENIES ]
+        FrequencySlider    
+        FrequencyDirichlet 0   
+
+      [ AA models ]
+[       aaModelJump 0  ] 
+
+      [ PARAMETERS for various moves ]
+      guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
+      eSprStopProb 0.5 [ stopping probability for eSPR moves ] 
+      etbrStopProb 0.5 [ stopping probability for eTBR moves ] 
+      parsimonyWarp 0.10 [ warp factor for parsimony based moves ]  
+      parsSPRRadius  10 
+
+      [================================================================]
+
+end ; 
+ #+END_SRC
 * On Bayesian Analyses
+
 * ExaBayes at Large: Invocations on Clusters/Supercomputers
+  
+
+
 * Notes on Reproducibility 
