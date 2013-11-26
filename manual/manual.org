@@ -90,8 +90,6 @@ $ ./configure && make
    #+BEGIN_SRC sh
 $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make 
    #+END_SRC
-   
-<<<<<<< HEAD
 ** Installation on Mac OS X
    For installation on an Apple system, you ideally should have set up
    an environment that allows you to compile (MPI-)applications in the
