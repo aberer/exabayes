@@ -606,7 +606,7 @@ static void coreGAMMA_FLEX(int upper, double *sumtable, volatile double *ext_dln
    branch and thereafter invokes the one-time only precomputation of values (sumtable) that can be re-used in each Newton-Raphson 
    iteration. Once this function has been called we can execute the actual NR procedure */
 
-void makenewzIterative(tree *tr)
+void makenewzIterative(tree *tr , array_reservoir_t res)
 {
   int 
     model, 
@@ -631,7 +631,7 @@ void makenewzIterative(tree *tr)
   
   /* call newvieIterative to get the likelihood arrays to the left and right of the branch */
 
-  newviewIterative(tr, 1);
+  newviewIterative(tr, 1, res);
 
 
   /* 
@@ -880,7 +880,7 @@ void execCore(tree *tr, volatile double *_dlnLdlz, volatile double *_d2lnLdlz2)
 
 */
 
-static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result,  double lambda, double *firstDerivative, double *secDerivative)
+static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result,  double lambda, double *firstDerivative, double *secDerivative, array_reservoir_t res)
 {
   double   z[NUM_BRANCHES], zprev[NUM_BRANCHES], zstep[NUM_BRANCHES];
   double  dlnLdlz[NUM_BRANCHES], d2lnLdlz2[NUM_BRANCHES];
@@ -974,7 +974,7 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result,
 
       if(firstIteration)
 	{
-	  makenewzIterative(tr);
+	  makenewzIterative(tr,res);
 	  firstIteration = FALSE;
 	}
       
@@ -1095,7 +1095,7 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result,
    between nodes p and q.
    The new branch lengths will be stored in result */
 
-void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask)
+void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask, array_reservoir_t res)
 {
   int 
     i;
@@ -1131,7 +1131,7 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
 
   /* call the Newton-Raphson procedure */
   
-  topLevelMakenewz(tr, z0, maxiter, result, lambda, nrD1, nrD2);
+  topLevelMakenewz(tr, z0, maxiter, result, lambda, nrD1, nrD2, res);
  
   /* fix eceuteModel this seems to be a bit redundant with topLevelMakenewz */ 
 

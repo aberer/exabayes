@@ -229,8 +229,8 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 		  exit(-1); 
 		}
 
-	      tout << "setting prior " << &prior << 
-		" for param "<< v.get() << std::endl; 
+	      // tout << "setting prior " << &prior << 
+		// " for param "<< v.get() << std::endl; 
 
 	      v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
 	      break; 
@@ -251,7 +251,7 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 	      foundPrior = partitionsOfPrior.size() ==  0; 
 	      if(foundPrior)
 		{
-		  tout << "setting prior " << &prior << " for param "<< v.get() << std::endl; 
+		  // tout << "setting prior " << &prior << " for param "<< v.get() << std::endl; 
 		  v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
 		  break; 
 		}

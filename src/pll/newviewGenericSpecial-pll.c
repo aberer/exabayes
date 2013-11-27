@@ -61,7 +61,6 @@
 double g_cyc1 = 0.0;
 double g_cyc2 = 0.0;
 
-
 /* required to compute the absoliute values of double precision numbers with SSE3 */
 
 const union __attribute__ ((aligned (BYTE_ALIGNMENT)))
@@ -1044,7 +1043,7 @@ void newviewGAMMA_FLEX_reorder(int tipCase, double *x1, double *x2, double *x3, 
 
 extern int debugPrint; 
 
-void newviewIterative (tree *tr, partitionList *pr, int startIndex)
+void newviewIterative (tree *tr, partitionList *pr, int startIndex, array_reservoir_t res )
 {
   traversalInfo 
     *ti   = tr->td[0].ti;
@@ -1230,23 +1229,53 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex)
 
 	      /* assert(availableLength == 0 ); */
 
-	      if(requiredLength != availableLength)
-		{		  
-		  /* if there is a vector of incorrect length assigned here i.e., x3 != NULL we must free 
-		     it first */
-		  if(x3_start)
-		    rax_free(x3_start);
 
-		  /* allocate memory: note that here we use a byte-boundary aligned malloc, because we need the vectors
-		     to be aligned at 16 BYTE (SSE3) or 32 BYTE (AVX) boundaries! */
+	      
+#if 0 
 
-		  x3_start = (double*)rax_malloc_aligned(requiredLength); 
-		  /* printf("allocating %d for %d\n", requiredLength, p_slot + tr->mxtips + 1 );  */
+	      /* if(res == NULL) */
+	      /* 	{ */
 
-		  /* update the data structures for consistent bookkeeping */
-		  pr->partitionData[model]->xVector[p_slot] = x3_start;
-		  pr->partitionData[model]->xSpaceVector[p_slot] = requiredLength;
-		}
+		  /* stanard raxml behaviour */
+		  if(requiredLength != availableLength)
+		    {	
+
+		      /* if there is a vector of incorrect length assigned here i.e., x3 != NULL we must free 
+			 it first */
+		      if(x3_start)
+			rax_free(x3_start);
+
+		      /* allocate memory: note that here we use a byte-boundary aligned malloc, because we need the vectors
+			 to be aligned at 16 BYTE (SSE3) or 32 BYTE (AVX) boundaries! */
+
+		      x3_start = (double*)rax_malloc_aligned(requiredLength); 
+		      /* printf("allocating %d for %d\n", requiredLength, p_slot + tr->mxtips + 1 );  */
+
+		      /* update the data structures for consistent bookkeeping */
+		      pr->partitionData[model]->xVector[p_slot] = x3_start;
+		      pr->partitionData[model]->xSpaceVector[p_slot] = requiredLength;
+		    }
+		  /* #else s */
+	      /* 	} */
+	      /* else  */
+	      /* 	{ */
+#else 
+		  /* exabayes behaviour */
+
+		  /* TODO make that dirty  */
+		  if(requiredLength != availableLength)
+		    {
+		  
+		      if(x3_start)
+			deallocate(res, x3_start);
+		  
+		      x3_start = allocate(res, requiredLength);
+		  
+		      pr->partitionData[model]->xVector[p_slot] = x3_start; 
+		      pr->partitionData[model]->xSpaceVector[p_slot] = requiredLength; 
+		    }
+		/* } */
+#endif
 
 	      /* now just set the pointers for data accesses in the newview() implementations above to the corresponding values 
 		 according to the tip case */
@@ -1571,7 +1600,7 @@ void computeTraversal(tree *tr, nodeptr p, boolean partialTraversal, int numBran
  *
  *
  */
-void newviewGeneric (tree *tr, partitionList *pr, nodeptr p, boolean masked)
+void newviewGeneric (tree *tr, partitionList *pr, nodeptr p, boolean masked, array_reservoir_t res)
 {  
   /* if it's a tip there is nothing to do */
 
@@ -1637,7 +1666,7 @@ void newviewGeneric (tree *tr, partitionList *pr, nodeptr p, boolean masked)
 #else
     /* in the sequential case we now simply call newviewIterative() */
 
-    newviewIterative(tr, pr, 0);
+    newviewIterative(tr, pr, 0, res);
 #endif
 
   }
@@ -1933,7 +1962,7 @@ void newviewGenericAncestral(tree *tr, partitionList *pr, nodeptr p)
 
   /* first call newviewGeneric() with mask set to FALSE such that the likelihood vector is there ! */
 
-  newviewGeneric(tr, pr, p, FALSE);
+  newviewGeneric(tr, pr, p, FALSE, NULL);
 
   /* now let's compute the ancestral states using this vector ! */
   
@@ -3022,7 +3051,7 @@ static void newviewGTRGAMMA_GAPPED_SAVE(int tipCase,
             _mm_store_pd(&x3[14], _mm_mul_pd(values[7], sv));	     
 
 	    
-	    printf("scale\n"); 
+	    /* printf("scale\n");  */
 	    
             addScale += wgt[i];
 

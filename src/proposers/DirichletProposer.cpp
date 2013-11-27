@@ -25,13 +25,13 @@ std::vector<double> DirichletProposer::proposeValues(std::vector<double> oldValu
 
       BoundsChecker::correctRevMat(newValues);       
 
-      double sum = std::accumulate(newValues.begin(), newValues.end(), 0.); 
-      for(auto &v : newValues)
-      	v /= sum; 
+      RateHelper::convertToSum1(newValues);
     }
   else 				// for freuqencies (or everything else, that sums up to 1)
     {      
       correctAbsoluteRates(newValues); 
+
+      RateHelper::convertToSum1(newValues);
     }  
 
   auto scaledNew = _rateHelper.getScaledValues(newValues, parameter);

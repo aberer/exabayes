@@ -1,4 +1,5 @@
 #include "AdHocIntegrator.hpp"
+#include "eval/ArrayReservoir.hpp"
 #include "eval/ArrayRestorer.hpp"
 #include "Arithmetics.hpp"
 #include "eval/FullCachePolicy.hpp"
@@ -7,7 +8,8 @@
 AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
   auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(traln, true, true));
-  auto eval = LikelihoodEvaluator(traln, plcy.get() );
+  auto&& res = std::make_shared<ArrayReservoir>(false);
+  auto eval = LikelihoodEvaluator(traln, plcy.get() , res);
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
@@ -137,11 +139,11 @@ double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std
 #if HAVE_PLL != 0 
       makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), 
 		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
+		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 
 #else 
       makenewzGeneric(&(traln.getTrHandle()), 
 		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 	  
+		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 	  
 #endif
       tmpBranch.setLength(result);
       thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
@@ -155,11 +157,11 @@ double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std
 #if HAVE_PLL != 0
   makenewzGeneric(&traln.getTrHandle(), &traln.getPartitionsHandle(), 
 		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
+		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 
 #else 
   makenewzGeneric(&traln.getTrHandle(), 
 		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE); 
+		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 
 #endif
       
   // thisOut << prevVal << "\t" << firstDerivative << "\t" << secDerivative << endl; 

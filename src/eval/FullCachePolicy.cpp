@@ -13,14 +13,14 @@ void FullCachePolicy::imprintPolicy(const TreeAln &traln, ArrayOrientation &arra
 }
 
 
-void FullCachePolicy::freeMemory()   
+void FullCachePolicy::freeMemory(ArrayReservoir& res) 
 {
-  restorer.clearMemory();
+  restorer.clearMemory(res);
 }
 
-void FullCachePolicy::accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient)
+void FullCachePolicy::accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient, ArrayReservoir &res)
 {
-  restorer.restoreSomePartitions(traln, partitions, arrayOrient); 
+  restorer.restoreSomePartitions(traln, partitions, arrayOrient, res); 
 }
 
 
@@ -29,7 +29,7 @@ std::unique_ptr<ArrayPolicy> FullCachePolicy::clone() const
   return std::unique_ptr<ArrayPolicy>(new FullCachePolicy(*this) ); 
 }
 
-void FullCachePolicy::prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat model, ArrayOrientation& arrayOrientation )
+void FullCachePolicy::prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat model, ArrayOrientation& arrayOrientation, ArrayReservoir& res )
 {
-  restorer.traverseAndCache(traln, virtualRoot.findNodePtr(traln), model,  arrayOrientation );
+  restorer.traverseAndCache(traln, virtualRoot.findNodePtr(traln), model,  arrayOrientation,res  );
 } 

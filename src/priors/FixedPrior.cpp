@@ -45,12 +45,6 @@ ParameterContent FixedPrior::getInitialValue() const
 } 
 
 
-// std::vector<double> FixedPrior::drawFromPrior(Randomness &rand)  const 
-// {
-//   return fixedValues; 
-// }
-
-
 void FixedPrior::print(std::ostream &out) const 
 {
   out << "Fixed(" ;     
@@ -83,8 +77,7 @@ double FixedPrior::accountForMeanSubstChange(TreeAln  &traln, const AbstractPara
 	    b.setConvertedInternalLength(traln, param, fixedValues.at(0));
 	}
       
-      if( std::any_of(bls.begin(), bls.end(), 
-		      [](BranchLength &b){ return not BoundsChecker::checkBranch(b) ;  }) ) 
+      if( std::any_of(bls.begin(), bls.end(), [](BranchLength &b){ return not BoundsChecker::checkBranch(b) ;  }) ) 
 	return - std::numeric_limits<double>::infinity(); 
       
       for(auto &b : bls)

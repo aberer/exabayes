@@ -33,8 +33,6 @@ void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
       if(takeAll)
 	endhere = file2numTree[filename]; 
 
-      // std::cout << "for file " << filename <<  " using trees " << start << " - " << endhere << std::endl;
-       
       auto&& ifh = std::ifstream{filename}; 
 
       for(nat i = 0; i < start; ++i)
@@ -54,7 +52,7 @@ void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
 auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
  -> std::pair<double,double> 
 {
-  auto allBips = std::unordered_set<Bipartition>(); 
+  auto allBips = std::unordered_set<Bipartition>{}; 
 
   for(auto &h : newBipHashes)
     for(auto &elem : h)
@@ -67,13 +65,15 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
       numTrees.push_back(tn);
     }
 
+  // std::cout << "numTrees: " <<  numTrees << std::endl; 
+
   auto numOccs = std::unordered_map<Bipartition,std::vector<double> >{}; 
-  for(auto &elem : allBips)
+  for(auto elem : allBips)
     {
       auto tmp = std::vector<double>{};
       for(auto &h : newBipHashes)
 	tmp.push_back( double(h.getPresence(elem).count()) );
-      numOccs[elem] = tmp; 
+      numOccs.insert(std::make_pair(elem, tmp)); 
     }
 
   auto asdsfPart = std::vector<double>{};
@@ -84,21 +84,20 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
       for(auto &v : numOccs[elem])
 	{
 	  v /= numTrees.at(ctr) ; 
-	  isRelevant |= ( ignoreFreq <= v); 
+	  isRelevant |= ( ignoreFreq < v); 
 	  ++ctr; 
 	}
       
       auto sd = sqrt ( Arithmetics::getVariance(numOccs[elem]) ) ; 
-      // std::cout << sd << " = " << numOccs[elem] <<  ( isRelevant ? "" : "\tIGNORED" ) << std::endl;  
 
       if(isRelevant)
 	asdsfPart.push_back( sd );
     }
 
-  auto asdsfMax = std::max_element(asdsfPart.begin(), asdsfPart.end()); 
+  auto asdsfMax = std::max_element(begin(asdsfPart), end(asdsfPart)); 
   auto mean = Arithmetics::getMean(asdsfPart); 
 
-  return make_pair(mean, *asdsfMax); 
+  return std::make_pair(mean, *asdsfMax); 
 }
 
 nat SplitFreqAssessor::getNumTreeAvailable(string fileName)

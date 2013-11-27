@@ -96,6 +96,7 @@ void FrequencyParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
   auto numStates = traln.getPartition(_partitions.at(0)).states;
   checkSanityPartitionsAndPrior_FreqRevMat(traln);
   auto initVal = _prior->getInitialValue(); 
+
   if( int(initVal.values.size()) != numStates && 
       initVal.protModel.size() == 0 )
     {

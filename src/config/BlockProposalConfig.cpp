@@ -59,7 +59,7 @@ void BlockProposalConfig::Read(NxsToken &token)
 	  else if(key.EqualsCaseInsensitive("parssprradius"))
 	    {
 	      parsSPRRadius = value.ConvertToInt();
-	      tout << "\n\nfound spr radius " << parsSPRRadius << "\n\n" << std::endl ;
+	      // tout << "\n\nfound spr radius " << parsSPRRadius << "\n\n" << std::endl ;
 	    }
 	  else 	      
 	    {

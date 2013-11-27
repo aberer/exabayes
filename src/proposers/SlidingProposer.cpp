@@ -1,4 +1,5 @@
 #include "SlidingProposer.hpp"
+#include "RateHelper.hpp"
 #include "BoundsChecker.hpp"
 #include <numeric>
 
@@ -23,11 +24,6 @@ double SlidingProposer::proposeOneValue(double oldVal, double parameter, Randomn
 
 std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
 {
-  // tout << "values: " ; 
-  // for(auto v : oldValues) 
-  //   tout << v << ","; 
-  // tout << std::endl; 
-
 #if 0 
   int posA = rand.drawIntegerOpen(oldValues.size()); 
 
@@ -86,31 +82,21 @@ std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> old
   // check if contracts are met  
   if(minMaxIsRelative)
     {
-      for(auto &v : oldValues)
-	v /= oldValues.back(); 
-
+      RateHelper::convertRelativeToLast(oldValues); 
       BoundsChecker::correctRevMat(oldValues); 
-
-      double sum = std::accumulate(begin(oldValues), end(oldValues), 0.); 
-      for(auto &v : oldValues) 
-	v /= sum; 
+      RateHelper::convertToSum1(oldValues); 
     }
   else 
     {
-      // assert(0);
       // sum may not be one 
-      auto sum = std::accumulate(oldValues.begin(), oldValues.end(), 0.) ; 
-      for(auto &v : oldValues)
-	v /= sum; 
-
+      RateHelper::convertToSum1(oldValues) ; 
       correctAbsoluteRates(oldValues);
-
+      RateHelper::convertToSum1(oldValues) ; 
     }
 
-  sum = std::accumulate(oldValues.begin(), oldValues.end(), 0.); 
-  if( fabs(sum - 1.0 ) > 1e-6 )
+  if( fabs( std::accumulate(oldValues.begin(), oldValues.end(), 0.) - 1.0 ) > 1e-6 )
     {
-      std::cerr << "Danger: while proposing values,  sum was " << sum << ". values: "   << oldValues  << std::endl; 
+      std::cerr << "Danger: while proposing values,  sum was " << std::accumulate(oldValues.begin(), oldValues.end(), 0.) << ". values: "   << oldValues  << std::endl; 
       assert(0); 
     }
 

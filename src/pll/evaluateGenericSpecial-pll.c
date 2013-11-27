@@ -374,7 +374,7 @@ static double evaluateGTRCAT (int *cptr, int *wptr,
 
 /* This is the core function for computing the log likelihood at a branch */
 
-void evaluateIterative(tree *tr, partitionList *pr)
+void evaluateIterative(tree *tr, partitionList *pr, array_reservoir_t res)
 {
   /* the branch lengths and node indices of the virtual root branch are always the first one that 
      are stored in the very important traversal array data structure that describes a partial or full tree traversal */
@@ -414,7 +414,7 @@ void evaluateIterative(tree *tr, partitionList *pr)
 
   /* iterate over all valid entries in the traversal descriptor */
 
-  newviewIterative(tr, pr, 1);
+  newviewIterative(tr, pr, 1, res);
 
   /* after the above call we are sure that we have properly and consistently computed the 
      conditionals to the right and left of the virtual root and we can now invoke the 
@@ -708,7 +708,7 @@ void evaluateIterative(tree *tr, partitionList *pr)
 
 
 
-void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraversal)
+void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraversal, array_reservoir_t res)
 {
   /* now this may be the entry point of the library to compute 
      the log like at a branch defined by p and p->back == q */
@@ -837,7 +837,7 @@ void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraver
   /* and here is just the sequential case, we directly call evaluateIterative() above 
      without having to tell the threads/processes that they need to compute this function now */
   
-  evaluateIterative(tr, pr);
+  evaluateIterative(tr, pr,res );
 #endif
 
   for(model = 0; model < pr->numberOfPartitions; model++)
@@ -858,7 +858,7 @@ void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraver
 }
 
 
-void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods)
+void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods, array_reservoir_t res)
 {
   double 
     //likelihood,
@@ -878,7 +878,7 @@ void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods)
      will then be used for calculating per-site log likelihoods 
      for each site individually and independently */
 
-  evaluateGeneric (tr, pr, tr->start, TRUE);
+  evaluateGeneric (tr, pr, tr->start, TRUE, res);
 
   //likelihood = tr->likelihood;
 

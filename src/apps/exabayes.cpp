@@ -41,8 +41,7 @@ int NUM_BRANCHES;
 #include "axml.h" 
 
 #ifdef TEST
-#include "Arithmetics.hpp"
-// #include "BasicTreeReader.hpp"
+#include <set> 
 #endif
 
 
@@ -70,21 +69,33 @@ static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  auto r = randCtr_t{}; 
-  r.v[0] = 112 ; 
-  auto rand =   Randomness {r} ; 
-  auto data = std::vector<double> {}; 
-  for(nat i = 0; i < 100; ++i)
-    data.push_back(rand.drawBinomial(0.1, 20));
-
-  for(auto &v : data)
-    {
-      tout << v << std::endl;  
-    }
-
-  std::cout << MAX_SCI_PRECISION   << "mean: " <<  Arithmetics::getMean(data) << std::endl; 
+  
+  // auto myLess = [](  nat a,  nat b  ){ return a < b ;  } ; 
+    // { return std::get<0>(a) < std::get<0>(b);   }; 
 
   
+  auto myMap = std::multimap<nat,nat > 
+    {
+      { 3 , 8} , 
+      {21, 15}, 
+      {27, 27},
+      {1,1}, 
+      {27,27} 
+    }; 
+
+  for(auto elem : myMap)
+    {
+      std::cout << std::get<0>(elem) << "\t" << std::get<1>(elem) << std::endl; 
+    }
+
+  auto result = myMap.lower_bound( 100 ); 
+
+  // assert(result != myMap.end()); 
+
+  std::cout << "result: " << std::get<0>(*result) << std::endl; 
+  
+
+
 
   exit(0); 
 #else 

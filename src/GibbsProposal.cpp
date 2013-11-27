@@ -113,9 +113,9 @@ std::array<double,3> GibbsProposal::optimiseBranch( TreeAln &traln, const Branch
   double add2nrd1 = lambda * traln.getMeanSubstitutionRate( { 0 }); 
 
 #if HAVE_PLL != 0
-  makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE) ;
+  makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE, &eval.getArrayReservoir()) ;
 #else 
-  makenewzGeneric(&(traln.getTrHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE) ;
+  makenewzGeneric(&(traln.getTrHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE, &eval.getArrayReservoir()) ;
 #endif
 
   return std::array<double,3>{{result, nrD1, nrD2}}; 

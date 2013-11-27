@@ -11,6 +11,8 @@
 #include <array>
 #include <memory>
 
+
+#include "eval/ArrayReservoir.hpp"
 #include "axml.h"
 #include "GlobalVariables.hpp"
 
@@ -64,6 +66,7 @@ public:
   /** 
       @brief frees all likelihood arrays 
    */   
+  void clearMemory(ArrayReservoir &arrayReservoir);
   void clearMemory(); 
   /** 
       @brief get the number of branches in the tree (not counting per-partition branch lengths)
@@ -224,7 +227,7 @@ public:
   RunModes getMode() const { return _mode; }
 
   void setTaxa(std::vector<std::string> map){ _taxa = map; }
-  std::vector<std::string> getTaxa() const {return _taxa; }
+  const std::vector<std::string>& getTaxa() const {return _taxa; }
 
   std::vector<BranchPlain> getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const;   
 
@@ -238,7 +241,6 @@ public:
   void copyTopologyAndBl(const TreeAln &rhs); 
   void copyAlnModel(const TreeAln& rhs); 
 
-  
   friend void swap(TreeAln& lhs, TreeAln& rhs ); 
 
 private: // METHODS  

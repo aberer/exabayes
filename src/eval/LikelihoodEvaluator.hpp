@@ -12,7 +12,7 @@
 class LikelihoodEvaluator
 {
 public: 
-  LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy *plcy ); 
+  LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy *plcy, std::shared_ptr<ArrayReservoir> arrayReservoir); 
   LikelihoodEvaluator( LikelihoodEvaluator &&rhs); 
   LikelihoodEvaluator( const LikelihoodEvaluator &rhs ); 
   LikelihoodEvaluator& operator=(LikelihoodEvaluator rhs) ; 
@@ -68,6 +68,8 @@ public:
   void expensiveVerify(TreeAln &traln,  BranchPlain root, double toVerify);
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
 
+  ArrayReservoir& getArrayReservoir() {return *(_arrayReservoir) ; }
+
 private: 			// METHODS 
   /** 
       @brief traverses the tree and reorients nodes to enforce
@@ -90,6 +92,7 @@ private: 			// ATTRIBUTES
   bool verifyLnl; 
   std::unique_ptr<ArrayPolicy> arrayPolicy; 
   ArrayOrientation arrayOrientation; 
+  std::shared_ptr<ArrayReservoir> _arrayReservoir; 
 }; 
 #endif
 

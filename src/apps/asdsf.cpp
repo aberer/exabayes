@@ -142,7 +142,7 @@ int main(int argc, char** argv)
 
   auto asdsf = SplitFreqAssessor(files); 
   
-  nat end = asdsf.getMinNumTrees()-1; 
+  nat end = asdsf.getMinNumTrees(); 
   
   if(end < constBurnin)
     {

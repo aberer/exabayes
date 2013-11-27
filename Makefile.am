@@ -1,8 +1,8 @@
 AUTOMAKE_OPTIONS=foreign
 
-EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/* build.sh
+EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/* build.sh apple-build.sh $(top_srcdir)/manual/manual.pdf $(top_srcdir)/manual/manual.html 
 
-.PHONY: my-update-src doc  mydist 
+.PHONY: my-update-src doc mydist  man  dist
 
 WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized -Wno-mismatched-tags -Wno-unused-private-field
 noinst_LIBRARIES=libbayes.a libncl.a 
@@ -112,6 +112,9 @@ doc :
 	doxygen 
 
 
-mydist:  
-	emacs --kill --eval "(progn (find-file \"$(top_srcdir)/manual/manual.org\") (org-latex-export-to-pdf) (org-html-export-to-html))"
+man:  
+	./manual/process.sh
 
+mydist : 
+	make man
+	make dist 

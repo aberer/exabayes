@@ -231,7 +231,7 @@ void BlockPrior::Read(NxsToken &token)
 	    }
 
 	  auto prior = parsePrior(token);
-	  tout << "parsed prior " << prior.get() << " for category " << cat  << std::endl; 
+	  // tout << "parsed prior " << prior.get() << " for category " << cat  << std::endl; 
 
 	  // account for fixed bl prior that may not have any value at all 
 

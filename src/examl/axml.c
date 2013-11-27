@@ -2625,7 +2625,7 @@ static void optimizeTrees(tree *tr, analdef *adef)
       if(i > 0)
 	resetBranches(tr);
       
-      evaluateGeneric(tr, tr->start, TRUE);	
+      evaluateGeneric(tr, tr->start, TRUE, NULL);	
       	  
       if(tr->fastTreeEvaluation && i > 0)
 	{

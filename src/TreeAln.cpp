@@ -3,7 +3,6 @@
 #include <cstring>
 #include <unordered_set>
 
-
 #include "RateHelper.hpp"
 #include "TreeResource.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -183,8 +182,9 @@ TreeAln::~TreeAln()
 
   if(_hasAlignment)
     {
-      clearMemory(); 
-      
+      // OK???
+      // clearMemory(); 
+
       for(int i = 0; i < numPart ;++i)
 	{
 	  auto& partition = getPartition(i); 
@@ -194,7 +194,7 @@ TreeAln::~TreeAln()
 	  exa_free(partition.frequencyGrouping); 
 #endif
 	  
-	  exa_free(partition.xVector); 
+	  // exa_free(partition.xVector); 
 
 	  exa_free(partition.frequencies);
 	  exa_free(partition.empiricalFrequencies); 
@@ -280,7 +280,8 @@ void TreeAln::createStandardTree(nat numTax)
   TreeInitializer::setupTheTree(_tr);
 }
 
-void TreeAln::clearMemory()
+
+void TreeAln::clearMemory(ArrayReservoir &arrayReservoir)
 {
   for(nat i = 0; i < getNumberOfPartitions() ; ++i)
     {
@@ -289,10 +290,12 @@ void TreeAln::clearMemory()
 	{
 	  if(partition.xSpaceVector[j] != 0 )
 	    {
-	      // tout << "freeing " << j <<   " which had length "<<partition.xSpaceVector[j] << std::endl; 
-	      exa_free( partition.xVector[j] );
-	      partition.xVector[j] = NULL; 
-	      partition.xSpaceVector[j] = 0; 
+	      if(partition.xVector[j])
+		{
+		  arrayReservoir.deallocate(partition.xVector[j]); 
+		  partition.xVector[j] = nullptr; 
+		  partition.xSpaceVector[j] = 0; 
+		}
 	    }
 	}
     }
@@ -609,7 +612,7 @@ void TreeAln::setFrequencies(const std::vector<double> &values, nat model)
   auto& partition = getPartition(model); 
   assert( partition.dataType != AA_DATA || partition.protFreqs == TRUE ); 
 
-  memcpy( partition.frequencies, &(values[0]), partition.states * sizeof(double)); 
+  memcpy( partition.frequencies, values.data(), partition.states * sizeof(double)); 
   initRevMat(model);   
 }
 
@@ -922,3 +925,17 @@ void TreeAln::setBranchUnchecked(const BranchLength &bl)
   p->z[0] = bl.getLength();
   p->back->z[0] = bl.getLength();
 }
+
+
+void TreeAln::clearMemory()
+{
+  for(nat i = 0; i < getNumberOfPartitions() ; ++i )
+    {
+      auto &partition = getPartition(i);
+      for(nat j = 0; j < getNumberOfTaxa(); ++j)
+	if(partition.xSpaceVector[j] != 0 )
+	  {
+	    exa_free(partition.xVector[j] );
+	  }
+    }
+} 

@@ -109,16 +109,35 @@ void RateHelper::convertRelativeToLast(std::vector<double> &values)
 
 double RateHelper::convertToSum1(std::vector<double> &values) 
 {
+#if 1 
+  double sum  = 0.; 
+  double error = 0.; 
+  
+  for(auto v : values)
+    {
+      double y = v - error; 
+      double t = sum + v ; 
+      error = (t - sum ) - y ; 
+      sum = t; 
+    }
+
+  
+  for (auto &v : values) 
+    v /= sum; 
+  
+  return sum; 
+
+#else  
   auto sum = std::accumulate(begin(values), end(values), 0.);
   std::for_each(begin(values), end(values), [=](double &v ) {v /= sum;  });
   return sum; 
+#endif
 }
 
 
 void RateHelper::convertToGivenSum(std::vector<double> &values, double givenSum) 
 {
   std::for_each(begin(values), end(values), [=](double &v){ v *= givenSum ;});
-  
 }
 
 

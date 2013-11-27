@@ -238,7 +238,7 @@ Bipartition Bipartition::getComplement( nat maxElem) const
 
   for(nat i = 0; i < maxElem; ++i)
     {
-      if(isSet(i))
+      if(not  isSet(i))
 	{
 	  result.set(i); 
 	}

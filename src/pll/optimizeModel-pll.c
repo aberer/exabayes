@@ -379,7 +379,7 @@ static void evaluateChange(tree *tr, partitionList *pr, int rateNumber, double *
       masterBarrier(THREAD_OPT_RATE, tr, pr);
 #else
       /* and compute the likelihood by doing a full tree traversal :-) */
-      evaluateGeneric(tr, pr, tr->start, TRUE);
+      evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 #endif     
       
       /* update likelihoods and the sum of per-partition likelihoods for those partitions that share the parameter.
@@ -437,7 +437,7 @@ static void evaluateChange(tree *tr, partitionList *pr, int rateNumber, double *
 #if (defined( _USE_PTHREADS) || defined(_FINE_GRAIN_MPI))
       masterBarrier(THREAD_OPT_ALPHA, tr, pr);
 #else  
-      evaluateGeneric(tr, pr, tr->start, TRUE);
+      evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 #endif
             
       for(i = 0; i < ll->entries; i++)	
@@ -1031,7 +1031,7 @@ static void optAlpha(tree *tr, partitionList *pr, double modelEpsilon, linkageLi
    int revertModel = 0;
 #endif   
 
-   evaluateGeneric(tr, pr, tr->start, TRUE);
+   evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
    
    /* 
      at this point here every worker has the traversal data it needs for the 
@@ -1149,7 +1149,7 @@ static void optRates(tree *tr, partitionList *pr, double modelEpsilon, linkageLi
 
   startRates = (double *)rax_malloc(sizeof(double) * numberOfRates * numberOfModels);
 
-  evaluateGeneric(tr, pr, tr->start, TRUE);
+  evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
   
   /* 
      at this point here every worker has the traversal data it needs for the 
@@ -2019,7 +2019,7 @@ static void optimizeRateCategories(tree *tr, partitionList *pr, int _maxCategori
   
       assert(isTip(tr->start->number, tr->mxtips));         
       
-      evaluateGeneric(tr, pr, tr->start, TRUE);
+      evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 
       if(tr->optimizeRateCategoryInvocations == 1)
 	{
@@ -2126,7 +2126,7 @@ static void optimizeRateCategories(tree *tr, partitionList *pr, int _maxCategori
       
       updatePerSiteRates(tr, pr, TRUE);
 
-      evaluateGeneric(tr, pr, tr->start, TRUE);
+      evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
       
       if(tr->likelihood < initialLH)
 	{	 		  
@@ -2141,7 +2141,7 @@ static void optimizeRateCategories(tree *tr, partitionList *pr, int _maxCategori
 	  
 	  updatePerSiteRates(tr, pr, FALSE);
 	  
-	  evaluateGeneric(tr, pr, tr->start, TRUE);
+	  evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 
 	  /* printf("REVERT: %1.40f %1.40f\n", initialLH, tr->likelihood); */
 
@@ -2314,7 +2314,7 @@ static void autoProtein(tree *tr, partitionList *pr)
 #endif
 	  
 	  resetBranches(tr);
-	  evaluateGeneric(tr, pr, tr->start, TRUE);
+	  evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 	  treeEvaluate(tr, pr, 16);// 0.5 * 32 = 16.0
 
 	  for(model = 0; model < pr->numberOfPartitions; model++)
@@ -2352,7 +2352,7 @@ static void autoProtein(tree *tr, partitionList *pr)
 #endif
 
       resetBranches(tr);
-      evaluateGeneric(tr, pr, tr->start, TRUE);
+      evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
       treeEvaluate(tr, pr, 16); // 0.5 * 32 = 16
       
       /*printf("Exit: %f\n", tr->likelihood);*/
@@ -2409,7 +2409,7 @@ void modOpt(tree *tr, partitionList *pr, double likelihoodEpsilon)
 
     optRatesGeneric(tr, pr, modelEpsilon, rateList);
 
-    evaluateGeneric(tr, pr, tr->start, TRUE);
+    evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 
     autoProtein(tr, pr);
 
@@ -2419,7 +2419,7 @@ void modOpt(tree *tr, partitionList *pr, double likelihoodEpsilon)
     {
       case GAMMA:      
         optAlpha(tr, pr, modelEpsilon, alphaList);
-        evaluateGeneric(tr, pr, tr->start, TRUE);
+        evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
         treeEvaluate(tr, pr, 3); // 0.1 * 32 = 3.2
         break;
       case CAT:

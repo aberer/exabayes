@@ -144,15 +144,14 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
 #endif
 
 #if 0   
-  
   ss << "Communicating " ; 
-  if(commFlags & CommFlag::Swap)
+  if( ( commFlags & CommFlag::Swap ) != CommFlag::NOTHING)
     ss << " SWAP, " ; 
-  if(commFlags & CommFlag::PrintStat)
+  if( ( commFlags & CommFlag::PrintStat )  != CommFlag::NOTHING)
     ss << " PRINTSTAT, "; 
-  if(commFlags & CommFlag::Tree)
+  if( ( commFlags & CommFlag::Tree ) != CommFlag::NOTHING)
     ss << " TREE, "; 
-  if(commFlags & CommFlag::Proposals)
+  if( ( commFlags & CommFlag::Proposals ) != CommFlag::NOTHING)
     ss << " PROPOSALS, "; 
   ss << std::endl; 
   blockingPrint(chainLeaderComm, ss.str()); 
@@ -172,14 +171,14 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
 	  const Chain& chain = run.getChains()[i]; 
 	  if(isMyChain(run.getRunid(), i))
 	    {
-	      std::string chainSer = chain.serializeConditionally( commFlags ); 
+	      auto chainSer = chain.serializeConditionally( commFlags ); 
 
 	      if(isFirst)
 		lengthOfChainStream = chainSer.size(); 
 	      isFirst = false; 
 	      assert(nat(lengthOfChainStream) == chainSer.size()); 
 
-	      serialized.insert(serialized.end(), chainSer.begin(), chainSer.end()); 
+	      serialized.insert(end(serialized), begin(chainSer), end(chainSer)); 
 	    }
 	}
     }
@@ -193,7 +192,7 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
 	{
 	  if(isMyRun(run.getRunid()))
 	    {
-	      std::stringstream part; 
+	      auto && part = std::stringstream{}; 
 	      run.getSwapInfo().serialize(part); 
 	      auto asString = part.str();
 	      
@@ -213,7 +212,7 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
   assert(0); 
 #endif
 
-  auto allMyChains = std::string (serialized.begin(), serialized.end());   
+  auto allMyChains = std::string (begin(serialized), end(serialized));   
   assert(allMyChains.size( )== serialized.size()); 
   nat lengthPerProcess = allMyChains.size(); 
 
@@ -239,7 +238,7 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
 		  if(isMyChain(rankOfChainLeader, run.getRunid(), i))
 		    {		      
 		      auto &chain = run.getChains().at(i);
-		      std::string str(streamIter, streamIter + lengthOfChainStream ); 
+		      auto str = std::string(streamIter, streamIter + lengthOfChainStream ); 
 		      streamIter += lengthOfChainStream; 
 		      chain.deserializeConditionally(str, commFlags); 
 		    }
@@ -279,6 +278,20 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
 	    }
 	}
     }
+  else
+    {
+
+      // for reproducibility. Otherwise runs are not reproducible any
+      // more with chain-level parallelism
+      for(auto &run : runs)
+	{
+	  for(auto &chain : run.getChains())
+	    {
+	      auto str =  chain.serializeConditionally(commFlags );
+	      chain.deserializeConditionally(str,  commFlags);
+	    }
+	}
+    }
 #else 
   
   // just for comparability to examl 
@@ -286,7 +299,6 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
     {
       for(auto &chain : run.getChains())
 	{
-	  // auto &&ss = std::stringstream{};
 	  auto str =  chain.serializeConditionally(commFlags );
 	  chain.deserializeConditionally(str,  commFlags);
 	}

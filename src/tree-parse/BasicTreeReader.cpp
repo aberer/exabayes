@@ -38,7 +38,7 @@ std::tuple<nat,double> BasicTreeReader<LABEL_READER,BL_READER>::parseElement(std
     }
   else 
     {
-      std::cout << "did not find bl for label " << label << std::endl; 
+      // std::cout << "did not find bl for label " << label << std::endl; 
     }
 
   return std::make_tuple(label, bl);

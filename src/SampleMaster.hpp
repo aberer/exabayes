@@ -47,7 +47,7 @@ public:
    */ 
   std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
   processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
-  void initializeWithParamInitValues(std::vector<TreeAln> &trees , const std::vector<AbstractParameter*> &params , const std::vector<bool> hasBls ) const ; 
+  void initializeWithParamInitValues(TreeAln &tree , const std::vector<AbstractParameter*> &params , bool hasBl ) const ; 
   /** 
       @brief EXPERIMENTAL 
    */ 
@@ -71,7 +71,7 @@ private:
   std::vector<std::string> getStartingTreeStrings(); 
   void informPrint(); 
   void printInitialState(); 
-  LikelihoodEvaluator createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile); 
+  LikelihoodEvaluator createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile, bool useSEV); 
   void writeCheckpointMaster(); 
   void initializeFromCheckpoint(); 
   std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 

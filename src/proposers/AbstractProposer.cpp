@@ -13,14 +13,6 @@ AbstractProposer::AbstractProposer(bool tune, bool tuneup, double minVal, double
 
 void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const 
 {
-  // tout << MAX_SCI_PRECISION << "to be normalized " << values << std::endl; 
-
-
-  // tout << MAX_SCI_PRECISION << "before correction: " ; 
-  // for(auto &v : values)
-  //   tout << v << ","; 
-  // tout << std::endl; 
-
   nat prevFixed = -1; 
   nat nowFixed = 0; 
   
@@ -78,11 +70,5 @@ void AbstractProposer::correctAbsoluteRates(std::vector<double> &values) const
       ++iter; 
     }
 
-  // tout << "iterations necessary: " <<  iter << "\tminval="<< minVal << std::endl; 
-
-  // tout << "after correction: " ; 
-  // for(auto &v : values)
-  //   tout << v << ","; 
-  // tout << std::endl; 
 } 
 

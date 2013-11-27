@@ -27,23 +27,25 @@ public:
   /** 
       @brief restore arrays for the given list of partitions  
   */ 
-  void restoreSomePartitions(TreeAln &traln, const std::vector<bool> &partitions, ArrayOrientation &evalOrientation); 
+  void restoreSomePartitions(TreeAln &traln, const std::vector<bool> &partitions, ArrayOrientation &evalOrientation, ArrayReservoir &res); 
   /** 
       @brief traverses a subtree and switches arrays, where necessary 
       @param virtualRoot the root of the subtree 
   */ 
-  void traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat model, ArrayOrientation& arrayOrientation); 
+  void traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat model, ArrayOrientation& arrayOrientation, ArrayReservoir& reservoir); 
 
   void cache( TreeAln &traln, nat nodeNumber, nat partitionId, const ArrayOrientation &curOrient ); 
   void destroyAndForget(TreeAln &traln, nat nodeNumber, nat partitionId ); 
-  void uncache(TreeAln &traln, nat nodeNumber, nat partitionId, ArrayOrientation &curOrient ); 
+  void uncache(TreeAln &traln, nat nodeNumber, nat partitionId, ArrayOrientation &curOrient, ArrayReservoir &res  ); 
 
-  void clearMemory();
+  void clearMemory(ArrayReservoir &res);
   /** 
       @brief for the sev-memory saving technique, we also need to remember   
    */ 
   void enableRestoreGapVector() { restoresGapVector = true; }  
 
+  void recycleArray(TreeAln& traln, nat nodeNumber, nat partitionId, ArrayReservoir& res); 
+  
 private: 			// METHODS
   std::pair<double*,nat> removeArray(TreeAln &traln, nat num, nat partition); 
   void insertArray(TreeAln &traln, nat num, nat partition, std::pair<double*,nat> toInsert); 

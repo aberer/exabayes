@@ -32,7 +32,7 @@ public:
   {
     auto result = double{0.};
 
-    iss.precision(std::numeric_limits<double>::digits10);
+    iss.precision(std::numeric_limits<double>::digits10 + 2);
 
     iss >> result; 
     return result; 

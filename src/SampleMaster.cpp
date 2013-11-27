@@ -2,6 +2,7 @@
 #include <fstream>
 #include <memory>
 
+#include "TreePrinter.hpp"
 #include "TreeResource.hpp"
 #include "ByteFileResource.hpp"
 
@@ -76,9 +77,6 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
       auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
 
       auto mapAsVect = traln.getTaxa(); 
-      
-      // TODO WHY WAS THAT HERE? 
-      // mapAsVect.erase(mapAsVect.begin()); 
 
       auto map = std::unordered_map<std::string,nat>{}; 
       nat ctr = 1; 
@@ -95,14 +93,15 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
       for(auto b : branches)
 	{
 	  traln.clipNode(traln.getUnhookedNode(b.getPrimNode()) , traln.getUnhookedNode(b.getSecNode())); 
+
 	  if(hasBranchLength)
 	    {
 	      for(auto param : params)
-		{
-		  auto bCopy = b; 
-		  bCopy.setConvertedInternalLength(traln, param, b.getLength()); 
-		  traln.setBranch(bCopy, param); 
-		}
+	  	{
+	  	  auto bCopy = b; 
+	  	  bCopy.setConvertedInternalLength(traln, param, b.getLength()); 
+	  	  traln.setBranch(bCopy, param); 
+	  	}
 	    }
 	}
     }
@@ -283,10 +282,11 @@ void SampleMaster::initializeFromCheckpoint()
 
 // TODO could move this method somewhere else  
 LikelihoodEvaluator
-SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile )
+SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile, bool useSEV )
 {
   auto &&plcy =  std::unique_ptr<ArrayPolicy>();
-
+  auto res = std::make_shared<ArrayReservoir>(useSEV); 
+  
   switch(_cl.getMemoryMode())
     {
     case MemoryMode::RESTORE_ALL: 
@@ -319,7 +319,7 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string bina
       assert(0); 
     }
 
-  auto eval = LikelihoodEvaluator(initTree, plcy.get()); 
+  auto eval = LikelihoodEvaluator(initTree, plcy.get(),res); 
 
 #ifdef DEBUG_LNL_VERIFY
 
@@ -333,28 +333,53 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string bina
 }
 
 
-void SampleMaster::initializeWithParamInitValues(std::vector<TreeAln> &tralns , 
-						 const std::vector<AbstractParameter*> &params,
-						 const std::vector<bool> hasBls) const 
+void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vector<AbstractParameter*> &params, bool hasBl) const 
 {
+  // we cannot have more than one set of branch lentghs. So if we had
+  // initial branch lengths, extract them first before changing the
+  // mean substition rate
+  auto branches = std::vector<std::tuple<BranchPlain,double>>{};
+
+  if( hasBl )
+    {
+      AbstractParameter* blParam = nullptr;
+      for(auto param : params)
+	{
+	  if(param->getCategory() == Category::BRANCH_LENGTHS)
+	    {
+	      blParam = param; 
+	      break; 
+	    }
+	}
+
+      for(auto b : traln.extractBranches())
+	{
+	  auto len = traln.getBranch(b, blParam).getInterpretedLength(traln,blParam); 
+	  // tout << b << "\t" << len << std::endl; 
+	  branches.emplace_back( b, len ); 
+	}
+    }
+  else 
+    {
+      for(auto b : traln.extractBranches())
+	branches.emplace_back(b, 0.);
+    }
+
   //  do normal parameters first 
   for(auto &param : params)
     {
       auto cat = param->getCategory( ); 
-      auto datatype =  tralns[0].getPartition(param->getPartitions()[0] ).dataType; 
+      auto datatype =  traln.getPartition(param->getPartitions()[0] ).dataType; 
       
-      if( cat != Category::TOPOLOGY && cat != Category::BRANCH_LENGTHS)
+      if( not ( cat == Category::TOPOLOGY || cat == Category::BRANCH_LENGTHS ) )
 	{
 	  // :NOTICE: treat prot frequencies differently!
 	  if(cat == Category::FREQUENCIES && datatype == AA_DATA ) 
 	    {
 	      for(auto p : param->getPartitions())
 		{
-		  for(auto &traln : tralns ) 
-		    {
-		      auto& partition = traln.getPartition(p);
-		      partition.protFreqs = TRUE; 
-		    }
+		  auto& partition = traln.getPartition(p);
+		  partition.protFreqs = TRUE; 
 		}
 	    }
 	  
@@ -363,30 +388,22 @@ void SampleMaster::initializeWithParamInitValues(std::vector<TreeAln> &tralns ,
 	    {
 	      for(auto p : param->getPartitions())
 		{
-		  for(auto &traln : tralns)
-		    {
-		      auto &partition = traln.getPartition(p);
-		      partition.protModels = GTR; 	
-		    }
+		  auto &partition = traln.getPartition(p);
+		  partition.protModels = GTR; 	
 		}
 	    }
 
 	  auto&& prior = param->getPrior(); 
 	  auto content = prior->getInitialValue();
 
-	  // tout << "initializing parameter " << param << " with " << content << std::endl; 
-
-	  auto &bla = tralns[0]; 
-	  param->verifyContent(bla, content); 
-
-	  for(auto &traln : tralns)
-	    param->applyParameter(traln, content); 
-
-	  // auto result = param->extractParameter(tralns[0]); 
-	  // tout << "result: " << result << std::endl; 
+	  param->verifyContent(traln, content); 
+	  param->applyParameter(traln, content); 
 	}
     }
 
+
+  // initialize branches or convert to internal representation if
+  // necessary
   for(auto &param : params)
     {
       auto cat = param->getCategory(); 
@@ -396,24 +413,32 @@ void SampleMaster::initializeWithParamInitValues(std::vector<TreeAln> &tralns ,
 	  auto content = prior->getInitialValue();
 	  auto initVal = content.values.at(0); 
 
-	  auto ctr = nat{0};
-	  for(auto &traln : tralns)
+	  for(auto belem : branches)
 	    {
-	      if( not hasBls[ctr] || not prior->isKeepInitData() )
+	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() 
+			       // not param->getPrior()->needsIntegration() 
+			       )  
+		? std::get<1>(belem) : initVal ;
+	      auto b = std::get<0>(belem).toBlDummy(); 
+	      b.setConvertedInternalLength(traln,param,absLen);
+
+	      if( not BoundsChecker::checkBranch(b))
 		{
-		  for(auto &b : traln.extractBranches(param))
-		    {
-		      b.setConvertedInternalLength( traln,param,   initVal);
-
-		      if(not BoundsChecker::checkBranch(b))
-			BoundsChecker::correctBranch(b); 
-
-		      traln.setBranch(b, param);
-		    }
+		  BoundsChecker::correctBranch(b); 
+		  auto newLen = b.getInterpretedLength(traln,param); 
+		  tout << "Warning: had to modify branch length " << absLen << " to " << newLen << " because it violated the maximum range of branch lengths allowed." << std::endl; 
 		}
+
+	      traln.setBranch(b,param); 
 	    }
 	}
     }
+
+  // AbstractParameter *blparam =   new BranchLengthsParameter{0,0,{0}}; 
+  // auto  tp  = TreePrinter{true, false, true }; 
+  // tout << tp.printTree(traln,blparam)  << std::endl; 
+  // assert(0); 
+
 }
 
 
@@ -626,7 +651,7 @@ void SampleMaster::initializeRuns(Randomness rand)
 #endif
   // END
 
- auto evalUptr = createEvaluatorPrototype(initTree,  binaryAlnFile); 
+  auto evalUptr = createEvaluatorPrototype(initTree,  binaryAlnFile, _cl.isSaveMemorySEV()); 
   
  auto&& proposals =  std::vector<std::unique_ptr<AbstractProposal> >{} ; 
   auto&& params = std::vector<std::unique_ptr<AbstractParameter> >{} ; 
@@ -653,7 +678,7 @@ void SampleMaster::initializeRuns(Randomness rand)
 	  && not v->getPrior()->needsIntegration() )
 	topoIsFixed = true; 
     }
-  
+
   // gather branch length parameters
   auto blParams = std::vector<AbstractParameter*>{} ;
   for(auto &v : params)
@@ -670,12 +695,14 @@ void SampleMaster::initializeRuns(Randomness rand)
 	tout << "Since the topology is fixed, only the first one will be used." << std::endl; 
     }
 
+
+  auto hadBl = false; 
   if(topoIsFixed)
     {
       auto treeRandomness = Randomness(treeSeeds[0]); 
-      initializeTree(initTree, 
-		     startingTrees.size() > 0  ? startingTrees.at(0): std::string(""), // meh 
-		     treeRandomness, blParams); 
+      hadBl = initializeTree(initTree, 
+				  startingTrees.size() > 0  ? startingTrees.at(0): std::string(""), // meh 
+				  treeRandomness, blParams); 
     }
 
   for(nat i = 0; i < _runParams.getNumRunConv() ; ++i)
@@ -684,7 +711,7 @@ void SampleMaster::initializeRuns(Randomness rand)
       for(nat j = 0; j < _runParams.getNumCoupledChains() ; ++j ) 
 	trees.emplace_back(initTree);
 
-      auto hadBls = std::vector<bool>(trees.size() , false);
+      auto hadBls = std::vector<bool>(trees.size() , topoIsFixed  && hadBl ? true : false);
       if(not topoIsFixed)
 	hadBls = initTrees(trees, treeSeeds[i],  startingTrees, blParams); 
 
@@ -692,7 +719,9 @@ void SampleMaster::initializeRuns(Randomness rand)
       for(auto &param : params)
 	paramView.push_back(param.get()); 
 
-      initializeWithParamInitValues(trees, paramView, hadBls );
+      // TODO method could be moved to treealn 
+      for(nat j = 0; j < trees.size() ;++j)
+	initializeWithParamInitValues(trees[j], paramView, hadBls[j] );
 
       auto runRand =  Randomness(runSeeds[i]); 
       
@@ -737,16 +766,11 @@ void SampleMaster::initializeRuns(Randomness rand)
   
   printInitializedFiles(); 
 
-  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now() - _initTime   ).count(); 
-  // tout << "[ " << timePassed<< "] further setup. performing first evaluation"  << std::endl; 
-
   if(not _cl.isDryRun())
     printInitialState(); 
   
   _pl.printLoadBalance(initTree);
 
-  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now() - _initTime   ).count(); 
-  // tout << "[ " << timePassed << "s ] completed initialization " << std::endl; 
   tout.flush();
 }
 
@@ -768,8 +792,11 @@ void SampleMaster::printInitializedFiles() const
 } 
 
 
+
 void SampleMaster::printInitialState()  
 {    
+  auto& res = _runs.at(0).getChains().at(0).getEvaluator().getArrayReservoir(); 
+
   // compute the initial state 
   for(auto &run: _runs)
     {    
@@ -781,7 +808,7 @@ void SampleMaster::printInitialState()
 	  chain.setLikelihood(traln.getTrHandle().likelihood);
 	  eval.evaluate(traln, traln.getAnyBranch(), true, true);
 	  eval.freeMemory(); 
-	  traln.clearMemory(); 
+	  traln.clearMemory(res); 
 
 	  if(_pl.isMyChain(run.getRunid(), i))
 	    {
@@ -840,14 +867,12 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
 
   end /= treesInBatch; 
   end *= treesInBatch;       
-
+  
   if(end == 0)
     return std::make_pair(nan(""), nan(""));   
 
   if( _runParams.getBurninGen() > 0 )
     {
-      assert(_runParams.getBurninProportion() == 0.); 
-
       int treesToDiscard =  _runParams.getBurninGen() / _runParams.getSamplingFreq(); 
 
       if(int(end) < treesToDiscard + 2 )
@@ -861,6 +886,9 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
       start = (int)((double)end * _runParams.getBurninProportion()  ); 
     } 
 
+  // dont forget that we also sampled gen0, therefore: 
+  ++end; 
+ 
   asdsf.extractBipsNew(start, end, false);
   auto asdsfVals = asdsf.computeAsdsfNew(_runParams.getAsdsfIgnoreFreq());
 
@@ -1012,7 +1040,7 @@ void SampleMaster::run()
 	      else 
 		hasConverged = asdsf.first < convCrit;  
 
-	      tout << std::endl  << "ASDSF for trees " << start << "-" << end  << " (avg/max):\t"
+	      tout << std::endl  << "standard deviation of split frequencies for trees " << start << "-" << end  << " (avg/max):\t"
 		   << PERC_PRECISION << asdsf.first * 100 << "%\t" << asdsf.second * 100 << "%"   << std::endl << std::endl; 
 	    }
 
@@ -1101,7 +1129,7 @@ void SampleMaster::writeCheckpointMaster()
 
   if( _pl.isGlobalMaster() )
     {
-      auto &&ss = stringstream{}; 
+      auto &&ss = std::stringstream{}; 
       ss <<  OutputFile::getFileBaseName(_cl.getWorkdir()) << "_newCheckpoint." << _cl.getRunid()  ; 
       auto newName = ss.str();
       auto&& chkpnt = std::ofstream{}; 
@@ -1115,7 +1143,7 @@ void SampleMaster::writeCheckpointMaster()
 	{
 	  ss.str("");
 	  ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_prevCheckpointBackup." << _cl.getRunid(); 
-	  std::string prevName =  ss.str();
+	  auto prevName =  ss.str();
 	  if( std::ifstream(prevName) )
 	    {
 	      int ret = remove(prevName.c_str()); 
@@ -1133,7 +1161,6 @@ void SampleMaster::writeCheckpointMaster()
     {
       auto &&nullstream = std::ofstream("/dev/null"); 
       serialize(nullstream); 
-      nullstream.close(); 
     }
 } 
 

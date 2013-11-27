@@ -118,14 +118,13 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
   
   evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion , prts , true, true); 
 }
+
+
  
-
-
 void ParameterProposal::resetState(TreeAln &traln) 
 {
   assert(_primaryParameters.size() == 1 ); 
   _primaryParameters[0]->applyParameter(traln, savedContent);
-
 
   // for a fixed bl parameter, we have to re-scale the branch lengths after rejection again. 
   // NOTICE: this is very inefficient 

@@ -4,7 +4,7 @@ topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
 
-seed=11436
+# seed=11436
 
 # seed=31342  			# problematic on tiny-aa
 # seed=4045
@@ -25,14 +25,16 @@ seed=11436
 
 # src/proposals/
 numProc=2
-# extraArgs="-Q"
+# extraArgs="-M 0 -S"
+# extraArgs="- 2"
+# extraArgs="-S"
 # extraArgs="-S  "
 # extraArgs="-m"
 
 # early with 150 , VERIFIED 
 # seed=31853
 
-startFromBest=0
+startFromBest=1
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off

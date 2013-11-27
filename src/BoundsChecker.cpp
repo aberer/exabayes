@@ -1,4 +1,3 @@
-
 #include <cmath>
 #include <cassert>
 #include <iomanip>
@@ -16,15 +15,13 @@
 const double BoundsChecker::zMin = 1.0e-15 ; // 1e-16
 const double BoundsChecker::zMax = (1.0 - 1.0e-6) ; // 1-1e-6
 
-
 //  these values would be okay according to raxml, but it takes things too far ... 
 const double BoundsChecker::rateMin = 1e-7; 
 const double BoundsChecker::rateMax = 1e6; 
-// const double BoundsChecker::rateMin = 1e-6; 
-// const double BoundsChecker::rateMax = 1e4; 
 
 const double BoundsChecker::alphaMin = 2e-2; 
 const double BoundsChecker::alphaMax = 1e3; 
+
 const double BoundsChecker::freqMin = 1e-3;
 
 
@@ -127,8 +124,6 @@ void BoundsChecker::correctRevMat( std::vector<double> &rates)
   // representation to rate representation, this is more tricky.
 
   // note: rates are relative to last value here 
-
-  // double sum = std::accumulate(rates.begin(), rates.end(), 0.); 
 
   for(auto &r : rates )
     {

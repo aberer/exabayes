@@ -132,10 +132,11 @@ void swap(Chain &lhs, Chain &rhs)
 
 void swapHeatAndProposals(Chain &lhs, Chain& rhs)
 {
-  std::swap(lhs._couplingId, rhs._couplingId); 
-  std::swap(lhs._proposalSets, rhs._proposalSets); 
-  std::swap(lhs._proposals, rhs._proposals); 
+  std::swap(lhs._couplingId,   rhs._couplingId    ); 
+  std::swap(lhs._proposalSets, rhs._proposalSets  ); 
+  std::swap(lhs._proposals,    rhs._proposals     ); 
 }
+
 
 std::ostream& Chain::addChainInfo(std::ostream &out) const 
 {
@@ -150,6 +151,7 @@ double Chain::getChainHeat() const
   assert(_couplingId == 0 || inverseHeat < 1.); 
   return inverseHeat; 
 }
+
 
 void Chain::updateProposalWeights()
 {
@@ -609,7 +611,7 @@ void Chain::step()
 
 void Chain::suspend()  
 {
-  _traln.clearMemory(); 
+  _traln.clearMemory(_evaluator.getArrayReservoir()); 
   _lnPr = _prior.getLnPrior();
   _evaluator.freeMemory(); 
 }

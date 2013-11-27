@@ -622,7 +622,7 @@ void sumGAMMA_FLEX_reorder(int tipCase, double *sumtable, double *x1, double *x2
  *
  *
  */
-void makenewzIterative(tree *tr, partitionList * pr)
+void makenewzIterative(tree *tr, partitionList * pr, array_reservoir_t res)
 {
   int 
     model, 
@@ -647,7 +647,7 @@ void makenewzIterative(tree *tr, partitionList * pr)
 
   /* call newvieIterative to get the likelihood arrays to the left and right of the branch */
 
-  newviewIterative(tr, pr, 1);
+  newviewIterative(tr, pr, 1, res);
 
 
   /* 
@@ -880,7 +880,7 @@ void execCore(tree *tr, partitionList *pr, volatile double *_dlnLdlz, volatile d
 */
 
 
-static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxiter, double *result,  double add2nrd1, double *firstDerivative, double *secDerivative)
+static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxiter, double *result,  double add2nrd1, double *firstDerivative, double *secDerivative, array_reservoir_t res)
 {  
   double   z[NUM_BRANCHES], zprev[NUM_BRANCHES], zstep[NUM_BRANCHES];
   volatile double  dlnLdlz[NUM_BRANCHES], d2lnLdlz2[NUM_BRANCHES];
@@ -998,7 +998,7 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
 	 of the derivatives */
       if(firstIteration)
 	{
-	  makenewzIterative(tr, pr);
+	  makenewzIterative(tr, pr, res);
 	  firstIteration = FALSE;
 	}
       execCore(tr, pr, dlnLdlz, d2lnLdlz2);
@@ -1122,7 +1122,7 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
  * @sa typical values for \a maxiter are constants \a iterations and \a newzpercycle
  * @note Requirement: q->z == p->z
  */
-void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double add2nrd1, boolean mask)
+void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double add2nrd1, boolean mask, array_reservoir_t res)
 {
   int i;
   //boolean originalExecute[NUM_BRANCHES];
@@ -1185,7 +1185,7 @@ void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double 
 
   /* printf("lambda=%f\n", lambda);  */
 
-  topLevelMakenewz(tr, pr, z0, maxiter, result, add2nrd1, firstDerivative, secDerivative); 
+  topLevelMakenewz(tr, pr, z0, maxiter, result, add2nrd1, firstDerivative, secDerivative, res); 
   
   /* Mark node as unpinnable */
   if(tr->useRecom)

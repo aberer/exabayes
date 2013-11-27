@@ -12,7 +12,7 @@ std::unique_ptr<ArrayPolicy> NoCachePolicy::clone() const
 }
 
 
-void NoCachePolicy::accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient)
+void NoCachePolicy::accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient , ArrayReservoir &res)
 {
 #if 1 
   // auto result = std::vector<nat>{}; 

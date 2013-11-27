@@ -12,9 +12,9 @@ public:
   virtual ~FullCachePolicy(){}
 
   virtual void imprintPolicy(const TreeAln &traln, ArrayOrientation &arrayOrient) ; 
-  virtual void freeMemory() ;  
-  virtual void accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient); 
-  virtual void prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat model  , ArrayOrientation& arrayOrientation ); 
+  virtual void freeMemory(ArrayReservoir &res) ;  
+  virtual void accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient, ArrayReservoir &res); 
+  virtual void prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat model  , ArrayOrientation& arrayOrientation, ArrayReservoir& res ); 
 
   virtual std::unique_ptr<ArrayPolicy> clone() const ; 
   

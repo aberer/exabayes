@@ -251,10 +251,10 @@ void CommandLine::parse(int argc, char *argv[])
     }
   else 
     {
-      if(singleModel.compare("") == 0 && modelFile.compare("") == 0 )
+      if(singleModel.compare("") == 0 && ( modelFile.compare("") == 0 || not std::ifstream(modelFile) )  )
 	{
 	  std::cout << "Found a phylip-style alignment file. However, you did not provide a\n"
-	       << "model file (see -q) or a data type specification for a single\n"
+	       << "model file (see -q, resp. it coul not be found) or a data type specification for a single\n"
 	       << "partition (-m). Cannot proceed.\n" ; 
 	  exit(-1); 
 	}

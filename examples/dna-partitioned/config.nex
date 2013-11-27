@@ -1,0 +1,18 @@
+#NEXUS
+
+begin params; 
+ [ apply an arbitrary linking scheme here ] 
+
+  stateFreq = (0+1+2) 
+  brlens = (0+1,2+3)
+  ratehet = (0-3)
+
+end;  
+
+begin runconfig; 
+ numruns 2 
+ numCoupledChains 2 
+ parsimonyStartingTree  true
+ componentWiseMH true 
+end; 
+

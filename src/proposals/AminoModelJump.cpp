@@ -1,4 +1,5 @@
 #include "AminoModelJump.hpp"
+#include "BoundsChecker.hpp"
 #include "Category.hpp"
 #include "priors/AbstractPrior.hpp"
 
@@ -38,7 +39,6 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &ha
     newFcs.push_back(traln.getMeanSubstitutionRate(blParam->getPartitions()));
 
   prior.accountForFracChange(traln, oldFcs, newFcs, blParams); 
-  
 }
 
 
@@ -54,6 +54,24 @@ void AminoModelJump::resetState(TreeAln &traln)
   auto partitions = primVar[0]->getPartitions();
   for(auto p: partitions )
     traln.setProteinModel(p,savedMod);
+
+
+  // necessary, if we have fixed branch lengths  
+  for(auto &param : getBranchLengthsParameterView() )
+    {
+      if( not param->getPrior()->needsIntegration() )
+	{
+	  auto prior = param->getPrior() ;
+	  for(auto &b : traln.extractBranches(param))
+	    {
+	      auto content = prior->getInitialValue(); 
+	      b.setConvertedInternalLength(traln,param, content.values[0]); 
+	      if(not BoundsChecker::checkBranch(b))
+		BoundsChecker::correctBranch(b); 
+	      traln.setBranch(b,param); 
+	    }
+	}
+    }
 }
 
 

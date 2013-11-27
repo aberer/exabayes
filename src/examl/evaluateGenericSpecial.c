@@ -389,7 +389,7 @@ static double evaluateGTRCAT (int *cptr, int *wptr,
 
 /* This is the core function for computing the log likelihood at a branch */
 
-void evaluateIterative(tree *tr)
+void evaluateIterative(tree *tr, array_reservoir_t res)
 {
   /* the branch lengths and node indices of the virtual root branch are always the first one that 
      are stored in the very important traversal array data structure that describes a partial or full tree traversal */
@@ -413,7 +413,7 @@ void evaluateIterative(tree *tr)
      
   /* iterate over all valid entries in the traversal descriptor */
 
-  newviewIterative(tr, 1);  
+  newviewIterative(tr, 1, res);  
 
   /* after the above call we are sure that we have properly and consistently computed the 
      conditionals to the right and left of the virtual root and we can now invoke the 
@@ -713,7 +713,7 @@ void evaluateIterative(tree *tr)
 
 
 
-void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal)
+void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal, array_reservoir_t res)
 {
   /* now this may be the entry point of the library to compute 
      the log like at a branch defined by p and p->back == q */
@@ -776,7 +776,7 @@ void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal)
   
   tr->td[0].traversalHasChanged = TRUE;
 
-  evaluateIterative(tr);  
+  evaluateIterative(tr, res);  
     		
   {
     double 

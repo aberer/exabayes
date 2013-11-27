@@ -363,7 +363,7 @@ static boolean restoreTree (topol *tpl, tree *tr, partitionList *pr)
   
   tr->nextnode   = tpl->nextnode;    
 
-  evaluateGeneric(tr, pr, tr->start, TRUE);
+  evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
   return TRUE;
 }
 

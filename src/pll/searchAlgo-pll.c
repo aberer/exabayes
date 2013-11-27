@@ -86,7 +86,7 @@ boolean initrav (tree *tr, partitionList *pr, nodeptr p)
     } 
     while (q != p);  
 
-    newviewGeneric(tr, pr, p, FALSE);
+    newviewGeneric(tr, pr, p, FALSE, NULL);
   }
 
   return TRUE;
@@ -126,9 +126,9 @@ void update(tree *tr, partitionList *pr, nodeptr p)
   double fakeM = 0;  
 
   if(numBranches > 1)
-    makenewzGeneric(tr, pr, p, q, z0, newzpercycle, z, &fakeM, &fake, fakeL , TRUE);
+    makenewzGeneric(tr, pr, p, q, z0, newzpercycle, z, &fakeM, &fake, fakeL , TRUE, NULL);
   else
-    makenewzGeneric(tr, pr, p, q, z0, newzpercycle, z, &fakeM, &fake, fakeL, FALSE);
+    makenewzGeneric(tr, pr, p, q, z0, newzpercycle, z, &fakeM, &fake, fakeL, FALSE, NULL);
 
   for(i = 0; i < numBranches; i++)
   {         
@@ -174,9 +174,9 @@ void smooth (tree *tr, partitionList *pr, nodeptr p)
     }	
 
     if(numBranches > 1 && !tr->useRecom)
-      newviewGeneric(tr, pr,p, TRUE);
+      newviewGeneric(tr, pr,p, TRUE,NULL);
     else
-      newviewGeneric(tr, pr,p, FALSE);
+      newviewGeneric(tr, pr,p, FALSE, NULL);
   }
 } 
 
@@ -452,7 +452,7 @@ void smoothRegion (tree *tr, partitionList *pr, nodeptr p, int region)
         q = q->next;
       }	
 
-      newviewGeneric(tr, pr,p, FALSE);
+      newviewGeneric(tr, pr,p, FALSE, NULL);
     }
   }
 }
@@ -551,7 +551,7 @@ nodeptr  removeNodeBIG (tree *tr, partitionList *pr, nodeptr p, int numBranches)
   double fake =0; 
   double fakeM = 0; 
   double fakeL = 0; 
-  makenewzGeneric(tr, pr, q, r, zqr, iterations, result, &fakeM, &fake, fakeL , FALSE);
+  makenewzGeneric(tr, pr, q, r, zqr, iterations, result, &fakeM, &fake, fakeL , FALSE, NULL);
 
   for(i = 0; i < numBranches; i++)        
     tr->zqr[i] = result[i];
@@ -592,8 +592,8 @@ nodeptr  removeNodeRestoreBIG (tree *tr, partitionList *pr, nodeptr p)
   q = p->next->back;
   r = p->next->next->back;  
 
-  newviewGeneric(tr, pr,q, FALSE);
-  newviewGeneric(tr, pr,r, FALSE);
+  newviewGeneric(tr, pr,q, FALSE, NULL);
+  newviewGeneric(tr, pr,r, FALSE, NULL);
 
   hookup(q, r, tr->currentZQR, pr->perGeneBranchLengths?pr->numberOfPartitions:1);
 
@@ -637,7 +637,7 @@ boolean insertBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
     double fake = 0; 
     double fakeM = 0; 
 
-    makenewzGeneric(tr, pr, q, r, qz, iterations, zqr,  &fakeM, &fake , fakeL, FALSE);
+    makenewzGeneric(tr, pr, q, r, qz, iterations, zqr,  &fakeM, &fake , fakeL, FALSE, NULL);
     /* the branch lengths values will be estimated using q, r and s
      * q-s are not connected, but both q and s have a valid LH vector , so we can call makenewzGeneric  to get a value for
      * lzsum, which is then use to generate reasonable starting values e1, e2, e3 for the new branches we create after the       insertion
@@ -646,8 +646,8 @@ boolean insertBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
 
     /* double fakeM = 0;  */
 
-    makenewzGeneric(tr, pr, q, s, defaultArray, iterations, zqs, &fakeM , &fake, fakeL , FALSE);
-    makenewzGeneric(tr, pr, r, s, defaultArray, iterations, zrs, &fakeM, &fake, fakeL , FALSE);
+    makenewzGeneric(tr, pr, q, s, defaultArray, iterations, zqs, &fakeM , &fake, fakeL , FALSE, NULL);
+    makenewzGeneric(tr, pr, r, s, defaultArray, iterations, zrs, &fakeM, &fake, fakeL , FALSE, NULL);
 
 
     for(i = 0; i < numBranches; i++)
@@ -692,7 +692,7 @@ boolean insertBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
     hookup(p->next->next, r, z, numBranches);
   }
 
-  newviewGeneric(tr, pr,p, FALSE);
+  newviewGeneric(tr, pr,p, FALSE, NULL);
 
   if(tr->thoroughInsertion)
   {     
@@ -743,7 +743,7 @@ boolean insertRestoreBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
     hookup(p->next->next, r, z, numBranches);
   }   
 
-  newviewGeneric(tr, pr,p, FALSE);
+  newviewGeneric(tr, pr,p, FALSE, NULL);
 
   return  TRUE;
 }
@@ -846,7 +846,7 @@ boolean testInsertBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
   {     
     if (! insertBIG(tr, pr, p, q))       return FALSE;
 
-    evaluateGeneric(tr, pr, p->next->next, FALSE);
+    evaluateGeneric(tr, pr, p->next->next, FALSE, NULL);
 
     if(tr->likelihood > tr->bestOfNode)
     {
@@ -968,7 +968,7 @@ int rearrangeBIG(tree *tr, partitionList *pr, nodeptr p, int mintrav, int maxtra
 
       hookup(p->next,       p1, p1z, numBranches);
       hookup(p->next->next, p2, p2z, numBranches);
-      newviewGeneric(tr, pr,p, FALSE);
+      newviewGeneric(tr, pr,p, FALSE, NULL);
     }
   }  
 
@@ -1021,7 +1021,7 @@ int rearrangeBIG(tree *tr, partitionList *pr, nodeptr p, int mintrav, int maxtra
       hookup(q->next,       q1, q1z, numBranches);
       hookup(q->next->next, q2, q2z, numBranches);
 
-      newviewGeneric(tr, pr,q, FALSE);
+      newviewGeneric(tr, pr,q, FALSE, NULL);
     }
   } 
 
@@ -1163,7 +1163,7 @@ boolean testInsertRestoreBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
   {
     if (! insertBIG(tr, pr, p, q))       return FALSE;
 
-    evaluateGeneric(tr, pr, p->next->next, FALSE);
+    evaluateGeneric(tr, pr, p->next->next, FALSE, NULL);
   }
   else
   {
@@ -1179,7 +1179,7 @@ boolean testInsertRestoreBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
         while ((! x->x)) 
         {
           if (! (x->x))
-            newviewGeneric(tr, pr,x, FALSE);
+            newviewGeneric(tr, pr,x, FALSE, NULL);
         }
       }
 
@@ -1188,7 +1188,7 @@ boolean testInsertRestoreBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
         while ((! y->x)) 
         {		  
           if (! (y->x))
-            newviewGeneric(tr, pr,y, FALSE);
+            newviewGeneric(tr, pr,y, FALSE, NULL);
         }
       }
 
@@ -1197,9 +1197,9 @@ boolean testInsertRestoreBIG (tree *tr, partitionList *pr, nodeptr p, nodeptr q)
         while ((! x->x) || (! y->x)) 
         {
           if (! (x->x))
-            newviewGeneric(tr, pr,x, FALSE);
+            newviewGeneric(tr, pr,x, FALSE, NULL);
           if (! (y->x))
-            newviewGeneric(tr, pr,y, FALSE);
+            newviewGeneric(tr, pr,y, FALSE, NULL);
         }
       }				      	
 
@@ -1433,7 +1433,7 @@ static void readTree(tree *tr, partitionList *pr, FILE *f)
 
   }
 
-  evaluateGeneric(tr, pr, tr->start, TRUE);
+  evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 
   printBothOpen("RAxML Restart with likelihood: %1.50f\n", tr->likelihood);
 }
@@ -2116,7 +2116,7 @@ cleanup_fast:
   {
     /* RE-TRAVERSE THE ENTIRE TREE */
 
-    evaluateGeneric(tr, pr, tr->start, TRUE);
+    evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 #ifdef _DEBUG_CHECKPOINTING
     printBothOpen("After Fast SPRs Final %f\n", tr->likelihood);   
 #endif
@@ -2297,7 +2297,7 @@ cleanup:
   /* do a final full tree traversal, not sure if this is required here */
 
   {
-    evaluateGeneric(tr, pr, tr->start, TRUE);
+    evaluateGeneric(tr, pr, tr->start, TRUE, NULL);
 
 #ifdef _DEBUG_CHECKPOINTING
     printBothOpen("After SLOW SPRs Final %f\n", tr->likelihood);   
@@ -2337,7 +2337,7 @@ treeEvaluate (tree *tr, partitionList *pr, int maxSmoothIterations)       /* Eva
 {
   smoothTree(tr, pr, maxSmoothIterations); /* former (32 * smoothFactor) */
 
-  evaluateGeneric(tr, pr, tr->start, FALSE);
+  evaluateGeneric(tr, pr, tr->start, FALSE, NULL);
 
   return TRUE;
 }

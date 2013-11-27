@@ -1,4 +1,6 @@
 #include "TreeIntegrator.hpp"
+#include "extensions.hpp" 
+#include "eval/ArrayReservoir.hpp"
 #include "proposals/BranchLengthMultiplier.hpp"
 #include "GibbsProposal.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -21,8 +23,9 @@
 
 TreeIntegrator::TreeIntegrator(TreeAln& traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
 {
-  auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(traln, true, true ));
-  auto eval = LikelihoodEvaluator(traln, plcy.get());
+  auto && plcy = make_unique<FullCachePolicy>(traln, true, true );
+  auto res = std::make_shared<ArrayReservoir>(false);
+  auto eval = LikelihoodEvaluator(traln, plcy.get(), res);
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);

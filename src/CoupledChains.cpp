@@ -147,15 +147,16 @@ void CoupledChains::attemptSwap(ParallelSetup &pl)
   bool didAccept = r < accRatio;   
   if( didAccept )
     {
+      // tout << cAIndex << " and " << cBIndex << " swap lnl="  << a.getLikelihood() << " " << b.getLikelihood() << std::endl; 
+
       if( bothAreMine)
       	{
 	  // tout << a.getCouplingId()  << "," << b.getCouplingId() << " => " ; 
 	  // std::swap(a,b);
 	  // tout << "\t" << a.getCouplingId()  << "," << b.getCouplingId() << std::endl; 
       	  // std::swap(_chains[cAIndex], _chains[cBIndex]); 
-	  
-	  swapHeatAndProposals(a,b);
 
+	  swapHeatAndProposals(a,b);
       	}
       else 
       	{
@@ -196,9 +197,13 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
   // additional sampling, if we are in the very first generation 
   if(startGen == 0)
     {
+      nat ctr = 0;  
       for(auto &c : _chains)
-	if( c.getChainHeat() == 1. && pl.isChainLeader() )
-	  c.sample(_paramId2TopFile, _pFile[0]); 
+  	if( c.getChainHeat() == 1. && pl.isChainLeader() && pl.isMyChain(_runid, ctr) )
+	  {
+	    c.sample(_paramId2TopFile, _pFile[0]); 
+	    ++ctr; 
+	  }
     }
 
   nat endGen = startGen + numGen; 

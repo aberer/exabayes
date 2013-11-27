@@ -111,23 +111,6 @@ namespace std
       return b.getHash(); 
     }
   }; 
-  
-  // template<> struct less<Bipartition>
-  // {
-  //   bool operator() (const Bipartition& lhs, const Bipartition& rhs) const 
-  //   {
-  //     auto mini = std::min(lhs.getRawBip().size(), rhs.getRawBip().size());
-  //     bool lhsIsLarger = lhs.getRawBip().size() > rhs.getRawBip().size(); 
-
-  //     for(nat i = 0; i < mini; ++i)
-  // 	{
-  // 	  if(lhs.getRawBip()[i] != rhs.getRawBip()[i])
-  // 	    return lhs.getRawBip()[i] < rhs.getRawBip()[i]; 
-  // 	}
-      
-  //     return not lhsIsLarger; 
-  //   }
-  // }    ; 
 }
 
 

@@ -2,9 +2,11 @@
 #include <algorithm>
 #include <cassert>
 
-#include "ArrayRestorer.hpp" 
+#include "eval/ArrayRestorer.hpp" 
 #include "Branch.hpp"
 #include "GlobalVariables.hpp"
+
+#include "eval/ArrayReservoir.hpp"
 
 #include "FlagType.hpp"
 
@@ -21,7 +23,7 @@ ArrayRestorer::ArrayRestorer(const TreeAln& traln, bool _cacheTipTip, bool _cach
 }
 
 
-void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool> &partitions, ArrayOrientation &evalOrientation)
+void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool> &partitions, ArrayOrientation &evalOrientation, ArrayReservoir& res)
 {
   for(nat model = 0; model <  traln.getNumberOfPartitions() ;++model)
     {
@@ -35,9 +37,7 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
       for(nat i = traln.getNumberOfTaxa() + 1  ; i < lastNode ; ++i)
 	{
 	  if(partitionLikelihoods[partitionIndex].isCached.at(ctr))
-	    {
-	      uncache(traln, i, partitionIndex, evalOrientation); 
-	    }
+	    uncache(traln, i, partitionIndex, evalOrientation, res); 
 	  ++ctr; 
 	}
 
@@ -84,8 +84,33 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
 }
 
 
+
+void ArrayRestorer::recycleArray(TreeAln& traln, nat nodeNumber, nat partitionId, ArrayReservoir& res)
+{
+  auto id = nodeNumber - (traln.getNumberOfTaxa() + 1); 
+  auto &partition = traln.getPartition(partitionId); 
+
+  if(partition.xSpaceVector[id] != 0 )
+    {
+      res.deallocate(partition.xVector[ id ]); 
+      partition.xVector[id] = nullptr;
+      partition.xSpaceVector[id] = 0; 
+    }
+
+  auto &elem  = partitionLikelihoods[partitionId]; 
+  
+  elem.cachedArrays[id] = nullptr; 
+  elem.lengths[id] = 0; 
+
+  arrayOrientation.setInvalid(partitionId, id); 
+}
+
+
 void ArrayRestorer::destroyAndForget(TreeAln &traln, nat nodeNumber, nat partitionId )
 {
+  // TODO let's recycle instead!
+  assert(0); 
+  
   auto id = nodeNumber - (traln.getNumberOfTaxa() + 1); 
   auto arrayAndLength = removeArray(traln, nodeNumber, partitionId);
   exa_free(arrayAndLength.first); 
@@ -99,7 +124,7 @@ void ArrayRestorer::destroyAndForget(TreeAln &traln, nat nodeNumber, nat partiti
 }
 
 
-void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, ArrayOrientation &curOrient )
+void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, ArrayOrientation &curOrient, ArrayReservoir &res  )
 {
   // tout << "uncaching node=" << nodeNumber << ", partition=" << partitionId << std::endl; 
 
@@ -112,8 +137,8 @@ void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, Arr
 
   if(partition.xVector[id] != NULL)
     {
-      exa_free(partition.xVector[id]); 
-      partition.xVector[id] = NULL; 
+      res.deallocate(partition.xVector[id]);
+      partition.xVector[id] = nullptr; 
       partition.xSpaceVector[id] = 0; 
     }
 
@@ -138,7 +163,7 @@ void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, Arr
 }
 
 
-void ArrayRestorer::traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat model, ArrayOrientation& curOrient )
+void ArrayRestorer::traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat model, ArrayOrientation& curOrient, ArrayReservoir& reservoir )
 {  
   if(traln.isTipNode(virtualRoot))
     return; 
@@ -166,14 +191,18 @@ void ArrayRestorer::traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat mo
 	}
       else 
 	{
+#if 1 
+	  recycleArray( traln, virtualRoot->number, model, reservoir);
+#else 
 	  destroyAndForget(traln,virtualRoot->number, model);
+#endif
 	}
     }
 
   if(incorrect)
     {
-      traverseAndCache(traln, pnb, model, curOrient); 
-      traverseAndCache(traln, pnnb, model, curOrient); 
+      traverseAndCache(traln, pnb, model, curOrient, reservoir); 
+      traverseAndCache(traln, pnnb, model, curOrient, reservoir); 
     }
 }
 
@@ -200,15 +229,18 @@ void ArrayRestorer::resetRestorer(const TreeAln &traln, ArrayOrientation &curOri
 }
 
 
-void ArrayRestorer::clearMemory()
+void ArrayRestorer::clearMemory(ArrayReservoir &res)
 {
   for(auto &partitionLikelihood : partitionLikelihoods)
     {
-      for(auto &elem : partitionLikelihood.cachedArrays )
+      for (nat i = 0; i < partitionLikelihood.cachedArrays.size();  ++i)
 	{
-	  if(elem != nullptr)
-	    exa_free(elem); 
-	  elem = nullptr; 
+	  if(partitionLikelihood.cachedArrays.at(i) != nullptr)
+	    {
+	      res.deallocate(partitionLikelihood.cachedArrays.at(i)); 
+	      partitionLikelihood.cachedArrays.at(i) = nullptr; 
+	      partitionLikelihood.lengths.at(i) = 0; 
+	    }
 	}
     }
 }

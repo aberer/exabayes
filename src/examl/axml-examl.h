@@ -293,6 +293,13 @@
 #define GTR_MULTI_STATE     2
 
 
+  /* added by andre  */
+typedef void* array_reservoir_t ; 
+extern double* allocate(array_reservoir_t self, size_t length); 
+extern void deallocate(array_reservoir_t self, double *array); 
+  /* end */
+
+
 
 
 
@@ -1050,10 +1057,10 @@ extern void computeBootStopOnly(tree *tr, char *bootStrapFileName, analdef *adef
 extern boolean bootStop(tree *tr, hashtable *h, int numberOfTrees, double *pearsonAverage, unsigned int **bitVectors, int treeVectorLength, unsigned int vectorLength);
 extern void computeConsensusOnly(tree *tr, char* treeSetFileName, analdef *adef);
 extern double evaluatePartialGeneric (tree *, int i, double ki, int _model);
-extern void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal);
-extern void newviewGeneric (tree *tr, nodeptr p, boolean masked);
+extern void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal, array_reservoir_t res);
+extern void newviewGeneric (tree *tr, nodeptr p, boolean masked, array_reservoir_t res);
 extern void newviewGenericMulti (tree *tr, nodeptr p, int model);
-void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask); 
+void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask, array_reservoir_t res); 
 /* extern void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, boolean mask); */
 extern void makenewzGenericDistance(tree *tr, int maxiter, double *z0, double *result, int taxon1, int taxon2);
 extern double evaluatePartitionGeneric (tree *tr, nodeptr p, int model);
@@ -1066,9 +1073,9 @@ extern void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int
 
 
 
-extern void   newviewIterative(tree *tr, int startIndex);
+extern void   newviewIterative(tree *tr, int startIndex, array_reservoir_t res);
 
-extern void evaluateIterative(tree *);
+extern void evaluateIterative(tree *tr, array_reservoir_t res);
 
 extern void *malloc_aligned( size_t size);
 
@@ -1078,7 +1085,7 @@ extern void storeValuesInTraversalDescriptor(tree *tr, double *value);
 
 
 
-extern void makenewzIterative(tree *);
+extern void makenewzIterative(tree *tr, array_reservoir_t res);
 extern void execCore(tree *, volatile double *dlnLdlz, volatile double *d2lnLdlz2);
 
 

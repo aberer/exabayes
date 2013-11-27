@@ -23,15 +23,15 @@ public:
     imprintPolicy(traln, arrayOrient); 
   }
 
-  virtual void freeMemory() = 0;  
+  virtual void freeMemory(ArrayReservoir& res) = 0;  
 
 
   /**
      @brief deal with rejection
    */ 
-  void accountForRejection(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient) 
+  void accountForRejection(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient, ArrayReservoir &res ) 
   {
-    accountForRejectionPolicy(traln, partitions, invalidNodes, arrayOrient); 
+    accountForRejectionPolicy(traln, partitions, invalidNodes, arrayOrient, res); 
    
     auto lnls = traln.getPartitionLnls(); 
     auto sum = 0.; 
@@ -45,11 +45,11 @@ public:
     traln.getTrHandle().likelihood = sum;  
   }
 
-  virtual void accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient)  = 0; 
+  virtual void accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient , ArrayReservoir &res)  = 0; 
 
 
   virtual std::unique_ptr<ArrayPolicy> clone() const = 0; 
-  virtual void prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat models, ArrayOrientation& arrayOrientation ) = 0; 
+  virtual void prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat models, ArrayOrientation& arrayOrientation , ArrayReservoir& res ) = 0; 
 
   virtual void enableRestoreGapVector(){}
 
