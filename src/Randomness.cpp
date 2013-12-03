@@ -207,8 +207,10 @@ nat Randomness::drawGeometric(double prop)
 
 nat Randomness::drawBinomial(double prop, nat trials )
 {
+  auto gen = std::default_random_engine{} ; 
+  gen.seed((*this)());
   auto dist = std::binomial_distribution<nat>(trials,prop);
-  return dist(*this);
+  return dist(gen);
 }
 
 

@@ -259,6 +259,12 @@ void CommandLine::parse(int argc, char *argv[])
 	  exit(-1); 
 	}
     }
+
+  if( treeFile.compare("") != 0 && not std::ifstream(treeFile))
+    {
+      std::cout << "Could not find tree file passed via -t >"  << treeFile << "<"<< std::endl; 
+      exit(-1); 
+    }
 }
 
 RunModes CommandLine::getTreeInitRunMode() const 
