@@ -10,6 +10,13 @@ int NUM_BRANCHES ;
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
+// #include "ParallelSetup.hpp"
+
+void myExit(int code)
+{
+  exit(code); 
+}
+
 static void printUsage(std::ostream &out)
 {
   out << "extractBips is a utility for extracting bipartitions, branch lengths\n"
@@ -37,7 +44,7 @@ static std::tuple<std::string, std::vector<std::string>,nat> processCommandLine(
 	case 'h': 
 	  {
 	    printUsage(std::cout); 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	  break; 
 	case 'n': 
@@ -71,7 +78,7 @@ static std::tuple<std::string, std::vector<std::string>,nat> processCommandLine(
 	default : 
 	  {
 	    std::cerr << "Error: unknown option >" << char(c) << "<. " << std::endl; 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	}
     }
@@ -80,7 +87,7 @@ static std::tuple<std::string, std::vector<std::string>,nat> processCommandLine(
   if(id.compare("") == 0)
     {
       std::cerr << "Please provide a run-id via -n " << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }    
   
   return std::make_tuple(id, files, burnin);
@@ -93,7 +100,7 @@ int main(int argc, char** argv)
   if(argc < 2) 
     {
       printUsage(std::cout);
-      exit(-1); 
+      myExit(-1); 
     }
 
   auto files = std::vector<std::string>{};
@@ -110,7 +117,7 @@ int main(int argc, char** argv)
       if(not std::ifstream(file))
 	{
 	  std::cerr << "Error: could not open file >" <<  file  << "<" << std::endl; 
-	  exit(-1); 
+	  myExit(-1); 
 	}    
       
     }

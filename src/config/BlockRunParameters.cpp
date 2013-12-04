@@ -1,4 +1,5 @@
 #include "BlockRunParameters.hpp" 
+#include "ParallelSetup.hpp"
 
 
 BlockRunParameters::BlockRunParameters()  
@@ -122,7 +123,7 @@ static void verifyProbability(double value, bool lowerIncluded, bool upperInclud
   if( not ( lowOkay && upperOkay ) )
     {
       std::cerr << "Error: >" << name << "< must be in the interval " << lowBracket  << "0,1" << upperBracket << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 
 }
@@ -132,7 +133,7 @@ static void verifyGreaterZero(int value, std::string name )
   if( not ( value > 0 )   )
     {
       std::cout << "Error: >name< must be > 0 "  << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }  
 }
 
@@ -151,7 +152,7 @@ void BlockRunParameters::verify() const
   if(numSwapsPerGen < 0.)
     {
       std::cerr << "Error: >numSwapsPerGen< must be in > 0."  << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 
   // verifyGreaterZero(numSwaps, "numSwaps"); 
@@ -166,6 +167,6 @@ void BlockRunParameters::verify() const
   if( diagFreq <= nat(samplingFreq)  ) 
     {
       std::cerr << "diagFreq < samplingFreq. Please choose the sampling frequency smaller than the diagnosis frequency.  " << std::endl; 
-      exit(-1);
+      ParallelSetup::genericExit(-1); 
     }
 }

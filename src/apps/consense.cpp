@@ -11,6 +11,12 @@ int NUM_BRANCHES;
 
 #include "ConsensusTree.hpp"
 
+// #include "ParallelSetup.hpp"
+void myExit(int code)
+{
+  exit(code); 
+}
+
 
 auto processCommandLine(int argc, char **argv)
   -> std::tuple<std::string,std::vector<std::string>,nat, nat,bool>
@@ -73,7 +79,7 @@ auto processCommandLine(int argc, char **argv)
 	default: 
 	  {
 	    std::cerr << "Unrecognized option >" <<  optarg << "<"  << std::endl; 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	}
     }
@@ -81,18 +87,18 @@ auto processCommandLine(int argc, char **argv)
   if(thresh < 50 || thresh > 100 )
     {
       std::cerr << "error: correct values for -t in [50,100] or MRE." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   if(files.size() == 0 )
     {
       std::cerr << "Please specfiy tree input files via -f" << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
   if(id.compare("") == 0)
     {
       std::cerr << "Please specify a runid for the output via -n. " << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
  
   return std::make_tuple(id, files, burnin, thresh, isRefined);
@@ -120,7 +126,7 @@ int main(int argc, char **argv)
   if(argc < 2 ) 
     {
       printUsage(std::cout);
-      exit(-1); 
+      myExit(-1); 
     }
 
   bool isMre = false;   
@@ -137,7 +143,7 @@ int main(int argc, char **argv)
       if(not std::ifstream(file))
 	{
 	  std::cerr << "Error: could not open file >" << file << "<" << std::endl; 
-	  exit(-1); 
+	  myExit(-1); 
 	}    
     }
 
@@ -155,7 +161,7 @@ int main(int argc, char **argv)
       std::cerr << std::endl << "File " << ss.str() << " already exists (probably \n"
 		<< "left over from a previous run). Please choose a new run-id or remove\n"
 		<< "previous output files." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   std::ofstream outfile(ss.str()); 

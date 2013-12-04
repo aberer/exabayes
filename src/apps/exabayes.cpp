@@ -95,11 +95,8 @@ static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
   // assert(result != myMap.end()); 
 
   std::cout << "result: " << std::get<0>(*result) << std::endl; 
-  
 
-
-
-  exit(0); 
+ParallelSetup::genericExit(0); 
 #else 
   // assert(0); 
   auto&& master = SampleMaster(  pl, cl );
@@ -107,7 +104,7 @@ static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
   if( cl.isDryRun())
     {
       std::cout << "Command line, input data and config file is okay. Exiting gracefully." << std::endl; 
-      exit(0); 
+      ParallelSetup::genericExit(0); 
     }
   else 
     {
@@ -219,7 +216,7 @@ static void printInfoHeader(int argc, char **argv)
        << "\nbuild with the (Phylogenetic Likelihood Library) PLL code base for sequential execution."
 #endif
 
-       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  "\n by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" << std::endl 
+       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  " by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" << std::endl 
        << "\nPlease send any feature requests and inquiries to " << PACKAGE_BUGREPORT
        << std::endl << std::endl; 
 

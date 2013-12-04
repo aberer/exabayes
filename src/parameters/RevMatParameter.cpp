@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <functional>
 
+#include "ParallelSetup.hpp"
+
 #include "RateHelper.hpp"
 #include "DnaAlphabet.hpp"
 #include "AminoAcidAlphabet.hpp"
@@ -129,6 +131,6 @@ void RevMatParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const
     {
       tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
       printShort(tout) << " that is not applicable." << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 }

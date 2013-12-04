@@ -22,6 +22,12 @@ using namespace Parser;
 typedef unsigned int  nat; 
 extern const char *protModels[NUM_PROT_MODELS];
 
+
+void myExit(int code)
+{
+  exit(code); 
+}
+
 PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool _haveModelFile)
   : alnFile(_alnFile)
   , modelFile(_modelFile)
@@ -247,7 +253,7 @@ static void analyzeIdentifier(char **ch, int modelNumber, tree *tr)
   if(!containsComma)
     {
       printf("Error, model file must have format: DNA or AA model, then a comma, and then the partition name\n");
-      exit(-1);
+      myExit(-1);
     }
 
   int i = 0;
@@ -275,7 +281,7 @@ static void analyzeIdentifier(char **ch, int modelNumber, tree *tr)
   else if (strcasecmp(model, "BIN") == 0)
     {	     	      
       std::cout << "model >BIN< is not supported yet." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
 	
       tr->initialPartitionData[modelNumber].protModels = -1;		  
       tr->initialPartitionData[modelNumber].protFreqs  = -1;
@@ -284,7 +290,7 @@ static void analyzeIdentifier(char **ch, int modelNumber, tree *tr)
   else if(strcasecmp(model, "MULTI") == 0)
     {	     	
       std::cout << "model >MULTI< is not supported yet." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
       
       tr->initialPartitionData[modelNumber].protModels = -1;		  
       tr->initialPartitionData[modelNumber].protFreqs  = -1;
@@ -293,7 +299,7 @@ static void analyzeIdentifier(char **ch, int modelNumber, tree *tr)
   else if(strcasecmp(model, "CODON") == 0)
     {	     	      
       std::cout << "model >CODON< is not supported yet." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
 
       tr->initialPartitionData[modelNumber].protModels = -1;		  
       tr->initialPartitionData[modelNumber].protFreqs  = -1;
@@ -325,7 +331,7 @@ static void setModel(int model, int position, int *a)
     {
       printf("ERROR trying to assign model %d to position %d \n", model, position);
       printf("while already model %d has been assigned to this position\n", a[position]);
-      exit(-1);
+      myExit(-1);
     }      
 }
 
@@ -436,7 +442,7 @@ void PhylipParser::parsePartitions()
       if(*ch == '=')
 	{
 	  printf("Identifier missing prior to '=' in %s\n", p_names[i]);
-	  exit(-1);
+	  myExit(-1);
 	}
       
       analyzeIdentifier(&ch, i, tr);
@@ -453,7 +459,7 @@ void PhylipParser::parsePartitions()
       if(!isNum(*ch))
 	{
 	  printf("%c Number expected in %s\n", *ch, p_names[i]);
-	  exit(-1);
+	  myExit(-1);
 	}   
       
       l = 0;
@@ -482,7 +488,7 @@ void PhylipParser::parsePartitions()
 	  else
 	    {
 	      printf("'-' or ',' expected in %s\n", p_names[i]);
-	      exit(-1);
+	      myExit(-1);
 	    }
 	}	 
       
@@ -501,7 +507,7 @@ void PhylipParser::parsePartitions()
       if(!isNum(*ch))
 	{
 	  printf("%c Number expected in %s\n", *ch, p_names[i]);
-	  exit(-1);
+	  myExit(-1);
 	}    
       
       l = 0;
@@ -519,7 +525,7 @@ void PhylipParser::parsePartitions()
       if(upper < lower)
 	{
 	  printf("Upper bound %d smaller than lower bound %d for this partition: %s\n", upper, lower,  p_names[i]);
-	  exit(-1);
+	  myExit(-1);
 	}
       
       skipWhites(&ch);
@@ -543,7 +549,7 @@ void PhylipParser::parsePartitions()
 	  if(!isNum(*ch))
 	    {
 	      printf("%c Number expected in %s\n", *ch, p_names[i]);
-	      exit(-1);
+	      myExit(-1);
 	    }     
 	  
 	  l = 0;
@@ -616,7 +622,7 @@ void PhylipParser::parsePartitions()
       if(tr->model[i] == -1)
 	{
 	  printf("ERROR: Alignment Position %d has not been assigned any model\n", i);
-	  exit(-1);
+	  myExit(-1);
 	}      
     }  
 
@@ -739,19 +745,19 @@ void PhylipParser::parseHeader (FILE *INFILE)
     {
       
       printf("\n Error: problem reading number of species and sites\n\n");
-      exit(-1);
+      myExit(-1);
     }
   
   if (numTax < 4) // numTax
     {
       printf("\n Error: too few species\n\n");
-      exit(-1);
+      myExit(-1);
     }
 
   if (numSites < 1) // numSites
     {
       printf("\n Error: too few sites\n\n");
-      exit(-1);
+      myExit(-1);
     }
 
   return;
@@ -833,8 +839,8 @@ void PhylipParser::checkTaxonName(char *buffer, int len)
 	{
 	  printf("\n Error: Taxon Name \"%s\" is invalid at position %d, it contains illegal character %c\n\n", buffer, i, buffer[i]);
 	  printf(" Illegal characters in taxon-names are: tabulators, carriage returns, spaces, \":\", \",\", \")\", \"(\", \";\", \"]\", \"[\"\n");
-	  printf(" Exiting\n");
-	  exit(-1);
+	  printf(" MyExiting\n");
+	  myExit(-1);
 	}
 
     }
@@ -990,7 +996,7 @@ boolean PhylipParser::getdata(FILE *INFILE)
 		      printf("Taxon Name to long at taxon %d, adapt constant nmlngth in\n", i);
 		      printf("axml.h, current setting %d\n", nmlngth);
 
-		      exit(-1);
+		      myExit(-1);
 		    }
 		}
 	      while(ch !=  ' ' && ch != '\n' && ch != '\t' && ch != '\r');
@@ -1841,7 +1847,7 @@ void PhylipParser::getinput()
   if(!getdata(INFILE))
     {
       printf("Problem reading alignment file \n");
-      exit(1);
+      myExit(1);
     }
       
   tr->nameHash = initStringHashTable(10 * tr->mxtips);

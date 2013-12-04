@@ -569,7 +569,7 @@ std::string SampleMaster::getOrCreateBinaryFile() const
       if(not std::ifstream(binaryAlnFile))
 	{
 	  tout << "Error: tried to create intermediate file "<< binaryAlnFile << ", but did not succeed!"  << std::endl; 
-	  exit(-1); 
+	  ParallelSetup::genericExit(-1); 
 	}
     }
   else 
@@ -596,7 +596,7 @@ nat SampleMaster::peekNumTax(std::string filePath)
       if(ch != int(initId[i]))
 	{
 	  tout << "error: expected >" << char(initId[i])  << "< but got >" << ch << "<"  << std::endl; 
-	  exit(-1); 
+	  ParallelSetup::genericExit(-1); 
 	}
     }
 

@@ -1,4 +1,5 @@
 #include "ProtModelParameter.hpp" 
+#include "ParallelSetup.hpp"
 #include "ProtModel.hpp"
 
 
@@ -58,6 +59,6 @@ void ProtModelParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
   if(traln.getPartition(_partitions.at(0)).states != 20)
     {
       std::cerr << "Error: in the config file you specified partition " << _partitions.at(0) << " to have an amino acid model. However, previously this partition was declared to have a different data type." << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 }

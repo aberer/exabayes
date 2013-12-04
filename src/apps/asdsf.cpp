@@ -18,6 +18,14 @@ int NUM_BRANCHES;
 
 #include "SplitFreqAssessor.hpp"
 
+
+void myExit(int code)
+{
+  exit(code); 
+}
+
+
+
 void printUsage()
 {
   std::cout
@@ -36,7 +44,8 @@ void printUsage()
 	    << "      -r num           constant burn-in: discard the first <num> samples\n"
 	    << "\n\n"
     ; 
-  exit(0); 
+
+  myExit(0); 
 }
 
 
@@ -129,7 +138,7 @@ int main(int argc, char** argv)
       if(not std::ifstream(file)) 
 	{
 	  std::cout << "error: could not open file >" << file << "<" << std::endl; 
-	  exit(-1); 
+	  myExit(-1); 
 	}
     }
 
@@ -137,7 +146,7 @@ int main(int argc, char** argv)
     {
       std::cout << "Error: you cannot set the relative burn-in AND a range of trees to\n"
 		<< "use.\n";
-      exit(0);
+      myExit(-1); 
     }
 
   auto asdsf = SplitFreqAssessor(files); 
@@ -147,7 +156,7 @@ int main(int argc, char** argv)
   if(end < constBurnin)
     {
       std::cout << "you are trying to discard " << constBurnin << " trees, but the minimum trees available in one of the files is just " << end << std::endl; 
-      exit(0);
+      myExit(-1); 
     }
 
   nat start = 0;   

@@ -18,6 +18,13 @@
 #include "Arithmetics.hpp"
 #include "common.h"
 
+// #include "ParallelSetup.hpp"
+
+
+void myExit(int code)
+{
+  exit(code); 
+}
 
 static bool isAAMod(const std::string& input )
 {
@@ -94,7 +101,7 @@ std::unordered_map<std::string, Values> readFile(std::string file, nat burnin)
 	  if(values.size() <= burnin)
 	    {
 	      std::cerr << "error: I merely have " << values.size() << " values and you are trying to skip " << burnin << " of them using the -b option" << std::endl; 
-	      exit(-1); 
+	      myExit(-1); 
 	    }
 	  
 	  
@@ -138,7 +145,7 @@ std::tuple<std::string, std::vector<std::string>, nat> processCmdLine(int argc, 
 	case 'h': 
 	  {
 	    printUsage(std::cout); 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	  break; 
 	case 'n': 
@@ -172,7 +179,7 @@ std::tuple<std::string, std::vector<std::string>, nat> processCmdLine(int argc, 
 	default : 
 	  {
 	    std::cerr << "error: unknown argument "  << optarg << std::endl; 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	}
     }
@@ -180,12 +187,12 @@ std::tuple<std::string, std::vector<std::string>, nat> processCmdLine(int argc, 
   if(files.size()  == 0)
     {
       std::cerr << "Error: please specify one or many files via -f." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
   if(id.compare("") == 0)
     {
       std::cerr << "Error: please specify a run id via -n. " << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   return std::make_tuple(id, files, burnin); 
@@ -198,7 +205,7 @@ int main(int argc, char **argv)
   if(argc < 2 )
     {
       printUsage(std::cout);
-      exit(-1); 
+      myExit(-1); 
     }  
 
   auto files = std::vector<std::string>{}; 
@@ -213,7 +220,7 @@ int main(int argc, char **argv)
   if(std::ifstream(outputFileName))
     {
       std::cerr << "Error: output file >" << outputFileName << "< already exists. Please or move." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
   
   auto && out = std::ofstream(outputFileName); 

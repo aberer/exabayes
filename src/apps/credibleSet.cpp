@@ -11,6 +11,13 @@ int NUM_BRANCHES;
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
+// #include "ParallelSetup.hpp"
+
+
+void myExit(int code)
+{
+  exit(code); 
+}
 
 static void printUsage(std::ostream &out )
 {
@@ -38,7 +45,7 @@ static auto  processCommandLine(int argc, char **argv)
 	case 'h': 
 	  {
 	    printUsage(std::cerr); 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	  break; 
 	case 'n':
@@ -72,7 +79,7 @@ static auto  processCommandLine(int argc, char **argv)
 	default: 
 	  {
 	    std::cerr << "Error: unknown option >" << char (c) << "<" << std::endl; 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	}
     }
@@ -81,7 +88,7 @@ static auto  processCommandLine(int argc, char **argv)
   if(not ( 0 < credSet && credSet <= 100 ))
     {
       std::cerr << "Error: the percentile (passed via -c) must be between 0 (excluded) and 100 (included)." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
   
   return std::make_tuple(id,files,credSet);
@@ -95,7 +102,7 @@ int main(int argc, char **argv)
   if(argc < 2 )
     {
       printUsage(std::cerr);
-      exit(-1);       
+      myExit(-1); 
     }
 
   auto id = std::string(argv[1]); 
@@ -116,7 +123,7 @@ int main(int argc, char **argv)
     {
       std::cerr << "The file " << ss.str() << " already exists (possibly left over from a previous run). Please\n"
 		<< "choose a different run-id." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   cs.printCredibleSet(ss.str(), ci); 

@@ -1,4 +1,5 @@
 #include "BipartitionExtractor.hpp"
+#include "ParallelSetup.hpp"
 
 #include <iostream>
 #include <unordered_set>
@@ -18,7 +19,7 @@ static void rejectIfExists(std::string filename)
     {
       std::cerr << std::endl <<  "File " << filename << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 }
 
@@ -74,7 +75,7 @@ nat BipartitionExtractor::getNumTreesInFile(std::string file) const
   if(result < 1)
     {
       std::cout << "Header of file " << file << " possibly broken. Expected list of taxa terminated by semi-colon." << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 
   result -= 2;

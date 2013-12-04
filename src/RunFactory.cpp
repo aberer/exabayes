@@ -226,7 +226,7 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 	      if(not v->priorIsFitting(prior, traln))
 		{
 		  tout  << "You forced prior " << &prior << " to be applied to parameter  "  << v.get() << ". This is not possible. "  << std::endl; 
-		  exit(-1); 
+		  ParallelSetup::genericExit(-1);
 		}
 
 	      // tout << "setting prior " << &prior << 

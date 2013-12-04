@@ -52,7 +52,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	      if(partAppeared.at(i))
 		{
 		  tout << "error: partition " << i << " occurring twice in the same scheme. Check your parameter-block!" << std::endl; 
-		  exit(-1); 
+		  ParallelSetup::genericExit(-1); 
 		}
 	      partAppeared.at(i) = true; 
 

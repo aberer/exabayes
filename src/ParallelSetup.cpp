@@ -320,8 +320,10 @@ void ParallelSetup::finalize()
 void ParallelSetup::genericExit(int code)
 {
 #if HAVE_PLL == 0
-  // MPI_Finalize(); 
-  MPI_Abort(MPI_COMM_WORLD, -1);
+  if( code == 0 )
+    MPI_Finalize(); 
+  else 
+    MPI_Abort(MPI_COMM_WORLD, code);
   exit(code); 
 #else 
   exit(code);   
@@ -465,7 +467,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   		<< "is a multiple of the product of runs to be executed in\n" 
   		<< "parallel and the number of chains to be executed in"
   		<< "parallel. Aborting." << std::endl; 
-      exit(0);
+      ParallelSetup::genericExit(0); 
     }
 
   runComm = MPI::COMM_WORLD.Split( getRunBatch(), getRankInRunBatch() ); 

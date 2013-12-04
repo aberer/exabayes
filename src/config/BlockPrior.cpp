@@ -20,7 +20,7 @@ static void expectString( std::string expectation, NxsToken& token)
   if(not okay)
     {
       std::cerr << "error while parsing the config file: expected " << expectation << " but got " << token.GetToken() << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 }
 
@@ -89,7 +89,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	      if(remainder != std::numeric_limits<double>::infinity())
 		{
 		  std::cerr << "Encountered 'remainder' twice while defining aaPr" << std::endl; 
-		  exit(-1);
+		  ParallelSetup::genericExit(-1); 
 		}
 
 	      token.GetNextToken();
@@ -106,7 +106,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	      if(not std::get<0>(modelRes) )
 		{
 		  std::cerr << "Error: expected " << token.GetToken() << "to be a valid protein model name" << std::endl; 
-		  exit(-1); 
+		  ParallelSetup::genericExit(-1); 
 		}
 	      auto model = std::get<1>(modelRes);
 
@@ -121,7 +121,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	      if(modelsProbs.find(model) != modelsProbs.end())
 		{
 		  std::cerr << "Error: model " <<  model << "occurred more than once in your specification of a discrete amino acid model prior."  << std::endl; 
-		  exit(-1); 
+		  ParallelSetup::genericExit(-1); 
 		}
 
 	      modelsProbs[model] = weight; 
@@ -219,7 +219,7 @@ void BlockPrior::Read(NxsToken &token)
 		  if( _numPart <= nat(val)  )
 		    {
 		      tout << "Error while parsing priors: you specified partition id " << val << " while ExaBayes assumes, that you only have " << _numPart << " partitions" << std::endl; 
-		      exit(-1);
+		      ParallelSetup::genericExit(-1); 
 		    }
 	      
 		  partitions.insert(val);
