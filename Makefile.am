@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign
 
-EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/* build.sh apple-build.sh $(top_srcdir)/manual/manual.pdf $(top_srcdir)/manual/manual.html 
+EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h examples/* build.sh apple-build.sh $(top_srcdir)/manual/manual.pdf manual/css/org.css manual/img/banner.png $(top_srcdir)/manual/manual.html README.txt LICENSE.txt COPYING
 
 .PHONY: my-update-src doc mydist  man  dist
 
@@ -115,6 +115,11 @@ doc :
 man:  
 	./manual/process.sh
 
+
+date :
+	./utils/updateDate.sh
+
 mydist : 
 	make man
+	make date 
 	make dist 

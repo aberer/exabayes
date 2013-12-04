@@ -21,6 +21,8 @@
 #include <chrono>
 
 
+#include "releaseDate.hpp" 
+
 int NUM_BRANCHES; 
 
 
@@ -217,9 +219,7 @@ static void printInfoHeader(int argc, char **argv)
        << "\nbuild with the (Phylogenetic Likelihood Library) PLL code base for sequential execution."
 #endif
 
-       << std::endl <<  "This software has been releasd by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis" << std::endl 
-       << "in ?" << std::endl 
-
+       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  "\n by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" << std::endl 
        << "\nPlease send any feature requests and inquiries to " << PACKAGE_BUGREPORT
        << std::endl << std::endl; 
 
