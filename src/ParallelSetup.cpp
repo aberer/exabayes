@@ -442,8 +442,8 @@ ParallelSetup::blockingPrint(const MPI::Comm &comm,std::string ss )
 
 void ParallelSetup::initializeExaml(const CommandLine &cl)
 {   
-  globalRank = MPI::COMM_WORLD.Get_rank(); 
-  globalSize = MPI::COMM_WORLD.Get_size(); 
+  MPI_Comm_rank(MPI_COMM_WORLD, (int*)&globalRank); 
+  MPI_Comm_size(MPI_COMM_WORLD, (int*)&globalSize); 
 
   runsParallel = cl.getNumRunParallel();
   chainsParallel = cl.getNumChainsParallel();

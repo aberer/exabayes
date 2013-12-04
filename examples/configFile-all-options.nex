@@ -37,6 +37,8 @@ begin runconfig;
  [ burninGen 2000 ]		    [ exact number of generations that are discarded for diagnostics ]  
  [ burninProportion      0.25 ]     [ discard this proportion of all initial samples as burnin  ]
 
+ 
+ [ componentWiseMH     false ]      [ enables component-wise Metropolis-Hastings. Very IMPORTANT, if you run an analysis using multiple unlinked parameters ]
 end; 
 
 

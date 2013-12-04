@@ -131,8 +131,8 @@ static void ignoreExceptionsDenormFloat()
 
 static bool fileExists(const std::string &name)
 {
-  FILE *fh = fopen(name.c_str(), "r"); 
-  return fh != nullptr; 
+  auto &&ifh = std::ifstream(name); 
+  return ifh.is_open(); 
 }
 
 
@@ -147,7 +147,6 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 
   if( not cl.isDryRun() && pl.isGlobalMaster() )
     {
-      // auto &&iss = std::ifstream(ss.str()); 
       if(fileExists(ss.str()))
 	{
 	  std::cerr << pl << std::endl; 
