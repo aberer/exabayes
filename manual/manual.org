@@ -806,8 +806,9 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    processes via ~-np <procs>~ or similar. You usually have to provide
    a batch script that is committed to the scheduler.
 
-
-   TODO parallel unit? 
+   In ExaBayes, you may have several computing nodes working on a
+   chain in parallel. We refer to the entirety of nodes computing a
+   chain as /parallel unit/. 
    
 ** Choosing the right kind of parallelism 
    :PROPERTIES:
