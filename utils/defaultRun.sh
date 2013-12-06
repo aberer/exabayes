@@ -25,6 +25,7 @@ seed=$RANDOM
 
 # src/proposals/
 numProc=2
+# extraArgs="-M 3 -S  "
 # extraArgs="-M 0 -S"
 # extraArgs="- 2"
 # extraArgs="-S"
@@ -34,7 +35,9 @@ numProc=2
 # early with 150 , VERIFIED 
 # seed=31853
 
-startFromBest=1
+devel=0
+
+startFromBest=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
@@ -63,20 +66,27 @@ fi
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
     cxxcompiler="clang++"
-    cppflags="-Qunused-arguments"  
+    cppflags="-Qunused-arguments "  
 else 
     ccompiler="gcc"
     cxxcompiler="g++"
 fi
 
 if [ $useGoogleProfiler -eq 1  ]; then
-    cppflags="$cppflags -D_USE_GOOGLE_PROFILER"
+    cppflags="$cppflags -D_USE_GOOGLE_PROFILER "
 fi
 
 
 if [ $useGoogleProfiler -eq 1 ]; then
-    libs="-lprofiler"
+    libs="-lprofiler "
 fi
+
+if [ $devel -eq 1 ]; then
+    libs="$libs -lprocps"
+    cppflags="$cppflags-D_DEVEL "
+fi
+
+
 
 
 if [ "$#" -lt 3 ]; then

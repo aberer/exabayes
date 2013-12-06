@@ -182,9 +182,6 @@ TreeAln::~TreeAln()
 
   if(_hasAlignment)
     {
-      // OK???
-      // clearMemory(); 
-
       for(int i = 0; i < numPart ;++i)
 	{
 	  auto& partition = getPartition(i); 
@@ -193,8 +190,8 @@ TreeAln::~TreeAln()
 	  exa_free(partition.symmetryVector);
 	  exa_free(partition.frequencyGrouping); 
 #endif
-	  
-	  // exa_free(partition.xVector); 
+
+	  exa_free(partition.xVector); 
 
 	  exa_free(partition.frequencies);
 	  exa_free(partition.empiricalFrequencies); 

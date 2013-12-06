@@ -18,6 +18,10 @@
 #include "Category.hpp"
 #include "TreePrinter.hpp"
 
+#ifdef  _DEVEL
+#include "memory.hpp" 
+#endif
+
 // #define VERIFY_GEN 4
 #define VERIFY_GEN 1000000
 
@@ -378,7 +382,8 @@ void Chain::stepSingleProposal()
   auto suggestion = peekNextVirtualRoot(traln,_chainRand); 
 
   pfun.evaluateProposal(_evaluator, _traln, suggestion);
-  
+
+
   double priorRatio = _prior.getLnPriorRatio();
   double lnlRatio = traln.getTrHandle().likelihood - prevLnl; 
 
@@ -417,32 +422,25 @@ void Chain::stepSingleProposal()
 
     }
 
-// #ifdef DEBUG_LNL_VERIFY
-//   double supposedLnl = getLikelihood(); 
-//   tout << MAX_SCI_PRECISION << "assumed_lnl: " << supposedLnl << std::endl; 
 
-//   bool problem = false; 
-
-//   auto blList = _traln.extractBranches(); 
-//   std::reverse(begin(blList), end(blList)) ; 
-  
-//   for(auto b :  blList)
-//     {
-//       _evaluator.evaluate(_traln, b, false, false); 
-//       auto lnl = getLikelihood(); 
-//       tout << lnl << std::endl ; 
-//       problem |=  fabs(lnl - supposedLnl) - 1.0 > 1e-6 ; 
-//     }
-  
-//   if(problem)
-//     {
-//       assert(0); 
-//     }
-// #endif
-  
-  // tout << "ORIENT at end: " << evaluator.getOrientation() << std::endl; 
   _evaluator.freeMemory();
 
+#ifdef _DEVEL
+  auto totalMem = getCurrentMemory(); 
+
+  nat used = 0, unused = 0; 
+  std::tie(used, unused) =  _evaluator.getArrayReservoir().getUsedAndUnusedBytes(); 
+  auto sum = used + unused; 
+
+  auto overhead = totalMem - sum ; 
+
+  tout << "MEM\t" << used / 1024  << "\t" << unused / 1024  << "\t" << overhead / 1024 << "\t" 
+       << double(used) / double(totalMem)  << "\t"
+       << double(unused) / double(totalMem)   << "\t"
+       << double(overhead) / double(totalMem)  
+       << "\t" << totalMem / 1024 
+       << std::endl; 
+#endif
 
   if(_tuneFrequency <  pfun.getNumCallSinceTuning() ) 
     pfun.autotune();

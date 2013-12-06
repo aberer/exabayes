@@ -60,8 +60,8 @@ void TopologyFile::sample(const TreeAln &traln, nat gen,  AbstractParameter* par
   auto&& fh = std::ofstream{fullFileName,std::fstream::app }; 
   
   auto tp = TreePrinter( param->getCategory() == Category::BRANCH_LENGTHS , false, false);
-  
-  auto treeString = tp.printTree(traln, param); 
+
+  auto treeString = tp.printTree(traln, param);
   fh << "\ttree gen."<< gen
      << ".{" <<  param->getPartitions()  << "}"
      << " = [&U] " << treeString << std::endl; 

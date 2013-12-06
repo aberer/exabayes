@@ -46,7 +46,6 @@ int NUM_BRANCHES;
 #include <set> 
 #endif
 
-
 // have ae look at that later again 
 double fastPow(double a, double b)
 {
