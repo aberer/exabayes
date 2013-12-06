@@ -756,22 +756,22 @@ void SampleMaster::initializeRuns(Randomness rand)
     _diagFile.initialize(_cl.getWorkdir(), _cl.getRunid(), _runs);
 
   // post-pone all printing to the end  
-  printAlignmentInfo(initTree);   
+  if(not _cl.isQuiet())
+    {
+      printAlignmentInfo(initTree);   
+      printParameters(initTree, params);
+      printProposals(proposals, proposalSets); 
+      informPrint();
+      tout.flush();
+      printInitializedFiles(); 
+    }
 
-  printParameters(initTree, params);
-  printProposals(proposals, proposalSets); 
-  informPrint();
-
-  tout.flush();
-  
-  printInitializedFiles(); 
-
-  if(not _cl.isDryRun())
-    printInitialState(); 
-  
-  _pl.printLoadBalance(initTree);
-
-  tout.flush();
+  printInitialState(); 
+  if(not _cl.isQuiet())
+    {
+      _pl.printLoadBalance(initTree);
+      tout.flush();
+    }
 }
 
 
@@ -979,14 +979,17 @@ SampleMaster::printDuringRun(nat gen)
 
 void SampleMaster::run()
 {
-  tout << "Starting MCMC sampling. Will print the log-likelihoods of\n"
-       << "all chains for the given print interval. Independent runs\n" 
-       << "are separated by '=', coupled chains are sorted according\n"
-       << "to heat (cold chain first)." << std::endl; 
-  tout << "First column indicates generation number (completed by all\n"
-       << "chains) and the time elapsed while computing these generations "
-       << std::endl << std::endl; 
-  tout << _pl << std::endl; 
+  if(not _cl.isQuiet())
+    {
+      tout << "Starting MCMC sampling. Will print the log-likelihoods of\n"
+	   << "all chains for the given print interval. Independent runs\n" 
+	   << "are separated by '=', coupled chains are sorted according\n"
+	   << "to heat (cold chain first)." << std::endl; 
+      tout << "First column indicates generation number (completed by all\n"
+	   << "chains) and the time elapsed while computing these generations "
+	   << std::endl << std::endl; 
+      tout << _pl << std::endl; 
+    } 
 
   bool hasConverged = false;   
   nat curGen = _runs[0].getChains()[0].getGeneration(); // dangerous 
@@ -1092,7 +1095,7 @@ void SampleMaster::finalizeRuns()
 	      tout << "best state for run " << run.getRunid() << " was: "  << chain.getBestState( )<< endl;       
 	    }
 	}
-      run.finalizeOutputFiles();
+      run.finalizeOutputFiles(_pl);
     }
   
   tout << endl << "Converged/stopped after " << _runs[0].getChains()[0].getGeneration() << " generations" << endl;   

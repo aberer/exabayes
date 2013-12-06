@@ -271,12 +271,15 @@ void CoupledChains::executePart(nat startGen, nat numGen, ParallelSetup &pl)
 }
 
 
-void CoupledChains::finalizeOutputFiles()   
+void CoupledChains::finalizeOutputFiles(const ParallelSetup &pl) 
 {
-  for(auto &elem : _paramId2TopFile)
-    elem.second.finalize(); 
-  for(auto &p : _pFile)
-    p.finalize();
+  if(pl.isRunLeader())
+    {
+      for(auto &elem : _paramId2TopFile)
+	elem.second.finalize(); 
+      for(auto &p : _pFile)
+	p.finalize();
+    }
 }
 
 

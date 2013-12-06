@@ -23,6 +23,7 @@ CommandLine::CommandLine(int argc, char **argv)
   , dryRun (false)
   , modelFile("")
   , singleModel("")
+  , quiet{false}
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -67,6 +68,9 @@ void CommandLine::printHelp()
 	    <<  "Options:\n" 
 	    << "    -v               print version and quit\n"
 	    << "    -h               print this help\n" 
+	    << "    -z               quiet mode. Substantially reduces the information printed by " << PROGRAM_NAME << ".\n"
+	    << "                      This option will save you some idle time, when you run " << PROGRAM_NAME << " with a\n"
+	    << "                      lot of processes.\n" 
 	    << "    -d               execute a dry-run. Procesess the input, but does not execute any sampling.\n"
 	    << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the examples/ folder\n"
 	    << "    -w dir           specify a working directory for output files\n"
@@ -109,12 +113,17 @@ void CommandLine::parse(int argc, char *argv[])
 
   // TODO threads/ processes? 
   
-  while( (c = getopt(argc,argv, "c:df:vhn:w:s:t:R:r:M:C:Qm:Sq:")) != EOF)
+  while( (c = getopt(argc,argv, "c:df:vhn:w:s:t:R:r:M:C:Qm:Sq:z")) != EOF)
     {
       try
 	{	  
 	  switch(c)
 	    {
+	    case 'z': 
+	      {
+		quiet = true; 
+	      }
+	      break; 
 	    case 'c': 		// config file 	  
 	      {
 		configFileName = std::string(optarg); 

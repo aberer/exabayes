@@ -11,11 +11,15 @@
 [[./img/banner.png]]
 
 * Quick Start
+  Installation of ~ExaBayes~ requires basic proficiency with using a
+  terminal (for help, consider this  [[https://help.ubuntu.com/community/UsingTheTerminal][tutorial]]). 
+
   To the impatient user that wants to give ExaBayes a quick try, we recommend: 
 
   1. download and unpack the software package.
-  2. run the *build.sh* script and check for the compiled binaries in
-     the ~build~ directory
+  2. open a terminal, enter the ~exabayes-<version>~ directory and
+     execute the *build.sh* script. Compiled binaries will appear in
+     the ~build~ directory.
   3. if necessary, convert your alignment file to phylip-format (e.g., using ~seaview~)
   4. run the sequential version of ExaBayes, where alignmentFile.phy
      is the alignment file, -m PROT is the equivalent command for an
@@ -93,15 +97,15 @@
   After downloading the software package (e.g., exabayes-1.0.tar.gz),
   you will have to compile the source code. The following sections
   explain, how to do so. After compiling you obtain an executable
-  called exabayes.    
+  called ~exabayes~.
 ** Requirements 
    ExaBayes requires a relatively recent ~c/c++~ compiler that supports
    ~c++11~ features. ExaBayes is confirmed to work with
    1. GCC version 4.6 or greater 
    2. Clang version 3.2 or greater
       
-   For running ExaBayes in parallel (using MPI), you need a working
-   MPI installation. If you merely want to make most of your local
+   For running ExaBayes in parallel, you need a working MPI
+   installation. If you merely want to make most of your local
    multi-core machine (e.g., laptop), simply install OpenMPI or
    Mpich2. On Debian/Ubuntu, this should be as simple as (choose one):
 #+BEGIN_SRC

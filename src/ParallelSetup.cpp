@@ -15,7 +15,6 @@ ParallelSetup::ParallelSetup(int argc, char **argv)
 {  
 }
 
-
 ParallelSetup::ParallelSetup(const ParallelSetup &rhs)
   : runsParallel(rhs.runsParallel)
   , chainsParallel(rhs.chainsParallel)
@@ -425,7 +424,6 @@ ParallelSetup::blockingPrint(const MPI::Comm &comm,std::string ss )
     {
       int res = 0; 
 
-      
       comm.Recv(&res, 1, MPI::INT, myRank-1, 0);       
       assert(res == 1 ); 
     }
@@ -490,11 +488,15 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
       commToChains[i] = chainComm.Create_intercomm(0, MPI::COMM_WORLD, rLeader, tag); 
     }
 
-  std::stringstream ss; 
-  if(isChainLeader())
-    ss << "is Chain Leader" << std::endl; 
-  blockingPrint(MPI::COMM_WORLD, ss.str()); 
-
+  
+  auto && ss = std::stringstream{} ; 
+  if(not cl.isQuiet() )
+    {
+      
+      if(isChainLeader())
+	ss << "is Chain Leader" << std::endl; 
+      blockingPrint(MPI::COMM_WORLD, ss.str()); 
+    }
 
   // do it again for the axml communicator 
   MPI_Comm tmpComm;   
@@ -508,9 +510,12 @@ void ParallelSetup::initializeExaml(const CommandLine &cl)
   chainLeaderComm = MPI::COMM_WORLD.Split(getRankInChainBatch(), getRunBatch() * getProcessesPerRunBatch() + getChainBatch()  ); 
 
   // print your configuration     
-  ss.str(""); 
-  ss << *this << std::endl; 
-  blockingPrint(MPI::COMM_WORLD,  ss.str() ); 
+  if(not cl.isQuiet() )
+    {
+      ss.str(""); 
+      ss << *this << std::endl; 
+      blockingPrint(MPI::COMM_WORLD,  ss.str() ); 
+    }
 
   _hasResource = true; 
 }

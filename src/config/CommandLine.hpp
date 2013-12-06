@@ -39,6 +39,8 @@ public:
   std::string getSingleModel() const {return singleModel; }
   std::string getModelFile() const {return modelFile; }
 
+  bool isQuiet() const {return quiet; }
+
 private: 			// METHODS
   void assertFileExists(std::string filename); 
   void parse(int argc, char *argv[]); 
@@ -60,6 +62,7 @@ private: 			// ATTRIBUTES
   bool dryRun; 
   std::string modelFile; 
   std::string singleModel; 
+  bool quiet; 
 }; 
 
 
