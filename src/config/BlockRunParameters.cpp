@@ -5,21 +5,22 @@
 BlockRunParameters::BlockRunParameters()  
   : diagFreq(5000) 
   , asdsfIgnoreFreq(0.1)
-  , asdsfConvergence (0.001)
+  , asdsfConvergence(0.05)
+  , useStopCriterion{true}
   , burninGen(0)
   , burninProportion(0.25)
   , samplingFreq (500)
   , numRunConv(1)
   , numGen(1e6)
   , numCoupledChains(1)
-  , printFreq (500)
+  , printFreq(500)
   , heatFactor(0.1)
-  , tuneHeat (false)
-  , tuneFreq (100)
+  , tuneHeat(false)
+  , tuneFreq(100)
   , useParsimonyStarting(false)
   , heatedChainsUseSame(false)
   , chkpntFreq(1000)
-  , componentWiseMH(false)
+  , componentWiseMH(true)
   , useAsdsfMax(false)
   , numSwapsPerGen(1.)
 {
@@ -87,10 +88,12 @@ void BlockRunParameters::Read(NxsToken &token)
 	    numCoupledChains = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("printFreq") )	   
 	    printFreq = myConvertToInt(value);
-	  else if (key.EqualsCaseInsensitive("asdsfIgnoreFreq"))
+	  else if (key.EqualsCaseInsensitive("sdsfIgnoreFreq"))
 	    asdsfIgnoreFreq = value.ConvertToDouble(); 
-	  else if (key.EqualsCaseInsensitive("asdsfConvergence"))
+	  else if (key.EqualsCaseInsensitive("sdsfConvergence"))
 	    asdsfConvergence = value.ConvertToDouble();
+	  // else if(key.EqualsCaseInsensitive("sdsfusemax"))
+	  //   useAsdsfMax = convertToBool(value);
 	  else if (key.EqualsCaseInsensitive("heatFactor"))
 	    heatFactor = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("numSwapsPerGen"))
@@ -103,8 +106,28 @@ void BlockRunParameters::Read(NxsToken &token)
 	    burninGen = myConvertToInt(value);
 	  else if(key.EqualsCaseInsensitive("burninProportion"))
 	    burninProportion = value.ConvertToDouble();
-	  else if(key.EqualsCaseInsensitive("asdsfusemax"))
-	    useAsdsfMax = convertToBool(value);
+	  else if(key.EqualsCaseInsensitive("convergencecriterion"))
+	    {
+	      if(value.EqualsCaseInsensitive("mean"))
+		{
+		  useStopCriterion = true; 
+		  useAsdsfMax = false; 
+		}
+	      else if(value.EqualsCaseInsensitive("max"))
+		{
+		  useStopCriterion = true; 
+		  useAsdsfMax = true ; 
+		}
+	      else if( value.EqualsCaseInsensitive("none"))
+		{
+		  useStopCriterion = false; 
+		}
+	      else 
+		{
+		  std::cerr << "Error: valid values for config entry >convergenceCriterion< are 'mean', 'max' or 'none'."  << std::endl; 
+		  ParallelSetup::genericExit(-1);
+		}
+	    }
 	  else 	      
 	    cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
 	}

@@ -27,7 +27,7 @@
 class SampleMaster : public Serializable
 {
 public:   
-  SampleMaster(ParallelSetup pl, const CommandLine& cl ) ; 
+  SampleMaster(std::shared_ptr<ParallelSetup> pl, const CommandLine& cl ) ; 
   /** 
       @brief initializes the runs  
       @notice this is the top-level function 
@@ -82,7 +82,7 @@ private:
 
 private:			// ATTRIBUTES 
   std::vector<CoupledChains> _runs; 
-  ParallelSetup _pl; 
+  std::shared_ptr<ParallelSetup> _plPtr; 
   CLOCK::system_clock::time_point _initTime; 
   BlockRunParameters _runParams;  
   CommandLine _cl; 

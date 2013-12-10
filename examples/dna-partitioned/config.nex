@@ -10,8 +10,10 @@ begin params;
 end;  
 
 begin runconfig; 
- numruns 2 
- numCoupledChains 2 
+ numruns 4 
+ numCoupledChains 4 
+ numgen 1e4 
+ numswapspergen 4 
  parsimonyStartingTree  true
  componentWiseMH true 
 end; 

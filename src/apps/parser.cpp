@@ -11,7 +11,7 @@ int NUM_BRANCHES ;
 
 void helpMessage()
 {
-  std::cout << "parser produces a binary output file, that can be fed into\n"
+  std::cout << "\nparser produces a binary output file, that can be fed into\n"
 	    << "ExaBayes/Yggdrasil. This is recommendable for large runs with hundreds\n"
 	    << "of processes.\n\n" ; 
 

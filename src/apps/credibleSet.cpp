@@ -21,7 +21,7 @@ void myExit(int code)
 
 static void printUsage(std::ostream &out )
 {
-  out << "credibleSet is a utility to extract a credible set of trees from a tree set.\n\n" ; 
+  out << "\ncredibleSet is a utility to extract a credible set of trees from a tree set.\n\n" ; 
   out << "USAGE: ./credibleSet -n id -f treeFile[..] [ -c credibleInterval]\n\n"; 
   out << "           -n id         a run id for the output file\n"; 
   out << "           -c int        credible set percentile (in (0,100], default:50)\n"; 
@@ -84,6 +84,12 @@ static auto  processCommandLine(int argc, char **argv)
 	}
     }
 
+  
+  if( id.compare("") == 0)
+    {
+      std::cerr << "Error: please specify an id for output files via -n" << std::endl;
+      myExit(-1); 
+    }
   
   if(not ( 0 < credSet && credSet <= 100 ))
     {

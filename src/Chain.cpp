@@ -136,9 +136,10 @@ void swap(Chain &lhs, Chain &rhs)
 
 void swapHeatAndProposals(Chain &lhs, Chain& rhs)
 {
+  std::swap(lhs._bestState,    rhs._bestState); 
   std::swap(lhs._couplingId,   rhs._couplingId    ); 
-  std::swap(lhs._proposalSets, rhs._proposalSets  ); 
   std::swap(lhs._proposals,    rhs._proposals     ); 
+  std::swap(lhs._proposalSets, rhs._proposalSets  ); 
 }
 
 
@@ -229,25 +230,24 @@ AbstractProposal& Chain::drawProposalFunction(Randomness &rand)
 }
 
 
-std::string Chain::serializeConditionally( CommFlag commFlags)  const 
+void Chain::serializeConditionally( std::ostream &out, CommFlag commFlags)  const 
 {
-  auto &&out = std::stringstream{}; 
-  
-  if( ( commFlags & CommFlag::PrintStat )  != CommFlag::NOTHING)
+  if( ( commFlags & CommFlag::PRINT_STAT )  != CommFlag::NOTHING)
     {
-      out.write(reinterpret_cast<const char*>(&_couplingId), sizeof(_couplingId)); 
-      out.write(reinterpret_cast<const char*>(&_bestState), sizeof(_bestState )); 
-      // out.write(reinterpret_cast<const char*>(&_lnl), sizeof(_lnl)); 
+      cWrite<decltype(_couplingId)>(out, _couplingId);
+      cWrite<decltype(_bestState)>(out, _bestState);
 
       double lnl = getLikelihood(); 
-      out.write(reinterpret_cast<const char*>(&lnl), sizeof(lnl)); 
-      
+      cWrite<decltype(lnl)>(out, lnl); 
 
-      out.write(reinterpret_cast<const char*>(&_lnPr), sizeof(_lnPr)); 
-      out.write(reinterpret_cast<const char*>(&_currentGeneration), sizeof(_currentGeneration)); 
+      cWrite<decltype(_lnPr)>(out, _lnPr); 
+      cWrite<decltype(_currentGeneration)>(out,_currentGeneration);
     }
 
-  if( ( commFlags & CommFlag::Proposals ) != CommFlag::NOTHING )
+  if( (commFlags & CommFlag::RAND) != CommFlag::NOTHING)
+    _chainRand.serialize(out);
+
+  if( ( commFlags & CommFlag::PROPOSALS ) != CommFlag::NOTHING )
     {
       for(auto& p : _proposals)
 	p->serialize(out); 
@@ -256,7 +256,7 @@ std::string Chain::serializeConditionally( CommFlag commFlags)  const
 	p.serialize(out);
     }
 
-  if( ( commFlags & CommFlag::Tree ) != CommFlag::NOTHING )
+  if( ( commFlags & CommFlag::TREE ) != CommFlag::NOTHING )
     {
       for(auto &var: extractSortedParameters())
 	{
@@ -267,36 +267,37 @@ std::string Chain::serializeConditionally( CommFlag commFlags)  const
 	  compo.serialize(out);
 	}
     }
-
-  return out.str(); 
 }
 
 
-void Chain::deserializeConditionally(std::string str, CommFlag commFlags)
+void Chain::deserializeConditionally(std::istream& in, CommFlag commFlags)
 {    
-  auto &&in = std::stringstream{}; 
-  in.str(str); 
-
-  if( ( commFlags & CommFlag::PrintStat ) != CommFlag::NOTHING )
+  if( ( commFlags & CommFlag::PRINT_STAT ) != CommFlag::NOTHING )
     {
-      in.read(reinterpret_cast<char*>(&_couplingId), sizeof(_couplingId) ); 
-      in.read(reinterpret_cast<char*>(&_bestState), sizeof(_bestState)); 
+      _couplingId = cRead<decltype(_couplingId)>(in); 
+      _bestState = cRead<decltype(_bestState)>(in); 
 
-      // in.read(reinterpret_cast<char*>(&_lnl), sizeof(_lnl)); 
-      double lnl = 0; 
-      in.read(reinterpret_cast<char*>(&lnl), sizeof(lnl)); 
+      double lnl = cRead<decltype(lnl)>(in); 
       setLikelihood(lnl); 
 
-      in.read(reinterpret_cast<char*>(&_lnPr), sizeof(_lnPr)); 
-      in.read(reinterpret_cast<char*>(&_currentGeneration), sizeof(_currentGeneration)); 
+      _lnPr = cRead<decltype(_lnPr)>(in); 
+      _currentGeneration = cRead<decltype(_currentGeneration)>(in);
+      
+      // tout << "deser: " 
+      // 	   << _couplingId << "\t"
+      // 	   << _bestState << "\t"
+      // 	   << lnl << "\t"
+      // 	   << _lnPr << "\t"
+      // 	   << _currentGeneration << std::endl ; 
     }
 
-  if( ( commFlags & CommFlag::Proposals ) != CommFlag::NOTHING )
-    {
-      initProposalsFromStream(in);
-    }
-  
-  if( ( commFlags & CommFlag::Tree ) != CommFlag::NOTHING )
+  if( (commFlags & CommFlag::RAND) != CommFlag::NOTHING)
+    _chainRand.deserialize(in);
+
+  if( ( commFlags & CommFlag::PROPOSALS ) != CommFlag::NOTHING )
+    initProposalsFromStream(in);
+
+  if( ( commFlags & CommFlag::TREE ) != CommFlag::NOTHING )
     {
       for(auto &param : extractSortedParameters())
 	{
@@ -741,82 +742,23 @@ void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  Pa
 void Chain::initProposalsFromStream(std::istream& in)
 {
   for(auto &p : _proposals)
-    {
-      nat elem = cRead<int>(in); 
-      assert(p->getId() == elem); 
-      p->deserialize(in);
-    }
+    p->deserialize(in);
 
   for(auto &p : _proposalSets)
-    {
-      // tout << "deserializing set " << p << std::endl; 
-      p.deserialize(in);
-    }
-}
+    p.deserialize(in);
+}     
+
+
+void Chain::serialize( std::ostream &out) const
+{
+  serializeConditionally(out, CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::RAND ) ;
+}  
 
 
 void Chain::deserialize( std::istream &in ) 
 {
-#ifdef DEBUG_SERIALIZE
-  tout << "deserializing chain" << std::endl; 
-#endif
-
-  _chainRand.deserialize(in); 
-  _couplingId = cRead<int>(in);   
-
-  double lnl = cRead<double>(in); 
-  setLikelihood(lnl); 
-
-  _lnPr = cRead<double>(in);   
-  _currentGeneration = cRead<int>(in); 
-
-  initProposalsFromStream(in);
-
-  for(auto &param : extractSortedParameters())
-    {
-      auto &&tmpSS = std::stringstream{}; 
-      auto name = readString(in);
-      param->printShort(tmpSS);
-      assert( tmpSS.str().compare(name) == 0 ); 
-      auto content = param->extractParameter(_traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
-      content.deserialize(in);
-      param->applyParameter(_traln, content);
-    }
+  deserializeConditionally(in, CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::RAND ) ;
 }
-
-
-
-// TODO remove 
-void Chain::serialize( std::ostream &out) const
-{
-  _chainRand.serialize(out);   
-  cWrite(out, _couplingId); 
-
-  double lnl = getLikelihood(); 
-  cWrite(out, lnl); 
-
-  cWrite(out, _lnPr); 
-  cWrite(out, _currentGeneration); 
-
-  for(auto &p : _proposals)
-    p->serialize(out);
-
-  for(auto &p : _proposalSets)
-    p.serialize(out); 
-    
-  for(auto &var: extractSortedParameters())
-    {
-      auto compo =  var->extractParameter(_traln); 
-
-      auto &&ss = std::stringstream{}; 
-      var->printShort(ss); 
-
-      std::string name = ss.str(); 
-
-      writeString(out,name); 
-      compo.serialize(out);
-    }  
-}   
 
 // c++<3
 

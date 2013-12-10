@@ -10,7 +10,6 @@ int NUM_BRANCHES ;
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-// #include "ParallelSetup.hpp"
 
 void myExit(int code)
 {
@@ -26,13 +25,13 @@ static void printUsage(std::ostream &out)
   out << "Options:\n"; 
   out << "         -n id            an id for the output file\n"  ; 
   out << "         -f file[..]      one or more topology files\n"; 
-  out << "         -b burnin        a number of trees to be discarded (beginning from\n"
-      << "                          the start of the file). Default: 0\n\n"; 
+  out << "         -b relBurnin     proportion of trees to discard as burn-in (beginning at\n"
+      << "                          the start of the file). Default: 0.25\n\n"; 
 }
 
-static std::tuple<std::string, std::vector<std::string>,nat> processCommandLine(int argc, char **argv)
+static std::tuple<std::string, std::vector<std::string>,double> processCommandLine(int argc, char **argv)
 {
-  nat burnin = 0; 
+  double burnin = 0.25; 
   auto files = std::vector<std::string> {}; 
   auto id = std::string{}; 
 
@@ -83,7 +82,14 @@ static std::tuple<std::string, std::vector<std::string>,nat> processCommandLine(
 	}
     }
 
-  
+
+
+  if(not ( 0<= burnin && burnin < 1.  ) )
+    {
+      std::cerr << "The relative burn-in to be discarded must be in the range [0,1)." << std::endl; 
+      myExit(-1); 
+    }
+ 
   if(id.compare("") == 0)
     {
       std::cerr << "Please provide a run-id via -n " << std::endl; 
@@ -92,6 +98,7 @@ static std::tuple<std::string, std::vector<std::string>,nat> processCommandLine(
   
   return std::make_tuple(id, files, burnin);
 }
+
 
 int main(int argc, char** argv)
 {
@@ -104,7 +111,7 @@ int main(int argc, char** argv)
     }
 
   auto files = std::vector<std::string>{};
-  nat burnin = 0; 
+  double burnin = 0; 
   auto id = std::string{};
 
   std::tie(id,files,burnin) = processCommandLine(argc, argv); 
@@ -125,7 +132,7 @@ int main(int argc, char** argv)
   assert(files.size() >  0); 
 
   auto bipEx = BipartitionExtractor(files, false);
-  bipEx.extractBips<true>(0);
+  bipEx.extractBips<true>(burnin);
   bipEx.printBipartitions(id);
   bipEx.printBipartitionStatistics(id); 
   bipEx.printFileNames(id);
@@ -133,5 +140,3 @@ int main(int argc, char** argv)
 
   return 0; 
 }
-
-

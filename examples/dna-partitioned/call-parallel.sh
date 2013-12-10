@@ -31,5 +31,5 @@ fi
 
 # this is a pretty memory intensive dataset. Let's trade as much runtime for memory as possible: 
 
-cmd="$mpi -np 2 $exec -f aln.phy -q aln.part -c config.nex -n myRun -s 123"
+cmd="$mpi -np 8  $exec -R 2 -C 2  -f aln.phy -q aln.part -c config.nex -n myRun -s 123"
 eval $cmd

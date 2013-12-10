@@ -22,7 +22,7 @@
 #include "file/ParameterFile.hpp"
 #include "Serializable.hpp"
 
-#include "ParallelSetup.hpp"
+#include "CommFlag.hpp"
 
 class TreeAln; 
 class AbstractProposal; 
@@ -73,11 +73,11 @@ public:
   /** 
       @brief deserialize the input string based on the flags 
    */ 
-  void deserializeConditionally(std::string str, CommFlag commFlags); 
+  void deserializeConditionally(std::istream& in, CommFlag commFlags); 
   /** 
       @brief serializes the chain into a string based on the flags
    */ 
-  std::string serializeConditionally( CommFlag commFlags) const ; 
+  void serializeConditionally( std::ostream& out, CommFlag commFlags) const ; 
 
   void reinitPrior(){_prior.initialize(_traln, extractParameters());}
 
@@ -95,7 +95,7 @@ public:
   void setHeatIncrement(nat cplId) {_couplingId = cplId  ;}
   void setRunId(nat id) {_runid = id; }
   double getDeltaT() {return _deltaT; }
-  int getGeneration() const {return _currentGeneration; }
+  nat getGeneration() const {return _currentGeneration; }
   double getLikelihood() const {return _traln.getTrHandle().likelihood; }
   void setLikelihood(double lnl) { _traln.getTrHandle().likelihood = lnl; } 
   void setLnPr(double lnPr) { _lnPr = lnPr;  }
@@ -104,9 +104,7 @@ public:
   void updateProposalWeights(); 
   
   const std::vector<ProposalSet>& getProposalSets() const {return _proposalSets; } 
- 
-  virtual void deserialize( std::istream &in ) ; 
-  virtual void serialize( std::ostream &out) const ;   
+
   /**
      @brief the chains determines the virtual root needed by the next
      generation
@@ -115,6 +113,12 @@ public:
 
   friend void swap(Chain &lhs, Chain &rhs); 
   friend void swapHeatAndProposals(Chain &chainA, Chain& chainB) ; 
+
+  // STUBS
+  // currently only here to implement the interface. maybe remove at
+  // some point alltogether
+  virtual void deserialize( std::istream &in ); 
+  virtual void serialize( std::ostream &out) const ; 
 
 private : 			// METHODS 
   AbstractProposal& drawProposalFunction(Randomness &rand);
@@ -131,7 +135,7 @@ private: 			// ATTRIBUTES
   int _runid; 
   int _tuneFrequency; 		// TODO should be have per-proposal tuning?   
   double _hastings;  		// logged!
-  int _currentGeneration;     	
+  nat _currentGeneration;     	
   /// indicates how hot the chain is (i = 0 => cold chain), may change!
   nat _couplingId;					     // CHECKPOINTED 
   std::vector<std::unique_ptr<AbstractProposal> > _proposals; 

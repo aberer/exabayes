@@ -68,7 +68,7 @@ asdsf_SOURCES= $(top_srcdir)/src/apps/asdsf.cpp
 ################################################################
 # the parser 
 parser_SOURCES=$(top_srcdir)/src/apps/parser.cpp
-parser_LDADD= libbayes.a  $(LIBTOUSE)   
+parser_LDADD= libbayes.a  $(LIBTOUSE) libncl.a
 parser_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) -Wno-deprecated-writable-strings  $(AM_CPP_FLAGS)
 
 ################################################################

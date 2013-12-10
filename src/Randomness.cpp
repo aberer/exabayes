@@ -232,10 +232,10 @@ void Randomness::deserialize( std::istream &in )
  
 void Randomness::serialize( std::ostream &out)  const
 {
-  cWrite(out, key.v[0]); 
-  cWrite(out, key.v[1]); 
-  cWrite(out, ctr.v[0]); 
-  cWrite(out, ctr.v[1]); 
+  cWrite<nat>(out, key.v[0]); 
+  cWrite<nat>(out, key.v[1]); 
+  cWrite<nat>(out, ctr.v[0]); 
+  cWrite<nat>(out, ctr.v[1]); 
 } 
 
 

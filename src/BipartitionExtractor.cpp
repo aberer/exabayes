@@ -58,7 +58,6 @@ BipartitionExtractor& BipartitionExtractor::operator=(BipartitionExtractor rhs)
 nat BipartitionExtractor::getNumTreesInFile(std::string file) const 
 {
   // VERY UNSAFE  
-
   nat result = 0; 
   
   std::ifstream fh(file); 
@@ -271,7 +270,7 @@ void BipartitionExtractor::printBipartitions(std::string id) const
 }
 
 
-std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartition> bips, bool printSupport) const 
+std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartition> bips, bool printSupport, bool printBranchLengths, bool phylipStyle) const 
 {
   // contains ids of direct children 
   auto directSubBips  = std::vector<std::vector<nat> >(bips.size()); 
@@ -315,80 +314,100 @@ std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartiti
   bips.push_back(toplevelBip); 
   directSubBips.push_back(belowTop); 
 
-  std::stringstream ss; 
-  buildTreeRecursive(bips.size()-1, directSubBips, bips, ss, printSupport); 
- 
+  auto&& ss = std::stringstream{}; 
+  buildTreeRecursive(bips.size()-1, directSubBips, bips, ss, printSupport, printBranchLengths, phylipStyle); 
+
   return ss.str(); 
 } 
 
 
 
 void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<std::vector<nat> >& directSubBips, 
-					      const std::vector<Bipartition> &bips, std::stringstream &result, bool printSupport) const
+					      const std::vector<Bipartition> &bips, std::stringstream &result, 
+					      bool printSupport, bool printBranchLengths, bool phylipStyle) const
 {
-  nat totalTrees = 0;
-  for(auto &bipHash : _bipHashes)
-    totalTrees += bipHash.getTreesAdded(); 
-
+  assert(_bipHashes.size() ==  1); 
+  nat totalTrees = _bipHashes[0].getTreesAdded();
+  auto taxa = getTaxa(); 
+  
   const auto& curBip = bips.at(currentId); 
-  const auto& taxa = getTaxa();	// meh: efficiency 
-  result << "("; 
-
   auto children = directSubBips.at(currentId); 
-  auto taxaSeen = Bipartition{}; 
-  taxaSeen.reserve(taxa.size());
-  
-  // print clades underneath this one  
-  bool isFirst = true; 
-  for(auto childId : children )
+
+  double mySupport = 0 ; 
+
+  if(currentId != bips.size() -1 )
     {
-      auto &childBip = bips.at(childId); 
-      if( isFirst)
-	isFirst = false; 
-      else 
-	result << ","; 
-	
-      buildTreeRecursive(childId, directSubBips, bips, result, printSupport); 
-      taxaSeen = taxaSeen | childBip; 
-    }
-  
-  if(children.size( ) != 0 && taxaSeen != curBip)
-    result << ","; 
-
-  // print remaining taxa in the bipartition that have not been
-  // covered yet by sub-bipartitions (=> multifurcations)
-  isFirst = true; 
-  nat ctr = 0; 
-
-  for(nat i = 0; i < curBip.getElemsReserved() && i < taxa.size() ;++i)
-    {
-      if( curBip.isSet(i) && not taxaSeen.isSet(i))
-	{
-	  if( isFirst)
-	    isFirst = false; 
-	  else 
-	    result << ","; 
-	    
-	  result << taxa[i] ;
-	  ++ctr; 
-	}
-    }
-
-  if(currentId != bips.size()  -1 )
-    {
-      double mySupport = 0; 
-      for(auto &bipHash : _bipHashes)
-	mySupport += bipHash.getPresence(curBip).count() ; 
-      mySupport /= double(totalTrees); 
-
+      auto lengths = _bipHashes[0].getBranchLengths(curBip);
+      mySupport = double(_bipHashes[0].getPresence(curBip).count()) / totalTrees; 
       assert(mySupport > 0. && mySupport <= 1.); 
+    }
 
-      result << ")" ; 
-      if(printSupport)
-      	result << ":[" << std::fixed << std::setprecision(3) << mySupport << "]"; 
+
+  // can only be one taxon, print it 
+  bool isTaxon = children.size() == 0; 
+  if(isTaxon )
+    {
+      if(phylipStyle)
+	result << taxa[currentId]; 
+      else 
+	{
+	  // ids are 1-based
+	  result << currentId + 1 ; 
+	}
+      assert(curBip.count() == 1 ); 
+      
     }
   else 
-    result << ");"; 
+    {
+      result << "("; 
+      bool isFirst = true; 
+
+      for(auto childId : children)
+	{
+	  result << ( isFirst ? "" : ",") ; 
+	  buildTreeRecursive(childId,directSubBips, bips, result, printSupport, printBranchLengths, phylipStyle); 
+	  isFirst = false;  
+	}
+
+      result << ")"; 
+    }
+
+
+ if(currentId != bips.size()  -1 )
+   {
+     if(printSupport)
+       {
+	 if(phylipStyle)
+	   {
+	     if(not isTaxon)
+	       {
+		 result << "[" << MAX_SCI_PRECISION   << mySupport << "]"; 
+	       }
+	   }
+	 else 
+	   {
+	     result << "[&prob=" << MAX_SCI_PRECISION   << mySupport
+		    << ",prob(percent)=\"" << std::fixed << std::setprecision(0) << mySupport * 100  << "\"" 
+		    << "]"; 
+	   }
+       }
+
+     if(printBranchLengths)
+       {
+	 assert(_bipHashes.size() == 1); 
+	 auto lengths = _bipHashes[0].getBranchLengths(curBip);
+	 auto median = Arithmetics::getPercentile(.5, lengths);
+	 auto mean = Arithmetics::getMean(lengths); 
+	 auto p95 = Arithmetics::getPercentile(.95, lengths); 
+	 auto p5 = Arithmetics::getPercentile(.05, lengths); 
+	 if(phylipStyle	)
+	   result << MAX_SCI_PRECISION << ":" << median ; 
+	 else 
+	   result << MAX_SCI_PRECISION << ":" << median << "[&length_mean="<< mean << ",length_median=" << median << ",length_95%HDP={" << p5 << "," << p95 << "}]" ; 
+       }
+   }
+ else 
+   result << ";";
 }
 
 

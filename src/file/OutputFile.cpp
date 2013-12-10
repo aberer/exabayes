@@ -1,5 +1,9 @@
 #include "file/OutputFile.hpp"
 
+#include "ParallelSetup.hpp"
+
+#include <fstream>
+#include <iostream>
 
 
 void OutputFile::rejectIfExists(std::string fileName)

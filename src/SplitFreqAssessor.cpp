@@ -122,7 +122,6 @@ nat SplitFreqAssessor::getNumTreeAvailable(string fileName)
 	}
       else if(foundTaxaStart) 	// check if all taxa are there and have the appropriate number 
 	{
-
 	  if(cleanline[cleanline.size()-1] == ';')
 	    foundTreeStart = true ; 
 
@@ -155,7 +154,7 @@ int SplitFreqAssessor::getMinNumTrees()
   nat minimum = std::numeric_limits<nat>::max(); 
   for(auto elem : file2numTree)
     {
-      nat avHere = elem.second; 
+      nat avHere = std::get<1>(elem); 
       if(avHere < minimum)
 	minimum = avHere;       
     }

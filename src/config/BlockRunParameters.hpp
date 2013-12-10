@@ -35,6 +35,7 @@ public:
   bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
   nat getChkpntFreq() const {return chkpntFreq; }
   bool isComponentWiseMH() const {return componentWiseMH; }
+  bool isUseStopCriterion() const {return useStopCriterion; }
 
   void verify() const ; 
 
@@ -42,6 +43,7 @@ private:
   nat diagFreq ; 
   double asdsfIgnoreFreq; 	
   double asdsfConvergence; 
+  bool useStopCriterion; 
   nat burninGen; 
   double burninProportion; 
   int samplingFreq; 

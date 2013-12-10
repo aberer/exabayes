@@ -27,33 +27,6 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
 void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   auto blParams = getBranchLengthsParameterView(); 
-  
-  // TODO remove 
-  // if(modifiesBL)
-  //   {
-  //     for(auto param : blParams)
-  // 	{
-  // 	  tout << "BL_before:" ; 
-  // 	  for (auto b : traln.extractBranches(param))
-  // 	    {
-  // 	      // tout << b << "," ; 
-  // 	      assert(BoundsChecker::checkBranch(b)); 
-  // 	      tout << b.getInterpretedLength(traln,param ) << ","; 
-  // 	    }
-  // 	  tout << std::endl; 
-  // 	}
-
-  //     for(nat i = 0 ; i < traln.getNumberOfPartitions(); ++i)
-  // 	{
-  // 	  // auto &partition = traln.getPartition(i); 
-  // 	  // partition.
-  // 	  auto freq = traln.getFrequencies(i); 
-  // 	  tout << MAX_SCI_PRECISION << "freq[" << i << "] " ; 
-  // 	  for(auto &v : freq)
-  // 	    tout << v  << ","; 
-  // 	  tout << std::endl; 
-  // 	}
-  //   } 
 
   assert(_primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
   // this parameter proposal works with any kind of parameters (rate
@@ -164,13 +137,13 @@ void ParameterProposal::autotune()
 
 void ParameterProposal::readFromCheckpointCore(std::istream &in)
 {
-  parameter = cRead<double>(in); 
+  parameter = cRead<decltype(parameter)>(in); 
 } 
 
 
 void ParameterProposal::writeToCheckpointCore(std::ostream &out)  const
 {
-  cWrite(out, parameter); 
+  cWrite<decltype(parameter)>(out, parameter); 
 } 
 
 

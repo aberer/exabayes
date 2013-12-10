@@ -1863,6 +1863,7 @@ inline VecBlockPtr NxsCharactersBlock::GetImpliedBlocks()
 {
   return GetCreatedTaxaBlocks();
 }
+
 inline const std::string & NxsCharactersBlock::GetBlockName() const
 {
   return NCL_BLOCKTYPE_ATTR_NAME;

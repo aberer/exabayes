@@ -4,7 +4,7 @@ topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
 
-# seed=11436
+seed=11436
 
 # seed=31342  			# problematic on tiny-aa
 # seed=4045
@@ -25,10 +25,12 @@ seed=$RANDOM
 
 # src/proposals/
 numProc=2
-# extraArgs="-Q"
+
+# extraArgs="-R 2 -C 2" 
 # extraArgs="-M 3 -S  "
-# extraArgs="-M 0 -S"
-# extraArgs="- 2"
+# extraArgs="-M 0  -S"
+# extraArgs=" -C 4 "
+# extraArgs="-R 2 -C 2  "	
 # extraArgs="-S"
 # extraArgs="-S  "
 # extraArgs="-m"
@@ -43,7 +45,7 @@ startFromBest=0
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=1
+useClang=0
 
 
 # find additional arguments for the call   
@@ -59,18 +61,20 @@ fi
 
 
 # use cgdb, if available 
-GDB=cgdb
+GDB=gdb
 if [ "$(which cgdb )" != ""   ]; then
     GDB="cgdb"
 fi
+GDB=gdb
+
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
     cxxcompiler="clang++"
     cppflags="-Qunused-arguments "  
 else 
-    ccompiler="gcc"
-    cxxcompiler="g++"
+    ccompiler="gcc-4.6"
+    cxxcompiler="g++-4.6"
 fi
 
 if [ $useGoogleProfiler -eq 1  ]; then
@@ -112,7 +116,7 @@ default=$1
 if [ "$default" == "debug" ]; then 
     cflags="$cflags -O0 -g"
     cxxflags="$cxxflags -O0 -g"
-    gdb="$TERM -e  $GDB -ex run --args "
+    gdb="$TERM -e $GDB  -ex run  --args "  #   
 elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"
     exit 

@@ -13,7 +13,7 @@ SwapMatrix::SwapMatrix(nat numChains)
 }
 
 SwapMatrix::SwapMatrix(const SwapMatrix& rhs)  
-  :matrix(rhs.matrix.begin(), rhs.matrix.end())
+  : matrix(begin(rhs.matrix), end(rhs.matrix))
   , numEntries(rhs.numEntries)
 {
 }
@@ -33,10 +33,9 @@ void swap(SwapMatrix& a, SwapMatrix &b)
 }
 
 
-
 void SwapMatrix::update(nat a, nat b, bool acc)
 {
-  auto &elem = matrix[mapToIndex(a,b)];
+  auto &elem = matrix.at(mapToIndex(a,b));
   if(acc)
     elem.accept();
   else 
@@ -73,16 +72,17 @@ nat SwapMatrix::mapToIndex(nat a, nat b) const
 } 
 
 
-std::ostream&  operator<<(std::ostream &out, SwapMatrix& rhs ) 
+std::ostream&  operator<<(std::ostream &out, const SwapMatrix& rhs ) 
 {
   for(nat i = 0; i < rhs.numEntries-1; ++i)
     {
-      tout << "(" ; 
-      bool isFirst = true; 
+      tout << "(" ;
+      bool isFirst = true;
       for(nat j = i+1; j < rhs.numEntries; ++j)
 	{
 	  auto &elem = rhs.matrix[rhs.mapToIndex(i,j)]; 
-	  out << (isFirst ? "" : ",") << std::setprecision(1) << 100 * elem.getRatioOverall() << "%"; 
+	  // out << (isFirst ? "" : ",") << std::setprecision(1) << 100 * elem.getRatioOverall() << "%"; 
+	  out << ( isFirst ? "" : "," ) << "(" << elem << ")" ; 
 	  isFirst = false; 
 	}
       tout << ")"; 
@@ -102,15 +102,27 @@ void SwapMatrix::serialize( std::ostream &out)  const
   for(auto &s : matrix)
     s.serialize(out); 
 }
-   
 
 
 SwapMatrix SwapMatrix::operator+(const SwapMatrix& rhs) const
 {
-  SwapMatrix result(numEntries); 
+  // tout << "rhs was: " << rhs << std::endl;     
+
+  auto result = SwapMatrix(numEntries); 
 
   for(nat i = 0; i < rhs.matrix.size(); ++i)
     result.matrix[i] = matrix[i] + rhs.matrix[i]; 
 
+  // tout << "result is" << result << std::endl; 
+
   return result; 
-} 
+}
+
+
+SwapMatrix& SwapMatrix::operator+=(const SwapMatrix& rhs) 
+{
+  *this = *this + rhs; 
+  return *this;
+}
+
+

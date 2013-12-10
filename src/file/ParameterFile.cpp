@@ -11,7 +11,7 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid
   : runid(runid)
   , couplingId(couplingId)
 {
-  std::stringstream ss ; 
+  auto&& ss = std::stringstream{}; 
 
   ss << OutputFile::getFileBaseName(workdir) << "_parameters." << runname << "." << runid ; 
   if(couplingId != 0 )
@@ -45,14 +45,10 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
   for(auto &param : blParams)    
     fh << "\tTL{" << param->getPartitions()   << "}"; 
 
-  // bool isFirst = true; 
   for(auto &p : parameters)
     {
       if(p->isPrintToParamFile())
 	{
-	  // if(isFirst) 
-	  //   isFirst = false; 
-	  // else 
 	  fh << "\t" ; 
 	  p->printAllComponentNames(fh, traln); 
 	}

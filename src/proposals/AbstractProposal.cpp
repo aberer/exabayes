@@ -108,12 +108,8 @@ std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs)
  
 void AbstractProposal::serialize( std::ostream &out)   const
 {
-  // auto && ss = std::stringstream{}; 
-  // printShort(ss); 
-  // std::string name = ss.str();
-  // writeString(out, name); 
-
-  cWrite(out, _id);
+  // cWrite<decltype(_id)>(out, _id);
+  // std::cout << "wrote id "<< _id << std::endl;     
   _sctr.serialize(out) ; 
   writeToCheckpointCore(out); 
 }
@@ -121,7 +117,9 @@ void AbstractProposal::serialize( std::ostream &out)   const
 
 void AbstractProposal::deserialize( std::istream &in )
 {
-  // notice: name has already been read 
+  // auto id = cRead<decltype(_id)>(in); 
+  // std::cout << "read id " << id << ", expected " << _id << std::endl; 
+  // assert(id == _id); 
   _sctr.deserialize(in); 
   readFromCheckpointCore(in); 
 }
@@ -129,7 +127,7 @@ void AbstractProposal::deserialize( std::istream &in )
 
 std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() const
 {
-  std::vector<AbstractParameter*> result; 
+  auto result = std::vector<AbstractParameter*> {}; 
   for(auto &v : _primaryParameters)
     result.push_back(v.get()); 
   return result; 

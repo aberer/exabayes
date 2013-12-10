@@ -220,7 +220,7 @@ void CommandLine::parse(int argc, char *argv[])
   if(runNumParallel > 1 || chainNumParallel > 1 )
     {
       std::cout << std::endl << "Your command line indicates that you intend to execute multiple runs\n"
-		<< "or chains in parallel. This is the sequential version of" << PROGRAM_NAME << "\n"
+		<< "or chains in parallel. This is the sequential version of " << PROGRAM_NAME << "\n"
 		<< "and thus these command line flags will be ignored." << std::endl; 
     }
 

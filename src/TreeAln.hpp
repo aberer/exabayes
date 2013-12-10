@@ -45,8 +45,8 @@ public:
    /////////////////
   explicit TreeAln(nat numTax);
   TreeAln(const TreeAln& rhs);
-  TreeAln(TreeAln &&rhs); 
   ~TreeAln();
+  // TreeAln(TreeAln &&rhs); 
   TreeAln& operator=(TreeAln rhs);
 
   friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
@@ -258,6 +258,7 @@ private: 			// ATTRIBUTES
   bool _hasLnlArrays; 
   bool _hasAlignment; 
   bool _hasTopology; 
+  // std::vector<double> _rateMultiplier; 
 };  
 
 

@@ -1,20 +1,30 @@
 #include "ConsensusTree.hpp"
+#include <limits>
 #include <map> 
 #include <cassert> 
 #include <algorithm>
 
 
-ConsensusTree::ConsensusTree(std::vector<std::string> files, nat burnin  )
-  : bipEx(files, false)
+ConsensusTree::ConsensusTree(std::vector<std::string> files, double burnin, double threshold, bool isMRE  )
+  : bipEx(files, true)
+  , _threshold{threshold}
+  , _isMRE{isMRE}
 {
-  bipEx.extractBips<false>(burnin); 
+  auto nums = std::vector<nat>{};
+
+  for( auto &file : files)
+    nums.push_back( bipEx.getNumTreesInFile(file)); 
+
+  nat minTrees = *(std::min_element(begin(nums), end(nums)));
+  nat absBurnin = int(double(minTrees) * burnin); 
+  bipEx.extractBips<true>(absBurnin); 
 }
 
 
 std::vector<Bipartition> ConsensusTree::getRefinedConsensusTree(const std::vector<Bipartition> &consensusBips, const std::vector<Bipartition> &minorityBips) const 
 {
   auto result = consensusBips; 
-  nat maxBipsNeeded = bipEx.getTaxa().size()  - 3 ; 
+  nat maxBipsNeeded =  2 * bipEx.getTaxa().size()  - 3 ; 
   nat maxElem = bipEx.getTaxa().size(); 
   
   for(auto minBip : minorityBips)
@@ -38,26 +48,25 @@ std::vector<Bipartition> ConsensusTree::getRefinedConsensusTree(const std::vecto
 }
 
 					
-std::string ConsensusTree::getConsensusTreeString(double threshold, bool isMRE)
+std::string ConsensusTree::getConsensusTreeString( bool printNames) const 
 {
   auto result = std::string{}; 
   const auto& bipHashes = bipEx.getBipartitionHashes();
 
   auto bip2Occ = std::unordered_map<Bipartition,nat>{}; 
-  nat maxBip = bipEx.getTaxa().size() - 3; 
+  nat maxBip = 2 * bipEx.getTaxa().size() - 3; 
 
   nat totalTreesAdded = 0; 
   for(auto &bipHash : bipHashes)
     totalTreesAdded += bipHash.getTreesAdded(); 
 
   nat absThreshold = 0; 
-  if(isMRE)
+  if(_isMRE)
     absThreshold = nat(totalTreesAdded * .5);
   else 
-    absThreshold = nat(totalTreesAdded * threshold); 
+    absThreshold = nat(totalTreesAdded * _threshold); 
 
   assert(absThreshold > 0. ); 
-
 
   // determine unique bipartitions  
   for(auto &bipHash : bipHashes)
@@ -92,22 +101,78 @@ std::string ConsensusTree::getConsensusTreeString(double threshold, bool isMRE)
 
   for(auto &bipPair : bip2occVect)
     {
-      if(bipPair.first.count() == 1 )
-      	continue; 
-      else if(absThreshold <= bipPair.second )
+      if(absThreshold <= bipPair.second )
 	consensus.push_back(bipPair.first); 
       else 
 	minorityBips.push_back(bipPair.first); 
     }
 
-  if(isMRE)
+  if(_isMRE)
     consensus = getRefinedConsensusTree(consensus, minorityBips); 
 
   assert(consensus.size() <= maxBip ); 
 
-  result = bipEx.bipartitionsToTreeString(consensus, true); 
+  result = bipEx.bipartitionsToTreeString(consensus, true, true, printNames); 
 
   return result; 
 }
 
 
+
+
+std::string ConsensusTree::getTreeHeader() const
+{
+  auto taxa = bipEx.getTaxa();
+
+  auto&& oss = std::ostringstream{}; 
+  oss << "#NEXUS\n" ; 
+  oss << "begin taxa;\n"; 
+  oss << "\tdimensions ntax=49;\n"; 
+  oss << "\ttaxlabels\n"; 
+  for(auto t : taxa)
+    {
+      oss << "\t\t" << t << "\n"; 
+    }
+  oss << "\t;\n"; 
+  oss << "end;\n" ; 
+  oss << "begin trees;\n"; 
+  oss << "\ttranslate\n"; 
+  nat ctr = 1; 
+  for(auto t : taxa)
+    {
+      oss << "\t\t" << ctr << "\t" << t << ( ctr == taxa.size() ? ";"  : "," ) << "\n"; 
+      ++ctr;
+    }
+
+
+  auto type = getType();
+
+  oss << "\ttree " << type << " = [&U] "; 
+  return oss.str(); 
+} 
+
+
+
+std::string ConsensusTree::getType() const 
+{
+  // TODO
+  auto type = std::string{};
+  if(_isMRE)
+    {
+      type = "ConsensusExtendedMajorityRule" ; 
+    }
+  else 
+    {
+      if(_threshold == 1 ) 
+	type = "ConsensusStrict" ; 
+      else if( _threshold == .5)
+	type = "ConsensusMajorityRule" ; 
+      else 
+	{
+	  auto &&ss = std::ostringstream{}; 
+	  ss << "ConsensusThreshold" << std::setprecision(0) << std::fixed << nat(_threshold * 100); 
+	  type = ss.str();
+	}
+    }
+  return type; 
+}

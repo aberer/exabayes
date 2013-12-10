@@ -20,7 +20,6 @@
 #include <sstream>
 #include <chrono>
 
-
 #include "releaseDate.hpp" 
 
 int NUM_BRANCHES; 
@@ -39,11 +38,10 @@ int NUM_BRANCHES;
 #include "teestream.hpp"
 
 // #define TEST  
-
 #include "axml.h" 
 
 #ifdef TEST
-#include <set> 
+#include "PendingSwap.hpp"
 #endif
 
 // have ae look at that later again 
@@ -62,40 +60,43 @@ double fastPow(double a, double b)
 /**
    @brief the main ExaBayes function.
 
-  @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
-static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
+static void exa_main ( CommandLine &cl,  std::shared_ptr<ParallelSetup> pl )
 {   
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
+  auto aSwap = SwapElem{0, 0,1,0.5};
+  auto&& myPSwap = PendingSwap {aSwap}; 
   
-  // auto myLess = [](  nat a,  nat b  ){ return a < b ;  } ; 
-    // { return std::get<0>(a) < std::get<0>(b);   }; 
 
+  auto coords = pl.getMyCoordinates();
+  assert(coords[1] < 2 ); 
+  auto data = coords[1] == 0 
+    ? std::vector<char>{ 'a', 'b', 'c'}
+  : std::vector<char>{ 'd', 'e', 'f'}; 
+
+  myPSwap.initialize(pl, data, 0, 2);
+
+  while(not myPSwap.hasReceived()); 
+
+  auto remote =  myPSwap.getRemoteData();
   
-  auto myMap = std::multimap<nat,nat > 
-    {
-      { 3 , 8} , 
-      {21, 15}, 
-      {27, 27},
-      {1,1}, 
-      {27,27} 
-    }; 
+  auto &&ss = std::ostringstream{}; 
+  for(auto elem : remote )
+    ss << elem << "," ; 
+  ss << std::endl; 
+  
+  pl.blockingPrint(pl.getGlobalComm(), ss.str());
 
-  for(auto elem : myMap)
-    {
-      std::cout << std::get<0>(elem) << "\t" << std::get<1>(elem) << std::endl; 
-    }
+  while(not myPSwap.isFinished()); 
+  
+    
 
-  auto result = myMap.lower_bound( 100 ); 
-
-  // assert(result != myMap.end()); 
-
-  std::cout << "result: " << std::get<0>(*result) << std::endl; 
-
-ParallelSetup::genericExit(0); 
+  return ; 
+  ParallelSetup::genericExit(0); 
 #else 
   // assert(0); 
   auto&& master = SampleMaster(  pl, cl );
@@ -237,26 +238,27 @@ static void printInfoHeader(int argc, char **argv)
 // just having this, because of mpi_finalize
 static int innerMain(int argc, char **argv)
 { 
-  auto pl = ParallelSetup(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
+  auto plPtr = make_shared<ParallelSetup>(); 		// MUST be the first thing to do because of mpi_init ! 
 
 #if HAVE_PLL != 0 && ( (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS)))
   assert(0); 
 #endif
 
-  ignoreExceptionsDenormFloat(); 
   auto cl = CommandLine(argc, argv); 
 
 #if HAVE_PLL == 0 
-  pl.initializeExaml(cl);
+  plPtr->initializeExaml(cl);
 #endif
 
-  initializeProfiler(pl);
+  ignoreExceptionsDenormFloat(); 
 
-  makeInfoFile(cl, pl);
+  initializeProfiler(*plPtr);
+
+  makeInfoFile(cl, *plPtr);
 
   printInfoHeader(argc,argv); 
 
-  exa_main( cl, pl); 
+  exa_main( cl, plPtr); 
   
   finalizeProfiler();
 

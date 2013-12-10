@@ -11,7 +11,6 @@ int NUM_BRANCHES;
 
 #include "ConsensusTree.hpp"
 
-// #include "ParallelSetup.hpp"
 void myExit(int code)
 {
   exit(code); 
@@ -19,16 +18,16 @@ void myExit(int code)
 
 
 auto processCommandLine(int argc, char **argv)
-  -> std::tuple<std::string,std::vector<std::string>,nat, nat,bool>
+  -> std::tuple<std::string,std::vector<std::string>,double, nat,bool>
 {
   auto id = std::string{}; 
   auto thresh = double(50); 
   bool isRefined = true; 
   auto files = std::vector<std::string>{}; 
-  nat burnin = 0; 
+  double burnin = 0.25; 
 
   int c = 0; 
-  while( ( c = getopt(argc, argv, "n:t:f:") ) != EOF )
+  while( ( c = getopt(argc, argv, "n:t:f:b:") ) != EOF )
     {
       switch(c)
 	{
@@ -101,6 +100,13 @@ auto processCommandLine(int argc, char **argv)
       myExit(-1); 
     }
  
+  if(not (  0 <= burnin   &&  burnin < 1. ))
+    {
+      std::cerr << "The relative burn-in range is [0,1)." << std::endl;
+      myExit(-1); 
+    }
+
+
   return std::make_tuple(id, files, burnin, thresh, isRefined);
 }
 
@@ -108,15 +114,17 @@ auto processCommandLine(int argc, char **argv)
 
 static void printUsage(std::ostream &out)
 {
-  out << "consense computes various flavours of consensus trees from sets of trees.\n\n"; 
+  out << "\nconsense computes various flavours of consensus trees from sets of trees.\n\n"; 
   out << "Usage: ./consense -n id  -f file[..] [-t threshold] [-b burnin] \n\n" ; 
   out << "        -n runid         an id for the output file\n" ; 
   out << "        -t thresh        a threshold for the consenus tree. Valid values:\n"
       << "                         values between 50 (majority rule) and 100 (strict) or MRE\n" 
       << "                         (the greedily refined MR consensus).  Default: MRE\n" ; 
-  out << "        -b burnin        number of trees to discard for each file (from start). Default: off\n"; 
+  out << "        -b relBurnin     proportion of trees to discard as burn-in (from start). Default: 0.25\n"; 
   out << "        -f file[..]      one or more exabayes topology files\n\n" ;
 }
+
+
 
 
 int main(int argc, char **argv)
@@ -133,7 +141,7 @@ int main(int argc, char **argv)
   auto threshold = double{0.}; 
  
   std::string id= {}; 
-  nat burnin = 0; 
+  double burnin = 0; 
   auto files = std::vector<std::string>{}; 
 
   std::tie(id, files, burnin, threshold, isMre) = processCommandLine(argc, argv);
@@ -150,11 +158,16 @@ int main(int argc, char **argv)
   assert(threshold > 1); 
   threshold /= 100.; 
 
-  auto ct = ConsensusTree(files); 
-  auto result = ct.getConsensusTreeString(threshold,isMre);
+  auto ct = ConsensusTree(files, burnin, threshold,isMre); 
+  auto header = ct.getTreeHeader(); 
+  auto result = ct.getConsensusTreeString(false);
+  auto type = ct.getType();
 
   auto&& ss = std::stringstream{}; 
-  ss << PROGRAM_NAME << "_consensusTree." << id; 
+  ss << PROGRAM_NAME << "_" << type << "Nexus." << id; 
+
+  auto &&ss2 = std::ostringstream{}; 
+  ss2 << PROGRAM_NAME << "_" << type << "Phylip." << id ; 
 
   if(std::ifstream(ss.str()))
     {
@@ -164,10 +177,17 @@ int main(int argc, char **argv)
       myExit(-1); 
     }
 
-  std::ofstream outfile(ss.str()); 
-  outfile << result << std::endl; 
+  auto &&outfile = std::ofstream(ss.str()); 
+  outfile << header  << result << std::endl; 
+  outfile << "end;" << std::endl; 
 
-  std::cout << "Printed consensus tree to " << ss.str() << std::endl; 
+
+  auto &&outfile2 = std::ofstream{ss2.str()}; 
+  outfile2 << ct.getConsensusTreeString(true) << std::endl; 
+
+
+  std::cout << "Printed consensus tree in nexus format to " << ss.str() << std::endl; 
+  std::cout << "Printed consensus tree in phylip format to " << ss2.str() << std::endl; 
 
   return 0; 
 }

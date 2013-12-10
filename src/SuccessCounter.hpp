@@ -19,7 +19,7 @@ class SuccessCounter : public Serializable
 public: 
   SuccessCounter();  
   SuccessCounter(const SuccessCounter& rhs); 
-  SuccessCounter operator=( const SuccessCounter &rhs) ; 
+  SuccessCounter operator=(  SuccessCounter rhs) ; 
 
   void accept(); 
   void reject();
@@ -33,19 +33,18 @@ public:
   virtual void deserialize( std::istream &in )   ; 
   virtual void serialize( std::ostream &out) const ;   
 
-
   SuccessCounter operator+(const SuccessCounter &rhs) const ; 
+  friend void swap(SuccessCounter &elemA, SuccessCounter &elemB); 
   
 private: 			// METHODS
   void reset();  
-  // void addOrReplace(bool acc); 
 
 private:		  // ATTRIBUTES
-  int globalAcc; 
-  int globalRej;   
-  int localAcc; 
-  int localRej; 
-  int batch; 			
+  nat globalAcc; 
+  nat globalRej;   
+  nat localAcc; 
+  nat localRej; 
+  nat batch; 			
 
   friend std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &b ); 
 }; 

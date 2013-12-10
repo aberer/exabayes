@@ -62,8 +62,6 @@ PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool _h
 }
 
 
-
-
 PhylipParser::~PhylipParser()
 {
   free(rdta->y0); 
