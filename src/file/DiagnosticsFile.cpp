@@ -45,7 +45,7 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
   for(auto& run : runs)
     {
       auto ps = run.getChains()[0].getProposalView(); 
-      std::stringstream ss; 
+      auto &&ss = std::stringstream{} ; 
       for(auto &p : ps)
 	{
 	  ss.str(""); 
@@ -54,6 +54,21 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
 	  names.push_back(ss.str()); 
 	  fh << "\t" << ss.str(); 
 	}        
+    }
+
+  for(auto &run : runs)
+    {
+      for(auto &set : run.getChains()[0].getProposalSets() )
+	{
+	  auto &&ss = std::stringstream {}; 
+	  for(auto &p : set.getProposalView ())
+	    {
+	      ss.str(""); 
+	      p->printShort(ss);
+	      ss << "$run" << run.getRunid(); 
+	      fh << "\t" << ss.str(); 
+	    }
+	}
     }
 
   fh << std::endl; 
@@ -114,11 +129,26 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
 	}
       auto& p = name2proposal[name]; 
       auto &sctr = p->getSCtr();
-      fh << "\t" << 
-	// sctr.getRatioInLast100()
-	// sctr.getRatioInLastInterval() << ","
-	sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
+      fh << "\t" << sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
     }	  
+
+
+  for(auto &run : runs)
+    {
+      for(auto &set : run.getChains()[0].getProposalSets() )
+	{
+	  for(auto &p : set.getProposalView ())
+	    {
+	      // ss.str(""); 
+	      // p->printShort(ss);
+	      // ss << "$run" << run.getRunid(); 
+	      // fh << "\t" << ss.str(); 
+	      auto &sctr = p->getSCtr();
+	      fh << "\t" << sctr.getRatioOverall() << "," << sctr.getTotalSeen();
+	    }
+	}
+    }
+
 
   fh << std::endl; 
   fh.close(); 

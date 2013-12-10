@@ -25,7 +25,7 @@ seed=$RANDOM
 
 # src/proposals/
 numProc=2
-# extraArgs="-z"
+# extraArgs="-Q"
 # extraArgs="-M 3 -S  "
 # extraArgs="-M 0 -S"
 # extraArgs="- 2"

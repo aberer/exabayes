@@ -130,8 +130,10 @@ static void ignoreExceptionsDenormFloat()
 
 static bool fileExists(const std::string &name)
 {
-  auto &&ifh = std::ifstream(name); 
-  return ifh.is_open(); 
+  auto &&ifh = std::ifstream{name};
+  bool result = ifh.is_open(); 
+  ifh.close();
+  return result; 
 }
 
 
@@ -157,7 +159,11 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 
   globals.logFile = ss.str();   
   
-  globals.logStream =  new ofstream  (globals.logFile); 
+  if( pl.isGlobalMaster())
+    globals.logStream =  new std::ofstream(globals.logFile); 
+  else 
+    globals.logStream =  new std::ofstream{"/dev/null"}; 
+    
   globals.teeOut =  new teestream(cout, *globals.logStream);
 
   if(not pl.isGlobalMaster())

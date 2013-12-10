@@ -102,6 +102,8 @@ public:
   double getLnPr() const {return _lnPr; }
   const PriorBelief& getPrior() const  {return _prior; } 
   void updateProposalWeights(); 
+  
+  const std::vector<ProposalSet>& getProposalSets() const {return _proposalSets; } 
  
   virtual void deserialize( std::istream &in ) ; 
   virtual void serialize( std::ostream &out) const ;   

@@ -30,7 +30,9 @@ public:
   double* allocate(size_t requiredLength ); 
   void deallocate(double* array); 
 
+#ifdef _DEVEL
   std::tuple<uint64_t,uint64_t> getUsedAndUnusedBytes() const ; 
+#endif
 
 private: 
   std::unordered_map<double*,nat> _usedArrays; 

@@ -90,6 +90,8 @@ void ArrayReservoir::deallocate(double* array)
 
 
 
+
+#ifdef _DEVEL
 std::tuple<uint64_t,uint64_t> ArrayReservoir::getUsedAndUnusedBytes() const 
 {
   uint64_t usedBytes =  std::accumulate(begin(_usedArrays), end(_usedArrays), 0, 
@@ -98,6 +100,4 @@ std::tuple<uint64_t,uint64_t> ArrayReservoir::getUsedAndUnusedBytes() const
 				       [](nat elem , const std::pair<nat,double*> &elemB) { return elem  + std::get<0>(elemB); });
  return std::make_tuple(usedBytes, unusedBytes);
 } 
-
-
-
+#endif
