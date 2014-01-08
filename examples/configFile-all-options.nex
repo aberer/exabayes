@@ -14,7 +14,7 @@ begin runconfig;
 
  [ RUN PARAMETERS ]
  [ numRuns  2 ] 	   	[ number of independant runs ]
- [ numGen 100000 ] 		[ if numRuns = 1, stop simulation after that many generations ] 
+ [ numGen 100000 ] 		[ number of generations to run. If a convergence criterion is used, this is the minimum number of generations to run.  ] 
  [ diagFreq 5000 ] 		[ check for convergence of multiple independent runs after this many generations ]
  [ samplingFrequency 500 ] 	[ take a sample every n generations ]
  [ tuneFreq 100 ]    	 	[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 

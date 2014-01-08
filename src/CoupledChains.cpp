@@ -245,12 +245,13 @@ CoupledChains::generateSwapsForBatch(nat startGen, nat numGen)
 	  nat gen = i + 1; 
 	  _rand.rebaseForGeneration(gen); 
 	  
-	  nat n = 2 * _chains.size() * _numSwapsPerGen; 
+	  double n = 2 * _chains.size() * _numSwapsPerGen; 
 	  if(n == 0)
 	    n = _chains.size(); 
-	  double p = _numSwapsPerGen / double(n); 
-	  nat numSwaps = _rand.drawBinomial(p,n); 
+	  double p = _numSwapsPerGen / n; 
 
+	  nat numSwaps = _rand.drawBinomial(p,n); 
+	  
 	  for(nat j = 0; j < numSwaps; ++j)
 	    {
 	      auto cAIndex = _rand.drawIntegerOpen(_chains.size()) ; 

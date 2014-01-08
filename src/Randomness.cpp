@@ -208,9 +208,17 @@ nat Randomness::drawGeometric(double prop)
 nat Randomness::drawBinomial(double prop, nat trials )
 {
   auto gen = std::default_random_engine{} ; 
-  gen.seed((*this)());
-  auto dist = std::binomial_distribution<nat>(trials,prop);
-  return dist(gen);
+  auto seed = (*this)(); 
+  gen.seed(seed);
+  
+  // BUG@mac: binomial_distribution should work with a nat as well
+  // here. However, on mac we got an overflow this way
+  auto dist = std::binomial_distribution<int>(trials,prop);
+  
+  auto result = nat(dist(gen)); 
+  assert(result <= trials); 
+  
+  return result;
 }
 
 
