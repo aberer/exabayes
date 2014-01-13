@@ -1,5 +1,5 @@
 #include "AbstractParameter.hpp" 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "Category.hpp"
 
 

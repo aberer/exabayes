@@ -1,5 +1,5 @@
 #include "FrequencyParameter.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "BoundsChecker.hpp"
 #include "DnaAlphabet.hpp"
 #include "AminoAcidAlphabet.hpp"

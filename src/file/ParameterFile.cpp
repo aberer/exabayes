@@ -2,7 +2,7 @@
 #include "GlobalVariables.hpp"
 #include "Category.hpp"
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include <cassert>
 

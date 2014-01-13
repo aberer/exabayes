@@ -2,7 +2,7 @@
 #define BYTEFILERESOURCE
 
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "InitializationResource.hpp"
 
 #include <memory>

@@ -1,4 +1,5 @@
 #+TITLE: ExaBayes User's Manual
+
 #+LaTeX_CLASS: koma-article
 #+LaTeX_CLASS_OPTIONS: [a4paper]
 #+OPTIONS: ^:nil

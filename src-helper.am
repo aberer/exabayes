@@ -1,4 +1,4 @@
-folders=./src ./src/proposals ./src/parameters ./src/config ./src/priors ./src/proposers ./src/file ./src/eval ./src/parser ./src/tree-parse
+folders=./src ./src/proposals ./src/parameters ./src/config ./src/priors ./src/proposers ./src/file ./src/eval ./src/parser ./src/tree-parse ./src/comm
 my-update-src:
 	@echo "" > src.am 
 	@echo "libbayes_a_SOURCES=" $(shell find $(folders)  -maxdepth 1   -name "*.[ch]" | grep -v "config.h"  )  $(shell find $(folders)  -maxdepth 1   -name "*.[ch]pp" | grep -v "asdsf.cpp\|extractBips.cpp\|consense.cpp\|parser.cpp\|postProcParams.cpp\|exabayes.cpp\|consense.cpp"   ) >> src.am

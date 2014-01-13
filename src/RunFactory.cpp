@@ -9,7 +9,7 @@
 #include "proposers/MultiplierProposer.hpp"
 #include "proposers/DirichletProposer.hpp"
 #include "proposers/SlidingProposer.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"

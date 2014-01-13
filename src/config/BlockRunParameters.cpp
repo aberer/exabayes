@@ -1,5 +1,5 @@
 #include "BlockRunParameters.hpp" 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 
 BlockRunParameters::BlockRunParameters()  

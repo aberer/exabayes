@@ -1,5 +1,5 @@
 #include "ProtModelParameter.hpp" 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "ProtModel.hpp"
 
 

@@ -1,7 +1,7 @@
 #include <cassert>
 
 #include "BlockProposalConfig.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 
 extern void genericExit(int code); 

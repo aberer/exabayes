@@ -11,7 +11,7 @@
 #include "priors/DirichletPrior.hpp"
 #include "priors/FixedPrior.hpp"
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 
 static void expectString( std::string expectation, NxsToken& token)

@@ -33,15 +33,17 @@ int NUM_BRANCHES;
 
 #include "config/CommandLine.hpp"
 #include "SampleMaster.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include "teestream.hpp"
 
-// #define TEST  
+
 #include "axml.h" 
 
+// #define TEST  
 #ifdef TEST
-#include "PendingSwap.hpp"
+// #include "PendingSwap.hpp"
+#include "comm/IncompleteMesh.hpp"
 #endif
 
 // have ae look at that later again 
@@ -68,34 +70,17 @@ static void exa_main ( CommandLine &cl,  std::shared_ptr<ParallelSetup> pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  auto aSwap = SwapElem{0, 0,1,0.5};
-  auto&& myPSwap = PendingSwap {aSwap}; 
+  auto mesh = IncompleteMesh{} ;
+  mesh.initialize(16, 1, 4);	
+
+  for(nat i = 0; i < 16 ; ++i)
+    {
+      auto coords = mesh.getCoordinates(i);
+      auto rank = mesh.getRankFromCoordinates(coords); 
+      tout <<  i << " has coordinates "  << coords[0] << "," << coords[1] << "," << coords[2] << "\t" << rank << std::endl; 
+      
+    }
   
-
-  auto coords = pl.getMyCoordinates();
-  assert(coords[1] < 2 ); 
-  auto data = coords[1] == 0 
-    ? std::vector<char>{ 'a', 'b', 'c'}
-  : std::vector<char>{ 'd', 'e', 'f'}; 
-
-  myPSwap.initialize(pl, data, 0, 2);
-
-  while(not myPSwap.hasReceived()); 
-
-  auto remote =  myPSwap.getRemoteData();
-  
-  auto &&ss = std::ostringstream{}; 
-  for(auto elem : remote )
-    ss << elem << "," ; 
-  ss << std::endl; 
-  
-  pl.blockingPrint(pl.getGlobalComm(), ss.str());
-
-  while(not myPSwap.isFinished()); 
-  
-    
-
-  return ; 
   ParallelSetup::genericExit(0); 
 #else 
   // assert(0); 

@@ -439,8 +439,18 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
 
   auto coords = _mesh.getCoordinates(_globalComm.getRank());
 
+  // sanity check 
+  auto rank = _mesh.getRankFromCoordinates(coords);
+  assert(int(rank) == _globalComm.getRank()); 
+
+  auto rankInRun = getRankInRun(coords);
+
+  // auto &&ss = std::stringstream{}; 
+  // ss << "splitting: col="<< coords[0] << ", rank="<< rankInRun << std::endl;
+  // blockingPrint(getGlobalComm(), ss.str());
+
   // create the run comm 
-  _runComm = Communicator().split(coords[0], coords[1] * coords[2]);
+  _runComm = Communicator().split(coords[0], rankInRun);
   assert(_runComm.isValid()); 
   
   // create chain comm 
@@ -459,25 +469,11 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
       auto tmp = std::array<nat,3>{{myRunBatch, i , 0 }}; 
       int rLeader = _mesh.getRankFromCoordinates( tmp );
 
-      // auto &&ss = std::stringstream{}; 
-      // auto myCoords = getMyCoordinates();
-      // ss << "[" <<  getGlobalRank()  << "] INTERCOMM CREATE: contacting " << rLeader << " with tag " << tag << " my batch: " << myChainBatch << "," << myRunBatch << " and coords " << myCoords[0] << "," << myCoords[1] << "," << myCoords[2] << std::endl; 
-      // std::cout << ss.str() << std::endl; 
-      // blockingPrint(_runComm, ss.str()); 
-
       MPI_Intercomm_create(_chainComm.getHandle(), 0, MPI_COMM_WORLD, rLeader, tag, _commToChains[i].getPtr());
 
       assert(_commToChains[i].isValid()); 
     } 
 
-  // auto && ss = std::stringstream{} ; 
-  // if(not cl.isQuiet() )
-  //   {
-  //     if(coords[2] == 0)
-  // 	ss << "is Chain Leader" << std::endl; 
-  //     blockingPrint(_globalComm, ss.str()); 
-  //   }
-  
   // install the ExaML communicator 
   MPI_Comm_dup(_chainComm.getHandle(), &comm); 
   assert(comm != MPI_COMM_NULL); 
@@ -499,12 +495,6 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
   // create chain leader comm 
   _chainLeaderComm = _globalComm.split(coords[2], myRank); 
 
-  // if(not cl.isQuiet() )
-  //   {
-  //     ss.str(""); 
-  //     ss << *this << std::endl; 
-  //     blockingPrint(_globalComm,  ss.str() ); 
-  //   }
 }
 
 nat ParallelSetup::getRankInData() const 
@@ -574,3 +564,9 @@ int ParallelSetup::getRankInRun( std::array<nat,3> coords) const
   auto localRootCoords = std::array<nat,3> { { coords[0], 0, 0  }}; 
   return _mesh.getRankFromCoordinates(coords)  - _mesh.getRankFromCoordinates(localRootCoords); 
 } 
+
+
+std::array<nat,3> ParallelSetup::getMyCoordinates() const
+{
+  return _mesh.getCoordinates(getGlobalRank()); 
+}

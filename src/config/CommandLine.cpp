@@ -3,7 +3,7 @@
 #include <cstring>
 #include "CommandLine.hpp"
 #include "GlobalVariables.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "file/OutputFile.hpp"
 #include "MemoryMode.hpp"
 #include "FlagType.hpp"

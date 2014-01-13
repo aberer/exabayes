@@ -14,7 +14,7 @@
 #include "tune.h"
 
 #include "eval/LikelihoodEvaluator.hpp" 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "Category.hpp"
 #include "TreePrinter.hpp"
 

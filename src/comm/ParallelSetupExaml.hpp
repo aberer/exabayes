@@ -112,7 +112,7 @@ public:
 
   bool globalBroadcast( bool val,int root ) const; 
 
-  std::array<nat,3> getMyCoordinates() const  {return _mesh.getCoordinates(getGlobalRank()); }
+  std::array<nat,3> getMyCoordinates() const; 
   
 private: 			// METHODS
   auto serializeAllChains(std::vector<CoupledChains> &runs, CommFlag commFlags) const

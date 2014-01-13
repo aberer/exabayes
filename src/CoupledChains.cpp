@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "PendingSwap.hpp"
+#include "comm/PendingSwap.hpp"
 #include "CoupledChains.hpp"   
 #include "Chain.hpp"
 #include "GlobalVariables.hpp"
@@ -8,7 +8,7 @@
 #include "proposals/AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 #include "time.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #define USE_NONBLOCKING_COMM
 

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include "RateHelper.hpp"
 #include "DnaAlphabet.hpp"

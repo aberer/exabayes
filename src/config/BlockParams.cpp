@@ -1,7 +1,7 @@
 #include "BlockParams.hpp"
 #include "axml.h"
 #include "GlobalVariables.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include <algorithm>
 

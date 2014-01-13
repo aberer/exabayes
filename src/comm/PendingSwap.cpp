@@ -4,11 +4,11 @@
 
 #include "ParallelSetup.hpp"
 
-
 PendingSwap::PendingSwap(SwapElem swap)
   : _swap{swap}
 {
 }
+
 
 PendingSwap::PendingSwap(PendingSwap&& rhs)
   : _sentReqs{std::move(rhs._sentReqs)}
@@ -16,7 +16,6 @@ PendingSwap::PendingSwap(PendingSwap&& rhs)
   , _swap{std::move(rhs._swap)}
 {
 }
-
 
 
 void swap(PendingSwap& lhs, PendingSwap& rhs)
@@ -65,6 +64,11 @@ void PendingSwap::initialize(ParallelSetup& pl, std::vector<char> myChainSer, na
   nat srcRankInRun = pl.getRankInRun( { {ourRunBatch, remoteBatch, myCoords[2] % numInRemoteBatch }  } ) ; 
 
   nat myRankInRun =  pl.getRankInRun( myCoords ); 
+
+  // auto &&ss = std::stringstream{}; 
+  // ss << "my rank in run is " << myRankInRun << " and in the runComm is " << pl.getRunComm().getRank() << "\tcoords=" << myCoords[0] << "," << myCoords[1] << "," << myCoords[2]; 
+  // pl.blockingPrint(pl.getRunComm(), ss.str());
+  // pl.globalBarrier();
 
   assert( int(myRankInRun) == pl.getRunComm().getRank() ); 
 
