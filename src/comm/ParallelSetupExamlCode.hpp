@@ -310,7 +310,8 @@ void ParallelSetup::genericExit(int code)
     MPI_Finalize(); 
   else 
     {
-      MPI_Abort(MPI_COMM_WORLD, code);
+      // MPI_Abort(MPI_COMM_WORLD, code);
+      MPI_Finalize();
     }
   exit(code); 
 }

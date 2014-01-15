@@ -4,7 +4,7 @@
 
 int NUM_BRANCHES ; 
 
-#include "BipartitionExtractor.hpp" 
+#include "contrib/BipartitionExtractor.hpp" 
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
@@ -82,8 +82,6 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 	}
     }
 
-
-
   if(not ( 0<= burnin && burnin < 1.  ) )
     {
       std::cerr << "The relative burn-in to be discarded must be in the range [0,1)." << std::endl; 
@@ -102,7 +100,7 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 
 int main(int argc, char** argv)
 {
-  NUM_BRANCHES = 1;   // BAD
+  NUM_BRANCHES = 1; // BAD 
 
   if(argc < 2) 
     {
@@ -126,13 +124,16 @@ int main(int argc, char** argv)
 	  std::cerr << "Error: could not open file >" <<  file  << "<" << std::endl; 
 	  myExit(-1); 
 	}    
-      
     }
 
   assert(files.size() >  0); 
 
-  auto bipEx = BipartitionExtractor(files, false);
-  bipEx.extractBips<true>(burnin);
+  auto&& bipEx = BipartitionExtractor(files, false);
+
+  nat numTree = bipEx.getNumTreesInFile( files[0] );
+  nat absBurnin = numTree * burnin; 
+
+  bipEx.extractBips<true>(absBurnin);
   bipEx.printBipartitions(id);
   bipEx.printBipartitionStatistics(id); 
   bipEx.printFileNames(id);

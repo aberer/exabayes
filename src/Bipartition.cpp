@@ -6,7 +6,7 @@
 
 // TODO at some point improve this  
 nat Bipartition::numBits = sizeof(nat) * 8; 
-nat Bipartition::numBitsMinusOne = numBits - 1 ; // not estethic, but efficient 
+nat Bipartition::numBitsMinusOne = numBits - 1 ; // not esthetic, but efficient 
 nat Bipartition::bitShift = 5; 
 nat Bipartition::allOne = std::numeric_limits<nat>::max();
 std::vector<nat> Bipartition::perBitMask = {
@@ -160,9 +160,27 @@ void Bipartition::unset(nat pos)
 
 std::ostream& operator<<(std::ostream& out, const Bipartition& rhs)
 {
+  nat total = rhs.count(); 
+  nat seen = 0;
+
   for(auto &elem : rhs.bip)
-    for(nat i = 0; i < Bipartition::numBits; ++i)
-      out <<  ( elem & Bipartition::perBitMask[i] ? "1" : "0" ) ; 
+    {
+      for(nat i = 0; i < Bipartition::numBits; ++i)
+	{
+	  if( elem & Bipartition::perBitMask[i] )
+	    {
+	      ++seen;
+	      out << "1"; 
+	      if(seen == total)
+		break; 
+	    }
+	  else 
+	    out << "0"; 
+	}
+
+      if(seen == total)
+	break; 
+    }
   
   return out;   
 }
@@ -180,26 +198,29 @@ nat Bipartition::count() const
 
 void Bipartition::printVerbose(std::ostream &out, const std::vector<std::string> nameMap) const
 {
-  nat numTax = nameMap.size() -1 ;   
+  auto numTax = nameMap.size() ; 
   bool printInverse = count() > numTax / 2;
   
   bool isFirst = true; 
   
-  for(nat i = 0; i < numTax; ++i)
+  for(nat i = 0; i < numTax  ; ++i)
     {
       bool isOne =  isSet(i); 
-      if( printInverse ^ isOne )
+      if( not printInverse != not isOne )
 	{
-	  out << (isFirst ? "" : "," ) << nameMap[i+1]; 
+	  out << (isFirst ? "" : "," ) << nameMap.at(i); 
 	  isFirst = false; 
 	}
     }
+  
+  assert(not isFirst);  
 } 
+
 
 bool Bipartition::isSubset(const Bipartition& rhs) const 
 {			
   // TODO expensive 
-  return   ( *this & rhs ) == *this   ; 
+  return ( *this & rhs ) == *this   ; 
 }
 
 
@@ -228,7 +249,6 @@ nat Bipartition::getHash() const
     }
   return hash; 
 }
-
 
 
 Bipartition Bipartition::getComplement( nat maxElem) const 
@@ -264,3 +284,5 @@ bool Bipartition::isCompatible(const Bipartition& rhs, nat maxElem) const
   
   return false; 
 } 
+
+

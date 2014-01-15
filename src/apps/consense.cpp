@@ -9,7 +9,7 @@ int NUM_BRANCHES;
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-#include "ConsensusTree.hpp"
+#include "contrib/ConsensusTree.hpp"
 
 void myExit(int code)
 {
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
   assert(threshold > 1); 
   threshold /= 100.; 
 
-  auto ct = ConsensusTree(files, burnin, threshold,isMre); 
+  auto&& ct = ConsensusTree(files, burnin, threshold,isMre); 
   auto header = ct.getTreeHeader(); 
   auto result = ct.getConsensusTreeString(false);
   auto type = ct.getType();

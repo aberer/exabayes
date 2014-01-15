@@ -10,8 +10,8 @@ class BipartitionExtractor : public TreeProcessor
 {
 public: 
   BipartitionExtractor(std::vector<std::string> files,bool extractToOneHash);
-  BipartitionExtractor( BipartitionExtractor&& rhs) ; 
-  BipartitionExtractor& operator=(BipartitionExtractor rhs); 
+  BipartitionExtractor( BipartitionExtractor&& rhs) = delete ; 
+  BipartitionExtractor& operator=(BipartitionExtractor rhs) = delete ; 
 
   template<bool readBL>
   void extractBips(nat burnin ); 

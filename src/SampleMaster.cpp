@@ -434,12 +434,6 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vec
 	    }
 	}
     }
-
-  // AbstractParameter *blparam =   new BranchLengthsParameter{0,0,{0}}; 
-  // auto  tp  = TreePrinter{true, false, true }; 
-  // tout << tp.printTree(traln,blparam)  << std::endl; 
-  // assert(0); 
-
 }
 
 
@@ -622,20 +616,14 @@ void SampleMaster::initializeRuns(Randomness rand)
       ParallelSetup::genericExit(-1); 
     }
 
-
   auto binaryAlnFile = getOrCreateBinaryFile(); 
   auto numTax = peekNumTax(binaryAlnFile); 
   auto runmodes = _cl.getTreeInitRunMode();
 
   auto initTree  = TreeAln (numTax);
-  // auto timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
-  // tout << " [ " << timePassed <<  "s ] starting byte file init " << std::endl; 
-  
+
   auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new ByteFileResource(binaryAlnFile, _plPtr))); 
   ti.initializeWithAlignmentInfo(initTree, runmodes); 
-
-  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
-  // tout << "[ " << timePassed <<  "s ] initialized from byte file " << std::endl; 
 
   // START integrator
 #ifdef _EXPERIMENTAL_INTEGRATION_MODE
@@ -662,7 +650,6 @@ void SampleMaster::initializeRuns(Randomness rand)
   auto&& params = std::vector<std::unique_ptr<AbstractParameter> >{} ; 
   auto&& proposalSets =  std::vector<ProposalSet>{};  
   std::tie(params, proposals, proposalSets) = processConfigFile(_cl.getConfigFileName(), initTree);
-
 
 #if HAVE_PLL == 0 
   if( int(_runParams.getNumRunConv()) <_cl.getNumRunParallel() )

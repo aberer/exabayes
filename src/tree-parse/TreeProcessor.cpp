@@ -15,17 +15,17 @@ TreeProcessor::TreeProcessor(std::vector<std::string> fileNames)
 {
   assert(fileNames.size() > 0); 
   fillTaxaInfo(fileNames.at(0)); 
-  nat numTax = taxa.size(); 
-  tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(numTax));
-  TreeInitializer::initializeBranchLengths(tralnPtr->getTrHandle(), 1,numTax); 
-  fns = fileNames; 
+  nat numTax = _taxa.size(); 
+  _tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(numTax));
+  TreeInitializer::initializeBranchLengths(_tralnPtr->getTrHandle(), 1,numTax); 
+  _fns = fileNames; 
 }
 
 
 TreeProcessor::TreeProcessor(TreeProcessor&& tp) 
-  : tralnPtr(std::move(tp.tralnPtr))
-  , fns(tp.fns)
-  , taxa(tp.taxa)
+  : _tralnPtr(std::move(tp._tralnPtr))
+  , _fns(tp._fns)
+  , _taxa(tp._taxa)
 {
 }  
 
@@ -51,16 +51,16 @@ void TreeProcessor::nextTree(std::istream &treefile)
   auto bt = BasicTreeReader<IntegerLabelReader,
 			    typename std::conditional<readBl,
 						      ReadBranchLength,
-						      IgnoreBranchLength>::type>(taxa.size());
+						      IgnoreBranchLength>::type>(_taxa.size());
   auto branches = bt.extractBranches(treefile);
 
-  tralnPtr->unlinkTree();
+  _tralnPtr->unlinkTree();
   for(auto b :branches)
     {
-      tralnPtr->clipNode(tralnPtr->getUnhookedNode(b.getPrimNode()), tralnPtr->getUnhookedNode(b.getSecNode()) );
+      _tralnPtr->clipNode(_tralnPtr->getUnhookedNode(b.getPrimNode()), _tralnPtr->getUnhookedNode(b.getSecNode()) );
       if(readBl)
 	{
-	  tralnPtr->setBranchUnchecked(b);
+	  _tralnPtr->setBranchUnchecked(b);
 	}
     }
 }
@@ -104,7 +104,7 @@ void TreeProcessor::fillTaxaInfo(std::string fileName)
 	  std::string num =  cleanerString.substr(0, pos),
 	    name = cleanerString.substr(pos+1, cleanerString.size()); 	  
 
-	  taxa.push_back(name); 
+	  _taxa.push_back(name); 
 	}
       else if(cleanLine.compare("translate") == 0  )
 	foundStart = true; 
