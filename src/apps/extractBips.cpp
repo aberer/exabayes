@@ -130,7 +130,7 @@ int main(int argc, char** argv)
 
   auto&& bipEx = BipartitionExtractor(files, false);
 
-  nat numTree = bipEx.getNumTreesInFile( files[0] );
+  nat numTree = bipEx.getNumTreesInFile( files.at(0) );
   nat absBurnin = numTree * burnin; 
 
   bipEx.extractBips<true>(absBurnin);

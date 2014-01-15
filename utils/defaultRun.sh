@@ -24,12 +24,12 @@ seed=11436
 # seed=32090 # problematic with  143 (on DNA!)
 
 # src/proposals/
-numProc=2
+numProc=4
 
 # extraArgs="-R 2 -C 2" 
 # extraArgs="-M 3 -S  "
 # extraArgs="-M 0  -S"
-# extraArgs=" -C 4 "
+extraArgs=" -C 4 "
 # extraArgs="-R 2 " 
 # extraArgs="-C 4"
 # extraArgs="-S"

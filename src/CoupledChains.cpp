@@ -338,11 +338,18 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
   for(nat i = 0; i < _chains.size() ; ++i)
     {
       if(pl.isMyChain(_runid, i))
-	assert(_chains[i].getGeneration() == startGen ); 
+	{
+	  if(_chains[i].getGeneration() != startGen)
+	    {
+	      tout << "problem at START was="<< _chains[i].getGeneration() << ", should be=" << startGen << std::endl; 
+	      assert(0 ); 
+	    }
+	}
     }
 
   auto pendingSwaps = std::list<PendingSwap>{}; 
   auto swapsToBeDeleted = std::list<PendingSwap>{}; 
+
 #ifdef USE_NONBLOCKING_COMM
   auto flags = CommFlag::PRINT_STAT | CommFlag::PROPOSALS; 
   while(not allSwaps.empty() ||  not pendingSwaps.empty())
@@ -487,6 +494,36 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
 #endif
     }
 #else 
+
+
+#if 1 
+  auto iter = begin(allSwaps); 
+  
+  nat gen = startGen; 
+  nat endGen = startGen + numGen; 
+
+  while(gen < endGen && iter != end(allSwaps))
+    {
+      for(nat i = 0; i < _chains.size() ;++i)
+	{
+	  if(pl.isMyChain(_runid, i))
+	    doStep(i,pl);
+	}
+
+      ++gen; 
+
+      // for(auto &c : _chains )
+      // 	assert(gen == c.getGeneration()); 
+      
+      while(iter != end(allSwaps) && iter->getGen() == gen)
+	{
+	  if(pl.isMyChain(_runid, iter->getOne()) || pl.isMyChain(_runid, iter->getOther()))
+	    doSwap(pl,*iter);
+	  ++iter;
+	}
+    }
+
+#else   
   // old version 
   while(not allSwaps.empty() || not pendingSwaps.empty())
     {
@@ -521,6 +558,9 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
     }
 #endif
 
+
+#endif
+
   // execute remaining steps
   for(nat i = 0; i < _chains.size() ; ++i)
     {
@@ -530,14 +570,21 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
 	    doStep(i,pl);
 	}
     }
-
+  
   for(nat i = 0; i < _chains.size(); ++i)
     {
       auto &chain = _chains[i]; 
       
       if(pl.isMyChain(_runid,i))
   	{
-  	  assert(chain.getGeneration() == startGen + numGen); 
+
+	  if(_chains[i].getGeneration() != startGen + numGen)
+	    {
+	      tout << "problem at END was="<< _chains[i].getGeneration() << ", should be=" << startGen << std::endl; 
+	      assert(0 ); 
+	    }
+
+  	  // assert(chain.getGeneration() == startGen + numGen); 
   	  chain.suspend();
   	}
     }

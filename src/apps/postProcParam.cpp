@@ -194,7 +194,6 @@ std::tuple<std::string, std::vector<std::string>, double> processCmdLine(int arg
 }
 
 
-
 int main(int argc, char **argv)
 {
   if(argc < 2 )
