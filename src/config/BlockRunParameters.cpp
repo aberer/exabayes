@@ -92,8 +92,6 @@ void BlockRunParameters::Read(NxsToken &token)
 	    asdsfIgnoreFreq = value.ConvertToDouble(); 
 	  else if (key.EqualsCaseInsensitive("sdsfConvergence"))
 	    asdsfConvergence = value.ConvertToDouble();
-	  // else if(key.EqualsCaseInsensitive("sdsfusemax"))
-	  //   useAsdsfMax = convertToBool(value);
 	  else if (key.EqualsCaseInsensitive("heatFactor"))
 	    heatFactor = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("numSwapsPerGen"))

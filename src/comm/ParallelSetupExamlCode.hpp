@@ -392,6 +392,14 @@ void ParallelSetup::blockingPrint( Communicator &comm,std::string ss )
   int myRank = comm.getRank();
   int size = comm.getSize(); 
 
+  // MEH 
+  if(size == 1 )
+    {
+      std::cout << "[ " << myRank << " ] " << ss << std::endl; 
+      std::cout.flush();
+      return; 
+    }
+
   if(myRank != 0)
     {
       int res = comm.receive<int>(myRank-1,0);
@@ -445,10 +453,6 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
   assert(int(rank) == _globalComm.getRank()); 
 
   auto rankInRun = getRankInRun(coords);
-
-  // auto &&ss = std::stringstream{}; 
-  // ss << "splitting: col="<< coords[0] << ", rank="<< rankInRun << std::endl;
-  // blockingPrint(getGlobalComm(), ss.str());
 
   // create the run comm 
   _runComm = Communicator().split(coords[0], rankInRun);
