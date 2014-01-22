@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 #include "RateHelper.hpp"
-#include "TreeResource.hpp"
+#include "tree-init/TreeResource.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "TreeRandomizer.hpp"
@@ -13,7 +13,7 @@
 #include "GlobalVariables.hpp"
 #include "BoundsChecker.hpp"
 #include "TreePrinter.hpp"
-#include "TreeInitializer.hpp"
+#include "tree-init/TreeInitializer.hpp"
 
 
 TreeAln::TreeAln(nat numTax)

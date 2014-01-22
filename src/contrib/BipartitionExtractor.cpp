@@ -25,34 +25,12 @@ static void rejectIfExists(std::string filename)
 
 
 // does not include length of tips currently   
-BipartitionExtractor::BipartitionExtractor(std::vector<std::string> files, bool extractToOneHash)
-  : TreeProcessor(files)
+BipartitionExtractor::BipartitionExtractor(std::vector<std::string> files, bool extractToOneHash, bool expensiveCheck)
+  : TreeProcessor(files, expensiveCheck)
   , _extractToOneHash(extractToOneHash)
 {
   assert(_taxa.size( ) != 0); 
 }
-
-
-// BipartitionExtractor::BipartitionExtractor( BipartitionExtractor&& rhs) 
-//   : TreeProcessor(std::move(rhs))
-//   , _bipHashes(std::move(rhs._bipHashes))
-//   , _uniqueBips(std::move(rhs._uniqueBips))
-//   , _extractToOneHash(std::move(_extractToOneHash))
-// {
-//   // should work, but am skeptic
-//   assert(0); 
-// }
-
-
-// BipartitionExtractor& BipartitionExtractor::operator=(BipartitionExtractor rhs)
-// {
-//   if(this == &rhs )
-//     return *this; 
-//   else 
-//     {
-//       assert(0); 
-//     }
-// }
 
 
 nat BipartitionExtractor::getNumTreesInFile(std::string file) const 
@@ -288,8 +266,7 @@ std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartiti
 	    [](const Bipartition& bipA, const Bipartition& bipB)
 	    {
 	      return bipA.count() < bipB.count() ; 
-	    }
-	    ); 
+	    } ); 
 
   auto toplevelBip = Bipartition();
   const auto& taxa = getTaxa();	
@@ -355,15 +332,18 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
   bool isTaxon = children.size() == 0; 
   if(isTaxon )
     {
+      //  TODO an efficient implementation (relevant for credibleset)
+      // would do that only once ...
+      auto ind = curBip.findIndex(); 
+      
       if(phylipStyle)
-	result << taxa[currentId]; 
+	result << taxa.at(ind); 
       else 
 	{
 	  // ids are 1-based
-	  result << currentId + 1 ; 
+	  result << ind + 1 ; 
 	}
       assert(curBip.count() == 1 ); 
-      
     }
   else 
     {
@@ -389,7 +369,7 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
 	   {
 	     if(not isTaxon)
 	       {
-		 result << "[" << MAX_SCI_PRECISION   << mySupport << "]"; 
+		 result << "" << SOME_FIXED_PRECISION << mySupport << ""; 
 	       }
 	   }
 	 else 

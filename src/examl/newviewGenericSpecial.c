@@ -1334,7 +1334,7 @@ void newviewIterative (tree *tr, int startIndex, array_reservoir_t res)
 	      /* check that we are not getting an integer overflow ! */
 
 	      assert(tr->partitionData[model].globalScaler[tInfo->pNumber] < INT_MAX);
-	    }	
+	    }
 	}
     }
 }

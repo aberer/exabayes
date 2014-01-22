@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 
   assert(files.size() >  0); 
 
-  auto&& bipEx = BipartitionExtractor(files, false);
+  auto&& bipEx = BipartitionExtractor(files, false, true);
 
   nat numTree = bipEx.getNumTreesInFile( files.at(0) );
   nat absBurnin = numTree * burnin; 

@@ -30,6 +30,10 @@ public:
    */ 
   bool isCompatible(const Bipartition& rhs, nat maxElem) const; 
   /** 
+      @brief finds the index of the first bit set 
+   */ 
+  nat findIndex() const ; 
+  /** 
       @brief gets the complement of a bipartition
    */ 
   Bipartition getComplement( nat maxElem) const; 
@@ -86,7 +90,7 @@ public:
       @brief prints the bipartition in a readable manner
    */ 
   void printVerbose(std::ostream &outt, const std::vector<std::string> nameMap) const; 
-  
+
   static std::vector<nat> perBitMask;
   static nat numBits;
   static nat numBitsMinusOne; 

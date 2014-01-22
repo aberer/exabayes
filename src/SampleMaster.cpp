@@ -3,8 +3,8 @@
 #include <memory>
 
 #include "TreePrinter.hpp"
-#include "TreeResource.hpp"
-#include "ByteFileResource.hpp"
+#include "tree-init/TreeResource.hpp"
+#include "tree-init/ByteFileResource.hpp"
 
 #include "AdHocIntegrator.hpp"
 #include "ProposalSet.hpp"
@@ -22,7 +22,7 @@
 #include "parameters/RevMatParameter.hpp"
 #include "parameters/FrequencyParameter.hpp"
 
-#include "TreeInitializer.hpp"
+#include "tree-init/TreeInitializer.hpp"
 
 #include "config/MemoryMode.hpp"
 #include "SampleMaster.hpp"
@@ -880,7 +880,7 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
 
   // std::cout << "computing asdsf for files " << fns << std::endl; 
   
-  auto&& asdsf = SplitFreqAssessor(fns);
+  auto&& asdsf = SplitFreqAssessor(fns, false);
   end = asdsf.getMinNumTrees() ; 
 
 
@@ -1000,10 +1000,16 @@ void SampleMaster::run()
 {
   if(not _cl.isQuiet())
     {
-      tout << "Starting MCMC sampling.\n" ; 
+      tout << "Starting MCMC sampling " ; 
 
+      bool haveAvx = false; 
+#ifdef HAVE_AVX
+      haveAvx = true; 
+#endif
+      tout << "using the " << (haveAvx ?  "AVX" : "SSE" ) << "-implementation" <<    (  _cl.isSaveMemorySEV() ?  " with SEVs" : "" ) << " for likelihood computations." << std::endl; 
+      
       if(_runParams.getNumRunConv() > 1 &&  _runParams.isUseStopCriterion() )
-	tout << PROGRAM_NAME << " will run until the topological convergence of is achieved\n"
+	tout << PROGRAM_NAME << " will run until topological convergence is achieved\n"
 	     << "(" << ( _runParams.isUseAsdsfMax() ? "MSDSF < " : "ASDSF < " ) 
 	     << _runParams.getAsdsfConvergence() * 100 <<  "%, at least " 
 	     << _runParams.getNumGen() << " generations).\n" ; 

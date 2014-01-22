@@ -105,11 +105,9 @@ std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs)
   return out; 
 }
 
- 
+
 void AbstractProposal::serialize( std::ostream &out)   const
 {
-  // cWrite<decltype(_id)>(out, _id);
-  // std::cout << "wrote id "<< _id << std::endl;     
   _sctr.serialize(out) ; 
   writeToCheckpointCore(out); 
 }

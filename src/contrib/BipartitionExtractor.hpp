@@ -9,7 +9,7 @@
 class BipartitionExtractor : public TreeProcessor
 {
 public: 
-  BipartitionExtractor(std::vector<std::string> files,bool extractToOneHash);
+  BipartitionExtractor(std::vector<std::string> files,bool extractToOneHash, bool expensiveCheck);
   BipartitionExtractor( BipartitionExtractor&& rhs) = delete ; 
   BipartitionExtractor& operator=(BipartitionExtractor rhs) = delete ; 
 
@@ -22,7 +22,7 @@ public:
 
   const std::vector<BipartitionHash>& getBipartitionHashes() const {return _bipHashes; } 
 
-  std::string bipartitionsToTreeString(std::vector<Bipartition> bips, bool printSupport, bool printBranchLengths, bool phylipStyle) const ; 
+  std::string bipartitionsToTreeString( std::vector<Bipartition> bips, bool printSupport, bool printBranchLengths, bool phylipStyle) const ; 
 
   nat getNumTreesInFile(std::string file) const ; 
 

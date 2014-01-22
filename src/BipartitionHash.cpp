@@ -7,7 +7,7 @@
 #include "Randomness.hpp"
 
 BipartitionHash::BipartitionHash(nat numTax)   
-  :_bipMeaning(numTax)
+  : _bipMeaning(numTax)
   , _treesAdded(0)
 {
   // must be deterministic!

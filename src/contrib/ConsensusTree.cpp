@@ -6,7 +6,7 @@
 
 
 ConsensusTree::ConsensusTree(std::vector<std::string> files, double burnin, double threshold, bool isMRE  )
-  : bipEx(files, true)
+  : bipEx(files, true, true)
   , _threshold{threshold}
   , _isMRE{isMRE}
 {
@@ -47,7 +47,7 @@ std::vector<Bipartition> ConsensusTree::getRefinedConsensusTree(const std::vecto
   return result; 
 }
 
-					
+
 std::string ConsensusTree::getConsensusTreeString( bool printNames) const 
 {
   auto result = std::string{}; 
@@ -62,9 +62,9 @@ std::string ConsensusTree::getConsensusTreeString( bool printNames) const
 
   nat absThreshold = 0; 
   if(_isMRE)
-    absThreshold = nat(totalTreesAdded * .5);
+    absThreshold = nat(ceil(totalTreesAdded * .5));
   else 
-    absThreshold = nat(totalTreesAdded * _threshold); 
+    absThreshold = nat(ceil(totalTreesAdded * _threshold)); 
 
   assert(absThreshold > 0. ); 
 
@@ -106,6 +106,8 @@ std::string ConsensusTree::getConsensusTreeString( bool printNames) const
       else 
 	minorityBips.push_back(bipPair.first); 
     }
+
+  assert(consensus.size() <= maxBip ); 
 
   if(_isMRE)
     consensus = getRefinedConsensusTree(consensus, minorityBips); 
@@ -155,7 +157,6 @@ std::string ConsensusTree::getTreeHeader() const
 
 std::string ConsensusTree::getType() const 
 {
-  // TODO
   auto type = std::string{};
   if(_isMRE)
     {

@@ -206,8 +206,8 @@ static void printInfoHeader(int argc, char **argv)
        << "\nbuild with the (Phylogenetic Likelihood Library) PLL code base for sequential execution."
 #endif
 
-       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  " by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" << std::endl 
-       << "\nPlease send any feature requests and inquiries to " << PACKAGE_BUGREPORT
+       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  " by \n\n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" << std::endl 
+       << "Please send any bug reports, feature requests and inquiries to " << PACKAGE_BUGREPORT
        << std::endl << std::endl; 
 
   tout << PROGRAM_NAME << " was called as follows: " << endl; 

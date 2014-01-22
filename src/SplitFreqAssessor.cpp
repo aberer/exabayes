@@ -12,8 +12,8 @@
 #include "BipartitionHash.hpp"
 
 
-SplitFreqAssessor::SplitFreqAssessor(std::vector<string> fileNames)
-  : TreeProcessor(fileNames)
+SplitFreqAssessor::SplitFreqAssessor(std::vector<string> fileNames, bool expensiveCheck)
+  : TreeProcessor(fileNames, expensiveCheck)
 {
   for(auto file : fileNames)
     {
@@ -64,8 +64,6 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
       nat tn = elem.getTreesAdded() ; 
       numTrees.push_back(tn);
     }
-
-  // std::cout << "numTrees: " <<  numTrees << std::endl; 
 
   auto numOccs = std::unordered_map<Bipartition,std::vector<double> >{}; 
   for(auto elem : allBips)

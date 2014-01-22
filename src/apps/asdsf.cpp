@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "comm/ParallelSetup.hpp"
+
 #include "axml.h"
 
 int NUM_BRANCHES; 
@@ -125,8 +127,8 @@ int main(int argc, char** argv)
 	default : 
 	  {
 	    std::cerr << "unknown argument >" << c << "<" << std::endl; 
-	    assert(0);
-	  }
+	    ParallelSetup::genericExit(-1); 
+	    }
 	} 
     }
   
@@ -149,7 +151,7 @@ int main(int argc, char** argv)
       myExit(-1); 
     }
 
-  auto asdsf = SplitFreqAssessor(files); 
+  auto asdsf = SplitFreqAssessor(files, true); 
   
   nat end = asdsf.getMinNumTrees(); 
   

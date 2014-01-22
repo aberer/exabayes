@@ -46,6 +46,17 @@ std::vector<nat> Bipartition::perBitMask = {
 
 
 
+
+static const char LogTable256[256] = 
+{
+#define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
+  -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+  LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
+  LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
+};
+
+
+
 Bipartition::Bipartition()
   : bip(0)
   , hash(0)
@@ -286,3 +297,31 @@ bool Bipartition::isCompatible(const Bipartition& rhs, nat maxElem) const
 } 
 
 
+
+nat Bipartition::findIndex() const 
+{
+  auto result = 0; 
+  auto iter = begin(bip); 
+  auto theEnd = end(bip); 
+  while( iter != theEnd && *iter == 0  )
+    {
+      ++iter; 
+      result += 32; 
+    }
+
+  assert(*iter != 0); 
+
+  // this actually compute the logarithm, i.e., the most significant
+  // bit
+  
+  unsigned int v = *iter; // 32-bit word to find the log of
+  unsigned r;     // r will be lg(v)
+  register unsigned int t, tt; // temporaries
+  
+  if (  ( tt =  v >> 16    )  )
+    r = (t = tt >> 8) ? 24 + LogTable256[t] : 16 + LogTable256[tt];
+  else 
+    r = (t = v >> 8) ? 8 + LogTable256[t] : LogTable256[v];
+
+  return result + r; 
+} 

@@ -7,14 +7,14 @@
 class TreeProcessor
 {
 public: 
-  TreeProcessor(std::vector<std::string> fileNames); 
+  TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck ); 
   TreeProcessor(TreeProcessor&& tp) ; 
   TreeProcessor& operator=(TreeProcessor &&tp); 
   
   const std::vector<std::string> getTaxa() const {return _taxa; }
 
 protected: 			// METHODS
-  void fillTaxaInfo(std::string fileName); 
+  auto fillTaxaInfo(std::string fileName) -> std::vector<std::string>; 
   template<bool readBl>
   void nextTree(std::istream &treefile); 
   void skipTree(std::istream &iss); 

@@ -4,7 +4,7 @@ EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihoo
 
 .PHONY: my-update-src doc mydist  man  dist
 
-WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized -Wno-mismatched-tags -Wno-unused-private-field
+WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized -Wno-mismatched-tags -Wno-unused-private-field -Wsign-compare
 noinst_LIBRARIES=libbayes.a libncl.a 
 RAX_FEATURE= -D_GNU_SOURCE -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops -D__STRICT_ANSI__ -D_OPTIMIZED_FUNCTIONS
 

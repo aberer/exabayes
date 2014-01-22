@@ -17,6 +17,19 @@ void myExit(int code)
 }
 
 
+static void printUsage(std::ostream &out)
+{
+  out << "\nconsense computes various flavours of consensus trees from sets of trees.\n\n"; 
+  out << "Usage: ./consense -n id  -f file[..] [-t threshold] [-b burnin] \n\n" ; 
+  out << "        -n runid         an id for the output file\n" ; 
+  out << "        -t thresh        a threshold for the consenus tree. Valid values:\n"
+      << "                         values between 50 (majority rule) and 100 (strict) or MRE\n" 
+      << "                         (the greedily refined MR consensus).  Default: MRE\n" ; 
+  out << "        -b relBurnin     proportion of trees to discard as burn-in (from start). Default: 0.25\n"; 
+  out << "        -f file[..]      one or more exabayes topology files\n\n" ;
+}
+
+
 auto processCommandLine(int argc, char **argv)
   -> std::tuple<std::string,std::vector<std::string>,double, nat,bool>
 {
@@ -27,10 +40,14 @@ auto processCommandLine(int argc, char **argv)
   double burnin = 0.25; 
 
   int c = 0; 
-  while( ( c = getopt(argc, argv, "n:t:f:b:") ) != EOF )
+  while( ( c = getopt(argc, argv, "n:t:f:b:h") ) != EOF )
     {
       switch(c)
 	{
+	case 'h': 
+	  printUsage(std::cout);
+	  myExit(0);
+	  break; 
 	case 'n': 
 	  {
 	    id = std::string{optarg, strlen(optarg)}; 
@@ -112,17 +129,7 @@ auto processCommandLine(int argc, char **argv)
 
 
 
-static void printUsage(std::ostream &out)
-{
-  out << "\nconsense computes various flavours of consensus trees from sets of trees.\n\n"; 
-  out << "Usage: ./consense -n id  -f file[..] [-t threshold] [-b burnin] \n\n" ; 
-  out << "        -n runid         an id for the output file\n" ; 
-  out << "        -t thresh        a threshold for the consenus tree. Valid values:\n"
-      << "                         values between 50 (majority rule) and 100 (strict) or MRE\n" 
-      << "                         (the greedily refined MR consensus).  Default: MRE\n" ; 
-  out << "        -b relBurnin     proportion of trees to discard as burn-in (from start). Default: 0.25\n"; 
-  out << "        -f file[..]      one or more exabayes topology files\n\n" ;
-}
+
 
 
 
@@ -167,7 +174,7 @@ int main(int argc, char **argv)
   ss << PROGRAM_NAME << "_" << type << "Nexus." << id; 
 
   auto &&ss2 = std::ostringstream{}; 
-  ss2 << PROGRAM_NAME << "_" << type << "Phylip." << id ; 
+  ss2 << PROGRAM_NAME << "_" << type << "Newick." << id ; 
 
   if(std::ifstream(ss.str()))
     {
@@ -187,7 +194,7 @@ int main(int argc, char **argv)
 
 
   std::cout << "Printed consensus tree in nexus format to " << ss.str() << std::endl; 
-  std::cout << "Printed consensus tree in phylip format to " << ss2.str() << std::endl; 
+  std::cout << "Printed consensus tree in newick format to " << ss2.str() << std::endl; 
 
   return 0; 
 }

@@ -10,9 +10,10 @@ class TreeResource : public InitializationResource
 public: 
   TreeResource(const TreeAln* tralnPtr);
   virtual ~TreeResource(){}
-
+  
+  virtual void markPosAndSkipWeights(int len) {} // DOES NOTHING 
   virtual std::vector<std::string> getTaxonNames(nat numTax) ; 
-  virtual void fillAliasWgt(int *pos, nat length) ;   
+  virtual void fillAliasWgt(TreeAln &traln) ;   
   virtual std::tuple<int,int,double,int> getGlobalInfo() ;
   virtual void fillPartition(pInfo &partition, nat model)  ;
   virtual void fillAlnPart(unsigned char* ptr, nat length, nat &ctr) ; 

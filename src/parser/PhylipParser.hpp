@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 typedef unsigned int nat; 
 
@@ -31,7 +32,7 @@ public:
 private: 			// METHODS
 
   template<typename T>
-  void myWrite(std::ostream& out, T* ptr, nat length)
+  void myWrite(std::ostream& out, T* ptr, size_t length)
   {
     out.write((char*) ptr, sizeof(T) * length) ; 
   }
@@ -77,9 +78,9 @@ private: 			// ATTRIBUTES
   Parser::tree         *tr;
   Parser::analdef      *adef;
 
-  bool compress; 		// an option 
-  nat numTax; 
-  nat numSites; 
+  bool _compress; 		// an option 
+  nat _numTax; 
+  nat _numSites; 
 
   unsigned int myMask32[32]; 
   std::string protModels[21]; 
@@ -95,9 +96,11 @@ private: 			// ATTRIBUTES
   const unsigned int bitVector32[33]; 
   Parser::partitionLengths pLengths[8]; 
   
-  bool haveModelFile; 
+  bool _haveModelFile; 
 
   Parser::nodeptr baseAddr; 
+  
+  std::vector<std::vector<uint8_t> > _ySpace; // 
 }; 
 
 
