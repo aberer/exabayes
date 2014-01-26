@@ -2,6 +2,8 @@
 #include <fstream>
 #include <memory>
 
+#include "extensions.hpp"
+
 #include "TreePrinter.hpp"
 #include "tree-init/TreeResource.hpp"
 #include "tree-init/ByteFileResource.hpp"
@@ -985,8 +987,14 @@ SampleMaster::printDuringRun(nat gen)
 	sortedLnls.emplace_back(c.getCouplingId(), c.getLikelihood()); 
       std::sort(sortedLnls.begin(), sortedLnls.end(), [] (const std::pair<nat,double> &elem1, const std::pair<nat,double> &elem2 ) { return elem1.first < elem2.first;  }); 
 
+      // auto &&tmp = make_unique<ThousandsSeparator<char> >(','); 
+
       for(auto elem : sortedLnls)
-	ss << " " << elem.second; 
+	{
+	  ss.imbue(locale(ss.getloc(), new ThousandsSeparator<char>(',') )); 
+	  
+	  ss << " " << elem.second; 
+	}
     }
 
   // print it 

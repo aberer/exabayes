@@ -84,7 +84,7 @@ private: 			// METHODS
   bool applyDirtynessToSubtree(TreeAln &traln, nat partition, const BranchPlain &branch); 
   void disorientDebug(TreeAln &traln, const BranchPlain& root); 
   void disorientDebugHelper(TreeAln &traln, const BranchPlain& root); 
-  void exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root ); 
+  void exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root, bool changedOrientation ); 
   void coreEvalSubTree(TreeAln& traln, const BranchPlain &root); 
 
 private: 			// ATTRIBUTES 

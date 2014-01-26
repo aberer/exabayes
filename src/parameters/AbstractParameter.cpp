@@ -1,4 +1,5 @@
 #include "AbstractParameter.hpp" 
+#include "extensions.hpp" 
 #include "comm/ParallelSetup.hpp"
 #include "Category.hpp"
 
@@ -36,15 +37,9 @@ std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs)
 std::ostream&  AbstractParameter::printShort(std::ostream& out) const
 {
   out << CategoryFuns::getShortName(_cat) << "{" ; 
-  bool isFirst= true; 
-  for(auto v : _partitions)
-    {
-      if(not isFirst)
-	out << ","; 
-      else 
-	isFirst = false; 
-      out  << v ; 
-    }
+
+  formatRange(out, _partitions); 
+
   out << "}";     
   return out; 
 }

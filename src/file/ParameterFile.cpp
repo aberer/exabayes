@@ -1,6 +1,7 @@
 #include "ParameterFile.hpp"
 #include "GlobalVariables.hpp"
 #include "Category.hpp"
+#include "extensions.hpp"
 
 #include "comm/ParallelSetup.hpp"
 
@@ -43,7 +44,11 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
       blParams.push_back(param); 
 
   for(auto &param : blParams)    
-    fh << "\tTL{" << param->getPartitions()   << "}"; 
+    {
+      fh << "\tTL{" ; 
+      formatRange(fh, param->getPartitions()); 
+      fh << "}"; 
+    }
 
   for(auto &p : parameters)
     {

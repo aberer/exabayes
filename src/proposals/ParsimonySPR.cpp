@@ -97,10 +97,10 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, branch22states2score in
 	  for(auto& v : values)
 	    data.push_back(v);
 	}
-      
+
       // could be encapsulated in <chain>
       MPI_Allreduce(MPI_IN_PLACE, data.data(), data.size(), MPI_UNSIGNED, MPI_SUM, comm);
-
+      
       nat ctr = 0; 
       for(auto &pair :insertions)
 	{

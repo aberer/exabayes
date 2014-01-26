@@ -1,6 +1,8 @@
 #include <cassert>
 #include <cstring>
 
+#include <algorithm>
+
 #include "ByteFileResource.hpp"
 #include "GlobalVariables.hpp"
 

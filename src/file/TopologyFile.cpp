@@ -1,5 +1,6 @@
 #include "TopologyFile.hpp"
 #include "GlobalVariables.hpp"
+#include "extensions.hpp"
 #include "comm/ParallelSetup.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "TreePrinter.hpp"
@@ -55,6 +56,7 @@ void TopologyFile::initialize(const TreeAln& traln, nat someId, bool isDryRun)
   fh.close(); 
 }
 
+
 void TopologyFile::sample(const TreeAln &traln, nat gen,  AbstractParameter* param)  
 {    
   auto&& fh = std::ofstream{fullFileName,std::fstream::app }; 
@@ -63,9 +65,13 @@ void TopologyFile::sample(const TreeAln &traln, nat gen,  AbstractParameter* par
 
   auto treeString = tp.printTree(traln, param);
   fh << "\ttree gen."<< gen
-     << ".{" <<  param->getPartitions()  << "}"
-     << " = [&U] " << treeString << std::endl; 
+     << ".{"; 
 
+  formatRange(fh, param->getPartitions()); 
+
+  fh << "}"
+     << " = [&U] " << treeString << std::endl; 
+  
   fh.close(); 
 }
 

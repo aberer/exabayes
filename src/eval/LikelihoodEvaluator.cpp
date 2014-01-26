@@ -14,6 +14,7 @@ LikelihoodEvaluator::LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy* plcy
 {
 }
 
+
 LikelihoodEvaluator::LikelihoodEvaluator( const LikelihoodEvaluator &rhs )
   : debugTraln(std::move(rhs.debugTraln))
   , verifyLnl(rhs.verifyLnl)
@@ -33,6 +34,7 @@ LikelihoodEvaluator::LikelihoodEvaluator( LikelihoodEvaluator &&rhs )
 {
 }
 
+
 void swap(LikelihoodEvaluator &lhs, LikelihoodEvaluator  &rhs)
 {
   using std::swap; 
@@ -41,6 +43,7 @@ void swap(LikelihoodEvaluator &lhs, LikelihoodEvaluator  &rhs)
   swap(lhs.arrayOrientation, rhs.arrayOrientation); 
   swap(lhs._arrayReservoir, rhs._arrayReservoir); // for consistency 
 }
+
 
 LikelihoodEvaluator& LikelihoodEvaluator::operator=(LikelihoodEvaluator rhs) 
 {
@@ -100,33 +103,48 @@ void LikelihoodEvaluator::evaluate( TreeAln &traln, const BranchPlain &root, boo
 void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions, bool fullTraversal, bool debug)    
 {
   // tout << "evaluatePartitions with root " << root << " and " << ( fullTraversal ? "full" : "partial" )  << " and partitons " << partitions << std::endl; 
-
   nat numPart = traln.getNumberOfPartitions(); 
   auto perPartitionLH = traln.getPartitionLnls();
 
   auto toExecute = std::vector<bool>(numPart, false);   
   for(auto m : partitions)
-    toExecute[m] = true; 
+    {
+      auto &partition = traln.getPartition(m);
+      toExecute[m] = partition.width > 0 ; 
+    }
   traln.setExecModel(toExecute); 
 
   if(fullTraversal)
     {
       for(auto &elem : partitions)
-	markPartitionDirty(traln, elem);
+	{
+	  auto &partition = traln.getPartition(elem);
+	  if(partition.width > 0 )
+	    markPartitionDirty(traln, elem);
+	}
     }
 
   for(auto elem : partitions )
     {
-      evalSubtree(traln, elem, root); 
-      evalSubtree(traln, elem, root.getInverted()); 
+      auto &partition = traln.getPartition(elem);
+      if(partition.width > 0 )
+	{
+	  evalSubtree(traln, elem, root); 
+	  evalSubtree(traln, elem, root.getInverted()); 
+	}
     }
 
   auto execute = std::vector<bool>(traln.getNumberOfPartitions(), false); 
   for (auto elem : partitions)
-    execute[elem] = true; 
+    {
+      auto &partition = traln.getPartition(elem); 
+      execute[elem] = partition.width > 0; 
+    }
   traln.setExecModel(execute); 
 
-  exa_evaluateGeneric(traln, root);
+  bool orientWasChanged = std::any_of(begin(execute), end(execute), [](bool elem){return elem ; });
+
+  exa_evaluateGeneric(traln, root, orientWasChanged);
 
   auto pLnl = traln.getPartitionLnls();
   for(auto m : partitions )
@@ -145,9 +163,16 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
 }
 
 
-void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const BranchPlain &evalBranch)   
+void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partId, const BranchPlain &evalBranch)   
 {
-  // tout << "eval subtree for " << partition << std::endl; 
+  // TODO do we have a cleaner partition for this break? It is
+  // necessary, s.t. in the -Q case, we do not do all that traverals
+  // (prepareForEvaluation) for partitions that do not have data anyway
+  auto &partition = traln.getPartition(partId);
+  if(partition.width == 0 )
+    return; 
+  
+  // tout << "eval subtree for " << partId << std::endl; 
 
   if(traln.isTipNode(evalBranch.getPrimNode()))
     {
@@ -155,8 +180,8 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const Bran
       return; 
     }
 
-  arrayPolicy->prepareForEvaluation(traln, evalBranch, partition, arrayOrientation, *_arrayReservoir); 
-  applyDirtynessToSubtree(traln, partition, evalBranch);
+  arrayPolicy->prepareForEvaluation(traln, evalBranch, partId, arrayOrientation, *_arrayReservoir); 
+  applyDirtynessToSubtree(traln, partId, evalBranch);
   
   if( 
      false && 
@@ -180,7 +205,7 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const Bran
     return; 
 
   auto execute = std::vector<bool>(traln.getNumberOfPartitions(), false); 
-  execute[partition] = true; 
+  execute[partId] = true; 
   traln.setExecModel(execute); 
   
   coreEvalSubTree(traln,evalBranch); 
@@ -201,11 +226,11 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partition, const Bran
 }
 
 
-void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root )
+void LikelihoodEvaluator::exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root, bool changedOrientation )
 {
   // tout << "calling exa_evaluate "  << std::endl; 
   auto start = root.findNodePtr(traln);
-  if(not ( ( start->x == 1 || traln.isTipNode(start)   )
+  if( changedOrientation && not ( ( start->x == 1 || traln.isTipNode(start)   )
 	   && ( start->back->x == 1 || traln.isTipNode(start->back) )  ) )
     {
       tout << "at evaluation at " << root << ": " ; 

@@ -1504,7 +1504,7 @@ void PhylipParser::sitesort()
     if(adef->compressPatterns)
       {
 	std::sort(index  + 1 , index + _numSites + 1 ,  
-		  [&](const  int &a , const int& b)
+		  [&](const  int &a , const int& b) -> bool 
 		  {
 		    // if( not ( a <= int(_numSites + 1) && b <= int(_numSites + 1) )) 
 		    //   std::cout << a << "," << b << std::endl; 
