@@ -131,6 +131,9 @@ int main(int argc, char** argv)
   auto&& bipEx = BipartitionExtractor(files, false, true);
 
   nat numTree = bipEx.getNumTreesInFile( files.at(0) );
+  
+  // std::cout <<  "have "<< numTree << std::endl; 
+  
   nat absBurnin = numTree * burnin; 
 
   bipEx.extractBips<true>(absBurnin);

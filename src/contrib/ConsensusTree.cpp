@@ -129,7 +129,8 @@ std::string ConsensusTree::getTreeHeader() const
   auto&& oss = std::ostringstream{}; 
   oss << "#NEXUS\n" ; 
   oss << "begin taxa;\n"; 
-  oss << "\tdimensions ntax=49;\n"; 
+  oss << "\tdimensions ntax="  << taxa.size() ; 
+  oss << ";\n"; 
   oss << "\ttaxlabels\n"; 
   for(auto t : taxa)
     {

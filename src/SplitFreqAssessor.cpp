@@ -109,9 +109,13 @@ nat SplitFreqAssessor::getNumTreeAvailable(string fileName)
 
   while(getline(infile, line))
     {
-      std::string cleanline = trim(line); 
+      auto cleanline = trim(line); 
 
-      if(foundTreeStart)	// check number of trees 
+      if(cleanline.compare("end;") == 0 )
+	{
+	  break; 
+	}
+      else if(foundTreeStart)	// check number of trees 
 	{
 	  if(cleanline[cleanline.size()-1] == ';') 
 	    ++numTrees; 

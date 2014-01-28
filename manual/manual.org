@@ -1,5 +1,7 @@
 #+TITLE: ExaBayes User's Manual
 
+* TODO grouped proposal sets!
+
 #+LaTeX_CLASS: koma-article
 #+LaTeX_CLASS_OPTIONS: [a4paper]
 #+OPTIONS: ^:nil

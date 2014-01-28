@@ -25,7 +25,7 @@ public:
   void initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId, bool isDryRun )  ; 
   void sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr)  ; 
 
-  void finalize() const  { }	// NO IMPLEMENT  
+  // void finalize() const  { }	// NO IMPLEMENT  
   void regenerate(std::string workdir, std::string prevId, nat gen) ; 
   
 private: 

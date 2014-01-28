@@ -39,7 +39,7 @@ void printUsage()
 	    << "                       first n trees, where n is the minimum number\n"
 	    << "                       available in all tree files]\n\n"  
 	    << "      -i ignoreFreq    ignore splits with frequencies lower than ignoreFreq\n"
-	    << "                       [Range: 0.0 < ignoreFreq < 1.0; default: 0.1]\n\n"
+	    << "                       [Range: 0.0 <= ignoreFreq < 1.0; default: 0.1]\n\n"
 	    << "      -f file[..]      two or more topology files\n\n"
 	    << "      -b relBurnin     discard first relBurnin percent of tree samples \n"
 	    << "                       [ 0.0 <= relBurnin < 1.0; default 0.25]\n\n"
@@ -167,10 +167,11 @@ int main(int argc, char** argv)
   else 
     start = nat(double(end ) * relBurnin); 
 
+  std::cout << "using trees number " << start << " to " <<  end << std::endl;   
+
   asdsf.extractBipsNew(start , end , takeAll);
   auto asdsfResult = asdsf.computeAsdsfNew(ignoreFreq); 
   
-  std::cout << "used trees number " << start << " to " <<  end << std::endl; 
   if(takeAll)
     std::cout << "but also included any tree with an id higher than " << end << ", if available." << std::endl; 
   std::cout << "average deviation of split frequencies: " <<  asdsfResult.first * 100  << "%" << std::endl; 

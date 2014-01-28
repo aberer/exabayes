@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstring>
 
+#include <numeric>
 #include <algorithm>
 
 #include "ByteFileResource.hpp"

@@ -307,11 +307,15 @@ void ParallelSetup::finalize()
 void ParallelSetup::genericExit(int code)
 {
   if( code == 0 )
-    MPI_Finalize(); 
+    {
+      MPI_Finalize(); 
+    }
   else 
     {
-      // MPI_Abort(MPI_COMM_WORLD, code);
-      MPI_Finalize();
+      if(Communicator().getRank() == 0)
+	MPI_Abort(MPI_COMM_WORLD, code);
+      else 
+	MPI_Finalize(); 
     }
   exit(code); 
 }
@@ -461,7 +465,10 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
   // create chain comm 
   _chainComm = _runComm.split(coords[1], coords[2]);
   assert(_chainComm.isValid()); 
-  
+
+
+#ifndef USE_NONBLOCKING_COMM
+  assert(0); 
   // create chain intercomms  
   for(nat i = 0; i < _chainsParallel; ++i)
     {
@@ -478,6 +485,7 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
 
       assert(_commToChains[i].isValid()); 
     } 
+#endif
 
   // install the ExaML communicator 
   MPI_Comm_dup(_chainComm.getHandle(), &comm); 

@@ -8,6 +8,7 @@
 #include "FlagType.hpp" 
 #include "Communicator.hpp"
 
+
 #include <mpi.h>
 extern MPI_Comm comm; 		// the examl communicator 
 extern int processID; 		// examl rank 

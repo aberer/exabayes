@@ -8,6 +8,11 @@
 
 #include "config.h"
 
+/* only to be disabled for benchmarking! */
+#define USE_NONBLOCKING_COMM
+
+
+
 
 #if HAVE_PLL != 0
 #define exa_realloc rax_realloc

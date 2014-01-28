@@ -24,32 +24,34 @@ double SlidingProposer::proposeOneValue(double oldVal, double parameter, Randomn
 
 std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
 {
-#if 0 
-  int posA = rand.drawIntegerOpen(oldValues.size()); 
+// #if 0 
+//   int posA = rand.drawIntegerOpen(oldValues.size()); 
 
-  double oldVal = oldValues.at(posA) ; 
-  double newVal = rand.drawFromSlidingWindow(oldVal, parameter); 
+//   double oldVal = oldValues.at(posA) ; 
+//   double newVal = rand.drawFromSlidingWindow(oldVal, parameter); 
 
-  if( newVal <= 0)
-    {
-      // append to the upper end of the window 
-      newVal = oldVal + parameter / 2  - newVal; 
-      assert(newVal >= 0 && newVal < 1); 
-    }
-  else if (newVal >= 1)
-    {
-      // append to the lower end of the window 
-      newVal = oldVal - parameter / 2 - newVal + 1 ; 
-      assert(newVal >= 0 && newVal < 1); 
-    }
+//   if( newVal <= 0)
+//     {
+//       // append to the upper end of the window 
+//       newVal = oldVal + parameter / 2  - newVal; 
+//       assert(newVal >= 0 && newVal < 1); 
+//     }
+//   else if (newVal >= 1)
+//     {
+//       // append to the lower end of the window 
+//       newVal = oldVal - parameter / 2 - newVal + 1 ; 
+//       assert(newVal >= 0 && newVal < 1); 
+//     }
 
-  oldValues[posA] = newVal; 
-#else 
+//   oldValues[posA] = newVal; 
+// #else 
 
   nat posA = rand.drawIntegerOpen(oldValues.size()) ; 
   nat posB = rand.drawIntegerOpen(oldValues.size()-1); 
   if(posA == posB)
     posB = oldValues.size() - 1 ; 
+
+  // tout << "proposing " << posA << " and " << posB << std::endl ; 
   
   auto &rateA = oldValues.at(posA); 
   auto &rateB = oldValues.at(posB); 
@@ -76,7 +78,7 @@ std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> old
 
   // tout << "newVals=" << rateA << ","  << rateB << std::endl; 
 
-#endif
+// #endif
 
 
   // check if contracts are met  

@@ -1164,7 +1164,7 @@ void SampleMaster::finalizeRuns()
 	      tout << SOME_FIXED_PRECISION << "best state for run " << run.getRunid() << " was: "  << chain.getBestState( )<< endl;       
 	    }
 	}
-      run.finalizeOutputFiles(*_plPtr);
+      // run.finalizeOutputFiles(*_plPtr);
     }
   
   double secsElapsed = CLOCK::duration_cast<CLOCK::duration<double> >( CLOCK::system_clock::now() - _initTime   ).count(); 

@@ -10,7 +10,7 @@
 #include "time.hpp"
 #include "comm/ParallelSetup.hpp"
 
-#define USE_NONBLOCKING_COMM
+#include "common.h"
 
 // #define VERBOSE 
 
@@ -495,6 +495,9 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
     }
 #else 
 
+  
+  assert (0); 
+
 
 #if 1 
   auto iter = begin(allSwaps); 
@@ -591,16 +594,16 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
 }
 
 
-void CoupledChains::finalizeOutputFiles(const ParallelSetup &pl) 
-{
-  if(pl.isRunLeader())
-    {
-      for(auto &elem : _paramId2TopFile)
-	elem.second.finalize(); 
-      for(auto &p : _pFile)
-	p.finalize();
-    }
-}
+// void CoupledChains::finalizeOutputFiles(const ParallelSetup &pl) 
+// {
+//   if(pl.isRunLeader())
+//     {
+//       // for(auto &elem : _paramId2TopFile)
+//       // 	elem.second.finalize(); 
+//       // for(auto &p : _pFile)
+//       // 	p.finalize();
+//     }
+// }
 
 
 void CoupledChains::deserialize( std::istream &in ) 

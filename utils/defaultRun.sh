@@ -24,13 +24,13 @@ seed=11436
 # seed=32090 # problematic with  143 (on DNA!)
 
 # src/proposals/
-numProc=2
+numProc=4
 
 # extraArgs="-R 2 -C 2" 
 # extraArgs="-M 3 -S  "
 # extraArgs="-M 0  -S"
 # extraArgs=" -C 4 "
-# extraArgs="-Q"
+# extraArgs="-C 2"
 # extraArgs="-M 3 "
 # extraArgs="-R 2 " 
 # extraArgs="-C 4"
@@ -48,7 +48,7 @@ startFromBest=0
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=1
+useClang=0
 
 
 # find additional arguments for the call   
