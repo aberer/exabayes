@@ -247,7 +247,7 @@ int main(int argc, char **argv)
 
   if(files.size() > 1)
     {
-      out << "\tprsf"; 
+      out << "\tpsrf"; 
       ++numCols; 
     }
 

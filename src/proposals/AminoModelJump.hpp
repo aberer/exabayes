@@ -5,7 +5,6 @@
 
 #include "Branch.hpp"
 #include "AbstractProposal.hpp"
-// #include "axml.h"
 #include "ProtModel.hpp"
 
 
@@ -24,7 +23,7 @@ public:
   virtual void resetState(TreeAln &traln); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
-  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const  {return {}; }
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
 
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0)); }
 

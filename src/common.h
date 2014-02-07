@@ -11,8 +11,8 @@
 /* only to be disabled for benchmarking! */
 #define USE_NONBLOCKING_COMM
 
-
-
+#define USE_SSE ( defined(HAVE_SSE3) &&  ! defined(MANUAL_SSE_OVERRIDE) ) 
+#define USE_AVX ( defined(HAVE_AVX) && ! defined(MANUAL_AVX_OVERRIDE) && ! defined(MANUAL_SSE_OVERRIDE) )
 
 #if HAVE_PLL != 0
 #define exa_realloc rax_realloc

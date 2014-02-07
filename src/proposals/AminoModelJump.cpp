@@ -5,7 +5,7 @@
 
 
 AminoModelJump::AminoModelJump()
-  : AbstractProposal( Category::AA_MODEL, "aaMat", 1.)
+  : AbstractProposal( Category::AA_MODEL, "aaMat", 1., 0,0)
 {
 }
 
@@ -31,6 +31,8 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &ha
       auto content = primVar[0]->getPrior()->drawFromPrior(rand , true ); 
       newModel = content.protModel[0];
     }
+
+  // tout << ProtModelFun::getName(savedMod)  << " -> "<< ProtModelFun::getName(newModel) << std::endl; 
 
   auto newFcs = std::vector<double>{}; 
   for(auto p : partitions)
@@ -87,3 +89,13 @@ AbstractProposal* AminoModelJump::clone() const
   return new AminoModelJump(*this); 
 }
 
+
+
+
+std::vector<nat> AminoModelJump::getInvalidatedNodes(const TreeAln& traln) const
+{
+  auto result = std::vector<nat>{}; 
+  for(nat i = traln.getNumberOfTaxa() + 1 ; i < traln.getNumberOfNodes() + 1  ; ++i)
+    result.push_back(i); 
+  return result; 
+}

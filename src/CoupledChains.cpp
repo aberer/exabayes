@@ -4,7 +4,7 @@
 #include "CoupledChains.hpp"   
 #include "Chain.hpp"
 #include "GlobalVariables.hpp"
-#include "tune.h"
+// #include "tune.h"
 #include "proposals/AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 #include "time.hpp"

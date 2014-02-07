@@ -1,15 +1,14 @@
 #include "BranchLengthMultiplier.hpp"
 #include "TreeAln.hpp"
 #include "BoundsChecker.hpp"
-#include "tune.h"
 #include "TreeRandomizer.hpp"
 #include "GibbsProposal.hpp"
 #include "priors/AbstractPrior.hpp"
 
 
-BranchLengthMultiplier::BranchLengthMultiplier(  double _multiplier)
-  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., false)
-  , multiplier(_multiplier)
+BranchLengthMultiplier::BranchLengthMultiplier(  double multiplier)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., false,  0.0001,  100)
+  , _multiplier(multiplier)
 {
 }
 
@@ -44,7 +43,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
     drawnMultiplier = 0 ,
     newZ = oldZ; 
 
-  drawnMultiplier= rand.drawMultiplier( multiplier); 
+  drawnMultiplier= rand.drawMultiplier( _multiplier); 
   assert(drawnMultiplier > 0.); 
   newZ = pow( oldZ, drawnMultiplier);
 
@@ -91,8 +90,8 @@ void BranchLengthMultiplier::resetState(TreeAln &traln)
 void BranchLengthMultiplier::autotune() 
 {
   double ratio = _sctr.getRatioInLastInterval(); 
-  double newParam = tuneParameter(_sctr.getBatch(), ratio , multiplier, false);
-  multiplier = newParam; 
+  double newParam = tuneParameter(_sctr.getBatch(), ratio , _multiplier, false);
+  _multiplier = newParam; 
   _sctr.nextBatch();
 }
 
@@ -105,12 +104,12 @@ AbstractProposal* BranchLengthMultiplier::clone() const
 
 void BranchLengthMultiplier::readFromCheckpointCore(std::istream &in) 
 {
-  multiplier = cRead<decltype(multiplier)>(in);
+  _multiplier = cRead<decltype(_multiplier)>(in);
 } 
 
 void BranchLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
-  cWrite<decltype(multiplier)>(out, multiplier); 
+  cWrite<decltype(_multiplier)>(out, _multiplier); 
 } 
 
 

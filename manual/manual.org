@@ -556,12 +556,13 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
 
     If you are running a dataset in parallel that comprises many
     partitions (possibly using the -Q option), it is advisable to
-    enable component-wise Metropolis-Hastings (cMH) (i.e., set
-    *componentWiseMH* to ~true~, this is the default). If cMH is
-    enabled and you have say multiple substitution matrix parameters,
-    then ExaBayes will propose (for instance) new substitution
-    parameters for each substitution matrix parameter one after
-    another (instead of only drawing one of the parameters at random).
+    group the proposals per partition into proposal sets (i.e., set
+    *proposalSets* to ~true~, this is the default). If proposal sets
+    is enabled and you have say multiple substitution matrix
+    parameters, then ExaBayes will propose (for instance) new
+    substitution parameters for each substitution matrix parameter one
+    after another (instead of only drawing one of the parameters at
+    random).
     
 *** Options regarding convergence 
     ExaBayes implements the same diagnostics for topological
@@ -654,9 +655,8 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    \cite{Lakner2008a}. 
 
 
-   Using component-wise Metropolis-Hastings (cMH) does not pose an
-   exception to this, the relative frequencies a parameter is updated
-   stay the same.
+   Using proposal sets does not represent an exception to this, the
+   relative frequencies a parameter is updated stay the same.
 
 #+ATTR_LATEX: :align l||p{5cm}|l|r
 | keyword              | full name                                        | affected parameters | default weight |
@@ -1031,15 +1031,8 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    overall data. If you achieve good load distribution using the ~-Q~
    option, your run may be executed much more efficiently (if you are
    interested in the technical reasons for this, consider
-   \cite{zhang2012multi}).
-
-   It is crucial, that you turn on the configuration option
-   ~componentWiseMH~ (~true~ by default). This holds in particular,
-   if you use the ~-Q~ option, but is relevant as well, if data is
-   distributed in a cyclic manner (default behaviour). The more
-   partitions you have and the more distinct computing nodes you have
-   in a parallel working unit, the more important the component-wise
-   MH option becomes.
+   \cite{zhang2012multi}). Furthermore, for efficiency it is important
+   that the option ~proposalSets~ is by default set to ~true~ (default).
 
 ** Note on Reproducibility
 :PROPERTIES:

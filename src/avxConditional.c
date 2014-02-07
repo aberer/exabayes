@@ -1,7 +1,8 @@
-#include "config.h" 
 
+#include "common.h"
 
-#if defined(HAVE_AVX) && ! defined(MANUAL_AVX_OVERRIDE)
+/* #if defined(HAVE_AVX) && ! defined(MANUAL_AVX_OVERRIDE) */
+#if USE_AVX
 
 #define  __AVX
 

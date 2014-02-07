@@ -31,7 +31,7 @@ public:
   virtual void writeToCheckpointCore(std::ostream &out) const; 
 
 protected: 
-  double multiplier;  
+  double _multiplier;  
   BranchLength savedBranch;   
   
 }; 

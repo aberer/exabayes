@@ -150,12 +150,12 @@ static double evaluateGAMMA_FLEX(int *wptr,
 
   int vn = virtual_width(n);  
 
-  printf( "n: %d %d\n", n, vn );
+  /* printf( "n: %d %d\n", n, vn ); */
 
-  if( tipX1 == 0 ) {
-    reorder_back( x1_start, vn, span );
-  }
-  reorder_back( x2_start, vn, span );
+  /* if( tipX1 == 0 ) { */
+  /*   reorder_back( x1_start, vn, span ); */
+  /* } */
+  /* reorder_back( x2_start, vn, span ); */
 
   /* we distingusih between two cases here: one node of the two nodes defining the branch at which we put the virtual root is 
      a tip. Both nodes can not be tips because we do not allow for two-taxon trees ;-) 
@@ -207,11 +207,10 @@ static double evaluateGAMMA_FLEX(int *wptr,
       sum += wptr[i] * term;
     }                      	
   }
-  if( tipX1 == 0 ) {
-    reorder( x1_start, vn, span );
-  }
-  reorder( x2_start, vn, span );
-
+  /* if( tipX1 == 0 ) { */
+  /*   reorder( x1_start, vn, span ); */
+  /* } */
+  /* reorder( x2_start, vn, span ); */
 
   return sum;
 } 
@@ -318,7 +317,7 @@ static double evaluateCAT_FLEX (int *cptr, int *wptr,
 /* GAMMA for proteins with memory saving */
 
 static double evaluateGTRGAMMAPROT_GAPPED_SAVE (int *wptr,
-    double *x1, double *x2,  
+    double *x1, double *nex2,  
     double *tipVector, 
     unsigned char *tipX1, int n, double *diagptable, 
     double *x1_gapColumn, double *x2_gapColumn, unsigned int *x1_gap, unsigned int *x2_gap);

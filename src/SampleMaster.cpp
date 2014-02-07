@@ -30,7 +30,7 @@
 #include "SampleMaster.hpp"
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
-#include "tune.h"
+// #include "tune.h"
 #include "RunFactory.hpp"	
 
 #include "GlobalVariables.hpp"
@@ -285,7 +285,7 @@ void SampleMaster::initializeFromCheckpoint()
 
 // TODO could move this method somewhere else  
 LikelihoodEvaluator
-SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile, bool useSEV )
+SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string binaryFile, bool useSEV)
 {
   auto &&plcy =  std::unique_ptr<ArrayPolicy>();
   auto res = std::make_shared<ArrayReservoir>(useSEV); 
@@ -327,7 +327,7 @@ SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, std::string bina
 #ifdef DEBUG_LNL_VERIFY
 
   auto dT = make_shared<TreeAln>(initTree.getNumberOfTaxa());
-  auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new ByteFileResource(binaryFile, _pl))); 
+  auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new ByteFileResource(binaryFile, _plPtr))); 
   ti.initializeWithAlignmentInfo(*dT, RunModes::NOTHING); 
   eval.setDebugTraln(dT);
 #endif
@@ -478,7 +478,7 @@ void SampleMaster::printProposals(const std::vector<unique_ptr<AbstractProposal>
 
   tout << std::endl; 
 
-  if(_runParams.isComponentWiseMH())
+  if(_runParams.isComponentWiseMH() && proposalSets.size() > 0 )
     {
       tout << "In addition to that, the following sets below will be executed \n"
 	   << "in a sequential manner (for efficiency, see manual for how to\n"
@@ -945,7 +945,7 @@ SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
   r.addStandardParameters(paramResult, traln);
   auto proposalSetResult = std::vector<ProposalSet>{};
   auto&& proposalResult = std::vector<std::unique_ptr<AbstractProposal>>{}; 
-  std::tie(proposalResult, proposalSetResult) = r.produceProposals(proposalConfig, priorBlock , paramResult, traln, _runParams.isComponentWiseMH());
+  std::tie(proposalResult, proposalSetResult) = r.produceProposals(proposalConfig, priorBlock , paramResult, traln, _runParams.isComponentWiseMH() && traln.getNumberOfPartitions() > 1);
 
   // sanity check 
   for(auto &paramPtr : paramResult)
@@ -1010,11 +1010,15 @@ void SampleMaster::run()
     {
       tout << "Starting MCMC sampling " ; 
 
-      bool haveAvx = false; 
-#ifdef HAVE_AVX
-      haveAvx = true; 
-#endif
-      tout << "using the " << (haveAvx ?  "AVX" : "SSE" ) << "-implementation" <<    (  _cl.isSaveMemorySEV() ?  " with SEVs" : "" ) << " for likelihood computations." << std::endl; 
+#if USE_AVX
+      auto impl=std::string{"AVX"};
+#elif USE_SSE
+      auto impl=std::string{"SSE"};
+#else 
+      auto impl=std::string{"standard"};
+#endif 
+
+      tout << "using the " << impl << " implementation" <<    (  _cl.isSaveMemorySEV() ?  " with SEVs" : "" ) << " for likelihood computations." << std::endl; 
       
       if(_runParams.getNumRunConv() > 1 &&  _runParams.isUseStopCriterion() )
 	tout << PROGRAM_NAME << " will run until topological convergence is achieved\n"

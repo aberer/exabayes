@@ -4,7 +4,7 @@
 #include "priors/AbstractPrior.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
-  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 5., false)
+  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 5., false, 0,0)
   , multiplier(_multiplier)
 {
 }

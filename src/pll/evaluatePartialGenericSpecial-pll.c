@@ -235,7 +235,7 @@ static inline void computeVectorCAT_FLEX(double *lVector, int *eVector, double k
    if -M is used, i.e., a per-partition branch length estimate is deployed, and finally the maximum number of tips in the comprehensive tree 
    as well as the number of states in the current model. */
 
-#ifdef _USE_UNUSED
+/* #ifdef _USE_UNUSED */
 static double evaluatePartialCAT_FLEX(int i, double ki, int counter,  traversalInfo *ti, double qz,
 				      int w, double *EIGN, double *EI, double *EV,
 				      double *tipVector, unsigned  char **yVector, 
@@ -340,7 +340,7 @@ static double evaluatePartialCAT_FLEX(int i, double ki, int counter,  traversalI
 
   return  term;
 }
-#endif
+/* #endif */
 
 /* this is the top-level function that can be called from other parts of the code.
    As input it takes the tree data structure, the site index, the evolutionary rate ki, 

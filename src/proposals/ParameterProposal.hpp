@@ -13,7 +13,7 @@
 class ParameterProposal : public AbstractProposal
 {
 public: 
-  ParameterProposal(Category cat, std::string _name, bool modifiesBL, std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight ); 
+  ParameterProposal(Category cat, std::string _name, bool modifiesBL, std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight, double minTuning, double maxTuning ); 
   ParameterProposal(const ParameterProposal &prop); 
   virtual ~ParameterProposal(){}
 

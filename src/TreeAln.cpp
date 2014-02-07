@@ -190,6 +190,14 @@ TreeAln::~TreeAln()
       for(int i = 0; i < numPart ;++i)
 	{
 	  auto& partition = getPartition(i); 
+	  
+	  if( _tr.saveMemory)
+	    {
+	      if(partition.gapColumn != 0 )
+		delete [] partition.gapColumn; 
+	      if(partition.gapVector != 0)
+		delete [] partition.gapVector; 
+	    }
 
 #if HAVE_PLL ==  0
 	  exa_free(partition.symmetryVector);
@@ -242,6 +250,7 @@ TreeAln::~TreeAln()
 #endif
 
 	}
+
     }
 
 #if HAVE_PLL == 0  

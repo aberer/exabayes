@@ -26,7 +26,10 @@ void deallocate(array_reservoir_t self, double *array)
 ArrayReservoir::~ArrayReservoir()
 {
   for(auto elem : _unusedArrays)
-    exa_free(std::get<1>(elem));
+    {
+      for(auto elem2 : std::get<1>(elem))
+	exa_free(elem2);
+    }
   for(auto elem : _usedArrays)
     exa_free(std::get<0>(elem)); 
 } 
@@ -47,19 +50,25 @@ double* ArrayReservoir::allocate(size_t requiredLength)
   if( found != end(_unusedArrays)
       && not freeOldArrayDespiteAvailable )
     {
-      auto elem = *found; 
-      _usedArrays.insert(std::make_pair(std::get<1>(elem), std::get<0>(elem)));
-      _unusedArrays.erase(found);
-      result = std::get<1>(elem); 
+      auto id = std::get<0>(*found); 
+      auto theList = std::get<1>(*found); 
+      assert(theList.size() > 0); 
+      result = theList.front(); 
+      std::get<1>(*found).pop_front();
+      if(std::get<1>(*found).size() == 0)
+	_unusedArrays.erase(found);
+      _usedArrays[result] = id; 
     }
   else 
     {				
       if(_freeOlds &&   _unusedArrays.size() > 0  )
 	{
-	  auto iter =  _unusedArrays.end();
-	  --iter; 
-	  exa_free(std::get<1>(*iter));
-	  _unusedArrays.erase(iter); 
+	  auto maxElemIter = std::max_element(begin(_unusedArrays), end(_unusedArrays));
+	  auto &maxElem = *maxElemIter; 
+	  exa_free(std::get<1>(maxElem).front()); 
+	  std::get<1>(maxElem).pop_front(); 
+	  if(std::get<1>(maxElem).size() == 0)
+	    _unusedArrays.erase(maxElemIter); 
 	}
 
       result = (double*) exa_malloc_aligned(requiredLength);
@@ -67,12 +76,15 @@ double* ArrayReservoir::allocate(size_t requiredLength)
     }
 
   assert(result != nullptr) ; 
+  // tout << "POP " << result << std::endl; 
   return result; 
 }
 
 
 void ArrayReservoir::deallocate(double* array)
 {
+  // tout << "push " << array <<  std::endl; 
+
   assert(array != nullptr); 
 
   auto iter = _usedArrays.find(array); 
@@ -80,15 +92,14 @@ void ArrayReservoir::deallocate(double* array)
   assert(iter != _usedArrays.end()); 
   auto elem = *iter; 
 
-  _unusedArrays.insert(std::make_pair(std::get<1>(elem), std::get<0>(elem))); 
+  _unusedArrays[std::get<1>(elem)].push_front(std::get<0>(elem)); 
+
   _usedArrays.erase(iter);
 
   assert(_usedArrays.find(array) == _usedArrays.end() ); 
-
+  
   array = nullptr; 
 } 
-
-
 
 
 #ifdef _DEVEL

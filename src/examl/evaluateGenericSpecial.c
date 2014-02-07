@@ -781,13 +781,13 @@ void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal, array_reservoi
   {
     double 
       *recv = (double *)malloc(sizeof(double) * tr->NumberOfModels);
-    
-#ifdef _USE_ALLREDUCE   
+
+/* #ifdef _USE_ALLREDUCE    */
     MPI_Allreduce(tr->perPartitionLH, recv, tr->NumberOfModels, MPI_DOUBLE, MPI_SUM, comm);
-#else
-    MPI_Reduce(tr->perPartitionLH, recv, tr->NumberOfModels, MPI_DOUBLE, MPI_SUM, 0, comm);
-    MPI_Bcast(recv, tr->NumberOfModels, MPI_DOUBLE, 0, comm);
-#endif
+/* #else */
+/*     MPI_Reduce(tr->perPartitionLH, recv, tr->NumberOfModels, MPI_DOUBLE, MPI_SUM, 0, comm); */
+/*     MPI_Bcast(recv, tr->NumberOfModels, MPI_DOUBLE, 0, comm); */
+/* #endif */
     
     memcpy(tr->perPartitionLH, recv, tr->NumberOfModels * sizeof(double));
 

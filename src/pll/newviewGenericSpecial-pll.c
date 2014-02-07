@@ -956,8 +956,7 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
    for computing the conditional likelihood at p given child nodes q and r. The actual implementation is located at the end/bottom of this 
    file.
    */
-#if 1
-//#ifdef _OPTIMIZED_FUNCTIONS
+#ifdef _OPTIMIZED_FUNCTIONS
 static void newviewGTRGAMMA_GAPPED_SAVE(int tipCase,
     double *x1_start, double *x2_start, double *x3_start,
     double *EV, double *tipVector,
@@ -1021,13 +1020,13 @@ static void newviewGTRCATPROT_SAVE(int tipCase, double *extEV,
    So in a sense, this function has no clue that there is any tree-like structure 
    in the traversal descriptor, it just operates on an array of structs of given length */ 
 
-void newviewCAT_FLEX_reorder(int tipCase, double *extEV,
-    int *cptr,
-    double *x1, double *x2, double *x3, double *tipVector,
-    int *ex3, unsigned char *tipX1, unsigned char *tipX2,
-    int n, double *left, double *right, int *wgt, int *scalerIncrement, const int states);
+/* void newviewCAT_FLEX_reorder(int tipCase, double *extEV, */
+/*     int *cptr, */
+/*     double *x1, double *x2, double *x3, double *tipVector, */
+/*     int *ex3, unsigned char *tipX1, unsigned char *tipX2, */
+/*     int n, double *left, double *right, int *wgt, int *scalerIncrement, const int states); */
 
-void newviewGAMMA_FLEX_reorder(int tipCase, double *x1, double *x2, double *x3, double *extEV, double *tipVector, int *ex3, unsigned char *tipX1, unsigned char *tipX2, int n, double *left, double *right, int *wgt, int *scalerIncrement, const int states, const int maxStateValue);
+/* void newviewGAMMA_FLEX_reorder(int tipCase, double *x1, double *x2, double *x3, double *extEV, double *tipVector, int *ex3, unsigned char *tipX1, unsigned char *tipX2, int n, double *left, double *right, int *wgt, int *scalerIncrement, const int states, const int maxStateValue); */
 
 /** @brief Iterates over the length of the traversal descriptor and computes the conditional likelihhod
  *
@@ -1229,43 +1228,11 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex, array_reserv
 
 	      /* assert(availableLength == 0 ); */
 
-
-	      
-#if 0 
-
-	      /* if(res == NULL) */
-	      /* 	{ */
-
-		  /* stanard raxml behaviour */
-		  if(requiredLength != availableLength)
-		    {	
-
-		      /* if there is a vector of incorrect length assigned here i.e., x3 != NULL we must free 
-			 it first */
-		      if(x3_start)
-			rax_free(x3_start);
-
-		      /* allocate memory: note that here we use a byte-boundary aligned malloc, because we need the vectors
-			 to be aligned at 16 BYTE (SSE3) or 32 BYTE (AVX) boundaries! */
-
-		      x3_start = (double*)rax_malloc_aligned(requiredLength); 
-		      /* printf("allocating %d for %d\n", requiredLength, p_slot + tr->mxtips + 1 );  */
-
-		      /* update the data structures for consistent bookkeeping */
-		      pr->partitionData[model]->xVector[p_slot] = x3_start;
-		      pr->partitionData[model]->xSpaceVector[p_slot] = requiredLength;
-		    }
-		  /* #else s */
-	      /* 	} */
-	      /* else  */
-	      /* 	{ */
-#else 
 		  /* exabayes behaviour */
 
 		  /* TODO make that dirty  */
 		  if(requiredLength != availableLength)
 		    {
-		  
 		      if(x3_start)
 			deallocate(res, x3_start);
 		  
@@ -1275,7 +1242,6 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex, array_reserv
 		      pr->partitionData[model]->xSpaceVector[p_slot] = requiredLength; 
 		    }
 		/* } */
-#endif
 
 	      /* now just set the pointers for data accesses in the newview() implementations above to the corresponding values 
 		 according to the tip case */
@@ -1359,71 +1325,15 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex, array_reserv
 
 
 #ifndef _OPTIMIZED_FUNCTIONS
-	      /* FER for the gpu-impl. we consider only GAMMA + DNA*/
-	      assert(tr->rateHetModel == GAMMA);
-	      assert( states == 4 );
-
-	      /* memory saving not implemented */
-
+	      
 	      assert(!tr->saveMemory);
 
-	      /* figure out if we need to compute the CAT or GAMMA model of rate heterogeneity */
-
-	      if(tr->rateHetModel == CAT) {
-		ticks t1 = getticks();
-
-		assert( states == 4 );
-		//		newviewCAT_FLEX(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-		//				x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-		//				0, tipX1, tipX2,
-		//				width, left, right, wgt, &scalerIncrement, states);
-
-		newviewGTRCAT(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-			      x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-			      tipX1, tipX2,
-			      width, left, right, wgt, &scalerIncrement);
-
-
-
-		ticks t2 = getticks();
-		if( tInfo->tipCase == TIP_TIP ) {
-		  newviewCAT_FLEX_reorder(tInfo->tipCase,  pr->partitionData[model]->EV, pr->partitionData[model]->rateCategory,
-					  x1_start, x2_start, x3_start, pr->partitionData[model]->tipVector,
-					  0, tipX1, tipX2,
-					  width, left, right, wgt, &scalerIncrement, states);
-		}
-		ticks t3 = getticks();
-
-		double d1 = elapsed(t2, t1);
-		double d2 = elapsed(t3, t2);
-
-		printf( "ticks: %f %f\n", d1, d2 );
-
-	      } else {
-		ticks t1 = getticks();
-		int old_scale = scalerIncrement;
-
-		ticks t2 = getticks();
-		if( 1 || tInfo->tipCase == TIP_TIP || tInfo->tipCase == INNER_INNER ) {
-		  /* FER this is what we want to compute in the GPU device */
-		  newviewGAMMA_FLEX_reorder(tInfo->tipCase,
-					    x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
-					    0, tipX1, tipX2,
-					    width, left, right, wgt, &scalerIncrement, states, getUndetermined(pr->partitionData[model]->dataType) + 1);
-		}
-
-		ticks t3 = getticks();
-
-		//                 double d1 = elapsed(t2, t1);
-		double d2 = elapsed(t3, t2);
-
-		const char *scaling_text = scalerIncrement != old_scale ? " *****" : "";
-		//  printf( "d: %d %d %f %s\n", nvc++, tInfo->tipCase, d2, scaling_text );
-		//                 printf( "ticks: %d %f %f%s\n", tInfo->tipCase, d1, d2, scaling_text );
-		//last_x3 = x3_start;
-		//last_width = width;
-
-	      }
+	      newviewGAMMA_FLEX(tInfo->tipCase,
+				x1_start, x2_start, x3_start ,pr->partitionData[model]->EV , pr->partitionData[model]->tipVector,
+				tipX1, tipX2,
+				width, left, right, wgt, &scalerIncrement  
+				, states, getUndetermined(pr->partitionData[model]->dataType) + 1
+				);
 #else
 	      /* dedicated highly optimized functions. Analogously to the functions in evaluateGeneric() 
 		 we also siwtch over the state number */
@@ -2177,8 +2087,7 @@ void printAncestralState(nodeptr p, boolean printStates, boolean printProbs, tre
  *  This is the optimized functions group
  */
 
-#if 1
-//#ifdef _OPTIMIZED_FUNCTIONS
+#ifdef _OPTIMIZED_FUNCTIONS
 
 /** @ingroup group1
  *  @brief Optimized function implementations for conditional likelihood implementation

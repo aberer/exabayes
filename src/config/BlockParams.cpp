@@ -11,6 +11,7 @@ extern void genericExit(int code);
 void BlockParams::partitionError(nat partition, nat totalPart) const
 {
   std::cerr << "In the parameter block of the configuration file you specified partition " << partition << ". However, there are only " << totalPart << " partitions in total in your alignment." << std::endl; 
+  std::cerr << "NOTICE that the first partition has id 0 and the last of n partitions has the id (n-1) . " << std::endl; 
   ParallelSetup::genericExit(-1); 
 }
 

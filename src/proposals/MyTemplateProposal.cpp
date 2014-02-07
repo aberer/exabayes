@@ -10,7 +10,8 @@
 
 // we need a constructor!  
 MyTemplateProposal::MyTemplateProposal( double aVariable)
-  : AbstractProposal( Category::TOPOLOGY, "MyTemplateProposal", 2.)
+  : AbstractProposal( Category::TOPOLOGY, "MyTemplateProposal", 2.,0,0
+		      )
 {
 }
 

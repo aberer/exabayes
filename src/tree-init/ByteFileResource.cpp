@@ -184,17 +184,16 @@ void ByteFileResource::fillAliasWgt(TreeAln& traln)
 
   auto &tr = traln.getTrHandle(); 
   auto length = tr.originalCrunchedLength; 
-  auto pos = new int[length]; 
+  auto posRes = std::unique_ptr<int[]>(new int[length]); 
+  auto pos = posRes.get();
   byteRead(_byteFile, pos, length);
 
   for(nat model = 0 ; model < traln.getNumberOfPartitions() ; ++model)
     {
       auto &partition = traln.getPartition(model); 
-      // partition.wgt[]
       nat ctr = 0; 
       for(int i = partition.lower; i < partition.upper; ++i)
 	partition.wgt[ctr++] = pos[ i ]; 
-      // std::copy(pos + partition.lower, pos + partition.upper ,  partition.wgt ); 
     }
   
   // reset the stream to the position, we've previously been 

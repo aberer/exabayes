@@ -76,7 +76,7 @@ void BlockRunParameters::Read(NxsToken &token)
 	    chkpntFreq = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("samplingfrequency"))
 	    samplingFreq = myConvertToInt(value); 
-	  else if(key.EqualsCaseInsensitive("componentWiseMH"))
+	  else if(key.EqualsCaseInsensitive("proposalsets"))
 	    componentWiseMH = convertToBool(value); 
 	  else if(key.EqualsCaseInsensitive("numRuns"))	    
 	    numRunConv = myConvertToInt(value); 

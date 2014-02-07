@@ -1,13 +1,15 @@
 #include "AbstractProposal.hpp"
 
 
-AbstractProposal::AbstractProposal( Category cat, std::string name,double weight, bool needsFullTraversal )  
+AbstractProposal::AbstractProposal( Category cat, std::string name,double weight, double minTuning, double maxTuning, bool needsFullTraversal )  
   : _name(name)
   , _category(cat)
   , _relativeWeight(weight)
   , _needsFullTraversal(needsFullTraversal)
   , _inSetExecution(false)
   , _suitsProteinPartitions(false)
+  , _minTuning{minTuning}
+  , _maxTuning{maxTuning}
 {
 } 
 
@@ -20,6 +22,8 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
   , _inSetExecution(rhs._inSetExecution)
   , _id(rhs._id)
   , _suitsProteinPartitions(rhs._suitsProteinPartitions)
+  , _minTuning{rhs._minTuning}
+  , _maxTuning{rhs._maxTuning}
 {
   this->_name = rhs._name; 
 
@@ -203,4 +207,34 @@ AbstractProposal::getBranchProposalMode() const
     }
 
   return {{multiply, outer, sequential }}; 
+}
+
+
+
+
+/**
+   @brief log tuning for a parameter 
+   
+   @return tuned parameter    
+ */
+double AbstractProposal::tuneParameter(int batch, double accRatio, double parameter, bool inverse )
+{  
+  double delta = 1.0 / sqrt(batch + 1 );
+  // delta = 0.1 < delta ? 0.1 : delta;
+
+  assert(_minTuning != 0  || _maxTuning != 0 ); 
+
+  double logTuning = log(parameter);
+  
+  if(inverse)
+    logTuning += (accRatio > TARGET_RATIO)  ? -delta : +delta ;
+  else 
+    logTuning += (accRatio > TARGET_RATIO)  ? +delta : -delta ;
+  
+  double newTuning = exp(logTuning);
+
+  if (_minTuning <  newTuning && newTuning < _maxTuning)
+    return  newTuning; 
+  else 
+    return parameter; 
 }

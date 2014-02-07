@@ -1,11 +1,9 @@
 #include "ParameterProposal.hpp"
-#include "tune.h"
 #include "priors/AbstractPrior.hpp"
 #include "BoundsChecker.hpp"
 
-ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL,  
-				     std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight )
-  : AbstractProposal( cat, name, weight)
+ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL, std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight, double minTuning, double maxTuning )
+  : AbstractProposal( cat, name, weight, minTuning, maxTuning)
   , modifiesBL(modifiesBL)
   , parameter(parameter)
   , proposer(std::move(_proposer))  
@@ -128,6 +126,10 @@ void ParameterProposal::autotune()
       return; 
 
   double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, not proposer->isTuneup());
+  
+  // tout << *this << "" << std::endl;  
+  // printShort (tout) ; 
+  // tout << "\t" << parameter << " -> "<< newParam << "\t" <<  _sctr.getBatch() << std::endl; 
 
   parameter = newParam; 
   _sctr.nextBatch();

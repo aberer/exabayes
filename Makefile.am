@@ -1,17 +1,25 @@
-AUTOMAKE_OPTIONS=foreign
+AUTOMAKE_OPTIONS= foreign subdir-objects
 
-EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h examples/* build.sh apple-build.sh $(top_srcdir)/manual/manual.pdf manual/css/org.css manual/img/banner.png $(top_srcdir)/manual/manual.html README.txt LICENSE.txt COPYING
+EXTRA_DIST=./lib/Random123-1.08 ./src/pll/avxLikelihood-pll.c ./src/examl/avxLikelihood.c ./src/pll/axml-pll.h ./src/examl/axml-examl.h ./examples/* ./build.sh ./apple-build.sh ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/manual.html ./README.txt ./LICENSE.txt ./COPYING ./bin/
+
+noinst_LIBRARIES=libbayes.a libncl.a 
 
 .PHONY: my-update-src doc mydist  man  dist
 
 WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized -Wno-mismatched-tags -Wno-unused-private-field -Wsign-compare
-noinst_LIBRARIES=libbayes.a libncl.a 
-RAX_FEATURE= -D_GNU_SOURCE -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops -D__STRICT_ANSI__ -D_OPTIMIZED_FUNCTIONS
+RAX_FEATURE= -D_GNU_SOURCE -fomit-frame-pointer -funroll-loops -D__STRICT_ANSI__ 
 
-MY_SIMD_FLAGS= $(SIMD_FLAGS)
-# MY_SIMD_FLAGS= -msse4.2 -DMANUAL_AVX_OVERRIDE
+if NO_SSE
+VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE -mno-avx -mno-sse3   -march=native -mtune=generic 
+else 
+if NO_AVX
+VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -mno-avx -D_OPTIMIZED_FUNCTIONS -march=native -mtune=native
+else 
+VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS  -march=native -mtune=native $(SIMD_FLAGS)
+endif
+endif
 
-AM_CPP_FLAGS=-fno-common
+RAXML_OPT=-O2
 
 SRCINCLUDE=-I$(top_srcdir)/src
 
@@ -20,12 +28,10 @@ BAYES_INCLUDES=-I$(top_srcdir)/lib/Random123-1.08/include -I$(top_srcdir)/lib/nc
 include src-helper.am
 include src.am 
 
-PLLDIR=$(top_srcdir)/src/pll
-libpll_a_SOURCES= $(PLLDIR)/evaluateGenericSpecial-pll.c $(PLLDIR)/axml-pll.c $(PLLDIR)/trash-pll.c $(PLLDIR)/vec_unit.h $(PLLDIR)/makenewzGenericSpecial-pll.c $(PLLDIR)/mem_alloc-pll.c $(PLLDIR)/restartHashTable-pll.c $(PLLDIR)/axml-pll.h $(PLLDIR)/mem_alloc.h $(PLLDIR)/recom-pll.c $(PLLDIR)/searchAlgo-pll.c $(PLLDIR)/phylip_parser/msa_sites.h $(PLLDIR)/phylip_parser/xalloc.h $(PLLDIR)/phylip_parser/phylip.h $(PLLDIR)/phylip_parser/lexer.h $(PLLDIR)/phylip_parser/ssort.h $(PLLDIR)/utils-pll.c $(PLLDIR)/treeIO-pll.c $(PLLDIR)/cycle.h $(PLLDIR)/aligned_buffer.h $(PLLDIR)/globalVariables.h $(PLLDIR)/topologies-pll.c $(PLLDIR)/utils.h $(PLLDIR)/evaluatePartialGenericSpecial-pll.c $(PLLDIR)/fastDNAparsimony-pll.c $(PLLDIR)/randomTree-pll.c $(PLLDIR)/optimizeModel-pll.c $(PLLDIR)/treeIO.h $(PLLDIR)/newviewGenericSpecial-pll.c $(PLLDIR)/bipartitionList-pll.c $(PLLDIR)/models-pll.c $(PLLDIR)/genericParallelization.h $(top_srcdir)/src/avxConditional.c
-libpll_a_CFLAGS= -w $(MY_SIMD_FLAGS) $(RAX_FEATURE) -O2 $(SRCINCLUDE)  $(AM_CPP_FLAGS)
-EXAMLDIR=$(top_srcdir)/src/examl
-libexaml_a_SOURCES= $(EXAMLDIR)/searchAlgo.c $(EXAMLDIR)/treeIO.c $(EXAMLDIR)/restartHashTable.c $(EXAMLDIR)/optimizeModel.c $(EXAMLDIR)/newviewGenericSpecial.c $(EXAMLDIR)/trash.c $(EXAMLDIR)/topologies.c $(EXAMLDIR)/axml-examl.h $(EXAMLDIR)/globalVariables.h $(EXAMLDIR)/evaluatePartialGenericSpecial.c $(EXAMLDIR)/bipartitionList.c $(EXAMLDIR)/models.c $(EXAMLDIR)/makenewzGenericSpecial.c $(EXAMLDIR)/evaluateGenericSpecial.c $(EXAMLDIR)/axml.c $(top_srcdir)/src/avxConditional.c $(EXAMLDIR)/fastDNAparsimony.c $(EXAMLDIR)/mpiMock.c $(EXAMLDIR)/mpiMock.h
-libexaml_a_CFLAGS= -w $(MY_SIMD_FLAGS)  -fgnu89-inline   $(RAX_FEATURE) -O2  $(SRCINCLUDE)  $(AM_CPP_FLAGS)
+libpll_a_SOURCES= ./src/pll/evaluateGenericSpecial-pll.c ./src/pll/axml-pll.c ./src/pll/trash-pll.c ./src/pll/vec_unit.h ./src/pll/makenewzGenericSpecial-pll.c ./src/pll/mem_alloc-pll.c ./src/pll/restartHashTable-pll.c ./src/pll/axml-pll.h ./src/pll/mem_alloc.h ./src/pll/recom-pll.c ./src/pll/searchAlgo-pll.c ./src/pll/phylip_parser/msa_sites.h ./src/pll/phylip_parser/xalloc.h ./src/pll/phylip_parser/phylip.h ./src/pll/phylip_parser/lexer.h ./src/pll/phylip_parser/ssort.h ./src/pll/utils-pll.c ./src/pll/treeIO-pll.c ./src/pll/cycle.h ./src/pll/aligned_buffer.h ./src/pll/globalVariables.h ./src/pll/topologies-pll.c ./src/pll/utils.h ./src/pll/evaluatePartialGenericSpecial-pll.c ./src/pll/fastDNAparsimony-pll.c ./src/pll/randomTree-pll.c ./src/pll/optimizeModel-pll.c ./src/pll/treeIO.h ./src/pll/newviewGenericSpecial-pll.c ./src/pll/bipartitionList-pll.c ./src/pll/models-pll.c ./src/pll/genericParallelization.h src/avxConditional.c
+libpll_a_CFLAGS= -w $(VECTOR_FLAGS) $(RAX_FEATURE) $(RAXML_OPT) $(SRCINCLUDE)  $(AM_CPP_FLAGS)
+libexaml_a_SOURCES= ./src/examl/searchAlgo.c ./src/examl/treeIO.c ./src/examl/restartHashTable.c ./src/examl/optimizeModel.c ./src/examl/newviewGenericSpecial.c ./src/examl/trash.c ./src/examl/topologies.c ./src/examl/axml-examl.h ./src/examl/globalVariables.h ./src/examl/evaluatePartialGenericSpecial.c ./src/examl/bipartitionList.c ./src/examl/models.c ./src/examl/makenewzGenericSpecial.c ./src/examl/evaluateGenericSpecial.c ./src/examl/axml.c ./src/avxConditional.c ./src/examl/fastDNAparsimony.c ./src/examl/mpiMock.c ./src/examl/mpiMock.h
+libexaml_a_CFLAGS= -w $(VECTOR_FLAGS)  -fgnu89-inline   $(RAX_FEATURE) $(RAXML_OPT)  $(SRCINCLUDE)  $(AM_CPP_FLAGS)
 
 # configure examl/pll specific stuff 
 if WITH_EXAML 
@@ -38,18 +44,18 @@ bin_PROGRAMS = yggdrasil postProcParam credibleSet extractBips consense parser a
 noinst_LIBRARIES+=libpll.a 
 endif 
 
-libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
-libbayes_a_CFLAGS=-O2  $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
+libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
+libbayes_a_CFLAGS=$(RAXML_OPT)  $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
 exabayes_LDADD= libncl.a libbayes.a 
 exabayes_LDADD+=$(LIBTOUSE)
-exabayes_SOURCES = $(top_srcdir)/src/apps/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
-exabayes_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
+exabayes_SOURCES = ./src/apps/exabayes.cpp ./src/config/CommandLine.cpp ./src/config/CommandLine.hpp
+exabayes_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
 
 
 yggdrasil_LDADD= libncl.a libbayes.a 
 yggdrasil_LDADD+=$(LIBTOUSE)
-yggdrasil_SOURCES = $(top_srcdir)/src/apps/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp
-yggdrasil_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
+yggdrasil_SOURCES = ./src/apps/exabayes.cpp ./src/config/CommandLine.cpp ./src/config/CommandLine.hpp
+yggdrasil_CXXFLAGS=-O3  $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
 
 
 if WITH_EXAML
@@ -61,65 +67,64 @@ endif
 
 ################################################################
 # ASDSF 
-asdsf_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(AM_CPP_FLAGS)
+asdsf_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(AM_CPP_FLAGS)
 asdsf_LDADD= libbayes.a  $(LIBTOUSE)  libncl.a
-asdsf_SOURCES= $(top_srcdir)/src/apps/asdsf.cpp 
+asdsf_SOURCES= ./src/apps/asdsf.cpp 
 
 ################################################################
 # the parser 
-parser_SOURCES=$(top_srcdir)/src/apps/parser.cpp
+parser_SOURCES=./src/apps/parser.cpp
 parser_LDADD= libbayes.a  $(LIBTOUSE) libncl.a
-parser_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) -Wno-deprecated-writable-strings  $(AM_CPP_FLAGS)
+parser_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) -Wno-deprecated-writable-strings  $(AM_CPP_FLAGS)
 
 ################################################################
 # extractBips 
-extractBips_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
+extractBips_CXXFLAGS=-O3 $(VECTOR_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
 extractBips_LDADD= libbayes.a $(LIBTOUSE)  libncl.a
-extractBips_SOURCES=$(top_srcdir)/src/apps/extractBips.cpp  
+extractBips_SOURCES=./src/apps/extractBips.cpp  
 
 
 ################################################################
 # consense 
-consense_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
+consense_CXXFLAGS=-O3 $(VECTOR_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
 consense_LDADD= libbayes.a  $(LIBTOUSE)  libncl.a
-consense_SOURCES=$(top_srcdir)/src/apps/consense.cpp
+consense_SOURCES=./src/apps/consense.cpp
 
 
 ################################################################
 # credibleSet 
-credibleSet_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
+credibleSet_CXXFLAGS=-O3 $(VECTOR_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
 credibleSet_LDADD= libbayes.a  $(LIBTOUSE) libncl.a
-credibleSet_SOURCES=$(top_srcdir)/src/apps/credibleSet.cpp
+credibleSet_SOURCES=./src/apps/credibleSet.cpp
 
 ################################################################
 # postProcParam 
-postProcParam_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
+postProcParam_CXXFLAGS=-O3 $(VECTOR_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
 postProcParam_LDADD= libbayes.a  $(LIBTOUSE) 
-postProcParam_SOURCES=$(top_srcdir)/src/apps/postProcParam.cpp
+postProcParam_SOURCES=./src/apps/postProcParam.cpp
 
 ################################################################
 # ncl 
-npre=$(top_srcdir)/lib/ncl-2.1.18/ncl
-libncl_a_SOURCES = $(npre)/nxsreader.cpp $(npre)/nxscxxdiscretematrix.cpp $(npre)/nxstaxaassociationblock.cpp $(npre)/nxsunalignedblock.cpp $(npre)/nxsmultiformat.cpp $(npre)/nxsdatablock.cpp $(npre)/nxspublicblocks.cpp $(npre)/nxstaxablock.cpp $(npre)/nxscharactersblock.cpp $(npre)/nxsstring.cpp $(npre)/nxstoken.cpp $(npre)/nxsassumptionsblock.cpp $(npre)/nxsblock.cpp $(npre)/nxsdistancesblock.cpp $(npre)/nxssetreader.cpp $(npre)/nxsexception.cpp $(npre)/nxstreesblock.cpp $(npre)/ncl.h $(npre)/nxscharactersblock.h $(npre)/nxsdistancedatum.h $(npre)/nxsreader.h $(npre)/nxstoken.h $(npre)/nxsallocatematrix.h $(npre)/nxscxxdiscretematrix.h $(npre)/nxsdistancesblock.h $(npre)/nxssetreader.h $(npre)/nxstreesblock.h $(npre)/nxsassumptionsblock.h $(npre)/nxsdatablock.h $(npre)/nxsexception.h $(npre)/nxsstring.h $(npre)/nxsunalignedblock.h $(npre)/nxsblock.h $(npre)/nxsdefs.h $(npre)/nxsmultiformat.h $(npre)/nxstaxaassociationblock.h $(npre)/nxsutilcopy.h $(npre)/nxscdiscretematrix.h $(npre)/nxsdiscretedatum.h $(npre)/nxspublicblocks.h $(npre)/nxstaxablock.h
+libncl_a_SOURCES = ./lib/ncl-2.1.18/ncl/nxsreader.cpp ./lib/ncl-2.1.18/ncl/nxscxxdiscretematrix.cpp ./lib/ncl-2.1.18/ncl/nxstaxaassociationblock.cpp ./lib/ncl-2.1.18/ncl/nxsunalignedblock.cpp ./lib/ncl-2.1.18/ncl/nxsmultiformat.cpp ./lib/ncl-2.1.18/ncl/nxsdatablock.cpp ./lib/ncl-2.1.18/ncl/nxspublicblocks.cpp ./lib/ncl-2.1.18/ncl/nxstaxablock.cpp ./lib/ncl-2.1.18/ncl/nxscharactersblock.cpp ./lib/ncl-2.1.18/ncl/nxsstring.cpp ./lib/ncl-2.1.18/ncl/nxstoken.cpp ./lib/ncl-2.1.18/ncl/nxsassumptionsblock.cpp ./lib/ncl-2.1.18/ncl/nxsblock.cpp ./lib/ncl-2.1.18/ncl/nxsdistancesblock.cpp ./lib/ncl-2.1.18/ncl/nxssetreader.cpp ./lib/ncl-2.1.18/ncl/nxsexception.cpp ./lib/ncl-2.1.18/ncl/nxstreesblock.cpp ./lib/ncl-2.1.18/ncl/ncl.h ./lib/ncl-2.1.18/ncl/nxscharactersblock.h ./lib/ncl-2.1.18/ncl/nxsdistancedatum.h ./lib/ncl-2.1.18/ncl/nxsreader.h ./lib/ncl-2.1.18/ncl/nxstoken.h ./lib/ncl-2.1.18/ncl/nxsallocatematrix.h ./lib/ncl-2.1.18/ncl/nxscxxdiscretematrix.h ./lib/ncl-2.1.18/ncl/nxsdistancesblock.h ./lib/ncl-2.1.18/ncl/nxssetreader.h ./lib/ncl-2.1.18/ncl/nxstreesblock.h ./lib/ncl-2.1.18/ncl/nxsassumptionsblock.h ./lib/ncl-2.1.18/ncl/nxsdatablock.h ./lib/ncl-2.1.18/ncl/nxsexception.h ./lib/ncl-2.1.18/ncl/nxsstring.h ./lib/ncl-2.1.18/ncl/nxsunalignedblock.h ./lib/ncl-2.1.18/ncl/nxsblock.h ./lib/ncl-2.1.18/ncl/nxsdefs.h ./lib/ncl-2.1.18/ncl/nxsmultiformat.h ./lib/ncl-2.1.18/ncl/nxstaxaassociationblock.h ./lib/ncl-2.1.18/ncl/nxsutilcopy.h ./lib/ncl-2.1.18/ncl/nxscdiscretematrix.h ./lib/ncl-2.1.18/ncl/nxsdiscretedatum.h ./lib/ncl-2.1.18/ncl/nxspublicblocks.h ./lib/ncl-2.1.18/ncl/nxstaxablock.h
 libncl_a_CXXFLAGS= -w -O3 -I$(top_srcdir)/lib/ncl-2.1.18/  -D__STRICT_ANSI__ $(AM_CPP_FLAGS)
 
 ################################
 # cleanup 
-clean : 
-	-rm -rf $(bin_PROGRAMS) *.o *.a 
+# clean : 
+# 	-rm -rf $(bin_PROGRAMS) *.o *.a 
 
 doc : 
 	doxygen 
 
 
 man:  
-	./manual/process.sh
+	$(top_srcdir)/manual/process.sh $(top_srcdir)/manual
 
 
 date :
-	./utils/updateDate.sh
+	$(top_srcdir)/utils/updateDate.sh
 
 mydist : 
-	make man
 	make date 
 	make dist 
+	make dist-zip

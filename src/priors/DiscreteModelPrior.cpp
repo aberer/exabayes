@@ -1,6 +1,5 @@
 #include "DiscreteModelPrior.hpp"
 #include "ProtModel.hpp"
-// #include "common.h"
 
 
 DiscreteModelPrior:: DiscreteModelPrior(std::unordered_map<ProtModel,double> model)
@@ -29,7 +28,8 @@ ParameterContent DiscreteModelPrior::drawFromPrior(Randomness &rand, bool unifor
 {
   auto modelList = std::vector<ProtModel>{}; 
   for(auto &v : _modelProbs)
-    modelList.push_back(std::get<0>(v)); 
+    if( std::get<1>(v) != 0 )
+      modelList.push_back(std::get<0>(v)); 
 
   nat index = rand.drawIntegerOpen(modelList.size())  ; 
   

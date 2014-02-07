@@ -22,9 +22,6 @@ public:
 
   void setPartitionInvalid(nat part)  ; 
   void setInvalid(nat part, nat id); 
-  
-  // void extractOrientation(const TreeAln& traln, nat part); 
-  // void extractOrientation( const TreeAln &traln ); 
 
   friend std::ostream& operator<<(std::ostream& out, const ArrayOrientation &rhs); 
 

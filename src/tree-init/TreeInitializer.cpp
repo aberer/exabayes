@@ -299,11 +299,12 @@ void TreeInitializer::initializePartitionsExaml(TreeAln &traln)
 	{
 	  tr.partitionData[model].gapVectorLength = ((int)width / 32) + 1;
 
-	  tr.partitionData[model].gapVector = (unsigned int*)calloc(tr.partitionData[model].gapVectorLength * 2 * tr.mxtips, sizeof(unsigned int));	  	    	  	  
-
-	  tr.partitionData[model].gapColumn = (double *)malloc_aligned(((size_t)tr.mxtips) *								      
-								       ((size_t)(tr.partitionData[model].states)) *
-								       discreteRateCategories(tr.rateHetModel) * sizeof(double));
+	  auto len = tr.partitionData[model].gapVectorLength * 2 * tr.mxtips; 
+	  tr.partitionData[model].gapVector = new unsigned int[len]; 
+	  std::fill(tr.partitionData[model].gapVector, tr.partitionData[model].gapVector + len, 0 ); 
+	  len = tr.mxtips * tr.partitionData[model].states * discreteRateCategories(tr.rateHetModel); 
+	  tr.partitionData[model].gapColumn = new double[ len ];
+	  std::fill(tr.partitionData[model].gapColumn , tr.partitionData[model].gapColumn + len , 0 ); 
 	}
       else
 	{
@@ -532,6 +533,10 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
       partition.yVector = (unsigned char **)exa_malloc(sizeof(unsigned char*) * ((size_t)tr.mxtips + 1));
       partition.xVector = (double **)exa_calloc(sizeof(double*), (size_t)tr.mxtips);
       partition.xSpaceVector = (size_t *)exa_calloc((size_t)tr.mxtips, sizeof(size_t));
+      // for(int i = 0; i < tr.mxtips; ++i)
+      // 	partition.xSpaceVector[i] = 0; 
+      
+
       partition.wgt = (int *)exa_malloc_aligned(width * sizeof(int));
       partition.rateCategory = (int *)exa_calloc(width, sizeof(int));
 
@@ -539,8 +544,10 @@ void TreeInitializer::initializePartitionsPLL(TreeAln &traln)
 	{
 	  partition.gapVectorLength = ((int)width / 32) + 1;
 	  assert(4 == sizeof(unsigned int));
-	  partition.gapVector = (unsigned int*)exa_calloc((size_t)partition.gapVectorLength * 2 * (size_t)tr.mxtips, sizeof(unsigned int));
-	  partition.gapColumn = (double *)exa_malloc_aligned(((size_t)tr.mxtips) * ((size_t)(partition.states)) * discreteRateCategories(tr.rateHetModel) * sizeof(double));
+	  partition.gapVector = new unsigned int[(partition.gapVectorLength * 2 * tr.mxtips)];
+	  std::fill(partition.gapVector, partition.gapVector + (partition.gapVectorLength * 2 * tr.mxtips), 0 );
+	  partition.gapColumn = new double[(tr.mxtips * partition.states * discreteRateCategories(tr.rateHetModel) )];
+	  std::fill(partition.gapColumn, partition.gapColumn + (tr.mxtips * partition.states * discreteRateCategories(tr.rateHetModel) ), 0 ); 
 	}
       else
 	{

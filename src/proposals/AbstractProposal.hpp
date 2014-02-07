@@ -19,7 +19,7 @@
 class AbstractProposal : public Serializable
 {
 public: 
-  AbstractProposal( Category cat, std::string  _name, double weight, bool needsFullTraversal = true)  ; 
+  AbstractProposal( Category cat, std::string  _name, double weight, double minTuning, double maxTuning, bool needsFullTraversal = true )  ; 
   AbstractProposal( const AbstractProposal& rhs)  ;   
   virtual ~AbstractProposal(){}
   AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
@@ -152,6 +152,8 @@ public:
   void enableForProteins() {_suitsProteinPartitions = true; }
   bool isSuitsProteinPartitions() const {return _suitsProteinPartitions;  } 
 
+  double tuneParameter(int batch, double accRatio, double parameter, bool inverse ); 
+
 protected:   
   std::string _name;   
   SuccessCounter _sctr; 
@@ -169,6 +171,9 @@ protected:
   nat _id; 
 
   bool _suitsProteinPartitions; // TODO try to get rid of it   
+
+  const double _minTuning; 
+  const double _maxTuning; 
 }; 
 
 #endif

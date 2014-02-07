@@ -33,7 +33,7 @@ std::array<double,2> ParsimonySPR::factors =
 // #define PRINT_DEBUG_PARS
 
 ParsimonySPR::ParsimonySPR( double parsWarp, double blMulti, int depth)
-  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. , false)
+  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. , false, 0,0)
   , _parsWarp(parsWarp)    
   , _blMulti(blMulti)    
   , _depth(depth)
