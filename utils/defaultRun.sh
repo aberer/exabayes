@@ -24,11 +24,11 @@ seed=$RANDOM
 # seed=32090 # problematic with  143 (on DNA!)
 
 # src/proposals/
-numProc=2
+numProc=1
 
 # extraArgs="-R 2 -C 2" 
 # extraArgs="-M 3 -S  "
-# extraArgs="-M 0  -S"
+# extraArgs="-M 3"
 # extraArgs=" -C 4 "
 # extraArgs="-C 2"
 # extraArgs="-M 3 "
@@ -41,6 +41,12 @@ numProc=2
 
 # early with 150 , VERIFIED 
 # seed=31853
+
+
+
+# args="--disable-silent-rules" 
+# args="--disable-sse"
+args=""
 
 devel=0
 
@@ -103,8 +109,7 @@ if [ "$#" -lt 3 ]; then
     exit
 fi
 
-# args="--disable-silent-rules" 
-args=""
+
 dataset=$3
 
 pathtodata=$topdir/data/$dataset

@@ -34,7 +34,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
   // extract the parameter (a handy std::vector<double> that for
   // instance contains all the frequencies)
-  auto content = _primaryParameters[0]->extractParameter(traln); 
+  auto content = _primaryParameters[0]->extractParameter(traln ); 
   savedContent = content; 
   
   // nasty, we have to correct for the fracchange 

@@ -1,5 +1,7 @@
 #include "RateHelper.hpp"
 
+#include <iostream>
+
 
 nat RateHelper::numStateToNumInTriangleMatrix(int numStates)  
 {  
@@ -16,7 +18,7 @@ std::vector<nat> RateHelper::extractIndices(nat num, nat numRates, const std::ve
   //         F F
   //           Y
 
-  auto indices = std::vector<nat>  {}; 
+  auto indices = std::vector<nat> {}; 
   if(num == 0)
     {
       for(nat i = 0; i < numRates-1; ++i)
@@ -44,7 +46,6 @@ std::vector<nat> RateHelper::extractIndices(nat num, nat numRates, const std::ve
 std::vector<double> RateHelper::extractSomeRates(nat num, nat numRates, std::vector<double> &rates)
 {
   auto partRates = std::vector<double>{}; 
-
   auto indices = extractIndices(num, numRates, rates);
 
   for(auto index : indices)
@@ -64,42 +65,6 @@ void RateHelper::insertRates(nat num, nat numRates, std::vector<double> &rates, 
 }
 
 
-
-// std::vector<double> RateHelper::extractOrFillSomeRates(nat num, nat numRates , std::vector<double> &rates, std::vector<double> partRates, bool extract)
-// {
-//   // auto combs = AminoAcidAlphabet().getCombinations(); 
-//   // tout << combs << std::endl; 
-//   // tout << num << std::endl; 
-
-//   auto indices = extractIndices(num, numRates, rates);
-  
-//   if(extract)
-//     {
-//     }
-//   else 
-//     {
-//       nat ctr = 0; 
-//       for(auto index : indices)
-// 	rates[index] = partRates.at(ctr++);
-//     }
-  
-//   // tout << "at rates " ; 
-//   // for(auto index : indices)
-//   //   tout << combs[index] << "\t"; 
-//   // tout << std::endl; 
-
-
-//   // 1 2 3 4 5 X
-//   //   6 7 8 9 Y
-//   //     A B C Z
-//   //       D E F
-//   //         F F
-//   //           Y
-  
-//   return partRates; 
-// }
-
-
 void RateHelper::convertRelativeToLast(std::vector<double> &values) 
 {
   auto last = values.back();
@@ -107,12 +72,15 @@ void RateHelper::convertRelativeToLast(std::vector<double> &values)
 }
 
 
-double RateHelper::convertToSum1(std::vector<double> &values) 
+
+
+static double getKahansSum1(const std::vector<double> &cpy)
 {
   double sum  = 0.; 
   double error = 0.; 
   
-  for(auto v : values)
+  // kahans algorithm
+  for(auto v : cpy)
     {
       double y = v - error; 
       double t = sum + v ; 
@@ -120,7 +88,40 @@ double RateHelper::convertToSum1(std::vector<double> &values)
       sum = t; 
     }
 
+  return sum; 
+}
+
+
+
+// second order kahan algorithm
+static double getKahansSum2(const std::vector<double> &x)
+{
+  double s = 0, cs  = 0, ccs = 0; 
+  for(nat i = 0; i < x.size() ; ++i)
+    {
+      double t = s + x[i]; 
+
+      double c = (abs(s) >= abs(x[i])) ? c = (s - t ) + x[i]  : c = (x[i] - t ) + s ; 
+      s = t; 
+      t = cs + c; 
+      double cc  = (abs(cs) >= abs(c)) ? cc = (cs - t ) + c : cc = (c - t ) + cs; 
+      cs = t ; 
+      ccs += cc; 
+    }
   
+  return s + cs + ccs; 
+}
+
+
+double RateHelper::convertToSum1(std::vector<double> &values) 
+{
+  // sorting reduces the error
+  auto cpy = values; 
+  std::sort(begin(cpy), end(cpy)); 
+
+  double sum = getKahansSum2(cpy) ; 
+
+  //  we do not loose precision here 
   for (auto &v : values) 
     v /= sum; 
   
@@ -134,10 +135,10 @@ void RateHelper::convertToGivenSum(std::vector<double> &values, double givenSum)
 }
 
 
-
 std::vector<double> RateHelper::getScaledValues(std::vector<double> values, double scParameter) 
 {
   double scaler = scParameter * values.size() ;  
   std::for_each(begin(values), end(values), [=](double &v){ v *= scaler; });
   return values; 
 }
+

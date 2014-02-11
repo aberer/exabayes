@@ -279,10 +279,7 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 	    k,
 	    states = pr->partitionData[model]->states,
 	    width = pr->partitionData[model]->parsimonyLength;
-            
-	  unsigned int	
-	    i;      
-                 
+
 	  switch(states)
 	    {
 	    case 2:       
@@ -299,7 +296,7 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 		    this[k]  = &(pr->partitionData[model]->parsVect[(width * 2 * pNumber) + width * k]);
 		  }
 
-		for(i = 0; i < width; i += INTS_PER_VECTOR)
+		for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 		  {	 	  
 		    INT_TYPE
 		      s_r, s_l, v_N,
@@ -341,7 +338,7 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 		    this[k]  = &(pr->partitionData[model]->parsVect[(width * 4 * pNumber) + width * k]);
 		  }
 
-		for(i = 0; i < width; i += INTS_PER_VECTOR)
+		for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 		  {	 	  
 		    INT_TYPE
 		      s_r, s_l, v_N,
@@ -395,7 +392,9 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 		    this[k]  = &(pr->partitionData[model]->parsVect[(width * 20 * pNumber) + width * k]);
 		  }
 
-		for(i = 0; i < width; i += INTS_PER_VECTOR)
+		/* printf("width=%d\n", width);  */
+
+		for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 		  {	 	  
 		    size_t j;
 		    
@@ -405,7 +404,7 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 		      l_A[20], 
 		      v_A[20];	    	 
 		    
-		    for(j = 0; j < 20; j++)
+		    for( j = 0; j < 20; j++)
 		      {
 			s_l = VECTOR_LOAD((CAST)(&left[j][i]));
 			s_r = VECTOR_LOAD((CAST)(&right[j][i]));
@@ -440,7 +439,7 @@ static void newviewParsimonyIterativeFast(tree *tr, partitionList *pr)
 		    this[k]  = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
 		  }
 
-		for(i = 0; i < width; i += INTS_PER_VECTOR)
+		for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 		  {	 	  
 		    size_t j;
 		    

@@ -42,8 +42,6 @@ int NUM_BRANCHES;
 
 // #define TEST  
 #ifdef TEST
-// #include "PendingSwap.hpp"
-#include "comm/IncompleteMesh.hpp"
 #endif
 
 // have ae look at that later again 
@@ -69,19 +67,31 @@ static void exa_main ( CommandLine &cl,  std::shared_ptr<ParallelSetup> pl )
 {   
   timeIncrement = CLOCK::system_clock::now(); 
 
-#ifdef TEST     
-  auto mesh = IncompleteMesh{} ;
-  mesh.initialize(16, 1, 4);	
 
-  for(nat i = 0; i < 16 ; ++i)
-    {
-      auto coords = mesh.getCoordinates(i);
-      auto rank = mesh.getRankFromCoordinates(coords); 
-      tout <<  i << " has coordinates "  << coords[0] << "," << coords[1] << "," << coords[2] << "\t" << rank << std::endl; 
-      
-    }
+#ifdef TEST     
   
-  ParallelSetup::genericExit(0); 
+  // double t = pow(2,128); 
+  // printf("%f\n", t); 
+
+
+  // double t2 = 1; 
+  // for(nat i = 0; i < 128; ++i)
+  //   t2 *= 2; 
+  // printf("%f\n", )
+
+
+  // auto mesh = IncompleteMesh{} ;
+  // mesh.initialize(16, 1, 4);	
+
+  // for(nat i = 0; i < 16 ; ++i)
+  //   {
+  //     auto coords = mesh.getCoordinates(i);
+  //     auto rank = mesh.getRankFromCoordinates(coords); 
+  //     tout <<  i << " has coordinates "  << coords[0] << "," << coords[1] << "," << coords[2] << "\t" << rank << std::endl; 
+      
+  //   }
+  
+  // ParallelSetup::genericExit(0); 
 #else 
   // assert(0); 
   auto&& master = SampleMaster(  pl, cl );

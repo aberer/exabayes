@@ -75,10 +75,9 @@ namespace Density
     double density=0;
     density -= betaFunctionLog(alphas);
     
-    // double sum = 0; 
-    if( fabs( std::accumulate(begin(values), end(values), 0. )    - 1. )  > 1e-6)
+    double sum = std::accumulate(begin(values), end(values), 0. ); 
+    if( fabs( sum - 1. )  > 1e-6)
       {
-	double sum = std::accumulate(begin(values), end(values), 0. ); 
 	std::cout << "error: expected sum of 1, got " << sum << std::endl; 
 	assert(0); 
       }      

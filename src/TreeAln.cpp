@@ -523,7 +523,7 @@ void TreeAln::initRevMat(nat model)
 #endif
 }
 
-void TreeAln::setRevMat(const std::vector<double> &values, nat model)
+void TreeAln::setRevMat(const std::vector<double> &values, nat model )
 {
   bool valuesOkay = BoundsChecker::checkRevmat(values); 
   if(not valuesOkay)
@@ -604,14 +604,11 @@ std::vector<double> TreeAln::getRevMat(nat model) const
   auto result = std::vector<double>{} ; 
   auto& partition = getPartition(model); 
   assert(partition.dataType != AA_DATA || partition.protModels == GTR); 
-  double sum = 0; 
-  for(nat i =0 ; i < RateHelper::numStateToNumInTriangleMatrix(partition.states); ++i)
-    {
-      result.push_back(partition.substRates[i]);
-      sum += result[i]; 
-    }
 
-  for_each(result.begin(), result.end(), [&](double &v) { v /= sum ; }) ; 
+  for(nat i = 0; i < RateHelper::numStateToNumInTriangleMatrix(partition.states); ++i)
+    result.push_back(partition.substRates[i]);
+  
+  RateHelper::convertToSum1(result);
 
   return result; 
 }

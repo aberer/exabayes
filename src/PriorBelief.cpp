@@ -71,7 +71,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	  break; 
 	case Category::SUBSTITUTION_RATES: 
 	  {
-	    auto revMat = traln.getRevMat(v->getPartitions()[0]); 
+	    auto revMat = traln.getRevMat(v->getPartitions()[0] ); 
 	    partialResult = v->getPrior()->getLogProb(revMat); 
 	  }
 	  break; 

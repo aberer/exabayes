@@ -5,14 +5,14 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <ncl/ncl.h>
-
 #include "GlobalVariables.hpp"
+
+#include "config/ExaBlock.hpp"
+
 #include "priors/AbstractPrior.hpp"
 #include "axml.h"
 
 #include "Category.hpp"
-
 
 // if the set is empty, then we have a general "fall-back" prior
 typedef std::unordered_multimap<Category, 
@@ -21,13 +21,13 @@ typedef std::unordered_multimap<Category,
 multiMapCategory2TuplePartitionsPrior ; 
 
 
-class BlockPrior : public NxsBlock
+class BlockPrior : public ExaBlock
 {
 public: 
   explicit BlockPrior(nat numPart) 
     : _numPart(numPart)
   {
-    NCL_BLOCKTYPE_ATTR_NAME = "PRIOR"; 
+    NCL_BLOCKTYPE_ATTR_NAME = "PRIORS"; 
   }
   
   void verify() const; 

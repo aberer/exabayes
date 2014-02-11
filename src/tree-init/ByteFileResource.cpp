@@ -284,21 +284,6 @@ std::tuple<parsimonyNumber*,nat> ByteFileResource::fillParsVect( nat numNode, na
   parsimonyNumber* ptr; 
   nat len = 0; 
   size_t mult = numNode * states; 
- 
-#if HAVE_PLL != 0
-  // old stuff, where nothing is distributed 
-  byteRead(_byteFile,&len , 1); 
-
-  assert(len != 0 ); 
-
-  size_t numBytes =  mult * len; 
-  ptr = (parsimonyNumber*)exa_malloc_aligned( numBytes * sizeof(parsimonyNumber));
-  // memset(ptr, 0 , sizeof(parsimonyNumber) * numBytes) ;
-
-  // tout << "reading  " <<  numBytes << std::endl; 
-  byteRead(_byteFile, ptr, numBytes); 
-#else 
-
 
   // data distribution is not necessary in line with partition
   // distribution scheme. But this will not hurt, unless we are trying
@@ -306,28 +291,34 @@ std::tuple<parsimonyNumber*,nat> ByteFileResource::fillParsVect( nat numNode, na
 
   nat totalLen = 0; 
   byteRead(_byteFile,&totalLen , 1); 
+  // assert(0); 
 
   assert(totalLen != 0 ); 
 
-  nat numBytes =  mult * totalLen; 
+  size_t numBytes =  mult * totalLen; 
 
+  // tout << std::endl  << "numBytes=" << numBytes  << std::endl;
+  
   auto allArray = std::vector<parsimonyNumber> (numBytes, 0); 
   byteRead(_byteFile, allArray.data(), numBytes); 
   // tout << "model=" << model << "\tlength=" << totalLen << "\treading  " <<  numBytes << std::endl; 
 
-  // nat rank = _pl.getRankInChainBatch(); 
+  // for(nat i = 0; i < numBytes; ++i)
+  //   tout << allArray[i] << "," ; 
+  // tout << std::endl; 
+
+#if HAVE_PLL == 0 
   nat rank = _pl->getRankInData();
   nat size = _pl->getSizeInData(); 
-
-  // nat size = _pl->.getProcessesPerChainBatch();
-  // nat size = _pl->.get
+#else 
+  nat rank = 0; 
+  nat size = 1 ; 
+#endif 
 
   len = (totalLen / size); 
   if( rank < totalLen % size )
     ++len; 
   auto lenUnpadded = len; 
-  
-  // tout << "totallen=" << totalLen << std::endl; 
 
   // could be avx-specific, but it's hardly worth the coding overhead... 
   const int intsPerType = 8; 
@@ -345,10 +336,8 @@ std::tuple<parsimonyNumber*,nat> ByteFileResource::fillParsVect( nat numNode, na
 
   for(nat i = 0; i <  2 * numTax   ; ++ i )
     {
-      // tout << "taxon "<< i << std::endl; 
       for(nat k = 0; k < states ; ++k )
         {
-          // tout << "state "<< k <<  " " ; 
           auto curStart = &(allArray.at( totalLen * states * (i )  + ( totalLen * k  )  ))  ; 
           auto localPtr = ptr + len * states * (i ) + (len * k ); 
             
@@ -356,20 +345,11 @@ std::tuple<parsimonyNumber*,nat> ByteFileResource::fillParsVect( nat numNode, na
           for( nat j = 0 ; j < totalLen; ++j )
             {
               if(j % size == rank)
-                {
-                  // printBits(curStart[j]) ; 
-                  // tout << ","; 
-                  localPtr[ctr++] = curStart[j]; 
-                }
+		localPtr[ctr++] = curStart[j]; 
             }
-          // tout << std::endl; 
           assert(ctr == lenUnpadded); 
         }
-      // tout << std::endl; 
     }
-
-
-#endif
 
 #ifdef DEBUG_MSG
   tout << "done"  << std::endl; 

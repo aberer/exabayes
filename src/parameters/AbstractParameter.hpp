@@ -12,6 +12,7 @@ class AbstractParameter
 public:   
   AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio); 
   AbstractParameter(const AbstractParameter& rhs); 
+
   /** 
       @brief applies the parameter content to the tree 
    */ 

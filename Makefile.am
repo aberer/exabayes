@@ -10,12 +10,12 @@ WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter 
 RAX_FEATURE= -D_GNU_SOURCE -fomit-frame-pointer -funroll-loops -D__STRICT_ANSI__ 
 
 if NO_SSE
-VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE -mno-avx -mno-sse3   -march=native -mtune=generic 
+VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE -mno-avx -mno-sse3   -march=native -mtune=generic $(SIMD_FLAGS)
 else 
 if NO_AVX
-VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -mno-avx -D_OPTIMIZED_FUNCTIONS -march=native -mtune=native
+VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -mno-avx -D_OPTIMIZED_FUNCTIONS -march=native -mtune=native $(SIMD_FLAGS)
 else 
-VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS  -march=native -mtune=native $(SIMD_FLAGS)
+VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS -march=native -mtune=native $(SIMD_FLAGS)
 endif
 endif
 
@@ -40,7 +40,7 @@ noinst_LIBRARIES+=libexaml.a
 bin_PROGRAMS = exabayes 
 else
 LIBTOUSE=libpll.a
-bin_PROGRAMS = yggdrasil postProcParam credibleSet extractBips consense parser asdsf
+bin_PROGRAMS = yggdrasil postProcParam credibleSet extractBips consense parser sdsf
 noinst_LIBRARIES+=libpll.a 
 endif 
 
@@ -66,10 +66,10 @@ endif
 
 
 ################################################################
-# ASDSF 
-asdsf_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(AM_CPP_FLAGS)
-asdsf_LDADD= libbayes.a  $(LIBTOUSE)  libncl.a
-asdsf_SOURCES= ./src/apps/asdsf.cpp 
+# SDSF 
+sdsf_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(AM_CPP_FLAGS)
+sdsf_LDADD= libbayes.a  $(LIBTOUSE)  libncl.a
+sdsf_SOURCES= ./src/apps/sdsf.cpp 
 
 ################################################################
 # the parser 
@@ -109,22 +109,15 @@ libncl_a_SOURCES = ./lib/ncl-2.1.18/ncl/nxsreader.cpp ./lib/ncl-2.1.18/ncl/nxscx
 libncl_a_CXXFLAGS= -w -O3 -I$(top_srcdir)/lib/ncl-2.1.18/  -D__STRICT_ANSI__ $(AM_CPP_FLAGS)
 
 ################################
-# cleanup 
-# clean : 
-# 	-rm -rf $(bin_PROGRAMS) *.o *.a 
 
 doc : 
 	doxygen 
 
-
 man:  
 	$(top_srcdir)/manual/process.sh $(top_srcdir)/manual
-
 
 date :
 	$(top_srcdir)/utils/updateDate.sh
 
-mydist : 
+dist-hook: 
 	make date 
-	make dist 
-	make dist-zip

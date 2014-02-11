@@ -261,7 +261,7 @@ static void newviewCAT_FLEX(int tipCase, double *extEV,
      */
 
 
-  printf( "newview: %d\n", tipCase);
+  /* printf( "newview: %d\n", tipCase); */
 
   switch(tipCase)
   {
@@ -439,6 +439,7 @@ static void newviewCAT_FLEX(int tipCase, double *extEV,
 
   *scalerIncrement = addScale;
 }
+
 
 /** @brief Computation of conditional likelihood arrays for GAMMA
  *
@@ -626,15 +627,20 @@ static void newviewGAMMA_FLEX(int tipCase,
 
 
           v = &x3[span * i];
+
           scale = 1;
           for(l = 0; scale && (l < span); l++)
             scale = (ABS(v[l]) <  minlikelihood);
 
-
           if (scale)
           {
+	    /* printf("tip_inner: ");  */
             for(l = 0; l < span; l++)
-              v[l] *= twotothe256;
+	      {
+		v[l] *= twotothe256;
+		/* printf("%g,", v[l]);  */
+	      }
+	    /* printf("\n");  */
 
             addScale += wgt[i];		    
           }
@@ -682,14 +688,20 @@ static void newviewGAMMA_FLEX(int tipCase,
         }
 
         v = &(x3[span * i]);
+
         scale = 1;
         for(l = 0; scale && (l < span); l++)
           scale = ((ABS(v[l]) <  minlikelihood));
 
         if(scale)
         {  
+	  /* printf("inner-inner:");  */
           for(l = 0; l < span; l++)
-            v[l] *= twotothe256;
+	    {
+	      v[l] *= twotothe256;
+	      /* printf("%g,", v[l]);  */
+	    }
+	  /* printf("\n");  */
 
           addScale += wgt[i];	    	  
         }
@@ -1090,6 +1102,8 @@ void newviewIterative (tree *tr, partitionList *pr, int startIndex, array_reserv
 	  q_slot = tInfo->qNumber - tr->mxtips - 1;
 	  r_slot = tInfo->rNumber - tr->mxtips - 1;
 	}
+
+      /* printf("%d = (%d,%d)\n" , tInfo->pNumber, tInfo->qNumber, tInfo->rNumber);  */
 
       /* if(  debugPrint) */
       /* 	printf("evaluating %d <= %d,%d\n", tInfo->pNumber, tInfo->qNumber, tInfo->rNumber); */

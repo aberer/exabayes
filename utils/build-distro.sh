@@ -29,7 +29,7 @@ export MPICH_CXX=$cxxcomp
 # make man 
 # make distclean
 
-ldflags="  -static-libstdc++"  # -static-libgcc
+ldflags=" -static-libstdc++"  # -static-libgcc
 # ldflags=" -static-libgcc  "
 
 export OMPI_LDFLAGS=$ldflags
