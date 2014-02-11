@@ -13,34 +13,54 @@
 #include "RevMatParameter.hpp"
 #include "axml.h"
 
+
+
+
 void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
   auto tmp = content.values; 
+
   RateHelper::convertRelativeToLast(tmp); 
   
+  // tout << "SET " << tmp << std::endl; 
+  
   for(auto &m : _partitions)
-    traln.setRevMat(tmp, m);
-
-  // auto newStuff = traln.getRevMat(_partitions[0]);
-  // tout << "applying new values " ;  
-  // std::copy(newStuff.begin(), newStuff.end(), std::ostream_iterator<double>(tout, ",")); 
-  // tout << std::endl;   
-  // tout << "fracchange = " << traln.getTr()->fracchange << std::endl; 
+    traln.setRevMat(tmp, m, false);
 } 
 
 
 ParameterContent RevMatParameter::extractParameter(const TreeAln &traln )  const
 {
   ParameterContent result; 
-  result.values = traln.getRevMat(_partitions.at(0)); 
-  double sum = 0; 
-  for(auto &v : result.values )
-    sum += v;  
-  for_each(result.values.begin(), result.values.end(), [=] (double &d){ d/= sum; }); 
+
+  result.values = traln.getRevMat(_partitions.at(0), false); 
+  
+  // DO ***NOT*** REMOVE 
+  // this is necessary to avoid rounding errors
+  // with AA GTR matrices; but essentially it is just a hack to reduce
+  // the probability of the gtr aa matrix to mess up
+  RateHelper::convertRelativeToLast(result.values); 
+  RateHelper::convertToSum1(result.values);
+
+  // tout << "GET " << result.values << std::endl; 
+
   return result; 
 }   
 
 
+ParameterContent RevMatParameter::extractParameterRaw(const TreeAln& traln) const 
+{
+  auto result = ParameterContent{}; 
+  result.values = traln.getRevMat(_partitions.at(0), true); 
+  return result; 
+}
+ 
+
+void RevMatParameter::applyParameterRaw(TreeAln &traln, const ParameterContent & content) const 
+{
+  for(auto &m : _partitions)
+    traln.setRevMat(content.values, m, true); 
+} 
 
 void RevMatParameter::printSample(std::ostream& fileHandle, const TreeAln &traln) const 
 {

@@ -9,7 +9,10 @@
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 { 
   auto tmp = content.values; 
+  
   RateHelper::convertToSum1(tmp); 
+    
+  // tout << MAX_SCI_PRECISION << "setting " << content.values << std::endl; 
 
   for(auto &m : _partitions)    
     traln.setFrequencies(tmp, m); 
@@ -20,6 +23,11 @@ ParameterContent FrequencyParameter::extractParameter(const TreeAln &traln )  co
 {
   auto result = ParameterContent{}; 
   result.values = traln.getFrequencies(_partitions[0]); 
+
+  // tout << MAX_SCI_PRECISION << "extracting "<< result.values << std::endl; 
+
+  // RateHelper::convertToSum1(result.values); 
+
   return result; 
 }   
 
@@ -35,7 +43,7 @@ void FrequencyParameter::printSample(std::ostream& fileHandle, const TreeAln &tr
     }
 } 
 
-
+ 
 void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln)  const   
 {
   auto content = extractParameter(traln); 

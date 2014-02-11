@@ -149,8 +149,10 @@ public:
 
   friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
 
-  void enableForProteins() {_suitsProteinPartitions = true; }
-  bool isSuitsProteinPartitions() const {return _suitsProteinPartitions;  } 
+  // void enableForProteins() {_suitsProteinPartitions = true; }
+  // bool isSuitsProteinPartitions() const {return _suitsProteinPartitions;  } 
+  void setForProteinsOnly(bool val)  {_forProteinOnly = val; }
+  bool isForProteinOnly() const {return _forProteinOnly; }
 
   double tuneParameter(int batch, double accRatio, double parameter, bool inverse ); 
 
@@ -170,7 +172,9 @@ protected:
   
   nat _id; 
 
-  bool _suitsProteinPartitions; // TODO try to get rid of it   
+  // bool _suitsProteinPartitions; // TODO try to get rid of it   
+  // bool _disableFor
+  bool _forProteinOnly; 
 
   const double _minTuning; 
   const double _maxTuning; 

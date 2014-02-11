@@ -46,25 +46,6 @@ static std::vector<double> parseValues(NxsToken &token)
 }
 
 
-double parseScientificDouble(NxsToken& token)
-{
-  auto str = token.GetToken(); 
-  token.GetNextToken();
-  tout << token.GetToken() << std::endl; 
-  if(token.GetToken().compare("E") == 0 || token.GetToken().compare("e") == 0 )
-    {
-      token.GetNextToken(); 
-      str += token.GetToken(); 
-      token.GetNextToken();
-    }
-  auto &&iss =  std::istringstream{str}	; 
-  double result = 0; 
-  iss >> result ; 
-  return result; 
-}
-
-
-
 std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {
   auto value = token.GetToken(false); 
@@ -80,15 +61,13 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       if(token.GetToken().compare(")") == 0) 
 	return make_unique<UniformPrior>(0,0); 
 
-      double n1 = atof(token.GetToken().c_str()); 
-      token.GetNextToken();
-
-      // double n1 = parseScientificDouble(token);
+      double n1 = parseScientificDouble(token); 
 
       assert(token.GetToken().compare(",") == 0);
       token.GetNextToken();
-      double n2 = atof(token.GetToken().c_str());
-      token.GetNextToken();
+
+      double n2 = parseScientificDouble(token); 
+
       assert(token.GetToken().compare(")") == 0);
       return make_unique<UniformPrior>(n1,n2);  
     }
@@ -199,8 +178,9 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
   else if(value.EqualsCaseInsensitive("exponential"))
     {
       token.GetNextToken();
-      double n1 = atof(token.GetToken().c_str());
-      token.GetNextToken();
+
+      double n1 = parseScientificDouble(token);
+
       assert(token.GetToken().compare(")") == 0);
       return make_unique<ExponentialPrior>(n1);
     }

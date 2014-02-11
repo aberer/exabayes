@@ -12,14 +12,17 @@ class AbstractParameter
 public:   
   AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio); 
   AbstractParameter(const AbstractParameter& rhs); 
+
   /** 
       @brief applies the parameter content to the tree 
    */ 
   virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const = 0; 
+  virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const {}
   /** 
       @brief extracts the parameter 
    */ 
   virtual ParameterContent extractParameter(const TreeAln &traln)  const  = 0;   
+  virtual ParameterContent extractParameterRaw(const TreeAln& traln) const {return ParameterContent{}; }
   /** 
       @brief print a sample for this parameter 
    */ 

@@ -87,7 +87,7 @@ public:
   /** 
       @brief get the substitution matrix for partition "model"
    */ 
-  std::vector<double> getRevMat(nat model) const ;   
+  std::vector<double> getRevMat(nat model, bool isRaw) const ;   
   /** 
       @brief gets the state frequencies for partition "model" 
    */ 
@@ -168,7 +168,7 @@ public:
   /** 
       @brief sets the parameters. Format is important, last rate must be 1.0  
   */ 
-  void setRevMat(const std::vector<double> &values, nat model);
+  void setRevMat(const std::vector<double> &values, nat model, bool isRaw);
   /** 
       @brief sets the alpha for partition "model"
    */ 

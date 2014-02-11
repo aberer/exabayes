@@ -24,7 +24,7 @@ BlockRunParameters::BlockRunParameters()
   , useAsdsfMax(false)
   , numSwapsPerGen(1.)
 {
-  NCL_BLOCKTYPE_ATTR_NAME = "runconfig"; 
+  NCL_BLOCKTYPE_ATTR_NAME = "run"; 
 }
 
 
@@ -70,11 +70,11 @@ void BlockRunParameters::Read(NxsToken &token)
 
 	  if(key.EqualsCaseInsensitive("numGen"))
 	    numGen = myConvertToInt(value);
-	  else if (key.EqualsCaseInsensitive("parsimonyStartingTree"))
+	  else if (key.EqualsCaseInsensitive("parsimonystart"))
 	    useParsimonyStarting = convertToBool(value); 
 	  else if (key.EqualsCaseInsensitive("checkpointinterval"))
 	    chkpntFreq = myConvertToInt(value); 
-	  else if(key.EqualsCaseInsensitive("samplingfrequency"))
+	  else if(key.EqualsCaseInsensitive("samplingfreq"))
 	    samplingFreq = myConvertToInt(value); 
 	  else if(key.EqualsCaseInsensitive("proposalsets"))
 	    componentWiseMH = convertToBool(value); 

@@ -30,7 +30,6 @@
 #include "SampleMaster.hpp"
 #include "Chain.hpp"
 #include "TreeRandomizer.hpp"
-// #include "tune.h"
 #include "RunFactory.hpp"	
 
 #include "GlobalVariables.hpp"
@@ -72,8 +71,6 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
   if(startingTree.compare("") != 0 )
     {
       hasBranchLength = std::any_of(startingTree.begin(), startingTree.end(), [](const char c ){ return c == ':'; }  ); 
-
-      // tout << "initializing from tree >" << startingTree << "<" << std::endl; 
 
       auto &&iss = std::istringstream {startingTree };
       auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
@@ -277,7 +274,6 @@ void SampleMaster::initializeFromCheckpoint()
 	  nat curGen = _runs[0].getChains()[0].getGeneration();
 	  _diagFile.regenerate(  _cl.getWorkdir(), _cl.getRunid(),  _cl.getCheckpointId(), 
 				 curGen);
-	  // _runs[0].getSwapInfo().getMatrix().size() * _runs.size()
 	}
     }
 }
@@ -399,6 +395,8 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vec
 	  auto&& prior = param->getPrior(); 
 	  auto content = prior->getInitialValue();
 
+	  // TODO specific function for setting initially 
+
 	  param->verifyContent(traln, content); 
 	  param->applyParameter(traln, content); 
 	}
@@ -418,9 +416,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vec
 
 	  for(auto belem : branches)
 	    {
-	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() 
-			       // not param->getPrior()->needsIntegration() 
-			       )  
+	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() )  
 		? std::get<1>(belem) : initVal ;
 	      auto b = std::get<0>(belem).toBlDummy(); 
 	      b.setConvertedInternalLength(traln,param,absLen);
@@ -765,9 +761,6 @@ void SampleMaster::initializeRuns(Randomness rand)
       if(_plPtr->isRunLeader() && _plPtr->isMyRun(run.getRunid()))
 	run.initializeOutputFiles(_cl.isDryRun());
     }
-
-  // timePassed = CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _initTime   ).count(); 
-  // tout << "[ " << timePassed << "s ] done initializing trees" << std::endl; 
 
   initializeFromCheckpoint(); 
   

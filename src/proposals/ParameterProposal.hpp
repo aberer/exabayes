@@ -37,7 +37,9 @@ private:
   bool modifiesBL; 
   double parameter; 
   std::unique_ptr<AbstractProposer> proposer;
-  ParameterContent savedContent; 
+  
+  ParameterContent _savedContent; 
+  ParameterContent _savedBinaryContent;
 }; 
 
 

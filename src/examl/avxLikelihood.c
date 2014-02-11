@@ -80,7 +80,7 @@ void  newviewGTRGAMMA_AVX(int tipCase,
     scale, 
     addScale = 0;
  
-  __m256d 
+  __m256d
     minlikelihood_avx = _mm256_set1_pd( minlikelihood ),
     twoto = _mm256_set1_pd(twotothe256);
  
@@ -1340,14 +1340,13 @@ void newviewGTRGAMMAPROT_AVX(int tipCase,
 #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #endif
 
-
 #if GCC_VERSION < 40500
    __m256d
     bitmask = _mm256_set_pd(0,0,0,-1);
 #else
   __m256i
     bitmask = _mm256_set_epi32(0, 0, 0, 0, 0, 0, -1, -1);
-#endif 
+#endif
   
   switch(tipCase) 
     {
