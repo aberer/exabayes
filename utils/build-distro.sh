@@ -10,6 +10,7 @@ shift
 cores=$1
 shift
 
+
 ssetypes=$*
 
 fold=$(pwd  | tr '/' '\n'| tail -n 1 )
@@ -18,6 +19,8 @@ if [ "$fold" != "exa-bayes" ]; then
     exit
 fi
 
+export CFLAGS="-Qunused-arguments"
+export CXXFLAGS="-Qunused-arguments"
 
 if [ $IS_APPLE == 0 ]; then
     compi=mpicc.openmpi
@@ -29,6 +32,7 @@ else
     cxxompi=mpicxx-openmpi-mp
     cmpich=mpicc-mpich-mp
     cxxmpich=mpicxx-mpich-mp
+    export CXXFLAGS="-stdlib=libc++ $CXXFLAGS"
 fi
 
 ccomp=gcc
@@ -39,16 +43,16 @@ export OMPI_MPIXX=$cxxcomp
 export MPICH_CC=$ccomp
 export MPICH_CXX=$cxxcomp
 
-./configure 
+./configure
 
 # make man 
 # make distclean
 
-ldflags=" -static-libstdc++"  # -static-libgcc
+# ldflags=" -static-libstdc++"  # -static-libgcc
 # ldflags=" -static-libgcc  "
 
-export OMPI_LDFLAGS=$ldflags
-export MPICH_LDFLAGS=$ldflags
+# export OMPI_LDFLAGS=$ldflags
+# export MPICH_LDFLAGS=$ldflags
 
 rm -f  exabayes-*.zip exabayes-*.tar.gz
 
@@ -59,19 +63,19 @@ do
     then 
 	mpis=sequential
     else
-	mpis="mpich openmpi" 
+	mpis="openmpi mpich" 
     fi 
 
     for mpi in $( echo  $mpis )
     do 
 	make distclean
 
-	if [ $mpi == mpich ]; then
-	    CC=$cmpich
-	    CXX=$cxxmpich
+	if [ "$mpi" == "mpich" ]; then
+	    cc="$cmpich"
+	    cxx="$cxxmpich"
 	else
-	    CC=$compi
-	    CXX=$cxxompi
+	    cc="$compi"
+	    cxx="$cxxompi"
 	fi
 
 	arg=""
@@ -87,9 +91,9 @@ do
 	if [ "$mpi" != "seqential" ] ; then 
 	    # build MPI
 	    cd distro-build 
-	    # ../configure --enable-mpi  CC="ccache $CC" CXX="ccache $CXX" $arg  --prefix $(readlink -f ../bin) --bindir $(readlink -f  ../bin ) && make -j $cores  && make install
-	    cmd="../configure --enable-mpi  CC=\"ccache $CC\" CXX=\"ccache $CXX\" $arg  --prefix $(readlink -f ../bin) --bindir $(readlink -f  ../bin ) && make -j $cores  && make install " 
-	    eval $cmd
+
+	    cmd="../configure --enable-mpi CC=\"ccache $cc\" CXX=\"ccache $cxx\" $arg  --prefix $(readlink -f ../bin) --bindir $(readlink -f  ../bin ) && make -j $cores  && make install " 
+	    eval "$cmd"
 
 	    if [ $? != 0 ]; then
 		echo -e  "\n\nPROBLEM\n\n"
@@ -103,9 +107,11 @@ do
 	# build regular 
 	rm -rf distro-build/*
 	cd distro-build
-	../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp"    LDFLAGS="$ldflags" $arg   --prefix $(readlink -f  ../bin) --bindir $(readlink -f ../bin) && make -j$cores   && make install 
+	cmd="../configure  CC=\"ccache $ccomp\" CXX=\"ccache $cxxcomp\" $arg   --prefix $(readlink -f  ../bin) --bindir $(readlink -f ../bin) && make -j$cores   && make install "
+	eval $cmd
 	if [ $? != 0  ]; then
 	    echo -e "\n\nPROBLEM\n\n"
+	    echo "$cmd"
 	    exit
 	fi
 	cd .. 
