@@ -1,0 +1,2100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>ExaBayes User's Manual</title>
+<!-- 2014-02-14 Fr 13:30 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="for support, please contact exabayes-at-googlegroups-dot-com" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="css/org.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">ExaBayes User's Manual</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Quick Start</a></li>
+<li><a href="#sec-2">2. Scope of ExaBayes: What is it? What is it not?</a></li>
+<li><a href="#sec-3">3. Installation</a>
+<ul>
+<li><a href="#sec-3-1">3.1. Executing downloaded executables</a></li>
+<li><a href="#sec-3-2">3.2. Compiling ExaBayes from source</a>
+<ul>
+<li><a href="#sec-3-2-1">3.2.1. Prerequisites for Linux systems</a></li>
+<li><a href="#apple">3.2.2. Prerequisites for Mac OS X</a></li>
+<li><a href="#sec-3-2-3">3.2.3. Automated build</a></li>
+<li><a href="#sec-3-2-4">3.2.4. Customized build</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sec-4">4. Detailed Example Session</a></li>
+<li><a href="#sec-5">5. Command Line Options</a>
+<ul>
+<li><a href="#sec-5-1">5.1. Mandatory Arguments</a></li>
+<li><a href="#sec-5-2">5.2. Optional Arguments</a></li>
+</ul>
+</li>
+<li><a href="#config">6. Configuration File</a>
+<ul>
+<li><a href="#param-block">6.1. Declaring and Linking Parameters</a></li>
+<li><a href="#sec-6-2">6.2. Declaring Priors for Parameters</a>
+<ul>
+<li><a href="#sec-6-2-1">6.2.1. Topology Prior</a></li>
+<li><a href="#sec-6-2-2">6.2.2. Branch Lengths Prior</a></li>
+<li><a href="#sec-6-2-3">6.2.3. Reversible Matrix Prior</a></li>
+<li><a href="#sec-6-2-4">6.2.4. Rate Heterogeneity Prior</a></li>
+<li><a href="#sec-6-2-5">6.2.5. State Frequencies Prior</a></li>
+<li><a href="#sec-6-2-6">6.2.6. Amino Acid Model Prior</a></li>
+</ul>
+</li>
+<li><a href="#sec-6-3">6.3. Configuring the Run</a>
+<ul>
+<li><a href="#sec-6-3-1">6.3.1. General Options</a></li>
+<li><a href="#sec-6-3-2">6.3.2. Options regarding convergence</a></li>
+<li><a href="#sec-6-3-3">6.3.3. MC3 options</a></li>
+</ul>
+</li>
+<li><a href="#sec-6-4">6.4. Configuring Proposals</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">7. Pre-/post-processing utilities</a>
+<ul>
+<li><a href="#parser">7.1. parser</a></li>
+<li><a href="#sec-7-2">7.2. postProcParam</a></li>
+<li><a href="#sec-7-3">7.3. sdsf</a></li>
+<li><a href="#sec-7-4">7.4. credibleSet</a></li>
+<li><a href="#sec-7-5">7.5. extractBips</a></li>
+<li><a href="#sec-7-6">7.6. consense</a></li>
+</ul>
+</li>
+<li><a href="#cluster">8. ExaBayes on Clusters/Supercomputers</a>
+<ul>
+<li><a href="#sec-8-1">8.1. TL;DR summary</a></li>
+<li><a href="#right-parallelism">8.2. Choosing the right kind of parallelism</a>
+<ul>
+<li><a href="#sec-8-2-1">8.2.1. On Run-level Parallelism</a></li>
+<li><a href="#chain-level">8.2.2. On Chain-level Parallelism</a></li>
+<li><a href="#data-para">8.2.3. On Data Parallelism</a></li>
+</ul>
+</li>
+<li><a href="#memory">8.3. Saving Memory</a></li>
+<li><a href="#sec-8-4">8.4. Highly Partitioned Runs</a></li>
+<li><a href="#reproducibility">8.5. Note on Reproducibility</a></li>
+</ul>
+</li>
+<li><a href="#partitionfile">9. File Format: Model/Partitioning file</a></li>
+<li><a href="#sec-10">10. FAQ</a></li>
+<li><a href="#sec-11">11. References</a></li>
+</ul>
+</div>
+</div>
+<img src="./img/banner.png" width="100%" alt="some_text">
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Quick Start</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Installation of <code>ExaBayes</code> requires basic proficiency with using a
+terminal (for help, consider this <a href="https://help.ubuntu.com/community/UsingTheTerminal">tutorial</a>).
+</p>
+
+<p>
+To the impatient user that wants to give ExaBayes a quick try, we recommend: 
+</p>
+
+<ol class="org-ol">
+<li>download and unpack the software package.
+</li>
+<li>open a terminal, enter the <code>exabayes-&lt;version&gt;</code> directory and
+execute the <b>build.sh</b> script. Compiled binaries will appear in
+the <code>build</code> directory.
+</li>
+<li>if necessary, convert your alignment file to phylip-format (e.g., using <code>seaview</code>)
+</li>
+<li>run the sequential version of ExaBayes, where alignmentFile.phy
+is the alignment file, -m PROT is the equivalent command for an
+unpartitioned protein alignment and <code>$RANDOM</code> could be any random
+number seed.
+<pre class="example">
+$ ./yggdrasil -f alignmentFile.phy -m DNA -s $RANDOM
+</pre>
+</li>
+<li>After some time, ExaBayes should finish or you may abort at any
+time. You can now examine the two output files
+ExaBayes_topology* and ExaBayes_parameters* using the
+post-processing tools <code>consense</code>, <code>postProcParam</code>, <code>credibleSet</code>
+and <code>extractBips</code>. Call the respective programs with <code>-h</code> for an
+overview of functions.
+</li>
+<li>Alternatively, check out the examples folder. It contains a fully
+documented configuration file (just modify for your needs) and a
+few example datasets ready for usage (use the <code>call.sh</code> script).
+For instructions on how to build the parallel version or how to
+do so on an apple system, consider sections <i>#comfort-linux</i> and
+<a href="#apple">3.2.2</a>.
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Scope of ExaBayes: What is it? What is it not?</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+ExaBayes is a tool for Bayesian phylogenetic analyses.  It
+implements a Markov chain Monte Carlo sampling approach that allows
+to determine the posterior probability of a tree (resp., topology)
+and various evolutionary model parameters, for instance, branch
+lengths or substitution rates.
+</p>
+
+<p>
+Similar approaches are implemented in <a href="http://beast.bio.ed.ac.uk">BEAST</a> \cite{Drummond2012} or
+<a href="http://mrbayes.sourceforge.net/">MrBayes</a> \cite{Ronquist2012}. ExaBayes has heavily drawn inspiration
+specifically from the latter one.
+</p>
+
+<p>
+ExaBayes comes with the most commonly used evolutionary models, such
+as the generalized time reversible model (GTR) of character
+substitution, the discretized \(\Gamma\) model of among site rate
+heterogeneity and estimates unconstrained trees. For clocked tree
+models or less parameter-rich substitution models, we refer you to
+the established tools.
+</p>
+
+<p>
+The distinguishing feature of ExaBayes is its capability to handle
+enormous datasets efficiently. ExaBayes provides an implementation
+of data parallelism using the <i>Message Passing Interface</i>
+(MPI). This means, that if you conduct your analysis on a computing
+cluster composed of several machines (a.k.a. nodes), the memory
+needed to evaluate the likelihood for trees and parameters given a
+large alignment can be spread out across multiple computing
+nodes. In conclusion the size of the concatenated alignment ExaBayes
+can handle is only limited by the combined main memory of your
+entire computing cluster.
+</p>
+
+<p>
+Aside from that ExaBayes also implements 
+</p>
+<ul class="org-ul">
+<li>chain-level and run-level parallelism,
+</li>
+<li>techniques to trade runtime for reduced memory footprint,
+</li>
+<li>a subtree equality vector approach that reduces memory without
+loss of runtime,
+</li>
+<li>a native AVX implementation for evaluating likelihood and
+parsimony scores (i.e., ExaBayes makes full use of your
+cutting-edge CPU),
+</li>
+<li>techniques to efficiently handle an arbitrary number of
+partitions.
+</li>
+</ul>
+
+
+<p>
+We use the highly efficient parsimony and likelihood implementation
+of RAxML \cite{Stamatakis2006}. Many of the techniques described
+above are adapted from or inspired by our experiences with
+large-scale maximum likelihood inferences using RAxML-Light/ExaML
+\cite{Stamatakis2012,Stamatakis2012a}.
+</p>
+
+<p>
+The ExaBayes package contains all tools necessary for
+post-processing your sampled chains. For visualization of parameter
+distributions, we recommend <a href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</a> (for which ExaBayes parameter
+files are compatible).
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Installation</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+For ExaBayes, we provide pre-compiled binaries that run on a wide
+range of systems (limited to Linux and MacOS though, we will not be
+able to support Windows in the foreseeable future). For optimal
+efficiency or if you want to use the parallel version, it is highly
+recommendable to compile ExaBayes from source. This should be
+straight-forward on a computer center, requires a bit of work on a
+Linux system and unfortunately is not entirely trivial if you have
+a MacOS system and no experience with the command line.
+</p>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Executing downloaded executables</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+After you have downloaded the appropriate package, you find all
+executables in the <code>./bin</code> folder. Just execute them only using the
+<code>-h</code> flag and you will be given a help page. If the executables
+produce error messages (indicating that some library was not
+found), you either downloaded the wrong package or you have to
+compile from source.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Compiling ExaBayes from source</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+Download and extract the source archive (sources are also included
+in all binary distributions). 
+</p>
+</div>
+
+<div id="outline-container-sec-3-2-1" class="outline-4">
+<h4 id="sec-3-2-1"><span class="section-number-4">3.2.1</span> Prerequisites for Linux systems</h4>
+<div class="outline-text-4" id="text-3-2-1">
+<p>
+ExaBayes requires a relatively recent <code>c/c++</code> compiler that
+supports <code>c++11</code> features. ExaBayes is confirmed to work with (only
+one required):
+</p>
+<ol class="org-ol">
+<li>GCC, version 4.6 or greater 
+</li>
+<li>Clang, version 3.2 or greater
+</li>
+</ol>
+
+<p>
+For running ExaBayes in parallel, you need a working MPI
+installation. If you merely want to make most of your local
+multi-core machine (e.g., laptop), simply install OpenMPI or
+Mpich2. On Debian/Ubuntu, this should be as simple as (choose one):
+</p>
+<pre class="example">
+$ sudo apt-get install mpich2 libmpich2-dev
+$ sudo apt-get install openmpi-bin libopenmpi-dev
+</pre>
+
+<p>
+For checking, if MPI already is installed on your machine, try to
+enter <code>mpirun</code> or <code>mpiexec</code> in a terminal. If it is not installed,
+you will receive a message <code>command not found</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-apple" class="outline-4">
+<h4 id="apple"><a id="sec-3-2-2" name="sec-3-2-2"></a><span class="section-number-4">3.2.2</span> Prerequisites for Mac OS X</h4>
+<div class="outline-text-4" id="text-apple">
+
+<p>
+For installation on an Apple system, you ideally should have set up
+an environment that allows you to compile (MPI-)applications in the
+terminal.
+</p>
+
+<p>
+First, you need to download and install <a href="http://en.wikipedia.org/wiki/Xcode">Xcode</a> (available in the
+AppStore) and <a href="http://www.macports.org/">MacPorts</a>. You only need MacPorts, if you want to
+build the parallel version. Open a terminal and use MacPorts to
+install an MPI implementation (either openmpi or mpich2):
+</p>
+<pre class="example">
+$ sudo port install openmpi-default
+$ sudo port install mpich-default
+</pre>
+
+<p>
+After the installation, a message will suggest that you set the MPI
+installation as default. You now have MPI compiler wrappers
+available (mpicc-mpich-mp, mpicxx-mpich-mp <i>or</i> mpicc-mpich-mp,
+mpicxx-mpich-mp <i>or</i> mpicc, mpicxx). 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3-2-3" class="outline-4">
+<h4 id="sec-3-2-3"><span class="section-number-4">3.2.3</span> Automated build</h4>
+<div class="outline-text-4" id="text-3-2-3">
+<p>
+We provide a small script that compiles ExaBayes and dumps all
+binaries into the <code>./bin</code> folder.  If you want to build the
+parallel version (and you already have installed MPI as described
+in the previous section), then you have to provide the names of
+the mpi compiler wrappers. If you just want the sequential
+version, just execute the script.
+</p>
+
+<p>
+Sequential only: 
+</p>
+<pre class="example">
+$ ./build.sh
+</pre>
+
+<p>
+Sequential and parallel version (where mpicc and mpicxx are the
+names of the mpi compilers):
+</p>
+<pre class="example">
+$ ./build.sh CC=mpicc CXX=mpicxx
+</pre>
+
+<p>
+If you build on MacOS, an additional option will be necessary
+<b>before</b> you call the build script:
+</p>
+
+<pre class="example">
+$ export CXXFLAGS="-stdlib=libc++"
+</pre>
+
+<p>
+Once everything has compiled, check, if all binaries are there as expected: 
+</p>
+<pre class="example">
+$ ls bin
+     consense	credibleSet	exabayes	extractBips	parser		postProcParam	sdsf		yggdrasil
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2-4" class="outline-4">
+<h4 id="sec-3-2-4"><span class="section-number-4">3.2.4</span> Customized build</h4>
+<div class="outline-text-4" id="text-3-2-4">
+<p>
+If you have a bit of experience with the usual Linux way to
+install programs, you may want to read this section for additional
+advice on the build process. This section also helps, if the
+automated build fails for whatever reason (although preferably you
+can contact our googlegroup).
+</p>
+
+<p>
+Essentially, you have to build the parallel and sequential
+executables separately. Since it is hard to guess the mpi compiler
+correctly, you have to explicitly set the MPI C and MPI C++
+compiler.
+</p>
+
+<p>
+The following commands first build the sequential version, then
+the parallel version. Remember to set CXXFLAGS as mentioned in the
+previous apple-specific section.
+</p>
+<pre class="example">
+$ ./configure                
+$ make 
+$ ./configure --enable-mpi CC=mpicc CXX=mpicxx 
+$ make clean 
+$ make
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Detailed Example Session</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+In this section we walk through a typical Bayesian analyses. It is
+primarily intended for users new to phylogeny estimation.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Command Line Options</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+The essential arguments for ExaBayes are provided on the command
+line. Aside from that, all options that affect how the MCMC
+computation is carried out is specified here.
+</p>
+</div>
+<div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1"><span class="section-number-3">5.1</span> Mandatory Arguments</h3>
+<div class="outline-text-3" id="text-5-1">
+<ul class="org-ul">
+<li><b>-f alignmentFile</b> 
+
+<p>
+provides an alignment file. If this file is the binary output
+produced by <code>parser</code> (see Section <a href="#parser">7.1</a>), then no further
+arguments are required.  If you provide a plain (un-processed)
+<a href="http://evolution.genetics.washington.edu/phylip/doc/sequence.html">Phylip file</a>, then either <code>-m</code> (single partition model) or <code>-q</code>
+(model file) are mandatory.
+</p>
+</li>
+
+<li><b>-m DNA | PROT</b> 
+
+<p>
+specifies the data type used, when a
+Phylip-formatted alignment has been passed via <code>-f</code>. This way, the
+alignment is parsed as a single partition with either DNA or amino
+acid (<code>PROT</code>) data.
+</p>
+</li>
+
+<li><b>-q modelFile</b> 
+
+<p>
+specifies a raxml-style partitioning/model scheme
+for the alignment. For this option, a Phylip-formatted alignment
+must be passed via <code>-f</code>. See Section <a href="#partitionfile">9</a> for a description of
+the file format. 
+</p>
+</li>
+
+<li><b>-s seed</b> 
+
+<p>
+provides a random seed. This number makes the run
+reproducible. The same seed, data set configuration file will
+result in the exact same result (apart from some exceptions, see Section
+<a href="#reproducibility">8.5</a>).  If you restart from a checkpoint file, this
+option will be ignored.
+</p>
+</li>
+
+<li><b>-n id</b> 
+
+<p>
+provides a run id used for naming output files 
+</p>
+</li>
+
+<li><b>-r runid</b> 
+
+<p>
+restarts your run from a previous run id. If your previous
+ExaBayes-run did not finish (because of a manual abort or
+walltime restrictions), this option can be used for continuing
+the run. It is essential, that you pass the same configuration
+and alignment file. Apart from that command line options that
+govern how the run is carried out, may change.
+</p>
+
+<p>
+Example:
+</p>
+<pre class="example">
+$ mpirun ./exabayes -s $RANDOM -n myId -c myConfig -f myBinaryAlnFile.bin 
+$ [runnig....] -&gt; aborted!
+$ mpirun ./exabayes -r myId -n myIdContinued -c myConfig -f myBinaryAlnFile.bin
+</pre>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2"><span class="section-number-3">5.2</span> Optional Arguments</h3>
+<div class="outline-text-3" id="text-5-2">
+<ul class="org-ul">
+<li><b>-d</b> 
+
+<p>
+carries out a dry-run. Only checks your config and alignment file
+and does not compute anything. Very recommendable, before
+submitting a large run to a cluster.
+</p>
+</li>
+
+<li><b>-c configFile</b> 
+
+<p>
+passes a configuration file that specifies how
+the MCMC will be carried out (see
+./examples/all-options-documented.nex and Section <a href="#config">6</a> for details)
+</p>
+</li>
+
+<li><b>-w workDir</b> 
+
+<p>
+specifies a location for output files
+</p>
+</li>
+
+<li><b>-R num</b> 
+
+<p>
+(<code>exabayes</code>-only) specifies the number of runs (i.e.,
+independent chains) to be executed in parallel. Large runs should
+be carried out as separate runs, see Section <a href="#cluster">8</a> for further
+details.
+</p>
+</li>
+
+<li><b>-C num</b> 
+
+<p>
+(<code>exabayes</code>-only) specifies the number of chains (i.e.,
+coupled chains per independent run) to be executed in
+parallel. Employing this option may be less efficient in terms of
+runtime and memory than data-level parallelism, see Section <a href="#cluster">8</a> for
+further details.
+</p>
+</li>
+
+<li><b>-Q</b> 
+
+<p>
+(<code>exabayes</code>-only) enables per-partition data
+distribution. This option assigns entire partitions to
+processors.  Thus, If your alignment comprises more partitions
+than you have processors available, this option is likely to
+speed up calculations substantially. You should check the
+print-out right before the start of MCMC sampling about whether
+load is distributed equally.
+</p>
+</li>
+
+<li><b>-S</b> 
+
+<p>
+try to save memory using the SEV-technique for gap columns
+on large gappy alignments Please refer to
+<a href="http://www.biomedcentral.com/1471-2105/12/470">http://www.biomedcentral.com/1471-2105/12/470</a> On very gappy
+alignments this option yields considerable runtime improvements.
+</p>
+</li>
+
+<li><b>-M mode</b> 
+
+<p>
+specifies the memory versus runtime trade-off.  &lt;mode&gt;
+is a value between 0 (fastest, highest memory consumption) and 3
+(slowest, least memory consumption). See Section <a href="#memory">8.3</a> for details.
+</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-config" class="outline-2">
+<h2 id="config"><a id="sec-6" name="sec-6"></a><span class="section-number-2">6</span> Configuration File</h2>
+<div class="outline-text-2" id="text-config">
+<p>
+In this Section, we describe all available options of the
+configuration file in detail. The configuration file is a file in
+nexus-format that is divided into sections. See
+examples/all-options-documented.nex for a complete version (and
+maybe copy and customize this file).
+</p>
+
+<p>
+None of the following blocks in mandatory. The parameter file itself
+is not mandatory and the default values mentioned below are used
+instead. The nexus-syntax for declaring a block is (here declaring a
+<code>run</code> block). 
+</p>
+
+<pre class="example">
+begin run; 
+   option value
+end;
+</pre>
+</div>
+
+<div id="outline-container-param-block" class="outline-3">
+<h3 id="param-block"><a id="sec-6-1" name="sec-6-1"></a><span class="section-number-3">6.1</span> Declaring and Linking Parameters</h3>
+<div class="outline-text-3" id="text-param-block">
+
+<p>
+keyword: <code>params</code> 
+</p>
+
+<p>
+This section allows to declare and link parameters (e.g., branch
+lengths) across partitions. You should have declared partitions in
+the partition file (passed via <code>-q</code>). If you provided a partition
+file to the <code>parser</code> tool, then the binary output file already
+contains information about partitions. Partition ids start with 0
+and refer to the order provided in the partition file.
+</p>
+
+<p>
+Currently the following keywords can be used to specify a parameter
+linking scheme (case does not matter):
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">param</th>
+<th scope="col" class="left">explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left"><code>stateFreq</code></td>
+<td class="left">link the equilibrium state frequencies (4 for DNA, 20 for AA) for partitions</td>
+</tr>
+
+<tr>
+<td class="left"><code>rateHet</code></td>
+<td class="left">link the alpha parameter of the \(\Gamma\)  distribution of rate heterogeneity among sites</td>
+</tr>
+
+<tr>
+<td class="left"><code>revMat</code></td>
+<td class="left">link the substitution rates in the GTR matrix (6 for DNA, 190 for AA) across partitions</td>
+</tr>
+
+<tr>
+<td class="left"><code>brlens</code></td>
+<td class="left">link branch lengths across partitions</td>
+</tr>
+
+<tr>
+<td class="left"><code>aaModel</code></td>
+<td class="left">link the fixed rate substitution matrix across partitions (if applicable)</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Note that, by default all parameters are unlinked for all
+partitions. Specifically regarding branch lengths, most people only
+want one global branch length parameter. If a partition id is
+omitted from the scheme, the default behaviour of ExaBayes is to
+instantiate a new parameter for this partition (i.e., it is
+unlinked).
+</p>
+
+<p>
+You have the following options for specifying linkage (here
+demonstrated for the branch length parameter):
+</p>
+
+<ul class="org-ul">
+<li>use <i>comma</i> to declare partitions as separate parameters <br  />
+     <i>example:</i> <code>brlens = (0,1,2,3)</code> <br  />
+     <i>result:</i> v{0}, v{1}, v{2}, v{3} <br  />
+</li>
+
+<li>use <i>plus</i> to link two partitions into one parameter <br  />
+      <i>example:</i> <code>brlens = (0 + 1 , 2 , 3)</code> <br  />
+      <i>result:</i>  v{0,1}, v{2}, v{3} <br  />
+</li>
+
+<li>use <i>colon</i> to declare a range of unlinked partitions (each one parameter) <br  />
+      <i>example:</i> <code>brlens = (0:3)</code> <br  />
+      <i>result:</i>  v{0}, v{1}, v{2}, v{3}  <br  />
+</li>
+
+<li>use <i>dash</i> to declare a range partitions linked into one
+parameter <br  />
+      <i>example:</i> <code>brlens = (0-3)</code><br  />
+      <i>result:</i> v{0,1,2,3} <br  />
+</li>
+</ul>
+
+<p>
+For most use cases, you probably will only want to link all branch
+lengths. However, in case you work with protein partitions, please
+consider:
+</p>
+
+<ul class="org-ul">
+<li>By default ExaBayes creates one <code>aaModel</code> parameter for each of
+your amino acid partitions. As state frequencies, ExaBayes uses
+the empirical frequencies provided by the respective amino acid
+substitution matrix.
+</li>
+<li>Instead of using the empirical frequencies, you may want to let
+ExaBayes integrate over these state frequencies. For doing so, you
+simply have to mention one of the respective partitions when
+specifying the <code>stateFreq</code> parameter scheme. If you have two AA
+partitions, then <code>stateFreq = (0)</code> instructs ExaBayes to integrate
+over the state frequencies of the first amino acid model
+parameter. 
+</li>
+<li>As an alternative to proposing AA substitution matrices for AA
+partitions, you can use ExaBayes to integrate over amino acid GTR
+matrices (189 free parameters).  For doing so, mention (and link)
+the respective AA partitions in the <code>revMat</code> linking scheme (e.g.,
+<code>revMat = (0+1)</code> for 1 shared GTR matrix across 2 AA partitions).
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2"><span class="section-number-3">6.2</span> Declaring Priors for Parameters</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+keyword: <code>priors</code>
+</p>
+
+<p>
+Using prior block, you can declare your prior belief in values the
+parameters ExaBayes integrates over can assume. This affects
+parameters implicitly instantiated by ExaBayes or explicitly
+defined in a param block (see Section <a href="#param-block">6.1</a>).
+</p>
+
+<p>
+By default priors specifications are applied to all matching
+parameters. You can overwrite these <i>general</i> priors by specifying
+parameter-specific priors. For doing so, list all at least one
+partition that is assigned to your target parameter in curly
+brackets after the prior keyword. For instance:
+</p>
+<pre class="example">
+brlenPr exponential(10)
+brlenPr{0,2,10} uniform(1e-6,10)
+</pre>
+<p>
+applies a uniform prior with \([1e-6,10]\) to all branch length
+parameters that contain the partitions 0,2 or 10 and applies an
+exponential prior with \(\lambda = 10\) to all remaining branch
+length parameters.
+</p>
+</div>
+
+<div id="outline-container-sec-6-2-1" class="outline-4">
+<h4 id="sec-6-2-1"><span class="section-number-4">6.2.1</span> Topology Prior</h4>
+<div class="outline-text-4" id="text-6-2-1">
+<p>
+keyword: <code>topoPr</code>, <br  />
+     default: <code>topoPr uniform()</code> <br  />
+     valid values: 
+</p>
+<ul class="org-ul">
+<li><code>fixed()</code> <br  />
+       topology is kept fixed
+</li>
+<li><code>uniform()</code> <br  />
+       all topologies have the same prior probability 
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2-2" class="outline-4">
+<h4 id="sec-6-2-2"><span class="section-number-4">6.2.2</span> Branch Lengths Prior</h4>
+<div class="outline-text-4" id="text-6-2-2">
+<p>
+keyword: <code>brlenPr</code> , <br  />
+     default: <code>brlenpr exponential(10)</code><br  />
+     valid values:
+</p>
+<ul class="org-ul">
+<li><code>exponential(</code> \(\lambda\) <code>)</code> <br  />
+       exponential prior with parameter \(\lambda\), 
+</li>
+<li><code>uniform(start,end)</code> <br  />
+       uniform probability in the range \([start,end]\) <br  />
+</li>
+<li><code>fixed(</code> \(val\) <code>)</code> <br  />
+       all branch lengths will be assigned the value \(val\) that is
+kept fixed during the analysis (not meaningful, you still
+integrate over the topology)
+</li>
+<li><code>fixed()</code> <br  />
+       all branch lengths keep original branch length provided via a
+starting tree. If no starting tree is available, a default
+value (currently 0.1) is assigned and kept fix during MCMC
+sampling.
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2-3" class="outline-4">
+<h4 id="sec-6-2-3"><span class="section-number-4">6.2.3</span> Reversible Matrix Prior</h4>
+<div class="outline-text-4" id="text-6-2-3">
+<p>
+keyword: <code>revMatPr</code>  <br  />
+    default: <code>revMatPr dirichlet(1,...,1)</code><br  />
+     valid values: 
+</p>
+<ul class="org-ul">
+<li><code>dirichlet(</code> \(x_1,x_2,\ldots, x_n\) <code>)</code><br  />
+       where for a dirichlet prior \(x_i\) are the substitution rates in
+a GTR matrix and thus \(n = 6\) for DNA GTR matrices and \(n =
+       190\) (yes, that is much, use with care) for AA GTR matrices.<br  />
+</li>
+<li><code>fixed(</code> \(x_1,x_2, \ldots, x_n\) <code>)</code><br  />
+       fixed rates are assigned to the matrix and kept fix during MCMC
+sampling. The values \(x_i\) may be expressed as relative rates
+(i.e, ExaBayes will normalize the rates, s.t. they sum up to
+1.0)
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2-4" class="outline-4">
+<h4 id="sec-6-2-4"><span class="section-number-4">6.2.4</span> Rate Heterogeneity Prior</h4>
+<div class="outline-text-4" id="text-6-2-4">
+<p>
+keyword: <code>shapePr</code>, <br  />
+     default: <code>shapePr uniform(0,200)</code>  <br  />
+     valid values: <br  />
+</p>
+<ul class="org-ul">
+<li><code>exponential(</code> \(\lambda\) <code>)</code> <br  />
+       prior probability of \(\alpha\) values have an exponential
+distribution with parameter \(\lambda\)
+</li>
+<li><code>uniform( start, end )</code> <br  />
+       \(\alpha\) values have uniform prior probability in the range
+       \([ start, end ]\) 
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2-5" class="outline-4">
+<h4 id="sec-6-2-5"><span class="section-number-4">6.2.5</span> State Frequencies Prior</h4>
+<div class="outline-text-4" id="text-6-2-5">
+<p>
+keyword: <code>stateFreqPr</code> , <br  />
+    default: dirichlet(1,1,\(\ldots\),1)<br  />
+    valid values: <br  />
+</p>
+<ul class="org-ul">
+<li><code>dirichlet(</code> \(x_1,x_2, \ldots, x_n\) <code>)</code> <br  />
+       where for a dirichlet prior \(x_i\) are the state frequencies in
+a GTR matrix and thus \(n =4\) for DNA and \(n = 20\) in a protein
+GTR matrix.
+</li>
+<li><code>fixed(</code> \(x_1,x_2, \ldots, x_n\) <code>)</code> <br  />
+       fixed values are assigned to the state frequencies and not
+changed during MCMC sampling. \(x_i\) can be expressed as
+relative rates (i.e., if the sum is \(\geq 1\), ExaBayes does the
+normalizing for you)
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-6-2-6" class="outline-4">
+<h4 id="sec-6-2-6"><span class="section-number-4">6.2.6</span> Amino Acid Model Prior</h4>
+<div class="outline-text-4" id="text-6-2-6">
+<p>
+keyword: <code>aaPr</code>, <br  />
+    default: <code>aaPr disc(remainder=1.0)</code> <br  />
+    valid values: <br  />
+</p>
+<ul class="org-ul">
+<li><code>disc(</code> \(m_1\) = \(w_1\), \(m_2\) = \(w_2\), \(\ldots\), \(m_n\) = \(w_n\) <code>)</code>  <br  />
+       a discrete probability distribution assigning weights \(w_i\) to
+protein substitution matrices \(m_i\). If only one model is
+specified, this is equivalent to a fixed prior.
+
+<p>
+\(m\) may be one of the following models: DAYHOFF, DCMUT, JTT,
+MTREV, WAG, RTREV, CPREV, VT, BLOSUM62, MTMAM, LG, MTART,
+MTZOA, PMB, HIVB, HIVW, JTTDCMUT, FLU.
+</p>
+
+<p>
+By default, if a model is not mentioned in the list, then its
+prior probability is 0 and thus is not considered during MCMC
+sampling.
+</p>
+
+<p>
+Additionally, you can include remainder value (i.e.,
+<code>remainder=</code> \(w_i\)). This means that all matrices not mentioned
+have a prior probability of \(w_i\).
+</p>
+</li>
+<li><code>fixed(</code> \(m\) <code>)</code><br  />
+       fix the value of the parameter to one of the models listed above 
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-3" class="outline-3">
+<h3 id="sec-6-3"><span class="section-number-3">6.3</span> Configuring the Run</h3>
+<div class="outline-text-3" id="text-6-3">
+<p>
+All of the following options need to be enclosed within a block
+featuring the keyword <code>run</code>. 
+</p>
+</div>
+
+<div id="outline-container-sec-6-3-1" class="outline-4">
+<h4 id="sec-6-3-1"><span class="section-number-4">6.3.1</span> General Options</h4>
+<div class="outline-text-4" id="text-6-3-1">
+<p>
+The following options allow you to exactly configure what kind of
+Bayesian sampling is performed. Keywords and default values are
+mentioned along the description of the options.  
+</p>
+
+<p>
+The most important settings are, how many independent runs
+(<b>numRuns</b>, default: 1) you want to run for how many generations
+(<b>numGen</b>, default: 1,000,000). If you execute exactly 1 run, then
+ExaBayes will terminate after <code>numGen</code> generations. For more than 1
+run, ExaBayes will terminate once <code>numGen</code> generations have passed
+and one of the following topological convergence diagnostics are
+below a specified threshold.
+</p>
+
+<p>
+By default, ExaBayes draws a sample from every cold chain (i.e.,
+for each independent run) every 500 generations (can be changed
+via <b>sampleFreq</b>). To change the print frequency (informing you
+about the likelihood state of each chain), modify <b>printFreq</b>. 
+</p>
+
+<p>
+ExaBayes updates a checkpoint file at regular intervals (1,000
+generations by default), the respective variable for changing the
+frequency is <b>checkPointInterval</b>. 
+</p>
+
+<p>
+If you do not specify starting trees, then ExaBayes uses random
+trees as initial topology. If you set <b>parsimonyStart</b> to
+<code>true</code>, a parsimony starting tree will be used instead.
+</p>
+
+<p>
+Some proposals (e.g., the branch length multiplier) can be tuned
+for achieving good acceptance ratios. ExaBayes tunes proposal
+parameters, once a proposal has been drawn 100 times (use
+<b>tuneFreq</b> to change this).
+</p>
+
+<p>
+If you are running a dataset in parallel that comprises many
+partitions (possibly using the -Q option), it is advisable to
+group the proposals per partition into proposal sets (i.e., set
+<b>proposalSets</b> to <code>true</code>, this is the default). If proposal sets
+is enabled and you have say multiple substitution matrix
+parameters, then ExaBayes will propose (for instance) new
+substitution parameters for each substitution matrix parameter one
+after another (instead of only drawing one of the parameters at
+random).
+</p>
+</div>
+</div>
+<div id="outline-container-sec-6-3-2" class="outline-4">
+<h4 id="sec-6-3-2"><span class="section-number-4">6.3.2</span> Options regarding convergence</h4>
+<div class="outline-text-4" id="text-6-3-2">
+<p>
+ExaBayes implements the same diagnostics for topological
+convergence as MrBayes and BEAST. These are either the maximum or
+the average deviation of split (i.e., bipartition) frequencies
+(MSDSF/ASDSF). By default, ExaBayes employs the ASDSF. You can
+change to MSDSF by setting <b>convergenceCriterion</b> to <code>max</code>. For
+disabling the convergence detection, set it to <code>none</code>. 
+</p>
+
+<p>
+The convergence threshold for either of these statistics can be
+specified via <b>sdsfConvergence</b> (default: 0.05, i.e., the
+respective statistic must be \(\leq 5 \%\)). Usually, splits that
+exhibit a low posterior probability are excluded from this
+statistic, since it is hard to determine their probability
+accurately. You can specify the exclusion threshold for the
+ASDSF/MSDSF via <b>sdsfIgnoreFreq</b> (default: 0.1, i.e., splits that
+do not occur in at least 10% of the trees of a run are ignored).
+</p>
+
+<p>
+Also relevant for the convergence statistic is how many samples
+are discarded by ExaBayes as burn-in. By default, the initial 25%
+of all sampled trees are discarded (change this via
+<b>burninProportion</b>). If you want to use an absolute burn-in,
+specify <b>burninGen</b> (e.g., <code>burninGen 1e4</code>) instead. In this case,
+all trees sampled prior to generation 10,000 are discarded.
+</p>
+
+<p>
+ExaBayes checks for topological convergence once every run has
+proceeded by \(5,000\) generations (set the <b>diagFreq</b> variable to
+change this value). 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-6-3-3" class="outline-4">
+<h4 id="sec-6-3-3"><span class="section-number-4">6.3.3</span> MC3 options</h4>
+<div class="outline-text-4" id="text-6-3-3">
+<p>
+If you sample a rough likelihood landscape, you may want to employ
+Metropolis-coupled MCMC (MC3, turned off by default). In very
+brief terms, this means that a number of heated chains are coupled
+to the cold chain (from which samples are drawn).  All coupled
+chains attempt to swap their states at regular intervals. Thus,
+the cold chain can be enabled to reach regions of the parameter
+space (potentially separated by values with low posterior
+probability) that are otherwise very unlikely to be reached.
+</p>
+
+<p>
+The total number of coupled chains can be specified via
+<b>numCoupledChains</b>.  This number includes the cold chain, so if
+you want to add three heated chains, <code>numCoupledChains 4</code> is the
+correct statement.
+</p>
+
+<p>
+The chains are heated incrementally, so the more chains you added,
+the hotter the hottest chain will get. The heat \(\beta\) for the
+\(i\)-th heated chain (where \(i = 0\) for the cold chain) is defined
+as
+</p>
+
+\begin{equation}
+\beta = \frac{1}{ 1 + i \cdot \delta}. 
+\end{equation}
+
+<p>
+When deciding upon acceptance of a new state, the likelihood and
+prior ratio are exponentiated with \(\beta\) (thus increasing the
+acceptance probability for heated chains). By default, the heat
+constant \(\delta\) is set to 0.1. The value changed by setting the
+variable <b>heatFactor</b>. 
+</p>
+
+<p>
+The expected number of swap attempts between chains per generation
+(i.e., after each chain has proceeded this many generations) can
+be specified via <b>numSwapPerGen</b> (default: 1). This is a very
+important variable that affects both the performance of the MC3
+mechanism as well as the your parallel runtime performance (if
+applicable).
+</p>
+
+<p>
+The reason for this is, that an increase of number of coupled
+chains will not directly translate into more efficient
+sampling. If the number of swap attempts is kept constant, then it
+becomes increasingly unlikely that any change is propagated to the
+cold chain as you increase the number of heated chains. On the
+other side, if you run coupled chains in parallel (-R argument),
+then more swapping attempts will lead to increased waiting
+times. This is, because processes computing the chain will have to
+wait for processes that compute the likelihood of the other chain
+involved in a swap attempt.
+</p>
+
+<p>
+If you want heated chains to start from the same topology
+as the cold chain, set <b>heatedChainsUseSame</b> to <code>true</code>.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-6-4" class="outline-3">
+<h3 id="sec-6-4"><span class="section-number-3">6.4</span> Configuring Proposals</h3>
+<div class="outline-text-3" id="text-6-4">
+<p>
+ExaBayes allows you to configure proposals that are used to move
+your chains through the parameter space. For each proposal, a
+relative weight governs, how often a specific proposal is
+drawn. You can customize your proposal mixture by modifying these
+weights. A proposal provides values for a single parameter only, so
+a change of the relative weight affects all related proposals.
+Specifically the topological proposals are described in detail in
+\cite{Lakner2008a}. 
+</p>
+
+
+<p>
+Using proposal sets does not represent an exception to this, the
+relative frequencies a parameter is updated stay the same.
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">keyword</th>
+<th scope="col" class="left">full name</th>
+<th scope="col" class="left">affected parameters</th>
+<th scope="col" class="right">default weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left"><b>nodeSlider</b></td>
+<td class="left">node slider</td>
+<td class="left">branch lengths</td>
+<td class="right">5</td>
+</tr>
+
+<tr>
+<td class="left"><b>treeLengthMult</b></td>
+<td class="left">tree length multiplier</td>
+<td class="left">branch lengths</td>
+<td class="right">1</td>
+</tr>
+
+<tr>
+<td class="left"><b>branchMulti</b></td>
+<td class="left">multiplier on branch lengths</td>
+<td class="left">branch lengths</td>
+<td class="right">15</td>
+</tr>
+
+<tr>
+<td class="left"><b>eTBR</b></td>
+<td class="left">extending tree bisection and reconnection (eTBR)</td>
+<td class="left">topology</td>
+<td class="right">5</td>
+</tr>
+
+<tr>
+<td class="left"><b>eSPR</b></td>
+<td class="left">extending subtree pruning and regrafting (eSPR)</td>
+<td class="left">topology</td>
+<td class="right">5</td>
+</tr>
+
+<tr>
+<td class="left"><b>parsimonySPR</b></td>
+<td class="left">parsimony-biased subtree pruning and regrafting</td>
+<td class="left">topology</td>
+<td class="right">5</td>
+</tr>
+
+<tr>
+<td class="left"><b>stNNI</b></td>
+<td class="left">stochastic nearest neighbor interchange</td>
+<td class="left">topology</td>
+<td class="right">5</td>
+</tr>
+
+<tr>
+<td class="left"><b>rateHetMulti</b></td>
+<td class="left">multiplier on \(\alpha\)</td>
+<td class="left">rate heterogeneity</td>
+<td class="right">1</td>
+</tr>
+
+<tr>
+<td class="left"><b>revMatSlider</b></td>
+<td class="left">sliding window</td>
+<td class="left">rev. matrix (DNA)</td>
+<td class="right">1</td>
+</tr>
+
+<tr>
+<td class="left"><b>revMatDirichlet</b></td>
+<td class="left">dirichlet proposal</td>
+<td class="left">rev. matrix (DNA)</td>
+<td class="right">1</td>
+</tr>
+
+<tr>
+<td class="left"><b>RevmatRateDirich</b></td>
+<td class="left">partial dirichlet proposal</td>
+<td class="left">rev. matrix (AA)</td>
+<td class="right">1</td>
+</tr>
+
+<tr>
+<td class="left"><b>frequencySlider</b></td>
+<td class="left">sliding window</td>
+<td class="left">state frequencies</td>
+<td class="right">0.5</td>
+</tr>
+
+<tr>
+<td class="left"><b>frequencyDirichlet</b></td>
+<td class="left">dirichlet proposal</td>
+<td class="left">state frequencies</td>
+<td class="right">0.5</td>
+</tr>
+
+<tr>
+<td class="left"><b>aaModelJump</b></td>
+<td class="left">fixed AA matrix</td>
+<td class="left">amino acid model</td>
+<td class="right">1</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Moreover, the behaviour of the topological proposals can be
+customized. The eSPR prunes a subtree, follows down a random path
+(starting with the original pruning position) and chooses the
+current branch as re-grafting position with a certain stopping
+probability (keyword: <code>eSprStopProb</code>). In case of the eTBR, the tree
+is bisected at a branch and the bisected branch traverses the tree
+on both ends as described for the eSPR (keyword for the stopping
+probability is <code>eTbrStopProb</code>).
+</p>
+
+<p>
+The parsimony-biased SPR (parsSPR) move prunes a subtree and
+proposes a regraft position proportionally to the parsimony score of
+the resulting tree. The parsSPR evaluates the parsimony score for
+regrafting positions that are no more than \(n\) steps (keyword:
+<code>parsSPRRadius</code>) apart (i.e., it considers branches within a
+specified radius for re-insertion). Computing the parsimony score is
+extremely fast and parallelized in ExaBayes. If you are dealing with
+large trees, consider increasing the radius. It may not increase
+mixing, but definitely will reduce the burn-in time and the increase
+in runtime should not be problematic. The default value depends on
+the logarithm of the number of taxa (a reasonable assumption, if we
+do not expect comb-like trees).
+</p>
+
+<p>
+Similar to MrBayes, parsimony scores are <i>heated</i> (i.e.,
+exponentiated) using the value of <code>parsimonyWarp</code>. If this value is
+decreased, the probability that trees with low parsimony score are
+proposed will get higher.  
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">keyword</th>
+<th scope="col" class="right">default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left"><b>eSprStopProb</b></td>
+<td class="right">0.5</td>
+</tr>
+
+<tr>
+<td class="left"><b>eTbrStopProb</b></td>
+<td class="right">0.5</td>
+</tr>
+
+<tr>
+<td class="left"><b>parsimonyWarp</b></td>
+<td class="right">0.10</td>
+</tr>
+
+<tr>
+<td class="left"><b>parsSprRadius</b></td>
+<td class="right">\(\lfloor 2 \cdot log(n) \rfloor\)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Pre-/post-processing utilities</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+For all utilities, please use the -h option, the documentation is
+mostly sufficient to execute the programs. In this section, we
+provide additional hints and caveats about employment of these
+tools.
+</p>
+</div>
+<div id="outline-container-parser" class="outline-3">
+<h3 id="parser"><a id="sec-7-1" name="sec-7-1"></a><span class="section-number-3">7.1</span> parser</h3>
+<div class="outline-text-3" id="text-parser">
+<p>
+This utility parses an phylip-formatted alignment and creates a
+binary representation of this alignment. You either have to
+indicate the data type of a single partition alignment (via <code>-m</code>)
+or provide a model file via <code>-q</code> (see Section <a href="#partitionfile">9</a>).
+</p>
+
+<p>
+Parsing large alignment can take a considerable amount of time that
+is lost manifold when ExaBayes is executed in parallel.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-7-2" class="outline-3">
+<h3 id="sec-7-2"><span class="section-number-3">7.2</span> postProcParam</h3>
+<div class="outline-text-3" id="text-7-2">
+<p>
+This utility can be used to summarize (similar to sump in MrBayes
+or the summary statistics in Tracer) all sampled parameters. 
+</p>
+
+<p>
+This is straight-forward for continuous parameters (such as
+substitution rates). If you integrate over fixed protein model
+matrices (e.g, WAG, LG,&#x2026;), you are integrating over a discrete
+parameter. The output in the ExaBayes_parameters* will list the
+respective matrices. In this case, postProcParam will create an
+extra column that contains the discrete distribution. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-7-3" class="outline-3">
+<h3 id="sec-7-3"><span class="section-number-3">7.3</span> sdsf</h3>
+<div class="outline-text-3" id="text-7-3">
+<p>
+This utility computes deviations of split frequencies (either
+maximum or average, abbrev. as ASDSF/MSDSF). If you are integrating
+over topologies (you usually are), ASDSF/MSDSF are an essential
+convergence criterion. Usually an ASDSF of 0.5-1% is considered
+"excellent convergence" and values between 1-5% are considered to
+be acceptable.
+</p>
+
+<p>
+You will encounter strongest deviations for branches with low
+posterior probability.
+</p>
+
+<p>
+The stand-alone <code>sdsf</code> computes the same result that is also
+calculated, if you run multiple independent analysis with
+convergence criterion. If you run an exceptionally large analysis
+with multiple independent runs and plan on sampling a very large
+number of trees, it is highly recommendable to launch each
+independent run as a distinct ExaBayes session. You could have a
+master-script that launches the independent runs (to be run for
+e.g., 2 h), then checks for convergence and restarts the runs from
+the respective checkpoints, if not converged yet. If an immense
+number of processes is involved and your cpu-h budget is tight,
+this saves you some sequential overhead.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-7-4" class="outline-3">
+<h3 id="sec-7-4"><span class="section-number-3">7.4</span> credibleSet</h3>
+<div class="outline-text-3" id="text-7-4">
+<p>
+This utility computes the credible set of topologies (up to a
+specified percentile) in one or many tree sets. Use it for
+post-analyses of your tree samples. 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-7-5" class="outline-3">
+<h3 id="sec-7-5"><span class="section-number-3">7.5</span> extractBips</h3>
+<div class="outline-text-3" id="text-7-5">
+<p>
+This utility extracts bipartitions (AKA splits or edges) from tree
+sets and the branch lengths associated with these
+bipartitions. Note that, this utility also examines trivial
+bipartitions (these correspond to outer branches in a tree).
+</p>
+
+<p>
+extractBips produces the following files: 
+</p>
+<ul class="org-ul">
+<li><b>ExaBayes_bipartitions.*</b> lists the smaller partition of a
+bipartition (i.e., all taxa omitted are in the complementary
+partition) and assigns a unique identifier to the bipartition.
+</li>
+
+<li><b>ExaBayes_fileNames.*</b> lists the file names of the input topology
+files and assigns a for reference in the remaining two files.
+</li>
+
+<li><b>ExaBayes_bipartitionBranchLengths.*</b> contains all unique branch
+lengths samples associated with a specific bipartition in a
+specific file. The file id and bipartition id from the previous
+two files are used for that.
+</li>
+
+<li><b>ExaBayes_bipartitionStatistics.*</b> contains summary statistics
+for the branch lengths associated with bipartitions (similar to
+the output of postProcParam). The ESS value indicates, whether
+you have sufficiently sampled the branch length associated with a
+branch and the PRSF value can be used to judge, if the samples
+from different chains converged against the same distribution.
+</li>
+</ul>
+
+<p>
+If a bipartition occurs only in one chain, extractBips will produce
+<code>-nan</code>-values.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-7-6" class="outline-3">
+<h3 id="sec-7-6"><span class="section-number-3">7.6</span> consense</h3>
+<div class="outline-text-3" id="text-7-6">
+<p>
+This utility allows to build consensus trees from one or more tree
+sets. If computing the consensus tree (specifically the extended MR
+consensus) becomes computationally challenging, you may want to
+give the parallelized consensus tree algorithm in <a href="https://github.com/stamatak/standard-RAxML">RAxML</a> a try (use
+<code>-J MRE</code>).
+</p>
+
+<p>
+<code>consense</code> will produces two output files (one in Newick format,
+one in Nexus format). Nodes are annotated with marginal probability
+(i.e., confidence), median, mean and 5%/95% quantile values.
+</p>
+
+<p>
+If you ran analyses with unlinked branch lengths (i.e., you had
+multiple partitions with a branch length parameter each), then you
+should create one consensus tree for each branch length parameter.
+ExaBayes writes one topology file per parameter and per
+analysis. So you can consense all files that have a "tree-x" (where
+x is the id of the parameter) in their name.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-cluster" class="outline-2">
+<h2 id="cluster"><a id="sec-8" name="sec-8"></a><span class="section-number-2">8</span> ExaBayes on Clusters/Supercomputers</h2>
+<div class="outline-text-2" id="text-cluster">
+
+<p>
+The striking feature of ExaBayes is its capability to execute
+standard analyses on clusters and super-computers efficiently.
+This section goes through various aspects worth considering.
+</p>
+
+<p>
+On clusters you often have to load a MPI module first. After
+loading the module and compiling ExaBayes using the MPI C/C++
+wrapper, you can execute a number of MPI processes using the
+<code>mpirun</code> (or <code>mpiexec</code>) commend. You usually specify the number of
+processes via <code>-np &lt;procs&gt;</code> or similar. You usually have to provide
+a batch script that is committed to the scheduler.
+</p>
+
+<p>
+In ExaBayes, you may have several computing nodes working on a
+chain in parallel. We refer to the entirety of nodes computing a
+chain as <i>parallel unit</i>.
+</p>
+</div>
+
+<div id="outline-container-sec-8-1" class="outline-3">
+<h3 id="sec-8-1"><span class="section-number-3">8.1</span> TL;DR summary</h3>
+<div class="outline-text-3" id="text-8-1">
+<p>
+In most cases, if you have \(x\) processes available and each machine
+(e.g., 4 machines with each 12 cores \(\Rightarrow\) 48 processes):
+</p>
+
+<ul class="org-ul">
+<li>if you run \(n\) independent analyses, use <code>-R n</code>.
+</li>
+<li>if you want to run \(m\) coupled chains, check, if ExaBayes becomes
+faster, if you increase from <code>-C 1</code> over <code>-C 2</code> to <code>-C 4</code> up to
+<code>-C m</code> (often the optimum is 2 or 4). For each increment
+(default: 500 generations), ExaBayes prints the time required for
+the last increment (use this for benchmarking).
+</li>
+<li>check the load balance output. For good parallel efficiency, each
+process should at least have &asymp; 100 patterns. Otherwise,
+less processes may be sufficient, but more do not hurt, if you
+are not under a budget constraint.
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-right-parallelism" class="outline-3">
+<h3 id="right-parallelism"><a id="sec-8-2" name="sec-8-2"></a><span class="section-number-3">8.2</span> Choosing the right kind of parallelism</h3>
+<div class="outline-text-3" id="text-right-parallelism">
+
+<p>
+ExaBayes implements three levels of parallelism (in descending
+order of granularity):
+</p>
+<ul class="org-ul">
+<li>runs-level parallelism,
+</li>
+<li>chain-level parallelism,
+</li>
+<li>data parallelism.
+</li>
+</ul>
+
+<p>
+For optimal performance, please consider the following
+example. Assume, you run \(m\) coupled chains and \(n\) independent
+runs, while you specify that \(m_p\) coupled chains and \(n_p\)
+independent runs are run in parallel (via <code>-R</code> and <code>-C</code>). For
+reasons of load balance, \(m\) should be a multiple of \(m_p\) (analog
+for \(n\)). Assume each of your computing nodes has \(k\) cores and you
+want to use \(l\) computing nodes for each parallel working unit
+(working on one coupled chain in an independent run that is
+executed in parallel). Thus, you will obtain optimal performance,
+if you execute ExeBayes with a total number of processes of 
+</p>
+
+\begin{equation}
+processes = m_p \cdot n_p \cdot l \cdot k .
+\end{equation}
+
+<p>
+If the number of cores \(k\) is divisible by 2, \(l = 2^i\) (where \(i <
+   0\)) works as well. This way several parallel working units fit on a
+node.
+</p>
+</div>
+
+<div id="outline-container-sec-8-2-1" class="outline-4">
+<h4 id="sec-8-2-1"><span class="section-number-4">8.2.1</span> On Run-level Parallelism</h4>
+<div class="outline-text-4" id="text-8-2-1">
+<p>
+Obviously, run-level parallelism is the most efficient kind, but
+also a trivial form of parallelism. Processes working on different
+runs rarely have to communicate with each other (except for writing
+a checkpoint, so make sure your checkpointing frequency is not too
+low). Thus, if you instruct ExaBayes to execute 2 runs parallel,
+then using twice as many processes will result in an optimal
+speedup of two.
+</p>
+
+<p>
+Alternatively, you can commit each independent run separately to
+the cluster and naturally get the same parallel speedup this
+way. You will save computational time, if you regularly check for
+topological convergence (using the <code>asdsf</code> tool). So one
+possibility is to commit several runs for which you specify a large
+number of generations in the config file and a relatively short
+walltime (maybe 2h) when committing the scripts. After the scripts
+have finished, another script checks the ASDSF and recommits the
+runs (using the checkpointing functionality <code>-r</code>). Or you commit
+several jobs for each of your run and each job has to wait for the
+previous job to finish (e.g., using <code>-hold_jid</code> in Grid
+Engine). 
+</p>
+
+<p>
+The optimal strategy depends on the configuration of your
+cluster/supercomputer. In some instances a single large run
+parallelized via <code>-R</code> allows your job a higher priority in the
+queue, in other instances smaller jobs that run for a short period
+will allow you to get the results as quickly as possible.
+</p>
+
+
+<p>
+If you sample an immense number of trees using an immense number of
+processes, we recommend to choose a non-monolithic (e.g., the
+second) strategy. The <code>asdsf</code> requires a bit of runtime on its own
+that increases with the number of trees and that is lost manifold,
+if many processes have to wait before they continue.
+</p>
+</div>
+</div>
+<div id="outline-container-chain-level" class="outline-4">
+<h4 id="chain-level"><a id="sec-8-2-2" name="sec-8-2-2"></a><span class="section-number-4">8.2.2</span> On Chain-level Parallelism</h4>
+<div class="outline-text-4" id="text-chain-level">
+<p>
+Employing chain-level parallelism in Bayesian analyses comes with
+some caveats. The speedup you can achieve with coupled chains
+strongly depends on how often an individual coupled chain is
+involved in a swapping attempt. Each time two chains \(a\) and \(b\)
+swap, all processes working on \(a\) have to wait for chain \(b\) to
+reach the respective generation and vice versa. Reducing the
+number of swap attempts (via <code>numSwapPerGen</code>) will improve your
+parallel efficiency, but probably reduces your mixing between
+coupled chains (e.g., it is less likely that the cold chain
+benefits from the hotter ones).
+</p>
+
+<p>
+So while runtime efficiency probably is the weakest argument for
+employing chain-level parallelism, memory is a point to consider
+(also see section <a href="#memory">8.3</a>). Likelihood computation is the single
+dominating factor of memory consumption. The formula for computing
+memory requirements (in Byte) of a single chain in one run is
+</p>
+
+\begin{equation}
+mem = 4 \cdot 8 \cdot r \cdot p \cdot (n-2),
+\end{equation}
+<p>
+where \(r\) is 4 for DNA and 20 for AA data, \(p\) is the number of
+unique site patterns in your alignment and \(n\) is the number of
+taxa.
+</p>
+
+<p>
+For executing \(m\) coupled chains (efficiently), you require \(m+1\)
+sets of likelihood arrays, thus \(mem \cdot (m+1)\) byte. Even if
+data parallelism is favorable for your dataset, memory
+requirements may become prohibitive.  If you employ more
+processes, you will also increase the amount of memory that is at
+your disposal. However, depending on the size of your dataset,
+parallel efficiency of data parallelism will decrease at some
+point. This is where chain-level parallelism should be considered.
+</p>
+
+<p>
+Using chain-level will allow you to increase the number of
+processes, while still enough work load is assigned to each
+process. 
+</p>
+
+<p>
+As described above you need an additional set of likelihood
+arrays. Unfortunately, this rule still holds, when chain-level
+parallelism is employed. Assuming, you run \(m_p\) coupled chains in
+parallel, you will need \(mem \cdot (m+m_p)\) byte. For a discussion
+on how to reduce \(m_p\), please see Section <a href="#memory">8.3</a>.    
+</p>
+</div>
+</div>
+<div id="outline-container-data-para" class="outline-4">
+<h4 id="data-para"><a id="sec-8-2-3" name="sec-8-2-3"></a><span class="section-number-4">8.2.3</span> On Data Parallelism</h4>
+<div class="outline-text-4" id="text-data-para">
+
+<p>
+Data parallelism means that the unique site patterns of your
+alignment are spread out across processes. As discussed at the
+beginning of this section you should choose the number of
+processes such that the processes involved in computing the
+likelihood of a single tree are distributed across as few
+computing nodes as possible.
+</p>
+
+<p>
+Since it takes longer to compute the likelihood of a larger
+pattern (i.e., your alignment contains more taxa), it is hard to
+say until which point data parallelism can be employed
+efficiently. As a rule of thumb each process should at least be
+responsible for at least 100 sites. If a parallel run of ExaBayes
+is started, ExaBayes prints the load distribution (i.e., how many
+pattern are assigned to each process) before starting the
+computation.
+</p>
+
+<p>
+By default, ExaBayes uses a cyclic distribution scheme. This means
+that if you have partitions with less patterns than processes in a
+single parallel working unit, then some processes will be idle and
+you would waste computational resources. Using the <code>-Q</code> option
+distributes entire partitions to processes and solves this
+problem. If the load distribution is still even with <code>-Q</code>, you can
+expect additional performance improvements.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-memory" class="outline-3">
+<h3 id="memory"><a id="sec-8-3" name="sec-8-3"></a><span class="section-number-3">8.3</span> Saving Memory</h3>
+<div class="outline-text-3" id="text-memory">
+
+<p>
+As mentioned earlier, with ExaBayes you can do Bayesian MCMC on
+alignments of which the size is only limited by the total memory
+you have available in your computing center.
+</p>
+
+<p>
+In addition to that, ExaBayes implements techniques to reduce the
+overall memory footprint. 
+</p>
+
+<p>
+The <code>-M x</code> option allows you to trade runtime for reduced memory
+consumption. The higher <code>x</code>, the slower but less memory-intensive
+are the likelihood computations. Remember, that for any <code>-M x</code>
+ExaBayes will yield the exact same results with the limitations
+described in section <a href="#reproducibility">8.5</a>.
+</p>
+
+
+<p>
+This is particularly relevant, if you use chain-level parallelism,
+since increased parallelism also increases the memory-overhead as
+explained in section <a href="#chain-level">8.2.2</a>. Recall that for <code>x=0</code>, you need
+the \((m+m_p)\) sets of likelihood arrays (where <code>m</code> is the number of
+coupled chains and \(m_p\) the number of coupled chains executed in
+parallel). This is, because ExaBayes uses an additional set of
+likelihood arrays to evaluate the likelihood of a new proposal and
+saves the previous likelihood arrays for the case of rejection of
+the proposal.
+</p>
+
+<p>
+With <code>-M 1</code>, you can instruct ExaBayes to not save likelihood
+arrays for arrays for inner nodes that are (recursively) computed
+from two leave (resp. tip) nodes. These nodes are particularly fast
+to compute, so you will not loose too much runtime. For a balanced
+binary tree (best case), the memory consumption of the saved
+likelihood arrays (adding the \(m_p\) to the equation of memory
+consumption) is reduced by more than 50%. In the worst case (a
+comb-/caterpillar-like tree), the memory consumption is merely
+reduced by 1 array.
+</p>
+
+<p>
+When run with <code>-M 2</code>, ExaBayes will only save likelihood arrays for
+the most expensive kind of nodes. These are nodes that have two
+inner nodes as their descendants. In terms of memory consumption, a
+balanced binary tree is the worst case (saving only $ &gt; 50\%$ of the
+additional likelihood arrays). In the best case (here the comb-like
+tree), ExaBayes will not save any addition likelihood arrays.
+</p>
+
+<p>
+For <code>-M 3</code>, ExaBayes by default does not save any likelihood
+arrays. The run will be executed substantially slower (but still
+less than a factor of 2), but specifically if you run a lot of
+chains in parallel, the factor \((m + m_p)\) in the memory
+consumption formula is reduced to <code>m</code>.
+</p>
+
+<p>
+Aside from that, ExaBayes implements a subtree equality
+vector-technique, that allows you to save memory for dataset that
+contain many gaps or undetermined characters (see
+\cite{Izquierdo-Carrasco2011}). The amount of memory you save is
+proportional to the amount of missing data and the runtime penalty
+should be negligible (resp., there are instances where this
+actually increases runtime performance).
+</p>
+</div>
+</div>
+<div id="outline-container-sec-8-4" class="outline-3">
+<h3 id="sec-8-4"><span class="section-number-3">8.4</span> Highly Partitioned Runs</h3>
+<div class="outline-text-3" id="text-8-4">
+<p>
+In a parallel setting, it is less straight-forward to sample across
+execute an analysis, if the alignment is highly partitioned. The
+issue of load distribution in case of data parallelism is discussed
+in section <a href="#data-para">8.2.3</a>. The upshot is that you should, whether all
+processes of a parallel unit have about the same portion of the
+overall data. If you achieve good load distribution using the <code>-Q</code>
+option, your run may be executed much more efficiently (if you are
+interested in the technical reasons for this, consider
+\cite{zhang2012multi}). Furthermore, for efficiency it is important
+that the option <code>proposalSets</code> is by default set to <code>true</code> (default).
+</p>
+</div>
+</div>
+<div id="outline-container-reproducibility" class="outline-3">
+<h3 id="reproducibility"><a id="sec-8-5" name="sec-8-5"></a><span class="section-number-3">8.5</span> Note on Reproducibility</h3>
+<div class="outline-text-3" id="text-reproducibility">
+<p>
+ExaBayes comes with a strong guarantee of reproducibility.
+</p>
+
+<p>
+Ideally, the same seed, configuration file and alignment file have
+to result in the exact same outcome (e.g., topology/parameter
+samples) regardless whether <code>yggdrasil</code> or <code>exabayes</code> were
+employed. This should hold for any kind of command line parameter
+governing the specifics of how calculations are to be
+performed. Furthermore, repeated continuations from a checkpoint
+file should not influence the output either.
+</p>
+
+<p>
+Any change in the configuration file potentially interferes with
+perfect reproducibility (e.g., increasing the checkpoint frequency).
+</p>
+
+<p>
+When parallelism is involved, this guarantee does not hold
+necessarily. The reason for this is indeterminism in the calculation
+of the likelihood, when conducted on multiple
+processors. Compensating for this problem comes at the cost of
+runtime performance, thus this has not been implement in ExaBayes. 
+</p>
+
+<p>
+In other words: running ExaBayes with a different number of
+processes may yield different results.
+</p>
+
+<p>
+All of the above does not influence the correctness of the results,
+however it limits the guarantee that the chain is in the exact same
+state.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-partitionfile" class="outline-2">
+<h2 id="partitionfile"><a id="sec-9" name="sec-9"></a><span class="section-number-2">9</span> File Format: Model/Partitioning file</h2>
+<div class="outline-text-2" id="text-partitionfile">
+<p>
+If you want to partition your data, you have to provide a model file
+either to the <code>parser</code> utility or to <code>yggdrasil/exabayes</code> (via
+<code>-q</code>). In brief, this format is identical to the raxml model-file
+format, except that instead of specifying specific protein
+substitution matrices, you must identify a protein partition with
+<b>PROT</b> instead of a matrix name such as <b>LG</b>. 
+</p>
+
+<p>
+The example file below demonstrates the syntax of this file format: 
+</p>
+
+<pre class="example">
+DNA, gene1=1-300
+DNA, gene2-codonPos1=301-500\3
+DNA, gene2-codonPos2=302-500\3
+DNA, gene2-codonPos3=303-500\3
+PROT, protId=501-800
+DNA, composure=801-1000,1101-1200
+DNA, gene3=1000-1100
+</pre>
+
+<p>
+The bottom line is: 
+</p>
+<ul class="org-ul">
+<li>data type identifier: <b>DNA</b> or <b>PROT</b> (followed by comma)
+</li>
+<li>partitionName (followed by equal sign)
+</li>
+<li>alignment positions:
+<ul class="org-ul">
+<li>range component, see "gene1"
+</li>
+<li>strided range (useful for codon positions), see
+"gene2-codonPos1", "gene2-codonPos2" and "gene2-codonPos3". Notice
+that the starting position of the range is incremented for the
+second and third codon position. 
+</li>
+<li>combining elements, see "composure". You can combine any
+element using a comma.  
+</li>
+</ul>
+</li>
+</ul>
+
+<p>
+For concatenating a large number of alignments efficiently, we
+distribute this <a href="https://github.com/aberer/concat-aln">tool</a> separately from ExaBayes. It automatically
+creates the appropriate model file, although you will have to
+manually set the data type for amino acid partitions. Please use
+with caution.
+</p>
+
+<p>
+A side note on efficiency: partitioning your data makes likelihood
+calculation less efficient. If for instance you partition your data
+and link all parameters across all partitions, then you could have
+provided an unpartitioned alignment and the MCMC sampling would
+require less computational resources. 
+</p>
+</div>
+</div>
+<div id="outline-container-sec-10" class="outline-2">
+<h2 id="sec-10"><span class="section-number-2">10</span> FAQ</h2>
+<div class="outline-text-2" id="text-10">
+<p>
+Nothing yet. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-11" class="outline-2">
+<h2 id="sec-11"><span class="section-number-2">11</span> References</h2>
+<div class="outline-text-2" id="text-11">
+<iframe width="100%" src="library2.html"></iframe>
+
+<hr  />
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: for support, please contact exabayes-at-googlegroups-dot-com</p>
+<p class="date">Created: 2014-02-14 Fr 13:30</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.5c)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
