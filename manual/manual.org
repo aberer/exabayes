@@ -154,8 +154,8 @@
 
    First, you need to download and install [[http://en.wikipedia.org/wiki/Xcode][Xcode]] (available in the
    AppStore) and [[http://www.macports.org/][MacPorts]]. You only need MacPorts, if you want to
-   build the parallel version. Use MacPorts to install an MPI
-   implementation (either openmpi or mpich2):
+   build the parallel version. Open a terminal and use MacPorts to
+   install an MPI implementation (either openmpi or mpich2):
 #+BEGIN_SRC
    $ sudo port install openmpi-default
    $ sudo port install mpich-default
@@ -163,8 +163,8 @@
    
    After the installation, a message will suggest that you set the MPI
    installation as default. You now have MPI compiler wrappers
-   available (mpicc-mpich-mp, mpicxx-mpich-mp or mpicc-mpich-mp,
-   mpicxx-mpich-mp or mpicc, mpicxx). 
+   available (mpicc-mpich-mp, mpicxx-mpich-mp /or/ mpicc-mpich-mp,
+   mpicxx-mpich-mp /or/ mpicc, mpicxx). 
 
    # TODO  
    # export CXXFLAGS="-stdlib=libc++"
@@ -209,58 +209,22 @@
     automated build fails for whatever reason (although preferably you
     can contact our googlegroup).
 
-    
-# *** Automated build on Linux
-# :PROPERTIES:
-# :CUSTOM_ID: comfort-linux
-# :END:
-#    The preferred way of compiling ExaBayes is to use the small
-#    *build.sh* script. If you need to have more control over the build
-#    process, consider the next two sections.
+    Essentially, you have to build the parallel and sequential
+    executables separately. Since it is hard to guess the mpi compiler
+    correctly, you have to explicitly set the MPI C and MPI C++
+    compiler.
 
-#    Simple execution of the build script creates the sequential version
-#    of ExaBayes (called Yggdrasil) and all pre- and post-processing
-#    tools in a build-folder.
+    The following commands first build the sequential version, then
+    the parallel version. Remember to set CXXFLAGS as mentioned in the
+    previous apple-specific section.
+#+BEGIN_SRC
+    $ ./configure                
+    $ make 
+    $ ./configure --enable-mpi CC=mpicc CXX=mpicxx 
+    $ make clean 
+    $ make 
+#+END_SRC 
 
-# #+BEGIN_SRC 
-#   $ ./build.sh 
-#    [...] 
-#   $ ls build 
-#   asdsf  consense  credibleSet extractBips  obj-mpi  obj-seq  parser  postProcParam  yggdrasil
-# #+END_SRC
-   
-#    For building the (parallel) mpi-version of ExaBayes (executable is
-#    called exabayes), please provide the name of the mpi-C compiler
-#    (usually mpicc) and mpi-C++ compiler (mpicxx,mpiCC or mpic++) as
-#    environment variable arguments. For instance: 
-
-# #+BEGIN_SRC 
-#   $ ./build.sh CC=mpicc CXX=mpic++
-#   [...]
-#   $ ls build 
-#   exabayes
-# #+END_SRC
-    
-# *** Manual build on Linux/Unix
-# **** Configuring and  Compiling the Sequential Version 
-#    To compile a sequential version of ExaBayes (called yggdrasil) and
-#    various pre- and post-processing tools, type
-#    #+BEGIN_SRC  
-# $ ./configure && make 
-#    #+END_SRC  
-#    If you have a multi-core machine, you can speed up the build
-#    process by adding -j<numProc> to the make command.
-# *** Configuring and Compiling the Parallel Version 
-   For compiling the parallel mpi-version using the configure script,
-   employ the command line below.
-
-   You have to use a slightly different configure call and inform the
-   configure script about your mpi compiler wrapper. These are usually
-   called mpicc (c compiler) and mpicxx/mpiCC or mpic++ (c++
-   compiler). For instance:
-   #+BEGIN_SRC 
-$ ./configure --enable-mpi CC=mpicc CXX=mpicxx  && make 
-   #+END_SRC
 * Detailed Example Session
   In this section we walk through a typical Bayesian analyses. It is
   primarily intended for users new to phylogeny estimation.
@@ -721,16 +685,16 @@ $ ./configure --enable-mpi CC=mpicc CXX=mpicxx  && make
 | keyword              | full name                                        | affected parameters | default weight |
 |----------------------+--------------------------------------------------+---------------------+----------------|
 | *nodeSlider*         | node slider                                      | branch lengths      |              5 |
-| *treeLengthMult*     | tree length multiplier                           | branch lengths      |              2 |
+| *treeLengthMult*     | tree length multiplier                           | branch lengths      |              1 |
 | *branchMulti*        | multiplier on branch lengths                     | branch lengths      |             15 |
 | *eTBR*               | extending tree bisection and reconnection (eTBR) | topology            |              5 |
 | *eSPR*               | extending subtree pruning and regrafting (eSPR)  | topology            |              5 |
 | *parsimonySPR*       | parsimony-biased subtree pruning and regrafting  | topology            |              5 |
 | *stNNI*              | stochastic nearest neighbor interchange          | topology            |              5 |
 | *rateHetMulti*       | multiplier on $\alpha$                           | rate heterogeneity  |              1 |
-| *revMatSlider*       | sliding window                                   | rev. matrix (DNA)   |            0.5 |
-| *revMatDirichlet*    | dirichlet proposal                               | rev. matrix (DNA)   |            0.5 |
-| *RevmatRateDirich*   | partial dirichlet proposal                       | rev. matrix (AA)    |              4 |
+| *revMatSlider*       | sliding window                                   | rev. matrix (DNA)   |              1 |
+| *revMatDirichlet*    | dirichlet proposal                               | rev. matrix (DNA)   |              1 |
+| *RevmatRateDirich*   | partial dirichlet proposal                       | rev. matrix (AA)    |              1 |
 | *frequencySlider*    | sliding window                                   | state frequencies   |            0.5 |
 | *frequencyDirichlet* | dirichlet proposal                               | state frequencies   |            0.5 |
 | *aaModelJump*        | fixed AA matrix                                  | amino acid model    |              1 |
@@ -1169,7 +1133,7 @@ DNA, gene2-codonPos1=301-500\3
 DNA, gene2-codonPos2=302-500\3
 DNA, gene2-codonPos3=303-500\3
 PROT, protId=501-800
-DNA, composure=801-1000,1101-1200
+DNA, composit=801-1000,1101-1200
 DNA, gene3=1000-1100
   #+END_SRC
 
@@ -1182,7 +1146,7 @@ DNA, gene3=1000-1100
       "gene2-codonPos1", "gene2-codonPos2" and "gene2-codonPos3". Notice
       that the starting position of the range is incremented for the
       second and third codon position. 
-    + combining elements, see "composure". You can combine any
+    + combining elements, see "composit". You can combine any
       element using a comma.  
 
  For concatenating a large number of alignments efficiently, we

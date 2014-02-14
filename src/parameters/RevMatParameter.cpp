@@ -35,11 +35,12 @@ ParameterContent RevMatParameter::extractParameter(const TreeAln &traln )  const
 
   result.values = traln.getRevMat(_partitions.at(0)); 
   
-  // DO ***NOT*** remove
-  // this is necessary to avoid rounding errors with AA GTR matrices  
-  // RateHelper::convertRelativeToLast(result.values); 
-  // if(not isRaw)
-  //   RateHelper::convertToSum1(result.values);
+  // DO ***NOT*** REMOVE 
+  // this is necessary to avoid rounding errors
+  // with AA GTR matrices; but essentially it is just a hack to reduce
+  // the probability of the gtr aa matrix to mess up
+  RateHelper::convertRelativeToLast(result.values); 
+  RateHelper::convertToSum1(result.values);
 
   // tout << "GET " << result.values << std::endl; 
 

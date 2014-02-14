@@ -1,12 +1,14 @@
 #! /bin/bash
 
-cores=4
-
-
-if [ $# -lt 1 ]; then
-    echo -e  "$0 ssetypes..\n\nwhere ssetypes can be  avx,sse, no-sse"
+if [ $# -lt 3 ]; then
+    echo -e  "$0 isApple cores ssetypes..\n\nwhere ssetypes can be  avx,sse, no-sse"
     exit
 fi
+
+IS_APPLE=$1
+shift
+cores=$1
+shift
 
 ssetypes=$*
 
@@ -16,8 +18,21 @@ if [ "$fold" != "exa-bayes" ]; then
     exit
 fi
 
-ccomp=gcc-4.6
-cxxcomp=g++-4.6
+
+if [ $IS_APPLE == 0 ]; then
+    compi=mpicc.openmpi
+    cxxompi=mpicxx.openmpi
+    cmpich=mpicc.mpich2
+    cxxmpich=mpicxx.mpich2
+else
+    compi=mpicc-openmpi-mp
+    cxxompi=mpicxx-openmpi-mp
+    cmpich=mpicc-mpich-mp
+    cxxmpich=mpicxx-mpich-mp
+fi
+
+ccomp=gcc
+cxxcomp=g++
 
 export OMPI_MPICC=$ccomp
 export OMPI_MPIXX=$cxxcomp
@@ -51,6 +66,14 @@ do
     do 
 	make distclean
 
+	if [ $mpi == mpich ]; then
+	    CC=$cmpich
+	    CXX=$cxxmpich
+	else
+	    CC=$compi
+	    CXX=$cxxompi
+	fi
+
 	arg=""
 	if [ "$vect" == "sse" ]; then
 	    arg="--disable-avx"
@@ -64,23 +87,33 @@ do
 	if [ "$mpi" != "seqential" ] ; then 
 	    # build MPI
 	    cd distro-build 
-	    ../configure --enable-mpi  CC="ccache mpicc.$mpi" CXX="ccache mpicxx.$mpi" $arg  --prefix $(realpath ../bin) --bindir $(realpath ../bin)    
-	    make -j$cores 
-	    make install 
+	    # ../configure --enable-mpi  CC="ccache $CC" CXX="ccache $CXX" $arg  --prefix $(readlink -f ../bin) --bindir $(readlink -f  ../bin ) && make -j $cores  && make install
+	    cmd="../configure --enable-mpi  CC=\"ccache $CC\" CXX=\"ccache $CXX\" $arg  --prefix $(readlink -f ../bin) --bindir $(readlink -f  ../bin ) && make -j $cores  && make install " 
+	    eval $cmd
+
+	    if [ $? != 0 ]; then
+		echo -e  "\n\nPROBLEM\n\n"
+		echo "$cmd"
+		exit
+	    fi
+
 	    cd .. 
 	fi 
 
 	# build regular 
 	rm -rf distro-build/*
 	cd distro-build
-	../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp"    LDFLAGS="$ldflags" $arg   --prefix $(realpath ../bin) --bindir $(realpath ../bin)  
-	make -j$cores 
-	make install 
+	../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp"    LDFLAGS="$ldflags" $arg   --prefix $(readlink -f  ../bin) --bindir $(readlink -f ../bin) && make -j$cores   && make install 
+	if [ $? != 0  ]; then
+	    echo -e "\n\nPROBLEM\n\n"
+	    exit
+	fi
 	cd .. 
 	
 	# build the distribution 
 	./configure 
-	make mydist 
+	make dist 
+	make dist-zip 
 
 	# mv packages 
 	name=$mpi-$vect
@@ -94,7 +127,9 @@ done
 rm bin/*
 
 ./configure 
-make mydist
+# make mydist
+make dist 
+make dist-zip 
 name=src
 newname=$(ls exabayes-*.tar.gz | sed "s/\(.*\)\(.tar.gz\)/\1-$name\2/")
 \mv exabayes*.tar.gz ./packages/$newname
