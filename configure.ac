@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[1.2.0.0],[exabayes-at-googlegroups-dot-com]) 
+AC_INIT([exabayes],[1.2.1],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 
@@ -68,7 +68,7 @@ AM_CONDITIONAL([NO_SSE], [ test "x$GUESS_SSE" = "xyes" ])
 
 dnl allow to disable avx 
 AC_ARG_ENABLE( [avx],
-	       [  --disable-avx   compiles ExaBayes with SSE support (slower) only, altough AVX is available ], 
+	       [  --disable-avx    compiles ExaBayes with SSE support (slower) only, altough AVX is available ], 
 [ case $enableval in 
   no ) GUESSAVX="yes" ;; 
   yes ) GUESSAVX="no" ;;
@@ -81,16 +81,32 @@ AM_CONDITIONAL([NO_AVX], [ test "x$GUESSAVX" = "xyes" ])
 AC_ARG_ENABLE( [mpi], 	      
 	   [  --enable-mpi  compiles ExaBayes with MPI support (please provide mpi-compiler wrappers to CC/CXX) ],
 [  case "${enableval}" in 
-   no )  CODE="no" ;; 
-   yes ) CODE="yes" ;; 
-   *) CODE="no" 
+   no )  MPI_CODE="no" ;; 
+   yes ) MPI_CODE="yes" ;; 
+   *) MPI_CODE="no" 
    esac ] ,
-[CODE="no"]
+[MPI_CODE="no"]
 )
 
 
+dnl enable google tests 
+AC_ARG_ENABLE( [tests], 
+	   [  --enable-tests    enable automated tests (developer only) ], 
+	   [   case "${enableval}" in 
+	       no ) CODE="no" ;; 
+	       yes )  CODE="yes" ;; 
+ 	       *) CODE="no"
+	       esac ], 
+  	   [CODE="no"]
+	)
+AM_CONDITIONAL([WITH_TEST], [ test "x$CODE" = "xyes" ])
+dnl if test "x$CODE" = "xyes" ; then 
+dnl AC_CHECK_HEADER([gtest.h], [],[AC_MSG_ERROR([Could not find google test headers.])])
+dnl fi 
+
+
 dnl test, if we have PLL AND force the user to provide a mpi-comiler, if we dont
-if test "x$CODE" = "xyes" ; then 
+if test "x$MPI_CODE" = "xyes" ; then 
    AC_DEFINE([HAVE_PLL], [0], "")
 
    AC_CHECK_HEADER(mpi.h,
@@ -118,14 +134,13 @@ if test "x$CODE" = "xyes" ; then
     )
    AC_LANG_POP([C++]) 
 
-elif test "x$CODE" = "xno" ; then 
+elif test "x$MPI_CODE" = "xno" ; then 
    AC_DEFINE([HAVE_PLL], [1], "")
 else 
    AC_MSG_ERROR(bad value --enable-mpi) 
 fi 
 
-AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xyes" ])
-
+AM_CONDITIONAL([WITH_EXAML], [ test "x$MPI_CODE" = "xyes" ])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

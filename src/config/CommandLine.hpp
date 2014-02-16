@@ -15,7 +15,10 @@
 class CommandLine
 {
 public: 
-  CommandLine(int argc, char* argv[]);
+  CommandLine();
+
+  void initialize(  int argc, char **argv); 
+
   randCtr_t getSeed() const; 
   std::string getConfigFileName() const {return configFileName; }
   std::string getAlnFileName() const{return alnFileName; }
@@ -43,7 +46,6 @@ public:
 
 private: 			// METHODS
   void assertFileExists(std::string filename); 
-  void parse(int argc, char *argv[]); 
   void printHelp();
 
 private: 			// ATTRIBUTES

@@ -56,9 +56,10 @@ public:
     return val; 
   } 
   
-  void printLoadBalance(const TreeAln& traln, nat numRun, nat numCoupled ) const 
+  std::string printLoadBalance(const TreeAln& traln, nat numRun, nat numCoupled ) const 
   {
-    
+    auto result = std::string{""};
+    return result; 
   } 
 
 

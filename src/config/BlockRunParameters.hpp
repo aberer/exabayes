@@ -13,6 +13,11 @@ class BlockRunParameters : public NxsBlock
 public: 
   BlockRunParameters(); 
 
+  BlockRunParameters(const BlockRunParameters& rhs) ;
+  BlockRunParameters& operator=( BlockRunParameters rhs); 
+  
+  friend void swap(BlockRunParameters& lhs, BlockRunParameters& rhs); 
+
   virtual void Read(NxsToken &token); 
 
   // getters 

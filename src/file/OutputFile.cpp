@@ -41,3 +41,10 @@ bool OutputFile::directoryExists(std::string name)
       return true; 
   return false; 
 }
+
+
+void OutputFile::removeMe() const 
+{
+  if(fullFileName.compare("") != 0 )
+    remove(fullFileName.c_str() ); 
+}

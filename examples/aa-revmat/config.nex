@@ -4,9 +4,9 @@ begin params;
       revmat = (0)
 end; 
 
-begin runconfig; 
+begin run; 
  numruns 2 
- parsimonyStartingTree  true
+ parsimonyStart  true
  printFreq 10 
 end; 
 

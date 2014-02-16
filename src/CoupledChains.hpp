@@ -40,6 +40,8 @@ public:
   CoupledChains(CoupledChains&& rhs); 
   CoupledChains& operator=(CoupledChains rhs); 
 
+  void deleteMyFiles() const ; 
+
   /**
      @brief run for a given number of generations
   */
@@ -102,4 +104,5 @@ private: 			// ATTRIBUTES
 }; 
 
 #endif
+
 

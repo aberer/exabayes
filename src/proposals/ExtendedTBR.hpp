@@ -29,7 +29,7 @@ private: 			// METHODS
   void buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &traln, Randomness &rand );
 
 private: 			// ATTRIBUTES
-  double extensionProbability;   
-  double multiplier; 
-  TbrMove move; 
+  double _extensionProbability;   
+  double _multiplier; 
+  TbrMove _move; 
 }; 

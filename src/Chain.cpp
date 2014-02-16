@@ -439,7 +439,7 @@ void Chain::stepSingleProposal()
        << std::endl; 
 #endif
 
-  if(_tuneFrequency <  pfun.getNumCallSinceTuning() ) 
+  if( _tuneFrequency > 0 && _tuneFrequency <  pfun.getNumCallSinceTuning()   ) 
     pfun.autotune();
   
 }
@@ -557,7 +557,7 @@ void Chain::stepSetProposal()
 #endif
 
   for(auto &proposal : pSet.getProposalView())
-    if(this->_tuneFrequency < proposal->getNumCallSinceTuning()) // meh
+    if( this->_tuneFrequency > 0  && this->_tuneFrequency < proposal->getNumCallSinceTuning()) // meh
       proposal->autotune(); 
 
   _prior.reject();

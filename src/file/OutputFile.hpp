@@ -14,6 +14,7 @@ public:
   std::string getFileName() const  {return fullFileName; }
   
   static bool directoryExists(std::string name); 
+  void removeMe() const ; 
 
 protected:   
   std::string fullFileName;   

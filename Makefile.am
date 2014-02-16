@@ -10,12 +10,12 @@ WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter 
 RAX_FEATURE= -D_GNU_SOURCE -fomit-frame-pointer -funroll-loops -D__STRICT_ANSI__ 
 
 if NO_SSE
-VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE -mno-avx -mno-sse3   -march=native -mtune=generic $(SIMD_FLAGS)
+VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE $(SIMD_FLAGS) -march=native -mtune=generic -mno-avx -mno-sse3
 else 
 if NO_AVX
-VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -mno-avx -D_OPTIMIZED_FUNCTIONS -march=native -mtune=native $(SIMD_FLAGS)
+VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -D_OPTIMIZED_FUNCTIONS  $(SIMD_FLAGS) -march=native -mtune=native -mno-avx
 else 
-VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS -march=native -mtune=native $(SIMD_FLAGS)
+VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS $(SIMD_FLAGS)  -march=native -mtune=native
 endif
 endif
 
@@ -40,8 +40,12 @@ noinst_LIBRARIES+=libexaml.a
 bin_PROGRAMS = exabayes 
 else
 LIBTOUSE=libpll.a
-bin_PROGRAMS = yggdrasil postProcParam credibleSet extractBips consense parser sdsf
+bin_PROGRAMS = yggdrasil postProcParam credibleSet extractBips consense parser sdsf  
 noinst_LIBRARIES+=libpll.a 
+endif 
+
+if WITH_TEST
+ bin_PROGRAMS+=exatest
 endif 
 
 libbayes_a_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) $(AM_CPP_FLAGS)
@@ -108,7 +112,28 @@ postProcParam_SOURCES=./src/apps/postProcParam.cpp
 libncl_a_SOURCES = ./lib/ncl-2.1.18/ncl/nxsreader.cpp ./lib/ncl-2.1.18/ncl/nxscxxdiscretematrix.cpp ./lib/ncl-2.1.18/ncl/nxstaxaassociationblock.cpp ./lib/ncl-2.1.18/ncl/nxsunalignedblock.cpp ./lib/ncl-2.1.18/ncl/nxsmultiformat.cpp ./lib/ncl-2.1.18/ncl/nxsdatablock.cpp ./lib/ncl-2.1.18/ncl/nxspublicblocks.cpp ./lib/ncl-2.1.18/ncl/nxstaxablock.cpp ./lib/ncl-2.1.18/ncl/nxscharactersblock.cpp ./lib/ncl-2.1.18/ncl/nxsstring.cpp ./lib/ncl-2.1.18/ncl/nxstoken.cpp ./lib/ncl-2.1.18/ncl/nxsassumptionsblock.cpp ./lib/ncl-2.1.18/ncl/nxsblock.cpp ./lib/ncl-2.1.18/ncl/nxsdistancesblock.cpp ./lib/ncl-2.1.18/ncl/nxssetreader.cpp ./lib/ncl-2.1.18/ncl/nxsexception.cpp ./lib/ncl-2.1.18/ncl/nxstreesblock.cpp ./lib/ncl-2.1.18/ncl/ncl.h ./lib/ncl-2.1.18/ncl/nxscharactersblock.h ./lib/ncl-2.1.18/ncl/nxsdistancedatum.h ./lib/ncl-2.1.18/ncl/nxsreader.h ./lib/ncl-2.1.18/ncl/nxstoken.h ./lib/ncl-2.1.18/ncl/nxsallocatematrix.h ./lib/ncl-2.1.18/ncl/nxscxxdiscretematrix.h ./lib/ncl-2.1.18/ncl/nxsdistancesblock.h ./lib/ncl-2.1.18/ncl/nxssetreader.h ./lib/ncl-2.1.18/ncl/nxstreesblock.h ./lib/ncl-2.1.18/ncl/nxsassumptionsblock.h ./lib/ncl-2.1.18/ncl/nxsdatablock.h ./lib/ncl-2.1.18/ncl/nxsexception.h ./lib/ncl-2.1.18/ncl/nxsstring.h ./lib/ncl-2.1.18/ncl/nxsunalignedblock.h ./lib/ncl-2.1.18/ncl/nxsblock.h ./lib/ncl-2.1.18/ncl/nxsdefs.h ./lib/ncl-2.1.18/ncl/nxsmultiformat.h ./lib/ncl-2.1.18/ncl/nxstaxaassociationblock.h ./lib/ncl-2.1.18/ncl/nxsutilcopy.h ./lib/ncl-2.1.18/ncl/nxscdiscretematrix.h ./lib/ncl-2.1.18/ncl/nxsdiscretedatum.h ./lib/ncl-2.1.18/ncl/nxspublicblocks.h ./lib/ncl-2.1.18/ncl/nxstaxablock.h
 libncl_a_CXXFLAGS= -w -O3 -I$(top_srcdir)/lib/ncl-2.1.18/  -D__STRICT_ANSI__ $(AM_CPP_FLAGS)
 
-################################
+################################################################
+
+# test 
+exatest_SOURCES = ./tests/exatest.cpp
+exatest_CXXFLAGS= -O3 $(VECTOR_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
+exatest_LDFLAGS=-L/usr/local/lib -lgtest -lpthread
+exatest_LDADD=libbayes.a $(LIBTOUSE) libncl.a 
+
+if WITH_EXAML
+ exatest_CXXFLAGS+=-D_WITH_MPI	
+ teststr="mpirun -np 2 ./exatest"
+else 
+ teststr="./exatest"
+endif
+
+
+test : exatest
+	$(RM) ExaBayes_*test-*
+	eval $(teststr)
+
+
+################################################################
 
 doc : 
 	doxygen 
