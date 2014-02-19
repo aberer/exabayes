@@ -3,10 +3,7 @@
 
 #include <cassert>
 #include <vector>
-
-#include "common.h"
-#include "SwapElem.hpp"
-#include "extensions.hpp"
+#include <memory>
 
 /** 
     @file PendingSwap.hpp
@@ -17,92 +14,41 @@
 */ 
 
 
-
-#if HAVE_PLL == 0
-
-#include <mpi.h>
-#include "CommRequest.hpp"
+#include "common.h"
 
 class ParallelSetup; 
+class SwapElem; 
+
+class AbstractPendingSwap; 
 
 class PendingSwap
 {
 public: 
-  PendingSwap( SwapElem swap); 
-  PendingSwap(PendingSwap&& rhs); 
-  PendingSwap& operator=( PendingSwap elem) = delete ; 
+  class Impl; 			// since we have an abstract variant, this does not really fit anymore 
+
+  PendingSwap( SwapElem swap, bool isLocal); 
+  PendingSwap(PendingSwap&& rhs);
+  PendingSwap& operator=( PendingSwap elem)  ; 
   PendingSwap( const PendingSwap& rhs) = delete; 
-
-  friend void swap(PendingSwap& lhs, PendingSwap& rhs);
-
+  ~PendingSwap();
+  
+  friend void swap(PendingSwap& lhs, PendingSwap& rhs); 
+  
   bool isFinished();
 
-  void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid, nat numChains); 
-  SwapElem getSwap() const {return _swap; }
+  void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid); 
+  SwapElem getSwap() const ; 
 
   bool allHaveReceived(ParallelSetup& pl) ;
 
-  std::string getRemoteData()  ; 
+  std::vector<char> getRemoteData()  const; 
   
 private: 			// METHODS 
   int createTag( nat numChains ) const ; 
 
 private: 			// ATTRIBUTES
-  std::vector<CommRequest> _sentReqs; 
-  CommRequest _recvReq; 
-  SwapElem _swap; 
+  std::unique_ptr<AbstractPendingSwap> _impl; 
 }; 
-
-#else 
-
-
-#include <string>
-
-class PendingSwap
-{
-public:   
-  PendingSwap(SwapElem swap)
-    : _swap{swap}
-  {
-  }
-
-  bool isFinished()  
-  {
-    assert(0); 
-    return true; 
-  }
-
-
-  std::string getRemoteData()  
-  {
-    assert(0);
-    auto result = std::string{};
-    return result; 
-  } 
-
-
-
-  bool allHaveReceived(ParallelSetup& pl)  
-  {
-    assert(0); 
-    return true; 
-  }
-
-  void execute(){assert(0); }
-
-  SwapElem getSwap() const { assert(0); return _swap; }
-
-  void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid, nat numChains)
-  {
-    assert(0); 
-  } 
-
-private: 
-  SwapElem _swap; 
-}; 
-
-
-#endif
 
 #endif
 

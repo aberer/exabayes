@@ -1,6 +1,5 @@
 #include "AbstractParameter.hpp" 
 #include "extensions.hpp" 
-#include "comm/ParallelSetup.hpp"
 #include "Category.hpp"
 
 
@@ -52,13 +51,13 @@ void AbstractParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) cons
 
 void AbstractParameter::checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &traln) const 
 {
-  auto numStates = traln.getPartition(_partitions.at(0)).states;
+  auto numStates = traln.getPartition(_partitions.at(0)).getStates();
   auto okay = bool{true}; 
   auto wrong = nat{0}; 
   for(auto p : _partitions)
     {
       if(numStates)
-	okay &= traln.getPartition(p).states == numStates; 
+	okay &= traln.getPartition(p).getStates() == numStates; 
       if(not okay)
 	{
 	  wrong = p; 
@@ -69,7 +68,7 @@ void AbstractParameter::checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &
   if(not okay)
     {
       std::cerr << "Error while processing parsed parameters: you tried to link " << _partitions[0] << " and " <<  wrong  << ". These partitions have a different number of states (probably DNA and PROT). Aborting." << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 }
 

@@ -6,8 +6,8 @@
 
 
 #include "Category.hpp"
-#include "axml.h"
-#include "SuccessCounter.hpp" 
+// #include "axml.h"
+#include "mcmc/SuccessCounter.hpp" 
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"

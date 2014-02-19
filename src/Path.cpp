@@ -2,7 +2,7 @@
 #include <fstream>
 
 #include "Path.hpp"
-#include "Chain.hpp"
+#include "mcmc/Chain.hpp"
 #include "proposals/AbstractProposal.hpp"
 
 

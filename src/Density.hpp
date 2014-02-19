@@ -23,11 +23,7 @@ double exponentialDensity(double value, double lambda);
 namespace Density
 {
   double lnDirichlet(std::vector<double> values, const std::vector<double> &alphas); 
-  // double dirichlet(std::vector<double> values, const std::vector<double> &alphas); 
-
-  // double exponential(double value, double lambda); 
   double lnExponential(double value, double lambda); 
-
   double lnGamma(double x, double alpha, double beta ); 
 } 
 #endif

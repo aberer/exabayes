@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <numeric>
 #include "Density.hpp"
-#include "axml.h"
+
+#include "common.h"
+
 
 // bracen copy from mrb
 static double logGamma (double alp)

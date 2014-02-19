@@ -2,9 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[1.2.1],[exabayes-at-googlegroups-dot-com]) 
+AC_INIT([exabayes],[1.3],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
+m4_include([./m4/lx_find_mpi.m4])
+
 
 AC_CONFIG_SRCDIR([src/])
 
@@ -34,7 +36,11 @@ AC_PROG_CC_C99
 AC_PROG_RANLIB
 
 dnl NOTICE if you have trouble with that, then install autoconf-archive (or similar)
-AX_EXT
+
+AX_EXT 
+
+AX_PTHREAD
+
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h stdint.h stdlib.h string.h strings.h sys/time.h unistd.h])
@@ -107,40 +113,49 @@ dnl fi
 
 dnl test, if we have PLL AND force the user to provide a mpi-comiler, if we dont
 if test "x$MPI_CODE" = "xyes" ; then 
-   AC_DEFINE([HAVE_PLL], [0], "")
+   dnl AC_DEFINE([HAVE_PLL], [0], "")
 
-   AC_CHECK_HEADER(mpi.h,
-    [],
-    [AC_MSG_ERROR([ 
+   dnl AX_MPI([], [AC_MSG_ERROR(Could not find mpi.h or mpicc.)])
+   dnl LX_FIND_MPI()
 
-       Could not find mpi.h. If you build ExaBayes with MPI support, please provide compiler wrappers, e.g., 
-              ./configure --enable-mpi CC=mpicc CXX=mpicxx 
-       , where specifically mpicxx could also be mpiCC or mpic++ (depends on your installation). 
-    ])]
-    )
+   AC_LANG_PUSH([C++])	 
+   dnl AX_MPI([],[AC_MSG_ERROR(Could not find mpi.h or mpicc.)])
+   LX_FIND_MPI(AC_MSG_ERROR(could not find mpi))
 
-   cache_var=AS_TR_SH([ac_cv_header_mpi.h])
-   $as_unset $cache_var
+   dnl AC_CHECK_HEADER(mpi.h,
+   dnl  [],
+   dnl  [AC_MSG_ERROR([ 
 
-   AC_LANG_PUSH([C++])
-   AC_CHECK_HEADER(mpi.h,
-    [],
-    [AC_MSG_ERROR([ 
+   dnl     Could not find mpi.h. If you build ExaBayes with MPI support, please provide compiler wrappers, e.g., 
+   dnl            ./configure --enable-mpi CC=mpicc CXX=mpicxx 
+   dnl     , where specifically mpicxx could also be mpiCC or mpic++ (depends on your installation). 
+   dnl  ])]
+   dnl  )
 
-       Could not find mpi.h. If you build ExaBayes with MPI support, please provide compiler wrappers, e.g., 
-              ./configure --enable-mpi CC=mpicc CXX=mpicxx 
-       , where specifically mpicxx could also be mpiCC or mpic++ (depends on your installation). 
-    ])]
-    )
-   AC_LANG_POP([C++]) 
+   AC_LANG_POP([C++])	 
 
-elif test "x$MPI_CODE" = "xno" ; then 
-   AC_DEFINE([HAVE_PLL], [1], "")
-else 
-   AC_MSG_ERROR(bad value --enable-mpi) 
+   dnl cache_var=AS_TR_SH([ac_cv_header_mpi.h])
+   dnl $as_unset $cache_var
+
+   dnl AC_LANG_PUSH([C++])
+   dnl AC_CHECK_HEADER(mpi.h,
+   dnl  [],
+   dnl  [AC_MSG_ERROR([ 
+
+   dnl     Could not find mpi.h. If you build ExaBayes with MPI support, please provide compiler wrappers, e.g., 
+   dnl            ./configure --enable-mpi CC=mpicc CXX=mpicxx 
+   dnl     , where specifically mpicxx could also be mpiCC or mpic++ (depends on your installation). 
+   dnl  ])]
+   dnl  )
+   dnl AC_LANG_POP([C++]) 
+
+dnl elif test "x$MPI_CODE" = "xno" ; then 
+   dnl AC_DEFINE([HAVE_PLL], [1], "")
+dnl else 
+   dnl AC_MSG_ERROR(bad value --enable-mpi) 
 fi 
 
-AM_CONDITIONAL([WITH_EXAML], [ test "x$MPI_CODE" = "xyes" ])
+AM_CONDITIONAL([WITH_MPI], [ test "x$MPI_CODE" = "xyes" ])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

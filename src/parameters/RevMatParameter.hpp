@@ -38,7 +38,7 @@ public:
   {
     auto content = prior.getInitialValue();
     auto& partition = traln.getPartition(_partitions.at(0));
-    return content.values.size()  ==  RateHelper::numStateToNumInTriangleMatrix(partition.states); 
+    return content.values.size()  ==  RateHelper::numStateToNumInTriangleMatrix(partition.getStates()); 
   }
 }; 
 

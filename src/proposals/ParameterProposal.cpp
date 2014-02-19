@@ -89,7 +89,7 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
 #endif
   
   
-  evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion , prts , true, true); 
+  evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion , prts , true); 
 }
 
 

@@ -17,24 +17,25 @@
 #include <fstream>
 #include "common.h"
 #include "config.h"
-#include "teestream.hpp"
+
+#include <mutex>
+#include "TeeStream.hpp"
 
 class AdHocIntegrator; 
 class TreeIntegrator; 
 
-#define tout (*globals.teeOut)
+#define tout (*globals.teeOut) << SyncOut()
 
+class TeeStream;
 
 class GlobalVariables
 {
 public: 
-  std::string logFile; 
-  
-  teestream* teeOut; 
-  std::ofstream* logStream;
+  std::unique_ptr<TeeStream> teeOut; 
+  std::unique_ptr<std::ofstream> logStream;
+  std::mutex mtx;
 };
 
-#endif
 
 #ifdef _INCLUDE_DEFINITIONS
 
@@ -49,15 +50,29 @@ bool startIntegration = false;
 AdHocIntegrator* ahInt; 
 TreeIntegrator* tInt; 
 
+bool isYggdrasil; 
+
+void (*exitFunction)(int code); 
+
 #else 
+
+extern void (*exitFunction)(int code); 
+
+extern bool isYggdrasil; 
+extern int PLL_NUM_BRANCHES; 
+
 extern std::ofstream nniOut; 
 extern std::ofstream sprOut; 
 extern bool startIntegration; 
 extern AdHocIntegrator* ahInt; 
 extern TreeIntegrator* tInt; 
 extern GlobalVariables globals; 
-extern int processID; 		// needed for raxml 
-extern int processes; 
 extern std::chrono::system_clock::time_point timeIncrement;  
 extern int debugPrint; 
 #endif
+
+
+#include "SyncOut.hpp"
+
+#endif
+

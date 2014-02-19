@@ -42,7 +42,7 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
 	}
 
       // restore the partition scaler 
-      auto& partition = traln.getPartition( partitionIndex);       
+      auto& partition = traln.getPartition( partitionIndex).getHandle(); // TODO lazy 
 
       if(restoresGapVector)
 	{
@@ -63,7 +63,7 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
   if(partitionLikelihoods[partitionId].cachedArrays.at(id) != nullptr)
     {
       assert(0);
-      exa_free(partitionLikelihoods[partitionId].cachedArrays.at(id)); 
+      free(partitionLikelihoods[partitionId].cachedArrays.at(id)); 
 
     }
 
@@ -72,12 +72,12 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
   partitionLikelihoods[partitionId].cachedArrays[id] = arrayAndLength.first; 
   partitionLikelihoods[partitionId].lengths[id] = arrayAndLength.second; 
   
-  auto& partition = traln.getPartition(partitionId); 
+  auto& partition = traln.getPartition(partitionId).getHandle(); // TODO lazy 
   partitionLikelihoods[partitionId].scaler[nodeNumber] = partition.globalScaler[nodeNumber]; 
 
   if(restoresGapVector)
     {
-      auto& partition = traln.getPartition(partitionId); 
+      auto& partition = traln.getPartition(partitionId).getHandle(); // TODO lazy
       auto vec = partition.gapVector + nodeNumber * partition.gapVectorLength; 
       auto iter = partitionLikelihoods[partitionId].gapVector.begin() + id * partition.gapVectorLength ; 
       std::copy(vec , vec + partition.gapVectorLength, iter ); 
@@ -89,7 +89,7 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
 void ArrayRestorer::recycleArray(TreeAln& traln, nat nodeNumber, nat partitionId, ArrayReservoir& res)
 {
   auto id = nodeNumber - (traln.getNumberOfTaxa() + 1); 
-  auto &partition = traln.getPartition(partitionId); 
+  auto &partition = traln.getPartition(partitionId).getHandle(); 
 
   if(partition.xSpaceVector[id] != 0 )
     {
@@ -114,7 +114,7 @@ void ArrayRestorer::destroyAndForget(TreeAln &traln, nat nodeNumber, nat partiti
   
   auto id = nodeNumber - (traln.getNumberOfTaxa() + 1); 
   auto arrayAndLength = removeArray(traln, nodeNumber, partitionId);
-  exa_free(arrayAndLength.first); 
+  free(arrayAndLength.first); 
   
   auto &elem  = partitionLikelihoods[partitionId];
   
@@ -129,7 +129,7 @@ void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, Arr
 {
   // tout << "uncaching node=" << nodeNumber << ", partition=" << partitionId << std::endl; 
 
-  auto& partition = traln.getPartition(partitionId); 
+  auto& partition = traln.getPartition(partitionId).getHandle(); 
   auto id = nodeNumber - ( traln.getNumberOfTaxa() + 1) ; 
 
   auto &backup = partitionLikelihoods[partitionId]; 
@@ -156,7 +156,7 @@ void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, Arr
   
   if(restoresGapVector)
     {
-      auto& partition = traln.getPartition(partitionId); 
+      auto& partition = traln.getPartition(partitionId).getHandle(); 
       auto vec = partition.gapVector + nodeNumber * partition.gapVectorLength; 
       auto iter = backup.gapVector.begin() + id * partition.gapVectorLength; 
       std::copy(iter, iter + partition.gapVectorLength, vec); 
@@ -217,7 +217,7 @@ void ArrayRestorer::resetRestorer(const TreeAln &traln, ArrayOrientation &curOri
 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
-      auto& partition = traln.getPartition( i); 
+      auto& partition = traln.getPartition( i).getHandle(); 
 
       if(restoresGapVector)
 	{
@@ -249,7 +249,7 @@ void ArrayRestorer::clearMemory(ArrayReservoir &res)
 
 std::pair<double*,nat> ArrayRestorer::removeArray(TreeAln &traln, nat num, nat pid)
 {
-  auto& partition = traln.getPartition(pid);
+  auto& partition = traln.getPartition(pid).getHandle();
 
   nat id = num - traln.getNumberOfTaxa() - 1; 
 
@@ -265,7 +265,7 @@ std::pair<double*,nat> ArrayRestorer::removeArray(TreeAln &traln, nat num, nat p
 
 void ArrayRestorer::insertArray(TreeAln &traln, nat num, nat pid, std::pair<double*,nat> toInsert)
 {
-  auto& partition = traln.getPartition(pid);
+  auto& partition = traln.getPartition(pid).getHandle();
   nat id = num - traln.getNumberOfTaxa() - 1 ; 
 
   assert(partition.xVector[id] == NULL); 

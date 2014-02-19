@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <functional>
 
-#include "comm/ParallelSetup.hpp"
-
 #include "RateHelper.hpp"
 #include "DnaAlphabet.hpp"
 #include "AminoAcidAlphabet.hpp"
@@ -11,9 +9,7 @@
 #include "GlobalVariables.hpp"
 
 #include "RevMatParameter.hpp"
-#include "axml.h"
-
-
+// #include "axml.h"
 
 
 void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
@@ -115,7 +111,7 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
 void RevMatParameter::verifyContent(const TreeAln&traln,  const ParameterContent &content) const 
 {
   auto& partition = traln.getPartition(_partitions[0]); 
-  auto num = RateHelper::numStateToNumInTriangleMatrix(partition.states);
+  auto num = RateHelper::numStateToNumInTriangleMatrix(partition.getStates());
 
   bool ok = true; 
 
@@ -142,7 +138,7 @@ void RevMatParameter::verifyContent(const TreeAln&traln,  const ParameterContent
 void RevMatParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const 
 {
   checkSanityPartitionsAndPrior_FreqRevMat(traln);
-  nat numStates = traln.getPartition(_partitions[0]).states; 
+  nat numStates = traln.getPartition(_partitions[0]).getStates(); 
   
   auto initVal = _prior->getInitialValue(); 
   
@@ -151,6 +147,6 @@ void RevMatParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const
     {
       tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
       printShort(tout) << " that is not applicable." << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 }

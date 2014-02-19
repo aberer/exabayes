@@ -1,20 +1,15 @@
-
 #include "common.h"
 
-/* #if defined(HAVE_AVX) && ! defined(MANUAL_AVX_OVERRIDE) */
 #if USE_AVX
 
 #define  __AVX
 
-#if HAVE_PLL != 0
-#include "pll/avxLikelihood-pll.c"
-#else 
-#include "examl/avxLikelihood.c"
-#endif
+#include "lib/pll/avxLikelihood.c"
+
 #else 
 
 
-static int prototypeDummy()
+int avx_prototypeDummy()
 {
   return 0; 
 }

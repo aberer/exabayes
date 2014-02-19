@@ -163,10 +163,10 @@ bool Bipartition::isSet(nat pos) const
     return (bip[ pos >> bitShift ] & perBitMask[ pos & numBitsMinusOne ] ) != 0; 
 }
 
-void Bipartition::unset(nat pos)
-{
-  bip[ pos  >> bitShift ] &= ( allOne & perBitMask[ pos & numBitsMinusOne ]) ; 
-} 
+// void Bipartition::unset(nat pos)
+// {
+//   bip[ pos  >> bitShift ] &= ( allOne & perBitMask[ pos & numBitsMinusOne ]) ; 
+// } 
 
 
 std::ostream& operator<<(std::ostream& out, const Bipartition& rhs)

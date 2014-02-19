@@ -6,28 +6,29 @@
 #include <string>
 #include <cassert>
 
-#include "axml.h"
+#include "pll.h"
 
 enum class ProtModel : int 
 {
-  DAYHOFF_T =    DAYHOFF,
-    DCMUT_T =      DCMUT,
-    JTT_T =        JTT,
-    MTREV_T =      MTREV,
-    WAG_T =        WAG,
-    RTREV_T =      RTREV,
-    CPREV_T =      CPREV,
-    VT_T =         VT,
-    BLOSUM62_T =   BLOSUM62,
-    MTMAM_T =      MTMAM,
-    LG_T =         LG,
-    MTART_T =      MTART,
-    MTZOA_T =      MTZOA,
-    PMB_T =        PMB,
-    HIVB_T =       HIVB,
-    HIVW_T =       HIVW,
-    JTTDCMUT_T =   JTTDCMUT,
-    FLU_T =        FLU
+  DAYHOFF_T =    PLL_DAYHOFF,
+    DCMUT_T =      PLL_DCMUT,
+    JTT_T =        PLL_JTT,
+    MTREV_T =      PLL_MTREV,
+    WAG_T =        PLL_WAG,
+    RTREV_T =      PLL_RTREV,
+    CPREV_T =      PLL_CPREV,
+    VT_T =         PLL_VT,
+    BLOSUM62_T =   PLL_BLOSUM62,
+    MTMAM_T =      PLL_MTMAM,
+    LG_T =         PLL_LG,
+    MTART_T =      PLL_MTART,
+    MTZOA_T =      PLL_MTZOA,
+    PMB_T =        PLL_PMB,
+    HIVB_T =       PLL_HIVB,
+    HIVW_T =       PLL_HIVW,
+    JTTDCMUT_T =   PLL_JTTDCMUT,
+    FLU_T =        PLL_FLU, 
+    LG4_T =        PLL_LG4
 }; 
 
 

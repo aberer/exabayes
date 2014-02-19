@@ -13,9 +13,7 @@ class Bipartition
 {
 public: 
   explicit Bipartition();
-  // Bipartition& operator=(Bipartition rhs); 
-  // Bipartition(const Bipartition &rhs); 
-  
+
   /** 
       @brief gets the number of elements that currently can be
       represented via this bipartition.
@@ -59,6 +57,9 @@ public:
    */ 
   Bipartition operator& (const Bipartition &rhs)const ; 
   
+  void setRawBip(std::vector<nat> tmp){bip=tmp;}
+
+  std::vector<nat> getRawBip() { return bip; }
   const std::vector<nat>& getRawBip() const {return bip; }
   /** 
       @brief indicates whether this bipartition is a subset of bipartition rhs. 
@@ -72,7 +73,7 @@ public:
   /** 
       @brief unsets the bit at position pos 
    */ 
-  void unset(nat pos); 
+  // void unset(nat pos); 
   bool isSet(nat pos) const;
   void initializeWithTaxon(nat pos, nat ranNum); 
   /**

@@ -6,15 +6,10 @@ int NUM_BRANCHES ;
 
 #include "contrib/BipartitionExtractor.hpp" 
 
-#define _INCLUDE_DEFINITIONS
-#include "GlobalVariables.hpp"
-#undef _INCLUDE_DEFINITIONS
+// #define _INCLUDE_DEFINITIONS
+// #include "GlobalVariables.hpp"
+// #undef _INCLUDE_DEFINITIONS
 
-
-void myExit(int code)
-{
-  exit(code); 
-}
 
 static void printUsage(std::ostream &out)
 {
@@ -43,7 +38,7 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 	case 'h': 
 	  {
 	    printUsage(std::cout); 
-	    myExit(-1); 
+	    exitFunction(-1); 
 	  }
 	  break; 
 	case 'n': 
@@ -53,7 +48,7 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 	  break; 
 	case 'f': 
 	  {
-	    nat index  = optind -1; 
+	    int index  = optind -1; 
 	    while(index < argc)
 	      {
 		auto next = std::string{strdup(argv[index])}; 
@@ -77,7 +72,7 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 	default : 
 	  {
 	    std::cerr << "Error: unknown option >" << char(c) << "<. " << std::endl; 
-	    myExit(-1); 
+	    exitFunction(-1); 
 	  }
 	}
     }
@@ -85,13 +80,13 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
   if(not ( 0<= burnin && burnin < 1.  ) )
     {
       std::cerr << "The relative burn-in to be discarded must be in the range [0,1)." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }
  
   if(id.compare("") == 0)
     {
       std::cerr << "Please provide a run-id via -n " << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }    
   
   return std::make_tuple(id, files, burnin);
@@ -100,12 +95,14 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 
 int main(int argc, char** argv)
 {
+  exitFunction = exit; 
+
   NUM_BRANCHES = 1; // BAD 
 
   if(argc < 2) 
     {
       printUsage(std::cout);
-      myExit(-1); 
+      exitFunction(-1); 
     }
 
   auto files = std::vector<std::string>{};
@@ -122,7 +119,7 @@ int main(int argc, char** argv)
       if(not std::ifstream(file))
 	{
 	  std::cerr << "Error: could not open file >" <<  file  << "<" << std::endl; 
-	  myExit(-1); 
+	  exitFunction(-1); 
 	}    
     }
 

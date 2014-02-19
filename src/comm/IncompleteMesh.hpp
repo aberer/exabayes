@@ -9,10 +9,7 @@
 class IncompleteMesh
 {
 public: 
-  /** 
-      @brief initiale the mesh 
-   */ 
-  void initialize(nat size, nat runDimSize, nat chainDimSize); 
+  IncompleteMesh(nat size, nat runDimSize, nat chainDimSize); 
   /** 
       @brief gets the rank from coordinates in this mesh 
    */ 
@@ -27,7 +24,10 @@ public:
       in other words the total number of ranks assigned to something 
    */ 
   nat getNumRanksInDim(nat runBatchId, nat chainBatchId) const ;   
-  // nat getNumRanksInDim(nat runBatchId) const ; 
+
+  nat getRunDimSize() const {return _runDimSize; }
+  nat getChainDimSize() const {return _chainDimSize; }
+  
 
 private: 			// METHODS 
   /** 

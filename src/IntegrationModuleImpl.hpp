@@ -32,7 +32,7 @@ void SampleMaster::branchLengthsIntegration(Randomness &rand)
   
   double lambda = 10 ; 
   
-  auto&& ahInt = AdHocIntegrator (traln, nullptr ,rand.generateSeed()); 
+  auto&& ahInt = AdHocIntegrator (traln, nullptr ,rand.generateSeed(), _plPtr); 
   auto paramView = _runs[0].getChains()[0].getProposalView()[0]->getBranchLengthsParameterView();
 
   std::vector<std::pair<double,double> > parsAndMLBlen; 

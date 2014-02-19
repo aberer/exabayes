@@ -29,6 +29,9 @@
  *  Bioinformatics 2006; doi: 10.1093/bioinformatics/btl446
  */
 
+#ifndef _AXML_EXAML_H
+#define _AXML_EXAML_H
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -38,12 +41,6 @@
 #else
 #define BYTE_ALIGNMENT 16
 #endif
-
-
-
-/* #include <mpi.h> */
-
-
 
 
 #define MAX_TIP_EV     0.999999999 /* max tip vector value, sum of EVs needs to be smaller than 1.0, otherwise the numerics break down */
@@ -1235,9 +1232,6 @@ void newviewGTRGAMMAPROT_AVX_GAPPED_SAVE(int tipCase,
 					 double *x1_gapColumn, double *x2_gapColumn, double *x3_gapColumn); 
 #endif
 
-
-
-
 /* added after it has been de-static-ized */
 boolean setupTree (tree *tr); 
 void printModelAndProgramInfo(tree *tr, analdef *adef, int argc, char *argv[]); 
@@ -1247,3 +1241,6 @@ void analyzeRunId(char id[128]);
 int filexists(char *filename); 
 void printBothOpen(const char* format, ... );
 extern  void allocateParsimonyDataStructures(tree *tr);
+
+
+#endif

@@ -1,9 +1,10 @@
 #ifndef _TREE_RANDOMIZER_H
 #define _TREE_RANDOMIZER_H
 
-#include "axml.h" 
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
+
+class ParallelSetup; 
 
 class TreeRandomizer
 {
@@ -32,7 +33,7 @@ public:
      @brief creates a parsimony tree and applies it to the specfilied tree.      
      the routine does not enforce treatment of branch lengths.  
    */ 
-  static void createParsimonyTree(TreeAln &traln, Randomness& rand); 
+  static void createParsimonyTree(TreeAln &traln, Randomness& rand, ParallelSetup& pl); 
 
 private: 
   /**
@@ -42,6 +43,9 @@ private:
      the probability of drawing a tip should be accordingly lower.
   */ 
   static BranchPlain drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  ; 
+
+  static void createStepwiseAdditionParsimonyTree(TreeAln &traln, ParallelSetup& pl ); 
+  static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, nodeptr q, ParallelSetup& pl); 
 
 }; 
 

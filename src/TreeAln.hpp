@@ -12,8 +12,8 @@
 #include <memory>
 
 
+#include "extensions.hpp"
 #include "eval/ArrayReservoir.hpp"
-#include "axml.h"
 #include "GlobalVariables.hpp"
 
 #include "ProtModel.hpp"
@@ -21,48 +21,42 @@
 #include "FlagType.hpp"
 #include "RunModes.hpp"
 
+#include "BranchLengthResource.hpp"
+#include "Partition.hpp"
+
 class AbstractPrior; 
 class Randomness; 
 class TreePrinter; 
 class AbstractParameter; 
 
-std::ostream& operator<<(std::ostream& out, pInfo& rhs); 
-nat numStateToNumInTriangleMatrix(int numStates) ; 
-
-
-#if HAVE_PLL == 0 
-struct partitionList; 
-#endif
-
-class TreeInitializer; 
-
 class TreeAln
 {
-  friend class TreeInitializer; 
+  friend class BranchLengthResource;  
+
 public: 
    /////////////////
    // life cycle  //
    /////////////////
   explicit TreeAln(nat numTax);
   TreeAln(const TreeAln& rhs);
-  ~TreeAln();
-  // TreeAln(TreeAln &&rhs); 
+  TreeAln(TreeAln &&rhs) = default ; 
   TreeAln& operator=(TreeAln rhs);
+  // TreeAln& operator=(TreeAln&& rhs) = default;
+
+  friend void swap(TreeAln& lhs, TreeAln& rhs ); 
 
   friend std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln);
 
   /////////////////////////////////////
   //           OBSERVERS             //
   /////////////////////////////////////
-  /**
-     @brief get the raxml representation of the partition  
-   */ 
-  pInfo& getPartition(nat model) const;
+  Partition& getPartition(nat model) ;
+  const Partition& getPartition(nat model)  const ; 
   /** 
       @brief get the internal raxml tree representation 
    */ 
-  tree& getTrHandle() {return _tr;}
-  const tree& getTrHandle() const {return _tr; }
+  pllInstance& getTrHandle() {return _tr;}
+  const pllInstance& getTrHandle() const {return _tr; }
   /** 
       @brief frees all likelihood arrays 
    */   
@@ -83,7 +77,8 @@ public:
   /** 
       @brief get the number of nodes in the unrooted tree 
    */ 
-  nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa(); return 2 * numTax - 2 ;  } // excluding the virtual root 
+
+  nat getNumberOfNodes() const { nat numTax = getNumberOfTaxa() ;  return 2 * numTax - 2 ;  } // excluding the virtual root 
   /** 
       @brief get the substitution matrix for partition "model"
    */ 
@@ -95,12 +90,14 @@ public:
   /**
      @brief gets the alpha parameter of the gamma distribution  
    */ 
-  double getAlpha(nat model) const {auto& partition = getPartition(model) ; return partition.alpha; } 
+  double getAlpha(nat model) const {  return getPartition(model).getAlpha(); 
+    // auto& partition = getPartition(model) ; return partition.alpha; 
+  } 
   /** 
       @brief indicates whether a nodepointer is a tip 
    */ 
-  bool isTipNode(nodeptr p) const {return isTip(p->number, getTrHandle().mxtips );}
-  bool isTipNode(nat node) const { return isTip(node, getTrHandle().mxtips) ; }
+  bool isTipNode(nodeptr p) const {return p->number <=  getTrHandle().mxtips ;}
+  bool isTipNode(nat node) const { return int(node) <=  getTrHandle().mxtips; }
   /** 
       @brief gets the branch from a node pointer (including branch length)
       
@@ -118,8 +115,6 @@ public:
 
   BranchLength getBranch(const nodeptr &branch,  const AbstractParameter *param) const; 
   BranchLengths getBranch(const nodeptr &branch, const std::vector<AbstractParameter*> &params) const ; 
-
-  void setNumberOfPartitions(nat numPart);
 
   /** 
       @brief gets a nodepointer with specified id 
@@ -156,10 +151,12 @@ public:
   ///////////////
   // MODIFIERS //
   ///////////////
-#if HAVE_PLL != 0 
-  partitionList& getPartitionsHandle()  { return _partitions; }   
-#endif  
-  BranchPlain getAnyBranch() const ;//  {return BranchPlain(tr.nodep[1]->number, tr.nodep[1]->back->number); } 
+  partitionList& getPartitionsHandle() ; 
+  const partitionList& getPartitionsHandle() const ;
+
+  void setPartitions(std::vector<Partition> p, bool initial);
+
+  BranchPlain getAnyBranch() const ;
   
   /**
      @brief sets the frequencies. Format is important, frequencies must add up to 1.0 
@@ -182,7 +179,7 @@ public:
       @brief hooks up two nodes. Branch lengths must be set
       separately.
    */ 
-  void clipNode(nodeptr p, nodeptr q);   
+  void clipNode(nodeptr p, nodeptr q, double *z = nullptr);   
   /** 
       @brief hooks up two nodes with default branch length
    */ 
@@ -195,7 +192,7 @@ public:
       @brief gets the maximum length of paths below this branch 
    */ 
   nat getDepth(const BranchPlain  &b) const ; 
-  void setHasAlignment(){_hasAlignment = true;  }
+  // void setHasAlignment(){_hasAlignment = true;  }
   /** 
       @brief gets the longest path 
    */ 
@@ -226,39 +223,47 @@ public:
 
   RunModes getMode() const { return _mode; }
 
-  void setTaxa(std::vector<std::string> map){ _taxa = map; }
   const std::vector<std::string>& getTaxa() const {return _taxa; }
+  void setTaxa(std::vector<std::string> taxa){_taxa = taxa; }
 
   std::vector<BranchPlain> getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const;   
 
   void setProteinModel(int part, ProtModel model) ; 
   ProtModel getProteinModel(int part) const; 
-  void setHasTopology( ) { _hasTopology = true; }
 
   void setBranchUnchecked(const BranchLength &bl); 
   void setMode(RunModes modeI){_mode = modeI; }
 
   void copyTopologyAndBl(const TreeAln &rhs); 
-  void copyAlnModel(const TreeAln& rhs); 
 
-  friend void swap(TreeAln& lhs, TreeAln& rhs ); 
+  void setBranchLengthResource(BranchLengthResource bls); 
+
+  void createCaterpillar(); 
 
 private: // METHODS  
   void initRevMat(nat model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(nat model); 
-  void createStandardTree(nat numTax); 
+  void initialize(nat numTax);
+  nat addNodeToPartialTree(nat id, nat curRoot, nat outerCtr); 
 
 private: 			// ATTRIBUTES 
-#if HAVE_PLL != 0 
-  partitionList _partitions; 
-#endif
-  tree _tr;		// TODO replace with an object for cleanup   
+  std::vector<Partition> _partitions;
+  partitionList _partitionListResource; // no-copy 
+  std::vector<pInfo*> _partitionPtrs;	// no-copy
+
+  pllInstance _tr;
   RunModes _mode; 
   std::vector<std::string> _taxa; 
-  bool _hasLnlArrays; 
-  bool _hasAlignment; 
-  bool _hasTopology; 
-  // std::vector<double> _rateMultiplier; 
+  BranchLengthResource _bls; 
+
+  // tree resources 
+  std::vector<traversalInfo>  _traversalInfo; 
+  std::vector<node> _nodes; 
+  std::vector<nodeptr> _nodeptrs;
+
+  std::vector<int> _ti; 
+  std::vector<boolean> _execModel; // for the traveral descriptor 
+  std::vector<nat> _parsimonyScore; 
 };  
 
 

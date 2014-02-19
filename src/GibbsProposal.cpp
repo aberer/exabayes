@@ -94,8 +94,12 @@ std::array<double,3> GibbsProposal::optimiseBranch( TreeAln &traln, const Branch
   double nrD1 = 0; 
   double nrD2 = 0; 
 
-  auto p = b.findNodePtr(traln ), 
-    q = p->back; 
+
+#if 0
+  auto p = b.findNodePtr(traln ) ,
+    q = p->back ; 
+#endif
+
 
   assert(traln.getNumberOfPartitions() == 1 ); 
 
@@ -104,18 +108,21 @@ std::array<double,3> GibbsProposal::optimiseBranch( TreeAln &traln, const Branch
   
   auto prior = param->getPrior(); 
   assert(dynamic_cast<ExponentialPrior*> (prior) != nullptr); 
+  double result = 0;   
+
+#if 0 
+
   double lambda = dynamic_cast<ExponentialPrior*>(param->getPrior())->getLamda(); 
 
-  double result = 0;   
   double init = b.getLength(); 
 
 
   double add2nrd1 = lambda * traln.getMeanSubstitutionRate( { 0 }); 
 
-#if HAVE_PLL != 0
-  makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE, &eval.getArrayReservoir()) ;
-#else 
-  makenewzGeneric(&(traln.getTrHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE, &eval.getArrayReservoir()) ;
+  assert(0); 
+
+  makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, PLL_FALSE, &eval.getArrayReservoir()) ;
+
 #endif
 
   return std::array<double,3>{{result, nrD1, nrD2}}; 

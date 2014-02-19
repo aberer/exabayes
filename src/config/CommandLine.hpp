@@ -4,18 +4,16 @@
 #include <memory>
 #include <string>
 
-#include "axml.h"
-
 #include "Randomness.hpp"
 #include "MemoryMode.hpp"
 
 #include "RunModes.hpp"
 
-
 class CommandLine
 {
 public: 
-  CommandLine();
+  
+  CommandLine(); 
 
   void initialize(  int argc, char **argv); 
 
@@ -29,20 +27,25 @@ public:
   void printVersion(bool toInfoFile);
   nat getNumChainsParallel() const {return chainNumParallel; }
   std::string getCheckpointId()const {return checkpointId; }
-  bool isPerPartitionDataDistribution() const {return perPartitionDataDistribution; }
   void parseAlternative(int argc, char *argv[]); 
   bool isSaveMemorySEV() const {return saveMemorySEV; }
 
+  std::string getCommandLineString() const ; 
   MemoryMode getMemoryMode()const {return memoryMode ;  }
   bool isDryRun() const {return dryRun; }
   RunModes getTreeInitRunMode() const ; 
   
   bool alnFileIsBinary() const; 
 
+  // int getTotalThreads() const {return _totalThreads; }
+  int getNumThreads() const {return _totalThreads; }
+
   std::string getSingleModel() const {return singleModel; }
   std::string getModelFile() const {return modelFile; }
 
   bool isQuiet() const {return quiet; }
+
+  int getReaderStride() const {return readerStride; }
 
 private: 			// METHODS
   void assertFileExists(std::string filename); 
@@ -59,12 +62,14 @@ private: 			// ATTRIBUTES
   int chainNumParallel; 
   std::string checkpointId; 
   MemoryMode memoryMode; 
-  bool perPartitionDataDistribution; 
   bool saveMemorySEV; 
   bool dryRun; 
   std::string modelFile; 
   std::string singleModel; 
   bool quiet; 
+  int readerStride; 
+  std::string _cmdString;
+  int _totalThreads; 
 }; 
 
 

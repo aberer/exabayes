@@ -1,6 +1,7 @@
 #ifndef PARSIMONY_EVALUATOR
 #define PARSIMONY_EVALUATOR
 
+#include "comm/RemoteComm.hpp"
 #include <cassert>
 #include "TreeAln.hpp"
 
@@ -17,9 +18,7 @@ public:
       transition between the descendent nodes
    */ 
   auto evaluate(TreeAln &traln, nodeptr p, bool fullTraversal, bool doParallelReduce )   
-    // -> std::unordered_map<nat,parsimonyNumber>; 
     -> std::array<parsimonyNumber,2>;
-
 
   static nat numState2pos(nat numState) 
   { 
@@ -50,8 +49,7 @@ public:
   static void disorientNode(nodeptr p); 
 
 private: 
-
-
+  std::shared_ptr<RemoteComm> _commPtr; 
 }; 
 
 #endif

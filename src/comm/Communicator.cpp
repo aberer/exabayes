@@ -1,179 +1,138 @@
-#include "Communicator.hpp"
-#include <algorithm>
-#include <numeric>
+#include "comm/Communicator.hpp"	 
+#include "GlobalVariables.hpp"
+#include "comm/ThreadResource.hpp"
 
-#if HAVE_PLL == 0
 
-#include "CommRequest.hpp"
-
-Communicator::Communicator() 
+Communicator::Communicator(std::unordered_map<tid_t,int> tid2rank)
+  : _remoteComm()
+  , _localComm(tid2rank)
 {
-  _comm = MPI_COMM_WORLD; 
+  auto tRanks =  std::vector<int> {}; 
+  for(nat i =0; i < tid2rank.size() ;++i)
+    tRanks.push_back(i); 
+  _localComm.setRanks(tRanks); 
 }
 
 
-Communicator::Communicator(Communicator &&rhs)
-  : _comm(std::move(rhs._comm))
+Communicator& Communicator::operator=(Communicator rhs) 
 {
-}
-
-
-Communicator& Communicator::operator=( Communicator rhs)
-{
-  swap(*this, rhs);
+  swap(*this, rhs); 
   return *this; 
 }
-  
-void swap(Communicator &lhs, Communicator& rhs)
-{
-  std::swap(lhs._comm, rhs._comm);
-}
-
-MPI_Comm* Communicator::getPtr()
-{
-  return &_comm; 
-}
 
 
-MPI_Comm& Communicator::getHandle()
+void swap(Communicator& lhs, Communicator &rhs)
 {
-  return _comm; 
-}
-
-  
-Communicator::~Communicator()
-{
-  if( _comm != MPI_COMM_WORLD )
-    MPI_Comm_free(&_comm);
+  using std::swap; 
+  swap(lhs._remoteComm, rhs._remoteComm); 
+  swap(lhs._localComm, rhs._localComm); 
 }
 
 
-int Communicator::getRank() const 
+void Communicator::waitAtBarrier() 
 {
-  int result = 0; 
-  MPI_Comm_rank(_comm, &result);
-  return result; 
+  if(getRank() == 0)
+    _remoteComm.waitAtBarrier();
+
+  _localComm.waitAtBarrier();
 }
 
 
-int Communicator::getSize() const 
+bool Communicator::haveThreadSupport() const 
 {
-  int result = 0; 
-  MPI_Comm_size(_comm, &result); 
-  return result; 
+  return _localComm.haveThreadSupport() && _remoteComm.haveThreadSupport(); 
 }
 
-  
+void Communicator::createSendRequest(std::vector<char> array, int dest, int tag, CommRequest& req)
+{
+  _remoteComm.createSendRequest(array, dest,tag, req); 
+}
+
+void Communicator::createRecvRequest(int src, int tag, nat length, CommRequest& req)
+{
+  _remoteComm.createRecvRequest(src,tag, length, req); 
+}
+
+
+int Communicator::getRank( ) const 
+{
+  return _remoteComm.getRank()  * _localComm.size() + _localComm.getRank() ; 
+}
+
+int Communicator::size() const 
+{
+  return _remoteComm.size() * _localComm.size(); 
+}
+
 bool Communicator::isValid() const
 {
-  return _comm != MPI_COMM_NULL; 
+  return _remoteComm.isValid() && _localComm.isValid();
+}
+
+Communicator Communicator::split(const std::vector<int> &color, const std::vector<int> &rank) const 
+{
+  // std::cout << "called split with " << color << " and "  << rank << std::endl; 
+
+  auto &&result = Communicator(_localComm.getTid2Ranking()) ; 
+
+  result._remoteComm = _remoteComm.split(color, rank);
+  result._localComm = std::move(_localComm.split(color, rank)); 
+
+  return std::move(result); 
 }
 
 
-void Communicator::waitAtBarrier()
+void Communicator::finalize()
 {
-  MPI_Barrier(_comm);
+  RemoteComm::finalize(); 
+}
+
+void Communicator::initComm(int argc, char **argv)
+{
+  RemoteComm::initComm(argc, argv); 
+}
+
+void Communicator::abort(int code)
+{
+  RemoteComm::abort(code); 
+}
+
+
+std::ostream& operator<<(std::ostream & out, const Communicator& rhs)
+{
+  out << rhs._remoteComm << "\t" ; 
+  out << rhs._localComm ; 
+  return out; 
+}
+
+
+int Communicator::mapToLocalRank( int rank) const   
+{
+  auto res =  rank %_localComm.size(); 
+  assert(res >= 0 && "local rank was negative" ); 
+  return  res; 
+}
+
+
+int Communicator::mapToRemoteRank(int rank) const  
+{
+  return rank / _localComm.size(); 
+}
+
+
+/** 
+    how many sets of threads offset does this set of threads need for
+    pinning?
+ */ 
+int Communicator::getOffsetForThreadPin() 
+{
+  auto numNodes = _remoteComm.getNumberOfPhysicalNodes(); 
+  auto siz = _remoteComm.size(); 
+  return ( siz / numNodes ) + (siz % numNodes == 0 ? 0 : 1   ) ; 
+}
+
+
+LocalComm&  Communicator::getLocalComm ()
+{
+  return _localComm;
 } 
-
-
-Communicator Communicator::split(int color, int rank)
-{
-  auto result = Communicator{}; 
-  MPI_Comm_split(_comm, color, rank, result.getPtr());
-  return result; 
-}
-
-template<typename T>
-std::vector<T> Communicator::gather(std::vector<T> myData, nat root) const
-{
-  auto result = std::vector<T>{};  
-  nat totalLength = getSize() * myData.size(); 
-  result.resize(totalLength); 
-
-  MPI_Gather( myData.data(), myData.size(), mpiType<T>::value, result.data(), myData.size(), mpiType<T>::value, root, _comm);
-
-  return result; 
-}
-
-// list all instantiations 
-template std::vector<char> Communicator::gather(std::vector<char> myData, nat root) const; 
-template std::vector<int> Communicator::gather(std::vector<int> myData, nat root) const; 
-
-
-// could also return vector<vector<T>>...however, functionality not needed right now 
-template<typename T> std::vector<T> Communicator::gatherVariableLength(std::vector<T> myData, int root) const 
-{
-  // determine lengths 
-  auto lengths = std::vector<nat>{}; 
-  auto myLen = std::vector<int>{  int(myData.size()) }; 
-  auto allLengths = gather<int>( myLen, root );
-  
-  // calculate the displacements 
-  auto displ = std::vector<int>{}; 
-  displ.push_back(0);
-  for(nat i = 1; i < allLengths.size(); ++i)
-    displ.push_back(displ.back() + allLengths.at(i-1));
-
-  auto result = std::vector<T>{}; 
-  result.resize(std::accumulate(begin(allLengths), end(allLengths), 0));
-
-  MPI_Gatherv(myData.data(), myData.size(), mpiType<T>::value, result.data(), allLengths.data(), displ.data(), mpiType<T>::value, root, _comm);
-  
-  return result; 
-} 
-
-template std::vector<char> Communicator::gatherVariableLength(std::vector<char> myData, int root) const ; 
-
-
-bool Communicator::broadcast(bool value, int root) const 
-{
-  char myVal = value ? 1 : 0 ; 
-  MPI_Bcast(&myVal, 1, MPI_CHAR, root, _comm);
-  return myVal == 1 ?true : false; 
-}
-
-// NOT used at the moment, would be nice, if we did 
-template<typename T>
-std::vector<T> Communicator::allReduce( std::vector<T> myValues)
-{
-  MPI_Allreduce(MPI_IN_PLACE, myValues.data(), myValues.size(), mpiType<T>::value, MPI_SUM, _comm); 
-  return myValues; 
-}
-
-
-
-// implement with templates once we have more allreduces   
-bool Communicator::allReduceLand( bool myValue ) const 
-{
-  char val =  myValue ? 1 : 0 ; 
-  
-  MPI_Allreduce(MPI_IN_PLACE, &val, 1, MPI_CHAR, MPI_LAND, _comm);
-
-  return val == 1 ? true : false; 
-}
-
-
-template<typename T> 
-T Communicator::receive( int source, int tag ) 
-{
-  auto result = T{}; 
-  MPI_Recv(&result,1, mpiType<T>::value, source, tag, _comm, MPI_STATUS_IGNORE);
-  return result; 
-}
-
-template<typename T> 
-void Communicator::send( T elem, int dest, int tag ) 
-{
-  MPI_Send(&elem,1, mpiType<T>::value, dest, tag, _comm);
-}
-
-
-template int Communicator::receive(int source , int tag); 
-template void Communicator::send( int elem, int dest, int tag ) ; 
-
-
-
-#else 
-#endif
-
-

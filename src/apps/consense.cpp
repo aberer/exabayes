@@ -5,16 +5,10 @@
 
 int NUM_BRANCHES; 	
 
-#define _INCLUDE_DEFINITIONS
-#include "GlobalVariables.hpp"
-#undef _INCLUDE_DEFINITIONS
 
 #include "contrib/ConsensusTree.hpp"
 
-void myExit(int code)
-{
-  exit(code); 
-}
+#include "GlobalVariables.hpp"
 
 
 static void printUsage(std::ostream &out)
@@ -46,7 +40,7 @@ auto processCommandLine(int argc, char **argv)
 	{
 	case 'h': 
 	  printUsage(std::cout);
-	  myExit(0);
+	  exitFunction(0);
 	  break; 
 	case 'n': 
 	  {
@@ -71,7 +65,7 @@ auto processCommandLine(int argc, char **argv)
 	  break; 
 	case 'f': 
 	  {
-	    nat index  = optind -1; 
+	    int index = optind -1; 
 	    while(index < argc)
 	      {
 		auto next = std::string{argv[index]}; 
@@ -95,7 +89,7 @@ auto processCommandLine(int argc, char **argv)
 	default: 
 	  {
 	    std::cerr << "Unrecognized option >" <<  optarg << "<"  << std::endl; 
-	    myExit(-1); 
+	    exitFunction(-1); 
 	  }
 	}
     }
@@ -103,24 +97,24 @@ auto processCommandLine(int argc, char **argv)
   if(thresh < 50 || thresh > 100 )
     {
       std::cerr << "error: correct values for -t in [50,100] or MRE." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }
 
   if(files.size() == 0 )
     {
       std::cerr << "Please specfiy tree input files via -f" << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }
   if(id.compare("") == 0)
     {
       std::cerr << "Please specify a runid for the output via -n. " << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }
  
   if(not (  0 <= burnin   &&  burnin < 1. ))
     {
       std::cerr << "The relative burn-in range is [0,1)." << std::endl;
-      myExit(-1); 
+      exitFunction(-1); 
     }
 
 
@@ -136,12 +130,14 @@ auto processCommandLine(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  exitFunction = exit; 
+
   NUM_BRANCHES = 1;   // BAD
 
   if(argc < 2 ) 
     {
       printUsage(std::cout);
-      myExit(-1); 
+      exitFunction(-1); 
     }
 
   bool isMre = false;   
@@ -158,7 +154,7 @@ int main(int argc, char **argv)
       if(not std::ifstream(file))
 	{
 	  std::cerr << "Error: could not open file >" << file << "<" << std::endl; 
-	  myExit(-1); 
+	  exitFunction(-1); 
 	}    
     }
 
@@ -181,7 +177,7 @@ int main(int argc, char **argv)
       std::cerr << std::endl << "File " << ss.str() << " already exists (probably \n"
 		<< "left over from a previous run). Please choose a new run-id or remove\n"
 		<< "previous output files." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }
 
   auto &&outfile = std::ofstream(ss.str()); 

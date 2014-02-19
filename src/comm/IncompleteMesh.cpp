@@ -3,11 +3,11 @@
 #include <algorithm>
 
 
-void IncompleteMesh::initialize(nat size, nat runDimSize, nat chainDimSize)
+IncompleteMesh::IncompleteMesh(nat size, nat runDimSize, nat chainDimSize)
+  : _runDimSize (runDimSize)
+  , _chainDimSize ( chainDimSize)
+  , _globalSize( size) 
 {
-  _runDimSize = runDimSize; 
-  _chainDimSize = chainDimSize; 
-  _globalSize = size; 
 }
 
 
@@ -89,8 +89,8 @@ std::ostream& operator<<(std::ostream& out, const IncompleteMesh& rhs)
     {
       auto coord = rhs.getCoordinates(i); 
       out << "rank:\t" << i << "\t|\t"<< std::get<0>(coord) << "\t" << 
-	std::get<1>(coord) << "\t" << 
-	std::get<2>(coord) <<  std::endl; 
+      	std::get<1>(coord) << "\t" << 
+      	std::get<2>(coord) <<  std::endl; 
     }
   return out; 
 }

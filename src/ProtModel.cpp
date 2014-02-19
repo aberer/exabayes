@@ -43,6 +43,7 @@ namespace ProtModelFun
 	ProtModel::MTREV_T,
 	ProtModel::WAG_T,
 	ProtModel::RTREV_T,
+	// ProtModel::LG4_T, 
 	ProtModel::CPREV_T,
 	ProtModel::VT_T,
 	ProtModel::BLOSUM62_T,
@@ -84,6 +85,8 @@ namespace ProtModelFun
 	return "MTMAM";
       case ProtModel::LG_T:
 	return "LG";
+      case ProtModel::LG4_T: 
+	return "LG4"; 
       case ProtModel::MTART_T:
 	return "MTART";
       case ProtModel::MTZOA_T:

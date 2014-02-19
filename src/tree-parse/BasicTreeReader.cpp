@@ -19,7 +19,7 @@ inline void BasicTreeReader<LABEL_READER, BL_READER>::expectChar(std::istream &i
   if(ch != got)
     {
       std::cerr << "expected >" << char(ch) << "<, got >"  <<  char(got) << "<" << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 }
 

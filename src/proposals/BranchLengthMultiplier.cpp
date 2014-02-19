@@ -73,7 +73,7 @@ void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,Tre
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL: " << savedBranch << std::endl; 
 #endif
-  evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false, true); 
+  evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false); 
 }
 
  

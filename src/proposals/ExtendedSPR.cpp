@@ -63,7 +63,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   modifiedPath.append(BranchPlain(q->number, r->number)); 
 
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
-  boolean accepted = FALSE;   
+  boolean accepted = PLL_FALSE;   
   while(not accepted)
     {  
       nodeptr n = 
@@ -224,7 +224,7 @@ void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &tral
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL " << toEval << std::endl; 
 #endif
-  evaluator.evaluate(traln,toEval, false, true); 
+  evaluator.evaluate(traln,toEval, false); 
 }
 
 

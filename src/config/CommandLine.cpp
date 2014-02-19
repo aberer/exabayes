@@ -3,7 +3,6 @@
 #include <cstring>
 #include "CommandLine.hpp"
 #include "GlobalVariables.hpp"
-#include "comm/ParallelSetup.hpp"
 #include "file/OutputFile.hpp"
 #include "MemoryMode.hpp"
 #include "FlagType.hpp"
@@ -19,28 +18,36 @@ CommandLine::CommandLine()
   , chainNumParallel(1)
   , checkpointId("")
   , memoryMode(MemoryMode::RESTORE_ALL)
-  , perPartitionDataDistribution(false)
   , saveMemorySEV(false)
   , dryRun (false)
   , modelFile("")
   , singleModel("")
   , quiet{false}
+  , readerStride(-1)
+  , _cmdString("")
+  , _totalThreads(-1)
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
 }
 
 
-
+std::string CommandLine::getCommandLineString() const 
+{
+  return _cmdString; 
+}
 
 void CommandLine::initialize(  int argc, char **argv)
 {
+  // first copy the command line string 
+  for(int i = 0; i < argc; ++i)
+    _cmdString += std::string(argv[i], argv[i] + strlen(argv[i])); 
 
   int c ; 
 
   // TODO threads/ processes? 
   
-  while( (c = getopt(argc,argv, "c:df:vhn:w:s:t:R:r:M:C:Qm:Sq:z")) != EOF)
+  while( (c = getopt(argc,argv, "c:df:vhn:w:s:t:R:r:M:C:m:Sq:zx:T:")) != EOF)
     {
       try
 	{	  
@@ -63,7 +70,7 @@ void CommandLine::initialize(  int argc, char **argv)
 	      break; 
 	    case 'v':  		// version 
 	      printVersion(false );
-	      ParallelSetup::genericExit(0); 
+	      exitFunction(0); 
 	      break; 
 	    case 'd': 
 	      dryRun = true; 
@@ -104,29 +111,32 @@ void CommandLine::initialize(  int argc, char **argv)
 	    case 'R': 
 	      runNumParallel = std::stoi(optarg);
 	      break; 
-	    case 'Q': 
-	      perPartitionDataDistribution = true; 
-	      break; 	  
+	    case 'T': 
+	      _totalThreads = std::stoi(optarg); 
+	      break; 
+	    case 'x': 
+	      readerStride = std::stoi(optarg); 
+	      break; 
 	    default: 
 	      {
 		std::cerr << "Encountered unknown command line option " <<  c 
 			  << "\n\nFor an overview of program options, please use -h" << std::endl ; 
 		// TODO mpi-finalize stuff 
-		ParallelSetup::genericExit(-1); 
+		exitFunction(-1); 
 	      }
 	    }
 	}
       catch(const std::invalid_argument& ia)
 	{
 	  std::cerr << "Invalid argument >" << optarg << "< to option >" << reinterpret_cast<char*>(&c) << "<" << std::endl; 
-	  ParallelSetup::genericExit(-1);
+	  exitFunction(-1);
 	}
     }  
   
   if(runid.compare("") == 0 )
     {
       std::cerr << "please specify a runid with -n runid" << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
   
   if(seed.v[0] != 0 && checkpointId.compare("") != 0 )
@@ -138,33 +148,25 @@ void CommandLine::initialize(  int argc, char **argv)
   if(checkpointId.compare("") == 0 && seed.v[0] == 0 )
     {
       std::cerr << "please specify a seed via -s seed (must NOT be 0)"   << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 
 
 
-#if HAVE_PLL != 0
-  if(runNumParallel > 1 || chainNumParallel > 1 )
+  if(isYggdrasil)
     {
-      std::cout << std::endl << "Your command line indicates that you intend to execute multiple runs\n"
-		<< "or chains in parallel. This is the sequential version of " << PROGRAM_NAME << "\n"
-		<< "and thus these command line flags will be ignored." << std::endl; 
+      if(runNumParallel > 1 || chainNumParallel > 1 )
+	{
+	  std::cout << std::endl << "Your command line indicates that you intend to execute multiple runs\n"
+		    << "or chains in parallel. This is the sequential version of " << PROGRAM_NAME << "\n"
+		    << "and thus these command line flags will be ignored." << std::endl; 
+	}
     }
-
-  if(perPartitionDataDistribution)
-    {
-      std::cout << std::endl << "Noticed your intent to enable per-partition data distribution (-Q). \n"
-		<< "Since this is the sequential version of " << PROGRAM_NAME << "this option is ignored.\n"
-		<< "For a detailed explanation of the -Q option, please consult the manual." << std::endl; 
-    }
-#endif
-
-
 
   if(workDir.compare("") != 0 && not OutputFile::directoryExists(workDir))
     {
       std::cout << std::endl << "Could not find the provided working directory >" << workDir << "<" << std::endl; 
-      ParallelSetup::genericExit(-1);
+      exitFunction(-1);
     }
 
   if(alnFileName.compare("") == 0 )
@@ -172,7 +174,7 @@ void CommandLine::initialize(  int argc, char **argv)
       std::cerr << "please specify an alignment file via -f file" <<  std::endl 
 		<< "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << std::endl; 
 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 
   if(alnFileIsBinary())
@@ -193,14 +195,14 @@ void CommandLine::initialize(  int argc, char **argv)
 	  std::cout << "Found a phylip-style alignment file. However, you did not provide a\n"
 	       << "model file (see -q, resp. it coul not be found) or a data type specification for a single\n"
 	       << "partition (-m). Cannot proceed.\n" ; 
-	  ParallelSetup::genericExit(-1); 
+	  exitFunction(-1); 
 	}
     }
 
   if( treeFile.compare("") != 0 && not std::ifstream(treeFile))
     {
       std::cout << "Could not find tree file passed via -t >"  << treeFile << "<"<< std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 }
 
@@ -248,42 +250,44 @@ void CommandLine::printHelp()
 	    << "                      lot of processes.\n" 
 	    << "    -d               execute a dry-run. Procesess the input, but does not execute any sampling.\n"
 	    << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the examples/ folder\n"
-	    << "    -w dir           specify a working directory for output files\n"
-	    << "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n"
-	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n"
-	    << "    -Q               per-partition data distribution (use this only with many partitions, check manual\n"
-	    << "                       for detailed explanation)\n"
-	    << "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
+	    << "    -w dir           specify a working directory for output files\n"; 
+
+  if(not isYggdrasil)
+    {
+      std::cout << "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n"
+		<< "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n" 
+		<< "    -x num           use every x-th process for reading (default: determines number of readers automatically)\n" ; 
+    }
+
+  std::cout << "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
 	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
 	    << "                       On very gappy alignments this option yields considerable runtime improvements. \n"
+	    << "    -T x             start x threads per MPI process. If you do not use MPI, simply start x threads. \n " 
 	    << "    -M mode          specifies the memory versus runtime trade-off (see manual for detailed discussion).\n"
 	    << "                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,\n"
 	    << "                       least memory consumption)\n"
 	    << std::endl; 
 
-  ParallelSetup::genericExit(-1); 
+  exitFunction(-1); 
 }
 
 
 void CommandLine::assertFileExists(std::string filename)
 {
-  FILE *fh = myfopen(filename.c_str(), "r");
-
-  if(fh == NULL )
+  auto &&in = std::ifstream{filename}; 
+  if( not in  )
     {
-      fclose(fh); 
       std::cerr << "could not file file " << filename << ". Aborting." << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
-  fclose(fh); 
 }
 
 
 RunModes CommandLine::getTreeInitRunMode() const 
 {
   auto runmodes = RunModes::NOTHING; 
-  if(isPerPartitionDataDistribution())
-    runmodes = runmodes | RunModes::PARTITION_DISTRIBUTION; 
+  // if(isPerPartitionDataDistribution())
+  //   runmodes = runmodes | RunModes::PARTITION_DISTRIBUTION; 
   if(isSaveMemorySEV())
     runmodes = runmodes | RunModes::MEMORY_SEV; 
   return runmodes; 
@@ -309,15 +313,6 @@ bool CommandLine::alnFileIsBinary() const
   auto readString = std::string(firstBytes); 
 
   bool result = readString.compare(fileId) == 0 ;
-  // if(not result)
-  //   {
-  //     // std::cout << "wanted to read >" << fileId << "< instead got >" << readString << "<" << std::endl; 
-      
-  //   }
-  // else 
-  //   {
-  //     // std::cout << "Determined alignment file to be binary" << std::endl; 
-  //   }
 
   return result; 
 }  

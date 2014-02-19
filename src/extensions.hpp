@@ -3,11 +3,12 @@
 
 #include <vector>
 #include <memory>
-#include <iomanip>
-
 #include <iostream>
 
 #include "common.h"
+
+#define PRINT(x) (tout << "#x=x"  << std::endl) 
+
 
 // still missing in c++11. 
 template<typename T, typename ...Args>
@@ -24,10 +25,6 @@ public:
   ThousandsSeparator(T Separator) : m_Separator(Separator) {}
 
 protected:
-  // T do_thousands_sep() const  {
-  //   return m_Separator;
-  // }
-  
   std::string do_grouping() const
   {
     return "\03";
@@ -37,40 +34,33 @@ private:
     T m_Separator;
 }; 
 
-
-
 void formatRange(std::ostream &out, const std::vector<nat> &values) ; 
-// {
-//   bool inRange = false; 
-//   for(auto iter = begin(values); iter != end(values) ; ++iter )
-//     {
-//       if(iter == begin(values))
-// 	out << *iter; 
-//       else if(iter == end(values) -1 )
-// 	{
-// 	  if(inRange)
-// 	    out << "-" << *iter ;  
-// 	  else 
-// 	    out << "," << *iter; 
-// 	}
-//       else 
-// 	{ 
-// 	  bool haveBeenInRange = ((iter-1) ==  begin(values)) || inRange; 
-// 	  inRange = *iter == *(iter-1) + 1;  
 
-// 	  if(not haveBeenInRange )
-// 	    {
-// 	      out << "," << *iter ; 
-// 	    }
-// 	  else
-// 	    {
-// 	      if(not inRange)
-// 		out << "-" << *iter; 
-// 	    }
-// 	}
-//     }
+template<typename T> struct shared_pod_ptr
+{
+  shared_pod_ptr(T *arg = nullptr)
+    : _impl{arg, [](T* bla){ free(bla) ; }}
+  {}
   
-// }
+  T* get() {return _impl.get() ; }
+
+private: 
+  std::shared_ptr<T> _impl; 
+}; 
+
+template<typename T, int ALIGN> T* aligned_malloc( size_t size ); 
+
+
+
+#include "AlignedAllocator.hpp"
+
+
+template<typename T>
+struct aligned_vector
+{
+typedef std::vector<T, AlignedAllocator<T, EXA_ALIGN> >  type; 
+}; 
+
 
 
 #endif

@@ -118,7 +118,7 @@ void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln,
   tout << "EVAL " << evalBranch << std::endl; 
 #endif
 
-  evaluator.evaluate(traln, evalBranch, false, true); 
+  evaluator.evaluate(traln, evalBranch, false); 
 }
 
 

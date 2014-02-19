@@ -1,9 +1,7 @@
 #include <sstream>
-#include "comm/ParallelSetup.hpp"
 #include "extensions.hpp" 
 #include <string.h>
 #include <cassert>
-#include "tree-init/TreeInitializer.hpp"
 #include <iostream>
 #include <cmath>
 #include "Branch.hpp"
@@ -28,13 +26,12 @@ TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveC
 	  if(not okay)
 	    {
 	      std::cout << "Error: file " << f << " contains a different numbering of taxa than " << fileNames[0] << ". At the moment, " << PROGRAM_NAME << " does not support this. Write us an e-mail, if this feature is important for you. " << std::endl; 
-	      ParallelSetup::genericExit(-1);
+	      exitFunction(-1);
 	    }
 	}
     }
 
   _tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(_taxa.size()));
-  TreeInitializer::initializeBranchLengths(_tralnPtr->getTrHandle(), 1,_taxa.size()); 
   _fns = fileNames; 
 }
 

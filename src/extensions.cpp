@@ -1,4 +1,6 @@
 #include "extensions.hpp"
+#include <cassert>
+#include <malloc.h>
 
 
 void formatRange(std::ostream &out, const std::vector<nat> &values)  
@@ -33,3 +35,17 @@ void formatRange(std::ostream &out, const std::vector<nat> &values)
     }
   
 }
+
+
+template<typename T, int ALIGN>
+T* aligned_malloc( size_t size )
+{
+  T *ptr = NULL; 
+  posix_memalign((void**)&ptr, ALIGN, sizeof(T) * size); 
+  assert(ptr != NULL); 
+  return ptr; 
+}
+template int* aligned_malloc<int,size_t(EXA_ALIGN)>( size_t size ) ; 
+template nat* aligned_malloc<nat,size_t(EXA_ALIGN)>( size_t size ) ; 
+template unsigned char* aligned_malloc<unsigned char,size_t(EXA_ALIGN)>( size_t size ) ; 
+template double* aligned_malloc<double,size_t(EXA_ALIGN)>( size_t size ) ; 

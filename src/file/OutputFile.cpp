@@ -1,6 +1,5 @@
 #include "file/OutputFile.hpp"
-
-#include "comm/ParallelSetup.hpp"
+#include "GlobalVariables.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -12,7 +11,7 @@ void OutputFile::rejectIfExists(std::string fileName)
     {
       std::cerr << std::endl <<  "File " << fileName << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      ParallelSetup::genericExit(-1);
+      exitFunction(-1);
     }
 }
 
@@ -22,7 +21,7 @@ void OutputFile::rejectIfNonExistant(std::string fileName)
     {
       std::cerr << "Error: could not find file from previous run. \n"
 		<< "The assumed name of this file was >" <<  fileName << "<. Aborting." << std::endl; 
-      ParallelSetup::genericExit(0); 
+      exitFunction(0); 
     }
 }
 

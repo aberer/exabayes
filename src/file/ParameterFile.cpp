@@ -3,22 +3,16 @@
 #include "Category.hpp"
 #include "extensions.hpp"
 
-#include "comm/ParallelSetup.hpp"
-
 #include <cassert>
 
 
-ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid, nat couplingId)
+ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid )
   : runid(runid)
-  , couplingId(couplingId)
 {
   auto&& ss = std::stringstream{}; 
 
   ss << OutputFile::getFileBaseName(workdir) << "_parameters." << runname << "." << runid ; 
-  if(couplingId != 0 )
-    ss << ".hot-"<<  couplingId; 
   fullFileName = ss.str();
-
 }
 
 

@@ -11,16 +11,13 @@
 #include "priors/DirichletPrior.hpp"
 #include "priors/FixedPrior.hpp"
 
-#include "comm/ParallelSetup.hpp"
-
-
 static void expectString( std::string expectation, NxsToken& token)
 {
   bool okay = token.GetToken().EqualsCaseInsensitive(expectation.c_str()); 
   if(not okay)
     {
       std::cerr << "error while parsing the config file: expected " << expectation << " but got " << token.GetToken() << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 }
 
@@ -89,7 +86,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	      if(remainder != std::numeric_limits<double>::infinity())
 		{
 		  std::cerr << "Encountered 'remainder' twice while defining aaPr" << std::endl; 
-		  ParallelSetup::genericExit(-1); 
+		  exitFunction(-1); 
 		}
 
 	      token.GetNextToken();
@@ -106,7 +103,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	      if(not std::get<0>(modelRes) )
 		{
 		  std::cerr << "Error: expected " << token.GetToken() << "to be a valid protein model name" << std::endl; 
-		  ParallelSetup::genericExit(-1); 
+		  exitFunction(-1); 
 		}
 	      auto model = std::get<1>(modelRes);
 
@@ -121,7 +118,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	      if(modelsProbs.find(model) != modelsProbs.end())
 		{
 		  std::cerr << "Error: model " <<  model << "occurred more than once in your specification of a discrete amino acid model prior."  << std::endl; 
-		  ParallelSetup::genericExit(-1); 
+		  exitFunction(-1); 
 		}
 
 	      modelsProbs[model] = weight; 
@@ -187,7 +184,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
   else 
     {
       cerr << "attempted to parse prior. Did not recognize keyword " <<  value << endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
       return make_unique<ExponentialPrior>(0);
     }
 }
@@ -220,7 +217,7 @@ void BlockPrior::Read(NxsToken &token)
 		  if( _numPart <= nat(val)  )
 		    {
 		      tout << "Error while parsing priors: you specified partition id " << val << " while ExaBayes assumes, that you only have " << _numPart << " partitions" << std::endl; 
-		      ParallelSetup::genericExit(-1); 
+		      exitFunction(-1); 
 		    }
 	      
 		  partitions.insert(val);
@@ -259,7 +256,7 @@ void BlockPrior::verify() const
 	    tout << "You attempted to set a fixed branch lengths prior to one or more\n"
 		 << "partitions (but not all of them). Currently, this option is not\n"
 		 << "supported. If you urgently need this feature, please contact us." << std::endl; 
-	    ParallelSetup::genericExit(-1);
+	    exitFunction(-1);
 	  }
     }
 } 

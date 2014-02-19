@@ -9,7 +9,6 @@
 #include "proposers/MultiplierProposer.hpp"
 #include "proposers/DirichletProposer.hpp"
 #include "proposers/SlidingProposer.hpp"
-#include "comm/ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -59,7 +58,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
     {
       assert(p->getPartitions().size() > 0 );
       if ( p->getCategory() == Category::SUBSTITUTION_RATES
-	   &&  traln.getPartition(p->getPartitions()[0]).dataType == AA_DATA ) 
+	   &&  traln.getPartition(p->getPartitions()[0]).getDataType() == PLL_AA_DATA ) 
 	{
 	  for(auto part : p->getPartitions())
 	    {
@@ -98,7 +97,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	  {
 	    for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
 	      {
-		if( traln.getPartition(i).dataType == AA_DATA
+		if( traln.getPartition(i).getDataType() == PLL_AA_DATA
 		    && not cat2partsUsed[Category::SUBSTITUTION_RATES][i]
 		    && not cat2partsUsed[Category::AA_MODEL][i] )
 		  partsUnused.push_back(i);
@@ -121,7 +120,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i )
 	      {
 		if(not cat2partsUsed.at(cat).at(i) // not already there 
-		   && traln.getPartition(i).dataType != AA_DATA) // we use an AA_MODEL as default for proteins 
+		   && traln.getPartition(i).getDataType() != PLL_AA_DATA) // we use an AA_MODEL as default for proteins 
 		  partsUnused.push_back(i); 
 	      }
 	  }
@@ -174,14 +173,14 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
     case Category::FREQUENCIES: 
       {
 	auto& partition = traln.getPartition(var->getPartitions()[0]);
-	assert(partition.dataType == DNA_DATA || partition.dataType == AA_DATA); 
-	var->setPrior(std::unique_ptr<AbstractPrior>(new DirichletPrior(std::vector<double>(partition.states , 1.)))); 
+	assert(partition.getDataType() == PLL_DNA_DATA || partition.getDataType() == PLL_AA_DATA); 
+	var->setPrior(std::unique_ptr<AbstractPrior>(new DirichletPrior(std::vector<double>(partition.getStates() , 1.)))); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
       {
 	auto& partition = traln.getPartition(var->getPartitions()[0]);	;
-	var->setPrior( make_unique<DirichletPrior>( std::vector<double>(RateHelper::numStateToNumInTriangleMatrix(partition.states), 1.) )); 
+	var->setPrior( make_unique<DirichletPrior>( std::vector<double>(RateHelper::numStateToNumInTriangleMatrix(partition.getStates()), 1.) )); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
@@ -226,7 +225,7 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 	      if(not v->priorIsFitting(prior, traln))
 		{
 		  tout  << "You forced prior " << &prior << " to be applied to parameter  "  << v.get() << ". This is not possible. "  << std::endl; 
-		  ParallelSetup::genericExit(-1);
+		  exitFunction(-1);
 		}
 
 	      // tout << "setting prior " << &prior << 
@@ -324,7 +323,7 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
       if(v->getCategory() == Category::SUBSTITUTION_RATES)
 	{
 	  // bool isProtPartition = traln.getPartition(v->getPartitions().at(0)).dataType == AA_DATA; 
-	  bool isDNAPartition = traln.getPartition(v->getPartitions().at(0)).dataType == DNA_DATA; 
+	  bool isDNAPartition = traln.getPartition(v->getPartitions().at(0)).getDataType() == PLL_DNA_DATA; 
 	  auto tmp = decltype(tmpResult){}; 
 	  for(auto &elem : tmpResult )
 	    {
@@ -396,7 +395,7 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 	  if(std::get<0>(elem) == Category::SUBSTITUTION_RATES)
 	    {
 	      // bool isProtPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == AA_DATA; 
-	      bool isDNAPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == DNA_DATA; 
+	      bool isDNAPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).getDataType() == PLL_DNA_DATA; 
 	      auto tmp = decltype(proposalsForSet){}; 
 	      for(auto &elem : proposalsForSet )
 		{

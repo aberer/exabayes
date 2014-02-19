@@ -149,7 +149,7 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &tra
   tout << "EVAL "  << b << std::endl; 
 #endif
 
-  evaluator.evaluatePartitionsWithRoot(traln,b, parts, false, true); 
+  evaluator.evaluatePartitionsWithRoot(traln,b, parts, false); 
 }
 
 

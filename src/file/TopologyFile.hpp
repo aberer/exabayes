@@ -15,7 +15,6 @@ public:
   TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId, nat paramNum, bool hasManyTopoloFiles); 
   void initialize(const TreeAln& traln, nat someId, bool isDryRun)  ;     
   void sample(const TreeAln &traln, nat gen, AbstractParameter* blParams)  ; 
-  // void finalize()  ; 
   void regenerate(std::string workdir, std::string prevId, nat gen) ; 
   void verifyNonExistance();
 

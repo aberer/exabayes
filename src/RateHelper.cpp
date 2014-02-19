@@ -3,6 +3,7 @@
 #include <iostream>
 
 
+
 nat RateHelper::numStateToNumInTriangleMatrix(int numStates)  
 {  
   return (  numStates * numStates - numStates) / 2 ; 

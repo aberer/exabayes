@@ -14,11 +14,11 @@
 
 
 #include <unordered_map>
-#include "axml.h"
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
 #include "SprMove.hpp"
 #include "ParsimonyEvaluator.hpp"
+#include "comm/RemoteComm.hpp"
 
 typedef std::unordered_map<BranchPlain, double> weightMap; 
 typedef std::unordered_map<BranchPlain,std::array<parsimonyNumber,2> > branch22states2score;
@@ -48,7 +48,7 @@ public:
   virtual AbstractProposal* clone() const; 
 
 protected:			// METHODS
-  weightMap getWeights(const TreeAln& traln,  branch22states2score insertions) const; 
+  weightMap getWeights(const TreeAln& traln,  branch22states2score insertions, LikelihoodEvaluator& eval) const; 
   branch22states2score determineScoresOfInsertions(TreeAln& traln, BranchPlain primeBranch, Randomness &rand, const branch22states2score &alreadyComputed ); 
   void traverse(const TreeAln &traln, nodeptr p, int distance ); 
   void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, branch22states2score &result, int curDepth,  const branch22states2score& alreadyComputed); 
@@ -63,6 +63,7 @@ protected: 			// ATTRIBUTES
   bool _parallelReduceAtEnd;
 
   static std::array<double,2> factors; 
+
 }; 
 
 #endif

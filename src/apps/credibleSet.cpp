@@ -7,16 +7,6 @@
 
 int NUM_BRANCHES; 
 
-#define _INCLUDE_DEFINITIONS
-#include "GlobalVariables.hpp"
-#undef _INCLUDE_DEFINITIONS
-
-
-void myExit(int code)
-{
-  exit(code); 
-}
-
 static void printUsage(std::ostream &out )
 {
   out << "\ncredibleSet is a utility to extract a credible set of trees from a tree set.\n\n" ; 
@@ -43,7 +33,7 @@ static auto  processCommandLine(int argc, char **argv)
 	case 'h': 
 	  {
 	    printUsage(std::cerr); 
-	    myExit(-1); 
+	    exitFunction(-1); 
 	  }
 	  break; 
 	case 'n':
@@ -59,7 +49,7 @@ static auto  processCommandLine(int argc, char **argv)
 	  break; 
 	case 'f': 
 	  {
-	    nat index  = optind -1; 
+	    int index  = optind -1; 
 	    while(index < argc)
 	      {
 		auto next = std::string{argv[index]}; 
@@ -77,7 +67,7 @@ static auto  processCommandLine(int argc, char **argv)
 	default: 
 	  {
 	    std::cerr << "Error: unknown option >" << char (c) << "<" << std::endl; 
-	    myExit(-1); 
+	    exitFunction(-1); 
 	  }
 	}
     }
@@ -86,13 +76,13 @@ static auto  processCommandLine(int argc, char **argv)
   if( id.compare("") == 0)
     {
       std::cerr << "Error: please specify an id for output files via -n" << std::endl;
-      myExit(-1); 
+      exitFunction(-1); 
     }
   
   if(not ( 0 < credSet && credSet <= 100 ))
     {
       std::cerr << "Error: the percentile (passed via -c) must be between 0 (excluded) and 100 (included)." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }
   
   return std::make_tuple(id,files,credSet);
@@ -101,12 +91,14 @@ static auto  processCommandLine(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  exitFunction = exit; 
+
   NUM_BRANCHES = 1;   // BAD
 
   if(argc < 2 )
     {
       printUsage(std::cerr);
-      myExit(-1); 
+      exitFunction(-1); 
     }
 
   auto id = std::string(argv[1]); 
@@ -127,7 +119,7 @@ int main(int argc, char **argv)
     {
       std::cerr << "The file " << ss.str() << " already exists (possibly left over from a previous run). Please\n"
 		<< "choose a different run-id." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1); 
     }
 
   cs.printCredibleSet(ss.str(), ci); 

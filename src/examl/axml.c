@@ -2501,7 +2501,7 @@ void initializeTree(tree *tr, analdef *adef)
       parsimonyNumber *ptr = tr->partitionData[model].parsVect; 
     }
 
-  for(int i = 1 ; i < 2 * tr->mxtips; ++i)
+  for( i = 1 ; i < 2 * tr->mxtips; ++i)
     {
       nodeptr p = tr->nodep[i]; 
       p->xPars = 1 ; 

@@ -1,7 +1,6 @@
 #include "TopologyFile.hpp"
 #include "GlobalVariables.hpp"
 #include "extensions.hpp"
-#include "comm/ParallelSetup.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "TreePrinter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"

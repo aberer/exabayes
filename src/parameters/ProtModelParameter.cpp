@@ -1,5 +1,4 @@
 #include "ProtModelParameter.hpp" 
-#include "comm/ParallelSetup.hpp"
 #include "ProtModel.hpp"
 
 
@@ -16,7 +15,7 @@ ParameterContent ProtModelParameter::extractParameter(const TreeAln &traln)  con
 {
 
   auto& partition = traln.getPartition(_partitions.at(0)); 
-  auto model = ProtModel(partition.protModels); 
+  auto model = ProtModel(partition.getProtModels()); 
   auto result =   ParameterContent{} ; 
   result.protModel = {model}; 
   return result; 
@@ -25,7 +24,7 @@ ParameterContent ProtModelParameter::extractParameter(const TreeAln &traln)  con
 void ProtModelParameter::printSample(std::ostream& fileHandle, const TreeAln &traln ) const 
 {
   auto& partition = traln.getPartition(_partitions.at(0)); 
-  auto name = ProtModelFun::getName(ProtModel(partition.protModels )); 
+  auto name = ProtModelFun::getName(ProtModel(partition.getProtModels() )); 
   fileHandle << name; 
 }
  
@@ -56,9 +55,9 @@ void ProtModelParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
 {
   checkSanityPartitionsAndPrior_FreqRevMat(traln);
   
-  if(traln.getPartition(_partitions.at(0)).states != 20)
+  if(traln.getPartition(_partitions.at(0)).getStates() != 20)
     {
       std::cerr << "Error: in the config file you specified partition " << _partitions.at(0) << " to have an amino acid model. However, previously this partition was declared to have a different data type." << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1); 
     }
 }

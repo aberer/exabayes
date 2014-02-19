@@ -7,7 +7,6 @@
 #include <cmath>
 #include <iostream>
 
-#include "axml.h"
 #include "Density.hpp"
 
 #include "Randomness.hpp"

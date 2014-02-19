@@ -16,9 +16,14 @@ public:
   {
     if(useSEV)
       {
+#if 0
 	auto& partition = traln.getPartition(model); 
 	gapVector = std::vector<nat>(partition.gapVectorLength * 2 * traln.getNumberOfTaxa() , 0);
 	gapColumn = std::vector<double>(traln.getNumberOfTaxa( ) * partition.states * 4 ,0);
+#else 
+	// TODO gap stuff 
+	assert(0); 
+#endif
       }
   }
 

@@ -1329,7 +1329,7 @@ static void compressDNA(tree *tr,  int *informative)
     }
 
   tr->parsimonyScore = (nat*)exa_malloc_aligned(sizeof(nat) * totalNodes * tr->NumberOfModels);  
-          
+
   for(i = 0; i < totalNodes * tr->NumberOfModels; i++) 
     tr->parsimonyScore[i] = 0;
 }
