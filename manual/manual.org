@@ -2,7 +2,7 @@
 
 #+LaTeX_CLASS: koma-article
 #+LaTeX_CLASS_OPTIONS: [a4paper, 12pt, titlepage]
-#+LATEX_HEADER: \titlehead{\centering\includegraphics[width=\linewidth]{./img/banner2.png}}
+#+LATEX_HEADER: \titlehead{\centering\includegraphics[width=\linewidth]{./img/banner.png}}
 #+OPTIONS: ^:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css" />
 
@@ -14,7 +14,7 @@
 \newpage  
 #+END_LATEX
 
-#+HTML: <img src="./img/banner2.png" width="100%" alt="some_text">
+#+HTML: <img src="./img/banner.png" width="100%" alt="some_text">
 
 * Quick Start
 
