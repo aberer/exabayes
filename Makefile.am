@@ -10,12 +10,12 @@ WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter 
 RAX_FEATURE= -D_GNU_SOURCE -fomit-frame-pointer -funroll-loops -D__STRICT_ANSI__ 
 
 if NO_SSE
-VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE $(SIMD_FLAGS) -march=native -mtune=generic -mno-avx -mno-sse3
+VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE -mno-avx -mno-sse3 # $(SIMD_FLAGS) -march=native -mtune=generic -mno-avx -mno-sse3
 else 
 if NO_AVX
-VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -D_OPTIMIZED_FUNCTIONS  $(SIMD_FLAGS) -march=native -mtune=native -mno-avx
+VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -D_OPTIMIZED_FUNCTIONS -msse3 -mno-avx  # $(SIMD_FLAGS) -march=native -mtune=native -mno-avx -m
 else 
-VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS $(SIMD_FLAGS)  -march=native -mtune=native
+VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS $(SIMD_FLAGS) -march=native -mtune=native
 endif
 endif
 

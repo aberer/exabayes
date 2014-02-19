@@ -16,7 +16,7 @@ fi
 read -p "update package? if yes, specify version: " version 
 if [ "$version" != "" ]; then
     rsync --no-p --no-g --chmod=Du=rwx,Dgo=rx --progress  -av packages/* dellsco:/scratch/sco/exelixis-new/material/exabayes/$version
-    ssh dellsco chmod o+rx /scratch/sco/exelixis-new/material/exabayes/$version
+    ssh dellsco chmod -R  o+rx /scratch/sco/exelixis-new/material/exabayes/$version
 fi
 
 # compose webpages 
