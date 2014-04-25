@@ -12,8 +12,7 @@
 #define _STAT_NNI_H
 
 class Chain; 
-#include "TreeAln.hpp"
-#include "Path.hpp"
+#include "data-struct/Path.hpp"
 #include "AbstractProposal.hpp"
 #include "SprMove.hpp"
 

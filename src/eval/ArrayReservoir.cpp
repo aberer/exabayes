@@ -1,8 +1,8 @@
 #include "eval/ArrayReservoir.hpp" 
-#include "GlobalVariables.hpp" 
+#include "system/GlobalVariables.hpp" 
 #include <algorithm>
 #include <cassert>
-#include "extensions.hpp"
+#include "system/extensions.hpp"
 
 const double ArrayReservoir::thresholdForNewSEVArray = 1.05 ; 
 
@@ -54,10 +54,8 @@ double* ArrayReservoir::allocate(size_t requiredLength)
 	  if(std::get<1>(maxElem).size() == 0)
 	    _unusedArrays.erase(maxElemIter); 
 	}
-
+      
       result = aligned_malloc<double,size_t(EXA_ALIGN)>(requiredLength); 
-      // tout << "=> allocating " << requiredLength << std::endl; 
-
       _usedArrays.insert(std::make_pair(result, requiredLength));
     }
 

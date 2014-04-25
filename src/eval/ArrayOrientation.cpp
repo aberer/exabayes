@@ -1,6 +1,6 @@
 #include "ArrayOrientation.hpp"
 #include <cassert>
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 
 
 ArrayOrientation::ArrayOrientation(const TreeAln &traln)

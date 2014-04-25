@@ -38,7 +38,7 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 	case 'h': 
 	  {
 	    printUsage(std::cout); 
-	    exitFunction(-1); 
+	    exitFunction(-1, false); 
 	  }
 	  break; 
 	case 'n': 
@@ -72,7 +72,7 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
 	default : 
 	  {
 	    std::cerr << "Error: unknown option >" << char(c) << "<. " << std::endl; 
-	    exitFunction(-1); 
+	    exitFunction(-1, false); 
 	  }
 	}
     }
@@ -80,29 +80,38 @@ static std::tuple<std::string, std::vector<std::string>,double> processCommandLi
   if(not ( 0<= burnin && burnin < 1.  ) )
     {
       std::cerr << "The relative burn-in to be discarded must be in the range [0,1)." << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
  
   if(id.compare("") == 0)
     {
       std::cerr << "Please provide a run-id via -n " << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }    
   
   return std::make_tuple(id, files, burnin);
 }
 
 
+static void myExit(int code, bool waitForAll)
+{
+  exit(code); 
+}
+
+
+
+
+
 int main(int argc, char** argv)
 {
-  exitFunction = exit; 
+  exitFunction = myExit; 
 
   NUM_BRANCHES = 1; // BAD 
 
   if(argc < 2) 
     {
       printUsage(std::cout);
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
 
   auto files = std::vector<std::string>{};
@@ -119,7 +128,7 @@ int main(int argc, char** argv)
       if(not std::ifstream(file))
 	{
 	  std::cerr << "Error: could not open file >" <<  file  << "<" << std::endl; 
-	  exitFunction(-1); 
+	  exitFunction(-1, false); 
 	}    
     }
 

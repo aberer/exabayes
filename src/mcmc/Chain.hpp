@@ -13,16 +13,16 @@
 #include <unordered_map>
 #include <memory>
 
-#include "ProposalSet.hpp"
-#include "PriorBelief.hpp"
+#include "proposals/ProposalSet.hpp"
+#include "priors/PriorBelief.hpp"
 #include "eval/LikelihoodEvaluator.hpp"
 #include "proposals/AbstractProposal.hpp"
 
 #include "file/TopologyFile.hpp"
 #include "file/ParameterFile.hpp"
-#include "Serializable.hpp"
+#include "system/Serializable.hpp"
 
-#include "CommFlag.hpp"
+#include "comm/CommFlag.hpp"
 
 class TreeAln; 
 class AbstractProposal; 
@@ -31,10 +31,10 @@ class AbstractProposal;
 class Chain : public Serializable
 {
 public: 
-  Chain(randKey_t seed, TreeAln _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, 
+  Chain(randKey_t seed, const TreeAln &_traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, 
 	std::vector<ProposalSet> proposalSets, LikelihoodEvaluator eval, bool isDryRun);   
   Chain( const Chain& rhs)   ; 
-  Chain( Chain&& rhs) ; 
+  Chain( Chain&& rhs)  = default ; 
   Chain& operator=( Chain rhs) ; 
 
   /** 

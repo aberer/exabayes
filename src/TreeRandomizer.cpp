@@ -1,7 +1,7 @@
 #include "TreeRandomizer.hpp"
 
 #include <vector>
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "comm/ParallelSetup.hpp"
 
 
@@ -120,6 +120,8 @@ void TreeRandomizer::createStepwiseAdditionParsimonyTree(TreeAln &traln, Paralle
         }
           
       stepwiseAddition(tr, pr, q, f->back, pl);
+      
+      // std::cout <<  SyncOut() << "bestPars: "<< tr->bestParsimony << std::endl; 
       
       {
         nodeptr   

@@ -18,24 +18,22 @@ bool LocalSwap:: isFinished()
   
 bool LocalSwap::allHaveReceived(ParallelSetup& pl) 
 {
+  // auto runid = pl.getRunComm().getLocalComm().getColor();
   auto myId = _swap.getMyId(pl,_runid); 
   auto remoteId = _swap.getRemoteId(pl,_runid);
 
-  auto tag = cantorPair(cantorPair(remoteId, myId), _runid); // NOTE: inverse of initialize 
+  auto tag = cantorPair(remoteId, myId); // NOTE: inverse of initialize 
   assert(tag < pl.getMaxTag()); 
 
-  auto &localComm = pl.getRunComm().getLocalComm(); 
+  auto &localComm = pl.getChainComm().getLocalComm(); 
+  auto runBatch = pl.getRunComm().getLocalComm().getColor();  
   
   if(not _haveReceived)
     {
       auto wasThere = false; 
-      auto data = std::vector<char>();
-      std::tie(wasThere, data) = localComm.readAsyncMessage<char>( tag ); 
+      std::tie(wasThere, _dataReceived) = localComm.readAsyncMessage<char>( tag, runBatch ); 
       if(wasThere)
-	{
-	  _dataReceived = data; 
-	  _haveReceived = true; 
-	}
+	_haveReceived = true; 
     }
   
   auto tmp = std::vector<int>{  _haveReceived ? 1 : 0   };
@@ -51,12 +49,15 @@ void LocalSwap::initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat 
   _runid = runid; 
   // post a message, that should be read by all threads belonging to
   // the other chain
+  
+  auto runBatch = pl.getRunComm().getLocalComm().getColor();  
 
   auto myId = _swap.getMyId(pl,runid); 
   auto remoteId = _swap.getRemoteId(pl, runid); 
-  auto tag = cantorPair(cantorPair(myId, remoteId),runid); 
+  auto tag = cantorPair(myId, remoteId); 
   assert(tag < pl.getMaxTag()); 
 
   if(pl.isChainLeader())
-    pl.getRunComm().getLocalComm().postAsyncMessage( myChainSer, pl.getChainComm().size() , tag );
+    pl.getChainComm().getLocalComm().postAsyncMessage( myChainSer,  tag, runBatch );
+
 } 

@@ -1,7 +1,7 @@
 #include "AdHocIntegrator.hpp"
 #include "eval/ArrayReservoir.hpp"
 #include "eval/ArrayRestorer.hpp"
-#include "Arithmetics.hpp"
+#include "math/Arithmetics.hpp"
 #include "eval/FullCachePolicy.hpp"
 
 

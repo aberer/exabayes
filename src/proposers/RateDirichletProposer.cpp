@@ -1,6 +1,6 @@
 #include "proposers/RateDirichletProposer.hpp"
-#include "BoundsChecker.hpp"
-#include "AminoAcidAlphabet.hpp"
+#include "system/BoundsChecker.hpp"
+#include "model/AminoAcidAlphabet.hpp"
 
 RateDirichletProposer::RateDirichletProposer(double minValI, double maxValI)
   : AbstractProposer{true,false, minValI, maxValI}

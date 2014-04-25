@@ -11,8 +11,8 @@
 
 #include <queue>
 
-#include "TreeAln.hpp"
-#include "Randomness.hpp"
+#include "model/TreeAln.hpp"
+#include "math/Randomness.hpp"
 #include "config/BlockRunParameters.hpp"
 #include "Chain.hpp"
 #include "SuccessCounter.hpp"

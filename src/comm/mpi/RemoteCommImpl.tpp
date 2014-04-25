@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <numeric>
 
 #include "comm/mpi/MpiType.hpp"
 

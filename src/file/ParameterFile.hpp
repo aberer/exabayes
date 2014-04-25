@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "parameters/AbstractParameter.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "OutputFile.hpp"
 
 /**

@@ -5,15 +5,14 @@
 #include <vector>
 
 
-#include "Category.hpp"
-// #include "axml.h"
+#include "model/Category.hpp"
 #include "mcmc/SuccessCounter.hpp" 
-#include "Randomness.hpp"
-#include "PriorBelief.hpp"
-#include "GlobalVariables.hpp"
+#include "math/Randomness.hpp"
+#include "priors/PriorBelief.hpp"
+#include "system/GlobalVariables.hpp"
 #include "eval/LikelihoodEvaluator.hpp"
 #include "TreeRandomizer.hpp"
-#include "Serializable.hpp"
+#include "system/Serializable.hpp"
 
 
 class AbstractProposal : public Serializable

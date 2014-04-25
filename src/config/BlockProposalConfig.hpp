@@ -5,8 +5,8 @@
 #include <map>
 
 #include "config/ExaBlock.hpp"
-#include "ProposalType.hpp"
-#include "GlobalVariables.hpp"
+#include "proposals/ProposalType.hpp"
+#include "system/GlobalVariables.hpp"
 
 
 // TODO allow for scientific doubles  

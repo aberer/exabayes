@@ -4,9 +4,9 @@
 #include <sstream>
 #include "priors/ExponentialPrior.hpp"
 #include "proposals/BranchIntegrator.hpp"
-#include "ProposalRegistry.hpp"
+#include "system/ProposalRegistry.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
-#include "ParsimonyEvaluator.hpp"
+#include "eval/ParsimonyEvaluator.hpp"
 #include "common.h"
 
 // HACK 

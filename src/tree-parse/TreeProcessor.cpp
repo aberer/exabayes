@@ -1,10 +1,10 @@
 #include <sstream>
-#include "extensions.hpp" 
+#include "system/extensions.hpp" 
 #include <string.h>
 #include <cassert>
 #include <iostream>
 #include <cmath>
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "BasicTreeReader.hpp"
 #include "TreeProcessor.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -26,12 +26,19 @@ TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveC
 	  if(not okay)
 	    {
 	      std::cout << "Error: file " << f << " contains a different numbering of taxa than " << fileNames[0] << ". At the moment, " << PROGRAM_NAME << " does not support this. Write us an e-mail, if this feature is important for you. " << std::endl; 
-	      exitFunction(-1);
+	      exitFunction(-1, false);
 	    }
 	}
     }
 
-  _tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(_taxa.size()));
+  _tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(_taxa.size(), false));
+  
+  // only necessary, if we actually have branch lengths (so resources
+  // are wasted, if we only read the topology)
+  auto blRes = BranchLengthResource(); 
+  blRes.initialize(_taxa.size(), 1 ); 
+  _tralnPtr->setBranchLengthResource(blRes); 
+  
   _fns = fileNames; 
 }
 

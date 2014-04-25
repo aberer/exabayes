@@ -1,7 +1,7 @@
 #include "ParameterFile.hpp"
-#include "GlobalVariables.hpp"
-#include "Category.hpp"
-#include "extensions.hpp"
+#include "system/GlobalVariables.hpp"
+#include "model/Category.hpp"
+#include "system/extensions.hpp"
 
 #include <cassert>
 

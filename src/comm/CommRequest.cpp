@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "comm/RemoteComm.hpp"
-#include "extensions.hpp"
+#include "system/extensions.hpp"
 #include "CommRequestImpl.hpp"
 
 

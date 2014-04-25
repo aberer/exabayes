@@ -1,4 +1,4 @@
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 
 
 
@@ -78,7 +78,7 @@ auto Communicator::allReduce(std::vector<T> myValues)
 {
   // std::cout << SyncOut()<< _localComm.getColor() << "," << _localComm.getRank()  << "before: " << myValues << std::endl; 
 
-  myValues = _localComm.reduce(myValues, 0);
+  myValues = _localComm.reduce<T>(myValues, 0);
 
   if(_localComm.getRank() == 0)
     myValues = _remoteComm.allReduce(myValues); 

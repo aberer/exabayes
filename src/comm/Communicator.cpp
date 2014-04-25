@@ -1,7 +1,7 @@
 #include "comm/Communicator.hpp"	 
-#include "GlobalVariables.hpp"
-#include "comm/ThreadResource.hpp"
-
+#include "system/GlobalVariables.hpp"
+#include "comm/threads/ThreadResource.hpp"
+#include "comm/AbstractPendingSwap.hpp"
 
 Communicator::Communicator(std::unordered_map<tid_t,int> tid2rank)
   : _remoteComm()
@@ -31,7 +31,7 @@ void swap(Communicator& lhs, Communicator &rhs)
 
 void Communicator::waitAtBarrier() 
 {
-  if(getRank() == 0)
+  if(_localComm.getRank() == 0)
     _remoteComm.waitAtBarrier();
 
   _localComm.waitAtBarrier();
@@ -92,9 +92,16 @@ void Communicator::initComm(int argc, char **argv)
   RemoteComm::initComm(argc, argv); 
 }
 
-void Communicator::abort(int code)
+
+#include <unistd.h>
+
+void Communicator::abort(int code, bool waitForAll)
 {
-  RemoteComm::abort(code); 
+  LocalComm::abort(code,waitForAll); 
+  RemoteComm::abort(code, waitForAll); 
+
+  exit(code); 
+  // exit(code); 
 }
 
 
@@ -124,15 +131,29 @@ int Communicator::mapToRemoteRank(int rank) const
     how many sets of threads offset does this set of threads need for
     pinning?
  */ 
-int Communicator::getOffsetForThreadPin() 
+int Communicator::getProcsPerNode() 
 {
   auto numNodes = _remoteComm.getNumberOfPhysicalNodes(); 
   auto siz = _remoteComm.size(); 
-  return ( siz / numNodes ) + (siz % numNodes == 0 ? 0 : 1   ) ; 
+  auto procsPerNode = (siz / numNodes) + (siz % numNodes == 0 ? 0 : 1 ) ; 
+  return procsPerNode; 
 }
 
 
 LocalComm&  Communicator::getLocalComm ()
 {
   return _localComm;
+} 
+
+
+RemoteComm& Communicator::getRemoteComm() 
+{
+  return _remoteComm; 
+}
+
+
+void Communicator::initWithMaxChains(int numChains, int numThreadsChecking)
+{
+  if(_localComm.getColor() == 0 && _localComm.getRank() == 0)
+    _localComm.initializeAsyncQueue(numThreadsChecking, AbstractPendingSwap::cantorPair(numChains, numChains) * 2 );
 } 

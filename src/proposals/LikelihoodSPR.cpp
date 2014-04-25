@@ -1,11 +1,11 @@
 #include <array>
 
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 #include "LikelihoodSPR.hpp"
 #include "TreeRandomizer.hpp"
 #include "priors/AbstractPrior.hpp"
 #include "GibbsProposal.hpp" 
-#include "Density.hpp"
+#include "math/Density.hpp"
 
 
 #define NUM_ITER 30   

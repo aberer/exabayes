@@ -1,5 +1,5 @@
 #include "BranchLengthsParameter.hpp"
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 
 void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {

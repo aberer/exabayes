@@ -1,5 +1,5 @@
 #include "BasicTreeReader.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "tree-parse/LabelPolicy.hpp"
 
 #include <tuple>
@@ -19,7 +19,7 @@ inline void BasicTreeReader<LABEL_READER, BL_READER>::expectChar(std::istream &i
   if(ch != got)
     {
       std::cerr << "expected >" << char(ch) << "<, got >"  <<  char(got) << "<" << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
 }
 

@@ -1,6 +1,8 @@
 #ifndef _ABSTRACT_PENDING_SWAP_HPP
 #define _ABSTRACT_PENDING_SWAP_HPP
 
+#include <cstdint>
+
 #include "comm/SwapElem.hpp"
 #include "comm/CommRequest.hpp"
 #include "comm/PendingSwap.hpp"
@@ -12,6 +14,11 @@ public:
     : _swap(swap)
   {
   } 
+
+  virtual ~AbstractPendingSwap()  
+  {
+  }
+
   
   SwapElem getSwap () const {return _swap; } 
 
@@ -20,9 +27,8 @@ public:
   virtual bool allHaveReceived(ParallelSetup& pl)  = 0 ; 
   virtual void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid)  = 0; 
 
-protected: 
 
-  uint64_t cantorPair(uint64_t a, uint64_t b ) const 
+  static uint64_t cantorPair(uint64_t a, uint64_t b )  
   {
     return (a + b ) * (a + b + 1 ) / 2 + b ; 
   }

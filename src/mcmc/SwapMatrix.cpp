@@ -1,5 +1,5 @@
 #include "SwapMatrix.hpp"
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 
 #include <iostream>
 #include <cassert>

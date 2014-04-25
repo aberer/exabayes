@@ -1,6 +1,6 @@
 #include "ExtendedSPR.hpp"
-#include "Path.hpp"
-#include "TreeAln.hpp"
+#include "data-struct/Path.hpp"
+#include "model/TreeAln.hpp"
 #include "priors/AbstractPrior.hpp"
 #include "TreePrinter.hpp"
 

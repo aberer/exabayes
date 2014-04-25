@@ -1,5 +1,5 @@
 #include "ProtModelParameter.hpp" 
-#include "ProtModel.hpp"
+#include "model/ProtModel.hpp"
 
 
 void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content) const 
@@ -58,6 +58,6 @@ void ProtModelParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
   if(traln.getPartition(_partitions.at(0)).getStates() != 20)
     {
       std::cerr << "Error: in the config file you specified partition " << _partitions.at(0) << " to have an amino acid model. However, previously this partition was declared to have a different data type." << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, true); 
     }
 }

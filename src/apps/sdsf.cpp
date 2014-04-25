@@ -9,12 +9,12 @@
 int NUM_BRANCHES; 
 
 #define _INCLUDE_DEFINITIONS
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
 #include "common.h"
 
-#include "SplitFreqAssessor.hpp"
+#include "contrib/SplitFreqAssessor.hpp"
 
 
 void printUsage()
@@ -40,10 +40,16 @@ void printUsage()
 }
 
 
+static void myExit(int code, bool waitForAll)
+{
+  exit(code); 
+}
+
+
 
 int main(int argc, char** argv)
 {
-  exitFunction = exit; 
+  exitFunction = myExit; 
 
 // #ifdef _USE_GOOGLE_PROFILER
 //   auto myProfileFile = "profile.out"; 
@@ -117,7 +123,7 @@ int main(int argc, char** argv)
 	default : 
 	  {
 	    std::cerr << "unknown argument >" << c << "<" << std::endl; 
-	    exitFunction(-1); 
+	    exitFunction(-1, false); 
 	    }
 	} 
     }

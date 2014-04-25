@@ -11,7 +11,7 @@
 #include <ncl/ncl.h>
 #include <vector>
 
-#include "PriorBelief.hpp"
+#include "priors/PriorBelief.hpp"
 #include "proposals/AbstractProposal.hpp"
 
 #include "BlockParams.hpp" 

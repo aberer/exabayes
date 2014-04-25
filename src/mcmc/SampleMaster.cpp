@@ -2,17 +2,12 @@
 #include <fstream>
 #include <memory>
 
-#include "extensions.hpp"
-
-#include "ByteFile.hpp"
+#include "system/ByteFile.hpp"
 #include "TreePrinter.hpp"
 
 #include "AdHocIntegrator.hpp"
-#include "ProposalSet.hpp"
-#include "RateHelper.hpp"
 
 #include "tree-parse/BasicTreeReader.hpp"
-#include "common.h"
 
 #include "config/BlockProposalConfig.hpp"
 #include "config/BlockRunParameters.hpp"
@@ -24,15 +19,14 @@
 
 #include "config/MemoryMode.hpp"
 #include "SampleMaster.hpp"
-#include "Chain.hpp"
 #include "TreeRandomizer.hpp"
-#include "RunFactory.hpp"	
+#include "system/RunFactory.hpp"	
 
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 #include "eval/ArrayRestorer.hpp"
-#include "SplitFreqAssessor.hpp"
+#include "contrib/SplitFreqAssessor.hpp"
 
 #include "eval/FullCachePolicy.hpp"
 #include "eval/NoCachePolicy.hpp"
@@ -49,6 +43,12 @@
 #undef _GO_TO_INTEGRATION_MODE
 #endif
 
+using std::endl; 
+using std::vector;
+using std::unique_ptr; 
+using std::move; 
+
+
 
 SampleMaster::SampleMaster( ) 
   : _initTime(CLOCK::system_clock::now())
@@ -57,19 +57,7 @@ SampleMaster::SampleMaster( )
 }
 
 
-SampleMaster::SampleMaster(SampleMaster&& rhs) 
-  : _runs{std::move(rhs._runs)}
-  , _plPtr{std::move(rhs._plPtr)}
-  , _initTime{std::move(rhs._initTime)}
-  , _runParams{rhs._runParams}
-  , _cl {rhs._cl}
-  , _lastPrintTime {rhs._lastPrintTime }
-  , _diagFile {rhs._diagFile }
-{
-}
-
-
-bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params)
+bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const vector<AbstractParameter*> &params)
 {  
   bool hasBranchLength = false; 
   if(startingTree.compare("") != 0 )
@@ -121,15 +109,15 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 
 
 
-std::vector<bool> SampleMaster::initTrees(std::vector<TreeAln> &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params)
+vector<bool> SampleMaster::initTrees(vector<TreeAln> &trees, randCtr_t seed, vector<std::string> startingTreeStrings, const vector<AbstractParameter*> &params)
 {  
-  auto hasBl = std::vector<bool>{}; 
+  auto hasBl = vector<bool>{}; 
 
   nat treesConsumed = 0; 
   auto treeRandomness = Randomness(seed); 
 
-  auto treesToInitialize = std::vector<TreeAln*>{}; 
-  treesToInitialize.push_back(&trees[0]); 
+  auto treesToInitialize = vector<TreeAln*>{}; 
+  treesToInitialize.push_back(&(trees[0])); 
   if(not _runParams.isHeatedChainsUseSame())
     {
       for(auto iter =  trees.begin() + 1  ; iter < trees.end(); ++iter)
@@ -166,37 +154,37 @@ std::vector<bool> SampleMaster::initTrees(std::vector<TreeAln> &trees, randCtr_t
 
 void SampleMaster::printAlignmentInfo(const TreeAln &traln)
 {
-  tout << std::endl << "The (binary) alignment file you provided, consists of the following\n" 
+  tout << endl << "The (binary) alignment file you provided, consists of the following\n" 
        << "partitions:" 
-       << std::endl;
+       << endl;
   
   for(nat i = 0 ;i < traln.getNumberOfPartitions() ;++i)
     {
       auto& partition = traln.getPartition(i);       
       nat length = partition.getUpper() - partition.getLower(); 
       
-      tout << std::endl; 
+      tout << endl; 
 
-      tout << "number:\t\t" << i << std::endl;     
-      tout << "name:\t\t" << partition.getName() << std::endl; 
-      tout << "#patterns:\t" << length << std::endl;       
+      tout << "number:\t\t" << i << endl;     
+      tout << "name:\t\t" << partition.getName() << endl; 
+      tout << "#patterns:\t" << length << endl;       
 
       switch(partition.getDataType())
 	{
 	case PLL_DNA_DATA: 
-	  tout << "type:\t\tDNA" << std::endl; 
+	  tout << "type:\t\tDNA" << endl; 
 	  break; 
 	case PLL_AA_DATA: 
-	  tout << "type:\t\tAA" << std::endl; 
+	  tout << "type:\t\tAA" << endl; 
 	  break; 
 	default : 
 	  assert(0); 
 	}      
     }
   tout << "\nParameter names will reference the above partition numbers."
-       << std::endl
+       << endl
        << "================================================================"
-       << std::endl  ; 
+       << endl  ; 
 }
 
 
@@ -204,31 +192,31 @@ void SampleMaster::informPrint()
 {
   if(not isYggdrasil && _plPtr->getRunsParallel()  > 1)
     {
-      tout << "Will execute "<< _plPtr->getRunsParallel() << " runs in parallel." << std::endl;       
+      tout << "Will execute "<< _plPtr->getRunsParallel() << " runs in parallel." << endl;       
       if(nat (_runParams.getNumRunConv()) < _plPtr->getRunsParallel())
 	{
 	  tout 
 	    << "Error: in the configuration file you specified to run " <<  _runParams.getNumRunConv() << " independent\n" 
 	    << "runs. Your command line indicates, that you want to run " << _plPtr->getRunsParallel() << " of them\n"
-	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< std::endl; 
-	  exitFunction(-1); 
+	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< endl; 
+	  exitFunction(-1, true); 
 	}
     }
 
   if(not isYggdrasil && _plPtr->getChainsParallel() > 1)
     {
-      tout << "Will execute " << _plPtr->getChainsParallel() << " chains in parallel."<< std::endl; 
+      tout << "Will execute " << _plPtr->getChainsParallel() << " chains in parallel."<< endl; 
       if(nat(_runParams.getNumCoupledChains()) < _plPtr->getChainsParallel())	
 	{
 	  tout
 	    << "Error: in the configuration file you specified to run " <<  _runParams.getNumCoupledChains() << " coupled\n" 
 	    << "chains per run. Your command line indicates, that you want to run " << _plPtr->getChainsParallel() << " of them\n"
-	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< std::endl; 
-	  exitFunction(-1); 
+	    << "in parallel. To shield you from surprises, " << PROGRAM_NAME << " will conservatively abort."<< endl; 
+	  exitFunction(-1, true); 
 	}
     }
 
-  tout << std::endl; 
+  tout << endl; 
 }
 
 
@@ -248,9 +236,9 @@ void SampleMaster::initializeFromCheckpoint()
       Serializable::getIfstream(checkPointFile, chkpnt); 
       if( not chkpnt )
 	{
-	  tout  << "Warning! Could not open / find file " << checkPointFile << std::endl; 
+	  tout  << "Warning! Could not open / find file " << checkPointFile << endl; 
 	  tout << "Although extremely unlikely, the previous run may have been killed\n"
-	       << "during the writing process of the checkpoint. Will try to recover from backup..." << std::endl; 
+	       << "during the writing process of the checkpoint. Will try to recover from backup..." << endl; 
 	  
 	  ss.str(""); 
 	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << _cl.getCheckpointId();
@@ -259,11 +247,11 @@ void SampleMaster::initializeFromCheckpoint()
 	  
 	  if( not chkpnt)
 	    {
-	      tout << "Could not recover checkpoint file backup either. Probably there is no backup, since not enough generations have completed. Giving up. Please start a new run." << std::endl; 
-	      exitFunction(-1); 
+	      tout << "Could not recover checkpoint file backup either. Probably there is no backup, since not enough generations have completed. Giving up. Please start a new run." << endl; 
+	      exitFunction(-1, false); 
 	    }
 	  else 
-	    tout << "Success! You lost one checkpoint, but we can continue from the backup. " << std::endl; 	  
+	    tout << "Success! You lost one checkpoint, but we can continue from the backup. " << endl; 	  
 	}
 
       deserialize(chkpnt); 
@@ -283,35 +271,35 @@ void SampleMaster::initializeFromCheckpoint()
 // TODO could move this method somewhere else  
 LikelihoodEvaluator SampleMaster::createEvaluatorPrototype(const TreeAln &initTree, bool useSEV)
 {
-  auto &&plcy =  std::unique_ptr<ArrayPolicy>();
+  auto &&plcy =  unique_ptr<ArrayPolicy>();
   auto res = std::make_shared<ArrayReservoir>(useSEV); 
   
   switch(_cl.getMemoryMode())
     {
     case MemoryMode::RESTORE_ALL: 
       {
-	plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, true, true));
-	if(  (initTree.getMode() & RunModes::MEMORY_SEV) != RunModes::NOTHING )
+	plcy = unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, true, true));
+	if(useSEV)
 	  plcy->enableRestoreGapVector();
       }
       break; 
     case MemoryMode::RESTORE_INNER_TIP: 
       {
-	plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, false, true));
-	if(  (initTree.getMode() & RunModes::MEMORY_SEV) != RunModes::NOTHING )
+	plcy = unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, false, true));
+	if(useSEV)
 	  plcy->enableRestoreGapVector();
       }
       break; 
     case MemoryMode::RESTORE_INNER_INNER: 
       {
-	plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, false, false));
-	if(  (initTree.getMode() & RunModes::MEMORY_SEV) != RunModes::NOTHING )
+	plcy = unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, false, false));
+	if (useSEV)
 	  plcy->enableRestoreGapVector();
       }
       break; 
     case MemoryMode::RESTORE_NONE: 
       {
-	plcy = std::unique_ptr<ArrayPolicy>(new NoCachePolicy(initTree)); 
+	plcy = unique_ptr<ArrayPolicy>(new NoCachePolicy(initTree)); 
       }
       break; 
     default: 
@@ -321,9 +309,7 @@ LikelihoodEvaluator SampleMaster::createEvaluatorPrototype(const TreeAln &initTr
   auto eval = LikelihoodEvaluator(initTree, plcy.get(),res, _plPtr); 
 
 #ifdef DEBUG_LNL_VERIFY
-
-  auto dT = make_shared<TreeAln>(initTree.getNumberOfTaxa());
-  // *dT = initTree; 
+  auto dT = make_shared<TreeAln>(initTree.getNumberOfTaxa(), false);
   eval.setDebugTraln(dT);
 #endif
 
@@ -331,12 +317,12 @@ LikelihoodEvaluator SampleMaster::createEvaluatorPrototype(const TreeAln &initTr
 }
 
 
-void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vector<AbstractParameter*> &params, bool hasBl) const 
+void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const vector<AbstractParameter*> &params, bool hasBl) const 
 {
   // we cannot have more than one set of branch lentghs. So if we had
   // initial branch lengths, extract them first before changing the
   // mean substition rate
-  auto branches = std::vector<std::tuple<BranchPlain,double>>{};
+  auto branches = vector<std::tuple<BranchPlain,double>>{};
 
   if( hasBl )
     {
@@ -353,7 +339,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vec
       for(auto b : traln.extractBranches())
 	{
 	  auto len = traln.getBranch(b, blParam).getInterpretedLength(traln,blParam); 
-	  // tout << b << "\t" << len << std::endl; 
+	  // tout << b << "\t" << len << endl; 
 	  branches.emplace_back( b, len ); 
 	}
     }
@@ -398,7 +384,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vec
 
 	  param->verifyContent(traln, content); 
 
-	  // tout << "APPL " << content << std::endl; 
+	  // tout << "APPL " << content << endl; 
 
 	  param->applyParameter(traln, content); 
 	}
@@ -427,7 +413,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vec
 		{
 		  BoundsChecker::correctBranch(b); 
 		  auto newLen = b.getInterpretedLength(traln,param); 
-		  tout << "Warning: had to modify branch length " << absLen << " to " << newLen << " because it violated the maximum range of branch lengths allowed." << std::endl; 
+		  tout << "Warning: had to modify branch length " << absLen << " to " << newLen << " because it violated the maximum range of branch lengths allowed." << endl; 
 		}
 
 	      traln.setBranch(b,param); 
@@ -438,9 +424,9 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const std::vec
 
 
 
-std::vector<std::string> SampleMaster::getStartingTreeStrings()
+vector<std::string> SampleMaster::getStartingTreeStrings()
 {
-  auto result =  std::vector<std::string>{};
+  auto result =  vector<std::string>{};
 
   auto&& ifh = std::ifstream{_cl.getTreeFile()}; 
   if(ifh)
@@ -455,7 +441,7 @@ std::vector<std::string> SampleMaster::getStartingTreeStrings()
 
 
 
-void SampleMaster::printProposals(const std::vector<unique_ptr<AbstractProposal> > &proposals, const std::vector<ProposalSet> &proposalSets  ) const 
+void SampleMaster::printProposals(const vector<unique_ptr<AbstractProposal> > &proposals, const vector<ProposalSet> &proposalSets  ) const 
 {
   double sum = 0; 
   for(auto &p : proposals)
@@ -472,34 +458,34 @@ void SampleMaster::printProposals(const std::vector<unique_ptr<AbstractProposal>
       tout << endl; 
     }
   if(proposals.size() == 0)
-    tout << "None." << std::endl; 
+    tout << "None." << endl; 
 
-  tout << std::endl; 
+  tout << endl; 
 
   if(_runParams.isComponentWiseMH() && proposalSets.size() > 0 )
     {
       tout << "In addition to that, the following sets below will be executed \n"
 	   << "in a sequential manner (for efficiency, see manual for how to\n"
-	   << "disable)." << std::endl; 
+	   << "disable)." << endl; 
 	for(auto &p : proposalSets )
 	  {
 	    p.printVerboseAbbreviated(tout, sum);
-	    tout << std::endl;       
+	    tout << endl;       
 	  }
     }
 }
 
 
-void SampleMaster::printParameters(const TreeAln &traln, const std::vector<unique_ptr<AbstractParameter> > &params) const 
+void SampleMaster::printParameters(const TreeAln &traln, const vector<unique_ptr<AbstractParameter> > &params) const 
 {
   // merely some printing and we are done  
-  tout << std::endl << "Parameters to be integrated (initial values derived from prior): " << std::endl; 
+  tout << endl << "Parameters to be integrated (initial values derived from prior): " << endl; 
   tout << SOME_FIXED_PRECISION; 
   for(auto &v : params)
     {
-      tout << v->getId() << "\t" << v.get()  << std::endl; 
-      tout << "\tsub-id:\t" << v->getIdOfMyKind() << std::endl; 
-      tout << "\tprior:\t" << v->getPrior() << std::endl; 
+      tout << v->getId() << "\t" << v.get()  << endl; 
+      tout << "\tsub-id:\t" << v->getIdOfMyKind() << endl; 
+      tout << "\tprior:\t" << v->getPrior() << endl; 
 
       tout << "\tinit value:\t" ; 
 
@@ -516,22 +502,22 @@ void SampleMaster::printParameters(const TreeAln &traln, const std::vector<uniqu
 	  
 	  if(_cl.getTreeFile().compare("") != 0)
 	    tout << " or given (tree file)" ; 
-	  tout << std::endl; 
+	  tout << endl; 
 	}
       else if ( dynamic_cast<RevMatParameter*>(v.get())  || dynamic_cast<FrequencyParameter*>(v.get()) )
 	{
 	  auto content = v->getPrior()->getInitialValue(); 
 	  RateHelper().convertToSum1(content.values);
-	  tout << content << std::endl; 
+	  tout << content << endl; 
 	}
       else 
 	{
 	  if(v->getPrior() ->isKeepInitData())
 	    tout << "original value (if available) / " ; 
-	  tout << v->getPrior()->getInitialValue()  << std::endl; 
+	  tout << v->getPrior()->getInitialValue()  << endl; 
 	}
     }
-  tout << "================================================================" << std::endl;
+  tout << "================================================================" << endl;
   tout << endl; 
 }
 
@@ -541,34 +527,36 @@ std::string SampleMaster::getOrCreateBinaryFile() const
   auto binaryAlnFile =std::string{}; 
   if( not _cl.alnFileIsBinary())
     {
-      tout << "You provided an alignment file in phylip format. Trying to parse it..." << std::endl; 
+      tout << "You provided an alignment file in phylip format. Trying to parse it..." << endl; 
       
       bool haveModelFile = _cl.getModelFile().compare("") != 0; 
       auto modelInfo = haveModelFile ? _cl.getModelFile( ): _cl.getSingleModel(); 
 
-      auto parser = PhylipParser{ _cl.getAlnFileName() , modelInfo, haveModelFile}; 
-      
       binaryAlnFile = std::string(_cl.getWorkdir() 
-					+  ( _cl.getWorkdir().compare("") == 0 ? "" : "/"   ) 
-					+   "ExaBayes_binaryAlignment" + "." + _cl.getRunid()) ;
-      if(std::ifstream(binaryAlnFile))
-	{
-	  tout << "removing previous binary alignment representation " << binaryAlnFile << std::endl; 
-	  remove(std::string(binaryAlnFile).c_str()); 
-	}
+				  +  ( _cl.getWorkdir().compare("") == 0 ? "" : "/"   ) 
+				  +   "ExaBayes_binaryAlignment" + "." + _cl.getRunid()) ;
 
-      parser.parse(); 
-      
-      if(_plPtr->isGlobalMaster())
-	parser.writeToFile(binaryAlnFile); 
+      if( _plPtr->isGlobalMaster() )
+	{
+	  auto &&parser = PhylipParser{ _cl.getAlnFileName() , modelInfo, haveModelFile}; 
+
+	  if(std::ifstream(binaryAlnFile))
+	    {
+	      tout << "removing previous binary alignment representation " << binaryAlnFile << endl; 
+	      remove(std::string(binaryAlnFile).c_str()); 
+	    }
+
+	  parser.parse(); 
+	  parser.writeToFile(binaryAlnFile); 
+	}
 
       _plPtr->getGlobalComm().waitAtBarrier();
 
       if(not std::ifstream(binaryAlnFile))
-	{
-	  tout << "Error: tried to create intermediate file "<< binaryAlnFile << ", but did not succeed!"  << std::endl; 
-	  exitFunction(-1); 
-	}
+      	{
+      	  std::cout << "Error: tried to create intermediate file "<< binaryAlnFile << ", but did not succeed!"  << endl; 
+      	  exitFunction(-1, false); 
+      	}
     }
   else 
     {
@@ -576,6 +564,34 @@ std::string SampleMaster::getOrCreateBinaryFile() const
     }
   
   return binaryAlnFile; 
+}
+
+
+void SampleMaster::catchRunErrors() const 
+{
+  if( int(_runParams.getNumRunConv()) <_cl.getNumRunParallel() )
+    {
+      tout << "\n\tERROR: you want to run  "<< _cl.getNumRunParallel() << " independent runs in parallel, while there are only " << _runParams.getNumRunConv() << " to be run in total.\n\n" << endl; 
+      exitFunction(-1, true); 
+    }
+
+  if ( _runParams.getNumCoupledChains() < _cl.getNumChainsParallel() )
+    {
+      tout << "\n\tERROR: you want to run " << _cl.getNumChainsParallel() << " coupled chains in parallel, while there are only "<< _runParams.getNumCoupledChains() << " to be run in total.\n\n" << endl; 
+      exitFunction(-1,true); 
+    }
+
+  if( (  _runParams.getNumRunConv() % _cl.getNumRunParallel() )  != 0 )
+    {
+      tout << "\n\tERROR: you specified to run " << _runParams.getNumRunConv() << " independent runs and " << _cl.getNumRunParallel() << " of them in parallel. Currently, the total number of runs must be a multiple of the number of parallel runs." << endl; 
+      exitFunction(-1,true); 
+    }
+
+  if( (  _runParams.getNumCoupledChains() % _cl.getNumChainsParallel() ) != 0  )
+    {
+      tout << "\n\tERROR: you specified to run " << _runParams.getNumCoupledChains() << " coupled chains for each independent run and "<< _cl.getNumChainsParallel() << " of them in parallel. Currently, the total number of coupled chains must be a multiple of the number of parallel coupled chains." << endl; 
+      exitFunction(-1, true); 
+    }
 }
 
 
@@ -587,39 +603,28 @@ void SampleMaster::initializeRuns(Randomness rand)
     {
       std::cerr << "You specified >" << _cl.getRunid() << "< as runid and intended\n"
 		<< "to restart from a previous run with id >" << _cl.getCheckpointId() << "<."
-		<< "Please specify a new runid for the restart. " << std::endl; 
-      exitFunction(-1); 
+		<< "Please specify a new runid for the restart. " << endl; 
+      exitFunction(-1, true); 
     }
-
-#if 0 
-  auto runmodes = _cl.getTreeInitRunMode();
-#endif
 
   // correctly initialize the first tree / alignment
   auto binaryAlnFile = getOrCreateBinaryFile(); 
 
   auto &&bFile = ByteFile(binaryAlnFile, _cl.isSaveMemorySEV()); 
 
-  auto readerStride = _cl.getReaderStride();  
-#if 0 
-  if(readerStride ==  -1 )
-    readerStride = bFile.determineOptStride(_plPtr->getGlobalComm());
-#else 
-  readerStride =  1 ; 
-#endif
-  bFile.parse(*_plPtr, readerStride); 
+  bFile.parse(*_plPtr); 
   auto partitions = bFile.getPartitions();
 
   auto time = getDuration(_initTime); 
-  tout << "time passed for parsing " << time << std::endl; 
+  // tout << "time passed for parsing " << time << endl; 
 
   auto taxa = bFile.getTaxa(); 
   auto numPart = partitions.size(); 
 
-  // tout << "\nNUM" << PLL_NUM_BRANCHES << std::endl; 
+  // tout << "\nNUM" << PLL_NUM_BRANCHES << endl; 
   PLL_NUM_BRANCHES = numPart; 
 
-  auto&& initTree = TreeAln(taxa.size());
+  auto&& initTree = TreeAln(taxa.size(), _cl.isSaveMemorySEV() );
   initTree.setPartitions(partitions, true); 
   initTree.setTaxa(taxa);
 
@@ -629,7 +634,7 @@ void SampleMaster::initializeRuns(Randomness rand)
 
   // START integrator
 #ifdef _EXPERIMENTAL_INTEGRATION_MODE
-  std::shared_ptr<TreeAln> aTree = std::unique_ptr<TreeAln>(new TreeAln()); 
+  std::shared_ptr<TreeAln> aTree = unique_ptr<TreeAln>(new TreeAln()); 
 
   aTree->initializeFromByteFile(binaryAlnFile, runmodes); 
   aTree->enableParsimony();
@@ -648,37 +653,15 @@ void SampleMaster::initializeRuns(Randomness rand)
 
   auto evalUptr = createEvaluatorPrototype(initTree,  _cl.isSaveMemorySEV()); 
 
-  auto&& proposals =  std::vector<std::unique_ptr<AbstractProposal> >{};
-  auto&& params = std::vector<std::unique_ptr<AbstractParameter> >{};
-  auto&& proposalSets =  std::vector<ProposalSet>{};  
+  auto&& proposals =  vector<unique_ptr<AbstractProposal> >{};
+  auto&& params = vector<unique_ptr<AbstractParameter> >{};
+  auto&& proposalSets =  vector<ProposalSet>{};  
   std::tie(params, proposals, proposalSets) = processConfigFile(_cl.getConfigFileName(), initTree);
 
-  if( int(_runParams.getNumRunConv()) <_cl.getNumRunParallel() )
-    {
-      tout << "\n\tERROR: you want to run  "<< _cl.getNumRunParallel() << " in parallel, while there are only " << _runParams.getNumRunConv() << " to be run in total.\n\n" << std::endl; 
-      exitFunction(-1); 
-    }
+  catchRunErrors();
 
-  if ( _runParams.getNumCoupledChains() < _cl.getNumChainsParallel() )
-    {
-      tout << "\n\tERROR: you want to run " << _cl.getNumChainsParallel() << " in parallel, while there are only "<< _runParams.getNumCoupledChains() << " to be run in total.\n\n" << std::endl; 
-      exitFunction(-1); 
-    }
-
-  if( (  _runParams.getNumRunConv() % _cl.getNumRunParallel() )  != 0 )
-    {
-      tout << "\n\tERROR: you specified to run " << _runParams.getNumRunConv() << " independent runs and " << _cl.getNumRunParallel() << " of them in parallel. Currently, the total number of runs must be a multiple of the number of parallel runs." << std::endl; 
-      exitFunction(-1); 
-    }
-
-  if( (  _runParams.getNumCoupledChains() % _cl.getNumChainsParallel() ) != 0  )
-    {
-      tout << "\n\tERROR: you specified to run " << _runParams.getNumCoupledChains() << " coupled chains for each independent run and "<< _cl.getNumChainsParallel() << " of them in parallel. Currently, the total number of coupled chains must be a multiple of the number of parallel coupled chains." << std::endl; 
-      exitFunction(-1); 
-    }
-
-  auto runSeeds = std::vector<randCtr_t>{};
-  auto treeSeeds = std::vector<randCtr_t>{}; 
+  auto runSeeds = vector<randCtr_t>{};
+  auto treeSeeds = vector<randCtr_t>{}; 
   for(nat i = 0; i <  _runParams.getNumRunConv();++i)
     {
       runSeeds.push_back(rand.generateSeed()); 
@@ -695,7 +678,7 @@ void SampleMaster::initializeRuns(Randomness rand)
     }
 
   // gather branch length parameters
-  auto blParams = std::vector<AbstractParameter*>{} ;
+  auto blParams = vector<AbstractParameter*>{} ;
   for(auto &v : params)
     {
       if(v->getCategory() == Category::BRANCH_LENGTHS)
@@ -704,10 +687,10 @@ void SampleMaster::initializeRuns(Randomness rand)
 
   if(startingTrees.size() > 1 )
     {
-      tout << "You provided " << startingTrees.size() << " starting trees" << std::endl;       
+      tout << "You provided " << startingTrees.size() << " starting trees" << endl;       
 
       if(topoIsFixed)
-	tout << "Since the topology is fixed, only the first one will be used." << std::endl; 
+	tout << "Since the topology is fixed, only the first one will be used." << endl; 
     }
 
   auto hadBl = false; 
@@ -721,28 +704,25 @@ void SampleMaster::initializeRuns(Randomness rand)
 
   for(nat i = 0; i < _runParams.getNumRunConv() ; ++i)
     {    
-      auto trees = std::vector<TreeAln>{}; 
+      auto trees = vector<TreeAln>{}; 
       for(nat j = 0; j < _runParams.getNumCoupledChains() ; ++j ) 
-	{
-	  auto cpy = initTree; 
-	  trees.push_back(cpy);
-	}
+	trees.emplace_back(initTree);
 
-      auto hadBls = std::vector<bool>(trees.size() , topoIsFixed  && hadBl ? true : false);
+      auto hadBls = vector<bool>(trees.size() , topoIsFixed  && hadBl ? true : false);
       if(not topoIsFixed)
 	hadBls = initTrees(trees, treeSeeds[i],  startingTrees, blParams); 
 
-      auto paramView = std::vector<AbstractParameter*>{}; 
+      auto paramView = vector<AbstractParameter*>{}; 
       for(auto &param : params)
 	paramView.push_back(param.get()); 
 
       // TODO method could be moved to treealn 
       for(nat j = 0; j < trees.size() ;++j)
 	initializeWithParamInitValues(trees[j], paramView, hadBls[j] );
-
+      
       auto runRand =  Randomness(runSeeds[i]); 
       
-      auto chains = std::vector<Chain>{};       
+      auto chains = vector<Chain>{};       
       for(nat j = 0; j < _runParams.getNumCoupledChains(); ++j)
 	{
 	  auto &t = trees.at(j);
@@ -764,7 +744,8 @@ void SampleMaster::initializeRuns(Randomness rand)
 	run.initializeOutputFiles(_cl.isDryRun());
     }
 
-  // assert(0); 
+  // important: initialize asynchronous tag based system 
+  _plPtr->getChainComm().initWithMaxChains( _runParams.getNumCoupledChains() , _plPtr->getChainComm().size()); 
 
   if(_cl.getCheckpointId().compare("") != 0)
     initializeFromCheckpoint(); 
@@ -789,6 +770,15 @@ void SampleMaster::initializeRuns(Randomness rand)
       auto res = _plPtr->printLoadBalance(initTree, _runParams.getNumRunConv(), _runParams.getNumCoupledChains());
       tout << res; 
     }
+
+
+  // BEGIN DEBUG 
+  // auto &p = initTree.getPartition(0); 
+  // auto &&ss = std::stringstream{}; 
+  // p.printAlignment(ss); 
+  // std::cout << ss.str() << endl; 
+  // END 
+
 }
 
 
@@ -799,13 +789,13 @@ void SampleMaster::printInitializedFiles() const
   bool isRestart = _cl.getCheckpointId().compare("") != 0;
   auto initString = isRestart ? "regenerated" : "initialized" ; 
 
-  stream << initString  << " diagnostics file " << _diagFile.getFileName()  << std::endl; 
+  stream << initString  << " diagnostics file " << _diagFile.getFileName()  << endl; 
 
   for(auto &run : _runs)
     {
       for(auto &elem : run.getAllFileNames())
 	{
-	  stream << initString << " file " << elem << std::endl; 
+	  stream << initString << " file " << elem << endl; 
 	}
     }
 } 
@@ -841,14 +831,14 @@ void SampleMaster::printInitialState()
   // computed
   synchronize(CommFlag::PRINT_STAT); 
 
-  tout << std::endl << "initial state: " << endl; 
+  tout << endl << "initial state: " << endl; 
   tout << "================================================================" << endl; 
   for(auto &run: _runs)
     {
       for(auto &chain: run.getChains())
 	{
 	  tout << chain ; 
-	  tout << "\tRNG(" << chain.getChainRand() << ")" << std::endl; 
+	  tout << "\tRNG(" << chain.getChainRand() << ")" << endl; 
 	}
       tout << "================================================================" << endl; 
     }
@@ -877,7 +867,7 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
       fns.push_back(ss.str());
     }
 
-  // std::cout << "computing asdsf for files " << fns << std::endl; 
+  // std::cout << "computing asdsf for files " << fns << endl; 
   
   auto&& asdsf = SplitFreqAssessor(fns, false);
   end = asdsf.getMinNumTrees() ; 
@@ -914,7 +904,7 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
 }
 
 
-std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
+std::tuple<vector<unique_ptr<AbstractParameter> > , vector<unique_ptr<AbstractProposal> > , vector<ProposalSet> >  
 SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )  
 {
   auto reader = ConfigReader{}; 
@@ -940,8 +930,8 @@ SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
   auto paramResult = paramBlock.getParameters();
 
   r.addStandardParameters(paramResult, traln);
-  auto proposalSetResult = std::vector<ProposalSet>{};
-  auto&& proposalResult = std::vector<std::unique_ptr<AbstractProposal>>{}; 
+  auto proposalSetResult = vector<ProposalSet>{};
+  auto&& proposalResult = vector<unique_ptr<AbstractProposal>>{}; 
   std::tie(proposalResult, proposalSetResult) = r.produceProposals(proposalConfig, priorBlock , paramResult, traln, _runParams.isComponentWiseMH() && traln.getNumberOfPartitions() > 1);
 
   // sanity check 
@@ -958,7 +948,7 @@ SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
   for(auto &p : proposalSetResult)
     ctr = p.numerateProposals(ctr);
 
-  return std::make_tuple(std::move(paramResult), std::move(proposalResult), proposalSetResult);
+  return std::make_tuple(move(paramResult), move(proposalResult), proposalSetResult);
 }
 
 
@@ -979,7 +969,7 @@ SampleMaster::printDuringRun(nat gen)
       else 
 	ss << " ==="; 
       
-      auto sortedLnls = std::vector<std::pair<nat,double>>{}; 
+      auto sortedLnls = vector<std::pair<nat,double>>{}; 
       for(auto &c : run.getChains() ) 
 	sortedLnls.emplace_back(c.getCouplingId(), c.getLikelihood()); 
       std::sort(sortedLnls.begin(), sortedLnls.end(), [] (const std::pair<nat,double> &elem1, const std::pair<nat,double> &elem2 ) { return elem1.first < elem2.first;  }); 
@@ -995,7 +985,7 @@ SampleMaster::printDuringRun(nat gen)
     }
 
   // print it 
-  tout << ss.str() << std::endl; 
+  tout << ss.str() << endl; 
 
  return CLOCK::system_clock::now(); 
 }
@@ -1003,7 +993,6 @@ SampleMaster::printDuringRun(nat gen)
 
 void SampleMaster::run()
 {
-
   if(not _cl.isQuiet())
     {
       tout << "Starting MCMC sampling " ; 
@@ -1016,7 +1005,7 @@ void SampleMaster::run()
       auto impl=std::string{"standard"};
 #endif 
 
-      tout << "using the " << impl << " implementation" <<    (  _cl.isSaveMemorySEV() ?  " with SEVs" : "" ) << " for likelihood computations." << std::endl; 
+      tout << "using the " << impl << " implementation" <<    (  _cl.isSaveMemorySEV() ?  " with SEVs" : "" ) << " for likelihood computations." << endl; 
       
       if(_runParams.getNumRunConv() > 1 &&  _runParams.isUseStopCriterion() )
 	tout << PROGRAM_NAME << " will run until topological convergence is achieved\n"
@@ -1049,31 +1038,35 @@ void SampleMaster::run()
       nat nextDiag = lastDiag + _runParams.getDiagFreq(); 
       nat nextChkpnt = lastChkpnt + _runParams.getChkpntFreq(); 
 
-      std::vector<nat> stopPoints = { nextChkpnt , nextPrint, nextDiag } ; 
+      vector<nat> stopPoints = { nextChkpnt , nextPrint, nextDiag } ; 
+      
+      if(not _runParams.isUseStopCriterion())
+	stopPoints.push_back(_runParams.getNumGen());
 
       if(curGen < _runParams.getNumGen())
 	stopPoints.push_back(_runParams.getNumGen());
 
       nat nextStop = *(std::min_element(stopPoints.begin(), stopPoints.end())); 
       int toExecute = nextStop - curGen; 
- 
+
       for(auto &run : _runs)
 	{
-	  // std::cout <<   "running a part" << std::endl; 
-	  // tout <<   "running a part" << std::endl; 
+	  // std::cout <<   "running a part" << endl; 
+	  // tout <<   "running a part" << endl; 
 	  if(_plPtr->isMyRun(run.getRunid()))
 	      run.executePartNew(curGen, toExecute, *_plPtr );
 	}
 
       curGen += toExecute; 
 
-      hasConverged = (  _runs.size() == 1) && (curGen >= _runParams.getNumGen()); 
+      hasConverged = not _runParams.isUseStopCriterion()  || (( _runs.size() == 1) && (curGen >= _runParams.getNumGen())); 
 
-      if(curGen % _runParams.getDiagFreq() == 0 )
+      if( (curGen % _runParams.getDiagFreq()) == 0 )
 	{
 	  auto asdsf = std::make_pair(nan(""), nan("")); 
 
 	  if(_runs.size() > 1 && _runParams.isUseStopCriterion() )
+	  // if(not hasConverged)
 	    {
 	      if( _plPtr->isGlobalMaster())
 		{
@@ -1087,14 +1080,14 @@ void SampleMaster::run()
 		  else 
 		    hasConverged = asdsf.first < convCrit;  
 	      
-		  tout << std::endl  << "standard deviation of split frequencies for trees " << start << "-" << end  << " (avg/max):\t"
-		       << PERC_PRECISION << asdsf.first * 100 << "%\t" << asdsf.second * 100 << "%"   << std::endl << std::endl; 
+		  tout << endl  << "standard deviation of split frequencies for trees " << start << "-" << end  << " (avg/max):\t"
+		       << PERC_PRECISION << asdsf.first * 100 << "%\t" << asdsf.second * 100 << "%"   << endl << endl; 
 		}
 	    }
 	  else 
 	    hasConverged = true ; 
 
-	  auto swapBackup = std::vector<SwapMatrix> {};
+	  auto swapBackup = vector<SwapMatrix> {};
 	  if(_plPtr->isGlobalMaster())
 	    {
 	      for(auto &run : _runs)
@@ -1190,7 +1183,7 @@ void SampleMaster::finalizeRuns()
   tout << endl << "Converged/stopped after " <<  _runs[0].getChains()[0].getGeneration() << " generations" << endl;   
   tout << endl << "Total execution time:\t" 
        <<  SOME_FIXED_PRECISION << secsElapsed << " seconds "
-       << "\tor " <<  std::setfill('0') << std::setw(2) <<  int(altFormat[0]) << ":" << std::setfill('0') << std::setw(2) << int(altFormat[1]) << ":" << altFormat[2] << " (hh:mm:ss)." << std::endl; 
+       << "\tor " <<  std::setfill('0') << std::setw(2) <<  int(altFormat[0]) << ":" << std::setfill('0') << std::setw(2) << int(altFormat[1]) << ":" << altFormat[2] << " (hh:mm:ss)." << endl; 
 
 }
 
@@ -1229,7 +1222,7 @@ void SampleMaster::writeCheckpointMaster()
 {
   // whenever we synchronize swap, we have to backup our own swap
   // matrices
-  auto swb=  std::vector<SwapMatrix> {}; 
+  auto swb=  vector<SwapMatrix> {}; 
   if( _plPtr->isGlobalMaster())
     {
       for(auto &run : _runs)

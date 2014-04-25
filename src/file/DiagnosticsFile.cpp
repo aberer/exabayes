@@ -212,7 +212,7 @@ void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::st
       // TODO: all this comparing against empty lines only is needed,
       // because we could not have any data lines (and only the
       // header). Come up with a better solution. 
-      if(lineCtr > 0 &&  not line.compare("") == 0 )
+      if( ( lineCtr > 0 )  &&  (  line.compare("") != 0 )  )
       	{
 	  auto &&ss = std::stringstream{} ; 
 	  ss.str(line); 
@@ -221,7 +221,7 @@ void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::st
 	  genFound = std::stoi(part); 
 	}
 
-      if(genFound < gen && not line.compare("") == 0)
+      if(( genFound < gen )  && ( line.compare("") != 0 ) )
 	fh << line << std::endl; 
       ++lineCtr;
     }

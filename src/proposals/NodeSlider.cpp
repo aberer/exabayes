@@ -1,6 +1,6 @@
 #include "NodeSlider.hpp"
 #include "eval/LikelihoodEvaluator.hpp"
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 #include "priors/AbstractPrior.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)

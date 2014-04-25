@@ -8,20 +8,20 @@
 #include "proposals/StatNNI.hpp"
 #include "proposals/NodeSlider.hpp"
 #include "Chain.hpp"		
-#include "TreeAln.hpp"
-#include "Randomness.hpp"
-#include "GlobalVariables.hpp"
+#include "model/TreeAln.hpp"
+#include "math/Randomness.hpp"
+#include "system/GlobalVariables.hpp"
 
 #include "eval/LikelihoodEvaluator.hpp" 
 #include "comm/ParallelSetup.hpp"
-#include "Category.hpp"
+#include "model/Category.hpp"
 #include "TreePrinter.hpp"
 
 #ifdef  _DEVEL
 #include "memory.hpp" 
 #endif
 
-Chain:: Chain(randKey_t seed, TreeAln traln, const std::vector<std::unique_ptr<AbstractProposal> > &proposals, 
+Chain:: Chain(randKey_t seed, const TreeAln& traln, const std::vector<std::unique_ptr<AbstractProposal> > &proposals, 
 	      std::vector<ProposalSet> proposalSets, LikelihoodEvaluator eval, bool isDryRun) 
   : _traln(traln)
   , _deltaT(0)
@@ -52,25 +52,25 @@ Chain:: Chain(randKey_t seed, TreeAln traln, const std::vector<std::unique_ptr<A
 }
 
 
-Chain::Chain(  Chain&& rhs)   
-  : _traln(std::move(rhs._traln))
-  , _deltaT(rhs._deltaT)
-  , _runid(rhs._runid)
-  , _tuneFrequency(rhs._tuneFrequency)
-  , _hastings(rhs._hastings)
-  , _currentGeneration(rhs._currentGeneration)
-  , _couplingId(rhs._couplingId) 
-  , _proposals(std::move(rhs._proposals))
-  , _proposalSets(std::move(rhs._proposalSets))
-  , _chainRand(std::move(rhs._chainRand)) 
-  , _relWeightSumSingle(rhs._relWeightSumSingle)
-  , _relWeightSumSets(rhs._relWeightSumSets) 
-  , _prior(std::move(rhs._prior))
-  , _bestState(rhs._bestState)
-  , _evaluator(std::move(rhs._evaluator))
-  , _lnPr(rhs._lnPr)
-{
-}
+// Chain::Chain(  Chain&& rhs)   
+//   : _traln(std::move(rhs._traln))
+//   , _deltaT(rhs._deltaT)
+//   , _runid(rhs._runid)
+//   , _tuneFrequency(rhs._tuneFrequency)
+//   , _hastings(rhs._hastings)
+//   , _currentGeneration(rhs._currentGeneration)
+//   , _couplingId(rhs._couplingId) 
+//   , _proposals(std::move(rhs._proposals))
+//   , _proposalSets(std::move(rhs._proposalSets))
+//   , _chainRand(std::move(rhs._chainRand)) 
+//   , _relWeightSumSingle(rhs._relWeightSumSingle)
+//   , _relWeightSumSets(rhs._relWeightSumSets) 
+//   , _prior(std::move(rhs._prior))
+//   , _bestState(rhs._bestState)
+//   , _evaluator(std::move(rhs._evaluator))
+//   , _lnPr(rhs._lnPr)
+// {
+// }
 
 
 Chain::Chain(  const Chain& rhs)   
@@ -367,7 +367,7 @@ void Chain::stepSingleProposal()
 
   auto& pfun = drawProposalFunction(_chainRand);
 
-  // tout << "have "  << pfun << std::endl; 
+  // tout << pfun << std::endl; 
 
   /* reset proposal ratio  */
   _hastings = 0; 
@@ -377,7 +377,6 @@ void Chain::stepSingleProposal()
   auto suggestion = peekNextVirtualRoot(traln,_chainRand); 
 
   pfun.evaluateProposal(_evaluator, _traln, suggestion);
-
 
   double priorRatio = _prior.getLnPriorRatio();
   double lnlRatio = traln.getTrHandle().likelihood - prevLnl; 
@@ -392,7 +391,7 @@ void Chain::stepSingleProposal()
   auto& output = std::cout  ; 
   addChainInfo(output); 
   output << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun.getName() << "\t" 
-	 << MORE_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << _hastings << std::endl; 
+	 << MORE_FIXED_PRECISION << SHOW(prevLnl) << SHOW(lnlRatio) << SHOW(priorRatio) << SHOW( _hastings) << SHOW(acceptance)  << SHOW(testr)<< std::endl; 
 #endif
 
   if(wasAccepted)
@@ -450,8 +449,6 @@ void Chain::stepSetProposal()
 
   double myHeat = getChainHeat(); 
   auto &pSet = drawProposalSet(_chainRand); 
-
-  // tout << "have " << pSet << std::endl; 
 
   auto oldPartitionLnls = traln.getPartitionLnls(); 
   

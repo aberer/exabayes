@@ -53,7 +53,7 @@ private:
   double burninProportion; 
   int samplingFreq; 
   int numRunConv; 
-  int numGen; 
+  uint64_t numGen; 
   int numCoupledChains; 
   int printFreq; 
   double heatFactor ; 

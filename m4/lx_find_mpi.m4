@@ -166,7 +166,6 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
          lx_mpi_link_paths=` echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-L\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
          lx_mpi_libs=`       echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-l\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
          lx_mpi_link_args=`  echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-Wl,\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-
 	 lx_mpi_remain=`  echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-[[^DILlW]]\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
 
 	 echo ""
@@ -180,21 +179,22 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
 	 echo "" 
 
          # Create variables and clean up newlines and multiple spaces
-         MPI_$3FLAGS="$lx_mpi_defines $lx_mpi_includes "  #  $lx_mpi_remain"
-         MPI_$3LDFLAGS="$lx_mpi_link_paths $lx_mpi_libs $lx_mpi_link_args $lx_mpi_remain"
+         MPI_$3FLAGS=`echo $lx_mpi_defines $lx_mpi_includes $lx_mpi_remain `  #  
+         MPI_$3LDFLAGS=`echo $lx_mpi_remain $lx_mpi_link_paths $lx_mpi_libs $lx_mpi_link_args `  
 
-         MPI_$3FLAGS=`  echo "$MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
+         MPI_$3FLAGS=` echo "$MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
          MPI_$3LDFLAGS=`echo "$MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
-
 
          OLD_LIBS=$LIBS
 	 OLD_$3FLAGS=$$3FLAGS
 
-	 $3FLAGS=`echo $MPI_$3FLAGS $SIMD_FLAGS `
-         LIBS=$MPI_CXXLDFLAGS
+	 $3FLAGS=`echo $MPI_$3FLAGS  $SIMD_FLAGS `
+         LIBS=`echo $MPI_$3LDFLAGS `
 
-         AC_TRY_LINK([#include <mpi.h>],
-                     [int rank, size;
+         AC_TRY_LINK([
+	 #include <mpi.h> 
+	 ],
+         [int rank, size;
                       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
                       MPI_Comm_size(MPI_COMM_WORLD, &size);],
                      [# Add a define for testing at compile time.
@@ -209,6 +209,10 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
 	 echo MPI_CXXFLAGS=$MPI_CXXFLAGS
 	 echo MPI_CXXLDFLAGS=$MPI_CXXLDFLAGS
 	 echo ""
+	 
+	 if [[  "$have_$3_mpi" == 'no'  ]] ; then 
+               AC_MSG_ERROR([ "error: could not setup a working MPI environment. Please contact the exabayes user group with this output and details about your MPI installation. ])	
+         fi 
 
          # AC_SUBST everything.
          AC_SUBST($1)
@@ -222,6 +226,6 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
          have_$3_mpi='no'
      fi
 
-     echo found CXXFLAGS: $MPI_CXXFLAGS 
-     echo found CXXLDFLAGS: $MPI_CXXLDFLAGS 
+     echo found CXXFLAGS: $MPI_$3FLAGS 
+     echo found CXXLDFLAGS: $MPI_$3LDFLAGS 
 ])

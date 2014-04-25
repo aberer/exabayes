@@ -1,5 +1,5 @@
 #include "priors/DirichletPrior.hpp"
-#include "RateHelper.hpp"
+#include "model/RateHelper.hpp"
 #include <numeric>
 
 

@@ -32,7 +32,7 @@ public:
   void createSendRequest(std::vector<char> array, int dest, int tag, CommRequest &req); 
   void createRecvRequest(int src, int tag, nat length, CommRequest& req ); 
 
-  nat getNumberOfPhysicalNodes() ; 
+  nat getNumberOfPhysicalNodes()  ; 
 
   static uint64_t _maxTagValue; 
 private: 

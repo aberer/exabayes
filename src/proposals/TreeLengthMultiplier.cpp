@@ -1,9 +1,8 @@
-// #include "axml.h"
 
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 #include "TreeLengthMultiplier.hpp"
-#include "Randomness.hpp"
-#include "TreeAln.hpp"
+#include "math/Randomness.hpp"
+#include "model/TreeAln.hpp"
 #include "priors/UniformPrior.hpp"
 #include "priors/AbstractPrior.hpp"
 

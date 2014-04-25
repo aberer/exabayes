@@ -33,7 +33,7 @@ static auto  processCommandLine(int argc, char **argv)
 	case 'h': 
 	  {
 	    printUsage(std::cerr); 
-	    exitFunction(-1); 
+	    exitFunction(-1, false); 
 	  }
 	  break; 
 	case 'n':
@@ -67,7 +67,7 @@ static auto  processCommandLine(int argc, char **argv)
 	default: 
 	  {
 	    std::cerr << "Error: unknown option >" << char (c) << "<" << std::endl; 
-	    exitFunction(-1); 
+	    exitFunction(-1, false); 
 	  }
 	}
     }
@@ -76,29 +76,37 @@ static auto  processCommandLine(int argc, char **argv)
   if( id.compare("") == 0)
     {
       std::cerr << "Error: please specify an id for output files via -n" << std::endl;
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
   
   if(not ( 0 < credSet && credSet <= 100 ))
     {
       std::cerr << "Error: the percentile (passed via -c) must be between 0 (excluded) and 100 (included)." << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
   
   return std::make_tuple(id,files,credSet);
 }
 
 
+static void myExit(int code, bool waitForAll)
+{
+  exit(code); 
+}
+
+
+
+
 int main(int argc, char **argv)
 {
-  exitFunction = exit; 
+  exitFunction = myExit; 
 
   NUM_BRANCHES = 1;   // BAD
 
   if(argc < 2 )
     {
       printUsage(std::cerr);
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
 
   auto id = std::string(argv[1]); 
@@ -119,7 +127,7 @@ int main(int argc, char **argv)
     {
       std::cerr << "The file " << ss.str() << " already exists (possibly left over from a previous run). Please\n"
 		<< "choose a different run-id." << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
 
   cs.printCredibleSet(ss.str(), ci); 

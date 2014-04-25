@@ -65,13 +65,28 @@ public:
 
 TEST_F(PartitionAssignmentTest, generic )
 {
-  for(nat i = 1; i < 100 ; ++i)
+  for(nat i = 1; i < 2 ; ++i) // 100
     {
       auto pa =  PartitionAssignment(i); 
       pa.assign(_partitions);
-      printStatistics(pa);
+      // printStatistics(pa);
       checkIfAllAssigned(pa); 
-      tout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl; 
+      // tout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl; 
     }
 }
+
+
+
+
+TEST(PartitionAssignment, tooFewSites)
+{
+  auto _partitions =  std::vector<Partition>() ; 
+  _partitions.emplace_back(10, "", PLL_DNA_DATA,4, 4, false );
+  _partitions.back().setLower(0);
+  _partitions.back().setUpper(10); 
+  
+  auto pa = PartitionAssignment(12); 
+  pa.assign(_partitions); 
+}
+
 

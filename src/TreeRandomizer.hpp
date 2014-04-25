@@ -1,8 +1,8 @@
 #ifndef _TREE_RANDOMIZER_H
 #define _TREE_RANDOMIZER_H
 
-#include "Randomness.hpp"
-#include "TreeAln.hpp"
+#include "math/Randomness.hpp"
+#include "model/TreeAln.hpp"
 
 class ParallelSetup; 
 

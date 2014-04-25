@@ -7,13 +7,12 @@
 #include "common.h"
 #include "mcmc/SuccessCounter.hpp"
 
-#include "Serializable.hpp"
+#include "system/Serializable.hpp"
 
 class SwapMatrix : public Serializable
 {
 public: 
   SwapMatrix(nat numChains ); 
-  // SwapMatrix(const SwapMatrix& rhs); 
   SwapMatrix operator=( SwapMatrix rhs ) ; 
 
   void update(nat a, nat b, bool acc); 

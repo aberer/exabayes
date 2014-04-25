@@ -15,9 +15,9 @@
 
 #include <unordered_map>
 #include "AbstractProposal.hpp"
-#include "Path.hpp"
+#include "data-struct/Path.hpp"
 #include "SprMove.hpp"
-#include "ParsimonyEvaluator.hpp"
+#include "eval/ParsimonyEvaluator.hpp"
 #include "comm/RemoteComm.hpp"
 
 typedef std::unordered_map<BranchPlain, double> weightMap; 

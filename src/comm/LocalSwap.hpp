@@ -3,6 +3,8 @@
 
 #include "comm/AbstractPendingSwap.hpp" 
 
+#include <iostream>
+
 
 class LocalSwap :  public AbstractPendingSwap
 {
@@ -10,8 +12,7 @@ public:
   LocalSwap( SwapElem elem )
     : AbstractPendingSwap(elem)
     , _haveReceived(false)
-  {
-  }
+  { }
 
   virtual std::vector<char> getRemoteData()  const ; 
   virtual bool isFinished()  ;   

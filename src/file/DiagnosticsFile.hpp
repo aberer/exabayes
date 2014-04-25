@@ -5,7 +5,7 @@
 
 #include "mcmc/CoupledChains.hpp"
 #include "OutputFile.hpp"
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 
 class DiagnosticsFile : public  OutputFile
 {

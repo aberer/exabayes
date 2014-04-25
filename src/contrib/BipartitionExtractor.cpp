@@ -5,8 +5,8 @@
 #include <cassert>
 #include <fstream>
 
-#include "Arithmetics.hpp" 
-#include "BipartitionHash.hpp"
+#include "math/Arithmetics.hpp" 
+#include "data-struct/BipartitionHash.hpp"
 
 #include "TreePrinter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -18,7 +18,7 @@ static void rejectIfExists(std::string filename)
     {
       std::cerr << std::endl <<  "File " << filename << " already exists (probably \n"
 		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
 }
 
@@ -50,7 +50,7 @@ nat BipartitionExtractor::getNumTreesInFile(std::string file) const
   if(result < 1)
     {
       std::cout << "Header of file " << file << " possibly broken. Expected list of taxa terminated by semi-colon." << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, false); 
     }
 
   result -= 2;

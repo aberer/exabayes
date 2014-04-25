@@ -20,7 +20,7 @@
 
 /* translate the defines for correct vectorization  */
 #if USE_SSE
-#define __SIM_SSE3
+#define __SSE3
 #endif
 
 #if USE_AVX

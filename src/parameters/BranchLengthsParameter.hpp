@@ -3,7 +3,7 @@
 
 #include "AbstractParameter.hpp"
 
-#include "Category.hpp"
+#include "model/Category.hpp"
 
 class BranchLengthsParameter : public AbstractParameter 
 {

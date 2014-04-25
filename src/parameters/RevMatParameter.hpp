@@ -2,8 +2,8 @@
 #define REV_MAT_PARAMETER
 
 
-#include "RateHelper.hpp"
-#include "Category.hpp"
+#include "model/RateHelper.hpp"
+#include "model/Category.hpp"
 #include "AbstractParameter.hpp"
   
 class RevMatParameter : public AbstractParameter

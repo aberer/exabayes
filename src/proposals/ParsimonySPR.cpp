@@ -4,16 +4,11 @@
 #include "priors/AbstractPrior.hpp"
 
 #include "ParsimonySPR.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 
 #include "comm/ParallelSetup.hpp"
 
 #include "TreePrinter.hpp"
-
-// #if HAVE_PLL == 0
-// #include <mpi.h>
-// extern MPI_Comm comm; 
-// #endif
 
 
 static double state2factor(nat states)

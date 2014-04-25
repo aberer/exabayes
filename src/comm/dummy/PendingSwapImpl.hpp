@@ -12,6 +12,7 @@ class PendingSwap::Impl : public AbstractPendingSwap
 {
 public: 
   Impl(SwapElem elem); 
+  virtual ~Impl(){}
   std::vector<char> getRemoteData() const ; 
   void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid); 
   bool allHaveReceived(ParallelSetup& pl)  ; 

@@ -2,12 +2,9 @@
 #define _SUCCESSCTR_H
 
 #include <iostream>
-// #include <iomanip>
 #include <list>
 
-typedef  unsigned int nat ; 
-
-#include "Serializable.hpp"
+#include "system/Serializable.hpp"
 
 #define SIZE_OF_LAST 100 
 

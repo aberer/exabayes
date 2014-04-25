@@ -4,8 +4,8 @@
 #include <vector>
 #include <algorithm>
 
-#include "Randomness.hpp"
-#include "Density.hpp"
+#include "math/Randomness.hpp"
+#include "math/Density.hpp"
 #include "mcmc/Chain.hpp"
 #include "proposals/AbstractProposal.hpp"
 

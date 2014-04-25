@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "mcmc/Chain.hpp"
 
 

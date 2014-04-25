@@ -27,8 +27,8 @@ public:
   class Impl; 			// since we have an abstract variant, this does not really fit anymore 
 
   PendingSwap( SwapElem swap, bool isLocal); 
-  PendingSwap(PendingSwap&& rhs);
-  PendingSwap& operator=( PendingSwap elem)  ; 
+  PendingSwap(PendingSwap&& rhs)     ;
+  PendingSwap& operator=( const PendingSwap& elem)   = delete; 
   PendingSwap( const PendingSwap& rhs) = delete; 
   ~PendingSwap();
   
