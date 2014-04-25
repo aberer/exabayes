@@ -7,12 +7,11 @@
 
 #include <assert.h>
 
-#include "../time.hpp"
+#include "../system/time.hpp"
 
-#include "../Bipartition.hpp"
+#include "data-struct/Bipartition.hpp"
 
 #include "../common.h"
-// #include <iomanip>
 #include <algorithm>
 #include <cstring>
 #include <iostream>
@@ -76,6 +75,7 @@ PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool ha
 
 PhylipParser::~PhylipParser()
 {
+  // if(rdta && rdta->y0)
   free(rdta->y0); 
   free(baseAddr); 
   free(tr->yVector); 
@@ -202,7 +202,7 @@ static int myGetline(char **lineptr, int *n, FILE *stream)
     {
       while (--copy > 0)
 	{
-	  register int c = getc(stream);
+	  int c = getc(stream);
 	  if (c == EOF)
 	    goto lose;
 	  else
@@ -2169,7 +2169,6 @@ void PhylipParser::writeWeights(std::ofstream &out)
   if(elem < std::numeric_limits<uint8_t>::max())
     {
       int len = sizeof(uint8_t); 
-      std::cout << "length weights integer type=" << len << std::endl; 
       myWrite(out, &len,1); 
       for(auto i = 0ull; i < tr->originalCrunchedLength; ++i)
 	{
@@ -2180,7 +2179,6 @@ void PhylipParser::writeWeights(std::ofstream &out)
   else if(elem < std::numeric_limits<uint16_t>::max())
     {
       int len = sizeof(uint16_t); 
-      std::cout << "length weights integer type=" << len << std::endl; 
       myWrite(out, &len,1); 
       for(auto i = 0ull; i < tr->originalCrunchedLength; ++i)
 	{
@@ -2191,7 +2189,6 @@ void PhylipParser::writeWeights(std::ofstream &out)
   else if(elem < std::numeric_limits<int32_t>::max())
     {
       int len = sizeof(uint32_t); 
-      std::cout << "length weights integer type=" << len << std::endl; 
       myWrite(out, &len,1); 
       for(auto i = 0ull; i < tr->originalCrunchedLength; ++i)
 	{

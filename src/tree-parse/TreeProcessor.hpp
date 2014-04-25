@@ -2,7 +2,7 @@
 #define _TREE_PROCESSOR_HPP
 
 #include <string>
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 
 class TreeProcessor
 {

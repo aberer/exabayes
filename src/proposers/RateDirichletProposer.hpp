@@ -2,7 +2,7 @@
 #define _PARTIAL_DIRICHLET_HPP 
 
 #include "proposers/AbstractProposer.hpp"
-#include "RateHelper.hpp"
+#include "model/RateHelper.hpp"
 
 
 class RateDirichletProposer :  public AbstractProposer

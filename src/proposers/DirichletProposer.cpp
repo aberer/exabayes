@@ -1,5 +1,5 @@
 #include "DirichletProposer.hpp"
-#include "BoundsChecker.hpp" 
+#include "system/BoundsChecker.hpp" 
 #include <numeric>
 
 DirichletProposer::DirichletProposer( double minValI, double maxValI, bool _minMaxIsRelative ) 

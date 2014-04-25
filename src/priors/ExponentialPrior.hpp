@@ -2,7 +2,7 @@
 #define _EXPONENTIAL_PRIOR 
 
 #include "AbstractPrior.hpp"
-#include "Density.hpp"
+#include "math/Density.hpp"
  
 class ExponentialPrior : public AbstractPrior
 {

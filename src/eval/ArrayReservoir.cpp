@@ -1,8 +1,8 @@
 #include "eval/ArrayReservoir.hpp" 
-#include "GlobalVariables.hpp" 
+#include "system/GlobalVariables.hpp" 
 #include <algorithm>
 #include <cassert>
-#include "extensions.hpp"
+#include "system/extensions.hpp"
 
 const double ArrayReservoir::thresholdForNewSEVArray = 1.05 ; 
 

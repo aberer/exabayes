@@ -2,7 +2,6 @@ AUTOMAKE_OPTIONS= foreign subdir-objects
 
 EXTRA_DIST=./lib/Random123-1.08 ./examples/* ./build.sh ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.txt ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c
 
- # ./lib/pll/genericParallelization.h
 noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a
 
 .PHONY: my-update-src doc mydist  man  dist
@@ -12,7 +11,7 @@ RAX_FEATURE=-D_GNU_SOURCE -fomit-frame-pointer -funroll-loops -D__STRICT_ANSI__
 
 AM_CXXFLAGS=$(RAX_FEATURE) $(WARN_FLAGS) $(PTHREAD_CFLAGS)
 AM_CFLAGS=$(RAX_FEATURE) $(WARN_FLAGS) -std=c1x
-AM_LDFLAGS=$(PTHREAD_LDFLAGS)
+AM_LDFLAGS=$(PTHREAD_LDFLAGS) $(AM_LDLFLAGS)
 
 if NO_SSE
 VECTOR_FLAGS=-DMANUAL_SSE_OVERRIDE -DMANUAL_AVX_OVERRIDE -mno-avx -mno-sse3 # $(SIMD_FLAGS) -march=native -mtune=generic -mno-avx -mno-sse3
@@ -35,7 +34,7 @@ include src-helper.am
 include src.am 
 
 # the comm stuff 
-libcommdummy_a_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(VECTOR_FLAGS)    $(MPICXX_FLAGS) $(BAYES_INCLUDES) 
+libcommdummy_a_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(VECTOR_FLAGS) $(BAYES_INCLUDES) 
 
 # the new pll 
 libpll_a_CFLAGS=$(AM_CFLAGS) -w $(VECTOR_FLAGS) -O2 $(SRCINCLUDE)  
@@ -47,14 +46,14 @@ bin_PROGRAMS = yggdrasil  sdsf postProcParam credibleSet extractBips consense pa
 if WITH_MPI 
 bin_PROGRAMS+=exabayes 
 noinst_LIBRARIES+=libcommmpi.a
-libcommmpi_a_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(VECTOR_FLAGS)   $(MPI_CXXFLAGS) $(BAYES_INCLUDES_PARA) 
+libcommmpi_a_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(VECTOR_FLAGS) $(MPI_CXXFLAGS) $(BAYES_INCLUDES_PARA) 
 endif 
 
 if WITH_TEST
  bin_PROGRAMS+=exatest
 endif 
 
-seqlibs= libncl.a libbayes.a libcommdummy.a libpll.a libncl.a 
+seqlibs= libncl.a libbayes.a libcommdummy.a  libpll.a libncl.a  
 paralibs= libbayes.a libcommmpi.a libpll.a libncl.a
 
 libbayes_a_CXXFLAGS= $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS)    
@@ -62,7 +61,7 @@ libbayes_a_CFLAGS=-O2 $(BAYES_INCLUDES) $(VECTOR_FLAGS)
 
 ################################################################
 # exabayes 
-exabayes_LDADD= $(paralibs)
+exabayes_LDADD= $(paralibs) $(MPI_CXXLDFLAGS)
 exabayes_SOURCES = ./src/apps/exabayes.cpp
 exabayes_CXXFLAGS= $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES) $(VECTOR_FLAGS)   
 exabayes_LDFLAGS=$(MPI_CXXLDFLAGS)
@@ -117,9 +116,9 @@ libncl_a_CXXFLAGS=-w $(AM_CXXFLAGS) -O3 -I$(top_srcdir)/lib/ncl-2.1.18/ -D__STRI
 
 # test 
 exatest_SOURCES = ./tests/exatest.cpp
-exatest_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(VECTOR_FLAGS) $(BAYES_INCLUDES) 
-exatest_LDFLAGS=-L/usr/local/lib -lgtest -lpthread
-exatest_LDADD=$(seqlibs)
+exatest_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(VECTOR_FLAGS) $(BAYES_INCLUDES)  -D_IS_YGG
+exatest_LDFLAGS=-L/usr/local/lib -lgtest -lpthread 
+exatest_LDADD= $(seqlibs) 
 
 if WITH_MPI
  exatest_CXXFLAGS+=-D_WITH_MPI	

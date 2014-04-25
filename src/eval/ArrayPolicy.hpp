@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "ArrayOrientation.hpp"
 
 class TreeAln; 

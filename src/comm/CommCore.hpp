@@ -54,10 +54,14 @@ bool haveThreadSupport() const ;
 
 static void finalize();  
 static void initComm(int argc, char **argv);
-static void abort(int code);
+static void abort(int code, bool waitForAll );
 
 
 SELF split(const std::vector<int> &color, const std::vector<int> &rank) const; 
 
 
 void waitAtBarrier() ; 
+
+
+
+

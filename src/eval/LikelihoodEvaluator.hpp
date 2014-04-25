@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "ArrayPolicy.hpp"
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "ArrayOrientation.hpp"
 
 class ParallelSetup; 
@@ -89,9 +89,7 @@ private: 			// METHODS
   bool applyDirtynessToSubtree(TreeAln &traln, nat partition, const BranchPlain &branch); 
   void disorientDebug(TreeAln &traln, const BranchPlain& root); 
   void disorientDebugHelper(TreeAln &traln, const BranchPlain& root); 
-  // void exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root, bool changedOrientation ); 
 
-  
   void evaluateLikelihood (TreeAln &traln , BranchPlain branch, bool fullTraversal); 
   void updatePartials (TreeAln& traln, nodeptr p, boolean masked); 
 

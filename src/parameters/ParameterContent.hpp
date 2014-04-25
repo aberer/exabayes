@@ -4,9 +4,9 @@
 #include <iostream>
 #include <vector>
 
-#include "ProtModel.hpp"
-#include "Branch.hpp"
-#include "Serializable.hpp"
+#include "model/ProtModel.hpp"
+#include "model/Branch.hpp"
+#include "system/Serializable.hpp"
 
 
 

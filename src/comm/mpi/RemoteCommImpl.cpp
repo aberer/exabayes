@@ -1,13 +1,11 @@
 #include "RemoteCommImpl.hpp"
 
-#include <algorithm>
-#include <numeric>
 #include <set>
 
 #include "comm/CommRequest.hpp"
 #include "CommRequestImpl.hpp"
 #include "MpiType.hpp"
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #include "comm/RemoteComm.hpp"
 
 uint64_t RemoteComm::Impl::_maxTagValue = 0 ; 
@@ -108,16 +106,20 @@ void RemoteComm::Impl::createRecvRequest(int src, int tag, nat length, CommReque
 }  
 
 
-nat RemoteComm::Impl::getNumberOfPhysicalNodes() 
+nat RemoteComm::Impl::getNumberOfPhysicalNodes()   
 {
   auto result = 0u;  
   auto name = std::vector<char>(MPI_MAX_PROCESSOR_NAME, '\0'); 
   auto len = 0; 
   auto root = 0; 
-  
-  MPI_Get_processor_name(name.data(), &len);
 
+  MPI_Get_processor_name(name.data(), &len);
+  
+  // std::cout << SHOW(name) << std::endl; 
+  
   auto everything = gather(name, root); 
+  
+  // std::cout << SHOW(everything) << std::endl; 
   
   if( getRank() == 0 )
     {
@@ -136,20 +138,25 @@ nat RemoteComm::Impl::getNumberOfPhysicalNodes()
 void RemoteComm::Impl::initComm(int argc, char **argv )
 {
   int provided = 0; 
-  
-  bool foundThread = false; 
+  int numThreads= -1; 
   for(int i = 0 ; i < argc ; ++i)
-    if(std::string(argv[i]).compare("-T") == 0 )
-      foundThread = true; 
+    {
+      if(std::string(argv[i]).compare("-T") == 0 && i + 1 < argc  )
+	numThreads = std::stoi(std::string{argv[i+1]}); 
+    }
 
-  if(foundThread)
+  if(numThreads > 1)
     {
       MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided); 
       int rank = 0; 
       MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
       if( provided != MPI_THREAD_MULTIPLE && rank == 0 )
 	{
-	  std::cout << "You called the mpi version of " << PROGRAM_NAME << " with threads (-T x).  However, the MPI implementation you installed does not support threads (MPI_THEAD_MULTIPLE to be exact). Please choose a different MPI installation OR do not use threads in combination with MPI OR configure and compile a MPI implementation yourself." << std::endl ;
+	  std::cout << "You called the mpi version of " << PROGRAM_NAME << " with threads (-T x).  However, the MPI implementation you installed\n" 
+		    << "does not support threads (MPI_THEAD_MULTIPLE to be exact). Please\n"
+		    << "choose a different MPI installation OR do not use threads in"
+		    << "combination with MPI OR configure and compile a MPI implementation\n"
+		    << "yourself." << std::endl ;
 	}
       else if ( provided == MPI_THREAD_MULTIPLE && rank == 0)
 	{
@@ -184,10 +191,20 @@ void RemoteComm::Impl::finalize()
 }
 
 
-void RemoteComm::Impl::abort(int code)
+void RemoteComm::Impl::abort(int code, bool waitForAll)
 {
-  MPI_Abort(MPI_COMM_WORLD, code); 
-  exit(code); 
+  if(_masterThread == std::this_thread::get_id())
+    {
+      if(waitForAll)
+	{
+	  MPI_Barrier(MPI_COMM_WORLD); 
+	  MPI_Finalize();
+	}
+      else 
+	{
+	  MPI_Abort(MPI_COMM_WORLD, code); 
+	}
+    }
 }
 
 

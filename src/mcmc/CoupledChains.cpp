@@ -3,10 +3,10 @@
 #include "comm/PendingSwap.hpp"
 #include "mcmc/CoupledChains.hpp"   
 #include "Chain.hpp"
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #include "proposals/AbstractProposal.hpp"
-#include "PriorBelief.hpp"
-#include "time.hpp"
+#include "priors/PriorBelief.hpp"
+#include "system/time.hpp"
 #include "comm/ParallelSetup.hpp"
 
 #include "common.h"
@@ -114,7 +114,7 @@ PendingSwap CoupledChains::prepareSwap(ParallelSetup &pl, const SwapElem& theSwa
 
   auto isLocal =   pl.swapIsLocal( theSwap.getOne(), theSwap.getOther(), _runid); 
 
-  auto result = PendingSwap(theSwap, isLocal); 
+  auto&& result = PendingSwap(theSwap, isLocal); 
   result.initialize(pl, mySer, _runid);
   return std::move(result); 
 }

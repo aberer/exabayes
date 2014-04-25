@@ -1,7 +1,7 @@
 #include "StatNNI.hpp"
-#include "Path.hpp"
+#include "data-struct/Path.hpp"
 #include "TreeRandomizer.hpp"
-#include "Arithmetics.hpp"
+#include "math/Arithmetics.hpp"
 #include "AdHocIntegrator.hpp"
 #include "GibbsProposal.hpp"
 

@@ -3,7 +3,7 @@
 
 #include "comm/RemoteComm.hpp"      
 #include "comm/LocalComm.hpp"
-#include "comm/threadDefs.hpp" 
+#include "comm/threads/threadDefs.hpp" 
 
 #include <vector>
 #include <cassert>
@@ -36,10 +36,13 @@ public:
   int mapToLocalRank( int rank) const  ; 
   int mapToRemoteRank(int rank) const ; 
 
-  int getOffsetForThreadPin() ;
+  int getProcsPerNode() ; 
   
   LocalComm&  getLocalComm() ; 
+  RemoteComm& getRemoteComm(); 
 
+  void initWithMaxChains(int numChains, int numThreadsChecking); 
+  
 private:
   RemoteComm _remoteComm; 
   LocalComm _localComm; 

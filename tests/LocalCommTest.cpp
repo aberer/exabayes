@@ -112,17 +112,6 @@ TEST(LocalCommTest, bcastTest)
   auto lam = [](LocalComm& comm) 
     {
       auto myData = std::vector<nat>(10,0); 
-      if(comm.getRank() == 1 )
-	{
-	  for(nat i =0 ; i< myData.size(); ++i)
-	    myData[i] = i; 
-	}
-
-      myData = comm.broadcast(myData, 1);
-
-      for(nat i = 0; i < myData.size(); ++i)
-	ASSERT_TRUE(myData[i] == i); 
-
       if(comm.getRank() == 0)
 	{
 	  for(nat i =0; i < myData.size();  ++i)
@@ -132,10 +121,14 @@ TEST(LocalCommTest, bcastTest)
       myData = comm.broadcast(myData,0); 
 
       for(nat i = 0; i< myData.size() ;++i)
-	ASSERT_TRUE(myData[i] == i+1); 
+	ASSERT_EQ(i+1, myData[i] ); 
     }; 
 
-  executeWithThreads(4 , lam); 
+  for(int i = 2; i < 9 ; ++i)
+    {
+      executeWithThreads(i , lam); 
+      // std::cout << SyncOut() << "================ okay ================ "<< std::endl; 
+    }
 }
 
 
@@ -146,27 +139,16 @@ TEST(LocalCommTest, bcastTestSplitted)
   auto lam = [](LocalComm& comm) 
     {
       auto myData = std::vector<nat>(10,0); 
-      if(comm.getRank() == 1 )
+      if(comm.getRank() == 0 )
 	{
 	  for(nat i =0 ; i< myData.size(); ++i)
 	    myData[i] = i + comm.getColor(); 
 	}
 
-      myData = comm.broadcast(myData, 1);
+      myData = comm.broadcast(myData, 0);
 
       for(nat i = 0; i < myData.size(); ++i)
 	ASSERT_TRUE(myData[i] == i + comm.getColor()); 
-
-      if(comm.getRank() == 0)
-	{
-	  for(nat i =0; i < myData.size();  ++i)
-	    myData[i] = i + 1 + comm.getColor(); 
-	}
-
-      myData = comm.broadcast(myData,0); 
-
-      for(nat i = 0; i< myData.size() ;++i)
-	ASSERT_TRUE(myData[i] == i+1 + comm.getColor()); 
     }; 
   
   auto cols = std::vector<int>{0,0,1,1}; 
@@ -181,7 +163,7 @@ TEST(LocalCommTest, scatterv)
 {
   auto lam = [](LocalComm& comm)  
     {
-      int ROOT = 1; 
+      int ROOT = 0; 
       auto counts = std::vector<int>{3,2,3,2};
       auto displ = std::vector<int>{0,3,5,8}; 
       auto myData = std::vector<int>(counts.at(comm.getRank()),0); 
@@ -221,7 +203,7 @@ TEST(LocalCommTest, splitScatterv)
       if(comm.getColor() == 0 )
 	return; 
 
-      int ROOT = 1; 
+      int ROOT = 0; 
       auto counts = std::vector<int>{3,2,3,2};
       auto displ = std::vector<int>{0,3,5,8}; 
       auto myData = std::vector<int>(counts.at(comm.getRank()),0); 
@@ -267,20 +249,43 @@ TEST(LocalCommTest, reduceTest)
 {
   auto lam = [](LocalComm& comm)
     {
-      int ROOT = 1; 
+      int ROOT = 0; 
       auto myData = std::vector<int>{comm.getRank(), comm.getRank() + 1 };
-      
       myData = comm.reduce(myData,ROOT); 
       
       if(comm.getRank() == ROOT)
 	{
-	  ASSERT_EQ(myData[0], rankSum(comm.size())); 
-	  ASSERT_EQ(myData[1], rankSum(comm.size()) + comm.size()); 
+	  ASSERT_EQ(rankSum(comm.size()), myData[0] ); 
+	  ASSERT_EQ(rankSum(comm.size()) + comm.size(), myData[1] ); 
 	}
     }; 
   
   executeWithThreads(4, lam);
 }
+
+
+
+TEST(LocalCommTest, allReduceTest)
+{
+  auto lm = [](LocalComm& comm)
+    {
+      for(int i = 0; i < 5; ++i)
+	{
+	  auto myData = std::vector<int>{comm.getRank(), comm.getRank() + 1 };
+      
+	  myData = comm.allReduce(myData); 
+
+	  ASSERT_EQ(rankSum(comm.size()), myData[0] ); 
+	  ASSERT_EQ(rankSum(comm.size()) + comm.size(), myData[1] ); 
+	}
+    }; 
+
+  for(int i = 0; i < 12; ++i)
+    {
+      executeWithThreads(i, lm);
+    }
+}
+
 
 
 TEST(LocalCommTest, reduceTestSplit)
@@ -329,7 +334,7 @@ TEST(LocalCommTest, gathervTest)
       if(comm.getColor() == 0)
 	return;
 
-      int ROOT = 1; 
+      int ROOT = 0; 
       auto myData = std::vector<int>{comm.getRank()};
       if(comm.getRank() % 2 == 0)
 	myData.push_back(comm.getRank()); 
@@ -359,7 +364,7 @@ TEST(LocalCommTest, gatherVariableKnownLength_Split_Test)
 
   auto lam = [](LocalComm&  comm)
     {
-      int ROOT = 1; 
+      int ROOT = 0; 
       auto myData = std::vector<int>{comm.getRank()}; 
       if(comm.getRank() % 2 == 0 )
 	myData.push_back(comm.getRank() + 1 );

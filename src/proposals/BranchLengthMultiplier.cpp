@@ -1,6 +1,6 @@
 #include "BranchLengthMultiplier.hpp"
-#include "TreeAln.hpp"
-#include "BoundsChecker.hpp"
+#include "model/TreeAln.hpp"
+#include "system/BoundsChecker.hpp"
 #include "TreeRandomizer.hpp"
 #include "GibbsProposal.hpp"
 #include "priors/AbstractPrior.hpp"
@@ -32,6 +32,8 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 {
   auto b = proposeBranch(traln, rand).toBlDummy(); 
 
+  // tout << SHOW(b) << std::endl; 
+  
   assert(_primaryParameters.size() == 1); 
   auto param = _primaryParameters[0].get(); 
 
@@ -44,6 +46,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
     newZ = oldZ; 
 
   drawnMultiplier= rand.drawMultiplier( _multiplier); 
+  // tout << SHOW(drawnMultiplier) << std::endl; 
   assert(drawnMultiplier > 0.); 
   newZ = pow( oldZ, drawnMultiplier);
 

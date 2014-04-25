@@ -6,7 +6,7 @@
 #include <iostream> 
 
 #include "common.h"
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "OutputFile.hpp"
 
 class TopologyFile : public OutputFile

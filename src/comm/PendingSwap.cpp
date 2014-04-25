@@ -5,7 +5,7 @@
 
 #include "PendingSwapImpl.hpp"
 
-#include "extensions.hpp"
+#include "system/extensions.hpp"
 
 #include "comm/LocalSwap.hpp"
 
@@ -18,13 +18,6 @@ PendingSwap::PendingSwap( SwapElem swap, bool isLocal )
     _impl = make_unique<PendingSwap::Impl>(swap); 
 }
 
-
-PendingSwap& PendingSwap::operator=( PendingSwap elem)  
-{
-  swap(elem, *this); 
-  return *this; 
-} 
-
 PendingSwap::~PendingSwap()
 {
 }
@@ -33,6 +26,7 @@ PendingSwap::~PendingSwap()
 PendingSwap::PendingSwap(PendingSwap&& rhs)
   : _impl(std::move(rhs._impl))
 {
+  rhs._impl = nullptr; 
 }
 
 

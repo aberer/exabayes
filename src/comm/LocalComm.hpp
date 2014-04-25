@@ -2,11 +2,18 @@
 #define _LOCAL_COMM_HPP
 
 #include <unordered_map>
-#include "comm/Message.hpp"
-#include "comm/threadDefs.hpp"
+#include "comm/threads/threadDefs.hpp"
 #include <iostream>
+#include <numeric>
 
-#include "comm/MessageQueue.hpp"
+#include "comm/threads/MessageQueue.hpp"
+#include "comm/threads/MessageQueueSingle.hpp"
+
+#define DATA_COMBINE_FUN std::function<void(std::vector<T>& acc,  typename std::vector<T>::const_iterator,  typename std::vector<T>::const_iterator)> 
+// 1st argument: accumulator
+// 2nd argument: start of donator
+// 3rd argument: end of donator 
+
 
 class LocalComm
 {
@@ -37,22 +44,46 @@ public:
   int getIdx(int col, int rank) const ; 
   int getColor() const {return _colors.at(_tid2LocCommIdx.at(MY_TID)); }
 
-  bool checkAsyncMessage( int tag )  const ; 
+  template<typename T>
+  void postAsyncMessage(const std::vector<T> &message, int tag, int runBatch); 
+  template<typename T>
+  std::tuple<bool,std::vector<T> > readAsyncMessage(int tag, int runBatch); 
+  
+  void initializeAsyncQueue(nat size, nat numSlots);
 
+private: 
   template<typename T>
-  void postAsyncMessage(const std::vector<T> &message, int numRead, int tag); 
+  void produceWrapper(std::vector<T> msg, int idx, const std::vector<int> &who) ; 
+
+  int mapRealRank2Corrected(int rank, int root) ; 
+  int mapCorrectedRank2Real(int rank, int root); 
+  /** 
+      @brief communicates data from tips to root in a deterministic way 
+   */ 
   template<typename T>
-  std::tuple<bool,std::vector<T> > readAsyncMessage(int tag); 
+  std::vector<T> commTreeUp(std::vector<T> data, int root, DATA_COMBINE_FUN fun); 
+  /** 
+      @brief communicates data from tips to root in an asynchronous way 
+   */ 
+  template<typename T>
+  std::vector<T> commTreeUpAsync(std::vector<T> data, int root, DATA_COMBINE_FUN fun); 
+  /** 
+      @brief communicates data from root to tips in an asynchronous way  
+   */ 
+  template<typename T>
+  std::vector<T> commTreeDownAsync(std::vector<T> data, int root); 
 
 private: 			// ATTRIBUTES
-  std::vector<Message> _messages; 
   std::unordered_map<tid_t,int> _tid2LocCommIdx;
 
   std::vector<int> _colors; 
   std::vector<int> _ranks; 
   int _size; 
 
-  MessageQueue _asyncMessages; 
+  // for each color (here runid), we have an array that is indexed by
+  // a tag that is composed of two chain ids (cantor pair)
+  std::vector< std::vector<MessageQueue> > _mgsPerTag; 
+  std::vector<std::vector<MessageQueueSingle>> _newMessages;
 }; 
 
 

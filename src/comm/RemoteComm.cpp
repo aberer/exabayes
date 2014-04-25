@@ -1,5 +1,5 @@
 #include "RemoteComm.hpp"
-#include "extensions.hpp"
+#include "system/extensions.hpp"
 
 #include "RemoteCommImpl.hpp"
 #include "CommRequest.hpp"
@@ -18,7 +18,7 @@ RemoteComm::RemoteComm(const RemoteComm &rhs)
 
 
 RemoteComm::RemoteComm( RemoteComm &&rhs) 
-  :_impl{std::move(rhs._impl)}
+  :_impl(std::move(rhs._impl))
 {
 }
 
@@ -69,7 +69,7 @@ std::vector<T> RemoteComm::broadcast(std::vector<T> array, int root)
 } 
 template auto RemoteComm::broadcast(std::vector<int> array, int root)  -> std::vector<int>; 
 template auto RemoteComm::broadcast(std::vector<unsigned int> array, int root)  -> std::vector<unsigned int>; 
-template auto RemoteComm::broadcast(std::vector<unsigned long> array, int root)  -> std::vector<unsigned long>; 
+// template auto RemoteComm::broadcast(std::vector<unsigned long> array, int root)  -> std::vector<unsigned long>; 
 
 
 template<typename T> 
@@ -155,7 +155,7 @@ void RemoteComm::createRecvRequest(int src, int tag, nat length, CommRequest& re
   _impl->createRecvRequest(src,tag, length, req); 
 }
 
-nat RemoteComm::getNumberOfPhysicalNodes() 
+nat RemoteComm::getNumberOfPhysicalNodes()   
 {
   return _impl->getNumberOfPhysicalNodes();
 } 
@@ -177,9 +177,9 @@ uint64_t RemoteComm::getMaxTag()
   return  RemoteComm::Impl::_maxTagValue;
 }
 
-void RemoteComm::abort(int code)
+void RemoteComm::abort(int code, bool waitForAll)
 {
-  RemoteComm::Impl::abort(code); 
+  RemoteComm::Impl::abort(code, waitForAll); 
 } 
 
 

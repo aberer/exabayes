@@ -2,19 +2,16 @@
 #define _COMMANDLINE_H
 
 #include <memory>
+#include <iosfwd>
 #include <string>
 
-#include "Randomness.hpp"
+#include "math/Randomness.hpp"
 #include "MemoryMode.hpp"
-
-#include "RunModes.hpp"
 
 class CommandLine
 {
 public: 
-  
   CommandLine(); 
-
   void initialize(  int argc, char **argv); 
 
   randCtr_t getSeed() const; 
@@ -24,7 +21,7 @@ public:
   std::string getTreeFile() const {return treeFile; }
   int getNumRunParallel() const {return runNumParallel; }
   std::string getWorkdir() const {return workDir; }
-  void printVersion(bool toInfoFile);
+  void printVersion(std::ostream &out);
   nat getNumChainsParallel() const {return chainNumParallel; }
   std::string getCheckpointId()const {return checkpointId; }
   void parseAlternative(int argc, char *argv[]); 
@@ -33,11 +30,14 @@ public:
   std::string getCommandLineString() const ; 
   MemoryMode getMemoryMode()const {return memoryMode ;  }
   bool isDryRun() const {return dryRun; }
-  RunModes getTreeInitRunMode() const ; 
-  
+
+  bool onlyPrintHelp() const {return _onlyPrintHelp; }
+  bool onlyPrintVersion() const {return _onlyPrintVersion; }
+
   bool alnFileIsBinary() const; 
 
-  // int getTotalThreads() const {return _totalThreads; }
+  bool hasThreadPinning() const {return _hasThreadPinning; }
+
   int getNumThreads() const {return _totalThreads; }
 
   std::string getSingleModel() const {return singleModel; }
@@ -47,9 +47,11 @@ public:
 
   int getReaderStride() const {return readerStride; }
 
+  void printHelp(std::ostream& out);
+
 private: 			// METHODS
   void assertFileExists(std::string filename); 
-  void printHelp();
+
 
 private: 			// ATTRIBUTES
   randCtr_t seed; 
@@ -70,6 +72,9 @@ private: 			// ATTRIBUTES
   int readerStride; 
   std::string _cmdString;
   int _totalThreads; 
+  bool _hasThreadPinning; 
+  bool _onlyPrintHelp; 
+  bool _onlyPrintVersion; 
 }; 
 
 

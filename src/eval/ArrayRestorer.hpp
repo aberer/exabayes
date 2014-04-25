@@ -9,12 +9,11 @@
 #ifndef _LNL_RESTORER_H
 #define   _LNL_RESTORER_H
 
-// #include "axml.h"
 #include "pll.h"
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "PartitionLikelihood.hpp"
 #include "ArrayOrientation.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 
 
 class ArrayRestorer

@@ -6,7 +6,7 @@
 
 #include "AbstractProposal.hpp" 
 #include "SprMove.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 
 typedef std::unordered_map<BranchLength,double> BranchToLnlMap; 
 typedef std::unordered_map<BranchLength, std::unordered_map<BranchLength, double>> BranchToNRD2; 

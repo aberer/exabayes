@@ -1,5 +1,5 @@
 #include "BlockParams.hpp"
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 
 #include <algorithm>
 
@@ -10,7 +10,7 @@ void BlockParams::partitionError(nat partition, nat totalPart) const
 {
   std::cerr << "In the parameter block of the configuration file you specified partition " << partition << ". However, there are only " << totalPart << " partitions in total in your alignment." << std::endl; 
   std::cerr << "NOTICE that the first partition has id 0 and the last of n partitions has the id (n-1) . " << std::endl; 
-  exitFunction(-1); 
+  exitFunction(-1, true); 
 }
 
 
@@ -51,7 +51,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 	      if(partAppeared.at(i))
 		{
 		  tout << "error: partition " << i << " occurring twice in the same scheme. Check your parameter-block!" << std::endl; 
-		  exitFunction(-1); 
+		  exitFunction(-1, true); 
 		}
 	      partAppeared.at(i) = true; 
 
@@ -105,7 +105,7 @@ void BlockParams::Read(NxsToken &token)
 	  if(catsFound.find(cat) != catsFound.end())
 	    {
 	      cerr << "parsing error: found a linking scheme for category  " <<  CategoryFuns::getLongName(cat) << " twice. Aborting." ; 
-	      exitFunction(-1); 
+	      exitFunction(-1, true); 
 	    }
 
 	  if( cat == Category::TOPOLOGY)

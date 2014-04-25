@@ -1,6 +1,6 @@
 #include "AminoModelJump.hpp"
-#include "BoundsChecker.hpp"
-#include "Category.hpp"
+#include "system/BoundsChecker.hpp"
+#include "model/Category.hpp"
 #include "priors/AbstractPrior.hpp"
 
 

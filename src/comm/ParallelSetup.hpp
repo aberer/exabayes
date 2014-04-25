@@ -4,10 +4,10 @@
 #include <unordered_map>
 #include "config/CommandLine.hpp"
 #include "comm/IncompleteMesh.hpp"
-#include "FlagType.hpp" 
+#include "system/FlagType.hpp" 
 #include "comm/Communicator.hpp"
 
-#include "comm/ThreadResource.hpp"
+#include "comm/threads/ThreadResource.hpp"
 
 #include "CommFlag.hpp"
 
@@ -108,11 +108,10 @@ public:
 
   std::array<nat,3> getMyCoordinates() const; 
 
-  static void abort(int code);
+  static void abort(int code, bool waitForAll);
 
   void releaseThreads(); 
-  void setCpuAffinity(int offset); 
-  
+
   /** 
    * @brief determines, whether the swap can be executed within a
    * local communicator only
@@ -120,6 +119,8 @@ public:
   bool swapIsLocal(nat chainIdA, nat chainIdB, nat runId ) const ; 
   
   uint64_t getMaxTag(); 
+
+  void pinThreads(); 
 
 private: 			// METHODS
   auto serializeAllChains(std::vector<CoupledChains> &runs, CommFlag commFlags) const

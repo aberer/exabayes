@@ -1,7 +1,7 @@
 #include <iostream> 
 #include <sstream>
 
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #include "mcmc/SwapMatrix.hpp"
 #include "mcmc/SampleMaster.hpp"
 #include "comm/IncompleteMesh.hpp"
@@ -20,7 +20,7 @@ ParallelSetup::ParallelSetup(CommandLine& cl)
 
 ParallelSetup& ParallelSetup::operator=(ParallelSetup rhs)
 {
-  std::cout << "assigning ParallelSetup " << std::endl; 
+  // std::cout << "assigning ParallelSetup " << std::endl; 
   swap(*this, rhs); 
   return *this; 
 }
@@ -49,17 +49,19 @@ void ParallelSetup::warn()
   auto numWorkers = _globalComm.size() // * _threadResource.getNumThreads()
     ;
 
-  if(  numWorkers < int(  _mesh.getRunDimSize() * _mesh.getChainDimSize() )  && _globalComm.getRank() == 0 )
+  if(  numWorkers < int(  _mesh.getRunDimSize() * _mesh.getChainDimSize() )   )
     {
-      std::cout << "\nError: You attempted to run " << _mesh.getRunDimSize() << " runs in parallel for which " <<  _mesh.getChainDimSize() <<  " coupled chains should be run in parallel. This requires at least " << (_mesh.getRunDimSize() * _mesh.getChainDimSize() ) << " processes (in the best case a multiple of this number). " << PROGRAM_NAME << " was started with " << _globalComm.size() << " processes though.\n" <<  std::endl; 
-      exitFunction(-1);
+      if( _globalComm.getRank() == 0)
+	std::cout << "\nError: You attempted to run " << _mesh.getRunDimSize() << " runs in parallel for which " <<  _mesh.getChainDimSize() <<  " coupled chains should be run in parallel. This requires at least " << (_mesh.getRunDimSize() * _mesh.getChainDimSize() ) << " processes (in the best case a multiple of this number). " << PROGRAM_NAME << " was started with " << _globalComm.size() << " processes though.\n" <<  std::endl; 
+      exitFunction(-1, true);
     }
 
-  if(  numWorkers % ( _mesh.getRunDimSize() * _mesh.getChainDimSize()) != 0  && _globalComm.getRank() == 0 ) 
+  if(  numWorkers % ( _mesh.getRunDimSize() * _mesh.getChainDimSize()) != 0 ) 
     {
-      std::cout << "\tWARNING! The number of processes and number chains run in parallel\n"
-		<< "\tare not a multiple of the overall nmuber of processes. Parts of the\n"
-		<< "\tcode may be executed less efficiently.\n" ; 
+      if(_globalComm.getRank() == 0 )
+	std::cout << "\tWARNING! The number of processes and number chains run in parallel\n"
+		  << "\tare not a multiple of the overall nmuber of processes. Parts of the\n"
+		  << "\tcode may be executed less efficiently.\n" ; 
     }
   
 }
@@ -109,13 +111,13 @@ void ParallelSetup::initialize( )
 	{
 	  if(isGlobalMaster())
 	    std::cout << "You instructed " << PROGRAM_NAME << " to use threads. However, " << PROGRAM_NAME << " has not been compiled with thread support. Most likely, you do not have pthreads installed. Most likely, you still can use this executable without threads (i.e., without -T x). "  << std::endl; 
-	  exitFunction(1);
+	  exitFunction(1, true);
 	}
       else 
 	{
 	  if(isGlobalMaster() )
 	    std::cout << "You instructed " << PROGRAM_NAME << " to use threads. However either " << PROGRAM_NAME << " has not been compiled with thread support (e.g., because the pthreads is not installed) or your MPI implementation does not support multi-threading." << std::endl; 
-	  exitFunction(1); 
+	  exitFunction(1, true); 
 	}
     }
 }
@@ -124,22 +126,6 @@ void ParallelSetup::initialize( )
 void ParallelSetup::releaseThreads()
 {
   _threadResource.releaseThreads();
-}
-
-
-void ParallelSetup::setCpuAffinity(int offset)
-{
-  auto off = 0 ; 
-  if( _globalComm.getLocalComm().getRank() == 0)
-    off = _globalComm.getOffsetForThreadPin() * _threadResource.getNumThreads(); 
-
-  auto arr = std::vector<int>{off}; 
-  arr = _globalComm.getLocalComm().broadcast(arr); 
-  off = arr[0]; 
-  
-  std::cout << SyncOut() << "setting affinity to " << off + _globalComm.getLocalComm().getRank() << std::endl; 
-
-  _threadResource.setAffinity(off + _globalComm.getLocalComm().getRank());
 }
 
 
@@ -183,7 +169,7 @@ std::string ParallelSetup::printLoadBalance(const TreeAln& traln, nat numRun, na
   if(sumA == 0)
     {
       ss << std::endl << "WARNING: there is a process that does not evaluate any portion of the\n"
-	 << "data. Consider enabling or disabling the '-Q' option"  << std::endl; 
+	 << "data. You could decrease the number of processes."  << std::endl; 
     }
   
 
@@ -587,9 +573,9 @@ nat ParallelSetup::getRunsParallel() const
 
 
 
-void ParallelSetup::abort(int code)
+void ParallelSetup::abort(int code, bool waitForAll)
 {
-  Communicator::abort(code); 
+  Communicator::abort(code, waitForAll); 
 }
 
 
@@ -607,3 +593,13 @@ uint64_t ParallelSetup::getMaxTag()
   return RemoteComm::getMaxTag();
 }
 
+
+void ParallelSetup::pinThreads()
+{
+  // should also work for numThreads == 1, but let's not take the risk 
+  if(_threadResource.getNumThreads() > 1 )
+    {
+      auto procsPerNode = _globalComm.getProcsPerNode(); 
+      _threadResource.pinThreads(procsPerNode,_globalComm.getRemoteComm().getRank() ); 
+    }
+}

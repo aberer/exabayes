@@ -1,6 +1,6 @@
 #include "AbstractParameter.hpp" 
-#include "extensions.hpp" 
-#include "Category.hpp"
+#include "system/extensions.hpp" 
+#include "model/Category.hpp"
 
 
 AbstractParameter::AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio)
@@ -68,7 +68,7 @@ void AbstractParameter::checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &
   if(not okay)
     {
       std::cerr << "Error while processing parsed parameters: you tried to link " << _partitions[0] << " and " <<  wrong  << ". These partitions have a different number of states (probably DNA and PROT). Aborting." << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, true); 
     }
 }
 

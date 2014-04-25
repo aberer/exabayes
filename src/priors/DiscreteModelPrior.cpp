@@ -1,5 +1,5 @@
 #include "DiscreteModelPrior.hpp"
-#include "ProtModel.hpp"
+#include "model/ProtModel.hpp"
 
 
 DiscreteModelPrior:: DiscreteModelPrior(std::unordered_map<ProtModel,double> model)

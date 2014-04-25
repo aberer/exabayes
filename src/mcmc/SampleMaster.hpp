@@ -11,15 +11,15 @@
 
 #include <vector>
 
-#include "ProposalSet.hpp"
+#include "proposals/ProposalSet.hpp"
 #include "config/BlockRunParameters.hpp"
 #include "config/BlockProposalConfig.hpp"
 #include "config/CommandLine.hpp"
 #include "CoupledChains.hpp"
 #include "config/ConfigReader.hpp"
 #include "comm/ParallelSetup.hpp"
-#include "time.hpp"
-#include "Serializable.hpp"
+#include "system/time.hpp"
+#include "system/Serializable.hpp"
 #include "file/DiagnosticsFile.hpp"
 
 
@@ -27,9 +27,6 @@ class SampleMaster : public Serializable
 {
 public:   
   SampleMaster() ; 
-  SampleMaster(SampleMaster&& rhs); 
-  
-  // void deleteMyFiles() const; 
 
   /** 
       @brief initializes the runs  
@@ -88,6 +85,7 @@ private:
   bool initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
   CLOCK::system_clock::time_point printDuringRun(nat gen) ; 
   std::string getOrCreateBinaryFile() const ; 
+  void catchRunErrors() const ; 
 
 private:			// ATTRIBUTES 
   std::vector<CoupledChains> _runs; 

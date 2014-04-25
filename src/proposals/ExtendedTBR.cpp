@@ -1,5 +1,5 @@
 #include "ExtendedTBR.hpp"
-#include "Category.hpp"
+#include "model/Category.hpp"
 #include "TreeRandomizer.hpp"
 
 

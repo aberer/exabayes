@@ -3,12 +3,12 @@
 #include <cassert>
 
 #include "eval/ArrayRestorer.hpp" 
-#include "Branch.hpp"
-#include "GlobalVariables.hpp"
+#include "model/Branch.hpp"
+#include "system/GlobalVariables.hpp"
 
 #include "eval/ArrayReservoir.hpp"
 
-#include "FlagType.hpp"
+#include "system/FlagType.hpp"
 
 ArrayRestorer::ArrayRestorer(const TreeAln& traln, bool _cacheTipTip, bool _cacheTipInner)
   : restoresGapVector(false)
@@ -16,7 +16,7 @@ ArrayRestorer::ArrayRestorer(const TreeAln& traln, bool _cacheTipTip, bool _cach
   , cacheTipTip(_cacheTipTip)
   , cacheTipInner(_cacheTipInner)
 {
-  bool useSEV = ( traln.getMode() & RunModes::MEMORY_SEV ) != RunModes::NOTHING; 
+  bool useSEV = traln.isSaveMemorySEV();
 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     partitionLikelihoods.emplace_back(traln,i, useSEV); 

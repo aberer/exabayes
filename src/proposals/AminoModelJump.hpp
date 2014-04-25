@@ -3,9 +3,9 @@
 
 #include <vector>
 
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "AbstractProposal.hpp"
-#include "ProtModel.hpp"
+#include "model/ProtModel.hpp"
 
 
 class AminoModelJump : public AbstractProposal

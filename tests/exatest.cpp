@@ -3,8 +3,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "../src/extensions.hpp"
-#include "../src/GlobalVariables.hpp"
+#include "system/extensions.hpp"
+#include "system/GlobalVariables.hpp"
 
 void initLogFile( )
 {
@@ -25,6 +25,7 @@ void initLogFile( )
 // #include "PartitionAssignmentTest.cpp"
 // #include "TreeAlnTest.cpp"
 
+#include "MessageQueueTest.cpp"
 #include "LocalCommTest.cpp"
 
 int main (int argc, char **argv)

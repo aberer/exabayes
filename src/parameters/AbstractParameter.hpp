@@ -1,7 +1,7 @@
 #ifndef _ABSTRACT_PARAMETER
 #define _ABSTRACT_PARAMETER
 
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "ParameterContent.hpp"
 #include "priors/AbstractPrior.hpp"
 

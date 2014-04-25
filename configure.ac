@@ -42,6 +42,9 @@ AX_EXT
 AX_PTHREAD
 
 
+AC_ARG_VAR([MPICXX],[sets the MPI c++ compiler ])
+
+
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h stdint.h stdlib.h string.h strings.h sys/time.h unistd.h])
 
@@ -106,53 +109,13 @@ AC_ARG_ENABLE( [tests],
   	   [CODE="no"]
 	)
 AM_CONDITIONAL([WITH_TEST], [ test "x$CODE" = "xyes" ])
-dnl if test "x$CODE" = "xyes" ; then 
-dnl AC_CHECK_HEADER([gtest.h], [],[AC_MSG_ERROR([Could not find google test headers.])])
-dnl fi 
-
 
 dnl test, if we have PLL AND force the user to provide a mpi-comiler, if we dont
 if test "x$MPI_CODE" = "xyes" ; then 
-   dnl AC_DEFINE([HAVE_PLL], [0], "")
-
-   dnl AX_MPI([], [AC_MSG_ERROR(Could not find mpi.h or mpicc.)])
-   dnl LX_FIND_MPI()
-
    AC_LANG_PUSH([C++])	 
-   dnl AX_MPI([],[AC_MSG_ERROR(Could not find mpi.h or mpicc.)])
-   LX_FIND_MPI(AC_MSG_ERROR(could not find mpi))
-
-   dnl AC_CHECK_HEADER(mpi.h,
-   dnl  [],
-   dnl  [AC_MSG_ERROR([ 
-
-   dnl     Could not find mpi.h. If you build ExaBayes with MPI support, please provide compiler wrappers, e.g., 
-   dnl            ./configure --enable-mpi CC=mpicc CXX=mpicxx 
-   dnl     , where specifically mpicxx could also be mpiCC or mpic++ (depends on your installation). 
-   dnl  ])]
-   dnl  )
+   LX_FIND_MPI([], AC_MSG_ERROR(could not find mpi))
 
    AC_LANG_POP([C++])	 
-
-   dnl cache_var=AS_TR_SH([ac_cv_header_mpi.h])
-   dnl $as_unset $cache_var
-
-   dnl AC_LANG_PUSH([C++])
-   dnl AC_CHECK_HEADER(mpi.h,
-   dnl  [],
-   dnl  [AC_MSG_ERROR([ 
-
-   dnl     Could not find mpi.h. If you build ExaBayes with MPI support, please provide compiler wrappers, e.g., 
-   dnl            ./configure --enable-mpi CC=mpicc CXX=mpicxx 
-   dnl     , where specifically mpicxx could also be mpiCC or mpic++ (depends on your installation). 
-   dnl  ])]
-   dnl  )
-   dnl AC_LANG_POP([C++]) 
-
-dnl elif test "x$MPI_CODE" = "xno" ; then 
-   dnl AC_DEFINE([HAVE_PLL], [1], "")
-dnl else 
-   dnl AC_MSG_ERROR(bad value --enable-mpi) 
 fi 
 
 AM_CONDITIONAL([WITH_MPI], [ test "x$MPI_CODE" = "xyes" ])

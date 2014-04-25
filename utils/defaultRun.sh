@@ -4,12 +4,18 @@ topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
 
-seed=8106
+seed=123
+
+# seed=8106
 
 # src/proposals/
-numProc=2
+numProc=1
+withTree=0
 
-extraArgs=" -T 2 -R 2 -C 2 " 
+extraArgs="-T 4 -R 2 -C 2 "  
+
+doParse=0
+
 
 # early with 150 , VERIFIED 
 # seed=31853
@@ -23,7 +29,7 @@ dotests=1
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=1
+useClang=0
 
 cflags=""
 cxxflags=""  #  -stdlib=libc++ 
@@ -53,8 +59,8 @@ if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     cxxcompiler="clang++"
     cppflags="-Qunused-arguments "  
 else 
-    ccompiler="gcc-4.6"
-    cxxcompiler="g++-4.6"
+    ccompiler="gcc-4.7"
+    cxxcompiler="g++-4.7"
 fi
 
 if [ $useGoogleProfiler -eq 1  ]; then
@@ -103,10 +109,11 @@ case $mode in
     valgrind)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -hold -e valgrind --tool=memcheck  "
+	gdb="$TERM -hold -e valgrind --tool=memcheck  " #    --leak-check=full --track-origins=yes
 	;;
     *)
 	echo "mode must be debug, default or valgrind"
+	exit
 esac
 
 
@@ -114,21 +121,42 @@ configFile=$pathtodata/config.nex
 
 args="$args --enable-mpi"
 
+if [ "$withTree" = "1" ]; then
+    if [ !  -f data/$dataset/tree ]; then
+	echo "could not find data/$dataset/tree"
+	exit 
+    fi
+
+    extraArgs="$extraArgs -t data/$dataset/tree"
+    
+fi
+
+
+
+if [ $doParse -eq 0 ] ; then 
+    alnArg=" -f $pathtodata/aln.binary "
+else 
+    alnArg="-f $pathtodata/aln.phy -q $pathtodata/aln.model"
+    if [ ! -f $pathtodata/aln.phy -o ! -f $pathtodata/aln.model  ]; then
+	echo "could not find file $pathtodata/aln.{phy,model} "
+	exit 
+    fi
+fi 
+
 if [ "$codeBase" == "mpi" ]; then    
     CC="$ccompiler"  
     CXX="$cxxcompiler"  
     
-    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
+    baseCall="mpirun -np $numProc  $gdb ./exabayes $alnArg -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
 elif [ "$codeBase" == "thread" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./yggdrasil -s $seed -f $pathtodata/aln.binary -n $runid $extraArgs -c $configFile $extra "  
+    baseCall="$gdb ./yggdrasil -s $seed $alnArg -n $runid $extraArgs -c $configFile $extra "  
 else
     echo "second argument must be either 'mpi' or 'thread'"
     exit
 fi
-
 
 if [ $startFromBest == 1 ]; then 
     if [ ! -f  $pathtodata/best.tre ] ; then 

@@ -2,10 +2,15 @@
 #include <numeric>
 
 #include "LikelihoodEvaluator.hpp"
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #include "ArrayRestorer.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "comm/ParallelSetup.hpp"
+
+
+using std::endl; 
+using std::cout; 
+
 
 
 LikelihoodEvaluator::LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy* plcy , std::shared_ptr<ArrayReservoir> arrayReservoir, ParallelSetup* pl)
@@ -90,6 +95,8 @@ void LikelihoodEvaluator::updatePartials (TreeAln &traln, nodeptr p, boolean mas
 		{
 		  size_t requiredLength = 0; 
 
+		  // assert(not tr->saveMemory ) ; 
+
 		  // determine how much memory we need 
 		  if(tr->saveMemory)
 		    {
@@ -104,7 +111,12 @@ void LikelihoodEvaluator::updatePartials (TreeAln &traln, nodeptr p, boolean mas
 		      for(j = 0; j < (size_t)pr->partitionData[model]->gapVectorLength; j++)
 			{              
 			  x3_gap[j] = x1_gap[j] & x2_gap[j];
-			  setBits += (size_t)(bitcount_32_bit(x3_gap[j])); 
+			  setBits += 
+			    // bitcount_32_bit(x3_gap[j])
+			    __builtin_popcount(x3_gap[j])
+			    ; 
+			
+			  // std::cout << SyncOut() << "set bits is " << setBits << std::endl; 
 			}
 
 		      requiredLength = (width - setBits)  * Partition::maxCategories * partition.states * sizeof(double);            
@@ -311,15 +323,6 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
     }
   evaluateLikelihood(traln, root, false); 
 
-  // TODO remove 
-  // auto a =  traln.getTrHandle().likelihood; 
-  // disorientDebugHelper(traln,root); 
-  // evaluateLikelihood(traln, root, false); 
-  // auto b =  traln.getTrHandle().likelihood; 
-  // tout << MAX_SCI_PRECISION << a << "\t"  << b << std::endl; 
-  // assert(fabs(a-b) < ACCEPTED_LIKELIHOOD_EPS); 
-  // END
-
   auto pLnl = traln.getPartitionLnls();
   for(auto m : partitions )
     perPartitionLH[m] = pLnl[m]; 
@@ -327,7 +330,7 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
 
   traln.getTrHandle().likelihood = std::accumulate(perPartitionLH.begin(), perPartitionLH.end(), 0.); 
   traln.setExecModel(std::vector<bool>(numPart, true));
-  
+
 #ifdef DEBUG_LNL_VERIFY
   expensiveVerify(traln, root ,traln.getTrHandle().likelihood);   
 #endif
@@ -420,15 +423,18 @@ void LikelihoodEvaluator::disorientDebug(TreeAln &traln, const BranchPlain& root
 }
 
 
+#include "parameters/BranchLengthsParameter.hpp"
+
 
 void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, BranchPlain root, double toVerify )
 {
+  // std::cout << "orig-lnl=" << traln.getTrHandle().likelihood << std::endl;  
   debugPrint = 0 ; 
-
+  
+  _debugTralnPtr->clearMemory();
   *_debugTralnPtr = traln; 
 
   disorientDebug(*_debugTralnPtr, root); 
-
   evaluateLikelihood(*_debugTralnPtr, root, false);   
 
   double verifiedLnl =  _debugTralnPtr->getTrHandle().likelihood; 
@@ -464,20 +470,21 @@ void LikelihoodEvaluator::expensiveVerify(TreeAln &traln, BranchPlain root, doub
 	  tout << std::endl; 
 	} 
 
-      std::cerr  << "WARNING: found in expensive evaluation: likelihood difference is " 
-		 <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
-		 << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")" << std::endl; 
-
-      tout << "partitionLnls= " << traln.getPartitionLnls() << "\n"
+      tout << "WARNING: found in expensive evaluation: likelihood difference is " 
+	   <<  std::setprecision(8) <<   fabs (verifiedLnl - toVerify )
+	   << " (with toVerify= " << toVerify << ", verified=" << verifiedLnl << ")\n"
+	   << "partitionLnls= " << traln.getPartitionLnls() << "\n"
 	   << "verifiedPartLnls="  << _debugTralnPtr->getPartitionLnls() << "\n"; 
 
-
       evaluateLikelihood(traln, traln.getAnyBranch(), true); 
-
-      tout << "after full traversal on orig=" << traln.getTrHandle().likelihood << std::endl; 
+      tout  << "after full traversal on orig=" << traln.getTrHandle().likelihood << std::endl; 
     }  
   assert(fabs (verifiedLnl - toVerify ) < ACCEPTED_LIKELIHOOD_EPS); 
   debugPrint = 1;  
+
+  // std::cout << SyncOut() << "VERIFIED " << MAX_SCI_PRECISION << verifiedLnl << SOME_FIXED_PRECISION << std::endl; 
+
+  _debugTralnPtr->clearMemory();
 }
 
 

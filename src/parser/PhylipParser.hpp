@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../Bipartition.hpp"
+#include "data-struct/Bipartition.hpp"
 
 // class Bipartition; 
 typedef unsigned int nat; 

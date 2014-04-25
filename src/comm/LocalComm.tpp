@@ -1,239 +1,315 @@
 #include <cassert>
-#include "GlobalVariables.hpp"
+
+#include "system/GlobalVariables.hpp"
 
 
 template<typename T> 
 auto  LocalComm::scatterVariableKnownLength( std::vector<T> allData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc, int root)   
   -> std::vector<T>
 {
-  // std::cout << SyncOut() << "scatterVariableKnownLength" << SHOW(root) << std::endl; 
+  // does not need to be terrible efficient...(binary tree of course would be better) 
+
+  assert(root == 0); 
+
   int myRank = getRank(); 
   int myCol = getColor();
+  int myIdx = getIdx();
   int rootIdx = getIdx(myCol, root); 
-  int myIdx = getIdx(); 
-  auto &rootMsg = _messages.at(rootIdx); 
-  auto &myMsg = _messages.at(myIdx); 
-  
-  auto result = std::vector<T>(countsPerProc[myRank],0); 
-  
+  auto result = std::vector<T>();
+
   if(myRank == root)
-    rootMsg.post(allData);
+    {
+      for(int i = 0; i < size() ;++i)
+	{
+	  if(i == root)
+	    continue; 
+	  
+	  auto toSend = std::vector<T>(begin(allData) + displPerProc[i], begin(allData) + displPerProc[i] + countsPerProc[i]);
+	  _newMessages[myIdx][i].produce(toSend); 
+	}
+      
+      result.insert(end(result), begin(allData) + displPerProc[myRank] , begin(allData) + displPerProc[myRank] + countsPerProc[myRank]); 
+    }
   else 
-    myMsg.incrementGeneration(true); 
-
-  auto myGen = myMsg.getGeneration();
-
-  // everybody reads 
-  while( rootMsg.getGeneration() != myGen) 
-    ; 
-  
-  rootMsg.readMessage( result.data(), displPerProc[myRank], countsPerProc[myRank]); 
-  
-  while(myRank == root && not rootMsg.clearMessage(size()))
-    ;
+    {
+      bool found = false; 
+      while(not found)
+	std::tie(found, result) =   _newMessages[rootIdx][myRank].consume<T>(myRank);
+    }
 
   return result; 
-} 
+}
+ 
 
 
 template<typename T>
 auto LocalComm::gatherVariableKnownLength(std::vector<T> myData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc , int root)   
   -> std::vector<T>
 {
-  // TODO, check for zero-messages and skip 
-  auto myRank = getRank(); 
-  auto myCol = getColor(); 
-  auto myIdx = getIdx(); 
+  assert(root == 0); 
 
-  auto result = std::vector<T>( std::accumulate(begin( countsPerProc), end( countsPerProc), 0),
-				0); 
-  auto resultIter = begin(result); 
-
-  auto &msg = _messages.at(myIdx); 
-  
-  assert(int(myData.size()) == countsPerProc[myRank]) ;
-  msg.post(myData);
-  auto myGen =  msg.getGeneration();
-
-  if(myRank == root)
+  DATA_COMBINE_FUN gatherer = [](std::vector<T>& acc, typename std::vector<T>::const_iterator  beginDon, typename std::vector<T>::const_iterator endDon)
     {
-      nat gatheredTotal = 0; 
-      for(int i = 0; i < size(); ++i)
-	{
-	  auto hisIdx = getIdx(myCol, i); 
+      acc.insert(end(acc), beginDon, endDon);
+    }; 
 
-	  auto &hisMsg = _messages.at(hisIdx); 
-
-	  while( hisMsg.getGeneration() != myGen )
-	    ; 
-
-	  auto msgSiz = hisMsg.readMessage( &(*resultIter), 0, countsPerProc[i]); 
-	  resultIter += msgSiz; 
-	  gatheredTotal += msgSiz; 
-	}
-
-      assert(gatheredTotal == result.size()); 
-
-      auto wasCleared = msg.clearMessage(1); 
-      assert(wasCleared); 
-    }
-  else 
-    {
-      while(not msg.clearMessage(1)) // only root reads message 
-	; 
-    }
-
-  return result; 
+  return commTreeUp(myData,root, gatherer) ; 
 } 
+
+
 
 
 template<typename T> 
 auto LocalComm::broadcast(std::vector<T> array, int root ) 
   -> std::vector<T>
 {
-  int myRank = getRank();
-  int myIdx = getIdx();
-  int myCol = getColor();
-  int rootIdx = getIdx(myCol, root); 
-
-  auto& rootMsg = _messages.at(rootIdx);   
-  auto &msg = _messages.at(myIdx); 
-
-  if(getRank() == root)
-    rootMsg.post(array);
-  else 
-    msg.incrementGeneration(true);
-
-  auto myGen = msg.getGeneration();
-    
-  if(getRank() == root)
-    {
-      auto num = size() -1  ; 
-      while(not msg.clearMessage(num ))
-	; 
-    }
-  else 
-    {
-      while(myGen != rootMsg.getGeneration())
-	; 
-      rootMsg.readMessage(array.data(), 0, array.size());
-    }
-
-  return array; 
+  return commTreeDownAsync(array, root);
 }
-
 
 
 template<typename T>
 std::vector<T> LocalComm::reduce(std::vector<T> data, int root )
 {
-  int myIdx = getIdx();
-  int myCol = getColor();
-  int myRank = getRank(); 
-  assert(root < size());
+  // sorry this rank translation is too much effort now..
+  assert(root == 0); 
 
-  auto &msg = _messages.at(myIdx) ; 
-
-  assert(root < size()); 
-  assert(myRank < size() ); 
-  
-  msg.post(data); 
-  auto myGen = msg.getGeneration(); 
-  
-  auto result = std::vector<T>(data.size(),0);
-  
-  if(myRank == root)
+  DATA_COMBINE_FUN reducer = [](  std::vector<T> &acc,  typename std::vector<T>::const_iterator beginDonator,   typename std::vector<T>::const_iterator endDonator)
     {
-      for(int i = 0; i < size() ;++i)
-	{
-	  int hisIdx = getIdx(myCol, i); 
-	  auto &hisMsg = _messages.at(hisIdx); 
-	  while( myGen !=  hisMsg.getGeneration())
-	    ; 
-	  auto hisData = hisMsg.getMessage<T>();
+      std::transform( 
+		     begin(acc), end(acc),
+		     beginDonator, begin(acc),
+		     std::plus<double>() 	     
+		     ); 
+    }; 
 
-	  assert(hisData.size() == result.size() ); 
-	  // std::cout << SyncOut() << std::this_thread::get_id() << " adding " << getColor()  << ","<< i << std::endl; 
-	  for(nat j = 0; j < hisData.size(); ++j)
-	    result[j] += hisData[j]; 
-	}
-
-      auto wasRead = msg.clearMessage(1); 
-      if(not wasRead)
-	{
-	  std::cout << SyncOut() << "problem with color "<< getColor()  << "," << myRank << SHOW(size()) << std::endl; 
-	  assert(wasRead ); 
-	}
-
-    }
-  else 
-    {
-      while(not msg.clearMessage(1))
-	; 
-    }
-
-  return result; 
+  return commTreeUpAsync(data,root, reducer); 
 }
-
-
 
 template<typename T> 
 auto LocalComm::gatherVariableLength(std::vector<T> myData, int root )  
   ->std::vector<T> 
 {
-  int myIdx = getIdx();
-  int myCol = _colors.at(myIdx);
-  auto result = std::vector<T>(); 
-  auto& myMsg = _messages.at(myIdx); 
-
-  myMsg.post(myData); 
-  auto myGen = myMsg.getGeneration() ; 
-
-  if(getRank() == root)
+  assert(root == 0); 
+  DATA_COMBINE_FUN gatherer = []( std::vector<T> &acc, typename std::vector<T>::const_iterator beginDonator,  typename std::vector<T>::const_iterator endDonator)
     {
-      for(int i = 0; i < size() ;++i)
-	{
-	  int hisIdx = getIdx(myCol, i); 
-	  auto &hisMsg = _messages.at(hisIdx); 
-	  while(myGen != hisMsg.getGeneration())
-	    ; 
-	  auto msg = hisMsg.getMessage<T>();
-	  result.insert(end(result), begin(msg), end(msg) ); 
-	}
+      acc.insert(end(acc), beginDonator, endDonator); 
+    }; 
 
-      auto wasCleared = myMsg.clearMessage(1); 
-      assert(wasCleared); 
-
-    }
-  else 
-    {
-      while(not myMsg.clearMessage(1))
-	; 
-    }
-
-  return result; 
+  return commTreeUp(myData,root, gatherer) ; 
 }
+
+
 
 
 template<typename T>
 std::vector<T> LocalComm::allReduce(std::vector<T> myData)
 {
   int root = 0 ; 
-  myData = reduce(myData, root);
-  myData = broadcast(myData,root); 
+  if(size() > 1)
+    {
+      myData = reduce(myData, root);
+      myData = broadcast(myData,root); 
+    }
   return myData; 
 }
 
 
 template<typename T>
-void LocalComm::postAsyncMessage(const std::vector<T> &message, int numRead, int tag)
+void LocalComm::postAsyncMessage(const std::vector<T> &message, int tag, int runBatch)
 {
-  _asyncMessages.post(message, numRead, tag);
+  // TODO multiple queues could be better here ... 
+  auto readers = std::vector<int>(size(),1); 
+  _mgsPerTag.at(runBatch).at(tag).produce(message, readers); 
 }
 
 
 template<typename T>
-std::tuple<bool,std::vector<T> > LocalComm::readAsyncMessage(int tag)
+std::tuple<bool,std::vector<T> > LocalComm::readAsyncMessage(int tag, int runBatch)
 {
-  return _asyncMessages.consumeOne<T>(tag);
+  return _mgsPerTag.at(runBatch).at(tag).consume<T>(getRank());
+}
+
+
+
+// not using a combine function right now, since we only need this for
+// the bcast, where it must be as efficient as possible
+template<typename T>
+std::vector<T> LocalComm::commTreeDownAsync(std::vector<T> data, int root)
+{
+  assert(root == 0); 
+  
+  int myIdx = getIdx();
+  int myCol = getColor();
+  int myRank = getRank(); 
+  assert(root < size());
+
+  auto &myMsg = _newMessages.at(myIdx); 
+
+  auto recvFrom = 0; 
+  auto sendTo = std::vector<int>( );
+
+  for( int offset = 1 ;
+       ( myRank % offset) == 0 && offset < size()  ;
+       offset *= 2 )
+    {
+      if( (myRank % ( offset * 2 ) ) == 0 )
+	{
+	  // receive downwards 
+	  auto hisRank = myRank+offset; 
+	  
+	  if( size() <= hisRank )
+	    continue;
+	  
+	  if(hisRank != myRank)
+	    sendTo.push_back(hisRank)  ; 
+	}
+      else 
+	{
+	  recvFrom = myRank - offset; 
+	}
+    }
+
+  // first receive 
+  auto msg = std::vector<T>{}; 
+  if(myRank != root)
+    {
+      bool gotMsg  = false; 
+      auto hisIdx = getIdx(getColor(), recvFrom); 
+      auto &hisMsg =  _newMessages.at(hisIdx);
+      while(not gotMsg) 
+	std::tie(gotMsg, msg) = hisMsg[myRank].consume<T>(myRank); // must be the real rank to avoid confusion 
+    }
+  else 
+    msg = data; 
+
+  for(auto v : sendTo)
+    _newMessages[myIdx][v].produce(msg); 
+
+  // then send everything 
+  return msg; 
+}
+
+
+
+template<typename T>
+std::vector<T> LocalComm::commTreeUpAsync(std::vector<T> data, int root, DATA_COMBINE_FUN fun)
+{
+  // opmitized for the case that the root is rank 0; TODO implement
+  // that more generally
+  assert(root == 0); 
+
+  int myIdx = getIdx();
+  int myCol = getColor();
+  int myRank = getRank(); 
+  assert(root < size());
+
+  auto &myMsg = _newMessages.at(myIdx); 
+
+  auto sendTo = 0; 
+  auto receiveFrom = std::vector<int>();
+
+  for( int offset = 1 ;
+       ( myRank % offset) == 0 && offset < size()  ;
+       offset *= 2 )
+    {
+      if( (myRank % ( offset * 2 ) ) == 0 )
+	{
+	  // receive downwards 
+	  auto hisRank = myRank+offset; 
+	  
+	  if( size() <= hisRank )
+	    continue;
+
+	  receiveFrom.push_back(hisRank); 
+
+	}
+      else 
+	{
+	  // send upwards 
+	  sendTo = myRank - offset; 
+	}
+    }
+
+  
+  // first receive everything 
+  while(not receiveFrom.empty())
+    {
+      // auto iter = receiveFrom
+      auto iter = begin(receiveFrom); 
+      while( iter != end(receiveFrom) )
+	{
+	  auto hisRank = *iter; 
+	  auto hisIdx = getIdx(getColor(), hisRank);
+	  auto &hisMsg = _newMessages.at(hisIdx);
+
+	  bool gotMsg  = false; 
+	  auto msg = std::vector<T>{}; 
+	  std::tie(gotMsg, msg) = hisMsg[myRank].consume<T>(myRank); // must be the real rank to avoid confusion 
+	  
+	  if(gotMsg)
+	    {
+	      fun(data, begin(msg), end(msg)); 
+	      iter = receiveFrom.erase(iter); 
+	    }
+	  else 
+	    ++iter; 
+	}
+    }
+
+  // then send 
+  _newMessages[myIdx][sendTo].produce(data);
+
+  return data; 
+}
+
+
+
+template<typename T>
+std::vector<T> LocalComm::commTreeUp(std::vector<T> data, int root, DATA_COMBINE_FUN fun)
+{
+  // opmitized for the case that the root is rank 0; TODO implement
+  // that more generally
+  assert(root == 0); 
+
+  int myIdx = getIdx();
+  int myCol = getColor();
+  int myRank = getRank(); 
+  assert(root < size());
+
+  auto &myMsg = _newMessages.at(myIdx); 
+
+  for( int offset = 1 ;
+       ( myRank % offset) == 0 && offset < size()  ;
+       offset *= 2 )
+    {
+      if( (myRank % ( offset * 2 ) ) == 0 )
+	{
+	  // receive downwards 
+	  auto hisRank = myRank+offset; 
+	  
+	  if( size() <= hisRank )
+	    continue;
+
+	  auto hisIdx = getIdx(getColor(), hisRank);
+	  auto &hisMsg = _newMessages.at(hisIdx);
+
+	  bool gotMsg  = false; 
+	  auto msg = std::vector<T>{}; 
+	  while(not gotMsg)
+	    std::tie(gotMsg, msg) = hisMsg[myRank].consume<T>(myRank); // must be the real rank to avoid confusion 
+
+	  fun(data, begin(msg), end(msg)); 
+	}
+      else 
+	{
+	  // send upwards 
+	  auto hisRank = myRank - offset; 
+	  auto readers = std::vector<int>(size(),0); 
+	  readers[hisRank] = 1 ; 
+
+	  myMsg[hisRank].produce(data); 
+	}
+    }
+
+  return data; 
 }

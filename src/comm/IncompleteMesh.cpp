@@ -1,7 +1,7 @@
 #include "IncompleteMesh.hpp"
 #include <cassert>
 #include <algorithm>
-
+#include <tuple>
 
 IncompleteMesh::IncompleteMesh(nat size, nat runDimSize, nat chainDimSize)
   : _runDimSize (runDimSize)

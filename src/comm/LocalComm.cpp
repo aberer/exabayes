@@ -1,13 +1,16 @@
 #include "comm/LocalComm.hpp"
+
 #include <cassert>
+#include <thread>
 
 
 LocalComm::LocalComm(std::unordered_map<tid_t,int> tid2rank)
-  : _messages(tid2rank.size())
-  , _tid2LocCommIdx(tid2rank)
+  : _tid2LocCommIdx(tid2rank)
   , _colors(_tid2LocCommIdx.size(),0)
   , _ranks(_tid2LocCommIdx.size(), 0)
-  , _size (_tid2LocCommIdx.size())
+  , _size(_tid2LocCommIdx.size())
+  , _mgsPerTag{}
+  , _newMessages(tid2rank.size(), std::vector<MessageQueueSingle>(_size))
 {
   nat ctr = 0; 
   for(auto &r : _ranks)
@@ -15,24 +18,24 @@ LocalComm::LocalComm(std::unordered_map<tid_t,int> tid2rank)
 }
 
 LocalComm::LocalComm(const LocalComm& rhs) 
-  : _messages(rhs._messages)
-  , _tid2LocCommIdx(rhs._tid2LocCommIdx)
+  : _tid2LocCommIdx(rhs._tid2LocCommIdx)
   , _colors(rhs._colors)
   , _ranks(rhs._ranks)
   , _size(rhs._size)
-  , _asyncMessages(rhs._asyncMessages)
+  , _mgsPerTag(rhs._mgsPerTag)
+  , _newMessages(rhs._newMessages)
 {
 }
   
 
 
 LocalComm::LocalComm(LocalComm &&rhs) 
-  : _messages(std::move(rhs._messages))
-  , _tid2LocCommIdx(std::move(rhs._tid2LocCommIdx))
+  : _tid2LocCommIdx(std::move(rhs._tid2LocCommIdx))
   , _colors(std::move(rhs._colors))
   , _ranks(std::move(rhs._ranks))
   , _size(std::move(rhs._size))
-  , _asyncMessages(std::move(rhs._asyncMessages))
+  , _mgsPerTag(std::move(rhs._mgsPerTag))
+  , _newMessages(std::move(rhs._newMessages))
 {
 }
 
@@ -46,8 +49,6 @@ LocalComm& LocalComm::operator=(LocalComm rhs )
 std::ostream& operator<<(std::ostream& out, const LocalComm& rhs)
 {
   out << "{" << rhs.getColor() << "," << rhs.getRank() << "}"; 
-  // for(nat i = 0; i < rhs._tid2LocCommIdx.size(); ++i)
-  //   out << "{" <<  rhs._colors[i] << "," << rhs._ranks[i] << "}" ; 
   return out; 
 }
 
@@ -116,21 +117,22 @@ LocalComm LocalComm::split(const std::vector<int> &color, const std::vector<int>
   for(auto c : result._colors)
     ++col2occ[c]; 
   result._size = begin(col2occ)->second; 
-
+ 
   result.isValid(); 
  
   return result; 
 }
 
- 
+
 void swap(LocalComm& lhs, LocalComm& rhs )
 {
   using std::swap; 
-  swap(lhs._messages, rhs._messages); 
   swap(lhs._tid2LocCommIdx, rhs._tid2LocCommIdx); 
   swap(lhs._colors, rhs._colors); 
   swap(lhs._ranks, rhs._ranks); 
   swap(lhs._size, rhs._size); 
+  swap(lhs._mgsPerTag, rhs._mgsPerTag); 
+  swap(lhs._newMessages, rhs._newMessages); 
 } 
 
 
@@ -165,13 +167,81 @@ static void dummyFun()
 
 bool LocalComm::haveThreadSupport() const 
 {
-  std::cout << "TODO proper check for pthread support " << std::endl; 
-  return true; 
+  bool isAvailable = true; 
+  try
+    { 
+      auto&& t = std::thread(dummyFun); 
+      t.join();
+    }
+  catch(std::system_error &anExcept)
+    {
+      isAvailable = false; 
+    }
+  
+  return isAvailable; 
 }
 
 
 
-bool LocalComm::checkAsyncMessage( int tag )  const 
+void LocalComm::initializeAsyncQueue(nat size, nat numSlots)
 {
-  return _asyncMessages.checkMessage(tag); 
+  auto maxCol = *(std::max_element(begin(_colors), end(_colors))); 
+  _mgsPerTag.resize(maxCol+1);
+  for(int j = 0; j < maxCol+1; ++j)
+    {
+      for(nat i = 0; i < numSlots; ++i)
+	_mgsPerTag.at(j).emplace_back(size);
+    }
 }
+
+
+int LocalComm::mapRealRank2Corrected(int rank, int root) 
+{
+  // auto result = rank - root ; 
+  // if( result < 0  )
+  //   return size() - result; 
+  // else 
+  //   return result; 
+
+  assert(root == 0); 
+  return rank; 
+}
+
+int LocalComm::mapCorrectedRank2Real(int rank, int root)
+{
+
+  // TODO this and the other function could be used to map the ranks
+  // in case we use a root != 0.
+
+  // since this is currently not needed and I do not have more time to
+  // fiddle around, these functions simply return the original rank.
+  
+  assert(root == 0); 
+  return rank; 
+
+  // auto result = rank + root; 
+  // if(result >= size())
+  //   return result - size(); 
+  // else 
+  //   return result; 
+}
+
+
+
+
+void LocalComm::abort(int code, bool waitForAll)
+{
+  if(_masterThread != std::this_thread::get_id())
+    {
+       while (not _threadsDie)
+	; 
+
+       pthread_exit(NULL);
+
+    }
+  else  
+    {
+      _threadsDie = true; 
+    }
+}
+

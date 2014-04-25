@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <functional>
 
-#include "RateHelper.hpp"
-#include "DnaAlphabet.hpp"
-#include "AminoAcidAlphabet.hpp"
+#include "model/RateHelper.hpp"
+#include "model/DnaAlphabet.hpp"
+#include "model/AminoAcidAlphabet.hpp"
 
-#include "BoundsChecker.hpp"
-#include "GlobalVariables.hpp"
+#include "system/BoundsChecker.hpp"
+#include "system/GlobalVariables.hpp"
 
 #include "RevMatParameter.hpp"
 // #include "axml.h"
@@ -147,6 +147,6 @@ void RevMatParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const
     {
       tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
       printShort(tout) << " that is not applicable." << std::endl; 
-      exitFunction(-1); 
+      exitFunction(-1, true); 
     }
 }

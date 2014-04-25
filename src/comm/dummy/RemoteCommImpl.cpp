@@ -57,7 +57,7 @@ void RemoteComm::Impl::finalize()
 } 
 
 
-void RemoteComm::Impl::abort(int code)
+void RemoteComm::Impl::abort(int code, bool waitForAll)
 {
   exit(code); 
 } 

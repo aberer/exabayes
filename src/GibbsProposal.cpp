@@ -1,10 +1,10 @@
 #include "GibbsProposal.hpp"
 #include "proposals/AbstractProposal.hpp"
 #include "priors/ExponentialPrior.hpp"
-#include "BoundsChecker.hpp"
-#include "Density.hpp"
+#include "system/BoundsChecker.hpp"
+#include "math/Density.hpp"
 #include "AdHocIntegrator.hpp"
-#include "Arithmetics.hpp"
+#include "math/Arithmetics.hpp"
 
 // between .85 and 1 
 // could be between 300 and 500 
