@@ -23,11 +23,22 @@ public:
   void applyToTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams, LikelihoodEvaluator& eval, bool considerOuter) const; 
   void revertTree(TreeAln &traln,const std::vector<AbstractParameter*> &blParams ) const; 
   void revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator& eval, bool considerOuter) const; 
+
+  
+  /**
+     @brief get the branch we insert into  
+   */ 
+  BranchPlain getInsertBranch() const
+  {
+    return path.at(path.size()-1);
+  }
+  
+  // TODO this tuple is a bad idea =(  => make it 2 values
   void extractMoveInfo(const TreeAln &traln, std::tuple<BranchPlain,BranchPlain> description, const std::vector<AbstractParameter*> &params); 
   void extractBranchesOnly(const TreeAln &traln, BranchPlain mover, BranchPlain movedInto, Path &pathHere) const ; 
   BranchPlain getEvalBranch(const TreeAln &traln) const; 
   auto moveBranchProposal(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator& eval, Randomness& rand, bool proposeOuter, double thresh, bool sequential)
-    -> std::tuple<std::vector<BranchLengths>,double,double> ; 
+    -> std::tuple<std::vector<BranchLengths>,log_double,double> ; 
 
   /**
      @brief gets designations for all branche sin the move. 
@@ -63,10 +74,10 @@ public:
 
 protected:			// METHODS
   BranchPlain getEvalBranchFromPath(const TreeAln &traln, const Path &pathHere ) const ; 
-  std::tuple<std::vector<BranchLengths>,double, double> proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator &eval, Randomness& rand, bool proposeOuter, double thresh, bool forward); 
+  std::tuple<std::vector<BranchLengths>,log_double, double> proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator &eval, Randomness& rand, bool proposeOuter, double thresh, bool forward); 
   auto proposeBranchesSequentially(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator &eval, 
 					  Randomness& rand, bool proposeOuter, double thresh, bool forward )
-    -> std::tuple<std::vector<BranchLengths>,double, double>; 
+    -> std::tuple<std::vector<BranchLengths>,log_double, double>; 
   std::vector<BranchPlain> getInvolvedBranchesInOrder(TreeAln& traln, bool outer, const Path &relPath); 
   bool returnCommonBranchesAfter(const BranchPlain &branch,  BranchPlain &result) const; 
   void sprCreatePath(const TreeAln &traln, BranchPlain mover, BranchPlain movedInto, Path &path, const std::vector<AbstractParameter*> &params ) const;

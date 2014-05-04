@@ -22,11 +22,13 @@ void initLogFile( )
 // #include "TopLevelInvocation.cpp" // 
 
 // #include "BipartitionTest.cpp"
-// #include "PartitionAssignmentTest.cpp"
+#include "tests/PartitionAssignmentTest.cpp"
 // #include "TreeAlnTest.cpp"
 
 #include "MessageQueueTest.cpp"
 #include "LocalCommTest.cpp"
+#include "brentTest.cpp"
+
 
 int main (int argc, char **argv)
 {

@@ -6,12 +6,7 @@ ProposalSet::ProposalSet(double relWeight, std::vector<std::unique_ptr<AbstractP
 {
   for(auto &p : _proposals)
     proposals.emplace_back(p->clone()); 
-  
-#ifdef UNSURE
-  assert(0);
-#endif
 
-  // TODO should not be necessary  
   for(auto &p : proposals)
     p->setInSetExecution(true);
 } 
@@ -23,10 +18,6 @@ ProposalSet::ProposalSet(const ProposalSet &rhs)
   for(auto &p : rhs.proposals)
     proposals.emplace_back(p->clone());
 
-#ifdef UNSURE
-  assert(0);
-#endif
-  // TODO should not be necessary  
   for(auto &p : rhs.proposals)
     p->setInSetExecution(true); 
 }
@@ -73,7 +64,6 @@ nat ProposalSet::numerateProposals(nat ctr)
 } 
 
 
-
 void ProposalSet::deserialize( std::istream &in )
 {
   for(auto &p : proposals)
@@ -111,3 +101,4 @@ bool ProposalSet::needsFullTraversal()
     result &= p->isNeedsFullTraversal();
   return result; 
 }
+

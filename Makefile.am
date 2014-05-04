@@ -23,8 +23,6 @@ VECTOR_FLAGS= -D_OPTIMIZED_FUNCTIONS $(SIMD_FLAGS) -march=native -mtune=native
 endif
 endif
 
-RAXML_OPT=-O2
-
 SRCINCLUDE=-I$(top_srcdir)/src
 
 BAYES_INCLUDES=-I$(top_srcdir)/lib/Random123-1.08/include -I$(top_srcdir)/lib/ncl-2.1.18/ $(SRCINCLUDE) -I$(top_srcdir)/src/comm/dummy

@@ -14,7 +14,7 @@
 const double GibbsProposal::EST_FAC = 1.5; 
 
 
-BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings,  const AbstractParameter*  blParam) 
+BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, log_double &hastings,  const AbstractParameter*  blParam) 
 {
   auto result = optimiseBranch(traln, branch, eval, maxIter ,blParam);
   auto optLen = result[0]; 
@@ -33,12 +33,13 @@ BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branc
   if(not BoundsChecker::checkBranch(resultBranch))
     BoundsChecker::correctBranch(resultBranch); 
 
-  double lnBackP = Density::lnGamma(branch.getInterpretedLength(traln, blParam), alpha, beta); 
-  double lnForP = Density::lnGamma(resultBranch.getInterpretedLength(traln, blParam), alpha, beta);
+  auto lnBackP = Density::lnGamma(branch.getInterpretedLength(traln, blParam), alpha, beta); 
+  auto lnForP = Density::lnGamma(resultBranch.getInterpretedLength(traln, blParam), alpha, beta);
 
-  assert(lnBackP != 0 && lnForP != 0 ); 
+  // assert(lnBackP != 0 && lnForP != 0 ); 
 
-  AbstractProposal::updateHastingsLog(hastings,   lnBackP - lnForP , "theGibbs");
+  hastings *= lnBackP / lnForP; 
+
   return resultBranch; 
 }
 
@@ -58,9 +59,6 @@ std::pair<double,double> GibbsProposal::getGammaParams(double nrOpt, double nrD1
       alpha = 1 ; 
       beta = nrD1 ; 
 
-// #ifdef VERBOSE_INFO
-//       tout << "GIBBS-BAD" << std::endl;
-// #endif
     }
   else 
     {
@@ -68,10 +66,6 @@ std::pair<double,double> GibbsProposal::getGammaParams(double nrOpt, double nrD1
       beta =  ((nrOpt + sqrt(nrOpt * nrOpt + 4 * c)) / (2 * c )) ; 
       alpha = nrOpt * beta + 1 ; 
     }
-
-  // if(nrD1 > 1e-1 && nrOpt < 1e-5)
-    // tout << "DANGER" << std::endl; 
-  // tout << MAX_SCI_PRECISION <<  "(" << nrOpt << ","  << nrD1 << "," << nrD2 << ") <=> " << SOME_FIXED_PRECISION << alpha << "," << beta << std::endl; 
 
   assert(nrD2 < 0 || not hasConverged ); 
 
@@ -94,17 +88,17 @@ std::array<double,3> GibbsProposal::optimiseBranch( TreeAln &traln, const Branch
   double nrD1 = 0; 
   double nrD2 = 0; 
 
-
 #if 0
   auto p = b.findNodePtr(traln ) ,
     q = p->back ; 
 #endif
 
-
   assert(traln.getNumberOfPartitions() == 1 ); 
 
+#if 0 
   eval.evalSubtree(traln, 0, b.toPlain() ); 
   eval.evalSubtree(traln, 0, b.toPlain().getInverted());
+#endif
   
   auto prior = param->getPrior(); 
   assert(dynamic_cast<ExponentialPrior*> (prior) != nullptr); 

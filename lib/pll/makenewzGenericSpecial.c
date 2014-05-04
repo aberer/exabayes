@@ -763,7 +763,11 @@ void makenewzIterative(pllInstance *tr, partitionList * pr)
  *
  * @warning \a makenewzIterative should have been called to precompute \a tr->partitionData[model].sumBuffer at the given branch
  *
- * @note  this function actually computes the first and second derivatives of the likelihood for a given branch stored in tr->coreLZ[model] Note that in the parallel case coreLZ must always be broadcasted together with the traversal descriptor, at least for optimizing branch lengths 
+ * @note this function actually computes the first and second
+ * derivatives of the likelihood for a given branch stored in
+ * tr->coreLZ[model] Note that in the parallel case coreLZ must always
+ * be broadcasted together with the traversal descriptor, at least for
+ * optimizing branch lengths
  *
  */
 void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, volatile double *_d2lnLdlz2)
@@ -859,7 +863,7 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
 					 sumBuffer, width, pr->partitionData[model]->wgt,
 					 &dlnLdlz, &d2lnLdlz2, lz);
           else
-
+	    
             coreGTRGAMMAPROT(pr->partitionData[model]->gammaRates, pr->partitionData[model]->EIGN,
                 sumBuffer, width, pr->partitionData[model]->wgt,
                 &dlnLdlz, &d2lnLdlz2, lz);
@@ -888,7 +892,6 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
       }			       	    	   
     }
   }
-
 }
 
 
@@ -918,7 +921,7 @@ static void topLevelMakenewz(pllInstance *tr, partitionList * pr, double *z0, in
   /* figure out if this is on a per partition basis or jointly across all partitions */
 
 
-
+  
   /* initialize loop convergence variables etc. 
      maxiter is the maximum number of NR iterations we are going to do before giving up */
 
@@ -1125,7 +1128,7 @@ static void topLevelMakenewz(pllInstance *tr, partitionList * pr, double *z0, in
  * @param tr
  *   Library instance
  *
- * @param p
+ * @paraom p
  *   One node that defines the branch (p->z)
  *
  * @param q
@@ -1164,35 +1167,35 @@ void makenewzGeneric(pllInstance *tr, partitionList * pr, nodeptr p, nodeptr q, 
   tr->td[0].ti[0].qNumber = q->number;
 
   for(i = 0; i < numBranches; i++)
-  {
-    //originalExecute[i] =  pr->partitionData[i]->executeModel;
-    tr->td[0].ti[0].qz[i] =  z0[i];
-    if(mask)
     {
-      if (tr->partitionConverged[i])
-        pr->partitionData[i]->executeModel = PLL_FALSE;
-      else
-        pr->partitionData[i]->executeModel = PLL_TRUE;
+      //originalExecute[i] =  pr->partitionData[i]->executeModel;
+      tr->td[0].ti[0].qz[i] =  z0[i];
+      if(mask)
+	{
+	  if (tr->partitionConverged[i])
+	    pr->partitionData[i]->executeModel = PLL_FALSE;
+	  else
+	    pr->partitionData[i]->executeModel = PLL_TRUE;
+	}
     }
-  }
   if (tr->useRecom)
-  {
-    int
-      slot = -1;
+    {
+      int
+	slot = -1;
       //count = 0;
 
-    /* Ensure p and q get a unpinnable slot in physical memory */
-    if(!isTip(q->number, tr->mxtips))
-    {
-      q_recom = getxVector(tr->rvec, q->number, &slot, tr->mxtips);
-      tr->td[0].ti[0].slot_q = slot;
+      /* Ensure p and q get a unpinnable slot in physical memory */
+      if(!isTip(q->number, tr->mxtips))
+	{
+	  q_recom = getxVector(tr->rvec, q->number, &slot, tr->mxtips);
+	  tr->td[0].ti[0].slot_q = slot;
+	}
+      if(!isTip(p->number, tr->mxtips))
+	{
+	  p_recom = getxVector(tr->rvec, p->number, &slot, tr->mxtips);
+	  tr->td[0].ti[0].slot_p = slot;
+	}
     }
-    if(!isTip(p->number, tr->mxtips))
-    {
-      p_recom = getxVector(tr->rvec, p->number, &slot, tr->mxtips);
-      tr->td[0].ti[0].slot_p = slot;
-    }
-  }
 
 
   /* compute the traversal descriptor of the likelihood vectors  that need to be re-computed 
@@ -1202,7 +1205,7 @@ void makenewzGeneric(pllInstance *tr, partitionList * pr, nodeptr p, nodeptr q, 
 
   if(p_recom || needsRecomp(tr->useRecom, tr->rvec, p, tr->mxtips))
     computeTraversal(tr, p, PLL_TRUE, numBranches);
-
+  
   if(q_recom || needsRecomp(tr->useRecom, tr->rvec, q, tr->mxtips))
     computeTraversal(tr, q, PLL_TRUE, numBranches);
 
@@ -1212,10 +1215,10 @@ void makenewzGeneric(pllInstance *tr, partitionList * pr, nodeptr p, nodeptr q, 
 
   /* Mark node as unpinnable */
   if(tr->useRecom)
-  {
-    unpinNode(tr->rvec, p->number, tr->mxtips);
-    unpinNode(tr->rvec, q->number, tr->mxtips);
-  }
+    {
+      unpinNode(tr->rvec, p->number, tr->mxtips);
+      unpinNode(tr->rvec, q->number, tr->mxtips);
+    }
 
   /* fix eceuteModel this seems to be a bit redundant with topLevelMakenewz */ 
 

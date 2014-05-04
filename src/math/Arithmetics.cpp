@@ -10,6 +10,12 @@
 
 namespace Arithmetics
 {
+  double getCoefficientOfVariation(const std::vector<double> &data) 
+  {
+    return sqrt(getVariance(data)) / getMean(data); 
+  } 
+
+
   double getPercentile(double percentile, std::vector<double> data)
   {
     assert(percentile < 1.);

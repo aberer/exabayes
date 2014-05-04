@@ -15,7 +15,7 @@ RateSlidingProposer::RateSlidingProposer(const RateSlidingProposer &rhs)
 }
 
 
-std::vector<double> RateSlidingProposer::proposeValues(std::vector<double> allOldValues, double parameter, Randomness &rand, double &hastings) 
+std::vector<double> RateSlidingProposer::proposeValues(std::vector<double> allOldValues, double parameter, Randomness &rand, log_double &hastings) 
 {
   static const nat numFreq = 20; // meh
   assert(allOldValues.size() == (numFreq * numFreq - numFreq) / 2); 

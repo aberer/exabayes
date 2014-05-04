@@ -5,17 +5,17 @@ UniformPrior::UniformPrior(double minVal, double maxVal) : minVal(minVal), maxVa
 {
 }
 
-double UniformPrior::getLogProb(const ParameterContent& content)  const 
+log_double UniformPrior::getLogProb(const ParameterContent& content)  const 
 {
   auto &values = content.values; 
   assert(values.size() == 1); 
   double value = values[0];
 
   if(minVal <= value && value <= maxVal )      
-    return log(1 / (maxVal - minVal)); 
+    return log_double::fromAbs(1 / (maxVal - minVal)); 
   else  
     {
-      return  - std::numeric_limits<double>::infinity();
+      return log_double::lowest();
     }
 }
 
@@ -65,4 +65,10 @@ double UniformPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractPa
     }
   
   return result; 
+} 
+
+
+double UniformPrior::getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const
+{
+  return 0; 
 } 

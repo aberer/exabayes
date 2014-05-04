@@ -1,10 +1,12 @@
 #include "priors/ExponentialPrior.hpp"
+#include "parameters/AbstractParameter.hpp"
+#include "parameters/BranchLengthsParameter.hpp"
 
 ExponentialPrior::ExponentialPrior(double lambda) : lambda(lambda)
 {
 }
 
-double ExponentialPrior::getLogProb(const ParameterContent& content) const 
+log_double ExponentialPrior::getLogProb(const ParameterContent& content) const 
 {
   auto& values = content.values; 
   assert(values.size() == 1); 
@@ -36,3 +38,15 @@ ParameterContent ExponentialPrior::getInitialValue() const
   result.values.push_back( 1. / lambda); 
   return result; 
 } 
+
+
+double ExponentialPrior::getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const
+{
+  // this assert is clearly ridiculous; however it is not worth making
+  // the situation even more complicated...
+  assert( dynamic_cast<BranchLengthsParameter*>(const_cast<AbstractParameter*>(&param)) != nullptr ); 
+  auto fracchange = traln.getMeanSubstitutionRate(param.getPartitions()); 
+
+  // return 1; 
+  return fracchange * lambda; 
+}

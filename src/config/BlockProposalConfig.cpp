@@ -9,7 +9,9 @@ BlockProposalConfig::BlockProposalConfig()
   : etbrStopProb(0.5)
   , esprStopProp(0.5)    
   , parsimonyWarp(0.1)
+  , _likeSprMaxRadius{-1}
   , parsSPRRadius(-1)
+  , _likeSprWarp(1.) 
 {
   NCL_BLOCKTYPE_ATTR_NAME = "PROPOSALS"; 
 }
@@ -50,8 +52,10 @@ void BlockProposalConfig::Read(NxsToken &token)
 	    esprStopProp = value.ConvertToDouble();	  
 	  else if(key.EqualsCaseInsensitive("etbrstopprob"))
 	    etbrStopProb = value.ConvertToDouble(); 	  
-	  else if(key.EqualsCaseInsensitive("guidedsprradius"))
-	    guidedRadius = value.ConvertToInt();
+	  else if(key.EqualsCaseInsensitive("likesprmaxradius"))
+	    _likeSprMaxRadius  = value.ConvertToInt();
+	  else if(key.EqualsCaseInsensitive("likesprwarp"))
+	    _likeSprWarp = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("parsimonyWarp"))	    
 	    parsimonyWarp = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("parssprradius"))

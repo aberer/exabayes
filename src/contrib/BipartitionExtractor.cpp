@@ -124,6 +124,7 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
     << "freq"
     << "\tbl.mean"
     << "\tbl.sd"
+    << "\tbl.cv"
     << "\tbl.ESS"
     << "\tbl.perc5"
     << "\tbl.perc25"
@@ -151,6 +152,7 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
       auto num = allBlsConcat.size() ; 
       auto mean = Arithmetics::getMean(allBlsConcat) ; 
       auto sd = sqrt(Arithmetics::getVariance(allBlsConcat) ); 
+      auto cv = Arithmetics::getCoefficientOfVariation(allBlsConcat); 
       auto ess = Arithmetics::getEffectiveSamplingSize(allBlsConcat) ; 
       auto perc5= Arithmetics::getPercentile(0.05,allBlsConcat) ; 
       auto perc25 = Arithmetics::getPercentile(0.25,allBlsConcat)  ; 
@@ -162,6 +164,7 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
 	       << "\t" << num 
 	       << "\t" << mean
 	       << "\t" << sd 
+	       << "\t" << cv
 	       << "\t" << ess 
 	       << "\t" << perc5 
 	       << "\t" << perc25

@@ -33,7 +33,7 @@ std::tuple<std::vector<double>, std::vector<double> > RateDirichletProposer::cor
 
 
 
-std::vector<double> RateDirichletProposer::proposeValues(std::vector<double> allOldValues, double parameter, Randomness &rand, double &hastings) 
+std::vector<double> RateDirichletProposer::proposeValues(std::vector<double> allOldValues, double parameter, Randomness &rand, log_double &hastings) 
 {
   // tout << std::setprecision(6) ; 
   // tout << "\n" << std::endl; 
@@ -78,7 +78,9 @@ std::vector<double> RateDirichletProposer::proposeValues(std::vector<double> all
   // scale new 
   auto alphasNew =  _rateHelper.getScaledValues(newRatesForFreq, parameter); 
   auto backP = Density::lnDirichlet(ratesForFreq, alphasNew); 
-  AbstractProposal::updateHastingsLog(hastings, backP - forP, "dirichletPartial");
+
+  // AbstractProposal::updateHastingsLog(hastings, backP - forP, "dirichletPartial");
+  hastings *= backP / forP;
 
   // tout << "hastings=" << backP - forP << std::endl; 
 

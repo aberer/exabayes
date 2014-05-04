@@ -31,11 +31,11 @@ CommandLine::CommandLine()
   , _hasThreadPinning{true}
   , _onlyPrintHelp(false)
   , _onlyPrintVersion(false)
-{
+  {
   
-  seed.v[0] = 0; 
-  seed.v[1] = 0; 
-}
+    seed.v[0] = 0; 
+    seed.v[1] = 0; 
+  }
 
 
 std::string CommandLine::getCommandLineString() const 
@@ -122,9 +122,9 @@ void CommandLine::initialize(  int argc, char **argv)
 	    case 'T': 
 	      _totalThreads = std::stoi(optarg); 
 	      break; 
-	    // case 'x': 
-	    //   readerStride = std::stoi(optarg); 
-	    //   break; 
+	      // case 'x': 
+	      //   readerStride = std::stoi(optarg); 
+	      //   break; 
 	    case 'x': 
 	      _hasThreadPinning = false; 
 	      break;
@@ -204,8 +204,8 @@ void CommandLine::initialize(  int argc, char **argv)
       if(singleModel.compare("") == 0 && ( modelFile.compare("") == 0 || not std::ifstream(modelFile) )  )
 	{
 	  std::cout << "Found a phylip-style alignment file. However, you did not provide a\n"
-	       << "model file (see -q, resp. it coul not be found) or a data type specification for a single\n"
-	       << "partition (-m). Cannot proceed.\n" ; 
+		    << "model file (see -q, resp. it coul not be found) or a data type specification for a single\n"
+		    << "partition (-m). Cannot proceed.\n" ; 
 	  exitFunction(-1, true); 
 	}
     }
@@ -233,56 +233,56 @@ void CommandLine::printHelp(std::ostream& out)
   printVersion(out); 
 
   out << std::endl << "Usage: " << (isYggdrasil ? "./yggdrasil" : "./exabayes"  ) <<  " -f alnFile [ -q modelFile ] [ -m model ] [ -s seed | -r id ]  -n id [options..] "
-	    << std::endl; 
+      << std::endl; 
 
   
   out << "\n\n"
-	    << "================================================================\n"
-	    << "Mandatory Arguments: \n"
-	    << "================================================================\n\n"
-	    << "    -f alnFile       a alignment file (either binary and created by parser or plain-text phylip)\n\n"
-	    << "    -s seed          a master seed for the MCMC\n\n"
-	    << "    -n ruid          a run id\n\n" 
-	    << "    -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. \n"
-	    << "                       Make sure, that all files created by the previous run are in the working directory.\n"
-	    << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n\n"
-	    << "    -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed \n"
-	    << "                       with binary files.\n\n"
-	    << "    -t treeFile      a file containing starting trees (in Newick format) for chains. If the file provides less\n"
-	    << "                       starting trees than chains to be initialized, parsimony/random trees will be used for\n"
-	    << "                       remaining chains. If a tree contains branch lengths, these branch lengths will be used\n"
-	    << "                       as initial values.\n\n"
-	    << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
-	    << "                       (valid values: DNA or PROT)\n\n"
-	    << std::endl;     
+      << "================================================================\n"
+      << "Mandatory Arguments: \n"
+      << "================================================================\n\n"
+      << "    -f alnFile       a alignment file (either binary and created by parser or plain-text phylip)\n\n"
+      << "    -s seed          a master seed for the MCMC\n\n"
+      << "    -n ruid          a run id\n\n" 
+      << "    -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. \n"
+      << "                       Make sure, that all files created by the previous run are in the working directory.\n"
+      << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n\n"
+      << "    -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed \n"
+      << "                       with binary files.\n\n"
+      << "    -t treeFile      a file containing starting trees (in Newick format) for chains. If the file provides less\n"
+      << "                       starting trees than chains to be initialized, parsimony/random trees will be used for\n"
+      << "                       remaining chains. If a tree contains branch lengths, these branch lengths will be used\n"
+      << "                       as initial values.\n\n"
+      << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
+      << "                       (valid values: DNA or PROT)\n\n"
+      << std::endl;     
 
   out <<      "\n" 
-	    << "================================================================\n"
-	    <<  "Options:\n" 
-	    << "================================================================\n\n"
-	    << "    -v               print version and quit\n\n"
-	    << "    -h               print this help\n\n" 
-	    << "    -z               quiet mode. Substantially reduces the information printed by " << PROGRAM_NAME << ".\n"
-	    << "                      This option will save you some idle time, when you run " << PROGRAM_NAME << " with a\n"
-	    << "                      lot of processes.\n\n" 
-	    << "    -d               execute a dry-run. Procesess the input, but does not execute any sampling.\n\n"
-	    << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the 'examples' folder.\n\n"
-	    << "    -w dir           specify a working directory for output files\n\n"; 
+      << "================================================================\n"
+      <<  "Options:\n" 
+      << "================================================================\n\n"
+      << "    -v               print version and quit\n\n"
+      << "    -h               print this help\n\n" 
+      << "    -z               quiet mode. Substantially reduces the information printed by " << PROGRAM_NAME << ".\n"
+      << "                      This option will save you some idle time, when you run " << PROGRAM_NAME << " with a\n"
+      << "                      lot of processes.\n\n" 
+      << "    -d               execute a dry-run. Procesess the input, but does not execute any sampling.\n\n"
+      << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the 'examples' folder.\n\n"
+      << "    -w dir           specify a working directory for output files\n\n"; 
 
-  out <<       "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n\n"
-	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n\n" 
-	    << "    -x               disables thread pinning (which schedules a thread to a cpu core\n"
-	    << "                       in a fixed way). You should try this function, if you notice load imbalances with the\n"
-	    << "                       threaded version of the code (i.e., using -T x).\n" ;  
-
-  out <<       "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
-	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
-            << "                       On very gappy alignments this option yields considerable runtime improvements. \n\n"
-	    << "    -T x             start x threads per MPI process. If you do not use MPI, simply start x threads. \n\n" 
-	    << "    -M mode          specifies the memory versus runtime trade-off (see manual for detailed discussion).\n"
-	    << "                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,\n"
-	    << "                       least memory consumption)\n\n"
-	    << std::endl; 
+  out << "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n\n"
+      << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n\n" 
+      << "    -x               disables thread pinning (which schedules a thread to a cpu core\n"
+      << "                       in a fixed way). You should try this function, if you notice load imbalances with the\n"
+      << "                       threaded version of the code (i.e., using -T x).\n\n" ;  
+  
+  out << "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
+      << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
+      << "                       On very gappy alignments this option yields considerable runtime improvements. \n\n"
+      << "    -T x             start x threads per MPI process. If you do not use MPI, simply start x threads. \n\n" 
+      << "    -M mode          specifies the memory versus runtime trade-off (see manual for detailed discussion).\n"
+      << "                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,\n"
+      << "                       least memory consumption)\n\n"
+      << std::endl; 
 }
 
 

@@ -49,7 +49,7 @@ Partition::Partition(nat numTax, std::string name, int dataType, int states , in
   _empiricalFrequencies.resize(pl->frequenciesLength); 
   _globalScaler.resize(2 * _numTax); 
   _yPtrs.resize(_numTax + 1);
-  
+
   _parsimonyScore.resize( 2 * numTax); 
 
   _gammaRates.resize(Partition::maxCategories); // =(
@@ -59,18 +59,6 @@ Partition::Partition(nat numTax, std::string name, int dataType, int states , in
   
   setPtrs();
 }
-
-
-// Partition::~Partition()
-// {
-//   for(nat i = 0; i < _xSpaceVector.size() ; ++i)
-//     {
-//       if(_xSpaceVector[i] > 0)
-// 	{
-// 	  free()
-// 	  }
-//     }
-// }
 
 
 Partition::Partition(const Partition &rhs)
@@ -92,13 +80,15 @@ Partition::Partition(const Partition &rhs)
   , _gammaRates  (rhs._gammaRates  )
   , _globalScaler (rhs._globalScaler )
   , _yPtrs (rhs._yPtrs )
-  , _xVector (rhs._xVector.size(), nullptr  )
+  // , _xVector (rhs._xVector.size(), nullptr  )
+  , _xVector(rhs._xVector)
   , _xSpaceVector (rhs._xSpaceVector.size() , 0  )
   , _parsVect (rhs._parsVect )
   , _parsimonyScore (rhs._parsimonyScore )
   , _parsimonyInformative(rhs._parsimonyInformative)
   , _gapVector(rhs._gapVector)
   , _gapColumn(rhs._gapColumn)
+  , _sumBuffer(rhs._sumBuffer)
 {
   defaultInit();
   setPtrs();
@@ -136,6 +126,8 @@ void Partition::setPtrs()
 
   _partition.gapVector = _gapVector.data();
   _partition.gapColumn = _gapColumn.data(); 
+  
+  _partition.sumBuffer = _sumBuffer.data();
 }
 
 
@@ -184,6 +176,8 @@ void swap(Partition& lhs, Partition& rhs)
   swap(lhs._parsimonyInformative, rhs._parsimonyInformative); 
   swap(lhs._gapVector, rhs._gapVector); 
   swap(lhs._gapColumn, rhs._gapColumn); 
+  
+  swap(lhs._sumBuffer, rhs._sumBuffer); 
 } 
 
 
@@ -209,6 +203,9 @@ void Partition::setAlignment( shared_pod_ptr<unsigned char> aln, int width)
       _yPtrs.at(i) = _y.get() + (pos * width) ; 
       ++pos; 
     }
+
+  _sumBuffer.resize(_partition.width * _partition.states * maxCategories,0);
+  _partition.sumBuffer = _sumBuffer.data();
 
   _partition.yVector = _yPtrs.data(); 
 

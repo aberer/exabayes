@@ -4,8 +4,9 @@
 
 #include "ProposalRegistry.hpp"
 
+#include "WeibullProposer.hpp"
 #include "proposals/LikelihoodSPR.hpp"
-#include "proposals/GibbsBranchLength.hpp"
+#include "proposals/DistributionBranchLength.hpp"
 #include "proposals/ExtendedTBR.hpp" 
 #include "proposals/ExtendedSPR.hpp"
 #include "proposals/ParsimonySPR.hpp"
@@ -15,6 +16,7 @@
 #include "proposals/NodeSlider.hpp"
 #include "proposals/TreeLengthMultiplier.hpp"
 #include "proposals/AbstractProposal.hpp"
+// #include "proposals/GammaDistributionSlider.hpp"
 
 #include "proposers/AbstractProposer.hpp"
 #include "proposers/SlidingProposer.hpp"
@@ -44,9 +46,9 @@ const double ProposalRegistry::initGammaMultiplier = 0.811 ;
 const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ; 
 
 
-const int ProposalRegistry::likeSprMinRadius = 1; 
-const int ProposalRegistry::likeSprMaxRadius = 4; 
-const double ProposalRegistry::likeSpWarp = 1; 
+// const int ProposalRegistry::likeSprMinRadius = 1; 
+// const int ProposalRegistry::likeSprMaxRadius = 3; 
+// const double ProposalRegistry::likeSprWarp = 1.; 
 
 
 /**
@@ -137,7 +139,13 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 						      initDirichletAlpha,1, 1e-3, 1e4) ; 
 	  break; 
 	case ProposalType::LIKE_SPR: 
-	  proposal = make_unique<LikelihoodSPR>(  likeSprMinRadius, likeSprMaxRadius, likeSpWarp);
+	  {
+	    int rad =  config.getLikeSprMaxRadius(); 
+	    if(rad == -1 )
+	      rad = std::floor( std::log( traln.getNumberOfTaxa() ) * 2 ); 
+
+	    proposal = make_unique<LikelihoodSPR>(rad , config.getLikeSprWarp() );
+	  }
 	  break; 
 	case ProposalType::DIRICH_REVMAT_PER_RATE:
 	  {
@@ -165,11 +173,14 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	case ProposalType::AMINO_MODEL_JUMP: 
 	  proposal = make_unique<AminoModelJump>();
 	  break; 
-	case ProposalType::BRANCH_GIBBS: 
-	  proposal = make_unique<GibbsBranchLength>();
+	case ProposalType::BRANCH_DIST_GAMMA: 
+	  proposal = make_unique<DistributionBranchLength<GammaProposer> >();
 	  break;
 	case ProposalType::BRANCH_SLIDER: 
 	  continue; 		// TODO implement  
+	  break; 
+	case ProposalType::BL_DIST_WEIBULL: 
+	  proposal = make_unique< DistributionBranchLength<WeibullProposer> >();
 	  break; 
 	default : 
 	  {

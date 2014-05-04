@@ -55,9 +55,9 @@ double* ArrayReservoir::allocate(size_t requiredLength)
 	    _unusedArrays.erase(maxElemIter); 
 	}
 
+      // tout << "allocating elem of length " <<  requiredLength<<  "\t" << SHOW(lengthOfFound)  << std::endl; 
+      
       result = aligned_malloc<double,size_t(EXA_ALIGN)>(requiredLength); 
-      // tout << "=> allocating " << requiredLength << std::endl; 
-
       _usedArrays.insert(std::make_pair(result, requiredLength));
     }
 

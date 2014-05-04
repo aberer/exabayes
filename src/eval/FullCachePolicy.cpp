@@ -31,5 +31,8 @@ std::unique_ptr<ArrayPolicy> FullCachePolicy::clone() const
 
 void FullCachePolicy::prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat model, ArrayOrientation& arrayOrientation, ArrayReservoir& res )
 {
-  restorer.traverseAndCache(traln, virtualRoot.findNodePtr(traln), model,  arrayOrientation,res  );
+  // fullTraversal parameter only there to indicate whether we have to
+  // search when determining whether arrays are oriented correctly
+
+  restorer.traverseAndCache(traln, virtualRoot.findNodePtr(traln), model,  arrayOrientation,res);
 } 

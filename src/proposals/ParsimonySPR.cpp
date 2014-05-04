@@ -10,6 +10,8 @@
 
 #include "TreePrinter.hpp"
 
+#include "BranchLengthOptimizer.hpp"
+#include "GammaProposer.hpp"
 
 static double state2factor(nat states)
 {
@@ -30,13 +32,16 @@ std::array<double,2> ParsimonySPR::factors =
 // #define PRINT_DEBUG_PARS
 
 ParsimonySPR::ParsimonySPR( double parsWarp, double blMulti, int depth)
-  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. , false, 0,0)
+  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. ,  0,0, false)
   , _parsWarp(parsWarp)    
   , _blMulti(blMulti)    
   , _depth(depth)
 {
   // very relevant to efficient, setting this as a varaible, s.t. we do not get lo t
   _parallelReduceAtEnd = true; 
+
+  auto res = getEnvironmentVariable("PARS_BL"); 
+  _proposePrimeBranch = res.compare("1") == 0 ; 
 }
 
 
@@ -59,7 +64,7 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
   else 
     {
       ParsimonyEvaluator::disorientNode(prunedTree); 
-      auto states2parsimony =   _pEval.evaluate(traln, prunedTree, false , not _parallelReduceAtEnd ); 
+      auto states2parsimony =   _pEval.evaluate(traln, prunedTree, false  ); 
       // assert(result.find(b) == result.end()) ;   
       result[b] = states2parsimony; 
     }
@@ -183,7 +188,7 @@ branch22states2score ParsimonySPR::determineScoresOfInsertions(TreeAln& traln, B
 } 
 
 
-void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
+void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 { 
   auto blParams = getBranchLengthsParameterView(); 
   auto prunedTree = determinePrimeBranch(traln, rand); 
@@ -192,7 +197,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   tout << "prime branch =" << prunedTree << std::endl; 
 #endif
 
-  _pEval.evaluate(traln, prunedTree.findNodePtr(traln), true, not _parallelReduceAtEnd );
+  _pEval.evaluate(traln, prunedTree.findNodePtr(traln), true );
 
   // decide upon an spr move 
   auto alreadyComputed = branch22states2score {}; 
@@ -231,6 +236,29 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
 
   // important: save the move 
   _move.extractMoveInfo(traln, std::make_tuple(prunedTree,chosen.first), getSecondaryParameterView() );
+
+  auto blBackLogProb = 0; 
+  if(_proposePrimeBranch)
+    {
+      auto b = _move.getPathHandle().at(1); 
+      eval.evaluate(traln, b , false );
+
+      // TODO 
+      assert(blParams.size() == 1 ); 
+
+      auto blo = BranchLengthOptimizer(traln, b, 30,    eval.getParallelSetup().getChainComm() , blParams); 
+      blo.optimizeBranches(traln); 
+      
+      auto optParams = blo.getOptimizedParameters(); 
+      auto optParam = optParams[0]; 
+
+      auto gP = optParam.getProposerDistribution<GammaProposer>(traln, 1.61, 2.); // MEH 
+      auto absLen = traln.getBranch(b, blParams[0]).getInterpretedLength(traln, blParams[0]) ; 
+      auto blBackLogProb = gP.getLogProbability(absLen); 
+
+      // tout << "probability of proposing " << MAX_SCI_PRECISION << absLen << " is " << SOME_FIXED_PRECISION << backProb << " for " << optParam << std::endl; 
+    }
+  
   _move.applyToTree(traln, getSecondaryParameterView() ); 
   
   ParsimonyEvaluator::disorientNode(prunedTree.findNodePtr(traln)); 
@@ -243,13 +271,53 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   auto backProb = weightedInsertionsBack[prunedFromBranch]; 
   auto forwProb = std::get<1>(chosen);
 
+
+  auto blForwLogProb = 0; 
+  if(_proposePrimeBranch)
+    {
+      // now the actual proposing 
+      
+      // tout << SHOW(_move) << std::endl; 
+
+      auto invMove = _move.getInverseMove(traln, blParams); 
+      // tout << SHOW(invMove) << std::endl; 
+      auto b = invMove.getPathHandle().at(1); 
+
+      eval.evaluate(traln, b, false); 
+       
+      auto oldAbsLen = traln.getBranch(b, blParams[0]).getInterpretedLength(traln, blParams[0]);
+
+      auto blo = BranchLengthOptimizer(traln,b, 30, eval.getParallelSetup().getChainComm(), blParams); 
+      blo.optimizeBranches(traln); 
+      
+      auto optParams = blo.getOptimizedParameters();
+      auto optParam = optParams[0]; 
+      
+      auto gP = optParam.getProposerDistribution<GammaProposer>(traln,1.61, 2. ); // MEH 
+      
+      auto newBranch = gP.proposeBranch(b, traln, blParams[0], rand); 
+
+      traln.setBranch(newBranch, blParams[0]); 
+      
+      auto absLen = newBranch.getInterpretedLength(traln, blParams[0]); 
+
+      // prior 
+      auto prNew = blParams[0]->getPrior()->getLogProb( ParameterContent{{absLen}} ); 
+      auto prOld = blParams[0]->getPrior()->getLogProb( ParameterContent{{oldAbsLen}} ); 
+      prior.addToRatio( prNew / prOld ); 
+
+      auto  blForwLogProb = gP.getLogProbability(absLen); 
+
+      // tout << "proposed " << absLen << " with "<< blBackLogProb - blForwLogProb << std::endl; 
+    }
+
 #ifdef PRINT_DEBUG_PARS
   for(auto &v : weightedInsertionsBack)
     tout << "(" << std::get<0>(v) << "," << std::get<1>(v) << ")" << std::endl; 
   tout << "backProb=" << backProb << " forwProb=" << forwProb << std::endl; 
 #endif
-  
-  AbstractProposal::updateHastingsLog( hastings, log(backProb) - log(forwProb),  _name); 
+
+  hastings *= log_double::fromLog((log(backProb) + blBackLogProb) - (log(forwProb) + blForwLogProb));
 }
 
 

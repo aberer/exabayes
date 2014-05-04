@@ -23,7 +23,7 @@ public:
   }
 
   virtual ~DirichletProposer(){}
-  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings); 
   virtual AbstractProposer* clone() const  {return new DirichletProposer(*this);  }
 
 private: 

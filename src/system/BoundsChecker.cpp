@@ -166,6 +166,6 @@ void BoundsChecker::correctFrequencies( std::vector<double> &frequencies)
   sum = 0 ;
   for(auto &f : frequencies)
     sum += f; 
-  assert(abs(sum - 1.0 ) < 1e-6); 
+  assert(fabs(sum - 1.0 ) < 1e-6); 
 } 
 

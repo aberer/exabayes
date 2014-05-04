@@ -11,7 +11,6 @@
 #define NUM_ITER 3 
 // #define ONLY_FIRST  
 
-
 // #define VERBOSE_INFO
 
 // TODO constructor instead of extract move info 
@@ -223,7 +222,7 @@ std::vector<BranchPlain> SprMove::getInvolvedBranchesInOrder(TreeAln& traln, boo
 
 auto SprMove::moveBranchProposal(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator& eval,
 				 Randomness& rand, bool proposeOuter, double thresh, bool sequential)
-  -> std::tuple<std::vector<BranchLengths>,double, double> 
+  -> std::tuple<std::vector<BranchLengths>,log_double, double> 
 {
   auto partResult = 
     sequential
@@ -245,16 +244,16 @@ auto SprMove::moveBranchProposal(TreeAln &traln, const std::vector<AbstractParam
   revertTree(traln, params, eval, proposeOuter);
 
   double maxImpact = std::get<2>(partResult);
-  return make_tuple(std::get<0>(partResult), std::get<1>(backPartResult) - std::get<1>(partResult), maxImpact);
+  return make_tuple(std::get<0>(partResult), std::get<1>(backPartResult)  / std::get<1>(partResult), maxImpact);
 }
 
 
 
 auto SprMove::proposeBranchesSequentially(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator &eval, 
 					  Randomness& rand, bool proposeOuter, double thresh, bool forward )
-  -> std::tuple<std::vector<BranchLengths>,double, double>
+  -> std::tuple<std::vector<BranchLengths>,log_double, double>
 {
-  double probability = 0.;
+  log_double probability = log_double::fromAbs(1.);
   auto result = std::vector<BranchLengths>{}; 
 
   assert(params.size() == 1 ); 
@@ -297,7 +296,7 @@ auto SprMove::proposeBranchesSequentially(TreeAln &traln, const std::vector<Abst
       if(not BoundsChecker::checkBranch(bl))
 	BoundsChecker::correctBranch(bl); 
 
-      double probPart = Density::lnGamma(bl.getInterpretedLength(traln,param), proposal[1], proposal[2]);       
+      auto probPart = Density::lnGamma(bl.getInterpretedLength(traln,param), proposal[1], proposal[2]);       
 
       traln.setBranch(bl,param); 
 
@@ -305,7 +304,7 @@ auto SprMove::proposeBranchesSequentially(TreeAln &traln, const std::vector<Abst
       bls.setLengths({bl.getLength()});
       result.push_back(bls); 
 
-      probability += probPart; 
+      probability *= probPart; 
     }
 
   for(auto elem : branch2lengthOrig)
@@ -337,9 +336,9 @@ std::vector<BranchPlain> findAdjacentBranches(const BranchPlain& branch, const s
 
 auto SprMove::proposeBranches(TreeAln &traln, const std::vector<AbstractParameter*> &params, LikelihoodEvaluator &eval, 
 			      Randomness& rand, bool proposeOuter, double thresh, bool forward )
-  -> std::tuple<std::vector<BranchLengths>,double, double>
+  -> std::tuple<std::vector<BranchLengths>,log_double, double>
 {
-  double probability = 0.; 
+  auto probability = log_double::fromAbs(1.); 
   auto result = std::vector<BranchLengths>{};
 
   assert(params.size() == 1); 
@@ -438,13 +437,13 @@ auto SprMove::proposeBranches(TreeAln &traln, const std::vector<AbstractParamete
 	  }
 
 	  result.push_back(newB);
-	  double probPart = Density::lnGamma(newRealLength, proposalResult[1], proposalResult[2]); 
+	  auto probPart = Density::lnGamma(newRealLength, proposalResult[1], proposalResult[2]); 
 
 #ifdef VERBOSE_INFO
 	  tout << MAX_SCI_PRECISION << "opt=" <<  nrOpt << "\tprop="<< newRealLength << "\t" << SOME_FIXED_PRECISION <<  log(nrOpt) -  log(newRealLength)  << "\t" << probPart << std::endl; 
 #endif
 
-	  probability += probPart; 
+	  probability *= probPart; 
 	}
     }
   else 
@@ -462,7 +461,7 @@ auto SprMove::proposeBranches(TreeAln &traln, const std::vector<AbstractParamete
 
 	  auto probPart = Density::lnGamma(origLen, params.first, params.second); 
 
-	  probability += probPart; 
+	  probability *= probPart; 
 #ifdef VERBOSE_INFO
 	  tout << MAX_SCI_PRECISION << "opt=" << nrOpt << "\tbl="<< origLen << "\tp=" << SOME_FIXED_PRECISION << probPart << std::endl; 
 #endif

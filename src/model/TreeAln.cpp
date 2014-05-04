@@ -29,10 +29,10 @@ TreeAln::TreeAln(nat numTax, bool isSaveMemorySEV)
 
 TreeAln::TreeAln( const TreeAln& rhs)
   : _taxa(rhs._taxa)
-  ,  _isSaveMemorySEV(rhs._isSaveMemorySEV)
+  , _isSaveMemorySEV(rhs._isSaveMemorySEV)
 {
   initialize(rhs.getNumberOfTaxa()); // must be first 
-
+  
   auto partCopy = rhs._partitions; 
   setPartitions(partCopy, false); 
   auto blsCpy = rhs._bls; 
@@ -253,6 +253,84 @@ void TreeAln::clearMemory(ArrayReservoir &arrayReservoir)
     }
 }
 
+
+
+/** 
+ * prunes subtree (primNode is the very root)
+ * 
+ * returns the original branch of prunedBranch and the branch that we
+ * obtain after pruning. This branch after pruning is oriented,
+ * s.t. the associated subtree can be traversed correctly.
+ */ 
+auto  TreeAln::pruneSubtree(const BranchPlain &subtree, const BranchPlain &prunedBranch, const std::vector<AbstractParameter*> &params)
+  -> std::tuple<BranchLengths, BranchPlain>
+{
+  auto result = getBranch(prunedBranch, params);
+
+  auto third = prunedBranch.getThirdBranch(*this,subtree); 
+  auto thirdBL =  getBranch(third, params); 
+
+  auto desc = getDescendents(subtree);
+  clipNode(desc.first.getInverted().findNodePtr(*this), desc.second.getInverted().findNodePtr(*this)); 
+
+  auto aNode = desc.first.getSecNode(); 
+  auto bNode = desc.second.getSecNode(); 
+    
+  auto newBranch = BranchLengths(aNode, bNode);
+
+  // orientation os the new branch is important. Since we take away
+  // prunedBranch, the other node that is not in prunedBranch must be
+  // at the very root
+  if( prunedBranch.hasNode(aNode) )
+    newBranch = newBranch.getInverted();
+
+  newBranch.setLengths(thirdBL.getLengths()); 
+  setBranch(newBranch, params); 
+
+  // cut the subtree  
+  detachNode(subtree.findNodePtr(*this)); 
+
+  tout << "PRUNE: " << SHOW(subtree) << SHOW(result) << SHOW(newBranch.toPlain()) << std::endl; 
+
+  return std::make_tuple(result, newBranch.toPlain()); 
+} 
+
+
+/** 
+    inserts a previously pruned subtree, correctly adding the novel branch  
+    
+    assumes that subtree is in a pruned state  
+  
+    note that prunedBranch must be a branch that will exist after insertion
+ */ 
+void TreeAln::insertSubtree(const BranchPlain &subtree, const BranchPlain& insertBranch, const BranchLengths &branchToCreate, const std::vector<AbstractParameter*> &params)
+{
+  // need to dance around the sensitive findNodePtr
+  auto pBack = subtree.getInverted().findNodePtr(*this); 
+  auto p = pBack->back; 
+  assert(p->next->back == NULL  &&   p->next->next->back == NULL); 
+
+  auto otherBranchToCreate = getBranch(insertBranch, params); 
+  otherBranchToCreate.setPrimNode(subtree.getPrimNode()); 
+  otherBranchToCreate.setSecNode(  insertBranch.getOtherNode(branchToCreate.getOtherNode(subtree.getPrimNode()))  );
+  
+  // cut the insert branch 
+  auto q = insertBranch.findNodePtr(*this); 
+  q->back = NULL; 
+  auto r = insertBranch.getInverted().findNodePtr(*this); 
+  r->back = NULL; 
+
+  clipNode(p->next , q); 
+  clipNode(p->next->next, r ); 
+  
+  setBranch(branchToCreate, params); 
+  setBranch(otherBranchToCreate, params); 
+
+  tout << "INSERT: " << SHOW(subtree) << SHOW(insertBranch) << SHOW(branchToCreate) << std::endl; 
+}
+
+
+
 void TreeAln::clipNodeDefault(nodeptr p, nodeptr q )
 {
   clipNode(p,q);  
@@ -369,22 +447,24 @@ void TreeAln::setExecModel(const std::vector<bool>  &modelInfo)
     }
 }
 
-std::vector<double> TreeAln::getPartitionLnls() const
+std::vector<log_double> TreeAln::getPartitionLnls() const
 {
-  auto result = std::vector<double>{}; 
+  auto result = std::vector<log_double>{}; 
 
   for(auto &p : _partitions)
-    result.push_back(p.getHandle().partitionLH); 
+    result.push_back(   log_double::fromLog(p.getHandle().partitionLH)  ); 
 
   return result; 
 }
- 
-void TreeAln::setPartitionLnls(const std::vector<double> partitionLnls)  
+
+
+
+void TreeAln::setPartitionLnls(const std::vector<log_double> partitionLnls)  
 {
   nat ctr = 0; 
   for(auto &p : _partitions )
     {
-      p.getHandle().partitionLH = partitionLnls[ctr]; 
+      p.getHandle().partitionLH = partitionLnls[ctr].getRawLog(); 
       ++ctr; 
     }
 } 
@@ -420,6 +500,8 @@ void TreeAln::setRevMat(const std::vector<double> &values, nat model, bool isRaw
 
 void TreeAln::setBranch(const BranchLength& branch, const AbstractParameter* param)
 {
+  // tout << "setting " << branch << std::endl; 
+
   assert(BoundsChecker::checkBranch(branch)); 
   assert(branch.exists(*this)); 
 
@@ -820,7 +902,7 @@ void TreeAln::setPartitions(const std::vector<Partition> &p, bool initial)
   _partitionListResource.partitionData = _partitionPtrs.data(); 
   _partitionListResource.perGeneBranchLengths = PLL_TRUE; 
   _partitionListResource.numberOfPartitions = _partitions.size(); 
-  _partitionListResource.dirty = PLL_TRUE; 
+  _partitionListResource.dirty = PLL_FALSE; 
 
   if(initial)
     {

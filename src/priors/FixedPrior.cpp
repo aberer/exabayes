@@ -9,7 +9,7 @@ FixedPrior::FixedPrior(std::vector<double> _fixedValues)
 }
 
 
-double FixedPrior::getLogProb(const ParameterContent& content)  const
+log_double FixedPrior::getLogProb(const ParameterContent& content)  const
 {    
   auto &values = content.values; 
 
@@ -28,7 +28,7 @@ double FixedPrior::getLogProb(const ParameterContent& content)  const
 	assert(fixedValues[i] == values[i]);
     }
 
-  return 0; 
+  return log_double::fromAbs(1.); 
 }
 
 

@@ -3,7 +3,7 @@
 #include "system/BoundsChecker.hpp"
 
 ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL, std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight, double minTuning, double maxTuning )
-  : AbstractProposal( cat, name, weight, minTuning, maxTuning)
+  : AbstractProposal( cat, name, weight, minTuning, maxTuning, true)
   , modifiesBL(modifiesBL)
   , parameter(parameter)
   , proposer(std::move(_proposer))  
@@ -21,7 +21,7 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
 }
 
 
-void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
+void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   auto blParams = getBranchLengthsParameterView(); 
 
@@ -71,13 +71,13 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
       for(nat i = 0; i < blParams.size();++i)
 	{
 	  auto value = traln.getNumberOfBranches() * log(newFCs.at(i) / oldFCs.at(i))   ; 
-	  AbstractProposal::updateHastingsLog(hastings, value, _name); 
+	  hastings *= log_double::fromLog(value); 
 	}
     }
 
   // a generic prior updates the prior rate 
   auto pr = _primaryParameters[0]->getPrior();
-  prior.addToRatio(pr->getLogProb(newValues) - pr->getLogProb(_savedContent.values)); 
+  prior.addToRatio(pr->getLogProb(newValues) / pr->getLogProb(_savedContent.values)); 
 } 
 
 

@@ -22,23 +22,25 @@ SplitFreqAssessor::SplitFreqAssessor(std::vector<string> fileNames, bool expensi
 }
 
 
-void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
+// void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
+void SplitFreqAssessor::extractBips( const std::vector<nat> &start, const std::vector<nat> &end) 
 {
   int ctr = 0; 
-
+  
   for (auto filename : _fns)
     {
-      nat endhere = end; 
-      if(takeAll)
-	endhere = file2numTree[filename]; 
+      nat endhere = end[ctr]; 
+      // nat endhere = end; 
+      // if(takeAll)
+      // 	endhere = file2numTree[filename]; 
 
       auto&& ifh = std::ifstream{filename}; 
 
-      for(nat i = 0; i < start; ++i)
+      for(nat i = 0; i < start[ctr]; ++i)
 	skipTree(ifh);
 
       auto &bipHash  = newBipHashes.at(ctr);
-      for(nat i = start ; i < endhere; ++i)
+      for(nat i = start[ctr] ; i < endhere; ++i)
 	{
 	  nextTree<false>(ifh);
 	  bipHash.addTree(*_tralnPtr,false, false);

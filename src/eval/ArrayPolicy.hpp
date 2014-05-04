@@ -34,15 +34,16 @@ public:
     accountForRejectionPolicy(traln, partitions, invalidNodes, arrayOrient, res); 
    
     auto lnls = traln.getPartitionLnls(); 
-    auto sum = 0.; 
+    auto sum = log_double::fromAbs(1.); 
     for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
       {
 	if(partitions[i])
 	  lnls[i] =  partitionLnls[i] ; 
-	sum += lnls[i]; 
+	sum *= lnls[i]; 
       }
     traln.setPartitionLnls(lnls); 
-    traln.getTrHandle().likelihood = sum;  
+    
+    traln.getTrHandle().likelihood = sum.getRawLog();  
   }
 
   virtual void accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient , ArrayReservoir &res)  = 0; 
@@ -55,7 +56,7 @@ public:
 
 protected: 
   double prevLnl; 
-  std::vector<double> partitionLnls;
+  std::vector<log_double> partitionLnls;
 }; 
 
 #endif

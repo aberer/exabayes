@@ -1960,7 +1960,7 @@ void PhylipParser::compressDNA(int *informative)
       if(entries % PCF != 0)
 	compressedEntries++;
 
-#if (defined(__SIM_SSE3) || defined(__AVX))
+#if (defined(__SSE3) || defined(__AVX))
       if(compressedEntries % INTS_PER_VECTOR != 0)
 	compressedEntriesPadded = compressedEntries + (INTS_PER_VECTOR - (compressedEntries % INTS_PER_VECTOR));
       else

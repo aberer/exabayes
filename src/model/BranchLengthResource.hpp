@@ -29,13 +29,11 @@ private:
   std::vector<double> _lzq  ;
   std::vector<double> _lzr  ;
   std::vector<double> _lzi  ;
-  std::vector<double> _coreLZ  ;
-  std::vector<boolean> _curvatOK  ;
-  std::vector<boolean> _partitionSmoothed  ;
-  std::vector<boolean> _partitionConverged  ;
   std::vector< std::vector<double> > _qz; 
   std::vector< std::vector<double> > _rz; 
   std::vector< std::vector<double> > _z; 
+  
+  std::vector<double> _parameterValues; 
 }; 
 
 #endif

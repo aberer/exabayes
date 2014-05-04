@@ -3,7 +3,6 @@
 #include "TreeRandomizer.hpp"
 #include "math/Arithmetics.hpp"
 #include "AdHocIntegrator.hpp"
-#include "GibbsProposal.hpp"
 
 // #define QUICK_HACK
 
@@ -33,7 +32,7 @@ BranchPlain StatNNI::determinePrimeBranch(const TreeAln &traln, Randomness& rand
 }
 
 
-void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
+void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {    
   auto blParams = getBranchLengthsParameterView(); 
   
@@ -58,7 +57,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
   if(multiplyBranches )
     {
       auto result = move.moveBranchProposal(traln, blParams, eval, rand, outer, 0.05, sequential);
-      hastings += std::get<1>(result); 
+      hastings *= std::get<1>(result); 
       // tout << "hastings is " << result.second << std::endl;  
 
       move.applyToTree(traln, getSecondaryParameterView() ); 
@@ -89,7 +88,7 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 	      // tout << "prRatio=" << newPr - oldPr << std::endl; 
 	      // tout << "bl: " << lenBeforeInterpret << " => " << lenAfterInterpret << "\t" << newPr - oldPr << std::endl; 
 
-	      prior.addToRatio(newPr - oldPr); 
+	      prior.addToRatio(newPr / oldPr); 
 	    }
 
 	  // set the branch
@@ -111,6 +110,8 @@ void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln,
 
   auto dNodes = move.getDirtyNodes(traln, false); 
 
+  // tout << SHOW(dNodes) << std::endl; 
+
   for (auto &elem : dNodes)
     evaluator.markDirty( traln, elem); 
 
@@ -119,6 +120,8 @@ void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln,
 #endif
 
   evaluator.evaluate(traln, evalBranch, false); 
+
+  // tout << "END" << std::endl; 
 }
 
 

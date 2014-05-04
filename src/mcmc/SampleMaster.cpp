@@ -33,12 +33,11 @@
 
 #include "TreeIntegrator.hpp"
 
+
 #include "parser/PhylipParser.hpp"
 
 // a developmental mode to integrate over branch lengths
 #define _GO_TO_INTEGRATION_MODE
-
-
 #ifndef _EXPERIMENTAL_INTEGRATION_MODE
 #undef _GO_TO_INTEGRATION_MODE
 #endif
@@ -633,21 +632,17 @@ void SampleMaster::initializeRuns(Randomness rand)
   initTree.setBranchLengthResource(bls); 
 
   // START integrator
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE
-  std::shared_ptr<TreeAln> aTree = unique_ptr<TreeAln>(new TreeAln()); 
-
-  aTree->initializeFromByteFile(binaryAlnFile, runmodes); 
-  aTree->enableParsimony();
+#ifdef _EXPERIMENTAL_INTEGRATION_MODE 
+  auto aTree = TreeAln(taxa.size(), false); 
+  aTree = initTree; 
 
   // let's have another tree for debug
-  auto dT = make_shared<TreeAln>();
-  dT->initializeFromByteFile(binaryAlnFile, runmodes); 
-  dT->enableParsimony(); 
+  auto dT = make_shared<TreeAln>(taxa.size(), false);
 
-  TreeRandomizer::randomizeTree(*aTree, masterRand); 
-  ahInt = new AdHocIntegrator(aTree, dT, masterRand.generateSeed());
+  TreeRandomizer::randomizeTree(aTree, rand); 
+  ahInt = new AdHocIntegrator(aTree, dT, rand.generateSeed(), _plPtr);
 
-  tInt = new TreeIntegrator(aTree, dT, masterRand.generateSeed()); 
+  tInt = new TreeIntegrator(aTree, dT, rand.generateSeed(), _plPtr); 
 #endif
   // END
 
@@ -770,15 +765,6 @@ void SampleMaster::initializeRuns(Randomness rand)
       auto res = _plPtr->printLoadBalance(initTree, _runParams.getNumRunConv(), _runParams.getNumCoupledChains());
       tout << res; 
     }
-
-
-  // BEGIN DEBUG 
-  // auto &p = initTree.getPartition(0); 
-  // auto &&ss = std::stringstream{}; 
-  // p.printAlignment(ss); 
-  // std::cout << ss.str() << endl; 
-  // END 
-
 }
 
 
@@ -813,9 +799,12 @@ void SampleMaster::printInitialState()
 	  auto &chain = run.getChains()[i]; 
 	  auto &eval = chain.getEvaluator(); 
 	  auto &traln  = chain.getTralnHandle();
-	  chain.setLikelihood(traln.getTrHandle().likelihood);
+	  chain.setLikelihood(traln.getLikelihood());
 	  eval.evaluate(traln, traln.getAnyBranch(), true);
 
+	  // NOTICE was not here before 
+	  chain.setLikelihood(traln.getLikelihood()) ; 
+	  
 	  eval.freeMemory(); 
 	  traln.clearMemory(res); 
 
@@ -830,7 +819,7 @@ void SampleMaster::printInitialState()
   // if we are parallel, we must inform the master about what we
   // computed
   synchronize(CommFlag::PRINT_STAT); 
-
+  
   tout << endl << "initial state: " << endl; 
   tout << "================================================================" << endl; 
   for(auto &run: _runs)
@@ -896,8 +885,8 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
 
   // dont forget that we also sampled gen0, therefore: 
   ++end; 
- 
-  asdsf.extractBipsNew(start, end, false);
+  
+  asdsf.extractBips(std::vector<nat>( _runParams.getNumRunConv(), start), std::vector<nat>(_runParams.getNumRunConv(), end) );
   auto asdsfVals = asdsf.computeAsdsfNew(_runParams.getAsdsfIgnoreFreq());
 
   return asdsfVals;
@@ -969,12 +958,10 @@ SampleMaster::printDuringRun(nat gen)
       else 
 	ss << " ==="; 
       
-      auto sortedLnls = vector<std::pair<nat,double>>{}; 
+      auto sortedLnls = vector<std::pair<nat,log_double>>{}; 
       for(auto &c : run.getChains() ) 
 	sortedLnls.emplace_back(c.getCouplingId(), c.getLikelihood()); 
-      std::sort(sortedLnls.begin(), sortedLnls.end(), [] (const std::pair<nat,double> &elem1, const std::pair<nat,double> &elem2 ) { return elem1.first < elem2.first;  }); 
-
-      // auto &&tmp = make_unique<ThousandsSeparator<char> >(','); 
+      std::sort(begin(sortedLnls), end(sortedLnls), [] (const std::pair<nat,log_double> &elem1, const std::pair<nat,log_double> &elem2 ) { return elem1.first < elem2.first;  }); 
 
       for(auto elem : sortedLnls)
 	{
@@ -1054,7 +1041,7 @@ void SampleMaster::run()
 	  // std::cout <<   "running a part" << endl; 
 	  // tout <<   "running a part" << endl; 
 	  if(_plPtr->isMyRun(run.getRunid()))
-	      run.executePartNew(curGen, toExecute, *_plPtr );
+	    run.executePartNew(curGen, toExecute, *_plPtr );
 	}
 
       curGen += toExecute; 
@@ -1066,7 +1053,7 @@ void SampleMaster::run()
 	  auto asdsf = std::make_pair(nan(""), nan("")); 
 
 	  if(_runs.size() > 1 && _runParams.isUseStopCriterion() )
-	  // if(not hasConverged)
+	    // if(not hasConverged)
 	    {
 	      if( _plPtr->isGlobalMaster())
 		{
@@ -1139,7 +1126,8 @@ void SampleMaster::run()
 
 #if defined( _EXPERIMENTAL_INTEGRATION_MODE ) && defined(_GO_TO_INTEGRATION_MODE)
   // go into integration mode, if we want to do so 
-  branchLengthsIntegration();
+  auto rnew = Randomness(_runs[0].getChains()[0].getChainRand().generateSeed());
+  branchLengthsIntegration(rnew);
 #endif
 
 #if defined(_EXPERIMENTAL_INTEGRATION_MODE)  && defined(_GO_TO_TREE_MOVE_INTEGARTION)
@@ -1214,8 +1202,6 @@ void SampleMaster::synchronize( CommFlag flags )
 {
   _plPtr->synchronizeChainsAtMaster(_runs, flags ); 
 }
-
-
 
 
 void SampleMaster::writeCheckpointMaster()

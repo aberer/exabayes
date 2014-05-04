@@ -935,6 +935,10 @@ static double evaluateCAT_FLEX_SAVE (const boolean fastScaling, int *ex1, int *e
 #endif
 
 
+
+
+
+
 /* This is the core function for computing the log likelihood at a branch */
 /** @ingroup evaluateLikelihoodGroup
     @brief Evaluate the log likelihood of a specific branch of the topology
@@ -1533,7 +1537,7 @@ void pllEvaluateLikelihood (pllInstance *tr, partitionList *pr, nodeptr p, boole
 #else
   /* and here is just the sequential case, we directly call pllEvaluateIterative() above 
      without having to tell the threads/processes that they need to compute this function now */
-
+  
   pllEvaluateIterative(tr, pr, getPerSiteLikelihoods); //PLL_TRUE
 
   /*

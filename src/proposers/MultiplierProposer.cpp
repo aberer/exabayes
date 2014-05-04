@@ -7,7 +7,7 @@ MultiplierProposer::MultiplierProposer(double minVal, double maxVal)
 }
 
 
-std::vector<double> MultiplierProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+std::vector<double> MultiplierProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings)
 {    
   double newVal = 0, position = 0, multiplier = 0; 
 
@@ -21,7 +21,8 @@ std::vector<double> MultiplierProposer::proposeValues(std::vector<double> oldVal
   else if(_maxVal < newVal)
     newVal = _maxVal; 
 
-  AbstractProposal::updateHastingsLog(hastings, log(multiplier), "multiplier"); 
+  hastings *= log_double::fromAbs(multiplier);
+
   oldValues[position] = newVal; 
   return oldValues;
 }

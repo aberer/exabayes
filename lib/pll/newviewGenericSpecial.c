@@ -1615,6 +1615,8 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
         r_slot = tInfo->rNumber - tr->mxtips - 1;
       }
 
+    /* printf("eval: %d = %d,%d\n", p_slot, q_slot, r_slot);  */
+
     /* now loop over all partitions for nodes p, q, and r of the current traversal vector entry */
 
     for(model = 0; model < pr->numberOfPartitions; model++)
