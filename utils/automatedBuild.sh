@@ -20,13 +20,13 @@ ssh tesla " cd proj/exa-bayes ; rm packages/*  ;  ./utils/build-distro.sh 0 4 av
 scp tesla:proj/exa-bayes/packages/* packages/
 
 # apple build 
-rsync --progress -av -C --delete \
-    --exclude packages \
-    --exclude data \
-    --exclude runs \
-    --exclude TMP \
-    --exclude extra \
-    ./ $apple:/Users/administrator/proj/exa-bayes
-ssh $apple " cd proj/exa-bayes ; rm packages/*  ; bash  ./utils/build-distro.sh 1 4 avx sse no-sse ;  "
-scp $apple:/Users/administrator/proj/exa-bayes/packages/* packages/
+# rsync --progress -av -C --delete \
+#     --exclude packages \
+#     --exclude data \
+#     --exclude runs \
+#     --exclude TMP \
+#     --exclude extra \
+#     ./ $apple:/Users/administrator/proj/exa-bayes
+# ssh $apple " cd proj/exa-bayes ; rm packages/*  ; bash  ./utils/build-distro.sh 1 4 avx sse no-sse ;  "
+# scp $apple:/Users/administrator/proj/exa-bayes/packages/* packages/
 
