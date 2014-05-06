@@ -20,8 +20,8 @@ fi
 
 if [ $IS_APPLE == 0 ]; then
     readlink=readlink
-    ccomp=gcc-4.6
-    cxxcomp=g++-4.6
+    ccomp=gcc-4.7
+    cxxcomp=g++-4.7
     system=linux
     compi=mpicc.openmpi
     cxxompi=mpicxx.openmpi
@@ -74,9 +74,17 @@ do
 	mkdir -p  distro-build  && rm -rf distro-build/*
 
 	cd distro-build 
+
 	../configure --enable-mpi  --prefix $($readlink -f ../)  CXXFLAGS="-static-libstdc++" CC="ccache $ccomp" CXX="ccache $cxxcomp" MPICXX=$mpicxx $arg ||   exit
-	make -j $cores || exit 
+	make -j $cores exabayes  || exit 
 	make install || exit   
+	make clean 
+
+	../configure --prefix $($readlink -f ../) LDFLAGS="-static"  CC="ccache $ccomp" CXX="ccache $cxxcomp"  $arg ||   exit
+
+	make -j $cores exabayes  || exit 
+	make install || exit   
+
 	cd .. 
 
 	# build the distribution 
