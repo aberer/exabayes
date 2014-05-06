@@ -76,15 +76,15 @@ do
 	cd distro-build 
 
 	../configure --enable-mpi  --prefix $($readlink -f ../) CXXFLAGS="-static-libstdc++" CC="ccache $ccomp" CXX="ccache $cxxcomp" MPICXX=$mpicxx $arg ||   exit
-	make -j $cores exabayes  || exit 
-	make install 
-
-	rm -rf * 
-
-	../configure --prefix $($readlink -f ../) LDFLAGS="-static" CC="ccache $ccomp" CXX="ccache $cxxcomp"  $arg ||   exit
-
 	make -j $cores || exit 
-	make install || exit   
+	make install  || exit 
+
+	# rm -rf * 
+
+	# ../configure --prefix $($readlink -f ../) LDFLAGS="-static" CC="ccache $ccomp" CXX="ccache $cxxcomp"  $arg ||   exit
+
+	# make -j $cores || exit 
+	# make install || exit   
 
 	cd .. 
 
