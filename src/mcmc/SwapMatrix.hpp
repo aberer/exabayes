@@ -14,6 +14,8 @@ class SwapMatrix : public Serializable
 public: 
   SwapMatrix(nat numChains ); 
   SwapMatrix operator=( SwapMatrix rhs ) ; 
+  SwapMatrix(SwapMatrix&& rhs) = default;  
+  SwapMatrix(const SwapMatrix & rhs)  = default; 
 
   void update(nat a, nat b, bool acc); 
   const SuccessCounter& getCounter(nat a, nat b ) const; 
