@@ -5,6 +5,7 @@
 #include "ProposalRegistry.hpp"
 
 #include "WeibullProposer.hpp"
+#include "proposals/DivTimeProposal.hpp"
 #include "proposals/LikelihoodSPR.hpp"
 #include "proposals/DistributionBranchLength.hpp"
 #include "proposals/ExtendedTBR.hpp" 
@@ -181,6 +182,9 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  break; 
 	case ProposalType::BL_DIST_WEIBULL: 
 	  proposal = make_unique< DistributionBranchLength<WeibullProposer> >();
+	  break; 
+	case ProposalType::DIV_TIME_DIRICH:
+	  proposal = make_unique<DivTimeProposal>(); 
 	  break; 
 	default : 
 	  {

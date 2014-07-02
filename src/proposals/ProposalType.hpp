@@ -36,7 +36,8 @@ enum class ProposalType
     DIRICH_REVMAT_PER_RATE = 20,
     SLIDING_REVMAT_PER_RATE = 21, 
     BL_DIST_WEIBULL = 22, 
-    BL_SLID_GAMMA = 23 
+    BL_SLID_GAMMA = 23 , 
+    DIV_TIME_DIRICH = 24 
 }; 
 
 

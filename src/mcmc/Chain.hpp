@@ -135,7 +135,7 @@ private: 			// ATTRIBUTES
   int _runid; 
   int _tuneFrequency; 		// TODO should be have per-proposal tuning?   
   log_double _hastings;  		// logged!
-  nat _currentGeneration;     	
+  nat _currentGeneration; 
   /// indicates how hot the chain is (i = 0 => cold chain), may change!
   nat _couplingId;					     // CHECKPOINTED 
   std::vector< std::unique_ptr<AbstractProposal> > _proposals; 

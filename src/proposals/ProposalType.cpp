@@ -32,6 +32,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, "rate orientated dirichlet proposal on RevMat" } ,
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, "rate orientated sliding proposal on RevMat"} , 
 	{ ProposalType::BL_DIST_WEIBULL , "a weibull based branch length proposal" } ,
+	{ ProposalType::DIV_TIME_DIRICH , "dirichlet proposal on divergence times" } ,
 	// { ProposalType::BL_SLID_GAMMA, "a gamma based proposer for 2 adjacent branch lengths"}
       }; 
     
@@ -71,6 +72,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, "REVMATRATEDIRICH" } ,
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, "REVMATRATESLIDER"} ,
 	{ ProposalType::BL_DIST_WEIBULL , "BLDISTWEIBULL" } , 
+	{ ProposalType::DIV_TIME_DIRICH , "DIVTIMEDIRICH" }
 	// { ProposalType::BL_SLID_GAMMA, "BLSLIDGAMMA"} 
       }; 
 
@@ -123,6 +125,7 @@ namespace ProposalTypeFunc
 	    ProposalType::BRANCH_DIST_GAMMA , 
 	    ProposalType::NODE_SLIDER, 
 	    ProposalType::BL_DIST_WEIBULL, 
+	    ProposalType::DIV_TIME_DIRICH
 	    // ProposalType::BL_SLID_GAMMA
 	    }; 
       case Category::FREQUENCIES: 
@@ -216,6 +219,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, true } ,
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, false} , 
 	{ ProposalType::BL_DIST_WEIBULL, false }, 
+	{ ProposalType::DIV_TIME_DIRICH, false }, 
 	// { ProposalType::BL_SLID_GAMMA, false } 
     };
 
