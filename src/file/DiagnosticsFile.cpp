@@ -32,7 +32,7 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
   for(auto& run : runs)
     {
       auto numElem = run.getChains().size(); 
-      auto info = run.getSwapInfo(); 
+      auto myInfo = run.getSwapInfo(); 
       for(nat i = 0; i < numElem; ++i)
 	{
 	  for(nat j = i+1; j < numElem; ++j )
@@ -75,7 +75,7 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
 }
 
 
-void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<CoupledChains> &runs ) 
+void DiagnosticsFile::printDiagnostics(uint64_t gen, double asdsf, const std::vector<CoupledChains> &runs ) 
 {
   auto &&fh = std::ofstream(fullFileName, std::fstream::app); 
 
@@ -105,8 +105,7 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
 	  if(chain.getCouplingId() != 0 ) // no hot chains
 	    continue; 
 
-	  auto &ps = chain.getProposalView(); 
-	  for(auto &p : ps)
+	  for(auto &p : chain.getProposalView())
 	    {
 	      auto &&ss = std::stringstream{} ; 
 	      p->printShort(ss);
@@ -180,7 +179,7 @@ static std::vector<std::string> getProposalNames(std::string line)
 }
 
 
-void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::string prevId, nat gen)
+void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::string prevId, uint64_t gen)
 {    
   assert(not _initialized); 
   _initialized = true; 

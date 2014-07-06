@@ -1,17 +1,19 @@
 #include <sstream>
-#include "system/extensions.hpp" 
+#include "extensions.hpp" 
 #include <string.h>
 #include <cassert>
 #include <iostream>
 #include <cmath>
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 #include "BasicTreeReader.hpp"
 #include "TreeProcessor.hpp"
-#include "parameters/BranchLengthsParameter.hpp"
+#include "BranchLengthsParameter.hpp"
 
 
 TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck)  
-  : _taxa(fillTaxaInfo(fileNames.at(0)))
+  : _tralnPtr{nullptr}
+  , _fns{}
+  , _taxa(fillTaxaInfo(fileNames.at(0)))
 {
   assert(fileNames.size() > 0); 
 
@@ -31,12 +33,12 @@ TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveC
 	}
     }
 
-  _tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(_taxa.size(), false));
+  _tralnPtr = make_unique<TreeAln>( int(_taxa.size()), false);
   
   // only necessary, if we actually have branch lengths (so resources
   // are wasted, if we only read the topology)
   auto blRes = BranchLengthResource(); 
-  blRes.initialize(_taxa.size(), 1 ); 
+  blRes.initialize(nat(_taxa.size()), 1 ); 
   _tralnPtr->setBranchLengthResource(blRes); 
   
   _fns = fileNames; 
@@ -72,7 +74,7 @@ void TreeProcessor::nextTree(std::istream &treefile)
   auto bt = BasicTreeReader<IntegerLabelReader,
 			    typename std::conditional<readBl,
 						      ReadBranchLength,
-						      IgnoreBranchLength>::type>(_taxa.size());
+						      IgnoreBranchLength>::type>( nat( _taxa.size()) );
   auto branches = bt.extractBranches(treefile);
 
   _tralnPtr->unlinkTree();
@@ -104,8 +106,9 @@ std::string TreeProcessor::trim(const std::string& str, const std::string& white
 }
 
 
-auto TreeProcessor::fillTaxaInfo(std::string fileName)
-  -> std::vector<std::string>
+
+std::vector<std::string>
+TreeProcessor::fillTaxaInfo(std::string fileName)
 {
   auto result = std::vector<std::string>{}; 
   auto whiteSpace = " \t"; 
@@ -124,7 +127,7 @@ auto TreeProcessor::fillTaxaInfo(std::string fileName)
 
 	  std::string cleanerString = trim(cleanLine, ",;"); 
 
-	  int pos = cleanerString.find_first_of(whiteSpace, 0);
+	  auto pos = cleanerString.find_first_of(whiteSpace, 0);
 	  std::string num =  cleanerString.substr(0, pos),
 	    name = cleanerString.substr(pos+1, cleanerString.size()); 	  
 

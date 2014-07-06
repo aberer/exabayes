@@ -3,8 +3,8 @@
 
 #include <unordered_map>
 
-#include "tree-parse/TreeProcessor.hpp"
-#include "data-struct/BipartitionHash.hpp"
+#include "TreeProcessor.hpp"	
+#include "BipartitionHash.hpp"
 
 class BipartitionExtractor : public TreeProcessor
 {
@@ -12,6 +12,7 @@ public:
   BipartitionExtractor(std::vector<std::string> files,bool extractToOneHash, bool expensiveCheck);
   BipartitionExtractor( BipartitionExtractor&& rhs) = delete ; 
   BipartitionExtractor& operator=(BipartitionExtractor rhs) = delete ; 
+  virtual ~BipartitionExtractor(){}
 
   template<bool readBL>
   void extractBips(nat burnin ); 

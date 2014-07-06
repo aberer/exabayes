@@ -1,11 +1,11 @@
 #include <iostream> 
 #include <sstream>
 
-#include "system/GlobalVariables.hpp"
-#include "mcmc/SwapMatrix.hpp"
-#include "mcmc/SampleMaster.hpp"
-#include "comm/IncompleteMesh.hpp"
-#include "comm/ParallelSetup.hpp"
+#include "GlobalVariables.hpp"
+#include "SwapMatrix.hpp"
+#include "SampleMaster.hpp"
+#include "IncompleteMesh.hpp"
+#include "ParallelSetup.hpp"
 #include "common.h"
 
 ParallelSetup::ParallelSetup(CommandLine& cl)
@@ -46,10 +46,9 @@ void ParallelSetup::initializeRemoteComm(int argc, char **argv)
 
 void ParallelSetup::warn()  
 {
-  auto numWorkers = _globalComm.size() // * _threadResource.getNumThreads()
-    ;
+  auto numWorkers = _globalComm.size() ;
 
-  if(  numWorkers < int(  _mesh.getRunDimSize() * _mesh.getChainDimSize() )   )
+  if(  numWorkers <  _mesh.getRunDimSize() * _mesh.getChainDimSize()    )
     {
       if( _globalComm.getRank() == 0)
 	std::cout << "\nError: You attempted to run " << _mesh.getRunDimSize() << " runs in parallel for which " <<  _mesh.getChainDimSize() <<  " coupled chains should be run in parallel. This requires at least " << (_mesh.getRunDimSize() * _mesh.getChainDimSize() ) << " processes (in the best case a multiple of this number). " << PROGRAM_NAME << " was started with " << _globalComm.size() << " processes though.\n" <<  std::endl; 
@@ -186,8 +185,8 @@ std::string ParallelSetup::printLoadBalance(const TreeAln& traln, nat numRun, na
 
 
 
-auto ParallelSetup::serializeAllChains(std::vector<CoupledChains> &runs, CommFlag commFlags) const
-  -> std::tuple<nat,std::vector<char>> 
+std::tuple<nat,std::vector<char> > 
+ParallelSetup::serializeAllChains(std::vector<CoupledChains> &runs, CommFlag commFlags) const
 {
   auto serialized = std::vector<char>{}; 
   // serializing all chains that are assigned to me  
@@ -205,7 +204,7 @@ auto ParallelSetup::serializeAllChains(std::vector<CoupledChains> &runs, CommFla
 	      auto chainSer =  ss.str();
 
 	      if(isFirst)
-		lengthOfChainStream = chainSer.size(); 
+		lengthOfChainStream = int(chainSer.size()); 
 	      isFirst = false; 
 	      assert(nat(lengthOfChainStream) == chainSer.size()); 
 
@@ -221,9 +220,8 @@ auto ParallelSetup::serializeAllChains(std::vector<CoupledChains> &runs, CommFla
 }
 
 
-
-auto ParallelSetup::serializeSwapMatrices(std::vector<CoupledChains>& runs, CommFlag &commFlags ) const 
-  -> std::tuple<nat, std::vector<char>> 
+std::tuple<nat, std::vector<char> > 
+ParallelSetup::serializeSwapMatrices(std::vector<CoupledChains>& runs, CommFlag &commFlags ) const 
 {
   auto serialized = std::vector<char>{};
   int lengthOfSwap = 0;   
@@ -240,7 +238,7 @@ auto ParallelSetup::serializeSwapMatrices(std::vector<CoupledChains>& runs, Comm
 	      auto asString = part.str();
 	      
 	      if(isFirst)
-		lengthOfSwap = asString.size();
+		lengthOfSwap = int(asString.size());
 	      
 	      isFirst = false; 
 	      assert(lengthOfSwap == int(asString.size())); 
@@ -285,11 +283,11 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
   // only leaders communicate 
   auto countsPerProc = std::vector<int>(_globalComm.size() , 0 );
   auto displPerProc = std::vector<int>(_globalComm.size() , 0 ); 
-  for(int i = 0; i< _globalComm.size() ; ++i)
+  for(auto i = 0u; i< _globalComm.size() ; ++i)
     {
       auto coords = _mesh.getCoordinates(i); 
       if(coords[2] == 0 )
-	countsPerProc[i] = myData.size(); 
+	countsPerProc[i] = int(myData.size()); 
 
       if(i != 0 )
 	displPerProc[i] = displPerProc[i-1] + countsPerProc[i]; 
@@ -302,7 +300,7 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
   if(isGlobalMaster())
     {
       auto ranksofLeaders = std::vector<nat> {}; 
-      for(int i = 0; i < _globalComm.size(); ++i)
+      for(int i = 0; i < int( _globalComm.size()); ++i)
 	{
 	  auto coords =  _mesh.getCoordinates(i);
 	  if(coords[2] == 0) 
@@ -432,7 +430,7 @@ ParallelSetup::sendRecvChain(const CoupledChains& run, nat myIndex, nat otherCha
 void ParallelSetup::blockingPrint( Communicator &comm,std::string ss )
 {
   int myRank = comm.getRank();
-  int size = comm.size(); 
+  auto size = comm.size(); 
 
   // MEH 
   if(size == 1 )
@@ -451,14 +449,14 @@ void ParallelSetup::blockingPrint( Communicator &comm,std::string ss )
   std::cout << "[ " << myRank << " ] " << ss << std::endl; 
   std::cout.flush();
   
-  if(myRank != size - 1) 
+  if(myRank != int(size - 1)) 
     comm.send<int>(1, myRank + 1 , 0 ); 
   else 
     comm.send<int>(1,0,0 ); 
     
   if( myRank == 0  )
     {
-      auto res =  comm.receive<int>(size-1,0);
+      auto res =  comm.receive<int>(int(size-1),0);
       assert(res == 1); 
     }
 }
@@ -503,8 +501,8 @@ bool ParallelSetup::swapIsLocal(nat chainIdA, nat chainIdB, nat runId ) const
 
 nat ParallelSetup::chainIdToLeaderRank(nat runId, nat chainId) const  
 {
-  nat pBatch = runId % _mesh.getRunDimSize(); 
-  nat cBatch = chainId % _mesh.getChainDimSize (); 
+  auto pBatch = nat(runId % _mesh.getRunDimSize()); 
+  auto cBatch = nat(chainId % _mesh.getChainDimSize ()); 
   
   auto coords = std::array<nat,3> {{ pBatch, cBatch, 0 }}; 
   return _mesh.getRankFromCoordinates(coords);
@@ -520,7 +518,7 @@ int ParallelSetup::getRankInRun( std::array<nat,3> coords) const
 
 int ParallelSetup::getColorInChain(std::array<nat,3> coords) const 
 {
-  return  coords[0] * _mesh.getChainDimSize() + coords[1]; 
+  return  int(coords[0] * _mesh.getChainDimSize() + coords[1]); 
 }
 
 std::array<nat,3> ParallelSetup::getMyCoordinates() const
@@ -560,13 +558,13 @@ bool ParallelSetup::isRunLeader() const
 }  
 
 
-nat ParallelSetup::getChainsParallel() const 
+size_t ParallelSetup::getChainsParallel() const 
 {
   return _mesh.getChainDimSize(); 
 }
 
 
-nat ParallelSetup::getRunsParallel() const
+size_t ParallelSetup::getRunsParallel() const
 {
   return _mesh.getRunDimSize(); 
 }

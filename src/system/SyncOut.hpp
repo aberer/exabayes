@@ -14,9 +14,12 @@ class SyncOut
 {
 public: 
   SyncOut()
-    : _lock(globals.mtx)
+    : _lock(mtx)
+    , _ss{}
   {
   }
+  
+  ~SyncOut(){}
 
   template<typename T>
   friend SyncOut& operator<<(SyncOut& out, T elem)

@@ -1,35 +1,16 @@
 #include "SwapMatrix.hpp"
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 #include <iostream>
 #include <cassert>
 
-SwapMatrix::SwapMatrix(nat numChains)
-  : numEntries(numChains)
+SwapMatrix::SwapMatrix(size_t numChains)
+  : matrix{}
+  , numEntries(numChains)
 {
   for(nat i = 0; i < numEntries; ++i)
     for(nat j = i  + 1 ; j < numEntries; ++j)
       matrix.push_back(SuccessCounter()); 
-}
-
-// SwapMatrix::SwapMatrix(const SwapMatrix& rhs)  
-//   : matrix(begin(rhs.matrix), end(rhs.matrix))
-//   , numEntries(rhs.numEntries)
-// {
-// }
-
-
-SwapMatrix SwapMatrix::operator=( SwapMatrix rhs) 
-{
-  swap(*this, rhs); 
-  return *this; 
-}
-
-
-void swap(SwapMatrix& a, SwapMatrix &b)
-{
-  using std::swap;  
-  swap(a.matrix, b.matrix); 
 }
 
 
@@ -49,13 +30,13 @@ const SuccessCounter& SwapMatrix::getCounter(nat a, nat b ) const
 } 
 
 
-nat SwapMatrix::mapToIndex(nat a, nat b) const 
+size_t SwapMatrix::mapToIndex(nat a, nat b) const 
 {
   assert(a != b);
   if(b < a )
     std::swap(a,b); 
 
-  nat result = 0; 
+  size_t result = 0; 
   for(nat i = 0; i < a && a != 0; ++i)
     result += numEntries -i  -1 ; 
   result += b - a - 1  ; 

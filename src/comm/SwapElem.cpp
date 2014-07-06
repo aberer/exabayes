@@ -42,6 +42,9 @@ nat SwapElem::getRemoteId(ParallelSetup& pl, nat runid) const
 
 bool operator==(const SwapElem &elemA, const SwapElem &elemB ) 
 {
+  // really?
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+
   bool isEqual = true; 
   isEqual &=    (elemA._idA ==  elemB._idA && elemA._idB ==  elemB._idB)
     || (elemA._idA ==  elemB._idB && elemA._idA ==  elemB._idB); 
@@ -68,6 +71,5 @@ bool SwapElem::onlyOneIsMine(ParallelSetup& pl, nat runid) const
 
 bool SwapElem::bothAreMine(ParallelSetup& pl, nat runid) const 
 {
-  auto bothAreMine = pl.isMyChain(runid, _idA) && pl.isMyChain(runid,_idB); 
-  return bothAreMine; 
+  return  pl.isMyChain(runid, _idA) && pl.isMyChain(runid,_idB); 
 }

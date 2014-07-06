@@ -1,5 +1,5 @@
 #include "RateHetParameter.hpp"
-#include "system/BoundsChecker.hpp"
+#include "BoundsChecker.hpp"
 
 
 void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const

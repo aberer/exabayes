@@ -1,13 +1,13 @@
 #include "ParameterFile.hpp"
-#include "system/GlobalVariables.hpp"
-#include "model/Category.hpp"
-#include "system/extensions.hpp"
+#include "GlobalVariables.hpp"
+#include "Category.hpp"
+#include "extensions.hpp"
 
 #include <cassert>
 
 
-ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid )
-  : runid(runid)
+ParameterFile::ParameterFile(std::string workdir, std::string runname, nat ru )
+  : runid(ru)
 {
   auto&& ss = std::stringstream{}; 
 
@@ -16,7 +16,7 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat runid
 }
 
 
-void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParameter*> parameters,  nat someId, bool isDryRun )  
+void ParameterFile::initialize(const TreeAln& traln, const ParameterList& parameters,  nat someId, bool isDryRun )  
 {        
   rejectIfExists(fullFileName); 
 
@@ -59,7 +59,7 @@ void ParameterFile::initialize(const TreeAln& traln, std::vector<AbstractParamet
 }
 
 
-void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParameter*> parameters, nat gen, double lnPr)  
+void ParameterFile::sample(const TreeAln &traln, const ParameterList& parameters, uint64_t gen, log_double lnPr)  
 {
   auto&& fh = std::ofstream(fullFileName, std::fstream::app);  
     
@@ -80,7 +80,7 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
     {
       double tl = 0; 
       for(auto &b : traln.extractBranches(param))
-	tl += b.getInterpretedLength(traln, param);
+	tl += b.getInterpretedLength( param);
       fh << tl << "\t"; 
     }
 
@@ -100,7 +100,7 @@ void ParameterFile::sample(const TreeAln &traln, const std::vector<AbstractParam
 }
 
 
-void ParameterFile::regenerate(std::string workdir, std::string prevId, nat gen) 
+void ParameterFile::regenerate(std::string workdir, std::string prevId, uint64_t gen) 
 {
   std::ofstream fh(fullFileName, std::fstream::out); 
 
@@ -121,10 +121,10 @@ void ParameterFile::regenerate(std::string workdir, std::string prevId, nat gen)
       
       if(lineCtr > 1 && not lineIsEmpty)
 	{
-	  std::stringstream ss; 
-	  ss.str(line); 
+	  std::stringstream ss1; 
+	  ss1.str(line); 
 	  std::string part; 
-	  getline( ss ,part, '\t'  );       
+	  getline( ss1 ,part, '\t'  );       
 	  genFound = std::stoi(part); 
 	}
 

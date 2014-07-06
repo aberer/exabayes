@@ -1,6 +1,7 @@
 #include <cassert>
 
-template<typename T> T RemoteComm::Impl::receive( int source, int tag ) 
+template<typename T>
+T RemoteComm::Impl::receive( int source, int tag ) 
 {
   assert(0); 
   return 0; 

@@ -23,7 +23,7 @@ public:
   RemoteComm& operator=( RemoteComm rhs); 
   friend void swap(RemoteComm &lhs, RemoteComm& rhs); 
 
-  #include "comm/CommCore.hpp"
+  #include "CommCore.hpp"
 
   void waitAtBarrier() const; 
 

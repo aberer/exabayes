@@ -2,12 +2,12 @@
 #define _PARALLEL_SETUP_PARA_HPP
 
 #include <unordered_map>
-#include "config/CommandLine.hpp"
-#include "comm/IncompleteMesh.hpp"
-#include "system/FlagType.hpp" 
-#include "comm/Communicator.hpp"
+#include "CommandLine.hpp"
+#include "IncompleteMesh.hpp"
+#include "FlagType.hpp" 
+#include "Communicator.hpp"
 
-#include "comm/threads/ThreadResource.hpp"
+#include "ThreadResource.hpp"
 
 #include "CommFlag.hpp"
 
@@ -42,11 +42,11 @@ public:
   /** 
       @brief gets the number of runs executed in parallel  
    */ 
-  nat getRunsParallel() const ; 
+  size_t getRunsParallel() const ; 
   /** 
       @brief gets the number of (coupled) chains executed in paralel (in addition to run-level parallelism)
    */ 
-  nat getChainsParallel() const ; 
+  size_t getChainsParallel() const ; 
   /** 
      @brief indicates whether the process should conduct output operatons (for his run) 
    */ 

@@ -12,12 +12,40 @@ class BranchLengthResource
   friend class TreeAln;  	// this is a resouce class only; friendship is okay 
 
 public: 
-  void initialize(nat numTax, nat numPart ); 
+  
+  BranchLengthResource()
+    : _numTax{0}
+    , _numPart{0}
+    , _zqr{}
+    , _currentZQR{}
+    , _currentLZR{}
+    ,_currentLZQ{}
+    , _currentLZS{}
+    , _currentLZI{}
+    , _lzs{}
+    , _lzq{}
+    , _lzr{}
+    , _lzi{}
+    , _qz{}
+    , _rz{}
+    , _z{}
+    , _parameterValues{}
+  {}
+
+
+  ~BranchLengthResource(){}
+  BranchLengthResource(const BranchLengthResource& rhs) = default ; 
+  BranchLengthResource(BranchLengthResource&& rhs) = default; 
+  BranchLengthResource& operator=(const BranchLengthResource &rhs)  = default; 
+  BranchLengthResource& operator=( BranchLengthResource &&rhs) =default; 
+    
+  
+  void initialize(size_t numTax, size_t numPart ); 
   void assign(TreeAln &traln) ;  
 
 private: 
-  nat _numTax; 
-  nat _numPart; 
+  size_t _numTax; 
+  size_t _numPart; 
   
   std::vector<double> _zqr  ;
   std::vector<double> _currentZQR  ;

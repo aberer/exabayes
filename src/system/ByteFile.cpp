@@ -1,6 +1,6 @@
 #include "ByteFile.hpp"
 
-#include "data-struct/Bipartition.hpp"
+#include "Bipartition.hpp"
 #include "PartitionAssignment.hpp"
 
 #include <cassert>
@@ -8,7 +8,7 @@
 
 #include "BandWidthTest.hpp"
 
-#include "comm/ParallelSetup.hpp"
+#include "ParallelSetup.hpp"
 
 // #define OLD_ALN_LAYOUT
 
@@ -19,8 +19,12 @@ extern const char inverseMeaningDNA[16]; // TODO remove
 ByteFile::ByteFile(std::string name, bool saveMemory)
   : _fileName(name)  
   , _in{_fileName, std::ios::binary}
+  , _taxa{}
+  , _numPat{0}
+  , _partitions{}
   , _saveMemory{saveMemory}
-  , _initTime{getTimePoint()}
+  , _weightType{IntegerWidth::BIT_8}
+  // , _initTime{getTimePoint()}
 {
 }
 
@@ -35,25 +39,25 @@ nat ByteFile::determineOptStride(Communicator &comm)
 
 
 template<typename T>
-std::vector<std::vector<T>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, nat numberOfArrays)
+std::vector<std::vector<T>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, size_t numberOfArrays)
 {
   auto result = std::vector<std::vector<T>>(); 
 
   auto fileStart = _in.tellg();
-  nat numProcPerChain = std::max((pl.getGlobalComm().size() / pl.getChainsParallel()) / pl.getRunsParallel(),1u); 
-  nat participatingProcs = numProcPerChain * pl.getChainsParallel() * pl.getRunsParallel(); 
-  nat numIter = (numberOfArrays / participatingProcs) +   ( ((numberOfArrays % participatingProcs) == 0 ) ? 0 : 1 ); 
+  auto numProcPerChain = std::max( ( pl.getGlobalComm().size() / pl.getChainsParallel()) / pl.getRunsParallel(),size_t(1u)); 
+  auto participatingProcs = numProcPerChain * pl.getChainsParallel() * pl.getRunsParallel(); 
+  auto numIter = (numberOfArrays / participatingProcs) +   ( ((numberOfArrays % participatingProcs) == 0 ) ? 0 : 1 ); 
 
   auto countsPerProc = std::vector<int>{}; 
   auto displPerProc = std::vector<int>{};
   std::tie(countsPerProc, displPerProc) = pAss.getCountsAndDispls(pl.getChainComm().size()) ; 
   
-  nat arrsProcessed = 0; 
+  auto arrsProcessed = size_t(0u); 
   for(nat iter = 0; iter < numIter ; ++iter)
     {
-      nat arraysThisRound = std::min(participatingProcs, numberOfArrays - iter * participatingProcs);
+      auto arraysThisRound = std::min(size_t(participatingProcs), numberOfArrays - iter * participatingProcs);
       auto arrs = std::vector< std::vector<T> >(arraysThisRound); 
-      nat myArrNum = iter * participatingProcs + pl.getGlobalComm().getRank(); 
+      auto myArrNum = iter * participatingProcs + pl.getGlobalComm().getRank(); 
 
       if( nat(pl.getGlobalComm().getRank()) < participatingProcs)
 	{
@@ -64,7 +68,7 @@ std::vector<std::vector<T>> ByteFile::readAndDistributeArrays(ParallelSetup& pl,
 	    }
 
 	  nat ctr = 0; 
-	  for(nat j = myArrNum % numProcPerChain; j < arraysThisRound ; j += numProcPerChain)
+	  for(auto j = myArrNum % numProcPerChain; j < arraysThisRound ; j += numProcPerChain)
 	    {
 	      if(arrs[j].size() == 0 )
 		arrs[j].resize(_numPat); 
@@ -101,7 +105,7 @@ std::vector<std::vector<T>> ByteFile::readAndDistributeArrays(ParallelSetup& pl,
 	      arr.shrink_to_fit();
 	    }
 
-	  auto &&res = pl.getChainComm().scatterVariableKnownLength<T>(arrReordereds[i], countsPerProc, displPerProc, i % numProcPerChain); 
+	  auto &&res = pl.getChainComm().scatterVariableKnownLength<T>(arrReordereds[i], countsPerProc, displPerProc, i % int(numProcPerChain)); 
 	  result.push_back(res);
 	}
       arrsProcessed += arraysThisRound; 
@@ -109,9 +113,9 @@ std::vector<std::vector<T>> ByteFile::readAndDistributeArrays(ParallelSetup& pl,
 
   return result; 
 }
-template std::vector<std::vector<int32_t>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, nat numberOfArrays); 
-template std::vector<std::vector<uint16_t>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, nat numberOfArrays); 
-template std::vector<std::vector<uint8_t>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, nat numberOfArrays); 
+template std::vector<std::vector<int32_t>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, size_t numberOfArrays); 
+template std::vector<std::vector<uint16_t>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, size_t numberOfArrays); 
+template std::vector<std::vector<uint8_t>> ByteFile::readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, size_t numberOfArrays); 
 
 
 std::tuple<int,int> ByteFile::parseHeader(ParallelSetup& pl)
@@ -179,10 +183,13 @@ void ByteFile::parse(ParallelSetup& pl )
       break; 
     case IntegerWidth::BIT_64: 
       assert(0); 
+      break; 
+    default:  
+      assert(0); 
     }
 
   // tout << "[ "  << getDuration(_initTime) << "] parsed weights" << std::endl ;
-  _initTime = getTimePoint();
+  // _initTime = getTimePoint();
 
 #ifdef OLD_ALN_LAYOUT
 #ifndef DIRECT_READ 
@@ -210,10 +217,10 @@ void ByteFile::parseAlnsDirect_newLayout(ParallelSetup& pl, PartitionAssignment&
   seek(Position::ALIGNMENT); 
   auto alnPos = _in.tellg();
 
-  auto pureIo = 0.f; 
-  auto pureReorder = 0.f;  
-  auto pureParsimony = 0.f; 
-  auto pureCommTime = 0.f; 
+  // auto pureIo = 0.; 
+  // auto pureReorder = 0.;  
+  // auto pureParsimony = 0.; 
+  // auto pureCommTime = 0.; 
 
   auto range = pAss.getAssignment().equal_range(pl.getChainComm().getRank()); 
 
@@ -226,21 +233,21 @@ void ByteFile::parseAlnsDirect_newLayout(ParallelSetup& pl, PartitionAssignment&
       auto pos = alnPos + std::streamoff(lenOfPat *  (partition.getLower() + assignment.offset)); 
       _in.seekg( pos ); 
       
-      auto tp = getTimePoint();
+      // auto tp = getTimePoint();
       auto alnTmp = readArray<uint8_t>(assignment.width * lenOfPat);
-      pureIo += getDuration(tp); 
+      // pureIo += getDuration(tp); 
       
       auto aln = aligned_malloc<uint8_t, size_t(EXA_ALIGN)>(assignment.width * _taxa.size()); 
 
-      tp = getTimePoint(); 
-      nat numTax =  _taxa.size(); 
+      // tp = getTimePoint(); 
+      auto numTax =  _taxa.size(); 
       for(auto j = 0u;  j < assignment.width; ++j)
 	{
-	  auto iter = alnTmp.data() + j * numTax; 
+	  auto iter2 = alnTmp.data() + j * numTax; 
 	  for(auto i = 0u; i < numTax; ++i)
-	    aln[ i * assignment.width + j ]  = iter[i]; 
+	    aln[ i * assignment.width + j ]  = iter2[i]; 
         }
-      pureReorder += getDuration(tp); 
+      // pureReorder += getDuration(tp); 
 
       // parse information about parsimony informativeness; it
       // probably would be easier to read the entire bit vector
@@ -249,7 +256,7 @@ void ByteFile::parseAlnsDirect_newLayout(ParallelSetup& pl, PartitionAssignment&
       auto startPos = partition.getLower() + assignment.offset; 
       auto endPos = startPos + assignment.width; 
       auto startInt =    startPos   / 32  ; 
-      auto endInt = endPos / 32; 
+      // auto endInt = endPos / 32; 
       auto intWidth = assignment.width / 32   ; 
       bool addAtStart = (startPos  % 32)  != 0; 
       bool addAtEnd = (endPos % 32) != 0; 
@@ -279,9 +286,9 @@ void ByteFile::parseAlnsDirect_newLayout(ParallelSetup& pl, PartitionAssignment&
       // tout << "NOT setting parsimony information read from file "  << std::endl; 
 #endif
 
-      tp = getTimePoint(); 
+      // tp = getTimePoint(); 
       partition.setAlignment(shared_pod_ptr<uint8_t>(aln), assignment.width); 
-      pureParsimony += getDuration(tp); 
+      // pureParsimony += getDuration(tp); 
     }
 
   // tout << "===> pure io: " << pureIo << " sec" << std::endl; 
@@ -295,9 +302,9 @@ void ByteFile::parseAlnsDirectRead(ParallelSetup& pl, PartitionAssignment& pAss)
 {
   seek(Position::ALIGNMENT);
 
-  auto itime = getTimePoint(); 
-  double mallocTime = 0; 
-  double ioTime = 0; 
+  // auto itime = getTimePoint(); 
+  // double mallocTime = 0; 
+  // double ioTime = 0; 
 
   auto alnPos = _in.tellg();
   auto range = pAss.getAssignment().equal_range(pl.getChainComm().getRank()); 
@@ -305,9 +312,9 @@ void ByteFile::parseAlnsDirectRead(ParallelSetup& pl, PartitionAssignment& pAss)
     {
       auto assignment =  iter->second; 
       auto &partition = _partitions.at(assignment.partId); 
-      itime = getTimePoint(); 
+      // itime = getTimePoint(); 
       auto aln = aligned_malloc<uint8_t, size_t(EXA_ALIGN) >(assignment.width * _taxa.size());
-      mallocTime += getDuration(itime); 
+      // mallocTime += getDuration(itime); 
       
       nat ctr = 0; 
       for(nat i = 0; i < _taxa.size(); ++i)
@@ -315,9 +322,9 @@ void ByteFile::parseAlnsDirectRead(ParallelSetup& pl, PartitionAssignment& pAss)
 	  auto start = size_t(alnPos) + ctr * _numPat +  partition.getLower() + assignment.offset; 
 	  _in.seekg(start);
 	  
-	  itime = getTimePoint(); 
+	  // itime = getTimePoint(); 
 	  readArray( assignment.width, aln +   assignment.width * ctr  ); 
-	  ioTime += getDuration(itime); 
+	  // ioTime += getDuration(itime); 
 	  ++ctr; 
 	}
       partition.setAlignment(shared_pod_ptr<uint8_t>(aln), assignment.width); 
@@ -325,7 +332,7 @@ void ByteFile::parseAlnsDirectRead(ParallelSetup& pl, PartitionAssignment& pAss)
 
   // tout << "[ "  << getDuration(_initTime) << "] computed parsimony" << std::endl; 
   // tout << "io-time: " << ioTime << "\tmallocTime" << mallocTime << std::endl; 
-  _initTime = getTimePoint();
+  // _initTime = getTimePoint();
 }
 
 
@@ -335,10 +342,10 @@ void ByteFile::parseAlns(ParallelSetup& pl, PartitionAssignment& pAss)
   
   auto myAln = std::vector< std::vector<unsigned char> >(); 
 
-  myAln = readAndDistributeArrays<unsigned char>(pl,pAss,_taxa.size()); 
+  myAln = readAndDistributeArrays<unsigned char>(pl, pAss ,_taxa.size()); 
 
   // tout << "[ "  << getDuration(_initTime) << "] distributed alignment" << std::endl; 
-  _initTime = getTimePoint();
+  // _initTime = getTimePoint();
 
   auto range = pAss.getAssignment().equal_range(pl.getChainComm().getRank()); 
   nat pos = 0; 
@@ -362,7 +369,7 @@ void ByteFile::parseAlns(ParallelSetup& pl, PartitionAssignment& pAss)
     }
 
   // tout << "[ "  << getDuration(_initTime) << "] computed parsimony" << std::endl; 
-  _initTime = getTimePoint();
+  // _initTime = getTimePoint();
 }
 
 
@@ -475,7 +482,7 @@ void ByteFile::parsePartitions(int numPart)
 
       auto dataType = readVar<decltype(p.dataType)>();
       auto protModel = readVar<decltype(p.protModels)>(); 
-      auto protFreqs = readVar<decltype(p.protFreqs)>(); 
+      auto protFreqs = readVar<decltype(p.protUseEmpiricalFreqs)>(); 
       auto nonGTR = readVar<decltype(p.nonGTR)>(); 
       auto len = readVar<int>(); 
 
@@ -483,7 +490,7 @@ void ByteFile::parsePartitions(int numPart)
       auto str =std::string(begin(arr), end(arr)); 
       readVar<char>(); 
 
-      auto partition =  Partition(_taxa.size(), str, dataType, states, maxTipStates, _saveMemory); 
+      auto partition =  Partition(nat(_taxa.size()), str, dataType, states, maxTipStates, _saveMemory); 
 
       partition.setPartitionContribution(pCont.at(i)); 
       partition.setLower(lower);
@@ -521,9 +528,9 @@ void ByteFile::seek(Position pos)
 	// skip partition contributios 
 	toSkipHere += _partitions.size() * sizeof(double); 
 
-	int oneElem = 
+	auto oneElem = 
 	  sizeof(ps.states) + sizeof(ps.maxTipStates) + sizeof(ps.lower) + sizeof(ps.upper) + sizeof(ps.width) + 
-	  sizeof(ps.dataType) + sizeof(ps.protModels) + sizeof(ps.protFreqs) + sizeof(ps.nonGTR); 
+	  sizeof(ps.dataType) + sizeof(ps.protModels) + sizeof(ps.protUseEmpiricalFreqs) + sizeof(ps.nonGTR); 
 	toSkipHere += _partitions.size() * (oneElem + sizeof(int)); 
 
 	for(auto &p : _partitions)

@@ -1,6 +1,8 @@
 #include "ArrayOrientation.hpp"
 #include <cassert>
-#include "model/Branch.hpp"
+#include "Branch.hpp"
+
+#include "common.h"
 
 
 const nat ArrayOrientation::maxSprSearch = 4; 
@@ -60,6 +62,8 @@ bool ArrayOrientation::isCorrectNew( const TreeAln& traln, nat part, nodeptr p) 
   auto id = nodeNum2ArrayNum(p->number, numTax); 
   auto theOrient = orientation.at(part).at(id); 
 
+  // tout << "node=" << p->number << " is oriented " << SHOW(theOrient) << std::endl; 
+
   if(theOrient == INVALID)
     return false; 
 
@@ -69,16 +73,29 @@ bool ArrayOrientation::isCorrectNew( const TreeAln& traln, nat part, nodeptr p) 
   // check, if a subtree was inserted (by an spr move) just between
   // this node and the correct array that this array is oriented
   // towards
-  if(not correct && not traln.isTipNode(p->back->number))
+  if(
+#ifdef DANGEROUS_LNL_SHORTCUT_OFF
+     false && 
+#endif
+     not correct && not traln.isTipNode(p->back->number))
     {
       auto numA = (nat) p->back->next->back->number; 
       auto numB = (nat) p->back->next->next->back->number; 
 
       correct |= ( theOrient == numA) ; 
       correct |= ( theOrient == numB) ; 
+
+// #ifdef PR      
+//       if(correct ) 
+// 	tout << "CORRECT!\t" << SHOW(p->back->number) << std::endl; 
     }
   
-  if(not correct)
+  if( 
+#ifdef DANGEROUS_LNL_SHORTCUT_OFF
+     false && 
+#endif
+      not correct 
+     )
     {
       // check, for topological rearrangement 
 
@@ -125,7 +142,7 @@ std::ostream& operator<<(std::ostream& out, const ArrayOrientation &rhs)
     {
       out << "[" << ctr << "] " ; 
       
-      nat ctr2 = rhs.orientation[0].size() + 3 ;
+      auto ctr2 = rhs.orientation[0].size() + 3 ;
       for(auto &subelem : elem ) 
 	{
 	  if(subelem == 0)

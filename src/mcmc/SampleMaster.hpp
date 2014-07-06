@@ -11,22 +11,25 @@
 
 #include <vector>
 
-#include "proposals/ProposalSet.hpp"
-#include "config/BlockRunParameters.hpp"
-#include "config/BlockProposalConfig.hpp"
-#include "config/CommandLine.hpp"
+#include "ProposalSet.hpp"
+#include "BlockRunParameters.hpp"
+#include "BlockProposalConfig.hpp"
+#include "CommandLine.hpp"
 #include "CoupledChains.hpp"
-#include "config/ConfigReader.hpp"
-#include "comm/ParallelSetup.hpp"
-#include "system/time.hpp"
-#include "system/Serializable.hpp"
-#include "file/DiagnosticsFile.hpp"
+#include "ConfigReader.hpp"
+#include "ParallelSetup.hpp"
+// #include "time.hpp"
+#include "TimeTracker.hpp"
+#include "Serializable.hpp"
+#include "DiagnosticsFile.hpp"
 
 
 class SampleMaster : public Serializable
 {
 public:   
-  SampleMaster() ; 
+  SampleMaster(size_t numCpu) ; 
+  SampleMaster(const SampleMaster& rhs) = default; 
+  SampleMaster& operator=(const SampleMaster &rhs)  = default; 
 
   /** 
       @brief initializes the runs  
@@ -41,13 +44,13 @@ public:
   /** 
       @brief starts the MCMC sampling   
    */ 
-  void run(); 
+  void simulate(); 
   /** 
       @brief initializes the config file 
    */ 
-  std::tuple<std::vector<std::unique_ptr<AbstractParameter> > , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
+  std::tuple<ParameterList , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
   processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
-  void initializeWithParamInitValues(TreeAln &tree , const std::vector<AbstractParameter*> &params , bool hasBl ) const ; 
+  void initializeWithParamInitValues(TreeAln &tree , const ParameterList &params , bool hasBl ) const ; 
   /** 
       @brief EXPERIMENTAL 
    */ 
@@ -68,11 +71,9 @@ public:
 
   void setParallelSetup(ParallelSetup* pl ) { _plPtr = pl; }
 
-  void synchronize( CommFlag flags )  ; 
-
 private: 
-  void printParameters(const TreeAln &traln, const std::vector<unique_ptr<AbstractParameter> > &params) const; 
-  void printProposals(const std::vector<unique_ptr<AbstractProposal> > &proposals, const std::vector<ProposalSet> &proposalSets  ) const ; 
+  void printParameters(const TreeAln &traln, const ParameterList &params) const; 
+  void printProposals( std::vector<unique_ptr<AbstractProposal> > &proposals,  std::vector<ProposalSet> &proposalSets, ParameterList &params  ) const ; 
   void printInitializedFiles() const; 
   std::vector<std::string> getStartingTreeStrings(); 
   void informPrint(); 
@@ -83,18 +84,19 @@ private:
   std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 
   std::vector<bool> initTrees(std::vector<TreeAln> &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
   bool initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
-  CLOCK::system_clock::time_point printDuringRun(nat gen) ; 
+  void printDuringRun(uint64_t gen) ; 
   std::string getOrCreateBinaryFile() const ; 
   void catchRunErrors() const ; 
 
 private:			// ATTRIBUTES 
   std::vector<CoupledChains> _runs; 
   ParallelSetup* _plPtr;  	// non-owning!
-  CLOCK::system_clock::time_point _initTime; 
   BlockRunParameters _runParams;  
   CommandLine _cl; 
-  CLOCK::system_clock::time_point _lastPrintTime; 
   DiagnosticsFile _diagFile; 
+
+  TimeTracker _timeTracker; 
+  TimeTracker _printTime; 
 };  
 
 #endif

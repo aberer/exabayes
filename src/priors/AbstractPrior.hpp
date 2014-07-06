@@ -7,12 +7,12 @@
 #include <cmath>
 #include <iostream>
 
-#include "math/Density.hpp"
+#include "Density.hpp"
 
-#include "math/Randomness.hpp"
-#include "model/TreeAln.hpp"
+#include "Randomness.hpp"
+#include "TreeAln.hpp"
 
-#include "parameters/ParameterContent.hpp"
+#include "ParameterContent.hpp"
 
 
 class AbstractPrior
@@ -29,9 +29,8 @@ public:
       prior.
   */
   virtual ParameterContent getInitialValue() const = 0; 
-  virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param , double myOld, double myNew ) const = 0; 
-
-  virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const = 0 ; 
+  virtual log_double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param , double myOld, double myNew ) const = 0; 
+  virtual ParameterContent drawFromPrior(Randomness &rand)  const = 0 ; 
   virtual log_double getLogProb( const ParameterContent &content ) const = 0; 
   virtual void print(std::ostream &out) const = 0;
 
@@ -39,7 +38,10 @@ public:
 
   virtual AbstractPrior* clone() const = 0;
 
-  virtual double getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const = 0; 
+  virtual double getFirstDerivative( const AbstractParameter& param) const = 0; 
+  
+  // only for internal branch lengths; this is very ugly, however we need this for maintaining numerical stability with > 300 partitions
+  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const  {assert(0)  ; return log_double(); }
 
   friend std::ostream& operator<<(std::ostream &out,  AbstractPrior* rhs)
   {

@@ -24,8 +24,8 @@ ConsensusTree::ConsensusTree(std::vector<std::string> files, double burnin, doub
 std::vector<Bipartition> ConsensusTree::getRefinedConsensusTree(const std::vector<Bipartition> &consensusBips, const std::vector<Bipartition> &minorityBips) const 
 {
   auto result = consensusBips; 
-  nat maxBipsNeeded =  2 * bipEx.getTaxa().size()  - 3 ; 
-  nat maxElem = bipEx.getTaxa().size(); 
+  auto maxBipsNeeded =  2 * nat(bipEx.getTaxa().size())  - 3 ; 
+  auto maxElem = bipEx.getTaxa().size(); 
   
   for(auto minBip : minorityBips)
     {
@@ -35,7 +35,7 @@ std::vector<Bipartition> ConsensusTree::getRefinedConsensusTree(const std::vecto
       auto isCompat = true; 
       for(auto &bip : result)
 	{
-	  isCompat &= bip.isCompatible(minBip, maxElem);
+	  isCompat &= bip.isCompatible(minBip, int(maxElem));
 	  if(not isCompat)
 	    break; 
 	}
@@ -54,7 +54,7 @@ std::string ConsensusTree::getConsensusTreeString( bool printNames) const
   const auto& bipHashes = bipEx.getBipartitionHashes();
 
   auto bip2Occ = std::unordered_map<Bipartition,nat>{}; 
-  nat maxBip = 2 * bipEx.getTaxa().size() - 3; 
+  auto maxBip = 2 * bipEx.getTaxa().size() - 3; 
 
   nat totalTreesAdded = 0; 
   for(auto &bipHash : bipHashes)
@@ -165,14 +165,14 @@ std::string ConsensusTree::getType() const
     }
   else 
     {
-      if(_threshold == 1 ) 
+      if( std::fabs(_threshold -1. )  < std::numeric_limits<double>::epsilon() ) 
 	type = "ConsensusStrict" ; 
-      else if( _threshold == .5)
+      else if( std::fabs( _threshold - 0.5 ) <  std::numeric_limits<double>::epsilon())
 	type = "ConsensusMajorityRule" ; 
       else 
 	{
 	  auto &&ss = std::ostringstream{}; 
-	  ss << "ConsensusThreshold" << std::setprecision(0) << std::fixed << nat(_threshold * 100); 
+	  ss << "ConsensusThreshold" << std::setprecision(0) << std::fixed << nat(_threshold * 100.); 
 	  type = ss.str();
 	}
     }

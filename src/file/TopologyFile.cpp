@@ -1,17 +1,17 @@
 #include "TopologyFile.hpp"
-#include "system/GlobalVariables.hpp"
-#include "system/extensions.hpp"
-#include "parameters/AbstractParameter.hpp"
+#include "GlobalVariables.hpp"
+#include "extensions.hpp"
+#include "AbstractParameter.hpp"
 #include "TreePrinter.hpp"
-#include "parameters/BranchLengthsParameter.hpp"
+#include "BranchLengthsParameter.hpp"
 
 #include <cassert>
 
 void genericExit(int code); 
 
-TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId, nat _paramNum, bool _hasManyTopoloFiles) 
-  : runid(runid)
-  , couplingId(couplingId)
+TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runidArg, nat couplingIdArg, nat _paramNum, bool _hasManyTopoloFiles) 
+  : runid(runidArg)
+  , couplingId(couplingIdArg)
   , paramNum(_paramNum)
   , hasManyTopoloFiles(_hasManyTopoloFiles)
 { 
@@ -86,7 +86,7 @@ std::streamoff TopologyFile::getPosBeforeEnd() const
 }
 
 
-void TopologyFile::sample(const TreeAln &traln, nat gen,  AbstractParameter* param)  
+void TopologyFile::sample(const TreeAln &traln, uint64_t gen,  AbstractParameter* param)  
 {    
   auto pos = getPosBeforeEnd(); 
 
@@ -109,7 +109,7 @@ void TopologyFile::sample(const TreeAln &traln, nat gen,  AbstractParameter* par
 }
 
 
-void TopologyFile::regenerate(std::string workdir, std::string prevId, nat gen) 
+void TopologyFile::regenerate(std::string workdir, std::string prevId, uint64_t gen ) 
 {
   auto&& fh = std::ofstream(fullFileName, std::fstream::out); 
 
@@ -138,15 +138,15 @@ void TopologyFile::regenerate(std::string workdir, std::string prevId, nat gen)
 	  while(line[cnt] == ' '  && cnt < line.size())
 	    ++cnt;
 
-	  auto&& ss = std::stringstream{} ; 
-	  ss.str(line.substr(cnt+1)); 
+	  auto&& ss1 = std::stringstream{} ; 
+	  ss1.str(line.substr(cnt+1)); 
 	  // tout << "no white:>" << ss.str() << "<" << std::endl; 
 	  auto found = std::string{} ;       
-	  getline(ss, found, ' '); 
+	  getline(ss1, found, ' '); 
 
 	  if(found.compare("tree") == 0)
 	    {	  
-	      getline(ss, found, ' ');       
+	      getline(ss1, found, ' ');       
 	      genFound = std::stoi(found.substr(4)); 
 	      // tout << "restoring file: at " << genFound << std::endl ; 
 	    }

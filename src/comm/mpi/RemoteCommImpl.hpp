@@ -1,14 +1,14 @@
 #ifndef _REMTE_COMM_IMPL_PARA_HPP
 #define _REMTE_COMM_IMPL_PARA_HPP
 
-#include <mpi.h>
+#include "MpiType.hpp"
 #include <vector>
 
 #include "common.h"
 
 class CommRequest; 
 
-#include "comm/RemoteComm.hpp"
+#include "RemoteComm.hpp"
 
 class RemoteComm::Impl
 {
@@ -16,6 +16,7 @@ public:
   typedef Impl SELF; 
  
   Impl() 
+    : _comm{MPI_COMM_WORLD}
   {
     MPI_Comm_dup(MPI_COMM_WORLD, &_comm);
   }
@@ -27,7 +28,7 @@ public:
 
   void waitAtBarrier() const; 
 
-  #include "comm/CommCore.hpp"
+  #include "CommCore.hpp"
 
   void createSendRequest(std::vector<char> array, int dest, int tag, CommRequest &req); 
   void createRecvRequest(int src, int tag, nat length, CommRequest& req ); 

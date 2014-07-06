@@ -45,6 +45,10 @@
 #include "pll.h"
 #include "pllInternal.h"
 
+#ifdef __MIC_NATIVE
+#include "mic_native.h"
+#endif
+
 /* the set of functions in here computes the log likelihood at a given branch (the virtual root of a tree) */
 
 /* includes for using SSE3 intrinsics */
@@ -935,10 +939,6 @@ static double evaluateCAT_FLEX_SAVE (const boolean fastScaling, int *ex1, int *e
 #endif
 
 
-
-
-
-
 /* This is the core function for computing the log likelihood at a branch */
 /** @ingroup evaluateLikelihoodGroup
     @brief Evaluate the log likelihood of a specific branch of the topology
@@ -1202,7 +1202,7 @@ void pllEvaluateIterative(pllInstance *tr, partitionList *pr, boolean getPerSite
           else
 	    calcDiagptable(z, states, categories, rateCategories, pr->partitionData[model]->EIGN, diagptable);
           
-#if (!defined(__SSE3) && !defined(__AVX))
+#if (!defined(__SSE3) && !defined(__AVX) && !defined(__MIC_NATIVE))
           
           /* generic slow functions, memory saving option is not implemented for these */
           
@@ -1214,7 +1214,7 @@ void pllEvaluateIterative(pllInstance *tr, partitionList *pr, boolean getPerSite
                                                 x1_start, x2_start, pr->partitionData[model]->tipVector,
                                                 tip, width, diagptable, states, pr->partitionData[model]->perSiteLikelihoods, getPerSiteLikelihoods);
           else
-            partitionLikelihood = evaluateGAMMA_FLEX(fastScaling, ex1, ex2, pr->partitionData[model]->wgt,
+              partitionLikelihood = evaluateGAMMA_FLEX(fastScaling, ex1, ex2, pr->partitionData[model]->wgt,
                                                 x1_start, x2_start, pr->partitionData[model]->tipVector,
                                                 tip, width, diagptable, states, pr->partitionData[model]->perSiteLikelihoods, getPerSiteLikelihoods);
 #else
@@ -1224,7 +1224,11 @@ void pllEvaluateIterative(pllInstance *tr, partitionList *pr, boolean getPerSite
 
           if(getPerSiteLikelihoods)
             {         
-              if(tr->rateHetModel == PLL_CAT)
+#ifdef __MIC_NATIVE
+			  // not supported on MIC!
+ 			  assert(0 && "Per-site LH calculations is not implemented on Intel MIC");
+#else
+        	  if(tr->rateHetModel == PLL_CAT)
                 {
                    if(tr->saveMemory)
                      partitionLikelihood = evaluateCAT_FLEX_SAVE(fastScaling, ex1, ex2, pr->partitionData[model]->rateCategory, pr->partitionData[model]->wgt,
@@ -1248,6 +1252,7 @@ void pllEvaluateIterative(pllInstance *tr, partitionList *pr, boolean getPerSite
                                                              x1_start, x2_start, pr->partitionData[model]->tipVector,
                                                              tip, width, diagptable, states, pr->partitionData[model]->perSiteLikelihoods, PLL_TRUE);
                 }
+#endif
             }
           else
             {
@@ -1259,6 +1264,18 @@ void pllEvaluateIterative(pllInstance *tr, partitionList *pr, boolean getPerSite
                 {         
                 case 4: /* DNA */
                   {
+
+#ifdef __MIC_NATIVE
+
+                  /* CAT & memory saving are not supported on MIC */
+
+                  assert(!tr->saveMemory);
+                  assert(tr->rateHetModel == PLL_GAMMA);
+
+                  partitionLikelihood =  evaluateGTRGAMMA_MIC(ex1, ex2, pr->partitionData[model]->wgt,
+                                              x1_start, x2_start, pr->partitionData[model]->tipVector,
+                                              tip, width, diagptable, fastScaling);
+#else
                     if(tr->rateHetModel == PLL_CAT)
                       {                           
                         if(tr->saveMemory)
@@ -1282,11 +1299,40 @@ void pllEvaluateIterative(pllInstance *tr, partitionList *pr, boolean getPerSite
                                                                   x1_start, x2_start, pr->partitionData[model]->tipVector,
                                                                   tip, width, diagptable);                                
                       }
+#endif
                   }
                   break;                                   
                 case 20: /* proteins */
                   {
-                    if(tr->rateHetModel == PLL_CAT)
+
+#ifdef __MIC_NATIVE
+
+                  /* CAT & memory saving are not supported on MIC */
+
+                  assert(!tr->saveMemory);
+                  assert(tr->rateHetModel == PLL_GAMMA);
+
+                  if(pr->partitionData[model]->protModels == PLL_LG4)
+                    partitionLikelihood =  evaluateGTRGAMMAPROT_LG4_MIC(pr->partitionData[model]->wgt,
+                                                                    x1_start, x2_start, pr->partitionData[model]->tipVector_LG4,
+                                                                    tip, width, diagptable);
+                  else
+                	partitionLikelihood =  evaluateGTRGAMMAPROT_MIC(ex1, ex2, pr->partitionData[model]->wgt,
+                                              x1_start, x2_start, pr->partitionData[model]->tipVector,
+                                              tip, width, diagptable, fastScaling);
+
+//                  printf("tip: %p, width: %d,  lh: %f\n", tip, width, partitionLikelihood);
+//                  int g;
+//                  if (x1_start)
+//					  for (g = 0; g < 20; ++g)
+//						  printf("%f \t", x1_start[g]);
+//                  printf("\n");
+//                  if (x2_start)
+//					  for (g = 0; g < 20; ++g)
+//						  printf("%f \t", x2_start[g]);
+#else
+
+                      if(tr->rateHetModel == PLL_CAT)
                       {                           
                         if(tr->saveMemory)
                           partitionLikelihood = evaluateGTRCATPROT_SAVE(fastScaling, ex1, ex2, pr->partitionData[model]->rateCategory, pr->partitionData[model]->wgt,
@@ -1316,6 +1362,7 @@ void pllEvaluateIterative(pllInstance *tr, partitionList *pr, boolean getPerSite
                                                                      tip, width, diagptable);           
                       }
                       }
+#endif
                   }
                   break;                            
                 default:

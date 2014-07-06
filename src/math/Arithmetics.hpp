@@ -34,5 +34,13 @@ namespace Arithmetics
   double getAutoCorrelation(const std::vector<double> &data, nat lag); 
 
   double getCoefficientOfVariation(const std::vector<double> &data) ; 
+
+  /** 
+      @brief calculates the sample skewness of data 
+   */ 
+  double getSkewness(const std::vector<double> &data); 
+
+  double getKahansSum2(const std::vector<double> &x); 
+  double getKahanSum(const std::vector<double> &x); 
 }
 #endif

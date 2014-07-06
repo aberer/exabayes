@@ -1,26 +1,26 @@
 #include <set>
 #include <iostream>
 
-#include "system/extensions.hpp"
-#include "system/RunFactory.hpp"
-#include "ProposalRegistry.hpp"
+#include "extensions.hpp"
+#include "RunFactory.hpp"
+#include "ProposalRegistry.hpp"	
 
-#include "proposers/AbstractProposer.hpp"
-#include "proposers/MultiplierProposer.hpp"
-#include "proposers/DirichletProposer.hpp"
-#include "proposers/SlidingProposer.hpp"
+#include "AbstractProposer.hpp"
+#include "MultiplierProposer.hpp"
+#include "DirichletProposer.hpp" 
+#include "SlidingProposer.hpp"
 
-#include "parameters/TopologyParameter.hpp"
-#include "parameters/BranchLengthsParameter.hpp"
-#include "parameters/FrequencyParameter.hpp"
-#include "parameters/RevMatParameter.hpp"
-#include "parameters/RateHetParameter.hpp"
+#include "TopologyParameter.hpp"
+#include "BranchLengthsParameter.hpp"
+#include "FrequencyParameter.hpp"
+#include "RevMatParameter.hpp"
+#include "RateHetParameter.hpp"
 
-#include "priors/DiscreteModelPrior.hpp"
-#include "priors/AbstractPrior.hpp"
-#include "priors/ExponentialPrior.hpp"
-#include "priors/UniformPrior.hpp"
-#include "priors/DirichletPrior.hpp"
+#include "DiscreteModelPrior.hpp"
+#include "AbstractPrior.hpp"
+#include "ExponentialPrior.hpp"
+#include "UniformPrior.hpp"
+#include "DirichletPrior.hpp"
 
 void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParameter> > &params, const TreeAln &traln ) const 
 {
@@ -201,7 +201,7 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
 }
 
 
-void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &priorInfo, std::vector<unique_ptr<AbstractParameter> > &variables)
+void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &priorInfo, ParameterList &variables)
 {
   auto& priors = priorInfo.getPriors();
 
@@ -224,7 +224,7 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 	    {
 	      if(not v->priorIsFitting(prior, traln))
 		{
-		  tout  << "You forced prior " << &prior << " to be applied to parameter  "  << v.get() << ". This is not possible. "  << std::endl; 
+		  tout  << "You forced prior " << &prior << " to be applied to parameter  "  << v << ". This is not possible. "  << std::endl; 
 		  exitFunction(-1, true);
 		}
 
@@ -258,12 +258,12 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 	}
       
       if(not foundPrior)
-	addStandardPrior(v.get(),traln); 
+	addStandardPrior(v,traln); 
     }
 }
 
 
-void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters)
+void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterList &allParameters)
 {
   // get all branch length pararemeters   
   auto blParameters = std::vector<unique_ptr<AbstractParameter> >{}; 
@@ -273,6 +273,7 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::v
 
   bool needsBl = false; 
   std::unordered_set<nat> myPartitions; 
+  
   for(auto &v: proposal->getPrimaryParameterView())
     {
       needsBl |=  ( v->getCategory() == Category::FREQUENCIES 
@@ -291,7 +292,8 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::v
 	  auto partitions =  blRandVar->getPartitions();
 	  if(std::any_of(partitions.begin(),partitions.end(), 
 			 [&](nat i){ return myPartitions.find(i) != myPartitions.end(); }))
-	    proposal->addSecondaryParameter(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
+	    proposal->addSecondaryParameter( blRandVar->getId() ); 
+	  // std::unique_ptr<AbstractParameter>(blRandVar->clone())
 	}
     }
 }
@@ -299,8 +301,8 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::v
 
 
 std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSet> > 
- RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
-			      std::vector<std::unique_ptr<AbstractParameter> > &params, const TreeAln &traln, bool componentWiseMH)
+RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+			     ParameterList  &params, const TreeAln &traln, bool componentWiseMH, ParallelSetup& pl)
 {
   auto proposals = std::vector<std::unique_ptr<AbstractProposal> >{} ; 
   auto resultPropSet = std::vector<ProposalSet >{} ; 
@@ -317,7 +319,7 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
       if( componentWiseMH && v->getCategory() != Category::TOPOLOGY )
 	continue; 
       
-      auto tmpResult = reg.getSingleParameterProposals(v->getCategory(), propConfig,  traln); 
+      auto tmpResult = reg.getSingleParameterProposals(v->getCategory(), propConfig,  traln, pl, params); 
 
       // remove proposals that are not meant for DNA/AA
       if(v->getCategory() == Category::SUBSTITUTION_RATES)
@@ -336,7 +338,7 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
       
       for(auto &p : tmpResult )
 	{
-	  p->addPrimaryParameter(std::unique_ptr<AbstractParameter>(v->clone()));
+	  p->addPrimaryParameter(v->getId());
 	  addSecondaryParameters(p.get(), params); 
 	}
 
@@ -366,13 +368,15 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 	case Category::FREQUENCIES:
 	case Category::RATE_HETEROGENEITY: 
 	case Category::AA_MODEL:	
-	  mashableParameters.push_back(v.get()); 
+	  mashableParameters.push_back(v); 
 	  break; 
 	case Category::BRANCH_LENGTHS:
 	  {
-	    mashableParameters.push_back(v.get()); 
+	    mashableParameters.push_back(v); 
 	    ++blCtr; 
 	  }
+	case Category::TOPOLOGY:
+	  break; 
 	default: 
 	  ;
 	}
@@ -387,7 +391,7 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 
       for(auto &elem : cat2param)
 	{
-	  auto proposalsForSet = reg.getSingleParameterProposals(elem.first, propConfig, traln);
+	  auto proposalsForSet = reg.getSingleParameterProposals(elem.first, propConfig, traln, pl,params );
 
 	  // filter out proposals that do not fit the current data
 	  // type of
@@ -397,10 +401,10 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 	      // bool isProtPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == AA_DATA; 
 	      bool isDNAPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).getDataType() == PLL_DNA_DATA; 
 	      auto tmp = decltype(proposalsForSet){}; 
-	      for(auto &elem : proposalsForSet )
+	      for(auto &elem2 : proposalsForSet )
 		{
-		  if( not ( elem->isForProteinOnly() &&  isDNAPartition ) ) // TODO more generic! 
-		    tmp.push_back(std::move(elem)); 
+		  if( not ( elem2->isForProteinOnly() &&  isDNAPartition ) ) // TODO more generic! 
+		    tmp.push_back(std::move(elem2)); 
 		}
 	      proposalsForSet.clear(); 
 	      proposalsForSet = std::move( tmp ) ; 
@@ -415,7 +419,7 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 	      for(auto &p : elem.second)
 		{
 		  auto proposalClone = std::unique_ptr<AbstractProposal>(proposalType->clone()); 
-		  proposalClone->addPrimaryParameter(std::unique_ptr<AbstractParameter>(p->clone()));
+		  proposalClone->addPrimaryParameter(p->getId());
 		  addSecondaryParameters(proposalClone.get(), params); 
 		  lP.push_back(std::move(proposalClone));		  
 		} 

@@ -7,17 +7,27 @@
 
 class CommRequest; 
 
-#include "comm/RemoteComm.hpp"
+#include "RemoteComm.hpp"
+#include "CommCoreNew.hpp"
 
 class RemoteComm::Impl
 {
   typedef Impl SELF; 
 
 public: 
-  Impl(){} ; 
-  Impl(const Impl& rhs)  {}; 
+  Impl()
+    : dummy{0}
+  {}  
+  Impl(const Impl& rhs)
+    : dummy{rhs.dummy}
+  {}
+
   Impl& operator=( Impl rhs); 
-  friend void swap(Impl &lhs, Impl& rhs){}; 
+  friend void swap(Impl &lhs, Impl& rhs)
+  {
+    std::swap(lhs.dummy, rhs.dummy); 
+  }; 
+
   ~Impl(){}; 
 
   void createSendRequest(std::vector<char> array, int dest, int tag, CommRequest& req);
@@ -25,11 +35,13 @@ public:
 
   void waitAtBarrier() const {} 
 
-#include "comm/CommCore.hpp"
+#include "CommCore.hpp"
 
   nat getNumberOfPhysicalNodes();
   static uint64_t _maxTagValue; 
-  
+
+private: 
+  nat dummy; 
 }; 
 
 #include "comm/dummy/RemoteCommImpl.tpp"

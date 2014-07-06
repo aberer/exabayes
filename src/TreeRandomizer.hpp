@@ -1,10 +1,11 @@
 #ifndef _TREE_RANDOMIZER_H
 #define _TREE_RANDOMIZER_H
 
-#include "math/Randomness.hpp"
-#include "model/TreeAln.hpp"
-
+class Randomness; 
 class ParallelSetup; 
+// class TreeAln; 
+
+#include "TreeAln.hpp"
 
 class TreeRandomizer
 {
@@ -51,3 +52,4 @@ private:
 
 
 #endif
+

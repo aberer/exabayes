@@ -1,11 +1,11 @@
 #include <cassert>
 
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 
 template<typename T> 
-auto  LocalComm::scatterVariableKnownLength( std::vector<T> allData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc, int root)   
-  -> std::vector<T>
+std::vector<T>
+LocalComm::scatterVariableKnownLength( std::vector<T> allData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc, int root)   
 {
   // does not need to be terrible efficient...(binary tree of course would be better) 
 
@@ -19,7 +19,7 @@ auto  LocalComm::scatterVariableKnownLength( std::vector<T> allData, std::vector
 
   if(myRank == root)
     {
-      for(int i = 0; i < size() ;++i)
+      for(auto i = 0; i < int(size()) ;++i)
 	{
 	  if(i == root)
 	    continue; 
@@ -43,8 +43,8 @@ auto  LocalComm::scatterVariableKnownLength( std::vector<T> allData, std::vector
 
 
 template<typename T>
-auto LocalComm::gatherVariableKnownLength(std::vector<T> myData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc , int root)   
-  -> std::vector<T>
+std::vector<T>
+LocalComm::gatherVariableKnownLength(std::vector<T> myData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc , int root)   
 {
   assert(root == 0); 
 
@@ -60,8 +60,8 @@ auto LocalComm::gatherVariableKnownLength(std::vector<T> myData, std::vector<int
 
 
 template<typename T> 
-auto LocalComm::broadcast(std::vector<T> array, int root ) 
-  -> std::vector<T>
+std::vector<T>
+LocalComm::broadcast(std::vector<T> array, int root ) 
 {
   if(size() == 1 )
     return array; 
@@ -81,7 +81,7 @@ std::vector<T> LocalComm::reduce(std::vector<T> data, int root )
   else 
     {
 
-      DATA_COMBINE_FUN reducer = [](  std::vector<T> &acc,  typename std::vector<T>::const_iterator beginDonator,   typename std::vector<T>::const_iterator endDonator)
+      DATA_COMBINE_FUN reducer = [](  std::vector<T> &acc,  typename std::vector<T>::const_iterator beginDonator, typename std::vector<T>::const_iterator endDonator)
 	{
 	  std::transform( 
 			 begin(acc), end(acc),
@@ -95,8 +95,8 @@ std::vector<T> LocalComm::reduce(std::vector<T> data, int root )
 }
 
 template<typename T> 
-auto LocalComm::gatherVariableLength(std::vector<T> myData, int root )  
-  ->std::vector<T> 
+std::vector<T> 
+LocalComm::gatherVariableLength(std::vector<T> myData, int root )  
 {
   assert(root == 0); 
   DATA_COMBINE_FUN gatherer = []( std::vector<T> &acc, typename std::vector<T>::const_iterator beginDonator,  typename std::vector<T>::const_iterator endDonator)
@@ -148,17 +148,17 @@ std::vector<T> LocalComm::commTreeDownAsync(std::vector<T> data, int root)
   assert(root == 0); 
   
   int myIdx = getIdx();
-  int myCol = getColor();
+  // int myCol = getColor();
   int myRank = getRank(); 
-  assert(root < size());
+  assert(nat(root) < size());
 
-  auto &myMsg = _newMessages.at(myIdx); 
+  // auto &myMsg = _newMessages.at(myIdx); 
 
   auto recvFrom = 0; 
   auto sendTo = std::vector<int>( );
 
   for( int offset = 1 ;
-       ( myRank % offset) == 0 && offset < size()  ;
+       ( myRank % offset) == 0 && size_t(offset) < size()  ;
        offset *= 2 )
     {
       if( (myRank % ( offset * 2 ) ) == 0 )
@@ -166,7 +166,7 @@ std::vector<T> LocalComm::commTreeDownAsync(std::vector<T> data, int root)
 	  // receive downwards 
 	  auto hisRank = myRank+offset; 
 	  
-	  if( size() <= hisRank )
+	  if( size() <= size_t(hisRank) )
 	    continue;
 	  
 	  if(hisRank != myRank)
@@ -208,17 +208,17 @@ std::vector<T> LocalComm::commTreeUpAsync(std::vector<T> data, int root, DATA_CO
   assert(root == 0); 
 
   int myIdx = getIdx();
-  int myCol = getColor();
+  // int myCol = getColor();
   int myRank = getRank(); 
-  assert(root < size());
+  assert(nat(root) < size());
 
-  auto &myMsg = _newMessages.at(myIdx); 
+  // auto &myMsg = _newMessages.at(myIdx); 
 
   auto sendTo = 0; 
   auto receiveFrom = std::vector<int>();
 
-  for( int offset = 1 ;
-       ( myRank % offset) == 0 && offset < size()  ;
+  for( auto offset = 1u ;
+       ( myRank % offset) == 0u && offset < size()  ;
        offset *= 2 )
     {
       if( (myRank % ( offset * 2 ) ) == 0 )
@@ -281,14 +281,14 @@ std::vector<T> LocalComm::commTreeUp(std::vector<T> data, int root, DATA_COMBINE
   assert(root == 0); 
 
   int myIdx = getIdx();
-  int myCol = getColor();
+  // int myCol = getColor();
   int myRank = getRank(); 
-  assert(root < size());
+  assert(root < int(size()));
 
   auto &myMsg = _newMessages.at(myIdx); 
 
   for( int offset = 1 ;
-       ( myRank % offset) == 0 && offset < size()  ;
+       ( myRank % offset) == 0 && offset < int(size())  ;
        offset *= 2 )
     {
       if( (myRank % ( offset * 2 ) ) == 0 )
@@ -296,7 +296,7 @@ std::vector<T> LocalComm::commTreeUp(std::vector<T> data, int root, DATA_COMBINE
 	  // receive downwards 
 	  auto hisRank = myRank+offset; 
 	  
-	  if( size() <= hisRank )
+	  if( int(size()) <= hisRank )
 	    continue;
 
 	  auto hisIdx = getIdx(getColor(), hisRank);

@@ -10,10 +10,10 @@
 #define   _LNL_RESTORER_H
 
 #include "pll.h"
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include "PartitionLikelihood.hpp"
 #include "ArrayOrientation.hpp"
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 
 
 class ArrayRestorer

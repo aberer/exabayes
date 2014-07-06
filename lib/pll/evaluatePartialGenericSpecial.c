@@ -251,8 +251,8 @@ static double evaluatePartialCAT_FLEX(int i, double ki, int counter,  traversalI
        a single site, thus we allocate states * mxtips space for storing probability values.
        Essentially  only (states * (mxtips - 2)) space would be required, but I was to lazy 
        to think if it has to be -1 or -2 here */
-    * lVector,   
-    * d,
+    * lVector = NULL,   
+    * d = NULL,
     lz, 
     term, 
     *x1, 
@@ -775,7 +775,7 @@ static double evaluatePartialGTRGAMMAPROT(int i, int counter,  traversalInfo *ti
   double   *x1, *x2; 
   int scale = 0, k, l, j;
   double 
-    *lVector,
+    *lVector = NULL,
     myEI[400]  __attribute__ ((aligned (PLL_BYTE_ALIGNMENT)));
 
   traversalInfo 
@@ -854,7 +854,7 @@ static double evaluatePartialGTRGAMMA(int i, int counter,  traversalInfo *ti, do
   double   *x1, *x2; 
   int scale = 0, k, l, j;
   double 
-    *lVector,
+    *lVector = NULL,
     myEI[16]  __attribute__ ((aligned (PLL_BYTE_ALIGNMENT)));
 
   traversalInfo 
@@ -1014,11 +1014,11 @@ static double evaluatePartialGTRCAT(int i, double ki, int counter,  traversalInf
 {
   double lz, term;       
   double  d[3];
-  double   *x1, *x2, *lVector; 
+  double   *x1, *x2, *lVector = NULL; 
   int scale = 0, k;
   traversalInfo *trav = &ti[0];
  
-  lVector = rax_posix_memalign ((void **) &lVector, PLL_BYTE_ALIGNMENT, sizeof(double) * 4 * mxtips);    
+  rax_posix_memalign ((void **) &lVector, PLL_BYTE_ALIGNMENT, sizeof(double) * 4 * mxtips);    
 
   assert(isTip(trav->pNumber, mxtips));
      
@@ -1164,7 +1164,7 @@ static double evaluatePartialGTRCATPROT(int i, double ki, int counter,  traversa
 {
   double lz, term;       
   double  d[20];
-  double   *x1, *x2, *lVector; 
+  double   *x1, *x2, *lVector = NULL; 
   int scale = 0, k;
 
   traversalInfo *trav = &ti[0];

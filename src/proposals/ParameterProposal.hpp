@@ -3,9 +3,9 @@
 
 #include <memory> 
 
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include "AbstractProposal.hpp"
-#include "proposers/AbstractProposer.hpp"
+#include "AbstractProposer.hpp"
 #include "ParameterProposal.hpp"
 
 
@@ -40,6 +40,7 @@ private:
   
   ParameterContent _savedContent; 
   ParameterContent _savedBinaryContent;
+  std::vector<double> _oldFCs; 
 }; 
 
 

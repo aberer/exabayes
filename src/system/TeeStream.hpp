@@ -7,6 +7,13 @@
 #include <vector>
 
 
+// START definition 
+template<typename T> std::ostream& operator<<(std::ostream& out, std::vector<T> elems); 
+template<typename T> std::ostream& operator<<(std::ostream& out, std::unordered_set<T> elems); 
+// END 
+
+
+
 template<typename T>
 std::ostream& operator<<(std::ostream& out, std::vector<T> elems)
 {
@@ -49,7 +56,7 @@ class TeeStream : public std::ostream
 public:   
   TeeStream(std::ostream &o1, std::ostream &o2, std::thread::id tid)
     : std::ostream(&tbuf)
-    ,tbuf(o1.rdbuf(), o2.rdbuf(), tid)
+    ,tbuf(*o1.rdbuf(), *o2.rdbuf(), tid)
   {}
 
   void disable(){tbuf.disable();}

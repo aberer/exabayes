@@ -1,7 +1,11 @@
 #include "RateHelper.hpp"
 
+#include "Arithmetics.hpp"
+
+
 #include <cmath>
 #include <iostream>
+
 
 
 
@@ -74,54 +78,13 @@ void RateHelper::convertRelativeToLast(std::vector<double> &values)
 }
 
 
-
-
-static double getKahansSum1(const std::vector<double> &cpy)
-{
-  double sum  = 0.; 
-  double error = 0.; 
-  
-  // kahans algorithm
-  for(auto v : cpy)
-    {
-      double y = v - error; 
-      double t = sum + v ; 
-      error = (t - sum ) - y ; 
-      sum = t; 
-    }
-
-  return sum; 
-}
-
-
-
-// second order kahan algorithm
-static double getKahansSum2(const std::vector<double> &x)
-{
-  double s = 0, cs  = 0, ccs = 0; 
-  for(nat i = 0; i < x.size() ; ++i)
-    {
-      double t = s + x[i]; 
-
-      double c = (std::fabs(s) >= std::fabs(x[i])) ?  (s - t ) + x[i]  : (x[i] - t ) + s ; 
-      s = t; 
-      t = cs + c; 
-      double cc  = (std::fabs(cs) >= std::fabs(c)) ?  (cs - t ) + c : (c - t ) + cs; 
-      cs = t ; 
-      ccs += cc; 
-    }
-  
-  return s + cs + ccs; 
-}
-
-
 double RateHelper::convertToSum1(std::vector<double> &values) 
 {
   // sorting reduces the error
   auto cpy = values; 
   std::sort(begin(cpy), end(cpy)); 
 
-  double sum = getKahansSum2(cpy) ; 
+  double sum = Arithmetics::getKahansSum2(cpy) ; 
 
   //  we do not loose precision here 
   for (auto &v : values) 
@@ -139,7 +102,7 @@ void RateHelper::convertToGivenSum(std::vector<double> &values, double givenSum)
 
 std::vector<double> RateHelper::getScaledValues(std::vector<double> values, double scParameter) 
 {
-  double scaler = scParameter * values.size() ;  
+  double scaler = scParameter * double(values.size()) ;  
   std::for_each(begin(values), end(values), [=](double &v){ v *= scaler; });
   return values; 
 }

@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 #include "ArrayOrientation.hpp"
 
 class TreeAln; 
@@ -12,13 +12,17 @@ class TreeAln;
 class ArrayPolicy
 {
 public: 
+  ArrayPolicy()
+    : partitionLnls{}
+  {}
+  
   virtual ~ArrayPolicy(){}
 
   virtual void imprintPolicy(const TreeAln &traln, ArrayOrientation &arrayOrient)  = 0; 
 
   void imprint(const TreeAln &traln, ArrayOrientation &arrayOrient) 
   {
-    prevLnl = traln.getTrHandle().likelihood; 
+    // prevLnl = traln.getTrHandle().likelihood; 
     partitionLnls = traln.getPartitionLnls(); 
     imprintPolicy(traln, arrayOrient); 
   }
@@ -55,7 +59,7 @@ public:
   virtual void enableRestoreGapVector(){}
 
 protected: 
-  double prevLnl; 
+  // double prevLnl; 
   std::vector<log_double> partitionLnls;
 }; 
 

@@ -48,6 +48,11 @@
 #include "pll.h"
 #include "pllInternal.h"
 
+#ifdef __MIC_NATIVE
+#include "mic_native.h"
+#endif
+
+
 #ifdef __SSE3
 #include <stdint.h>
 #include <xmmintrin.h>
@@ -131,8 +136,8 @@ const union __attribute__ ((aligned (PLL_BYTE_ALIGNMENT)))
 
 #endif
 
-static void pllGetTransitionMatrixNormal (pllInstance * tr, partitionList * pr, int model, nodeptr p, double * outBuffer);
-static void pllGetTransitionMatrixLG4 (partitionList * pr, int model, nodeptr p, double * outBuffer);
+static int pllGetTransitionMatrixNormal (pllInstance * tr, partitionList * pr, nodeptr p, int model, int rate, double * outBuffer);
+static int pllGetTransitionMatrixLG4 (partitionList * pr, nodeptr p, int model, double * outBuffer);
 
 extern const char dnaStateNames[4];     /**< @brief Array that contains letters for the four DNA base-pairs, i.e. 0 = A, 1 = C, 2 = G, 3 = T */
 extern const char protStateNames[20];   /**< @brief Array that contains letters for the 20 AA base-pairs */
@@ -227,6 +232,7 @@ makeP(double z1, double z2, double *rptr, double *EI,  double *EIGN, int numberO
     {
       d1[j] = EXP(rptr[i] * lz1[j]);
       d2[j] = EXP(rptr[i] * lz2[j]);
+
     }
 
     /* now fill the P matrices for the two branch length values */
@@ -296,16 +302,27 @@ makeP(double z1, double z2, double *rptr, double *EI,  double *EIGN, int numberO
     @param outBuffer Output buffer where to store the transition probability matrix
 
 */
-void pllGetTransitionMatrix (pllInstance * tr, partitionList * pr, int model, nodeptr p, double * outBuffer)
+int pllGetTransitionMatrix (pllInstance * tr, partitionList * pr, nodeptr p, int model, int rate, double * outBuffer)
 {
-  if (pr->partitionData[model]->dataType == PLL_AA_DATA && pr->partitionData[model]->protModels == PLL_LG4)
-    pllGetTransitionMatrixLG4 (pr, model, p, outBuffer);
+  if (tr->rateHetModel == PLL_CAT)
+   {
+     if (rate >= pr->partitionData[model]->numberOfCategories) return (PLL_FALSE);
+   }
   else
-    pllGetTransitionMatrixNormal (tr, pr, model, p, outBuffer);
+   {
+     if (rate >= 4) return (PLL_FALSE);
+   }
+
+  if (pr->partitionData[model]->dataType == PLL_AA_DATA && pr->partitionData[model]->protModels == PLL_LG4)
+    return (pllGetTransitionMatrixLG4 (pr, p, model, outBuffer));
+    
+    
+  return (pllGetTransitionMatrixNormal (tr, pr, p, model, rate, outBuffer));
 }
 
 
-static void pllGetTransitionMatrixLG4 (partitionList * pr, int model, nodeptr p, double * outBuffer)
+/* TODO: Fix this function according to pllGetTransitionMatrixNormal */
+static int pllGetTransitionMatrixLG4 (partitionList * pr, nodeptr p, int model, double * outBuffer)
 {
   int
     i, j, k,
@@ -334,74 +351,79 @@ static void pllGetTransitionMatrixLG4 (partitionList * pr, int model, nodeptr p,
          }
       }
    }
+  return (PLL_TRUE);
 }
 
-static void pllGetTransitionMatrixNormal (pllInstance * tr, partitionList * pr, int model, nodeptr p, double * outBuffer)
+static int pllGetTransitionMatrixNormal (pllInstance * tr, partitionList * pr, nodeptr p, int model, int rate, double * outBuffer)
 {
   int 
     i, j, k,
-    numberOfCategories,
+    /* numberOfCategories, */
     states = pr->partitionData[model]->states;
   double
     * d = (double *)rax_malloc(sizeof(double) * states),
     * rptr,
     * EI   = pr->partitionData[model]->EI,
-    * EIGN = pr->partitionData[model]->EIGN;
-
-
+    * EIGN = pr->partitionData[model]->EIGN,
+    * EV = pr->partitionData[model]->EV;
+  
+  double lz = (p->z[model] > PLL_ZMIN) ? log(p->z[model]) : log(PLL_ZMIN);                        
 
   if (tr->rateHetModel == PLL_CAT)
    {
      rptr               = pr->partitionData[model]->perSiteRates;
-     numberOfCategories = pr->partitionData[model]->numberOfCategories;
+     /* numberOfCategories = pr->partitionData[model]->numberOfCategories; */
    }
   else
    {
      rptr               = pr->partitionData[model]->gammaRates;
-     numberOfCategories = 4;
+     /* numberOfCategories = 4; */
    }
 
-  for (i = 0; i < numberOfCategories; ++ i)
-   {
-     /* exponentiate the rate multiplied by the branch */
-     for (j = 1; j < states; ++ j)
-      {
-        d[j] = EXP(rptr[i] * EIGN[j] * p->z[model]);
-      }
+  for (i = 0; i < states * states; ++ i) outBuffer[i] = 0;
 
-     /* now fill the P matrix for the branch length values */
+  d[0] = 1.0;
+  for (j = 1; j < states; ++ j)
+   {
+     d[j] = EXP(rptr[rate] * EIGN[j] * lz);
+   }
+
+  for (i = 0; i < states; ++ i)
+   {
      for (j = 0; j < states; ++ j)
       {
-        outBuffer[states * states * i + states * j] = 1.0;
-        for (k = 1; j < states; ++k)
+        for (k = 0; k < states; ++ k)
          {
-           outBuffer[states * states * i + states * j + k] = d[k] * EI[states * j + k];
+           outBuffer[states * i + j] += (d[k] * EI[states * i + k] * EV[states * j + k]);
          }
       }
    }
 
-  if (tr->saveMemory)
-   {
-     i = tr->maxCategories;
-     
-     for (j = 1; j < states; ++j)
-      {
-        d[j] = EXP(EIGN[j] * p->z[model]);
-      }
+  assert (!tr->saveMemory);
+  // TODO: Fix the following snippet
+  //if (tr->saveMemory)
+  // {
+  //   i = tr->maxCategories;
+  //   
+  //   for (j = 1; j < states; ++j)
+  //    {
+  //      d[j] = EXP(EIGN[j] * p->z[model]);
+  //    }
 
-     for (j = 0; j < states; ++j)
-      {
-        outBuffer[states * states * i + states * j] = 1.0;
-        for (k = 1; k < states; ++k)
-         {
-           outBuffer[states * states * i + states * j + k] = d[k] * EI[states * j + k];
-         }
-      }
-   }
+  //   for (j = 0; j < states; ++j)
+  //    {
+  //      outBuffer[states * states * i + states * j] = 1.0;
+  //      for (k = 1; k < states; ++k)
+  //       {
+  //         outBuffer[states * states * i + states * j + k] = d[k] * EI[states * j + k];
+  //       }
+  //    }
+  // }
 
   rax_free(d);
-}
 
+  return (PLL_TRUE);
+}
 
 
 /** @brief Compute two P matrices for two edges for the LG4 model
@@ -1615,8 +1637,6 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
         r_slot = tInfo->rNumber - tr->mxtips - 1;
       }
 
-    /* printf("eval: %d = %d,%d\n", p_slot, q_slot, r_slot);  */
-
     /* now loop over all partitions for nodes p, q, and r of the current traversal vector entry */
 
     for(model = 0; model < pr->numberOfPartitions; model++)
@@ -1624,8 +1644,6 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
       /* number of sites in this partition */
       size_t            
         width  = (size_t)pr->partitionData[model]->width;
-
-      /* printf("width for partition %d\t%d\n", model, width);  */
 
       /* this conditional statement is exactly identical to what we do in pllEvaluateIterative */
 
@@ -1934,7 +1952,7 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
               left, right, tr->saveMemory, tr->maxCategories, states);
 
 
-#if (!defined(__SSE3) && !defined(__AVX))
+#if (!defined(__SSE3) && !defined(__AVX) && !defined(__MIC_NATIVE))
         assert(!tr->saveMemory);
 
         /* figure out if we need to compute the CAT or GAMMA model of rate heterogeneity */
@@ -1949,7 +1967,7 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
          }
         else 
          {
-             newviewGAMMA_FLEX(tInfo->tipCase,
+            newviewGAMMA_FLEX(tInfo->tipCase,
                  x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
                  0, tipX1, tipX2,
                  width, left, right, wgt, &scalerIncrement, fastScaling, states, getUndetermined(pr->partitionData[model]->dataType) + 1);
@@ -1961,6 +1979,18 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
         switch(states)
         {               
         case 4: /* DNA */
+#ifdef __MIC_NATIVE
+
+              /* CAT & memory saving are not supported on MIC */
+
+              assert(!tr->saveMemory);
+              assert(tr->rateHetModel == PLL_GAMMA);
+
+              newviewGTRGAMMA_MIC(tInfo->tipCase,
+                                x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+                                ex3, tipX1, tipX2,
+                                width, left, right, wgt, &scalerIncrement, fastScaling);
+#else
           if(tr->rateHetModel == PLL_CAT)
             {                                
               
@@ -2002,6 +2032,7 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
                                                 width, left, right, wgt, &scalerIncrement, fastScaling,
                                                 x1_gap, x2_gap, x3_gap, 
                                                 x1_gapColumn, x2_gapColumn, x3_gapColumn);
+
 #else
               newviewGTRGAMMA_GAPPED_SAVE(tInfo->tipCase,
                                           x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
@@ -2023,9 +2054,33 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
                               width, left, right, wgt, &scalerIncrement, fastScaling);
 #endif
             }
+#endif
 
             break;                  
           case 20: /* proteins */
+
+#ifdef __MIC_NATIVE
+
+			/* CAT & memory saving are not supported on MIC */
+
+			assert(!tr->saveMemory);
+			assert(tr->rateHetModel == PLL_GAMMA);
+
+			if(pr->partitionData[model]->protModels == PLL_LG4)
+			{
+				  newviewGTRGAMMAPROT_LG4_MIC(tInfo->tipCase,
+	                    x1_start, x2_start, x3_start, pr->partitionData[model]->EV_LG4, pr->partitionData[model]->tipVector_LG4,
+	                    tipX1, tipX2,
+	                    width, left, right, wgt, &scalerIncrement);
+			}
+			else
+			{
+				  newviewGTRGAMMAPROT_MIC(tInfo->tipCase,
+						x1_start, x2_start, x3_start, pr->partitionData[model]->EV, pr->partitionData[model]->tipVector,
+						ex3, tipX1, tipX2,
+						width, left, right, wgt, &scalerIncrement, fastScaling);
+			}
+#else
 
             if(tr->rateHetModel == PLL_CAT)
             {
@@ -2056,7 +2111,7 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
 #endif
             }
             else
-	      {
+            {
 
               
 
@@ -2116,6 +2171,7 @@ void pllNewviewIterative (pllInstance *tr, partitionList *pr, int startIndex)
 #endif                 
             }   
         }
+#endif
             
             break;      
           default:
@@ -2595,6 +2651,86 @@ void newviewAncestralIterative(pllInstance *tr, partitionList *pr)
     }
 }
 
+/** @brief Computes the Conditional Likelihood Vector (CLV) for each rate of some internal node.
+
+    Computes the conditional likelihood vectors of node \a p for each rate, given the partition
+    index \a partition. The result is placed in the array \a outProbs, which must be pre-allocated
+    by the caller, and must be of size \a sites * categories * states * sizeof(double). The structure of
+    the resulting array is the following:
+    For each site we have \a categories * states cells of size \a double. Those cells are divided per rate
+    category, i.e. first \a states cells are the probabilities for the states of rate 1 (ordered alphabetically
+    by base name), next \a states cells for rate 2 and so on.
+
+    @param tr   PLL instance
+    @param pr     List of partitions
+    @param p Node for which we want to compute the CLV
+    @param partition   Index of the partition for which to compute the CLV
+    @param outProbs    Pre-allocated array where the result will be stored
+
+    @returns Returns \b PLL_TRUE on success, \b PLL_FALSE on failure
+
+    @todo       Fix to work with CAT
+*/
+int pllGetCLV (pllInstance * tr, partitionList * pr, nodeptr p, int partition, double * outProbs)
+{
+  size_t i, j, k, l;
+
+  if (tr->rateHetModel != PLL_GAMMA) return (PLL_FALSE);
+
+  int p_slot;
+  size_t states = (size_t)pr->partitionData[partition]->states;
+
+  double
+    *term = (double*)rax_malloc(sizeof(double) * states);
+
+  if(tr->useRecom)
+    p_slot = p->number;
+  else
+    p_slot = p->number - tr->mxtips - 1;
+
+  size_t width = (size_t) pr->partitionData[partition]->width;
+  double * diagptable = NULL;
+  double * rateCategories = pr->partitionData[partition]->gammaRates;
+  double * x3 = pr->partitionData[partition]->xVector[p_slot];
+  size_t categories = 4;
+
+  rax_posix_memalign ((void **)&diagptable, PLL_BYTE_ALIGNMENT, categories * states * states * sizeof (double));
+
+  calc_diagp_Ancestral(rateCategories, pr->partitionData[partition]->EI,  pr->partitionData[partition]->EIGN, categories, diagptable, states);
+
+  for (i = 0; i < width; ++ i)
+   {
+     double
+       *_v  = &x3[categories * states * i],
+       *clv = &outProbs[categories * states * i];
+
+     for (k = 0; k < categories; ++ k)
+      {
+        double
+         sum = 0.0,
+         *v = &(_v[states * k]);
+
+        for (l = 0; l < states; ++ l)
+         {
+           double al = 0.0;
+
+           for (j = 0; j < states; ++ j)
+             al += v[j] * diagptable[k * states * states + l * states + j];
+
+           term[l] = al;
+           sum += al;
+         }
+        for (l = 0; l < states; ++ l)
+           clv[k * categories + l] = term[l] / sum;
+      }
+   }
+
+  rax_free(term);
+  rax_free(diagptable);
+
+  return (PLL_TRUE);
+}
+
 /* this is very similar to pllUpdatePartials, except that it also computes the marginal ancestral probabilities 
    at node p. To simplify the code I am re-using newview() here to first get the likelihood vector p->x at p
    and then I deploy newviewAncestralIterative(tr); that should always only have a traversal descriptor of lenth 1,
@@ -2882,6 +3018,129 @@ void printAncestralState(nodeptr p, boolean printStates, boolean printProbs, pll
   rax_free(a);
 }
 
+void pllGetAncestralState(pllInstance *tr, partitionList *pr, nodeptr p, double * outProbs, char * outSequence)
+{
+#ifdef _USE_PTHREADS
+  size_t 
+    accumulatedOffset = 0;
+#endif
+
+  int
+    j,
+    k,
+    model,
+    globalIndex = 0;
+     
+  pllUpdatePartialsAncestral(tr, pr, p);
+  
+  /* allocate an array of structs for storing ancestral prob vector info/data */
+
+  ancestralState 
+    *a = (ancestralState *)rax_malloc(sizeof(ancestralState) * tr->originalCrunchedLength);   
+
+  /* loop over partitions */
+
+  for(model = 0; model < pr->numberOfPartitions; model++)
+    {
+      int            
+        i,
+        width = pr->partitionData[model]->upper - pr->partitionData[model]->lower,
+        states = pr->partitionData[model]->states;
+      
+      /* set pointer to ancestral probability vector */
+
+#ifdef _USE_PTHREADS
+      double
+        *ancestral = &tr->ancestralVector[accumulatedOffset];
+#else
+      double 
+        *ancestral = pr->partitionData[model]->ancestralBuffer;
+#endif        
+      
+      /* loop over the sites of the partition */
+
+      for(i = 0; i < width; i++, globalIndex++)
+        {
+          double
+            equal = 1.0 / (double)states,
+            max = -1.0;
+            
+          boolean
+            approximatelyEqual = PLL_TRUE;
+
+          int
+            max_l = -1,
+            l;
+          
+          char 
+            c;
+
+          /* stiore number of states for this site */
+
+          a[globalIndex].states = states;
+
+          /* alloc space for storing marginal ancestral probabilities */
+
+          a[globalIndex].probs = (double *)rax_malloc(sizeof(double) * states);
+          
+          /* loop over states to store probabilities and find the maximum */
+
+          for(l = 0; l < states; l++)
+            {
+              double 
+                value = ancestral[states * i + l];
+
+              if(value > max)
+                {
+                  max = value;
+                  max_l = l;
+                }
+              
+              /* this is used for discretizing the ancestral state sequence, if all marginal ancestral 
+                 probabilities are approximately equal we output a ? */
+
+              approximatelyEqual = approximatelyEqual && (PLL_ABS(equal - value) < 0.000001);
+              
+              a[globalIndex].probs[l] = value;                
+            }
+
+          
+          /* figure out the discrete ancestral nucleotide */
+
+          if(approximatelyEqual)
+            c = '?';      
+          else
+            c = getStateCharacter(pr->partitionData[model]->dataType, max_l);
+          
+          a[globalIndex].c = c;   
+        }
+
+#ifdef _USE_PTHREADS
+      accumulatedOffset += width * states;
+#endif            
+    }
+
+  /* print marginal ancestral probs to terminal */
+
+  for(k = 0; k < tr->originalCrunchedLength; k++)
+    {
+      for(j = 0; j < a[k].states; j++)
+        outProbs[k * a[k].states + j] = a[k].probs[j];
+    }
+ 
+  /* print discrete state ancestrakl sequence to terminal */
+
+  for(k = 0; k < tr->originalCrunchedLength; k++)          
+      outSequence[k] = a[k].c;
+  outSequence[tr->originalCrunchedLength] = 0;
+  
+  /* free the ancestral state data structure */
+          
+  for(j = 0; j < tr->originalCrunchedLength; j++)
+    rax_free(a[j].probs);  
+
+  rax_free(a);
+}
 /* optimized function implementations */
 
 

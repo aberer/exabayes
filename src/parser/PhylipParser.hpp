@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 
-#include "data-struct/Bipartition.hpp"
+#include "Bipartition.hpp"
 
 // class Bipartition; 
 typedef unsigned int nat; 
@@ -20,7 +20,7 @@ typedef unsigned int nat;
 
 namespace  Parser
 {
-#include "parser/axml-parser.hpp"
+#include "axml-parser.hpp"
 }
 #undef BYTE_ALIGNMENT
 
@@ -28,6 +28,9 @@ class PhylipParser
 {
 public: 
   PhylipParser(std::string _alnFile, std::string _modelFile, bool _haveModelFile); 
+  PhylipParser(const PhylipParser& rhs)  = delete; 
+  PhylipParser& operator=(const PhylipParser &rhs) = default ; 
+
   ~PhylipParser();
   void parse(); 
   void writeToFile(std::string fileName) ; 
@@ -36,9 +39,9 @@ private: 			// METHODS
   void writeWeights(std::ofstream &out); 
 
   template<typename T>
-  void myWrite(std::ostream& out, T* ptr, size_t length)
+  void myWrite(std::ostream& out, const T* ptr, size_t length)
   {
-    out.write((char*) ptr, sizeof(T) * length) ; 
+    out.write((const char*) ptr, sizeof(T) * length) ; 
   }
 
   void getyspace();
@@ -46,7 +49,7 @@ private: 			// METHODS
   void defaultInit();
   void parseHeader(FILE *INFILE);
   Parser::boolean setupTree ();
-  void checkTaxonName(char *buffer, int len);
+  void checkTaxonName(char *buffer, size_t len );
   void parsePartitions(); 
   void parseSinglePartition(std::string dataType); 
   void uppercase (int *chptr);
@@ -84,7 +87,7 @@ private: 			// ATTRIBUTES
 
   bool _compress; 		// an option 
   nat _numTax; 
-  nat _numSites; 
+  uint64_t _numSites; 
 
   unsigned int myMask32[32]; 
   std::vector<std::string> protModels; 

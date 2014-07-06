@@ -1,6 +1,6 @@
 #include "Branch.hpp"
 #include "TreeAln.hpp"
-#include "parameters/AbstractParameter.hpp"
+#include "AbstractParameter.hpp"
 #include <limits>
 
 
@@ -143,14 +143,17 @@ bool Branch<TYPE>::equals(const Branch &rhs, BranchEqualFlag flags) const
     result |= (rhs.thatNode == thisNode) && (rhs.thisNode == thatNode); 
 
   
-  if(std::is_same<TYPE, std::vector<double>>::value || std::is_same<TYPE,double>::value)
-    {
+  
+  // if(std::is_same<TYPE, std::vector<double>>::value || std::is_same<TYPE,double>::value)
+  //   {
       if( (flags & BranchEqualFlag::WITH_LENGTH) != BranchEqualFlag::WITHOUT_ANYTHING)
 	{
-	  for(nat i = 0; i < rhs.lengths.size(); ++i)
-	    result &= (rhs.lengths[i] == lengths[i]) ;  
+	  result &= this->lenEqual(rhs) ; 
+	  // for(nat i = 0; i < rhs.lengths.size(); ++i)
+	    // result &= 
+	    // result &= (rhs.lengths[i] == lengths[i]) ;  
 	}
-    }
+    // }
 
   return result; 
 }
@@ -166,10 +169,10 @@ bool Branch<TYPE>::equalsUndirected(const Branch &rhs) const
 template<typename TYPE>
 BranchPlain Branch<TYPE>::getThirdBranch(const TreeAln &traln, const Branch& rhs ) const
 {
-  int node = getIntersectingNode(rhs); 
-  assert(not traln.isTipNode(traln.getTrHandle().nodep[node])); 
+  int aNode = getIntersectingNode(rhs); 
+  assert(not traln.isTipNode(traln.getTrHandle().nodep[aNode])); 
 
-  nodeptr p = traln.getNode(node); 
+  nodeptr p = traln.getNode(aNode); 
   nodeptr q = p->back,
     q1 = p->next->back,
     q2 = p->next->next->back; 

@@ -46,6 +46,7 @@
 #include "pll.h"
 #include "pllInternal.h"
 
+/*
 static boolean treeNeedString(const char *fp, char c1, int *position)
 {
   char 
@@ -70,7 +71,6 @@ static boolean treeNeedString(const char *fp, char c1, int *position)
       return PLL_FALSE;
   }
 } 
-
 
 
 static boolean treeLabelEndString (char ch)
@@ -139,7 +139,6 @@ static boolean  treeFlushLabelString(const char *fp, int *position)
 { 
   return  treeGetLabelString(fp, (char *) NULL, (int) 0, position);
 } 
-
 
 static boolean treeProcessLengthString (const char *fp, double *dptr, int *position)
 { 
@@ -276,7 +275,6 @@ static boolean addElementLenString(const char *fp, pllInstance *tr, nodeptr p, i
 
 
 
-
 void treeReadTopologyString(char *treeString, pllInstance *tr)
 { 
   char 
@@ -356,3 +354,4 @@ void treeReadTopologyString(char *treeString, pllInstance *tr)
   printf("Tree parsed\n");
 
 } 
+*/

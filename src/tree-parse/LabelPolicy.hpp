@@ -1,7 +1,7 @@
 #ifndef INTEGER_LABEL_READER
 #define INTEGER_LABEL_READER
 
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 #include <unordered_map>
 #include <iostream>
 #include <cassert>
@@ -27,6 +27,11 @@ void setLabelMap(std::unordered_map<std::string,nat> map) {}
 class NameLabelReader
 {
 public: 
+  NameLabelReader()
+    : _name2id{}
+  {
+  }
+
   nat readLabel(std::istream &in)
   {
     auto label = std::string{}; 

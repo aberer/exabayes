@@ -4,7 +4,7 @@
 #include <map>
 
 #include "common.h"
-#include "model/Partition.hpp"
+#include "Partition.hpp"	
 
 struct Assignment
 {
@@ -31,8 +31,9 @@ struct PartInfo
 class PartitionAssignment
 {
 public: 
-  explicit PartitionAssignment(nat size )
+  explicit PartitionAssignment(size_t size )
     : _numProc(size)
+    , _proc2assignment{}
   {
   }
 
@@ -41,9 +42,9 @@ public:
 
   void assign(const std::vector<Partition>& pass); 
   const std::multimap<nat,Assignment>& getAssignment() const {return _proc2assignment; }
-  std::pair< std::vector<int>,std::vector<int> > getCountsAndDispls(nat) const ; 
+  std::pair< std::vector<int>,std::vector<int> > getCountsAndDispls(size_t bla) const ; 
 
-  nat getNumProc() const {return _numProc; }
+  size_t getNumProc() const {return _numProc; }
 
   auto getNumPartPerProcess() const -> std::vector<nat>; 
   auto getSitesPerProcess() const  -> std::vector<nat>; 
@@ -55,7 +56,7 @@ private: 			// METHODS
   void _assignToProcPartially(PartInfo p, nat proc, std::vector<nat> &numAssigned, std::vector<nat> &sizeAssigned, nat offset, nat numElem) ; 
   
 private: 			// ATTRIBUTES
-  nat _numProc; 
+  size_t _numProc; 
   std::multimap<nat,Assignment> _proc2assignment;
 }; 
 

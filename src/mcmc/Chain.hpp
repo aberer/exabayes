@@ -1,10 +1,3 @@
-/**
-   @brief represents a chain 
-
-   notice: the chain currently is in an intermediate stage to full c++
-   conversion. That's why we have two public regions. 
- */ 
-
 #ifndef _CHAIN_H
 #define  _CHAIN_H
 
@@ -13,16 +6,16 @@
 #include <unordered_map>
 #include <memory>
 
-#include "proposals/ProposalSet.hpp"
-#include "priors/PriorBelief.hpp"
-#include "eval/LikelihoodEvaluator.hpp"
-#include "proposals/AbstractProposal.hpp"
+#include "ProposalSet.hpp"
+#include "PriorBelief.hpp"
+#include "LikelihoodEvaluator.hpp"
+#include "AbstractProposal.hpp"
 
-#include "file/TopologyFile.hpp"
-#include "file/ParameterFile.hpp"
-#include "system/Serializable.hpp"
+#include "TopologyFile.hpp"
+#include "ParameterFile.hpp"
+#include "Serializable.hpp"
 
-#include "comm/CommFlag.hpp"
+#include "CommFlag.hpp"
 
 class TreeAln; 
 class AbstractProposal; 
@@ -31,11 +24,12 @@ class AbstractProposal;
 class Chain : public Serializable
 {
 public: 
-  Chain(randKey_t seed, const TreeAln &_traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, 
-	std::vector<ProposalSet> proposalSets, LikelihoodEvaluator eval, bool isDryRun);   
+  Chain(randKey_t seed, const TreeAln &_traln, ParameterList params, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::vector<ProposalSet> proposalSets, LikelihoodEvaluator eval, bool isDryRun);   
   Chain( const Chain& rhs)   ; 
   Chain( Chain&& rhs)  = default ; 
   Chain& operator=( Chain rhs) ; 
+
+  // void setParamsAndProposals( ,); 
 
   /** 
       @brief apply saved parameter contents to the tree structure
@@ -64,8 +58,7 @@ public:
   /** 
       @brief extracts the variables of a chain into a sorted array      
    */ 
-  std::vector<AbstractParameter*> extractParameters() const ; 
-  std::vector<AbstractParameter*> extractSortedParameters() const ; 
+  const ParameterList& getParameterList() const {return _params; }
   /** 
       @brief take a sample from the chain 
    */ 
@@ -79,7 +72,7 @@ public:
    */ 
   void serializeConditionally( std::ostream& out, CommFlag commFlags) const ; 
 
-  void reinitPrior(){_prior.initialize(_traln, extractParameters());}
+  void reinitPrior(){_prior.initialize(_traln, _params );}
 
   // getters and setters 
   log_double getBestState() const {return _bestState; }
@@ -95,7 +88,7 @@ public:
   void setHeatIncrement(nat cplId) {_couplingId = cplId  ;}
   void setRunId(nat id) {_runid = id; }
   double getDeltaT() {return _deltaT; }
-  nat getGeneration() const {return _currentGeneration; }
+  uint64_t getGeneration() const {return _currentGeneration; }
   log_double getLikelihood() const {return _traln.getLikelihood(); }
   void setLikelihood(log_double lnl) { _traln.setLikelihood(lnl); } 
   void setLnPr(log_double lnPr) { _lnPr = lnPr;  }
@@ -120,11 +113,17 @@ public:
   virtual void deserialize( std::istream &in ); 
   virtual void serialize( std::ostream &out) const ; 
 
+  friend std::ostream& operator<<(std::ostream& out, const Chain &rhs); 
+  
+  void applyParameterContents( std::unordered_map<AbstractParameter*,ParameterContent> param2content)  ; 
+
+  // HACK 
+  void resetParamPtr(); 
+
 private : 			// METHODS 
   AbstractProposal& drawProposalFunction(Randomness &rand);
   ProposalSet& drawProposalSet( Randomness &rand); 
   void printArrayStart(); 
-  void initProposalsFromStream(std::istream& in);
 
   void stepSingleProposal(); 
   void stepSetProposal();
@@ -135,7 +134,7 @@ private: 			// ATTRIBUTES
   int _runid; 
   int _tuneFrequency; 		// TODO should be have per-proposal tuning?   
   log_double _hastings;  		// logged!
-  nat _currentGeneration; 
+  uint64_t _currentGeneration; 
   /// indicates how hot the chain is (i = 0 => cold chain), may change!
   nat _couplingId;					     // CHECKPOINTED 
   std::vector< std::unique_ptr<AbstractProposal> > _proposals; 
@@ -150,8 +149,7 @@ private: 			// ATTRIBUTES
   // suspending and resuming the chain   
   log_double _lnPr; 	
 
-  // friends 
-  friend std::ostream& operator<<(std::ostream& out, const Chain &rhs); 
+  ParameterList _params; 
 }; 
 
 #endif

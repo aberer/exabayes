@@ -12,16 +12,16 @@ public:
   virtual void print(std::ostream& out ) const  ; 
   virtual ParameterContent getInitialValue() const; 
 
-  virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const {assert(0); return ParameterContent{}; } ; 
+  virtual ParameterContent drawFromPrior(Randomness &rand)  const {assert(0); return ParameterContent{}; } ; 
 
-  virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const; 
+  virtual log_double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const; 
 
   virtual AbstractPrior* clone() const { return new  UniformPrior(*this) ; }
 
   double getMin() const {return minVal; }
   double getMax() const {return maxVal; }
 
-  double getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const; 
+  double getFirstDerivative( const AbstractParameter& param) const; 
 
 private: 
   double minVal; 

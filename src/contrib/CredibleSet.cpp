@@ -35,11 +35,11 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
     }; 
   std::sort(sortedBipOcc.begin(), sortedBipOcc.end(), sortFun ); 
 
-  auto hashFun = [](const std::vector<nat> &tree) -> nat 
+  auto hashFun = [](const std::vector<nat> &tree) -> size_t 
     {
-      nat result = 0; 
+      size_t result = 0u; 
       for(nat i = 0; i < tree.size() ;++i)
-	result ^= std::hash<nat>()(tree.at(i)); 
+	result ^= std::hash<nat>()( tree.at(i)); 
       return result; 
     }; 
 

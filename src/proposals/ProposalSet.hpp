@@ -20,7 +20,7 @@
 #define PROPOSAL_SET
 
 #include <iostream>
-#include "proposals/AbstractProposal.hpp"
+#include "AbstractProposal.hpp"
 
 class ProposalSet : public Serializable
 {
@@ -28,7 +28,7 @@ public:
   // life cycle 
   ProposalSet(double relWeight, std::vector<std::unique_ptr<AbstractProposal>> proposals); 
   ProposalSet(const ProposalSet &rhs);
-  ProposalSet& operator=(ProposalSet rhs); 
+  ProposalSet& operator=(const ProposalSet &rhs); 
   /** 
       @brief prints the proposal set    
    */ 
@@ -41,6 +41,8 @@ public:
   
   nat numerateProposals(nat ctr); 
 
+  void setParameterListPtr(ParameterList* pPtr);  
+
   double getRelativeWeight() const {return relativeWeight; }
   std::vector<AbstractProposal*> getProposalView() const;  
 
@@ -50,8 +52,8 @@ public:
   friend std::ostream& operator<<(std::ostream& out, const ProposalSet &rhs); 
 
 private: 
-  std::vector<std::unique_ptr<AbstractProposal> > proposals;   
   double relativeWeight; 
+  std::vector<std::unique_ptr<AbstractProposal> > proposals;   
 }; 
 
 

@@ -5,8 +5,11 @@
 
 class ExaBlock  : public NxsBlock
 {
-protected: 
-  double parseScientificDouble(NxsToken& token) ; 
+
+protected:
+  double parseScientificDouble(NxsToken& token) const  ; 
+  bool convertToBool(NxsString &string) const ; 
+
 
 }; 
 

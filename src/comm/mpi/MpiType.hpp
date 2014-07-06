@@ -1,6 +1,7 @@
 #ifndef _MY_123_MPI_TYPE_HPP
 #define _MY_123_MPI_TYPE_HPP
 
+#pragma GCC system_header
 #include <mpi.h>
 
 template<typename T>  

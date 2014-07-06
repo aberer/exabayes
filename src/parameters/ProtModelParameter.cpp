@@ -1,5 +1,5 @@
 #include "ProtModelParameter.hpp" 
-#include "model/ProtModel.hpp"
+#include "ProtModel.hpp"
 
 
 void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content) const 

@@ -12,16 +12,17 @@ DivTimeProposal::DivTimeProposal(   )
 void DivTimeProposal::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   assert(0); 
+  return;
 } 
 
-void DivTimeProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
+ void DivTimeProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {
   // trivial full evaluaet (just chekc the toher proposals )
   assert(0); 
 } 
 
 
-void DivTimeProposal::resetState(TreeAln &traln) 
+ void DivTimeProposal::resetState(TreeAln &traln) 
 {
   // reset the previous state of traln 
   assert(0); 
@@ -60,6 +61,7 @@ std::pair<BranchPlain,BranchPlain> DivTimeProposal::prepareForSetExecution(TreeA
 {
   // TODO implement, if you want to have proposal sets (not necessary iniitiallyz)
   assert(0); 
+  return std::make_pair(BranchPlain(), BranchPlain());
 } 
 
 

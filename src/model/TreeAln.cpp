@@ -1,34 +1,61 @@
+#pragma GCC diagnostic ignored "-Werror"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <sstream>
 #include <cassert>
 #include <cstring>
 #include <unordered_set>
 
-#include "system/ByteFile.hpp"
+#include "ByteFile.hpp"
 
 #include "RateHelper.hpp"
-#include "parameters/BranchLengthsParameter.hpp"
-#include "parameters/AbstractParameter.hpp"
+#include "BranchLengthsParameter.hpp"
+#include "AbstractParameter.hpp"
 #include "TreeRandomizer.hpp"
 #include "TreeAln.hpp"
-#include "system/GlobalVariables.hpp"
-#include "system/BoundsChecker.hpp"
+#include "GlobalVariables.hpp"
+#include "BoundsChecker.hpp"
 #include "TreePrinter.hpp"
 #include "Partition.hpp"
 
+// #define PRINT_LIKESPR_INFO
 
 using std::cout;
 using std::endl; 
 
 
-TreeAln::TreeAln(nat numTax, bool isSaveMemorySEV)
-  : _isSaveMemorySEV(isSaveMemorySEV)
+TreeAln::TreeAln(size_t numTax, bool useSEV)
+  :  _partitions{}
+  , _partitionListResource{}
+  , _partitionPtrs{}
+  , _tr{}
+  , _taxa{}
+  , _bls{}
+  , _traversalInfo{}
+  , _nodes{}
+  , _nodeptrs{}
+  , _ti{}
+  , _execModel{}
+  , _parsimonyScore{}
+  , _isSaveMemorySEV(useSEV)
 {
   initialize(numTax); 		// must be first 
 }
 
 
 TreeAln::TreeAln( const TreeAln& rhs)
-  : _taxa(rhs._taxa)
+  :  _partitions{}
+  , _partitionListResource{}
+  , _partitionPtrs{}
+  , _tr{}
+  , _taxa{rhs._taxa}
+  , _bls{}
+  , _traversalInfo{}
+  , _nodes{}
+  , _nodeptrs{}
+  , _ti{}
+  , _execModel{}
+  , _parsimonyScore{}
   , _isSaveMemorySEV(rhs._isSaveMemorySEV)
 {
   initialize(rhs.getNumberOfTaxa()); // must be first 
@@ -74,7 +101,7 @@ void swap(TreeAln& lhs, TreeAln& rhs )
 }
 
 
-void TreeAln::initialize(nat numTax)
+void TreeAln::initialize(size_t numTax)
 {
   memset(&_tr,0,sizeof(pllInstance)); 
 
@@ -97,7 +124,7 @@ void TreeAln::initialize(nat numTax)
   _tr.constrained = PLL_FALSE;
   _tr.gapyness = 0.0; 
   _tr.useMedian = PLL_FALSE;
-  _tr.mxtips = numTax; 
+  _tr.mxtips = nat(numTax); 
 
   _tr.fastParsimony = PLL_FALSE; 
   _tr.fastScaling = PLL_TRUE; 
@@ -123,7 +150,7 @@ void TreeAln::initialize(nat numTax)
     {
       auto p = &(*p0); 
       ++p0; 
-      p->hash = std::hash<int>()(i); // necessary?
+      p->hash = static_cast<hashNumberType>(std::hash<int>()(i)); // necessary?
       p->x      =  0;
       p->xBips  = 0;
       p->number =  i;
@@ -290,7 +317,9 @@ auto  TreeAln::pruneSubtree(const BranchPlain &subtree, const BranchPlain &prune
   // cut the subtree  
   detachNode(subtree.findNodePtr(*this)); 
 
+#ifdef PRINT_LIKESPR_INFO
   tout << "PRUNE: " << SHOW(subtree) << SHOW(result) << SHOW(newBranch.toPlain()) << std::endl; 
+#endif
 
   return std::make_tuple(result, newBranch.toPlain()); 
 } 
@@ -326,7 +355,9 @@ void TreeAln::insertSubtree(const BranchPlain &subtree, const BranchPlain& inser
   setBranch(branchToCreate, params); 
   setBranch(otherBranchToCreate, params); 
 
+#ifdef PRINT_LIKESPR_INFO
   tout << "INSERT: " << SHOW(subtree) << SHOW(insertBranch) << SHOW(branchToCreate) << std::endl; 
+#endif
 }
 
 
@@ -410,7 +441,7 @@ nodeptr TreeAln::getUnhookedNode(int number)
 }
 
 
-nat TreeAln::getNumberOfPartitions() const
+size_t TreeAln::getNumberOfPartitions() const
 {
   return _partitions.size(); 
 }
@@ -472,7 +503,7 @@ void TreeAln::setPartitionLnls(const std::vector<log_double> partitionLnls)
 
 void TreeAln::initRevMat(nat model)
 {
-  initReversibleGTR(&getTrHandle(), &(getPartitionsHandle()) , model); 
+  pllInitReversibleGTR(&getTrHandle(), &(getPartitionsHandle()) , model); 
 }
 
 
@@ -516,6 +547,8 @@ void TreeAln::setBranch(const BranchLength& branch, const AbstractParameter* par
 
 void TreeAln::setBranch(const BranchLengths& branch, const std::vector<AbstractParameter*>params)
 {
+  // tout << "setting2 " << branch << std::endl; 
+
   assert(BoundsChecker::checkBranch(branch)); 
   assert(branch.exists(*this)); 
 
@@ -547,7 +580,7 @@ void TreeAln::setAlpha(double alpha,  nat model)
 void TreeAln::discretizeGamma(nat model)
 {
   auto& partition =  getPartition(model).getHandle(); 
-  makeGammaCats(partition.alpha, partition.gammaRates, Partition::maxCategories, _tr.useMedian);
+  pllMakeGammaCats(partition.alpha, partition.gammaRates, Partition::maxCategories, _tr.useMedian);
 }
 
 
@@ -616,24 +649,6 @@ std::pair<BranchPlain,BranchPlain> TreeAln::getDescendents(const BranchPlain &b)
 } 
 
 
-double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) const 
-{
-  double result = 0; 
-  auto sum = double{0.}; 
-
-  for(auto &p :partitions)
-    {
-      auto& partition =  getPartition(p);
-      result += partition.getFracChange()  * partition.getPartitionContribution();  
-      sum += partition.getPartitionContribution(); 
-      assert(partition.getPartitionContribution() > 0 ) ; 
-      assert( partition.getFracChange() > 0  ); 
-    }
-
-  return result / sum   ; 
-}
-
-
 nat TreeAln::getDepth(const BranchPlain &b) const 
 {
   if(b.isTipBranch(*this))
@@ -669,10 +684,10 @@ std::vector<nat> TreeAln::getLongestPathBelowBranch(const BranchPlain &b) const
 }
 
 
-std::vector<nat> TreeAln::getNeighborsOfNode( nat node ) const 
+std::vector<nat> TreeAln::getNeighborsOfNode( nat aNode ) const 
 {
   auto result = std::vector<nat>{};
-  auto nodePtr = getNode(node); 
+  auto nodePtr = getNode(aNode); 
   if(isTipNode(nodePtr))
     result.push_back(nodePtr->back->number);
   else 
@@ -741,14 +756,14 @@ std::vector<BranchPlain> TreeAln::extractBranches() const
 
   for(int i = getNumberOfTaxa() + 1 ; i < last ; ++i)
     {
-      auto node = getNode(i); 
+      auto aNode = getNode(i); 
       
-      if( node->back->number < i )
-	result.emplace_back(i,node->back->number); 
-      if(node->next->back->number < i)
-	result.emplace_back(i,node->next->back->number); 
-      if(node->next->next->back->number < i)
-	result.emplace_back(i,node->next->next->back->number); 
+      if( aNode->back->number < i )
+	result.emplace_back(i,aNode->back->number); 
+      if(aNode->next->back->number < i)
+	result.emplace_back(i,aNode->next->back->number); 
+      if(aNode->next->next->back->number < i)
+	result.emplace_back(i,aNode->next->next->back->number); 
     }
 
   assert(result.size() == getNumberOfBranches());
@@ -764,14 +779,14 @@ std::vector<BranchLength> TreeAln::extractBranches( const AbstractParameter* par
 
   for(int i = getNumberOfTaxa() + 1 ; i < int(getNumberOfNodes() + 1 )   ; ++i)
     {
-      auto node = getNode(i); 
+      auto aNode = getNode(i); 
       
-      if( node->back->number < i )
-	result.emplace_back( getBranch(BranchPlain(   i,node->back->number ),param) ); 
-      if(node->next->back->number < i)
-	result.emplace_back( getBranch(BranchPlain(i,node->next->back->number), param) ); 
-      if(node->next->next->back->number < i)
-	result.emplace_back( getBranch(BranchPlain( i,node->next->next->back->number ),param) );  
+      if( aNode->back->number < i )
+	result.emplace_back( getBranch(BranchPlain(   i,aNode->back->number ),param) ); 
+      if(aNode->next->back->number < i)
+	result.emplace_back( getBranch(BranchPlain(i,aNode->next->back->number), param) ); 
+      if(aNode->next->next->back->number < i)
+	result.emplace_back( getBranch(BranchPlain( i,aNode->next->next->back->number ),param) );  
    }
 
   assert(result.size() == getNumberOfBranches());
@@ -785,14 +800,14 @@ std::vector<BranchLengths> TreeAln::extractBranches( const std::vector<AbstractP
 
   for(int i = getNumberOfTaxa() + 1 ; i < int(getNumberOfNodes() + 1 )  ; ++i)
     {
-      auto node = getNode(i); 
+      auto aNode = getNode(i); 
       
-      if( node->back->number < i )
-	result.emplace_back(  getBranch(BranchPlain(   i,node->back->number ),param) ); 
-      if(node->next->back->number < i)
-	result.emplace_back(  getBranch(BranchPlain(i,node->next->back->number), param)); 
-      if(node->next->next->back->number < i)
-	result.emplace_back( getBranch(BranchPlain( i,node->next->next->back->number ),param) ); 
+      if( aNode->back->number < i )
+	result.emplace_back(  getBranch(BranchPlain(   i,aNode->back->number ),param) ); 
+      if(aNode->next->back->number < i)
+	result.emplace_back(  getBranch(BranchPlain(i,aNode->next->back->number), param)); 
+      if(aNode->next->next->back->number < i)
+	result.emplace_back( getBranch(BranchPlain( i,aNode->next->next->back->number ),param) ); 
     }
 
   assert(result.size() == getNumberOfBranches());
@@ -901,7 +916,7 @@ void TreeAln::setPartitions(const std::vector<Partition> &p, bool initial)
     _partitionPtrs.push_back(&(part.getHandle())); 
   _partitionListResource.partitionData = _partitionPtrs.data(); 
   _partitionListResource.perGeneBranchLengths = PLL_TRUE; 
-  _partitionListResource.numberOfPartitions = _partitions.size(); 
+  _partitionListResource.numberOfPartitions = static_cast<int>(_partitions.size()); 
   _partitionListResource.dirty = PLL_FALSE; 
 
   if(initial)

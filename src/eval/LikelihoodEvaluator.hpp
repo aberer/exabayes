@@ -4,17 +4,18 @@
 #include <vector>
 
 #include "ArrayPolicy.hpp"
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include "ArrayOrientation.hpp"
 
 class ParallelSetup; 
 
-#include <memory>
+#include "extensions.hpp"
 
 class LikelihoodEvaluator
 {
 public: 
-  LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy *plcy, std::shared_ptr<ArrayReservoir> arrayReservoir, ParallelSetup* pl); 
+  LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy *plcy,  std::shared_ptr<ArrayReservoir> arrayReservoir, ParallelSetup* pl); 
+  ~LikelihoodEvaluator(){}
   LikelihoodEvaluator( LikelihoodEvaluator &&rhs) = default; 
   LikelihoodEvaluator( const LikelihoodEvaluator &rhs ); 
   LikelihoodEvaluator& operator=(LikelihoodEvaluator rhs) ; 
@@ -33,7 +34,8 @@ public:
       please correct this.
   */
   void evaluatePartitionsDry(TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions); 
-
+  
+  void invalidateWithBranches(const TreeAln& traln, const BranchPlain &root,  const std::unordered_set<BranchPlain> &invalidBranches); 
 
   /** 
       @brief evaluate a subtree. This used to be the
@@ -48,8 +50,8 @@ public:
   /** 
       @brief mark a node as dirty  
    */ 
-  void markDirty(const TreeAln &traln, nat nodeId); 
-  void markDirty(const TreeAln &traln, nat partitionId, nat nodeId) ; 
+  void invalidateArray(const TreeAln &traln, nat nodeId); 
+  void invalidateArray(const TreeAln &traln, nat partitionId, nat nodeId) ; 
   
   void debugPrintToCompute(const TreeAln &traln, const BranchPlain &root); 
   void debugPrintToComputeHelper(const TreeAln &traln, const BranchPlain &root ); 
@@ -103,6 +105,8 @@ private: 			// METHODS
 
   void disorientDebug(TreeAln &traln, const BranchPlain& root); 
   void disorientDebugHelper(TreeAln &traln, const BranchPlain& root); 
+
+  bool subtreeValid(const TreeAln& traln, const BranchPlain &root,  const std::unordered_set<BranchPlain> &invalidBranches) ; 
 
   void evaluateLikelihood (TreeAln &traln , BranchPlain branch, bool fullTraversal, bool isDebugEval); 
   void updatePartials (TreeAln& traln, nodeptr p); 

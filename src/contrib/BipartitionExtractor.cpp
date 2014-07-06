@@ -5,11 +5,11 @@
 #include <cassert>
 #include <fstream>
 
-#include "math/Arithmetics.hpp" 
-#include "data-struct/BipartitionHash.hpp"
+#include "Arithmetics.hpp" 
+#include "BipartitionHash.hpp"
 
 #include "TreePrinter.hpp"
-#include "parameters/BranchLengthsParameter.hpp"
+#include "BranchLengthsParameter.hpp"
 
 
 static void rejectIfExists(std::string filename)
@@ -26,6 +26,8 @@ static void rejectIfExists(std::string filename)
 // does not include length of tips currently   
 BipartitionExtractor::BipartitionExtractor(std::vector<std::string> files, bool extractToOneHash, bool expensiveCheck)
   : TreeProcessor(files, expensiveCheck)
+  , _bipHashes{}
+  , _uniqueBips{}
   , _extractToOneHash(extractToOneHash)
 {
   assert(_taxa.size( ) != 0); 
@@ -125,6 +127,7 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
     << "\tbl.mean"
     << "\tbl.sd"
     << "\tbl.cv"
+    << "\tbl.skew"
     << "\tbl.ESS"
     << "\tbl.perc5"
     << "\tbl.perc25"
@@ -153,6 +156,7 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
       auto mean = Arithmetics::getMean(allBlsConcat) ; 
       auto sd = sqrt(Arithmetics::getVariance(allBlsConcat) ); 
       auto cv = Arithmetics::getCoefficientOfVariation(allBlsConcat); 
+      auto skew = Arithmetics::getSkewness(allBlsConcat);
       auto ess = Arithmetics::getEffectiveSamplingSize(allBlsConcat) ; 
       auto perc5= Arithmetics::getPercentile(0.05,allBlsConcat) ; 
       auto perc25 = Arithmetics::getPercentile(0.25,allBlsConcat)  ; 
@@ -165,6 +169,7 @@ void BipartitionExtractor::printBipartitionStatistics(std::string id) const
 	       << "\t" << mean
 	       << "\t" << sd 
 	       << "\t" << cv
+	       << "\t" << skew
 	       << "\t" << ess 
 	       << "\t" << perc5 
 	       << "\t" << perc25
@@ -245,11 +250,11 @@ void BipartitionExtractor::printBipartitions(std::string id) const
   for(auto &bipElem :  _uniqueBips)
     {
       auto &bip = std::get<0>(bipElem); 
-      auto id = std::get<1>(bipElem); 
+      auto myId = std::get<1>(bipElem); 
 
       assert(bip.count() != 0 ); 
       
-      out << id << "\t" ; 
+      out << myId << "\t" ; 
       bip.printVerbose(out, _taxa);
 
       out << std::endl;       
@@ -259,7 +264,7 @@ void BipartitionExtractor::printBipartitions(std::string id) const
 }
 
 
-std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartition> bips, bool printSupport, bool printBranchLengths, bool phylipStyle) const 
+std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartition> bips, bool printSupportLocal, bool printBranchLengthsLocal, bool phylipStyle) const 
 {
   // contains ids of direct children 
   auto directSubBips  = std::vector<std::vector<nat> >(bips.size()); 
@@ -303,7 +308,7 @@ std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartiti
   directSubBips.push_back(belowTop); 
 
   auto&& ss = std::stringstream{}; 
-  buildTreeRecursive(bips.size()-1, directSubBips, bips, ss, printSupport, printBranchLengths, phylipStyle); 
+  buildTreeRecursive( nat (bips.size()-1), directSubBips, bips, ss, printSupportLocal, printBranchLengthsLocal, phylipStyle); 
 
   return ss.str(); 
 } 
@@ -312,7 +317,7 @@ std::string BipartitionExtractor::bipartitionsToTreeString(std::vector<Bipartiti
 
 void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<std::vector<nat> >& directSubBips, 
 					      const std::vector<Bipartition> &bips, std::stringstream &result, 
-					      bool printSupport, bool printBranchLengths, bool phylipStyle) const
+					      bool printSupportLocal, bool printBranchLengthsLocal, bool phylipStyle) const
 {
   assert(_bipHashes.size() ==  1); 
   nat totalTrees = _bipHashes[0].getTreesAdded();
@@ -355,7 +360,7 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
       for(auto childId : children)
 	{
 	  result << ( isFirst ? "" : ",") ; 
-	  buildTreeRecursive(childId,directSubBips, bips, result, printSupport, printBranchLengths, phylipStyle); 
+	  buildTreeRecursive(childId,directSubBips, bips, result, printSupportLocal, printBranchLengthsLocal, phylipStyle); 
 	  isFirst = false;  
 	}
 
@@ -365,7 +370,7 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
 
  if(currentId != bips.size()  -1 )
    {
-     if(printSupport)
+     if(printSupportLocal)
        {
 	 if(phylipStyle)
 	   {
@@ -382,7 +387,7 @@ void BipartitionExtractor::buildTreeRecursive(nat currentId, const std::vector<s
 	   }
        }
 
-     if(printBranchLengths)
+     if(printBranchLengthsLocal)
        {
 	 assert(_bipHashes.size() == 1); 
 	 auto lengths = _bipHashes[0].getBranchLengths(curBip);

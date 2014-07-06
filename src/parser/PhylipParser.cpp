@@ -1,4 +1,12 @@
-#include "parser/PhylipParser.hpp"
+#include "PhylipParser.hpp"
+
+#pragma GCC diagnostic ignored "-Wlong-long"
+#pragma warning (disable : 2259 )
+
+
+// sorry...my patience is at an end... 
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wshadow"
 
 /**
    @brief disclaimer: this is a relatively quick and very dirty
@@ -7,11 +15,11 @@
 
 #include <assert.h>
 
-#include "../system/time.hpp"
+// #include "time.hpp"
 
-#include "data-struct/Bipartition.hpp"
+#include "Bipartition.hpp"
 
-#include "../common.h"
+#include "common.h"
 #include <algorithm>
 #include <cstring>
 #include <iostream>
@@ -25,7 +33,7 @@
 
 using namespace Parser; 
 
-#include "parser/parserDefines.hpp"
+#include "parserDefines.hpp"
 
 #define INTS_PER_VECTOR 8
 
@@ -39,10 +47,17 @@ static void myExit(int code)
 }
 
 
+
 PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool haveModelFile	)
   : alnFile(_alnFile)
   , modelFile(_modelFile)
+  , rdta{nullptr}
+  , cdta{nullptr}
+  , tr{nullptr}
+  , adef{nullptr}
   , _compress(true)		// TODO 
+  , _numTax{0}
+  , _numSites{0}
   , protModels {"DAYHOFF", "DCMUT", "JTT", "MTREV", "WAG", "RTREV", "CPREV", "VT", "BLOSUM62", "MTMAM", "LG", "MTART", "MTZOA", "PMB", "HIVB", "HIVW", "JTTDCMUT", "FLU", "AUTO", "LG4", "GTR"}
   , inverseMeaningBINARY {'_', '0', '1', '-'}
   , inverseMeaningDNA {'_', 'A', 'C', 'M', 'G', 'R', 'S', 'V', 'T', 'W', 'Y', 'H', 'K', 'D', 'B', '-'}
@@ -64,6 +79,9 @@ PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool ha
     {4096, 4096, 64, 4096, 4096, 2016, 64, 4160, 64, 2016, FALSE, FALSE, 64, (char*)NULL, 64, TRUE, (unsigned int*)NULL}    /* 64 states */
   }
   , _haveModelFile(haveModelFile)
+  , baseAddr{nullptr}
+  , _ySpace{}
+  , _infoness{}
 {
   // std::cout << "called parser with " << alnFile << "\t" << modelFile << " and " << ( haveModelFile ? "have model" : "NO model"  ) <<  std::endl; 
   
@@ -155,12 +173,13 @@ static void skipWhites(char **ch)
 
 static boolean lineContainsOnlyWhiteChars(char *line)
 {
-  int i, n = strlen(line);
+  // int i; 
+  auto n = strlen(line);
 
   if(n == 0)
     return TRUE;
 
-  for(i = 0; i < n; i++)
+  for(auto i = 0u; i < n; i++)
     {
       if(!whitechar(line[i]))
 	return FALSE;
@@ -177,10 +196,12 @@ const unsigned int* PhylipParser::getBitVector(int dataType)
 }
 
 
-static int myGetline(char **lineptr, int *n, FILE *stream)
+static long int myGetline(char **lineptr, int *n, FILE *stream)
 {
   char *line, *p;
-  int size, copy, len;
+  long int len ; 
+  long int copy; 
+  int size ;
   int chunkSize = 256 * sizeof(char);
 
   if (*lineptr == NULL || *n < 2) 
@@ -207,14 +228,14 @@ static int myGetline(char **lineptr, int *n, FILE *stream)
 	    goto lose;
 	  else
 	    {
-	      *p++ = c;
+	      *p++ = char(c);
 	      if(c == '\n' || c == '\r')	
 		goto win;
 	    }
 	}
 
       /* Need to enlarge the line buffer.  */
-      len = p - line;
+      len =  p - line;
       size *= 2;
       line = (char*) realloc (line, size);
       if (line == NULL)
@@ -356,8 +377,11 @@ void PhylipParser::parseSinglePartition(std::string dataType)
   partition->protFreqs  = adef->protEmpiricalFreqs;
 
   partition->lower = 0; 
-  partition->upper = tr->originalCrunchedLength; 
-  partition->width = tr->originalCrunchedLength; 
+
+  assert(  tr->originalCrunchedLength < std::numeric_limits<nat>::max() ); 
+  
+  partition->upper = static_cast<decltype(partition->upper)> (tr->originalCrunchedLength); 
+  partition->width = static_cast<decltype(partition->upper)> (tr->originalCrunchedLength); 
   
   if(dataType.compare("PROT") == 0)
     {
@@ -388,7 +412,7 @@ void PhylipParser::parsePartitions()
   char *ch;
   char *cc = (char*)calloc(1,sizeof(char));
   char **p_names;
-  int n, l;
+  size_t  n, l;
   int lower, upper, modulo;
   char buf[256];
   int **partitions;
@@ -426,22 +450,24 @@ void PhylipParser::parsePartitions()
   for(nat i = 0; i < numberOfModels; i++)    
     partitions[i] = (int *)NULL;
 
-  nat i = 0; 
-  while(myGetline(&cc, &nbytes, f) > -1)
-    {          
-      if(!lineContainsOnlyWhiteChars(cc))
-	{
-	  n = strlen(cc);	 
-	  p_names[i] = (char *)malloc(sizeof(char) * (n + 1));
-	  strcpy(&(p_names[i][0]), cc);
-	  i++;
-	}
-      if(cc)
-	free(cc);
-      cc = (char *)NULL;
-    }         
+  {
+    auto i = 0; 
+    while(myGetline(&cc, &nbytes, f) > -1)
+      {          
+	if(!lineContainsOnlyWhiteChars(cc))
+	  {
+	    n = strlen(cc);	 
+	    p_names[i] = (char *)malloc(sizeof(char) * (n + 1));
+	    strcpy(&(p_names[i][0]), cc);
+	    i++;
+	  }
+	if(cc)
+	  free(cc);
+	cc = (char *)NULL;
+      }
+  }         
 
-  for(i = 0; i < numberOfModels; i++)
+  for(auto i = 0u; i < numberOfModels; i++)
     {           
       ch = p_names[i];     
       pairsCount = 0;
@@ -624,7 +650,7 @@ void PhylipParser::parsePartitions()
     }
 
 
-  for(i = 1; i < _numSites + 1; i++)
+  for(auto i = 1u; i < _numSites + 1; i++)
     {
       
       if(tr->model[i] == -1)
@@ -634,7 +660,7 @@ void PhylipParser::parsePartitions()
 	}      
     }  
 
-  for(i = 0; i < numberOfModels; i++)
+  for(auto i = 0u; i < numberOfModels; i++)
     {
       free(partitions[i]);
       free(p_names[i]);
@@ -748,7 +774,7 @@ void PhylipParser::defaultInit()
 
 void PhylipParser::parseHeader (FILE *INFILE)
 {
-   if (fscanf(INFILE, "%u %u", & _numTax, & _numSites) != 2)
+   if (fscanf(INFILE, "%u %lu", & _numTax, & _numSites) != 2)
     {
       
       printf("\n Error: problem reading number of species and sites\n\n");
@@ -814,11 +840,9 @@ boolean PhylipParser::setupTree ()
 }
 
 
-void PhylipParser::checkTaxonName(char *buffer, int len)
+void PhylipParser::checkTaxonName(char *buffer, size_t len)
 {
-  int i;
-
-  for(i = 0; i < len - 1; i++)
+  for(auto i = 0u; i < len - 1; i++)
     {
       boolean valid;
 
@@ -866,13 +890,14 @@ void PhylipParser::uppercase (int *chptr)
 
 boolean PhylipParser::getdata(FILE *INFILE)
 {
+  size_t len ; 
+  
   int   
     i, 
     j, 
     basesread, 
     basesnew, 
     ch, my_i, meaning,
-    len,
     meaningAA[256], 
     meaningDNA[256], 
     meaningBINARY[256],
@@ -994,7 +1019,7 @@ boolean PhylipParser::getdata(FILE *INFILE)
 
 	      do
 		{
-		  buffer[my_i] = ch;
+		  buffer[my_i] = static_cast<char>(ch);
 		  ch = getc(INFILE);
 		  my_i++;
 		  if(my_i >= nmlngth)
@@ -1059,7 +1084,7 @@ boolean PhylipParser::getdata(FILE *INFILE)
 	      if (meaning != -1)
 		{
 		  j++;
-		  rdta->y[i][j] = ch;		 
+		  rdta->y[i][j] = static_cast<char>(ch); 
 		}
 	      else
 		{
@@ -1569,8 +1594,6 @@ void PhylipParser::sitecombcrunch ()
 
   if(adef->mode == PER_SITE_LL)
     {
-      int i;
-
       assert(0);
 
       tr->patternPosition = (int*)malloc(sizeof(int) * _numSites);
@@ -2312,7 +2335,7 @@ void PhylipParser::writeToFile(std::string fileName)
 
 void PhylipParser::parse()
 {
-  auto nowTime =  getTimePoint(); 
+  // auto nowTime =  getTimePoint(); 
 
   int model;
 
@@ -2325,15 +2348,15 @@ void PhylipParser::parse()
 
   getinput();  
   // auto dur = getDuration(nowTime);
-  nowTime = getTimePoint(); 
+  // nowTime = getTimePoint(); 
   // std::cout << SOME_FIXED_PRECISION << "[" << dur << " s] got input" << std::endl; 
   makeweights();         
   // dur = getDuration(nowTime); 
-  nowTime = getTimePoint(); 
+  // nowTime = getTimePoint(); 
   // std::cout << "[" << dur << " s] made weights" << std::endl; 
   makevalues();         
   // dur = getDuration(nowTime); 
-  nowTime = getTimePoint(); 
+  // nowTime = getTimePoint(); 
   // std::cout << "[" << dur << " s] made values" << std::endl; 
 
   for(model = 0; model < tr->NumberOfModels; model++)

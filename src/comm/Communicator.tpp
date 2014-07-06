@@ -1,10 +1,10 @@
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 
 
 template<typename T> 
-auto Communicator::broadcast(std::vector<T> array, int root) 
-  -> std::vector<T>
+std::vector<T>
+Communicator::broadcast(std::vector<T> array, int root) 
 {
   auto result = std::vector<T>(array.size()); 
   auto localRoot = mapToLocalRank(root); 
@@ -55,7 +55,7 @@ std::vector<T>  Communicator::gatherVariableLength(std::vector<T> myData, int ro
 
  
 template<typename T> 
-auto  Communicator::receive( int source, int tag ) -> T 
+T Communicator::receive( int source, int tag ) 
 { 
   assert(0); 
   return _remoteComm.receive<T>(source,tag); 
@@ -73,8 +73,8 @@ void Communicator::send( T elem, int dest, int tag )
 
 
 template<typename T> 
-auto Communicator::allReduce(std::vector<T> myValues)
-  -> std::vector<T>
+std::vector<T>
+Communicator::allReduce(std::vector<T> myValues)
 {
   // std::cout << SyncOut()<< _localComm.getColor() << "," << _localComm.getRank()  << "before: " << myValues << std::endl; 
 
@@ -92,15 +92,15 @@ auto Communicator::allReduce(std::vector<T> myValues)
 
 
 template<typename T>
-auto Communicator::gatherVariableKnownLength(std::vector<T> myData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc , int root) 
-  -> std::vector<T>
+std::vector<T>
+Communicator::gatherVariableKnownLength(std::vector<T> myData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc , int root) 
 {
   auto localRoot = mapToLocalRank(root) ; 
   auto remoteRoot = mapToRemoteRank(root); 
   
   auto countsLocal = std::vector<int>(); 
   auto displLocal = std::vector<int>();
-  for(int i = _localComm.size() * _remoteComm.getRank() ; i < _localComm.size() * (_remoteComm.getRank()+1); ++i )
+  for(auto i = _localComm.size() * _remoteComm.getRank() ; i < _localComm.size() * (_remoteComm.getRank()+1); ++i )
     countsLocal.push_back(countsPerProc[i]);
   displLocal.push_back(0);
   for(nat i  =1; i < countsLocal.size(); ++i)
@@ -109,7 +109,7 @@ auto Communicator::gatherVariableKnownLength(std::vector<T> myData, std::vector<
   myData = _localComm.gatherVariableKnownLength(myData, countsLocal, displLocal, localRoot); 
 
   auto countsRemote  = std::vector<int>( _remoteComm.size(), 0 ); 
-  for(int i = 0; i < size() ;++i)
+  for(auto i = 0u; i < size() ;++i)
     countsRemote[i / _localComm.getNumThreads() ] += countsPerProc[i]; 
   auto displRemote = std::vector<int>();
   displRemote.push_back(0); 
@@ -125,14 +125,14 @@ auto Communicator::gatherVariableKnownLength(std::vector<T> myData, std::vector<
 
 
 template<typename T> 
-auto Communicator::scatterVariableKnownLength( std::vector<T> myData,  std::vector<int> &countsPerProc,  std::vector<int> &displPerProc, int root )  
-  -> std::vector<T> 
+std::vector<T> 
+Communicator::scatterVariableKnownLength( std::vector<T> myData,  std::vector<int> &countsPerProc,  std::vector<int> &displPerProc, int root )  
 {
   auto localRoot = mapToLocalRank(root)	; 
   auto remoteRoot = mapToRemoteRank(root); 
 
   auto countsRemote  = std::vector<int>( _remoteComm.size(), 0 ); 
-  for(int i = 0; i < size() ;++i)
+  for(auto i = 0u; i < size() ;++i)
     countsRemote[i / _localComm.getNumThreads() ] += countsPerProc[i]; 
   auto displRemote = std::vector<int>();
   displRemote.push_back(0); 
@@ -145,7 +145,7 @@ auto Communicator::scatterVariableKnownLength( std::vector<T> myData,  std::vect
   
   auto countsLocal = std::vector<int>(); 
   auto displLocal = std::vector<int>();
-  for(int i = _localComm.size() * _remoteComm.getRank() ; i < _localComm.size() * (_remoteComm.getRank()+1); ++i )
+  for(auto i = _localComm.size() * _remoteComm.getRank() ; i < _localComm.size() * (_remoteComm.getRank()+1); ++i )
     countsLocal.push_back(countsPerProc[i]);
   displLocal.push_back(0);
   for(nat i  =1; i < countsLocal.size(); ++i)

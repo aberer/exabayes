@@ -2,56 +2,62 @@
 #include <fstream>
 #include <memory>
 
-#include "system/ByteFile.hpp"
+#include "ByteFile.hpp"
 #include "TreePrinter.hpp"
-
 #include "AdHocIntegrator.hpp"
+#include "BasicTreeReader.hpp"
+#include "BlockProposalConfig.hpp"
+#include "BlockRunParameters.hpp"
+#include "ConfigReader.hpp"
 
-#include "tree-parse/BasicTreeReader.hpp"
+#include "TopologyParameter.hpp"
+#include "RevMatParameter.hpp"	
+#include "FrequencyParameter.hpp"
 
-#include "config/BlockProposalConfig.hpp"
-#include "config/BlockRunParameters.hpp"
-#include "config/ConfigReader.hpp"
-
-#include "parameters/TopologyParameter.hpp"
-#include "parameters/RevMatParameter.hpp"
-#include "parameters/FrequencyParameter.hpp"
-
-#include "config/MemoryMode.hpp"
+#include "MemoryMode.hpp"
 #include "SampleMaster.hpp"
 #include "TreeRandomizer.hpp"
-#include "system/RunFactory.hpp"	
+#include "RunFactory.hpp"	
 
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
-#include "system/BoundsChecker.hpp"
-#include "eval/ArrayRestorer.hpp"
-#include "contrib/SplitFreqAssessor.hpp"
+#include "BoundsChecker.hpp"
+#include "ArrayRestorer.hpp"
+#include "SplitFreqAssessor.hpp"
 
-#include "eval/FullCachePolicy.hpp"
-#include "eval/NoCachePolicy.hpp"
+#include "FullCachePolicy.hpp"
+#include "NoCachePolicy.hpp"
 
 #include "TreeIntegrator.hpp"
 
 
-#include "parser/PhylipParser.hpp"
+#include "PhylipParser.hpp"
 
 // a developmental mode to integrate over branch lengths
-#define _GO_TO_INTEGRATION_MODE
+
+// #define _GO_TO_MOVE
+
+
 #ifndef _EXPERIMENTAL_INTEGRATION_MODE
 #undef _GO_TO_INTEGRATION_MODE
+#undef _GO_TO_TREE_MOVE_INTEGARTION
 #endif
 
 using std::endl; 
 using std::vector;
 using std::unique_ptr; 
 using std::move; 
+using std::get; 
 
 
-
-SampleMaster::SampleMaster( ) 
-  : _initTime(CLOCK::system_clock::now())
-  , _lastPrintTime(CLOCK::system_clock::now())
+SampleMaster::SampleMaster( size_t numCpu) 
+  : _runs{}
+  , _plPtr{nullptr}
+  , _runParams{}
+  , _cl{}
+  , _diagFile{}
+  , _timeTracker{numCpu}
+  , _printTime{numCpu}
 {
 }
 
@@ -89,7 +95,7 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 	      for(auto param : params)
 	  	{
 	  	  auto bCopy = b; 
-	  	  bCopy.setConvertedInternalLength(traln, param, b.getLength()); 
+	  	  bCopy.setConvertedInternalLength( param, b.getLength()); 
 	  	  traln.setBranch(bCopy, param); 
 	  	}
 	    }
@@ -108,7 +114,8 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 
 
 
-vector<bool> SampleMaster::initTrees(vector<TreeAln> &trees, randCtr_t seed, vector<std::string> startingTreeStrings, const vector<AbstractParameter*> &params)
+std::vector<bool> 
+SampleMaster::initTrees(vector<TreeAln> &trees, randCtr_t seed, vector<std::string> startingTreeStrings, const vector<AbstractParameter*> &params)
 {  
   auto hasBl = vector<bool>{}; 
 
@@ -219,51 +226,49 @@ void SampleMaster::informPrint()
 }
 
 
-
 void SampleMaster::initializeFromCheckpoint()
 {
   // continue from checkpoint  
 
-    // {
-      auto prevId = _cl.getCheckpointId(); 
+  auto prevId = _cl.getCheckpointId(); 
       
-      auto &&ss = std::stringstream{} ;       
-      ss << _cl.getWorkdir() << ( _cl.getWorkdir().compare("") == 0  ? "" : "/") 
-	 << PROGRAM_NAME << "_checkpoint." << _cl.getCheckpointId();       
-      auto checkPointFile = ss.str(); 
-      auto &&chkpnt = std::ifstream{} ; 
+  auto &&ss = std::stringstream{} ;       
+  ss << _cl.getWorkdir() << ( _cl.getWorkdir().compare("") == 0  ? "" : "/") 
+     << PROGRAM_NAME << "_checkpoint." << _cl.getCheckpointId();       
+  auto checkPointFile = ss.str(); 
+  auto &&chkpnt = std::ifstream{} ; 
+  Serializable::getIfstream(checkPointFile, chkpnt); 
+  if( not chkpnt )
+    {
+      tout  << "Warning! Could not open / find file " << checkPointFile << endl; 
+      tout << "Although extremely unlikely, the previous run may have been killed\n"
+	   << "during the writing process of the checkpoint. Will try to recover from backup..." << endl; 
+	  
+      ss.str(""); 
+      ss << PROGRAM_NAME << "_prevCheckpointBackup." << _cl.getCheckpointId();
+      checkPointFile = ss.str();	  
       Serializable::getIfstream(checkPointFile, chkpnt); 
-      if( not chkpnt )
-	{
-	  tout  << "Warning! Could not open / find file " << checkPointFile << endl; 
-	  tout << "Although extremely unlikely, the previous run may have been killed\n"
-	       << "during the writing process of the checkpoint. Will try to recover from backup..." << endl; 
 	  
-	  ss.str(""); 
-	  ss << PROGRAM_NAME << "_prevCheckpointBackup." << _cl.getCheckpointId();
-	  checkPointFile = ss.str();	  
-	  Serializable::getIfstream(checkPointFile, chkpnt); 
-	  
-	  if( not chkpnt)
-	    {
-	      tout << "Could not recover checkpoint file backup either. Probably there is no backup, since not enough generations have completed. Giving up. Please start a new run." << endl; 
-	      exitFunction(-1, false); 
-	    }
-	  else 
-	    tout << "Success! You lost one checkpoint, but we can continue from the backup. " << endl; 	  
-	}
-
-      deserialize(chkpnt); 
-
-      if(_plPtr->isGlobalMaster())
+      if( not chkpnt)
 	{
-	  for(auto &run : _runs)
-	    run.regenerateOutputFiles(_cl.getWorkdir(), _cl.getCheckpointId());
-	  nat curGen = _runs[0].getChains()[0].getGeneration();
-	  _diagFile.regenerate(  _cl.getWorkdir(), _cl.getRunid(),  _cl.getCheckpointId(), 
-				 curGen);
+	  tout << "Could not recover checkpoint file backup either. Probably there is no backup, since not enough generations have completed. Giving up. Please start a new run." << endl; 
+	  exitFunction(-1, false); 
 	}
-    // }
+      else 
+	tout << "Success! You lost one checkpoint, but we can continue from the backup. " << endl; 	  
+    }
+
+  deserialize(chkpnt); 
+
+  if(_plPtr->isGlobalMaster())
+    {
+      for(auto &thisRun : _runs)
+	thisRun.regenerateOutputFiles(_cl.getWorkdir(), _cl.getCheckpointId());
+      auto curGen = _runs[0].getChains()[0].getGeneration();
+      _diagFile.regenerate(  _cl.getWorkdir(), _cl.getRunid(),  _cl.getCheckpointId(), 
+			     curGen);
+    }
+
 }
 
 
@@ -316,7 +321,7 @@ LikelihoodEvaluator SampleMaster::createEvaluatorPrototype(const TreeAln &initTr
 }
 
 
-void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const vector<AbstractParameter*> &params, bool hasBl) const 
+void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const ParameterList &params, bool hasBl) const 
 {
   // we cannot have more than one set of branch lentghs. So if we had
   // initial branch lengths, extract them first before changing the
@@ -337,7 +342,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const vector<A
 
       for(auto b : traln.extractBranches())
 	{
-	  auto len = traln.getBranch(b, blParam).getInterpretedLength(traln,blParam); 
+	  auto len = traln.getBranch(b, blParam).getInterpretedLength(blParam); 
 	  // tout << b << "\t" << len << endl; 
 	  branches.emplace_back( b, len ); 
 	}
@@ -397,21 +402,26 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const vector<A
       auto cat = param->getCategory(); 
       if(cat == Category::BRANCH_LENGTHS)
 	{
-	  auto &&prior = param->getPrior();
-	  auto content = prior->getInitialValue();
-	  auto initVal = content.values.at(0); 
+	  param->updateMeanSubstRate(traln);
 
+	  auto &&prior = param->getPrior();
+
+	  auto content = prior->getInitialValue();
+	  // auto content = prior->drawFromPrior();
+
+	  auto initVal = content.values.at(0); 
+	  
 	  for(auto belem : branches)
 	    {
 	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() )  
 		? std::get<1>(belem) : initVal ;
 	      auto b = std::get<0>(belem).toBlDummy(); 
-	      b.setConvertedInternalLength(traln,param,absLen);
+	      b.setConvertedInternalLength(param,absLen);
 
 	      if( not BoundsChecker::checkBranch(b))
 		{
 		  BoundsChecker::correctBranch(b); 
-		  auto newLen = b.getInterpretedLength(traln,param); 
+		  auto newLen = b.getInterpretedLength(param); 
 		  tout << "Warning: had to modify branch length " << absLen << " to " << newLen << " because it violated the maximum range of branch lengths allowed." << endl; 
 		}
 
@@ -440,8 +450,17 @@ vector<std::string> SampleMaster::getStartingTreeStrings()
 
 
 
-void SampleMaster::printProposals(const vector<unique_ptr<AbstractProposal> > &proposals, const vector<ProposalSet> &proposalSets  ) const 
+void SampleMaster::printProposals( std::vector<std::unique_ptr<AbstractProposal> > &proposals,  std::vector<ProposalSet> &proposalSets, ParameterList &params  ) const 
 {
+  // something is rotten in the state of denmark: it should not be
+  // necessary to reset the parameters here again, yet if we dont, we
+  // get an error.
+  for(auto &p : proposals)
+    p->setParams(&params); 
+
+  for(auto &p : proposalSets)
+    p.setParameterListPtr(&params); 
+
   double sum = 0; 
   for(auto &p : proposals)
     sum += p->getRelativeWeight(); 
@@ -475,20 +494,20 @@ void SampleMaster::printProposals(const vector<unique_ptr<AbstractProposal> > &p
 }
 
 
-void SampleMaster::printParameters(const TreeAln &traln, const vector<unique_ptr<AbstractParameter> > &params) const 
+void SampleMaster::printParameters(const TreeAln &traln, const ParameterList &params) const 
 {
   // merely some printing and we are done  
   tout << endl << "Parameters to be integrated (initial values derived from prior): " << endl; 
   tout << SOME_FIXED_PRECISION; 
   for(auto &v : params)
     {
-      tout << v->getId() << "\t" << v.get()  << endl; 
+      tout << v->getId() << "\t" << v  << endl; 
       tout << "\tsub-id:\t" << v->getIdOfMyKind() << endl; 
       tout << "\tprior:\t" << v->getPrior() << endl; 
 
       tout << "\tinit value:\t" ; 
 
-      if(dynamic_cast<TopologyParameter*>(v.get())  != nullptr )
+      if(dynamic_cast<TopologyParameter*>(v)  != nullptr )
 	{
 	  auto p = v->getPrior(); 
 
@@ -503,7 +522,7 @@ void SampleMaster::printParameters(const TreeAln &traln, const vector<unique_ptr
 	    tout << " or given (tree file)" ; 
 	  tout << endl; 
 	}
-      else if ( dynamic_cast<RevMatParameter*>(v.get())  || dynamic_cast<FrequencyParameter*>(v.get()) )
+      else if ( dynamic_cast<RevMatParameter*>(v)  || dynamic_cast<FrequencyParameter*>(v) )
 	{
 	  auto content = v->getPrior()->getInitialValue(); 
 	  RateHelper().convertToSum1(content.values);
@@ -614,14 +633,11 @@ void SampleMaster::initializeRuns(Randomness rand)
   bFile.parse(*_plPtr); 
   auto partitions = bFile.getPartitions();
 
-  auto time = getDuration(_initTime); 
-  // tout << "time passed for parsing " << time << endl; 
-
   auto taxa = bFile.getTaxa(); 
   auto numPart = partitions.size(); 
 
   // tout << "\nNUM" << PLL_NUM_BRANCHES << endl; 
-  PLL_NUM_BRANCHES = numPart; 
+  PLL_NUM_BRANCHES = int(numPart); 
 
   auto&& initTree = TreeAln(taxa.size(), _cl.isSaveMemorySEV() );
   initTree.setPartitions(partitions, true); 
@@ -647,12 +663,13 @@ void SampleMaster::initializeRuns(Randomness rand)
   // END
 
   auto evalUptr = createEvaluatorPrototype(initTree,  _cl.isSaveMemorySEV()); 
+  
+  auto aRes = processConfigFile(_cl.getConfigFileName(), initTree);
 
-  auto&& proposals =  vector<unique_ptr<AbstractProposal> >{};
-  auto&& params = vector<unique_ptr<AbstractParameter> >{};
-  auto&& proposalSets =  vector<ProposalSet>{};  
-  std::tie(params, proposals, proposalSets) = processConfigFile(_cl.getConfigFileName(), initTree);
-
+  auto&& params = get<0>(aRes); 
+  auto&& proposals = get<1>(aRes);
+  auto&& proposalSets = get<2>(aRes); 
+  
   catchRunErrors();
 
   auto runSeeds = vector<randCtr_t>{};
@@ -667,8 +684,7 @@ void SampleMaster::initializeRuns(Randomness rand)
   auto topoIsFixed = false; 
   for(auto &v :params)
     {
-      if( dynamic_cast<TopologyParameter*>(v.get()) != nullptr
-	  && not v->getPrior()->needsIntegration() )
+      if( dynamic_cast<TopologyParameter*>(v) != nullptr && not v->getPrior()->needsIntegration() )
 	topoIsFixed = true; 
     }
 
@@ -677,7 +693,7 @@ void SampleMaster::initializeRuns(Randomness rand)
   for(auto &v : params)
     {
       if(v->getCategory() == Category::BRANCH_LENGTHS)
-	blParams.push_back(v.get());
+	blParams.push_back(v);
     }
 
   if(startingTrees.size() > 1 )
@@ -707,13 +723,9 @@ void SampleMaster::initializeRuns(Randomness rand)
       if(not topoIsFixed)
 	hadBls = initTrees(trees, treeSeeds[i],  startingTrees, blParams); 
 
-      auto paramView = vector<AbstractParameter*>{}; 
-      for(auto &param : params)
-	paramView.push_back(param.get()); 
-
       // TODO method could be moved to treealn 
       for(nat j = 0; j < trees.size() ;++j)
-	initializeWithParamInitValues(trees[j], paramView, hadBls[j] );
+	initializeWithParamInitValues(trees[j], params, hadBls[j] );
       
       auto runRand =  Randomness(runSeeds[i]); 
       
@@ -721,7 +733,7 @@ void SampleMaster::initializeRuns(Randomness rand)
       for(nat j = 0; j < _runParams.getNumCoupledChains(); ++j)
 	{
 	  auto &t = trees.at(j);
-	  chains.emplace_back( runRand.generateSeed(), t, proposals, proposalSets, evalUptr, _cl.isDryRun() ); 
+	  chains.emplace_back( runRand.generateSeed(), t, params, proposals, proposalSets, evalUptr, _cl.isDryRun() ); 
 	  auto &chain = chains[j]; 		
 	  chain.setRunId(i); 
 	  chain.setTuneFreuqency(_runParams.getTuneFreq()); 
@@ -753,9 +765,9 @@ void SampleMaster::initializeRuns(Randomness rand)
     {
       printAlignmentInfo(initTree);   
       printParameters(initTree, params);
-      printProposals(proposals, proposalSets); 
+      printProposals(proposals, proposalSets, params ); 
       informPrint();
-      globals.teeOut->flush();
+      teeOut->flush();
       printInitializedFiles(); 
     }
 
@@ -766,12 +778,15 @@ void SampleMaster::initializeRuns(Randomness rand)
       tout << res; 
     }
 
-
   // BEGIN DEBUG 
-  // auto &p = initTree.getPartition(0); 
-  // auto &&ss = std::stringstream{}; 
-  // p.printAlignment(ss); 
-  // std::cout << ss.str() << endl; 
+  auto printTheAlignment = false;  
+  if(printTheAlignment)
+    {
+      auto &p = initTree.getPartition(0); 
+      auto &&ss = std::stringstream{}; 
+      p.printAlignment(ss); 
+      std::cout << ss.str() << endl; 
+    }
   // END 
 
 }
@@ -827,8 +842,8 @@ void SampleMaster::printInitialState()
 
   // if we are parallel, we must inform the master about what we
   // computed
-  synchronize(CommFlag::PRINT_STAT); 
-  
+  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT);
+
   tout << endl << "initial state: " << endl; 
   tout << "================================================================" << endl; 
   for(auto &run: _runs)
@@ -902,7 +917,8 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
 }
 
 
-std::tuple<vector<unique_ptr<AbstractParameter> > , vector<unique_ptr<AbstractProposal> > , vector<ProposalSet> >  
+
+std::tuple<ParameterList , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >   
 SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )  
 {
   auto reader = ConfigReader{}; 
@@ -926,15 +942,16 @@ SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
 
   auto r = RunFactory{}; 
   auto paramResult = paramBlock.getParameters();
-
   r.addStandardParameters(paramResult, traln);
+  auto paramList = ParameterList(move(paramResult)); 
+
   auto proposalSetResult = vector<ProposalSet>{};
   auto&& proposalResult = vector<unique_ptr<AbstractProposal>>{}; 
-  std::tie(proposalResult, proposalSetResult) = r.produceProposals(proposalConfig, priorBlock , paramResult, traln, _runParams.isComponentWiseMH() && traln.getNumberOfPartitions() > 1);
+  std::tie(proposalResult, proposalSetResult) = r.produceProposals(proposalConfig, priorBlock , paramList, traln, _runParams.isComponentWiseMH() && traln.getNumberOfPartitions() > 1, *_plPtr);
 
   // sanity check 
-  for(auto &paramPtr : paramResult)
-    paramPtr->checkSanityPartitionsAndPrior(traln);
+  for(auto &p : paramList)
+    p->checkSanityPartitionsAndPrior(traln);
 
   // now enumerate the proposals 
   nat ctr = 0; 
@@ -946,18 +963,20 @@ SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
   for(auto &p : proposalSetResult)
     ctr = p.numerateProposals(ctr);
 
-  return std::make_tuple(move(paramResult), move(proposalResult), proposalSetResult);
+  return std::make_tuple(paramList, move(proposalResult), proposalSetResult);
 }
 
 
-CLOCK::system_clock::time_point 
-SampleMaster::printDuringRun(nat gen)   
+void SampleMaster::printDuringRun(uint64_t gen)   
 {
-  synchronize(CommFlag::PRINT_STAT);
+  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT); 
+
+  auto time = _printTime.getRecentElapsed(); 
+  _printTime.updateTime();
   
   auto && ss = std::stringstream{} ; 
   ss << SOME_FIXED_PRECISION; 
-  ss << "[" << gen << "," << CLOCK::duration_cast<CLOCK::duration<double> > (CLOCK::system_clock::now()- _lastPrintTime   ).count()     << "s]\t"; 
+  ss << "[" << gen << "," <<  time << "s]\t"; 
 
   bool isFirst = true; 
   for(auto &run : _runs)
@@ -982,12 +1001,10 @@ SampleMaster::printDuringRun(nat gen)
 
   // print it 
   tout << ss.str() << endl; 
-
- return CLOCK::system_clock::now(); 
 }
 
 
-void SampleMaster::run()
+void SampleMaster::simulate()
 {
   if(not _cl.isQuiet())
     {
@@ -1016,41 +1033,41 @@ void SampleMaster::run()
 	   << "by all chains) and the time elapsed for this increment.\n\n"; 
     } 
 
-  bool hasConverged = false;   
-  nat curGen = _runs[0].getChains()[0].getGeneration(); // dangerous 
+  auto hasConverged = false;   
+  auto curGen = _runs[0].getChains()[0].getGeneration(); // dangerous 
   for(auto & run: _runs)
     for(auto &c : run.getChains())
       assert( nat(c.getGeneration()) == curGen );       
 
-  int lastPrint = (curGen / _runParams.getPrintFreq() )  * _runParams.getPrintFreq() ; 
-  int lastDiag =  (curGen / _runParams.getDiagFreq() ) * _runParams.getDiagFreq(); 
-  int lastChkpnt = ( curGen / _runParams.getChkpntFreq() )* _runParams.getChkpntFreq() ; 
+  auto lastPrint = (curGen / _runParams.getPrintFreq() )  * _runParams.getPrintFreq() ; 
+  auto lastDiag =  (curGen / _runParams.getDiagFreq() ) * _runParams.getDiagFreq(); 
+  auto lastChkpnt = ( curGen / _runParams.getChkpntFreq() )* _runParams.getChkpntFreq() ; 
   
-  _lastPrintTime = printDuringRun(curGen); 
+  printDuringRun(curGen); 
 
   while(curGen < nat(_runParams.getNumGen()) || not hasConverged)   
     { 
-      nat nextPrint =  lastPrint + _runParams.getPrintFreq(); 
-      nat nextDiag = lastDiag + _runParams.getDiagFreq(); 
-      nat nextChkpnt = lastChkpnt + _runParams.getChkpntFreq(); 
+      auto nextPrint =  uint64_t(lastPrint + _runParams.getPrintFreq()); 
+      auto nextDiag = uint64_t(lastDiag + _runParams.getDiagFreq()); 
+      auto nextChkpnt = uint64_t(lastChkpnt + _runParams.getChkpntFreq()); 
 
-      vector<nat> stopPoints = { nextChkpnt , nextPrint, nextDiag } ; 
+      auto stopPoints =std::vector<uint64_t> { nextChkpnt , nextPrint, nextDiag } ; 
       
       if(not _runParams.isUseStopCriterion())
-	stopPoints.push_back(_runParams.getNumGen());
+	stopPoints.push_back(uint64_t(_runParams.getNumGen()));
 
       if(curGen < _runParams.getNumGen())
-	stopPoints.push_back(_runParams.getNumGen());
+	stopPoints.push_back(uint64_t(_runParams.getNumGen()));
 
-      nat nextStop = *(std::min_element(stopPoints.begin(), stopPoints.end())); 
-      int toExecute = nextStop - curGen; 
+      auto  nextStop = *(std::min_element(stopPoints.begin(), stopPoints.end())); 
+      auto toExecute = nextStop - curGen; 
 
       for(auto &run : _runs)
 	{
 	  // std::cout <<   "running a part" << endl; 
 	  // tout <<   "running a part" << endl; 
 	  if(_plPtr->isMyRun(run.getRunid()))
-	    run.executePartNew(curGen, toExecute, *_plPtr );
+	    run.executePart(curGen, toExecute, *_plPtr );
 	}
 
       curGen += toExecute; 
@@ -1091,9 +1108,9 @@ void SampleMaster::run()
 		  if(_plPtr->isMyRun(run.getRunid()))
 		    swapBackup.push_back(run.getSwapInfo());
 		}
-	    }	    
+	    } 
 
-	  synchronize(CommFlag::PRINT_STAT | CommFlag::SWAP | CommFlag::PROPOSALS);
+	  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT | CommFlag::SWAP | CommFlag::PROPOSALS);
 
 	  // hack 
 	  int bla = hasConverged ? 1 : 0 ; 
@@ -1122,7 +1139,7 @@ void SampleMaster::run()
       
       if(curGen % _runParams.getPrintFreq() == 0 )
 	{
-	  _lastPrintTime = printDuringRun(curGen); 
+	  printDuringRun(curGen);
 	  lastPrint = curGen; 
 	}
 
@@ -1140,14 +1157,18 @@ void SampleMaster::run()
 #endif
 
 #if defined(_EXPERIMENTAL_INTEGRATION_MODE)  && defined(_GO_TO_TREE_MOVE_INTEGARTION)
-  auto sprLengthStr = std::string(std::getenv("SPR_LENGTH")); 
-  auto && iss  = std::istringstream{sprLengthStr}; 
-  nat sprLen = 0;  
-  iss >> sprLen; 
+  // auto sprLengthStr = std::string(std::getenv("SPR_LENGTH")); 
+  // auto && iss  = std::istringstream{sprLengthStr}; 
+  // nat sprLen = 0;  
+  // iss >> sprLen; 
+  // void integrateAllMoves(const TreeAln &otherTree, std::string runid, nat sprDistance); 
   
-  tInt->integrateAllBranchesNew(*(_runs[0].getChains()[0].getTralnPtr()), 
-				_cl.getRunid(),
-				sprLen );
+  // tInt->integrateAllBranchesNew(*(_runs[0].getChains()[0].getTralnPtr()), 
+  // 				_cl.getRunid(),
+  // 				sprLen );
+
+  tInt->integrateAllMoves(   _runs[0].getChains()[0].getTralnHandle(),  _cl.getRunid(), 4 ); 
+  
 #endif
 }
 
@@ -1158,30 +1179,28 @@ void SampleMaster::finalizeRuns()
     {
       for(auto &chain : run.getChains())
 	{
-	  if(chain.getChainHeat() == 1. )
+	  if(  std::fabs(chain.getChainHeat() - 1. ) < std::numeric_limits<double>::epsilon())
 	    {
 	      tout << SOME_FIXED_PRECISION << "best state for run " << run.getRunid() << " was: "  << chain.getBestState( )<< endl;       
 	    }
 	}
     }
-  
-  double secsElapsed = CLOCK::duration_cast<CLOCK::duration<double> >( CLOCK::system_clock::now() - _initTime   ).count(); 
 
-  auto altFormat = std::array<double,3>();
-  {
-    auto tmp = secsElapsed; 
-    altFormat[0] = int(tmp / 3600); 
-    tmp -= altFormat[0] * 3600 ; 
-    altFormat[1] = int(tmp / 60); 
-    tmp -= altFormat[1] * 60 ; 
-    altFormat[2] = tmp ; 
-  }
+  _timeTracker.updateTime();
 
+  auto wallTimeElapsed = _timeTracker.getAccWallTime();
+  auto altFormat = TimeTracker::formatForWatch(wallTimeElapsed); 
   tout << endl << "Converged/stopped after " <<  _runs[0].getChains()[0].getGeneration() << " generations" << endl;   
-  tout << endl << "Total execution time:\t" 
-       <<  SOME_FIXED_PRECISION << secsElapsed << " seconds "
+  tout << endl << "Total walltime elapsed:\t" 
+       <<  SOME_FIXED_PRECISION << wallTimeElapsed << " seconds "
        << "\tor " <<  std::setfill('0') << std::setw(2) <<  int(altFormat[0]) << ":" << std::setfill('0') << std::setw(2) << int(altFormat[1]) << ":" << altFormat[2] << " (hh:mm:ss)." << endl; 
 
+  auto cpuTime =  _timeTracker.getAccCpuTime();
+  altFormat = TimeTracker::formatForWatch(cpuTime) ; 
+  
+  tout << "Total CPU time elapsed:\t"  ; 
+  tout <<  SOME_FIXED_PRECISION << cpuTime << " seconds "
+       << "\tor " <<  std::setfill('0') << std::setw(2) <<  int(altFormat[0]) << ":" << std::setfill('0') << std::setw(2) << int(altFormat[1]) << ":" << altFormat[2] << " (hh:mm:ss)." << endl; 
 }
 
 
@@ -1190,10 +1209,8 @@ void SampleMaster::deserialize( std::istream &in )
   for(auto &run : _runs)
     run.deserialize(in); 
 
-  long start = 0; 
-  in >> start; 
-  CLOCK::duration<long> durationSinceStart{start};   
-  _initTime = CLOCK::system_clock::now() -  durationSinceStart; 
+  _timeTracker.deserialize(in);
+  _timeTracker.updateTime();
 }
 
  
@@ -1202,29 +1219,22 @@ void SampleMaster::serialize( std::ostream &out) const
   for(auto & run : _runs)    
     run.serialize(out);
 
-  long duration = CLOCK::duration_cast<CLOCK::duration<long> >(CLOCK::system_clock::now() - _initTime).count();
-  cWrite(out, duration); 
+  _timeTracker.serialize(out);
 }
 
 
-void SampleMaster::synchronize( CommFlag flags )  
-{
-  _plPtr->synchronizeChainsAtMaster(_runs, flags ); 
-}
-
-
-void SampleMaster::writeCheckpointMaster()
+void SampleMaster::writeCheckpointMaster() 
 {
   // whenever we synchronize swap, we have to backup our own swap
   // matrices
-  auto swb=  vector<SwapMatrix> {}; 
+  auto swb=  std::vector<SwapMatrix> {}; 
   if( _plPtr->isGlobalMaster())
     {
       for(auto &run : _runs)
 	swb.push_back(run.getSwapInfo());
     }
 
-  synchronize(CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::SWAP);
+  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::SWAP ); 
 
   if( _plPtr->isGlobalMaster())
     {
@@ -1243,6 +1253,7 @@ void SampleMaster::writeCheckpointMaster()
       auto newName = ss.str();
       auto&& chkpnt = std::ofstream{}; 
       Serializable::getOfstream(newName, chkpnt); 
+      _timeTracker.updateTime();
       serialize(chkpnt);
 
       ss.str("");

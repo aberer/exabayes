@@ -2,7 +2,7 @@
 #define _NODESLIDER_H
 
 #include "AbstractProposal.hpp" 
-#include "data-struct/Path.hpp"
+#include "Path.hpp"
 
 
 class NodeSlider : public AbstractProposal

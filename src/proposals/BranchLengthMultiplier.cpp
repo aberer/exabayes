@@ -1,13 +1,14 @@
 #include "BranchLengthMultiplier.hpp"
-#include "model/TreeAln.hpp"
-#include "system/BoundsChecker.hpp"
+#include "TreeAln.hpp"
+#include "BoundsChecker.hpp"
 #include "TreeRandomizer.hpp"
-#include "priors/AbstractPrior.hpp"
+#include "AbstractPrior.hpp"
 
 
 BranchLengthMultiplier::BranchLengthMultiplier(  double multiplier)
   : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., 0.0001,  100, false)
   , _multiplier(multiplier)
+  , _savedBranch{}
 {
 }
 
@@ -31,10 +32,8 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, lo
 {
   auto b = proposeBranch(traln, rand).toBlDummy(); 
 
-  // tout << SHOW(b) << std::endl; 
-  
-  assert(_primaryParameters.size() == 1); 
-  auto param = _primaryParameters[0].get(); 
+  assert(_primParamIds.size() == 1); 
+  auto param = _allParams->at(_primParamIds[0]); 
 
   _savedBranch = traln.getBranch(b.toPlain(), param); 
 
@@ -58,20 +57,17 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, lo
   traln.setBranch(b, param); 
 
   double realMultiplier = log(b.getLength()) / log(oldZ); 
-  // AbstractProposal::updateHastingsLog(hastings, log(realMultiplier), _name); 
+
   hastings *= log_double::fromAbs(realMultiplier); 
 
-  auto prNew = param->getPrior()->getLogProb( ParameterContent{{ b.getInterpretedLength(traln, param)} } ); 
-  auto prOld = param->getPrior()->getLogProb( ParameterContent{{ _savedBranch.getInterpretedLength(traln, param) }} );
-  
-  prior.addToRatio(prNew / prOld );
+  prior.addToRatio(param->getPrior()->getUpdatedValue(oldZ, b.getLength(), param));
 }
 
 
 void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  assert(_primaryParameters.size() == 1 ); 
-  auto parts = _primaryParameters[0]->getPartitions();
+  assert(_primParamIds.size() == 1 ); 
+  auto parts = _allParams->at(_primParamIds[0])->getPartitions();
   
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL: " << savedBranch << std::endl; 
@@ -84,7 +80,7 @@ void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,Tre
  
 void BranchLengthMultiplier::resetState(TreeAln &traln) 
 {
-  assert(_primaryParameters.size() == 1)  ; 
+  assert(_primParamIds.size() == 1)  ; 
   auto params = getBranchLengthsParameterView(); 
   assert(params.size() == 1); 
   auto param = params[0]; 

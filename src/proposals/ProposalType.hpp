@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "model/Category.hpp" 
+#include "Category.hpp" 
 
 
 // add your new proposal here and update accordingly in everything in
@@ -13,31 +13,27 @@
 
 enum class ProposalType
 {
-  ST_NNI= 0, 
-    E_SPR = 1,
-    E_TBR = 2,
-    PARSIMONY_SPR= 3 , 
-    GUIDED_SPR = 4,
-    BRANCH_SLIDER = 5 ,
-    TL_MULT = 6, 
-    BRANCH_COLLAPSER = 7,
-    NODE_SLIDER = 8,
-    BRANCH_LENGTHS_MULTIPLIER = 9 , 
-    REVMAT_SLIDER = 10 ,
-    REVMAT_DIRICHLET = 11, 
-    RATE_HET_SLIDER = 12, 
-    RATE_HET_MULTI = 13,     
-    FREQUENCY_SLIDER = 14, 
-    FREQUENCY_DIRICHLET = 15,     
-    AMINO_MODEL_JUMP = 16,
-    BRANCH_DIST_GAMMA = 17,
-    DIRICH_REVMAT_ALL = 18, 
-    LIKE_SPR = 19 ,
-    DIRICH_REVMAT_PER_RATE = 20,
-    SLIDING_REVMAT_PER_RATE = 21, 
-    BL_DIST_WEIBULL = 22, 
-    BL_SLID_GAMMA = 23 , 
-    DIV_TIME_DIRICH = 24 
+  ST_NNI, 
+    E_SPR, 
+    E_TBR,
+    PARSIMONY_SPR,
+    TL_MULT,
+    NODE_SLIDER,
+    BRANCH_LENGTHS_MULTIPLIER,
+    REVMAT_SLIDER,
+    REVMAT_DIRICHLET,
+    RATE_HET_SLIDER,
+    RATE_HET_MULTI,
+    FREQUENCY_SLIDER,
+    FREQUENCY_DIRICHLET,
+    AMINO_MODEL_JUMP,
+    BRANCH_DIST_GAMMA,
+    LIKE_SPR,
+    DIRICH_REVMAT_PER_RATE,
+    SLIDING_REVMAT_PER_RATE,
+    BL_DIST_WEIBULL,
+    DIV_TIME_DIRICH, 
+    BIASED_BL_MULT 
 }; 
 
 
@@ -87,7 +83,7 @@ namespace ProposalTypeFunc
       (if this is not the case, then the proposal can only be
       activated by explicitly specifying it in the config file)
    */ 
-  bool isReadyForProductiveUse(ProposalType p); 
+  bool isDefaultInstantiate(ProposalType p); 
 
 }
 

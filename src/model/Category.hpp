@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "parameters/AbstractParameter.hpp"
+#include "AbstractParameter.hpp"
 
 enum class Category :  int  
 {  

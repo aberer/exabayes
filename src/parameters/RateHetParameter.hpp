@@ -2,7 +2,7 @@
 #define RATE_HET_PARAMETER
 
 #include "AbstractParameter.hpp"
-#include "model/Category.hpp"
+#include "Category.hpp"
   
 class RateHetParameter : public AbstractParameter
 {

@@ -43,18 +43,17 @@
 
 extern const char *protModels[PLL_NUM_PROT_MODELS];
 
-static struct pllHashTable * hashTable;
-
-static void destroy_model_names(void)
+static void destroy_model_names(pllHashTable * hashTable)
 {
   pllHashDestroy (&hashTable, PLL_TRUE);
 }
 
-static void init_model_names (void)
+static pllHashTable * init_model_names (void)
 {
   int i;
   int * item;
 
+  pllHashTable * hashTable;
   hashTable = pllHashInit (PLL_NUM_PROT_MODELS);
 
   for (i = 0; i < PLL_NUM_PROT_MODELS; ++ i)
@@ -63,6 +62,7 @@ static void init_model_names (void)
      *item = i;
      pllHashAdd (hashTable, protModels[i], (void *) item);
    }
+  return hashTable;
 }
 
 /** @ingroup parsePartitionFileGroup
@@ -95,7 +95,7 @@ pllQueuePartitionsDestroy (pllQueue ** partitions)
 }
 
 static pllQueue *
-parse_partition (int * inp)
+parse_partition (int * inp, pllHashTable * proteinModelsHash)
 {
   int input, i;
   pllLexToken token;
@@ -136,14 +136,14 @@ parse_partition (int * inp)
     if (!strcmp (pi->partitionModel, "DNA"))
      {
        pi->protModels = PLL_FALSE;
-       pi->protFreqs  = PLL_FALSE;
+       pi->protUseEmpiricalFreqs  = PLL_FALSE;
        pi->dataType   = PLL_DNA_DATA;
        pi->optimizeBaseFrequencies = PLL_FALSE; 
      }
     else if (!strcmp (pi->partitionModel, "DNAX"))
      {
        pi->protModels = PLL_FALSE;
-       pi->protFreqs  = PLL_FALSE;
+       pi->protUseEmpiricalFreqs  = PLL_FALSE;
        pi->dataType   = PLL_DNA_DATA;
        pi->optimizeBaseFrequencies = PLL_TRUE; 
      }
@@ -151,10 +151,10 @@ parse_partition (int * inp)
      {                  /* check for protein data */
        pi->dataType  = PLL_AA_DATA;
 
-       if (pllHashSearch (hashTable, pi->partitionModel, (void **) &item))
+       if (pllHashSearch (proteinModelsHash, pi->partitionModel, (void **) &item))
         {
           pi->protModels = *item;
-          pi->protFreqs  = PLL_FALSE;
+          pi->protUseEmpiricalFreqs  = PLL_FALSE;
           pi->optimizeBaseFrequencies = PLL_FALSE;
         }
        else
@@ -162,10 +162,10 @@ parse_partition (int * inp)
           if (pi->partitionModel[token.len - 1] == 'X')
            {
              pi->partitionModel[token.len - 1] = '\0';
-             if (pllHashSearch (hashTable, pi->partitionModel, (void **) &item))
+             if (pllHashSearch (proteinModelsHash, pi->partitionModel, (void **) &item))
               {
                 pi->protModels = *item;
-                pi->protFreqs  = PLL_FALSE;
+                pi->protUseEmpiricalFreqs  = PLL_FALSE;
                 pi->optimizeBaseFrequencies = PLL_TRUE;
               }
              pi->partitionModel[token.len - 1] = 'X';
@@ -173,10 +173,10 @@ parse_partition (int * inp)
           else if (pi->partitionModel[token.len - 1] == 'F')
            {
              pi->partitionModel[token.len - 1] = '\0';
-             if (pllHashSearch (hashTable, pi->partitionModel, (void **) &item))
+             if (pllHashSearch (proteinModelsHash, pi->partitionModel, (void **) &item))
               {
                 pi->protModels = *item;
-                pi->protFreqs  = PLL_TRUE;
+                pi->protUseEmpiricalFreqs  = PLL_TRUE;
                 pi->optimizeBaseFrequencies = PLL_FALSE;
               }
              pi->partitionModel[token.len - 1] = 'F';
@@ -325,7 +325,7 @@ pllPartitionDump (pllQueue * partitions)
     @brief Parse a partition (model) file
 
     Parses the partition file \a filename and stores the information
-    a queue structure ::pllQueue
+    in a queue structure ::pllQueue
 
     @param filename
       Name of the partition file
@@ -348,17 +348,49 @@ pllPartitionParse (const char * filename)
      return (0);
    }
 
-  printf ("%s\n\n", rawdata);
+  //printf ("%s\n\n", rawdata);
 
   n = strlen (rawdata);
 
   init_lexan (rawdata, n);
   input = get_next_symbol();
 
-  init_model_names();
-  partitions = parse_partition (&input);
-  destroy_model_names();
+  pllHashTable * model_names;
+  model_names = init_model_names();
+  partitions = parse_partition (&input, model_names);
+  destroy_model_names(model_names);
   
   rax_free (rawdata);
+  return (partitions);
+}
+
+/** @ingroup parsePartitionFileGroup
+    @brief Parse a partition (model) file
+
+    Parses the partition information stored in string \a p and stores the information
+    in a queue structure ::pllQueue
+
+    @param p
+      Partition information string
+    
+    @return
+      Queue structure with parsed information
+*/
+pllQueue *
+pllPartitionParseString (const char * p)
+{
+  long n;
+  int input;
+  pllQueue * partitions;
+
+  n = strlen(p);
+  init_lexan (p, n);
+  input = get_next_symbol();
+
+  pllHashTable * model_names;
+  model_names = init_model_names();
+  partitions = parse_partition (&input, model_names);
+  destroy_model_names(model_names);
+  
   return (partitions);
 }

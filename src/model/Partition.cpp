@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <algorithm>
 #include <cstring>
 #include <cassert>
@@ -5,11 +7,9 @@
 #include <iostream>
 
 #include "Partition.hpp"
-#include "system/GlobalVariables.hpp" 
+#include "GlobalVariables.hpp" 
 
-#include "system/time.hpp"
-
-#include "system/BitMask.hpp"
+#include "BitMask.hpp"
 
 extern const char inverseMeaningDNA[16]; // TODO remove 
 
@@ -18,13 +18,30 @@ int Partition::maxCategories = 4; 	// TODO!!!
 Partition::Partition(nat numTax, std::string name, int dataType, int states , int maxTipStates, bool saveMemory)
   : _saveMemory{saveMemory}
   , _numTax{numTax}
+  , _partition{}
   , _name{name}
   , _wgtPtr{nullptr}
   , _y{nullptr}
+  , _left{}
+  , _right{}
+  , _EV{}
+  , _tipVector{}
+  , _EIGN{}
+  , _EI{}
+  , _substRates{}
+  , _frequencies{}
+  , _empiricalFrequencies{}
+  , _gammaRates{}
+  , _globalScaler{}
+  , _yPtrs{}
+  , _xVector{}
+  , _xSpaceVector{}
   , _parsVect(nullptr)
+  , _parsimonyScore{}
   , _parsimonyInformative(0) 
   , _gapVector(0)
   , _gapColumn(0)
+  , _sumBuffer{}
 {
   // std::cout << SyncOut() << "init partition" << std::endl; x
   memset(&_partition, 0, sizeof(pInfo)); 
@@ -61,18 +78,6 @@ Partition::Partition(nat numTax, std::string name, int dataType, int states , in
 }
 
 
-// Partition::~Partition()
-// {
-//   for(nat i = 0; i < _xSpaceVector.size() ; ++i)
-//     {
-//       if(_xSpaceVector[i] > 0)
-// 	{
-// 	  free()
-// 	  }
-//     }
-// }
-
-
 Partition::Partition(const Partition &rhs)
   : _saveMemory (rhs._saveMemory )
   , _numTax(rhs._numTax)
@@ -92,8 +97,8 @@ Partition::Partition(const Partition &rhs)
   , _gammaRates  (rhs._gammaRates  )
   , _globalScaler (rhs._globalScaler )
   , _yPtrs (rhs._yPtrs )
-  // , _xVector (rhs._xVector.size(), nullptr  )
-  , _xVector(rhs._xVector)
+  , _xVector (rhs._xVector.size(), nullptr  )
+  // , _xVector(rhs._xVector)
   , _xSpaceVector (rhs._xSpaceVector.size() , 0  )
   , _parsVect (rhs._parsVect )
   , _parsimonyScore (rhs._parsimonyScore )
@@ -195,6 +200,7 @@ void swap(Partition& lhs, Partition& rhs)
 
 void Partition::initGapVectorStruct()  
 {
+  assert(_saveMemory); 
   setGapVectorLength(  getWidth() / 32 + 1 ); 
   assert(sizeof(unsigned int) == 4); 
   _gapVector.resize(getGapVectorLength() * 2 * _numTax , 0 );
@@ -220,8 +226,9 @@ void Partition::setAlignment( shared_pod_ptr<unsigned char> aln, int width)
   _partition.sumBuffer = _sumBuffer.data();
 
   _partition.yVector = _yPtrs.data(); 
-
-  initGapVectorStruct(); 
+  
+  if(_saveMemory)
+    initGapVectorStruct(); 
 
   prepareParsimony();
 }
@@ -299,7 +306,7 @@ void Partition::compressDNA(const std::vector<bool> &informative)
 		  for(int k = 0; k < states; k++)
 		    {
 		      if(value & mask32[k])
-			compressedValues[k] |= mask32[compressedCounter];
+			compressedValues[k] |= mask32[int(compressedCounter)];
 		    }
                      
 		  compressedCounter++;
@@ -323,7 +330,7 @@ void Partition::compressDNA(const std::vector<bool> &informative)
 	{   
 	  for(;compressedCounter < PLL_PCF; compressedCounter++)              
 	    for(int k = 0; k < states; k++)
-	      compressedValues[k] |= mask32[compressedCounter];               
+	      compressedValues[k] |= mask32[int(compressedCounter)];               
           
 	  for(int k = 0; k < states; k++)
 	    {
@@ -398,11 +405,11 @@ void Partition::prepareParsimony()
     }
   else 
     {
-      auto tp = getTimePoint(); 
+      // auto tp = getTimePoint(); 
       auto informative = determineUninformativeSites();
       // tout << "determine uninfo: "<< getDuration(tp)  << " sec"<< std::endl; 
 
-      tp = getTimePoint(); 
+      // tp = getTimePoint(); 
       compressDNA(informative);
       // tout << "compress: "<< getDuration(tp) << " sec"  << std::endl; 
     }

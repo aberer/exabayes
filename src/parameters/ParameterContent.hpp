@@ -4,9 +4,9 @@
 #include <iostream>
 #include <vector>
 
-#include "model/ProtModel.hpp"
-#include "model/Branch.hpp"
-#include "system/Serializable.hpp"
+#include "ProtModel.hpp"
+#include "Branch.hpp"
+#include "Serializable.hpp"
 
 
 
@@ -21,6 +21,7 @@ public:
 		   std::vector<BranchPlain> topoI = std::vector<BranchPlain>{}, 
 		   std::vector<BranchLength> blI = std::vector<BranchLength>{}, 
 		   std::vector<ProtModel>  pmI = std::vector<ProtModel>{}) ; 
+  virtual ~ParameterContent(){}
 
 public:   			// public stuff that should be private 
   std::vector<double> values; 

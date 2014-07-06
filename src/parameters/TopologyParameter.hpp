@@ -2,7 +2,7 @@
 #define _TOPOLOGY_PARAMETER
 
 #include "AbstractParameter.hpp"
-#include "model/Category.hpp"
+#include "Category.hpp"
 
 class TopologyParameter : public AbstractParameter
 {

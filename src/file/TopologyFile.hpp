@@ -6,7 +6,7 @@
 #include <iostream> 
 
 #include "common.h"
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include "OutputFile.hpp"
 
 class TopologyFile : public OutputFile
@@ -14,8 +14,8 @@ class TopologyFile : public OutputFile
 public: 
   TopologyFile(std::string workdir, std::string runname, nat runid, nat couplingId, nat paramNum, bool hasManyTopoloFiles); 
   void initialize(const TreeAln& traln, nat someId, bool isDryRun)  ;     
-  void sample(const TreeAln &traln, nat gen, AbstractParameter* blParams)  ; 
-  void regenerate(std::string workdir, std::string prevId, nat gen) ; 
+  void sample(const TreeAln &traln, uint64_t gen, AbstractParameter* blParams)  ; 
+  void regenerate(std::string workdir, std::string prevId, uint64_t gen) ; 
   void verifyNonExistance();
 
 private: 			// METHODS

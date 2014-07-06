@@ -11,14 +11,13 @@
 #include <array>
 #include <memory>
 
-
-#include "system/extensions.hpp"
-#include "eval/ArrayReservoir.hpp"
-#include "system/GlobalVariables.hpp"
+#include "extensions.hpp"
+#include "ArrayReservoir.hpp"
+#include "GlobalVariables.hpp"
 
 #include "ProtModel.hpp"
 #include "Branch.hpp"
-#include "system/FlagType.hpp"
+#include "FlagType.hpp"
 
 #include "BranchLengthResource.hpp"
 #include "Partition.hpp"
@@ -37,9 +36,10 @@ public:
    /////////////////
    // life cycle  //
    /////////////////
-  TreeAln(nat numTax, bool isSaveMemorySEV);
+  TreeAln(size_t numTax, bool isSaveMemorySEV);
   TreeAln(const TreeAln& rhs);
   TreeAln(TreeAln&& rhs) = default; 
+  ~TreeAln(){}
   TreeAln& operator=(TreeAln rhs);
 
   friend void swap(TreeAln& lhs, TreeAln& rhs ); 
@@ -68,7 +68,7 @@ public:
   /** 
       @brief get the number of partitions in the alignment
    */ 
-  nat getNumberOfPartitions() const;   
+  size_t getNumberOfPartitions() const;   
   /** 
       @brief get the number of taxa in the tree 
    */ 
@@ -111,7 +111,7 @@ public:
       @brief indicates whether a nodepointer is a tip 
    */ 
   bool isTipNode(nodeptr p) const {return p->number <=  getTrHandle().mxtips ;}
-  bool isTipNode(nat node) const { return int(node) <=  getTrHandle().mxtips; }
+  bool isTipNode(nat aNode) const { return int(aNode) <=  getTrHandle().mxtips; }
   /** 
       @brief gets the branch from a node pointer (including branch length)
       
@@ -154,7 +154,7 @@ public:
   /** 
       @brief gets the mean substitution rate overall specified partitions
    */ 
-  double getMeanSubstitutionRate(const std::vector<nat> &partitions) const ;
+  // double getMeanSubstitutionRate(const std::vector<nat> &partitions) const ;
   /** 
       @brief unlinks a node 
    */ 
@@ -253,17 +253,16 @@ public:
   bool isSaveMemorySEV() const { return _isSaveMemorySEV; } 
 
   void createCaterpillar(); 
-  
-// private: // METHODS  
+
   void initRevMat(nat model); 	// these functions are not needed any more: directly use the respective setter function     
   void discretizeGamma(nat model); 
-  void initialize(nat numTax);
+  void initialize(size_t numTax);
   nat addNodeToPartialTree(nat id, nat curRoot, nat outerCtr); 
 
 private: 			// ATTRIBUTES 
   std::vector<Partition> _partitions;
-  partitionList _partitionListResource; // no-copy 
-  std::vector<pInfo*> _partitionPtrs;	// no-copy
+  partitionList _partitionListResource; 
+  std::vector<pInfo*> _partitionPtrs;	
 
   pllInstance _tr;
   std::vector<std::string> _taxa; 

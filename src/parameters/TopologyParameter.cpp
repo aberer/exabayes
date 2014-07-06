@@ -5,7 +5,10 @@ void TopologyParameter::applyParameter(TreeAln& traln , const ParameterContent &
 {
   traln.unlinkTree();
   for(auto &b : content.topology)
-    traln.clipNode(traln.getUnhookedNode(b.getPrimNode()), traln.getUnhookedNode(b.getSecNode())); 
+    {
+      // tout << "clipping " << b << std::endl; 
+      traln.clipNode(traln.getUnhookedNode(b.getPrimNode()), traln.getUnhookedNode(b.getSecNode())); 
+    }
 }
 
 

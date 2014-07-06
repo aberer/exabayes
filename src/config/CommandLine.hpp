@@ -5,7 +5,7 @@
 #include <iosfwd>
 #include <string>
 
-#include "math/Randomness.hpp"
+#include "Randomness.hpp"
 #include "MemoryMode.hpp"
 
 class CommandLine

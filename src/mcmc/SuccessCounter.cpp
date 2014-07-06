@@ -14,35 +14,14 @@ SuccessCounter::SuccessCounter()
 }
 
 
-SuccessCounter::SuccessCounter(const SuccessCounter& rhs)
-  : globalAcc(rhs.globalAcc)
-  , globalRej(rhs.globalRej)
-  , localAcc(rhs.localAcc)
-  , localRej(rhs.localRej)
-  , batch(rhs.batch)
-{  
-}
-
-
-
-
-
-SuccessCounter SuccessCounter::operator=( SuccessCounter rhs) 
-{
-  swap(*this, rhs);
-  return *this; 
-} 
-
-
-
-void swap(SuccessCounter &elemA, SuccessCounter &elemB)
-{
-  std::swap(elemA.globalAcc, elemB.globalAcc);
-  std::swap(elemA.globalRej, elemB.globalRej);
-  std::swap(elemA.localRej, elemB.localRej);
-  std::swap(elemA.localAcc, elemB.localAcc);
-  std::swap(elemA.batch, elemB.batch);
-}
+// SuccessCounter::SuccessCounter(const SuccessCounter& rhs)
+//   : globalAcc(rhs.globalAcc)
+//   , globalRej(rhs.globalRej)
+//   , localAcc(rhs.localAcc)
+//   , localRej(rhs.localRej)
+//   , batch(rhs.batch)
+// {  
+// }
 
 
 void SuccessCounter::accept() 

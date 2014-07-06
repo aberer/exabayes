@@ -15,8 +15,10 @@
 #include <vector>
 #include <iostream>
 
-#include "system/GlobalVariables.hpp"
-#include "system/extensions.hpp"
+#include "GlobalVariables.hpp"
+#include "extensions.hpp"
+
+#include "ParameterList.hpp"
 
 class AbstractPrior; 
 class AbstractParameter; 
@@ -28,7 +30,7 @@ public:
   /** 
       @brief intializes and scores the prior each parameter    
    */ 
-  void initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables);   
+  void initialize(const TreeAln &traln, ParameterList &params);   
   /** 
       @brief informs the prior about acceptance of the new state    
    */ 
@@ -40,8 +42,7 @@ public:
   /** 
       @brief adds a (logarithmic!) value to the prior ratio
    */ 
-  void addToRatio(double val)  { assert(wasInitialized) ;  _lnPriorRatio *= log_double::fromAbs(val); }
-  void addToRatio(log_double val)  { assert(wasInitialized) ;  _lnPriorRatio *= val; }
+  void addToRatio(log_double val); 
   
   /** 
       @brief accounts for branch length prior changes due to either
@@ -55,12 +56,12 @@ public:
 
       @notice this is very pedastrian, but I do not see how to avoid this
    */ 
-  void accountForFracChange( TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, 
-			    const std::vector<AbstractParameter*> &affectedBlParams )  ; 
+  // void accountForFracChange( TreeAln &traln, const std::vector<double> &oldFc, const std::vector<double> &newFcs, 
+  // 			    const std::vector<AbstractParameter*> &affectedBlParams )  ; 
   /** 
       @brief verifies the prior 
    */ 
-  void verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> variables) const ;  
+  void verifyPrior(const TreeAln &traln, ParameterList& variables)  ;  
 
   ///////////////
   // OBSERVERS //
@@ -70,12 +71,14 @@ public:
   log_double getLnPriorRatio() const {assert(wasInitialized) ; return _lnPriorRatio; }
 
 private: 
-  log_double scoreEverything(const TreeAln &traln, const std::vector<AbstractParameter*> &variables) const ; 
+  log_double scoreEverything(const TreeAln &traln, ParameterList& params) const ; 
   
   // having an internal state actually defies the logic of the randomVariables being external 
   log_double _lnPrior; 
   log_double _lnPriorRatio; 
   bool wasInitialized; 
+
+  // double _error; 
 }; 
 
 

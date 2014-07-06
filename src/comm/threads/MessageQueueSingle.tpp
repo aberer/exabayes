@@ -1,4 +1,4 @@
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 #include <algorithm>
 

@@ -18,7 +18,7 @@ public:
       @brief gets the number of elements that currently can be
       represented via this bipartition.
    */ 
-  nat getElemsReserved() const { return bip.size() * 32 ; } 
+  size_t getElemsReserved() const { return bip.size() * 32 ; } 
   
   void setHash(nat h) {assert(h != 0 ) ; hash = h; }
   nat getHash() const ; 
@@ -82,7 +82,7 @@ public:
 
      @notice do not overuse, this is somewhat expensive
    */ 
-  void reserve(nat num);
+  void reserve(size_t num);
   /**
      @brief gets the number of bits set
    */ 
@@ -93,9 +93,9 @@ public:
   void printVerbose(std::ostream &outt, const std::vector<std::string> nameMap) const; 
 
   static std::vector<nat> perBitMask;
-  static nat numBits;
-  static nat numBitsMinusOne; 
-  static nat bitShift; 
+  static size_t numBits;
+  static size_t numBitsMinusOne; 
+  static size_t bitShift; 
   static nat allOne; 
 
   friend std::ostream& operator<<(std::ostream& out, const Bipartition& rhs); 

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <tuple>
 
-IncompleteMesh::IncompleteMesh(nat size, nat runDimSize, nat chainDimSize)
+IncompleteMesh::IncompleteMesh(size_t size, size_t runDimSize, size_t chainDimSize)
   : _runDimSize (runDimSize)
   , _chainDimSize ( chainDimSize)
   , _globalSize( size) 
@@ -11,18 +11,18 @@ IncompleteMesh::IncompleteMesh(nat size, nat runDimSize, nat chainDimSize)
 }
 
 
-std::tuple<nat,nat> IncompleteMesh::getElementsPerDimension(nat total, nat dimSize) const 
+std::tuple<size_t,size_t> IncompleteMesh::getElementsPerDimension(size_t total, size_t dimSize) const 
 {
-  nat cartProcs = total  / dimSize; 
-  nat remainderProcs = total % dimSize ; 
-  nat numMoreProc = remainderProcs; 
+  auto cartProcs = total  / dimSize; 
+  auto remainderProcs = total % dimSize ; 
+  auto numMoreProc = remainderProcs; 
 
   assert(numMoreProc * (cartProcs + 1 )  +  (  dimSize - numMoreProc ) * cartProcs == total); 
   return std::make_tuple(  cartProcs, dimSize - numMoreProc ); 
 }
 
 
-nat IncompleteMesh::getProcsInMyDim(nat rank, nat total, nat dimSize ) const 
+size_t IncompleteMesh::getProcsInMyDim(nat rank, size_t total, size_t dimSize ) const 
 {
   auto elemPerDim = getElementsPerDimension(total, dimSize); 
   auto procs = std::get<0>(elemPerDim); 
@@ -31,7 +31,7 @@ nat IncompleteMesh::getProcsInMyDim(nat rank, nat total, nat dimSize ) const
 }
 
 
-nat IncompleteMesh::getMyCoord(nat rank, nat total, nat dimSize ) const 
+nat IncompleteMesh::getMyCoord(nat rank, size_t total, size_t dimSize ) const 
 {
   auto elemPerDim = getElementsPerDimension(total, dimSize); 
   auto procs = std::get<0>(elemPerDim); 
@@ -39,26 +39,26 @@ nat IncompleteMesh::getMyCoord(nat rank, nat total, nat dimSize ) const
   auto numWithMany = dimSize - numWithFew; 
 
   if( rank <  numWithMany  * ( procs + 1) )
-    return rank / (procs + 1 ); 
+    return nat(rank / (procs + 1 )); 
   else 
     {
-      rank -=  numWithMany * (procs + 1); 
-      return  numWithMany  + rank /  procs; 
+      rank -=  nat(numWithMany * (procs + 1)); 
+      return  nat(numWithMany  + rank /  procs); 
     }
 }
 
 
-nat IncompleteMesh::getRankInMyDim(nat rank, nat total, nat dimSize) const 
+nat IncompleteMesh::getRankInMyDim(nat rank, size_t total, size_t dimSize) const 
 {
   nat procs = 0, numWithFew = 0; 
   std::tie(procs, numWithFew) = getElementsPerDimension(total, dimSize); 
-  nat numWithMany = dimSize - numWithFew;  
+  auto numWithMany = dimSize - numWithFew;  
     
   if(rank < numWithMany * (procs + 1 ))
     return rank % (procs+1); 
   else 
     {
-      rank -=  numWithMany * (procs + 1); 
+      rank -=  nat(numWithMany * (procs + 1)); 
       return rank % procs; 
     }
 }
@@ -99,7 +99,7 @@ std::ostream& operator<<(std::ostream& out, const IncompleteMesh& rhs)
 nat IncompleteMesh::getRankFromCoordinates( std::array<nat,3> coords) const 
 {
   auto result = 0; 
-  auto resultRun = 0; 
+  auto resultRun = 0u; 
   auto resultChain = 0; 
 
   assert(coords[0] < _runDimSize && coords[1] < _chainDimSize); 
@@ -110,12 +110,12 @@ nat IncompleteMesh::getRankFromCoordinates( std::array<nat,3> coords) const
   auto numWithFew = std::get<1>(elemPerDim);
   auto numWithMany = _runDimSize - numWithFew; 
   if(coords[0] < numWithMany)
-    resultRun += coords[0] * (procs + 1 ); 
+    resultRun += nat(coords[0] * (procs + 1 )); 
   else 
     {
-      resultRun += numWithMany * (procs + 1); 
-      coords[0] -= numWithMany; 
-      resultRun += coords[0] * procs; 
+      resultRun += nat(numWithMany * (procs + 1)); 
+      coords[0] -= nat(numWithMany); 
+      resultRun += nat(coords[0] * procs); 
     }
 
   // add ranks
@@ -128,12 +128,12 @@ nat IncompleteMesh::getRankFromCoordinates( std::array<nat,3> coords) const
   numWithMany = _chainDimSize - numWithFew; 
     
   if(coords[1] < numWithMany)
-    resultChain += coords[1] * (procs+1); 
+    resultChain += nat(coords[1] * (procs+1)); 
   else 
     {
-      resultChain += numWithMany * (procs+1); 
-      coords[1] -= numWithMany; 
-      resultChain += coords[1] *  procs; 
+      resultChain += nat(numWithMany * (procs+1)); 
+      coords[1] -= nat(numWithMany); 
+      resultChain += nat(coords[1] *  procs); 
     }
     
   result += resultRun + resultChain + coords[2]; 
@@ -160,7 +160,7 @@ nat IncompleteMesh::getNumRanksInDim(nat runBatchId, nat chainBatchId) const
     }
   else 				
     {
-      otherRank = _globalSize; 
+      otherRank = nat(_globalSize); 
     }
 
   assert(baseRank  < otherRank); 

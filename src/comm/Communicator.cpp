@@ -1,7 +1,7 @@
-#include "comm/Communicator.hpp"	 
-#include "system/GlobalVariables.hpp"
-#include "comm/threads/ThreadResource.hpp"
-#include "comm/AbstractPendingSwap.hpp"
+#include "Communicator.hpp"	 
+#include "GlobalVariables.hpp"
+#include "ThreadResource.hpp"
+#include "AbstractPendingSwap.hpp"
 
 Communicator::Communicator(std::unordered_map<tid_t,int> tid2rank)
   : _remoteComm()
@@ -56,10 +56,10 @@ void Communicator::createRecvRequest(int src, int tag, nat length, CommRequest& 
 
 int Communicator::getRank( ) const 
 {
-  return _remoteComm.getRank()  * _localComm.size() + _localComm.getRank() ; 
+  return _remoteComm.getRank()  * int(_localComm.size()) + _localComm.getRank() ; 
 }
 
-int Communicator::size() const 
+size_t Communicator::size() const 
 {
   return _remoteComm.size() * _localComm.size(); 
 }
@@ -115,7 +115,7 @@ std::ostream& operator<<(std::ostream & out, const Communicator& rhs)
 
 int Communicator::mapToLocalRank( int rank) const   
 {
-  auto res =  rank %_localComm.size(); 
+  auto res =  rank % int(_localComm.size()); 
   assert(res >= 0 && "local rank was negative" ); 
   return  res; 
 }
@@ -123,7 +123,7 @@ int Communicator::mapToLocalRank( int rank) const
 
 int Communicator::mapToRemoteRank(int rank) const  
 {
-  return rank / _localComm.size(); 
+  return rank /int( _localComm.size()); 
 }
 
 
@@ -136,7 +136,7 @@ int Communicator::getProcsPerNode()
   auto numNodes = _remoteComm.getNumberOfPhysicalNodes(); 
   auto siz = _remoteComm.size(); 
   auto procsPerNode = (siz / numNodes) + (siz % numNodes == 0 ? 0 : 1 ) ; 
-  return procsPerNode; 
+  return int(procsPerNode); 
 }
 
 
@@ -152,8 +152,8 @@ RemoteComm& Communicator::getRemoteComm()
 }
 
 
-void Communicator::initWithMaxChains(int numChains, int numThreadsChecking)
+void Communicator::initWithMaxChains(size_t numChains, size_t numThreadsChecking)
 {
   if(_localComm.getColor() == 0 && _localComm.getRank() == 0)
-    _localComm.initializeAsyncQueue(numThreadsChecking, AbstractPendingSwap::cantorPair(numChains, numChains) * 2 );
+    _localComm.initializeAsyncQueue(nat(numThreadsChecking), size_t(AbstractPendingSwap::cantorPair(numChains, numChains) * 2) );
 } 

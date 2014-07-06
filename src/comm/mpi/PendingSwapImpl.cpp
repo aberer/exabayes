@@ -1,9 +1,11 @@
 #include "PendingSwapImpl.hpp" 
 
-#include "comm/ParallelSetup.hpp"
+#include "ParallelSetup.hpp"
 
 PendingSwap::Impl::Impl(SwapElem elem)
   : AbstractPendingSwap(elem)
+  , _sentReqs{}
+  , _recvReq{ CommRequest{} }
   {
   }
 
@@ -26,42 +28,42 @@ uint64_t PendingSwap::Impl::createTag( int rank ) const
 
 void PendingSwap::Impl::initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid) 
 {
-  uint64_t tag = createTag( pl.getChainComm().getRank() ); 
+  auto tag = createTag( pl.getChainComm().getRank() ); 
   // std::cout << SyncOut() << SHOW(tag) << std::endl; 
   assert(tag < pl.getMaxTag()); 
 
-  nat myId = _swap.getMyId(pl,runid); 
-  nat remoteId = _swap.getRemoteId(pl,runid);
+  auto myId = _swap.getMyId(pl,runid); 
+  auto remoteId = _swap.getRemoteId(pl,runid);
 
-  nat ourRunBatch = runid % pl.getRunsParallel();
-  nat myBatch = myId % pl.getChainsParallel();
-  nat remoteBatch = remoteId % pl.getChainsParallel(); 
+  auto ourRunBatch = runid % pl.getRunsParallel();
+  auto myBatch = myId % pl.getChainsParallel();
+  auto  remoteBatch = remoteId % pl.getChainsParallel(); 
   
-  nat numInMyBatch = pl.getMesh().getNumRanksInDim(ourRunBatch, myBatch); 
-  nat numInRemoteBatch = pl.getMesh().getNumRanksInDim(ourRunBatch, remoteBatch); 
+  auto numInMyBatch = pl.getMesh().getNumRanksInDim(nat(ourRunBatch), nat(myBatch)); 
+  auto numInRemoteBatch = pl.getMesh().getNumRanksInDim(nat(ourRunBatch), nat(remoteBatch)); 
 
   auto myCoords = pl.getMyCoordinates(); 
 
   // determine from who i receive 
   // auto srcRankInRun =  ; 
-  auto remRank =  pl.getRunComm().mapToRemoteRank( pl.getRankInRun( { {ourRunBatch, remoteBatch, myCoords[2] % numInRemoteBatch }  } )); 
+  auto remRank =  pl.getRunComm().mapToRemoteRank( pl.getRankInRun( { {nat(ourRunBatch), nat(remoteBatch), nat(myCoords[2] % numInRemoteBatch) }  } )); 
 
   nat myRankInRun =  pl.getRankInRun( myCoords ); 
 
   assert( int(myRankInRun) == pl.getRunComm().getRank() ); 
 
-  pl.getRunComm().createRecvRequest(remRank, tag, myChainSer.size(), _recvReq);
+  pl.getRunComm().createRecvRequest(int(remRank), int(tag), nat(myChainSer.size()), _recvReq);
 
   // send stuff 
   for(nat i = 0 ; i < numInRemoteBatch; ++i)
     {
       if( i % numInMyBatch == myCoords[2])
 	{
-	  auto hisRemoteRank = pl.getRunComm().mapToRemoteRank( pl.getRankInRun( {{ ourRunBatch, remoteBatch, i } })); 
+	  auto hisRemoteRank = pl.getRunComm().mapToRemoteRank( pl.getRankInRun( {{ nat(ourRunBatch), nat(remoteBatch), nat(i) } })); 
 	  
 	  _sentReqs.push_back(  CommRequest()  );
 	  auto &&elem = _sentReqs.back();
-	  pl.getRunComm().createSendRequest(myChainSer, hisRemoteRank, tag , elem); 
+	  pl.getRunComm().createSendRequest(myChainSer, hisRemoteRank, nat(tag) , elem); 
 	}
     }
 }

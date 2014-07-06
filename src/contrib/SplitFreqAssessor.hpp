@@ -9,13 +9,19 @@
 #ifndef _AVGSPLITFREQASSESSOR_H
 #define _AVGSPLITFREQASSESSOR_H
 
-#include "tree-parse/TreeProcessor.hpp"
-#include "data-struct/BipartitionHash.hpp"
+#include "TreeProcessor.hpp"
+#include "BipartitionHash.hpp"
 
 class SplitFreqAssessor : public TreeProcessor 
 {
 public: 
   SplitFreqAssessor(std::vector<std::string>fileNames, bool expensiveCheck);
+  SplitFreqAssessor(const SplitFreqAssessor &rhs) = default; 
+  SplitFreqAssessor( SplitFreqAssessor &&rhs) = default; 
+  SplitFreqAssessor& operator=(const SplitFreqAssessor &rhs)  = default; 
+  SplitFreqAssessor& operator=(SplitFreqAssessor &&rhs) = default ; 
+
+  virtual ~SplitFreqAssessor(){}
   /** 
       @brief use the new bipartition hash for extracting bipartitions 
    */ 

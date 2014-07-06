@@ -2,10 +2,10 @@
 #include <numeric>
 
 #include "LikelihoodEvaluator.hpp"
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 #include "ArrayRestorer.hpp"
-#include "model/Branch.hpp"
-#include "comm/ParallelSetup.hpp"
+#include "Branch.hpp"
+#include "ParallelSetup.hpp"
 
 #include "common.h"
 
@@ -13,13 +13,10 @@ using std::endl;
 using std::cout; 
 
 
-using std::endl; 
-using std::cout; 
-
-
-
-LikelihoodEvaluator::LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy* plcy , std::shared_ptr<ArrayReservoir> arrayReservoir, ParallelSetup* pl)
-  : _arrayPolicy (plcy->clone()) 
+LikelihoodEvaluator::LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy* plcy ,  std::shared_ptr<ArrayReservoir> arrayReservoir, ParallelSetup* pl)
+  : _debugTralnPtr{nullptr}
+  , _verifyLnl{false}
+  , _arrayPolicy (plcy->clone()) 
   , _arrayOrientation(traln)
   , _arrayReservoir(arrayReservoir)
   , _plPtr(pl)
@@ -98,7 +95,7 @@ void LikelihoodEvaluator::updatePartials (TreeAln &traln, nodeptr p)
 
 	      if(tr->td[0].executeModel[model] && width > 0)
 		{
-		  size_t requiredLength = 0; 
+		  auto requiredLength = size_t(0u); 
 
 		  // assert(not tr->saveMemory ) ; 
 
@@ -128,18 +125,19 @@ void LikelihoodEvaluator::updatePartials (TreeAln &traln, nodeptr p)
 		    }
 		  else 
 		    {
-		      requiredLength  =  virtual_width( width ) * Partition::maxCategories * partition.states * sizeof(double);
+		      // wtf is virtual width?  
+		      requiredLength  = size_t(Partition::maxCategories)  *  virtual_width( int(width) )   * partition.states * sizeof(double);
 		    }
 
 		  auto x3_start = partition.xVector[tInfo.pNumber - tr->mxtips - 1]; 
 		  auto availableLength = partition.xSpaceVector[(tInfo.pNumber - tr->mxtips - 1)]; 
 
-		  // tout << "required = " << requiredLength << "\tavailableLength=" << availableLength << std::endl; 
-
 		  /* new exabayes behaviour  */
 		  if(requiredLength != availableLength)
 		    {
 		      int p_slot =  tInfo.pNumber - tr->mxtips - 1; 
+		      
+		      // tout << "required = " << requiredLength << "\tavailableLength=" << availableLength << std::endl; 
 
 		      if( x3_start)
 			_arrayReservoir->deallocate(x3_start);
@@ -203,11 +201,15 @@ void LikelihoodEvaluator::evaluateLikelihood (TreeAln &traln , BranchPlain branc
   // care of the evaluate part. All nodes up until the virtual root
   // should have been computed by some other function (preferably
   // evaluateSubtrees) already.
+  
+  // when proposal sets are turned off, this warning may be triggered  
+#if 0 
   if(not isDebugEval)
     {
       if(tr->td[0].count != 1)
-      tout << "danger " << SHOW(tr->td[0].count) << " but expected 1" << std::endl; 
+	tout << "danger " << SHOW(tr->td[0].count) << " but expected 1" << std::endl; 
     }
+#endif
   // assert( tr->td[0].count == 1 ); 
 
   storeExecuteMaskInTraversalDescriptor(tr, pr);
@@ -284,7 +286,7 @@ void LikelihoodEvaluator::evaluate( TreeAln &traln, const BranchPlain &root, boo
 {
   // tout << "evaluate with root " << root << " and " << ( fullTraversal ? "full" : "partial" ) << std::endl; 
   auto partitions = std::vector<nat>{}; 
-  nat numPart = traln.getNumberOfPartitions(); 
+  auto numPart = traln.getNumberOfPartitions(); 
   partitions.reserve(numPart);
   for(nat i = 0 ; i < numPart; ++i)
     partitions.push_back(i); 
@@ -357,7 +359,7 @@ void LikelihoodEvaluator::evaluatePartitionsDry(TreeAln &traln, const BranchPlai
 void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain &root , const std::vector<nat>& partitions, bool fullTraversal)    
 {
   // tout << "evaluatePartitions with root " << root << " and " << ( fullTraversal ? "full" : "partial" )  << " and partitons " << partitions << std::endl; 
-  nat numPart = traln.getNumberOfPartitions();
+  auto numPart = traln.getNumberOfPartitions();
   auto perPartitionLH = traln.getPartitionLnls();
 
   evaluateSubtrees(traln, root, partitions, fullTraversal);
@@ -423,12 +425,16 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partId, const BranchP
   _arrayPolicy->prepareForEvaluation(traln, evalBranch, partId, _arrayOrientation, *_arrayReservoir); 
   applyDirtynessToSubtree(traln, partId, evalBranch);
   
-  if( 
-#ifndef LNL_PRINT_DEBUG
-     false && 
+  
+  bool showDebug =  
+#ifdef LNL_PRINT_DEBUG
+    true ; 
+#else 
+  false ; 
 #endif
-     true  
-      )
+
+
+  if( showDebug )
     {
       if(evalBranch.findNodePtr(traln)->x != 1)
 	{
@@ -565,8 +571,9 @@ void LikelihoodEvaluator::setDebugTraln(std::shared_ptr<TreeAln> debugTraln)
 #endif
 
 
-void LikelihoodEvaluator::markDirty(const TreeAln &traln, nat nodeId)
+void LikelihoodEvaluator::invalidateArray(const TreeAln &traln, nat nodeId)
 {
+  // tout << "INVAL "<< nodeId << std::endl; 
   for(nat i = 0; i < traln.getNumberOfPartitions() ;++i)
     _arrayOrientation.setOrientation(i, ArrayOrientation::nodeNum2ArrayNum(nodeId,traln.getNumberOfTaxa()), INVALID); 
 } 
@@ -597,7 +604,7 @@ void LikelihoodEvaluator::debugPrintToCompute(const TreeAln &traln, const Branch
 }
 
 
-void LikelihoodEvaluator::markDirty(const TreeAln &traln, nat partitionId, nat nodeId) 
+void LikelihoodEvaluator::invalidateArray(const TreeAln &traln, nat partitionId, nat nodeId) 
 {
   nat id = nodeId - traln.getNumberOfTaxa()  - 1; 
   _arrayOrientation.setOrientation(partitionId,id, INVALID); 
@@ -632,3 +639,45 @@ void  LikelihoodEvaluator::evaluateSubtrees(TreeAln& traln, const BranchPlain &r
     parts.push_back(i);
   evaluateSubtrees(traln, root, parts, fullTraversal); 
 } 
+
+
+
+
+bool LikelihoodEvaluator::subtreeValid(const TreeAln& traln, const BranchPlain &root,  const std::unordered_set<BranchPlain> &invalidBranches) 
+{
+  if( not traln.isTipNode(root.getSecNode()) )
+    {
+      auto desc = traln.getDescendents(root.getInverted()); 
+
+      auto sideA = subtreeValid(traln, desc.first, invalidBranches); 
+      auto sideB = subtreeValid(traln, desc.second, invalidBranches); 
+      
+      auto isValid = invalidBranches.find(root) == invalidBranches.end()
+	&& sideA 
+	&& sideB; 
+      
+      if(not isValid)
+	{
+	  invalidateArray(traln, root.getSecNode());
+	  tout << "marked " << root.getSecNode() << " as dirty" << std::endl; 
+	}
+      return isValid; 
+    }
+  else 
+    return true; 
+}
+
+/* 
+   in case, we have proposed new branches, this invalidates all
+   likelihood arrays that are affected by this 
+ */ 
+void LikelihoodEvaluator::invalidateWithBranches(const TreeAln& traln, const BranchPlain &root,  const std::unordered_set<BranchPlain> &invalidBranches)
+{
+  if(not traln.isTipNode(root.getSecNode()))
+    subtreeValid(traln, root, invalidBranches);
+  if(not traln.isTipNode(root.getPrimNode()))
+    subtreeValid(traln,root.getInverted(), invalidBranches); 
+}
+
+
+

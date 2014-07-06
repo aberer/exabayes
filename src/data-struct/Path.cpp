@@ -2,8 +2,8 @@
 #include <fstream>
 
 #include "Path.hpp"
-#include "mcmc/Chain.hpp"
-#include "proposals/AbstractProposal.hpp"
+#include "Chain.hpp"
+#include "AbstractProposal.hpp"
 
 
 void Path::clear()
@@ -66,28 +66,10 @@ void Path::debug_assertPathExists(TreeAln& traln)
 }
 
 
-
-
-/**
-    @brief saves all branch lengths along the path in s. 
- */ 
-void Path::saveBranchLengthsPath(const TreeAln& traln, const std::vector<AbstractParameter*> &params)
-{
-  bls.clear();
-  for(auto &b : stack)
-    {
-      auto p = b.findNodePtr(traln);
-      auto bl = traln.getBranch(p,params); 
-      // tout << "saving " << bl << std::endl; 
-      bls.push_back(bl); 
-    }
-}
-
-
-bool Path::nodeIsOnPath(int node) const
+bool Path::nodeIsOnPath(int aNode) const
 {
   for(auto b : stack)
-    if(b.hasNode(node))
+    if(b.hasNode(aNode))
       return true;       
 
   return false; 
@@ -102,41 +84,7 @@ std::ostream& operator<<(std::ostream &out, const Path &rhs)
 }
 
 
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, BranchLength b, double parameter, double &hastings, PriorBelief &prior, AbstractParameter* const param) const 
-{  
-#if 0 
-  nodeptr p = b.findNodePtr(traln); 
-  double multiplier = rand.drawMultiplier(parameter); 
-
-  double oldZ = traln.getBranch(p, param).getLength(param); 
-  
-  double newZ = multiplier * oldZ; 
-
-  assert(0);
-  // , newZ
-  traln.clipNode(p,p->back);   
-
-  prior.updateBranchLengthPrior(traln, oldZ, newZ, param);
-
-  double realMultiplier = log(newZ) / log(oldZ);    
-  AbstractProposal::updateHastings(hastings, realMultiplier, "pathMod");; 
-#else 
-  assert(0); 
-#endif
-}
-
-
-void Path::restoreBranchLengthsPath(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
-{
-  for(auto &bl : bls )
-    {
-      // tout << "restore " << bl << std::endl; 
-      traln.setBranch(bl,blParams); 
-    }
-}
-
-
-int Path::getNthNodeInPath(nat num)   const
+nat Path::getNthNodeInPath(size_t num)   const
 { 
   int result; 
   
@@ -212,7 +160,7 @@ bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const BranchPlain &ta
 
 
 
-void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
+ void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
 {  
   // cout << "trying to find path between " << p->number << "/" << p->back->number << " and "  << q->number << "/" << q->back->number  << endl; 
   

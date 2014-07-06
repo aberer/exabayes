@@ -1,13 +1,21 @@
 #ifndef PARSIMONY_EVALUATOR
 #define PARSIMONY_EVALUATOR
 
-#include "comm/RemoteComm.hpp"
+#include "RemoteComm.hpp"
 #include <cassert>
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 
 class ParsimonyEvaluator
 {
 public:
+  ParsimonyEvaluator()
+  {}
+  
+  ParsimonyEvaluator(const ParsimonyEvaluator& rhs )  = default; 
+  ParsimonyEvaluator( ParsimonyEvaluator&& rhs ) = default; 
+  ParsimonyEvaluator& operator=(const ParsimonyEvaluator &rhs)= default ; 
+  ParsimonyEvaluator& operator=( ParsimonyEvaluator &&rhs)= default ; 
+
 
   void evaluateSubtree(TreeAln &traln, nodeptr p);
 
@@ -17,9 +25,8 @@ public:
       @param parsimonyLength the per partition parsimony score for the
       transition between the descendent nodes
    */ 
-  auto evaluate(TreeAln &traln, nodeptr p, bool fullTraversal )   
-    -> std::array<parsimonyNumber,2>;
-
+  std::array<parsimonyNumber,2> evaluate(TreeAln &traln, nodeptr p, bool fullTraversal ) ; 
+    
   static nat numState2pos(nat numState) 
   { 
     switch(numState)
@@ -48,8 +55,8 @@ public:
 
   static void disorientNode(nodeptr p); 
 
-private: 
-  std::shared_ptr<RemoteComm> _commPtr; 
+// private: 
+//   std::shared_ptr<RemoteComm> _commPtr; 
 }; 
 
 #endif

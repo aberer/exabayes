@@ -1,13 +1,15 @@
 #include "BipartitionHash.hpp"
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 
 #include <algorithm>
 #include <iostream>
 
-#include "math/Randomness.hpp"
+#include "Randomness.hpp"
 
 BipartitionHash::BipartitionHash(nat numTax)   
-  : _bipMeaning(numTax)
+  :_bipPresence{}
+  , _bipBranchLengths{}
+  , _bipMeaning(numTax)
   , _treesAdded(0)
 {
   // must be deterministic!

@@ -1,12 +1,15 @@
 #include "ParameterProposal.hpp"
-#include "priors/AbstractPrior.hpp"
-#include "system/BoundsChecker.hpp"
+#include "AbstractPrior.hpp"
+#include "BoundsChecker.hpp"
 
-ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL, std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight, double minTuning, double maxTuning )
+ParameterProposal::ParameterProposal(Category cat, std::string name, bool modBL, std::unique_ptr<AbstractProposer> _proposer, double p, double weight, double minTuning, double maxTuning )
   : AbstractProposal( cat, name, weight, minTuning, maxTuning, true)
-  , modifiesBL(modifiesBL)
-  , parameter(parameter)
+  , modifiesBL(modBL)
+  , parameter(p)
   , proposer(std::move(_proposer))  
+  , _savedContent{}
+  , _savedBinaryContent{}
+  , _oldFCs{}
 {
 } 
 
@@ -16,6 +19,9 @@ ParameterProposal::ParameterProposal(const ParameterProposal &rhs)
   , modifiesBL(rhs.modifiesBL)
   , parameter(rhs.parameter)
   , proposer(std::unique_ptr<AbstractProposer>(rhs.proposer->clone()))
+  , _savedContent{rhs._savedContent}
+  , _savedBinaryContent{rhs._savedBinaryContent}
+  , _oldFCs{rhs._oldFCs}
 {
   
 }
@@ -25,25 +31,27 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, log_dou
 {
   auto blParams = getBranchLengthsParameterView(); 
 
-  assert(_primaryParameters.size() == 1); 	// we only have one parameter to integrate over 
+  assert(_primParamIds.size() == 1); 	// we only have one parameter to integrate over 
   // this parameter proposal works with any kind of parameters (rate
   // heterogeneity, freuqencies, revmat ... could also be extended to
   // work with AA)
-  
 
+  
   // extract the parameter (a handy std::vector<double> that for
   // instance contains all the frequencies)
-  auto content = _primaryParameters[0]->extractParameter(traln ); 
+  auto primParam = _allParams->at(_primParamIds[0]); 
+  auto content = primParam->extractParameter(traln ); 
   _savedContent = content; 
   
   // for aa revmat + statefreqs, we need to be able to restore the exact value
-  _savedBinaryContent = _primaryParameters[0]->extractParameterRaw(traln); 
+  _savedBinaryContent = primParam->extractParameterRaw(traln); 
   
   // nasty, we have to correct for the fracchange 
-  auto oldFCs = std::vector<double>{}; 
+  // auto oldFCs = std::vector<double>{}; 
+  _oldFCs.clear();
   auto newFCs = std::vector<double>{};
   for(auto &param : blParams)
-    oldFCs.push_back(traln.getMeanSubstitutionRate(param->getPartitions())); 
+    _oldFCs.push_back(param->getMeanSubstitutionRate()); 
 
   // we have a proposer object, that does the proposing (check out
   // ProposalFunctions.hpp) It should take care of the hastings as
@@ -59,35 +67,46 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, log_dou
   newContent.values = newValues; 
   // use our parameter object to set the frequencies or revtmat rates
   // or what ever (for all partitions)
-  _primaryParameters[0]->applyParameter(traln, newContent); 
+  primParam->applyParameter(traln, newContent); 
   
   if(modifiesBL)
     {
+      // update the frac changes 
       for(auto &param : blParams)
-	newFCs.push_back(traln.getMeanSubstitutionRate(param->getPartitions())); 
+	param->updateMeanSubstRate(traln);
+      
 
-      prior.accountForFracChange(traln, oldFCs, newFCs, blParams); 
+      for(auto &param : blParams)
+	newFCs.push_back(param->getMeanSubstitutionRate()); 
+
+      auto ctr = 0; 
+      for(auto &param: blParams)
+	{
+	  prior.addToRatio( param->getPrior()->accountForMeanSubstChange(traln,param,_oldFCs.at(ctr), newFCs.at(ctr))); 
+	  ++ctr; 
+	}
+
+      // prior.accountForFracChange(traln, oldFCs, newFCs, blParams); 
 
       for(nat i = 0; i < blParams.size();++i)
 	{
-	  auto value = traln.getNumberOfBranches() * log(newFCs.at(i) / oldFCs.at(i))   ; 
+	  auto value = traln.getNumberOfBranches() * log(newFCs.at(i) / _oldFCs.at(i))   ; 
 	  hastings *= log_double::fromLog(value); 
 	}
     }
 
   // a generic prior updates the prior rate 
-  auto pr = _primaryParameters[0]->getPrior();
+  auto pr = primParam->getPrior();
   prior.addToRatio(pr->getLogProb(newValues) / pr->getLogProb(_savedContent.values)); 
 } 
 
 
 void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {
-  auto prts = _primaryParameters[0]->getPartitions(); 
+  auto prts = _allParams->at(_primParamIds[0])->getPartitions(); 
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL-CHOICE "  << branchSuggestion << std::endl; 
 #endif
-  
   
   evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion , prts , true); 
 }
@@ -96,8 +115,12 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
  
 void ParameterProposal::resetState(TreeAln &traln) 
 {
-  assert(_primaryParameters.size() == 1 ); 
-  _primaryParameters[0]->applyParameter(traln, _savedContent);
+  assert(_primParamIds.size() == 1 ); 
+  _allParams->at(_primParamIds[0])->applyParameter(traln, _savedContent);
+
+
+  // for aa gtr revmat  + statefreq, we need to reset the exact binary value 
+  _allParams->at(_primParamIds[0])->applyParameterRaw(traln,_savedBinaryContent); 
 
   // for a fixed bl parameter, we have to re-scale the branch lengths after rejection again. 
   // NOTICE: this is very inefficient 
@@ -111,17 +134,19 @@ void ParameterProposal::resetState(TreeAln &traln)
 	      for(auto &b : traln.extractBranches(param))
 		{
 		  auto content = prior->getInitialValue(); 
-		  b.setConvertedInternalLength(traln,param, content.values[0]); 
+		  b.setConvertedInternalLength(param, content.values[0]); 
 		  if(not BoundsChecker::checkBranch(b))
 		    BoundsChecker::correctBranch(b); 
 		  traln.setBranch(b,param); 
 		}
 	    }
+	  else 
+	    {
+	      param->updateMeanSubstRate(traln);
+	    }
       	}
     }
-  
-  // for aa gtr revmat  + statefreq, we need to reset the exact binary value 
-  _primaryParameters[0]->applyParameterRaw(traln,_savedBinaryContent); 
+
 }
 
 

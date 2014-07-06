@@ -1,5 +1,8 @@
 #include "ParameterContent.hpp"
-#include "model/Branch.hpp"
+#include "Branch.hpp"
+
+#include "GlobalVariables.hpp"
+
 #include <limits>
 #include <algorithm> 
 
@@ -22,7 +25,10 @@ void ParameterContent::deserialize( std::istream &in )
     v = cRead<double>(in); 
 
   for(auto &b : branchLengths)
-    b.deserialize(in);
+    {
+      b.deserialize(in);
+      // tout << "DESER " << b << std::endl; 
+    }
 
   for(auto &b : topology)
     b.deserialize(in); 
@@ -38,7 +44,10 @@ void ParameterContent::serialize( std::ostream &out) const
     cWrite(out, v); 
 
   for(auto &b : branchLengths)    
-    b.serialize(out);
+    {
+      b.serialize(out);
+      // tout << "SER "<< b << std::endl; 
+    }
 
   for(auto &b : topology)
     b.serialize(out); 

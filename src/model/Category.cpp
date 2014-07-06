@@ -3,14 +3,14 @@
 #include <memory>
 #include <algorithm>
 
-#include "parameters/ProtModelParameter.hpp"
-#include "parameters/AbstractParameter.hpp"
-#include "parameters/BranchLengthsParameter.hpp"
-#include "parameters/FrequencyParameter.hpp" 
-#include "parameters/ParameterContent.hpp"
-#include "parameters/RateHetParameter.hpp"
-#include "parameters/RevMatParameter.hpp"
-#include "parameters/TopologyParameter.hpp"
+#include "ProtModelParameter.hpp"
+#include "AbstractParameter.hpp"
+#include "BranchLengthsParameter.hpp"
+#include "FrequencyParameter.hpp" 
+#include "ParameterContent.hpp"
+#include "RateHetParameter.hpp"
+#include "RevMatParameter.hpp"
+#include "TopologyParameter.hpp"
 
 
 std::ostream&  operator<<(std::ostream& out, const Category &rhs)

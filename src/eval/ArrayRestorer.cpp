@@ -2,16 +2,17 @@
 #include <algorithm>
 #include <cassert>
 
-#include "eval/ArrayRestorer.hpp" 
-#include "model/Branch.hpp"
-#include "system/GlobalVariables.hpp"
+#include "ArrayRestorer.hpp" 
+#include "Branch.hpp"
+#include "GlobalVariables.hpp"
 
-#include "eval/ArrayReservoir.hpp"
-#include "system/FlagType.hpp"
+#include "ArrayReservoir.hpp"
+#include "FlagType.hpp"
 
 
 ArrayRestorer::ArrayRestorer(const TreeAln& traln, bool _cacheTipTip, bool _cacheTipInner)
-  : restoresGapVector(false)
+  : partitionLikelihoods{}
+  , restoresGapVector(false)
   , arrayOrientation(traln)
   , cacheTipTip(_cacheTipTip)
   , cacheTipInner(_cacheTipInner)
@@ -27,10 +28,15 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
 {
   for(nat model = 0; model <  traln.getNumberOfPartitions() ;++model)
     {
-      if(not partitions[model])
-	continue; 
       nat partitionIndex = model; 
       // tout << "restoring partition "  << model << std::endl; 
+
+      // restore the partition scaler 
+      auto& partition = traln.getPartition( partitionIndex).getHandle(); // TODO lazy 
+
+      if(not partitions[model] || partition.width == 0 )
+	continue; 
+
       
       nat ctr = 0; 
       nat lastNode = traln.getNumberOfNodes() + 1; 
@@ -41,10 +47,7 @@ void ArrayRestorer::restoreSomePartitions(TreeAln &traln, const std::vector<bool
 	  ++ctr; 
 	}
 
-      // restore the partition scaler 
-      auto& partition = traln.getPartition( partitionIndex).getHandle(); // TODO lazy 
-
-      if(restoresGapVector)
+      if(restoresGapVector && partition.width > 0 )
 	{
 	  std::copy(partitionLikelihoods.at(partitionIndex).gapColumn.begin(), 
 		    partitionLikelihoods.at(partitionIndex).gapColumn.end(), 
@@ -77,7 +80,6 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
 
   if(restoresGapVector)
     {
-      auto& partition = traln.getPartition(partitionId).getHandle(); // TODO lazy
       auto vec = partition.gapVector + nodeNumber * partition.gapVectorLength; 
       auto iter = partitionLikelihoods[partitionId].gapVector.begin() + id * partition.gapVectorLength ; 
       std::copy(vec , vec + partition.gapVectorLength, iter ); 
@@ -156,7 +158,6 @@ void ArrayRestorer::uncache(TreeAln &traln, nat nodeNumber, nat partitionId, Arr
   
   if(restoresGapVector)
     {
-      auto& partition = traln.getPartition(partitionId).getHandle(); 
       auto vec = partition.gapVector + nodeNumber * partition.gapVectorLength; 
       auto iter = backup.gapVector.begin() + id * partition.gapVectorLength; 
       std::copy(iter, iter + partition.gapVectorLength, vec); 
@@ -224,7 +225,7 @@ void ArrayRestorer::resetRestorer(const TreeAln &traln, ArrayOrientation &curOri
     {
       auto& partition = traln.getPartition( i).getHandle(); 
 
-      if(restoresGapVector)
+      if( restoresGapVector && partition.width > 0  )
 	{
 	  // problematic? 
 	  std::copy(partition.gapColumn ,
@@ -259,7 +260,7 @@ std::pair<double*,nat> ArrayRestorer::removeArray(TreeAln &traln, nat num, nat p
   nat id = num - traln.getNumberOfTaxa() - 1; 
 
   double *array = partition.xVector[id];
-  double length = partition.xSpaceVector[id]; 
+  auto length = partition.xSpaceVector[id]; 
   
   partition.xVector[id] = NULL; 
   partition.xSpaceVector[id] = 0; 

@@ -74,8 +74,10 @@
 #include "globalVariables.h"
 
 static void pllTreeInitDefaults (pllInstance * tr, int tips);
+static void getInnerBranchEndPointsRecursive (nodeptr p, int tips, int * i, node **nodes);
+#if (!defined(_FINE_GRAIN_MPI) && !defined(_USE_PTHREADS))
 static void initializePartitionsSequential(pllInstance *tr, partitionList *pr);
-
+#endif
 
 /** @defgroup instanceLinkingGroup Linking topology, partition scheme and alignment to the PLL instance
     
@@ -84,6 +86,7 @@ static void initializePartitionsSequential(pllInstance *tr, partitionList *pr);
 */
 /***************** UTILITY FUNCTIONS **************************/
 
+#if (!defined(_SVID_SOURCE) && !defined(_BSD_SOURCE) && !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) && !defined(_POSIX_SOURCE))
 static char *
 my_strtok_r (char * s, const char * delim, char **save_ptr)
 {  
@@ -113,7 +116,8 @@ my_strtok_r (char * s, const char * delim, char **save_ptr)
    }
    
   return token;
-}  
+}
+#endif
 
 #if (defined(_SVID_SOURCE) || defined(_BSD_SOURCE) || defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || defined(_POSIX_SOURCE))
 #define STRTOK_R strtok_r
@@ -485,42 +489,6 @@ static unsigned int KISS32(void)
   return (x+y+w);
 }
 */
-/*********************************** *********************************************************/
-
-
-
-
-
-
-
-
-/***********************reading and initializing input ******************/
-
-
-/********************PRINTING various INFO **************************************/
-
-
-
-/* Delete it at some point */
-void printLog(pllInstance *tr)
-{
-  FILE *logFile;
-  double t;
-
-
-  t = gettime() - masterTime;
-
-  logFile = myfopen(logFileName, "ab");
-
-  fprintf(logFile, "%f %f\n", t, tr->likelihood);
-
-  fclose(logFile);
-
-
-}
-
-
-/************************************************************************************/
 
 /** @brief Get a random subtree
 
@@ -689,10 +657,31 @@ void initializePartitionData(pllInstance *localTree, partitionList * localPartit
 
       localPartitions->partitionData[model]->xSpaceVector = (size_t *)rax_calloc((size_t)localTree->mxtips, sizeof(size_t));
 
-      rax_posix_memalign ((void **)&(localPartitions->partitionData[model]->sumBuffer), PLL_BYTE_ALIGNMENT, width *
-										      (size_t)(localPartitions->partitionData[model]->states) *
-										      discreteRateCategories(localTree->rateHetModel) *
+      const size_t span = (size_t)(localPartitions->partitionData[model]->states) *
+              discreteRateCategories(localTree->rateHetModel);
+
+#ifdef __MIC_NATIVE
+
+      // Alexey: sum buffer buffer padding for Xeon PHI
+      const int aligned_width = width % PLL_VECTOR_WIDTH == 0 ? width : width + (PLL_VECTOR_WIDTH - (width % PLL_VECTOR_WIDTH));
+
+      rax_posix_memalign ((void **)&(localPartitions->partitionData[model]->sumBuffer), PLL_BYTE_ALIGNMENT, aligned_width *
+										      span *
 										      sizeof(double));
+
+      // Alexey: fill padding entries with 1. (will be corrected with site weights, s. below)
+      {
+          int k;
+          for (k = width*span; k < aligned_width*span; ++k)
+              localPartitions->partitionData[model]->sumBuffer[k] = 1.;
+      }
+
+#else
+
+      rax_posix_memalign ((void **)&(localPartitions->partitionData[model]->sumBuffer), PLL_BYTE_ALIGNMENT, width *
+                                              span *
+                                              sizeof(double));
+#endif
 
       /* Initialize buffers to store per-site log likelihoods */
 
@@ -735,7 +724,19 @@ void initializePartitionData(pllInstance *localTree, partitionList * localPartit
       ancestralVectorWidth += ((size_t)(localPartitions->partitionData[model]->upper - localPartitions->partitionData[model]->lower) * (size_t)(localPartitions->partitionData[model]->states) * sizeof(double));
       /* :TODO: do we have to use the original tree for that   */
 
-      rax_posix_memalign ((void **)&(localPartitions->partitionData[model]->wgt), PLL_BYTE_ALIGNMENT,width * sizeof(int));
+#ifdef __MIC_NATIVE
+
+      rax_posix_memalign ((void **)&(localPartitions->partitionData[model]->wgt), PLL_BYTE_ALIGNMENT, aligned_width * sizeof(int));
+
+      // Alexey: fill padding entries with 0.
+      {
+          int k;
+          for (k = width; k < aligned_width; ++k)
+              localPartitions->partitionData[model]->wgt[k] = 0;
+      }
+#else
+      rax_posix_memalign ((void **)&(localPartitions->partitionData[model]->wgt), PLL_BYTE_ALIGNMENT, width * sizeof(int));
+#endif
 
       /* rateCategory must be assigned using rax_calloc() at start up there is only one rate category 0 for all sites */
 
@@ -865,6 +866,7 @@ void pllSetBranchLength (pllInstance *tr, nodeptr p, int partition_id, double bl
   p->z[partition_id] = z;
 }
 
+#if (!defined(_FINE_GRAIN_MPI) && !defined(_USE_PTHREADS))
 static void initializePartitionsSequential(pllInstance *tr, partitionList *pr)
 { 
   size_t
@@ -893,6 +895,7 @@ static void initializePartitionsSequential(pllInstance *tr, partitionList *pr)
 
   initMemorySavingAndRecom(tr, pr);
 }
+#endif
 
 
 /* interface to outside  */
@@ -1165,7 +1168,7 @@ createPartitions (pllQueue * parts, int * bounds)
      if (pi->dataType == PLL_DNA_DATA)
       {
         pl->partitionData[i]->protModels                = -1;
-        pl->partitionData[i]->protFreqs                 = -1;
+        pl->partitionData[i]->protUseEmpiricalFreqs                 = -1;
         pl->partitionData[i]->dataType                  = PLL_DNA_DATA;
         pl->partitionData[i]->maxTipStates              = 16;
         pl->partitionData[i]->optimizeBaseFrequencies   = pi->optimizeBaseFrequencies;
@@ -1177,7 +1180,7 @@ createPartitions (pllQueue * parts, int * bounds)
 	if(pl->partitionData[i]->protModels != PLL_GTR)
 	  pl->partitionData[i]->optimizeSubstitutionRates = PLL_FALSE;
         pl->partitionData[i]->maxTipStates              = 23;
-        pl->partitionData[i]->protFreqs                 = pi->protFreqs;
+        pl->partitionData[i]->protUseEmpiricalFreqs                 = pi->protUseEmpiricalFreqs;
         pl->partitionData[i]->protModels                = pi->protModels;
         pl->partitionData[i]->optimizeBaseFrequencies   = pi->optimizeBaseFrequencies;
       }
@@ -1230,7 +1233,7 @@ partitionList * pllPartitionsCommit (pllQueue * parts, pllAlignmentData * alignm
   partitionList * pl;
   int * newBounds;
   int k, nparts;
-
+  int tmpvar;
  
 
   dst = k = 0;
@@ -1255,15 +1258,19 @@ partitionList * pllPartitionsCommit (pllQueue * parts, pllAlignmentData * alignm
            if (oi[i] == i)
             {
               swapSite (alignmentData->sequenceData, dst, i, alignmentData->sequenceCount);
-              oi[dst++] = i;
+	      tmpvar = oi[i];
+	      oi[i] = oi[dst];
+              oi[dst++] = tmpvar;
             }
-           else if (oi[i] < i)
+           else
             {
-              j = oi[i];
-              while (j < i) j = oi[j];
+              j = i;
+              while (oi[j] != i) j = oi[j];
 
               swapSite (alignmentData->sequenceData, dst, j, alignmentData->sequenceCount);
-              oi[dst++] = j;
+              tmpvar = oi[j];
+	      oi[j] = oi[dst];
+              oi[dst++] = tmpvar;
             }
          }
       }
@@ -1618,6 +1625,7 @@ pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partitionL
 {
   int i;
   nodeptr node;
+  struct pllHashItem * hItem;
 
   if (tr->mxtips != alignmentData->sequenceCount) return (0);
 
@@ -1667,6 +1675,19 @@ pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partitionL
        tr->yVector[node->number] = alignmentData->sequenceData[i];
    }
 
+  /* Populate tipNames */
+
+  tr->tipNames = (char **) rax_calloc(tr->mxtips + 1, sizeof (char *));
+  for (i = 0; (unsigned int)i < tr->nameHash->size; ++ i)
+   {
+     hItem = tr->nameHash->Items[i];
+
+     for (; hItem; hItem = hItem->next)
+      {
+        tr->tipNames[((nodeptr)hItem->data)->number] = hItem->str; 
+      }
+   }
+
   return (1);
 }
 
@@ -1679,21 +1700,22 @@ pllCreateInstance (pllInstanceAttr * attr)
 
   tr = (pllInstance *) rax_calloc (1, sizeof (pllInstance));
 
-  tr->threadID     = 0;
-  tr->rateHetModel = attr->rateHetModel;
-  tr->fastScaling  = attr->fastScaling;
-  tr->saveMemory   = attr->saveMemory;
-  tr->useRecom     = attr->useRecom;
+  tr->threadID          = 0;
+  tr->rateHetModel      = attr->rateHetModel;
+  tr->fastScaling       = attr->fastScaling;
+  tr->saveMemory        = attr->saveMemory;
+  tr->useRecom          = attr->useRecom;
+  tr->likelihoodEpsilon = 0.01;
   
   tr->randomNumberSeed = attr->randomNumberSeed;
 
   /* remove it from the library */
-  tr->useMedian    = PLL_FALSE;
+  tr->useMedian         = PLL_FALSE;
 
-  tr->maxCategories = (attr->rateHetModel == PLL_GAMMA) ? 4 : 25;
+  tr->maxCategories     = (attr->rateHetModel == PLL_GAMMA) ? 4 : 25;
 
-  tr->numberOfThreads  = attr->numberOfThreads;
-  tr->rearrangeHistory = NULL;
+  tr->numberOfThreads   = attr->numberOfThreads;
+  tr->rearrangeHistory  = NULL;
 
   /* Lock the slave processors at this point */
 #ifdef _FINE_GRAIN_MPI
@@ -1730,7 +1752,7 @@ static void pllTreeInitDefaults (pllInstance * tr, int tips)
   tr->tree_string = (char *) rax_calloc ( tr->treeStringLength, sizeof(char));
   tr->tree0 = (char*)rax_calloc((size_t)tr->treeStringLength, sizeof(char));
   tr->tree1 = (char*)rax_calloc((size_t)tr->treeStringLength, sizeof(char));
-
+  tr->constraintVector = (int *)rax_malloc((2 * tr->mxtips) * sizeof(int));
   
   p0 = (nodeptr) rax_malloc ((tips + 3 * inner) * sizeof (node));
   assert (p0);
@@ -1977,6 +1999,59 @@ linkTaxa (pllInstance * pInst, pllNewickTree * nTree, int taxaExist)
   return PLL_TRUE;
 }
 
+/** @brief Get the instantaneous rate matrix
+    
+    Obtain the instantaneous rate matrix (Q) for partitionm \a model
+    of the partition list \a pr, and store it in an array \a outBuffer.
+    
+    @param tr        PLL instance
+    @param pr        List of partitions
+    @param model     Index of partition to use
+    @param outBuffer Where to store the instantaneous rate matrix 
+
+    @todo Currently, the Q matrix can be only obtained for DNA GTR data.
+
+    @return Returns \b PLL_TRUE in case of success, otherwise \b PLL_FALSE
+*/
+int pllGetInstRateMatrix (partitionList * pr, int model, double * outBuffer)
+{
+  if (pr->partitionData[model]->dataType != PLL_DNA_DATA) return (PLL_FALSE);
+
+  int  i;
+  double mean = 0;
+  double * substRates = pr->partitionData[model]->substRates;
+  double * freqs = pr->partitionData[model]->frequencies;
+  
+  /* normalize substitution rates */
+  for (i = 0; i < 6; ++ i)  substRates[i] /= substRates[5];
+
+  outBuffer[0 * 4 + 1] = (substRates[0] * freqs[1]);
+  outBuffer[0 * 4 + 2] = (substRates[1] * freqs[2]);
+  outBuffer[0 * 4 + 3] = (substRates[2] * freqs[3]);
+
+  outBuffer[1 * 4 + 0] = (substRates[0] * freqs[0]);
+  outBuffer[1 * 4 + 2] = (substRates[3] * freqs[2]);
+  outBuffer[1 * 4 + 3] = (substRates[4] * freqs[3]);
+
+  outBuffer[2 * 4 + 0] = (substRates[1] * freqs[0]);
+  outBuffer[2 * 4 + 1] = (substRates[3] * freqs[1]);
+  outBuffer[2 * 4 + 3] = (substRates[5] * freqs[3]);
+
+  outBuffer[3 * 4 + 0] = (substRates[2] * freqs[0]);
+  outBuffer[3 * 4 + 1] = (substRates[4] * freqs[1]);
+  outBuffer[3 * 4 + 2] = (substRates[5] * freqs[2]);
+
+  outBuffer[0 * 4 + 0] = -(substRates[0] * freqs[1] + substRates[1] * freqs[2] + substRates[2] * freqs[3]);
+  outBuffer[1 * 4 + 1] = -(substRates[0] * freqs[0] + substRates[3] * freqs[2] + substRates[4] * freqs[3]);
+  outBuffer[2 * 4 + 2] = -(substRates[1] * freqs[0] + substRates[3] * freqs[1] + substRates[5] * freqs[3]);
+  outBuffer[3 * 4 + 3] = -(substRates[2] * freqs[0] + substRates[4] * freqs[1] + substRates[5] * freqs[2]);
+
+  for (i = 0; i <  4; ++ i) mean         += freqs[i] * (-outBuffer[i * 4 + i]);
+  for (i = 0; i < 16; ++ i) outBuffer[i] /= mean;
+
+  return (PLL_TRUE);
+}
+
 /** @ingroup instanceLinkingGroup
     @brief Initializes the PLL tree topology according to a parsed newick tree
 
@@ -2002,6 +2077,27 @@ pllTreeInitTopologyNewick (pllInstance * tr, pllNewickTree * newick, int useDefa
   if (useDefaultz == PLL_TRUE)
     resetBranches (tr);
 }
+
+/** @brief Get the node oriented pointer from a round-about node
+
+    Returns the pointer of the round-about node $p$ that has the orientation, i.e.
+    has the \a x flag set to 1. In case a tip is passed, then the returned pointer
+    is the same as the input.
+
+    @param pInst  PLL instance
+    @param p      One of the three pointers of a round-about node
+
+    @return  Returns the the pointer that has the orientation
+*/
+nodeptr pllGetOrientedNodePointer (pllInstance * pInst, nodeptr p)
+{
+  if (p->number <= pInst->mxtips || p->x) return p;
+
+  if (p->next->x) return p->next;
+
+  return p->next->next;
+}
+
 
 //void
 //pllTreeInitTopologyNewick (pllInstance * tr, pllNewickTree * nt, int useDefaultz)
@@ -2375,7 +2471,8 @@ pllDestroyInstance (pllInstance * tr)
   rax_free (tr->tree_string);
   rax_free (tr->tree0);
   rax_free (tr->tree1);
-  
+  rax_free (tr->tipNames);
+  rax_free (tr->constraintVector);
   pllClearRearrangeHistory (tr);
 
   rax_free (tr);
@@ -2720,7 +2817,7 @@ void pllSetFixedAlpha(double alpha, int model, partitionList * pr, pllInstance *
 
   //do the discretization of the gamma curve
 
-  makeGammaCats(pr->partitionData[model]->alpha, pr->partitionData[model]->gammaRates, 4, tr->useMedian);
+  pllMakeGammaCats(pr->partitionData[model]->alpha, pr->partitionData[model]->gammaRates, 4, tr->useMedian);
 
   //broadcast the changed parameters to all threads/MPI processes 
 
@@ -2782,7 +2879,7 @@ double pllGetAlpha (partitionList * pr, int pid)
     @param model     Index of the partition for which we want to get the base frequencies
     @param outBuffer Buffer where to store the base frequencies
 */
-void pllGetBaseFrequencies(pllInstance * tr, partitionList * pr, int model, double * outBuffer)
+void pllGetBaseFrequencies(partitionList * pr, int model, double * outBuffer)
 {
   memcpy (outBuffer, pr->partitionData[model]->frequencies, pr->partitionData[model]->states * sizeof (double));
 }
@@ -2845,7 +2942,7 @@ void pllSetFixedBaseFrequencies(double *f, int length, int model, partitionList 
   memcpy(pr->partitionData[model]->frequencies, f, sizeof(double) * length);
 
   //re-calculate the Q matrix 
-  initReversibleGTR(tr, pr, model);
+  pllInitReversibleGTR(tr, pr, model);
 
 
   //broadcast the new Q matrix to all threads/processes 
@@ -2916,7 +3013,7 @@ int pllSetOptimizeBaseFrequencies(int model, partitionList * pr, pllInstance *tr
     }
 
   //re-calculate the Q matrix 
-  initReversibleGTR(tr, pr, model);
+  pllInitReversibleGTR(tr, pr, model);
 
   //broadcast the new Q matrix to all threads/processes 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
@@ -2946,7 +3043,7 @@ int pllSetOptimizeBaseFrequencies(int model, partitionList * pr, pllInstance *tr
     @param model     Index of partition for which we want to get the substitution rates
     @param outBuffer Buffer where to store the substitution rates.
 */
-void pllGetSubstitutionMatrix (pllInstance * tr, partitionList * pr, int model, double * outBuffer)
+void pllGetSubstitutionMatrix (partitionList * pr, int model, double * outBuffer)
 {
   int 
     rates,
@@ -2959,7 +3056,7 @@ void pllGetSubstitutionMatrix (pllInstance * tr, partitionList * pr, int model, 
 }
 
 /** @ingroup modelParamsGroups
-     @brief Set all substitution rates to a fixed value for a specific partition
+     @brief Set all substitution rates for a specific partition and disable ML optimization for them
     
     Sets all substitution rates of a partition to fixed values and disables 
     ML optimization of these parameters. It will automatically re-scale the relative rates  
@@ -2985,6 +3082,37 @@ void pllGetSubstitutionMatrix (pllInstance * tr, partitionList * pr, int model, 
       test if this works with the parallel versions
 */
 void pllSetFixedSubstitutionMatrix(double *q, int length, int model, partitionList * pr,  pllInstance *tr)
+{
+  pllSetSubstitutionMatrix(q, length, model, pr, tr);
+  pr->partitionData[model]->optimizeSubstitutionRates = PLL_FALSE;
+}
+
+/** @ingroup modelParamsGroups
+     @brief Set all substitution rates for a specific partition
+    
+    Sets all substitution rates of a partition to the given values.
+    It will automatically re-scale the relative rates such that the last rate is 1.0 
+
+    @param f
+      array containing the substitution rates
+
+    @param length
+      length of array f, this needs to be as long as: (s * s - s) / 2,
+      i.e., the number of upper diagonal entries of the Q matrix
+
+    @param model
+      Index of the partition for which we want to set/fix the substitution rates
+
+    @param pr
+      List of partitions
+      
+    @param tr
+      Library instance for which we want to fix the substitution rates 
+
+    @todo
+      test if this works with the parallel versions
+*/
+void pllSetSubstitutionMatrix(double *q, int length, int model, partitionList * pr,  pllInstance *tr)
 {
   int 
     i,
@@ -3027,14 +3155,13 @@ void pllSetFixedSubstitutionMatrix(double *q, int length, int model, partitionLi
     }
 
   //re-calculate the Q matrix 
-  initReversibleGTR(tr, pr, model);
+  pllInitReversibleGTR(tr, pr, model);
 
   //broadcast the new Q matrix to all threads/processes 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
   pllMasterBarrier (tr, pr, PLL_THREAD_COPY_RATES);
 #endif
   
-  pr->partitionData[model]->optimizeSubstitutionRates = PLL_FALSE;
 
   pr->dirty = PLL_TRUE;
   updateAllBranchLengths (tr, old_fracchange, tr->fracchange);
@@ -3307,7 +3434,6 @@ int pllInitModel (pllInstance * tr, partitionList * partitions, pllAlignmentData
 #endif
 #endif 
 
-  masterTime = gettime();         
 #ifdef _USE_PTHREADS
   tr->threadID = 0;
 #ifndef _PORTABLE_PTHREADS
@@ -3458,5 +3584,35 @@ pllReadFile (const char * filename, long * filesize)
   fclose (fp);
 
   return (rawdata);
+}
+
+static void getInnerBranchEndPointsRecursive (nodeptr p, int tips, int * i, node **nodes)
+{
+  if (!isTip (p->next->back->number, tips))
+   {
+     nodes[(*i)++] = p->next;
+     getInnerBranchEndPointsRecursive(p->next->back, tips, i, nodes);
+   }
+  if (!isTip (p->next->next->back->number, tips))
+   {
+     nodes[(*i)++] = p->next->next;
+     getInnerBranchEndPointsRecursive(p->next->next->back, tips, i, nodes);
+   }
+}
+
+node ** pllGetInnerBranchEndPoints (pllInstance * tr)
+{
+  node ** nodes;
+  nodeptr p;
+  int i = 0;
+
+  nodes = (node **) rax_calloc(tr->mxtips - 3, sizeof(node *));
+
+  p = tr->start;
+  assert (isTip(p->number, tr->mxtips));
+
+  getInnerBranchEndPointsRecursive(p->back, tr->mxtips, &i, nodes);
+
+  return nodes;
 }
 

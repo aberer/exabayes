@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include "Bipartition.hpp"
 
 
@@ -11,6 +11,7 @@ class BipartitionHash
 {
 public: 
   BipartitionHash(nat numTax); 
+  ~BipartitionHash(){}
   void addTree(const TreeAln &traln, bool withBranch, bool withTrivial); 
 
   std::unordered_map<Bipartition, Bipartition>::const_iterator begin() const{return _bipPresence.begin(); }

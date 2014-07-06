@@ -2,15 +2,15 @@
 
 #include <set>
 
-#include "comm/CommRequest.hpp"
+#include "CommRequest.hpp"
 #include "CommRequestImpl.hpp"
-#include "MpiType.hpp"
-#include "system/GlobalVariables.hpp"
-#include "comm/RemoteComm.hpp"
+#include "GlobalVariables.hpp"
+#include "RemoteComm.hpp"
 
 uint64_t RemoteComm::Impl::_maxTagValue = 0 ; 
 
 RemoteComm::Impl::Impl(const RemoteComm::Impl& rhs)
+  : _comm{MPI_COMM_WORLD}
 {
   MPI_Comm_dup(rhs._comm, &_comm); 
 }
@@ -41,11 +41,11 @@ int RemoteComm::Impl::getRank() const
 }
 
 
-int RemoteComm::Impl::size() const 
+size_t RemoteComm::Impl::size() const 
 {
   int result = 0; 
   MPI_Comm_size(_comm, &result); 
-  return result; 
+  return size_t(result); 
 }
 
   
@@ -93,7 +93,7 @@ void RemoteComm::Impl::createSendRequest(std::vector<char> array, int dest, int 
   auto &impl = *(req._impl);
   impl._array = array; 
   assert(impl._array.size() != 0 ) ;
-  MPI_Isend(  (void*)impl._array.data(), impl._array.size(), MPI_CHAR, dest, tag, _comm, &(impl._req)); 
+  MPI_Isend(  (void*)impl._array.data(), int(impl._array.size()), MPI_CHAR, dest, tag, _comm, &(impl._req)); 
 }
 
  
@@ -102,7 +102,7 @@ void RemoteComm::Impl::createRecvRequest(int src, int tag, nat length, CommReque
   auto &impl = *(req._impl);
   impl._array = std::vector<char>(length); 
   assert(impl._array.size() != 0 ) ;
-  MPI_Irecv( impl._array.data(), impl._array.size(), MPI_CHAR, src, tag, _comm, &impl._req); 
+  MPI_Irecv( impl._array.data(), int(impl._array.size()), MPI_CHAR, src, tag, _comm, &impl._req); 
 }  
 
 
@@ -124,9 +124,9 @@ nat RemoteComm::Impl::getNumberOfPhysicalNodes()
   if( getRank() == 0 )
     {
       auto uniqStr = std::unordered_set<std::string>{}; 
-      for(auto i = 0; i < size() ; ++i)
+      for(auto i = 0; i < int(size()) ; ++i)
 	uniqStr.insert(std::string(begin(everything) + (i * MPI_MAX_PROCESSOR_NAME), begin(everything) + ((i+1) * MPI_MAX_PROCESSOR_NAME) )); 
-      result = uniqStr.size(); 
+      result = nat(uniqStr.size()); 
     }
   
   result = broadcastVar(result, root); 

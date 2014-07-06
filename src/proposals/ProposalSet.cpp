@@ -2,7 +2,9 @@
 
 
 ProposalSet::ProposalSet(double relWeight, std::vector<std::unique_ptr<AbstractProposal> > _proposals)
-  : relativeWeight(relWeight)
+  : Serializable()
+  ,  relativeWeight(relWeight)
+  , proposals{}
 {
   for(auto &p : _proposals)
     proposals.emplace_back(p->clone()); 
@@ -13,7 +15,9 @@ ProposalSet::ProposalSet(double relWeight, std::vector<std::unique_ptr<AbstractP
 
 
 ProposalSet::ProposalSet(const ProposalSet &rhs)
-  : relativeWeight(rhs.relativeWeight)
+  : Serializable(rhs)
+  , relativeWeight(rhs.relativeWeight)
+  , proposals{}
 {
   for(auto &p : rhs.proposals)
     proposals.emplace_back(p->clone());
@@ -23,16 +27,17 @@ ProposalSet::ProposalSet(const ProposalSet &rhs)
 }
 
 
-ProposalSet& ProposalSet::operator=(ProposalSet rhs)
+ProposalSet& ProposalSet::operator=(const ProposalSet &rhs)
 {
-  std::swap(rhs, *this); 
+  auto&& result = ProposalSet(rhs); 
+  std::swap(result, *this); 
   return *this; 
 }
 
 
 std::vector<AbstractProposal*> ProposalSet::getProposalView() const
 {
-  std::vector<AbstractProposal*> result; 
+  auto result = std::vector<AbstractProposal*>{}; 
   for(auto &p : proposals)
     result.push_back(p.get());
   return result; 
@@ -67,9 +72,7 @@ nat ProposalSet::numerateProposals(nat ctr)
 void ProposalSet::deserialize( std::istream &in )
 {
   for(auto &p : proposals)
-    {
-      p->deserialize(in); 
-    }
+    p->deserialize(in); 
 }
 
 
@@ -102,3 +105,10 @@ bool ProposalSet::needsFullTraversal()
   return result; 
 }
 
+
+
+void ProposalSet::setParameterListPtr(ParameterList* pPtr)
+{
+  for(auto &elem : proposals)
+    elem->setParams(pPtr );
+} 

@@ -7,10 +7,11 @@
 #ifndef _AXML_H_
 #define _AXML_H_
 
+#pragma warning  disable 
+
 
 #include "common.h"
 
-/* extern int NUM_BRANCHES;  */
 
 #ifdef _USE_GOOGLE_PROFILER
 #include <google/profiler.h>
@@ -34,11 +35,16 @@ extern "C"{
 #include "lib/pll/pll-renamed.h"
 #include "lib/pll/pllInternal.h"
 
-unsigned int evaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, boolean full );
-void newviewParsimony(pllInstance *tr, partitionList *pr, nodeptr  p); 
+
+#ifdef __MIC_NATIVE
+#include "lib/pll/mic_native.h"
+#endif
+
 
 #ifdef __cplusplus
 }
 #endif
+/* #pragma warning restore   */
+
 
 #endif

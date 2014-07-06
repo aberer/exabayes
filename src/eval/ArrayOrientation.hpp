@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream>
 
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 
 #define INVALID 0 
 

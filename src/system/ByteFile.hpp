@@ -3,8 +3,8 @@
 
 #include <fstream>
 #include <string>
-#include "model/Partition.hpp"
-#include "system/time.hpp"
+#include "Partition.hpp"
+// #include "time.hpp"
 
 
 class Communicator; 
@@ -59,11 +59,11 @@ private: 			// METHODS
   void parseAlnsDirectRead(ParallelSetup& pl, PartitionAssignment& pAss); 
   void parseAlnsDirect_newLayout(ParallelSetup& pl, PartitionAssignment& pAss); 
 
-  template<typename T> std::vector<std::vector<T>> readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, nat numberOfArrays); 
+  template<typename T> std::vector<std::vector<T>> readAndDistributeArrays(ParallelSetup& pl, PartitionAssignment& pAss, size_t numberOfArrays); 
 
   template <typename T> T readVar(); 
-  template<typename T> std::vector<T> readArray(nat length); 
-  template<typename T> void readArray(nat length, T* array); 
+  template<typename T> std::vector<T> readArray(size_t length); 
+  template<typename T> void readArray(size_t length, T* array); 
 
 private: 			// ATTRIBUTES
   std::string _fileName; 
@@ -73,7 +73,7 @@ private: 			// ATTRIBUTES
   std::vector<Partition> _partitions; 
   bool _saveMemory; 
   IntegerWidth _weightType; 
-  CLOCK::system_clock::time_point _initTime; 
+  // CLOCK::system_clock::time_point _initTime; 
 }; 
 
 #include "ByteFile.tpp"

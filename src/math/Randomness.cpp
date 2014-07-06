@@ -3,15 +3,18 @@
 #include <cstring>
 
 #include "Randomness.hpp" 
-#include "math/Density.hpp"
+#include "Density.hpp"
 
 
-Randomness::Randomness(randCtr_t seed)
+Randomness::Randomness(randCtr_t seed) 
+  : ctr{{0}}
+  , key{{0}}
 {
-  key.v[0] = seed.v[0]; 
-  key.v[1] = seed.v[1]; 
-  ctr.v[0] = 0; 
-  ctr.v[1] = 0; 
+  ctr[0] = 0u; 
+  ctr[1] = 0u; 
+    
+  key[0] = seed[0];
+  key[1] = seed[1]; 
 }
 
 
@@ -31,29 +34,6 @@ void Randomness::incrementNoLimit()
       ++ctr.v[1]; 
       ctr.v[0] = 0;     
     }
-}
-
-
-
-int Randomness::drawIntegerClosed(int upperBound)
-{
-  assert(upperBound >= 0 ); 
-  if(upperBound == 0)
-    return 0 ; 
-  else 
-    {
-      randCtr_t r = exa_rand(key, ctr); 
-      ++ctr.v[0]; 
-      return r.v[0] % (upperBound + 1 ) ; 
-    }
-}
-
-
-int Randomness::drawIntegerOpen(int upperBound)
-{
-  // cout << "drawing from [0," << upperBound << ")" << endl; 
-  assert(upperBound > 0); 
-  return drawIntegerClosed(upperBound-1);   
 }
 
 
@@ -126,35 +106,35 @@ void Randomness::drawPermutation( int* perm, int n)
 }
 
 
-int Randomness::drawSampleProportionally( double *weights, int numWeight )
-{
-  double r = drawRandDouble01();
+// int Randomness::drawSampleProportionally( double *weights, int numWeight )
+// {
+//   double r = drawRandDouble01();
  
-  double sum=0.0;
-  double lower_bound = 0.0;
-  int i = 0; 
+//   double sum=0.0;
+//   double lower_bound = 0.0;
+//   // int i = 0; 
   
-  assert( numWeight > 0 );
+//   assert( numWeight > 0 );
   
-  for(  i = 0; i < numWeight ; ++i ) 
-    {
-      sum+=weights[i]; 
-    }
-  assert(sum>0);
-  r=r*sum;
+//   for(  auto i = 0; i < numWeight ; ++i ) 
+//     {
+//       sum+=weights[i]; 
+//     }
+//   assert(sum>0);
+//   r=r*sum;
     
-  for( int i = 0; i < numWeight ; ++i ) 
-    {
-      double upper_bound = lower_bound + weights[i];
+//   for( auto i = 0; i < numWeight ; ++i ) 
+//     {
+//       double upper_bound = lower_bound + weights[i];
     
-      if( r >= lower_bound && r < upper_bound ) 
-	return i ;
+//       if( r >= lower_bound && r < upper_bound ) 
+// 	return i ;
     
-      lower_bound = upper_bound; 
-    }
+//       lower_bound = upper_bound; 
+//     }
   
-  return i-1;
-}
+//   return i-1;
+// }
 
 
 //This function should be called if the alphas for the dirichlet distribution are given
@@ -167,7 +147,7 @@ std::vector<double> Randomness::drawRandDirichlet( const std::vector<double> &al
   // The boundary is a rather small value anyway.
   static double lowerBound = 1e-32; 
   
-  auto sum= double{0};
+  auto sum= double{0.};
   auto result = std::vector<double>{}; 
 
   for(auto alpha : alphas)
@@ -247,15 +227,18 @@ void Randomness::serialize( std::ostream &out)  const
 } 
 
 
-void Randomness::rebaseForGeneration(nat generation)
+void Randomness::rebaseForGeneration(uint64_t generation)
 {
-  ctr.v[1] = generation; 
+  // TODO 
+  assert(generation < std::numeric_limits<nat>::max()); 
+  
+  ctr.v[1] = uint32_t(generation); 
   ctr.v[0] = 0; 
 }
 
 
 
-nat Randomness::getGeneration() const 
+uint64_t Randomness::getGeneration() const 
 {
   return ctr.v[1]; 
 }
@@ -277,3 +260,5 @@ double Randomness::drawRandWeibull(double lambda, double k )
   auto result = dist(gen); 
   return result; 
 } 
+
+

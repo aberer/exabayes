@@ -1,4 +1,4 @@
-#include "comm/LocalComm.hpp"
+#include "LocalComm.hpp"
 
 #include <cassert>
 #include <thread>
@@ -6,11 +6,11 @@
 
 LocalComm::LocalComm(std::unordered_map<tid_t,int> tid2rank)
   : _tid2LocCommIdx(tid2rank)
-  , _colors(_tid2LocCommIdx.size(),0)
-  , _ranks(_tid2LocCommIdx.size(), 0)
+  , _colors(_tid2LocCommIdx.size(),0u)
+  , _ranks(_tid2LocCommIdx.size(), 0u)
   , _size(_tid2LocCommIdx.size())
   , _mgsPerTag{}
-  , _newMessages(tid2rank.size(), std::vector<MessageQueueSingle>(_size))
+  , _newMessages(tid2rank.size(), std::vector<MessageQueueSingle>(size_t(_size)))
 {
   nat ctr = 0; 
   for(auto &r : _ranks)
@@ -53,12 +53,12 @@ std::ostream& operator<<(std::ostream& out, const LocalComm& rhs)
 }
 
 
-int LocalComm::getNumThreads() const 
+size_t LocalComm::getNumThreads() const 
 {
   return _ranks.size();
 }
 
-int LocalComm::size() const 
+size_t LocalComm::size() const 
 {
   return _size; 
 }
@@ -84,7 +84,7 @@ bool LocalComm::isValid() const
   int aNum = begin(color2num)->second; 
   for(auto &elem : color2num)
     assert(aNum == elem.second); 
-  assert(_size == aNum); 
+  assert(int(_size) == aNum); 
 
   return result; 
 }
@@ -96,7 +96,7 @@ LocalComm LocalComm::split(const std::vector<int> &color, const std::vector<int>
   
   auto uniqCols = std::unordered_set<int>{}; 
   uniqCols.insert(begin(color), end(color)); 
-  auto minCol = *(std::min_element(begin(uniqCols), end(uniqCols))); 
+  // auto minCol = *(std::min_element(begin(uniqCols), end(uniqCols))); 
   auto tColors = color; 
 
   if(rank[0] > 0 )
@@ -139,10 +139,10 @@ void swap(LocalComm& lhs, LocalComm& rhs )
 int LocalComm::getIdx(int col, int rank) const 
 {
   int result = -1; 
-  for(int i = 0; i < getNumThreads(); ++i)
+  for(auto i = 0u ; i < getNumThreads(); ++i)
     {
       if(_colors[i] == col && _ranks[i] == rank)
-	return i; 
+	return int(i); 
     }
   assert(0); 
   return result; 
@@ -183,14 +183,14 @@ bool LocalComm::haveThreadSupport() const
 
 
 
-void LocalComm::initializeAsyncQueue(nat size, nat numSlots)
+void LocalComm::initializeAsyncQueue(size_t siz, size_t numSlots)
 {
   auto maxCol = *(std::max_element(begin(_colors), end(_colors))); 
   _mgsPerTag.resize(maxCol+1);
   for(int j = 0; j < maxCol+1; ++j)
     {
       for(nat i = 0; i < numSlots; ++i)
-	_mgsPerTag.at(j).emplace_back(size);
+	_mgsPerTag.at(j).emplace_back(siz);
     }
 }
 

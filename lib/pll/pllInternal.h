@@ -11,7 +11,6 @@
 #include "pll.h"
 #include "genericParallelization.h"
 #include "errcodes.h"
-#include "hash.h"
 #include "lexer.h"
 #include "parsePartition.h"
 #include "mem_alloc.h"
@@ -41,12 +40,10 @@ extern void hookupFull ( nodeptr p, nodeptr q, double *z);
 extern void hookupDefault ( nodeptr p, nodeptr q);
 extern boolean whitechar ( int ch );
 extern void printLog ( pllInstance *tr);
-extern void initReversibleGTR( pllInstance *tr, partitionList *pr, int model);
 extern double LnGamma ( double alpha );
 extern double IncompleteGamma ( double x, double alpha, double ln_gamma_alpha );
 extern double PointNormal ( double prob );
 extern double PointChi2 ( double prob, double v );
-extern void makeGammaCats (double alpha, double *gammaRates, int K, boolean useMedian);
 extern void initModel ( pllInstance *tr, double **empiricalFrequencies, partitionList * partitions);
 
 extern void resetBranches ( pllInstance *tr );
@@ -94,10 +91,11 @@ extern int initBestTree ( bestlist *bt, int newkeep, int numsp );
 extern void resetBestTree ( bestlist *bt );
 extern boolean freeBestTree ( bestlist *bt );
 
-extern int treeReadLen (FILE *fp, pllInstance *tr, boolean readBranches, boolean readNodeLabels, boolean topologyOnly);
+
+/* extern int treeReadLen (FILE *fp, pllInstance *tr, boolean readBranches, boolean readNodeLabels, boolean topologyOnly);
+extern void getStartingTree (pllInstance *tr); 
 extern void treeReadTopologyString(char *treeString, pllInstance *tr);
-extern void getStartingTree (pllInstance *tr);
-extern double treeLength (pllInstance *tr, int model);
+extern double treeLength (pllInstance *tr, int model);*/
 extern double evaluatePartialGeneric (pllInstance *, partitionList *pr, int i, double ki, int _model);
 extern void newviewAncestralIterative(pllInstance *tr, partitionList *pr);
 extern void printAncestralState(nodeptr p, boolean printStates, boolean printProbs, pllInstance *tr, partitionList *pr);

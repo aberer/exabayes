@@ -238,7 +238,6 @@
      of the nodes you intend to execute ExaBayes later *or* use the
      configure flags "--disable-avx", etc.
 
-
 * Tutorial and Workflow
   This is a basic tutorial for how to conduct Bayesian tree inference
   with ~ExaBayes~ (specifically useful, if you do not have much
@@ -458,7 +457,7 @@
   Command line options specify, *how* ExaBayes will carry out the
   analyses. In contrast, the a config file specifies which kind of
   analyses will be executed. 
-
+  
 ** Mandatory Arguments 
 
    + *-f alignmentFile* 
@@ -789,10 +788,10 @@
     ExaBayes updates a checkpoint file at regular intervals (1,000
     generations by default), the respective variable for changing the
     frequency is *checkPointInterval*. 
-
-    If you do not specify starting trees, then ExaBayes uses random
-    trees as initial topology. If you set *parsimonyStart* to ~true~,
-    a parsimony starting tree will be used instead (recommendable).
+    
+    By default, ExaBayes starts from a random-order addition parsimony
+    tree. If you want to start from a purely random topology, set
+    *parsimonyStart* to ~false~.
 
     Some proposals (e.g., the branch length multiplier) can be tuned
     for achieving good acceptance ratios. ExaBayes tunes proposal
@@ -888,6 +887,9 @@
     as the cold chain, set *heatedChainsUseSame* to ~true~.
 
 ** Configuring Proposals
+  :PROPERTIES:
+  :CUSTOM_ID: proposal-config
+  :END:
 
    ExaBayes allows you to configure proposals that are used to move
    your chains through the parameter space. For each proposal, a
@@ -902,22 +904,25 @@
    relative to runtime (so no modifications are necessary).
 
 #+ATTR_LATEX: :align l||p{5cm}|l|r
-| keyword              | full name                                        | affected parameters  | default weight |
-|----------------------+--------------------------------------------------+----------------------+----------------|
-| *nodeSlider*         | node slider                                      | branch lengths       |              5 |
-| *treeLengthMult*     | tree length multiplier                           | branch lengths       |              1 |
-| *branchMulti*        | multiplier on branch lengths                     | branch lengths       |             15 |
-| *eTBR*               | extending tree bisection and reconnection (eTBR) | topology             |              5 |
-| *eSPR*               | extending subtree pruning and regrafting (eSPR)  | topology             |              5 |
-| *parsimonySPR*       | parsimony-biased subtree pruning and regrafting  | topology             |              5 |
-| *stNNI*              | stochastic nearest neighbor interchange          | topology             |              5 |
-| *rateHetMulti*       | multiplier on $\alpha$                           | rate heterogeneity   |              1 |
-| *revMatSlider*       | sliding window                                   | rev. matrix (DNA,AA) |              1 |
-| *revMatDirichlet*    | dirichlet proposal                               | rev. matrix (DNA,AA) |              1 |
-| *RevmatRateDirich*   | partial dirichlet proposal                       | rev. matrix (AA)     |              1 |
-| *frequencySlider*    | sliding window                                   | state frequencies    |            0.5 |
-| *frequencyDirichlet* | dirichlet proposal                               | state frequencies    |            0.5 |
-| *aaModelJump*        | fixed AA matrix                                  | amino acid model     |              1 |
+| keyword              | full name                                                                                      | affected parameters  | default weight |
+|----------------------+------------------------------------------------------------------------------------------------+----------------------+----------------|
+| *nodeSlider*         | node slider                                                                                    | branch lengths       |              0 |
+| *treeLengthMult*     | tree length multiplier                                                                         | branch lengths       |              1 |
+| *branchMulti*        | multiplier on branch lengths                                                                   | branch lengths       |              0 |
+| *eTBR*               | extending tree bisection and reconnection (eTBR)                                               | topology             |              0 |
+| *eSPR*               | extending subtree pruning and regrafting (eSPR)                                                | topology             |              6 |
+| *parsimonySPR*       | parsimony-biased subtree pruning and regrafting                                                | topology             |              6 |
+| *stNNI*              | stochastic nearest neighbor interchange                                                        | topology             |              6 |
+| *likeSPR*            | a posterior-guided SPR                                                                         | topology             |              2 |
+| *rateHetMulti*       | multiplier on $\alpha$                                                                         | rate heterogeneity   |              1 |
+| *revMatSlider*       | sliding window                                                                                 | rev. matrix (DNA,AA) |              1 |
+| *revMatDirichlet*    | dirichlet proposal                                                                             | rev. matrix (DNA,AA) |              1 |
+| *RevmatRateDirich*   | partial dirichlet proposal                                                                     | rev. matrix (AA)     |              1 |
+| *frequencySlider*    | sliding window                                                                                 | state frequencies    |            0.5 |
+| *frequencyDirichlet* | dirichlet proposal                                                                             | state frequencies    |            0.5 |
+| *aaModelJump*        | fixed AA matrix                                                                                | amino acid model     |              1 |
+| *blDistGamma*        | Newton-Raphson-based branch length proposal employing a Gamma distribution                     | branch lengths       |              9 |
+| *blDistWeibull*      | Newton-Raphson-based branch length proposal employing a Weibull distribution (not recommended) | branch lengths       |              0 |
 
   Moreover, the behaviour of the topological proposals can be
   customized. The eSPR prunes a subtree, follows down a random path
@@ -945,13 +950,38 @@
   exponentiated) using the value of ~parsimonyWarp~. If this value is
   decreased, the probability that trees with low parsimony score are
   proposed will get higher.  
-  
-| keyword         |                    default value |
-|-----------------+----------------------------------|
-| *eSprStopProb*  |                              0.5 |
-| *eTbrStopProb*  |                              0.5 |
-| *parsimonyWarp* |                             0.10 |
-| *parsSprRadius* | $\lfloor 2 \cdot log(n) \rfloor$ |
+
+  The posterior-guided SPR move is particularly expensive, since after
+  pruning, it evaluates all reattachment locations in a radius
+  (specified by ~likeSprMaxRadius~) and uses a score based on the
+  posterior to propose a SPR move. How heavily ExaBayes relies on this
+  score can be quantified with ~likeSprWrap~ (e.g., choose a
+  likeSprWrap = 0.1 or 0.01 to give topological changes that decrease
+  the posterior by -10 resp. -100 log-units a reasonable chance of
+  being proposed).
+
+  ~moveOptMode~ allows you to enhance topological proposals by
+  simultaneously proposing branch lengths along with topology (turned
+  off by default). Value 1 means that one branch that is remapped by
+  any NNI/SPR will be proposed. For moveOptMode = 2, all branches that
+  are traversed by a moving subtree will be proposed. For moveOptMode
+  = 3, we additionally propose two branches adjacent and for
+  moveOptMode = 4, adjacent subtrees (e.g., also the root branch of
+  the moving subtree) will be proposed. By default, the NR-based Gamma
+  distribution proposal is used, if useMultiplier is ~true~, then a
+  multiplier is used instead (not recommended).
+
+
+| keyword            |                    default value |
+|--------------------+----------------------------------|
+| *eSprStopProb*     |                              0.5 |
+| *eTbrStopProb*     |                              0.5 |
+| *parsimonyWarp*    |                             0.10 |
+| *parsSprRadius*    | $\lfloor 2 \cdot \log(n) \rfloor$ |
+| *useMultilier*     |                            false |
+| *moveOptMode*      |                                0 |
+| *likeSprMaxRadius* |      $\lceil \log_2(n) \rceil$   |
+| *likeSprWrap*      |                              1.0 |
 
 * Pre-/post-processing utilities
 :PROPERTIES:
@@ -1314,6 +1344,10 @@
    each processor.  For efficiency it is important that the option
    ~proposalSets~ is by default set to ~true~ (default).
 
+   For assigning data (possibly a huge number of partitions) to
+   processors, ExaBayes employs the same algorithm as
+   ExaML \cite{kobert2014divisible}.
+
 ** Note on Reproducibility
 :PROPERTIES:
 :CUSTOM_ID: reproducibility
@@ -1391,6 +1425,80 @@ DNA, gene3=1000-1100
  and link all parameters across all partitions, then you could have
  provided an unpartitioned alignment and the MCMC sampling would
  require less computational resources. 
+
+* Trading mixing efficiency versus runtime
+  
+  As of version 1.4, ExaBayes comes with more advanced guided
+  proposals that have considerable runtime requirements. If you have
+  trouble achieving convergence on your dataset, you may want to
+  increase the usage of these expensive proposals. On the other hand,
+  if you find your dataset to be easily resolvable and you want as
+  many samples from your runtime as possible, you may want to switch
+  to cheaper proposals. Here, we explain your options for both cases
+  (see Section [[#proposal-config]] for information on how to configure
+  proposals).
+
+  In certain cases, we have observed that the NR-based Gamma proposal
+  (~blDistGamma~) increases the probability that chains get stuck
+  (specifically, if started from a random tree). Here, it may be
+  useful to run ExaBayes with the default branch length proposal
+  configuration of version 1.3 (branch length multiplier with weight
+  15, node slider with weight 5, ~blDistGamma~ with weight 0).
+
+  Currently, the posterior-guided SPR (~likeSPR~) has a rather low
+  weight, because of its excessive runtime costs. If runtime is not a
+  problem, we recommend to increase the weight of this proposal on
+  hard datasets. For instance, you may want to go for a configuration
+  that only uses the parsimony-guided SPR and the posterior-guided
+  SPR, both with weight 10 (list remainder topology proposals and set
+  its weight to 0). This setting allowed us to resolve hard datasets
+  with up to 500 taxa which could not be resolved with the previously
+  implemented proposals. The radius of the posterior-guided SPR is an
+  important factor concerning runtime/mixing efficiency. In principle
+  it suffices to set it as large as the largest SPR move that you
+  expect (e.g., assume you know that an unstable subtree usually has
+  regrafting locations in a radius of 3 around the pruning
+  location). Radii should be chosen based upon the dual logarithm of
+  the number of taxa in your tree (start out with this value and
+  modify).
+
+  You may want to turn the posterior-guided SPR off and switch back to
+  default config from ExaBayes 1.3. For doing so, enable the ~eTBR~,
+  ~eSPR~, ~stNNI~ and ~parsSPR~ and assign a weight of 5 to them (0
+  for ~likeSPR~). We specifically do not recommend the ~eTBR~, since
+  true TBR moves (that are not actually SPR or NNI moves) are rarely
+  accepted.
+
+  Proposing branch lengths simultaneously with topology (~moveOptode~
+  > 0 ) may in some cases increase convergence behavior and may allow
+  extremely accurate estimates of split posterior
+  probabilities. However, specifically in the presence of a
+  posterior-guided SPR move, this option becomes very expensive (and
+  thus the radius for the ~likeSPR~ should be chosen conservatively).
+  
+  A cheap option to decrease burn-in time and potentially to increase
+  mixing efficiency is to increase the radius of the parsimony guided
+  SPR. Since, computing the parsimony score is very cheap, you do not
+  have to expect considerable runtime penalties for using arbitrarily
+  high values here (generally recommended).
+
+* Citation
+  ExaBayes has been published in [[http://mbe.oxfordjournals.org/content/early/2014/08/16/molbev.msu236.abstract][Molecular Biology and Evolution]].
+
+  The respective BibTex entry for citing the advance online
+  publication is:
+
+#+BEGIN_SRC TEXT
+@article{aberer2014exabayes,
+  title={ExaBayes: Massively Parallel Bayesian Tree Inference for 
+  the Whole-Genome Era},
+  author={Aberer, Andre J and Kobert, Kassian and Stamatakis, Alexandros},
+  journal={Molecular Biology and Evolution},
+  pages={msu236},
+  year={2014},
+  publisher={Oxford University Press}
+}
+#+END_SRC
 
 * References
 # make the bibliography work does not work

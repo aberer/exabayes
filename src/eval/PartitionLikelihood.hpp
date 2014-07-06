@@ -2,17 +2,19 @@
 #define _PARTITION_LIKELIHOOD 
 
 #include <vector>
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 
 class PartitionLikelihood
 {
 public: 
-  PartitionLikelihood(const TreeAln& traln, nat model, bool useSEV)
-    : model(model)
+  PartitionLikelihood(const TreeAln& traln, nat modelArg, bool useSEV)
+    : model(modelArg)
     , cachedArrays(traln.getNumberOfInnerNodes()) 
     , lengths(traln.getNumberOfInnerNodes(), 0)
     , scaler( 2 * traln.getNumberOfTaxa() , 0)
     , isCached(traln.getNumberOfInnerNodes(),false)
+    , gapVector{}
+    , gapColumn{}
   {
     if(useSEV)
       {

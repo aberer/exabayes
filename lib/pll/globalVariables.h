@@ -185,7 +185,6 @@ extern char resultFileName[1024];
 extern const partitionLengths pLengths[PLL_MAX_MODEL];
 extern const char * protModels[PLL_NUM_PROT_MODELS];
 extern char * secondaryModelList[21];
-extern double masterTime;
 extern char logFileName[1024];
 //extern const unsigned int * mask32;
 

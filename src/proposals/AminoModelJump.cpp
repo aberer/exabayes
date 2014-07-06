@@ -1,22 +1,28 @@
 #include "AminoModelJump.hpp"
-#include "system/BoundsChecker.hpp"
-#include "model/Category.hpp"
-#include "priors/AbstractPrior.hpp"
+#include "BoundsChecker.hpp"
+#include "Category.hpp"
+#include "AbstractPrior.hpp"
 
 
 AminoModelJump::AminoModelJump()
   : AbstractProposal( Category::AA_MODEL, "aaMat", 1., 0,0, true)
+  , savedMod{}
+  , _oldFcs{}
 {
 }
 
 
 void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator &eval)
 {
+  // assert(0); 
+  // must update mean substitution  rate 
+
   // save the old fracchanges
   auto blParams = getBranchLengthsParameterView();
-  auto oldFcs = std::vector<double>{};
+  // auto oldFcs = std::vector<double>{};
+  _oldFcs.clear(); 
   for(auto &blParam : blParams)
-    oldFcs.push_back(traln.getMeanSubstitutionRate(blParam->getPartitions())); 
+    _oldFcs.push_back(blParam->getMeanSubstitutionRate()); 
 
   auto primVar = getPrimaryParameterView();
 
@@ -28,7 +34,7 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double
   auto newModel = savedMod; 
   while(  newModel == savedMod )
     {
-      auto content = primVar[0]->getPrior()->drawFromPrior(rand , true ); 
+      auto content = primVar[0]->getPrior()->drawFromPrior(rand ); 
       newModel = content.protModel[0];
     }
 
@@ -37,10 +43,25 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double
   auto newFcs = std::vector<double>{}; 
   for(auto p : partitions)
     traln.setProteinModel(p, newModel);
-  for(auto blParam : blParams)
-    newFcs.push_back(traln.getMeanSubstitutionRate(blParam->getPartitions()));
 
-  prior.accountForFracChange(traln, oldFcs, newFcs, blParams); 
+  // update the fracchanges
+  for(auto blParam: blParams)
+    blParam->updateMeanSubstRate(traln);
+
+  for(auto blParam : blParams)
+    {
+      // newFcs.push_back(traln.getMeanSubstitutionRate(blParam->getPartitions()));
+      newFcs.push_back(blParam->getMeanSubstitutionRate());
+    }
+
+
+  // prior.accountForFracChange(traln, oldFcs, newFcs, blParams); 
+  auto ctr = 0u; 
+  for(auto param: blParams)
+    {
+      prior.addToRatio( param->getPrior()->accountForMeanSubstChange(traln,param,_oldFcs.at(ctr), newFcs.at(ctr))); 
+      ++ctr; 
+    }
 }
 
 
@@ -59,6 +80,7 @@ void AminoModelJump::resetState(TreeAln &traln)
 
 
   // necessary, if we have fixed branch lengths  
+  auto ctr = 0; 
   for(auto &param : getBranchLengthsParameterView() )
     {
       if( not param->getPrior()->needsIntegration() )
@@ -67,11 +89,16 @@ void AminoModelJump::resetState(TreeAln &traln)
 	  for(auto &b : traln.extractBranches(param))
 	    {
 	      auto content = prior->getInitialValue(); 
-	      b.setConvertedInternalLength(traln,param, content.values[0]); 
+	      b.setConvertedInternalLength(param, content.values[0]); 
 	      if(not BoundsChecker::checkBranch(b))
 		BoundsChecker::correctBranch(b); 
 	      traln.setBranch(b,param); 
 	    }
+	}
+      else 
+	{
+	  param->setMeanSubstitutionRate(_oldFcs[ctr]); 
+	  ++ctr; 
 	}
     }
 }

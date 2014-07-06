@@ -10,31 +10,28 @@
 int NUM_BRANCHES; 
 
 #define _INCLUDE_DEFINITIONS
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
 #include "common.h"
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
-#include "contrib/SplitFreqAssessor.hpp"
+#include "SplitFreqAssessor.hpp"
 
 
-void printUsage()
+static void printUsage()
 {
   std::cout
 	    << "\nComputes the avgerage and maximum deviation of split frequencies\n"
 	    << "of sets of trees.\n\n"
 	    << "USAGE: ./asdsf [-m] [-b relBurnin | -r start ] [ -i ignoreFreq ]  -f file[..]\n\n"
-	    // << "      -m               if files contain a different number of trees, try \n"
-	    // << "                       to use as many trees as possible [default: use\n"
-	    // << "                       first n trees, where n is the minimum number\n"
-	    // << "                       available in all tree files]\n\n"  
 	    << "      -i ignoreFreq    ignore splits with frequencies lower than ignoreFreq\n"
 	    << "                       [Range: 0.0 <= ignoreFreq < 1.0; default: 0.1]\n\n"
 	    << "      -f file[..]      two or more topology files\n\n"
-	    << "      -b relBurnin     discard first relBurnin percent of tree samples \n"
+	    << "      -r relBurnin     discard first relBurnin percent of tree samples \n"
 	    << "                       [ 0.0 <= relBurnin < 1.0; default 0.25]\n\n"
-	    << "      -r num           constant burn-in: discard the first <num> samples\n"
+	    << "      -b num           constant burn-in: discard the first <num> samples\n\n"
+	    << "      -q               quiet run: only prints asdsf / msdsf\n"
 	    << "\n\n"
     ; 
 
@@ -64,6 +61,7 @@ int main(int argc, char** argv)
 
   bool constBurninWasSet = false; 
   bool relBurninWasSet = false; 
+  auto quiet = false;  
 
   nat constBurnin = 0; 
   double relBurnin = 0.25; 
@@ -71,7 +69,7 @@ int main(int argc, char** argv)
   double ignoreFreq = 0.1; 
 
   int c = 0;   
-  while( ( c = getopt(argc, argv,"r:b:f:i:h") ) != EOF )
+  while( ( c = getopt(argc, argv,"r:b:f:i:hq") ) != EOF )
     {
       switch(c)
 	{
@@ -87,7 +85,7 @@ int main(int argc, char** argv)
 	    assert(ignoreFreq < 1. && 0. <= ignoreFreq); 
 	  }
 	  break; 
-	case 'r':
+	case 'b':
 	  {
 	    constBurninWasSet  = true; 
 	    auto &&iss = std::stringstream{optarg}; 
@@ -111,13 +109,18 @@ int main(int argc, char** argv)
 	      }
 	  }
 	  break; 
-	case 'b': 
+	case 'r': 
 	  {
 	    relBurninWasSet = true ; 
 	    auto &&iss = std::istringstream {optarg}; 
 	    iss >> relBurnin; 
 	  }
 	  break; 
+	case 'q': 
+	  {
+	    quiet = true; 
+	    break; 
+	  }
 	default : 
 	  {
 	    std::cerr << "unknown argument >" << c << "<" << std::endl; 
@@ -145,7 +148,7 @@ int main(int argc, char** argv)
       exit(-1); 
     }
 
-  if(relBurninWasSet && not (0. < relBurnin && relBurnin < 1.) )
+  if(relBurninWasSet && not (0. <= relBurnin && relBurnin < 1.) )
     {
       std::cout << "Error: please specifify a value (percentage) between (0,1) for the relative burn-in. Your value was "<< relBurnin << std::endl; 
       exit(-1 ); 
@@ -168,24 +171,31 @@ int main(int argc, char** argv)
 	      exit(-1); 
 	    }
 	  
-	  std::cout << SHOW(constBurnin) << std::endl; 
+	  // std::cout << SHOW(constBurnin) << std::endl; 
 
 	  start[i] = constBurnin; 
 	}
       else 
 	start[i] = nat(double(numTrees[i]) * relBurnin); 
 
-      std::cout << "using trees number " << start[i] <<  " to "<< numTrees[i] << " for file" << files[i] << std::endl; 
+      if(not quiet)
+	std::cout << "using trees number " << start[i] <<  " to "<< numTrees[i] << " for file " << files[i] << std::endl; 
     }
 
   sdsf.extractBips( start  , numTrees ); 
 
   auto sdsfResult = sdsf.computeAsdsfNew(ignoreFreq); 
 
-  std::cout << "average deviation of split frequencies: " <<  sdsfResult.first * 100  << "%" << std::endl; 
-  std::cout  << "maximum deviation of split frequencies: " << sdsfResult.second * 100 << "%" << std::endl; 
-  std::cout << "ignored splits that occurred in less than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << std::endl; 
-
+  if(not quiet)
+    {
+      std::cout << "average deviation of split frequencies: " <<  sdsfResult.first * 100  << "%" << std::endl; 
+      std::cout  << "maximum deviation of split frequencies: " << sdsfResult.second * 100 << "%" << std::endl; 
+      std::cout << "ignored splits that occurred in less than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << std::endl; 
+    }
+  else 
+    {
+      std::cout << sdsfResult.first * 100  << "\t" << sdsfResult.second * 100 << std::endl; 
+    }
 
   return 0; 
 }

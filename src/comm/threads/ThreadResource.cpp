@@ -1,13 +1,15 @@
-#include "comm/threads/ThreadResource.hpp"
+#include "ThreadResource.hpp"
 
-#include "comm/ParallelSetup.hpp"
-#include "config/CommandLine.hpp"
+#include "ParallelSetup.hpp"
+#include "CommandLine.hpp"
 #include <cstring>
 
 extern void exa_main ( CommandLine &cl,  ParallelSetup* pl ); 
  
 ThreadResource::ThreadResource(CommandLine& cl, ParallelSetup* pl)
-  : _threadsAreReleased(false)
+  : _threads{}
+  , _tid2rank{}
+  , _threadsAreReleased(false)
 {
   auto haveThreadSupport = pl->getGlobalComm().haveThreadSupport(); 
   if(haveThreadSupport)
@@ -91,7 +93,7 @@ void ThreadResource::releaseThreads()
 
 ThreadResource::~ThreadResource()
 {
-  nat ctr = 0; 
+  // nat ctr = 0; 
   for(auto &t : _threads)
     t.join();
 }

@@ -5,10 +5,10 @@
 #include <vector>
 #include <sstream>
 
-#include "tree-parse/BranchLengthPolicy.hpp"
-#include "tree-parse/LabelPolicy.hpp"
+#include "BranchLengthPolicy.hpp"
+#include "LabelPolicy.hpp"
 #include <iosfwd>
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 
 typedef unsigned int nat; 
 
@@ -16,7 +16,7 @@ template<class LABEL_READER,class BL_READER>
 class BasicTreeReader
 {
 public: 
-  BasicTreeReader( nat numTax );
+  BasicTreeReader( nat numTax ); 
   std::vector<BranchLength> extractBranches(std::istream &iss) ; 
   void setLabelMap(std::unordered_map<std::string,nat> map) { lr.setLabelMap(map) ; }
   

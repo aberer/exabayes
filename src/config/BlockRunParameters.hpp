@@ -3,20 +3,18 @@
 
 
 #include <cassert>
-#include <ncl/ncl.h>
-
+#include "ExaBlock.hpp"
 #include "common.h"
 
 
-class BlockRunParameters : public NxsBlock
+class BlockRunParameters : public ExaBlock
 {
 public: 
   BlockRunParameters(); 
-
-  BlockRunParameters(const BlockRunParameters& rhs) ;
-  BlockRunParameters& operator=( BlockRunParameters rhs); 
-  
-  friend void swap(BlockRunParameters& lhs, BlockRunParameters& rhs); 
+  BlockRunParameters(const BlockRunParameters& rhs) = default ;
+  BlockRunParameters(BlockRunParameters&& rhs) = default; 
+  BlockRunParameters& operator=(const BlockRunParameters &rhs) = default; 
+  BlockRunParameters& operator=(BlockRunParameters &&rhs) = default; 
 
   virtual void Read(NxsToken &token); 
 
@@ -28,7 +26,7 @@ public:
   nat getPrintFreq() const { return printFreq; }
   nat getNumCoupledChains() const { return numCoupledChains; }
   bool isUseAsdsfMax() const { return useAsdsfMax; }
-  nat getNumGen() const { return numGen; }
+  uint64_t getNumGen() const { return numGen; }
   nat getNumRunConv() const { return numRunConv; }
   nat getSamplingFreq() const { return samplingFreq; }
   double getBurninProportion() const { return burninProportion; }

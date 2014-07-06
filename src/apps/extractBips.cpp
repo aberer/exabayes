@@ -4,7 +4,7 @@
 
 int NUM_BRANCHES ; 
 
-#include "contrib/BipartitionExtractor.hpp" 
+#include "BipartitionExtractor.hpp" 
 
 // #define _INCLUDE_DEFINITIONS
 // #include "GlobalVariables.hpp"
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
   
   // std::cout <<  "have "<< numTree << std::endl; 
   
-  nat absBurnin = numTree * burnin; 
+  nat absBurnin = nat(double(numTree) * burnin); 
 
   bipEx.extractBips<true>(absBurnin);
   bipEx.printBipartitions(id);
