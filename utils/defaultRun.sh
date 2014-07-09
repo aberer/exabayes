@@ -6,10 +6,6 @@ seed=$RANDOM			#
 # seed=2342
 seed=123
 
-seed=123
-
-# seed=8106
-
 # src/proposals/
 numProc=2
 withTree=0
@@ -30,7 +26,7 @@ dotests=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=1
+useGoogleProfiler=0
 useClang=1
 
 cflags=""

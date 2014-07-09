@@ -237,27 +237,27 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, log_double &
   // important: save the move 
   _move.extractMoveInfo(traln, std::make_tuple(prunedTree,chosen.first), getSecondaryParameterView() );
 
-  auto blBackLogProb = 0; 
-  if(_proposePrimeBranch)
-    {
-      auto b = _move.getPathHandle().at(1); 
-      eval.evaluate(traln, b , false );
+  // auto blBackLogProb = 0; 
+  // if(_proposePrimeBranch)
+  //   {
+  //     auto b = _move.getPathHandle().at(1); 
+  //     eval.evaluate(traln, b , false );
 
-      // TODO 
-      assert(blParams.size() == 1 ); 
+  //     // TODO 
+  //     assert(blParams.size() == 1 ); 
 
-      auto blo = BranchLengthOptimizer(traln, b, 30,    eval.getParallelSetup().getChainComm() , blParams); 
-      blo.optimizeBranches(traln); 
+  //     auto blo = BranchLengthOptimizer(traln, b, 30,    eval.getParallelSetup().getChainComm() , blParams); 
+  //     blo.optimizeBranches(traln); 
       
-      auto optParams = blo.getOptimizedParameters(); 
-      auto optParam = optParams[0]; 
+  //     auto optParams = blo.getOptimizedParameters(); 
+  //     auto optParam = optParams[0]; 
 
-      auto gP = optParam.getProposerDistribution<GammaProposer>(traln, 1.61, 2.); // MEH 
-      auto absLen = traln.getBranch(b, blParams[0]).getInterpretedLength(traln, blParams[0]) ; 
-      auto blBackLogProb = gP.getLogProbability(absLen); 
+  //     auto gP = optParam.getProposerDistribution<GammaProposer>(traln, 1.61, 2.); // MEH 
+  //     auto absLen = traln.getBranch(b, blParams[0]).getInterpretedLength(traln, blParams[0]) ; 
+  //     auto blBackLogProb = gP.getLogProbability(absLen); 
 
-      // tout << "probability of proposing " << MAX_SCI_PRECISION << absLen << " is " << SOME_FIXED_PRECISION << backProb << " for " << optParam << std::endl; 
-    }
+  //     // tout << "probability of proposing " << MAX_SCI_PRECISION << absLen << " is " << SOME_FIXED_PRECISION << backProb << " for " << optParam << std::endl; 
+  //   }
   
   _move.applyToTree(traln, getSecondaryParameterView() ); 
   
@@ -272,44 +272,44 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, log_double &
   auto forwProb = std::get<1>(chosen);
 
 
-  auto blForwLogProb = 0; 
-  if(_proposePrimeBranch)
-    {
-      // now the actual proposing 
+  // auto blForwLogProb = 0; 
+  // if(_proposePrimeBranch)
+  //   {
+  //     // now the actual proposing 
       
-      // tout << SHOW(_move) << std::endl; 
+  //     // tout << SHOW(_move) << std::endl; 
 
-      auto invMove = _move.getInverseMove(traln, blParams); 
-      // tout << SHOW(invMove) << std::endl; 
-      auto b = invMove.getPathHandle().at(1); 
+  //     auto invMove = _move.getInverseMove(traln, blParams); 
+  //     // tout << SHOW(invMove) << std::endl; 
+  //     auto b = invMove.getPathHandle().at(1); 
 
-      eval.evaluate(traln, b, false); 
+  //     eval.evaluate(traln, b, false); 
        
-      auto oldAbsLen = traln.getBranch(b, blParams[0]).getInterpretedLength(traln, blParams[0]);
+  //     auto oldAbsLen = traln.getBranch(b, blParams[0]).getInterpretedLength(traln, blParams[0]);
 
-      auto blo = BranchLengthOptimizer(traln,b, 30, eval.getParallelSetup().getChainComm(), blParams); 
-      blo.optimizeBranches(traln); 
+  //     auto blo = BranchLengthOptimizer(traln,b, 30, eval.getParallelSetup().getChainComm(), blParams); 
+  //     blo.optimizeBranches(traln); 
       
-      auto optParams = blo.getOptimizedParameters();
-      auto optParam = optParams[0]; 
+  //     auto optParams = blo.getOptimizedParameters();
+  //     auto optParam = optParams[0]; 
       
-      auto gP = optParam.getProposerDistribution<GammaProposer>(traln,1.61, 2. ); // MEH 
+  //     auto gP = optParam.getProposerDistribution<GammaProposer>(traln,1.61, 2. ); // MEH 
       
-      auto newBranch = gP.proposeBranch(b, traln, blParams[0], rand); 
+  //     auto newBranch = gP.proposeBranch(b, traln, blParams[0], rand); 
 
-      traln.setBranch(newBranch, blParams[0]); 
+  //     traln.setBranch(newBranch, blParams[0]); 
       
-      auto absLen = newBranch.getInterpretedLength(traln, blParams[0]); 
+  //     auto absLen = newBranch.getInterpretedLength(traln, blParams[0]); 
 
-      // prior 
-      auto prNew = blParams[0]->getPrior()->getLogProb( ParameterContent{{absLen}} ); 
-      auto prOld = blParams[0]->getPrior()->getLogProb( ParameterContent{{oldAbsLen}} ); 
-      prior.addToRatio( prNew / prOld ); 
+  //     // prior 
+  //     auto prNew = blParams[0]->getPrior()->getLogProb( ParameterContent{{absLen}} ); 
+  //     auto prOld = blParams[0]->getPrior()->getLogProb( ParameterContent{{oldAbsLen}} ); 
+  //     prior.addToRatio( prNew / prOld ); 
 
-      auto  blForwLogProb = gP.getLogProbability(absLen); 
+  //     auto  blForwLogProb = gP.getLogProbability(absLen); 
 
-      // tout << "proposed " << absLen << " with "<< blBackLogProb - blForwLogProb << std::endl; 
-    }
+  //     // tout << "proposed " << absLen << " with "<< blBackLogProb - blForwLogProb << std::endl; 
+  //   }
 
 #ifdef PRINT_DEBUG_PARS
   for(auto &v : weightedInsertionsBack)
@@ -317,8 +317,9 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, log_double &
   tout << "backProb=" << backProb << " forwProb=" << forwProb << std::endl; 
 #endif
 
-  hastings *= log_double::fromLog((log(backProb) + blBackLogProb) - (log(forwProb) + blForwLogProb));
-}
+  // hastings *= log_double::fromLog((log(backProb) ) - (log(forwProb)));
+  hastings *=   ( log_double::fromAbs(backProb)  /   log_double::fromAbs(forwProb)) ; 
+} 
 
 
 void ParsimonySPR::traverse(const TreeAln &traln, nodeptr p, int distance )

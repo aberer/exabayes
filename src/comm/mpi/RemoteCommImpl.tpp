@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <numeric>
+#include <vector>
 
 #include "comm/mpi/MpiType.hpp"
 
@@ -22,7 +23,8 @@ std::vector<T> RemoteComm::Impl::gatherVariableLength(std::vector<T> myData, int
 {
   // determine lengths 
   auto lengths = std::vector<nat>{}; 
-  auto myLen = std::vector<int>{  int(myData.size()) }; 
+  auto myLen = std::vector<int>();	
+  myLen.push_back(myData.size());
   auto allLengths = gather<int>( myLen, root );
   
   // calculate the displacements 

@@ -1,5 +1,6 @@
 #! /bin/bash
 
+
 if [ $# -lt 3 ]; then
     echo -e  "$0 isApple cores ssetypes..\n\nwhere ssetypes can be  avx,sse, no-sse"
     exit
@@ -27,8 +28,8 @@ if [ $IS_APPLE == 0 ]; then
     cxxompi=mpicxx.openmpi
     cmpich=mpicc.mpich2
     cxxmpich=mpicxx.mpich2
-    # ld="LDFLAGS='-static-libgcc -static-libstdc++\'"
 else
+    export PATH=/opt/local/libexec/gnubin/:/opt/local/bin:/opt/local/sbin:/opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
     readlink=greadlink
     ccomp=clang
     cxxcomp=clang++

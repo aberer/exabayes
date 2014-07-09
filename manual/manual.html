@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>ExaBayes User's Manual</title>
-<!-- 2014-02-25 Di 12:23 -->
+<!-- 2014-07-09 Mi 15:32 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="for support, please contact exabayes-at-googlegroups-dot-com" />
@@ -190,7 +190,7 @@ for the JavaScript code in this tag.
 <li><a href="#sec-3">3. Installation</a>
 <ul>
 <li><a href="#sec-3-1">3.1. Executing downloaded executables</a></li>
-<li><a href="#sec-3-2">3.2. Compiling ExaBayes from source</a></li>
+<li><a href="#comp-src">3.2. Compiling ExaBayes from source</a></li>
 </ul>
 </li>
 <li><a href="#sec-4">4. Tutorial and Workflow</a>
@@ -256,9 +256,8 @@ recommend:
 <li>Download and unpack the software package. You find executables
 (sequential: <code>yggdrasil</code>, parallel: <code>exabayes</code>) in the <code>./bin</code>
 folder. The <code>-h</code> flag provides you with an overview of
-options. If you downloaded the plain source, executing the
-<code>./build.sh</code> script is sufficient to build the sequential
-version.
+options. If you downloaded the source code please follow the
+instructions in Sect. <a href="#comp-src">3.2</a>. 
 </li>
 <li>If you have convinced yourself, that the executables are in
 place, consider running the examples in the <code>./examples</code>
@@ -284,6 +283,7 @@ overview of functions.
 </ol>
 </div>
 </div>
+
 <div id="outline-container-sec-2" class="outline-2">
 <h2 id="sec-2"><span class="section-number-2">2</span> Scope of ExaBayes: What is it? What is it not?</h2>
 <div class="outline-text-2" id="text-2">
@@ -357,6 +357,7 @@ parameter files are compatible).
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-3" class="outline-2">
 <h2 id="sec-3"><span class="section-number-2">3</span> Installation</h2>
 <div class="outline-text-2" id="text-3">
@@ -385,9 +386,11 @@ compile from source.
 </p>
 </div>
 </div>
-<div id="outline-container-sec-3-2" class="outline-3">
-<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Compiling ExaBayes from source</h3>
-<div class="outline-text-3" id="text-3-2">
+
+<div id="outline-container-comp-src" class="outline-3">
+<h3 id="comp-src"><a id="sec-3-2" name="sec-3-2"></a><span class="section-number-3">3.2</span> Compiling ExaBayes from source</h3>
+<div class="outline-text-3" id="text-comp-src">
+
 <p>
 Download and extract the source archive (sources are also included
 in all binary distributions). 
@@ -410,10 +413,11 @@ one required):
 </ol>
 
 <p>
-For running ExaBayes in parallel, you need a working MPI
-installation. If you want to make most of your local multi-core
-machine (e.g., laptop), simply install OpenMPI or Mpich2. On
-Debian/Ubuntu, this should be as simple as (choose one):
+For running ExaBayes in parallel using more than one computing
+node, you need a working MPI installation. If you want to make most
+of your local multi-core machine (e.g., laptop), simply install
+OpenMPI or Mpich2. On Debian/Ubuntu, this should be as simple as
+(choose one):
 </p>
 <pre class="example">
 $ sudo apt-get install mpich2 libmpich2-dev
@@ -427,6 +431,7 @@ you will receive a message "command not found".
 </p>
 </div>
 </div>
+
 <div id="outline-container-apple" class="outline-4">
 <h4 id="apple"><a id="sec-3-2-2" name="sec-3-2-2"></a><span class="section-number-4">3.2.2</span> Prerequisites for Mac OS X</h4>
 <div class="outline-text-4" id="text-apple">
@@ -457,45 +462,69 @@ mpicxx-mpich-mp <i>or</i> mpicc, mpicxx).
 
 <p>
 For installing MPI, also consider <a href="http://brew.sh/">HomeBrew</a> which is an alternative
-to MacPorts that does not require <code>sudo</code>.
+to MacPorts that does not require <code>sudo</code>. 
 </p>
 </div>
 </div>
+
+
 <div id="outline-container-sec-3-2-3" class="outline-4">
-<h4 id="sec-3-2-3"><span class="section-number-4">3.2.3</span> Automated build</h4>
+<h4 id="sec-3-2-3"><span class="section-number-4">3.2.3</span> Configuring and Compiling</h4>
 <div class="outline-text-4" id="text-3-2-3">
 <p>
-We provide a small script that compiles ExaBayes and dumps all
-binaries into the <code>./bin</code> folder.  If you want to build the
-parallel version (and you already have installed MPI as described
-in the previous section), then you have to provide the names of
-the mpi compiler wrappers. If you just want the sequential
-version, just execute the script.
-</p>
-
-<p>
-Sequential only: 
-</p>
-<pre class="example">
-$ ./build.sh
-</pre>
-
-<p>
-Sequential and parallel version (where mpicc and mpicxx are the
-names of the mpi compilers):
-</p>
-<pre class="example">
-$ ./build.sh CC=mpicc CXX=mpicxx
-</pre>
-
-<p>
-If you build on MacOS, an additional option will be necessary
-<b>before</b> you call the build script:
+ExaBayes uses the typical autotools setup. Typically, the MPI
+environment (if available) or best vectorization scheme (SSE or
+AVX) is determined automatically. The basic command for building
+exabayes (with MPI support) is
 </p>
 
 <pre class="example">
-$ export CXXFLAGS="-stdlib=libc++"
+./configure --enable-mpi &amp;&amp; make
 </pre>
+
+<p>
+Consider the following options:
+</p>
+
+<ul class="org-ul">
+<li>important: use the &#x2013;bindir option with the absolute path to a
+directory in conjunction with "make install" to dump all executables
+into a folder /full/path/to/this/dir/bin
+</li>
+</ul>
+
+<pre class="example">
+./configure --bindir=/full/path/to/this/dir &amp;&amp; make install
+</pre>
+
+<ul class="org-ul">
+<li>omit "&#x2013;enable-mpi" to only build the multi-threaded version
+(e.g., if you have no MPI support available)
+</li>
+
+<li>for the build on Mac systems, it <b>may</b> be necessary to add
+CXXFLAGS="-stdlib=libc++" at the configure step:
+</li>
+</ul>
+<pre class="example">
+./configure CXXFLAGS="-stdlib=libc++" &amp;&amp; make
+</pre>
+
+<ul class="org-ul">
+<li>use the ./configure environment variables (see ./configure &#x2013;help)
+to specify non-default compilers, for instance
+</li>
+</ul>
+
+<pre class="example">
+./configure --enable-mpi CC=clang-3.3 CXX=clang++-3.3 MPICXX=mpicxx.openmpi
+</pre>
+
+<p>
+will configure exabayes to be build with clang-3.3 and OpenMPI,
+although default compilers of your system are &#x2013; for instance &#x2013; gcc
+and MPICH.
+</p>
 
 <p>
 Once everything has compiled, check, if all binaries are there as expected: 
@@ -504,47 +533,36 @@ Once everything has compiled, check, if all binaries are there as expected:
 $ ls bin
      consense	credibleSet	exabayes	extractBips	parser		postProcParam	sdsf		yggdrasil
 </pre>
-</div>
-</div>
-<div id="outline-container-sec-3-2-4" class="outline-4">
-<h4 id="sec-3-2-4"><span class="section-number-4">3.2.4</span> Customized build</h4>
-<div class="outline-text-4" id="text-3-2-4">
-<p>
-If you have a bit of experience with the usual Linux way to
-install programs, you may want to read this section for additional
-advice on the build process. This section also helps, if the
-automated build fails for whatever reason (although preferably you
-can contact our googlegroup).
-</p>
 
 <p>
-Essentially, you have to build the parallel and sequential
-executables separately. Since it is hard to guess the mpi compiler
-correctly, you have to explicitly set the MPI C and MPI C++
-compiler.
+Please notice: 
 </p>
 
-<p>
-The following commands first build the sequential version, then
-the parallel version. For MacOS, Remember to set CXXFLAGS as
-mentioned in the previous apple-specific section.
-</p>
-<pre class="example">
-$ ./configure                
-$ make 
-$ ./configure --enable-mpi CC=mpicc CXX=mpicxx 
-$ make clean 
-$ make
-</pre>
+<ol class="org-ol">
+<li>Compilation takes a while: if you have multiple cores available,
+then use "make -j x", where x is the number of cores you want to
+use for compilation.
+</li>
 
-<p>
-Tip: Use make with <code>-j n</code>, where <code>n</code> is the number of cores on
-your system.
-</p>
+<li>If for some reason you want to re-compile the code, do not forget
+to run "make clean" first.
+</li>
+
+<li>If you compile on a cluster where your login-node has an
+AVX-capable CPU, then you will get an AVX-optimized exabayes. If
+you now try to execute this version of exabayes on a non-AVX
+capable CPU, the program mostly will just crash with the message
+"Illegal instruction.". In these cases, compile exabayes on one
+of the nodes you intend to execute ExaBayes later <b>or</b> use the
+configure flags "&#x2013;disable-avx", etc.
+</li>
+</ol>
 </div>
 </div>
 </div>
 </div>
+
+
 <div id="outline-container-sec-4" class="outline-2">
 <h2 id="sec-4"><span class="section-number-2">4</span> Tutorial and Workflow</h2>
 <div class="outline-text-2" id="text-4">
@@ -680,6 +698,7 @@ that your chain has explored this parameter sufficiently.
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-4-2" class="outline-3">
 <h3 id="sec-4-2"><span class="section-number-3">4.2</span> Partitioned Alignment</h3>
 <div class="outline-text-3" id="text-4-2">
@@ -835,6 +854,7 @@ estimates of branch lengths distributions.
 </div>
 </div>
 </div>
+
 <div id="outline-container-sec-5" class="outline-2">
 <h2 id="sec-5"><span class="section-number-2">5</span> Command Line Options</h2>
 <div class="outline-text-2" id="text-5">
@@ -924,6 +944,7 @@ $ mpirun -np 2  ./exabayes -r myId -n myIdContinued -c myConfig -f myBinaryAlnFi
 </ul>
 </div>
 </div>
+
 <div id="outline-container-sec-5-2" class="outline-3">
 <h3 id="sec-5-2"><span class="section-number-3">5.2</span> Optional Arguments</h3>
 <div class="outline-text-3" id="text-5-2">
@@ -934,6 +955,15 @@ $ mpirun -np 2  ./exabayes -r myId -n myIdContinued -c myConfig -f myBinaryAlnFi
 carries out a dry-run. Only checks your config and alignment file
 and does not compute anything. Very recommendable, before
 submitting a large run to a cluster.
+</p>
+</li>
+
+<li><b>-T n</b>
+
+<p>
+Executes Yggdrasil with \(n\) threads. We recommend to use the
+multi-threaded version of yggdrasil only on systems, where no MPI
+installation is available.
 </p>
 </li>
 
@@ -973,19 +1003,6 @@ further details.
 </p>
 </li>
 
-<li><b>-Q</b> 
-
-<p>
-(<code>exabayes</code>-only) enables per-partition data
-distribution. This option assigns entire partitions to
-processors.  Thus, If your alignment comprises more partitions
-than you have processors available, this option is likely to
-speed up calculations substantially. You should check the
-print-out right before the start of MCMC sampling about whether
-load is distributed equally.
-</p>
-</li>
-
 <li><b>-S</b> 
 
 <p>
@@ -1007,6 +1024,7 @@ is a value between 0 (fastest, highest memory consumption) and 3
 </div>
 </div>
 </div>
+
 <div id="outline-container-config" class="outline-2">
 <h2 id="config"><a id="sec-6" name="sec-6"></a><span class="section-number-2">6</span> Configuration File</h2>
 <div class="outline-text-2" id="text-config">
@@ -1159,7 +1177,6 @@ partitions).
 </ul>
 </div>
 </div>
-
 <div id="outline-container-sec-6-2" class="outline-3">
 <h3 id="sec-6-2"><span class="section-number-3">6.2</span> Declaring Priors for Parameters</h3>
 <div class="outline-text-3" id="text-6-2">
@@ -1211,7 +1228,6 @@ keyword: <code>topoPr</code>, <br  />
 </ul>
 </div>
 </div>
-
 <div id="outline-container-sec-6-2-2" class="outline-4">
 <h4 id="sec-6-2-2"><span class="section-number-4">6.2.2</span> Branch Lengths Prior</h4>
 <div class="outline-text-4" id="text-6-2-2">
@@ -1240,7 +1256,6 @@ sampling.
 </ul>
 </div>
 </div>
-
 <div id="outline-container-sec-6-2-3" class="outline-4">
 <h4 id="sec-6-2-3"><span class="section-number-4">6.2.3</span> Reversible Matrix Prior</h4>
 <div class="outline-text-4" id="text-6-2-3">
@@ -1264,7 +1279,6 @@ sampling. The values \(x_i\) may be expressed as relative rates
 </ul>
 </div>
 </div>
-
 <div id="outline-container-sec-6-2-4" class="outline-4">
 <h4 id="sec-6-2-4"><span class="section-number-4">6.2.4</span> Rate Heterogeneity Prior</h4>
 <div class="outline-text-4" id="text-6-2-4">
@@ -1280,12 +1294,11 @@ distribution with parameter \(\lambda\)
 </li>
 <li><code>uniform( start, end )</code> <br  />
        \(\alpha\) values have uniform prior probability in the range
-       \([ start, end ]\) 
+\([ start, end ]\) 
 </li>
 </ul>
 </div>
 </div>
-
 <div id="outline-container-sec-6-2-5" class="outline-4">
 <h4 id="sec-6-2-5"><span class="section-number-4">6.2.5</span> State Frequencies Prior</h4>
 <div class="outline-text-4" id="text-6-2-5">
@@ -1309,6 +1322,7 @@ normalizing for you)
 </ul>
 </div>
 </div>
+
 <div id="outline-container-sec-6-2-6" class="outline-4">
 <h4 id="sec-6-2-6"><span class="section-number-4">6.2.6</span> Amino Acid Model Prior</h4>
 <div class="outline-text-4" id="text-6-2-6">
@@ -1348,7 +1362,6 @@ have a prior probability of \(w_i\).
 </div>
 </div>
 </div>
-
 <div id="outline-container-sec-6-3" class="outline-3">
 <h3 id="sec-6-3"><span class="section-number-3">6.3</span> Configuring the Run</h3>
 <div class="outline-text-3" id="text-6-3">
@@ -1380,7 +1393,7 @@ below a specified threshold.
 <p>
 By default, ExaBayes draws a sample from every cold chain (i.e.,
 for each independent run) every 500 generations (can be changed
-via <b>sampleFreq</b>). To change the print frequency (informing you
+via <b>samplingFreq</b>). To change the print frequency (informing you
 about the likelihood state of each chain), modify <b>printFreq</b>. 
 </p>
 
@@ -1405,16 +1418,17 @@ parameters, once a proposal has been drawn 100 times (use
 
 <p>
 If you are running a dataset in parallel that comprises many
-partitions (possibly using the -Q option), it is advisable to
-group the proposals per partition into proposal sets (i.e., set
-<b>proposalSets</b> to <code>true</code>, this is the default). If proposal sets
-are enabled and you have for instance multiple substitution matrix
-parameters, then ExaBayes will propose new substitution parameters
-for each substitution matrix parameter one after another (instead
-of only drawing one of the parameters at random).
+partitions, it is advisable to group the proposals per partition
+into proposal sets (i.e., set <b>proposalSets</b> to <code>true</code>, this is
+the default). If proposal sets are enabled and you have for
+instance multiple substitution matrix parameters, then ExaBayes
+will propose new substitution parameters for each substitution
+matrix parameter one after another (instead of only drawing one of
+the parameters at random).
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-6-3-2" class="outline-4">
 <h4 id="sec-6-3-2"><span class="section-number-4">6.3.2</span> Options regarding convergence</h4>
 <div class="outline-text-4" id="text-6-3-2">
@@ -1454,6 +1468,7 @@ change this value).
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-6-3-3" class="outline-4">
 <h4 id="sec-6-3-3"><span class="section-number-4">6.3.3</span> MC3 options</h4>
 <div class="outline-text-4" id="text-6-3-3">
@@ -1523,6 +1538,7 @@ as the cold chain, set <b>heatedChainsUseSame</b> to <code>true</code>.
 </div>
 </div>
 </div>
+
 <div id="outline-container-sec-6-4" class="outline-3">
 <h3 id="sec-6-4"><span class="section-number-3">6.4</span> Configuring Proposals</h3>
 <div class="outline-text-3" id="text-6-4">
@@ -1735,6 +1751,7 @@ proposed will get higher.
 </div>
 </div>
 </div>
+
 <div id="outline-container-prepost" class="outline-2">
 <h2 id="prepost"><a id="sec-7" name="sec-7"></a><span class="section-number-2">7</span> Pre-/post-processing utilities</h2>
 <div class="outline-text-2" id="text-prepost">
@@ -1761,6 +1778,7 @@ is lost manifold when ExaBayes is executed in parallel.
 </p>
 </div>
 </div>
+
 <div id="outline-container-parser" class="outline-3">
 <h3 id="parser"><a id="sec-7-2" name="sec-7-2"></a><span class="section-number-3">7.2</span> postProcParam</h3>
 <div class="outline-text-3" id="text-parser">
@@ -1785,6 +1803,7 @@ convergence).
 </p>
 </div>
 </div>
+
 
 <div id="outline-container-sec-7-3" class="outline-3">
 <h3 id="sec-7-3"><span class="section-number-3">7.3</span> sdsf</h3>
@@ -1818,6 +1837,7 @@ you sequential overhead.
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-7-4" class="outline-3">
 <h3 id="sec-7-4"><span class="section-number-3">7.4</span> credibleSet</h3>
 <div class="outline-text-3" id="text-7-4">
@@ -1828,6 +1848,7 @@ post-analyses of your tree samples.
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-7-5" class="outline-3">
 <h3 id="sec-7-5"><span class="section-number-3">7.5</span> extractBips</h3>
 <div class="outline-text-3" id="text-7-5">
@@ -1875,6 +1896,7 @@ If a bipartition occurs only in one chain, extractBips will produce
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-7-6" class="outline-3">
 <h3 id="sec-7-6"><span class="section-number-3">7.6</span> consense</h3>
 <div class="outline-text-3" id="text-7-6">
@@ -1903,6 +1925,7 @@ x is the id of the parameter) in their name.
 </div>
 </div>
 </div>
+
 <div id="outline-container-cluster" class="outline-2">
 <h2 id="cluster"><a id="sec-8" name="sec-8"></a><span class="section-number-2">8</span> ExaBayes on Clusters/Supercomputers</h2>
 <div class="outline-text-2" id="text-cluster">
@@ -1963,6 +1986,7 @@ are not under a budget constraint.
 </ul>
 </div>
 </div>
+
 <div id="outline-container-right-parallelism" class="outline-3">
 <h3 id="right-parallelism"><a id="sec-8-2" name="sec-8-2"></a><span class="section-number-3">8.2</span> Choosing the right kind of parallelism</h3>
 <div class="outline-text-3" id="text-right-parallelism">
@@ -2047,6 +2071,7 @@ if many processes have to wait before they continue.
 </p>
 </div>
 </div>
+
 <div id="outline-container-chain-level" class="outline-4">
 <h4 id="chain-level"><a id="sec-8-2-2" name="sec-8-2-2"></a><span class="section-number-4">8.2.2</span> On Chain-level Parallelism</h4>
 <div class="outline-text-4" id="text-chain-level">
@@ -2106,6 +2131,7 @@ on how to reduce \(m_p\), please see Section <a href="#memory">8.3</a>.
 </p>
 </div>
 </div>
+
 <div id="outline-container-data-para" class="outline-4">
 <h4 id="data-para"><a id="sec-8-2-3" name="sec-8-2-3"></a><span class="section-number-4">8.2.3</span> On Data Parallelism</h4>
 <div class="outline-text-4" id="text-data-para">
@@ -2129,19 +2155,10 @@ is started, ExaBayes prints the load distribution (i.e., how many
 pattern are assigned to each process) before starting the
 computation.
 </p>
+</div>
+</div>
+</div>
 
-<p>
-By default, ExaBayes uses a cyclic distribution scheme. This means
-that if you have partitions with less patterns than processes in a
-single parallel working unit, then some processes will be idle and
-you would waste computational resources. Using the <code>-Q</code> option
-distributes entire partitions to processes and solves this
-problem. If the load distribution is still even with <code>-Q</code>, you can
-expect additional performance improvements.
-</p>
-</div>
-</div>
-</div>
 <div id="outline-container-memory" class="outline-3">
 <h3 id="memory"><a id="sec-8-3" name="sec-8-3"></a><span class="section-number-3">8.3</span> Saving Memory</h3>
 <div class="outline-text-3" id="text-memory">
@@ -2218,6 +2235,7 @@ actually increases runtime performance).
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-8-4" class="outline-3">
 <h3 id="sec-8-4"><span class="section-number-3">8.4</span> Highly Partitioned Runs</h3>
 <div class="outline-text-3" id="text-8-4">
@@ -2227,15 +2245,14 @@ execute an analysis, if the alignment is highly partitioned. The
 issue of load distribution in case of data parallelism is discussed
 in section <a href="#data-para">8.2.3</a>. The upshot is that you should, whether all
 processes of a parallel unit have about the same portion of the
-overall data. If you achieve good load distribution using the <code>-Q</code>
-option, your run may be executed much more efficiently (if you are
-interested in the technical reasons for this, consider
-<a href='manual.html#sec-9'>[7]</a>). Furthermore, for efficiency it is important
-that the option <code>proposalSets</code> is by default set to <code>true</code>
-(default).
+overall data. In parallel runs, ExaBayes initially lists, how many
+characters, partitions, (coupled) chains and runs are assigned to
+each processor.  For efficiency it is important that the option
+<code>proposalSets</code> is by default set to <code>true</code> (default).
 </p>
 </div>
 </div>
+
 <div id="outline-container-reproducibility" class="outline-3">
 <h3 id="reproducibility"><a id="sec-8-5" name="sec-8-5"></a><span class="section-number-3">8.5</span> Note on Reproducibility</h3>
 <div class="outline-text-3" id="text-reproducibility">
@@ -2280,6 +2297,7 @@ state.
 </div>
 </div>
 </div>
+
 <div id="outline-container-partitionfile" class="outline-2">
 <h2 id="partitionfile"><a id="sec-9" name="sec-9"></a><span class="section-number-2">9</span> File Format: Model/Partitioning file</h2>
 <div class="outline-text-2" id="text-partitionfile">
@@ -2347,6 +2365,7 @@ require less computational resources.
 </p>
 </div>
 </div>
+
 <div id="outline-container-sec-10" class="outline-2">
 <h2 id="sec-10"><span class="section-number-2">10</span> References</h2>
 <div class="outline-text-2" id="text-10">

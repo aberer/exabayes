@@ -38,48 +38,4 @@ private: 			// ATTRIBUTES
 }; 
 
 
-template<typename T>
-void Serializable::cWrite(std::ostream &out, const T& toWrite) const 
-{
-  static_assert(not std::is_same<T, std::string>::value, "Do NOT use the cWrite funciton with strings (there is a specific function for that)");
-
-  // std::cout << "wrote " << toWrite << std::endl; 
-  
-  if(checkpointIsBinary)
-    {      
-      out.write((char*)&toWrite, sizeof(T)); 
-      // std::cout << "WROTE " << toWrite << std::endl;
-    }
-  else 
-    {
-      out << std::scientific << MAX_SCI_PRECISION; 
-      out << toWrite << DELIM; 
-    }
-}
-
-
-template<typename T>
-T Serializable::cRead(std::istream &in )
-{
-  T result; 
-
-  static_assert(not std::is_same<T, std::string>::value, "Do NOT use the cRead funciton with strings (there is a specific function for that)");
-
-  if(checkpointIsBinary)
-    {
-      in.read((char*)&result, sizeof(T)); 
-      // std::cout << "READ " << result << std::endl; 
-    }
-  else 
-    {
-      in >> result; 
-      // std::cout <<  "READ " << result << std::endl; 
-      readDelimiter(in);
-    }
-
-  // std::cout << "read " << result << std::endl; 
-
-  return result; 
-}
-
 #endif
