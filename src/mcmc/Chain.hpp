@@ -82,7 +82,7 @@ public:
   void reinitPrior(){_prior.initialize(_traln, extractParameters());}
 
   // getters and setters 
-  double getBestState() const {return _bestState; }
+  log_double getBestState() const {return _bestState; }
   LikelihoodEvaluator& getEvaluator() {return _evaluator; }
   const TreeAln& getTralnHandle() const { return _traln; }
   TreeAln& getTralnHandle()  { return _traln; }
@@ -96,10 +96,10 @@ public:
   void setRunId(nat id) {_runid = id; }
   double getDeltaT() {return _deltaT; }
   nat getGeneration() const {return _currentGeneration; }
-  double getLikelihood() const {return _traln.getTrHandle().likelihood; }
-  void setLikelihood(double lnl) { _traln.getTrHandle().likelihood = lnl; } 
-  void setLnPr(double lnPr) { _lnPr = lnPr;  }
-  double getLnPr() const {return _lnPr; }
+  log_double getLikelihood() const {return _traln.getLikelihood(); }
+  void setLikelihood(log_double lnl) { _traln.setLikelihood(lnl); } 
+  void setLnPr(log_double lnPr) { _lnPr = lnPr;  }
+  log_double getLnPr() const {return _lnPr; }
   const PriorBelief& getPrior() const  {return _prior; } 
   void updateProposalWeights(); 
   
@@ -134,21 +134,21 @@ private: 			// ATTRIBUTES
   double _deltaT; 		// this is the global heat parameter that defines the heat increments  
   int _runid; 
   int _tuneFrequency; 		// TODO should be have per-proposal tuning?   
-  double _hastings;  		// logged!
-  nat _currentGeneration;     	
+  log_double _hastings;  		// logged!
+  nat _currentGeneration; 
   /// indicates how hot the chain is (i = 0 => cold chain), may change!
   nat _couplingId;					     // CHECKPOINTED 
-  std::vector<std::unique_ptr<AbstractProposal> > _proposals; 
+  std::vector< std::unique_ptr<AbstractProposal> > _proposals; 
   std::vector<ProposalSet> _proposalSets; 
   Randomness _chainRand;
   double _relWeightSumSingle;
   double _relWeightSumSets;   
   PriorBelief _prior; 
-  double _bestState; 
+  log_double _bestState; 
   LikelihoodEvaluator _evaluator;   
   
   // suspending and resuming the chain   
-  double _lnPr; 	
+  log_double _lnPr; 	
 
   // friends 
   friend std::ostream& operator<<(std::ostream& out, const Chain &rhs); 

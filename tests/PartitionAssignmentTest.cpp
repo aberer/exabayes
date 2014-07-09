@@ -1,6 +1,5 @@
-#include "PartitionAssignment.hpp"
+#include "system/PartitionAssignment.hpp"
 #include <algorithm>
-
 
 class PartitionAssignmentTest : public testing::Test
 {
@@ -90,3 +89,18 @@ TEST(PartitionAssignment, tooFewSites)
 }
 
 
+
+
+TEST(PartitionAssignment, alexeyPathologicalCase)
+{
+  auto _partitions = std::vector<Partition>{};
+  _partitions.emplace_back(101, "", PLL_DNA_DATA, 4,4,false); 
+  _partitions.back().setLower(0); 
+  _partitions.back().setUpper(100); 
+  _partitions.emplace_back(100, "", PLL_DNA_DATA, 4,4,false); 
+  _partitions.back().setLower(101); 
+  _partitions.back().setUpper(201); 
+
+  auto pa = PartitionAssignment(2); 
+  pa.assign(_partitions);
+}

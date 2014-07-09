@@ -763,7 +763,11 @@ void makenewzIterative(pllInstance *tr, partitionList * pr)
  *
  * @warning \a makenewzIterative should have been called to precompute \a tr->partitionData[model].sumBuffer at the given branch
  *
- * @note  this function actually computes the first and second derivatives of the likelihood for a given branch stored in tr->coreLZ[model] Note that in the parallel case coreLZ must always be broadcasted together with the traversal descriptor, at least for optimizing branch lengths 
+ * @note this function actually computes the first and second
+ * derivatives of the likelihood for a given branch stored in
+ * tr->coreLZ[model] Note that in the parallel case coreLZ must always
+ * be broadcasted together with the traversal descriptor, at least for
+ * optimizing branch lengths
  *
  */
 void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, volatile double *_d2lnLdlz2)
@@ -888,7 +892,6 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
       }			       	    	   
     }
   }
-
 }
 
 

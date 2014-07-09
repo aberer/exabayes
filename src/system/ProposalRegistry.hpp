@@ -28,7 +28,7 @@ public:
   static const double initNodeSliderMultiplier; 
   static const int likeSprMinRadius; 
   static const int likeSprMaxRadius; 
-  static const double likeSpWarp; 
+  static const double likeSprWarp; 
   static const double initDirichletProtAlpha; 
 
 private: 

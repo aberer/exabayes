@@ -265,3 +265,15 @@ void Randomness::setKey(randKey_t _key)
 {
   key = _key; 
 }
+
+
+
+double Randomness::drawRandWeibull(double lambda, double k )
+{
+  auto dist = std::weibull_distribution<double>(k, lambda); 
+  auto gen = std::default_random_engine{} ; 
+  auto seed = (*this)(); 
+  gen.seed(seed);
+  auto result = dist(gen); 
+  return result; 
+} 

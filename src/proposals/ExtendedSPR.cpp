@@ -9,7 +9,7 @@
 // #define DEBUG_ESPR
 
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
-  : AbstractProposal(Category::TOPOLOGY,  "eSPR", 5., false, 0,0)
+  : AbstractProposal(Category::TOPOLOGY,  "eSPR", 5.,  0,0, false)
   , stopProb(_stopProb) 
   , multiplier(_multiplier)    
 {
@@ -125,7 +125,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
    
    the same function as below, but I cleaned the other flavour, since so much stuff has changed. 
  */ 
-void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
+void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   auto bMode = getBranchProposalMode();
   bool multiplyBranchesUsingPosterior = bMode[0]; 
@@ -145,7 +145,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
   if(multiplyBranchesUsingPosterior)
     {
       auto result = move.moveBranchProposal(traln, blParams, eval, rand, outer, 0.05, sequential);
-      hastings += std::get<1>(result); 
+      hastings *= std::get<1>(result); 
 
       move.applyToTree(traln, getSecondaryParameterView() , eval, outer); 
 
@@ -182,7 +182,7 @@ void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
 	      auto newPr = priorHere->getLogProb( ParameterContent{{ lenAfterInterpret}} ) ; 
 	      auto oldPr = priorHere->getLogProb( ParameterContent{{  lenBeforeInterpret}}); 
 
-	      prior.addToRatio(newPr - oldPr); 
+	      prior.addToRatio( newPr / oldPr); 
 	    }
 
 	  // set the branch

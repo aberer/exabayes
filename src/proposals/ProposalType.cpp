@@ -27,10 +27,13 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER , "frequency slider"},
 	{ ProposalType::FREQUENCY_DIRICHLET , "frequency dirichlet"},
 	{ ProposalType::AMINO_MODEL_JUMP , "amino acid model jump"},
-	{ ProposalType::BRANCH_GIBBS , "approximate Gibbs branch length"} ,
+	{ ProposalType::BRANCH_DIST_GAMMA , "branch length from opt-dist"} ,
 	{ ProposalType::LIKE_SPR, "likelihood-guided SPR move"}, 
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, "rate orientated dirichlet proposal on RevMat" } ,
-	{ ProposalType::SLIDING_REVMAT_PER_RATE, "rate orientated sliding proposal on RevMat"} 
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, "rate orientated sliding proposal on RevMat"} , 
+	{ ProposalType::BL_DIST_WEIBULL , "a weibull based branch length proposal" } ,
+	{ ProposalType::DIV_TIME_DIRICH , "dirichlet proposal on divergence times" } ,
+	// { ProposalType::BL_SLID_GAMMA, "a gamma based proposer for 2 adjacent branch lengths"}
       }; 
     
     if(map.find(type) == map.end())
@@ -63,11 +66,14 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER,  "FREQUENCYSLIDER" } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  "FREQUENCYDIRICHLET" } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } ,
-	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} , 
+	{ ProposalType::BRANCH_DIST_GAMMA , "BLDISTGAMMA"} , 
 	{ ProposalType::DIRICH_REVMAT_ALL , "DIRICHREVMATALL"} 	, 
 	{ ProposalType::LIKE_SPR, "LIKESPR"},
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, "REVMATRATEDIRICH" } ,
-	{ ProposalType::SLIDING_REVMAT_PER_RATE, "REVMATRATESLIDER"} 
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, "REVMATRATESLIDER"} ,
+	{ ProposalType::BL_DIST_WEIBULL , "BLDISTWEIBULL" } , 
+	{ ProposalType::DIV_TIME_DIRICH , "DIVTIMEDIRICH" }
+	// { ProposalType::BL_SLID_GAMMA, "BLSLIDGAMMA"} 
       }; 
 
     return proposal2name[p];     
@@ -116,8 +122,11 @@ namespace ProposalTypeFunc
 	    ProposalType::BRANCH_SLIDER, 
 	    ProposalType::TL_MULT, 
 	    ProposalType::BRANCH_COLLAPSER, 
-	    ProposalType::BRANCH_GIBBS , 
-	    ProposalType::NODE_SLIDER
+	    ProposalType::BRANCH_DIST_GAMMA , 
+	    ProposalType::NODE_SLIDER, 
+	    ProposalType::BL_DIST_WEIBULL, 
+	    ProposalType::DIV_TIME_DIRICH
+	    // ProposalType::BL_SLID_GAMMA
 	    }; 
       case Category::FREQUENCIES: 
 	return { 
@@ -204,11 +213,14 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER,  true } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  true } ,
-	{ ProposalType::BRANCH_GIBBS , false } , 
+	{ ProposalType::BRANCH_DIST_GAMMA , false } , 
 	{ ProposalType::DIRICH_REVMAT_ALL , false } 	, 
 	{ ProposalType::LIKE_SPR , false}, 
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, true } ,
-	{ ProposalType::SLIDING_REVMAT_PER_RATE, false} 
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, false} , 
+	{ ProposalType::BL_DIST_WEIBULL, false }, 
+	{ ProposalType::DIV_TIME_DIRICH, false }, 
+	// { ProposalType::BL_SLID_GAMMA, false } 
     };
 
     if(map.find(p) == map.end())

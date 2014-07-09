@@ -126,6 +126,9 @@ private: 			// ATTRIBUTES
   std::vector<bool> _parsimonyInformative; 
   std::vector<nat> _gapVector;
   typename aligned_vector<double>::type _gapColumn ; 
+
+  // std::vector<double>
+  typename aligned_vector<double>::type _sumBuffer; 
 };
 
 

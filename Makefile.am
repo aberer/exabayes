@@ -32,7 +32,7 @@ include src-helper.am
 include src.am 
 
 # the comm stuff 
-libcommdummy_a_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(VECTOR_FLAGS) $(BAYES_INCLUDES)  -I$(top_srcdir)
+libcommdummy_a_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(VECTOR_FLAGS) $(BAYES_INCLUDES) 
 
 # the new pll 
 libpll_a_CFLAGS=$(AM_CFLAGS) -w $(VECTOR_FLAGS) -O2 $(SRCINCLUDE)  

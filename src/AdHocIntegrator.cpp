@@ -3,6 +3,11 @@
 #include "eval/ArrayRestorer.hpp"
 #include "math/Arithmetics.hpp"
 #include "eval/FullCachePolicy.hpp"
+#include "BranchLengthOptimizer.hpp"
+
+
+#include "common.h"
+#include "comm/Communicator.hpp"
 
 
 AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed, ParallelSetup* pl)
@@ -10,7 +15,7 @@ AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugT
   auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(traln, true, true));
   auto&& res = std::make_shared<ArrayReservoir>(false);
   auto eval = LikelihoodEvaluator(traln, plcy.get() , res, pl);
-
+  
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
 #endif
@@ -18,7 +23,7 @@ AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugT
   // s.t. we do not have to care about the branch length linking problem 
   assert(traln.getNumberOfPartitions() == 1 ); 
 
-  std::vector<std::unique_ptr<AbstractParameter> > params; 
+  auto params = std::vector<std::unique_ptr<AbstractParameter> > {}; 
   params.emplace_back(std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0, {0}))); 
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     params[0]->addPartition(i);
@@ -27,34 +32,26 @@ AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugT
 
   params[0]->setPrior(std::unique_ptr<AbstractPrior>(new ExponentialPrior(lambda)));
 
-  vector<unique_ptr<AbstractProposal> >  proposals;   
+  auto proposals = std::vector<std::unique_ptr<AbstractProposal> > {};   
   proposals.emplace_back( new BranchIntegrator (ProposalRegistry::initBranchLengthMultiplier)); 
   proposals[0]->addPrimaryParameter( std::move(params[0])); 
 
   std::vector<ProposalSet> pSets; 
 
-  integrationChain = std::unique_ptr<Chain>( new Chain(seed, traln, proposals, pSets, std::move(eval), false ));
-  integrationChain->getEvaluator().imprint(traln);
+  integrationChain = make_unique<Chain>( seed, traln, proposals, pSets, std::move(eval), false );
 }
 
 
 void AdHocIntegrator::copyTree(const TreeAln &traln)
 {
   auto &myTree = integrationChain->getTralnHandle();
-
   myTree = traln; 
-  
-  auto& eval = integrationChain->getEvaluator();
-// #if 0
-  eval.evaluate(myTree, traln.getAnyBranch(), true);
-// #endif
 }
 
 
 void AdHocIntegrator::prepareForBranch( const BranchPlain &branch,  const TreeAln &otherTree)
 {
   copyTree(otherTree); 
-
   auto &traln = integrationChain->getTralnHandle();
 
   auto ps = integrationChain->getProposalView(); 
@@ -65,7 +62,8 @@ void AdHocIntegrator::prepareForBranch( const BranchPlain &branch,  const TreeAl
 
   // std::cout << "important TODO: has the branch been reset? will not do that here" << std::endl; 
 
-  integrationChain->getEvaluator().evaluate(traln, branch, true); 
+  auto &eval = integrationChain->getEvaluator(); 
+  eval.evaluate(traln, branch, true); 
   integrationChain->reinitPrior(); 
 }
 
@@ -105,7 +103,7 @@ std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const
 	}
       
       auto ess = Arithmetics::getEffectiveSamplingSize(result); 
-      converged = ess > 200; 
+      converged = ess > 10000.; 
     }
 
   traln.setBranch(backup, paramView[0]); 
@@ -116,16 +114,16 @@ std::vector<double> AdHocIntegrator::integrate( const BranchPlain &branch, const
 /** 
     @brief gets the optimimum 
  */ 
-double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std::string runid, double lambda, nat nrSteps)
+double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std::string runid, nat nrSteps, Communicator& comm)
 {
   auto &traln = integrationChain->getTralnHandle(); 
 
   auto paramView = integrationChain->getProposalView()[0]->getBranchLengthsParameterView();
+  assert(paramView.size() == 1 ); 
   auto tmpBranch = branch; 
-  // tout << "optimizing the branch using nr" << endl; 
-  std::stringstream ss; 
+  auto &&ss = std::stringstream{} ; 
   ss << "nr-length." << runid  << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
-  std::ofstream thisOut(ss.str()); 
+  auto &&thisOut =  std::ofstream(ss.str()); 
 
   double result = 0;  
   double curVal = 0.1; 
@@ -138,34 +136,26 @@ double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std
   
   for(nat i = 0; i < nrSteps; ++i )
     {
-      assert(0); 
-#if 0 
-      makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), 
-		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, PLL_FALSE, NULL); 
-#endif
-      tmpBranch.setLength(result);
+      auto blo = BranchLengthOptimizer(traln, branch.toPlain(), 1, comm, paramView);
+      blo.optimizeBranches(traln); 
+
+      auto optParams = blo.getOptimizedParameters(); 
+
+      tmpBranch.setLength(optParams[0].getOptimum()); 
+      firstDerivative  = optParams[0].getFirstDerivative(); 
+      secDerivative = optParams[0].getSecondDerivative();
+
       thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
-      prevVal = tmpBranch.getInterpretedLength(traln, paramView[0]); 
-      curVal = result; 
-    } 
-
-  tmpBranch.setConvertedInternalLength(traln, paramView[0], prevVal); 
-
-#if 0 
-
-  double something = tmpBranch.getLength(); 
-
-  makenewzGeneric(&traln.getTrHandle(), &traln.getPartitionsHandle(), 
-  		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-  		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, PLL_FALSE, NULL); 
-  
-  assert(0); 
-#endif
       
-  // thisOut << prevVal << "\t" << firstDerivative << "\t" << secDerivative << endl; 
+      prevVal = tmpBranch.getInterpretedLength(traln, paramView[0]); 
 
-  thisOut.close(); 
+      if(not BoundsChecker::checkBranch(tmpBranch))
+	BoundsChecker::correctBranch(tmpBranch); 
+      
+      traln.setBranch(tmpBranch, paramView[0]); 
+      curVal = tmpBranch.getInterpretedLength(traln, paramView[0]); 
+
+    } 
 
   return prevVal; 
 }
@@ -181,7 +171,8 @@ void AdHocIntegrator::createLnlCurve(BranchPlain branch, std::string runid, Tree
   ss << "lnl." << runid << "." << branch.getPrimNode() << "-" << branch.getSecNode() << ".tab"; 
   std::ofstream thisOut(ss.str());
 
-  auto& eval = integrationChain->getEvaluator();
+  auto &eval = integrationChain->getEvaluator(); 
+  eval.evaluate(traln, branch, true);
 
   if(maxHere != minHere)
     {
@@ -197,25 +188,29 @@ void AdHocIntegrator::createLnlCurve(BranchPlain branch, std::string runid, Tree
     }
   else
     thisOut << minHere << "\t" << "NA" << endl; 
-  thisOut.close(); 
 }
 
 
-double AdHocIntegrator::getParsimonyLength(TreeAln &traln, const BranchPlain &b )
+double AdHocIntegrator::getParsimonyLength(TreeAln &traln, const BranchPlain &b, Communicator& comm )
 {
   auto pEval =  ParsimonyEvaluator{}; 
   auto branchLength = std::vector<nat>{} ; 
-  // auto state2pars = 
-  pEval.evaluate(traln, b.findNodePtr(traln), true, true  );
+  auto state2pars = pEval.evaluate(traln, b.findNodePtr(traln), true  );
+  
+  // state2pars.data() = comm.allReduce(state2pars.data()); 
+
+  auto tmp = std::vector<nat>(begin(state2pars), end(state2pars)) ; 
+  tmp = comm.allReduce(tmp); 
+  
+  for(nat i = 0; i < tmp.size() ; ++i)
+    state2pars[i] = tmp[i]; 
+  
+  assert(std::get<0>(state2pars) != 0 || std::get<1>(state2pars) != 0 ); 
 
   assert(traln.getNumberOfPartitions() == 1 ); 
   auto& partition =  traln.getPartition(0);
   auto length = partition.getUpper() - partition.getLower(); 
-  
-  // TODO this is incorrect!
-  assert(0); 
 
-  double result =  double(branchLength[0])  / double(length); 
-  return result; 
+  return  double(state2pars[0] ) / double(length) ; 
 }
 

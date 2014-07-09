@@ -44,26 +44,31 @@ void SampleMaster::branchLengthsIntegration(Randomness &rand)
       ahInt.prepareForBranch( branch.toPlain(), traln); 
 
       // sampling 
+
       auto samples = ahInt.integrate( branch.toPlain(), traln );
+      tout << "sampled" << std::endl; 
 
       double minHere = *( std::min_element(samples.begin(), samples.end()) ) ; 
       double maxHere = *( std::max_element(samples.begin(), samples.end()) ) ; 
 
       auto &&ss =stringstream{};
       ss << "samples." << _cl.getRunid()<< "." << branch.getPrimNode() << "-" << branch.getSecNode()   <<  ".tab" ;
-      ofstream thisOut (ss.str());
-      std::copy(samples.begin(), samples.end(), std::ostream_iterator<double>(thisOut, "\n")); 
+      auto &&thisOut = std::ofstream(ss.str());
+      for(auto &elem : samples)
+	thisOut << elem << "\n"; 
 
       // lnl curve 
       ahInt.createLnlCurve(branch.toPlain(), _cl.getRunid(), traln, minHere, maxHere, STEPS_FOR_LNL);
+      tout << "created lnl curve " << std::endl; 
 
       // optimization 
-      double nrOpt = ahInt.printOptimizationProcess(branch,  _cl.getRunid(), lambda, NR_STEPS);
+      double nrOpt = ahInt.printOptimizationProcess(branch,  _cl.getRunid(),   NR_STEPS, _plPtr->getChainComm());
+      tout << "printed opt process" << std::endl; 
 
       // print parsimony length  
-      double pLength = ahInt.getParsimonyLength(traln, branch.toPlain()); 
+      double pLength = ahInt.getParsimonyLength(traln, branch.toPlain(), _plPtr->getChainComm()); 
       parsAndMLBlen.push_back({pLength, nrOpt});
-
+      
       // reset 
       traln.setBranch(initBranch, paramView[0]);
     }

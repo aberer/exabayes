@@ -94,6 +94,7 @@ public:
       @brief draws integer uniformly from [0,n)
   */  
   int drawIntegerOpen(int upperBound); 
+  double drawRandWeibull(double lambda, double k ); 
   /** 
       @brief draw integer uniformly from [0,n]
   */ 

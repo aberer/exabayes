@@ -1,11 +1,6 @@
 #include "extensions.hpp"
 #include <cassert>
 
-// // #ifdef __APPLE__
-// #include <malloc/malloc.h>
-// #else   
-// #endif
-
 
 void formatRange(std::ostream &out, const std::vector<nat> &values)  
 {
@@ -54,3 +49,19 @@ template int* aligned_malloc<int,size_t(EXA_ALIGN)>( size_t size ) ;
 template nat* aligned_malloc<nat,size_t(EXA_ALIGN)>( size_t size ) ; 
 template unsigned char* aligned_malloc<unsigned char,size_t(EXA_ALIGN)>( size_t size ) ; 
 template double* aligned_malloc<double,size_t(EXA_ALIGN)>( size_t size ) ; 
+
+
+
+std::string getEnvironmentVariable( const std::string  & key ) 
+{
+  char * val;                                                                        
+  val = getenv( key.c_str() );                                                       
+  std::string retval = "";                                                           
+  
+  if (val != NULL) 
+    { 
+      retval = val;                                                                    
+    } 
+  
+  return retval;                                                                        
+}

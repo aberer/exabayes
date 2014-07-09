@@ -1,5 +1,5 @@
 folders=./src ./src/proposals ./src/parameters  ./src/config ./src/priors ./src/proposers ./src/file ./src/eval ./src/parser ./src/tree-parse ./src/contrib ./src/mcmc/  ./src/model ./src/system  ./src/data-struct ./src/math
-mpiFolds= ./src/comm/ ./src/comm/mpi ./src/comm/threads
+mpiFolds= ./src/comm/threads ./src/comm/mpi ./src/comm/
 dummyFolds= ./src/comm/ ./src/comm/dummy ./src/comm/threads
 my-update-src:
 	@echo -n "" > src.am 

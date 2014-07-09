@@ -7,8 +7,7 @@ class UniformPrior : public AbstractPrior
 {
 public: 
   UniformPrior(double minVal, double maxVal); 
-  virtual double getLogProb(const ParameterContent& content)  const ; 
-  // virtual std::vector<double> drawFromPrior(Randomness &rand)  const; 
+  virtual log_double getLogProb(const ParameterContent& content)  const ; 
   virtual bool needsIntegration() const {return true; } 
   virtual void print(std::ostream& out ) const  ; 
   virtual ParameterContent getInitialValue() const; 
@@ -21,6 +20,8 @@ public:
 
   double getMin() const {return minVal; }
   double getMax() const {return maxVal; }
+
+  double getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const; 
 
 private: 
   double minVal; 

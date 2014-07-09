@@ -13,7 +13,7 @@ public:
 
   virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const {assert(0); return ParameterContent{}; } ; 
 
-  virtual double getLogProb( const ParameterContent& content) const ; 
+  virtual log_double getLogProb( const ParameterContent& content) const ; 
   virtual void print(std::ostream& out ) const ; 
 
   virtual ParameterContent getInitialValue() const; 
@@ -23,6 +23,8 @@ public:
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const {return 0 ; } 
 
   virtual AbstractPrior* clone() const { return new  DirichletPrior(*this) ; }
+
+  double getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const {assert(0); return 0; } // doesnt have that
   
 private: 
   std::vector<double> alphas; 

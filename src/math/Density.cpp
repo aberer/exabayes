@@ -6,10 +6,10 @@
 #include "Density.hpp"
 
 #include "common.h"
-
+#include "system/extensions.hpp"
 
 // bracen copy from mrb
-static double logGamma (double alp)
+static log_double logGamma (double alp)
 {
   double 
     x = alp, f = 0.0, z;
@@ -24,33 +24,25 @@ static double logGamma (double alp)
       f = -log(f);
     }
   z = 1.0 / (x*x);
-  return  (f + (x-0.5)*log(x) - x + 0.918938533204673 + 
+  return  log_double::fromLog(f + (x-0.5)*log(x) - x + 0.918938533204673 + 
 	   (((-0.000595238095238*z+0.000793650793651)*z-0.002777777777778)*z +
 	    0.083333333333333)/x);  
 
 }
 
 
-static double betaFunctionLog(const std::vector<double> &alphas)
+static log_double betaFunctionLog(const std::vector<double> &alphas)
 {
-  double beta=0;
+  log_double beta = log_double::fromAbs(1.);
   double sum=0;
   for(auto v : alphas)
     {
-      beta+=lgamma(v);       
+      beta *= log_double::fromLog(lgamma(v)); 
       sum+=v ;    
     }
-  beta -= lgamma(sum);
+  beta /= log_double::fromLog(lgamma(sum));
 
   return beta;
-}
-
-
-static double gammaFunction(double alpha)
-{
-  
-  double  lgam = lgamma(alpha);
-  return signgam*exp(lgam); 
 }
 
 
@@ -61,21 +53,21 @@ static double betaFunction(const std::vector<double> &alphas)
 
   for(auto v : alphas)
     {
-      beta *= gammaFunction(v); 
+      beta *= Density::gammaFunction(v); 
       sum += v; 
     }
 
-  beta /= gammaFunction(sum);
+  beta /= Density::gammaFunction(sum);
 
   return beta;
 }
 
 namespace Density
 {
-  double lnDirichlet(std::vector<double> values, const std::vector<double> &alphas)
+  log_double lnDirichlet(std::vector<double> values, const std::vector<double> &alphas)
   {
-    double density=0;
-    density -= betaFunctionLog(alphas);
+    log_double density= log_double::fromAbs(1.);
+    density /= betaFunctionLog(alphas);
     
     double sum = std::accumulate(begin(values), end(values), 0. ); 
     if( fabs( sum - 1. )  > 1e-6)
@@ -85,7 +77,7 @@ namespace Density
       }      
 
     for(nat i=0; i<values.size(); i++)
-      density += (alphas[i] - 1 ) * log(values[i]); 
+      density *= log_double::fromLog((alphas[i] - 1 ) * log(values[i])); 
 
     return density; 
   }
@@ -103,10 +95,10 @@ namespace Density
     return density; 
   }
 
-
-  double lnExponential(double value, double lambda)
+  
+  log_double lnExponential(double value, double lambda)
   {
-    return  log(lambda) - lambda * value; 
+    return log_double::fromLog(log(lambda) - lambda * value); 
   }
 
   double exponential(double value, double lambda)
@@ -115,11 +107,26 @@ namespace Density
     return lambda * exp(- lambda * value); 
   } 
 
-  double lnGamma (double x, double alpha, double beta )
+  log_double lnGamma (double x, double alpha, double beta )
   {    
-    double result =  (alpha-1.0) * log(x) + alpha * log(beta) - x * beta - logGamma(alpha);  
-
-    // std::cout << "Gamma("<< x << ";" <<  alpha << "," << beta << ") = " << result << std::endl; 
-    return result; 
+    auto result =  (alpha-1.0) * log(x) + alpha * log(beta) - x * beta - logGamma(alpha).getRawLog();  
+    return log_double::fromLog(result); 
   }
+
+
+  log_double lnWeibull(double x, double lambda, double k) 
+  {
+    if(x < 0 )
+      return log_double::lowest();
+    else 
+      return log_double::fromLog( log(k / lambda)  + (k-1) * log( x / lambda)  - pow( x / lambda, k)); 
+  } 
+
+  double gammaFunction(double alpha)
+  {
+  
+    double lgam = lgamma(alpha);
+    return signgam*exp(lgam); 
+  }
+
 }  

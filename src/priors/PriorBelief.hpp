@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include "system/GlobalVariables.hpp"
+#include "system/extensions.hpp"
 
 class AbstractPrior; 
 class AbstractParameter; 
@@ -31,15 +32,17 @@ public:
   /** 
       @brief informs the prior about acceptance of the new state    
    */ 
-  void accept()  { assert(wasInitialized); lnPrior += lnPriorRatio;  lnPriorRatio = 0; }  
+  void accept()  { assert(wasInitialized); _lnPrior *= _lnPriorRatio;  _lnPriorRatio = log_double::fromAbs(1.); }  
   /** 
       @brief informs the prior about rejection of the new state 
    */
-  void reject() { assert(wasInitialized) ; lnPriorRatio = 0; }
+  void reject() { assert(wasInitialized) ; _lnPriorRatio = log_double::fromAbs(1.); }
   /** 
       @brief adds a (logarithmic!) value to the prior ratio
    */ 
-  void addToRatio(double val)  { assert(wasInitialized) ;  lnPriorRatio += val; }
+  void addToRatio(double val)  { assert(wasInitialized) ;  _lnPriorRatio *= log_double::fromAbs(val); }
+  void addToRatio(log_double val)  { assert(wasInitialized) ;  _lnPriorRatio *= val; }
+  
   /** 
       @brief accounts for branch length prior changes due to either
       substitution rate or state frequencies updates
@@ -62,15 +65,16 @@ public:
   ///////////////
   // OBSERVERS //
   ///////////////
-  double getLnPrior () const {assert(not std::isinf(lnPrior)) ; assert(wasInitialized); return lnPrior; } 
-  double getLnPriorRatio() const {assert(wasInitialized) ; return lnPriorRatio; }
+  log_double getLnPrior () const { // assert(not std::isinf(_lnPrior)) ;
+    assert(wasInitialized); return _lnPrior; } 
+  log_double getLnPriorRatio() const {assert(wasInitialized) ; return _lnPriorRatio; }
 
 private: 
-  double scoreEverything(const TreeAln &traln, const std::vector<AbstractParameter*> &variables) const ; 
+  log_double scoreEverything(const TreeAln &traln, const std::vector<AbstractParameter*> &variables) const ; 
   
   // having an internal state actually defies the logic of the randomVariables being external 
-  double lnPrior; 
-  double lnPriorRatio; 
+  log_double _lnPrior; 
+  log_double _lnPriorRatio; 
   bool wasInitialized; 
 }; 
 

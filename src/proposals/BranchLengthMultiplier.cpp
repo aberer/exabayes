@@ -2,12 +2,11 @@
 #include "model/TreeAln.hpp"
 #include "system/BoundsChecker.hpp"
 #include "TreeRandomizer.hpp"
-#include "GibbsProposal.hpp"
 #include "priors/AbstractPrior.hpp"
 
 
 BranchLengthMultiplier::BranchLengthMultiplier(  double multiplier)
-  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., false,  0.0001,  100)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., 0.0001,  100, false)
   , _multiplier(multiplier)
 {
 }
@@ -28,7 +27,7 @@ BranchPlain BranchLengthMultiplier::determinePrimeBranch(const TreeAln &traln, R
 } 
 
 
-void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
+void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   auto b = proposeBranch(traln, rand).toBlDummy(); 
 
@@ -37,9 +36,9 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   assert(_primaryParameters.size() == 1); 
   auto param = _primaryParameters[0].get(); 
 
-  savedBranch = traln.getBranch(b.toPlain(), param); 
+  _savedBranch = traln.getBranch(b.toPlain(), param); 
 
-  double oldZ = savedBranch.getLength();
+  double oldZ = _savedBranch.getLength();
 
   double
     drawnMultiplier = 0 ,
@@ -59,12 +58,13 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   traln.setBranch(b, param); 
 
   double realMultiplier = log(b.getLength()) / log(oldZ); 
-  AbstractProposal::updateHastingsLog(hastings, log(realMultiplier), _name); 
+  // AbstractProposal::updateHastingsLog(hastings, log(realMultiplier), _name); 
+  hastings *= log_double::fromAbs(realMultiplier); 
 
-  double prNew = param->getPrior()->getLogProb( ParameterContent{{ b.getInterpretedLength(traln, param)} } ); 
-  double prOld = param->getPrior()->getLogProb( ParameterContent{{ savedBranch.getInterpretedLength(traln, param) }} );
+  auto prNew = param->getPrior()->getLogProb( ParameterContent{{ b.getInterpretedLength(traln, param)} } ); 
+  auto prOld = param->getPrior()->getLogProb( ParameterContent{{ _savedBranch.getInterpretedLength(traln, param) }} );
   
-  prior.addToRatio(prNew - prOld );
+  prior.addToRatio(prNew / prOld );
 }
 
 
@@ -76,7 +76,9 @@ void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,Tre
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL: " << savedBranch << std::endl; 
 #endif
-  evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false); 
+  evaluator.evaluatePartitionsWithRoot(traln,_savedBranch.toPlain(), parts, false); 
+
+  // tout << SOME_FIXED_PRECISION << "lnl=" << traln.getTrHandle().likelihood << std::endl; 
 }
 
  
@@ -86,7 +88,7 @@ void BranchLengthMultiplier::resetState(TreeAln &traln)
   auto params = getBranchLengthsParameterView(); 
   assert(params.size() == 1); 
   auto param = params[0]; 
-  traln.setBranch(savedBranch, param); 
+  traln.setBranch( _savedBranch, param); 
 }
 
 
@@ -94,7 +96,13 @@ void BranchLengthMultiplier::autotune()
 {
   double ratio = _sctr.getRatioInLastInterval(); 
   double newParam = tuneParameter(_sctr.getBatch(), ratio , _multiplier, false);
+
+  // tout << MAX_SCI_PRECISION << SHOW(_multiplier) << " -> " << SHOW(newParam) << std::endl; 
+
+  // tout << MAX_SCI_PRECISION <<   SHOW(_minTuning) << SHOW(newParam) << SHOW(_maxTuning) << std::endl; 
+  
   _multiplier = newParam; 
+
   _sctr.nextBatch();
 }
 
@@ -109,6 +117,7 @@ void BranchLengthMultiplier::readFromCheckpointCore(std::istream &in)
 {
   _multiplier = cRead<decltype(_multiplier)>(in);
 } 
+
 
 void BranchLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
@@ -127,27 +136,6 @@ std::pair<BranchPlain,BranchPlain> BranchLengthMultiplier::prepareForSetExecutio
 
 std::vector<nat> BranchLengthMultiplier::getInvalidatedNodes(const TreeAln &traln ) const 
 {
-  // auto tmp = std::vector<nat>{}; 
-  // if(not traln.isTipNode(savedBranch.getPrimNode()))
-  //   {
-  //     auto desc1 = traln.getDescendents(savedBranch.toPlain());
-  //     tmp.push_back(std::get<0>(desc1).getSecNode());
-  //     tmp.push_back(std::get<1>(desc1).getSecNode());
-  //   }
-
-  // if(not traln.isTipNode(savedBranch.getSecNode()))
-  //   {
-  //     auto desc2 = traln.getDescendents(savedBranch.getInverted().toPlain());
-  //     tmp.push_back(std::get<0>(desc2).getSecNode());
-  //     tmp.push_back(std::get<1>(desc2).getSecNode());
-  //   }
-
-  // return { 
-  //   savedBranch.getPrimNode() , 
-  //     savedBranch.getSecNode() 
-  //     } ; 
   return {}; 
 }
-
-
 

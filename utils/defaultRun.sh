@@ -2,21 +2,22 @@
 
 topdir=$(dirname  $0 )/../
 
-seed=$RANDOM
+seed=$RANDOM			# 
+# seed=2342
+seed=123
 
 seed=123
 
 # seed=8106
 
 # src/proposals/
-numProc=4
+numProc=2
 withTree=0
 
 # extraArgs=" -S "
-extraArgs=" -T 4  -R 2 -C 2 "  
+extraArgs=" "  
 
 doParse=0
-
 
 # early with 150 , VERIFIED 
 # seed=31853
@@ -25,12 +26,12 @@ doParse=0
 # args="--disable-sse"
 
 startFromBest=0
-dotests=1
+dotests=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0
-useClang=0
+useGoogleProfiler=1
+useClang=1
 
 cflags=""
 cxxflags=""  #  -stdlib=libc++ 
@@ -110,7 +111,7 @@ case $mode in
     valgrind)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -hold -e valgrind --tool=memcheck  " #    --leak-check=full --track-origins=yes
+	gdb="$TERM -hold -e valgrind --show-reachable=yes --leak-check=full --tool=memcheck  " #    --leak-check=full --track-origins=yes
 	;;
     *)
 	echo "mode must be debug, default or valgrind"

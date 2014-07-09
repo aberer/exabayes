@@ -94,6 +94,19 @@ public:
     auto &p = getPartition(model);
     return p.getAlpha();
   } 
+
+  // not so happy with that...
+  log_double getLikelihood() const 
+  {
+    return log_double::fromLog(getTrHandle().likelihood); 
+  }
+
+  void setLikelihood(log_double val)
+  {
+    getTrHandle().likelihood = val.getRawLog();
+  }
+
+
   /** 
       @brief indicates whether a nodepointer is a tip 
    */ 
@@ -116,6 +129,11 @@ public:
 
   BranchLength getBranch(const nodeptr &branch,  const AbstractParameter *param) const; 
   BranchLengths getBranch(const nodeptr &branch, const std::vector<AbstractParameter*> &params) const ; 
+
+  // improved interface for topological moves  
+  void insertSubtree(const BranchPlain &subtree, const BranchPlain& insertBranch, const BranchLengths &branchToCreate, const std::vector<AbstractParameter*> &params); 
+  auto  pruneSubtree(const BranchPlain &subtree, const BranchPlain &prunedBranch, const std::vector<AbstractParameter*> &params)
+    -> std::tuple<BranchLengths, BranchPlain>; 
 
   /** 
       @brief gets a nodepointer with specified id 
@@ -215,8 +233,8 @@ public:
   std::pair<BranchPlain,BranchPlain> getDescendents(const BranchPlain &b) const; 
 
   std::vector<bool> getExecModel() const ; 
-  std::vector<double> getPartitionLnls() const; 
-  void setPartitionLnls(const std::vector<double> partitionLnls) ; 
+  std::vector<log_double> getPartitionLnls() const; 
+  void setPartitionLnls(const std::vector<log_double> partitionLnls) ; 
   void setExecModel(const std::vector<bool>  &modelInfo); 
 
   nat getNumberOfAssignedSites(nat model) const ; 

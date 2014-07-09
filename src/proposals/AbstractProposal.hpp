@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+class OptimizedParameter;  
 
 #include "model/Category.hpp"
 #include "mcmc/SuccessCounter.hpp" 
@@ -13,15 +14,20 @@
 #include "eval/LikelihoodEvaluator.hpp"
 #include "TreeRandomizer.hpp"
 #include "system/Serializable.hpp"
+#include "DistributionProposer.hpp"
+#include "GammaProposer.hpp"
+
 
 
 class AbstractProposal : public Serializable
 {
 public: 
-  AbstractProposal( Category cat, std::string  _name, double weight, double minTuning, double maxTuning, bool needsFullTraversal = true )  ; 
+  AbstractProposal( Category cat, std::string  _name, double weight, double minTuning, double maxTuning, bool needsFullTraversal )  ; 
   AbstractProposal( const AbstractProposal& rhs)  ;   
   virtual ~AbstractProposal(){}
   AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
+
+  bool isUsingOptimizedBranches() const {return _usingOptimizedBranches; } 
 
   std::array<bool,3> getBranchProposalMode() const ; 
 
@@ -35,7 +41,7 @@ public:
   /**
      @brief determines the proposal, applies it to the tree / model, updates prior and hastings ratio
    */ 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) = 0; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) = 0; 
   /**
      @brief evaluates the proposal 
      @todo remove the prior, we should not need it here 
@@ -76,11 +82,11 @@ public:
   /** 
       @brief inform proposal about acceptance
    */ 
-  void accept() {_sctr.accept();}
+  virtual void accept() {_sctr.accept();}
   /**
      @brief inform proposal about rejection 
-   */ 
-  void reject() {_sctr.reject();}
+  */ 
+  virtual void reject() {_sctr.reject();}
   /** 
       @brief gets the success counter 
    */ 
@@ -88,7 +94,7 @@ public:
   /** 
       @brief gets the number of proposal invocation, since it has been tune the last time 
    */ 
-  int  getNumCallSinceTuning() const { return _sctr.getRecentlySeen(); }
+  int getNumCallSinceTuning() const { return _sctr.getRecentlySeen(); }
   /** 
       @brief add a parameter to be integrated over to the proposal 
    */ 
@@ -107,7 +113,7 @@ public:
       @brief update the hatsings
       @param valToAdd is the absolute proposal ratio that shall be added 
    */ 
-  static void updateHastingsLog(double &hastings, double valToAdd, std::string whoDoneIt); 
+  // static void updateHastingsLog(double &hastings, double valToAdd, std::string whoDoneIt); 
 
   std::vector<nat> getAffectedPartitions() const ; 
 
@@ -148,8 +154,6 @@ public:
 
   friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
 
-  // void enableForProteins() {_suitsProteinPartitions = true; }
-  // bool isSuitsProteinPartitions() const {return _suitsProteinPartitions;  } 
   void setForProteinsOnly(bool val)  {_forProteinOnly = val; }
   bool isForProteinOnly() const {return _forProteinOnly; }
 
@@ -157,6 +161,7 @@ public:
 
   nat getNumTaxNeeded() const {return _numTaxNeeded; }
 
+  virtual void extractProposer(TreeAln& traln, const OptimizedParameter& param) { }
 
 protected:   
   std::string _name;   
@@ -174,14 +179,13 @@ protected:
   
   nat _id; 
 
-  // bool _suitsProteinPartitions; // TODO try to get rid of it   
-  // bool _disableFor
   bool _forProteinOnly; 
 
-  const double _minTuning; 
-  const double _maxTuning; 
+  double _minTuning; 
+  double _maxTuning; 
 
   nat _numTaxNeeded; 
+  bool _usingOptimizedBranches; 
 }; 
 
 #endif

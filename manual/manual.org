@@ -776,7 +776,7 @@
 
     By default, ExaBayes draws a sample from every cold chain (i.e.,
     for each independent run) every 500 generations (can be changed
-    via *sampleFreq*). To change the print frequency (informing you
+    via *samplingFreq*). To change the print frequency (informing you
     about the likelihood state of each chain), modify *printFreq*. 
     
     ExaBayes updates a checkpoint file at regular intervals (1,000

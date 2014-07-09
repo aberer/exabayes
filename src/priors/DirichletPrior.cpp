@@ -3,7 +3,7 @@
 #include <numeric>
 
 
-double DirichletPrior::getLogProb(const ParameterContent& content) const 
+log_double DirichletPrior::getLogProb(const ParameterContent& content) const 
 {
   auto &values = content.values; 
   assert(values.size() == alphas.size() ); 
@@ -12,7 +12,7 @@ double DirichletPrior::getLogProb(const ParameterContent& content) const
     sum += v; 
   assert(fabs(sum - 1.0) < 1e-6); 
 
-  double result = Density::lnDirichlet(values, alphas ); 
+  auto result = Density::lnDirichlet(values, alphas ); 
   return result; 
 }
 

@@ -14,7 +14,7 @@ public:
   MultiplierProposer(const MultiplierProposer& rhs): AbstractProposer(rhs) {}
 
   virtual AbstractProposer* clone() const  {return new MultiplierProposer(*this);  }
-  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings); 
 }; 
 
 #endif

@@ -19,7 +19,7 @@ public:
   /** 
       @brief use the new bipartition hash for extracting bipartitions 
    */ 
-  void extractBipsNew(nat start, nat end, bool takeAll); 
+  void extractBips( const std::vector<nat> &start, const std::vector<nat> &end); 
   /** 
       @brief gets the minimum number of trees present in all of the files 
   */ 
@@ -27,8 +27,10 @@ public:
   
   std::pair<double,double> computeAsdsfNew(double ignoreFreq);
 
-private: 			// ATTRIBUTES
   nat getNumTreeAvailable(std::string filename); 
+
+private: 			// ATTRIBUTES
+
   std::vector<BipartitionHash> newBipHashes;   
   std::unordered_map<std::string, nat> file2numTree; 
 }; 

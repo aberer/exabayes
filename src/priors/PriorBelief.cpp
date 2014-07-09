@@ -13,8 +13,8 @@
 
 
 PriorBelief::PriorBelief()
-  :lnPrior(0)
-  ,lnPriorRatio(0)
+  : _lnPrior(log_double::fromAbs(1.))
+  , _lnPriorRatio(log_double::fromAbs(1.))
   , wasInitialized(false)
 {
 }
@@ -22,8 +22,8 @@ PriorBelief::PriorBelief()
 
 void PriorBelief::initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables)
 {
-  lnPrior = scoreEverything(traln, variables); 
-  lnPriorRatio = 0; 
+  _lnPrior = scoreEverything(traln, variables); 
+  _lnPriorRatio = log_double::fromAbs(1.); 
   wasInitialized = true; 
 }
 
@@ -36,31 +36,31 @@ void PriorBelief::accountForFracChange(TreeAln &traln, const std::vector<double>
   nat ctr = 0; 
   for(auto &param : affectedBlParams)
     {
-      lnPriorRatio += param->getPrior()->accountForMeanSubstChange(traln,  param, oldFcs.at(ctr), newFcs.at(ctr));
+      _lnPriorRatio *= log_double::fromLog(param->getPrior()->accountForMeanSubstChange(traln,  param, oldFcs.at(ctr), newFcs.at(ctr)));
       ++ctr; 
     }
 }
 
 
-double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<AbstractParameter*> &parameters) const 
+log_double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<AbstractParameter*> &parameters) const 
 {
-  double result = 0; 
+  log_double result = log_double::fromAbs(1.); 
 
   for( auto& v : parameters)
     {
-      double partialResult = 0; 
-
+      log_double partialResult = log_double::fromAbs(1.); 
+      
       switch(v->getCategory()) 
 	{	  
 	case Category::TOPOLOGY: 	  
-	  partialResult = 0; 	// well...
+	  partialResult *= log_double::fromAbs(1.); 	// well...
 	  break; 
 	case Category::BRANCH_LENGTHS: 
 	  {
 	    auto bs = traln.extractBranches(v); 
 	    auto pr = v->getPrior();	    
 	    for(auto &b : bs)	      
-	      partialResult += pr->getLogProb( ParameterContent {  { b.getInterpretedLength(traln,v) }  }); 
+	      partialResult *= pr->getLogProb( ParameterContent {  { b.getInterpretedLength(traln,v) }  }); 
 	  }
 	  break; 
 	case Category::FREQUENCIES: 
@@ -94,12 +94,11 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 	}
       
       // std::cout << "pr(" <<  v << ") = "<< partialResult << std::endl ; 
-      result += partialResult; 
+      result *= partialResult; 
     }
 
-  
-  // the lnPriorRatio may be infinite. But never the assumed value 
-  assert(not std::isinf(result) && not std::isnan(result)); 
+  // the lnPriorRatio may be infinite. But never the assumed value   
+  assert(not result.isInfinity() && not result.isNaN()); 
   
   return result; 
 } 
@@ -107,13 +106,15 @@ double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<Abst
 
 void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> parameters) const 
 {
-  assert(lnPriorRatio == 0); 
-  double verified = scoreEverything(traln, parameters); 
-  if ( fabs(verified - lnPrior) >= ACCEPTED_LNPR_EPS)
+  assert(  _lnPriorRatio.toAbs() == 1.   ); 
+  
+  auto verified = scoreEverything(traln, parameters); 
+
+  if (   log_double( verified / _lnPrior).toAbs() - 1.  >=  ACCEPTED_LNPR_EPS)
     {
-      tout << MAX_SCI_PRECISION << "ln prior was " << lnPrior << " while it should be " << verified << std::endl; 
-      tout << "difference: "<< fabs(verified - lnPrior) << std::endl; 
-      assert(fabs(verified -  lnPrior ) < ACCEPTED_LNPR_EPS); 
+      tout << MAX_SCI_PRECISION << "ln prior was " << _lnPrior << " while it should be " << verified << std::endl; 
+      tout << "difference: "<< fabs( verified.toAbs() - _lnPrior.toAbs()) << std::endl; 
+      assert(0); 
     }
 }
 

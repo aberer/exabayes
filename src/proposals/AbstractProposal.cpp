@@ -11,6 +11,7 @@ AbstractProposal::AbstractProposal( Category cat, std::string name,double weight
   , _minTuning{minTuning}
   , _maxTuning{maxTuning}
   , _numTaxNeeded{4}
+  , _usingOptimizedBranches(false)
 {
 } 
 
@@ -26,6 +27,7 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
   , _minTuning{rhs._minTuning}
   , _maxTuning{rhs._maxTuning}
   , _numTaxNeeded{rhs._numTaxNeeded}
+  , _usingOptimizedBranches(rhs._usingOptimizedBranches)
 {
   this->_name = rhs._name; 
 
@@ -36,10 +38,10 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
 }
 
 
-void AbstractProposal::updateHastingsLog(double &hastings, double logValueToAdd, std::string whoDoneIt) 
-{
-  hastings += logValueToAdd; 
-}
+// void AbstractProposal::updateHastingsLog(double &hastings, double logValueToAdd, std::string whoDoneIt) 
+// {
+//   hastings += logValueToAdd; 
+// }
 
 
 std::ostream& AbstractProposal::printShort(std::ostream &out)  const 
@@ -212,8 +214,6 @@ AbstractProposal::getBranchProposalMode() const
 }
 
 
-
-
 /**
    @brief log tuning for a parameter 
    
@@ -236,7 +236,7 @@ double AbstractProposal::tuneParameter(int batch, double accRatio, double parame
   double newTuning = exp(logTuning);
 
   if (_minTuning <  newTuning && newTuning < _maxTuning)
-    return  newTuning; 
+    return newTuning; 
   else 
     return parameter; 
 }

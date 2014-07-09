@@ -9,7 +9,7 @@ DirichletProposer::DirichletProposer( double minValI, double maxValI, bool _minM
 } 
 
 
-std::vector<double> DirichletProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+std::vector<double> DirichletProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings)
 {
   assert(fabs(std::accumulate(oldValues.begin(), oldValues.end(), 0. ) - 1.0 ) < 1e-6); // sum of rates equals 1 ? 
 
@@ -38,8 +38,8 @@ std::vector<double> DirichletProposer::proposeValues(std::vector<double> oldValu
 
   auto backP = Density::lnDirichlet(oldValues, scaledNew); 
   auto forP = Density::lnDirichlet(newValues, scaledOld); 
-  
-  AbstractProposal::updateHastingsLog(hastings, backP - forP   , "dirichlet"); 
+
+  hastings *= ( backP / forP); 
     
   assert(fabs(std::accumulate(oldValues.begin(), oldValues.end(), 0. ) - 1.0 ) < 1e-6); // sum of rates equals 1 ? 
   return newValues; 

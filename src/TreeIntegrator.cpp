@@ -8,7 +8,7 @@
 #include "priors/ExponentialPrior.hpp"
 #include "proposals/TreeLengthMultiplier.hpp"
 #include "system/ProposalRegistry.hpp"
-#include "proposals/GibbsBranchLength.hpp"
+#include "proposals/DistributionBranchLength.hpp"
 #include "proposals/BranchLengthMultiplier.hpp"
 #include "proposals/SprMove.hpp"
 #include "math/Arithmetics.hpp"
@@ -21,11 +21,11 @@
 
 
 
-TreeIntegrator::TreeIntegrator(TreeAln& traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed, std::shared_ptr<ParallelSetup> plPtr)
+TreeIntegrator::TreeIntegrator(TreeAln& traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed, ParallelSetup* plPtr)
 {
   auto && plcy = make_unique<FullCachePolicy>(traln, true, true );
   auto res = std::make_shared<ArrayReservoir>(false);
-  auto eval = LikelihoodEvaluator(traln, plcy.get(), res, plPtr.get());
+  auto eval = LikelihoodEvaluator(traln, plcy.get(), res, plPtr);
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
@@ -44,7 +44,7 @@ TreeIntegrator::TreeIntegrator(TreeAln& traln, std::shared_ptr<TreeAln> debugTre
   params[0]->setPrior(std::unique_ptr< AbstractPrior>(new ExponentialPrior(lambda)));
 
   auto &&proposals  = std::vector<std::unique_ptr<AbstractProposal> > {};   
-  proposals.emplace_back(new GibbsBranchLength()); 
+  proposals.emplace_back(new DistributionBranchLength<GammaProposer>()); 
   proposals[0]->addPrimaryParameter( std::move(std::unique_ptr<AbstractParameter>(params[0]->clone()))); 
 
   auto pSets = std::vector<ProposalSet>{}; 
@@ -81,7 +81,7 @@ Branch2Stat TreeIntegrator::integrateTree(double essThresh, LikelihoodEvaluator 
   
   eval.evaluate(traln, traln.getAnyBranch(),true); 
   eval.freeMemory(); 
-  integrationChain->setLikelihood(traln.getTrHandle().likelihood); 
+  integrationChain->setLikelihood(  traln.getLikelihood()); 
   integrationChain->suspend(); 
   integrationChain->resume( ); 
 
