@@ -91,6 +91,16 @@ namespace ProposalTypeFunc
   {
     switch(c)
       {
+      case Category::DIVERGENCE_TIMES: 
+	assert(0); 
+	return{
+	  
+	}; 
+      case Category::DIVERGENCE_RATES: 
+	assert(0); 
+	return 
+	  {
+	  }; 
       case Category::TOPOLOGY: 
 	return { 
 	  ProposalType::ST_NNI, 

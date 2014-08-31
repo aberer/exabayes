@@ -5,6 +5,7 @@
 
 #include "TbrMove.hpp"
 
+
 void ExtendedTbrProposer::buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &traln, Randomness &rand, std::vector<AbstractParameter*> params ) const 
 {
   double stopProb = _stopProb; 

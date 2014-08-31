@@ -12,6 +12,9 @@
 #include "RevMatParameter.hpp"
 #include "TopologyParameter.hpp"
 
+#include "DivergenceTimes.hpp"
+#include "DivergenceRates.hpp"
+
 
 std::ostream&  operator<<(std::ostream& out, const Category &rhs)
 {
@@ -25,6 +28,10 @@ namespace CategoryFuns
   {
     switch(cat)
       {
+      case Category::DIVERGENCE_TIMES:
+	return "DivergenceTimes"; 
+      case Category::DIVERGENCE_RATES:
+	return "DivergenceRates"; 
       case Category::TOPOLOGY :
 	return "Topology";
       case Category::BRANCH_LENGTHS:
@@ -50,6 +57,10 @@ namespace CategoryFuns
   {
     switch(cat)
       {
+      case Category::DIVERGENCE_RATES: 
+	return "divRate"; 
+      case Category::DIVERGENCE_TIMES: 
+	return "divTime"; 
       case Category::TOPOLOGY:
 	return "topo" ;
       case Category::BRANCH_LENGTHS:
@@ -72,6 +83,10 @@ namespace CategoryFuns
   {
     switch(cat)
       {
+      case Category::DIVERGENCE_TIMES: 
+	return "TIMEPR"; 
+      case Category::DIVERGENCE_RATES:
+	return "DIVRATEPR"; 
       case Category::TOPOLOGY: 
 	return "TOPOPR"; 
       case Category::BRANCH_LENGTHS: 
@@ -148,6 +163,10 @@ namespace CategoryFuns
   {
     switch(cat)
       {
+      case Category::DIVERGENCE_RATES: 
+	return make_unique<DivergenceRates>(id, idOfMyKind, partitions,0,0);
+      case Category::DIVERGENCE_TIMES: 
+	return make_unique<DivergenceTimes>(id, idOfMyKind, partitions,0); 
       case Category::TOPOLOGY :
 	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind,partitions ));
       case Category::BRANCH_LENGTHS:

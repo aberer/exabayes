@@ -84,6 +84,9 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
       switch(cat)
 	{	  
 	  // force to have everything linked with those 
+	case Category::DIVERGENCE_TIMES:
+	case Category::DIVERGENCE_RATES: 
+	case Category::BRANCH_LENGTHS: 
 	case Category::TOPOLOGY: 
 	  {
 	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
@@ -104,7 +107,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	      }
 	  } 
 	  break; 
-	case Category::BRANCH_LENGTHS: 
+
 	case Category::RATE_HETEROGENEITY:
 	  {
 	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)

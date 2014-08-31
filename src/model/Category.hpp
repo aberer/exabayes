@@ -13,8 +13,9 @@ enum class Category :  int
     FREQUENCIES = 2,
     SUBSTITUTION_RATES = 3,
     RATE_HETEROGENEITY = 4,	
-    AA_MODEL= 5  
-
+    AA_MODEL= 5, 
+    DIVERGENCE_TIMES = 6, 
+    DIVERGENCE_RATES = 7 
 } ; 
 
 
