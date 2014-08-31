@@ -5,7 +5,9 @@
 void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
   for(auto &m : _partitions)
-    traln.setAlpha(content.values[0], m); 
+    {
+      traln.setAlpha(content.values[0], m); 
+    }
 }
  
 

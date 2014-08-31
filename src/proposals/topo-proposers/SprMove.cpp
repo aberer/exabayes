@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "AdHocIntegrator.hpp"
+// #include "AdHocIntegrator.hpp"
 #include "SprMove.hpp"
 #include "Arithmetics.hpp"
 #include "BoundsChecker.hpp"
