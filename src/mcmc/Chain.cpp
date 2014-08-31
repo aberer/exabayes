@@ -205,7 +205,7 @@ void Chain::suspend()
   _lnPr = _prior.getLnPrior();
   // tout << "SUSPEND " <<  MAX_SCI_PRECISION << _lnPr << std::endl; 
 
-#if 1 
+#if 0 
   // auto params =  getBranchLengthsParameterView(); 
   AbstractParameter* param = (nullptr); 
   for(auto p : _params)
@@ -222,7 +222,7 @@ void Chain::suspend()
 void Chain::resume() 
 {    
 
-#if 1 
+#if 0 
   AbstractParameter* param = (nullptr); 
   for(auto p : _params)
     if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
@@ -608,7 +608,10 @@ void Chain::stepSetProposal()
   bool fullTraversalNecessary = pSet.needsFullTraversal();
   
   // all proposals are applied, now only evaluate once 
-  if( branches.first.equalsUndirected(BranchPlain(0,0)) ) // TODO another HACK
+  if( 
+     // branches.first.equalsUndirected(BranchPlain(0,0))
+     branches.first == BranchPlain(0,0) 
+      ) // TODO another HACK
     {
       // this should be a reasonable suggestion 
       auto nextRoot = peekNextVirtualRoot(_traln, _chainRand); 

@@ -9,7 +9,7 @@ void ExtendedTbrProposer::buildPath(Path &path, BranchPlain bisectedBranch, Tree
 {
   double stopProb = _stopProb; 
 
-  nodeptr p= bisectedBranch.findNodePtr(traln ); 
+  nodeptr p= traln.findNodePtr(bisectedBranch ); 
   path.clear();
 
   nodeptr pn = p->next->back,
@@ -55,7 +55,7 @@ void ExtendedTbrProposer::buildPath(Path &path, BranchPlain bisectedBranch, Tree
 
   // for reasons of resetting the first branch in the path must be
   // identifyable later
-  path.at(0) = bisectedBranch.getThirdBranch(traln, path.at(1)); 
+  path.at(0) = traln.getThirdBranch(bisectedBranch, path.at(1)); 
 }
 
 
@@ -74,7 +74,7 @@ void ExtendedTbrProposer::determineMove(TreeAln &traln, LikelihoodEvaluator &eva
       else 
 	{
 	  auto desc = traln.getDescendents(b) ; 
-	  return not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln)) ; 
+	  return not(traln.isTipBranch(desc.first) && traln.isTipBranch(desc.second)) ; 
 	}
     }; 
   auto oneMovable = canMove(bisectedBranch);
@@ -109,11 +109,11 @@ BranchPlain ExtendedTbrProposer::determinePrimeBranch(const TreeAln &traln, Rand
 {
   auto canMove = [&](const BranchPlain &b) -> bool 
     { 
-      auto result = b.isTipBranch(traln); 
+      auto result = traln.isTipBranch(b); 
       if( not result)
   	{
   	  auto desc = traln.getDescendents(b) ; 
-  	  result = not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln) ); 
+  	  result = not(traln.isTipBranch(desc.first) && traln.isTipBranch(desc.second) ); 
   	  // tout << b << " with children " << std::get<0>(desc) << "," << std::get<1>(desc)<< std::endl ; 
   	}
       return result; 

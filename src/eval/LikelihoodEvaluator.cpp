@@ -1,10 +1,11 @@
 #include <algorithm>
 #include <numeric>
 
+#include "BranchPlain.hpp"
 #include "LikelihoodEvaluator.hpp"
 #include "GlobalVariables.hpp"
 #include "ArrayRestorer.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "ParallelSetup.hpp"
 
 #include "common.h"
@@ -164,7 +165,7 @@ void LikelihoodEvaluator::evaluateLikelihood (TreeAln &traln , BranchPlain branc
 {
   pllInstance* tr = &(traln.getTrHandle()); 
   partitionList *pr = &(traln.getPartitionsHandle());
-  nodeptr p = branch.findNodePtr(traln) ; 
+  nodeptr p = traln.findNodePtr(branch) ; 
 
   auto result = log_double::fromAbs(1.);
   
@@ -248,7 +249,7 @@ bool LikelihoodEvaluator::applyDirtynessToSubtree(TreeAln &traln, nat partId, co
     return true; 
 
   nat id =  ArrayOrientation::nodeNum2ArrayNum( branch.getPrimNode() , traln.getNumberOfTaxa( ) ); 
-  auto p = branch.findNodePtr(traln); 
+  auto p = traln.findNodePtr(branch); 
 
   auto& partition = traln.getPartition(partId).getHandle();
 
@@ -374,7 +375,7 @@ void LikelihoodEvaluator::evaluatePartitionsWithRoot( TreeAln &traln, const Bran
 
   bool changedOrientation  = std::any_of(begin(execute), end(execute), [](bool elem){return elem ; });
 
-  auto start = root.findNodePtr(traln);
+  auto start = traln.findNodePtr(root);
   if( changedOrientation && not ( ( start->x == 1 || traln.isTipNode(start)   )
 	   && ( start->back->x == 1 || traln.isTipNode(start->back) )  ) )
     {
@@ -436,7 +437,7 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partId, const BranchP
 
   if( showDebug )
     {
-      if(evalBranch.findNodePtr(traln)->x != 1)
+      if(traln.findNodePtr(evalBranch)->x != 1)
 	{
 	  tout << "computing "; 
 	  debugPrintToComputeHelper(traln, evalBranch); 
@@ -449,23 +450,23 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partId, const BranchP
     }
   
   // abort, if everything is okay 
-  if(evalBranch.findNodePtr(traln)->x == 1)
+  if(traln.findNodePtr(evalBranch)->x == 1)
     return; 
 
   auto execute = std::vector<bool>(traln.getNumberOfPartitions(), false); 
   execute[partId] = true; 
   traln.setExecModel(execute); 
 
-  updatePartials(traln, evalBranch.findNodePtr(traln)	); 
+  updatePartials(traln, traln.findNodePtr(evalBranch) ); 
 
   // assert stuff 
   auto desc = traln.getDescendents(evalBranch); 
-  auto p = desc.first.getInverted().findNodePtr(traln); 
+  auto p = traln.findNodePtr(desc.first.getInverted()); 
   assert(p->x || traln.isTipNode(p->number)); 
-  p = desc.second.getInverted().findNodePtr(traln); 
+  p = traln.findNodePtr(desc.second.getInverted()); 
   assert(p->x || traln.isTipNode(p->number)); 
 
-  p =  evalBranch.findNodePtr(traln) ; 
+  p =  traln.findNodePtr(evalBranch); 
 
   p->x = 1; 
   p->next->x  = 0; 
@@ -475,7 +476,7 @@ void LikelihoodEvaluator::evalSubtree(TreeAln  &traln, nat partId, const BranchP
 
 void LikelihoodEvaluator::disorientDebugHelper(TreeAln &traln, const BranchPlain& root  )
 {
-  auto p = root.findNodePtr(traln); 
+  auto p = traln.findNodePtr(root); 
 
   if( traln.isTipNode(p))
     return ; 
@@ -586,7 +587,7 @@ void LikelihoodEvaluator::debugPrintToComputeHelper(const TreeAln &traln, const 
 
   auto desc = traln.getDescendents(root); 
   
-  if( root.findNodePtr(traln)->x == 0)
+  if( traln.findNodePtr(root)->x == 0)
     {
       tout << root.getPrimNode() <<  "=(" << desc.first.getSecNode( )<<  "+"  << desc.second.getSecNode()  << "),"  ; 
       debugPrintToComputeHelper(traln, desc.first.getInverted()); 

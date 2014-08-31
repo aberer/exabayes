@@ -5,13 +5,13 @@
 void StatNniProposer::determineMove(TreeAln &traln, LikelihoodEvaluator &eval, Randomness& rand, BranchPlain primeBranch, const std::vector<AbstractParameter*> &params) 
 {
   auto b = traln.getBranch( primeBranch, params); 
-  nodeptr p = b.findNodePtr(traln); 
+  nodeptr p = traln.findNodePtr(b); 
   auto switchingBranch = BranchPlain( rand.drawRandDouble01() < 0.5  
 				      ? p->back->next->back->number
 				      : p->back->next->next->back->number, 
 				      p->back->number ); 
   
-  _move = SprMove(traln, b.toPlain(), switchingBranch); 
+  _move = SprMove(traln, b, switchingBranch); 
   _forwProb = log_double::fromAbs(1.); 
 } 
 

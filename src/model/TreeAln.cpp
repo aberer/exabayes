@@ -8,6 +8,10 @@
 
 #include "ByteFile.hpp"
 
+#include "BranchLength.hpp"
+#include "BranchPlain.hpp"
+#include "BranchLengths.hpp"
+
 #include "RateHelper.hpp"
 #include "BranchLengthsParameter.hpp"
 #include "AbstractParameter.hpp"
@@ -234,7 +238,7 @@ void TreeAln::copyTopologyAndBl(const TreeAln &rhs)
     {
       auto a = getUnhookedNode(bl.getPrimNode());
       auto b = getUnhookedNode(bl.getSecNode()); 
-      auto z = bl.findNodePtr(rhs)->z; 
+      auto z = rhs.findNodePtr(bl)->z; 
       clipNode(a,b, z); 
     }
 }
@@ -282,6 +286,51 @@ void TreeAln::clearMemory(ArrayReservoir &arrayReservoir)
 
 
 
+BranchPlain TreeAln::getThirdBranch(const BranchPlain& oneBranch, const BranchPlain& otherBranch) const 
+{
+  auto commonNode =  getCommonNode(oneBranch, otherBranch); 
+  auto branches = getBranchesFromNode(commonNode); 
+
+  for(auto branch: branches )
+    {
+      if(branch != oneBranch
+	 && branch.getInverted() != oneBranch
+	 && branch != otherBranch
+	 && branch.getInverted() != otherBranch)
+	return branch; 
+    }
+
+  assert(0); 
+  return branches[0]; 
+}
+
+
+std::vector<BranchPlain> TreeAln::getBranchesFromNode(nat aNode) const
+{
+  // tout << "TODO: make this method work for outer nodes as well"<< std::endl; 
+
+  if(aNode <= getNumberOfTaxa())
+    {
+      auto p = getNode(aNode); 
+      assert(p->back->number == p->next->back->number); 
+      return {  BranchPlain(aNode, p->back->number)  }; 
+    }
+  else 
+    {
+      // must be an inner node 
+      // assert(aNode > getNumberOfTaxa());
+ 
+      auto theNode = getNode(aNode); 
+      auto a = nat(theNode->back->number); 
+      auto b = nat(theNode->next->back->number); 
+      auto c = nat(theNode->next->next->back->number); 
+  
+      return {   BranchPlain{aNode, a }, BranchPlain{aNode, b}, BranchPlain{aNode, c}  }; 
+    }
+}
+
+
+
 /** 
  * prunes subtree (primNode is the very root)
  * 
@@ -294,16 +343,17 @@ auto  TreeAln::pruneSubtree(const BranchPlain &subtree, const BranchPlain &prune
 {
   auto result = getBranch(prunedBranch, params);
 
-  auto third = prunedBranch.getThirdBranch(*this,subtree); 
+  auto third = getThirdBranch(prunedBranch, subtree); 
+// prunedBranch.getThirdBranch(*this,subtree); 
   auto thirdBL =  getBranch(third, params); 
 
   auto desc = getDescendents(subtree);
-  clipNode(desc.first.getInverted().findNodePtr(*this), desc.second.getInverted().findNodePtr(*this)); 
+  clipNode(findNodePtr(desc.first.getInverted()), findNodePtr(desc.second.getInverted())); 
 
   auto aNode = desc.first.getSecNode(); 
   auto bNode = desc.second.getSecNode(); 
     
-  auto newBranch = BranchLengths(aNode, bNode);
+  auto newBranch = BranchLengths(BranchPlain(aNode, bNode));
 
   // orientation os the new branch is important. Since we take away
   // prunedBranch, the other node that is not in prunedBranch must be
@@ -315,13 +365,13 @@ auto  TreeAln::pruneSubtree(const BranchPlain &subtree, const BranchPlain &prune
   setBranch(newBranch, params); 
 
   // cut the subtree  
-  detachNode(subtree.findNodePtr(*this)); 
+  detachNode(findNodePtr(subtree)); 
 
 #ifdef PRINT_LIKESPR_INFO
   tout << "PRUNE: " << SHOW(subtree) << SHOW(result) << SHOW(newBranch.toPlain()) << std::endl; 
 #endif
 
-  return std::make_tuple(result, newBranch.toPlain()); 
+  return std::make_tuple(result, newBranch); 
 } 
 
 
@@ -335,18 +385,20 @@ auto  TreeAln::pruneSubtree(const BranchPlain &subtree, const BranchPlain &prune
 void TreeAln::insertSubtree(const BranchPlain &subtree, const BranchPlain& insertBranch, const BranchLengths &branchToCreate, const std::vector<AbstractParameter*> &params)
 {
   // need to dance around the sensitive findNodePtr
-  auto pBack = subtree.getInverted().findNodePtr(*this); 
+  auto pBack = findNodePtr(subtree.getInverted()); 
   auto p = pBack->back; 
   assert(p->next->back == NULL  &&   p->next->next->back == NULL); 
 
-  auto otherBranchToCreate = getBranch(insertBranch, params); 
-  otherBranchToCreate.setPrimNode(subtree.getPrimNode()); 
-  otherBranchToCreate.setSecNode(  insertBranch.getOtherNode(branchToCreate.getOtherNode(subtree.getPrimNode()))  );
+  auto oB = BranchPlain(subtree.getPrimNode(), insertBranch.getOtherNode(branchToCreate.getOtherNode(subtree.getPrimNode()))); 
+  auto otherBranchToCreate =  BranchLengths(oB,getBranch(insertBranch, params).getLengths());
+  // auto otherBranchToCreate = ; 
+  // otherBranchToCreate.setPrimNode(); 
+  // otherBranchToCreate.setSecNode(    );
   
   // cut the insert branch 
-  auto q = insertBranch.findNodePtr(*this); 
+  auto q = findNodePtr(insertBranch); 
   q->back = NULL; 
-  auto r = insertBranch.getInverted().findNodePtr(*this); 
+  auto r = findNodePtr(insertBranch.getInverted()); 
   r->back = NULL; 
 
   clipNode(p->next , q); 
@@ -534,12 +586,12 @@ void TreeAln::setBranch(const BranchLength& branch, const AbstractParameter* par
   // tout << "setting " << branch << std::endl; 
 
   assert(BoundsChecker::checkBranch(branch)); 
-  assert(branch.exists(*this)); 
+  assert(exists(branch)); 
 
-  auto p = branch.findNodePtr(*this);
+  auto p = findNodePtr(branch);
   for(auto &partition : param->getPartitions() )
     {
-      double length = branch.getLength(); 
+      auto length = branch.getLength().getValue(); 
       p->z[partition] = p->back->z[partition] = length; 
     }
 }
@@ -550,13 +602,13 @@ void TreeAln::setBranch(const BranchLengths& branch, const std::vector<AbstractP
   // tout << "setting2 " << branch << std::endl; 
 
   assert(BoundsChecker::checkBranch(branch)); 
-  assert(branch.exists(*this)); 
+  assert(exists(branch)); 
 
-  auto p = branch.findNodePtr(*this); 
+  auto p = findNodePtr(branch); 
   
   for(auto &param : params)
     {
-      double length = branch.getLengths().at(param->getIdOfMyKind());
+      auto length = branch.getLengths().at(param->getIdOfMyKind()).getValue();
       for(auto &partition : param->getPartitions())
 	p->z[partition] = p->back->z[partition] = length; 
     }
@@ -637,7 +689,7 @@ nodeptr TreeAln::getNode(nat elem) const
 
 std::pair<BranchPlain,BranchPlain> TreeAln::getDescendents(const BranchPlain &b) const
 {
-  auto p = b.findNodePtr(*this); 
+  auto p = findNodePtr(b); 
   
   assert(not isTipNode(p)); 
 
@@ -651,7 +703,7 @@ std::pair<BranchPlain,BranchPlain> TreeAln::getDescendents(const BranchPlain &b)
 
 nat TreeAln::getDepth(const BranchPlain &b) const 
 {
-  if(b.isTipBranch(*this))
+  if(isTipBranch(b))
     return 1; 
   else 
     {
@@ -663,7 +715,7 @@ nat TreeAln::getDepth(const BranchPlain &b) const
 
 std::vector<nat> TreeAln::getLongestPathBelowBranch(const BranchPlain &b) const 
 {
-  if(b.isTipBranch(*this))
+  if(isTipBranch(b))
     return std::vector<nat>{b.getSecNode()}; 
   else 
     {
@@ -724,17 +776,27 @@ BranchLengths TreeAln::getBranch(const nodeptr& p, const std::vector<AbstractPar
 
 BranchLength TreeAln::getBranch(const BranchPlain &branch,  const AbstractParameter *param) const
 {
-  auto result = branch.toBlDummy();
-  result.extractLength(*this, branch, param); 
-  return result; 
+  auto p = findNodePtr(branch); 
+  auto res = p->z[param->getPartitions()[0]]; 
+  return BranchLength(branch, InternalBranchLength(res)); 
 }
 
 
 BranchLengths TreeAln::getBranch(const BranchPlain& branch, const std::vector<AbstractParameter*> &params) const 
 {
-  auto result = branch.toBlsDummy();
-  result.extractLength(*this, branch, params);
-  return result; 
+  // auto result = branch.toBlsDummy();
+  // result.extractLength(*this, branch, params);
+  // return result; 
+
+  auto intLens = std::vector<InternalBranchLength>{}; 
+  auto p = findNodePtr(branch); 
+  for(auto &param : params)
+    {
+      auto res = p->z[param->getPartitions()[0]];
+      intLens.emplace_back(res); 
+    }
+  
+  return BranchLengths(branch, intLens); 
 }
 
 
@@ -822,7 +884,7 @@ std::vector<BranchPlain> TreeAln::getBranchesByDistance(const BranchPlain& branc
 
   auto toCheck = std::vector<BranchPlain>{}; 
   
-  if(not isTipNode(branch.findNodePtr(*this))) 
+  if(not isTipNode(findNodePtr(branch))) 
     {
       auto desc = getDescendents(branch); 
       toCheck.push_back(desc.first.getInverted()); 
@@ -830,7 +892,7 @@ std::vector<BranchPlain> TreeAln::getBranchesByDistance(const BranchPlain& branc
     }
 
   if(bothSides
-     && not isTipNode(branch.getInverted().findNodePtr(*this)))
+     && not isTipNode(findNodePtr(branch.getInverted())))
     {
       auto desc2 = getDescendents(branch.getInverted()); 
       toCheck.push_back(desc2.first.getInverted()); 
@@ -866,9 +928,9 @@ ProtModel TreeAln::getProteinModel(int part) const
 // HACK, don't use 
 void TreeAln::setBranchUnchecked(const BranchLength &bl)
 {
-  auto p =  bl.findNodePtr(*this);
-  p->z[0] = bl.getLength();
-  p->back->z[0] = bl.getLength();
+  auto p =  findNodePtr(bl);
+  p->z[0] = bl.getLength().getValue();
+  p->back->z[0] = bl.getLength().getValue();
 }
 
 
@@ -940,5 +1002,38 @@ void TreeAln::setPartitions(const std::vector<Partition> &p, bool initial)
 }
 
 
+nodeptr TreeAln::findNodePtr(const BranchPlain &branch ) const 
+{
+  auto& tr = getTrHandle(); 
+  auto thisNode = branch.getPrimNode(); 
+  auto thatNode = branch.getSecNode(); 
+  
+  nodeptr p = tr.nodep[thisNode]; 
+  if(p->back->number == (int)thatNode)
+    return p ; 
+  else if(p->next->back->number == (int)thatNode) 
+    return p->next; 
+  else 
+    {
+      assert(p->next->next->back->number == (int)thatNode); 
+      return p->next->next; 
+    }  
+} 
 
 
+
+bool TreeAln::isTipBranch(const BranchPlain &branch ) const
+{
+  return branch.getPrimNode() <= getNumberOfTaxa() || branch.getSecNode() <= getNumberOfTaxa() ; 
+}
+
+
+
+
+bool TreeAln::exists(const BranchPlain &branch )const 
+{
+  auto branches = getBranchesFromNode(branch.getPrimNode()); 
+  // auto result = false; 
+  return std::any_of(begin(branches), end(branches), 
+		     [&](const BranchPlain &b ){ return b.getSecNode() == branch.getSecNode(); }); 
+} 

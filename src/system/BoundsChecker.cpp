@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cassert>
 
-#include "Branch.hpp"
+// #include "Branch.hpp"
 
 #include "BoundsChecker.hpp"
 #include "GlobalVariables.hpp"
@@ -24,9 +24,6 @@ const double BoundsChecker::alphaMax = 1e3;
 const double BoundsChecker::freqMin = 1e-3;
 
 
-
-
-
 bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )  
 {
   static double dirtyThresh = 1e-6; 
@@ -44,7 +41,7 @@ bool BoundsChecker::checkFrequencies( const std::vector<double> &freqs )
 
 bool BoundsChecker::checkBranch( const BranchLength &branch) 
 {
-  auto v = branch.getLength() ; 
+  auto v = branch.getLength().getValue() ; 
   return BoundsChecker::zMin <= v && v <= BoundsChecker::zMax ; 
 }
 
@@ -52,7 +49,10 @@ bool BoundsChecker::checkBranch( const BranchLengths &branch)
 {
   bool okay = true; 
   for(auto &v : branch.getLengths())
-    okay &= BoundsChecker::zMin <= v && v <= BoundsChecker::zMax; 
+    {
+      auto val = v.getValue();
+      okay &= BoundsChecker::zMin <= val && val <= BoundsChecker::zMax; 
+    }
   return okay; 
 }
 
@@ -101,10 +101,11 @@ void BoundsChecker::correctBranch( BranchLengths &branch )
 
   for(auto &length : lengths )
     {
-      if(length < BoundsChecker::zMin )
-	length = BoundsChecker::zMin;
-      if(BoundsChecker::zMax < length)
-	length = BoundsChecker::zMax; 
+      auto val = length.getValue();
+      if(val < BoundsChecker::zMin )
+	length.setValue(BoundsChecker::zMin); 
+      if(BoundsChecker::zMax < val)
+	length.setValue(BoundsChecker::zMax); 
     }
 
   branch.setLengths(lengths);   
@@ -113,10 +114,10 @@ void BoundsChecker::correctBranch( BranchLengths &branch )
 
 void BoundsChecker::correctBranch(BranchLength &branch)
 {
-  double length = branch.getLength(); 
-  if(length < BoundsChecker::zMin )
+  auto length = branch.getLength(); 
+  if(length.getValue() < BoundsChecker::zMin )
     length = BoundsChecker::zMin;
-  if(BoundsChecker::zMax < length)
+  if(BoundsChecker::zMax < length.getValue())
     length = BoundsChecker::zMax; 
   branch.setLength(length);   
 }

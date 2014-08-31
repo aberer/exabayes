@@ -23,8 +23,7 @@ public:
   // TODO we should just cast to BranchLengthParameter and make this specific to branch length parameter ... 
   virtual double getMeanSubstitutionRate()  const {assert(0) ; return 0 ; }
   virtual void updateMeanSubstRate(const TreeAln& traln) {assert(0); }
-  virtual void setMeanSubstitutionRate(double fac) {assert(0); }
-  
+
   /** 
       @brief applies the parameter content to the tree 
    */ 

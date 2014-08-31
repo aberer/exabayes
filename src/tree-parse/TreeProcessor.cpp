@@ -4,7 +4,7 @@
 #include <cassert>
 #include <iostream>
 #include <cmath>
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "BasicTreeReader.hpp"
 #include "TreeProcessor.hpp"
 #include "BranchLengthsParameter.hpp"

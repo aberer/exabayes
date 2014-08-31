@@ -4,8 +4,11 @@
 #include <iostream>
 #include <vector>
 
+
+#include "BranchPlain.hpp"
+#include "BranchLength.hpp"
 #include "ProtModel.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "Serializable.hpp"
 
 

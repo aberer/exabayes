@@ -19,15 +19,17 @@ void ExtendedSprProposer::determineMove(TreeAln &traln, LikelihoodEvaluator &eva
   assert(modifiedPath.size( ) == 0 ); 
 
   auto start = primeBranch; 
-  auto p = start.findNodePtr(traln) ; 
+  auto p = traln.findNodePtr(start) ; 
   auto q = p->next->back; 
   auto r = p->next->next->back; 
 
   auto lengthR = traln.getBranch(r, params); 
   auto lengthQ = traln.getBranch(q, params); 
   traln.clipNode(q,r);
-  auto newBranch = lengthR; 
-  newBranch.setSecNode(q->number); 
+  // auto newBranch = lengthR; 
+  // newBranch.setSecNode(q->number); 
+
+  auto newBranch = BranchLengths(BranchPlain(  lengthR.getPrimNode(), q->number), lengthR.getLengths() ); 
   traln.setBranch(newBranch, params); 
 
   p->next->back = p->next->next->back = (nodeptr)NULL; 
@@ -53,13 +55,16 @@ void ExtendedSprProposer::determineMove(TreeAln &traln, LikelihoodEvaluator &eva
 
   /* undo changes to the tree  */
   traln.clipNode(p->next,q); 
-  newBranch = lengthQ ; 
-  newBranch.setSecNode(p->number); 
+
+  newBranch = BranchLengths(BranchPlain(lengthQ.getPrimNode(), p->number), lengthQ.getLengths()); 
+  // newBranch = lengthQ ; 
+  // newBranch.setSecNode(p->number); 
   traln.setBranch(newBranch, params);
 
   traln.clipNode(p->next->next,r);   
-  newBranch = lengthR; 
-  newBranch.setSecNode(p->number); 
+  newBranch = BranchLengths(BranchPlain(lengthR.getPrimNode(), p->number), lengthR.getLengths()); 
+  // newBranch = lengthR; 
+  // newBranch.setSecNode(p->number); 
   traln.setBranch(newBranch, params); 
   
   /* now correct  */
@@ -71,7 +76,7 @@ void ExtendedSprProposer::determineMove(TreeAln &traln, LikelihoodEvaluator &eva
     assert(0); 
 
   /* correct the incorrectly set first branch in the path */
-  modifiedPath.at(0) = modifiedPath.at(0).getThirdBranch(traln, modifiedPath.at(1)); 
+  modifiedPath.at(0) = traln.getThirdBranch(modifiedPath.at(0), modifiedPath.at(1)); 
   
 #ifdef DEBUG_ESPR
   cout << *modifiedPath << endl; 
@@ -104,7 +109,7 @@ BranchPlain ExtendedSprProposer::determinePrimeBranch(const TreeAln &traln, Rand
     {
       start = TreeRandomizer::drawBranchWithInnerNode(traln, rand); 
       
-      p = start.findNodePtr(traln );
+      p = traln.findNodePtr(start );
       q = p->next->back; 
       r = p->next->next->back;
     } while(traln.isTipNode(q) && traln.isTipNode(r) ); 

@@ -33,10 +33,10 @@ public:
     auto sum = 0.; 
     for(auto bl : traln.extractBranches(param))
       {
-	auto len = bl.getInterpretedLength( param );
+	auto len = bl.toMeanSubstitutions( param->getMeanSubstitutionRate() );
 	auto prob = std::exp(- std::log(len ) * 0.25 )  + myEps; 
 	sum += prob; 
-	b2len.insert(std::make_pair(bl.toPlain(), prob)); 
+	b2len.insert(std::make_pair(bl, prob)); 
       }
     
     for(auto elem :  b2len)

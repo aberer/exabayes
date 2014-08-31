@@ -82,12 +82,14 @@ log_double FixedPrior::accountForMeanSubstChange(TreeAln  &traln, const Abstract
 	{
 	  if(_keepInitData)
 	    {
-	      auto len = b.getLength();
+	      auto len = b.getLength().getValue();
 	      double frac = myNew / myOld; 
-	      b.setLength( pow(len, 1. / frac ) );
+	      b.setLength( InternalBranchLength(pow(len, 1. / frac ) ));
 	    }
 	  else 
-	    b.setConvertedInternalLength( param, _fixedValues.at(0));
+	    {
+	      b.setLength(InternalBranchLength::fromAbsolute(_fixedValues.at(0), param->getMeanSubstitutionRate())); 
+	    }
 	}
       
       if( std::any_of(bls.begin(), bls.end(), [](BranchLength &b){ return not BoundsChecker::checkBranch(b) ;  }) ) 

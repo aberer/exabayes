@@ -1,5 +1,5 @@
 #include "ParameterContent.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
 
 #include "GlobalVariables.hpp"
 
@@ -25,11 +25,8 @@ void ParameterContent::deserialize( std::istream &in )
     v = cRead<double>(in); 
 
   for(auto &b : branchLengths)
-    {
-      b.deserialize(in);
-      // tout << "DESER " << b << std::endl; 
-    }
-
+    b.deserialize(in);
+ 
   for(auto &b : topology)
     b.deserialize(in); 
   

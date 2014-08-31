@@ -82,7 +82,8 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 	      for(auto param : params)
 	  	{
 	  	  auto bCopy = b; 
-	  	  bCopy.setConvertedInternalLength( param, b.getLength()); 
+	  	  // bCopy.setConvertedInternalLength( param, b.getLength()); 
+		  bCopy.setLength( b.getLength() ); // probably not necessary 
 	  	  traln.setBranch(bCopy, param); 
 	  	}
 	    }
@@ -329,7 +330,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 
       for(auto b : traln.extractBranches())
 	{
-	  auto len = traln.getBranch(b, blParam).getInterpretedLength(blParam); 
+	  auto len = traln.getBranch(b, blParam).toMeanSubstitutions(blParam->getMeanSubstitutionRate()); 
 	  // tout << b << "\t" << len << endl; 
 	  branches.emplace_back( b, len ); 
 	}
@@ -402,13 +403,15 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	    {
 	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() )  
 		? std::get<1>(belem) : initVal ;
-	      auto b = std::get<0>(belem).toBlDummy(); 
-	      b.setConvertedInternalLength(param,absLen);
+	      auto b = BranchLength(std::get<0>(belem),  InternalBranchLength::fromAbsolute(absLen, param->getMeanSubstitutionRate())); 
+	       
+	      // b.setLength(); 
+  // setConvertedInternalLength(param,absLen);
 
 	      if( not BoundsChecker::checkBranch(b))
 		{
 		  BoundsChecker::correctBranch(b); 
-		  auto newLen = b.getInterpretedLength(param); 
+		  auto newLen = b.toMeanSubstitutions(param->getMeanSubstitutionRate()); 
 		  tout << "Warning: had to modify branch length " << absLen << " to " << newLen << " because it violated the maximum range of branch lengths allowed." << endl; 
 		}
 

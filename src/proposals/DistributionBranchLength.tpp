@@ -44,12 +44,12 @@ void DistributionBranchLength<C>::createProposer(TreeAln &traln, LikelihoodEvalu
   assert(params.size() == 1 );     
   auto param = params[0]; 
   
-  _savedBranch = traln.getBranch(b.toPlain(),param); 
+  _savedBranch = traln.getBranch(b,param); 
   
-  eval.evaluateSubtrees(traln, b.toPlain(), param->getPartitions(), false);
-  eval.evaluatePartitionsDry(traln, b.toPlain(), param->getPartitions());
+  eval.evaluateSubtrees(traln, b, param->getPartitions(), false);
+  eval.evaluatePartitionsDry(traln, b, param->getPartitions());
 
-  auto blo= BranchLengthOptimizer(traln, b.toPlain(), MAX_OPT_ITER, eval.getParallelSetup().getChainComm(), params); 
+  auto blo= BranchLengthOptimizer(traln, b, MAX_OPT_ITER, eval.getParallelSetup().getChainComm(), params); 
   blo.optimizeBranches(traln);
   auto optParams = blo.getOptimizedParameters();
   assert(optParams.size() == 1);
@@ -63,23 +63,23 @@ void DistributionBranchLength<C>::createProposer(TreeAln &traln, LikelihoodEvalu
 template<class C>
 void DistributionBranchLength<C>::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
-  auto b = proposeBranch(traln, rand).toBlDummy(); 
+  auto b = proposeBranch(traln, rand); 
   
   auto params = getBranchLengthsParameterView();
   assert(params.size() == 1 );     
   auto param = params[0]; 
 
-  _savedBranch = traln.getBranch(b.toPlain(), param);
+  _savedBranch = traln.getBranch(b, param);
 
   if(not _inSetExecution)
-    createProposer(traln, eval, b.toPlain());
+    createProposer(traln, eval, b);
 
-  auto newBranch  = _proposer.proposeBranch(b.toPlain(), traln, param, rand); 
+  auto newBranch  = _proposer.proposeBranch(b, traln, param, rand); 
 
   _converged = _proposer.isConverged(); 
 
-  auto prevAbsLen = _savedBranch.getInterpretedLength(param); 
-  auto curAbsLen  = newBranch.getInterpretedLength(param); 
+  auto prevAbsLen = _savedBranch.toMeanSubstitutions(param->getMeanSubstitutionRate()); 
+  auto curAbsLen  = newBranch.toMeanSubstitutions(param->getMeanSubstitutionRate()); 
 
   auto oldPr = param->getPrior()->getLogProb( ParameterContent{{ prevAbsLen }} ); 
   auto newPr = param->getPrior()->getLogProb( ParameterContent{{ curAbsLen }} ); 

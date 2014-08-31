@@ -3,7 +3,7 @@
 #include <cmath>
 
 #include "BoundsChecker.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "GlobalVariables.hpp"
 #include "AbstractPrior.hpp"
 #include "UniformPrior.hpp"
@@ -45,10 +45,11 @@ log_double PriorBelief::scoreEverything(const TreeAln &traln, ParameterList &par
 	case Category::BRANCH_LENGTHS: 
 	  {
 	    auto bs = traln.extractBranches(v); 
-	    auto pr = v->getPrior();	    
+	    auto pr = v->getPrior(); 
+	    auto meanSubstRate = v->getMeanSubstitutionRate();
 	    for(auto &b : bs)	      
 	      {
-		auto len = b.getInterpretedLength(v); 
+		auto len = b.toMeanSubstitutions(meanSubstRate); 
 		auto logProb = pr->getLogProb( ParameterContent {  { len  }  }); 
 		partialResult *= logProb; 
 	      }

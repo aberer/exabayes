@@ -1,4 +1,5 @@
 #include "FullCachePolicy.hpp"
+#include "BranchPlain.hpp"
 
 
 FullCachePolicy::FullCachePolicy(const TreeAln& traln, bool cacheTipTip, bool cacheTipInner  )
@@ -34,5 +35,5 @@ void FullCachePolicy::prepareForEvaluation(TreeAln &traln, BranchPlain virtualRo
   // fullTraversal parameter only there to indicate whether we have to
   // search when determining whether arrays are oriented correctly
 
-  restorer.traverseAndCache(traln, virtualRoot.findNodePtr(traln), model,  arrayOrientation,res);
+  restorer.traverseAndCache(traln, traln.findNodePtr(virtualRoot), model,  arrayOrientation,res);
 } 

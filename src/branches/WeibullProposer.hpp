@@ -1,7 +1,8 @@
 #ifndef WEIBULL_PROPOSER_HPP
 #define WEIBULL_PROPOSER_HPP
 
-#include "Branch.hpp"
+#include "TreeAln.hpp"
+#include "BranchLength.hpp"
 #include "extensions.hpp"
 
 class Randomness; 
