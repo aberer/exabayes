@@ -205,7 +205,7 @@ void Chain::suspend()
   _lnPr = _prior.getLnPrior();
   // tout << "SUSPEND " <<  MAX_SCI_PRECISION << _lnPr << std::endl; 
 
-#if 1 
+#if 0 
   // auto params =  getBranchLengthsParameterView(); 
   AbstractParameter* param = (nullptr); 
   for(auto p : _params)
@@ -222,7 +222,7 @@ void Chain::suspend()
 void Chain::resume() 
 {    
 
-#if 1 
+#if 0 
   AbstractParameter* param = (nullptr); 
   for(auto p : _params)
     if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)

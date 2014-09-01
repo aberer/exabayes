@@ -84,6 +84,8 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
       switch(cat)
 	{	  
 	  // force to have everything linked with those 
+	case Category::BRANCH_LENGTHS: 
+	case Category::RATE_HETEROGENEITY:
 	case Category::TOPOLOGY: 
 	  {
 	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
@@ -104,16 +106,6 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	      }
 	  } 
 	  break; 
-	case Category::BRANCH_LENGTHS: 
-	case Category::RATE_HETEROGENEITY:
-	  {
-	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      {
-		if(not cat2partsUsed[cat][j])
-		  partsUnused.push_back(j);
-	      }
-	  }
-	  break; 
 	case Category::FREQUENCIES:
 	case Category::SUBSTITUTION_RATES: 
 	  {
@@ -132,6 +124,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
       // create parameters for unused partitions 
       switch(cat)
 	{
+	case Category::BRANCH_LENGTHS: 
 	case Category::TOPOLOGY:
 	  {
 	    ++highestParamId; 
@@ -142,7 +135,6 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	case Category::FREQUENCIES: 
 	case Category::AA_MODEL:	
 	case Category::SUBSTITUTION_RATES: 
-	case Category::BRANCH_LENGTHS: 
 	case Category::RATE_HETEROGENEITY:
 	  {
 	    for(auto p : partsUnused)
