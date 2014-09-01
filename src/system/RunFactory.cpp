@@ -306,22 +306,21 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterLi
 
   if(doingDivRates)
     {
-      
+      auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
+      proposal->addSecondaryParameter((*tp)->getId()); 
     }
   else if(doingDivTimes)
     {
-      
+      for(auto &p : allParameters)
+	{
+	  if(p->getCategory() == Category::DIVERGENCE_RATES)
+	    proposal->addSecondaryParameter(p->getId()); 
+	}
     }
   else 
     { 
       // get all branch length pararemeters   
       auto blParameters = allParameters.getViewByCategory(Category::BRANCH_LENGTHS);
-      // auto blParameters = std::vector<unique_ptr<AbstractParameter> >{}; 
-      // for(auto &v : allParameters)
-      // 	if(v->getCategory() == Category::BRANCH_LENGTHS)
-      // 	  blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
-      
-
       bool needsBl = false; 
       
       auto myPartitions = std::unordered_set<nat> {}; 

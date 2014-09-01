@@ -444,7 +444,7 @@ void SampleMaster::makeTreeUltrametric( TreeAln &traln, AbstractParameter* divTi
       
     }
 
-  assert(0); 
+  // assert(0); 
 }
 
 
