@@ -34,7 +34,6 @@ void DivergenceRates::verifyContent(const TreeAln &traln, const ParameterContent
 {
   
 }
- 
 
 
 log_double DivergenceRates::getPriorValue(const TreeAln& traln) const

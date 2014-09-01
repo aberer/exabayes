@@ -9,7 +9,10 @@
 class NodeAge : public BranchPlain
 {
 public:
-  NodeAge(){}
+  NodeAge(const BranchPlain &b = BranchPlain(), double h = 0)
+    : BranchPlain(b)
+    , _height{h}
+  {}
   virtual ~NodeAge(){}
   
   

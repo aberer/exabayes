@@ -78,6 +78,10 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
   for(auto &p : paramsToAdd)
     params.push_back(std::move(p)); 
 
+  auto divTimeMode = std::any_of(begin(params), end(params), 
+				 [](const std::unique_ptr< AbstractParameter> &param){ return param->getCategory() == Category::DIVERGENCE_TIMES
+										       || param->getCategory() == Category::DIVERGENCE_RATES ; }); 
+  
   // add standard stuff, if not defined yet
   for(auto cat : CategoryFuns::getAllCategories())
     {
@@ -88,22 +92,37 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	  // force to have everything linked with those 
 	case Category::BRANCH_LENGTHS: 
 	case Category::TOPOLOGY: 
-	  // but do not instantiate these parameters, if we are doing
-	  // divtime (use the conflicting categories later, to rerduce
-	  // the complexity of the code)
-	  if(std::any_of(begin(params), end(params), 
-			 [](const std::unique_ptr< AbstractParameter> &param){ return param->getCategory() == Category::DIVERGENCE_TIMES || param->getCategory() == Category::DIVERGENCE_RATES ; }))
-	    continue; 
+	    if(not divTimeMode)
+	      {
+		for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
+		  {
+		    if(not cat2partsUsed.at(cat).at(i))
+		      {
+			partsUnused.push_back(i);
+		      }
+		  }
+	      }
+	    else 
+	      continue; 
+	    break; 
 	case Category::DIVERGENCE_TIMES:
 	case Category::DIVERGENCE_RATES: 
 	  {
-	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
+	    // but do not instantiate these parameters, if we are doing
+	    // divtime (use the conflicting categories later, to rerduce
+	    // the complexity of the code)
+	    if(divTimeMode)
 	      {
-		if(not cat2partsUsed.at(cat).at(i))
+		for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
 		  {
-		    partsUnused.push_back(i);
+		    if(not cat2partsUsed.at(cat).at(i))
+		      {
+			partsUnused.push_back(i);
+		      }
 		  }
 	      }
+	    else 
+	      continue ; 
 	  }
 	  break; 
 	case Category::AA_MODEL:	
@@ -278,35 +297,55 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 
 void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterList &allParameters, nat numTaxa)
 {
-  // get all branch length pararemeters   
-  auto blParameters = std::vector<unique_ptr<AbstractParameter> >{}; 
-  for(auto &v : allParameters)
-    if(v->getCategory() == Category::BRANCH_LENGTHS)
-      blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
+  // TODO reduce code complexity 
 
-  bool needsBl = false; 
-  std::unordered_set<nat> myPartitions; 
+  auto primParams = proposal->getPrimaryParameterView(); 
   
-  for(auto &v: proposal->getPrimaryParameterView())
-    {
-      needsBl |=  ( v->getCategory() == Category::FREQUENCIES 
-		   || v->getCategory() == Category::SUBSTITUTION_RATES
-		   || v->getCategory() == Category::TOPOLOGY
-		   || v->getCategory() == Category::AA_MODEL
-		   ); 
-      auto ps = v->getPartitions();
-      myPartitions.insert(ps.begin(), ps.end()); 
-    }
+  auto doingDivRates = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_RATES; }); 
+  auto doingDivTimes = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
 
-  if(needsBl)
+  if(doingDivRates)
     {
-      for(auto &blRandVar : blParameters)
+      
+    }
+  else if(doingDivTimes)
+    {
+      
+    }
+  else 
+    { 
+      // get all branch length pararemeters   
+      auto blParameters = allParameters.getViewByCategory(Category::BRANCH_LENGTHS);
+      // auto blParameters = std::vector<unique_ptr<AbstractParameter> >{}; 
+      // for(auto &v : allParameters)
+      // 	if(v->getCategory() == Category::BRANCH_LENGTHS)
+      // 	  blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
+      
+
+      bool needsBl = false; 
+      
+      auto myPartitions = std::unordered_set<nat> {}; 
+  
+      for(auto &p: proposal->getPrimaryParameterView())
 	{
-	  auto partitions =  blRandVar->getPartitions();
-	  if(std::any_of(partitions.begin(),partitions.end(), 
-			 [&](nat i){ return myPartitions.find(i) != myPartitions.end(); }))
-	    proposal->addSecondaryParameter( blRandVar->getId() ); 
-	  // std::unique_ptr<AbstractParameter>(blRandVar->clone())
+	  needsBl |=  ( p->getCategory() == Category::FREQUENCIES 
+			|| p->getCategory() == Category::SUBSTITUTION_RATES
+			|| p->getCategory() == Category::TOPOLOGY
+			|| p->getCategory() == Category::AA_MODEL
+			); 
+	  auto ps = p->getPartitions();
+	  myPartitions.insert(ps.begin(), ps.end()); 
+	}
+
+      if(needsBl)
+	{
+	  for(auto &blRandVar : blParameters)
+	    {
+	      auto partitions =  blRandVar->getPartitions();
+	      if(std::any_of(partitions.begin(),partitions.end(), 
+			     [&](nat i){ return myPartitions.find(i) != myPartitions.end(); }))
+		proposal->addSecondaryParameter( blRandVar->getId() ); 
+	    }
 	}
     }
 }

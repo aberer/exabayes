@@ -1,6 +1,7 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+#include <algorithm>
 
 #include "ByteFile.hpp"
 #include "TreePrinter.hpp"
@@ -309,7 +310,7 @@ LikelihoodEvaluator SampleMaster::createEvaluatorPrototype(const TreeAln &initTr
 }
 
 
-void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const ParameterList &params, bool hasBl) const 
+void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const ParameterList &params, bool hasBl)   const 
 {
   // we cannot have more than one set of branch lentghs. So if we had
   // initial branch lengths, extract them first before changing the
@@ -393,10 +394,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	  param->updateMeanSubstRate(traln);
 
 	  auto &&prior = param->getPrior();
-
 	  auto content = prior->getInitialValue();
-	  // auto content = prior->drawFromPrior();
-
 	  auto initVal = content.values.at(0); 
 	  
 	  for(auto belem : branches)
@@ -404,9 +402,6 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() )  
 		? std::get<1>(belem) : initVal ;
 	      auto b = BranchLength(std::get<0>(belem),  InternalBranchLength::fromAbsolute(absLen, param->getMeanSubstitutionRate())); 
-	       
-	      // b.setLength(); 
-  // setConvertedInternalLength(param,absLen);
 
 	      if( not BoundsChecker::checkBranch(b))
 		{
@@ -419,8 +414,38 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	    }
 	}
     }
+
+  auto divRates = std::vector<AbstractParameter*>{}; 
+  auto divTimes = std::vector<AbstractParameter*>{}; 
+
+  for(auto & p : params)
+    {
+      if(p->getCategory() == Category::DIVERGENCE_RATES)
+	divRates.push_back(p); 
+      if(p->getCategory() == Category::DIVERGENCE_TIMES)
+	divTimes.push_back(p); 
+    }
+
+  if(divRates.size() > 0 )
+    {
+      assert(divTimes.size() == 1 ); // not more than one time parameter !
+      makeTreeUltrametric(traln, divTimes[0], divRates);
+    }
 }
 
+
+void SampleMaster::makeTreeUltrametric( TreeAln &traln, AbstractParameter* divTimes, std::vector<AbstractParameter*> &divRates) const 
+{
+  assert(divRates.size() == 1 ); // for simplicity 
+
+  // TODO correctly initialize everything 
+  for(auto b : traln.extractBranches())
+    {
+      
+    }
+
+  assert(0); 
+}
 
 
 vector<std::string> SampleMaster::getStartingTreeStrings()

@@ -4,7 +4,6 @@
 #include "AbstractParameter.hpp"
 
 
-
 class DivergenceRates : public AbstractParameter
 {
 public:
