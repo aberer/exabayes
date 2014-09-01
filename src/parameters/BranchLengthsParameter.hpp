@@ -31,6 +31,8 @@ public: 			// INHERITED METHODS
   virtual void updateMeanSubstRate(const TreeAln& traln) ;  
   virtual void setMeanSubstitutionRate(double fac) {_fracChange = fac; }
 
+  virtual log_double getPriorValue(const TreeAln& traln) const { assert(0);  return log_double::fromAbs(1);  }
+
 public: 			// METHODS 
   BranchLengthsParameter(nat id, nat idOfMyKind, std::vector<nat> partitions)    ; 
   BranchLengthsParameter(const BranchLengthsParameter& rhs) = default; 

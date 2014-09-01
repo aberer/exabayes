@@ -74,7 +74,7 @@ void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
   for(auto schemePart : scheme )
     {
       assert(schemePart.size()  > 0 ); 
-      parameters.push_back(CategoryFuns::getParameterFromCategory(cat,idCtr,getNumSeen(cat), schemePart));
+      parameters.push_back(CategoryFuns::getParameterFromCategory(cat,idCtr,getNumSeen(cat), schemePart, tralnPtr->getNumberOfTaxa()));
       ++idCtr; 
     }
 }
@@ -104,7 +104,7 @@ void BlockParams::Read(NxsToken &token)
 
 	  if(catsFound.find(cat) != catsFound.end())
 	    {
-	      cerr << "parsing error: found a linking scheme for category  " <<  CategoryFuns::getLongName(cat) << " twice. Aborting." ; 
+	      cerr << "parsing error: found a linking scheme for category  " <<  CategoryFuns::getShortName(cat) << " twice. Aborting." ; 
 	      exitFunction(-1, true); 
 	    }
 

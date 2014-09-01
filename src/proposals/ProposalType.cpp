@@ -92,14 +92,14 @@ namespace ProposalTypeFunc
     switch(c)
       {
       case Category::DIVERGENCE_TIMES: 
-	assert(0); 
-	return{
-	  
-	}; 
+	return
+	  {
+	    ProposalType::DIVTIME_SLIDER 
+	  }; 
       case Category::DIVERGENCE_RATES: 
-	assert(0); 
 	return 
 	  {
+	    ProposalType::DIVRATE_SLIDER
 	  }; 
       case Category::TOPOLOGY: 
 	return { 
@@ -203,7 +203,9 @@ namespace ProposalTypeFunc
 	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER,  false } ,
 	{ ProposalType::NODE_SLIDER,  false } ,
 	{ ProposalType::BL_DIST_WEIBULL, false }, 
-	{ ProposalType::DIV_TIME_DIRICH, false }
+	{ ProposalType::DIV_TIME_DIRICH, false }, 
+	{ ProposalType::DIVTIME_SLIDER , true } , 
+	{ ProposalType::DIVRATE_SLIDER , true }
     };
 
     if(map.find(p) == map.end())

@@ -62,3 +62,13 @@ void ProtModelParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
       exitFunction(-1, true); 
     }
 }
+
+
+
+bool ProtModelParameter::fitsToPartition(Partition& p) const 
+{
+  return p.getDataType() == PLL_AA_DATA; 
+} 
+
+
+

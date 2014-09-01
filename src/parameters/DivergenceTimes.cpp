@@ -5,7 +5,6 @@ DivergenceTimes::DivergenceTimes(nat id, nat idOfMyKind, std::vector<nat> partit
   : AbstractParameter(Category::DIVERGENCE_TIMES, id, idOfMyKind, partitions, 0 )
   , _nodeAges{ numberOfTaxa - 1 }
 {
-  
 }
 
 
@@ -37,3 +36,11 @@ void DivergenceTimes::verifyContent(const TreeAln &traln, const ParameterContent
 
 
 
+
+
+log_double DivergenceTimes::getPriorValue(const TreeAln& traln) const
+{
+  // assert(0); return log_double::fromAbs(1); 
+  // TODO should extract all branches and evaluate the prior ... not doing this here. .. 
+  return log_double::fromAbs(1.);
+} 

@@ -3,10 +3,10 @@
 #include "Category.hpp"
 
 
-DivergenceRates::DivergenceRates(nat id, nat idOfMyKind, std::vector<nat> partitions, nat numberOfTaxa, nat numRateCats)
-  : AbstractParameter(Category::DIVERGENCE_TIMES, id, idOfMyKind, partitions, 0)
+DivergenceRates::DivergenceRates(nat id, nat idOfMyKind, std::vector<nat> partitions, nat numberOfTaxa)
+  : AbstractParameter(Category::DIVERGENCE_RATES, id, idOfMyKind, partitions, 0)
   , _rateAssignments(numberOfTaxa-1, 0 )
-  , _rates(numRateCats,1.)
+  , _rates(1,1.)
 {
 }
 
@@ -16,7 +16,7 @@ void DivergenceRates::applyParameter(TreeAln& traln,  const ParameterContent &co
 {
 }
 
- 
+
 ParameterContent DivergenceRates::extractParameter(const TreeAln &traln)  const  
 {
 }
@@ -35,3 +35,24 @@ void DivergenceRates::verifyContent(const TreeAln &traln, const ParameterContent
   
 }
  
+
+
+log_double DivergenceRates::getPriorValue(const TreeAln& traln) const
+{
+  auto result = log_double::fromAbs(1); 
+  
+  // that only partly makes sense ... 
+  // result *= _prior->getLogProb( _rates);
+
+  return result; 
+} 
+
+
+
+void DivergenceRates::setPrior(const std::unique_ptr<AbstractPrior> &prior) 
+{
+  // meh meh meh 
+
+  AbstractParameter::setPrior(prior); 
+  _rates.resize(prior->getInitialValue().values.size());
+}

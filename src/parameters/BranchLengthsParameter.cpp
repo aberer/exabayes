@@ -50,7 +50,6 @@ bool BranchLengthsParameter::priorIsFitting(const AbstractPrior &prior, const Tr
 }
 
 
-
 void BranchLengthsParameter::deserialize( std::istream &in ) 
 {
   _nonConvTuner.deserialize(in); 

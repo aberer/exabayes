@@ -17,14 +17,14 @@ public:
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln ) const ; 
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  ; 
   virtual void verifyContent(const TreeAln &traln, const ParameterContent &content) const; 
-
   
   virtual AbstractParameter* clone() const  
   {
     return new DivergenceTimes(*this); 
   } 
 
-
+  virtual log_double getPriorValue(const TreeAln& traln) const; // {assert(0); return log_double::fromAbs(1); } 
+  
 private: 
   std::vector<NodeAge> _nodeAges; 
 

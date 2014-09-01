@@ -3,7 +3,6 @@
 #include <cmath>
 
 #include "BoundsChecker.hpp"
-// #include "Branch.hpp"
 #include "GlobalVariables.hpp"
 #include "AbstractPrior.hpp"
 #include "UniformPrior.hpp"
@@ -39,6 +38,15 @@ log_double PriorBelief::scoreEverything(const TreeAln &traln, ParameterList &par
       
       switch(v->getCategory()) 
 	{	  
+	case Category::DIVERGENCE_RATES: 
+	case Category::DIVERGENCE_TIMES: 
+	  {
+	    // that's how it is supposed to be ... this entire switch
+	    // should be converted into respective methods in the
+	    // parameters ...
+	    partialResult *= v->getPriorValue(traln); 
+	  }
+	  break; 
 	case Category::TOPOLOGY: 	  
 	  partialResult *= log_double::fromAbs(1.); 	// well...
 	  break; 

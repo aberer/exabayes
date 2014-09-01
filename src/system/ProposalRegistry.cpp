@@ -10,6 +10,9 @@
 #include "ParsSprProposer.hpp"
 #include "LikelihoodSprProposer.hpp"
 
+#include "DivRateSlider.hpp"
+#include "DivTimeSlider.hpp"
+
 #include "WeibullProposer.hpp"
 #include "DivTimeProposal.hpp"
 #include "DistributionBranchLength.hpp"
@@ -76,7 +79,17 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
       auto&& proposal = std::unique_ptr<AbstractProposal>{}; 
 
       switch(p)
-	{	      
+	{
+	case ProposalType::DIVRATE_SLIDER: 
+	  {
+	    proposal = make_unique<DivRateSlider>();
+	  }
+	  break;
+	case ProposalType::DIVTIME_SLIDER: 
+	  {
+	    proposal = make_unique<DivTimeSlider>(); 
+	  }
+	  break; 
 	case ProposalType::ST_NNI: 
 	  {
 	    auto tmp = make_unique<GenericTopoProposal>(  make_unique<StatNniProposer>(), "stNNI", 6., config.getMoveOptMode() ) ;
