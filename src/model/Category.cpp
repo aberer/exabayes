@@ -166,7 +166,9 @@ namespace CategoryFuns
       case Category::DIVERGENCE_RATES: 
 	return make_unique<DivergenceRates>(id, idOfMyKind, partitions,numTaxa);
       case Category::DIVERGENCE_TIMES: 
-	return make_unique<DivergenceTimes>(id, idOfMyKind, partitions,numTaxa); 
+	// dummy initialize, let's set the proper node-age object
+	// later, as soon as we know the topology 
+	return make_unique<DivergenceTimes>(id, idOfMyKind, partitions, NodeAge{BranchPlain(0,0),0.}); 
       case Category::TOPOLOGY :
 	return  make_unique<TopologyParameter>( id, idOfMyKind,partitions );
       case Category::BRANCH_LENGTHS:

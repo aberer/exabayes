@@ -105,8 +105,8 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	    else 
 	      continue; 
 	    break; 
-	case Category::DIVERGENCE_TIMES:
 	case Category::DIVERGENCE_RATES: 
+	case Category::DIVERGENCE_TIMES:
 	  {
 	    // but do not instantiate these parameters, if we are doing
 	    // divtime (use the conflicting categories later, to rerduce
@@ -116,9 +116,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 		for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
 		  {
 		    if(not cat2partsUsed.at(cat).at(i))
-		      {
-			partsUnused.push_back(i);
-		      }
+		      partsUnused.push_back(i);
 		  }
 	      }
 	    else 
@@ -164,9 +162,15 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 
       if(CategoryFuns::inUniqueByDefault(cat))
 	{
-	  ++highestParamId; 
-	  ++cat2idOfItsKind[cat]; 
-	  params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat] , partsUnused, traln.getNumberOfTaxa())); 
+	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? traln.getNumberOfInnerNodes(true)  : 1; 
+
+	  for(int i = 0; i < numNeeded; ++i )
+	    {
+	      ++highestParamId; 
+	      ++cat2idOfItsKind[cat]; 
+	      params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat] , 
+								      partsUnused, traln.getNumberOfTaxa())); 
+	    }
 	}
       else 
 	{
@@ -175,7 +179,8 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	    {
 	      ++highestParamId;
 	      ++cat2idOfItsKind[cat];
-	      params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat], {p}, traln.getNumberOfTaxa())); 
+	      params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat], 
+								      {p}, traln.getNumberOfTaxa())); 
 	    }
 	}
     }
@@ -306,15 +311,33 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterLi
 
   if(doingDivRates)
     {
-      auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
-      proposal->addSecondaryParameter((*tp)->getId()); 
+      // the rates actually do not really need the divergence times as secondary paramters, correct? 
+
+      // as we said yesterday, they can be proposed independently of the times 
+
+      // things would get really cluttered...but if you want, just add the *all* divergnece times parameters here, if you need them in the divtimes e
+
+      // auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
+      // proposal->addSecondaryParameter((*tp)->getId()); 
     }
   else if(doingDivTimes)
     {
+      // what is our current primary parameter id?
+      assert(primParams.size() == 1 ); 
+      auto primId = primParams[0]->getId();
+
       for(auto &p : allParameters)
 	{
 	  if(p->getCategory() == Category::DIVERGENCE_RATES)
-	    proposal->addSecondaryParameter(p->getId()); 
+	    {
+	      // add the div-rates as a secondary paramater
+	      proposal->addSecondaryParameter(p->getId()); 
+	    }
+	  else if(p->getCategory() == Category::DIVERGENCE_TIMES && p->getId() != primId)
+	    {
+	      // now add all *other* div time parameters as secondary parameters 
+	      proposal->addSecondaryParameter(p->getId()); 
+	    }
 	}
     }
   else 

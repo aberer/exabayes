@@ -9,11 +9,14 @@
 
 
 ParameterContent::ParameterContent(std::vector<double> valuesI, std::vector<BranchPlain> topoI,
-				   std::vector<BranchLength> blI, std::vector<ProtModel>  pmI) 
+				   std::vector<BranchLength> blI, std::vector<ProtModel>  pmI,
+				   std::vector<NodeAge> nI 
+				   ) 
   : values{valuesI}
   , topology{topoI}
   , branchLengths{blI}
   , protModel{pmI}
+  , nodeAges{nI}
   {
   }  
 

@@ -9,7 +9,7 @@
 class DivergenceTimes : public AbstractParameter
 {
 public:
-  DivergenceTimes(nat id, nat idOfMyKind, std::vector<nat> partitions, nat numberOfTaxa);
+  DivergenceTimes(nat id, nat idOfMyKind, std::vector<nat> partitions, NodeAge age);
   virtual ~DivergenceTimes(){}
 
   virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const ; 
@@ -26,7 +26,7 @@ public:
   virtual log_double getPriorValue(const TreeAln& traln) const; // {assert(0); return log_double::fromAbs(1); } 
   
 private: 
-  std::vector<NodeAge> _nodeAges; 
+  NodeAge _nodeAge; 
 
 };
 

@@ -1,6 +1,5 @@
 #include "ArrayOrientation.hpp"
 #include <cassert>
-// #include "Branch.hpp"
 
 #include "common.h"
 
@@ -12,7 +11,7 @@ ArrayOrientation::ArrayOrientation(const TreeAln &traln)
   : orientation(traln.getNumberOfPartitions())
 {
   for(nat i = 0 ; i < traln.getNumberOfPartitions(); ++i)
-    orientation[i] = std::vector<nat>(traln.getNumberOfInnerNodes(),  INVALID); 
+    orientation[i] = std::vector<nat>(traln.getNumberOfInnerNodes(false),  INVALID); 
 }
 
 

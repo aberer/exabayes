@@ -1,9 +1,9 @@
 #include "DivergenceTimes.hpp"
 #include "Category.hpp"
 
-DivergenceTimes::DivergenceTimes(nat id, nat idOfMyKind, std::vector<nat> partitions, nat numberOfTaxa)
+DivergenceTimes::DivergenceTimes(nat id, nat idOfMyKind, std::vector<nat> partitions, NodeAge age)
   : AbstractParameter(Category::DIVERGENCE_TIMES, id, idOfMyKind, partitions, 0 )
-  , _nodeAges{ numberOfTaxa - 1 }
+  , _nodeAge{age}
 {
 }
 
@@ -15,11 +15,11 @@ void DivergenceTimes::applyParameter(TreeAln& traln,  const ParameterContent &co
  
 ParameterContent DivergenceTimes::extractParameter(const TreeAln &traln)  const  
 {
-  
+  assert(0); 
+  return ParameterContent{{}} ; 
 }
 
 
-   
 void DivergenceTimes::printSample(std::ostream& fileHandle, const TreeAln &traln ) const 
 {
 }

@@ -19,6 +19,8 @@ void DivergenceRates::applyParameter(TreeAln& traln,  const ParameterContent &co
 
 ParameterContent DivergenceRates::extractParameter(const TreeAln &traln)  const  
 {
+  assert(0); 
+  return ParameterContent{{}}; 
 }
 
    

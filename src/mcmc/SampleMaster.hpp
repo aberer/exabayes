@@ -51,7 +51,7 @@ public:
   processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
   void initializeWithParamInitValues(TreeAln &tree , const ParameterList &params , bool hasBl ) const ; 
 
-  void makeTreeUltrametric( TreeAln &traln, AbstractParameter* divTimes, std::vector<AbstractParameter*> &divRates) const; 
+  void makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const; 
   /** 
       @brief EXPERIMENTAL 
    */ 

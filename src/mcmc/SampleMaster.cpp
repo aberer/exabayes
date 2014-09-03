@@ -428,23 +428,33 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 
   if(divRates.size() > 0 )
     {
-      assert(divTimes.size() == 1 ); // not more than one time parameter !
-      makeTreeUltrametric(traln, divTimes[0], divRates);
+      // assert(divTimes.size() == 1 ); // not more than one time parameter !
+      makeTreeUltrametric(traln, divTimes, divRates);
     }
 }
 
 
-void SampleMaster::makeTreeUltrametric( TreeAln &traln, AbstractParameter* divTimes, std::vector<AbstractParameter*> &divRates) const 
+void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const 
 {
   assert(divRates.size() == 1 ); // for simplicity 
+  auto divRate = divRates[0]; 
 
+  // TODO correctly initialize DivergenceTimes 
+  
+  // => traverse the tree and get the absolute branch lengths
+  // ; compute node age correctly 
+
+  // then pack information into a ParameterContent and use
+  // DivergenceTimes->apply (maybe you need to create another method
+  // for initialization)
+ 
   // TODO correctly initialize everything 
   for(auto b : traln.extractBranches())
     {
       
     }
 
-  // assert(0); 
+  assert(0); 
 }
 
 

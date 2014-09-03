@@ -1,6 +1,8 @@
 #ifndef NODEAGE_H
 #define NODEAGE_H
 
+#include "BranchPlain.hpp"
+
 // for this class, _primNode is the node, we identify the age for 
 
 // _secNode points upwards (with the NOT having any upward node)

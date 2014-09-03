@@ -156,8 +156,8 @@ public:
   /** 
       @brief gets the number of inner nodes in the tree 
    */ 
-  nat getNumberOfInnerNodes() const { return getNumberOfNodes()  - getNumberOfTaxa()  ;   } 
-  
+  nat getNumberOfInnerNodes(bool rooted) const; 
+
   /** 
       @brief gets the mean substitution rate overall specified partitions
    */ 

@@ -1037,3 +1037,13 @@ bool TreeAln::exists(const BranchPlain &branch )const
   return std::any_of(begin(branches), end(branches), 
 		     [&](const BranchPlain &b ){ return b.getSecNode() == branch.getSecNode(); }); 
 } 
+
+
+
+nat TreeAln::getNumberOfInnerNodes(bool rooted) const 
+{
+  return getNumberOfNodes()  - getNumberOfTaxa() 
+    + ( rooted ? 1 : 0 )    ;   
+}
+
+
