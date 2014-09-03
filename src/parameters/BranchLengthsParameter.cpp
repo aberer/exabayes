@@ -12,7 +12,7 @@ BranchLengthsParameter::BranchLengthsParameter(nat id, nat idOfMyKind, std::vect
   }
 
 
-void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
+void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content)
 {
   for(auto &b : content.branchLengths)
     {

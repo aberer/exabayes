@@ -55,40 +55,44 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
   bool hasBranchLength = false; 
   if(startingTree.compare("") != 0 )
     {
-      hasBranchLength = std::any_of(startingTree.begin(), startingTree.end(), [](const char c ){ return c == ':'; }  ); 
-
-      auto &&iss = std::istringstream {startingTree };
-      auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
-
-      auto mapAsVect = traln.getTaxa(); 
-
-      auto map = std::unordered_map<std::string,nat>{}; 
-      nat ctr = 1; 
-      for(auto elem : mapAsVect)
-	{
-	  map[elem] = ctr; 
-	  ++ctr; 
-	}
-      reader.setLabelMap(map);
-      auto branches = reader.extractBranches(iss);
-      assert(branches.size() == traln.getNumberOfBranches() ); 
-
-      traln.unlinkTree();
-      for(auto b : branches)
-	{
-	  traln.clipNode(traln.getUnhookedNode(b.getPrimNode()) , traln.getUnhookedNode(b.getSecNode())); 
-
-	  if(hasBranchLength)
-	    {
-	      for(auto param : params)
-	  	{
-	  	  auto bCopy = b; 
-	  	  // bCopy.setConvertedInternalLength( param, b.getLength()); 
-		  bCopy.setLength( b.getLength() ); // probably not necessary 
-	  	  traln.setBranch(bCopy, param); 
-	  	}
-	    }
-	}
+//      hasBranchLength = std::any_of(startingTree.begin(), startingTree.end(), [](const char c ){ return c == ':'; }  );
+//
+//      auto &&iss = std::istringstream {startingTree };
+//      auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
+//
+//      auto mapAsVect = traln.getTaxa();
+//
+//      auto map = std::unordered_map<std::string,nat>{};
+//      nat ctr = 1;
+//      for(auto elem : mapAsVect)
+//	{
+//	  map[elem] = ctr;
+//	  ++ctr;
+//	}
+//      reader.setLabelMap(map);
+//      auto branches = reader.extractBranches(iss);
+//      assert(branches.size() == traln.getNumberOfBranches() );
+//
+//      traln.unlinkTree();
+//      for(auto b : branches)
+//	{
+//	  traln.clipNode(traln.getUnhookedNode(b.getPrimNode()) , traln.getUnhookedNode(b.getSecNode()));
+//
+//	  if(hasBranchLength)
+//	    {
+//	      for(auto param : params)
+//	  	{
+//	  	  auto bCopy = b;
+//	  	  // bCopy.setConvertedInternalLength( param, b.getLength());
+//		  bCopy.setLength( b.getLength() ); // probably not necessary
+//	  	  traln.setBranch(bCopy, param);
+//	  	}
+//	    }
+//	}
+		auto branches = traln.extractBranches();
+		pllInstance * instance = &(traln.getTrHandle());
+		pllNewickTree * newickTree = pllNewickParseString(startingTree.c_str());
+		pllTreeInitTopologyNewick(instance, newickTree, PLL_FALSE);
     }
   else
     {	      

@@ -5,7 +5,7 @@
 #include "RateHelper.hpp"
 
 
-void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
+void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content)
 { 
   auto tmp = content.values; 
   

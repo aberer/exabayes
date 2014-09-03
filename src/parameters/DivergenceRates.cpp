@@ -12,7 +12,7 @@ DivergenceRates::DivergenceRates(nat id, nat idOfMyKind, std::vector<nat> partit
 
 
 
-void DivergenceRates::applyParameter(TreeAln& traln,  const ParameterContent &content) const 
+void DivergenceRates::applyParameter(TreeAln& traln,  const ParameterContent &content)
 {
 }
 

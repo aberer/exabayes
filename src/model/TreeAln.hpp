@@ -16,7 +16,7 @@
 #include "GlobalVariables.hpp"
 
 #include "ProtModel.hpp"
-// #include "Branch.hpp"
+#include "BranchPlain.hpp"
 #include "FlagType.hpp"
 
 #include "BranchLengthResource.hpp"
@@ -274,6 +274,14 @@ public:
   void initialize(size_t numTax);
   nat addNodeToPartialTree(nat id, nat curRoot, nat outerCtr); 
 
+    /////////////////////
+   // rooted topology //
+  /////////////////////
+  bool isRooted(void) const;
+  void setRootBranch(const BranchPlain &rb);
+  BranchPlain getRootBranch() const;
+  bool isRootChild(const nat nodeId) const;
+
 private: 			// ATTRIBUTES 
   std::vector<Partition> _partitions;
   partitionList _partitionListResource; 
@@ -292,7 +300,10 @@ private: 			// ATTRIBUTES
   std::vector<boolean> _execModel; // for the traveral descriptor 
   std::vector<nat> _parsimonyScore; 
 
-  bool _isSaveMemorySEV; 
+  bool _isSaveMemorySEV;
+  // in case we are working with a rooted tree
+  BranchPlain _root;
+
 };  
 
 #endif

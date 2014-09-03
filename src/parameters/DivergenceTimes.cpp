@@ -8,7 +8,7 @@ DivergenceTimes::DivergenceTimes(nat id, nat idOfMyKind, std::vector<nat> partit
 }
 
 
-void DivergenceTimes::applyParameter(TreeAln& traln,  const ParameterContent &content) const 
+void DivergenceTimes::applyParameter(TreeAln& traln,  const ParameterContent &content)
 {
 }
 

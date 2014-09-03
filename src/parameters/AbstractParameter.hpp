@@ -29,7 +29,7 @@ public:
   /** 
       @brief applies the parameter content to the tree 
    */ 
-  virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const = 0; 
+  virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) = 0;
   virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const {}
   /** 
       @brief extracts the parameter 

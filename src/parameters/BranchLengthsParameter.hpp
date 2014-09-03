@@ -13,7 +13,7 @@ public: 			// inherited from SERIALIZABLE
   virtual void serialize( std::ostream &out) const; 
 
 public: 			// INHERITED METHODS 
-  virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
+  virtual void applyParameter(TreeAln& traln, const ParameterContent &content);
   virtual ParameterContent extractParameter(const TreeAln &traln )  const;   
   virtual AbstractParameter* clone () const {return new BranchLengthsParameter(*this) ;  }
 

@@ -10,7 +10,7 @@ public:
   DivergenceRates(nat id, nat idOfMyKind, std::vector<nat> partitions, nat numberOfTaxa); 
   virtual ~DivergenceRates(){}
 
-  virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const ; 
+  virtual void applyParameter(TreeAln& traln,  const ParameterContent &content);
   virtual ParameterContent extractParameter(const TreeAln &traln)  const  ;   
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln ) const ; 
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  ; 
