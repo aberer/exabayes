@@ -82,11 +82,13 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	{
 	case ProposalType::DIVRATE_SLIDER: 
 	  {
+	    // tout << "init: divrateslider " << std::endl; 
 	    proposal = make_unique<DivRateSlider>();
 	  }
 	  break;
 	case ProposalType::DIVTIME_SLIDER: 
 	  {
+	    // tout << "init: divtimeslider " << std::endl; 
 	    proposal = make_unique<DivTimeSlider>(); 
 	  }
 	  break; 

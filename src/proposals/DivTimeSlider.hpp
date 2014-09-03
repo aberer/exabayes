@@ -21,7 +21,7 @@ public:				// INHERITED
 
 public:
   DivTimeSlider()
-    : AbstractProposal(Category::DIVERGENCE_TIMES, "divRateSlider", 10 , 1e-5, 1e2, false)
+    : AbstractProposal(Category::DIVERGENCE_TIMES, "divTimeSlider", 10 , 1e-5, 1e2, false)
   {
   }
 

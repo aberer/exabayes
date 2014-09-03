@@ -35,6 +35,9 @@ void ParameterContent::deserialize( std::istream &in )
   
   for(auto &v :  protModel)
     v = ProtModel(cRead<int>(in));
+
+  assert(0) ; 
+  
 } 
 
 
@@ -57,6 +60,8 @@ void ParameterContent::serialize( std::ostream &out) const
       auto tmp = int(v);
       cWrite<int>(out,tmp); 
     }
+
+  assert(0) ; 
 }   
 
 
