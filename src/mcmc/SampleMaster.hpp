@@ -22,7 +22,6 @@
 #include "Serializable.hpp"
 #include "DiagnosticsFile.hpp"
 
-
 class SampleMaster : public Serializable
 {
 public:   

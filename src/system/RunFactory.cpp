@@ -162,7 +162,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 
       if(CategoryFuns::inUniqueByDefault(cat))
 	{
-	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? traln.getNumberOfInnerNodes(true)  : 1; 
+	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? (traln.getNumberOfInnerNodes(true)+1)  : 1;
 
 	  for(int i = 0; i < numNeeded; ++i )
 	    {

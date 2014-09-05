@@ -36,7 +36,8 @@ void ParameterContent::deserialize( std::istream &in )
   for(auto &v :  protModel)
     v = ProtModel(cRead<int>(in));
 
-  assert(0) ; 
+  for(auto &b : nodeAges)
+    b.deserialize(in);
   
 } 
 
@@ -61,7 +62,10 @@ void ParameterContent::serialize( std::ostream &out) const
       cWrite<int>(out,tmp); 
     }
 
-  assert(0) ; 
+  for(auto &b : nodeAges)
+    {
+      b.serialize(out);
+    }
 }   
 
 

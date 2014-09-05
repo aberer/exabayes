@@ -17,6 +17,7 @@ public:
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln ) const ; 
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  ; 
   virtual void verifyContent(const TreeAln &traln, const ParameterContent &content) const; 
+  void initializeParameter(TreeAln& traln,  const ParameterContent &content, bool root = false);
   
   virtual AbstractParameter* clone() const  
   {

@@ -281,6 +281,7 @@ public:
   void setRootBranch(const BranchPlain &rb);
   BranchPlain getRootBranch() const;
   bool isRootChild(const nat nodeId) const;
+  bool isRootBranch(const BranchPlain &rb) const;
 
 private: 			// ATTRIBUTES 
   std::vector<Partition> _partitions;

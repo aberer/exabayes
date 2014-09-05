@@ -28,6 +28,8 @@
 #include "FullCachePolicy.hpp"
 #include "NoCachePolicy.hpp"
 
+#include "DivergenceTimes.hpp"
+
 #include "PhylipParser.hpp"
 
 
@@ -74,8 +76,10 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 //      assert(branches.size() == traln.getNumberOfBranches() );
 //
 //      traln.unlinkTree();
+//
 //      for(auto b : branches)
 //	{
+//    	  std::cout << b << std::endl;
 //	  traln.clipNode(traln.getUnhookedNode(b.getPrimNode()) , traln.getUnhookedNode(b.getSecNode()));
 //
 //	  if(hasBranchLength)
@@ -89,10 +93,10 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 //	  	}
 //	    }
 //	}
-		auto branches = traln.extractBranches();
+//		auto branches = traln.extractBranches();
 		pllInstance * instance = &(traln.getTrHandle());
 		pllNewickTree * newickTree = pllNewickParseString(startingTree.c_str());
-		pllTreeInitTopologyNewick(instance, newickTree, PLL_FALSE);
+		pllTreeInitTopologyNewick(instance, newickTree, PLL_TRUE);
     }
   else
     {	      
@@ -437,28 +441,94 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
     }
 }
 
+double traverseDepthFromRoot(TreeAln &traln, const BranchPlain &branch, std::vector<NodeAge *> & nodeAges) {
+
+	double currentHeight = nodeAges[branch.getPrimNode()-1]->getHeight();
+	nodeAges[branch.getPrimNode()-1]->setPrimNode(branch.getPrimNode());
+	nodeAges[branch.getPrimNode()-1]->setSecNode(branch.getSecNode());
+	if (!traln.isTipNode(branch.getPrimNode())) {
+
+		auto plainDescendants = traln.getDescendents(branch);
+
+		nodeAges[plainDescendants.first.getSecNode()-1]->setHeight(currentHeight+1.0);
+		nodeAges[plainDescendants.second.getSecNode()-1]->setHeight(currentHeight+1.0);
+
+		return std::max(
+				traverseDepthFromRoot(traln, plainDescendants.first.getInverted(), nodeAges),
+				traverseDepthFromRoot(traln, plainDescendants.second.getInverted(), nodeAges)
+				);
+	} else {
+		return currentHeight;
+	}
+}
 
 void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const 
 {
-  assert(divRates.size() == 1 ); // for simplicity 
+
+	assert(divRates.size() == 1 );
+	/* initialize the rates */
+
   auto divRate = divRates[0]; 
 
-  // TODO correctly initialize DivergenceTimes 
-  
-  // => traverse the tree and get the absolute branch lengths
-  // ; compute node age correctly 
+  vector<NodeAge *> nodeAges(traln.getNumberOfNodes());
+  for (nat i = 0; i < traln.getNumberOfNodes(); i++)
+  {
+	  nodeAges[i] = new NodeAge();
+  }
 
-  // then pack information into a ParameterContent and use
-  // DivergenceTimes->apply (maybe you need to create another method
-  // for initialization)
- 
-  // TODO correctly initialize everything 
-  for(auto b : traln.extractBranches())
-    {
-      
-    }
+  /* set root at random */
+  traln.setRootBranch(traln.getAnyBranch());
 
-  assert(0); 
+  nodeAges[traln.getRootBranch().getPrimNode()-1]->setHeight(1.0);
+  nodeAges[traln.getRootBranch().getSecNode()-1]->setHeight(1.0);
+
+  double maxHeight = std::max(
+		  traverseDepthFromRoot(traln, traln.getRootBranch(), nodeAges),
+		  traverseDepthFromRoot(traln, traln.getRootBranch().getInverted(), nodeAges));
+
+	/* correct the node heights from the tips to the root and initialize branches */
+	for (auto b : nodeAges)
+	{
+		b->setHeight(
+				traln.isTipNode(b->getPrimNode()) ?
+						0 : (maxHeight - b->getHeight()));
+	}
+
+	auto rootNodeAge = NodeAge();
+	rootNodeAge.setHeight(maxHeight);
+
+	for (auto b : nodeAges)
+	{
+		if (b->getPrimNode() > traln.getNumberOfTaxa())
+		{
+			auto divtime =
+					static_cast<DivergenceTimes *>(divTimes[b->getPrimNode()
+							- traln.getNumberOfTaxa()]);
+			auto content = ParameterContent();
+
+			/* adding both current and parental branches */
+			content.nodeAges.push_back(*b);
+			if (traln.isRootChild(b->getPrimNode()))
+			{
+				content.nodeAges.push_back(rootNodeAge);
+			}
+			else
+			{
+				content.nodeAges.push_back(*nodeAges[b->getSecNode() - 1]);
+			}
+			divtime->initializeParameter(traln, content);
+		}
+	}
+
+	auto content = ParameterContent();
+	auto divtime = static_cast<DivergenceTimes *>(divTimes[divTimes.size()-1]);
+	content.nodeAges.push_back(rootNodeAge);
+	divtime->initializeParameter(traln, content, true);
+
+	for (nat i = 0; i < traln.getNumberOfNodes(); i++)
+	{
+		delete nodeAges[i];
+	}
 }
 
 

@@ -17,9 +17,10 @@ public:
   {}
   virtual ~NodeAge(){}
 
-  // TODO 
+  void setHeight(double height) { _height = height; }
+  double getHeight(void) const { return _height; }
 
-  // overwirte serialize/deserialize 
+  // TODO overwirte serialize/deserialize
 
 private: 
   double _height;  
