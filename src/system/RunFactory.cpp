@@ -162,8 +162,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 
       if(CategoryFuns::inUniqueByDefault(cat))
 	{
-	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? (traln.getNumberOfInnerNodes(true)+1)  : 1;
-
+	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? (traln.getNumberOfInnerNodes(true))  : 1;
 	  for(int i = 0; i < numNeeded; ++i )
 	    {
 	      ++highestParamId; 
@@ -201,9 +200,12 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
     case Category::DIVERGENCE_TIMES:
       var->setPrior(make_unique<UniformPrior>(0,10)); 
       break; 
-    case Category::DIVERGENCE_RATES: 
-      var->setPrior(make_unique<DirichletPrior>(std::vector<double>{1,1,1,1,1})); 
-      break; 
+    case Category::DIVERGENCE_RATES:
+    {
+      std::vector<double> cats(2*traln.getNumberOfTaxa() - 2, 1.0);
+      var->setPrior(make_unique<DirichletPrior>(cats));
+      break;
+    }
     case Category::BRANCH_LENGTHS: 
       var->setPrior( make_unique<ExponentialPrior>(10.0 ));
       break; 

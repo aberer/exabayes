@@ -19,6 +19,8 @@ public:
   virtual void verifyContent(const TreeAln &traln, const ParameterContent &content) const; 
   void initializeParameter(TreeAln& traln,  const ParameterContent &content, bool root = false);
   
+  virtual std::ostream& printShort(std::ostream& out) const;
+
   virtual AbstractParameter* clone() const  
   {
     return new DivergenceTimes(*this); 
@@ -26,9 +28,9 @@ public:
 
   virtual log_double getPriorValue(const TreeAln& traln) const; // {assert(0); return log_double::fromAbs(1); } 
   
-private: 
-  NodeAge _nodeAge; 
-
+private:
+  bool _rootNode;
+  NodeAge _nodeAge;
 };
 
 

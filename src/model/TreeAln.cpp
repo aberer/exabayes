@@ -1074,6 +1074,6 @@ bool TreeAln::isRootChild(const nat nodeId) const
 
 bool TreeAln::isRootBranch(const BranchPlain &rb) const
 {
-	return (rb == _root);
+	return (rb == _root || rb == _root.getInverted());
 }
 

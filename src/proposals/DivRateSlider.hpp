@@ -22,16 +22,12 @@ public:
   virtual void writeToCheckpointCore(std::ostream &out)const   ;  
   virtual void readFromCheckpointCore(std::istream &in) ; 
 
+  DivRateSlider();
+  virtual ~DivRateSlider();
 
-
-public:
-  DivRateSlider()
-    : AbstractProposal(Category::DIVERGENCE_TIMES, "divRateSlider", 10 , 1e-5, 1e2, false)
-  {}
-
+protected:
+  ParameterContent _savedContent;
   
-
-  virtual ~DivRateSlider(){}
 };
 
 

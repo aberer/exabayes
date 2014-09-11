@@ -25,10 +25,7 @@ public:
   }
   
 
-  virtual AbstractParameter* clone() const  
-  {
-    return new DivergenceRates(*this); 
-  } 
+  virtual AbstractParameter* clone() const;
 
   virtual log_double getPriorValue(const TreeAln& traln) const; 
 

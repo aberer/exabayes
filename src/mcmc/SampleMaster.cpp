@@ -496,6 +496,7 @@ void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractPara
 
 	auto rootNodeAge = NodeAge();
 	rootNodeAge.setHeight(maxHeight);
+	auto rootContent = ParameterContent();
 
 	for (auto b : nodeAges)
 	{
@@ -503,7 +504,7 @@ void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractPara
 		{
 			auto divtime =
 					static_cast<DivergenceTimes *>(divTimes[b->getPrimNode()
-							- traln.getNumberOfTaxa()]);
+							- traln.getNumberOfTaxa() - 1]);
 			auto content = ParameterContent();
 
 			/* adding both current and parental branches */
@@ -511,6 +512,7 @@ void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractPara
 			if (traln.isRootChild(b->getPrimNode()))
 			{
 				content.nodeAges.push_back(rootNodeAge);
+				rootContent.nodeAges.push_back(*b);
 			}
 			else
 			{
@@ -520,10 +522,9 @@ void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractPara
 		}
 	}
 
-	auto content = ParameterContent();
 	auto divtime = static_cast<DivergenceTimes *>(divTimes[divTimes.size()-1]);
-	content.nodeAges.push_back(rootNodeAge);
-	divtime->initializeParameter(traln, content, true);
+	rootContent.nodeAges.push_back(rootNodeAge);
+	divtime->initializeParameter(traln, rootContent, true);
 
 	for (nat i = 0; i < traln.getNumberOfNodes(); i++)
 	{

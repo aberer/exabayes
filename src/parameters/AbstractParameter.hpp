@@ -69,7 +69,7 @@ public:
   AbstractPrior* getPrior() const { return _prior.get(); }
   bool isPrintToParamFile() const {return _printToParamFile; }
 
-  std::ostream&  printShort(std::ostream& out) const;  
+  virtual std::ostream&  printShort(std::ostream& out) const;
   friend std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs); 
   virtual AbstractParameter* clone() const = 0 ; 
 

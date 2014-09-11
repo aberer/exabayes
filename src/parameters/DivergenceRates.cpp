@@ -14,12 +14,43 @@ DivergenceRates::DivergenceRates(nat id, nat idOfMyKind,
 	for (int i = 0; i < _rateAssignments.size(); i++)
 	{
 		_rateAssignments[i] = i;
+		_rates[i] = 1;
 	}
+}
+
+AbstractParameter* DivergenceRates::clone() const
+{
+	DivergenceRates * ndr = new DivergenceRates(*this);
+	ndr->setRates(_rates);
+	return ndr;
 }
 
 void DivergenceRates::applyParameter(TreeAln& traln,
 		const ParameterContent &content)
 {
+	assert(content.values.size() == _rates.size());
+	for (int i = 0; i < content.values.size(); i++)
+	{
+		if (content.nodeAges.size() == _rates.size())
+		{
+			std::cout << " RATEDBG " << content.values[i] << " " << content.nodeAges[i] << std::endl;
+		}
+		if (content.values[i] != _rates[i])
+		{
+			/* rate update */
+			if (!traln.isRootBranch(i))
+			{
+				/* root branch */
+			}
+			else
+			{
+				/* TODO-divtimes We need to know which branch is pointing to the root! */
+				//traln.getBranchesFromNode(i)
+				//_rates[i] = content.values[i];
+			}
+			_rates[i] = content.values[i];
+		}
+	}
 }
 
 ParameterContent DivergenceRates::extractParameter(const TreeAln &traln) const
@@ -62,7 +93,8 @@ void DivergenceRates::printAllComponentNames(std::ostream &fileHandle,
 void DivergenceRates::verifyContent(const TreeAln &traln,
 		const ParameterContent &content) const
 {
-
+//	assert(content.values.size() == traln.getNumberOfNodes());
+	assert(content.values.size() == _rates.size());
 }
 
 log_double DivergenceRates::getPriorValue(const TreeAln& traln) const

@@ -19,14 +19,17 @@ public:				// INHERITED
   virtual void writeToCheckpointCore(std::ostream &out)const   ;  
   virtual void readFromCheckpointCore(std::istream &in) ; 
 
-public:
-  DivTimeSlider()
-    : AbstractProposal(Category::DIVERGENCE_TIMES, "divTimeSlider", 10 , 1e-5, 1e2, false)
-  {
-  }
-
+  DivTimeSlider();
   virtual ~DivTimeSlider(){}
 
+protected:
+  NodeAge getNodeAge(TreeAln & traln, BranchPlain & bp) const;
+  NodeAge getNodeAge(TreeAln & traln, nat primaryNode) const;
+  ParameterContent _savedContent;
+//  NodeAge _savedAge;
+//  double _savedTime;
+//  double _savedBranchLength;
+//  std::pair<double, double> _savedChildrenBranchLength;
 };
 
 
