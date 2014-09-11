@@ -23,6 +23,8 @@ public:				// INHERITED
   virtual ~DivTimeSlider(){}
 
 protected:
+  double getNewProposal(double height, double oldHeight, double youngHeight, Randomness &rand);
+
   NodeAge getNodeAge(TreeAln & traln, BranchPlain & bp) const;
   NodeAge getNodeAge(TreeAln & traln, nat primaryNode) const;
   ParameterContent _savedContent;

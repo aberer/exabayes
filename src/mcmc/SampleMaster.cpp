@@ -28,7 +28,10 @@
 #include "FullCachePolicy.hpp"
 #include "NoCachePolicy.hpp"
 
+#include "NodeAge.hpp"
+
 #include "DivergenceTimes.hpp"
+#include "DivergenceRates.hpp"
 
 #include "PhylipParser.hpp"
 
@@ -378,16 +381,17 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 		}
 	    }
 
-	  auto&& prior = param->getPrior(); 
-	  auto content = prior->getInitialValue();
+		if (cat != Category::DIVERGENCE_RATES)
+		{
+			auto&& prior = param->getPrior();
+			auto content = prior->getInitialValue();
 
-	  // TODO specific function for setting initially 
+			// TODO specific function for setting initially
+			param->verifyContent(traln, content);
+			// tout << "APPL " << content << endl;
 
-	  param->verifyContent(traln, content); 
-
-	  // tout << "APPL " << content << endl; 
-
-	  param->applyParameter(traln, content); 
+			param->applyParameter(traln, content);
+	    }
 	}
     }
 
@@ -468,8 +472,6 @@ void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractPara
 	assert(divRates.size() == 1 );
 	/* initialize the rates */
 
-  auto divRate = divRates[0]; 
-
   vector<NodeAge *> nodeAges(traln.getNumberOfNodes());
   for (nat i = 0; i < traln.getNumberOfNodes(); i++)
   {
@@ -526,10 +528,15 @@ void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractPara
 	rootContent.nodeAges.push_back(rootNodeAge);
 	divtime->initializeParameter(traln, rootContent, true);
 
+	auto ratesContent = ParameterContent();
 	for (nat i = 0; i < traln.getNumberOfNodes(); i++)
 	{
+		ratesContent.branchLengths.push_back(BranchLength(*nodeAges[i],InternalBranchLength(0.0)));
 		delete nodeAges[i];
 	}
+
+	auto divrate = static_cast<DivergenceRates *>(divRates[0]);
+	divrate->initializeParameter(traln, ratesContent);
 }
 
 

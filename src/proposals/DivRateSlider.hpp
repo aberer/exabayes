@@ -26,6 +26,9 @@ public:
   virtual ~DivRateSlider();
 
 protected:
+
+  double getNewProposal(double oldRate, Randomness &rand);
+
   ParameterContent _savedContent;
   
 };

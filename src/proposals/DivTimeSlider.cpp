@@ -6,7 +6,7 @@ DivTimeSlider::DivTimeSlider() :
 {
 }
 
-double getNewProposal(double height, double oldHeight, double youngHeight,
+double DivTimeSlider::getNewProposal(double height, double oldHeight, double youngHeight,
 		Randomness &rand)
 {
 	/* find the range for the slider */
