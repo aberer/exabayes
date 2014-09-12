@@ -6,7 +6,8 @@ DivergenceRates::DivergenceRates(nat id, nat idOfMyKind,
 		std::vector<nat> partitions, nat numberOfTaxa) :
 		AbstractParameter(Category::DIVERGENCE_RATES, id, idOfMyKind,
 				partitions, 0), _rateAssignments(2 * numberOfTaxa - 2, 0), _rates(
-				2 * numberOfTaxa - 2, 1.), _directedBranches(2 * numberOfTaxa - 2)
+				2 * numberOfTaxa - 2, 1.), _directedBranches(
+				2 * numberOfTaxa - 2)
 {
 	/*
 	 * we initialize as many different rate categories as branches in the tree, all to 1.0
@@ -22,7 +23,7 @@ void DivergenceRates::initializeParameter(TreeAln& traln,
 		const ParameterContent &content)
 {
 	assert(content.branchLengths.size() == traln.getNumberOfNodes());
-	for (int i=0; i<traln.getNumberOfNodes();i++)
+	for (int i = 0; i < traln.getNumberOfNodes(); i++)
 	{
 		_directedBranches[i] = content.branchLengths[i];
 	}
@@ -38,33 +39,55 @@ AbstractParameter* DivergenceRates::clone() const
 	return ndr;
 }
 
+nat vmax(std::vector<nat> & v)
+{
+	return *std::max_element(v.begin(), v.end());
+}
+
 void DivergenceRates::applyParameter(TreeAln& traln,
 		const ParameterContent &content)
 {
 	verifyContent(traln, content);
 
-	for (int i = 0; i < _rates.size(); i++)
+	if (content.rateAssignments != _rateAssignments)
 	{
-		if (content.values[i] != _rates[i])
+		/* modification in the assignments */
+assert(0);
+		/* update assignments */
+		_rateAssignments = content.rateAssignments;
+		//_rates.resize(_ra)
+	}
+	else
+	{
+		/* modification in the rates */
+		for (int i = 0; i < _rates.size(); i++)
 		{
-			_rates[i] = content.values[i];
-			traln.setBranch(content.branchLengths[i], this);
+			if (content.values[i] != _rates[i])
+			{
+				_rates[i] = content.values[i];
+				for (int j = 0; j < _rateAssignments.size(); j++)
+				{
+					if (_rateAssignments[j] == i)
+					{
+						traln.setBranch(content.branchLengths[j], this);
+					}
+				}
+			}
 		}
 	}
-
 }
 
 ParameterContent DivergenceRates::extractParameter(const TreeAln &traln) const
 {
 	auto content = ParameterContent();
 	content.values = _rates;
-
-	for (int i=0; i<_rates.size(); i++)
+	content.rateAssignments = _rateAssignments;
+	for (int i = 0; i < _rates.size(); i++)
 	{
-		content.values.push_back(1.0 * _rateAssignments[i]);
 		content.branchLengths.push_back(
-					traln.getBranch(_directedBranches[i], this));
+				traln.getBranch(_directedBranches[i], this));
 	}
+	verifyContent(traln, content);
 	return content;
 }
 
@@ -103,20 +126,23 @@ void DivergenceRates::verifyContent(const TreeAln &traln,
 {
 	/*
 	 * content must have
-     * 1) rateValues (double) for every node
-	 * 2) rateAssignments (nat) for every node
+	 * 1) rateAssignments (nat) for every node
+	 * 2) branch lengths (BranchLength) for every node
+	 * 3) rateValues (double) for every rateAssignment
 	 */
-	assert(content.values.size() == 2*_rates.size());
+	assert(content.values.size() > 0);
+	assert(content.rateAssignments.size() == traln.getNumberOfNodes());
 	assert(content.branchLengths.size() == _directedBranches.size());
-	for (int i=0;i<_directedBranches.size(); i++)
+	for (int i = 0; i < _directedBranches.size(); i++)
 	{
 		assert(content.branchLengths[i] == _directedBranches[i]);
 	}
-	for (int i=_rates.size(); i<2*_rates.size(); i++)
-	{
-		double intpart;
-		assert(modf(content.values[i], &intpart) == 0.0);
-	}
+
+	/* root branch has the same value for both nodes */
+//	auto rb = traln.getRootBranch();
+//	assert(
+//			content.branchLengths[rb.getPrimNode() - 1]
+//					== content.branchLengths[rb.getSecNode() - 1]);
 }
 
 log_double DivergenceRates::getPriorValue(const TreeAln& traln) const

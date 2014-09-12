@@ -21,7 +21,8 @@ public:
 		   std::vector<BranchPlain> topoI = std::vector<BranchPlain>{}, 
 		   std::vector<BranchLength> blI = std::vector<BranchLength>{}, 
 		   std::vector<ProtModel>  pmI = std::vector<ProtModel>{}, 
-		   std::vector<NodeAge> nI = std::vector<NodeAge>{}
+		   std::vector<NodeAge> nI = std::vector<NodeAge>{},
+		   std::vector<nat> rA = std::vector<nat>{}
 		   ) ; 
   virtual ~ParameterContent(){}
 
@@ -31,6 +32,7 @@ public:   			// public stuff that should be private
   std::vector<BranchLength> branchLengths; 
   std::vector<ProtModel> protModel; 
   std::vector<NodeAge> nodeAges; 
+  std::vector<nat> rateAssignments;
   
   virtual void deserialize( std::istream &in )  ; 
   virtual void serialize( std::ostream &out)  const;   

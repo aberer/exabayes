@@ -35,7 +35,7 @@ public:
 	virtual log_double getPriorValue(const TreeAln& traln) const;
 
 protected:
-	std::vector<int> _rateAssignments;
+	std::vector<nat> _rateAssignments;
 	std::vector<double> _rates;
 	std::vector<BranchPlain> _directedBranches;
 };

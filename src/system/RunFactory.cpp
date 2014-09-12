@@ -313,14 +313,16 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterLi
 
   if(doingDivRates)
     {
-      // the rates actually do not really need the divergence times as secondary paramters, correct? 
-
-      // as we said yesterday, they can be proposed independently of the times 
-
-      // things would get really cluttered...but if you want, just add the *all* divergnece times parameters here, if you need them in the divtimes e
-
-      // auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
-      // proposal->addSecondaryParameter((*tp)->getId()); 
+//      auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; });
+//      proposal->addSecondaryParameter((*tp)->getId());
+      for(auto &p : allParameters)
+	{
+	  if(p->getCategory() == Category::DIVERGENCE_TIMES)
+	    {
+	      // now add all *other* div time parameters as secondary parameters
+	      proposal->addSecondaryParameter(p->getId());
+	    }
+	}
     }
   else if(doingDivTimes)
     {

@@ -27,6 +27,17 @@ public:
 
 protected:
 
+  enum ProposalMode {
+		  PROP_MODE_CATEGORIES,
+		  PROP_MODE_RATES
+  };
+
+  enum AssignmentsOperation {
+		  ASSING_OP_MERGE,  /* merge 2 categories */
+		  ASSING_OP_SPLIT,  /* split 1 category in 2 or several */
+		  ASSING_OP_MOVE    /* move an item from one category to another */
+  };
+
   double getNewProposal(double oldRate, Randomness &rand);
 
   ParameterContent _savedContent;
