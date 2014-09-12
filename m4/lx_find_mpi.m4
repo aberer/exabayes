@@ -145,7 +145,14 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
                  if [[ "$?" -eq 0 ]]; then
                      echo yes
                  else
-                     echo no
+                     echo no	
+		     echo -n "Checking whether $$1 is a Cray MPI wrapper and responds to '-craype-verbose'... "
+		     lx_mpi_command_line=`$$1 -craype-verbose 2>/dev/null`
+ 		     if [[ "$?" -eq 0 ]]; then 
+		     	echo yes 
+ 		     else 	 
+		        echo no 
+  		     fi 
                  fi
              fi
          else
