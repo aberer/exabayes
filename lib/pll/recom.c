@@ -141,7 +141,7 @@ void allocRecompVectorsInfo(pllInstance *tr)
   num_vectors = (int) (1 + tr->vectorRecomFraction * (float)num_inner_nodes); 
 
   int theoretical_minimum_of_vectors = 3 + ((int)(log((double)tr->mxtips)/log(2.0)));
-  printBothOpen("Try to use %d ancestral vectors, min required %d\n", num_vectors, theoretical_minimum_of_vectors);
+  //printBothOpen("Try to use %d ancestral vectors, min required %d\n", num_vectors, theoretical_minimum_of_vectors);
 
   assert(num_vectors >= theoretical_minimum_of_vectors);
   assert(num_vectors < tr->mxtips);
@@ -640,7 +640,7 @@ void countTraversal(pllInstance *tr)
 }
 
 
-
+/*
 void printTraversalInfo(pllInstance *tr)
 {
   int 
@@ -653,7 +653,7 @@ void printTraversalInfo(pllInstance *tr)
   printBothOpen("Traversals ii: %d \n", tr->travCounter->ii);
   printBothOpen("all: %d \n", tr->travCounter->tt + tr->travCounter->ii + tr->travCounter->ti);
   printBothOpen("Traversals len freq  : \n");
-
+  
   for(k = 0; k < tr->mxtips; k++)
   {
     total_steps += tr->travCounter->travlenFreq[k] * (k - 1);
@@ -662,7 +662,7 @@ void printTraversalInfo(pllInstance *tr)
   }
   printBothOpen("all steps: %d \n", total_steps);
 }
-
+*/
 /*end code to track traversal descriptor stats */
 /* E recomp */
 

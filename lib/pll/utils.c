@@ -73,6 +73,74 @@
 
 #include "globalVariables.h"
 
+extern int PLL_NUM_BRANCHES; 
+
+/* mappings of BIN/DNA/AA alphabet to numbers */
+
+static const char PLL_MAP_BIN[256] =
+ {
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, -1,
+    1,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+  };
+
+static const char PLL_MAP_NT[256] =
+ {
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15,
+   -1,  1, 14,  2, 13, -1, -1,  4, 11, -1, -1, 12, -1,  3, 15, 15,
+   -1, -1,  5,  6,  8,  8,  7,  9, 15, 10, -1, -1, -1, -1, -1, -1,
+   -1,  1, 14,  2, 13, -1, -1,  4, 11, -1, -1, 12, -1,  3, 15, 15,
+   -1, -1,  5,  6,  8,  8,  7,  9, 15, 10, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+ };
+
+static const char PLL_MAP_AA[256] =
+ {
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 22, -1, -1, 22, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 22,
+   -1,  0, 20,  4,  3,  6, 13,  7,  8,  9, -1, 11, 10, 12,  2, -1,
+   14,  5,  1, 15, 16, -1, 19, 17, 22, 18, 21, -1, -1, -1, -1, -1,
+   -1,  0, 20,  4,  3,  6, 13,  7,  8,  9, -1, 11, 10, 12,  2, -1,
+   14,  5,  1, 15, 16, -1, 19, 17, 22, 18, 21, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+ };
+
+
+
+
+
 static void pllTreeInitDefaults (pllInstance * tr, int tips);
 static void getInnerBranchEndPointsRecursive (nodeptr p, int tips, int * i, node **nodes);
 #if (!defined(_FINE_GRAIN_MPI) && !defined(_USE_PTHREADS))
@@ -144,31 +212,6 @@ void storeValuesInTraversalDescriptor(pllInstance *tr, partitionList *pr, double
   for(model = 0; model < pr->numberOfPartitions; model++)
     tr->td[0].parameterValues[model] = value[model];
 }
-
-void printBothOpen(const char* format, ... )
-{
-  FILE *f = myfopen(infoFileName, "ab");
-
-  va_list args;
-  va_start(args, format);
-  vfprintf(f, format, args );
-  va_end(args);
-
-  va_start(args, format);
-  vprintf(format, args );
-  va_end(args);
-
-  fclose(f);
-}
-
-/* Marked for deletion 
-boolean getSmoothFreqs(int dataType)
-{
-  assert(PLL_MIN_MODEL < dataType && dataType < PLL_MAX_MODEL);
-
-  return pLengths[dataType].smoothFrequencies;
-}
-*/
 
 const unsigned int *getBitVector(int dataType)
 {
@@ -293,60 +336,6 @@ double randum (long  *seed)
 
   return res;
 }
-
-/* Marked for deletion 
-static int filexists(char *filename)
-{
-  FILE 
-    *fp = fopen(filename,"rb");
-
-  int res; 
-
-  if(fp)
-  {
-    res = 1;
-    fclose(fp);
-  }
-  else
-    res = 0;
-
-  return res;
-}
-*/
-
-
-FILE *myfopen(const char *path, const char *mode)
-{
-  FILE *fp = fopen(path, mode);
-
-  if(strcmp(mode,"r") == 0 || strcmp(mode,"rb") == 0)
-  {
-    if(fp)
-      return fp;
-    else
-    {	  
-      printf("\n Error: the file %s you want to open for reading does not exist, exiting ...\n\n", path);
-      exit(-1);
-      return (FILE *)NULL;
-    }
-  }
-  else
-  {
-    if(fp)
-      return fp;
-    else
-    {	 
-      printf("\n Error: the file %s you want to open for writing or appending can not be opened [mode: %s], exiting ...\n\n",
-          path, mode);
-      exit(-1);
-      return (FILE *)NULL;
-    }
-  }
-
-
-}
-
-
 
 
 /********************* END UTILITY FUNCTIONS ********************/
@@ -641,6 +630,18 @@ void initializePartitionData(pllInstance *localTree, partitionList * localPartit
 
       localPartitions->partitionData[model]->xVector = (double **)rax_calloc(sizeof(double*), (size_t)localTree->mxtips);
 
+      if (localPartitions->partitionData[model]->ascBias)
+       {
+         localPartitions->partitionData[model]->ascOffset    = 4 * localPartitions->partitionData[model]->states * localPartitions->partitionData[model]->states;
+         localPartitions->partitionData[model]->ascVector    = (double *)rax_malloc(innerNodes * 
+                                                                                    localPartitions->partitionData[model]->ascOffset * 
+                                                                                    sizeof(double));
+         localPartitions->partitionData[model]->ascExpVector = (int *)rax_calloc(innerNodes *
+                                                                                 localPartitions->partitionData[model]->states,
+                                                                                 sizeof(int));
+         localPartitions->partitionData[model]->ascSumBuffer = (double *)rax_malloc(localPartitions->partitionData[model]->ascOffset * sizeof(double)); 
+       }
+
 
       /* 
 	 Initializing the xVector array like this is absolutely required !!!!
@@ -908,7 +909,7 @@ static void initializePartitionsSequential(pllInstance *tr, partitionList *pr)
 //#endif
 //}
 
-static void freeLinkageList( linkageList* ll)
+void freeLinkageList( linkageList* ll)
 {
   int i;    
 
@@ -1046,6 +1047,7 @@ pllPartitionsValidate (pllQueue * parts, pllAlignmentData * alignmentData)
 
   /* boolean array for marking that a site was assigned a partition */
   used = (char *) rax_calloc (alignmentData->sequenceLength, sizeof (char));
+  /* printf ("Sequence length : %d\n", alignmentData->sequenceLength); */
 
   /* traverse all partitions and their respective regions and mark sites */
   for (elm = parts->head; elm; elm = elm->next)
@@ -1055,6 +1057,12 @@ pllPartitionsValidate (pllQueue * parts, pllAlignmentData * alignmentData)
      for (regionItem = pi->regionList->head; regionItem; regionItem = regionItem->next)
       {
         region = (pllPartitionRegion *) regionItem->item;
+
+        if (region->start < 1 || region->end > alignmentData->sequenceLength) 
+         {
+           rax_free (used);
+           return (0);
+         }
 
         for (i = region->start - 1; i < region->end; i += region->stride)
          {
@@ -1118,25 +1126,21 @@ swapSite (unsigned char ** buf, int s1, int s2, int nTaxa)
     the partition scheme \b AFTER the sites have been repositioned in contiguous
     regions according to the partition scheme.
 
-    @param bounds
-      An array of the new starting and ending posititons of sites in the alignment for each partition.
-      This array is of size 2 * \a nparts. The elements are always couples (lower,upper). The upper
-      bounds is a site that is not included in the partition
+    @param bounds  An array of the new starting and ending posititons of sites
+    in the alignment for each partition.  This array is of size 2 * \a nparts.
+    The elements are always couples (lower,upper). The upper bounds is a site
+    that is not included in the partition
 
-    @todo
-      Fix the bug in PLL 
-
-    @param nparts
-      The number of partitions to be created
+    @param nparts The number of partitions to be created
       
+    @todo Fix the bug in PLL 
 */
-static partitionList *
-createPartitions (pllQueue * parts, int * bounds)
+static partitionList * createPartitions (pllQueue * parts, int * bounds)
 {
   partitionList * pl;
   pllPartitionInfo * pi;
   struct pllQueueItem * elm;
-  int i;
+  int i, j;
 
   pl = (partitionList *) rax_malloc (sizeof (partitionList));
   
@@ -1149,6 +1153,21 @@ createPartitions (pllQueue * parts, int * bounds)
   for (i = 0, elm = parts->head; elm; elm = elm->next, ++ i)
    {
      pi = (pllPartitionInfo *) elm->item;
+
+     /* check whether the data type is valid, and in case it's not, deallocate
+        and return NULL */
+     if (pi->dataType <= PLL_MIN_MODEL || pi->dataType >= PLL_MAX_MODEL)
+      {
+        for (j = 0; j < i; ++ j)
+         {
+           rax_free (pl->partitionData[j]->partitionName);
+           rax_free (pl->partitionData[j]);
+         }
+        rax_free (pl->partitionData);
+        rax_free (pl);
+        return (NULL);
+      }
+
      pl->partitionData[i] = (pInfo *) rax_malloc (sizeof (pInfo));
 
      pl->partitionData[i]->lower = bounds[i << 1];
@@ -1164,25 +1183,22 @@ createPartitions (pllQueue * parts, int * bounds)
      
      pl->partitionData[i]->optimizeAlphaParameter    = PLL_TRUE;
      pl->partitionData[i]->optimizeSubstitutionRates = PLL_TRUE;
-
-     if (pi->dataType == PLL_DNA_DATA)
-      {
+     pl->partitionData[i]->dataType                  = pi->dataType;
         pl->partitionData[i]->protModels                = -1;
         pl->partitionData[i]->protUseEmpiricalFreqs                 = -1;
-        pl->partitionData[i]->dataType                  = PLL_DNA_DATA;
-        pl->partitionData[i]->maxTipStates              = 16;
+     pl->partitionData[i]->maxTipStates              = pLengths[pi->dataType].undetermined + 1;
         pl->partitionData[i]->optimizeBaseFrequencies   = pi->optimizeBaseFrequencies;
-      }
-     else /* PLL_AA_DATA */
+     pl->partitionData[i]->ascBias                   = pi->ascBias;
+     pl->partitionData[i]->parsVect                  = NULL;
+
+
+
+     if (pi->dataType == PLL_AA_DATA)
       {
-        pl->partitionData[i]->dataType                  = PLL_AA_DATA; 
-        pl->partitionData[i]->protModels                = pi->protModels;
 	if(pl->partitionData[i]->protModels != PLL_GTR)
 	  pl->partitionData[i]->optimizeSubstitutionRates = PLL_FALSE;
-        pl->partitionData[i]->maxTipStates              = 23;
         pl->partitionData[i]->protUseEmpiricalFreqs                 = pi->protUseEmpiricalFreqs;
         pl->partitionData[i]->protModels                = pi->protModels;
-        pl->partitionData[i]->optimizeBaseFrequencies   = pi->optimizeBaseFrequencies;
       }
      
      pl->partitionData[i]->states                = pLengths[pl->partitionData[i]->dataType].states;
@@ -1253,7 +1269,7 @@ partitionList * pllPartitionsCommit (pllQueue * parts, pllAlignmentData * alignm
       {
         region = (pllPartitionRegion *) regionItem->item;
 
-        for (i = region->start - 1; i < region->end; i += region->stride)
+        for (i = region->start - 1; i < region->end && i < alignmentData->sequenceLength; i += region->stride)
          {
            if (oi[i] == i)
             {
@@ -1276,9 +1292,11 @@ partitionList * pllPartitionsCommit (pllQueue * parts, pllAlignmentData * alignm
       }
      newBounds[(k << 1) + 1] = dst;    /* set the uppwer limit for this partition */
    }
-  pl = createPartitions (parts, newBounds);
+  if ((pl = createPartitions (parts, newBounds)))
+   { 
   pl->numberOfPartitions = nparts;
   pl->dirty = PLL_FALSE;
+   }
   
   rax_free (newBounds);
   rax_free (oi);
@@ -1453,8 +1471,11 @@ pllAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * pl)
     @param pfreqs
       Array of size \a partition->states where the empirical frequencies for this partition are stored
 */
-static void
-genericBaseFrequencies (pInfo * partition, pllAlignmentData * alignmentData, boolean smoothFrequencies, const unsigned int * bitMask, double * pfreqs)
+static int genericBaseFrequenciesAlignment (pInfo * partition, 
+                                              pllAlignmentData * alignmentData, 
+                                              boolean smoothFrequencies, 
+                                              const unsigned int * bitMask, 
+                                              double * pfreqs)
 {
   double 
     wj, 
@@ -1472,6 +1493,21 @@ genericBaseFrequencies (pInfo * partition, pllAlignmentData * alignmentData, boo
     upper;
 
   unsigned char  *yptr;  
+  const char * map;
+  
+  switch (partition->dataType)
+   {
+     case PLL_BINARY_DATA:
+       map = PLL_MAP_BIN;
+     case PLL_DNA_DATA:
+       map = PLL_MAP_NT;
+       break;
+     case PLL_AA_DATA:
+       map = PLL_MAP_AA;
+       break;
+     default:
+       assert(0);
+   }
 
   numFreqs = partition->states;
   lower    = partition->lower;
@@ -1491,7 +1527,8 @@ genericBaseFrequencies (pInfo * partition, pllAlignmentData * alignmentData, boo
 	  
 	  for(j = lower; j < upper; j++) 
 	    {
-	      unsigned int code = bitMask[yptr[j]];
+              if (map[yptr[j]] < 0) return (0);
+              unsigned int code = bitMask[(unsigned char)map[yptr[j]]];
 	      assert(code >= 1);
 	      
 	      for(l = 0; l < numFreqs; l++)
@@ -1564,12 +1601,138 @@ genericBaseFrequencies (pInfo * partition, pllAlignmentData * alignmentData, boo
 	}     
     }  
 */
+  return (1);
+  
+}
+
+static void  genericBaseFrequenciesInstance (pInfo * partition, 
+                                             pllInstance * tr, 
+                                             boolean smoothFrequencies, 
+                                             const unsigned int * bitMask, 
+                                             double * pfreqs)
+{
+  double 
+    wj, 
+    acc,
+    sumf[64],   
+    temp[64];
+ 
+  int     
+    i, 
+    j, 
+    k, 
+    l,
+    numFreqs,
+    lower,
+    upper;
+
+  unsigned char  *yptr;  
+
+  numFreqs = partition->states;
+  lower    = partition->lower;
+  upper    = partition->upper;
+
+  for(l = 0; l < numFreqs; l++)     
+    pfreqs[l] = 1.0 / ((double)numFreqs);
+          
+  for (k = 1; k <= 8; k++) 
+    {                                                   
+      for(l = 0; l < numFreqs; l++)
+        sumf[l] = 0.0;
+              
+      for (i = 1; i <= tr->mxtips; i++) 
+        {                
+          yptr = tr->yVector[i];
+          
+          for(j = lower; j < upper; j++) 
+            {
+              unsigned int code = bitMask[yptr[j]];
+              assert(code >= 1);
+              
+              for(l = 0; l < numFreqs; l++)
+                {
+                  if((code >> l) & 1)
+                    temp[l] = pfreqs[l];
+                  else
+                    temp[l] = 0.0;
+                }                             
+              
+              for(l = 0, acc = 0.0; l < numFreqs; l++)
+                {
+                  if(temp[l] != 0.0)
+                    acc += temp[l];
+                }
+              
+              wj = tr->aliaswgt[j] / acc;
+              
+              for(l = 0; l < numFreqs; l++)
+                {
+                  if(temp[l] != 0.0)                
+                    sumf[l] += wj * temp[l];                                                                                               
+                }
+            }
+        }                     
+      
+      for(l = 0, acc = 0.0; l < numFreqs; l++)
+        {
+          if(sumf[l] != 0.0)
+            acc += sumf[l];
+        }
+              
+      for(l = 0; l < numFreqs; l++)
+        pfreqs[l] = sumf[l] / acc;           
+    }
+
+   /* TODO: What is that? */
+/*
+  if(smoothFrequencies)         
+   {;
+    smoothFreqs(numFreqs, pfreqs,  tr->partitionData[model].frequencies, &(tr->partitionData[model]));     
+   }
+  else    
+    {
+      boolean 
+        zeroFreq = PLL_FALSE;
+
+      char 
+        typeOfData[1024];
+
+      getDataTypeString(tr, model, typeOfData);  
+
+      for(l = 0; l < numFreqs; l++)
+        {
+          if(pfreqs[l] == 0.0)
+            {
+              printBothOpen("Empirical base frequency for state number %d is equal to zero in %s data partition %s\n", l, typeOfData, tr->partitionData[model].partitionName);
+              printBothOpen("Since this is probably not what you want to do, RAxML will soon exit.\n\n");
+              zeroFreq = PLL_TRUE;
+            }
+        }
+
+      if(zeroFreq)
+        exit(-1);
+
+      for(l = 0; l < numFreqs; l++)
+        {
+          assert(pfreqs[l] > 0.0);
+          tr->partitionData[model].frequencies[l] = pfreqs[l];
+        }     
+    }  
+*/
 
   
 }
 
-double **
-pllBaseFrequenciesGTR (partitionList * pl, pllAlignmentData * alignmentData)
+/**  Compute the empirical base frequencies of an alignment
+
+     Computes the empirical base frequencies per partition of an alignment \a alignmentData
+     given the partition structure \a pl.
+
+     @param alignmentData The alignment structure for which to compute the empirical base frequencies
+     @param pl            List of partitions
+     @return Returns a list of frequencies for each partition
+*/
+double ** pllBaseFrequenciesAlignment (pllAlignmentData * alignmentData, partitionList * pl)
 {
   int
     i,
@@ -1584,13 +1747,62 @@ pllBaseFrequenciesGTR (partitionList * pl, pllAlignmentData * alignmentData)
       
       switch  (pl->partitionData[model]->dataType)
 	{
+        case PLL_BINARY_DATA:
         case PLL_AA_DATA:
         case PLL_DNA_DATA:
-          genericBaseFrequencies (pl->partitionData[model], 
+          if (!genericBaseFrequenciesAlignment (pl->partitionData[model], 
                                   alignmentData, 
                                   pLengths[pl->partitionData[model]->dataType].smoothFrequencies,
                                   pLengths[pl->partitionData[model]->dataType].bitVector,
                                   freqs[model]
+                                               ))
+            return (NULL);
+          break;
+        default:
+          {
+            errno = PLL_UNKNOWN_MOLECULAR_DATA_TYPE;
+            for (i = 0; i <= model; ++ i) rax_free (freqs[i]);
+            rax_free (freqs);
+            return (double **)NULL;
+          }
+        }
+    }
+  
+  return (freqs);
+}
+
+/**  Compute the empirical base frequencies of the alignment incorporated in the instance
+
+     Computes the empirical base frequencies per partition of the alignment
+     incorporated in the instance \a tr given the partition structure \a pl.
+
+     @param tr The instance for which to compute the empirical base frequencies
+     @param pl List of partitions
+     @return Returns a list of frequencies for each partition
+*/
+double ** pllBaseFrequenciesInstance (pllInstance * tr, partitionList * pl)
+{
+  int
+    i,
+    model;
+
+  double 
+    **freqs = (double **) rax_malloc (pl->numberOfPartitions * sizeof (double *));
+
+  for (model = 0; model < pl->numberOfPartitions; ++ model)
+    {
+      freqs[model] = (double *) rax_malloc (pl->partitionData[model]->states * sizeof (double));
+      
+      switch  (pl->partitionData[model]->dataType)
+        {
+        case PLL_AA_DATA:
+        case PLL_DNA_DATA:
+        case PLL_BINARY_DATA:
+          genericBaseFrequenciesInstance (pl->partitionData[model], 
+                                          tr, 
+                                          pLengths[pl->partitionData[model]->dataType].smoothFrequencies,
+                                          pLengths[pl->partitionData[model]->dataType].bitVector,
+                                          freqs[model]
 				  );
           break;
 	default:
@@ -1620,17 +1832,13 @@ pllEmpiricalFrequenciesDestroy (double *** empiricalFrequencies, int models)
   *empiricalFrequencies = NULL;
 }
 
-int
-pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partitionList * partitions, int bDeep)
+int pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partitionList * partitions)
 {
   int i;
   nodeptr node;
-  struct pllHashItem * hItem;
+  pllHashItem * hItem;
 
   if (tr->mxtips != alignmentData->sequenceCount) return (0);
-
-  /* Do the base substitution (from A,C,G....  ->   0,1,2,3....)*/
-  pllBaseSubstitute (alignmentData, partitions);
 
   tr->aliaswgt = (int *) rax_malloc (alignmentData->sequenceLength * sizeof (int));
   memcpy (tr->aliaswgt, alignmentData->siteWeights, alignmentData->sequenceLength * sizeof (int));
@@ -1643,17 +1851,13 @@ pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partitionL
 
   /* allocate memory for the alignment */
   tr->yVector    = (unsigned char **) rax_malloc ((alignmentData->sequenceCount + 1) * sizeof (unsigned char *));                                                                                                                                                                      
-  tr->bDeep = bDeep;
 
-  if (bDeep == PLL_DEEP_COPY)
-   {
      tr->yVector[0] = (unsigned char *)  rax_malloc (sizeof (unsigned char) * (alignmentData->sequenceLength + 1) * alignmentData->sequenceCount);
      for (i = 1; i <= alignmentData->sequenceCount; ++ i) 
       {                     
         tr->yVector[i] = (unsigned char *) (tr->yVector[0] + (i - 1) * (alignmentData->sequenceLength + 1) * sizeof (unsigned char));
         tr->yVector[i][alignmentData->sequenceLength] = 0;
       }                     
-   }
                          
   /* place sequences to tips */                              
   for (i = 1; i <= alignmentData->sequenceCount; ++ i)                      
@@ -1665,14 +1869,26 @@ pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partitionL
         rax_free (tr->patrat);
         rax_free (tr->patratStored);
         rax_free (tr->lhs);
-        if (bDeep == PLL_DEEP_COPY) rax_free (tr->yVector[0]);
+        rax_free (tr->yVector[0]);
         rax_free (tr->yVector);
         return (0);
       }
-     if (bDeep == PLL_DEEP_COPY)
-       memcpy (tr->yVector[node->number], alignmentData->sequenceData[i], alignmentData->sequenceLength );
-     else
-       tr->yVector[node->number] = alignmentData->sequenceData[i];
+     memcpy (tr->yVector[node->number], alignmentData->sequenceData[i], alignmentData->sequenceLength);
+   }
+
+  /* Do the base substitution (from A,C,G....  ->   0,1,2,3....)*/
+  pllBaseSubstitute (tr, partitions);
+
+  /* Populate tipNames */
+  tr->tipNames = (char **) rax_calloc(tr->mxtips + 1, sizeof (char *));
+  for (i = 0; (unsigned int)i < tr->nameHash->size; ++ i)
+   {
+     hItem = tr->nameHash->Items[i];
+
+     for (; hItem; hItem = hItem->next)
+      {
+        tr->tipNames[((nodeptr)hItem->data)->number] = hItem->str; 
+      }
    }
 
   /* Populate tipNames */
@@ -1691,8 +1907,7 @@ pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partitionL
   return (1);
 }
 
-pllInstance *
-pllCreateInstance (pllInstanceAttr * attr)
+pllInstance * pllCreateInstance (pllInstanceAttr * attr)
 {
   pllInstance * tr;
 
@@ -1708,6 +1923,7 @@ pllCreateInstance (pllInstanceAttr * attr)
   tr->likelihoodEpsilon = 0.01;
   
   tr->randomNumberSeed = attr->randomNumberSeed;
+  tr->parsimonyScore   = NULL;
 
   /* remove it from the library */
   tr->useMedian         = PLL_FALSE;
@@ -1819,7 +2035,7 @@ static void pllTreeInitDefaults (pllInstance * tr, int tips)
 
   tr->bitVectors = NULL;
   tr->vLength    = 0;
-  tr->h          = NULL;
+  //tr->h          = NULL;
 
   /* TODO: Fix hash type */
   tr->nameHash   = pllHashInit (10 * tr->mxtips);
@@ -1976,7 +2192,7 @@ linkTaxa (pllInstance * pInst, pllNewickTree * nTree, int taxaExist)
          {
            child = pInst->nodep[leaf];
            pInst->nameList[leaf] = strdup (nodeInfo->name);
-           pllHashAdd (pInst->nameHash, pInst->nameList[leaf], (void *) (pInst->nodep[leaf]));
+           pllHashAdd (pInst->nameHash, pllHashString(pInst->nameList[leaf], pInst->nameHash->size), pInst->nameList[leaf], (void *) (pInst->nodep[leaf]));
            ++ leaf;
          }
       }
@@ -2219,7 +2435,7 @@ pllTreeInitTopologyRandom (pllInstance * tr, int tips, char ** nameList)
    {
      tr->nameList[i] = (char *) rax_malloc ((strlen (nameList[i]) + 1) * sizeof (char));
      strcpy (tr->nameList[i], nameList[i]);
-     pllHashAdd (tr->nameHash, tr->nameList[i], (void *) (tr->nodep[i]));
+     pllHashAdd (tr->nameHash, pllHashString(tr->nameList[i], tr->nameHash->size), tr->nameList[i], (void *) (tr->nodep[i]));
    }
   
 
@@ -2256,7 +2472,7 @@ pllTreeInitTopologyForAlignment (pllInstance * tr, pllAlignmentData * alignmentD
    {
      tr->nameList[i] = (char *) rax_malloc ((strlen (nameList[i]) + 1) * sizeof (char));
      strcpy (tr->nameList[i], nameList[i]);
-     pllHashAdd (tr->nameHash, tr->nameList[i], (void *) (tr->nodep[i]));
+     pllHashAdd (tr->nameHash, pllHashString(tr->nameList[i], tr->nameHash->size), tr->nameList[i], (void *) (tr->nodep[i]));
    }
 }
 
@@ -2286,131 +2502,36 @@ void pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partiti
     Transforms the alignment to the PLL internal representation by substituting each base 
     with a specific digit.
 
-    @param alignmentData
-      Multiple sequence alignment
-
-    @param partitions
-      List of partitions
+    @param alignmentData  Multiple sequence alignment
+    @param partitions     List of partitions
 */
-void
-pllBaseSubstitute (pllAlignmentData * alignmentData, partitionList * partitions)
+void pllBaseSubstitute (pllInstance * tr, partitionList * partitions)
 {
-  char meaningDNA[256];
-  char  meaningAA[256];
-  char * d;
+  const char * d;
   int i, j, k;
-
-  if (alignmentData->sequenceData[1][1] < 23) return;
-  for (i = 0; i < 256; ++ i)
-   {
-     meaningDNA[i] = -1;
-     meaningAA[i]  = -1;
-   }
-
-  /* DNA data */
-
-  meaningDNA['A'] =  1;
-  meaningDNA['B'] = 14;
-  meaningDNA['C'] =  2;
-  meaningDNA['D'] = 13;
-  meaningDNA['G'] =  4;
-  meaningDNA['H'] = 11;
-  meaningDNA['K'] = 12;
-  meaningDNA['M'] =  3;
-  meaningDNA['R'] =  5;
-  meaningDNA['S'] =  6;
-  meaningDNA['T'] =  8;
-  meaningDNA['U'] =  8;
-  meaningDNA['V'] =  7;
-  meaningDNA['W'] =  9;
-  meaningDNA['Y'] = 10;
-  meaningDNA['a'] =  1;
-  meaningDNA['b'] = 14;
-  meaningDNA['c'] =  2;
-  meaningDNA['d'] = 13;
-  meaningDNA['g'] =  4;
-  meaningDNA['h'] = 11;
-  meaningDNA['k'] = 12;
-  meaningDNA['m'] =  3;
-  meaningDNA['r'] =  5;
-  meaningDNA['s'] =  6;
-  meaningDNA['t'] =  8;
-  meaningDNA['u'] =  8;
-  meaningDNA['v'] =  7;
-  meaningDNA['w'] =  9;
-  meaningDNA['y'] = 10;
-
-  meaningDNA['N'] =
-  meaningDNA['n'] =
-  meaningDNA['O'] =
-  meaningDNA['o'] =
-  meaningDNA['X'] =
-  meaningDNA['x'] =
-  meaningDNA['-'] =
-  meaningDNA['?'] = 15;
- 
-  /* AA data */
-
-  meaningAA['A'] =  0;  /* alanine */
-  meaningAA['R'] =  1;  /* arginine */
-  meaningAA['N'] =  2;  /*  asparagine*/
-  meaningAA['D'] =  3;  /* aspartic */
-  meaningAA['C'] =  4;  /* cysteine */
-  meaningAA['Q'] =  5;  /* glutamine */
-  meaningAA['E'] =  6;  /* glutamic */
-  meaningAA['G'] =  7;  /* glycine */
-  meaningAA['H'] =  8;  /* histidine */
-  meaningAA['I'] =  9;  /* isoleucine */
-  meaningAA['L'] =  10; /* leucine */
-  meaningAA['K'] =  11; /* lysine */
-  meaningAA['M'] =  12; /* methionine */
-  meaningAA['F'] =  13; /* phenylalanine */
-  meaningAA['P'] =  14; /* proline */
-  meaningAA['S'] =  15; /* serine */
-  meaningAA['T'] =  16; /* threonine */
-  meaningAA['W'] =  17; /* tryptophan */
-  meaningAA['Y'] =  18; /* tyrosine */
-  meaningAA['V'] =  19; /* valine */
-  meaningAA['B'] =  20; /* asparagine, aspartic 2 and 3*/
-  meaningAA['Z'] =  21; /*21 glutamine glutamic 5 and 6*/
-  meaningAA['a'] =  0;  /* alanine */
-  meaningAA['r'] =  1;  /* arginine */
-  meaningAA['n'] =  2;  /*  asparagine*/
-  meaningAA['d'] =  3;  /* aspartic */
-  meaningAA['c'] =  4;  /* cysteine */
-  meaningAA['q'] =  5;  /* glutamine */
-  meaningAA['e'] =  6;  /* glutamic */
-  meaningAA['g'] =  7;  /* glycine */
-  meaningAA['h'] =  8;  /* histidine */
-  meaningAA['i'] =  9;  /* isoleucine */
-  meaningAA['l'] =  10; /* leucine */
-  meaningAA['k'] =  11; /* lysine */
-  meaningAA['m'] =  12; /* methionine */
-  meaningAA['f'] =  13; /* phenylalanine */
-  meaningAA['p'] =  14; /* proline */
-  meaningAA['s'] =  15; /* serine */
-  meaningAA['t'] =  16; /* threonine */
-  meaningAA['w'] =  17; /* tryptophan */
-  meaningAA['y'] =  18; /* tyrosine */
-  meaningAA['v'] =  19; /* valine */
-  meaningAA['b'] =  20; /* asparagine, aspartic 2 and 3*/
-  meaningAA['z'] =  21; /*21 glutamine glutamic 5 and 6*/
-
-  meaningAA['X'] = 
-  meaningAA['x'] = 
-  meaningAA['?'] = 
-  meaningAA['*'] = 
-  meaningAA['-'] = 22;
 
   for (i = 0; i < partitions->numberOfPartitions; ++ i)
    {
-     d = (partitions->partitionData[i]->dataType == PLL_DNA_DATA) ? meaningDNA : meaningAA;
+     switch (partitions->partitionData[i]->dataType)
+      {
+        case PLL_DNA_DATA:
+          d = PLL_MAP_NT;
+          break;
+        case PLL_BINARY_DATA:
+          d = PLL_MAP_BIN;
+          break;
+        case PLL_AA_DATA:
+          d = PLL_MAP_AA;
+          break;
+        default:
+          assert(0);
+      }
      
-     for (j = 1; j <= alignmentData->sequenceCount; ++ j)
+     for (j = 1; j <= tr->mxtips; ++ j)
       {
         for (k = partitions->partitionData[i]->lower; k < partitions->partitionData[i]->upper; ++ k)
          {
-           alignmentData->sequenceData[j][k] = d[alignmentData->sequenceData[j][k]];
+           tr->yVector[j][k] = d[tr->yVector[j][k]];
          }
       }
    }
@@ -2448,13 +2569,10 @@ pllDestroyInstance (pllInstance * tr)
   for (i = 1; i <= tr->mxtips; ++ i)
     rax_free (tr->nameList[i]);
   
-  pllHashDestroy (&(tr->nameHash), PLL_FALSE);
+  pllHashDestroy (&(tr->nameHash), NULL);
   if (tr->yVector)
    {
-     if (tr->bDeep == PLL_DEEP_COPY)
-      {
         if (tr->yVector[0]) rax_free (tr->yVector[0]);
-      }
      rax_free (tr->yVector);
    }
   rax_free (tr->aliaswgt);
@@ -3402,19 +3520,12 @@ int pllLinkRates(char *string, partitionList *pr)
     
     Initializes partitions according to model parameters.
 
-    @param tr
-      The PLL instance
-
-    @param partitions
-      List of partitions
-
-    @param alignmentData
-      The parsed alignment
-    
-    @return
-      Returns \b PLL_TRUE in case of success, otherwise \b PLL_FALSE
+    @param tr              The PLL instance
+    @param partitions      List of partitions
+    @param alignmentData   The parsed alignment
+    @return                Returns \b PLL_TRUE in case of success, otherwise \b PLL_FALSE
 */
-int pllInitModel (pllInstance * tr, partitionList * partitions, pllAlignmentData * alignmentData) 
+int pllInitModel (pllInstance * tr, partitionList * partitions) 
 {
   double ** ef;
   int
@@ -3422,7 +3533,7 @@ int pllInitModel (pllInstance * tr, partitionList * partitions, pllAlignmentData
     *unlinked = (int *)rax_malloc(sizeof(int) * partitions->numberOfPartitions);
   double old_fracchange = tr->fracchange;
 
-  ef = pllBaseFrequenciesGTR (partitions, alignmentData);
+  ef = pllBaseFrequenciesInstance (tr, partitions);
 
   if(!ef)
     return PLL_FALSE;

@@ -32,25 +32,11 @@
 
 int PLL_NUM_BRANCHES; 
 
-double masterTime;
-double accumulatedTime;
+const char *protModels[PLL_NUM_PROT_MODELS] = {"PROT", /* dummy needed by exabayes ; just any model   */
+					       "DAYHOFF", "DCMUT", "JTT", "MTREV", "WAG", "RTREV", "CPREV", "VT", "BLOSUM62", "MTMAM", "LG", "MTART", "MTZOA", "PMB", 
+					       "HIVB", "HIVW", "JTTDCMUT", "FLU", "AUTO", "LG4", "GTR"};
 
-char run_id[128] = "", 
-  workdir[1024] = "", 
-  seq_file[1024] = "", 
-  tree_file[1024]="", 
-  weightFileName[1024] = "",   
-  resultFileName[1024] = "", 
-  logFileName[1024] = "",   
-  infoFileName[1024] = "", 
-  randomFileName[1024] = "",     
-  proteinModelFileName[1024] = "", 
-  binaryCheckpointName[1024] = "",
-  binaryCheckpointInputName[1024] = "",
-  byteFileName[1024] = "";
-
-const char *protModels[PLL_NUM_PROT_MODELS] = {"DAYHOFF", "DCMUT", "JTT", "MTREV", "WAG", "RTREV", "CPREV", "VT", "BLOSUM62", "MTMAM", "LG", "MTART", "MTZOA", "PMB", 
-					   "HIVB", "HIVW", "JTTDCMUT", "FLU", "AUTO", "LG4", "GTR"};
+const char binaryStateNames[2]   = {'0', '1'};  
 
 const char dnaStateNames[4]      = {'A', 'C', 'G', 'T'};
 
@@ -129,7 +115,7 @@ const char *secondaryModelList[21] = { "S6A (GTR)", "S6B", "S6C", "S6D", "S6E", 
 const partitionLengths pLengths[PLL_MAX_MODEL] = {
   
   /* BINARY */
-  {4,   4,   2,  4,  2, 1, 2,  8, 2, 2, PLL_FALSE, PLL_FALSE, 3, inverseMeaningBINARY, 2, PLL_FALSE, bitVectorIdentity},
+  {4,   4,   2,  4,  4, 1, 2,  8, 2, 2, PLL_FALSE, PLL_FALSE, 3, inverseMeaningBINARY, 2, PLL_FALSE, bitVectorIdentity},
   
   /* DNA */
   {16,  16,  4, 16, 16, 6, 4, 64, 6, 4, PLL_FALSE, PLL_FALSE, 15, inverseMeaningDNA, 4, PLL_FALSE, bitVectorIdentity},
@@ -178,14 +164,10 @@ MPI_Datatype TRAVERSAL_MPI;
 #endif
 
 #else
-
 extern int PLL_NUM_BRANCHES; 
-extern char infoFileName[1024];
-extern char resultFileName[1024];
 extern const partitionLengths pLengths[PLL_MAX_MODEL];
 extern const char * protModels[PLL_NUM_PROT_MODELS];
 extern char * secondaryModelList[21];
-extern char logFileName[1024];
 //extern const unsigned int * mask32;
 
 #endif

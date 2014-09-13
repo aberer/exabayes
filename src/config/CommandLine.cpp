@@ -254,7 +254,7 @@ void CommandLine::printHelp(std::ostream& out)
       << "                       remaining chains. If a tree contains branch lengths, these branch lengths will be used\n"
       << "                       as initial values.\n\n"
       << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
-      << "                       (valid values: DNA or PROT)\n\n"
+      << "                       (valid values: BIN, DNA or PROT)\n\n"
       << std::endl;     
 
   out <<      "\n" 

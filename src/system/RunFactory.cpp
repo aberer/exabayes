@@ -107,12 +107,22 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	  } 
 	  break; 
 	case Category::FREQUENCIES:
+	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i )
+	      {
+		auto dataType = traln.getPartition(i).getDataType(); 
+		if(not cat2partsUsed.at(cat).at(i) // not already there 
+		   && dataType != PLL_AA_DATA ) // we use an AA_MODEL as default for proteins 
+		  partsUnused.push_back(i); 
+	      }
+	    break ;
 	case Category::SUBSTITUTION_RATES: 
 	  {
 	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i )
 	      {
+		auto dataType = traln.getPartition(i).getDataType(); 
 		if(not cat2partsUsed.at(cat).at(i) // not already there 
-		   && traln.getPartition(i).getDataType() != PLL_AA_DATA) // we use an AA_MODEL as default for proteins 
+		   && dataType != PLL_AA_DATA
+		   && dataType != PLL_BINARY_DATA) // we use an AA_MODEL as default for proteins 
 		  partsUnused.push_back(i); 
 	      }
 	  }
@@ -165,7 +175,10 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
     case Category::FREQUENCIES: 
       {
 	auto& partition = traln.getPartition(var->getPartitions()[0]);
-	assert(partition.getDataType() == PLL_DNA_DATA || partition.getDataType() == PLL_AA_DATA); 
+	assert(partition.getDataType() == PLL_DNA_DATA 
+	       || partition.getDataType() == PLL_AA_DATA 
+	       || partition.getDataType() == PLL_BINARY_DATA
+	       ); 
 	var->setPrior(std::unique_ptr<AbstractPrior>(new DirichletPrior(std::vector<double>(partition.getStates() , 1.)))); 
       }
       break; 

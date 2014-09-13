@@ -355,7 +355,10 @@ parse_phylip (pllAlignmentData * alignmentData, int input)
        
        if (token.tokenType == PLL_TOKEN_NEWLINE) break;
 
-       if (token.tokenType != PLL_TOKEN_STRING)
+       if (token.tokenType != PLL_TOKEN_STRING
+	   /* HACK: to make binary model work... */
+	   && token.tokenType != PLL_TOKEN_NUMBER
+	   )
         {
           rax_free (sequenceLength);
           return (0);
@@ -680,7 +683,6 @@ pllParseFASTA (const char * filename)
 pllAlignmentData *
 pllParseAlignmentFile (int fileType, const char * filename)
 {
-
   switch (fileType)
    {
      case PLL_FORMAT_PHYLIP:

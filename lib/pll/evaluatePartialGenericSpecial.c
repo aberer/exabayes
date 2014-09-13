@@ -166,8 +166,8 @@ static inline void computeVectorCAT_FLEX(double *lVector, int *eVector, double k
 
   for(j = 1; j < states; j++)
     {
-      d1[j] = x1[j] * EXP(EIGN[j] * lz1);
-      d2[j] = x2[j] * EXP(EIGN[j] * lz2);	    
+      d1[j] = x1[j] * exp(EIGN[j] * lz1);
+      d2[j] = x2[j] * exp(EIGN[j] * lz2);	    
     }
  
  
@@ -318,18 +318,18 @@ static double evaluatePartialCAT_FLEX(int i, double ki, int counter,  traversalI
   d[0] = 1.0; 
 
   for(k = 1; k < states; k++)
-    d[k] = EXP (EIGN[k] * lz);
+    d[k] = exp (EIGN[k] * lz);
   
   term = 0.0;
 
   for(k = 0; k < states; k++) 
     term += x1[k] * x2[k] * d[k];       
 
-  /* note the "scale * PLL_LOG(PLL_MINLIKELIHOOD)" term here which we use to undo/revert the scaling multiplications 
+  /* note the "scale * log(PLL_MINLIKELIHOOD)" term here which we use to undo/revert the scaling multiplications 
      such that we obtain a correct log likelihood score. The integer variable scale, contains the number of times 
      we had to scale (multiply by 2^256) for site i only during a full tree traversal using Felsenstein's algorithm */
 
-  term = PLL_LOG(PLL_FABS(term)) + (scale * PLL_LOG(PLL_MINLIKELIHOOD));   
+  term = log(fabs(term)) + (scale * log(PLL_MINLIKELIHOOD));   
 
   /* multiply with the site pattern weight (site pattern compression factor */
 
@@ -408,6 +408,7 @@ double evaluatePartialGeneric (pllInstance *tr, partitionList *pr, int i, double
   /* switch over the number of states of the data in the current model/partition */
   switch(states)
     {
+    case 2:   /* BINARY */
    
     case 4:   /* DNA */
       /* switch over CAT versus GAMMA and pass all model parameters for the respective partition to the respective functions */
@@ -542,8 +543,8 @@ static inline void computeVectorGTRGAMMAPROT(double *lVector, int *eVector, doub
     
 	for(l = 1; l < 20; l++)
 	  {
-	    e1[l] = EXP(EIGN[l] * lz1);
-	    e2[l] = EXP(EIGN[l] * lz2);
+	    e1[l] = exp(EIGN[l] * lz1);
+	    e2[l] = exp(EIGN[l] * lz2);
 	  }
 
 	for(l = 0; l < 20; l+=2)
@@ -691,8 +692,8 @@ static  void computeVectorGTRGAMMA(double *lVector, int *eVector, double *gammaR
     
 	for(l = 1; l < 4; l++)
 	  {
-	    e1[l] = EXP(EIGN[l] * lz1);
-	    e2[l] = EXP(EIGN[l] * lz2);
+	    e1[l] = exp(EIGN[l] * lz1);
+	    e2[l] = exp(EIGN[l] * lz2);
 	  }
 
 	for(l = 0; l < 4; l+=2)
@@ -823,7 +824,7 @@ static double evaluatePartialGTRGAMMAPROT(int i, int counter,  traversalInfo *ti
     {
       d[20 * j] = 1.0;
       for(l = 1; l < 20; l++)
-	d[20 * j + l] = EXP(EIGN[l] * lz * gammaRates[j]);
+	d[20 * j + l] = exp(EIGN[l] * lz * gammaRates[j]);
     }
 
  
@@ -833,7 +834,7 @@ static double evaluatePartialGTRGAMMAPROT(int i, int counter,  traversalInfo *ti
 	term += x1[l] * x2[20 * j + l] * d[j * 20 + l];	      
     }
   
-  term = PLL_LOG(0.25 * PLL_FABS(term)) + (scale * PLL_LOG(PLL_MINLIKELIHOOD));   
+  term = log(0.25 * fabs(term)) + (scale * log(PLL_MINLIKELIHOOD));   
 
   term = term * w;
 
@@ -898,7 +899,7 @@ static double evaluatePartialGTRGAMMA(int i, int counter,  traversalInfo *ti, do
     {
       d[4 * j] = 1.0;
       for(l = 1; l < 4; l++)
-	d[4 * j + l] = EXP(EIGN[l] * lz * gammaRates[j]);
+	d[4 * j + l] = exp(EIGN[l] * lz * gammaRates[j]);
     }
 
  
@@ -908,7 +909,7 @@ static double evaluatePartialGTRGAMMA(int i, int counter,  traversalInfo *ti, do
 	term += x1[l] * x2[4 * j + l] * d[j * 4 + l];	      
     }
 
-  term = PLL_LOG(0.25 * PLL_FABS(term)) + (scale * PLL_LOG(PLL_MINLIKELIHOOD));   
+  term = log(0.25 * fabs(term)) + (scale * log(PLL_MINLIKELIHOOD));   
 
   term = term * w;
 
@@ -960,8 +961,8 @@ static inline void computeVectorGTRCAT(double *lVector, int *eVector, double ki,
     {
       d1[j] = 
 	x1[j + 1] * 
-	EXP(EIGN[j + 1] * lz1);
-      d2[j] = x2[j + 1] * EXP(EIGN[j + 1] * lz2);	    
+	exp(EIGN[j + 1] * lz1);
+      d2[j] = x2[j + 1] * exp(EIGN[j + 1] * lz2);	    
     }
  
  
@@ -1047,16 +1048,16 @@ static double evaluatePartialGTRCAT(int i, double ki, int counter,  traversalInf
   lz  = log(qz); 
   lz *= ki;  
   
-  d[0] = EXP (EIGN[1] * lz);
-  d[1] = EXP (EIGN[2] * lz);
-  d[2] = EXP (EIGN[3] * lz);       	   
+  d[0] = exp (EIGN[1] * lz);
+  d[1] = exp (EIGN[2] * lz);
+  d[2] = exp (EIGN[3] * lz);       	   
   
   term =  x1[0] * x2[0];
   term += x1[1] * x2[1] * d[0];
   term += x1[2] * x2[2] * d[1];
   term += x1[3] * x2[3] * d[2];     
 
-  term = PLL_LOG(PLL_FABS(term)) + (scale * PLL_LOG(PLL_MINLIKELIHOOD));   
+  term = log(fabs(term)) + (scale * log(PLL_MINLIKELIHOOD));   
 
   term = term * w;
 
@@ -1108,8 +1109,8 @@ static inline void computeVectorGTRCATPROT(double *lVector, int *eVector, double
 
   for(j = 1; j < 20; j++)
     {
-      d1[j] = x1[j] * EXP(EIGN[j] * lz1);
-      d2[j] = x2[j] * EXP(EIGN[j] * lz2);	    
+      d1[j] = x1[j] * exp(EIGN[j] * lz1);
+      d2[j] = x2[j] * exp(EIGN[j] * lz2);	    
     }
  
  
@@ -1201,14 +1202,14 @@ static double evaluatePartialGTRCATPROT(int i, double ki, int counter,  traversa
   d[0] = 1.0;
   
   for(k = 1; k < 20; k++)
-    d[k] =  EXP (EIGN[k] * lz);
+    d[k] =  exp (EIGN[k] * lz);
 
         	   
   term =  0.0;
   for(k = 0; k < 20; k++)
     term += x1[k] * x2[k] * d[k];     
 
-  term = PLL_LOG(PLL_FABS(term)) + (scale * PLL_LOG(PLL_MINLIKELIHOOD));   
+  term = log(fabs(term)) + (scale * log(PLL_MINLIKELIHOOD));   
 
   term = term * w;
 

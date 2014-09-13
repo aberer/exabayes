@@ -27,8 +27,7 @@
 #include "FullCachePolicy.hpp"
 #include "NoCachePolicy.hpp"
 
-#include "PhylipParser.hpp"
-
+#include "PhylipAlignment.hpp"
 
 using std::endl; 
 using std::vector;
@@ -164,6 +163,9 @@ void SampleMaster::printAlignmentInfo(const TreeAln &traln)
 
       switch(partition.getDataType())
 	{
+	case PLL_BINARY_DATA : 
+	  tout << "type:\t\tBINARY" << std::endl; 
+	  break; 
 	case PLL_DNA_DATA: 
 	  tout << "type:\t\tDNA" << endl; 
 	  break; 
@@ -543,7 +545,8 @@ std::string SampleMaster::getOrCreateBinaryFile() const
 
       if( _plPtr->isGlobalMaster() )
 	{
-	  auto &&parser = PhylipParser{ _cl.getAlnFileName() , modelInfo, haveModelFile}; 
+
+	  auto &&phyAln = PhylipAlignment{} ; 
 
 	  if(std::ifstream(binaryAlnFile))
 	    {
@@ -551,8 +554,19 @@ std::string SampleMaster::getOrCreateBinaryFile() const
 	      remove(std::string(binaryAlnFile).c_str()); 
 	    }
 
-	  parser.parse(); 
-	  parser.writeToFile(binaryAlnFile); 
+	  phyAln.initAln(_cl.getAlnFileName(), PLL_FORMAT_PHYLIP);
+
+	  if(not haveModelFile)
+	    {
+	      auto type = getTypeFromString(modelInfo); 
+	      phyAln.createDummyPartition(type); 
+	    }
+	  else 
+	    {
+	      phyAln.initPartitions(modelInfo); 
+	    }
+
+	  phyAln.writeToFile(binaryAlnFile); 
 	}
 
       _plPtr->getGlobalComm().waitAtBarrier();
@@ -633,21 +647,6 @@ void SampleMaster::initializeRuns(Randomness rand)
   auto bls = BranchLengthResource{}; 
   bls.initialize(taxa.size(), numPart);
   initTree.setBranchLengthResource(bls); 
-
-  // START integrator
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE 
-  auto aTree = TreeAln(taxa.size(), false); 
-  aTree = initTree; 
-
-  // let's have another tree for debug
-  auto dT = make_shared<TreeAln>(taxa.size(), false);
-
-  TreeRandomizer::randomizeTree(aTree, rand); 
-  ahInt = new AdHocIntegrator(aTree, dT, rand.generateSeed(), _plPtr);
-
-  tInt = new TreeIntegrator(aTree, dT, rand.generateSeed(), _plPtr); 
-#endif
-  // END
 
   auto evalUptr = createEvaluatorPrototype(initTree,  _cl.isSaveMemorySEV()); 
   

@@ -333,9 +333,6 @@ void pinToCore(int tid)
 
   if(pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0)
     {
-      printBothOpen("\n\nThere was a problem finding a physical core for thread number %d to run on.\n", tid);
-      printBothOpen("Probably this happend because you are trying to run more threads than you have cores available,\n");
-      printBothOpen("which is a thing you should never ever do again, good bye .... \n\n");
       assert(0);
     }
 }
@@ -647,9 +644,6 @@ static void multiprocessorScheduling(pllInstance * tr, partitionList *pr, int ti
 	  assert(exists);
 	}
 
-      if(tid == 0)
-	printBothOpen("\nMulti-processor partition data distribution enabled (\"-Q\" option)\n");
-
       for(s = 0; s < arrayLength; s++)
 	{
 	  if(numberOfPartitions[s] > 0)
@@ -710,13 +704,8 @@ static void multiprocessorScheduling(pllInstance * tr, partitionList *pr, int ti
 		  pr->partitionData[pt[i].partitionNumber]->partitionAssignment = minIndex;
 		}
 
-	      if(tid == 0)
-		{
-		  for(i = 0; i < n; i++)	       
-		    printBothOpen("Process %d has %d sites for %d state model \n", i, assignments[i], modelStates[s]);		  		
 
-		  printBothOpen("\n");
-		}
+              /* Process i gets assignments[i] sites for modelStates[s] state model */
 
 	      for(i = 0; i < n; i++)
 		checkSum += (size_t)assignments[i];
@@ -1936,14 +1925,15 @@ static void assignAndInitPart1(pllInstance *localTree, pllInstance *tr, partitio
   
   for(model = 0; model < (size_t)localPr->numberOfPartitions; model++)
     {
-      ASSIGN_BUF(      localPr->partitionData[model]->numberOfCategories,     pr->partitionData[model]->numberOfCategories, int);
-      ASSIGN_BUF(      localPr->partitionData[model]->states,                 pr->partitionData[model]->states, int);
-      ASSIGN_BUF(      localPr->partitionData[model]->maxTipStates ,          pr->partitionData[model]->maxTipStates, int);
-      ASSIGN_BUF(      localPr->partitionData[model]->dataType ,              pr->partitionData[model]->dataType, int);
-      ASSIGN_BUF(      localPr->partitionData[model]->protModels ,            pr->partitionData[model]->protModels, int);
-      ASSIGN_BUF(      localPr->partitionData[model]->protUseEmpiricalFreqs ,             pr->partitionData[model]->protUseEmpiricalFreqs, int);
-      ASSIGN_BUF(      localPr->partitionData[model]->lower ,                 pr->partitionData[model]->lower, int);
-      ASSIGN_BUF(      localPr->partitionData[model]->upper ,                 pr->partitionData[model]->upper, int);
+      ASSIGN_BUF(localPr->partitionData[model]->numberOfCategories,     pr->partitionData[model]->numberOfCategories, int);
+      ASSIGN_BUF(localPr->partitionData[model]->states,                 pr->partitionData[model]->states, int);
+      ASSIGN_BUF(localPr->partitionData[model]->maxTipStates ,          pr->partitionData[model]->maxTipStates, int);
+      ASSIGN_BUF(localPr->partitionData[model]->dataType ,              pr->partitionData[model]->dataType, int);
+      ASSIGN_BUF(localPr->partitionData[model]->protModels ,            pr->partitionData[model]->protModels, int);
+      ASSIGN_BUF(localPr->partitionData[model]->protUseEmpiricalFreqs , pr->partitionData[model]->protUseEmpiricalFreqs, int);
+      ASSIGN_BUF(localPr->partitionData[model]->lower ,                 pr->partitionData[model]->lower, int);
+      ASSIGN_BUF(localPr->partitionData[model]->upper ,                 pr->partitionData[model]->upper, int);
+      ASSIGN_BUF(localPr->partitionData[model]->ascBias,                pr->partitionData[model]->ascBias, boolean);
 
       localPr->partitionData[model]->partitionLH = 0.0;      
 

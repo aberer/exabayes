@@ -91,9 +91,7 @@ void ParsSprProposer::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nod
   else 
     {
       ParsimonyEvaluator::disorientNode(prunedTree); 
-      auto states2parsimony = _pEval.evaluate(traln, prunedTree, false  ); 
-      // assert(result.find(b) == result.end()) ;   
-      result[b] = states2parsimony; 
+      result[b] =  _pEval.evaluate(traln, prunedTree, false  ); 
     }
 
   traln.clipNode(insertPos, insertBack); 

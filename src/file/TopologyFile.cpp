@@ -17,7 +17,7 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runidAr
 { 
   auto&& ss = std::stringstream{}; 
   
-  ss <<  OutputFile::getFileBaseName(workdir) << "_topologies." << runname << "." << runid ; 
+  ss <<  OutputFile::getFileBaseName(workdir) << "_topologies.run-"<< runid <<  "." << runname ; 
   if(hasManyTopoloFiles)
     ss << ".tree." << paramNum; 
   
@@ -115,7 +115,7 @@ void TopologyFile::regenerate(std::string workdir, std::string prevId, uint64_t 
 
   auto&& ss = std::stringstream {}; 
   
-  ss << OutputFile::getFileBaseName(workdir) << "_topologies." << prevId << "." << runid ; 
+  ss << OutputFile::getFileBaseName(workdir) << "_topologies.run-"  << runid  << "."  << prevId; 
   if(hasManyTopoloFiles)
     ss << ".tree." << paramNum; 
 

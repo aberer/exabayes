@@ -86,7 +86,7 @@ void OptimizedParameter::nrStep()
       double tantmp = - _nrD1 /  _nrD2;
       if (tantmp < 100)
 	{
-	  _zCur *= EXP(tantmp);
+	  _zCur *= std::exp(tantmp);
 	  if (_zCur < zMin)
 	    _zCur = zMin;
 

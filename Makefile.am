@@ -4,7 +4,7 @@
 AUTOMAKE_OPTIONS= foreign subdir-objects
 EXTRA_DIST=./lib/Random123-1.08 ./examples/* ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.txt ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c  ./manual/library2.html
 noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a libpll.a libpll_model.a 
-bin_PROGRAMS = yggdrasil    sdsf postProcParam credibleSet extractBips consense parser 	
+bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractBips consense 
 
 .PHONY: my-update-src doc mydist  man  dist
 
@@ -151,9 +151,9 @@ sdsf_SOURCES= ./src/apps/sdsf.cpp
 
 ################################################################
 # the parser 
-parser_SOURCES=./src/apps/parser.cpp
-parser_LDADD=$(seqlibs)
-parser_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES)   -Wno-deprecated-writable-strings    
+parser_exabayes_SOURCES=./src/apps/parser.cpp
+parser_exabayes_LDADD=$(seqlibs)
+parser_exabayes_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES)   -Wno-deprecated-writable-strings    
 
 ################################################################
 # extractBips 

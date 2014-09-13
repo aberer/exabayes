@@ -1,4 +1,4 @@
-#include "PhylipParser.hpp"
+// #include "PhylipParser.hpp"
 
 #include <fstream>
 #include <stdexcept>
@@ -6,9 +6,9 @@
 #include <unistd.h>
 #include <cstring>
 
-#include "GlobalVariables.hpp"
+#include "PhylipAlignment.hpp"
 
-int NUM_BRANCHES ; 
+#include "GlobalVariables.hpp"
 
 static void helpMessage()
 {
@@ -118,14 +118,18 @@ int main(int argc, char **argv)
   
   bool useSinglePartition =  modelFile.compare("") == 0; 
 
-  auto &&parser = PhylipParser(alignmentFile, 
-			     useSinglePartition ? singlePartitionModel : modelFile, 
-			     not useSinglePartition);
-  parser.parse(); 
-  
-  parser.writeToFile(outputFileName + ".binary"); 
+  auto &&phyAln = PhylipAlignment{} ; 
+  phyAln.initAln(alignmentFile, PLL_FORMAT_PHYLIP);
+
+  if(useSinglePartition)
+    phyAln.createDummyPartition(getTypeFromString(singlePartitionModel)); 
+  else 
+    phyAln.initPartitions(modelFile); 
+
+  phyAln.writeToFile(outputFileName + ".binary"); 
 
   std::cout << "wrote binary alignment file to " << outputFileName << ".binary" << std::endl; 
   
   return 0 ;
 }
+

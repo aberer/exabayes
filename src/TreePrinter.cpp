@@ -34,6 +34,7 @@ std::string TreePrinter::printTree(const TreeAln& traln, const std::vector<Abstr
 } 
 
 
+
 void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss, nodeptr p , const std::vector<AbstractParameter*> &params)
 {
   ss << MAX_SCI_PRECISION; 

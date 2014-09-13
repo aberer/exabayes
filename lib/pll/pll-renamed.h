@@ -53,6 +53,8 @@
 #ifndef __pll__
 #define __pll__
 
+extern int PLL_NUM_BRANCHES; 
+
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
@@ -98,28 +100,15 @@ extern "C" {
 #define PLL_DELTAZ                              0.00001     /* test of net branch length change in update */
 #define PLL_DEFAULTZ                            0.9         /* value of z assigned as starting point */
 #define PLL_UNLIKELY                            -1.0E300    /* low likelihood for initialization */
-
-
 #define PLL_SUMMARIZE_LENGTH                    -3
 #define PLL_SUMMARIZE_LH                        -2
 #define PLL_NO_BRANCHES                         -1
-
 #define PLL_MASK_LENGTH                         32
-#define GET_BITVECTOR_LENGTH(x) ((x % PLL_MASK_LENGTH) ? (x / PLL_MASK_LENGTH + 1) : (x / PLL_MASK_LENGTH))
-
 #define PLL_ZMIN                                1.0E-15  /* max branch prop. to -log(PLL_ZMIN) (= 34) */
 #define PLL_ZMAX                                (1.0 - 1.0E-6) /* min branch prop. to 1.0-zmax (= 1.0E-6) */
-
-#define PLL_TWOTOTHE256 \
-  115792089237316195423570985008687907853269984665640564039457584007913129639936.0  
-                                                     /*  2**256 (exactly)  */
-
+#define PLL_TWOTOTHE256                         115792089237316195423570985008687907853269984665640564039457584007913129639936.0  /*  2**256 (exactly)  */
 #define PLL_MINLIKELIHOOD                       (1.0/PLL_TWOTOTHE256)
 #define PLL_MINUSMINLIKELIHOOD                  -PLL_MINLIKELIHOOD
-
-
-#define PLL_DEEP_COPY                           1 << 0
-#define PLL_SHALLOW_COPY                        1 << 1
 
 
 #define PLL_FORMAT_PHYLIP                       1 
@@ -131,7 +120,7 @@ extern "C" {
 
 #define PLL_BADREAR                             -1
 
-/* #define PLL_NUM_BRANCHES                        16 */
+/* #define PLL_NUM_BRANCHES                        50 */
 
 #define PLL_TRUE                                1
 #define PLL_FALSE                               0
@@ -175,48 +164,23 @@ extern "C" {
    on the other hand 0.001 caused problems with some of the 16-state secondary structure models
 
    For some reason the frequency settings seem to be repeatedly causing numerical problems
-   
 */
 
 #define PLL_ITMAX                               100    /* max number of iterations in brent's algorithm */
 
-
-
 #define PLL_SHFT(a,b,c,d)                       (a)=(b);(b)=(c);(c)=(d);
 #define PLL_SIGN(a,b)                           ((b) > 0.0 ? fabs(a) : -fabs(a))
-
 #define PLL_ABS(x)                              (((x)<0)   ?  (-(x)) : (x))
 #define PLL_MIN(x,y)                            (((x)<(y)) ?    (x)  : (y))
 #define PLL_MAX(x,y)                            (((x)>(y)) ?    (x)  : (y))
-#define PLL_FABS(x)                             fabs(x)
-
-#ifdef _USE_FPGA_LOG
-extern double log_approx (double input);
-#define PLL_LOG(x)  log_approx(x)
-#else
-#define PLL_LOG(x)  log(x)
-#endif
-
-
-#ifdef _USE_FPGA_EXP
-extern double exp_approx (double x);
-#define EXP(x)  exp_approx(x)
-#else
-#define EXP(x)  exp(x)
-#endif
-
-
-
 #define PLL_SWAP(x,y) do{ __typeof__ (x) _t = x; x = y; y = _t; } while(0)
-
-
-#define PointGamma(prob,alpha,beta)  PointChi2(prob,2.0*(alpha))/(2.0*(beta))
+#define PLL_POINT_GAMMA(prob,alpha,beta)        PointChi2(prob,2.0*(alpha))/(2.0*(beta))
 
 #define PLL_LIB_NAME                            "PLL"
 #define PLL_LIB_VERSION                         "1.0.0"
 #define PLL_LIB_DATE                            "September 2013"
 
-
+/* aminoacid substitution models */
 #define PLL_DAYHOFF                             0
 #define PLL_DCMUT                               1
 #define PLL_JTT                                 2
@@ -238,18 +202,18 @@ extern double exp_approx (double x);
 #define PLL_AUTO                                18
 #define PLL_LG4                                 19
 #define PLL_GTR                                 20  /* GTR always needs to be the last one */
-
 #define PLL_NUM_PROT_MODELS                     21
 
 /* bipartition stuff */
-
 #define PLL_BIPARTITIONS_RF                     4
 
-
+/* scenarios for likelihood computation */
 #define PLL_TIP_TIP                             0
 #define PLL_TIP_INNER                           1
 #define PLL_INNER_INNER                         2
 
+
+/* available data types in PLL */
 #define PLL_MIN_MODEL                          -1
 #define PLL_BINARY_DATA                         0
 #define PLL_DNA_DATA                            1
@@ -289,6 +253,8 @@ extern double exp_approx (double x);
 #define PLL_MK_MULTI_STATE                      1
 #define PLL_GTR_MULTI_STATE                     2
 
+
+/* available models of rate heterogeneity in PLL */
 #define PLL_CAT                                 0
 #define PLL_GAMMA                               1
 
@@ -329,19 +295,6 @@ typedef struct
 
 /** @brief ???
  * @todo add explanation, is this ever used?  */
-struct ent
-{
-  unsigned int *bitVector;
-  unsigned int *treeVector;
-  unsigned int amountTips;
-  int *supportVector;
-  unsigned int bipNumber;
-  unsigned int bipNumber2;
-  unsigned int supportFromTreeset[2]; 
-  struct ent *next;
-};
-
-typedef struct ent entry;
 
 typedef unsigned int hashNumberType;
 
@@ -353,40 +306,68 @@ typedef unsigned int hashNumberType;
 
 /** @brief ???Hash tables 
  * @todo add explanation of all hash tables  */
-typedef struct
+typedef struct pllBipartitionEntry
 {
-  hashNumberType tableSize;
-  entry **table;
-  hashNumberType entryCount;
-}
-  hashtable;
-struct stringEnt
-{
-  int nodeNumber;
-  char *word;
-  struct stringEnt *next;
-};
+  unsigned int *bitVector;
+  unsigned int *treeVector;
+  unsigned int amountTips;
+  int *supportVector;
+  unsigned int bipNumber;
+  unsigned int bipNumber2;
+  unsigned int supportFromTreeset[2]; 
+  struct pllBipartitionEntry *next;
+} pllBipartitionEntry;
 
-typedef struct stringEnt stringEntry;
-typedef struct
-{
-  hashNumberType tableSize;
-  stringEntry **table;
-}
-  stringHashtable;
+//typedef struct
+//{
+//  hashNumberType tableSize;
+//  entry **table;
+//  hashNumberType entryCount;
+//}
+//  hashtable;
+//struct stringEnt
+//{
+//  int nodeNumber;
+//  char *word;
+//  struct stringEnt *next;
+//};
+//
+//typedef struct stringEnt stringEntry;
+//typedef struct
+//{
+//  hashNumberType tableSize;
+//  stringEntry **table;
+//}
+//  stringHashtable;
 
-struct pllHashItem
+typedef struct pllHashItem
 {
   void * data;
   char * str;
   struct pllHashItem * next;
-};
+} pllHashItem;
 
 typedef struct pllHashTable
 {
   unsigned int size;
   struct pllHashItem ** Items;
+  unsigned int entries;
 } pllHashTable;
+
+
+
+/* struct pllHashItem */
+/* { */
+/*   void * data; */
+/*   char * str; */
+/*   struct pllHashItem * next; */
+/* }; */
+
+/* typedef struct pllHashTable */
+/* { */
+/*   unsigned int size; */
+/*   struct pllHashItem ** Items; */
+/* } pllHashTable; */
 
 
 
@@ -714,38 +695,6 @@ typedef  struct noderec
 }
   node, *nodeptr;
 
-/** @struct info
-    
-    @brief A brief line
-
-    @var info::lh
-    @brief this is lh
-
-    Detailed description of lh
-
-    @var info::number
-    @brief This is a number
-    Detailed description of number
-*/
-typedef struct
-  {
-    double lh;
-    int number;
-  }
-  info;
-
-typedef struct bInf {
-  double likelihood;
-  nodeptr node;
-} bestInfo;
-
-typedef struct iL {
-  bestInfo *list;
-  int n;
-  int valid;
-} infoList;
-
-
 typedef unsigned int parsimonyNumber;
 
 /* @brief Alignment, transition model, model of rate heterogenety and likelihood vectors for one partition.
@@ -960,6 +909,14 @@ typedef struct {
   double *right;
   double *tipVector;
   
+
+  /* asc bias */
+  boolean       ascBias;
+  int           ascOffset;
+  int         * ascExpVector;
+  double      * ascSumBuffer;
+  double      * ascVector;
+  
   /* LG4 */
 
   double *EIGN_LG4[4];
@@ -1007,6 +964,7 @@ typedef struct {
   /* Parsimony vectors at each node */
   size_t parsimonyLength;
   parsimonyNumber *parsVect; 
+  parsimonyNumber *perSiteParsScores;
 
   /* This buffer of size width is used to store intermediate values for the branch length optimization under 
      newton-raphson. The data in here can be re-used for all iterations irrespective of the branch length.
@@ -1190,8 +1148,6 @@ typedef  struct  {
      not change depending on datatype */
 
   /* model stuff end */
-  int              bDeep;            /**< yVectors are 0: shallow-copy, or 1: deep-copy of alignment */
-
   unsigned char    **yVector;        /**< list of raw sequences (parsed from the alignment)*/
 
   int              secondaryStructureModel;
@@ -1261,7 +1217,8 @@ typedef  struct  {
 
   unsigned int vLength;
 
-  hashtable *h;                 /**< hashtable for ML convergence criterion */
+  pllHashTable *h;                 /**< hashtable for ML convergence criterion */
+  //hashtable *h;
  
   int optimizeRateCategoryInvocations;
 
@@ -1562,28 +1519,18 @@ extern pllInstance * pllCreateInstance (pllInstanceAttr * pInst);
  *  @ingroup instanceLinkingGroup
  *  @brief Load alignment to the PLL instance
  *   
- *   Loads (copies) the parsed alignment to the PLL instance. Depending
- *   on how the \a bDeep flag is set, the alignment in the PLL instance
- *   is a deep or shallow copy of \a alignmentData
+ *   Loads (copies) the parsed alignment \a alignmentData to the PLL instance
+ *   as a deep copy.
  * 
  *    @param tr              The library instance
  *    @param alignmentData   The multiple sequence alignment
  *    @param partitions      List of partitions
- *    @param bDeep           Controls how the alignment is used within the PLL
-                             instance. If it is set to \b PLL_DEEP_COPY, then 
-                             new memory will be allocated and the alignment will
-                             be copied there (deep copy). On the other hand, if
-                             \b PLL_SHALLOW_COPY is specified, only the pointers
-                             will be copied and therefore, the alignment will be
-                             shared between the alignment structure and the
-                             library instance (shallow copy).
  *
  *    @return Returns 1 in case of success, 0 otherwise.
  */
 extern int pllLoadAlignment (pllInstance * tr, 
                          pllAlignmentData * alignmentData, 
-                         partitionList * pList, 
-                         int bDeep);
+                             partitionList * pList);
 
 /**
  * @brief Compute the empirical base frequencies for all partitions
@@ -1596,8 +1543,8 @@ extern int pllLoadAlignment (pllInstance * tr,
  * @return   A list of \a pl->numberOfPartitions arrays each of size
              \a pl->partitionData[i]->states, where \a i is the \a i-th partition
 */
-extern double ** pllBaseFrequenciesGTR (partitionList * pl, 
-                         pllAlignmentData * alignmentData);
+extern double ** pllBaseFrequenciesAlignment (pllAlignmentData * alignmentData, partitionList * pl);
+extern double ** pllBaseFrequenciesInstance (pllInstance * tr, partitionList * pl);
 
 /* pthreads and MPI */
 extern void pllStartPthreads (pllInstance *tr, partitionList *pr);
@@ -1635,7 +1582,8 @@ extern void  pllQueuePartitionsDestroy (pllQueue ** partitions);
 extern pllQueue * pllPartitionParse (const char * filename);
 extern pllQueue * pllPartitionParseString (const char * p);
 extern void pllPartitionDump (pllQueue * partitions);
-void pllBaseSubstitute (pllAlignmentData * alignmentData, partitionList * partitions);
+  void pllBaseSubstitute (pllInstance * tr, partitionList * partitions);
+/* void pllBaseSubstitute (pllAlignmentData * tr, partitionList * partitions); */
 partitionList * pllPartitionsCommit (pllQueue * parts, pllAlignmentData * alignmentData);
 int pllPartitionsValidate (pllQueue * parts, pllAlignmentData * alignmentData);
 extern void pllAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * pl);
@@ -1650,7 +1598,7 @@ extern pllAlignmentData * pllParseAlignmentFile (int fileType, const char *);
 
 
 /* model management */
-int pllInitModel (pllInstance *, partitionList *, pllAlignmentData *);
+int pllInitModel (pllInstance *, partitionList *);
 void pllInitReversibleGTR(pllInstance * tr, partitionList * pr, int model);
 void pllMakeGammaCats(double alpha, double *gammaRates, int K, boolean useMedian);
 int pllLinkAlphaParameters(char *string, partitionList *pr);
@@ -1685,6 +1633,8 @@ nodeptr pllGetRandomSubtree(pllInstance *);
 extern void pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr);
 void pllDestroyInstance (pllInstance *);
 extern void pllGetAncestralState(pllInstance *tr, partitionList *pr, nodeptr p, double * outProbs, char * outSequence);
+unsigned int pllEvaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, boolean full, boolean perSiteScores);
+void pllInitParsimonyStructures(pllInstance *tr, partitionList *pr, boolean perSiteScores);
 
 /* rearrange functions (NNI and SPR) */
 pllRearrangeList * pllCreateRearrangeList (int max);
@@ -1701,10 +1651,10 @@ extern int pllTopologyPerformNNI(pllInstance * tr, nodeptr p, int swap);
 
 /* hash functions */
 unsigned int pllHashString (const char * s, unsigned int size);
-int pllHashAdd  (struct pllHashTable * hTable, const char * s, void * item);
-struct pllHashTable * pllHashInit (unsigned int n);
+int pllHashAdd  (pllHashTable * hTable, unsigned int hash, const char * s, void * item);
+pllHashTable * pllHashInit (unsigned int n);
 int pllHashSearch (struct pllHashTable * hTable, char * s, void ** item);
-void pllHashDestroy (struct pllHashTable ** hTable, int);
+void pllHashDestroy (struct pllHashTable ** hTable, void (*cbDealloc)(void *));
 
 /* node specific functions */
 nodeptr pllGetOrientedNodePointer (pllInstance * pInst, nodeptr p);
@@ -1713,11 +1663,6 @@ nodeptr pllGetOrientedNodePointer (pllInstance * pInst, nodeptr p);
 extern char * pllReadFile (const char *, long *);
 extern int * pllssort1main (char ** x, int n);
 extern node ** pllGetInnerBranchEndPoints (pllInstance * tr);
-
-/* parsimony functions  */
-unsigned int evaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, boolean full );
-void newviewParsimony(pllInstance *tr, partitionList *pr, nodeptr  p);
-
 
 /* ---------------- */
 

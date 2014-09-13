@@ -44,7 +44,7 @@ namespace ProtModelFun
 	ProtModel::MTREV_T,
 	ProtModel::WAG_T,
 	ProtModel::RTREV_T,
-	// ProtModel::LG4_T, 
+	ProtModel::LG4_T, 
 	ProtModel::CPREV_T,
 	ProtModel::VT_T,
 	ProtModel::BLOSUM62_T,
