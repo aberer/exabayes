@@ -62,6 +62,10 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 {
   auto result = std::vector<unique_ptr<AbstractProposal> >{} ; 
 
+  auto numNodeAges = traln.getNumberOfInnerNodes(true);
+
+  tout << SHOW(numNodeAges) << std::endl; 
+  
   auto&& proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
   for(auto& p : proposals)
     {     
@@ -89,7 +93,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	case ProposalType::DIVTIME_SLIDER: 
 	  {
 	    // tout << "init: divtimeslider " << std::endl; 
-	    proposal = make_unique<DivTimeSlider>(); 
+	    proposal = make_unique<DivTimeSlider>(DivTimeSlider::defaultWeight / numNodeAges); 
 	  }
 	  break; 
 	case ProposalType::ST_NNI: 
@@ -211,7 +215,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  proposal = make_unique< DistributionBranchLength<WeibullProposer> >();
 	  break; 
 	case ProposalType::DIV_TIME_DIRICH:
-	  proposal = make_unique<DivTimeProposal>(); 
+	  proposal = make_unique<DivTimeProposal>(DivTimeProposal::defaultWeight / numNodeAges ); 
 	  break; 
 	case ProposalType::BIASED_BL_MULT: 
 	  proposal = make_unique<BiasedBranchMult>(initBranchLengthMultiplier);

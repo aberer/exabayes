@@ -6,6 +6,9 @@
 
 class DivTimeSlider : public AbstractProposal
 { 
+public:                         // STATIC 
+  const static double defaultWeight;  
+
 public:				// INHERITED 
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
@@ -19,7 +22,7 @@ public:				// INHERITED
   virtual void writeToCheckpointCore(std::ostream &out)const   ;  
   virtual void readFromCheckpointCore(std::istream &in) ; 
 
-  DivTimeSlider();
+  DivTimeSlider(double weight);
   virtual ~DivTimeSlider(){}
 
 protected:

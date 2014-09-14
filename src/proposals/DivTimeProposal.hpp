@@ -7,7 +7,7 @@
 class DivTimeProposal : public AbstractProposal
 {
 public: 
-  DivTimeProposal( ) ; 
+  DivTimeProposal(double weight ) ; 
 
   /**
      @brief determines the proposal, applies it to the tree / model, updates prior and hastings ratio
@@ -55,6 +55,10 @@ public:
 
   virtual void printParams(std::ostream &out)  const {} 
 
+
+public:                         // STATIC 
+  static double defaultWeight; 
+  
 protected:   
   // probably needs something like 
   // std::set<TimeBranchLength>  _backup

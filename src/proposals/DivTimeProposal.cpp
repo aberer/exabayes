@@ -1,8 +1,13 @@
 #include "DivTimeProposal.hpp"
 
+// okay...just noticed, that this class is not used ;-) 
 
-DivTimeProposal::DivTimeProposal(   )  
-  : AbstractProposal(Category::BRANCH_LENGTHS, "divTimeDirich", 10., 0,0, true)
+double DivTimeProposal::defaultWeight = 10.; 
+
+// the default weight (10?) be divided by the number of proposals, we have. 
+
+DivTimeProposal::DivTimeProposal( double weight  )  
+  : AbstractProposal(Category::BRANCH_LENGTHS, "divTimeDirich", weight,  0,0, true)
     // TODO: should be a 
 {
   // todo initialize parameters, e.g. a parameter to tune the dirichlet proposal

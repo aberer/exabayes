@@ -1,7 +1,12 @@
 #include "DivTimeSlider.hpp"
 
-DivTimeSlider::DivTimeSlider() :
-		AbstractProposal(Category::DIVERGENCE_TIMES, "divTimeSlider", 10, 1e-5,
+
+const double DivTimeSlider::defaultWeight = 10.;  
+
+// see DivTimeProposal for why we want a weight here . 
+
+DivTimeSlider::DivTimeSlider(double weight) :
+		AbstractProposal(Category::DIVERGENCE_TIMES, "divTimeSlider", weight, 1e-5,
 				1e2, false), _savedContent()
 {
 }

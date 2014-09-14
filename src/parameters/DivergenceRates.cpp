@@ -114,7 +114,7 @@ void DivergenceRates::printAllComponentNames(std::ostream &fileHandle,
 		bool isFirst = true;
 		for (auto &p : _partitions)
 		{
-			fileHandle << (isFirst ? "" : ",") << p;
+                  fileHandle << (isFirst ? "" : ",") << p;
 			isFirst = false;
 		}
 		fileHandle << "}(" << i << ")";

@@ -4,8 +4,8 @@
 DivergenceTimes::DivergenceTimes(nat id, nat idOfMyKind,
 		std::vector<nat> partitions, NodeAge age) :
 		AbstractParameter(Category::DIVERGENCE_TIMES, id, idOfMyKind,
-				partitions, 0), _nodeAge
-		{ age }, _rootNode(false)
+				partitions, 0), 
+                _rootNode(false), _nodeAge { age }
 {
 }
 
