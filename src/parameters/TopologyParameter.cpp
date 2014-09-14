@@ -1,7 +1,7 @@
 #include "TopologyParameter.hpp"
 
 
-void TopologyParameter::applyParameter(TreeAln& traln , const ParameterContent &content) const
+void TopologyParameter::applyParameter(TreeAln& traln , const ParameterContent &content)
 {
   traln.unlinkTree();
   for(auto &b : content.topology)

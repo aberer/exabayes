@@ -20,6 +20,9 @@ public:
   virtual void deserialize( std::istream &in )  ; 
   virtual void serialize( std::ostream &out) const;   
 
+  void setHeight(double height) { _height = height; }
+  double getHeight(void) const { return _height; }
+
 private: 
   double _height;  
 };

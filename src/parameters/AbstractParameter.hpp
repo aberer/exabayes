@@ -29,7 +29,7 @@ public:
   /** 
       @brief applies the parameter content to the tree 
    */ 
-  virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const = 0; 
+  virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) = 0;
   virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const {}
   /** 
       @brief extracts the parameter 
@@ -69,7 +69,7 @@ public:
   AbstractPrior* getPrior() const { return _prior.get(); }
   bool isPrintToParamFile() const {return _printToParamFile; }
 
-  std::ostream&  printShort(std::ostream& out) const;  
+  virtual std::ostream&  printShort(std::ostream& out) const;
   friend std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs); 
   virtual AbstractParameter* clone() const = 0 ; 
 

@@ -163,8 +163,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 
       if(CategoryFuns::inUniqueByDefault(cat))
 	{
-	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? traln.getNumberOfInnerNodes(true)  : 1; 
-
+	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? (traln.getNumberOfInnerNodes(true))  : 1;
 	  for(int i = 0; i < numNeeded; ++i )
             {
               ++highestParamId; 
@@ -203,8 +202,11 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
       var->setPrior(make_unique<UniformPrior>(0,10)); 
       break; 
     case Category::DIVERGENCE_RATES: 
-      var->setPrior(make_unique<DirichletPrior>(std::vector<double>{1,1,1,1,1})); 
+    {
+      std::vector<double> cats(2*traln.getNumberOfTaxa() - 2, 1.0);
+      var->setPrior(make_unique<DirichletPrior>(cats));
       break; 
+    }
     case Category::BRANCH_LENGTHS: 
       var->setPrior( make_unique<ExponentialPrior>(10.0 ));
       break; 
@@ -315,14 +317,16 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterLi
 
   if(doingDivRates)
     {
-      // the rates actually do not really need the divergence times as secondary paramters, correct? 
-
-      // as we said yesterday, they can be proposed independently of the times 
-
-      // things would get really cluttered...but if you want, just add the *all* divergnece times parameters here, if you need them in the divtimes e
-
-      // auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
-      // proposal->addSecondaryParameter((*tp)->getId()); 
+//      auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; });
+//      proposal->addSecondaryParameter((*tp)->getId());
+      for(auto &p : allParameters)
+	{
+	  if(p->getCategory() == Category::DIVERGENCE_TIMES)
+	    {
+	      // now add all *other* div time parameters as secondary parameters
+	      proposal->addSecondaryParameter(p->getId());
+	    }
+	}
     }
   else if(doingDivTimes)
     {

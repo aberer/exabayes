@@ -1,6 +1,4 @@
 #include "ParameterContent.hpp"
-// #include "Branch.hpp"
-
 #include "GlobalVariables.hpp"
 
 #include <limits>
@@ -10,13 +8,14 @@
 
 ParameterContent::ParameterContent(std::vector<double> valuesI, std::vector<BranchPlain> topoI,
 				   std::vector<BranchLength> blI, std::vector<ProtModel>  pmI,
-				   std::vector<NodeAge> nI 
+				   std::vector<NodeAge> nI, std::vector<nat> rA
 				   ) 
   : values{valuesI}
   , topology{topoI}
   , branchLengths{blI}
   , protModel{pmI}
   , nodeAges{nI}
+  , rateAssignments{rA}
   {
   }  
 
@@ -36,8 +35,11 @@ void ParameterContent::deserialize( std::istream &in )
   for(auto &v :  protModel)
     v = ProtModel(cRead<int>(in));
 
-  for(auto &v : nodeAges)
-    v.deserialize(in); 
+  for(auto &b : nodeAges)
+    b.deserialize(in);
+  
+  for(auto &r : rateAssignments)
+      r = cRead<nat>(in);
 } 
 
 
@@ -61,8 +63,13 @@ void ParameterContent::serialize( std::ostream &out) const
       cWrite<int>(out,tmp); 
     }
 
-  for(auto &v : nodeAges )
-    v.serialize(out); 
+  for(auto &b : nodeAges)
+    {
+      b.serialize(out);
+    }
+
+  for(auto &r : rateAssignments)
+    cWrite(out, r);
 }   
 
 
@@ -72,34 +79,34 @@ std::ostream& operator<<(std::ostream& out, const ParameterContent &rhs)
   auto isFirst = bool{true}; 
  
 
-  if(rhs.values.size() > 0)
+  if (rhs.values.size() > 0)
     {
-      for(auto &v : rhs.values)
+		for (auto &v : rhs.values)
 	{
-	  out << (isFirst ? "" : ","  )<< v; 
+			out << (isFirst ? "" : ",") << v;
 	  isFirst = false; 
 	}
     }
-  else if(rhs.branchLengths.size( )> 0)
+	else if (rhs.branchLengths.size() > 0)
     {
-      for(auto &b : rhs.branchLengths)
+		for (auto &b : rhs.branchLengths)
 	{
-	  out << (isFirst ? "" : ",") << b ; 
+			out << (isFirst ? "" : ",") << b;
 	  isFirst = false; 
 	}
     }
-  else if(rhs.topology.size() > 0)
+	else if (rhs.topology.size() > 0)
     {
-      for(auto &b : rhs.topology)
+		for (auto &b : rhs.topology)
 	{
 	  out << (isFirst ? "" : ",") << b; 
 	  isFirst = false; 
 	}
     }
-  else if(rhs.protModel.size()  > 0)
+	else if (rhs.protModel.size() > 0)
     {
-      for(auto &p : rhs.protModel)
-      	out << p ; 
+		for (auto &p : rhs.protModel)
+			out << p;
     }
   else     
     assert(0); 

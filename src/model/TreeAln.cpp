@@ -42,6 +42,7 @@ TreeAln::TreeAln(size_t numTax, bool useSEV)
   , _execModel{}
   , _parsimonyScore{}
   , _isSaveMemorySEV(useSEV)
+  , _root(0,0)
 {
   initialize(numTax); 		// must be first 
 }
@@ -61,6 +62,7 @@ TreeAln::TreeAln( const TreeAln& rhs)
   , _execModel{}
   , _parsimonyScore{}
   , _isSaveMemorySEV(rhs._isSaveMemorySEV)
+  , _root(rhs._root)
 {
   initialize(rhs.getNumberOfTaxa()); // must be first 
   
@@ -102,6 +104,7 @@ void swap(TreeAln& lhs, TreeAln& rhs )
   swap(lhs._parsimonyScore, rhs._parsimonyScore	);
 
   swap(lhs._isSaveMemorySEV, rhs._isSaveMemorySEV) ; 
+  swap(lhs._root, rhs._root) ;
 }
 
 
@@ -471,7 +474,6 @@ void TreeAln::unlinkTree()
 nodeptr TreeAln::getUnhookedNode(int number)
 {  
   nodeptr p = _tr.nodep[number]; 
-
   if(isTipNode(number) )
     {
       assert(p->back == NULL); 
@@ -609,8 +611,9 @@ void TreeAln::setBranch(const BranchLengths& branch, const std::vector<AbstractP
   for(auto &param : params)
     {
       auto length = branch.getLengths().at(param->getIdOfMyKind()).getValue();
-      for(auto &partition : param->getPartitions())
+      for(auto &partition : param->getPartitions()) {
 	p->z[partition] = p->back->z[partition] = length; 
+    }
     }
 }
 
@@ -1038,11 +1041,38 @@ bool TreeAln::exists(const BranchPlain &branch )const
 		     [&](const BranchPlain &b ){ return b.getSecNode() == branch.getSecNode(); }); 
 } 
 
-
+/////////////////////
+// rooted topology //
+/////////////////////
 
 nat TreeAln::getNumberOfInnerNodes(bool rooted) const 
 {
-  return getNumberOfNodes()  - getNumberOfTaxa() 
-    + ( rooted ? 1 : 0 )    ;   
+	return getNumberOfNodes() - getNumberOfTaxa() + (rooted ? 1 : 0);
 }
 
+bool TreeAln::isRooted(void) const
+{
+	return (_root.getPrimNode() + _root.getSecNode() > 0);
+}
+
+BranchPlain TreeAln::getRootBranch() const
+{
+	return BranchPlain(_root);
+}
+
+void TreeAln::setRootBranch(const BranchPlain &rb)
+{
+	_root.setPrimNode(rb.getPrimNode());
+	_root.setSecNode(rb.getSecNode());
+}
+
+bool TreeAln::isRootChild(const nat nodeId) const
+{
+	return (isRooted()
+			&& (nodeId == _root.getPrimNode() || nodeId == _root.getSecNode()));
+}
+
+bool TreeAln::isRootBranch(const BranchPlain &rb) const
+{
+	return (rb == _root || rb == _root.getInverted());
+}

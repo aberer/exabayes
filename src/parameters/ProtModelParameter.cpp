@@ -2,7 +2,7 @@
 #include "ProtModel.hpp"
 
 
-void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content) const 
+void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content)
 {
   for(auto &m : _partitions)
     {

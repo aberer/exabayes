@@ -12,7 +12,7 @@
 // #include "axml.h"
 
 
-void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
+void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content)
 {
   auto tmp = content.values; 
 

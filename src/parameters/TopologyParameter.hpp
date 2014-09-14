@@ -13,7 +13,7 @@ public:
     _printToParamFile = false; 
   }
 
-  virtual void applyParameter(TreeAln& traln , const ParameterContent &content) const; 
+  virtual void applyParameter(TreeAln& traln , const ParameterContent &content);
   virtual ParameterContent extractParameter(const TreeAln &traln )  const;   
   virtual AbstractParameter* clone () const {return new TopologyParameter(*this); } 
 
