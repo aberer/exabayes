@@ -8,14 +8,14 @@
 #include "AbstractAlphabet.hpp"
 
 
-class PhylipAlignment
+class AlignmentPLL
 {
 public:
-  PhylipAlignment(); 
-  PhylipAlignment(const PhylipAlignment& rhs) = delete; 
-  PhylipAlignment& operator=(const PhylipAlignment &rhs) = delete; 
-  PhylipAlignment(PhylipAlignment&& rhs); 
-  PhylipAlignment& operator=( PhylipAlignment &&rhs) ; 
+  AlignmentPLL(); 
+  AlignmentPLL(const AlignmentPLL& rhs) = delete; 
+  AlignmentPLL& operator=(const AlignmentPLL &rhs) = delete; 
+  AlignmentPLL(AlignmentPLL&& rhs); 
+  AlignmentPLL& operator=( AlignmentPLL &&rhs) ; 
   
   
   void substituteBases () ;
@@ -23,7 +23,7 @@ public:
   void initAln(std::string alnFile, int fileType);
   void initPartitions(std::string partitionFile); 
   void print() const ;
-  virtual ~PhylipAlignment(); 
+  virtual ~AlignmentPLL(); 
   void writeToFile( std::string fileName) const ; 
   void writeHeader(std::ofstream &out) const ; 
 
@@ -36,6 +36,9 @@ public:
   void writeWeights(std::ofstream &out) const;  
 
   void createDummyPartition(Alphabet alphabet) ; 
+
+
+  static int guessFormat(std::string file); 
 
 private: 			// ATTRIBUTES 
   pllAlignmentData* _pllAlignmentData; 

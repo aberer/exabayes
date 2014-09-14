@@ -1,7 +1,9 @@
-#include "PhylipAlignment.hpp"
+#include "AlignmentPLL.hpp"
 #include "GlobalVariables.hpp"
 
 #include <time.h> 
+
+#include <cwctype>
 
 #include <cstdio>
 #include <cassert>
@@ -77,14 +79,14 @@ static const char PLL_MAP_AA[256] =
 
 
 
-PhylipAlignment::PhylipAlignment()
+AlignmentPLL::AlignmentPLL()
   : _pllAlignmentData{nullptr}
   , _partitions{nullptr}
 {
 } 
 
 
-PhylipAlignment::PhylipAlignment(PhylipAlignment&& rhs)
+AlignmentPLL::AlignmentPLL(AlignmentPLL&& rhs)
   : _pllAlignmentData{rhs._pllAlignmentData}
   , _partitions{rhs._partitions}
 {
@@ -93,7 +95,7 @@ PhylipAlignment::PhylipAlignment(PhylipAlignment&& rhs)
 }
 
 
-PhylipAlignment& PhylipAlignment::operator=( PhylipAlignment &&rhs) 
+AlignmentPLL& AlignmentPLL::operator=( AlignmentPLL &&rhs) 
 {
   if(this == &rhs)
     return *this; 
@@ -110,7 +112,7 @@ PhylipAlignment& PhylipAlignment::operator=( PhylipAlignment &&rhs)
 }
 
 
-void PhylipAlignment::initAln(std::string alnFile, int fileType) 
+void AlignmentPLL::initAln(std::string alnFile, int fileType) 
 {
   // properly initialize 
   errno = 0; 
@@ -142,7 +144,7 @@ void PhylipAlignment::initAln(std::string alnFile, int fileType)
 }
 
 
-void PhylipAlignment::substituteBases () 
+void AlignmentPLL::substituteBases () 
 {
   auto numSeq = _pllAlignmentData->sequenceCount; 
 
@@ -178,7 +180,7 @@ void PhylipAlignment::substituteBases ()
 }
 
 
-void PhylipAlignment::initPartitions(std::string partitionFile)
+void AlignmentPLL::initPartitions(std::string partitionFile)
 {
   // guess number of partitions 
 
@@ -207,7 +209,7 @@ void PhylipAlignment::initPartitions(std::string partitionFile)
 }
 
 
-PhylipAlignment::~PhylipAlignment()
+AlignmentPLL::~AlignmentPLL()
 {
   if(_pllAlignmentData != nullptr)
     {
@@ -234,13 +236,13 @@ PhylipAlignment::~PhylipAlignment()
 
 
 
-void PhylipAlignment::print() const 
+void AlignmentPLL::print() const 
 {
   pllAlignmentDataDumpConsole(_pllAlignmentData) ;
 }
 
 
-void PhylipAlignment::writeHeader(std::ofstream &out) const 
+void AlignmentPLL::writeHeader(std::ofstream &out) const 
 {
   auto fileId = std::string{ "BINARY"} ; 
   myWrite(out, fileId.c_str(), fileId.size() ); 
@@ -251,7 +253,7 @@ void PhylipAlignment::writeHeader(std::ofstream &out) const
 }
 
 
-void PhylipAlignment::writeToFile( std::string fileName) const 
+void AlignmentPLL::writeToFile( std::string fileName) const 
 {
   auto numPart = _partitions->numberOfPartitions; 
   auto numTax = _pllAlignmentData->sequenceCount; 
@@ -344,7 +346,7 @@ void PhylipAlignment::writeToFile( std::string fileName) const
 
 
 
-void PhylipAlignment::writeWeights(std::ofstream &out) const 
+void AlignmentPLL::writeWeights(std::ofstream &out) const 
 {
   auto weights = _pllAlignmentData->siteWeights; 
   auto seqLen = _pllAlignmentData->sequenceLength; 
@@ -397,7 +399,7 @@ void PhylipAlignment::writeWeights(std::ofstream &out) const
 }
 
 
-void PhylipAlignment::createDummyPartition(Alphabet alphabet) 
+void AlignmentPLL::createDummyPartition(Alphabet alphabet) 
 {
   // get a unique file name 
   srand((unsigned int)(time(NULL))) ; 		// MEH 
@@ -425,4 +427,27 @@ void PhylipAlignment::createDummyPartition(Alphabet alphabet)
 
   remove(fn.c_str()); 
 } 
+
+
+int AlignmentPLL::guessFormat(std::string file)
+{
+  auto &&in = std::ifstream(file); 
+  auto line = std::string{""};
+  getline(in, line); 
+  
+  auto iter = begin(line); 
+  auto lineEnd = end(line); 
+
+  while(iter != lineEnd && iswspace(*iter))
+    ++iter ; 
+
+  // first non-whitespace character must be > for fasta
+  if(*iter == '>')
+    return PLL_FORMAT_FASTA; 
+  else
+    return PLL_FORMAT_PHYLIP; 
+
+  // TODO much more could be done ...
+}
+
 

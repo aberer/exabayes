@@ -17,9 +17,8 @@ public:
   {}
   virtual ~NodeAge(){}
 
-  // TODO 
-
-  // overwirte serialize/deserialize 
+  virtual void deserialize( std::istream &in )  ; 
+  virtual void serialize( std::ostream &out) const;   
 
 private: 
   double _height;  

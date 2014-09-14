@@ -28,7 +28,7 @@
 #include "FullCachePolicy.hpp"
 #include "NoCachePolicy.hpp"
 
-#include "PhylipAlignment.hpp"
+#include "AlignmentPLL.hpp"
 
 using std::endl; 
 using std::vector;
@@ -584,7 +584,7 @@ std::string SampleMaster::getOrCreateBinaryFile() const
       if( _plPtr->isGlobalMaster() )
 	{
 
-	  auto &&phyAln = PhylipAlignment{} ; 
+	  auto &&phyAln = AlignmentPLL{} ; 
 
 	  if(std::ifstream(binaryAlnFile))
 	    {
@@ -592,7 +592,8 @@ std::string SampleMaster::getOrCreateBinaryFile() const
 	      remove(std::string(binaryAlnFile).c_str()); 
 	    }
 
-	  phyAln.initAln(_cl.getAlnFileName(), PLL_FORMAT_PHYLIP);
+          auto format = AlignmentPLL::guessFormat(_cl.getAlnFileName());
+	  phyAln.initAln(_cl.getAlnFileName(), format);
 
 	  if(not haveModelFile)
 	    {

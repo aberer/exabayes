@@ -1,12 +1,10 @@
-// #include "PhylipParser.hpp"
-
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
 
-#include "PhylipAlignment.hpp"
+#include "AlignmentPLL.hpp"
 
 #include "GlobalVariables.hpp"
 
@@ -118,8 +116,9 @@ int main(int argc, char **argv)
   
   bool useSinglePartition =  modelFile.compare("") == 0; 
 
-  auto &&phyAln = PhylipAlignment{} ; 
-  phyAln.initAln(alignmentFile, PLL_FORMAT_PHYLIP);
+  auto format = AlignmentPLL::guessFormat(alignmentFile);
+  auto &&phyAln = AlignmentPLL{} ; 
+  phyAln.initAln(alignmentFile, format);
 
   if(useSinglePartition)
     phyAln.createDummyPartition(getTypeFromString(singlePartitionModel)); 
