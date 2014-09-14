@@ -8,6 +8,9 @@ class DivergenceRates: public AbstractParameter
 public:
 	DivergenceRates(nat id, nat idOfMyKind, std::vector<nat> partitions,
 			nat numberOfTaxa);
+
+        DivergenceRates(const DivergenceRates& rhs);  
+  
 	virtual ~DivergenceRates()
 	{
 	}

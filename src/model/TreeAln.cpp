@@ -611,9 +611,10 @@ void TreeAln::setBranch(const BranchLengths& branch, const std::vector<AbstractP
   for(auto &param : params)
     {
       auto length = branch.getLengths().at(param->getIdOfMyKind()).getValue();
-      for(auto &partition : param->getPartitions()) {
-	p->z[partition] = p->back->z[partition] = length; 
-    }
+      for(auto &partition : param->getPartitions()) 
+        {
+          p->z[partition] = p->back->z[partition] = length; 
+        }
     }
 }
 

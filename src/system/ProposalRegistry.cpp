@@ -64,8 +64,6 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 
   auto numNodeAges = traln.getNumberOfInnerNodes(true);
 
-  tout << SHOW(numNodeAges) << std::endl; 
-  
   auto&& proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
   for(auto& p : proposals)
     {     

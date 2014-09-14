@@ -19,6 +19,18 @@ DivergenceRates::DivergenceRates(nat id, nat idOfMyKind,
 	}
 }
 
+
+
+DivergenceRates::DivergenceRates(const DivergenceRates& rhs)
+  : AbstractParameter(rhs)
+  , _rateAssignments{rhs._rateAssignments}
+  , _rates{rhs._rates}    
+  , _directedBranches{rhs._directedBranches}
+{
+} 
+
+
+
 void DivergenceRates::initializeParameter(TreeAln& traln,
 		const ParameterContent &content)
 {
@@ -32,11 +44,7 @@ void DivergenceRates::initializeParameter(TreeAln& traln,
 
 AbstractParameter* DivergenceRates::clone() const
 {
-	DivergenceRates * ndr = new DivergenceRates(*this);
-	ndr->setRates(_rates);
-	ndr->_rateAssignments = _rateAssignments;
-	ndr->_directedBranches = _directedBranches;
-	return ndr;
+  return new DivergenceRates(*this);; 
 }
 
 nat vmax(std::vector<nat> & v)

@@ -79,6 +79,7 @@ void DivergenceTimes::initializeParameter(TreeAln& traln,
 	_rootNode = !(_nodeAge.getPrimNode() + _nodeAge.getSecNode());
 }
 
+
 void DivergenceTimes::applyParameter(TreeAln& traln,
 		const ParameterContent &content)
 {
