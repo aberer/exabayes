@@ -35,21 +35,23 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, log_
 
   auto haveUniformPrior = dynamic_cast<UniformPrior*>(blParam->getPrior()) != nullptr;
 
+  auto meanSubstRate = blParam->getMeanSubstitutionRate(); 
+
   for(auto &b : newBranches)
     {
       auto initLength = b.getLength();
-      initTL += b.getInterpretedLength( blParam);
+      initTL += b.toMeanSubstitutions(meanSubstRate); 
 
-      b.setLength(  pow(initLength, treeScaler) ); 
+      b.setLength(  InternalBranchLength(pow(initLength.getValue(), treeScaler) )); 
       
       if( not BoundsChecker::checkBranch(b))
 	BoundsChecker::correctBranch(b);
 
-      double realScaling = log(b.getLength()) / log(initLength); 
+      double realScaling = log(b.getLength().getValue()) / log(initLength.getValue()); 
 
       hastings *= log_double::fromAbs(realScaling); 
 
-      double tmp = b.getInterpretedLength( blParam); 
+      double tmp = b.toMeanSubstitutions(meanSubstRate) ; 
       newTL += tmp;
       
       // correct? 

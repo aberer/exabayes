@@ -53,7 +53,7 @@ InsertionResult EvalOptDragged::getResult (LikelihoodEvaluator &eval, TreeAln &t
 InsertionResult EvalOptThree::getResult (LikelihoodEvaluator &eval, TreeAln &traln, const BranchPlain& insertBranch, const BranchPlain& prunedSubtree, const BranchPlain & draggedBranch, const std::vector<AbstractParameter*> &params) const 
 {
   // tout << SHOW(prunedSubtree) << SHOW(insertBranch) << std::endl; 
-  auto branches = std::vector<BranchPlain>{ prunedSubtree, draggedBranch, prunedSubtree.getThirdBranch(traln, draggedBranch ) }; 
+  auto branches = std::vector<BranchPlain>{ prunedSubtree, draggedBranch, traln.getThirdBranch(prunedSubtree, draggedBranch ) }; 
   
   bool converged = false; 
   nat ctr = 0; 
@@ -103,8 +103,8 @@ InsertionResult EvalOptThree::getResult (LikelihoodEvaluator &eval, TreeAln &tra
 
 	      // tout << "OPT: " << b << "\t" << b.getInterpretedLength(traln, p ) << std::endl; 
 
-	      auto oldLen = traln.getBranch(b.toPlain(), p).getInterpretedLength( p); 
-	      auto newLen = b.getInterpretedLength(p); 
+	      auto oldLen = traln.getBranch(b, p).toMeanSubstitutions( p->getMeanSubstitutionRate()); 
+	      auto newLen = b.toMeanSubstitutions(p->getMeanSubstitutionRate()); 
 	      
 	      converged &=  ( std::fabs((oldLen / newLen )  -1. ) < 1.e-1) ; 
 

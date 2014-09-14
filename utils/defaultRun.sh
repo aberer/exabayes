@@ -2,7 +2,7 @@
 
 topdir=$(dirname  $0 )/../
 
-# seed=$RANDOM			# 
+seed=$RANDOM			# 
 seed=12345
 
 # src/proposals/

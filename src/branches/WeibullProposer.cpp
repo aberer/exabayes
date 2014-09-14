@@ -2,6 +2,7 @@
 #include "brent.hpp"
 #include "Density.hpp"
 #include <functional>
+#include "AbstractParameter.hpp"
 
 #include "Randomness.hpp"
 #include <cmath>
@@ -70,9 +71,7 @@ WeibullProposer::WeibullProposer(double nrOpt, double nrd1, double nrd2, double 
 BranchLength WeibullProposer::proposeBranch(BranchPlain b, TreeAln& traln, AbstractParameter* param, Randomness& rand) const 
 {
   auto proposedVal = rand.drawRandWeibull(_lambda, _k); 
-  auto bl = b.toBlDummy();
-  bl.setConvertedInternalLength( param, proposedVal); 
-  return bl; 
+  return BranchLength(b, InternalBranchLength::fromAbsolute(proposedVal, param->getMeanSubstitutionRate()));
 } 
 
 log_double WeibullProposer::getLogProbability(double val) const 

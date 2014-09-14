@@ -78,7 +78,7 @@ void AminoModelJump::resetState(TreeAln &traln)
 	  for(auto &b : traln.extractBranches(param))
 	    {
 	      auto content = prior->getInitialValue(); 
-	      b.setConvertedInternalLength(param, content.values[0]); 
+	      b.setLength(InternalBranchLength::fromAbsolute(content.values[0], param->getMeanSubstitutionRate())); 
 	      if(not BoundsChecker::checkBranch(b))
 		BoundsChecker::correctBranch(b); 
 	      traln.setBranch(b,param); 

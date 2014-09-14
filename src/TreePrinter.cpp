@@ -1,7 +1,12 @@
 #include <cassert>
 
-#include "Branch.hpp"
+#include "AbstractParameter.hpp"
+
+// #include "Branch.hpp"
 #include "TreePrinter.hpp"
+
+#include "BranchLength.hpp"
+
 
 TreePrinter::TreePrinter(bool withBranchLengths_I , bool withInternalNodes_I , bool withRealNames_I) 
   : withBranchLengths(withBranchLengths_I)
@@ -42,7 +47,8 @@ void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss,
   if(params.size() == 1 )
     {
       auto param = params[0]; 
-      ss << ":" << traln.getBranch(p,param).getInterpretedLength( param); 
+      // ss << ":" << traln.getBranch(p,param).getInterpretedLength( param); 
+      ss << ":" << traln.getBranch(p,param).toMeanSubstitutions(param->getMeanSubstitutionRate()); 
     }
   else 
     {
@@ -50,7 +56,8 @@ void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss,
       bool isFirst = true ; 
       for(auto param : params)
 	{
-	  ss << (isFirst ? "" : ",")  << traln.getBranch(p,param).getInterpretedLength( param); 
+	  // ss << (isFirst ? "" : ",")  << traln.getBranch(p,param).getInterpretedLength( param); 
+	  ss << (isFirst ? "" : ",") << traln.getBranch(p,param).toMeanSubstitutions(param->getMeanSubstitutionRate()); 
 	  isFirst = false; 
 	}
       ss << "]"; 

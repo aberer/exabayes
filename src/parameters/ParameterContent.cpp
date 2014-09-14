@@ -1,5 +1,5 @@
 #include "ParameterContent.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
 
 #include "GlobalVariables.hpp"
 
@@ -9,11 +9,14 @@
 
 
 ParameterContent::ParameterContent(std::vector<double> valuesI, std::vector<BranchPlain> topoI,
-				   std::vector<BranchLength> blI, std::vector<ProtModel>  pmI) 
+				   std::vector<BranchLength> blI, std::vector<ProtModel>  pmI,
+				   std::vector<NodeAge> nI 
+				   ) 
   : values{valuesI}
   , topology{topoI}
   , branchLengths{blI}
   , protModel{pmI}
+  , nodeAges{nI}
   {
   }  
 
@@ -25,16 +28,16 @@ void ParameterContent::deserialize( std::istream &in )
     v = cRead<double>(in); 
 
   for(auto &b : branchLengths)
-    {
-      b.deserialize(in);
-      // tout << "DESER " << b << std::endl; 
-    }
-
+    b.deserialize(in);
+ 
   for(auto &b : topology)
     b.deserialize(in); 
   
   for(auto &v :  protModel)
     v = ProtModel(cRead<int>(in));
+
+  for(auto &v : nodeAges)
+    v.deserialize(in); 
 } 
 
 
@@ -57,6 +60,9 @@ void ParameterContent::serialize( std::ostream &out) const
       auto tmp = int(v);
       cWrite<int>(out,tmp); 
     }
+
+  for(auto &v : nodeAges )
+    v.serialize(out); 
 }   
 
 

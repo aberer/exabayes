@@ -1,4 +1,4 @@
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "TbrMove.hpp"
 #include "Path.hpp"
 
@@ -12,12 +12,15 @@ TbrMove::TbrMove(const TreeAln &traln, const BranchPlain &bisected, const Branch
   auto empty = BranchPlain{}; 
 
   _moveA = 
-    not insertA.equalsUndirected(empty) 
+    // not insertA.equalsUndirected(empty) 
+    not (insertA == empty || insertA.getInverted() == empty)
     ? SprMove(traln, bisected,insertA)
     : SprMove(); 
   
   _moveB = 
-    not insertB.equalsUndirected(empty) 
+    not 
+    // insertB.equalsUndirected(empty) 
+    (insertB == empty || insertB.getInverted() == empty ) 
     ? SprMove(traln, bisected.getInverted(),insertB)
     : SprMove();
 }
@@ -132,7 +135,7 @@ std::vector<BranchPlain> TbrMove::getBranchesToPropose(const TreeAln& traln, Mov
 	  {
 	    auto a = _moveA.getMovingSubtree(traln); 
 	    auto b = _moveB.getMovingSubtree(traln); 
-	    assert(a.equalsUndirected(b)); 
+	    assert( a == b || a.getInverted() == b ); 
 	    result.push_back(b);
 	  }
 	  break; 
@@ -144,7 +147,7 @@ std::vector<BranchPlain> TbrMove::getBranchesToPropose(const TreeAln& traln, Mov
     }
 
   for(auto &elem : result )
-    assert(elem.exists(traln)); 
+    assert(traln.exists(elem)); 
     
   assert(std::unordered_set<BranchPlain>(begin(result), end(result)).size() == result.size() ); 
 

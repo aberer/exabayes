@@ -2,6 +2,7 @@
 #include "LikelihoodEvaluator.hpp"
 #include "BoundsChecker.hpp"
 #include "AbstractPrior.hpp"
+#include "BranchLength.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
   : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 5.,  0,0, false)
@@ -56,11 +57,11 @@ BranchPlain NodeSlider::proposeOtherBranch(const BranchPlain &firstBranch, const
 
 void NodeSlider::prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const 
 {
-  nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
+  nat middleNode = getCommonNode(oneBranch,otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
   
   auto b = BranchPlain(middleNode, otherNode); 
-  nodeptr p = b.findNodePtr(traln);    
+  nodeptr p = traln.findNodePtr(b);    
 
   eval.invalidateArray( traln, p->number); 
 }
@@ -74,10 +75,10 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, log_double &ha
 
   // TODO outer branches have a lower probability of getting drawn? =/ 
   oneBranch = traln.getBranch(proposeBranch(traln, rand),param); 
-  otherBranch = traln.getBranch(proposeOtherBranch(oneBranch.toPlain(), traln, rand),param); 
+  otherBranch = traln.getBranch(proposeOtherBranch(oneBranch, traln, rand),param); 
 
-  double oldA = oneBranch.getLength(),
-    oldB = otherBranch.getLength();
+  auto oldA = oneBranch.getLength().getValue(),
+    oldB = otherBranch.getLength().getValue();
 
   double bothZ = oldA * oldB; 
 
@@ -89,7 +90,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, log_double &ha
   if(not BoundsChecker::checkBranch(testBranch))
     {
       BoundsChecker::correctBranch(testBranch); 
-      newZ = pow(testBranch.getLength( ),2); 
+      newZ = pow(testBranch.getLength( ).getValue(),2); 
       drawnMultiplier = log(newZ)   / log(bothZ); 
     }
 
@@ -102,14 +103,14 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, log_double &ha
   if(not BoundsChecker::checkBranch(testBranch))
     {
       BoundsChecker::correctBranch(testBranch); 
-      newA = testBranch.getLength(); 
+      newA = testBranch.getLength().getValue(); 
       problemWithA = true; 
     }
   testBranch.setLength(newB); 
   if(not BoundsChecker::checkBranch(testBranch))
     {
       BoundsChecker::correctBranch(testBranch); 
-      newB = testBranch.getLength(); 
+      newB = testBranch.getLength().getValue(); 
       assert(not problemWithA); // should have been detected, when we checked the multiplier 
     }
 
@@ -118,7 +119,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, log_double &ha
   // tout << "changing " << oneBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
   
-  auto lnPrA = param->getPrior()->getUpdatedValue(oneBranch.getLength(), testBranch.getLength(), param);
+  auto lnPrA = param->getPrior()->getUpdatedValue(oneBranch.getLength().getValue(), testBranch.getLength().getValue(), param);
 
   // auto lnPrA = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(param) } } )
   //   /   param->getPrior()->getLogProb( ParameterContent{{ oneBranch.getInterpretedLength(param) } } ); 
@@ -128,7 +129,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, log_double &ha
   // tout << "changing " << otherBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
 
-  auto lnPrB = param->getPrior()->getUpdatedValue(otherBranch.getLength(), testBranch.getLength(), param); 
+  auto lnPrB = param->getPrior()->getUpdatedValue(otherBranch.getLength().getValue(), testBranch.getLength().getValue(), param); 
 
   // auto lnPrB = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(param) } } )
   //   /   param->getPrior()->getLogProb( ParameterContent{{ otherBranch.getInterpretedLength(param) } } ); 
@@ -141,7 +142,7 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, log_double &ha
 
 void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
+  nat middleNode = getCommonNode(oneBranch,otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
   assert(_primParamIds.size() == 1); 
   auto b = BranchPlain(middleNode, otherNode); 
@@ -180,6 +181,6 @@ AbstractProposal* NodeSlider::clone() const
 
 std::vector<nat> NodeSlider::getInvalidatedNodes(const TreeAln& traln) const
 {
-  nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
+  nat middleNode = getCommonNode(oneBranch,otherBranch) ;
   return { middleNode } ; 
 }

@@ -49,3 +49,18 @@ std::ostream& operator<<(std::ostream& s, const ParameterList& c)
     }
   return s;
 }
+
+
+
+std::vector<AbstractParameter*> ParameterList::getViewByCategory(Category cat) const 
+{
+  auto result = std::vector<AbstractParameter*>{}; 
+
+  for(auto &p : _paramView)
+    {
+      if(p->getCategory() == cat)
+	result.push_back(p);
+    }
+
+  return result; 
+} 

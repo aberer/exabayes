@@ -80,7 +80,10 @@ void ParameterFile::sample(const TreeAln &traln, const ParameterList& parameters
     {
       double tl = 0; 
       for(auto &b : traln.extractBranches(param))
-	tl += b.getInterpretedLength( param);
+	{
+	  // tl += b.getInterpretedLength( param);
+	  tl += b.toMeanSubstitutions(param->getMeanSubstitutionRate()); 
+	}
       fh << tl << "\t"; 
     }
 

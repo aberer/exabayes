@@ -18,7 +18,6 @@
 #include "CoupledChains.hpp"
 #include "ConfigReader.hpp"
 #include "ParallelSetup.hpp"
-// #include "time.hpp"
 #include "TimeTracker.hpp"
 #include "Serializable.hpp"
 #include "DiagnosticsFile.hpp"
@@ -51,6 +50,8 @@ public:
   std::tuple<ParameterList , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
   processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
   void initializeWithParamInitValues(TreeAln &tree , const ParameterList &params , bool hasBl ) const ; 
+
+  void makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const; 
   /** 
       @brief EXPERIMENTAL 
    */ 

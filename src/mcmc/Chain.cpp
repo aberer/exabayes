@@ -608,7 +608,10 @@ void Chain::stepSetProposal()
   bool fullTraversalNecessary = pSet.needsFullTraversal();
   
   // all proposals are applied, now only evaluate once 
-  if( branches.first.equalsUndirected(BranchPlain(0,0)) ) // TODO another HACK
+  if( 
+     // branches.first.equalsUndirected(BranchPlain(0,0))
+     branches.first == BranchPlain(0,0) 
+      ) // TODO another HACK
     {
       // this should be a reasonable suggestion 
       auto nextRoot = peekNextVirtualRoot(_traln, _chainRand); 

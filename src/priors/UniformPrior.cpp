@@ -46,8 +46,8 @@ log_double UniformPrior::accountForMeanSubstChange( TreeAln &traln, const Abstra
 
   for(auto &b : traln.extractBranches(param))
     {
-      bool less = b.getLength() < minV; 
-      bool greater = b.getLength() > maxV; 
+      bool less = b.getLength().getValue() < minV; 
+      bool greater = b.getLength().getValue() > maxV; 
 	      
       assert(not (less && greater)); 
 

@@ -43,7 +43,7 @@ log_double ExponentialPrior::accountForMeanSubstChange( TreeAln &traln, const Ab
   auto sum = 1.; 
   auto bs = traln.extractBranches(param); 
   for( auto &elem :  bs )
-    sum *= elem.getLength() ; 
+    sum *= elem.getLength().getValue() ; 
   auto blInfluence = log( sum); 
 #endif
   

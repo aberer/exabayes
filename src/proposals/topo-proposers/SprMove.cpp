@@ -15,20 +15,24 @@
 SprMove::SprMove(const TreeAln &traln, const BranchPlain &prunedTree,  const BranchPlain &insertBranch) 
   : _path{}
 {
-  nodeptr p = prunedTree.findNodePtr(traln);
+  nodeptr p = traln.findNodePtr(prunedTree);
   
   _path.clear();   
-  _path.findPath(traln, p, insertBranch.findNodePtr(traln));
+  _path.findPath(traln, p, traln.findNodePtr(insertBranch));
   _path.reverse();   
 
   auto Tmp = _path.at(0); 
 
-  nodeptr aNode = Tmp.findNodePtr(traln); 
+  nodeptr aNode = traln.findNodePtr(Tmp); 
   if(traln.isTipNode(aNode))
-    aNode = Tmp.getInverted().findNodePtr(traln);
+    aNode = traln.findNodePtr(Tmp.getInverted());
   assert(not traln.isTipNode(aNode)); 
   auto b = _path.at(0); 
-  while(b.equalsUndirected( _path.at(0)) || b.equalsUndirected(BranchPlain(p->number, p->back->number))) 
+  while(  (b == _path.at(0) || b.getInverted() == _path.at(0)) 
+ // b.equalsUndirected( )
+	  || // b.equalsUndirected(BranchPlain(p->number, p->back->number))
+	  (b == BranchPlain(p->number, p->back->number) || b.getInverted() == BranchPlain(p->number, p->back->number))
+	  ) 
     {
       aNode = aNode->next; 
       b = BranchPlain(aNode->number, aNode->back->number) ;
@@ -46,18 +50,18 @@ void SprMove::apply(TreeAln &traln,const std::vector<AbstractParameter*> &params
 
   assert(_path.size() > 2 ); 
 
-  auto third =  _path.at(0).getThirdBranch(traln, _path.at(1)); 
-  nodeptr sTPtr = third.findNodePtr(traln); 
+  auto third =  traln.getThirdBranch(_path.at(0), _path.at(1)); 
+  nodeptr sTPtr = traln.findNodePtr(third); 
   assert(_path.at(1).hasNode(sTPtr->number )); 
   
   // finds the two nodeptrs adjacent to the subtree  
-  auto prOuterPtr = BranchPlain(_path.getNthNodeInPath(0) ,_path.getNthNodeInPath(1)).findNodePtr(traln ),
-    prInnerPtr = BranchPlain(_path.getNthNodeInPath(2), _path.getNthNodeInPath(1)).findNodePtr(traln ); 
+  auto prOuterPtr = traln.findNodePtr(BranchPlain(_path.getNthNodeInPath(0) ,_path.getNthNodeInPath(1)) ),
+    prInnerPtr = traln.findNodePtr(BranchPlain(_path.getNthNodeInPath(2), _path.getNthNodeInPath(1)) ); 
 
   int lastNode = _path.getNthNodeInPath(  int(_path.getNumberOfNodes()-1 ) ),
     s2LastNode = _path.getNthNodeInPath( int(_path.getNumberOfNodes()-2 ) ); 
-  nodeptr s2lPtr = BranchPlain(s2LastNode, lastNode).findNodePtr(traln ), // s2l 
-    lPtr = BranchPlain(lastNode, s2LastNode).findNodePtr(traln ); // l
+  nodeptr s2lPtr = traln.findNodePtr(BranchPlain(s2LastNode, lastNode) ), // s2l 
+    lPtr = traln.findNodePtr(BranchPlain(lastNode, s2LastNode) ); // l
 
   nodeptr toBeInserted = prInnerPtr->back;   
   nodeptr toBeInsertedPath = prOuterPtr->back;  
@@ -76,9 +80,8 @@ void SprMove::apply(TreeAln &traln,const std::vector<AbstractParameter*> &params
   traln.clipNode(toBeInserted, s2lPtr); 
   traln.setBranch(traln.getBranch(toBeInserted, params), params); 
 
-  assert(BranchPlain(sTPtr->number, s2lPtr->number).exists(traln)); 
-  assert(BranchPlain(sTPtr->number, lPtr->number).exists(traln )); 
-
+  assert(traln.exists(BranchPlain(sTPtr->number, s2lPtr->number))); 
+  assert(traln.exists(BranchPlain(sTPtr->number, lPtr->number) )); 
 }
 
 
@@ -89,7 +92,7 @@ void SprMove::apply(TreeAln &traln,const std::vector<AbstractParameter*> &params
  */ 
 BranchPlain SprMove::getMovingSubtree(const TreeAln &traln) const 
 {
-  return _path.at(0).getThirdBranch(traln, _path.at(1)); 
+  return traln.getThirdBranch(_path.at(0), _path.at(1)); 
 }
 
 
@@ -98,15 +101,15 @@ BranchPlain SprMove::getMovingSubtree(const TreeAln &traln) const
  */ 
 BranchPlain SprMove::getEvalBranch(const TreeAln &traln) const
 {    
-  auto b = _path.at(0).getThirdBranch(traln, _path.at(1)); 
+  auto b = traln.getThirdBranch(_path.at(0), _path.at(1)); 
   auto lastBranch = _path.at( int(_path.size()-1 )); 
 
   auto bA = BranchPlain(b.getPrimNode(), lastBranch.getPrimNode()), 
     bB = BranchPlain(b.getPrimNode(),lastBranch.getSecNode()); 
 
-  assert(bA.exists(traln) && bB.exists(traln)); 
+  assert(traln.exists(bA) && traln.exists(bB)); 
 
-  auto futureRoot = bA.getThirdBranch(traln, bB ); 
+  auto futureRoot = traln.getThirdBranch(bA, bB ); 
   
   return futureRoot; 
 }
@@ -250,7 +253,7 @@ std::vector<BranchPlain> SprMove::getBranchesToPropose(const TreeAln& traln, Mov
 	for(auto i = 1u; i < _path.size(); ++i)
 	  {
 	    result.push_back(_path.at(i)); 
-	    result.push_back(_path.at(i-1).getThirdBranch(traln, _path.at(i))); 
+	    result.push_back(traln.getThirdBranch(_path.at(i-1), _path.at(i))); 
 	  }
       }
       break; 
@@ -272,7 +275,7 @@ std::vector<BranchPlain> SprMove::getBranchesToPropose(const TreeAln& traln, Mov
     }
 
   for(auto &elem : result )
-    assert(elem.exists(traln)); 
+    assert(traln.exists(elem)); 
     
   assert(std::unordered_set<BranchPlain>(begin(result), end(result)).size() == result.size() ); 
   return result; 

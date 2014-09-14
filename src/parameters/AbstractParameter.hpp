@@ -20,11 +20,12 @@ public:
   AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio); 
   AbstractParameter(const AbstractParameter& rhs); 
 
+  virtual log_double getPriorValue(const TreeAln& traln) const = 0; 
+
   // TODO we should just cast to BranchLengthParameter and make this specific to branch length parameter ... 
   virtual double getMeanSubstitutionRate()  const {assert(0) ; return 0 ; }
   virtual void updateMeanSubstRate(const TreeAln& traln) {assert(0); }
-  virtual void setMeanSubstitutionRate(double fac) {assert(0); }
-  
+
   /** 
       @brief applies the parameter content to the tree 
    */ 
@@ -50,7 +51,7 @@ public:
   /** 
       @brief sets the prior for this parameter 
    */ 
-  void setPrior(const std::unique_ptr<AbstractPrior> &prior){_prior = std::unique_ptr<AbstractPrior>(prior->clone()); }
+  virtual void setPrior(const std::unique_ptr<AbstractPrior> &prior){_prior = std::unique_ptr<AbstractPrior>(prior->clone()); }
   nat getIdOfMyKind() const {return _idOfMyKind; }
   /** 
       @brief veriffies that content is compatible to this parameter (e.g., not too many rates). 
@@ -74,6 +75,12 @@ public:
 
 
   virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const; 
+
+  virtual bool fitsToPartition(Partition& p) const 
+  {
+    return true; 
+  }
+
 
   virtual void checkSanityPartitionsAndPrior(const TreeAln &traln) const ; 
 

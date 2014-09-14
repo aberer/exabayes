@@ -1,6 +1,7 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+#include <algorithm>
 
 #include "ByteFile.hpp"
 #include "TreePrinter.hpp"
@@ -81,7 +82,8 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
 	      for(auto param : params)
 	  	{
 	  	  auto bCopy = b; 
-	  	  bCopy.setConvertedInternalLength( param, b.getLength()); 
+	  	  // bCopy.setConvertedInternalLength( param, b.getLength()); 
+		  bCopy.setLength( b.getLength() ); // probably not necessary 
 	  	  traln.setBranch(bCopy, param); 
 	  	}
 	    }
@@ -331,7 +333,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 
       for(auto b : traln.extractBranches())
 	{
-	  auto len = traln.getBranch(b, blParam).getInterpretedLength(blParam); 
+	  auto len = traln.getBranch(b, blParam).toMeanSubstitutions(blParam->getMeanSubstitutionRate()); 
 	  // tout << b << "\t" << len << endl; 
 	  branches.emplace_back( b, len ); 
 	}
@@ -394,23 +396,19 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	  param->updateMeanSubstRate(traln);
 
 	  auto &&prior = param->getPrior();
-
 	  auto content = prior->getInitialValue();
-	  // auto content = prior->drawFromPrior();
-
 	  auto initVal = content.values.at(0); 
 	  
 	  for(auto belem : branches)
 	    {
 	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() )  
 		? std::get<1>(belem) : initVal ;
-	      auto b = std::get<0>(belem).toBlDummy(); 
-	      b.setConvertedInternalLength(param,absLen);
+	      auto b = BranchLength(std::get<0>(belem),  InternalBranchLength::fromAbsolute(absLen, param->getMeanSubstitutionRate())); 
 
 	      if( not BoundsChecker::checkBranch(b))
 		{
 		  BoundsChecker::correctBranch(b); 
-		  auto newLen = b.getInterpretedLength(param); 
+		  auto newLen = b.toMeanSubstitutions(param->getMeanSubstitutionRate()); 
 		  tout << "Warning: had to modify branch length " << absLen << " to " << newLen << " because it violated the maximum range of branch lengths allowed." << endl; 
 		}
 
@@ -418,8 +416,48 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	    }
 	}
     }
+
+  auto divRates = std::vector<AbstractParameter*>{}; 
+  auto divTimes = std::vector<AbstractParameter*>{}; 
+
+  for(auto & p : params)
+    {
+      if(p->getCategory() == Category::DIVERGENCE_RATES)
+	divRates.push_back(p); 
+      if(p->getCategory() == Category::DIVERGENCE_TIMES)
+	divTimes.push_back(p); 
+    }
+
+  if(divRates.size() > 0 )
+    {
+      // assert(divTimes.size() == 1 ); // not more than one time parameter !
+      makeTreeUltrametric(traln, divTimes, divRates);
+    }
 }
 
+
+void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const 
+{
+  assert(divRates.size() == 1 ); // for simplicity 
+  auto divRate = divRates[0]; 
+
+  // TODO correctly initialize DivergenceTimes 
+  
+  // => traverse the tree and get the absolute branch lengths
+  // ; compute node age correctly 
+
+  // then pack information into a ParameterContent and use
+  // DivergenceTimes->apply (maybe you need to create another method
+  // for initialization)
+ 
+  // TODO correctly initialize everything 
+  for(auto b : traln.extractBranches())
+    {
+      
+    }
+
+  assert(0); 
+}
 
 
 vector<std::string> SampleMaster::getStartingTreeStrings()
