@@ -120,6 +120,10 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	default: 
 	  assert(0); 
 	}
+      
+      if(partsUnused.size() == 0 )
+        continue; 
+
 
       // create parameters for unused partitions 
       switch(cat)
