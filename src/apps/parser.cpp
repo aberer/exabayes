@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   auto outputFileName = std::string(""); 
   
   int c = 0 ; 
-  while(  ( c  = getopt( argc, argv, "s:q:m:n:") )  != EOF ) 
+  while(  ( c  = getopt( argc, argv, "s:q:m:n:h") )  != EOF ) 
     {
       try
 	{
@@ -64,6 +64,10 @@ int main(int argc, char **argv)
 	    case 'm':
 	      singlePartitionModel = std::string(optarg); 
 	      break; 
+            case 'h': 
+              helpMessage(); 
+              exitFunction(0, false); 
+              break; 
 	    case 'n': 
 	      outputFileName = std::string(optarg); 
 	      break; 
