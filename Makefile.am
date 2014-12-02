@@ -58,7 +58,7 @@ endif
 AM_CFLAGS+=$(VECTOR_FLAGS)
 AM_CXXFLAGS+=$(VECTOR_FLAGS)
 
-folders=$(shell find $(top_srcdir)/src -type d | grep -v '.deps' | grep -v comm)
+folders=$(shell find $(top_srcdir)/src -type d | grep -v '.deps' | grep -v comm | grep -v apps)
 
 SRCINCLUDE=$(shell echo $(folders) | tr ' ' '\n' |  sed "s/\(.*\)/-I\1/" | tr '\n' ' ')  
 SRCINCLUDE+= -I$(top_srcdir)/src/comm/ -I$(top_srcdir)/src/comm/threads

@@ -411,7 +411,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
     }
 }
 
-double traverseDepthFromRoot(TreeAln &traln, const BranchPlain &branch, std::vector<NodeAge *> & nodeAges) {
+static double traverseDepthFromRoot(TreeAln &traln, const BranchPlain &branch, std::vector<NodeAge *> & nodeAges) {
 
 	double currentHeight = nodeAges[branch.getPrimNode()-1]->getHeight();
 	nodeAges[branch.getPrimNode()-1]->setPrimNode(branch.getPrimNode());

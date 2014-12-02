@@ -14,7 +14,7 @@ extern "C"
   void buildSimpleTree (pllInstance *tr, partitionList *pr, int ip, int iq, int ir); 
   void makePermutationFast(int *perm, int n, pllInstance *tr); 
   void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int maxTips, boolean full); 
-};
+}
 
 
 // // // this is a quick-and-dirty adaptation for building a random stepwise
