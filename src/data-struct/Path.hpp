@@ -16,7 +16,7 @@
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
 
 
 class Path

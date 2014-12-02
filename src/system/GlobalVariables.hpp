@@ -64,7 +64,7 @@ extern volatile bool  _threadsDie;
 extern void (*exitFunction)(int code , bool waitForAll); 
 
 extern bool isYggdrasil; 
-extern int PLL_NUM_BRANCHES; 
+// extern int PLL_NUM_BRANCHES; 
 
 extern bool startIntegration; 
 extern AdHocIntegrator* ahInt; 

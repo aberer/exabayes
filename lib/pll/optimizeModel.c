@@ -57,8 +57,6 @@ extern int optimizeRatesInvocations;
 extern int optimizeAlphaInvocations;
 extern int optimizeInvarInvocations;
 extern char ratesFileName[1024];
-extern char workdir[1024];
-extern char run_id[128];
 extern char lengthFileName[1024];
 extern char lengthFileNameModel[1024];
 /* extern char *protModels[PLL_NUM_PROT_MODELS]; */
@@ -69,7 +67,7 @@ static void optParamGeneric(pllInstance *tr, partitionList * pr, double modelEps
 //#define _DEBUG_MOD_OPT
 
 
-/*********************FUNCTIONS FOOR EXACT MODEL OPTIMIZATION UNDER GTRGAMMA ***************************************/
+/*********************FUNCTIONS FOR EXACT MODEL OPTIMIZATION UNDER GTRGAMMA ***************************************/
 
 
 /* the following function is used to set rates in the Q matrix 
@@ -1385,7 +1383,8 @@ void pllOptBaseFreqs(pllInstance *tr, partitionList * pr, double modelEpsilon, l
     i,
     states,
     dnaPartitions = 0,
-    aaPartitions  = 0;
+    aaPartitions  = 0,
+    binPartitions = 0;
 
   /* first do DNA */
 
@@ -1404,6 +1403,7 @@ void pllOptBaseFreqs(pllInstance *tr, partitionList * pr, double modelEpsilon, l
           else
              ll->ld[i].valid = PLL_FALSE;
           break;       
+        case PLL_BINARY_DATA:
         case PLL_AA_DATA:
           ll->ld[i].valid = PLL_FALSE;
           break;
@@ -1434,6 +1434,7 @@ void pllOptBaseFreqs(pllInstance *tr, partitionList * pr, double modelEpsilon, l
             ll->ld[i].valid = PLL_FALSE; 
           break;
         case PLL_DNA_DATA:      
+        case PLL_BINARY_DATA:
           ll->ld[i].valid = PLL_FALSE;
           break;
         default:
@@ -1443,6 +1444,40 @@ void pllOptBaseFreqs(pllInstance *tr, partitionList * pr, double modelEpsilon, l
   
   if(aaPartitions > 0)      
     optFreqs(tr, pr, modelEpsilon, ll, aaPartitions, states);
+
+  /* then binary */
+  for(i = 0; i < ll->entries; i++)
+    {
+      switch(pr->partitionData[ll->ld[i].partitionList[0]]->dataType)
+	{
+	case PLL_BINARY_DATA:	  
+	  states = pr->partitionData[ll->ld[i].partitionList[0]]->states; 	      
+	  if(pr->partitionData[ll->ld[i].partitionList[0]]->optimizeBaseFrequencies)
+	    {
+	      ll->ld[i].valid = PLL_TRUE;
+	      binPartitions++;		
+	    }
+	  else
+	    ll->ld[i].valid = PLL_FALSE; 
+	  break;
+	case PLL_DNA_DATA:	  
+	case PLL_AA_DATA:      
+	case PLL_SECONDARY_DATA:
+	case PLL_SECONDARY_DATA_6:
+	case PLL_SECONDARY_DATA_7:
+	case PLL_GENERIC_32:
+	case PLL_GENERIC_64:	    
+	  ll->ld[i].valid = PLL_FALSE;
+	  break;
+	default:
+	  assert(0);
+	}	 
+    }
+
+  if(binPartitions > 0)      
+    optFreqs(tr, pr, modelEpsilon, ll, binPartitions, states);
+
+  /* done */
 
   for(i = 0; ll && i < ll->entries; i++)
     ll->ld[i].valid = PLL_TRUE;

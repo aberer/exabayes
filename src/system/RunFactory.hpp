@@ -44,7 +44,7 @@ private: 			// METHODS
   /** 
       @brief adds secondary parameters to proposals, if necessary (currently only branch lengths)
   */ 
-  void addSecondaryParameters(AbstractProposal* proposal,  ParameterList  &allParameters); 
+  void addSecondaryParameters(AbstractProposal* proposal,  ParameterList  &allParameters, nat numTaxa); 
 }; 
 
 #endif

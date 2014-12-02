@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "AbstractProposal.hpp"
 #include "ProtModel.hpp"
 

@@ -48,6 +48,9 @@
 #include "pllInternal.h"
 #include "globalVariables.h"
 
+
+extern int PLL_NUM_BRANCHES; 
+
 static void saveTopolRELLRec(pllInstance *tr, nodeptr p, topolRELL *tpl, int *i, int numsp)
 {
   int k;

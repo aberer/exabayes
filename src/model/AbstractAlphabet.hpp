@@ -6,6 +6,21 @@
 
 typedef unsigned int nat; 
 
+
+enum class Alphabet  : int 
+  {
+    BINARY = 1 , 
+      DNA = 2 , 
+      PROTEIN  = 3 
+  }; 
+
+
+Alphabet getTypeFromString(std::string str); 
+std::string getStringFromType(Alphabet type); 
+
+
+
+
 class AbstractAlphabet
 {
 public: 

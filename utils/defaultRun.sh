@@ -2,7 +2,7 @@
 
 topdir=$(dirname  $0 )/../
 
-# seed=$RANDOM			# 
+seed=$RANDOM			# 
 seed=12345
 
 # src/proposals/
@@ -37,6 +37,8 @@ GDB=cgdb
 if [ $dotests == 1 ]; then
     args="$args --enable-tests"
 fi
+
+# args="$args --disable-sse"
 
 # args="$args --disable-silent-rules"
 # args="$args" 			#    --disable-sse
@@ -106,7 +108,7 @@ case $mode in
     valgrind)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -hold -e valgrind --track-origins=yes --show-reachable=yes --leak-check=full --tool=memcheck  " #    --leak-check=full --track-origins=yes
+	gdb="$TERM -hold -e valgrind --track-origins=yes --leak-check=full --tool=memcheck  " #    --leak-check=full --track-origins=yes  --show-reachable=yes
 	;;
     *)
 	echo "mode must be debug, default or valgrind"

@@ -33,6 +33,9 @@ public:
   
   friend std::ostream& operator<<(std::ostream& s, const ParameterList& c) ; 
 
+  
+  std::vector<AbstractParameter*> getViewByCategory(Category cat) const ; 
+
 private: 
   std::vector< std::unique_ptr<AbstractParameter> > _params; 
   std::vector<AbstractParameter*> _paramView; 

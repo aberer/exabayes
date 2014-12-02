@@ -43,6 +43,9 @@ Partition::Partition(nat numTax, std::string name, int dataType, int states , in
   , _gapColumn(0)
   , _sumBuffer{}
 {
+  // allocate more space for aa matrices, since we maybe use lg4    
+  auto duplicity = dataType == PLL_AA_DATA ? 4 : 1 ; 
+
   // std::cout << SyncOut() << "init partition" << std::endl; x
   memset(&_partition, 0, sizeof(pInfo)); 
   defaultInit();
@@ -57,12 +60,12 @@ Partition::Partition(nat numTax, std::string name, int dataType, int states , in
   // allocate the memory 
   _left.resize( pl->leftLength * (maxCategories + 1));  
   _right.resize( pl->rightLength * (maxCategories + 1)); 
-  _EV.resize(pl->evLength);
-  _tipVector.resize(pl->tipVectorLength);
-  _EIGN.resize(pl->eignLength ); 
-  _EI.resize(pl->eiLength);
-  _substRates.resize(pl->substRatesLength); 
-  _frequencies.resize(pl->frequenciesLength); 
+  _EV.resize(pl->evLength * duplicity);
+  _tipVector.resize(pl->tipVectorLength * duplicity);
+  _EIGN.resize( pl->eignLength * duplicity ); 
+  _EI.resize(pl->eiLength * duplicity);
+  _substRates.resize(pl->substRatesLength * duplicity); 
+  _frequencies.resize(pl->frequenciesLength * duplicity); 
   _empiricalFrequencies.resize(pl->frequenciesLength); 
   _globalScaler.resize(2 * _numTax); 
   _yPtrs.resize(_numTax + 1);
@@ -98,7 +101,6 @@ Partition::Partition(const Partition &rhs)
   , _globalScaler (rhs._globalScaler )
   , _yPtrs (rhs._yPtrs )
   , _xVector (rhs._xVector.size(), nullptr  )
-  // , _xVector(rhs._xVector)
   , _xSpaceVector (rhs._xSpaceVector.size() , 0  )
   , _parsVect (rhs._parsVect )
   , _parsimonyScore (rhs._parsimonyScore )
@@ -124,6 +126,7 @@ void Partition::setPtrs()
 {
   _partition.left = _left.data(); 
   _partition.right = _right.data();
+
   _partition.EV = _EV.data();
   _partition.tipVector = _tipVector.data(); // ***TODO*** actually needed? 
   _partition.EIGN = _EIGN.data();
@@ -145,6 +148,23 @@ void Partition::setPtrs()
   _partition.gapColumn = _gapColumn.data(); 
   
   _partition.sumBuffer = _sumBuffer.data();
+
+  // set lg4 ptrs 
+  if(getDataType() == PLL_AA_DATA)
+    {
+      const partitionLengths 
+	*pl = getPartitionLengths(&_partition); 
+
+      for(int i = 0 ; i < 4 ; ++i)
+	{
+	  _partition.EIGN_LG4[i] = _EIGN.data() + (pl->eignLength * i ); 
+	  _partition.EI_LG4[i] = _EI.data() + (pl->eiLength * i); 
+	  _partition.EV_LG4[i] = _EV.data() + (pl->evLength * i); 
+	  _partition.tipVector_LG4[i] =  _tipVector.data() + (pl->tipVectorLength * i); 
+	  _partition.substRates_LG4[i] = _substRates.data() + (pl->substRatesLength * i); 
+	  _partition.frequencies_LG4[i] = _frequencies.data() +  (pl->frequenciesLength * i) ; 
+	}
+    }
 }
 
 
@@ -430,33 +450,36 @@ std::ostream& Partition::printAlignment(std::ostream &out)
 
 
 
-std::ostream& operator<<(const Partition& rhs, std::ostream& out)
+
+
+std::ostream& operator<<(std::ostream& out, const Partition& rhs )
 {
-  // out << SHOW(  rhs._saveMemory)
-  //     << SHOW(rhs._numTax )
-  //     << SHOW( &(rhs._partition) ) 
-  //     << SHOW(rhs._name )
-  //     // << SHOW(rhs._wgtPtr.get() )
-  //     // << SHOW(rhs._y.get() )
-  //     << SHOW(  std::vector<double>(begin(rhs._left), end(rhs._left)) )
-  //     << SHOW(std::vector<double>(begin(rhs._right),end(rhs._right) ))
-  //     << SHOW(std::vector<double>(begin(rhs._EV),end(rhs._EV) ))
-  //     << SHOW(std::vector<double>(begin(rhs._tipVector),end(rhs._tipVector) ))
-  //     << SHOW(rhs._EIGN )
-  //     << SHOW(rhs._EI )
-  //     << SHOW(rhs._substRates )
-  //     << SHOW(rhs._frequencies )
-  //     << SHOW(rhs._empiricalFrequencies )
-  //     << SHOW(rhs._gammaRates  )
-  //     << SHOW(rhs._globalScaler )
-  //     << SHOW(rhs._yPtrs )
-  //     << SHOW(rhs._xVector )
-  //     << SHOW(rhs._xSpaceVector )
+  out << SHOW(  rhs._saveMemory)
+      << SHOW(rhs._numTax )
+      << SHOW( &(rhs._partition) ) 
+      << SHOW(rhs._name )
+      // << SHOW(rhs._wgtPtr.get() )
+      // << SHOW(rhs._y.get() )
+      << SHOW(  std::vector<double>(begin(rhs._left), end(rhs._left)) )
+      << SHOW(std::vector<double>(begin(rhs._right),end(rhs._right) ))
+      << SHOW(std::vector<double>(begin(rhs._EV),end(rhs._EV) ))
+      << SHOW(std::vector<double>(begin(rhs._tipVector),end(rhs._tipVector) ))
+      << SHOW(rhs._EIGN )
+      << SHOW(rhs._EI )
+      << SHOW(rhs._substRates )
+      << SHOW(rhs._frequencies )
+      << SHOW(rhs._empiricalFrequencies )
+      << SHOW(rhs._gammaRates  )
+      << SHOW(rhs._globalScaler )
+      << SHOW(rhs._yPtrs )
+      << SHOW(rhs._xVector )
+      << SHOW(rhs._xSpaceVector )
     
-  //     << SHOW(rhs._parsVect.get() )
-  //     << SHOW(rhs._parsimonyScore)
-  //     // << SHOW(rhs._parsimonyInformative )
-  //     << SHOW(rhs._gapVector)
-  //     << SHOW(std::vector<double>(begin(rhs._gapColumn),end(rhs._gapColumn)  )); 
+    // TODO 
+      // << SHOW(rhs._parsVect.get() )
+      // << SHOW(rhs._parsimonyScore)
+      // << SHOW(rhs._parsimonyInformative )
+      << SHOW(rhs._gapVector)
+      << SHOW(std::vector<double>(begin(rhs._gapColumn),end(rhs._gapColumn)  )); 
   return out; 
 }

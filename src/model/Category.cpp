@@ -12,44 +12,53 @@
 #include "RevMatParameter.hpp"
 #include "TopologyParameter.hpp"
 
+#include "DivergenceTimes.hpp"
+#include "DivergenceRates.hpp"
 
-std::ostream&  operator<<(std::ostream& out, const Category &rhs)
-{
-  return out << CategoryFuns::getLongName(rhs) ; 
-}
+
+
 
 
 namespace CategoryFuns
 {
-  std::string getLongName(Category cat)
+  
+  std::string getShortName(Category cat)
   {
     switch(cat)
       {
-      case Category::TOPOLOGY :
-	return "Topology";
-      case Category::BRANCH_LENGTHS:
-	return "BranchLengths" ;
-      case Category::FREQUENCIES :
-	return "Frequencies" ;
-      case Category::SUBSTITUTION_RATES :
-	return "ReversiMatr" ;
-      case Category::RATE_HETEROGENEITY:
-	return "RateHetero" ;
-      case Category::AA_MODEL :
-	return "aaModel" ;
-      default : 
+      case Category::TOPOLOGY: 
+	return "topo"; 
+      case Category::BRANCH_LENGTHS: 
+	return "brlens"; 
+      case Category::FREQUENCIES: 
+	return "statefreq"; 
+      case Category::SUBSTITUTION_RATES : 
+	return "revmat"; 
+      case Category::RATE_HETEROGENEITY : 
+	return "ratehet"; 
+      case Category::AA_MODEL : 
+	return "aamdel"; 
+      case Category::DIVERGENCE_RATES : 
+	return "divrates"; 
+      case Category::DIVERGENCE_TIMES : 
+	return "divtimes"; 
+      default: 
 	{
 	  assert(0); 
-	  return "NOTHING"; 
+	  return "divtimes"; 
 	}
       }
   }
 
 
-  std::string getShortName(Category cat)
+  std::string getComponentName(Category cat)
   {
     switch(cat)
       {
+      case Category::DIVERGENCE_RATES: 
+	return "dR"; 
+      case Category::DIVERGENCE_TIMES: 
+	return "time"; 
       case Category::TOPOLOGY:
 	return "topo" ;
       case Category::BRANCH_LENGTHS:
@@ -72,6 +81,10 @@ namespace CategoryFuns
   {
     switch(cat)
       {
+      case Category::DIVERGENCE_TIMES: 
+	return "TIMEPR"; 
+      case Category::DIVERGENCE_RATES:
+	return "DIVRATEPR"; 
       case Category::TOPOLOGY: 
 	return "TOPOPR"; 
       case Category::BRANCH_LENGTHS: 
@@ -94,11 +107,14 @@ namespace CategoryFuns
   {
     return {  
       Category::TOPOLOGY, 
+	Category::DIVERGENCE_TIMES, 
+	Category::DIVERGENCE_RATES, 
 	Category::BRANCH_LENGTHS, 
 	Category::FREQUENCIES, 
 	Category::AA_MODEL,
 	Category::SUBSTITUTION_RATES, 
-	Category::RATE_HETEROGENEITY} ; 
+	Category::RATE_HETEROGENEITY 
+	} ; 
   }
 
 
@@ -125,46 +141,84 @@ namespace CategoryFuns
   Category getCategoryFromLinkLabel(std::string name)
   {
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    if(name.compare("statefreq") == 0)
-      return Category::FREQUENCIES; 
-    else if(name.compare("ratehet") == 0)
-      return Category::RATE_HETEROGENEITY; 
-    else if(name.compare("revmat") == 0)
-      return Category::SUBSTITUTION_RATES; 
-    else if(name.compare("aamodel") == 0)
-      return Category::AA_MODEL; 
-    else if(name.compare("brlens") == 0)
-      return Category::BRANCH_LENGTHS; 
-    else
+
+    auto cats = getAllCategories(); 
+
+    auto result = Category::TOPOLOGY; 
+    for(auto cat : cats)
       {
-	assert(0); 
-	return Category::TOPOLOGY; 
+	if( getShortName(cat).compare(name) == 0 )
+	  result = cat; 
       }
+    return result; 
   }
 
 
 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions)
+  
+  
+
+
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat numTaxa)
   {
     switch(cat)
       {
+      case Category::DIVERGENCE_RATES: 
+	return make_unique<DivergenceRates>(id, idOfMyKind, partitions,numTaxa);
+      case Category::DIVERGENCE_TIMES: 
+	// dummy initialize, let's set the proper node-age object
+	// later, as soon as we know the topology 
+	return make_unique<DivergenceTimes>(id, idOfMyKind, partitions, NodeAge{BranchPlain(0,0),0.}); 
       case Category::TOPOLOGY :
-	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind,partitions ));
+	return  make_unique<TopologyParameter>( id, idOfMyKind,partitions );
       case Category::BRANCH_LENGTHS:
-	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id, idOfMyKind, partitions));
+	return  make_unique<BranchLengthsParameter>( id, idOfMyKind, partitions);
       case Category::FREQUENCIES :
-	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id, idOfMyKind,partitions));
+	return  make_unique<FrequencyParameter>( id, idOfMyKind,partitions);
       case Category::SUBSTITUTION_RATES :
-	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id, idOfMyKind,partitions));
+	return  make_unique<RevMatParameter>( id, idOfMyKind,partitions);
       case Category::RATE_HETEROGENEITY:
-	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind,partitions));
+	return  make_unique<RateHetParameter>( id, idOfMyKind,partitions);
       case Category::AA_MODEL :
-	return std::unique_ptr<AbstractParameter>( new ProtModelParameter(id, idOfMyKind,partitions));
+	return make_unique<ProtModelParameter>( id, idOfMyKind,partitions);
       default : 
 	{
 	  assert(0); 
-	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind, partitions));
+	  return make_unique<RateHetParameter>(id, idOfMyKind, partitions);
 	}
       }    
   }  
+  
+  // should the catogry by default be linked into a continuous block     
+  bool inUniqueByDefault(Category cat)
+  {
+    return
+      cat == Category::TOPOLOGY
+      || cat == Category::BRANCH_LENGTHS
+      || cat == Category::DIVERGENCE_TIMES ; 
+  }
+
+  
+  std::vector<Category> getConflictingCategories(Category cat) 
+  {
+    switch(cat)
+      {
+      case Category::TOPOLOGY:
+      case Category::BRANCH_LENGTHS: 
+	return {Category::DIVERGENCE_TIMES, Category::DIVERGENCE_RATES}; 
+      case Category::DIVERGENCE_RATES:
+      case Category::DIVERGENCE_TIMES: 
+	return {Category::BRANCH_LENGTHS, Category::TOPOLOGY}; 
+      case Category::SUBSTITUTION_RATES:
+	return {Category::AA_MODEL}; 
+      case Category::AA_MODEL:
+	return {Category::SUBSTITUTION_RATES}; 
+      case Category::FREQUENCIES:
+      case Category::RATE_HETEROGENEITY: 
+      default : 
+	return {}; 
+      }
+  } 
 }
+
+

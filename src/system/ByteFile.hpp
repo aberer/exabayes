@@ -69,7 +69,7 @@ private: 			// ATTRIBUTES
   std::string _fileName; 
   std::ifstream _in; 
   std::vector<std::string> _taxa; 
-  uint64_t _numPat;
+  int _numPat;
   std::vector<Partition> _partitions; 
   bool _saveMemory; 
   IntegerWidth _weightType; 

@@ -1,5 +1,7 @@
 #include "BranchBackup.hpp"
 
+#include "BranchLength.hpp"
+
 #include <algorithm> 
 
 using std::get; 
@@ -21,7 +23,7 @@ BranchBackup::BranchBackup(TreeAln &traln, std::vector<BranchPlain> bs, std::vec
 
 void BranchBackup::extend(TreeAln &traln, AbstractParameter* param, const BranchLength &length)
 {
-  auto bl = traln.getBranch(length.toPlain(), param); 
+  auto bl = traln.getBranch(length, param); 
   _backup.push_back(std::make_pair(param, bl));
   traln.setBranch(length, param);
 }
@@ -43,7 +45,9 @@ std::tuple<bool, BranchLength> BranchBackup::find(const BranchPlain &branch, Abs
 {
   auto foundIter = std::find_if(begin(_backup), end(_backup), [&](const std::pair<AbstractParameter*, BranchLength> &elem)
 				{
-				  return get<0>(elem) == param && branch.equalsUndirected(get<1>(elem).toPlain()); 
+				  return get<0>(elem) == param && 
+				  (get<1>(elem) == branch || branch.getInverted() == get<1>(elem)); 
+				  // branch.equalsUndirected(get<1>(elem).toPlain()); 
 				}
 				); 
     

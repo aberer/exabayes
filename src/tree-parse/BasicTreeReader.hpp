@@ -5,10 +5,12 @@
 #include <vector>
 #include <sstream>
 
+#include "BranchLength.hpp"
+
 #include "BranchLengthPolicy.hpp"
 #include "LabelPolicy.hpp"
 #include <iosfwd>
-#include "Branch.hpp"
+// #include "Branch.hpp"
 
 typedef unsigned int nat; 
 

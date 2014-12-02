@@ -9,7 +9,7 @@
 class ParsSprProposer : public  TopoMoveProposer
 {
   typedef std::unordered_map<BranchPlain, double> weightMap; 
-  typedef std::unordered_map<BranchPlain,std::array<parsimonyNumber,2> > branch2parsScore;
+  typedef std::unordered_map<BranchPlain,std::array<parsimonyNumber,3> > branch2parsScore;
 
 public: 			// INHERITED METHODS
   virtual void determineMove(TreeAln &traln, LikelihoodEvaluator& eval, Randomness& rand, BranchPlain primeBranch, const std::vector<AbstractParameter*> &params)  ; 

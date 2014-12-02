@@ -1,8 +1,10 @@
 #include "TreeRandomizer.hpp"
 
 #include <vector>
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "ParallelSetup.hpp"
+
+#include "BranchPlain.hpp"
 
 
 extern "C"
@@ -12,7 +14,7 @@ extern "C"
   void buildSimpleTree (pllInstance *tr, partitionList *pr, int ip, int iq, int ir); 
   void makePermutationFast(int *perm, int n, pllInstance *tr); 
   void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int maxTips, boolean full); 
-}
+};
 
 
 // // // this is a quick-and-dirty adaptation for building a random stepwise
@@ -171,7 +173,7 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
       auto taxonP = traln.getNode(i); 
       traln.clipNodeDefault(taxonP, inner); 
 
-      auto p1 = drawBranchUniform_helper(traln, rand, i-1).findNodePtr(traln),
+      auto p1 = traln.findNodePtr(drawBranchUniform_helper(traln, rand, i-1)),
 	p2 = p1->back; 
       
       traln.clipNodeDefault(p1, inner->next); 

@@ -66,8 +66,8 @@ std::vector<SprMove> MoveEnumeration::getMovesForBranch(const TreeAln& traln, Br
 
 	  if(dist == 1 
 	     &&   
-	     ( ( BranchPlain(pP, iP ).exists(traln) && pP > iP  ) 
-	       || ( BranchPlain(pP, iS ).exists(traln) && pP > iS  )) )
+	     ( ( traln.exists(BranchPlain(pP, iP )) && pP > iP  ) 
+	       || ( traln.exists(BranchPlain(pP, iS )) && pP > iS  )) )
 	    {
 	      // tout << "skipping " << pruneBranch << "," << insertBranch << std::endl; 
 	      continue; 

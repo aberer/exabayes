@@ -2,7 +2,7 @@
 #include "ProtModel.hpp"
 
 
-void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content) const 
+void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content)
 {
   for(auto &m : _partitions)
     {
@@ -62,3 +62,13 @@ void ProtModelParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
       exitFunction(-1, true); 
     }
 }
+
+
+
+bool ProtModelParameter::fitsToPartition(Partition& p) const 
+{
+  return p.getDataType() == PLL_AA_DATA; 
+} 
+
+
+

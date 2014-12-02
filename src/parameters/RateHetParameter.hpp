@@ -13,7 +13,7 @@ public:
   {
   }
   
-  virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
+  virtual void applyParameter(TreeAln& traln, const ParameterContent &content);
   virtual ParameterContent extractParameter(const TreeAln &traln )  const;   
   virtual AbstractParameter* clone () const {return new RateHetParameter(*this); } 
 
@@ -21,6 +21,8 @@ public:
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const ; 
 
   virtual void verifyContent(const TreeAln&traln, const ParameterContent &content) const; 
+
+    virtual log_double getPriorValue(const TreeAln& traln) const{assert(0); return log_double::fromAbs(1); } 
 }; 
 
 #endif

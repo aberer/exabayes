@@ -50,7 +50,17 @@
 #include "pll.h"
 #include "pllInternal.h"
 
-#include "globalVariables.h"
+typedef struct bInf {
+  double likelihood;
+  nodeptr node;
+} bestInfo;
+
+typedef struct iL {
+  bestInfo *list;
+  int n;
+  int valid;
+} infoList;
+
 
 double treeOptimizeRapid(pllInstance *tr, partitionList *pr, int mintrav, int maxtrav, bestlist *bt, infoList *iList);
 nniMove getBestNNIForBran(pllInstance* tr, partitionList *pr, nodeptr p, double curLH);
@@ -68,13 +78,8 @@ static void pllCreateRollbackInfo (pllInstance * tr, pllRearrangeInfo * rearr, i
 static void pllRollbackNNI (pllInstance * tr, partitionList * pr, pllRollbackInfo * ri);
 static void pllRollbackSPR (partitionList * pr, pllRollbackInfo * ri);
 
-extern double accumulatedTime;   /**< Accumulated time for checkpointing */
+extern partitionLengths pLengths[PLL_MAX_MODEL];
 
-extern char seq_file[1024];      /**< Checkpointing related file */
-extern double masterTime;        /**< Needed for checkpointing */
-/* extern partitionLengths pLengths[PLL_MAX_MODEL]; */
-extern char binaryCheckpointName[1024];  /**< Binary checkpointing file */
-extern char binaryCheckpointInputName[1024];
 
 boolean initrav (pllInstance *tr, partitionList *pr, nodeptr p)
 { 
@@ -2746,13 +2751,7 @@ pllRollbackNNI (pllInstance * tr, partitionList * pr, pllRollbackInfo * ri)
 {
   nodeptr p = ri->Move.NNI.origin;
 
-#if 0 
-  NNI (tr, p, ri->Move.NNI.swapType);
-#else 
-  assert(0); 
-  /* i got no clue, what NNI should be... commenting out because of
-     compiler error... */
-#endif
+  pllTopologyPerformNNI (tr, p, ri->Move.NNI.swapType);
   pllUpdatePartials (tr, pr, p,       PLL_FALSE);
   pllUpdatePartials (tr, pr, p->back, PLL_FALSE);
   update (tr, pr, p);
@@ -2837,7 +2836,7 @@ pllRearrangeCommit (pllInstance * tr, partitionList * pr, pllRearrangeInfo * rea
   switch (rearr->rearrangeType)
    {
      case PLL_REARRANGE_NNI:
-       pllTopologyPerformNNI (tr, rearr->Move.NNI.originNode, rearr->Move.NNI.swapType);
+       pllTopologyPerformNNI(tr, rearr->Move.NNI.originNode, rearr->Move.NNI.swapType);
        pllUpdatePartials (tr, pr, rearr->Move.NNI.originNode, PLL_FALSE);
        pllUpdatePartials (tr, pr, rearr->Move.NNI.originNode->back, PLL_FALSE);
        update (tr, pr, rearr->Move.NNI.originNode);
@@ -3009,6 +3008,17 @@ determineRearrangementSetting(pllInstance *tr, partitionList *pr,
   return bestTrav;
 }
 
+
+static void hash_dealloc_bipentry (void * entry)
+{
+  pllBipartitionEntry * e = (pllBipartitionEntry *)entry;
+
+  if(e->bitVector)     rax_free(e->bitVector);
+  if(e->treeVector)    rax_free(e->treeVector);
+  if(e->supportVector) rax_free(e->supportVector);
+
+}
+
 /** @ingroup rearrangementGroup
     @brief RAxML algorithm for ML search
 
@@ -3042,20 +3052,9 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
   bestlist *bestT, *bt;
   infoList iList;
   pllOptimizeBranchLengths(tr, pr, 32);
-#ifdef _TERRACES
-  /* store the 20 best trees found in a dedicated list */
 
-  bestlist
-  *terrace;
-
-  /* output file names */
-
-  char
-  terraceFileName[1024],
-  buf[64];
-#endif
-
-  hashtable *h = (hashtable*) NULL;
+  pllHashTable *h = NULL;
+  //hashtable *h = NULL;
   unsigned int **bitVectors = (unsigned int**) NULL;
 
   /* Security check... These variables might have not been initialized! */
@@ -3065,7 +3064,8 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
   if (tr->searchConvergenceCriterion)
     {
       bitVectors = initBitVector(tr->mxtips, &vLength);
-      h = initHashTable(tr->mxtips * 4);
+      //h = initHashTable(tr->mxtips * 4);
+      h = pllHashInit (tr->mxtips * 4);
     }
 
   bestT = (bestlist *) rax_malloc(sizeof(bestlist));
@@ -3075,18 +3075,6 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
   bt = (bestlist *) rax_malloc(sizeof(bestlist));
   bt->ninit = 0;
   initBestTree(bt, 20, tr->mxtips);
-
-#ifdef _TERRACES
-  /* initialize the tree list and the output file name for the current tree search/replicate */
-  terrace = (bestlist *) rax_malloc(sizeof(bestlist));
-  terrace->ninit = 0;
-  initBestTree(terrace, 20, tr->mxtips);
-  strcpy(terraceFileName, workdir);
-  strcat(terraceFileName, "RAxML_terrace.");
-  strcat(terraceFileName, run_id);
-  strcat(terraceFileName, ".BS.");
-  strcat(terraceFileName, buf);
-#endif
 
   initInfoList(&iList, 50);
 
@@ -3266,11 +3254,6 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
 
           pllOptimizeBranchLengths(tr, pr, 8);
 
-#ifdef _TERRACES
-          /* save all 20 best trees in the terrace tree list */
-          saveBestTree(terrace, tr, pr->perGeneBranchLengths?pr->numberOfPartitions:1);
-#endif
-
           difference = (
               (tr->likelihood > previousLh) ?
                   tr->likelihood - previousLh : previousLh - tr->likelihood);
@@ -3286,48 +3269,19 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
     }
 
   cleanup:
-#ifdef _TERRACES
-    {
-      double
-      bestLH = tr->likelihood;
-      FILE
-      *f = myfopen(terraceFileName, "w");
-
-      /* print out likelihoods of 20 best trees found during the tree search */
-      for(i = 1; i <= terrace->nvalid; i++)
-        {
-          recallBestTree(terrace, i, tr, pr);
-          /* if the likelihood scores are smaller than some epsilon 0.000001
-           print the tree to file */
-          if(ABS(bestLH - tr->likelihood) < 0.000001)
-            {
-              fprintf(f, "%s\n", tr->tree_string);
-            }
-        }
-      fclose(f);
-      /* increment tree search counter */
-      bCount++;
-    }
-#endif
-
   if (tr->searchConvergenceCriterion)
     {
       freeBitVectors(bitVectors, 2 * tr->mxtips);
       rax_free(bitVectors);
-      freeHashTable(h);
-      rax_free(h);
+      //freeHashTable(h);
+      //rax_free(h);
+      pllHashDestroy(&h, hash_dealloc_bipentry);
     }
 
   freeBestTree(bestT);
   rax_free(bestT);
   freeBestTree(bt);
   rax_free(bt);
-
-#ifdef _TERRACES
-  /* free terrace tree list */
-  freeBestTree(terrace);
-  rax_free(terrace);
-#endif
 
   freeInfoList(&iList);
 

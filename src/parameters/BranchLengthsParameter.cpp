@@ -12,7 +12,7 @@ BranchLengthsParameter::BranchLengthsParameter(nat id, nat idOfMyKind, std::vect
   }
 
 
-void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
+void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content)
 {
   for(auto &b : content.branchLengths)
     {
@@ -48,7 +48,6 @@ bool BranchLengthsParameter::priorIsFitting(const AbstractPrior &prior, const Tr
   auto content = prior.getInitialValue();
   return content.values .size() < 2  ; 
 }
-
 
 
 void BranchLengthsParameter::deserialize( std::istream &in ) 

@@ -13,7 +13,7 @@
 #include "TreeAln.hpp"
 #include "PartitionLikelihood.hpp"
 #include "ArrayOrientation.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
 
 
 class ArrayRestorer

@@ -33,6 +33,7 @@
 #include "mem_alloc.h"
 
 
+
 #ifndef WIN32
 #include <sys/times.h>
 #include <sys/types.h>
@@ -51,6 +52,7 @@
 #include <assert.h>
 
 #if defined(__MIC_NATIVE)
+
 
 #include <immintrin.h>
 
@@ -107,6 +109,8 @@
 
 #endif
 
+#include "pll.h"
+#include "pllInternal.h"
 
 static boolean tipHomogeneityCheckerPars(pllInstance *tr, nodeptr p, int grouping);
 
@@ -115,8 +119,6 @@ extern const unsigned int mask32[32];
 
 
 extern double masterTime;
-/*extern char  workdir[1024];
-  extern char run_id[128];*/
 
 /************************************************ pop count stuff ***********************************************/
 
@@ -1559,8 +1561,6 @@ static void determineUninformativeSites(pllInstance *tr, partitionList *pr, int 
 
   for(model = 0; model < pr->numberOfPartitions; model++)
     {
-      
-      
       for(i = pr->partitionData[model]->lower; i < pr->partitionData[model]->upper; i++)
         {
            if(isInformative(tr, pr->partitionData[model]->dataType, i))
@@ -1573,7 +1573,6 @@ static void determineUninformativeSites(pllInstance *tr, partitionList *pr, int 
         }      
     }
 
- 
  
   /* printf("Uninformative Patterns: %d\n", number); */
 }

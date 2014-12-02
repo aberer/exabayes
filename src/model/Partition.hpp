@@ -76,8 +76,7 @@ public:
   void setFracChange(double f) { _partition.fracchange = f; }
 
   nat getPartitionParsimony(){return _parsimonyScore.at(0); }
-  
-  // void printAlignment(); 
+
   std::ostream& printAlignment(std::ostream &out);
 
   int getGapVectorLength() const { return _partition.gapVectorLength; }
@@ -85,7 +84,7 @@ public:
 
   void setParsimonyInformative(std::vector<bool> theInfo){_parsimonyInformative = theInfo; }
 
-  friend std::ostream& operator<<(const Partition& rhs, std::ostream& out); 
+  friend std::ostream& operator<<(std::ostream& out, const Partition& rhs ); 
 
 
 private: 			// METHODS
@@ -126,9 +125,8 @@ private: 			// ATTRIBUTES
   std::vector<bool> _parsimonyInformative; 
   std::vector<nat> _gapVector;
   typename aligned_vector<double>::type _gapColumn ; 
-
-  // std::vector<double>
   typename aligned_vector<double>::type _sumBuffer; 
+
 };
 
 

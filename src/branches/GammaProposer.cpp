@@ -54,10 +54,9 @@ GammaProposer::GammaProposer(double nrOpt, double nrd1, double nrd2, double conv
 
 BranchLength GammaProposer::proposeBranch(BranchPlain b, TreeAln& traln, AbstractParameter* param, Randomness& rand) const 
 {
-  double proposedVal = rand.drawRandGamma(_alpha, _beta); 
+  auto proposedVal = rand.drawRandGamma(_alpha, _beta); 
 
-  auto bl = b.toBlDummy();
-  bl.setConvertedInternalLength(param, proposedVal); 
+  auto bl = BranchLength(b, InternalBranchLength::fromAbsolute(proposedVal, param->getMeanSubstitutionRate())); 
   
   // we will not propose a branch outside the bounds 
   if(not BoundsChecker::checkBranch(bl) )

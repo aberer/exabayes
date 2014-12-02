@@ -77,13 +77,15 @@ log_double GenericTopoProposal::proposeAndApplyNewBranches(TreeAln &traln, const
 	  for(auto p : params)
 	    {
 	      auto multi = rand.drawMultiplier(multiplier);
+	      auto meanSubstRate = p->getMeanSubstitutionRate(); 
 	      auto bl = traln.getBranch(b,p); 
-	      auto oldLen = bl.getInterpretedLength(p); 
+	      auto oldLen = bl.toMeanSubstitutions(meanSubstRate); 
 	      
-	      bl.setConvertedInternalLength( p, oldLen * multi);
+	      // bl.setConvertedInternalLength( p, oldLen * multi);
+	      bl.setLength(InternalBranchLength::fromAbsolute(oldLen * multi, meanSubstRate));
 	      if(not BoundsChecker::checkBranch(bl))
 		BoundsChecker::correctBranch(bl);
-	      auto newLen = bl.getInterpretedLength( p); 
+	      auto newLen = bl.toMeanSubstitutions(meanSubstRate); 
 	      auto realMulti = newLen / oldLen; 
 
 	      // tout << SHOW(realMulti) << std::endl;
@@ -119,6 +121,7 @@ log_double GenericTopoProposal::proposeAndApplyNewBranches(TreeAln &traln, const
 	{
 	  auto p = optParam.getParam();
 	  auto b = optParam.getBranch();
+	  auto meanSubstRate = p->getMeanSubstitutionRate();
 
 	  auto convParam = p->getAttributes()._convTuner.getParameter();
 	  auto nonConvParam = p->getAttributes()._nonConvTuner.getParameter();
@@ -126,9 +129,10 @@ log_double GenericTopoProposal::proposeAndApplyNewBranches(TreeAln &traln, const
 	  auto dist = optParam.getProposerDistribution<GammaProposer>(traln, convParam, nonConvParam ); 
 	  auto bl = dist.proposeBranch(b, traln, p, rand);
 	  
-	  auto oldLen = traln.getBranch(b,p).getInterpretedLength( p);
+	  auto oldLen = traln.getBranch(b,p).toMeanSubstitutions( meanSubstRate);
 	  traln.setBranch(bl, p);
-	  auto newLen = bl.getInterpretedLength(p); 
+	  auto newLen = bl.toMeanSubstitutions(meanSubstRate); 
+	  
 
 	  // tout  << MAX_SCI_PRECISION << SHOW(newLen)<< std::endl; 
 	  
@@ -178,7 +182,7 @@ log_double GenericTopoProposal::assessOldBranches(TreeAln& traln, LikelihoodEval
 	  if(not get<0>(found))
 	    tout << "error: could not find " << b << std::endl; 
 
-	  auto curLen = get<1>(found).getInterpretedLength(p); 
+	  auto curLen = get<1>(found).toMeanSubstitutions(p->getMeanSubstitutionRate()); 
 	  // tout << MAX_SCI_PRECISION << SHOW(curLen)<< std::endl; 
 	  result *= optParam.getProposerDistribution<GammaProposer>(traln, convParam, nonConvParam).getLogProbability(curLen); 
 	}

@@ -18,7 +18,7 @@ public:
   {    
   }
 
-  virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
+  virtual void applyParameter(TreeAln& traln, const ParameterContent &content);
   virtual ParameterContent extractParameter(const TreeAln &traln)  const;   
   virtual AbstractParameter* clone () const {return new FrequencyParameter(*this); } 
 
@@ -35,6 +35,8 @@ public:
     auto& partition = traln.getPartition(_partitions.at(0));
     return content.values.size() == nat(partition.getStates()); 
   } 
+
+  virtual log_double getPriorValue(const TreeAln& traln) const{assert(0); return log_double::fromAbs(1); } 
 }; 
 
 

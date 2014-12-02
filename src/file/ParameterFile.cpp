@@ -11,7 +11,7 @@ ParameterFile::ParameterFile(std::string workdir, std::string runname, nat ru )
 {
   auto&& ss = std::stringstream{}; 
 
-  ss << OutputFile::getFileBaseName(workdir) << "_parameters." << runname << "." << runid ; 
+  ss << OutputFile::getFileBaseName(workdir) << "_parameters.run-"<< runid << "." << runname   ; 
   fullFileName = ss.str();
 }
 
@@ -80,7 +80,10 @@ void ParameterFile::sample(const TreeAln &traln, const ParameterList& parameters
     {
       double tl = 0; 
       for(auto &b : traln.extractBranches(param))
-	tl += b.getInterpretedLength( param);
+	{
+	  // tl += b.getInterpretedLength( param);
+	  tl += b.toMeanSubstitutions(param->getMeanSubstitutionRate()); 
+	}
       fh << tl << "\t"; 
     }
 
@@ -105,7 +108,7 @@ void ParameterFile::regenerate(std::string workdir, std::string prevId, uint64_t
   std::ofstream fh(fullFileName, std::fstream::out); 
 
   std::stringstream ss; 
-  ss << OutputFile::getFileBaseName(workdir) << "_parameters." << prevId << "." << runid ; 
+  ss << OutputFile::getFileBaseName(workdir) << "_parameters.run-"<< runid  << "." << prevId; 
   std::ifstream prevFile(ss.str()); 
   rejectIfNonExistant(ss.str()); 
 

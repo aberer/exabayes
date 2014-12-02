@@ -16,12 +16,15 @@
 #include "GlobalVariables.hpp"
 
 #include "ProtModel.hpp"
-#include "Branch.hpp"
+#include "BranchPlain.hpp"
 #include "FlagType.hpp"
 
 #include "BranchLengthResource.hpp"
 #include "Partition.hpp"
 
+class BranchPlain; 
+class BranchLength; 
+class BranchLengths; 
 class AbstractPrior; 
 class Randomness; 
 class TreePrinter; 
@@ -95,6 +98,8 @@ public:
     return p.getAlpha();
   } 
 
+  BranchPlain getThirdBranch(const BranchPlain& oneBranch, const BranchPlain& otherBranch) const ; 
+
   // not so happy with that...
   log_double getLikelihood() const 
   {
@@ -139,6 +144,8 @@ public:
       @brief gets a nodepointer with specified id 
    */ 
   nodeptr getNode(nat elem) const ; 
+  
+  std::vector<BranchPlain> getBranchesFromNode(nat aNode) const; 
   /** 
       @brief extract all branches from the tree (including branch lengths)
    */ 
@@ -149,8 +156,8 @@ public:
   /** 
       @brief gets the number of inner nodes in the tree 
    */ 
-  nat getNumberOfInnerNodes() const { return getNumberOfNodes()  - getNumberOfTaxa()  ;   } 
-  
+  nat getNumberOfInnerNodes(bool rooted) const; 
+
   /** 
       @brief gets the mean substitution rate overall specified partitions
    */ 
@@ -199,6 +206,9 @@ public:
       separately.
    */ 
   void clipNode(nodeptr p, nodeptr q, double *z = nullptr);   
+
+  bool exists(const BranchPlain &branch )const ; 
+  
   /** 
       @brief hooks up two nodes with default branch length
    */ 
@@ -215,6 +225,11 @@ public:
       @brief gets the longest path 
    */ 
   std::vector<nat> getLongestPathBelowBranch(const BranchPlain &b) const ; 
+
+
+  bool isTipBranch(const BranchPlain &branch ) const ; 
+
+  nodeptr findNodePtr(const BranchPlain &branch ) const ; 
 
   /**
      @brief gets a node with given id that is not connected to the tree right now 
@@ -259,6 +274,15 @@ public:
   void initialize(size_t numTax);
   nat addNodeToPartialTree(nat id, nat curRoot, nat outerCtr); 
 
+    /////////////////////
+   // rooted topology //
+  /////////////////////
+  bool isRooted(void) const;
+  void setRootBranch(const BranchPlain &rb);
+  BranchPlain getRootBranch() const;
+  bool isRootChild(const nat nodeId) const;
+  bool isRootBranch(const BranchPlain &rb) const;
+
 private: 			// ATTRIBUTES 
   std::vector<Partition> _partitions;
   partitionList _partitionListResource; 
@@ -277,7 +301,10 @@ private: 			// ATTRIBUTES
   std::vector<boolean> _execModel; // for the traveral descriptor 
   std::vector<nat> _parsimonyScore; 
 
-  bool _isSaveMemorySEV; 
+  bool _isSaveMemorySEV;
+  // in case we are working with a rooted tree
+  BranchPlain _root;
+
 };  
 
 #endif

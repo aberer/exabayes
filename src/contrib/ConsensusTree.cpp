@@ -1,5 +1,6 @@
 #include "ConsensusTree.hpp"
 #include <limits>
+#include <iomanip>
 #include <map> 
 #include <cassert> 
 #include <algorithm>

@@ -2,6 +2,7 @@
 #define NO_CACHE_POLICY_HPP
 
 #include "ArrayPolicy.hpp"
+#include "BranchPlain.hpp"
 
 class NoCachePolicy : public ArrayPolicy
 {

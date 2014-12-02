@@ -13,7 +13,7 @@ public: 			// inherited from SERIALIZABLE
   virtual void serialize( std::ostream &out) const; 
 
 public: 			// INHERITED METHODS 
-  virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
+  virtual void applyParameter(TreeAln& traln, const ParameterContent &content);
   virtual ParameterContent extractParameter(const TreeAln &traln )  const;   
   virtual AbstractParameter* clone () const {return new BranchLengthsParameter(*this) ;  }
 
@@ -30,6 +30,8 @@ public: 			// INHERITED METHODS
   virtual double getMeanSubstitutionRate() const ;
   virtual void updateMeanSubstRate(const TreeAln& traln) ;  
   virtual void setMeanSubstitutionRate(double fac) {_fracChange = fac; }
+
+  virtual log_double getPriorValue(const TreeAln& traln) const { assert(0);  return log_double::fromAbs(1);  }
 
 public: 			// METHODS 
   BranchLengthsParameter(nat id, nat idOfMyKind, std::vector<nat> partitions)    ; 

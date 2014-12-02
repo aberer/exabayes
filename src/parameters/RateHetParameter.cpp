@@ -2,7 +2,7 @@
 #include "BoundsChecker.hpp"
 
 
-void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
+void RateHetParameter::applyParameter(TreeAln& traln, const ParameterContent &content)
 {
   for(auto &m : _partitions)
     {
