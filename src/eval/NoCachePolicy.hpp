@@ -15,7 +15,6 @@ public:
   virtual void prepareForEvaluation(TreeAln &traln, BranchPlain virtualRoot, nat models, ArrayOrientation& arrayOrientation, ArrayReservoir& res ) {} 
   virtual void accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient , ArrayReservoir &res); 
   virtual std::unique_ptr<ArrayPolicy> clone() const ; 
-
 }; 
 
 

@@ -5,7 +5,6 @@
 #include "LikelihoodEvaluator.hpp"
 #include "GlobalVariables.hpp"
 #include "ArrayRestorer.hpp"
-// #include "Branch.hpp"
 #include "ParallelSetup.hpp"
 
 #include "common.h"

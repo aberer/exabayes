@@ -21,7 +21,7 @@ doParse=0
 # args="--disable-sse"
 
 startFromBest=0
-dotests=0
+dotests=1
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off

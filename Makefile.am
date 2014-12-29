@@ -192,8 +192,8 @@ endif
 
 exatest_SOURCES = ./tests/exatest.cpp
 exatest_CXXFLAGS=$(AM_CXXFLAGS) -O3  $(BAYES_INCLUDES)  -D_IS_YGG
-exatest_LDFLAGS=-L/usr/local/lib -lgtest -lpthread 
-exatest_LDADD= $(seqlibs) 
+exatest_LDFLAGS= -lpthread # -L/usr/local/lib -lgtest
+exatest_LDADD= $(seqlibs)  /usr/src/gtest/libgtest.a
 
 if WITH_MPI
  exatest_CXXFLAGS+=-D_WITH_MPI	

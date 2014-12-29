@@ -3,15 +3,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
 #include "system/extensions.hpp"
 #include "system/GlobalVariables.hpp"
 
-void initLogFile( )
-{
-  // globals.logFile = std::string{"/dev/null"}; 
-  globals.logStream = make_unique<std::ofstream>(std::string{"/dev/null"}); 
-  globals.teeOut =  make_unique<TeeStream>(std::cout, *globals.logStream, MY_TID);
-}
+// void initLogFile( )
+// {
+//   // globals.logFile = std::string{"/dev/null"}; 
+//   logStream = make_unique<std::ofstream>(std::string{"/dev/null"}); 
+//   teeOut =  make_unique<TeeStream>(std::cout, *globals.logStream, MY_TID);
+// }
 
 
 // TODO 
@@ -22,21 +23,27 @@ void initLogFile( )
 // #include "TopLevelInvocation.cpp" // 
 
 // #include "BipartitionTest.cpp"
-#include "tests/PartitionAssignmentTest.cpp"
+// #include "tests/PartitionAssignmentTest.cpp"
 // #include "TreeAlnTest.cpp"
 
-#include "MessageQueueTest.cpp"
-#include "LocalCommTest.cpp"
-#include "brentTest.cpp"
+// #include "MessageQueueTest.cpp"
+// #include "LocalCommTest.cpp"
+// #include "brentTest.cpp"
+
+#include "BareTopologyTest.hpp"
+#include "bitvector_test.hpp"
+
+#include "TopologyTest.hpp"
 
 
 int main (int argc, char **argv)
 {
   int result = 0; 
 
-  testing::InitGoogleTest(&argc, argv); 
+  testing::InitGoogleTest(&argc, argv);
+  
 
-  initLogFile(); 
+  // initLogFile(); 
 
   
 // #ifdef _WITH_MPI  
