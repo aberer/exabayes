@@ -33,7 +33,7 @@ bitvector Topology::getBipOrDummy(iterator it) const
 {
   auto result = bitvector{}; 
   if( it->isOuterBranch() )
-    result.set(it->getTaxonNode()); 
+    result.set(it->getTaxonNode() -1 ); 
   else
     {
       auto found = _bvs.find(*it); 
@@ -57,13 +57,13 @@ void Topology::reorient_helper(iterator it )
 
       // delete incorrectly oriented bip 
       assert( _bvs.find( *(it.opposite()) ) != _bvs.end()  );
-      std::cout << "ERASE " << *(it.opposite()) << "\t"  << _bvs[*(it.opposite())] << std::endl;
+      // std::cout << "ERASE " << *(it.opposite()) << "\t"  << _bvs[*(it.opposite())] << std::endl;
       _bvs.erase( *(it.opposite()) );
 
       // correctly insert it 
       auto bip = getBipOrDummy(sib) | getBipOrDummy(sib.neighbor ());
       _bvs.insert(   make_pair(*it , bip) );
-      std::cout << "RE-INSERT " << *it << "\t" << bip << std::endl;
+      // std::cout << "RE-INSERT " << *it << "\t" << bip << std::endl;
       
     }
 }
@@ -97,7 +97,7 @@ iterator Topology::insert(iterator pos)
     
     _bvs.erase(*pos); 
     auto newLink  = Link( newPos->secondary(), pos->secondary() );
-    std::cout << "REINSERT bip in " << newLink << std::endl;
+    // std::cout << "REINSERT bip in " << newLink << std::endl;
     _bvs[newLink] = bip;
   }
 
@@ -111,11 +111,15 @@ iterator Topology::insert(iterator pos)
         std::swap(found, newOne);
 
       auto bip = getBipOrDummy(found);
-      bip.set(newPos->getTaxonNode());
-      _bvs[*newOne] = bip;
-      std::cout << "INSERT new bip in " << *newOne << std::endl;
+      bip.set(newPos->getTaxonNode() -1 );
+      _bvs[ *(newOne.opposite())] = bip;
+      // std::cout << "INSERT new bip in " << *newOne << std::endl;
     }
-  
+
+  // TODO efficiency problem? 
+  for(auto &v : _bvs)
+    v.second.resize(outerSize() + 1 );
+
   return newPos;
 }  
 
@@ -130,30 +134,27 @@ bool Topology::verifyBipartitions() const
       auto &bip = v.second;
 
       auto ctr = bip.count();
-      auto iter = iterator(this, link.invert());
+      auto iter = iterator(this, link);
       auto controlBv =  bitvector(); 
       while(ctr > 0 )
         {
           if( iter->isOuterBranch() )
             {
               --ctr;
-              controlBv.set(iter->getTaxonNode()); 
+              controlBv.set(iter->getTaxonNode() - 1 ); 
             }
           ++iter; 
         }
 
       if( controlBv != bip)
         {
-          std::cout << "error: \tcontrol:\t" << controlBv << "\tinthere:\t" << bip  << std::endl;
+          // std::cout << "error: \tcontrol:\t" << controlBv << "\tinthere:\t" << bip  << std::endl;
           okay = false; 
         }
       else
         {
-          std::cout << "GREAT: \tcontrol:\t" << controlBv << "\tinthere:\t" << bip  << std::endl;
+          // std::cout << "GREAT: \tcontrol:\t" << controlBv << "\tinthere:\t" << bip  << std::endl;
         }
     }
   return okay; 
 }
-
-
-

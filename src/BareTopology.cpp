@@ -1,4 +1,5 @@
 #include "BareTopology.hpp"
+#include "Topology.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -161,12 +162,15 @@ iterator::iterator(BareTopology const * ref, Link l)
   
 }
 
+void iterator::handleHalfIsDone( bool &haveNewOne) 
+{
+
+}
+
 
 
 iterator& iterator::next()
 {
-  // std::cout << "NEXT of " << **this << std::endl;
-  
   auto haveNewOne = false;
   while(not haveNewOne)
     {
@@ -185,7 +189,7 @@ iterator& iterator::next()
           if( _haveBothSides  || _first.isOuterBranch() )
             {
               *this = _ref->end();
-              break;
+              break; 
             }
           else
             {
@@ -194,6 +198,7 @@ iterator& iterator::next()
               haveNewOne = false; 
             }
         }
+
     }
   return *this; 
 }
@@ -201,10 +206,76 @@ iterator& iterator::next()
 
 iterator& iterator::advance(size_t n)
 {
-  // TODO short-cut? 
-  
-  for(auto i = 0u; i < n; ++i)
-    ++*this;
+  if( n > 0 )
+    {
+      auto t = dynamic_cast< Topology const* >(_ref); 
+      if(  t != nullptr )
+        {
+          auto toJump = size_t(0);  
+          auto &map = t->_bvs;
+
+          if( _curLink.isOuterBranch() )
+            {
+              toJump = 1; 
+              ++*this;
+              std::cout << "jumping 1 (outer)"  << std::endl;
+            }
+          else
+            {
+              auto found = map.find( _curLink );
+              auto foundOppo = map.find( _curLink.invert() );
+
+              if(  not (found != map.end() || foundOppo != map.end()))
+                {
+                  std::cout << "could not find " << _curLink << std::endl;
+                  assert(false); 
+                }
+
+              toJump = found != map.end()
+                ? found->second.count()
+                :  _ref->outerSize() - foundOppo->second.count();
+
+              // std::cout << "count=" << toJump << std::endl;
+              toJump = toJump * 2 - 1 ;
+
+              if( toJump <= n)
+                {
+                  bool doReverse = ( ( _curLink == _first ) || ( _curLink == _first.invert() ) );
+
+                  _curLink = *neighbor();
+
+                  bool later  = ( ( _curLink == _first ) || ( _curLink == _first.invert() ) ); 
+
+                  if(doReverse || later)
+                    {
+                      _first = _first.invert();
+                      _haveBothSides = true;
+                      if(later)
+                        {
+                          ++*this;
+                        }
+                    }
+
+                  std::cout << "skip clade, jumping " << toJump << "\t now:" << **this << (later ? " later ": ""  ) << std::endl;
+                }
+              else
+                {
+                  toJump = 1;
+                  ++*this;
+                  std::cout << "cannot skip clade => simple jump " << "\t now:" << **this << std::endl;
+                }
+            }
+
+
+          *this = advance(n-toJump);
+        }
+      else
+        {
+          for(auto i = 0u; i < n; ++i)
+            ++*this;
+        }
+    }
+
   return *this; 
 }
 

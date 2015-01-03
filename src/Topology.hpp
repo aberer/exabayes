@@ -16,6 +16,8 @@ using iterator = BareTopology::iterator;
 
 class Topology : public BareTopology 
 {
+  friend class iterator;
+  
 public:
   Topology(); 
   virtual ~Topology() {}

@@ -74,8 +74,6 @@ class BareTopology
 {
 public: 
   class iterator;
-  class iterator; 
-
   friend class iterator; 
   
   friend std::ostream& operator<<(std::ostream&, const BareTopology&); 
@@ -83,9 +81,18 @@ public:
 public:
   BareTopology();
   virtual ~BareTopology(){}
-
+  /** 
+      @brief gets the number of outer nodes 
+   */ 
   size_t outerSize() const { return _numOuterNodes; }
-  size_t innerSize() const { return _numInnerNodes; }
+  /**
+     @brief gets the number of inner nodes 
+   */ 
+  size_t innerSize() const { return - _numInnerNodes; }
+  /** 
+      @brief gets the number of branches in the tree 
+   */ 
+  size_t size() const { return outerSize() + innerSize() -1 ; }
   
   iterator begin() const; 
   iterator end() const;               // grml also const
@@ -98,7 +105,7 @@ public:
   virtual iterator insert(iterator it);
 
   bool print(std::ostream &s, iterator c, bool needTrifurcation ) const; 
-
+  
   void dumpConnections() const 
   {
     for(auto iter = _connections.begin(); iter != _connections.end(); ++iter)
@@ -166,21 +173,24 @@ public:
   Link get() const {return _curLink; }
 
   iterator& operator++() { next(); return *this; }
-  iterator operator+( int n ) { auto cpy = *this; cpy.advance(n); return cpy; }
-  
+  iterator operator+( size_t n ) { auto cpy = *this; cpy.advance(n); return cpy; }
   iterator& advance(size_t n); 
 
   /** 
       @brief forgets the branches it already has traversed 
    */ 
-  void reset() ; 
-  
+  void reset() ;
+private:                        // METHODS 
+  /** 
+      @brief conducts extra steps necessary, once the first subtree is traversed  
+  */
+  void handleHalfIsDone(bool &haveNewOne) ; 
 private:
   BareTopology const* _ref; 
   value_type _curLink;
   stack<value_type> _descent;
   Link _first;
-  bool _haveBothSides; 
+  bool _haveBothSides;
 };
 
 
