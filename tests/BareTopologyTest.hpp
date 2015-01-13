@@ -143,3 +143,16 @@ TEST_F(BareTopologyTest, decompose)
   ASSERT_TRUE( t == t2);
 }
 
+
+
+TEST_F(BareTopologyTest, findPath)
+{
+  std::cout << t << std::endl;
+
+  auto path = t.begin(3).findPathTo(  t.begin(4));
+  for(auto &v : path)
+    std::cout << v << ",";
+  std::cout << std::endl;
+
+  t.dumpConnections();
+}

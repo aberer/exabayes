@@ -46,6 +46,8 @@ public:
    */ 
   iterator& advance(difference_type n);
 
+  BareTopology const* getTopologyHandle() const { return _ref; }
+  
   /** 
       @brief for DEBUG
    */ 
@@ -58,6 +60,13 @@ public:
   size_t getNumOuterNodesInSubtree() const ;
   size_t getNumLinksInSubtree() const;
 
+  bool isValid() const;
+  
+  vector<node_id> findPathTo( iterator end) const ;
+  
+
+private:
+  vector<node_id> findPathTo_helper( iterator end) const; 
 private:
   BareTopology const* _ref; 
   value_type _curLink;

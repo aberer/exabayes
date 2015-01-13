@@ -1,13 +1,16 @@
 #include "Topology.hpp"
 
 #include "common.h"
+
+#include <algorithm>
 #include <cassert>
 
+
+using iterator = BareTopology::iterator;
+using std::unique_ptr;
 using std::make_pair;
 
-using iterator = BareTopology::iterator; 
-
-#include "SPRMove.hpp"
+#include "Move.hpp"
 
 
 Topology::Topology()
@@ -223,7 +226,7 @@ bool Topology::verifyBipartitions() const
   return okay; 
 }
 
-#include <algorithm>
+
 
 
 
@@ -255,16 +258,16 @@ bool Topology::isEquivalent( Topology const& rhs) const
 }
 
 
-iterator Topology::move(iterator movedSubtree, iterator regraftLocation )
+unique_ptr<Move> Topology::move(Move &theMove )
 {
-  // TODO this sucks big time. .. we have to declare it here 
-  auto theMove = SPRMove(movedSubtree, regraftLocation);
   auto van = theMove.getVanishingLinks();
   
+  auto movedSubtree = theMove.getReferenceBranch(); 
+  
   reorient(movedSubtree, true );
-  auto res = BareTopology::move(movedSubtree, regraftLocation);
-
-
+  
+  BareTopology::move(theMove);
+  
   for(auto v : van )
     {
       auto iter = _bvs.find( v);
@@ -276,5 +279,6 @@ iterator Topology::move(iterator movedSubtree, iterator regraftLocation )
     }
 
   reorient(movedSubtree, false);
-  return res; 
+
+  return theMove.getInverse(); 
 }

@@ -1,70 +1,46 @@
 #ifndef SPRMOVE_H
 #define SPRMOVE_H
 
+#include <cassert>
 #include <tuple>
 
-class SPRMove
+#include "extensions.hpp"
+#include "Move.hpp"
+
+#include "BareTopology.hpp"
+
+
+
+
+class SPRMove : public Move 
 {
   iterator _movedSubtree;
   iterator _regraftLocation;
 
-  vector<Link> _emergingLinks ;
-  vector<Link> _vanishingLinks;
+  iterator _n1;
+  iterator _n2; 
 
 public:
-  SPRMove( iterator movedSubtree, iterator regraftLocation   )
-    : _movedSubtree{movedSubtree}
-    , _regraftLocation{regraftLocation}
-    , _emergingLinks{}
-    , _vanishingLinks{}
-  {
-  }
-
+  SPRMove( iterator movedSubtree, iterator regraftLocation   ); 
   
-  vector<Link> getEmergingLinks ()
-  {
-    if( _vanishingLinks.size() == 0 )
-      computeVanishEmergeLinks( );
-    return _emergingLinks; 
-  }
-
-  vector<Link> getVanishingLinks()
-  {
-    if( _emergingLinks.size() == 0  )
-      computeVanishEmergeLinks();
-    return _vanishingLinks; 
-  }
-
-
-  Link getBranchAfterPruning() 
-  {
-    if( _emergingLinks.size() == 0 )
-      computeVanishEmergeLinks();
-
-    // must always be the first! 
-    return _emergingLinks[0]; 
-  }
+  void initialize( )   ; 
+  virtual ~SPRMove(){}
+  virtual void apply( ) ; 
   
-  
-private: 
-  void computeVanishEmergeLinks( )   
-  {
-    auto p = _regraftLocation->primary(); 
-    auto s = _regraftLocation->secondary();
-    
-    auto n1 = _movedSubtree.neighbor();
-    auto n2 = n1.neighbor();
+  virtual std::unique_ptr<Move> clone() const; 
 
-    auto branchAfterPruning =  Link(n1->secondary() , n2->secondary()); 
-    
-    _emergingLinks = vector<Link>{ branchAfterPruning , // DONT move this guy 
-                                   Link(p, _movedSubtree->primary()),
-                                   Link(s, _movedSubtree->primary())};
-    
-    _vanishingLinks = vector<Link> {*n1, *n2, *_regraftLocation};
-  }
-  
+  virtual std::unique_ptr<Move> getInverse() const;
+  virtual iterator getReferenceBranch()  const; 
 
+
+  iterator getMovedSubtree() const {  return _movedSubtree; }
+  iterator getRegraftLocation() const { return _regraftLocation; }
+  
+  // must always be the first! 
+  Link getBranchAfterPruning() const { return _emergingLinks[0]; }
+
+private:
+  void clear() ; 
 };
 
 

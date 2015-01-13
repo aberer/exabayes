@@ -191,7 +191,7 @@ void NewickParser<TREE>::initalize()
   _annotations = bipParser.parse(tokens);
   auto bips = vector<bitvector>();
   std::transform(_annotations.begin(), _annotations.end(), std::back_inserter(bips), [](std::pair<bitvector, std::string > const& elem){ return elem.first; });
-  _tree = TREE(bips); 
+  _tree = TREE(bips);
 }
 
 

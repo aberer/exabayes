@@ -3,6 +3,8 @@
 
 #include "stacktrace.hpp"
 
+#include "SPRMove.hpp"
+
 #include "Topology.hpp"
 #include <algorithm>
 
@@ -207,8 +209,7 @@ TEST(TopologyTest, initWithBip)
   // for(auto &bip : bips)
     // std::cout << bip << std::endl;
 
-  auto t = Topology ( bips );
-
+  auto t = Topology (  bips);
 
   auto t2 = Topology();
   t2.insert(t2.begin());
@@ -233,9 +234,12 @@ TEST(TopologyTest, initWithBip)
 
 TEST_F(TopologyTestClass, move)
 {
-  _topo.move( _topo.begin(2).opposite(), _topo.begin(1) );
+  auto move1 = SPRMove(_topo.begin(2).opposite(), _topo.begin(1));
+  _topo.move( move1 );
   ASSERT_TRUE(_topo.verifyBipartitions());
-  _topo.move( _topo.begin(5).opposite(), _topo.begin(6) );
+
+  auto move2 = ( SPRMove(_topo.begin(5).opposite(), _topo.begin(6) )); 
+  _topo.move( move2 );
   ASSERT_TRUE(_topo.verifyBipartitions());
 
   auto nw = NewickParser<Topology>("((1,2),4,(3,(5,6)));");

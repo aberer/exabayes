@@ -8,14 +8,15 @@
 #include <iostream>
 #include <vector>
 #include <exception>
+#include <memory>
 
 #include "bitvector.hpp"
 
+#include "Link.hpp"
+
+class Move; 
+
 // iteratior included below!
-
-using node_id = int;
-
-class BareTopology;
 
 class IllegalTreeOperation : public std::exception 
 {
@@ -35,63 +36,11 @@ private:
 };
 
 
-class Link
-{
-  friend class BareTopology;
-  friend class Topology; 
-
-public:
-  Link( node_id a = 0, node_id b = 0 )
-    : _priNode{a}
-    , _secNode{b}
-  {}
-
-  bool operator==(  Link const& rhs) const { return _priNode == rhs._priNode && _secNode == rhs._secNode; }
-  bool operator!=(const Link &other) const { return !(*this == other); }
-  
-  friend std::ostream& operator<<(std::ostream& s, const Link& c); 
-
-  Link invert() const { return Link(_secNode,_priNode); }
-
-  bool isOuterBranch() const { return _priNode > 0 || _secNode >  0;  }
-
-  node_id getTaxonNode() const { return _priNode < 0 ? _secNode : _priNode;       } 
-  
-  node_id primary() const {  return _priNode; }
-  node_id secondary() const  { return _secNode ; }
-  
-private: 
-  node_id _priNode;             // primary node represented by this link 
-  node_id _secNode;             // secondary node represented by this link
-};
-
-
-
-namespace std
-{
-  template<>
-  struct hash<Link>
-  {
-    size_t operator()(const Link & x) const
-    {
-      return std::hash<size_t>()( x.primary()  ) ^ std::hash<size_t>()( x.secondary() ); 
-    }
-  }; 
-
-  template<> 
-  struct equal_to<Link>
-  {
-    bool operator()(const Link &a, const Link &b)  const
-    {
-      return a == b ; 
-    }
-  }; 
-}
-
-
-
 class BareTopology
 {
+public:
+  using node_id = int; 
+  
 public: 
   class iterator;
   friend class iterator; 
@@ -125,8 +74,7 @@ public:
   size_t size() const { return outerSize() + innerSize() -1 ; }
   
   iterator begin() const; 
-  iterator end() const;               // grml also const
-  
+  iterator end() const;               
   iterator begin( node_id taxon) const;
   /** 
       @brief decomposes the tree and yields a minimal description that
@@ -146,7 +94,11 @@ public:
    */ 
   virtual iterator erase(iterator it);
 
-  virtual iterator move(iterator movedSubtree, iterator regraftLocation ); 
+  /** 
+      @brief applies the move to the tree 
+      @return the inverse move 
+   */
+  virtual std::unique_ptr<Move> move( Move& theMove); 
   
   bool print(std::ostream &s, iterator c, bool needTrifurcation ) const; 
   
@@ -154,21 +106,20 @@ public:
 
   // for DEBUG 
   void dumpConnections() const ;
+
+
+  
 protected:
   static bool isInnerNode(node_id id )  { return id < 0;  }
   static bool isOuterNode(node_id id) {return id > 0 ; }
   void eraseNode( node_id id); 
 
   node_id findHighestNode() const  ;
-
-  void initializeWithBipartitions( vector<bitvector> bipartitions );
-
+  void initializeWithBipartitions( vector<bitvector> bipartitions );  
   std::tuple<vector<Link>,vector<Link>> getEmergeVansihLinks( iterator movedSubtree, iterator regraftLocation) const;
   
 private:
-
   iterator addBipartitionAt(bitvector curBip, vector<bitvector>  &bipartitions ,iterator branch);
-
   node_id createInnerNode() { return --_numInnerNodes;   }
   node_id createOuterNode(node_id id = 0 ); 
   
@@ -188,3 +139,5 @@ private:
 
 
 #endif /* TOPOLOGY_H */
+
+

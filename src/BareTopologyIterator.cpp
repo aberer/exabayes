@@ -1,6 +1,8 @@
 #include "Topology.hpp"
 #include "common.h"
+
 #include <cassert>
+#include <algorithm>
 
 using std::stack; 
 using iterator = BareTopology::iterator;
@@ -261,6 +263,74 @@ size_t iterator::getNumLinksInSubtree() const
   else
     {
       assert(0); 
+    }
+  
+  return result; 
+}
+
+
+
+bool iterator::isValid() const
+{
+  auto &map =  _ref->_connections.at(_curLink.primary() ); 
+  return map.find(_curLink.secondary()) != map.end() ; 
+}
+
+
+
+vector<node_id> iterator::findPathTo( iterator end) const
+{
+  std::cout << "finding path between "  << **this << " and " << *end << std::endl;
+  
+  auto result = vector<node_id>{}; 
+  result = findPathTo_helper( end);
+
+  if( result.empty() )
+    {
+      auto tmp = opposite();
+      result = tmp.findPathTo_helper(end); 
+    }
+
+  assert(not result.empty()); 
+
+  std::reverse(result.begin(), result.end());
+  
+  result.erase(result.begin() + result.size() - 1  ); 
+  
+  
+  return result; 
+}
+
+
+vector<node_id> iterator::findPathTo_helper( iterator end) const
+{
+  auto result = vector<node_id>{}; 
+  
+  if( _curLink == end._curLink || _curLink == end._curLink.invert() )
+    {
+      result.push_back( _curLink.primary()) ; 
+    }
+  else if( _curLink.isOuterBranch()  && _curLink.secondary() == _curLink.getTaxonNode())
+    {
+      // dont add 
+    }
+  else
+    {
+      auto n1 = opposite().neighbor();
+      auto n2 = n1.neighbor(); 
+      
+      result = n1.findPathTo_helper(end);
+
+      if( not result.empty() )
+        {
+          result.push_back(n1->primary());
+        }
+      else 
+        {
+          result = n2.findPathTo_helper(end);
+          if(not result.empty() )
+            result.push_back(n2->primary()); 
+        }
     }
   
   return result; 

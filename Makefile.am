@@ -207,6 +207,16 @@ test : exatest
 	$(RM) ExaBayes_*test-*
 	eval $(teststr)
 
+
+################################################################
+# test program
+
+bin_PROGRAMS+=exadebug
+exadebug_SOURCES = ./tests/exadebug.cpp
+exadebug_CXXFLAGS=$(AM_CXXFLAGS) -O1 -g   $(BAYES_INCLUDES)  -D_IS_YGG
+exadebug_LDADD= $(seqlibs)
+
+
 ################################################################
 
 doc : 

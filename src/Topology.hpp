@@ -17,6 +17,7 @@ class Topology : public BareTopology
   
 public:
   Topology();
+  
   Topology( std::vector<bitvector> const& bipartitions )
     : BareTopology()
     , _bvs{}
@@ -24,18 +25,17 @@ public:
     this->initializeWithBipartitions(bipartitions);
   }
 
-  
   bool isEquivalent( Topology const& rhs) const; 
 
   virtual ~Topology() {}
   virtual iterator insert(iterator it, node_id givenId = 0 );
   virtual iterator erase(iterator it);
-  iterator move(iterator movedSubtree, iterator regraftLocation ); 
+  virtual std::unique_ptr<Move> move(Move &move ); 
 
   friend std::ostream& operator<<(std::ostream& s, const Topology& c); 
 
-  bool verifyBipartitions() const ; 
-  
+  bool verifyBipartitions() const ;
+
 private:
   void checkedInsert( Link link, bitvector bip);
 

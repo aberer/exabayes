@@ -143,8 +143,13 @@ bitvector operator&(  bitvector const& lhs, bitvector const& rhs)
   
   auto minSize = std::min(lhs.size(), rhs.size()) ;
 
-  for(auto i =0u ; i < bitvector::elemSize(minSize); ++i)
-    result._array[i] = lhs._array[i] & rhs._array[i];
+  auto minElemSize = bitvector::elemSize(minSize); 
+
+  assert(lhs._array.size() >= minElemSize ) ;
+  assert(rhs._array.size() >= minElemSize ) ; 
+  
+  for(auto i =0u ; i < minElemSize; ++i)
+    result._array.at(i) = lhs._array.at(i) & rhs._array.at(i);
 
   return result;
 }
@@ -207,7 +212,7 @@ bitvector bitvector::operator~() const
 }
 
 
-bool bitvector::operator==(const bitvector &other) const
+bool bitvector::operator==( bitvector const&other) const
 {
   auto minSize = elemSize(std::min(size(), other.size()));
   auto maxSize = elemSize(std::max(size(), other.size()));
@@ -251,7 +256,7 @@ bitvector::bitvector( std::initializer_list<int> l )
 
 bool bitvector::operator<(bitvector const& rhs) const
 {
-  return (*this & rhs) == *this && count() < rhs.count() ; 
+  return  ( ( *this & rhs) == *this )  && count() < rhs.count() ; 
 }
 
 

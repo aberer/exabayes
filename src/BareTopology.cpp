@@ -9,6 +9,8 @@
 #include <cassert>
 #include "all_exceptions.hpp"
 
+#include "Move.hpp"
+
 
 using std::tuple; 
 using std::string; 
@@ -44,6 +46,7 @@ BareTopology::BareTopology(  std::vector<size_t> const& numbers)
       insert(begin(1) + v ); 
     }
 }
+
 
 
 BareTopology::BareTopology( vector<bitvector> const& bipartitions )
@@ -85,7 +88,7 @@ iterator BareTopology::addBipartitionAt(bitvector curBip, vector<bitvector>&  bi
   
   // treat sub-bipartitions
   auto branchForNext =  branch; 
-  while( bipartitions.front() < curBip )
+  while( not bipartitions.empty() && bipartitions.front() < curBip )
     {
       auto nextBip = bipartitions.front();
       alreadyAdded |= nextBip;
@@ -314,11 +317,7 @@ iterator BareTopology::end() const
 }
 
 
-std::ostream& operator<<(std::ostream& s, const Link& c)
-{
-  s << c._priNode << "," << c._secNode; 
-  return s;
-}
+
 
 
 
@@ -481,27 +480,18 @@ node_id BareTopology::findHighestNode() const
 }
 
 
-
-
-
-
-
-
-iterator BareTopology::move(iterator movedSubtree, iterator regraftLocation )
+std::unique_ptr<Move> BareTopology::move(Move &theMove  )
 {
-  if(  movedSubtree->isOuterBranch()  && movedSubtree->primary() == movedSubtree->getTaxonNode()  )
-    throw IllegalTreeOperation("Tried to move entire tree.");
-
-  auto theMove = SPRMove(movedSubtree, regraftLocation);
-
-  auto vanishingLinks = theMove.getVanishingLinks(); 
-  auto emergingLinks = theMove.getEmergingLinks();
-
-  for(auto &v : vanishingLinks)
+  for(auto &v : theMove.getVanishingLinks())
     unhook( v );
 
-  for(auto &v : emergingLinks)
-    hook(v); 
+  for(auto &v : theMove.getEmergingLinks())
+    hook(v);
 
-  return iterator(this , theMove.getBranchAfterPruning()); 
+  theMove.apply();
+
+  return theMove.getInverse();
 }
+
+
+
