@@ -1,0 +1,267 @@
+#include "Topology.hpp"
+#include "common.h"
+#include <cassert>
+
+using std::stack; 
+using iterator = BareTopology::iterator;
+
+
+iterator::iterator(BareTopology const * ref, Link l) 
+  : _ref{ref}
+  , _curLink{l}
+  , _descent{ }
+  , _first{l}
+  , _haveBothSides{false}
+  , _numTraversed{1} 
+{
+  
+}
+
+
+iterator iterator::neighbor() const 
+{
+  if( _curLink.primary() > 0 )
+    return *this;
+
+  auto result = *this; 
+  auto& map = result._ref->_connections.at(result._curLink._priNode); 
+  auto found = map.find(result._curLink._secNode);
+  assert(found != map.end());
+  ++found;
+
+  // cycle around 
+  if(found == map.end())
+    found = map.begin();
+  
+  result._curLink._secNode = *found;
+  result.reset();
+  return result; 
+}
+
+
+iterator iterator::opposite( ) const 
+{
+  auto result = *this;  
+  result._curLink = result._curLink.invert();
+  result.reset();
+  return result; 
+}
+
+
+void iterator::reset()
+{
+  auto tmp = stack<Link>{};
+  std::swap(_descent, tmp);
+}
+
+
+iterator& iterator::next()
+{
+  if( _numTraversed == (_ref->size()) )
+    *this = _ref->end();
+  else
+    {
+      auto haveNewOne = false; 
+
+      while(not haveNewOne)
+        {
+          _curLink = isOuterNode( _curLink.secondary())
+            ? *neighbor()
+            : *opposite().neighbor();
+
+          haveNewOne = _descent.empty() || ( not (_curLink == _descent.top().invert() || _curLink == _descent.top())) ;
+          if(not haveNewOne)
+            _descent.pop();
+          else if(not _curLink.isOuterBranch())
+            _descent.push(_curLink);
+
+          if( _curLink == _first.invert() || _curLink == _first )
+            {
+              if( _haveBothSides  || _first.isOuterBranch() )
+                {
+                  *this = _ref->end();
+                  haveNewOne = true; // actually not, but we terminate here 
+                }
+              else
+                {
+                  _curLink = _first.invert();
+                  _haveBothSides = true; 
+                  haveNewOne = false; 
+                }
+            }
+        }
+  
+      ++_numTraversed;
+    }
+
+  return *this; 
+}
+
+
+iterator& iterator::advance(difference_type n)
+{
+  if( size_t(_numTraversed) > _ref->size() )
+    {
+      *this = _ref->end();  
+    }
+  else if( n > 0 )
+    {
+      auto t = dynamic_cast< Topology const* >(_ref); 
+      if(  t != nullptr )
+        {
+          auto toJump = size_t(0u);
+          auto &map = t->_bvs;
+
+          if( _curLink.isOuterBranch() )
+            {
+              toJump = 1u; 
+              ++*this;
+            }
+          else
+            {
+              toJump = getNumLinksInSubtree();
+
+              if( toJump <= n)
+                {
+                  if( not _descent.empty() && _curLink == _descent.top())
+                    _descent.pop();
+                  
+                  _curLink = *neighbor();
+                  _numTraversed += toJump ;
+                  
+                  if(  ( _curLink == _first || _curLink == _first.invert() ) 
+                       || ( not _descent.empty() &&
+                            ( _curLink == _descent.top() || _curLink.invert() == _descent.top() ) ) )
+                    {
+                      --_numTraversed;
+                      ++*this; 
+                    }
+                }
+              else
+                {
+                  toJump = 1;
+                  ++*this;
+                }
+            }
+
+          *this = advance(n-toJump);
+        }
+      else
+        {
+          for(auto i = 0u; i < n; ++i)
+            ++*this;
+        }
+    }
+
+  return *this; 
+}
+
+
+iterator::difference_type distance(iterator first, iterator last)
+{
+  auto result = iterator::difference_type(0);
+
+  auto t = dynamic_cast<Topology const*>(first._ref);
+  if(t != nullptr)
+    {
+      auto target = t->getBipOrDummy(last);
+      auto current = t->getBipOrDummy(first);
+
+      assert(first != t->end() );
+
+      if(  target == current || current == ~target )
+        {         
+          // => go to return
+        }
+      else if( first->isOuterBranch() && first->primary() == first->getTaxonNode() )
+        {
+          // this case avoids skipping the entire tree 
+          ++ first;
+          result += 1 + distance(first,last); 
+        }
+      else if( ( (target & current).count() == 0 || ( current <  target)  ) )
+        {
+          auto n = first.getNumLinksInSubtree();
+          first.advance(n);
+          result += n + distance(first,last);
+
+        }
+      else
+        {
+          ++first; 
+          result += 1 + distance(first, last); 
+        }
+    }
+  else
+    {
+      while( first != last
+             && first != last.opposite() // this is technically incorrect ... 
+             ) 
+        {
+          ++result;
+          ++first;
+        }
+    }
+
+  return result; 
+}
+
+
+
+
+size_t iterator::getNumOuterNodesInSubtree() const
+{
+  auto result = size_t(0); 
+  auto t = dynamic_cast<Topology const*>(_ref);
+  if( t != nullptr)
+    {
+      if( _curLink.isOuterBranch() )
+        {
+          result = _curLink.primary() == _curLink.getTaxonNode()
+            ? t->outerSize() - 1
+            : 1 ;
+        }
+      else
+        {
+          auto found = t->_bvs.find( **this);
+          auto foundAlt = t->_bvs.find( (*this)->invert() ) ; 
+          if(found  != t->_bvs.end())
+            {
+              result =  found->second.count();
+            }
+          else if(  foundAlt != t->_bvs.end() )
+            {
+              result = t->outerSize() - foundAlt->second.count();
+            }
+          else
+            {
+              std::cout << "found neither " << **this << " nor " << (*this)->invert() << " in\n" << t << std::endl;
+              assert(0); 
+            }
+        }
+    }
+  else
+    {
+      assert(0);       
+    }
+  
+  return result; 
+}
+
+
+
+size_t iterator::getNumLinksInSubtree() const
+{
+  auto result = size_t(0);
+  auto t = dynamic_cast<Topology const*>(_ref);
+  if( t != nullptr)
+    {
+      result = getNumOuterNodesInSubtree() * 2 - 1 ; 
+    }
+  else
+    {
+      assert(0); 
+    }
+  
+  return result; 
+}

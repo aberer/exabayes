@@ -150,6 +150,12 @@ bitvector operator&(  bitvector const& lhs, bitvector const& rhs)
 }
 
 
+bitvector operator-(bitvector const& lhs, bitvector const rhs)
+{
+  return lhs & (~ rhs) ; 
+}
+
+
 bitvector& bitvector::operator|=(bitvector const& rhs )
 {
   *this = *this | rhs; 
@@ -229,9 +235,35 @@ bitvector::bitvector( )
 {
 }
 
+
+
+
+
 bitvector::bitvector( std::initializer_list<int> l )
   : bitvector()
 {
   for(auto v : l )
     set(v); 
+}
+
+
+
+
+bool bitvector::operator<(bitvector const& rhs) const
+{
+  return (*this & rhs) == *this && count() < rhs.count() ; 
+}
+
+
+bitvector::operator vector<size_t>() const 
+{
+  auto result = vector<size_t>{};
+
+  for(auto i = 0u ;i < size() ; ++i)
+    {
+      if( get(i))
+        result.push_back(i);
+    }
+  
+  return result; 
 }

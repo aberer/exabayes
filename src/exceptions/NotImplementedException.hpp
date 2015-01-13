@@ -11,7 +11,8 @@ public:
   }
   
   virtual ~NotImplementedException()
-  {}
+  {
+  }
 };
 
 

@@ -3,17 +3,37 @@
 
 #include <map>
 #include <stack>
+#include <string>
 #include <set>
 #include <iostream>
+#include <vector>
+#include <exception>
 
-using std::stack;
-using std::map; 
-using std::set; 
+#include "bitvector.hpp"
+
+// iteratior included below!
 
 using node_id = int;
 
-
 class BareTopology;
+
+class IllegalTreeOperation : public std::exception 
+{
+public:
+  IllegalTreeOperation( std::string str)
+    : _str{str}
+  {}
+
+  virtual const char* what() const noexcept
+  {
+    return _str.c_str();
+  }
+  
+  virtual ~IllegalTreeOperation(){}
+private:
+  std::string _str; 
+};
+
 
 class Link
 {
@@ -80,6 +100,16 @@ public:
   
 public:
   BareTopology();
+  /** 
+      @brief initializes the tree from a sequence of numbers 
+      
+      Each number indicates the link, where the next taxon shall be
+      inserted. These positions are relative to an iterator that
+      starts at a reference taxon (1). The reference taxon allows the
+      Topology specialization to rapidly determine these numbers.
+  */ 
+  BareTopology(  std::vector<size_t> const& numbers);
+  BareTopology( std::vector<bitvector> const& bipartitions ); 
   virtual ~BareTopology(){}
   /** 
       @brief gets the number of outer nodes 
@@ -96,102 +126,65 @@ public:
   
   iterator begin() const; 
   iterator end() const;               // grml also const
-
+  
   iterator begin( node_id taxon) const;
-
+  /** 
+      @brief decomposes the tree and yields a minimal description that
+      allows to reconstruct the topology 
+      @result a sequence of insertion locations
+   */ 
+  std::vector<size_t> decomposeToInsertionNumbers(); 
   /**
      @brief inserts the next outer node at a given branch 
    */ 
-  virtual iterator insert(iterator it);
+  virtual iterator insert(iterator it, node_id id = 0 );
+  /** 
+      @brief removes a subtree represented by an iterator from the
+      tree. This subtree must not hold more than one taxon.
+      
+      @return returns an iterator to the branch existing after removal
+   */ 
+  virtual iterator erase(iterator it);
 
+  virtual iterator move(iterator movedSubtree, iterator regraftLocation ); 
+  
   bool print(std::ostream &s, iterator c, bool needTrifurcation ) const; 
   
-  void dumpConnections() const 
-  {
-    for(auto iter = _connections.begin(); iter != _connections.end(); ++iter)
-      {
-        auto &from = iter->first ;
-        std::cout << from << "\t->\t";
-        for(auto i = iter->second.begin(); i != iter->second.end(); ++i)
-          {
-            std::cout << *i <<",";
-          }
-        std::cout << "\n";
-      }
-  }
-  
+  bool operator==(const BareTopology &other) const;
+
+  // for DEBUG 
+  void dumpConnections() const ;
 protected:
   static bool isInnerNode(node_id id )  { return id < 0;  }
   static bool isOuterNode(node_id id) {return id > 0 ; }
+  void eraseNode( node_id id); 
 
-private: 
-  node_id createInnerNode() { return --_numInnerNodes;   }
-  node_id createOuterNode() { return ++_numOuterNodes; }
+  node_id findHighestNode() const  ;
+
+  void initializeWithBipartitions( vector<bitvector> bipartitions );
+
+  std::tuple<vector<Link>,vector<Link>> getEmergeVansihLinks( iterator movedSubtree, iterator regraftLocation) const;
   
-  void hook(node_id i, node_id o);
+private:
+
+  iterator addBipartitionAt(bitvector curBip, vector<bitvector>  &bipartitions ,iterator branch);
+
+  node_id createInnerNode() { return --_numInnerNodes;   }
+  node_id createOuterNode(node_id id = 0 ); 
+  
+  void hook(Link l);
+  void hook( node_id i, node_id o); 
   void unhook(Link l);
 
 private:
-  map<node_id, set<node_id>> _connections;
+  std::map<node_id, std::set<node_id>> _connections;
   int _numInnerNodes;
   int _numOuterNodes;
 };
 
 
-class BareTopology::iterator
-{
-  friend class BareTopology;
-  friend class Topology;
 
-  using iterator_category = std::forward_iterator_tag ;
-  using value_type = Link;
-  using difference_type = size_t;
-  using pointer = Link*;
-  using reference = Link&; 
-  
-public:
-  iterator(BareTopology const*  ref, value_type l);
-  iterator(  const iterator& rhs) = default;
-  iterator& operator=(const iterator &rhs) = default; 
-  /** 
-      @brief equals ->next and looses any traversal memory   
-   */ 
-  iterator neighbor(  ) const;
-  /** 
-      @brief equals ->back and looses any traversal memory   
-  */ 
-  iterator opposite( ) const;
-  
-  iterator& next();
-
-  bool operator==(const iterator &other) const { return _ref == other._ref && _curLink == other._curLink; }
-  bool operator!=(const iterator &other) const { return !(*this == other); }
-  
-  Link const& operator*() const {  return _curLink; }
-  Link const *  operator->() const { return &_curLink ;  }
-  
-  Link get() const {return _curLink; }
-
-  iterator& operator++() { next(); return *this; }
-  iterator operator+( size_t n ) { auto cpy = *this; cpy.advance(n); return cpy; }
-  iterator& advance(size_t n); 
-
-  /** 
-      @brief forgets the branches it already has traversed 
-   */ 
-  void reset() ;
-private:                        // METHODS 
-  /** 
-      @brief conducts extra steps necessary, once the first subtree is traversed  
-  */
-  void handleHalfIsDone(bool &haveNewOne) ; 
-private:
-  BareTopology const* _ref; 
-  value_type _curLink;
-  stack<value_type> _descent;
-  Link _first;
-  bool _haveBothSides;
-};
+#include "BareTopologyIterator.hpp"
 
 
 #endif /* TOPOLOGY_H */

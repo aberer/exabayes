@@ -99,5 +99,17 @@ TEST(bitvectortest, complement)
 }
 
 
+TEST(bitvectortest, plusMinus)
+{
+  auto a = bitvector{ 0,1,2};
+  auto b = bitvector{ 2,3,4};
+
+  ASSERT_EQ(  bitvector(a - b).count() , 2   ); 
+}
+
+
+
 #endif /* BITVECTOR_TEST_H */
+
+
 

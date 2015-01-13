@@ -29,7 +29,7 @@ useGoogleProfiler=0
 useClang=1
 
 cflags=""
-cxxflags=""  #  -stdlib=libc++ 
+cxxflags="-rdynamic"  #  -stdlib=libc++ 
 
 GDB=cgdb
 

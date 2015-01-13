@@ -1,13 +1,26 @@
 #include "BareTopology.hpp"
 #include "Topology.hpp"
 
+#include "common.h"
+
+#include <sstream>
+#include <algorithm>
 #include <iostream>
 #include <cassert>
-#include "NotImplementedException.hpp"
+#include "all_exceptions.hpp"
 
+
+using std::tuple; 
+using std::string; 
+using std::vector; 
+using std::stack;
+using std::map; 
+using std::set; 
 using std::make_pair;
 
 using iterator = BareTopology::iterator;
+
+#include "SPRMove.hpp"
 
 BareTopology::BareTopology()
   : _connections{}
@@ -17,10 +30,119 @@ BareTopology::BareTopology()
 }
 
 
+BareTopology::BareTopology(  std::vector<size_t> const& numbers)
+  : BareTopology()
+{
+  // default initialization 
+  insert(begin());
+  insert(begin());
+  insert(begin());
+
+  for(auto &v : numbers)
+    {
+      assert(v <= size()); 
+      insert(begin(1) + v ); 
+    }
+}
+
+
+BareTopology::BareTopology( vector<bitvector> const& bipartitions )
+  : BareTopology()
+{
+  initializeWithBipartitions(bipartitions);
+}
+
+
+
+// TODO no copy 
+void BareTopology::initializeWithBipartitions( vector<bitvector>  bipartitions )
+{
+  // TODO use a reverse iterator instead 
+
+  std::reverse(bipartitions.begin(), bipartitions.end()); 
+  // we must assume that bipartitions have been created via a
+  // post-order travarsal. The last bipartition (now the first) *must*
+  // contain all taxa.
+
+  assert(bipartitions.front().count() == bipartitions.front().size() ); 
+
+  // auto innerNode = begin(1)->secondary(); 
+
+  // addFirstBipartitionAt( bipartitions, innerNode);
+  auto topBip = bipartitions.front();
+  bipartitions.erase(bipartitions.begin()); 
+  addBipartitionAt(topBip, bipartitions, begin()); 
+}
+
+
+
+
+iterator BareTopology::addBipartitionAt(bitvector curBip, vector<bitvector>&  bipartitions, iterator branch)
+{
+  // std::cout << "ADD "<< curBip << " to "  << *branch  << std::endl;
+  auto alreadyAdded = bitvector();
+  alreadyAdded.resize(curBip.size()); // NECESSARY??? 
+  
+  // treat sub-bipartitions
+  auto branchForNext =  branch; 
+  while( bipartitions.front() < curBip )
+    {
+      auto nextBip = bipartitions.front();
+      alreadyAdded |= nextBip;
+      bipartitions.erase(bipartitions.begin());
+      branchForNext = addBipartitionAt(nextBip, bipartitions, branchForNext); 
+    }
+
+  
+  if( alreadyAdded < curBip)
+    {
+      auto toInsert = vector<size_t> (curBip - alreadyAdded);
+      assert(toInsert.size() == 1 );
+
+      // this branch must exist
+      // std::cout << "INSERT\t" << toInsert[0] << "\t" << *branch  << std::endl;
+      insert(branch, static_cast<node_id>(toInsert[0] + 1 ));
+    }
+
+  
+  // return the correct position of the bipartition in the tree so far
+  auto p  = branch->primary();
+  auto s = branch->secondary(); 
+
+  if(  p ==  0 || s == 0 || size() <  2 )
+    {
+      branch = begin();
+    }
+  else if(  _connections.at(p).find(s) == _connections.at(p).end() ) 
+    {
+      assert( _connections.find(p) != _connections.end()); 
+      auto &map = _connections.at(p);
+      assert( _connections.find(s) != _connections.end()); 
+      auto &oppoMap = _connections.at(s);
+      auto res = vector<node_id>();
+
+      std::set_intersection( map.begin(), map.end(),  oppoMap.begin(), oppoMap.end(), std::back_inserter(res));
+      assert(res.size() == 1 );
+
+      auto &conOfRes = _connections.at(res[0]);
+      auto other = vector<node_id>();
+      auto known = std::set<node_id>{p, s }; 
+      std::set_difference(conOfRes.begin(), conOfRes.end(),   known.begin(), known.end(), std::back_inserter(other) ) ; 
+      assert(other.size() == 1 );
+
+      branch._curLink = Link(res[0] , other[0]);
+    }
+  else
+    {
+      std::cout << "no modification necessary" << std::endl; 
+    }
+
+  return branch; 
+}
+
+
 void BareTopology::unhook(Link l)
 {
-  // std::cout <<  "UNHOOK " << l  << std::endl;
-  
   auto p = l.primary();
   auto s = l.secondary(); 
   
@@ -37,37 +159,51 @@ void BareTopology::unhook(Link l)
 }
 
 
-void BareTopology::hook(node_id i, node_id o)
+
+void BareTopology::hook( node_id i, node_id o)
 {
+  hook(Link(i,o));
+}
+
+
+
+void BareTopology::hook(Link l)
+{
+  node_id i = l.primary(); 
+  node_id o = l.secondary(); 
+
   assert( outerSize() == 2 || not (isOuterNode(i) && isOuterNode(o)));
   _connections[i].insert(o);
   _connections[o].insert(i);
 }
 
 
-iterator BareTopology::insert(iterator it)
+
+
+
+iterator BareTopology::insert(iterator it, node_id givenId  )
 {
   auto result = end();
   if( outerSize() == 0 )
     {
-      auto id = createOuterNode();
+      auto id = createOuterNode( givenId );
       _connections[id] = set<node_id>{}; 
       result = iterator(this, Link(id, 0)); 
     }
   else if ( outerSize() == 1 )
     {
-      auto oId = createOuterNode();
+      auto oId = createOuterNode( givenId);
       auto o = it._curLink._priNode; 
-      hook(oId, o);
+      hook( Link(oId, o) );
       result = iterator(this, Link(oId, o)); 
     }
   else
     {
-      auto iId = createInnerNode();
-      auto oId = createOuterNode();
-      hook(oId, iId);
-      hook( iId, it._curLink._priNode );
-      hook( iId, it._curLink._secNode );
+      auto iId = createInnerNode( );
+      auto oId = createOuterNode(givenId);
+      hook(Link(oId, iId));
+      hook( Link(iId, it._curLink._priNode) );
+      hook( Link(iId, it._curLink._secNode )  );
       result = iterator(this, Link(oId, iId)); 
     }
 
@@ -76,6 +212,65 @@ iterator BareTopology::insert(iterator it)
     unhook(*it);
 
   return result;
+}
+
+
+void BareTopology::eraseNode( node_id id)
+{
+  if( id <  0)
+    ++_numInnerNodes;
+  else
+    --_numOuterNodes;
+
+  assert( _connections[id].empty() );
+  _connections.erase( _connections.find( id )); 
+}
+
+
+iterator BareTopology::erase(iterator it)
+{
+  auto result = it;
+  if( outerSize() == 1 )
+    {
+      eraseNode(1);
+    }
+  else if( size() == 1 )
+    {
+      assert( Link(1,2) == *it); 
+      unhook( Link(1,2));
+      eraseNode(2);
+      result = iterator(this, Link(1,0)); 
+    }
+  else if( not (
+                it->isOuterBranch()
+                &&  it->secondary() == it->getTaxonNode()
+                && it->secondary() == static_cast<int>(outerSize())
+                )
+           )
+    {
+      throw UnsupportedTreeAction();
+    }
+  else
+    {
+      auto itA = it.neighbor();
+      auto itB = itA.neighbor();
+  
+      unhook(*it);
+      unhook(*itA);
+      unhook(*itB);
+      
+      auto l = Link(itA->secondary(), itB->secondary()); 
+  
+      eraseNode(it->primary());
+      eraseNode(it->secondary());
+
+      hook(   l.primary() , l.secondary()   );
+  
+      result.reset();
+      result._curLink = l ; 
+    }
+
+  return result; 
 }
 
 
@@ -99,16 +294,13 @@ iterator BareTopology::begin() const
     result = end(); 
   else if(outerSize() == 1 )
     {
-      result = iterator(this, Link(1,0)); 
+      result = iterator(this, Link(findHighestNode(),0)); 
     }
   else 
     {
       auto elem = _connections.begin();
       auto beg = elem->first ; 
-      auto other =
-        // elem->second.begin() == elem->second.end()
-        // ? 0 :
-      *(elem->second.begin()); 
+      auto other = *(elem->second.begin()); 
       result =  iterator(this, Link(beg,other)); 
     }
   
@@ -120,165 +312,6 @@ iterator BareTopology::end() const
 {
   return iterator(this, Link{}); 
 }
-
-
-iterator iterator::neighbor() const 
-{
-  if( _curLink.primary() > 0 )
-    return *this;
-
-  auto result = *this; 
-  auto& map = result._ref->_connections.at(result._curLink._priNode); 
-  auto found = map.find(result._curLink._secNode);
-  assert(found != map.end());
-  ++found;
-
-  // cycle around 
-  if(found == map.end())
-    found = map.begin();
-  
-  result._curLink._secNode = *found;
-  result.reset();
-  return result; 
-}
-
-
-iterator iterator::opposite( ) const 
-{
-  auto result = *this;  
-  result._curLink = result._curLink.invert();
-  result.reset();
-  return result; 
-}
-
-
-iterator::iterator(BareTopology const * ref, Link l) 
-  : _ref{ref}
-  , _curLink{l}
-  , _descent{ }
-  , _first{l}
-  , _haveBothSides{false}
-{
-  
-}
-
-void iterator::handleHalfIsDone( bool &haveNewOne) 
-{
-
-}
-
-
-
-iterator& iterator::next()
-{
-  auto haveNewOne = false;
-  while(not haveNewOne)
-    {
-      _curLink = isOuterNode( _curLink.secondary())
-        ? *neighbor()
-        : *opposite().neighbor(); 
-        
-      haveNewOne = _descent.empty() || ( not (_curLink == _descent.top().invert() || _curLink == _descent.top())) ;
-      if(not haveNewOne)
-        _descent.pop();
-      else if(not _curLink.isOuterBranch())
-        _descent.push(_curLink);
-
-      if( _curLink == _first.invert() || _curLink == _first )
-        {
-          if( _haveBothSides  || _first.isOuterBranch() )
-            {
-              *this = _ref->end();
-              break; 
-            }
-          else
-            {
-              _curLink = _first.invert();
-              _haveBothSides = true; 
-              haveNewOne = false; 
-            }
-        }
-
-    }
-  return *this; 
-}
-
-
-iterator& iterator::advance(size_t n)
-{
-  if( n > 0 )
-    {
-      auto t = dynamic_cast< Topology const* >(_ref); 
-      if(  t != nullptr )
-        {
-          auto toJump = size_t(0);  
-          auto &map = t->_bvs;
-
-          if( _curLink.isOuterBranch() )
-            {
-              toJump = 1; 
-              ++*this;
-              std::cout << "jumping 1 (outer)"  << std::endl;
-            }
-          else
-            {
-              auto found = map.find( _curLink );
-              auto foundOppo = map.find( _curLink.invert() );
-
-              if(  not (found != map.end() || foundOppo != map.end()))
-                {
-                  std::cout << "could not find " << _curLink << std::endl;
-                  assert(false); 
-                }
-
-              toJump = found != map.end()
-                ? found->second.count()
-                :  _ref->outerSize() - foundOppo->second.count();
-
-              // std::cout << "count=" << toJump << std::endl;
-              toJump = toJump * 2 - 1 ;
-
-              if( toJump <= n)
-                {
-                  bool doReverse = ( ( _curLink == _first ) || ( _curLink == _first.invert() ) );
-
-                  _curLink = *neighbor();
-
-                  bool later  = ( ( _curLink == _first ) || ( _curLink == _first.invert() ) ); 
-
-                  if(doReverse || later)
-                    {
-                      _first = _first.invert();
-                      _haveBothSides = true;
-                      if(later)
-                        {
-                          ++*this;
-                        }
-                    }
-
-                  std::cout << "skip clade, jumping " << toJump << "\t now:" << **this << (later ? " later ": ""  ) << std::endl;
-                }
-              else
-                {
-                  toJump = 1;
-                  ++*this;
-                  std::cout << "cannot skip clade => simple jump " << "\t now:" << **this << std::endl;
-                }
-            }
-
-
-          *this = advance(n-toJump);
-        }
-      else
-        {
-          for(auto i = 0u; i < n; ++i)
-            ++*this;
-        }
-    }
-
-  return *this; 
-}
-
 
 
 std::ostream& operator<<(std::ostream& s, const Link& c)
@@ -319,6 +352,10 @@ std::ostream& operator<<(std::ostream& s, BareTopology const& c)
     {
       s << "();"; 
     }
+  else if( c.outerSize() == 1 )
+    {
+      s << "1;"  ; 
+    }
   else
     {
       auto start = c.begin();
@@ -334,10 +371,137 @@ std::ostream& operator<<(std::ostream& s, BareTopology const& c)
 }
 
 
-
-void iterator::reset()
+bool BareTopology::operator==(const BareTopology &other) const
 {
-  auto tmp = stack<Link>{};
-  std::swap(_descent, tmp);
-}
+  for(auto &val : _connections)
+    {
+      auto &f = val.first;
+      auto &s = val.second;
+
+      if(  other._connections.find(f) == other._connections.end() )
+        return false; 
+
+      auto &s2  = other._connections.at(f);
+
+      if( s.size() != s2.size())
+        return false;
+
+      for(auto &v : s)
+        {
+          if( s2.find(v) == s2.end())
+            return false; 
+        }
+    }
   
+  return true; 
+}
+
+
+
+void BareTopology::dumpConnections() const  
+{
+  for(auto iter = _connections.begin(); iter != _connections.end(); ++iter)
+    {
+      auto &from = iter->first ;
+      std::cout << from << "\t->\t";
+      for(auto i = iter->second.begin(); i != iter->second.end(); ++i)
+        {
+          std::cout << *i <<",";
+        }
+      std::cout << "\n";
+    }
+}
+
+
+
+vector<size_t> BareTopology::decomposeToInsertionNumbers()
+{
+  auto result = vector<size_t>();
+
+  while( size() > 3 )
+    {
+      auto highest = findHighestNode();
+      
+      auto last = begin( highest  ).opposite();
+      auto newIt = erase(last);
+      auto dist = distance(begin(1), newIt);
+      result.push_back( dist );
+    }
+
+  std::reverse(result.begin(), result.end()); 
+  
+  return result; 
+}
+
+
+node_id BareTopology::createOuterNode(node_id id )
+{
+  auto result = id;       
+  if(  id == 0 )
+    {
+      // TODO  INEFFICIENT 
+      
+      // determine the id yourself
+
+      bool hasBroken = false; 
+      // naive expensive operation 
+      for(auto i = node_id(1); i < _numOuterNodes + 1 ; ++i)
+        {
+          if( _connections.find(i) == _connections.end() )
+            {
+              hasBroken = true; 
+              result = i;
+              break; 
+            }
+        }
+
+      if(not hasBroken)
+        result = _numOuterNodes + 1 ;
+
+      assert( _connections.find(result)== _connections.end() && result != 0); 
+    }
+  else if( _connections.find(id) !=   _connections.end() )
+    {
+      auto &&ss = std::stringstream{};
+      ss << id; 
+      throw IllegalTreeOperation("trying to insert outer node " + ss.str()  + " that is already there." ) ; 
+    }
+
+  ++_numOuterNodes;
+  // std::cout << "created " << result << std::endl;
+  return result; 
+}
+
+
+node_id BareTopology::findHighestNode() const
+{
+  auto const& elem = std::max_element( _connections.begin() , _connections.end() ,
+                                       []( std::pair<node_id, std::set<node_id>>  const &elemA ,std::pair<node_id, std::set<node_id>>  const &elemB ) { return elemA.first < elemB.first; });
+  return elem->first; 
+}
+
+
+
+
+
+
+
+
+iterator BareTopology::move(iterator movedSubtree, iterator regraftLocation )
+{
+  if(  movedSubtree->isOuterBranch()  && movedSubtree->primary() == movedSubtree->getTaxonNode()  )
+    throw IllegalTreeOperation("Tried to move entire tree.");
+
+  auto theMove = SPRMove(movedSubtree, regraftLocation);
+
+  auto vanishingLinks = theMove.getVanishingLinks(); 
+  auto emergingLinks = theMove.getEmergingLinks();
+
+  for(auto &v : vanishingLinks)
+    unhook( v );
+
+  for(auto &v : emergingLinks)
+    hook(v); 
+
+  return iterator(this , theMove.getBranchAfterPruning()); 
+}

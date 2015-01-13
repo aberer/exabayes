@@ -35,6 +35,9 @@
 
 #include "TopologyTest.hpp"
 
+#include "NewickParserTest.hpp"
+
+#include "BipartitionParserTest.hpp"
 
 int main (int argc, char **argv)
 {

@@ -47,14 +47,23 @@ public:
   bitvector& operator&=(bitvector const& rhs );
   bitvector operator~() const ;
 
+  bool operator<(bitvector const& rhs) const;
+  bool operator>(bitvector const& rhs) const { return rhs < *this;  }
+
+  bool operator<=(bitvector const& rhs) const { return (*this == rhs) ||  ( *this < rhs) ; }
+  bool operator>=(bitvector const& rhs) const {return *this == rhs || *this > rhs; } 
+  
   bool operator==(const bitvector &other) const ;
   bool operator!=(const bitvector &other) const { return !(*this == other); }
 
-  friend std::ostream& operator<<(std::ostream& out, bitvector const& rhs ); 
+  friend std::ostream& operator<<(std::ostream& out, bitvector const& rhs );
+
+  operator vector<size_t>() const ; 
 
 public:                         // FRIENDS
   friend bitvector operator|( bitvector const& lhs, bitvector const& rhs);
-  friend bitvector operator&( bitvector const& lhs, bitvector const& rhs); 
+  friend bitvector operator&( bitvector const& lhs, bitvector const& rhs);
+  friend bitvector operator-(bitvector const& lhs, bitvector const rhs);
 
 private:                        // METHODS
   static size_t elemSize(size_t size) ;
@@ -66,6 +75,8 @@ private:
 };
 
 
+
+// remove it again, the iterator sucks 
 class bitvector::iterator
 {
 public:
