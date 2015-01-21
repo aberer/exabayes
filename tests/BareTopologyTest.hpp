@@ -147,12 +147,10 @@ TEST_F(BareTopologyTest, decompose)
 
 TEST_F(BareTopologyTest, findPath)
 {
-  std::cout << t << std::endl;
-
   auto path = t.begin(3).findPathTo(  t.begin(4));
-  for(auto &v : path)
-    std::cout << v << ",";
-  std::cout << std::endl;
 
-  t.dumpConnections();
+  ASSERT_EQ(path.size() , 3 ); 
+  ASSERT_EQ(path[0], -4);
+  ASSERT_EQ(path[1],-1);    
+  ASSERT_EQ(path[2] , -2);
 }

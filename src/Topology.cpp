@@ -5,13 +5,11 @@
 #include <algorithm>
 #include <cassert>
 
-
 using iterator = BareTopology::iterator;
 using std::unique_ptr;
 using std::make_pair;
 
 #include "Move.hpp"
-
 
 Topology::Topology()
   : BareTopology()
@@ -45,7 +43,10 @@ bitvector Topology::getBipOrDummy(iterator it) const
   auto foundB = _bvs.find(it->invert()); 
   
   if( it->isOuterBranch() )
-    result.set(it->getTaxonNode() -1 ); 
+    {
+      result.resize( outerSize() ); 
+      result.set(it->getTaxonNode() -1 );
+    }
   else if(  foundA != _bvs.end()  )
     {
       result = foundA->second; 

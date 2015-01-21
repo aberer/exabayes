@@ -63,10 +63,15 @@ public:
   bool isValid() const;
   
   vector<node_id> findPathTo( iterator end) const ;
-  
 
+
+  static int ctr; 
+  
 private:
-  vector<node_id> findPathTo_helper( iterator end) const; 
+  vector<node_id> findPathTo_helper( iterator end) const;
+  vector<node_id> findPathTo_helperWithBipartitions( bitvector const& endBip) const;
+
+  bitvector getBipOrDummy() const ; 
 private:
   BareTopology const* _ref; 
   value_type _curLink;

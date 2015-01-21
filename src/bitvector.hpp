@@ -47,6 +47,8 @@ public:
   bitvector& operator&=(bitvector const& rhs );
   bitvector operator~() const ;
 
+  bitvector symmetricDifference( bitvector const& rhs) const ; 
+
   bool operator<(bitvector const& rhs) const;
   bool operator>(bitvector const& rhs) const { return rhs < *this;  }
 

@@ -35,7 +35,7 @@ public:
   friend std::ostream& operator<<(std::ostream& s, const Topology& c); 
 
   bool verifyBipartitions() const ;
-
+  
 private:
   void checkedInsert( Link link, bitvector bip);
 

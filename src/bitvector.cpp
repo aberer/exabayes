@@ -272,3 +272,9 @@ bitvector::operator vector<size_t>() const
   
   return result; 
 }
+
+
+bitvector bitvector::symmetricDifference( bitvector const& rhs) const
+{
+  return (*this | rhs ) - (*this & rhs); 
+}

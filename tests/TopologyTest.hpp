@@ -250,4 +250,34 @@ TEST_F(TopologyTestClass, move)
 }
 
 
+TEST_F(TopologyTestClass, findPath)
+{
+  auto path = _topo.begin(3).findPathTo(  _topo.begin(4));
+
+  // build an old-school tree
+  auto bt =  BareTopology();
+  bt.insert(bt.begin());
+  bt.insert(bt.begin());
+  bt.insert(bt.begin());
+  bt.insert(bt.begin(1));
+  bt.insert(bt.begin(2));
+  bt.insert(bt.begin(3));
+
+  for(auto i = 1u; i <= bt.outerSize(); ++i)
+    {
+      for(auto j = i + 1 ; j <= bt.outerSize() ; ++j)
+        {
+          auto p1 = _topo.begin(i).opposite().findPathTo( _topo.begin(j).opposite() );
+          auto p2 = bt.begin(i).findPathTo(bt.begin(j));
+
+          ASSERT_EQ(p1.size() , p2.size());
+
+          for(auto l = 0u; l < p1.size() ;++l)
+            ASSERT_EQ(p1[l], p2[l]);
+        }
+    }
+}
+
 #endif /* TOPOLOGYTEST_H */
+
+

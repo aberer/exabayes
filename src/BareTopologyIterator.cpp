@@ -7,6 +7,8 @@
 using std::stack; 
 using iterator = BareTopology::iterator;
 
+int iterator::ctr = 0; 
+
 
 iterator::iterator(BareTopology const * ref, Link l) 
   : _ref{ref}
@@ -269,7 +271,6 @@ size_t iterator::getNumLinksInSubtree() const
 }
 
 
-
 bool iterator::isValid() const
 {
   auto &map =  _ref->_connections.at(_curLink.primary() ); 
@@ -277,30 +278,111 @@ bool iterator::isValid() const
 }
 
 
-
 vector<node_id> iterator::findPathTo( iterator end) const
 {
-  std::cout << "finding path between "  << **this << " and " << *end << std::endl;
-  
-  auto result = vector<node_id>{}; 
-  result = findPathTo_helper( end);
+  auto result = vector<node_id>{};
 
-  if( result.empty() )
+  auto casted = dynamic_cast<Topology const*>(_ref); 
+  if( casted != nullptr)
     {
-      auto tmp = opposite();
-      result = tmp.findPathTo_helper(end); 
+      auto endBip = end.getBipOrDummy();
+      result = findPathTo_helperWithBipartitions( endBip ) ;
+      std::reverse( result.begin(), result.end() );
     }
+  else
+    {
+      result = findPathTo_helper( end );
 
-  assert(not result.empty()); 
+      if( result.empty() )
+        {
+          auto tmp = opposite();
+          result = tmp.findPathTo_helper(end); 
+        }
 
-  std::reverse(result.begin(), result.end());
+      assert(not result.empty()); 
+
+      std::reverse(result.begin(), result.end());
   
-  result.erase(result.begin() + result.size() - 1  ); 
-  
+      result.erase(result.begin() + result.size() - 1  ); 
+    }
   
   return result; 
 }
 
+
+
+vector<node_id> iterator::findPathTo_helperWithBipartitions( bitvector const& endBip) const
+{
+  auto result = vector<node_id>{};
+
+  auto t = dynamic_cast<Topology const*>(_ref); 
+  
+  auto curBip = t->getBipOrDummy(*this); 
+
+  auto scoreBip = []( bitvector const& start, bitvector const &end )
+    {
+      if( start == end)
+        return size_t(0) ; 
+      else if( start < end)
+        return start.symmetricDifference(end).count();
+      else if( start < ~end)
+        return start.symmetricDifference(~end).count();
+      else
+        return start.size(); 
+    }; 
+
+  auto curScore = scoreBip(curBip, endBip);
+
+  if(curScore == 0 )
+    {
+      // we are done 
+    }
+  else
+    {
+      auto oppo = opposite(); 
+      auto oppoScore = scoreBip( ~curBip, endBip);
+
+      auto n1Outer = ( _curLink.isOuterBranch() && _curLink.primary() == _curLink.getTaxonNode() );
+      auto n2Outer = ( _curLink.isOuterBranch() && _curLink.primary() == _curLink.getTaxonNode() ); 
+      
+      auto n1 =  n1Outer ?  opposite().neighbor().opposite()  : neighbor().opposite() ;
+      auto n1Bip = t->getBipOrDummy(n1);
+      auto n1Score = scoreBip( n1Bip, endBip);
+
+      auto n2 =  n2Outer ? opposite().neighbor().neighbor().opposite() : neighbor().neighbor().opposite();
+      auto n2Bip = t->getBipOrDummy(n2);
+      auto n2Score = scoreBip(n2Bip,endBip); 
+
+      auto scores = vector<long unsigned>{ oppoScore, n1Score, n2Score };
+      auto minScore = std::min_element( scores.begin(), scores.end());
+
+      assert( *minScore < curScore); 
+  
+      if(  *minScore == oppoScore )
+        {
+          result = oppo.findPathTo_helperWithBipartitions(endBip);
+        }
+      else if( *minScore == n1Score )
+        {
+          result = n1.findPathTo_helperWithBipartitions(endBip);
+          result.push_back(n1->secondary()); 
+        }
+      else if( *minScore == n2Score)
+        {
+          result = n2.findPathTo_helperWithBipartitions(endBip);
+          result.push_back(n2->secondary()); 
+        }
+      else
+        assert(0); 
+    }
+
+  return result; 
+}
+
+
+
+
+// I do not see a strong reason, why this should be a member function ... 
 
 vector<node_id> iterator::findPathTo_helper( iterator end) const
 {
@@ -334,4 +416,12 @@ vector<node_id> iterator::findPathTo_helper( iterator end) const
     }
   
   return result; 
+}
+
+
+bitvector iterator::getBipOrDummy() const
+{
+  auto casted = dynamic_cast<Topology const*>(_ref);
+  assert(casted != nullptr);
+  return casted->getBipOrDummy( *this ); 
 }

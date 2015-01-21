@@ -108,6 +108,15 @@ TEST(bitvectortest, plusMinus)
 }
 
 
+TEST(bitvectortest, symDiff)
+{
+  auto a = bitvector{ 0,1,2};
+  auto b = bitvector{ 2,3,4};
+  auto c = a.symmetricDifference(b);
+  ASSERT_EQ( c.count(), 4); 
+}
+
+
 
 #endif /* BITVECTOR_TEST_H */
 
