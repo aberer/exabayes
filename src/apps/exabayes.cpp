@@ -122,7 +122,7 @@ static void printInfoHeader(CommandLine& cl)
     ss << "the multi-threaded MPI hybrid variant of " ; 
 
   ss << PROGRAM_NAME << " (version " << VERSION << "),\n"; 
-  ss << "a tool for Bayesian MCMC sampling of phylogenetic trees, build with the" ; 
+  ss << "a tool for Bayesian MCMC sampling of phylogenetic trees, built with the" ; 
 
   ss << "\nPhylogenetic Likelihood Library (version " << PLL_LIB_VERSION << ", " << PLL_LIB_DATE << ")." ; 
 
