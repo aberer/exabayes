@@ -4,7 +4,6 @@
 #include <cassert>
 #include <iostream>
 #include <cmath>
-// #include "Branch.hpp"
 #include "BasicTreeReader.hpp"
 #include "TreeProcessor.hpp"
 #include "BranchLengthsParameter.hpp"
@@ -77,10 +76,25 @@ void TreeProcessor::nextTree(std::istream &treefile)
 						      IgnoreBranchLength>::type>( nat( _taxa.size()) );
   auto branches = bt.extractBranches(treefile);
 
+  // DEBUG START
+  // for(auto b : branches)
+    // std::cout << b << std::endl;
+  // END 
+  
   _tralnPtr->unlinkTree();
   for(auto b :branches)
     {
-      _tralnPtr->clipNode(_tralnPtr->getUnhookedNode(b.getPrimNode()), _tralnPtr->getUnhookedNode(b.getSecNode()) );
+      // std::cout << b << std::endl;
+      assert(b.getPrimNode() != 0);
+      assert(b.getSecNode() != 0 ); 
+      
+      auto nodeA = _tralnPtr->getUnhookedNode(b.getPrimNode());
+      auto nodeB =  _tralnPtr->getUnhookedNode(b.getSecNode());
+      
+      assert(nodeA != nullptr);
+      assert(nodeB != nullptr); 
+      
+      _tralnPtr->clipNode(nodeA, nodeB);
       if(readBl)
 	{
 	  _tralnPtr->setBranchUnchecked(b);

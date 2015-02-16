@@ -64,11 +64,12 @@ public:
 	exitFunction(-1, false); 
       }
 
+    // std::cout << SHOW(label) << std::endl;
+
     return _name2id[label]; 
   }
 
   void setLabelMap(std::unordered_map<std::string,nat> map) { _name2id = map; } 
-
 
   std::unordered_map<std::string,nat> _name2id; 
 }; 

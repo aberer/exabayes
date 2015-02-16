@@ -114,7 +114,7 @@ iterator& iterator::advance(difference_type n)
       if(  t != nullptr )
         {
           auto toJump = size_t(0u);
-          auto &map = t->_bvs;
+          // auto &map = t->_bvs;
 
           if( _curLink.isOuterBranch() )
             {

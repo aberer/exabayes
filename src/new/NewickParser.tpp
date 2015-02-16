@@ -73,7 +73,7 @@ vector<typename NewickParser<TREE>::tok_t> NewickParser<TREE>::tokenizeInput() c
           while(  iter !=  _input.end() )
             {
               if( not isWhiteSpace(*iter))
-                throw IllegalNewickFormatException( "found non-whitespace characters after semicolon delimiter: " + *iter);
+                throw IllegalNewickFormatException( string{"found non-whitespace characters after semicolon delimiter: "} + *iter);
               ++iter; 
             }
         }

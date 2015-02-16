@@ -78,9 +78,9 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
   for(auto &p : paramsToAdd)
     params.push_back(std::move(p)); 
 
-  auto divTimeMode = std::any_of(begin(params), end(params), 
-				 [](const std::unique_ptr< AbstractParameter> &param){ return param->getCategory() == Category::DIVERGENCE_TIMES
-										       || param->getCategory() == Category::DIVERGENCE_RATES ; }); 
+  // auto divTimeMode = std::any_of(begin(params), end(params), 
+				 // [](const std::unique_ptr< AbstractParameter> &param){ return param->getCategory() == Category::DIVERGENCE_TIMES
+										       // || param->getCategory() == Category::DIVERGENCE_RATES ; }); 
   
   // add standard stuff, if not defined yet
   for(auto cat : CategoryFuns::getAllCategories())
@@ -93,7 +93,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	case Category::BRANCH_LENGTHS: 
 	case Category::RATE_HETEROGENEITY:
 	case Category::TOPOLOGY: 
-          if(not divTimeMode)
+          // if(not divTimeMode)
             {
               for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
                 {
@@ -103,27 +103,27 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
                     }
                 }
             }
-          else 
-            continue; 
+          // else 
+            // continue; 
           break; 
-	case Category::DIVERGENCE_RATES: 
-	case Category::DIVERGENCE_TIMES:
-	  {
+	// case Category::DIVERGENCE_RATES: 
+	// case Category::DIVERGENCE_TIMES:
+	  // {
 	    // but do not instantiate these parameters, if we are doing
 	    // divtime (use the conflicting categories later, to rerduce
 	    // the complexity of the code)
-	    if(divTimeMode)
-	      {
-		for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
-		  {
-		    if(not cat2partsUsed.at(cat).at(i))
-		      partsUnused.push_back(i);
-		  }
-	      }
-	    else 
-	      continue ; 
-	  }
-	  break; 
+	    // if(divTimeMode)
+	    //   {
+	    //     for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
+	    //       {
+	    //         if(not cat2partsUsed.at(cat).at(i))
+	    //           partsUnused.push_back(i);
+	    //       }
+	    //   }
+	    // else 
+	      // continue ;        // 
+	  // }
+	  // break; 
 	case Category::AA_MODEL:	
 	  {
 	    for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
@@ -167,7 +167,8 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 
       if(CategoryFuns::inUniqueByDefault(cat))
 	{
-	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? (traln.getNumberOfInnerNodes(true))  : 1;
+	  auto numNeeded =  // ( cat == Category::DIVERGENCE_TIMES ) ? (traln.getNumberOfInnerNodes(true))  :
+            1;
 	  for(int i = 0; i < numNeeded; ++i )
             {
               ++highestParamId; 
@@ -201,16 +202,15 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
     case Category::TOPOLOGY:  
       var->setPrior( make_unique<UniformPrior>(0,0) ); // TODO : proper topology prior? 
       break; 
-      
-    case Category::DIVERGENCE_TIMES:
-      var->setPrior(make_unique<UniformPrior>(0,10)); 
-      break; 
-    case Category::DIVERGENCE_RATES: 
-    {
-      std::vector<double> cats(2*traln.getNumberOfTaxa() - 2, 1.0);
-      var->setPrior(make_unique<DirichletPrior>(cats));
-      break; 
-    }
+    // case Category::DIVERGENCE_TIMES:
+    //   var->setPrior(make_unique<UniformPrior>(0,10)); 
+    //   break; 
+    // case Category::DIVERGENCE_RATES: 
+    // {
+    //   std::vector<double> cats(2*traln.getNumberOfTaxa() - 2, 1.0);
+    //   var->setPrior(make_unique<DirichletPrior>(cats));
+    //   break; 
+    // }
     case Category::BRANCH_LENGTHS: 
       var->setPrior( make_unique<ExponentialPrior>(10.0 ));
       break; 
@@ -316,43 +316,43 @@ void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterLi
 
   auto primParams = proposal->getPrimaryParameterView(); 
   
-  auto doingDivRates = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_RATES; }); 
-  auto doingDivTimes = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
+  // auto doingDivRates = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_RATES; }); 
+  // auto doingDivTimes = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
 
-  if(doingDivRates)
-    {
-//      auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; });
-//      proposal->addSecondaryParameter((*tp)->getId());
-      for(auto &p : allParameters)
-	{
-	  if(p->getCategory() == Category::DIVERGENCE_TIMES)
-	    {
-	      // now add all *other* div time parameters as secondary parameters
-	      proposal->addSecondaryParameter(p->getId());
-	    }
-	}
-    }
-  else if(doingDivTimes)
-    {
-      // what is our current primary parameter id?
-      assert(primParams.size() == 1 ); 
-      auto primId = primParams[0]->getId();
+//   if(doingDivRates)
+//     {
+// //      auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; });
+// //      proposal->addSecondaryParameter((*tp)->getId());
+//       for(auto &p : allParameters)
+// 	{
+// 	  if(p->getCategory() == Category::DIVERGENCE_TIMES)
+// 	    {
+// 	      // now add all *other* div time parameters as secondary parameters
+// 	      proposal->addSecondaryParameter(p->getId());
+// 	    }
+// 	}
+//     }
+  // else if(doingDivTimes)
+  //   {
+  //     // what is our current primary parameter id?
+  //     assert(primParams.size() == 1 ); 
+  //     auto primId = primParams[0]->getId();
 
-      for(auto &p : allParameters)
-	{
-	  if(p->getCategory() == Category::DIVERGENCE_RATES)
-	    {
-	      // add the div-rates as a secondary paramater
-	      proposal->addSecondaryParameter(p->getId()); 
-	    }
-	  else if(p->getCategory() == Category::DIVERGENCE_TIMES && p->getId() != primId)
-	    {
-	      // now add all *other* div time parameters as secondary parameters 
-	      proposal->addSecondaryParameter(p->getId()); 
-	    }
-	}
-    }
-  else 
+  //     for(auto &p : allParameters)
+  //       {
+  //         if(p->getCategory() == Category::DIVERGENCE_RATES)
+  //           {
+  //             // add the div-rates as a secondary paramater
+  //             proposal->addSecondaryParameter(p->getId()); 
+  //           }
+  //         else if(p->getCategory() == Category::DIVERGENCE_TIMES && p->getId() != primId)
+  //           {
+  //             // now add all *other* div time parameters as secondary parameters 
+  //             proposal->addSecondaryParameter(p->getId()); 
+  //           }
+  //       }
+  //   }
+  // else 
     { 
       // get all branch length pararemeters   
       auto blParameters = allParameters.getViewByCategory(Category::BRANCH_LENGTHS);
@@ -450,8 +450,8 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
       // those are prototypes! non-owning pointers 
       switch(v->getCategory())
 	{
-	case Category::DIVERGENCE_RATES: 
-	case Category::DIVERGENCE_TIMES: 
+	// case Category::DIVERGENCE_RATES: 
+	// case Category::DIVERGENCE_TIMES: 
 	case Category::SUBSTITUTION_RATES: 
 	case Category::FREQUENCIES:
 	case Category::RATE_HETEROGENEITY: 

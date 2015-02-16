@@ -13,13 +13,13 @@ public : 			// INHERITED
   virtual void serialize( std::ostream &out) const;   
 
 public:
-  BranchLength(const BranchPlain &b = BranchPlain(), InternalBranchLength len = 0 )
+  BranchLength( BranchPlain const& b = BranchPlain(), InternalBranchLength len = 0 )
     : BranchPlain(b)
     , _length(len)
   {
   }
   
-    virtual ~BranchLength(){}
+  virtual ~BranchLength(){}
 
   double toMeanSubstitutions(double meanSubstRate) const 
   {

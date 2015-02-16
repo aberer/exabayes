@@ -1,8 +1,6 @@
 #ifndef TOPOLOGYTEST_H
 #define TOPOLOGYTEST_H
 
-#include "stacktrace.hpp"
-
 #include "SPRMove.hpp"
 
 #include "Topology.hpp"

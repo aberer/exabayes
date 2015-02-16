@@ -1,5 +1,4 @@
-#include "BasicTreeReader.hpp"	// 
-// #include "Branch.hpp"
+#include "BasicTreeReader.hpp"	
 #include "LabelPolicy.hpp"
 
 #include <tuple>
@@ -27,7 +26,7 @@ inline void BasicTreeReader<LABEL_READER, BL_READER>::expectChar(std::istream &i
 
 
 template<class LABEL_READER, class BL_READER>
-std::tuple<nat,double> BasicTreeReader<LABEL_READER,BL_READER>::parseElement(std::istream &iss)
+typename BasicTreeReader<LABEL_READER,BL_READER>::nodeLenTuple BasicTreeReader<LABEL_READER,BL_READER>::parseElement(std::istream &iss)
 {
   auto bl = double{ nan("") };  
   auto label = lr.readLabel(iss);
@@ -40,23 +39,26 @@ std::tuple<nat,double> BasicTreeReader<LABEL_READER,BL_READER>::parseElement(std
     }
   else 
     {
-      // std::cout << "did not find bl for label " << label << std::endl; 
+      std::cout << "did not find bl for label " << label << std::endl; 
     }
+
+  assert(label > 0 );
 
   return std::make_tuple(label, bl);
 }
 
 
 template<class LABEL_READER,class BL_READER>
-void BasicTreeReader<LABEL_READER, BL_READER>::addBranch(nat label, std::tuple<nat,double> subtree, std::vector<BranchLength> &branches) const 
+void BasicTreeReader<LABEL_READER, BL_READER>::addBranch(nat label, nodeLenTuple subtree, std::vector<BranchLength> &branches) const 
 {
-  branches.emplace_back(label,std::get<0>(subtree)); 
+  assert(std::get<0>(subtree) > 0 ); 
+  branches.push_back( BranchPlain(label, std::get<0>(subtree)) );
   branches.rbegin()->setLength(std::get<1>(subtree));
 }
 
 
 template<class LABEL_READER,class BL_READER>
-std::tuple<nat,double> BasicTreeReader<LABEL_READER, BL_READER>::parseSubTree(std::istream &iss, std::vector<BranchLength> &branches, bool toplevel) 
+typename BasicTreeReader<LABEL_READER, BL_READER>::nodeLenTuple BasicTreeReader<LABEL_READER, BL_READER>::parseSubTree(std::istream &iss, std::vector<BranchLength> &branches, bool toplevel) 
 {
   int ch = iss.peek(); 
   auto label = nat{0}; 
@@ -64,13 +66,15 @@ std::tuple<nat,double> BasicTreeReader<LABEL_READER, BL_READER>::parseSubTree(st
 
   if(ch != '(')			// must be a taxon label  
     {
-      return parseElement(iss);
+      auto res = parseElement(iss);
+      assert(std::get<0>(res) != 0 ); 
+      return res; 
     }
   else 				// true tree 
     {
       expectChar(iss,'(');
 
-      label = _highestInner; 
+      label = _highestInner;
       ++_highestInner;
 
       auto res  = parseSubTree(iss,branches, false);
@@ -93,9 +97,10 @@ std::tuple<nat,double> BasicTreeReader<LABEL_READER, BL_READER>::parseSubTree(st
 	  expectChar(iss,':');
 	  bl = br.readBranchLength(iss);
 	}
-    }
 
-  return std::make_tuple(label,bl); 
+      assert(label != 0 ); 
+      return std::make_tuple(label,bl); 
+    }
 }
 
 
@@ -104,8 +109,8 @@ std::vector<BranchLength> BasicTreeReader<LABEL_READER, BL_READER>::extractBranc
 {
   auto result = std::vector<BranchLength>{}; 
 
-
   parseSubTree(iss, result, true);
+  
   expectChar(iss,';');
 
   return result; 

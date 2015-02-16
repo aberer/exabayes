@@ -12,8 +12,8 @@
 #include "RevMatParameter.hpp"
 #include "TopologyParameter.hpp"
 
-#include "DivergenceTimes.hpp"
-#include "DivergenceRates.hpp"
+// #include "DivergenceTimes.hpp"
+// #include "DivergenceRates.hpp"
 
 
 
@@ -38,10 +38,10 @@ namespace CategoryFuns
 	return "ratehet"; 
       case Category::AA_MODEL : 
 	return "aamdel"; 
-      case Category::DIVERGENCE_RATES : 
-	return "divrates"; 
-      case Category::DIVERGENCE_TIMES : 
-	return "divtimes"; 
+      // case Category::DIVERGENCE_RATES : 
+	// return "divrates"; 
+      // case Category::DIVERGENCE_TIMES : 
+	// return "divtimes"; 
       default: 
 	{
 	  assert(0); 
@@ -55,10 +55,10 @@ namespace CategoryFuns
   {
     switch(cat)
       {
-      case Category::DIVERGENCE_RATES: 
-	return "dR"; 
-      case Category::DIVERGENCE_TIMES: 
-	return "time"; 
+      // case Category::DIVERGENCE_RATES: 
+	// return "dR"; 
+      // case Category::DIVERGENCE_TIMES: 
+	// return "time"; 
       case Category::TOPOLOGY:
 	return "topo" ;
       case Category::BRANCH_LENGTHS:
@@ -81,10 +81,10 @@ namespace CategoryFuns
   {
     switch(cat)
       {
-      case Category::DIVERGENCE_TIMES: 
-	return "TIMEPR"; 
-      case Category::DIVERGENCE_RATES:
-	return "DIVRATEPR"; 
+      // case Category::DIVERGENCE_TIMES: 
+	// return "TIMEPR"; 
+      // case Category::DIVERGENCE_RATES:
+	// return "DIVRATEPR"; 
       case Category::TOPOLOGY: 
 	return "TOPOPR"; 
       case Category::BRANCH_LENGTHS: 
@@ -107,8 +107,8 @@ namespace CategoryFuns
   {
     return {  
       Category::TOPOLOGY, 
-	Category::DIVERGENCE_TIMES, 
-	Category::DIVERGENCE_RATES, 
+	// Category::DIVERGENCE_TIMES, 
+	// Category::DIVERGENCE_RATES, 
 	Category::BRANCH_LENGTHS, 
 	Category::FREQUENCIES, 
 	Category::AA_MODEL,
@@ -163,12 +163,12 @@ namespace CategoryFuns
   {
     switch(cat)
       {
-      case Category::DIVERGENCE_RATES: 
-	return make_unique<DivergenceRates>(id, idOfMyKind, partitions,numTaxa);
-      case Category::DIVERGENCE_TIMES: 
+      // case Category::DIVERGENCE_RATES: 
+	// return make_unique<DivergenceRates>(id, idOfMyKind, partitions,numTaxa);
+      // case Category::DIVERGENCE_TIMES: 
 	// dummy initialize, let's set the proper node-age object
 	// later, as soon as we know the topology 
-	return make_unique<DivergenceTimes>(id, idOfMyKind, partitions, NodeAge{BranchPlain(0,0),0.}); 
+	// return make_unique<DivergenceTimes>(id, idOfMyKind, partitions, NodeAge{BranchPlain(0,0),0.}); 
       case Category::TOPOLOGY :
 	return  make_unique<TopologyParameter>( id, idOfMyKind,partitions );
       case Category::BRANCH_LENGTHS:
@@ -195,7 +195,8 @@ namespace CategoryFuns
     return
       cat == Category::TOPOLOGY
       || cat == Category::BRANCH_LENGTHS
-      || cat == Category::DIVERGENCE_TIMES ; 
+      // || cat == Category::DIVERGENCE_TIMES
+      ; 
   }
 
   
@@ -204,11 +205,12 @@ namespace CategoryFuns
     switch(cat)
       {
       case Category::TOPOLOGY:
-      case Category::BRANCH_LENGTHS: 
-	return {Category::DIVERGENCE_TIMES, Category::DIVERGENCE_RATES}; 
-      case Category::DIVERGENCE_RATES:
-      case Category::DIVERGENCE_TIMES: 
-	return {Category::BRANCH_LENGTHS, Category::TOPOLOGY}; 
+      case Category::BRANCH_LENGTHS:
+        return {}; 
+	// return {Category::DIVERGENCE_TIMES, Category::DIVERGENCE_RATES}; 
+      // case Category::DIVERGENCE_RATES:
+      // case Category::DIVERGENCE_TIMES: 
+	// return {Category::BRANCH_LENGTHS, Category::TOPOLOGY}; 
       case Category::SUBSTITUTION_RATES:
 	return {Category::AA_MODEL}; 
       case Category::AA_MODEL:

@@ -57,15 +57,11 @@ std::string ConsensusTree::getConsensusTreeString( bool printNames) const
   auto bip2Occ = std::unordered_map<Bipartition,nat>{}; 
   auto maxBip = 2 * bipEx.getTaxa().size() - 3; 
 
-  nat totalTreesAdded = 0; 
+  auto totalTreesAdded = 0.; 
   for(auto &bipHash : bipHashes)
     totalTreesAdded += bipHash.getTreesAdded(); 
 
-  nat absThreshold = 0; 
-  if(_isMRE)
-    absThreshold = nat(ceil(totalTreesAdded * .5));
-  else 
-    absThreshold = nat(ceil(totalTreesAdded * _threshold)); 
+  auto absThreshold = static_cast<nat>( totalTreesAdded *  (  _isMRE ? .5 : _threshold )  ) ; 
 
   assert(absThreshold > 0. ); 
 
@@ -102,7 +98,7 @@ std::string ConsensusTree::getConsensusTreeString( bool printNames) const
 
   for(auto &bipPair : bip2occVect)
     {
-      if(absThreshold <= bipPair.second )
+      if(absThreshold < bipPair.second )
 	consensus.push_back(bipPair.first); 
       else 
 	minorityBips.push_back(bipPair.first); 

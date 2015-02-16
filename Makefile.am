@@ -21,7 +21,7 @@ GCC_WARN= -Wcast-align   -Wchar-subscripts  -Wformat-nonliteral  -Wformat-y2k  -
 # GCC_WARN+=-Weffc++   
 
 GCC_WARN_OFF= -Wno-suggest-attribute=noreturn   -Wno-unknown-warning-option  -Wno-unknown-warning   -Wno-missing-noreturn
-WARN_FLAGS=-Wall -Wextra -ansi -pedantic -Wcast-qual  -Wcomment -Wconversion -Wdisabled-optimization -Wfloat-equal  -Wformat  -Wformat=2 -Wformat-security  -Winit-self  -Winline -Winvalid-pch -Wmissing-braces -Wmissing-include-dirs -Wparentheses  -Wpointer-arith -Wreturn-type -Wsequence-point  -Wshadow -Wsign-compare -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch -Wtrigraphs  -Wuninitialized -Wunknown-pragmas  -Wwrite-strings -Wunused  -Wunused-function  -Wunused-variable -Wreturn-type   -Wmissing-declarations -Wundef  $(WARN_OFF) 
+WARN_FLAGS=-Wall -Wextra -pedantic -Wcast-qual  -Wcomment -Wconversion -Wdisabled-optimization -Wfloat-equal  -Wformat  -Wformat=2 -Wformat-security  -Winit-self  -Winline -Winvalid-pch -Wmissing-braces -Wmissing-include-dirs -Wparentheses  -Wpointer-arith -Wreturn-type -Wsequence-point  -Wshadow -Wsign-compare -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch -Wtrigraphs  -Wuninitialized -Wunknown-pragmas  -Wwrite-strings -Wunused  -Wunused-function  -Wunused-variable -Wreturn-type   -Wmissing-declarations -Wundef  $(WARN_OFF) 
 
 if WITH_INTEL
 else 

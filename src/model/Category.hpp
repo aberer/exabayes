@@ -14,8 +14,8 @@ enum class Category :  int
     SUBSTITUTION_RATES = 3,
     RATE_HETEROGENEITY = 4,	
     AA_MODEL= 5, 
-    DIVERGENCE_RATES = 6 ,
-    DIVERGENCE_TIMES = 7, 
+    // DIVERGENCE_RATES = 6 ,
+    // DIVERGENCE_TIMES = 7, 
 } ; 
 
 

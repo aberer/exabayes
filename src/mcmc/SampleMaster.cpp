@@ -33,8 +33,8 @@
 
 #include "NodeAge.hpp"
 
-#include "DivergenceTimes.hpp"
-#include "DivergenceRates.hpp"
+// #include "DivergenceTimes.hpp"
+// #include "DivergenceRates.hpp"
 
 using std::endl; 
 using std::vector;
@@ -60,9 +60,9 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
   bool hasBranchLength = false; 
   if(startingTree.compare("") != 0 )
     {
-		pllInstance * instance = &(traln.getTrHandle());
-		pllNewickTree * newickTree = pllNewickParseString(startingTree.c_str());
-		pllTreeInitTopologyNewick(instance, newickTree, PLL_TRUE);
+      pllInstance * instance = &(traln.getTrHandle());
+      pllNewickTree * newickTree = pllNewickParseString(startingTree.c_str());
+      pllTreeInitTopologyNewick(instance, newickTree, PLL_TRUE);
     }
   else
     {	      
@@ -347,18 +347,18 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 		}
 	    }
 
-		if (cat != Category::DIVERGENCE_RATES)
-		{
-	  auto&& prior = param->getPrior(); 
-	  auto content = prior->getInitialValue();
+          // if (cat != Category::DIVERGENCE_RATES)
+          //   {
+          //     auto&& prior = param->getPrior(); 
+          //     auto content = prior->getInitialValue();
 
-	  // TODO specific function for setting initially 
-	  param->verifyContent(traln, content); 
-	  // tout << "APPL " << content << endl; 
+          //     // TODO specific function for setting initially 
+          //     param->verifyContent(traln, content); 
+          //     // tout << "APPL " << content << endl; 
 
-	  param->applyParameter(traln, content); 
-	}
-    }
+          //     param->applyParameter(traln, content); 
+          //   }
+        }
     }
 
 
@@ -393,117 +393,117 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	}
     }
 
-  auto divRates = std::vector<AbstractParameter*>{}; 
-  auto divTimes = std::vector<AbstractParameter*>{}; 
+  // auto divRates = std::vector<AbstractParameter*>{}; 
+  // auto divTimes = std::vector<AbstractParameter*>{}; 
 
-  for(auto & p : params)
-    {
-      if(p->getCategory() == Category::DIVERGENCE_RATES)
-	divRates.push_back(p); 
-      if(p->getCategory() == Category::DIVERGENCE_TIMES)
-	divTimes.push_back(p); 
-    }
+  // for(auto & p : params)
+  //   {
+  //     if(p->getCategory() == Category::DIVERGENCE_RATES)
+  //       divRates.push_back(p); 
+  //     if(p->getCategory() == Category::DIVERGENCE_TIMES)
+  //       divTimes.push_back(p); 
+  //   }
 
-  if(divRates.size() > 0 )
-    {
-      // assert(divTimes.size() == 1 ); // not more than one time parameter !
-      makeTreeUltrametric(traln, divTimes, divRates);
-    }
+  // if(divRates.size() > 0 )
+  //   {
+  //     // assert(divTimes.size() == 1 ); // not more than one time parameter !
+  //     makeTreeUltrametric(traln, divTimes, divRates);
+  //   }
 }
 
-static double traverseDepthFromRoot(TreeAln &traln, const BranchPlain &branch, std::vector<NodeAge *> & nodeAges) {
+// static double traverseDepthFromRoot(TreeAln &traln, const BranchPlain &branch, std::vector<NodeAge *> & nodeAges) {
 
-	double currentHeight = nodeAges[branch.getPrimNode()-1]->getHeight();
-	nodeAges[branch.getPrimNode()-1]->setPrimNode(branch.getPrimNode());
-	nodeAges[branch.getPrimNode()-1]->setSecNode(branch.getSecNode());
-	if (!traln.isTipNode(branch.getPrimNode())) {
+//   double currentHeight = nodeAges[branch.getPrimNode()-1]->getHeight();
+//   nodeAges[branch.getPrimNode()-1]->setPrimNode(branch.getPrimNode());
+//   nodeAges[branch.getPrimNode()-1]->setSecNode(branch.getSecNode());
+//   if (!traln.isTipNode(branch.getPrimNode())) {
 
-		auto plainDescendants = traln.getDescendents(branch);
+//     auto plainDescendants = traln.getDescendents(branch);
 
-		nodeAges[plainDescendants.first.getSecNode()-1]->setHeight(currentHeight+1.0);
-		nodeAges[plainDescendants.second.getSecNode()-1]->setHeight(currentHeight+1.0);
+//     nodeAges[plainDescendants.first.getSecNode()-1]->setHeight(currentHeight+1.0);
+//     nodeAges[plainDescendants.second.getSecNode()-1]->setHeight(currentHeight+1.0);
 
-		return std::max(
-				traverseDepthFromRoot(traln, plainDescendants.first.getInverted(), nodeAges),
-				traverseDepthFromRoot(traln, plainDescendants.second.getInverted(), nodeAges)
-				);
-	} else {
-		return currentHeight;
-	}
-}
+//     return std::max(
+//                     traverseDepthFromRoot(traln, plainDescendants.first.getInverted(), nodeAges),
+//                     traverseDepthFromRoot(traln, plainDescendants.second.getInverted(), nodeAges)
+//                     );
+//   } else {
+//     return currentHeight;
+//   }
+// }
 
-void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const 
-{
+// void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const 
+// {
 
-	assert(divRates.size() == 1 );
-	/* initialize the rates */
+//   assert(divRates.size() == 1 );
+//   /* initialize the rates */
   
-  vector<NodeAge *> nodeAges(traln.getNumberOfNodes());
-  for (nat i = 0; i < traln.getNumberOfNodes(); i++)
-  {
-	  nodeAges[i] = new NodeAge();
-  }
+//   vector<NodeAge *> nodeAges(traln.getNumberOfNodes());
+//   for (nat i = 0; i < traln.getNumberOfNodes(); i++)
+//     {
+//       nodeAges[i] = new NodeAge();
+//     }
 
-  /* set root at random */
-  traln.setRootBranch(traln.getAnyBranch());
+//   /* set root at random */
+//   traln.setRootBranch(traln.getAnyBranch());
  
-  nodeAges[traln.getRootBranch().getPrimNode()-1]->setHeight(1.0);
-  nodeAges[traln.getRootBranch().getSecNode()-1]->setHeight(1.0);
+//   nodeAges[traln.getRootBranch().getPrimNode()-1]->setHeight(1.0);
+//   nodeAges[traln.getRootBranch().getSecNode()-1]->setHeight(1.0);
 
-  double maxHeight = std::max(
-		  traverseDepthFromRoot(traln, traln.getRootBranch(), nodeAges),
-		  traverseDepthFromRoot(traln, traln.getRootBranch().getInverted(), nodeAges));
+//   double maxHeight = std::max(
+//                               traverseDepthFromRoot(traln, traln.getRootBranch(), nodeAges),
+//                               traverseDepthFromRoot(traln, traln.getRootBranch().getInverted(), nodeAges));
 
-	/* correct the node heights from the tips to the root and initialize branches */
-	for (auto b : nodeAges)
-	{
-		b->setHeight(
-				traln.isTipNode(b->getPrimNode()) ?
-						0 : (maxHeight - b->getHeight()));
-	}
+//   /* correct the node heights from the tips to the root and initialize branches */
+//   for (auto b : nodeAges)
+//     {
+//       b->setHeight(
+//                    traln.isTipNode(b->getPrimNode()) ?
+//                    0 : (maxHeight - b->getHeight()));
+//     }
 
-	auto rootNodeAge = NodeAge();
-	rootNodeAge.setHeight(maxHeight);
-	auto rootContent = ParameterContent();
+//   auto rootNodeAge = NodeAge();
+//   rootNodeAge.setHeight(maxHeight);
+//   auto rootContent = ParameterContent();
 
-	for (auto b : nodeAges)
-    {
-		if (b->getPrimNode() > traln.getNumberOfTaxa())
-		{
-			auto divtime =
-					static_cast<DivergenceTimes *>(divTimes[b->getPrimNode()
-							- traln.getNumberOfTaxa() - 1]);
-			auto content = ParameterContent();
+//   // for (auto b : nodeAges)
+//   //   {
+//   //     if (b->getPrimNode() > traln.getNumberOfTaxa())
+//   //       {
+//   //         // auto divtime =
+//   //         //   static_cast<DivergenceTimes *>(divTimes[b->getPrimNode()
+//   //         //                                           - traln.getNumberOfTaxa() - 1]) ;
+//   //         auto content = ParameterContent();
 
-			/* adding both current and parental branches */
-			content.nodeAges.push_back(*b);
-			if (traln.isRootChild(b->getPrimNode()))
-			{
-				content.nodeAges.push_back(rootNodeAge);
-				rootContent.nodeAges.push_back(*b);
-			}
-			else
-			{
-				content.nodeAges.push_back(*nodeAges[b->getSecNode() - 1]);
-			}
-			divtime->initializeParameter(traln, content);
-		}
-	}
+//   //         /* adding both current and parental branches */
+//   //         content.nodeAges.push_back(*b);
+//   //         if (traln.isRootChild(b->getPrimNode()))
+//   //           {
+//   //             content.nodeAges.push_back(rootNodeAge);
+//   //             rootContent.nodeAges.push_back(*b);
+//   //           }
+//   //         else
+//   //           {
+//   //             content.nodeAges.push_back(*nodeAges[b->getSecNode() - 1]);
+//   //           }
+//   //         // divtime->initializeParameter(traln, content);
+//   //       }
+//   //   }
       
-	auto divtime = static_cast<DivergenceTimes *>(divTimes[divTimes.size()-1]);
-	rootContent.nodeAges.push_back(rootNodeAge);
-	divtime->initializeParameter(traln, rootContent, true);
+//   auto divtime = static_cast<DivergenceTimes *>(divTimes[divTimes.size()-1]);
+//   rootContent.nodeAges.push_back(rootNodeAge);
+//   divtime->initializeParameter(traln, rootContent, true);
 
-	auto ratesContent = ParameterContent();
-	for (nat i = 0; i < traln.getNumberOfNodes(); i++)
-	{
-		ratesContent.branchLengths.push_back(BranchLength(*nodeAges[i],InternalBranchLength(0.0)));
-		delete nodeAges[i];
-    }
+//   auto ratesContent = ParameterContent();
+//   for (nat i = 0; i < traln.getNumberOfNodes(); i++)
+//     {
+//       ratesContent.branchLengths.push_back(BranchLength(*nodeAges[i],InternalBranchLength(0.0)));
+//       delete nodeAges[i];
+//     }
 
-	auto divrate = static_cast<DivergenceRates *>(divRates[0]);
-	divrate->initializeParameter(traln, ratesContent);
-}
+//   auto divrate = static_cast<DivergenceRates *>(divRates[0]);
+//   divrate->initializeParameter(traln, ratesContent);
+// }
 
 
 vector<std::string> SampleMaster::getStartingTreeStrings()
@@ -558,11 +558,11 @@ void SampleMaster::printProposals( std::vector<std::unique_ptr<AbstractProposal>
       tout << "In addition to that, the following sets below will be executed \n"
 	   << "in a sequential manner (for efficiency, see manual for how to\n"
 	   << "disable)." << endl; 
-	for(auto &p : proposalSets )
-	  {
-	    p.printVerboseAbbreviated(tout, sum);
-	    tout << endl;       
-	  }
+      for(auto &p : proposalSets )
+        {
+          p.printVerboseAbbreviated(tout, sum);
+          tout << endl;       
+        }
     }
 }
 
@@ -780,8 +780,8 @@ void SampleMaster::initializeRuns(Randomness rand)
     {
       auto treeRandomness = Randomness(treeSeeds[0]); 
       hadBl = initializeTree(initTree, 
-				  startingTrees.size() > 0  ? startingTrees.at(0): std::string(""), // meh 
-				  treeRandomness, blParams); 
+                             startingTrees.size() > 0  ? startingTrees.at(0): std::string(""), // meh 
+                             treeRandomness, blParams); 
     }
 
   for(nat i = 0; i < _runParams.getNumRunConv() ; ++i)
