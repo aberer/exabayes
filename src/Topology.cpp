@@ -1,5 +1,6 @@
 #include "Topology.hpp"
 
+#include "LikeArrayManager.hpp"
 #include "common.h"
 
 #include <algorithm>
@@ -14,6 +15,7 @@ using std::make_pair;
 Topology::Topology()
   : BareTopology()
   , _bvs{}
+  , _observingLnlArray{}
 {  
 }
 
@@ -31,7 +33,7 @@ std::ostream& operator<<(std::ostream& s, const Topology& c)
 void Topology::checkedInsert( Link link, bitvector bip)
 {
   assert(BareTopology::isOuterNode(link.primary()) || BareTopology::isOuterNode(link.secondary()));
-  _bvs.insert(make_pair(link,bip));
+  insertBip(link, bip);
 }
 
 
@@ -79,11 +81,12 @@ void Topology::reorient_helper(iterator it , bool forceExistence)
       if(forceExistence)
         assert( _bvs.find( *(it.opposite()) ) != _bvs.end()  );
 
-      _bvs.erase( *(it.opposite()) );
-      
+      eraseBip(*(it.opposite()) ) ; 
+
       // correctly insert it 
       auto bip = getBipOrDummy(sib) | getBipOrDummy(sib.neighbor ());
-      _bvs.insert(   make_pair(*it , bip) );
+
+      insertBip( *it, bip);
     }
 }
 
@@ -98,6 +101,9 @@ void Topology::reorient(iterator it, bool forceExistence )
       reorient_helper(it, forceExistence );
       reorient_helper(it.neighbor(), forceExistence);
       reorient_helper(it.neighbor().neighbor(), forceExistence);
+      
+      if(_observingLnlArray != nullptr)
+        _observingLnlArray->tellRoot(it); 
     }
 }
 
@@ -111,44 +117,34 @@ iterator Topology::erase(iterator it)
   auto neighA = it.neighbor();
   auto neighB = neighA.neighbor();
 
-  auto isOuterA = neighA->isOuterBranch();
-  auto isOuterB = neighB->isOuterBranch();
-
   auto bip = bitvector(); 
   
-  if(not isOuterA)
+  auto removeIfInner = [&](iterator anIt )
     {
+      auto res = not anIt->isOuterBranch(); 
+      if( res )
+        {
+          auto found = _bvs.find( *anIt);
+          bip = found->second;
+          assert(found != _bvs.end());
+          eraseBip(found->first); 
+        }
+      return res; 
+    }; 
 
-      auto foundA = _bvs.find(* neighA);
-      bip = foundA->second; 
-      assert(foundA != _bvs.end());
-      // std::cout << "erasing " << foundA->first << "\t" << foundA->second << std::endl;
-      _bvs.erase( foundA);
-    }
-  
-  if(not isOuterB)
-    {
-      auto foundB = _bvs.find(* neighB);
-      bip = foundB->second; 
-      assert(foundB != _bvs.end());
-      // std::cout << "erasing " << foundB->first << "\t" << foundB->second << std::endl;
-      _bvs.erase(foundB);
-    }
+  auto isOuterA = removeIfInner(neighA);
+  auto isOuterB = removeIfInner(neighB); 
   
   result = BareTopology::erase(it);
 
   if( not (isOuterB || isOuterA))
     {
       bip.unset(it->getTaxonNode());
-      _bvs.insert( make_pair(*result, bip));
+      insertBip(*result, bip); 
     }
-  
-  // std::cout << "inserting " << *result << "\t" << bip << std::endl;
 
   return result;
 }
-
-
 
 iterator Topology::insert(iterator pos, node_id givenId)
 {
@@ -161,11 +157,11 @@ iterator Topology::insert(iterator pos, node_id givenId)
   {
     assert(_bvs.find(*pos) != _bvs.end()); 
     auto bip = _bvs.at(*pos);
-    
-    _bvs.erase(*pos); 
-    auto newLink  = Link( newPos->secondary(), pos->secondary() );
-    // std::cout << "REINSERT bip in " << newLink << std::endl;
-    _bvs[newLink] = bip;
+
+    eraseBip(*pos); 
+
+    insertBip(Link( newPos->secondary(), pos->secondary() ),
+              bip); 
   }
 
   // insert current link
@@ -181,7 +177,8 @@ iterator Topology::insert(iterator pos, node_id givenId)
 
       auto bip = getBipOrDummy(found);
       bip.set(newPos->getTaxonNode() -1 );
-      _bvs[ *(newOne.opposite())] = bip;
+
+      insertBip(*(newOne.opposite()),bip);  
     }
   
   auto highest = findHighestNode() ;
@@ -228,9 +225,6 @@ bool Topology::verifyBipartitions() const
 }
 
 
-
-
-
 bool Topology::isEquivalent( Topology const& rhs) const
 {
   // this requires some computational effort, but given the data
@@ -274,12 +268,45 @@ unique_ptr<Move> Topology::move(Move &theMove )
       auto iter = _bvs.find( v);
       auto iter2 = _bvs.find( v.invert()); 
       if(  iter  != _bvs.end() )
-        _bvs.erase( iter);
+        eraseBip( iter->first); 
       else if( iter2 != _bvs.end() )
-        _bvs.erase(iter2); 
+        eraseBip( iter2->first); 
     }
 
   reorient(movedSubtree, false);
 
   return theMove.getInverse(); 
+}
+
+
+void Topology::eraseBip( Link const& l )
+{
+  auto found = _bvs.find(l); 
+
+  if(found != _bvs.end())
+    {
+      auto bip =  found->second; 
+      
+      _bvs.erase(found);
+  
+      if(_observingLnlArray != nullptr)
+        _observingLnlArray->makeVanish(bip);
+    }
+}
+
+
+void Topology::insertBip( Link l, bitvector b)
+{
+  _bvs.insert( make_pair(l , b) );
+  
+  if(_observingLnlArray != nullptr)
+  _observingLnlArray->makeExist(b); 
+}
+
+
+void Topology::setObservingLnlArrayManager( LikeArrayManagerPtr ptr)
+{
+  _observingLnlArray = ptr;
+  for(auto &v : _bvs)
+    _observingLnlArray->makeExist(v.second);
 }

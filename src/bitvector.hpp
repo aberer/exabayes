@@ -60,8 +60,10 @@ public:
 
   friend std::ostream& operator<<(std::ostream& out, bitvector const& rhs );
 
-  operator vector<size_t>() const ; 
+  operator vector<size_t>() const ;
 
+  size_t getHash() const ;
+  
 public:                         // FRIENDS
   friend bitvector operator|( bitvector const& lhs, bitvector const& rhs);
   friend bitvector operator&( bitvector const& lhs, bitvector const& rhs);
@@ -93,6 +95,19 @@ private:
   bitvector* _ref;
   size_t _index; 
 } ;
+
+
+
+namespace std
+{
+  template<> struct hash<bitvector>
+  {
+    size_t operator() (bitvector const &rhs) const
+    {
+      return rhs.getHash();
+    }
+  }; 
+}
 
 
 inline bitvector::iterator::iterator(bitvector* rhs, size_t index)

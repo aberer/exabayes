@@ -278,3 +278,12 @@ bitvector bitvector::symmetricDifference( bitvector const& rhs) const
 {
   return (*this | rhs ) - (*this & rhs); 
 }
+
+
+size_t bitvector::getHash() const
+{
+  auto res = bv_elem(0u); 
+  for(auto v : _array)
+    res ^=  static_cast<bv_elem>(std::hash<bv_elem>()(v));
+  return res; 
+}

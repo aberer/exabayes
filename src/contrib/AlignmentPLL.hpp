@@ -37,7 +37,6 @@ public:
 
   void createDummyPartition(Alphabet alphabet) ; 
 
-
   static int guessFormat(std::string file); 
 
 private: 			// ATTRIBUTES 

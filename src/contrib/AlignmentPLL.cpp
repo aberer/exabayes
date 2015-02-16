@@ -144,6 +144,8 @@ void AlignmentPLL::initAln(std::string alnFile, int fileType)
 }
 
 
+// this is probably not necessary any more since tomas could have
+// fixed that in the mean time
 void AlignmentPLL::substituteBases () 
 {
   auto numSeq = _pllAlignmentData->sequenceCount; 
