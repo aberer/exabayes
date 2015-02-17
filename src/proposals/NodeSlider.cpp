@@ -5,7 +5,7 @@
 #include "BranchLength.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
-  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 5.,  0,0, false)
+  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 0.,  0,0, false)
   , multiplier(_multiplier)
   , oneBranch{}
   , otherBranch{}

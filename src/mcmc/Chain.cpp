@@ -746,11 +746,12 @@ std::ostream& operator<<(std::ostream& out, const Chain &rhs)
 }
 
 
-void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile ) const
+void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile, std::unordered_map<bitvector,bitvector> &bitset ) const
 {
   auto blParamsUnfixed=  std::vector<AbstractParameter*>{} ; 
   AbstractParameter *topoParamUnfixed = nullptr; 
-  
+
+  // sample all the parameters 
   for(auto &param : _params  ) 
     {
       if(param->getCategory() == Category::BRANCH_LENGTHS && param->getPrior()->needsIntegration() )
@@ -759,6 +760,7 @@ void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  Pa
 	topoParamUnfixed = param  ; 
     }
 
+  // sample the topology (including branch lengths )
   if(blParamsUnfixed.size() > 0)
     {
       for(auto &param : blParamsUnfixed)

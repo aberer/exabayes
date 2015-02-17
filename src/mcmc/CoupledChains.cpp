@@ -6,7 +6,6 @@
 #include "GlobalVariables.hpp"
 #include "AbstractProposal.hpp"
 #include "PriorBelief.hpp"
-// #include "time.hpp"
 #include "ParallelSetup.hpp"
 
 #include "common.h"
@@ -267,7 +266,7 @@ void CoupledChains::doStep(nat id, ParallelSetup &pl)
   if(   std::fabs(chain.getChainHeat() - 1.) < std::numeric_limits<double>::epsilon()
      && chain.getGeneration() % _samplingFreq == 0 
      && pl.isChainLeader())
-    chain.sample(_paramId2TopFile, _pFile[0]);
+    chain.sample(_paramId2TopFile, _pFile[0], _sampledBipartitions);
 }
 
 
@@ -313,7 +312,7 @@ void CoupledChains::executePart(uint64_t startGen, uint64_t numGen, ParallelSetu
 	if( std::fabs(c.getChainHeat() -  1.  ) < std::numeric_limits<double>::epsilon()
 	    && pl.isChainLeader() && pl.isMyChain(_runid, ctr) )
 	  {
-	    c.sample(_paramId2TopFile, _pFile[0]); 
+	    c.sample(_paramId2TopFile, _pFile[0], _sampledBipartitions); 
 	    ++ctr; 
 	  }
     }

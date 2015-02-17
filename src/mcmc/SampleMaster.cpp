@@ -28,13 +28,9 @@
 #include "FullCachePolicy.hpp"
 #include "NoCachePolicy.hpp"
 
-
 #include "AlignmentPLL.hpp"
 
 #include "NodeAge.hpp"
-
-// #include "DivergenceTimes.hpp"
-// #include "DivergenceRates.hpp"
 
 using std::endl; 
 using std::vector;
@@ -939,23 +935,20 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
   for(nat i = 0; i < _runParams.getNumRunConv(); ++i)
     {
       auto &&ss = stringstream{}; 
-      ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies." << _cl.getRunid() << "." << i; 
+      ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies.run-" << i << "." << _cl.getRunid() ; 
       
-      // if we do not find the file, let's assume we have multiple branch lengths 
+      // if we do not find the file, let's assume we have multiple branch lengths
       if (not std::ifstream(ss.str()) ) 
 	{
 	  ss.str(""); 
-	  ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies." << _cl.getRunid() << "." << i << ".tree.0"; 
+	  ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies.run-" << i << ".tree.0." << _cl.getRunid(); 
 	}
 
       fns.push_back(ss.str());
     }
 
-  // std::cout << "computing asdsf for files " << fns << endl; 
-  
   auto&& asdsf = SplitFreqAssessor(fns, false);
   end = asdsf.getMinNumTrees() ; 
-
 
   // :HACK: possibly the number of trees is parsed incorrectly. This
   // is not problematic, but could lead to a hang, if we have too few

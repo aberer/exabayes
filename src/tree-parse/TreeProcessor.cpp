@@ -76,11 +76,6 @@ void TreeProcessor::nextTree(std::istream &treefile)
 						      IgnoreBranchLength>::type>( nat( _taxa.size()) );
   auto branches = bt.extractBranches(treefile);
 
-  // DEBUG START
-  // for(auto b : branches)
-    // std::cout << b << std::endl;
-  // END 
-  
   _tralnPtr->unlinkTree();
   for(auto b :branches)
     {

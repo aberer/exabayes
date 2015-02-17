@@ -17,6 +17,8 @@
 
 #include "CommFlag.hpp"
 
+#include "bitvector.hpp"
+
 class TreeAln; 
 class AbstractProposal; 
 
@@ -62,7 +64,7 @@ public:
   /** 
       @brief take a sample from the chain 
    */ 
-  void sample( std::unordered_map<nat,TopologyFile> &tFile, ParameterFile &pFile  ) const ; 
+  void sample( std::unordered_map<nat,TopologyFile> &tFile, ParameterFile &pFile,std::unordered_map<bitvector,bitvector> &bitset  ) const ; 
   /** 
       @brief deserialize the input string based on the flags 
    */ 

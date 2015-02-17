@@ -125,5 +125,17 @@ void PriorBelief::addToRatio(log_double val)
 {
   assert(wasInitialized) ;
   // tout << MAX_SCI_PRECISION << "adding " << val << std::endl; 
-  _lnPriorRatio *= val; 
+  _lnPriorRatio *= val;
+
+  assert(not _lnPriorRatio.isInfinity()  );
+  assert(not _lnPriorRatio.isNaN()); 
+  
+  // assert(not std::isinf(_lnPriorRatio));
+  // assert(not std::isnan(_lnPriorRatio));
+
+  // if( not _lnPriorRatio.isNormal())
+  //   {
+  //     tout <<  SHOW(_lnPriorRatio) << std::endl;
+  //     assert(0); 
+  //   }
 }

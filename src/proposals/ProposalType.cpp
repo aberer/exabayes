@@ -30,7 +30,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, "rate orientated sliding proposal on RevMat"} , 
 	{ ProposalType::BL_DIST_WEIBULL , "a weibull based branch length proposal" } ,
 	// { ProposalType::DIV_TIME_DIRICH , "dirichlet proposal on divergence times" } ,
-	{ ProposalType::BIASED_BL_MULT, "biased branch length multiplier "}
+	// { ProposalType::BIASED_BL_MULT, "biased branch length multiplier "}
       }; 
     
     if(map.find(type) == map.end())
@@ -66,7 +66,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, "REVMATRATESLIDER"} ,
 	{ ProposalType::BL_DIST_WEIBULL , "BLDISTWEIBULL" } ,
 	// { ProposalType::DIV_TIME_DIRICH , "DIVTIMEDIRICH" },
-	{ ProposalType::BIASED_BL_MULT, "BIASBLMULT"}
+	// { ProposalType::BIASED_BL_MULT, "BIASBLMULT"}
       }; 
 
     return proposal2name[p];     
@@ -117,7 +117,7 @@ namespace ProposalTypeFunc
 	    ProposalType::NODE_SLIDER, 
 	    ProposalType::BL_DIST_WEIBULL, 
 	    // ProposalType::DIV_TIME_DIRICH, 
-	    ProposalType::BIASED_BL_MULT
+	    // ProposalType::BIASED_BL_MULT
 	    }; 
       case Category::FREQUENCIES: 
 	return { 
@@ -198,14 +198,10 @@ namespace ProposalTypeFunc
 	{ ProposalType::AMINO_MODEL_JUMP,  true } ,
 
 	{ ProposalType::TL_MULT,  true } ,
-	{ ProposalType::BIASED_BL_MULT, true } ,
 	{ ProposalType::BRANCH_DIST_GAMMA , true } ,
 	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER,  false } ,
 	{ ProposalType::NODE_SLIDER,  false } ,
 	{ ProposalType::BL_DIST_WEIBULL, false }, 
-	// { ProposalType::DIV_TIME_DIRICH, false }, 
-	// { ProposalType::DIVTIME_SLIDER , true } , 
-	// { ProposalType::DIVRATE_SLIDER , true }
     };
 
     if(map.find(p) == map.end())

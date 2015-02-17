@@ -21,6 +21,8 @@
 #include "SwapMatrix.hpp"
 #include "SwapElem.hpp"
 
+#include "bitvector.hpp"
+
 class PendingSwap; 
 class ParallelSetup;
 
@@ -101,7 +103,9 @@ private: 			// ATTRIBUTES
   std::unordered_map<nat,TopologyFile> _paramId2TopFile; 
   std::vector<ParameterFile> _pFile; 
 
-  double _numSwapsPerGen; 
+  double _numSwapsPerGen;
+
+  std::unordered_map<bitvector,bitvector> _sampledBipartitions; 
 }; 
 
 #endif

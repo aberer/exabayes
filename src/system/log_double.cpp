@@ -38,3 +38,33 @@ log_double operator*( const log_double& lhs, const log_double &rhs)
 #endif 
 
 }
+
+
+
+log_double log_double::fromAbs(double val)
+{
+  if(  val <= 0 )
+    {
+      tout << "error: tried to create a log-double of " <<  val << std::endl; 
+      assert(val > 0 ); 
+    }
+    
+  auto result = log_double();
+  result._val = log(val); 
+  return result; 
+}
+
+
+log_double log_double::fromLog(double val )
+{
+  auto result = log_double();
+  result._val = val; 
+  return result; 
+}
+
+log_double log_double::lowest()
+{
+  auto result = log_double::fromAbs(1.); 
+  result._val = std::numeric_limits<double>::lowest();
+  return result; 
+}

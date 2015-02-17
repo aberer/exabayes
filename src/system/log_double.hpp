@@ -19,38 +19,23 @@ public:
   {
   }
 
-  static log_double fromAbs(double val)
-  {
-    if(  val <= 0 )
-      {
-	tout << "error: tried to create a log-double of " <<  val << std::endl; 
-	assert(val > 0 ); 
-      }
-    
-    auto result = log_double();
-    result._val = log(val); 
-    return result; 
-  }
+  static log_double fromAbs(double val); 
+  static log_double fromLog(double val );
 
-  static log_double fromLog(double val )
-  {
-    auto result = log_double();
-    result._val = val; 
-    return result; 
-  }
-  
   // could overload numeric_limits<log_double>::min()
-  static log_double lowest()
-  {
-    auto result = log_double::fromAbs(1.); 
-    result._val = std::numeric_limits<double>::lowest();
-    return result; 
-  }
-  
+  static log_double lowest(); 
+
   bool isNegativeInfinity() const 
   {
-    return isInfinity() && _val < 0. ; 
+    return isInfinity() && _val < 0. ;
+    
   }
+
+  bool isNormal() const
+  {
+    return std::isnormal(_val)  ;
+  }
+  
 
   bool isInfinity() const 
   {

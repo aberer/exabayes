@@ -131,7 +131,7 @@ void ParameterFile::regenerate(std::string workdir, std::string prevId, uint64_t
 	  genFound = std::stoi(part); 
 	}
 
-      if(genFound < gen && not lineIsEmpty)
+      if(genFound <= gen && not lineIsEmpty)
 	fh << line << std::endl; 
       ++lineCtr; 
     }

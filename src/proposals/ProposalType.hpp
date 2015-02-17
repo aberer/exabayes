@@ -6,7 +6,6 @@
 
 #include "Category.hpp" 
 
-
 // add your new proposal here and update accordingly in everything in
 // ProposalType.cpp .  if you missed something, then exabayes usually
 // complains with an > assert(0);
@@ -32,11 +31,7 @@ enum class ProposalType
     DIRICH_REVMAT_PER_RATE,
     SLIDING_REVMAT_PER_RATE,
     BL_DIST_WEIBULL,
-    // DIV_TIME_DIRICH, 
-    BIASED_BL_MULT , 
-    // DIVRATE_SLIDER, 
-    // DIVTIME_SLIDER
-}; 
+};
 
 
 class ProposalTypeHash

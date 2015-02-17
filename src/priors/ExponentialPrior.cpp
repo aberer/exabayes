@@ -32,21 +32,10 @@ log_double ExponentialPrior::getUpdatedValue(double oldRawVal, double newRawVal,
 
 log_double ExponentialPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const 
 {
-#if 0 
   double blInfluence = 0; 
   for(auto &b : traln.extractBranches(param))
-    blInfluence += log(b.getLength());
+    blInfluence += log(b.getLength().getValue());
 
-#else 
-  // necessary because of numerical stability 
-
-  auto sum = 1.; 
-  auto bs = traln.extractBranches(param); 
-  for( auto &elem :  bs )
-    sum *= elem.getLength().getValue() ; 
-  auto blInfluence = log( sum); 
-#endif
-  
   auto result = log_double::fromLog((myNew - myOld) *  _lambda  *  blInfluence ); 
   return result; 
 }

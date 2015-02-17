@@ -17,9 +17,17 @@ TopologyFile::TopologyFile(std::string workdir, std::string runname, nat runidAr
 { 
   auto&& ss = std::stringstream{}; 
   
-  ss <<  OutputFile::getFileBaseName(workdir) << "_topologies.run-"<< runid <<  "." << runname ; 
+
   if(hasManyTopoloFiles)
-    ss << ".tree." << paramNum; 
+    {
+      ss <<  OutputFile::getFileBaseName(workdir) << "_topologies.run-"<< runid <<  ".tree." << paramNum <<  "." << runname ;
+          // ss << ".tree." << paramNum; 
+    }
+  else
+    {
+      ss <<  OutputFile::getFileBaseName(workdir) << "_topologies.run-"<< runid <<  "." << runname ; 
+    }
+
   
   if(couplingId != 0 )
     ss << ".hot-"<<  couplingId; 
