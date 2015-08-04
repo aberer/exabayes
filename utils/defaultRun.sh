@@ -6,7 +6,7 @@ seed=$RANDOM			#
 seed=12345
 
 # src/proposals/
-numProc=2
+numProc=4
 withTree=0
 
 # extraArgs=" -S "
@@ -21,7 +21,7 @@ doParse=0
 # args="--disable-sse"
 
 startFromBest=0
-dotests=1
+dotests=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off

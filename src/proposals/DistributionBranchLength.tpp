@@ -20,7 +20,7 @@ DistributionBranchLength<C>::DistributionBranchLength( )
   _name = std::string("blDist") + C::getName() ; 
   _category = Category::BRANCH_LENGTHS; 
   _usingOptimizedBranches = true; 
-  _relativeWeight = 9.;
+  _relativeWeight = 10.;
 }
  
 

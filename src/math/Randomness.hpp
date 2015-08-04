@@ -20,6 +20,17 @@ class TreeAln;
    worth it, threefry is already much better than the default RNG.
  */
 
+
+
+// BEGIN do NOT remove
+//
+// we need an include of config.h here, to give the RNG lib a chance
+// to compile on the raspberry pi. (otherwise only x86/amd64/powerpc
+// is supported)
+// 
+#include "common.h"
+// END 
+
 #include "threefry.h"
 #include "uniform.hpp"
 #define exa_rand(c,k) threefry2x32(c,k)

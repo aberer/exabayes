@@ -7,13 +7,19 @@
 #include <exception>
 #include <iosfwd>
 
+#include "Serializable.hpp"
+
 using std::reference_wrapper; 
 using std::vector;
 
 using bv_elem = unsigned int ; 
 
-class bitvector
+class bitvector : public Serializable
 {
+public: // INHERITED
+  virtual void deserialize( std::istream &in ); 
+  virtual void serialize( std::ostream &out) const;   
+  
 public:
   class iterator; 
   

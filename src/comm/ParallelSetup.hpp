@@ -74,7 +74,7 @@ public:
   /** 
       @brief synchronize all core chain information at the master node // 
       @notice this only concerns the global masterprocess in a
-      parallel environtment.  
+      parallel environment.  
   */ 
   void synchronizeChainsAtMaster( std::vector<CoupledChains>& runs, CommFlag commFlags) ;  
 

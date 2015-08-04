@@ -205,15 +205,36 @@ bool bitvector::iterator::get() const
 
 bitvector bitvector::operator~() const 
 {
+#if 0 
   auto cpy = *this; 
   for(auto &v : cpy._array)
     v = ~v; 
+  return cpy;
+#else
+  auto cpy = bitvector();
+  cpy.resize(size()); 
+  for(auto i = 0u; i < size() ;++i)
+    {
+      if(not get(i))
+        cpy.set(i);
+    }
   return cpy; 
+#endif 
 }
 
 
 bool bitvector::operator==( bitvector const&other) const
 {
+#if 1
+  auto maxSize = std::max(size(), other.size());
+  for(auto i = 0u ; i < maxSize; ++i)
+    {
+      if( get(i) != other.get(i))
+        return false ; 
+    }
+  return true; 
+  
+#else 
   auto minSize = elemSize(std::min(size(), other.size()));
   auto maxSize = elemSize(std::max(size(), other.size()));
 
@@ -230,7 +251,8 @@ bool bitvector::operator==( bitvector const&other) const
         return false;
     }
 
-  return true; 
+  return true;
+#endif 
 }
 
 
@@ -282,8 +304,38 @@ bitvector bitvector::symmetricDifference( bitvector const& rhs) const
 
 size_t bitvector::getHash() const
 {
-  auto res = bv_elem(0u); 
-  for(auto v : _array)
-    res ^=  static_cast<bv_elem>(std::hash<bv_elem>()(v));
-  return res; 
+  // :HACK: dirty
+  auto res = 0u; 
+  for(size_t i = 0; i < size() ; ++i)
+    {
+      if( get(i) )
+        res ^= std::hash<size_t>()(i); 
+    }
+  return res;  
+  
+  // auto res = bv_elem(0u); 
+  // for(auto v : _array)
+    // res ^=  static_cast<bv_elem>(std::hash<bv_elem>()(v));
+  // return res; 
 }
+
+
+
+void bitvector::deserialize( std::istream &in )
+{
+  _usedSize = cRead<size_t>(in);
+  auto len = cRead<size_t>(in);
+  _array.resize(len,0);
+  for(auto &v : _array)
+    v = cRead<bv_elem>(in); 
+}
+
+void bitvector::serialize( std::ostream &out) const
+{
+  cWrite<size_t>( out, _usedSize);
+  cWrite<size_t>(out, _array.size());
+  for(auto &v : _array)
+    cWrite<bv_elem>(out,v);
+}
+
+

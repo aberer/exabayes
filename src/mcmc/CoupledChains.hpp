@@ -21,6 +21,8 @@
 #include "SwapMatrix.hpp"
 #include "SwapElem.hpp"
 
+#include "SampledBipartitions.hpp"
+
 #include "bitvector.hpp"
 
 class PendingSwap; 
@@ -78,6 +80,17 @@ public:
 
   void regenerateOutputFiles(std::string _workdir, std::string prevId) ; 
   std::list<SwapElem> generateSwapsForBatch(uint64_t startGen, uint64_t numGen) ; 
+
+
+  /** 
+      @brief reduces the contained information, s.t. it is only
+      available at the run-master
+  */ 
+  void reduceSampledBips(ParallelSetup &pl); 
+
+
+  SampledBipartitions getSampledBipartitions() const { return _sampledBipartitions;  }
+  
   
 private: 			// METHODS
   /**
@@ -105,7 +118,7 @@ private: 			// ATTRIBUTES
 
   double _numSwapsPerGen;
 
-  std::unordered_map<bitvector,bitvector> _sampledBipartitions; 
+  SampledBipartitions _sampledBipartitions; 
 }; 
 
 #endif

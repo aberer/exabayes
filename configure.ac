@@ -150,5 +150,27 @@ fi
 
 AM_CONDITIONAL([WITH_MPI], [ test "x$MPI_CODE" = "xyes" ])
 
+
+
+AC_ARG_ENABLE( [safe-rng],
+               [  --disable-safe-rng   disables a check in the random
+                              number generator. Use this option on architectures
+                              other than x86/amd64/powerpc and at your own risk. ],
+               [ case "${enableval}" in
+                 no) ac_safe_rng="no" ;;
+                 yes) ac_safe_rng="yes" ;;
+                 *) ac_safe_rng="yes"
+                 esac ],
+               [ac_safe_rng="yes"]
+)
+
+AS_IF( [ test x"$ac_safe_rng" = "xyes" ],
+           [ AC_DEFINE( [USE_SAFE_RNG],  [], [ "the rng  libRandom123 will check whether it is compiled on supported archetectures  " ]) ],
+            [])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
+
+
+
+

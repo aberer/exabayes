@@ -18,6 +18,8 @@
 #include "Category.hpp"
 #include "TreePrinter.hpp"
 
+#include "SampledBipartitions.hpp"
+
 // // TODO not too much thought went into this  
 
 // actually, i do not think this is a good idea, but too afaid of
@@ -746,7 +748,7 @@ std::ostream& operator<<(std::ostream& out, const Chain &rhs)
 }
 
 
-void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile, std::unordered_map<bitvector,bitvector> &bitset ) const
+void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile, SampledBipartitions &sampledBipartitions, uint64_t sampleIndex  ) const
 {
   auto blParamsUnfixed=  std::vector<AbstractParameter*>{} ; 
   AbstractParameter *topoParamUnfixed = nullptr; 
@@ -776,7 +778,9 @@ void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  Pa
       f.sample(_traln, getGeneration(), topoParamUnfixed); 
     }
 
-  pFile.sample( _traln, _params, getGeneration(), _prior.getLnPrior()); 
+  pFile.sample( _traln, _params, getGeneration(), _prior.getLnPrior());
+
+  sampledBipartitions.addTree(_traln, sampleIndex);
 }
 
      

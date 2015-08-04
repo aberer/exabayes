@@ -50,7 +50,7 @@ public:
   processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
   void initializeWithParamInitValues(TreeAln &tree , const ParameterList &params , bool hasBl ) const ; 
 
-  void makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const; 
+  // void makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const; 
   /** 
       @brief EXPERIMENTAL 
    */ 
@@ -70,6 +70,12 @@ public:
   void setCommandLine(CommandLine cl) { _cl = cl; }
 
   void setParallelSetup(ParallelSetup* pl ) { _plPtr = pl; }
+  /** 
+      @brief determines whether the topology has converged  
+      
+      @return asdsf, msdsf
+  */
+  std::tuple<double,double> determineSplitFrequencyDeviations( ParallelSetup &pl, uint64_t numTreesIgnored, uint64_t numTrees); 
 
 private: 
   void printParameters(const TreeAln &traln, const ParameterList &params) const; 

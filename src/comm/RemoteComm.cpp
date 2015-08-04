@@ -67,9 +67,9 @@ std::vector<T> RemoteComm::broadcast(std::vector<T> array, int root)
 {
   return _impl->broadcast(array, root);
 } 
-template auto RemoteComm::broadcast(std::vector<int> array, int root)  -> std::vector<int>; 
+template auto RemoteComm::broadcast(std::vector<int> array, int root)  -> std::vector<int>;
+template auto RemoteComm::broadcast(std::vector<double> array, int root)  -> std::vector<double>; 
 template auto RemoteComm::broadcast(std::vector<unsigned int> array, int root)  -> std::vector<unsigned int>; 
-// template auto RemoteComm::broadcast(std::vector<unsigned long> array, int root)  -> std::vector<unsigned long>; 
 
 
 template<typename T> 

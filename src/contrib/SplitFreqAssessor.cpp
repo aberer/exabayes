@@ -32,10 +32,6 @@ void SplitFreqAssessor::extractBips( const std::vector<nat> &start, const std::v
   for (auto filename : _fns)
     {
       nat endhere = end[ctr]; 
-      // nat endhere = end; 
-      // if(takeAll)
-      // 	endhere = file2numTree[filename]; 
-
       auto&& ifh = std::ifstream{filename}; 
 
       for(nat i = 0; i < start[ctr]; ++i)
@@ -77,6 +73,14 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
       numOccs.insert(std::make_pair(elem, tmp)); 
     }
 
+  // for(auto &numOcc : numOccs)
+  //   {
+  //     tout << std::get<0>(numOcc) << "\t";
+  //     for(auto & v : std::get<1>(numOcc))
+  //       tout << v << ","; 
+  //     tout << endl; 
+  //   }
+  
   auto asdsfPart = std::vector<double>{};
   for(auto &elem : allBips)
     {
@@ -89,8 +93,16 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
 	  ++ctr; 
 	}
       
-      auto sd = sqrt ( Arithmetics::getVariance(numOccs[elem]) ) ; 
+      auto sd = sqrt ( Arithmetics::getVariance(numOccs[elem]) ) ;
 
+      if(isRelevant)
+        {
+          tout << elem << "\t";
+          for(auto &v : numOccs[elem])
+            tout << v << ",";
+          tout << endl; 
+        }
+      
       if(isRelevant)
 	asdsfPart.push_back( sd );
     }

@@ -50,7 +50,7 @@ else
 if NO_AVX
 VECTOR_FLAGS=-DMANUAL_AVX_OVERRIDE -msse3 -mno-avx  # $(SIMD_FLAGS) -march=native -mtune=native -mno-avx -m
 else 
-VECTOR_FLAGS= $(SIMD_FLAGS) -march=native -mtune=native
+VECTOR_FLAGS= $(SIMD_FLAGS)  # -march=native -mtune=native
 endif
 endif
 endif

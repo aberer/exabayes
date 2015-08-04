@@ -1,5 +1,8 @@
 #include <sstream>
 
+#include <string>
+#include <fstream>
+
 #include "PendingSwap.hpp"
 #include "CoupledChains.hpp"   
 #include "Chain.hpp"
@@ -15,6 +18,9 @@
 #ifdef VERBOSE
 #include <unistd.h>
 #endif
+
+using std::string; 
+using std::istringstream; 
 
 
 CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir, std::string runname, int numCoupled,  std::vector<Chain> chains   )
@@ -266,7 +272,7 @@ void CoupledChains::doStep(nat id, ParallelSetup &pl)
   if(   std::fabs(chain.getChainHeat() - 1.) < std::numeric_limits<double>::epsilon()
      && chain.getGeneration() % _samplingFreq == 0 
      && pl.isChainLeader())
-    chain.sample(_paramId2TopFile, _pFile[0], _sampledBipartitions);
+    chain.sample(_paramId2TopFile, _pFile[0], _sampledBipartitions, chain.getGeneration()  / _samplingFreq );
 }
 
 
@@ -312,7 +318,7 @@ void CoupledChains::executePart(uint64_t startGen, uint64_t numGen, ParallelSetu
 	if( std::fabs(c.getChainHeat() -  1.  ) < std::numeric_limits<double>::epsilon()
 	    && pl.isChainLeader() && pl.isMyChain(_runid, ctr) )
 	  {
-	    c.sample(_paramId2TopFile, _pFile[0], _sampledBipartitions); 
+	    c.sample(_paramId2TopFile, _pFile[0], _sampledBipartitions, 0); 
 	    ++ctr; 
 	  }
     }
@@ -546,4 +552,60 @@ std::vector<std::string> CoupledChains::getAllFileNames() const
   
   return result; 
 } 
+
+
+
+/** 
+    @brief reduces the contained information, s.t. it is only
+    available at the run-master
+*/ 
+void CoupledChains::reduceSampledBips(ParallelSetup &pl)
+{
+  if( pl.isRunLeader() )
+    {
+      auto others = vector<SampledBipartitions>();
+      
+      auto tmp = std::vector<char>{}; 
+      auto othersSerialized = pl.getRunComm().gatherVariableLength( tmp ); 
+      
+      auto&& iss = std::istringstream( string( othersSerialized.begin(), othersSerialized.end() ) ); 
+
+      auto chainsBelongingToOthers = 0u;
+      for(int i = 0; i < _chains.size() ; ++i)
+        if(  not pl.isMyChain(_runid, i) )
+          ++chainsBelongingToOthers;
+
+      for(int i = 0; i < chainsBelongingToOthers; ++i)
+        {
+          auto sb = SampledBipartitions ();
+          sb.deserialize(iss);
+          others.push_back(sb); 
+        }
+
+      for(auto &v : others)
+        _sampledBipartitions.reduce(v);
+    }
+  else 
+    {
+
+      auto&& mystream = std::stringstream();
+      bool isAnyChainLeader =  false; 
+      for(int i = 0; i < _chains.size(); ++i )
+        {
+          if( pl.isMyChain(_runid, i) && pl.isChainLeader() )
+            isAnyChainLeader = true;
+        }
+
+      if(isAnyChainLeader)
+        {
+          _sampledBipartitions.serialize(mystream);
+          _sampledBipartitions = SampledBipartitions();
+        }
+
+      auto asString = mystream.str();
+      auto myData = vector<char>(asString.begin(), asString.end());
+
+      pl.getRunComm().gatherVariableLength(myData);
+    }
+}
 

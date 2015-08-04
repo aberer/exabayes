@@ -2,6 +2,7 @@
 #include <fstream>
 #include <memory>
 #include <algorithm>
+#include <tuple>
 
 #include "ByteFile.hpp"
 #include "TreePrinter.hpp"
@@ -9,6 +10,8 @@
 #include "BlockProposalConfig.hpp"
 #include "BlockRunParameters.hpp"
 #include "ConfigReader.hpp"
+
+#include "Arithmetics.hpp"
 
 #include "TopologyParameter.hpp"
 #include "RevMatParameter.hpp"	
@@ -32,7 +35,7 @@
 
 #include "NodeAge.hpp"
 
-using std::endl; 
+using std::endl;
 using std::vector;
 using std::unique_ptr; 
 using std::move; 
@@ -342,18 +345,6 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 		  partition.setProtModel(PLL_GTR); 
 		}
 	    }
-
-          // if (cat != Category::DIVERGENCE_RATES)
-          //   {
-          //     auto&& prior = param->getPrior(); 
-          //     auto content = prior->getInitialValue();
-
-          //     // TODO specific function for setting initially 
-          //     param->verifyContent(traln, content); 
-          //     // tout << "APPL " << content << endl; 
-
-          //     param->applyParameter(traln, content); 
-          //   }
         }
     }
 
@@ -388,118 +379,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	    }
 	}
     }
-
-  // auto divRates = std::vector<AbstractParameter*>{}; 
-  // auto divTimes = std::vector<AbstractParameter*>{}; 
-
-  // for(auto & p : params)
-  //   {
-  //     if(p->getCategory() == Category::DIVERGENCE_RATES)
-  //       divRates.push_back(p); 
-  //     if(p->getCategory() == Category::DIVERGENCE_TIMES)
-  //       divTimes.push_back(p); 
-  //   }
-
-  // if(divRates.size() > 0 )
-  //   {
-  //     // assert(divTimes.size() == 1 ); // not more than one time parameter !
-  //     makeTreeUltrametric(traln, divTimes, divRates);
-  //   }
 }
-
-// static double traverseDepthFromRoot(TreeAln &traln, const BranchPlain &branch, std::vector<NodeAge *> & nodeAges) {
-
-//   double currentHeight = nodeAges[branch.getPrimNode()-1]->getHeight();
-//   nodeAges[branch.getPrimNode()-1]->setPrimNode(branch.getPrimNode());
-//   nodeAges[branch.getPrimNode()-1]->setSecNode(branch.getSecNode());
-//   if (!traln.isTipNode(branch.getPrimNode())) {
-
-//     auto plainDescendants = traln.getDescendents(branch);
-
-//     nodeAges[plainDescendants.first.getSecNode()-1]->setHeight(currentHeight+1.0);
-//     nodeAges[plainDescendants.second.getSecNode()-1]->setHeight(currentHeight+1.0);
-
-//     return std::max(
-//                     traverseDepthFromRoot(traln, plainDescendants.first.getInverted(), nodeAges),
-//                     traverseDepthFromRoot(traln, plainDescendants.second.getInverted(), nodeAges)
-//                     );
-//   } else {
-//     return currentHeight;
-//   }
-// }
-
-// void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const 
-// {
-
-//   assert(divRates.size() == 1 );
-//   /* initialize the rates */
-  
-//   vector<NodeAge *> nodeAges(traln.getNumberOfNodes());
-//   for (nat i = 0; i < traln.getNumberOfNodes(); i++)
-//     {
-//       nodeAges[i] = new NodeAge();
-//     }
-
-//   /* set root at random */
-//   traln.setRootBranch(traln.getAnyBranch());
- 
-//   nodeAges[traln.getRootBranch().getPrimNode()-1]->setHeight(1.0);
-//   nodeAges[traln.getRootBranch().getSecNode()-1]->setHeight(1.0);
-
-//   double maxHeight = std::max(
-//                               traverseDepthFromRoot(traln, traln.getRootBranch(), nodeAges),
-//                               traverseDepthFromRoot(traln, traln.getRootBranch().getInverted(), nodeAges));
-
-//   /* correct the node heights from the tips to the root and initialize branches */
-//   for (auto b : nodeAges)
-//     {
-//       b->setHeight(
-//                    traln.isTipNode(b->getPrimNode()) ?
-//                    0 : (maxHeight - b->getHeight()));
-//     }
-
-//   auto rootNodeAge = NodeAge();
-//   rootNodeAge.setHeight(maxHeight);
-//   auto rootContent = ParameterContent();
-
-//   // for (auto b : nodeAges)
-//   //   {
-//   //     if (b->getPrimNode() > traln.getNumberOfTaxa())
-//   //       {
-//   //         // auto divtime =
-//   //         //   static_cast<DivergenceTimes *>(divTimes[b->getPrimNode()
-//   //         //                                           - traln.getNumberOfTaxa() - 1]) ;
-//   //         auto content = ParameterContent();
-
-//   //         /* adding both current and parental branches */
-//   //         content.nodeAges.push_back(*b);
-//   //         if (traln.isRootChild(b->getPrimNode()))
-//   //           {
-//   //             content.nodeAges.push_back(rootNodeAge);
-//   //             rootContent.nodeAges.push_back(*b);
-//   //           }
-//   //         else
-//   //           {
-//   //             content.nodeAges.push_back(*nodeAges[b->getSecNode() - 1]);
-//   //           }
-//   //         // divtime->initializeParameter(traln, content);
-//   //       }
-//   //   }
-      
-//   auto divtime = static_cast<DivergenceTimes *>(divTimes[divTimes.size()-1]);
-//   rootContent.nodeAges.push_back(rootNodeAge);
-//   divtime->initializeParameter(traln, rootContent, true);
-
-//   auto ratesContent = ParameterContent();
-//   for (nat i = 0; i < traln.getNumberOfNodes(); i++)
-//     {
-//       ratesContent.branchLengths.push_back(BranchLength(*nodeAges[i],InternalBranchLength(0.0)));
-//       delete nodeAges[i];
-//     }
-
-//   auto divrate = static_cast<DivergenceRates *>(divRates[0]);
-//   divrate->initializeParameter(traln, ratesContent);
-// }
 
 
 vector<std::string> SampleMaster::getStartingTreeStrings()
@@ -516,7 +396,6 @@ vector<std::string> SampleMaster::getStartingTreeStrings()
 
   return result; 
 }
-
 
 
 void SampleMaster::printProposals( std::vector<std::unique_ptr<AbstractProposal> > &proposals,  std::vector<ProposalSet> &proposalSets, ParameterList &params  ) const 
@@ -1143,8 +1022,17 @@ void SampleMaster::simulate()
 	  auto asdsf = std::make_pair(nan(""), nan("")); 
 
 	  if(_runs.size() > 1 && _runParams.isUseStopCriterion() )
-	    // if(not hasConverged)
 	    {
+              // auto numTrees = curGen / samplingFreq; 
+              auto numTreesIgnored = 0u;
+              auto numTrees = curGen / _runParams.getSamplingFreq() + 1 ;
+              numTreesIgnored = _runParams.getBurninGen()  > 0
+                ?  _runParams.getBurninGen() / _runParams.getSamplingFreq()
+                : static_cast<nat> ( ( static_cast<double>(numTrees) * _runParams.getBurninProportion() ) )  ; // round up 
+              
+              auto altAsdsf = determineSplitFrequencyDeviations( *_plPtr, numTreesIgnored, numTrees );
+              tout << "\nend of new\n" << endl; 
+              
 	      if( _plPtr->isGlobalMaster())
 		{
 		  nat start = 0, 
@@ -1158,7 +1046,11 @@ void SampleMaster::simulate()
 		    hasConverged = asdsf.first < convCrit;  
 	      
 		  tout << endl  << "standard deviation of split frequencies for trees " << start << "-" << end  << " (avg/max):\t"
-		       << PERC_PRECISION << asdsf.first * 100 << "%\t" << asdsf.second * 100 << "%"   << endl << endl; 
+		       << PERC_PRECISION << asdsf.first * 100 << "%\t" << asdsf.second * 100 << "%"   << endl ; 
+                  
+                  tout  << "alternatively computed SDSF (avg/max):\t\t\t"
+                        << PERC_PRECISION << std::get<0>(altAsdsf) * 100 << "%\t" << std::get<1>(altAsdsf) * 100 << "%"   << endl ; 
+                  tout << endl;
 		}
 	    }
 	  else 
@@ -1328,3 +1220,110 @@ void SampleMaster::writeCheckpointMaster()
       serialize(nullstream); 
     }
 } 
+
+
+
+std::tuple<double,double>
+SampleMaster::determineSplitFrequencyDeviations( ParallelSetup &pl, uint64_t numTreesIgnored, uint64_t numTrees )
+{
+  // this is a rather quick and dirty method. Non-blocking comm could
+  // be used here.
+  // TODO
+
+  auto numKeepTrees = numTrees - numTreesIgnored;
+  // auto relFreq = static_cast<uint64_t>( numKeepTrees * _runParams.getAsdsfIgnoreFreq()  );
+
+  std::cout << "from: " << SHOW(numTreesIgnored) << "to: " << SHOW(numTrees)   << SHOW(numKeepTrees) << std::endl;
+  
+  // reduce the sampled bips to the chain leader  
+  for(int i = 0; i < _runs.size() ; ++i)
+    {
+      if( pl.isMyRun(i) )
+        _runs.at(i).reduceSampledBips(pl); 
+    }
+
+
+  // gather all maps at the global master
+  auto&& ss = std::stringstream(); 
+  for(auto &r : _runs)
+    {
+      if(  pl.isMyRun( r.getRunid() )  && pl.isRunLeader() )
+        {
+          auto const& c = r.getSampledBipartitions();
+          c.serialize(ss);
+        }
+    }
+
+  auto const& str = ss.str(); 
+  auto myData = vector<char>( str.begin(), str.end() );
+  auto res = pl.getGlobalComm().gatherVariableLength( myData );
+  
+  auto tmp = vector<double>{0,0}; 
+  if ( pl.isGlobalMaster() )
+    {
+      auto&& all = std::stringstream( string( res.begin(), res.end() ) );
+      auto sbs = vector<SampledBipartitions>( _runs.size() );
+      for(auto &v : sbs)
+        v.deserialize(all);
+
+      auto igVec = bitvector();
+      igVec.resize(numTrees); 
+      for(int i = 0; i < numTreesIgnored; ++i)
+        igVec.set(i);
+      auto keepVec = ~ igVec; 
+
+      auto allBips = unordered_set<bitvector>();
+      for(auto &sb : sbs )
+        for(auto &v : sb.getMap() )
+          allBips.insert(v.first);
+
+      auto sdsfs = vector<double>();
+      for(auto iter = allBips.begin() ;iter != allBips.end(); ++iter)
+        {
+          auto occs =  vector<double>();
+          auto isRelevant = false;  
+
+          for(auto &sb : sbs)
+            {
+              auto const&& map = sb.getMap(); 
+              auto bipIter = map.find( *iter );
+              if( bipIter == map.end() )
+                bipIter = map.find(  ~ *iter ) ; 
+
+              if( bipIter != map.end() )
+                {
+                  auto b = bipIter->second & keepVec;
+                  auto relFreq = static_cast<double>(b.count()) / static_cast<double>(numKeepTrees); 
+                  occs.push_back(relFreq); 
+                  isRelevant |= _runParams.getAsdsfIgnoreFreq() < relFreq  ;
+                }
+              else
+                occs.push_back(0.); 
+            }
+
+          if(isRelevant)
+            {
+              if( iter->get(0))
+                tout <<  ~(*iter) <<"\t";
+              else
+                tout << *iter << "\t"; 
+
+              for(auto &v : occs)
+                tout << v << "," ;
+              tout << endl;
+            }
+
+          if(isRelevant)
+            sdsfs.push_back(std::sqrt(Arithmetics::getVariance(occs)));
+        }
+
+      auto maxPtr = std::max_element(sdsfs.begin(), sdsfs.end());
+      auto mean = Arithmetics::getMean(sdsfs);
+
+      tmp = vector<double>{ mean, *maxPtr  }; 
+    }
+  
+  tmp = pl.getGlobalComm().broadcast( tmp );
+  
+  return std::tuple<double,double>(  tmp[0], tmp[1]  ); 
+}
