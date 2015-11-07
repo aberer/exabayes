@@ -26,7 +26,7 @@ dotests=0
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=1
+useClang=0
 
 cflags=""
 cxxflags="-rdynamic"  #  -stdlib=libc++ 
