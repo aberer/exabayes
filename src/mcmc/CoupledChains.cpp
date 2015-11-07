@@ -23,7 +23,9 @@ using std::string;
 using std::istringstream; 
 
 
-CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir, std::string runname, int numCoupled,  std::vector<Chain> chains   )
+CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir,
+                             std::string runname, int numCoupled,
+                             std::vector<Chain> chains   )
   : _chains(chains)
   , _swapInfo(nat(_chains.size()))
   , _heatIncrement(0.1) 
@@ -35,6 +37,7 @@ CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir, st
   , _paramId2TopFile{}
   , _pFile{}
   , _numSwapsPerGen(1.0)
+  , _sampledBipartitions{}
 {  
   auto &params = _chains[0].getParameterList(); 
 

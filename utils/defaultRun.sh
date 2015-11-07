@@ -118,7 +118,7 @@ esac
 
 configFile=$pathtodata/config.nex
 
-args="$args --enable-mpi"
+args="$args"
 
 if [ "$withTree" = "1" ]; then
     if [ !  -f data/$dataset/tree ]; then
