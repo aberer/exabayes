@@ -26,13 +26,12 @@ dotests=0
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=0
+useClang=1
 
 cflags=""
 cxxflags="-rdynamic"  #  -stdlib=libc++ 
 
-GDB=cgdb
-
+GDB=gdb
 
 if [ $dotests == 1 ]; then
     args="$args --enable-tests"
@@ -101,7 +100,7 @@ case $mode in
     debug)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -e $GDB  -ex run  --args "  #   	
+	gdb="$TERM -e $GDB  -ex run --args "  #   	
 	;;
     default)
 	;;
@@ -131,7 +130,6 @@ if [ "$withTree" = "1" ]; then
 fi
 
 
-
 if [ $doParse -eq 0 ] ; then 
     alnArg=" -f $pathtodata/aln.binary "
 else 
@@ -145,12 +143,15 @@ fi
 if [ "$codeBase" == "mpi" ]; then    
     CC="$ccompiler"  
     CXX="$cxxcompiler"  
+
+    args="$args --enable-mpi"
     
     baseCall="mpirun -np $numProc  $gdb ./exabayes $alnArg -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
 elif [ "$codeBase" == "thread" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
+    
     baseCall="$gdb ./yggdrasil -s $seed $alnArg -n $runid $extraArgs -c $configFile $extra "  
 else
     echo "second argument must be either 'mpi' or 'thread'"
@@ -163,7 +164,7 @@ if [ $startFromBest == 1 ]; then
 	echo "if you do not have such a tree, deactivate startFromBest" 
 	exit 
     fi 
-	
+    
     baseCall="$baseCall -t $pathtodata/best.tre"
 fi 
 
