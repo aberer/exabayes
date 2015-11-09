@@ -1,6 +1,6 @@
 #! /bin/bash
 
-topdir=$(dirname  $0 )/../
+topdir=$(realpath $(dirname  $0 )/../) 
 
 seed=$RANDOM			# 
 seed=12345
@@ -25,13 +25,11 @@ dotests=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0
-useClang=1
+useGoogleProfiler=1
+useClang=0
 
 cflags=""
-cxxflags=""  #  -stdlib=libc++ 
-
-GDB=cgdb
+cxxflags=""  #  -stdlib=libc++  -rdynamic
 
 
 if [ $dotests == 1 ]; then
@@ -81,6 +79,9 @@ fi
 mode=$1
 codeBase=$2
 dataset=$3
+
+
+builddir=/tmp/exabayes
 
 # poor...
 shift  
@@ -194,7 +195,7 @@ else
     prevStat=""
 fi 
 
-cmd="$topdir/configure $args"
+cmd="$(realpath $topdir/configure) $args"
 
 if [ "$prevStat"  == "$cmd" ]  
 then     
@@ -203,7 +204,10 @@ else
     echo "config before: >"$prevStat"<"
     echo "config    now: >$cmd<"
 
-    rm -f  Makefile     
+    rm -f  Makefile
+
+    mkdir -p $builddir
+    cd $builddir
     eval $cmd
 
     echo "configuring with $cmd"
