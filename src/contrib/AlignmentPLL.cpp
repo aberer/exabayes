@@ -413,7 +413,7 @@ void AlignmentPLL::createDummyPartition(Alphabet alphabet)
       ss << "tmp." << r ; 
       fn = ss.str(); 
 
-      fExists = std::ifstream(fn) ;
+      fExists = static_cast<bool>(std::ifstream(fn)) ;
     }
 
   auto str = getStringFromType(alphabet); 
