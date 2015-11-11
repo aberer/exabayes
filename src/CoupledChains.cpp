@@ -1,16 +1,16 @@
 #include <sstream>
 
-#include "PendingSwap.hpp"
+#include "comm/PendingSwap.hpp"
 #include "CoupledChains.hpp"   
 #include "Chain.hpp"
 #include "GlobalVariables.hpp"
-#include "tune.h"
+// #include "tune.h"
 #include "proposals/AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 #include "time.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
-#define USE_NONBLOCKING_COMM
+#include "common.h"
 
 // #define VERBOSE 
 
@@ -245,12 +245,13 @@ CoupledChains::generateSwapsForBatch(nat startGen, nat numGen)
 	  nat gen = i + 1; 
 	  _rand.rebaseForGeneration(gen); 
 	  
-	  nat n = 2 * _chains.size() * _numSwapsPerGen; 
+	  double n = 2 * _chains.size() * _numSwapsPerGen; 
 	  if(n == 0)
 	    n = _chains.size(); 
-	  double p = _numSwapsPerGen / double(n); 
-	  nat numSwaps = _rand.drawBinomial(p,n); 
+	  double p = _numSwapsPerGen / n; 
 
+	  nat numSwaps = _rand.drawBinomial(p,n); 
+	  
 	  for(nat j = 0; j < numSwaps; ++j)
 	    {
 	      auto cAIndex = _rand.drawIntegerOpen(_chains.size()) ; 
@@ -337,11 +338,18 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
   for(nat i = 0; i < _chains.size() ; ++i)
     {
       if(pl.isMyChain(_runid, i))
-	assert(_chains[i].getGeneration() == startGen ); 
+	{
+	  if(_chains[i].getGeneration() != startGen)
+	    {
+	      tout << "problem at START was="<< _chains[i].getGeneration() << ", should be=" << startGen << std::endl; 
+	      assert(0 ); 
+	    }
+	}
     }
 
   auto pendingSwaps = std::list<PendingSwap>{}; 
   auto swapsToBeDeleted = std::list<PendingSwap>{}; 
+
 #ifdef USE_NONBLOCKING_COMM
   auto flags = CommFlag::PRINT_STAT | CommFlag::PROPOSALS; 
   while(not allSwaps.empty() ||  not pendingSwaps.empty())
@@ -486,6 +494,39 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
 #endif
     }
 #else 
+
+  
+  assert (0); 
+
+
+#if 1 
+  auto iter = begin(allSwaps); 
+  
+  nat gen = startGen; 
+  nat endGen = startGen + numGen; 
+
+  while(gen < endGen && iter != end(allSwaps))
+    {
+      for(nat i = 0; i < _chains.size() ;++i)
+	{
+	  if(pl.isMyChain(_runid, i))
+	    doStep(i,pl);
+	}
+
+      ++gen; 
+
+      // for(auto &c : _chains )
+      // 	assert(gen == c.getGeneration()); 
+      
+      while(iter != end(allSwaps) && iter->getGen() == gen)
+	{
+	  if(pl.isMyChain(_runid, iter->getOne()) || pl.isMyChain(_runid, iter->getOther()))
+	    doSwap(pl,*iter);
+	  ++iter;
+	}
+    }
+
+#else   
   // old version 
   while(not allSwaps.empty() || not pendingSwaps.empty())
     {
@@ -520,6 +561,9 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
     }
 #endif
 
+
+#endif
+
   // execute remaining steps
   for(nat i = 0; i < _chains.size() ; ++i)
     {
@@ -529,30 +573,37 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
 	    doStep(i,pl);
 	}
     }
-
+  
   for(nat i = 0; i < _chains.size(); ++i)
     {
       auto &chain = _chains[i]; 
       
       if(pl.isMyChain(_runid,i))
   	{
-  	  assert(chain.getGeneration() == startGen + numGen); 
+
+	  if(_chains[i].getGeneration() != startGen + numGen)
+	    {
+	      tout << "problem at END was="<< _chains[i].getGeneration() << ", should be=" << startGen << std::endl; 
+	      assert(0 ); 
+	    }
+
+  	  // assert(chain.getGeneration() == startGen + numGen); 
   	  chain.suspend();
   	}
     }
 }
 
 
-void CoupledChains::finalizeOutputFiles(const ParallelSetup &pl) 
-{
-  if(pl.isRunLeader())
-    {
-      for(auto &elem : _paramId2TopFile)
-	elem.second.finalize(); 
-      for(auto &p : _pFile)
-	p.finalize();
-    }
-}
+// void CoupledChains::finalizeOutputFiles(const ParallelSetup &pl) 
+// {
+//   if(pl.isRunLeader())
+//     {
+//       // for(auto &elem : _paramId2TopFile)
+//       // 	elem.second.finalize(); 
+//       // for(auto &p : _pFile)
+//       // 	p.finalize();
+//     }
+// }
 
 
 void CoupledChains::deserialize( std::istream &in ) 

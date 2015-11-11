@@ -6,7 +6,7 @@
 // TODO the disorient is still  very inefficient 
 
 ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
-  : AbstractProposal(Category::TOPOLOGY , "eTBR", 5., false)
+  : AbstractProposal(Category::TOPOLOGY , "eTBR", 5., false, 0,0)
   , extensionProbability(_extensionProb)
   , multiplier(_multiplier)
 {

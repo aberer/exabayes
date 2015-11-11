@@ -72,7 +72,12 @@ bool BoundsChecker::checkRevmat( const std::vector<double> &rates)
       result &=  prob ; 
     }
 
-  assert(rates.back() == 1.) ;
+  if(rates.back() != 1.)
+    {
+      tout << "error: last state was "<< MAX_SCI_PRECISION << rates.back() << std::endl; 
+      assert(0) ;
+    }
+
   return result; 
 }
  

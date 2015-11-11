@@ -14,16 +14,6 @@ std::unique_ptr<ArrayPolicy> NoCachePolicy::clone() const
 
 void NoCachePolicy::accountForRejectionPolicy(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat>& invalidNodes, ArrayOrientation &arrayOrient , ArrayReservoir &res)
 {
-#if 1 
-  // auto result = std::vector<nat>{}; 
-  // for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i)
-  //   if(partitions[i])
-  //     result.push_back(i); 
-
-  // tout << "accounting for rejection of " << invalidNodes
-  //      << " for partitons " << result << std::endl; 
-#endif
-
   for(nat i = 0; i < partitions.size( ); ++i)
     {
       if(not partitions[i])

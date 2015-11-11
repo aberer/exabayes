@@ -2,13 +2,16 @@
 #define _BLOCK_PROPOSALCONFIG_H
 
 #include <cassert>
-#include <ncl/ncl.h>
 #include <map>
 
+#include "config/ExaBlock.hpp"
 #include "ProposalType.hpp"
 #include "GlobalVariables.hpp"
 
-class BlockProposalConfig : public NxsBlock
+
+// TODO allow for scientific doubles  
+
+class BlockProposalConfig : public ExaBlock
 {
 public: 
   BlockProposalConfig();

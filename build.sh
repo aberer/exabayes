@@ -1,31 +1,43 @@
-#! /bin/bash
+#! /bin/sh
 
-mkdir -p build/{obj-mpi,obj-seq}
+rm -rf bin 
+mkdir bin 
 
 if [ -f Makefile ]; then
     make distclean
 fi
 
-numCores=$(grep "cpu cores" /proc/cpuinfo  | head -n 1 | cut -f 2 -d ':')
+# numCores=`grep "cpu cores" /proc/cpuinfo  | head -n 1 | cut -f 2 -d ':'`
 
-cd build
+cd bin
 
-if [ $# -gt 1 ]; then
-    rm -rf obj-mpi/*
-    cd obj-mpi  
+# parallel build, if we have additional stuff 
 
-    ../../configure --enable-mpi $* 
-    make -j $numCores
+if [  $# -gt 1 ] ; then
+    rm -rf build 
+    mkdir build
+    cd build
+
+    ../../configure --enable-mpi $*
+
+    make
 
     mv exabayes ..    
+    cd .. 
 
 else 
-    rm -rf obj-seq/*
-    cd obj-seq
+    echo -e "\n\nNo arguments given => will not attempt to build parallel version.\n\n"  
+fi 
 
-    ../../configure
-    make -j $numCores 
+# cd bin 
+rm -rf build 
 
-    mv yggdrasil  postProcParam asdsf credibleSet extractBips consense  parser  .. 
+mkdir build 
+cd build 
+../../configure 
+make
 
-fi
+mv yggdrasil postProcParam sdsf credibleSet extractBips consense parser ..
+
+cd .. 
+rm -rf build 

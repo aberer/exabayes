@@ -1,7 +1,7 @@
 #ifndef  _CREDIBLE_SET_H
 #define  _CREDIBLE_SET_H
 
-#include "BipartitionExtractor.hpp" 
+#include "contrib/BipartitionExtractor.hpp" 
 
 
 class CredibleSet

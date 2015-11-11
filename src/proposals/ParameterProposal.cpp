@@ -1,17 +1,14 @@
 #include "ParameterProposal.hpp"
-#include "tune.h"
 #include "priors/AbstractPrior.hpp"
 #include "BoundsChecker.hpp"
 
-ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL,  
-				     std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight )
-  : AbstractProposal( cat, name, weight)
+ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL, std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight, double minTuning, double maxTuning )
+  : AbstractProposal( cat, name, weight, minTuning, maxTuning)
   , modifiesBL(modifiesBL)
   , parameter(parameter)
   , proposer(std::move(_proposer))  
 {
 } 
-
 
 
 ParameterProposal::ParameterProposal(const ParameterProposal &rhs) 
@@ -36,8 +33,11 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
   // extract the parameter (a handy std::vector<double> that for
   // instance contains all the frequencies)
-  auto content = _primaryParameters[0]->extractParameter(traln); 
-  savedContent = content; 
+  auto content = _primaryParameters[0]->extractParameter(traln ); 
+  _savedContent = content; 
+  
+  // for aa revmat + statefreqs, we need to be able to restore the exact value
+  _savedBinaryContent = _primaryParameters[0]->extractParameterRaw(traln); 
   
   // nasty, we have to correct for the fracchange 
   auto oldFCs = std::vector<double>{}; 
@@ -77,7 +77,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, double 
 
   // a generic prior updates the prior rate 
   auto pr = _primaryParameters[0]->getPrior();
-  prior.addToRatio(pr->getLogProb(newValues) - pr->getLogProb(savedContent.values)); 
+  prior.addToRatio(pr->getLogProb(newValues) - pr->getLogProb(_savedContent.values)); 
 } 
 
 
@@ -97,7 +97,7 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
 void ParameterProposal::resetState(TreeAln &traln) 
 {
   assert(_primaryParameters.size() == 1 ); 
-  _primaryParameters[0]->applyParameter(traln, savedContent);
+  _primaryParameters[0]->applyParameter(traln, _savedContent);
 
   // for a fixed bl parameter, we have to re-scale the branch lengths after rejection again. 
   // NOTICE: this is very inefficient 
@@ -119,6 +119,9 @@ void ParameterProposal::resetState(TreeAln &traln)
 	    }
       	}
     }
+  
+  // for aa gtr revmat  + statefreq, we need to reset the exact binary value 
+  _primaryParameters[0]->applyParameterRaw(traln,_savedBinaryContent); 
 }
 
 
@@ -128,6 +131,10 @@ void ParameterProposal::autotune()
       return; 
 
   double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, not proposer->isTuneup());
+  
+  // tout << *this << "" << std::endl;  
+  // printShort (tout) ; 
+  // tout << "\t" << parameter << " -> "<< newParam << "\t" <<  _sctr.getBatch() << std::endl; 
 
   parameter = newParam; 
   _sctr.nextBatch();

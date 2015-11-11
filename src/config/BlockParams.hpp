@@ -3,14 +3,14 @@
 #ifndef _BLOCK_PARTITION_H
 #define _BLOCK_PARTITION_H
 
-#include <ncl/ncl.h>
+#include "config/ExaBlock.hpp"
 
 #include "GlobalVariables.hpp"
 #include "parameters/AbstractParameter.hpp" 
 #include "TreeAln.hpp"
 #include "Category.hpp"
 
-class BlockParams : public NxsBlock
+class BlockParams : public ExaBlock
 {
 public: 
   BlockParams()

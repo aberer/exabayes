@@ -24,38 +24,22 @@ double SlidingProposer::proposeOneValue(double oldVal, double parameter, Randomn
 
 std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
 {
-#if 0 
-  int posA = rand.drawIntegerOpen(oldValues.size()); 
 
-  double oldVal = oldValues.at(posA) ; 
-  double newVal = rand.drawFromSlidingWindow(oldVal, parameter); 
-
-  if( newVal <= 0)
-    {
-      // append to the upper end of the window 
-      newVal = oldVal + parameter / 2  - newVal; 
-      assert(newVal >= 0 && newVal < 1); 
-    }
-  else if (newVal >= 1)
-    {
-      // append to the lower end of the window 
-      newVal = oldVal - parameter / 2 - newVal + 1 ; 
-      assert(newVal >= 0 && newVal < 1); 
-    }
-
-  oldValues[posA] = newVal; 
-#else 
+#if 1
 
   nat posA = rand.drawIntegerOpen(oldValues.size()) ; 
   nat posB = rand.drawIntegerOpen(oldValues.size()-1); 
   if(posA == posB)
     posB = oldValues.size() - 1 ; 
+
+  
+  // tout << "proposing " << posA << " and " << posB << std::endl ; 
   
   auto &rateA = oldValues.at(posA); 
   auto &rateB = oldValues.at(posB); 
   double sum = rateA + rateB; 
 
-  // tout << "\n\noldVals="  << rateA << "," << rateB << std::endl; 
+  // tout << MAX_SCI_PRECISION << "oldVals="  << rateA << "," << rateB  << "\t"; 
   
   double oldProb = rateA / (sum); 
   double newProb = rand.drawFromSlidingWindow(oldProb, parameter) ; 
@@ -75,9 +59,24 @@ std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> old
   rateB = (1-newProb) * sum ; 
 
   // tout << "newVals=" << rateA << ","  << rateB << std::endl; 
+  // assert((rateA + rateB) -  sum < 1e-6); 
+
+#else 
+
+  nat posA = rand.drawIntegerOpen(oldValues.size()); 
+  auto &rate = oldValues.at(posA)  ; 
+  double newVal = rand.drawFromSlidingWindow(rate, parameter) ; 
+
+  if(newVal <= 0)
+    newVal = - newVal; 
+  else if(1 <= newVal )
+    newVal = newVal-1; 
+  
+  rate = newVal; 
+  
+  RateHelper::convertToSum1(oldValues); 
 
 #endif
-
 
   // check if contracts are met  
   if(minMaxIsRelative)

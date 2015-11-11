@@ -5,7 +5,7 @@
 #include <map>
 
 CredibleSet::CredibleSet(std::vector<std::string> files)
-  : _bipEx(files, true)
+  : _bipEx(files, true, true)
 {
   _bipEx.extractBips<true>(0);
   // const auto &hash = _bipEx.getBipartitionHashes()[0]; 
@@ -69,7 +69,7 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
 	}
 
       // std::cout << "expected " << oneTree.size() << " , got " << numBip << std::endl;
-      assert(oneTree.size() + 1 == numBip ); 
+      assert(oneTree.size()  == numBip ); 
 
       auto& iter = trees[oneTree]; 
       ++iter; 

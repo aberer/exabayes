@@ -9,7 +9,7 @@
 // #define DEBUG_ESPR
 
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
-  : AbstractProposal(Category::TOPOLOGY,  "eSPR", 5., false)
+  : AbstractProposal(Category::TOPOLOGY,  "eSPR", 5., false, 0,0)
   , stopProb(_stopProb) 
   , multiplier(_multiplier)    
 {

@@ -11,7 +11,7 @@
 #include "priors/DirichletPrior.hpp"
 #include "priors/FixedPrior.hpp"
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 
 static void expectString( std::string expectation, NxsToken& token)
@@ -46,7 +46,6 @@ static std::vector<double> parseValues(NxsToken &token)
 }
 
 
-
 std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
 {
   auto value = token.GetToken(false); 
@@ -62,12 +61,13 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
       if(token.GetToken().compare(")") == 0) 
 	return make_unique<UniformPrior>(0,0); 
 
-      double n1 = atof(token.GetToken().c_str()); 
-      token.GetNextToken();
+      double n1 = parseScientificDouble(token); 
+
       assert(token.GetToken().compare(",") == 0);
       token.GetNextToken();
-      double n2 = atof(token.GetToken().c_str());
-      token.GetNextToken();
+
+      double n2 = parseScientificDouble(token); 
+
       assert(token.GetToken().compare(")") == 0);
       return make_unique<UniformPrior>(n1,n2);  
     }
@@ -178,8 +178,9 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
   else if(value.EqualsCaseInsensitive("exponential"))
     {
       token.GetNextToken();
-      double n1 = atof(token.GetToken().c_str());
-      token.GetNextToken();
+
+      double n1 = parseScientificDouble(token);
+
       assert(token.GetToken().compare(")") == 0);
       return make_unique<ExponentialPrior>(n1);
     }

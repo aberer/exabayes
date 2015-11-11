@@ -1,6 +1,6 @@
 #include "file/OutputFile.hpp"
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include <fstream>
 #include <iostream>

@@ -1,16 +1,14 @@
 #include "axml.h"
 
-
 #include "BoundsChecker.hpp"
 #include "TreeLengthMultiplier.hpp"
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
-#include "tune.h"
 #include "priors/UniformPrior.hpp"
 #include "priors/AbstractPrior.hpp"
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
-  : AbstractProposal(Category::BRANCH_LENGTHS, "TL-Mult", 2.)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "TL-Mult", 1., 0.0001, 100)
   , multiplier(_multiplier)    
 {
 }

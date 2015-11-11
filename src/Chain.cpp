@@ -11,19 +11,15 @@
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "GlobalVariables.hpp"
-#include "tune.h"
 
 #include "eval/LikelihoodEvaluator.hpp" 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "Category.hpp"
 #include "TreePrinter.hpp"
 
 #ifdef  _DEVEL
 #include "memory.hpp" 
 #endif
-
-// #define VERIFY_GEN 4
-#define VERIFY_GEN 1000000
 
 
 Chain:: Chain(randKey_t seed, TreeAln traln, const std::vector<std::unique_ptr<AbstractProposal> > &proposals, 

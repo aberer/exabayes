@@ -1,14 +1,11 @@
 #! /usr/bin/Rscript
 
-
 args = commandArgs(trailingOnly = TRUE)
-
 
 fn = args[1]                          #rf distances
 numTreeFile = args[2]                      # number of trees per run 
 name = args[3]                          # an id for the run
 ids = args[4]
-
 
 idTab = read.table(ids, header=F, as.is=T)
 ## idTab

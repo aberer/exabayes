@@ -1,6 +1,8 @@
 #+TITLE: ExaBayes User's Manual
+
 #+LaTeX_CLASS: koma-article
-#+LaTeX_CLASS_OPTIONS: [a4paper]
+#+LaTeX_CLASS_OPTIONS: [a4paper, 12pt, titlepage]
+#+LATEX_HEADER: \titlehead{\centering\includegraphics[width=\linewidth]{./img/banner.png}}
 #+OPTIONS: ^:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css" />
 
@@ -8,11 +10,16 @@
 
 #+AUTHOR: for support, please contact exabayes-at-googlegroups-dot-com
 
-[[./img/banner.png]]
+#+BEGIN_LATEX
+\newpage  
+#+END_LATEX
+
+#+HTML: <img src="./img/banner.png" width="100%" alt="some_text">
 
 * Quick Start
+
   Installation of ~ExaBayes~ requires basic proficiency with using a
-  terminal (for help, consider this  [[https://help.ubuntu.com/community/UsingTheTerminal][tutorial]]). 
+  terminal (for help, consider this [[https://help.ubuntu.com/community/UsingTheTerminal][tutorial]]).
 
   To the impatient user that wants to give ExaBayes a quick try, we recommend: 
 
@@ -94,15 +101,34 @@
   files are compatible).
 
 * Installation
-  After downloading the software package (e.g., exabayes-1.0.tar.gz),
-  you will have to compile the source code. The following sections
-  explain, how to do so. After compiling you obtain an executable
-  called ~exabayes~.
-** Requirements 
-   ExaBayes requires a relatively recent ~c/c++~ compiler that supports
-   ~c++11~ features. ExaBayes is confirmed to work with
-   1. GCC version 4.6 or greater 
-   2. Clang version 3.2 or greater
+   For ExaBayes, we provide pre-compiled binaries that run on a wide
+   range of systems (limited to Linux and MacOS though, we will not be
+   able to support Windows in the foreseeable future). For optimal
+   efficiency or if you want to use the parallel version, it is highly
+   recommendable to compile ExaBayes from source. This should be
+   straight-forward on a computer center, requires a bit of work on a
+   Linux system and unfortunately is not entirely trivial if you have
+   a MacOS system and no experience with the command line.
+
+** Executing downloaded executables
+   
+   After you have downloaded the appropriate package, you find all
+   executables in the ~./bin~ folder. Just execute them only using the
+   ~-h~ flag and you will be given a help page. If the executables
+   produce error messages (indicating that some library was not
+   found), you either downloaded the wrong package or you have to
+   compile from source.
+
+** Compiling ExaBayes from source
+   Download and extract the source archive (sources are also included
+   in all binary distributions). 
+
+*** Prerequisites for Linux systems 
+   ExaBayes requires a relatively recent ~c/c++~ compiler that
+   supports ~c++11~ features. ExaBayes is confirmed to work with (only
+   one required):
+   1. GCC, version 4.6 or greater 
+   2. Clang, version 3.2 or greater
       
    For running ExaBayes in parallel, you need a working MPI
    installation. If you merely want to make most of your local
@@ -112,99 +138,96 @@
    $ sudo apt-get install mpich2 libmpich2-dev
    $ sudo apt-get install openmpi-bin libopenmpi-dev
 #+END_SRC
-** Comfort build on Linux/Unix
-:PROPERTIES:
-:CUSTOM_ID: comfort-linux
-:END:
    
-   The preferred way of compiling ExaBayes is to use the small
-   *build.sh* script. If you need to have more control over the build
-   process, consider the next two sections.
+   For checking, if MPI already is installed on your machine, try to
+   enter ~mpirun~ or ~mpiexec~ in a terminal. If it is not installed,
+   you will receive a message ~command not found~.
 
-   Simple execution of the build script creates the sequential version
-   of ExaBayes (called Yggdrasil) and all pre- and post-processing
-   tools in a build-folder.
-
-#+BEGIN_SRC sh
-  $ ./build.sh 
-   [...] 
-  $ ls build 
-  asdsf  consense  credibleSet extractBips  obj-mpi  obj-seq  parser  postProcParam  yggdrasil
-#+END_SRC
-   
-   For building the (parallel) mpi-version of ExaBayes (executable is
-   called exabayes), please provide the name of the mpi-C compiler
-   (usually mpicc) and mpi-C++ compiler (mpicxx,mpiCC or mpic++) as
-   environment variable arguments. For instance: 
-
-#+BEGIN_SRC sh
-  $ ./build.sh CC=mpicc CXX=mpic++
-  [...]
-  $ ls build 
-  exabayes
-#+END_SRC
-   
-** Manual build on Linux/Unix
-*** Configuring and  Compiling the Sequential Version 
-   To compile a sequential version of ExaBayes (called yggdrasil) and
-   various pre- and post-processing tools, type
-   #+BEGIN_SRC sh 
-$ ./configure && make 
-   #+END_SRC  
-   If you have a multi-core machine, you can speed up the build
-   process by adding -j<numProc> to the make command.
-*** Configuring and Compiling the Parallel Version 
-   For compiling the parallel mpi-version using the configure script,
-   employ the command line below.
-
-   You have to use a slightly different configure call and inform the
-   configure script about your mpi compiler wrapper. These are usually
-   called mpicc (c compiler) and mpicxx/mpiCC or mpic++ (c++
-   compiler). For instance:
-   #+BEGIN_SRC sh
-$ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make 
-   #+END_SRC
-** Installation on Mac OS X
+*** Prerequisites for Mac OS X
    :PROPERTIES:
    :CUSTOM_ID: apple
    :END:
 
    For installation on an Apple system, you ideally should have set up
    an environment that allows you to compile (MPI-)applications in the
-   terminal. This should not be too difficult, but we cannot provide
-   an extensive tutorial here.
+   terminal.
 
-   First, you need to download and install [[http://en.wikipedia.org/wiki/Xcode][Xcode]] and [[http://www.macports.org/][MacPorts]]. Then,
-   open a terminal and install further programs (if you do not want
-   the parallel version, omit openmpi):
+   First, you need to download and install [[http://en.wikipedia.org/wiki/Xcode][Xcode]] (available in the
+   AppStore) and [[http://www.macports.org/][MacPorts]]. You only need MacPorts, if you want to
+   build the parallel version. Open a terminal and use MacPorts to
+   install an MPI implementation (either openmpi or mpich2):
 #+BEGIN_SRC
-   $ sudo port install gcc 
-   $ sudo port install openmpi 
+   $ sudo port install openmpi-default
+   $ sudo port install mpich-default
 #+END_SRC
-
-   In the best case, you now can run the *apple-build.sh*-script and
-   use the automated build:
    
-#+BEGIN_SRC 
-   $ ./apple-build.sh CC=openmpicc CXX=openmpicxx
-#+END_SRC
+   After the installation, a message will suggest that you set the MPI
+   installation as default. You now have MPI compiler wrappers
+   available (mpicc-mpich-mp, mpicxx-mpich-mp /or/ mpicc-mpich-mp,
+   mpicxx-mpich-mp /or/ mpicc, mpicxx). 
 
-   If this does not work out, please try it the manual way and
-   modify the command line, if necessary (resp. ask us for support):
-   
+   # TODO  
+   # export CXXFLAGS="-stdlib=libc++"
+
+*** Automated build 
+    We provide a small script that compiles ExaBayes and dumps all
+    binaries into the ~./bin~ folder.  If you want to build the
+    parallel version (and you already have installed MPI as described
+    in the previous section), then you have to provide the names of
+    the mpi compiler wrappers. If you just want the sequential
+    version, just execute the script.
+
+    Sequential only: 
 #+BEGIN_SRC
-   $ ./configure CXXFLAGS="-stdlib=libc++" && make 
-   $ ./configure --enable-mpi CC=openmpicc CXX=openmpicxx CXXFLAGS="-stdlib=libc++" && make 
+   $ ./build.sh 
 #+END_SRC
 
-   ExaBayes is confirmed to work with 
-   1. clang/ clang++ LLVM version 5.0 (based on LLVM 3.3svn),
-   2. openmpi 1.7.2,
-   3. on OS X "Mountain Lion".
-      
-   There may be different ways of building ExaBayes on Apple
-   systems. For suggestions and support requests, please contact our
-   google group.
+    Sequential and parallel version (where mpicc and mpicxx are the
+    names of the mpi compilers):
+#+BEGIN_SRC
+   $ ./build.sh CC=mpicc CXX=mpicxx
+#+END_SRC
+    
+    If you build on MacOS, an additional option will be necessary
+    *before* you call the build script:
+
+#+BEGIN_SRC
+   $ export CXXFLAGS="-stdlib=libc++"
+#+END_SRC
+
+    Once everything has compiled, check, if all binaries are there as expected: 
+#+BEGIN_SRC
+   $ ls bin
+        consense	credibleSet	exabayes	extractBips	parser		postProcParam	sdsf		yggdrasil
+#+END_SRC
+
+
+*** Customized build
+    If you have a bit of experience with the usual Linux way to
+    install programs, you may want to read this section for additional
+    advice on the build process. This section also helps, if the
+    automated build fails for whatever reason (although preferably you
+    can contact our googlegroup).
+
+    Essentially, you have to build the parallel and sequential
+    executables separately. Since it is hard to guess the mpi compiler
+    correctly, you have to explicitly set the MPI C and MPI C++
+    compiler.
+
+    The following commands first build the sequential version, then
+    the parallel version. Remember to set CXXFLAGS as mentioned in the
+    previous apple-specific section.
+#+BEGIN_SRC
+    $ ./configure                
+    $ make 
+    $ ./configure --enable-mpi CC=mpicc CXX=mpicxx 
+    $ make clean 
+    $ make 
+#+END_SRC 
+
+* Detailed Example Session
+  In this section we walk through a typical Bayesian analyses. It is
+  primarily intended for users new to phylogeny estimation.
 
 * Command Line Options 
   The essential arguments for ExaBayes are provided on the command
@@ -214,10 +237,11 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
 
    + *-f alignmentFile* 
 
-     provides a binary alignment file, that has been
-     created with the ~parser~ utility (see Section [[#parser]]). If the ~-m~ or
-     ~-q~ option is used, then alignmentFile has to be a plain
-     (un-processed) [[http://evolution.genetics.washington.edu/phylip/doc/sequence.html][Phylip file]]. 
+     provides an alignment file. If this file is the binary output
+     produced by ~parser~ (see Section [[#parser]]), then no further
+     arguments are required.  If you provide a plain (un-processed)
+     [[http://evolution.genetics.washington.edu/phylip/doc/sequence.html][Phylip file]], then either ~-m~ (single partition model) or ~-q~
+     (model file) are mandatory.
 
    + *-m DNA | PROT* 
 
@@ -264,8 +288,9 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
 ** Optional Arguments 
    + *-d* 
      
-     carries out a dry-run. Very recommendable, before
-     submitting a large run to a cluster. 
+     carries out a dry-run. Only checks your config and alignment file
+     and does not compute anything. Very recommendable, before
+     submitting a large run to a cluster.
 
    + *-c configFile* 
 
@@ -328,10 +353,10 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
   None of the following blocks in mandatory. The parameter file itself
   is not mandatory and the default values mentioned below are used
   instead. The nexus-syntax for declaring a block is (here declaring a
-  ~runconfig~ block). 
+  ~run~ block). 
 
    #+BEGIN_SRC
- begin runconfig; 
+ begin run; 
     option value
  end; 
    #+END_SRC
@@ -364,30 +389,31 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
 |-------------+------------------------------------------------------------------------------------------|
 
    Note that, by default all parameters are unlinked for all
-   partitions. Specifically regarding branch lengths, most people will
-   to have only branch length parameter. If a partition id is omitted
-   from the scheme, the default behaviour of ExaBayes is to
+   partitions. Specifically regarding branch lengths, most people only
+   want one global branch length parameter. If a partition id is
+   omitted from the scheme, the default behaviour of ExaBayes is to
    instantiate a new parameter for this partition (i.e., it is
-   unlinked). 
+   unlinked).
    
    You have the following options for specifying linkage (here
    demonstrated for the branch length parameter):
    
-   + use /comma/ to declare separate parameters \\ 
-     /example:/ ~brlens  = (0,1,2,3)~ \\ 
-     /result:/ v{0}, v{1}, v{2}, v{3} \\ 
+   + use /comma/ to declare partitions as separate parameters \\
+     /example:/ ~brlens = (0,1,2,3)~ \\
+     /result:/ v{0}, v{1}, v{2}, v{3} \\
 
-   + use /plus/ to link two parameters \\ 
+   + use /plus/ to link two partitions into one parameter \\ 
       /example:/ ~brlens = (0 + 1 , 2 , 3)~ \\ 
       /result:/  v{0,1}, v{2}, v{3} \\ 
 
-   + use /colon/ to declare a range of unlinked parameters \\ 
+   + use /colon/ to declare a range of unlinked partitions (each one parameter) \\ 
       /example:/ ~brlens = (0:3)~ \\ 
       /result:/  v{0}, v{1}, v{2}, v{3}  \\ 
 
-   + use /dash/ to declare a range of linked parameters \\ 
-      /example:/ ~brlens = (0-3)~\\ 
-      /result:/ v{0,1,2,3} \\ 
+   + use /dash/ to declare a range partitions linked into one
+     parameter \\
+      /example:/ ~brlens = (0-3)~\\
+      /result:/ v{0,1,2,3} \\
 
   For most use cases, you probably will only want to link all branch
   lengths. However, in case you work with protein partitions, please
@@ -411,7 +437,7 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
     ~revMat = (0+1)~ for 1 shared GTR matrix across 2 AA partitions).
 ** Declaring Priors for Parameters
 
-   keyword: ~prior~
+   keyword: ~priors~
    
    Using prior block, you can declare your prior belief in values the
    parameters ExaBayes integrates over can assume. This affects
@@ -464,7 +490,7 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
      - ~dirichlet(~ $x_1,x_2,\ldots, x_n$ ~)~\\
        where for a dirichlet prior $x_i$ are the substitution rates in
        a GTR matrix and thus $n = 6$ for DNA GTR matrices and $n =
-       190$ (yes, that is much, use with care) for AA GTR matrices).\\
+       190$ (yes, that is much, use with care) for AA GTR matrices.\\
      - ~fixed(~ $x_1,x_2, \ldots, x_n$ ~)~\\
        fixed rates are assigned to the matrix and kept fix during MCMC
        sampling. The values $x_i$ may be expressed as relative rates
@@ -518,7 +544,7 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
        fix the value of the parameter to one of the models listed above 
 ** Configuring the Run
    All of the following options need to be enclosed within a block
-   featuring the keyword ~runconfig~. 
+   featuring the keyword ~run~. 
 
 *** General Options 
     The following options allow you to exactly configure what kind of
@@ -543,7 +569,7 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
     frequency is *checkPointInterval*. 
 
     If you do not specify starting trees, then ExaBayes uses random
-    trees as initial topology. If you set *parsimonyStartingTree* to
+    trees as initial topology. If you set *parsimonyStart* to
     ~true~, a parsimony starting tree will be used instead.
 
     Some proposals (e.g., the branch length multiplier) can be tuned
@@ -553,12 +579,13 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
 
     If you are running a dataset in parallel that comprises many
     partitions (possibly using the -Q option), it is advisable to
-    enable component-wise Metropolis-Hastings (cMH) (i.e., set
-    *componentWiseMH* to ~true~, this is the default). If cMH is
-    enabled and you have say multiple substitution matrix parameters,
-    then ExaBayes will propose (for instance) new substitution
-    parameters for each substitution matrix parameter one after
-    another (instead of only drawing one of the parameters at random).
+    group the proposals per partition into proposal sets (i.e., set
+    *proposalSets* to ~true~, this is the default). If proposal sets
+    is enabled and you have say multiple substitution matrix
+    parameters, then ExaBayes will propose (for instance) new
+    substitution parameters for each substitution matrix parameter one
+    after another (instead of only drawing one of the parameters at
+    random).
     
 *** Options regarding convergence 
     ExaBayes implements the same diagnostics for topological
@@ -587,7 +614,7 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
     ExaBayes checks for topological convergence once every run has
     proceeded by $5,000$ generations (set the *diagFreq* variable to
     change this value). 
-
+    
 *** MC3 options 
     If you sample a rough likelihood landscape, you may want to employ
     Metropolis-coupled MCMC (MC3, turned off by default). In very
@@ -651,24 +678,23 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    \cite{Lakner2008a}. 
 
 
-   Using component-wise Metropolis-Hastings (cMH) does not pose an
-   exception to this, the relative frequencies a parameter is updated
-   stay the same.
+   Using proposal sets does not represent an exception to this, the
+   relative frequencies a parameter is updated stay the same.
 
 #+ATTR_LATEX: :align l||p{5cm}|l|r
 | keyword              | full name                                        | affected parameters | default weight |
 |----------------------+--------------------------------------------------+---------------------+----------------|
 | *nodeSlider*         | node slider                                      | branch lengths      |              5 |
-| *treeLengthMult*     | tree length multiplier                           | branch lengths      |              2 |
+| *treeLengthMult*     | tree length multiplier                           | branch lengths      |              1 |
 | *branchMulti*        | multiplier on branch lengths                     | branch lengths      |             15 |
 | *eTBR*               | extending tree bisection and reconnection (eTBR) | topology            |              5 |
 | *eSPR*               | extending subtree pruning and regrafting (eSPR)  | topology            |              5 |
 | *parsimonySPR*       | parsimony-biased subtree pruning and regrafting  | topology            |              5 |
 | *stNNI*              | stochastic nearest neighbor interchange          | topology            |              5 |
 | *rateHetMulti*       | multiplier on $\alpha$                           | rate heterogeneity  |              1 |
-| *revMatSlider*       | sliding window                                   | rev. matrix (DNA)   |            0.5 |
-| *revMatDirichlet*    | dirichlet proposal                               | rev. matrix (DNA)   |            0.5 |
-| *RevmatRateDirich*   | partial dirichlet proposal                       | rev. matrix (AA)    |              4 |
+| *revMatSlider*       | sliding window                                   | rev. matrix (DNA)   |              1 |
+| *revMatDirichlet*    | dirichlet proposal                               | rev. matrix (DNA)   |              1 |
+| *RevmatRateDirich*   | partial dirichlet proposal                       | rev. matrix (AA)    |              1 |
 | *frequencySlider*    | sliding window                                   | state frequencies   |            0.5 |
 | *frequencyDirichlet* | dirichlet proposal                               | state frequencies   |            0.5 |
 | *aaModelJump*        | fixed AA matrix                                  | amino acid model    |              1 |
@@ -734,28 +760,28 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    parameter. The output in the ExaBayes_parameters* will list the
    respective matrices. In this case, postProcParam will create an
    extra column that contains the discrete distribution. 
-** asdsf
+** sdsf
    This utility computes deviations of split frequencies (either
    maximum or average, abbrev. as ASDSF/MSDSF). If you are integrating
    over topologies (you usually are), ASDSF/MSDSF are an essential
-   convergence criterion. The authors of MrBayes recommend an ASDSF of
-   0.5-1% to be considered "good convergence" and values between 1-3%
-   to be acceptable.
+   convergence criterion. Usually an ASDSF of 0.5-1% is considered
+   "excellent convergence" and values between 1-5% are considered to
+   be acceptable.
 
-   According to our experience, you will encounter strongest
-   deviations for branches with low posterior probability. 
+   You will encounter strongest deviations for branches with low
+   posterior probability.
 
-   The stand-alone ~asdsf~ tool is identical to the convergence
-   diagnostic that is carried out, when multiple independent runs are
-   carried out. If you run an exceptionally large analysis with
-   multiple independent runs and plan on sampling a very large number
-   of trees, it is highly recommendable to launch each independent run
-   as a distinct ExaBayes session. You could have a master-script that
-   launches the independent runs (to be run for e.g., 2 h), then
-   checks for convergence and restarts the runs from the respective
-   checkpoints, if not converged yet. If an immense number of
-   processes is involved and your cpu-h budget is tight, this saves
-   you some sequential overhead. 
+   The stand-alone ~sdsf~ computes the same result that is also
+   calculated, if you run multiple independent analysis with
+   convergence criterion. If you run an exceptionally large analysis
+   with multiple independent runs and plan on sampling a very large
+   number of trees, it is highly recommendable to launch each
+   independent run as a distinct ExaBayes session. You could have a
+   master-script that launches the independent runs (to be run for
+   e.g., 2 h), then checks for convergence and restarts the runs from
+   the respective checkpoints, if not converged yet. If an immense
+   number of processes is involved and your cpu-h budget is tight,
+   this saves you some sequential overhead.
    
 ** credibleSet
    This utility computes the credible set of topologies (up to a
@@ -797,10 +823,23 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    consensus) becomes computationally challenging, you may want to
    give the parallelized consensus tree algorithm in [[https://github.com/stamatak/standard-RAxML][RAxML]] a try (use
    ~-J MRE~).
+
+   ~consense~ will produces two output files (one in Newick format,
+   one in Nexus format). Nodes are annotated with marginal probability
+   (i.e., confidence), median, mean and 5%/95% quantile values.
+
+   If you ran analyses with unlinked branch lengths (i.e., you had
+   multiple partitions with a branch length parameter each), then you
+   should create one consensus tree for each branch length parameter.
+   ExaBayes writes one topology file per parameter and per
+   analysis. So you can consense all files that have a "tree-x" (where
+   x is the id of the parameter) in their name.
+   
 * ExaBayes on Clusters/Supercomputers
 :PROPERTIES:
 :CUSTOM_ID: cluster
 :END:
+
    The striking feature of ExaBayes is its capability to execute
    standard analyses on clusters and super-computers efficiently.
    This section goes through various aspects worth considering.
@@ -814,8 +853,23 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
 
    In ExaBayes, you may have several computing nodes working on a
    chain in parallel. We refer to the entirety of nodes computing a
-   chain as /parallel unit/. 
+   chain as /parallel unit/.
+
+** TL;DR summary
+   In most cases, if you have $x$ processes available and each machine
+   (e.g., 4 machines with each 12 cores $\Rightarrow$ 48 processes):
    
+   + if you run $n$ independent analyses, use ~-R n~.
+   + if you want to run $m$ coupled chains, check, if ExaBayes becomes
+     faster, if you increase from ~-C 1~ over ~-C 2~ to ~-C 4~ up to
+     ~-C m~ (often the optimum is 2 or 4). For each increment
+     (default: 500 generations), ExaBayes prints the time required for
+     the last increment (use this for benchmarking).
+   + check the load balance output. For good parallel efficiency, each
+     process should at least have \approx 100 patterns. Otherwise,
+     less processes may be sufficient, but more do not hurt, if you
+     are not under a budget constraint.
+
 ** Choosing the right kind of parallelism 
    :PROPERTIES:
    :CUSTOM_ID: right-parallelism
@@ -885,15 +939,14 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
 :PROPERTIES:
 :CUSTOM_ID: chain-level
 :END:
-
     Employing chain-level parallelism in Bayesian analyses comes with
     some caveats. The speedup you can achieve with coupled chains
     strongly depends on how often an individual coupled chain is
     involved in a swapping attempt. Each time two chains $a$ and $b$
-    swap, all processes working working on $a$ have to wait for chain
-    $b$ to reach the respective generation and vice versa. Reducing
-    the number of swap attempts (via ~numSwapPerGen~) will improve
-    your parallel efficiency, but probably reduces your mixing between
+    swap, all processes working on $a$ have to wait for chain $b$ to
+    reach the respective generation and vice versa. Reducing the
+    number of swap attempts (via ~numSwapPerGen~) will improve your
+    parallel efficiency, but probably reduces your mixing between
     coupled chains (e.g., it is less likely that the cold chain
     benefits from the hotter ones).
 
@@ -1028,15 +1081,8 @@ $ ./configure --enable-mpi CC=mpicc CXX mpicxx  && make
    overall data. If you achieve good load distribution using the ~-Q~
    option, your run may be executed much more efficiently (if you are
    interested in the technical reasons for this, consider
-   \cite{zhang2012multi}).
-
-   It is crucial, that you turn on the configuration option
-   ~componentWiseMH~ (~true~ by default). This holds in particular,
-   if you use the ~-Q~ option, but is relevant as well, if data is
-   distributed in a cyclic manner (default behaviour). The more
-   partitions you have and the more distinct computing nodes you have
-   in a parallel working unit, the more important the component-wise
-   MH option becomes.
+   \cite{zhang2012multi}). Furthermore, for efficiency it is important
+   that the option ~proposalSets~ is by default set to ~true~ (default).
 
 ** Note on Reproducibility
 :PROPERTIES:
@@ -1087,7 +1133,7 @@ DNA, gene2-codonPos1=301-500\3
 DNA, gene2-codonPos2=302-500\3
 DNA, gene2-codonPos3=303-500\3
 PROT, protId=501-800
-DNA, composure=801-1000,1101-1200
+DNA, composit=801-1000,1101-1200
 DNA, gene3=1000-1100
   #+END_SRC
 
@@ -1100,7 +1146,7 @@ DNA, gene3=1000-1100
       "gene2-codonPos1", "gene2-codonPos2" and "gene2-codonPos3". Notice
       that the starting position of the range is incremented for the
       second and third codon position. 
-    + combining elements, see "composure". You can combine any
+    + combining elements, see "composit". You can combine any
       element using a comma.  
 
  For concatenating a large number of alignments efficiently, we
@@ -1115,7 +1161,8 @@ DNA, gene3=1000-1100
  provided an unpartitioned alignment and the MCMC sampling would
  require less computational resources. 
 
-
+* FAQ
+  Nothing yet. 
 * References
 # make the bibliography work does not work
 #+BIBLIOGRAPHY: library

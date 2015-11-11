@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 #include "RateHelper.hpp"
-#include "TreeResource.hpp"
+#include "tree-init/TreeResource.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "TreeRandomizer.hpp"
@@ -13,7 +13,7 @@
 #include "GlobalVariables.hpp"
 #include "BoundsChecker.hpp"
 #include "TreePrinter.hpp"
-#include "TreeInitializer.hpp"
+#include "tree-init/TreeInitializer.hpp"
 
 
 TreeAln::TreeAln(nat numTax)
@@ -190,6 +190,14 @@ TreeAln::~TreeAln()
       for(int i = 0; i < numPart ;++i)
 	{
 	  auto& partition = getPartition(i); 
+	  
+	  if( _tr.saveMemory)
+	    {
+	      if(partition.gapColumn != 0 )
+		delete [] partition.gapColumn; 
+	      if(partition.gapVector != 0)
+		delete [] partition.gapVector; 
+	    }
 
 #if HAVE_PLL ==  0
 	  exa_free(partition.symmetryVector);
@@ -242,6 +250,7 @@ TreeAln::~TreeAln()
 #endif
 
 	}
+
     }
 
 #if HAVE_PLL == 0  
@@ -514,20 +523,27 @@ void TreeAln::initRevMat(nat model)
 #endif
 }
 
-void TreeAln::setRevMat(const std::vector<double> &values, nat model)
+void TreeAln::setRevMat(const std::vector<double> &values, nat model, bool isRaw )
 {
+  // if(not isRaw)
+  //   {
   bool valuesOkay = BoundsChecker::checkRevmat(values); 
   if(not valuesOkay)
     {
       tout << "Problem with substitution parameter: "  << MAX_SCI_PRECISION << values << std::endl;  
       assert( valuesOkay ); 
     }
+  // }
 
   auto& partition = getPartition(model) ; 
 
   assert(partition.dataType != AA_DATA || partition.protModels == GTR); 
 
-  memcpy(partition.substRates, values.data(), RateHelper::numStateToNumInTriangleMatrix(  partition.states) * sizeof(double)); 
+  nat num = RateHelper::numStateToNumInTriangleMatrix(  partition.states); 
+  assert(num == values.size()); 
+
+  std::copy(begin(values), end(values), partition.substRates); 
+
   initRevMat(model); 
 }
 
@@ -590,19 +606,18 @@ std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln)
 }
 
 
-std::vector<double> TreeAln::getRevMat(nat model) const 
+std::vector<double> TreeAln::getRevMat(nat model, bool isRaw) const 
 {
   auto result = std::vector<double>{} ; 
   auto& partition = getPartition(model); 
   assert(partition.dataType != AA_DATA || partition.protModels == GTR); 
-  double sum = 0; 
-  for(nat i =0 ; i < RateHelper::numStateToNumInTriangleMatrix(partition.states); ++i)
-    {
-      result.push_back(partition.substRates[i]);
-      sum += result[i]; 
-    }
 
-  for_each(result.begin(), result.end(), [&](double &v) { v /= sum ; }) ; 
+  nat num = RateHelper::numStateToNumInTriangleMatrix(partition.states); 
+  result.resize(num); 
+  std::copy(partition.substRates, partition.substRates+ num ,  begin(result) );
+
+  if(not isRaw)
+    RateHelper::convertToSum1(result);
 
   return result; 
 }

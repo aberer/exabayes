@@ -8,6 +8,7 @@
 #include "FlagType.hpp" 
 #include "Communicator.hpp"
 
+
 #include <mpi.h>
 extern MPI_Comm comm; 		// the examl communicator 
 extern int processID; 		// examl rank 
@@ -112,7 +113,7 @@ public:
 
   bool globalBroadcast( bool val,int root ) const; 
 
-  std::array<nat,3> getMyCoordinates() const  {return _mesh.getCoordinates(getGlobalRank()); }
+  std::array<nat,3> getMyCoordinates() const; 
   
 private: 			// METHODS
   auto serializeAllChains(std::vector<CoupledChains> &runs, CommFlag commFlags) const

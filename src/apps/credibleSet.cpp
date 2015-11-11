@@ -1,4 +1,4 @@
-#include "CredibleSet.hpp"
+#include "contrib/CredibleSet.hpp"
 #include <cstring>
 #include <unistd.h>
 #include <cassert>
@@ -10,8 +10,6 @@ int NUM_BRANCHES;
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
-
-// #include "ParallelSetup.hpp"
 
 
 void myExit(int code)
@@ -120,7 +118,7 @@ int main(int argc, char **argv)
   double ci = ciNumber; 
   ci /= 100.; 
 
-  auto cs = CredibleSet(files); 
+  auto&& cs = CredibleSet(files); 
 
   auto &&ss = std::stringstream{}; 
   ss << PROGRAM_NAME << "_credibleSet." << id  ; 

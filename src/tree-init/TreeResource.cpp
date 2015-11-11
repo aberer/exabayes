@@ -15,9 +15,13 @@ std::vector<std::string> TreeResource::getTaxonNames(nat numTax)
   return taxa;
 }
 
+
  
-void TreeResource::fillAliasWgt(int *pos, nat length) 
+
+void TreeResource::fillAliasWgt(TreeAln &traln ) 
 {
+  // okay???
+  // assert(0);
 }
 
    

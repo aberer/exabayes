@@ -1,6 +1,7 @@
 #ifndef REVERVE_ARRAYS_HPP
 #define REVERVE_ARRAYS_HPP
 
+#include <list>
 #include <memory>
 #include <map>
 #include <unordered_map>
@@ -36,7 +37,8 @@ public:
 
 private: 
   std::unordered_map<double*,nat> _usedArrays; 
-  std::multimap<nat,double*> _unusedArrays; 
+  // std::multimap<nat,double*> _unusedArrays; 
+  std::map<nat,std::list<double*> > _unusedArrays; 
   
   static const double numGammaCats; 
   static const double thresholdForNewSEVArray; 

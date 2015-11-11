@@ -19,7 +19,9 @@ public:
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
+  // virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const ; 
   virtual ParameterContent extractParameter(const TreeAln &traln)  const;   
+  // virtual ParameterContent extractParameterRaw(const TreeAln& traln) const ; 
   virtual AbstractParameter* clone () const {return new FrequencyParameter(*this); } 
 
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln) const ; 

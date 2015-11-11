@@ -4,7 +4,7 @@ topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
 
-seed=11436
+# seed=11436
 
 # seed=31342  			# problematic on tiny-aa
 # seed=4045
@@ -24,19 +24,29 @@ seed=11436
 # seed=32090 # problematic with  143 (on DNA!)
 
 # src/proposals/
-numProc=2
+numProc=1
 
 # extraArgs="-R 2 -C 2" 
 # extraArgs="-M 3 -S  "
-# extraArgs="-M 0  -S"
+# extraArgs="-M 3"
 # extraArgs=" -C 4 "
-# extraArgs="-R 2 -C 2  "	
+# extraArgs="-C 2"
+# extraArgs="-M 3 "
+# extraArgs="-M 3 "
+# extraArgs="-R 2 " 
+# extraArgs="-C 4"
 # extraArgs="-S"
 # extraArgs="-S  "
 # extraArgs="-m"
 
 # early with 150 , VERIFIED 
 # seed=31853
+
+
+
+# args="--disable-silent-rules" 
+# args="--disable-sse"
+args=""
 
 devel=0
 
@@ -45,7 +55,7 @@ startFromBest=0
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=0
+useClang=1
 
 
 # find additional arguments for the call   
@@ -73,8 +83,8 @@ if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     cxxcompiler="clang++"
     cppflags="-Qunused-arguments "  
 else 
-    ccompiler="gcc-4.6"
-    cxxcompiler="g++-4.6"
+    ccompiler="gcc"
+    cxxcompiler="g++"
 fi
 
 if [ $useGoogleProfiler -eq 1  ]; then
@@ -99,8 +109,7 @@ if [ "$#" -lt 3 ]; then
     exit
 fi
 
-# args="--disable-silent-rules" 
-args=""
+
 dataset=$3
 
 pathtodata=$topdir/data/$dataset
@@ -139,6 +148,7 @@ if [ "$codeBase" == "examl" ]; then
 
     CC="mpicc -cc=$ccompiler"  
     CXX="mpicxx -cxx=$cxxcompiler"  
+
     baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
     # CC="$ccompiler" 

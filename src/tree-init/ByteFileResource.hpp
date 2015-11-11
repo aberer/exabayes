@@ -2,7 +2,7 @@
 #define BYTEFILERESOURCE
 
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "InitializationResource.hpp"
 
 #include <memory>
@@ -14,10 +14,12 @@ public:
   ByteFileResource(std::string fileName, std::shared_ptr<ParallelSetup> pl );
   virtual ~ByteFileResource(){}
 
+  virtual void markPosAndSkipWeights(int len); 
+
   virtual void fillPartition(pInfo &partition, nat model) ; 
   virtual std::tuple<int,int,double,int> getGlobalInfo();
   virtual std::vector<std::string> getTaxonNames(nat numTax); 
-  virtual void fillAliasWgt(int *pos, nat length); 
+  virtual void fillAliasWgt(TreeAln &traln); 
   virtual void fillAlnPart(unsigned char* ptr, nat length, nat &ctr);
   virtual std::tuple<parsimonyNumber*,nat> fillParsVect(nat numTax, nat states, nat model); 
 
@@ -26,6 +28,7 @@ public:
   virtual bool isDataAreDistributed() { return false; } 
 private: 
   std::ifstream _byteFile; 
+  std::streampos _weightPos; 
   std::shared_ptr<ParallelSetup> _pl; 		// non-owning
 }; 
 

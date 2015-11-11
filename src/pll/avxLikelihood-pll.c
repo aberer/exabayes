@@ -1325,6 +1325,7 @@ void newviewGTRGAMMAPROT_AVX(int tipCase,
 			     unsigned char *tipX1, unsigned char *tipX2, int n, 
 			     double *left, double *right, int *wgt, int *scalerIncrement) 
 {
+
   double	
     *uX1, 
     *uX2, 
@@ -1341,7 +1342,6 @@ void newviewGTRGAMMAPROT_AVX(int tipCase,
     scale, 
     addScale = 0;
 
- 
 #ifndef GCC_VERSION
 #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #endif

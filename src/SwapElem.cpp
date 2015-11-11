@@ -1,6 +1,6 @@
 #include "SwapElem.hpp"
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 nat SwapElem::getMyId(ParallelSetup& pl, nat runid) const 
 {

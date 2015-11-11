@@ -39,6 +39,9 @@ public:
   template<typename T> T receive( int source, int tag ); 
   template<typename T> void send( T elem, int dest, int tag ) ; 
 
+  template<typename T>
+  std::vector<T> allReduce( std::vector<T> myValues); 
+
 private: 
   MPI_Comm _comm; 
 }; 

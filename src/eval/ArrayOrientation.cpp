@@ -27,30 +27,6 @@ void ArrayOrientation::setPartitionInvalid(nat part)
 } 
 
 
-// void ArrayOrientation::extractOrientation(const TreeAln& traln, nat part)
-// {
-//   assert(0);
-//   nat ctr = traln.getNumberOfTaxa() + 1; 
-//   for(nat i = 0; i < traln.getNumberOfInnerNodes() ;++i)
-//     {
-//       auto p = traln.getNode(ctr);
-
-//       nat value = 0; 
-//       if(p->x)
-// 	value = p->back->number; 
-//       else if(p->next->x)
-// 	value = p->next->back->number;
-//       else if(p->next->next->x)
-// 	value = p->next->next->back->number;
-//       else 
-// 	assert(0); 
-
-//       orientation[part][i] = value; 
-//       ++ctr; 
-//     }
-// }
-
-
 std::ostream& operator<<(std::ostream& out, const ArrayOrientation &rhs)
 {
   nat ctr = 0; 

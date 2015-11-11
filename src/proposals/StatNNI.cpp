@@ -21,8 +21,8 @@
 
 
 StatNNI::StatNNI( double _multiplier)
-  : AbstractProposal(Category::TOPOLOGY,  "stNNI", 5., false)
-  ,   multiplier(_multiplier)
+  : AbstractProposal(Category::TOPOLOGY,  "stNNI", 5., 0,0, false)
+  , multiplier(_multiplier)
 {
 }
 

@@ -33,7 +33,7 @@ std::array<double,2> ParsimonySPR::factors =
 // #define PRINT_DEBUG_PARS
 
 ParsimonySPR::ParsimonySPR( double parsWarp, double blMulti, int depth)
-  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. , false)
+  : AbstractProposal(Category::TOPOLOGY, "parsSPR", 5. , false, 0,0)
   , _parsWarp(parsWarp)    
   , _blMulti(blMulti)    
   , _depth(depth)
@@ -97,10 +97,10 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, branch22states2score in
 	  for(auto& v : values)
 	    data.push_back(v);
 	}
-      
+
       // could be encapsulated in <chain>
       MPI_Allreduce(MPI_IN_PLACE, data.data(), data.size(), MPI_UNSIGNED, MPI_SUM, comm);
-
+      
       nat ctr = 0; 
       for(auto &pair :insertions)
 	{

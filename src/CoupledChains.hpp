@@ -66,7 +66,7 @@ public:
   void addToSwapMatrix(const SwapMatrix &toAdd){ _swapInfo = _swapInfo + toAdd;  }
   const Randomness& getRandomness() const {return _rand; }
   std::vector<std::string> getAllFileNames() const ; 
-  void finalizeOutputFiles(const ParallelSetup &pl); 
+  // void finalizeOutputFiles(const ParallelSetup &pl); 
 
   virtual void deserialize( std::istream &in ) ; 
   virtual void serialize( std::ostream &out) const ;   

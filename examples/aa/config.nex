@@ -4,9 +4,9 @@ begin params;
  stateFreq = (0)       [ also integrate over state frequencies ] 
 end;  
 
-begin runconfig; 
+begin run; 
  numruns 2 
- parsimonyStartingTree  true
+ parsimonyStarting  true
  printFreq 10
 end; 
 

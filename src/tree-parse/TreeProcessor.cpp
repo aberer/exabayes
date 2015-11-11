@@ -1,8 +1,9 @@
 #include <sstream>
+#include "comm/ParallelSetup.hpp"
 #include "extensions.hpp" 
 #include <string.h>
 #include <cassert>
-#include "TreeInitializer.hpp"
+#include "tree-init/TreeInitializer.hpp"
 #include <iostream>
 #include <cmath>
 #include "Branch.hpp"
@@ -11,21 +12,37 @@
 #include "parameters/BranchLengthsParameter.hpp"
 
 
-TreeProcessor::TreeProcessor(std::vector<std::string> fileNames)  
+TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck)  
+  : _taxa(fillTaxaInfo(fileNames.at(0)))
 {
   assert(fileNames.size() > 0); 
-  fillTaxaInfo(fileNames.at(0)); 
-  nat numTax = taxa.size(); 
-  tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(numTax));
-  TreeInitializer::initializeBranchLengths(tralnPtr->getTrHandle(), 1,numTax); 
-  fns = fileNames; 
+
+  if(expensiveCheck && fileNames.size() > 1)
+    {
+      for(auto f : fileNames )
+	{
+	  auto taxa = fillTaxaInfo(f); 
+	  bool okay = true;  
+	  for(nat i = 0; i < taxa.size() ; ++i)
+	    okay &= (_taxa[i].compare(taxa[i]) == 0 ); 
+	  if(not okay)
+	    {
+	      std::cout << "Error: file " << f << " contains a different numbering of taxa than " << fileNames[0] << ". At the moment, " << PROGRAM_NAME << " does not support this. Write us an e-mail, if this feature is important for you. " << std::endl; 
+	      ParallelSetup::genericExit(-1);
+	    }
+	}
+    }
+
+  _tralnPtr = std::unique_ptr<TreeAln>(new TreeAln(_taxa.size()));
+  TreeInitializer::initializeBranchLengths(_tralnPtr->getTrHandle(), 1,_taxa.size()); 
+  _fns = fileNames; 
 }
 
 
 TreeProcessor::TreeProcessor(TreeProcessor&& tp) 
-  : tralnPtr(std::move(tp.tralnPtr))
-  , fns(tp.fns)
-  , taxa(tp.taxa)
+  : _tralnPtr(std::move(tp._tralnPtr))
+  , _fns(tp._fns)
+  , _taxa(tp._taxa)
 {
 }  
 
@@ -51,16 +68,16 @@ void TreeProcessor::nextTree(std::istream &treefile)
   auto bt = BasicTreeReader<IntegerLabelReader,
 			    typename std::conditional<readBl,
 						      ReadBranchLength,
-						      IgnoreBranchLength>::type>(taxa.size());
+						      IgnoreBranchLength>::type>(_taxa.size());
   auto branches = bt.extractBranches(treefile);
 
-  tralnPtr->unlinkTree();
+  _tralnPtr->unlinkTree();
   for(auto b :branches)
     {
-      tralnPtr->clipNode(tralnPtr->getUnhookedNode(b.getPrimNode()), tralnPtr->getUnhookedNode(b.getSecNode()) );
+      _tralnPtr->clipNode(_tralnPtr->getUnhookedNode(b.getPrimNode()), _tralnPtr->getUnhookedNode(b.getSecNode()) );
       if(readBl)
 	{
-	  tralnPtr->setBranchUnchecked(b);
+	  _tralnPtr->setBranchUnchecked(b);
 	}
     }
 }
@@ -82,11 +99,14 @@ std::string TreeProcessor::trim(const std::string& str, const std::string& white
   return str.substr(strBegin, strRange);
 }
 
-void TreeProcessor::fillTaxaInfo(std::string fileName)
+
+auto TreeProcessor::fillTaxaInfo(std::string fileName)
+  -> std::vector<std::string>
 {
-  std::string whiteSpace = " \t"; 
-  std::ifstream infile(fileName); 
-  std::string line; 
+  auto result = std::vector<std::string>{}; 
+  auto whiteSpace = " \t"; 
+  auto &&infile =  std::ifstream(fileName); 
+  auto line = std::string{} ; 
   bool foundStart = false; 
   bool abort = false; 
   while(not abort && getline(infile, line))
@@ -104,15 +124,16 @@ void TreeProcessor::fillTaxaInfo(std::string fileName)
 	  std::string num =  cleanerString.substr(0, pos),
 	    name = cleanerString.substr(pos+1, cleanerString.size()); 	  
 
-	  taxa.push_back(name); 
+	  // _taxa.push_back(name); 
+	  result.push_back(name);
 	}
       else if(cleanLine.compare("translate") == 0  )
 	foundStart = true; 
     }  
 
   assert(foundStart); 
+  return result; 
 }
-
 
 
 template void TreeProcessor::nextTree<true>(std::istream &treefile) ; 

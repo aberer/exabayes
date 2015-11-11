@@ -1,6 +1,5 @@
 #include "parser/PhylipParser.hpp"
 
-
 /**
    @brief disclaimer: this is a relatively quick and very dirty
    approach to integrating the parser into the main code
@@ -8,10 +7,18 @@
 
 #include <assert.h>
 
+#include "time.hpp"
+
 #include "common.h"
+#include <iomanip>
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <fstream>
+
+
+// #define DEBUG_MSG
+
 
 using namespace Parser; 
 
@@ -28,10 +35,10 @@ void myExit(int code)
   exit(code); 
 }
 
-PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool _haveModelFile)
+PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool haveModelFile	)
   : alnFile(_alnFile)
   , modelFile(_modelFile)
-  , compress(true)		// TODO 
+  , _compress(true)		// TODO 
   , protModels {"DAYHOFF", "DCMUT", "JTT", "MTREV", "WAG", "RTREV", "CPREV", "VT", "BLOSUM62", "MTMAM", "LG", "MTART", "MTZOA", "PMB", "HIVB", "HIVW", "JTTDCMUT", "FLU", "AUTO", "LG4", "GTR"}
   , inverseMeaningBINARY {'_', '0', '1', '-'}
   , inverseMeaningDNA {'_', 'A', 'C', 'M', 'G', 'R', 'S', 'V', 'T', 'W', 'Y', 'H', 'K', 'D', 'B', '-'}
@@ -52,7 +59,7 @@ PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool _h
     {1024, 1024, 32, 1024, 1024, 496, 32, 1056, 496, 32, FALSE, FALSE, 32, inverseMeaningGeneric32, 32, TRUE, bitVector32},    /* 32 states */
     {4096, 4096, 64, 4096, 4096, 2016, 64, 4160, 64, 2016, FALSE, FALSE, 64, (char*)NULL, 64, TRUE, (unsigned int*)NULL}    /* 64 states */
   }
-  , haveModelFile(_haveModelFile)
+  , _haveModelFile(haveModelFile)
 {
   // std::cout << "called parser with " << alnFile << "\t" << modelFile << " and " << ( haveModelFile ? "have model" : "NO model"  ) <<  std::endl; 
   
@@ -67,10 +74,8 @@ PhylipParser::~PhylipParser()
   free(rdta->y0); 
   free(baseAddr); 
   free(tr->yVector); 
-
   free(tr->ti); 
-  free(tr->parsimonyScore); 
-  
+
   free(tr->nameHash->table); 
   free(tr->nameHash);
 
@@ -584,7 +589,7 @@ void PhylipParser::parsePartitions()
  
   /*********************************************************************************************************************/ 
 
-  for(nat i = 0; i <= numSites; i++)
+  for(nat i = 0; i <= _numSites; i++)
     tr->model[i] = -1;
   
   for(nat i = 0; i < numberOfModels; i++)
@@ -606,7 +611,7 @@ void PhylipParser::parsePartitions()
 	    {
 	      for(int k = lower; k <= upper; k += modulo)
 		{
-		  if(k <= int(numSites))
+		  if(k <= int(_numSites))
 		    setModel(i, k, tr->model);	      
 		}
 	    }
@@ -614,7 +619,7 @@ void PhylipParser::parsePartitions()
     }
 
 
-  for(i = 1; i < numSites + 1; i++)
+  for(i = 1; i < _numSites + 1; i++)
     {
       
       if(tr->model[i] == -1)
@@ -641,23 +646,23 @@ void PhylipParser::parsePartitions()
 
 void PhylipParser::getyspace ()
 {
-  size_t size = 4 * ((size_t)(numSites / 4 + 1));
+  size_t size = 4 * ((size_t)(_numSites / 4 + 1));
   unsigned char *y0;
 
-  rdta->y = (unsigned char **) malloc((numTax + 1) * sizeof(unsigned char *));
+  rdta->y = (unsigned char **) malloc((_numTax + 1) * sizeof(unsigned char *));
   assert(rdta->y);   
 
-  y0 = (unsigned char *) malloc(((size_t)(numTax + 1)) * size * sizeof(unsigned char));
+  y0 = (unsigned char *) malloc(((size_t)(_numTax + 1)) * size * sizeof(unsigned char));
 
   /*
-    printf("Raw alignment data Assigning %Zu bytes\n", ((size_t)(numTax + 1)) * size * sizeof(unsigned char));
+    printf("Raw alignment data Assigning %Zu bytes\n", ((size_t)(_numTax + 1)) * size * sizeof(unsigned char));
   */
 
   assert(y0);   
 
   rdta->y0 = y0;
 
-  for (nat i = 0; i <= numTax; i++)
+  for (nat i = 0; i <= _numTax; i++)
     {
       rdta->y[i] = y0;
       y0 += size;
@@ -729,30 +734,29 @@ void PhylipParser::defaultInit()
   tr->useGappedImplementation = FALSE;
   tr->saveMemory = FALSE;
 
-  if(compress)
+  if(_compress)
     adef->compressPatterns = TRUE; 
   
   adef->useMultipleModel = TRUE; 
-
 }
 
 
 void PhylipParser::parseHeader (FILE *INFILE)
 {
-   if (fscanf(INFILE, "%u %u", & numTax, & numSites) != 2)
+   if (fscanf(INFILE, "%u %u", & _numTax, & _numSites) != 2)
     {
       
       printf("\n Error: problem reading number of species and sites\n\n");
       myExit(-1);
     }
   
-  if (numTax < 4) // numTax
+  if (_numTax < 4) // _numTax
     {
       printf("\n Error: too few species\n\n");
       myExit(-1);
     }
 
-  if (numSites < 1) // numSites
+  if (_numSites < 1) // _numSites
     {
       printf("\n Error: too few sites\n\n");
       myExit(-1);
@@ -1013,7 +1017,7 @@ boolean PhylipParser::getdata(FILE *INFILE)
 
 	  j = basesread;
 
-	  while ((j < int(numSites)) && ((ch = getc(INFILE)) != EOF) && (ch != '\n') && (ch != '\r'))
+	  while ((j < int(_numSites)) && ((ch = getc(INFILE)) != EOF) && (ch != '\n') && (ch != '\r'))
 	    {
 	      uppercase(& ch);
 
@@ -1089,11 +1093,11 @@ boolean PhylipParser::getdata(FILE *INFILE)
 
       firstpass = FALSE;
       basesread = basesnew;
-      allread = (basesread >= int(numSites));
+      allread = (basesread >= int(_numSites));
     }
 
   for(j = 1; j <= tr->mxtips; j++)
-    for(i = 1; i <= int(numSites); i++)
+    for(i = 1; i <= int(_numSites); i++)
       {
 	assert(tr->dataVector[i] != -1);
 
@@ -1347,13 +1351,13 @@ unsigned char PhylipParser::buildStates(int secModel, unsigned char v1, unsigned
 
 void PhylipParser::adaptRdataToSecondary()
 {
-  int *alias = (int*)calloc(numSites, sizeof(int));
+  int *alias = (int*)calloc(_numSites, sizeof(int));
   int  realPosition = 0;  
 
-  for(nat i = 0; i < numSites; i++)
+  for(nat i = 0; i < _numSites; i++)
     alias[i] = -1;
 
-  for(nat i = 0; i < numSites; i++)
+  for(nat i = 0; i < _numSites; i++)
     {
       int partner = tr->secondaryStructurePairs[i];
       if(partner != -1)
@@ -1362,7 +1366,7 @@ void PhylipParser::adaptRdataToSecondary()
 
 	  if(int(i) < partner)
 	    {
-	      for(nat j = 1; j <= numTax; j++)
+	      for(nat j = 1; j <= _numTax; j++)
 		{
 		  unsigned char v1 = rdta->y[j][i+1];
 		  unsigned char v2 = rdta->y[j][partner+1];
@@ -1382,18 +1386,18 @@ void PhylipParser::adaptRdataToSecondary()
 	}
     }
 
-  assert(int(numSites - realPosition) == tr->numberOfSecondaryColumns / 2);
+  assert(int(_numSites - realPosition) == tr->numberOfSecondaryColumns / 2);
 
-  numSites = realPosition;
+  _numSites = realPosition;
 
-  for(nat i = 0; i < numSites; i++)
+  for(nat i = 0; i < _numSites; i++)
     {
       assert(alias[i] != -1);
       tr->model[i+1]    = tr->model[alias[i]+1];
       tr->dataVector[i+1] = tr->dataVector[alias[i]+1];
       rdta->wgt[i+1] =  rdta->wgt[alias[i]+1];
 
-      for(nat j = 1; j <= numTax; j++)
+      for(nat j = 1; j <= _numTax; j++)
 	rdta->y[j][i+1] = rdta->y[j][alias[i]+1];
     }
 
@@ -1401,15 +1405,21 @@ void PhylipParser::adaptRdataToSecondary()
 }
 
 
+// #define OLD_SORT 
+
 void PhylipParser::sitesort()
 {
-  int  gap, i, j, jj, jg, k, n, nsp;
+  unsigned char  **data;
   int  
     *index, 
     *category = (int*)NULL;
-
+ 
+#ifdef OLD_SORT
+  int n = _numSites, 
+    nsp = _numTax; 
+  int  gap, i, j, jj, jg, k;
   boolean  flip, tied;
-  unsigned char  **data;
+#endif
 
   if(adef->useSecondaryStructure)
     {
@@ -1421,14 +1431,31 @@ void PhylipParser::sitesort()
   if(adef->useMultipleModel)    
     category      = tr->model;
   
-
   index    = cdta->alias;
   data     = rdta->y;
-  n        = numSites;
-  nsp      = numTax;
+
   index[0] = -1;
 
+#ifdef DEBUG_MSG	
+  // before 
+  std::cout << "aln before" << std::endl; 
+  for(nat i = 1; i < _numTax + 1 ; ++i)
+    {
+      for(nat j = 1; j < _numSites + 1  ;  ++j)
+	{
+	  std::cout << inverseMeaningDNA[rdta->y[i][j]] ; 
+	}
+      std::cout << std::endl; 
+    }
 
+  for(nat i = 0; i < _numSites + 1 ; ++i)
+    std::cout << index[i] << ","; 
+  std::cout << "\n"; 
+#endif
+
+#ifdef OLD_SORT 
+  // TODO i am pretty sure that this is the part that drags down the
+  // parsing speed
   if(adef->compressPatterns)
     {
       for (gap = n / 2; gap > 0; gap /= 2)
@@ -1444,7 +1471,7 @@ void PhylipParser::sitesort()
 		  if(adef->useMultipleModel)
 		    {		     		      
 		      assert(category[jj] != -1 &&
-			     category[jg] != -1);
+		  	     category[jg] != -1);
 		     
 		      flip = (category[jj] > category[jg]);
 		      tied = (category[jj] == category[jg]);		     
@@ -1473,7 +1500,49 @@ void PhylipParser::sitesort()
 	    }
 	}
     }
+#else 
+    if(adef->compressPatterns)
+      {
+	std::sort(index  + 1 , index + _numSites + 1 ,  
+		  [&](const  int &a , const int& b) -> bool 
+		  {
+		    // if( not ( a <= int(_numSites + 1) && b <= int(_numSites + 1) )) 
+		    //   std::cout << a << "," << b << std::endl; 
+
+		    if(adef->useMultipleModel)
+		      {
+			if(category[a] != category[b])
+			  return category[a] < category[b]; 
+		      }
+		    
+		    for(int i = 1; i < int(_numTax + 1) ; ++i)
+		      {
+			if( data[i][a] != data[i][b] ) 
+			  return data[i][a] < data[i][b]; 
+		      }
+		    return false; 
+		  });
+      }
+#endif
+
+
+#ifdef DEBUG_MSG 
+  std::cout << "aln before" << std::endl; 
+  for(nat i = 1; i < _numTax + 1 ; ++i)
+    {
+      for(nat j = 1; j < _numSites + 1  ;  ++j)
+	{
+	  std::cout << inverseMeaningDNA[rdta->y[i][index[j]]] ; 
+	}
+      std::cout << std::endl; 
+    }
+
+  for(nat i = 0; i < _numSites + 1 ; ++i)
+    std::cout << index[i] << ","; 
+  std::cout << "\n"; 
+#endif
 }
+
 
 void PhylipParser::sitecombcrunch ()
 {
@@ -1485,8 +1554,8 @@ void PhylipParser::sitecombcrunch ()
 
   if(adef->useMultipleModel)
     {
-      aliasSuperModel = (int*)malloc(sizeof(int) * (numSites + 1));
-      aliasModel      = (int*)malloc(sizeof(int) * (numSites + 1));
+      aliasSuperModel = (int*)malloc(sizeof(int) * (_numSites + 1));
+      aliasModel      = (int*)malloc(sizeof(int) * (_numSites + 1));
     } 
 
   i = 0;
@@ -1499,20 +1568,18 @@ void PhylipParser::sitecombcrunch ()
 
       assert(0);
 
-      tr->patternPosition = (int*)malloc(sizeof(int) * numSites);
-      tr->columnPosition  = (int*)malloc(sizeof(int) * numSites);
+      tr->patternPosition = (int*)malloc(sizeof(int) * _numSites);
+      tr->columnPosition  = (int*)malloc(sizeof(int) * _numSites);
 
-      for( i = 0; i < int(numSites); i++)
+      for( i = 0; i < int(_numSites); i++)
 	{
 	  tr->patternPosition[i] = -1;
 	  tr->columnPosition[i]  = -1;
 	}
     }
 
-  
-
   i = 0;
-  for (j = 1; j <= int(numSites); j++)
+  for (j = 1; j <= int(_numSites); j++)
     {
       sitei = cdta->alias[i];
       sitej = cdta->alias[j];
@@ -1530,7 +1597,7 @@ void PhylipParser::sitecombcrunch ()
 	    tied = 1;
 	}
 
-      for (k = 1; tied && (k <= int(numTax)); k++)
+      for (k = 1; tied && (k <= int(_numTax)); k++)
 	tied = (rdta->y[k][sitei] == rdta->y[k][sitej]);
 
       if (tied)
@@ -1578,20 +1645,20 @@ void PhylipParser::sitecombcrunch ()
     {
       assert(0);
 
-      for(i = 0; i < int(numSites); i++)
+      for(i = 0; i < int(_numSites); i++)
 	{
 	  int p  = tr->patternPosition[i];
 	  int c  = tr->columnPosition[i];
 
 	  assert(p >= 0 && p < cdta->endsite);
-	  assert(c >= 1 && c <= int(numSites));
+	  assert(c >= 1 && c <= int(_numSites));
 	}
     }
 
 
   if(adef->useMultipleModel)
     {
-      for(i = 0; i <= int(numSites); i++)
+      for(i = 0; i <= int(_numSites); i++)
 	{
 	  tr->model[i]      = aliasModel[i];
 	  tr->dataVector[i] = aliasSuperModel[i];
@@ -1609,7 +1676,7 @@ boolean PhylipParser::makeweights ()
 {
   int  i;
 
-  for (i = 1; i <= int(numSites); i++)
+  for (i = 1; i <= int(_numSites); i++)
     cdta->alias[i] = i;
 
   sitesort();
@@ -1628,10 +1695,10 @@ boolean PhylipParser::makevalues()
     modelCounter;
 
   unsigned char
-    *y    = (unsigned char *)malloc(((size_t)numTax) * ((size_t)cdta->endsite) * sizeof(unsigned char));
+    *y    = (unsigned char *)malloc(((size_t)_numTax) * ((size_t)cdta->endsite) * sizeof(unsigned char));
 
   {
-    for (i = 1; i <= int(numTax); i++)
+    for (i = 1; i <= int(_numTax); i++)
       for (j = 0; j < cdta->endsite; j++)   
 	y[(((size_t)(i - 1)) * ((size_t)cdta->endsite)) + j] = rdta->y[i][cdta->alias[j]];
 
@@ -1703,7 +1770,7 @@ boolean PhylipParser::makevalues()
 
   tr->originalCrunchedLength = tr->cdta->endsite;
     
-  for(i = 0; i < int(numTax); i++)
+  for(i = 0; i < int(_numTax); i++)
     tr->yVector[i + 1] = &(rdta->y0[(tr->originalCrunchedLength) * ((size_t)i)]);
 
   return TRUE;
@@ -1802,19 +1869,19 @@ void PhylipParser::getinput()
   
   parseHeader(INFILE); 
 
-  tr->mxtips = numTax;
+  tr->mxtips = _numTax;
   
-  rdta->wgt             = (int *)    malloc((numSites + 1) * sizeof(int));
-  cdta->alias           = (int *)    malloc((numSites + 1) * sizeof(int));
-  cdta->aliaswgt        = (int *)    malloc((numSites + 1) * sizeof(int)); 
-  tr->model             = (int *)    calloc((numSites + 1), sizeof(int));
-  tr->initialDataVector  = (int *)    malloc((numSites + 1) * sizeof(int));
-  tr->extendedDataVector = (int *)    malloc((numSites + 1) * sizeof(int));         
+  rdta->wgt             = (int *)    malloc((_numSites + 1) * sizeof(int));
+  cdta->alias           = (int *)    malloc((_numSites + 1) * sizeof(int));
+  cdta->aliaswgt        = (int *)    malloc((_numSites + 1) * sizeof(int)); 
+  tr->model             = (int *)    calloc((_numSites + 1), sizeof(int));
+  tr->initialDataVector  = (int *)    malloc((_numSites + 1) * sizeof(int));
+  tr->extendedDataVector = (int *)    malloc((_numSites + 1) * sizeof(int));         
   
 
   assert(!adef->useWeightFile); 
 
-  for (i = 1; i <= int(numSites); i++)
+  for (i = 1; i <= int(_numSites); i++)
     rdta->wgt[i] = 1;
 
 
@@ -1822,12 +1889,12 @@ void PhylipParser::getinput()
   
   int ref;
   
-  if(haveModelFile)
+  if(_haveModelFile)
     parsePartitions();
   else 
     parseSinglePartition(modelFile);
 
-  for(i = 1; i <= int(numSites); i++)
+  for(i = 1; i <= int(_numSites); i++)
     {
       ref = tr->model[i];
       tr->initialDataVector[i] = tr->initialPartitionData[ref].dataType;
@@ -1897,12 +1964,9 @@ void PhylipParser::compressDNA(int *informative)
       compressedEntriesPadded = compressedEntries;
 #endif     
 
-      nat numByte = compressedEntriesPadded * states * totalNodes; 
-
-      // okay? 
-      // tr->partitionData[model].parsVect = (parsimonyNumber *)malloc_aligned(numByte * sizeof(parsimonyNumber));
+      size_t numByte = compressedEntriesPadded * states * totalNodes; 
       tr->partitionData[model].parsVect = (parsimonyNumber *)malloc(numByte * sizeof(parsimonyNumber));
-     
+
       for(nat i = 0; i < numByte; i++)      
 	tr->partitionData[model].parsVect[i] = 0;
 
@@ -1979,10 +2043,10 @@ void PhylipParser::compressDNA(int *informative)
 
   // formerly aligned! 
   // tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
-  tr->parsimonyScore = (unsigned int*)malloc(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
+  // tr->parsimonyScore = (unsigned int*)malloc(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
           
-  for(nat i = 0; i < totalNodes * tr->NumberOfModels; i++) 
-    tr->parsimonyScore[i] = 0;
+  // for(nat i = 0; i < totalNodes * tr->NumberOfModels; i++) 
+  //   tr->parsimonyScore[i] = 0;
 }
 
 boolean PhylipParser::isInformative(int dataType, int site)
@@ -2134,21 +2198,29 @@ void PhylipParser::writeToFile(std::string fileName)
       myWrite(out, p->partitionName, len);
     } 
 
-  myWrite(out, rdta->y0, (tr->originalCrunchedLength) * ((size_t)tr->mxtips)); 
+  auto iter = rdta->y0; 
+  for(int i = 0 ;i < tr->mxtips; ++i)
+    {
+      // necessary because of an overflow with a dataset consisting of
+      // 200 taxa and 1e8 bp
+      myWrite(out, iter  , tr->originalCrunchedLength); 
+      iter += tr->originalCrunchedLength; 
+    }
 
   for(model = 0; model < (size_t) tr->NumberOfModels; ++model)
     {
       myWrite(out, &(tr->partitionData[model].parsimonyLength),1); 
-      int numBytes =tr->partitionData[model].parsimonyLength * tr->partitionData[model].states * 2 * tr->mxtips ; 
+      size_t numBytes =tr->partitionData[model].parsimonyLength * tr->partitionData[model].states * 2 * tr->mxtips ; 
       myWrite(out, tr->partitionData[model].parsVect, numBytes); 
     }
   out.close(); 
-  // std::cout << "done writing" << std::endl; 
 }
 
 
 void PhylipParser::parse()
 {
+  auto nowTime =  getTimePoint(); 
+
   int model;
 
   adef = (analdef *)malloc(sizeof(analdef));
@@ -2159,8 +2231,17 @@ void PhylipParser::parse()
   defaultInit();
 
   getinput();  
+  auto dur = getDuration(nowTime);
+  nowTime = getTimePoint(); 
+  std::cout << SOME_FIXED_PRECISION << "[" << dur << " s] got input" << std::endl; 
   makeweights();         
-  makevalues();                 
+  dur = getDuration(nowTime); 
+  nowTime = getTimePoint(); 
+  std::cout << "[" << dur << " s] made weights" << std::endl; 
+  makevalues();         
+  dur = getDuration(nowTime); 
+  nowTime = getTimePoint(); 
+  std::cout << "[" << dur << " s] made values" << std::endl; 
 
   for(model = 0; model < tr->NumberOfModels; model++)
     {	

@@ -88,10 +88,18 @@ extern "C" {
 #define zmax (1.0 - 1.0E-6) /* min branch prop. to 1.0-zmax (= 1.0E-6) */
 
 #define twotothe256  \
-  115792089237316195423570985008687907853269984665640564039457584007913129639936.0  
-                                                     /*  2**256 (exactly)  */
+  115792089237316195423570985008687907853269984665640564039457584007913129639936.0
+  /*  2**256 (exactly)  */
 
-#define minlikelihood  (1.0/twotothe256)
+
+/* #define twotothe256 \ */
+/*   340282366920938463463374607431768211456.0 */
+
+
+
+  
+
+#define minlikelihood  ( 1.0/twotothe256  ) 
 #define minusminlikelihood -minlikelihood
 
 

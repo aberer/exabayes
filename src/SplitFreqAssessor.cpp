@@ -12,13 +12,13 @@
 #include "BipartitionHash.hpp"
 
 
-SplitFreqAssessor::SplitFreqAssessor(std::vector<string> fileNames)
-  : TreeProcessor(fileNames)
+SplitFreqAssessor::SplitFreqAssessor(std::vector<string> fileNames, bool expensiveCheck)
+  : TreeProcessor(fileNames, expensiveCheck)
 {
   for(auto file : fileNames)
     {
       file2numTree[file] = getNumTreeAvailable(file);
-      newBipHashes.emplace_back(taxa.size());
+      newBipHashes.emplace_back(_taxa.size());
     }
 }
 
@@ -27,7 +27,7 @@ void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
 {
   int ctr = 0; 
 
-  for (auto filename : fns)
+  for (auto filename : _fns)
     {
       nat endhere = end; 
       if(takeAll)
@@ -42,7 +42,7 @@ void SplitFreqAssessor::extractBipsNew(nat start, nat end, bool takeAll)
       for(nat i = start ; i < endhere; ++i)
 	{
 	  nextTree<false>(ifh);
-	  bipHash.addTree(*tralnPtr,false, false);
+	  bipHash.addTree(*_tralnPtr,false, false);
 	}
       ++ctr; 
     }
@@ -64,8 +64,6 @@ auto SplitFreqAssessor::computeAsdsfNew(double ignoreFreq)
       nat tn = elem.getTreesAdded() ; 
       numTrees.push_back(tn);
     }
-
-  // std::cout << "numTrees: " <<  numTrees << std::endl; 
 
   auto numOccs = std::unordered_map<Bipartition,std::vector<double> >{}; 
   for(auto elem : allBips)
@@ -111,9 +109,13 @@ nat SplitFreqAssessor::getNumTreeAvailable(string fileName)
 
   while(getline(infile, line))
     {
-      std::string cleanline = trim(line); 
+      auto cleanline = trim(line); 
 
-      if(foundTreeStart)	// check number of trees 
+      if(cleanline.compare("end;") == 0 )
+	{
+	  break; 
+	}
+      else if(foundTreeStart)	// check number of trees 
 	{
 	  if(cleanline[cleanline.size()-1] == ';') 
 	    ++numTrees; 
@@ -134,9 +136,9 @@ nat SplitFreqAssessor::getNumTreeAvailable(string fileName)
 	  istringstream(num) >> index ; 
 	  index--; 
 
-	  if(name.compare(taxa.at(index)) != 0)
+	  if(name.compare(_taxa.at(index)) != 0)
 	    {
-	      std::cout << "expected " << name << " but got " << taxa.at(index) << std::endl; 
+	      std::cout << "expected " << name << " but got " << _taxa.at(index) << std::endl; 
 	      assert(0); // assert same taxa names 
 	    }
 	} 

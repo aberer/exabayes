@@ -10,17 +10,17 @@
 [================================================================]
 [                               GENERAL                          ] 
 [================================================================]
-begin runconfig; 
+begin RUN; 
 
  [ RUN PARAMETERS ]
  [ numRuns  2 ] 	   	[ number of independant runs ]
- [ numGen 100000 ] 		[ if numRuns = 1, stop simulation after that many generations ] 
+ [ numGen 100000 ] 		[ number of generations to run. If a convergence criterion is used, this is the minimum number of generations to run.  ] 
  [ diagFreq 5000 ] 		[ check for convergence of multiple independent runs after this many generations ]
- [ samplingFrequency 500 ] 	[ take a sample every n generations ]
+ [ samplingFreq 500 ] 	[ take a sample every n generations ]
  [ tuneFreq 100 ]    	 	[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  [ printFreq 1000 ]  		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
- [ parsimonyStartingTree true ]   [ if true: use parsimony trees as starting trees, else: use random starting trees ] 
+ [ parsimonyStart true ]   [ if true: use parsimony trees as starting trees, else: use random starting trees ] 
  [ heatedChainsUseSame  false ]   [ should heated chains start with the same tree as the cold chain? default: false] 
  [ checkPointInterval   10000 ]	  [ defines how often a checkpoint is written ]
 
@@ -38,7 +38,7 @@ begin runconfig;
  [ burninGen 2000 ]		    [ exact number of generations that are discarded for diagnostics ]  
  [ burninProportion      0.25 ]     [ discard this proportion of all initial samples as burnin  ]
 
- [ componentWiseMH     false ]      [ enables component-wise Metropolis-Hastings. Very IMPORTANT, if you run an analysis using multiple unlinked parameters ]
+ [ proposalSets     false ]      [ enables accumulation of proposal into proposalSets. Very IMPORTANT, if you run an analysis using multiple unlinked parameters ]
 end; 
 
 
@@ -65,7 +65,7 @@ end;
 [================================================================]
 [ PRIOR configuration ]
 [================================================================]
-begin PRIOR; 
+begin PRIORS; 
 [ TOPOLOGY: fixed or uniform  ]
 [   topoPr fixed()      ] 
 [   topoPr uniform(0,0) ]
@@ -129,7 +129,7 @@ end;
  [================================================================]
  [ PROPOSAL configuration ]
  [================================================================]
- begin proposals; 
+begin proposals; 
  [ each proposal has a relative weight, use 0 to deactivate ] 
 
  [ for disabling a category, please set it to fixed in the prior

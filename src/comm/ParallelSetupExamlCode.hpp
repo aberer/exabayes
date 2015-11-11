@@ -307,10 +307,15 @@ void ParallelSetup::finalize()
 void ParallelSetup::genericExit(int code)
 {
   if( code == 0 )
-    MPI_Finalize(); 
+    {
+      MPI_Finalize(); 
+    }
   else 
     {
-      MPI_Abort(MPI_COMM_WORLD, code);
+      if(Communicator().getRank() == 0)
+	MPI_Abort(MPI_COMM_WORLD, code);
+      else 
+	MPI_Finalize(); 
     }
   exit(code); 
 }
@@ -391,6 +396,14 @@ void ParallelSetup::blockingPrint( Communicator &comm,std::string ss )
   int myRank = comm.getRank();
   int size = comm.getSize(); 
 
+  // MEH 
+  if(size == 1 )
+    {
+      std::cout << "[ " << myRank << " ] " << ss << std::endl; 
+      std::cout.flush();
+      return; 
+    }
+
   if(myRank != 0)
     {
       int res = comm.receive<int>(myRank-1,0);
@@ -439,14 +452,23 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
 
   auto coords = _mesh.getCoordinates(_globalComm.getRank());
 
+  // sanity check 
+  auto rank = _mesh.getRankFromCoordinates(coords);
+  assert(int(rank) == _globalComm.getRank()); 
+
+  auto rankInRun = getRankInRun(coords);
+
   // create the run comm 
-  _runComm = Communicator().split(coords[0], coords[1] * coords[2]);
+  _runComm = Communicator().split(coords[0], rankInRun);
   assert(_runComm.isValid()); 
   
   // create chain comm 
   _chainComm = _runComm.split(coords[1], coords[2]);
   assert(_chainComm.isValid()); 
-  
+
+
+#ifndef USE_NONBLOCKING_COMM
+  assert(0); 
   // create chain intercomms  
   for(nat i = 0; i < _chainsParallel; ++i)
     {
@@ -459,25 +481,12 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
       auto tmp = std::array<nat,3>{{myRunBatch, i , 0 }}; 
       int rLeader = _mesh.getRankFromCoordinates( tmp );
 
-      // auto &&ss = std::stringstream{}; 
-      // auto myCoords = getMyCoordinates();
-      // ss << "[" <<  getGlobalRank()  << "] INTERCOMM CREATE: contacting " << rLeader << " with tag " << tag << " my batch: " << myChainBatch << "," << myRunBatch << " and coords " << myCoords[0] << "," << myCoords[1] << "," << myCoords[2] << std::endl; 
-      // std::cout << ss.str() << std::endl; 
-      // blockingPrint(_runComm, ss.str()); 
-
       MPI_Intercomm_create(_chainComm.getHandle(), 0, MPI_COMM_WORLD, rLeader, tag, _commToChains[i].getPtr());
 
       assert(_commToChains[i].isValid()); 
     } 
+#endif
 
-  // auto && ss = std::stringstream{} ; 
-  // if(not cl.isQuiet() )
-  //   {
-  //     if(coords[2] == 0)
-  // 	ss << "is Chain Leader" << std::endl; 
-  //     blockingPrint(_globalComm, ss.str()); 
-  //   }
-  
   // install the ExaML communicator 
   MPI_Comm_dup(_chainComm.getHandle(), &comm); 
   assert(comm != MPI_COMM_NULL); 
@@ -499,12 +508,6 @@ void ParallelSetup::initializeExaml(const CommandLine &cl )
   // create chain leader comm 
   _chainLeaderComm = _globalComm.split(coords[2], myRank); 
 
-  // if(not cl.isQuiet() )
-  //   {
-  //     ss.str(""); 
-  //     ss << *this << std::endl; 
-  //     blockingPrint(_globalComm,  ss.str() ); 
-  //   }
 }
 
 nat ParallelSetup::getRankInData() const 
@@ -574,3 +577,9 @@ int ParallelSetup::getRankInRun( std::array<nat,3> coords) const
   auto localRootCoords = std::array<nat,3> { { coords[0], 0, 0  }}; 
   return _mesh.getRankFromCoordinates(coords)  - _mesh.getRankFromCoordinates(localRootCoords); 
 } 
+
+
+std::array<nat,3> ParallelSetup::getMyCoordinates() const
+{
+  return _mesh.getCoordinates(getGlobalRank()); 
+}

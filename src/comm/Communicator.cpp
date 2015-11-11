@@ -104,6 +104,15 @@ bool Communicator::broadcast(bool value, int root) const
   return myVal == 1 ?true : false; 
 }
 
+// NOT used at the moment, would be nice, if we did 
+template<typename T>
+std::vector<T> Communicator::allReduce( std::vector<T> myValues)
+{
+  MPI_Allreduce(MPI_IN_PLACE, myValues.data(), myValues.size(), mpiType<T>::value, MPI_SUM, _comm); 
+  return myValues; 
+}
+
+
 
 // implement with templates once we have more allreduces   
 bool Communicator::allReduceLand( bool myValue ) const 

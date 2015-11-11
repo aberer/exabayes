@@ -7,7 +7,7 @@
 #ifndef _AXML_H_
 #define _AXML_H_
 
-#include "config.h"
+
 #include "common.h"
 
 extern int NUM_BRANCHES; 
@@ -16,7 +16,12 @@ extern int NUM_BRANCHES;
 #include <google/profiler.h>
 #endif
 
-#if defined(HAVE_AVX)  && ! defined(MANUAL_AVX_OVERRIDE)
+#if USE_SSE
+#define __SIM_SSE3
+#endif
+
+
+#if USE_AVX
 #define __AVX 
 #endif
 

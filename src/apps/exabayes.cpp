@@ -33,15 +33,15 @@ int NUM_BRANCHES;
 
 #include "config/CommandLine.hpp"
 #include "SampleMaster.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include "teestream.hpp"
 
-// #define TEST  
+
 #include "axml.h" 
 
+// #define TEST  
 #ifdef TEST
-#include "PendingSwap.hpp"
 #endif
 
 // have ae look at that later again 
@@ -67,36 +67,31 @@ static void exa_main ( CommandLine &cl,  std::shared_ptr<ParallelSetup> pl )
 {   
   timeIncrement = CLOCK::system_clock::now(); 
 
+
 #ifdef TEST     
-  auto aSwap = SwapElem{0, 0,1,0.5};
-  auto&& myPSwap = PendingSwap {aSwap}; 
   
+  // double t = pow(2,128); 
+  // printf("%f\n", t); 
 
-  auto coords = pl.getMyCoordinates();
-  assert(coords[1] < 2 ); 
-  auto data = coords[1] == 0 
-    ? std::vector<char>{ 'a', 'b', 'c'}
-  : std::vector<char>{ 'd', 'e', 'f'}; 
 
-  myPSwap.initialize(pl, data, 0, 2);
+  // double t2 = 1; 
+  // for(nat i = 0; i < 128; ++i)
+  //   t2 *= 2; 
+  // printf("%f\n", )
 
-  while(not myPSwap.hasReceived()); 
 
-  auto remote =  myPSwap.getRemoteData();
+  // auto mesh = IncompleteMesh{} ;
+  // mesh.initialize(16, 1, 4);	
+
+  // for(nat i = 0; i < 16 ; ++i)
+  //   {
+  //     auto coords = mesh.getCoordinates(i);
+  //     auto rank = mesh.getRankFromCoordinates(coords); 
+  //     tout <<  i << " has coordinates "  << coords[0] << "," << coords[1] << "," << coords[2] << "\t" << rank << std::endl; 
+      
+  //   }
   
-  auto &&ss = std::ostringstream{}; 
-  for(auto elem : remote )
-    ss << elem << "," ; 
-  ss << std::endl; 
-  
-  pl.blockingPrint(pl.getGlobalComm(), ss.str());
-
-  while(not myPSwap.isFinished()); 
-  
-    
-
-  return ; 
-  ParallelSetup::genericExit(0); 
+  // ParallelSetup::genericExit(0); 
 #else 
   // assert(0); 
   auto&& master = SampleMaster(  pl, cl );
@@ -221,8 +216,8 @@ static void printInfoHeader(int argc, char **argv)
        << "\nbuild with the (Phylogenetic Likelihood Library) PLL code base for sequential execution."
 #endif
 
-       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  " by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" << std::endl 
-       << "\nPlease send any feature requests and inquiries to " << PACKAGE_BUGREPORT
+       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  " by \n\n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis" << std::endl 
+       << "\nPlease send any bug reports, feature requests and inquiries to " << PACKAGE_BUGREPORT
        << std::endl << std::endl; 
 
   tout << PROGRAM_NAME << " was called as follows: " << endl; 

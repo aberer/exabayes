@@ -2,7 +2,7 @@
 #define INTEGER_LABEL_READER
 
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include "GlobalVariables.hpp"
 #include <unordered_map>

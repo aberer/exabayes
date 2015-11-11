@@ -9,7 +9,7 @@
 #include "proposers/MultiplierProposer.hpp"
 #include "proposers/DirichletProposer.hpp"
 #include "proposers/SlidingProposer.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -323,11 +323,12 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
       // remove proposals that are not meant for DNA/AA
       if(v->getCategory() == Category::SUBSTITUTION_RATES)
 	{
-	  bool isProtPartition = traln.getPartition(v->getPartitions().at(0)).dataType == AA_DATA; 
+	  // bool isProtPartition = traln.getPartition(v->getPartitions().at(0)).dataType == AA_DATA; 
+	  bool isDNAPartition = traln.getPartition(v->getPartitions().at(0)).dataType == DNA_DATA; 
 	  auto tmp = decltype(tmpResult){}; 
 	  for(auto &elem : tmpResult )
 	    {
-	      if( elem->isSuitsProteinPartitions () == isProtPartition)
+	      if( not ( elem->isForProteinOnly() && isDNAPartition ) ) // TODO more generic!  
 		tmp.push_back(std::move(elem)); 
 	    }
 	  tmpResult.clear(); 
@@ -394,11 +395,12 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSe
 	  // TODO improve the setup here 
 	  if(std::get<0>(elem) == Category::SUBSTITUTION_RATES)
 	    {
-	      bool isProtPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == AA_DATA; 
+	      // bool isProtPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == AA_DATA; 
+	      bool isDNAPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == DNA_DATA; 
 	      auto tmp = decltype(proposalsForSet){}; 
 	      for(auto &elem : proposalsForSet )
 		{
-		  if( elem->isSuitsProteinPartitions () == isProtPartition)
+		  if( not ( elem->isForProteinOnly() &&  isDNAPartition ) ) // TODO more generic! 
 		    tmp.push_back(std::move(elem)); 
 		}
 	      proposalsForSet.clear(); 

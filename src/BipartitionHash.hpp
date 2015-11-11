@@ -14,22 +14,23 @@ public:
   BipartitionHash(nat numTax); 
   void addTree(const TreeAln &traln, bool withBranch, bool withTrivial); 
 
-  std::unordered_map<Bipartition, Bipartition>::const_iterator begin() const{return bipPresence.begin(); }
-  std::unordered_map<Bipartition, Bipartition>::const_iterator end() const{return bipPresence.end(); }
+  std::unordered_map<Bipartition, Bipartition>::const_iterator begin() const{return _bipPresence.begin(); }
+  std::unordered_map<Bipartition, Bipartition>::const_iterator end() const{return _bipPresence.end(); }
 
   std::vector<double> getBranchLengths(const Bipartition& bip) const;
   Bipartition getPresence(const Bipartition &bip) const; 
 
-  nat getTreesAdded() const {return treesAdded; }
+  nat getTreesAdded() const {return _treesAdded; }
 
 private: 			// METHODS
-  Bipartition addElement(const TreeAln &traln, nodeptr p, bool withBranch, bool withTrivial); 
+  Bipartition addElement(const TreeAln &traln, nodeptr p, bool withBranch, bool withTrivial, nat &addedSoFar); 
+  void addBipOccurrence(bool withBranch, Bipartition& result, nat treesAdded, nodeptr p); 
 
 private: 			// ATTRIBUTES
-  std::unordered_map<Bipartition, Bipartition> bipPresence; 
-  std::unordered_map<Bipartition, std::vector<double> > bipBranchLengths; 
-  std::vector<nat> bipMeaning; 
-  nat treesAdded; 
+  std::unordered_map<Bipartition, Bipartition> _bipPresence; 
+  std::unordered_map<Bipartition, std::vector<double> > _bipBranchLengths; 
+  std::vector<nat> _bipMeaning; 
+  nat _treesAdded; 
 }; 
 
 

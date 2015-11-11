@@ -142,7 +142,6 @@ nat IncompleteMesh::getRankFromCoordinates( std::array<nat,3> coords) const
 }
 
 
-
 nat IncompleteMesh::getNumRanksInDim(nat runBatchId, nat chainBatchId) const 
 {
   assert(runBatchId < _runDimSize); 
@@ -168,5 +167,3 @@ nat IncompleteMesh::getNumRanksInDim(nat runBatchId, nat chainBatchId) const
 
   return otherRank - baseRank; 
 }   
-
-

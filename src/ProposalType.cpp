@@ -1,7 +1,7 @@
 #include <iostream>		// 
 #include <cassert>
 
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "ProposalType.hpp"
 
 void genericExit(int code); 

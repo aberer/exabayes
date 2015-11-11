@@ -17,7 +17,7 @@
 class SplitFreqAssessor : public TreeProcessor 
 {
 public: 
-  SplitFreqAssessor(std::vector<std::string>fileNames);
+  SplitFreqAssessor(std::vector<std::string>fileNames, bool expensiveCheck);
   /** 
       @brief use the new bipartition hash for extracting bipartitions 
    */ 

@@ -18,7 +18,7 @@
 #include "config/CommandLine.hpp"
 #include "CoupledChains.hpp"
 #include "config/ConfigReader.hpp"
-#include "ParallelSetup.hpp"
+#include "comm/ParallelSetup.hpp"
 #include "time.hpp"
 #include "Serializable.hpp"
 #include "file/DiagnosticsFile.hpp"

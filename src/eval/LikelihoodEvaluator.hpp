@@ -63,7 +63,7 @@ public:
    */ 
   void accountForRejection(TreeAln &traln, const std::vector<bool> &partitions, const std::vector<nat> &invalidNodes); 
 
-  ArrayOrientation getOrientation() const {return arrayOrientation;   }
+  ArrayOrientation getOrientation() const {return _arrayOrientation;   }
 
   void expensiveVerify(TreeAln &traln,  BranchPlain root, double toVerify);
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
@@ -84,14 +84,14 @@ private: 			// METHODS
   bool applyDirtynessToSubtree(TreeAln &traln, nat partition, const BranchPlain &branch); 
   void disorientDebug(TreeAln &traln, const BranchPlain& root); 
   void disorientDebugHelper(TreeAln &traln, const BranchPlain& root); 
-  void exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root ); 
+  void exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root, bool changedOrientation ); 
   void coreEvalSubTree(TreeAln& traln, const BranchPlain &root); 
 
 private: 			// ATTRIBUTES 
-  std::shared_ptr<TreeAln> debugTraln;  
-  bool verifyLnl; 
-  std::unique_ptr<ArrayPolicy> arrayPolicy; 
-  ArrayOrientation arrayOrientation; 
+  std::shared_ptr<TreeAln> _debugTralnPtr;  
+  bool _verifyLnl; 
+  std::unique_ptr<ArrayPolicy> _arrayPolicy; 
+  ArrayOrientation _arrayOrientation; 
   std::shared_ptr<ArrayReservoir> _arrayReservoir; 
 }; 
 #endif
