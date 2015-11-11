@@ -1,0 +1,45 @@
+/**
+   @mainpage 
+   
+   @section intro Introduction 
+
+   ExaBayes is a tool that does this and that ... 
+
+   @section install Installation 
+   
+   ExaBayes can be compiled with two flavors: 
+
+   1. a high-performance MPI version that uses the ExaML (see
+    https://github.com/stamatak) code base. This is particularly
+    useful, if you want to do Bayesian inference on a particularly
+    large alignment and you have access to a computing cluster that
+    has a high-bandwith connect (e.g., InfiniBand or Myrinet) 
+   2. a sequential version (no MPI libraries needed) that employs the
+    phylogenetic likelihood library (PLL) code base.  While currently
+    both versions come with the same feature set, the PLL version will
+    incorporate more advanced inference features and the option for
+    multi-core execution of ExaBayes-PLL runs will be added.  For a
+    large number of CPUs, the ExaML version should always be
+    preferred.
+
+   @subsection examl-install ExaML installation
+   Simply run ./configure && make 
+
+
+   @subsection pll-installation  PLL installation 
+   Run ./configure \-\-enable-pll && make 
+
+
+
+   @section ack Acknowledgments
+
+   Beside the PLL and ExaML, ExaBayes makes use of a strong
+   counter-based random number generator (see
+   http://www.deshawresearch.com/resources_random123.html). 
+
+   Furthermore, we make use of a slimmed-down version of the Nexus Class
+   Library (v.2.1) by Paul O. Lewis and Mark Holder (see
+   http://ncl.sourceforge.net/).
+
+ */
+

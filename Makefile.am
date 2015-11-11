@@ -1,62 +1,107 @@
 AUTOMAKE_OPTIONS=foreign
 
+EXTRA_DIST=lib/Random123-1.07 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/* lib/getoptpp/*
 
-WARN_FLAGS=--pedantic -Wall #-Wunused-parameter -Wredundant-decls  -Wreturn-type  -Wswitch-default -Wunused-value -Wimplicit  -Wimplicit-function-declaration  -Wimplicit-int -Wimport  -Wunused  -Wunused-function  -Wunused-label -Wno-int-to-pointer-cast -Wbad-function-cast  -Wmissing-declarations -Wmissing-prototypes  -Wnested-externs  -Wold-style-definition -Wstrict-prototypes  -Wdeclaration-after-statement -Wpointer-sign -Wextra -Wredundant-decls -Wunused -Wunused-function -Wunused-parameter -Wunused-value  -Wunused-variable -Wformat  -Wformat-nonliteral -Wparentheses -Wsequence-point -Wuninitialized -Wundef -Wbad-function-cast
-LANG_FLAGS=-std=gnu99 # because of asm 
+.PHONY: my-update-src doc 
+
+WARN_FLAGS= -Wall --pedantic -Wextra -Wno-unused-function -Wno-unused-parameter  -Wuninitialized
+#  -Wno-write-strings  -Wsign-compare  -Wno-vla
+noinst_LIBRARIES=libbayes.a libncl.a 
+RAX_FEATURE= -D_GNU_SOURCE -D_OPTIMIZED_FUNCTIONS -D__SIM_SSE3 -D_USE_ALLREDUCE -fomit-frame-pointer -funroll-loops
+#  -D_SEQUENTIAL #  
 
 
-# TODO they cannot be serious with that...this is the only way of getting rid of the default -O2 -g  
-CFLAGS=
+# SIMD_FLAGS=-msse3
 
-AM_CFLAGS=-D__SIM_SSE3 -D_BAYESIAN -msse3 -D_GNU_SOURCE  -D_OPTIMIZED_FUNCTIONS
+# TODO 
+# SIMD_FLAGS is potentially problematic: auto-avx vectorization was considered harmfull? 
 
-if WITH_DEBUG
-AM_CFLAGS+=-g3 -O0
+# TODO threads
+  #  $(srcppre)/genericParallelization-pll.c
+
+bin_PROGRAMS= exabayes prsf asdsf
+
+SRCINCLUDE=-I$(top_srcdir)/src
+
+BAYES_INCLUDES=-I$(top_srcdir)/lib/Random123-1.07/include -I$(top_srcdir)/lib/ncl-2.1.18/ -I$(top_srcdir)/src/proposals $(SRCINCLUDE)
+
+include src-helper.am
+include src.am 
+
+
+PLLDIR=$(top_srcdir)/src/pll
+PLLINCLUDE=-I$(PLLDIR)
+libpll_a_SOURCES= $(PLLDIR)/evaluateGenericSpecial-pll.c $(PLLDIR)/axml-pll.c $(PLLDIR)/trash-pll.c $(PLLDIR)/vec_unit.h $(PLLDIR)/makenewzGenericSpecial-pll.c $(PLLDIR)/mem_alloc-pll.c $(PLLDIR)/restartHashTable-pll.c $(PLLDIR)/axml-pll.h $(PLLDIR)/mem_alloc.h $(PLLDIR)/recom-pll.c $(PLLDIR)/searchAlgo-pll.c $(PLLDIR)/phylip_parser/msa_sites.h $(PLLDIR)/phylip_parser/xalloc.h $(PLLDIR)/phylip_parser/phylip.h $(PLLDIR)/phylip_parser/lexer.h $(PLLDIR)/phylip_parser/ssort.h $(PLLDIR)/utils-pll.c $(PLLDIR)/treeIO-pll.c $(PLLDIR)/cycle.h $(PLLDIR)/aligned_buffer.h $(PLLDIR)/globalVariables.h $(PLLDIR)/topologies-pll.c $(PLLDIR)/utils.h $(PLLDIR)/evaluatePartialGenericSpecial-pll.c $(PLLDIR)/fastDNAparsimony-pll.c $(PLLDIR)/randomTree-pll.c $(PLLDIR)/optimizeModel-pll.c $(PLLDIR)/treeIO.h $(PLLDIR)/newviewGenericSpecial-pll.c $(PLLDIR)/bipartitionList-pll.c $(PLLDIR)/models-pll.c $(PLLDIR)/genericParallelization.h $(top_srcdir)/src/avxConditional.c
+libpll_a_CFLAGS= -w $(SIMD_FLAGS) $(PLLINCLUDE)  $(RAX_FEATURE) -O2    $(SRCINCLUDE)  # 
+EXAMLDIR=$(top_srcdir)/src/examl
+EXAMLINCLUDE=-I$(EXMALDIR) 
+libexaml_a_SOURCES= $(EXAMLDIR)/searchAlgo.c $(EXAMLDIR)/treeIO.c $(EXAMLDIR)/restartHashTable.c $(EXAMLDIR)/optimizeModel.c $(EXAMLDIR)/newviewGenericSpecial.c $(EXAMLDIR)/trash.c $(EXAMLDIR)/topologies.c $(EXAMLDIR)/axml-examl.h $(EXAMLDIR)/globalVariables.h $(EXAMLDIR)/evaluatePartialGenericSpecial.c $(EXAMLDIR)/bipartitionList.c $(EXAMLDIR)/models.c $(EXAMLDIR)/makenewzGenericSpecial.c $(EXAMLDIR)/evaluateGenericSpecial.c $(EXAMLDIR)/axml.c $(top_srcdir)/src/avxConditional.c $(EXAMLDIR)/fastDNAparsimony.c $(EXAMLDIR)/mpiMock.c $(EXAMLDIR)/mpiMock.h
+libexaml_a_CFLAGS= -w $(SIMD_FLAGS)  -fgnu89-inline  $(EXAMLINCLUDE)  $(RAX_FEATURE) -O2  $(SRCINCLUDE) #
+
+# configure examl/pll specific stuff 
+if WITH_EXAML 
+LIBTOUSE=libexaml.a
+LIBINCLUDE=$(EXAMLINCLUDE)
+noinst_LIBRARIES+=libexaml.a
+bin_PROGRAMS+= parserExaml
 else
-AM_CFLAGS+=-O2 -fomit-frame-pointer -funroll-loops
-endif
-
-
-
-# TODO avx, threads
-  # src/pll/avxLikelihood-pll.c src/pll/axml-pll.c 
-
-# this is fubar
-# OPT_SRC=lib/ncl/ncl/nxsassumptionsblock.cpp   lib/ncl/ncl/nxsdatablock.cpp       lib/ncl/ncl/nxspublicblocks.cpp  lib/ncl/ncl/nxstaxaassociationblock.cpp  lib/ncl/ncl/nxsunalignedblock.cpp lib/ncl/ncl/nxsblock.cpp              lib/ncl/ncl/nxsdistancesblock.cpp  lib/ncl/ncl/nxsreader.cpp        lib/ncl/ncl/nxstaxablock.cpp lib/ncl/ncl/nxscharactersblock.cpp    lib/ncl/ncl/nxsexception.cpp       lib/ncl/ncl/nxssetreader.cpp     lib/ncl/ncl/nxstoken.cpp lib/ncl/ncl/nxscxxdiscretematrix.cpp  lib/ncl/ncl/nxsmultiformat.cpp     lib/ncl/ncl/nxsstring.cpp        lib/ncl/ncl/nxstreesblock.cpp
-# OPT_HEAD= -Ilib/ncl-2.1.18/ncl
-
-
-
-if WITH_PLL 
-########
-# PLL  #
-########
-OPT_SRC= src/main-pll.c  src/nclConfigReader.cpp src/configParser.c src/randomness.c src/pll/evaluateGenericSpecial-pll.c src/pll/fastDNAparsimony-pll.c src/pll/makenewzGenericSpecial-pll.c  src/pll/models-pll.c src/pll/optimizeModel-pll.c  src/pll/recom-pll.c src/pll/searchAlgo-pll.c  src/pll/trash-pll.c   src/pll/utils-pll.c  src/pll/bipartitionList-pll.c  src/pll/evaluatePartialGenericSpecial-pll.c  src/pll/genericParallelization-pll.c  src/pll/mem_alloc-pll.c src/pll/newviewGenericSpecial-pll.c  src/pll/randomTree-pll.c src/pll/restartHashTable-pll.c  src/pll/topologies-pll.c  src/pll/treeIO-pll.c 
-OPT_HEAD= -I./src/pll/
-bin_PROGRAMS=exabayes_pll
-exabayes_pll_SOURCES= src/bayes.c $(OPT_SRC)
-FEATURE_FLAGS= -D_USE_PTHREADS -pthread #  -D_USE_ALLREDUCE
-else  
-#########
-# EXAML #
-#########
-CC=mpicc
-CXX=mpicxx
-OPT_SRC= src/main-examl.c src/nclConfigReader.cpp src/main-common.c src/randomness.c src/configParser.c src/examl/bipartitionList.c src/examl/evaluatePartialGenericSpecial.c src/examl/models.c src/examl/optimizeModel.c src/examl/searchAlgo.c src/examl/trash.c \
-src/examl-legacy.c src/examl/evaluateGenericSpecial.c src/examl/makenewzGenericSpecial.c src/examl/newviewGenericSpecial.c src/examl/restartHashTable.c src/examl/topologies.c src/examl/treeIO.c
-OPT_HEAD= -I./src/examl/
-bin_PROGRAMS=exabayes
-exabayes_SOURCES=src/bayes.c $(OPT_SRC)
-FEATURE_FLAGS= -D_USE_ALLREDUCE
+LIBTOUSE=libpll.a
+LIBINCLUDE=$(PLLINCLUDE) 
+bin_PROGRAMS+= parserPll
+noinst_LIBRARIES+=libpll.a
 endif 
 
 
+GETOPT=-I$(top_srcdir)/lib/getoptpp/getoptpp/ -I$(top_srcdir)/lib/getoptpp/
+libbayes_a_CXXFLAGS=-O3 $(GETOPT) $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)  
+libbayes_a_CFLAGS=-O2 $(GETOPT) $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS)  
+exabayes_LDADD= libncl.a libbayes.a 
+exabayes_LDADD+=$(LIBTOUSE)
+exabayes_SOURCES = $(top_srcdir)/src/exabayes.cpp $(top_srcdir)/src/config/CommandLine.cpp $(top_srcdir)/src/config/CommandLine.hpp $(top_srcdir)/lib/getoptpp/src/getopt_pp.cpp
+exabayes_CXXFLAGS=-O3 $(GETOPT) $(BAYES_INCLUDES) $(LIBINCLUDE) $(SIMD_FLAGS) $(RAX_FEATURE) $(WARN_FLAGS) 
+
+################################################################
+# PRSF
+
+prsf_LDADD = libbayes.a $(LIBTOUSE) 
+prsf_CXXFLAGS=-O3 $(LIBINCLUDE) $(SIMD_FLAGS) $(SRCINCLUDE) $(RAX_FEATURE)
+prsf_SOURCES= $(top_srcdir)/src/prsf.cpp
 
 
+################################################################
+# ASDSF 
+asdsf_CXXFLAGS=-O3  $(LIBINCLUDE) $(BAYES_INCLUDES) $(SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE)
+asdsf_LDADD=    libbayes.a $(LIBTOUSE)  libncl.a 
+asdsf_SOURCES= $(top_srcdir)/src/asdsf.cpp
 
-AM_CFLAGS+=$(OPT_HEAD)
-AM_CFLAGS+= $(FEATURE_FLAGS) $(WARN_FLAGS) $(LANG_FLAGS)
-AM_CXXFLAGS=$(AM_CFLAGS)
-AM_LDFLAGS = -lm   -lncl  -L/usr/local/lib/ncl/
+################################################################
+# examl parser 
+pre1=$(top_srcdir)/lib/ExaML/parser/
+parserExaml_SOURCES=$(pre1)/axml.c $(pre1)/parsePartitions.c $(pre1)/axml-parser.h  $(pre1)/globalVariables.h 
+parserExaml_CFLAGS=$(SIMD_FLAGS) $(SRCINCLUDE) $(RAX_FEATURE)
 
 
+################################################################
+# ncl 
+npre=$(top_srcdir)/lib/ncl-2.1.18/ncl
+libncl_a_SOURCES = $(npre)/nxsreader.cpp $(npre)/nxscxxdiscretematrix.cpp $(npre)/nxstaxaassociationblock.cpp $(npre)/nxsunalignedblock.cpp $(npre)/nxsmultiformat.cpp $(npre)/nxsdatablock.cpp $(npre)/nxspublicblocks.cpp $(npre)/nxstaxablock.cpp $(npre)/nxscharactersblock.cpp $(npre)/nxsstring.cpp $(npre)/nxstoken.cpp $(npre)/nxsassumptionsblock.cpp $(npre)/nxsblock.cpp $(npre)/nxsdistancesblock.cpp $(npre)/nxssetreader.cpp $(npre)/nxsexception.cpp $(npre)/nxstreesblock.cpp $(npre)/ncl.h $(npre)/nxscharactersblock.h $(npre)/nxsdistancedatum.h $(npre)/nxsreader.h $(npre)/nxstoken.h $(npre)/nxsallocatematrix.h $(npre)/nxscxxdiscretematrix.h $(npre)/nxsdistancesblock.h $(npre)/nxssetreader.h $(npre)/nxstreesblock.h $(npre)/nxsassumptionsblock.h $(npre)/nxsdatablock.h $(npre)/nxsexception.h $(npre)/nxsstring.h $(npre)/nxsunalignedblock.h $(npre)/nxsblock.h $(npre)/nxsdefs.h $(npre)/nxsmultiformat.h $(npre)/nxstaxaassociationblock.h $(npre)/nxsutilcopy.h $(npre)/nxscdiscretematrix.h $(npre)/nxsdiscretedatum.h $(npre)/nxspublicblocks.h $(npre)/nxstaxablock.h
+libncl_a_CXXFLAGS= -w -O3 -I$(top_srcdir)/lib/ncl-2.1.18/
+
+################################################################
+# pll parser 
+pre2=$(top_srcdir)/lib/phylogenetic-likelihood-library/parser
+parserPll_SOURCES=$(pre2)/axml.c $(pre2)/parsePartitions.c $(pre2)/axml.h $(pre2)/globalVariables.h src/pll/mem_alloc.h $(PLLDIR)/mem_alloc-pll.c
+parserPll_CFLAGS=-w -I$(pre2) $(PLLINCLUDE) $(AM_CFLAGS)  $(SRCINCLUDE)
+
+################################
+# cleanup 
+
+clean:
+	-rm -rf  $(bin_PROGRAMS) $(exabayes_OBJECTS) $(libbayes_a_OBJECTS) libbayes.a
+
+clean-all : 
+	-rm -rf $(bin_PROGRAMS) *.o *.a 
+
+
+doc : 
+	doxygen 

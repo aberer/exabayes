@@ -1,29 +1,63 @@
 #! /bin/bash
 
 
+topdir=$(dirname  $0 )/../
+
 model=GAMMA
-seed=123
-numCores=4
+seed=12
+
+numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
+
+# important: if you do not have google-perftools (and the respective
+# *-dev ) package installed, then you should turn this off
+useGoogleProfiler=0		
+useClang=1
+
+if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
+    ccompiler="clang"
+    cxxcompiler="clang++"
+    cppflags="-Qunused-arguments -D__STRICT_ANSI__"
+else 
+    ccompiler="gcc"
+    cxxcompiler="g++"
+fi
+
+if [ $useGoogleProfiler -eq 1  ]; then
+    cppflags="$cppflags -D_USE_GOOGLE_PROFILER"
+fi
+
+
+if [ $useGoogleProfiler -eq 1 ]; then
+    libs="-lprofiler"
+fi
+
 
 
 if [ "$#" != 3 ]; then
-    echo -e  "./defaultRun.sh debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
+    echo -e  "$0 debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
     exit
 fi
 
 
+# args="--disable-silent-rules" 
 args=""
-
 dataset=$3
 
+pathtodata=$topdir/data/$dataset
+if [ ! -d $pathtodata ]; then     
+    echo "could not find dataset $dataset"
+    exit
+fi 
+
+cflags="-fno-common"
+cxxflags="-fno-common"
+
 default=$1
-if [ "$default" == "default" ]; then
-    args=$args
-    gdb=""
-elif [ "$default" == "debug" ]; then 
-    args="$args --enable-debug"
+if [ "$default" == "debug" ]; then 
+    cflags="$cflags -O0 -g"
+    cxxflags="$cxxflags -O0 -g"
     gdb="$TERM -e gdb -ex run --args "
-else  
+elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"
     exit 
 fi
@@ -31,34 +65,72 @@ fi
 
 codeBase=$2
 if [ "$codeBase" == "examl" ]; then    
-    baseCall="mpirun -np 2 $gdb ./exabayes -s data/$dataset/aln.examl.binary -t data/$dataset/tree -n testRun -m $model -p $seed -c examples/test.nex "
+    args="$args --disable-pll"
+
+    CC="mpicc -cc=$ccompiler" 
+    CXX="mpicxx -cxx=$cxxcompiler"  
+    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+
+    # CC="$ccompiler" 
+    # CXX="$cxxcompiler"  
+    # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
-    args="$args --enable-pll"
-    baseCall="$gdb ./exabayes_pll -T $numCores -p $seed  -s data/$dataset/aln.pll.binary  -t data/$dataset/tree -n testRun -m $model  -c examples/test.nex "
+    CC="$ccompiler"
+    CXX="$cxxcompiler"
+    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n testRun -c $topdir/examples/test.nex " 
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
 fi
 
+if [ "$(which ccache)" != "" ]  ; then 
+    CC="ccache $CC"
+    CXX="ccache $CXX"
+fi 
 
-if [ ! -d data/$dataset ]; then
-    echo "could not find dataset data/$dataset"
-    exit
+args="$args CC=\""$CC"\" CXX=\""$CXX"\""
+if [ "$cflags" != "" ]; then
+    args="$args CFLAGS=\""$cflags"\""
+fi
+if [ "$cxxflags" != "" ]; then
+    args="$args CXXFLAGS=\""$cxxflags"\""
+fi
+if [ "$cppflags" != "" ]; then
+    args="$args CPPFLAGS=\""$cppflags"\""
+fi
+if [ "$libs" != "" ]; then
+    args="$args LIBS=\""$libs"\""
 fi
 
+rm -f exabayes
+if [ -f status ] ; then 
+    prevStat=$(cat status)
+else    
+    prevStat=""
+fi 
 
-if [ -f lastConfig -a   "$(cat lastConfig)" == "$args"    ]; then 
-    echo "no need to re-configure / re-build"
+cmd="$topdir/configure $args"
+
+if [ "$prevStat"  == "$cmd" ]  
+then     
+    echo "=> no need to reconfigure"
 else 
-    echo "calling ./configure $args" 
-    ./configure $args  
-    make clean     
-fi
+    echo "config before: >"$prevStat"<"
+    echo "config    now: >$cmd<"
+
+    rm -f  Makefile     
+    eval $cmd
+
+    echo "configuring with $cmd"
+    if [ -f Makefile ]; then
+	echo "$cmd" > status 	
+    fi
+fi 
 
 make -j $numCores
-echo $args > lastConfig 
 
-echo "calling exabayes as $baseCall"
-wait 
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/ncl $baseCall
-
+if [ -f ./exabayes ]; then
+    echo "calling exabayes as   $baseCall"
+    wait 
+    $baseCall    
+fi

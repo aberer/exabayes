@@ -1,0 +1,12 @@
+instructions on how to set up this repository: 
+* check out the repo into this folder (top-level dir)
+* make sure, you installed MPI 
+* exa-bayes: autoreconf  => follow instructions of command and repeat until it completes successfully
+* install the ncl library => assuming default location /usr/local/lib/ncl (you should not have to do anything)
+* in lib: $ git clone  git://github.com/stamatak/ExaML.git
+* in lib: git clone PLL 
+* in src: $ ln -s ../lib/ExaML/examl
+* in src: $ ln -s  ../lib/phylogenetic-likelihood-library/ pll
+* in top-level dir: ./configure 
+* now make should work ... 
+* for the PLL: execute ./utils/setupPLLLinks.sh
