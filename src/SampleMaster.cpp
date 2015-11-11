@@ -56,11 +56,21 @@
 void genericExit(int code); 
 
 
-SampleMaster::SampleMaster(std::shared_ptr<ParallelSetup> pl, const CommandLine& cl ) 
-  : _plPtr(pl)
-  , _initTime(CLOCK::system_clock::now())
-  , _cl(cl)
+SampleMaster::SampleMaster( ) 
+  : _initTime(CLOCK::system_clock::now())
   , _lastPrintTime(CLOCK::system_clock::now())
+{
+}
+
+
+SampleMaster::SampleMaster(SampleMaster&& rhs) 
+  : _runs{std::move(rhs._runs)}
+  , _plPtr{std::move(rhs._plPtr)}
+  , _initTime{std::move(rhs._initTime)}
+  , _runParams{rhs._runParams}
+  , _cl {rhs._cl}
+  , _lastPrintTime {rhs._lastPrintTime }
+  , _diagFile {rhs._diagFile }
 {
 }
 
@@ -675,7 +685,7 @@ void SampleMaster::initializeRuns(Randomness rand)
     }
 #endif
 
-  assert(_runParams.getTuneFreq() > 0); 
+  // assert(_runParams.getTuneFreq() > 0); 
 
   auto runSeeds = std::vector<randCtr_t>{};
   auto treeSeeds = std::vector<randCtr_t>{}; 
@@ -781,8 +791,8 @@ void SampleMaster::initializeRuns(Randomness rand)
   printInitialState(); 
   if(not _cl.isQuiet())
     {
-      _plPtr->printLoadBalance(initTree, _runParams.getNumRunConv(), _runParams.getNumCoupledChains());
-      tout.flush();
+      auto res = _plPtr->printLoadBalance(initTree, _runParams.getNumRunConv(), _runParams.getNumCoupledChains());
+      tout << res; 
     }
 }
 
@@ -832,10 +842,9 @@ void SampleMaster::printInitialState()
 	}
     }
 
-
   // if we are parallel, we must inform the master about what we
   // computed
-  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT);
+  synchronize(CommFlag::PRINT_STAT); 
 
   tout << std::endl << "initial state: " << endl; 
   tout << "================================================================" << endl; 
@@ -961,7 +970,7 @@ SampleMaster::processConfigFile(string configFileName, const TreeAln &traln )
 CLOCK::system_clock::time_point 
 SampleMaster::printDuringRun(nat gen)   
 {
-  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT);
+  synchronize(CommFlag::PRINT_STAT);
   
   auto && ss = std::stringstream{} ; 
   ss << SOME_FIXED_PRECISION; 
@@ -993,7 +1002,7 @@ SampleMaster::printDuringRun(nat gen)
   // print it 
   tout << ss.str() << std::endl; 
 
-  return CLOCK::system_clock::now(); 
+ return CLOCK::system_clock::now(); 
 }
 
 
@@ -1097,7 +1106,8 @@ void SampleMaster::run()
 		}
 	    }	    
 
-	  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT | CommFlag::SWAP | CommFlag::PROPOSALS); 
+	  synchronize(CommFlag::PRINT_STAT | CommFlag::SWAP | CommFlag::PROPOSALS);
+	  
 	  hasConverged = _plPtr->globalBroadcast(hasConverged, 0); 
 	  
 	  if(_plPtr->isGlobalMaster()) 
@@ -1205,6 +1215,14 @@ void SampleMaster::serialize( std::ostream &out) const
 }
 
 
+void SampleMaster::synchronize( CommFlag flags )  
+{
+  _plPtr->synchronizeChainsAtMaster(_runs, flags ); 
+}
+
+
+
+
 void SampleMaster::writeCheckpointMaster()
 {
   // whenever we synchronize swap, we have to backup our own swap
@@ -1216,7 +1234,7 @@ void SampleMaster::writeCheckpointMaster()
 	swb.push_back(run.getSwapInfo());
     }
 
-  _plPtr->synchronizeChainsAtMaster(_runs, CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::SWAP); 
+  synchronize(CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::SWAP);
 
   if( _plPtr->isGlobalMaster())
     {
@@ -1265,6 +1283,14 @@ void SampleMaster::writeCheckpointMaster()
     }
 } 
 
+
+void SampleMaster::deleteMyFiles() const
+{
+  _diagFile.removeMe();
+  remove( globals.logFile.c_str()); 
+  for(auto &run : _runs)
+    run.deleteMyFiles();
+} 
 
 
 #include "IntegrationModuleImpl.hpp"

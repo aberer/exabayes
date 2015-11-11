@@ -1,6 +1,6 @@
 #NEXUS
 
-begin runconfig; 
+begin run; 
  numruns 2 
  numCoupledChains 2 
 end; 

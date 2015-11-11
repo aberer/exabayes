@@ -27,7 +27,11 @@
 class SampleMaster : public Serializable
 {
 public:   
-  SampleMaster(std::shared_ptr<ParallelSetup> pl, const CommandLine& cl ) ; 
+  SampleMaster() ; 
+  SampleMaster(SampleMaster&& rhs); 
+  
+  void deleteMyFiles() const; 
+
   /** 
       @brief initializes the runs  
       @notice this is the top-level function 
@@ -63,6 +67,12 @@ public:
   
   virtual void deserialize( std::istream &in ) ; 
   virtual void serialize( std::ostream &out) const ;
+
+  void setCommandLine(CommandLine cl) { _cl = cl; }
+
+  void setParallelSetup(std::shared_ptr<ParallelSetup> pl ) {_plPtr = pl; }
+
+  void synchronize( CommFlag flags )  ; 
 
 private: 
   void printParameters(const TreeAln &traln, const std::vector<unique_ptr<AbstractParameter> > &params) const; 

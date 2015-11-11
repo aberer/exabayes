@@ -33,32 +33,18 @@ public:
   bool broadcast(bool value, int root) const ; 
   
   Communicator split(int color, int rank); 
-
-  std::vector<char> gather(std::vector<char> myData) const;
-
+  
+  template<typename T> std::vector<T> gather(std::vector<T> myData, nat root = 0) const;
+  template<typename T> std::vector<T> gatherVariableLength(std::vector<T> myData, int root = 0) const ; 
+  
   template<typename T> T receive( int source, int tag ); 
   template<typename T> void send( T elem, int dest, int tag ) ; 
 
-  template<typename T>
-  std::vector<T> allReduce( std::vector<T> myValues); 
+  template<typename T> std::vector<T> allReduce( std::vector<T> myValues); 
 
 private: 
   MPI_Comm _comm; 
 }; 
-
-template<typename T> 
-T Communicator::receive( int source, int tag ) 
-{
-  auto result = T{}; 
-  MPI_Recv(&result,1, mpiType<T>::value, source, tag, _comm, MPI_STATUS_IGNORE);
-  return result; 
-}
-
-template<typename T> 
-void Communicator::send( T elem, int dest, int tag ) 
-{
-  MPI_Send(&elem,1, mpiType<T>::value, dest, tag, _comm);
-}
 
 
 #else

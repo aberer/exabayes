@@ -1,0 +1,5 @@
+begin run; 
+      numgen 2e3
+      numruns 2 
+      numcoupledchains 2 
+end;

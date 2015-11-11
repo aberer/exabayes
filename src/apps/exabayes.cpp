@@ -94,7 +94,12 @@ static void exa_main ( CommandLine &cl,  std::shared_ptr<ParallelSetup> pl )
   // ParallelSetup::genericExit(0); 
 #else 
   // assert(0); 
-  auto&& master = SampleMaster(  pl, cl );
+  auto&& master = SampleMaster(   );
+  
+  master.setParallelSetup(pl); 
+  master.setCommandLine(cl); 
+
+
   master.initializeRuns(Randomness(cl.getSeed())); 
   if( cl.isDryRun())
     {
@@ -233,13 +238,14 @@ static void printInfoHeader(int argc, char **argv)
 // just having this, because of mpi_finalize
 static int innerMain(int argc, char **argv)
 { 
-  auto plPtr = make_shared<ParallelSetup>(); 		// MUST be the first thing to do because of mpi_init ! 
+  auto plPtr = make_shared<ParallelSetup>(); 
 
 #if HAVE_PLL != 0 && ( (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS)))
   assert(0); 
 #endif
 
-  auto cl = CommandLine(argc, argv); 
+  auto cl = CommandLine(); 
+  cl.initialize(argc, argv); 
 
 #if HAVE_PLL == 0 
   plPtr->initializeExaml(cl);
@@ -252,7 +258,7 @@ static int innerMain(int argc, char **argv)
   makeInfoFile(cl, *plPtr);
 
   printInfoHeader(argc,argv); 
-
+  
   exa_main( cl, plPtr); 
   
   finalizeProfiler();

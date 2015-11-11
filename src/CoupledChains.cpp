@@ -4,7 +4,6 @@
 #include "CoupledChains.hpp"   
 #include "Chain.hpp"
 #include "GlobalVariables.hpp"
-// #include "tune.h"
 #include "proposals/AbstractProposal.hpp"
 #include "PriorBelief.hpp"
 #include "time.hpp"
@@ -644,4 +643,14 @@ std::vector<std::string> CoupledChains::getAllFileNames() const
     result.push_back(elem.getFileName()); 
   
   return result; 
+} 
+
+
+
+void CoupledChains::deleteMyFiles() const 
+{
+  for(auto elem : _paramId2TopFile )
+    std::get<1>(elem).removeMe(); 
+  for(auto elem : _pFile)
+    elem.removeMe(); 
 } 

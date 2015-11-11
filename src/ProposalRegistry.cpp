@@ -52,7 +52,7 @@ const double ProposalRegistry::likeSpWarp = 1;
 /**
    @brief yields a set of proposls for integrating a category  
  */
-vector<unique_ptr<AbstractProposal> >
+std::vector<std::unique_ptr<AbstractProposal> >
 ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln) const 
 {
   auto result = std::vector<unique_ptr<AbstractProposal> >{} ; 

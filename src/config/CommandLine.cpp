@@ -8,7 +8,8 @@
 #include "MemoryMode.hpp"
 #include "FlagType.hpp"
 
-CommandLine::CommandLine(int argc, char **argv)
+
+CommandLine::CommandLine()
   : configFileName("")
   , alnFileName("")
   , runid("")
@@ -27,88 +28,14 @@ CommandLine::CommandLine(int argc, char **argv)
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
-  
-  parse(argc, argv) ;
 }
 
 
-void CommandLine::printVersion(bool toInfofile )
-{   
-  (toInfofile ? tout : std::cout )  << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << std::endl << std::endl
-				    << "For bugs reports and feature inquiries, please send an email to " << PACKAGE_BUGREPORT << std::endl; 
-}
 
 
-void CommandLine::printHelp()
+void CommandLine::initialize(  int argc, char **argv)
 {
-  printVersion(false); 
 
-  std::cout << std::endl << "./exabayes   -f alnFile [ -q modelFile ] [ -m model ] [ -s seed | -r id ]  -n id [options..] "
-	    << std::endl; 
-
-  std::cout << "\n\n"
-	    << "Mandatory Arguments: \n"
-	    << "    -f alnFile       a alignment file (either binary and created by parser or plain-text phylip)\n"
-	    << "    -s seed          a master seed for the MCMC\n"
-	    << "    -n ruid          a run id\n" 
-	    << "    -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. \n"
-	    << "                       Make sure, that all files created by the previous run are in the working directory.\n"
-	    << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n"
-	    << "    -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed \n"
-	    << "                       with binary files.\n"
-	    << "    -t treeFile      a file containing starting trees (in Newick format) for chains. If the file provides less\n"
-	    << "                       starting trees than chains to be initialized, parsimony/random trees will be used for\n"
-	    << "                       remaining chains. If a tree contains branch lengths, these branch lengths will be used\n"
-	    << "                       as initial values.\n"
-	    << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
-	    << "                       (valid values: DNA or PROT)\n"
-	    << std::endl;     
-
-  std::cout << "\n" 
-	    <<  "Options:\n" 
-	    << "    -v               print version and quit\n"
-	    << "    -h               print this help\n" 
-	    << "    -z               quiet mode. Substantially reduces the information printed by " << PROGRAM_NAME << ".\n"
-	    << "                      This option will save you some idle time, when you run " << PROGRAM_NAME << " with a\n"
-	    << "                      lot of processes.\n" 
-	    << "    -d               execute a dry-run. Procesess the input, but does not execute any sampling.\n"
-	    << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the examples/ folder\n"
-	    << "    -w dir           specify a working directory for output files\n"
-	    << "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n"
-	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n"
-	    << "    -Q               per-partition data distribution (use this only with many partitions, check manual\n"
-	    << "                       for detailed explanation)\n"
-	    << "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
-	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
-	    << "                       On very gappy alignments this option yields considerable runtime improvements. \n"
-	    << "    -M mode          specifies the memory versus runtime trade-off (see manual for detailed discussion).\n"
-	    << "                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,\n"
-	    << "                       least memory consumption)\n"
-	    << std::endl; 
-
-  ParallelSetup::genericExit(-1); 
-}
-
-
-void CommandLine::assertFileExists(std::string filename)
-{
-  FILE *fh = myfopen(filename.c_str(), "r");
-
-  if(fh == NULL )
-    {
-      fclose(fh); 
-      std::cerr << "could not file file " << filename << ". Aborting." << std::endl; 
-      ParallelSetup::genericExit(-1); 
-    }
-  fclose(fh); 
-}
-
-
-/** 
-    @brief parses the command line 
- */ 
-void CommandLine::parse(int argc, char *argv[])
-{
   int c ; 
 
   // TODO threads/ processes? 
@@ -277,6 +204,81 @@ void CommandLine::parse(int argc, char *argv[])
     }
 }
 
+
+
+
+void CommandLine::printVersion(bool toInfofile )
+{   
+  (toInfofile ? tout : std::cout )  << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << std::endl << std::endl
+				    << "For bugs reports and feature inquiries, please send an email to " << PACKAGE_BUGREPORT << std::endl; 
+}
+
+
+void CommandLine::printHelp()
+{
+  printVersion(false); 
+
+  std::cout << std::endl << "./exabayes   -f alnFile [ -q modelFile ] [ -m model ] [ -s seed | -r id ]  -n id [options..] "
+	    << std::endl; 
+
+  std::cout << "\n\n"
+	    << "Mandatory Arguments: \n"
+	    << "    -f alnFile       a alignment file (either binary and created by parser or plain-text phylip)\n"
+	    << "    -s seed          a master seed for the MCMC\n"
+	    << "    -n ruid          a run id\n" 
+	    << "    -r id            restart from checkpoint. Just specify the id of the previous run (-n) here. \n"
+	    << "                       Make sure, that all files created by the previous run are in the working directory.\n"
+	    << "                       This option is not mandatory for the start-up, seed (via -s) will be ignored.\n"
+	    << "    -q modelfile     a RAxML-style model file (see manual) for multi-partition alignments. Not needed \n"
+	    << "                       with binary files.\n"
+	    << "    -t treeFile      a file containing starting trees (in Newick format) for chains. If the file provides less\n"
+	    << "                       starting trees than chains to be initialized, parsimony/random trees will be used for\n"
+	    << "                       remaining chains. If a tree contains branch lengths, these branch lengths will be used\n"
+	    << "                       as initial values.\n"
+	    << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
+	    << "                       (valid values: DNA or PROT)\n"
+	    << std::endl;     
+
+  std::cout << "\n" 
+	    <<  "Options:\n" 
+	    << "    -v               print version and quit\n"
+	    << "    -h               print this help\n" 
+	    << "    -z               quiet mode. Substantially reduces the information printed by " << PROGRAM_NAME << ".\n"
+	    << "                      This option will save you some idle time, when you run " << PROGRAM_NAME << " with a\n"
+	    << "                      lot of processes.\n" 
+	    << "    -d               execute a dry-run. Procesess the input, but does not execute any sampling.\n"
+	    << "    -c confFile      a file configuring your " << PROGRAM_NAME << " run. For a template see the examples/ folder\n"
+	    << "    -w dir           specify a working directory for output files\n"
+	    << "    -R num           the number of runs (i.e., independent chains) to be executed in parallel\n"
+	    << "    -C num           number of chains (i.e., coupled chains) to be executed in parallel\n"
+	    << "    -Q               per-partition data distribution (use this only with many partitions, check manual\n"
+	    << "                       for detailed explanation)\n"
+	    << "    -S               try to save memory using the SEV-technique for gap columns on large gappy alignments\n" 
+	    << "                       Please refer to  http://www.biomedcentral.com/1471-2105/12/470\n" 
+	    << "                       On very gappy alignments this option yields considerable runtime improvements. \n"
+	    << "    -M mode          specifies the memory versus runtime trade-off (see manual for detailed discussion).\n"
+	    << "                       <mode> is a value between 0 (fastest, highest memory consumption) and 3 (slowest,\n"
+	    << "                       least memory consumption)\n"
+	    << std::endl; 
+
+  ParallelSetup::genericExit(-1); 
+}
+
+
+void CommandLine::assertFileExists(std::string filename)
+{
+  FILE *fh = myfopen(filename.c_str(), "r");
+
+  if(fh == NULL )
+    {
+      fclose(fh); 
+      std::cerr << "could not file file " << filename << ". Aborting." << std::endl; 
+      ParallelSetup::genericExit(-1); 
+    }
+  fclose(fh); 
+}
+
+
 RunModes CommandLine::getTreeInitRunMode() const 
 {
   auto runmodes = RunModes::NOTHING; 
@@ -286,7 +288,6 @@ RunModes CommandLine::getTreeInitRunMode() const
     runmodes = runmodes | RunModes::MEMORY_SEV; 
   return runmodes; 
 } 
-
 
 
 randCtr_t CommandLine::getSeed() const

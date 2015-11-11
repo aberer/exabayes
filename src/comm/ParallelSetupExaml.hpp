@@ -83,7 +83,7 @@ public:
    */ 
   static void blockingPrint( Communicator &comm,std::string ss );  
 
-  void printLoadBalance(const TreeAln& traln, nat numRun, nat numCoupled ) const ; 
+  std::string printLoadBalance(const TreeAln& traln, nat numRun, nat numCoupled ) const ; 
 
   /** 
       @brief indicates whether the chain belongs to a process

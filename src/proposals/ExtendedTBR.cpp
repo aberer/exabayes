@@ -5,10 +5,10 @@
 
 // TODO the disorient is still  very inefficient 
 
-ExtendedTBR::ExtendedTBR( double _extensionProb, double _multiplier)
+ExtendedTBR::ExtendedTBR( double extensionProb, double multiplier)
   : AbstractProposal(Category::TOPOLOGY , "eTBR", 5., false, 0,0)
-  , extensionProbability(_extensionProb)
-  , multiplier(_multiplier)
+  , _extensionProbability(extensionProb)
+  , _multiplier(multiplier)
 {
 }
 
@@ -17,7 +17,7 @@ void ExtendedTBR::buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &tra
 {
   auto params = getBranchLengthsParameterView();
 
-  double stopProb = extensionProbability; 
+  double stopProb = _extensionProbability; 
 
   nodeptr p= bisectedBranch.findNodePtr(traln ); 
   path.clear();
@@ -73,20 +73,23 @@ BranchPlain ExtendedTBR::determinePrimeBranch(const TreeAln &traln, Randomness& 
 {
   auto canMove = [&](const BranchPlain &b) -> bool 
     { 
-      auto desc = traln.getDescendents(b) ; 
-      auto result = not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln) ); 
-      // tout << b << " with children " << std::get<0>(desc) << "," << std::get<1>(desc)<< std::endl ; 
+      auto result = b.isTipBranch(traln); 
+      if( not result)
+  	{
+  	  auto desc = traln.getDescendents(b) ; 
+  	  result = not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln) ); 
+  	  // tout << b << " with children " << std::get<0>(desc) << "," << std::get<1>(desc)<< std::endl ; 
+  	}
       return result; 
     }; 
 
   auto bisectedBranch = BranchPlain{}; 
   auto movableA = bool{false}; 
   auto movableB = bool{false}; 
-    
-  while(not movableA && not movableB )
-    {
-      bisectedBranch = TreeRandomizer::drawInnerBranchUniform(traln, rand ); 
 
+  while(not ( movableA || movableB ) )
+    {
+      bisectedBranch = TreeRandomizer::drawBranchWithInnerNode(traln,rand); 
       movableA = canMove(bisectedBranch); 
       movableB = canMove(bisectedBranch.getInverted()); 
     }
@@ -104,7 +107,15 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 
   // determine, if a true TBR move can be executed
   auto canMove = [&](const BranchPlain &b) -> bool 
-    { auto desc = traln.getDescendents(b) ; return not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln)) ; }; 
+    { 
+      if(traln.isTipNode(b.getPrimNode()))
+	return false; 
+      else 
+	{
+	  auto desc = traln.getDescendents(b) ; 
+	  return not(desc.first.isTipBranch(traln) && desc.second.isTipBranch(traln)) ; 
+	}
+    }; 
   auto oneMovable = canMove(bisectedBranch);
   auto otherMovable = canMove(bisectedBranch.getInverted()); 
 
@@ -128,7 +139,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
     }
   
   auto moveDescription = std::make_tuple( bisectedBranch, descOne, descOther); 
-  move.extractMoveInfo(traln, moveDescription , getSecondaryParameterView()); 
+  _move.extractMoveInfo(traln, moveDescription , getSecondaryParameterView()); 
 }
 
 
@@ -154,13 +165,13 @@ void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hasti
       assert(0); 
     }
 
-  move.applyToTree(traln, getSecondaryParameterView() );
+  _move.applyToTree(traln, getSecondaryParameterView() );
 }
 
 
 void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& traln, const BranchPlain &branchSuggestion)
 { 
-  auto toEval = move.getEvalBranch(traln);
+  auto toEval = _move.getEvalBranch(traln);
 
   assert(toEval.exists(traln)); 
   
@@ -168,7 +179,7 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& tral
   tout << "EVAL " << toEval << std::endl; 
 #endif
 
-  auto dirtyNodes = move.getDirtyNodes(traln, false);
+  auto dirtyNodes = _move.getDirtyNodes(traln, false);
   
   // tout << "dirtyNodes: " << dirtyNodes << std::endl; 
 
@@ -181,7 +192,7 @@ void ExtendedTBR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln& tral
 
 void ExtendedTBR::resetState(TreeAln &traln)
 {
-  move.revertTree(traln, getSecondaryParameterView() );
+  _move.revertTree(traln, getSecondaryParameterView() );
 }
 
 
@@ -194,5 +205,5 @@ AbstractProposal* ExtendedTBR::clone() const
 
 std::vector<nat> ExtendedTBR::getInvalidatedNodes(const TreeAln& traln) const
 {
-  return move.getDirtyNodes(traln, false);
+  return _move.getDirtyNodes(traln, false);
 } 

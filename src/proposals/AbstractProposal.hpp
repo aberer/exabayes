@@ -156,6 +156,9 @@ public:
 
   double tuneParameter(int batch, double accRatio, double parameter, bool inverse ); 
 
+  nat getNumTaxNeeded() const {return _numTaxNeeded; }
+
+
 protected:   
   std::string _name;   
   SuccessCounter _sctr; 
@@ -178,6 +181,8 @@ protected:
 
   const double _minTuning; 
   const double _maxTuning; 
+
+  nat _numTaxNeeded; 
 }; 
 
 #endif

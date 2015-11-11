@@ -2231,17 +2231,17 @@ void PhylipParser::parse()
   defaultInit();
 
   getinput();  
-  auto dur = getDuration(nowTime);
+  // auto dur = getDuration(nowTime);
   nowTime = getTimePoint(); 
-  std::cout << SOME_FIXED_PRECISION << "[" << dur << " s] got input" << std::endl; 
+  // std::cout << SOME_FIXED_PRECISION << "[" << dur << " s] got input" << std::endl; 
   makeweights();         
-  dur = getDuration(nowTime); 
+  // dur = getDuration(nowTime); 
   nowTime = getTimePoint(); 
-  std::cout << "[" << dur << " s] made weights" << std::endl; 
+  // std::cout << "[" << dur << " s] made weights" << std::endl; 
   makevalues();         
-  dur = getDuration(nowTime); 
+  // dur = getDuration(nowTime); 
   nowTime = getTimePoint(); 
-  std::cout << "[" << dur << " s] made values" << std::endl; 
+  // std::cout << "[" << dur << " s] made values" << std::endl; 
 
   for(model = 0; model < tr->NumberOfModels; model++)
     {	

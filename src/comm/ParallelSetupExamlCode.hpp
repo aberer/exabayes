@@ -56,25 +56,22 @@ void ParallelSetup::initialize(int argc, char **argv)
 }
 
 
-void ParallelSetup::printLoadBalance(const TreeAln& traln, nat numRun, nat numCoupled ) const 
+std::string ParallelSetup::printLoadBalance(const TreeAln& traln, nat numRun, nat numCoupled ) const 
 {
   auto &&ss = std::stringstream{};
-
   ss << SOME_FIXED_PRECISION; 
-
   if(isGlobalMaster())
-    ss << "load distribution (rank,#pattern,chainsPerRun):"  << std::endl;
+    ss <<  "load distribution (rank,#pattern,chainsPerRun):"  << std::endl;
   
-  double sumA = 0;   
-
+  nat sumA = 0;   
   for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
     {
       auto& partition = traln.getPartition(i); 
       sumA += partition.width; 
     }
   
-  if(isGlobalMaster())
-    ss << "[ " << _globalComm.getRank() << " ] " ; 
+  // if(isGlobalMaster())
+  ss << "[ " << _globalComm.getRank() << " ] " ; 
   ss  << sumA << "\t"  ; 
 
   bool isFirst = true; 
@@ -90,7 +87,6 @@ void ParallelSetup::printLoadBalance(const TreeAln& traln, nat numRun, nat numCo
 	  isFirst = false; 
 	}
     }
-
   ss << std::endl; 
   
   if(sumA == 0)
@@ -98,9 +94,35 @@ void ParallelSetup::printLoadBalance(const TreeAln& traln, nat numRun, nat numCo
       ss << std::endl << "WARNING: there is a process that does not evaluate any portion of the\n"
 	 << "data. Consider enabling or disabling the '-Q' option"  << std::endl; 
     }
+  
 
-  auto tmp = Communicator{}; 
-  blockingPrint(tmp , ss.str() );
+  auto str = ss.str();
+  auto myData =  std::vector<char>(begin(str), end(str));
+  auto allData = _globalComm.gatherVariableLength(myData); 
+  
+  auto result = std::string(begin(allData), end(allData)); 
+  result += "\n" ; 
+  
+  return result; 
+
+  // auto lengths = std::vector<nat>{}; 
+  // auto myLen = std::vector<nat>{  nat(ss.str().size()) }; 
+
+  // auto allLengths = _runComm.gather<nat>( myLen );
+
+  // _runComm.gather<char>()
+
+  
+  // auto tmp = Communicator{}; 
+  // blockingPrint(tmp , ss.str() );
+
+  // inform the master, how many 
+
+  // TODO 
+  // assert(0); 
+
+  
+  
 }
 
 
@@ -205,9 +227,8 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
   myData.insert(end(myData), begin(swapSer), end(swapSer)); 
 
   // communicate 
-  auto allChainsSerialized = _chainLeaderComm.gather(myData);
+  auto allChainsSerialized = _chainLeaderComm.gather<char>(myData);
    
-
   // the master process unpacks the received information 
   auto streamIter = begin(allChainsSerialized); 
   if( isGlobalMaster() )

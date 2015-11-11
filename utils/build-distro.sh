@@ -28,7 +28,6 @@ if [ $IS_APPLE == 0 ]; then
     cxxmpich=mpicxx.mpich2
     # ld="LDFLAGS='-static-libgcc -static-libstdc++\'"
 else
-    ld=""
     ccomp=clang
     cxxcomp=clang++
     system=apple
@@ -41,12 +40,21 @@ else
 fi
 
 
+
+
 ./configure || exit
 
 rm -f  exabayes-*.zip exabayes-*.tar.gz
 
 for vect in $(echo  $ssetypes ) 
 do 
+    case "$vect" in 
+	"no-sse" ) mpis=sequential ;; 
+	"avx" ) mpis="openmpi mpich2" ;;
+	"sse" ) mpis="openmpi mpich2" ;;
+	*) echo "error: vect must be no-sse, sse or avx" ; exit 
+    esac 
+
 
     if [ "$vect" == "no-sse" ]
     then 
@@ -80,8 +88,8 @@ do
 	if [ "$mpi" != "sequential" ] ; then 
 	    # build MPI
 	    cd distro-build 
-
-	    ../configure --enable-mpi CC="ccache $cc" CXX="ccache $cxx" $arg  --prefix $(readlink -f ../bin) --bindir $(readlink -f  ../bin ) && make -j $cores  && make install || exit   
+	    ../configure --enable-mpi  --prefix $(readlink -f ../) CC="ccache $cc" CXX="ccache $cxx" $arg   && make -j $cores  && make install || exit   
+	    # --bindir $(readlink -f  ../ )
 	    # eval $cmd
 
 	    cd .. 
@@ -93,13 +101,15 @@ do
 	
 	
 	if [ "$IS_APPLE" == "0" ] ; then 
-	    ../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg LDFLAGS="-static-libgcc -static-libstdc++" --prefix $(readlink -f  ../bin) --bindir $(readlink -f ../bin) && make -j$cores   && make install || exit  
+	    ../configure --prefix $(readlink -f  ../)  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg LDFLAGS="-static"    && make -j$cores   && make install || exit  
+	    # --bindir $(readlink -f ../bin)
 	else 
-	    ../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg "$ld" --prefix $(readlink -f  ../bin) --bindir $(readlink -f ../bin) && make -j$cores   && make install || exit  
+	    ../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg --prefix $(readlink -f  ../) && make -j$cores   && make install || exit  
+	    # --bindir $(readlink -f ../bin)
 	fi 
-	# eval $cmd
+
 	cd .. 
-	
+
 	# build the distribution 
 	./configure 
 	make dist 

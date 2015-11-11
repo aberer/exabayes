@@ -24,7 +24,7 @@ seed=$RANDOM
 # seed=32090 # problematic with  143 (on DNA!)
 
 # src/proposals/
-numProc=1
+numProc=4
 
 # extraArgs="-R 2 -C 2" 
 # extraArgs="-M 3 -S  "
@@ -46,16 +46,18 @@ numProc=1
 
 # args="--disable-silent-rules" 
 # args="--disable-sse"
-args=""
-
-devel=0
 
 startFromBest=0
+dotests=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
 useClang=1
+
+if [ $dotests == 1 ]; then
+    args="--enable-tests"
+fi
 
 
 # find additional arguments for the call   
@@ -75,7 +77,7 @@ GDB=gdb
 if [ "$(which cgdb )" != ""   ]; then
     GDB="cgdb"
 fi
-GDB=gdb
+# GDB=gdb
 
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
@@ -95,13 +97,6 @@ fi
 if [ $useGoogleProfiler -eq 1 ]; then
     libs="-lprofiler "
 fi
-
-if [ $devel -eq 1 ]; then
-    libs="$libs -lprocps"
-    cppflags="$cppflags-D_DEVEL "
-fi
-
-
 
 
 if [ "$#" -lt 3 ]; then

@@ -6,17 +6,18 @@
 [ In most instances, it is convenient to use the scientific notations also
    for integer variables (e.g., write 1e6 for requesting numgen=1000000) ] 
 
+[ all keywords are case-insensitive ]
+
 
 [================================================================]
 [                               GENERAL                          ] 
 [================================================================]
 begin RUN; 
-
  [ RUN PARAMETERS ]
  [ numRuns  2 ] 	   	[ number of independant runs ]
  [ numGen 100000 ] 		[ number of generations to run. If a convergence criterion is used, this is the minimum number of generations to run.  ] 
  [ diagFreq 5000 ] 		[ check for convergence of multiple independent runs after this many generations ]
- [ samplingFreq 500 ] 	[ take a sample every n generations ]
+ [ samplingFreq 500 ] 	        [ take a sample every n generations ]
  [ tuneFreq 100 ]    	 	[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  [ printFreq 1000 ]  		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
@@ -30,7 +31,7 @@ begin RUN;
  [ numSwapsPerGen 1 ]           [ number of swaps attempted on average per generation ] 
 
  [ CONVERGENCE ]
- [ convergenceCriterion mean ] [ indicates whether a topological convergence criterion should be used. Valid values: none, mean (default), max ] 
+ [ convergenceCriterion mean ]  [ indicates whether a topological convergence criterion should be used. Valid values: none, mean (default), max ] 
  [ sdsfIgnoreFreq  0.1 ]        [ ignore clades for which the relative frequency does not exceed this value in any chain (here 10%) ]
  [ sdsfConvergence 0.01 ]       [ consider runs converged (and stop) once the asdsf or msdsf is below this value (here 1%): 1-5% is considered good, 0.5% can be considered very good convergence ] 
 
@@ -171,3 +172,4 @@ begin proposals;
   [================================================================]
 
 end ; 
+

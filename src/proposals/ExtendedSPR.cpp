@@ -26,7 +26,7 @@ BranchPlain ExtendedSPR::determinePrimeBranch(const TreeAln &traln, Randomness &
       p = start.findNodePtr(traln );
       q = p->next->back; 
       r = p->next->next->back;
-    } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
+    } while(traln.isTipNode(q) && traln.isTipNode(r) ); 
   return start; 
 } 
 
@@ -65,7 +65,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
   while(not accepted)
-    {      
+    {  
       nodeptr n = 
 	rand.drawRandDouble01()  < 0.5 
 	? currentNode->next->back

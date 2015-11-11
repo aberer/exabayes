@@ -7,10 +7,10 @@ AbstractProposal::AbstractProposal( Category cat, std::string name,double weight
   , _relativeWeight(weight)
   , _needsFullTraversal(needsFullTraversal)
   , _inSetExecution(false)
-  // , _suitsProteinPartitions(false)
   , _forProteinOnly(false)
   , _minTuning{minTuning}
   , _maxTuning{maxTuning}
+  , _numTaxNeeded{4}
 {
 } 
 
@@ -22,10 +22,10 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
   , _needsFullTraversal(rhs._needsFullTraversal)
   , _inSetExecution(rhs._inSetExecution)
   , _id(rhs._id)
-  // , _suitsProteinPartitions(rhs._suitsProteinPartitions)
   , _forProteinOnly(rhs._forProteinOnly)
   , _minTuning{rhs._minTuning}
   , _maxTuning{rhs._maxTuning}
+  , _numTaxNeeded{rhs._numTaxNeeded}
 {
   this->_name = rhs._name; 
 
