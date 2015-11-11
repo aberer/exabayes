@@ -16,13 +16,13 @@ std::string DiagnosticsFile::createName(std::string runname, std::string workdir
 
 void DiagnosticsFile::initialize(std::string workdir, std::string name, const std::vector<CoupledChains> &runs) 
 {
-  assert(not initialized); 
-  initialized = true; 
+  assert(not _initialized); 
+  _initialized = true; 
 
   fullFileName = createName(name, workdir);     
   rejectIfExists(fullFileName); 
 
-  std::ofstream fh(fullFileName); 
+  auto&& fh = std::ofstream(fullFileName); 
 
   fh << "GEN" ;
 
@@ -44,16 +44,30 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
   
   for(auto& run : runs)
     {
-      auto ps = run.getChains()[0].getProposalView(); 
-      std::stringstream ss; 
+      auto &coldChain = run.getChains()[0]; 
+
+      auto ps = coldChain.getProposalView(); 
+      auto &&ss = std::stringstream{} ; 
       for(auto &p : ps)
 	{
 	  ss.str(""); 
 	  p->printShort(ss); 
 	  ss << "$run" << run.getRunid();  
-	  names.push_back(ss.str()); 
+	  _names.push_back(ss.str()); 
 	  fh << "\t" << ss.str(); 
 	}        
+
+      for(auto &propset : coldChain.getProposalSets())
+	{
+	  for(auto &p : propset.getProposalView())
+	    {
+	      ss.str(""); 
+	      p->printShort(ss);
+	      ss << "$run" << run.getRunid();
+	      _names.push_back(ss.str()); 
+	      fh << "\t" << ss.str();
+	    }
+	}
     }
 
   fh << std::endl; 
@@ -63,7 +77,7 @@ void DiagnosticsFile::initialize(std::string workdir, std::string name, const st
 
 void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<CoupledChains> &runs ) 
 {
-  std::ofstream fh(fullFileName, std::fstream::app); 
+  auto &&fh = std::ofstream(fullFileName, std::fstream::app); 
 
   fh << gen ; 
   
@@ -77,14 +91,13 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
       for(auto &elem  : m)
 	{
 	  fh << "\t"
-	     // << elem.getRatioInLastInterval()<< ","
 	     << elem.getRatioOverall() 
 	     << "," << elem.getTotalSeen();
 	}
     }
 
   // print acceptance rates  
-  std::unordered_map<std::string,AbstractProposal*> name2proposal; 
+  auto name2proposal = std::unordered_map<std::string,AbstractProposal*>{}; 
   for(auto &run : runs)
     {
       for(auto &chain: run.getChains())
@@ -95,47 +108,89 @@ void DiagnosticsFile::printDiagnostics(nat gen, double asdsf, const std::vector<
 	  auto &ps = chain.getProposalView(); 
 	  for(auto &p : ps)
 	    {
-	      std::stringstream ss; 	      
+	      auto &&ss = std::stringstream{} ; 
 	      p->printShort(ss);
 	      ss << "$run"  << run.getRunid(); 
 
 	      assert(name2proposal.find(ss.str()) == name2proposal.end()); 
 	      name2proposal[ss.str()] = p; 
 	    }
+	  
+	  for(auto &ps  :chain.getProposalSets())
+	    {
+	      for(auto &p : ps.getProposalView())
+		{
+		  auto &&oss = std::ostringstream{}; 
+		  p->printShort(oss); 
+		  oss << "$run" << run.getRunid();
+
+		  assert(name2proposal.find(oss.str()) == name2proposal.end()); 
+		  name2proposal[oss.str()] = p; 
+		}
+	    }
 	}
     }
-
-  for(auto &name : names) 
+  
+  for(auto &name : _names) 
     {
-      if(name2proposal.find(name) == name2proposal.end())
+      if(name2proposal.find(name) == end(name2proposal))
 	{
-	  tout << "could not find proposal " << name << std::endl; 
+	  tout << "could not find proposal >" << name << "<" << std::endl; 
 	  assert(0); 
 	}
       auto& p = name2proposal[name]; 
       auto &sctr = p->getSCtr();
-      fh << "\t" << 
-	// sctr.getRatioInLast100()
-	// sctr.getRatioInLastInterval() << ","
-	sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
+      fh << "\t" << sctr.getRatioOverall() << "," << sctr.getTotalSeen() ; 
     }	  
 
   fh << std::endl; 
-  fh.close(); 
 }
 
 
-void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::string prevId, nat gen, nat numSwapEntries)
+
+static bool isProposal(std::string token)
+{
+  auto result = true;  
+
+  result &= token.compare("GEN") != 0 ;  
+  result &= token.compare("asdsf") != 0 ; 
+
+  result &= not (token[0] == 's'  && token[1] == 'w' && token[2] == '(') ; 
+
+  return result; 
+}
+
+
+static std::vector<std::string> getProposalNames(std::string line)  
+{
+  auto result = std::vector<std::string> {}; 
+  auto&& iss = std::istringstream {line}; 
+
+  while(iss)
+    {
+      auto token = std::string {}; 
+      
+      getline(iss, token, '\t');
+
+      if(iss && isProposal(token))
+	result.push_back(token);
+    }
+
+  return result; 
+}
+
+
+void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::string prevId, nat gen)
 {    
-  assert(not initialized); 
-  initialized = true; 
+  assert(not _initialized); 
+  _initialized = true; 
 
   fullFileName = createName (nowId, workdir); 
   rejectIfExists(fullFileName); 
-  std::ofstream fh(fullFileName);   
-  std::string prevFileName = createName(prevId, workdir); 
+  auto &&fh = std::ofstream(fullFileName);   
+  auto prevFileName = createName(prevId, workdir); 
   rejectIfNonExistant(prevFileName); 
-  std::ifstream ifh(prevFileName); 
+  auto&& ifh = std::ifstream (prevFileName); 
 
   nat genFound = 0; 
   nat lineCtr = 0; 
@@ -143,44 +198,25 @@ void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::st
 
   while(genFound < gen && not ifh.eof())
     {
-      std::string line ; 
+      auto line = std::string{}  ; 
       getline(ifh, line); 
 
       // special treatment
       if(firstLine)
 	{
 	  firstLine = false; 
-	  std::stringstream ss; 
-	  ss.str(line); 
 	  
-	  nat ctr = 0; 
-	  std::string part; 
-	  bool isEmpty = false; 
-	  do 
-	    {	      
-	      auto& ret = getline(ss,part, '\t'); 
-	      isEmpty = not ret; 
-	      
-	      // skipping over the swap matrix and additional info 
-	      if( not (ctr < numSwapEntries + 2  ))
-		{
-		  // tout << "parsed " << part << std::endl; 
-		  names.push_back(part); 
-		}
-
-	      ++ctr ; 
-	    }while(part.compare("") !=  0 && not isEmpty); 	  
+	  _names = getProposalNames(line);
 	}
 
       // TODO: all this comparing against empty lines only is needed,
       // because we could not have any data lines (and only the
       // header). Come up with a better solution. 
-      if(lineCtr > 0 &&  not line.compare("") == 0
-	 )
+      if(lineCtr > 0 &&  not line.compare("") == 0 )
       	{
-	  std::stringstream ss; 
+	  auto &&ss = std::stringstream{} ; 
 	  ss.str(line); 
-	  std::string part; 
+	  auto part = std::string{} ; 
 	  getline(ss, part, '\t'); 
 	  genFound = std::stoi(part); 
 	}
@@ -189,9 +225,5 @@ void DiagnosticsFile::regenerate(std::string workdir, std::string nowId, std::st
 	fh << line << std::endl; 
       ++lineCtr;
     }
-  
-  fh.close(); 
 } 
-
-
 

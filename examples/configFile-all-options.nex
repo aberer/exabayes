@@ -25,18 +25,20 @@ begin runconfig;
  [ checkPointInterval   10000 ]	  [ defines how often a checkpoint is written ]
 
  [ MCMCMC ]
- numCoupledChains  2	[ number of chains per independent run (only one is cold)  => must be > 0] 
- heatFactor 0.1   	[ the heat increment added to each hotter chain (this is not the inverse heat)   ]
- numSwapPerGen 1        [ number of swaps attempted on average per generation ] 
+ [ numCoupledChains  2] 	[ number of chains per independent run (only one is cold)  => must be > 0] 
+ [ heatFactor 0.1 ]     	[ the heat increment added to each hotter chain (this is not the inverse heat)   ]
+ [ numSwapsPerGen 1 ]           [ number of swaps attempted on average per generation ] 
 
  [ CONVERGENCE ]
- asdsfIgnoreFreq  0.1		[ ignore clades for which the relative frequency does not exceed this value in any chain (here 10%) ]
- asdsfConvergence 0.01          [ consider runs converged (and stop) once the asdsf or msdsf is below this value (here 1%): 1-5% is considered good, 0.5% can be considered very good convergence ] 
+ [ convergenceCriterion mean ] [ indicates whether a topological convergence criterion should be used. Valid values: none, mean (default), max ] 
+ [ sdsfIgnoreFreq  0.1 ]        [ ignore clades for which the relative frequency does not exceed this value in any chain (here 10%) ]
+ [ sdsfConvergence 0.01 ]       [ consider runs converged (and stop) once the asdsf or msdsf is below this value (here 1%): 1-5% is considered good, 0.5% can be considered very good convergence ] 
 
  [ BURNIN ] 
- [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
-   burninProportion      0.25     [ discard this proportion of all initial samples as burnin  ]
+ [ burninGen 2000 ]		    [ exact number of generations that are discarded for diagnostics ]  
+ [ burninProportion      0.25 ]     [ discard this proportion of all initial samples as burnin  ]
 
+ [ componentWiseMH     false ]      [ enables component-wise Metropolis-Hastings. Very IMPORTANT, if you run an analysis using multiple unlinked parameters ]
 end; 
 
 

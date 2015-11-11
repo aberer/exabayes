@@ -64,6 +64,7 @@ void ArrayRestorer::cache( TreeAln &traln, nat nodeNumber, nat partitionId, cons
     {
       assert(0);
       exa_free(partitionLikelihoods[partitionId].cachedArrays.at(id)); 
+
     }
 
   auto arrayAndLength = removeArray(traln, nodeNumber, partitionId); 

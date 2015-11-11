@@ -4,8 +4,6 @@
 #include <sys/stat.h>
 #include <sstream>
 
-#include "ParallelSetup.hpp"
-
 class OutputFile
 {
 public: 

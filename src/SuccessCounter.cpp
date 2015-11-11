@@ -24,21 +24,31 @@ SuccessCounter::SuccessCounter(const SuccessCounter& rhs)
 }
 
 
-SuccessCounter SuccessCounter::operator=( const SuccessCounter &rhs) 
+
+
+
+SuccessCounter SuccessCounter::operator=( SuccessCounter rhs) 
 {
-  if(&rhs == this)
-    return *this; 
-  else 
-    return SuccessCounter(rhs);   
+  swap(*this, rhs);
+  return *this; 
 } 
 
+
+
+void swap(SuccessCounter &elemA, SuccessCounter &elemB)
+{
+  std::swap(elemA.globalAcc, elemB.globalAcc);
+  std::swap(elemA.globalRej, elemB.globalRej);
+  std::swap(elemA.localRej, elemB.localRej);
+  std::swap(elemA.localAcc, elemB.localAcc);
+  std::swap(elemA.batch, elemB.batch);
+}
 
 
 void SuccessCounter::accept() 
 {
   ++globalAcc;
   ++localAcc; 
-  // addOrReplace(true); 
 }
 
 
@@ -46,21 +56,7 @@ void SuccessCounter::reject()
 {
   ++globalRej;
   ++localRej; 
-  // addOrReplace(false); 
 }
-
-
-// double SuccessCounter::getRatioInLast100() const 
-// {
-//   double acc = 0, rej = 0 ; 
-//   for(auto b : lastX )
-//     if(b)
-//       acc++;
-//     else 
-//       rej++; 
-//   return acc / (acc+rej) ; 
-// }
-
 
 
 double SuccessCounter::getRatioInLastInterval() const 
@@ -86,56 +82,50 @@ void SuccessCounter::nextBatch()
 
 void SuccessCounter::reset()
 {
-  localRej = 0; localAcc = 0; 
+  localRej = 0;
+  localAcc = 0;
 }
-
-
-// void SuccessCounter::addOrReplace(bool acc)
-// { 
-//   if(lastX.size() ==  SIZE_OF_LAST) 
-//     {
-//       lastX.pop_front(); 
-//     }
-//   lastX.push_back(acc); 
-// }
 
 
 void SuccessCounter::deserialize( std::istream &in )   
 {
-  globalAcc = cRead<int>(in); 
-  globalRej = cRead<int>(in); 
-  localAcc = cRead<int>(in); 
-  localRej = cRead<int>(in); 
-  batch = cRead<int>(in); 
+  globalAcc = cRead<decltype(globalAcc)>(in); 
+  globalRej = cRead<decltype(globalRej)>(in); 
+  localAcc = cRead<decltype(localAcc)>(in); 
+  localRej = cRead<decltype(localRej)>(in); 
+  batch = cRead<decltype(batch)>(in); 
 }
  
 void SuccessCounter::serialize( std::ostream &out)  const
 {
-  cWrite<int>(out, globalAcc); 
-  cWrite<int>(out, globalRej); 
-  cWrite<int>(out, localAcc); 
-  cWrite<int>(out, localRej); 
-  cWrite<int>(out, batch); 
+  // local stuff needed for the proposals!!!
+
+  cWrite<decltype(globalAcc)>(out, globalAcc); 
+  cWrite<decltype(globalRej)>(out, globalRej); 
+  cWrite<decltype(localAcc)>(out, localAcc); 
+  cWrite<decltype(localRej)>(out, localRej); 
+  cWrite<decltype(batch)>(out, batch); 
 } 
 
 
 
 SuccessCounter SuccessCounter::operator+(const SuccessCounter &rhs) const 
 {
-#ifdef UNSURE
-  // this whole addition thing is not really consistent. It does its job for swap matrices, I guess. 
-  assert(0); 
-#endif
-
-  SuccessCounter result; 
+  auto result =  SuccessCounter{}; 
   result.globalAcc = rhs.globalAcc + globalAcc; 
   result.globalRej = rhs.globalRej + globalRej; 
   result.localAcc = rhs.localAcc + localAcc; 
   result.localRej = rhs.localRej + localRej; 
   result.batch = rhs.batch + batch; 
-
+  
   return result; 
 } 
 
+
+std::ostream& operator<<( std::ostream &out, const SuccessCounter &rhs)
+{
+  out << rhs.globalAcc << "/" <<  rhs.globalRej; 
+  return out; 
+}
 
 

@@ -1,4 +1,5 @@
 #include "AbstractParameter.hpp" 
+#include "ParallelSetup.hpp"
 #include "Category.hpp"
 
 
@@ -73,7 +74,7 @@ void AbstractParameter::checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &
   if(not okay)
     {
       std::cerr << "Error while processing parsed parameters: you tried to link " << _partitions[0] << " and " <<  wrong  << ". These partitions have a different number of states (probably DNA and PROT). Aborting." << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 }
 

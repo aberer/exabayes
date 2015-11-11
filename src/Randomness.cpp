@@ -207,8 +207,10 @@ nat Randomness::drawGeometric(double prop)
 
 nat Randomness::drawBinomial(double prop, nat trials )
 {
+  auto gen = std::default_random_engine{} ; 
+  gen.seed((*this)());
   auto dist = std::binomial_distribution<nat>(trials,prop);
-  return dist(*this);
+  return dist(gen);
 }
 
 
@@ -230,10 +232,10 @@ void Randomness::deserialize( std::istream &in )
  
 void Randomness::serialize( std::ostream &out)  const
 {
-  cWrite(out, key.v[0]); 
-  cWrite(out, key.v[1]); 
-  cWrite(out, ctr.v[0]); 
-  cWrite(out, ctr.v[1]); 
+  cWrite<nat>(out, key.v[0]); 
+  cWrite<nat>(out, key.v[1]); 
+  cWrite<nat>(out, ctr.v[0]); 
+  cWrite<nat>(out, ctr.v[1]); 
 } 
 
 

@@ -1,4 +1,6 @@
 #include "parser/PhylipParser.hpp"
+#include "ParallelSetup.hpp"
+
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
@@ -9,7 +11,7 @@ int NUM_BRANCHES ;
 
 void helpMessage()
 {
-  std::cout << "parser produces a binary output file, that can be fed into\n"
+  std::cout << "\nparser produces a binary output file, that can be fed into\n"
 	    << "ExaBayes/Yggdrasil. This is recommendable for large runs with hundreds\n"
 	    << "of processes.\n\n" ; 
 
@@ -24,13 +26,18 @@ void helpMessage()
 	    << std::endl; 
 }
 
+static void myExit(int code)
+{
+  exit(code); 
+}
+
 
 int main(int argc, char **argv)
 {
   if(argc < 2)
     {
       helpMessage(); 
-      exit(0);       
+      myExit(-1); 
     }
   
   auto alignmentFile = std::string(""); 
@@ -61,14 +68,14 @@ int main(int argc, char **argv)
 	      {
 		std::cerr << "Encountered unknown command line option " <<  c 
 			  << "\n\nFor an overview of program options, please use -h" << std::endl ; 
-		exit(0);
+		myExit(-1); 
 	      }
 	    }
 	}
       catch(const std::invalid_argument& ia )
 	{
 	  std::cerr << "Invalid argument >" << optarg << "< to option >" << reinterpret_cast<char*>(&c) << "<" << std::endl; 
-	  exit(-1); 
+	  myExit(-1); 
 	}
     }
 
@@ -76,33 +83,33 @@ int main(int argc, char **argv)
   if(outputFileName.compare("") == 0 )
     {
       std::cout << "Please specify an output file name via -n." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   if(outputFileName.compare("") != 0 && std::ifstream(outputFileName + ".binary"))
     {
       std::cout << "Error: output file "  <<  outputFileName  << ".binary already exists." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   if(modelFile.compare("") == 0 && singlePartitionModel.compare("") == 0)
     {
       std::cout << "Please specify either a model file via -q or a data type for a single\n"
 		<< "partition (either DNA or PROT) via -m." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   if(modelFile.compare("") != 0 && not std::ifstream{modelFile})
     {
       std::cout << "Error: model file provided, but could not open model file >"  << modelFile << "<" << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   
   if(not std::ifstream{alignmentFile})
     {
       std::cout << "Error: could not open alignment file >" << alignmentFile << "<" << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
 
   

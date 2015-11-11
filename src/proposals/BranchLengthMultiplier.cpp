@@ -105,12 +105,12 @@ AbstractProposal* BranchLengthMultiplier::clone() const
 
 void BranchLengthMultiplier::readFromCheckpointCore(std::istream &in) 
 {
-  multiplier = cRead<double>(in);
+  multiplier = cRead<decltype(multiplier)>(in);
 } 
 
 void BranchLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
-  cWrite(out, multiplier); 
+  cWrite<decltype(multiplier)>(out, multiplier); 
 } 
 
 

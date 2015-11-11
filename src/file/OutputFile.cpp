@@ -1,5 +1,9 @@
 #include "file/OutputFile.hpp"
 
+#include "ParallelSetup.hpp"
+
+#include <fstream>
+#include <iostream>
 
 
 void OutputFile::rejectIfExists(std::string fileName)
@@ -24,7 +28,7 @@ void OutputFile::rejectIfNonExistant(std::string fileName)
 
 std::string OutputFile::getFileBaseName(std::string workdir )
 {
-  std::stringstream ss; 
+  auto &&ss = std::stringstream{}; 
   ss << workdir << ( workdir.compare("") == 0  ? "" : "/") << PROGRAM_NAME; 
   return ss.str(); 
 }

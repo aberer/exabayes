@@ -43,6 +43,8 @@ void Serializable::cWrite(std::ostream &out, const T& toWrite) const
 {
   static_assert(not std::is_same<T, std::string>::value, "Do NOT use the cWrite funciton with strings (there is a specific function for that)");
 
+  // std::cout << "wrote " << toWrite << std::endl; 
+  
   if(checkpointIsBinary)
     {      
       out.write((char*)&toWrite, sizeof(T)); 
@@ -74,6 +76,8 @@ T Serializable::cRead(std::istream &in )
       // std::cout <<  "READ " << result << std::endl; 
       readDelimiter(in);
     }
+
+  // std::cout << "read " << result << std::endl; 
 
   return result; 
 }

@@ -15,15 +15,17 @@ CredibleSet::CredibleSet(std::vector<std::string> files)
 
 void CredibleSet::printCredibleSet(std::string filename, double thresh)
 {
-  const auto& hash = _bipEx.getBipartitionHashes()[0]; 
-  auto numBip = _bipEx.getTaxa().size() - 3; 
+  assert(_bipEx.getBipartitionHashes().size() == 1 ); 
+  const auto& bipHash = _bipEx.getBipartitionHashes()[0]; 
+  auto numTax = _bipEx.getTaxa().size();
+  auto numBip =  2 * numTax - 3; 
 
   // sort the elems in the hash by number of occurrences of the bipartition 
   auto sortedBipOcc = std::vector<std::pair<Bipartition,Bipartition>>{}; 
-  for(auto elem : hash)    
+  for(auto elem : bipHash)    
     {
-      if(elem.first.count() > 1 )
-	sortedBipOcc.push_back(std::make_pair(elem.first, elem.second)); 
+      // if(elem.first.count() > 1 )
+      sortedBipOcc.push_back(std::make_pair(elem.first, elem.second)); 
     }
 
   auto sortFun = [](const std::pair<Bipartition, Bipartition> &elemA, 
@@ -66,7 +68,8 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
 	    break; 
 	}
 
-      assert(oneTree.size() == numBip); 
+      // std::cout << "expected " << oneTree.size() << " , got " << numBip << std::endl;
+      assert(oneTree.size() + 1 == numBip ); 
 
       auto& iter = trees[oneTree]; 
       ++iter; 
@@ -86,7 +89,6 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
 	      return elemA.second > elemB.second; 
 	    }); 
 
-  
   auto treeStrings = std::vector<std::pair<std::string, nat> >{}; 
   for(auto &elem : treeAndOcc)
     {
@@ -96,17 +98,18 @@ void CredibleSet::printCredibleSet(std::string filename, double thresh)
       for(auto &id : tree)
 	bips.push_back(sortedBipOcc[id].first); 
 
-      auto result = _bipEx.bipartitionsToTreeString(bips, false ); 
-      treeStrings.push_back(make_pair(result, elem.second)); 
+      auto result = _bipEx.bipartitionsToTreeString(bips, false , false, true); 
+      treeStrings.push_back(std::make_pair(result, elem.second)); 
     }
 
   nat absThreshold = nat( totalTrees * thresh); 
-  std::sort(treeStrings.begin(), treeStrings.end(), [](const std::pair<std::string,nat> &elemA, const std::pair<std::string, nat> &elemB)
+  std::sort(begin(treeStrings), end(treeStrings),
+	    [](const std::pair<std::string,nat> &elemA, const std::pair<std::string, nat> &elemB)
 	    {
 	      return elemA.second > elemB.second; 
 	    }); 
   
-  std::ofstream outfile(filename); 
+  auto &&outfile = std::ofstream (filename); 
   outfile << "freq\ttree" << std::endl; 
   
   nat accProb = 0; 

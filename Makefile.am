@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS=foreign
 
-EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h doc/*  examples/* build.sh apple-build.sh $(top_srcdir)/manual/manual.pdf $(top_srcdir)/manual/manual.html 
+EXTRA_DIST=lib/Random123-1.08 src/pll/avxLikelihood-pll.c src/examl/avxLikelihood.c src/pll/axml-pll.h src/examl/axml-examl.h examples/* build.sh apple-build.sh $(top_srcdir)/manual/manual.pdf manual/css/org.css manual/img/banner.png $(top_srcdir)/manual/manual.html README.txt LICENSE.txt COPYING
 
 .PHONY: my-update-src doc mydist  man  dist
 
@@ -34,7 +34,7 @@ noinst_LIBRARIES+=libexaml.a
 bin_PROGRAMS = exabayes 
 else
 LIBTOUSE=libpll.a
-bin_PROGRAMS = yggdrasil   postProcParam asdsf credibleSet extractBips consense  parser 
+bin_PROGRAMS = yggdrasil postProcParam credibleSet extractBips consense parser asdsf
 noinst_LIBRARIES+=libpll.a 
 endif 
 
@@ -62,39 +62,39 @@ endif
 ################################################################
 # ASDSF 
 asdsf_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) $(AM_CPP_FLAGS)
-asdsf_LDADD= libbayes.a $(LIBTOUSE) libncl.a
+asdsf_LDADD= libbayes.a  $(LIBTOUSE)  libncl.a
 asdsf_SOURCES= $(top_srcdir)/src/apps/asdsf.cpp 
 
 ################################################################
 # the parser 
 parser_SOURCES=$(top_srcdir)/src/apps/parser.cpp
-parser_LDADD= libbayes.a $(LIBTOUSE)  
+parser_LDADD= libbayes.a  $(LIBTOUSE) libncl.a
 parser_CXXFLAGS=-O3 $(BAYES_INCLUDES) $(MY_SIMD_FLAGS) $(RAX_FEATURE) -Wno-deprecated-writable-strings  $(AM_CPP_FLAGS)
 
 ################################################################
 # extractBips 
 extractBips_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
-extractBips_LDADD= libbayes.a $(LIBTOUSE)
+extractBips_LDADD= libbayes.a $(LIBTOUSE)  libncl.a
 extractBips_SOURCES=$(top_srcdir)/src/apps/extractBips.cpp  
 
 
 ################################################################
 # consense 
 consense_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
-consense_LDADD= libbayes.a $(LIBTOUSE)
+consense_LDADD= libbayes.a  $(LIBTOUSE)  libncl.a
 consense_SOURCES=$(top_srcdir)/src/apps/consense.cpp
 
 
 ################################################################
 # credibleSet 
 credibleSet_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
-credibleSet_LDADD= libbayes.a $(LIBTOUSE)
+credibleSet_LDADD= libbayes.a  $(LIBTOUSE) libncl.a
 credibleSet_SOURCES=$(top_srcdir)/src/apps/credibleSet.cpp
 
 ################################################################
 # postProcParam 
 postProcParam_CXXFLAGS=-O3 $(MY_SIMD_FLAGS) $(BAYES_INCLUDES) $(RAX_FEATURE) $(AM_CPP_FLAGS)
-postProcParam_LDADD= libbayes.a $(LIBTOUSE)
+postProcParam_LDADD= libbayes.a  $(LIBTOUSE) 
 postProcParam_SOURCES=$(top_srcdir)/src/apps/postProcParam.cpp
 
 ################################################################
@@ -115,6 +115,11 @@ doc :
 man:  
 	./manual/process.sh
 
+
+date :
+	./utils/updateDate.sh
+
 mydist : 
 	make man
+	make date 
 	make dist 

@@ -1,7 +1,6 @@
 #ifndef _PARAMETER_FILE
 #define _PARAMETER_FILE
 
-
 #include <sstream>
 #include <string>
 #include <iostream> 

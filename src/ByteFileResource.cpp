@@ -5,7 +5,7 @@
 #include "GlobalVariables.hpp"
 
 
-ByteFileResource::ByteFileResource(std::string fileName, ParallelSetup  pl)
+ByteFileResource::ByteFileResource(std::string fileName, std::shared_ptr<ParallelSetup> pl)
   : _byteFile{fileName, std::ios::binary}
   , _pl(pl)
 {
@@ -141,8 +141,12 @@ std::tuple<parsimonyNumber*,nat> ByteFileResource::fillParsVect( nat numNode, na
   byteRead(_byteFile, allArray.data(), numBytes); 
   // tout << "model=" << model << "\tlength=" << totalLen << "\treading  " <<  numBytes << std::endl; 
 
-  nat rank = _pl.getRankInChainBatch(); 
-  nat size = _pl.getProcessesPerChainBatch();
+  // nat rank = _pl.getRankInChainBatch(); 
+  nat rank = _pl->getRankInData();
+  nat size = _pl->getSizeInData(); 
+
+  // nat size = _pl->.getProcessesPerChainBatch();
+  // nat size = _pl->.get
 
   len = (totalLen / size); 
   if( rank < totalLen % size )

@@ -55,13 +55,18 @@ TreeAln::TreeAln( const TreeAln& rhs)
 }
 
 
-TreeAln::TreeAln(TreeAln &&rhs)
-{
-  // assert(0); 
-  tout << "MOVE tree " << &rhs << std::endl; 
-  // using std::swap; 
-  swap(*this, rhs);
-}
+// this was problematic with gcc-4.6
+// TreeAln::TreeAln(TreeAln &&rhs)
+// {
+//   // memset(&_tr, 0, sizeof(tree)); 
+//   // createStandardTree(rhs.getNumberOfTaxa()); 
+
+//   // assert(0); 
+//   // tout << "MOVE tree " << &rhs << std::endl; 
+//   // std::swap(*this, rhs); 
+//   // using std::swap; 
+//   swap(*this, rhs);
+// }
 
 
 TreeAln& TreeAln::operator=(TreeAln rhs)
@@ -182,9 +187,6 @@ TreeAln::~TreeAln()
 
   if(_hasAlignment)
     {
-      // OK???
-      // clearMemory(); 
-
       for(int i = 0; i < numPart ;++i)
 	{
 	  auto& partition = getPartition(i); 
@@ -193,8 +195,8 @@ TreeAln::~TreeAln()
 	  exa_free(partition.symmetryVector);
 	  exa_free(partition.frequencyGrouping); 
 #endif
-	  
-	  // exa_free(partition.xVector); 
+
+	  exa_free(partition.xVector); 
 
 	  exa_free(partition.frequencies);
 	  exa_free(partition.empiricalFrequencies); 

@@ -19,6 +19,11 @@
 #include "common.h"
 
 
+void myExit(int code)
+{
+  exit(code); 
+}
+
 static bool isAAMod(const std::string& input )
 {
   auto substr = input.substr(0,7) ; 
@@ -36,7 +41,7 @@ public:
 }; 
 
 
-std::unordered_map<std::string, Values> readFile(std::string file, nat burnin)
+std::unordered_map<std::string, Values> readFile(std::string file, double burnin)
 {
   auto result = std::unordered_map<std::string, Values>{}; 
   auto&& fh = std::ifstream(file); 
@@ -83,29 +88,21 @@ std::unordered_map<std::string, Values> readFile(std::string file, nat burnin)
   for(nat i = 0; i < headers.size() ; ++i)
     result[headers[i]] = values[i]; 
 
-  // remove the burnin 
-  if(burnin > 0 )
+  nat ctr = 0; 
+  for(auto &elem : result)
     {
-      nat ctr = 0; 
-      for(auto &elem : result)
-	{
-	  auto& values = std::get<1>(elem); 
-	  
-	  if(values.size() <= burnin)
-	    {
-	      std::cerr << "error: I merely have " << values.size() << " values and you are trying to skip " << burnin << " of them using the -b option" << std::endl; 
-	      exit(-1); 
-	    }
-	  
-	  
-	  std::cout << "querying " << headers[ctr] << std::endl; 
-	  if(isAAMod(headers[ctr]))
-	    values.models.erase(values.models.begin(), values.models.begin() + burnin);
-	  else 
-	    values.values.erase(values.values.begin(), values.values.begin() + burnin);
+      auto& values = std::get<1>(elem); 
 
-	  ++ctr ; 
+      // std::cout << "querying " << headers[ctr] << std::endl; 
+      if(isAAMod(headers[ctr]))
+	{
+	      
+	  values.models.erase(begin(values.models), begin(values.models) + nat(burnin * values.models.size() ));
 	}
+      else 
+	values.values.erase(begin(values.values), begin(values.values) + nat(burnin * values.values.size() ));
+
+      ++ctr ; 
     } 
 
   return result; 
@@ -114,22 +111,21 @@ std::unordered_map<std::string, Values> readFile(std::string file, nat burnin)
 
 static void printUsage(std::ostream &out)
 {
-  out << "postProcParams is a utility that provides various statistics for sampled parameters.\n\n"; 
+  out << "\npostProcParams is a utility that provides various statistics for sampled parameters.\n\n"; 
   out << "Usage: ./postProcParams -n id -f file[..] [-b burnin]\n\n"; 
   out << "    -n id             an id for the output file.\n"  ; 
-  out << "    -b burnin         a number of samples to neglect (starting from the beginning of the file)\n"  ; 
+  out << "    -b relBurnin      proportion of samples to discard as burn-in (beginning from start of the file). Default: 0.25\n"  ; 
   out << "    -f file[..]       one or many ExaBayes_parameters* files\n\n" ; 
-
 }
 
 
-std::tuple<std::string, std::vector<std::string>, nat> processCmdLine(int argc, char **argv)
+std::tuple<std::string, std::vector<std::string>, double> processCmdLine(int argc, char **argv)
 {
   
   int c = 0; 
   auto id = std::string {}; 
   auto files = std::vector<std::string> {}; 
-  auto burnin  = 0; 
+  auto burnin  = 0.25f; 
   
   while( (c  = getopt(argc, argv, "hn:f:b:")) != EOF) 
     {
@@ -138,7 +134,7 @@ std::tuple<std::string, std::vector<std::string>, nat> processCmdLine(int argc, 
 	case 'h': 
 	  {
 	    printUsage(std::cout); 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	  break; 
 	case 'n': 
@@ -172,7 +168,7 @@ std::tuple<std::string, std::vector<std::string>, nat> processCmdLine(int argc, 
 	default : 
 	  {
 	    std::cerr << "error: unknown argument "  << optarg << std::endl; 
-	    exit(-1); 
+	    myExit(-1); 
 	  }
 	}
     }
@@ -180,12 +176,18 @@ std::tuple<std::string, std::vector<std::string>, nat> processCmdLine(int argc, 
   if(files.size()  == 0)
     {
       std::cerr << "Error: please specify one or many files via -f." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
   if(id.compare("") == 0)
     {
       std::cerr << "Error: please specify a run id via -n. " << std::endl; 
-      exit(-1); 
+      myExit(-1); 
+    }
+
+  if(not ( 0. <= burnin && burnin < 1.)  )
+    {
+      std::cerr << "Error: the relative burn-in parameter must be in the range [0,1)." << std::endl; 
+      myExit(-1); 
     }
 
   return std::make_tuple(id, files, burnin); 
@@ -198,11 +200,11 @@ int main(int argc, char **argv)
   if(argc < 2 )
     {
       printUsage(std::cout);
-      exit(-1); 
+      myExit(-1); 
     }  
 
   auto files = std::vector<std::string>{}; 
-  nat burnin = 0; 
+  double burnin = 0; 
   auto id = std::string{}; 
   std::tie(id, files, burnin) = processCmdLine(argc, argv);
 
@@ -213,7 +215,7 @@ int main(int argc, char **argv)
   if(std::ifstream(outputFileName))
     {
       std::cerr << "Error: output file >" << outputFileName << "< already exists. Please or move." << std::endl; 
-      exit(-1); 
+      myExit(-1); 
     }
   
   auto && out = std::ofstream(outputFileName); 

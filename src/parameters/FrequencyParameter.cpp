@@ -1,4 +1,5 @@
 #include "FrequencyParameter.hpp"
+#include "ParallelSetup.hpp"
 #include "BoundsChecker.hpp"
 #include "DnaAlphabet.hpp"
 #include "AminoAcidAlphabet.hpp"
@@ -102,7 +103,7 @@ void FrequencyParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
     {
       tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
       printShort(tout) << " that is not applicable." << std::endl; 
-      exit(-1); 
+      ParallelSetup::genericExit(-1); 
     }
 }
 

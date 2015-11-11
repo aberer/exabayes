@@ -27,11 +27,10 @@ ArrayReservoir::~ArrayReservoir()
 {
   for(auto elem : _unusedArrays)
     exa_free(std::get<1>(elem));
+  for(auto elem : _usedArrays)
+    exa_free(std::get<0>(elem)); 
 } 
 
-
-
-// nat gctr = 0; 
 
 double* ArrayReservoir::allocate(size_t requiredLength)
 {
@@ -52,18 +51,9 @@ double* ArrayReservoir::allocate(size_t requiredLength)
       _usedArrays.insert(std::make_pair(std::get<1>(elem), std::get<0>(elem)));
       _unusedArrays.erase(found);
       result = std::get<1>(elem); 
-      // tout  << _unusedArrays.size() + _usedArrays.size() << "=" << _unusedArrays.size() << "/" << _usedArrays.size()  << " => REUSE "  << std::endl; 
     }
   else 
     {				
-      // tout  << _unusedArrays.size() + _usedArrays.size() << "=" << _unusedArrays.size() << "/" << _usedArrays.size()  << " => NEW "  << std::endl; 
-      
-      // if(freeOldArrayDespiteAvailable)
-      // 	{
-	  // ++gctr; 
-	  // tout <<  gctr << "\tfreeing an array anyway. Needed "  << requiredLength << ", but smalles was " << lengthOfFound << std::endl; 
-	// }
-
       if(_freeOlds &&   _unusedArrays.size() > 0  )
 	{
 	  auto iter =  _unusedArrays.end();
@@ -95,7 +85,19 @@ void ArrayReservoir::deallocate(double* array)
 
   assert(_usedArrays.find(array) == _usedArrays.end() ); 
 
-  // tout << _unusedArrays.size() + _usedArrays.size() << "=" << _unusedArrays.size() << "/" << _usedArrays.size()  << " => PUT BACK "  << std::endl; 
-
   array = nullptr; 
 } 
+
+
+
+
+#ifdef _DEVEL
+std::tuple<uint64_t,uint64_t> ArrayReservoir::getUsedAndUnusedBytes() const 
+{
+  uint64_t usedBytes =  std::accumulate(begin(_usedArrays), end(_usedArrays), 0, 
+				     [](nat elem, const std::pair<double*,nat> &elemB) { return elem + std::get<1>(elemB); } );
+  uint64_t unusedBytes = std::accumulate(begin(_unusedArrays), end(_unusedArrays), 0, 
+				       [](nat elem , const std::pair<nat,double*> &elemB) { return elem  + std::get<0>(elemB); });
+ return std::make_tuple(usedBytes, unusedBytes);
+} 
+#endif

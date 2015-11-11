@@ -25,6 +25,7 @@ public:
   std::vector<SuccessCounter> getMatrix() const {return matrix; }
 
   SwapMatrix operator+(const SwapMatrix& rhs) const; 
+  SwapMatrix& operator+=(const SwapMatrix& rhs) ; 
 
   friend void swap(SwapMatrix& a, SwapMatrix &b); 
 
@@ -35,8 +36,7 @@ private:
   std::vector<SuccessCounter> matrix; 
   nat numEntries; 
 
-
-  friend  std::ostream& operator<<(std::ostream &out, SwapMatrix& rhs ) ; 
+  friend  std::ostream& operator<<(std::ostream &out, const SwapMatrix& rhs ) ; 
 }; 
 
 

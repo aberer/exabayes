@@ -22,12 +22,14 @@ public:
 
   const std::vector<BipartitionHash>& getBipartitionHashes() const {return _bipHashes; } 
 
-  std::string bipartitionsToTreeString(std::vector<Bipartition> bips, bool printSupport) const ; 
-  void buildTreeRecursive(nat currentId, const std::vector<std::vector<nat> >& directSubBips, const std::vector<Bipartition> &bips, std::stringstream &result, bool printSupport) const; 
-  
+  std::string bipartitionsToTreeString(std::vector<Bipartition> bips, bool printSupport, bool printBranchLengths, bool phylipStyle) const ; 
+
+  nat getNumTreesInFile(std::string file) const ; 
+
 private: 
   void extractUniqueBipartitions() ;
-  nat getNumTreesInFile(std::string file) const ; 
+  void buildTreeRecursive(nat currentId, const std::vector<std::vector<nat> >& directSubBips, const std::vector<Bipartition> &bips, std::stringstream &result, bool printSupport, bool printBranchLengths, bool phylipStyle) const; 
+
 
 private: 			// ATTRIBUTES
   std::vector<BipartitionHash> _bipHashes; 

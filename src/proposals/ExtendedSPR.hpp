@@ -12,7 +12,6 @@ class ExtendedSPR : public AbstractProposal
 {
 public: 
   ExtendedSPR(  double stopProb, double multiplier); 
-  // virtual ~ExtendedSPR(){}
 
   virtual BranchPlain determinePrimeBranch( const TreeAln &traln, Randomness &rand) const ; 
 
@@ -24,7 +23,7 @@ public:
   virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return 
       std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
 
-  virtual void readFromCheckpointCore(std::istream &in) {   } 
+  virtual void readFromCheckpointCore(std::istream &in) { } 
   virtual void writeToCheckpointCore(std::ostream &out) const { }  
 
   virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 

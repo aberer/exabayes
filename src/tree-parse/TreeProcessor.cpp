@@ -1,4 +1,5 @@
 #include <sstream>
+#include "extensions.hpp" 
 #include <string.h>
 #include <cassert>
 #include "TreeInitializer.hpp"
@@ -41,7 +42,7 @@ TreeProcessor& TreeProcessor::operator=(TreeProcessor &&rhs)
 template<bool readBl>
 void TreeProcessor::nextTree(std::istream &treefile) 
 {
-  auto paramPtr = std::unique_ptr<AbstractParameter>(new BranchLengthsParameter(0,0, {0}));   
+  auto paramPtr = make_unique<BranchLengthsParameter>(0,0, std::vector<nat>{0});   
   paramPtr->addPartition(0);
 
   while( treefile.get() != '('); 

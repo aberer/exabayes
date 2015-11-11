@@ -5,12 +5,13 @@
 #include "ParallelSetup.hpp"
 #include "InitializationResource.hpp"
 
+#include <memory>
 #include <fstream>
 
 class ByteFileResource :  public InitializationResource
 {
 public: 
-  ByteFileResource(std::string fileName, ParallelSetup pl );
+  ByteFileResource(std::string fileName, std::shared_ptr<ParallelSetup> pl );
   virtual ~ByteFileResource(){}
 
   virtual void fillPartition(pInfo &partition, nat model) ; 
@@ -25,7 +26,7 @@ public:
   virtual bool isDataAreDistributed() { return false; } 
 private: 
   std::ifstream _byteFile; 
-  ParallelSetup _pl; 
+  std::shared_ptr<ParallelSetup> _pl; 		// non-owning
 }; 
 
 #endif

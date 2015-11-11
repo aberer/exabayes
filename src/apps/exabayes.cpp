@@ -20,6 +20,7 @@
 #include <sstream>
 #include <chrono>
 
+#include "releaseDate.hpp" 
 
 int NUM_BRANCHES; 
 
@@ -37,13 +38,11 @@ int NUM_BRANCHES;
 #include "teestream.hpp"
 
 // #define TEST  
-
 #include "axml.h" 
 
 #ifdef TEST
-#include <set> 
+#include "PendingSwap.hpp"
 #endif
-
 
 // have ae look at that later again 
 double fastPow(double a, double b)
@@ -61,43 +60,43 @@ double fastPow(double a, double b)
 /**
    @brief the main ExaBayes function.
 
-  @param tr -- a tree structure that has been initialize in one of the adapter mains. 
+   @param tr -- a tree structure that has been initialize in one of the adapter mains. 
    @param adef -- the legacy adef
  */
-static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
+static void exa_main ( CommandLine &cl,  std::shared_ptr<ParallelSetup> pl )
 {   
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-  
-  // auto myLess = [](  nat a,  nat b  ){ return a < b ;  } ; 
-    // { return std::get<0>(a) < std::get<0>(b);   }; 
-
-  
-  auto myMap = std::multimap<nat,nat > 
-    {
-      { 3 , 8} , 
-      {21, 15}, 
-      {27, 27},
-      {1,1}, 
-      {27,27} 
-    }; 
-
-  for(auto elem : myMap)
-    {
-      std::cout << std::get<0>(elem) << "\t" << std::get<1>(elem) << std::endl; 
-    }
-
-  auto result = myMap.lower_bound( 100 ); 
-
-  // assert(result != myMap.end()); 
-
-  std::cout << "result: " << std::get<0>(*result) << std::endl; 
+  auto aSwap = SwapElem{0, 0,1,0.5};
+  auto&& myPSwap = PendingSwap {aSwap}; 
   
 
+  auto coords = pl.getMyCoordinates();
+  assert(coords[1] < 2 ); 
+  auto data = coords[1] == 0 
+    ? std::vector<char>{ 'a', 'b', 'c'}
+  : std::vector<char>{ 'd', 'e', 'f'}; 
 
+  myPSwap.initialize(pl, data, 0, 2);
 
-  exit(0); 
+  while(not myPSwap.hasReceived()); 
+
+  auto remote =  myPSwap.getRemoteData();
+  
+  auto &&ss = std::ostringstream{}; 
+  for(auto elem : remote )
+    ss << elem << "," ; 
+  ss << std::endl; 
+  
+  pl.blockingPrint(pl.getGlobalComm(), ss.str());
+
+  while(not myPSwap.isFinished()); 
+  
+    
+
+  return ; 
+  ParallelSetup::genericExit(0); 
 #else 
   // assert(0); 
   auto&& master = SampleMaster(  pl, cl );
@@ -105,7 +104,7 @@ static void exa_main ( CommandLine &cl,  ParallelSetup &pl )
   if( cl.isDryRun())
     {
       std::cout << "Command line, input data and config file is okay. Exiting gracefully." << std::endl; 
-      exit(0); 
+      ParallelSetup::genericExit(0); 
     }
   else 
     {
@@ -132,8 +131,10 @@ static void ignoreExceptionsDenormFloat()
 
 static bool fileExists(const std::string &name)
 {
-  FILE *fh = fopen(name.c_str(), "r"); 
-  return fh != nullptr; 
+  auto &&ifh = std::ifstream{name};
+  bool result = ifh.is_open(); 
+  ifh.close();
+  return result; 
 }
 
 
@@ -148,7 +149,6 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 
   if( not cl.isDryRun() && pl.isGlobalMaster() )
     {
-      // auto &&iss = std::ifstream(ss.str()); 
       if(fileExists(ss.str()))
 	{
 	  std::cerr << pl << std::endl; 
@@ -160,7 +160,11 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
 
   globals.logFile = ss.str();   
   
-  globals.logStream =  new ofstream  (globals.logFile); 
+  if( pl.isGlobalMaster())
+    globals.logStream =  new std::ofstream(globals.logFile); 
+  else 
+    globals.logStream =  new std::ofstream{"/dev/null"}; 
+    
   globals.teeOut =  new teestream(cout, *globals.logStream);
 
   if(not pl.isGlobalMaster())
@@ -217,9 +221,7 @@ static void printInfoHeader(int argc, char **argv)
        << "\nbuild with the (Phylogenetic Likelihood Library) PLL code base for sequential execution."
 #endif
 
-       << std::endl <<  "This software has been releasd by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis" << std::endl 
-       << "in ?" << std::endl 
-
+       << std::endl <<  "This software has been released in " << RELEASE_DATE <<  " by \n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" << std::endl 
        << "\nPlease send any feature requests and inquiries to " << PACKAGE_BUGREPORT
        << std::endl << std::endl; 
 
@@ -236,26 +238,27 @@ static void printInfoHeader(int argc, char **argv)
 // just having this, because of mpi_finalize
 static int innerMain(int argc, char **argv)
 { 
-  auto pl = ParallelSetup(argc,argv); 		// MUST be the first thing to do because of mpi_init ! 
+  auto plPtr = make_shared<ParallelSetup>(); 		// MUST be the first thing to do because of mpi_init ! 
 
 #if HAVE_PLL != 0 && ( (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS)))
   assert(0); 
 #endif
 
-  ignoreExceptionsDenormFloat(); 
   auto cl = CommandLine(argc, argv); 
 
 #if HAVE_PLL == 0 
-  pl.initializeExaml(cl);
+  plPtr->initializeExaml(cl);
 #endif
 
-  initializeProfiler(pl);
+  ignoreExceptionsDenormFloat(); 
 
-  makeInfoFile(cl, pl);
+  initializeProfiler(*plPtr);
+
+  makeInfoFile(cl, *plPtr);
 
   printInfoHeader(argc,argv); 
 
-  exa_main( cl, pl); 
+  exa_main( cl, plPtr); 
   
   finalizeProfiler();
 
