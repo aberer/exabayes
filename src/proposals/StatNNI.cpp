@@ -55,12 +55,12 @@ void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings,
 
 
 
-void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior)
+void StatNNI::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
 {
   Branch evalBranch = move.getEvalBranch(traln); 
   nodeptr p = evalBranch.findNodePtr(traln);
   move.disorientAtNode(traln, p);
-  evaluator.evaluate(traln, evalBranch, false); 
+  evaluator->evaluate(traln, evalBranch, false); 
 }
 
 

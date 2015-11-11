@@ -38,7 +38,7 @@ void AbstractProposal::updateHastings(double &hastings, double valToAdd, std::st
 }
 
 
-std::ostream& AbstractProposal::printShort(std::ostream &out) 
+std::ostream& AbstractProposal::printShort(std::ostream &out)  const 
 {
   out << this->name << "( " ;  
     
@@ -89,7 +89,7 @@ std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 }
 
 
-std::ostream&  operator<< ( std::ostream& out , const std::unique_ptr<AbstractProposal> &rhs) 
+std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs) 
 {
   out << rhs->name <<  " primarily modifying " ; 
   for(auto &r : rhs->primVar)
@@ -118,3 +118,24 @@ AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
 } 
 
 
+
+
+
+void AbstractProposal::writeToCheckpoint( std::ofstream &out)  
+{
+  std::stringstream ss ; 
+  printShort(ss); 
+  std::string name = ss.str();
+  // cWrite<std::string>(out, name);   
+  writeString(out, name); 
+  sctr.writeToCheckpoint(out) ; 
+  writeToCheckpointCore(out); 
+}
+
+
+void AbstractProposal::readFromCheckpoint( std::ifstream &in )
+{
+  // notice: name has already been read 
+  sctr.readFromCheckpoint(in); 
+  readFromCheckpointCore(in); 
+}

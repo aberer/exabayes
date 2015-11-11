@@ -13,6 +13,8 @@
 #endif
 
 
+void genericExit(int code); 
+
 
 int main(int argc, char** argv)
 {
@@ -23,7 +25,7 @@ int main(int argc, char** argv)
 	   << "start\t is first tree to include (potentially skipping a burnin) " << std::endl
 	   << "end\t is the last generation to include (file may be truncated)" << std::endl
 	   << "[file ...]\t are various ExaBayes_topology* files. " << std::endl; 
-      exit(0); 
+      exit(-1); 
     }
 
   int start = atoi(argv[1]); 
@@ -37,7 +39,7 @@ int main(int argc, char** argv)
       if(fh == NULL)
 	{
 	  std::cerr << "could not find file >" << argv[i] << "<"<< std::endl; 
-	  exit(0); 
+	  exit(-1); 
 	}
       
       tmp.push_back(std::string(argv[i]));
@@ -57,4 +59,5 @@ int main(int argc, char** argv)
   std::cout << "ignored splits that did not occur more than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << std::endl; 
   return 0; 
 }
+
 

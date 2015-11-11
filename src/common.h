@@ -6,7 +6,6 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-
 #include "config.h"
 
 
@@ -23,6 +22,11 @@
 #define exa_malloc malloc
 #define exa_calloc calloc
 #endif
+
+
+#define SOME_SCI_PRECISION std::scientific << std::setprecision(2)   
+#define MAX_SCI_PRECISION  std::scientific << std::setprecision(std::numeric_limits<double>::digits10)   
+#define PERC_PRECCISION std::fixed << std::setprecision(2) 
 
 
 #define NO_SEC_BL_MULTI
@@ -43,6 +47,11 @@ typedef  unsigned int nat ;
    be user variables later (for development lets just keep them here).
 
  */
+
+
+
+#define _DISABLE_INIT_LNL_CHECK
+
 
 /* #define DEBUG_ACCEPTANCE */
 /* #define DEBUG_HASTINGS */
@@ -68,14 +77,15 @@ typedef  unsigned int nat ;
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_CHECK_TREE_CONSISTENCY */
 /* #define DEBUG_SHOW_TOPO_CHANGES */
-/* #define VERIFY_LNL_SUPER_EXPENSIVE */
 /* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
 
 
 
 /* #define DEBUG_LNL_VERIFY */
-/* BAD BAD BAD  */
+/* BAD BAD BAD */
 /* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
+
+/* #define PRINT_MUCH */
 
 
 #endif

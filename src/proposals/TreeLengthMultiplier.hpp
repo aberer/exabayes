@@ -8,15 +8,17 @@ public:
   virtual ~TreeLengthMultiplier(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior)  ; 
   virtual void autotune() ;
 
   virtual AbstractProposal* clone() const;  
 
+  virtual void readFromCheckpointCore(std::ifstream &in); //  { in >> multiplier; readDelimiter(in);  } 
+  virtual void writeToCheckpointCore(std::ofstream &out); //  {out << multiplier << DELIM; } 
+
 private: 
   double multiplier; 		// the tuning variable  
-  // double rememMultiplier; 	// for resetting 
   double initTreeLength; 
   
   void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 

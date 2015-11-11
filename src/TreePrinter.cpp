@@ -40,13 +40,13 @@ void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss, nodeptr p,
     ss << p->number ; 
 
   if(not isFirst && withBranchLengths)
-    ss << ":" << std::setprecision(7) << std::fixed  << Branch(p->number,p->back->number,p->z[0]).getInterpretedLength(traln); 
+    ss << ":" << std::setprecision(std::numeric_limits<double>::digits10) << std::scientific  << Branch(p->number,p->back->number,p->z[0]).getInterpretedLength(traln); 
 
   if(isFirst)
     {
       ss << "," << p->back->number; 
       if(withBranchLengths)
-	ss << ":" << std::setprecision(7) << std::fixed  << Branch(p->back->number, p->number, p->z[0]).getInterpretedLength(traln); 
+	ss << ":" << std::setprecision(std::numeric_limits<double>::digits10) << std::scientific  << Branch(p->back->number, p->number, p->z[0]).getInterpretedLength(traln); 
     }
 }
 

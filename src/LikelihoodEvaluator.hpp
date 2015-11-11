@@ -9,47 +9,63 @@
 class LikelihoodEvaluator
 {
 public: 
-  LikelihoodEvaluator(std::shared_ptr<LnlRestorer> restorer); 
+  LikelihoodEvaluator(){}
+  virtual ~LikelihoodEvaluator() {} 
 
-  double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions)  ; 
-  void evalSubtree( TreeAln &traln, const Branch &evalBranch)    ; 
-  double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal )  ; 
-  double evaluateFull(TreeAln& traln, const Branch &evalBranch); 
-  Branch findVirtualRoot(const TreeAln &traln) const ; 
-
-
-  void imprint(const TreeAln &traln); 
-  void resetToImprinted(TreeAln &traln) ; 
-
+  /**
+     @brief: evaluate a list of partitions. This is always a full traversal 
+   */
+  virtual double evaluatePartitions( TreeAln &traln, const std::vector<nat>& partitions, bool fullTraversal)  = 0; 
+  /** 
+      @brief evaluate a subtree. This used to be the
+      newview-command. The this-node is the important part, the
+      that-node of the branch only specifies the orientation.
+   */ 
+  virtual void evalSubtree( TreeAln &traln, const Branch &evalBranch)  = 0   ; 
+  /** 
+      @brief evaluation at a given branch  
+   */ 
+  virtual double evaluate(TreeAln &traln, const Branch &evalBranch,  bool fullTraversal ) = 0 ; 
+  /** 
+      @brief find the root branch in the current tree    
+   */
+  Branch findVirtualRoot(const TreeAln &traln) const ;   
+  /** 
+      @brief make the current state in the tree resettable (only needed for chain.cpp)
+   */ 
+  virtual void imprint(const TreeAln &traln) = 0; 
+  /**
+     @brief use backup likelihood arrays to reset the state 
+   */ 
+  virtual void resetToImprinted(TreeAln &traln) = 0;  
+  /** 
+      @brief invalidate the orientation at a given node 
+   */ 
   static bool disorientNode( nodeptr p); 
+  /**
+     @brief destroy the orientation of the entire tree (e.g., to enforce re-evaluation)
+   */
   static void disorientTree(TreeAln &traln, const Branch &root) ; 
+  /** 
+      @brief destroy the orientation of a subtree 
+   */ 
   static void disorientSubtree(TreeAln &traln, const Branch &branch) ; 
 
-  void evaluateFullNoBackup(TreeAln& traln); 
-  void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
+  virtual std::unique_ptr<LikelihoodEvaluator> clone() const = 0; 
 
-#ifdef DEBUG_LNL_VERIFY
-  // BAD
   void expensiveVerify(TreeAln &traln);
   void setDebugTraln(std::shared_ptr<TreeAln> _debugTraln); 
-#endif
 
-private: 			// METHODS
+protected: 			// METHODS
+  void exa_evaluateGeneric(TreeAln &traln, nodeptr start, boolean fullTraversal); 
   void coreEvalSubTree(TreeAln& traln, nodeptr p, boolean masked); 
 
-
-private: 			// ATTRIBUTES
-  std::shared_ptr<LnlRestorer> restorer;    
-#ifdef DEBUG_LNL_VERIFY
+protected: 			// ATTRIBUTES
   std::shared_ptr<TreeAln> debugTraln;  
   bool verifyLnl; 
-#endif
-
   double prevLnl; 
+  std::vector<double> partitionLnls;  
 }; 
-
-
-
 
 #endif
 

@@ -11,6 +11,7 @@
 #include "globalVariables.h" 
 #endif
 
+
 int main(int argc, char **argv)
 {
   if(argc < 2 || 4 < argc)

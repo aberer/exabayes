@@ -1,7 +1,9 @@
 #include "PriorBelief.hpp"
 #include "Branch.hpp"
 #include "GlobalVariables.hpp"
-#include "Priors.hpp"
+#include "priors/AbstractPrior.hpp"
+
+#include "priors/ExponentialPrior.hpp"
 
 #include "Category.hpp"
 
@@ -13,6 +15,7 @@ PriorBelief::PriorBelief()
   , wasInitialized(false)
 {
 }
+
 
 
 void PriorBelief::initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables)
@@ -39,12 +42,12 @@ void PriorBelief::accountForFracChange(const TreeAln &traln, const std::vector<d
 
   assert(oldFc.size() == 1 && newFcs.size() == 1 );  
 
-  double blInfluence = 0; 
+  double blInfluence = 1; 
   std::vector<Branch> branches = traln.extractBranches() ;  
   for(auto &b : branches)
-    blInfluence += log(b.getLength()); 
+    blInfluence *= b.getLength(); 
 
-  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * blInfluence;
+  lnPriorRatio += (newFcs[0] - oldFc[0]) * lambda * log(blInfluence);
 }
 
 
@@ -52,15 +55,13 @@ double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<AbstractPa
 {
   double result = 0; 
 
-  // for(auto &v = variables.begin(); v < variables.end(); ++v)  
-       for( const auto v : variables)
+  for( auto& v : variables)
     {
       double partialResult = 0; 
 
-      switch(v->getCategory())			// TODO => category object 
+      switch(v->getCategory()) 
 	{	  
 	case Category::TOPOLOGY: 	  
-	  // partialResult = v.getPrior()->getLogProb({});
 	  partialResult = 0; 	// well...
 	  break; 
 	case Category::BRANCH_LENGTHS: 
@@ -69,7 +70,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<AbstractPa
 	    std::vector<Branch> bs = traln.extractBranches(); 
 	    auto pr = v->getPrior();	    
 	    for(auto b : bs)
-	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln)} );
+	      partialResult += pr->getLogProb( {  b.getInterpretedLength(traln) }); 	  
 	  }
 	  break; 
 	case Category::FREQUENCIES: 
@@ -96,7 +97,7 @@ double PriorBelief::scoreEverything(const TreeAln &traln, std::vector<AbstractPa
 	default : assert(0); 
 	}
       
-      // cout << "pr(" <<  v << ") = "<< partialResult << endl ; 
+      // std::cout << "pr(" <<  v << ") = "<< partialResult << std::endl ; 
       result += partialResult; 
     }
 

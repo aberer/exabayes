@@ -5,6 +5,8 @@
 #include <cassert>
 #include <ncl/ncl.h>
 
+#include "common.h"
+
 
 class BlockRunParameters : public NxsBlock
 {
@@ -20,7 +22,7 @@ public:
   double getHeatFactor() const { return heatFactor ; }
   int getPrintFreq() const { return printFreq; }
   int getNumCoupledChains() const { return numCoupledChains; }
-  string getRunId() const { return runId; }
+  // string getRunId() const { return runId; }
   int getNumGen() const { return numGen; }
   int getNumRunConv() const { return numRunConv; }
   int getSamplingFreq() const { return samplingFreq; }
@@ -31,6 +33,7 @@ public:
   double getAsdsfConvergence() const {return asdsfConvergence; }
   bool isUseParsimonyStarting() const {return useParsimonyStarting; } 
   bool isHeatedChainsUseSame() const {return heatedChainsUseSame;}
+  nat getChkpntFreq() const {return chkpntFreq; }
 
 private: 
   int diagFreq ; 
@@ -41,7 +44,7 @@ private:
   int samplingFreq; 
   int numRunConv; 
   int numGen; 
-  string runId; 
+  // string runId; 
   int numCoupledChains; 
   int printFreq; 
   double heatFactor ; 
@@ -50,6 +53,7 @@ private:
   int tuneFreq;  
   bool useParsimonyStarting; 
   bool heatedChainsUseSame; 
+  nat chkpntFreq; 
 }; 
 
 

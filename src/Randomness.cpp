@@ -1,5 +1,4 @@
 #include <limits>
-
 #include <cstring>
 
 #include "Randomness.hpp" 
@@ -33,8 +32,6 @@ void Randomness::incrementNoLimit()
       ctr.v[0] = 0;     
     }
 }
-
-
 
 
 /** 
@@ -209,19 +206,19 @@ std::vector<double> Randomness::drawRandDirichlet( const std::vector<double> &al
 
 
 //This function should be called if the expected values for the dirichlet distribution are given
-std::vector<double> Randomness::drawDirichletExpected(const std::vector<double> &mean,double scale)
-{
-  std::vector<double> alphas; 
-  double originalSum=0;
-  for(nat i=0; i< mean.size();i++)
-    {
-      originalSum+=mean[i];
-      alphas.push_back( mean[i]*scale ) ;
-    }
-  assert(fabs(originalSum - 1.0 ) < 1e-6);   
+// std::vector<double> Randomness::drawDirichletExpected(const std::vector<double> &mean,double scale)
+// {
+//   std::vector<double> alphas; 
+//   double originalSum=0;
+//   for(nat i=0; i< mean.size();i++)
+//     {
+//       originalSum+=mean[i];
+//       alphas.push_back( mean[i]*scale ) ;
+//     }
+//   assert(fabs(originalSum - 1.0 ) < 1e-6);   
   
-  return  drawRandDirichlet( alphas);
-}
+//   return  drawRandDirichlet( alphas);
+// }
 
 
 
@@ -386,4 +383,23 @@ std::ostream& operator<<(std::ostream& out, const Randomness &rhs)
 {
   out << "key={" << rhs.key.v[0] << "," << rhs.key.v[1] << "},ctr={" << rhs.ctr.v[0] << ","<< rhs.ctr.v[1] << "}"; 
   return out; 
+} 
+
+
+
+void Randomness::readFromCheckpoint( std::ifstream &in )  
+{ 
+  key.v[0] = cRead<nat>(in); 
+  key.v[1] = cRead<nat>(in) ; 
+  ctr.v[0] = cRead<nat>(in); 
+  ctr.v[1] = cRead<nat>(in); 
+
+}
+ 
+void Randomness::writeToCheckpoint( std::ofstream &out) 
+{
+  cWrite(out, key.v[0]); 
+  cWrite(out, key.v[1]); 
+  cWrite(out, ctr.v[0]); 
+  cWrite(out, ctr.v[1]); 
 } 

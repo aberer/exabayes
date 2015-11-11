@@ -7,8 +7,7 @@
 #include "axml.h"
 
 #include "Randomness.hpp"
-
-using namespace std; 
+#include "MemoryMode.hpp"
 
 
 class CommandLine
@@ -16,31 +15,37 @@ class CommandLine
 public: 
   CommandLine(int argc, char* argv[]);
   randCtr_t getSeed() const; 
-  string getConfigFileName() const {return configFileName; }
-  string getAlnFileName() const{return alnFileName; }
-  string getRunid() const {return runid; }
-  string getTreeFile() const {return treeFile; }
+  std::string getConfigFileName() const {return configFileName; }
+  std::string getAlnFileName() const{return alnFileName; }
+  std::string getRunid() const {return runid; }
+  std::string getTreeFile() const {return treeFile; }
   int getNumRunParallel() const {return runNumParallel; }
-  string getWorkdir() const {return workDir; }
+  std::string getWorkdir() const {return workDir; }
   void printVersion(bool toInfoFile);
-  // int getChainNumParallel() const { return chainNumParallel; }
 
+  // int getChainNumParallel() const { return chainNumParallel; }
+  std::string getCheckpointId()const {return checkpointId; }
   void parseAlternative(int argc, char *argv[]); 
 
-private: 
-  // int seed; 
-  randCtr_t seed; 
-  string configFileName; 
-  string alnFileName; 
-  string runid; 
-  string treeFile; 
-  string workDir;
-  int runNumParallel; 
-  int chainNumParallel; 
+  MemoryMode getMemoryMode()const {return memoryMode ;  }
 
-  void assertFileExists(string filename); 
+private: 			// METHODS
+
+  void assertFileExists(std::string filename); 
   void parse(int argc, char *argv[]); 
   void printHelp();
+
+private: 			// ATTRIBUTES
+  randCtr_t seed; 
+  std::string configFileName; 
+  std::string alnFileName; 
+  std::string runid; 
+  std::string treeFile; 
+  std::string workDir;
+  int runNumParallel; 
+  int chainNumParallel; 
+  std::string checkpointId; 
+  MemoryMode memoryMode; 
 }; 
 
 

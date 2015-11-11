@@ -1,14 +1,29 @@
 #include <set>
+#include <iostream>
 
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
-#include "ProposalFunctions.hpp"
+
+#include "proposers/AbstractProposer.hpp"
+#include "proposers/MultiplierProposal.hpp"
+#include "proposers/DirichletProposal.hpp"
+#include "proposers/SlidingProposal.hpp"
+#include "ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
 #include "parameters/FrequencyParameter.hpp"
 #include "parameters/RevMatParameter.hpp"
 #include "parameters/RateHetParameter.hpp"
+
+#include "priors/AbstractPrior.hpp"
+#include "priors/ExponentialPrior.hpp"
+#include "priors/UniformPrior.hpp"
+#include "priors/DirichletPrior.hpp"
+#include "priors/FixedPrior.hpp"
+
+
+void genericExit(int code); 
 
 
 
@@ -20,7 +35,15 @@ void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &v
   for(auto &v : vars)
     categories.insert(v->getCategory()); 
 
-  nat highestId = vars.size() == 0 ? 0 : vars[vars.size()-1]->getId(); 
+  int highestId = -1; 
+  for(auto &v : vars )
+    {
+      v->printShort(tout); 
+      int id = v->getId(); 
+      if(highestId < id)
+	highestId = id; 
+    }
+  ++highestId;
 
   // add standard stuff, if not defined yet
   for(auto &cat : CategoryFuns::getAllCategories())
@@ -70,29 +93,22 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
     case Category::TOPOLOGY:  
-      var->setPrior( make_shared<UniformPrior>(0,0)); // TODO : proper topology prior? 
+      var->setPrior( std::make_shared<UniformPrior>(0,0) ); // TODO : proper topology prior? 
       break; 
     case Category::BRANCH_LENGTHS: 
-      var->setPrior(make_shared<ExponentialPrior>(10.0));
+      var->setPrior( std::make_shared<ExponentialPrior>(10.0) );
       break; 
     case Category::FREQUENCIES: 
       {
 	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
 	assert(partition->dataType == DNA_DATA || partition->dataType == AA_DATA); 
-
-	vector<double>badHardcoded; 
-	for(int i = 0; i < partition->states; ++i)
-	  badHardcoded.push_back(1.); 
-	var->setPrior(make_shared<DirichletPrior>(badHardcoded)); 
+	var->setPrior(make_shared<DirichletPrior>(vector<double>(partition->states , 1.))); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
       {
-	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
-	assert(partition->dataType == DNA_DATA); 
-	
-	vector<double> subAlpha = {1,1,1,1,1,1}; 
-	var->setPrior(make_shared<DirichletPrior>( subAlpha )); 
+	pInfo *partition = traln.getPartition(var->getPartitions()[0]);	;
+	var->setPrior(make_shared<DirichletPrior>( vector<double> (numStateToNumInTriangleMatrix(partition->states), 1.) )); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
@@ -125,7 +141,7 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
 	      if(thePrior != nullptr)
 		{
 		  cerr << "while setting prior for random variable " << v.get() << ": it seems you have defined a prior for more than one partition of a set of partitions that is linked for a specific variable to estimate. Please only specify exactly one prior per variable for a set of linked partitions."  << endl; 
-		  exit(1); 
+		  ParallelSetup::genericExit(-1); 
 		}
 	      else 
 		thePrior = idMap.at(partId); 
@@ -136,12 +152,12 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       if(thePrior == nullptr)	  
 	{
 	  thePrior = generalPriors.at(int(v->getCategory())); // BAD
-	  if(thePrior != nullptr)
-	    cout << "using GENERAL prior for variable " <<  endl; 
+	  // if(thePrior != nullptr)
+	  //   cout << "using GENERAL prior for variable " <<  endl; 
 	}
       else 
 	{
-	  tout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
+	  // tout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
 	}
       
       if(thePrior != nullptr)
@@ -149,17 +165,15 @@ void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &p
       else 
 	{	  
 	  addStandardPrior(v.get(), traln);
-	  tout << "using STANDARD prior for variable "  << v.get() << endl; 
+	  // tout << "using STANDARD prior for variable "  << v.get() << endl; 
 	}
     }
 }
 
-void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, shared_ptr<LikelihoodEvaluator> eval )
+void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, const unique_ptr<LikelihoodEvaluator> &eval )
 {
-  // randomVariables = partitionParams.getParameters();  
-
-  addStandardParameters(randomVariables, traln);
-  
+  randomVariables = partitionParams.getParameters(); 
+  addStandardParameters(randomVariables, traln);  
   addPriorsToVariables(traln, priorInfo, randomVariables);
 
   ProposalRegistry reg; 
@@ -171,7 +185,7 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   for(auto &v : randomVariables)
     {
-      if(typeid(v->getPrior()) == typeid(shared_ptr<FixedPrior>))
+      if(dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr ) // is it a fixed prior?
 	continue;
 
       vector<unique_ptr<AbstractProposal> > tmpResult;  
@@ -202,7 +216,10 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 
   tout << endl << "Parameters to be integrated: " << endl; 
   for(auto &v : randomVariables)
-    tout << v.get()  << endl; 
+    {
+      tout << v->getId() << "\t" << v.get()  << endl; 
+      tout << "\t with prior " << v->getPrior() << std::endl; 
+    }
   tout << endl; 
   
   double sum = 0; 

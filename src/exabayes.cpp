@@ -16,6 +16,7 @@
 #define __AVX
 #endif
 
+#include <iostream>
 #include <sstream>
 
 #include "axml.h" 
@@ -43,8 +44,10 @@
 
 
 // have ae look at that later again 
-double fastPow(double a, double b) {
-  union {
+double fastPow(double a, double b)
+{
+  union 
+  {
     double d;
     int x[2];
   } u = { a };
@@ -53,6 +56,10 @@ double fastPow(double a, double b) {
   return u.d;
 }
 
+
+
+
+void genericExit(int code); 
 
 #include <chrono>
 
@@ -68,22 +75,39 @@ static void exa_main (const CommandLine &cl, const ParallelSetup &pl )
   timeIncrement = CLOCK::system_clock::now(); 
 
 #ifdef TEST     
-
-  auto t =  make_shared<TreeAln>( 1,2)  ; 
-  t->initializeFromByteFile(cl.getAlnFileName());
-  t->enableParsimony();
-
-  randCtr_t c; 
-  c.v[1] = 0; 
-  c.v[0] = 1; 
-
-  TreeRandomizer r(c); 
-  r.randomizeTree(*t);
   
-  vector<nat> partPars ; 
-  ParsimonyEvaluator p; 
-  p.evaluate(*t, t->getTr()->start, true,partPars);
+  std::string bla = "aeae"; 
+  bla += '\0'; 
+  std::cout <<  bla.size() << std::endl;  
 
+
+  std::ofstream fh("file.txt", std::ios::binary); 
+  string test = "bla"; 
+  test += "\0"; 
+  int number = 123; 
+
+  fh.write(test.c_str(), test.size()); 
+  fh.write((char*)&number, sizeof(int)); 
+  fh.close();
+  
+  std::ifstream ifh("file.txt", std::ios::binary); 
+  char *reread = new char[100]; 
+  char *iter = reread; 
+  memset(reread, '\0', 100); 
+  char c = 'a'; 
+  while(c != '\0')
+    {
+      ifh.read(&c,1); 
+      *iter = c; 
+      ++iter; 
+    }
+  // ifh.read(reread, 3); 
+  
+  std::cout << "i read >" << reread << "<" << std::endl; 
+
+  fh.close(); 
+
+  genericExit(0); 
 #else 
 
   SampleMaster master(  pl, cl );
@@ -128,7 +152,12 @@ void makeInfoFile(const CommandLine &cl, const ParallelSetup &pl )
     ss << "/" ; 
   ss << PROGRAM_NAME << "_info."  << cl.getRunid() ;
 
-  // TODO maybe check for existance 
+  if( pl.isMasterReporter() && std::ifstream(ss.str()))
+    {
+      std::cerr << std::endl <<  "File " << ss.str() << " already exists (probably \n"
+		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
+      ParallelSetup::genericExit(-1); 
+    }
 
   globals.logFile = ss.str();   
   

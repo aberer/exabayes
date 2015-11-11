@@ -17,7 +17,7 @@
 class LnlRestorer
 {
 public: 
-  LnlRestorer(TreeAln& traln); 
+  LnlRestorer(const TreeAln& traln); 
   ~LnlRestorer();
 
   void resetRestorer(const TreeAln &traln); 
@@ -35,15 +35,15 @@ private:
   int numPart; 
   int numTax; 
 
-  std::vector<double> partitionLnl; 
+  // std::vector<double> partitionLnl; 
 
   int modelEvaluated; 
   // TODO eventually use unique ptrs there as well 
   std::vector<std::vector<double* > > reservePerPartition; 
-  std::vector<bool> wasSwitched; 
-  std::vector<nat> orientation; 
-  std::vector<std::vector<nat>> partitionScaler;   
-  double prevLnl; 		// for DEBUG
+  std::vector<bool> wasSwitched;
+  std::vector<nat> orientation;
+  std::vector<std::vector<nat> > partitionScaler;   
+  // double prevLnl; 		// for DEBUG
 }; 
 
 #endif

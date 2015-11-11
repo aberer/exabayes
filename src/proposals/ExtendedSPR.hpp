@@ -15,11 +15,13 @@ public:
   virtual ~ExtendedSPR(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, PriorBelief &prior) ; 
+  virtual void evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
   virtual void autotune() {}	// disabled 
   virtual AbstractProposal* clone() const;  
-
+  
+  virtual void readFromCheckpointCore(std::ifstream &in) {   } 
+  virtual void writeToCheckpointCore(std::ofstream &out) { }  
 
 protected: 			// METHODS
   void drawPathForESPR( TreeAln& traln, Randomness &rand, double stopProp ); 

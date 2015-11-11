@@ -16,8 +16,9 @@ std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs)
 	isFirst = false; 
       out << v; 
     }
-  auto p = rhs->getPrior(); 
-  out << "} \twith prior " << p ; 
+  // auto p = rhs->getPrior(); 
+  out << "}" ; 
+  // out << \twith prior " << p ; 
   return out;
 }
 
@@ -37,3 +38,4 @@ std::ostream&  AbstractParameter::printShort(std::ostream& out)
   out << "}";     
   return out; 
 }
+

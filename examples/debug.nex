@@ -1,0 +1,172 @@
+#NEXUS
+begin params; 
+[================================================================]
+[ LINKING of parameters across partitions ]
+[================================================================]
+[ notice: everything (except branch lengths) is unlinked by default ]
+[ Thus, if you omit partition ids for a certain proposal type, 
+  then you have an additional parameter to integrate ]
+
+[ 
+stateFreq = (0,1,2,3)     [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
+rateHet = (0,2,1,3)  
+revMat = (0,1,2,3)   
+] 
+
+[ 
+stateFreq = (0/1,2,3)     [ <= 0,1 are linked, we have separate state frequency parameters for 2 and 3 ]
+rateHet = (0,2/1,3)  
+revMat = (0,1,2,3)   
+] 
+
+[ TODO: branch lengths ]
+end;  
+
+
+[================================================================]
+[ PRIOR configuration ]
+[================================================================]
+begin PRIOR; 
+[ topology: constraints not enabled currently  ]
+  topoPr fixed()  
+[ topoPr uniform(0,1) ]
+
+[ topoPr uniform(0,1)] 
+
+[ branch lengths: TODO per-partition,clock ]
+[  brlenpr uniform(0.0000001,4)   ] 
+[ brlenpr fixed()  ]      [ you should have provided a user tree with branch lengths ]  
+[  brlenpr{3} exponential(10.0) ] 
+[ brlenpr exponential(10) ] 
+
+[ substitution matrix ]
+[  revMatPr dirichlet(1,2,3,4,5,6)    ] 
+[ revMatPr fixed(1,2,3,4,5,6) ] 
+
+[ state frequencies ] 
+[  stateFreqPr{0}  dirichlet(0.25,0.25,0.25,0.25)  ] 
+[ stateFreqPr fixed(empirical) ] [ NOT implemented yet ] 
+ stateFreqPr fixed(1,2,3,4)    
+
+[ rate heterogeneity: alpha parameter ]
+[ shapePr exponential(1) ]
+[ shapePr uniform(0.0000001,200) ] 
+shapePr fixed(1)   
+
+[ todo: prior in substitution matrices ]
+
+end; 
+
+[================================================================]
+[                               GENERAL                          ] 
+[================================================================]
+begin runconfig; 
+ [ NOTICE: please do not use scientific notation for numbers (e.g., 1e-6). Right now, we cannot parse this ] 
+
+ [ RUN PARAMETERS ]
+ diagFreq 10000		[ check for convergence of multiple independent runs after this many generations ]
+ samplingFrequency 500 	[ take a sample every n generations ]
+ numRuns  1 	   	[ number of independant runs ]
+ numGen 100000          [ if numRuns = 1, stop simulation after that many generations ] 
+ tuneFreq 100 		[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
+ printFreq 500		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
+
+  parsimonyStartingTree		true		[ allowed values: true  / false(default); if no starting tree is present, a random tree is used   ] 
+  heatedChainsUseSame		false		[ should heated chains start with the same tree as the cold chain? default: false] 
+  [  sampledHeated false ] [ also take samples from the heated chains ]
+
+  checkPointInterval   1000  [ defines how often a checkpoint is written ]
+
+ [ CONVERGENCE ]
+ asdsfIgnoreFreq  0.1	[ ignore clades for which the relative  frequency in no chain exceeds this value ]
+ asdsfConvergence  0.005    [ indicate convergence, as soon as the asdsf is below this value: 1-5% is considered good, 0.005 can be considered very good convergence ] 
+
+
+ [ MCMCMC ]
+ numCoupledChains  1	[ number of chains per independent run (only one is cold)  => must be > 0] 
+ heatFactor 0.1   	   [ the heat increment added to each hotter chain (this is not the inverse heat)   ]
+ swapInterval 1 	   [ attempt a swap between chains every n generations ]
+ tuneHeat false        [ if true, the heat increment will be tuned, s.t. the cold chain swaps with the coldest hot chain in 23.45% of all cases   ] 
+ 
+ [ BURNIN ] 
+ [ comment out one of the two options ]      
+ [ burninGen 2000 ]     [ exact number of generations that are discarded for diagnostics ]  
+  burninProportion 	  	0.25   	  	[ discard this proportion of all initial samples as burnin  ]
+
+
+end; 
+
+
+ [================================================================]
+ [ PROPOSAL configuration ]
+ [================================================================]
+ begin proposals; 
+      [ TOPOLOGY ]
+
+      stNNI 10
+
+[  
+      eTBR  0
+      eSPR 0 
+      stNNI 0
+      parsimonySPR 0
+      guidedSPR 0
+
+   parsimonySPR 0	
+   eTBR  10	
+
+   eSPR  0
+   branchMulti 0 
+
+      eTBR  0
+      eSPR 0 
+      stNNI 0
+
+
+]  
+
+
+[       branchMulti 100] 
+       branchMulti 10
+      nodeSlider  0  
+     treeLengthMult 0		
+
+[   
+      [ BRANCH LENGTHS ] 
+[       branchSlider 0 ] [ <===== for enabling this, see the ProposalRegistry ]
+      branchMulti 0 
+       treeLengthMult 2  
+      nodeSlider  0 
+      branchCollapser 0 [ bug! ]      
+    aGibbsBL 20 
+ ]
+  
+      [ RATE HETEROGENEITY ]
+[       rateHetSlider 0 ] 
+[       rateHetMulti 1 ] 
+
+      [ REVMAT ] 
+[          revMatSlider 1    ] 
+[         revMatDirichlet 0 ] 
+
+	  revMatSlider 40      
+	  revMatDirichlet 0 
+
+      [ FREQUENIES ]
+[        FrequencySlider   ] 
+[        FrequencyDirichlet 0  ] 
+
+      [ AA models ]
+[       aaModelJump 0  [ todo ] ] 
+
+ 
+
+      [ PARAMETERS for various moves ]
+      guidedSPRRadius 10  [ maximum radius that is searched by the guided spr move ] 
+      eSprStopProb 0.5 [ stopping probability for eSPR moves, 0.5 in mb! ] 
+      parsimonyWarp 0.10 [ warp factor for parsimony based moves => if we set that to 10, it is a reference to the star trek voyager episode "threshold" ]  
+
+
+      [================================================================]
+
+end ; 

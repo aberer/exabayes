@@ -1,29 +1,33 @@
 #include <algorithm>
 #include <functional>
 
+#include "GlobalVariables.hpp"
+
 #include "RevMatParameter.hpp"
 #include "axml.h"
 
 void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
-  std::vector<double> tmp = content.values; 
-  // tmp.insert(tmp.begin(), )
+  auto tmp = content.values; 
+
   for_each(tmp.begin(), tmp.end(), [&](double &d){return d /= *(tmp.rbegin()) ;  } );
-  
-  // std::cout << "setting values " ; 
-  // for_each(tmp.begin(), tmp.end(), [](double d  ){std::cout << d << "," ; }) ; 
-  // std::cout << std::endl; 
   
   for(auto &m : partitions)
     traln.setRevMat(tmp, m);
+
+  auto newStuff = traln.getRevMat(partitions[0]);
+  
+  // tout << "applying new values " ;  
+  // std::copy(newStuff.begin(), newStuff.end(), std::ostream_iterator<double>(tout, ",")); 
+  // tout << std::endl;   
+  // tout << "fracchange = " << traln.getTr()->fracchange << std::endl; 
 } 
 
 
 ParameterContent RevMatParameter::extractParameter(const TreeAln &traln )  const
 {
   ParameterContent result; 
-  result.values = traln.getRevMat(partitions[0]); 
-  // double sum = std::accumulate(result.values.begin(), result.values.end(), 0, std::sum¿ ); 
+  result.values = traln.getRevMat(partitions.at(0)); 
   double sum = 0; 
   for(auto &v : result.values )
     sum += v;  
@@ -61,7 +65,7 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
   bool isFirstG = true; 
   for(nat i = 0; i < content.values.size() ; ++i)
     {
-      fileHandle << (isFirstG ? "" : "\t" ) << "pi{" ;
+      fileHandle << (isFirstG ? "" : "\t" ) << "r{" ;
       isFirstG = false; 
 	
       bool isFirst = true; 

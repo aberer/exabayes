@@ -1,7 +1,12 @@
-#include <iostream>
+#include <iostream>		// 
 #include <cassert>
 
+#include "ParallelSetup.hpp"
 #include "ProposalType.hpp"
+
+void genericExit(int code); 
+
+
 
 namespace ProposalTypeFunc
 {
@@ -32,7 +37,7 @@ namespace ProposalTypeFunc
     if(map.find(type) == map.end())
       {
 	std::cerr << "you requested a proposal type for which no long name has been set. Correct that in ProposalType.hpp  " << std::endl; 
-	exit(1) ; 
+	ParallelSetup::genericExit(-1); 
       }
     return map[type]; 
   }
@@ -75,7 +80,7 @@ namespace ProposalTypeFunc
       }
     
     std::cerr << "something went wrong while trying to identify what kind of proposal >"  << name  << "< is. See ProposalType.hpp" << std::endl; 
-    exit(1); 
+    ParallelSetup::genericExit(-1); 
     return ProposalType::ST_NNI; 
   }
 
@@ -181,7 +186,7 @@ namespace ProposalTypeFunc
       {
 	std::cerr << "Error, could not find type >" << int(p) << 
 	  "< when trying to determine, if proposal is ready for productive use. Check ProposalType.cpp" << std::endl; 
-	exit(1); 
+	ParallelSetup::genericExit(-1); 
       }
 
     return map[p]; 

@@ -3,10 +3,12 @@
 // experimental code that should not directly mix with production level code. 
 
 #define STEPS_FOR_LNL 1000
-#define INTEGRATION_GENERATIONS 10000
+#define INTEGRATION_GENERATIONS 100000
 #define NR_STEPS 30
 
+
 #include <sstream>
+#include "priors/ExponentialPrior.hpp"
 #include "proposals/BranchIntegrator.hpp"
 #include "ProposalRegistry.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
@@ -30,8 +32,8 @@ void SampleMaster::branchLengthsIntegration()
   tFile << tp.printTree(traln) << endl; 
   tFile << tp2.printTree(traln) << endl; 
   tFile.close(); 
-  
-  auto eval = chain.getEvaluatorPtr();
+
+  auto eval = chain.getEvaluator()->clone(); 
 
   vector<unique_ptr<AbstractParameter> > vars; 
   vars.emplace_back(unique_ptr<AbstractParameter>(new BranchLengthsParameter( 0 ))); 
@@ -48,7 +50,7 @@ void SampleMaster::branchLengthsIntegration()
   proposals.push_back( std::move(p) ); 
   proposals[0]->addPrimVar( std::move(vars[0])); 
 
-  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval );   
+  Chain integrationChain(masterRand.generateSeed(), tralnPtr, proposals, eval->clone() );   
 
   auto branches =  traln.extractBranches();
   auto ps = integrationChain.getProposalView(); 
@@ -62,7 +64,7 @@ void SampleMaster::branchLengthsIntegration()
       Branch initBranch = branch; 
 
       traln.setBranch(branch); 
-      eval->evaluateFull(traln, branch);
+      eval->evaluate(traln, branch, true); 
       integrator->setToPropose(branch); 
       
       stringstream ss; 
@@ -76,7 +78,8 @@ void SampleMaster::branchLengthsIntegration()
 	  integrationChain.step();
 	  auto elem = traln.getBranch(branch.findNodePtr(traln)); 
 	  auto iLen = elem.getInterpretedLength(traln);
-	  thisOut << iLen << endl; 
+	  if (i % 10 == 0)
+	    thisOut << iLen << endl; 
 	  if(iLen < minHere)
 	    minHere = iLen; 
 	  if(maxHere < iLen)

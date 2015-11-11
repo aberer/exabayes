@@ -38,7 +38,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
       
       if( not BoundsChecker::checkBranch(b))
 	{
-	  std::cout << "correction!" << std::endl; 
+	  // std::cout << "correction!" << std::endl; 
 	  BoundsChecker::correctBranch(b);
 	}
       
@@ -46,7 +46,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, doub
       updateHastings(hastings, realScaling, "TL-multi"); 
       newTL *= b.getLength(); 
     }
-  
+
   for(auto &b : newBranches)
     traln.setBranch(b);
 
@@ -79,9 +79,9 @@ void TreeLengthMultiplier::autotune()
 }
  
  
-void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
+void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
 {
-  evaluator.evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
+  evaluator->evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
 }
 
 
@@ -89,3 +89,16 @@ AbstractProposal* TreeLengthMultiplier::clone() const
 {
   return new TreeLengthMultiplier(*this);
 }  
+
+
+void TreeLengthMultiplier::readFromCheckpointCore(std::ifstream &in)
+{
+  multiplier = cRead<double>(in); 
+} 
+
+void TreeLengthMultiplier::writeToCheckpointCore(std::ofstream &out) 
+{
+  cWrite(out, multiplier); 
+} 
+
+

@@ -5,13 +5,16 @@
 #include <iomanip>
 #include <list>
 
+typedef  unsigned int nat ; 
+
+#include "Checkpointable.hpp"
 
 #define SIZE_OF_LAST 100 
 
 // TODO  an success interval would be nice 
 
 
-class SuccessCounter
+class SuccessCounter : public Checkpointable
 {
 public: 
   SuccessCounter();  
@@ -23,22 +26,26 @@ public:
   double getRatioInLastInterval() const ; 
   double getRatioOverall() const ; 
   void nextBatch(); 
-  int getBatch(){return batch; }
-
-  friend std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &b ); 
-
-private:   
-  std::list<bool> lastX ; 		// last x events. Only for debug, no functionality in tuning 
+  int getBatch() const {return batch; }
+  nat getTotalSeen()const  {return globalAcc + globalRej; }
   
-  int globalAcc; 
-  int globalRej; 
+  virtual void readFromCheckpoint( std::ifstream &in )   ; 
+  virtual void writeToCheckpoint( std::ofstream &out) ;   
   
-  int localAcc; 
-  int localRej; 
-  int batch; 
-
+private: 			// METHODS
   void reset();  
   void addOrReplace(bool acc); 
+
+private:		  // ATTRIBUTES
+// last x events. Only for debug, no functionality in tuning 
+  std::list<bool> lastX ;	// not checkpointed     
+  int globalAcc; 
+  int globalRej;   
+  int localAcc; 
+  int localRej; 
+  int batch; 			
+
+  friend std::ostream& operator<<(std::ostream& rhs, const SuccessCounter &b ); 
 }; 
 
 

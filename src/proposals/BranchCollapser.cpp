@@ -1,4 +1,5 @@
 #include "BranchCollapser.hpp"
+#include "Category.hpp"
 #include "TreeRandomizer.hpp"
 
 
@@ -61,9 +62,9 @@ void BranchCollapser::applyToState(TreeAln &traln, PriorBelief &prior, double &h
 }
 
 
-void BranchCollapser::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, PriorBelief &prior) 
+void BranchCollapser::evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) 
 {
-  evaluator.evaluate(traln,modifiedBranch, false); 
+  evaluator->evaluate(traln,modifiedBranch, false); 
 }
 
 

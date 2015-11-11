@@ -3,7 +3,6 @@
 #include "BoundsChecker.hpp"
 #include "tune.h"
 #include "TreeRandomizer.hpp"
-
 #include "GibbsProposal.hpp"
 
 
@@ -44,7 +43,7 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   if(not BoundsChecker::checkBranch(b))
     BoundsChecker::correctBranch(b); 
 
-  traln.setBranch( b ); 
+  traln.setBranch(b); 
 
   double realMultiplier = log(b.getLength()) / log(oldZ); 
   updateHastings(hastings, realMultiplier, name); 
@@ -54,9 +53,9 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
 }
 
 
-void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, PriorBelief &prior) 
+void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) 
 {
-  evaluator.evaluate(traln,savedBranch, false); 
+  evaluator->evaluate(traln,savedBranch, false); 
 }
 
  
@@ -86,3 +85,14 @@ AbstractProposal* BranchLengthMultiplier::clone() const
   return new BranchLengthMultiplier(*this);
 // multiplier
 }
+
+
+void BranchLengthMultiplier::readFromCheckpointCore(std::ifstream &in) 
+{
+  multiplier = cRead<double>(in);
+} 
+
+void BranchLengthMultiplier::writeToCheckpointCore(std::ofstream &out)  
+{
+  cWrite(out, multiplier); 
+} 

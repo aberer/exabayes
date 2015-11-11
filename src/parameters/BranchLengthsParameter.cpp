@@ -1,7 +1,5 @@
 #include "BranchLengthsParameter.hpp"
 
-
-
 void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
   for(auto &b : content.branches)
@@ -14,3 +12,4 @@ ParameterContent BranchLengthsParameter::extractParameter(const TreeAln &traln) 
   result.branches = traln.extractBranches(); 
   return result; 
 }   
+

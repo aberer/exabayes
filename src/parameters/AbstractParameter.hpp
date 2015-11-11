@@ -3,8 +3,7 @@
 
 #include "ParameterContent.hpp"
 #include "TreeAln.hpp"
-#include "Priors.hpp"
-
+#include "priors/AbstractPrior.hpp"
 
 enum class Category; 
 
@@ -18,8 +17,6 @@ public:
     , printToParamFile(true)
   {
   }
-
-  virtual AbstractParameter* clone () const =  0; 
 
   virtual void applyParameter(TreeAln& traln,  const ParameterContent &content) const = 0; 
   virtual ParameterContent extractParameter(const TreeAln &traln)  const  = 0;   
@@ -38,6 +35,10 @@ public:
 
   std::ostream&  printShort(std::ostream& out); 
   friend std::ostream& operator<<(std::ostream &out, const AbstractParameter* rhs); 
+
+  
+  virtual AbstractParameter* clone() const = 0 ; 
+
 
 protected: 
   nat id; 

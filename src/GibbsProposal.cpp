@@ -5,7 +5,7 @@
 const double GibbsProposal::EST_EXP = -1; 
 
 // const double GibbsProposal::EST_FAC = 0.015; 
-const double GibbsProposal::EST_FAC = 1; 
+const double GibbsProposal::EST_FAC = 2; 
 
 
 

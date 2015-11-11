@@ -3,15 +3,35 @@
 
 topdir=$(dirname  $0 )/../
 
-model=GAMMA
-seed=12
 
+
+
+
+model=GAMMA
+# seed=$RANDOM
+seed=20916
+
+# lakner-27
+# seed=28233
+
+# small dna 
+# seed=5594
+
+runid=testRun
 numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
+
+
+# use cgdb, if available 
+GDB=gdb
+if [ "$(which cgdb )" != ""   ]; then
+    GDB="gdb"
+fi
+
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0		
-useClang=1
+useGoogleProfiler=0 
+useClang=0
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
@@ -30,7 +50,6 @@ fi
 if [ $useGoogleProfiler -eq 1 ]; then
     libs="-lprofiler"
 fi
-
 
 
 if [ "$#" != 3 ]; then
@@ -56,7 +75,7 @@ default=$1
 if [ "$default" == "debug" ]; then 
     cflags="$cflags -O0 -g"
     cxxflags="$cxxflags -O0 -g"
-    gdb="$TERM -e gdb -ex run --args "
+    gdb="$TERM -e $GDB -ex run --args "
 elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"
     exit 
@@ -69,15 +88,15 @@ if [ "$codeBase" == "examl" ]; then
 
     CC="mpicc -cc=$ccompiler" 
     CXX="mpicxx -cxx=$cxxcompiler"  
-    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed -c $topdir/examples/test.nex"
 
     # CC="$ccompiler" 
     # CXX="$cxxcompiler"  
-    # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n testRun -s $seed -c $topdir/examples/test.nex"
+    # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed -c $topdir/examples/test.nex"
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n testRun -c $topdir/examples/test.nex " 
+    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid -c $topdir/examples/test.nex " 
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
@@ -131,6 +150,7 @@ make -j $numCores
 
 if [ -f ./exabayes ]; then
     echo "calling exabayes as   $baseCall"
+    rm ExaBayes_*.${runid}*
     wait 
     $baseCall    
 fi

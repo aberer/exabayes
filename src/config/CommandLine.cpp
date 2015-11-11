@@ -3,10 +3,9 @@
 #include <cstring>
 #include "CommandLine.hpp"
 #include "GlobalVariables.hpp"
+#include "ParallelSetup.hpp"
 
-#include "getoptpp/getopt_pp.h"
-
-using namespace GetOpt; 
+#include "MemoryMode.hpp"
 
 
 CommandLine::CommandLine(int argc, char **argv)
@@ -16,6 +15,8 @@ CommandLine::CommandLine(int argc, char **argv)
   , treeFile("")
   , workDir("")
   , runNumParallel(1)
+  , checkpointId("")
+  , memoryMode(MemoryMode::RESTORING)
 {
   seed.v[0] = 0; 
   seed.v[1] = 0; 
@@ -26,64 +27,57 @@ CommandLine::CommandLine(int argc, char **argv)
 
 void CommandLine::printVersion(bool toInfofile )
 {   
-  (toInfofile ? tout : cout )  << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << endl << endl
-    			       << "For bugs reports and feature inquiries, please send an email to " << PACKAGE_BUGREPORT << endl; 
+  (toInfofile ? tout : std::cout )  << "This is " << PROGRAM_NAME << ", version " << PACKAGE_VERSION << std::endl << std::endl
+				    << "For bugs reports and feature inquiries, please send an email to " << PACKAGE_BUGREPORT << std::endl; 
 }
 
 
 
 void CommandLine::printHelp()
 {
-#if HAVE_PLL == 0
-  if(processID != 0)
-    exit(0); 
-#endif
-
   printVersion(false); 
 
-  cout << "\n\n" 
-       <<  "Options:\n" 
-       << "\t-f binFile\t\ta binary alignment file that has been created by the appropriate parser before (see manual for help) [mandatory] \n"
-       << "\t-c confFile\t\ta config file. For a template see the examples/ folder [mandatory]\n"
-       << "\t-v\t\tprint version and exit\n"
-       << "\t-h\t\tprint this help\n" 
-       << "\t-w dir\t\tspecify a working directory for output files (NOT IMPLEMENTED)\n"
-       << "\t-s seed\t\ta master seed for the MCMC [mandatory]\n"
-       << "\t-n ruid\t\ta run id [mandatory]\n"
-       << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel"
-       << endl; 
+  std::cout << std::endl << "./exabayes -f binFile -c confFile -s seed -n id [options..] "
+	    << std::endl; 
 
-  exit(0); 
+  std::cout << "\n\n"
+	    << "Mandatory Arguments: \n"
+	    << "\t-f binFile\t\ta binary alignment file that has been created by the appropriate parser before (see manual for help)\n"
+	    << "\t-c confFile\t\ta config file. For a template see the examples/ folder\n"
+	    << "\t-s seed\t\ta master seed for the MCMC\n"
+	    << "\t-n ruid\t\ta run id\n" 
+	    << std::endl; 
+
+  std::cout << "\n" 
+	    <<  "Options:\n" 
+	    << "\t-v\t\tprint version and quit\n"
+	    << "\t-h\t\tprint this help\n" 
+	    << "\t-w dir\t\tspecify a working directory for output files (NOT IMPLEMENTED)\n"
+	    << "\t-R num\t\tthe number of runs (i.e., independent chains) to be executed in parallel\n"
+	    << "\t-r id\t\trestart from checkpoint. Just specify the id of the previous run here. \n"
+	    << "\t\t\tMake sure, ExaBayes can access all files from this previous run.\n"
+	    << "\t-M mode\t\tspecifies the memory versus runtime trade\n"
+	    << "\t\t\t0\tfastest\n" 
+	    << "\t\t\t1\tstandard\n"
+	    << "\t\t\t1\tTODO\n"
+	    << std::endl; 
+
+  ParallelSetup::genericExit(-1); 
 }
 
 
-void CommandLine::assertFileExists(string filename)
+void CommandLine::assertFileExists(std::string filename)
 {
   FILE *fh = myfopen(filename.c_str(), "r");
 
   if(fh == NULL )
     {
       fclose(fh); 
-      cerr << "could not file file " << filename << ". Aborting." << endl; 
-      exit(0);
+      std::cerr << "could not file file " << filename << ". Aborting." << std::endl; 
+      ParallelSetup::genericExit(-1); 
     }
   fclose(fh); 
 }
-
-
-
-void CommandLine::parseAlternative(int argc, char *argv[])
-{
-  GetOpt_pp args(argc, argv);
-
-  args >> Option('s' ,"seed" , seed.v[0]);
-  args >> Option('f', "file", alnFileName); 
-  args >> Option('n', "runid", runid); 
-  args >> Option('t', "tree-file", treeFile); 
-  args >> Option('w', "work-dir", workDir); 
-  args >> Option('R', "parallel-run", runNumParallel); 
-}
-
 
 
 /** 
@@ -96,44 +90,50 @@ void CommandLine::parse(int argc, char *argv[])
   // TODO threads/ processes? 
   // TODO implement working directory 
   
-  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:")) != EOF)
+  while( (c = getopt(argc,argv, "c:f:vhn:w:s:t:R:r:M:")) != EOF)
     {
       switch(c)
 	{
 	case 'C': 		// chain-level parallelism 
 	  {
-	    cerr << "not in use" << endl; 
+	    std::cerr << "not in use" << std::endl; 
 	    assert(0); 
 	  }
 	  break; 
 	case 'c': 		// config file 	  
 	  {
-	    configFileName = string(strdup(optarg)); 
+	    configFileName = std::string(strdup(optarg)); 
 	    assertFileExists(configFileName);
 	  }
 	  break; 
 	case 'f': 		// aln file 
-	  alnFileName = string(strdup(optarg)); 
+	  alnFileName = std::string(strdup(optarg)); 
 	  assertFileExists(alnFileName); 
 	  break; 
 	case 'v':  		// version 
 	  printVersion(false );
-	  exit(0); 
+	  ParallelSetup::genericExit(-1); 
 	  break; 
 	case 'h': 		// help 
 	  printHelp();
 	  break; 
 	case 'n': 		// runid 
-	  runid = string(optarg); 	  
+	  runid = std::string(optarg); 	  
 	  break; 
 	case 't': 		// trees -- have that in the config file? 
-	  treeFile = string(strdup(optarg)); 
+	  treeFile = std::string(strdup(optarg)); 
 	  break; 
 	case 'w':		// working dir  
-	  workDir = string(strdup(optarg)); 
+	  workDir = std::string(strdup(optarg)); 
 	  break; 
 	case 's': 		// seed 
 	  seed.v[0] = std::stoi(optarg);
+	  break; 
+	case 'r': 
+	  checkpointId = strdup(optarg);   
+	  break; 
+	case 'M': 
+	  memoryMode = MemoryMode(std::stoi(optarg)); 
 	  break; 
 	case 'R': 
 	  runNumParallel = atoi(optarg);
@@ -149,34 +149,30 @@ void CommandLine::parse(int argc, char *argv[])
   
   if(runid.compare("") == 0 )
     {
-      cerr << "please specify a runid with -n runid" << endl; 
+      std::cerr << "please specify a runid with -n runid" << std::endl; 
       abort(); 
     }
 
   if(seed.v[0] == 0 )
     {
-      cerr << "please specify a seed via -s seed (must NOT be 0)"   << endl; 
+      std::cerr << "please specify a seed via -s seed (must NOT be 0)"   << std::endl; 
       abort(); 
     }
 
   if( configFileName.compare("") == 0)
     {
-      cerr << "please specify a config file via -c configfile" << endl << "You find a template in the examples/ folder" << endl; 
+      std::cerr << "please specify a config file via -c configfile" << std::endl << "You find a template in the examples/ folder" << std::endl; 
       abort(); 
     }
 
   if(alnFileName.compare("") == 0 )
     {
-      cerr << "please specify a binary alignment file via -f file" <<  endl 
-	   << "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << endl; 
+      std::cerr << "please specify a binary alignment file via -f file" <<  std::endl 
+		<< "You have to transform your NEWICK-style alignment into a binary file using the appropriate parser (see manual)." << std::endl; 
       abort();
     }
 
 }
-
-
-
-
 
 
 randCtr_t CommandLine::getSeed() const

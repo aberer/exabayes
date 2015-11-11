@@ -20,7 +20,6 @@ void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
 }
 
 
-
 void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
 {
   for(nat i = 1 ; i < traln.getNumberOfNodes() + 1 ; ++i)
@@ -60,11 +59,6 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
 }
 
 
-
-/** 
-    @brief samples an inner branch (including orientation), such that
-    each oriented inner branch is equally likely.
- */ 
 Branch TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  
 {
   bool acc = false;   
@@ -145,23 +139,12 @@ Branch TreeRandomizer::drawBranchWithInnerNode(const TreeAln& traln,Randomness &
 }
 
 
-/**
-   @brief draws a branch with uniform probability.
-   
-   We have to treat inner and outer branches separatedly.
- */
+
 Branch TreeRandomizer::drawBranchUniform(const TreeAln & traln, Randomness &rand )  
 {
   return drawBranchUniform_helper(traln, rand, traln.getNumberOfTaxa()); 
 }
 
-
-/**
-   @brief currently just exists for the tree randomizer 
-
-   Notice that an inner branch has 3 nodes associated with it, thus
-   the probability of drawing a tip should be accordingly lower.
-*/ 
 Branch TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  
 { 
   int randId = 0; 

@@ -1,4 +1,5 @@
 #include "RadiusMlSPR.hpp"
+#include "Category.hpp"
 
 
 /* 
@@ -471,7 +472,7 @@ void RadiusMlSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hasti
    actually this method should not do anything. Currently, we need
    it, to update the lnl arrays appropriatly. Pretty expensive.
 */ 
-void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, PriorBelief &prior) 
+void RadiusMlSPR::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
 {
 #if 0 
   evaluateGenericWrapper(traln, p, FALSE );
@@ -514,13 +515,11 @@ void RadiusMlSPR::resetState(TreeAln &traln, PriorBelief &prior)
 #endif
   debug_printTree(traln);
 #endif
-} 
-
+}
 
 
 AbstractProposal* RadiusMlSPR::clone() const
 {
-  // return new RadiusMlSPR( radius);
   return new RadiusMlSPR( *this );
 }
 

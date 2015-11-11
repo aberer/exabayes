@@ -1,5 +1,6 @@
 #include "GibbsProposal.hpp" 
 #include "BranchLengthMultiplier.hpp"
+#include "Category.hpp"
 
 
 #define MAX_ITER 30 
@@ -7,14 +8,22 @@
 class GibbsBranchLength : public BranchLengthMultiplier
 {
 public: 
-  GibbsBranchLength(std::shared_ptr<LikelihoodEvaluator> _eval)
+  GibbsBranchLength(std::unique_ptr<LikelihoodEvaluator> _eval)
     : BranchLengthMultiplier(0)
-    , eval(_eval)
+    , eval(std::move(_eval))
   {
     name = "estGibbsBL"; 
     category = Category::BRANCH_LENGTHS; 
     relativeWeight = 20 ; 
   } 
+
+  GibbsBranchLength(const GibbsBranchLength& rhs)
+    : BranchLengthMultiplier(rhs)
+    , eval(rhs.eval->clone())
+  {
+  }
+
+
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
   {
@@ -35,8 +44,7 @@ public:
   virtual void autotune(){}
 
   virtual AbstractProposal* clone() const  { return new GibbsBranchLength(*this); }  
-  
-private: 
-  std::shared_ptr<LikelihoodEvaluator> eval; 
 
+private: 
+  std::unique_ptr<LikelihoodEvaluator> eval; 
 }; 

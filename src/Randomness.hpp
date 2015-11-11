@@ -6,6 +6,8 @@
 
 #include "axml.h"
 
+#include "Checkpointable.hpp" 
+
 class TreeAln; 
 
 /* TODO is this correct? */
@@ -29,7 +31,7 @@ typedef threefry2x32_key_t randKey_t;
 typedef threefry2x32_ctr_t randCtr_t; 
 
 
-class Randomness
+class Randomness : public Checkpointable
 {
 public: 
   Randomness(randCtr_t seed); 
@@ -42,6 +44,9 @@ public:
 
   nat operator()() ; 
 
+  virtual void readFromCheckpoint( std::ifstream &in )  ; 
+  virtual void writeToCheckpoint( std::ofstream &out) ; 
+
   double drawRandBiUnif(double x); 
   double drawRandExp(double lambda); 
   double drawMultiplier(double multiplier); 
@@ -51,7 +56,7 @@ public:
   int drawSampleProportionally( double *weights, int numWeight ); 
 
   std::vector<double> drawRandDirichlet( const std::vector<double> &alphas); 
-  std::vector<double> drawDirichletExpected(const std::vector<double> &mean,double scale); 
+  // std::vector<double> drawDirichletExpected(const std::vector<double> &mean,double scale); 
 
   // Gamma(alpha, beta) sampling
   double drawRandGamma(double alpha, double beta); 
@@ -82,7 +87,6 @@ private:  		// METHODS
 private:   			// ATTRIBUTES
   randCtr_t ctr; 
   randKey_t key; 
-
 }; 
 
 #endif

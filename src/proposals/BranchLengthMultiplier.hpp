@@ -3,6 +3,7 @@
 
 #include "AbstractProposal.hpp"
 
+#include <limits>
 
 
 class BranchLengthMultiplier : public AbstractProposal
@@ -12,7 +13,7 @@ public:
   virtual ~BranchLengthMultiplier(){}
 
   virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, PriorBelief &prior) ; 
+  virtual void evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) ; 
   virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
 
   virtual void autotune();
@@ -21,6 +22,9 @@ public:
 
 
   virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
+
+  virtual void readFromCheckpointCore(std::ifstream &in); 
+  virtual void writeToCheckpointCore(std::ofstream &out) ; 
 
 protected: 
   double multiplier;  
