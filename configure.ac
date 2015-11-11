@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[1.4],[exabayes-at-googlegroups-dot-com]) 
+AC_INIT([exabayes],[1.4.1],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 m4_include([./m4/lx_find_mpi.m4])

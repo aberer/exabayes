@@ -18,10 +18,6 @@
 #include "Category.hpp"
 #include "TreePrinter.hpp"
 
-#ifdef  _DEVEL
-#include "memory.hpp" 
-#endif
-
 // // TODO not too much thought went into this  
 
 // actually, i do not think this is a good idea, but too afaid of
@@ -172,7 +168,6 @@ void swapHeatAndProposals(Chain &lhs, Chain& rhs)
   std::swap(lhs._couplingId,   rhs._couplingId    ); 
   std::swap(lhs._proposals,    rhs._proposals     ); 
   std::swap(lhs._proposalSets, rhs._proposalSets  ); 
-  // std::swap(lhs._params, rhs._params); 
 }
 
 
@@ -210,15 +205,15 @@ void Chain::suspend()
   _lnPr = _prior.getLnPrior();
   // tout << "SUSPEND " <<  MAX_SCI_PRECISION << _lnPr << std::endl; 
 
-// #if 1 
-//   // auto params =  getBranchLengthsParameterView(); 
-//   AbstractParameter* param = (nullptr); 
-//   for(auto p : _params)
-//     if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
-//       param = p; 
-//   auto bs = _traln.extractBranches(param);
-//   tout << "SUSPEND " << bs << std::endl; 
-// #endif
+#if 1 
+  // auto params =  getBranchLengthsParameterView(); 
+  AbstractParameter* param = (nullptr); 
+  for(auto p : _params)
+    if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
+      param = p; 
+  auto bs = _traln.extractBranches(param);
+  tout << MAX_SCI_PRECISION << "SUSPEND " << bs << std::endl; 
+#endif
 
   _evaluator.freeMemory(); 
 }
@@ -227,14 +222,14 @@ void Chain::suspend()
 void Chain::resume() 
 {    
 
-// #if 1 
-//   AbstractParameter* param = (nullptr); 
-//   for(auto p : _params)
-//     if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
-//       param = p; 
-//   auto bs = _traln.extractBranches(param);
-//   tout << "RESUME " << bs << std::endl; 
-// #endif
+#if 1 
+  AbstractParameter* param = (nullptr); 
+  for(auto p : _params)
+    if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
+      param = p; 
+  auto bs = _traln.extractBranches(param);
+  tout  << MAX_SCI_PRECISION << "RESUME " << bs << std::endl; 
+#endif
 
   // auto vs = getParamView(); 
   _prior.initialize(_traln, _params);
@@ -439,13 +434,8 @@ BranchPlain Chain::peekNextVirtualRoot(TreeAln &traln, Randomness rand)
 void Chain::stepSingleProposal()
 {
   auto &traln = _traln; 
-
   auto prevLnl = getLikelihood(); 
-  double myHeat = getChainHeat();
-
   auto& pfun = drawProposalFunction(_chainRand);
-
-  // tout << pfun << std::endl; 
 
   /* reset proposal ratio  */
   _hastings = log_double::fromAbs(1.); 
@@ -463,7 +453,7 @@ void Chain::stepSingleProposal()
   auto lnlRatio = traln.getLikelihood() / prevLnl; 
 
   double testr = _chainRand.drawRandDouble01();
-  double acceptance = fmin(    log_double( exponentiate( priorRatio * lnlRatio, myHeat) * _hastings).toAbs()  ,1.) ; 
+  double acceptance = fmin(    log_double( exponentiate( priorRatio * lnlRatio, getChainHeat() ) * _hastings).toAbs()  ,1.) ; 
 
   bool wasAccepted  = testr < acceptance; 
 
@@ -500,22 +490,6 @@ void Chain::stepSingleProposal()
 
   _evaluator.freeMemory();
 
-#ifdef _DEVEL
-  auto totalMem = getCurrentMemory(); 
-
-  nat used = 0, unused = 0; 
-  std::tie(used, unused) =  _evaluator.getArrayReservoir().getUsedAndUnusedBytes(); 
-  auto sum = used + unused; 
-
-  auto overhead = totalMem - sum ; 
-
-  tout << "MEM\t" << used / 1024  << "\t" << unused / 1024  << "\t" << overhead / 1024 << "\t" 
-       << double(used) / double(totalMem)  << "\t"
-       << double(unused) / double(totalMem)   << "\t"
-       << double(overhead) / double(totalMem)  
-       << "\t" << totalMem / 1024 
-       << std::endl; 
-#endif
 
   if( _tuneFrequency > 0 && _tuneFrequency <  pfun.getNumCallSinceTuning()   ) 
     pfun.autotune();
@@ -558,31 +532,31 @@ void Chain::applyParameterContents(std::unordered_map<AbstractParameter*,Paramet
 
 void Chain::stepSetProposal()
 {
-  auto& traln = _traln; 
-
-  double myHeat = getChainHeat(); 
   auto &pSet = drawProposalSet(_chainRand); 
 
-  // tout << pSet << std::endl; 
-
-  auto oldPartitionLnls = traln.getPartitionLnls(); 
+  auto oldPartitionLnls = _traln.getPartitionLnls(); 
   
   auto p2Hastings =  std::unordered_map<AbstractProposal*, log_double>{} ; 
   auto p2LnPriorRatio = std::unordered_map<AbstractProposal*, log_double>{}; 
   auto p2OldLnl = std::unordered_map<AbstractProposal*, log_double>{} ; 
 
   auto affectedPartitions = std::vector<nat>{}; 
-
   auto proposals = pSet.getProposalView(); 
-  
-  auto branches = proposals.at(_chainRand.drawIntegerOpen(proposals.size()))->prepareForSetExecution(traln, _chainRand);
-  
+  auto branches = proposals.at(_chainRand.drawIntegerOpen(proposals.size()))->prepareForSetExecution(_traln, _chainRand);
+
+  // branch length proposals are all executed on the same branch. In
+  // case of the node slider, we need two adjacent branches. One of
+  // the proposals in the set determines which branch we are dealing
+  // with
   for(auto &proposal: proposals)
     {
       proposal->setPreparedBranch(branches.first);
       proposal->setOtherPreparedBranch(branches.second);
     }
-
+  
+  // get all parameters and affected partitions for which we actually
+  // do something in this proposal set (e.g., if this is a AA
+  // proposal, we would not do anything to DNA partitions)
   auto affectedParameters = std::vector<AbstractParameter*>();  
   for(auto &proposal: proposals)
     {
@@ -593,28 +567,31 @@ void Chain::stepSetProposal()
       affectedPartitions.insert(end(affectedPartitions), begin(partitions), end(partitions));
     }
   
+  // stuff that is specific to the newton-raphson optimizing proposal
+  // sets (i.e., blDistGamma)
   if( proposals[0]->isUsingOptimizedBranches() )
     {
 
       auto relevantBranch = branches.first;  
-      _evaluator.evaluateSubtrees(traln, relevantBranch,affectedPartitions , false);
+      _evaluator.evaluateSubtrees(_traln, relevantBranch,affectedPartitions , false);
 
-      _evaluator.evaluatePartitionsDry(traln, relevantBranch, affectedPartitions ); 
+      _evaluator.evaluatePartitionsDry(_traln, relevantBranch, affectedPartitions ); 
 
-      auto blo = BranchLengthOptimizer(traln, relevantBranch, 30, _evaluator.getParallelSetup().getChainComm(), affectedParameters);
-      blo.optimizeBranches(traln);
+      auto blo = BranchLengthOptimizer(_traln, relevantBranch, 30, _evaluator.getParallelSetup().getChainComm(), affectedParameters);
+      blo.optimizeBranches(_traln);
       auto optParams = blo.getOptimizedParameters();
 
       assert(optParams.size() == affectedParameters.size()); 
       for(nat i = 0; i < optParams.size() ; ++i)
-	proposals[i]->extractProposer(traln, optParams[i]);
+	proposals[i]->extractProposer(_traln, optParams[i]);
     }
-  
+
+  // apply each proposal, reset priors and hastings after each proposal  
   for(auto &proposal : proposals)
     {
       auto  lHast = log_double::fromAbs(1.); 
       _prior.reject();
-      proposal->applyToState(traln, _prior, lHast, _chainRand, _evaluator); 
+      proposal->applyToState(_traln, _prior, lHast, _chainRand, _evaluator); 
       p2LnPriorRatio[proposal] = _prior.getLnPriorRatio(); 
       p2Hastings[proposal] = lHast; 
 
@@ -629,23 +606,26 @@ void Chain::stepSetProposal()
     }
 
   bool fullTraversalNecessary = pSet.needsFullTraversal();
-
+  
+  // all proposals are applied, now only evaluate once 
   if( branches.first.equalsUndirected(BranchPlain(0,0)) ) // TODO another HACK
     {
       // this should be a reasonable suggestion 
-      auto nextRoot = peekNextVirtualRoot(traln, _chainRand); 
-      _evaluator.evaluatePartitionsWithRoot(traln, nextRoot, affectedPartitions, fullTraversalNecessary); 
+      auto nextRoot = peekNextVirtualRoot(_traln, _chainRand); 
+      _evaluator.evaluatePartitionsWithRoot(_traln, nextRoot, affectedPartitions, fullTraversalNecessary); 
     }
   else 
     {
-      pSet.getProposalView()[0]->prepareForSetEvaluation(traln, _evaluator);
-      _evaluator.evaluatePartitionsWithRoot(traln, branches.first , affectedPartitions, fullTraversalNecessary );
+      pSet.getProposalView()[0]->prepareForSetEvaluation(_traln, _evaluator);
+      _evaluator.evaluatePartitionsWithRoot(_traln, branches.first , affectedPartitions, fullTraversalNecessary );
     }
 
-  auto newPLnls = traln.getPartitionLnls();
+  auto newPLnls = _traln.getPartitionLnls();
 
   _prior.reject();		// slight abuse 
-  auto partitionsToReset = std::vector<bool>(traln.getNumberOfPartitions() , false); 
+  
+  // decide upon acceptance, rejection of single proposals and account for it 
+  auto partitionsToReset = std::vector<bool>(_traln.getNumberOfPartitions() , false); 
   nat accCtr = 0; 
   nat total = 0; 
   auto p2WasAccepted = std::unordered_map<AbstractProposal*, bool>{} ; 
@@ -657,7 +637,7 @@ void Chain::stepSetProposal()
 	for(auto p : var->getPartitions()) 
 	  newLnl *= newPLnls[p]; 
  
-      double accRatio = log_double(exponentiate(   p2LnPriorRatio[proposal] * ( newLnl / p2OldLnl[proposal]) ,  myHeat) * p2Hastings[proposal]).toAbs();
+      auto accRatio = log_double(exponentiate(   p2LnPriorRatio[proposal] * ( newLnl / p2OldLnl[proposal]) ,  getChainHeat()) * p2Hastings[proposal]).toAbs();
 
       if(_chainRand.drawRandDouble01() < accRatio)
 	{
@@ -668,7 +648,7 @@ void Chain::stepSetProposal()
       else 
 	{
 	  // TODO prior more efficient 
-	  proposal->resetState(traln);
+	  proposal->resetState(_traln);
 	  proposal->reject();	  
 
 	  for(auto& param: proposal->getPrimaryParameterView())
@@ -680,11 +660,10 @@ void Chain::stepSetProposal()
 	}      
     }
 
-  auto nodes = pSet.getProposalView()[0]->getInvalidatedNodes(traln); 
-  _evaluator.accountForRejection(traln, partitionsToReset, nodes); 
+  auto nodes = pSet.getProposalView()[0]->getInvalidatedNodes(_traln); 
+  _evaluator.accountForRejection(_traln, partitionsToReset, nodes); 
 
-  // _lnl = traln.getTrHandle().likelihood; 
-  auto lnl = traln.getLikelihood(); 
+  auto lnl = _traln.getLikelihood(); 
   _lnPr = _prior.getLnPrior();
   
   if(_bestState < lnl)
@@ -697,6 +676,7 @@ void Chain::stepSetProposal()
   output << "\t" << accCtr << "/"  << total << "\t" << pSet << "\t" << lnl << std::endl; 
 #endif
 
+  // tune proposals, if it time 
   for(auto &proposal : pSet.getProposalView())
     if( this->_tuneFrequency > 0  && this->_tuneFrequency < proposal->getNumCallSinceTuning()) // meh
       proposal->autotune(); 

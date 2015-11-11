@@ -3,7 +3,7 @@
 
 ProposalSet::ProposalSet(double relWeight, std::vector<std::unique_ptr<AbstractProposal> > _proposals)
   : Serializable()
-  ,  relativeWeight(relWeight)
+  , relativeWeight(relWeight)
   , proposals{}
 {
   for(auto &p : _proposals)
@@ -23,7 +23,7 @@ ProposalSet::ProposalSet(const ProposalSet &rhs)
     proposals.emplace_back(p->clone());
 
   for(auto &p : rhs.proposals)
-    p->setInSetExecution(true); 
+    p->setInSetExecution(true);
 }
 
 
@@ -104,7 +104,6 @@ bool ProposalSet::needsFullTraversal()
     result &= p->isNeedsFullTraversal();
   return result; 
 }
-
 
 
 void ProposalSet::setParameterListPtr(ParameterList* pPtr)

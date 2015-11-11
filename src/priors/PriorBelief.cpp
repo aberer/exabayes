@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "BoundsChecker.hpp"
 #include "Branch.hpp"
 #include "GlobalVariables.hpp"
 #include "AbstractPrior.hpp"

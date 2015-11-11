@@ -3,7 +3,7 @@
 topdir=$(dirname  $0 )/../
 
 # seed=$RANDOM			# 
-seed=1293873
+seed=12345
 
 # src/proposals/
 numProc=2

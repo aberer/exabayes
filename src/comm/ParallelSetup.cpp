@@ -307,8 +307,6 @@ void ParallelSetup::synchronizeChainsAtMaster( std::vector<CoupledChains>& runs,
 	    ranksofLeaders.push_back(i); 
 	}
 
-      // assert(ranksofLeaders.size() == nat(_chainLeaderComm.size())); 
-
       // accumulate swap matrices 
       auto sws = std::vector<SwapMatrix>{}; 
       for(nat i = 0; i < runs.size() ;++i)

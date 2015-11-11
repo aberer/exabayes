@@ -86,8 +86,6 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, log_dou
 	  ++ctr; 
 	}
 
-      // prior.accountForFracChange(traln, oldFCs, newFCs, blParams); 
-
       for(nat i = 0; i < blParams.size();++i)
 	{
 	  auto value = traln.getNumberOfBranches() * log(newFCs.at(i) / _oldFCs.at(i))   ; 

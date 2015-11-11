@@ -21,7 +21,7 @@ begin RUN;
  [ tuneFreq 100 ]    	 	[ tune move parameters every n generations, set to 0, if you want to disable parameter tuning ] 
  [ printFreq 1000 ]  		[ print a sample to the screen every n generations, set to 0 if you want to disable output info about the state of the chains  ]
 
- [ parsimonyStart true ]   [ if true: use parsimony trees as starting trees, else: use random starting trees ] 
+ [ parsimonyStart false ]   [ if true: use parsimony trees as starting trees, else: use random starting trees ] 
  [ heatedChainsUseSame  false ]   [ should heated chains start with the same tree as the cold chain? default: false] 
  [ checkPointInterval   10000 ]	  [ defines how often a checkpoint is written ]
 
@@ -137,18 +137,18 @@ begin proposals;
    section rather than to disable all proposals ]
  
   [ TOPOLOGY proposals  ]
-  [ eTBR         5 ]       
-  [ eSPR         5 ] 
-  [ stNNI        5 ] 
-  [ parsimonySPR 5 ] 
+  [ eTBR         0 ]       
+  [ eSPR         6 ] 
+  [ stNNI        6 ] 
+  [ parsimonySPR 6 ] 
+  [ likeSpr      2 ]		[ new posterior guided SPR ]
 
   [ BRANCH LENGTHS proposals ] 
-  [ branchMulti    15 ] 
-  [ treeLengthMult 2  ] 
-  [ nodeSlider     5  ] 
-
-
-  
+  [ branchMulti    0 ] 
+  [ treeLengthMult 1  ] 
+  [ nodeSlider     0  ] 
+  [ blDistGamma    9  ]         [ efficient Newton-Raphson-based branch length proposal ]
+  [ biasBLMult     1  ]         [ branch length multiplier that preferably samples short branch lengnths ]
 
   [ RATE HETEROGENEITY ]
   [ rateHetMulti   1  ] 
@@ -171,6 +171,11 @@ begin proposals;
   [ etbrStopProb 0.5   ]            [ stopping probability for eTBR moves ] 
   [ parsimonyWarp 0.10 ]            [ warp factor for parsimony based moves ]  
   [ parsSPRRadius  10  ]            [ rearrangement radius (around current position) for parsimony SPR ] 
+
+  [ likesprmaxradius 5  ]           [ a radius for the posterior-guided SPR (likeSPR) move: when pruning a subtree, the likeSpr will check all possible re-attachment positions within this radius (expensive!)  ]
+  [ likesprwarp 1.0     ]           [ warp factor for posterior-guided SPR move ]
+  [ moveOptMode 0       ]           [ values in (0,4), proposes branches simultaneously with any of the topological moves  ] 
+  [ useMultiplier true	]           [ in case moveOptMode > 0, use a branch length multiplier instead of a gamma proposal ]
 
   [================================================================]
 

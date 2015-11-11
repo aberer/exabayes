@@ -15,7 +15,10 @@ BranchLengthsParameter::BranchLengthsParameter(nat id, nat idOfMyKind, std::vect
 void BranchLengthsParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
 {
   for(auto &b : content.branchLengths)
-    traln.setBranch(b, const_cast<AbstractParameter*>(dynamic_cast<const AbstractParameter* const >(this))); 
+    {
+      // tout << "setting " << b << std::endl; 
+      traln.setBranch(b, const_cast<AbstractParameter*>(dynamic_cast<const AbstractParameter* const >(this))); 
+    }
 }
 
 ParameterContent BranchLengthsParameter::extractParameter(const TreeAln &traln)  const

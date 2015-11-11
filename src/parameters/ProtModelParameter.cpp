@@ -7,6 +7,7 @@ void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent 
   for(auto &m : _partitions)
     {
       assert(content.protModel.size() == 1); 
+      // tout << "aa model " << content.protModel[0] << std::endl;
       traln.setProteinModel(m, content.protModel[0]);
     }
 }

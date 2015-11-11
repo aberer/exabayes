@@ -1,1 +1,1 @@
-#define RELEASE_DATE "2014-08-26"
+#define RELEASE_DATE "2014-08-27"

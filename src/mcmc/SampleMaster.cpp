@@ -4,7 +4,6 @@
 
 #include "ByteFile.hpp"
 #include "TreePrinter.hpp"
-#include "AdHocIntegrator.hpp"
 #include "BasicTreeReader.hpp"
 #include "BlockProposalConfig.hpp"
 #include "BlockRunParameters.hpp"
@@ -28,20 +27,8 @@
 #include "FullCachePolicy.hpp"
 #include "NoCachePolicy.hpp"
 
-#include "TreeIntegrator.hpp"
-
-
 #include "PhylipParser.hpp"
 
-// a developmental mode to integrate over branch lengths
-
-// #define _GO_TO_MOVE
-
-
-#ifndef _EXPERIMENTAL_INTEGRATION_MODE
-#undef _GO_TO_INTEGRATION_MODE
-#undef _GO_TO_TREE_MOVE_INTEGARTION
-#endif
 
 using std::endl; 
 using std::vector;
@@ -1100,7 +1087,7 @@ void SampleMaster::simulate()
 	  else 
 	    hasConverged = true ; 
 
-	  auto swapBackup = vector<SwapMatrix> {};
+	  auto swapBackup = std::vector<SwapMatrix> {};
 	  if(_plPtr->isGlobalMaster())
 	    {
 	      for(auto &run : _runs)
@@ -1150,26 +1137,7 @@ void SampleMaster::simulate()
 	} 
     }
 
-#if defined( _EXPERIMENTAL_INTEGRATION_MODE ) && defined(_GO_TO_INTEGRATION_MODE)
-  // go into integration mode, if we want to do so 
-  auto rnew = Randomness(_runs[0].getChains()[0].getChainRand().generateSeed());
-  branchLengthsIntegration(rnew);
-#endif
 
-#if defined(_EXPERIMENTAL_INTEGRATION_MODE)  && defined(_GO_TO_TREE_MOVE_INTEGARTION)
-  // auto sprLengthStr = std::string(std::getenv("SPR_LENGTH")); 
-  // auto && iss  = std::istringstream{sprLengthStr}; 
-  // nat sprLen = 0;  
-  // iss >> sprLen; 
-  // void integrateAllMoves(const TreeAln &otherTree, std::string runid, nat sprDistance); 
-  
-  // tInt->integrateAllBranchesNew(*(_runs[0].getChains()[0].getTralnPtr()), 
-  // 				_cl.getRunid(),
-  // 				sprLen );
-
-  tInt->integrateAllMoves(   _runs[0].getChains()[0].getTralnHandle(),  _cl.getRunid(), 4 ); 
-  
-#endif
 }
 
  
@@ -1283,6 +1251,3 @@ void SampleMaster::writeCheckpointMaster()
       serialize(nullstream); 
     }
 } 
-
-
-#include "IntegrationModuleImpl.hpp"

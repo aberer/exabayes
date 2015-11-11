@@ -14,12 +14,8 @@ AminoModelJump::AminoModelJump()
 
 void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator &eval)
 {
-  // assert(0); 
-  // must update mean substitution  rate 
-
   // save the old fracchanges
   auto blParams = getBranchLengthsParameterView();
-  // auto oldFcs = std::vector<double>{};
   _oldFcs.clear(); 
   for(auto &blParam : blParams)
     _oldFcs.push_back(blParam->getMeanSubstitutionRate()); 
@@ -38,8 +34,6 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double
       newModel = content.protModel[0];
     }
 
-  // tout << ProtModelFun::getName(savedMod)  << " -> "<< ProtModelFun::getName(newModel) << std::endl; 
-
   auto newFcs = std::vector<double>{}; 
   for(auto p : partitions)
     traln.setProteinModel(p, newModel);
@@ -49,13 +43,8 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double
     blParam->updateMeanSubstRate(traln);
 
   for(auto blParam : blParams)
-    {
-      // newFcs.push_back(traln.getMeanSubstitutionRate(blParam->getPartitions()));
-      newFcs.push_back(blParam->getMeanSubstitutionRate());
-    }
+    newFcs.push_back(blParam->getMeanSubstitutionRate());
 
-
-  // prior.accountForFracChange(traln, oldFcs, newFcs, blParams); 
   auto ctr = 0u; 
   for(auto param: blParams)
     {
@@ -70,6 +59,7 @@ void AminoModelJump::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &tr
   evaluator.evaluate(traln,traln.getAnyBranch(), true); //TODO evaluate one partition
 }
 
+
 void AminoModelJump::resetState(TreeAln &traln)
 {  
   auto primVar = getPrimaryParameterView();
@@ -80,7 +70,6 @@ void AminoModelJump::resetState(TreeAln &traln)
 
 
   // necessary, if we have fixed branch lengths  
-  auto ctr = 0; 
   for(auto &param : getBranchLengthsParameterView() )
     {
       if( not param->getPrior()->needsIntegration() )
@@ -97,8 +86,9 @@ void AminoModelJump::resetState(TreeAln &traln)
 	}
       else 
 	{
-	  param->setMeanSubstitutionRate(_oldFcs[ctr]); 
-	  ++ctr; 
+	  // TODO inefficient =/ but cannot use the _oldFcs. That
+	  // would cause trouble in proposal sets
+	  param->updateMeanSubstRate(traln);
 	}
     }
 }
