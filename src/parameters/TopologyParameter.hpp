@@ -1,9 +1,8 @@
 #ifndef _TOPOLOGY_PARAMETER
 #define _TOPOLOGY_PARAMETER
 
-#include "TreeAln.hpp"
 #include "AbstractParameter.hpp"
-#include "Category.hpp"
+#include "model/Category.hpp"
 
 class TopologyParameter : public AbstractParameter
 {

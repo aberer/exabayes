@@ -1,6 +1,6 @@
 #include "ParameterProposal.hpp"
 #include "priors/AbstractPrior.hpp"
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 
 ParameterProposal::ParameterProposal(Category cat, std::string name, bool modifiesBL, std::unique_ptr<AbstractProposer> _proposer, double parameter, double weight, double minTuning, double maxTuning )
   : AbstractProposal( cat, name, weight, minTuning, maxTuning)
@@ -89,7 +89,7 @@ void ParameterProposal::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln
 #endif
   
   
-  evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion , prts , true, true); 
+  evaluator.evaluatePartitionsWithRoot(traln, branchSuggestion , prts , true); 
 }
 
 

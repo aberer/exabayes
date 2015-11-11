@@ -8,33 +8,26 @@
 
 #include "config.h"
 
+
 /* only to be disabled for benchmarking! */
 #define USE_NONBLOCKING_COMM
 
 #define USE_SSE ( defined(HAVE_SSE3) &&  ! defined(MANUAL_SSE_OVERRIDE) ) 
 #define USE_AVX ( defined(HAVE_AVX) && ! defined(MANUAL_AVX_OVERRIDE) && ! defined(MANUAL_SSE_OVERRIDE) )
 
-#if HAVE_PLL != 0
-#define exa_realloc rax_realloc
-#define exa_malloc_aligned  rax_malloc_aligned
-#define exa_free rax_free
-#define exa_malloc rax_malloc
-#define exa_calloc rax_calloc
+#if USE_AVX
+#define EXA_ALIGN VectAlign::AVX 
+#elif USE_SSE
+#define EXA_ALIGN VectAlign::SSE
 #else 
-#define exa_malloc_aligned malloc_aligned
-#define exa_realloc realloc
-#define exa_free free
-#define exa_malloc malloc
-#define exa_calloc calloc
+#define EXA_ALIGN VectAlign::Normal
 #endif
-
 
 #define SOME_SCI_PRECISION std::scientific << std::setprecision(2)   
 #define MAX_SCI_PRECISION  std::scientific << std::setprecision(std::numeric_limits<double>::digits10)   
 #define SOME_FIXED_PRECISION std::fixed << std::setprecision(2)   
 #define MORE_FIXED_PRECISION std::fixed << std::setprecision(4)   
 #define PERC_PRECISION std::fixed << std::setprecision(2) 
-
 
 #define NO_SEC_BL_MULTI
 #define NOT_IMPLEMENTED  0
@@ -46,8 +39,7 @@ typedef unsigned int nat;
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
 #define ACCEPTED_LNPR_EPS 1e-6
 
-/* some global switches */
-
+/* some global switches */ 
 
 /* #define _GO_TO_TREE_MOVE_INTEGARTION */
 /* #define _GO_TO_INTEGRATION_MODE */
@@ -56,6 +48,9 @@ typedef unsigned int nat;
 #define _DISABLE_INIT_LNL_CHECK
 /* #define INTEGRATION_GENERATION 3e4 */
 #define INTEGRATION_GENERATION 1e6
+
+#define SHOW(sym) #sym << "=" << sym << "\t"
+
 
 /* #define UNSURE  */
 /* #define EFFICIENT  */

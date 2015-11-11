@@ -1,8 +1,6 @@
 #include <cassert>
 
 #include "BlockProposalConfig.hpp"
-#include "comm/ParallelSetup.hpp"
-
 
 extern void genericExit(int code); 
 
@@ -43,7 +41,7 @@ void BlockProposalConfig::Read(NxsToken &token)
 	      if(userValue.find(t) != userValue.end())
 		{
 		  std::cerr << "encountered the value " << key << "twice in the config file" << std::endl; 
-		  ParallelSetup::genericExit(-1); 
+		  exitFunction(-1, true); 
 		}
 	      else 
 		userValue[t] = val; 
@@ -76,25 +74,25 @@ void BlockProposalConfig::verify()
   if(not (0.01 < esprStopProp && esprStopProp <= 1 ))
     {
       tout << "Error: >esprStopProp< must be in the range (0.01,1]" << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }
 
   if(not (0.01 < esprStopProp && esprStopProp <= 1 ))
     {
       tout << "Error: >etbrStopProb< must be in the range (0.01,1]" << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1,true); 
     }
   
   if(not (0.001 < parsimonyWarp && parsimonyWarp < 10))
     {
       tout << "Error: >parsimonyWarp< must be in the range (0.001,10)" << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }
   
   if(parsSPRRadius != -1 &&  (parsSPRRadius <= 1 ))
     {
       tout << "Error: >parsSPRRadius< must be in the range (1,inf)" << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }
 }
 

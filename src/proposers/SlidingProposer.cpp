@@ -1,6 +1,6 @@
 #include "SlidingProposer.hpp"
-#include "RateHelper.hpp"
-#include "BoundsChecker.hpp"
+#include "model/RateHelper.hpp"
+#include "system/BoundsChecker.hpp"
 #include <numeric>
 
 SlidingProposer::SlidingProposer(double minVal, double maxVal, bool _minMaxIsRelative)

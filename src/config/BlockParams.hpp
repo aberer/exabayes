@@ -5,10 +5,10 @@
 
 #include "config/ExaBlock.hpp"
 
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #include "parameters/AbstractParameter.hpp" 
-#include "TreeAln.hpp"
-#include "Category.hpp"
+#include "model/TreeAln.hpp"
+#include "model/Category.hpp"
 
 class BlockParams : public ExaBlock
 {

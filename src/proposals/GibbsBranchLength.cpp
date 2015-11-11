@@ -1,5 +1,5 @@
 #include "GibbsBranchLength.hpp"
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 #include "GibbsProposal.hpp"
 #include "priors/AbstractPrior.hpp"
 

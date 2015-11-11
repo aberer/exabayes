@@ -7,15 +7,18 @@
 
 #include <assert.h>
 
-#include "time.hpp"
+#include "../system/time.hpp"
 
-#include "common.h"
-#include <iomanip>
+#include "data-struct/Bipartition.hpp"
+
+#include "../common.h"
 #include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <fstream>
 
+
+// #define OLD_ALN_LAYOUT
 
 // #define DEBUG_MSG
 
@@ -30,10 +33,11 @@ typedef unsigned int  nat;
 extern const char *protModels[NUM_PROT_MODELS];
 
 
-void myExit(int code)
+static void myExit(int code)
 {
   exit(code); 
 }
+
 
 PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool haveModelFile	)
   : alnFile(_alnFile)
@@ -71,6 +75,7 @@ PhylipParser::PhylipParser(std::string _alnFile, std::string _modelFile, bool ha
 
 PhylipParser::~PhylipParser()
 {
+  // if(rdta && rdta->y0)
   free(rdta->y0); 
   free(baseAddr); 
   free(tr->yVector); 
@@ -197,7 +202,7 @@ static int myGetline(char **lineptr, int *n, FILE *stream)
     {
       while (--copy > 0)
 	{
-	  register int c = getc(stream);
+	  int c = getc(stream);
 	  if (c == EOF)
 	    goto lose;
 	  else
@@ -1955,7 +1960,7 @@ void PhylipParser::compressDNA(int *informative)
       if(entries % PCF != 0)
 	compressedEntries++;
 
-#if (defined(__SIM_SSE3) || defined(__AVX))
+#if (defined(__SSE3) || defined(__AVX))
       if(compressedEntries % INTS_PER_VECTOR != 0)
 	compressedEntriesPadded = compressedEntries + (INTS_PER_VECTOR - (compressedEntries % INTS_PER_VECTOR));
       else
@@ -2133,19 +2138,79 @@ void PhylipParser::determineUninformativeSites( int *informative)
 }
 
 
-void PhylipParser::allocateParsimonyDataStructures()
+Bipartition PhylipParser::allocateParsimonyDataStructures()
 {
-  int 
-    *informative = (int *)malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
+  auto informative = std::vector<int>(tr->originalCrunchedLength, 0);
  
-  determineUninformativeSites( informative);
+  determineUninformativeSites( informative.data());
 
-  compressDNA( informative);
+  compressDNA( informative.data());
  
   tr->ti = (int*)malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
+  
+  auto result = Bipartition{} ;
+  result.reserve(tr->originalCrunchedLength);
+  for(decltype(tr->originalCrunchedLength) i = 0; i < tr->originalCrunchedLength; ++i)
+    {
+      if(informative[i] > 0 )
+	result.set(i); 
+    }
 
-  free(informative); 
+  return result;
 }
+
+
+void PhylipParser::writeWeights(std::ofstream &out)
+{
+  auto elem =  *(std::max_element(tr->cdta->aliaswgt, tr->cdta->aliaswgt + tr->originalCrunchedLength)); 
+
+  // sorry, hard coding here 
+
+  if(elem < std::numeric_limits<uint8_t>::max())
+    {
+      int len = sizeof(uint8_t); 
+      myWrite(out, &len,1); 
+      for(auto i = 0ull; i < tr->originalCrunchedLength; ++i)
+	{
+	  uint8_t val = tr->cdta->aliaswgt[i]; 
+	  myWrite(out, &val, 1); 
+	}
+    }
+  else if(elem < std::numeric_limits<uint16_t>::max())
+    {
+      int len = sizeof(uint16_t); 
+      myWrite(out, &len,1); 
+      for(auto i = 0ull; i < tr->originalCrunchedLength; ++i)
+	{
+	  uint16_t val = tr->cdta->aliaswgt[i]; 
+	  myWrite(out, &val, 1); 
+	}
+    }
+  else if(elem < std::numeric_limits<int32_t>::max())
+    {
+      int len = sizeof(uint32_t); 
+      myWrite(out, &len,1); 
+      for(auto i = 0ull; i < tr->originalCrunchedLength; ++i)
+	{
+	  uint32_t val = tr->cdta->aliaswgt[i]; 
+	  myWrite(out, &val, 1); 
+	}
+    }
+  else 
+    {
+      assert(0); 
+      // cannot do that 
+      int len = sizeof(int64_t); 
+      myWrite(out, &len,1); 
+      for(auto  i = 0ull; i < tr->originalCrunchedLength; ++i)
+	{
+	  int64_t val = tr->cdta->aliaswgt[i]; 
+	  myWrite(out, &val, 1); 
+	}
+    }
+}
+
+
 
 
 void PhylipParser::writeToFile(std::string fileName) 
@@ -2161,9 +2226,9 @@ void PhylipParser::writeToFile(std::string fileName)
 
   myWrite(out, &(tr->mxtips), 1); 
   myWrite(out, &(tr->NumberOfModels), 1); 
-  myWrite(out, &adef->gapyness, 1); 
   myWrite(out,&tr->originalCrunchedLength, 1) ; 
-  myWrite(out,tr->cdta->aliaswgt, tr->originalCrunchedLength ) ; 
+
+  writeWeights(out); 
 
   for(i = 1; i <= (size_t)tr->mxtips; i++)
     {
@@ -2198,6 +2263,7 @@ void PhylipParser::writeToFile(std::string fileName)
       myWrite(out, p->partitionName, len);
     } 
 
+#ifdef OLD_ALN_LAYOUT
   auto iter = rdta->y0; 
   for(int i = 0 ;i < tr->mxtips; ++i)
     {
@@ -2206,13 +2272,40 @@ void PhylipParser::writeToFile(std::string fileName)
       myWrite(out, iter  , tr->originalCrunchedLength); 
       iter += tr->originalCrunchedLength; 
     }
-
-  for(model = 0; model < (size_t) tr->NumberOfModels; ++model)
+#else 
+  auto iter = rdta->y0; 
+  auto numPat = tr->originalCrunchedLength; 
+  auto pattern = std::vector<uint8_t>(tr->mxtips,0); 
+  for(uint64_t i = 0; i < numPat; ++i)
     {
-      myWrite(out, &(tr->partitionData[model].parsimonyLength),1); 
-      size_t numBytes =tr->partitionData[model].parsimonyLength * tr->partitionData[model].states * 2 * tr->mxtips ; 
-      myWrite(out, tr->partitionData[model].parsVect, numBytes); 
+      for(int j = 0; j < tr->mxtips; ++j)
+	pattern[j] = *(iter + numPat * j + i); 
+      myWrite(out, pattern.data() ,  tr->mxtips); 
     }
+  
+#endif
+
+  // also write infoness 
+  auto handle = _infoness.getRawBip(); 
+  
+  // std::cout << "INFO: again: "; 
+  // for(nat i = 0 ;i < tr->originalCrunchedLength; ++i)
+  //   {
+  //     if(_infoness.isSet(i))
+  // 	std::cout << 1; 
+  //     else 
+  // 	std::cout << 0 ; 
+  //   }
+  // std::cout << std::endl; 
+  
+  myWrite(out, handle.data(), handle.size()); 
+  
+  // for(model = 0; model < (size_t) tr->NumberOfModels; ++model)
+  //   {
+  //     myWrite(out, &(tr->partitionData[model].parsimonyLength),1); 
+  //     size_t numBytes =tr->partitionData[model].parsimonyLength * tr->partitionData[model].states * 2 * tr->mxtips ; 
+  //     myWrite(out, tr->partitionData[model].parsVect, numBytes); 
+  //   }
   out.close(); 
 }
 
@@ -2280,5 +2373,15 @@ void PhylipParser::parse()
   for(int i = 0; i < tr->NumberOfModels; ++i)
     tr->partitionContributions[i] /= total; 
 
-  allocateParsimonyDataStructures()  ; 
+  _infoness = allocateParsimonyDataStructures()  ; 
+
+  // for(nat i = 0; i < tr->originalCrunchedLength; ++i)
+  //   {
+  //   if(_infoness.isSet(i))
+  //     std::cout  << "1"; 
+  //   else 
+  //     std::cout << "0" ; 
+  //   }
+  // std::cout << std::endl; 
+  
 }

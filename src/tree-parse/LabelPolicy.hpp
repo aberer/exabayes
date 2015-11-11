@@ -1,10 +1,7 @@
 #ifndef INTEGER_LABEL_READER
 #define INTEGER_LABEL_READER
 
-
-#include "comm/ParallelSetup.hpp"
-
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #include <unordered_map>
 #include <iostream>
 #include <cassert>
@@ -59,7 +56,7 @@ public:
     if(_name2id.find(label) == _name2id.end()) 
       {
 	std::cerr << "Error: while parsing tree, could not find taxon >" << label << "<" << std::endl; 
-	ParallelSetup::genericExit(-1); 
+	exitFunction(-1, false); 
       }
 
     return _name2id[label]; 

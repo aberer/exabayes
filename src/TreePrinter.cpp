@@ -1,7 +1,6 @@
 #include <cassert>
-#include <iomanip>
 
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "TreePrinter.hpp"
 
 TreePrinter::TreePrinter(bool withBranchLengths , bool withInternalNodes , bool withRealNames) 

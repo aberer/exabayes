@@ -3,7 +3,7 @@
 
 #include <memory> 
 
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "AbstractProposal.hpp"
 #include "proposers/AbstractProposer.hpp"
 #include "ParameterProposal.hpp"

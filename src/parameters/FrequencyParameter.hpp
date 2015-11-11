@@ -1,9 +1,9 @@
 #ifndef FREQ_PARAMETER
 #define FREQ_PARAMETER
 
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "AbstractParameter.hpp"
-#include "Category.hpp"
+#include "model/Category.hpp"
   
 class FrequencyParameter : public AbstractParameter
 {
@@ -19,9 +19,7 @@ public:
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
-  // virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const ; 
   virtual ParameterContent extractParameter(const TreeAln &traln)  const;   
-  // virtual ParameterContent extractParameterRaw(const TreeAln& traln) const ; 
   virtual AbstractParameter* clone () const {return new FrequencyParameter(*this); } 
 
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln) const ; 
@@ -35,7 +33,7 @@ public:
   {
     auto content = prior.getInitialValue();
     auto& partition = traln.getPartition(_partitions.at(0));
-    return content.values.size() == nat(partition.states); 
+    return content.values.size() == nat(partition.getStates()); 
   } 
 }; 
 

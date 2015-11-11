@@ -2,7 +2,7 @@
 #define _PARTITION_LIKELIHOOD 
 
 #include <vector>
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 
 class PartitionLikelihood
 {
@@ -16,9 +16,16 @@ public:
   {
     if(useSEV)
       {
+// #if 0
 	auto& partition = traln.getPartition(model); 
-	gapVector = std::vector<nat>(partition.gapVectorLength * 2 * traln.getNumberOfTaxa() , 0);
-	gapColumn = std::vector<double>(traln.getNumberOfTaxa( ) * partition.states * 4 ,0);
+	gapVector = std::vector<nat>(partition.getGapVectorLength() * 2 * traln.getNumberOfTaxa() , 0);
+	gapColumn = std::vector<double>(traln.getNumberOfTaxa( ) * partition.getStates() * Partition::maxCategories ,0);
+	// very MEH 
+
+// #else 
+// 	// TODO gap stuff 
+// 	assert(0); 
+// #endif
       }
   }
 

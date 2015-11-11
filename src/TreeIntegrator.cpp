@@ -1,17 +1,17 @@
 #include "TreeIntegrator.hpp"
-#include "extensions.hpp" 
+#include "system/extensions.hpp" 
 #include "eval/ArrayReservoir.hpp"
 #include "proposals/BranchLengthMultiplier.hpp"
 #include "GibbsProposal.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
 #include "priors/ExponentialPrior.hpp"
 #include "proposals/TreeLengthMultiplier.hpp"
-#include "ProposalRegistry.hpp"
+#include "system/ProposalRegistry.hpp"
 #include "proposals/GibbsBranchLength.hpp"
 #include "proposals/BranchLengthMultiplier.hpp"
-#include "SprMove.hpp"
-#include "Arithmetics.hpp"
+#include "proposals/SprMove.hpp"
+#include "math/Arithmetics.hpp"
 #include "eval/FullCachePolicy.hpp"
 
 // #define NUM_GEN_BASE 1000
@@ -21,11 +21,11 @@
 
 
 
-TreeIntegrator::TreeIntegrator(TreeAln& traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
+TreeIntegrator::TreeIntegrator(TreeAln& traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed, std::shared_ptr<ParallelSetup> plPtr)
 {
   auto && plcy = make_unique<FullCachePolicy>(traln, true, true );
   auto res = std::make_shared<ArrayReservoir>(false);
-  auto eval = LikelihoodEvaluator(traln, plcy.get(), res);
+  auto eval = LikelihoodEvaluator(traln, plcy.get(), res, plPtr.get());
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
@@ -60,7 +60,7 @@ void TreeIntegrator::prepareChain( const TreeAln &otherTree, bool copyEverything
   if(copyEverything)
     traln = otherTree; 
 
-  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(), true, true); 
+  integrationChain->getEvaluator().evaluate(traln, traln.getAnyBranch(), true); 
   integrationChain->reinitPrior(); 
 }
 
@@ -79,7 +79,7 @@ Branch2Stat TreeIntegrator::integrateTree(double essThresh, LikelihoodEvaluator 
   auto param = params[0]; 
 
   
-  eval.evaluate(traln, traln.getAnyBranch(),true, true); 
+  eval.evaluate(traln, traln.getAnyBranch(),true); 
   eval.freeMemory(); 
   integrationChain->setLikelihood(traln.getTrHandle().likelihood); 
   integrationChain->suspend(); 

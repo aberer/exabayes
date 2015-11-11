@@ -1,26 +1,10 @@
 #include "eval/ArrayReservoir.hpp" 
-#include "GlobalVariables.hpp" 
+#include "system/GlobalVariables.hpp" 
 #include <algorithm>
 #include <cassert>
-#include "axml.h"
+#include "system/extensions.hpp"
 
-const double ArrayReservoir::numGammaCats = 4; 
 const double ArrayReservoir::thresholdForNewSEVArray = 1.05 ; 
-
-
-// adding c-bindings
-double* allocate(array_reservoir_t self, size_t required)
-{
-  auto castedSelf = static_cast<ArrayReservoir*>(self); 
-  return castedSelf->allocate(required); 
-}
-
-
-void deallocate(array_reservoir_t self, double *array)
-{
-  auto castedSelf = static_cast<ArrayReservoir*>(self); 
-  castedSelf->deallocate(array);
-}
 
 
 ArrayReservoir::~ArrayReservoir()
@@ -28,10 +12,10 @@ ArrayReservoir::~ArrayReservoir()
   for(auto elem : _unusedArrays)
     {
       for(auto elem2 : std::get<1>(elem))
-	exa_free(elem2);
+	free(elem2);
     }
   for(auto elem : _usedArrays)
-    exa_free(std::get<0>(elem)); 
+    free(std::get<0>(elem)); 
 } 
 
 
@@ -65,13 +49,13 @@ double* ArrayReservoir::allocate(size_t requiredLength)
 	{
 	  auto maxElemIter = std::max_element(begin(_unusedArrays), end(_unusedArrays));
 	  auto &maxElem = *maxElemIter; 
-	  exa_free(std::get<1>(maxElem).front()); 
+	  free(std::get<1>(maxElem).front()); 
 	  std::get<1>(maxElem).pop_front(); 
 	  if(std::get<1>(maxElem).size() == 0)
 	    _unusedArrays.erase(maxElemIter); 
 	}
-
-      result = (double*) exa_malloc_aligned(requiredLength);
+      
+      result = aligned_malloc<double,size_t(EXA_ALIGN)>(requiredLength); 
       _usedArrays.insert(std::make_pair(result, requiredLength));
     }
 

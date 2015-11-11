@@ -4,9 +4,9 @@
 #include <sstream>
 #include "priors/ExponentialPrior.hpp"
 #include "proposals/BranchIntegrator.hpp"
-#include "ProposalRegistry.hpp"
+#include "system/ProposalRegistry.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
-#include "ParsimonyEvaluator.hpp"
+#include "eval/ParsimonyEvaluator.hpp"
 #include "common.h"
 
 // HACK 
@@ -19,7 +19,7 @@ struct noDeleter
 class AdHocIntegrator
 {
 public: 
-  AdHocIntegrator(TreeAln& tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed); 
+  AdHocIntegrator(TreeAln& tralnPtr, std::shared_ptr<TreeAln> debugTree, randCtr_t seed, ParallelSetup* pl); 
   std::vector<AbstractParameter*> getBlParamView() const ;
   void prepareForBranch( const BranchPlain &branch, const TreeAln &traln); 
   std::vector<double> integrate(const BranchPlain &branch, const TreeAln &otherTree); 

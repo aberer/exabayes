@@ -6,26 +6,15 @@
 #include <string>
 #include <vector>
 
-#include "comm/ParallelSetup.hpp"
-
-#include "axml.h"
-
 int NUM_BRANCHES; 
 
 #define _INCLUDE_DEFINITIONS
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
 #include "common.h"
 
-#include "SplitFreqAssessor.hpp"
-
-
-void myExit(int code)
-{
-  exit(code); 
-}
-
+#include "contrib/SplitFreqAssessor.hpp"
 
 
 void printUsage()
@@ -47,13 +36,20 @@ void printUsage()
 	    << "\n\n"
     ; 
 
-  myExit(0); 
+  exit(0); 
+}
+
+
+static void myExit(int code, bool waitForAll)
+{
+  exit(code); 
 }
 
 
 
 int main(int argc, char** argv)
 {
+  exitFunction = myExit; 
 
 // #ifdef _USE_GOOGLE_PROFILER
 //   auto myProfileFile = "profile.out"; 
@@ -102,7 +98,7 @@ int main(int argc, char** argv)
 	  break; 
 	case 'f':
 	  {
-	    nat index  = optind -1; 
+	    int index  = optind -1; 
 	    while(index < argc)
 	      {
 		auto next = std::string{argv[index]}; 
@@ -127,7 +123,7 @@ int main(int argc, char** argv)
 	default : 
 	  {
 	    std::cerr << "unknown argument >" << c << "<" << std::endl; 
-	    ParallelSetup::genericExit(-1); 
+	    exitFunction(-1, false); 
 	    }
 	} 
     }
@@ -140,7 +136,7 @@ int main(int argc, char** argv)
       if(not std::ifstream(file)) 
 	{
 	  std::cout << "error: could not open file >" << file << "<" << std::endl; 
-	  myExit(-1); 
+	  exit(-1); 
 	}
     }
 
@@ -148,7 +144,7 @@ int main(int argc, char** argv)
     {
       std::cout << "Error: you cannot set the relative burn-in AND a range of trees to\n"
 		<< "use.\n";
-      myExit(-1); 
+      exit(-1); 
     }
 
   auto asdsf = SplitFreqAssessor(files, true); 
@@ -158,7 +154,7 @@ int main(int argc, char** argv)
   if(end < constBurnin)
     {
       std::cout << "you are trying to discard " << constBurnin << " trees, but the minimum trees available in one of the files is just " << end << std::endl; 
-      myExit(-1); 
+      exit(-1); 
     }
 
   nat start = 0;   

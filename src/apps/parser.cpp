@@ -1,11 +1,12 @@
 #include "parser/PhylipParser.hpp"
-#include "comm/ParallelSetup.hpp"
 
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
+
+#include "system/GlobalVariables.hpp"
 
 int NUM_BRANCHES ; 
 
@@ -26,7 +27,7 @@ void helpMessage()
 	    << std::endl; 
 }
 
-static void myExit(int code)
+static void myExit(int code, bool waitForAll)
 {
   exit(code); 
 }
@@ -34,10 +35,12 @@ static void myExit(int code)
 
 int main(int argc, char **argv)
 {
+  exitFunction = myExit; 
+
   if(argc < 2)
     {
       helpMessage(); 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
   
   auto alignmentFile = std::string(""); 
@@ -68,14 +71,14 @@ int main(int argc, char **argv)
 	      {
 		std::cerr << "Encountered unknown command line option " <<  c 
 			  << "\n\nFor an overview of program options, please use -h" << std::endl ; 
-		myExit(-1); 
+		exitFunction(-1, false); 
 	      }
 	    }
 	}
       catch(const std::invalid_argument& ia )
 	{
 	  std::cerr << "Invalid argument >" << optarg << "< to option >" << reinterpret_cast<char*>(&c) << "<" << std::endl; 
-	  myExit(-1); 
+	  exitFunction(-1, false); 
 	}
     }
 
@@ -83,33 +86,33 @@ int main(int argc, char **argv)
   if(outputFileName.compare("") == 0 )
     {
       std::cout << "Please specify an output file name via -n." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
 
   if(outputFileName.compare("") != 0 && std::ifstream(outputFileName + ".binary"))
     {
       std::cout << "Error: output file "  <<  outputFileName  << ".binary already exists." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
 
   if(modelFile.compare("") == 0 && singlePartitionModel.compare("") == 0)
     {
       std::cout << "Please specify either a model file via -q or a data type for a single\n"
 		<< "partition (either DNA or PROT) via -m." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
 
   if(modelFile.compare("") != 0 && not std::ifstream{modelFile})
     {
       std::cout << "Error: model file provided, but could not open model file >"  << modelFile << "<" << std::endl; 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
 
   
   if(not std::ifstream{alignmentFile})
     {
       std::cout << "Error: could not open alignment file >" << alignmentFile << "<" << std::endl; 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
 
   

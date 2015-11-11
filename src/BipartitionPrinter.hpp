@@ -1,6 +1,0 @@
-#ifndef BIPARTITION_PRINTER_HPP	
-#define BIPARTITION_PRINTER_HPP	
-
-
-
-#endif

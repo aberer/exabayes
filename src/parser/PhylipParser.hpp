@@ -8,6 +8,9 @@
 #include <iostream>
 #include <vector>
 
+#include "data-struct/Bipartition.hpp"
+
+// class Bipartition; 
 typedef unsigned int nat; 
 
 #ifdef BYTE_ALIGNMENT
@@ -30,6 +33,7 @@ public:
   void writeToFile(std::string fileName) ; 
 
 private: 			// METHODS
+  void writeWeights(std::ofstream &out); 
 
   template<typename T>
   void myWrite(std::ostream& out, T* ptr, size_t length)
@@ -67,7 +71,7 @@ private: 			// METHODS
   void compressDNA(int *informative); 
   Parser::boolean isInformative(int dataType, int site); 
   void determineUninformativeSites( int *informative); 
-  void allocateParsimonyDataStructures(); 
+  Bipartition allocateParsimonyDataStructures(); 
 
 private: 			// ATTRIBUTES
   std::string alnFile; 		
@@ -101,6 +105,8 @@ private: 			// ATTRIBUTES
   Parser::nodeptr baseAddr; 
   
   std::vector<std::vector<uint8_t> > _ySpace; // 
+
+  Bipartition _infoness; 
 }; 
 
 

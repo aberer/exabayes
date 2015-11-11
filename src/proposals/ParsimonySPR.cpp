@@ -4,14 +4,11 @@
 #include "priors/AbstractPrior.hpp"
 
 #include "ParsimonySPR.hpp"
-#include "Branch.hpp"
+#include "model/Branch.hpp"
+
+#include "comm/ParallelSetup.hpp"
 
 #include "TreePrinter.hpp"
-
-#if HAVE_PLL == 0
-#include <mpi.h>
-extern MPI_Comm comm; 
-#endif
 
 
 static double state2factor(nat states)
@@ -79,14 +76,11 @@ void ParsimonySPR::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodept
 }
 
 
-
-
-weightMap ParsimonySPR::getWeights(const TreeAln& traln, branch22states2score insertions) const
+weightMap ParsimonySPR::getWeights(const TreeAln& traln, branch22states2score insertions, LikelihoodEvaluator& eval) const
 {
   auto result = weightMap{}; 
   double minWeight = std::numeric_limits<double>::max(); 
 
-#if HAVE_PLL == 0
   if(_parallelReduceAtEnd)
     {
       auto data = std::vector<parsimonyNumber>{}; 
@@ -98,9 +92,8 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, branch22states2score in
 	    data.push_back(v);
 	}
 
-      // could be encapsulated in <chain>
-      MPI_Allreduce(MPI_IN_PLACE, data.data(), data.size(), MPI_UNSIGNED, MPI_SUM, comm);
-      
+      data = eval.getParallelSetup().getChainComm().allReduce<>(data);
+
       nat ctr = 0; 
       for(auto &pair :insertions)
 	{
@@ -110,7 +103,6 @@ weightMap ParsimonySPR::getWeights(const TreeAln& traln, branch22states2score in
 	}
       
     }
-#endif
 
   for(auto &elem : insertions)
     {
@@ -205,7 +197,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   // decide upon an spr move 
   auto alreadyComputed = branch22states2score {}; 
   alreadyComputed = determineScoresOfInsertions(traln, prunedTree, rand, alreadyComputed); // #, hastings, prior
-  auto weightedInsertions = getWeights(traln, alreadyComputed); 
+  auto weightedInsertions = getWeights(traln, alreadyComputed, eval); 
 
 #ifdef PRINT_DEBUG_PARS
   for(auto &v : weightedInsertions)
@@ -245,7 +237,7 @@ void ParsimonySPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hast
   _pEval.evaluateSubtree(traln, prunedTree.findNodePtr(traln));
   
   auto backScores = determineScoresOfInsertions(traln, prunedTree,rand, alreadyComputed); 
-  auto weightedInsertionsBack = getWeights(traln, backScores); 
+  auto weightedInsertionsBack = getWeights(traln, backScores, eval); 
   
   assert(weightedInsertionsBack.find(prunedFromBranch) != weightedInsertionsBack.end()); 
   auto backProb = weightedInsertionsBack[prunedFromBranch]; 
@@ -286,7 +278,7 @@ void ParsimonySPR::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &t
   tout << "EVAL " << toEval << std::endl; 
 #endif
 
-  evaluator.evaluate(traln,toEval, false, true); 
+  evaluator.evaluate(traln,toEval, false); 
 }
 
 

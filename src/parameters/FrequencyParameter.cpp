@@ -1,9 +1,8 @@
 #include "FrequencyParameter.hpp"
-#include "comm/ParallelSetup.hpp"
-#include "BoundsChecker.hpp"
-#include "DnaAlphabet.hpp"
-#include "AminoAcidAlphabet.hpp"
-#include "RateHelper.hpp"
+#include "system/BoundsChecker.hpp"
+#include "model/DnaAlphabet.hpp"
+#include "model/AminoAcidAlphabet.hpp"
+#include "model/RateHelper.hpp"
 
 
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
@@ -83,7 +82,7 @@ void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterCont
   auto& partition = traln.getPartition(_partitions[0]);
   bool ok = true; 
   // ok &= BoundsChecker::checkFrequencies(content.values); 
-  ok &= (content.values.size() ==  nat(partition.states)); 
+  ok &= (content.values.size() ==  nat(partition.getStates())); 
   
   auto newValues = content.values; 
   RateHelper::convertToSum1(newValues);
@@ -102,7 +101,7 @@ void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterCont
 
 void FrequencyParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const 
 {
-  auto numStates = traln.getPartition(_partitions.at(0)).states;
+  auto numStates = traln.getPartition(_partitions.at(0)).getStates();
   checkSanityPartitionsAndPrior_FreqRevMat(traln);
   auto initVal = _prior->getInitialValue(); 
 
@@ -111,7 +110,7 @@ void FrequencyParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) con
     {
       tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
       printShort(tout) << " that is not applicable." << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }
 }
 

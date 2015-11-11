@@ -495,7 +495,7 @@ typedef  struct  {
 
   unsigned char             **yVector;
   int              secondaryStructureModel;
-  int              originalCrunchedLength;
+  uint64_t              originalCrunchedLength;
   int              fullSites;
   int              *originalModel;
   int              *originalDataVector;

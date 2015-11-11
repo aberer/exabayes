@@ -2,8 +2,8 @@
 #define REV_MAT_PARAMETER
 
 
-#include "RateHelper.hpp"
-#include "Category.hpp"
+#include "model/RateHelper.hpp"
+#include "model/Category.hpp"
 #include "AbstractParameter.hpp"
   
 class RevMatParameter : public AbstractParameter
@@ -38,7 +38,7 @@ public:
   {
     auto content = prior.getInitialValue();
     auto& partition = traln.getPartition(_partitions.at(0));
-    return content.values.size()  ==  RateHelper::numStateToNumInTriangleMatrix(partition.states); 
+    return content.values.size()  ==  RateHelper::numStateToNumInTriangleMatrix(partition.getStates()); 
   }
 }; 
 

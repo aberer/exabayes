@@ -6,17 +6,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
-
 #include "common.h"
-
-
-typedef void* array_reservoir_t ; 
-extern "C" 
-{
-  double* allocate(array_reservoir_t self, size_t a ); 
-  void deallocate(array_reservoir_t self, double *array); 
-}
-
 
 
 class ArrayReservoir
@@ -37,7 +27,6 @@ public:
 
 private: 
   std::unordered_map<double*,nat> _usedArrays; 
-  // std::multimap<nat,double*> _unusedArrays; 
   std::map<nat,std::list<double*> > _unusedArrays; 
   
   static const double numGammaCats; 

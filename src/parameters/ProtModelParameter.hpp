@@ -1,7 +1,7 @@
 #ifndef PROT_MODEL_PARAMETER
 #define PROT_MODEL_PARAMETER
 
-#include "Category.hpp"
+#include "model/Category.hpp"
 #include "parameters/AbstractParameter.hpp"
 
 class ProtModelParameter : public AbstractParameter

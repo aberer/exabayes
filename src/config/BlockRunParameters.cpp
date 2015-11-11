@@ -1,5 +1,6 @@
 #include "BlockRunParameters.hpp" 
-#include "comm/ParallelSetup.hpp"
+
+#include "system/GlobalVariables.hpp"
 
 
 BlockRunParameters::BlockRunParameters()  
@@ -110,6 +111,11 @@ static int myConvertToInt(NxsString &elem)
   return int(elem.ConvertToDouble());
 }
 
+static uint64_t myConvertToLongInt(NxsString& elem)
+{
+  return uint64_t(elem.ConvertToDouble());
+}
+
 
 void BlockRunParameters::Read(NxsToken &token)
 { 
@@ -129,7 +135,7 @@ void BlockRunParameters::Read(NxsToken &token)
 	  auto value = token.GetToken(false); 	    
 
 	  if(key.EqualsCaseInsensitive("numGen"))
-	    numGen = myConvertToInt(value);
+	    numGen = myConvertToLongInt(value);
 	  else if (key.EqualsCaseInsensitive("parsimonystart"))
 	    useParsimonyStarting = convertToBool(value); 
 	  else if (key.EqualsCaseInsensitive("checkpointinterval"))
@@ -183,7 +189,7 @@ void BlockRunParameters::Read(NxsToken &token)
 	      else 
 		{
 		  std::cerr << "Error: valid values for config entry >convergenceCriterion< are 'mean', 'max' or 'none'."  << std::endl; 
-		  ParallelSetup::genericExit(-1);
+		  exitFunction(-1, true);
 		}
 	    }
 	  else 	      
@@ -204,7 +210,7 @@ static void verifyProbability(double value, bool lowerIncluded, bool upperInclud
   if( not ( lowOkay && upperOkay ) )
     {
       std::cerr << "Error: >" << name << "< must be in the interval " << lowBracket  << "0,1" << upperBracket << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }
 
 }
@@ -214,14 +220,14 @@ static void verifyGreaterZero(int value, std::string name )
   if( not ( value > 0 )   )
     {
       std::cout << "Error: >name< must be > 0 "  << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }  
 }
 
 
 
 
-void BlockRunParameters::verify() const 
+void BlockRunParameters::verify()   const 
 {
   verifyGreaterZero(diagFreq, "diagFreq"); 
   
@@ -233,7 +239,7 @@ void BlockRunParameters::verify() const
   if(numSwapsPerGen < 0.)
     {
       std::cerr << "Error: >numSwapsPerGen< must be in > 0."  << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }
 
   // verifyGreaterZero(numSwaps, "numSwaps"); 
@@ -248,6 +254,6 @@ void BlockRunParameters::verify() const
   if( diagFreq <= nat(samplingFreq)  ) 
     {
       std::cerr << "diagFreq < samplingFreq. Please choose the sampling frequency smaller than the diagnosis frequency.  " << std::endl; 
-      ParallelSetup::genericExit(-1); 
+      exitFunction(-1, true); 
     }
 }

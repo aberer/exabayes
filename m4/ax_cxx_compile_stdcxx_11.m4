@@ -52,6 +52,9 @@ m4_define([_AX_CXX_COMPILE_STDCXX_11_testbody], [
     check_type&& cr = static_cast<check_type&&>(c);
 
     auto d = a;
+    auto&& g = a; 
+        
+    void* tmp = nullptr; 
 ])
 
 AC_DEFUN([AX_CXX_COMPILE_STDCXX_11], [dnl
@@ -121,7 +124,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX_11], [dnl
   else
     if test x$ac_success = xno; then
       HAVE_CXX11=0
-      AC_MSG_NOTICE([No compiler with C++11 support was found])
+      AC_MSG_ERROR([No compiler with C++11 support was found])
     else
       HAVE_CXX11=1
       AC_DEFINE(HAVE_CXX11,1,

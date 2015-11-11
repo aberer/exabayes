@@ -1,9 +1,8 @@
-#include "axml.h"
 
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 #include "TreeLengthMultiplier.hpp"
-#include "Randomness.hpp"
-#include "TreeAln.hpp"
+#include "math/Randomness.hpp"
+#include "model/TreeAln.hpp"
 #include "priors/UniformPrior.hpp"
 #include "priors/AbstractPrior.hpp"
 
@@ -76,7 +75,7 @@ void TreeLengthMultiplier::autotune()
 {
   double parameter = multiplier; 
 
-  double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, FALSE);
+  double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, PLL_FALSE);
 
   multiplier = newParam; 
 
@@ -93,7 +92,7 @@ void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, Tr
   tout << "EVAL-CHOICE " << branchSuggestion << std::endl; 
 #endif
 
-  evaluator.evaluatePartitionsWithRoot(traln,branchSuggestion, parts, true, true); 
+  evaluator.evaluatePartitionsWithRoot(traln,branchSuggestion, parts, true); 
 }
 
 

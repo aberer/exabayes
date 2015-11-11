@@ -1,11 +1,11 @@
 #include <array>
 
-#include "BoundsChecker.hpp"
+#include "system/BoundsChecker.hpp"
 #include "LikelihoodSPR.hpp"
 #include "TreeRandomizer.hpp"
 #include "priors/AbstractPrior.hpp"
 #include "GibbsProposal.hpp" 
-#include "Density.hpp"
+#include "math/Density.hpp"
 
 
 #define NUM_ITER 30   
@@ -70,7 +70,7 @@ double LikelihoodSPR::scoreReattachment(TreeAln& traln, const BranchLength &reat
   map[reattachmentBranch] = mapPart; 
 
   // tout << std::endl; 
-  eval.evaluate(traln, toOptimise[0].toPlain(), false, true); 
+  eval.evaluate(traln, toOptimise[0].toPlain(), false); 
   result =  traln.getTrHandle().likelihood;
   
   // revert 
@@ -523,7 +523,7 @@ void LikelihoodSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &tr
   auto evalBranch = traln.getAnyBranch(); 
 
   // TODO inefficient 
-  evaluator.evaluate(traln, evalBranch, true, true);
+  evaluator.evaluate(traln, evalBranch, true);
 } 
 
 

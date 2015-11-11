@@ -2,7 +2,7 @@
 #define DIRICHLETPROPOSAL_H
 
 #include "AbstractProposer.hpp"
-#include "RateHelper.hpp"
+#include "model/RateHelper.hpp"
 
 class DirichletProposer : public AbstractProposer
 {				

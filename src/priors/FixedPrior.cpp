@@ -1,7 +1,7 @@
 #include "priors/FixedPrior.hpp"
 #include "parameters/AbstractParameter.hpp"
-#include "Category.hpp"
-#include "BoundsChecker.hpp"
+#include "model/Category.hpp"
+#include "system/BoundsChecker.hpp"
 
 FixedPrior::FixedPrior(std::vector<double> _fixedValues)
   : fixedValues(_fixedValues) 

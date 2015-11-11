@@ -19,6 +19,7 @@ if [ "$fold" != "exa-bayes" ]; then
 fi
 
 if [ $IS_APPLE == 0 ]; then
+    readlink=readlink
     ccomp=gcc-4.6
     cxxcomp=g++-4.6
     system=linux
@@ -28,6 +29,7 @@ if [ $IS_APPLE == 0 ]; then
     cxxmpich=mpicxx.mpich2
     # ld="LDFLAGS='-static-libgcc -static-libstdc++\'"
 else
+    readlink=greadlink
     ccomp=clang
     cxxcomp=clang++
     system=apple
@@ -88,10 +90,7 @@ do
 	if [ "$mpi" != "sequential" ] ; then 
 	    # build MPI
 	    cd distro-build 
-	    ../configure --enable-mpi  --prefix $(readlink -f ../) CC="ccache $cc" CXX="ccache $cxx" $arg   && make -j $cores  && make install || exit   
-	    # --bindir $(readlink -f  ../ )
-	    # eval $cmd
-
+	    ../configure --enable-mpi  --prefix $($readlink -f ../) CC="ccache $cc" CXX="ccache $cxx" $arg   && make -j $cores  && make install || exit   
 	    cd .. 
 	fi 
 
@@ -101,11 +100,9 @@ do
 	
 	
 	if [ "$IS_APPLE" == "0" ] ; then 
-	    ../configure --prefix $(readlink -f  ../)  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg LDFLAGS="-static"    && make -j$cores   && make install || exit  
-	    # --bindir $(readlink -f ../bin)
+	    ../configure --prefix $($readlink -f ../)  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg LDFLAGS="-static"    && make -j$cores   && make install || exit  
 	else 
-	    ../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg --prefix $(readlink -f  ../) && make -j$cores   && make install || exit  
-	    # --bindir $(readlink -f ../bin)
+	    ../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg --prefix $($readlink -f  ../) && make -j$cores   && make install || exit  
 	fi 
 
 	cd .. 

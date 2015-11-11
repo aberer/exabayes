@@ -5,14 +5,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 
 #include "config/ExaBlock.hpp"
 
 #include "priors/AbstractPrior.hpp"
-#include "axml.h"
 
-#include "Category.hpp"
+#include "model/Category.hpp"
 
 // if the set is empty, then we have a general "fall-back" prior
 typedef std::unordered_multimap<Category, 

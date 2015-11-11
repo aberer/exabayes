@@ -1,77 +1,52 @@
 #include "CommRequest.hpp"
 
-#if HAVE_PLL == 0 		
-
 #include <cassert>
 #include <iostream>
 
-#include "Communicator.hpp"
-#include "extensions.hpp"
+#include "comm/RemoteComm.hpp"
+#include "system/extensions.hpp"
+#include "CommRequestImpl.hpp"
 
 
-CommRequest::CommRequest( )
-  : _req{nullptr}
+CommRequest::CommRequest( std::vector<char> array  )
+  : _impl( make_unique<CommRequest::Impl>(array) )
 {
+  
 }
 
 
-CommRequest::CommRequest(CommRequest &&rhs)
-  : _req(std::move(rhs._req))
-  , _array(std::move(rhs._array))
+CommRequest::CommRequest(CommRequest &&rhs)   
+  : _impl{std::move(rhs._impl)}
 {
+  
 }
 
 
-void CommRequest::initialize( bool sending, int srcDest, int tag, std::vector<char> data,  Communicator& comm)
+CommRequest::~CommRequest()
 {
-  assert(_req.get() == nullptr); 
+} 
 
-  _req = make_unique<MPI_Request>();
-  _array = data; 
 
-  if(sending)
-    MPI_Isend( (void*) _array.data(), _array.size(), MPI_CHAR, srcDest, tag, comm.getHandle(), _req.get());
-  else 
-    MPI_Irecv( (void*) _array.data(), _array.size(), MPI_CHAR, srcDest, tag, comm.getHandle(), _req.get());
+bool CommRequest::isServed() const 
+{
+  return _impl->isServed(); 
 }
 
-CommRequest& CommRequest::operator=(CommRequest &&rhs)
+
+std::vector<char> CommRequest::getArray() const 
 {
-  swap(*this, rhs); 
+  return _impl->getArray();
+}
+
+
+void  swap(CommRequest& lhs, CommRequest& rhs)
+{
+  std::swap(lhs._impl, rhs._impl);
+} 
+
+
+CommRequest& CommRequest::operator=(CommRequest rhs)
+{
+  swap(rhs, *this); 
   return *this; 
-}
-
-
-
-void swap(CommRequest &lhs, CommRequest& rhs) 
-{
-  std::swap(lhs._req, rhs._req);
-  std::swap(lhs._array, rhs._array);
-}
-
-
-bool CommRequest::isServed()
-{
-  assert(_req != nullptr ); 
-
-  if( _req != nullptr )
-    {
-      int flag = 0; 
-      MPI_Test(_req.get(), &flag, MPI_STATUS_IGNORE);
-      return flag != 0 ; 
-    }
-  else 
-    {
-      std::cout << "DANGER request was empty "  << std::endl; 
-      return true; 
-    }
-}
-
-#else 
-
-static void dummyFun()
-{
-  // avoids warnings 
-}
-
-#endif 
+} 

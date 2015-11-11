@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 #include "tree-parse/TreeProcessor.hpp"
-#include "BipartitionHash.hpp"
+#include "data-struct/BipartitionHash.hpp"
 
 class BipartitionExtractor : public TreeProcessor
 {

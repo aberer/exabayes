@@ -178,3 +178,4 @@ std::string ConsensusTree::getType() const
     }
   return type; 
 }
+

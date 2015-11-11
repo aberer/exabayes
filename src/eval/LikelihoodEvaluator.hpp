@@ -4,16 +4,18 @@
 #include <vector>
 
 #include "ArrayPolicy.hpp"
-#include "axml.h"
-#include "TreeAln.hpp"
+#include "model/TreeAln.hpp"
 #include "ArrayOrientation.hpp"
 
+class ParallelSetup; 
+
+#include <memory>
 
 class LikelihoodEvaluator
 {
 public: 
-  LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy *plcy, std::shared_ptr<ArrayReservoir> arrayReservoir); 
-  LikelihoodEvaluator( LikelihoodEvaluator &&rhs); 
+  LikelihoodEvaluator(const TreeAln &traln, ArrayPolicy *plcy, std::shared_ptr<ArrayReservoir> arrayReservoir, ParallelSetup* pl); 
+  LikelihoodEvaluator( LikelihoodEvaluator &&rhs) = default; 
   LikelihoodEvaluator( const LikelihoodEvaluator &rhs ); 
   LikelihoodEvaluator& operator=(LikelihoodEvaluator rhs) ; 
   friend void swap(LikelihoodEvaluator &lhs, LikelihoodEvaluator  &rhs); 
@@ -21,7 +23,7 @@ public:
   /**
      @brief: evaluate a list of partitions. This is always a full traversal 
    */
-  void evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain& root,  const std::vector<nat>& partitions, bool fullTraversal, bool debug)  ; 
+  void evaluatePartitionsWithRoot( TreeAln &traln, const BranchPlain& root,  const std::vector<nat>& partitions, bool fullTraversal)  ; 
   /** 
       @brief evaluate a subtree. This used to be the
       newview-command. The this-node is the important part, the
@@ -31,7 +33,8 @@ public:
   /** 
       @brief evaluation at a given branch  
    */ 
-  void evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal, bool debug )  ; 
+  // void evaluate(TreeAln &traln, const BranchPlain &evalBranch,  bool fullTraversal, bool debug )  ; 
+  void evaluate( TreeAln &traln, const BranchPlain &root, bool fullTraversal)    ;
   /** 
       @brief mark a node as dirty  
    */ 
@@ -70,6 +73,8 @@ public:
 
   ArrayReservoir& getArrayReservoir() {return *(_arrayReservoir) ; }
 
+  ParallelSetup& getParallelSetup() { return *_plPtr; }
+
 private: 			// METHODS 
   /** 
       @brief traverses the tree and reorients nodes to enforce
@@ -84,8 +89,9 @@ private: 			// METHODS
   bool applyDirtynessToSubtree(TreeAln &traln, nat partition, const BranchPlain &branch); 
   void disorientDebug(TreeAln &traln, const BranchPlain& root); 
   void disorientDebugHelper(TreeAln &traln, const BranchPlain& root); 
-  void exa_evaluateGeneric(TreeAln &traln, const BranchPlain& root, bool changedOrientation ); 
-  void coreEvalSubTree(TreeAln& traln, const BranchPlain &root); 
+
+  void evaluateLikelihood (TreeAln &traln , BranchPlain branch, bool fullTraversal); 
+  void updatePartials (TreeAln& traln, nodeptr p, boolean masked); 
 
 private: 			// ATTRIBUTES 
   std::shared_ptr<TreeAln> _debugTralnPtr;  
@@ -93,6 +99,6 @@ private: 			// ATTRIBUTES
   std::unique_ptr<ArrayPolicy> _arrayPolicy; 
   ArrayOrientation _arrayOrientation; 
   std::shared_ptr<ArrayReservoir> _arrayReservoir; 
+  ParallelSetup* _plPtr;
 }; 
 #endif
-

@@ -7,11 +7,10 @@
 #include <cmath>
 #include <iostream>
 
-#include "axml.h"
-#include "Density.hpp"
+#include "math/Density.hpp"
 
-#include "Randomness.hpp"
-#include "TreeAln.hpp"
+#include "math/Randomness.hpp"
+#include "model/TreeAln.hpp"
 
 #include "parameters/ParameterContent.hpp"
 

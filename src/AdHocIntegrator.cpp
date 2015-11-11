@@ -1,15 +1,15 @@
 #include "AdHocIntegrator.hpp"
 #include "eval/ArrayReservoir.hpp"
 #include "eval/ArrayRestorer.hpp"
-#include "Arithmetics.hpp"
+#include "math/Arithmetics.hpp"
 #include "eval/FullCachePolicy.hpp"
 
 
-AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed)
+AdHocIntegrator::AdHocIntegrator(TreeAln &traln, std::shared_ptr<TreeAln> debugTree, randCtr_t seed, ParallelSetup* pl)
 {
   auto && plcy = std::unique_ptr<ArrayPolicy>(new FullCachePolicy(traln, true, true));
   auto&& res = std::make_shared<ArrayReservoir>(false);
-  auto eval = LikelihoodEvaluator(traln, plcy.get() , res);
+  auto eval = LikelihoodEvaluator(traln, plcy.get() , res, pl);
 
 #ifdef DEBUG_LNL_VERIFY
   eval.setDebugTraln(debugTree);
@@ -45,7 +45,9 @@ void AdHocIntegrator::copyTree(const TreeAln &traln)
   myTree = traln; 
   
   auto& eval = integrationChain->getEvaluator();
-  eval.evaluate(myTree, traln.getAnyBranch(), true , true);
+// #if 0
+  eval.evaluate(myTree, traln.getAnyBranch(), true);
+// #endif
 }
 
 
@@ -63,7 +65,7 @@ void AdHocIntegrator::prepareForBranch( const BranchPlain &branch,  const TreeAl
 
   // std::cout << "important TODO: has the branch been reset? will not do that here" << std::endl; 
 
-  integrationChain->getEvaluator().evaluate(traln, branch, true, true); 
+  integrationChain->getEvaluator().evaluate(traln, branch, true); 
   integrationChain->reinitPrior(); 
 }
 
@@ -136,14 +138,11 @@ double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std
   
   for(nat i = 0; i < nrSteps; ++i )
     {
-#if HAVE_PLL != 0 
+      assert(0); 
+#if 0 
       makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), 
 		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 
-#else 
-      makenewzGeneric(&(traln.getTrHandle()), 
-		      branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 	  
+		      &curVal, 1, &result,  &firstDerivative, &secDerivative, lambda, PLL_FALSE, NULL); 
 #endif
       tmpBranch.setLength(result);
       thisOut << prevVal <<  "\t" << firstDerivative << "\t" << secDerivative << endl; 	
@@ -152,16 +151,16 @@ double AdHocIntegrator::printOptimizationProcess(const BranchLength& branch, std
     } 
 
   tmpBranch.setConvertedInternalLength(traln, paramView[0], prevVal); 
+
+#if 0 
+
   double something = tmpBranch.getLength(); 
 
-#if HAVE_PLL != 0
   makenewzGeneric(&traln.getTrHandle(), &traln.getPartitionsHandle(), 
-		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 
-#else 
-  makenewzGeneric(&traln.getTrHandle(), 
-		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
-		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, FALSE, NULL); 
+  		  branch.findNodePtr(traln), branch.getInverted().findNodePtr(traln),
+  		  &something, 1, &result,  &firstDerivative, &secDerivative, lambda, PLL_FALSE, NULL); 
+  
+  assert(0); 
 #endif
       
   // thisOut << prevVal << "\t" << firstDerivative << "\t" << secDerivative << endl; 
@@ -191,7 +190,7 @@ void AdHocIntegrator::createLnlCurve(BranchPlain branch, std::string runid, Tree
 	  auto b = traln.getBranch(branch, param); 
 	  b.setConvertedInternalLength(traln, paramView[0], i); 
 	  traln.setBranch(b, paramView[0]); 
-	  eval.evaluate(traln, branch, false, true);
+	  eval.evaluate(traln, branch, false);
 	  double lnl = traln.getTrHandle().likelihood; 
 	  thisOut << i << "\t" << setprecision(std::numeric_limits<double>::digits10) << lnl << endl; 
 	}
@@ -211,7 +210,7 @@ double AdHocIntegrator::getParsimonyLength(TreeAln &traln, const BranchPlain &b 
 
   assert(traln.getNumberOfPartitions() == 1 ); 
   auto& partition =  traln.getPartition(0);
-  auto length = partition.upper - partition.lower; 
+  auto length = partition.getUpper() - partition.getLower(); 
   
   // TODO this is incorrect!
   assert(0); 

@@ -2,7 +2,7 @@
 #define DISCRETE_MODEL_PRIOR
 
 #include <unordered_map>
-#include "ProtModel.hpp"
+#include "model/ProtModel.hpp"
 #include "priors/AbstractPrior.hpp"
 
 class DiscreteModelPrior : public AbstractPrior

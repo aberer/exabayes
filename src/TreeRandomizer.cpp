@@ -1,34 +1,160 @@
 #include "TreeRandomizer.hpp"
 
 #include <vector>
-#include "Branch.hpp"
+#include "model/Branch.hpp"
+#include "comm/ParallelSetup.hpp"
 
-void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
+
+extern "C"
+{				// 
+  void newviewParsimonyIterativeFast(pllInstance *tr, partitionList * pr); 
+  unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionList *pr); 
+  void buildSimpleTree (pllInstance *tr, partitionList *pr, int ip, int iq, int ir); 
+  void makePermutationFast(int *perm, int n, pllInstance *tr); 
+  void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int maxTips, boolean full); 
+  unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionList * pr); 
+}
+
+
+// // // this is a quick-and-dirty adaptation for building a random stepwise
+// // addition parsimony tree
+
+
+void TreeRandomizer::stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, nodeptr q, ParallelSetup& pl)
+{            
+  nodeptr 
+    r = q->back;
+
+  unsigned int 
+    mp;
+  
+  int 
+    counter = 4;
+  
+  p->next->back = q;
+  q->back = p->next;
+
+  p->next->next->back = r;
+  r->back = p->next->next;
+   
+  computeTraversalInfoParsimony(p, tr->ti, &counter, tr->mxtips, PLL_FALSE);              
+  tr->ti[0] = counter;
+  tr->ti[1] = p->number;
+  tr->ti[2] = p->back->number;
+    
+  mp = evaluateParsimonyIterativeFast(tr, pr);
+
+  auto result = std::vector<nat>{mp}; 
+  // std::cout <<  "my score was " << mp << std::endl; 
+  result = pl.getChainComm().allReduce(result);
+  mp = result.at(0); 
+  // std::cout << "after allreduce "<< mp << std::endl; 
+  
+  
+  if(mp < tr->bestParsimony)
+    {    
+      tr->bestParsimony = mp;
+      tr->insertNode = q;     
+    }
+ 
+  q->back = r;
+  r->back = q;
+   
+  if(q->number > tr->mxtips
+#if 0 
+     && tr->parsimonyScore[q->number] > 0
+#endif
+     )
+    {         
+      stepwiseAddition(tr, pr, p, q->next->back, pl);
+      stepwiseAddition(tr, pr, p, q->next->next->back, pl);
+    }
+}
+
+
+
+void TreeRandomizer::createStepwiseAdditionParsimonyTree(TreeAln &traln, ParallelSetup& pl )
+{   
+  auto *tr = &(traln.getTrHandle()); 
+  auto *pr = &(traln.getPartitionsHandle()); 
+
+  assert(tr->fastParsimony == PLL_FALSE); 
+    
+  nodeptr  
+    p, 
+    f;    
+
+  int 
+    nextsp; 
+  auto perm = std::vector<int>(tr->mxtips+1,  0); 
+       
+  assert(!tr->constrained);
+
+  makePermutationFast(perm.data(), tr->mxtips, tr);
+  
+  tr->ntips = 0;    
+  
+  tr->nextnode = tr->mxtips + 1;       
+  
+  buildSimpleTree(tr, pr, perm[1], perm[2], perm[3]);
+  
+  f = tr->start;       
+  
+  while(tr->ntips < tr->mxtips) 
+    {   
+      nodeptr q;
+      
+      tr->bestParsimony = std::numeric_limits<nat>::max();
+      nextsp = ++(tr->ntips);             
+      p = tr->nodep[perm[nextsp]];                 
+      q = tr->nodep[(tr->nextnode)++];
+      p->back = q;
+      q->back = p;
+        
+      if(tr->grouped)
+        {
+          int 
+            number = p->back->number;            
+
+          tr->constraintVector[number] = -9;
+        }
+          
+      stepwiseAddition(tr, pr, q, f->back, pl);
+      
+      // std::cout <<  SyncOut() << "bestPars: "<< tr->bestParsimony << std::endl; 
+      
+      {
+        nodeptr   
+          r = tr->insertNode->back;
+        
+        int counter = 4;
+        
+        hookupDefault(q->next,       tr->insertNode);
+        hookupDefault(q->next->next, r);
+        
+        computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, PLL_FALSE);              
+        tr->ti[0] = counter;
+        
+        newviewParsimonyIterativeFast(tr, pr);
+      }
+    }    
+}
+
+
+void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand, ParallelSetup& pl)
 {
   nat r = rand();  
 
   traln.unlinkTree();
   traln.getTrHandle().randomNumberSeed = r; 
 
-  // tout << "parsimony number seed is "<< r << std::endl; 
-  
-#if HAVE_PLL != 0
-  makeParsimonyTreeFast(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), r);
-#else 
-  makeParsimonyTreeFast(&(traln.getTrHandle()), r); 
-#endif
+  createStepwiseAdditionParsimonyTree(traln, pl);
 }
 
 
 void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
 {
-  for(nat i = 1 ; i < traln.getNumberOfNodes() + 1 ; ++i)
-    {
-      auto p = traln.getNode(i);
-      p->back = NULL; 
-      p->next->back = NULL; 
-      p->next->next->back = NULL;       
-    }
+  traln.unlinkTree();
 
   // start with the simple tree 
   auto a = traln.getNode(1 ),
@@ -54,7 +180,6 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
       traln.clipNodeDefault(p1, inner->next); 
       traln.clipNodeDefault(p2, inner->next->next); 
     }
- 
 }
 
 

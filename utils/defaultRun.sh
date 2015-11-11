@@ -4,64 +4,46 @@ topdir=$(dirname  $0 )/../
 
 seed=$RANDOM
 
-# seed=11436
+seed=123
 
-# seed=31342  			# problematic on tiny-aa
-# seed=4045
-# seed=1450
-# seed=27159
-# seed=28978
-# seed=6929
-
-# seed=10115 # aa-test
-# seed=19180 #aa-test
-
-# seed=2807 # aa-test-one  <= most research so far 
-
-# seed=13290 # tiny-aa
-
-# seed=24066 # problematic with tiny-aa
-# seed=32090 # problematic with  143 (on DNA!)
+# seed=8106
 
 # src/proposals/
 numProc=4
+withTree=0
 
-# extraArgs="-R 2 -C 2" 
-# extraArgs="-M 3 -S  "
-# extraArgs="-M 3"
-# extraArgs=" -C 4 "
-# extraArgs="-C 2"
-# extraArgs="-M 3 "
-# extraArgs="-M 3 "
-# extraArgs="-R 2 " 
-# extraArgs="-C 4"
-# extraArgs="-S"
-# extraArgs="-S  "
-# extraArgs="-m"
+# extraArgs=" -S "
+extraArgs=" -T 4  -R 2 -C 2 "  
+
+doParse=0
+
 
 # early with 150 , VERIFIED 
 # seed=31853
-
-
 
 # args="--disable-silent-rules" 
 # args="--disable-sse"
 
 startFromBest=0
-dotests=0
+dotests=1
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
 useGoogleProfiler=0
-useClang=1
+useClang=0
+
+cflags=""
+cxxflags=""  #  -stdlib=libc++ 
+
+GDB=cgdb
+
 
 if [ $dotests == 1 ]; then
-    args="--enable-tests"
+    args="$args --enable-tests"
 fi
 
-
-# find additional arguments for the call   
-# *=$bak
+# args="$args --disable-silent-rules"
+# args="$args" 			#    --disable-sse
 
 runid=testRun
 
@@ -69,15 +51,8 @@ if [ -f /proc/cpuinfo ] ; then
     numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
 else 
     numCores=1
+
 fi 
-
-
-# use cgdb, if available 
-GDB=gdb
-if [ "$(which cgdb )" != ""   ]; then
-    GDB="cgdb"
-fi
-# GDB=gdb
 
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
@@ -100,33 +75,14 @@ fi
 
 
 if [ "$#" -lt 3 ]; then
-    echo -e  "$0 debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
+    echo -e  "$0 debug|default|valgrind mpi|thread dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
     exit
 fi
 
 
-dataset=$3
-
-pathtodata=$topdir/data/$dataset
-if [ ! -d $pathtodata ]; then     
-    echo "could not find dataset $dataset"
-    exit
-fi 
-
-cflags=""
-cxxflags=""  #  -stdlib=libc++ 
-
-default=$1
-if [ "$default" == "debug" ]; then 
-    cflags="$cflags -O0 -g"
-    cxxflags="$cxxflags -O0 -g"
-    gdb="$TERM -e $GDB  -ex run  --args "  #   
-elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
-    echo "first argument must be either 'debug' or 'default'"
-    exit 
-fi
-
+mode=$1
 codeBase=$2
+dataset=$3
 
 # poor...
 shift  
@@ -136,28 +92,72 @@ extra=$*
 # echo "extra would be $extra"
 
 
+pathtodata=$topdir/data/$dataset
+if [ ! -d $pathtodata ]; then     
+    echo "could not find dataset $dataset"
+    exit
+fi 
+
+
+case $mode in
+    debug)
+	cflags="$cflags -O0 -g"
+	cxxflags="$cxxflags -O0 -g"
+	gdb="$TERM -e $GDB  -ex run  --args "  #   	
+	;;
+    default)
+	;;
+    valgrind)
+	cflags="$cflags -O0 -g"
+	cxxflags="$cxxflags -O0 -g"
+	gdb="$TERM -hold -e valgrind --tool=memcheck  " #    --leak-check=full --track-origins=yes
+	;;
+    *)
+	echo "mode must be debug, default or valgrind"
+	exit
+esac
+
+
 configFile=$pathtodata/config.nex
 
-if [ "$codeBase" == "examl" ]; then    
-    args="$args --enable-mpi"
+args="$args --enable-mpi"
 
-    CC="mpicc -cc=$ccompiler"  
-    CXX="mpicxx -cxx=$cxxcompiler"  
+if [ "$withTree" = "1" ]; then
+    if [ !  -f data/$dataset/tree ]; then
+	echo "could not find data/$dataset/tree"
+	exit 
+    fi
 
-    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
-
-    # CC="$ccompiler" 
-    # CXX="$cxxcompiler"  
-    # baseCall="  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed -c $topdir/examples/test.nex"
-elif [ "$codeBase" == "pll" ]; then 
-    CC="$ccompiler"
-    CXX="$cxxcompiler"
-    baseCall="$gdb ./yggdrasil -s $seed -f $pathtodata/aln.binary -n $runid $extraArgs -c $configFile $extra "  
-else
-    echo "second argument must be either 'pll' or 'examl'"
-    exit
+    extraArgs="$extraArgs -t data/$dataset/tree"
+    
 fi
 
+
+
+if [ $doParse -eq 0 ] ; then 
+    alnArg=" -f $pathtodata/aln.binary "
+else 
+    alnArg="-f $pathtodata/aln.phy -q $pathtodata/aln.model"
+    if [ ! -f $pathtodata/aln.phy -o ! -f $pathtodata/aln.model  ]; then
+	echo "could not find file $pathtodata/aln.{phy,model} "
+	exit 
+    fi
+fi 
+
+if [ "$codeBase" == "mpi" ]; then    
+    CC="$ccompiler"  
+    CXX="$cxxcompiler"  
+    
+    baseCall="mpirun -np $numProc  $gdb ./exabayes $alnArg -n $runid -s $seed  $extraArgs -c $configFile $extra"
+
+elif [ "$codeBase" == "thread" ]; then 
+    CC="$ccompiler"
+    CXX="$cxxcompiler"
+    baseCall="$gdb ./yggdrasil -s $seed $alnArg -n $runid $extraArgs -c $configFile $extra "  
+else
+    echo "second argument must be either 'mpi' or 'thread'"
+    exit
+fi
 
 if [ $startFromBest == 1 ]; then 
     if [ ! -f  $pathtodata/best.tre ] ; then 

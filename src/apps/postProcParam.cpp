@@ -12,17 +12,12 @@
 #include <iomanip> 
 
 #define _INCLUDE_DEFINITIONS
-#include "GlobalVariables.hpp"
+#include "system/GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-#include "Arithmetics.hpp"
+#include "math/Arithmetics.hpp"
 #include "common.h"
 
-
-void myExit(int code)
-{
-  exit(code); 
-}
 
 static bool isAAMod(const std::string& input )
 {
@@ -34,6 +29,7 @@ static bool isAAMod(const std::string& input )
 class Values
 {
 public: 
+  Values(){}; 
   size_t size() const {return std::max(values.size(), models.size()); }
 
   std::vector<double> values; 
@@ -134,7 +130,7 @@ std::tuple<std::string, std::vector<std::string>, double> processCmdLine(int arg
 	case 'h': 
 	  {
 	    printUsage(std::cout); 
-	    myExit(-1); 
+	    exitFunction(-1,false); 
 	  }
 	  break; 
 	case 'n': 
@@ -168,7 +164,7 @@ std::tuple<std::string, std::vector<std::string>, double> processCmdLine(int arg
 	default : 
 	  {
 	    std::cerr << "error: unknown argument "  << optarg << std::endl; 
-	    myExit(-1); 
+	    exitFunction(-1,false); 
 	  }
 	}
     }
@@ -176,30 +172,38 @@ std::tuple<std::string, std::vector<std::string>, double> processCmdLine(int arg
   if(files.size()  == 0)
     {
       std::cerr << "Error: please specify one or many files via -f." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1,false); 
     }
   if(id.compare("") == 0)
     {
       std::cerr << "Error: please specify a run id via -n. " << std::endl; 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
 
   if(not ( 0. <= burnin && burnin < 1.)  )
     {
       std::cerr << "Error: the relative burn-in parameter must be in the range [0,1)." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1,false); 
     }
 
   return std::make_tuple(id, files, burnin); 
 }
 
 
+static void myExit(int code, bool waitForAll)
+{
+  exit(code); 
+}
+
+
 int main(int argc, char **argv)
 {
+  exitFunction = myExit; 
+
   if(argc < 2 )
     {
       printUsage(std::cout);
-      myExit(-1); 
+      exitFunction(-1, false); 
     }  
 
   auto files = std::vector<std::string>{}; 
@@ -214,7 +218,7 @@ int main(int argc, char **argv)
   if(std::ifstream(outputFileName))
     {
       std::cerr << "Error: output file >" << outputFileName << "< already exists. Please or move." << std::endl; 
-      myExit(-1); 
+      exitFunction(-1, false); 
     }
   
   auto && out = std::ofstream(outputFileName); 
