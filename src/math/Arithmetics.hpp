@@ -32,5 +32,7 @@ namespace Arithmetics
   double getPearsonCorrelationCoefficient(const std::vector<double> &sampleA, const std::vector<double> &sampleB); 
 
   double getAutoCorrelation(const std::vector<double> &data, nat lag); 
+
+  double getCoefficientOfVariation(const std::vector<double> &data) ; 
 }
 #endif

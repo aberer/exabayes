@@ -16,12 +16,12 @@ public:
   {
   }
 
-  double proposeOneValue(double oldVal, double parameter, Randomness &rand, double &hastings); 
+  double proposeOneValue(double oldVal, double parameter, Randomness &rand, log_double &hastings); 
 
-  std::vector<double> proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
+  std::vector<double> proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings); 
 
 
-  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings); 
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings); 
 
   virtual AbstractProposer* clone() const  {return new SlidingProposer(*this);  }
 

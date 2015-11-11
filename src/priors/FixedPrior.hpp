@@ -10,7 +10,7 @@ public:
   FixedPrior(std::vector<double> fixedValues)   ; 
 
   virtual bool needsIntegration() const {return false; } 
-  virtual double getLogProb(const ParameterContent &content )  const; 
+  virtual log_double getLogProb(const ParameterContent &content )  const; 
 
   virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const {assert(0); return ParameterContent{}; } ; 
 
@@ -19,6 +19,8 @@ public:
 
   virtual AbstractPrior* clone() const { return new  FixedPrior(*this) ; }
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const; 
+
+  double getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const {assert(0); return 0; }
 
 private: 
   std::vector<double> fixedValues; 

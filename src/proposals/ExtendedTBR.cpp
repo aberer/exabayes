@@ -6,7 +6,7 @@
 // TODO the disorient is still  very inefficient 
 
 ExtendedTBR::ExtendedTBR( double extensionProb, double multiplier)
-  : AbstractProposal(Category::TOPOLOGY , "eTBR", 5., false, 0,0)
+  : AbstractProposal(Category::TOPOLOGY , "eTBR", 5., 0,0, false )
   , _extensionProbability(extensionProb)
   , _multiplier(multiplier)
 {
@@ -143,7 +143,7 @@ void ExtendedTBR::drawPaths(TreeAln &traln, Randomness &rand)
 }
 
 
-void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
+void ExtendedTBR::applyToState(TreeAln& traln, PriorBelief& prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 { 
   drawPaths(traln,rand);
   // TODO replace by absence of prior 

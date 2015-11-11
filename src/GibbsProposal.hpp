@@ -12,7 +12,7 @@ public:
   /** 
       @brief draw a new branch length from the posterior branch length distribution of a branch 
    */ 
-  static BranchLength drawFromEsitmatedPosterior(const BranchLength &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings,  const AbstractParameter* param) ; 
+  static BranchLength drawFromEsitmatedPosterior(const BranchLength &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, log_double &hastings,  const AbstractParameter* param) ; 
   static std::pair<double,double> getGammaParams(double nrOpt, double nrD1, double nrdD2); 
   /** 
       @brief optimises the branch

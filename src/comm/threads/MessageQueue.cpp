@@ -1,7 +1,7 @@
 #include "comm/threads/MessageQueue.hpp"
 #include "system/GlobalVariables.hpp" 
 #include <algorithm>
-
+#include <numeric>
 
 using std::move; 
 

@@ -7,8 +7,8 @@
 #include "system/GlobalVariables.hpp"
 
 #include "eval/ArrayReservoir.hpp"
-
 #include "system/FlagType.hpp"
+
 
 ArrayRestorer::ArrayRestorer(const TreeAln& traln, bool _cacheTipTip, bool _cacheTipInner)
   : restoresGapVector(false)
@@ -170,7 +170,12 @@ void ArrayRestorer::traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat mo
     return; 
 
   nat index = virtualRoot->number - 1 - traln.getNumberOfTaxa(); 
-  bool incorrect = not curOrient.isCorrect(model, index, virtualRoot->back->number);
+
+// #if 1
+  bool incorrect = not curOrient.isCorrectNew(traln, model, virtualRoot);
+// #else 
+//   bool incorrect = not curOrient.isCorrect(model, index, virtualRoot->back->number);
+// #endif
 
   auto pnb = virtualRoot->next->back, 
     pnnb = virtualRoot->next->next->back;

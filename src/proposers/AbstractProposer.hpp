@@ -16,7 +16,7 @@ class AbstractProposer
 {
 public:   
   AbstractProposer(bool tune, bool tuneup, double minVal, double maxVal); 
-  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings) = 0; 
+  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings) = 0; 
   bool isTune() const {return _tune; } 
   bool isTuneup() const {return _tuneup; }
   void correctAbsoluteRates(std::vector<double> &values) const ; 

@@ -5,12 +5,12 @@
 
 
 AminoModelJump::AminoModelJump()
-  : AbstractProposal( Category::AA_MODEL, "aaMat", 1., 0,0)
+  : AbstractProposal( Category::AA_MODEL, "aaMat", 1., 0,0, true)
 {
 }
 
 
-void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator &eval)
+void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator &eval)
 {
   // save the old fracchanges
   auto blParams = getBranchLengthsParameterView();

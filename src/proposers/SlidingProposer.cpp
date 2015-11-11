@@ -10,7 +10,7 @@ SlidingProposer::SlidingProposer(double minVal, double maxVal, bool _minMaxIsRel
 }
 
 
-double SlidingProposer::proposeOneValue(double oldVal, double parameter, Randomness &rand, double &hastings)
+double SlidingProposer::proposeOneValue(double oldVal, double parameter, Randomness &rand, log_double &hastings)
 {
   double newVal = rand.drawFromSlidingWindow(oldVal, parameter);
   if(newVal < 0 )
@@ -22,7 +22,7 @@ double SlidingProposer::proposeOneValue(double oldVal, double parameter, Randomn
 } 
 
 
-std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings)
 {
 
 #if 1
@@ -104,7 +104,7 @@ std::vector<double> SlidingProposer::proposeRelativeMany(std::vector<double> old
 
 
 
-std::vector<double> SlidingProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, double &hastings)
+std::vector<double> SlidingProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings)
 {
   if(oldValues.size() == 1 )
     return {proposeOneValue(oldValues[0], parameter,rand, hastings)}; 

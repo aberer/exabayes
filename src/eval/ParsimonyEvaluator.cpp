@@ -17,7 +17,7 @@ void ParsimonyEvaluator::evaluateSubtree(TreeAln &traln, nodeptr p)
 }
 
 
-std::array<nat,2> ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool fullTraversal, bool doParallelReduce ) 
+std::array<nat,2> ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool fullTraversal ) 
 {
   auto result = std::array<parsimonyNumber,2>{{0,0}}; 
 
@@ -46,13 +46,14 @@ std::array<nat,2> ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool f
     }
 
   // meh 
-  if(doParallelReduce)
-    {
-      auto tmp = std::vector<nat> {result[0], result[1]}; 
-      _commPtr->allReduce(tmp); 
-      result[0]= tmp[0]; 
-      result[1] = tmp[1]; 
-    } 
+  // if(doParallelReduce)
+  //   {
+  //     auto tmp = std::vector<nat> {result[0], result[1]}; 
+  //     _commPtr->allReduce(tmp); 
+  //     result[0]= tmp[0]; 
+  //     result[1] = tmp[1]; 
+  //   }
+  
 
   return result; 
 }

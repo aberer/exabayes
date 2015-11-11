@@ -14,6 +14,7 @@
 
 #include "parameters/ParameterContent.hpp"
 
+
 class AbstractPrior
 {
 public: 
@@ -31,12 +32,14 @@ public:
   virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param , double myOld, double myNew ) const = 0; 
 
   virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const = 0 ; 
-  virtual double getLogProb( const ParameterContent &content ) const = 0; 
+  virtual log_double getLogProb( const ParameterContent &content ) const = 0; 
   virtual void print(std::ostream &out) const = 0;
 
   virtual bool needsIntegration() const = 0; 
 
   virtual AbstractPrior* clone() const = 0;
+
+  virtual double getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const = 0; 
 
   friend std::ostream& operator<<(std::ostream &out,  AbstractPrior* rhs)
   {

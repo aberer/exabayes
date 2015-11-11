@@ -2,15 +2,14 @@
 #include <map> 
 #include <unordered_map>
 
-// TODO remove 
-#include "parameters/BranchLengthsParameter.hpp" 
-
 #include "proposals/StatNNI.hpp"
 #include "proposals/NodeSlider.hpp"
 #include "Chain.hpp"		
 #include "model/TreeAln.hpp"
 #include "math/Randomness.hpp"
 #include "system/GlobalVariables.hpp"
+
+#include "BranchLengthOptimizer.hpp"
 
 #include "eval/LikelihoodEvaluator.hpp" 
 #include "comm/ParallelSetup.hpp"
@@ -27,14 +26,14 @@ Chain:: Chain(randKey_t seed, const TreeAln& traln, const std::vector<std::uniqu
   , _deltaT(0)
   , _runid(0)
   , _tuneFrequency(100)
-  , _hastings(0)
+  , _hastings(log_double::fromAbs(1))
   , _currentGeneration(0)
   , _couplingId(0)
   , _proposalSets(proposalSets)
   , _chainRand(seed)
   , _relWeightSumSingle(0)
   , _relWeightSumSets(0)
-  , _bestState(std::numeric_limits<double>::lowest())
+  , _bestState(log_double::lowest())
   , _evaluator(eval)
 {
   for(auto &p : proposals)
@@ -49,28 +48,8 @@ Chain:: Chain(randKey_t seed, const TreeAln& traln, const std::vector<std::uniqu
 
   suspend(); 
   updateProposalWeights();
+
 }
-
-
-// Chain::Chain(  Chain&& rhs)   
-//   : _traln(std::move(rhs._traln))
-//   , _deltaT(rhs._deltaT)
-//   , _runid(rhs._runid)
-//   , _tuneFrequency(rhs._tuneFrequency)
-//   , _hastings(rhs._hastings)
-//   , _currentGeneration(rhs._currentGeneration)
-//   , _couplingId(rhs._couplingId) 
-//   , _proposals(std::move(rhs._proposals))
-//   , _proposalSets(std::move(rhs._proposalSets))
-//   , _chainRand(std::move(rhs._chainRand)) 
-//   , _relWeightSumSingle(rhs._relWeightSumSingle)
-//   , _relWeightSumSets(rhs._relWeightSumSets) 
-//   , _prior(std::move(rhs._prior))
-//   , _bestState(rhs._bestState)
-//   , _evaluator(std::move(rhs._evaluator))
-//   , _lnPr(rhs._lnPr)
-// {
-// }
 
 
 Chain::Chain(  const Chain& rhs)   
@@ -171,15 +150,15 @@ void Chain::resume()
 {    
   auto vs = extractParameters(); 
   _prior.initialize(_traln, vs);
-  double prNow = _prior.getLnPrior(); 
-  
-  if( fabs(_lnPr - prNow) > ACCEPTED_LNPR_EPS)
+  auto prNow = _prior.getLnPrior(); 
+
+  if(   log_double(  _lnPr / prNow ).toAbs() - 1. >= ACCEPTED_LNPR_EPS)
     {
       std::cerr << MAX_SCI_PRECISION ; 
       std::cerr << "While trying to resume chain: previous log prior could not be\n"
-		<< "reproduced. This is a programming error." << std::endl; 
+  		<< "reproduced. This is a programming error." << std::endl; 
       std::cerr << "Prior was " << _lnPr << "\t now we have " << prNow << std::endl; 
-      assert(0);       
+      assert(0); 
     }
 
   updateProposalWeights();
@@ -231,8 +210,8 @@ void Chain::serializeConditionally( std::ostream &out, CommFlag commFlags)  cons
     {
       cWrite<decltype(_couplingId)>(out, _couplingId);
       cWrite<decltype(_bestState)>(out, _bestState);
-
-      double lnl = getLikelihood(); 
+      
+      auto lnl = getLikelihood(); 
       cWrite<decltype(lnl)>(out, lnl); 
 
       cWrite<decltype(_lnPr)>(out, _lnPr); 
@@ -270,20 +249,11 @@ void Chain::deserializeConditionally(std::istream& in, CommFlag commFlags)
   if( ( commFlags & CommFlag::PRINT_STAT ) != CommFlag::NOTHING )
     {
       _couplingId = cRead<decltype(_couplingId)>(in); 
-      _bestState = cRead<decltype(_bestState)>(in); 
+      _bestState = cRead<log_double>(in); 
+      setLikelihood(cRead<log_double>(in) ); 
 
-      double lnl = cRead<decltype(lnl)>(in); 
-      setLikelihood(lnl); 
-
-      _lnPr = cRead<decltype(_lnPr)>(in); 
+      _lnPr = cRead<log_double>(in); 
       _currentGeneration = cRead<decltype(_currentGeneration)>(in);
-      
-      // tout << "deser: " 
-      // 	   << _couplingId << "\t"
-      // 	   << _bestState << "\t"
-      // 	   << lnl << "\t"
-      // 	   << _lnPr << "\t"
-      // 	   << _currentGeneration << std::endl ; 
     }
 
   if( (commFlags & CommFlag::RAND) != CommFlag::NOTHING)
@@ -362,7 +332,7 @@ void Chain::stepSingleProposal()
 {
   auto &traln = _traln; 
 
-  double prevLnl = getLikelihood(); 
+  auto prevLnl = getLikelihood(); 
   double myHeat = getChainHeat();
 
   auto& pfun = drawProposalFunction(_chainRand);
@@ -370,19 +340,22 @@ void Chain::stepSingleProposal()
   // tout << pfun << std::endl; 
 
   /* reset proposal ratio  */
-  _hastings = 0; 
+  _hastings = log_double::fromAbs(1.); 
 
   pfun.applyToState(_traln, _prior, _hastings, _chainRand, _evaluator);
+  
+  assert(not _hastings.isNaN()) ; 
 
+  // can be ignored
   auto suggestion = peekNextVirtualRoot(traln,_chainRand); 
 
   pfun.evaluateProposal(_evaluator, _traln, suggestion);
 
-  double priorRatio = _prior.getLnPriorRatio();
-  double lnlRatio = traln.getTrHandle().likelihood - prevLnl; 
+  auto priorRatio = _prior.getLnPriorRatio();
+  auto lnlRatio = traln.getLikelihood() / prevLnl; 
 
   double testr = _chainRand.drawRandDouble01();
-  double acceptance = exp(( priorRatio + lnlRatio) * myHeat + _hastings) ; 
+  double acceptance = fmin(    log_double( exponentiate( priorRatio * lnlRatio, myHeat) * _hastings).toAbs()  ,1.) ; 
 
   bool wasAccepted  = testr < acceptance; 
 
@@ -398,8 +371,8 @@ void Chain::stepSingleProposal()
     {
       pfun.accept();      
       _prior.accept();
-      if(_bestState < traln.getTrHandle().likelihood  )
-	_bestState = traln.getTrHandle().likelihood; 
+      if(_bestState < traln.getLikelihood()  )
+	_bestState = traln.getLikelihood(); 
       _lnPr = _prior.getLnPrior();
     }
   else
@@ -416,7 +389,6 @@ void Chain::stepSingleProposal()
       _evaluator.accountForRejection(traln, myRejected, nodes); 
 
     }
-
 
   _evaluator.freeMemory();
 
@@ -439,8 +411,9 @@ void Chain::stepSingleProposal()
 
   if( _tuneFrequency > 0 && _tuneFrequency <  pfun.getNumCallSinceTuning()   ) 
     pfun.autotune();
-  
 }
+
+
 
 
 void Chain::stepSetProposal()
@@ -452,20 +425,51 @@ void Chain::stepSetProposal()
 
   auto oldPartitionLnls = traln.getPartitionLnls(); 
   
-  auto p2Hastings =  std::unordered_map<AbstractProposal*, double>{} ; 
-  auto p2LnPriorRatio = std::unordered_map<AbstractProposal*, double>{}; 
-  auto p2OldLnl = std::unordered_map<AbstractProposal*, double>{} ; 
+  auto p2Hastings =  std::unordered_map<AbstractProposal*, log_double>{} ; 
+  auto p2LnPriorRatio = std::unordered_map<AbstractProposal*, log_double>{}; 
+  auto p2OldLnl = std::unordered_map<AbstractProposal*, log_double>{} ; 
 
   auto affectedPartitions = std::vector<nat>{}; 
-  
-  auto branches = pSet.getProposalView()[0]->prepareForSetExecution(traln, _chainRand);
 
-  for(auto &proposal : pSet.getProposalView())
+  auto proposals = pSet.getProposalView(); 
+  auto branches = proposals[0]->prepareForSetExecution(traln, _chainRand);
+  
+  for(auto &proposal: proposals)
     {
       proposal->setPreparedBranch(branches.first);
       proposal->setOtherPreparedBranch(branches.second);
+    }
 
-      double lHast = 0;       
+  auto affectedParameters = std::vector<AbstractParameter*>();  
+  for(auto &proposal: proposals)
+    {
+      auto param = proposal->getPrimaryParameterView()[0]; 
+      affectedParameters.push_back(param);
+      
+      auto partitions = param->getPartitions();
+      affectedPartitions.insert(end(affectedPartitions), begin(partitions), end(partitions));
+    }
+  
+  if( proposals[0]->isUsingOptimizedBranches() )
+    {
+
+      auto relevantBranch = branches.first;  
+      _evaluator.evaluateSubtrees(traln, relevantBranch,affectedPartitions , false);
+
+      _evaluator.evaluatePartitionsDry(traln, relevantBranch, affectedPartitions ); 
+
+      auto blo = BranchLengthOptimizer(traln, relevantBranch, 30, _evaluator.getParallelSetup().getChainComm(), affectedParameters);
+      blo.optimizeBranches(traln);
+      auto optParams = blo.getOptimizedParameters();
+
+      assert(optParams.size() == affectedParameters.size()); 
+      for(nat i = 0; i < optParams.size() ; ++i)
+	proposals[i]->extractProposer(traln, optParams[i]);
+    }
+  
+  for(auto &proposal : proposals)
+    {
+      auto  lHast = log_double::fromAbs(1.); 
       _prior.reject();
       proposal->applyToState(traln, _prior, lHast, _chainRand, _evaluator); 
       p2LnPriorRatio[proposal] = _prior.getLnPriorRatio(); 
@@ -474,11 +478,9 @@ void Chain::stepSetProposal()
       for(auto &p : proposal->getPrimaryParameterView())
 	{
 	  auto partitions = p->getPartitions(); 
-	  affectedPartitions.insert(end(affectedPartitions), begin(partitions), end(partitions)); 
-	  
-	  double lnl = 0; 
+	  auto lnl = log_double::fromAbs(1.0); 
 	  for(auto &partition : partitions)
-	    lnl += oldPartitionLnls[partition]; 
+	    lnl *= oldPartitionLnls[partition]; 
 	  p2OldLnl[proposal] = lnl; 
 	}
     }
@@ -507,12 +509,12 @@ void Chain::stepSetProposal()
   for(auto &proposal : pSet.getProposalView())
     {
       ++total; 
-      double newLnl =0 ;  
+      auto newLnl = log_double::fromAbs(1.0) ;  
       for(auto var : proposal->getPrimaryParameterView())
 	for(auto p : var->getPartitions()) 
-	  newLnl += newPLnls[p]; 
+	  newLnl *= newPLnls[p]; 
  
-      double accRatio = exp(( p2LnPriorRatio[proposal] + ( newLnl - p2OldLnl[proposal]) ) * myHeat + p2Hastings[proposal]);
+      double accRatio = log_double(exponentiate(   p2LnPriorRatio[proposal] * ( newLnl / p2OldLnl[proposal]) ,  myHeat) * p2Hastings[proposal]).toAbs();
 
       if(_chainRand.drawRandDouble01() < accRatio)
 	{
@@ -539,7 +541,7 @@ void Chain::stepSetProposal()
   _evaluator.accountForRejection(traln, partitionsToReset, nodes); 
 
   // _lnl = traln.getTrHandle().likelihood; 
-  auto lnl = traln.getTrHandle().likelihood; 
+  auto lnl = traln.getLikelihood(); 
   _lnPr = _prior.getLnPrior();
   
   if(_bestState < lnl)
@@ -562,7 +564,7 @@ void Chain::stepSetProposal()
     {
       if(p2WasAccepted[proposal])
 	{
-	  double tmp = p2LnPriorRatio.at(proposal); 
+	  auto tmp = p2LnPriorRatio.at(proposal); 
 	  _prior.addToRatio(tmp); 
 	}
     }
@@ -726,7 +728,7 @@ void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  Pa
       f.sample(_traln, getGeneration(), topoParamUnfixed); 
     }
 
-  pFile.sample( _traln, extractParameters(), getGeneration(), _prior.getLnPrior()); 
+  pFile.sample( _traln, extractParameters(), getGeneration(), _prior.getLnPrior().toAbs()); 
 }
 
 
@@ -753,4 +755,3 @@ void Chain::deserialize( std::istream &in )
 }
 
 // c++<3
-

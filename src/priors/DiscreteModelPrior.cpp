@@ -38,7 +38,7 @@ ParameterContent DiscreteModelPrior::drawFromPrior(Randomness &rand, bool unifor
   return result; 
 }
 
-double DiscreteModelPrior::getLogProb( const ParameterContent& content ) const 
+log_double DiscreteModelPrior::getLogProb( const ParameterContent& content ) const 
 {
   assert(content.protModel.size() == 1 ); 
   
@@ -46,7 +46,7 @@ double DiscreteModelPrior::getLogProb( const ParameterContent& content ) const
   // auto model = ProtModel(content.values[0]); 
   assert(_modelProbs.find(model) != _modelProbs.end()); 
 
-  return log(_modelProbs.at(model));
+  return log_double::fromAbs(_modelProbs.at(model));
 }
 
  

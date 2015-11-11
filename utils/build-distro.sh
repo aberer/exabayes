@@ -1,5 +1,6 @@
 #! /bin/bash
 
+
 if [ $# -lt 3 ]; then
     echo -e  "$0 isApple cores ssetypes..\n\nwhere ssetypes can be  avx,sse, no-sse"
     exit
@@ -20,15 +21,15 @@ fi
 
 if [ $IS_APPLE == 0 ]; then
     readlink=readlink
-    ccomp=gcc-4.6
-    cxxcomp=g++-4.6
+    ccomp=gcc
+    cxxcomp=g++
     system=linux
     compi=mpicc.openmpi
     cxxompi=mpicxx.openmpi
     cmpich=mpicc.mpich2
     cxxmpich=mpicxx.mpich2
-    # ld="LDFLAGS='-static-libgcc -static-libstdc++\'"
 else
+    export PATH=/opt/local/libexec/gnubin/:/opt/local/bin:/opt/local/sbin:/opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
     readlink=greadlink
     ccomp=clang
     cxxcomp=clang++
@@ -50,31 +51,17 @@ rm -f  exabayes-*.zip exabayes-*.tar.gz
 
 for vect in $(echo  $ssetypes ) 
 do 
-    case "$vect" in 
-	"no-sse" ) mpis=sequential ;; 
-	"avx" ) mpis="openmpi mpich2" ;;
-	"sse" ) mpis="openmpi mpich2" ;;
-	*) echo "error: vect must be no-sse, sse or avx" ; exit 
-    esac 
-
-
-    if [ "$vect" == "no-sse" ]
-    then 
-	mpis="sequential"
-    else
-	mpis="openmpi mpich2" 
-    fi 
-
+    mpis="mpich2 openmpi"
+    
     for mpi in $( echo  $mpis )
     do 
 	make distclean
 
 	if [ "$mpi" == "mpich2" ]; then
-	    cc="$cmpich"
-	    cxx="$cxxmpich"
+	    mpicxx="$cxxmpich"
 	else
-	    cc="$compi"
-	    cxx="$cxxompi"
+
+	    mpicxx="$cxxompi"
 	fi
 
 	arg=""
@@ -87,23 +74,18 @@ do
 	mkdir -p  bin && rm -rf bin/*
 	mkdir -p  distro-build  && rm -rf distro-build/*
 
-	if [ "$mpi" != "sequential" ] ; then 
-	    # build MPI
-	    cd distro-build 
-	    ../configure --enable-mpi  --prefix $($readlink -f ../) CC="ccache $cc" CXX="ccache $cxx" $arg   && make -j $cores  && make install || exit   
-	    cd .. 
-	fi 
+	cd distro-build 
 
-	# build regular 
-	rm -rf distro-build/*
-	cd distro-build
-	
-	
-	if [ "$IS_APPLE" == "0" ] ; then 
-	    ../configure --prefix $($readlink -f ../)  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg LDFLAGS="-static"    && make -j$cores   && make install || exit  
-	else 
-	    ../configure  CC="ccache $ccomp" CXX="ccache $cxxcomp" $arg --prefix $($readlink -f  ../) && make -j$cores   && make install || exit  
-	fi 
+	../configure --enable-mpi  --prefix $($readlink -f ../) CXXFLAGS="-static-libstdc++" CC="ccache $ccomp" CXX="ccache $cxxcomp" MPICXX=$mpicxx $arg ||   exit
+	make -j $cores || exit 
+	make install  || exit 
+
+	# rm -rf * 
+
+	# ../configure --prefix $($readlink -f ../) LDFLAGS="-static" CC="ccache $ccomp" CXX="ccache $cxxcomp"  $arg ||   exit
+
+	# make -j $cores || exit 
+	# make install || exit   
 
 	cd .. 
 
@@ -114,7 +96,7 @@ do
 
 	# mv packages 
 	name=$system-$mpi-$vect
-	newname=$(ls exabayes-*.tar.gz | sed "s/\(.*\)\(.tar.gz\)/\1-$name\2/")
+	newname=$(ls exabayes-*.tar.gz | sed "s/\(.*\)\(.tar.gz\)/\1-$name\2/") 
 	\mv exabayes*.tar.gz ./packages/$newname
 	newname=$(ls exabayes-*.zip | sed "s/\(.*\)\(.zip\)/\1-$name\2/")
 	\mv exabayes*.zip ./packages/$newname

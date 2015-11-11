@@ -87,7 +87,7 @@ private: 			// ATTRIBUTES
   nat _numSites; 
 
   unsigned int myMask32[32]; 
-  std::string protModels[21]; 
+  std::vector<std::string> protModels; 
 
   const char inverseMeaningBINARY[4] ; 
   const char inverseMeaningDNA[16]; 

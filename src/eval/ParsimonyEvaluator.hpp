@@ -17,7 +17,7 @@ public:
       @param parsimonyLength the per partition parsimony score for the
       transition between the descendent nodes
    */ 
-  auto evaluate(TreeAln &traln, nodeptr p, bool fullTraversal, bool doParallelReduce )   
+  auto evaluate(TreeAln &traln, nodeptr p, bool fullTraversal )   
     -> std::array<parsimonyNumber,2>;
 
   static nat numState2pos(nat numState) 

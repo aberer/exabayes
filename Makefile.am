@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS= foreign subdir-objects
 
-EXTRA_DIST=./lib/Random123-1.08 ./examples/* ./build.sh ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.txt ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c
+EXTRA_DIST=./lib/Random123-1.08 ./examples/* ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.txt ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c
 
 noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a
 

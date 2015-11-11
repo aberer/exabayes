@@ -28,9 +28,8 @@
   1. Download and unpack the software package. You find executables
      (sequential: ~yggdrasil~, parallel: ~exabayes~) in the ~./bin~
      folder. The ~-h~ flag provides you with an overview of
-     options. If you downloaded the plain source, executing the
-     ~./build.sh~ script is sufficient to build the sequential
-     version.
+     options. If you downloaded the source code please follow the
+     instructions in Sect. [[#comp-src]]. 
   2. If you have convinced yourself, that the executables are in
      place, consider running the examples in the ~./examples~
      directory (call the ~./call.sh~ or ~./call-parallel.sh~ scripts
@@ -121,6 +120,10 @@
    compile from source.
 
 ** Compiling ExaBayes from source
+:PROPERTIES:
+:CUSTOM_ID: comp-src
+:END:
+
    Download and extract the source archive (sources are also included
    in all binary distributions). 
 
@@ -131,10 +134,11 @@
    1. GCC, version 4.6 or greater 
    2. Clang, version 3.2 or greater
       
-   For running ExaBayes in parallel, you need a working MPI
-   installation. If you want to make most of your local multi-core
-   machine (e.g., laptop), simply install OpenMPI or Mpich2. On
-   Debian/Ubuntu, this should be as simple as (choose one):
+   For running ExaBayes in parallel using more than one computing
+   node, you need a working MPI installation. If you want to make most
+   of your local multi-core machine (e.g., laptop), simply install
+   OpenMPI or Mpich2. On Debian/Ubuntu, this should be as simple as
+   (choose one):
 #+BEGIN_SRC
    $ sudo apt-get install mpich2 libmpich2-dev
    $ sudo apt-get install openmpi-bin libopenmpi-dev
@@ -143,7 +147,7 @@
    For checking, if MPI already is installed on your machine, try to
    enter ~mpirun~ or ~mpiexec~ in a terminal. If it is not installed,
    you will receive a message "command not found".
-
+   
 *** Prerequisites for Mac OS X
    :PROPERTIES:
    :CUSTOM_ID: apple
@@ -168,65 +172,72 @@
    mpicxx-mpich-mp /or/ mpicc, mpicxx).
 
    For installing MPI, also consider [[http://brew.sh/][HomeBrew]] which is an alternative
-   to MacPorts that does not require ~sudo~.
+   to MacPorts that does not require ~sudo~. 
 
-*** Automated build 
-    We provide a small script that compiles ExaBayes and dumps all
-    binaries into the ~./bin~ folder.  If you want to build the
-    parallel version (and you already have installed MPI as described
-    in the previous section), then you have to provide the names of
-    the mpi compiler wrappers. If you just want the sequential
-    version, just execute the script.
 
-    Sequential only: 
+*** Configuring and Compiling
+    ExaBayes uses the typical autotools setup. Typically, the MPI
+    environment (if available) or best vectorization scheme (SSE or
+    AVX) is determined automatically. The basic command for building
+    exabayes (with MPI support) is
+
 #+BEGIN_SRC
-   $ ./build.sh 
+  ./configure --enable-mpi && make
 #+END_SRC
 
-    Sequential and parallel version (where mpicc and mpicxx are the
-    names of the mpi compilers):
+    Consider the following options:
+    
++ important: use the --bindir option with the absolute path to a
+  directory in conjunction with "make install" to dump all executables
+  into a folder /full/path/to/this/dir/bin
+   
 #+BEGIN_SRC
-   $ ./build.sh CC=mpicc CXX=mpicxx
+    ./configure --bindir=/full/path/to/this/dir && make install
 #+END_SRC
     
-    If you build on MacOS, an additional option will be necessary
-    *before* you call the build script:
++ omit "--enable-mpi" to only build the multi-threaded version
+  (e.g., if you have no MPI support available)
 
++ for the build on Mac systems, it *may* be necessary to add
+    CXXFLAGS="-stdlib=libc++" at the configure step:
 #+BEGIN_SRC
-   $ export CXXFLAGS="-stdlib=libc++"
+    ./configure CXXFLAGS="-stdlib=libc++" && make
 #+END_SRC
 
-    Once everything has compiled, check, if all binaries are there as expected: 
++ use the ./configure environment variables (see ./configure --help)
+  to specify non-default compilers, for instance
+  
+#+BEGIN_SRC 
+  ./configure --enable-mpi CC=clang-3.3 CXX=clang++-3.3 MPICXX=mpicxx.openmpi
+#+END_SRC
+
+  will configure exabayes to be build with clang-3.3 and OpenMPI,
+  although default compilers of your system are -- for instance -- gcc
+  and MPICH.
+
+  Once everything has compiled, check, if all binaries are there as expected: 
 #+BEGIN_SRC
    $ ls bin
         consense	credibleSet	exabayes	extractBips	parser		postProcParam	sdsf		yggdrasil
 #+END_SRC
+  
+  Please notice: 
+  
+  1. Compilation takes a while: if you have multiple cores available,
+     then use "make -j x", where x is the number of cores you want to
+     use for compilation.
 
-*** Customized build
-    If you have a bit of experience with the usual Linux way to
-    install programs, you may want to read this section for additional
-    advice on the build process. This section also helps, if the
-    automated build fails for whatever reason (although preferably you
-    can contact our googlegroup).
+  2. If for some reason you want to re-compile the code, do not forget
+     to run "make clean" first.
+  
+  3. If you compile on a cluster where your login-node has an
+     AVX-capable CPU, then you will get an AVX-optimized exabayes. If
+     you now try to execute this version of exabayes on a non-AVX
+     capable CPU, the program mostly will just crash with the message
+     "Illegal instruction.". In these cases, compile exabayes on one
+     of the nodes you intend to execute ExaBayes later *or* use the
+     configure flags "--disable-avx", etc.
 
-    Essentially, you have to build the parallel and sequential
-    executables separately. Since it is hard to guess the mpi compiler
-    correctly, you have to explicitly set the MPI C and MPI C++
-    compiler.
-
-    The following commands first build the sequential version, then
-    the parallel version. For MacOS, Remember to set CXXFLAGS as
-    mentioned in the previous apple-specific section.
-#+BEGIN_SRC
-    $ ./configure                
-    $ make 
-    $ ./configure --enable-mpi CC=mpicc CXX=mpicxx 
-    $ make clean 
-    $ make 
-#+END_SRC 
-
-    Tip: Use make with ~-j n~, where ~n~ is the number of cores on
-    your system.
 
 * Tutorial and Workflow
   This is a basic tutorial for how to conduct Bayesian tree inference
@@ -512,6 +523,12 @@
      and does not compute anything. Very recommendable, before
      submitting a large run to a cluster.
 
+   + *-T n*
+     
+     Executes Yggdrasil with $n$ threads. We recommend to use the
+     multi-threaded version of yggdrasil only on systems, where no MPI
+     installation is available.
+
    + *-c configFile* 
 
      passes a configuration file that specifies how the MCMC will be
@@ -535,16 +552,6 @@
      parallel. Employing this option may be less efficient in terms of
      runtime and memory than data-level parallelism, see Section [[#cluster]] for
      further details.
-
-   + *-Q* 
-
-     (~exabayes~-only) enables per-partition data
-     distribution. This option assigns entire partitions to
-     processors.  Thus, If your alignment comprises more partitions
-     than you have processors available, this option is likely to
-     speed up calculations substantially. You should check the
-     print-out right before the start of MCMC sampling about whether
-     load is distributed equally.
 
    + *-S* 
 
@@ -776,7 +783,7 @@
 
     By default, ExaBayes draws a sample from every cold chain (i.e.,
     for each independent run) every 500 generations (can be changed
-    via *sampleFreq*). To change the print frequency (informing you
+    via *samplingFreq*). To change the print frequency (informing you
     about the likelihood state of each chain), modify *printFreq*. 
     
     ExaBayes updates a checkpoint file at regular intervals (1,000
@@ -793,13 +800,13 @@
     *tuneFreq* to change this, set it to 0 to disable tuning).
 
     If you are running a dataset in parallel that comprises many
-    partitions (possibly using the -Q option), it is advisable to
-    group the proposals per partition into proposal sets (i.e., set
-    *proposalSets* to ~true~, this is the default). If proposal sets
-    are enabled and you have for instance multiple substitution matrix
-    parameters, then ExaBayes will propose new substitution parameters
-    for each substitution matrix parameter one after another (instead
-    of only drawing one of the parameters at random).
+    partitions, it is advisable to group the proposals per partition
+    into proposal sets (i.e., set *proposalSets* to ~true~, this is
+    the default). If proposal sets are enabled and you have for
+    instance multiple substitution matrix parameters, then ExaBayes
+    will propose new substitution parameters for each substitution
+    matrix parameter one after another (instead of only drawing one of
+    the parameters at random).
     
 *** Options regarding convergence 
     ExaBayes implements the same diagnostics for topological
@@ -1235,14 +1242,6 @@
     pattern are assigned to each process) before starting the
     computation.
 
-    By default, ExaBayes uses a cyclic distribution scheme. This means
-    that if you have partitions with less patterns than processes in a
-    single parallel working unit, then some processes will be idle and
-    you would waste computational resources. Using the ~-Q~ option
-    distributes entire partitions to processes and solves this
-    problem. If the load distribution is still even with ~-Q~, you can
-    expect additional performance improvements.
-
 ** Saving Memory
 :PROPERTIES:
 :CUSTOM_ID: memory
@@ -1310,12 +1309,10 @@
    issue of load distribution in case of data parallelism is discussed
    in section [[#data-para]]. The upshot is that you should, whether all
    processes of a parallel unit have about the same portion of the
-   overall data. If you achieve good load distribution using the ~-Q~
-   option, your run may be executed much more efficiently (if you are
-   interested in the technical reasons for this, consider
-   \cite{zhang2012multi}). Furthermore, for efficiency it is important
-   that the option ~proposalSets~ is by default set to ~true~
-   (default).
+   overall data. In parallel runs, ExaBayes initially lists, how many
+   characters, partitions, (coupled) chains and runs are assigned to
+   each processor.  For efficiency it is important that the option
+   ~proposalSets~ is by default set to ~true~ (default).
 
 ** Note on Reproducibility
 :PROPERTIES:

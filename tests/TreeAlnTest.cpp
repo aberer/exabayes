@@ -26,4 +26,5 @@ TEST(tree, assignment)
 {
   // auto&& bf = ByteFile("/home/aberer/proj/exa-bayes/data/tiny/aln.binary"); 
   
+
 }

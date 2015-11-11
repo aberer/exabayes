@@ -1,5 +1,6 @@
 #include "RateHelper.hpp"
 
+#include <cmath>
 #include <iostream>
 
 
@@ -102,10 +103,10 @@ static double getKahansSum2(const std::vector<double> &x)
     {
       double t = s + x[i]; 
 
-      double c = (abs(s) >= abs(x[i])) ?  (s - t ) + x[i]  : (x[i] - t ) + s ; 
+      double c = (std::fabs(s) >= std::fabs(x[i])) ?  (s - t ) + x[i]  : (x[i] - t ) + s ; 
       s = t; 
       t = cs + c; 
-      double cc  = (abs(cs) >= abs(c)) ?  (cs - t ) + c : (c - t ) + cs; 
+      double cc  = (std::fabs(cs) >= std::fabs(c)) ?  (cs - t ) + c : (c - t ) + cs; 
       cs = t ; 
       ccs += cc; 
     }

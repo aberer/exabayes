@@ -63,7 +63,10 @@ template<typename T>
 auto LocalComm::broadcast(std::vector<T> array, int root ) 
   -> std::vector<T>
 {
-  return commTreeDownAsync(array, root);
+  if(size() == 1 )
+    return array; 
+  else 
+    return commTreeDownAsync(array, root);
 }
 
 
@@ -73,16 +76,22 @@ std::vector<T> LocalComm::reduce(std::vector<T> data, int root )
   // sorry this rank translation is too much effort now..
   assert(root == 0); 
 
-  DATA_COMBINE_FUN reducer = [](  std::vector<T> &acc,  typename std::vector<T>::const_iterator beginDonator,   typename std::vector<T>::const_iterator endDonator)
+  if(size() == 1 )
+    return data; 
+  else 
     {
-      std::transform( 
-		     begin(acc), end(acc),
-		     beginDonator, begin(acc),
-		     std::plus<double>() 	     
-		     ); 
-    }; 
 
-  return commTreeUpAsync(data,root, reducer); 
+      DATA_COMBINE_FUN reducer = [](  std::vector<T> &acc,  typename std::vector<T>::const_iterator beginDonator,   typename std::vector<T>::const_iterator endDonator)
+	{
+	  std::transform( 
+			 begin(acc), end(acc),
+			 beginDonator, begin(acc),
+			 std::plus<double>() 	     
+			  ); 
+	}; 
+
+      return commTreeUpAsync(data,root, reducer); 
+    } 
 }
 
 template<typename T> 

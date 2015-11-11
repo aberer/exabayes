@@ -9,6 +9,7 @@
 #define _DENSITIES_H
 
 #include <vector>
+#include "system/extensions.hpp"
 
 double exponentialDensity(double value, double lambda); 
 
@@ -22,8 +23,10 @@ double exponentialDensity(double value, double lambda);
 
 namespace Density
 {
-  double lnDirichlet(std::vector<double> values, const std::vector<double> &alphas); 
-  double lnExponential(double value, double lambda); 
-  double lnGamma(double x, double alpha, double beta ); 
+  log_double lnDirichlet(std::vector<double> values, const std::vector<double> &alphas); 
+  log_double lnExponential(double value, double lambda); 
+  log_double lnGamma(double x, double alpha, double beta ); 
+  log_double lnWeibull(double x, double lambda, double k) ; 
+  double gammaFunction(double alpha); 
 } 
 #endif

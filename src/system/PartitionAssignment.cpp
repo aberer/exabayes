@@ -83,6 +83,7 @@ void PartitionAssignment::improvedAssign( std::vector<PartInfo> partitions )
   // phase 4: stick breaking 
   auto procsHigh = std::vector<nat>{}; 
   auto procsLow = std::vector<nat>{}; 
+  numFull = 0; 
   for(nat proc = 0; proc < _numProc; ++proc)
     {
       if( sizeAssigned[proc] < cap)
@@ -92,6 +93,8 @@ void PartitionAssignment::improvedAssign( std::vector<PartInfo> partitions )
 	  else if(numAssigned[proc] == numLow + 1)
 	    procsHigh.push_back(proc); 
 	}
+      else 
+	++numFull; 
     }
   assert(procsHigh.size() + procsLow.size() + numFull == _numProc); 
 

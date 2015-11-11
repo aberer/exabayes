@@ -156,13 +156,13 @@ bool CoupledChains::doSwap(ParallelSetup &pl, const SwapElem &theSwap )
   assert(a.getGeneration() == b.getGeneration()); 
   assert(b.getChainHeat() <= 1. && a.getChainHeat() <= 1.); 
 
-  double aB = (a.getLikelihood() + a.getLnPr()) * b.getChainHeat(),
-    bA = (b.getLikelihood() + b.getLnPr()) * a.getChainHeat(),
-    aA = (a.getLikelihood() + a.getLnPr()) * a.getChainHeat(),
-    bB = (b.getLikelihood() + b.getLnPr()) * b.getChainHeat();
+  auto 
+    aB = exponentiate( (  a.getLikelihood() * a.getLnPr()) , b.getChainHeat()),
+    bA = exponentiate(b.getLikelihood() * b.getLnPr() , a.getChainHeat()),
+    aA = exponentiate(a.getLikelihood() * a.getLnPr() , a.getChainHeat()),
+    bB = exponentiate(b.getLikelihood() * b.getLnPr() , b.getChainHeat());
 
-
-  double accRatio = min(exp(( aB + bA )  - (aA + bB )),1.0); 
+  double accRatio = min(   log_double(( aB * bA )  / (aA * bB )).toAbs(),   1.0); 
 
   nat coupIdA = a.getCouplingId(), 
     coupIdB = b.getCouplingId(); 
@@ -206,13 +206,12 @@ bool CoupledChains::doLocalSwap(ParallelSetup &pl, const SwapElem &theSwap )
   assert(a.getGeneration() == b.getGeneration()); 
   assert(b.getChainHeat() <= 1. && a.getChainHeat() <= 1.); 
 
-  double aB = (a.getLikelihood() + a.getLnPr()) * b.getChainHeat(),
-    bA = (b.getLikelihood() + b.getLnPr()) * a.getChainHeat(),
-    aA = (a.getLikelihood() + a.getLnPr()) * a.getChainHeat(),
-    bB = (b.getLikelihood() + b.getLnPr()) * b.getChainHeat();
+  auto aB = exponentiate((a.getLikelihood() * a.getLnPr()) , b.getChainHeat()),
+    bA = exponentiate((b.getLikelihood() * b.getLnPr()) , a.getChainHeat()),
+    aA = exponentiate((a.getLikelihood() * a.getLnPr()) , a.getChainHeat()),
+    bB = exponentiate((b.getLikelihood() * b.getLnPr()) , b.getChainHeat());
 
-
-  double accRatio = min(exp(( aB + bA )  - (aA + bB )),1.0); 
+  double accRatio = min(   log_double(( aB * bA )  / (aA * bB )).toAbs(),1.0); 
 
   nat coupIdA = a.getCouplingId(), 
     coupIdB = b.getCouplingId(); 

@@ -1,4 +1,5 @@
 #include <cassert>
+#include <algorithm>
 #include <unistd.h>
 #include <unordered_map>
 #include <limits>
@@ -13,6 +14,7 @@ int NUM_BRANCHES;
 #undef _INCLUDE_DEFINITIONS
 
 #include "common.h"
+#include "system/extensions.hpp"
 
 #include "contrib/SplitFreqAssessor.hpp"
 
@@ -23,10 +25,10 @@ void printUsage()
 	    << "\nComputes the avgerage and maximum deviation of split frequencies\n"
 	    << "of sets of trees.\n\n"
 	    << "USAGE: ./asdsf [-m] [-b relBurnin | -r start ] [ -i ignoreFreq ]  -f file[..]\n\n"
-	    << "      -m               if files contain a different number of trees, try \n"
-	    << "                       to use as many trees as possible [default: use\n"
-	    << "                       first n trees, where n is the minimum number\n"
-	    << "                       available in all tree files]\n\n"  
+	    // << "      -m               if files contain a different number of trees, try \n"
+	    // << "                       to use as many trees as possible [default: use\n"
+	    // << "                       first n trees, where n is the minimum number\n"
+	    // << "                       available in all tree files]\n\n"  
 	    << "      -i ignoreFreq    ignore splits with frequencies lower than ignoreFreq\n"
 	    << "                       [Range: 0.0 <= ignoreFreq < 1.0; default: 0.1]\n\n"
 	    << "      -f file[..]      two or more topology files\n\n"
@@ -69,8 +71,7 @@ int main(int argc, char** argv)
   double ignoreFreq = 0.1; 
 
   int c = 0;   
-  bool takeAll = false; 
-  while( ( c = getopt(argc, argv,"r:b:f:mi:h") ) != EOF )
+  while( ( c = getopt(argc, argv,"r:b:f:i:h") ) != EOF )
     {
       switch(c)
 	{
@@ -92,9 +93,6 @@ int main(int argc, char** argv)
 	    auto &&iss = std::stringstream{optarg}; 
 	    iss >> constBurnin ; 
 	  }
-	  break; 
-	case 'm': 
-	  takeAll = true; 
 	  break; 
 	case 'f':
 	  {
@@ -147,36 +145,47 @@ int main(int argc, char** argv)
       exit(-1); 
     }
 
-  auto asdsf = SplitFreqAssessor(files, true); 
-  
-  nat end = asdsf.getMinNumTrees(); 
-  
-  if(end < constBurnin)
+  if(relBurninWasSet && not (0. < relBurnin && relBurnin < 1.) )
     {
-      std::cout << "you are trying to discard " << constBurnin << " trees, but the minimum trees available in one of the files is just " << end << std::endl; 
-      exit(-1); 
+      std::cout << "Error: please specifify a value (percentage) between (0,1) for the relative burn-in. Your value was "<< relBurnin << std::endl; 
+      exit(-1 ); 
+    }    
+
+  auto sdsf = SplitFreqAssessor(files, true); 
+
+  auto numTrees = std::vector<nat>(files.size(),0);
+  std::transform(begin(files), files.end(), begin(numTrees), [&](const std::string &file)  { return sdsf.getNumTreeAvailable(file); } ); 
+  
+  // determine the range 
+  auto start =  std::vector<nat>(files.size(),0);
+  for(auto i = 0u; i < files.size(); ++i)
+    {
+      if(constBurninWasSet)
+	{
+	  if( numTrees[i] < constBurnin)
+	    {
+	      std::cout << "you are trying to discard " << constBurnin << " trees, but the minimum trees available in one of the files is just " << numTrees[i] << std::endl; 
+	      exit(-1); 
+	    }
+	  
+	  std::cout << SHOW(constBurnin) << std::endl; 
+
+	  start[i] = constBurnin; 
+	}
+      else 
+	start[i] = nat(double(numTrees[i]) * relBurnin); 
+
+      std::cout << "using trees number " << start[i] <<  " to "<< numTrees[i] << " for file" << files[i] << std::endl; 
     }
 
-  nat start = 0;   
-  if(constBurninWasSet)
-    start = constBurnin; 
-  else 
-    start = nat(double(end ) * relBurnin); 
+  sdsf.extractBips( start  , numTrees ); 
 
-  std::cout << "using trees number " << start << " to " <<  end << std::endl;   
+  auto sdsfResult = sdsf.computeAsdsfNew(ignoreFreq); 
 
-  asdsf.extractBipsNew(start , end , takeAll);
-  auto asdsfResult = asdsf.computeAsdsfNew(ignoreFreq); 
-  
-  if(takeAll)
-    std::cout << "but also included any tree with an id higher than " << end << ", if available." << std::endl; 
-  std::cout << "average deviation of split frequencies: " <<  asdsfResult.first * 100  << "%" << std::endl; 
-  std::cout  << "maximum deviation of split frequencies: " << asdsfResult.second * 100 << "%" << std::endl; 
+  std::cout << "average deviation of split frequencies: " <<  sdsfResult.first * 100  << "%" << std::endl; 
+  std::cout  << "maximum deviation of split frequencies: " << sdsfResult.second * 100 << "%" << std::endl; 
   std::cout << "ignored splits that occurred in less than "  << ignoreFreq * 100 << "% of the trees for any of the specified files." << std::endl; 
 
-// #ifdef _USE_GOOGLE_PROFILER
-//   ProfilerStop();
-// #endif
 
   return 0; 
 }

@@ -147,6 +147,9 @@ begin proposals;
   [ treeLengthMult 2  ] 
   [ nodeSlider     5  ] 
 
+
+  
+
   [ RATE HETEROGENEITY ]
   [ rateHetMulti   1  ] 
 

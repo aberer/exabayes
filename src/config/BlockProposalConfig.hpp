@@ -26,18 +26,20 @@ public:
   double getEsprStopProp() const {return esprStopProp; } 
   double getEtbrStopProb() const {return etbrStopProb; }
   double getParsimonyWarp() const {return parsimonyWarp; }
-  int getGuidedRadius() const {return guidedRadius; }  
   void verify(); 
   int getParsSPRRadius() const { return parsSPRRadius; }
-
+  int getLikeSprMaxRadius() const { return _likeSprMaxRadius; }
+  double getLikeSprWarp() const { return _likeSprWarp;  }
+  
 private: 
   std::unordered_map<ProposalType, double, ProposalTypeHash> userValue; 
 
   double etbrStopProb; 
   double esprStopProp; 
   double parsimonyWarp;   
-  int guidedRadius; 
+  int _likeSprMaxRadius;
   int parsSPRRadius; 
+  double _likeSprWarp; 
 }; 
 
 

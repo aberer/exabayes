@@ -8,7 +8,6 @@
 
 #include "config.h"
 
-
 /* only to be disabled for benchmarking! */
 #define USE_NONBLOCKING_COMM
 
@@ -41,18 +40,12 @@ typedef unsigned int nat;
 
 /* some global switches */ 
 
-/* #define _GO_TO_TREE_MOVE_INTEGARTION */
-/* #define _GO_TO_INTEGRATION_MODE */
 /* #define _EXPERIMENTAL_INTEGRATION_MODE */
 
 #define _DISABLE_INIT_LNL_CHECK
-/* #define INTEGRATION_GENERATION 3e4 */
-#define INTEGRATION_GENERATION 1e6
 
 #define SHOW(sym) #sym << "=" << sym << "\t"
 
-
-/* #define UNSURE  */
 /* #define EFFICIENT  */
 
 /* #define PRINT_EVAL_CHOICE */
@@ -61,5 +54,8 @@ typedef unsigned int nat;
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_VERIFY_LNPR */
+
+/* many print statements  */
+/* #define LNL_PRINT_DEBUG */
 
 #endif

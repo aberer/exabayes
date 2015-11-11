@@ -32,7 +32,7 @@ public:
 
   virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const; 
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
   virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
   virtual void resetState(TreeAln &traln) ; 
   virtual void autotune() ;
@@ -64,6 +64,7 @@ protected: 			// ATTRIBUTES
 
   static std::array<double,2> factors; 
 
+  bool _proposePrimeBranch; 
 }; 
 
 #endif
