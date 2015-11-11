@@ -61,26 +61,29 @@
 extern "C" {
 #endif
 
-#ifdef __AVX
+#ifdef __MIC_NATIVE
+#define PLL_BYTE_ALIGNMENT 64
+#define PLL_VECTOR_WIDTH 8
+#elif defined (__AVX)
 
 #include <xmmintrin.h>
 #include <immintrin.h>
 #include <pmmintrin.h>
 
 #define PLL_BYTE_ALIGNMENT 32
+#define PLL_VECTOR_WIDTH 4
 
-#else
-
-#ifdef __SSE3
+#elif defined (__SSE3)
 
 #include <xmmintrin.h>
 #include <pmmintrin.h>
 
 #define PLL_BYTE_ALIGNMENT 16
+#define PLL_VECTOR_WIDTH 2
 
 #else
 #define PLL_BYTE_ALIGNMENT 1
-#endif
+#define PLL_VECTOR_WIDTH 1
 #endif
 
 #include "stack.h"
@@ -371,6 +374,19 @@ typedef struct
   stringEntry **table;
 }
   stringHashtable;
+
+struct pllHashItem
+{
+  void * data;
+  char * str;
+  struct pllHashItem * next;
+};
+
+typedef struct pllHashTable
+{
+  unsigned int size;
+  struct pllHashItem ** Items;
+} pllHashTable;
 
 
 
@@ -882,7 +898,7 @@ typedef unsigned int parsimonyNumber;
 
     If \a protModels is set to \b PLL_AUTO then \a autoProtModels holds the currently detected best fitting protein model for the partition
 
-    @var pInfo::protFreqs
+    @var pInfo::protUseEmpiricalFreqs
 
     @var pInfo::nonGTR
 
@@ -944,7 +960,7 @@ typedef struct {
   double *right;
   double *tipVector;
   
-     /* LG4 */
+  /* LG4 */
 
   double *EIGN_LG4[4];
   double *EV_LG4[4];
@@ -956,18 +972,17 @@ typedef struct {
   
   /* LG4 */
   
-  /* Protein specific ?? */
-  int     protModels;
-  int     autoProtModels;
-  int     protFreqs;                    /** TODO: Is this the flag for empirical protein frequencies? (0 use default) */ 
-  /* specific for secondary structures ?? */
-  boolean nonGTR;
-  boolean optimizeBaseFrequencies;
-  boolean optimizeAlphaParameter;
-  boolean optimizeSubstitutionRates;
-  int    *symmetryVector;
-  int    *frequencyGrouping;
+  /* Protein specific */
+  int     protModels;			/**< Empirical model matrix */
+  int     autoProtModels;		/**< Model selected with "auto" protein model */
+  int     protUseEmpiricalFreqs;	/**< Whether to use empirical frequencies for protein model */
 
+  boolean nonGTR;
+  boolean optimizeBaseFrequencies;	/**< Whether to optimize base frequencies */
+  boolean optimizeAlphaParameter;	/**< Whether to optimize alpha parameters and gamma rates */
+  boolean optimizeSubstitutionRates;	/**< Whether to optimize substitution rates */
+  int    *symmetryVector;		/**< Specify linkage between substitution rate parameters */
+  int    *frequencyGrouping;
 
   /* LIKELIHOOD VECTORS */
 
@@ -1148,7 +1163,8 @@ typedef  struct  {
 
 //#endif
   
-  stringHashtable  *nameHash;
+  pllHashTable     *nameHash;
+  char           ** tipNames;
 
   char             *secondaryStructureInput;
 
@@ -1617,6 +1633,7 @@ extern char * pllTreeToNewick ( char *treestr, pllInstance *tr, partitionList *p
 /* partition parser declarations */
 extern void  pllQueuePartitionsDestroy (pllQueue ** partitions);
 extern pllQueue * pllPartitionParse (const char * filename);
+extern pllQueue * pllPartitionParseString (const char * p);
 extern void pllPartitionDump (pllQueue * partitions);
 void pllBaseSubstitute (pllAlignmentData * alignmentData, partitionList * partitions);
 partitionList * pllPartitionsCommit (pllQueue * parts, pllAlignmentData * alignmentData);
@@ -1634,6 +1651,8 @@ extern pllAlignmentData * pllParseAlignmentFile (int fileType, const char *);
 
 /* model management */
 int pllInitModel (pllInstance *, partitionList *, pllAlignmentData *);
+void pllInitReversibleGTR(pllInstance * tr, partitionList * pr, int model);
+void pllMakeGammaCats(double alpha, double *gammaRates, int K, boolean useMedian);
 int pllLinkAlphaParameters(char *string, partitionList *pr);
 int pllLinkFrequencies(char *string, partitionList *pr);
 int pllLinkRates(char *string, partitionList *pr);
@@ -1641,13 +1660,18 @@ int pllSetSubstitutionRateMatrixSymmetries(char *string, partitionList * pr, int
 void pllSetFixedAlpha(double alpha, int model, partitionList * pr, pllInstance *tr);
 void pllSetFixedBaseFrequencies(double *f, int length, int model, partitionList * pr, pllInstance *tr);
 int  pllSetOptimizeBaseFrequencies(int model, partitionList * pr, pllInstance *tr);
+void pllSetSubstitutionMatrix(double *q, int length, int model, partitionList * pr,  pllInstance *tr);
 void pllSetFixedSubstitutionMatrix(double *q, int length, int model, partitionList * pr,  pllInstance *tr);
+int pllGetInstRateMatrix (partitionList * pr, int model, double * outBuffer);
 int pllOptimizeModelParameters(pllInstance *tr, partitionList *pr, double likelihoodEpsilon);
 double pllGetAlpha (partitionList * pr, int pid);
 void pllGetGammaRates (partitionList * pr, int pid, double * outBuffer);
-extern void pllGetBaseFrequencies(pllInstance * tr, partitionList * pr, int model, double * outBuffer);
-extern void pllGetSubstitutionMatrix (pllInstance * tr, partitionList * pr, int model, double * outBuffer);
+extern void pllGetBaseFrequencies(partitionList * pr, int model, double * outBuffer);
+extern void pllGetSubstitutionMatrix (partitionList * pr, int model, double * outBuffer);
 void pllEmpiricalFrequenciesDestroy (double *** empiricalFrequencies, int models);
+extern void pllOptRatesGeneric(pllInstance *tr, partitionList *pr, double modelEpsilon, linkageList *ll);
+extern void pllOptBaseFreqs(pllInstance *tr, partitionList * pr, double modelEpsilon, linkageList *ll);
+extern void pllOptAlphasGeneric(pllInstance *tr, partitionList * pr, double modelEpsilon, linkageList *ll);
 
 /* tree topology */
 void pllTreeInitTopologyNewick (pllInstance *, pllNewickTree *, int);
@@ -1660,6 +1684,7 @@ void pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partiti
 nodeptr pllGetRandomSubtree(pllInstance *);
 extern void pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr);
 void pllDestroyInstance (pllInstance *);
+extern void pllGetAncestralState(pllInstance *tr, partitionList *pr, nodeptr p, double * outProbs, char * outSequence);
 
 /* rearrange functions (NNI and SPR) */
 pllRearrangeList * pllCreateRearrangeList (int max);
@@ -1669,11 +1694,30 @@ void pllRearrangeCommit (pllInstance * tr, partitionList * pr, pllRearrangeInfo 
 int pllRearrangeRollback (pllInstance * tr, partitionList * pr);
 void pllClearRearrangeHistory (pllInstance * tr);
 int pllRaxmlSearchAlgorithm (pllInstance * tr, partitionList * pr, boolean estimateModel);
-void pllGetTransitionMatrix (pllInstance * tr, partitionList * pr, int model, nodeptr p, double * outBuffer);
+int pllGetTransitionMatrix (pllInstance * tr, partitionList * pr, nodeptr p, int model, int rate, double * outBuffer);
+void pllGetTransitionMatrix2 (pllInstance * tr, partitionList * pr, int model, nodeptr p, double * outBuffer);
+int pllGetCLV (pllInstance * tr, partitionList * pr, nodeptr p, int partition, double * outProbs);
+extern int pllTopologyPerformNNI(pllInstance * tr, nodeptr p, int swap);
+
+/* hash functions */
+unsigned int pllHashString (const char * s, unsigned int size);
+int pllHashAdd  (struct pllHashTable * hTable, const char * s, void * item);
+struct pllHashTable * pllHashInit (unsigned int n);
+int pllHashSearch (struct pllHashTable * hTable, char * s, void ** item);
+void pllHashDestroy (struct pllHashTable ** hTable, int);
+
+/* node specific functions */
+nodeptr pllGetOrientedNodePointer (pllInstance * pInst, nodeptr p);
 
 /* other functions */
 extern char * pllReadFile (const char *, long *);
 extern int * pllssort1main (char ** x, int n);
+extern node ** pllGetInnerBranchEndPoints (pllInstance * tr);
+
+/* parsimony functions  */
+unsigned int evaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, boolean full );
+void newviewParsimony(pllInstance *tr, partitionList *pr, nodeptr  p);
+
 
 /* ---------------- */
 

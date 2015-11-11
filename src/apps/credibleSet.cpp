@@ -1,4 +1,4 @@
-#include "contrib/CredibleSet.hpp"
+#include "CredibleSet.hpp"
 #include <cstring>
 #include <unistd.h>
 #include <cassert>

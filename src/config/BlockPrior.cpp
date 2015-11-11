@@ -1,15 +1,17 @@
 #include "BlockPrior.hpp"
 
 #include <sstream>
+#include <cmath>
 #include <limits>
 
-#include "system/extensions.hpp"
 
-#include "priors/DiscreteModelPrior.hpp"
-#include "priors/UniformPrior.hpp"
-#include "priors/ExponentialPrior.hpp"
-#include "priors/DirichletPrior.hpp"
-#include "priors/FixedPrior.hpp"
+#include "extensions.hpp"
+
+#include "DiscreteModelPrior.hpp"
+#include "UniformPrior.hpp"
+#include "ExponentialPrior.hpp"
+#include "DirichletPrior.hpp"
+#include "FixedPrior.hpp"
 
 static void expectString( std::string expectation, NxsToken& token)
 {
@@ -83,7 +85,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	  auto foundRemainder = token.GetToken().EqualsCaseInsensitive("remainder"); 
 	  if(foundRemainder)	// keep track of the weight 
 	    {
-	      if(remainder != std::numeric_limits<double>::infinity())
+	      if( not ( std::isinf( remainder) && remainder > 0 )  )
 		{
 		  std::cerr << "Encountered 'remainder' twice while defining aaPr" << std::endl; 
 		  exitFunction(-1, true); 
@@ -127,7 +129,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	    }
 	}
 
-      if(remainder != std::numeric_limits<double>::infinity())
+      if(   not std::isinf(remainder) )
 	{
 	  for(auto model : ProtModelFun::getAllModels())
 	    {

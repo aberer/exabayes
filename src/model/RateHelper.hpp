@@ -20,6 +20,8 @@
 class RateHelper
 {
 public: 
+  RateHelper(){} 
+
   static void convertRelativeToLast(std::vector<double> &values) ; 
   static double convertToSum1(std::vector<double> &values); 
   static void convertToGivenSum(std::vector<double> &values, double givenSum); 

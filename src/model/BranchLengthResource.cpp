@@ -1,8 +1,7 @@
 #include "BranchLengthResource.hpp"
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 
-
-void BranchLengthResource::initialize(nat numTax, nat numPart )
+void BranchLengthResource::initialize(size_t numTax, size_t numPart )
 {
   _numTax = numTax; 
   _numPart = numPart; 

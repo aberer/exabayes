@@ -1,5 +1,5 @@
-#include "file/OutputFile.hpp"
-#include "system/GlobalVariables.hpp"
+#include "OutputFile.hpp"
+#include "GlobalVariables.hpp"
 
 #include <fstream>
 #include <iostream>

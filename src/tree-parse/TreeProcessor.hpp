@@ -2,13 +2,14 @@
 #define _TREE_PROCESSOR_HPP
 
 #include <string>
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 
 class TreeProcessor
 {
 public: 
   TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck ); 
   TreeProcessor(TreeProcessor&& tp) ; 
+  virtual ~TreeProcessor(){}
   TreeProcessor& operator=(TreeProcessor &&tp); 
   
   const std::vector<std::string> getTaxa() const {return _taxa; }

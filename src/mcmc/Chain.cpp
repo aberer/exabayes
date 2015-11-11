@@ -1,65 +1,119 @@
 #include <sstream>		
 #include <map> 
 #include <unordered_map>
+#include <algorithm>
 
-#include "proposals/StatNNI.hpp"
-#include "proposals/NodeSlider.hpp"
+#include "TopologyParameter.hpp"
+
+#include "NodeSlider.hpp"
 #include "Chain.hpp"		
-#include "model/TreeAln.hpp"
-#include "math/Randomness.hpp"
-#include "system/GlobalVariables.hpp"
+#include "TreeAln.hpp"
+#include "Randomness.hpp"
+#include "GlobalVariables.hpp"
 
 #include "BranchLengthOptimizer.hpp"
 
-#include "eval/LikelihoodEvaluator.hpp" 
-#include "comm/ParallelSetup.hpp"
-#include "model/Category.hpp"
+#include "LikelihoodEvaluator.hpp" 
+#include "ParallelSetup.hpp"
+#include "Category.hpp"
 #include "TreePrinter.hpp"
 
 #ifdef  _DEVEL
 #include "memory.hpp" 
 #endif
 
-Chain:: Chain(randKey_t seed, const TreeAln& traln, const std::vector<std::unique_ptr<AbstractProposal> > &proposals, 
+// // TODO not too much thought went into this  
+
+// actually, i do not think this is a good idea, but too afaid of
+// removing it at this point in the release cycle
+namespace std 
+{
+  template<> struct hash<AbstractParameter*>
+  {
+  // public: 
+    size_t operator()(const AbstractParameter* rhs) const 
+    {
+       return rhs->getId(); 
+    }
+  } ;
+
+  template<>
+  struct equal_to<AbstractParameter*>
+  {
+    bool operator()(const AbstractParameter* a, const AbstractParameter* b ) const 
+    {
+      return a->getId() == b->getId(); 
+    }
+  }; 
+}
+
+
+Chain:: Chain(randKey_t seed, const TreeAln& traln,  ParameterList params, const std::vector<std::unique_ptr<AbstractProposal> > &proposals, 
 	      std::vector<ProposalSet> proposalSets, LikelihoodEvaluator eval, bool isDryRun) 
-  : _traln(traln)
+  : Serializable()
+  ,  _traln(traln)
   , _deltaT(0)
   , _runid(0)
   , _tuneFrequency(100)
   , _hastings(log_double::fromAbs(1))
   , _currentGeneration(0)
   , _couplingId(0)
+  , _proposals{}
   , _proposalSets(proposalSets)
   , _chainRand(seed)
   , _relWeightSumSingle(0)
   , _relWeightSumSets(0)
+  , _prior{}
   , _bestState(log_double::lowest())
   , _evaluator(eval)
+  , _lnPr{log_double::fromAbs(1.)}
+  , _params{params}
 {
   for(auto &p : proposals)
     {
-      std::unique_ptr<AbstractProposal> copy(p->clone()); 
-      assert(copy->getPrimaryParameterView().size() != 0); 
-      _proposals.push_back(std::move(copy)); 
+      _proposals.emplace_back(p->clone()); 
+      _proposals.back()->setParams(&_params); 
     }
 
-  const std::vector<AbstractParameter*> vars = extractParameters(); 
-  _prior.initialize(_traln, vars);
+  for(auto &p : _proposalSets)
+    p.setParameterListPtr(&_params);
 
+
+  // experimental: initilize with random starting values 
+  // for(auto &p : _params)
+  //   {
+  //     if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
+  // 	{
+  // 	  for(auto bl : _traln.extractBranches(p))
+  // 	    {
+  // 	      auto newVal = p->getPrior()->drawFromPrior(_chainRand);
+  // 	      tout << "init with " << newVal << std::endl; 
+  // 	      bl.setConvertedInternalLength(p,newVal.values[0]); 
+  // 	      if(BoundsChecker::checkBranch(bl))
+  // 		BoundsChecker::correctBranch(bl); 
+  // 	      _traln.setBranch(bl,p);
+  // 	    }
+  // 	}
+  //   }
+
+  _prior.initialize(_traln, _params);
   suspend(); 
   updateProposalWeights();
 
 }
 
 
+
 Chain::Chain(  const Chain& rhs)   
-  : _traln(rhs._traln)
+  : Serializable(rhs)
+  ,  _traln(rhs._traln)
   , _deltaT(rhs._deltaT)
   , _runid(rhs._runid)
   , _tuneFrequency(rhs._tuneFrequency)
   , _hastings(rhs._hastings)
   , _currentGeneration(rhs._currentGeneration)
   , _couplingId(rhs._couplingId) 
+  , _proposals{}
   , _proposalSets(std::move(rhs._proposalSets))
   , _chainRand(std::move(rhs._chainRand)) 
   , _relWeightSumSingle(rhs._relWeightSumSingle)
@@ -68,14 +122,19 @@ Chain::Chain(  const Chain& rhs)
   , _bestState(rhs._bestState)
   , _evaluator(std::move(rhs._evaluator))
   , _lnPr(rhs._lnPr)
+  , _params{rhs._params}
 {
   for(auto &p : rhs._proposals)
-    _proposals.emplace_back(p->clone());
+    {
+      _proposals.emplace_back(p->clone());
+      _proposals.back()->setParams(&_params);
+    }
+
+  for(auto &p : _proposalSets)
+    p.setParameterListPtr(&_params);
 }
 
-
-
-
+ 
 Chain& Chain::operator=(Chain rhs)
 {
   swap(*this, rhs); 
@@ -86,8 +145,6 @@ Chain& Chain::operator=(Chain rhs)
 void swap(Chain &lhs, Chain &rhs)
 {
   using std::swap; 
-
-  assert(lhs._currentGeneration == rhs._currentGeneration); 
 
   swap(lhs._traln,rhs._traln); 
   swap(lhs._deltaT,rhs._deltaT);
@@ -105,6 +162,7 @@ void swap(Chain &lhs, Chain &rhs)
   swap(lhs._bestState,rhs._bestState);
   swap(lhs._evaluator,rhs._evaluator);
   swap(lhs._lnPr,rhs._lnPr);
+  swap(lhs._params, rhs._params); 
 }
 
 
@@ -114,6 +172,7 @@ void swapHeatAndProposals(Chain &lhs, Chain& rhs)
   std::swap(lhs._couplingId,   rhs._couplingId    ); 
   std::swap(lhs._proposals,    rhs._proposals     ); 
   std::swap(lhs._proposalSets, rhs._proposalSets  ); 
+  // std::swap(lhs._params, rhs._params); 
 }
 
 
@@ -145,19 +204,52 @@ void Chain::updateProposalWeights()
 }
 
 
+void Chain::suspend()  
+{
+  _traln.clearMemory(_evaluator.getArrayReservoir()); 
+  _lnPr = _prior.getLnPrior();
+  // tout << "SUSPEND " <<  MAX_SCI_PRECISION << _lnPr << std::endl; 
+
+// #if 1 
+//   // auto params =  getBranchLengthsParameterView(); 
+//   AbstractParameter* param = (nullptr); 
+//   for(auto p : _params)
+//     if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
+//       param = p; 
+//   auto bs = _traln.extractBranches(param);
+//   tout << "SUSPEND " << bs << std::endl; 
+// #endif
+
+  _evaluator.freeMemory(); 
+}
+
 
 void Chain::resume() 
 {    
-  auto vs = extractParameters(); 
-  _prior.initialize(_traln, vs);
-  auto prNow = _prior.getLnPrior(); 
 
-  if(   log_double(  _lnPr / prNow ).toAbs() - 1. >= ACCEPTED_LNPR_EPS)
+// #if 1 
+//   AbstractParameter* param = (nullptr); 
+//   for(auto p : _params)
+//     if(dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
+//       param = p; 
+//   auto bs = _traln.extractBranches(param);
+//   tout << "RESUME " << bs << std::endl; 
+// #endif
+
+  // auto vs = getParamView(); 
+  _prior.initialize(_traln, _params);
+  auto prNow = _prior.getLnPrior(); 
+  
+  // tout << "RESUME " <<  prNow  << std::endl; 
+
+  if(   std::fabs(log_double(  _lnPr / prNow ).toAbs()) - 1. >= ACCEPTED_LNPR_EPS)
     {
       std::cerr << MAX_SCI_PRECISION ; 
       std::cerr << "While trying to resume chain: previous log prior could not be\n"
   		<< "reproduced. This is a programming error." << std::endl; 
-      std::cerr << "Prior was " << _lnPr << "\t now we have " << prNow << std::endl; 
+      std::cerr << "Prior was " << _lnPr << "\t now we have " << prNow << 
+	"\tdiff=" << std::fabs(_lnPr.getRawLog() - prNow.getRawLog()) << 
+	std::endl; 
       assert(0); 
     }
 
@@ -228,13 +320,16 @@ void Chain::serializeConditionally( std::ostream &out, CommFlag commFlags)  cons
 
       for(auto& p: _proposalSets)
 	p.serialize(out);
+
+      for(auto &p : _params)
+	p->serialize(out); 
     }
 
   if( ( commFlags & CommFlag::TREE ) != CommFlag::NOTHING )
     {
-      for(auto &var: extractSortedParameters())
-	{
-	  auto compo = var->extractParameter(_traln);
+       for(auto &var: _params)
+	 {
+           auto compo = var->extractParameter(_traln);
 	  auto&&  tmp = std::stringstream{}; 
 	  var->printShort(tmp); 	  	  
 	  writeString(out,tmp.str()); 
@@ -260,11 +355,22 @@ void Chain::deserializeConditionally(std::istream& in, CommFlag commFlags)
     _chainRand.deserialize(in);
 
   if( ( commFlags & CommFlag::PROPOSALS ) != CommFlag::NOTHING )
-    initProposalsFromStream(in);
+    {
+      for(auto &p : _proposals)
+	p->deserialize(in);
+
+      for(auto &p : _proposalSets)
+	p.deserialize(in);
+
+      for(auto &p : _params)
+	p->deserialize(in); 	// dubios decision: serialized version of a parameter could also be the content...
+    }
 
   if( ( commFlags & CommFlag::TREE ) != CommFlag::NOTHING )
     {
-      for(auto &param : extractSortedParameters())
+      auto param2content = std::unordered_map<AbstractParameter*,ParameterContent>{}; 
+      
+      for(auto &param : _params)
 	{
 	  auto name = readString(in);
 	  {
@@ -274,8 +380,11 @@ void Chain::deserializeConditionally(std::istream& in, CommFlag commFlags)
 	  }
 	  auto content = param->extractParameter(_traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
 	  content.deserialize(in);
-	  param->applyParameter(_traln, content);
+
+	  param2content.insert(std::make_pair(param, content)); 
 	}
+      
+      applyParameterContents(param2content);
     }
 }
 
@@ -286,8 +395,7 @@ BranchPlain Chain::peekNextVirtualRoot(TreeAln &traln, Randomness rand)
 {
   // TODO go beyond next step  
 
-  nat curGen = rand.getGeneration();
-  // tout << rand << std::endl; 
+  auto curGen = rand.getGeneration();
 
   rand.rebaseForGeneration(curGen + 1 ); 
 
@@ -360,8 +468,8 @@ void Chain::stepSingleProposal()
   bool wasAccepted  = testr < acceptance; 
 
 #ifdef DEBUG_SHOW_EACH_PROPOSAL 
-  // auto& output = tout  ; 
-  auto& output = std::cout  ; 
+  auto& output = tout  ; 
+  // auto& output = std::cout  ; 
   addChainInfo(output); 
   output << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun.getName() << "\t" 
 	 << MORE_FIXED_PRECISION << SHOW(prevLnl) << SHOW(lnlRatio) << SHOW(priorRatio) << SHOW( _hastings) << SHOW(acceptance)  << SHOW(testr)<< std::endl; 
@@ -416,12 +524,46 @@ void Chain::stepSingleProposal()
 
 
 
+/** 
+    whenever we apply a bunch of stored parameters, we MUST apply the
+    topology parameter BEFORE the branch length parameter (otherwise,
+    we may not correctly reproduce the state)
+    
+    the state of a chain (wrt parameter values) could be
+    encapsulated...
+
+    TODO: use this specific function also in all other occasions...
+ */ 
+void Chain::applyParameterContents(std::unordered_map<AbstractParameter*,ParameterContent> param2content)  
+{
+  auto topoParams =  std::unordered_map<AbstractParameter*,ParameterContent>{}; 
+  auto otherParams = std::unordered_map<AbstractParameter*,ParameterContent>{}; 
+  
+  for(auto elem : param2content)
+    if(dynamic_cast<TopologyParameter*>(elem.first) != nullptr) 
+      topoParams.insert(elem); 
+
+  for(auto elem : param2content)
+    if(dynamic_cast<TopologyParameter*>(elem.first) == nullptr) 
+      otherParams.insert(elem); 
+
+  for(auto &elem : topoParams)
+    elem.first->applyParameter(_traln, elem.second);
+  
+  for(auto &elem : otherParams)
+    elem.first->applyParameter(_traln, elem.second); 
+}
+
+
+
 void Chain::stepSetProposal()
 {
   auto& traln = _traln; 
 
   double myHeat = getChainHeat(); 
   auto &pSet = drawProposalSet(_chainRand); 
+
+  // tout << pSet << std::endl; 
 
   auto oldPartitionLnls = traln.getPartitionLnls(); 
   
@@ -432,7 +574,8 @@ void Chain::stepSetProposal()
   auto affectedPartitions = std::vector<nat>{}; 
 
   auto proposals = pSet.getProposalView(); 
-  auto branches = proposals[0]->prepareForSetExecution(traln, _chainRand);
+  
+  auto branches = proposals.at(_chainRand.drawIntegerOpen(proposals.size()))->prepareForSetExecution(traln, _chainRand);
   
   for(auto &proposal: proposals)
     {
@@ -548,7 +691,7 @@ void Chain::stepSetProposal()
     _bestState = lnl; 
 
 #ifdef DEBUG_SHOW_EACH_PROPOSAL
-  auto &output = std::cout ; 
+  auto &output = tout ; 
 
   addChainInfo(output);
   output << "\t" << accCtr << "/"  << total << "\t" << pSet << "\t" << lnl << std::endl; 
@@ -579,7 +722,7 @@ void Chain::step()
   ++_currentGeneration; 
 
 #ifdef DEBUG_VERIFY_LNPR
-  _prior.verifyPrior(_traln, extractParameters());
+  _prior.verifyPrior(_traln, _params);
 #endif
 
   _evaluator.imprint(_traln);
@@ -597,88 +740,8 @@ void Chain::step()
 #endif
 
 #ifdef DEBUG_VERIFY_LNPR
-  _prior.verifyPrior(_traln, extractParameters());
+  _prior.verifyPrior(_traln, _params );
 #endif
-}
-
-
-void Chain::suspend()  
-{
-  _traln.clearMemory(_evaluator.getArrayReservoir()); 
-  _lnPr = _prior.getLnPrior();
-  _evaluator.freeMemory(); 
-}
-
-
-// TODO not too much thought went into this  
-namespace std 
-{
-  template<> struct hash<AbstractParameter*>
-  {
-  // public: 
-    size_t operator()(const AbstractParameter* rhs) const 
-    {
-       return rhs->getId(); 
-    }
-  } ;
-
-  template<>
-  struct equal_to<AbstractParameter*>
-  {
-    bool operator()(const AbstractParameter* a, const AbstractParameter* b ) const 
-    {
-      return a->getId() == b->getId(); 
-    }
-  }; 
-}
-
-
-std::vector<AbstractParameter*> Chain::extractSortedParameters() const 
-{
-  auto result = extractParameters();
-  std::sort(begin(result), end(result), 
-	    [] (const AbstractParameter *lhs, const AbstractParameter* rhs)  -> bool 
-	    {
-	      auto prioLhs = lhs->getParamPriority();
-	      auto prioRhs = rhs->getParamPriority();
-	      if(prioLhs == prioRhs)
-		return lhs->getId() < rhs->getId(); 
-	      return prioLhs > prioRhs;  
-	    });
-
-  return result; 
-}
-
-std::vector<AbstractParameter*> Chain::extractParameters() const 
-{
-  auto result = std::unordered_set<AbstractParameter*>{}; 
-  
-  // add parameters in the default proposals 
-  for(auto &p : _proposals)
-    {
-      for(auto &v : p->getPrimaryParameterView())
-	result.insert(v); 
-      for(auto &v : p->getSecondaryParameterView())
-	result.insert(v); 
-    }
-  
-  // add the proposals in the proposal sets 
-  for(auto &p : _proposalSets)
-    {
-      for(auto &p2 : p.getProposalView() )
-	{
-	  auto tmp =  p2->getPrimaryParameterView();
-	  result.insert( tmp.begin(), tmp.end()); 
-	  tmp = p2->getSecondaryParameterView();
-	  result.insert(tmp.begin(), tmp.end()); 
-	}
-    }
-
-  auto result2 = std::vector<AbstractParameter*> {}; 
-  for(auto &v : result) 
-    result2.push_back(v); 
-
-  return result2; 
 }
 
 
@@ -705,7 +768,7 @@ void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  Pa
   auto blParamsUnfixed=  std::vector<AbstractParameter*>{} ; 
   AbstractParameter *topoParamUnfixed = nullptr; 
   
-  for(auto &param : extractParameters()) 
+  for(auto &param : _params  ) 
     {
       if(param->getCategory() == Category::BRANCH_LENGTHS && param->getPrior()->needsIntegration() )
 	blParamsUnfixed.push_back(param); 
@@ -728,21 +791,10 @@ void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  Pa
       f.sample(_traln, getGeneration(), topoParamUnfixed); 
     }
 
-  pFile.sample( _traln, extractParameters(), getGeneration(), _prior.getLnPrior().toAbs()); 
+  pFile.sample( _traln, _params, getGeneration(), _prior.getLnPrior()); 
 }
 
-
-
-void Chain::initProposalsFromStream(std::istream& in)
-{
-  for(auto &p : _proposals)
-    p->deserialize(in);
-
-  for(auto &p : _proposalSets)
-    p.deserialize(in);
-}     
-
-
+     
 void Chain::serialize( std::ostream &out) const
 {
   serializeConditionally(out, CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::RAND ) ;
@@ -754,4 +806,13 @@ void Chain::deserialize( std::istream &in )
   deserializeConditionally(in, CommFlag::PRINT_STAT | CommFlag::PROPOSALS | CommFlag::TREE | CommFlag::RAND ) ;
 }
 
+
+void Chain::resetParamPtr()
+{
+  for(auto &p : _proposals)
+    p->setParams(&_params); 
+
+  for(auto &p : _proposalSets)
+    p.setParameterListPtr(&_params); 
+} 
 // c++<3

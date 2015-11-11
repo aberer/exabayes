@@ -5,13 +5,18 @@
 extern void genericExit(int code); 
 
 
+
+
 BlockProposalConfig::BlockProposalConfig()
-  : etbrStopProb(0.5)
+  : userValue{}
+  , etbrStopProb(0.5)
   , esprStopProp(0.5)    
   , parsimonyWarp(0.1)
   , _likeSprMaxRadius{-1}
   , parsSPRRadius(-1)
   , _likeSprWarp(1.) 
+  , _moveOptMode{MoveOptMode::NONE}
+  , _useMultiplier{false}
 {
   NCL_BLOCKTYPE_ATTR_NAME = "PROPOSALS"; 
 }
@@ -50,6 +55,12 @@ void BlockProposalConfig::Read(NxsToken &token)
 	    }
 	  else if(key.EqualsCaseInsensitive("esprstopprob"))	    
 	    esprStopProp = value.ConvertToDouble();	  
+	  else if(key.EqualsCaseInsensitive("moveoptmode"))
+	    {
+	      auto val =  value.ConvertToInt(); 
+	      assert(0 <= val && val < 5 ); // no better way to check =/ 
+	      _moveOptMode = MoveOptMode(val); 
+	    }
 	  else if(key.EqualsCaseInsensitive("etbrstopprob"))
 	    etbrStopProb = value.ConvertToDouble(); 	  
 	  else if(key.EqualsCaseInsensitive("likesprmaxradius"))
@@ -58,6 +69,8 @@ void BlockProposalConfig::Read(NxsToken &token)
 	    _likeSprWarp = value.ConvertToDouble();
 	  else if(key.EqualsCaseInsensitive("parsimonyWarp"))	    
 	    parsimonyWarp = value.ConvertToDouble();
+	  else if(key.EqualsCaseInsensitive("usemultiplier"))
+	    _useMultiplier = convertToBool(value); 
 	  else if(key.EqualsCaseInsensitive("parssprradius"))
 	    {
 	      parsSPRRadius = value.ConvertToInt();

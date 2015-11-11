@@ -47,7 +47,7 @@ auto  send( T elem, int dest, int tag )
   -> void ; 
 
 int getRank() const;
-int size() const; 
+size_t size() const; 
 bool isValid() const ;
 
 bool haveThreadSupport() const ; 

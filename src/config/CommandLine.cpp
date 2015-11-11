@@ -4,14 +4,15 @@
 #include <iostream>
 
 #include "CommandLine.hpp"	
-#include "system/GlobalVariables.hpp"
-#include "file/OutputFile.hpp"
+#include "GlobalVariables.hpp"
+#include "OutputFile.hpp"
 #include "MemoryMode.hpp"
-#include "system/FlagType.hpp"
+#include "FlagType.hpp"
 
 
 CommandLine::CommandLine()
-  : configFileName("")
+  : seed({{0,0}})
+  , configFileName("")
   , alnFileName("")
   , runid("")
   , treeFile("")

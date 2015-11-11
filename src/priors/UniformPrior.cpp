@@ -1,7 +1,8 @@
-#include "priors/UniformPrior.hpp"
+#include "UniformPrior.hpp"
 
 
-UniformPrior::UniformPrior(double minVal, double maxVal) : minVal(minVal), maxVal(maxVal)
+UniformPrior::UniformPrior(double minV, double maxV) 
+  : minVal(minV), maxVal(maxV)
 {
 }
 
@@ -20,13 +21,6 @@ log_double UniformPrior::getLogProb(const ParameterContent& content)  const
 }
 
 
-// std::vector<double> UniformPrior::drawFromPrior(Randomness &rand)  const
-// {
-//   double val = minVal + rand.drawRandDouble01() * (maxVal - minVal); 
-//   std::vector<double> result = {val}; 
-//   return result; 
-// }
-
 void UniformPrior::print(std::ostream& out ) const  
 { 
   out << "Uniform("  << minVal << "," << maxVal << ")" ; 
@@ -43,17 +37,17 @@ ParameterContent UniformPrior::getInitialValue() const
 
 
 
-double UniformPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double oldFc, double newFc )const 
+log_double UniformPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double oldFc, double newFc )const 
 {
-  auto result = 0; 
+  auto result = 0.; 
 
-  auto maxVal =  exp( - getMin() / newFc) , 
-    minVal = exp(  - getMax() / newFc) ; 
+  auto maxV =  exp( - getMin() / newFc) , 
+    minV = exp(  - getMax() / newFc) ; 
 
   for(auto &b : traln.extractBranches(param))
     {
-      bool less = b.getLength() < minVal; 
-      bool greater = b.getLength() > maxVal; 
+      bool less = b.getLength() < minV; 
+      bool greater = b.getLength() > maxV; 
 	      
       assert(not (less && greater)); 
 
@@ -64,11 +58,11 @@ double UniformPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractPa
 	}
     }
   
-  return result; 
+  return log_double::fromAbs(result); 
 } 
 
 
-double UniformPrior::getFirstDerivative(const TreeAln &traln, const AbstractParameter& param) const
+double UniformPrior::getFirstDerivative( const AbstractParameter& param) const
 {
   return 0; 
 } 

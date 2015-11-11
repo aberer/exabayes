@@ -1,6 +1,6 @@
 #include "BlockRunParameters.hpp" 
 
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 
 BlockRunParameters::BlockRunParameters()  
@@ -18,7 +18,7 @@ BlockRunParameters::BlockRunParameters()
   , heatFactor(0.1)
   , tuneHeat(false)
   , tuneFreq(100)
-  , useParsimonyStarting(false)
+  , useParsimonyStarting(true)
   , heatedChainsUseSame(false)
   , chkpntFreq(1000)
   , componentWiseMH(true)
@@ -27,83 +27,6 @@ BlockRunParameters::BlockRunParameters()
 {
   NCL_BLOCKTYPE_ATTR_NAME = "run"; 
 }
-
-
-BlockRunParameters::BlockRunParameters(const BlockRunParameters& rhs) 
-  : diagFreq{rhs.diagFreq}  
-  , asdsfIgnoreFreq{rhs.asdsfIgnoreFreq} 	
-  , asdsfConvergence{rhs.asdsfConvergence} 
-  , useStopCriterion{rhs.useStopCriterion} 
-  , burninGen{rhs.burninGen} 
-  , burninProportion{rhs.burninProportion} 
-  , samplingFreq{rhs.samplingFreq} 
-  , numRunConv{rhs.numRunConv} 
-  , numGen{rhs.numGen} 
-  , numCoupledChains{rhs.numCoupledChains} 
-  , printFreq{rhs.printFreq} 
-  , heatFactor{rhs.heatFactor}  
-  , tuneHeat{rhs.tuneHeat} 
-  , tuneFreq{rhs.tuneFreq}  
-  , useParsimonyStarting{rhs.useParsimonyStarting} 
-  , heatedChainsUseSame{rhs.heatedChainsUseSame} 
-  , chkpntFreq{rhs.chkpntFreq} 
-  , componentWiseMH{rhs.componentWiseMH} 
-  , useAsdsfMax{rhs.useAsdsfMax} 
-  , numSwapsPerGen{rhs.numSwapsPerGen}   
-{
-  
-}
-
-
-void swap(BlockRunParameters& lhs, BlockRunParameters& rhs)
-{
-  using std::swap; 
-  swap(lhs.diagFreq , rhs.diagFreq);   
-  swap(lhs.asdsfIgnoreFreq , rhs.asdsfIgnoreFreq);  	
-  swap(lhs.asdsfConvergence , rhs.asdsfConvergence);  
-  swap(lhs.useStopCriterion , rhs.useStopCriterion);  
-  swap(lhs.burninGen , rhs.burninGen);  
-  swap(lhs.burninProportion , rhs.burninProportion);  
-  swap(lhs.samplingFreq , rhs.samplingFreq);  
-  swap(lhs.numRunConv , rhs.numRunConv);  
-  swap(lhs.numGen , rhs.numGen);  
-  swap(lhs.numCoupledChains , rhs.numCoupledChains);  
-  swap(lhs.printFreq , rhs.printFreq);  
-  swap(lhs.heatFactor , rhs.heatFactor);   
-  swap(lhs.tuneHeat , rhs.tuneHeat);  
-  swap(lhs.tuneFreq , rhs.tuneFreq);   
-  swap(lhs.useParsimonyStarting , rhs.useParsimonyStarting);  
-  swap(lhs.heatedChainsUseSame , rhs.heatedChainsUseSame);  
-  swap(lhs.chkpntFreq , rhs.chkpntFreq);  
-  swap(lhs.componentWiseMH , rhs.componentWiseMH);  
-  swap(lhs.useAsdsfMax , rhs.useAsdsfMax);  
-  swap(lhs.numSwapsPerGen , rhs.numSwapsPerGen);    
-}
-
-
-BlockRunParameters& BlockRunParameters::operator=( BlockRunParameters rhs)
-{
-  swap(rhs, *this); 
-  return *this ; 
-}
-
-
-
-static bool convertToBool(NxsString &string)
-{
-  if(string.EqualsCaseInsensitive("true"))
-    return true ; 
-  else if (string.EqualsCaseInsensitive("false"))
-    return false; 
-  else 
-    {
-      cerr << "ERROR while parsing boolean value: expected either \"true\" or \"false\"" << endl; 
-      assert(0); 
-      return false; 
-    }  
-}
-
-
 
 
 static int myConvertToInt(NxsString &elem)
@@ -199,6 +122,8 @@ void BlockRunParameters::Read(NxsToken &token)
 }
 
 
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+
 static void verifyProbability(double value, bool lowerIncluded, bool upperIncluded, std::string name)
 {
   auto lowOkay = 0 < value || ( lowerIncluded &&  0 ==  value) ; 
@@ -215,7 +140,9 @@ static void verifyProbability(double value, bool lowerIncluded, bool upperInclud
 
 }
 
-static void verifyGreaterZero(int value, std::string name )
+
+template<typename T>
+static void verifyGreaterZero(T value, std::string name )
 {
   if( not ( value > 0 )   )
     {

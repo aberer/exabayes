@@ -11,15 +11,15 @@
 
 #include <queue>
 
-#include "model/TreeAln.hpp"
-#include "math/Randomness.hpp"
-#include "config/BlockRunParameters.hpp"
+#include "TreeAln.hpp"
+#include "Randomness.hpp"
+#include "BlockRunParameters.hpp"
 #include "Chain.hpp"
 #include "SuccessCounter.hpp"
-#include "file/TopologyFile.hpp"
-#include "file/ParameterFile.hpp"
+#include "TopologyFile.hpp"
+#include "ParameterFile.hpp"
 #include "SwapMatrix.hpp"
-#include "comm/SwapElem.hpp"
+#include "SwapElem.hpp"
 
 class PendingSwap; 
 class ParallelSetup;
@@ -35,25 +35,25 @@ public:
   ////////////////
   // LIFE CYCLE //
   ////////////////
-  CoupledChains(Randomness rand, int runNum, string workingdir, std::string runname, int numCoupled,  vector<Chain>& _chains ); 
+  CoupledChains(Randomness rand, int runNum, string workingdir, std::string runname, int numCoupled,  vector<Chain> chains ); 
   CoupledChains(CoupledChains&& rhs) = default; 
-  CoupledChains(const CoupledChains& rhs) = delete; 
-  CoupledChains& operator=(CoupledChains rhs); 
+  CoupledChains(const CoupledChains& rhs) = default; 
+  CoupledChains& operator=(const CoupledChains& rhs) = default; 
+  CoupledChains& operator=(CoupledChains&& rhs) = default; 
 
-  friend void swap(CoupledChains &lhs, CoupledChains& rhs ); 
+  // friend void swap(CoupledChains &lhs, CoupledChains& rhs ); 
 
   // void deleteMyFiles() const ; 
 
   /**
      @brief run for a given number of generations
   */
-  void run(int numGen); 
+  void run(uint64_t numGen); 
 
   /** 
       @brief Execute a portion of one run. 
   */
-  void executePart(nat startGen, nat numGen,  ParallelSetup &pl);   
-  void  executePartNew(nat startGen, nat numGen, ParallelSetup& pl); 
+  void executePart(uint64_t startGen, uint64_t numGen, ParallelSetup& pl); 
   void doStep(nat id, ParallelSetup &pl); 
   void setSamplingFreq(nat i) {_samplingFreq = i; }
   void setHeatIncrement(double temp ) { _heatIncrement = temp ; } 
@@ -61,7 +61,7 @@ public:
   std::vector<Chain>& getChains() {return _chains; } 
   nat getRunid()  const {return _runid; }
   const vector<Chain>& getChains() const {return _chains; }
-  int getNumberOfChains(){return _chains.size();}
+  size_t getNumberOfChains(){return _chains.size();}
   void setNumSwapsPerGen(double s){_numSwapsPerGen = s; }
   void setRunName(string a) {_runname = a;  }
   void initializeOutputFiles(bool isDryRun)  ; 
@@ -75,7 +75,7 @@ public:
   virtual void serialize( std::ostream &out) const ;   
 
   void regenerateOutputFiles(std::string _workdir, std::string prevId) ; 
-  std::list<SwapElem> generateSwapsForBatch(nat startGen, nat numGen) ; 
+  std::list<SwapElem> generateSwapsForBatch(uint64_t startGen, uint64_t numGen) ; 
   
 private: 			// METHODS
   /**

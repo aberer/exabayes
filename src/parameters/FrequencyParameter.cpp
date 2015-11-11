@@ -1,8 +1,8 @@
 #include "FrequencyParameter.hpp"
-#include "system/BoundsChecker.hpp"
-#include "model/DnaAlphabet.hpp"
-#include "model/AminoAcidAlphabet.hpp"
-#include "model/RateHelper.hpp"
+#include "BoundsChecker.hpp"
+#include "DnaAlphabet.hpp"
+#include "AminoAcidAlphabet.hpp"
+#include "RateHelper.hpp"
 
 
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const

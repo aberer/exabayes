@@ -1,9 +1,9 @@
 #ifndef FREQ_PARAMETER
 #define FREQ_PARAMETER
 
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include "AbstractParameter.hpp"
-#include "model/Category.hpp"
+#include "Category.hpp"
   
 class FrequencyParameter : public AbstractParameter
 {

@@ -3183,7 +3183,7 @@ static void makeEigen(double **_a, const int states, double *d, double *e)
   *   Array where the computed tipVector will be stored
   *
   * @todo
-  *   Perhaps we could change this also to the way optRatesGeneric and other functions are implemented.
+  *   Perhaps we could change this also to the way pllOptRatesGeneric and other functions are implemented.
   *   That is, instead of passing all these parameters, pass the partition index instead and load the
   *   values within the code. Will make the code more readable. 
 */
@@ -3339,6 +3339,7 @@ static void initGeneric(const int states,
     for (j = 0; j < states; j++)
       {
 	*eptr++ = EIGV[i][j];	 /* EIGV: Eigenvalues */ 
+	
       }
   
   for (i = 0; i < states; i++)
@@ -3419,8 +3420,6 @@ static void initGeneric(const int states,
   rax_free(EIGN);
 }
 
-
-
 /** @brief Initialize GTR
   *
   * Wrapper function for the decomposition of the substitution rates matrix
@@ -3435,13 +3434,14 @@ static void initGeneric(const int states,
   * @param model
   *   Partition index
   */
-void initReversibleGTR(pllInstance * tr, partitionList * pr, int model)
+void pllInitReversibleGTR(pllInstance * tr, partitionList * pr, int model)
 { 
  double   
    *ext_EIGN         = pr->partitionData[model]->EIGN,
    *EV               = pr->partitionData[model]->EV,
    *EI               = pr->partitionData[model]->EI,
    *frequencies      = pr->partitionData[model]->frequencies,
+   *empiricalFrequencies = pr->partitionData[model]->empiricalFrequencies,
    *ext_initialRates = pr->partitionData[model]->substRates,
    *tipVector        = pr->partitionData[model]->tipVector,
    *fracchange       = &(pr->partitionData[model]->fracchange);
@@ -3486,11 +3486,23 @@ void initReversibleGTR(pllInstance * tr, partitionList * pr, int model)
 	       {		 
 		 initProtMat(f, pr->partitionData[model]->protModels, &(pr->partitionData[model]->substRates_LG4[i][0]), i);
 		 
-		 if(!pr->partitionData[model]->protFreqs && !pr->partitionData[model]->optimizeBaseFrequencies)	       	  	  
-		   for(l = 0; l < 20; l++)		
-		     pr->partitionData[model]->frequencies_LG4[i][l] = f[l];
+		 if(!pr->partitionData[model]->optimizeBaseFrequencies)
+		 {
+		   if(!pr->partitionData[model]->protUseEmpiricalFreqs)
+		   {
+		     for(l = 0; l < 20; l++)		
+		       pr->partitionData[model]->frequencies_LG4[i][l] = f[l];
+		   }
+                   else
+		   {
+		     for(l = 0; l < 20; l++)		
+		       pr->partitionData[model]->frequencies_LG4[i][l] = empiricalFrequencies[l];
+		   }
+	 	 }
 		 else
+		 {
 		   memcpy(pr->partitionData[model]->frequencies_LG4[i], frequencies, 20 * sizeof(double));
+		 }
 	       }
 	   }
 	 else
@@ -3503,13 +3515,18 @@ void initReversibleGTR(pllInstance * tr, partitionList * pr, int model)
 	       }
 
 	     /*if(adef->protEmpiricalFreqs && tr->NumberOfModels == 1)
-	       assert(tr->partitionData[model].protFreqs);*/
+	       assert(tr->partitionData[model].protUseEmpiricalFreqs);*/
 	 
-              if(!pr->partitionData[model]->protFreqs && !pr->partitionData[model]->optimizeBaseFrequencies)
-               {	     	    
-                 for(l = 0; l < 20; l++)		
-                   frequencies[l] = f[l];
-               } 
+              if (!pr->partitionData[model]->optimizeBaseFrequencies) {
+                  if(!pr->partitionData[model]->protUseEmpiricalFreqs)
+                  {	     	    
+                      for(l = 0; l < 20; l++)		
+                         frequencies[l] = f[l];
+                  } else {
+                      for(l = 0; l < 20; l++)		
+                         frequencies[l] = empiricalFrequencies[l];
+                  }
+              }
            }  
        }
                
@@ -3773,10 +3790,6 @@ l4:
    return (ch);
 }
 
-
-
-
-
 /** @brief Compute the gamma rates
     
     Compute the gamma rates
@@ -3796,7 +3809,7 @@ l4:
     @todo
        Document this more.
 */
-void makeGammaCats(double alpha, double *gammaRates, int K, boolean useMedian)
+void pllMakeGammaCats(double alpha, double *gammaRates, int K, boolean useMedian)
 {
   int 
     i;
@@ -4282,9 +4295,9 @@ void initModel(pllInstance *tr, double **empiricalFrequencies, partitionList * p
      if(partitions->partitionData[model]->dataType == PLL_AA_DATA && partitions->partitionData[model]->protModels == PLL_AUTO)
        partitions->partitionData[model]->autoProtModels = PLL_WAG; /* initialize by WAG per default */
       
-     initReversibleGTR(tr, partitions, model); /* Decomposition of Q matrix */
+     pllInitReversibleGTR(tr, partitions, model); /* Decomposition of Q matrix */
       /* GAMMA model init */
-     makeGammaCats(partitions->partitionData[model]->alpha, partitions->partitionData[model]->gammaRates, 4, tr->useMedian);
+     pllMakeGammaCats(partitions->partitionData[model]->alpha, partitions->partitionData[model]->gammaRates, 4, tr->useMedian);
 
 #if 0 
      /* todo this should be solved in exabayes */

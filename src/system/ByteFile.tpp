@@ -19,7 +19,7 @@ T ByteFile::readVar()
 }
 
 template<typename T> 
-void ByteFile::readArray(nat length, T* array)
+void ByteFile::readArray(size_t length, T* array)
 {
   _in.read((char*)array, sizeof(T) * length); 
   auto bytesRead = _in.gcount();
@@ -33,7 +33,7 @@ void ByteFile::readArray(nat length, T* array)
 
 
 template<typename T>
-std::vector<T> ByteFile::readArray(nat length)
+std::vector<T> ByteFile::readArray(size_t length)
 {
   auto result = std::vector<T>(length); 
   readArray(length, result.data());

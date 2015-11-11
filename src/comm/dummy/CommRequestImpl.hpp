@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "comm/CommRequest.hpp"
+#include "CommRequest.hpp"
 
 class CommRequest::Impl
 {

@@ -20,31 +20,24 @@
 
 #include <thread>
 #include <mutex>
-#include "system/TeeStream.hpp"
+#include "TeeStream.hpp"
 
 class AdHocIntegrator; 
 class TreeIntegrator; 
 
-#define tout (*globals.teeOut) << SyncOut()
+#define tout (*teeOut) << SyncOut()
 
 class TeeStream;
-
-class GlobalVariables
-{
-public: 
-  std::unique_ptr<TeeStream> teeOut; 
-  std::unique_ptr<std::ofstream> logStream;
-  std::mutex mtx;
-};
 
 
 #ifdef _INCLUDE_DEFINITIONS
 
-std::ofstream nniOut; 
-std::ofstream sprOut; 
 
-GlobalVariables globals; 
-std::chrono::system_clock::time_point timeIncrement;  
+std::unique_ptr<TeeStream> teeOut; 
+std::unique_ptr<std::ofstream> logStream;
+std::mutex mtx;
+
+// std::chrono::system_clock::time_point timeIncrement;  
 int debugPrint = 0; 
 bool startIntegration = false; 
 
@@ -60,6 +53,11 @@ volatile bool _threadsDie;
 
 #else 
 
+extern   std::unique_ptr<TeeStream> teeOut; 
+extern std::unique_ptr<std::ofstream> logStream;
+extern std::mutex mtx;
+  
+
 extern std::thread::id _masterThread; 
 extern volatile bool  _threadsDie; 
 
@@ -68,13 +66,11 @@ extern void (*exitFunction)(int code , bool waitForAll);
 extern bool isYggdrasil; 
 extern int PLL_NUM_BRANCHES; 
 
-extern std::ofstream nniOut; 
-extern std::ofstream sprOut; 
 extern bool startIntegration; 
 extern AdHocIntegrator* ahInt; 
 extern TreeIntegrator* tInt; 
-extern GlobalVariables globals; 
-extern std::chrono::system_clock::time_point timeIncrement;  
+// extern GlobalVariables globals; 
+// extern std::chrono::system_clock::time_point timeIncrement;  
 extern int debugPrint; 
 #endif
 

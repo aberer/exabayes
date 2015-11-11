@@ -5,14 +5,16 @@
 
 #include <ncl/ncl.h>
 
-#include "model/TreeAln.hpp"
-#include "math/Arithmetics.hpp"
+#include "TreeAln.hpp"
+#include "Arithmetics.hpp"
 #include "SplitFreqAssessor.hpp"
-#include "data-struct/BipartitionHash.hpp"
+#include "BipartitionHash.hpp"
 
 
 SplitFreqAssessor::SplitFreqAssessor(std::vector<string> fileNames, bool expensiveCheck)
   : TreeProcessor(fileNames, expensiveCheck)
+  , newBipHashes{}
+  , file2numTree{}
 {
   for(auto file : fileNames)
     {
@@ -129,7 +131,7 @@ nat SplitFreqAssessor::getNumTreeAvailable(string fileName)
 	    foundTreeStart = true ; 
 
 	  string cleanerString =  trim(cleanline,  ",;"); 
-	  int pos = cleanerString.find_first_of(whitespace, 0); 
+	  auto pos = cleanerString.find_first_of(whitespace, 0); 
 	  string num = cleanerString.substr(0, pos),
 	    name = cleanerString.substr(pos+1, cleanerString.size()); 
 

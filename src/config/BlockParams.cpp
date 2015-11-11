@@ -1,12 +1,12 @@
 #include "BlockParams.hpp"
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 #include <algorithm>
 
 extern void genericExit(int code); 
 
 
-void BlockParams::partitionError(nat partition, nat totalPart) const
+void BlockParams::partitionError(nat partition, size_t totalPart) const
 {
   std::cerr << "In the parameter block of the configuration file you specified partition " << partition << ". However, there are only " << totalPart << " partitions in total in your alignment." << std::endl; 
   std::cerr << "NOTICE that the first partition has id 0 and the last of n partitions has the id (n-1) . " << std::endl; 
@@ -16,7 +16,7 @@ void BlockParams::partitionError(nat partition, nat totalPart) const
 
 void BlockParams::parseScheme(NxsToken& token, Category cat, nat &idCtr)
 {
-  nat numPart = tralnPtr->getNumberOfPartitions();
+  auto numPart = tralnPtr->getNumberOfPartitions();
   auto partAppeared = std::vector<bool>(numPart, false); 
 
   token.GetNextToken();

@@ -400,40 +400,42 @@ pllValidateNewick (pllNewickTree * t)
   pllNewickNodeInfo * item;
   int correct = 0;
  
- item = t->tree->item;
- if (item->rank != 2 && item->rank != 3) return (0);
- head = t->tree->next;
- while (head)
- {
-   item = head->item;
-   if (item->rank != 2 && item->rank != 0) 
-    {
-      return (0);
-    }
-   head = head->next;
- }
- 
- item = t->tree->item;
-
- if (item->rank == 2) 
+  item = t->tree->item;
+  if (item->rank != 2 && item->rank != 3) return (0);
+  head = t->tree->next;
+  while (head)
   {
-    correct = (t->nodes == 2 * t->tips -1);
-    if (correct)
+    item = head->item;
+    if (item->rank != 2 && item->rank != 0) 
      {
-       errno = PLL_NEWICK_ROOTED_TREE;
+       return (0);
      }
-    else
-     {
-       errno = PLL_NEWICK_BAD_STRUCTURE;
-     }
-    return (PLL_FALSE);
+    head = head->next;
   }
   
- 
- correct = ((t->nodes == 2 * t->tips - 2) && t->nodes != 4);
- if (correct) return (PLL_TRUE);
+  item = t->tree->item;
 
- errno = PLL_NEWICK_BAD_STRUCTURE;
+  if (item->rank == 2) 
+   {
+     correct = (t->nodes == 2 * t->tips -1);
+     if (correct)
+      {
+        errno = PLL_NEWICK_ROOTED_TREE;
+      }
+     else
+      {
+        errno = PLL_NEWICK_BAD_STRUCTURE;
+      }
+     return (PLL_FALSE);
+   }
+   
+  
+  correct = ((t->nodes == 2 * t->tips - 2) && t->nodes != 4);
+  if (correct) return (PLL_TRUE);
+
+  errno = PLL_NEWICK_BAD_STRUCTURE;
+
+  return (1);
 }
 
 
@@ -579,7 +581,7 @@ pllNewickParseFile (const char * filename)
      return (0);
    }
 
-  printf ("%s\n\n", rawdata);
+  //printf ("%s\n\n", rawdata);
 
   t = pllNewickParseString (rawdata);
 

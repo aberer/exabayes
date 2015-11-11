@@ -41,14 +41,18 @@ private:
   std::atomic<Node*> _last; 	// shared 
 }; 
 
-struct MessageQueueSingle::Node {
+struct MessageQueueSingle::Node 
+{
   Node(std::vector<byte> msg ); 
+  Node(const Node& rhs ) = default; 
+  Node& operator=(const Node &rhs)  = default; 
+
   std::vector<byte> _message; 
   Node *_next; 
 }; 
 
 
-#include "comm/threads/MessageQueueSingle.tpp"
+#include "MessageQueueSingle.tpp"
 
 
 #endif

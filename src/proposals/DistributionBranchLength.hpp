@@ -23,7 +23,8 @@ public:
   virtual AbstractProposal* clone() const  { return new DistributionBranchLength(*this); }  
   virtual void extractProposer(TreeAln& traln, const OptimizedParameter& param) 
   {
-    _proposer = param.getProposerDistribution< C >(traln, _convTuner.getParameter(), _nonConvTuner.getParameter() );
+    auto attr = _allParams->at(_primParamIds[0])->getAttributes();
+    _proposer = param.getProposerDistribution< C >(traln, attr._convTuner.getParameter(),attr._nonConvTuner.getParameter() );
   }
 
   virtual void accept(); 
@@ -34,13 +35,9 @@ private:
 
   bool _converged; 
 
-  ComplexTuner _convTuner; 
-  ComplexTuner _nonConvTuner; 
 }; 
 
-
-
 void calcDiagptable(const double z, const int states, const int numberOfCategories, const double *rptr, const double *EIGN, double *diagptable); 
-#include "proposals/DistributionBranchLength.tpp"
+#include "DistributionBranchLength.tpp"
 
 #endif

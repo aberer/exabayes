@@ -1,4 +1,4 @@
-#include "parser/PhylipParser.hpp"
+#include "PhylipParser.hpp"
 
 #include <fstream>
 #include <stdexcept>
@@ -6,11 +6,11 @@
 #include <unistd.h>
 #include <cstring>
 
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 int NUM_BRANCHES ; 
 
-void helpMessage()
+static void helpMessage()
 {
   std::cout << "\nparser produces a binary output file, that can be fed into\n"
 	    << "ExaBayes/Yggdrasil. This is recommendable for large runs with hundreds\n"
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
   
   bool useSinglePartition =  modelFile.compare("") == 0; 
 
-  auto parser = PhylipParser(alignmentFile, 
+  auto &&parser = PhylipParser(alignmentFile, 
 			     useSinglePartition ? singlePartitionModel : modelFile, 
 			     not useSinglePartition);
   parser.parse(); 

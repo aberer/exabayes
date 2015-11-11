@@ -1,6 +1,6 @@
 #include "BasicTreeReader.hpp"
-#include "model/Branch.hpp"
-#include "tree-parse/LabelPolicy.hpp"
+#include "Branch.hpp"
+#include "LabelPolicy.hpp"
 
 #include <tuple>
 #include <cassert>
@@ -9,6 +9,8 @@
 template<class LABEL_READER,class BL_READER>
 BasicTreeReader<LABEL_READER,BL_READER>::BasicTreeReader( nat numTax )
   : _highestInner{numTax + 1 }
+  , lr{}
+  , br{}
 {
 }
 
@@ -101,6 +103,7 @@ template<class LABEL_READER,class BL_READER>
 std::vector<BranchLength> BasicTreeReader<LABEL_READER, BL_READER>::extractBranches(std::istream &iss ) 
 {
   auto result = std::vector<BranchLength>{}; 
+
 
   parseSubTree(iss, result, true);
   expectChar(iss,';');

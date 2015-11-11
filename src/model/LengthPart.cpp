@@ -1,6 +1,23 @@
 #include "LengthPart.hpp"
 #include "TreeAln.hpp"
-#include "parameters/AbstractParameter.hpp"
+#include "AbstractParameter.hpp"
+
+
+bool LengthPart<double>::lenEqual(const LengthPart<double> &rhs) const 
+{
+  return std::fabs(length  - rhs.length) < std::numeric_limits<double>::epsilon();
+}
+
+bool LengthPart<std::vector<double> >::lenEqual(const LengthPart<std::vector<double> > &rhs) const 
+{
+  auto result = true; 
+  result &= rhs.lengths.size() == lengths.size(); 
+  for(auto i  = 0u; i < rhs.lengths.size() ; ++i)
+    result &= std::fabs(rhs.lengths[i] - lengths[i] ) < std::numeric_limits<double>::epsilon();
+  
+  return result; 
+}
+
 
 
 void LengthPart<double>::extractLength(const TreeAln &traln, const BranchPlain& branch, const AbstractParameter*  param)
@@ -19,17 +36,18 @@ void LengthPart<std::vector<double>>::extractLength(const TreeAln &traln, const 
 }
 
 
-double LengthPart<double>::getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const
+double LengthPart<double>::getInterpretedLength(const AbstractParameter* param) const
 { 
-  double fracC = traln.getMeanSubstitutionRate(param->getPartitions()); 
+  double fracC = param->getMeanSubstitutionRate();
   return -log(length) * fracC; 
 }
 
 
-void LengthPart<double>::setConvertedInternalLength(const TreeAln& traln, const AbstractParameter* param, double length) 
+// meh, could better go to branch length parameter 
+void LengthPart<double>::setConvertedInternalLength(const AbstractParameter* param, double len) 
 {
-  double fracC = traln.getMeanSubstitutionRate(param->getPartitions());  
-  double internalLength = exp(- length / fracC); 
+  double fracC = param->getMeanSubstitutionRate();
+  double internalLength = exp(- len / fracC); 
   this->length = internalLength; 
 } 
 

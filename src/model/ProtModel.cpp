@@ -103,10 +103,10 @@ namespace ProtModelFun
       case ProtModel::FLU_T:
 	return "FLU";
       default: 
-	{
-	  std::cerr << "error: encountered unknown protein model with internal value "<< int(mod) << std::endl; 
-	  assert(0); 
-	}
+      	{
+      	  std::cerr << "error: encountered unknown protein model with internal value "<< int(mod) << std::endl; 
+      	  assert(0); 
+      	}
       }
   }
 }

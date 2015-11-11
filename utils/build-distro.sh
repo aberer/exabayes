@@ -24,9 +24,7 @@ if [ $IS_APPLE == 0 ]; then
     ccomp=gcc
     cxxcomp=g++
     system=linux
-    compi=mpicc.openmpi
     cxxompi=mpicxx.openmpi
-    cmpich=mpicc.mpich2
     cxxmpich=mpicxx.mpich2
 else
     export PATH=/opt/local/libexec/gnubin/:/opt/local/bin:/opt/local/sbin:/opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
@@ -34,12 +32,10 @@ else
     ccomp=clang
     cxxcomp=clang++
     system=apple
-    compi=mpicc-openmpi-mp
-    cxxompi=mpicxx-openmpi-mp
-    cmpich=mpicc-mpich-mp
-    cxxmpich=mpicxx-mpich-mp
+    cxxompi=/usr/local/Cellar/open-mpi16/1.6.5/bin/mpicxx
+    cxxmpich=/usr/local/Cellar/mpich2/3.1.2/bin/mpicxx
 
-    export CXXFLAGS="-stdlib=libc++ $CXXFLAGS"
+    export CXXFLAGS="-stdlib=libc++ $CXXFLAGS -Qunused-arguments -Wno-unreachable-code"
 fi
 
 
@@ -76,16 +72,12 @@ do
 
 	cd distro-build 
 
-	../configure --enable-mpi  --prefix $($readlink -f ../) CXXFLAGS="-static-libstdc++" CC="ccache $ccomp" CXX="ccache $cxxcomp" MPICXX=$mpicxx $arg ||   exit
+	
+	cmd="../configure --enable-mpi  --prefix $($readlink -f ../) CXXFLAGS=\"-static-libstdc++ $CXXFLAGS\" CC=\"ccache $ccomp\" CXX=\"ccache $cxxcomp\" MPICXX=$mpicxx $arg"
+	echo $cmd
+	eval $cmd ||   exit
 	make -j $cores || exit 
 	make install  || exit 
-
-	# rm -rf * 
-
-	# ../configure --prefix $($readlink -f ../) LDFLAGS="-static" CC="ccache $ccomp" CXX="ccache $cxxcomp"  $arg ||   exit
-
-	# make -j $cores || exit 
-	# make install || exit   
 
 	cd .. 
 

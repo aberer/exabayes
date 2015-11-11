@@ -1,9 +1,12 @@
 #include "DistributionBranchLength.hpp"
-#include "system/BoundsChecker.hpp"
-#include "priors/AbstractPrior.hpp"
-#include "comm/ParallelSetup.hpp"
+#include "BoundsChecker.hpp"
+#include "AbstractPrior.hpp"
+#include "ParallelSetup.hpp"
 #include "DistributionProposer.hpp"
 #include "BranchLengthOptimizer.hpp"
+
+
+#define MAX_OPT_ITER 8 
 
 // ONLY gamma right now 
 
@@ -11,12 +14,13 @@
 template<class C> 
 DistributionBranchLength<C>::DistributionBranchLength( ) 
   : BranchLengthMultiplier(0)
-  , _convTuner{1.61, 0.01,10, 0.1, false }
-  , _nonConvTuner{   2. , 0.1, 10, 0.1 , false }	
+  , _proposer()
+  , _converged{false}
 {
   _name = std::string("blDist") + C::getName() ; 
   _category = Category::BRANCH_LENGTHS; 
   _usingOptimizedBranches = true; 
+  _relativeWeight = 9.;
 }
  
 
@@ -45,11 +49,14 @@ void DistributionBranchLength<C>::createProposer(TreeAln &traln, LikelihoodEvalu
   eval.evaluateSubtrees(traln, b.toPlain(), param->getPartitions(), false);
   eval.evaluatePartitionsDry(traln, b.toPlain(), param->getPartitions());
 
-  auto blo= BranchLengthOptimizer(traln, b.toPlain(), 30, eval.getParallelSetup().getChainComm(), params); 
+  auto blo= BranchLengthOptimizer(traln, b.toPlain(), MAX_OPT_ITER, eval.getParallelSetup().getChainComm(), params); 
   blo.optimizeBranches(traln);
   auto optParams = blo.getOptimizedParameters();
   assert(optParams.size() == 1);
-  _proposer = optParams[0].getProposerDistribution< C >(traln, _convTuner.getParameter(), _nonConvTuner.getParameter());
+  
+  auto attr = _allParams->at(_primParamIds[0])->getAttributes();
+    
+  _proposer = optParams[0].getProposerDistribution< C >(traln, attr._convTuner.getParameter(), attr._nonConvTuner.getParameter());
 }
 
 
@@ -71,8 +78,8 @@ void DistributionBranchLength<C>::applyToState(TreeAln &traln, PriorBelief &prio
 
   _converged = _proposer.isConverged(); 
 
-  auto prevAbsLen = _savedBranch.getInterpretedLength(traln,param); 
-  auto curAbsLen  = newBranch.getInterpretedLength(traln,param); 
+  auto prevAbsLen = _savedBranch.getInterpretedLength(param); 
+  auto curAbsLen  = newBranch.getInterpretedLength(param); 
 
   auto oldPr = param->getPrior()->getLogProb( ParameterContent{{ prevAbsLen }} ); 
   auto newPr = param->getPrior()->getLogProb( ParameterContent{{ curAbsLen }} ); 
@@ -95,21 +102,24 @@ void DistributionBranchLength<C>::autotune()
 {
   auto res = getEnvironmentVariable("TUNE"); 
 
+  auto attr = _allParams->at(_primParamIds[0])->getAttributes(); 
+
   if(res.compare("0") != 0 )
     {
-      if( _convTuner.getRecentlySeen()  > 100 )
+      if( attr._convTuner.getRecentlySeen()  > 100 )
 	{
-	  _convTuner.tune();
+	  // tout << "tuning conv" << std::endl;
+	  attr._convTuner.tune();
 	}
       
-      if( _nonConvTuner.getRecentlySeen() > 100)
+      if( attr._nonConvTuner.getRecentlySeen() > 100)
       	{
-      	  double oldParam = _nonConvTuner.getParameter();
-      	  double ratio = _nonConvTuner.getRatio(); 
-      	  _nonConvTuner.tune();
-      	  double newParam = _nonConvTuner.getParameter(); 
+	  // tout << "tuning non-conv" << std::endl;
+      	  attr._nonConvTuner.tune();
       	}
     }
+  
+  _allParams->at(_primParamIds[0])->setAttributes(attr);
 
   _sctr.nextBatch();
 }
@@ -121,10 +131,14 @@ void DistributionBranchLength<C>::accept()
 {
   _sctr.accept();  
 
+  auto attr = _allParams->at(_primParamIds[0])->getAttributes();
+
   if(_converged)
-    _convTuner.accept();
+    attr._convTuner.accept();
   else 
-    _nonConvTuner.accept();
+    attr._nonConvTuner.accept();
+  
+  _allParams->at(_primParamIds[0])->setAttributes(attr); 
 }
 
 
@@ -133,9 +147,13 @@ void DistributionBranchLength<C>::reject()
 {
   _sctr.reject();
 
+  auto attr = _allParams->at(_primParamIds[0])->getAttributes();
+
   if( _converged )
-    _convTuner.reject();
+    attr._convTuner.reject();
   else 
-    _nonConvTuner.reject();
+    attr._nonConvTuner.reject();
+
+  _allParams->at(_primParamIds[0])->setAttributes(attr); 
 }
 

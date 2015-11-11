@@ -3,7 +3,7 @@
 
 #include "pll.h"
 #include <memory>
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 #include <iosfwd>
 
 
@@ -16,10 +16,10 @@ public:
   static int maxCategories; 	// TODO 
 
   Partition(nat numTax, std::string name, int dataType, int states , int maxTipStates, bool saveMemory); 
+  ~Partition(){}
   Partition(const Partition &rhs); 
   Partition( Partition &&rhs) = default ; 
   Partition& operator=( Partition rhs); 
-  // Partition& operator=( Partition &&rhs) = default ; 
   friend void swap(Partition& lhs, Partition& rhs) ; 
 
   void defaultInit(); 
@@ -49,8 +49,8 @@ public:
   int getProtModels() const {return _partition.protModels; } 
   void setProtModel(int protModel)  { _partition.protModels = protModel; }
   
-  int getProtFreqs() const { return _partition.protFreqs ; }
-  void setProtFreqs(int protFreqs ) {_partition.protFreqs = protFreqs; }
+  int getProtFreqs() const { return _partition.protUseEmpiricalFreqs ; }
+  void setProtFreqs(int protFreqs ) {_partition.protUseEmpiricalFreqs = protFreqs; }
 
   void setNonGTR(int nonGTR){_partition.nonGTR = nonGTR; } 
   int getNonGTR() const {return _partition.nonGTR; }
@@ -83,7 +83,7 @@ public:
   int getGapVectorLength() const { return _partition.gapVectorLength; }
   void setGapVectorLength( int len) { _partition.gapVectorLength = len; }
 
-  void setParsimonyInformative(std::vector<bool> info){_parsimonyInformative = info; }
+  void setParsimonyInformative(std::vector<bool> theInfo){_parsimonyInformative = theInfo; }
 
   friend std::ostream& operator<<(const Partition& rhs, std::ostream& out); 
 

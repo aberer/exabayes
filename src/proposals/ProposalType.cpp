@@ -14,10 +14,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::E_SPR , "extended SPR"}, 
 	{ ProposalType::E_TBR , "extended TBR"},
 	{ ProposalType::PARSIMONY_SPR, "parsimony-guided SPR"},
-	{ ProposalType::GUIDED_SPR , "ML-guided PSR"},
-	{ ProposalType::BRANCH_SLIDER , "branch length slider"},
 	{ ProposalType::TL_MULT , "tree length multiplier"},
-	{ ProposalType::BRANCH_COLLAPSER , "branch collapser"},
 	{ ProposalType::NODE_SLIDER , "node slider"},
 	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER , "branch length multiplier"},
 	{ ProposalType::REVMAT_SLIDER , "substition matrix slider"},
@@ -33,7 +30,7 @@ namespace ProposalTypeFunc
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, "rate orientated sliding proposal on RevMat"} , 
 	{ ProposalType::BL_DIST_WEIBULL , "a weibull based branch length proposal" } ,
 	{ ProposalType::DIV_TIME_DIRICH , "dirichlet proposal on divergence times" } ,
-	// { ProposalType::BL_SLID_GAMMA, "a gamma based proposer for 2 adjacent branch lengths"}
+	{ ProposalType::BIASED_BL_MULT, "biased branch length multiplier "}
       }; 
     
     if(map.find(type) == map.end())
@@ -53,9 +50,6 @@ namespace ProposalTypeFunc
 	{ ProposalType::E_SPR,  "ESPR" } ,
 	{ ProposalType::E_TBR,  "ETBR" } ,
 	{ ProposalType::PARSIMONY_SPR,  "PARSIMONYSPR" } ,
-	{ ProposalType::GUIDED_SPR,  "GUIDEDSPR" } ,
-	{ ProposalType::BRANCH_SLIDER,  "BRANCHSLIDER" } ,
-	{ ProposalType::BRANCH_COLLAPSER,  "BRANCHCOLLAPSER" } , 
 	{ ProposalType::TL_MULT,  "TREELENGTHMULT" } ,
 	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER,  "BRANCHMULTI" } ,
 	{ ProposalType::NODE_SLIDER,  "NODESLIDER" } ,
@@ -67,13 +61,12 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_DIRICHLET,  "FREQUENCYDIRICHLET" } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } ,
 	{ ProposalType::BRANCH_DIST_GAMMA , "BLDISTGAMMA"} , 
-	{ ProposalType::DIRICH_REVMAT_ALL , "DIRICHREVMATALL"} 	, 
 	{ ProposalType::LIKE_SPR, "LIKESPR"},
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, "REVMATRATEDIRICH" } ,
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, "REVMATRATESLIDER"} ,
-	{ ProposalType::BL_DIST_WEIBULL , "BLDISTWEIBULL" } , 
-	{ ProposalType::DIV_TIME_DIRICH , "DIVTIMEDIRICH" }
-	// { ProposalType::BL_SLID_GAMMA, "BLSLIDGAMMA"} 
+	{ ProposalType::BL_DIST_WEIBULL , "BLDISTWEIBULL" } ,
+	{ ProposalType::DIV_TIME_DIRICH , "DIVTIMEDIRICH" },
+	{ ProposalType::BIASED_BL_MULT, "BIASBLMULT"}
       }; 
 
     return proposal2name[p];     
@@ -94,15 +87,6 @@ namespace ProposalTypeFunc
   }
 
 
-
-  std::vector<ProposalType> getMultiParameterProposals()
-  {
-    std::vector<ProposalType> result; 
-    result.push_back(ProposalType::DIRICH_REVMAT_ALL);
-    return result; 
-  }
-
-
   std::vector<ProposalType> getSingleParameterProposalsForCategory(Category c) 
   {
     switch(c)
@@ -113,20 +97,17 @@ namespace ProposalTypeFunc
 	    ProposalType::E_SPR, 
 	    ProposalType::E_TBR, 
 	    ProposalType::PARSIMONY_SPR, 
-	    ProposalType::GUIDED_SPR ,
 	    ProposalType::LIKE_SPR
 	    }; 
       case Category::BRANCH_LENGTHS: 
 	return { 
 	  ProposalType::BRANCH_LENGTHS_MULTIPLIER, 
-	    ProposalType::BRANCH_SLIDER, 
 	    ProposalType::TL_MULT, 
-	    ProposalType::BRANCH_COLLAPSER, 
 	    ProposalType::BRANCH_DIST_GAMMA , 
 	    ProposalType::NODE_SLIDER, 
 	    ProposalType::BL_DIST_WEIBULL, 
-	    ProposalType::DIV_TIME_DIRICH
-	    // ProposalType::BL_SLID_GAMMA
+	    ProposalType::DIV_TIME_DIRICH, 
+	    ProposalType::BIASED_BL_MULT
 	    }; 
       case Category::FREQUENCIES: 
 	return { 
@@ -160,23 +141,14 @@ namespace ProposalTypeFunc
 
   std::vector<ProposalType> getAllProposals()
   {
-    std::vector<ProposalType> result; 
+    auto result = std::vector<ProposalType>{}; 
     auto cs =   CategoryFuns::getAllCategories() ; 
     for(auto c : cs)
       {
-	// auto someProposals = getProposalsForCategory(c) ; 
-
 	auto someProposals =  getSingleParameterProposalsForCategory( c) ; 
-	
-	// do we need the multi-parameter proposals here as
-	// well?
-	// assert(0); 
 	result.insert(result.end(), someProposals.begin(), someProposals.end()); 
       } 
 
-    std::vector<ProposalType> multiParamProps =  getMultiParameterProposals();
-    result.insert(result.end(), multiParamProps.begin(), multiParamProps.end()); 
-    
     return result; 
   }
 
@@ -192,35 +164,36 @@ namespace ProposalTypeFunc
   } 
 
 
-  bool isReadyForProductiveUse(ProposalType p)
+  bool isDefaultInstantiate(ProposalType p)
   {
     std::unordered_map<ProposalType, bool, ProposalTypeHash> map  = 
     {
 	{ ProposalType::ST_NNI,  true } ,
 	{ ProposalType::E_SPR,  true } ,
-	{ ProposalType::E_TBR,  true } ,
+	{ ProposalType::E_TBR,  false } , // dont like this one: mostly works, when degenerated to spr 
+	{ ProposalType::LIKE_SPR , true}, 
 	{ ProposalType::PARSIMONY_SPR,  true } ,
-	{ ProposalType::GUIDED_SPR,  false } ,
-	{ ProposalType::BRANCH_SLIDER,  false } ,
-	{ ProposalType::BRANCH_COLLAPSER, false } , 
-	{ ProposalType::TL_MULT,  true } ,
-	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER,  true } ,
-	{ ProposalType::NODE_SLIDER,  true } ,
+
 	{ ProposalType::REVMAT_SLIDER,  true }  , 
 	{ ProposalType::REVMAT_DIRICHLET,  true } ,
-	{ ProposalType::RATE_HET_SLIDER,  false } ,
-	{ ProposalType::RATE_HET_MULTI,  true } ,
-	{ ProposalType::FREQUENCY_SLIDER,  true } ,
-	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
-	{ ProposalType::AMINO_MODEL_JUMP,  true } ,
-	{ ProposalType::BRANCH_DIST_GAMMA , false } , 
-	{ ProposalType::DIRICH_REVMAT_ALL , false } 	, 
-	{ ProposalType::LIKE_SPR , false}, 
 	{ ProposalType::DIRICH_REVMAT_PER_RATE, true } ,
 	{ ProposalType::SLIDING_REVMAT_PER_RATE, false} , 
+
+	{ ProposalType::RATE_HET_SLIDER,  false } ,
+	{ ProposalType::RATE_HET_MULTI,  true } ,
+
+	{ ProposalType::FREQUENCY_SLIDER,  true } ,
+	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
+
+	{ ProposalType::AMINO_MODEL_JUMP,  true } ,
+
+	{ ProposalType::TL_MULT,  true } ,
+	{ ProposalType::BIASED_BL_MULT, true } ,
+	{ ProposalType::BRANCH_DIST_GAMMA , true } ,
+	{ ProposalType::BRANCH_LENGTHS_MULTIPLIER,  false } ,
+	{ ProposalType::NODE_SLIDER,  false } ,
 	{ ProposalType::BL_DIST_WEIBULL, false }, 
-	{ ProposalType::DIV_TIME_DIRICH, false }, 
-	// { ProposalType::BL_SLID_GAMMA, false } 
+	{ ProposalType::DIV_TIME_DIRICH, false }
     };
 
     if(map.find(p) == map.end())

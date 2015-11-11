@@ -184,6 +184,24 @@ pllAlignmentDataDumpConsole (pllAlignmentData * alignmentData)
     }
  }
 
+
+
+static void dump_fasta_content(FILE * fp, pllAlignmentData * alignmentData)
+{
+  int i;
+
+  for (i = 1; i <= alignmentData->sequenceCount; ++i)
+     fprintf (fp, ">%s\n%s\n", alignmentData->sequenceLabels[i], alignmentData->sequenceData[i]);
+}
+
+static void dump_phylip_content(FILE * fp, pllAlignmentData * alignmentData)
+{
+  int i;
+
+  for (i = 1; i <= alignmentData->sequenceCount; ++i)
+     fprintf (fp, "%s %s\n", alignmentData->sequenceLabels[i], alignmentData->sequenceData[i]);
+}
+
 /** @ingroup alignmentGroup
     @brief Dump the alignment to a file of format \a fileFormat
 
@@ -207,28 +225,22 @@ int
 pllAlignmentDataDumpFile (pllAlignmentData * alignmentData, int fileFormat, const char * filename)
 {
   FILE * fp;
-  int i;
-  const char * phylip = "%s %s\n";
-  const char * fasta  = ">%s\n%s\n";
-  const char * outFormat;
-
+  void (*outfun)(FILE *, pllAlignmentData *);
+  
   if (fileFormat != PLL_FORMAT_PHYLIP && fileFormat != PLL_FORMAT_FASTA) return (PLL_FALSE);
 
-  outFormat = (fileFormat == PLL_FORMAT_PHYLIP) ? phylip : fasta;
+  outfun = (fileFormat == PLL_FORMAT_PHYLIP) ? dump_phylip_content : dump_fasta_content;
 
-  fp = fopen (filename,"w");
+  fp = fopen (filename, "w");
   if (!fp) return (PLL_FALSE);
   
-  /* if PHYLIP print the stupid header at the beginning */
+  /* if PHYLIP print the silly header at the beginning */
   if (fileFormat == PLL_FORMAT_PHYLIP)
    {
      fprintf (fp, "%d %d\n", alignmentData->sequenceCount, alignmentData->sequenceLength);
    }
-
-  for (i = 1; i <= alignmentData->sequenceCount; ++ i)
-   {
-     fprintf (fp, outFormat, alignmentData->sequenceLabels[i], alignmentData->sequenceData[i]);
-   }
+  
+  outfun(fp, alignmentData);
 
   fclose (fp);
   return (PLL_TRUE);

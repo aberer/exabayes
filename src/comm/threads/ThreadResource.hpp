@@ -1,7 +1,7 @@
 #ifndef _THREAD_RESOURCE_HPP
 #define _THREAD_RESOURCE_HPP
 
-#include "comm/threads/threadDefs.hpp"
+#include "threadDefs.hpp"
 
 #include <memory>
 #include <vector>
@@ -22,7 +22,7 @@ public:
   friend void swap(ThreadResource &lhs, ThreadResource& rhs); 
   ~ThreadResource(); 
 
-  int getNumThreads() const {return _threads.size() + 1; }
+  int getNumThreads() const {return int(_threads.size()) + 1; }
 
   void threadStart(CommandLine& cl, ParallelSetup* pl); 
   void releaseThreads(); 

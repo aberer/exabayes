@@ -1,3 +1,6 @@
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma warning (disable : 1572 )
+
 # include <cstdlib>
 # include <iostream>
 # include <cmath>
@@ -1469,8 +1472,9 @@ namespace brent{
   class func_wrapper : public func_base {
     DoubleOfDouble* func;
   public:
-    func_wrapper(DoubleOfDouble* f) {
-      func = f;
+    func_wrapper(DoubleOfDouble* f) 
+      : func{f}
+    {
     }
     virtual double operator() (double x){
       return func(x);
@@ -1504,9 +1508,10 @@ namespace brent{
   // Generally useful functor to evaluate a monic polynomial.
   // For details, see class definition in brent.hpp
 
-  double monicPoly::operator()(double x){
-    double rslt(1);
-    for (int ii = coeff.size()-1; ii >= 0; ii--){
+  double monicPoly::operator()(double x)
+  {
+    double rslt = 1 ; 
+    for (int ii = int(coeff.size())-1; ii >= 0; ii--){
       rslt *= x;
       rslt += coeff[ii];
     }
@@ -1516,7 +1521,7 @@ namespace brent{
   // Similarly, evaluate a general polynomial (not necessarily monic):
   double Poly::operator()(double x){
     double rslt(0);
-    for (int ii = coeff.size()-1; ii >= 0; ii--){
+    for (int ii = int(coeff.size())-1; ii >= 0; ii--){
       rslt *= x;
       rslt += coeff[ii];
     }

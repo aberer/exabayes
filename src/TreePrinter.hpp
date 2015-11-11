@@ -1,7 +1,7 @@
 #ifndef _TREE_PRINTER_HPP
 #define _TREE_PRINTER_HPP
 
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include <sstream>
 
 class AbstractParameter; 

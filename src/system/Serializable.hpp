@@ -11,14 +11,22 @@
 
 class Serializable
 {
+public: 			// INHERITED METHODS 
+  virtual void deserialize( std::istream &in )  = 0 ; 
+  virtual void serialize( std::ostream &out) const = 0;   
+
 public: 
   Serializable()
     : DELIM('&')
     , checkpointIsBinary(true)
   {}
 
-  virtual void deserialize( std::istream &in )  = 0 ; 
-  virtual void serialize( std::ostream &out) const = 0;   
+  Serializable(const Serializable& rhs) = default; 
+  Serializable( Serializable&& rhs) = default; 
+  Serializable& operator=(const Serializable &rhs)  = default; 
+  Serializable& operator=( Serializable &&rhs)  = default; 
+
+  virtual ~Serializable(){}
 
   void getOfstream(std::string name, std::ofstream &result); 
   void getIfstream(std::string name, std::ifstream &result ); 

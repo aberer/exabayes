@@ -9,7 +9,7 @@
 #define _DENSITIES_H
 
 #include <vector>
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
 double exponentialDensity(double value, double lambda); 
 

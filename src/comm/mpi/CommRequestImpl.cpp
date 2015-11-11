@@ -2,10 +2,11 @@
 
 #include  <cassert>
 
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
 CommRequest::Impl::Impl( std::vector<char> array)
-  : _array(array)
+  : _req{MPI_Request{}}
+  ,  _array(array)
 {
 }
 

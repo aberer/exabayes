@@ -1,7 +1,7 @@
 #include "RemoteCommImpl.hpp"
 
 
-#include "comm/CommRequest.hpp"
+#include "CommRequest.hpp"
 #include <cstdint>
 #include <limits>
 #include <cassert>
@@ -12,14 +12,7 @@ RemoteComm::Impl& RemoteComm::Impl::operator=( Impl rhs)
   return *this;
 } 
 
-
-
 uint64_t RemoteComm::Impl::_maxTagValue = std::numeric_limits<int>::max();
-
-// uint64_t RemoteComm::Impl::getMaxTag() const
-// {
-//   return std::numeric_limits<int>::max();
-// }
 
 
 RemoteComm::Impl RemoteComm::Impl::split(const std::vector<int> &color, const std::vector<int> &rank)  const
@@ -73,7 +66,7 @@ template<> bool RemoteComm::Impl::broadcastVar(bool var, int root)
 
 
 int RemoteComm::Impl::getRank() const   {return 0 ; } 
-int RemoteComm::Impl::size() const {return 1; }  
+size_t RemoteComm::Impl::size() const {return 1u; }  
 bool RemoteComm::Impl::isValid() const  {return true; }   
 
 

@@ -4,12 +4,14 @@ namespace brent
 
   class func_base{
   public:
+    virtual ~func_base(){}
     virtual double operator() (double) = 0;
   };
 
   class monicPoly : public func_base {
   public:
     std::vector<double> coeff;
+    virtual ~monicPoly(){}
     virtual double operator() (double x);
     // constructors:
     monicPoly(const size_t degree)
@@ -22,6 +24,7 @@ namespace brent
 
   class Poly : public func_base {
   public:
+    virtual ~Poly(){}
     std::vector<double> coeff;    // a vector of size nterms i.e. 1+degree
     virtual double operator() (double x);
     // constructors:

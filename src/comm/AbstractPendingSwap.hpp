@@ -3,9 +3,9 @@
 
 #include <cstdint>
 
-#include "comm/SwapElem.hpp"
-#include "comm/CommRequest.hpp"
-#include "comm/PendingSwap.hpp"
+#include "SwapElem.hpp"
+#include "CommRequest.hpp"
+#include "PendingSwap.hpp"
 
 class AbstractPendingSwap
 {

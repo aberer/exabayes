@@ -12,10 +12,10 @@
 #include <iomanip> 
 
 #define _INCLUDE_DEFINITIONS
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 #undef _INCLUDE_DEFINITIONS
 
-#include "math/Arithmetics.hpp"
+#include "Arithmetics.hpp"
 #include "common.h"
 
 
@@ -29,15 +29,18 @@ static bool isAAMod(const std::string& input )
 class Values
 {
 public: 
-  Values(){}; 
-  size_t size() const {return std::max(values.size(), models.size()); }
+  Values()
+    : _values{}
+    , _models{}
+  {} 
+  size_t size() const {return std::max(_values.size(), _models.size()); }
 
-  std::vector<double> values; 
-  std::vector<std::string> models; 
+  std::vector<double> _values; 
+  std::vector<std::string> _models; 
 }; 
 
 
-std::unordered_map<std::string, Values> readFile(std::string file, double burnin)
+static std::unordered_map<std::string, Values> readFile(std::string file, double burnin)
 {
   auto result = std::unordered_map<std::string, Values>{}; 
   auto&& fh = std::ifstream(file); 
@@ -48,10 +51,12 @@ std::unordered_map<std::string, Values> readFile(std::string file, double burnin
   auto headers = std::vector<std::string>{} ; 
   getline(fh,line); 
 
-  auto&& istr = std::istringstream(line); 
-  auto elem = std::string{}; 
-  while(getline(istr, elem, '\t'))
-    headers.push_back(elem); 
+  {
+    auto&& istr = std::istringstream(line); 
+    auto elem = std::string{}; 
+    while(getline(istr, elem, '\t'))
+      headers.push_back(elem); 
+  }
 
   auto values = std::vector<Values>(); 
 
@@ -61,20 +66,20 @@ std::unordered_map<std::string, Values> readFile(std::string file, double burnin
   while(getline(fh, line))
     {
       nat ctr = 0; 
-      auto &&istr = std::istringstream(line); 
-      auto elem = std::string{}; 
-      while(getline(istr, elem, '\t'))
+      auto &&istr2 = std::istringstream(line); 
+      auto elem2 = std::string{}; 
+      while(getline(istr2, elem2, '\t'))
 	{
 	  if(isAAMod(headers[ctr]))
 	    {
-	      values.at(ctr).models.push_back(elem); 
+	      values.at(ctr)._models.push_back(elem2); 
 	    }
 	  else 
 	    {
-	      auto &&elemHelper = std::istringstream(elem); 
+	      auto &&elemHelper = std::istringstream(elem2); 
 	      double value = 0; 
 	      elemHelper >> value; 
-	      values.at(ctr).values.push_back(value);
+	      values.at(ctr)._values.push_back(value);
 	    }
 	  ++ctr; 
 
@@ -87,16 +92,16 @@ std::unordered_map<std::string, Values> readFile(std::string file, double burnin
   nat ctr = 0; 
   for(auto &elem : result)
     {
-      auto& values = std::get<1>(elem); 
+      auto& vals = std::get<1>(elem); 
 
       // std::cout << "querying " << headers[ctr] << std::endl; 
       if(isAAMod(headers[ctr]))
 	{
 	      
-	  values.models.erase(begin(values.models), begin(values.models) + nat(burnin * values.models.size() ));
+	  vals._models.erase(begin(vals._models), begin(vals._models) + nat(burnin * double(vals._models.size())));
 	}
       else 
-	values.values.erase(begin(values.values), begin(values.values) + nat(burnin * values.values.size() ));
+	vals._values.erase(begin(vals._values), begin(vals._values) + nat(burnin * double(vals._values.size()) ));
 
       ++ctr ; 
     } 
@@ -115,7 +120,7 @@ static void printUsage(std::ostream &out)
 }
 
 
-std::tuple<std::string, std::vector<std::string>, double> processCmdLine(int argc, char **argv)
+static std::tuple<std::string, std::vector<std::string>, double> processCmdLine(int argc, char **argv)
 {
   
   int c = 0; 
@@ -283,13 +288,13 @@ int main(int argc, char **argv)
 
 	  if(isAA)
 	    {
-	      valuesConcat.models.reserve(valuesConcat.size() + someVals.size()); 
-	      valuesConcat.models.insert(end(valuesConcat.models), begin(someVals.models),end(someVals.models));
+	      valuesConcat._models.reserve(valuesConcat.size() + someVals.size()); 
+	      valuesConcat._models.insert(end(valuesConcat._models), begin(someVals._models),end(someVals._models));
 	    }
 	  else 
 	    {
-	      valuesConcat.values.reserve(valuesConcat.size() + someVals.size()); 
-	      valuesConcat.values.insert(end(valuesConcat.values), begin(someVals.values),end(someVals.values));
+	      valuesConcat._values.reserve(valuesConcat.size() + someVals.size()); 
+	      valuesConcat._values.insert(end(valuesConcat._values), begin(someVals._values),end(someVals._values));
 	    }
 	}
 
@@ -303,7 +308,7 @@ int main(int argc, char **argv)
 	  
 	  auto frequencyHash = std::unordered_map<std::string, double>{}; 
 	  auto total = double{0}; 
-	  for(auto &v : valuesConcat.models )
+	  for(auto &v : valuesConcat._models )
 	    {
 	      ++frequencyHash[v]; 
 	      ++total; 
@@ -325,17 +330,17 @@ int main(int argc, char **argv)
 	{
 	  auto relVals = std::vector<std::vector<double>>{};
 	  for(auto r : relevant)
-	    relVals.push_back(r.values); 
+	    relVals.push_back(r._values); 
       
 	  auto prsf = Arithmetics::PRSF(relVals); 
-	  auto sd = sqrt(Arithmetics::getVariance(valuesConcat.values));
-	  auto perc95  = Arithmetics::getPercentile(.95, valuesConcat.values);
-	  auto perc5 = Arithmetics::getPercentile(.5, valuesConcat.values); 
-	  auto perc50 = Arithmetics::getPercentile(.50, valuesConcat.values); 
-	  auto perc25 = Arithmetics::getPercentile(.25, valuesConcat.values); 
-	  auto perc75 = Arithmetics::getPercentile(.75, valuesConcat.values); 
-	  auto ess = Arithmetics::getEffectiveSamplingSize(valuesConcat.values); 
-	  auto mean = Arithmetics::getMean(valuesConcat.values); 
+	  auto sd = sqrt(Arithmetics::getVariance(valuesConcat._values));
+	  auto perc95  = Arithmetics::getPercentile(.95, valuesConcat._values);
+	  auto perc5 = Arithmetics::getPercentile(.5, valuesConcat._values); 
+	  auto perc50 = Arithmetics::getPercentile(.50, valuesConcat._values); 
+	  auto perc25 = Arithmetics::getPercentile(.25, valuesConcat._values); 
+	  auto perc75 = Arithmetics::getPercentile(.75, valuesConcat._values); 
+	  auto ess = Arithmetics::getEffectiveSamplingSize(valuesConcat._values); 
+	  auto mean = Arithmetics::getMean(valuesConcat._values); 
 	  out << header
 	      << "\t" << mean
 	      << "\t" << sd

@@ -1,9 +1,9 @@
 #ifndef _NEW_COMMUNICATOR_HPP
 #define _NEW_COMMUNICATOR_HPP
 
-#include "comm/RemoteComm.hpp"      
-#include "comm/LocalComm.hpp"
-#include "comm/threads/threadDefs.hpp" 
+#include "RemoteComm.hpp"      
+#include "LocalComm.hpp"
+#include "threadDefs.hpp" 
 
 #include <vector>
 #include <cassert>
@@ -29,7 +29,7 @@ public:
   void createSendRequest(std::vector<char> array, int dest, int tag, CommRequest& req);
   void createRecvRequest(int src, int tag, nat length, CommRequest& req); 
 
-#include "comm/CommCore.hpp"
+#include "CommCore.hpp"
 
   friend std::ostream& operator<<(std::ostream & out, const Communicator& rhs); 
   
@@ -41,7 +41,7 @@ public:
   LocalComm&  getLocalComm() ; 
   RemoteComm& getRemoteComm(); 
 
-  void initWithMaxChains(int numChains, int numThreadsChecking); 
+  void initWithMaxChains(size_t numChains, size_t numThreadsChecking); 
   
 private:
   RemoteComm _remoteComm; 
@@ -49,7 +49,7 @@ private:
 };  
 
 
-#include "comm/Communicator.tpp"
+#include "Communicator.tpp"
 
 #endif
 

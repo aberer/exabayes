@@ -1,12 +1,14 @@
 #include "AbstractParameter.hpp" 
-#include "system/extensions.hpp" 
-#include "model/Category.hpp"
+#include "extensions.hpp" 
+#include "Category.hpp"
 
 
 AbstractParameter::AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio)
-  : _id(id)
+  : Serializable()
+  ,  _id(id)
   , _idOfMyKind(idOfMyKind)
   , _cat(cat) 
+  , _prior{nullptr}
   , _printToParamFile(true)
   , _partitions(partitions)
   , _paramPriority(paramPrio)
@@ -15,15 +17,15 @@ AbstractParameter::AbstractParameter(Category cat, nat id, nat idOfMyKind, std::
 }
 
 AbstractParameter::AbstractParameter(const AbstractParameter& rhs)
-  : _id(rhs._id)
+  : Serializable(rhs)
+  , _id(rhs._id)
   , _idOfMyKind(rhs._idOfMyKind)
   , _cat(rhs._cat)
+  , _prior{  rhs._prior.get() != nullptr ? std::unique_ptr<AbstractPrior>(rhs._prior->clone()) : nullptr}	
   , _printToParamFile(rhs._printToParamFile)
   , _partitions(rhs._partitions)
   , _paramPriority(rhs._paramPriority)
 {
-  if(rhs._prior.get() != nullptr)
-    _prior = std::unique_ptr<AbstractPrior>(rhs._prior->clone()); 
   assert(_partitions.size() > 0); 
 }
 

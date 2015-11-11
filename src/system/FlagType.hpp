@@ -4,6 +4,13 @@
 #include <type_traits>
 
 
+// icc wants prior definition 
+template<typename T> T operator|( T a, T b)  ; 
+template<typename T> T operator&( T a,  T b) ; 
+template<typename T> T operator&=(T a, T b) ; 
+template<typename T> T operator|=(T a, T b) ;  
+
+
 template<typename T>
 T operator|( T a, T b) 
 {

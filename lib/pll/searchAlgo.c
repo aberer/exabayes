@@ -66,7 +66,7 @@ static void pllCreateSprInfoRollback (pllInstance * tr, pllRearrangeInfo * rearr
 static void pllCreateNniInfoRollback (pllInstance * tr, pllRearrangeInfo * rearr);
 static void pllCreateRollbackInfo (pllInstance * tr, pllRearrangeInfo * rearr, int numBranches);
 static void pllRollbackNNI (pllInstance * tr, partitionList * pr, pllRollbackInfo * ri);
-static void pllRollbackSPR (pllInstance * tr, partitionList * pr, pllRollbackInfo * ri);
+static void pllRollbackSPR (partitionList * pr, pllRollbackInfo * ri);
 
 extern double accumulatedTime;   /**< Accumulated time for checkpointing */
 
@@ -1315,6 +1315,7 @@ void restoreTreeFast(pllInstance *tr, partitionList *pr)
   testInsertRestoreBIG(tr, pr, tr->removeNode, tr->insertNode);
 }
 
+/*
 static void myfwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
   size_t  
@@ -1346,13 +1347,8 @@ static void readTree(pllInstance *tr, partitionList *pr, FILE *f)
 
   tr->start = tr->nodep[nodeNumber];
 
-  /*printf("Start: %d %d\n", tr->start->number, nodeNumber);*/
 
   myfread(&startAddress, sizeof(nodeptr), 1, f);
-
-  /*printf("%u %u\n", (size_t)startAddress, (size_t)tr->nodeBaseAddress);*/
-
-
 
   myfread(tr->nodeBaseAddress, sizeof(node), x, f);
 
@@ -1398,7 +1394,6 @@ static void readTree(pllInstance *tr, partitionList *pr, FILE *f)
   printBothOpen("RAxML Restart with likelihood: %1.50f\n", tr->likelihood);
 }
 
-
 static void readCheckpoint(pllInstance *tr, partitionList *pr)
 {
   int  
@@ -1407,9 +1402,9 @@ static void readCheckpoint(pllInstance *tr, partitionList *pr)
 
   FILE 
     *f = myfopen(binaryCheckpointInputName, "r");
-
+*/
   /* cdta */   
-
+/*
   myfread(&(tr->ckp), sizeof(checkPointState), 1, f);
 
 
@@ -1492,9 +1487,9 @@ static void readCheckpoint(pllInstance *tr, partitionList *pr)
 
 
   accumulatedTime = tr->ckp.accumulatedTime;
-
+*/
   /* printf("Accumulated time so far: %f\n", accumulatedTime); */
-
+/*
   tr->optimizeRateCategoryInvocations = tr->ckp.tr_optimizeRateCategoryInvocations;
 
 
@@ -1544,16 +1539,16 @@ static void readCheckpoint(pllInstance *tr, partitionList *pr)
   myfread(tr->patrat, sizeof(double), tr->originalCrunchedLength, f);
   myfread(tr->patratStored, sizeof(double), tr->originalCrunchedLength, f);
 
-
+*/
   /* need to read this as well in checkpoints, otherwise the branch lengths 
      in the output tree files will be wrong, not the internal branch lengths though */
-
+/*
   //TODO: Same problem as writing the checkpoint
   //myfread(tr->fracchanges,  sizeof(double), pr->numberOfPartitions, f);
   myfread(&(tr->fracchange),   sizeof(double), 1, f);
-
+*/
   /* pInfo */
-
+/*
   for(model = 0; model < pr->numberOfPartitions; model++)
   {
     int 
@@ -1586,7 +1581,7 @@ static void readCheckpoint(pllInstance *tr, partitionList *pr)
 	    }
 	}
 
-    makeGammaCats(pr->partitionData[model]->alpha, pr->partitionData[model]->gammaRates, 4, tr->useMedian);
+    pllMakeGammaCats(pr->partitionData[model]->alpha, pr->partitionData[model]->gammaRates, 4, tr->useMedian);
   }
 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
@@ -1617,7 +1612,7 @@ void restart(pllInstance *tr, partitionList *pr)
       assert(0);
   }
 }
-
+*/
 
 /* The number of maximum smoothing iterations is given explicitely */
 /** @brief Optimize branch lenghts and evaluate likelihood of topology
@@ -1670,7 +1665,7 @@ pllOptimizeBranchLengths (pllInstance *tr, partitionList *pr, int maxSmoothItera
 
     @image html nni.png "In case \a swap is set to \b PLL_NNI_P_NEXT then the dashed red edge between \a p and \a r is removed and the blue edges are created. If \a swap is set to \b PLL_INIT_P_NEXTNEXT then the dashed red edge between \a p and \a s is removed and the green edges are created. In both cases the black dashed edge is removed"
 */
-int NNI(pllInstance * tr, nodeptr p, int swap)
+int pllTopologyPerformNNI(pllInstance * tr, nodeptr p, int swap)
 {
   nodeptr       q, r;
 
@@ -1766,7 +1761,7 @@ nniMove getBestNNIForBran(pllInstance* tr, partitionList *pr, nodeptr p,
 
 	/* Save the scaling factor */
 	// Now try to do an NNI move of type 1
-	NNI(tr, p, PLL_NNI_P_NEXT);
+	pllTopologyPerformNNI(tr, p, PLL_NNI_P_NEXT);
 	double lh1 = tr->likelihood;
 	/* Update branch lengths */
 	pllUpdatePartials(tr, pr, p, PLL_FALSE);
@@ -1789,7 +1784,7 @@ nniMove getBestNNIForBran(pllInstance* tr, partitionList *pr, nodeptr p,
 #endif
 
 	/* Restore previous NNI move */
-	NNI(tr, p, PLL_NNI_P_NEXT);
+	pllTopologyPerformNNI(tr, p, PLL_NNI_P_NEXT);
 	/* Restore the old branch length */
 	for (i = 0; i < pr->numberOfPartitions; i++) {
 		p->z[i] = z0[i];
@@ -1804,7 +1799,7 @@ nniMove getBestNNIForBran(pllInstance* tr, partitionList *pr, nodeptr p,
 	printf("Likelihood after restoring from NNI 1: %f\n", tr->likelihood);
 #endif
 	/* Try to do an NNI move of type 2 */
-	NNI(tr, p, 2);
+	pllTopologyPerformNNI(tr, p, 2);
 	double lh2 = tr->likelihood;
 	/* Update branch lengths */
 	pllUpdatePartials(tr, pr, p, PLL_FALSE);
@@ -1829,7 +1824,7 @@ nniMove getBestNNIForBran(pllInstance* tr, partitionList *pr, nodeptr p,
 #endif
 
 	/* Restore previous NNI move */
-	NNI(tr, p, 2);
+	pllTopologyPerformNNI(tr, p, 2);
 	pllUpdatePartials(tr, pr, p, PLL_FALSE);
 	pllUpdatePartials(tr, pr, p->back, PLL_FALSE);
 	/* Restore the old branch length */
@@ -1949,7 +1944,7 @@ int pllNniSearch(pllInstance * tr, partitionList *pr, int estimateModel) {
 		int numNNI2Apply = ceil(numNonConflictNNI * delta);
 		for (i = 0; i < numNNI2Apply; i++) {
 			// Just do the topological change
-			NNI(tr, nonConfNNIList[i].p, nonConfNNIList[i].nniType);
+			pllTopologyPerformNNI(tr, nonConfNNIList[i].p, nonConfNNIList[i].nniType);
 			pllUpdatePartials(tr, pr, nonConfNNIList[i].p, PLL_FALSE);
 			pllUpdatePartials(tr, pr, nonConfNNIList[i].p->back, PLL_FALSE);
 			// Apply the store branch length
@@ -1974,7 +1969,7 @@ int pllNniSearch(pllInstance * tr, partitionList *pr, int estimateModel) {
 			printf("Rolling back the tree\n");
 #endif
 			for (i = 0; i < numNNI2Apply; i++) {
-				NNI(tr, nonConfNNIList[i].p, nonConfNNIList[i].nniType);
+				pllTopologyPerformNNI(tr, nonConfNNIList[i].p, nonConfNNIList[i].nniType);
 				// Restore the branch length
 				int j;
 				for (j = 0; j < pr->numberOfPartitions; j++) {
@@ -2455,7 +2450,7 @@ pllTestNNILikelihood (pllInstance * tr, partitionList * pr, nodeptr p, int swapT
    }
 
   /* perform NNI */
-  NNI (tr, p, swapType);
+  pllTopologyPerformNNI(tr, p, swapType);
   /* recompute the likelihood vectors of the two subtrees rooted at p and p->back,
      optimize the branch lengths and evaluate the likelihood  */
   pllUpdatePartials (tr, pr, p,       PLL_FALSE);
@@ -2465,7 +2460,7 @@ pllTestNNILikelihood (pllInstance * tr, partitionList * pr, nodeptr p, int swapT
   lh = tr->likelihood;
 
   /* restore topology */
-  NNI (tr, p, swapType);
+  pllTopologyPerformNNI(tr, p, swapType);
   pllUpdatePartials (tr, pr, p,       PLL_FALSE);
   pllUpdatePartials (tr, pr, p->back, PLL_FALSE);
   //update (tr, pr, p);
@@ -2718,7 +2713,7 @@ pllCreateRollbackInfo (pllInstance * tr, pllRearrangeInfo * rearr, int numBranch
       Rollback information
 */
 static void
-pllRollbackSPR (pllInstance * tr, partitionList * pr, pllRollbackInfo * ri)
+pllRollbackSPR (partitionList * pr, pllRollbackInfo * ri)
 {
   int numBranches;
 
@@ -2751,7 +2746,13 @@ pllRollbackNNI (pllInstance * tr, partitionList * pr, pllRollbackInfo * ri)
 {
   nodeptr p = ri->Move.NNI.origin;
 
+#if 0 
   NNI (tr, p, ri->Move.NNI.swapType);
+#else 
+  assert(0); 
+  /* i got no clue, what NNI should be... commenting out because of
+     compiler error... */
+#endif
   pllUpdatePartials (tr, pr, p,       PLL_FALSE);
   pllUpdatePartials (tr, pr, p->back, PLL_FALSE);
   update (tr, pr, p);
@@ -2789,7 +2790,7 @@ pllRearrangeRollback (pllInstance * tr, partitionList * pr)
        pllRollbackNNI (tr, pr, ri);
        break;
      case PLL_REARRANGE_SPR:
-       pllRollbackSPR (tr, pr, ri);
+       pllRollbackSPR (pr, ri);
        break;
      default:
        rax_free (ri);
@@ -2836,7 +2837,7 @@ pllRearrangeCommit (pllInstance * tr, partitionList * pr, pllRearrangeInfo * rea
   switch (rearr->rearrangeType)
    {
      case PLL_REARRANGE_NNI:
-       NNI (tr, rearr->Move.NNI.originNode, rearr->Move.NNI.swapType);
+       pllTopologyPerformNNI (tr, rearr->Move.NNI.originNode, rearr->Move.NNI.swapType);
        pllUpdatePartials (tr, pr, rearr->Move.NNI.originNode, PLL_FALSE);
        pllUpdatePartials (tr, pr, rearr->Move.NNI.originNode->back, PLL_FALSE);
        update (tr, pr, rearr->Move.NNI.originNode);
@@ -3030,6 +3031,9 @@ int
 pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
     boolean estimateModel)
 {
+  pllEvaluateLikelihood(tr, pr, tr->start, PLL_TRUE, PLL_FALSE);
+  pllOptimizeBranchLengths(tr, pr, 32);
+
   unsigned int vLength = 0;
   int i, impr, bestTrav, rearrangementsMax = 0, rearrangementsMin = 0,
       thoroughIterations = 0, fastIterations = 0;
@@ -3087,7 +3091,7 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
   initInfoList(&iList, 50);
 
   difference = 10.0;
-  epsilon = 0.01;
+  epsilon = tr->likelihoodEpsilon;
 
   tr->thoroughInsertion = 0;
 
@@ -3157,7 +3161,7 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
 
       saveBestTree(bestT, tr,
           pr->perGeneBranchLengths ? pr->numberOfPartitions : 1);
-      //printResult(tr, adef, PLL_FALSE);
+
       lh = previousLh = tr->likelihood;
 
       treeOptimizeRapid(tr, pr, 1, bestTrav, bt, &iList);
@@ -3169,11 +3173,6 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
           recallBestTree(bt, i, tr, pr);
 
           pllOptimizeBranchLengths(tr, pr, 8);
-
-          /*
-           if(adef->rellBootstrap)
-           updateRellTrees(tr, NUM_RELL_BOOTSTRAPS);
-           */
 
           difference = (
               (tr->likelihood > previousLh) ?
@@ -3213,7 +3212,6 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
       recallBestTree(bestT, 1, tr, pr);
       if (impr)
         {
-          //printResult(tr, adef, PLL_FALSE);
           rearrangementsMin = 1;
           rearrangementsMax = tr->stepwidth;
 
@@ -3288,7 +3286,6 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
     }
 
   cleanup:
-
 #ifdef _TERRACES
     {
       double
@@ -3333,7 +3330,12 @@ pllRaxmlSearchAlgorithm(pllInstance * tr, partitionList * pr,
 #endif
 
   freeInfoList(&iList);
-  //printResult(tr, adef, PLL_FALSE);
+
+  if (estimateModel) {
+      pllOptimizeModelParameters(tr, pr, epsilon);
+  }
+  pllOptimizeBranchLengths(tr, pr, 64);
+
   return 0;
 }
 

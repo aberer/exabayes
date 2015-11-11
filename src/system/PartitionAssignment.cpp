@@ -42,9 +42,9 @@ void PartitionAssignment::improvedAssign( std::vector<PartInfo> partitions )
   for(auto &p : partitions)
     __totalSites += p.num; 
 
-  nat cap = ceil( double(__totalSites) / double(_numProc) ); 
-  int remainder =  cap * _numProc -  __totalSites; 
-  assert(remainder >= 0 );   
+  auto cap = static_cast<nat>(ceil( double(__totalSites) / double(_numProc) )); 
+  auto remainder =  int(cap * _numProc -  __totalSites); 
+  assert(remainder >= 0);   
   auto numFull = 0u; 
   auto numAssigned = std::vector<nat>(_numProc,0); 
   auto sizeAssigned = std::vector<nat>(_numProc, 0); 
@@ -197,13 +197,13 @@ void PartitionAssignment::assignForType(  std::vector<PartInfo> curParts )
   for(auto &p : curParts)
     totalSites += p.num; 
 
-  nat sitesPerProc = totalSites / _numProc; 
-  int remainder = totalSites - (sitesPerProc * _numProc); 
+  auto sitesPerProc = int(totalSites / _numProc); 
+  auto remainder = totalSites - (sitesPerProc * _numProc); 
       
   std::sort(begin(curParts), end(curParts), [](const PartInfo &a, const PartInfo& b){ return a.num < b.num ; }); 
 
   auto sitesLeft = std::vector<int>(_numProc, sitesPerProc);
-  for(int i = 0; i< remainder; ++i)
+  for(auto i = 0u; i< remainder; ++i)
     ++sitesLeft[i]; 
 
   // that's a bit much, but it only assures that elements are
@@ -389,16 +389,16 @@ auto PartitionAssignment::getNumPartPerProcess() const
 
 
 
-auto PartitionAssignment::getCountsAndDispls( nat numInComm) const 
-  -> std::pair< std::vector<int>,std::vector<int> > 
+std::pair< std::vector<int>,std::vector<int> > 
+PartitionAssignment::getCountsAndDispls( size_t numInComm) const 
 {
   auto countsPerProc = std::vector<int>{}; 
   for(nat i = 0; i <  numInComm; ++i)
-    countsPerProc.push_back(getTotalWidthPerProc(i)); // TODO inefficient
+    countsPerProc.push_back(int(getTotalWidthPerProc(i))); // TODO inefficient
   auto displPerProc = std::vector<int>{}; 
   displPerProc.push_back(0); 
   for(nat i = 1; i  < numInComm ; ++i)
-    displPerProc.push_back(displPerProc[i-1] + countsPerProc[i-1]);
+    displPerProc.push_back(int(displPerProc[i-1] + countsPerProc[i-1]));
 
   return std::make_pair(countsPerProc,displPerProc);
 } 

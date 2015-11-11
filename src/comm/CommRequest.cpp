@@ -3,8 +3,8 @@
 #include <cassert>
 #include <iostream>
 
-#include "comm/RemoteComm.hpp"
-#include "system/extensions.hpp"
+#include "RemoteComm.hpp"
+#include "extensions.hpp"
 #include "CommRequestImpl.hpp"
 
 

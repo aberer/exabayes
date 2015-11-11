@@ -25,7 +25,7 @@ typedef uint8_t byte;
 
 class  MessageQueue 
 {
-  struct Node; 
+  class Node; 
 
 public: 
   explicit MessageQueue(int numThreads); 
@@ -43,19 +43,21 @@ public:
   
 private: 
   Node* _first;			// producer only 
-  // char pad[CACHE_LINE_SIZE - sizeof(Node*)]; 
   std::atomic<Node*> _divider; 	// shared 
-  // char pad2[CACHE_LINE_SIZE - sizeof(std::atomic<Node*>)]; 
   std::atomic<Node*> _last; 	// shared 
-  // char pad2[CACHE_LINE_SIZE - sizeof(std::atomic<Node*>)]; 
-  std::atomic<bool> _consumerLock;
-  // char pad2[CACHE_LINE_SIZE - sizeof(std::atomic<bool>)]; 
+  std::atomic<bool> _consumerLock; 
   int _numThreads; 
 }; 
 
-struct MessageQueue::Node {
+class MessageQueue::Node 
+{
+public: 
   // METHODS
   Node(std::vector<byte> msg, std::vector<int> whoReads ); 
+  
+  Node(const Node &node) = default; 
+  Node& operator=(const Node &rhs) = default; 
+
   std::tuple<int, std::vector<byte> > getConsumed(int threadId); 
 
   // ATTRIBUTES
@@ -66,7 +68,7 @@ struct MessageQueue::Node {
 }; 
 
 
-#include "comm/threads/MessageQueue.tpp"
+#include "MessageQueue.tpp"
 
 
 #endif

@@ -6,7 +6,7 @@ class ParallelSetup;
 #include <string>
 #include <vector>
 
-#include "comm/AbstractPendingSwap.hpp"
+#include "AbstractPendingSwap.hpp"
 
 class PendingSwap::Impl : public AbstractPendingSwap
 {

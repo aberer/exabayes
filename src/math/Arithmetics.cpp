@@ -16,6 +16,28 @@ namespace Arithmetics
   } 
 
 
+  double getSkewness(const std::vector<double> &data)
+  {
+    auto result = 0.; 
+
+    auto mean = getMean(data); 
+    
+    auto toThe3 = 0.; 
+    auto toThe2 = 0.; 
+    
+    for(auto &v : data)
+      {
+	toThe2 += pow(v - mean,2); 
+	toThe3 += pow(v - mean,3); 
+      }
+    
+    toThe3 /= double(data.size()); 
+    toThe2 /= double(data.size()) - 1.; 
+    
+    result = toThe3 / sqrt(pow(toThe2, 3)); 
+    return result; 
+  }
+
   double getPercentile(double percentile, std::vector<double> data)
   {
     assert(percentile < 1.);
@@ -26,9 +48,9 @@ namespace Arithmetics
 
     sort(begin(data), end(data), std::less<double>()); 
 
-    nat idx = nat(double(data.size()) * percentile); 
+    auto idx = size_t(double(data.size()) * percentile); 
 
-    if( fabs(double(idx) / percentile - data.size()) > 0   ) // dirty
+    if( std::fabs(double(idx) / percentile - double(data.size())) > 0.   ) // dirty
       ++idx;
 
     if(data.size() < idx + 1 )	// meh 
@@ -46,7 +68,7 @@ namespace Arithmetics
     for(auto &v : data)
       result += v; 
 
-    result /= data.size(); 
+    result /= double(data.size()); 
     
     return result; 
   }
@@ -61,7 +83,7 @@ namespace Arithmetics
     
     for(auto &v : data)
       result += pow(mean - v,2 ); 
-    result /= (data.size() -1);  
+    result /= double(data.size() -1);  
     
     return result; 
   }
@@ -76,7 +98,7 @@ namespace Arithmetics
     double withinChainVariance = 0;   
     for(auto &chainData : data)
       withinChainVariance += getVariance(chainData); 
-    withinChainVariance /= data.size(); 
+    withinChainVariance /= double(data.size()); 
 
     auto means = std::vector<double>{}; 
     for(auto &chainData: data ) 
@@ -99,8 +121,8 @@ namespace Arithmetics
     // the above sounds less good   
 
     for(nat i = 0; i < means.size() ;++i )
-      betweenChainVariance += data[i].size() * pow(means[i] - meanOfMeans, 2); 
-    betweenChainVariance /= (data.size()-1) ; 
+      betweenChainVariance += double(data[i].size()) * pow(means[i] - meanOfMeans, 2); 
+    betweenChainVariance /= double(data.size()-1) ; 
 
     double estimatedVariance = 0; // of the stationary chain
     estimatedVariance = (1. - 1. / meanNumberOfDraws) * withinChainVariance + betweenChainVariance / double(meanNumberOfDraws) ;  
@@ -159,7 +181,7 @@ namespace Arithmetics
 
     double gammaStat[2000];
     double mean = getMean(data) ; 
-    nat maxLag = data.size()-1; 
+    auto maxLag = data.size()-1; 
 
     if(data.size()  - 1 > 2000)
       maxLag = 2000; 
@@ -187,6 +209,44 @@ namespace Arithmetics
 	      maxLag = lag;
 	  }
       }
-    return (gammaStat[0] * data.size()) / varStat;
+    return (gammaStat[0] * double(data.size())) / varStat;
   }
+}
+
+
+
+// second order kahan algorithm
+double Arithmetics::getKahansSum2(const std::vector<double> &x)
+{
+  double s = 0, cs  = 0, ccs = 0; 
+  for(nat i = 0; i < x.size() ; ++i)
+    {
+      double t = s + x[i]; 
+
+      double c = (std::fabs(s) >= std::fabs(x[i])) ?  (s - t ) + x[i]  : (x[i] - t ) + s ; 
+      s = t; 
+      t = cs + c; 
+      double cc  = (std::fabs(cs) >= std::fabs(c)) ?  (cs - t ) + c : (c - t ) + cs; 
+      cs = t ; 
+      ccs += cc; 
+    }
+  
+  return s + cs + ccs; 
+}
+
+
+
+double Arithmetics::getKahanSum(const std::vector<double> &x)
+{
+  auto sum = 0.; 
+  auto c = 0.; 
+
+  for(auto &v : x)
+    {
+      auto y = v - c; 
+      auto t = sum + y; 
+      c = (t - sum ) - y ; 
+      sum = t; 
+    }
+  return sum;  
 }

@@ -4,9 +4,10 @@
 #include <cassert>
 #include <map>
 
-#include "config/ExaBlock.hpp"
-#include "proposals/ProposalType.hpp"
-#include "system/GlobalVariables.hpp"
+#include "ExaBlock.hpp"
+#include "ProposalType.hpp"
+#include "GlobalVariables.hpp"
+#include "TopoMove.hpp"
 
 
 // TODO allow for scientific doubles  
@@ -31,6 +32,10 @@ public:
   int getLikeSprMaxRadius() const { return _likeSprMaxRadius; }
   double getLikeSprWarp() const { return _likeSprWarp;  }
   
+  MoveOptMode getMoveOptMode()  const { return _moveOptMode; }
+  
+  bool hasUseMultiplier() const  {return _useMultiplier; }
+
 private: 
   std::unordered_map<ProposalType, double, ProposalTypeHash> userValue; 
 
@@ -40,6 +45,8 @@ private:
   int _likeSprMaxRadius;
   int parsSPRRadius; 
   double _likeSprWarp; 
+  MoveOptMode  _moveOptMode;  
+  bool _useMultiplier; 
 }; 
 
 

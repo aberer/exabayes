@@ -1,8 +1,8 @@
 #include "TreeRandomizer.hpp"
 
 #include <vector>
-#include "model/Branch.hpp"
-#include "comm/ParallelSetup.hpp"
+#include "Branch.hpp"
+#include "ParallelSetup.hpp"
 
 
 extern "C"
@@ -12,7 +12,6 @@ extern "C"
   void buildSimpleTree (pllInstance *tr, partitionList *pr, int ip, int iq, int ir); 
   void makePermutationFast(int *perm, int n, pllInstance *tr); 
   void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int maxTips, boolean full); 
-  unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionList * pr); 
 }
 
 
@@ -171,10 +170,8 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
       inner = traln.getNode(traln.getNumberOfTaxa() + i-2 );       
       auto taxonP = traln.getNode(i); 
       traln.clipNodeDefault(taxonP, inner); 
-      
-      auto b = drawBranchUniform_helper(traln, rand, i-1);
 
-      auto p1 = b.findNodePtr(traln),
+      auto p1 = drawBranchUniform_helper(traln, rand, i-1).findNodePtr(traln),
 	p2 = p1->back; 
       
       traln.clipNodeDefault(p1, inner->next); 
@@ -186,12 +183,12 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
 BranchPlain TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  
 {
   bool acc = false;   
-  int node = 0; 
+  int aNode = 0; 
   nodeptr p = nullptr; 
   while(not acc)
     {      
-      node = drawInnerNode(traln, rand); 
-      p = traln.getNode(node); 
+      aNode = drawInnerNode(traln, rand); 
+      p = traln.getNode(aNode); 
       
       nat numTips = 0; 
       if(  traln.isTipNode(p->back) ) 
@@ -205,7 +202,7 @@ BranchPlain TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Random
       
       acc = numTips == 0 || rand.drawRandDouble01() <  (3. - double(numTips)) / 3.;       
     }
-  assert(node != 0); 
+  assert(aNode != 0); 
   
   std::vector<nat> options; 
   if(not traln.isTipNode(p->back))
@@ -219,8 +216,8 @@ BranchPlain TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Random
   if(options.size() == 1 )
     other = options[0]; 
   else 
-    other = options.at(rand.drawIntegerOpen(options.size()));   
-  return BranchPlain(node, other); 
+    other = options.at(rand.drawIntegerOpen(int(options.size())));   
+  return BranchPlain(aNode, other); 
 }
 
 
@@ -292,8 +289,7 @@ BranchPlain TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Rando
     }
   else 
     {
-      int r = rand.drawIntegerOpen(3); 
-          switch(r)
+      switch(rand.drawIntegerOpen(3))
   	{
   	case 0 : 
   	  thatNode = p->back->number; 
@@ -310,3 +306,5 @@ BranchPlain TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Rando
 
   return BranchPlain(thisNode, thatNode); 
 }
+
+

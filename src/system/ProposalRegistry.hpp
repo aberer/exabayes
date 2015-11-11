@@ -5,8 +5,9 @@
 #include <memory>
 
 #include "GlobalVariables.hpp"
-#include "config/BlockProposalConfig.hpp"
-#include "proposals/ParameterProposal.hpp"
+#include "BlockProposalConfig.hpp"
+#include "ParameterProposal.hpp"
+#include "ParameterList.hpp"
 
 class ProposalRegistry
 {
@@ -14,8 +15,8 @@ public:
   /** 
       @brief get all proposals that integrate over a single parameter   
   */ 
-  vector<unique_ptr<AbstractProposal> >
-  getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln) const ; 
+  std::vector<std::unique_ptr<AbstractProposal> >
+  getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln, ParallelSetup& pl, ParameterList &params) const ; 
 
   static const double initFrequencySlidingWindow ; 
   static const double initBranchLengthMultiplier; 

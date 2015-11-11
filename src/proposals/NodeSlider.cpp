@@ -1,11 +1,13 @@
 #include "NodeSlider.hpp"
-#include "eval/LikelihoodEvaluator.hpp"
-#include "system/BoundsChecker.hpp"
-#include "priors/AbstractPrior.hpp"
+#include "LikelihoodEvaluator.hpp"
+#include "BoundsChecker.hpp"
+#include "AbstractPrior.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
   : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 5.,  0,0, false)
   , multiplier(_multiplier)
+  , oneBranch{}
+  , otherBranch{}
 {
 }
 
@@ -60,7 +62,7 @@ void NodeSlider::prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& e
   auto b = BranchPlain(middleNode, otherNode); 
   nodeptr p = b.findNodePtr(traln);    
 
-  eval.markDirty( traln, p->number); 
+  eval.invalidateArray( traln, p->number); 
 }
 
 
@@ -115,15 +117,21 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, log_double &ha
   testBranch.setLength(newA); 
   // tout << "changing " << oneBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
-  auto lnPrA = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(traln,param) } } )
-    /   param->getPrior()->getLogProb( ParameterContent{{ oneBranch.getInterpretedLength(traln,param) } } ); 
+  
+  auto lnPrA = param->getPrior()->getUpdatedValue(oneBranch.getLength(), testBranch.getLength(), param);
+
+  // auto lnPrA = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(param) } } )
+  //   /   param->getPrior()->getLogProb( ParameterContent{{ oneBranch.getInterpretedLength(param) } } ); 
 
   testBranch = otherBranch; 
   testBranch.setLength(newB); 
   // tout << "changing " << otherBranch << " to " << testBranch << std::endl; 
   traln.setBranch(testBranch, param); 
-  auto lnPrB = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(traln,param) } } )
-    /   param->getPrior()->getLogProb( ParameterContent{{ otherBranch.getInterpretedLength(traln,param) } } ); 
+
+  auto lnPrB = param->getPrior()->getUpdatedValue(otherBranch.getLength(), testBranch.getLength(), param); 
+
+  // auto lnPrB = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(param) } } )
+  //   /   param->getPrior()->getLogProb( ParameterContent{{ otherBranch.getInterpretedLength(param) } } ); 
 
   // AbstractProposal::updateHastingsLog(hastings, log(), _name); 
   hastings *= log_double::fromAbs(pow(drawnMultiplier,2));
@@ -135,15 +143,15 @@ void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &tra
 {
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
-  assert(_primaryParameters.size() == 1); 
+  assert(_primParamIds.size() == 1); 
   auto b = BranchPlain(middleNode, otherNode); 
 
-  auto parts = _primaryParameters[0]->getPartitions(); 
+  auto parts = _allParams->at(_primParamIds[0])->getPartitions(); 
 
-  for(auto node : getInvalidatedNodes(traln) ) 
+  for(auto aNode : getInvalidatedNodes(traln) ) 
     { 
       for(auto part : parts)
-	evaluator.markDirty(traln, part, node); 
+	evaluator.invalidateArray(traln, part, aNode); 
     }
 
 #ifdef PRINT_EVAL_CHOICE

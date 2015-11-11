@@ -8,6 +8,7 @@ class BranchIntegrator  : public BranchLengthMultiplier
 public: 
   BranchIntegrator( double _mult )
     : BranchLengthMultiplier( _mult)
+    , toPropose{}
   {
     _name =  "blInt"; 
     _relativeWeight = 20; 

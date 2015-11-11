@@ -15,6 +15,7 @@ class log_double
 public: 
   log_double()
     : _val{0}
+    , _error{0}
   {
   }
 
@@ -48,7 +49,7 @@ public:
   
   bool isNegativeInfinity() const 
   {
-    return _val == - std::numeric_limits<double>::infinity(); 
+    return isInfinity() && _val < 0. ; 
   }
 
   bool isInfinity() const 
@@ -75,6 +76,13 @@ public:
     return exp(_val); 
   }
 
+  static log_double negativeInfinity()
+  {
+    auto result = log_double (); 
+    result._val = 0; 
+    return result; 
+  }
+
   friend bool operator<(const log_double& lhs, const log_double& rhs)
   {
     return lhs._val < rhs._val; 
@@ -86,22 +94,13 @@ public:
     lhs = lhs / rhs; 
   }
 
-  friend log_double operator/(  log_double lhs , const log_double &rhs )
-  {
-    lhs._val -= rhs._val; 
-    return lhs; 
-  }
-
-  friend log_double operator*( log_double lhs, const log_double &rhs)
-  {
-    lhs._val += rhs._val; 
-    return lhs;  
-  }
-  
   friend void operator*= (log_double &lhs, const log_double& rhs)
   {
     lhs = lhs * rhs; 
   }
+
+  friend log_double operator/(  const log_double &lhs , const log_double &rhs ); 
+  friend log_double operator*( const log_double& lhs, const log_double &rhs); 
 
   
   // this is only meant for communication with PLL
@@ -116,16 +115,7 @@ public:
 
 private: 
   double _val; 
-  
-  
+  double _error; 
 }; 
-
-
-
-
-
-
-
-
 
 #endif

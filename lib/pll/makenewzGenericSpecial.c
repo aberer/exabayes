@@ -51,6 +51,10 @@
 /*#include <tmmintrin.h>*/
 #endif
 
+#ifdef __MIC_NATIVE
+#include "mic_native.h"
+#endif
+
 
 /** @file makenewzGenericSpecial.c
  *  
@@ -418,10 +422,10 @@ static void coreCAT_FLEX(int upper, int numberOfCategories, double *sum,
     *d, 
 
     /* arrays to store stuff we can pre-compute */
-    *d_start,
-    *e,
-    *s,
-    *dd,
+    *d_start = NULL,
+    *e = NULL,
+    *s = NULL,
+    *dd = NULL,
     inv_Li, 
     dlnLidlz, 
     d2lnLidlz2,
@@ -681,20 +685,27 @@ void makenewzIterative(pllInstance *tr, partitionList * pr)
 
       getVects(tr, pr, &tipX1, &tipX2, &x1_start, &x2_start, &tipCase, model, &x1_gapColumn, &x2_gapColumn, &x1_gap, &x2_gap);
 
-#if (!defined(__SSE3) && !defined(__AVX))
+#if (!defined(__SSE3) && !defined(__AVX) && !defined(__MIC_NATIVE))
       assert(!tr->saveMemory);
       if(tr->rateHetModel == PLL_CAT)
         sumCAT_FLEX(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector, tipX1, tipX2,
             width, states);
       else
         //sumGAMMA_FLEX_reorder(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector, tipX1, tipX2,
-        sumGAMMA_FLEX(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector, tipX1, tipX2,
+          sumGAMMA_FLEX(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector, tipX1, tipX2,
             width, states);
 #else
       switch(states)
       {
+      case 4: /* DNA */
+#ifdef __MIC_NATIVE
+      assert(!tr->saveMemory);
+      assert(tr->rateHetModel == PLL_GAMMA);
 
-        case 4: /* DNA */
+      sumGTRGAMMA_MIC(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector, tipX1, tipX2,
+          width);
+#else
+
           if(tr->rateHetModel == PLL_CAT)
           {
             if(tr->saveMemory)
@@ -713,9 +724,22 @@ void makenewzIterative(pllInstance *tr, partitionList * pr)
               sumGAMMA(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector, tipX1, tipX2,
                   width);
           }
+#endif
           break;		
         case 20: /* proteins */
-          if(tr->rateHetModel == PLL_CAT)
+#ifdef __MIC_NATIVE
+          assert(!tr->saveMemory);
+          assert(tr->rateHetModel == PLL_GAMMA);
+
+	      if(pr->partitionData[model]->protModels == PLL_LG4)
+			  sumGTRGAMMAPROT_LG4_MIC(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector_LG4, tipX1, tipX2,
+				  width);
+	      else
+			  sumGTRGAMMAPROT_MIC(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector, tipX1, tipX2,
+				  width);
+#else
+
+            if(tr->rateHetModel == PLL_CAT)
           {
             if(tr->saveMemory)
               sumGTRCATPROT_SAVE(tipCase, pr->partitionData[model]->sumBuffer, x1_start, x2_start, pr->partitionData[model]->tipVector,
@@ -740,6 +764,7 @@ void makenewzIterative(pllInstance *tr, partitionList * pr)
                   tipX1, tipX2, width);
 		    }
           }
+#endif
           break;		
         default:
           assert(0);
@@ -763,11 +788,7 @@ void makenewzIterative(pllInstance *tr, partitionList * pr)
  *
  * @warning \a makenewzIterative should have been called to precompute \a tr->partitionData[model].sumBuffer at the given branch
  *
- * @note this function actually computes the first and second
- * derivatives of the likelihood for a given branch stored in
- * tr->coreLZ[model] Note that in the parallel case coreLZ must always
- * be broadcasted together with the traversal descriptor, at least for
- * optimizing branch lengths
+ * @note  this function actually computes the first and second derivatives of the likelihood for a given branch stored in tr->coreLZ[model] Note that in the parallel case coreLZ must always be broadcasted together with the traversal descriptor, at least for optimizing branch lengths 
  *
  */
 void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, volatile double *_d2lnLdlz2)
@@ -824,7 +845,7 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
         lz = tr->td[0].parameterValues[0];
       }
 
-#if (!defined(__SSE3) && !defined(__AVX))
+#if (!defined(__SSE3) && !defined(__AVX) && !defined(__MIC_NATIVE))
       /* compute first and second derivatives with the slow generic functions */
 
       if(tr->rateHetModel == PLL_CAT)
@@ -838,7 +859,14 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
 #else
       switch(states)
       {	   
-        case 4: /* DNA */
+      case 4: /* DNA */
+#ifdef __MIC_NATIVE
+      assert(tr->rateHetModel == PLL_GAMMA);
+
+      coreGTRGAMMA_MIC(width, sumBuffer,
+          &dlnLdlz, &d2lnLdlz2, pr->partitionData[model]->EIGN, pr->partitionData[model]->gammaRates, lz,
+          pr->partitionData[model]->wgt);
+#else
           if(tr->rateHetModel == PLL_CAT)
             coreGTRCAT(width, pr->partitionData[model]->numberOfCategories, sumBuffer,
                 &dlnLdlz, &d2lnLdlz2, pr->partitionData[model]->wgt,
@@ -848,8 +876,23 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
                 &dlnLdlz, &d2lnLdlz2, pr->partitionData[model]->EIGN, pr->partitionData[model]->gammaRates, lz,
                 pr->partitionData[model]->wgt);
 
+#endif
           break;		    
         case 20: /* proteins */
+
+#ifdef __MIC_NATIVE
+      assert(tr->rateHetModel == PLL_GAMMA);
+
+	  if(pr->partitionData[model]->protModels == PLL_LG4)
+		  coreGTRGAMMAPROT_LG4_MIC(width, sumBuffer,
+			  &dlnLdlz, &d2lnLdlz2, pr->partitionData[model]->EIGN_LG4, pr->partitionData[model]->gammaRates, lz,
+			  pr->partitionData[model]->wgt);
+	  else
+		  coreGTRGAMMAPROT_MIC(width, sumBuffer,
+			  &dlnLdlz, &d2lnLdlz2, pr->partitionData[model]->EIGN, pr->partitionData[model]->gammaRates, lz,
+			  pr->partitionData[model]->wgt);
+#else
+
           if(tr->rateHetModel == PLL_CAT)
             coreGTRCATPROT(pr->partitionData[model]->EIGN, lz, pr->partitionData[model]->numberOfCategories,  pr->partitionData[model]->perSiteRates,
                 pr->partitionData[model]->rateCategory, width,
@@ -869,7 +912,7 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
                 &dlnLdlz, &d2lnLdlz2, lz);
 	    
 		}
-
+#endif
           break;		   
         default:
           assert(0);
@@ -892,6 +935,7 @@ void execCore(pllInstance *tr, partitionList *pr, volatile double *_dlnLdlz, vol
       }			       	    	   
     }
   }
+
 }
 
 
@@ -1987,7 +2031,7 @@ static void coreGTRCAT(int upper, int numberOfCategories, double *sum,
 {
   int i;
   double
-    *d, *d_start,
+    *d, *d_start = NULL,
     inv_Li, dlnLidlz, d2lnLidlz2,
     dlnLdlz = 0.0,
     d2lnLdlz2 = 0.0;
@@ -2225,7 +2269,7 @@ static void coreGTRCATPROT(double *EIGN, double lz, int numberOfCategories, doub
     int *wgt, volatile double *ext_dlnLdlz,  volatile double *ext_d2lnLdlz2, double *sumtable)
 {
   int i, l;
-  double *d1, *d_start, *sum;
+  double *d1, *d_start = NULL, *sum;
   double 
     e[20] __attribute__ ((aligned (PLL_BYTE_ALIGNMENT))), 
     s[20] __attribute__ ((aligned (PLL_BYTE_ALIGNMENT))), 

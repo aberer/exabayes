@@ -10,6 +10,9 @@ class BranchLengthMultiplier : public AbstractProposal
 {
 public: 
   BranchLengthMultiplier(  double multiplier); 
+  BranchLengthMultiplier(const BranchLengthMultiplier& rhs) = default; 
+  BranchLengthMultiplier( BranchLengthMultiplier&& rhs) = default; 
+  BranchLengthMultiplier& operator=(const BranchLengthMultiplier &rhs)  = default; 
 
   virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
 

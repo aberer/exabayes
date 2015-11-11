@@ -1,8 +1,9 @@
 #include "CommRequestImpl.hpp"
 
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
 CommRequest::Impl::Impl(std::vector<char> array)
+  : _array{}
 {
 }
 

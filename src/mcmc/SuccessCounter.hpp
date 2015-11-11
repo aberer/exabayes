@@ -4,7 +4,7 @@
 #include <iostream>
 #include <list>
 
-#include "system/Serializable.hpp"
+#include "Serializable.hpp"
 
 #define SIZE_OF_LAST 100 
 
@@ -15,8 +15,10 @@ class SuccessCounter : public Serializable
 {
 public: 
   SuccessCounter();  
-  SuccessCounter(const SuccessCounter& rhs); 
-  SuccessCounter operator=(  SuccessCounter rhs) ; 
+  SuccessCounter(const SuccessCounter& rhs) = default ; 
+  SuccessCounter( SuccessCounter&& rhs) = default ; 
+  SuccessCounter& operator=(  const SuccessCounter& rhs)  = default ; 
+  SuccessCounter& operator=(   SuccessCounter&& rhs)  = default ; 
 
   void accept(); 
   void reject();

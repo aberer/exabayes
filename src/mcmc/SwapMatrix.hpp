@@ -5,16 +5,17 @@
 #include <iostream>
 
 #include "common.h"
-#include "mcmc/SuccessCounter.hpp"
+#include "SuccessCounter.hpp"
 
-#include "system/Serializable.hpp"
+#include "Serializable.hpp"
 
 class SwapMatrix : public Serializable
 {
 public: 
-  SwapMatrix(nat numChains ); 
-  SwapMatrix operator=( SwapMatrix rhs ) ; 
+  explicit SwapMatrix(size_t numChains ); 
   SwapMatrix(SwapMatrix&& rhs) = default;  
+  SwapMatrix& operator=(const SwapMatrix &rhs)  = default; 
+  SwapMatrix& operator=( SwapMatrix &&rhs)  = default; 
   SwapMatrix(const SwapMatrix & rhs)  = default; 
 
   void update(nat a, nat b, bool acc); 
@@ -31,11 +32,11 @@ public:
   friend void swap(SwapMatrix& a, SwapMatrix &b); 
 
 private: 
-  nat mapToIndex(nat a, nat b) const ;
-
+  size_t mapToIndex(nat a, nat b) const ;
+  
 private:  
   std::vector<SuccessCounter> matrix; 
-  nat numEntries; 
+  size_t numEntries; 
 
   friend  std::ostream& operator<<(std::ostream &out, const SwapMatrix& rhs ) ; 
 }; 

@@ -1,6 +1,6 @@
 #include "Serializable.hpp"
 #include "GlobalVariables.hpp"
-#include "system/log_double.hpp"
+#include "log_double.hpp"
 
 
 void Serializable::getOfstream(std::string name, std::ofstream &result)
@@ -60,7 +60,7 @@ void Serializable::writeString(std::ostream &out, std::string toWrite) const
   if(checkpointIsBinary)
     {
       toWrite += '\0'; 
-      int length = toWrite.size(); 
+      int length = int(toWrite.size()); 
       out.write((char*)&length, sizeof(int)); 
       out.write(toWrite.c_str(), length * sizeof(char)); 
     }
@@ -81,8 +81,8 @@ template<> log_double Serializable::cRead<log_double>(std::istream &in)
 
 template<> void Serializable::cWrite<log_double>( std::ostream &out, const log_double &val )  const 
 {
-  double tmp = val.getRawLog(); 
-  cWrite(out, tmp); 
+  double tmp = (double)val.getRawLog(); 
+  cWrite(out,  tmp); 
 }
 
 
@@ -100,7 +100,7 @@ void Serializable::cWrite(std::ostream &out, const T& toWrite) const
   
   if(checkpointIsBinary)
     {      
-      out.write((char*)&toWrite, sizeof(T)); 
+      out.write((const char*)&toWrite, sizeof(T)); 
       // std::cout << "WROTE " << toWrite << std::endl;
     }
   else 
@@ -113,6 +113,8 @@ template void Serializable::cWrite<int>(std::ostream &out, const int& toWrite) c
 template void Serializable::cWrite<nat>(std::ostream &out, const nat& toWrite) const ;
 template void Serializable::cWrite<long>(std::ostream &out, const long& toWrite) const ;
 template void Serializable::cWrite<double>(std::ostream &out, const double& toWrite) const ;
+template void Serializable::cWrite<unsigned long>(std::ostream &out, const unsigned long& toWrite) const ;
+template void Serializable::cWrite<unsigned long long>(std::ostream &out, const unsigned long long& toWrite) const ;
 
 
 
@@ -145,3 +147,5 @@ template int Serializable::cRead(std::istream &in );
 template nat Serializable::cRead(std::istream &in );
 template long Serializable::cRead(std::istream &in );
 template double Serializable::cRead(std::istream &in );
+template unsigned long Serializable::cRead(std::istream &in );
+template unsigned long long Serializable::cRead(std::istream &in );

@@ -17,7 +17,10 @@ class AbstractParameter;
 template<typename TYPE = void> class LengthPart
 {
 public: 
+  LengthPart(){}
+
   // trait-like (could be better...)
+  virtual ~LengthPart(){}
   
   friend std::ostream& operator<<(std::ostream &out, const LengthPart& rhs)
   {
@@ -29,6 +32,11 @@ public:
   void lengthToString(std::ostream &out)  const
   {
   }
+
+  bool lenEqual(const LengthPart &rhs) const 
+  {
+    return true; 
+  }
 }; 
 
 
@@ -37,11 +45,15 @@ public:
 template<> class LengthPart<double>
 {
 public: 
+  LengthPart(double val = 0 )
+    : length{val}  { }
+
+  virtual ~LengthPart(){}
   /** 
       @brief gets the absolute (true) length of the branch
    */ 
-  double getInterpretedLength(const TreeAln &traln, const AbstractParameter* param) const; 
-  void setConvertedInternalLength(const TreeAln& traln,  const AbstractParameter* param, double length) ; 
+  double getInterpretedLength( const AbstractParameter* param) const; 
+  void setConvertedInternalLength(  const AbstractParameter* param, double length) ; 
   /**
      @brief sets the branch length (internal representation)
    */ 
@@ -51,6 +63,7 @@ public:
    */ 
   double getLength () const {return length; }
 
+  bool lenEqual(const LengthPart<double>& rhs) const ; 
 
   friend std::ostream& operator<<(std::ostream &out, const LengthPart &rhs)
   {
@@ -72,11 +85,18 @@ protected:
 template<> class LengthPart<std::vector<double>>
 {
  public: 
+  LengthPart()
+    : lengths{}    
+  { } 
+
+  virtual ~LengthPart(){}
   double getLength(const AbstractParameter* param) const ; 
   const std::vector<double>& getLengths() const {return lengths; }
   void setLengths(std::vector<double> _lengths) { lengths = _lengths; } 
 
   void extractLength(const TreeAln &traln, const BranchPlain &branch, const std::vector<AbstractParameter*> &params); 
+
+  bool lenEqual(const LengthPart<std::vector<double> > &rhs) const ; 
 
   friend std::ostream& operator<<(std::ostream &out, const LengthPart &rhs)
   {

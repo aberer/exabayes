@@ -42,7 +42,7 @@ typedef struct
   char * partitionName;
   char * partitionModel;
   int protModels;
-  int protFreqs;
+  int protUseEmpiricalFreqs;
   int dataType;
   int optimizeBaseFrequencies;
   pllQueue * regionList;

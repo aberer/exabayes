@@ -2,12 +2,12 @@
 
 #include <cmath>
 
-#include "model/Branch.hpp"
-#include "system/GlobalVariables.hpp"
-#include "priors/AbstractPrior.hpp"
-#include "priors/UniformPrior.hpp"
-#include "priors/ExponentialPrior.hpp"
-#include "model/Category.hpp"
+#include "Branch.hpp"
+#include "GlobalVariables.hpp"
+#include "AbstractPrior.hpp"
+#include "UniformPrior.hpp"
+#include "ExponentialPrior.hpp"
+#include "Category.hpp"
 
 #include "TreePrinter.hpp"
 
@@ -20,35 +20,21 @@ PriorBelief::PriorBelief()
 }
 
 
-void PriorBelief::initialize(const TreeAln &traln, const std::vector<AbstractParameter*> &variables)
+void PriorBelief::initialize(const TreeAln &traln , ParameterList &params)
 {
-  _lnPrior = scoreEverything(traln, variables); 
+  _lnPrior = scoreEverything(traln, params); 
   _lnPriorRatio = log_double::fromAbs(1.); 
   wasInitialized = true; 
 }
 
 
-void PriorBelief::accountForFracChange(TreeAln &traln, const std::vector<double> &oldFcs, const std::vector<double> &newFcs, 
-				       const std::vector<AbstractParameter*> &affectedBlParams )  
+log_double PriorBelief::scoreEverything(const TreeAln &traln, ParameterList &parameters) const 
 {
-  assert(wasInitialized); 
-
-  nat ctr = 0; 
-  for(auto &param : affectedBlParams)
-    {
-      _lnPriorRatio *= log_double::fromLog(param->getPrior()->accountForMeanSubstChange(traln,  param, oldFcs.at(ctr), newFcs.at(ctr)));
-      ++ctr; 
-    }
-}
-
-
-log_double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<AbstractParameter*> &parameters) const 
-{
-  log_double result = log_double::fromAbs(1.); 
+  auto result = log_double::fromAbs(1.);
 
   for( auto& v : parameters)
     {
-      log_double partialResult = log_double::fromAbs(1.); 
+      auto partialResult = log_double::fromAbs(1.); 
       
       switch(v->getCategory()) 
 	{	  
@@ -60,7 +46,11 @@ log_double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<
 	    auto bs = traln.extractBranches(v); 
 	    auto pr = v->getPrior();	    
 	    for(auto &b : bs)	      
-	      partialResult *= pr->getLogProb( ParameterContent {  { b.getInterpretedLength(traln,v) }  }); 
+	      {
+		auto len = b.getInterpretedLength(v); 
+		auto logProb = pr->getLogProb( ParameterContent {  { len  }  }); 
+		partialResult *= logProb; 
+	      }
 	  }
 	  break; 
 	case Category::FREQUENCIES: 
@@ -104,9 +94,9 @@ log_double PriorBelief::scoreEverything(const TreeAln &traln, const std::vector<
 } 
 
 
-void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParameter*> parameters) const 
+void PriorBelief::verifyPrior(const TreeAln &traln, ParameterList& parameters)  
 {
-  assert(  _lnPriorRatio.toAbs() == 1.   ); 
+  // assert( _lnPriorRatio.toAbs() == 1. ); 
   
   auto verified = scoreEverything(traln, parameters); 
 
@@ -116,5 +106,14 @@ void PriorBelief::verifyPrior(const TreeAln &traln, std::vector<AbstractParamete
       tout << "difference: "<< fabs( verified.toAbs() - _lnPrior.toAbs()) << std::endl; 
       assert(0); 
     }
+
+  _lnPrior = verified; 
 }
 
+
+void PriorBelief::addToRatio(log_double val) 
+{
+  assert(wasInitialized) ;
+  // tout << MAX_SCI_PRECISION << "adding " << val << std::endl; 
+  _lnPriorRatio *= val; 
+}

@@ -12,9 +12,8 @@
 class ArrayReservoir
 {
 public: 
-  ArrayReservoir(bool freeOlds) : _freeOlds(freeOlds){}
+  ArrayReservoir(bool freeOlds) ; 
   ~ArrayReservoir(); 
-
   ArrayReservoir(const ArrayReservoir& rhs) = delete; 
   ArrayReservoir& operator=(const ArrayReservoir& rhs) = delete; 
 
@@ -26,8 +25,8 @@ public:
 #endif
 
 private: 
-  std::unordered_map<double*,nat> _usedArrays; 
-  std::map<nat,std::list<double*> > _unusedArrays; 
+  std::unordered_map<double*,size_t> _usedArrays; 
+  std::map<size_t,std::list<double*> > _unusedArrays; 
   
   static const double numGammaCats; 
   static const double thresholdForNewSEVArray; 

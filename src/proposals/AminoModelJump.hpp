@@ -3,9 +3,9 @@
 
 #include <vector>
 
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 #include "AbstractProposal.hpp"
-#include "model/ProtModel.hpp"
+#include "ProtModel.hpp"
 
 
 class AminoModelJump : public AbstractProposal
@@ -13,7 +13,7 @@ class AminoModelJump : public AbstractProposal
 public: 
   AminoModelJump( ); 
 
-  virtual BranchPlain determinePrimeBranch(const TreeAln& traln, Randomness &rand) const  { return BranchPlain(); } 
+  virtual BranchPlain determinePrimeBranch(const TreeAln& traln, Randomness &rand) const  { return BranchPlain(0,0); } 
 
   virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
   virtual void writeToCheckpointCore(std::ostream &out) const  { } //disabled
@@ -29,6 +29,7 @@ public:
 
 private: 
   ProtModel savedMod;
+  std::vector<double> _oldFcs; 
 }; 
 
 #endif

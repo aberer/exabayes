@@ -27,10 +27,10 @@
 
 #include "pll.h"
 
-#include "system/Serializable.hpp"
+#include "Serializable.hpp"
 
 class TreeAln; 
-#include "system/FlagType.hpp" 
+#include "FlagType.hpp" 
 
 class AbstractParameter; 
 
@@ -52,8 +52,9 @@ public:
   /////////////////
   // life cycle  //
   /////////////////
-  Branch(nat a = 0, nat b = 0)
-    : thisNode(a)
+  Branch(nat a = 0, nat b = 0 )
+    : LengthPart<TYPE>()
+    ,  thisNode(a)
     , thatNode(b)
   {
   };
@@ -85,11 +86,11 @@ public:
   /**
      @brief sets the primary node
    */ 
-  void setPrimNode(nat node)  {thisNode = node; }
+  void setPrimNode(nat aNode)  {thisNode = aNode; }
   /** 
       @brief sets the secondary (reference) node
    */ 
-  void setSecNode(nat node) {thatNode = node; }  
+  void setSecNode(nat aNode) {thatNode = aNode; }  
   /**
      @brief indicates whether the branch exists in tree traln
    */ 
@@ -106,7 +107,7 @@ public:
   /** 
       @brief indicates whether a node is part of this branch 
   */ 
-  bool hasNode(nat node) const {return (thisNode == node) || (thatNode == node) ;  }
+  bool hasNode(nat aNode) const {return (thisNode == aNode) || (thatNode == aNode) ;  }
   /** 
       @brief finds the nodeptr in the tree that is described by this
       branch
@@ -115,7 +116,7 @@ public:
   /** 
       @brief gets the other node (given a node)
    */ 
-  nat getOtherNode(nat node) const {assert(node == thisNode || node ==  thatNode) ; return thisNode == node ? thatNode : thisNode; }
+  nat getOtherNode(nat aNode) const {assert(aNode == thisNode || aNode ==  thatNode) ; return thisNode == aNode ? thatNode : thisNode; }
   /** 
       @brief indicates whether a branch is a tip branch  
    */ 
@@ -132,7 +133,6 @@ public:
 
   virtual void deserialize( std::istream &in ) ; 
   virtual void serialize( std::ostream &out) const  ;   
-
 
   Branch<double> toBlDummy() const; 
   Branch<std::vector<double>> toBlsDummy() const ; 
@@ -156,7 +156,7 @@ private: 			// METHODS
 private: 			// ATTRIBUTES 
   nat thisNode; 
   nat thatNode;   
-  std::vector<double> lengths; 
+  // std::vector<double> lengths; 
 };
 
 #include "LengthPart.hpp"

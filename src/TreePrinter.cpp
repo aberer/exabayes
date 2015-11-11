@@ -1,12 +1,12 @@
 #include <cassert>
 
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 #include "TreePrinter.hpp"
 
-TreePrinter::TreePrinter(bool withBranchLengths , bool withInternalNodes , bool withRealNames) 
-  : withBranchLengths(withBranchLengths)
-  , withInternalNodes(withInternalNodes)
-  , withRealNames(withRealNames)
+TreePrinter::TreePrinter(bool withBranchLengths_I , bool withInternalNodes_I , bool withRealNames_I) 
+  : withBranchLengths(withBranchLengths_I)
+  , withInternalNodes(withInternalNodes_I)
+  , withRealNames(withRealNames_I)
 {
 }
 
@@ -41,15 +41,15 @@ void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss,
   if(params.size() == 1 )
     {
       auto param = params[0]; 
-      ss << ":" << traln.getBranch(p,param).getInterpretedLength(traln, param); 
+      ss << ":" << traln.getBranch(p,param).getInterpretedLength( param); 
     }
   else 
     {
       ss << ":["; 
       bool isFirst = true ; 
-      for(auto &param : params)
+      for(auto param : params)
 	{
-	  ss << (isFirst ? "" : ",")  << traln.getBranch(p,param).getInterpretedLength(traln, param); 
+	  ss << (isFirst ? "" : ",")  << traln.getBranch(p,param).getInterpretedLength( param); 
 	  isFirst = false; 
 	}
       ss << "]"; 

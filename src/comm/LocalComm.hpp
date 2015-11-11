@@ -2,12 +2,12 @@
 #define _LOCAL_COMM_HPP
 
 #include <unordered_map>
-#include "comm/threads/threadDefs.hpp"
+#include "threadDefs.hpp"
 #include <iostream>
 #include <numeric>
 
-#include "comm/threads/MessageQueue.hpp"
-#include "comm/threads/MessageQueueSingle.hpp"
+#include "MessageQueue.hpp"
+#include "MessageQueueSingle.hpp"
 
 #define DATA_COMBINE_FUN std::function<void(std::vector<T>& acc,  typename std::vector<T>::const_iterator,  typename std::vector<T>::const_iterator)> 
 // 1st argument: accumulator
@@ -36,10 +36,10 @@ public:
   void setColors(std::vector<int> colors) { _colors = colors; }
   void setRanks(std::vector<int> ranks) {_ranks = ranks; }
   
-  #include "comm/CommCore.hpp"
+  #include "CommCore.hpp"
 
   int getIdx() const {return _tid2LocCommIdx.at(MY_TID); }
-  int getNumThreads() const ; 
+  size_t getNumThreads() const ; 
 
   int getIdx(int col, int rank) const ; 
   int getColor() const {return _colors.at(_tid2LocCommIdx.at(MY_TID)); }
@@ -49,7 +49,7 @@ public:
   template<typename T>
   std::tuple<bool,std::vector<T> > readAsyncMessage(int tag, int runBatch); 
   
-  void initializeAsyncQueue(nat size, nat numSlots);
+  void initializeAsyncQueue(size_t size, size_t numSlots);
 
 private: 
   template<typename T>
@@ -78,7 +78,7 @@ private: 			// ATTRIBUTES
 
   std::vector<int> _colors; 
   std::vector<int> _ranks; 
-  int _size; 
+  size_t _size; 
 
   // for each color (here runid), we have an array that is indexed by
   // a tag that is composed of two chain ids (cantor pair)
@@ -87,6 +87,6 @@ private: 			// ATTRIBUTES
 }; 
 
 
-#include "comm/LocalComm.tpp"
+#include "LocalComm.tpp"
 
 #endif

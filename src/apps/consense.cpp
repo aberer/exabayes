@@ -5,10 +5,8 @@
 
 int NUM_BRANCHES; 	
 
-
-#include "contrib/ConsensusTree.hpp"
-
-#include "system/GlobalVariables.hpp"
+#include "ConsensusTree.hpp"
+#include "GlobalVariables.hpp"
 
 
 static void printUsage(std::ostream &out)
@@ -24,8 +22,8 @@ static void printUsage(std::ostream &out)
 }
 
 
-auto processCommandLine(int argc, char **argv)
-  -> std::tuple<std::string,std::vector<std::string>,double, nat,bool>
+static std::tuple<std::string,std::vector<std::string>,double, nat,bool>
+processCommandLine(int argc, char **argv)
 {
   auto id = std::string{}; 
   auto thresh = double(50); 

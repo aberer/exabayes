@@ -1,10 +1,17 @@
-#include "eval/ArrayReservoir.hpp" 
-#include "system/GlobalVariables.hpp" 
+#include "ArrayReservoir.hpp" 
+#include "GlobalVariables.hpp" 
 #include <algorithm>
 #include <cassert>
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
 const double ArrayReservoir::thresholdForNewSEVArray = 1.05 ; 
+
+ArrayReservoir::ArrayReservoir(bool freeOlds)  
+  : _usedArrays{}
+  , _unusedArrays{}
+  , _freeOlds(freeOlds)
+{
+}
 
 
 ArrayReservoir::~ArrayReservoir()
@@ -29,7 +36,7 @@ double* ArrayReservoir::allocate(size_t requiredLength)
   
   // we free anyway such that we do not acccumulate a lot of large
   // arrays when the SEV technique is used
-  bool freeOldArrayDespiteAvailable =  _freeOlds &&   ( requiredLength * thresholdForNewSEVArray  < lengthOfFound )  ; 
+  bool freeOldArrayDespiteAvailable =  _freeOlds &&   ( size_t(double(requiredLength) * thresholdForNewSEVArray)  < lengthOfFound )  ; 
 
   if( found != end(_unusedArrays)
       && not freeOldArrayDespiteAvailable )

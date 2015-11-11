@@ -9,6 +9,7 @@ typedef unsigned int nat;
 class AbstractAlphabet
 {
 public: 
+  virtual ~AbstractAlphabet(){}
   virtual std::vector<std::string> getStates() = 0 ; 
   std::vector<std::string> getCombinations() 
   {

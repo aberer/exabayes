@@ -3,18 +3,21 @@
 
 #include <vector>
 
-#include "mcmc/CoupledChains.hpp"
+#include "CoupledChains.hpp"
 #include "OutputFile.hpp"
-#include "system/GlobalVariables.hpp"
+#include "GlobalVariables.hpp"
 
 class DiagnosticsFile : public  OutputFile
 {
 public:   
-  DiagnosticsFile() : _initialized(false) {}
+  DiagnosticsFile() 
+    : _names{}
+    , _initialized(false) 
+  {}
 
   void initialize(std::string workdir, std::string name, const std::vector<CoupledChains> &runs) ; 
-  void regenerate(std::string workdir, std::string nowId, std::string prevId, nat gen); 
-  void printDiagnostics(nat gen, double asdsf, const std::vector<CoupledChains> &runs );  
+  void regenerate(std::string workdir, std::string nowId, std::string prevId, uint64_t gen); 
+  void printDiagnostics(uint64_t gen, double asdsf, const std::vector<CoupledChains> &runs );  
 
   bool isInitialized() const {return _initialized; }
 

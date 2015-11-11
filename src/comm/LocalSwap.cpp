@@ -1,5 +1,5 @@
-#include "comm/LocalSwap.hpp"
-#include "comm/ParallelSetup.hpp"
+#include "LocalSwap.hpp"
+#include "ParallelSetup.hpp"
 
 
 std::vector<char> LocalSwap::getRemoteData() const 
@@ -31,7 +31,7 @@ bool LocalSwap::allHaveReceived(ParallelSetup& pl)
   if(not _haveReceived)
     {
       auto wasThere = false; 
-      std::tie(wasThere, _dataReceived) = localComm.readAsyncMessage<char>( tag, runBatch ); 
+      std::tie(wasThere, _dataReceived) = localComm.readAsyncMessage<char>( int(tag), runBatch ); 
       if(wasThere)
 	_haveReceived = true; 
     }
@@ -39,7 +39,7 @@ bool LocalSwap::allHaveReceived(ParallelSetup& pl)
   auto tmp = std::vector<int>{  _haveReceived ? 1 : 0   };
   tmp = localComm.allReduce(tmp); 
   
-  return tmp[0] == localComm.size(); 
+  return tmp[0] == int(localComm.size()); 
 }
 
  
@@ -58,6 +58,6 @@ void LocalSwap::initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat 
   assert(tag < pl.getMaxTag()); 
 
   if(pl.isChainLeader())
-    pl.getChainComm().getLocalComm().postAsyncMessage( myChainSer,  tag, runBatch );
+    pl.getChainComm().getLocalComm().postAsyncMessage( myChainSer,  int(tag), runBatch );
 
 } 

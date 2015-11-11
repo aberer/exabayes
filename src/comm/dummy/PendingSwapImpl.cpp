@@ -1,8 +1,8 @@
 #include "PendingSwapImpl.hpp"
 
 #include <string>
-#include "comm/SwapElem.hpp"
-#include "comm/ParallelSetup.hpp"
+#include "SwapElem.hpp"
+#include "ParallelSetup.hpp"
 
 PendingSwap::Impl::Impl(SwapElem elem)
   : AbstractPendingSwap(elem)

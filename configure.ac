@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[1.3.1],[exabayes-at-googlegroups-dot-com]) 
+AC_INIT([exabayes],[1.4],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 m4_include([./m4/lx_find_mpi.m4])
@@ -24,10 +24,12 @@ AM_SILENT_RULES([yes])
 
 OLD_CXXFLAGS=$CXXFLAGS
 OLD_CFLAGS=$CFLAGS
-AC_PROG_CC
-AC_PROG_CXX
+AC_PROG_CC( [gcc icc] )
+AC_PROG_CXX( [g++ icpc] )
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
+
+AC_C_LONG_LONG
 
 
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
@@ -88,7 +90,7 @@ AC_ARG_ENABLE( [avx],
 AM_CONDITIONAL([NO_AVX], [ test "x$GUESSAVX" = "xyes" ])
 
 AC_ARG_ENABLE( [mpi], 	      
-	   [  --enable-mpi  compiles ExaBayes with MPI support (please provide mpi-compiler wrappers to CC/CXX) ],
+	   [  --enable-mpi     compiles ExaBayes with MPI support (optionally use MPICXX, to set a non-default MPI compiler ) ], 
 [  case "${enableval}" in 
    no )  MPI_CODE="no" ;; 
    yes ) MPI_CODE="yes" ;; 
@@ -98,9 +100,37 @@ AC_ARG_ENABLE( [mpi],
 )
 
 
+dnl check, if we are an intel compiler 
+
+INTEL=no
+AC_TRY_COMPILE( [], 
+[ 
+  #ifndef __INTEL_COMPILER 
+  #error "checked for intel compiler without success" 
+  #endif 
+], 
+[ INTEL="yes" ]
+)
+AM_CONDITIONAL( [WITH_INTEL], [ test "x$INTEL" = "xyes" ] ) 
+
+
+
+AC_ARG_ENABLE( [mic],
+	       [  --enable-mic     compiles the PLL with support for Intel accellerators (Xeon Phi/Intel MIC)  ],
+	       [  case "${enableval}" in 
+	             no )  MIC_CODE="no" ;; 
+		     yes ) MIC_CODE="yes" ;; 
+                     *) MIC_CODE="no" 
+	          esac ] ,
+	       [MIC_CODE="no"]
+	        )
+AM_CONDITIONAL([WITH_MIC], [ test "x$MIC_CODE" = "xyes" ])
+
+
+
 dnl enable google tests 
 AC_ARG_ENABLE( [tests], 
-	   [  --enable-tests    enable automated tests (developer only) ], 
+	   [  --enable-tests   enable automated tests (developer only) ], 
 	   [   case "${enableval}" in 
 	       no ) CODE="no" ;; 
 	       yes )  CODE="yes" ;; 

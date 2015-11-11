@@ -8,10 +8,10 @@ template<typename T>
 std::vector<T> RemoteComm::Impl::gather(std::vector<T> myData, nat root) 
 {
   auto result = std::vector<T>{};  
-  nat totalLength = size() * myData.size(); 
+  nat totalLength = nat(size() * myData.size()); 
   result.resize(totalLength); 
 
-  MPI_Gather( myData.data(), myData.size(), mpiType<T>::value, result.data(), myData.size(), mpiType<T>::value, root, _comm);
+  MPI_Gather( myData.data(), int(myData.size()), mpiType<T>::value, result.data(), int(myData.size()), mpiType<T>::value, root, _comm);
 
   return result; 
 }
@@ -24,7 +24,7 @@ std::vector<T> RemoteComm::Impl::gatherVariableLength(std::vector<T> myData, int
   // determine lengths 
   auto lengths = std::vector<nat>{}; 
   auto myLen = std::vector<int>();	
-  myLen.push_back(myData.size());
+  myLen.push_back(int(myData.size()));
   auto allLengths = gather<int>( myLen, root );
   
   // calculate the displacements 
@@ -36,15 +36,15 @@ std::vector<T> RemoteComm::Impl::gatherVariableLength(std::vector<T> myData, int
   auto result = std::vector<T>{}; 
   result.resize(std::accumulate(begin(allLengths), end(allLengths), 0));
 
-  MPI_Gatherv(myData.data(), myData.size(), mpiType<T>::value, result.data(), allLengths.data(), displ.data(), mpiType<T>::value, root, _comm);
+  MPI_Gatherv(myData.data(), int(myData.size()), mpiType<T>::value, result.data(), allLengths.data(), displ.data(), mpiType<T>::value, root, _comm);
   
   return result; 
 } 
 
 
 template<typename T>
-auto RemoteComm::Impl::gatherVariableKnownLength(std::vector<T> myData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc , int root) 
-  -> std::vector<T>
+std::vector<T>
+RemoteComm::Impl::gatherVariableKnownLength(std::vector<T> myData, std::vector<int> &countsPerProc, std::vector<int> &displPerProc , int root) 
 {
   auto myRank = getRank(); 
   auto result = std::vector<T>();
@@ -52,7 +52,7 @@ auto RemoteComm::Impl::gatherVariableKnownLength(std::vector<T> myData, std::vec
   if( myRank == root )
     result.resize(std::accumulate(begin(countsPerProc), end(countsPerProc), 0),0);
   
-  MPI_Gatherv(myData.data(), myData.size(),  mpiType<T>::value, result.data(), countsPerProc.data(), displPerProc.data(),mpiType<T>::value,
+  MPI_Gatherv(myData.data(), int(myData.size()),  mpiType<T>::value, result.data(), countsPerProc.data(), displPerProc.data(),mpiType<T>::value,
 	      root, _comm); 
 
   return result; 
@@ -79,14 +79,14 @@ RemoteComm::Impl::scatterVariableKnownLength( std::vector<T> allData, std::vecto
 template<typename T>
 std::vector<T> RemoteComm::Impl::broadcast(std::vector<T> array, int root)  
 {
-  MPI_Bcast(array.data(), array.size(), mpiType<T>::value, root, _comm); 
+  MPI_Bcast(array.data(), int(array.size()), mpiType<T>::value, root, _comm); 
   return array; 
 }
 
 template<typename T>
 std::vector<T> RemoteComm::Impl::allReduce( std::vector<T> myValues)
 {
-  MPI_Allreduce(MPI_IN_PLACE, myValues.data(), myValues.size(), mpiType<T>::value, MPI_SUM, _comm); 
+  MPI_Allreduce(MPI_IN_PLACE, myValues.data(), int(myValues.size()), mpiType<T>::value, MPI_SUM, _comm); 
   return myValues; 
 }
 

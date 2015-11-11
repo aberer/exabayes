@@ -1,5 +1,5 @@
 #include "RemoteComm.hpp"
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
 #include "RemoteCommImpl.hpp"
 #include "CommRequest.hpp"
@@ -49,7 +49,7 @@ int RemoteComm::getRank() const
   return _impl->getRank();
 }
  
-int RemoteComm::size() const  
+size_t RemoteComm::size() const  
 {
   return _impl->size(); 
 }

@@ -1,13 +1,13 @@
 #include <sstream>
 
-#include "comm/PendingSwap.hpp"
-#include "mcmc/CoupledChains.hpp"   
+#include "PendingSwap.hpp"
+#include "CoupledChains.hpp"   
 #include "Chain.hpp"
-#include "system/GlobalVariables.hpp"
-#include "proposals/AbstractProposal.hpp"
-#include "priors/PriorBelief.hpp"
-#include "system/time.hpp"
-#include "comm/ParallelSetup.hpp"
+#include "GlobalVariables.hpp"
+#include "AbstractProposal.hpp"
+#include "PriorBelief.hpp"
+// #include "time.hpp"
+#include "ParallelSetup.hpp"
 
 #include "common.h"
 
@@ -18,18 +18,20 @@
 #endif
 
 
-CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir, std::string runname, int numCoupled,  std::vector<Chain> &chains   )
-  : _chains(std::move(chains))
-  , _swapInfo(_chains.size())
+CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir, std::string runname, int numCoupled,  std::vector<Chain> chains   )
+  : _chains(chains)
+  , _swapInfo(nat(_chains.size()))
   , _heatIncrement(0.1) 
   , _rand(randI)
   , _runid(runNum) 
   , _samplingFreq(100)
   , _runname(runname) 
   , _workdir(workingdir)
-  , _numSwapsPerGen{1.}
+  , _paramId2TopFile{}
+  , _pFile{}
+  , _numSwapsPerGen(1.0)
 {  
-  auto params = _chains[0].extractParameters(); 
+  auto &params = _chains[0].getParameterList(); 
 
   AbstractParameter* topoParamUnfixed = nullptr; 
   auto blParamsUnfixed = std::vector<AbstractParameter*>{}; 
@@ -57,37 +59,11 @@ CoupledChains::CoupledChains(Randomness randI, int runNum, string workingdir, st
 }
 
 
-CoupledChains& CoupledChains::operator=(CoupledChains rhs)
-{
-  swap(*this, rhs); 
-  return *this; 
-} 
-
-
-
-void swap(CoupledChains &lhs, CoupledChains& rhs )
-{
-  using std::swap; 
-
-  swap(lhs._chains , rhs._chains );
-  swap(lhs._swapInfo , rhs._swapInfo );
-  swap(lhs._heatIncrement 	, rhs._heatIncrement 	);
-  swap(lhs._rand , rhs._rand );
-  swap(lhs._runid , rhs._runid );
-  swap(lhs._samplingFreq , rhs._samplingFreq );
-  swap(lhs._runname , rhs._runname );
-  swap(lhs._workdir , rhs._workdir );
-  swap(lhs._paramId2TopFile , rhs._paramId2TopFile );
-  swap(lhs._pFile , rhs._pFile );
-  swap(lhs._numSwapsPerGen , rhs._numSwapsPerGen );
-}
-
-
 void CoupledChains::initializeOutputFiles(bool isDryRun)  
 {  
   // TODO sampling file for every chain possibly 
   auto &traln = _chains[0].getTralnHandle(); 
-  auto params = _chains[0].extractParameters();
+  auto &params = _chains[0].getParameterList();
 
   auto tag =  _rand.getKey();
 
@@ -122,7 +98,7 @@ PendingSwap CoupledChains::prepareSwap(ParallelSetup &pl, const SwapElem& theSwa
 
 bool CoupledChains::doSwap(ParallelSetup &pl, const SwapElem &theSwap )
 {  
-  int numChain = _chains.size(); 
+  int numChain = int(_chains.size()); 
   assert(numChain > 1 ); 
 
   auto flags = CommFlag::PRINT_STAT | CommFlag::PROPOSALS; 
@@ -172,7 +148,15 @@ bool CoupledChains::doSwap(ParallelSetup &pl, const SwapElem &theSwap )
   bool didAccept = r < accRatio;   
   if( didAccept )
     {
+      // tout << "SWAP" << std::endl; 
+
       swapHeatAndProposals(a,b);
+
+      // this is necessary because of the chains owning the parameters
+      // (and e.g., tuning params for bldistgamma), but the proposals
+      // having only pointers to them. (nicer design required)
+      a.resetParamPtr();
+      b.resetParamPtr();
     }
 
   // update swap matrix: if the other chain did not belong to us and
@@ -186,7 +170,7 @@ bool CoupledChains::doSwap(ParallelSetup &pl, const SwapElem &theSwap )
 
 bool CoupledChains::doLocalSwap(ParallelSetup &pl, const SwapElem &theSwap )
 {  
-  int numChain = _chains.size(); 
+  int numChain = int(_chains.size()); 
   assert(numChain > 1 ); 
 
   int cAIndex = theSwap.getOne() ; 
@@ -221,7 +205,10 @@ bool CoupledChains::doLocalSwap(ParallelSetup &pl, const SwapElem &theSwap )
   bool didAccept = r < accRatio;   
   if( didAccept )
     {
+      // tout << "SWAP" << std::endl; 
       swapHeatAndProposals(a,b);
+      a.resetParamPtr();
+      b.resetParamPtr();
     }
 
   // update swap matrix: if the other chain did not belong to us and
@@ -233,32 +220,23 @@ bool CoupledChains::doLocalSwap(ParallelSetup &pl, const SwapElem &theSwap )
 }
 
 
-static bool allFinished(const std::vector<Chain> &chains, nat gen, const ParallelSetup &pl,  nat runid)
-{
-  bool allFinished = true; 
-  for(nat i = 0; i < chains.size() ; ++i)
-    allFinished &= not pl.isMyChain(runid, i) || (chains[i].getGeneration() == gen); 
-  return allFinished; 
-}
-
-
 std::list<SwapElem>
-CoupledChains::generateSwapsForBatch(nat startGen, nat numGen) 
+CoupledChains::generateSwapsForBatch(uint64_t startGen, uint64_t numGen) 
 {
   auto allSwaps = std::list<SwapElem>{}; 
   if( _chains.size() > 1  )
     {
-      for(nat i = startGen; i < startGen + numGen; ++i)
+      for(auto i  = startGen; i < startGen + numGen; ++i)
 	{
-	  nat gen = i + 1; 
+	  auto gen = i + 1; 
 	  _rand.rebaseForGeneration(gen); 
 
-	  double n = 2 * _chains.size() * _numSwapsPerGen; 
-	  if(n == 0)
-	    n = _chains.size(); 
+	  double n = 2. * double(_chains.size()) * _numSwapsPerGen; 
+	  if(nat(n) == 0)	// CORRECT???
+	    n = double(_chains.size()); 
 	  double p = _numSwapsPerGen / n; 
 
-	  nat numSwaps = _rand.drawBinomial(p,n); 
+	  auto numSwaps = nat(_rand.drawBinomial(p,nat(n))); 
 
 	  for(nat j = 0; j < numSwaps; ++j)
 	    {
@@ -286,7 +264,7 @@ void CoupledChains::doStep(nat id, ParallelSetup &pl)
 #ifdef VERBOSE
   std::cout << "STEP " << id << "\t" << chain.getGeneration() << std::endl; 
 #endif
-  if(chain.getChainHeat() == 1.
+  if(   std::fabs(chain.getChainHeat() - 1.) < std::numeric_limits<double>::epsilon()
      && chain.getGeneration() % _samplingFreq == 0 
      && pl.isChainLeader())
     chain.sample(_paramId2TopFile, _pFile[0]);
@@ -317,7 +295,7 @@ static void unblock(std::vector<bool> &isBlocked, nat num)
 }
 
 
-void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
+void CoupledChains::executePart(uint64_t startGen, uint64_t numGen, ParallelSetup& pl)
 {
   assert(pl.isMyRun(getRunid())); 
 
@@ -332,7 +310,8 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
     {
       nat ctr = 0;  
       for(auto &c : _chains)
-	if( c.getChainHeat() == 1. && pl.isChainLeader() && pl.isMyChain(_runid, ctr) )
+	if( std::fabs(c.getChainHeat() -  1.  ) < std::numeric_limits<double>::epsilon()
+	    && pl.isChainLeader() && pl.isMyChain(_runid, ctr) )
 	  {
 	    c.sample(_paramId2TopFile, _pFile[0]); 
 	    ++ctr; 
@@ -356,7 +335,6 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
   auto pendingSwaps = std::list<PendingSwap>{}; 
   auto swapsToBeDeleted = std::list<PendingSwap>{}; 
 
-#ifdef USE_NONBLOCKING_COMM
   auto flags = CommFlag::PRINT_STAT | CommFlag::PROPOSALS; 
   while(not allSwaps.empty() ||  not pendingSwaps.empty())
     {
@@ -500,76 +478,6 @@ void CoupledChains::executePartNew(nat startGen, nat numGen, ParallelSetup& pl)
       sleep(1); 
 #endif
     }
-#else 
-
-  
-  assert (0); 
-
-
-#if 1 
-  auto iter = begin(allSwaps); 
-  
-  nat gen = startGen; 
-  nat endGen = startGen + numGen; 
-
-  while(gen < endGen && iter != end(allSwaps))
-    {
-      for(nat i = 0; i < _chains.size() ;++i)
-	{
-	  if(pl.isMyChain(_runid, i))
-	    doStep(i,pl);
-	}
-
-      ++gen; 
-
-      // for(auto &c : _chains )
-      // 	assert(gen == c.getGeneration()); 
-      
-      while(iter != end(allSwaps) && iter->getGen() == gen)
-	{
-	  if(pl.isMyChain(_runid, iter->getOne()) || pl.isMyChain(_runid, iter->getOther()))
-	    doSwap(pl,*iter);
-	  ++iter;
-	}
-    }
-
-#else   
-  // old version 
-  while(not allSwaps.empty() || not pendingSwaps.empty())
-    {
-      auto swap = allSwaps.front(); 
-      allSwaps.erase(begin(allSwaps));
-
-      auto one = swap.getOne(); 
-      auto other = swap.getOther();
-      auto gen = swap.getGen();
-      
-      auto bothAreMine = pl.isMyChain(_runid, one) && pl.isMyChain(_runid,other); 
-      auto oneIsMine = ( not pl.isMyChain(_runid, one) ) != ( not  pl.isMyChain(_runid,other)) ; 
-
-      if(not bothAreMine && not oneIsMine )
-	continue; 
-
-      if(oneIsMine)
-	{
-	  nat myId = swap.getMyId(pl,_runid); 
-	  while( _chains[myId].getGeneration() < gen)
-	    doStep(myId, pl); 
-	}
-      else 
-	{
-	  while( _chains[one].getGeneration() < gen)
-	    doStep(one,pl); 
-	  while( _chains[other].getGeneration() < gen) 
-	    doStep(other,pl); 
-	}
-
-      doSwap(pl, swap);
-    }
-#endif
-
-
-#endif
 
   // execute remaining steps
   for(nat i = 0; i < _chains.size() ; ++i)
@@ -621,7 +529,7 @@ void CoupledChains::serialize( std::ostream &out)   const
 
 void CoupledChains::regenerateOutputFiles(std::string workdir, std::string prevId) 
 {
-  nat gen = _chains[0].getGeneration();
+  auto gen = _chains[0].getGeneration();
   for(auto &pF : _pFile)
     pF.regenerate(workdir, prevId, gen); 
   for(auto &elem : _paramId2TopFile)

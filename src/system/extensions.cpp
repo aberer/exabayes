@@ -2,7 +2,7 @@
 #include <cassert>
 
 
-void formatRange(std::ostream &out, const std::vector<nat> &values)  
+void formatRange(std::ostream &out, const std::vector<nat> &values) 
 {
   bool inRange = false; 
   for(auto iter = begin(values); iter != end(values) ; ++iter )

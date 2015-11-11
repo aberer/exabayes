@@ -4,31 +4,35 @@
 
 #include "ProposalRegistry.hpp"
 
+#include "StatNniProposer.hpp"
+#include "ExtendedSprProposer.hpp"
+#include "ExtendedTbrProposer.hpp"
+#include "ParsSprProposer.hpp"
+#include "LikelihoodSprProposer.hpp"
+
 #include "WeibullProposer.hpp"
-#include "proposals/DivTimeProposal.hpp"
-#include "proposals/LikelihoodSPR.hpp"
-#include "proposals/DistributionBranchLength.hpp"
-#include "proposals/ExtendedTBR.hpp" 
-#include "proposals/ExtendedSPR.hpp"
-#include "proposals/ParsimonySPR.hpp"
-#include "proposals/StatNNI.hpp"
-#include "proposals/BranchLengthMultiplier.hpp"
-#include "proposals/AminoModelJump.hpp"
-#include "proposals/NodeSlider.hpp"
-#include "proposals/TreeLengthMultiplier.hpp"
-#include "proposals/AbstractProposal.hpp"
-// #include "proposals/GammaDistributionSlider.hpp"
+#include "DivTimeProposal.hpp"
+#include "DistributionBranchLength.hpp"
+#include "GenericTopoProposal.hpp"
 
-#include "proposers/AbstractProposer.hpp"
-#include "proposers/SlidingProposer.hpp"
-#include "proposers/MultiplierProposer.hpp"
-#include "proposers/DirichletProposer.hpp"
-#include "proposers/RateDirichletProposer.hpp"
-#include "proposers/RateSlidingProposer.hpp"
+#include "BiasedBranchMult.hpp"
 
-#include "system/extensions.hpp"
+#include "BranchLengthMultiplier.hpp"
+#include "AminoModelJump.hpp"
+#include "NodeSlider.hpp"
+#include "TreeLengthMultiplier.hpp"
+#include "AbstractProposal.hpp"
 
-#include "proposals/ProposalType.hpp"
+#include "AbstractProposer.hpp"
+#include "SlidingProposer.hpp"
+#include "MultiplierProposer.hpp"
+#include "DirichletProposer.hpp"
+#include "RateDirichletProposer.hpp"
+#include "RateSlidingProposer.hpp"
+
+#include "extensions.hpp"
+
+#include "ProposalType.hpp"
 #include "BoundsChecker.hpp"
 
 const double ProposalRegistry::initBranchLengthMultiplier = 1.386294; 
@@ -47,16 +51,11 @@ const double ProposalRegistry::initGammaMultiplier = 0.811 ;
 const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ; 
 
 
-// const int ProposalRegistry::likeSprMinRadius = 1; 
-// const int ProposalRegistry::likeSprMaxRadius = 3; 
-// const double ProposalRegistry::likeSprWarp = 1.; 
-
-
 /**
    @brief yields a set of proposls for integrating a category  
  */
 std::vector<std::unique_ptr<AbstractProposal> >
-ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln) const 
+ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln, ParallelSetup& pl, ParameterList &params) const 
 {
   auto result = std::vector<unique_ptr<AbstractProposal> >{} ; 
 
@@ -68,10 +67,10 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
       if(config.wasSetByUser(p))
 	{
 	  userWeight = config.getProposalWeight(p); 
-	  if(userWeight == 0)
+	  if( not FLOAT_IS_INITIALIZED(userWeight))
 	    continue; 
 	} 
-      else if( not ProposalTypeFunc::isReadyForProductiveUse(p)  )		
+      else if( not ProposalTypeFunc::isDefaultInstantiate(p)  )		
 	continue;       
 
       auto&& proposal = std::unique_ptr<AbstractProposal>{}; 
@@ -79,7 +78,12 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
       switch(p)
 	{	      
 	case ProposalType::ST_NNI: 
-	  proposal = make_unique<StatNNI>(initSecondaryBranchLengthMultiplier) ;
+	  {
+	    auto tmp = make_unique<GenericTopoProposal>(  make_unique<StatNniProposer>(), "stNNI", 6., config.getMoveOptMode() ) ;
+	    if(config.hasUseMultiplier())
+	      tmp->enableUseMultiplier();
+	    proposal = std::move(tmp);
+	  }
 	  break; 
 	case ProposalType::BRANCH_LENGTHS_MULTIPLIER:	      
 	  proposal = make_unique< BranchLengthMultiplier>( initBranchLengthMultiplier) ; 
@@ -92,12 +96,29 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  break; 
 	case ProposalType::E_TBR: 
 	  {
-	    auto etbrStop = config.getEtbrStopProb(); 
-	    proposal = make_unique< ExtendedTBR> (  etbrStop, initSecondaryBranchLengthMultiplier); 
+	    auto&& tmp = make_unique<GenericTopoProposal>(  make_unique<ExtendedTbrProposer>(config.getEtbrStopProb()) , "eTBR", 5., config.getMoveOptMode());
+	    if(config.hasUseMultiplier())
+	      tmp->enableUseMultiplier();
+	    proposal = std::move(tmp); 
 	  }
 	  break; 
 	case ProposalType::E_SPR: 
-	  proposal = make_unique<ExtendedSPR> (  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier); 
+	  {
+	    auto tmp = make_unique<GenericTopoProposal>( make_unique<ExtendedSprProposer>(config.getEsprStopProp()), "eSPR", 6. , config.getMoveOptMode());
+	    if(config.hasUseMultiplier())
+	      tmp->enableUseMultiplier();
+	    proposal = std::move(tmp);
+	  }
+	  break; 
+	case ProposalType::LIKE_SPR: 
+	  {
+	    int rad =  config.getLikeSprMaxRadius(); 
+	    if(rad == -1)
+	      rad = int(std::ceil(std::log(traln.getNumberOfTaxa()) / std::log(2))); 
+
+	    proposal = make_unique<GenericTopoProposal>( make_unique<LikehoodSprProposer>(rad , config.getLikeSprWarp(), config.getMoveOptMode()),
+							 "likeSPR", 2., config.getMoveOptMode());
+	  }
 	  break; 
 	case ProposalType::PARSIMONY_SPR:	
 	  {
@@ -105,8 +126,11 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	    int radius = config.getParsSPRRadius(); 
 	    nat numTax = traln.getNumberOfTaxa(); 
 	    if(radius == -1)
-	      radius = std::floor( std::log(numTax) * 2  );
-	    proposal = make_unique<ParsimonySPR> (  config.getParsimonyWarp(), initSecondaryBranchLengthMultiplier, radius ); 
+	      radius = int(std::floor( std::log(numTax) * 2   ));
+	    auto&& tmp  = make_unique<GenericTopoProposal>( make_unique<ParsSprProposer>(config.getParsimonyWarp(),radius, pl.getChainComm()), "parsSpr", 6. , config.getMoveOptMode()); 
+	    if(config.hasUseMultiplier())
+	      tmp->enableUseMultiplier();
+	    proposal = std::move(tmp);
 	  }
 	  break; 
 	case ProposalType::REVMAT_SLIDER: 
@@ -139,15 +163,6 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 						      std::unique_ptr<DirichletProposer	>(new DirichletProposer	 (BoundsChecker::rateMin, BoundsChecker::rateMax, true)), 
 						      initDirichletAlpha,1, 1e-3, 1e4) ; 
 	  break; 
-	case ProposalType::LIKE_SPR: 
-	  {
-	    int rad =  config.getLikeSprMaxRadius(); 
-	    if(rad == -1 )
-	      rad = std::floor( std::log( traln.getNumberOfTaxa() ) * 2 ); 
-
-	    proposal = make_unique<LikelihoodSPR>(rad , config.getLikeSprWarp() );
-	  }
-	  break; 
 	case ProposalType::DIRICH_REVMAT_PER_RATE:
 	  {
 	    proposal = make_unique<ParameterProposal>(Category::SUBSTITUTION_RATES, "revMatDirichRate", true,
@@ -177,14 +192,14 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	case ProposalType::BRANCH_DIST_GAMMA: 
 	  proposal = make_unique<DistributionBranchLength<GammaProposer> >();
 	  break;
-	case ProposalType::BRANCH_SLIDER: 
-	  continue; 		// TODO implement  
-	  break; 
 	case ProposalType::BL_DIST_WEIBULL: 
 	  proposal = make_unique< DistributionBranchLength<WeibullProposer> >();
 	  break; 
 	case ProposalType::DIV_TIME_DIRICH:
 	  proposal = make_unique<DivTimeProposal>(); 
+	  break; 
+	case ProposalType::BIASED_BL_MULT: 
+	  proposal = make_unique<BiasedBranchMult>(initBranchLengthMultiplier);
 	  break; 
 	default : 
 	  {
@@ -192,9 +207,12 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	    assert(0); 
 	  }
 	} 
+      
+      proposal->setParams(&params);
 
       if(config.wasSetByUser(p))
 	proposal->setRelativeWeight(userWeight);       
+      
       result.push_back((std::move(proposal))); 	
     }
 

@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <functional>
 
-#include "model/RateHelper.hpp"
-#include "model/DnaAlphabet.hpp"
-#include "model/AminoAcidAlphabet.hpp"
+#include "RateHelper.hpp"
+#include "DnaAlphabet.hpp"
+#include "AminoAcidAlphabet.hpp"
 
-#include "system/BoundsChecker.hpp"
-#include "system/GlobalVariables.hpp"
+#include "BoundsChecker.hpp"
+#include "GlobalVariables.hpp"
 
 #include "RevMatParameter.hpp"
 // #include "axml.h"

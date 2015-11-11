@@ -6,38 +6,22 @@
 
 class OptimizedParameter;  
 
-#include "model/Category.hpp"
-#include "mcmc/SuccessCounter.hpp" 
-#include "math/Randomness.hpp"
-#include "priors/PriorBelief.hpp"
-#include "system/GlobalVariables.hpp"
-#include "eval/LikelihoodEvaluator.hpp"
+#include "Category.hpp"
+#include "SuccessCounter.hpp" 
+#include "Randomness.hpp"
+#include "PriorBelief.hpp"
+#include "GlobalVariables.hpp"
+#include "LikelihoodEvaluator.hpp"
 #include "TreeRandomizer.hpp"
-#include "system/Serializable.hpp"
+#include "Serializable.hpp"
 #include "DistributionProposer.hpp"
 #include "GammaProposer.hpp"
-
+#include "ParameterList.hpp"
 
 
 class AbstractProposal : public Serializable
 {
-public: 
-  AbstractProposal( Category cat, std::string  _name, double weight, double minTuning, double maxTuning, bool needsFullTraversal )  ; 
-  AbstractProposal( const AbstractProposal& rhs)  ;   
-  virtual ~AbstractProposal(){}
-  AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
-
-  bool isUsingOptimizedBranches() const {return _usingOptimizedBranches; } 
-
-  std::array<bool,3> getBranchProposalMode() const ; 
-
-  // you MUST implement all virtual methods in your derived
-  // proposal. Here, the signatures are set to 0, this must not
-  // be the case in the derived proposal. This 0 keyword makes it
-  // impossible to create an instance of AbstractProposal and forces
-  // you to implement these methods, when you derive from
-  // AbstractProposal.
-
+public: 			// INHERITED METHODS 
   /**
      @brief determines the proposal, applies it to the tree / model, updates prior and hastings ratio
    */ 
@@ -57,24 +41,8 @@ public:
   virtual void autotune() = 0  ;
   
   virtual AbstractProposal* clone() const = 0;  
-  /** 
-      @brief gets the relative weight of this proposal 
-   */ 
-  double getRelativeWeight() const { return _relativeWeight; }
-  /**
-     @brief sets the relative weight of this proposal 
-   */ 
-  void setRelativeWeight(double tmp) { _relativeWeight = tmp; }
-  
+
   virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const = 0; 
-  /** 
-      @brief gets the category 
-   */ 
-  Category getCategory() const {return _category; }
-  /** 
-      @brief gets the name of the proposal 
-   */ 
-  std::string getName() const {return _name; }
   /** 
       @brief gets nodes that are invalid by executed the proposal 
    */ 
@@ -87,6 +55,61 @@ public:
      @brief inform proposal about rejection 
   */ 
   virtual void reject() {_sctr.reject();}
+
+  virtual void extractProposer(TreeAln& traln, const OptimizedParameter& param) { }
+
+  /** 
+      @brief prepare for set execution (only relevant for branch length + node slider)
+   */ 
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  = 0; 
+
+  // we need to implement these 
+  virtual void serialize( std::ostream &out)  const;  
+  virtual void deserialize( std::istream &in ) ; 
+
+  /** 
+      @brief writes proposal specific (tuned) parameters
+   */ 
+  virtual void writeToCheckpointCore(std::ostream &out)const  = 0 ;  
+  /** 
+      @brief reads proposal specific (tuned) parameters 
+   */ 
+  virtual void readFromCheckpointCore(std::istream &in) = 0; 
+
+  virtual void prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const  {} 
+
+  virtual void printParams(std::ostream &out)  const {} 
+
+public: 
+  AbstractProposal( Category cat, std::string  _name, double weight, double minTuning, double maxTuning, bool needsFullTraversal )  ; 
+  AbstractProposal(const AbstractProposal& rhs) = default; 
+  AbstractProposal& operator=(const AbstractProposal &rhs)  = default; 
+
+  virtual ~AbstractProposal(){}
+
+  bool isUsingOptimizedBranches() const {return _usingOptimizedBranches; } 
+
+  std::array<bool,3> getBranchProposalMode() const ; 
+
+  /** 
+      @brief gets the relative weight of this proposal 
+   */ 
+  double getRelativeWeight() const { return _relativeWeight; }
+  /**
+     @brief sets the relative weight of this proposal 
+   */ 
+  void setRelativeWeight(double tmp) { _relativeWeight = tmp; }
+  
+
+  /** 
+      @brief gets the category 
+   */ 
+  Category getCategory() const {return _category; }
+  /** 
+      @brief gets the name of the proposal 
+   */ 
+  std::string getName() const {return _name; }
+
   /** 
       @brief gets the success counter 
    */ 
@@ -98,11 +121,11 @@ public:
   /** 
       @brief add a parameter to be integrated over to the proposal 
    */ 
-  void addPrimaryParameter(std::unique_ptr<AbstractParameter> var) {_primaryParameters.push_back(std::move(var)) ; }
+  void addPrimaryParameter(nat id) {_primParamIds.push_back(id) ; }
   /** 
       @brief add a parameter  that is integrated over as a by-product of this proposal 
    */ 
-  void addSecondaryParameter(std::unique_ptr<AbstractParameter> var) {_secondaryParameters.push_back(std::move(var)) ; }
+  void addSecondaryParameter(nat id) {_secParamIds.push_back(id) ; }
   /** 
       @brief indicates whether this proposal needs a full traversal 
    */ 
@@ -122,35 +145,13 @@ public:
 
   std::vector<AbstractParameter*> getPrimaryParameterView() const; 
   std::vector<AbstractParameter*> getSecondaryParameterView() const ; 
-  /** 
-      @brief prepare for set execution (only relevant for branch length + node slider)
-   */ 
-  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  = 0; 
 
-  // we need to implement these 
-  virtual void serialize( std::ostream &out)  const;  
-  virtual void deserialize( std::istream &in ) ; 
-  
   void setPreparedBranch(BranchPlain b ) {_preparedBranch = b;  }
   void setOtherPreparedBranch(BranchPlain b){_preparedOtherBranch = b; }
 
   void setInSetExecution(bool exec) { _inSetExecution = exec;  }
   void setId(nat id){_id = id; }
   nat getId() const {return _id; }
-
-  /** 
-      @brief writes proposal specific (tuned) parameters
-   */ 
-  virtual void writeToCheckpointCore(std::ostream &out)const  = 0 ;  
-  /** 
-      @brief reads proposal specific (tuned) parameters 
-   */ 
-  virtual void readFromCheckpointCore(std::istream &in) = 0; 
-
-  virtual void prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const  {} 
-
-
-  virtual void printParams(std::ostream &out)  const {} 
 
   friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
 
@@ -161,14 +162,21 @@ public:
 
   nat getNumTaxNeeded() const {return _numTaxNeeded; }
 
-  virtual void extractProposer(TreeAln& traln, const OptimizedParameter& param) { }
+  
+  /* 
+     this method should not be....rather unsafe. Ideally, we'd like to
+     have a factory that produces proposals and parameters alike...
+   */ 
+  void setParams( ParameterList *params) { _allParams = params ; }
 
-protected:   
+protected:   			// ATTRIBUTES 
   std::string _name;   
   SuccessCounter _sctr; 
   Category _category; 
-  std::vector<std::unique_ptr<AbstractParameter> > _primaryParameters; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  std::vector<std::unique_ptr<AbstractParameter> > _secondaryParameters;  // as a by-product also these random variables are changed 
+
+  std::vector<nat> _primParamIds; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  std::vector<nat> _secParamIds;  // as a by-product also these random variables are changed 
+
   double _relativeWeight; 
   bool _needsFullTraversal; 
   bool _inSetExecution;
@@ -186,6 +194,8 @@ protected:
 
   nat _numTaxNeeded; 
   bool _usingOptimizedBranches; 
+
+  ParameterList* _allParams; 	// call back to chain->params ; not owned here 
 }; 
 
 #endif

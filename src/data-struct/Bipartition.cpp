@@ -5,9 +5,9 @@
 
 
 // TODO at some point improve this  
-nat Bipartition::numBits = sizeof(nat) * 8; 
-nat Bipartition::numBitsMinusOne = numBits - 1 ; // not esthetic, but efficient 
-nat Bipartition::bitShift = 5; 
+size_t Bipartition::numBits = sizeof(nat) * 8; 
+size_t Bipartition::numBitsMinusOne = numBits - 1 ; // not esthetic, but efficient 
+size_t Bipartition::bitShift = 5; 
 nat Bipartition::allOne = std::numeric_limits<nat>::max();
 std::vector<nat> Bipartition::perBitMask = {
   1u, 
@@ -83,10 +83,10 @@ bool Bipartition::operator==(const Bipartition &rhs) const
   for(nat i = 0; result && i < shortestLength; ++i)
     result &= ( bip.at(i) == rhs.bip.at(i)) ;  
   
-  for(nat i = shortestLength; result && i < bip.size(); ++i)
+  for(auto i = shortestLength; result && i < bip.size(); ++i)
     result &= ( bip.at(i) == 0 ) ; 
   
-  for(nat i = shortestLength; result && i < rhs.bip.size() ;++i)
+  for(auto i = shortestLength; result && i < rhs.bip.size() ;++i)
     result &= (rhs.bip.at(i) == 0); 
   
   return result; 
@@ -97,8 +97,8 @@ Bipartition Bipartition::operator| (const Bipartition &rhs) const
 {
   auto result = Bipartition{}; 
 
-  nat longestLength = std::max(bip.size() , rhs.bip.size()); 
-  nat shorterLength = std::min(bip.size(), rhs.bip.size()); 
+  auto longestLength = std::max(bip.size() , rhs.bip.size()); 
+  auto shorterLength = std::min(bip.size(), rhs.bip.size()); 
   
   result.bip.resize(longestLength, 0u); 
   // std::cout << "resizing to " << longestLength << std::endl; 
@@ -109,12 +109,12 @@ Bipartition Bipartition::operator| (const Bipartition &rhs) const
 
   if( bip.size() < rhs.bip.size() )
     {
-      for(nat i = shorterLength; i < longestLength; ++i)
+      for(auto i = shorterLength; i < longestLength; ++i)
 	result.bip[i] = rhs.bip[i]; 
     }
   else if(rhs.bip.size() < bip.size())
     {
-      for(nat i = shorterLength; i < longestLength; ++i)
+      for(auto i = shorterLength; i < longestLength; ++i)
 	result.bip[i] = bip[i]; 
     }
   
@@ -134,7 +134,7 @@ void Bipartition::initializeWithTaxon(nat pos, nat ranNum)
 
 
 
-void Bipartition::reserve(nat num)
+void Bipartition::reserve(size_t num)
 {
   ++num ;
   auto elemsNeeded = num / numBits + ( num % numBits > 0 ? 1 : 0  ) ; 
@@ -238,7 +238,7 @@ bool Bipartition::isSubset(const Bipartition& rhs) const
 Bipartition Bipartition::operator& (const Bipartition &rhs) const
 {
   auto result = Bipartition{}; 
-  nat shorterLength = std::min(bip.size(), rhs.bip.size()); 
+  auto shorterLength = std::min(bip.size(), rhs.bip.size()); 
   result.bip.resize(shorterLength, 0u); 
 
   for(nat i = 0; i < shorterLength; ++i)

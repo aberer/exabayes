@@ -6,7 +6,7 @@
 #include "Density.hpp"
 
 #include "common.h"
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
 // bracen copy from mrb
 static log_double logGamma (double alp)
@@ -46,21 +46,6 @@ static log_double betaFunctionLog(const std::vector<double> &alphas)
 }
 
 
-static double betaFunction(const std::vector<double> &alphas)
-{
-  double beta=1.0;
-  double sum=0;
-
-  for(auto v : alphas)
-    {
-      beta *= Density::gammaFunction(v); 
-      sum += v; 
-    }
-
-  beta /= Density::gammaFunction(sum);
-
-  return beta;
-}
 
 namespace Density
 {
@@ -82,18 +67,18 @@ namespace Density
     return density; 
   }
 
-  double dirichlet(std::vector<double> values, const std::vector<double> &alphas)
-  {
-    assert(0); 			// deprecated 
-    double density=1;  
-    density /= betaFunction(alphas);  
-    assert(fabs(std::accumulate(values.begin(), values.end(), 0.) -  1.0 )  < 1e-6); 
+  // double dirichlet(std::vector<double> values, const std::vector<double> &alphas)
+  // {
+  //   assert(0); 			// deprecated 
+  //   double density=1;  
+  //   density /= betaFunction(alphas);  
+  //   assert(fabs(std::accumulate(values.begin(), values.end(), 0.) -  1.0 )  < 1e-6); 
 
-    for(nat i=0; i< values.size(); i++)
-      density *= pow( values[i],alphas[i]-1);
+  //   for(nat i=0; i< values.size(); i++)
+  //     density *= pow( values[i],alphas[i]-1);
   
-    return density; 
-  }
+  //   return density; 
+  // }
 
   
   log_double lnExponential(double value, double lambda)
@@ -101,11 +86,12 @@ namespace Density
     return log_double::fromLog(log(lambda) - lambda * value); 
   }
 
-  double exponential(double value, double lambda)
-  {
-    assert(0); 			// deprecated 
-    return lambda * exp(- lambda * value); 
-  } 
+  // double exponential(double value, double lambda)
+  // {
+  //   assert(0); 			// deprecated 
+  //   return lambda * exp(- lambda * value); 
+  // }
+  
 
   log_double lnGamma (double x, double alpha, double beta )
   {    

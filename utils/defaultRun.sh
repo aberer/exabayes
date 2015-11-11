@@ -2,16 +2,15 @@
 
 topdir=$(dirname  $0 )/../
 
-seed=$RANDOM			# 
-# seed=2342
-seed=123
+# seed=$RANDOM			# 
+seed=1293873
 
 # src/proposals/
 numProc=2
 withTree=0
 
 # extraArgs=" -S "
-extraArgs=" "  
+extraArgs="    "  
 
 doParse=0
 
@@ -107,7 +106,7 @@ case $mode in
     valgrind)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -hold -e valgrind --show-reachable=yes --leak-check=full --tool=memcheck  " #    --leak-check=full --track-origins=yes
+	gdb="$TERM -hold -e valgrind --track-origins=yes --show-reachable=yes --leak-check=full --tool=memcheck  " #    --leak-check=full --track-origins=yes
 	;;
     *)
 	echo "mode must be debug, default or valgrind"

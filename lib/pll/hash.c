@@ -28,7 +28,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include "hash.h"
+#include "pll.h"
 #include "mem_alloc.h"
 
 /** @brief Generate the hash value for a string 

@@ -1,7 +1,7 @@
 #ifndef _LOCAL_SWAP_HPP
 #define _LOCAL_SWAP_HPP
 
-#include "comm/AbstractPendingSwap.hpp" 
+#include "AbstractPendingSwap.hpp" 
 
 #include <iostream>
 
@@ -11,8 +11,15 @@ class LocalSwap :  public AbstractPendingSwap
 public: 
   LocalSwap( SwapElem elem )
     : AbstractPendingSwap(elem)
+    , _plPtr{nullptr}
     , _haveReceived(false)
+    , _dataReceived{}
+    , _runid{0}
   { }
+
+  LocalSwap(const LocalSwap& rhs) = default ; 
+  LocalSwap& operator=(const LocalSwap &rhs) ; 
+    
 
   virtual std::vector<char> getRemoteData()  const ; 
   virtual bool isFinished()  ;   

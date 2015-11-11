@@ -11,6 +11,9 @@
 /* only to be disabled for benchmarking! */
 #define USE_NONBLOCKING_COMM
 
+#define FLOAT_IS_INITIALIZED(x) ( std::fabs(x) > std::numeric_limits<double>::epsilon()  )
+
+
 #define USE_SSE ( defined(HAVE_SSE3) &&  ! defined(MANUAL_SSE_OVERRIDE) ) 
 #define USE_AVX ( defined(HAVE_AVX) && ! defined(MANUAL_AVX_OVERRIDE) && ! defined(MANUAL_SSE_OVERRIDE) )
 
@@ -41,6 +44,9 @@ typedef unsigned int nat;
 /* some global switches */ 
 
 /* #define _EXPERIMENTAL_INTEGRATION_MODE */
+/* #define _GO_TO_TREE_MOVE_INTEGARTION */
+/* #define _GO_TO_INTEGRATION_MODE */
+
 
 #define _DISABLE_INIT_LNL_CHECK
 
@@ -51,11 +57,19 @@ typedef unsigned int nat;
 /* #define PRINT_EVAL_CHOICE */
 
 /* debugging */
-/* #define DEBUG_SHOW_EACH_PROPOSAL */
+
+/* verification */
 /* #define DEBUG_LNL_VERIFY */
 /* #define DEBUG_VERIFY_LNPR */
 
 /* many print statements  */
+
+/* #define DEBUG_SHOW_EACH_PROPOSAL */
+/* #define PRINT_LIKESPR_INFO */
 /* #define LNL_PRINT_DEBUG */
+
+
+/* TODO !!!  */
+/* #define DANGEROUS_LNL_SHORTCUT_OFF */
 
 #endif

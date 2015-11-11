@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>ExaBayes User's Manual</title>
-<!-- 2014-07-09 Mi 15:32 -->
+<!-- 2014-08-26 Di 19:23 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="for support, please contact exabayes-at-googlegroups-dot-com" />
@@ -210,7 +210,7 @@ for the JavaScript code in this tag.
 <li><a href="#param-block">6.1. Declaring and Linking Parameters</a></li>
 <li><a href="#sec-6-2">6.2. Declaring Priors for Parameters</a></li>
 <li><a href="#sec-6-3">6.3. Configuring the Run</a></li>
-<li><a href="#sec-6-4">6.4. Configuring Proposals</a></li>
+<li><a href="#proposal-config">6.4. Configuring Proposals</a></li>
 </ul>
 </li>
 <li><a href="#prepost">7. Pre-/post-processing utilities</a>
@@ -233,7 +233,9 @@ for the JavaScript code in this tag.
 </ul>
 </li>
 <li><a href="#partitionfile">9. File Format: Model/Partitioning file</a></li>
-<li><a href="#sec-10">10. References</a></li>
+<li><a href="#sec-10">10. Trading mixing efficiency versus runtime</a></li>
+<li><a href="#sec-11">11. Citation</a></li>
+<li><a href="#sec-12">12. References</a></li>
 </ul>
 </div>
 </div>
@@ -561,7 +563,6 @@ configure flags "&#x2013;disable-avx", etc.
 </div>
 </div>
 </div>
-
 
 <div id="outline-container-sec-4" class="outline-2">
 <h2 id="sec-4"><span class="section-number-2">4</span> Tutorial and Workflow</h2>
@@ -1404,9 +1405,9 @@ frequency is <b>checkPointInterval</b>.
 </p>
 
 <p>
-If you do not specify starting trees, then ExaBayes uses random
-trees as initial topology. If you set <b>parsimonyStart</b> to <code>true</code>,
-a parsimony starting tree will be used instead (recommendable).
+By default, ExaBayes starts from a random-order addition parsimony
+tree. If you want to start from a purely random topology, set
+<b>parsimonyStart</b> to <code>false</code>.
 </p>
 
 <p>
@@ -1539,9 +1540,10 @@ as the cold chain, set <b>heatedChainsUseSame</b> to <code>true</code>.
 </div>
 </div>
 
-<div id="outline-container-sec-6-4" class="outline-3">
-<h3 id="sec-6-4"><span class="section-number-3">6.4</span> Configuring Proposals</h3>
-<div class="outline-text-3" id="text-6-4">
+<div id="outline-container-proposal-config" class="outline-3">
+<h3 id="proposal-config"><a id="sec-6-4" name="sec-6-4"></a><span class="section-number-3">6.4</span> Configuring Proposals</h3>
+<div class="outline-text-3" id="text-proposal-config">
+
 <p>
 ExaBayes allows you to configure proposals that are used to move
 your chains through the parameter space. For each proposal, a
@@ -1583,7 +1585,7 @@ relative to runtime (so no modifications are necessary).
 <td class="left"><b>nodeSlider</b></td>
 <td class="left">node slider</td>
 <td class="left">branch lengths</td>
-<td class="right">5</td>
+<td class="right">0</td>
 </tr>
 
 <tr>
@@ -1597,35 +1599,42 @@ relative to runtime (so no modifications are necessary).
 <td class="left"><b>branchMulti</b></td>
 <td class="left">multiplier on branch lengths</td>
 <td class="left">branch lengths</td>
-<td class="right">15</td>
+<td class="right">0</td>
 </tr>
 
 <tr>
 <td class="left"><b>eTBR</b></td>
 <td class="left">extending tree bisection and reconnection (eTBR)</td>
 <td class="left">topology</td>
-<td class="right">5</td>
+<td class="right">0</td>
 </tr>
 
 <tr>
 <td class="left"><b>eSPR</b></td>
 <td class="left">extending subtree pruning and regrafting (eSPR)</td>
 <td class="left">topology</td>
-<td class="right">5</td>
+<td class="right">6</td>
 </tr>
 
 <tr>
 <td class="left"><b>parsimonySPR</b></td>
 <td class="left">parsimony-biased subtree pruning and regrafting</td>
 <td class="left">topology</td>
-<td class="right">5</td>
+<td class="right">6</td>
 </tr>
 
 <tr>
 <td class="left"><b>stNNI</b></td>
 <td class="left">stochastic nearest neighbor interchange</td>
 <td class="left">topology</td>
-<td class="right">5</td>
+<td class="right">6</td>
+</tr>
+
+<tr>
+<td class="left"><b>likeSPR</b></td>
+<td class="left">a posterior-guided SPR</td>
+<td class="left">topology</td>
+<td class="right">2</td>
 </tr>
 
 <tr>
@@ -1676,6 +1685,20 @@ relative to runtime (so no modifications are necessary).
 <td class="left">amino acid model</td>
 <td class="right">1</td>
 </tr>
+
+<tr>
+<td class="left"><b>blDistGamma</b></td>
+<td class="left">Newton-Raphson-based branch length proposal employing a Gamma distribution</td>
+<td class="left">branch lengths</td>
+<td class="right">9</td>
+</tr>
+
+<tr>
+<td class="left"><b>blDistWeibull</b></td>
+<td class="left">Newton-Raphson-based branch length proposal employing a Weibull distribution (not recommended)</td>
+<td class="left">branch lengths</td>
+<td class="right">0</td>
+</tr>
 </tbody>
 </table>
 
@@ -1712,6 +1735,31 @@ decreased, the probability that trees with low parsimony score are
 proposed will get higher.  
 </p>
 
+<p>
+The posterior-guided SPR move is particularly expensive, since after
+pruning, it evaluates all reattachment locations in a radius
+(specified by <code>likeSprMaxRadius</code>) and uses a score based on the
+posterior to propose a SPR move. How heavily ExaBayes relies on this
+score can be quantified with <code>likeSprWrap</code> (e.g., choose a
+likeSprWrap = 0.1 or 0.01 to give topological changes that decrease
+the posterior by -10 resp. -100 log-units a reasonable chance of
+being proposed).
+</p>
+
+<p>
+<code>moveOptMode</code> allows you to enhance topological proposals by
+simultaneously proposing branch lengths along with topology (turned
+off by default). Value 1 means that one branch that is remapped by
+any NNI/SPR will be proposed. For moveOptMode = 2, all branches that
+are traversed by a moving subtree will be proposed. For moveOptMode
+= 3, we additionally propose two branches adjacent and for
+moveOptMode = 4, adjacent subtrees (e.g., also the root branch of
+the moving subtree) will be proposed. By default, the NR-based Gamma
+distribution proposal is used, if useMultiplier is <code>true</code>, then a
+multiplier is used instead (not recommended).
+</p>
+
+
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -1744,7 +1792,27 @@ proposed will get higher.
 
 <tr>
 <td class="left"><b>parsSprRadius</b></td>
-<td class="right">\(\lfloor 2 \cdot log(n) \rfloor\)</td>
+<td class="right">\(\lfloor 2 \cdot \log(n) \rfloor\)</td>
+</tr>
+
+<tr>
+<td class="left"><b>useMultilier</b></td>
+<td class="right">false</td>
+</tr>
+
+<tr>
+<td class="left"><b>moveOptMode</b></td>
+<td class="right">0</td>
+</tr>
+
+<tr>
+<td class="left"><b>likeSprMaxRadius</b></td>
+<td class="right">\(\lceil \log_2(n) \rceil\)</td>
+</tr>
+
+<tr>
+<td class="left"><b>likeSprWrap</b></td>
+<td class="right">1.0</td>
 </tr>
 </tbody>
 </table>
@@ -2250,6 +2318,12 @@ characters, partitions, (coupled) chains and runs are assigned to
 each processor.  For efficiency it is important that the option
 <code>proposalSets</code> is by default set to <code>true</code> (default).
 </p>
+
+<p>
+For assigning data (possibly a huge number of partitions) to
+processors, ExaBayes employs the same algorithm as
+ExaML <a href='manual.html#sec-9'>[9]</a>.
+</p>
 </div>
 </div>
 
@@ -2367,8 +2441,107 @@ require less computational resources.
 </div>
 
 <div id="outline-container-sec-10" class="outline-2">
-<h2 id="sec-10"><span class="section-number-2">10</span> References</h2>
+<h2 id="sec-10"><span class="section-number-2">10</span> Trading mixing efficiency versus runtime</h2>
 <div class="outline-text-2" id="text-10">
+<p>
+As of version 1.4, ExaBayes comes with more advanced guided
+proposals that have considerable runtime requirements. If you have
+trouble achieving convergence on your dataset, you may want to
+increase the usage of these expensive proposals. On the other hand,
+if you find your dataset to be easily resolvable and you want as
+many samples from your runtime as possible, you may want to switch
+to cheaper proposals. Here, we explain your options for both cases
+(see Section <a href="#proposal-config">6.4</a> for information on how to configure
+proposals).
+</p>
+
+<p>
+In certain cases, we have observed that the NR-based Gamma proposal
+(<code>blDistGamma</code>) increases the probability that chains get stuck
+(specifically, if started from a random tree). Here, it may be
+useful to run ExaBayes with the default branch length proposal
+configuration of version 1.3 (branch length multiplier with weight
+15, node slider with weight 5, <code>blDistGamma</code> with weight 0).
+</p>
+
+<p>
+Currently, the posterior-guided SPR (<code>likeSPR</code>) has a rather low
+weight, because of its excessive runtime costs. If runtime is not a
+problem, we recommend to increase the weight of this proposal on
+hard datasets. For instance, you may want to go for a configuration
+that only uses the parsimony-guided SPR and the posterior-guided
+SPR, both with weight 10 (list remainder topology proposals and set
+its weight to 0). This setting allowed us to resolve hard datasets
+with up to 500 taxa which could not be resolved with the previously
+implemented proposals. The radius of the posterior-guided SPR is an
+important factor concerning runtime/mixing efficiency. In principle
+it suffices to set it as large as the largest SPR move that you
+expect (e.g., assume you know that an unstable subtree usually has
+regrafting locations in a radius of 3 around the pruning
+location). Radii should be chosen based upon the dual logarithm of
+the number of taxa in your tree (start out with this value and
+modify).
+</p>
+
+<p>
+You may want to turn the posterior-guided SPR off and switch back to
+default config from ExaBayes 1.3. For doing so, enable the <code>eTBR</code>,
+<code>eSPR</code>, <code>stNNI</code> and <code>parsSPR</code> and assign a weight of 5 to them (0
+for <code>likeSPR</code>). We specifically do not recommend the <code>eTBR</code>, since
+true TBR moves (that are not actually SPR or NNI moves) are rarely
+accepted.
+</p>
+
+<p>
+Proposing branch lengths simultaneously with topology (<code>moveOptode</code>
+&gt; 0 ) may in some cases increase convergence behavior and may allow
+extremely accurate estimates of split posterior
+probabilities. However, specifically in the presence of a
+posterior-guided SPR move, this option becomes very expensive (and
+thus the radius for the <code>likeSPR</code> should be chosen conservatively).
+</p>
+
+<p>
+A cheap option to decrease burn-in time and potentially to increase
+mixing efficiency is to increase the radius of the parsimony guided
+SPR. Since, computing the parsimony score is very cheap, you do not
+have to expect considerable runtime penalties for using arbitrarily
+high values here (generally recommended).
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-11" class="outline-2">
+<h2 id="sec-11"><span class="section-number-2">11</span> Citation</h2>
+<div class="outline-text-2" id="text-11">
+<p>
+ExaBayes has been published in <a href="http://mbe.oxfordjournals.org/content/early/2014/08/16/molbev.msu236.abstract">Molecular Biology and Evolution</a>.
+</p>
+
+<p>
+The respective BibTex entry for citing the advance online
+publication is:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-TEXT">@article{aberer2014exabayes,
+  title={ExaBayes: Massively Parallel Bayesian Tree Inference for 
+  the Whole-Genome Era},
+  author={Aberer, Andre J and Kobert, Kassian and Stamatakis, Alexandros},
+  journal={Molecular Biology and Evolution},
+  pages={msu236},
+  year={2014},
+  publisher={Oxford University Press}
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-12" class="outline-2">
+<h2 id="sec-12"><span class="section-number-2">12</span> References</h2>
+<div class="outline-text-2" id="text-12">
 <iframe width="100%" src="library2.html"></iframe>
 
 <hr  />

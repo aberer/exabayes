@@ -4,11 +4,11 @@
 #include <vector>
 #include <memory>
 
-#include <mpi.h>
+#include "MpiType.hpp"
 
-#include "comm/RemoteComm.hpp"
+#include "RemoteComm.hpp"
 
-#include "comm/CommRequest.hpp"
+#include "CommRequest.hpp"
 
 class CommRequest::Impl
 {

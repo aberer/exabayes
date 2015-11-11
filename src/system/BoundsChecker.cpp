@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cassert>
 
-#include "model/Branch.hpp"
+#include "Branch.hpp"
 
 #include "BoundsChecker.hpp"
 #include "GlobalVariables.hpp"
@@ -71,7 +71,7 @@ bool BoundsChecker::checkRevmat( const std::vector<double> &rates)
       result &=  prob ; 
     }
 
-  if(rates.back() != 1.)
+  if( std::fabs(rates.back() - 1. )  > std::numeric_limits<double>::epsilon() )
     {
       tout << "error: last state was "<< MAX_SCI_PRECISION << rates.back() << std::endl; 
       assert(0) ;
@@ -146,7 +146,7 @@ void BoundsChecker::correctFrequencies( std::vector<double> &frequencies)
 
   // determine number of freqs that are not okay 
   int numberOkay = 0; 
-  double sum = 0;  
+  auto  sum = double(0);  
   for(auto &f : frequencies)
     {
       if(f < BoundsChecker::freqMin) 
@@ -155,11 +155,11 @@ void BoundsChecker::correctFrequencies( std::vector<double> &frequencies)
 	  ++numberOkay; 
     }
 
-  sum = 1 - (frequencies.size() - numberOkay )  * BoundsChecker::freqMin; 
+  sum = 1. - (static_cast<double>(frequencies.size()) - numberOkay )  * BoundsChecker::freqMin; 
 
   // renormalize again 
   for(auto &f : frequencies)
-    if(f != BoundsChecker::freqMin) 
+    if(  std::fabs(f -  BoundsChecker::freqMin) > std::numeric_limits<double>::epsilon() ) 
 	f /= sum; 
   
   // check to be sure that they add up to 1 

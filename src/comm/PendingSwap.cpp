@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "PendingSwap.hpp"
 
 #include "ParallelSetup.hpp"
@@ -5,12 +7,13 @@
 
 #include "PendingSwapImpl.hpp"
 
-#include "system/extensions.hpp"
+#include "extensions.hpp"
 
-#include "comm/LocalSwap.hpp"
+#include "LocalSwap.hpp"
 
 
 PendingSwap::PendingSwap( SwapElem swap, bool isLocal )
+  : _impl{nullptr}
 {
   if(isLocal)
     _impl = make_unique<LocalSwap>(swap) ;

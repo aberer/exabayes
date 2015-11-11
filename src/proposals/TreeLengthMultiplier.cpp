@@ -1,25 +1,29 @@
 
-#include "system/BoundsChecker.hpp"
+#include "BoundsChecker.hpp"
+
 #include "TreeLengthMultiplier.hpp"
-#include "math/Randomness.hpp"
-#include "model/TreeAln.hpp"
-#include "priors/UniformPrior.hpp"
-#include "priors/AbstractPrior.hpp"
+#include "Randomness.hpp"
+#include "TreeAln.hpp"
+#include "UniformPrior.hpp"
+#include "AbstractPrior.hpp"
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
   : AbstractProposal(Category::BRANCH_LENGTHS, "TL-Mult", 1., 0.0001, 100, true)
   , multiplier(_multiplier)    
+  , initTreeLength{0.}
+  , storedBranches{}
 {
 }
-
 
 void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   storedBranches.clear(); 
-  
-  auto blParam = _primaryParameters[0].get(); 
 
-  assert(_primaryParameters.size() == 1); 
+  assert(_primParamIds.size() == 1); 
+  auto blParam = (*_allParams)[_primParamIds[0]]; 
+  // getPrimaryParameterView()[0]; 
+
+
 
   storedBranches = traln.extractBranches(blParam);
 
@@ -34,7 +38,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, log_
   for(auto &b : newBranches)
     {
       auto initLength = b.getLength();
-      initTL += b.getInterpretedLength(traln, blParam);
+      initTL += b.getInterpretedLength( blParam);
 
       b.setLength(  pow(initLength, treeScaler) ); 
       
@@ -45,7 +49,7 @@ void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, log_
 
       hastings *= log_double::fromAbs(realScaling); 
 
-      double tmp = b.getInterpretedLength(traln, blParam); 
+      double tmp = b.getInterpretedLength( blParam); 
       newTL += tmp;
       
       // correct? 
@@ -88,8 +92,8 @@ void TreeLengthMultiplier::autotune()
  
 void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  assert(_primaryParameters.size( )== 1); 
-  auto parts = _primaryParameters[0]->getPartitions(); 
+  assert(_primParamIds.size( )== 1); 
+  auto parts = _allParams->at(_primParamIds[0])->getPartitions(); 
 
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL-CHOICE " << branchSuggestion << std::endl; 

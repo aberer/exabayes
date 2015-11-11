@@ -1,5 +1,5 @@
-#include "comm/threads/MessageQueueSingle.hpp"
-#include "system/GlobalVariables.hpp" 
+#include "MessageQueueSingle.hpp"
+#include "GlobalVariables.hpp" 
 #include <algorithm>
 
 

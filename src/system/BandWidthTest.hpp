@@ -2,7 +2,7 @@
 #define _BAND_WIDTH_TEST
 
 #include "common.h"
-#include "comm/Communicator.hpp"
+#include "Communicator.hpp"
 
 class BandWidthTest
 {

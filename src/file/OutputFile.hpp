@@ -7,6 +7,13 @@
 class OutputFile
 {
 public: 
+  OutputFile()
+    : fullFileName{""}
+  {
+  }
+
+  virtual ~OutputFile(){}
+
   static void rejectIfExists(std::string fileName); 
   void rejectIfNonExistant(std::string fileName); 
   // TODO portability 

@@ -1,5 +1,5 @@
 #include "DiscreteModelPrior.hpp"
-#include "model/ProtModel.hpp"
+#include "ProtModel.hpp"
 
 
 DiscreteModelPrior:: DiscreteModelPrior(std::unordered_map<ProtModel,double> model)
@@ -17,21 +17,22 @@ ParameterContent DiscreteModelPrior::getInitialValue() const
 } 
 
 
-double DiscreteModelPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param , double myOld, double myNew ) const 
+log_double DiscreteModelPrior::accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param , double myOld, double myNew ) const 
 {
   assert(0); 
+  return log_double::fromAbs(0);
 }
 
  
 // TODO bool uniform 
-ParameterContent DiscreteModelPrior::drawFromPrior(Randomness &rand, bool uniform)  const 
+ParameterContent DiscreteModelPrior::drawFromPrior(Randomness &rand)  const 
 {
   auto modelList = std::vector<ProtModel>{}; 
   for(auto &v : _modelProbs)
-    if( std::get<1>(v) != 0 )
+    if( FLOAT_IS_INITIALIZED(std::get<1>(v)) )
       modelList.push_back(std::get<0>(v)); 
 
-  nat index = rand.drawIntegerOpen(modelList.size())  ; 
+  auto index = rand.drawIntegerOpen(int(modelList.size()))  ; 
   
   auto result = ParameterContent{}; 
   result.protModel.push_back(modelList.at(index));

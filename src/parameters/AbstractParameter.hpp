@@ -1,18 +1,30 @@
 #ifndef _ABSTRACT_PARAMETER
 #define _ABSTRACT_PARAMETER
 
-#include "model/TreeAln.hpp"
+#include "TreeAln.hpp"
 #include "ParameterContent.hpp"
-#include "priors/AbstractPrior.hpp"
+#include "AbstractPrior.hpp"
+#include "ParamAttribute.hpp"
+
+#include "Serializable.hpp"
 
 enum class Category; 
 
-class AbstractParameter
+class AbstractParameter : public Serializable
 {
+public: 			// INHERITED METHDOS 
+  virtual void deserialize( std::istream &in ) {} // generally, there is nothing to do ... 
+  virtual void serialize( std::ostream &out) const {}
+
 public:   
   AbstractParameter(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat paramPrio); 
   AbstractParameter(const AbstractParameter& rhs); 
 
+  // TODO we should just cast to BranchLengthParameter and make this specific to branch length parameter ... 
+  virtual double getMeanSubstitutionRate()  const {assert(0) ; return 0 ; }
+  virtual void updateMeanSubstRate(const TreeAln& traln) {assert(0); }
+  virtual void setMeanSubstitutionRate(double fac) {assert(0); }
+  
   /** 
       @brief applies the parameter content to the tree 
    */ 
@@ -66,6 +78,9 @@ public:
   virtual void checkSanityPartitionsAndPrior(const TreeAln &traln) const ; 
 
   nat getParamPriority() const {return _paramPriority; } 
+
+  virtual ParamAttribute   getAttributes() const {assert(0) ; return ParamAttribute(); } // currently only used for tuning of branch length parameter 
+  virtual void setAttributes(  ParamAttribute attr) {assert(0) ; } // same here 
 
 protected: 			// METHODS
   void checkSanityPartitionsAndPrior_FreqRevMat(const TreeAln &traln) const ; 

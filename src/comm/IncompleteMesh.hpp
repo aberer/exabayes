@@ -9,7 +9,7 @@
 class IncompleteMesh
 {
 public: 
-  IncompleteMesh(nat size, nat runDimSize, nat chainDimSize); 
+  IncompleteMesh(size_t size, size_t runDimSize, size_t chainDimSize); 
   /** 
       @brief gets the rank from coordinates in this mesh 
    */ 
@@ -25,8 +25,8 @@ public:
    */ 
   nat getNumRanksInDim(nat runBatchId, nat chainBatchId) const ;   
 
-  nat getRunDimSize() const {return _runDimSize; }
-  nat getChainDimSize() const {return _chainDimSize; }
+  size_t getRunDimSize() const {return _runDimSize; }
+  size_t getChainDimSize() const {return _chainDimSize; }
   
 
 private: 			// METHODS 
@@ -39,16 +39,16 @@ private: 			// METHODS
       @param total -- total  number of elements 
       @paarm dimSize -- size of the dimension
    */ 
-  std::tuple<nat,nat> getElementsPerDimension(nat total, nat dimSize) const ; 
-  nat getProcsInMyDim(nat rank, nat total, nat dimSize ) const ; 
-  nat getMyCoord(nat rank, nat total, nat dimSize ) const ; 
-  nat getRankInMyDim(nat rank, nat total, nat dimSize) const ; 
+  std::tuple<size_t,size_t> getElementsPerDimension(size_t total, size_t dimSize) const ; 
+  size_t getProcsInMyDim(nat rank, size_t total, size_t dimSize ) const ; 
+  nat getMyCoord(nat rank, size_t total, size_t dimSize ) const ; 
+  nat getRankInMyDim(nat rank, size_t total, size_t dimSize) const ; 
   friend std::ostream& operator<<(std::ostream& out, const IncompleteMesh& rhs); 
 
 private: 			// ATTRIBUTES
-  nat _runDimSize; 
-  nat _chainDimSize; 
-  nat _globalSize;
+  size_t _runDimSize; 
+  size_t _chainDimSize; 
+  size_t _globalSize;
 };  
 
 #endif

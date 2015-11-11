@@ -1,47 +1,28 @@
 #include "AbstractProposal.hpp"
+#include "ParameterList.hpp"
 
 
 AbstractProposal::AbstractProposal( Category cat, std::string name,double weight, double minTuning, double maxTuning, bool needsFullTraversal )  
   : _name(name)
+  , _sctr{}
   , _category(cat)
+  , _primParamIds{}
+  , _secParamIds{}
   , _relativeWeight(weight)
   , _needsFullTraversal(needsFullTraversal)
   , _inSetExecution(false)
+  , _preparedBranch(0,0)
+  , _preparedOtherBranch(0,0)
+  , _id{0}
   , _forProteinOnly(false)
   , _minTuning{minTuning}
   , _maxTuning{maxTuning}
   , _numTaxNeeded{4}
   , _usingOptimizedBranches(false)
+  , _allParams( nullptr ) 	// do not like 
+  // the proper way to initialize everything is probably a factory... 
 {
 } 
-
-
-AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
-  : _sctr(rhs._sctr)
-  , _category(rhs._category)
-  , _relativeWeight(rhs._relativeWeight)
-  , _needsFullTraversal(rhs._needsFullTraversal)
-  , _inSetExecution(rhs._inSetExecution)
-  , _id(rhs._id)
-  , _forProteinOnly(rhs._forProteinOnly)
-  , _minTuning{rhs._minTuning}
-  , _maxTuning{rhs._maxTuning}
-  , _numTaxNeeded{rhs._numTaxNeeded}
-  , _usingOptimizedBranches(rhs._usingOptimizedBranches)
-{
-  this->_name = rhs._name; 
-
-  for(auto &v : rhs._primaryParameters)
-    _primaryParameters.emplace_back(v->clone()); 
-  for(auto &v : rhs._secondaryParameters)
-    _secondaryParameters.emplace_back(v->clone()); 
-}
-
-
-// void AbstractProposal::updateHastingsLog(double &hastings, double logValueToAdd, std::string whoDoneIt) 
-// {
-//   hastings += logValueToAdd; 
-// }
 
 
 std::ostream& AbstractProposal::printShort(std::ostream &out)  const 
@@ -49,26 +30,28 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
   out << _name << "( " ;  
     
   bool isFirst = true; 
-  for(auto &v : _primaryParameters)
+  for(auto &v : _primParamIds)
     {
+      // tout << "trying to print "  << v << std::endl; 
       if(not isFirst)
 	out << ","; 
       else 
 	isFirst = false; 
-      v->printShort(out); 
+      auto p = _allParams->at(v); 
+      p->printShort(out); 
     }
 
-  if(_secondaryParameters.size() > 0)
+  if(_secParamIds.size() > 0)
     {
       out << ";"; 
       isFirst = true; 
-      for(auto &v : _secondaryParameters)
+      for(auto &v : _secParamIds)
 	{
 	  if(not isFirst)
 	    out << ","; 
 	  else 
 	    isFirst = false; 
-	  v->printShort(out); 
+	  _allParams->at(v)->printShort(out); 
 	}
     }
 
@@ -82,9 +65,9 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
 std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 {
   out << _name  << "(" ; 
-  assert(_primaryParameters.size() == 1); 
+  assert(_primParamIds.size() == 1); 
   bool isFirst= true; 
-  for (auto v : _primaryParameters[0]->getPartitions()) 
+  for (auto v : _allParams->at(_primParamIds[0])->getPartitions()) 
     {
       if( not isFirst)
 	out << ","; 
@@ -101,14 +84,14 @@ std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs)
 {
   out << rhs._name  << std::endl
       << "\tintegrating:\t"; 
-  for(auto &r : rhs._primaryParameters)
-    out << r.get() << ", "  ; 
+  for(auto &r : rhs._primParamIds)
+    out << rhs._allParams->at(r) << ", "  ; 
   
-  if(not rhs._secondaryParameters.empty() )
+  if(not rhs._secParamIds.empty() )
     {
       out << std::endl << "\talso modifying:\t" ; 
-      for(auto &r : rhs._secondaryParameters ) 
-	out << r.get() << ",\t" ; 
+      for(auto &r : rhs._secParamIds ) 
+	out << rhs._allParams->at(r) << ",\t" ; 
     }
   return out; 
 }
@@ -123,9 +106,6 @@ void AbstractProposal::serialize( std::ostream &out)   const
 
 void AbstractProposal::deserialize( std::istream &in )
 {
-  // auto id = cRead<decltype(_id)>(in); 
-  // std::cout << "read id " << id << ", expected " << _id << std::endl; 
-  // assert(id == _id); 
   _sctr.deserialize(in); 
   readFromCheckpointCore(in); 
 }
@@ -134,17 +114,17 @@ void AbstractProposal::deserialize( std::istream &in )
 std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() const
 {
   auto result = std::vector<AbstractParameter*> {}; 
-  for(auto &v : _primaryParameters)
-    result.push_back(v.get()); 
+  for(auto &v : _primParamIds)
+    result.push_back( _allParams->at(v)); 
   return result; 
 }
 
  
 std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() const 
 {
-  std::vector<AbstractParameter*> result; 
-  for(auto &v : _secondaryParameters)
-    result.push_back(v.get()); 
+  auto result = std::vector<AbstractParameter*>{}; 
+  for(auto &v : _secParamIds)
+    result.push_back( _allParams->at(v)); 
   return result; 
 }
 
@@ -152,21 +132,21 @@ std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() co
 std::vector<AbstractParameter*> AbstractProposal::getBranchLengthsParameterView() const 
 {
   auto result = std::vector<AbstractParameter*> {}; 
-  for(auto &p : _primaryParameters)
-    if(p->getCategory() == Category::BRANCH_LENGTHS)
-      result.push_back(p.get()); 
+  for(auto &p : _primParamIds)
+    if(_allParams->at(p)->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(_allParams->at(p)); 
 
-  for(auto &p : _secondaryParameters ) 
-    if(p->getCategory() == Category::BRANCH_LENGTHS)
-      result.push_back(p.get());
+  for(auto &p : _secParamIds ) 
+    if(_allParams->at(p)->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(_allParams->at(p));
   return result; 
 } 
 
 
 std::vector<nat> AbstractProposal::getAffectedPartitions() const 
 {
-  assert(_primaryParameters.size() == 1); 
-  return _primaryParameters[0]->getPartitions();
+  assert( _primParamIds.size() == 1); 
+  return _allParams->at(_primParamIds[0])->getPartitions();
 } 
 
 
@@ -224,7 +204,7 @@ double AbstractProposal::tuneParameter(int batch, double accRatio, double parame
   double delta = 1.0 / sqrt(batch + 1 );
   // delta = 0.1 < delta ? 0.1 : delta;
 
-  assert(_minTuning != 0  || _maxTuning != 0 ); 
+  assert(  FLOAT_IS_INITIALIZED(_minTuning)  || FLOAT_IS_INITIALIZED( _maxTuning) ); 
 
   double logTuning = log(parameter);
   
