@@ -1,64 +1,76 @@
 #include "axml.h"
 
+
 #include "BoundsChecker.hpp"
 #include "TreeLengthMultiplier.hpp"
 #include "Randomness.hpp"
 #include "TreeAln.hpp"
 #include "tune.h"
-
-
+#include "priors/UniformPrior.hpp"
+#include "priors/AbstractPrior.hpp"
 
 TreeLengthMultiplier::TreeLengthMultiplier( double _multiplier)
-  : multiplier(_multiplier)    
+  : AbstractProposal(Category::BRANCH_LENGTHS, "TL-Mult", 2.)
+  , multiplier(_multiplier)    
 {
-  this->name = "TL-Mult"; 
-  category = Category::BRANCH_LENGTHS; 
-  relativeWeight = 2 ;
 }
 
 
-void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+void TreeLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
   storedBranches.clear(); 
-  storedBranches = traln.extractBranches();
+  
+  auto blParam = _primaryParameters[0].get(); 
 
-  std::vector<Branch> newBranches = storedBranches; 
+  assert(_primaryParameters.size() == 1); 
+
+  storedBranches = traln.extractBranches(blParam);
+
+  auto  newBranches = storedBranches; 
   
   double treeScaler = rand.drawMultiplier(multiplier); 
-  double initTL = 1; 
-  double newTL = 1; 
-  // std::cout << "drew " <<  treeScaler << std::endl; 
+  double initTL = 0; 
+  double newTL = 0; 
+
+  auto haveUniformPrior = dynamic_cast<UniformPrior*>(blParam->getPrior()) != nullptr;
 
   for(auto &b : newBranches)
     {
       auto initLength = b.getLength();
-      initTL *= initLength; 
+      initTL += b.getInterpretedLength(traln, blParam);
 
       b.setLength(  pow(initLength, treeScaler) ); 
       
       if( not BoundsChecker::checkBranch(b))
+	BoundsChecker::correctBranch(b);
+
+      double realScaling = log(b.getLength()) / log(initLength); 
+      AbstractProposal::updateHastingsLog(hastings, log(realScaling), "TL-multi"); 
+      double tmp = b.getInterpretedLength(traln, blParam); 
+      newTL += tmp;
+
+      if(haveUniformPrior && blParam->getPrior()->getLogProb(ParameterContent{{tmp}})  == - std::numeric_limits<double>::infinity())
 	{
-	  // std::cout << "correction!" << std::endl; 
-	  BoundsChecker::correctBranch(b);
+	  // tout << "danger: problematic length " << tmp << std::endl; 
+	  prior.addToRatio( - std::numeric_limits<double>::infinity()); 
 	}
-      
-      double realScaling = log(b.getLength())  /  log(initLength); 
-      updateHastings(hastings, realScaling, "TL-multi"); 
-      newTL *= b.getLength(); 
     }
 
   for(auto &b : newBranches)
-    traln.setBranch(b);
+    traln.setBranch(b, blParam);
 
-  auto brPr = primVar[0]->getPrior(); 
-  prior.updateBranchLengthPrior(traln, initTL, newTL, brPr);
+  if(not haveUniformPrior)
+    prior.addToRatio(blParam->getPrior()->getLogProb( ParameterContent{{ newTL} }  )  - blParam->getPrior()->getLogProb( ParameterContent{{ initTL} } )  ); 
 }
 
 
-void TreeLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior)  
+void TreeLengthMultiplier::resetState(TreeAln &traln)  
 {
+  auto blParams = getPrimaryParameterView(); 
+  assert(blParams.size( )== 1 ) ;
+  auto blParam = blParams[0]; 
   for(auto &b : storedBranches)
-    traln.setBranch(b); 
+    traln.setBranch(b, blParam); 
 } 
 
 
@@ -66,22 +78,24 @@ void TreeLengthMultiplier::autotune()
 {
   double parameter = multiplier; 
 
-  double newParam = tuneParameter(sctr.getBatch(), sctr.getRatioInLastInterval(), parameter, FALSE);
-
-#ifdef DEBUG_PRINT_TUNE_INFO
-  std::cout << name << ": with ratio " << sctr.getRatioInLastInterval()
-	    << ": "<< ((newParam < parameter ) ? "reducing" : "increasing") <<  "\t" << parameter << "=>" << newParam << std::endl; 
-#endif
+  double newParam = tuneParameter(_sctr.getBatch(), _sctr.getRatioInLastInterval(), parameter, FALSE);
 
   multiplier = newParam; 
 
-  sctr.nextBatch();
+  _sctr.nextBatch();
 }
  
  
-void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void TreeLengthMultiplier::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  evaluator->evaluate(traln,Branch(traln.getTr()->start->number,traln.getTr()->start->back->number), true); 
+  assert(_primaryParameters.size( )== 1); 
+  auto parts = _primaryParameters[0]->getPartitions(); 
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL-CHOICE " << branchSuggestion << std::endl; 
+#endif
+
+  evaluator.evaluatePartitionsWithRoot(traln,branchSuggestion, parts, true, true); 
 }
 
 
@@ -91,14 +105,23 @@ AbstractProposal* TreeLengthMultiplier::clone() const
 }  
 
 
-void TreeLengthMultiplier::readFromCheckpointCore(std::ifstream &in)
+void TreeLengthMultiplier::readFromCheckpointCore(std::istream &in)
 {
   multiplier = cRead<double>(in); 
 } 
 
-void TreeLengthMultiplier::writeToCheckpointCore(std::ofstream &out) 
+void TreeLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
   cWrite(out, multiplier); 
+} 
+
+
+std::vector<nat> TreeLengthMultiplier::getInvalidatedNodes(const TreeAln& traln) const
+{
+  auto result = std::vector<nat>{}; 
+  for(nat i = traln.getNumberOfTaxa() + 1 ; i < traln.getNumberOfNodes() + 1  ; ++i)
+    result.push_back(i); 
+  return result; 
 } 
 
 

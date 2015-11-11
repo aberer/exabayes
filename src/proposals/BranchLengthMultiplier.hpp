@@ -10,26 +10,30 @@ class BranchLengthMultiplier : public AbstractProposal
 {
 public: 
   BranchLengthMultiplier(  double multiplier); 
-  virtual ~BranchLengthMultiplier(){}
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
+
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) ; 
+  virtual void resetState(TreeAln &traln) ; 
 
   virtual void autotune();
 
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln ) const ; 
+  // {return {}; }
+
   virtual AbstractProposal* clone() const;  
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand) ;
 
+  virtual BranchPlain proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
 
-  virtual Branch proposeBranch(const TreeAln &traln, Randomness &rand) const ;   
-
-  virtual void readFromCheckpointCore(std::ifstream &in); 
-  virtual void writeToCheckpointCore(std::ofstream &out) ; 
+  virtual void readFromCheckpointCore(std::istream &in); 
+  virtual void writeToCheckpointCore(std::ostream &out) const; 
 
 protected: 
   double multiplier;  
-  Branch savedBranch;   
-
+  BranchLength savedBranch;   
+  
 }; 
 
 

@@ -9,6 +9,8 @@
 #include "Randomness.hpp"
 #include "MemoryMode.hpp"
 
+#include "RunModes.hpp"
+
 
 class CommandLine
 {
@@ -22,15 +24,22 @@ public:
   int getNumRunParallel() const {return runNumParallel; }
   std::string getWorkdir() const {return workDir; }
   void printVersion(bool toInfoFile);
-
-  // int getChainNumParallel() const { return chainNumParallel; }
+  nat getNumChainsParallel() const {return chainNumParallel; }
   std::string getCheckpointId()const {return checkpointId; }
+  bool isPerPartitionDataDistribution() const {return perPartitionDataDistribution; }
   void parseAlternative(int argc, char *argv[]); 
+  bool isSaveMemorySEV() const {return saveMemorySEV; }
 
   MemoryMode getMemoryMode()const {return memoryMode ;  }
+  bool isDryRun() const {return dryRun; }
+  RunModes getTreeInitRunMode() const ; 
+  
+  bool alnFileIsBinary() const; 
+
+  std::string getSingleModel() const {return singleModel; }
+  std::string getModelFile() const {return modelFile; }
 
 private: 			// METHODS
-
   void assertFileExists(std::string filename); 
   void parse(int argc, char *argv[]); 
   void printHelp();
@@ -42,10 +51,15 @@ private: 			// ATTRIBUTES
   std::string runid; 
   std::string treeFile; 
   std::string workDir;
-  int runNumParallel; 
+  int runNumParallel;   
   int chainNumParallel; 
   std::string checkpointId; 
   MemoryMode memoryMode; 
+  bool perPartitionDataDistribution; 
+  bool saveMemorySEV; 
+  bool dryRun; 
+  std::string modelFile; 
+  std::string singleModel; 
 }; 
 
 

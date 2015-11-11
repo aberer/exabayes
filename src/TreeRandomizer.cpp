@@ -1,21 +1,21 @@
-#include <vector>
-
 #include "TreeRandomizer.hpp"
-#include "TreeAln.hpp"
-#include "treeRead.h"
 
+#include <vector>
+#include "Branch.hpp"
 
 void TreeRandomizer::createParsimonyTree(TreeAln &traln, Randomness& rand)
 {
   nat r = rand();  
 
   traln.unlinkTree();
-  traln.getTr()->randomNumberSeed = r; 
+  traln.getTrHandle().randomNumberSeed = r; 
 
+  // tout << "parsimony number seed is "<< r << std::endl; 
+  
 #if HAVE_PLL != 0
-  makeParsimonyTreeFast(traln.getTr(), traln.getPartitionsPtr());
+  makeParsimonyTreeFast(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), r);
 #else 
-  makeParsimonyTreeFast(traln.getTr()); 
+  makeParsimonyTreeFast(&(traln.getTrHandle()), r); 
 #endif
 }
 
@@ -54,12 +54,11 @@ void TreeRandomizer::randomizeTree(TreeAln &traln, Randomness& rand )
       traln.clipNodeDefault(p1, inner->next); 
       traln.clipNodeDefault(p2, inner->next->next); 
     }
-  
-  traln.getTr()->start = traln.getTr()->nodep[1];   
+ 
 }
 
 
-Branch TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  
+BranchPlain TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness &rand)  
 {
   bool acc = false;   
   int node = 0; 
@@ -96,7 +95,7 @@ Branch TreeRandomizer::drawInnerBranchUniform( const TreeAln& traln, Randomness 
     other = options[0]; 
   else 
     other = options.at(rand.drawIntegerOpen(options.size()));   
-  return Branch(node, other); 
+  return BranchPlain(node, other); 
 }
 
 
@@ -113,24 +112,24 @@ nat TreeRandomizer::drawInnerNode(const TreeAln& traln, Randomness &rand )
     
     => equals draw subtree uniformly
  */ 
-Branch TreeRandomizer::drawBranchWithInnerNode(const TreeAln& traln,Randomness &rand)  
+BranchPlain TreeRandomizer::drawBranchWithInnerNode(const TreeAln& traln,Randomness &rand)  
 {
   nat idA = drawInnerNode(traln, rand); 
   nat r = rand.drawIntegerClosed(2);  
   nodeptr p = traln.getNode(idA); 
   assert(not traln.isTipNode(p)) ; 
 
-  Branch b; 
+  BranchPlain b; 
   switch(r)
     {
     case 0: 
-      b = Branch(idA, p->back->number); 
+      b = BranchPlain(idA, p->back->number); 
       break; 
     case 1: 
-      b = Branch(idA, p->next->back->number); 
+      b = BranchPlain(idA, p->next->back->number); 
       break; 
     case 2: 
-      b = Branch(idA, p->next->next->back->number); 
+      b = BranchPlain(idA, p->next->next->back->number); 
       break; 
     default: assert(0); 
     }
@@ -140,12 +139,12 @@ Branch TreeRandomizer::drawBranchWithInnerNode(const TreeAln& traln,Randomness &
 
 
 
-Branch TreeRandomizer::drawBranchUniform(const TreeAln & traln, Randomness &rand )  
+BranchPlain TreeRandomizer::drawBranchUniform(const TreeAln & traln, Randomness &rand )  
 {
   return drawBranchUniform_helper(traln, rand, traln.getNumberOfTaxa()); 
 }
 
-Branch TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  
+BranchPlain TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness &rand , nat curNumTax)  
 { 
   int randId = 0; 
   double r = rand.drawRandDouble01(); 
@@ -155,7 +154,7 @@ Branch TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness
   // in the nodeptr array that is the number of trees in the final
   // tree
   if( r <= 0.75) 		// draw an inner node 
-    randId = 1 + traln.getTr()->mxtips + rand.drawIntegerClosed(curNumTax -3 )  ; 
+    randId = 1 + traln.getTrHandle().mxtips + rand.drawIntegerClosed(curNumTax -3 )  ; 
   else 				// draw a tip 
     randId = rand.drawIntegerOpen(curNumTax) + 1 ;           
 
@@ -184,5 +183,5 @@ Branch TreeRandomizer::drawBranchUniform_helper(const TreeAln &traln, Randomness
   	}
     }
 
-  return Branch(thisNode, thatNode); 
+  return BranchPlain(thisNode, thatNode); 
 }

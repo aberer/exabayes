@@ -1,17 +1,24 @@
 #include "FrequencyParameter.hpp"
+#include "BoundsChecker.hpp"
+#include "DnaAlphabet.hpp"
+#include "AminoAcidAlphabet.hpp"
+#include "RateHelper.hpp"
 
 
 void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
-{  
-  for(auto &m : partitions)    
-    traln.setFrequencies(content.values, m); 
+{ 
+  auto tmp = content.values; 
+  RateHelper::convertToSum1(tmp); 
+
+  for(auto &m : _partitions)    
+    traln.setFrequencies(tmp, m); 
 }
 
 
 ParameterContent FrequencyParameter::extractParameter(const TreeAln &traln )  const
 {
-  ParameterContent result; 
-  result.values = traln.getFrequencies(partitions[0]); 
+  auto result = ParameterContent{}; 
+  result.values = traln.getFrequencies(_partitions[0]); 
   return result; 
 }   
 
@@ -36,13 +43,15 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
   switch(content.values.size())
     {
     case 4:       
-      names = { "A" , "C", "G", "T"}; 
+      names = DnaAlphabet().getStates() ; 
+      break; 
+    case 20: 
+      names = AminoAcidAlphabet().getStates(); 
       break; 
     default: 
       assert(0); 
     }
 
-  
   bool isFirstG = true; 
   for(nat i = 0; i < content.values.size() ; ++i)
     {
@@ -50,7 +59,7 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
       isFirstG = false; 
 	
       bool isFirst = true; 
-      for(auto &p : partitions)
+      for(auto &p : _partitions)
 	{
 	  fileHandle  << (isFirst ? "": "," ) << p ; 
 	  isFirst = false; 
@@ -58,3 +67,42 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
       fileHandle  << "}("  << names.at(i) << ")"; 
     }  
 } 
+
+
+void FrequencyParameter::verifyContent(const TreeAln &traln, const ParameterContent &content) const 
+{
+  auto& partition = traln.getPartition(_partitions[0]);
+  bool ok = true; 
+  // ok &= BoundsChecker::checkFrequencies(content.values); 
+  ok &= (content.values.size() ==  nat(partition.states)); 
+  
+  auto newValues = content.values; 
+  RateHelper::convertToSum1(newValues);
+  
+  if(ok)
+    ok &= BoundsChecker::checkFrequencies(newValues);
+
+  if(not ok)
+    {
+      tout << "ERROR: we had " << content << " for parameter " << this << ". Did you mis-specify a fixed prior?"  << std::endl; 
+      assert(0); 
+    }  
+}
+
+
+
+void FrequencyParameter::checkSanityPartitionsAndPrior(const TreeAln &traln) const 
+{
+  auto numStates = traln.getPartition(_partitions.at(0)).states;
+  checkSanityPartitionsAndPrior_FreqRevMat(traln);
+  auto initVal = _prior->getInitialValue(); 
+
+  if( int(initVal.values.size()) != numStates && 
+      initVal.protModel.size() == 0 )
+    {
+      tout << "Error while processing parsed priors: you specified prior " << _prior.get() << " for parameter "; 
+      printShort(tout) << " that is not applicable." << std::endl; 
+      exit(-1); 
+    }
+}
+

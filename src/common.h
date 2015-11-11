@@ -26,66 +26,40 @@
 
 #define SOME_SCI_PRECISION std::scientific << std::setprecision(2)   
 #define MAX_SCI_PRECISION  std::scientific << std::setprecision(std::numeric_limits<double>::digits10)   
-#define PERC_PRECCISION std::fixed << std::setprecision(2) 
+#define SOME_FIXED_PRECISION std::fixed << std::setprecision(2)   
+#define MORE_FIXED_PRECISION std::fixed << std::setprecision(4)   
+#define PERC_PRECISION std::fixed << std::setprecision(2) 
 
 
 #define NO_SEC_BL_MULTI
 #define NOT_IMPLEMENTED  0
 #define TODO 0
 
-typedef  unsigned int nat ; 
+typedef unsigned int nat; 
 
 #define TARGET_RATIO 0.25    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
-#define ACCEPTED_LNPR_EPS 1e-6 
+#define ACCEPTED_LNPR_EPS 1e-6
+
+/* some global switches */
 
 
-/* ABOVE: stuff that is needed by everyone and can be defined
-   repeatedly
-
-   BELOW: some switches (e.g., debugging) and constants that are could
-   be user variables later (for development lets just keep them here).
-
- */
-
-
+/* #define _GO_TO_TREE_MOVE_INTEGARTION */
+/* #define _GO_TO_INTEGRATION_MODE */
+/* #define _EXPERIMENTAL_INTEGRATION_MODE */
 
 #define _DISABLE_INIT_LNL_CHECK
+/* #define INTEGRATION_GENERATION 3e4 */
+#define INTEGRATION_GENERATION 1e6
 
-
-/* #define DEBUG_ACCEPTANCE */
-/* #define DEBUG_HASTINGS */
 /* #define UNSURE  */
 /* #define EFFICIENT  */
-/* #define INCORRECT */
-/* #define PRINT_MULT */
-/* #define DEBUG_EVAL */
-/* #define DEBUG_ARRAY_SWAP */
 
-/* #define  TUNE_ONLY_IF_ENOUGH	/// only tune a parameter, once TUNE_FREQUENCY times the respective function had been called     */
-/* #define DEBUG_PRINT_TUNE_INFO */
+/* #define PRINT_EVAL_CHOICE */
 
-/* #define ENABLE_PRSF */
-/* #define CONTROL_ESPR */
-/* #define DEBUG_TREE_LENGTH */
-/* #define DEBUG_PARS_SPR */
-
-/* for debugging:  */
-
-#define DEBUG_GUIDED_SPR 0 	/* dont comment out, set to 0 for deactivation  */
-/* #define DEBUG_SHOW_TREE */
+/* debugging */
 /* #define DEBUG_SHOW_EACH_PROPOSAL */
-/* #define DEBUG_CHECK_TREE_CONSISTENCY */
-/* #define DEBUG_SHOW_TOPO_CHANGES */
-/* #define DEBUG_ASDSF_PRINT_ALL_BIPS */
-
-
-
 /* #define DEBUG_LNL_VERIFY */
-/* BAD BAD BAD */
-/* #define DEBUG_VERIFY_LNPR	/\* verify the log prior probability  *\/ */
-
-/* #define PRINT_MUCH */
-
+/* #define DEBUG_VERIFY_LNPR */
 
 #endif

@@ -21,22 +21,26 @@
 class MyTemplateProposal : public AbstractProposal
 {
 public: 
-  MyTemplateProposal( double aVariable);
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const {return BranchPlain(); }
+  MyTemplateProposal( double aVariable); 
 
   // everything copied over from AbstractProposal that has a = 0
   // there. This declares the methods pure virtual, and the derived
   // proposal HAS to implement theese methods.
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior); 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
+  virtual void resetState(TreeAln &traln); 
   virtual void autotune()  ;
   virtual AbstractProposal* clone() const ;  
 
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const{return {}; }
+
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
   
   // if your proposal has  parameters that are tuned   
   // this is very straight forward, just check out the other proposals 
-  virtual void readFromCheckpointCore(std::ifstream &in); 
-  virtual void writeToCheckpointCore(std::ofstream &out); 
+  virtual void readFromCheckpointCore(std::istream &in); 
+  virtual void writeToCheckpointCore(std::ostream &out) const; 
 
 
 private: 

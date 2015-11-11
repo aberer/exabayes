@@ -2838,6 +2838,7 @@ static void initProtMat(double f[20], int proteinMatrix, double *ext_initialRate
           
 static void updateFracChange(tree *tr)
 {   
+  
   if(tr->NumberOfModels == 1)    
     {   
       assert(tr->fracchanges[0] != -1.0);
@@ -2853,8 +2854,8 @@ static void updateFracChange(tree *tr)
 
       tr->fracchange = 0.0;	                     
  	        
-      for(model = 0; model < tr->NumberOfModels; model++)                   
-	tr->fracchange +=  tr->partitionContributions[model] * tr->fracchanges[model];	
+      /* for(model = 0; model < tr->NumberOfModels; model++)                    */
+      /* 	tr->fracchange +=  tr->partitionContributions[model] * tr->fracchanges[model];	 */
     }
 }
 
@@ -3266,9 +3267,7 @@ void initReversibleGTR(tree *tr, int model)
    *frequencies      = tr->partitionData[model].frequencies,
    *ext_initialRates = tr->partitionData[model].substRates,
    *tipVector        = tr->partitionData[model].tipVector;
-
  
-  
  int states = tr->partitionData[model].states;
 
  switch(tr->partitionData[model].dataType)
@@ -3307,9 +3306,9 @@ void initReversibleGTR(tree *tr, int model)
 	       {		 
 		 initProtMat(f, tr->partitionData[model].protModels, &(tr->partitionData[model].substRates_LG4[i][0]), i);
 		 
-		 if(!tr->partitionData[model].protFreqs)	       	  	  
+		 if(!tr->partitionData[model].protFreqs) 
 		   for(l = 0; l < 20; l++)		
-		     tr->partitionData[model].frequencies_LG4[i][l] = f[l];
+		       tr->partitionData[model].frequencies_LG4[i][l] = f[l];
 		 else
 		   memcpy(tr->partitionData[model].frequencies_LG4[i], frequencies, 20 * sizeof(double));
 	       }
@@ -3320,9 +3319,6 @@ void initReversibleGTR(tree *tr, int model)
 	       initProtMat(f, tr->partitionData[model].autoProtModels, ext_initialRates, 0);
 	     else	  
 	       initProtMat(f, tr->partitionData[model].protModels, ext_initialRates, 0); 		   
-	     
-	     /*if(adef->protEmpiricalFreqs && tr->NumberOfModels == 1)
-	       assert(tr->partitionData[model].protFreqs);*/
 	     
 	     if(!tr->partitionData[model].protFreqs)	       	  
 	       {	     	    
@@ -3370,7 +3366,7 @@ void initReversibleGTR(tree *tr, int model)
      assert(0);
    } 
 
- updateFracChange(tr);    
+ /* updateFracChange(tr);     */
 }
 
 
@@ -3733,6 +3729,7 @@ static void setSymmetry(int *s, int *sDest, const int sCount, int *f, int *fDest
     fDest[i] = f[i];
 }
 
+
 static void setupSecondaryStructureSymmetries(tree *tr)
 {
   int model;
@@ -3915,8 +3912,8 @@ static void setupSecondaryStructureSymmetries(tree *tr)
 	}
 
     }
-
 }
+
 
 static void initializeBaseFreqs(tree *tr, double **empiricalFrequencies)
 {
@@ -3975,7 +3972,7 @@ void initModel(tree *tr, double **empiricalFrequencies)
       tr->partitionData[model].alpha = 1.0;    
       if(tr->partitionData[model].protModels == AUTO)
 	tr->partitionData[model].autoProtModels = WAG; /* initialize by WAG per default */
-                         
+      
       initReversibleGTR(tr, model);
       makeGammaCats(tr->partitionData[model].alpha, tr->partitionData[model].gammaRates, 4, tr->useMedian);     
     }                   		       

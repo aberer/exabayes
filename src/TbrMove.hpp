@@ -6,14 +6,11 @@
 class TbrMove : public SprMove
 {
 public: 
-  virtual ~TbrMove(){}   
-  virtual void applyToTree(TreeAln &traln) const ; 
-  virtual void revertTree(TreeAln &traln, PriorBelief &prior) const ; 
-  virtual void disorientAtNode(TreeAln &traln, nodeptr p) const ; 
-  virtual void extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) ; 
-  virtual void multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior*> brPr) const ; 
-  virtual Branch getEvalBranch(const TreeAln &traln) const ; 
-  virtual AbstractMove* clone() const {return new TbrMove;}  
+  void applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const ; 
+  void revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &params) const ; 
+  void extractMoveInfo(const TreeAln &traln, std::tuple<BranchPlain,BranchPlain,BranchPlain> description,const std::vector<AbstractParameter*> &params) ; 
+  BranchPlain getEvalBranch(const TreeAln &traln) const ; 
+  std::vector<nat> getDirtyNodes(const TreeAln &traln, bool considerOuter) const; 
 
   friend std::ostream& operator<<(std::ostream &out, const TbrMove &rhs) ;  
 

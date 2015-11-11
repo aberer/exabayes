@@ -12,6 +12,27 @@ SwapMatrix::SwapMatrix(nat numChains)
       matrix.push_back(SuccessCounter()); 
 }
 
+SwapMatrix::SwapMatrix(const SwapMatrix& rhs)  
+  :matrix(rhs.matrix.begin(), rhs.matrix.end())
+  , numEntries(rhs.numEntries)
+{
+}
+
+
+SwapMatrix SwapMatrix::operator=( SwapMatrix rhs) 
+{
+  swap(*this, rhs); 
+  return *this; 
+}
+
+
+void swap(SwapMatrix& a, SwapMatrix &b)
+{
+  using std::swap;  
+  swap(a.matrix, b.matrix); 
+}
+
+
 
 void SwapMatrix::update(nat a, nat b, bool acc)
 {
@@ -31,6 +52,7 @@ const SuccessCounter& SwapMatrix::getCounter(nat a, nat b ) const
 
 nat SwapMatrix::mapToIndex(nat a, nat b) const 
 {
+  assert(a != b);
   if(b < a )
     std::swap(a,b); 
 
@@ -39,7 +61,13 @@ nat SwapMatrix::mapToIndex(nat a, nat b) const
     result += numEntries -i  -1 ; 
   result += b - a - 1  ; 
 
-  assert(result < matrix.size()); 
+  if(not (result < matrix.size()))
+    {
+      tout << "for " << a << "," << b << " the index was "
+      	   << result << ", but matrix has only " << matrix.size() << std::endl; 
+      
+      assert(result < matrix.size()); 
+    }
 
   return result; 
 } 
@@ -63,15 +91,26 @@ std::ostream&  operator<<(std::ostream &out, SwapMatrix& rhs )
 }
 
 
-void SwapMatrix::readFromCheckpoint( std::ifstream &in )   
+void SwapMatrix::deserialize( std::istream &in )   
 {  
   for(auto &s : matrix)
-    s.readFromCheckpoint(in);
+    s.deserialize(in);
 } 
 
-void SwapMatrix::writeToCheckpoint( std::ofstream &out) 
+void SwapMatrix::serialize( std::ostream &out)  const
 {
   for(auto &s : matrix)
-    s.writeToCheckpoint(out); 
+    s.serialize(out); 
 }
    
+
+
+SwapMatrix SwapMatrix::operator+(const SwapMatrix& rhs) const
+{
+  SwapMatrix result(numEntries); 
+
+  for(nat i = 0; i < rhs.matrix.size(); ++i)
+    result.matrix[i] = matrix[i] + rhs.matrix[i]; 
+
+  return result; 
+} 

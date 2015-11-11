@@ -87,7 +87,7 @@
 
 #define badRear         -1
 
-#define NUM_BRANCHES     16
+/* #define NUM_BRANCHES     16 */
 
 #define TRUE             1
 #define FALSE            0
@@ -293,6 +293,13 @@
 #define GTR_MULTI_STATE     2
 
 
+  /* added by andre  */
+typedef void* array_reservoir_t ; 
+extern double* allocate(array_reservoir_t self, size_t length); 
+extern void deallocate(array_reservoir_t self, double *array); 
+  /* end */
+
+
 
 
 
@@ -387,8 +394,8 @@ typedef struct
   int pNumber;
   int qNumber;
   int rNumber;
-  double qz[NUM_BRANCHES];
-  double rz[NUM_BRANCHES];
+  double *qz/* [NUM_BRANCHES] */;
+  double *rz/* [NUM_BRANCHES] */;
 } traversalInfo;
 
 typedef struct
@@ -441,10 +448,7 @@ typedef struct
 
 typedef  struct noderec
 {
-  double           z[NUM_BRANCHES];
-#ifdef _BAYESIAN 
-  double           z_tmp[NUM_BRANCHES];
-#endif 
+  double           *z/* [NUM_BRANCHES] */;
   struct noderec  *next;
   struct noderec  *back;
   hashNumberType   hash;
@@ -487,9 +491,9 @@ typedef struct {
 
   int     states;
   int     maxTipStates;
-  size_t     lower;
-  size_t     upper;
-  size_t     width;
+  int     lower;
+  int     upper;
+  int     width;
   int     dataType;
   int     protModels;
   int     autoProtModels;
@@ -675,7 +679,7 @@ typedef  struct  {
   int              maxCategories;
   int              categories;
   
-  double           coreLZ[NUM_BRANCHES];
+  double           *coreLZ/* [NUM_BRANCHES] */;
   int              numBranches;
   
   
@@ -685,7 +689,7 @@ typedef  struct  {
   int              multiStateModel;
 
 
-  boolean curvatOK[NUM_BRANCHES];
+  boolean *curvatOK/* [NUM_BRANCHES] */;
   /* the stuff below is shared among DNA and AA, span does
      not change depending on datatype */
 
@@ -696,7 +700,7 @@ typedef  struct  {
 
   unsigned char             **yVector;
   int              secondaryStructureModel;
-  size_t           originalCrunchedLength;
+  int           originalCrunchedLength;
  
  
   int              *secondaryStructurePairs;
@@ -730,8 +734,8 @@ typedef  struct  {
   int              NumberOfModels;    
 
   boolean          bigCutoff;
-  boolean          partitionSmoothed[NUM_BRANCHES];
-  boolean          partitionConverged[NUM_BRANCHES];
+  boolean          *partitionSmoothed/* [NUM_BRANCHES] */;
+  boolean          *partitionConverged/* [NUM_BRANCHES] */;
   boolean          rooted;
   boolean          doCutoff;
  
@@ -750,17 +754,17 @@ typedef  struct  {
   nodeptr removeNode;
   nodeptr insertNode;
 
-  double zqr[NUM_BRANCHES];
-  double currentZQR[NUM_BRANCHES];
+  double *zqr/* [NUM_BRANCHES] */;
+  double *currentZQR/* [NUM_BRANCHES] */;
 
-  double currentLZR[NUM_BRANCHES];
-  double currentLZQ[NUM_BRANCHES];
-  double currentLZS[NUM_BRANCHES];
-  double currentLZI[NUM_BRANCHES];
-  double lzs[NUM_BRANCHES];
-  double lzq[NUM_BRANCHES];
-  double lzr[NUM_BRANCHES];
-  double lzi[NUM_BRANCHES];
+  double *currentLZR/* [NUM_BRANCHES] */;
+  double *currentLZQ/* [NUM_BRANCHES] */;
+  double *currentLZS/* [NUM_BRANCHES] */;
+  double *currentLZI/* [NUM_BRANCHES] */;
+  double *lzs/* [NUM_BRANCHES] */;
+  double *lzq/* [NUM_BRANCHES] */;
+  double *lzr/* [NUM_BRANCHES] */;
+  double *lzi/* [NUM_BRANCHES] */;
 
  
  
@@ -795,7 +799,7 @@ typedef struct {
 
 typedef struct
 {
-  double z[NUM_BRANCHES];
+  double *z/* [NUM_BRANCHES] */;
   nodeptr p, q;
   int cp, cq;
 }
@@ -823,7 +827,7 @@ typedef  struct
 
 
 typedef struct conntyp {
-    double           z[NUM_BRANCHES];           /* branch length */
+    double           *z/* [NUM_BRANCHES] */;           /* branch length */
     node            *p, *q;       /* parent and child sectors */
     void            *valptr;      /* pointer to value of subtree */
     int              descend;     /* pointer to first connect of child */
@@ -985,8 +989,8 @@ extern int checker ( tree *tr, nodeptr p );
 extern boolean tipHomogeneityChecker ( tree *tr, nodeptr p, int grouping );
 extern void makeRandomTree ( tree *tr);
 extern void nodeRectifier ( tree *tr );
-extern void makeParsimonyTreeFast(tree *tr);
-void makeParsimonyTreeFast(tree *tr); 
+/* extern void makeParsimonyTreeFast(tree *tr); */
+void makeParsimonyTreeFast(tree *tr, unsigned int seed); 
 extern void allocateParsimonyDataStructures(tree *tr);
 extern void freeParsimonyDataStructures(tree *tr);
 extern void parsimonySPR(nodeptr p, tree *tr);
@@ -1053,10 +1057,10 @@ extern void computeBootStopOnly(tree *tr, char *bootStrapFileName, analdef *adef
 extern boolean bootStop(tree *tr, hashtable *h, int numberOfTrees, double *pearsonAverage, unsigned int **bitVectors, int treeVectorLength, unsigned int vectorLength);
 extern void computeConsensusOnly(tree *tr, char* treeSetFileName, analdef *adef);
 extern double evaluatePartialGeneric (tree *, int i, double ki, int _model);
-extern void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal);
-extern void newviewGeneric (tree *tr, nodeptr p, boolean masked);
+extern void evaluateGeneric (tree *tr, nodeptr p, boolean fullTraversal, array_reservoir_t res);
+extern void newviewGeneric (tree *tr, nodeptr p, boolean masked, array_reservoir_t res);
 extern void newviewGenericMulti (tree *tr, nodeptr p, int model);
-void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask); 
+void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *nrD1, double *nrD2, double lambda, boolean mask, array_reservoir_t res); 
 /* extern void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, boolean mask); */
 extern void makenewzGenericDistance(tree *tr, int maxiter, double *z0, double *result, int taxon1, int taxon2);
 extern double evaluatePartitionGeneric (tree *tr, nodeptr p, int model);
@@ -1069,9 +1073,9 @@ extern void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int
 
 
 
-extern void   newviewIterative(tree *tr, int startIndex);
+extern void   newviewIterative(tree *tr, int startIndex, array_reservoir_t res);
 
-extern void evaluateIterative(tree *);
+extern void evaluateIterative(tree *tr, array_reservoir_t res);
 
 extern void *malloc_aligned( size_t size);
 
@@ -1081,7 +1085,7 @@ extern void storeValuesInTraversalDescriptor(tree *tr, double *value);
 
 
 
-extern void makenewzIterative(tree *);
+extern void makenewzIterative(tree *tr, array_reservoir_t res);
 extern void execCore(tree *, volatile double *dlnLdlz, volatile double *d2lnLdlz2);
 
 
@@ -1161,9 +1165,6 @@ extern void updatePerSiteRates(tree *tr, boolean scaleRates);
 extern void restart(tree *tr, analdef *adef);
 
 extern void writeCheckpoint(tree *tr);
-
-/* inline boolean isGap(unsigned int *x, int pos); */
-/* inline boolean noGap(unsigned int *x, int pos); */
 
 void myBinFwrite(void *ptr, size_t size, size_t nmemb, FILE *byteFile);
 void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile);

@@ -7,7 +7,6 @@
 void genericExit(int code); 
 
 
-
 namespace ProposalTypeFunc
 {
   std::string getLongName(ProposalType type)
@@ -31,7 +30,10 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER , "frequency slider"},
 	{ ProposalType::FREQUENCY_DIRICHLET , "frequency dirichlet"},
 	{ ProposalType::AMINO_MODEL_JUMP , "amino acid model jump"},
-	{ ProposalType::BRANCH_GIBBS , "approximate Gibbs branch length"} 
+	{ ProposalType::BRANCH_GIBBS , "approximate Gibbs branch length"} ,
+	{ ProposalType::LIKE_SPR, "likelihood-guided SPR move"}, 
+	{ ProposalType::DIRICH_REVMAT_PER_RATE, "rate orientated dirichlet proposal on RevMat" } ,
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, "rate orientated sliding proposal on RevMat"} 
       }; 
     
     if(map.find(type) == map.end())
@@ -64,7 +66,11 @@ namespace ProposalTypeFunc
 	{ ProposalType::FREQUENCY_SLIDER,  "FREQUENCYSLIDER" } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  "FREQUENCYDIRICHLET" } ,
 	{ ProposalType::AMINO_MODEL_JUMP,  "AAMODELJUMP" } ,
-	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} 
+	{ ProposalType::BRANCH_GIBBS , "AGIBBSBL"} , 
+	{ ProposalType::DIRICH_REVMAT_ALL , "DIRICHREVMATALL"} 	, 
+	{ ProposalType::LIKE_SPR, "LIKESPR"},
+	{ ProposalType::DIRICH_REVMAT_PER_RATE, "REVMATRATEDIRICH" } ,
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, "REVMATRATESLIDER"} 
       }; 
 
     return proposal2name[p];     
@@ -85,7 +91,16 @@ namespace ProposalTypeFunc
   }
 
 
-  std::vector<ProposalType> getProposalsForCategory(Category c) 
+
+  std::vector<ProposalType> getMultiParameterProposals()
+  {
+    std::vector<ProposalType> result; 
+    result.push_back(ProposalType::DIRICH_REVMAT_ALL);
+    return result; 
+  }
+
+
+  std::vector<ProposalType> getSingleParameterProposalsForCategory(Category c) 
   {
     switch(c)
       {
@@ -95,7 +110,8 @@ namespace ProposalTypeFunc
 	    ProposalType::E_SPR, 
 	    ProposalType::E_TBR, 
 	    ProposalType::PARSIMONY_SPR, 
-	    ProposalType::GUIDED_SPR 
+	    ProposalType::GUIDED_SPR ,
+	    ProposalType::LIKE_SPR
 	    }; 
       case Category::BRANCH_LENGTHS: 
 	return { 
@@ -114,7 +130,9 @@ namespace ProposalTypeFunc
       case Category::SUBSTITUTION_RATES: 
 	return { 
 	  ProposalType::REVMAT_SLIDER, 
-	    ProposalType::REVMAT_DIRICHLET
+	    ProposalType::REVMAT_DIRICHLET, 
+	    ProposalType::DIRICH_REVMAT_PER_RATE,
+	    ProposalType::SLIDING_REVMAT_PER_RATE
 	    }; 	
       case Category::RATE_HETEROGENEITY: 
 	return { 
@@ -140,9 +158,19 @@ namespace ProposalTypeFunc
     auto cs =   CategoryFuns::getAllCategories() ; 
     for(auto c : cs)
       {
-	auto someProposals = getProposalsForCategory(c) ; 
+	// auto someProposals = getProposalsForCategory(c) ; 
+
+	auto someProposals =  getSingleParameterProposalsForCategory( c) ; 
+	
+	// do we need the multi-parameter proposals here as
+	// well?
+	// assert(0); 
 	result.insert(result.end(), someProposals.begin(), someProposals.end()); 
-      }    
+      } 
+
+    std::vector<ProposalType> multiParamProps =  getMultiParameterProposals();
+    result.insert(result.end(), multiParamProps.begin(), multiParamProps.end()); 
+    
     return result; 
   }
 
@@ -178,14 +206,19 @@ namespace ProposalTypeFunc
 	{ ProposalType::RATE_HET_MULTI,  true } ,
 	{ ProposalType::FREQUENCY_SLIDER,  true } ,
 	{ ProposalType::FREQUENCY_DIRICHLET,  true } ,
-	{ ProposalType::AMINO_MODEL_JUMP,  false } ,
-	{ ProposalType::BRANCH_GIBBS , false } 
+	{ ProposalType::AMINO_MODEL_JUMP,  true } ,
+	{ ProposalType::BRANCH_GIBBS , false } , 
+	{ ProposalType::DIRICH_REVMAT_ALL , false } 	, 
+	{ ProposalType::LIKE_SPR , false}, 
+	{ ProposalType::DIRICH_REVMAT_PER_RATE, true } ,
+	{ ProposalType::SLIDING_REVMAT_PER_RATE, false} 
     };
 
     if(map.find(p) == map.end())
       {
 	std::cerr << "Error, could not find type >" << int(p) << 
 	  "< when trying to determine, if proposal is ready for productive use. Check ProposalType.cpp" << std::endl; 
+	assert(0);
 	ParallelSetup::genericExit(-1); 
       }
 

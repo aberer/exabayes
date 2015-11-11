@@ -1,77 +1,67 @@
+#include "Branch.hpp"
 #include "TbrMove.hpp"
+#include "Path.hpp"
 
 
-void TbrMove::applyToTree(TreeAln &traln) const 
+void TbrMove::applyToTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
-  int numBranches = traln.getNumBranches(); 
-  assert(numBranches == 1); 
-
-  applyPath(traln,path1); 
-  applyPath(traln,path2); 
+  if( path1.size() > 0 )
+    applyPath(traln,path1, blParams); 
+  if( path2.size() > 0)
+    applyPath(traln,path2, blParams); 
 } 
 
 
-void TbrMove::revertTree(TreeAln &traln, PriorBelief &prior) const 
+void TbrMove::revertTree(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
-  Path path1r ; 
-  Path path2r ; 
-  getPathAfterMove(traln,path1, path1r);
-  getPathAfterMove(traln,path2, path2r);
+  if( path1.size() > 0)
+    {
+      auto path1r = getPathAfterMove(path1);
+      applyPath(traln,path1r, blParams);
+      path1.restoreBranchLengthsPath(traln, blParams); 
+    }
+
+  if( path2.size() > 0)
+    {
+      auto path2r = getPathAfterMove(path2);
+      applyPath(traln,path2r, blParams);
+      path2.restoreBranchLengthsPath(traln, blParams); 
+    }
+} 
+
+
+void TbrMove::extractMoveInfo(const TreeAln &traln, std::tuple<BranchPlain,BranchPlain,BranchPlain> description,const std::vector<AbstractParameter*> &params) 
+{
+  path1.clear(); 
+  path2.clear(); 
   
-  applyPath(traln,path1r);
-  applyPath(traln,path2r);
+  auto 
+    empty = BranchPlain{},
+    elem0 = std::get<0>(description),
+    elem1 = std::get<1>(description),
+    elem2 = std::get<2>(description); 
 
-  path1.restoreBranchLengthsPath(traln, prior); 
-  path2.restoreBranchLengthsPath(traln, prior); 
+  if(not elem1.equalsUndirected(empty))
+    sprCreatePath(traln, elem0,elem1,path1, params); 
+  if(not elem2.equalsUndirected(empty))
+    sprCreatePath(traln, elem0.getInverted(),elem2,path2, params); 
 } 
 
 
-void TbrMove::disorientAtNode(TreeAln &traln, nodeptr p) const 
-{
-  // limitation: must be the bisecting branch currently 
-
-  int nodeA = path1.getNthNodeInPath(1),
-    nodeB = path2.getNthNodeInPath(1); 
-
-  nodeptr  q = nullptr, r = nullptr ; 
-  if(nodeA == p->number)
-    {
-      assert(nodeB == p->back->number); 
-      q = p; 
-      r = p->back; 
-    }
-  else if( nodeB  == p->number)
-    {
-      assert(nodeA == p->back->number); 
-      q = p->back; 
-      r = p ; 
-    }
-  else 
-    {
-      assert(0);
-    }
-
-  sprDisorientPath(traln,q, path1);
-  sprDisorientPath(traln,r, path2);
-} 
-
-
-void TbrMove::extractMoveInfo(const TreeAln &traln, std::vector<Branch> description) 
-{
-  sprCreatePath(traln, description.at(0),description.at(1),path1); 
-  sprCreatePath(traln, description.at(2),description.at(3),path2); 
-} 
-
-
-void TbrMove::multiplyBranches(TreeAln &traln, Randomness &rand, double &hastings, PriorBelief &prior, double multiplier, std::vector<AbstractPrior*> brPr) const 
-{
-  assert(0);
-} 
-
-
-Branch TbrMove::getEvalBranch(const TreeAln &traln) const 
+BranchPlain TbrMove::getEvalBranch(const TreeAln &traln) const 
 {   
-  return  Branch(path1.getNthNodeInPath(1) , path2.getNthNodeInPath(1)); 
+  auto evalBranch = BranchPlain{}; 
+
+  if(path1.size( ) > 0 && path2.size( ) ) 
+    evalBranch = BranchPlain(path1.getNthNodeInPath(1) , path2.getNthNodeInPath(1)); 
+  else if(path1.size( ) > 0 )
+    evalBranch = getEvalBranchFromPath(traln, path1); 
+  else if(path2.size() > 0 )
+    evalBranch = getEvalBranchFromPath(traln, path2); 
+  else 
+    assert(0); 
+
+  return evalBranch; 
 }
 
 
@@ -80,3 +70,27 @@ std::ostream& operator<<(std::ostream &out, const TbrMove &rhs)
   return out <<  "path1:"  << rhs.path1 << std::endl
 	     << "path2:" << rhs.path2 << std::endl; 
 }  
+
+
+std::vector<nat> TbrMove::getDirtyNodes(const TreeAln &traln, bool considerOuter) const
+{
+  assert(not considerOuter); 
+
+  auto result = std::vector<nat>(); 
+  result.reserve(path1.getNumberOfNodes() + path2.getNumberOfNodes() );
+
+  if(path1.size( ) > 0 )
+    {
+      for(int i = 1; i < path1.getNumberOfNodes()- 1; ++i)
+	result.push_back ( path1.getNthNodeInPath(i)) ;
+    }
+
+  if(path2.size() > 0 )
+    {
+      for(int i = 1 ; i < path2.getNumberOfNodes() - 1 ; ++i)
+	result.push_back( path2.getNthNodeInPath(i)) ; 
+    }
+
+  return result; 
+} 
+

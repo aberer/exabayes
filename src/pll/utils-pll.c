@@ -241,11 +241,10 @@ void read_msa(tree *tr, partitionList *pr, const char *filename)
       model;
 
     unsigned char *y;
-  double **empiricalFrequencies;
+  double **empiricalFrequencies; /*  */
 
     FILE
       *byteFile = myfopen(filename, "rb");
-
 
     /* read the alignment info */
     myBinFread(&(tr->mxtips),                 sizeof(int), 1, byteFile);
@@ -347,12 +346,8 @@ void read_msa(tree *tr, partitionList *pr, const char *filename)
 
     myBinFread(y, sizeof(unsigned char), ((size_t)tr->originalCrunchedLength) * ((size_t)tr->mxtips), byteFile);
 
-    /* Initialize the model */
-    //printf("Here 1!\n");
     initializePartitionsSequential(tr, pr);
-    //printf("Here 2!\n");
     initModel(tr, empiricalFrequencies, pr);
-
 
     fclose(byteFile);
   }
@@ -369,41 +364,41 @@ void myBinFread(void *ptr, size_t size, size_t nmemb, FILE *byteFile)
   assert(bytes_read == nmemb);
 }
 
-#if 0
-void *malloc_aligned(size_t size) 
-{
-  void 
-    *ptr = (void *)NULL;
+/* #if 0 */
+/* void *malloc_aligned(size_t size)  */
+/* { */
+/*   void  */
+/*     *ptr = (void *)NULL; */
 
-  int 
-    res;
+/*   int  */
+/*     res; */
 
 
-#if defined (__APPLE__)
-  /* 
-     presumably malloc on MACs always returns 
-     a 16-byte aligned pointer
-     */
+/* #if defined (__APPLE__) */
+/*   /\*  */
+/*      presumably malloc on MACs always returns  */
+/*      a 16-byte aligned pointer */
+/*      *\/ */
 
-  ptr = rax_malloc(size);
+/*   ptr = rax_malloc(size); */
 
-  if(ptr == (void*)NULL) 
-    assert(0);
+/*   if(ptr == (void*)NULL)  */
+/*     assert(0); */
 
-#ifdef __AVX
-  assert(0);
-#endif
+/* #ifdef __AVX */
+/*   assert(0); */
+/* #endif */
 
-#else
-  res = posix_memalign( &ptr, BYTE_ALIGNMENT, size );
+/* #else */
+/*   res = posix_memalign( &ptr, BYTE_ALIGNMENT, size ); */
 
-  if(res != 0) 
-    assert(0);
-#endif 
+/*   if(res != 0)  */
+/*     assert(0); */
+/* #endif  */
 
-  return ptr;
-}
-#endif
+/*   return ptr; */
+/* } */
+/* #endif */
 
 
 
@@ -514,14 +509,13 @@ void printResult(tree *tr, partitionList *pr, analdef *adef, boolean finalPrint)
 
 
 
-/* Marked for deletion 
-boolean getSmoothFreqs(int dataType)
-{
-  assert(MIN_MODEL < dataType && dataType < MAX_MODEL);
 
-  return pLengths[dataType].smoothFrequencies;
-}
-*/
+/* boolean getSmoothFreqs(int dataType) */
+/* { */
+/*   assert(MIN_MODEL < dataType && dataType < MAX_MODEL); */
+
+/*   return pLengths[dataType].smoothFrequencies; */
+/* } */
 
 const unsigned int *getBitVector(int dataType)
 {
@@ -876,7 +870,7 @@ boolean setupTree (tree *tr, boolean doInit, partitionList *partitions)
   tr->td[0].executeModel = (boolean *)rax_malloc(sizeof(boolean) * (size_t)NUM_BRANCHES);
   tr->td[0].parameterValues = (double *)rax_malloc(sizeof(double) * (size_t)NUM_BRANCHES);
 
-  tr->fracchange = -1.0;
+  /* tr->fracchange = -1.0; */
 
   tr->constraintVector = (int *)rax_malloc((2 * (size_t)tr->mxtips) * sizeof(int));
 
@@ -941,8 +935,8 @@ boolean setupTree (tree *tr, boolean doInit, partitionList *partitions)
   tr->ntips       = 0;
   tr->nextnode    = 0;
 
-  for(i = 0; i < NUM_BRANCHES; i++)
-    tr->partitionSmoothed[i] = FALSE;
+  /* for(i = 0; i < NUM_BRANCHES; i++) */
+  /*   tr->partitionSmoothed[i] = FALSE; */
 
   tr->bitVectors = (unsigned int **)NULL;
 
@@ -953,10 +947,10 @@ boolean setupTree (tree *tr, boolean doInit, partitionList *partitions)
   tr->nameHash = initStringHashTable(10 * tr->mxtips);
 
   for (i = 0; i < partitions->numberOfPartitions; i++) {
-	partitions->partitionData[i] = (pInfo*)rax_malloc (sizeof(pInfo));
-	partitions->partitionData[i]->partitionContribution = -1.0;
-	partitions->partitionData[i]->partitionLH = 0.0;
-	partitions->partitionData[i]->fracchange = 1.0;
+    partitions->partitionData[i] = (pInfo*)rax_malloc (sizeof(pInfo));
+    partitions->partitionData[i]->partitionContribution = -1.0;
+    partitions->partitionData[i]->partitionLH = 0.0;
+    partitions->partitionData[i]->fracchange = 1.0;
   }
 
   return TRUE;
@@ -1202,7 +1196,7 @@ void initializePartitionData(tree *localTree, partitionList * localPartitions)
 
       localPartitions->partitionData[model]->substRates        = (double *)rax_malloc((size_t)pl->substRatesLength * sizeof(double));
       localPartitions->partitionData[model]->frequencies       = (double*)rax_malloc((size_t)pl->frequenciesLength * sizeof(double));
-      localPartitions->partitionData[model]->empiricalFrequencies       = (double*)rax_malloc((size_t)pl->frequenciesLength * sizeof(double));
+      localPartitions->partitionData[model]->empiricalFrequencies       = (double*)rax_calloc((size_t)pl->frequenciesLength,  sizeof(double));
       localPartitions->partitionData[model]->tipVector         = (double *)rax_malloc_aligned((size_t)pl->tipVectorLength * sizeof(double));
       localPartitions->partitionData[model]->symmetryVector    = (int *)rax_malloc((size_t)pl->symmetryVectorLength  * sizeof(int));
       localPartitions->partitionData[model]->frequencyGrouping = (int *)rax_malloc((size_t)pl->frequencyGroupingLength  * sizeof(int));
@@ -1250,7 +1244,7 @@ void initializePartitionData(tree *localTree, partitionList * localPartitions)
 	  localPartitions->partitionData[model]->gapVector = (unsigned int*)rax_calloc((size_t)localPartitions->partitionData[model]->gapVectorLength * 2 * (size_t)localTree->mxtips, sizeof(unsigned int));
 	  localPartitions->partitionData[model]->gapColumn = (double *)rax_malloc_aligned(((size_t)localTree->mxtips) *
 									       ((size_t)(localPartitions->partitionData[model]->states)) *
-									       discreteRateCategories(localTree->rateHetModel) * sizeof(double));
+											  discreteRateCategories(localTree->rateHetModel) * sizeof(double));
 	}
       else
 	{
@@ -1308,26 +1302,31 @@ void initMemorySavingAndRecom(tree *tr, partitionList *pr)
 
 double get_branch_length(tree *tr, nodeptr p, int partition_id)
 {
+  assert(0); 
+#if  0 
   //assert(partition_id < tr->numBranches);
   assert(partition_id < NUM_BRANCHES);
   assert(partition_id >= 0);
-  assert(tr->fracchange != -1.0);
+  /* assert(tr->fracchange != -1.0); */
   double z = p->z[partition_id];
   if(z < zmin) z = zmin;
   if(z > zmax) z = zmax;
   return (-log(z) * tr->fracchange);
+#endif
 }
 void set_branch_length(tree *tr, nodeptr p, int partition_id, double bl)
 {
+  #if 0 
   //assert(partition_id < tr->numBranches);
   assert(partition_id < NUM_BRANCHES);
   assert(partition_id >= 0);
-  assert(tr->fracchange != -1.0);
+  /* assert(tr->fracchange != -1.0); */
   double z;
   z = exp((-1 * bl)/tr->fracchange);
   if(z < zmin) z = zmin;
   if(z > zmax) z = zmax;
   p->z[partition_id] = z;
+#endif
 }
 
 void initializePartitionsSequential(tree *tr, partitionList *pr)

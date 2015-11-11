@@ -6,36 +6,21 @@
 class UniformPrior : public AbstractPrior
 {
 public: 
-  UniformPrior(double minVal, double maxVal) : minVal(minVal), maxVal(maxVal)
-  {
-  }
+  UniformPrior(double minVal, double maxVal); 
+  virtual double getLogProb(const ParameterContent& content)  const ; 
+  // virtual std::vector<double> drawFromPrior(Randomness &rand)  const; 
+  virtual bool needsIntegration() const {return true; } 
+  virtual void print(std::ostream& out ) const  ; 
+  virtual ParameterContent getInitialValue() const; 
 
-  virtual double getLogProb(std::vector<double> values)  const 
-  {
-    assert(values.size() == 1); 
-    double value = values[0];
+  virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const {assert(0); return ParameterContent{}; } ; 
 
-    if(minVal < value && value < maxVal )      
-      return log(1 / (maxVal - minVal)); 
-    else  
-      {
-	double result = std::numeric_limits<double>::lowest(); 
-	return result; 
-      }
-  }
+  virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew ) const; 
 
+  virtual AbstractPrior* clone() const { return new  UniformPrior(*this) ; }
 
-  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
-  {
-    double val = minVal + rand.drawRandDouble01() * (maxVal - minVal); 
-    std::vector<double> result = {val}; 
-    return result; 
-  }
-
-  virtual void print(std::ostream& out ) const  
-  { 
-    out << "Uniform("  << minVal << "," << maxVal << ")" ; 
-  }
+  double getMin() const {return minVal; }
+  double getMax() const {return maxVal; }
 
 private: 
   double minVal; 

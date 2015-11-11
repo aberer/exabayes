@@ -11,19 +11,20 @@
 #include "Randomness.hpp"
 #include "PriorBelief.hpp"
 #include "GlobalVariables.hpp"
-#include "LikelihoodEvaluator.hpp"
+#include "eval/LikelihoodEvaluator.hpp"
 #include "TreeRandomizer.hpp"
-#include "Checkpointable.hpp"
+#include "Serializable.hpp"
 
 
-class AbstractProposal : public Checkpointable
+class AbstractProposal : public Serializable
 {
 public: 
-  // for copying the non-trivial types 
-  AbstractProposal(){} 
-  AbstractProposal( const AbstractProposal& rhs); 
-  
+  AbstractProposal( Category cat, std::string  _name, double weight, bool needsFullTraversal = true)  ; 
+  AbstractProposal( const AbstractProposal& rhs)  ;   
   virtual ~AbstractProposal(){}
+  AbstractProposal& operator=(const AbstractProposal &rhs) = delete;  
+
+  std::array<bool,3> getBranchProposalMode() const ; 
 
   // you MUST implement all virtual methods in your derived
   // proposal. Here, the signatures are set to 0, this must not
@@ -35,98 +36,140 @@ public:
   /**
      @brief determines the proposal, applies it to the tree / model, updates prior and hastings ratio
    */ 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) = 0; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) = 0; 
   /**
      @brief evaluates the proposal 
      @todo remove the prior, we should not need it here 
    */ 
-  virtual void evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) = 0; 
+  virtual void evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) = 0; 
   /** 
       @brief resets the tree to its previous state; corrects the prior, if necessary (@todo is this the case?)
    */ 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior) = 0 ; 
+  virtual void resetState(TreeAln &traln) = 0 ; 
   /** 
       @brief tunes proposal parameters, if available  
    */ 
   virtual void autotune() = 0  ;
-
+  
   virtual AbstractProposal* clone() const = 0;  
   /** 
       @brief gets the relative weight of this proposal 
    */ 
-  double getRelativeWeight() const { return relativeWeight; }
+  double getRelativeWeight() const { return _relativeWeight; }
   /**
      @brief sets the relative weight of this proposal 
    */ 
-  void setRelativeWeight(double tmp) { relativeWeight = tmp; }
+  void setRelativeWeight(double tmp) { _relativeWeight = tmp; }
+  
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const = 0; 
   /** 
       @brief gets the category 
    */ 
-  Category getCategory() const {return category; }
+  Category getCategory() const {return _category; }
   /** 
       @brief gets the name of the proposal 
    */ 
-  std::string getName() const {return name; }
+  std::string getName() const {return _name; }
+  /** 
+      @brief gets nodes that are invalid by executed the proposal 
+   */ 
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln) const = 0;  
   /** 
       @brief inform proposal about acceptance
    */ 
-  void accept() {sctr.accept();}
+  void accept() {_sctr.accept();}
   /**
      @brief inform proposal about rejection 
    */ 
-  void reject() {sctr.reject();}
+  void reject() {_sctr.reject();}
   /** 
       @brief gets the success counter 
    */ 
-  const SuccessCounter& getSCtr()  const { return sctr; }
+  const SuccessCounter& getSCtr()  const { return _sctr; }
   /** 
       @brief gets the number of proposal invocation, since it has been tune the last time 
    */ 
-  int  getNumCallSinceTuning() const { return sctr.getRecentlySeen(); }
+  int  getNumCallSinceTuning() const { return _sctr.getRecentlySeen(); }
   /** 
       @brief add a parameter to be integrated over to the proposal 
    */ 
-  void addPrimVar(std::unique_ptr<AbstractParameter> var) {primVar.push_back(std::move(var)) ; }
+  void addPrimaryParameter(std::unique_ptr<AbstractParameter> var) {_primaryParameters.push_back(std::move(var)) ; }
   /** 
       @brief add a parameter  that is integrated over as a by-product of this proposal 
    */ 
-  void addSecVar(std::unique_ptr<AbstractParameter> var) {secVar.push_back(std::move(var)) ; }
+  void addSecondaryParameter(std::unique_ptr<AbstractParameter> var) {_secondaryParameters.push_back(std::move(var)) ; }
+  /** 
+      @brief indicates whether this proposal needs a full traversal 
+   */ 
+  bool isNeedsFullTraversal() const {return _needsFullTraversal; }
+  std::vector<AbstractParameter*> getBranchLengthsParameterView() const ; 
+
   /** 
       @brief update the hatsings
       @param valToAdd is the absolute proposal ratio that shall be added 
    */ 
-  static void updateHastings(double &hastings, double valToAdd, std::string whoDoneIt); 
+  static void updateHastingsLog(double &hastings, double valToAdd, std::string whoDoneIt); 
+
+  std::vector<nat> getAffectedPartitions() const ; 
 
   std::ostream& printNamePartitions(std::ostream &out); 
   std::ostream& printShort(std::ostream &out)  const ;
 
-  std::vector<AbstractParameter*> getPrimVar() const; 
-  std::vector<AbstractParameter*> getSecVar() const ; 
+  std::vector<AbstractParameter*> getPrimaryParameterView() const; 
+  std::vector<AbstractParameter*> getSecondaryParameterView() const ; 
+  /** 
+      @brief prepare for set execution (only relevant for branch length + node slider)
+   */ 
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  = 0; 
 
   // we need to implement these 
-  void writeToCheckpoint( std::ofstream &out)  ; 
-  void readFromCheckpoint( std::ifstream &in ); 
+  virtual void serialize( std::ostream &out)  const;  
+  virtual void deserialize( std::istream &in ) ; 
   
+  void setPreparedBranch(BranchPlain b ) {_preparedBranch = b;  }
+  void setOtherPreparedBranch(BranchPlain b){_preparedOtherBranch = b; }
+
+  void setInSetExecution(bool exec) { _inSetExecution = exec;  }
+  void setId(nat id){_id = id; }
+  nat getId() const {return _id; }
+
   /** 
       @brief writes proposal specific (tuned) parameters
    */ 
-  virtual void writeToCheckpointCore(std::ofstream &out)  = 0 ;  
+  virtual void writeToCheckpointCore(std::ostream &out)const  = 0 ;  
   /** 
       @brief reads proposal specific (tuned) parameters 
    */ 
-  virtual void readFromCheckpointCore(std::ifstream &in) = 0; 
+  virtual void readFromCheckpointCore(std::istream &in) = 0; 
+
+  virtual void prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const  {} 
+
+
+  virtual void printParams(std::ostream &out)  const {} 
+
+  friend std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs); 
+
+  void enableForProteins() {_suitsProteinPartitions = true; }
+  bool isSuitsProteinPartitions() const {return _suitsProteinPartitions;  } 
 
 protected:   
-  std::string name;   
-  SuccessCounter sctr; 
-  Category category; 
+  std::string _name;   
+  SuccessCounter _sctr; 
+  Category _category; 
+  std::vector<std::unique_ptr<AbstractParameter> > _primaryParameters; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
+  std::vector<std::unique_ptr<AbstractParameter> > _secondaryParameters;  // as a by-product also these random variables are changed 
+  double _relativeWeight; 
+  bool _needsFullTraversal; 
+  bool _inSetExecution;
 
-  std::vector<std::unique_ptr<AbstractParameter> > primVar; // it is the  primary purpose of this proposal to integrate over these parameters (in most cases only 1) 
-  std::vector<std::unique_ptr<AbstractParameter> > secVar;  // as a by-product also these random variables are changed 
-
-  double relativeWeight; 
+  // meh 
+  BranchPlain _preparedBranch; 
+  BranchPlain _preparedOtherBranch; 
   
-  friend std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs); 
+  nat _id; 
+
+  bool _suitsProteinPartitions; // TODO try to get rid of it   
 }; 
 
 #endif
+

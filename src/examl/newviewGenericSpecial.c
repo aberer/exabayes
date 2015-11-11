@@ -891,7 +891,7 @@ inline boolean noGap(unsigned int *x, int pos)
    So in a sense, this function has no clue that there is any tree-like structure 
    in the traversal descriptor, it just operates on an array of structs of given length */ 
 
-void newviewIterative (tree *tr, int startIndex)
+void newviewIterative (tree *tr, int startIndex, array_reservoir_t res)
 {
   traversalInfo 
     *ti   = tr->td[0].ti;
@@ -1017,6 +1017,8 @@ void newviewIterative (tree *tr, int startIndex)
 		 availableLength will be zero at the very first time we traverse the tree.
 		 Hence we need to allocate something here */
 
+#if 0 
+	      /* old raxml behaviour  */
 	      if(requiredLength != availableLength)
 		{		  
 		  /* if there is a vector of incorrect length assigned here i.e., x3 != NULL we must free 
@@ -1033,6 +1035,21 @@ void newviewIterative (tree *tr, int startIndex)
 		  tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1] = x3_start;		  
 		  tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)] = requiredLength;		 
 		}
+#else 
+	      /* new exabayes behaviour  */
+	      if(requiredLength != availableLength)
+		{
+		  int p_slot =  tInfo->pNumber - tr->mxtips - 1; 
+
+		  if(x3_start)
+		    deallocate(res, x3_start);
+		  
+		  x3_start = allocate(res, requiredLength);
+		  
+		  tr->partitionData[model].xVector[p_slot] = x3_start; 
+		  tr->partitionData[model].xSpaceVector[p_slot] = requiredLength; 
+		}
+#endif
 
 	      /* now just set the pointers for data accesses in the newview() implementations above to the corresponding values 
 		 according to the tip case */
@@ -1328,7 +1345,7 @@ void newviewIterative (tree *tr, int startIndex)
    correct and then it also re-computes reciursively the likelihood arrays 
    in the subtrees of p as needed and if needed */
 
-void newviewGeneric (tree *tr, nodeptr p, boolean masked)
+void newviewGeneric (tree *tr, nodeptr p, boolean masked , array_reservoir_t res)
 {  
   /* if it's a tip there is nothing to do */
 
@@ -1364,18 +1381,18 @@ void newviewGeneric (tree *tr, nodeptr p, boolean masked)
   */
 
 
-  if(masked)
-    {
-      int model;
+  /* if(masked) */
+  /*   { */
+  /*     int model; */
       
-      for(model = 0; model < tr->NumberOfModels; model++)
-	{
-	  if(tr->partitionConverged[model])
-	    tr->executeModel[model] = FALSE;
-	  else
-	    tr->executeModel[model] = TRUE;
-	}
-    }
+  /*     for(model = 0; model < tr->NumberOfModels; model++) */
+  /* 	{ */
+  /* 	  if(tr->partitionConverged[model]) */
+  /* 	    tr->executeModel[model] = FALSE; */
+  /* 	  else */
+  /* 	    tr->executeModel[model] = TRUE; */
+  /* 	} */
+  /*   } */
 
   /* if there is something to re-compute */
 
@@ -1387,19 +1404,19 @@ void newviewGeneric (tree *tr, nodeptr p, boolean masked)
       
 
 
-      newviewIterative(tr, 0);
+      newviewIterative(tr, 0, res);
 
     }
 
   /* clean up */
 
-  if(masked)
-    {
-      int model;
+  /* if(masked) */
+  /*   { */
+  /*     int model; */
       
-      for(model = 0; model < tr->NumberOfModels; model++)
-	tr->executeModel[model] = TRUE;
-    }
+  /*     for(model = 0; model < tr->NumberOfModels; model++) */
+  /* 	tr->executeModel[model] = TRUE; */
+  /*   } */
 
   tr->td[0].traversalHasChanged = FALSE;
 }

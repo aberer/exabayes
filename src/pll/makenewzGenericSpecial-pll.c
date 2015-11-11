@@ -622,7 +622,7 @@ void sumGAMMA_FLEX_reorder(int tipCase, double *sumtable, double *x1, double *x2
  *
  *
  */
-void makenewzIterative(tree *tr, partitionList * pr)
+void makenewzIterative(tree *tr, partitionList * pr, array_reservoir_t res)
 {
   int 
     model, 
@@ -647,7 +647,7 @@ void makenewzIterative(tree *tr, partitionList * pr)
 
   /* call newvieIterative to get the likelihood arrays to the left and right of the branch */
 
-  newviewIterative(tr, pr, 1);
+  newviewIterative(tr, pr, 1, res);
 
 
   /* 
@@ -880,7 +880,7 @@ void execCore(tree *tr, partitionList *pr, volatile double *_dlnLdlz, volatile d
 */
 
 
-static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxiter, double *result,  double lambda, double *firstDerivative, double *secDerivative)
+static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxiter, double *result,  double add2nrd1, double *firstDerivative, double *secDerivative, array_reservoir_t res)
 {  
   double   z[NUM_BRANCHES], zprev[NUM_BRANCHES], zstep[NUM_BRANCHES];
   volatile double  dlnLdlz[NUM_BRANCHES], d2lnLdlz2[NUM_BRANCHES];
@@ -903,12 +903,12 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
      maxiter is the maximum number of NR iterations we are going to do before giving up */
 
   for(i = 0; i < numBranches; i++)
-  {
-    z[i] = z0[i];
-    maxiter[i] = _maxiter;
-    outerConverged[i] = FALSE;
-    tr->curvatOK[i] = TRUE;
-  }
+    {
+      z[i] = z0[i];
+      maxiter[i] = _maxiter;
+      outerConverged[i] = FALSE;
+      tr->curvatOK[i] = TRUE;
+    }
 
 
   /* nested do while loops of Newton-Raphson */
@@ -916,155 +916,155 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
   do
     {
 
-    /* check if we ar done for partition i or if we need to adapt the branch length again */
+      /* check if we ar done for partition i or if we need to adapt the branch length again */
 
-    for(i = 0; i < numBranches; i++)
-    {
-      if(outerConverged[i] == FALSE && tr->curvatOK[i] == TRUE)
-      {
-        tr->curvatOK[i] = FALSE;
+      for(i = 0; i < numBranches; i++)
+	{
+	  if(outerConverged[i] == FALSE && tr->curvatOK[i] == TRUE)
+	    {
+	      tr->curvatOK[i] = FALSE;
 
-        zprev[i] = z[i];
+	      zprev[i] = z[i];
 
-        zstep[i] = (1.0 - zmax) * z[i] + zmin;
-      }
-    }
+	      zstep[i] = (1.0 - zmax) * z[i] + zmin;
+	    }
+	}
 
-    for(i = 0; i < numBranches; i++)
-    {
-      /* other case, the outer loop hasn't converged but we are trying to approach 
-         the maximum from the wrong side */
+      for(i = 0; i < numBranches; i++)
+	{
+	  /* other case, the outer loop hasn't converged but we are trying to approach 
+	     the maximum from the wrong side */
 
-      if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
-      {
-        double lz;
+	  if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
+	    {
+	      double lz;
 
-        if (z[i] < zmin) z[i] = zmin;
-        else if (z[i] > zmax) z[i] = zmax;
-        lz    = log(z[i]);
+	      if (z[i] < zmin) z[i] = zmin;
+	      else if (z[i] > zmax) z[i] = zmax;
+	      lz    = log(z[i]);
 
-        tr->coreLZ[i] = lz;
-	/* printf("coreLZ: %f\n", lz);  */
-      }
-    }
-
-
-    /* set the execution mask */
-
-    if(numBranches > 1)
-    {
-      for(model = 0; model < pr->numberOfPartitions; model++)
-      {
-        if(pr->partitionData[model]->executeModel)
-          pr->partitionData[model]->executeModel = !tr->curvatOK[model];
-
-      }
-    }
-    else
-    {
-      for(model = 0; model < pr->numberOfPartitions; model++)
-        pr->partitionData[model]->executeModel = !tr->curvatOK[0];
-    }
+	      tr->coreLZ[i] = lz;
+	      /* printf("coreLZ: %f\n", lz);  */
+	    }
+	}
 
 
-    /* store it in traversal descriptor */
+      /* set the execution mask */
 
-    storeExecuteMaskInTraversalDescriptor(tr, pr);
+      if(numBranches > 1)
+	{
+	  for(model = 0; model < pr->numberOfPartitions; model++)
+	    {
+	      if(pr->partitionData[model]->executeModel)
+		pr->partitionData[model]->executeModel = !tr->curvatOK[model];
 
-    /* store the new branch length values to be tested in traversal descriptor */
+	    }
+	}
+      else
+	{
+	  for(model = 0; model < pr->numberOfPartitions; model++)
+	    pr->partitionData[model]->executeModel = !tr->curvatOK[0];
+	}
 
-    storeValuesInTraversalDescriptor(tr, pr, &(tr->coreLZ[0]));
+
+      /* store it in traversal descriptor */
+
+      storeExecuteMaskInTraversalDescriptor(tr, pr);
+
+      /* store the new branch length values to be tested in traversal descriptor */
+
+      storeValuesInTraversalDescriptor(tr, pr, &(tr->coreLZ[0]));
 
 #if (defined(_FINE_GRAIN_MPI) || defined(_USE_PTHREADS))
 
-    /* if this is the first iteration of NR we will need to first do this one-time call 
-       of maknewzIterative() Note that, only this call requires broadcasting the traversal descriptor,
-       subsequent calls to masterBarrier(THREAD_MAKENEWZ, tr); will not require this
-       */
+      /* if this is the first iteration of NR we will need to first do this one-time call 
+	 of maknewzIterative() Note that, only this call requires broadcasting the traversal descriptor,
+	 subsequent calls to masterBarrier(THREAD_MAKENEWZ, tr); will not require this
+      */
 
-    if(firstIteration)
-      {
-	tr->td[0].traversalHasChanged = TRUE; 
-	masterBarrier(THREAD_MAKENEWZ_FIRST, tr, pr);
-	firstIteration = FALSE; 
-	tr->td[0].traversalHasChanged = FALSE; 
-      }
-    else 
-      masterBarrier(THREAD_MAKENEWZ, tr, pr);
-    branchLength_parallelReduce(tr, (double*)dlnLdlz, (double*)d2lnLdlz2, numBranches);
+      if(firstIteration)
+	{
+	  tr->td[0].traversalHasChanged = TRUE; 
+	  masterBarrier(THREAD_MAKENEWZ_FIRST, tr, pr);
+	  firstIteration = FALSE; 
+	  tr->td[0].traversalHasChanged = FALSE; 
+	}
+      else 
+	masterBarrier(THREAD_MAKENEWZ, tr, pr);
+      branchLength_parallelReduce(tr, (double*)dlnLdlz, (double*)d2lnLdlz2, numBranches);
 #else 
-    /* sequential part, if this is the first newton-raphson implementation,
-       do the precomputations as well, otherwise just execute the computation
-       of the derivatives */
-    if(firstIteration)
-      {
-	makenewzIterative(tr, pr);
-	firstIteration = FALSE;
-      }
-    execCore(tr, pr, dlnLdlz, d2lnLdlz2);
+      /* sequential part, if this is the first newton-raphson implementation,
+	 do the precomputations as well, otherwise just execute the computation
+	 of the derivatives */
+      if(firstIteration)
+	{
+	  makenewzIterative(tr, pr, res);
+	  firstIteration = FALSE;
+	}
+      execCore(tr, pr, dlnLdlz, d2lnLdlz2);
 #endif
 
-    for(int i = 0; i < numBranches ; ++i)
-      {
-	dlnLdlz[i] += ( ( lambda   * tr->fracchange)  );
-	assert(i == 0); 
-      }
+      for(int i = 0; i < numBranches ; ++i)
+	{
+	  dlnLdlz[i] += add2nrd1;
+	  assert(i == 0); 
+	}
 
-    /* do a NR step, if we are on the correct side of the maximum that's okay, otherwise 
-       shorten branch */
+      /* do a NR step, if we are on the correct side of the maximum that's okay, otherwise 
+	 shorten branch */
 
-    for(i = 0; i < numBranches; i++)
-    {
-      if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
-      {
-        if ((d2lnLdlz2[i] >= 0.0) && (z[i] < zmax))
-          zprev[i] = z[i] = 0.37 * z[i] + 0.63;  /*  Bad curvature, shorten branch */
-        else
-          tr->curvatOK[i] = TRUE;
-      }
+      for(i = 0; i < numBranches; i++)
+	{
+	  if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
+	    {
+	      if ((d2lnLdlz2[i] >= 0.0) && (z[i] < zmax))
+		zprev[i] = z[i] = 0.37 * z[i] + 0.63;  /*  Bad curvature, shorten branch */
+	      else
+		tr->curvatOK[i] = TRUE;
+	    }
+	}
+
+      /* do the standard NR step to obrain the next value, depending on the state for eahc partition */
+
+      for(i = 0; i < numBranches; i++)
+	{
+	  if(tr->curvatOK[i] == TRUE && outerConverged[i] == FALSE)
+	    {
+	      if (d2lnLdlz2[i] < 0.0)
+		{
+		  double tantmp = -dlnLdlz[i] / d2lnLdlz2[i];
+		  if (tantmp < 100)
+		    {
+		      z[i] *= EXP(tantmp);
+		      if (z[i] < zmin)
+			z[i] = zmin;
+
+		      if (z[i] > 0.25 * zprev[i] + 0.75)
+			z[i] = 0.25 * zprev[i] + 0.75;
+		    }
+		  else
+		    z[i] = 0.25 * zprev[i] + 0.75;
+		}
+	      if (z[i] > zmax) z[i] = zmax;
+
+	      /* decrement the maximum number of itarations */
+
+	      maxiter[i] = maxiter[i] - 1;
+
+	      /* check if the outer loop has converged */
+	      if(maxiter[i] > 0 && (ABS(z[i] - zprev[i]) > zstep[i]))
+		outerConverged[i] = FALSE;
+	      else
+		outerConverged[i] = TRUE;
+	    }
+	}
+
+      /* check if the loop has converged for all partitions */
+
+      loopConverged = TRUE;
+      for(i = 0; i < numBranches; i++)
+	loopConverged = loopConverged && outerConverged[i];
     }
-
-    /* do the standard NR step to obrain the next value, depending on the state for eahc partition */
-
-    for(i = 0; i < numBranches; i++)
-      {
-      if(tr->curvatOK[i] == TRUE && outerConverged[i] == FALSE)
-      {
-        if (d2lnLdlz2[i] < 0.0)
-        {
-          double tantmp = -dlnLdlz[i] / d2lnLdlz2[i];
-          if (tantmp < 100)
-          {
-            z[i] *= EXP(tantmp);
-            if (z[i] < zmin)
-              z[i] = zmin;
-
-            if (z[i] > 0.25 * zprev[i] + 0.75)
-              z[i] = 0.25 * zprev[i] + 0.75;
-          }
-          else
-            z[i] = 0.25 * zprev[i] + 0.75;
-        }
-        if (z[i] > zmax) z[i] = zmax;
-
-        /* decrement the maximum number of itarations */
-
-        maxiter[i] = maxiter[i] - 1;
-
-        /* check if the outer loop has converged */
-        if(maxiter[i] > 0 && (ABS(z[i] - zprev[i]) > zstep[i]))
-          outerConverged[i] = FALSE;
-        else
-          outerConverged[i] = TRUE;
-      }
-    }
-
-    /* check if the loop has converged for all partitions */
-
-    loopConverged = TRUE;
-    for(i = 0; i < numBranches; i++)
-      loopConverged = loopConverged && outerConverged[i];
-  }
   while (!loopConverged);
   
   
@@ -1086,7 +1086,7 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
   /* copy the new branches in the result array of branches.
      if we don't do a per partition estimate of 
      branches this will only set result[0]
-     */
+  */
 
   for(i = 0; i < numBranches; i++)
     result[i] = z[i];
@@ -1122,7 +1122,7 @@ static void topLevelMakenewz(tree *tr, partitionList * pr, double *z0, int _maxi
  * @sa typical values for \a maxiter are constants \a iterations and \a newzpercycle
  * @note Requirement: q->z == p->z
  */
-void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double lambda, boolean mask)
+void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double add2nrd1, boolean mask, array_reservoir_t res)
 {
   int i;
   //boolean originalExecute[NUM_BRANCHES];
@@ -1185,8 +1185,8 @@ void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double 
 
   /* printf("lambda=%f\n", lambda);  */
 
-  topLevelMakenewz(tr, pr, z0, maxiter, result, lambda, firstDerivative, secDerivative); 
-
+  topLevelMakenewz(tr, pr, z0, maxiter, result, add2nrd1, firstDerivative, secDerivative, res); 
+  
   /* Mark node as unpinnable */
   if(tr->useRecom)
   {

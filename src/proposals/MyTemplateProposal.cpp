@@ -10,17 +10,12 @@
 
 // we need a constructor!  
 MyTemplateProposal::MyTemplateProposal( double aVariable)
+  : AbstractProposal( Category::TOPOLOGY, "MyTemplateProposal", 2.)
 {
-  name = "MyTemplateProposal"; 	
-
-  // check out Category.hpp and Category.cpp
-  category = Category::TOPOLOGY; 
-  
-  relativeWeight = 2.0; 
 }
 
 
-void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
+void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
   // i do not have an idea what to write here, maybe check out
   // ParameterProposal, I documented the apply-funciton there .
@@ -28,7 +23,7 @@ void MyTemplateProposal::applyToState(TreeAln &traln, PriorBelief &prior, double
 }
 
 
-void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   // the previous evluation scheme has been replaced with the
   // LikelihoodEvaluator class. 
@@ -40,15 +35,15 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, Tree
   // the entire aligment), then we'd have to do this:
   
   std::vector<nat> allRelevantPartitions; 
-  for(nat i = 0; i < primVar.size(); ++i)  
+  for(nat i = 0; i < _primaryParameters.size(); ++i)  
     {
-      std::vector<nat> partitionsHere = primVar[i]->getPartitions(); 
+      std::vector<nat> partitionsHere = _primaryParameters[i]->getPartitions(); 
       for(nat j = 0; j < partitionsHere.size(); ++j)
 	allRelevantPartitions.push_back(partitionsHere[j]); 
     }
 
   
-  evaluator->evaluatePartitions(traln, allRelevantPartitions, true); 
+  // evaluator->evaluatePartitions(traln, allRelevantPartitions, true); 
   
   
   // let's do it again and use some c++ conveniences 
@@ -58,20 +53,20 @@ void MyTemplateProposal::evaluateProposal(  LikelihoodEvaluator *evaluator, Tree
   // difficult). However, here, you MUST add a "&". This means that
   // you do not want a copy of the parameter object, but the actual
   // object
-  for(auto &var : primVar)	
+  for(auto &var : _primaryParameters)	
     for(auto p : var->getPartitions()) // iterate over all partitions in this parameter 
       allRelevantPartitions2.push_back(p); 
-  evaluator->evaluatePartitions(traln, allRelevantPartitions2,true); 
+  // evaluator.evaluatePartitions(traln, allRelevantPartitions2,true); 
 
   // when in doubt, there is always 
-  tree *tr = traln.getTr(); 
-  Branch toEval(tr->start->number, tr->start->back->number); // a bit clunky 
-  evaluator->evaluate(traln, toEval, true); 
+  auto& tr = traln.getTrHandle(); 
+  auto toEval = BranchPlain(tr.start->number, tr.start->back->number); // a bit clunky 
+  evaluator.evaluate(traln, toEval, true, true); 
 }
 
 
 
-void MyTemplateProposal::resetState(TreeAln &traln, PriorBelief &prior)
+void MyTemplateProposal::resetState(TreeAln &traln)
 {  
 
 }
@@ -106,7 +101,7 @@ void MyTemplateProposal::privateMethod(TreeAln& traln, Randomness &rand)
 
 
 // checkpointing stuff 
-void MyTemplateProposal::readFromCheckpointCore(std::ifstream &in)
+void MyTemplateProposal::readFromCheckpointCore(std::istream &in)
 {  
   // assume our aTuningParamer needs to be tuned. Then, we have to
   // read it from the previous checkpointing file: 
@@ -115,7 +110,7 @@ void MyTemplateProposal::readFromCheckpointCore(std::ifstream &in)
 }
 
 
-void MyTemplateProposal::writeToCheckpointCore(std::ofstream &out)
+void MyTemplateProposal::writeToCheckpointCore(std::ostream &out) const
 { 
   // and we have to write it to the filen, once we checkpoint 
   cWrite<double>(out, aTuningParamer); 	  

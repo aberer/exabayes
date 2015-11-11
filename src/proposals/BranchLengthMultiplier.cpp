@@ -4,33 +4,42 @@
 #include "tune.h"
 #include "TreeRandomizer.hpp"
 #include "GibbsProposal.hpp"
+#include "priors/AbstractPrior.hpp"
 
 
-BranchLengthMultiplier::BranchLengthMultiplier( double _multiplier)
-  :  multiplier(_multiplier)
+BranchLengthMultiplier::BranchLengthMultiplier(  double _multiplier)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., false)
+  , multiplier(_multiplier)
 {
-  this->name = "blMult"; 
-  this->category = Category::BRANCH_LENGTHS; 
-  relativeWeight = 20;
 }
 
-Branch BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
+
+BranchPlain BranchLengthMultiplier::proposeBranch(const TreeAln &traln, Randomness &rand) const 
 {
-  return TreeRandomizer::drawBranchUniform(traln, rand); 
+  if(_inSetExecution)
+    return _preparedBranch;
+  else  
+    return determinePrimeBranch(traln,rand); 
 }   
 
 
-void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+BranchPlain BranchLengthMultiplier::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const 
 {
-  Branch b = proposeBranch(traln, rand); 
-  
-  nodeptr p = b.findNodePtr(traln); 
-  savedBranch = b; 
+  return TreeRandomizer::drawBranchUniform(traln, rand); 
+} 
 
-  double oldZ = traln.getBranch(p).getLength();
-  savedBranch.setLength( oldZ); 
-  assert(traln.getNumBranches() == 1); 
-  
+
+void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
+{
+  auto b = proposeBranch(traln, rand).toBlDummy(); 
+
+  assert(_primaryParameters.size() == 1); 
+  auto param = _primaryParameters[0].get(); 
+
+  savedBranch = traln.getBranch(b.toPlain(), param); 
+
+  double oldZ = savedBranch.getLength();
+
   double
     drawnMultiplier = 0 ,
     newZ = oldZ; 
@@ -39,60 +48,104 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, do
   assert(drawnMultiplier > 0.); 
   newZ = pow( oldZ, drawnMultiplier);
 
+  // tout << MAX_SCI_PRECISION << "proposed " << newZ <<  " from " << multiplier << " and oldBranch=" << savedBranch << std::endl; 
+  
   b.setLength(newZ); 
+
   if(not BoundsChecker::checkBranch(b))
     BoundsChecker::correctBranch(b); 
-
-  traln.setBranch(b); 
+  traln.setBranch(b, param); 
 
   double realMultiplier = log(b.getLength()) / log(oldZ); 
-  updateHastings(hastings, realMultiplier, name); 
+  AbstractProposal::updateHastingsLog(hastings, log(realMultiplier), _name); 
 
-  auto relPrior =  primVar[0]->getPrior(); 
-  prior.updateBranchLengthPrior(traln, oldZ, b.getLength(),relPrior) ; 
+  double prNew = param->getPrior()->getLogProb( ParameterContent{{ b.getInterpretedLength(traln, param)} } ); 
+  double prOld = param->getPrior()->getLogProb( ParameterContent{{ savedBranch.getInterpretedLength(traln, param) }} );
+  
+  prior.addToRatio(prNew - prOld );
 }
 
 
-void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator *evaluator,TreeAln &traln, PriorBelief &prior) 
+void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
-  evaluator->evaluate(traln,savedBranch, false); 
+  assert(_primaryParameters.size() == 1 ); 
+  auto parts = _primaryParameters[0]->getPartitions();
+  
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL: " << savedBranch << std::endl; 
+#endif
+  evaluator.evaluatePartitionsWithRoot(traln,savedBranch.toPlain(), parts, false, true); 
 }
 
  
-void BranchLengthMultiplier::resetState(TreeAln &traln, PriorBelief &prior) 
+void BranchLengthMultiplier::resetState(TreeAln &traln) 
 {
-  traln.setBranch(savedBranch); 
+  assert(_primaryParameters.size() == 1)  ; 
+  auto params = getBranchLengthsParameterView(); 
+  assert(params.size() == 1); 
+  auto param = params[0]; 
+  traln.setBranch(savedBranch, param); 
 }
 
 
 void BranchLengthMultiplier::autotune() 
 {
-  double ratio = sctr.getRatioInLastInterval(); 
-  double newParam = tuneParameter(sctr.getBatch(), ratio , multiplier, false);
-
-  // bool up = multiplier  < newParam; 
-
-  // cout << "tuned " << ( up ? " UP ":  " DOWN " )  <<  multiplier << " => " << newParam << "\t ratio=" << setprecision(3) << ratio << endl; 
-  
+  double ratio = _sctr.getRatioInLastInterval(); 
+  double newParam = tuneParameter(_sctr.getBatch(), ratio , multiplier, false);
   multiplier = newParam; 
-  sctr.nextBatch();
+  _sctr.nextBatch();
 }
 
 
 AbstractProposal* BranchLengthMultiplier::clone() const
 {
-  // tout << "cloning "  << name << endl;
   return new BranchLengthMultiplier(*this);
-// multiplier
 }
 
 
-void BranchLengthMultiplier::readFromCheckpointCore(std::ifstream &in) 
+void BranchLengthMultiplier::readFromCheckpointCore(std::istream &in) 
 {
   multiplier = cRead<double>(in);
 } 
 
-void BranchLengthMultiplier::writeToCheckpointCore(std::ofstream &out)  
+void BranchLengthMultiplier::writeToCheckpointCore(std::ostream &out) const
 {
   cWrite(out, multiplier); 
 } 
+
+
+std::pair<BranchPlain,BranchPlain> BranchLengthMultiplier::prepareForSetExecution(TreeAln &traln, Randomness &rand) 
+{
+  assert(_inSetExecution); 
+  return std::pair<BranchPlain,BranchPlain>( 
+					    determinePrimeBranch(traln,rand),
+					    BranchPlain(0,0)); 
+}
+
+
+std::vector<nat> BranchLengthMultiplier::getInvalidatedNodes(const TreeAln &traln ) const 
+{
+  // auto tmp = std::vector<nat>{}; 
+  // if(not traln.isTipNode(savedBranch.getPrimNode()))
+  //   {
+  //     auto desc1 = traln.getDescendents(savedBranch.toPlain());
+  //     tmp.push_back(std::get<0>(desc1).getSecNode());
+  //     tmp.push_back(std::get<1>(desc1).getSecNode());
+  //   }
+
+  // if(not traln.isTipNode(savedBranch.getSecNode()))
+  //   {
+  //     auto desc2 = traln.getDescendents(savedBranch.getInverted().toPlain());
+  //     tmp.push_back(std::get<0>(desc2).getSecNode());
+  //     tmp.push_back(std::get<1>(desc2).getSecNode());
+  //   }
+
+  // return { 
+  //   savedBranch.getPrimNode() , 
+  //     savedBranch.getSecNode() 
+  //     } ; 
+  return {}; 
+}
+
+
+

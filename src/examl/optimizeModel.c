@@ -41,6 +41,8 @@
 #include <string.h>
 #include "axml.h"
 
+#include <mpi.h>
+
 static const double MNBRAK_GOLD =    1.618034;
 static const double MNBRAK_TINY =      1.e-20;
 static const double MNBRAK_GLIMIT =     100.0;
@@ -287,7 +289,7 @@ static void evaluateChange(tree *tr, int rateNumber, double *value, double *resu
       assert(pos == numberOfModels);
 
 
-      evaluateGeneric(tr, tr->start, TRUE);  
+      evaluateGeneric(tr, tr->start, TRUE, NULL);  
       
    
       
@@ -337,7 +339,7 @@ static void evaluateChange(tree *tr, int rateNumber, double *value, double *resu
 	    }
 	}
 
-      evaluateGeneric(tr, tr->start, TRUE);
+      evaluateGeneric(tr, tr->start, TRUE, NULL);
             
       for(i = 0; i < ll->entries; i++)	
 	{	  
@@ -927,7 +929,7 @@ static void optAlpha(tree *tr, double modelEpsilon, linkageList *ll)
     *_x         = (double *)malloc(sizeof(double) * numberOfModels);   
 
 
-   evaluateGeneric(tr, tr->start, TRUE);
+   evaluateGeneric(tr, tr->start, TRUE, NULL);
    /* 
      at this point here every worker has the traversal data it needs for the 
      search, so we won't re-distribute it he he :-)
@@ -1023,7 +1025,7 @@ static void optRates(tree *tr, double modelEpsilon, linkageList *ll, int numberO
 
   startRates = (double *)malloc(sizeof(double) * numberOfRates * numberOfModels);
 
-  evaluateGeneric(tr, tr->start, TRUE);
+  evaluateGeneric(tr, tr->start, TRUE, NULL);
   /* 
      at this point here every worker has the traversal data it needs for the 
      search 
@@ -2437,7 +2439,7 @@ static void optimizeRateCategories(tree *tr, int _maxCategories)
   
       assert(isTip(tr->start->number, tr->mxtips));         
       
-      evaluateGeneric(tr, tr->start, TRUE);     
+      evaluateGeneric(tr, tr->start, TRUE, NULL);     
 
       if(optimizeRateCategoryInvocations == 1)
 	{
@@ -2557,7 +2559,7 @@ static void optimizeRateCategories(tree *tr, int _maxCategories)
 
       updatePerSiteRates(tr, TRUE);	
                 
-      evaluateGeneric(tr, tr->start, TRUE);
+      evaluateGeneric(tr, tr->start, TRUE, NULL);
      
       if(tr->likelihood < initialLH)
 	{	 		  
@@ -2572,7 +2574,7 @@ static void optimizeRateCategories(tree *tr, int _maxCategories)
 	  
 	  updatePerSiteRates(tr, FALSE);
 	  
-	  evaluateGeneric(tr, tr->start, TRUE);	 
+	  evaluateGeneric(tr, tr->start, TRUE, NULL);	 
 
 	  assert(initialLH == tr->likelihood);
 	}
@@ -2733,7 +2735,7 @@ static void autoProtein(tree *tr)
 
 	  
 	  resetBranches(tr);
-	  evaluateGeneric(tr, tr->start, TRUE);  
+	  evaluateGeneric(tr, tr->start, TRUE, NULL);  
 	  treeEvaluate(tr, 0.5);     
 
 	  for(model = 0; model < tr->NumberOfModels; model++)
@@ -2772,7 +2774,7 @@ static void autoProtein(tree *tr)
 
 
       resetBranches(tr);
-      evaluateGeneric(tr, tr->start, TRUE); 
+      evaluateGeneric(tr, tr->start, TRUE, NULL); 
       treeEvaluate(tr, 0.5);
       
       /*printf("Exit: %f\n", tr->likelihood);*/
@@ -2833,7 +2835,7 @@ void modOpt(tree *tr, double likelihoodEpsilon, analdef *adef, int treeIteration
           
       optRatesGeneric(tr, modelEpsilon, rateList);
                         
-      evaluateGeneric(tr, tr->start, TRUE);                                                       
+      evaluateGeneric(tr, tr->start, TRUE, NULL);                                                       
 
       autoProtein(tr);
 
@@ -2845,7 +2847,7 @@ void modOpt(tree *tr, double likelihoodEpsilon, analdef *adef, int treeIteration
 	case GAMMA:      
 	  optAlpha(tr, modelEpsilon, alphaList); 
 	  
-	  evaluateGeneric(tr, tr->start, TRUE); 	 	 
+	  evaluateGeneric(tr, tr->start, TRUE, NULL); 	 	 
 	  
 	  treeEvaluate(tr, 0.1);	  	 
 	 

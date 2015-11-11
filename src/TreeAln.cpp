@@ -1,23 +1,96 @@
 #include <sstream>
 #include <cassert>
 #include <cstring>
+#include <unordered_set>
 
+#include "RateHelper.hpp"
+#include "TreeResource.hpp"
+#include "parameters/BranchLengthsParameter.hpp"
+#include "parameters/AbstractParameter.hpp"
 #include "TreeRandomizer.hpp"
 #include "axml.h"
 #include "TreeAln.hpp"
 #include "GlobalVariables.hpp"
 #include "BoundsChecker.hpp"
+#include "TreePrinter.hpp"
+#include "TreeInitializer.hpp"
 
-const double TreeAln::zZero = BoundsChecker::zMax + ( 1 - BoundsChecker::zMax) / 2 ; 
-const double TreeAln::initBL = 0.65; // TODO I'd prefer absolute real value of 0.1  (currentyl 0.15)
 
-TreeAln::TreeAln()
-  : parsimonyEnabled(true)
+TreeAln::TreeAln(nat numTax)
+  : _mode(RunModes::NOTHING)
+  , _hasLnlArrays(false)
+  , _hasAlignment{false}
+  , _hasTopology{false}
 {
-  memset(&tr,0,sizeof(tree)); 
-  initDefault();
-
+  memset(&_tr,0,sizeof(tree)); 
+  createStandardTree(numTax);
 }
+
+
+TreeAln::TreeAln( const TreeAln& rhs)
+  : _mode(rhs._mode)
+  , _taxa(rhs._taxa)
+  , _hasLnlArrays(false)
+  , _hasAlignment(false)
+  , _hasTopology(false)
+{
+  memset(&_tr,0,sizeof(tree));
+  createStandardTree(rhs.getNumberOfTaxa());
+
+  if(rhs._hasAlignment)
+    {
+      // tout << "copying alignment " << std::endl; 
+      auto &&ti = TreeInitializer(std::unique_ptr<InitializationResource>(new TreeResource(&rhs)));
+      ti.initializeWithAlignmentInfo(*this, rhs._mode);
+      _hasAlignment = true; 
+      copyAlnModel(rhs); 
+    }
+
+  // tout << "copying topology" << std::endl; 
+  if(rhs._hasTopology)
+    {
+      copyTopologyAndBl(rhs);
+      _hasTopology = true; 
+    }
+}
+
+
+TreeAln::TreeAln(TreeAln &&rhs)
+{
+  // assert(0); 
+  tout << "MOVE tree " << &rhs << std::endl; 
+  // using std::swap; 
+  swap(*this, rhs);
+}
+
+
+TreeAln& TreeAln::operator=(TreeAln rhs)
+{
+  // assert(0); 
+  // tout << "using OPERATOR= on " << this <<  " to  copy rhs=" << &rhs  << std::endl; 
+  // using std::swap; 
+  swap(*this, rhs);
+  return *this; 
+}
+
+
+
+void swap(TreeAln& lhs, TreeAln& rhs )
+{
+  using std::swap; 
+#if HAVE_PLL != 0
+  swap(lhs._partitions, rhs._partitions); 
+#endif 
+  swap(lhs._taxa, rhs._taxa); 
+  swap(lhs._mode, rhs._mode); 
+  swap(lhs._tr, rhs._tr); 
+  
+  swap(lhs._hasLnlArrays,  rhs._hasLnlArrays); 
+  swap(lhs._hasAlignment ,rhs._hasAlignment );
+  swap(lhs._hasTopology , rhs._hasTopology); 
+}
+
+
 
 
 TreeAln::~TreeAln()
@@ -25,246 +98,236 @@ TreeAln::~TreeAln()
   // this is slightly crazy, but we'll have to do the cleanup
   // somewhere.
 
-  if(tr.aliaswgt != NULL)
-    exa_free(tr.aliaswgt); 
-  if(tr.rateCategory != NULL)
-    exa_free(tr.rateCategory); 
-  if(tr.patrat != NULL)
-    exa_free(tr.patrat);
-  if(tr.patratStored != NULL)
-    exa_free(tr.patratStored);
-  if(tr.lhs != NULL)
-    exa_free(tr.lhs);  
-  if(tr.yVector != NULL)
-    exa_free(tr.yVector); 
-  if(tr.nameList != NULL)
+  if(_hasAlignment)
     {
-      for(int i = 1; i <= tr.mxtips; ++i )
-	exa_free(tr.nameList[i]);
-      exa_free(tr.nameList);
+      nat numTax = getNumberOfTaxa(); 
+
+      delete [] _tr.zqr; 
+      delete [] _tr.currentZQR; 
+      delete [] _tr.currentLZR; 
+      delete [] _tr.currentLZQ; 
+      delete [] _tr.currentLZS; 
+      delete [] _tr.currentLZI; 
+      delete [] _tr.lzs; 
+      delete [] _tr.lzq; 
+      delete [] _tr.lzr; 
+      delete [] _tr.lzi; 
+      delete [] _tr.coreLZ; 
+      delete [] _tr.curvatOK; 
+      
+      delete [] _tr.partitionSmoothed ; 
+      delete [] _tr.partitionConverged; 
+
+      for(nat i = 0; i < numTax ; ++i)
+	{
+	  delete [] _tr.td[0].ti[i].qz; 
+	  delete [] _tr.td[0].ti[i].rz; 
+	}
+
+      for(nat i = 0; i < numTax + 3 * (numTax - 1)  ; ++i )
+	{
+	  auto node = _tr.nodeBaseAddress + i; 
+	  delete [] node->z; 
+	}
     }
 
-  if(tr.tree_string != NULL)
-    exa_free(tr.tree_string);
-  if(tr.tree0 != NULL)
-    exa_free(tr.tree0);
-  if(tr.tree1 != NULL)
-    exa_free(tr.tree1);
-  
-  if(tr.constraintVector != NULL)
-    exa_free(tr.constraintVector); 
-  if(tr.nodeBaseAddress != NULL)
-    exa_free(tr.nodeBaseAddress);
+  if(_tr.aliaswgt != NULL)
+    exa_free(_tr.aliaswgt); 
+#if HAVE_PLL == 0
+  if(_tr.perPartitionLH != NULL)
+    exa_free(_tr.perPartitionLH); 
+#endif
+  if(_tr.rateCategory != NULL)
+    exa_free(_tr.rateCategory); 
+  if(_tr.patrat != NULL)
+    exa_free(_tr.patrat);
+  if(_tr.patratStored != NULL)
+    exa_free(_tr.patratStored);
+  if(_tr.lhs != NULL)
+    exa_free(_tr.lhs);  
+  if(_tr.yVector != NULL)
+    exa_free(_tr.yVector); 
 
+  if(_tr.tree_string != NULL)
+    exa_free(_tr.tree_string);
+  if(_tr.tree0 != NULL)
+    exa_free(_tr.tree0);
+  if(_tr.tree1 != NULL)
+    exa_free(_tr.tree1);
+  
+  if(_tr.constraintVector != NULL)
+    exa_free(_tr.constraintVector); 
+  if(_tr.nodeBaseAddress != NULL)
+    exa_free(_tr.nodeBaseAddress);
 
   // free parsimony related stuff
-  if(parsimonyEnabled)
+  exa_free(_tr.parsimonyScore);
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
-      exa_free(tr.parsimonyScore);
-      for(int i = 0; i < getNumberOfPartitions(); ++i)
-	{
-	  pInfo *partition = getPartition(i); 
-	  exa_free(partition->parsVect);
-	}
-      exa_free(tr.ti); 
+      auto& partition = getPartition(i); 
+      if(partition.parsVect != NULL)
+	exa_free(partition.parsVect);
     }
+  exa_free(_tr.ti); 
 
+  exa_free(_tr.td[0].ti);    
+  exa_free(_tr.td[0].executeModel);    
+  exa_free(_tr.td[0].parameterValues);    
 
-  exa_free(tr.td[0].ti);    
-  exa_free(tr.td[0].executeModel);    
-  exa_free(tr.td[0].parameterValues);    
-
-  exa_free(tr.nodep); 
+  exa_free(_tr.nodep); 
 
   int numPart = getNumberOfPartitions();
-  for(int i = 0; i < numPart ;++i)
+  
+  // tout << "have "  << numPart << std::endl; 
+
+  if(_hasAlignment)
     {
-      pInfo *partition = getPartition(i); 
+      // OK???
+      // clearMemory(); 
 
-      exa_free(partition->frequencyGrouping); 
-      exa_free(partition->symmetryVector);
-      exa_free(partition->frequencies);
-      exa_free(partition->empiricalFrequencies); 
-      exa_free(partition->tipVector); 
-      exa_free(partition->perSiteRates); 
-      exa_free(partition->gammaRates); 
-      // TODO xvector 
-      exa_free(partition->yVector);
-      exa_free(partition->xSpaceVector); 
-      exa_free(partition->sumBuffer); 
+      for(int i = 0; i < numPart ;++i)
+	{
+	  auto& partition = getPartition(i); 
 
-      exa_free(partition->wgt); 
-      exa_free(partition->rateCategory); 
-      exa_free(partition->partitionName); 
-      exa_free(partition->EIGN); 
-      exa_free(partition->left); 
-      exa_free(partition->right); 
-      exa_free(partition->EI); 
-      exa_free(partition->EV); 
-      exa_free(partition->globalScaler);       
-      exa_free(partition->substRates);       
-#if HAVE_PLL != 0      
-      exa_free(partition->ancestralBuffer); 
-      exa_free(partition); 
+#if HAVE_PLL ==  0
+	  exa_free(partition.symmetryVector);
+	  exa_free(partition.frequencyGrouping); 
 #endif
-    }
+	  
+	  // exa_free(partition.xVector); 
 
-#if HAVE_PLL != 0 
-  exa_free(partitions.partitionData); 
-#else 
-  exa_free(tr.executeModel) ;  
-  exa_free(tr.partitionContributions); 
-  exa_free(tr.fracchanges); 
-#endif
+	  exa_free(partition.frequencies);
+	  exa_free(partition.empiricalFrequencies); 
+	  exa_free(partition.tipVector); 
+	  exa_free(partition.perSiteRates); 
+	  exa_free(partition.gammaRates); 
+      
+	  for(int j = 1; j < _tr.mxtips + 1 ; ++j)
+	    {
+	      if(partition.yVector[j] != NULL)
+		exa_free(partition.yVector[j]);
+	    }
+	  exa_free(partition.yVector);
+	  exa_free(partition.xSpaceVector); 
 
-}
-
-
-void TreeAln::initializeFromByteFile(std::string _byteFileName)
-{
-#if HAVE_PLL != 0
-  this->initializeTreePLL(_byteFileName);
-#else 
-  extern char byteFileName[1024]; 
-  strcpy(byteFileName, _byteFileName.c_str() ) ;  
-
-  analdef adef ; 
-
-  adef.max_rearrange          = 21;
-  adef.stepwidth              = 5;
-  adef.initial                = 10;
-  adef.bestTrav               = 10;
-  adef.initialSet             = FALSE; 
-  adef.mode                   = BIG_RAPID_MODE; 
-  adef.likelihoodEpsilon      = 0.1; 
-  adef.permuteTreeoptimize    = FALSE; 
-  adef.perGeneBranchLengths   = FALSE;   
-  adef.useCheckpoint          = FALSE;
-  
-  initializeTree(&tr, &adef);   
-#endif  
-
-
-  // set default values (will be overwritten later, if necessary )
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
-    {
-      pInfo *partition =  getPartition(i);
-      assert(partition->dataType == DNA_DATA);
-
-      setFrequencies(std::vector<double>(partition->states, 1.0 / (double)partition->states ), i); 
-      int num = numStateToNumInTriangleMatrix(partition->states); 
-      setRevMat(std::vector<double>( num , 1.0 ), i); 
-      setAlpha(1, i); 
-    }
-
-  // HACK: initialize the tree somehow 
-  randCtr_t s; 
-  s.v[0] = 0 ; 
-  s.v[1] = 1 ; 
-  Randomness r(s); 
-  TreeRandomizer::randomizeTree(*this,r ); 
-
-  // evaluate once, to activate the likelihood arrays  
-  auto start = tr.start; 
-#if HAVE_PLL != 0  
-  evaluateGeneric(&tr, getPartitionsPtr(), start, true); 
-#else 
-  evaluateGeneric(&tr, start, true); 
-#endif   
-}
-
-
-double TreeAln::getTreeLengthExpensive() const
-{
-  std::vector<Branch> branches = extractBranches(); 
-  
-  assert(getNumBranches() == 1 ); 
-
-  double result = 1; 
-  for(auto b : branches)
-    result *= b.getLength(); 
-
-  return result; 
-}
-
-
-
-void TreeAln::extractHelper( nodeptr p , std::vector<Branch> &result, bool isStart) const 
-{
-  Branch b = Branch(p->number, p->back->number,  p->back->z[0]);       
-  result.push_back(b);
-
-  if(not isStart && isTipNode(p))
-    return; 
-
-  assert(getNumBranches() == 1 ); 
-  
-  for(nodeptr q =  p->next; p != q ; q = q->next)        
-    extractHelper( q->back, result, false);    
-}
-
-
-std::vector<Branch> TreeAln::extractBranches() const 
-{
-  std::vector<Branch> result; 
-  extractHelper(tr.nodep[1]->back, result, true);
-  return result; 
-}
-
-
-void TreeAln::enableParsimony()
-{  
 #if HAVE_PLL == 0
-  // assert the parsimony x-ints are set correctly 
-  for(nat i = 1; i < getNumberOfNodes() + 1 ; ++i)
-    {
-      tr.nodep[i]->xPars = 1; 
-      tr.nodep[i]->next->xPars = 0; 
-      tr.nodep[i]->next->next->xPars = 0; 
-    }
-  
-  // allocateParsimonyDataStructures(tr);   
+	  exa_free(partition.sumBuffer); 
+#endif
+
+	  exa_free(partition.wgt); 
+	  exa_free(partition.rateCategory); 
+	  exa_free(partition.partitionName); 
+	  exa_free(partition.EIGN); 
+	  exa_free(partition.left); 
+	  exa_free(partition.right); 
+	  exa_free(partition.EI); 
+	  exa_free(partition.EV); 
+	  exa_free(partition.globalScaler);       
+	  exa_free(partition.substRates);       
+	}
+
+
+      if(getNumberOfPartitions() > 0)
+	{
+#if HAVE_PLL != 0 
+	  for(nat i = 0; i < getNumberOfPartitions(); ++i)
+	    {
+	      exa_free(_partitions.partitionData[i]);
+	    }
+	  exa_free(_partitions.partitionData); 
 #else 
-  allocateParsimonyDataStructures(&tr, &partitions);   
+	  exa_free(_tr.partitionData);
+#endif
+
+	}
+    }
+
+#if HAVE_PLL == 0  
+  exa_free(_tr.executeModel) ;  
+  exa_free(_tr.partitionContributions); 
+  exa_free(_tr.fracchanges); 
 #endif
 }
 
 
-void TreeAln::initDefault()
-{   
-  tr.likelihood =  0 ; 
-  tr.doCutoff = TRUE;
-  tr.secondaryStructureModel = SEC_16; /* default setting */
-  tr.searchConvergenceCriterion = FALSE;
-  tr.rateHetModel = GAMMA; 
-  tr.multiStateModel  = GTR_MULTI_STATE;
+void TreeAln::createStandardTree(nat numTax)
+{
+  _tr.likelihood =  0 ; 
+  _tr.doCutoff = TRUE;
+  _tr.secondaryStructureModel = SEC_16; /* default setting */
+  _tr.searchConvergenceCriterion = FALSE;
+  _tr.rateHetModel = GAMMA; 
+  _tr.multiStateModel  = GTR_MULTI_STATE;
 #if HAVE_PLL == 0 
-  tr.useGappedImplementation = FALSE;
-  tr.saveBestTrees          = 0;
+  _tr.useGappedImplementation = FALSE;
+  _tr.saveBestTrees          = 0;
+  _tr.numBranches = getNumberOfPartitions();
+#else 
+  _partitions.perGeneBranchLengths = TRUE; 
 #endif
-  tr.saveMemory = FALSE;
-  tr.manyPartitions = FALSE;
-  tr.categories             = 25;
-  tr.grouped = FALSE;
-  tr.constrained = FALSE;
-  tr.gapyness               = 0.0; 
-  tr.useMedian = FALSE;
-  tr.mxtips = 0; 
+
+  _tr.manyPartitions = FALSE;
+  _tr.saveMemory = FALSE;
+  _tr.categories             = 25;
+  _tr.grouped = FALSE;
+  _tr.constrained = FALSE;
+  _tr.gapyness               = 0.0; 
+  _tr.useMedian = FALSE;
+  _tr.mxtips = numTax; 
+
+  setNumberOfPartitions(0);
+
+  TreeInitializer::setupTheTree(_tr);
+}
+
+
+void TreeAln::clearMemory(ArrayReservoir &arrayReservoir)
+{
+  for(nat i = 0; i < getNumberOfPartitions() ; ++i)
+    {
+      auto& partition = getPartition(i);
+      for(nat j = 0; j < getNumberOfTaxa() ; ++j)
+	{
+	  if(partition.xSpaceVector[j] != 0 )
+	    {
+	      if(partition.xVector[j])
+		{
+		  arrayReservoir.deallocate(partition.xVector[j]); 
+		  partition.xVector[j] = nullptr; 
+		  partition.xSpaceVector[j] = 0; 
+		}
+	    }
+	}
+    }
 }
 
 
 void TreeAln::clipNodeDefault(nodeptr p, nodeptr q )
 {
-  clipNode(p,q, TreeAln::initBL);
+  clipNode(p,q);  
+  // use a problematic branch length to ensure, that it was overridden
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
+    p->z[i] = p->back->z[i] = 0.9; 
 }
 
 
-void TreeAln::clipNode(nodeptr p, nodeptr q, double z)
+void TreeAln::clipNode(nodeptr p, nodeptr q)
 {
   p->back = q; 
   q->back = p; 
-  assert(getNumBranches() == 1);     
-  p->z[0] = p->back->z[0]  = z; 
+}
+
+
+void TreeAln::detachNode(nodeptr p)
+{
+  p->next->back = NULL; 
+  p->next->next->back = NULL; 
+}
+
+void TreeAln::unlinkNode(nodeptr p )
+{
+  p->back = NULL; 
+  detachNode(p); 
 }
 
 
@@ -275,33 +338,26 @@ void TreeAln::unlinkTree()
 #endif
 
   // unlink tips 
-  for(int i = 1; i < tr.mxtips+1; ++i)
+  for(int i = 1; i < _tr.mxtips+1; ++i)
     {
-      nodeptr p = tr.nodep[i]; 
+      nodeptr p = _tr.nodep[i]; 
       p->back = NULL; 
     }
 
-  for(int i = tr.mxtips + 1; i < 2 * tr.mxtips; ++i)
-    {      
-      nodeptr p = tr.nodep[i]; 
-      p->back = NULL; 
-      p->next->back = NULL; 
-      p->next->next->back = NULL; 
-    }
-
+  for(int i = _tr.mxtips + 1; i < 2 * _tr.mxtips; ++i)
+    unlinkNode(_tr.nodep[i]); 
 }
 
 
 nodeptr TreeAln::getUnhookedNode(int number)
 {  
-  nodeptr p = tr.nodep[number]; 
+  nodeptr p = _tr.nodep[number]; 
 
-  if(isTip(number, tr.mxtips) )
+  if(isTip(number, _tr.mxtips) )
     {
       assert(p->back == NULL); 
       return p; 
     }
-
 
   nodeptr q = p ; 
   do 
@@ -311,129 +367,85 @@ nodeptr TreeAln::getUnhookedNode(int number)
       q = q->next; 
     } while(p != q); 
 
+  
+  std::cerr << "Error: did not find unlinked node for " << number << std::endl; 
   assert(0);
   return NULL;
 }
 
-#define UNSAFE_EXACT_TREE_COPY
 
-
-// TreeAln& TreeAln::operator=( TreeAln& rhs)
- void TreeAln::copyModel(const TreeAln& rhs)
-{  
+void TreeAln::copyTopologyAndBl(const TreeAln &rhs) 
+{
   assert(&rhs != this); 
 
-  // copy partition parameters 
-  for(int i = 0; i < rhs.getNumberOfPartitions(); ++i)
-    {
-      pInfo *partitionRhs = rhs.getPartition(i); 
-      pInfo *partitionLhs = this->getPartition(i); 
-
-      for(int j = 0; j < partitionRhs->states; ++j )
-	partitionLhs->frequencies[j] = partitionRhs->frequencies[j]; 
-      
-      for(nat j = 0 ; j < numStateToNumInTriangleMatrix(partitionRhs->states); ++j)
-	partitionLhs->substRates[j] = partitionRhs->substRates[j]; 
-
-      partitionLhs->alpha = partitionRhs->alpha; 
-      this->initRevMat(i);
-      this->discretizeGamma(i);       
-    }
-
   this->unlinkTree();
-  int mxtips = rhs.getTr()->mxtips ;
-  auto *rhsTree = rhs.getTr(); 
-  auto *thisTree = getTr();
+  int mxtips = rhs.getTrHandle().mxtips ;
+  auto &rhsTree = rhs.getTrHandle(); 
+  auto &thisTree = getTrHandle();
 
-
-#ifdef UNSAFE_EXACT_TREE_COPY
   // if this works, it is one of the most hackney things, I've ever done... 
-  for(int i = mxtips+1 ; i < 2* tr.mxtips-1; ++i)
+  for(int i = mxtips+1 ; i < 2* _tr.mxtips-1; ++i)
     {
-      nodeptr rhsNode = rhsTree->nodep[i],
-	lhsNode = thisTree->nodep[i];       
-      hookup(lhsNode, lhsNode -   (rhsNode - rhsNode->back), rhsNode->z, getNumBranches()) ;             
+      nodeptr rhsNode = rhsTree.nodep[i],
+	lhsNode = thisTree.nodep[i];       
+      hookup(lhsNode, lhsNode -   (rhsNode - rhsNode->back), rhsNode->z, rhs.getNumberOfPartitions() ) ;             
 
       lhsNode = lhsNode->next; 
       rhsNode = rhsNode->next; 
-      hookup(lhsNode, lhsNode -   (rhsNode - rhsNode->back), rhsNode->z, getNumBranches()) ;       
+      hookup(lhsNode, lhsNode -   (rhsNode - rhsNode->back), rhsNode->z, rhs.getNumberOfPartitions()) ;       
 
       lhsNode = lhsNode->next; 
       rhsNode = rhsNode->next; 
-      hookup(lhsNode, lhsNode  -   (rhsNode - rhsNode->back), rhsNode->z, getNumBranches()) ; 
+      hookup(lhsNode, lhsNode  -   (rhsNode - rhsNode->back), rhsNode->z, rhs.getNumberOfPartitions()) ; 
     }
-#else 
-  for(int i = 1 ; i <= mxtips; ++i )
-    {
-      nodeptr a = rhsTree->nodep[i],
-	b = rhsTree->nodep[i]->back; 
+}
 
-#ifdef DEBUG_LINK_INFO
-      cout << "hooking up tip " << a->number << " and " << b->number << endl; 
-#endif
+
+void TreeAln::copyAlnModel(const TreeAln& rhs)
+{
+  assert(&rhs != this); 
+
+ // copy partition parameters 
+  for(nat i = 0; i < rhs.getNumberOfPartitions(); ++i)
+    {
+      auto& partitionRhs = rhs.getPartition(i); 
+      auto& partitionLhs = this->getPartition(i); 
+
+      for(int j = 0; j < partitionRhs.states; ++j )
+	partitionLhs.frequencies[j] = partitionRhs.frequencies[j]; 
       
-      hookup(this->getUnhookedNode(a->number), this->getUnhookedNode(b->number),a->z, getNumBranches()); 
+      for(nat j = 0 ; j < RateHelper::numStateToNumInTriangleMatrix(partitionRhs.states); ++j)
+	partitionLhs.substRates[j] = partitionRhs.substRates[j]; 
+
+      partitionLhs.protModels = partitionRhs.protModels; 	
+      partitionLhs.alpha = partitionRhs.alpha; 
+
+      partitionLhs.protFreqs = partitionRhs.protFreqs; 
+
+      initRevMat(i);
+      discretizeGamma(i);       
     }
-
-  for(int i = mxtips+1; i < 2 * tr.mxtips-1; ++i)
-    {      
-      nodeptr pRhs = rhsTree->nodep[i], 
-	q = pRhs; 
-      do 
-	{
-	  if(NOT branchExists(thisTree, constructBranch(q->number, q->back->number)))
-	    {
-#ifdef DEBUG_LINK_INFO
-	      cout << "hooing up " << q->number << " and " << q->back->number << endl; 
-#endif
-	      hookup(getUnhookedNode(q->number ) , getUnhookedNode(q->back->number) , q->z, getNumBranches()); 
-	    }
-	  else 
-	    {
-#ifdef DEBUG_LINK_INFO
-	      cout << "branch between " << q->number <<  " and "  << q->back->number << " already existing" <<endl; 
-#endif
-	    }
-
-	  q = q->next ; 
-	} while(q != pRhs); 
-    }
-
-#endif
-
-  tr.start = tr.nodep[rhsTree->start->number];   
 }
 
 
-
-int TreeAln::getNumBranches() const
+nat TreeAln::getNumberOfPartitions() const
 {
 #if HAVE_PLL != 0
-  return partitions.perGeneBranchLengths  ? partitions.numberOfPartitions : 1 ; 
+  return _partitions.numberOfPartitions; 
 #else 
-  return tr.numBranches; 
+  return _tr.NumberOfModels; 
 #endif
 }
 
 
-int TreeAln::getNumberOfPartitions() const
-{
-#if HAVE_PLL != 0
-  return partitions.numberOfPartitions; 
-#else 
-  return tr.NumberOfModels; 
-#endif
-}
-
-
-pInfo* TreeAln::getPartition(int model)  const
+pInfo& TreeAln::getPartition(nat model)  const
 {
   assert(model < getNumberOfPartitions()); 
   
 #if HAVE_PLL != 0  
-  return partitions.partitionData[model]; 
+  return *(_partitions.partitionData[model]); 
 #else 
-  return tr.partitionData + model; 
+  return _tr.partitionData[model] ; 
 #endif
 }
 
@@ -441,25 +453,25 @@ pInfo* TreeAln::getPartition(int model)  const
 std::vector<bool> TreeAln::getExecModel() const 
 { 
   std::vector<bool> result; 
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0  
-      result.push_back(partitions.partitionData[i]->executeModel); 
+      result.push_back(_partitions.partitionData[i]->executeModel); 
 #else  
-      result.push_back(tr.executeModel[i]); 
+      result.push_back(_tr.executeModel[i]); 
 #endif
     }
-   return result; 
+  return result; 
 }
  
 void TreeAln::setExecModel(const std::vector<bool>  &modelInfo)
 {
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0 
-      partitions.partitionData[i]->executeModel =  modelInfo[i] ?  true : false; 
+      _partitions.partitionData[i]->executeModel =  modelInfo[i] ?  true : false; 
 #else 
-      tr.executeModel[i] = modelInfo[i]; 
+      _tr.executeModel[i] = modelInfo[i]; 
 #endif
     }
 }
@@ -467,12 +479,12 @@ void TreeAln::setExecModel(const std::vector<bool>  &modelInfo)
 std::vector<double> TreeAln::getPartitionLnls() const
 {
   std::vector<double> result; 
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0 
-      result.push_back(partitions.partitionData[i]->partitionLH); 
+      result.push_back(_partitions.partitionData[i]->partitionLH); 
 #else 
-      result.push_back(tr.perPartitionLH[i]); 
+      result.push_back(_tr.perPartitionLH[i]); 
 #endif
     }
   return result; 
@@ -480,65 +492,79 @@ std::vector<double> TreeAln::getPartitionLnls() const
  
 void TreeAln::setPartitionLnls(const std::vector<double> partitionLnls)  
 {
-  for(int i = 0; i < getNumberOfPartitions(); ++i)
+  for(nat i = 0; i < getNumberOfPartitions(); ++i)
     {
 #if HAVE_PLL != 0
-      partitions.partitionData[i]->partitionLH = partitionLnls[i]; 
+      _partitions.partitionData[i]->partitionLH = partitionLnls[i]; 
 #else 
-      tr.perPartitionLH[i]  = partitionLnls[i]; 
+      _tr.perPartitionLH[i]  = partitionLnls[i]; 
 #endif
     }
 } 
 
 
-void TreeAln::initRevMat(int model)
+void TreeAln::initRevMat(nat model)
 {
 #if HAVE_PLL != 0
-  initReversibleGTR(getTr(), getPartitionsPtr() , model); 
+  initReversibleGTR(&getTrHandle(), &(getPartitionsHandle()) , model); 
 #else 
-  initReversibleGTR(getTr(), model); 
+  initReversibleGTR(&getTrHandle(), model); 
 #endif
 }
 
-
-void TreeAln::setFrequencies(const std::vector<double> &values, int model)
+void TreeAln::setRevMat(const std::vector<double> &values, nat model)
 {
-  // tout << "setting frequencies "; 
-  // for_each(values.begin(), values.end(), [](double d) {tout << std::setprecision(3) << d << "," ;  } );
-  // tout << std::endl; 
+  bool valuesOkay = BoundsChecker::checkRevmat(values); 
+  if(not valuesOkay)
+    {
+      tout << "Problem with substitution parameter: "  << MAX_SCI_PRECISION << values << std::endl;  
+      assert( valuesOkay ); 
+    }
 
-  assert( BoundsChecker::checkFrequencies(values) ) ;    
-  auto partition = getPartition(model); 
-  memcpy( partition->frequencies, &(values[0]), partition->states * sizeof(double)); 
-  initRevMat(model);   
-}
+  auto& partition = getPartition(model) ; 
 
+  assert(partition.dataType != AA_DATA || partition.protModels == GTR); 
 
-void TreeAln::setRevMat(const std::vector<double> &values, int model)
-{
-  // std::cout << "checking "; for_each(values.begin(), values.end(), [](double d){std::cout << d << "," ;}) ; std::cout  << std::endl; 
-  assert( BoundsChecker::checkRevmat(values) ); 
-  auto partition = getPartition(model) ; 
-  memcpy(partition->substRates, &(values[0]), numStateToNumInTriangleMatrix(  partition->states) * sizeof(double)); 
+  memcpy(partition.substRates, values.data(), RateHelper::numStateToNumInTriangleMatrix(  partition.states) * sizeof(double)); 
   initRevMat(model); 
 }
 
 
-
-void TreeAln::setBranch(const Branch& branch)
+void TreeAln::setBranch(const BranchLength& branch, const AbstractParameter* param)
 {
   assert(BoundsChecker::checkBranch(branch)); 
   assert(branch.exists(*this)); 
+
   auto p = branch.findNodePtr(*this);
-  p->z[0] = p->back->z[0] = branch.getLength();
+  for(auto &partition : param->getPartitions() )
+    {
+      double length = branch.getLength(); 
+      p->z[partition] = p->back->z[partition] = length; 
+    }
 }
 
 
-void TreeAln::setAlpha(double alpha,  int model)
+void TreeAln::setBranch(const BranchLengths& branch, const std::vector<AbstractParameter*>params)
+{
+  assert(BoundsChecker::checkBranch(branch)); 
+  assert(branch.exists(*this)); 
+
+  auto p = branch.findNodePtr(*this); 
+  
+  for(auto &param : params)
+    {
+      double length = branch.getLengths().at(param->getIdOfMyKind());
+      for(auto &partition : param->getPartitions())
+	p->z[partition] = p->back->z[partition] = length; 
+    }
+}
+
+
+void TreeAln::setAlpha(double alpha,  nat model)
 {
   assert(BoundsChecker::checkAlpha(alpha)); 
-  auto p = getPartition(model); 
-  p->alpha = alpha; 
+  auto& p = getPartition(model); 
+  p.alpha = alpha; 
   discretizeGamma(model); 
 }
 
@@ -547,176 +573,30 @@ void TreeAln::setAlpha(double alpha,  int model)
    @brief makes the discrete categories for the gamma
    distribution. Has to be called, if alpha was updated.   
 
- */ 
-void TreeAln::discretizeGamma(int model)
+*/ 
+void TreeAln::discretizeGamma(nat model)
 {
-  pInfo *partition =  getPartition(model); 
-  makeGammaCats(partition->alpha, partition->gammaRates, 4, tr.useMedian);
+  auto& partition =  getPartition(model); 
+  makeGammaCats(partition.alpha, partition.gammaRates, 4, _tr.useMedian);
 }
 
 
-
-
-// initialization code from the PLL in future version, we could also
-// support plain files again. Just do not really know what to do with
-// it =/
-#if HAVE_PLL  != 0 
-
-void TreeAln::initializeTreePLL(std::string byteFileName)
+std::ostream& operator<< (std::ostream& out,  const TreeAln&  traln)
 {
-  partitionList *pl = getPartitionsPtr();
-  pl->partitionData = (pInfo**)exa_malloc(NUM_BRANCHES*sizeof(pInfo*));
-
-  double **empFreq = NULL; 
-  bool perGeneBL = false; 
-  initializePartitionsPLL(byteFileName, &empFreq, perGeneBL );
-
-  initializePartitionsSequential(getTr(), getPartitionsPtr());
-  initModel(getTr(), empFreq, getPartitionsPtr());
-  
-  for(int i = 0; i < pl->numberOfPartitions; ++i)
-    exa_free(empFreq[i]);
-  exa_free(empFreq) ;
-} 
-
-
-void TreeAln::initializePartitionsPLL(std::string byteFileName, double ***empiricalFrequencies, bool multiBranch)
-{
-  unsigned char *y;
-
-  FILE 
-    *byteFile = myfopen(byteFileName.c_str(), "rb");	 
-
-  myBinFread(&(tr.mxtips),                 sizeof(int), 1, byteFile);
-  myBinFread(&(tr.originalCrunchedLength), sizeof(int), 1, byteFile);
-  myBinFread(&(partitions.numberOfPartitions),  sizeof(int), 1, byteFile);
-  myBinFread(&(tr.gapyness),            sizeof(double), 1, byteFile);
-
-
-  partitions.perGeneBranchLengths = multiBranch ? 1 : 0 ;
-
-  /* If we use the RF-based convergence criterion we will need to allocate some hash tables.
-     let's not worry about this right now, because it is indeed RAxML-specific */
-
-  tr.aliaswgt                   = (int *)exa_malloc((size_t)tr.originalCrunchedLength * sizeof(int));
-  myBinFread(tr.aliaswgt, sizeof(int), tr.originalCrunchedLength, byteFile);	       
-
-  tr.rateCategory    = (int *)    exa_malloc((size_t)tr.originalCrunchedLength * sizeof(int));	  
-
-  tr.patrat          = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double));
-  tr.patratStored    = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double)); 
-  tr.lhs             = (double*)  exa_malloc((size_t)tr.originalCrunchedLength * sizeof(double)); 
-
-  *empiricalFrequencies = (double **)exa_malloc(sizeof(double *) * partitions.numberOfPartitions);
-
-  y = (unsigned char *)exa_malloc(sizeof(unsigned char) * ((size_t)tr.originalCrunchedLength) * ((size_t)tr.mxtips));
-  tr.yVector = (unsigned char **)exa_malloc(sizeof(unsigned char *) * ((size_t)(tr.mxtips + 1)));
-
-  for( nat i = 1; i <= (size_t)tr.mxtips; i++)
-    tr.yVector[i] = &y[(i - 1) *  (size_t)tr.originalCrunchedLength]; 
-
-  setupTree(&tr, FALSE, &partitions);
-
-  for(int i = 0; i < partitions.numberOfPartitions; i++)
-    partitions.partitionData[i]->executeModel = TRUE;
-
-  /* data structures for convergence criterion need to be initialized after! setupTree */
-
-  for( nat i = 1; i <= (size_t)tr.mxtips; i++)
-    {
-      int len;
-      myBinFread(&len, sizeof(int), 1, byteFile);
-      tr.nameList[i] = (char*)exa_malloc(sizeof(char) * (size_t)len);
-      myBinFread(tr.nameList[i], sizeof(char), len, byteFile);
-      /*printf("%s \n", tr.nameList[i]);*/
-    }  
-
-  for( nat i = 1; i <= (size_t)tr.mxtips; i++)
-    addword(tr.nameList[i], tr.nameHash, i);
-
-  for(int model = 0; model < partitions.numberOfPartitions; model++)
-    {
-      int 
-	len;
-
-      pInfo 
-	*p = partitions.partitionData[model];
-
-      myBinFread(&(p->states),             sizeof(int), 1, byteFile);
-      myBinFread(&(p->maxTipStates),       sizeof(int), 1, byteFile);
-      myBinFread(&(p->lower),              sizeof(int), 1, byteFile);
-      myBinFread(&(p->upper),              sizeof(int), 1, byteFile);
-      myBinFread(&(p->width),              sizeof(int), 1, byteFile);
-      myBinFread(&(p->dataType),           sizeof(int), 1, byteFile);
-      myBinFread(&(p->protModels),         sizeof(int), 1, byteFile);
-      myBinFread(&(p->autoProtModels),     sizeof(int), 1, byteFile);
-      myBinFread(&(p->protFreqs),          sizeof(int), 1, byteFile);
-      myBinFread(&(p->nonGTR),             sizeof(boolean), 1, byteFile);
-      myBinFread(&(p->numberOfCategories), sizeof(int), 1, byteFile); 
-
-      /* later on if adding secondary structure data
-
-	 int    *symmetryVector;
-	 int    *frequencyGrouping;
-      */
-
-      myBinFread(&len, sizeof(int), 1, byteFile);
-      p->partitionName = (char*)exa_malloc(sizeof(char) * (size_t)len);
-      myBinFread(p->partitionName, sizeof(char), len, byteFile);
-
-      (*empiricalFrequencies)[model] = (double *)exa_malloc(sizeof(double) * (size_t)partitions.partitionData[model]->states);
-      myBinFread((*empiricalFrequencies)[model], sizeof(double), partitions.partitionData[model]->states, byteFile);
-    }
-
-  myBinFread(y, sizeof(unsigned char), ((size_t)tr.originalCrunchedLength) * ((size_t)tr.mxtips), byteFile);
-
-  fclose(byteFile);
-}
-
-
-#endif
-
-
-std::ostream& operator<< (std::ostream& out,  TreeAln&  traln)
-{
-  TreePrinter tp(true, false, false); 
+  auto tp = TreePrinter(true, false, false); 
   return out << tp.printTree(traln); 
 }
 
 
-
-void TreeAln::collapseBranch(Branch b)
+std::vector<double> TreeAln::getRevMat(nat model) const 
 {
-  assert(getNumBranches() == 1 ); 
-  nodeptr p = b.findNodePtr( *this); 
-  p->z[0] = p->back->z[0] = TreeAln::zZero;   
-}
-
-
-bool TreeAln::isCollapsed(Branch b ) 
-{
-  assert(getNumBranches() == 1 ); 
-  nodeptr p = b.findNodePtr(*this); 
-  return p->z[0] >=  BoundsChecker::zMax ; 
-}
-
-
-void TreeAln::setBranchLengthUnsafe(Branch b ) 
-{
-  assert(getNumBranches() == 1 ); 
-  nodeptr p = b.findNodePtr(  *this);   
-  p->z[0] = p->back->z[0] = b.getLength();   
-} 
-
-
-std::vector<double> TreeAln::getRevMat(int model) const 
-{
-  std::vector<double> result; 
-  pInfo *partition = getPartition(model); 
+  auto result = std::vector<double>{} ; 
+  auto& partition = getPartition(model); 
+  assert(partition.dataType != AA_DATA || partition.protModels == GTR); 
   double sum = 0; 
-  for(nat i =0 ; i < numStateToNumInTriangleMatrix(partition->states); ++i)
+  for(nat i =0 ; i < RateHelper::numStateToNumInTriangleMatrix(partition.states); ++i)
     {
-      result.push_back(partition->substRates[i]);
+      result.push_back(partition.substRates[i]);
       sum += result[i]; 
     }
 
@@ -726,35 +606,28 @@ std::vector<double> TreeAln::getRevMat(int model) const
 }
 
 
-std::vector<double> TreeAln::getFrequencies(int model) const
+void TreeAln::setFrequencies(const std::vector<double> &values, nat model)
 {
-  std::vector<double> result; 
-  pInfo* partition = getPartition(model) ; 
-  for(int i = 0; i < partition->states; ++i) 
-    result.push_back(partition->frequencies[i]); 
+  assert( BoundsChecker::checkFrequencies(values) ) ;    
+  auto& partition = getPartition(model); 
+  assert( partition.dataType != AA_DATA || partition.protFreqs == TRUE ); 
+
+  memcpy( partition.frequencies, values.data(), partition.states * sizeof(double)); 
+  initRevMat(model);   
+}
+
+
+std::vector<double> TreeAln::getFrequencies(nat model) const
+{
+  auto result = std::vector<double> {}; 
+  auto& partition = getPartition(model) ; 
+
+  assert( partition.dataType != AA_DATA || partition.protFreqs == TRUE ); 
+  
+  for(int i = 0; i < partition.states; ++i) 
+    result.push_back(partition.frequencies[i]); 
   return result; 
 }
-
-
-
-bool TreeAln::revMatIsImmutable(int model) const
-{
-#ifdef UNSURE
-  assert(0); 
-#endif
-    
-  pInfo *partition = getPartition(model); 
-    
-  return partition->states == 20 && partition->protModels != GTR; 
-} 
-
-
-nat numStateToNumInTriangleMatrix(int numStates)  
-{  
-  return (  numStates * numStates - numStates) / 2 ; 
-}
-
-
 
 
 nodeptr TreeAln::getNode(nat elem) const  
@@ -764,43 +637,23 @@ nodeptr TreeAln::getNode(nat elem) const
       std::cout << "bug: attempted to get node " << elem << std::endl; assert(elem != 0 && elem <= getNumberOfNodes() + 1 ) ;
     } 
 
-  return  getTr()->nodep[elem] ; 
+  return  getTrHandle().nodep[elem] ; 
 }
 
 
-
-std::pair<Branch,Branch> TreeAln::getDescendingBranches(const Branch &b) const
+std::pair<BranchPlain,BranchPlain> TreeAln::getDescendents(const BranchPlain &b) const
 {
   auto p = b.findNodePtr(*this); 
-  return std::pair<Branch,Branch>
-    { Branch(p->next->number, p->next->back->number), Branch(p->next->next->number, p->next->next->back->number) }; 
+  
+  assert(not isTipNode(p)); 
+
+  auto pn = p->next,
+    pnn = p->next->next; 
+
+  return 
+    std::make_pair ( BranchPlain(pn->number, pn->back->number), 
+		     BranchPlain(pnn->number, pnn->back->number) ); 
 } 
-
-
- 
-// for debug 
-void TreeAln::printArrayStart(std::ostream &out, nat length )
-{
-  out << SOME_SCI_PRECISION; 
-  auto numTax = getNumberOfTaxa(); 
-  for(nat i =   0  ; i < getNumberOfInnerNodes( )   ; ++i)
-    {
-      out << "[ array " << i + numTax  <<  " ]"; 
-	
-      for(nat ctr = 0 ; ctr < length  ; ++ctr)
-	{
-	  for(nat j = 0 ; j < 4; ++j)
-	    {
-	      auto partition = getPartition(0); 
-	      out << partition->xVector[i][ctr * 4 + j] << "," ; 
-	    }
-	  out << "\t" ;
-	}
-      out << std::endl; 
-    } 
-}
-
-
 
 
 std::ostream& operator<<(std::ostream& out, pInfo& rhs)
@@ -813,3 +666,276 @@ std::ostream& operator<<(std::ostream& out, pInfo& rhs)
   out << "),alpha=" << rhs.alpha << "}"; 
   return out ; 
 }
+
+
+double TreeAln::getMeanSubstitutionRate(const std::vector<nat> &partitions) const 
+{
+  double result = 0; 
+  auto sum = double{0.}; 
+
+  for(auto &p :partitions)
+    {
+#if HAVE_PLL == 0
+      result += _tr.fracchanges[p] * _tr.partitionContributions[p];   
+      assert(_tr.partitionContributions[p] > 0 && _tr.fracchanges[p] > 0  ); 
+      sum += _tr.partitionContributions[p]; 
+#else 
+      auto& partition =  getPartition(p);
+      result += partition.fracchange * partition.partitionContribution;  
+      sum += partition.partitionContribution; 
+      assert(partition.partitionContribution > 0 && partition.fracchange > 0  ); 
+#endif
+    }
+
+  return result / sum   ; 
+}
+
+
+nat TreeAln::getDepth(const BranchPlain &b) const 
+{
+  if(b.isTipBranch(*this))
+    return 1; 
+  else 
+    {
+      auto desc = getDescendents(b.getInverted());
+      return std::max(getDepth(desc.first), getDepth(desc.second)) + 1; 
+    }
+}
+
+
+std::vector<nat> TreeAln::getLongestPathBelowBranch(const BranchPlain &b) const 
+{
+  if(b.isTipBranch(*this))
+    return std::vector<nat>{b.getSecNode()}; 
+  else 
+    {
+      auto desc = getDescendents(b.getInverted());
+      auto resA = getLongestPathBelowBranch(desc.first);
+      auto resB = getLongestPathBelowBranch(desc.second);
+      if(resA.size() > resB.size())
+	{
+	  resA.push_back(b.getSecNode()); 
+	  return resA; 
+	}
+      else 
+	{
+	  resB.push_back(b.getSecNode()); 
+	  return resB; 
+	}
+    }
+}
+
+
+std::vector<nat> TreeAln::getNeighborsOfNode( nat node ) const 
+{
+  auto result = std::vector<nat>{};
+  auto nodePtr = getNode(node); 
+  if(isTipNode(nodePtr))
+    result.push_back(nodePtr->back->number);
+  else 
+    {
+      result = 
+	{
+	  nat(nodePtr->back->number), 
+	  nat(nodePtr->next->back->number), 
+	  nat(nodePtr->next->next->back->number)
+	} ; 
+    }
+  
+  return result; 
+} 
+
+
+BranchPlain TreeAln::getAnyBranch() const 
+{
+  // assert(0); 
+  return BranchPlain(_tr.nodep[1]->number, _tr.nodep[1]->back->number); 
+} 
+
+BranchLength TreeAln::getBranch(const nodeptr &p,  const AbstractParameter *param) const
+{
+  return getBranch(BranchPlain(p->number,p->back->number), param); 
+}
+
+
+BranchLengths TreeAln::getBranch(const nodeptr& p, const std::vector<AbstractParameter*> &params) const 
+{
+  return getBranch(BranchPlain(p->number, p->back->number), params); 
+}
+
+
+BranchLength TreeAln::getBranch(const BranchPlain &branch,  const AbstractParameter *param) const
+{
+  auto result = branch.toBlDummy();
+  result.extractLength(*this, branch, param); 
+  return result; 
+}
+
+
+BranchLengths TreeAln::getBranch(const BranchPlain& branch, const std::vector<AbstractParameter*> &params) const 
+{
+  auto result = branch.toBlsDummy();
+  result.extractLength(*this, branch, params);
+  return result; 
+}
+
+nat TreeAln::getNumberOfAssignedSites(nat model) const 
+{
+  auto partition =  getPartition (model); 
+#if HAVE_PLL != 0
+  nat length = partition.upper - partition.lower; 
+#else 
+  nat length = partition.width; 
+#endif
+
+  return length; 
+}
+
+
+std::vector<BranchPlain> TreeAln::extractBranches() const
+{
+  auto result = std::vector<BranchPlain>(); 
+  result.reserve(getNumberOfBranches()); 
+
+  int last = int(getNumberOfNodes() + 1); 
+  for(int i = getNumberOfTaxa() + 1 ; i < last ; ++i)
+    {
+      auto node = getNode(i); 
+      
+      if( node->back->number < i )
+	result.emplace_back(i,node->back->number); 
+      if(node->next->back->number < i)
+	result.emplace_back(i,node->next->back->number); 
+      if(node->next->next->back->number < i)
+	result.emplace_back(i,node->next->next->back->number); 
+    }
+
+  assert(result.size() == getNumberOfBranches());
+
+  return result;
+}
+
+
+
+std::vector<BranchLength> TreeAln::extractBranches( const AbstractParameter* param ) const 
+{
+  auto result = std::vector<BranchLength>(); 
+  result.reserve(getNumberOfBranches());
+
+  for(int i = getNumberOfTaxa() + 1 ; i < int(getNumberOfNodes() + 1 )   ; ++i)
+    {
+      auto node = getNode(i); 
+      
+      if( node->back->number < i )
+	result.emplace_back( getBranch(BranchPlain(   i,node->back->number ),param) ); 
+      if(node->next->back->number < i)
+	result.emplace_back( getBranch(BranchPlain(i,node->next->back->number), param) ); 
+      if(node->next->next->back->number < i)
+	result.emplace_back( getBranch(BranchPlain( i,node->next->next->back->number ),param) );  
+   }
+
+  assert(result.size() == getNumberOfBranches());
+  return result;
+}
+
+std::vector<BranchLengths> TreeAln::extractBranches( const std::vector<AbstractParameter*> &param ) const 
+{
+  auto result = std::vector<BranchLengths>(); 
+  result.reserve(getNumberOfBranches()); 
+
+  for(int i = getNumberOfTaxa() + 1 ; i < int(getNumberOfNodes() + 1 )  ; ++i)
+    {
+      auto node = getNode(i); 
+      
+      if( node->back->number < i )
+	result.emplace_back(  getBranch(BranchPlain(   i,node->back->number ),param) ); 
+      if(node->next->back->number < i)
+	result.emplace_back(  getBranch(BranchPlain(i,node->next->back->number), param)); 
+      if(node->next->next->back->number < i)
+	result.emplace_back( getBranch(BranchPlain( i,node->next->next->back->number ),param) ); 
+    }
+
+  assert(result.size() == getNumberOfBranches());
+  return result;
+}
+
+
+std::vector<BranchPlain> TreeAln::getBranchesByDistance(const BranchPlain& branch, nat distance, bool bothSides ) const 
+{
+  if(distance == 0)
+    return { branch };
+
+  auto toCheck = std::vector<BranchPlain>{}; 
+  
+  if(not isTipNode(branch.findNodePtr(*this))) 
+    {
+      auto desc = getDescendents(branch); 
+      toCheck.push_back(desc.first.getInverted()); 
+      toCheck.push_back(desc.second.getInverted()); 
+    }
+
+  if(bothSides
+     && not isTipNode(branch.getInverted().findNodePtr(*this)))
+    {
+      auto desc2 = getDescendents(branch.getInverted()); 
+      toCheck.push_back(desc2.first.getInverted()); 
+      toCheck.push_back(desc2.second.getInverted()); 
+    }
+
+  auto myResult = std::vector<BranchPlain>{}; 
+  for(auto b : toCheck)
+    {
+      auto result = getBranchesByDistance(b, distance-1, false); 
+      myResult.insert(end(myResult), begin(result), end(result)); 
+    }
+
+  return myResult; 
+}
+
+
+void TreeAln::setNumberOfPartitions(nat numPart)
+{
+#if HAVE_PLL == 0
+  _tr.NumberOfModels = numPart; 
+#else 
+  _partitions.numberOfPartitions = numPart; 
+#endif
+}
+
+
+void TreeAln::setProteinModel(int part, ProtModel model) 
+{
+  auto& pData = getPartition(part) ; 
+  pData.protModels=int(model);
+  initRevMat(part); 
+}
+
+
+ProtModel TreeAln::getProteinModel(int part) const
+{
+  auto& pData = getPartition(part) ; 
+  return ProtModel(pData.protModels); 
+}
+
+
+// HACK, don't use 
+void TreeAln::setBranchUnchecked(const BranchLength &bl)
+{
+  auto p =  bl.findNodePtr(*this);
+  p->z[0] = bl.getLength();
+  p->back->z[0] = bl.getLength();
+}
+
+
+void TreeAln::clearMemory()
+{
+  for(nat i = 0; i < getNumberOfPartitions() ; ++i )
+    {
+      auto &partition = getPartition(i);
+      for(nat j = 0; j < getNumberOfTaxa(); ++j)
+	if(partition.xSpaceVector[j] != 0 )
+	  {
+	    exa_free(partition.xVector[j] );
+	  }
+    }
+} 

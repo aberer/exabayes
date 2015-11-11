@@ -3,9 +3,10 @@
 
 #include "mem_alloc.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
+// #include <malloc.h>
 
 #ifdef RAXML_USE_LLALLOC
 
@@ -59,12 +60,12 @@ void *rax_malloc_aligned(size_t size)
 // if llalloc should not be used, forward the rax_* functions to the corresponding standard function
 
 void *rax_memalign(size_t align, size_t size) {
-#if defined (__APPLE__)
-    return malloc(size); // apple has no memalign, but seem to return 16byte (32byte?) aligned blocks by default
-#else
-    return memalign(align, size);
-#endif
-    
+  void *ptr = NULL; 
+  posix_memalign(&ptr, align, size); 
+  
+  assert(ptr != NULL); 
+  
+  return ptr; 
 }
 
 void *rax_malloc( size_t size ) {

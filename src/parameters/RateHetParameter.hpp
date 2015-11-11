@@ -8,8 +8,8 @@ class RateHetParameter : public AbstractParameter
 {
 public: 
 
-  RateHetParameter(nat id )
-    : AbstractParameter(Category::RATE_HETEROGENEITY, id )
+  RateHetParameter(nat id, nat idOfMyKind, std::vector<nat> partitions )
+    : AbstractParameter(Category::RATE_HETEROGENEITY, id, idOfMyKind, partitions,1 )
   {
   }
   
@@ -19,6 +19,8 @@ public:
 
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln) const ; 
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const ; 
+
+  virtual void verifyContent(const TreeAln&traln, const ParameterContent &content) const; 
 }; 
 
 #endif

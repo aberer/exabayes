@@ -1,7 +1,6 @@
 #ifndef _TOPOLOGY_PARAMETER
 #define _TOPOLOGY_PARAMETER
 
-
 #include "TreeAln.hpp"
 #include "AbstractParameter.hpp"
 #include "Category.hpp"
@@ -9,10 +8,10 @@
 class TopologyParameter : public AbstractParameter
 {
 public: 
-  TopologyParameter(nat id )
-    : AbstractParameter(Category::TOPOLOGY, id)
+  TopologyParameter(nat id, nat idOfMyKind, std::vector<nat> partitions )
+    : AbstractParameter(Category::TOPOLOGY, id, idOfMyKind, partitions, 1)
   {
-    printToParamFile = false; 
+    _printToParamFile = false; 
   }
 
   virtual void applyParameter(TreeAln& traln , const ParameterContent &content) const; 
@@ -21,6 +20,8 @@ public:
 
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln) const {}
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  {} 
+
+  virtual void verifyContent(const TreeAln&traln, const ParameterContent &content)  const { } // nothing to do 
 }; 
 
 #endif

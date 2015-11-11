@@ -10,50 +10,59 @@
 #ifndef __PARSIMONY_SPR
 #define __PARSIMONY_SPR
 
-
-
 // why not evaluate stuff only on a few partitions and use that for guidance? 
 
 
 #include <unordered_map>
-
 #include "axml.h"
 #include "AbstractProposal.hpp"
 #include "Path.hpp"
 #include "SprMove.hpp"
 #include "ParsimonyEvaluator.hpp"
 
-typedef std::unordered_map<Branch, double, BranchHashNoLength, BranchEqualNoLength> weightMap; 
-typedef std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength> scoreMap; 
+typedef std::unordered_map<BranchPlain, double> weightMap; 
+typedef std::unordered_map<BranchPlain,std::array<parsimonyNumber,2> > branch22states2score;
+
 
 class ParsimonySPR : public AbstractProposal
 {
 public: 
-  ParsimonySPR( double parsWarp, double blMulti); 
+  ParsimonySPR( double parsWarp, double blMulti, int depth); 
   virtual ~ParsimonySPR(){}
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const; 
+
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
+  virtual void resetState(TreeAln &traln) ; 
   virtual void autotune() ;
 
-  AbstractProposal* clone() const; 
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) );}
+  virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
+  virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out) { } //disabled
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
 
-protected: 
-  double parsWarp; 
-  double blMulti;   
+  virtual void printParams(std::ostream &out)  const ; 
 
-  weightMap getWeights(const TreeAln& traln, const scoreMap &insertions) const; 
-  void determineSprPath(TreeAln& traln, Randomness &rand, double &hastings, PriorBelief &prior ); 
+  virtual AbstractProposal* clone() const; 
+
+protected:			// METHODS
+  weightMap getWeights(const TreeAln& traln,  branch22states2score insertions) const; 
+  branch22states2score determineScoresOfInsertions(TreeAln& traln, BranchPlain primeBranch, Randomness &rand, const branch22states2score &alreadyComputed ); 
   void traverse(const TreeAln &traln, nodeptr p, int distance ); 
-  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, std::unordered_map<Branch,std::vector<nat>, BranchHashNoLength, BranchEqualNoLength > &posses); 
-  
-  SprMove move; 
-  ParsimonyEvaluator pEval;   
-}; 
+  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, branch22states2score &result, int curDepth,  const branch22states2score& alreadyComputed); 
 
+protected: 			// ATTRIBUTES
+  double _parsWarp; 
+  double _blMulti;   
+  SprMove _move; 
+  ParsimonyEvaluator _pEval;   
+  BranchPlain _subtreeBranch; 
+  int _depth;
+  bool _parallelReduceAtEnd;
+
+  static std::array<double,2> factors; 
+}; 
 
 #endif

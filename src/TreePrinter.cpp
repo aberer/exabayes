@@ -1,27 +1,74 @@
+#include <cassert>
+#include <iomanip>
+
+#include "Branch.hpp"
 #include "TreePrinter.hpp"
 
-static int getTheX(nodeptr p)
+TreePrinter::TreePrinter(bool withBranchLengths , bool withInternalNodes , bool withRealNames) 
+  : withBranchLengths(withBranchLengths)
+  , withInternalNodes(withInternalNodes)
+  , withRealNames(withRealNames)
 {
-  if(p->x)
-    return p->back->number; 
-  else if(p->next->x)
-    return p->next->back->number; 
-  else if(p->next->next->x)
-    return p->next->next->back->number; 
-  else 
-    assert(0) ; 
-  return 0;     
 }
 
 
-
-
-void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss, nodeptr p, bool isFirst)
+std::string TreePrinter::printTree(const TreeAln& traln, AbstractParameter* param)
 {
+  auto vect = std::vector<AbstractParameter*>{};
+  vect.push_back(param); 
+  return printTree(traln, vect);   
+}
+
+
+std::string TreePrinter::printTree(const TreeAln& traln, const std::vector<AbstractParameter*> &params)
+{
+  auto &&ss = std::stringstream{}; 
+  ss << SOME_FIXED_PRECISION; 
+
+  ss << "("; 
+  helper(traln, ss, traln.getNode(1)->back, true, params );   
+  ss << ")" ; 
+  if(withBranchLengths)
+    ss << ":0.0"; 
+  ss << ";"; 
+  return ss.str();
+} 
+
+
+void TreePrinter::printBranchLength(const TreeAln& traln, std::stringstream &ss, nodeptr p , const std::vector<AbstractParameter*> &params)
+{
+  ss << MAX_SCI_PRECISION; 
+
+  if(params.size() == 1 )
+    {
+      auto param = params[0]; 
+      ss << ":" << traln.getBranch(p,param).getInterpretedLength(traln, param); 
+    }
+  else 
+    {
+      ss << ":["; 
+      bool isFirst = true ; 
+      for(auto &param : params)
+	{
+	  ss << (isFirst ? "" : ",")  << traln.getBranch(p,param).getInterpretedLength(traln, param); 
+	  isFirst = false; 
+	}
+      ss << "]"; 
+    }
+}
+
+
+void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss, 
+			 nodeptr p, bool isFirst, const std::vector<AbstractParameter*> &params)
+{  
   if(traln.isTipNode(p))
     {
       if(withRealNames)
-	ss << traln.getTr()->nameList[p->number]; 
+	{
+	  auto &taxa = traln.getTaxa(); 
+	  ss << taxa.at(p->number-1) ; 
+	// ss << traln.getTrHandle().nameList[p->number]; 
+	}
       else 
 	ss << p->number; 
     }
@@ -29,9 +76,9 @@ void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss, nodeptr p,
     {
       if (not isFirst )
 	ss << "("; 
-      helper(traln, ss, p->next->back, false); 
+      helper(traln, ss, p->next->back, false, params); 
       ss << "," ; 
-      helper(traln, ss, p->next->next->back, false );       
+      helper(traln, ss, p->next->next->back, false, params ); 
       if(not isFirst)
 	ss << ")"; 
     }
@@ -39,26 +86,18 @@ void TreePrinter::helper(const TreeAln &traln, std::stringstream &ss, nodeptr p,
   if(not isFirst && withInternalNodes && not traln.isTipNode(p))
     ss << p->number ; 
 
-  if(not isFirst && withBranchLengths)
-    ss << ":" << std::setprecision(std::numeric_limits<double>::digits10) << std::scientific  << Branch(p->number,p->back->number,p->z[0]).getInterpretedLength(traln); 
+  if(not isFirst && withBranchLengths && params.size() != 0 )
+    printBranchLength(traln, ss, p, params);
 
   if(isFirst)
     {
       ss << "," << p->back->number; 
-      if(withBranchLengths)
-	ss << ":" << std::setprecision(std::numeric_limits<double>::digits10) << std::scientific  << Branch(p->back->number, p->number, p->z[0]).getInterpretedLength(traln); 
+      if(withBranchLengths && params.size() !=  0)
+	printBranchLength(traln, ss, p, params);
     }
 }
 
-
-// this is unrooted! 
-std::string TreePrinter::printTree(const TreeAln &traln)
+std::string TreePrinter::printTree(const TreeAln& traln)
 {
-  std::stringstream ss; 
-  ss << "("; 
-  helper(traln, ss, traln.getTr()->start->back, true );   
-  ss << "):0.0;"; 
-
-  return ss.str();
-
-}
+  return printTree(traln, {});
+} 

@@ -1,27 +1,79 @@
 #include "NodeSlider.hpp"
-#include "LikelihoodEvaluator.hpp"
+#include "eval/LikelihoodEvaluator.hpp"
 #include "BoundsChecker.hpp"
+#include "priors/AbstractPrior.hpp"
 
 NodeSlider::NodeSlider( double _multiplier)
-  : multiplier(_multiplier)
+  : AbstractProposal( Category::BRANCH_LENGTHS, "nodeSlider", 5., false)
+  , multiplier(_multiplier)
 {
-  name = "nodeSlider"; 
-  this->category = Category::BRANCH_LENGTHS; 
-  relativeWeight = 5.; 
 }
 
 
-void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+std::pair<BranchPlain,BranchPlain> NodeSlider::prepareForSetExecution(TreeAln& traln, Randomness &rand) 
 {
-  // TODO outer branches have a lower probability of getting drawn? =/ 
-  oneBranch = TreeRandomizer::drawInnerBranchUniform(traln,rand); 
+  assert(_inSetExecution); 
 
-  nodeptr p = oneBranch.findNodePtr(traln); 
-  // TODO correct here for the problem mentioned above   
-  nodeptr q = rand.drawRandDouble01() < 0.5  ? p->next->back : p->next->next->back; 
-  oneBranch.setLength(traln.getBranch(p).getLength()); 
-  otherBranch = Branch(p->number, q->number, traln.getBranch(q).getLength()); 
+  auto a = determinePrimeBranch(traln, rand); 
+  auto descendents = traln.getDescendents(a); 
+  auto b = rand.drawRandDouble01() < 0.5 ? descendents.first : descendents.second; 	
+  return std::pair<BranchPlain,BranchPlain>(a,b); 
+}
+
+
+BranchPlain NodeSlider::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const
+{
+  return TreeRandomizer::drawInnerBranchUniform(traln,rand); 
+} 
+
+
+BranchPlain NodeSlider::proposeBranch(const TreeAln &traln, Randomness &rand) const 
+{
+  if(_inSetExecution)
+    {
+      return _preparedBranch;
+    }
+  else  
+    {
+      return determinePrimeBranch(traln, rand); 
+    }
+}
+
+
+BranchPlain NodeSlider::proposeOtherBranch(const BranchPlain &firstBranch, const TreeAln& traln, Randomness& rand) const 
+{
+  if(_inSetExecution)
+    return _preparedOtherBranch; 
+  else 
+    {
+      auto descendents = traln.getDescendents(firstBranch); 
+      return rand.drawRandDouble01() < 0.5 ? descendents.first : descendents.second; 	
+    }
+}
+
+
+void NodeSlider::prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const 
+{
+  nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
+  nat otherNode = oneBranch.getOtherNode(middleNode); 
   
+  auto b = BranchPlain(middleNode, otherNode); 
+  nodeptr p = b.findNodePtr(traln);    
+
+  eval.markDirty( traln, p->number); 
+}
+
+
+void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
+{
+  auto blParams = getPrimaryParameterView(); 
+  auto param = blParams[0];
+  assert(blParams.size() == 1); 
+
+  // TODO outer branches have a lower probability of getting drawn? =/ 
+  oneBranch = traln.getBranch(proposeBranch(traln, rand),param); 
+  otherBranch = traln.getBranch(proposeOtherBranch(oneBranch.toPlain(), traln, rand),param); 
+
   double oldA = oneBranch.getLength(),
     oldB = otherBranch.getLength();
 
@@ -35,14 +87,14 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
   if(not BoundsChecker::checkBranch(testBranch))
     {
       BoundsChecker::correctBranch(testBranch); 
-      newZ = pow(testBranch.getLength(),2); 
+      newZ = pow(testBranch.getLength( ),2); 
       drawnMultiplier = log(newZ)   / log(bothZ); 
     }
 
   double uniScaler = rand.drawRandDouble01(), 
     newA = pow(newZ, uniScaler ),
     newB = pow(newZ, 1-uniScaler); 
-  
+
   bool problemWithA = false; 
   testBranch.setLength(newA); 
   if(not BoundsChecker::checkBranch(testBranch))
@@ -59,37 +111,55 @@ void NodeSlider::applyToState(TreeAln &traln, PriorBelief &prior, double &hastin
       assert(not problemWithA); // should have been detected, when we checked the multiplier 
     }
 
-  traln.clipNode(oneBranch.findNodePtr(traln), 
-		oneBranch.getInverted().findNodePtr(traln),
-		newA); 
-  
-  traln.clipNode(otherBranch.findNodePtr(traln),
-		 otherBranch.getInverted().findNodePtr(traln),
-		 newB); 
-  updateHastings(hastings, drawnMultiplier * drawnMultiplier, name); 
-  auto brPr = primVar[0]->getPrior(); 
+  testBranch = oneBranch; 
+  testBranch.setLength(newA); 
+  // tout << "changing " << oneBranch << " to " << testBranch << std::endl; 
+  traln.setBranch(testBranch, param); 
+  double lnPrA = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(traln,param) } } )
+    -   param->getPrior()->getLogProb( ParameterContent{{ oneBranch.getInterpretedLength(traln,param) } } ); 
 
-  prior.updateBranchLengthPrior(traln, oldA, newA, brPr);
-  prior.updateBranchLengthPrior(traln, oldB, newB, brPr);
+  testBranch = otherBranch; 
+  testBranch.setLength(newB); 
+  // tout << "changing " << otherBranch << " to " << testBranch << std::endl; 
+  traln.setBranch(testBranch, param); 
+  double lnPrB = param->getPrior()->getLogProb( ParameterContent{{ testBranch.getInterpretedLength(traln,param) } } )
+    -   param->getPrior()->getLogProb( ParameterContent{{ otherBranch.getInterpretedLength(traln,param) } } ); 
+
+  AbstractProposal::updateHastingsLog(hastings, log(pow(drawnMultiplier,2)), _name); 
+
+  prior.addToRatio(lnPrA + lnPrB); 
 }
 
-void NodeSlider::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) 
+void NodeSlider::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) 
 {
   nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
   nat otherNode = oneBranch.getOtherNode(middleNode); 
-  
-  Branch b(middleNode, otherNode); 
-  nodeptr p = b.findNodePtr(traln);    
-  LikelihoodEvaluator::disorientNode( p); 
+  assert(_primaryParameters.size() == 1); 
+  auto b = BranchPlain(middleNode, otherNode); 
 
-  evaluator->evaluate(traln,b, false); 
+  auto parts = _primaryParameters[0]->getPartitions(); 
+
+  for(auto node : getInvalidatedNodes(traln) ) 
+    { 
+      for(auto part : parts)
+	evaluator.markDirty(traln, part, node); 
+    }
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL "  << b << std::endl; 
+#endif
+
+  evaluator.evaluatePartitionsWithRoot(traln,b, parts, false, true); 
 }
 
 
-void NodeSlider::resetState(TreeAln &traln, PriorBelief &prior) 
+void NodeSlider::resetState(TreeAln &traln) 
 {
-  traln.setBranch(oneBranch); 
-  traln.setBranch(otherBranch); 
+  auto view = getPrimaryParameterView();
+  assert(view.size() == 1);
+
+  traln.setBranch(oneBranch, view[0]); 
+  traln.setBranch(otherBranch, view[0]); 
 }
 
 
@@ -97,3 +167,10 @@ AbstractProposal* NodeSlider::clone() const
 {
   return new NodeSlider(*this); 
 }  
+
+
+std::vector<nat> NodeSlider::getInvalidatedNodes(const TreeAln& traln) const
+{
+  nat middleNode = oneBranch.getIntersectingNode(otherBranch) ;
+  return { middleNode } ; 
+}

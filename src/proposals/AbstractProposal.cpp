@@ -1,49 +1,47 @@
 #include "AbstractProposal.hpp"
 
 
-std::vector<AbstractParameter*> AbstractProposal::getPrimVar() const
+AbstractProposal::AbstractProposal( Category cat, std::string name,double weight, bool needsFullTraversal )  
+  : _name(name)
+  , _category(cat)
+  , _relativeWeight(weight)
+  , _needsFullTraversal(needsFullTraversal)
+  , _inSetExecution(false)
+  , _suitsProteinPartitions(false)
 {
-  std::vector<AbstractParameter*> result; 
-  for(auto &v : primVar)
-    result.push_back(v.get()); 
-  return result; 
+} 
+
+
+AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
+  : _sctr(rhs._sctr)
+  , _category(rhs._category)
+  , _relativeWeight(rhs._relativeWeight)
+  , _needsFullTraversal(rhs._needsFullTraversal)
+  , _inSetExecution(rhs._inSetExecution)
+  , _id(rhs._id)
+  , _suitsProteinPartitions(rhs._suitsProteinPartitions)
+{
+  this->_name = rhs._name; 
+
+  for(auto &v : rhs._primaryParameters)
+    _primaryParameters.emplace_back(v->clone()); 
+  for(auto &v : rhs._secondaryParameters)
+    _secondaryParameters.emplace_back(v->clone()); 
 }
 
- 
-std::vector<AbstractParameter*> AbstractProposal::getSecVar() const 
+
+void AbstractProposal::updateHastingsLog(double &hastings, double logValueToAdd, std::string whoDoneIt) 
 {
-  std::vector<AbstractParameter*> result; 
-  for(auto &v : secVar)
-    result.push_back(v.get()); 
-  return result; 
-}
-
-
-/**
-   @brief valToAdd must not be on the log-scale 
- */ 
-void AbstractProposal::updateHastings(double &hastings, double valToAdd, std::string whoDoneIt) 
-{
-#ifdef DEBUG_HASTINGS  
-  if(whoDoneIt.compare("branchCollapser" ) == 0 )
-    tout << setprecision(6) << whoDoneIt << " updates hastings " << hastings << " with " << valToAdd ; 
-#endif
-
-  hastings += log(valToAdd); 	// we are logarithmic now   
-
-#ifdef DEBUG_HASTINGS
-  if(whoDoneIt.compare("branchCollapser") == 0)
-    tout <<  " => " << hastings << endl; 
-#endif
+  hastings += logValueToAdd; 
 }
 
 
 std::ostream& AbstractProposal::printShort(std::ostream &out)  const 
 {
-  out << this->name << "( " ;  
+  out << _name << "( " ;  
     
   bool isFirst = true; 
-  for(auto &v : primVar)
+  for(auto &v : _primaryParameters)
     {
       if(not isFirst)
 	out << ","; 
@@ -52,11 +50,11 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
       v->printShort(out); 
     }
 
-  if(secVar.size() > 0)
+  if(_secondaryParameters.size() > 0)
     {
       out << ";"; 
       isFirst = true; 
-      for(auto &v : secVar)
+      for(auto &v : _secondaryParameters)
 	{
 	  if(not isFirst)
 	    out << ","; 
@@ -65,18 +63,20 @@ std::ostream& AbstractProposal::printShort(std::ostream &out)  const
 	  v->printShort(out); 
 	}
     }
+
+  printParams(out);
+
   out << " )"; 
   return out; 
 }
 
 
-
 std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 {
-  out << name  << "(" ; 
-  assert(primVar.size() == 1); 
+  out << _name  << "(" ; 
+  assert(_primaryParameters.size() == 1); 
   bool isFirst= true; 
-  for (auto v : primVar[0]->getPartitions()) 
+  for (auto v : _primaryParameters[0]->getPartitions()) 
     {
       if( not isFirst)
 	out << ","; 
@@ -89,53 +89,122 @@ std::ostream& AbstractProposal::printNamePartitions(std::ostream &out)
 }
 
 
-std::ostream&  operator<< ( std::ostream& out , AbstractProposal* rhs) 
+std::ostream&  operator<< ( std::ostream& out , const AbstractProposal& rhs) 
 {
-  out << rhs->name <<  " primarily modifying " ; 
-  for(auto &r : rhs->primVar)
-    out << r.get() << ",\t"  ; 
-
-  if(not rhs->secVar.empty() )
+  out << rhs._name  << std::endl
+      << "\tintegrating:\t"; 
+  for(auto &r : rhs._primaryParameters)
+    out << r.get() << ", "  ; 
+  
+  if(not rhs._secondaryParameters.empty() )
     {
-      out << "\tand also modifying " ; 
-      for(auto &r : rhs->secVar ) 
+      out << std::endl << "\talso modifying:\t" ; 
+      for(auto &r : rhs._secondaryParameters ) 
 	out << r.get() << ",\t" ; 
     }
   return out; 
 }
 
-
-AbstractProposal::AbstractProposal( const AbstractProposal& rhs)
-  : name(rhs.name)
-  , sctr(rhs.sctr)
-  , category(rhs.category)
-  , relativeWeight(rhs.relativeWeight)
+ 
+void AbstractProposal::serialize( std::ostream &out)   const
 {
-  for(auto &v : rhs.primVar)
-    primVar.emplace_back(v->clone()); 
-  for(auto &v : rhs.secVar)
-    secVar.emplace_back(v->clone()); 
-} 
+  // auto && ss = std::stringstream{}; 
+  // printShort(ss); 
+  // std::string name = ss.str();
+  // writeString(out, name); 
 
-
-
-
-
-void AbstractProposal::writeToCheckpoint( std::ofstream &out)  
-{
-  std::stringstream ss ; 
-  printShort(ss); 
-  std::string name = ss.str();
-  // cWrite<std::string>(out, name);   
-  writeString(out, name); 
-  sctr.writeToCheckpoint(out) ; 
+  cWrite(out, _id);
+  _sctr.serialize(out) ; 
   writeToCheckpointCore(out); 
 }
 
 
-void AbstractProposal::readFromCheckpoint( std::ifstream &in )
+void AbstractProposal::deserialize( std::istream &in )
 {
   // notice: name has already been read 
-  sctr.readFromCheckpoint(in); 
+  _sctr.deserialize(in); 
   readFromCheckpointCore(in); 
+}
+
+
+std::vector<AbstractParameter*> AbstractProposal::getPrimaryParameterView() const
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &v : _primaryParameters)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+ 
+std::vector<AbstractParameter*> AbstractProposal::getSecondaryParameterView() const 
+{
+  std::vector<AbstractParameter*> result; 
+  for(auto &v : _secondaryParameters)
+    result.push_back(v.get()); 
+  return result; 
+}
+
+
+std::vector<AbstractParameter*> AbstractProposal::getBranchLengthsParameterView() const 
+{
+  auto result = std::vector<AbstractParameter*> {}; 
+  for(auto &p : _primaryParameters)
+    if(p->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(p.get()); 
+
+  for(auto &p : _secondaryParameters ) 
+    if(p->getCategory() == Category::BRANCH_LENGTHS)
+      result.push_back(p.get());
+  return result; 
+} 
+
+
+std::vector<nat> AbstractProposal::getAffectedPartitions() const 
+{
+  assert(_primaryParameters.size() == 1); 
+  return _primaryParameters[0]->getPartitions();
+} 
+
+
+std::array<bool,3>
+AbstractProposal::getBranchProposalMode() const 
+{
+  bool outer = false; 
+  bool multiply = false; 
+  bool sequential = false; 
+
+  auto branchOpt = std::getenv("PROPOSE_BRANCHES"); 
+  if(branchOpt != NULL )
+    {
+      auto &&iss =  std::istringstream(branchOpt); 
+      int mode = 0; 
+      iss >> mode; 
+      if(mode == 0)
+	{
+	}
+      else if(mode == 1)
+	{
+	  multiply = true ; 
+	}
+      else if(mode == 2)
+	{
+	  multiply = true; 
+	  outer = true; 
+	}
+      else if(mode == 3 )
+	{
+	  multiply = true; 
+	  sequential = true; 
+	}
+      else if(mode == 4 )
+	{
+	  multiply = true; 
+	  outer = true; 
+	  sequential = true; 
+	}
+      else 
+	assert(0);
+    }
+
+  return {{multiply, outer, sequential }}; 
 }

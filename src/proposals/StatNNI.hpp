@@ -15,31 +15,37 @@ class Chain;
 #include "TreeAln.hpp"
 #include "Path.hpp"
 #include "AbstractProposal.hpp"
-#include "NniMove.hpp"
+#include "SprMove.hpp"
 
 class StatNNI : public AbstractProposal
 {
 public: 
   StatNNI( double multiplier);
-  virtual ~StatNNI(){}
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
+  virtual void resetState(TreeAln &traln) ; 
 
+  BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const; 
+  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0) ); }
   virtual void autotune() {}	// disabled 
 
   virtual AbstractProposal* clone() const;  
   
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out) { } //disabled
+  virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
+  virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
-private:
-  double multiplier; 
-  Path path; 
-  NniMove move; 
 
+  std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const;  
+
+private: 			// METHODS
   void treatOneBranch(nodeptr p, TreeAln &traln, double &hastings, PriorBelief &prior, Randomness &rand); 
+
+private:			// ATTRIBUTES
+  double multiplier; 
+  SprMove move; 
+  bool branchesSaved; 
+  std::vector<BranchLengths> savedBls;
 };
 
 #endif

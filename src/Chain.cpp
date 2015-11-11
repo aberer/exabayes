@@ -1,365 +1,619 @@
-#include <sstream>
+#include <sstream>		
 #include <map> 
 #include <unordered_map>
 
+// TODO remove 
+#include "parameters/BranchLengthsParameter.hpp" 
+
+#include "proposals/StatNNI.hpp"
+#include "proposals/NodeSlider.hpp"
 #include "Chain.hpp"		
 #include "TreeAln.hpp"
 #include "Randomness.hpp"
 #include "GlobalVariables.hpp"
 #include "tune.h"
 
-#include "LikelihoodEvaluator.hpp" 
+#include "eval/LikelihoodEvaluator.hpp" 
 #include "ParallelSetup.hpp"
 #include "Category.hpp"
+#include "TreePrinter.hpp"
 
 // #define VERIFY_GEN 4
 #define VERIFY_GEN 1000000
 
 
-Chain:: Chain(randKey_t seed, std::shared_ptr<TreeAln> _traln, const std::vector<std::unique_ptr<AbstractProposal> > &_proposals, std::unique_ptr<LikelihoodEvaluator> eval) 
-  : tralnPtr(_traln)
-  , deltaT(0)
-  , runid(0)
-  , tuneFrequency(100)
-  , hastings(0)
-  , currentGeneration(0)
-  , couplingId(0)
-  , chainRand(seed)
-  , relWeightSum(0)
-  , bestState(std::numeric_limits<double>::lowest())
-  , evaluator(std::move(eval))
+Chain:: Chain(randKey_t seed, TreeAln traln, const std::vector<std::unique_ptr<AbstractProposal> > &proposals, 
+	      std::vector<ProposalSet> proposalSets, LikelihoodEvaluator eval, bool isDryRun) 
+  : _traln(traln)
+  , _deltaT(0)
+  , _runid(0)
+  , _tuneFrequency(100)
+  , _hastings(0)
+  , _currentGeneration(0)
+  , _couplingId(0)
+  , _proposalSets(proposalSets)
+  , _chainRand(seed)
+  , _relWeightSumSingle(0)
+  , _relWeightSumSets(0)
+  , _bestState(std::numeric_limits<double>::lowest())
+  , _evaluator(eval)
 {
-  for(auto &p : _proposals)
+  for(auto &p : proposals)
     {
       std::unique_ptr<AbstractProposal> copy(p->clone()); 
-      assert(copy->getPrimVar().size() != 0); 
-      proposals.push_back(std::move(copy)); 
+      assert(copy->getPrimaryParameterView().size() != 0); 
+      _proposals.push_back(std::move(copy)); 
     }
 
-  Branch root(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number); 
-  // evaluator->evaluateNoBack(*tralnPtr, root, true); // the non-restoring eval  
-  evaluator->evaluate(*tralnPtr, root, true); 
-  
-  const std::vector<AbstractParameter*> vars = extractVariables(); 
-  prior.initialize(*tralnPtr, vars);
+  const std::vector<AbstractParameter*> vars = extractParameters(); 
+  _prior.initialize(_traln, vars);
 
-  // saving the tree state 
-  suspend(false); 
+  suspend(); 
+  updateProposalWeights();
 }
 
 
-Chain::Chain( Chain&& rhs)   
-  : tralnPtr(rhs.tralnPtr)
-  , deltaT(rhs.deltaT)
-  , runid(rhs.runid)
-  , tuneFrequency(rhs.tuneFrequency)
-  , currentGeneration(rhs.currentGeneration)
-  , couplingId(rhs.couplingId) 
-  , chainRand(rhs.chainRand) 
-  , bestState(rhs.bestState)
-  , evaluator(std::move(rhs.evaluator))
+Chain::Chain(  Chain&& rhs)   
+  : _traln(std::move(rhs._traln))
+  , _deltaT(rhs._deltaT)
+  , _runid(rhs._runid)
+  , _tuneFrequency(rhs._tuneFrequency)
+  , _hastings(rhs._hastings)
+  , _currentGeneration(rhs._currentGeneration)
+  , _couplingId(rhs._couplingId) 
+  , _proposals(std::move(rhs._proposals))
+  , _proposalSets(std::move(rhs._proposalSets))
+  , _chainRand(std::move(rhs._chainRand)) 
+  , _relWeightSumSingle(rhs._relWeightSumSingle)
+  , _relWeightSumSets(rhs._relWeightSumSets) 
+  , _prior(std::move(rhs._prior))
+  , _bestState(rhs._bestState)
+  , _evaluator(std::move(rhs._evaluator))
+  , _lnPr(rhs._lnPr)
 {
-  for(auto &p : rhs.proposals )
-    proposals.emplace_back(std::move(p)); // ->clone
-  prior.initialize(*tralnPtr, extractVariables()); 
-  suspend(false);
 }
+
+
+Chain::Chain(  const Chain& rhs)   
+  : _traln(rhs._traln)
+  , _deltaT(rhs._deltaT)
+  , _runid(rhs._runid)
+  , _tuneFrequency(rhs._tuneFrequency)
+  , _hastings(rhs._hastings)
+  , _currentGeneration(rhs._currentGeneration)
+  , _couplingId(rhs._couplingId) 
+  , _proposalSets(std::move(rhs._proposalSets))
+  , _chainRand(std::move(rhs._chainRand)) 
+  , _relWeightSumSingle(rhs._relWeightSumSingle)
+  , _relWeightSumSets(rhs._relWeightSumSets) 
+  , _prior(std::move(rhs._prior))
+  , _bestState(rhs._bestState)
+  , _evaluator(std::move(rhs._evaluator))
+  , _lnPr(rhs._lnPr)
+{
+  for(auto &p : rhs._proposals)
+    _proposals.emplace_back(p->clone());
+}
+
+
 
 
 Chain& Chain::operator=(Chain rhs)
 {
-  std::swap(*this, rhs); 
+  swap(*this, rhs); 
   return *this; 
+}
+
+
+void swap(Chain &lhs, Chain &rhs)
+{
+  using std::swap; 
+
+  assert(lhs._currentGeneration == rhs._currentGeneration); 
+
+  swap(lhs._traln,rhs._traln); 
+  swap(lhs._deltaT,rhs._deltaT);
+  swap(lhs._runid,rhs._runid);
+  swap(lhs._tuneFrequency,rhs._tuneFrequency);
+  swap(lhs._hastings,rhs._hastings);
+  swap(lhs._currentGeneration,rhs._currentGeneration);
+  swap(lhs._couplingId,rhs._couplingId); 
+  swap(lhs._proposals,rhs._proposals);
+  swap(lhs._proposalSets,rhs._proposalSets);
+  swap(lhs._chainRand,rhs._chainRand);
+  swap(lhs._relWeightSumSingle,rhs._relWeightSumSingle);
+  swap(lhs._relWeightSumSets,rhs._relWeightSumSets); 
+  swap(lhs._prior,rhs._prior);
+  swap(lhs._bestState,rhs._bestState);
+  swap(lhs._evaluator,rhs._evaluator);
+  swap(lhs._lnPr,rhs._lnPr);
+}
+
+
+void swapHeatAndProposals(Chain &lhs, Chain& rhs)
+{
+  std::swap(lhs._couplingId,   rhs._couplingId    ); 
+  std::swap(lhs._proposalSets, rhs._proposalSets  ); 
+  std::swap(lhs._proposals,    rhs._proposals     ); 
 }
 
 
 std::ostream& Chain::addChainInfo(std::ostream &out) const 
 {
-  return out << "[run=" << runid << ",heat=" << couplingId << ",gen=" << getGeneration() << "]" ; 
+  return out << "[run=" << _runid << ",heat=" << _couplingId << ",gen=" << getGeneration() << "]" ; 
 }
 
-
-/**
-   @brief returns the inverse temperature for this chain
- */ 
-double Chain::getChainHeat()
+ 
+double Chain::getChainHeat() const 
 {
-  double tmp = 1. + ( deltaT * couplingId ) ; 
+  double tmp = 1. + ( _deltaT * _couplingId ) ; 
   double inverseHeat = 1.f / tmp; 
-  assert(couplingId == 0 || inverseHeat < 1.); 
+  assert(_couplingId == 0 || inverseHeat < 1.); 
   return inverseHeat; 
 }
 
 
-
-
-void Chain::resume(bool evaluate, bool checkLnl) 
-{    
-  auto vs = extractVariables(); 
-
-  // set the topology first 
-  bool topoFound = false; 
-  for(auto &v : vs)
-    {
-      if(v->getCategory( ) == Category::TOPOLOGY)	
-	{
-	  assert(not topoFound);
-	  topoFound = true; 
-	  v->applyParameter(*tralnPtr, savedContent[v->getId()]); 
-	}
-    }
-
-  // now deal with all the other parameters 
-  for(auto &v : vs)
-    if(v->getCategory() != Category::TOPOLOGY)
-      v->applyParameter(*tralnPtr, savedContent[v->getId()]); 
-
-  if(evaluate)
-    {
-      Branch root(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number); 
-      // evaluator->evaluateNoBack(*tralnPtr, root, true);
-      evaluator->evaluate(*tralnPtr, root, true);
-
-      if(checkLnl && fabs(likelihood - tralnPtr->getTr()->likelihood) >  ACCEPTED_LIKELIHOOD_EPS )
-	{
-	  addChainInfo(std::cerr); 
-	  std::cerr << "While trying to resume chain: previous chain liklihood"
-		    <<  " could not be exactly reproduced. Please report this issue." << std::endl; 
-	  std::cerr << MAX_SCI_PRECISION << 
-	    "prev=" << likelihood << "\tnow=" << tralnPtr->getTr()->likelihood << std::endl; 	  
-	  assert(0);       
-	}  
-
-      prior.initialize(*tralnPtr, vs);
-      double prNow = prior.getLnPrior(); 
-  
-      if(fabs(lnPr - prNow) > ACCEPTED_LNPR_EPS)
-	{
-	  std::cerr << "While trying to resume chain: previous log prior for chain larger than" <<
-	    "re-evaluated prior. This is a programming error." << std::endl; 
-	  assert(0);       
-	}
-    }
-
-  // prepare proposals 
-  relWeightSum = 0; 
-  for(auto& elem : proposals)
-    relWeightSum +=  elem->getRelativeWeight();
-}
-
-
-void Chain::printProposalState(std::ostream& out ) const 
+void Chain::updateProposalWeights()
 {
-  std::map<Category, std::vector<AbstractProposal*> > sortedProposals; 
-  for(auto& p : proposals)
-    sortedProposals[p->getCategory()].push_back(p.get()) ; 
+  // prepare proposals 
+  _relWeightSumSingle = 0; 
+  for(auto& elem : _proposals)
+    _relWeightSumSingle +=  elem->getRelativeWeight();
   
-  for(auto &n : CategoryFuns::getAllCategories())
-    {       
-      Category cat = n; 
-
-      bool isThere = false; 
-      for(auto &p : proposals)
-	isThere |= p->getCategory() == cat ; 
-      
-      if(isThere)
-	{
-	  tout << CategoryFuns::getLongName(n) << ":\t";
-	  for(auto &p : proposals)
-	    {
-	      if(p->getCategory() == cat)
-		{
-		  p->printNamePartitions(tout); 
-		  tout  << ":"  << p->getSCtr() << "\t" ; 	      
-		}
-	    }
-	  tout << std::endl; 
-	}
-    }
+  _relWeightSumSets = 0; 
+  for(auto &set : _proposalSets)
+    _relWeightSumSets += set.getRelativeWeight();
 }
 
 
-AbstractProposal* Chain::drawProposalFunction()
-{ 
-  double r = relWeightSum * chainRand.drawRandDouble01();   
 
-  for(auto& c : proposals)
+void Chain::resume() 
+{    
+  auto vs = extractParameters(); 
+  _prior.initialize(_traln, vs);
+  double prNow = _prior.getLnPrior(); 
+  
+  if( fabs(_lnPr - prNow) > ACCEPTED_LNPR_EPS)
+    {
+      std::cerr << MAX_SCI_PRECISION ; 
+      std::cerr << "While trying to resume chain: previous log prior could not be\n"
+		<< "reproduced. This is a programming error." << std::endl; 
+      std::cerr << "Prior was " << _lnPr << "\t now we have " << prNow << std::endl; 
+      assert(0);       
+    }
+
+  updateProposalWeights();
+}
+
+
+ProposalSet& Chain::drawProposalSet(Randomness &rand)
+{
+  double r = _relWeightSumSets * rand.drawRandDouble01(); 
+
+  for(auto &c : _proposalSets )
+    {
+      double w = c.getRelativeWeight(); 
+      if(r < w )
+	return c; 
+      else 
+	r -= w ; 
+    }
+
+  assert(0); 
+  return _proposalSets[0]; 
+}
+
+
+AbstractProposal& Chain::drawProposalFunction(Randomness &rand)
+{ 
+  double r = _relWeightSumSingle * rand.drawRandDouble01();   
+
+  for(auto& c : _proposals)
     {
       double w = c->getRelativeWeight(); 
       if(r < w )
 	{
 	  // std::cout << "drawn " << c.get() << std::endl; 
-	  return c.get();
+	  return *c;
 	}
       else 
 	r -= w; 
     }
 
   assert(0); 
-  return proposals[0].get(); 
+  return *(_proposals[0]); 
 }
 
 
-void Chain::switchState(Chain &rhs)
+std::string Chain::serializeConditionally( CommFlag commFlags)  const 
 {
-  std::swap(couplingId, rhs.couplingId); 
-  std::swap(bestState, rhs.bestState); 
-  // swap(chainRand, rhs.chainRand); 
-  std::swap(proposals, rhs.proposals); 
+  auto &&out = std::stringstream{}; 
+  
+  if( ( commFlags & CommFlag::PrintStat )  != CommFlag::NOTHING)
+    {
+      out.write(reinterpret_cast<const char*>(&_couplingId), sizeof(_couplingId)); 
+      out.write(reinterpret_cast<const char*>(&_bestState), sizeof(_bestState )); 
+      // out.write(reinterpret_cast<const char*>(&_lnl), sizeof(_lnl)); 
+
+      double lnl = getLikelihood(); 
+      out.write(reinterpret_cast<const char*>(&lnl), sizeof(lnl)); 
+      
+
+      out.write(reinterpret_cast<const char*>(&_lnPr), sizeof(_lnPr)); 
+      out.write(reinterpret_cast<const char*>(&_currentGeneration), sizeof(_currentGeneration)); 
+    }
+
+  if( ( commFlags & CommFlag::Proposals ) != CommFlag::NOTHING )
+    {
+      for(auto& p : _proposals)
+	p->serialize(out); 
+
+      for(auto& p: _proposalSets)
+	p.serialize(out);
+    }
+
+  if( ( commFlags & CommFlag::Tree ) != CommFlag::NOTHING )
+    {
+      for(auto &var: extractSortedParameters())
+	{
+	  auto compo = var->extractParameter(_traln);
+	  auto&&  tmp = std::stringstream{}; 
+	  var->printShort(tmp); 	  	  
+	  writeString(out,tmp.str()); 
+	  compo.serialize(out);
+	}
+    }
+
+  return out.str(); 
+}
+
+
+void Chain::deserializeConditionally(std::string str, CommFlag commFlags)
+{    
+  auto &&in = std::stringstream{}; 
+  in.str(str); 
+
+  if( ( commFlags & CommFlag::PrintStat ) != CommFlag::NOTHING )
+    {
+      in.read(reinterpret_cast<char*>(&_couplingId), sizeof(_couplingId) ); 
+      in.read(reinterpret_cast<char*>(&_bestState), sizeof(_bestState)); 
+
+      // in.read(reinterpret_cast<char*>(&_lnl), sizeof(_lnl)); 
+      double lnl = 0; 
+      in.read(reinterpret_cast<char*>(&lnl), sizeof(lnl)); 
+      setLikelihood(lnl); 
+
+      in.read(reinterpret_cast<char*>(&_lnPr), sizeof(_lnPr)); 
+      in.read(reinterpret_cast<char*>(&_currentGeneration), sizeof(_currentGeneration)); 
+    }
+
+  if( ( commFlags & CommFlag::Proposals ) != CommFlag::NOTHING )
+    {
+      initProposalsFromStream(in);
+    }
+  
+  if( ( commFlags & CommFlag::Tree ) != CommFlag::NOTHING )
+    {
+      for(auto &param : extractSortedParameters())
+	{
+	  auto name = readString(in);
+	  {
+	    auto&& tmp = std::stringstream{}; 
+	    param->printShort(tmp);
+	    assert( tmp.str().compare(name) == 0 ); 
+	  }
+	  auto content = param->extractParameter(_traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
+	  content.deserialize(in);
+	  param->applyParameter(_traln, content);
+	}
+    }
+}
+
+
+
+
+BranchPlain Chain::peekNextVirtualRoot(TreeAln &traln, Randomness rand)  
+{
+  // TODO go beyond next step  
+
+  nat curGen = rand.getGeneration();
+  // tout << rand << std::endl; 
+
+  rand.rebaseForGeneration(curGen + 1 ); 
+
+  double sum = _relWeightSumSingle + _relWeightSumSets; 
+  
+  auto branch = BranchPlain(); 
+
+  if( rand.drawRandDouble01() * sum < _relWeightSumSingle) 
+    {
+      auto &pfun = drawProposalFunction(rand); 
+      branch = pfun.determinePrimeBranch(traln, rand); 
+    }
+  else 
+    {
+      auto pset = drawProposalSet(rand); 
+      branch = pset.getProposalView()[0]->determinePrimeBranch(traln, rand); 
+    }
+
+  if(branch.getPrimNode() == 0 || branch.getSecNode() == 0)
+    {
+      // TODO better draw  
+      branch = TreeRandomizer::drawInnerBranchUniform(traln, rand); 
+#ifdef PRINT_EVAL_CHOICE
+      tout << "RANDOM " << branch<< std::endl; 
+#endif
+      // tout << "no prediction, just returning a somewhat inner branch " << branch  << std::endl; 
+    }
+  else 
+    {
+#ifdef PRINT_EVAL_CHOICE
+      tout << "PREDICT " << branch << std::endl; 
+#endif
+    }
+  
+
+  return branch; 
+}
+
+
+
+void Chain::stepSingleProposal()
+{
+  auto &traln = _traln; 
+  
+  // double prevLnl = _lnl ; 
+  double prevLnl = getLikelihood(); 
+  double myHeat = getChainHeat();
+
+  auto& pfun = drawProposalFunction(_chainRand);
+
+  // tout << "have "  << pfun << std::endl; 
+
+  /* reset proposal ratio  */
+  _hastings = 0; 
+
+  pfun.applyToState(_traln, _prior, _hastings, _chainRand, _evaluator);
+
+  auto suggestion = peekNextVirtualRoot(traln,_chainRand); 
+
+  pfun.evaluateProposal(_evaluator, _traln, suggestion);
+  
+  double priorRatio = _prior.getLnPriorRatio();
+  double lnlRatio = traln.getTrHandle().likelihood - prevLnl; 
+
+  double testr = _chainRand.drawRandDouble01();
+  double acceptance = exp(( priorRatio + lnlRatio) * myHeat + _hastings) ; 
+
+  bool wasAccepted  = testr < acceptance; 
+
+#ifdef DEBUG_SHOW_EACH_PROPOSAL 
+  auto& output = tout  ; 
+  addChainInfo(output); 
+  output << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun.getName() << "\t" 
+	 << MORE_FIXED_PRECISION << prevLnl << "\tdelta(lnl)=" << lnlRatio << "\tdelta(lnPr)=" << priorRatio << "\thastings=" << _hastings << std::endl; 
+#endif
+
+  if(wasAccepted)
+    {
+      pfun.accept();      
+      _prior.accept();
+      if(_bestState < traln.getTrHandle().likelihood  )
+	_bestState = traln.getTrHandle().likelihood; 
+      _lnPr = _prior.getLnPrior();
+    }
+  else
+    {
+      pfun.resetState(traln);
+      pfun.reject();
+      _prior.reject();
+      
+      auto myRejected = std::vector<bool>(traln.getNumberOfPartitions(), false); 
+      for(auto &elem : pfun.getAffectedPartitions())
+	myRejected[elem] = true; 
+
+      auto nodes = pfun.getInvalidatedNodes(traln); 
+      _evaluator.accountForRejection(traln, myRejected, nodes); 
+
+    }
+
+// #ifdef DEBUG_LNL_VERIFY
+//   double supposedLnl = getLikelihood(); 
+//   tout << MAX_SCI_PRECISION << "assumed_lnl: " << supposedLnl << std::endl; 
+
+//   bool problem = false; 
+
+//   auto blList = _traln.extractBranches(); 
+//   std::reverse(begin(blList), end(blList)) ; 
+  
+//   for(auto b :  blList)
+//     {
+//       _evaluator.evaluate(_traln, b, false, false); 
+//       auto lnl = getLikelihood(); 
+//       tout << lnl << std::endl ; 
+//       problem |=  fabs(lnl - supposedLnl) - 1.0 > 1e-6 ; 
+//     }
+  
+//   if(problem)
+//     {
+//       assert(0); 
+//     }
+// #endif
+  
+  // tout << "ORIENT at end: " << evaluator.getOrientation() << std::endl; 
+  _evaluator.freeMemory();
+
+
+  if(_tuneFrequency <  pfun.getNumCallSinceTuning() ) 
+    pfun.autotune();
+  
+}
+
+
+void Chain::stepSetProposal()
+{
+  auto& traln = _traln; 
+
+  double myHeat = getChainHeat(); 
+  auto &pSet = drawProposalSet(_chainRand); 
+
+  // tout << "have " << pSet << std::endl; 
+
+  auto oldPartitionLnls = traln.getPartitionLnls(); 
+  
+  auto p2Hastings =  std::unordered_map<AbstractProposal*, double>{} ; 
+  auto p2LnPriorRatio = std::unordered_map<AbstractProposal*, double>{}; 
+  auto p2OldLnl = std::unordered_map<AbstractProposal*, double>{} ; 
+
+  auto affectedPartitions = std::vector<nat>{}; 
+  
+  auto branches = pSet.getProposalView()[0]->prepareForSetExecution(traln, _chainRand);
+
+  for(auto &proposal : pSet.getProposalView())
+    {
+      proposal->setPreparedBranch(branches.first);
+      proposal->setOtherPreparedBranch(branches.second);
+
+      double lHast = 0;       
+      _prior.reject();
+      proposal->applyToState(traln, _prior, lHast, _chainRand, _evaluator); 
+      p2LnPriorRatio[proposal] = _prior.getLnPriorRatio(); 
+      p2Hastings[proposal] = lHast; 
+
+      for(auto &p : proposal->getPrimaryParameterView())
+	{
+	  auto partitions = p->getPartitions(); 
+	  affectedPartitions.insert(end(affectedPartitions), begin(partitions), end(partitions)); 
+	  
+	  double lnl = 0; 
+	  for(auto &partition : partitions)
+	    lnl += oldPartitionLnls[partition]; 
+	  p2OldLnl[proposal] = lnl; 
+	}
+    }
+
+  bool fullTraversalNecessary = pSet.needsFullTraversal();
+
+  if( branches.first.equalsUndirected(BranchPlain(0,0)) ) // TODO another HACK
+    {
+      // this should be a reasonable suggestion 
+      auto nextRoot = peekNextVirtualRoot(traln, _chainRand); 
+      _evaluator.evaluatePartitionsWithRoot(traln, nextRoot, affectedPartitions, fullTraversalNecessary, true); 
+    }
+  else 
+    {
+      pSet.getProposalView()[0]->prepareForSetEvaluation(traln, _evaluator);
+      _evaluator.evaluatePartitionsWithRoot(traln, branches.first , affectedPartitions, fullTraversalNecessary, true );
+    }
+
+  auto newPLnls = traln.getPartitionLnls();
+
+  _prior.reject();		// slight abuse 
+  auto partitionsToReset = std::vector<bool>(traln.getNumberOfPartitions() , false); 
+  nat accCtr = 0; 
+  nat total = 0; 
+  auto p2WasAccepted = std::unordered_map<AbstractProposal*, bool>{} ; 
+  for(auto &proposal : pSet.getProposalView())
+    {
+      ++total; 
+      double newLnl =0 ;  
+      for(auto var : proposal->getPrimaryParameterView())
+	for(auto p : var->getPartitions()) 
+	  newLnl += newPLnls[p]; 
+ 
+      double accRatio = exp(( p2LnPriorRatio[proposal] + ( newLnl - p2OldLnl[proposal]) ) * myHeat + p2Hastings[proposal]);
+
+      if(_chainRand.drawRandDouble01() < accRatio)
+	{
+	  ++accCtr;
+	  proposal->accept();
+	  p2WasAccepted[proposal] = true; 
+	}
+      else 
+	{
+	  // TODO prior more efficient 
+	  proposal->resetState(traln);
+	  proposal->reject();	  
+
+	  for(auto& param: proposal->getPrimaryParameterView())
+	    {
+	      for(auto p : param->getPartitions())
+		partitionsToReset[p] = true; 
+	    }
+	  p2WasAccepted[proposal] = false; 
+	}      
+    }
+
+  auto nodes = pSet.getProposalView()[0]->getInvalidatedNodes(traln); 
+  _evaluator.accountForRejection(traln, partitionsToReset, nodes); 
+
+  // _lnl = traln.getTrHandle().likelihood; 
+  auto lnl = traln.getTrHandle().likelihood; 
+  _lnPr = _prior.getLnPrior();
+  
+  if(_bestState < lnl)
+    _bestState = lnl; 
+
+#ifdef DEBUG_SHOW_EACH_PROPOSAL
+  auto &output = std::cout ; 
+
+  addChainInfo(output);
+  output << "\t" << accCtr << "/"  << total << "\t" << pSet << "\t" << lnl << std::endl; 
+#endif
+
+  for(auto &proposal : pSet.getProposalView())
+    if(this->_tuneFrequency < proposal->getNumCallSinceTuning()) // meh
+      proposal->autotune(); 
+
+  _prior.reject();
+  tout << MAX_SCI_PRECISION; 
+  for(auto &proposal : pSet.getProposalView())
+    {
+      if(p2WasAccepted[proposal])
+	{
+	  double tmp = p2LnPriorRatio.at(proposal); 
+	  _prior.addToRatio(tmp); 
+	}
+    }
+
+  _evaluator.freeMemory();
+  _prior.accept();
 }
 
 
 void Chain::step()
 {
-  currentGeneration++; 
-  
-  // DEBUG 
-  // tout << "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << currentGeneration << std::endl; 
-  // {
-  //   assert(tralnPtr->getNumberOfPartitions() == 1 ); 
-  //   auto partition = tralnPtr->getPartition(0); 
-
-  //   for(nat i = 0; i < tralnPtr->getNumberOfInnerNodes(); ++i)
-  //     {
-  // 	nat index = i + tralnPtr->getNumberOfTaxa( )+ 1 ; 
-  // 	tout << "[ array " << index <<  "] " <<  partition->xVector[i] << std::endl; 
-  //     }
-  // }
-
-
-  // evaluator->expensiveVerify(*tralnPtr);   
-  
-  // DEBUG 
-  // tout << *tralnPtr << std::endl; 
-  // for(int i = 0; i < tralnPtr->getNumberOfPartitions() ; ++i) 
-  //   {
-  //     auto p = tralnPtr->getPartition(i); 
-  //     tout << *p << std::endl; 
-  //   }
-  // tout << "fracchange=" << tralnPtr->getTr()->fracchange << std::endl; 
-  
-  // if(currentGeneration > 138)
-  //   exit(0); 
-
- // debugPrint = (  currentGeneration >= VERIFY_GEN   ) ; 
+  ++_currentGeneration; 
 
 #ifdef DEBUG_VERIFY_LNPR
-  prior.verifyPrior(*tralnPtr, extractVariables());
+  _prior.verifyPrior(_traln, extractParameters());
 #endif
 
- 
-  tree *tr = tralnPtr->getTr();   
-  evaluator->imprint(*tralnPtr);
-
+  _evaluator.imprint(_traln);
   // inform the rng that we produce random numbers for generation x  
-  chainRand.rebase(currentGeneration);
+  _chainRand.rebaseForGeneration(_currentGeneration);
 
-  double prevLnl = tr->likelihood; 
-  double myHeat = getChainHeat();
-
-  auto pfun = drawProposalFunction();
- 
-  /* reset proposal ratio  */
-  hastings = 0; 
-
-#ifdef DEBUG_ACCEPTANCE
-  double oldPrior = prior.getLnPrior();
-#endif
-  
-  pfun->applyToState(*tralnPtr, prior, hastings, chainRand);
-
-  if(debugPrint)
-    tout << TreePrinter(false, true, false).printTree(*tralnPtr) << std::endl; 
-
-  pfun->evaluateProposal(evaluator.get(), *tralnPtr, prior);
-  
-  double priorRatio = prior.getLnPriorRatio();
-  double lnlRatio = tr->likelihood - prevLnl; 
-
-  double testr = chainRand.drawRandDouble01();
-  double acceptance = exp(( priorRatio + lnlRatio) * myHeat + hastings) ; 
-
-#ifdef DEBUG_ACCEPTANCE
-  tout  << endl << "(" << oldPrior<<  " - " << prior.getLnPriorRatio()  << ") + ( " << std::setprecision(std::numeric_limits<double>::digits10 ) << tr->likelihood << " - "<< prevLnl   << ") * " << myHeat << " + " << hastings << endl; 
-#endif
-
-  bool wasAccepted  = testr < acceptance; 
-  
-#ifdef DEBUG_SHOW_EACH_PROPOSAL
-  {
-    double lnl = tr->likelihood; 
-    addChainInfo(tout); 
-    tout << "\t" << (wasAccepted ? "ACC" : "rej" )  << "\t"<< pfun->getName() << "\t" << std::setprecision(std::numeric_limits<double>::digits10) << std::scientific << lnl << "\tdelta=" << lnlRatio << "\t" << hastings << std::endl; 
-  }
-#endif
-
-
-  if(wasAccepted)
-    {
-      pfun->accept();      
-      prior.accept();
-      if(bestState < tralnPtr->getTr()->likelihood  )
-	bestState = tralnPtr->getTr()->likelihood; 
-      likelihood = tralnPtr->getTr()->likelihood; 
-      lnPr = prior.getLnPrior();
-    }
-  else
-    {
-      pfun->resetState(*tralnPtr, prior);
-      pfun->reject();
-      prior.reject();
-
-      evaluator->resetToImprinted(*tralnPtr);
-    }
+  double sum = _relWeightSumSingle + _relWeightSumSets; 
+  if(_chainRand.drawRandDouble01() * sum < _relWeightSumSingle)
+    stepSingleProposal();
+  else 
+    stepSetProposal();
 
 #ifdef DEBUG_LNL_VERIFY
-  evaluator->expensiveVerify(*tralnPtr); 
-#endif
-  
-#ifdef DEBUG_TREE_LENGTH  
-  assert( fabs (tralnPtr->getTreeLengthExpensive() - tralnPtr->getTreeLength())  < 1e-6); 
+  _evaluator.expensiveVerify(_traln, _traln.getAnyBranch() , getLikelihood()); 
 #endif
 
 #ifdef DEBUG_VERIFY_LNPR
-  prior.verifyPrior(*tralnPtr, extractVariables());
+  _prior.verifyPrior(_traln, extractParameters());
 #endif
-  
-  if( currentGeneration == VERIFY_GEN  )
-    {      
-      tout << "EVAL" << std::endl; 
-      evaluator->evaluate(*tralnPtr, evaluator->findVirtualRoot(*tralnPtr), true); 
-    }
-
-  if(this->tuneFrequency <  pfun->getNumCallSinceTuning() ) 
-    pfun->autotune();
-
 }
 
 
- 
-void Chain::suspend(bool paramsOnly)  
+void Chain::suspend()  
 {
-  auto variables = extractVariables();
-  savedContent.clear(); 
-
-  for(auto& v : variables)
-    {
-      assert(savedContent.find(v->getId()) == savedContent.end()); 
-      savedContent[v->getId()] = v->extractParameter(*tralnPtr); 
-    }
-
-  if(not paramsOnly)
-    {
-#ifdef EFFICIENT
-      // too expensive 
-      assert(0); 
-#endif
-      resume(false, true ); 
-      Branch rootBranch(tralnPtr->getTr()->start->number, tralnPtr->getTr()->start->back->number);
-      evaluator->evaluate(*tralnPtr, rootBranch, true);
-      likelihood = tralnPtr->getTr()->likelihood; 
-      lnPr = prior.getLnPrior();
-    }
+  _traln.clearMemory(_evaluator.getArrayReservoir()); 
+  _lnPr = _prior.getLnPrior();
+  _evaluator.freeMemory(); 
 }
 
 
@@ -386,21 +640,48 @@ namespace std
 }
 
 
-
-
-const std::vector<AbstractParameter*> Chain::extractVariables() const 
+std::vector<AbstractParameter*> Chain::extractSortedParameters() const 
 {
-  std::unordered_set<AbstractParameter*> result; 
-  for(auto &p : proposals)
+  auto result = extractParameters();
+  std::sort(begin(result), end(result), 
+	    [] (const AbstractParameter *lhs, const AbstractParameter* rhs)  -> bool 
+	    {
+	      auto prioLhs = lhs->getParamPriority();
+	      auto prioRhs = rhs->getParamPriority();
+	      if(prioLhs == prioRhs)
+		return lhs->getId() < rhs->getId(); 
+	      return prioLhs > prioRhs;  
+	    });
+
+  return result; 
+}
+
+std::vector<AbstractParameter*> Chain::extractParameters() const 
+{
+  auto result = std::unordered_set<AbstractParameter*>{}; 
+  
+  // add parameters in the default proposals 
+  for(auto &p : _proposals)
     {
-      for(auto &v : p->getPrimVar())
+      for(auto &v : p->getPrimaryParameterView())
 	result.insert(v); 
-      for(auto &v : p->getSecVar())
+      for(auto &v : p->getSecondaryParameterView())
 	result.insert(v); 
     }
   
-  std::vector<AbstractParameter*> result2 ; 
-  
+  // add the proposals in the proposal sets 
+  for(auto &p : _proposalSets)
+    {
+      for(auto &p2 : p.getProposalView() )
+	{
+	  auto tmp =  p2->getPrimaryParameterView();
+	  result.insert( tmp.begin(), tmp.end()); 
+	  tmp = p2->getSecondaryParameterView();
+	  result.insert(tmp.begin(), tmp.end()); 
+	}
+    }
+
+  auto result2 = std::vector<AbstractParameter*> {}; 
   for(auto &v : result) 
     result2.push_back(v); 
 
@@ -410,8 +691,8 @@ const std::vector<AbstractParameter*> Chain::extractVariables() const
 
 const std::vector<AbstractProposal*> Chain::getProposalView() const 
 {
-  std::vector<AbstractProposal*> result;  
-  for(auto &elem: proposals)
+  auto result = std::vector<AbstractProposal*>{};  
+  for(auto &elem: _proposals)
     result.push_back(elem.get()); 
   return result; 
 }
@@ -420,127 +701,124 @@ const std::vector<AbstractProposal*> Chain::getProposalView() const
 std::ostream& operator<<(std::ostream& out, const Chain &rhs)
 {
   rhs.addChainInfo(out); 
-  out << "\tLnL: " << rhs.getLnLikelihood() << "\tLnPr: " << rhs.getLnPrior(); 
-  return out; 
+  // out  << "\tLnl: " << rhs.tralnPtr->getTr()->likelihood << "\tLnPr: " << rhs.prior.getLnPrior();
+  out  << "\tLnl: " << rhs.getLikelihood() << "\tLnPr: " << rhs._lnPr; 
+  return out;  
 }
 
 
-void Chain::sample( const TopologyFile &tFile, const ParameterFile &pFile  ) const
+void Chain::sample(  std::unordered_map<nat,TopologyFile> &paramId2TopFile ,  ParameterFile &pFile ) const
 {
-  tFile.sample( *tralnPtr, getGeneration() ); 
-  pFile.sample( *tralnPtr, extractVariables(), getGeneration(), prior.getLnPrior()); 
-}
-
-
-void Chain::readFromCheckpoint( std::ifstream &in ) 
-{
-  chainRand.readFromCheckpoint(in); 
-  couplingId = cRead<int>(in);   
-  likelihood = cRead<double>(in); 
-  lnPr = cRead<double>(in);   
-  currentGeneration = cRead<int>(in); 
+  auto blParamsUnfixed=  std::vector<AbstractParameter*>{} ; 
+  AbstractParameter *topoParamUnfixed = nullptr; 
   
-  std::unordered_map<std::string, AbstractProposal*> name2proposal; 
-  for(auto &p :proposals)
+  for(auto &param : extractParameters()) 
     {
-      std::stringstream ss; 
-      p->printShort(ss); 
-      assert(name2proposal.find(ss.str()) == name2proposal.end()); // not yet there 
-      name2proposal[ss.str()] = p.get();
+      if(param->getCategory() == Category::BRANCH_LENGTHS && param->getPrior()->needsIntegration() )
+	blParamsUnfixed.push_back(param); 
+      else if(param->getCategory() == Category::TOPOLOGY && param->getPrior()->needsIntegration() )
+	topoParamUnfixed = param  ; 
     }
 
-  nat ctr = 0; 
-  while(ctr < proposals.size())
+  if(blParamsUnfixed.size() > 0)
     {
-      // std::string name = cRead<std::string>(in); 
-      std::string name = readString(in);
-
-      if(name2proposal.find(name) == name2proposal.end())
+      for(auto &param : blParamsUnfixed)
 	{
-	  std::cerr << "Could not parse the checkpoint file.  A reason for this may be that\n"
-		    << "you used a different configuration or alignment file in combination\n"
-		    << "with this checkpoint file. Fatality." << std::endl; 
-	  ParallelSetup::genericExit(-1); 
+	  nat myId = param->getId(); 
+	  auto &f = paramId2TopFile.at(myId); 
+	  f.sample(_traln, getGeneration(), param); 
 	}
-      name2proposal[name]->readFromCheckpoint(in);
-      ++ctr; 
+    }
+  else if(topoParamUnfixed != nullptr)
+    {
+      auto &f = paramId2TopFile.at(topoParamUnfixed->getId()); 
+      f.sample(_traln, getGeneration(), topoParamUnfixed); 
     }
 
-
-  std::unordered_map<std::string, AbstractParameter*> name2parameter; 
-  for(auto &p : extractVariables())
-    {
-      std::stringstream ss;       
-      p->printShort(ss);
-      assert(name2parameter.find(ss.str()) == name2parameter.end()); // not yet there 
-      name2parameter[ss.str()] = p;
-    }  
-
-
-  ctr = 0; 
-  while(ctr < name2parameter.size())
-    {
-      // std::string name = cRead<std::string>(in) ; 
-      std::string name = readString(in); 
-      if(name2parameter.find(name) == name2parameter.end())
-	{
-	  std::cerr << "Could not parse the checkpoint file. A reason for this may be that\n"
-		    << "you used a different configuration or alignment file in combination\n"
-		    << "with this checkpoint file. Fatality." << std::endl; 
-	  ParallelSetup::genericExit(-1); 
-	}
-      auto param  = name2parameter[name]; 
-
-      ParameterContent content = param->extractParameter(*tralnPtr); // initializes the object correctly. the object must "know" how many values are to be extracted 
-      content.readFromCheckpoint(in);
-      
-      param->applyParameter(*tralnPtr, content); 
-      ++ctr;
-    }
-
-  // resume the chain and thereby assert that everything could be
-  // restored correctly
-  auto vars = extractVariables(); 
-  savedContent.clear(); 
-  // savedContent.resize(vars.size()); 
-  
-  for(auto & v: vars)
-    {
-      assert(savedContent.find(v->getId()) == savedContent.end()); 
-      savedContent[v->getId()] = v->extractParameter(*tralnPtr);
-    }
-
-  resume(false, true);
+  pFile.sample( _traln, extractParameters(), getGeneration(), _prior.getLnPrior()); 
 }
- 
 
-void Chain::writeToCheckpoint( std::ofstream &out) 
+
+
+void Chain::initProposalsFromStream(std::istream& in)
 {
-  resume(false, true);      
-  suspend(false);
-
-  chainRand.writeToCheckpoint(out);   
-  cWrite(out, couplingId); 
-  cWrite(out, likelihood); 
-
-  // addChainInfo(tout); 
-  // tout << "  saving lnl " << MAX_SCI_PRECISION << likelihood << std::endl << std::endl; 
-
-  cWrite(out, lnPr); 
-  cWrite(out, currentGeneration); 
-
-  for(auto &p : proposals)
-    p->writeToCheckpoint(out);
-
-  for(auto &var: extractVariables())
+  for(auto &p : _proposals)
     {
-      auto compo = var->extractParameter(*tralnPtr); 
-      
-      std::stringstream ss; 
+      nat elem = cRead<int>(in); 
+      assert(p->getId() == elem); 
+      p->deserialize(in);
+    }
+
+  for(auto &p : _proposalSets)
+    {
+      // tout << "deserializing set " << p << std::endl; 
+      p.deserialize(in);
+    }
+}
+
+
+void Chain::deserialize( std::istream &in ) 
+{
+#ifdef DEBUG_SERIALIZE
+  tout << "deserializing chain" << std::endl; 
+#endif
+
+  _chainRand.deserialize(in); 
+  _couplingId = cRead<int>(in);   
+
+  double lnl = cRead<double>(in); 
+  setLikelihood(lnl); 
+
+  _lnPr = cRead<double>(in);   
+  _currentGeneration = cRead<int>(in); 
+
+  initProposalsFromStream(in);
+
+  for(auto &param : extractSortedParameters())
+    {
+      auto &&tmpSS = std::stringstream{}; 
+      auto name = readString(in);
+      param->printShort(tmpSS);
+      assert( tmpSS.str().compare(name) == 0 ); 
+      auto content = param->extractParameter(_traln); // initializes the object correctly. the object must "know" how many values are to be extracted 
+      content.deserialize(in);
+      param->applyParameter(_traln, content);
+    }
+}
+
+
+
+// TODO remove 
+void Chain::serialize( std::ostream &out) const
+{
+  _chainRand.serialize(out);   
+  cWrite(out, _couplingId); 
+
+  double lnl = getLikelihood(); 
+  cWrite(out, lnl); 
+
+  cWrite(out, _lnPr); 
+  cWrite(out, _currentGeneration); 
+
+  for(auto &p : _proposals)
+    p->serialize(out);
+
+  for(auto &p : _proposalSets)
+    p.serialize(out); 
+    
+  for(auto &var: extractSortedParameters())
+    {
+      auto compo =  var->extractParameter(_traln); 
+
+      auto &&ss = std::stringstream{}; 
       var->printShort(ss); 
+
       std::string name = ss.str(); 
-      
+
       writeString(out,name); 
-      compo.writeToCheckpoint(out);
+      compo.serialize(out);
     }  
 }   
+
+// c++<3
+

@@ -1,88 +1,122 @@
 #include "GibbsProposal.hpp"
-#include "AbstractProposal.hpp"
-#include "densities.h"
+#include "proposals/AbstractProposal.hpp"
+#include "priors/ExponentialPrior.hpp"
+#include "BoundsChecker.hpp"
+#include "Density.hpp"
+#include "AdHocIntegrator.hpp"
+#include "Arithmetics.hpp"
 
-const double GibbsProposal::EST_EXP = -1; 
+// between .85 and 1 
+// could be between 300 and 500 
 
-// const double GibbsProposal::EST_FAC = 0.015; 
-const double GibbsProposal::EST_FAC = 2; 
+#define VERBOSE_INFO
+
+const double GibbsProposal::EST_FAC = 1.5; 
 
 
-
-/** 
-    @brief draws a branch from the estimated posterior probability   
-    
-    internal length used as a starting point for newton-raphson
-    optimization
-
-    important: uses the current length for the hastings
-
-    @param Branch branch -- contains the initial branch length
-    
- */ 
-void GibbsProposal::drawFromEsitmatedPosterior(Branch &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings) 
+BranchLength GibbsProposal::drawFromEsitmatedPosterior(const BranchLength &branch, LikelihoodEvaluator& eval, TreeAln &traln, Randomness& rand,  int maxIter, double &hastings,  const AbstractParameter*  blParam) 
 {
-  double initLength = branch.getLength(); 
+  auto result = optimiseBranch(traln, branch, eval, maxIter ,blParam);
+  auto optLen = result[0]; 
+  auto nrD1  = result[1]; 
+  auto nrD2 = result[2]; 
+  auto resultBranch = branch; 
+  resultBranch.setLength(optLen); 
 
-  // std::cout <<  << std::endl; 
-  
-  double nrD2 = 0; 
-  optimiseBranch(traln, branch, eval, nrD2, maxIter);
+  auto proposalResult = propose(resultBranch.getInterpretedLength(traln, blParam), nrD1, nrD2, rand); 
+  auto proposal = proposalResult[0];  
+  auto alpha = proposalResult[1]; 
+  auto beta = proposalResult[2]; 
 
-  if( nrD2 > 0 )
-    {
-      std::cerr << "2nd derivate > 0. HACK: setting it to negative value. Resolve this!" << std::endl; 
-      nrD2 = - nrD2; 
-    }
+  resultBranch.setConvertedInternalLength(traln,blParam, proposal);
 
-  double nrOpt = branch.getInterpretedLength(traln); 
-  double c = EST_FAC  / -nrD2 ; 
-  double beta =  ((nrOpt + sqrt(nrOpt * nrOpt + 4 * c)) / (2 * c )); 
-  double alpha = nrOpt * beta + 1 ; 
+  if(not BoundsChecker::checkBranch(resultBranch))
+    BoundsChecker::correctBranch(resultBranch); 
 
-  double proposal = rand.drawRandGamma(alpha,   beta);
-  double prop = branch.getInternalLength(traln, proposal );   
+  double lnBackP = Density::lnGamma(branch.getInterpretedLength(traln, blParam), alpha, beta); 
+  double lnForP = Density::lnGamma(resultBranch.getInterpretedLength(traln, blParam), alpha, beta);
 
-  branch.setLength(initLength); 
-  double lnBackP = logGammaDensity(branch.getInterpretedLength(traln), alpha, beta); 
-  double lnForP = logGammaDensity(proposal, alpha, beta); 
+  assert(lnBackP != 0 && lnForP != 0 ); 
 
-  // std::cout << std::endl <<  "initL=" << branch.getInterpretedLength(traln) << "\tnrOpt=" << nrOpt << "\tnrD2=" << nrD2 << "\tproposal=" 
-  // 	    << proposal <<  "\thastings=" << lnBackP - lnForP   <<std::endl; 
-
-  
-  // hastings += (lnBackP - lnForP); 
-  AbstractProposal::updateHastings(hastings,   exp(lnBackP - lnForP) , "theGibbs");
-  branch.setLength(prop); 
+  AbstractProposal::updateHastingsLog(hastings,   lnBackP - lnForP , "theGibbs");
+  return resultBranch; 
 }
 
 
 
-void GibbsProposal::optimiseBranch( TreeAln &traln, Branch &b, LikelihoodEvaluator& eval, double &secDerivative, int maxIter)
+std::pair<double,double> GibbsProposal::getGammaParams(double nrOpt, double nrD1, double nrD2)
 {
+#ifdef VERBOSE_INFO
+  // tout << MAX_SCI_PRECISION << nrOpt << "\t" << nrD2 << std::endl; 
+#endif
+
+  bool hasConverged = not (nrOpt < 1e-5 && 1e-1 < fabs(nrD1)) ; 
+
+  double alpha = 0,  beta = 0; 
+  if(not hasConverged)
+    {
+      alpha = 1 ; 
+      beta = nrD1 ; 
+
+// #ifdef VERBOSE_INFO
+//       tout << "GIBBS-BAD" << std::endl;
+// #endif
+    }
+  else 
+    {
+      double c = EST_FAC  /  (- nrD2) ; 
+      beta =  ((nrOpt + sqrt(nrOpt * nrOpt + 4 * c)) / (2 * c )) ; 
+      alpha = nrOpt * beta + 1 ; 
+    }
+
+  // if(nrD1 > 1e-1 && nrOpt < 1e-5)
+    // tout << "DANGER" << std::endl; 
+  // tout << MAX_SCI_PRECISION <<  "(" << nrOpt << ","  << nrD1 << "," << nrD2 << ") <=> " << SOME_FIXED_PRECISION << alpha << "," << beta << std::endl; 
+
+  assert(nrD2 < 0 || not hasConverged ); 
+
+  return make_pair(alpha, beta);
+}
+
+
+std::array<double,3> GibbsProposal::propose(double nrOpt, double nrd1, double nrd2, Randomness &rand)
+{
+  auto params = getGammaParams(nrOpt, nrd1, nrd2); 
+  double proposal = rand.drawRandGamma(params.first, params.second); 
+  
+  auto result = std::array<double,3>{{ proposal, params.first, params.second} }; 
+  return result; 
+}
+
+
+std::array<double,3> GibbsProposal::optimiseBranch( TreeAln &traln, const BranchLength& b, LikelihoodEvaluator& eval, int maxIter,  AbstractParameter const  *param)
+{
+  double nrD1 = 0; 
+  double nrD2 = 0; 
+
   auto p = b.findNodePtr(traln ), 
     q = p->back; 
 
-  if(not p->x == 1 )
-    eval.evalSubtree(traln, b); 
-  if(not q->x == 1 )
-    eval.evalSubtree(traln,b.getInverted());
+  assert(traln.getNumberOfPartitions() == 1 ); 
 
-  // eval.evaluate(traln,b, false);
+  eval.evalSubtree(traln, 0, b.toPlain() ); 
+  eval.evalSubtree(traln, 0, b.toPlain().getInverted());
+  
+  auto prior = param->getPrior(); 
+  assert(dynamic_cast<ExponentialPrior*> (prior) != nullptr); 
+  double lambda = dynamic_cast<ExponentialPrior*>(param->getPrior())->getLamda(); 
 
-
-  double lambda = 10;
   double result = 0;   
   double init = b.getLength(); 
-  double firstDerivative = 0 ; 
+
+
+  double add2nrd1 = lambda * traln.getMeanSubstitutionRate( { 0 }); 
 
 #if HAVE_PLL != 0
-  makenewzGeneric(traln.getTr(), traln.getPartitionsPtr(), p, q, &init, maxIter,  &result , &firstDerivative,  &secDerivative, lambda, FALSE) ;
+  makenewzGeneric(&(traln.getTrHandle()), &(traln.getPartitionsHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE, &eval.getArrayReservoir()) ;
 #else 
-  makenewzGeneric(traln.getTr(), p, q, &init, maxIter,  &result , &firstDerivative,  &secDerivative, lambda, FALSE) ;
+  makenewzGeneric(&(traln.getTrHandle()), p, q, &init, maxIter,  &result , &nrD1,  &nrD2, add2nrd1, FALSE, &eval.getArrayReservoir()) ;
 #endif
 
-  b.setLength(result); 
-  
-  // std::cout<< "result=" << result << "\tresult_iter=" << b.getInterpretedLength(traln) << "\tfirst=" << firstDerivative<< "\tsecond="<< secDerivative << "\tafter " << maxIter << std::endl; 
+  return std::array<double,3>{{result, nrD1, nrD2}}; 
 }

@@ -1,42 +1,69 @@
 #! /bin/bash
 
-
 topdir=$(dirname  $0 )/../
 
+seed=$RANDOM
 
+# seed=11436
 
+# seed=31342  			# problematic on tiny-aa
+# seed=4045
+# seed=1450
+# seed=27159
+# seed=28978
+# seed=6929
 
+# seed=10115 # aa-test
+# seed=19180 #aa-test
 
-model=GAMMA
-# seed=$RANDOM
-seed=20916
+# seed=2807 # aa-test-one  <= most research so far 
 
-# lakner-27
-# seed=28233
+# seed=13290 # tiny-aa
 
-# small dna 
-# seed=5594
+# seed=24066 # problematic with tiny-aa
+# seed=32090 # problematic with  143 (on DNA!)
 
-runid=testRun
-numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
+# src/proposals/
+numProc=2
+# extraArgs="-M 0 -S"
+# extraArgs="- 2"
+# extraArgs="-S"
+# extraArgs="-S  "
+# extraArgs="-m"
 
+# early with 150 , VERIFIED 
+# seed=31853
 
-# use cgdb, if available 
-GDB=gdb
-if [ "$(which cgdb )" != ""   ]; then
-    GDB="gdb"
-fi
-
+startFromBest=1
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0 
-useClang=0
+useGoogleProfiler=0
+useClang=1
+
+
+# find additional arguments for the call   
+# *=$bak
+
+runid=testRun
+
+if [ -f /proc/cpuinfo ] ; then 
+    numCores=$(cat /proc/cpuinfo  | grep processor  | wc -l) 
+else 
+    numCores=1
+fi 
+
+
+# use cgdb, if available 
+GDB=cgdb
+if [ "$(which cgdb )" != ""   ]; then
+    GDB="cgdb"
+fi
 
 if [ "$useClang" -ne "0" -a "$(which clang)" != "" ]; then
     ccompiler="clang"
     cxxcompiler="clang++"
-    cppflags="-Qunused-arguments -D__STRICT_ANSI__"
+    cppflags="-Qunused-arguments"  
 else 
     ccompiler="gcc"
     cxxcompiler="g++"
@@ -52,11 +79,10 @@ if [ $useGoogleProfiler -eq 1 ]; then
 fi
 
 
-if [ "$#" != 3 ]; then
+if [ "$#" -lt 3 ]; then
     echo -e  "$0 debug|default pll|examl dataset\n\nwhere the first two arguments are either of the two options, and the third argument is the name of the dataset (e.g., small-dna)"
     exit
 fi
-
 
 # args="--disable-silent-rules" 
 args=""
@@ -68,27 +94,37 @@ if [ ! -d $pathtodata ]; then
     exit
 fi 
 
-cflags="-fno-common"
-cxxflags="-fno-common"
+cflags=""
+cxxflags=""  #  -stdlib=libc++ 
 
 default=$1
 if [ "$default" == "debug" ]; then 
     cflags="$cflags -O0 -g"
     cxxflags="$cxxflags -O0 -g"
-    gdb="$TERM -e $GDB -ex run --args "
+    gdb="$TERM -e  $GDB -ex run --args "
 elif [   "$default" != "debug"   -a   "$default" != "default"   ] ; then 
     echo "first argument must be either 'debug' or 'default'"
     exit 
 fi
 
-
 codeBase=$2
-if [ "$codeBase" == "examl" ]; then    
-    args="$args --disable-pll"
 
-    CC="mpicc -cc=$ccompiler" 
+# poor...
+shift  
+shift  
+shift  
+extra=$*
+# echo "extra would be $extra"
+
+
+configFile=$pathtodata/config.nex
+
+if [ "$codeBase" == "examl" ]; then    
+    args="$args --enable-mpi"
+
+    CC="mpicc -cc=$ccompiler"  
     CXX="mpicxx -cxx=$cxxcompiler"  
-    baseCall="mpirun -np 2  $gdb ./exabayes -f $pathtodata/aln.examl.binary -n $runid -s $seed -c $topdir/examples/test.nex"
+    baseCall="mpirun -np $numProc  $gdb ./exabayes -f $pathtodata/aln.binary -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
     # CC="$ccompiler" 
     # CXX="$cxxcompiler"  
@@ -96,11 +132,23 @@ if [ "$codeBase" == "examl" ]; then
 elif [ "$codeBase" == "pll" ]; then 
     CC="$ccompiler"
     CXX="$cxxcompiler"
-    baseCall="$gdb ./exabayes -s $seed -f $pathtodata/aln.pll.binary -n $runid -c $topdir/examples/test.nex " 
+    baseCall="$gdb ./yggdrasil -s $seed -f $pathtodata/aln.binary -n $runid $extraArgs -c $configFile $extra "  
 else
     echo "second argument must be either 'pll' or 'examl'"
     exit
 fi
+
+
+if [ $startFromBest == 1 ]; then 
+    if [ ! -f  $pathtodata/best.tre ] ; then 
+	echo "tried to start from best tree, but could not find $pathtodata/best.tre"
+	echo "if you do not have such a tree, deactivate startFromBest" 
+	exit 
+    fi 
+	
+    baseCall="$baseCall -t $pathtodata/best.tre"
+fi 
+
 
 if [ "$(which ccache)" != "" ]  ; then 
     CC="ccache $CC"
@@ -121,7 +169,7 @@ if [ "$libs" != "" ]; then
     args="$args LIBS=\""$libs"\""
 fi
 
-rm -f exabayes
+rm -f exabayes yggdrasil
 if [ -f status ] ; then 
     prevStat=$(cat status)
 else    
@@ -148,9 +196,9 @@ fi
 
 make -j $numCores
 
-if [ -f ./exabayes ]; then
+if [ -f ./exabayes -o -f ./yggdrasil ]; then
     echo "calling exabayes as   $baseCall"
-    rm ExaBayes_*.${runid}*
+    rm -f  ExaBayes_*.${runid}*
     wait 
     $baseCall    
 fi

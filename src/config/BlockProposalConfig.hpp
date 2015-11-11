@@ -13,8 +13,7 @@ class BlockProposalConfig : public NxsBlock
 public: 
   BlockProposalConfig();
   virtual void Read(NxsToken &token); 
-  // void setupMap();  
-  
+
   bool wasSetByUser(ProposalType type ) const {  return userValue.find(type) != userValue.end() ; }
   double getProposalWeight(ProposalType type) const
   { 
@@ -22,15 +21,20 @@ public:
   }
 
   double getEsprStopProp() const {return esprStopProp; } 
+  double getEtbrStopProb() const {return etbrStopProb; }
   double getParsimonyWarp() const {return parsimonyWarp; }
   int getGuidedRadius() const {return guidedRadius; }  
+  void verify(); 
+  int getParsSPRRadius() const { return parsSPRRadius; }
 
 private: 
   std::unordered_map<ProposalType, double, ProposalTypeHash> userValue; 
 
+  double etbrStopProb; 
   double esprStopProp; 
   double parsimonyWarp;   
   int guidedRadius; 
+  int parsSPRRadius; 
 }; 
 
 

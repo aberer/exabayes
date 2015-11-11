@@ -1,78 +1,146 @@
 #include "StatNNI.hpp"
 #include "Path.hpp"
 #include "TreeRandomizer.hpp"
+#include "Arithmetics.hpp"
+#include "AdHocIntegrator.hpp"
+#include "GibbsProposal.hpp"
+
+// #define QUICK_HACK
+
+#if defined(QUICK_HACK ) && not defined(_EXPERIMENTAL_INTEGRATION_MODE)
+#error "need integration mode "
+#endif
+
+// #define _NNI_GIBBS
+// #define _EXPERIMENTAL_GIBBS
+// #define _EXPERIMENTAL_GIBBS_EXTRA
+
+#if not defined(_EXPERIMENTAL_GIBBS) &&  defined(_EXPERIMENTAL_GIBBS_EXTRA)
+#error "define _EXPERIMENTAL_GIBBS as well!"
+#endif
 
 
 StatNNI::StatNNI( double _multiplier)
-  :  multiplier(_multiplier)
+  : AbstractProposal(Category::TOPOLOGY,  "stNNI", 5., false)
+  ,   multiplier(_multiplier)
 {
-  this->name = "stNNI" ; 
-  this->category = Category::TOPOLOGY; 
-  relativeWeight = 5; 
 }
 
 
-void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) 
+BranchPlain StatNNI::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const
+{
+  return TreeRandomizer::drawInnerBranchUniform(traln, rand); 
+}
+
+
+void StatNNI::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {    
-  int numBranches = traln.getNumBranches();
-  assert(numBranches == 1); 
-
-  Branch b( TreeRandomizer::drawInnerBranchUniform(traln, rand) ) ; 
-  nodeptr p = b.findNodePtr(traln); 
-
-  Branch switchingBranch = Branch( 
-				  rand.drawRandDouble01() < 0.5  
-				  ? p->back->next->back->number
-				  : p->back->next->next->back->number, 
-				  p->back->number
-				   ); 
+  auto blParams = getBranchLengthsParameterView(); 
   
-  move.extractMoveInfo(traln, {b, switchingBranch}); 
+  auto bTmp =  determinePrimeBranch(traln, rand); 
+  auto b = traln.getBranch( bTmp, blParams); 
 
-  std::vector<AbstractPrior* > priors; 
-  bool multiplyBranches = false; 
-  for(auto &v : secVar)
+  nodeptr p = b.findNodePtr(traln); 
+  auto switchingBranch = BranchPlain( rand.drawRandDouble01() < 0.5  
+				   ? p->back->next->back->number
+				   : p->back->next->next->back->number, 
+						      p->back->number ); 
+  auto bls = std::make_tuple(b.toPlain(), switchingBranch); 
+  move.extractMoveInfo(traln, bls, blParams); 
+
+  auto priors =  std::vector<AbstractPrior* >{}; 
+
+  auto bMode = getBranchProposalMode(); 
+  auto multiplyBranches = bMode[0]; 
+  auto outer = bMode[1]; 
+  auto sequential = bMode[2]; 
+
+  if(multiplyBranches )
     {
-      multiplyBranches |= v->getCategory() == Category::BRANCH_LENGTHS; 
-      priors.push_back(v->getPrior()) ; 
-#ifdef UNSURE
-      // fixed prior? 
-      assert(0); 
+      auto result = move.moveBranchProposal(traln, blParams, eval, rand, outer, 0.05, sequential);
+      hastings += std::get<1>(result); 
+      // tout << "hastings is " << result.second << std::endl;  
+
+      move.applyToTree(traln, getSecondaryParameterView() ); 
+      
+      // save and apply the branches 
+      branchesSaved = true; 
+      savedBls.clear(); 
+      for(auto elem : std::get<0>(result))
+	{
+	  auto curBranch = traln.getBranch(elem.toPlain(), blParams); 
+	  savedBls.push_back(curBranch); 
+	  
+	  // inform prior 
+	  for(auto param : blParams)
+	    {
+	      auto priorHere = param->getPrior(); 
+
+	      auto b = elem.toBlDummy(); 
+	      b.setLength(elem.getLength(param)); 
+	      double lenAfterInterpret = b.getInterpretedLength(traln, param); 
+
+	      b.setLength(curBranch.getLength(param)); 
+	      double lenBeforeInterpret = b.getInterpretedLength(traln, param ); 
+
+	      auto newPr = priorHere->getLogProb( ParameterContent{{ lenAfterInterpret}} ) ; 
+	      auto oldPr = priorHere->getLogProb( ParameterContent{{  lenBeforeInterpret}}); 
+
+	      // tout << "prRatio=" << newPr - oldPr << std::endl; 
+	      // tout << "bl: " << lenBeforeInterpret << " => " << lenAfterInterpret << "\t" << newPr - oldPr << std::endl; 
+
+	      prior.addToRatio(newPr - oldPr); 
+	    }
+
+	  // set the branch
+	  traln.setBranch(elem, blParams);
+	  
+	}
+    }
+  else 
+    {
+      branchesSaved = false; 
+      move.applyToTree(traln, getSecondaryParameterView() ); 
+    }
+}
+
+
+void StatNNI::evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
+{
+  auto evalBranch = move.getEvalBranch(traln); 
+
+  auto dNodes = move.getDirtyNodes(traln, false); 
+
+  for (auto &elem : dNodes)
+    evaluator.markDirty( traln, elem); 
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL " << evalBranch << std::endl; 
 #endif
+
+  evaluator.evaluate(traln, evalBranch, false, true); 
+}
+
+
+void StatNNI::resetState(TreeAln &traln)  
+{
+  auto params = getSecondaryParameterView(); 
+  if(branchesSaved)
+    {
+      for(auto elem : savedBls)
+	traln.setBranch(elem, params); 
     }
 
-#ifdef NO_SEC_BL_MULTI
-  multiplyBranches = false; 
-#endif
-
-  if(multiplyBranches)
-    move.multiplyBranches(traln, rand, hastings, prior, multiplier, priors); 
-
-  move.applyToTree(traln);
-  // debug_checkTreeConsistency(traln);
-}
-
-
-
-
-void StatNNI::evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
-{
-  Branch evalBranch = move.getEvalBranch(traln); 
-  nodeptr p = evalBranch.findNodePtr(traln);
-  move.disorientAtNode(traln, p);
-  evaluator->evaluate(traln, evalBranch, false); 
-}
-
-
-
-void StatNNI::resetState(TreeAln &traln, PriorBelief &prior)  
-{
-  move.revertTree(traln,prior); 
-  // debug_checkTreeConsistency(traln);
+  move.revertTree(traln, params); 
 }
 
 
 AbstractProposal* StatNNI::clone()  const
 {
   return new StatNNI( *this );
+}
+ 
+std::vector<nat> StatNNI::getInvalidatedNodes(const TreeAln& traln) const
+{
+  return move.getDirtyNodes(traln, false);
 }

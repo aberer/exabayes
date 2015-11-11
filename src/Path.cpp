@@ -3,9 +3,7 @@
 
 #include "Path.hpp"
 #include "Chain.hpp"
-#include "AbstractProposal.hpp"
-
-
+#include "proposals/AbstractProposal.hpp"
 
 
 void Path::clear()
@@ -13,7 +11,7 @@ void Path::clear()
   stack.clear(); 
 }
 
-void Path::append(Branch value)
+void Path::append(BranchPlain value)
 {
   stack.push_back(value);
 }
@@ -31,11 +29,11 @@ void Path::popFront()
 }
 
 
-void Path::pushToStackIfNovel(Branch b, const TreeAln &traln)
+void Path::pushToStackIfNovel(BranchPlain b, const TreeAln &traln)
 {  
   assert(stack.size() >= 2 ); 
 
-  Branch bPrev = at(size()-1); 
+  auto bPrev = at(size()-1); 
   if(stack.size() == 2)
     {
       if(not b.equalsUndirected(bPrev))
@@ -73,15 +71,15 @@ void Path::debug_assertPathExists(TreeAln& traln)
 /**
     @brief saves all branch lengths along the path in s. 
  */ 
-void Path::saveBranchLengthsPath(const TreeAln& traln)
+void Path::saveBranchLengthsPath(const TreeAln& traln, const std::vector<AbstractParameter*> &params)
 {
-  int numBranches = traln.getNumBranches() ;
-  assert(numBranches == 1 ); 
-
-  for(auto& b : stack)
+  bls.clear();
+  for(auto &b : stack)
     {
-      nodeptr p = b.findNodePtr(traln);        
-      b.setLength( traln.getBranch(p).getLength()) ; 
+      auto p = b.findNodePtr(traln);
+      auto bl = traln.getBranch(p,params); 
+      // tout << "saving " << bl << std::endl; 
+      bls.push_back(bl); 
     }
 }
 
@@ -89,7 +87,7 @@ void Path::saveBranchLengthsPath(const TreeAln& traln)
 bool Path::nodeIsOnPath(int node) const
 {
   for(auto b : stack)
-    if(b.nodeIsInBranch(node))
+    if(b.hasNode(node))
       return true;       
 
   return false; 
@@ -104,35 +102,37 @@ std::ostream& operator<<(std::ostream &out, const Path &rhs)
 }
 
 
-
-void Path::multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, AbstractPrior* brPr) const 
+void Path::multiplyBranch(TreeAln &traln, Randomness &rand, BranchLength b, double parameter, double &hastings, PriorBelief &prior, AbstractParameter* const param) const 
 {  
+#if 0 
   nodeptr p = b.findNodePtr(traln); 
   double multiplier = rand.drawMultiplier(parameter); 
 
-  double oldZ = traln.getBranch(p).getLength(); 
+  double oldZ = traln.getBranch(p, param).getLength(param); 
+  
   double newZ = multiplier * oldZ; 
 
-  traln.clipNode(p,p->back, newZ);   
+  assert(0);
+  // , newZ
+  traln.clipNode(p,p->back);   
 
-  prior.updateBranchLengthPrior(traln, oldZ, newZ, brPr);
+  prior.updateBranchLengthPrior(traln, oldZ, newZ, param);
 
   double realMultiplier = log(newZ) / log(oldZ);    
   AbstractProposal::updateHastings(hastings, realMultiplier, "pathMod");; 
+#else 
+  assert(0); 
+#endif
 }
 
 
-
-void Path::restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior) const 
+void Path::restoreBranchLengthsPath(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const 
 {
-  int numBranches = traln.getNumBranches();
-  assert(numBranches == 1); 
-  for(auto b : stack)
+  for(auto &bl : bls )
     {
-      nodeptr p = b.findNodePtr(traln); 
-      double tmp = b.getLength(); 
-      traln.clipNode(p, p->back, tmp); 
-    }  
+      // tout << "restore " << bl << std::endl; 
+      traln.setBranch(bl,blParams); 
+    }
 }
 
 
@@ -146,35 +146,35 @@ int Path::getNthNodeInPath(nat num)   const
   
   if(num == 0)
     {
-      Branch b = stack[0]; 
-      if(stack[1].nodeIsInBranch(b.getPrimNode()))
+      auto  b = stack[0]; 
+      if(stack[1].hasNode(b.getPrimNode()))
 	result= b.getSecNode(); 
       else 
 	{
-	  assert(stack[1].nodeIsInBranch(b.getSecNode())); 
+	  assert(stack[1].hasNode(b.getSecNode())); 
 	  result= b.getPrimNode() ; 
 	}
     }
   else if(num == stack.size() )
     {
-      Branch b = stack[num-1]; 
+      auto b = stack[num-1]; 
       
-      if(stack[num-2].nodeIsInBranch(b.getPrimNode() ))
+      if(stack[num-2].hasNode(b.getPrimNode() ))
 	result=  b.getSecNode(); 
       else 
 	{
-	  assert(stack[num-2].nodeIsInBranch(b.getSecNode() )); 
+	  assert(stack[num-2].hasNode(b.getSecNode() )); 
 	  result= b.getPrimNode(); 
 	}
     }
   else 
     {      
-      Branch b = stack[num]; 
-      if(stack[num-1].nodeIsInBranch(b.getPrimNode() ))
+      auto b = stack[num]; 
+      if(stack[num-1].hasNode(b.getPrimNode() ))
 	result= b.getPrimNode(); 
       else 
 	{
-	  assert(stack[num-1].nodeIsInBranch(b.getSecNode() )); 
+	  assert(stack[num-1].hasNode(b.getSecNode() )); 
 	  result= b.getSecNode(); 
 	}	
     }
@@ -191,9 +191,9 @@ void Path::reverse()
 
 
 
-bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const Branch &target)
+bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const BranchPlain &target)
 {
-  Branch curBranch =  Branch(p->number, p->back->number); 
+  auto  curBranch = BranchPlain(p->number, p->back->number); 
   if( curBranch.equalsUndirected( target) ) 
     return true; 
   
@@ -203,7 +203,7 @@ bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const Branch &target)
       found = findPathHelper(traln, q->back, target); 
       if(found)	
 	{
-	  append(Branch(q->number, q->back->number));
+	  append(BranchPlain(q->number, q->back->number));
 	  return found; 
 	}
     }
@@ -218,12 +218,12 @@ void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
   
   stack.clear();   
 
-  Branch targetBranch = Branch(q->number, q->back->number ); 
+  auto targetBranch = BranchPlain(q->number, q->back->number ); 
 
   bool found = findPathHelper(traln, p->back, targetBranch); 
   if(found)  
     {      
-      append(Branch(p->number, p->back->number)); 
+      append(BranchPlain(p->number, p->back->number)); 
       return ; 
     }
 
@@ -232,13 +232,13 @@ void Path::findPath(const TreeAln& traln, nodeptr p, nodeptr q)
   found = findPathHelper(traln, p->next->back, targetBranch); 
   if(found  )
     {
-      append(Branch(p->next->number, p->next->back->number)); 
+      append(BranchPlain(p->next->number, p->next->back->number)); 
       return; 
     }
 
   assert(stack.size() == 0);   
   found = findPathHelper(traln, p->next->next->back, targetBranch); 
   if(found)
-    append(Branch(p->next->next->number, p->next->next->back->number)); 
+    append(BranchPlain(p->next->next->number, p->next->next->back->number)); 
   assert(found);
 }

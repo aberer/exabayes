@@ -374,7 +374,7 @@ static double evaluateGTRCAT (int *cptr, int *wptr,
 
 /* This is the core function for computing the log likelihood at a branch */
 
-void evaluateIterative(tree *tr, partitionList *pr)
+void evaluateIterative(tree *tr, partitionList *pr, array_reservoir_t res)
 {
   /* the branch lengths and node indices of the virtual root branch are always the first one that 
      are stored in the very important traversal array data structure that describes a partial or full tree traversal */
@@ -414,7 +414,7 @@ void evaluateIterative(tree *tr, partitionList *pr)
 
   /* iterate over all valid entries in the traversal descriptor */
 
-  newviewIterative(tr, pr, 1);
+  newviewIterative(tr, pr, 1, res);
 
   /* after the above call we are sure that we have properly and consistently computed the 
      conditionals to the right and left of the virtual root and we can now invoke the 
@@ -431,17 +431,17 @@ void evaluateIterative(tree *tr, partitionList *pr)
     /* 
        Important part of the tarversal descriptor: 
        figure out if we need to recalculate the likelihood of this 
-partition: 
+       partition: 
 
-The reasons why this is important in terms of performance are given in this paper 
-here which you should actually read:
+       The reasons why this is important in terms of performance are given in this paper 
+       here which you should actually read:
 
-A. Stamatakis, M. Ott: "Load Balance in the Phylogenetic Likelihood Kernel". Proceedings of ICPP 2009, accepted for publication, Vienna, Austria, September 2009
+       A. Stamatakis, M. Ott: "Load Balance in the Phylogenetic Likelihood Kernel". Proceedings of ICPP 2009, accepted for publication, Vienna, Austria, September 2009
 
-The width > 0 check is for checking if under the cyclic data distribution of per-partition sites to threads this thread does indeed have a site 
-of the current partition.
+       The width > 0 check is for checking if under the cyclic data distribution of per-partition sites to threads this thread does indeed have a site 
+       of the current partition.
 
-*/
+    */
 
     if(tr->td[0].executeModel[model] && width > 0)
     {	
@@ -562,13 +562,21 @@ of the current partition.
       }
 
 
-      /* if we are using a per-partition branch length estimate, the branch has an index, otherwise, for a joint branch length
-         estimate over all partitions we just use the branch length value with index 0 */
+      /* if we are using a per-partition branch length estimate, the
+         branch has an index, otherwise, for a joint branch length
+         estimate over all partitions we just use the branch length
+         value with index 0 */
 
       if(pr->perGeneBranchLengths)
-        z = pz[model];
+	{
+	  z = pz[model];
+	  /* printf("EVAL(%d) %f\n", model, pz[model]); */
+	}
       else
-        z = pz[0];
+	{
+	  z = pz[0];
+	  assert(0);
+	}
 
       /* calc P-Matrix at root for branch z connecting nodes p and q */
 
@@ -641,11 +649,10 @@ of the current partition.
             else
             {		    		    		      
               if(tr->saveMemory)
-                partitionLikelihood = evaluateGTRGAMMAPROT_GAPPED_SAVE(pr->partitionData[model]->wgt,
-                    x1_start, x2_start, pr->partitionData[model]->tipVector,
-                    tip, width, diagptable,
-                    x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
-
+		partitionLikelihood = evaluateGTRGAMMAPROT_GAPPED_SAVE(pr->partitionData[model]->wgt,
+								       x1_start, x2_start, pr->partitionData[model]->tipVector,
+								       tip, width, diagptable,
+								       x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
               else
                 partitionLikelihood = evaluateGTRGAMMAPROT(pr->partitionData[model]->wgt,
                     x1_start, x2_start, pr->partitionData[model]->tipVector,
@@ -701,7 +708,7 @@ of the current partition.
 
 
 
-void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraversal)
+void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraversal, array_reservoir_t res)
 {
   /* now this may be the entry point of the library to compute 
      the log like at a branch defined by p and p->back == q */
@@ -774,21 +781,21 @@ void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraver
   }
 
 /* #if 0 */
-  if(debugPrint)
-    {
-      printf("need to recompute: "); 
-      for(int i = 0; i < tr->td[0].count ; ++i)
-	{
-	  if(tr->td[0].ti != NULL )
-	    {
-	      if(i == 0)
-		printf("(%d=%d+%d),",  tr->td[0].ti[i].rNumber, tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber  );       
-	      else 
-		printf("(%d=%d+%d),",  tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber, tr->td[0].ti[i].rNumber ); 
-	    }
-	}
-      printf("\n"); 
-    } 
+  /* if(debugPrint) */
+  /*   { */
+  /*     printf("need to recompute: ");  */
+  /*     for(int i = 0; i < tr->td[0].count ; ++i) */
+  /* 	{ */
+  /* 	  if(tr->td[0].ti != NULL ) */
+  /* 	    { */
+  /* 	      if(i == 0) */
+  /* 		printf("(%d=%d+%d),",  tr->td[0].ti[i].rNumber, tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber  );        */
+  /* 	      else  */
+  /* 		printf("(%d=%d+%d),",  tr->td[0].ti[i].pNumber, tr->td[0].ti[i].qNumber, tr->td[0].ti[i].rNumber );  */
+  /* 	    } */
+  /* 	} */
+  /*     printf("\n");  */
+  /*   } */ 
 /* #endif */
 
   /* now we copy this partition execute mask into the traversal descriptor which must come from the 
@@ -830,7 +837,7 @@ void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraver
   /* and here is just the sequential case, we directly call evaluateIterative() above 
      without having to tell the threads/processes that they need to compute this function now */
   
-  evaluateIterative(tr, pr);
+  evaluateIterative(tr, pr,res );
 #endif
 
   for(model = 0; model < pr->numberOfPartitions; model++)
@@ -851,7 +858,7 @@ void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraver
 }
 
 
-void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods)
+void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods, array_reservoir_t res)
 {
   double 
     //likelihood,
@@ -871,7 +878,7 @@ void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods)
      will then be used for calculating per-site log likelihoods 
      for each site individually and independently */
 
-  evaluateGeneric (tr, pr, tr->start, TRUE);
+  evaluateGeneric (tr, pr, tr->start, TRUE, res);
 
   //likelihood = tr->likelihood;
 
@@ -1066,9 +1073,9 @@ static double evaluateGTRGAMMAPROT_GAPPED_SAVE (int *wptr,
 
 
 static double evaluateGTRGAMMAPROT (int *wptr,
-    double *x1, double *x2,  
-    double *tipVector, 
-    unsigned char *tipX1, int n, double *diagptable)
+				    double *x1,  double *x2,  
+				    double *tipVector, 
+				    unsigned char *tipX1, int n, double *diagptable)
 {
   double   sum = 0.0, term;        
   int     i, j, l;   
@@ -1423,10 +1430,10 @@ static double evaluateGTRCAT_SAVE (int *cptr, int *wptr,
 
 
 static double evaluateGTRGAMMA_GAPPED_SAVE(int *wptr,
-    double *x1_start, double *x2_start, 
-    double *tipVector, 
-    unsigned char *tipX1, const int n, double *diagptable,
-    double *x1_gapColumn, double *x2_gapColumn, unsigned int *x1_gap, unsigned int *x2_gap)
+					   double *x1_start, double *x2_start, 
+					   double *tipVector, 
+					   unsigned char *tipX1, const int n, double *diagptable,
+					   double *x1_gapColumn, double *x2_gapColumn, unsigned int *x1_gap, unsigned int *x2_gap)
 {
   double   sum = 0.0, term;    
   int     i, j;

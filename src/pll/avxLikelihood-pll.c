@@ -243,6 +243,7 @@ void  newviewGTRGAMMA_AVX(int tipCase,
 		xv[2] = _mm256_mul_pd(xv[2], twoto);
 		xv[3] = _mm256_mul_pd(xv[3], twoto);
 		addScale += wgt[i];
+
 	      }
 
 	    _mm256_store_pd(&x3[16 * i],      xv[0]);
@@ -319,9 +320,7 @@ void  newviewGTRGAMMA_AVX(int tipCase,
       assert(0);
     }
 
- 
   *scalerIncrement = addScale;
-  
 }
 
 
@@ -1333,7 +1332,7 @@ void newviewGTRGAMMAPROT_AVX(int tipCase,
     x1px2, 
     *vl, 
     *vr;
-  
+
   int	
     i, 
     j, 
@@ -1806,6 +1805,6 @@ void newviewGTRGAMMAPROT_AVX(int tipCase,
     default:
       assert(0);
     }
-   
+
   *scalerIncrement = addScale;
 }

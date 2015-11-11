@@ -1,13 +1,14 @@
 #include <set>
 #include <iostream>
 
+#include "extensions.hpp"
 #include "RunFactory.hpp"
 #include "ProposalRegistry.hpp"
 
 #include "proposers/AbstractProposer.hpp"
-#include "proposers/MultiplierProposal.hpp"
-#include "proposers/DirichletProposal.hpp"
-#include "proposers/SlidingProposal.hpp"
+#include "proposers/MultiplierProposer.hpp"
+#include "proposers/DirichletProposer.hpp"
+#include "proposers/SlidingProposer.hpp"
 #include "ParallelSetup.hpp"
 
 #include "parameters/TopologyParameter.hpp"
@@ -16,73 +17,145 @@
 #include "parameters/RevMatParameter.hpp"
 #include "parameters/RateHetParameter.hpp"
 
+#include "priors/DiscreteModelPrior.hpp"
 #include "priors/AbstractPrior.hpp"
 #include "priors/ExponentialPrior.hpp"
 #include "priors/UniformPrior.hpp"
 #include "priors/DirichletPrior.hpp"
-#include "priors/FixedPrior.hpp"
 
-
-void genericExit(int code); 
-
-
-
-// not to be confused with a fun factory...
-void RunFactory::addStandardParameters(vector<unique_ptr<AbstractParameter> > &vars, const TreeAln &traln )
+void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParameter> > &params, const TreeAln &traln ) const 
 {
-  std::set<Category> categories; 
-
-  for(auto &v : vars)
-    categories.insert(v->getCategory()); 
-
-  int highestId = -1; 
-  for(auto &v : vars )
+  int highestParamId = -1; 
+  if(params.size() > 0 )
     {
-      v->printShort(tout); 
-      int id = v->getId(); 
-      if(highestId < id)
-	highestId = id; 
+      auto ids = std::vector<nat>{};
+      for(auto &param : params )
+	ids.push_back(param->getId() ); 
+      highestParamId = * (std::max_element(ids.begin(), ids.end())) ; 
+    } 
+
+  auto cat2partsUsed = std::unordered_map<Category, std::vector<bool> >{}; 
+  auto cat2idOfItsKind = std::unordered_map<Category,int>{}; 
+  for( auto c : CategoryFuns::getAllCategories())
+    {
+      cat2partsUsed[c] = std::vector<bool>(traln.getNumberOfPartitions(), false);
+      cat2idOfItsKind[c] = -1; 
     }
-  ++highestId;
+
+  for(const auto &param : params)
+    {
+      auto cat =param->getCategory(); 
+      int id = param->getIdOfMyKind(); 
+      if( cat2idOfItsKind[cat] < id )
+	cat2idOfItsKind[cat] = id; 
+      for(auto &p : param->getPartitions())
+	cat2partsUsed[cat].at(p) = true; 
+    }
+
+  // add frequency parameters to aa-revmats, if not already there 
+  auto relCat = Category::FREQUENCIES; 
+  auto&& paramsToAdd= std::vector<std::unique_ptr<AbstractParameter>> {};
+  for( const auto &p : params)
+    {
+      assert(p->getPartitions().size() > 0 );
+      if ( p->getCategory() == Category::SUBSTITUTION_RATES
+	   &&  traln.getPartition(p->getPartitions()[0]).dataType == AA_DATA ) 
+	{
+	  for(auto part : p->getPartitions())
+	    {
+	      if(not cat2partsUsed.at(relCat).at(part) )
+		{
+		  ++highestParamId;   
+		  ++cat2idOfItsKind[relCat]; 
+		  paramsToAdd.push_back(CategoryFuns::getParameterFromCategory(relCat, highestParamId, cat2idOfItsKind[relCat], {part}));
+		  cat2partsUsed.at(relCat).at(part) = true; 
+		}
+	    }
+	}
+    }
+  
+  for(auto &p : paramsToAdd)
+    params.push_back(std::move(p)); 
 
   // add standard stuff, if not defined yet
-  for(auto &cat : CategoryFuns::getAllCategories())
+  for(auto cat : CategoryFuns::getAllCategories())
     {
-      Category  catIter = cat; 
-      if(categories.find(cat) != categories.end())
-	continue; 
-
-      switch(catIter)
+      // determine unused partitions 
+      auto partsUnused = std::vector<nat>{}; 
+      switch(cat)
 	{	  
 	  // force to have everything linked with those 
 	case Category::TOPOLOGY: 
-	case Category::BRANCH_LENGTHS: 
 	  {
-	    auto r = CategoryFuns::getParameterFromCategory(catIter, highestId );
-	    ++highestId; 
-	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      r->addPartition(j); 
-	    vars.push_back(std::move(r)); 
+	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
+	      {
+		if(not cat2partsUsed.at(cat).at(i))
+		  partsUnused.push_back(i);
+	      }
 	  }
 	  break; 
 	case Category::AA_MODEL:	
-	  std::cout << "TODO define,  when AA_MODLE should be added <= runfactory.cpp" << std::endl; 
-	  break; 	  
-	  // a new parameter per partition 
-	case Category::SUBSTITUTION_RATES: 
-	case Category::RATE_HETEROGENEITY:
-	case Category::FREQUENCIES:
 	  {
-	    for(int j = 0; j < traln.getNumberOfPartitions(); ++j)
+	    for(nat i = 0; i < traln.getNumberOfPartitions(); ++i)
 	      {
-		auto r = CategoryFuns::getParameterFromCategory(catIter, highestId) ; 
-		++highestId; 
-		r->addPartition(j); 
-		vars.push_back(std::move(r)); 
-	      }	    
+		if( traln.getPartition(i).dataType == AA_DATA
+		    && not cat2partsUsed[Category::SUBSTITUTION_RATES][i]
+		    && not cat2partsUsed[Category::AA_MODEL][i] )
+		  partsUnused.push_back(i);
+	      }
+	  } 
+	  break; 
+	case Category::BRANCH_LENGTHS: 
+	case Category::RATE_HETEROGENEITY:
+	  {
+	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
+	      {
+		if(not cat2partsUsed[cat][j])
+		  partsUnused.push_back(j);
+	      }
 	  }
 	  break; 
-	default: assert(0); 
+	case Category::FREQUENCIES:
+	case Category::SUBSTITUTION_RATES: 
+	  {
+	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i )
+	      {
+		if(not cat2partsUsed.at(cat).at(i) // not already there 
+		   && traln.getPartition(i).dataType != AA_DATA) // we use an AA_MODEL as default for proteins 
+		  partsUnused.push_back(i); 
+	      }
+	  }
+	  break; 
+	default: 
+	  assert(0); 
+	}
+
+      // create parameters for unused partitions 
+      switch(cat)
+	{
+	case Category::TOPOLOGY:
+	  {
+	    ++highestParamId; 
+	    ++cat2idOfItsKind[cat]; 
+	    params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat] , partsUnused)); 
+	  }
+	  break; 
+	case Category::FREQUENCIES: 
+	case Category::AA_MODEL:	
+	case Category::SUBSTITUTION_RATES: 
+	case Category::BRANCH_LENGTHS: 
+	case Category::RATE_HETEROGENEITY:
+	  {
+	    for(auto p : partsUnused)
+	      {
+		++highestParamId;
+		++cat2idOfItsKind[cat];
+		params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat], {p})); 
+	      }
+	  }
+	  break; 
+	default : 
+	  assert(0); 
 	}
     }
 }
@@ -93,117 +166,178 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
     case Category::TOPOLOGY:  
-      var->setPrior( std::make_shared<UniformPrior>(0,0) ); // TODO : proper topology prior? 
+      var->setPrior( std::unique_ptr<AbstractPrior>(new UniformPrior(0,0)) ); // TODO : proper topology prior? 
       break; 
     case Category::BRANCH_LENGTHS: 
-      var->setPrior( std::make_shared<ExponentialPrior>(10.0) );
+      var->setPrior( std::unique_ptr<AbstractPrior>(new ExponentialPrior(10.0) ));
       break; 
     case Category::FREQUENCIES: 
       {
-	pInfo *partition = traln.getPartition(var->getPartitions()[0]);
-	assert(partition->dataType == DNA_DATA || partition->dataType == AA_DATA); 
-	var->setPrior(make_shared<DirichletPrior>(vector<double>(partition->states , 1.))); 
+	auto& partition = traln.getPartition(var->getPartitions()[0]);
+	assert(partition.dataType == DNA_DATA || partition.dataType == AA_DATA); 
+	var->setPrior(std::unique_ptr<AbstractPrior>(new DirichletPrior(std::vector<double>(partition.states , 1.)))); 
       }
       break; 
     case Category::SUBSTITUTION_RATES: 
       {
-	pInfo *partition = traln.getPartition(var->getPartitions()[0]);	;
-	var->setPrior(make_shared<DirichletPrior>( vector<double> (numStateToNumInTriangleMatrix(partition->states), 1.) )); 
+	auto& partition = traln.getPartition(var->getPartitions()[0]);	;
+	var->setPrior( make_unique<DirichletPrior>( std::vector<double>(RateHelper::numStateToNumInTriangleMatrix(partition.states), 1.) )); 
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
-      var->setPrior(make_shared<UniformPrior>(1e-6, 200));     
+      var->setPrior(std::unique_ptr<AbstractPrior>(new UniformPrior(1e-6, 200))); 
       break; 
     case Category::AA_MODEL : 
-      assert(NOT_IMPLEMENTED); 
+      {
+	auto modelProbs = std::unordered_map<ProtModel,double>{}; 
+	for(auto model : ProtModelFun::getAllModels())
+	  modelProbs[model] = 1.; 
+	auto prior =  std::unique_ptr<AbstractPrior>(new DiscreteModelPrior(modelProbs));
+	var->setPrior(prior);
+      }
       break; 
-    default: assert(0); 
+    default: 
+      assert(0); 
     }
 }
 
 
-void RunFactory::addPriorsToVariables(const TreeAln &traln,  const BlockPrior &priorInfo, vector<unique_ptr<AbstractParameter> > &variables)
+void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &priorInfo, std::vector<unique_ptr<AbstractParameter> > &variables)
 {
-  auto generalPriors = priorInfo.getGeneralPriors();
-  auto specificPriors = priorInfo.getSpecificPriors();
+  auto& priors = priorInfo.getPriors();
 
   for(auto &v : variables)
     {
       auto partitionIds = v->getPartitions(); 
+      
+      auto cat = v->getCategory();
+      auto foundPrior = bool{false}; 
 
-      // try adding a partition specific prior 
-      auto idMap = specificPriors[ int(v->getCategory()) ]; 
-      shared_ptr<AbstractPrior> thePrior = nullptr; 
-      for(nat partId : partitionIds)	
-	{	  	  
-	  if(idMap.find(partId) != idMap.end()) // found 
+      // try to find a partition specific prior 
+      for(auto iter = priors.find(cat) ; iter != priors.end() ; ++iter)
+	{
+	  auto &partitionsOfPrior = std::get<0>(iter->second); 
+	  foundPrior = std::any_of(begin(partitionIds), end(partitionIds), [&]( nat tmp ){  return partitionsOfPrior.find(tmp) != partitionsOfPrior.end(); } ); 
+	  
+	  auto& prior = *(std::get<1>(iter->second).get()); 
+
+	  if(foundPrior)
 	    {
-	      if(thePrior != nullptr)
+	      if(not v->priorIsFitting(prior, traln))
 		{
-		  cerr << "while setting prior for random variable " << v.get() << ": it seems you have defined a prior for more than one partition of a set of partitions that is linked for a specific variable to estimate. Please only specify exactly one prior per variable for a set of linked partitions."  << endl; 
-		  ParallelSetup::genericExit(-1); 
+		  tout  << "You forced prior " << &prior << " to be applied to parameter  "  << v.get() << ". This is not possible. "  << std::endl; 
+		  exit(-1); 
 		}
-	      else 
-		thePrior = idMap.at(partId); 
-	    }	 	    
+
+	      // tout << "setting prior " << &prior << 
+		// " for param "<< v.get() << std::endl; 
+
+	      v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
+	      break; 
+	    }
 	}
 
-      // use a general prior, if we have not found anything
-      if(thePrior == nullptr)	  
+      // try to find a general prior 
+      if(not foundPrior)
 	{
-	  thePrior = generalPriors.at(int(v->getCategory())); // BAD
-	  // if(thePrior != nullptr)
-	  //   cout << "using GENERAL prior for variable " <<  endl; 
-	}
-      else 
-	{
-	  // tout << "using PARTITION-SPECIFIC prior for variable " <<  endl; 
+	  for(auto iter = priors.find(cat) ; iter != priors.end() ; ++iter)
+	    {
+	      auto &prior = *(std::get<1>(iter->second).get()); 
+
+	      if(not v->priorIsFitting(prior, traln))
+		continue; 
+
+	      auto &partitionsOfPrior = std::get<0>(iter->second); 
+	      foundPrior = partitionsOfPrior.size() ==  0; 
+	      if(foundPrior)
+		{
+		  // tout << "setting prior " << &prior << " for param "<< v.get() << std::endl; 
+		  v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
+		  break; 
+		}
+	    }
 	}
       
-      if(thePrior != nullptr)
-	v->setPrior(thePrior);
-      else 
-	{	  
-	  addStandardPrior(v.get(), traln);
-	  // tout << "using STANDARD prior for variable "  << v.get() << endl; 
+      if(not foundPrior)
+	addStandardPrior(v.get(),traln); 
+    }
+}
+
+
+void RunFactory::addSecondaryParameters(AbstractProposal* proposal, const std::vector<unique_ptr<AbstractParameter> > &allParameters)
+{
+  // get all branch length pararemeters   
+  auto blParameters = std::vector<unique_ptr<AbstractParameter> >{}; 
+  for(auto &v : allParameters)
+    if(v->getCategory() == Category::BRANCH_LENGTHS)
+      blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
+
+  bool needsBl = false; 
+  std::unordered_set<nat> myPartitions; 
+  for(auto &v: proposal->getPrimaryParameterView())
+    {
+      needsBl |=  ( v->getCategory() == Category::FREQUENCIES 
+		   || v->getCategory() == Category::SUBSTITUTION_RATES
+		   || v->getCategory() == Category::TOPOLOGY
+		   || v->getCategory() == Category::AA_MODEL
+		   ); 
+      auto ps = v->getPartitions();
+      myPartitions.insert(ps.begin(), ps.end()); 
+    }
+
+  if(needsBl)
+    {
+      for(auto &blRandVar : blParameters)
+	{
+	  auto partitions =  blRandVar->getPartitions();
+	  if(std::any_of(partitions.begin(),partitions.end(), 
+			 [&](nat i){ return myPartitions.find(i) != myPartitions.end(); }))
+	    proposal->addSecondaryParameter(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
 	}
     }
 }
 
-void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, const BlockParams& partitionParams, const TreeAln &traln, vector<unique_ptr<AbstractProposal> > &proposals, const unique_ptr<LikelihoodEvaluator> &eval )
+
+
+std::tuple<std::vector<std::unique_ptr<AbstractProposal>>,std::vector<ProposalSet> > 
+ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockPrior &priorInfo, 
+			      std::vector<std::unique_ptr<AbstractParameter> > &params, const TreeAln &traln, bool componentWiseMH)
 {
-  randomVariables = partitionParams.getParameters(); 
-  addStandardParameters(randomVariables, traln);  
-  addPriorsToVariables(traln, priorInfo, randomVariables);
+  auto proposals = std::vector<std::unique_ptr<AbstractProposal> >{} ; 
+  auto resultPropSet = std::vector<ProposalSet >{} ; 
+  addPriorsToParameters(traln, priorInfo, params);
 
-  ProposalRegistry reg; 
+  auto reg = ProposalRegistry{}; 
 
-  std::vector<unique_ptr<AbstractParameter> > blRandVars; 
-  for(auto &v : randomVariables)
-    if(v->getCategory() == Category::BRANCH_LENGTHS)
-      blRandVars.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
-
-  for(auto &v : randomVariables)
+  // instantiate all proposals that integrate over one parameter 
+  for(auto &v : params)
     {
-      if(dynamic_cast<FixedPrior*>(v->getPrior()) != nullptr ) // is it a fixed prior?
+      if(not v->getPrior()->needsIntegration() )
 	continue;
 
-      vector<unique_ptr<AbstractProposal> > tmpResult;  
+      if( componentWiseMH && v->getCategory() != Category::TOPOLOGY )
+	continue; 
+      
+      auto tmpResult = reg.getSingleParameterProposals(v->getCategory(), propConfig,  traln); 
 
-      reg.getProposals(v->getCategory(), propConfig, tmpResult, traln, eval); 
-      for(auto  &p : tmpResult )
+      // remove proposals that are not meant for DNA/AA
+      if(v->getCategory() == Category::SUBSTITUTION_RATES)
 	{
-	  p->addPrimVar(std::unique_ptr<AbstractParameter>(v->clone()));
-	  if(v->getCategory() == Category::TOPOLOGY)
+	  bool isProtPartition = traln.getPartition(v->getPartitions().at(0)).dataType == AA_DATA; 
+	  auto tmp = decltype(tmpResult){}; 
+	  for(auto &elem : tmpResult )
 	    {
-	      for(auto &blRandVar : blRandVars)
-		p->addSecVar(std::unique_ptr<AbstractParameter>(blRandVar->clone())); 
+	      if( elem->isSuitsProteinPartitions () == isProtPartition)
+		tmp.push_back(std::move(elem)); 
 	    }
-	  else if(v->getCategory() == Category::FREQUENCIES || v->getCategory() == Category::SUBSTITUTION_RATES)
-	    {
-	      for(auto &blRandVar : blRandVars)
-		p->addSecVar(std::unique_ptr<AbstractParameter>(blRandVar->clone())) ; 
-	    }	  
+	  tmpResult.clear(); 
+	  tmpResult = std::move( tmp ) ; 
+	}
+      
+      for(auto &p : tmpResult )
+	{
+	  p->addPrimaryParameter(std::unique_ptr<AbstractParameter>(v->clone()));
+	  addSecondaryParameters(p.get(), params); 
 	}
 
       // dammit...
@@ -214,25 +348,83 @@ void RunFactory::configureRuns(const BlockProposalConfig &propConfig, const Bloc
 	}
     }
 
-  tout << endl << "Parameters to be integrated: " << endl; 
-  for(auto &v : randomVariables)
+  // instantiate proposals that integrate over multiple over an entire
+  // category gather all parameters that we can integrate over
+  // together in a partitioned manner and output a good set of
+  // proposals
+  nat blCtr = 0; 
+  auto mashableParameters = std::vector<AbstractParameter*>{}; 
+  for(auto &v : params)
     {
-      tout << v->getId() << "\t" << v.get()  << endl; 
-      tout << "\t with prior " << v->getPrior() << std::endl; 
-    }
-  tout << endl; 
-  
-  double sum = 0; 
-  for(auto &p : proposals)
-    sum += p->getRelativeWeight(); 
-  
-  tout << "Will employ the following proposal mixture (frequency,type,affected variables): " << endl; 
-  for(auto &p : proposals )
+      if(not v->getPrior()->needsIntegration() ) 
+	continue;
+
+      // those are prototypes! non-owning pointers 
+      switch(v->getCategory())
+	{
+	case Category::SUBSTITUTION_RATES: 
+	case Category::FREQUENCIES:
+	case Category::RATE_HETEROGENEITY: 
+	case Category::AA_MODEL:	
+	  mashableParameters.push_back(v.get()); 
+	  break; 
+	case Category::BRANCH_LENGTHS:
+	  {
+	    mashableParameters.push_back(v.get()); 
+	    ++blCtr; 
+	  }
+	default: 
+	  ;
+	}
+    }  
+
+  // TODO that's all a bit cumbersome, has to be re-designed a bit 
+  if(componentWiseMH)
     {
-      tout << setprecision(2) << p->getRelativeWeight() / sum * 100 <<   "%\t" ; 
-      p->printShort(tout ) ; 
-      tout << endl; 
+      auto cat2param = std::unordered_map<Category, std::vector<AbstractParameter*> >{}; 
+      for(auto &p:  mashableParameters)
+	cat2param[p->getCategory()].push_back(p); 
+
+      for(auto &elem : cat2param)
+	{
+	  auto proposalsForSet = reg.getSingleParameterProposals(elem.first, propConfig, traln);
+
+	  // filter out proposals that do not fit the current data
+	  // type of
+	  // TODO improve the setup here 
+	  if(std::get<0>(elem) == Category::SUBSTITUTION_RATES)
+	    {
+	      bool isProtPartition = traln.getPartition(std::get<1>(elem).at(0)->getPartitions().at(0)).dataType == AA_DATA; 
+	      auto tmp = decltype(proposalsForSet){}; 
+	      for(auto &elem : proposalsForSet )
+		{
+		  if( elem->isSuitsProteinPartitions () == isProtPartition)
+		    tmp.push_back(std::move(elem)); 
+		}
+	      proposalsForSet.clear(); 
+	      proposalsForSet = std::move( tmp ) ; 
+	    }	  
+	  
+	  // this and the above for-loop essentially produce all
+	  // proposals, that we'd also obtain in the default case =>
+	  // but we need a set of it
+	  for(auto &proposalType : proposalsForSet)
+	    {
+	      auto lP = std::vector<std::unique_ptr<AbstractProposal> >{}; 	      
+	      for(auto &p : elem.second)
+		{
+		  auto proposalClone = std::unique_ptr<AbstractProposal>(proposalType->clone()); 
+		  proposalClone->addPrimaryParameter(std::unique_ptr<AbstractParameter>(p->clone()));
+		  addSecondaryParameters(proposalClone.get(), params); 
+		  lP.push_back(std::move(proposalClone));		  
+		} 
+	      proposalType->setInSetExecution(true);
+
+	      resultPropSet.emplace_back(lP[0]->getRelativeWeight(), std::move(lP)); 
+	    }
+	}
     }
-  tout << setprecision(2) << fixed << endl ; 
+
+  return std::make_tuple(std::move(proposals), resultPropSet); 
 }
 

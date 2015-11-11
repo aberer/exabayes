@@ -1,36 +1,64 @@
 #include <memory>
 #include <limits>
+#include <unordered_map>
 
 #include "ProposalRegistry.hpp"
 
+#include "proposals/LikelihoodSPR.hpp"
+#include "proposals/GibbsBranchLength.hpp"
+#include "proposals/ExtendedTBR.hpp" 
+#include "proposals/ExtendedSPR.hpp"
+#include "proposals/ParsimonySPR.hpp"
+#include "proposals/StatNNI.hpp"
+#include "proposals/BranchLengthMultiplier.hpp"
+#include "proposals/AminoModelJump.hpp"
+#include "proposals/NodeSlider.hpp"
+#include "proposals/TreeLengthMultiplier.hpp"
+#include "proposals/AbstractProposal.hpp"
+
 #include "proposers/AbstractProposer.hpp"
-#include "proposers/SlidingProposal.hpp"
-#include "proposers/MultiplierProposal.hpp"
-#include "proposers/DirichletProposal.hpp"
+#include "proposers/SlidingProposer.hpp"
+#include "proposers/MultiplierProposer.hpp"
+#include "proposers/DirichletProposer.hpp"
+#include "proposers/RateDirichletProposer.hpp"
+#include "proposers/RateSlidingProposer.hpp"
+
+#include "extensions.hpp"
 
 #include "ProposalType.hpp"
 #include "BoundsChecker.hpp"
 
 const double ProposalRegistry::initBranchLengthMultiplier = 1.386294; 
+
 const double ProposalRegistry::initRateSlidingWindow = 0.15 ;
+
 const double ProposalRegistry::initFrequencySlidingWindow = 0.2 ; 
 const double ProposalRegistry::initGammaSlidingWindow = 0.75; 
 const double ProposalRegistry::initSecondaryBranchLengthMultiplier = 0.098; 
 const double ProposalRegistry::initTreeLengthMultiplier = 1.386294; 
+
 const double ProposalRegistry::initDirichletAlpha = 100 ; 
+const double ProposalRegistry::initDirichletProtAlpha = 50 ; 
+
 const double ProposalRegistry::initGammaMultiplier = 0.811 ; 
 const double ProposalRegistry::initNodeSliderMultiplier = 0.191 ; 
+
+
+const int ProposalRegistry::likeSprMinRadius = 1; 
+const int ProposalRegistry::likeSprMaxRadius = 4; 
+const double ProposalRegistry::likeSpWarp = 1; 
 
 
 /**
    @brief yields a set of proposls for integrating a category  
  */
-void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &config, vector<unique_ptr<AbstractProposal> > &result, const TreeAln &traln, const unique_ptr<LikelihoodEvaluator> &eval) const 
+vector<unique_ptr<AbstractProposal> >
+ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalConfig &config, const TreeAln &traln) const 
 {
-  vector<aaMatrix_t> someMatrices; // TODO 
+  auto result = std::vector<unique_ptr<AbstractProposal> >{} ; 
 
-  auto proposals =  ProposalTypeFunc::getProposalsForCategory(cat); 
-  for(auto p : proposals)
+  auto&& proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
+  for(auto& p : proposals)
     {     
 
       double userWeight = 1; 
@@ -39,84 +67,103 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	  userWeight = config.getProposalWeight(p); 
 	  if(userWeight == 0)
 	    continue; 
-	}      
+	} 
       else if( not ProposalTypeFunc::isReadyForProductiveUse(p)  )		
 	continue;       
 
-      unique_ptr<AbstractProposal> proposal; 
+      auto&& proposal = std::unique_ptr<AbstractProposal>{}; 
 
       switch(p)
 	{	      
 	case ProposalType::ST_NNI: 
-	  proposal = unique_ptr<AbstractProposal>(new  StatNNI(initSecondaryBranchLengthMultiplier)) ;
+	  proposal = make_unique<StatNNI>(initSecondaryBranchLengthMultiplier) ;
 	  break; 
 	case ProposalType::BRANCH_LENGTHS_MULTIPLIER:	      
-	  proposal = unique_ptr< AbstractProposal>(new BranchLengthMultiplier( initBranchLengthMultiplier)) ; 
+	  proposal = make_unique< BranchLengthMultiplier>( initBranchLengthMultiplier) ; 
 	  break; 
 	case ProposalType::NODE_SLIDER:
-	  proposal = unique_ptr<NodeSlider>( new NodeSlider(initNodeSliderMultiplier)); 
+	  proposal = make_unique<NodeSlider> (initNodeSliderMultiplier); 
 	  break; 
 	case ProposalType::TL_MULT:
-	  proposal = unique_ptr< TreeLengthMultiplier>( new TreeLengthMultiplier(  ProposalRegistry::initTreeLengthMultiplier)); 
+	  proposal = make_unique< TreeLengthMultiplier> (  ProposalRegistry::initTreeLengthMultiplier); 
 	  break; 
 	case ProposalType::E_TBR: 
-	  proposal = unique_ptr< ExtendedTBR>( new ExtendedTBR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier)); 
+	  {
+	    auto etbrStop = config.getEtbrStopProb(); 
+	    proposal = make_unique< ExtendedTBR> (  etbrStop, initSecondaryBranchLengthMultiplier); 
+	  }
 	  break; 
 	case ProposalType::E_SPR: 
-	  proposal = unique_ptr<ExtendedSPR>( new ExtendedSPR(  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier)); 
+	  proposal = make_unique<ExtendedSPR> (  config.getEsprStopProp(), initSecondaryBranchLengthMultiplier); 
 	  break; 
 	case ProposalType::PARSIMONY_SPR:	
-	  proposal = unique_ptr<ParsimonySPR>( new ParsimonySPR(  config.getParsimonyWarp(), initSecondaryBranchLengthMultiplier)); 
+	  {
+	    // decide upon radius 
+	    int radius = config.getParsSPRRadius(); 
+	    nat numTax = traln.getNumberOfTaxa(); 
+	    if(radius == -1)
+	      radius = std::floor( std::log(numTax) * 2  );
+	    proposal = make_unique<ParsimonySPR> (  config.getParsimonyWarp(), initSecondaryBranchLengthMultiplier, radius ); 
+	  }
 	  break; 
 	case ProposalType::REVMAT_SLIDER: 
-	  proposal = 
-	    std::unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatSlider", true, 
-								       std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::rateMin, BoundsChecker::rateMax)),
-								       initRateSlidingWindow )) ; 
-	  proposal->setRelativeWeight(0.5); 
+	  proposal = make_unique<ParameterProposal>  (Category::SUBSTITUTION_RATES, "revMatSlider", true, 
+						      make_unique<SlidingProposer>(BoundsChecker::rateMin, BoundsChecker::rateMax, true),
+								       initRateSlidingWindow,0.5 ) ; 
 	  break; 
 	case ProposalType::FREQUENCY_SLIDER:
-	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqSlider", true, 
-									   std::unique_ptr<SlidingProposal>( new SlidingProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max())), 
-									   initFrequencySlidingWindow )) ; 
-	  proposal->setRelativeWeight(0.5); 
+	  proposal = make_unique<ParameterProposal>  (Category::FREQUENCIES, "freqSlider", true, 
+									   std::unique_ptr<SlidingProposer>( new SlidingProposer(BoundsChecker::freqMin, std::numeric_limits<double>::max(), false)), 
+									   initFrequencySlidingWindow,0.5 ) ; 
 	  break; 		  
 	case ProposalType::RATE_HET_MULTI: 
-	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::RATE_HETEROGENEITY, "rateHetMulti", false, 
-									   std::unique_ptr<MultiplierProposal>(new MultiplierProposal(BoundsChecker::alphaMin, BoundsChecker::alphaMax)),
-									   initGammaMultiplier )) ; 
-	  proposal->setRelativeWeight(1); 
+	  proposal = make_unique<ParameterProposal>  (Category::RATE_HETEROGENEITY, "rateHetMulti", false, 
+										std::unique_ptr<MultiplierProposer>(new MultiplierProposer(BoundsChecker::alphaMin, BoundsChecker::alphaMax)),
+										initGammaMultiplier,1. ) ; 
 	  break; 
 	case ProposalType::RATE_HET_SLIDER: 
-	  proposal = 
-	    unique_ptr<ParameterProposal> ( new ParameterProposal(Category::RATE_HETEROGENEITY, "rateHetSlider", false, 
-								  std::unique_ptr<SlidingProposal>(new SlidingProposal(BoundsChecker::alphaMin, BoundsChecker::alphaMax)),   
-								  initGammaSlidingWindow )) ; 
-	  proposal->setRelativeWeight(0); 
+	  proposal = make_unique<ParameterProposal>  (Category::RATE_HETEROGENEITY, "rateHetSlider", false, 
+								  std::unique_ptr<SlidingProposer>(new SlidingProposer(BoundsChecker::alphaMin, BoundsChecker::alphaMax, false)),   
+								  initGammaSlidingWindow,0 ) ; 
 	  break; 
 	case ProposalType::FREQUENCY_DIRICHLET: 
-	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::FREQUENCIES, "freqDirich", true, 
-									   std::unique_ptr<DirichletProposal>(new DirichletProposal(BoundsChecker::freqMin, std::numeric_limits<double>::max())), 
-									   initDirichletAlpha )) ; 
-	  proposal->setRelativeWeight(0.5); 
+	  proposal = make_unique<ParameterProposal>  (Category::FREQUENCIES, "freqDirich", true, 
+									   std::unique_ptr<DirichletProposer	>(new DirichletProposer	(BoundsChecker::freqMin, std::numeric_limits<double>::max(), false)), 
+									   initDirichletAlpha,0.5 ) ; 
 	  break; 
 	case ProposalType::REVMAT_DIRICHLET: 
-	  proposal = unique_ptr<ParameterProposal> ( new ParameterProposal(Category::SUBSTITUTION_RATES, "revMatDirich", true, 
-									   std::unique_ptr<DirichletProposal>(new DirichletProposal (BoundsChecker::rateMin, BoundsChecker::rateMax)), 
-									   initDirichletAlpha)) ; 
-	  proposal->setRelativeWeight(0.5); 
+	  proposal = make_unique<ParameterProposal>  (Category::SUBSTITUTION_RATES, "revMatDirich", true, 
+									   std::unique_ptr<DirichletProposer	>(new DirichletProposer	 (BoundsChecker::rateMin, BoundsChecker::rateMax, true)), 
+									   initDirichletAlpha,0.5) ; 
 	  break; 
-	case ProposalType::GUIDED_SPR:
-	  proposal = unique_ptr<RadiusMlSPR>( new RadiusMlSPR(  config.getGuidedRadius() )); 
+	case ProposalType::LIKE_SPR: 
+	  proposal = make_unique<LikelihoodSPR>(  likeSprMinRadius, likeSprMaxRadius, likeSpWarp);
 	  break; 
-	case ProposalType::BRANCH_COLLAPSER:
-	  proposal = unique_ptr<BranchCollapser>( new BranchCollapser()); 
+	case ProposalType::DIRICH_REVMAT_PER_RATE:
+	  {
+	    proposal = make_unique<ParameterProposal>(Category::SUBSTITUTION_RATES, "revMatDirichRate", true,
+						      make_unique<RateDirichletProposer>( BoundsChecker::rateMin, BoundsChecker::rateMax),
+						      initDirichletProtAlpha, 4
+						      );
+	    proposal->enableForProteins();
+	  }
+	  break; 
+	case ProposalType::SLIDING_REVMAT_PER_RATE:
+	  {
+	    proposal = make_unique<ParameterProposal>(Category::SUBSTITUTION_RATES, "revMatSliderRate", true,
+						      make_unique<RateSlidingProposer>( BoundsChecker::rateMin, BoundsChecker::rateMax),
+						      initRateSlidingWindow, 0.5 // TODO !!! 
+						      );
+	    
+	    // TODO not ready yet   
+	    assert(0); 
+	  }
 	  break; 
 	case ProposalType::AMINO_MODEL_JUMP: 
-	  proposal = unique_ptr<AminoModelJump>( new AminoModelJump(someMatrices));
+	  proposal = make_unique<AminoModelJump>();
 	  break; 
 	case ProposalType::BRANCH_GIBBS: 
-	  proposal = unique_ptr<GibbsBranchLength>( new GibbsBranchLength(std::unique_ptr<LikelihoodEvaluator>(eval->clone())));
+	  proposal = make_unique<GibbsBranchLength>();
 	  break;
 	case ProposalType::BRANCH_SLIDER: 
 	  continue; 		// TODO implement  
@@ -132,5 +179,6 @@ void ProposalRegistry::getProposals(Category cat, const BlockProposalConfig &con
 	proposal->setRelativeWeight(userWeight);       
       result.push_back((std::move(proposal))); 	
     }
-} 
 
+  return result; 
+} 

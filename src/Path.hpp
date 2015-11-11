@@ -16,33 +16,33 @@
 #include "PriorBelief.hpp"
 #include "Branch.hpp"
 
+
 class Path
 {
 public:   
 /** @brief returns true, if the node with a given id is part of this branch */ 
   bool nodeIsOnPath(int node) const;  
   /** @brief for all branches in the path, copy over the branch lengths */ 
-  void saveBranchLengthsPath(const TreeAln& traln); 
+  void saveBranchLengthsPath(const TreeAln& traln, const std::vector<AbstractParameter*> &params); 
 
   /** @brief asserts that this path exists in a given tree */ 
   void debug_assertPathExists(TreeAln& traln); 
 
   /** @brief assigns stored branch lengths of a path to a given tree  */ 
-  void restoreBranchLengthsPath(TreeAln &traln ,PriorBelief &prior) const ; 
-
+  void restoreBranchLengthsPath(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const ; 
   /** @brief only add a branch to the path, if it is novel. If the new
       branch cancels out an existing branch, the path is shortened again */ 
-  void pushToStackIfNovel(Branch b, const TreeAln &traln ); 
+  void pushToStackIfNovel(BranchPlain b, const TreeAln &traln ); 
 
   // straight-forward container methods 
-  void append(Branch value); 
+  void append(BranchPlain value); 
   void clear(); 
   /** @brief number of branches in the path */ 
   nat size() const {return stack.size(); }
 
   /** @brief yields the branch */  
-  Branch& at(int num){return stack[num]; }
-  Branch at(int num) const{return stack[num];}
+  BranchPlain& at(int num){return stack[num]; }
+  BranchPlain at(int num) const{return stack[num];}
 
   /** @brief reverse the path */ 
   void reverse(); 
@@ -60,20 +60,16 @@ public:
   int getNumberOfNodes() const {return stack.size()  + 1 ;   }
   void printWithBLs(TreeAln &traln ) const; 
 
-  void multiplyBranch(TreeAln &traln, Randomness &rand, Branch b, double parameter, double &hastings, PriorBelief &prior, AbstractPrior* prBr) const; 
+  void multiplyBranch(TreeAln &traln, Randomness &rand, BranchLength bl, double parameter, double &hastings, PriorBelief &prior,  AbstractParameter* const param) const ; 
 
   void findPath(const TreeAln& traln, nodeptr p, nodeptr q);
-
   friend std::ostream& operator<<(std::ostream &out, const Path &rhs)  ;
 
 private: 
-  std::vector<Branch> stack; 
+  std::vector<BranchPlain> stack; 
+  std::vector<BranchLengths> bls; 
 
-  bool findPathHelper(const TreeAln &traln, nodeptr p, const Branch &target);
-
+  bool findPathHelper(const TreeAln &traln, nodeptr p, const BranchPlain &target);
 }; 
 
-
 #endif
-
-

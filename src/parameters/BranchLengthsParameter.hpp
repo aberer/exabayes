@@ -9,10 +9,15 @@ class BranchLengthsParameter : public AbstractParameter
 {
 public: 
   
-  BranchLengthsParameter(nat id )    
-    : AbstractParameter(Category::BRANCH_LENGTHS, id )
+  BranchLengthsParameter(nat id, nat idOfMyKind, std::vector<nat> partitions)    
+    : AbstractParameter(Category::BRANCH_LENGTHS, id, idOfMyKind, partitions,0 )
   {    
-    printToParamFile = false; 
+    _printToParamFile = false; 
+  }
+
+  BranchLengthsParameter(const BranchLengthsParameter& rhs)
+    : AbstractParameter(rhs)
+  {
   }
 
   virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
@@ -21,6 +26,10 @@ public:
 
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln) const  {}
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const  {} 
+
+  virtual void verifyContent(const TreeAln&traln, const ParameterContent &content) const ; 
+
+  virtual bool priorIsFitting(const AbstractPrior &prior, const TreeAln &traln) const; 
 
 }; 
 

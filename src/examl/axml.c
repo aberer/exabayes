@@ -213,35 +213,11 @@ void *malloc_aligned(size_t size)
   void 
     *ptr = (void *)NULL;
  
-  int 
-    res;
-  
-
-#if defined (__APPLE__)
-  /* 
-     presumably malloc on MACs always returns 
-     a 16-byte aligned pointer
-  */
-
-  ptr = malloc(size);
-  
-  if(ptr == (void*)NULL) 
-   assert(0);
-  
-#ifdef __AVX
-  assert(0);
-#endif
-
-
-#else
-  
   /* printf("trying to allocate %d\n", size);  */
-  res = posix_memalign( &ptr, BYTE_ALIGNMENT, size );
+  posix_memalign( &ptr, BYTE_ALIGNMENT, size );
 
-  if(res != 0) 
-    assert(0);
-#endif 
-   
+  assert(ptr != NULL);
+    
   return ptr;
 }
 
@@ -637,13 +613,9 @@ boolean setupTree (tree *tr)
   tr->maxCategories = MAX(4, tr->categories);
   
   tr->partitionContributions = (double *)malloc(sizeof(double) * tr->NumberOfModels);
-  
   for(i = 0; i < tr->NumberOfModels; i++)
     tr->partitionContributions[i] = -1.0;
-  
   tr->perPartitionLH = (double *)malloc(sizeof(double) * tr->NumberOfModels);
-  
-  
   for(i = 0; i < tr->NumberOfModels; i++)    
     tr->perPartitionLH[i] = 0.0;	    
   
@@ -683,7 +655,6 @@ boolean setupTree (tree *tr)
   tr->constraintVector = (int *)malloc((2 * tr->mxtips) * sizeof(int));
   
   tr->nameList = (char **)malloc(sizeof(char *) * (tips + 1));
-   
 
   if (!(p0 = (nodeptr) malloc((tips + 3*inter) * sizeof(node))))
     {
@@ -747,8 +718,8 @@ boolean setupTree (tree *tr)
   tr->ntips       = 0;
   tr->nextnode    = 0;
  
-  for(i = 0; i < tr->numBranches; i++)
-    tr->partitionSmoothed[i] = FALSE;
+  /* for(i = 0; i < tr->numBranches; i++) */
+  /*   tr->partitionSmoothed[i] = FALSE; */
 
   tr->bitVectors = (unsigned int **)NULL;
 
@@ -790,11 +761,6 @@ static void initAdef(analdef *adef)
   adef->perGeneBranchLengths   = FALSE;  
  
   adef->useCheckpoint          = FALSE;
-   
-#ifdef _BAYESIAN 
-  adef->bayesian               = FALSE;
-#endif
-
 }
 
 
@@ -1906,7 +1872,7 @@ boolean isThisMyPartition(tree *tr, int tid, int model)
     return FALSE;
 }
 
-static void computeFractionMany(tree *tr, int tid)
+void computeFractionMany(tree *tr, int tid)
 {
   int
     sites = 0;
@@ -1932,7 +1898,7 @@ static void computeFractionMany(tree *tr, int tid)
 
 
 
-static void computeFraction(tree *tr, int tid, int n)
+void computeFraction(tree *tr, int tid, int n)
 {
   int
     model;
@@ -2028,7 +1994,7 @@ static int partCompare(const void *p1, const void *p2)
 	 and are cheap to compute 
 */
 
-static void multiprocessorScheduling(tree *tr, int tid)
+void multiprocessorScheduling(tree *tr, int tid)
 {
   int 
     s,
@@ -2056,9 +2022,6 @@ static void multiprocessorScheduling(tree *tr, int tid)
 
       assert(exists);
     }
-
-  if(tid == 0)
-    printBothOpen("\nMulti-processor partition data distribution enabled (-Q option)\n");
 
   for(s = 0; s < arrayLength; s++)
     {
@@ -2114,14 +2077,6 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	      assert(pt[i].partitionNumber >= 0 && pt[i].partitionNumber < tr->NumberOfModels);
 	      tr->partitionAssignment[pt[i].partitionNumber] = minIndex;
 	    }
-	  
-	  if(tid == 0)
-	    {
-	      for(i = 0; i < n; i++)	       
-		printBothOpen("Process %d has %d sites for %d state model \n", i, assignments[i], modelStates[s]);		  		
-	      
-	      printBothOpen("\n");
-	    }
 
 	  for(i = 0; i < n; i++)
 	    checkSum += (size_t)assignments[i];
@@ -2132,14 +2087,11 @@ static void multiprocessorScheduling(tree *tr, int tid)
 	  free(pt);
 	}
     }
-
-
- 
 }
 
 
 
-static void initializePartitions(tree *tr, FILE *byteFile)
+void initializePartitions(tree *tr, FILE *byteFile)
 { 
   size_t
     i,
@@ -2464,6 +2416,7 @@ void initializeTree(tree *tr, analdef *adef)
   
   if(tr->rateHetModel == CAT)
     {
+      assert(0); 		/* not ready yet */
       tr->rateCategory    = (int *)    calloc(tr->originalCrunchedLength, sizeof(int));	    
       tr->patrat          = (double*)  malloc(tr->originalCrunchedLength * sizeof(double));
       tr->patratStored    = (double*)  malloc(tr->originalCrunchedLength * sizeof(double)); 
@@ -2559,8 +2512,8 @@ void initializeTree(tree *tr, analdef *adef)
   /* BEGIN added by andre for parsimony  */
   tr->parsimonyScore = (unsigned int*)malloc_aligned(sizeof(unsigned int) * totalNodes * tr->NumberOfModels);  
   memset(tr->parsimonyScore, 0, totalNodes * tr->NumberOfModels * sizeof(unsigned int )); 
-  for(int i = 0; i < totalNodes * tr->NumberOfModels; ++i)
-    tr->parsimonyScore[i]; 
+  /* for(int i = 0; i < totalNodes * tr->NumberOfModels; ++i) */
+  /*   tr->parsimonyScore[i];  */
   tr->ti = (int*) malloc(sizeof(int) * 4 * (size_t)tr->mxtips);  
   /* END */
   
@@ -2672,7 +2625,7 @@ static void optimizeTrees(tree *tr, analdef *adef)
       if(i > 0)
 	resetBranches(tr);
       
-      evaluateGeneric(tr, tr->start, TRUE);	
+      evaluateGeneric(tr, tr->start, TRUE, NULL);	
       	  
       if(tr->fastTreeEvaluation && i > 0)
 	{

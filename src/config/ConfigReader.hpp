@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "PriorBelief.hpp"
-#include "AbstractProposal.hpp"
+#include "proposals/AbstractProposal.hpp"
 
 #include "BlockParams.hpp" 
 #include "BlockPrior.hpp"

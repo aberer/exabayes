@@ -1,55 +1,66 @@
 #include "ExtendedSPR.hpp"
 #include "Path.hpp"
 #include "TreeAln.hpp"
+#include "priors/AbstractPrior.hpp"
+#include "TreePrinter.hpp"
 
+// #define MOVE_INFO
 
 // #define DEBUG_ESPR
 
 ExtendedSPR::ExtendedSPR( double _stopProb, double _multiplier)
-  : stopProb(_stopProb), multiplier(_multiplier)    
+  : AbstractProposal(Category::TOPOLOGY,  "eSPR", 5., false)
+  , stopProb(_stopProb) 
+  , multiplier(_multiplier)    
 {
-  this->name = "eSPR"; 
-  category = Category::TOPOLOGY; 
-  relativeWeight = 5.;
 }
 
-
-/**
-   @brief draws a random set of branches in the tree that constitute a
-   path
-   
-   This function employs the eSPR strategy 
-   
-   @param s -- the result : the first two branches in the stack define
-   the root of the pruned subtree
- */
-void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopProp )
+BranchPlain ExtendedSPR::determinePrimeBranch(const TreeAln &traln, Randomness &rand) const 
 {
-  Path modifiedPath; 
-  assert(0 < stopProp && stopProp < 1.0 ); 
-
-  assert(modifiedPath.size( ) == 0 ); 
-
-  Branch start; 
+  auto  start = BranchPlain(); 
   nodeptr p,q,r; 
   do 
     {
       start = TreeRandomizer::drawBranchWithInnerNode(traln, rand); 
-
+      
       p = start.findNodePtr(traln );
       q = p->next->back; 
       r = p->next->next->back;
     } while(traln.isTipNode(q) || traln.isTipNode(r) ); 
+  return start; 
+} 
 
-  /* save branches and prune */
-  double zqr[NUM_BRANCHES]; 
-  for(int i = 0; i < traln.getNumBranches(); ++i)
-    zqr[i] = traln.getBranch(r).getLength();   
-  traln.clipNode(q,r, q->z[0]);
+
+// IMPORTANT TODO: is the number of branches that CAN get chosen for
+// the move the same with the forward and the backward move? if not,
+// this MUST be accounted for in the hastings
+
+
+void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopProp )
+{
+  auto params =  getBranchLengthsParameterView();
+
+  auto modifiedPath = Path{}; 
+  assert(0 < stopProp && stopProp < 1.0 ); 
+
+  assert(modifiedPath.size( ) == 0 ); 
+
+  auto start = determinePrimeBranch(traln,rand); 
+  auto p = start.findNodePtr(traln) ; 
+  auto q = p->next->back; 
+  auto r = p->next->next->back; 
+
+  auto lengthR = traln.getBranch(r, params); 
+  auto lengthQ = traln.getBranch(q, params); 
+  traln.clipNode(q,r);
+  auto newBranch = lengthR; 
+  newBranch.setSecNode(q->number); 
+  traln.setBranch(newBranch, params); 
+
   p->next->back = p->next->next->back = (nodeptr)NULL; 
 
   modifiedPath.append(start); 
-  modifiedPath.append(Branch(q->number, r->number)); 
+  modifiedPath.append(BranchPlain(q->number, r->number)); 
 
   nodeptr currentNode = rand.drawRandDouble01() ? q : r; 
   boolean accepted = FALSE;   
@@ -60,7 +71,7 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
 	? currentNode->next->back
 	: currentNode->next->next->back; 
 
-      modifiedPath.pushToStackIfNovel(Branch(currentNode->number, n->number),traln); 
+      modifiedPath.pushToStackIfNovel(BranchPlain(currentNode->number, n->number),traln); 
 
       currentNode = n; 
       
@@ -68,13 +79,20 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
     }
 
   /* undo changes to the tree  */
-  traln.clipNode(p->next,q, q->z[0]); 
-  traln.clipNode(p->next->next,r,zqr[0]);   
+  traln.clipNode(p->next,q); 
+  newBranch = lengthQ ; 
+  newBranch.setSecNode(p->number); 
+  traln.setBranch(newBranch, params);
 
+  traln.clipNode(p->next->next,r);   
+  newBranch = lengthR; 
+  newBranch.setSecNode(p->number); 
+  traln.setBranch(newBranch, params); 
+  
   /* now correct  */
-  if( modifiedPath.at(2).nodeIsInBranch(modifiedPath.at(1).getPrimNode()))    
+  if( modifiedPath.at(2).hasNode(modifiedPath.at(1).getPrimNode()))    
     modifiedPath.at(1).setSecNode(p->number); 
-  else if(modifiedPath.at(2).nodeIsInBranch(modifiedPath.at(1).getSecNode()  ))    
+  else if(modifiedPath.at(2).hasNode(modifiedPath.at(1).getSecNode()  ))    
     modifiedPath.at(1).setPrimNode( p->number); 
   else 
     assert(0); 
@@ -92,12 +110,14 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
   // move.
 
   // BEGIN  TODO remove modifiedPath
-  Branch bla = modifiedPath.at(modifiedPath.size()-1); 
-  move.extractMoveInfo(traln, {Branch(p->number, p->back->number), Branch(bla.getPrimNode(), bla.getSecNode()) }); 
+  auto bla = modifiedPath.at(modifiedPath.size()-1); 
+  move.extractMoveInfo(traln, 
+		       std::make_tuple(   BranchPlain(p->number, p->back->number), 
+					  BranchPlain(bla.getPrimNode(), bla.getSecNode()) ),
+		       getSecondaryParameterView() ); 
   modifiedPath.clear(); 
   // END
 }
-
 
 
 /**
@@ -105,51 +125,129 @@ void ExtendedSPR::drawPathForESPR(TreeAln& traln, Randomness &rand, double stopP
    
    the same function as below, but I cleaned the other flavour, since so much stuff has changed. 
  */ 
-void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand)
+void ExtendedSPR::applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval)
 {
-  // debug_printTree(traln);
+  auto bMode = getBranchProposalMode();
+  bool multiplyBranchesUsingPosterior = bMode[0]; 
+  bool outer = bMode[1]; 
+  bool sequential = bMode[2]; 
+
+  auto blParams = getBranchLengthsParameterView(); 
   drawPathForESPR( traln,rand ,stopProb); 
 
-  move.applyToTree(traln); 
-
-  assert(traln.getNumBranches() == 1 ); 
-
-  bool modifiesBl = false; 
-  for(auto &v : secVar)
-    modifiesBl |= v->getCategory() == Category::BRANCH_LENGTHS; 
-
-#ifdef NO_SEC_BL_MULTI
-  modifiesBl = false; 
+#ifdef MOVE_INFO
+  double topoLnl = 0; 
+  double oldLnl = traln.getTr()->likelihood; 
+  double branchLnl = 0; 
+  double impact = 0; 
 #endif
 
-  if(modifiesBl)
+  if(multiplyBranchesUsingPosterior)
     {
-      auto brPr = secVar.at(0)->getPrior();
-      move.multiplyBranches(traln, rand, hastings, prior, multiplier, {brPr} ); 
+      auto result = move.moveBranchProposal(traln, blParams, eval, rand, outer, 0.05, sequential);
+      hastings += std::get<1>(result); 
+
+      move.applyToTree(traln, getSecondaryParameterView() , eval, outer); 
+
+      // BEGIN REPORT 
+#ifdef MOVE_INFO
+      eval.evaluate(traln, move.getEvalBranch(traln), false); 
+      topoLnl = traln.getTr()->likelihood; 
+#endif
+      // END
+      
+      // save and apply the branches 
+      branchesSaved = true; 
+      savedBls.clear(); 
+#ifdef MOVE_INFO
+      impact = std::get<2>(result);
+#endif
+      for(auto elem : std::get<0>(result))
+	{
+	  auto curBranch = traln.getBranch(elem.toPlain(), blParams); 
+	  savedBls.push_back(curBranch); 
+	  
+	  // inform prior 
+	  for(auto param : blParams)
+	    {
+	      auto priorHere = param->getPrior(); 
+
+	      auto b = elem.toBlDummy(); 
+	      b.setLength(elem.getLength(param)); 
+	      double lenAfterInterpret = b.getInterpretedLength(traln, param); 
+
+	      b.setLength(curBranch.getLength(param)); 
+	      double lenBeforeInterpret = b.getInterpretedLength(traln, param ); 
+
+	      auto newPr = priorHere->getLogProb( ParameterContent{{ lenAfterInterpret}} ) ; 
+	      auto oldPr = priorHere->getLogProb( ParameterContent{{  lenBeforeInterpret}}); 
+
+	      prior.addToRatio(newPr - oldPr); 
+	    }
+
+	  // set the branch
+	  traln.setBranch(elem, blParams);
+	}
+     
+#ifdef MOVE_INFO 
+      // BEGIN
+      for(auto n : move.getDirtyNodes(traln, outer))
+	eval.markDirty(traln, n);
+      eval.evaluate(traln,move.getEvalBranch(traln), false); 
+      branchLnl = traln.getTrHandle().likelihood; 
+      // END
+#endif
+    }
+  else 
+    {
+      branchesSaved = false; 
+      move.applyToTree(traln, getSecondaryParameterView() ); 
     }
 
-  // debug_checkTreeConsistency(traln); 
+#ifdef MOVE_INFO
+  tout << "ESPR\t" << move.getNniDistance() 
+       << "\t" << oldLnl <<  "\t" << topoLnl - oldLnl << "\t" << branchLnl - oldLnl << "\t"
+       << hastings << "\t" << prior.getLnPriorRatio()<< "\t" << impact << std::endl;  
+  // tout << "================================================================" << std::endl; 
+#endif
 }
 
 
-void ExtendedSPR::evaluateProposal(LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior)
+void ExtendedSPR::evaluateProposal(LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion)
 {  
-  Branch toEval = move.getEvalBranch(traln);
-  auto p = toEval.findNodePtr(traln); 
-  move.disorientAtNode(traln,p); 
-  evaluator->evaluate(traln,toEval, false); 
+  auto toEval = move.getEvalBranch(traln);
+  auto dirtyNodes = move.getDirtyNodes(traln, false); 
+  for(auto &elem : dirtyNodes)
+    evaluator.markDirty( traln, elem); 
+
+
+#ifdef PRINT_EVAL_CHOICE
+  tout << "EVAL " << toEval << std::endl; 
+#endif
+  evaluator.evaluate(traln,toEval, false, true); 
 }
 
 
-void ExtendedSPR::resetState(TreeAln &traln, PriorBelief &prior )
+void ExtendedSPR::resetState(TreeAln &traln )
 {
-  move.revertTree(traln,prior); 
-  // debug_checkTreeConsistency(traln);
-  // debug_printTree(traln); 
+  auto params = getSecondaryParameterView(); 
+  if(branchesSaved)
+    {
+      for(auto elem : savedBls)
+	traln.setBranch(elem, params); 
+    }
+
+  move.revertTree(traln, getSecondaryParameterView() ); 
 }
 
 
 AbstractProposal* ExtendedSPR::clone() const
 {
   return new ExtendedSPR( *this); 
+}
+
+
+std::vector<nat> ExtendedSPR::getInvalidatedNodes(const TreeAln& traln) const
+{
+  return move.getDirtyNodes(traln, false);
 }

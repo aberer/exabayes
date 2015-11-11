@@ -2,37 +2,23 @@
 #define _EXPONENTIAL_PRIOR 
 
 #include "AbstractPrior.hpp"
+#include "Density.hpp"
  
 class ExponentialPrior : public AbstractPrior
 {
 public: 
-  ExponentialPrior(double lambda) : lambda(lambda)
-  {
-  }
-
-  virtual double getLogProb(std::vector<double> values) const 
-  {
-    assert(values.size() == 1); 
-    double value =  values[0]; 
-    double result = exponentialDensity(value, lambda); 
-    result = log(result); 
-    return result ; 
-  }
-
-  virtual std::vector<double> drawFromPrior(Randomness &rand)  const
-  {
-    double drawn = rand.drawRandExp(lambda); 
-    std::vector<double> result = {drawn}; 
-    return result;  
-  }
-
-  virtual void print(std::ostream& out ) const  
-  {        
-    out << "Exponential("  << lambda << ")" ;       
-  }
-
+  ExponentialPrior(double lambda) ; 
+  virtual bool needsIntegration() const {return true; } 
+  virtual double getLogProb(const ParameterContent& content) const  ; 
+  // virtual std::vector<double> drawFromPrior(Randomness &rand)  const; 
+  virtual ParameterContent drawFromPrior(Randomness &rand, bool uniform)  const {assert(0); return ParameterContent{}; } ; 
+  virtual void print(std::ostream& out ) const  ; 
   virtual double getLamda()  const  { return lambda; } 
+  virtual ParameterContent getInitialValue() const; 
+  virtual double accountForMeanSubstChange( TreeAln &traln, const AbstractParameter* param, double myOld, double myNew )  const ; 
 
+
+  virtual AbstractPrior* clone() const { return new  ExponentialPrior(*this) ; }
 private: 
   double lambda; 
 }; 

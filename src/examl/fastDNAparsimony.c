@@ -47,6 +47,11 @@
 #include <assert.h>
 
 
+#include <mpi.h>
+
+extern MPI_Comm comm; 
+
+
 typedef unsigned int nat; 
 
 #include "axml.h"
@@ -95,6 +100,18 @@ typedef unsigned int nat;
 #define VECTOR_AND_NOT _mm256_andnot_pd
 
 #endif
+
+static inline int states2pos (int states)
+{
+  switch(states)
+    {
+    case 4 :
+      return 0; 
+    case 20: 
+      return 1; 
+    default : assert(0); 
+    }
+}
 
 
 extern const nat mask32[32]; 
@@ -257,6 +274,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
   
   for(index = 4; index < count; index += 4)
     {       
+      
       size_t
 	pNumber = (size_t)ti[index],
 	qNumber = (size_t)ti[index + 1],
@@ -295,7 +313,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
 		  }
 
 		for(nat i = 0; i < width; i += INTS_PER_VECTOR)
-		  {	 	  
+		  { 
 		    INT_TYPE
 		      s_r, s_l, v_N,
 		      l_A, l_C,
@@ -330,6 +348,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
 
 		for(k = 0; k < 4; k++)
 		  {
+
 		    int numL = (width * 4 * qNumber) + width * k; 
 		    int numR = (width * 4 * rNumber) + width * k; 
 		    int numT = (width * 4 * pNumber) + width * k; 
@@ -342,6 +361,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
 
 		for(nat iter = 0; iter < (nat)width; iter += INTS_PER_VECTOR)
 		  {	 	  
+		    /* printf("at %d / %d\t INTS=%d\n", iter, width, INTS_PER_VECTOR) ;  */
 
 		    INT_TYPE
 		      s_r, s_l, v_N,
@@ -384,7 +404,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
 	    case 20:
 	      {
 		/* check carefully, if we have trouble with the indices  */
-		assert(0); 
+		/* assert(0);  */
 
 		parsimonyNumber
 		  *left[20],
@@ -483,7 +503,7 @@ static void newviewParsimonyIterativeFast(tree *tr)
     }
 }
 
-static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
+static void evaluateParsimonyIterativeFast(tree *tr,  nat *state2parsimony)
 {
   INT_TYPE 
     allOne = SET_ALL_BITS_ONE;
@@ -499,7 +519,10 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
     newviewParsimonyIterativeFast(tr);
   
   for(nat i = 0; i < tr->NumberOfModels; ++i)
-    partitionParsimony[i] = tr->parsimonyScore[pNumber * tr->NumberOfModels + i] + tr->parsimonyScore[qNumber * tr->NumberOfModels + i]; 
+    {
+      nat states = tr->partitionData[i].states; 
+      state2parsimony[ states2pos( states ) ] = tr->parsimonyScore[pNumber * tr->NumberOfModels + i] + tr->parsimonyScore[qNumber * tr->NumberOfModels + i]; 
+    }
 
   for(model = 0; model < tr->NumberOfModels; model++)
     {
@@ -521,6 +544,8 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 left[k]  = &(tr->partitionData[model].parsVect[(width * 2 * qNumber) + width * k]);
 		 right[k] = &(tr->partitionData[model].parsVect[(width * 2 * pNumber) + width * k]);
 	       }     
+
+	     nat sum = 0; 
 	     
 	     for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 	       {                	                       
@@ -531,8 +556,10 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 		 
-		 partitionParsimony[model] += vectorPopcount(v_N); 
+		 sum += vectorPopcount(v_N); ;
 	       }
+	     /* pLengthAtBranch[model] = sum;  */
+	     state2parsimony[states2pos(states)] += sum; 
 	   }
 	   break;
 	 case 4:
@@ -552,8 +579,11 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 right[k] = start + numR;
 	       }        
 
+	     nat sum = 0; 
+
 	     for(nat i = 0; i < width; i += INTS_PER_VECTOR)
-	       {                	                        
+	       {
+
 		 INT_TYPE      
 		   l_A = VECTOR_BIT_AND(VECTOR_LOAD((CAST)(&left[0][i])), VECTOR_LOAD((CAST)(&right[0][i]))),
 		   l_C = VECTOR_BIT_AND(VECTOR_LOAD((CAST)(&left[1][i])), VECTOR_LOAD((CAST)(&right[1][i]))),
@@ -562,12 +592,12 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		   v_N = VECTOR_BIT_OR(VECTOR_BIT_OR(l_A, l_C), VECTOR_BIT_OR(l_G, l_T));     
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
-		 
-		 nat tmp = vectorPopcount(v_N);
 
-		 partitionParsimony[model] += tmp ; 
+		 sum += vectorPopcount(v_N); 
+	       }
 
-	       }	   	 
+	     /* pLengthAtBranch[model] = sum; */
+	     state2parsimony[states2pos( states)] += sum; 
 	   }
 	   break;
 	 case 20:
@@ -582,6 +612,9 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		  right[k] = &(tr->partitionData[model].parsVect[(width * 20 * pNumber) + width * k]);
 		}  
 	   
+
+	      nat sum = 0; 
+
 	      for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 		{                	       
 		  int 
@@ -598,10 +631,11 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		    }
 		  
 		  v_N = VECTOR_AND_NOT(v_N, allOne);
-		  
-		  partitionParsimony[model] += vectorPopcount(v_N); 
-
+	
+		  sum += vectorPopcount(v_N); ;
 		}
+	      /* pLengthAtBranch[model] = sum; */
+	      state2parsimony[states2pos(states)] += sum; 
 	   }
 	   break;
 	 default:
@@ -618,6 +652,8 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 right[k] = &(tr->partitionData[model].parsVect[(width * states * pNumber) + width * k]);
 	       }  
 	   
+	     nat sum = 0; 
+
 	     for(nat i = 0; i < width; i += INTS_PER_VECTOR)
 	       {                	       
 		 size_t
@@ -635,8 +671,10 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 		 
 		 v_N = VECTOR_AND_NOT(v_N, allOne);
 
-		 partitionParsimony[model] += vectorPopcount(v_N); 
+		 sum += vectorPopcount(v_N); 
 	       }
+	     /* pLengthAtBranch[model] = sum;  */
+	     state2parsimony[states2pos(states)] += sum; 
 	   }
 	 }
     }
@@ -652,9 +690,9 @@ static void evaluateParsimonyIterativeFast(tree *tr,  nat *partitionParsimony)
 
 
 
-void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimony)
+void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *state2parsimony )
 {
-  volatile nat result;
+  /* volatile nat   */
   nodeptr q = p->back;
   int
     *ti = tr->ti,
@@ -680,10 +718,7 @@ void evaluateParsimony(tree *tr, nodeptr p, boolean full, nat *partitionParsimon
 
   ti[0] = counter;
 
-  /* for(int i = 0; i < tr->NumberOfModels; ++i) */
-  /*   partitionParsimony[i] = 0;  */
- 
-  evaluateParsimonyIterativeFast(tr, partitionParsimony);
+  evaluateParsimonyIterativeFast(tr, state2parsimony);
 }
 
 
@@ -817,8 +852,8 @@ static void compressDNA(tree *tr,  int *informative)
 	upper = tr->partitionData[model].upper;
 
       parsimonyNumber 
-	**compressedTips = (parsimonyNumber **)exa_malloc(states * sizeof(parsimonyNumber*)),
-	*compressedValues = (parsimonyNumber *)exa_malloc(states * sizeof(parsimonyNumber));
+	**compressedTips = (parsimonyNumber **)exa_calloc(states,  sizeof(parsimonyNumber*)),
+	*compressedValues = (parsimonyNumber *)exa_calloc(states,  sizeof(parsimonyNumber));
       
       for(i = lower; i < upper; i++)    
 	if(informative[i])
@@ -936,7 +971,7 @@ static void stepwiseAddition(tree *tr,  nodeptr p, nodeptr q)
 {            
   nodeptr 
     r = q->back;
-
+  
   nat 
     mp;
   
@@ -954,14 +989,15 @@ static void stepwiseAddition(tree *tr,  nodeptr p, nodeptr q)
   tr->ti[1] = p->number;
   tr->ti[2] = p->back->number;
 
-   
-  nat* partitionParsimony = (nat*) exa_calloc(tr->NumberOfModels,sizeof(nat)) ; 
-  evaluateParsimonyIterativeFast(tr,  partitionParsimony);
+  nat state2parsimony[2] = {0,0}; 
+  evaluateParsimonyIterativeFast(tr,  state2parsimony);
+
   mp = 0; 
-  for(int i = 0; i < tr->NumberOfModels; ++i)
-    mp += partitionParsimony[i]; 
-  exa_free(partitionParsimony); 
-  
+  for(int i = 0; i < 2; ++i)
+    mp += state2parsimony[i]; 
+
+  MPI_Allreduce(MPI_IN_PLACE, &mp,1,MPI_UNSIGNED, MPI_SUM, comm);
+
   if(mp < tr->bestParsimony)
     {    
       tr->bestParsimony = mp;
@@ -971,7 +1007,7 @@ static void stepwiseAddition(tree *tr,  nodeptr p, nodeptr q)
   q->back = r;
   r->back = q;
    
-  if(q->number > tr->mxtips && tr->parsimonyScore[q->number] > 0)
+  if(q->number > tr->mxtips )
     {	      
       stepwiseAddition(tr,  p, q->next->back);
       stepwiseAddition(tr, p, q->next->next->back);
@@ -1061,8 +1097,9 @@ static void buildSimpleTree (tree *tr, int ip, int iq, int ir)
 
 
 
-static void makePermutationFast(int *perm, int n, tree *tr)
+static void makePermutationFast(int *perm, int n, tree *tr, nat seed)
 {    
+  tr->randomNumberSeed = seed; 
   int  
     i, 
     j, 
@@ -1084,16 +1121,16 @@ static void makePermutationFast(int *perm, int n, tree *tr)
     }
 }
 
-void makeParsimonyTreeFast(tree *tr)
+void makeParsimonyTreeFast(tree *tr, nat seed)
 {   
   nodeptr  
-    p, 
-    f;    
+    p = NULL, 
+    f = NULL;    
 
   int 
     i, 
     nextsp,
-    *perm        = (int *)exa_malloc((size_t)(tr->mxtips + 1) * sizeof(int));  
+    *perm        = (int *)exa_calloc((size_t)(tr->mxtips + 1) , sizeof(int));  
 
   unsigned int 
     randomMP, 
@@ -1101,14 +1138,14 @@ void makeParsimonyTreeFast(tree *tr)
   
   assert(!tr->constrained);
 
-  makePermutationFast(perm, tr->mxtips, tr);
-  
+  makePermutationFast(perm, tr->mxtips, tr, seed);
+
   tr->ntips = 0;    
   
   tr->nextnode = tr->mxtips + 1;       
   
   buildSimpleTree(tr, perm[1], perm[2], perm[3]);
-  
+
   f = tr->start;       
   
   while(tr->ntips < tr->mxtips) 
@@ -1129,9 +1166,11 @@ void makeParsimonyTreeFast(tree *tr)
 
 	  tr->constraintVector[number] = -9;
 	}
-          
-      stepwiseAddition(tr, q, f->back);
       
+      stepwiseAddition(tr, q, f->back);
+
+      /* printf("[%d / %d] bestnode: %d\n", tr->ntips, tr->mxtips, tr->insertNode->number);  */
+
       {
 	nodeptr	  
 	  r = tr->insertNode->back;
@@ -1147,6 +1186,9 @@ void makeParsimonyTreeFast(tree *tr)
 	newviewParsimonyIterativeFast(tr);
       }
     }    
+
+  
+  MPI_Barrier(comm);
 
   /* printf("ADD: %d\n", tr->bestParsimony);  */
 

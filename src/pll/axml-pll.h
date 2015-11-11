@@ -108,7 +108,9 @@ extern "C" {
 
 #define badRear         -1
 
-#define NUM_BRANCHES     16
+
+  /* really problematic */
+/* #define NUM_BRANCHES     1024 */
 
 #define TRUE             1
 #define FALSE            0
@@ -359,6 +361,13 @@ extern double exp_approx (double x);
 #define MEM_APROX_OVERHEAD     1.3 /* TODOFER can we measure this empirically? */
 
 
+  /* added by andre  */
+typedef void* array_reservoir_t ; 
+  extern double* allocate(array_reservoir_t self, size_t length ); 
+extern void deallocate(array_reservoir_t self, double *array); 
+  /* end */
+
+
 typedef  int boolean;
 
 /** @brief Stores the recomputation-state of likelihood vectors  */
@@ -480,8 +489,8 @@ typedef struct
   int pNumber;                  /**< should exist in some nodeptr p->number */
   int qNumber;/**< should exist in some nodeptr q->number */
   int rNumber;/**< should exist in some nodeptr r->number */
-  double qz[NUM_BRANCHES];
-  double rz[NUM_BRANCHES];
+  double *qz/* [NUM_BRANCHES] */;
+  double *rz/* [NUM_BRANCHES] */;
   /* recom */
   int slot_p;                   /**< In recomputation mode, the RAM slot index for likelihood vector of node p, otherwise unused */
   int slot_q;                   /**< In recomputation mode, the RAM slot index for likelihood vector of node q, otherwise unused */
@@ -762,10 +771,7 @@ typedef  struct noderec
 {
  
   branchInfo      *bInf;
-  double           z[NUM_BRANCHES];
-#ifdef _BAYESIAN 
-  double           z_tmp[NUM_BRANCHES];
-#endif 
+  double           *z/* [NUM_BRANCHES] */;
   struct noderec  *next;        
   struct noderec  *back;       
   hashNumberType   hash;
@@ -891,9 +897,9 @@ typedef struct {
   /* partial LH Inner vectors  ancestral vectors, we have 2*tips - 3 inner nodes */
   double          **xVector;          /* Probability entries for inner nodes */
   unsigned char   **yVector;          /* Tip entries (sequence) for tip nodes */
-  unsigned int     *globalScaler;     /* Counters for scaling operations done at node i */
+  unsigned int     *globalScaler; /* Counters for scaling operations done at node i */
   /* These are for the saveMemory option (tracking gaps to skip computations and memory) */
-  size_t           *xSpaceVector;     
+  size_t           *xSpaceVector; 
   int               gapVectorLength;
   unsigned int     *gapVector;
   double           *gapColumn; 
@@ -998,7 +1004,7 @@ typedef struct {
   int rateHetModel;
   int maxCategories;
   int NumberOfModels;
-  int numBranches;
+  /* int numBranches; */
   int originalCrunchedLength;    
   int mxtips;
   char seq_file[1024];
@@ -1080,7 +1086,7 @@ typedef  struct  {
   int              maxCategories;
   int              categories;
 
-  double           coreLZ[NUM_BRANCHES];
+  double           *coreLZ/* [NUM_BRANCHES] */;
   
  
   branchInfo	   *bInf;
@@ -1088,7 +1094,7 @@ typedef  struct  {
   int              multiStateModel;
 
 
-  boolean curvatOK[NUM_BRANCHES];
+  boolean *curvatOK/* [NUM_BRANCHES] */;
   /* the stuff below is shared among DNA and AA, span does
      not change depending on datatype */
 
@@ -1101,11 +1107,8 @@ typedef  struct  {
   int              secondaryStructureModel;
   int              originalCrunchedLength;
  
- 
   int              *secondaryStructurePairs;
 
-
-  double            fracchange;
   double            lhCutoff;
   double            lhAVG;
   unsigned long     lhDEC;
@@ -1130,9 +1133,9 @@ typedef  struct  {
   int              nextnode;  
 
 
-  boolean          bigCutoff;
-  boolean          partitionSmoothed[NUM_BRANCHES];
-  boolean          partitionConverged[NUM_BRANCHES];
+  boolean          bigCutoff; 
+  boolean          *partitionSmoothed/* [NUM_BRANCHES] */;
+  boolean          *partitionConverged/* [NUM_BRANCHES] */;
   boolean          rooted;
   boolean          doCutoff;
  
@@ -1146,22 +1149,22 @@ typedef  struct  {
  
   unsigned int bestParsimony;
   unsigned int *parsimonyScore;
-  
+
   double bestOfNode;
   nodeptr removeNode;   /**< the node that has been removed. Together with \a insertNode represents an SPR move */
   nodeptr insertNode;   /**< the node where insertion should take place . Together with \a removeNode represents an SPR move*/
 
-  double zqr[NUM_BRANCHES];
-  double currentZQR[NUM_BRANCHES];
+  double *zqr/* [NUM_BRANCHES] */;
+  double *currentZQR/* [NUM_BRANCHES] */;
 
-  double currentLZR[NUM_BRANCHES];
-  double currentLZQ[NUM_BRANCHES];
-  double currentLZS[NUM_BRANCHES];
-  double currentLZI[NUM_BRANCHES];
-  double lzs[NUM_BRANCHES];
-  double lzq[NUM_BRANCHES];
-  double lzr[NUM_BRANCHES];
-  double lzi[NUM_BRANCHES];
+  double *currentLZR/* [NUM_BRANCHES] */;
+  double *currentLZQ/* [NUM_BRANCHES] */;
+  double *currentLZS/* [NUM_BRANCHES] */;
+  double *currentLZI/* [NUM_BRANCHES] */;
+  double *lzs/* [NUM_BRANCHES] */;
+  double *lzq/* [NUM_BRANCHES] */;
+  double *lzr/* [NUM_BRANCHES] */;
+  double *lzi/* [NUM_BRANCHES] */;
 
 
   unsigned int **bitVectors;
@@ -1188,7 +1191,7 @@ typedef struct {
 
 typedef struct
 {
-  double z[NUM_BRANCHES];
+  double *z/* [NUM_BRANCHES] */;
   nodeptr p, q;
   int cp, cq;
 }
@@ -1221,7 +1224,7 @@ typedef  struct
 /** @brief Connection within a topology.
 *   */
 typedef struct conntyp {
-    double           z[NUM_BRANCHES];           /**< branch length */
+    double           *z/* [NUM_BRANCHES] */;           /**< branch length */
     node            *p, *q;       /**< parent and child sectors */
     void            *valptr;      /**< pointer to value of subtree */
     int              descend;     /**< pointer to first connect of child */
@@ -1360,7 +1363,7 @@ extern void set_branch_length(tree *tr, nodeptr p, int partition_id, double bl);
 extern size_t discreteRateCategories(int rateHetModel);
 
 extern const partitionLengths * getPartitionLengths(pInfo *p);
-extern boolean getSmoothFreqs(int dataType);
+/* extern boolean getSmoothFreqs(int dataType); */
 extern const unsigned int *getBitVector(int dataType);
 extern int getUndetermined(int dataType);
 extern int getStates(int dataType);
@@ -1407,8 +1410,8 @@ extern int checker ( tree *tr, nodeptr p );
 extern boolean tipHomogeneityChecker ( tree *tr, nodeptr p, int grouping );
 extern void makeRandomTree ( tree *tr);
 extern void nodeRectifier ( tree *tr );
-extern void makeParsimonyTreeFast(tree *tr, partitionList *pr);
-extern void allocateParsimonyDataStructures(tree *tr, partitionList *pr);
+  extern void makeParsimonyTreeFast(tree *tr, partitionList *pr, unsigned int);
+  extern void allocateParsimonyDataStructures(tree *tr, partitionList *pr);
 extern void freeParsimonyDataStructures(tree *tr, partitionList *pr);
 extern void parsimonySPR(nodeptr p, partitionList *pr, tree *tr);
 
@@ -1474,14 +1477,14 @@ extern void computeBootStopOnly(tree *tr, char *bootStrapFileName, analdef *adef
 extern boolean bootStop(tree *tr, hashtable *h, int numberOfTrees, double *pearsonAverage, unsigned int **bitVectors, int treeVectorLength, unsigned int vectorLength);
 extern void computeConsensusOnly(tree *tr, char* treeSetFileName, analdef *adef);
 extern double evaluatePartialGeneric (tree *, partitionList *pr, int i, double ki, int _model);
-extern void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraversal);
-extern void newviewGeneric (tree *tr, partitionList *pr, nodeptr p, boolean masked);
+  extern void evaluateGeneric (tree *tr, partitionList *pr, nodeptr p, boolean fullTraversal, array_reservoir_t res);
+  extern void newviewGeneric (tree *tr, partitionList *pr, nodeptr p, boolean masked, array_reservoir_t res);
 extern void newviewGenericAncestral(tree *tr, partitionList *pr, nodeptr p);
 extern void newviewAncestralIterative(tree *tr, partitionList *pr);
   extern void printAncestralState(nodeptr p, boolean printStates, boolean printProbs, tree *tr, partitionList *pr);
 
   extern void newviewGenericMulti (tree *tr, nodeptr p, int model);
-  extern void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double lambda, boolean mask); 
+  extern void makenewzGeneric(tree *tr, partitionList * pr, nodeptr p, nodeptr q, double *z0, int maxiter, double *result, double *firstDerivative, double *secDerivative, double lambda, boolean mask, array_reservoir_t res); 
 extern void makenewzGenericDistance(tree *tr, int maxiter, double *z0, double *result, int taxon1, int taxon2);
 extern double evaluatePartitionGeneric (tree *tr, nodeptr p, int model);
 extern void newviewPartitionGeneric (tree *tr, nodeptr p, int model);
@@ -1507,9 +1510,9 @@ extern void countTraversal(tree *tr);
 
 extern void makeP(double z1, double z2, double *rptr, double *EI,  double *EIGN, int numberOfCategories, double *left, double *right, boolean saveMem, int maxCat, const int states);
 
-extern void newviewIterative(tree *tr, partitionList *pr, int startIndex);
+  extern void newviewIterative(tree *tr, partitionList *pr, int startIndex, array_reservoir_t res);
 
-extern void evaluateIterative(tree *tr, partitionList *pr);
+  extern void evaluateIterative(tree *tr, partitionList *pr, array_reservoir_t  res);
 
 //extern void *malloc_aligned( size_t size);
 
@@ -1517,7 +1520,7 @@ extern void storeExecuteMaskInTraversalDescriptor(tree *tr, partitionList *pr);
 extern void storeValuesInTraversalDescriptor(tree *tr, partitionList *pr, double *value);
 
 
-extern void makenewzIterative(tree *, partitionList *pr);
+  extern void makenewzIterative(tree *, partitionList *pr, array_reservoir_t res);
 extern void execCore(tree *, partitionList *pr, volatile double *dlnLdlz, volatile double *d2lnLdlz2);
 
 extern void determineFullTraversal(nodeptr p, tree *tr);
@@ -1588,7 +1591,7 @@ extern void testGapped(tree *tr);
 extern boolean issubset(unsigned int* bipA, unsigned int* bipB, unsigned int vectorLen);
 extern boolean compatible(entry* e1, entry* e2, unsigned int bvlen);
 
-extern void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods);
+  extern void perSiteLogLikelihoods(tree *tr, partitionList *pr, double *logLikelihoods, array_reservoir_t res);
 
 extern int *permutationSH(tree *tr, int nBootstrap, long _randomSeed);
 extern void perSiteLogLikelihoodsPthreads(tree *tr, partitionList *pr, double *lhs, int n, int tid);
@@ -1729,3 +1732,5 @@ int filexists(char *filename);
 void printBothOpen(const char* format, ... );
 
 void printModelAndProgramInfo(tree *tr, partitionList *pr, analdef *adef, int argc, char *argv[]);
+
+

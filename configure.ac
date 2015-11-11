@@ -2,12 +2,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[0.4],[exabayes@googlegroups.com]) 
+AC_INIT([exabayes],[1.0],[exabayes-at-googlegroups-dot-com]) 
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
-# m4_include([./m4/ax_ext.m4])
 
 AC_CONFIG_SRCDIR([src/])
+
+dnl todo-ish 
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([src/config.h])
 
@@ -19,7 +20,6 @@ AM_SILENT_RULES([yes])
 dnl AC_CONFIG_SUBDIRS([lib/ncl-2.1.18])
 
 # Checks for programs.
-
 
 OLD_CXXFLAGS=$CXXFLAGS
 OLD_CFLAGS=$CFLAGS
@@ -53,38 +53,27 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([clock_gettime getcwd getpagesize gettimeofday memset pow sqrt strcasecmp strchr])
 
 
-AC_DEFINE([HAVE_PLL], [0], "")
-AC_ARG_ENABLE( [pll], 	      
-	   [  --enable-pll[=val]	compile ExaBayes with a specific code base. Options: 
-	  no : ExaML code base 	 
-	  sequential [default]:  sequential PLL,
-	  threads: PLL with pthreads parallelization
-	  mpi: PLL with MPI processes   ],
-[ case "${enableval}" in
-    no ) CODE="no" ;;	
-  sequential | yes  ) CODE="sequential" ;; 
-  mpi ) CODE="mpi" ;; 
-  threads ) CODE="threads" ;; 
-  esac ],
-[CODE="sequential"]
+# AC_DEFINE([HAVE_PLL], [0], "")
+AC_ARG_ENABLE( [mpi], 	      
+	   [  --enable-mpi  compiles ExaBayes with MPI support ],
+[  case "${enableval}" in 
+   no )  CODE="no" ;; 
+   yes ) CODE="yes" ;; 
+   *) CODE="no" 
+   esac ] ,
+[CODE="no"]
 )
 
 
-if test "x$CODE" = "xno" ; then 
+if test "x$CODE" = "xyes" ; then 
    AC_DEFINE([HAVE_PLL], [0], "")
-elif test "x$CODE" = "xsequential" ; then 
+elif test "x$CODE" = "xno" ; then 
    AC_DEFINE([HAVE_PLL], [1], "")
-elif test "x$CODE" = "xyes" ; then 
-   AC_DEFINE([HAVE_PLL], [1], "")
-elif test "x$CODE" = "xthreads" ; then 
-   AC_DEFINE([HAVE_PLL], [2], "")
-elif test "x$CODE" = "xmpi" ; then 
-   AC_DEFINE([HAVE_PLL], [3], "")
 else 
-   AC_MSG_ERROR(bad value --enable-pll) 
+   AC_MSG_ERROR(bad value --enable-mpi) 
 fi 
 
-AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xno" ])
+AM_CONDITIONAL([WITH_EXAML], [ test "x$CODE" = "xyes" ])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

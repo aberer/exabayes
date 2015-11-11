@@ -8,26 +8,33 @@
 class NodeSlider : public AbstractProposal
 {
 public:   
-  NodeSlider( double multiplier);
+  NodeSlider(  double multiplier);
   virtual ~NodeSlider(){}
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator *evaluator, TreeAln &traln, PriorBelief &prior) ; 
-  virtual void resetState(TreeAln &traln, PriorBelief &prior) ; 
+  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const; 
 
+  virtual void applyToState(TreeAln &traln, PriorBelief &prior, double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
+  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
+  virtual void resetState(TreeAln &traln) ; 
+  
+  BranchPlain proposeBranch(const TreeAln &traln, Randomness &rand) const ; 
+  BranchPlain proposeOtherBranch(const BranchPlain &firstBranch, const TreeAln& traln, Randomness& rand) const ; 
+
+  virtual void prepareForSetEvaluation( TreeAln &traln, LikelihoodEvaluator& eval) const ; 
+  std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln& traln, Randomness &rand) ; 
   virtual void autotune() {}	// disabled 
 
   virtual AbstractProposal* clone() const;  
 
-  virtual void readFromCheckpointCore(std::ifstream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ofstream &out) { } //disabled
+  virtual std::vector<nat> getInvalidatedNodes(const TreeAln &traln ) const; 
+
+  virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
+  virtual void writeToCheckpointCore(std::ostream &out) const { } //disabled
 
 protected: 
   double multiplier; 
-  // Path path; 
-  Branch oneBranch; 
-  Branch otherBranch; 
-
+  BranchLength oneBranch; 
+  BranchLength otherBranch; 
 };  
 
 #endif

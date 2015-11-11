@@ -1,7 +1,7 @@
 #include "config.h" 
 
 
-#ifdef HAVE_AVX
+#if defined(HAVE_AVX) && ! defined(MANUAL_AVX_OVERRIDE)
 
 #define  __AVX
 

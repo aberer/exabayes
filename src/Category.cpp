@@ -3,13 +3,20 @@
 #include <memory>
 #include <algorithm>
 
+#include "parameters/ProtModelParameter.hpp"
 #include "parameters/AbstractParameter.hpp"
 #include "parameters/BranchLengthsParameter.hpp"
-#include "parameters/FrequencyParameter.hpp"
+#include "parameters/FrequencyParameter.hpp" 
 #include "parameters/ParameterContent.hpp"
 #include "parameters/RateHetParameter.hpp"
 #include "parameters/RevMatParameter.hpp"
 #include "parameters/TopologyParameter.hpp"
+
+
+std::ostream&  operator<<(std::ostream& out, const Category &rhs)
+{
+  return out << CategoryFuns::getLongName(rhs) ; 
+}
 
 
 namespace CategoryFuns
@@ -21,7 +28,7 @@ namespace CategoryFuns
       case Category::TOPOLOGY :
 	return "Topology";
       case Category::BRANCH_LENGTHS:
-	return "BranchLen" ;
+	return "BranchLengths" ;
       case Category::FREQUENCIES :
 	return "Frequencies" ;
       case Category::SUBSTITUTION_RATES :
@@ -46,11 +53,11 @@ namespace CategoryFuns
       case Category::TOPOLOGY:
 	return "topo" ;
       case Category::BRANCH_LENGTHS:
-	return "bl" ;
+	return "v" ;
       case Category::FREQUENCIES :
 	return "pi" ;
       case Category::SUBSTITUTION_RATES:
-	return "revMat";
+	return "r";
       case Category::RATE_HETEROGENEITY :
 	return "shape" ;
       case Category::AA_MODEL:
@@ -73,6 +80,8 @@ namespace CategoryFuns
 	return "STATEFREQPR";
       case Category::SUBSTITUTION_RATES: 
 	return "REVMATPR";
+      case Category::AA_MODEL:
+	return "AAPR"; 
       case Category::RATE_HETEROGENEITY: 
 	return "SHAPEPR"; 
       default: 
@@ -83,20 +92,30 @@ namespace CategoryFuns
 
   std::vector<Category> getAllCategories()
   {
-    return {  Category::TOPOLOGY, Category::BRANCH_LENGTHS, Category::FREQUENCIES, Category::SUBSTITUTION_RATES, Category::RATE_HETEROGENEITY} ; 
+    return {  
+      Category::TOPOLOGY, 
+	Category::BRANCH_LENGTHS, 
+	Category::FREQUENCIES, 
+	Category::AA_MODEL,
+	Category::SUBSTITUTION_RATES, 
+	Category::RATE_HETEROGENEITY} ; 
   }
 
 
   Category getCategoryByPriorName(std::string name)
   {
     // bad but this is a bit exhausting... 
-    std::vector<Category> cats = getAllCategories();
+    auto cats = getAllCategories();
+    
+    std::transform(begin(name), end(name), begin(name), ::toupper);
 
     for(auto c : cats)
       {
 	if(getPriorName(c).compare(name) == 0)
 	  return c; 
       }
+
+    tout << "Error in config file: did not find >" << name << "<" << std::endl; 
 
     assert(0); 
     return cats[0]; 
@@ -114,7 +133,7 @@ namespace CategoryFuns
       return Category::SUBSTITUTION_RATES; 
     else if(name.compare("aamodel") == 0)
       return Category::AA_MODEL; 
-    else if(name.compare("branchlength") == 0)
+    else if(name.compare("brlens") == 0)
       return Category::BRANCH_LENGTHS; 
     else
       {
@@ -125,28 +144,27 @@ namespace CategoryFuns
 
 
 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id)
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions)
   {
-
     switch(cat)
       {
       case Category::TOPOLOGY :
-	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new TopologyParameter(id, idOfMyKind,partitions ));
       case Category::BRANCH_LENGTHS:
-	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new BranchLengthsParameter(id, idOfMyKind, partitions));
       case Category::FREQUENCIES :
-	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new FrequencyParameter(id, idOfMyKind,partitions));
       case Category::SUBSTITUTION_RATES :
-	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new RevMatParameter(id, idOfMyKind,partitions));
       case Category::RATE_HETEROGENEITY:
-	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id));
+	return  std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind,partitions));
       case Category::AA_MODEL :
+	return std::unique_ptr<AbstractParameter>( new ProtModelParameter(id, idOfMyKind,partitions));
       default : 
 	{
 	  assert(0); 
-	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id));
+	  return std::unique_ptr<AbstractParameter>( new RateHetParameter(id, idOfMyKind, partitions));
 	}
       }    
-  } 
- 
+  }  
 }

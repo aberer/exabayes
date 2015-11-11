@@ -14,14 +14,16 @@
 #include <chrono> 
 #include <memory>
 
+#include <fstream>
 #include "common.h"
 #include "config.h"
 #include "teestream.hpp"
 
+class AdHocIntegrator; 
+class TreeIntegrator; 
+
 #define tout (*globals.teeOut)
 
-class TreeAln; 
-class BipartitionHash; 
 
 class GlobalVariables
 {
@@ -32,21 +34,30 @@ public:
   std::ofstream* logStream;
 };
 
-
-
-
 #endif
 
 #ifdef _INCLUDE_DEFINITIONS
 
+std::ofstream nniOut; 
+std::ofstream sprOut; 
 
 GlobalVariables globals; 
 std::chrono::system_clock::time_point timeIncrement;  
 int debugPrint = 0; 
+bool startIntegration = false; 
+
+AdHocIntegrator* ahInt; 
+TreeIntegrator* tInt; 
 
 #else 
+extern std::ofstream nniOut; 
+extern std::ofstream sprOut; 
+extern bool startIntegration; 
+extern AdHocIntegrator* ahInt; 
+extern TreeIntegrator* tInt; 
 extern GlobalVariables globals; 
 extern int processID; 		// needed for raxml 
+extern int processes; 
 extern std::chrono::system_clock::time_point timeIncrement;  
 extern int debugPrint; 
 #endif

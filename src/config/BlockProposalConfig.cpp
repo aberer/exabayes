@@ -8,9 +8,12 @@ extern void genericExit(int code);
 
 
 BlockProposalConfig::BlockProposalConfig()
+  : etbrStopProb(0.5)
+  , esprStopProp(0.5)    
+  , parsimonyWarp(0.1)
+  , parsSPRRadius(-1)
 {
   NCL_BLOCKTYPE_ATTR_NAME = "PROPOSALS"; 
-  // setupMap();
 }
 
 
@@ -47,10 +50,17 @@ void BlockProposalConfig::Read(NxsToken &token)
 	    }
 	  else if(key.EqualsCaseInsensitive("esprstopprob"))	    
 	    esprStopProp = value.ConvertToDouble();	  
+	  else if(key.EqualsCaseInsensitive("etbrstopprob"))
+	    etbrStopProb = value.ConvertToDouble(); 	  
 	  else if(key.EqualsCaseInsensitive("guidedsprradius"))
 	    guidedRadius = value.ConvertToInt();
 	  else if(key.EqualsCaseInsensitive("parsimonyWarp"))	    
 	    parsimonyWarp = value.ConvertToDouble();
+	  else if(key.EqualsCaseInsensitive("parssprradius"))
+	    {
+	      parsSPRRadius = value.ConvertToInt();
+	      // tout << "\n\nfound spr radius " << parsSPRRadius << "\n\n" << std::endl ;
+	    }
 	  else 	      
 	    {
 	      cerr << "WARNING: ignoring unknown value >"  << key << "< and >" << value <<  "<" << endl; 
@@ -60,6 +70,33 @@ void BlockProposalConfig::Read(NxsToken &token)
     }
 }
 
+
+void BlockProposalConfig::verify()
+{
+  if(not (0.01 < esprStopProp && esprStopProp <= 1 ))
+    {
+      tout << "Error: >esprStopProp< must be in the range (0.01,1]" << std::endl; 
+      exit(-1); 
+    }
+
+  if(not (0.01 < esprStopProp && esprStopProp <= 1 ))
+    {
+      tout << "Error: >etbrStopProb< must be in the range (0.01,1]" << std::endl; 
+      exit(-1); 
+    }
+  
+  if(not (0.001 < parsimonyWarp && parsimonyWarp < 10))
+    {
+      tout << "Error: >parsimonyWarp< must be in the range (0.001,10)" << std::endl; 
+      exit(-1); 
+    }
+  
+  if(parsSPRRadius != -1 &&  (parsSPRRadius <= 1 ))
+    {
+      tout << "Error: >parsSPRRadius< must be in the range (1,inf)" << std::endl; 
+      exit(-1); 
+    }
+}
 
 // NOTICE 
 

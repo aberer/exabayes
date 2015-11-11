@@ -10,34 +10,14 @@
 #include "config.h"
 #include "common.h"
 
-
+extern int NUM_BRANCHES; 
 
 #ifdef _USE_GOOGLE_PROFILER
 #include <google/profiler.h>
 #endif
 
-#ifdef HAVE_AVX
+#if defined(HAVE_AVX)  && ! defined(MANUAL_AVX_OVERRIDE)
 #define __AVX 
-#endif
-
-
-#if HAVE_PLL != 0
-
-#else 
-
-#ifdef _SEQUENTIAL
-
-#ifdef __cplusplus
-extern "C"{
-#endif
-#include "examl/mpiMock.h"
-#ifdef __cplusplus
-}
-#endif
-#else 
-#include "mpi.h"
-#endif
-
 #endif
 
 
@@ -50,7 +30,6 @@ extern "C"{
 #else 
 #include "examl/axml-examl.h"
 #endif
-
 
 
 #if HAVE_PLL == 0
@@ -66,6 +45,3 @@ extern "C"{
 #endif
 
 #endif
-
-
-
