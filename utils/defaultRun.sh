@@ -122,13 +122,12 @@ configFile=$pathtodata/config.nex
 args="$args --enable-mpi"
 
 if [ "$withTree" = "1" ]; then
-    if [ !  -f data/$dataset/tree ]; then
+    if [ !  -f $topdir/data/$dataset/tree ]; then
 	echo "could not find data/$dataset/tree"
 	exit 
     fi
 
-    extraArgs="$extraArgs -t data/$dataset/tree"
-    
+    extraArgs="$extraArgs -t $topdir/data/$dataset/tree"
 fi
 
 
@@ -187,6 +186,11 @@ fi
 if [ "$libs" != "" ]; then
     args="$args LIBS=\""$libs"\""
 fi
+
+################ change dir ################
+
+cd $builddir
+
 
 rm -f exabayes yggdrasil
 if [ -f status ] ; then 
