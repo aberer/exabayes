@@ -1,5 +1,3 @@
-
-
 #ifndef _BLOCK_PARTITION_H
 #define _BLOCK_PARTITION_H
 

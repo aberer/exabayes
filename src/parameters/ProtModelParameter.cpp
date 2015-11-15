@@ -1,6 +1,9 @@
 #include "ProtModelParameter.hpp" 
 #include "ProtModel.hpp"
 
+#include <sstream>
+
+using std::stringstream; 
 
 void ProtModelParameter::applyParameter(TreeAln& traln,  const ParameterContent &content)
 {
@@ -46,7 +49,16 @@ void ProtModelParameter::verifyContent(const TreeAln &traln, const ParameterCont
 {
   if(content.protModel.size() != 1)
     {
-      tout << "incorrect number of models in parameter content. This is a programming error." << std::endl; 
+      stringstream ss;
+      bool first = true; 
+      for (auto& partition : _partitions)
+        ss << (first ?  "" : ",") << partition; 
+
+      tout << "Incorrect number of models in parameter content. "
+        "If you specified a prior for partition " <<  ss.str() <<  ", "
+        "you most probably misspelled the name. If you are sure, that this is"
+        " not the case, please report this as a programming error."
+           << std::endl; 
       assert(0); 
     }
 } 
