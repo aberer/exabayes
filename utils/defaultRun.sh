@@ -102,7 +102,7 @@ case $mode in
     debug)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -e $GDB  -ex run  --args "  #   	
+	gdb="$TERM -e gdb -ex run --args "  #   	
 	;;
     default)
 	;;
@@ -146,7 +146,7 @@ if [ "$codeBase" == "mpi" ]; then
     CC="$ccompiler"  
     CXX="$cxxcompiler"  
     
-    baseCall="mpirun -np $numProc  $gdb ./exabayes $alnArg -n $runid -s $seed  $extraArgs -c $configFile $extra"
+    baseCall="mpirun -np $numProc  $gdb  ./exabayes $alnArg -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
 elif [ "$codeBase" == "thread" ]; then 
     CC="$ccompiler"
