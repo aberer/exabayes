@@ -219,4 +219,4 @@ date :
 	./utils/updateDate.sh
 
 dist-hook: 
-	make date 
+	make date

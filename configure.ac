@@ -29,8 +29,8 @@ AC_PROG_CXX( [g++ icpc] )
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
 
+dnl TODO: could we remove this one? 
 AC_C_LONG_LONG
-
 
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 AC_PROG_CC_STDC
