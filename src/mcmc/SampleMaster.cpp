@@ -60,9 +60,9 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
   bool hasBranchLength = false; 
   if(startingTree.compare("") != 0 )
     {
-		pllInstance * instance = &(traln.getTrHandle());
-		pllNewickTree * newickTree = pllNewickParseString(startingTree.c_str());
-		pllTreeInitTopologyNewick(instance, newickTree, PLL_TRUE);
+      pllInstance * instance = &(traln.getTrHandle());
+      pllNewickTree * newickTree = pllNewickParseString(startingTree.c_str());
+      pllTreeInitTopologyNewick(instance, newickTree, PLL_TRUE);
     }
   else
     {	      
