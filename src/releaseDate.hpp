@@ -1,2 +1,2 @@
-#define RELEASE_DATE "2016-01-09"
-#define GIT_COMMIT_ID "fa757cb928c2ca5f6d159ab3bf1d253e36ed0f27"
+#define RELEASE_DATE "2016-02-15"
+#define GIT_COMMIT_ID "f54bfc728bdb45251130180f2aec4cef14e0a8fa"
