@@ -938,15 +938,15 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
   auto fns = vector<string>{}; 
   for(nat i = 0; i < _runParams.getNumRunConv(); ++i)
     {
-      auto &&ss = stringstream{}; 
-      ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies." << _cl.getRunid() << "." << i; 
+      auto &&ss = stringstream{};
+
+      ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies.run-" << i  << "." << _cl.getRunid();
       
+      // TODO: test it with multiple branch lengths 
+        
       // if we do not find the file, let's assume we have multiple branch lengths 
       if (not std::ifstream(ss.str()) ) 
-	{
-	  ss.str(""); 
-	  ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies." << _cl.getRunid() << "." << i << ".tree.0"; 
-	}
+        ss << ".tree.0";
 
       fns.push_back(ss.str());
     }

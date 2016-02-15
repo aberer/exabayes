@@ -111,11 +111,21 @@ std::vector<std::string>
 TreeProcessor::fillTaxaInfo(std::string fileName)
 {
   auto result = std::vector<std::string>{}; 
-  auto whiteSpace = " \t"; 
-  auto &&infile =  std::ifstream(fileName); 
+  auto whiteSpace = " \t";
+
+  auto &&infile =  std::ifstream(fileName);
+  
+  if (!infile)
+    {
+      tout << "Warning: could not find file " << fileName << std::endl;
+      assert(0);
+    }
+  
+  
   auto line = std::string{} ; 
   bool foundStart = false; 
-  bool abort = false; 
+  bool abort = false;
+
   while(not abort && getline(infile, line))
     {      
       std::string cleanLine = trim(line); 

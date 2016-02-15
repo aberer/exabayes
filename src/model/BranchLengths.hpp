@@ -10,7 +10,8 @@
 class BranchLengths : public BranchPlain
 {
 public: 
-  BranchLengths(const BranchPlain &b = BranchPlain() , std::vector<InternalBranchLength> lengths = {{}})
+  explicit BranchLengths(const BranchPlain &b = BranchPlain(),
+                         std::vector<InternalBranchLength> lengths = {{}})
     : BranchPlain(b)
     , _lengths(lengths)
   {

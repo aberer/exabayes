@@ -15,9 +15,9 @@ class BranchPlain   : public Serializable
 public: 			// INHERITED
   virtual void deserialize( std::istream &in )   ; 
   virtual void serialize( std::ostream &out) const;   
-
+  
 public:
-  BranchPlain(nat a = 0, nat b = 0)
+  explicit BranchPlain(nat a = 0, nat b = 0)
     : _primNode{a}
     , _secNode{b}
   {}

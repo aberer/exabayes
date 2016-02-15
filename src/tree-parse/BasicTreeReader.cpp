@@ -40,7 +40,7 @@ std::tuple<nat,double> BasicTreeReader<LABEL_READER,BL_READER>::parseElement(std
     }
   else 
     {
-      // std::cout << "did not find bl for label " << label << std::endl; 
+      std::cerr << "did not find bl for label " << label << std::endl; 
     }
 
   return std::make_tuple(label, bl);
@@ -50,8 +50,14 @@ std::tuple<nat,double> BasicTreeReader<LABEL_READER,BL_READER>::parseElement(std
 template<class LABEL_READER,class BL_READER>
 void BasicTreeReader<LABEL_READER, BL_READER>::addBranch(nat label, std::tuple<nat,double> subtree, std::vector<BranchLength> &branches) const 
 {
-  branches.emplace_back(label,std::get<0>(subtree)); 
-  branches.rbegin()->setLength(std::get<1>(subtree));
+  auto label2 = 0u;
+  auto len = 0.;
+
+  std::tie(label2,len) = subtree;
+
+  assert(label2 != 0u && label != 0u);
+
+  branches.emplace_back(BranchPlain(label, label2),len);
 }
 
 
@@ -103,7 +109,6 @@ template<class LABEL_READER,class BL_READER>
 std::vector<BranchLength> BasicTreeReader<LABEL_READER, BL_READER>::extractBranches(std::istream &iss ) 
 {
   auto result = std::vector<BranchLength>{}; 
-
 
   parseSubTree(iss, result, true);
   expectChar(iss,';');

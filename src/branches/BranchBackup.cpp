@@ -1,5 +1,6 @@
 #include "BranchBackup.hpp"
 
+#include "BranchPlain.hpp"
 #include "BranchLength.hpp"
 
 #include <algorithm> 
@@ -52,7 +53,7 @@ std::tuple<bool, BranchLength> BranchBackup::find(const BranchPlain &branch, Abs
 				); 
     
   if( foundIter == end(_backup ))
-    return std::make_pair(false, BranchLength(0,0)); 
+    return std::make_pair(false, BranchLength());
   else 
     return std::make_tuple(true, get<1>(*foundIter)); 
 }
