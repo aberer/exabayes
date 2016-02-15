@@ -197,8 +197,16 @@ void AlignmentPLL::initPartitions(std::string partitionFile)
   assert(_pllAlignmentData != nullptr);
   auto queue = pllPartitionParse(partitionFile.c_str()); 
 
-  auto result = pllPartitionsValidate(queue, _pllAlignmentData); 
-  assert(result == 1); 
+  auto result = pllPartitionsValidate(queue, _pllAlignmentData);
+  
+  if (result != 1)
+    {
+      std::cout << "\n\nError: parsing file "  << partitionFile << " failed. \n\n"
+        "Please double-check, whether each site is assigned a partition. \n"
+        "Side note: the notation for choosing every n-th (e.g., triplet) \n"
+        "character has changed from '\\3' to '/3'.";
+      assert(0);
+    }
 
   _partitions = pllPartitionsCommit(queue, _pllAlignmentData);
   pllQueuePartitionsDestroy(&queue); 

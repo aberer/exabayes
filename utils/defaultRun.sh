@@ -12,7 +12,7 @@ withTree=0
 # extraArgs=" -S "
 extraArgs="    "  
 
-doParse=0
+doParse=1
 
 # early with 150 , VERIFIED 
 # seed=31853
