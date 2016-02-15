@@ -941,9 +941,7 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
       auto &&ss = stringstream{};
 
       ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies.run-" << i  << "." << _cl.getRunid();
-      
-      // TODO: test it with multiple branch lengths 
-        
+
       // if we do not find the file, let's assume we have multiple branch lengths 
       if (not std::ifstream(ss.str()) ) 
         ss << ".tree.0";
@@ -951,8 +949,6 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
       fns.push_back(ss.str());
     }
 
-  // std::cout << "computing asdsf for files " << fns << endl; 
-  
   auto&& asdsf = SplitFreqAssessor(fns, false);
   end = asdsf.getMinNumTrees() ; 
 
