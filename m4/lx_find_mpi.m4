@@ -123,34 +123,34 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
      # and link lines.  After this part of the macro, we'll have a valid
      # lx_mpi_command_line
      echo -n "Checking whether $$1 responds to '-showme:compile'... "
-     lx_mpi_compile_line=`$$1 -showme:compile 2>/dev/null`
+     lx_mpi_compile_line=$($$1 -showme:compile 2>/dev/null)
      if [[ "$?" -eq 0 ]]; then
          echo yes
-         lx_mpi_link_line=`$$1 -showme:link 2>/dev/null`
+         lx_mpi_link_line=$($$1 -showme:link 2>/dev/null)
      else
          echo no
          echo -n "Checking whether $$1 responds to '-showme'... "
-         lx_mpi_link_line=`$$1 -showme 2>/dev/null`
-         lx_mpi_compile_line=`$$1 -showme 2>/dev/null`
+         lx_mpi_link_line=$($$1 -showme 2>/dev/null)
+         lx_mpi_compile_line=$($$1 -showme 2>/dev/null)
          if [[ "$?" -ne 0 ]]; then
              echo no
              echo -n "Checking whether $$1 responds to '-compile-info'... "
-             lx_mpi_compile_line=`$$1 -compile-info 2>/dev/null`
+             lx_mpi_compile_line=$($$1 -compile-info 2>/dev/null)
              if [[ "$?" -eq 0 ]]; then
                  echo yes
-                 lx_mpi_link_line=`$$1 -link-info 2>/dev/null`
+                 lx_mpi_link_line=$($$1 -link-info 2>/dev/null)
              else
                  echo no
                  echo -n "Checking whether $$1 responds to '-show'... "
-                 lx_mpi_compile_line=`$$1 -show 2>/dev/null`
-                 lx_mpi_link_line=`$$1 -show 2>/dev/null`
+                 lx_mpi_compile_line=$($$1 -show 2>/dev/null)
+                 lx_mpi_link_line=$($$1 -show 2>/dev/null)
                  if [[ "$?" -eq 0 ]]; then
                      echo yes
                  else
                      echo no	
 		     echo -n "Checking whether $$1 is a Cray MPI wrapper and responds to '-craype-verbose'... "
-                     lx_mpi_compile_line=`$$1 -craype-verbose 2>/dev/null`
-                     lx_mpi_link_line=`$$1 -craype-verbose 2>/dev/null`
+                     lx_mpi_compile_line=$($$1 -craype-verbose 2>/dev/null)
+                     lx_mpi_link_line=$($$1 -craype-verbose 2>/dev/null)
  		     if [[ "$?" -eq 0 ]]; then 
 		     	echo yes 
  		     else 	 
@@ -193,18 +193,18 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
          echo -e "REMAINDER:\t"$lx_mpi_remain
 
          # Create variables and clean up newlines and multiple spaces
-         MPI_$3FLAGS=`echo $lx_mpi_defines $lx_mpi_includes ` #  $lx_mpi_remain
-         MPI_$3LDFLAGS=`echo $lx_mpi_intel_linker_flags  $lx_mpi_linker_flags  ` # $lx_mpi_remain
+         MPI_$3FLAGS=$(echo $lx_mpi_defines $lx_mpi_includes ) #  $lx_mpi_remain
+         MPI_$3LDFLAGS=$(echo $lx_mpi_intel_linker_flags  $lx_mpi_linker_flags  ) # $lx_mpi_remain
 
-         MPI_$3FLAGS=` echo "$MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
-         MPI_$3LDFLAGS=`echo "$MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
+         MPI_$3FLAGS=$( echo "$MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g')
+         MPI_$3LDFLAGS=$(echo "$MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g')
 
          OLD_LIBS=$LIBS
 	 OLD_$3FLAGS=$$3FLAGS
 
-         $3FLAGS=`echo $MPI_$3FLAGS `
+         $3FLAGS=$(echo $MPI_$3FLAGS )
 
-         LIBS=`echo $MPI_$3LDFLAGS `
+         LIBS=$(echo $MPI_$3LDFLAGS )
 
          AC_TRY_LINK([
 	 #include <mpi.h> 
