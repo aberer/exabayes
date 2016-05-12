@@ -130,7 +130,8 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
      else
          echo no
          echo -n "Checking whether $$1 responds to '-showme'... "
-         lx_mpi_command_line=`$$1 -showme 2>/dev/null`
+         lx_mpi_link_line=`$$1 -showme 2>/dev/null`
+         lx_mpi_compile_line=`$$1 -showme 2>/dev/null`
          if [[ "$?" -ne 0 ]]; then
              echo no
              echo -n "Checking whether $$1 responds to '-compile-info'... "
@@ -141,13 +142,15 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
              else
                  echo no
                  echo -n "Checking whether $$1 responds to '-show'... "
-                 lx_mpi_command_line=`$$1 -show 2>/dev/null`
+                 lx_mpi_compile_line=`$$1 -show 2>/dev/null`
+                 lx_mpi_link_line=`$$1 -show 2>/dev/null`
                  if [[ "$?" -eq 0 ]]; then
                      echo yes
                  else
                      echo no	
 		     echo -n "Checking whether $$1 is a Cray MPI wrapper and responds to '-craype-verbose'... "
-		     lx_mpi_command_line=`$$1 -craype-verbose 2>/dev/null`
+                     lx_mpi_compile_line=`$$1 -craype-verbose 2>/dev/null`
+                     lx_mpi_link_line=`$$1 -craype-verbose 2>/dev/null`
  		     if [[ "$?" -eq 0 ]]; then 
 		     	echo yes 
  		     else 	 
@@ -160,34 +163,38 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
          fi
      fi
 
-     if [[ ! -z "$lx_mpi_compile_line" -a ! -z "$lx_mpi_link_line" ]]; then
-         lx_mpi_command_line="$lx_mpi_compile_line $lx_mpi_link_line"
-     fi
-
-     if [[ ! -z "$lx_mpi_command_line" ]]; then
+     if [[ ! -z "$lx_mpi_compile_line"  -a ! -z "$lx_mpi_link_line" ]]; then
          # Now extract the different parts of the MPI command line.  Do these separately in case we need to
          # parse them all out in future versions of this macro.
 
-         lx_mpi_defines=`    echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-D\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_includes=`   echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-I\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_link_paths=` echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-L\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_libs=`       echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-l\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_link_args=`  echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-Wl,\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-	 lx_mpi_remain=`  echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-[[^DILlW]]\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
+         define_pattern='\(^\| \)-D\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'
+         include_pattern='\(^\| \)-I\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'
+         linker_pattern='\(^\| \)\(-\(L\|l\|Wl\)\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)\|-pthread\)'
+         intel_linker_pattern='\(^\| \)-Xlinker[[[:space:]]]\+\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'
 
-	 echo ""
-	 echo LINE:  $lx_mpi_command_line
-	 echo DEFINES: $lx_mpi_defines	
-	 echo INCLUDES: $lx_mpi_includes
-	 echo LINK_PATHS: $lx_link_paths
-	 echo LIBS: $lx_mpi_libs
-	 echo LINK_ARGS: $lx_mpi_link_args	
-	 echo REMAIN: $lx_mpi_remain
-	 echo "" 
+         lx_mpi_defines=$(              echo "$lx_mpi_compile_line" | grep -o -- "${define_pattern}" )
+         lx_mpi_includes=$(             echo "$lx_mpi_compile_line" | grep -o -- "${include_pattern}" )
+         lx_mpi_linker_flags=$(         echo "$lx_mpi_link_line" | grep -o -- "${linker_pattern}" )
+         lx_mpi_intel_linker_flags=$(   echo "$lx_mpi_link_line" | grep -o -- "${intel_linker_pattern}" )
+         lx_mpi_remain=$( \
+                          echo "$lx_mpi_link_line $lx_mpi_compile_line" | sed -e "s/${define_pattern}//g" \
+                                                                              -e "s/${include_pattern}//g" \
+                                                                              -e "s/${linker_pattern}//g" \
+                                                                              -e "s/${intel_linker_pattern}//g"  )
+
+         echo ""
+         echo -e "COMPILE_LINE:\t"$lx_mpi_compile_line
+         echo -e "LINK_LINE:\t"$lx_mpi_link_line
+         echo ""
+         echo -e "DEFINES:\t"$lx_mpi_defines
+         echo -e "INCLUDES:\t"$lx_mpi_includes
+         echo -e "LINKER_FLAGS:\t"$lx_mpi_linker_flags
+         echo -e "I_LINKER_FLAGS:\t"$lx_mpi_intel_linker_flags
+         echo -e "REMAINDER:\t"$lx_mpi_remain
 
          # Create variables and clean up newlines and multiple spaces
-         MPI_$3FLAGS=`echo $lx_mpi_defines $lx_mpi_includes $lx_mpi_remain `  #  
-         MPI_$3LDFLAGS=`echo $lx_mpi_remain $lx_mpi_link_paths $lx_mpi_libs $lx_mpi_link_args `  
+         MPI_$3FLAGS=`echo $lx_mpi_defines $lx_mpi_includes ` #  $lx_mpi_remain
+         MPI_$3LDFLAGS=`echo $lx_mpi_intel_linker_flags  $lx_mpi_linker_flags  ` # $lx_mpi_remain
 
          MPI_$3FLAGS=` echo "$MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
          MPI_$3LDFLAGS=`echo "$MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
@@ -212,7 +219,8 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
                       MPI_$3LDFLAGS=""
                       have_$3_mpi='no'])
 
-	 echo "" 
+         echo ""
+         echo "RESULT:"
 	 echo MPI_CXXFLAGS=$MPI_CXXFLAGS
 	 echo MPI_CXXLDFLAGS=$MPI_CXXLDFLAGS
 	 echo ""
