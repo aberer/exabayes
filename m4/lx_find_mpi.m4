@@ -202,7 +202,8 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
          OLD_LIBS=$LIBS
 	 OLD_$3FLAGS=$$3FLAGS
 
-	 $3FLAGS=`echo $MPI_$3FLAGS  $SIMD_FLAGS `
+         $3FLAGS=`echo $MPI_$3FLAGS `
+
          LIBS=`echo $MPI_$3LDFLAGS `
 
          AC_TRY_LINK([
