@@ -9,8 +9,9 @@
 #include "TreeProcessor.hpp"
 #include "BranchLengthsParameter.hpp"
 
+using namespace std;
 
-TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck)  
+TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck)
   : _tralnPtr{nullptr}
   , _fns{}
   , _taxa(fillTaxaInfo(fileNames.at(0)))

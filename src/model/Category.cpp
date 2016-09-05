@@ -16,8 +16,7 @@
 #include "DivergenceRates.hpp"
 
 
-
-
+using namespace std;
 
 namespace CategoryFuns
 {

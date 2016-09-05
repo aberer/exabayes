@@ -4,6 +4,7 @@
 #include "RemoteCommImpl.hpp"
 #include "CommRequest.hpp"
 
+using namespace std;
 
 RemoteComm::RemoteComm()
   : _impl{make_unique<RemoteComm::Impl>()}

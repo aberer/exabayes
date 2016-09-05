@@ -33,6 +33,9 @@ dnl TODO: could we remove this one?
 AC_C_LONG_LONG
 
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
+
+AX_CXX_COMPILE_STDCXX(14, [noext], [optional])
+
 AC_PROG_CC_STDC
 AC_PROG_CC_C99
 AC_PROG_RANLIB

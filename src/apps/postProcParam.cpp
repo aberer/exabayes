@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
+#include <tuple>
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
