@@ -6,11 +6,6 @@
 #ifndef _TREEALN_H
 #define _TREEALN_H
 
-#include <vector>
-#include <iostream>
-#include <array>
-#include <memory>
-
 #include "extensions.hpp"
 #include "ArrayReservoir.hpp"
 #include "GlobalVariables.hpp"
@@ -22,7 +17,11 @@
 #include "BranchLengthResource.hpp"
 #include "Partition.hpp"
 
-class BranchPlain; 
+#include <vector>
+#include <iostream>
+#include <array>
+#include <memory>
+
 class BranchLength; 
 class BranchLengths; 
 class AbstractPrior; 

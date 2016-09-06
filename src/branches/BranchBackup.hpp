@@ -1,7 +1,13 @@
 #ifndef BRANCH_BACKUP_HPP
 #define  BRANCH_BACKUP_HPP
 
-#include "TreeAln.hpp"
+#include "BranchPlain.hpp"
+#include "BranchLength.hpp"
+
+#include <vector>
+
+class AbstractParameter;
+class TreeAln;
 
 class BranchBackup 
 {

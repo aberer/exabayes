@@ -3,9 +3,11 @@
 #include "BranchPlain.hpp"
 #include "BranchLength.hpp"
 
-#include <algorithm> 
+#include "TreeAln.hpp"
 
-using std::get; 
+#include <algorithm>
+
+using std::get;
 
 
 
