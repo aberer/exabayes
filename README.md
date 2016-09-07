@@ -14,8 +14,7 @@ It contains the following branches:
 * _master:_ a commit on the master branch (always tagged) is a specific version of ExaBayes
 * _feature branches_: intended for development only 
 
-
-## Documentation 
+## Documentation
 
 Please find a detailed manual in manual/manual.pdf or
 manual/manual.html.
@@ -24,6 +23,26 @@ An online version of the manual is available on the ExaBayes site on
 the [Exelixis website][1].
 
 Possibly, blog posts may appear on my [personal webpage][2].
+
+
+## Installation
+
+Preferably download, compile and install a released version (available
+on the [Exelixis website][1]).
+
+The slightly harder to way to install latest development version is to
+run `bootstrap.sh` (you need to have installed autoconf and an
+up-to-date version of autoconf-archive).
+
+## Identifiability
+
+All released versions correspond to a git-tag and thus allow you to
+trace which code exactly was used when performing an analysis.
+
+If you build from the devel-branch, ExaBayes specifies a `pre-X`
+version in the header of the log (where X is the succeeding
+version). Furthermore, ExaBayes prints the git commit id and git
+commit date.
 
 ## Support
 
