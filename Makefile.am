@@ -6,7 +6,7 @@ EXTRA_DIST=./lib/Random123-1.08 ./examples/* ./manual/manual.pdf ./manual/css/or
 noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a libpll.a libpll_model.a 
 bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractBips consense 
 
-.PHONY: my-update-src doc mydist  man  dist
+.PHONY: my-update-src doc mydist man date dist
 
 
 ################################################################
@@ -60,7 +60,7 @@ AM_CXXFLAGS+=$(VECTOR_FLAGS)
 
 folders=$(shell find $(top_srcdir)/src -type d | grep -v '.deps' | grep -v comm | grep -v apps)
 
-SRCINCLUDE=$(shell echo $(folders) | tr ' ' '\n' |  sed "s/\(.*\)/-I\1/" | tr '\n' ' ')  
+SRCINCLUDE=$(shell echo $(folders) | tr ' ' '\n' |  sed "s/\(.*\)/-I\1/" | tr '\n' ' ')
 SRCINCLUDE+= -I$(top_srcdir)/src/comm/ -I$(top_srcdir)/src/comm/threads
 
 RAND123_INCLUDES=-isystem $(top_srcdir)/lib/Random123-1.08/include/Random123 -isystem $(top_srcdir)/lib/Random123-1.08/include -isystem $(top_srcdir)/lib/Random123-1.08/examples
@@ -82,7 +82,7 @@ dummyFolds= ./src/comm/dummy $(commFolds)
 
 my-update-src:
 	@echo -n "" > src.am 
-	@echo "libbayes_a_SOURCES=" $(shell echo "$(top_srcdir)/src/common.h $(top_srcdir)/src/pll.h")   $(shell find $(folders)  -maxdepth 1   -name "*.[cht]pp" ) >> src.am
+	@echo "libbayes_a_SOURCES=" $(shell echo "$(top_srcdir)/src/common.h $(top_srcdir)/src/pll.h")    $(shell find $(folders)  -maxdepth 1   -name "*.[cht]pp" ) >> src.am
 	@echo "libcommdummy_a_SOURCES=" $(shell find ${dummyFolds} -maxdepth 1 -name "*.[cht]pp" ) >> src.am
 	@echo "libcommmpi_a_SOURCES=" $(shell find ${mpiFolds}  -maxdepth 1 -name "*.[cht]pp" ) >> src.am
 	@echo "libncl_a_SOURCES=" $(shell find $(top_srcdir)/lib/ncl-2.1.18/ncl -name "*.[cht]") $(shell find $(top_srcdir)/lib/ncl-2.1.18/ncl -name "*.[cht]pp") >> src.am	
@@ -94,6 +94,7 @@ include src.am
 
 libcommdummy_a_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)  
 
+
 ################################################################
 # lib comm mpi 
 if WITH_MPI 
@@ -101,6 +102,7 @@ bin_PROGRAMS+=exabayes
 noinst_LIBRARIES+=libcommmpi.a
 libcommmpi_a_CXXFLAGS=$(AM_CXXFLAGS) -O3  $(MPI_CXXFLAGS) $(BAYES_INCLUDES_PARA)    
 endif 
+
 
 ################################################################
 #  libbayes 
@@ -128,56 +130,54 @@ libpll_a_SOURCES+=./lib/pll/mic_native_aa.c ./lib/pll/mic_native_dna.c ./lib/pll
 endif
 
 
-
-
 ################################################################
-# exabayes 
-exabayes_LDADD= $(paralibs) $(MPI_CXXLDFLAGS)
+# exabayes
 exabayes_SOURCES = ./src/apps/exabayes.cpp
-exabayes_CXXFLAGS=   $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)  
+exabayes_CXXFLAGS=   $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)
 exabayes_LDFLAGS=$(MPI_CXXLDFLAGS)
+exabayes_LDADD= $(paralibs) $(MPI_CXXLDFLAGS)
 
 ################################################################
 # yggdrasil 
-yggdrasil_LDADD=$(seqlibs)
 yggdrasil_SOURCES = ./src/apps/exabayes.cpp
 yggdrasil_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)  -D_IS_YGG
+yggdrasil_LDADD=$(seqlibs)
 
 ################################################################
-# SDSF 
+# SDSF
+sdsf_SOURCES= ./src/apps/sdsf.cpp
 sdsf_CXXFLAGS= $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)    
 sdsf_LDADD= $(seqlibs)
-sdsf_SOURCES= ./src/apps/sdsf.cpp 
 
 ################################################################
 # the parser 
 parser_exabayes_SOURCES=./src/apps/parser.cpp
+parser_exabayes_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES)   -Wno-deprecated-writable-strings
 parser_exabayes_LDADD=$(seqlibs)
-parser_exabayes_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES)   -Wno-deprecated-writable-strings    
 
 ################################################################
-# extractBips 
-extractBips_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)    
+# extractBips
+extractBips_SOURCES=./src/apps/extractBips.cpp
+extractBips_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)
 extractBips_LDADD=$(seqlibs)
-extractBips_SOURCES=./src/apps/extractBips.cpp  
 
 ################################################################
-# consense 
+# consense
+consense_SOURCES=./src/apps/consense.cpp
 consense_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)  
 consense_LDADD=$(seqlibs)
-consense_SOURCES=./src/apps/consense.cpp
 
 ################################################################
-# credibleSet 
+# credibleSet
+credibleSet_SOURCES=./src/apps/credibleSet.cpp
 credibleSet_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)   
 credibleSet_LDADD= $(seqlibs)
-credibleSet_SOURCES=./src/apps/credibleSet.cpp
 
 ################################################################
-# postProcParam 
+# postProcParam
+postProcParam_SOURCES=./src/apps/postProcParam.cpp
 postProcParam_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)   
 postProcParam_LDADD=$(seqlibs)
-postProcParam_SOURCES=./src/apps/postProcParam.cpp
 
 ################################################################
 # ncl 
@@ -209,14 +209,14 @@ test : exatest
 
 ################################################################
 
-doc : 
+doc:
 	doxygen 
 
-man:  
+man:
 	./manual/process.sh ./manual
 
-date :
+date:
 	./utils/updateDate.sh
 
-dist-hook: 
+dist-hook:
 	make date
