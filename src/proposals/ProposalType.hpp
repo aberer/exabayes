@@ -33,8 +33,7 @@ enum class ProposalType
     SLIDING_REVMAT_PER_RATE,
     BL_DIST_WEIBULL,
     DIV_TIME_DIRICH, 
-    BIASED_BL_MULT , 
-    DIVRATE_SLIDER, 
+    DIVRATE_SLIDER,
     DIVTIME_SLIDER
 }; 
 

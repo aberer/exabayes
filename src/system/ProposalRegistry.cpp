@@ -18,8 +18,6 @@
 #include "DistributionBranchLength.hpp"
 #include "GenericTopoProposal.hpp"
 
-#include "BiasedBranchMult.hpp"
-
 #include "BranchLengthMultiplier.hpp"
 #include "AminoModelJump.hpp"
 #include "NodeSlider.hpp"
@@ -215,10 +213,7 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	case ProposalType::DIV_TIME_DIRICH:
 	  proposal = make_unique<DivTimeProposal>(DivTimeProposal::defaultWeight / numNodeAges ); 
 	  break; 
-	case ProposalType::BIASED_BL_MULT: 
-	  proposal = make_unique<BiasedBranchMult>(initBranchLengthMultiplier);
-	  break; 
-	default : 
+        default :
 	  {
 	    cerr << "you did not implement case " << int(p) << " in ProposalRegistry.cpp" << endl; 
 	    assert(0); 

@@ -6,7 +6,7 @@
 
 
 BranchLengthMultiplier::BranchLengthMultiplier(  double multiplier)
-  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., 0.0001,  100, false)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 7., 0.0001,  100, false)
   , _multiplier(multiplier)
   , _savedBranch{}
 {
