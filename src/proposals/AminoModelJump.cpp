@@ -6,35 +6,46 @@
 
 AminoModelJump::AminoModelJump()
   : AbstractProposal( Category::AA_MODEL, "aaMat", 1., 0,0, true)
-  , savedMod{}
-  , _oldFcs{}
+  , _savedMod{}
 {
 }
 
+ProtModel AminoModelJump::drawProposal(Randomness &rand) const
+{
+    auto primVar = getPrimaryParameterView();
+    auto newModel = _savedMod;
+    while(newModel == _savedMod)
+    {
+        auto content = primVar[0]->getPrior()->drawFromPrior(rand );
+        newModel = content.protModel[0];
+    }
+
+    return newModel;
+}
 
 void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator &eval)
 {
   // save the old fracchanges
   auto blParams = getBranchLengthsParameterView();
-  _oldFcs.clear(); 
-  for(auto &blParam : blParams)
-    _oldFcs.push_back(blParam->getMeanSubstitutionRate()); 
 
   auto primVar = getPrimaryParameterView();
 
   assert(primVar.size() == 1); 
   auto partitions = primVar[0]->getPartitions();
 
-  savedMod = traln.getProteinModel(partitions[0]);
+  std::vector<double> oldFCs;
+  oldFCs.reserve(partitions.size());
 
-  auto newModel = savedMod; 
-  while(  newModel == savedMod )
-    {
-      auto content = primVar[0]->getPrior()->drawFromPrior(rand ); 
-      newModel = content.protModel[0];
-    }
+  for(auto &blParam : blParams)
+    oldFCs.push_back(blParam->getMeanSubstitutionRate());
 
-  auto newFcs = std::vector<double>{}; 
+  _savedMod = traln.getProteinModel(partitions[0]);
+
+  auto newModel = drawProposal(rand);
+
+  std::vector<double> newFCs;
+  newFCs.reserve(partitions.size());
+
   for(auto p : partitions)
     traln.setProteinModel(p, newModel);
 
@@ -43,12 +54,13 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double
     blParam->updateMeanSubstRate(traln);
 
   for(auto blParam : blParams)
-    newFcs.push_back(blParam->getMeanSubstitutionRate());
+    newFCs.push_back(blParam->getMeanSubstitutionRate());
 
-  auto ctr = 0u; 
+  // account for implicit BL multiplier in prior
+  auto ctr = 0u;
   for(auto param: blParams)
     {
-      prior.addToRatio( param->getPrior()->accountForMeanSubstChange(traln,param,_oldFcs.at(ctr), newFcs.at(ctr))); 
+      prior.addToRatio(param->getPrior()->accountForMeanSubstChange(traln,param, oldFCs.at(ctr), newFCs.at(ctr)));
       ++ctr; 
     }
 }
@@ -63,13 +75,12 @@ void AminoModelJump::evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &tr
 void AminoModelJump::resetState(TreeAln &traln)
 {  
   auto primVar = getPrimaryParameterView();
-  assert(primVar.size() == 1 ); 
+  assert(primVar.size() == 1);
   auto partitions = primVar[0]->getPartitions();
   for(auto p: partitions )
-    traln.setProteinModel(p,savedMod);
+    traln.setProteinModel(p, _savedMod);
 
-
-  // necessary, if we have fixed branch lengths  
+  // necessary, if we have fixed branch lengths
   for(auto &param : getBranchLengthsParameterView() )
     {
       if( not param->getPrior()->needsIntegration() )
@@ -86,7 +97,7 @@ void AminoModelJump::resetState(TreeAln &traln)
 	}
       else 
 	{
-	  // TODO inefficient =/ but cannot use the _oldFcs. That
+          // TODO inefficient =/ but cannot use the oldFCs. That
 	  // would cause trouble in proposal sets
 	  param->updateMeanSubstRate(traln);
 	}

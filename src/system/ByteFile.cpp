@@ -3,14 +3,13 @@
 #include "Bipartition.hpp"
 #include "PartitionAssignment.hpp"
 
-#include <cassert>
-#include <cstring>
-
 #include "BandWidthTest.hpp"
 
 #include "ParallelSetup.hpp"
 
-#define OLD_ALN_LAYOUT
+#include <iostream>
+#include <cassert>
+#include <cstring>
 
 #define DIRECT_READ
 

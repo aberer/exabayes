@@ -71,7 +71,7 @@ void ParameterProposal::applyToState(TreeAln &traln, PriorBelief &prior, log_dou
   
   if(modifiesBL)
     {
-      // update the frac changes 
+      // update the frac changes
       for(auto &param : blParams)
 	param->updateMeanSubstRate(traln);
       
