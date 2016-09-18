@@ -22,6 +22,9 @@ public:
 
   double getFirstDerivative( const AbstractParameter& param) const {assert(0); return 0; }
 
+  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const
+    { assert(0); return log_double();}
+
 private: 
   std::vector<double> _fixedValues; 
 }; 

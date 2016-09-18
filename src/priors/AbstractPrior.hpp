@@ -41,11 +41,12 @@ public:
   virtual double getFirstDerivative( const AbstractParameter& param) const = 0; 
   
   // only for internal branch lengths; this is very ugly, however we need this for maintaining numerical stability with > 300 partitions
-  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const  {assert(0)  ; return log_double(); }
+  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const = 0;
 
   friend std::ostream& operator<<(std::ostream &out,  AbstractPrior* rhs)
   {
-    rhs->print(out); 
+
+    rhs->print(out);
     return out; 
   }
   

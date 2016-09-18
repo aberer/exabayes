@@ -26,6 +26,9 @@ public:
   virtual AbstractPrior* clone() const { return new  DirichletPrior(*this) ; }
 
   double getFirstDerivative( const AbstractParameter& param) const {assert(0); return 0; } // doesnt have that
+
+  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const
+    { assert(0); return log_double();}
   
 private: 
   std::vector<double> alphas; 
