@@ -63,6 +63,13 @@ void AminoModelJump::applyToState(TreeAln &traln, PriorBelief &prior, log_double
       prior.addToRatio(param->getPrior()->accountForMeanSubstChange(traln,param, oldFCs.at(ctr), newFCs.at(ctr)));
       ++ctr; 
     }
+
+  // account for implicit BL multiplier in Hastings
+  for(nat i = 0; i < blParams.size(); ++i)
+  {
+      auto value = traln.getNumberOfBranches() * log(newFCs.at(i) / oldFCs.at(i))   ;
+      hastings *= log_double::fromLog(value);
+  }
 }
 
 
