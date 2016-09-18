@@ -60,11 +60,11 @@ typedef unsigned int nat;
 
 /* verification */
 /* #define DEBUG_LNL_VERIFY */
-/* #define DEBUG_VERIFY_LNPR */
+#define DEBUG_VERIFY_LNPR
 
 /* many print statements  */
 
-/* #define DEBUG_SHOW_EACH_PROPOSAL */
+#define DEBUG_SHOW_EACH_PROPOSAL
 /* #define PRINT_LIKESPR_INFO */
 /* #define LNL_PRINT_DEBUG */
 

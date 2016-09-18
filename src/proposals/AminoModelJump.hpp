@@ -6,31 +6,62 @@
 
 #include <vector>
 
+///////////////////////////////////////////////////////////////////////////////
+//                             AMINO MODEL JUMP                              //
+///////////////////////////////////////////////////////////////////////////////
 class AminoModelJump : public AbstractProposal
 {
-public: 
-  AminoModelJump( ); 
-
-  virtual BranchPlain determinePrimeBranch(const TreeAln& traln, Randomness &rand) const  { return BranchPlain(0,0); } 
-
-  virtual void readFromCheckpointCore(std::istream &in) {   } // disabled
-  virtual void writeToCheckpointCore(std::ostream &out) const  { } //disabled
-
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand , LikelihoodEvaluator& eval) ; 
-  virtual void evaluateProposal(LikelihoodEvaluator &evaluator,TreeAln &traln, const BranchPlain &branchSuggestion) ; 
-  virtual void resetState(TreeAln &traln); 
-  virtual void autotune();
-  virtual AbstractProposal* clone() const ;  
-  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
-
-  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair(BranchPlain(0,0),BranchPlain(0,0)); }
-
+public:
+    // _________________________________________________________________________
+    AminoModelJump();
+    // _________________________________________________________________________
+    virtual BranchPlain                               determinePrimeBranch(
+        const TreeAln& traln,
+        Randomness&    rand) const {return BranchPlain(0, 0); }
+    // _________________________________________________________________________
+    virtual void                                      readFromCheckpointCore(
+        std::istream&in){}                                    // disabled
+    // _________________________________________________________________________
+    virtual void                                      writeToCheckpointCore(
+        std::ostream&out) const {}                                 // disabled
+    // _________________________________________________________________________
+    virtual void                                      applyToState(
+        TreeAln&             traln,
+        PriorBelief&         prior,
+        log_double&          hastings,
+        Randomness&          rand,
+        LikelihoodEvaluator& eval);
+    // _________________________________________________________________________
+    virtual void                                      evaluateProposal(
+        LikelihoodEvaluator&evaluator,
+        TreeAln&            traln,
+        const BranchPlain&  branchSuggestion);
+    // _________________________________________________________________________
+    virtual void                                      resetState(
+        TreeAln&traln);
+    // _________________________________________________________________________
+    virtual void                                      autotune();
+    // _________________________________________________________________________
+    virtual AbstractProposal*                         clone()
+    const;
+    // _________________________________________________________________________
+    virtual std::vector<nat>                          getInvalidatedNodes(
+        const TreeAln& traln) const;
+    // _________________________________________________________________________
+    virtual std::pair<BranchPlain,
+                      BranchPlain>                    prepareForSetExecution(
+        TreeAln&   traln,
+        Randomness&rand)
+    {
+        return std::make_pair(BranchPlain(0, 0), BranchPlain(0, 0));
+    }
 private:
-  ProtModel drawProposal(Randomness &rand) const ;
-
-
-private: 
-  ProtModel _savedMod;
+    // _________________________________________________________________________
+    ProtModel                                         drawProposal(
+        Randomness&rand) const;
+private:
+    ProtModel _savedMod;
 };
+
 
 #endif
