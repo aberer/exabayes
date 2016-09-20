@@ -1,11 +1,6 @@
 #pragma GCC diagnostic ignored "-Werror"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
-#include <sstream>
-#include <cassert>
-#include <cstring>
-#include <unordered_set>
-
 #include "ByteFile.hpp"
 
 #include "BranchLength.hpp"
@@ -21,6 +16,12 @@
 #include "BoundsChecker.hpp"
 #include "TreePrinter.hpp"
 #include "Partition.hpp"
+
+#include <sstream>
+#include <cassert>
+#include <cstring>
+#include <unordered_set>
+#include <numeric>
 
 // #define PRINT_LIKESPR_INFO
 

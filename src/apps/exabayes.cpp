@@ -128,9 +128,9 @@ static void printInfoHeader(CommandLine& cl)
   ss << "\nPhylogenetic Likelihood Library (version "
      << PLL_LIB_VERSION << ", " << PLL_LIB_DATE << ")." ; 
 
-  ss <<  "\n\nThis software is a pre-release (date: " << RELEASE_DATE <<
-    ", commit:" << GIT_COMMIT_ID << ")"
-    "\nreleased by \n\n\tAndre J. Aberer, Kassian Kobert and Alexandros "
+  ss <<  "\n\nThis software has been released on " << RELEASE_DATE <<
+    "\n(git commit id:" << GIT_COMMIT_ID << ")"
+    "\n\n\tby Andre J. Aberer, Kassian Kobert and Alexandros "
     "Stamatakis\n" 
        << "\nPlease send any bug reports, feature requests and inquiries to "
      << PACKAGE_BUGREPORT << "\n\n"; 
