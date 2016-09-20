@@ -918,7 +918,16 @@ void TreeAln::setProteinModel(int part, ProtModel model)
 {
   auto& partition = getPartition(part) ; 
   partition.setProtModel(int(model)); 
-  initRevMat(part); 
+  initRevMat(part);
+
+  const auto& freqs =  partition.getFrequencies();
+
+  auto sum = std::accumulate(freqs.begin(), freqs.end(), 0.,
+                                [](double a, double b){
+                                    return a + b;
+                             });
+
+  assert(std::abs(1.0 - sum)  < ACCEPTED_LNPR_EPS);
 }
 
 
