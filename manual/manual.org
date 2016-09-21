@@ -1,8 +1,8 @@
 #+TITLE: ExaBayes User's Manual
 
-#+LaTeX_CLASS: koma-article
-#+LaTeX_CLASS_OPTIONS: [a4paper, 12pt, titlepage]
-#+LATEX_HEADER: \titlehead{\centering\includegraphics[width=\linewidth]{./img/banner2.png}}
+#+LaTeX_CLASS: article
+#+LaTeX_CLASS_OPTIONS: [KOMA, a4paper, 12pt, titlepage]
+
 #+OPTIONS: ^:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css" />
 #+OPTIONS: toc:2  
@@ -12,7 +12,7 @@
 #+AUTHOR: for support, please contact exabayes-at-googlegroups-dot-com
 
 #+BEGIN_LATEX
-\newpage  
+\newpage
 #+END_LATEX
 
 #+HTML: <img src="./img/banner2.png" width="100%" alt="some_text">
@@ -39,7 +39,7 @@
      ExaBayes, where alignmentFile.phy is the alignment file (use -m
      PROT for protein data) and ~$RANDOM~ could be any random number
      seed.
-     #+BEGIN_SRC
+     #+BEGIN_SRC bash
      $ ./bin/bin/yggdrasil -f alignmentFile.phy -m DNA -s $RANDOM 
      #+END_SRC
   4. After some time, ExaBayes should finish or you may abort at any
@@ -139,7 +139,7 @@
    of your local multi-core machine (e.g., laptop), simply install
    OpenMPI or Mpich2. On Debian/Ubuntu, this should be as simple as
    (choose one):
-#+BEGIN_SRC
+#+BEGIN_SRC bash
    $ sudo apt-get install mpich2 libmpich2-dev
    $ sudo apt-get install openmpi-bin libopenmpi-dev
 #+END_SRC
@@ -161,7 +161,7 @@
    the AppStore) and [[http://www.macports.org/][MacPorts]]. You only need MacPorts, if you want to
    build the parallel version. Open a terminal and use MacPorts to
    install an MPI implementation (either openmpi or mpich2):
-#+BEGIN_SRC
+#+BEGIN_SRC bash
    $ sudo port install openmpi-default
    $ sudo port install mpich-default
 #+END_SRC
@@ -181,7 +181,7 @@
     AVX) is determined automatically. The basic command for building
     exabayes (with MPI support) is
 
-#+BEGIN_SRC
+#+BEGIN_SRC bash
   ./configure --enable-mpi && make
 #+END_SRC
 
@@ -191,7 +191,7 @@
   directory in conjunction with "make install" to dump all executables
   into a folder /full/path/to/this/dir/bin
    
-#+BEGIN_SRC
+#+BEGIN_SRC bash
     ./configure --bindir=/full/path/to/this/dir && make install
 #+END_SRC
     
@@ -200,14 +200,14 @@
 
 + for the build on Mac systems, it *may* be necessary to add
     CXXFLAGS="-stdlib=libc++" at the configure step:
-#+BEGIN_SRC
+#+BEGIN_SRC bash
     ./configure CXXFLAGS="-stdlib=libc++" && make
 #+END_SRC
 
 + use the ./configure environment variables (see ./configure --help)
   to specify non-default compilers, for instance
   
-#+BEGIN_SRC 
+#+BEGIN_SRC bash
   ./configure --enable-mpi CC=clang-3.3 CXX=clang++-3.3 MPICXX=mpicxx.openmpi
 #+END_SRC
 
@@ -216,7 +216,7 @@
   and MPICH.
 
   Once everything has compiled, check, if all binaries are there as expected: 
-#+BEGIN_SRC
+#+BEGIN_SRC bash
    $ ls bin
         consense	credibleSet	exabayes	extractBips	parser		postProcParam	sdsf		yggdrasil
 #+END_SRC
@@ -254,7 +254,7 @@
 ** Basic Workflow
 
     Let's at first simply run a single chain for some time: 
-    #+BEGIN_SRC
+    #+BEGIN_SRC bash
     $ ./yggdrasil -f aln.phy -m DNA -n myRun -s $RANDOM  
     #+END_SRC
 
@@ -290,7 +290,7 @@
 
     Now use the post-processing tools to examine the result. First, we
     create a consensus tree:
-    #+BEGIN_SRC
+    #+BEGIN_SRC bash
     $ ./consense -f ExaBayes_topologies.myRun.0 -n myCons 
     #+END_SRC
     
@@ -300,7 +300,7 @@
     most branches is pretty low.
 
     Let's inspect the $50\%$ credible set of trees: 
-    #+BEGIN_SRC
+    #+BEGIN_SRC bash
     $ ./credibleSet -f ExaBayes_topologies.myRun.0 -n cred  
     #+END_SRC
     
@@ -309,7 +309,7 @@
     will find that no tree occurred more than once.
 
     Finally, let's check, how well the parameters are sampled: 
-    #+BEGIN_SRC
+    #+BEGIN_SRC bash
     $ ./postProcParam   -f ExaBayes_parameters.myRun.0  -n params
     #+END_SRC
 
@@ -354,7 +354,7 @@
    ~params~ section.
 
    Use this command line to start the analysis:   
-   #+BEGIN_SRC
+   #+BEGIN_SRC bash
     $ ./yggdrasil -f aln.phy -q aln.part  -n myRun -s $RANDOM -c config.nex
    #+END_SRC
    
@@ -368,7 +368,7 @@
    version:
    
    #+LATEX: \begin{small}
-   #+BEGIN_SRC
+   #+BEGIN_SRC bash
     $ mpirun -np 16  ./exabayes -f aln.phy -q aln.part  -n myRun -s $RANDOM -c config.nex -R 4 
    #+END_SRC
    #+LATEX: \end{small}
@@ -392,7 +392,7 @@
    the coupled chains in parallel:
    
    #+LATEX: \begin{footnotesize}
-   #+BEGIN_SRC
+   #+BEGIN_SRC bash
     $ mpirun -np 16 ./exabayes -f aln.phy -q aln.part -n myRun -s $RANDOM -c config.nex -R 2 -C 2
    #+END_SRC
    #+LATEX: \end{footnotesize}
@@ -408,13 +408,13 @@
    topologies). You can feed both files into the consensus tree (for
    both files the initial $25\%$ of samples will be discarded).
 
-#+BEGIN_SRC
+#+BEGIN_SRC bash
    $ ./consense -f ExaBayes_topologies.myRun.* -n myCons 
 #+END_SRC
 
    Analyze both parameter files using
    
-#+BEGIN_SRC
+#+BEGIN_SRC bash
    $ ./postProcParam -f ExaBayes_parameters.myRun.* -n params
 #+END_SRC
 
@@ -433,7 +433,7 @@
    with branch lengths. To extract ESS and PSRF values for each branch
    length, run: 
 
-#+BEGIN_SRC
+#+BEGIN_SRC bash
    $ ./extractBips -f ExaBayes_topologies.myRun.* -n bls 
 #+END_SRC
 
@@ -508,7 +508,7 @@
 
      Example:
      #+LATEX: \begin{footnotesize}
-     #+BEGIN_SRC 
+     #+BEGIN_SRC bash
      $ mpirun -np 8 ./exabayes -s $RANDOM -n myId -c myConfig -f myBinaryAlnFile.bin 
      $ [runnig....] -> aborted!
      $ mpirun -np 2  ./exabayes -r myId -n myIdContinued -c myConfig -f myBinaryAlnFile.bin -S 
@@ -577,7 +577,7 @@
   default values mentioned below are used instead. The nexus-syntax
   for declaring a block is (here declaring a ~run~ block).
 
-   #+BEGIN_SRC
+   #+BEGIN_SRC TEXT
  begin run; 
     option value
  end; 
@@ -671,7 +671,7 @@
    parameter-specific priors. For doing so, list all at least one
    partition that is assigned to your target parameter in curly
    brackets after the prior keyword. For instance:
-   #+BEGIN_SRC
+   #+BEGIN_SRC TEXT
    brlenPr exponential(10)
    brlenPr{0,2,10} uniform(1e-6,10)
    #+END_SRC
@@ -1114,7 +1114,7 @@
    downloaded binaries, try to execute ExaBayes using ~n~ processes
    and using either ~mpirun~ or ~mpiexec~ as follows:
 
-   #+BEGIN_SRC
+   #+BEGIN_SRC bash
    $ mpirun -np n ./exabayes <further args>
    #+END_SRC
    
@@ -1393,11 +1393,11 @@
 
   The example file below demonstrates the syntax of this file format: 
 
-  #+BEGIN_SRC
+  #+BEGIN_SRC TEXT
 DNA, gene1=1-300
-DNA, gene2-codonPos1=301-500\3
-DNA, gene2-codonPos2=302-500\3
-DNA, gene2-codonPos3=303-500\3
+DNA, gene2-codonPos1=301-500/3
+DNA, gene2-codonPos2=302-500/3
+DNA, gene2-codonPos3=303-500/3
 PROT, protId=501-800
 DNA, composit=801-1000,1101-1200
 DNA, gene3=1000-1100

@@ -2,7 +2,7 @@
 # GENENRAL 
 
 AUTOMAKE_OPTIONS= foreign subdir-objects
-EXTRA_DIST=./src/releaseDate.hpp ./lib/Random123-1.08 ./examples/* ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.md ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c  ./manual/library2.html
+EXTRA_DIST= ./CHANGELOG ./src/releaseDate.hpp ./lib/Random123-1.08 ./examples/* ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.md ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c  ./manual/library2.html
 noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a libpll.a libpll_model.a 
 bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractBips consense 
 

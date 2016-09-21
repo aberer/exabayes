@@ -6,18 +6,19 @@ if [ "$res" != "yes" ]; then
     exit
 fi
 
-path=/home/aberer/proj/exa-bayes
+path=$(dirname $0)
+
 if [ "$(pwd)" != "$path"  ]; then
     echo "can only be executed from $path"
     exit
 fi
 
 # update packages, if wanted 
-read -p "update package? if yes, specify version: " version 
-if [ "$version" != "" ]; then
-    rsync --no-p --no-g --chmod=Du=rwx,Dgo=rx --progress  -av packages/* dellsco:/scratch/sco/exelixis-new/material/exabayes/$version
-    ssh dellsco chmod -R  o+rx /scratch/sco/exelixis-new/material/exabayes/$version
-fi
+# read -p "update package? if yes, specify version: " version
+# if [ "$version" != "" ]; then
+#     rsync --no-p --no-g --chmod=Du=rwx,Dgo=rx --progress  -av packages/* dellsco:/scratch/sco/exelixis-new/material/exabayes/$version
+#     ssh dellsco chmod -R  o+rx /scratch/sco/exelixis-new/material/exabayes/$version
+# fi
 
 # compose webpages 
 cd webpage 
@@ -31,4 +32,4 @@ cd /home/aberer/proj/exelixis-web
 git pull 
 cd $path
 
-rsync -C -L  -av webpage/ /home/aberer/proj/exelixis-web/web/software/exabayes/
+rsync -C -L  -av webpage/ ~/proj/exelixis-web/web/software/exabayes/
