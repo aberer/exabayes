@@ -146,11 +146,11 @@ begin proposals;
   [ likeSpr      2 ]		[ new posterior guided SPR ]
 
   [ BRANCH LENGTHS proposals ] 
-  [ branchMulti    0 ] 
+  [ branchMulti    7 ]
   [ treeLengthMult 1  ] 
   [ nodeSlider     0  ] 
-  [ blDistGamma    9  ]         [ efficient Newton-Raphson-based branch length proposal ]
-  [ biasBLMult     1  ]         [ branch length multiplier that preferably samples short branch lengnths ]
+  [ blDistGamma    7  ]         [ efficient Newton-Raphson-based branch length proposal ]
+  [ biasBLMult     0  ]         [ branch length multiplier that preferably samples short branch lengnths ]
 
   [ RATE HETEROGENEITY ]
   [ rateHetMulti   1  ] 

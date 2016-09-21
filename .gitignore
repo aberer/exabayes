@@ -43,3 +43,5 @@ sdsf
 /lib/ncl-2.1.18/ncl/Makefile.in
 /lib/ncl-2.1.18/stamp-h1
 /src/config.h.in~
+/compile
+/manual/missfont.log
