@@ -23,9 +23,8 @@ public:
   virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const ; 
   virtual ParameterContent extractParameter(const TreeAln &traln )  const;   
   virtual ParameterContent extractParameterRaw(const TreeAln& traln) const ; 
-  // virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const ; 
 
-  virtual AbstractParameter* clone () const {return new RevMatParameter(*this); } 
+  virtual AbstractParameter* clone () const {return new RevMatParameter(*this); }
 
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln) const ; 
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const ; 

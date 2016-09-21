@@ -9,7 +9,7 @@
 #include "GlobalVariables.hpp"
 
 #include "RevMatParameter.hpp"
-// #include "axml.h"
+
 
 
 void RevMatParameter::applyParameter(TreeAln& traln, const ParameterContent &content)
@@ -110,10 +110,20 @@ void RevMatParameter::printAllComponentNames(std::ostream &fileHandle, const Tre
 
 void RevMatParameter::verifyContent(const TreeAln&traln,  const ParameterContent &content) const 
 {
-  auto& partition = traln.getPartition(_partitions[0]); 
+  auto& partition = traln.getPartition(_partitions[0]);
+
+  if (partition.getDataType() == PLL_BINARY_DATA)
+  {
+      tout << "\n\nError: you specfied a reversible rates parameter for"
+           << " partition " << _partitions[0] << ", which consists of binary data."
+           << std::endl;
+      assert(0);
+  }
+
+
   auto num = RateHelper::numStateToNumInTriangleMatrix(partition.getStates());
 
-  bool ok = true; 
+  bool ok = true;
 
   ok &= content.values.size( )== num ; 
   
