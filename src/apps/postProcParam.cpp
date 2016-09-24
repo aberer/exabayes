@@ -9,7 +9,9 @@
 #include <fstream>
 #include <algorithm>
 #include <sstream>
-#include <iomanip> 
+#include <iomanip>
+#include <cmath>
+#include <tuple>
 
 #define _INCLUDE_DEFINITIONS
 #include "GlobalVariables.hpp"
@@ -333,7 +335,7 @@ int main(int argc, char **argv)
 	    relVals.push_back(r._values); 
       
 	  auto prsf = Arithmetics::PRSF(relVals); 
-	  auto sd = sqrt(Arithmetics::getVariance(valuesConcat._values));
+          auto sd = std::sqrt(Arithmetics::getVariance(valuesConcat._values));
 	  auto perc95  = Arithmetics::getPercentile(.95, valuesConcat._values);
 	  auto perc5 = Arithmetics::getPercentile(.5, valuesConcat._values); 
 	  auto perc50 = Arithmetics::getPercentile(.50, valuesConcat._values); 

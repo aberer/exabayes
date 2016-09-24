@@ -36,14 +36,16 @@ void Path::pushToStackIfNovel(BranchPlain b, const TreeAln &traln)
   auto bPrev = at(size()-1); 
   if(stack.size() == 2)
     {
-      if(not b.equalsUndirected(bPrev))
+      // if(not b.equalsUndirected(bPrev))
+      if(bPrev != b && bPrev.getInverted() != b)
 	append(b); 
     }
   else 
     {      
-      if(b.equalsUndirected(bPrev))
+      // if(b.equalsUndirected(bPrev))
+      if(b == bPrev || b.getInverted() == bPrev)
 	stack.pop_back();
-      else if(bPrev.isTipBranch(traln))
+      else if(traln.isTipBranch(bPrev))
 	{
 	  stack.pop_back();
 	  append(b); 
@@ -142,7 +144,8 @@ void Path::reverse()
 bool Path::findPathHelper(const TreeAln &traln, nodeptr p, const BranchPlain &target)
 {
   auto  curBranch = BranchPlain(p->number, p->back->number); 
-  if( curBranch.equalsUndirected( target) ) 
+  // if( curBranch.equalsUndirected( target) ) 
+  if( curBranch == target || curBranch.getInverted() == target)
     return true; 
   
   bool found = false; 

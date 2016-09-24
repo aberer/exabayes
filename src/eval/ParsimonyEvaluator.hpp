@@ -25,38 +25,39 @@ public:
       @param parsimonyLength the per partition parsimony score for the
       transition between the descendent nodes
    */ 
-  std::array<parsimonyNumber,2> evaluate(TreeAln &traln, nodeptr p, bool fullTraversal ) ; 
+  std::array<parsimonyNumber,3> evaluate(TreeAln &traln, nodeptr p, bool fullTraversal ) ; 
     
-  static nat numState2pos(nat numState) 
+  static nat numState2pos(int dataType) 
   { 
-    switch(numState)
+    switch(dataType)
       {
-      case 4: 
+      case PLL_BINARY_DATA: 
 	return 0 ; 
-      case 20: 
-	return 1; 
+      case PLL_DNA_DATA: 
+	return 1 ; 
+      case PLL_AA_DATA: 
+	return 2; 
       default: 
 	assert(0); 
       }
   }
 
-  static  nat pos2numstate(nat pos)
+  static nat pos2numstate(nat pos)
   {
     switch(pos)
       {
       case 0: 
-	return 4; 
+	return PLL_BINARY_DATA; 
       case 1: 
-	return 20; 
+	return PLL_DNA_DATA; 
+      case 2: 
+	return PLL_AA_DATA; 
       default : 
 	assert(0); 
       }
   }
 
   static void disorientNode(nodeptr p); 
-
-// private: 
-//   std::shared_ptr<RemoteComm> _commPtr; 
 }; 
 
 #endif

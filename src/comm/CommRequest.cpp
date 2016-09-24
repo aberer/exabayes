@@ -7,6 +7,7 @@
 #include "extensions.hpp"
 #include "CommRequestImpl.hpp"
 
+using namespace std;
 
 CommRequest::CommRequest( std::vector<char> array  )
   : _impl( make_unique<CommRequest::Impl>(array) )

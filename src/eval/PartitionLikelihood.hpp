@@ -9,10 +9,10 @@ class PartitionLikelihood
 public: 
   PartitionLikelihood(const TreeAln& traln, nat modelArg, bool useSEV)
     : model(modelArg)
-    , cachedArrays(traln.getNumberOfInnerNodes()) 
-    , lengths(traln.getNumberOfInnerNodes(), 0)
+    , cachedArrays(traln.getNumberOfInnerNodes(false)) // we are talking about the unrooted pll tree  
+    , lengths(traln.getNumberOfInnerNodes(false), 0) 
     , scaler( 2 * traln.getNumberOfTaxa() , 0)
-    , isCached(traln.getNumberOfInnerNodes(),false)
+    , isCached(traln.getNumberOfInnerNodes(false),false)
     , gapVector{}
     , gapColumn{}
   {

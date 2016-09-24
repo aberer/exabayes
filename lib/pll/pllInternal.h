@@ -15,11 +15,10 @@
 #include "parsePartition.h"
 #include "mem_alloc.h"
 
-extern int lookupWord(char *s, stringHashtable *h);
+//extern int lookupWord(char *s, stringHashtable *h);
 
 extern void getDataTypeString(pllInstance *tr, pInfo *partitionInfo, char typeOfData[1024]);
 extern int countTips(nodeptr p, int numsp);
-extern entry *initEntry(void);
 extern unsigned int precomputed16_bitcount(unsigned int n, char *bits_in_16bits);
 
 extern size_t discreteRateCategories(int rateHetModel);
@@ -130,16 +129,15 @@ extern void makePermutation(int *perm, int n, pllInstance *tr);
 extern nodeptr findAnyTip(nodeptr p, int numsp);
 extern void putWAG(double *ext_initialRates);
 extern  unsigned int **initBitVector(int mxtips, unsigned int *vectorLength);
-extern hashtable *initHashTable(unsigned int n);
-extern void cleanupHashTable(hashtable *h, int state);
-extern double convergenceCriterion(hashtable *h, int mxtips);
+//extern hashtable *initHashTable(unsigned int n);
+extern void cleanupHashTable(pllHashTable * h, int state);
+extern double convergenceCriterion(pllHashTable *h, int mxtips);
 extern void freeBitVectors(unsigned int **v, int n);
-extern void freeHashTable(hashtable *h);
-extern stringHashtable *initStringHashTable(hashNumberType n);
-extern void addword(char *s, stringHashtable *h, int nodeNumber);
-extern void printBothOpen(const char* format, ... );
+//extern void freeHashTable(hashtable *h);
+//extern stringHashtable *initStringHashTable(hashNumberType n);
+//extern void addword(char *s, stringHashtable *h, int nodeNumber);
 extern void initRateMatrix(pllInstance *tr, partitionList *pr);
-extern void bitVectorInitravSpecial(unsigned int **bitVectors, nodeptr p, int numsp, unsigned int vectorLength, hashtable *h, int treeNumber, int function, branchInfo *bInf,
+extern void bitVectorInitravSpecial(unsigned int **bitVectors, nodeptr p, int numsp, unsigned int vectorLength, pllHashTable *h, int treeNumber, int function, branchInfo *bInf,
                                     int *countBranches, int treeVectorLength, boolean traverseOnly, boolean computeWRF, int processID);
 extern  unsigned int bitcount_32_bit(unsigned int i);
 extern unsigned int bitcount_64_bit(unsigned long i);

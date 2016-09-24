@@ -44,6 +44,7 @@ typedef struct
   int protModels;
   int protUseEmpiricalFreqs;
   int dataType;
+  int ascBias;
   int optimizeBaseFrequencies;
   pllQueue * regionList;
 } pllPartitionInfo;

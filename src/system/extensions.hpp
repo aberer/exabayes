@@ -14,19 +14,23 @@
 #define PRINT(x) (tout << "#x=x"  << std::endl) 
 
 
+#if ! defined(HAVE_CXX14)
 
-// START definitions 
-template<typename T, typename ...Args> std::unique_ptr<T> make_unique( Args&& ...args ); 
-// END 
+namespace std{
+// START definitions
+template<typename T, typename ...Args> std::unique_ptr<T> make_unique( Args&& ...args );
+// END
 
-
-// still missing in c++11. 
+// still missing in c++11.
 
 template<typename T, typename ...Args>
 std::unique_ptr<T> make_unique( Args&& ...args )
 {
   return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
 }
+
+}
+#endif
 
 
 // a bit more number formatting  

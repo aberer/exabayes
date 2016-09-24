@@ -10,12 +10,13 @@
 #include "ParsSprProposer.hpp"
 #include "LikelihoodSprProposer.hpp"
 
+#include "DivRateSlider.hpp"
+#include "DivTimeSlider.hpp"
+
 #include "WeibullProposer.hpp"
 #include "DivTimeProposal.hpp"
 #include "DistributionBranchLength.hpp"
 #include "GenericTopoProposal.hpp"
-
-#include "BiasedBranchMult.hpp"
 
 #include "BranchLengthMultiplier.hpp"
 #include "AminoModelJump.hpp"
@@ -59,6 +60,8 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 {
   auto result = std::vector<unique_ptr<AbstractProposal> >{} ; 
 
+  auto numNodeAges = traln.getNumberOfInnerNodes(true);
+
   auto&& proposals = ProposalTypeFunc::getSingleParameterProposalsForCategory(cat ) ; 
   for(auto& p : proposals)
     {     
@@ -76,7 +79,19 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
       auto&& proposal = std::unique_ptr<AbstractProposal>{}; 
 
       switch(p)
-	{	      
+	{
+	case ProposalType::DIVRATE_SLIDER: 
+	  {
+	    // tout << "init: divrateslider " << std::endl; 
+	    proposal = make_unique<DivRateSlider>();
+	  }
+	  break;
+	case ProposalType::DIVTIME_SLIDER: 
+	  {
+	    // tout << "init: divtimeslider " << std::endl; 
+	    proposal = make_unique<DivTimeSlider>(DivTimeSlider::defaultWeight / numNodeAges); 
+	  }
+	  break; 
 	case ProposalType::ST_NNI: 
 	  {
 	    auto tmp = make_unique<GenericTopoProposal>(  make_unique<StatNniProposer>(), "stNNI", 6., config.getMoveOptMode() ) ;
@@ -196,12 +211,9 @@ ProposalRegistry::getSingleParameterProposals(Category cat, const BlockProposalC
 	  proposal = make_unique< DistributionBranchLength<WeibullProposer> >();
 	  break; 
 	case ProposalType::DIV_TIME_DIRICH:
-	  proposal = make_unique<DivTimeProposal>(); 
+	  proposal = make_unique<DivTimeProposal>(DivTimeProposal::defaultWeight / numNodeAges ); 
 	  break; 
-	case ProposalType::BIASED_BL_MULT: 
-	  proposal = make_unique<BiasedBranchMult>(initBranchLengthMultiplier);
-	  break; 
-	default : 
+        default :
 	  {
 	    cerr << "you did not implement case " << int(p) << " in ProposalRegistry.cpp" << endl; 
 	    assert(0); 

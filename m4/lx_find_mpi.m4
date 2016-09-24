@@ -122,73 +122,95 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
      # Figure out what the compiler responds to to get it to show us the compile
      # and link lines.  After this part of the macro, we'll have a valid
      # lx_mpi_command_line
+
+     responded=0
+
+
+
+     # check -showme:compile
      echo -n "Checking whether $$1 responds to '-showme:compile'... "
      lx_mpi_compile_line=`$$1 -showme:compile 2>/dev/null`
      if [[ "$?" -eq 0 ]]; then
          echo yes
          lx_mpi_link_line=`$$1 -showme:link 2>/dev/null`
+         responded=1
      else
          echo no
-         echo -n "Checking whether $$1 responds to '-showme'... "
-         lx_mpi_command_line=`$$1 -showme 2>/dev/null`
-         if [[ "$?" -ne 0 ]]; then
-             echo no
-             echo -n "Checking whether $$1 responds to '-compile-info'... "
-             lx_mpi_compile_line=`$$1 -compile-info 2>/dev/null`
-             if [[ "$?" -eq 0 ]]; then
-                 echo yes
-                 lx_mpi_link_line=`$$1 -link-info 2>/dev/null`
-             else
-                 echo no
-                 echo -n "Checking whether $$1 responds to '-show'... "
-                 lx_mpi_command_line=`$$1 -show 2>/dev/null`
-                 if [[ "$?" -eq 0 ]]; then
-                     echo yes
-                 else
-                     echo no
-                 fi
-             fi
-         else
-             echo yes
-         fi
      fi
 
-     if [[ ! -z "$lx_mpi_compile_line" -a ! -z "$lx_mpi_link_line" ]]; then
-         lx_mpi_command_line="$lx_mpi_compile_line $lx_mpi_link_line"
+     # check -showme
+     if [[ "$responded" -eq 0 ]]; then
+        echo -n "Checking whether $$1 responds to '-showme'... "
+
+        testOutput=`$$1 -showme 2>/dev/null`
+        if [[ "$?" -eq 0 ]]; then
+           responded=1
+           lx_mpi_link_line=$testOutput
+           lx_mpi_compile_line=$testOutput
+           echo yes
+        else
+           echo no
+        fi
      fi
 
-     if [[ ! -z "$lx_mpi_command_line" ]]; then
-         # Now extract the different parts of the MPI command line.  Do these separately in case we need to
-         # parse them all out in future versions of this macro.
+     # check -compile-info
+     if [[ "$responded" -eq 0 ]]; then
+        echo -n "Checking whether $$1 responds to '-compile-info'... "
+        lx_mpi_compile_line=`$$1 -compile-info 2>/dev/null`
 
-         lx_mpi_defines=`    echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-D\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_includes=`   echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-I\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_link_paths=` echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-L\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_libs=`       echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-l\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-         lx_mpi_link_args=`  echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-Wl,\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
-	 lx_mpi_remain=`  echo "$lx_mpi_command_line" | grep -o -- '\(^\| \)-[[^DILlW]]\([[^\"[:space:]]]\+\|\"[[^\"[:space:]]]\+\"\)'`
+        if [[ "$?" -eq 0 ]]; then
+           lx_mpi_link_line=`$$1 -link-info 2>/dev/null`
+           responded=1
+           echo yes
+        else
+           echo no
+        fi
+     fi
 
-	 echo ""
-	 echo LINE:  $lx_mpi_command_line
-	 echo DEFINES: $lx_mpi_defines	
-	 echo INCLUDES: $lx_mpi_includes
-	 echo LINK_PATHS: $lx_link_paths
-	 echo LIBS: $lx_mpi_libs
-	 echo LINK_ARGS: $lx_mpi_link_args	
-	 echo REMAIN: $lx_mpi_remain
-	 echo "" 
+     # check -show
+     if [[ "$responded" -eq 0 ]]; then
+        echo -n "Checking whether $$1 responds to '-show'... "
 
-         # Create variables and clean up newlines and multiple spaces
-         MPI_$3FLAGS=`echo $lx_mpi_defines $lx_mpi_includes $lx_mpi_remain `  #  
-         MPI_$3LDFLAGS=`echo $lx_mpi_remain $lx_mpi_link_paths $lx_mpi_libs $lx_mpi_link_args `  
+        testOutput=`$$1 -show 2>/dev/null`
+        if [[ "$?" -eq 0 ]]; then
+           lx_mpi_compile_line=$testOutput
+           lx_mpi_link_line=$testOutput
+           responded=1
+           echo yes
+        else
+           echo no
+        fi
+     fi
 
-         MPI_$3FLAGS=` echo "$MPI_$3FLAGS"   | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
-         MPI_$3LDFLAGS=`echo "$MPI_$3LDFLAGS" | tr '\n' ' ' | sed 's/^[[ \t]]*//;s/[[ \t]]*$//' | sed 's/  +/ /g'`
+     # check -craype-verbose
+     if [[ "$responded" -eq 0 ]]; then
+        echo -n "Checking whether $$1 is a Cray MPI wrapper and responds to '-craype-verbose'... "
+
+        testOutput=`$$1 -craype-verbose 2>/dev/null`
+        if [[ "$?" -eq 0 ]]; then
+           lx_mpi_compile_line=$testOutput
+           lx_mpi_link_line=$testOutput
+           responded=1
+           echo yes
+        else
+           echo no
+        fi
+     fi
+
+     # remove the compiler name
+     lx_mpi_link_line=`echo "$lx_mpi_link_line" | sed 's/^[[^-]][[^[:space:]]]\+//'`
+     lx_mpi_compile_line=`echo "$lx_mpi_compile_line" | sed 's/^[[^-]][[^[:space:]]]\+//'`
+
+     if [[ ! -z "$lx_mpi_compile_line"  -a ! -z "$lx_mpi_link_line" ]]; then
+
+         MPI_$3FLAGS=`echo $lx_mpi_compile_line`
+         MPI_$3LDFLAGS=`echo $lx_mpi_link_line`
 
          OLD_LIBS=$LIBS
 	 OLD_$3FLAGS=$$3FLAGS
 
-	 $3FLAGS=`echo $MPI_$3FLAGS  $SIMD_FLAGS `
+         $3FLAGS=`echo $MPI_$3FLAGS `
+
          LIBS=`echo $MPI_$3LDFLAGS `
 
          AC_TRY_LINK([
@@ -205,7 +227,8 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
                       MPI_$3LDFLAGS=""
                       have_$3_mpi='no'])
 
-	 echo "" 
+         echo ""
+         echo "RESULT:"
 	 echo MPI_CXXFLAGS=$MPI_CXXFLAGS
 	 echo MPI_CXXLDFLAGS=$MPI_CXXLDFLAGS
 	 echo ""
@@ -224,6 +247,7 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
      else
          echo Unable to find suitable MPI Compiler. Try setting $1.
          have_$3_mpi='no'
+         exit 1
      fi
 
      echo found CXXFLAGS: $MPI_$3FLAGS 

@@ -1,1 +1,0 @@
-#define RELEASE_DATE "2014-08-27"

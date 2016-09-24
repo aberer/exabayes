@@ -6,7 +6,7 @@
 
 
 BranchLengthMultiplier::BranchLengthMultiplier(  double multiplier)
-  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 15., 0.0001,  100, false)
+  : AbstractProposal(Category::BRANCH_LENGTHS, "blMult", 7., 0.0001,  100, false)
   , _multiplier(multiplier)
   , _savedBranch{}
 {
@@ -30,14 +30,14 @@ BranchPlain BranchLengthMultiplier::determinePrimeBranch(const TreeAln &traln, R
 
 void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) 
 {
-  auto b = proposeBranch(traln, rand).toBlDummy(); 
-
+  auto b = BranchLength(proposeBranch(traln, rand)); 
+  
   assert(_primParamIds.size() == 1); 
   auto param = _allParams->at(_primParamIds[0]); 
 
-  _savedBranch = traln.getBranch(b.toPlain(), param); 
+  _savedBranch = traln.getBranch(b, param); 
 
-  double oldZ = _savedBranch.getLength();
+  double oldZ = _savedBranch.getLength().getValue();
 
   double
     drawnMultiplier = 0 ,
@@ -50,17 +50,17 @@ void BranchLengthMultiplier::applyToState(TreeAln &traln, PriorBelief &prior, lo
 
   // tout << MAX_SCI_PRECISION << "proposed " << newZ <<  " from " << multiplier << " and oldBranch=" << savedBranch << std::endl; 
   
-  b.setLength(newZ); 
+  b.setLength(InternalBranchLength(newZ)); 
 
   if(not BoundsChecker::checkBranch(b))
     BoundsChecker::correctBranch(b); 
   traln.setBranch(b, param); 
 
-  double realMultiplier = log(b.getLength()) / log(oldZ); 
+  double realMultiplier = log(b.getLength().getValue()) / log(oldZ); 
 
   hastings *= log_double::fromAbs(realMultiplier); 
 
-  prior.addToRatio(param->getPrior()->getUpdatedValue(oldZ, b.getLength(), param));
+  prior.addToRatio(param->getPrior()->getUpdatedValue(oldZ, b.getLength().getValue(), param));
 }
 
 
@@ -72,7 +72,7 @@ void BranchLengthMultiplier::evaluateProposal(LikelihoodEvaluator &evaluator,Tre
 #ifdef PRINT_EVAL_CHOICE
   tout << "EVAL: " << savedBranch << std::endl; 
 #endif
-  evaluator.evaluatePartitionsWithRoot(traln,_savedBranch.toPlain(), parts, false); 
+  evaluator.evaluatePartitionsWithRoot(traln,_savedBranch, parts, false); 
 
   // tout << SOME_FIXED_PRECISION << "lnl=" << traln.getTrHandle().likelihood << std::endl; 
 }

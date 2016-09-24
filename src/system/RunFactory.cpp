@@ -33,14 +33,16 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
       highestParamId = * (std::max_element(ids.begin(), ids.end())) ; 
     } 
 
-  auto cat2partsUsed = std::unordered_map<Category, std::vector<bool> >{}; 
-  auto cat2idOfItsKind = std::unordered_map<Category,int>{}; 
-  for( auto c : CategoryFuns::getAllCategories())
+  auto allCats = CategoryFuns::getAllCategories(); 
+  auto cat2partsUsed = std::unordered_map<Category, std::vector<bool> >(); 
+  auto cat2idOfItsKind = std::unordered_map<Category,int>(); 
+  for( auto c : allCats)
     {
       cat2partsUsed[c] = std::vector<bool>(traln.getNumberOfPartitions(), false);
       cat2idOfItsKind[c] = -1; 
     }
 
+  // register which partitions are used by which parameter 
   for(const auto &param : params)
     {
       auto cat =param->getCategory(); 
@@ -66,7 +68,7 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 		{
 		  ++highestParamId;   
 		  ++cat2idOfItsKind[relCat]; 
-		  paramsToAdd.push_back(CategoryFuns::getParameterFromCategory(relCat, highestParamId, cat2idOfItsKind[relCat], {part}));
+  		  paramsToAdd.push_back(CategoryFuns::getParameterFromCategory(relCat, highestParamId, cat2idOfItsKind[relCat], {part}, traln.getNumberOfTaxa()));
 		  cat2partsUsed.at(relCat).at(part) = true; 
 		}
 	    }
@@ -76,6 +78,10 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
   for(auto &p : paramsToAdd)
     params.push_back(std::move(p)); 
 
+  auto divTimeMode = std::any_of(begin(params), end(params), 
+				 [](const std::unique_ptr< AbstractParameter> &param){ return param->getCategory() == Category::DIVERGENCE_TIMES
+										       || param->getCategory() == Category::DIVERGENCE_RATES ; }); 
+  
   // add standard stuff, if not defined yet
   for(auto cat : CategoryFuns::getAllCategories())
     {
@@ -84,13 +90,38 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
       switch(cat)
 	{	  
 	  // force to have everything linked with those 
+	case Category::BRANCH_LENGTHS: 
+	case Category::RATE_HETEROGENEITY:
 	case Category::TOPOLOGY: 
+          if(not divTimeMode)
+            {
+              for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
+                {
+                  if(not cat2partsUsed.at(cat).at(i))
+                    {
+                      partsUnused.push_back(i);
+                    }
+                }
+            }
+          else 
+            continue; 
+          break; 
+	case Category::DIVERGENCE_RATES: 
+	case Category::DIVERGENCE_TIMES:
 	  {
-	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
+	    // but do not instantiate these parameters, if we are doing
+	    // divtime (use the conflicting categories later, to rerduce
+	    // the complexity of the code)
+	    if(divTimeMode)
 	      {
-		if(not cat2partsUsed.at(cat).at(i))
-		  partsUnused.push_back(i);
+		for(nat i = 0; i < traln.getNumberOfPartitions() ; ++ i)
+		  {
+		    if(not cat2partsUsed.at(cat).at(i))
+		      partsUnused.push_back(i);
+		  }
 	      }
+	    else 
+	      continue ; 
 	  }
 	  break; 
 	case Category::AA_MODEL:	
@@ -104,23 +135,23 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	      }
 	  } 
 	  break; 
-	case Category::BRANCH_LENGTHS: 
-	case Category::RATE_HETEROGENEITY:
-	  {
-	    for(nat j = 0; j < traln.getNumberOfPartitions(); ++j)
-	      {
-		if(not cat2partsUsed[cat][j])
-		  partsUnused.push_back(j);
-	      }
-	  }
-	  break; 
 	case Category::FREQUENCIES:
+          for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i )
+            {
+              auto dataType = traln.getPartition(i).getDataType(); 
+              if(not cat2partsUsed.at(cat).at(i) // not already there 
+                 && dataType != PLL_AA_DATA ) // we use an AA_MODEL as default for proteins 
+                partsUnused.push_back(i); 
+            }
+          break ;
 	case Category::SUBSTITUTION_RATES: 
 	  {
 	    for(nat i = 0; i < traln.getNumberOfPartitions() ; ++i )
 	      {
+		auto dataType = traln.getPartition(i).getDataType(); 
 		if(not cat2partsUsed.at(cat).at(i) // not already there 
-		   && traln.getPartition(i).getDataType() != PLL_AA_DATA) // we use an AA_MODEL as default for proteins 
+		   && dataType != PLL_AA_DATA
+		   && dataType != PLL_BINARY_DATA) // we use an AA_MODEL as default for proteins 
 		  partsUnused.push_back(i); 
 	      }
 	  }
@@ -128,35 +159,38 @@ void RunFactory::addStandardParameters(std::vector<std::unique_ptr<AbstractParam
 	default: 
 	  assert(0); 
 	}
+      
+      if(partsUnused.size() == 0 )
+        continue; 
 
-      // create parameters for unused partitions 
-      switch(cat)
+
+
+      if(CategoryFuns::inUniqueByDefault(cat))
 	{
-	case Category::TOPOLOGY:
-	  {
-	    ++highestParamId; 
-	    ++cat2idOfItsKind[cat]; 
-	    params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat] , partsUnused)); 
-	  }
-	  break; 
-	case Category::FREQUENCIES: 
-	case Category::AA_MODEL:	
-	case Category::SUBSTITUTION_RATES: 
-	case Category::BRANCH_LENGTHS: 
-	case Category::RATE_HETEROGENEITY:
-	  {
-	    for(auto p : partsUnused)
-	      {
-		++highestParamId;
-		++cat2idOfItsKind[cat];
-		params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat], {p})); 
-	      }
-	  }
-	  break; 
-	default : 
-	  assert(0); 
+	  auto numNeeded =  ( cat == Category::DIVERGENCE_TIMES ) ? (traln.getNumberOfInnerNodes(true))  : 1;
+	  for(int i = 0; i < numNeeded; ++i )
+            {
+              ++highestParamId; 
+              ++cat2idOfItsKind[cat]; 
+	      params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat] , 
+								      partsUnused, traln.getNumberOfTaxa())); 
+            }
 	}
+      else 
+        {
+	  // add a parameter per partition 
+          for(auto p : partsUnused)
+            {
+              ++highestParamId;
+              ++cat2idOfItsKind[cat];
+	      params.push_back(CategoryFuns::getParameterFromCategory(cat, highestParamId, cat2idOfItsKind[cat], 
+								      {p}, traln.getNumberOfTaxa())); 
+            }
+        }
     }
+
+
+  // TODO sanity check, whehther conflicting parameters are there...
 }
 
 
@@ -165,15 +199,28 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
   switch(var->getCategory())			// TODO such switches should be part of an object
     {
     case Category::TOPOLOGY:  
-      var->setPrior( std::unique_ptr<AbstractPrior>(new UniformPrior(0,0)) ); // TODO : proper topology prior? 
+      var->setPrior( make_unique<UniformPrior>(0,0) ); // TODO : proper topology prior? 
       break; 
+      
+    case Category::DIVERGENCE_TIMES:
+      var->setPrior(make_unique<UniformPrior>(0,10)); 
+      break; 
+    case Category::DIVERGENCE_RATES: 
+    {
+      std::vector<double> cats(2*traln.getNumberOfTaxa() - 2, 1.0);
+      var->setPrior(make_unique<DirichletPrior>(cats));
+      break; 
+    }
     case Category::BRANCH_LENGTHS: 
-      var->setPrior( std::unique_ptr<AbstractPrior>(new ExponentialPrior(10.0) ));
+      var->setPrior( make_unique<ExponentialPrior>(10.0 ));
       break; 
     case Category::FREQUENCIES: 
       {
 	auto& partition = traln.getPartition(var->getPartitions()[0]);
-	assert(partition.getDataType() == PLL_DNA_DATA || partition.getDataType() == PLL_AA_DATA); 
+	assert(partition.getDataType() == PLL_DNA_DATA 
+	       || partition.getDataType() == PLL_AA_DATA 
+	       || partition.getDataType() == PLL_BINARY_DATA
+	       ); 
 	var->setPrior(std::unique_ptr<AbstractPrior>(new DirichletPrior(std::vector<double>(partition.getStates() , 1.)))); 
       }
       break; 
@@ -184,15 +231,15 @@ void RunFactory::addStandardPrior(AbstractParameter* var, const TreeAln& traln )
       }
       break; 
     case Category::RATE_HETEROGENEITY: 
-      var->setPrior(std::unique_ptr<AbstractPrior>(new UniformPrior(1e-6, 200))); 
+      var->setPrior(make_unique<UniformPrior>(1e-6, 200)); 
       break; 
     case Category::AA_MODEL : 
       {
 	auto modelProbs = std::unordered_map<ProtModel,double>{}; 
 	for(auto model : ProtModelFun::getAllModels())
 	  modelProbs[model] = 1.; 
-	auto prior =  std::unique_ptr<AbstractPrior>(new DiscreteModelPrior(modelProbs));
-	var->setPrior(prior);
+	auto&& prior =  make_unique<DiscreteModelPrior>(modelProbs);
+	var->setPrior(std::move(prior));
       }
       break; 
     default: 
@@ -229,7 +276,7 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 		}
 
 	      // tout << "setting prior " << &prior << 
-		// " for param "<< v.get() << std::endl; 
+              // " for param "<< v.get() << std::endl; 
 
 	      v->setPrior( std::unique_ptr<AbstractPrior>(prior.clone()) ) ; 
 	      break; 
@@ -263,37 +310,76 @@ void RunFactory::addPriorsToParameters(const TreeAln &traln,  const BlockPrior &
 }
 
 
-void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterList &allParameters)
+void RunFactory::addSecondaryParameters(AbstractProposal* proposal,  ParameterList &allParameters, nat numTaxa)
 {
-  // get all branch length pararemeters   
-  auto blParameters = std::vector<unique_ptr<AbstractParameter> >{}; 
-  for(auto &v : allParameters)
-    if(v->getCategory() == Category::BRANCH_LENGTHS)
-      blParameters.push_back(std::unique_ptr<AbstractParameter>(v->clone())); 
+  // TODO reduce code complexity 
 
-  bool needsBl = false; 
-  std::unordered_set<nat> myPartitions; 
+  auto primParams = proposal->getPrimaryParameterView(); 
   
-  for(auto &v: proposal->getPrimaryParameterView())
-    {
-      needsBl |=  ( v->getCategory() == Category::FREQUENCIES 
-		   || v->getCategory() == Category::SUBSTITUTION_RATES
-		   || v->getCategory() == Category::TOPOLOGY
-		   || v->getCategory() == Category::AA_MODEL
-		   ); 
-      auto ps = v->getPartitions();
-      myPartitions.insert(ps.begin(), ps.end()); 
-    }
+  auto doingDivRates = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_RATES; }); 
+  auto doingDivTimes = std::any_of(begin(primParams), end(primParams), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; }); 
 
-  if(needsBl)
+  if(doingDivRates)
     {
-      for(auto &blRandVar : blParameters)
+//      auto tp = std::find_if(begin(allParameters), end(allParameters), [](const AbstractParameter* param){return param->getCategory() == Category::DIVERGENCE_TIMES; });
+//      proposal->addSecondaryParameter((*tp)->getId());
+      for(auto &p : allParameters)
 	{
-	  auto partitions =  blRandVar->getPartitions();
-	  if(std::any_of(partitions.begin(),partitions.end(), 
-			 [&](nat i){ return myPartitions.find(i) != myPartitions.end(); }))
-	    proposal->addSecondaryParameter( blRandVar->getId() ); 
-	  // std::unique_ptr<AbstractParameter>(blRandVar->clone())
+	  if(p->getCategory() == Category::DIVERGENCE_TIMES)
+	    {
+	      // now add all *other* div time parameters as secondary parameters
+	      proposal->addSecondaryParameter(p->getId());
+	    }
+	}
+    }
+  else if(doingDivTimes)
+    {
+      // what is our current primary parameter id?
+      assert(primParams.size() == 1 ); 
+      auto primId = primParams[0]->getId();
+
+      for(auto &p : allParameters)
+	{
+	  if(p->getCategory() == Category::DIVERGENCE_RATES)
+	    {
+	      // add the div-rates as a secondary paramater
+	      proposal->addSecondaryParameter(p->getId()); 
+	    }
+	  else if(p->getCategory() == Category::DIVERGENCE_TIMES && p->getId() != primId)
+	    {
+	      // now add all *other* div time parameters as secondary parameters 
+	      proposal->addSecondaryParameter(p->getId()); 
+	    }
+	}
+    }
+  else 
+    { 
+      // get all branch length pararemeters   
+      auto blParameters = allParameters.getViewByCategory(Category::BRANCH_LENGTHS);
+      bool needsBl = false; 
+  
+      auto myPartitions = std::unordered_set<nat> {}; 
+  
+      for(auto &p: proposal->getPrimaryParameterView())
+        {
+	  needsBl |=  ( p->getCategory() == Category::FREQUENCIES 
+			|| p->getCategory() == Category::SUBSTITUTION_RATES
+			|| p->getCategory() == Category::TOPOLOGY
+			|| p->getCategory() == Category::AA_MODEL
+                        ); 
+	  auto ps = p->getPartitions();
+          myPartitions.insert(ps.begin(), ps.end()); 
+        }
+
+      if(needsBl)
+        {
+          for(auto &blRandVar : blParameters)
+            {
+              auto partitions =  blRandVar->getPartitions();
+              if(std::any_of(partitions.begin(),partitions.end(), 
+                             [&](nat i){ return myPartitions.find(i) != myPartitions.end(); }))
+                proposal->addSecondaryParameter( blRandVar->getId() ); 
+	    }
 	}
     }
 }
@@ -339,7 +425,7 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
       for(auto &p : tmpResult )
 	{
 	  p->addPrimaryParameter(v->getId());
-	  addSecondaryParameters(p.get(), params); 
+	  addSecondaryParameters(p.get(), params, traln.getNumberOfTaxa()); 
 	}
 
       // dammit...
@@ -364,6 +450,8 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
       // those are prototypes! non-owning pointers 
       switch(v->getCategory())
 	{
+	case Category::DIVERGENCE_RATES: 
+	case Category::DIVERGENCE_TIMES: 
 	case Category::SUBSTITUTION_RATES: 
 	case Category::FREQUENCIES:
 	case Category::RATE_HETEROGENEITY: 
@@ -420,7 +508,7 @@ RunFactory::produceProposals(const BlockProposalConfig &propConfig, const BlockP
 		{
 		  auto proposalClone = std::unique_ptr<AbstractProposal>(proposalType->clone()); 
 		  proposalClone->addPrimaryParameter(p->getId());
-		  addSecondaryParameters(proposalClone.get(), params); 
+		  addSecondaryParameters(proposalClone.get(), params, traln.getNumberOfTaxa()); 
 		  lP.push_back(std::move(proposalClone));		  
 		} 
 	      proposalType->setInSetExecution(true);

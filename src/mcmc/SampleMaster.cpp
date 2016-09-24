@@ -1,6 +1,7 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+#include <algorithm>
 
 #include "ByteFile.hpp"
 #include "TreePrinter.hpp"
@@ -27,8 +28,13 @@
 #include "FullCachePolicy.hpp"
 #include "NoCachePolicy.hpp"
 
-#include "PhylipParser.hpp"
 
+#include "AlignmentPLL.hpp"
+
+#include "NodeAge.hpp"
+
+#include "DivergenceTimes.hpp"
+#include "DivergenceRates.hpp"
 
 using std::endl; 
 using std::vector;
@@ -54,39 +60,9 @@ bool SampleMaster::initializeTree(TreeAln &traln, std::string startingTree, Rand
   bool hasBranchLength = false; 
   if(startingTree.compare("") != 0 )
     {
-      hasBranchLength = std::any_of(startingTree.begin(), startingTree.end(), [](const char c ){ return c == ':'; }  ); 
-
-      auto &&iss = std::istringstream {startingTree };
-      auto reader = BasicTreeReader<NameLabelReader,ReadBranchLength>{traln.getNumberOfTaxa()};
-
-      auto mapAsVect = traln.getTaxa(); 
-
-      auto map = std::unordered_map<std::string,nat>{}; 
-      nat ctr = 1; 
-      for(auto elem : mapAsVect)
-	{
-	  map[elem] = ctr; 
-	  ++ctr; 
-	}
-      reader.setLabelMap(map);
-      auto branches = reader.extractBranches(iss);
-      assert(branches.size() == traln.getNumberOfBranches() ); 
-
-      traln.unlinkTree();
-      for(auto b : branches)
-	{
-	  traln.clipNode(traln.getUnhookedNode(b.getPrimNode()) , traln.getUnhookedNode(b.getSecNode())); 
-
-	  if(hasBranchLength)
-	    {
-	      for(auto param : params)
-	  	{
-	  	  auto bCopy = b; 
-	  	  bCopy.setConvertedInternalLength( param, b.getLength()); 
-	  	  traln.setBranch(bCopy, param); 
-	  	}
-	    }
-	}
+      pllInstance * instance = &(traln.getTrHandle());
+      pllNewickTree * newickTree = pllNewickParseString(startingTree.c_str());
+      pllTreeInitTopologyNewick(instance, newickTree, PLL_TRUE);
     }
   else
     {	      
@@ -164,6 +140,9 @@ void SampleMaster::printAlignmentInfo(const TreeAln &traln)
 
       switch(partition.getDataType())
 	{
+	case PLL_BINARY_DATA : 
+	  tout << "type:\t\tBINARY" << std::endl; 
+	  break; 
 	case PLL_DNA_DATA: 
 	  tout << "type:\t\tDNA" << endl; 
 	  break; 
@@ -329,7 +308,7 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 
       for(auto b : traln.extractBranches())
 	{
-	  auto len = traln.getBranch(b, blParam).getInterpretedLength(blParam); 
+	  auto len = traln.getBranch(b, blParam).toMeanSubstitutions(blParam->getMeanSubstitutionRate()); 
 	  // tout << b << "\t" << len << endl; 
 	  branches.emplace_back( b, len ); 
 	}
@@ -368,17 +347,18 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 		}
 	    }
 
+		if (cat != Category::DIVERGENCE_RATES)
+		{
 	  auto&& prior = param->getPrior(); 
 	  auto content = prior->getInitialValue();
 
 	  // TODO specific function for setting initially 
-
 	  param->verifyContent(traln, content); 
-
 	  // tout << "APPL " << content << endl; 
 
 	  param->applyParameter(traln, content); 
 	}
+    }
     }
 
 
@@ -392,23 +372,19 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	  param->updateMeanSubstRate(traln);
 
 	  auto &&prior = param->getPrior();
-
 	  auto content = prior->getInitialValue();
-	  // auto content = prior->drawFromPrior();
-
 	  auto initVal = content.values.at(0); 
 	  
 	  for(auto belem : branches)
 	    {
 	      auto absLen =  ( hasBl  && param->getPrior()->isKeepInitData() )  
 		? std::get<1>(belem) : initVal ;
-	      auto b = std::get<0>(belem).toBlDummy(); 
-	      b.setConvertedInternalLength(param,absLen);
+	      auto b = BranchLength(std::get<0>(belem),  InternalBranchLength::fromAbsolute(absLen, param->getMeanSubstitutionRate())); 
 
 	      if( not BoundsChecker::checkBranch(b))
 		{
 		  BoundsChecker::correctBranch(b); 
-		  auto newLen = b.getInterpretedLength(param); 
+		  auto newLen = b.toMeanSubstitutions(param->getMeanSubstitutionRate()); 
 		  tout << "Warning: had to modify branch length " << absLen << " to " << newLen << " because it violated the maximum range of branch lengths allowed." << endl; 
 		}
 
@@ -416,8 +392,118 @@ void SampleMaster::initializeWithParamInitValues(TreeAln &traln , const Paramete
 	    }
 	}
     }
+
+  auto divRates = std::vector<AbstractParameter*>{}; 
+  auto divTimes = std::vector<AbstractParameter*>{}; 
+
+  for(auto & p : params)
+    {
+      if(p->getCategory() == Category::DIVERGENCE_RATES)
+	divRates.push_back(p); 
+      if(p->getCategory() == Category::DIVERGENCE_TIMES)
+	divTimes.push_back(p); 
+    }
+
+  if(divRates.size() > 0 )
+    {
+      // assert(divTimes.size() == 1 ); // not more than one time parameter !
+      makeTreeUltrametric(traln, divTimes, divRates);
+    }
 }
 
+static double traverseDepthFromRoot(TreeAln &traln, const BranchPlain &branch, std::vector<NodeAge *> & nodeAges) {
+
+	double currentHeight = nodeAges[branch.getPrimNode()-1]->getHeight();
+	nodeAges[branch.getPrimNode()-1]->setPrimNode(branch.getPrimNode());
+	nodeAges[branch.getPrimNode()-1]->setSecNode(branch.getSecNode());
+	if (!traln.isTipNode(branch.getPrimNode())) {
+
+		auto plainDescendants = traln.getDescendents(branch);
+
+		nodeAges[plainDescendants.first.getSecNode()-1]->setHeight(currentHeight+1.0);
+		nodeAges[plainDescendants.second.getSecNode()-1]->setHeight(currentHeight+1.0);
+
+		return std::max(
+				traverseDepthFromRoot(traln, plainDescendants.first.getInverted(), nodeAges),
+				traverseDepthFromRoot(traln, plainDescendants.second.getInverted(), nodeAges)
+				);
+	} else {
+		return currentHeight;
+	}
+}
+
+void SampleMaster::makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const 
+{
+
+	assert(divRates.size() == 1 );
+	/* initialize the rates */
+  
+  vector<NodeAge *> nodeAges(traln.getNumberOfNodes());
+  for (nat i = 0; i < traln.getNumberOfNodes(); i++)
+  {
+	  nodeAges[i] = new NodeAge();
+  }
+
+  /* set root at random */
+  traln.setRootBranch(traln.getAnyBranch());
+ 
+  nodeAges[traln.getRootBranch().getPrimNode()-1]->setHeight(1.0);
+  nodeAges[traln.getRootBranch().getSecNode()-1]->setHeight(1.0);
+
+  double maxHeight = std::max(
+		  traverseDepthFromRoot(traln, traln.getRootBranch(), nodeAges),
+		  traverseDepthFromRoot(traln, traln.getRootBranch().getInverted(), nodeAges));
+
+	/* correct the node heights from the tips to the root and initialize branches */
+	for (auto b : nodeAges)
+	{
+		b->setHeight(
+				traln.isTipNode(b->getPrimNode()) ?
+						0 : (maxHeight - b->getHeight()));
+	}
+
+	auto rootNodeAge = NodeAge();
+	rootNodeAge.setHeight(maxHeight);
+	auto rootContent = ParameterContent();
+
+	for (auto b : nodeAges)
+    {
+		if (b->getPrimNode() > traln.getNumberOfTaxa())
+		{
+			auto divtime =
+					static_cast<DivergenceTimes *>(divTimes[b->getPrimNode()
+							- traln.getNumberOfTaxa() - 1]);
+			auto content = ParameterContent();
+
+			/* adding both current and parental branches */
+			content.nodeAges.push_back(*b);
+			if (traln.isRootChild(b->getPrimNode()))
+			{
+				content.nodeAges.push_back(rootNodeAge);
+				rootContent.nodeAges.push_back(*b);
+			}
+			else
+			{
+				content.nodeAges.push_back(*nodeAges[b->getSecNode() - 1]);
+			}
+			divtime->initializeParameter(traln, content);
+		}
+	}
+      
+	auto divtime = static_cast<DivergenceTimes *>(divTimes[divTimes.size()-1]);
+	rootContent.nodeAges.push_back(rootNodeAge);
+	divtime->initializeParameter(traln, rootContent, true);
+
+	auto ratesContent = ParameterContent();
+	for (nat i = 0; i < traln.getNumberOfNodes(); i++)
+	{
+		ratesContent.branchLengths.push_back(BranchLength(*nodeAges[i],InternalBranchLength(0.0)));
+		delete nodeAges[i];
+    }
+
+	auto divrate = static_cast<DivergenceRates *>(divRates[0]);
+	divrate->initializeParameter(traln, ratesContent);
+}
 
 
 vector<std::string> SampleMaster::getStartingTreeStrings()
@@ -543,7 +629,8 @@ std::string SampleMaster::getOrCreateBinaryFile() const
 
       if( _plPtr->isGlobalMaster() )
 	{
-	  auto &&parser = PhylipParser{ _cl.getAlnFileName() , modelInfo, haveModelFile}; 
+
+	  auto &&phyAln = AlignmentPLL{} ; 
 
 	  if(std::ifstream(binaryAlnFile))
 	    {
@@ -551,8 +638,20 @@ std::string SampleMaster::getOrCreateBinaryFile() const
 	      remove(std::string(binaryAlnFile).c_str()); 
 	    }
 
-	  parser.parse(); 
-	  parser.writeToFile(binaryAlnFile); 
+          auto format = AlignmentPLL::guessFormat(_cl.getAlnFileName());
+	  phyAln.initAln(_cl.getAlnFileName(), format);
+
+	  if(not haveModelFile)
+	    {
+	      auto type = getTypeFromString(modelInfo); 
+	      phyAln.createDummyPartition(type); 
+	    }
+	  else 
+	    {
+	      phyAln.initPartitions(modelInfo); 
+	    }
+
+	  phyAln.writeToFile(binaryAlnFile); 
 	}
 
       _plPtr->getGlobalComm().waitAtBarrier();
@@ -633,21 +732,6 @@ void SampleMaster::initializeRuns(Randomness rand)
   auto bls = BranchLengthResource{}; 
   bls.initialize(taxa.size(), numPart);
   initTree.setBranchLengthResource(bls); 
-
-  // START integrator
-#ifdef _EXPERIMENTAL_INTEGRATION_MODE 
-  auto aTree = TreeAln(taxa.size(), false); 
-  aTree = initTree; 
-
-  // let's have another tree for debug
-  auto dT = make_shared<TreeAln>(taxa.size(), false);
-
-  TreeRandomizer::randomizeTree(aTree, rand); 
-  ahInt = new AdHocIntegrator(aTree, dT, rand.generateSeed(), _plPtr);
-
-  tInt = new TreeIntegrator(aTree, dT, rand.generateSeed(), _plPtr); 
-#endif
-  // END
 
   auto evalUptr = createEvaluatorPrototype(initTree,  _cl.isSaveMemorySEV()); 
   
@@ -854,21 +938,17 @@ std::pair<double,double> SampleMaster::convergenceDiagnostic(nat &start, nat &en
   auto fns = vector<string>{}; 
   for(nat i = 0; i < _runParams.getNumRunConv(); ++i)
     {
-      auto &&ss = stringstream{}; 
-      ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies." << _cl.getRunid() << "." << i; 
-      
+      auto &&ss = stringstream{};
+
+      ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies.run-" << i  << "." << _cl.getRunid();
+
       // if we do not find the file, let's assume we have multiple branch lengths 
       if (not std::ifstream(ss.str()) ) 
-	{
-	  ss.str(""); 
-	  ss << OutputFile::getFileBaseName(_cl.getWorkdir())  << "_topologies." << _cl.getRunid() << "." << i << ".tree.0"; 
-	}
+        ss << ".tree.0";
 
       fns.push_back(ss.str());
     }
 
-  // std::cout << "computing asdsf for files " << fns << endl; 
-  
   auto&& asdsf = SplitFreqAssessor(fns, false);
   end = asdsf.getMinNumTrees() ; 
 

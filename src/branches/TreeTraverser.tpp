@@ -28,8 +28,8 @@ TreeTraverser<T>::TreeTraverser( int depth, TreeAln &traln, LikelihoodEvaluator&
 template<class T>
 void TreeTraverser<T>::traverse()
 {
-  auto floatingBranch = BranchLengths(0,0); 
-  auto branchAfterPrune = BranchPlain(0,0);
+  auto floatingBranch = BranchLengths{}; 
+  auto branchAfterPrune = BranchPlain{};
 
   std::tie(floatingBranch, branchAfterPrune) = _traln.get().pruneSubtree(_prunedSubtree, _rootOfTraversed, _params); 
 
@@ -58,8 +58,10 @@ void TreeTraverser<T>::testInsert( const BranchPlain &insertBranch, BranchLength
       // coming from (while descending), so this is the point, where
       // we have to insert the branch length
 
-      floatingBranch.setPrimNode(_prunedSubtree.getPrimNode()); 
-      floatingBranch.setSecNode( insertBranch.getPrimNode() ); 
+      // floatingBranch.setPrimNode(_prunedSubtree.getPrimNode()); 
+      // floatingBranch.setSecNode( insertBranch.getPrimNode() ); 
+      
+      floatingBranch = BranchLengths(BranchPlain(_prunedSubtree.getPrimNode(),insertBranch.getPrimNode() ), floatingBranch.getLengths()); 
       
       _traln.get().insertSubtree( _prunedSubtree,  insertBranch, floatingBranch, _params); 
 
@@ -70,13 +72,13 @@ void TreeTraverser<T>::testInsert( const BranchPlain &insertBranch, BranchLength
       for(auto v : dirtyNodes)
       	_eval.get().invalidateArray(_traln, v); 
 
-      auto insert = _insertEval.getResult(_eval, _traln, insertBranch, _prunedSubtree, floatingBranch.toPlain(), _params);
+      auto insert = _insertEval.getResult(_eval, _traln, insertBranch, _prunedSubtree, floatingBranch, _params);
       _result.push_back(insert);	
 
-      auto floatAfterPrune = BranchLengths(0,0); 
-      auto branchAfterPrune = BranchPlain(0,0); 
+      auto floatAfterPrune = BranchLengths{}; 
+      auto branchAfterPrune = BranchPlain{};
 
-      std::tie( floatAfterPrune, branchAfterPrune) = _traln.get().pruneSubtree(_prunedSubtree, floatingBranch.toPlain(), _params); 
+      std::tie( floatAfterPrune, branchAfterPrune) = _traln.get().pruneSubtree(_prunedSubtree, floatingBranch, _params); 
       
       // assure correct pruning 
       // not good anyway

@@ -11,6 +11,7 @@
 
 #include "LocalSwap.hpp"
 
+using namespace std;
 
 PendingSwap::PendingSwap( SwapElem swap, bool isLocal )
   : _impl{nullptr}

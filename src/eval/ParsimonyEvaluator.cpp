@@ -1,5 +1,15 @@
 #include "ParsimonyEvaluator.hpp"
 
+
+
+// not messing around with pll.h any more, let's declare it right here: 
+extern "C"
+{
+  void newviewParsimony(pllInstance *tr, partitionList *pr, nodeptr  p); 
+  unsigned int evaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, boolean full); 
+}
+
+
 void ParsimonyEvaluator::disorientNode(nodeptr p)
 {
   if(p->xPars == 1 )
@@ -17,9 +27,9 @@ void ParsimonyEvaluator::evaluateSubtree(TreeAln &traln, nodeptr p)
 }
 
 
-std::array<nat,2> ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool fullTraversal ) 
+std::array<nat,3> ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool fullTraversal ) 
 {
-  auto result = std::array<parsimonyNumber,2>{{0,0}}; 
+  auto result = std::array<parsimonyNumber,3>{{0,0,0}}; 
 
   auto &pHandle = traln.getPartitionsHandle();
   auto &tHandle = traln.getTrHandle();
@@ -32,28 +42,21 @@ std::array<nat,2> ParsimonyEvaluator::evaluate(TreeAln &traln, nodeptr p, bool f
     {
       auto &partition = traln.getPartition(i); 
       // HACK 
-      switch(partition.getStates())
+      switch(partition.getDataType())
 	{
-	case 4: 
-	  result[0] += partition.getPartitionParsimony(); 
+	case PLL_BINARY_DATA: 
+	  result[0] += partition.getPartitionParsimony();
 	  break; 
-	case 20: 
+	case PLL_DNA_DATA: 
 	  result[1] += partition.getPartitionParsimony(); 
+	  break; 
+	case PLL_AA_DATA: 
+	  result[2] += partition.getPartitionParsimony(); 
 	  break; 
 	default : 
 	  assert(0); 
 	}
     }
-
-  // meh 
-  // if(doParallelReduce)
-  //   {
-  //     auto tmp = std::vector<nat> {result[0], result[1]}; 
-  //     _commPtr->allReduce(tmp); 
-  //     result[0]= tmp[0]; 
-  //     result[1] = tmp[1]; 
-  //   }
-  
 
   return result; 
 }

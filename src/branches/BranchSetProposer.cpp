@@ -52,8 +52,8 @@ void BranchSetProposer::findJointOptimum(LikelihoodEvaluator& eval, int maxIter,
 	    {
 	      auto optBranch = optParam.getOptimizedBranch(); 
 	      auto p = optParam.getParam(); 
-	      auto lenNow = optBranch.getInterpretedLength( p);
-	      auto lenOld = _traln.get().getBranch(b,p).getInterpretedLength( p); 
+	      auto lenNow = optBranch.toMeanSubstitutions( p->getMeanSubstitutionRate());
+	      auto lenOld = _traln.get().getBranch(b,p).toMeanSubstitutions( p->getMeanSubstitutionRate()); 
 	      // tout << ctr << "\t" << b << "\t" << MAX_SCI_PRECISION << SHOW(lenNow) << SHOW(lenOld) << std::endl; 
 	      
 	      if(not BoundsChecker::checkBranch(optBranch))
@@ -113,13 +113,16 @@ void BranchSetProposer::reorderToConnectedComponent()
       
       for(auto iter = res1.first ; iter != res1.second; ++iter)
 	{
-	  if(not iter->second.equalsUndirected(b) )
+
+   // ->second.equalsUndirected(b)
+	  if(not (iter->second == b || b.getInverted() == iter->second) )
 	    result.push_back( iter->second);
 	}
       
       for(auto iter = res2.first; iter != res2.second; ++iter)
 	{
-	  if(not iter->second.equalsUndirected(b))
+	  // if(not (iter->second.equalsUndirected(b))
+	  if(not (iter->second == b || iter->second == b.getInverted()))
 	    result.push_back(iter->second); 
 	}
 

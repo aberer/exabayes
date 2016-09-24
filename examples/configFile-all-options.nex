@@ -54,6 +54,8 @@ begin params;
 [ brlens    = (0-3)   ]    [ branch lengths ] 
 [ aaModel   = (0-3)   ]    [ fixed-rate amino acid substitution matrix ] 
 
+[ brlens    = (0:3)   ]    [ branch lengths are now linked by default. Use this statement to UNLINK branch lengths (assuming, you have 4 partitions) ] 
+
 [ syntax for linking: ] 
 [ brlens = (0-3)      ]    [ linked: one branch length parameter, linked across all 4 partitions ]
 [ brlens = (0:3)      ]    [ unlinked: 4 branch length parameters (one for each partition)  ] 
@@ -144,11 +146,11 @@ begin proposals;
   [ likeSpr      2 ]		[ new posterior guided SPR ]
 
   [ BRANCH LENGTHS proposals ] 
-  [ branchMulti    0 ] 
+  [ branchMulti    7 ]
   [ treeLengthMult 1  ] 
   [ nodeSlider     0  ] 
-  [ blDistGamma    9  ]         [ efficient Newton-Raphson-based branch length proposal ]
-  [ biasBLMult     1  ]         [ branch length multiplier that preferably samples short branch lengnths ]
+  [ blDistGamma    7  ]         [ efficient Newton-Raphson-based branch length proposal ]
+  [ biasBLMult     0  ]         [ branch length multiplier that preferably samples short branch lengnths ]
 
   [ RATE HETEROGENEITY ]
   [ rateHetMulti   1  ] 

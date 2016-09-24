@@ -205,7 +205,7 @@ void CommandLine::initialize(  int argc, char **argv)
       if(singleModel.compare("") == 0 && ( modelFile.compare("") == 0 || not std::ifstream(modelFile) )  )
 	{
 	  std::cout << "Found a phylip-style alignment file. However, you did not provide a\n"
-		    << "model file (see -q, resp. it coul not be found) or a data type specification for a single\n"
+                    << "model file (see -q, resp. it could not be found) or a data type specification for a single\n"
 		    << "partition (-m). Cannot proceed.\n" ; 
 	  exitFunction(-1, true); 
 	}
@@ -254,7 +254,7 @@ void CommandLine::printHelp(std::ostream& out)
       << "                       remaining chains. If a tree contains branch lengths, these branch lengths will be used\n"
       << "                       as initial values.\n\n"
       << "    -m model         indicates the type of data for a single partition non-binary alignment file\n" 
-      << "                       (valid values: DNA or PROT)\n\n"
+      << "                       (valid values: BIN, DNA or PROT)\n\n"
       << std::endl;     
 
   out <<      "\n" 

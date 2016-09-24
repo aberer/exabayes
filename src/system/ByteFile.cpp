@@ -3,14 +3,13 @@
 #include "Bipartition.hpp"
 #include "PartitionAssignment.hpp"
 
-#include <cassert>
-#include <cstring>
-
 #include "BandWidthTest.hpp"
 
 #include "ParallelSetup.hpp"
 
-// #define OLD_ALN_LAYOUT
+#include <iostream>
+#include <cassert>
+#include <cstring>
 
 #define DIRECT_READ
 
@@ -24,7 +23,6 @@ ByteFile::ByteFile(std::string name, bool saveMemory)
   , _partitions{}
   , _saveMemory{saveMemory}
   , _weightType{IntegerWidth::BIT_8}
-  // , _initTime{getTimePoint()}
 {
 }
 
@@ -138,7 +136,9 @@ std::tuple<int,int> ByteFile::parseHeader(ParallelSetup& pl)
   
   int numTax = readVar<int>();
   int numPart = readVar<int>();
-  _numPat = readVar<decltype(_numPat)>();
+  _numPat = readVar<// decltype(_numPat)
+    int
+		    >();
   int lenOfWeights = readVar<int>(); 
 
   _weightType = IntegerWidth(lenOfWeights); 
@@ -154,22 +154,15 @@ void ByteFile::parse(ParallelSetup& pl )
   auto numTax = int(0); 
   auto numPart = int(0); 
   std::tie(numTax, numPart) = parseHeader(pl);
-  
+
   // must be done here, because of the variable length strings
   parseTaxa(numTax); 
   parsePartitions(numPart);
-  
-  // tout << "[ "  << getDuration(_initTime) << "] parsed partitions" << std::endl; 
-  
+
   auto size = pl.getChainComm().size(); 
   auto pAss = PartitionAssignment(size); 
   pAss.assign(_partitions);
 
-  // tout << "assignment: " << std::endl; 
-  // for(auto &p : pAss.getAssignment())
-  //   tout << p.second << std::endl; 
-  // tout << "[ "  << getDuration(_initTime) << "] assigned partitions" << std::endl; 
-  
   switch(_weightType)
     {    
     case IntegerWidth::BIT_8: 
@@ -188,26 +181,7 @@ void ByteFile::parse(ParallelSetup& pl )
       assert(0); 
     }
 
-  // tout << "[ "  << getDuration(_initTime) << "] parsed weights" << std::endl ;
-  // _initTime = getTimePoint();
-
-#ifdef OLD_ALN_LAYOUT
-#ifndef DIRECT_READ 
-  parseAlns(pl, pAss); 
-#else
   parseAlnsDirectRead(pl, pAss); 
-#endif 
-
-#else  // major 
-
-#ifndef DIRECT_READ
-#error "not implemented yet"  
-#else 
-  parseAlnsDirect_newLayout(pl, pAss); 
-#endif 
-  
-#endif
-  // tout << "[ "  << getDuration(_initTime) << "] parsed alignment" << std::endl; 
 }
 
 
@@ -327,12 +301,16 @@ void ByteFile::parseAlnsDirectRead(ParallelSetup& pl, PartitionAssignment& pAss)
 	  // ioTime += getDuration(itime); 
 	  ++ctr; 
 	}
+
+      // tout << aln << std::endl; 
+
       partition.setAlignment(shared_pod_ptr<uint8_t>(aln), assignment.width); 
     }
 
   // tout << "[ "  << getDuration(_initTime) << "] computed parsimony" << std::endl; 
   // tout << "io-time: " << ioTime << "\tmallocTime" << mallocTime << std::endl; 
   // _initTime = getTimePoint();
+
 }
 
 
@@ -383,8 +361,6 @@ void ByteFile::parseWeights(ParallelSetup& pl, PartitionAssignment &pAss)
 {
   seek(Position::WEIGHTS ); 
 
-#ifdef DIRECT_READ
-
   auto assigns = pAss.getAssignment(); 
   auto wgtPos = std::streamoff(_in.tellg()); 
   auto range = assigns.equal_range(pl.getChainComm().getRank() ); 
@@ -401,42 +377,11 @@ void ByteFile::parseWeights(ParallelSetup& pl, PartitionAssignment &pAss)
 
       // more efficient copy possible? probably not, since we change the size of the integer 
 
-      // auto && so = SyncOut()  ; 
-      // so << "weights "   << pl.getGlobalComm().getRank() << "\t" << assignment.offset << "\t"; 
       for(nat i = 0; i < arrForReading.size(); ++i) 
-	{
-	  wgts[i] = arrForReading[i]; 
-	  // so << wgts[i] << "," ; 
-	}
-      // std::cout << so << std::endl ;
+	wgts[i] = arrForReading[i]; 
 
       partition.setWeights(shared_pod_ptr<int>(wgts), assignment.width); 
     }
-
-
-#else 
-  // fetch my own weights 
-  auto &&arrs = readAndDistributeArrays<T>(pl, pAss,1); 
-  auto &&arr = arrs[0]; 
-
-  auto arrIter = begin(arr); 
-
-  auto range = pAss.getAssignment().equal_range(pl.getChainComm().getRank()); 
-  for(auto iter = range.first; iter != range.second; ++iter)
-    {
-      auto assignment = iter->second; 
-      // tout << assignment << std::endl; 
-      auto wgts = aligned_malloc<int,size_t (EXA_ALIGN) >(assignment.width);
-      // tout << "allocated " << assignment.width << std::endl; 
-
-      std::copy(arrIter, arrIter + assignment.width, wgts); 
-  
-      arrIter += assignment.width; 
-      auto &p = _partitions.at(assignment.partId); 
-      p.setWeights(shared_pod_ptr<int>(wgts), assignment.width);
-
-    }
-#endif
 } 
 template void ByteFile::parseWeights<uint32_t>(ParallelSetup& pl, PartitionAssignment &pAss); 
 template void ByteFile::parseWeights<uint16_t>(ParallelSetup& pl, PartitionAssignment &pAss); 
@@ -454,11 +399,10 @@ void ByteFile::parseTaxa(int numTax)
       int len = readVar<int>(); 
       auto arr = readArray<char>(len-1); 
       auto str = std::string(begin(arr), end(arr)); 
-      // tout << "parsed >"<< str  << "<"<< std::endl; 
       _taxa.push_back(str);
+
       readVar<char>(); 
     }
-  // tout << "after taxa, pos was: "<< _in.tellg() << std::endl;
 }
 
 
@@ -477,9 +421,6 @@ void ByteFile::parsePartitions(int numPart)
       auto maxTipStates = readVar<decltype(p.maxTipStates)>(); 
       auto lower = readVar<decltype(p.lower)> (); 
       auto upper = readVar<decltype(p.upper)>(); 
-
-      readVar<decltype(p.width)>(); // auto width = 
-
       auto dataType = readVar<decltype(p.dataType)>();
       auto protModel = readVar<decltype(p.protModels)>(); 
       auto protFreqs = readVar<decltype(p.protUseEmpiricalFreqs)>(); 
@@ -503,7 +444,7 @@ void ByteFile::parsePartitions(int numPart)
 
       _partitions.push_back(partition); 
 
-      // tout << "parsed partition " << i << ": " << partition.getLower() << "\t" << partition.getUpper() << std::endl; 
+      // tout << "parsed partition " << i << ": " << partition.getLower() << "\t" << partition.getUpper() << "\twidth" << partition.getWidth()  << std::endl; 
     }
 
   // tout << "after parsing partitions, pos was "<< _in.tellg() << std::endl;
@@ -529,7 +470,7 @@ void ByteFile::seek(Position pos)
 	toSkipHere += _partitions.size() * sizeof(double); 
 
 	auto oneElem = 
-	  sizeof(ps.states) + sizeof(ps.maxTipStates) + sizeof(ps.lower) + sizeof(ps.upper) + sizeof(ps.width) + 
+	  sizeof(ps.states) + sizeof(ps.maxTipStates) + sizeof(ps.lower) + sizeof(ps.upper) + 
 	  sizeof(ps.dataType) + sizeof(ps.protModels) + sizeof(ps.protUseEmpiricalFreqs) + sizeof(ps.nonGTR); 
 	toSkipHere += _partitions.size() * (oneElem + sizeof(int)); 
 
@@ -583,6 +524,8 @@ void ByteFile::checkMagicNumber()
 
 std::vector<Partition> ByteFile::getPartitions() const 
 {
+  
+
   return _partitions; 
 }
 

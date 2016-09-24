@@ -1,8 +1,8 @@
 #! /bin/bash
 
-topdir=$(dirname  $0 )/../
+topdir=$(realpath $(dirname  $0 )/../) 
 
-# seed=$RANDOM			# 
+seed=$RANDOM			# 
 seed=12345
 
 # src/proposals/
@@ -12,7 +12,7 @@ withTree=0
 # extraArgs=" -S "
 extraArgs="    "  
 
-doParse=0
+doParse=1
 
 # early with 150 , VERIFIED 
 # seed=31853
@@ -25,18 +25,18 @@ dotests=0
 
 # important: if you do not have google-perftools (and the respective
 # *-dev ) package installed, then you should turn this off
-useGoogleProfiler=0
-useClang=1
+useGoogleProfiler=1
+useClang=0
 
 cflags=""
-cxxflags=""  #  -stdlib=libc++ 
-
-GDB=cgdb
+cxxflags=""  #  -stdlib=libc++  -rdynamic
 
 
 if [ $dotests == 1 ]; then
     args="$args --enable-tests"
 fi
+
+# args="$args --disable-sse"
 
 # args="$args --disable-silent-rules"
 # args="$args" 			#    --disable-sse
@@ -80,6 +80,9 @@ mode=$1
 codeBase=$2
 dataset=$3
 
+
+builddir=/tmp/exabayes
+
 # poor...
 shift  
 shift  
@@ -99,14 +102,14 @@ case $mode in
     debug)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -e $GDB  -ex run  --args "  #   	
+	gdb="$TERM -e gdb -ex run --args "  #   	
 	;;
     default)
 	;;
     valgrind)
 	cflags="$cflags -O0 -g"
 	cxxflags="$cxxflags -O0 -g"
-	gdb="$TERM -hold -e valgrind --track-origins=yes --show-reachable=yes --leak-check=full --tool=memcheck  " #    --leak-check=full --track-origins=yes
+	gdb="$TERM -hold -e valgrind --track-origins=yes --leak-check=full --tool=memcheck  " #    --leak-check=full --track-origins=yes  --show-reachable=yes
 	;;
     *)
 	echo "mode must be debug, default or valgrind"
@@ -116,16 +119,15 @@ esac
 
 configFile=$pathtodata/config.nex
 
-args="$args --enable-mpi"
+# args="$args --enable-mpi"
 
 if [ "$withTree" = "1" ]; then
-    if [ !  -f data/$dataset/tree ]; then
+    if [ !  -f $topdir/data/$dataset/tree ]; then
 	echo "could not find data/$dataset/tree"
 	exit 
     fi
 
-    extraArgs="$extraArgs -t data/$dataset/tree"
-    
+    extraArgs="$extraArgs -t $topdir/data/$dataset/tree"
 fi
 
 
@@ -144,7 +146,7 @@ if [ "$codeBase" == "mpi" ]; then
     CC="$ccompiler"  
     CXX="$cxxcompiler"  
     
-    baseCall="mpirun -np $numProc  $gdb ./exabayes $alnArg -n $runid -s $seed  $extraArgs -c $configFile $extra"
+    baseCall="mpirun -np $numProc  $gdb  ./exabayes $alnArg -n $runid -s $seed  $extraArgs -c $configFile $extra"
 
 elif [ "$codeBase" == "thread" ]; then 
     CC="$ccompiler"
@@ -185,6 +187,11 @@ if [ "$libs" != "" ]; then
     args="$args LIBS=\""$libs"\""
 fi
 
+################ change dir ################
+
+cd $builddir
+
+
 rm -f exabayes yggdrasil
 if [ -f status ] ; then 
     prevStat=$(cat status)
@@ -192,7 +199,7 @@ else
     prevStat=""
 fi 
 
-cmd="$topdir/configure $args"
+cmd="$(realpath $topdir/configure) $args"
 
 if [ "$prevStat"  == "$cmd" ]  
 then     
@@ -201,7 +208,10 @@ else
     echo "config before: >"$prevStat"<"
     echo "config    now: >$cmd<"
 
-    rm -f  Makefile     
+    rm -f  Makefile
+
+    mkdir -p $builddir
+    cd $builddir
     eval $cmd
 
     echo "configuring with $cmd"

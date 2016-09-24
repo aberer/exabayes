@@ -65,7 +65,12 @@ void LikehoodSprProposer::determineBackProb(TreeAln &traln, LikelihoodEvaluator&
   
   // find the correct element for the reverse move
   auto backInsertIter = std::find_if(begin(insertsForRevMove), end(insertsForRevMove),
-				     [&]( const InsertionResult& elem) { return elem.getBranch().equalsUndirected(backBranch); }); 
+				     [&]( const InsertionResult& elem) 
+				     { 
+				       // return elem.getBranch().equalsUndirected(backBranch); 
+				       return elem.getBranch() == backBranch 
+				       ||  elem.getBranch() == backBranch.getInverted(); 
+				     }); 
   assert(backInsertIter != end(insertsForRevMove)); 
   
   _backProb = backInsertIter->getInsertionProb(); 
@@ -79,7 +84,7 @@ BranchPlain LikehoodSprProposer::determinePrimeBranch(const TreeAln &traln, Rand
   do 
     {
       prunedTree  = TreeRandomizer::drawBranchWithInnerNode(traln,rand); 
-      p = prunedTree.findNodePtr(traln);
+      p = traln.findNodePtr(prunedTree);
       pn = p->next->back; 
       pnn = p->next->next->back;         
 

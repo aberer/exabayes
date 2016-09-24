@@ -19,7 +19,10 @@ public:
   virtual log_double getLogProb(const ParameterContent& content ) const ; 
   virtual void print(std::ostream &out) const ;
 
-  double getFirstDerivative( const AbstractParameter& param) const {assert(0); return 0; } // doesnt have that 
+  double getFirstDerivative( const AbstractParameter& param) const {assert(0); return 0; } // doesnt have that
+
+  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const
+    { assert(0); return log_double();}
 
   virtual AbstractPrior* clone()const { return new  DiscreteModelPrior(*this) ; }
 private: 

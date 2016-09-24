@@ -1,7 +1,8 @@
 #ifndef _GAMMA_PROPOSER_HPP
 #define _GAMMA_PROPOSER_HPP
 
-#include "Branch.hpp"
+// #include "Branch.hpp"
+#include "BranchLength.hpp"
 #include "extensions.hpp"
 
 class AbstractParameter; 

@@ -9,45 +9,78 @@ green='\e[0;32m'
 # configure this 
 # see  play.h-its.org:/home/andre/compilers for the setup 
 
-GCC_BIN_DIR=../../gcc/bin/
-CLANG_DIR=../../clang/
+GCC_VERSIONS=(4.8 4.9 5 6)
+CLANG_VERSIONS=(3.4 3.5 3.6 3.7 3.8 3.9 4.0)
 
-numcores=48
+numcores=4
 
-# check gcc versions 
-for elem in $(ls $GCC_BIN_DIR)
-do 
-    ./configure CC="ccache $GCC_BIN_DIR/$elem/bin/gcc" CXX="ccache $GCC_BIN_DIR/$elem/bin/g++" > /dev/null 
-    make clean  > /dev/null
-    make -j$numcores  > /dev/null
+# check gcc versions
+for elem in ${GCC_VERSIONS[*]}
+do
+    WARNLOG=warnlog-gcc$elem-without-mpi.log
 
-    if [ $? != 0 ]; then
-	echo -e  "[ ${red} failure ${NC} ] with $elem"
-    else  
-	echo -e  "[ ${green} OK ${NC} ] with $elem"
-    fi
-done 
-
-
-# check clang versions  
-for elem in $(ls $CLANG_DIR)
-do 
-    ./configure --enable-mpi \
-	CC="ccache $CLANG_DIR/$elem/bin/clang" \
-	CXX="ccache $CLANG_DIR/$elem/bin/clang++" \
-	CXXFLAGS="-stdlib=libstdc++ -nostdinc++ -Wno-unreachable-code -I$GCC_BIN_DIR/gcc-4.9.0/include/c++/4.9.0 -I$GCC_BIN_DIR/gcc-4.9.0/include/c++/4.9.0/./x86_64-unknown-linux-gnu "  \
-	CPPFLAGS="-Qunused-arguments" \
-	LDFLAGS="-L$GCC_BIN_DIR/gcc-4.9.0/lib64 "   > /dev/null 
-    
-    make clean > /dev/null 
-    make  -j48  > /dev/null 
+    ./configure CC="ccache gcc-$elem" CXX="ccache g++-$elem" > /dev/null
+    make clean > /dev/null
+    make -j$numcores  > /dev/null 2> $WARNLOG
 
     if [ $? != 0 ]; then
-	echo -e  "[ ${red} failure ${NC} ] with $elem"
-    else  
-	echo -e  "[ ${green} OK ${NC} ] with $elem"
+        echo -e  "[ ${red} failure ${NC} ] with GCC $elem (no MPI)"
+    else
+        echo -e  "[ ${green} OK ${NC} ] with GCC $elem (no MPI)"
     fi
-done 
+done
 
+# check gcc versions with MPI
+for elem in ${GCC_VERSIONS[*]}
+do
+    WARNLOG=warnlog-gcc$elem-mpi.log
 
+    ./configure --enable-mpi MPICXX="mpic++.openmpi" OMPI_CXX="ccache g++-$elem" CC="ccache gcc-$elem" CXX="ccache g++-$elem" > /dev/null
+    make clean > /dev/null
+    make -j$numcores  > /dev/null 2> $WARNLOG
 
+    if [ $? != 0 ]; then
+        echo -e  "[ ${red} failure ${NC} ] with GCC $elem (MPI)"
+    else
+        echo -e  "[ ${green} OK ${NC} ] with GCC $elem (MPI)"
+    fi
+done
+
+# check clang versions
+for elem in ${CLANG_VERSIONS[*]}
+do
+    WARNLOG=warnlog-gcc$elem-without-mpi.log
+
+    ./configure CC="ccache clang-$elem" \
+                CXXFLAGS="-stdlib=libc++" \
+                CXX="ccache clang++-$elem" > /dev/null
+
+    make clean > /dev/null
+    make -j$numcores > /dev/null 2> $WARNLOG
+
+    if [ $? != 0 ]; then
+        echo -e  "[ ${red} failure ${NC} ] with clang-$elem (no MPI)"
+    else
+        echo -e  "[ ${green} OK ${NC} ] with clang-$elem (no MPI)"
+    fi
+done
+
+# check clang versions with MPI
+for elem in ${CLANG_VERSIONS[*]}
+do
+    WARNLOG=warnlog-gcc$elem-mpi.log
+
+    ./configure MPICXX="mpic++.openmpi" OMPI_CXX="ccache clang++-$elem" \
+                CC="ccache clang-$elem" \
+                CXXFLAGS="-stdlib=libc++" \
+                CXX="ccache clang++-$elem"  > /dev/null
+
+    make clean > /dev/null
+    make -j$numcores > /dev/null 2> $WARNLOG
+
+    if [ $? != 0 ]; then
+        echo -e  "[ ${red} failure ${NC} ] with $elem (MPI)"
+    else
+        echo -e  "[ ${green} OK ${NC} ] with $elem (MPI)"
+    fi
+done

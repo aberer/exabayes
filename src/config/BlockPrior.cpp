@@ -104,7 +104,7 @@ std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)
 	      auto modelRes = ProtModelFun::getModelFromStringIfPossible(token.GetToken()); 
 	      if(not std::get<0>(modelRes) )
 		{
-		  std::cerr << "Error: expected " << token.GetToken() << "to be a valid protein model name" << std::endl; 
+		  std::cerr << "Error: expected " << token.GetToken() << " to be a valid protein model name" << std::endl; 
 		  exitFunction(-1, true); 
 		}
 	      auto model = std::get<1>(modelRes);

@@ -40,6 +40,7 @@ typedef unsigned int nat;
 #define TARGET_RATIO 0.25    ///  the golden acceptance ratio, we want to achieve
 #define ACCEPTED_LIKELIHOOD_EPS 1e-6
 #define ACCEPTED_LNPR_EPS 1e-6
+#define ACCEPTED_FREQ_EPS 1e-6
 
 /* some global switches */ 
 
@@ -60,11 +61,11 @@ typedef unsigned int nat;
 
 /* verification */
 /* #define DEBUG_LNL_VERIFY */
-/* #define DEBUG_VERIFY_LNPR */
+// #define DEBUG_VERIFY_LNPR
 
 /* many print statements  */
 
-/* #define DEBUG_SHOW_EACH_PROPOSAL */
+// #define DEBUG_SHOW_EACH_PROPOSAL
 /* #define PRINT_LIKESPR_INFO */
 /* #define LNL_PRINT_DEBUG */
 

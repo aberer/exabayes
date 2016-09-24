@@ -1,11 +1,12 @@
 #include "FrequencyParameter.hpp"
 #include "BoundsChecker.hpp"
 #include "DnaAlphabet.hpp"
+#include "BinaryAlphabet.hpp"
 #include "AminoAcidAlphabet.hpp"
 #include "RateHelper.hpp"
 
 
-void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content) const
+void FrequencyParameter::applyParameter(TreeAln& traln, const ParameterContent &content)
 { 
   auto tmp = content.values; 
   
@@ -50,6 +51,9 @@ void FrequencyParameter::printAllComponentNames(std::ostream &fileHandle, const 
   std::vector<std::string> names; 
   switch(content.values.size())
     {
+    case 2: 
+      names = BinaryAlphabet().getStates(); 
+      break; 
     case 4:       
       names = DnaAlphabet().getStates() ; 
       break; 

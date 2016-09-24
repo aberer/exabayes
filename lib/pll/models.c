@@ -3341,7 +3341,6 @@ static void initGeneric(const int states,
 	*eptr++ = EIGV[i][j];	 /* EIGV: Eigenvalues */ 
 	
       }
-  
   for (i = 0; i < states; i++)
     for (j = 0; j < states; j++)
       {
@@ -3351,26 +3350,6 @@ static void initGeneric(const int states,
 	  EI[i * states + j] = EV[i * states + j] * invfreq[i];   /* EV = Eigenvector, EI = Inverse Eigenvector,   $ u_{i,x}^{-1} = \pi_x u_{x,i} */
       }
   
-  /* 
-     printf("EIGN\n");
-
-     for(i = 0; i < states; i++)
-     printf("%f ", ext_EIGN[i]);
-     printf("\n");
-
-     printf("EI\n");
-     for(i = 0; i < states; i++)
-     {
-     for(j = 0; j < states; j++)
-     {
-     printf("%f ", EI[i * states + j]);             
-     }
-     printf("\n");
-    }
-  */
-  
-
-
   for (i = 0; i < valueVectorLength; i++)
     {
       unsigned int value = valueVector[i];
@@ -3834,7 +3813,7 @@ void pllMakeGammaCats(double alpha, double *gammaRates, int K, boolean useMedian
 	t = 0.0; 
       
       for(i = 0; i < K; i++)     
-	gammaRates[i] = PointGamma((double)(i * 2 + 1) * middle, alfa, beta);
+        gammaRates[i] = PLL_POINT_GAMMA((double)(i * 2 + 1) * middle, alfa, beta);
       
       for (i = 0; i < K; i++) 
 	t += gammaRates[i];
@@ -3846,7 +3825,7 @@ void pllMakeGammaCats(double alpha, double *gammaRates, int K, boolean useMedian
       lnga1 = LnGamma(alfa + 1);
 
       for (i = 0; i < K - 1; i++)
-	gammaProbs[i] = PointGamma((i + 1.0) / K, alfa, beta);
+        gammaProbs[i] = PLL_POINT_GAMMA((i + 1.0) / K, alfa, beta);
 
       for (i = 0; i < K - 1; i++)
 	gammaProbs[i] = IncompleteGamma(gammaProbs[i] * beta, alfa + 1, lnga1);   

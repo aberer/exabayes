@@ -2,7 +2,9 @@
 #define _BOUNDS_CHECKER
 
 #include <vector>
-#include "Branch.hpp"
+// #include "Branch.hpp"
+#include "BranchLength.hpp"
+#include "BranchLengths.hpp"
 
 
 class BoundsChecker

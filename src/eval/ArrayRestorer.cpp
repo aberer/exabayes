@@ -3,7 +3,6 @@
 #include <cassert>
 
 #include "ArrayRestorer.hpp" 
-#include "Branch.hpp"
 #include "GlobalVariables.hpp"
 
 #include "ArrayReservoir.hpp"
@@ -217,7 +216,7 @@ void ArrayRestorer::traverseAndCache(TreeAln &traln, nodeptr virtualRoot, nat mo
 void ArrayRestorer::resetRestorer(const TreeAln &traln, ArrayOrientation &curOrient)
 {
   for(auto &p : partitionLikelihoods)
-    p.isCached = std::vector<bool>(traln.getNumberOfInnerNodes(), false); 
+    p.isCached = std::vector<bool>(traln.getNumberOfInnerNodes(false), false); 
   
   arrayOrientation = curOrient; 
 

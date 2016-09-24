@@ -10,7 +10,7 @@ public:
   ExponentialPrior(double lambda) ; 
   virtual bool needsIntegration() const {return true; } 
   virtual log_double getLogProb(const ParameterContent& content) const  ; 
-  log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const  ;
+  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const  ;
   virtual ParameterContent drawFromPrior(Randomness &rand)  const ; 
   virtual void print(std::ostream& out ) const  ; 
   virtual double getLamda()  const  { return _lambda; } 

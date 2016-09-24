@@ -122,12 +122,18 @@ static void printInfoHeader(CommandLine& cl)
     ss << "the multi-threaded MPI hybrid variant of " ; 
 
   ss << PROGRAM_NAME << " (version " << VERSION << "),\n"; 
-  ss << "a tool for Bayesian MCMC sampling of phylogenetic trees, build with the" ; 
+  ss << "a tool for Bayesian MCMC sampling of phylogenetic trees, build with "
+    "the" ; 
 
-  ss << "\nPhylogenetic Likelihood Library (version " << PLL_LIB_VERSION << ", " << PLL_LIB_DATE << ")." ; 
+  ss << "\nPhylogenetic Likelihood Library (version "
+     << PLL_LIB_VERSION << ", " << PLL_LIB_DATE << ")." ; 
 
-  ss <<  "\n\nThis software has been released in " << RELEASE_DATE <<  " by \n\n\tAndre J. Aberer, Kassian Kobert and Alexandros Stamatakis\n" 
-       << "\nPlease send any bug reports, feature requests and inquiries to " << PACKAGE_BUGREPORT << "\n\n"; 
+  ss <<  "\n\nThis software has been released on " << RELEASE_DATE <<
+    "\n(git commit id:" << GIT_COMMIT_ID << ")"
+    "\n\n\tby Andre J. Aberer, Kassian Kobert and Alexandros "
+    "Stamatakis\n" 
+       << "\nPlease send any bug reports, feature requests and inquiries to "
+     << PACKAGE_BUGREPORT << "\n\n"; 
 
   ss << "The program was called as follows: \n" ; 
   ss << cl.getCommandLineString() << "\n" ; 

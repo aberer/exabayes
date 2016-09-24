@@ -2,11 +2,51 @@
 # GENENRAL 
 
 AUTOMAKE_OPTIONS= foreign subdir-objects
-EXTRA_DIST=./lib/Random123-1.08 ./examples/* ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.txt ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c  ./manual/library2.html
-noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a libpll.a libpll_model.a 
-bin_PROGRAMS = yggdrasil    sdsf postProcParam credibleSet extractBips consense parser 	
 
-.PHONY: my-update-src doc mydist  man  dist
+EXTRA_DIST= src/releaseDate.hpp lib/Random123-1.08  LICENSE.txt lib/pll/avxLikelihood.c examples
+noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a libpll.a libpll_model.a 
+bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractBips consense
+dist_doc_DATA = ./CHANGELOG  ./README.md ./COPYING
+
+# shared/doc/manual
+docmanualdir=$(docdir)/manual
+dist_docmanual_DATA= \
+./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png \
+./manual/img/banner2.png ./manual/manual.html ./manual/library2.html
+
+# shared/doc/examples
+docexamplesdir=$(docdir)/examples
+dist_docexamples_DATA = examples/configFile-all-options.nex
+
+# shared/doc/examples/dna-unpartitioned
+docexamples1dir=$(docdir)/examples/dna-unpartitioned
+dist_docexamples1_DATA=examples/dna-unpartitioned/call-parallel.sh \
+examples/dna-unpartitioned/call.sh examples/dna-unpartitioned/config.nex
+
+# shared/doc/examples/aa
+docexamplesdir2dir=$(docdir)/examples/aa
+dist_docexamplesdir2_DATA=examples/aa/call-parallel.sh examples/aa/call.sh \
+examples/aa/config.nex
+
+# shared/doc/examples/aa-revmat
+docexamplesdir3dir=$(docdir)/examples/aa-revmat
+dist_docexamplesdir3_DATA=examples/aa-revmat/call-parallel.sh \
+examples/aa-revmat/call.sh \
+examples/aa-revmat/aln.phy examples/aa-revmat/config.nex
+
+# shared/doc/examples/dna-partitioned
+docexamplesdir4dir=$(docdir)/examples/dna-partitioned
+dist_docexamplesdir4_DATA=examples/dna-partitioned/call-parallel.sh \
+examples/dna-partitioned/call.sh examples/dna-partitioned/aln.phy \
+examples/dna-partitioned/aln.part examples/dna-partitioned/config.nex
+
+# shared/doc/examples/binary
+docexamplesdir5dir=$(docdir)/examples/aa
+dist_docexamplesdir5_DATA= examples/binary/aln.model \
+examples/binary/call-parallel.sh examples/binary/call.sh \
+examples/binary/aln.phy examples/binary/config.nex
+
+.PHONY: my-update-src doc man date dist
 
 
 ################################################################
@@ -14,14 +54,26 @@ bin_PROGRAMS = yggdrasil    sdsf postProcParam credibleSet extractBips consense 
 
 # enforce, once sanity is back: -Wsign-compare -Wtype-limits
 
-WARN_OFF= -Wno-unused-parameter -Wno-sign-conversion -Wno-unknown-pragmas -Wno-inline
-GCC_WARN= -Wcast-align   -Wchar-subscripts  -Wformat-nonliteral  -Wformat-y2k  -Wimport  -Wmissing-field-initializers -Wmissing-format-attribute  -Wpacked  -Wredundant-decls   -Wstack-protector   -Wswitch-default  -Wswitch-enum   -Wunreachable-code   -Wvariadic-macros  -Wvolatile-register-var -Wunused-label -Wunused-value -Wint-to-pointer-cast
+WARN_OFF= -Wno-unused-parameter -Wno-sign-conversion -Wno-unknown-pragmas \
+-Wno-inline
+GCC_WARN= -Wcast-align -Wchar-subscripts -Wformat-nonliteral -Wformat-y2k \
+-Wimport  -Wmissing-field-initializers -Wmissing-format-attribute  -Wpacked \
+-Wredundant-decls -Wstack-protector -Wswitch-default -Wswitch-enum \
+-Wunreachable-code -Wvariadic-macros -Wvolatile-register-var -Wunused-label \
+-Wunused-value -Wint-to-pointer-cast
 
 # the intel compiler way overdoes it with the warnings 
 # GCC_WARN+=-Weffc++   
 
-GCC_WARN_OFF= -Wno-suggest-attribute=noreturn   -Wno-unknown-warning-option  -Wno-unknown-warning   -Wno-missing-noreturn
-WARN_FLAGS=-Wall -Wextra -ansi -pedantic -Wcast-qual  -Wcomment -Wconversion -Wdisabled-optimization -Wfloat-equal  -Wformat  -Wformat=2 -Wformat-security  -Winit-self  -Winline -Winvalid-pch -Wmissing-braces -Wmissing-include-dirs -Wparentheses  -Wpointer-arith -Wreturn-type -Wsequence-point  -Wshadow -Wsign-compare -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch -Wtrigraphs  -Wuninitialized -Wunknown-pragmas  -Wwrite-strings -Wunused  -Wunused-function  -Wunused-variable -Wreturn-type   -Wmissing-declarations -Wundef  $(WARN_OFF) 
+GCC_WARN_OFF= -Wno-suggest-attribute=noreturn -Wno-unknown-warning-option \
+-Wno-unknown-warning -Wno-missing-noreturn
+WARN_FLAGS=-Wall -Wextra -pedantic -Wcast-qual -Wcomment -Wconversion \
+-Wdisabled-optimization -Wfloat-equal  -Wformat  -Wformat=2 -Wformat-security \
+-Winit-self -Winline -Winvalid-pch -Wmissing-braces -Wmissing-include-dirs \
+-Wparentheses -Wpointer-arith -Wreturn-type -Wsequence-point -Wshadow \
+-Wsign-compare -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch -Wtrigraphs \
+-Wuninitialized -Wunknown-pragmas  -Wwrite-strings -Wunused  -Wunused-function \
+-Wunused-variable -Wreturn-type -Wmissing-declarations -Wundef  $(WARN_OFF)
 
 if WITH_INTEL
 else 
@@ -58,9 +110,9 @@ endif
 AM_CFLAGS+=$(VECTOR_FLAGS)
 AM_CXXFLAGS+=$(VECTOR_FLAGS)
 
-folders=$(shell find $(top_srcdir)/src -type d | grep -v '.deps' | grep -v comm)
+folders=$(shell find $(top_srcdir)/src -type d | grep -v '.deps' | grep -v comm | grep -v apps)
 
-SRCINCLUDE=$(shell echo $(folders) | tr ' ' '\n' |  sed "s/\(.*\)/-I\1/" | tr '\n' ' ')  
+SRCINCLUDE=$(shell echo $(folders) | tr ' ' '\n' |  sed "s/\(.*\)/-I\1/" | tr '\n' ' ')
 SRCINCLUDE+= -I$(top_srcdir)/src/comm/ -I$(top_srcdir)/src/comm/threads
 
 RAND123_INCLUDES=-isystem $(top_srcdir)/lib/Random123-1.08/include/Random123 -isystem $(top_srcdir)/lib/Random123-1.08/include -isystem $(top_srcdir)/lib/Random123-1.08/examples
@@ -82,7 +134,7 @@ dummyFolds= ./src/comm/dummy $(commFolds)
 
 my-update-src:
 	@echo -n "" > src.am 
-	@echo "libbayes_a_SOURCES=" $(shell echo "$(top_srcdir)/src/common.h $(top_srcdir)/src/pll.h")   $(shell find $(folders)  -maxdepth 1   -name "*.[cht]pp" ) >> src.am
+	@echo "libbayes_a_SOURCES=" $(shell echo "$(top_srcdir)/src/common.h $(top_srcdir)/src/pll.h")    $(shell find $(folders)  -maxdepth 1   -name "*.[cht]pp" ) >> src.am
 	@echo "libcommdummy_a_SOURCES=" $(shell find ${dummyFolds} -maxdepth 1 -name "*.[cht]pp" ) >> src.am
 	@echo "libcommmpi_a_SOURCES=" $(shell find ${mpiFolds}  -maxdepth 1 -name "*.[cht]pp" ) >> src.am
 	@echo "libncl_a_SOURCES=" $(shell find $(top_srcdir)/lib/ncl-2.1.18/ncl -name "*.[cht]") $(shell find $(top_srcdir)/lib/ncl-2.1.18/ncl -name "*.[cht]pp") >> src.am	
@@ -94,6 +146,7 @@ include src.am
 
 libcommdummy_a_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)  
 
+
 ################################################################
 # lib comm mpi 
 if WITH_MPI 
@@ -101,6 +154,7 @@ bin_PROGRAMS+=exabayes
 noinst_LIBRARIES+=libcommmpi.a
 libcommmpi_a_CXXFLAGS=$(AM_CXXFLAGS) -O3  $(MPI_CXXFLAGS) $(BAYES_INCLUDES_PARA)    
 endif 
+
 
 ################################################################
 #  libbayes 
@@ -112,11 +166,20 @@ libbayes_a_CFLAGS=-O2 $(BAYES_INCLUDES)
 ################################################################
 # libpll 
 
-libpll_a_SOURCES=./lib/pll/alignment.c ./lib/pll/evaluateGenericSpecial.c ./lib/pll/globalVariables.h ./lib/pll/lexer.c ./lib/pll/mem_alloc.h ./lib/pll/genericParallelization.h  ./lib/pll/newick.h ./lib/pll/pllInternal.h ./lib/pll/recom.c ./lib/pll/stack.h ./lib/pll/utils.c \
- ./lib/pll/evaluatePartialGenericSpecial.c  ./lib/pll/lexer.h  ./lib/pll/newviewGenericSpecial.c ./lib/pll/pll-renamed.h ./lib/pll/restartHashTable.c ./lib/pll/topologies.c \
- ./lib/pll/bipartitionList.c ./lib/pll/fastDNAparsimony.c ./lib/pll/makenewzGenericSpecial.c  ./lib/pll/optimizeModel.c ./lib/pll/queue.c ./lib/pll/searchAlgo.c ./lib/pll/trash.c \
- ./lib/pll/cycle.h ./lib/pll/hash.c ./lib/pll/parsePartition.c ./lib/pll/queue.h ./lib/pll/ssort.c ./lib/pll/treeIO.c \
- ./lib/pll/errcodes.h ./lib/pll/hash.h  ./lib/pll/newick.c ./lib/pll/parsePartition.h ./lib/pll/randomTree.c ./lib/pll/stack.c ./lib/pll/treeIO.h ./src/avxConditional.c
+libpll_a_SOURCES=./lib/pll/alignment.c ./lib/pll/evaluateGenericSpecial.c \
+./lib/pll/globalVariables.h ./lib/pll/lexer.c ./lib/pll/mem_alloc.h \
+./lib/pll/genericParallelization.h  ./lib/pll/newick.h ./lib/pll/pllInternal.h \
+./lib/pll/recom.c ./lib/pll/stack.h ./lib/pll/utils.c \
+./lib/pll/evaluatePartialGenericSpecial.c ./lib/pll/lexer.h \
+./lib/pll/newviewGenericSpecial.c ./lib/pll/pll-renamed.h \
+./lib/pll/restartHashTable.c ./lib/pll/topologies.c ./lib/pll/bipartitionList.c \
+./lib/pll/fastDNAparsimony.c ./lib/pll/makenewzGenericSpecial.c \
+./lib/pll/optimizeModel.c ./lib/pll/queue.c ./lib/pll/searchAlgo.c \
+./lib/pll/trash.c ./lib/pll/cycle.h ./lib/pll/hash.c ./lib/pll/parsePartition.c \
+./lib/pll/queue.h ./lib/pll/ssort.c ./lib/pll/treeIO.c ./lib/pll/errcodes.h \
+./lib/pll/hash.h  ./lib/pll/newick.c ./lib/pll/parsePartition.h \
+./lib/pll/randomTree.c ./lib/pll/stack.c ./lib/pll/treeIO.h \
+./src/avxConditional.c
 
 libpll_model_a_SOURCES= ./lib/pll/models.c 
 libpll_model_a_CFLAGS=$(AM_CFLAGS) -w  $(SRCINCLUDE) -O1 $(MIC_FLAGS)
@@ -128,56 +191,54 @@ libpll_a_SOURCES+=./lib/pll/mic_native_aa.c ./lib/pll/mic_native_dna.c ./lib/pll
 endif
 
 
-
-
 ################################################################
-# exabayes 
-exabayes_LDADD= $(paralibs) $(MPI_CXXLDFLAGS)
+# exabayes
 exabayes_SOURCES = ./src/apps/exabayes.cpp
-exabayes_CXXFLAGS=   $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)  
+exabayes_CXXFLAGS=   $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)
 exabayes_LDFLAGS=$(MPI_CXXLDFLAGS)
+exabayes_LDADD= $(paralibs) $(MPI_CXXLDFLAGS)
 
 ################################################################
 # yggdrasil 
-yggdrasil_LDADD=$(seqlibs)
 yggdrasil_SOURCES = ./src/apps/exabayes.cpp
 yggdrasil_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)  -D_IS_YGG
+yggdrasil_LDADD=$(seqlibs)
 
 ################################################################
-# SDSF 
+# SDSF
+sdsf_SOURCES= ./src/apps/sdsf.cpp
 sdsf_CXXFLAGS= $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)    
 sdsf_LDADD= $(seqlibs)
-sdsf_SOURCES= ./src/apps/sdsf.cpp 
 
 ################################################################
 # the parser 
-parser_SOURCES=./src/apps/parser.cpp
-parser_LDADD=$(seqlibs)
-parser_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES)   -Wno-deprecated-writable-strings    
+parser_exabayes_SOURCES=./src/apps/parser.cpp
+parser_exabayes_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES) -Wno-deprecated-writable-strings
+parser_exabayes_LDADD=$(seqlibs)
 
 ################################################################
-# extractBips 
-extractBips_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)    
+# extractBips
+extractBips_SOURCES=./src/apps/extractBips.cpp
+extractBips_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)
 extractBips_LDADD=$(seqlibs)
-extractBips_SOURCES=./src/apps/extractBips.cpp  
 
 ################################################################
-# consense 
+# consense
+consense_SOURCES=./src/apps/consense.cpp
 consense_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)  
 consense_LDADD=$(seqlibs)
-consense_SOURCES=./src/apps/consense.cpp
 
 ################################################################
-# credibleSet 
+# credibleSet
+credibleSet_SOURCES=./src/apps/credibleSet.cpp
 credibleSet_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)   
 credibleSet_LDADD= $(seqlibs)
-credibleSet_SOURCES=./src/apps/credibleSet.cpp
 
 ################################################################
-# postProcParam 
+# postProcParam
+postProcParam_SOURCES=./src/apps/postProcParam.cpp
 postProcParam_CXXFLAGS=-O3 $(AM_CXXFLAGS)  $(BAYES_INCLUDES)   
 postProcParam_LDADD=$(seqlibs)
-postProcParam_SOURCES=./src/apps/postProcParam.cpp
 
 ################################################################
 # ncl 
@@ -209,14 +270,14 @@ test : exatest
 
 ################################################################
 
-doc : 
+doc:
 	doxygen 
 
-man:  
+man:
 	./manual/process.sh ./manual
 
-date :
+date:
 	./utils/updateDate.sh
 
-dist-hook: 
-	make date 
+dist-hook:
+	make date

@@ -18,12 +18,15 @@ public:
 
   virtual AbstractPrior* clone() const { return new  UniformPrior(*this) ; }
 
+  virtual log_double getUpdatedValue(double oldRawVal, double newRawVal, const AbstractParameter* param) const
+    { assert(0); return log_double();}
+
   double getMin() const {return minVal; }
   double getMax() const {return maxVal; }
 
-  double getFirstDerivative( const AbstractParameter& param) const; 
+  double getFirstDerivative( const AbstractParameter& param) const;
 
-private: 
+private:
   double minVal; 
   double maxVal; 
 }; 

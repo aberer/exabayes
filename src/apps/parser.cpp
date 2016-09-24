@@ -1,14 +1,12 @@
-#include "PhylipParser.hpp"
-
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
 
-#include "GlobalVariables.hpp"
+#include "AlignmentPLL.hpp"
 
-int NUM_BRANCHES ; 
+#include "GlobalVariables.hpp"
 
 static void helpMessage()
 {
@@ -49,7 +47,7 @@ int main(int argc, char **argv)
   auto outputFileName = std::string(""); 
   
   int c = 0 ; 
-  while(  ( c  = getopt( argc, argv, "s:q:m:n:") )  != EOF ) 
+  while(  ( c  = getopt( argc, argv, "s:q:m:n:h") )  != EOF ) 
     {
       try
 	{
@@ -64,6 +62,10 @@ int main(int argc, char **argv)
 	    case 'm':
 	      singlePartitionModel = std::string(optarg); 
 	      break; 
+            case 'h': 
+              helpMessage(); 
+              exitFunction(0, false); 
+              break; 
 	    case 'n': 
 	      outputFileName = std::string(optarg); 
 	      break; 
@@ -118,14 +120,19 @@ int main(int argc, char **argv)
   
   bool useSinglePartition =  modelFile.compare("") == 0; 
 
-  auto &&parser = PhylipParser(alignmentFile, 
-			     useSinglePartition ? singlePartitionModel : modelFile, 
-			     not useSinglePartition);
-  parser.parse(); 
-  
-  parser.writeToFile(outputFileName + ".binary"); 
+  auto format = AlignmentPLL::guessFormat(alignmentFile);
+  auto &&phyAln = AlignmentPLL{} ; 
+  phyAln.initAln(alignmentFile, format);
+
+  if(useSinglePartition)
+    phyAln.createDummyPartition(getTypeFromString(singlePartitionModel)); 
+  else 
+    phyAln.initPartitions(modelFile); 
+
+  phyAln.writeToFile(outputFileName + ".binary"); 
 
   std::cout << "wrote binary alignment file to " << outputFileName << ".binary" << std::endl; 
   
   return 0 ;
 }
+

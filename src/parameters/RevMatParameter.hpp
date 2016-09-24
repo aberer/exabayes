@@ -19,13 +19,12 @@ public:
   {    
   }
 
-  virtual void applyParameter(TreeAln& traln, const ParameterContent &content) const; 
+  virtual void applyParameter(TreeAln& traln, const ParameterContent &content);
   virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const ; 
   virtual ParameterContent extractParameter(const TreeAln &traln )  const;   
   virtual ParameterContent extractParameterRaw(const TreeAln& traln) const ; 
-  // virtual void applyParameterRaw(TreeAln &traln, const ParameterContent & content) const ; 
 
-  virtual AbstractParameter* clone () const {return new RevMatParameter(*this); } 
+  virtual AbstractParameter* clone () const {return new RevMatParameter(*this); }
 
   virtual void printSample(std::ostream& fileHandle, const TreeAln &traln) const ; 
   virtual void printAllComponentNames(std::ostream &fileHandle, const TreeAln &traln) const ; 
@@ -40,6 +39,8 @@ public:
     auto& partition = traln.getPartition(_partitions.at(0));
     return content.values.size()  ==  RateHelper::numStateToNumInTriangleMatrix(partition.getStates()); 
   }
+  
+    virtual log_double getPriorValue(const TreeAln& traln) const{assert(0); return log_double::fromAbs(1); } 
 }; 
 
 #endif

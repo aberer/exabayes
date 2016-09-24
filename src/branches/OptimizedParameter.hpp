@@ -4,7 +4,10 @@
 
 class TreeAln; 
 
-#include "Branch.hpp"
+#include "AbstractParameter.hpp"
+
+// #include "Branch.hpp"
+#include "BranchPlain.hpp"
 #include "DistributionProposer.hpp"
 
 
@@ -93,9 +96,9 @@ DistributionProposer<T>
 OptimizedParameter::getProposerDistribution(TreeAln &traln, double convParameter, double nonConvParameter) const   
 {
   // tout << "init with factor "  << factor << std::endl; 
-  auto bl =  BranchLength(1,2); 
+  auto bl =  BranchLength(BranchPlain(1,2));
   bl.setLength(_zCur); 
-  auto realLen = bl.getInterpretedLength( _param);
+  auto realLen = bl.toMeanSubstitutions( _param->getMeanSubstitutionRate());
   return DistributionProposer<T>(realLen, _nrD1, _nrD2, convParameter, nonConvParameter ); 
 }
 

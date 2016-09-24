@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_REREQ([2.67])
-AC_INIT([exabayes],[1.4.1],[exabayes-at-googlegroups-dot-com]) 
+AC_INIT([exabayes],[1.5],[exabayes-at-googlegroups-dot-com])
 
 m4_include([./m4/ax_cxx_compile_stdcxx_11.m4])
 m4_include([./m4/lx_find_mpi.m4])
@@ -29,10 +29,13 @@ AC_PROG_CXX( [g++ icpc] )
 CXXFLAGS=$OLD_CXXFLAGS
 CFLAGS=$OLD_CFLAGS
 
+dnl TODO: could we remove this one? 
 AC_C_LONG_LONG
 
-
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
+
+AX_CXX_COMPILE_STDCXX(14, [noext], [optional])
+
 AC_PROG_CC_STDC
 AC_PROG_CC_C99
 AC_PROG_RANLIB

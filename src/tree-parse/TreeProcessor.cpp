@@ -4,13 +4,14 @@
 #include <cassert>
 #include <iostream>
 #include <cmath>
-#include "Branch.hpp"
+// #include "Branch.hpp"
 #include "BasicTreeReader.hpp"
 #include "TreeProcessor.hpp"
 #include "BranchLengthsParameter.hpp"
 
+using namespace std;
 
-TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck)  
+TreeProcessor::TreeProcessor(std::vector<std::string> fileNames, bool expensiveCheck)
   : _tralnPtr{nullptr}
   , _fns{}
   , _taxa(fillTaxaInfo(fileNames.at(0)))
@@ -111,11 +112,21 @@ std::vector<std::string>
 TreeProcessor::fillTaxaInfo(std::string fileName)
 {
   auto result = std::vector<std::string>{}; 
-  auto whiteSpace = " \t"; 
-  auto &&infile =  std::ifstream(fileName); 
+  auto whiteSpace = " \t";
+
+  auto &&infile =  std::ifstream(fileName);
+  
+  if (!infile)
+    {
+      tout << "Warning: could not find file " << fileName << std::endl;
+      assert(0);
+    }
+  
+  
   auto line = std::string{} ; 
   bool foundStart = false; 
-  bool abort = false; 
+  bool abort = false;
+
   while(not abort && getline(infile, line))
     {      
       std::string cleanLine = trim(line); 

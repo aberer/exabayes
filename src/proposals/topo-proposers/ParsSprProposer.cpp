@@ -44,7 +44,7 @@ ParsSprProposer::determineScoresOfInsertions(TreeAln& traln, BranchPlain prunedT
   auto result = branch2parsScore{}; 
 
   nodeptr
-    p = prunedTree.findNodePtr(traln), 
+    p = traln.findNodePtr(prunedTree), 
     pn = p->next->back , 
     pnn = p->next->next->back ; 
 
@@ -91,9 +91,7 @@ void ParsSprProposer::testInsertParsimony(TreeAln &traln, nodeptr insertPos, nod
   else 
     {
       ParsimonyEvaluator::disorientNode(prunedTree); 
-      auto states2parsimony = _pEval.evaluate(traln, prunedTree, false  ); 
-      // assert(result.find(b) == result.end()) ;   
-      result[b] = states2parsimony; 
+      result[b] =  _pEval.evaluate(traln, prunedTree, false  ); 
     }
 
   traln.clipNode(insertPos, insertBack); 
@@ -115,7 +113,7 @@ void ParsSprProposer::determineMove(TreeAln &traln, LikelihoodEvaluator &eval, R
 
   _pEval = ParsimonyEvaluator{} ; 
 
-  _pEval.evaluate(traln, prunedTree.findNodePtr(traln), true );
+  _pEval.evaluate(traln, traln.findNodePtr(prunedTree), true );
 
   // decide upon an spr move 
   _computedInsertions = branch2parsScore {}; 
@@ -152,8 +150,8 @@ void ParsSprProposer::determineBackProb( TreeAln &traln, LikelihoodEvaluator &ev
   auto prunedTree = _move.getEvalBranch(traln); 
   auto prunedFromBranch = _move.getInverseMove().getInsertBranch();
 
-  ParsimonyEvaluator::disorientNode( prunedTree.findNodePtr(traln)); 
-  _pEval.evaluateSubtree(traln, prunedTree.findNodePtr(traln));
+  ParsimonyEvaluator::disorientNode( traln.findNodePtr(prunedTree)); 
+  _pEval.evaluateSubtree(traln, traln.findNodePtr(prunedTree));
 
   auto backScores = determineScoresOfInsertions(traln, prunedTree); 
   auto weightedInsertionsBack = getWeights(traln, backScores); 
@@ -177,7 +175,7 @@ BranchPlain ParsSprProposer::determinePrimeBranch(const TreeAln &traln, Randomne
   do 
     {
       prunedTree  = TreeRandomizer::drawBranchWithInnerNode(traln,rand); 
-      p = prunedTree.findNodePtr(traln);
+      p = traln.findNodePtr(prunedTree);
       pn = p->next->back; 
       pnn = p->next->next->back;         
 

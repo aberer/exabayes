@@ -1,5 +1,7 @@
 #include "BipartitionHash.hpp"
-#include "Branch.hpp"
+// #include "Branch.hpp"
+
+#include "BranchPlain.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -46,8 +48,8 @@ void BipartitionHash::addTree(const TreeAln &traln, bool withBranch, bool withTr
     }
 
   // recursive descent
-  addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch, withTrivial, bipsAdded); 
-  addElement(traln, desc.second.getInverted().findNodePtr(traln), withBranch, withTrivial, bipsAdded); 
+  addElement(traln, traln.findNodePtr(desc.first.getInverted()), withBranch, withTrivial, bipsAdded); 
+  addElement(traln, traln.findNodePtr(desc.second.getInverted()), withBranch, withTrivial, bipsAdded); 
 
   // check 
   auto numTax = traln.getNumberOfTaxa(); 
@@ -79,7 +81,7 @@ Bipartition BipartitionHash::addElement(const TreeAln &traln, nodeptr p, bool wi
 {
   auto curBranch = BranchPlain(p->number, p->back->number);
 
-  if(curBranch.isTipBranch(traln))
+  if(traln.isTipBranch(curBranch))
     {
       auto result = Bipartition{}; 
       // TODO maybe insert trivial bipartitions as well 
@@ -98,8 +100,8 @@ Bipartition BipartitionHash::addElement(const TreeAln &traln, nodeptr p, bool wi
     {
       auto desc = traln.getDescendents(curBranch);
 
-      auto&& bipA = addElement(traln, desc.first.getInverted().findNodePtr(traln), withBranch, withTrivial, addedSoFar); 
-      auto&& bipB = addElement(traln, desc.second.getInverted().findNodePtr(traln), withBranch, withTrivial, addedSoFar) ; 
+      auto&& bipA = addElement(traln, traln.findNodePtr(desc.first.getInverted()), withBranch, withTrivial, addedSoFar); 
+      auto&& bipB = addElement(traln, traln.findNodePtr(desc.second.getInverted()), withBranch, withTrivial, addedSoFar) ; 
 
       auto result = bipA | bipB; 
 

@@ -2,9 +2,9 @@
 #define __mem_alloc_h
 #include <stddef.h>
 #include <stdlib.h>
-#ifdef __linux__
-#include <malloc.h>
-#endif
+// #ifdef __linux__
+// #include <malloc.h>
+// #endif
 #include "pll.h"
 
 #define rax_memalign memalign

@@ -13,8 +13,9 @@ enum class Category :  int
     FREQUENCIES = 2,
     SUBSTITUTION_RATES = 3,
     RATE_HETEROGENEITY = 4,	
-    AA_MODEL= 5  
-
+    AA_MODEL= 5, 
+    DIVERGENCE_RATES = 6 ,
+    DIVERGENCE_TIMES = 7, 
 } ; 
 
 
@@ -39,14 +40,14 @@ namespace std
 
 namespace CategoryFuns 
 {
+  bool inUniqueByDefault(Category cat); 
+
+  std::vector<Category> getConflictingCategories(Category cat) ; 
+
   /** 
       @brief gets a list of all categories 
    */ 
   std::vector<Category> getAllCategories(); 
-  /**
-     @brief gets the verbose name of a category 
-   */ 
-  std::string getLongName(Category cat); 
   /** 
       @brief gets the short name of a category 
    */ 
@@ -63,11 +64,12 @@ namespace CategoryFuns
       @brief gets the category by name of the linking parameter in the config file 
    */   
   Category getCategoryFromLinkLabel(std::string name); 
-  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions); 
+
+  std::string getComponentName(Category cat); 
+  
+  std::unique_ptr<AbstractParameter> getParameterFromCategory(Category cat, nat id, nat idOfMyKind, std::vector<nat> partitions, nat numTaxa); 
   
 } 
-
-std::ostream&  operator<<(std::ostream& out, const Category &rhs); 
 
 #endif
  
