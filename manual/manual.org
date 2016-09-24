@@ -238,6 +238,18 @@
      of the nodes you intend to execute ExaBayes later *or* use the
      configure flags "--disable-avx", etc.
 
+** Installation of ExaBayes Into File Systems
+
+   So far we have compiled the executables. The build system offers
+   the capability to install compiled binaries and documentation into
+   defined places (e.g., ~/usr, /usr/local, /opt).
+
+   In order to achieve this, you need to specify an absolute path as
+   "--prefix" and invoke "make --install" after the successful build:
+#+BEGIN_SRC bash
+$ ./configure --prefix=/home/user/usr && make && make --install
+#+END_SRC
+
 * Tutorial and Workflow
   This is a basic tutorial for how to conduct Bayesian tree inference
   with ~ExaBayes~ (specifically useful, if you do not have much
