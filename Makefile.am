@@ -2,9 +2,49 @@
 # GENENRAL 
 
 AUTOMAKE_OPTIONS= foreign subdir-objects
-EXTRA_DIST= ./CHANGELOG ./src/releaseDate.hpp ./lib/Random123-1.08 ./examples/* ./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png ./manual/img/banner2.png ./manual/manual.html ./README.md ./LICENSE.txt ./COPYING ./bin/ ./lib/pll/avxLikelihood.c  ./manual/library2.html
+
+EXTRA_DIST= src/releaseDate.hpp lib/Random123-1.08  LICENSE.txt lib/pll/avxLikelihood.c examples
 noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a libpll.a libpll_model.a 
-bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractBips consense 
+bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractBips consense
+dist_doc_DATA = ./CHANGELOG  ./README.md ./COPYING
+
+# shared/doc/manual
+docmanualdir=$(docdir)/manual
+dist_docmanual_DATA= \
+./manual/manual.pdf ./manual/css/org.css ./manual/img/banner.png \
+./manual/img/banner2.png ./manual/manual.html ./manual/library2.html
+
+# shared/doc/examples
+docexamplesdir=$(docdir)/examples
+dist_docexamples_DATA = examples/configFile-all-options.nex
+
+# shared/doc/examples/dna-unpartitioned
+docexamples1dir=$(docdir)/examples/dna-unpartitioned
+dist_docexamples1_DATA=examples/dna-unpartitioned/call-parallel.sh \
+examples/dna-unpartitioned/call.sh examples/dna-unpartitioned/config.nex
+
+# shared/doc/examples/aa
+docexamplesdir2dir=$(docdir)/examples/aa
+dist_docexamplesdir2_DATA=examples/aa/call-parallel.sh examples/aa/call.sh \
+examples/aa/config.nex
+
+# shared/doc/examples/aa-revmat
+docexamplesdir3dir=$(docdir)/examples/aa-revmat
+dist_docexamplesdir3_DATA=examples/aa-revmat/call-parallel.sh \
+examples/aa-revmat/call.sh \
+examples/aa-revmat/aln.phy examples/aa-revmat/config.nex
+
+# shared/doc/examples/dna-partitioned
+docexamplesdir4dir=$(docdir)/examples/dna-partitioned
+dist_docexamplesdir4_DATA=examples/dna-partitioned/call-parallel.sh \
+examples/dna-partitioned/call.sh examples/dna-partitioned/aln.phy \
+examples/dna-partitioned/aln.part examples/dna-partitioned/config.nex
+
+# shared/doc/examples/binary
+docexamplesdir5dir=$(docdir)/examples/aa
+dist_docexamplesdir5_DATA= examples/binary/aln.model \
+examples/binary/call-parallel.sh examples/binary/call.sh \
+examples/binary/aln.phy examples/binary/config.nex
 
 .PHONY: my-update-src doc man date dist
 
@@ -14,14 +54,26 @@ bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractB
 
 # enforce, once sanity is back: -Wsign-compare -Wtype-limits
 
-WARN_OFF= -Wno-unused-parameter -Wno-sign-conversion -Wno-unknown-pragmas -Wno-inline
-GCC_WARN= -Wcast-align   -Wchar-subscripts  -Wformat-nonliteral  -Wformat-y2k  -Wimport  -Wmissing-field-initializers -Wmissing-format-attribute  -Wpacked  -Wredundant-decls   -Wstack-protector   -Wswitch-default  -Wswitch-enum   -Wunreachable-code   -Wvariadic-macros  -Wvolatile-register-var -Wunused-label -Wunused-value -Wint-to-pointer-cast
+WARN_OFF= -Wno-unused-parameter -Wno-sign-conversion -Wno-unknown-pragmas \
+-Wno-inline
+GCC_WARN= -Wcast-align -Wchar-subscripts -Wformat-nonliteral -Wformat-y2k \
+-Wimport  -Wmissing-field-initializers -Wmissing-format-attribute  -Wpacked \
+-Wredundant-decls -Wstack-protector -Wswitch-default -Wswitch-enum \
+-Wunreachable-code -Wvariadic-macros -Wvolatile-register-var -Wunused-label \
+-Wunused-value -Wint-to-pointer-cast
 
 # the intel compiler way overdoes it with the warnings 
 # GCC_WARN+=-Weffc++   
 
-GCC_WARN_OFF= -Wno-suggest-attribute=noreturn   -Wno-unknown-warning-option  -Wno-unknown-warning   -Wno-missing-noreturn
-WARN_FLAGS=-Wall -Wextra -pedantic -Wcast-qual  -Wcomment -Wconversion -Wdisabled-optimization -Wfloat-equal  -Wformat  -Wformat=2 -Wformat-security  -Winit-self  -Winline -Winvalid-pch -Wmissing-braces -Wmissing-include-dirs -Wparentheses  -Wpointer-arith -Wreturn-type -Wsequence-point  -Wshadow -Wsign-compare -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch -Wtrigraphs  -Wuninitialized -Wunknown-pragmas  -Wwrite-strings -Wunused  -Wunused-function  -Wunused-variable -Wreturn-type   -Wmissing-declarations -Wundef  $(WARN_OFF)
+GCC_WARN_OFF= -Wno-suggest-attribute=noreturn -Wno-unknown-warning-option \
+-Wno-unknown-warning -Wno-missing-noreturn
+WARN_FLAGS=-Wall -Wextra -pedantic -Wcast-qual -Wcomment -Wconversion \
+-Wdisabled-optimization -Wfloat-equal  -Wformat  -Wformat=2 -Wformat-security \
+-Winit-self -Winline -Winvalid-pch -Wmissing-braces -Wmissing-include-dirs \
+-Wparentheses -Wpointer-arith -Wreturn-type -Wsequence-point -Wshadow \
+-Wsign-compare -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch -Wtrigraphs \
+-Wuninitialized -Wunknown-pragmas  -Wwrite-strings -Wunused  -Wunused-function \
+-Wunused-variable -Wreturn-type -Wmissing-declarations -Wundef  $(WARN_OFF)
 
 if WITH_INTEL
 else 
@@ -114,11 +166,20 @@ libbayes_a_CFLAGS=-O2 $(BAYES_INCLUDES)
 ################################################################
 # libpll 
 
-libpll_a_SOURCES=./lib/pll/alignment.c ./lib/pll/evaluateGenericSpecial.c ./lib/pll/globalVariables.h ./lib/pll/lexer.c ./lib/pll/mem_alloc.h ./lib/pll/genericParallelization.h  ./lib/pll/newick.h ./lib/pll/pllInternal.h ./lib/pll/recom.c ./lib/pll/stack.h ./lib/pll/utils.c \
- ./lib/pll/evaluatePartialGenericSpecial.c  ./lib/pll/lexer.h  ./lib/pll/newviewGenericSpecial.c ./lib/pll/pll-renamed.h ./lib/pll/restartHashTable.c ./lib/pll/topologies.c \
- ./lib/pll/bipartitionList.c ./lib/pll/fastDNAparsimony.c ./lib/pll/makenewzGenericSpecial.c  ./lib/pll/optimizeModel.c ./lib/pll/queue.c ./lib/pll/searchAlgo.c ./lib/pll/trash.c \
- ./lib/pll/cycle.h ./lib/pll/hash.c ./lib/pll/parsePartition.c ./lib/pll/queue.h ./lib/pll/ssort.c ./lib/pll/treeIO.c \
- ./lib/pll/errcodes.h ./lib/pll/hash.h  ./lib/pll/newick.c ./lib/pll/parsePartition.h ./lib/pll/randomTree.c ./lib/pll/stack.c ./lib/pll/treeIO.h ./src/avxConditional.c
+libpll_a_SOURCES=./lib/pll/alignment.c ./lib/pll/evaluateGenericSpecial.c \
+./lib/pll/globalVariables.h ./lib/pll/lexer.c ./lib/pll/mem_alloc.h \
+./lib/pll/genericParallelization.h  ./lib/pll/newick.h ./lib/pll/pllInternal.h \
+./lib/pll/recom.c ./lib/pll/stack.h ./lib/pll/utils.c \
+./lib/pll/evaluatePartialGenericSpecial.c ./lib/pll/lexer.h \
+./lib/pll/newviewGenericSpecial.c ./lib/pll/pll-renamed.h \
+./lib/pll/restartHashTable.c ./lib/pll/topologies.c ./lib/pll/bipartitionList.c \
+./lib/pll/fastDNAparsimony.c ./lib/pll/makenewzGenericSpecial.c \
+./lib/pll/optimizeModel.c ./lib/pll/queue.c ./lib/pll/searchAlgo.c \
+./lib/pll/trash.c ./lib/pll/cycle.h ./lib/pll/hash.c ./lib/pll/parsePartition.c \
+./lib/pll/queue.h ./lib/pll/ssort.c ./lib/pll/treeIO.c ./lib/pll/errcodes.h \
+./lib/pll/hash.h  ./lib/pll/newick.c ./lib/pll/parsePartition.h \
+./lib/pll/randomTree.c ./lib/pll/stack.c ./lib/pll/treeIO.h \
+./src/avxConditional.c
 
 libpll_model_a_SOURCES= ./lib/pll/models.c 
 libpll_model_a_CFLAGS=$(AM_CFLAGS) -w  $(SRCINCLUDE) -O1 $(MIC_FLAGS)
@@ -152,7 +213,7 @@ sdsf_LDADD= $(seqlibs)
 ################################################################
 # the parser 
 parser_exabayes_SOURCES=./src/apps/parser.cpp
-parser_exabayes_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES)   -Wno-deprecated-writable-strings
+parser_exabayes_CXXFLAGS=-O3 $(AM_CXXFLAGS) $(BAYES_INCLUDES) -Wno-deprecated-writable-strings
 parser_exabayes_LDADD=$(seqlibs)
 
 ################################################################
