@@ -5,6 +5,12 @@ if [ $# != 1 ]; then
     exit
 fi
 
+read -p "did you follow the following procedure? C-e C-h l p, C-e C-h h h,  make man? [type yes] " res
+if [ "$res" != "yes" ]; then
+    echo "then do it!"
+    exit
+fi
+
 input=$1
 
 start=$(grep -i  -n "<body>" $input  | cut -f 1 -d ':')
