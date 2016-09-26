@@ -21,12 +21,14 @@ dist_docexamples_DATA = examples/configFile-all-options.nex
 # shared/doc/examples/dna-unpartitioned
 docexamples1dir=$(docdir)/examples/dna-unpartitioned
 dist_docexamples1_DATA=examples/dna-unpartitioned/call-parallel.sh \
-examples/dna-unpartitioned/call.sh examples/dna-unpartitioned/config.nex
+examples/dna-unpartitioned/call.sh examples/dna-unpartitioned/config.nex \
+examples/aa/aln.phy
+
 
 # shared/doc/examples/aa
 docexamplesdir2dir=$(docdir)/examples/aa
 dist_docexamplesdir2_DATA=examples/aa/call-parallel.sh examples/aa/call.sh \
-examples/aa/config.nex
+examples/aa/config.nex examples/aa/aln.phy
 
 # shared/doc/examples/aa-revmat
 docexamplesdir3dir=$(docdir)/examples/aa-revmat
