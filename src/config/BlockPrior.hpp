@@ -14,35 +14,52 @@
 #include "Category.hpp"
 
 // if the set is empty, then we have a general "fall-back" prior
-typedef std::unordered_multimap<Category, 
-				std::tuple<std::unordered_set<nat>,
-					   std::unique_ptr<AbstractPrior> > >  
-multiMapCategory2TuplePartitionsPrior ; 
+using multiMapCategory2TuplePartitionsPrior =
+        std::unordered_multimap<Category,
+                                std::tuple<std::unordered_set<nat>,
+                                           std::unique_ptr<AbstractPrior> > >;
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                                BLOCK PRIOR                                //
+///////////////////////////////////////////////////////////////////////////////
 class BlockPrior : public ExaBlock
 {
-public: 
-  explicit BlockPrior(size_t numPart) 
-    : _parsedPriors{}
-    , _numPart(numPart)
-  {
-    NCL_BLOCKTYPE_ATTR_NAME = "PRIORS"; 
-  }
-  
-  void verify() const; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    explicit BlockPrior(
+        size_t numPart)
+        : _parsedPriors{}
+        , _numPart(numPart)
+    {NCL_BLOCKTYPE_ATTR_NAME = "PRIORS"; }
+    // ________________________________________________________________________
+    void                                                           verify()
+    const;
+    // ________________________________________________________________________
+    virtual void                                                   Read(
+        NxsToken&token);
+    // ________________________________________________________________________
+    const multiMapCategory2TuplePartitionsPrior&                   getPriors()
+    const {return _parsedPriors; }
 
-  
-  virtual void Read(NxsToken &token); 
-  const multiMapCategory2TuplePartitionsPrior& getPriors()const  {return _parsedPriors; } 
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    std::unique_ptr<AbstractPrior>                                 parsePrior(
+        NxsToken&token);
 
-private: 			// METHODS
-  std::unique_ptr<AbstractPrior> parsePrior(NxsToken &token)  ; 
-  
-private: 			// ATTRIBUTES
-  multiMapCategory2TuplePartitionsPrior _parsedPriors; 
-  size_t _numPart;
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    multiMapCategory2TuplePartitionsPrior
+        _parsedPriors;
+    size_t _numPart;
+};
 
 
 #endif

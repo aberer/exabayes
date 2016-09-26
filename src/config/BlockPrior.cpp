@@ -1,10 +1,5 @@
 #include "BlockPrior.hpp"
 
-#include <sstream>
-#include <cmath>
-#include <limits>
-
-
 #include "extensions.hpp"
 
 #include "DiscreteModelPrior.hpp"
@@ -13,253 +8,309 @@
 #include "DirichletPrior.hpp"
 #include "FixedPrior.hpp"
 
-static void expectString( std::string expectation, NxsToken& token)
+#include <sstream>
+#include <cmath>
+#include <limits>
+
+static void                                       expectString(
+    std::string expectation,
+    NxsToken&   token)
 {
-  bool okay = token.GetToken().EqualsCaseInsensitive(expectation.c_str()); 
-  if(not okay)
+    bool okay = token.GetToken().EqualsCaseInsensitive(expectation.c_str());
+
+    if (not okay)
     {
-      std::cerr << "error while parsing the config file: expected " << expectation << " but got " << token.GetToken() << std::endl; 
-      exitFunction(-1, false); 
+        std::cerr << "error while parsing the config file: expected "
+                  << expectation << " but got " << token.GetToken()
+                  << std::endl;
+        exitFunction(-1, false);
     }
 }
 
 
-static std::vector<double> parseValues(NxsToken &token)
+static std::vector<double>                        parseValues(
+    NxsToken&token)
 {
-  auto result = std::vector<double>{}; 
+    auto result = std::vector<double>{};
 
-  // assumption: we have already seen the ')'
+    // assumption: we have already seen the ')'
 
-  while(token.GetToken().compare(")") != 0)
+    while (token.GetToken().compare(")") != 0)
     {
-      auto &&iss = std::istringstream{token.GetToken()}; 
-      auto value = double{0.};
-      iss >> value; 
-      result.push_back(value);
-      token.GetNextToken();
-      if(token.GetToken().compare(",") == 0)
-	token.GetNextToken();
+        auto&&iss = std::istringstream{
+            token.GetToken()
+        };
+        auto  value = double {
+            0.
+        };
+        iss >> value;
+        result.push_back(value);
+        token.GetNextToken();
+
+        if (token.GetToken().compare(",") == 0)
+            token.GetNextToken();
     }
-  
-  return result; 
+
+    return result;
 }
 
 
-std::unique_ptr<AbstractPrior> BlockPrior::parsePrior(NxsToken &token)  
+std::unique_ptr<AbstractPrior>                    BlockPrior::parsePrior(
+    NxsToken&token)
 {
-  auto value = token.GetToken(false); 
-  token.GetNextToken();
+    auto value = token.GetToken(false);
+    token.GetNextToken();
 
-  assert(token.GetToken(false).compare("(") == 0); 
+    assert(token.GetToken(false).compare("(") == 0);
 
-  if(value.EqualsCaseInsensitive("uniform"))
+    if (value.EqualsCaseInsensitive("uniform"))
     {
-      token.GetNextToken();
+        token.GetNextToken();
 
-      // for non-continuous variables (e.g., topology)
-      if(token.GetToken().compare(")") == 0) 
-	return make_unique<UniformPrior>(0,0); 
+        // for non-continuous variables (e.g., topology)
+        if (token.GetToken().compare(")") == 0)
+            return make_unique<UniformPrior>(0, 0);
 
-      double n1 = parseScientificDouble(token); 
+        double n1 = parseScientificDouble(token);
 
-      assert(token.GetToken().compare(",") == 0);
-      token.GetNextToken();
+        assert(token.GetToken().compare(",") == 0);
+        token.GetNextToken();
 
-      double n2 = parseScientificDouble(token); 
+        double n2 = parseScientificDouble(token);
 
-      assert(token.GetToken().compare(")") == 0);
-      return make_unique<UniformPrior>(n1,n2);  
+        assert(token.GetToken().compare(")") == 0);
+        return make_unique<UniformPrior>(n1, n2);
     }
-  else if(value.EqualsCaseInsensitive("disc"))
+    else if (value.EqualsCaseInsensitive("disc"))
     {
-      expectString("(", token);
-      
-      auto modelsProbs = std::unordered_map<ProtModel, double>{};
+        expectString("(", token);
 
-      auto remainder = std::numeric_limits<double>::infinity();
+        auto modelsProbs = std::unordered_map<ProtModel, double>{};
 
-      while(token.GetToken().compare(")") != 0)
-	{
-	  token.GetNextToken();
+        auto remainder = std::numeric_limits<double>::infinity();
 
-	  auto foundRemainder = token.GetToken().EqualsCaseInsensitive("remainder"); 
-	  if(foundRemainder)	// keep track of the weight 
-	    {
-	      if( not ( std::isinf( remainder) && remainder > 0 )  )
-		{
-		  std::cerr << "Encountered 'remainder' twice while defining aaPr" << std::endl; 
-		  exitFunction(-1, true); 
-		}
+        while (token.GetToken().compare(")") != 0)
+        {
+            token.GetNextToken();
 
-	      token.GetNextToken();
-	      expectString("=", token); 
-	      token.GetNextToken();
+            auto foundRemainder = token.GetToken().EqualsCaseInsensitive(
+                    "remainder");
 
-	      auto &&iss = std::istringstream{token.GetToken()};
-	      iss >> remainder ; 
-	      token.GetNextToken();
-	    } 
-	  else 			// simply parse that model 
-	    {
-	      auto modelRes = ProtModelFun::getModelFromStringIfPossible(token.GetToken()); 
-	      if(not std::get<0>(modelRes) )
-		{
-		  std::cerr << "Error: expected " << token.GetToken() << " to be a valid protein model name" << std::endl; 
-		  exitFunction(-1, true); 
-		}
-	      auto model = std::get<1>(modelRes);
+            if (foundRemainder) // keep track of the weight
+            {
+                if (not (std::isinf(remainder) && remainder > 0))
+                {
+                    std::cerr
+                        << "Encountered 'remainder' twice while defining aaPr"
+                        << std::endl;
+                    exitFunction(-1, true);
+                }
 
-	      token.GetNextToken();
-	      expectString("=", token); 
+                token.GetNextToken();
+                expectString("=", token);
+                token.GetNextToken();
 
-	      token.GetNextToken(); 
-	      auto &&iss = std::istringstream{token.GetToken()}; 
-	      auto weight = double{0.}; 
-	      iss >> weight; 
+                auto&&iss = std::istringstream{
+                    token.GetToken()
+                };
+                iss >> remainder;
+                token.GetNextToken();
+            }
+            else    // simply parse that model
+            {
+                auto  modelRes = ProtModelFun::getModelFromStringIfPossible(
+                        token.GetToken());
 
-	      if(modelsProbs.find(model) != modelsProbs.end())
-		{
-		  std::cerr << "Error: model " <<  model << "occurred more than once in your specification of a discrete amino acid model prior."  << std::endl; 
-		  exitFunction(-1, true); 
-		}
+                if (not std::get<0>(modelRes))
+                {
+                    std::cerr << "Error: expected " << token.GetToken()
+                              << " to be a valid protein model name"
+                              << std::endl;
+                    exitFunction(-1, true);
+                }
 
-	      modelsProbs[model] = weight; 
+                auto  model = std::get<1>(modelRes);
 
-	      token.GetNextToken();
-	    }
-	}
+                token.GetNextToken();
+                expectString("=", token);
 
-      if(   not std::isinf(remainder) )
-	{
-	  for(auto model : ProtModelFun::getAllModels())
-	    {
-	      if( modelsProbs.find(model) == modelsProbs.end()  )
-		modelsProbs[model] = remainder; 
-	    }
-	}
+                token.GetNextToken();
+                auto&&iss = std::istringstream{
+                    token.GetToken()
+                };
+                auto  weight = double {
+                    0.
+                };
+                iss >> weight;
 
-      return make_unique<DiscreteModelPrior>(modelsProbs);
+                if (modelsProbs.find(model) != modelsProbs.end())
+                {
+                    std::cerr << "Error: model " <<  model
+                              <<
+                        "occurred more than once in your specification of a discrete amino acid model prior."
+                              << std::endl;
+                    exitFunction(-1, true);
+                }
+
+                modelsProbs[model] = weight;
+
+                token.GetNextToken();
+            }
+        }
+
+        if (not std::isinf(remainder))
+        {
+            for (auto model : ProtModelFun::getAllModels())
+            {
+                if (modelsProbs.find(model) == modelsProbs.end())
+                    modelsProbs[model] = remainder;
+            }
+        }
+
+        return make_unique<DiscreteModelPrior>(modelsProbs);
     }
-  else if(value.EqualsCaseInsensitive("dirichlet"))
+    else if (value.EqualsCaseInsensitive("dirichlet"))
     {
-      expectString("(",token);
-      token.GetNextToken();
-      
-      auto alphas = parseValues(token); 
-      auto pr = new DirichletPrior(alphas);
+        expectString("(", token);
+        token.GetNextToken();
 
-      return std::unique_ptr<AbstractPrior>(pr); 
+        auto alphas = parseValues(token);
+        auto pr = new DirichletPrior(alphas);
+
+        return std::unique_ptr<AbstractPrior>(pr);
     }
-  else if(value.EqualsCaseInsensitive("fixed"))
-    { 
-      token.GetNextToken();
-
-      auto res = ProtModelFun::getModelFromStringIfPossible(token.GetToken()); 
-      auto foundProt = std::get<0>(res); 
-
-      if( foundProt )
-	{
-	  auto model = std::get<1>(res);
-
-	  token.GetNextToken();
-	  assert(token.GetToken().compare(")" ) == 0 ); 
-
-	  std::unordered_map<ProtModel,double> tmp = {{model,1.}}; 
-	  return make_unique<DiscreteModelPrior>( tmp  );
-	}
-      else 
-	{
-	  auto fixedValues = parseValues(token);
-	  auto &&result = make_unique<FixedPrior>(fixedValues); 
-	  return std::move(result);
-	}
-    }
-  else if(value.EqualsCaseInsensitive("exponential"))
+    else if (value.EqualsCaseInsensitive("fixed"))
     {
-      token.GetNextToken();
+        token.GetNextToken();
 
-      double n1 = parseScientificDouble(token);
+        auto res = ProtModelFun::getModelFromStringIfPossible(
+                token.GetToken());
+        auto foundProt = std::get<0>(res);
 
-      assert(token.GetToken().compare(")") == 0);
-      return make_unique<ExponentialPrior>(n1);
+        if (foundProt)
+        {
+            auto                                  model = std::get<1>(res);
+
+            token.GetNextToken();
+            assert(token.GetToken().compare(")") == 0);
+
+            std::unordered_map<ProtModel, double> tmp = {{model, 1.}};
+            return make_unique<DiscreteModelPrior>(tmp);
+        }
+        else
+        {
+            auto  fixedValues = parseValues(token);
+            auto&&result = make_unique<FixedPrior>(fixedValues);
+            return std::move(result);
+        }
     }
-  else 
+    else if (value.EqualsCaseInsensitive("exponential"))
     {
-      cerr << "attempted to parse prior. Did not recognize keyword " <<  value << endl; 
-      exitFunction(-1, true); 
-      return make_unique<ExponentialPrior>(0);
+        token.GetNextToken();
+
+        double n1 = parseScientificDouble(token);
+
+        assert(token.GetToken().compare(")") == 0);
+        return make_unique<ExponentialPrior>(n1);
+    }
+    else
+    {
+        cerr << "attempted to parse prior. Did not recognize keyword "
+             <<  value << endl;
+        exitFunction(-1, true);
+        return make_unique<ExponentialPrior>(0);
     }
 }
 
 
-void BlockPrior::Read(NxsToken &token) 
+void                    BlockPrior::Read(
+    NxsToken&token)
 {
-  DemandEndSemicolon(token, "PRIOR");
+    DemandEndSemicolon(token, "PRIOR");
 
-  while(true)
+    while (true)
     {
-      token.GetNextToken();
-      auto  res = HandleBasicBlockCommands(token); 
+        token.GetNextToken();
+        auto res = HandleBasicBlockCommands(token);
 
-      if (res == NxsBlock::NxsCommandResult(STOP_PARSING_BLOCK))
-	return;
-      if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
-	{
-	  auto cat = CategoryFuns::getCategoryByPriorName(token.GetToken()); 
-	  token.GetNextToken();
+        if (res == NxsBlock::NxsCommandResult(STOP_PARSING_BLOCK))
+            return;
 
-	  auto partitions  = std::unordered_set<nat> {}; 
-	  if(token.GetToken().compare("{") == 0)
-	    {
-	      while(not token.GetToken().EqualsCaseInsensitive("}"))
-		{
-		  token.GetNextToken();
-		  auto val = token.GetToken().ConvertToInt(); 
-	      
-		  if( _numPart <= nat(val)  )
-		    {
-		      tout << "Error while parsing priors: you specified partition id " << val << " while ExaBayes assumes, that you only have " << _numPart << " partitions" << std::endl; 
-		      exitFunction(-1, true); 
-		    }
-	      
-		  partitions.insert(val);
-		  token.GetNextToken();
-		}
+        if (res != NxsBlock::NxsCommandResult(HANDLED_COMMAND))
+        {
+            auto cat = CategoryFuns::getCategoryByPriorName(token.GetToken());
+            token.GetNextToken();
 
-	      assert(token.GetToken().compare("}") == 0) ;
-	      token.GetNextToken();
-	    }
+            auto partitions  = std::unordered_set<nat>{};
 
-	  auto prior = parsePrior(token);
-	  // tout << "parsed prior " << prior.get() << " for category " << cat  << std::endl; 
+            if (token.GetToken().compare("{") == 0)
+            {
+                while (not token.GetToken().EqualsCaseInsensitive("}"))
+                {
+                    token.GetNextToken();
+                    auto val = token.GetToken().ConvertToInt();
 
-	  // account for fixed bl prior that may not have any value at all 
+                    if (_numPart <= nat(val))
+                    {
+                        tout
+                            <<
+                            "Error while parsing priors: you specified partition id "
+                            << val
+                            << " while ExaBayes assumes, that you only have "
+                            << _numPart << " partitions" << std::endl;
+                        exitFunction(-1, true);
+                    }
 
-	  if(cat == Category::BRANCH_LENGTHS && prior->getInitialValue().values.size() == 0)
-	    prior->setKeepInitData(); 
+                    partitions.insert(val);
+                    token.GetNextToken();
+                }
 
-	  _parsedPriors.insert(std::make_pair( cat, std::make_tuple(partitions,std::move(prior))  ));
-	}
-    }  
-} 
+                assert(token.GetToken().compare("}") == 0);
+                token.GetNextToken();
+            }
 
+            auto prior = parsePrior(token);
+            // tout << "parsed prior " << prior.get() << " for category " <<
+            // cat  << std::endl;
 
-void BlockPrior::verify() const
-{
-  // TODO actually it seems the things below are not really necessary... 
-  auto range =  _parsedPriors.equal_range(Category::BRANCH_LENGTHS); 
-  for(auto iter = std::get<0>(range) ; iter != std::get<1>(range) ; ++iter )
-    {
-      auto &elem = std::get<1>(*iter); 
-      auto &setOfParts = std::get<0>(elem); 
-      auto priorPtr = std::get<1>(elem).get(); 
-      if( setOfParts.size() > 0 && dynamic_cast<FixedPrior*>(priorPtr)  != nullptr) 
-	  {
-	    tout << "You attempted to set a fixed branch lengths prior to one or more\n"
-		 << "partitions (but not all of them). Currently, this option is not\n"
-		 << "supported. If you urgently need this feature, please contact us." << std::endl; 
-	    exitFunction(-1, true);
-	  }
+            // account for fixed bl prior that may not have any value at all
+
+            if (cat == Category::BRANCH_LENGTHS &&
+                prior->getInitialValue().values.size() == 0)
+                prior->setKeepInitData();
+
+            _parsedPriors.insert(std::make_pair(cat, std::make_tuple(
+                                                    partitions, std::move(
+                                                        prior))));
+        }
     }
-} 
+}
+
+
+void                    BlockPrior::verify() const
+{
+    // TODO actually it seems the things below are not really necessary...
+    auto range =  _parsedPriors.equal_range(Category::BRANCH_LENGTHS);
+
+    for (auto iter = std::get<0>(range); iter != std::get<1>(range); ++iter)
+    {
+        auto&elem = std::get<1>(*iter);
+        auto&setOfParts = std::get<0>(elem);
+        auto priorPtr = std::get<1>(elem).get();
+
+        if (setOfParts.size() > 0 && dynamic_cast<FixedPrior*>(priorPtr)  !=
+            nullptr)
+        {
+            tout
+                <<
+                "You attempted to set a fixed branch lengths prior to one or more\n"
+                <<
+                "partitions (but not all of them). Currently, this option is not\n"
+                <<
+                "supported. If you urgently need this feature, please contact us."
+                << std::endl;
+            exitFunction(-1, true);
+        }
+    }
+}
 

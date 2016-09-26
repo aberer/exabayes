@@ -8,41 +8,78 @@
 
 #include "common.h"
 
-class CommRequest; 
+class CommRequest;
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                                REMOTE COMM                                //
+///////////////////////////////////////////////////////////////////////////////
 class RemoteComm
 {
-public: 
-  class Impl; 			// CLASS declaration!
-  typedef RemoteComm SELF ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    using SELF = RemoteComm;
 
-  RemoteComm() ; 
-  RemoteComm(const RemoteComm &rhs)   ; 
-  RemoteComm( RemoteComm &&rhs)  ; 
-  ~RemoteComm();
-  RemoteComm& operator=( RemoteComm rhs); 
-  friend void swap(RemoteComm &lhs, RemoteComm& rhs); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    static uint64_t                        getMaxTag();
+    // ________________________________________________________________________
+    class Impl;         // CLASS declaration!
+    // ________________________________________________________________________
+    RemoteComm();
+    // ________________________________________________________________________
+    RemoteComm(
+        const RemoteComm&rhs);
+    // ________________________________________________________________________
+    RemoteComm(
+        RemoteComm&&rhs);
+    // ________________________________________________________________________
+    ~RemoteComm();
+    // ________________________________________________________________________
+    RemoteComm&                            operator=(
+        RemoteComm rhs);
+    // ________________________________________________________________________
+    friend void                            swap(
+        RemoteComm& lhs,
+        RemoteComm& rhs);
 
   #include "CommCore.hpp"
 
-  void waitAtBarrier() const; 
+    // ________________________________________________________________________
+    void                                   waitAtBarrier() const;
+    // ________________________________________________________________________
+    void                                   createSendRequest(
+        std::vector<char>array,
+        int              dest,
+        int              tag,
+        CommRequest&     req);
+    // ________________________________________________________________________
+    void                                   createRecvRequest(
+        int          src,
+        int          tag,
+        nat          length,
+        CommRequest& req);
+    // ________________________________________________________________________
+    friend std::ostream&                   operator<<(
+        std::ostream&     out,
+        const RemoteComm& rhs)
+    {return out << "R-" << rhs.getRank()  << "/" << rhs.size(); }
+    // ________________________________________________________________________
+    nat                                    getNumberOfPhysicalNodes();
+    // ________________________________________________________________________
+    int                                    getOffsetForThreadPin();
 
-  void createSendRequest(std::vector<char> array, int dest, int tag, CommRequest& req); 
-  void createRecvRequest(int src, int tag, nat length, CommRequest& req); 
-
-  friend std::ostream& operator<<(std::ostream& out, const RemoteComm& rhs)
-  {
-    return out << "R-" << rhs.getRank()  << "/" << rhs.size() ; 
-  }
-  
-  nat getNumberOfPhysicalNodes() ; 
-  int getOffsetForThreadPin() ; 
-
-  static uint64_t getMaxTag() ; 
-  
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
 private:
-  std::unique_ptr<RemoteComm::Impl> _impl; 
-}; 
+    std::unique_ptr<RemoteComm::Impl> _impl;
+};
 
 
 #endif

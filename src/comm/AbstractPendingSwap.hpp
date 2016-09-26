@@ -1,43 +1,57 @@
 #ifndef _ABSTRACT_PENDING_SWAP_HPP
 #define _ABSTRACT_PENDING_SWAP_HPP
 
-#include <cstdint>
-
 #include "SwapElem.hpp"
 #include "CommRequest.hpp"
 #include "PendingSwap.hpp"
 
+#include <cstdint>
+
+///////////////////////////////////////////////////////////////////////////////
+//                           ABSTRACT PENDING SWAP                           //
+///////////////////////////////////////////////////////////////////////////////
 class AbstractPendingSwap
 {
-public: 
-  AbstractPendingSwap(SwapElem swap )
-    : _swap(swap)
-  {
-  } 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    AbstractPendingSwap(
+        SwapElem swap)
+        : _swap(swap)
+    {}
+    // ________________________________________________________________________
+    virtual ~AbstractPendingSwap()
+    {}
 
-  virtual ~AbstractPendingSwap()  
-  {
-  }
+    // ________________________________________________________________________
+    SwapElem                                     getSwap() const
+    {return _swap; }
+    // ________________________________________________________________________
+    virtual std::vector<char>                    getRemoteData() const = 0;
+    // ________________________________________________________________________
+    virtual bool                                 isFinished() = 0;
+    // ________________________________________________________________________
+    virtual bool                                 allHaveReceived(
+        ParallelSetup& pl)  = 0;
+    // ________________________________________________________________________
+    virtual void                                 initialize(
+        ParallelSetup&   pl,
+        std::vector<char>myChainSer,
+        nat              runid)  = 0;
+    // ________________________________________________________________________
+    static uint64_t                              cantorPair(
+        uint64_t a,
+        uint64_t b)
+    {return (a + b) * (a + b + 1) / 2 + b; }
 
-  
-  SwapElem getSwap () const {return _swap; } 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PROTECTED DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+protected:
+    SwapElem _swap;
+};
 
-  virtual std::vector<char> getRemoteData() const = 0    ; 
-  virtual bool isFinished() = 0 ;   
-  virtual bool allHaveReceived(ParallelSetup& pl)  = 0 ; 
-  virtual void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid)  = 0; 
-
-
-  static uint64_t cantorPair(uint64_t a, uint64_t b )  
-  {
-    return (a + b ) * (a + b + 1 ) / 2 + b ; 
-  }
-
-protected: 
-
-  SwapElem _swap; 
-  
-
-}; 
 
 #endif

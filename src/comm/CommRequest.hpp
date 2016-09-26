@@ -8,29 +8,48 @@
 
 #include <cassert>
 
-class RemoteComm; 
+class RemoteComm;
 
+///////////////////////////////////////////////////////////////////////////////
+//                                COMM REQUEST                               //
+///////////////////////////////////////////////////////////////////////////////
 class CommRequest
 {
-public: 
-  class Impl; 
-  friend class RemoteComm; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    class Impl;
+    friend class RemoteComm;
+    // ________________________________________________________________________
+    CommRequest(
+        std::vector<char>array = std::vector<char>{});
+    // ________________________________________________________________________
+    CommRequest(
+        CommRequest&&rhs);
+    // ________________________________________________________________________
+    CommRequest(
+        const CommRequest& rhs) = delete;
+    // ________________________________________________________________________
+    CommRequest&                         operator=(
+        CommRequest rhs);
+    // ________________________________________________________________________
+    ~CommRequest();
+    // ________________________________________________________________________
+    friend void                          swap(
+        CommRequest& lhs,
+        CommRequest& rhs);
+    // ________________________________________________________________________
+    std::vector<char>                    getArray() const;
+    // ________________________________________________________________________
+    bool                                 isServed() const;
 
-  CommRequest(std::vector<char> array = std::vector<char>{}); 
-  CommRequest(CommRequest &&rhs)   ; 
-  CommRequest(const CommRequest& rhs) = delete; 
-  CommRequest& operator=(CommRequest rhs); 
-  ~CommRequest(); 
-
-  friend void  swap(CommRequest& lhs, CommRequest& rhs); 
-
-  std::vector<char> getArray() const; 
-  bool isServed() const; 
-
-private: 
-  std::unique_ptr<CommRequest::Impl> _impl; 
-}; 
-
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    std::unique_ptr<CommRequest::Impl> _impl;
+};
 
 
 #endif

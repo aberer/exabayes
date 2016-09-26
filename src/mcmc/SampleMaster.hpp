@@ -1,15 +1,13 @@
-/** 
-    @file SampleMaster.hpp
-    
-    @brief represents various chains sampling the posterior probability space
-    
-    Despite of its modest name, this is in fact the master class.  
- */ 
+/**
+ *  @file SampleMaster.hpp
+ *
+ *  @brief represents various chains sampling the posterior probability space
+ *
+ *  Despite of its modest name, this is in fact the master class.
+ */
 
 #ifndef _SAMPLING_H
 #define _SAMPLING_H
-
-#include <vector>
 
 #include "ProposalSet.hpp"
 #include "BlockRunParameters.hpp"
@@ -22,81 +20,192 @@
 #include "Serializable.hpp"
 #include "DiagnosticsFile.hpp"
 
+#include <vector>
+
+///////////////////////////////////////////////////////////////////////////////
+//                               SAMPLE MASTER                               //
+///////////////////////////////////////////////////////////////////////////////
 class SampleMaster : public Serializable
 {
-public:   
-  SampleMaster(size_t numCpu) ; 
-  SampleMaster(const SampleMaster& rhs) = default; 
-  SampleMaster& operator=(const SampleMaster &rhs)  = default; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                          PUBLIC INTERFACE                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    SampleMaster(
+        size_t numCpu);
+    // ________________________________________________________________________
+    SampleMaster(
+        const SampleMaster& rhs) = default;
+    // ________________________________________________________________________
+    SampleMaster&
+                        operator=(
+        const SampleMaster&rhs)  = default;
+    // ________________________________________________________________________
+    /**
+     *  @brief initializes the runs
+     *  @notice this is the top-level function
+     */
+    void
+                        initializeRuns(
+        Randomness rand);
+    // ________________________________________________________________________
+    // nat peekNumTax(std::string filePath);
+    /**
+     *  @brief cleanup, once finished
+     */
+    void
+                        finalizeRuns();
+    // ________________________________________________________________________
+    /**
+     *  @brief starts the MCMC sampling
+     */
+    void
+                        simulate();
+    // ________________________________________________________________________
+    /**
+     *  @brief initializes the config file
+     */
+    std::tuple<ParameterList, std::vector<std::unique_ptr<AbstractProposal> >,
+               std::vector<ProposalSet> >
+                        processConfigFile(
+        string        configFileName,
+        const TreeAln&tralnPtr);
+    // ________________________________________________________________________
+    void
+                        initializeWithParamInitValues(
+        TreeAln&            tree,
+        const ParameterList&params,
+        bool                hasBl) const;
+    // ________________________________________________________________________
+    void
+                        makeTreeUltrametric(
+        TreeAln&                        traln,
+        std::vector<AbstractParameter*> divTimes,
+        std::vector<AbstractParameter*>&divRates) const;
+    // ________________________________________________________________________
+    /**
+     *  @brief EXPERIMENTAL
+     */
+    void
+                        branchLengthsIntegration(
+        Randomness&rand);
+    // ________________________________________________________________________
+    /**
+     *  @brief print information about the alignment
+     */
+    void
+                        printAlignmentInfo(
+        const TreeAln&traln);
+    // ________________________________________________________________________
+    /**
+     *  @brief gets the runs
+     */
+    const std::vector<CoupledChains>&
+                        getRuns() const
+    {return _runs; }
+    // ________________________________________________________________________
+    virtual void
+                        deserialize(
+        std::istream&in);
+    // ________________________________________________________________________
+    virtual void
+                        serialize(
+        std::ostream&out) const;
+    // ________________________________________________________________________
+    void
+                        setCommandLine(
+        CommandLine cl){_cl = cl; }
+    // ________________________________________________________________________
+    void
+                        setParallelSetup(
+        ParallelSetup* pl){_plPtr = pl; }
 
-  /** 
-      @brief initializes the runs  
-      @notice this is the top-level function 
-   */ 
-  void initializeRuns(Randomness rand); 
-  // nat peekNumTax(std::string filePath); 
-  /** 
-      @brief cleanup, once finished
-   */ 
-  void finalizeRuns();  
-  /** 
-      @brief starts the MCMC sampling   
-   */ 
-  void simulate(); 
-  /** 
-      @brief initializes the config file 
-   */ 
-  std::tuple<ParameterList , std::vector<std::unique_ptr<AbstractProposal> > , std::vector<ProposalSet> >  
-  processConfigFile(string configFileName, const TreeAln &tralnPtr ) ; 
-  void initializeWithParamInitValues(TreeAln &tree , const ParameterList &params , bool hasBl ) const ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    void
+                        printParameters(
+        const TreeAln&      traln,
+        const ParameterList&params) const;
+    // ________________________________________________________________________
+    void
+                        printProposals(
+        std::vector<unique_ptr<AbstractProposal> >&proposals,
+        std::vector<ProposalSet>&                  proposalSets,
+        ParameterList&                             params) const;
+    // ________________________________________________________________________
+    void
+                        printInitializedFiles()
+    const;
+    // ________________________________________________________________________
+    std::vector<std::string>
+                        getStartingTreeStrings();
+    // ________________________________________________________________________
+    void
+                        informPrint();
+    // ________________________________________________________________________
+    void
+                        printInitialState();
+    // ________________________________________________________________________
+    LikelihoodEvaluator
+                        createEvaluatorPrototype(
+        const TreeAln&initTree,
+        bool          useSEV);
+    // ________________________________________________________________________
+    void
+                        writeCheckpointMaster();
+    // ________________________________________________________________________
+    void
+                        initializeFromCheckpoint();
+    // ________________________________________________________________________
+    std::pair<double,
+              double>
+                        convergenceDiagnostic(
+        nat&begin,
+        nat&end);
+    // ________________________________________________________________________
+    std::vector<bool>
+                        initTrees(
+        std::vector<TreeAln>&                 trees,
+        randCtr_t                             seed,
+        std::vector<std::string>              startingTreeStrings,
+        const std::vector<AbstractParameter*>&params);
+    // ________________________________________________________________________
+    bool
+                        initializeTree(
+        TreeAln&                              traln,
+        std::string                           startingTree,
+        Randomness&                           treeRandomness,
+        const std::vector<AbstractParameter*>&params);
+    // ________________________________________________________________________
+    void
+                        printDuringRun(
+        uint64_t gen);
+    // ________________________________________________________________________
+    std::string
+                        getOrCreateBinaryFile()
+    const;
+    // ________________________________________________________________________
+    void
+                        catchRunErrors()
+    const;
 
-  void makeTreeUltrametric( TreeAln &traln, std::vector<AbstractParameter*> divTimes, std::vector<AbstractParameter*> &divRates) const; 
-  /** 
-      @brief EXPERIMENTAL 
-   */ 
-  void branchLengthsIntegration(Randomness &rand)  ;  
-  /** 
-      @brief print information about the alignment  
-   */ 
-  void printAlignmentInfo(const TreeAln &traln);   
-  /** 
-      @brief gets the runs 
-   */ 
-  const std::vector<CoupledChains>& getRuns() const {return _runs; }
-  
-  virtual void deserialize( std::istream &in ) ; 
-  virtual void serialize( std::ostream &out) const ;
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    std::vector<CoupledChains> _runs;
+    ParallelSetup*             _plPtr; // non-owning!
+    BlockRunParameters         _runParams;
+    CommandLine                _cl;
+    DiagnosticsFile            _diagFile;
 
-  void setCommandLine(CommandLine cl) { _cl = cl; }
+    TimeTracker                _timeTracker;
+    TimeTracker                _printTime;
+};
 
-  void setParallelSetup(ParallelSetup* pl ) { _plPtr = pl; }
-
-private: 
-  void printParameters(const TreeAln &traln, const ParameterList &params) const; 
-  void printProposals( std::vector<unique_ptr<AbstractProposal> > &proposals,  std::vector<ProposalSet> &proposalSets, ParameterList &params  ) const ; 
-  void printInitializedFiles() const; 
-  std::vector<std::string> getStartingTreeStrings(); 
-  void informPrint(); 
-  void printInitialState(); 
-  LikelihoodEvaluator createEvaluatorPrototype(const TreeAln &initTree, bool useSEV); 
-  void writeCheckpointMaster(); 
-  void initializeFromCheckpoint(); 
-  std::pair<double,double> convergenceDiagnostic(nat &begin, nat &end); 
-  std::vector<bool> initTrees(std::vector<TreeAln> &trees, randCtr_t seed, std::vector<std::string> startingTreeStrings, const std::vector<AbstractParameter*> &params); 
-  bool initializeTree(TreeAln &traln, std::string startingTree, Randomness &treeRandomness, const std::vector<AbstractParameter*> &params); 
-  void printDuringRun(uint64_t gen) ; 
-  std::string getOrCreateBinaryFile() const ; 
-  void catchRunErrors() const ; 
-
-private:			// ATTRIBUTES 
-  std::vector<CoupledChains> _runs; 
-  ParallelSetup* _plPtr;  	// non-owning!
-  BlockRunParameters _runParams;  
-  CommandLine _cl; 
-  DiagnosticsFile _diagFile; 
-
-  TimeTracker _timeTracker; 
-  TimeTracker _printTime; 
-};  
 
 #endif

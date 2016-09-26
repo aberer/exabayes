@@ -6,40 +6,74 @@
 
 #include "common.h"
 
-class CommRequest; 
+class CommRequest;
 
 #include "RemoteComm.hpp"
 
+///////////////////////////////////////////////////////////////////////////////
+//                              REMOTE COMM IMPL                             //
+///////////////////////////////////////////////////////////////////////////////
 class RemoteComm::Impl
 {
-public: 
-  typedef Impl SELF; 
- 
-  Impl() 
-    : _comm{MPI_COMM_WORLD}
-  {
-    MPI_Comm_dup(MPI_COMM_WORLD, &_comm);
-  }
- 
-  Impl(const Impl& rhs); 
-  Impl& operator=( Impl rhs); 
-  friend void swap(Impl &lhs, Impl& rhs); 
-  ~Impl(); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    using SELF = Impl;
 
-  void waitAtBarrier() const; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+    // TODO: omg
+public:
+    static uint64_t _maxTagValue;
 
-  #include "CommCore.hpp"
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    Impl()
+        : _comm{MPI_COMM_WORLD}
+    {MPI_Comm_dup(MPI_COMM_WORLD, &_comm); }
+    // ________________________________________________________________________
+    Impl(
+        const Impl& rhs);
+    // ________________________________________________________________________
+    Impl&                          operator=(
+        Impl rhs);
+    // ________________________________________________________________________
+    friend void                    swap(
+        Impl& lhs,
+        Impl& rhs);
+    // ________________________________________________________________________
+    ~Impl();
+    // ________________________________________________________________________
+    void                           waitAtBarrier() const;
 
-  void createSendRequest(std::vector<char> array, int dest, int tag, CommRequest &req); 
-  void createRecvRequest(int src, int tag, nat length, CommRequest& req ); 
+#include "CommCore.hpp"
 
-  nat getNumberOfPhysicalNodes()  ; 
+    // ________________________________________________________________________
+    void                           createSendRequest(
+        std::vector<char>array,
+        int              dest,
+        int              tag,
+        CommRequest&     req);
+    // ________________________________________________________________________
+    void                           createRecvRequest(
+        int          src,
+        int          tag,
+        nat          length,
+        CommRequest& req);
+    // ________________________________________________________________________
+    nat                            getNumberOfPhysicalNodes();
 
-  static uint64_t _maxTagValue; 
-private: 
-  MPI_Comm _comm; 
-  
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    MPI_Comm _comm;
+};
 
 
 #include "comm/mpi/RemoteCommImpl.tpp"

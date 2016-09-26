@@ -1,19 +1,32 @@
 #ifndef  _CREDIBLE_SET_H
 #define  _CREDIBLE_SET_H
 
-#include "BipartitionExtractor.hpp" 
+#include "BipartitionExtractor.hpp"
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                                CREDIBLE SET                               //
+///////////////////////////////////////////////////////////////////////////////
 class CredibleSet
 {
-public: 
-  CredibleSet(std::vector<std::string> file); 
-  void printCredibleSet(std::string filename, double thresh)  ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    CredibleSet(
+        std::vector<std::string>file);
+    // ________________________________________________________________________
+    void                    printCredibleSet(
+        std::string filename,
+        double      thresh);
 
-private: 
-  BipartitionExtractor _bipEx ; 
-  // nat _totalTrees;   
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    BipartitionExtractor _bipEx;
+};
 
 
 #endif

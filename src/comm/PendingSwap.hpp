@@ -5,50 +5,73 @@
 #include <vector>
 #include <memory>
 
-/** 
-    @file PendingSwap.hpp
-
-    @brief represents a swap for which in the parallel case have not received the other chain yet
-
-    This class has no meaning in non-MPI-versions. 
-*/ 
-
-
 #include "common.h"
 
-class ParallelSetup; 
-class SwapElem; 
+class ParallelSetup;
+class SwapElem;
+class AbstractPendingSwap;
 
-class AbstractPendingSwap; 
-
+///////////////////////////////////////////////////////////////////////////////
+//                                PENDING SWAP                               //
+///////////////////////////////////////////////////////////////////////////////
 class PendingSwap
 {
-public: 
-  class Impl; 			// since we have an abstract variant, this does not really fit anymore 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    class Impl;         // since we have an abstract variant, this does not
+                        // really fit anymore
+    // ________________________________________________________________________
+    PendingSwap(
+        SwapElem swap,
+        bool     isLocal);
+    // ________________________________________________________________________
+    PendingSwap(
+        PendingSwap&& rhs);
+    // ________________________________________________________________________
+    PendingSwap&                         operator=(
+        const PendingSwap& elem)   = delete;
+    // ________________________________________________________________________
+    PendingSwap(
+        const PendingSwap& rhs) = delete;
+    // ________________________________________________________________________
+    ~PendingSwap();
+    // ________________________________________________________________________
+    friend void                          swap(
+        PendingSwap& lhs,
+        PendingSwap& rhs);
+    // ________________________________________________________________________
+    bool                                 isFinished();
+    // ________________________________________________________________________
+    void                                 initialize(
+        ParallelSetup&   pl,
+        std::vector<char>myChainSer,
+        nat              runid);
+    // ________________________________________________________________________
+    SwapElem                             getSwap() const;
+    // ________________________________________________________________________
+    bool                                 allHaveReceived(
+        ParallelSetup& pl);
+    // ________________________________________________________________________
+    std::vector<char>                    getRemoteData()  const;
 
-  PendingSwap( SwapElem swap, bool isLocal); 
-  PendingSwap(PendingSwap&& rhs)     ;
-  PendingSwap& operator=( const PendingSwap& elem)   = delete; 
-  PendingSwap( const PendingSwap& rhs) = delete; 
-  ~PendingSwap();
-  
-  friend void swap(PendingSwap& lhs, PendingSwap& rhs); 
-  
-  bool isFinished();
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    int                                  createTag(
+        nat numChains) const;
 
-  void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid); 
-  SwapElem getSwap() const ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ATTRIBUTES
+    std::unique_ptr<AbstractPendingSwap> _impl;
+};
 
-  bool allHaveReceived(ParallelSetup& pl) ;
-
-  std::vector<char> getRemoteData()  const; 
-  
-private: 			// METHODS 
-  int createTag( nat numChains ) const ; 
-
-private: 			// ATTRIBUTES
-  std::unique_ptr<AbstractPendingSwap> _impl; 
-}; 
 
 #endif
 

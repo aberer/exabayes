@@ -5,44 +5,80 @@
 
 #include "common.h"
 
-class CommRequest; 
+class CommRequest;
 
 #include "RemoteComm.hpp"
 #include "CommCoreNew.hpp"
 
+///////////////////////////////////////////////////////////////////////////////
+//                              REMOTE COMM IMPL                             //
+///////////////////////////////////////////////////////////////////////////////
 class RemoteComm::Impl
 {
-  typedef Impl SELF; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    using SELF = Impl;
 
-public: 
-  Impl()
-    : dummy{0}
-  {}  
-  Impl(const Impl& rhs)
-    : dummy{rhs.dummy}
-  {}
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+    // TODO: omg
+public:
+    static uint64_t _maxTagValue;
 
-  Impl& operator=( Impl rhs); 
-  friend void swap(Impl &lhs, Impl& rhs)
-  {
-    std::swap(lhs.dummy, rhs.dummy); 
-  }; 
-
-  ~Impl(){}; 
-
-  void createSendRequest(std::vector<char> array, int dest, int tag, CommRequest& req);
-  void createRecvRequest(int src, int tag, nat length, CommRequest& req);  
-
-  void waitAtBarrier() const {} 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    Impl()
+        : dummy{0}
+    {}
+    // ________________________________________________________________________
+    Impl(
+        const Impl& rhs)
+        : dummy{rhs.dummy}
+    {}
+    // ________________________________________________________________________
+    Impl&                          operator=(
+        Impl rhs);
+    // ________________________________________________________________________
+    friend void                    swap(
+        Impl& lhs,
+        Impl& rhs)
+    {std::swap(lhs.dummy, rhs.dummy); };
+    // ________________________________________________________________________
+    ~Impl()
+    {};
+    // ________________________________________________________________________
+    void                           createSendRequest(
+        std::vector<char>array,
+        int              dest,
+        int              tag,
+        CommRequest&     req);
+    // ________________________________________________________________________
+    void                           createRecvRequest(
+        int          src,
+        int          tag,
+        nat          length,
+        CommRequest& req);
+    // ________________________________________________________________________
+    void                           waitAtBarrier() const
+    {}
 
 #include "CommCore.hpp"
+    // ________________________________________________________________________
+    nat                            getNumberOfPhysicalNodes();
 
-  nat getNumberOfPhysicalNodes();
-  static uint64_t _maxTagValue; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                             PRIVATE DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    nat dummy;
+};
 
-private: 
-  nat dummy; 
-}; 
 
 #include "comm/dummy/RemoteCommImpl.tpp"
 

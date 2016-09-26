@@ -1,30 +1,49 @@
-#ifndef OUTPUT_FILE_H 
-#define OUTPUT_FILE_H 
+#ifndef OUTPUT_FILE_H
+#define OUTPUT_FILE_H
 
 #include <sys/stat.h>
 #include <sstream>
 
+///////////////////////////////////////////////////////////////////////////////
+//                                OUTPUT FILE                                //
+///////////////////////////////////////////////////////////////////////////////
 class OutputFile
 {
-public: 
-  OutputFile()
-    : fullFileName{""}
-  {
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    OutputFile()
+        : fullFileName{""}
+    {}
+    // ________________________________________________________________________
+    virtual ~OutputFile(){}
+    // ________________________________________________________________________
+    static void                           rejectIfExists(
+        std::string fileName);
+    // ________________________________________________________________________
+    void                                  rejectIfNonExistant(
+        std::string fileName);
+    // TODO portability
+    // ________________________________________________________________________
+    static std::string                    getFileBaseName(
+        std::string workdir);
+    // ________________________________________________________________________
+    std::string                           getFileName() const
+    {return fullFileName; }
+    // ________________________________________________________________________
+    static bool                           directoryExists(
+        std::string name);
+    // ________________________________________________________________________
+    void                                  removeMe() const;
 
-  virtual ~OutputFile(){}
+    ///////////////////////////////////////////////////////////////////////////
+    //                             PROTECTED DATA                            //
+    ///////////////////////////////////////////////////////////////////////////
+protected:
+    std::string fullFileName;
+};
 
-  static void rejectIfExists(std::string fileName); 
-  void rejectIfNonExistant(std::string fileName); 
-  // TODO portability 
-  static std::string getFileBaseName(std::string workdir ); 
-  std::string getFileName() const  {return fullFileName; }
-  
-  static bool directoryExists(std::string name); 
-  void removeMe() const ; 
-
-protected:   
-  std::string fullFileName;   
-}; 
 
 #endif

@@ -1,23 +1,40 @@
 #ifndef _PENDING_SWAP_IMPL_HPP
 #define _PENDING_SWAP_IMPL_HPP
 
-class ParallelSetup; 
+#include "AbstractPendingSwap.hpp"
 
 #include <string>
 #include <vector>
 
-#include "AbstractPendingSwap.hpp"
+class ParallelSetup;
 
+///////////////////////////////////////////////////////////////////////////////
+//                             PENDING SWAP IMPL                             //
+///////////////////////////////////////////////////////////////////////////////
 class PendingSwap::Impl : public AbstractPendingSwap
 {
-public: 
-  Impl(SwapElem elem); 
-  virtual ~Impl(){}
-  std::vector<char> getRemoteData() const ; 
-  void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid); 
-  bool allHaveReceived(ParallelSetup& pl)  ; 
-  bool isFinished()  ; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    Impl(
+        SwapElem elem);
+    // ________________________________________________________________________
+    virtual ~Impl(){}
+    // ________________________________________________________________________
+    std::vector<char>                    getRemoteData() const;
+    // ________________________________________________________________________
+    void                                 initialize(
+        ParallelSetup&   pl,
+        std::vector<char>myChainSer,
+        nat              runid);
+    // ________________________________________________________________________
+    bool                                 allHaveReceived(
+        ParallelSetup& pl);
+    // ________________________________________________________________________
+    bool                                 isFinished();
+};
 
 
 #endif

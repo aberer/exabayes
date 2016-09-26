@@ -1,109 +1,154 @@
 #ifndef _OPTIMIZED_PARAMETER_HPP
 #define _OPTIMIZED_PARAMETER_HPP
 
-
-class TreeAln; 
-
 #include "AbstractParameter.hpp"
 
-// #include "Branch.hpp"
 #include "BranchPlain.hpp"
 #include "DistributionProposer.hpp"
 
+class TreeAln;
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                            OPTIMIZED PARAMETER                            //
+///////////////////////////////////////////////////////////////////////////////
 class OptimizedParameter
 {
-public: 
-  OptimizedParameter( TreeAln& traln, const BranchPlain& branch, AbstractParameter* param, int maxIter ); 
-  OptimizedParameter(const OptimizedParameter& rhs) = default; 
-  OptimizedParameter& operator=(const OptimizedParameter &rhs) = default; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+    // TODO: really?
+public:
+    static const double zMin;
+    static const double zMax;
 
-  template<class T> 
-  auto getProposerDistribution(TreeAln &traln, double convParameter, double nonConvParameter) const 
-    -> DistributionProposer<T> ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    OptimizedParameter(
+        TreeAln&           traln,
+        const BranchPlain& branch,
+        AbstractParameter* param,
+        int                maxIter);
+    // ________________________________________________________________________
+    template<class T>
+    auto                                   getProposerDistribution(
+        TreeAln&traln,
+        double  convParameter,
+        double  nonConvParameter) const
+        ->DistributionProposer<T>;
+    // ________________________________________________________________________
+    void                                   applyToMask(
+        std::vector<bool>&mask)  const;
+    // ________________________________________________________________________
+    void                                   applyValues(
+        double*values) const;
+    // ________________________________________________________________________
+    BranchLength                           getOptimizedBranch() const;
+    // ________________________________________________________________________
+    AbstractParameter*                     getParam() const
+    {return _param; }
+    // ________________________________________________________________________
+    bool                                   isCurvatureOk() const
+    {return _curvatOK; }
+    // ________________________________________________________________________
+    bool                                   hasConvergedNew() const;
+    // ________________________________________________________________________
+    bool                                   hasFinished() const;
+    // ________________________________________________________________________
+    void                                   resetStep();
+    // ________________________________________________________________________
+    void                                   changeSide();
+    // ________________________________________________________________________
+    void                                   decrIter()
+    {--_iters; }
+    // ________________________________________________________________________
+    void                                   shortenBadBranch();
+    // ________________________________________________________________________
+    void                                   nrStep();
+    // ________________________________________________________________________
+    void                                   setToTypicalBranch(
+        double   typicalAbsLen,
+        TreeAln& traln);
+    // ________________________________________________________________________
+    void                                   extractDerivatives(
+        TreeAln&            traln,
+        std::vector<double>&dlnLdlz,
+        std::vector<double>&d2lnLdlz2);
+    // ________________________________________________________________________
+    // check if we are done for partition i or if we need to adapt the
+    // branch length again
+    //
+    void                                   doInitStep();
 
-  void applyToMask (std::vector<bool> &mask)  const; 
-  void applyValues(double *values) const ; 
+    // ________________________________________________________________________
+    double                                 getFirstDerivative() const
+    {return _nrD1; }
+    // ________________________________________________________________________
+    double                                 getSecondDerivative()
+    const
+    {return _nrD2; }
+    // ________________________________________________________________________
+    double                                 getOptimum() const
+    {return _zCur; }
+    // ________________________________________________________________________
+    void                                   checkConvergence();
+    // ________________________________________________________________________
+    BranchPlain                            getBranch() const
+    {return _branch; }
+    // ________________________________________________________________________
+    friend std::ostream&                   operator                    <<(
+        std::ostream&             out,
+        const OptimizedParameter& rhs)
+    {
+        out << rhs.getOptimum() << "," << rhs.getFirstDerivative() << ","
+            << rhs.getSecondDerivative();
+        return out;
+    }
 
-  BranchLength getOptimizedBranch() const ;  
+    ///////////////////////////////////////////////////////////////////////////
+    //                             PRIVATE DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    double             _zPrev;
+    double             _zCur;
+    double             _zStep;
+    double             _coreLZ;
 
-  AbstractParameter* getParam() const {return _param; }
+    double             _nrD1;
+    double             _nrD2;
 
-  bool isCurvatureOk() const {return _curvatOK; }
+    int                _iters;
 
-  bool hasConvergedNew() const ; 
-  bool hasFinished() const ; 
+    bool               _curvatOK;
+    AbstractParameter* _param;
 
-  void resetStep(); 
-  void changeSide(); 
-
-  void decrIter() {--_iters; }
-
-  void shortenBadBranch(); 
-  void nrStep(); 
-
-  void setToTypicalBranch(double typicalAbsLen, TreeAln& traln ); 
-
-  void extractDerivatives( TreeAln &traln, std::vector<double> &dlnLdlz, std::vector<double> &d2lnLdlz2); 
-
-  /** @brief check if we ar done for partition i or if we need to
-      adapt the branch length again */
-  void doInitStep(); 
-
-  static const double zMin ; 
-  static const double zMax; 
-
-  double getFirstDerivative() const {return _nrD1; }
-  double getSecondDerivative() const {return _nrD2; }
-  double getOptimum() const {return _zCur;  }
-
-  void checkConvergence() ; 
-
-  BranchPlain getBranch() const 
-  {
-    return _branch; 
-  }
-
-  
-  friend std::ostream& operator<<(std::ostream& out, const OptimizedParameter& rhs)
-  {
-    out << rhs.getOptimum() << "," << rhs.getFirstDerivative() << ","  << rhs.getSecondDerivative() ; 
-    return out ; 
-  }
-
-private: 
-  double _zPrev; 
-  double _zCur; 
-  double _zStep; 
-  double _coreLZ; 
-
-  double _nrD1; 
-  double _nrD2; 
-  
-  int _iters; 
-  
-  bool _curvatOK; 
-  AbstractParameter* _param; 
-
-  bool _hasConverged; 
-  BranchPlain _branch; 
-}; 
+    bool               _hasConverged;
+    BranchPlain        _branch;
+};
 
 
-template<class T> 
-DistributionProposer<T> 
-OptimizedParameter::getProposerDistribution(TreeAln &traln, double convParameter, double nonConvParameter) const   
+///////////////////////////////////////////////////////////////////////////////
+//                             INLINE DEFINITIONS                            //
+///////////////////////////////////////////////////////////////////////////////
+template<class T>
+auto                                       OptimizedParameter::
+    getProposerDistribution(
+    TreeAln&traln,
+    double  convParameter,
+    double  nonConvParameter) const
+    ->DistributionProposer<T>
 {
-  // tout << "init with factor "  << factor << std::endl; 
-  auto bl =  BranchLength(BranchPlain(1,2));
-  bl.setLength(_zCur); 
-  auto realLen = bl.toMeanSubstitutions( _param->getMeanSubstitutionRate());
-  return DistributionProposer<T>(realLen, _nrD1, _nrD2, convParameter, nonConvParameter ); 
+    // tout << "init with factor "  << factor << std::endl;
+    auto bl =  BranchLength(BranchPlain(1, 2));
+    bl.setLength(_zCur);
+    auto realLen = bl.toMeanSubstitutions(_param->getMeanSubstitutionRate());
+    return DistributionProposer<T>(realLen, _nrD1, _nrD2, convParameter,
+                                   nonConvParameter);
 }
 
 
-
 #endif
-
 

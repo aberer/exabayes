@@ -5,45 +5,55 @@
 #include <iostream>
 
 
-void OutputFile::rejectIfExists(std::string fileName)
+void                           OutputFile::rejectIfExists(
+    std::string fileName)
 {
-  if( std::ifstream(fileName) ) 
+    if (std::ifstream(fileName))
     {
-      std::cerr << std::endl <<  "File " << fileName << " already exists (probably \n"
-		<< "from previous run). Please choose a new run-id or remove previous output files. " << std::endl; 
-      exitFunction(-1, false);
+        std::cerr << std::endl <<  "File " << fileName
+                  << " already exists (probably \n"
+                  <<
+        "from previous run). Please choose a new run-id or remove previous output files. "
+                  << std::endl;
+        exitFunction(-1, false);
     }
 }
 
-void OutputFile::rejectIfNonExistant(std::string fileName)
+void                           OutputFile::rejectIfNonExistant(
+    std::string fileName)
 {
-  if( not std::ifstream(fileName) )      
+    if (not std::ifstream(fileName))
     {
-      std::cerr << "Error: could not find file from previous run. \n"
-		<< "The assumed name of this file was >" <<  fileName << "<. Aborting." << std::endl; 
-      exitFunction(0, true); 
+        std::cerr << "Error: could not find file from previous run. \n"
+                  << "The assumed name of this file was >" <<  fileName
+                  << "<. Aborting." << std::endl;
+        exitFunction(0, true);
     }
 }
 
-std::string OutputFile::getFileBaseName(std::string workdir )
+std::string                    OutputFile::getFileBaseName(
+    std::string workdir)
 {
-  auto &&ss = std::stringstream{}; 
-  ss << workdir << ( workdir.compare("") == 0  ? "" : "/") << PROGRAM_NAME; 
-  return ss.str(); 
+    auto&&ss = std::stringstream{};
+    ss << workdir << (workdir.compare("") == 0  ? "" : "/") << PROGRAM_NAME;
+    return ss.str();
 }
 
-bool OutputFile::directoryExists(std::string name)
+bool                           OutputFile::directoryExists(
+    std::string name)
 {
-  struct stat st;
-  if(stat(name.c_str(),&st) == 0)
-    if((st.st_mode & S_IFDIR) != 0)
-      return true; 
-  return false; 
+    struct stat st;
+
+    if (stat(name.c_str(), &st) == 0)
+        if ((st.st_mode & S_IFDIR) != 0)
+            return true;
+
+    return false;
 }
 
 
-void OutputFile::removeMe() const 
+void                           OutputFile::removeMe() const
 {
-  if(fullFileName.compare("") != 0 )
-    remove(fullFileName.c_str() ); 
+    if (fullFileName.compare("") != 0)
+        remove(fullFileName.c_str());
 }

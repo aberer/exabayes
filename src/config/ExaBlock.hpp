@@ -1,16 +1,25 @@
-#ifndef __EXA_BLOCK_HPP 
+#ifndef __EXA_BLOCK_HPP
 #define __EXA_BLOCK_HPP
 
 #include <ncl/ncl.h>
 
-class ExaBlock  : public NxsBlock
+
+///////////////////////////////////////////////////////////////////////////////
+//                                 EXA BLOCK                                 //
+///////////////////////////////////////////////////////////////////////////////
+class ExaBlock : public NxsBlock
 {
-
+    ///////////////////////////////////////////////////////////////////////////
+    //                          PROTECTED INTERFACE                          //
+    ///////////////////////////////////////////////////////////////////////////
 protected:
-  double parseScientificDouble(NxsToken& token) const  ; 
-  bool convertToBool(NxsString &string) const ; 
+    // ________________________________________________________________________
+    double                    parseScientificDouble(
+        NxsToken& token) const;
+    // ________________________________________________________________________
+    bool                      convertToBool(
+        NxsString&string) const;
+};
 
-
-}; 
 
 #endif

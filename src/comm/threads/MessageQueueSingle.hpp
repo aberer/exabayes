@@ -1,55 +1,97 @@
 #ifndef _MESSAGE_QUEUE_SINGLE_HPP
-#define _MESSAGE_QUEUE_SINGLE_HPP 
+#define _MESSAGE_QUEUE_SINGLE_HPP
 
-/** 
-    @brief 
-    this is a true lockless single producer, single consumer message queue. 
-    
-    see sutters article in drdobbs
- */ 
+/**
+ *  @brief
+ *  this is a true lockless single producer, single consumer message queue.
+ *
+ *  see sutters article in drdobbs
+ */
 
 #include <vector>
 #include <limits>
 #include <atomic>
 
+using byte =  uint8_t;
 
-typedef uint8_t byte;  
-
-class  MessageQueueSingle 
+///////////////////////////////////////////////////////////////////////////////
+//                            MESSAGE QUEUE SINGLE                           //
+///////////////////////////////////////////////////////////////////////////////
+class MessageQueueSingle
 {
-  struct Node; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    struct Node;
 
-public: 
-  MessageQueueSingle(); 
-  MessageQueueSingle(const MessageQueueSingle& rhs) ; 
-  MessageQueueSingle( MessageQueueSingle&& rhs) ; 
-  MessageQueueSingle& operator=(MessageQueueSingle rhs); 
-  friend void swap(MessageQueueSingle& lhs, MessageQueueSingle& rhs); 
-  ~MessageQueueSingle(); 
-  
-  template<typename T>
-  void produce(std::vector<T> msg); 
-  template<typename T>
-  std::tuple<bool,std::vector<T> >  consume(int myId); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    MessageQueueSingle();
+    // ________________________________________________________________________
+    MessageQueueSingle(
+        const MessageQueueSingle& rhs);
+    // ________________________________________________________________________
+    MessageQueueSingle(
+        MessageQueueSingle&& rhs);
+    // ________________________________________________________________________
+    MessageQueueSingle&                                  operator=(
+        MessageQueueSingle rhs);
+    // ________________________________________________________________________
+    friend void                                          swap(
+        MessageQueueSingle& lhs,
+        MessageQueueSingle& rhs);
+    // ________________________________________________________________________
+    ~MessageQueueSingle();
+    // ________________________________________________________________________
+    template<typename T>
+    void                                                 produce(
+        std::vector<T>msg);
+    // ________________________________________________________________________
+    template<typename T>
+    std::tuple<bool, std::vector<T> >                    consume(
+        int myId);
 
-  
-private: 
-  Node* _first;			// producer only 
-  // char pad[CACHE_LINE_SIZE - sizeof(Node*)]; 
-  std::atomic<Node*> _divider; 	// shared 
-  // char pad2[CACHE_LINE_SIZE - sizeof(std::atomic<Node*>)]; 
-  std::atomic<Node*> _last; 	// shared 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    Node*              _first; // producer only
+    // char pad[CACHE_LINE_SIZE - sizeof(Node*)];
+    std::atomic<Node*> _divider; // shared
+    // char pad2[CACHE_LINE_SIZE - sizeof(std::atomic<Node*>)];
+    std::atomic<Node*> _last;   // shared
+};
 
-struct MessageQueueSingle::Node 
+
+///////////////////////////////////////////////////////////////////////////////
+//                         MESSAGE QUEUE SINGLE NODE                         //
+///////////////////////////////////////////////////////////////////////////////
+struct MessageQueueSingle::Node
 {
-  Node(std::vector<byte> msg ); 
-  Node(const Node& rhs ) = default; 
-  Node& operator=(const Node &rhs)  = default; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+    // ________________________________________________________________________
+    Node(
+        std::vector<byte>msg);
+    // ________________________________________________________________________
+    Node(
+        const Node& rhs) = default;
+    // ________________________________________________________________________
+    Node&                                                operator=(
+        const Node&rhs)  = default;
 
-  std::vector<byte> _message; 
-  Node *_next; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    std::vector<byte>               _message;
+    Node*                           _next;
+};
 
 
 #include "MessageQueueSingle.tpp"

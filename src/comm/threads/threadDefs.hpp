@@ -2,7 +2,9 @@
 #define _THREAD_DEFS_HPP
 
 #include <thread>
+
 #define MY_TID std::this_thread::get_id()
-typedef std::thread::id tid_t;  
+
+using tid_t =  std::thread::id;
 
 #endif

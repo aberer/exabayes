@@ -1,33 +1,54 @@
 #ifndef _COMM_REQUEST_IMPL_SEQ_HPP
 #define _COMM_REQUEST_IMPL_SEQ_HPP
 
-#include <vector>
-#include <memory>
-
 #include "MpiType.hpp"
 
 #include "RemoteComm.hpp"
 
 #include "CommRequest.hpp"
 
+#include <vector>
+#include <memory>
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                             COMM REQUEST IMPL                             //
+///////////////////////////////////////////////////////////////////////////////
 class CommRequest::Impl
 {
-  friend class RemoteComm; 
-  friend class RemoteComm::Impl; 
+    friend class RemoteComm;
+    friend class RemoteComm::Impl;
 
-public: 
-  Impl(std::vector<char> array );
-  Impl(Impl&& rhs) = delete; 
-  Impl(const Impl& rhs) = delete; 
-  Impl& operator=(const Impl& rhs) = delete; 
-  ~Impl(); 
-  std::vector<char> getArray() const; 
-  bool isServed() const ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    Impl(
+        std::vector<char>array);
+    // ________________________________________________________________________
+    Impl(
+        Impl&& rhs) = delete;
+    // ________________________________________________________________________
+    Impl(
+        const Impl& rhs) = delete;
+    // ________________________________________________________________________
+    Impl&                                operator=(
+        const Impl& rhs) = delete;
+    // ________________________________________________________________________
+    ~Impl();
+    // ________________________________________________________________________
+    std::vector<char>                    getArray() const;
+    // ________________________________________________________________________
+    bool                                 isServed() const;
 
-private: 
-  mutable MPI_Request _req; 
-  std::vector<char> _array; 
-} ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    mutable MPI_Request _req;
+    std::vector<char>   _array;
+};
 
 
 #endif

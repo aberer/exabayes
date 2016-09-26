@@ -4,30 +4,26 @@
 #pragma GCC system_header
 #include <mpi.h>
 
-template<typename T>  
-struct mpiType 
+template<typename T>
+struct mpiType
 {
-  static MPI_Datatype value ;
-}; 
+    static MPI_Datatype               value;
+};
 
 
-enum class MPI_OP_TYPE : int 
+enum class MPI_OP_TYPE : int
 {
-  SUM = 1 , 
-    LAND = 2 
-} ; 
+    SUM  = 1,
+    LAND = 2
+};
 
 
 template<MPI_OP_TYPE op>
 struct mpiOp
 {
-  static MPI_Op value; 
-}; 
+    static MPI_Op               value;
+};
+
 
 #endif
-
-
-
-
-
 

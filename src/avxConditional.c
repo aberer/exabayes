@@ -6,12 +6,11 @@
 
 #include "lib/pll/avxLikelihood.c"
 
-#else 
+#else
 
-
-int avx_prototypeDummy()
+int                    avx_prototypeDummy()
 {
-  return 0; 
+    return 0;
 }
 
 #endif

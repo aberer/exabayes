@@ -1,81 +1,135 @@
 #ifndef _COMMANDLINE_H
 #define _COMMANDLINE_H
 
+#include "Randomness.hpp"
+#include "MemoryMode.hpp"
+
 #include <memory>
 #include <iosfwd>
 #include <string>
 
-#include "Randomness.hpp"
-#include "MemoryMode.hpp"
-
+///////////////////////////////////////////////////////////////////////////////
+//                               COMMAND LINE                                //
+///////////////////////////////////////////////////////////////////////////////
 class CommandLine
 {
-public: 
-  CommandLine(); 
-  void initialize(  int argc, char **argv); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    CommandLine();
+    // ________________________________________________________________________
+    void                           initialize(
+        int   argc,
+        char**argv);
+    // ________________________________________________________________________
+    randCtr_t                      getSeed() const;
+    // ________________________________________________________________________
+    std::string                    getConfigFileName() const
+    {return configFileName; }
+    // ________________________________________________________________________
+    std::string                    getAlnFileName() const
+    {return alnFileName; }
+    // ________________________________________________________________________
+    std::string                    getRunid() const
+    {return runid; }
+    // ________________________________________________________________________
+    std::string                    getTreeFile() const
+    {return treeFile; }
+    // ________________________________________________________________________
+    int                            getNumRunParallel() const
+    {return runNumParallel; }
+    // ________________________________________________________________________
+    std::string                    getWorkdir() const
+    {return workDir; }
+    // ________________________________________________________________________
+    void                           printVersion(
+        std::ostream&out);
+    // ________________________________________________________________________
+    nat                            getNumChainsParallel() const
+    {return chainNumParallel; }
+    // ________________________________________________________________________
+    std::string                    getCheckpointId() const
+    {return checkpointId; }
+    // ________________________________________________________________________
+    void                           parseAlternative(
+        int  argc,
+        char*argv[]);
+    // ________________________________________________________________________
+    bool                           isSaveMemorySEV() const
+    {return saveMemorySEV; }
+    // ________________________________________________________________________
+    std::string                    getCommandLineString() const;
+    // ________________________________________________________________________
+    MemoryMode                     getMemoryMode() const
+    {return memoryMode; }
+    // ________________________________________________________________________
+    bool                           isDryRun() const
+    {return dryRun; }
+    // ________________________________________________________________________
+    bool                           onlyPrintHelp() const
+    {return _onlyPrintHelp; }
+    // ________________________________________________________________________
+    bool                           onlyPrintVersion() const
+    {return _onlyPrintVersion; }
+    // ________________________________________________________________________
+    bool                           alnFileIsBinary() const;
+    // ________________________________________________________________________
+    bool                           hasThreadPinning() const
+    {return _hasThreadPinning; }
+    // ________________________________________________________________________
+    int                            getNumThreads() const
+    {return _totalThreads; }
+    // ________________________________________________________________________
+    std::string                    getSingleModel() const
+    {return singleModel; }
+    // ________________________________________________________________________
+    std::string                    getModelFile() const
+    {return modelFile; }
+    // ________________________________________________________________________
+    bool                           isQuiet() const
+    {return quiet; }
+    // ________________________________________________________________________
+    int                            getReaderStride() const
+    {return readerStride; }
+    // ________________________________________________________________________
+    void                           printHelp(
+        std::ostream& out);
 
-  randCtr_t getSeed() const; 
-  std::string getConfigFileName() const {return configFileName; }
-  std::string getAlnFileName() const{return alnFileName; }
-  std::string getRunid() const {return runid; }
-  std::string getTreeFile() const {return treeFile; }
-  int getNumRunParallel() const {return runNumParallel; }
-  std::string getWorkdir() const {return workDir; }
-  void printVersion(std::ostream &out);
-  nat getNumChainsParallel() const {return chainNumParallel; }
-  std::string getCheckpointId()const {return checkpointId; }
-  void parseAlternative(int argc, char *argv[]); 
-  bool isSaveMemorySEV() const {return saveMemorySEV; }
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    void                           assertFileExists(
+        std::string filename);
 
-  std::string getCommandLineString() const ; 
-  MemoryMode getMemoryMode()const {return memoryMode ;  }
-  bool isDryRun() const {return dryRun; }
-
-  bool onlyPrintHelp() const {return _onlyPrintHelp; }
-  bool onlyPrintVersion() const {return _onlyPrintVersion; }
-
-  bool alnFileIsBinary() const; 
-
-  bool hasThreadPinning() const {return _hasThreadPinning; }
-
-  int getNumThreads() const {return _totalThreads; }
-
-  std::string getSingleModel() const {return singleModel; }
-  std::string getModelFile() const {return modelFile; }
-
-  bool isQuiet() const {return quiet; }
-
-  int getReaderStride() const {return readerStride; }
-
-  void printHelp(std::ostream& out);
-
-private: 			// METHODS
-  void assertFileExists(std::string filename); 
-
-
-private: 			// ATTRIBUTES
-  randCtr_t seed; 
-  std::string configFileName; 
-  std::string alnFileName; 
-  std::string runid; 
-  std::string treeFile; 
-  std::string workDir;
-  int runNumParallel;   
-  int chainNumParallel; 
-  std::string checkpointId; 
-  MemoryMode memoryMode; 
-  bool saveMemorySEV; 
-  bool dryRun; 
-  std::string modelFile; 
-  std::string singleModel; 
-  bool quiet; 
-  int readerStride; 
-  std::string _cmdString;
-  int _totalThreads; 
-  bool _hasThreadPinning; 
-  bool _onlyPrintHelp; 
-  bool _onlyPrintVersion; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    randCtr_t   seed;
+    std::string configFileName;
+    std::string alnFileName;
+    std::string runid;
+    std::string treeFile;
+    std::string workDir;
+    int         runNumParallel;
+    int         chainNumParallel;
+    std::string checkpointId;
+    MemoryMode  memoryMode;
+    bool        saveMemorySEV;
+    bool        dryRun;
+    std::string modelFile;
+    std::string singleModel;
+    bool        quiet;
+    int         readerStride;
+    std::string _cmdString;
+    int         _totalThreads;
+    bool        _hasThreadPinning;
+    bool        _onlyPrintHelp;
+    bool        _onlyPrintVersion;
+};
 
 
 #endif

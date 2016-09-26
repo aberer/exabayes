@@ -1,27 +1,49 @@
 #ifndef _PENDING_SWAP_IMPL_HPP
 #define _PENDING_SWAP_IMPL_HPP
 
-#include <vector>
-
 #include "AbstractPendingSwap.hpp"
 
+#include <vector>
+
+///////////////////////////////////////////////////////////////////////////////
+//                             PENDING SWAP IMPL                             //
+///////////////////////////////////////////////////////////////////////////////
 class PendingSwap::Impl : public AbstractPendingSwap
 {
-public: 
-  Impl(SwapElem elem); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    Impl(
+        SwapElem elem);
+    // ________________________________________________________________________
+    std::vector<char>                    getRemoteData() const;
+    // ________________________________________________________________________
+    bool                                 isFinished();
+    // ________________________________________________________________________
+    bool                                 allHaveReceived(
+        ParallelSetup& pl);
+    // ________________________________________________________________________
+    void                                 initialize(
+        ParallelSetup&   pl,
+        std::vector<char>myChainSer,
+        nat              runid);
 
-  std::vector<char> getRemoteData() const ; 
-  bool isFinished()  ;   
-  bool allHaveReceived(ParallelSetup& pl)  ; 
-  void initialize(ParallelSetup& pl, std::vector<char> myChainSer, nat runid) ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    uint64_t                             createTag(
+        int rank) const;
 
-private: 
-  uint64_t createTag( int rank ) const ; 
-
-private: 
-  std::vector<CommRequest> _sentReqs; 
-  CommRequest _recvReq; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                             PRIVATE DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    std::vector<CommRequest> _sentReqs;
+    CommRequest              _recvReq;
+};
 
 
 #endif

@@ -5,20 +5,41 @@
 #include <vector>
 #include <string>
 
-class ConsensusTree 
+///////////////////////////////////////////////////////////////////////////////
+//                               CONSENSUS TREE                              //
+///////////////////////////////////////////////////////////////////////////////
+class ConsensusTree
 {
-public: 
-  ConsensusTree(std::vector<std::string> files, double burnin, double threshold, bool isMRE  ); 
-  std::string getConsensusTreeString(bool printNames) const ;  
-  std::vector<Bipartition>  getRefinedConsensusTree(const std::vector<Bipartition> &consensusBips, const std::vector<Bipartition> &minorityBips) const ; 
-  std::string getTreeHeader() const; 
-  std::string getType() const ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    ConsensusTree(
+        std::vector<std::string>files,
+        double                  burnin,
+        double                  threshold,
+        bool                    isMRE);
+    // ________________________________________________________________________
+    std::string                                 getConsensusTreeString(
+        bool printNames) const;
+    // ________________________________________________________________________
+    std::vector<Bipartition>                    getRefinedConsensusTree(
+        const std::vector<Bipartition>&consensusBips,
+        const std::vector<Bipartition>&minorityBips) const;
+    // ________________________________________________________________________
+    std::string                                 getTreeHeader() const;
+    // ________________________________________________________________________
+    std::string                                 getType() const;
 
-private:   
-  BipartitionExtractor bipEx; 
-  double _threshold; 
-  bool _isMRE; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    BipartitionExtractor bipEx;
+    double               _threshold;
+    bool                 _isMRE;
+};
 
 
 #endif

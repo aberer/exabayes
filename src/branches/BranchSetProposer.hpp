@@ -3,30 +3,67 @@
 
 #include <unordered_map>
 
-#include "OptimizedParameter.hpp" 
+#include "OptimizedParameter.hpp"
 
-class LikelihoodEvaluator; 
+class LikelihoodEvaluator;
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                            BRANCH SET PROPOSER                            //
+///////////////////////////////////////////////////////////////////////////////
 class BranchSetProposer
 {
-public: 
-  ~BranchSetProposer(){}
-  BranchSetProposer(TreeAln &traln, std::vector<BranchPlain> branches, std::vector<AbstractParameter*> params); 
-  void findJointOptimum(LikelihoodEvaluator& eval, int maxIter, bool computeLikelihood); 
-  std::unordered_map<BranchPlain, std::vector<OptimizedParameter> > getResult() const {return _result; }
-  log_double getOptimalLikelihood() const {return _likelihood; }
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+    using ResultType =
+            std::unordered_map<BranchPlain,
+                               std::vector<OptimizedParameter> >;
 
-private: 
-  void reorderToConnectedComponent(); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    ~BranchSetProposer(){}
+    // ________________________________________________________________________
+    BranchSetProposer(
+        TreeAln&                       traln,
+        std::vector<BranchPlain>       branches,
+        std::vector<AbstractParameter*>params);
+    // ________________________________________________________________________
+    void                          findJointOptimum(
+        LikelihoodEvaluator& eval,
+        int                  maxIter,
+        bool                 computeLikelihood);
+    // ________________________________________________________________________
 
-private: 
+    auto                          getResult() const
+        ->ResultType
+    {return _result; }
+    // ________________________________________________________________________
+    log_double                    getOptimalLikelihood()
+    const
+    {
+        return _likelihood;
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    void                          reorderToConnectedComponent();
 
-  std::reference_wrapper<TreeAln> _traln; 
-  std::vector<BranchPlain> _branches; 
-  const std::vector<AbstractParameter*> _params; 
-  std::unordered_map<BranchPlain, std::vector<OptimizedParameter> > _result; 
-  log_double _likelihood; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                             PRIVATE DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    std::reference_wrapper<TreeAln>                                   _traln;
+    std::vector<BranchPlain>                                          _branches;
+    const std::vector<AbstractParameter*>                             _params;
+    std::unordered_map<BranchPlain, std::vector<OptimizedParameter> > _result;
+    log_double _likelihood;
+};
+
 
 #endif

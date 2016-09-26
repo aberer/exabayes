@@ -1,13 +1,13 @@
 /**
-   @file axml.h
-   @brief A wrapper to include all files from pll/examl.   
-*/ 
+ * @file axml.h
+ * @brief A wrapper to include all files from pll/examl.
+ */
 
 
 #ifndef _AXML_H_
 #define _AXML_H_
 
-#pragma warning  disable 
+#pragma warning  disable
 
 
 #include "common.h"
@@ -18,18 +18,17 @@
 #endif
 
 
-
 /* translate the defines for correct vectorization  */
 #if USE_SSE
 #define __SSE3
 #endif
 
 #if USE_AVX
-#define __AVX 
+#define __AVX
 #endif
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 #include "lib/pll/pll-renamed.h"
