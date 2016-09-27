@@ -1,40 +1,52 @@
 #include "StatNniProposer.hpp"
+
 #include "TreeRandomizer.hpp"
 #include "SprMove.hpp"
 
-void StatNniProposer::determineMove(TreeAln &traln, LikelihoodEvaluator &eval, Randomness& rand, BranchPlain primeBranch, const std::vector<AbstractParameter*> &params) 
+void                                         StatNniProposer::determineMove(
+    TreeAln&                              traln,
+    LikelihoodEvaluator&                  eval,
+    Randomness&                           rand,
+    BranchPlain                           primeBranch,
+    const std::vector<AbstractParameter*>&params)
 {
-  auto b = traln.getBranch( primeBranch, params); 
-  nodeptr p = traln.findNodePtr(b); 
-  auto switchingBranch = BranchPlain( rand.drawRandDouble01() < 0.5  
-				      ? p->back->next->back->number
-				      : p->back->next->next->back->number, 
-				      p->back->number ); 
-  
-  _move = SprMove(traln, b, switchingBranch); 
-  _forwProb = log_double::fromAbs(1.); 
-} 
+    auto    b = traln.getBranch(primeBranch, params);
+    nodeptr p = traln.findNodePtr(b);
+    auto    switchingBranch = BranchPlain(rand.drawRandDouble01() < 0.5
+                                          ? p->back->next->back->number
+                                          : p->back->next->next->back->number,
+                                          p->back->number);
 
-
-TopoMoveProposer* StatNniProposer::clone() const  
-{
-  return new StatNniProposer(*this);
+    _move = SprMove(traln, b, switchingBranch);
+    _forwProb = log_double::fromAbs(1.);
 }
 
 
-BranchPlain StatNniProposer::determinePrimeBranch(const TreeAln &traln, Randomness& rand) const 
+TopoMoveProposer*                            StatNniProposer::clone() const
 {
-  return TreeRandomizer::drawInnerBranchUniform(traln, rand);   
-} 
+    return new StatNniProposer(*this);
+}
 
 
-std::unique_ptr<TopoMove> StatNniProposer::getMove() const   
+BranchPlain                                  StatNniProposer::
+    determinePrimeBranch(
+    const TreeAln&traln,
+    Randomness&   rand) const
 {
-  return std::unique_ptr<TopoMove>(_move.clone()); 
-} 
+    return TreeRandomizer::drawInnerBranchUniform(traln, rand);
+}
 
 
-void StatNniProposer::determineBackProb(TreeAln &traln, LikelihoodEvaluator &eval, const std::vector<AbstractParameter*> &params) 
+std::unique_ptr<TopoMove>                    StatNniProposer::getMove() const
 {
-  _backProb = log_double::fromAbs(1.);
-} 
+    return std::unique_ptr<TopoMove>(_move.clone());
+}
+
+
+void                                         StatNniProposer::determineBackProb(
+    TreeAln&                              traln,
+    LikelihoodEvaluator&                  eval,
+    const std::vector<AbstractParameter*>&params)
+{
+    _backProb = log_double::fromAbs(1.);
+}

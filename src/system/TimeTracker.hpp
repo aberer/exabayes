@@ -1,45 +1,66 @@
 #ifndef TIMETRACKER_H
 #define TIMETRACKER_H
 
-#include <chrono> 
-#include <ratio>
-#include <array>
-#define CLOCK std::chrono  
-
 #include "Serializable.hpp"
 
+#include <chrono>
+#include <ratio>
+#include <array>
+#define CLOCK std::chrono
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                                TIME TRACKER                               //
+///////////////////////////////////////////////////////////////////////////////
 class TimeTracker : public Serializable
 {
-public: 
-  virtual void deserialize( std::istream &in ); 
-  virtual void serialize( std::ostream &out) const;
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    virtual void                     deserialize(
+        std::istream&in);
+    // ________________________________________________________________________
+    virtual void                     serialize(
+        std::ostream&out) const;
+    // ________________________________________________________________________
+    TimeTracker(
+        size_t numCpu);
+    // ________________________________________________________________________
+    double                           getRecentElapsed()
+    const;
+    // ________________________________________________________________________
+    void                             updateTime();
+    // ________________________________________________________________________
+    double                           getAccWallTime()
+    const
+    {return _accWallTime;}
+    // ________________________________________________________________________
+    double                           getAccCpuTime()
+    const {return _accCpuTime;}
+    // ________________________________________________________________________
+    static double                    getDuration(
+        CLOCK::system_clock::time_point tp);
+    // ________________________________________________________________________
+    static auto                      getTimePoint()
+        ->CLOCK::system_clock::time_point;
+    // ________________________________________________________________________
+    static auto                      formatForWatch(
+        double time)
+        ->std::array<double, 3>;
 
-public: 
-  TimeTracker(size_t numCpu);
-  TimeTracker(const TimeTracker& rhs) = default; 
-  TimeTracker( TimeTracker&& rhs) = default; 
-  TimeTracker& operator=(const TimeTracker &rhs)  = default; 
-  TimeTracker& operator=( TimeTracker &&rhs)  = default; 
-
-  double getRecentElapsed() const ; 
-  void updateTime(); 
-  
-  double getAccWallTime()const {return _accWallTime; } 
-  double getAccCpuTime() const {return _accCpuTime; } 
-
-  static double getDuration(CLOCK::system_clock::time_point tp );
-  static CLOCK::system_clock::time_point getTimePoint(); 
-  static std::array<double,3> formatForWatch(double time )  ; 
-
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
 private:
-  CLOCK::system_clock::time_point _timePoint; 
+    CLOCK::system_clock::time_point _timePoint;
 
-  double _accWallTime; 
-  double _accCpuTime; 
+    double _accWallTime;
+    double _accCpuTime;
 
-  size_t  _numCpu; 
-}; 
+    size_t _numCpu;
+};
 
 
 #endif /* TIMETRACKER_H */

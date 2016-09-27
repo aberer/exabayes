@@ -1,39 +1,71 @@
-#ifndef _INSERTION_SCORE 
-#define _INSERTION_SCORE 
+#ifndef _INSERTION_SCORE
+#define _INSERTION_SCORE
 
-
-class  InsertionScore
+///////////////////////////////////////////////////////////////////////////////
+//                              INSERTION SCORE                              //
+///////////////////////////////////////////////////////////////////////////////
+class InsertionScore
 {
-public: 
-  InsertionScore(BranchPlain _b, std::vector<nat> _tmp) : b(_b), partitionParsimony(_tmp){}  
-  BranchPlain getBranch() const  {return b; }
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    InsertionScore(
+        BranchPlain     _b,
+        std::vector<nat>_tmp)
+        : b(_b)
+        , partitionParsimony(_tmp)
+    {}
+    // ________________________________________________________________________
+    BranchPlain                            getBranch() const
+    {return b;}
+    // ________________________________________________________________________
+    double                                 getWeight() const
+    {return logProb;}
+    // ________________________________________________________________________
+    void                                   setWeight(
+        double w)
+    {logProb = w;}
+    // ________________________________________________________________________
+    nat                                    getScore() const
+    {
+        nat result = 0;
 
-  double getWeight() const {return  logProb; }
-  void setWeight(double w) { logProb = w; }
+        for (auto b : partitionParsimony)
+            result += b;
 
-  nat getScore() const
-  {
-    nat result = 0; 
-    for(auto b : partitionParsimony)
-      result += b; 
-    return result; 
-  }
+        return result;
+    }
+    // ________________________________________________________________________
+    nat                                    getPartitionScore(
+        int model) const {return partitionParsimony[model];}
 
-  nat getPartitionScore(int model) const{return partitionParsimony[model] ; }
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    friend std::ostream&                   operator<<(
+        std::ostream&        out,
+        const InsertionScore&rhs)
+    {
+        out <<  "(" << rhs.b << "=";
 
+        for (auto elem : rhs.partitionParsimony)
+            out << elem << ",";
 
-private: 
-  BranchPlain b; 
-  std::vector<nat> partitionParsimony; 
-  double logProb;
+        return out;
+    }
 
-  friend std::ostream& operator<< (std::ostream &out, const InsertionScore &rhs) { 
-    out <<  "(" << rhs.b << "=" ; 
-    for(auto elem : rhs.partitionParsimony)
-      out << elem << "," ; 
-    return out; 
-  }
-} ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    BranchPlain b;
+    std::vector<nat>partitionParsimony;
+    double logProb;
+};
 
 
 #endif

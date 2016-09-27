@@ -6,32 +6,65 @@
 
 class Path;
 
+///////////////////////////////////////////////////////////////////////////////
+//                           EXTENDED TBR PROPOSER                           //
+///////////////////////////////////////////////////////////////////////////////
 class ExtendedTbrProposer : public TopoMoveProposer
 {
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    virtual void                                 determineMove(
+        TreeAln&                              traln,
+        LikelihoodEvaluator&                  eval,
+        Randomness&                           rand,
+        BranchPlain                           primeBranch,
+        const std::vector<AbstractParameter*>&params);
+    // ________________________________________________________________________
+    virtual TopoMoveProposer*                    clone() const;
+    // ________________________________________________________________________
+    virtual BranchPlain                          determinePrimeBranch(
+        const TreeAln&traln,
+        Randomness&   rand) const;
+    // ________________________________________________________________________
+    virtual void                                 determineBackProb(
+        TreeAln&                              traln,
+        LikelihoodEvaluator&                  eval,
+        const std::vector<AbstractParameter*>&params);
+    // ________________________________________________________________________
+    std::unique_ptr<TopoMove>                    getMove() const;
+    // ________________________________________________________________________
+    virtual void                                 printParams(
+        std::ostream&out)  const {out << ";stopProb=" << _stopProb;}
+    // ________________________________________________________________________
+    ExtendedTbrProposer(
+        double stopProb)
+        : _stopProb{stopProb}
+        , _move{}
+    {}
 
-public:				// INHERITED METHODS 
-  virtual void determineMove(TreeAln &traln, LikelihoodEvaluator &eval, Randomness& rand, BranchPlain primeBranch, const std::vector<AbstractParameter*> &params)  ; 
-  virtual TopoMoveProposer* clone() const ; 
-  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
-  virtual void determineBackProb(TreeAln &traln, LikelihoodEvaluator &eval, const std::vector<AbstractParameter*> &params); 
-  std::unique_ptr<TopoMove> getMove() const   ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    void                                         buildPath(
+        Path&                          path,
+        BranchPlain                    bisectedBranch,
+        TreeAln&                       traln,
+        Randomness&                    rand,
+        std::vector<AbstractParameter*>params) const;
 
-  virtual void printParams(std::ostream &out)  const { out << ";stopProb=" << _stopProb  ;} 
-
-public: 			// METHODS 
-  ExtendedTbrProposer(double stopProb )
-    : _stopProb{stopProb}
-    , _move{}
-  {}
-  
-private: 			// METHODS
-  void buildPath(Path &path, BranchPlain bisectedBranch, TreeAln &traln, Randomness &rand, std::vector<AbstractParameter*> params ) const; 
-
-private: 			// ATTRIBUTES
-  double _stopProb; 
-  TbrMove _move; 
-}; 
-
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ATTRIBUTES
+    double _stopProb;
+    TbrMove _move;
+};
 
 
 #endif

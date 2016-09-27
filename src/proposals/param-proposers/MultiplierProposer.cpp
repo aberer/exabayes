@@ -1,28 +1,34 @@
 #include "MultiplierProposer.hpp"
 
 
-MultiplierProposer::MultiplierProposer(double minVal, double maxVal)
-  : AbstractProposer{true, true, minVal, maxVal}
+MultiplierProposer::MultiplierProposer(
+    double minVal,
+    double maxVal)
+    : AbstractProposer{true, true, minVal, maxVal}
+{}
+
+
+auto                    MultiplierProposer::proposeValues(
+    std::vector<double>oldValues,
+    double             parameter,
+    Randomness&        rand,
+    log_double&        hastings)
+    ->std::vector<double>
 {
-}
+    double newVal = 0,  multiplier = 0;
 
+    auto   position = rand.drawIntegerOpen(oldValues.size());
+    multiplier =  rand.drawMultiplier(parameter);
+    newVal = oldValues[position] * multiplier;
 
-std::vector<double> MultiplierProposer::proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings)
-{    
-  double newVal = 0,  multiplier = 0; 
+    // TODO allowed?
+    if (newVal < _minVal)
+        newVal = _minVal;
+    else if (_maxVal < newVal)
+        newVal = _maxVal;
 
-  auto position = rand.drawIntegerOpen( oldValues.size() ); 
-  multiplier =  rand.drawMultiplier( parameter);     
-  newVal = oldValues[position] * multiplier; 
+    hastings *= log_double::fromAbs(multiplier);
 
-  // TODO allowed? 
-  if(newVal < _minVal)
-    newVal = _minVal; 
-  else if(_maxVal < newVal)
-    newVal = _maxVal; 
-
-  hastings *= log_double::fromAbs(multiplier);
-
-  oldValues[position] = newVal; 
-  return oldValues;
+    oldValues[position] = newVal;
+    return oldValues;
 }

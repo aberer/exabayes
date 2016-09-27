@@ -1,50 +1,61 @@
 #ifndef INTERNALBRANCHLENGTH_H
 #define INTERNALBRANCHLENGTH_H
 
-
 #include "Serializable.hpp"
 
+///////////////////////////////////////////////////////////////////////////////
+//                           INTERNAL BRANCH LENGTH                          //
+///////////////////////////////////////////////////////////////////////////////
 class InternalBranchLength : public Serializable
 {
-public: 			// INHERITED
-  
-  virtual void deserialize( std::istream &in )   ; 
-  virtual void serialize( std::ostream &out) const;   
-
-
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
 public:
-  InternalBranchLength(double z = 0)
-    : _internalBranchLength {z }
-  {
-  }
-  
-  virtual ~InternalBranchLength() { }
-  
+    // ________________________________________________________________________
+    InternalBranchLength(
+        double z = 0)
+        : _internalBranchLength{z}
+    {}
 
-  /** 
-      Creates an internal branch length (i.e., z-value) for a tree 
-   */ 
-  static InternalBranchLength fromAbsolute(double absLen, double meanSubstRate);
+    // implements Serializable
+    // ________________________________________________________________________
+    virtual void                                   deserialize(
+        std::istream&in);
+    // ________________________________________________________________________
+    virtual void                                   serialize(
+        std::ostream&out) const;
 
-  double getValue() const 
-  {
-    return _internalBranchLength; 
-  }
+    // ________________________________________________________________________
+    virtual ~InternalBranchLength(){}
 
+    // ________________________________________________________________________
+    /**
+     *  Creates an internal branch length (i.e., z-value) for a tree
+     */
+    static InternalBranchLength                    fromAbsolute(
+        double absLen,
+        double meanSubstRate);
 
-  void setValue(double val)
-  {
-    _internalBranchLength = val;
-  }
+    // ________________________________________________________________________
+    double                                         getValue() const
+    {return _internalBranchLength; }
 
-  
-  double toMeanSubstitutions(double meanSubstRate) const ;
+    // ________________________________________________________________________
+    void                                           setValue(
+        double val)
+    {_internalBranchLength = val; }
 
-private: 
-  double _internalBranchLength; 
+    // ________________________________________________________________________
+    double                                         toMeanSubstitutions(
+        double meanSubstRate) const;
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    double _internalBranchLength;
 };
- 
-
 
 
 #endif /* INTERNALBRANCHLENGTH_H */

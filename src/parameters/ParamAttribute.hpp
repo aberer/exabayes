@@ -3,28 +3,38 @@
 
 #include "ComplexTuner.hpp"
 
-// another one of these generic container classes 
+// another one of these generic container classes
 
-// not very much happy with it...  
+// not very much happy with it...
 
+///////////////////////////////////////////////////////////////////////////////
+//                              PARAM ATTRIBUTE                              //
+///////////////////////////////////////////////////////////////////////////////
 class ParamAttribute
 {
-public: 
-  ParamAttribute()
-    :  _convTuner{0., 0.01,10, 0.1, false }
-    , _nonConvTuner{   0. , 0.1, 10, 0.1 , false }	
-  {
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    ComplexTuner _convTuner;
+    ComplexTuner _nonConvTuner;
 
-  ParamAttribute(ComplexTuner c, ComplexTuner n) 
-    : _convTuner{c}
-    , _nonConvTuner{n}
-  {
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    ParamAttribute()
+        :  _convTuner{0., 0.01, 10, 0.1, false}
+        , _nonConvTuner{0., 0.1, 10, 0.1, false}
+    {}
 
-  ComplexTuner _convTuner; 
-  ComplexTuner _nonConvTuner; 
-}; 
+    ParamAttribute(
+        ComplexTuner c,
+        ComplexTuner n)
+        : _convTuner{c}
+        , _nonConvTuner{n}
+    {}
+};
 
 
 #endif

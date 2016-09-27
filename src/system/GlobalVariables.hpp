@@ -1,17 +1,18 @@
 /**
-    @file globals.h
-
-    @brief Global variables for ExaBayes.
-    
-    Notice that there are already a bunch of global variables from axml-variants.  
-*/ 
+ *  @file globals.h
+ *
+ *  @brief Global variables for ExaBayes.
+ *
+ *  Notice that there are already a bunch of global variables from
+ * axml-variants.
+ */
 
 
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
 #include <string>
-#include <chrono> 
+#include <chrono>
 #include <memory>
 
 #include <fstream>
@@ -22,8 +23,8 @@
 #include <mutex>
 #include "TeeStream.hpp"
 
-class AdHocIntegrator; 
-class TreeIntegrator; 
+class AdHocIntegrator;
+class TreeIntegrator;
 
 #define tout (*teeOut) << SyncOut()
 
@@ -33,45 +34,49 @@ class TeeStream;
 #ifdef _INCLUDE_DEFINITIONS
 
 
-std::unique_ptr<TeeStream> teeOut; 
-std::unique_ptr<std::ofstream> logStream;
-std::mutex mtx;
+std::unique_ptr<TeeStream>            teeOut;
+std::unique_ptr<std::ofstream>        logStream;
+std::mutex                            mtx;
 
-// std::chrono::system_clock::time_point timeIncrement;  
-int debugPrint = 0; 
-bool startIntegration = false; 
+// std::chrono::system_clock::time_point timeIncrement;
+int                                   debugPrint = 0;
+bool                                  startIntegration = false;
 
-AdHocIntegrator* ahInt; 
-TreeIntegrator* tInt; 
+AdHocIntegrator*                      ahInt;
+TreeIntegrator*                       tInt;
 
-bool isYggdrasil; 
+bool                                  isYggdrasil;
 
-void (*exitFunction)(int code, bool waitForAll); 
+void                                  (*exitFunction)(
+    int  code,
+    bool waitForAll);
 
-std::thread::id _masterThread; 
-volatile bool _threadsDie; 
+std::thread::id                       _masterThread;
+volatile bool                         _threadsDie;
 
-#else 
+#else
 
-extern   std::unique_ptr<TeeStream> teeOut; 
+extern std::unique_ptr<TeeStream>     teeOut;
 extern std::unique_ptr<std::ofstream> logStream;
-extern std::mutex mtx;
-  
+extern std::mutex                     mtx;
 
-extern std::thread::id _masterThread; 
-extern volatile bool  _threadsDie; 
 
-extern void (*exitFunction)(int code , bool waitForAll); 
+extern std::thread::id                _masterThread;
+extern volatile bool                  _threadsDie;
 
-extern bool isYggdrasil; 
-// extern int PLL_NUM_BRANCHES; 
+extern void                           (*exitFunction)(
+    int  code,
+    bool waitForAll);
 
-extern bool startIntegration; 
-extern AdHocIntegrator* ahInt; 
-extern TreeIntegrator* tInt; 
-// extern GlobalVariables globals; 
-// extern std::chrono::system_clock::time_point timeIncrement;  
-extern int debugPrint; 
+extern bool                           isYggdrasil;
+// extern int PLL_NUM_BRANCHES;
+
+extern bool                           startIntegration;
+extern AdHocIntegrator*               ahInt;
+extern TreeIntegrator*                tInt;
+// extern GlobalVariables globals;
+// extern std::chrono::system_clock::time_point timeIncrement;
+extern int                            debugPrint;
 #endif
 
 

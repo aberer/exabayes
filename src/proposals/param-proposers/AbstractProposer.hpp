@@ -1,37 +1,59 @@
 #ifndef _PROPOSAL_FUNCTION_H
 #define _PROPOSAL_FUNCTION_H
 
-#include <vector>
-#include <algorithm>
-
 #include "Randomness.hpp"
 #include "Density.hpp"
 #include "Chain.hpp"
 #include "AbstractProposal.hpp"
 
-//////////////
-// ABSTRACT //
-//////////////
+#include <vector>
+#include <algorithm>
+
+///////////////////////////////////////////////////////////////////////////////
+//                             ABSTRACT PROPOSER                             //
+///////////////////////////////////////////////////////////////////////////////
 class AbstractProposer
 {
-public:   
-  AbstractProposer(bool tune, bool tuneup, double minVal, double maxVal); 
-  virtual ~AbstractProposer(){}
- 
-  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings) = 0; 
-  bool isTune() const {return _tune; } 
-  bool isTuneup() const {return _tuneup; }
-  void correctAbsoluteRates(std::vector<double> &values) const ; 
-  virtual AbstractProposer* clone() const = 0; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    AbstractProposer(
+        bool   tune,
+        bool   tuneup,
+        double minVal,
+        double maxVal);
+    // ________________________________________________________________________
+    virtual ~AbstractProposer(){}
+    // ________________________________________________________________________
+    virtual std::vector<double>                    proposeValues(
+        std::vector<double>oldValues,
+        double             parameter,
+        Randomness&        rand,
+        log_double&        hastings) = 0;
+    // ________________________________________________________________________
+    bool                                           isTune() const
+    {return _tune;}
+    // ________________________________________________________________________
+    bool                                           isTuneup() const
+    {return _tuneup;}
+    // ________________________________________________________________________
+    void                                           correctAbsoluteRates(
+        std::vector<double>&values) const;
+    // ________________________________________________________________________
+    virtual AbstractProposer*                      clone() const = 0;
 
-protected: 
-  bool _tune; 
-  bool _tuneup; 
-  double _minVal; 
-  double _maxVal; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                             PROTECTED DATA                            //
+    ///////////////////////////////////////////////////////////////////////////
+protected:
+    bool _tune;
+    bool _tuneup;
+    double _minVal;
+    double _maxVal;
+};
 
 
 #endif
-
 

@@ -1,25 +1,54 @@
 #ifndef _MOVE_ENUMERATOR_HPP
 #define _MOVE_ENUMERATOR_HPP
 
-#include <vector> 
-
 #include "common.h"
-
 
 #include "TreeAln.hpp"
 
-class SprMove; 
+#include <vector>
 
+class SprMove;
+
+///////////////////////////////////////////////////////////////////////////////
+//                              MOVE ENUMERATION                             //
+///////////////////////////////////////////////////////////////////////////////
 class MoveEnumeration
 {
-public: 
-  static std::vector<SprMove> getAllUniqueMoves(const TreeAln& traln, nat dist) ; 
-  static std::vector<SprMove> getMovesForBranch(const TreeAln& traln, BranchPlain pruneBranch, nat dist) ; 
-  static std::vector<SprMove> getMovesFromDepthFirstSearch(const TreeAln& traln, const BranchPlain & pruneBranch, int dist); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    static auto                    getAllUniqueMoves(
+        const TreeAln& traln,
+        nat            dist)
+        ->std::vector<SprMove>;
+    // ________________________________________________________________________
+    static auto                    getMovesForBranch(
+        const TreeAln& traln,
+        BranchPlain    pruneBranch,
+        nat            dist)
+        ->std::vector<SprMove>;
+    // ________________________________________________________________________
+    static auto                    getMovesFromDepthFirstSearch(
+        const TreeAln&     traln,
+        const BranchPlain& pruneBranch,
+        int                dist)
+        ->std::vector<SprMove>;
 
-private: 
-  static std::vector<SprMove> getMovesFromDepthFirstSearch_helper(const TreeAln& traln, const BranchPlain & pruneBranch, const BranchPlain& insert, int depth, bool isFirst ) ; 
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    static auto                    getMovesFromDepthFirstSearch_helper(
+        const TreeAln&     traln,
+        const BranchPlain& pruneBranch,
+        const BranchPlain& insert,
+        int                depth,
+        bool               isFirst)
+        ->std::vector<SprMove>;
+};
 
 
 #endif

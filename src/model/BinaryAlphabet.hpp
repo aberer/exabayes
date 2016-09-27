@@ -5,19 +5,17 @@
 #include "AbstractAlphabet.hpp"
 
 
-// this should be simplified...not everything needs to be class 
+// this should be simplified...not everything needs to be class
 
-
+///////////////////////////////////////////////////////////////////////////////
+//                              BINARY ALPHABET                              //
+///////////////////////////////////////////////////////////////////////////////
 class BinaryAlphabet
 {
 public:
-  std::vector<std::string> getStates()
-  {
-    return { "0", "1" };
-  }
+    std::vector<std::string>                    getStates()
+    {return {"0", "1"}; }
 };
-
-
 
 
 #endif /* BINARYALPHABET_H */

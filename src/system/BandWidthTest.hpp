@@ -4,13 +4,17 @@
 #include "common.h"
 #include "Communicator.hpp"
 
+///////////////////////////////////////////////////////////////////////////////
+//                              BAND WIDTH TEST                              //
+///////////////////////////////////////////////////////////////////////////////
 class BandWidthTest
 {
-public: 
-  nat determineOptimum(Communicator& comm, std::string fileName); 
-  
-
-}; 
+public:
+    // ________________________________________________________________________
+    nat                    determineOptimum(
+        Communicator& comm,
+        std::string   fileName);
+};
 
 
 #endif

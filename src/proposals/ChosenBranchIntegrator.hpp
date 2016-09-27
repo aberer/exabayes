@@ -4,36 +4,43 @@
 #include "BranchLengthMultiplier.hpp"
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                          CHOSEN BRANCH INTEGRATOR                         //
+///////////////////////////////////////////////////////////////////////////////
 class ChosenBranchIntegrator : public BranchLengthMultiplier
 {
-public: 
-  ChosenBranchIntegrator(double multiplier)
-    : BranchLengthMultiplier(multiplier)
-    , _chosenBranches{}
-  {
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    ChosenBranchIntegrator(
+        double multiplier)
+        : BranchLengthMultiplier(multiplier)
+        , _chosenBranches{}
+    {}
+    // ________________________________________________________________________
+    virtual BranchPlain                    proposeBranch(
+        const TreeAln&traln,
+        Randomness&   rand) const
+    {
+        auto elem = rand.drawIntegerOpen(_chosenBranches.size());
+        return _chosenBranches[elem];
+    }
+    // ________________________________________________________________________
+    void                                   setChosenBranches(
+        std::vector<BranchPlain>branches)
+    {_chosenBranches = branches; }
+    // ________________________________________________________________________
+    AbstractProposal*                      clone() const
+    {return new ChosenBranchIntegrator(*this); }
 
-  virtual BranchPlain proposeBranch(const TreeAln &traln, Randomness &rand) const 
-  {
-    auto elem = rand.drawIntegerOpen(_chosenBranches.size());
-    return _chosenBranches[elem]; 
-  }   
-  
-  void setChosenBranches(std::vector<BranchPlain> branches)
-  {
-    _chosenBranches = branches; 
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    std::vector<BranchPlain> _chosenBranches;
+};
 
-  
-  AbstractProposal* clone() const
-  {
-    return new ChosenBranchIntegrator(*this);
-  }
-
-private: 
-    std::vector<BranchPlain> _chosenBranches; 
-
-
-}; 
 
 #endif

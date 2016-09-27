@@ -4,105 +4,124 @@
 #include "BoundsChecker.hpp"
 #include <numeric>
 
-FixedPrior::FixedPrior(std::vector<double> fixedValues)
-  : _fixedValues(fixedValues) 
+FixedPrior::FixedPrior(
+    std::vector<double>fixedValues)
+    : _fixedValues(fixedValues)
 {
-  if(_fixedValues.size() >  1 )
+    if (_fixedValues.size() >  1)
     {
-      auto sum = std::accumulate(begin(_fixedValues), end(_fixedValues),0.); 
-      for(auto &v : _fixedValues)
-	v /= sum; 
+        auto sum = std::accumulate(begin(_fixedValues), end(_fixedValues), 0.);
+
+        for (auto&v : _fixedValues)
+            v /= sum;
     }
 }
 
 
-log_double FixedPrior::getLogProb(const ParameterContent& content)  const
-{    
-  auto &values = content.values; 
+log_double                          FixedPrior::getLogProb(
+    const ParameterContent& content)  const
+{
+    auto&values = content.values;
 
-  // branch lengths case! 
-  if(_fixedValues.size( )== 1 )
+    // branch lengths case!
+    if (_fixedValues.size() == 1)
     {
-      if(fabs (values[0] - _fixedValues.at(0) ) > 1e-6)
-	{
-	  tout << "Fatal: for fixed prior, value should be "   << _fixedValues.at(0) << " but actually is " << values[0] << std::endl; 
-	  assert(0); 
-	}
+        if (fabs(values[0] - _fixedValues.at(0)) > 1e-6)
+        {
+            tout << "Fatal: for fixed prior, value should be "
+                 << _fixedValues.at(0) << " but actually is " << values[0]
+                 << std::endl;
+            assert(0);
+        }
     }
-  else 
+    else
     {
-      for(nat i = 0; i < _fixedValues.size() ; ++i)
-	{
-	  if(std::fabs(_fixedValues[i] - values[i]) > 1e-6 )
-	    {
-	      tout << "error: expected " << SHOW(_fixedValues) << " but obtained " << SHOW(values) << std::endl; 
-	      assert(0); 
-	    }
-	}
+        for (nat i = 0; i < _fixedValues.size(); ++i)
+        {
+            if (std::fabs(_fixedValues[i] - values[i]) > 1e-6)
+            {
+                tout << "error: expected " << SHOW(_fixedValues)
+                     << " but obtained " << SHOW(values) << std::endl;
+                assert(0);
+            }
+        }
     }
 
-  return log_double::fromAbs(1.); 
+    return log_double::fromAbs(1.);
 }
 
 
-ParameterContent FixedPrior::getInitialValue() const
+ParameterContent                    FixedPrior::getInitialValue() const
 {
-  auto result = ParameterContent{}; 
+    auto result = ParameterContent{};
 
-  if(not _keepInitData) 
-    result.values = _fixedValues; 
-  else 
-    result.values = {0.1}; 
-       
-  return result; 
-} 
+    if (not _keepInitData)
+        result.values = _fixedValues;
+    else
+        result.values = {0.1};
 
-
-void FixedPrior::print(std::ostream &out) const 
-{
-  out << "Fixed(" ;     
-  bool first = true; 
-  for(auto v : _fixedValues)
-    {
-      out << (first ? "" : ",") << v ; 
-      if(first) first = false; 
-    }
-  out << ")"; 
+    return result;
 }
 
 
-log_double FixedPrior::accountForMeanSubstChange(TreeAln  &traln, const AbstractParameter* param, double myOld, double myNew ) const 
+void                                FixedPrior::print(
+    std::ostream&out) const
 {
-  if(param->getCategory() == Category::BRANCH_LENGTHS)
+    out << "Fixed(";
+    bool first = true;
+
+    for (auto v : _fixedValues)
     {
-      // first check, if re-scaling is possible 
-      auto bls = traln.extractBranches(param); 
+        out << (first ? "" : ",") << v;
 
-      for(auto &b : bls)
-	{
-	  if(_keepInitData)
-	    {
-	      auto len = b.getLength().getValue();
-	      double frac = myNew / myOld; 
-	      b.setLength( InternalBranchLength(pow(len, 1. / frac ) ));
-	    }
-	  else 
-	    {
-	      b.setLength(InternalBranchLength::fromAbsolute(_fixedValues.at(0), param->getMeanSubstitutionRate())); 
-	    }
-	}
-      
-      if( std::any_of(bls.begin(), bls.end(), [](BranchLength &b){ return not BoundsChecker::checkBranch(b) ;  }) ) 
-	return log_double::negativeInfinity();
-
-      for(auto &b : bls)
-	traln.setBranch(b,param); 
-
-      return log_double::fromAbs(1); 
+        if (first)
+            first = false;
     }
-  else 
+
+    out << ")";
+}
+
+
+log_double                          FixedPrior::accountForMeanSubstChange(
+    TreeAln&                 traln,
+    const AbstractParameter* param,
+    double                   myOld,
+    double                   myNew) const
+{
+    if (param->getCategory() == Category::BRANCH_LENGTHS)
     {
-      assert(0); 
-      return log_double::fromAbs(0); 
+        // first check, if re-scaling is possible
+        auto bls = traln.extractBranches(param);
+
+        for (auto&b : bls)
+        {
+            if (_keepInitData)
+            {
+                auto   len  = b.getLength().getValue();
+                double frac = myNew / myOld;
+                b.setLength(InternalBranchLength(pow(len, 1. / frac)));
+            }
+            else
+                b.setLength(InternalBranchLength::fromAbsolute(_fixedValues.at(
+                                                                   0),
+                                                               param->
+                                                                   getMeanSubstitutionRate()));
+        }
+
+        if (std::any_of(bls.begin(), bls.end(), [](BranchLength&b)
+        {
+            return not BoundsChecker::checkBranch(b);
+        }))
+            return log_double::negativeInfinity();
+
+        for (auto&b : bls)
+            traln.setBranch(b, param);
+
+        return log_double::fromAbs(1);
+    }
+    else
+    {
+        assert(0);
+        return log_double::fromAbs(0);
     }
 }

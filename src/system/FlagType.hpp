@@ -4,41 +4,69 @@
 #include <type_traits>
 
 
-// icc wants prior definition 
-template<typename T> T operator|( T a, T b)  ; 
-template<typename T> T operator&( T a,  T b) ; 
-template<typename T> T operator&=(T a, T b) ; 
-template<typename T> T operator|=(T a, T b) ;  
-
-
+// icc wants prior definition
+// ____________________________________________________________________________
 template<typename T>
-T operator|( T a, T b) 
+T                    operator|(
+    T a,
+    T b);
+
+// ____________________________________________________________________________
+template<typename T>
+T                    operator&(
+    T a,
+    T b);
+
+// ____________________________________________________________________________
+template<typename T>
+T                    operator&=(
+    T a,
+    T b);
+
+// ____________________________________________________________________________
+template<typename T>
+T                    operator|=(
+    T a,
+    T b);
+
+// ____________________________________________________________________________
+template<typename T>
+T                    operator|(
+    T a,
+    T b)
 {
-  static_assert(std::is_enum<T>::value  , "type must be an enum!\n"); 
-  return static_cast<T>(static_cast<int>(a) | static_cast<int>(b)); 
+    static_assert(std::is_enum<T>::value, "type must be an enum!\n");
+    return static_cast<T>(static_cast<int>(a) | static_cast<int>(b));
 }
 
+
+// ____________________________________________________________________________
 template<typename T>
-T operator&( T a,  T b)
+T                    operator&(
+    T a,
+    T b)
 {
-  static_assert(std::is_enum<T>::value, "type must be an enum!\n"); 
-  return static_cast<T>(static_cast<int>(a) & static_cast<int>(b)); 
+    static_assert(std::is_enum<T>::value, "type must be an enum!\n");
+    return static_cast<T>(static_cast<int>(a) & static_cast<int>(b));
 }
 
-
+// ____________________________________________________________________________
 template<typename T>
-T operator&=(T a, T b)
+T                    operator&=(
+    T a,
+    T b)
 {
-  return a & b; 
+    return a & b;
 }
 
-
+// ____________________________________________________________________________
 template<typename T>
-T operator|=(T a, T b)
+T                    operator|=(
+    T a,
+    T b)
 {
-  return a | b; 
+    return a | b;
 }
-
 
 
 #endif

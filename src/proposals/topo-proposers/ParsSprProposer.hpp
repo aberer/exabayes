@@ -6,57 +6,102 @@
 #include "ParsimonyEvaluator.hpp"
 #include "Communicator.hpp"
 
-class ParsSprProposer : public  TopoMoveProposer
+///////////////////////////////////////////////////////////////////////////////
+//                             PARS SPR PROPOSER                             //
+///////////////////////////////////////////////////////////////////////////////
+class ParsSprProposer : public TopoMoveProposer
 {
-  typedef std::unordered_map<BranchPlain, double> weightMap; 
-  typedef std::unordered_map<BranchPlain,std::array<parsimonyNumber,3> > branch2parsScore;
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    using weightMap =  std::unordered_map<BranchPlain, double>;
+    using branch2parsScore = std::unordered_map<
+                BranchPlain, std::array<parsimonyNumber, 3> >;
 
-public: 			// INHERITED METHODS
-  virtual void determineMove(TreeAln &traln, LikelihoodEvaluator& eval, Randomness& rand, BranchPlain primeBranch, const std::vector<AbstractParameter*> &params)  ; 
-  virtual TopoMoveProposer* clone() const ; 
-  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const ; 
-  virtual void determineBackProb( TreeAln &traln, LikelihoodEvaluator &eval, const std::vector<AbstractParameter*> &params ); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    virtual void                                determineMove(
+        TreeAln&                              traln,
+        LikelihoodEvaluator&                  eval,
+        Randomness&                           rand,
+        BranchPlain                           primeBranch,
+        const std::vector<AbstractParameter*>&params);
+    // ________________________________________________________________________
+    virtual TopoMoveProposer*                   clone() const;
+    // ________________________________________________________________________
+    virtual BranchPlain                         determinePrimeBranch(
+        const TreeAln&traln,
+        Randomness&   rand) const;
+    // ________________________________________________________________________
+    virtual void                                determineBackProb(
+        TreeAln&                              traln,
+        LikelihoodEvaluator&                  eval,
+        const std::vector<AbstractParameter*>&params);
+    // ________________________________________________________________________
+    virtual auto                                getMove() const
+        ->std::unique_ptr<TopoMove>;
+    // ________________________________________________________________________
+    virtual void                                printParams(
+        std::ostream&out)  const
+    {out << ";radius=" << _depth << ",warp=" << _parsWarp;}
+    // ________________________________________________________________________
+    ParsSprProposer(
+        double       parsWarp,
+        int          depth,
+        Communicator&comm);
+    // ________________________________________________________________________
+    virtual ~ParsSprProposer(){}
+    // ________________________________________________________________________
+    ParsSprProposer(
+        const ParsSprProposer& rhs)
+        : TopoMoveProposer(rhs)
+        , _parsWarp{rhs._parsWarp}
+        , _depth{rhs._depth}
+        , _pEval{rhs._pEval}
+        , _comm{rhs._comm}
+        , _computedInsertions{rhs._computedInsertions}
+        , _move{rhs._move}
+    {}
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    branch2parsScore                            determineScoresOfInsertions(
+        TreeAln&    traln,
+        BranchPlain prunedTree);
+    // ________________________________________________________________________
+    void                                        testInsertParsimony(
+        TreeAln&         traln,
+        nodeptr          insertPos,
+        nodeptr          prunedTree,
+        branch2parsScore&result,
+        int              curDepth);
+    // ________________________________________________________________________
+    auto                                        getWeights(
+        const TreeAln&   traln,
+        branch2parsScore insertions)
+        ->weightMap;
 
-  virtual std::unique_ptr<TopoMove> getMove() const ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ATTRIBUTES
+    double _parsWarp;
+    int _depth;
+    ParsimonyEvaluator _pEval;
+    std::reference_wrapper<Communicator>_comm;
+    branch2parsScore _computedInsertions;
+    SprMove _move;
 
-  virtual void printParams(std::ostream &out)  const { out << ";radius=" << _depth << ",warp=" << _parsWarp ;} 
-
-public: 			// METHODS
-  ParsSprProposer(double parsWarp, int depth, Communicator &comm );
-
-  virtual  ~ParsSprProposer() {} 
-  ParsSprProposer(const ParsSprProposer& rhs)
-    : TopoMoveProposer(rhs)
-    , _parsWarp{rhs._parsWarp}
-    , _depth{rhs._depth}
-    , _pEval{rhs._pEval}
-    , _comm{rhs._comm}
-    , _computedInsertions{rhs._computedInsertions}
-    , _move{rhs._move}
-  {
-  }
-
-
-  ParsSprProposer(ParsSprProposer&& rhs) = default; 
-  ParsSprProposer& operator=(const ParsSprProposer &rhs)  = default; 
-  ParsSprProposer& operator=( ParsSprProposer &&rhs)  = default ; 
-  
-private: 			// METHODS 
-  branch2parsScore determineScoresOfInsertions(TreeAln& traln, BranchPlain prunedTree  )  ;
-  void testInsertParsimony(TreeAln &traln, nodeptr insertPos, nodeptr prunedTree, branch2parsScore &result, int curDepth) ; 
-  auto  getWeights(const TreeAln& traln, branch2parsScore insertions)  -> weightMap; 
-
-private: 			// ATTRIBUTES
-  double _parsWarp; 
-  int _depth; 
-  ParsimonyEvaluator _pEval; 
-  std::reference_wrapper<Communicator> _comm; 
-  branch2parsScore _computedInsertions; 
-  SprMove _move; 
-
-  static std::array<double,2> factors; 
-  static double weightEps; 	// mostly a numerical addition
-}; 
+    static std::array<double, 2>factors;
+    static double weightEps; // mostly a numerical addition
+};
 
 
 #endif

@@ -3,16 +3,23 @@
 
 #include <iosfwd>
 
-enum class MoveOptMode : int 
+///////////////////////////////////////////////////////////////////////////////
+//                               MOVE OPT MODE                               //
+///////////////////////////////////////////////////////////////////////////////
+enum class MoveOptMode : int
 {
-  NONE = 0 , 
-    ONLY_SWITCHING = 1, 
-    ALL_INTERNAL = 2, 
-    ALL_IN_MOVE = 3, 
-    ALL_SURROUNDING = 4  
-    }; 	 
+    NONE = 0,
+    ONLY_SWITCHING = 1,
+    ALL_INTERNAL = 2,
+    ALL_IN_MOVE  = 3,
+    ALL_SURROUNDING = 4
+};
 
-std::ostream& operator<<(std::ostream& s, const MoveOptMode& c) ;
+
+// ____________________________________________________________________________
+std::ostream&                   operator<<(
+    std::ostream&      s,
+    const MoveOptMode& c);
 
 #endif /* MOVEOPTMODE_H */
 

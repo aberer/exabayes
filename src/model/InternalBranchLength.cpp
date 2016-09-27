@@ -2,29 +2,34 @@
 
 #include <cmath>
 
-InternalBranchLength InternalBranchLength::fromAbsolute(double absLen, double meanSubstRate)
+InternalBranchLength                    InternalBranchLength::fromAbsolute(
+    double absLen,
+    double meanSubstRate)
 {
-  auto result = InternalBranchLength{}; 
-  auto internal = exp( - (absLen  /  meanSubstRate) ) ;
-  result._internalBranchLength = internal;
-  return result;
+    auto result = InternalBranchLength{};
+    auto internal = exp(-(absLen  /  meanSubstRate));
+    result._internalBranchLength = internal;
+    return result;
 }
 
 
-double InternalBranchLength::toMeanSubstitutions(double meanSubstRate) const 
+double                                  InternalBranchLength::
+    toMeanSubstitutions(
+    double meanSubstRate) const
 {
-  return -log(_internalBranchLength) * meanSubstRate; 
+    return -log(_internalBranchLength) * meanSubstRate;
 }
 
 
-
-void InternalBranchLength::deserialize( std::istream &in )
+void                                    InternalBranchLength::deserialize(
+    std::istream&in)
 {
-  _internalBranchLength = cRead<double>(in); 
+    _internalBranchLength = cRead<double>(in);
 }
 
 
-void InternalBranchLength::serialize( std::ostream &out) const
+void                                    InternalBranchLength::serialize(
+    std::ostream&out) const
 {
-  cWrite(out, _internalBranchLength); 
-}   
+    cWrite(out, _internalBranchLength);
+}

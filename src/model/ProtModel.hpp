@@ -8,9 +8,12 @@
 
 #include "pll.h"
 
-enum class ProtModel : int 
+///////////////////////////////////////////////////////////////////////////////
+//                                 PROT MODEL                                //
+///////////////////////////////////////////////////////////////////////////////
+enum class ProtModel : int
 {
-  DAYHOFF_T =    PLL_DAYHOFF,
+    DAYHOFF_T =    PLL_DAYHOFF,
     DCMUT_T =      PLL_DCMUT,
     JTT_T =        PLL_JTT,
     MTREV_T =      PLL_MTREV,
@@ -23,41 +26,53 @@ enum class ProtModel : int
     LG_T =         PLL_LG,
     MTART_T =      PLL_MTART,
     MTZOA_T =      PLL_MTZOA,
-    PMB_T =        PLL_PMB,
-    HIVB_T =       PLL_HIVB,
-    HIVW_T =       PLL_HIVW,
+    PMB_T   =        PLL_PMB,
+    HIVB_T  =       PLL_HIVB,
+    HIVW_T  =       PLL_HIVW,
     JTTDCMUT_T =   PLL_JTTDCMUT,
-    FLU_T =        PLL_FLU, 
+    FLU_T =        PLL_FLU,
     LG4_T =        PLL_LG4
-}; 
+};
 
 
-namespace ProtModelFun
-{
-  std::string getName(ProtModel mod); 
-  std::vector<ProtModel> getAllModels();
-  std::tuple<bool,ProtModel> getModelFromStringIfPossible(const std::string & modelString); 
+namespace ProtModelFun {
+// ____________________________________________________________________________
+std::string                                    getName(
+    ProtModel mod);
+// ____________________________________________________________________________
+std::vector<ProtModel>                         getAllModels();
+// ____________________________________________________________________________
+std::tuple<bool, ProtModel>                    getModelFromStringIfPossible(
+    const std::string& modelString);
 }
 
-std::ostream& operator<<(std::ostream &out, const ProtModel &rhs); 
+// ____________________________________________________________________________
+std::ostream&                                  operator<<(
+    std::ostream&   out,
+    const ProtModel&rhs);
 
-namespace std
+namespace std {
+template<>
+struct less<ProtModel>
 {
-  template<> struct less<ProtModel> {
-    bool operator()(const ProtModel& a, const ProtModel& b)  const 
+    bool                                       operator()(
+        const ProtModel& a,
+        const ProtModel& b)  const
     {
-      return int(a) < int(b);
-    } 
-  }; 
-
-
-  template<> struct hash<ProtModel>
-  {
-    size_t operator() (const ProtModel& rhs) const 
-    {
-      return std::hash<size_t>()(size_t(rhs));
+        return int(a) < int(b);
     }
-  }; 
+};
+
+
+template<>
+struct hash<ProtModel>
+{
+    size_t                                     operator()(
+        const ProtModel& rhs) const
+    {
+        return std::hash<size_t>()(size_t(rhs));
+    }
+};
 }
 
 

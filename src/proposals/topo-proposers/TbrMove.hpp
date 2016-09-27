@@ -1,40 +1,75 @@
-#ifndef _TBR_MOVE_H 
-#define _TBR_MOVE_H 
+#ifndef _TBR_MOVE_H
+#define _TBR_MOVE_H
 
 #include "SprMove.hpp"
 
 #include "TopoMove.hpp"
 
+///////////////////////////////////////////////////////////////////////////////
+//                                  TBR MOVE                                 //
+///////////////////////////////////////////////////////////////////////////////
 class TbrMove : public TopoMove
 {
-public: 			// INHERITED methods  
-  virtual void apply(TreeAln &traln, const std::vector<AbstractParameter*> &blParams) const ; 
-  virtual ~TbrMove(){}
-  virtual BranchPlain getEvalBranch(const TreeAln &traln) const ; 
-  virtual std::vector<nat> getDirtyNodes() const  ; 
-  virtual std::unique_ptr<TopoMove> getInverse() const  ; 
-  virtual TopoMove* clone() const  ; 
-  virtual void print(std::ostream& out) const ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    virtual void                                         apply(
+        TreeAln&                              traln,
+        const std::vector<AbstractParameter*>&blParams) const;
+    // ________________________________________________________________________
+    virtual ~TbrMove(){}
 
-  virtual std::vector<BranchPlain> getBranchesToPropose(const TreeAln& traln, MoveOptMode mode ) ; 
-  
-  virtual int getNniDistance() const { return _moveA.getNniDistance() + _moveB.getNniDistance()  ; }
-  virtual void invalidateArrays(LikelihoodEvaluator& eval, TreeAln& traln, MoveOptMode mode) const ; 
+    virtual BranchPlain                                  getEvalBranch(
+        const TreeAln&traln) const;
+    // ________________________________________________________________________
+    virtual std::vector<nat>                             getDirtyNodes() const;
+    // ________________________________________________________________________
+    virtual std::unique_ptr<TopoMove>                    getInverse() const;
+    // ________________________________________________________________________
+    virtual TopoMove*                                    clone() const;
+    // ________________________________________________________________________
+    virtual void                                         print(
+        std::ostream& out) const;
+    // ________________________________________________________________________
+    virtual auto                                         getBranchesToPropose(
+        const TreeAln& traln,
+        MoveOptMode    mode)
+        ->std::vector<BranchPlain>;
+    // ________________________________________________________________________
+    virtual int                                          getNniDistance() const
+    {return _moveA.getNniDistance() + _moveB.getNniDistance();}
+    // ________________________________________________________________________
+    virtual void                                         invalidateArrays(
+        LikelihoodEvaluator& eval,
+        TreeAln&             traln,
+        MoveOptMode          mode) const;
+    // ________________________________________________________________________
+    explicit TbrMove()
+        : _moveA{}
+        , _moveB{}
+    {}
+    // ________________________________________________________________________
+    TbrMove(
+        const TreeAln&     traln,
+        const BranchPlain& bisected,
+        const BranchPlain& insertA,
+        const BranchPlain& insertB);
+    // ________________________________________________________________________
+    TbrMove                                              getInverseMove() const;
+    // ________________________________________________________________________
+    friend std::ostream&                                 operator<<(
+        std::ostream& out,
+        const TbrMove&rhs);
 
-public: 			// methods 
-  explicit TbrMove()  
-    : _moveA{}
-    , _moveB{}
-  {}
-  TbrMove(const TreeAln &traln, const BranchPlain &bisected, const BranchPlain& insertA, const BranchPlain& insertB)  ; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    SprMove _moveA;
+    SprMove _moveB;
+};
 
-  TbrMove getInverseMove() const ; 
-
-  friend std::ostream& operator<<(std::ostream &out, const TbrMove &rhs) ;  
-
-private: 			// ATTRIBUTES
-  SprMove _moveA; 
-  SprMove _moveB; 
-}; 
 
 #endif

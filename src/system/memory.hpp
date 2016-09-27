@@ -6,11 +6,12 @@
 #include <stdio.h>
 #include <proc/readproc.h>
 
-uint64_t getCurrentMemory()
+// ____________________________________________________________________________
+uint64_t                    getCurrentMemory()
 {
-  struct proc_t usage;
-  look_up_our_self(&usage);
-  return usage.vsize; 
+    struct proc_t usage;
+    look_up_our_self(&usage);
+    return usage.vsize;
 }
 
 

@@ -46,7 +46,8 @@ public:
         const BranchPlain&branch,
         AbstractParameter*param) const;
     // ________________________________________________________________________
-    friend std::ostream& operator                     <<(
+    friend std::ostream&                              operator
+    <<(
         std::ostream&       out,
         const BranchBackup& rhs);
 

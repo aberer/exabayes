@@ -5,39 +5,49 @@
 #include <iosfwd>
 #include <cmath>
 
+///////////////////////////////////////////////////////////////////////////////
+//                            IGNORE BRANCH LENGTH                           //
+///////////////////////////////////////////////////////////////////////////////
 class IgnoreBranchLength
 {
-public: 
-  double readBranchLength(std::istream &iss)
-  {
-    bool foundNext = false; 
-    while(not foundNext)
-      {
-	int ch = iss.get(); 
+public:
+    double                    readBranchLength(
+        std::istream&iss)
+    {
+        bool foundNext = false;
 
-	foundNext = ( ch == ')'
-		      || ch == ';'
-		      || ch == ',' ) ; 
-      }
-    iss.unget();
-    return nan("");
-  }
+        while (not foundNext)
+        {
+            int ch = iss.get();
+
+            foundNext = (ch == ')'
+                         || ch == ';'
+                         || ch == ',');
+        }
+
+        iss.unget();
+        return nan("");
+    }
 };
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                            READ BRANCH LENGTH                             //
+///////////////////////////////////////////////////////////////////////////////
 class ReadBranchLength
 {
-public: 
-  double readBranchLength(std::istream &iss)
-  {
-    auto result = double{0.};
+public:
+    double                    readBranchLength(
+        std::istream&iss)
+    {
+        auto result = double {0.};
 
-    iss.precision(std::numeric_limits<double>::digits10 + 2);
+        iss.precision(std::numeric_limits<double>::digits10 + 2);
 
-    iss >> result; 
-    return result; 
-  }
-  
+        iss >> result;
+        return result;
+    }
 };
+
 
 #endif

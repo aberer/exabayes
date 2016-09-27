@@ -1,4 +1,5 @@
 #include "ParameterProposal.hpp"
+
 #include "AbstractPrior.hpp"
 #include "BoundsChecker.hpp"
 

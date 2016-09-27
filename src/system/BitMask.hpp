@@ -1,21 +1,36 @@
 #ifndef _BITMASK_HPP
 #define _BITMASK_HPP
 
-#include <stddef.h> 
+#include <stddef.h>
 
 
-template<typename T> 
+///////////////////////////////////////////////////////////////////////////////
+//                                  BIT MASK                                 //
+///////////////////////////////////////////////////////////////////////////////
+template<typename T>
 class BitMask
 {
-public: 
-  static size_t constexpr length = sizeof(T) * 8 ; // dont know where size_of_byte define is 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC DATA                              //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    static size_t constexpr length = sizeof(T) * 8; // dont know where
+                                                    // size_of_byte define is
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    BitMask();
+    T                    operator[](
+        int num){return _impl[num];}
 
-public: 
-  BitMask(); 
-  T operator[](int num ) {return _impl[num]; } 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
 private:
-  T _impl[length]; 
-}; 
+    T _impl[length];
+};
 
 
 #endif

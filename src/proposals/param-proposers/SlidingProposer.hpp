@@ -3,31 +3,56 @@
 
 #include "AbstractProposer.hpp"
 
-
+///////////////////////////////////////////////////////////////////////////////
+//                              SLIDING PROPOSER                             //
+///////////////////////////////////////////////////////////////////////////////
 class SlidingProposer : public AbstractProposer
 {
-public: 
-  SlidingProposer(double minVal, double maxVal, bool minMaxIsRelative); 
-  virtual ~SlidingProposer(){}
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    SlidingProposer(
+        double minVal,
+        double maxVal,
+        bool   minMaxIsRelative);
+    // ________________________________________________________________________
+    virtual ~SlidingProposer(){}
+    // ________________________________________________________________________
+    SlidingProposer(
+        const SlidingProposer&rhs)
+        : AbstractProposer(rhs)
+        , minMaxIsRelative(rhs.minMaxIsRelative)
+    {}
+    // ________________________________________________________________________
+    double                                         proposeOneValue(
+        double     oldVal,
+        double     parameter,
+        Randomness&rand,
+        log_double&hastings);
+    // ________________________________________________________________________
+    std::vector<double>                            proposeRelativeMany(
+        std::vector<double>oldValues,
+        double             parameter,
+        Randomness&        rand,
+        log_double&        hastings);
+    // ________________________________________________________________________
+    virtual std::vector<double>                    proposeValues(
+        std::vector<double>oldValues,
+        double             parameter,
+        Randomness&        rand,
+        log_double&        hastings);
+    // ________________________________________________________________________
+    virtual AbstractProposer*                      clone() const
+    {return new SlidingProposer(*this);}
 
-  SlidingProposer(const SlidingProposer &rhs) 
-    : AbstractProposer(rhs)
-    , minMaxIsRelative(rhs.minMaxIsRelative)
-  {
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    bool minMaxIsRelative;
+};
 
-  double proposeOneValue(double oldVal, double parameter, Randomness &rand, log_double &hastings); 
-
-  std::vector<double> proposeRelativeMany(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings); 
-
-
-  virtual std::vector<double> proposeValues(std::vector<double> oldValues, double parameter, Randomness &rand, log_double &hastings); 
-
-  virtual AbstractProposer* clone() const  {return new SlidingProposer(*this);  }
-
-
-private: 
-  bool minMaxIsRelative ; 
-}; 
 
 #endif

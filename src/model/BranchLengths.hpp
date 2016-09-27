@@ -7,40 +7,49 @@
 #include "InternalBranchLength.hpp"
 #include "Serializable.hpp"
 
+///////////////////////////////////////////////////////////////////////////////
+//                               BRANCH LENGTHS                              //
+///////////////////////////////////////////////////////////////////////////////
 class BranchLengths : public BranchPlain
 {
-public: 
-  explicit BranchLengths(const BranchPlain &b = BranchPlain(),
-                         std::vector<InternalBranchLength> lengths = {{}})
-    : BranchPlain(b)
-    , _lengths(lengths)
-  {
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    explicit BranchLengths(
+        const BranchPlain&               b = BranchPlain(),
+        std::vector<InternalBranchLength>lengths = {{}})
+        : BranchPlain(b)
+        , _lengths(lengths)
+    {}
+    // ________________________________________________________________________
+    virtual ~BranchLengths(){}
+    // ________________________________________________________________________
+    BranchLengths                                        getInverted() const
+    {return BranchLengths(BranchPlain::getInverted(), _lengths); }
+    // ________________________________________________________________________
+    void                                                 setLengths(
+        std::vector<InternalBranchLength>lengths)
+    {_lengths = lengths; }
+    // ________________________________________________________________________
+    std::vector<InternalBranchLength>                    getLengths() const
+    {return _lengths; }
 
-  virtual ~BranchLengths(){}
+    // implements Serializable
+    // ________________________________________________________________________
+    virtual void                                         deserialize(
+        std::istream&in);
+    // ________________________________________________________________________
+    virtual void                                         serialize(
+        std::ostream&out) const;
 
-  BranchLengths getInverted() const 
-  {
-    return BranchLengths(BranchPlain::getInverted(), _lengths); 
-  }
-
-  void setLengths(std::vector<InternalBranchLength> lengths)
-  {
-    _lengths = lengths; 
-  }
-
-  std::vector<InternalBranchLength> getLengths() const 
-  {
-    return _lengths; 
-  }
-
-  virtual void deserialize( std::istream &in ); 
-  virtual void serialize( std::ostream &out) const; 
-
-private: 
-  std::vector<InternalBranchLength> _lengths; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    std::vector<InternalBranchLength> _lengths;
 };
-
 
 
 #endif /* BRANCHLENGTHS_H */

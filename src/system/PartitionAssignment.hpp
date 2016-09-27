@@ -1,64 +1,131 @@
 #ifndef _PARTITION_ASSIGNMENT_HPP
 #define _PARTITION_ASSIGNMENT_HPP
 
+#include "common.h"
+#include "Partition.hpp"
+
 #include <map>
 
-#include "common.h"
-#include "Partition.hpp"	
-
+///////////////////////////////////////////////////////////////////////////////
+//                                 ASSIGNMENT                                //
+///////////////////////////////////////////////////////////////////////////////
 struct Assignment
 {
-  nat partId; 
-  nat procNum;
-  nat offset; 
-  nat width; 
-  nat compStates; 
-}; 
+    nat               partId;
+    nat               procNum;
+    nat               offset;
+    nat               width;
+    nat               compStates;
+};
 
 
+// ____________________________________________________________________________
+std::ostream&
+                                                                                                                                            operator
+<<(
+    std::ostream&     out,
+    const Assignment& rhs);
 
-
-std::ostream& operator<<(std::ostream& out, const Assignment& rhs); 
-
+///////////////////////////////////////////////////////////////////////////////
+//                                 PART INFO                                 //
+///////////////////////////////////////////////////////////////////////////////
 struct PartInfo
 {
-  nat id; 
-  nat num; 
-  nat compStates; 		// not used in modern thingie 
-}; 
+    nat               id;
+    nat               num;
+    nat               compStates; // not used in modern thingie
+};
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                            PARTITION ASSIGNMENT                           //
+///////////////////////////////////////////////////////////////////////////////
 class PartitionAssignment
 {
-public: 
-  explicit PartitionAssignment(size_t size )
-    : _numProc(size)
-    , _proc2assignment{}
-  {
-  }
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    explicit PartitionAssignment(
+        size_t size)
+        : _numProc(size)
+        , _proc2assignment{}
+    {}
+    // ________________________________________________________________________
+    size_t
+                                                                                                                                            getTotalWidthPerProc(
+        nat proc) const;
+    // ________________________________________________________________________
+    void
+                                                                                                                                            assignOld(
+        const std::vector<Partition>& pass);
+    // ________________________________________________________________________
+    void
+                                                                                                                                            assign(
+        const std::vector<Partition>& pass);
+    // ________________________________________________________________________
+    const std::multimap<nat,
+                        Assignment>&
+    getAssignment()
+    const
+    {return _proc2assignment;}
+    // ________________________________________________________________________
+    auto
+                                                                                                                                            getCountsAndDispls(
+        size_t bla) const
+        ->std::pair<std::vector<int>, std::vector<int> >;
+    // ________________________________________________________________________
+    size_t
+                                                                                                                                            getNumProc()
+    const
+    {return _numProc;}
+    // ________________________________________________________________________
+    auto
+                                                                                                                                            getNumPartPerProcess()
+    const->std::vector<nat>;
+    // ________________________________________________________________________
+    auto
+                                                                                                                                            getSitesPerProcess()
+    const->std::vector<nat>;
 
-  size_t getTotalWidthPerProc(nat proc) const; 
-  void assignOld(const std::vector<Partition>& pass); 
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    void
+                                                                                                                                            assignForType(
+        std::vector<PartInfo>);
+    // ________________________________________________________________________
+    void
+                                                                                                                                            improvedAssign(
+        std::vector<PartInfo>partitions);
+    // ________________________________________________________________________
+    void
+                                                                                                                                            _assignToProcFull(
+        PartInfo         p,
+        nat              proc,
+        std::vector<nat>&numAssigned,
+        std::vector<nat>&sizeAssigned);
+    // ________________________________________________________________________
+    void
+                                                                                                                                            _assignToProcPartially(
+        PartInfo         p,
+        nat              proc,
+        std::vector<nat>&numAssigned,
+        std::vector<nat>&sizeAssigned,
+        nat              offset,
+        nat              numElem);
 
-  void assign(const std::vector<Partition>& pass); 
-  const std::multimap<nat,Assignment>& getAssignment() const {return _proc2assignment; }
-  std::pair< std::vector<int>,std::vector<int> > getCountsAndDispls(size_t bla) const ; 
-
-  size_t getNumProc() const {return _numProc; }
-
-  auto getNumPartPerProcess() const -> std::vector<nat>; 
-  auto getSitesPerProcess() const  -> std::vector<nat>; 
-
-private: 			// METHODS 
-  void assignForType( std::vector<PartInfo> ); 
-  void improvedAssign( std::vector<PartInfo> partitions); 
-  void _assignToProcFull(PartInfo p, nat proc, std::vector<nat> &numAssigned, std::vector<nat> &sizeAssigned) ; 
-  void _assignToProcPartially(PartInfo p, nat proc, std::vector<nat> &numAssigned, std::vector<nat> &sizeAssigned, nat offset, nat numElem) ; 
-  
-private: 			// ATTRIBUTES
-  size_t _numProc; 
-  std::multimap<nat,Assignment> _proc2assignment;
-}; 
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ATTRIBUTES
+    size_t _numProc;
+    std::multimap<nat, Assignment>_proc2assignment;
+};
 
 
 #endif

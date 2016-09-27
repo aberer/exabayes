@@ -1,33 +1,80 @@
 #include "AbstractProposal.hpp"
 
 
+///////////////////////////////////////////////////////////////////////////////
+//                           TREE LENGTH MULTIPLIER                          //
+///////////////////////////////////////////////////////////////////////////////
 class TreeLengthMultiplier : public AbstractProposal
 {
-public: 
-  TreeLengthMultiplier(  double _multiplier) ; 
-  virtual ~TreeLengthMultiplier(){}
+    ///////////////////////////////////////////////////////////////////////////
+    //                            PUBLIC INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    // ________________________________________________________________________
+    TreeLengthMultiplier(
+        double _multiplier);
+    // ________________________________________________________________________
+    virtual ~TreeLengthMultiplier(){}
+    // ________________________________________________________________________
+    virtual auto                    determinePrimeBranch(
+        const TreeAln&traln,
+        Randomness&   rand) const
+        ->BranchPlain
+    {return BranchPlain();}
+    // ________________________________________________________________________
+    virtual void                    applyToState(
+        TreeAln&             traln,
+        PriorBelief&         prior,
+        log_double&          hastings,
+        Randomness&          rand,
+        LikelihoodEvaluator& eval);
+    // ________________________________________________________________________
+    virtual void                    evaluateProposal(
+        LikelihoodEvaluator&evaluator,
+        TreeAln&            traln,
+        const BranchPlain&  branchSuggestion);
+    // ________________________________________________________________________
+    virtual void                    resetState(
+        TreeAln&traln);
+    // ________________________________________________________________________
+    virtual void                    autotune();
+    // ________________________________________________________________________
+    virtual auto                    clone()
+    const
+        ->AbstractProposal *;
+    // ________________________________________________________________________
+    virtual void                    readFromCheckpointCore(
+        std::istream&in);
+    // ________________________________________________________________________
+    virtual void                    writeToCheckpointCore(
+        std::ostream&out) const;
+    // ________________________________________________________________________
+    virtual auto                    prepareForSetExecution(
+        TreeAln&   traln,
+        Randomness&rand)
+        ->std::pair<BranchPlain, BranchPlain>
+    {return std::make_pair(BranchPlain(0, 0), BranchPlain(0, 0));}
+    // ________________________________________________________________________
+    virtual auto                    getInvalidatedNodes(
+        const TreeAln& traln) const
+        ->std::vector<nat>;
 
-  virtual BranchPlain determinePrimeBranch(const TreeAln &traln, Randomness& rand) const{return BranchPlain(); }
+    ///////////////////////////////////////////////////////////////////////////
+    //                           PRIVATE INTERFACE                           //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    // ________________________________________________________________________
+    void                            multiplyBranchLengthsRecursively(
+        TreeAln& traln,
+        nodeptr  p,
+        double   multiHere);
 
-  virtual void applyToState(TreeAln &traln, PriorBelief &prior, log_double &hastings, Randomness &rand, LikelihoodEvaluator& eval) ; 
-  virtual void evaluateProposal(  LikelihoodEvaluator &evaluator, TreeAln &traln, const BranchPlain &branchSuggestion) ; 
-  virtual void resetState(TreeAln &traln)  ; 
-  virtual void autotune() ;
+    ///////////////////////////////////////////////////////////////////////////
+    //                              PRIVATE DATA                             //
+    ///////////////////////////////////////////////////////////////////////////
+private:
+    double multiplier;      // the tuning variable
+    double initTreeLength;
+    std::vector<BranchLength>storedBranches;
+};
 
-  virtual AbstractProposal* clone() const;  
-
-  virtual void readFromCheckpointCore(std::istream &in);
-  virtual void writeToCheckpointCore(std::ostream &out) const;
-
-  virtual std::pair<BranchPlain,BranchPlain> prepareForSetExecution(TreeAln &traln, Randomness &rand)  { return std::make_pair (BranchPlain(0,0),BranchPlain(0,0) );}
-
-  virtual std::vector<nat> getInvalidatedNodes(const TreeAln& traln) const; 
-
-private: 			// METHODS
-  void multiplyBranchLengthsRecursively(TreeAln& traln, nodeptr p, double multiHere); 
-
-private: 			// ATTRIBUTES
-  double multiplier; 		// the tuning variable  
-  double initTreeLength; 
-  std::vector<BranchLength> storedBranches; 
-} ; 

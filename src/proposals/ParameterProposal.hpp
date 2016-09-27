@@ -49,10 +49,10 @@ public:
     // _________________________________________________________________________
     virtual BranchPlain                               determinePrimeBranch(
         const TreeAln&traln,
-        Randomness&   rand) const {return BranchPlain(); }
+        Randomness&   rand) const {return BranchPlain();}
     // _________________________________________________________________________
     virtual AbstractProposal*                         clone()
-    const {return new ParameterProposal(*this);   }
+    const {return new ParameterProposal(*this);}
     // _________________________________________________________________________
     virtual std::vector<nat>                          getInvalidatedNodes(
         const TreeAln&traln) const;
@@ -61,7 +61,7 @@ public:
                       BranchPlain>                    prepareForSetExecution(
         TreeAln&   traln,
         Randomness&rand)
-    {return std::make_pair(BranchPlain(0, 0), BranchPlain(0, 0)); }
+    {return std::make_pair(BranchPlain(0, 0), BranchPlain(0, 0));}
     // _________________________________________________________________________
     virtual void                                      readFromCheckpointCore(
         std::istream&in);
@@ -69,13 +69,13 @@ public:
     virtual void                                      writeToCheckpointCore(
         std::ostream&out) const;
 private:
-    bool                              modifiesBL;
-    double                            parameter;
-    std::unique_ptr<AbstractProposer> proposer;
+    bool modifiesBL;
+    double parameter;
+    std::unique_ptr<AbstractProposer>proposer;
 
-    ParameterContent                  _savedContent;
-    ParameterContent                  _savedBinaryContent;
-    std::vector<double>               _oldFCs;
+    ParameterContent _savedContent;
+    ParameterContent _savedBinaryContent;
+    std::vector<double>_oldFCs;
 };
 
 
