@@ -63,10 +63,10 @@ public:
 
     // ________________________________________________________________________
     GenericTopoProposal(
-        std::unique_ptr<TopoMoveProposer>moveDet,
-        std::string                      name,
-        double                           relWeight,
-        MoveOptMode                      toOpt);
+        TopoMoveProposer::UPtr moveDet,
+        std::string            name,
+        double                 relWeight,
+        MoveOptMode            toOpt);
     // ________________________________________________________________________
     GenericTopoProposal(
         const GenericTopoProposal& rhs);

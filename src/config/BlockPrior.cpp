@@ -12,7 +12,7 @@
 #include <cmath>
 #include <limits>
 
-static void                                       expectString(
+static void                                   expectString(
     std::string expectation,
     NxsToken&   token)
 {
@@ -28,7 +28,7 @@ static void                                       expectString(
 }
 
 
-static std::vector<double>                        parseValues(
+static std::vector<double>                    parseValues(
     NxsToken&token)
 {
     auto result = std::vector<double>{};
@@ -55,7 +55,7 @@ static std::vector<double>                        parseValues(
 }
 
 
-std::unique_ptr<AbstractPrior>                    BlockPrior::parsePrior(
+AbstractPrior::UPtr                           BlockPrior::parsePrior(
     NxsToken&token)
 {
     auto value = token.GetToken(false);

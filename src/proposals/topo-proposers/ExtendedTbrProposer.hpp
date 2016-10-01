@@ -16,27 +16,27 @@ class ExtendedTbrProposer : public TopoMoveProposer
     ///////////////////////////////////////////////////////////////////////////
 public:
     // ________________________________________________________________________
-    virtual void                                 determineMove(
+    virtual void                                determineMove(
         TreeAln&                              traln,
         LikelihoodEvaluator&                  eval,
         Randomness&                           rand,
         BranchPlain                           primeBranch,
         const std::vector<AbstractParameter*>&params);
     // ________________________________________________________________________
-    virtual TopoMoveProposer*                    clone() const;
+    virtual TopoMoveProposer*                   clone() const;
     // ________________________________________________________________________
-    virtual BranchPlain                          determinePrimeBranch(
+    virtual BranchPlain                         determinePrimeBranch(
         const TreeAln&traln,
         Randomness&   rand) const;
     // ________________________________________________________________________
-    virtual void                                 determineBackProb(
+    virtual void                                determineBackProb(
         TreeAln&                              traln,
         LikelihoodEvaluator&                  eval,
         const std::vector<AbstractParameter*>&params);
     // ________________________________________________________________________
-    std::unique_ptr<TopoMove>                    getMove() const;
+    TopoMove::UPtr                              getMove() const;
     // ________________________________________________________________________
-    virtual void                                 printParams(
+    virtual void                                printParams(
         std::ostream&out)  const {out << ";stopProb=" << _stopProb;}
     // ________________________________________________________________________
     ExtendedTbrProposer(
@@ -50,7 +50,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 private:
     // ________________________________________________________________________
-    void                                         buildPath(
+    void                                        buildPath(
         Path&                          path,
         BranchPlain                    bisectedBranch,
         TreeAln&                       traln,

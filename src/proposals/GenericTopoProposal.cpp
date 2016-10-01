@@ -17,10 +17,10 @@ double GenericTopoProposal::multiplier = std::log(2. / 3.) / -0.5;
 
 
 GenericTopoProposal::GenericTopoProposal(
-    std::unique_ptr<TopoMoveProposer>moveDet,
-    std::string                      name,
-    double                           relWeight,
-    MoveOptMode                      toOpt)
+    TopoMoveProposer::UPtr moveDet,
+    std::string            name,
+    double                 relWeight,
+    MoveOptMode            toOpt)
     : AbstractProposal(Category::TOPOLOGY,  name, relWeight, 0., 0., false)
     , _move(nullptr)
     , _moveProposer{std::move(moveDet)}
@@ -152,7 +152,7 @@ log_double                             GenericTopoProposal::
 
             auto dist = optParam.getProposerDistribution<GammaProposer>(traln,
                                                                         convParam,
-            nonConvParam);
+                                                                        nonConvParam);
             auto bl = dist.proposeBranch(b, traln, p, rand);
 
             auto oldLen = traln.getBranch(b, p).toMeanSubstitutions(
@@ -165,7 +165,7 @@ log_double                             GenericTopoProposal::
 
             // update log prior
             prior.addToRatio(p->getPrior()->getLogProb(
-            ParameterContent{{newLen}})
+                                 ParameterContent{{newLen}})
                              / p->getPrior()->getLogProb(ParameterContent{{oldLen}}));
 
             auto hastHere = dist.getLogProbability(newLen);

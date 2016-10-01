@@ -16,20 +16,24 @@ enum class Category;
 class AbstractParameter : public Serializable
 {
     ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    using UPtr = std::unique_ptr<AbstractParameter>;
+
+    ///////////////////////////////////////////////////////////////////////////
     //                            PUBLIC INTERFACE                           //
     ///////////////////////////////////////////////////////////////////////////
 public:
     // ________________________________________________________________________
     // generally, there is
     // nothing to do ...
-    virtual auto
-                                                                                                             deserialize(
+    virtual auto                      deserialize(
         std::istream& in)
         ->void
     {}
     // ________________________________________________________________________
-    virtual auto
-    serialize(
+    virtual auto                      serialize(
         std::ostream&out) const
         ->void
     {}
@@ -44,54 +48,49 @@ public:
     AbstractParameter(
         const AbstractParameter& rhs);
     // ________________________________________________________________________
-    virtual auto
-                                                                                                             getPriorValue(
+    virtual auto                      getPriorValue(
         const TreeAln& traln) const
         ->log_double  = 0;
     // ________________________________________________________________________
     // TODO we should just cast to BranchLengthParameter and make this specific
     // to branch length parameter ...
-    virtual double
-                                                                                                             getMeanSubstitutionRate()
+    virtual double                    getMeanSubstitutionRate()
     const
     {
         assert(0);
         return 0;
     }
     // ________________________________________________________________________
-    virtual void
-                                                                                                             updateMeanSubstRate(
-        const TreeAln& traln){assert(0); }
+    virtual void                      updateMeanSubstRate(
+        const TreeAln& traln){assert(0);}
     // ________________________________________________________________________
     /**
      *  @brief applies the parameter content to the tree
      */
-    virtual void
-                                                                                                             applyParameter(
+    virtual void                      applyParameter(
         TreeAln&               traln,
         const ParameterContent&content) = 0;
     // ________________________________________________________________________
-    virtual void
-                                                                                                             applyParameterRaw(
+    virtual void                      applyParameterRaw(
         TreeAln&                traln,
         const ParameterContent& content) const {}
     // ________________________________________________________________________
     /**
      *  @brief extracts the parameter
      */
-    virtual ParameterContent
-                                                                                                             extractParameter(
-        const TreeAln&traln)  const  = 0;
+    virtual auto                      extractParameter(
+        const TreeAln&traln)  const
+        ->ParameterContent  = 0;
     // ________________________________________________________________________
-    virtual ParameterContent
-                                                                                                             extractParameterRaw(
-        const TreeAln& traln) const {return ParameterContent{}; }
+    virtual auto                      extractParameterRaw(
+        const TreeAln& traln) const
+        ->ParameterContent
+    {return ParameterContent{};}
     // ________________________________________________________________________
     /**
      *  @brief print a sample for this parameter
      */
-    virtual void
-                                                                                                             printSample(
+    virtual void                      printSample(
         std::ostream& fileHandle,
         const TreeAln&traln) const = 0;
     // ________________________________________________________________________
@@ -99,30 +98,26 @@ public:
      *  @brief print the names of all components of this parameter (e.g., the
      * meaning of the various rates )
      */
-    virtual void
-                                                                                                             printAllComponentNames(
+    virtual void                      printAllComponentNames(
         std::ostream& fileHandle,
         const TreeAln&traln) const  = 0;
     // ________________________________________________________________________
     /**
      *  @brief adds a partition to the parameter (during setup)
      */
-    void
-                                                                                                             addPartition(
-        nat id){_partitions.push_back(id); }
+    void                              addPartition(
+        nat id){_partitions.push_back(id);}
     // ________________________________________________________________________
     /**
      *  @brief sets the prior for this parameter
      */
-    virtual void
-    setPrior(
-        const std::unique_ptr<AbstractPrior>&prior)
-    {_prior = std::unique_ptr<AbstractPrior>(prior->clone()); }
+    virtual void                      setPrior(
+        const AbstractPrior::UPtr&prior)
+    {_prior = AbstractPrior::UPtr(prior->clone());}
     // ________________________________________________________________________
-    nat
-                                                                                                             getIdOfMyKind()
+    nat                               getIdOfMyKind()
     const
-    {return _idOfMyKind; }
+    {return _idOfMyKind;}
     // ________________________________________________________________________
     /**
      *  @brief veriffies that content is compatible to this parameter (e.g.,
@@ -131,75 +126,64 @@ public:
      *  This is a crude method merely for initialization (user input
      * validation)
      */
-    virtual void
-                                                                                                             verifyContent(
+    virtual void                      verifyContent(
         const TreeAln&         traln,
         const ParameterContent&content) const  =  0;
 
     // ________________________________________________________________________
-    Category
-                                                                                                             getCategory()
+    auto                              getCategory()
     const
-    {return _cat; }
+        ->Category
+    {return _cat;}
     // ________________________________________________________________________
-    nat
-    getId()
+    nat                               getId()
     const
-    {return _id; }
+    {return _id;}
     // ________________________________________________________________________
-    std::vector<nat>
-                                                                                                             getPartitions()
+    auto                              getPartitions()
     const
-    {return _partitions; }
+        ->std::vector<nat>
+    {return _partitions;}
     // ________________________________________________________________________
-    auto
-    getPrior()
+    auto                              getPrior()
     const
         ->AbstractPrior
-    * {return _prior.get(); }
+    * {return _prior.get();}
     // ________________________________________________________________________
-    bool
-                                                                                                             isPrintToParamFile()
+    bool                              isPrintToParamFile()
     const
-    {return _printToParamFile; }
+    {return _printToParamFile;}
     // ________________________________________________________________________
-    virtual auto
-    printShort(
+    virtual auto                      printShort(
         std::ostream& out) const
         ->std::ostream &;
     // ________________________________________________________________________
-    friend auto
-    operator<<(
+    friend auto                       operator<<(
         std::ostream&            out,
         const AbstractParameter* rhs)
         ->std::ostream &;
     // ________________________________________________________________________
-    virtual AbstractParameter*
-    clone()
-    const = 0;
+    virtual auto                      clone() const
+        ->AbstractParameter *  = 0;
     // ________________________________________________________________________
-    virtual bool
-                                                                                                             priorIsFitting(
+    virtual bool                      priorIsFitting(
         const AbstractPrior&prior,
         const TreeAln&      traln) const;
     // ________________________________________________________________________
-    virtual bool
-                                                                                                             fitsToPartition(
+    virtual bool                      fitsToPartition(
         Partition& p) const
-    {return true; }
+    {return true;}
     // ________________________________________________________________________
-    virtual void
-                                                                                                             checkSanityPartitionsAndPrior(
+    virtual void                      checkSanityPartitionsAndPrior(
         const TreeAln&traln) const;
     // ________________________________________________________________________
-    nat
-                                                                                                             getParamPriority()
+    nat                               getParamPriority()
     const
-    {return _paramPriority; }
+    {return _paramPriority;}
     // ________________________________________________________________________
-    virtual ParamAttribute
-                                                                                                             getAttributes()
+    virtual auto                      getAttributes()
     const
+        ->ParamAttribute
     {
         assert(0);
         return ParamAttribute();
@@ -207,17 +191,15 @@ public:
 
     // ________________________________________________________________________
     // currently only used for tuning of branch length parameter
-    virtual void
-                                                                                                             setAttributes(
-        ParamAttribute attr){assert(0); }                          // same here
+    virtual void                      setAttributes(
+        ParamAttribute attr){assert(0);}                           // same here
 
 
     ///////////////////////////////////////////////////////////////////////////
     //                          PROTECTED INTERFACE                          //
     ///////////////////////////////////////////////////////////////////////////
 protected:
-    void
-                                                                                                             checkSanityPartitionsAndPrior_FreqRevMat(
+    void                              checkSanityPartitionsAndPrior_FreqRevMat(
         const TreeAln&traln) const;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -225,13 +207,13 @@ protected:
     ///////////////////////////////////////////////////////////////////////////
 protected:
     // ATTRIBUTES
-    nat                            _id;
-    nat                            _idOfMyKind;
-    Category                       _cat;
-    std::unique_ptr<AbstractPrior> _prior;
-    bool                           _printToParamFile;
-    std::vector<nat>               _partitions;
-    nat                            _paramPriority;
+    nat _id;
+    nat _idOfMyKind;
+    Category _cat;
+    std::unique_ptr<AbstractPrior>_prior;
+    bool _printToParamFile;
+    std::vector<nat>_partitions;
+    nat _paramPriority;
 };
 
 

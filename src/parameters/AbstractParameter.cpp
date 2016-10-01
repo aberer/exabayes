@@ -26,7 +26,7 @@ AbstractParameter::AbstractParameter(
     , _id(rhs._id)
     , _idOfMyKind(rhs._idOfMyKind)
     , _cat(rhs._cat)
-    , _prior{rhs._prior.get() != nullptr ? std::unique_ptr<AbstractPrior>(
+    , _prior{rhs._prior.get() != nullptr ? AbstractPrior::UPtr(
             rhs._prior->clone()) : nullptr}
     , _printToParamFile(rhs._printToParamFile)
     , _partitions(rhs._partitions)

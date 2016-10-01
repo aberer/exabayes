@@ -21,7 +21,7 @@ public:
     BlockParams()
         : parameters{}
         , tralnPtr{nullptr}
-    {NCL_BLOCKTYPE_ATTR_NAME = "PARAMS"; }
+    {NCL_BLOCKTYPE_ATTR_NAME = "PARAMS";}
     // ________________________________________________________________________
     BlockParams(
         const BlockParams&rhs)  = default;
@@ -30,9 +30,9 @@ public:
         const BlockParams&rhs)  = default;
     // ________________________________________________________________________
     void                                                      setTree(
-        const TreeAln* _traln){tralnPtr = _traln; }
+        const TreeAln* _traln){tralnPtr = _traln;}
     // ________________________________________________________________________
-    vector<unique_ptr<AbstractParameter> >                    getParameters()
+    vector<AbstractParameter::UPtr>                           getParameters()
     const;
     // ________________________________________________________________________
     virtual void                                              Read(
@@ -59,7 +59,7 @@ private:
     //                              PRIVATE DATA                             //
     ///////////////////////////////////////////////////////////////////////////
 private:
-    vector<unique_ptr<AbstractParameter> > parameters;
+    vector<unique_ptr<AbstractParameter> >parameters;
     const TreeAln*                         tralnPtr; // NON-owning
 };
 

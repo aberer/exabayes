@@ -39,6 +39,12 @@ class TreeAln
     friend class BranchLengthResource;
 
     ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    using UPtr = std::unique_ptr<TreeAln>;
+
+    ///////////////////////////////////////////////////////////////////////////
     //                            PUBLIC INTERFACE                           //
     ///////////////////////////////////////////////////////////////////////////
 public:
@@ -76,10 +82,10 @@ public:
      *  @brief get the internal raxml tree representation
      */
     pllInstance&                                      getTrHandle()
-    {return _tr; }
+    {return _tr;}
     // ________________________________________________________________________
     const pllInstance&                                getTrHandle() const
-    {return _tr; }
+    {return _tr;}
     // ________________________________________________________________________
     /**
      *  @brief frees all likelihood arrays
@@ -95,7 +101,7 @@ public:
      */
     nat                                               getNumberOfBranches()
     const
-    {return getNumberOfNodes() - 1; }
+    {return getNumberOfNodes() - 1;}
     // ________________________________________________________________________
     /**
      *  @brief get the number of partitions in the alignment
@@ -107,7 +113,7 @@ public:
      *  @brief get the number of taxa in the tree
      */
     nat                                               getNumberOfTaxa()
-    const {return getTrHandle().mxtips; }
+    const {return getTrHandle().mxtips;}
     // ________________________________________________________________________
     /**
      *  @brief get the number of nodes in the unrooted tree
@@ -115,7 +121,7 @@ public:
 
     nat                                               getNumberOfNodes()
     const
-    {nat numTax = getNumberOfTaxa();  return 2 * numTax - 2;  }
+    {nat numTax = getNumberOfTaxa();  return 2 * numTax - 2;}
     // excluding the virtual root
     // ________________________________________________________________________
     /**
@@ -162,10 +168,10 @@ public:
      *  @brief indicates whether a nodepointer is a tip
      */
     bool                                              isTipNode(
-        nodeptr p) const {return p->number <=  getTrHandle().mxtips; }
+        nodeptr p) const {return p->number <=  getTrHandle().mxtips;}
     // ________________________________________________________________________
     bool                                              isTipNode(
-        nat aNode) const {return int(aNode) <=  getTrHandle().mxtips; }
+        nat aNode) const {return int(aNode) <=  getTrHandle().mxtips;}
     // ________________________________________________________________________
     /**
      *  @brief gets the branch from a node pointer (including branch length)
@@ -378,10 +384,10 @@ public:
         nat model) const;
     // ________________________________________________________________________
     const std::vector<std::string>&                   getTaxa() const
-    {return _taxa; }
+    {return _taxa;}
     // ________________________________________________________________________
     void                                              setTaxa(
-        std::vector<std::string>taxa){_taxa = taxa; }
+        std::vector<std::string>taxa){_taxa = taxa;}
     // ________________________________________________________________________
     std::vector<BranchPlain>                          getBranchesByDistance(
         const BranchPlain& branch,
@@ -405,7 +411,7 @@ public:
         BranchLengthResource bls);
     // ________________________________________________________________________
     bool                                              isSaveMemorySEV() const
-    {return _isSaveMemorySEV; }
+    {return _isSaveMemorySEV;}
     // ________________________________________________________________________
     void                                              createCaterpillar();
     // ________________________________________________________________________
@@ -443,26 +449,26 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 private:
     // ATTRIBUTES
-    std::vector<Partition>     _partitions;
-    partitionList              _partitionListResource;
-    std::vector<pInfo*>        _partitionPtrs;
+    std::vector<Partition>_partitions;
+    partitionList _partitionListResource;
+    std::vector<pInfo*>_partitionPtrs;
 
-    pllInstance                _tr;
-    std::vector<std::string>   _taxa;
-    BranchLengthResource       _bls;
+    pllInstance _tr;
+    std::vector<std::string>_taxa;
+    BranchLengthResource _bls;
 
     // tree resources
-    std::vector<traversalInfo> _traversalInfo;
-    std::vector<node>          _nodes;
-    std::vector<nodeptr>       _nodeptrs;
+    std::vector<traversalInfo>_traversalInfo;
+    std::vector<node>_nodes;
+    std::vector<nodeptr>_nodeptrs;
 
-    std::vector<int>           _ti;
-    std::vector<boolean>       _execModel; // for the traveral descriptor
-    std::vector<nat>           _parsimonyScore;
+    std::vector<int>_ti;
+    std::vector<boolean>_execModel;        // for the traveral descriptor
+    std::vector<nat>_parsimonyScore;
 
-    bool                       _isSaveMemorySEV;
+    bool _isSaveMemorySEV;
     // in case we are working with a rooted tree
-    BranchPlain                _root;
+    BranchPlain _root;
 };
 
 

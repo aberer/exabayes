@@ -54,7 +54,7 @@ protected:
     //                             PROTECTED DATA                            //
     ///////////////////////////////////////////////////////////////////////////
 protected:
-    std::unique_ptr<TreeAln>_tralnPtr;
+    TreeAln::UPtr _tralnPtr;
     std::vector<std::string>_fns;
     std::vector<std::string>_taxa;
 };

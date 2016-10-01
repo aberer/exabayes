@@ -160,10 +160,10 @@ BranchPlain                                  ExtendedTbrProposer::
 }
 
 
-std::unique_ptr<TopoMove>                    ExtendedTbrProposer::getMove()
+TopoMove::UPtr                               ExtendedTbrProposer::getMove()
 const
 {
-    return std::unique_ptr<TopoMove>(_move.clone());
+    return TopoMove::UPtr(_move.clone());
 }
 
 

@@ -93,9 +93,10 @@ std::vector<nat>                             TbrMove::getDirtyNodes() const
 }
 
 
-std::unique_ptr<TopoMove>                    TbrMove::getInverse() const
+auto                                         TbrMove::getInverse() const
+    ->TopoMove::UPtr
 {
-    return std::unique_ptr<TopoMove>(new TbrMove(getInverseMove()));
+    return TopoMove::UPtr(new TbrMove(getInverseMove()));
 }
 
 

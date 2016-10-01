@@ -17,7 +17,7 @@
 using multiMapCategory2TuplePartitionsPrior =
         std::unordered_multimap<Category,
                                 std::tuple<std::unordered_set<nat>,
-                                           std::unique_ptr<AbstractPrior> > >;
+                                           AbstractPrior::UPtr> >;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ public:
         size_t numPart)
         : _parsedPriors{}
         , _numPart(numPart)
-    {NCL_BLOCKTYPE_ATTR_NAME = "PRIORS"; }
+    {NCL_BLOCKTYPE_ATTR_NAME = "PRIORS";}
     // ________________________________________________________________________
     void                                                           verify()
     const;
@@ -43,13 +43,13 @@ public:
         NxsToken&token);
     // ________________________________________________________________________
     const multiMapCategory2TuplePartitionsPrior&                   getPriors()
-    const {return _parsedPriors; }
+    const {return _parsedPriors;}
 
     ///////////////////////////////////////////////////////////////////////////
     //                           PRIVATE INTERFACE                           //
     ///////////////////////////////////////////////////////////////////////////
 private:
-    std::unique_ptr<AbstractPrior>                                 parsePrior(
+    AbstractPrior::UPtr                                            parsePrior(
         NxsToken&token);
 
     ///////////////////////////////////////////////////////////////////////////

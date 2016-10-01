@@ -139,10 +139,10 @@ BranchPlain                                  ExtendedSprProposer::
 }
 
 
-std::unique_ptr<TopoMove>                    ExtendedSprProposer::getMove()
+TopoMove::UPtr                               ExtendedSprProposer::getMove()
 const
 {
-    return std::unique_ptr<TopoMove>(_move.clone());
+    return TopoMove::UPtr(_move.clone());
 }
 
 

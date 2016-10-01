@@ -50,7 +50,7 @@ Partition::Partition(
     , _sumBuffer{}
 {
     // allocate more space for aa matrices, since we maybe use lg4
-    auto duplicity = dataType == PLL_AA_DATA ? 4 : 1;
+    auto                       duplicity = dataType == PLL_AA_DATA ? 4 : 1;
 
     // std::cout << SyncOut() << "init partition" << std::endl; x
     memset(&_partition, 0, sizeof(pInfo));
@@ -60,8 +60,7 @@ Partition::Partition(
     _partition.maxTipStates = maxTipStates;
     _partition.states = states;
 
-    const partitionLengths
-    *    pl = getPartitionLengths(&_partition);
+    const partitionLengths*    pl = getPartitionLengths(&_partition);
 
     // allocate the memory
     _left.resize(pl->leftLength * (maxCategories + 1));
@@ -328,13 +327,13 @@ void                    Partition::compressDNA(
     for (nat taxIter = 1; taxIter <= _numTax; taxIter++)
     {
         size_t
-                  compressedIndex  = 0,
+              compressedIndex  = 0,
             compressedCounter      = 0;
 
-        auto      alnLine = _partition.yVector[taxIter];
+        auto  alnLine = _partition.yVector[taxIter];
 
-        auto      compressedValues = std::vector<nat>(states, 0);
-        auto      compressedTips = std::vector<nat*>(states, nullptr);
+        auto  compressedValues = std::vector<nat>(states, 0);
+        auto  compressedTips = std::vector<nat*>(states, nullptr);
 
         for (int k = 0; k < states; k++)
             compressedTips[k] = _partition.parsVect
@@ -396,15 +395,15 @@ void                    Partition::compressDNA(
 bool                    Partition::isInformative(
     int site) const
 {
-    auto      dataType = getDataType();
+    auto       dataType = getDataType();
 
     int
-              check[256],
+               check[256],
         undetermined = getUndetermined(dataType);
     memset(check, 0, sizeof(int) * 256);
 
     const nat
-    *         bitVector = getBitVector(dataType);
+    *          bitVector = getBitVector(dataType);
 
     for (nat i = 1; i <= _numTax; ++i)
     {
@@ -413,7 +412,7 @@ bool                    Partition::isInformative(
         assert(bitVector[nucleotide] > 0);
     }
 
-    nat       infoCtr = 0;
+    nat        infoCtr = 0;
 
     for (int i = 0; i < undetermined; ++i)
         if (check[i] > 0)

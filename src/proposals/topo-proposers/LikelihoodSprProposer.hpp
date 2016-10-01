@@ -15,35 +15,29 @@ class LikehoodSprProposer : public TopoMoveProposer
     ///////////////////////////////////////////////////////////////////////////
 public:
     // ________________________________________________________________________
-    virtual void
-                        determineMove(
+    virtual void                              determineMove(
         TreeAln&                              traln,
         LikelihoodEvaluator&                  eval,
         Randomness&                           rand,
         BranchPlain                           primeBranch,
         const std::vector<AbstractParameter*>&params);
     // ________________________________________________________________________
-    virtual void
-                        determineBackProb(
+    virtual void                              determineBackProb(
         TreeAln&                              traln,
         LikelihoodEvaluator&                  eval,
         const std::vector<AbstractParameter*>&params);
     // ________________________________________________________________________
-    virtual auto
-                        determinePrimeBranch(
+    virtual auto                              determinePrimeBranch(
         const TreeAln&traln,
         Randomness&   rand) const
         ->BranchPlain;
     // ________________________________________________________________________
-    virtual auto
-                        clone() const
+    virtual auto                              clone() const
         ->TopoMoveProposer *;
     // ________________________________________________________________________
-    virtual std::unique_ptr<TopoMove>
-                        getMove() const;
+    virtual TopoMove::UPtr                    getMove() const;
     // ________________________________________________________________________
-    virtual void
-                        printParams(
+    virtual void                              printParams(
         std::ostream&out)  const
     {out << ";radius=" << _maxStep << ",warp=" << _likeWarp;}
 
@@ -59,16 +53,14 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 private:
     // ________________________________________________________________________
-    auto
-                        computeLikelihoodsOfInsertions(
+    auto                                      computeLikelihoodsOfInsertions(
         TreeAln&                              traln,
         LikelihoodEvaluator&                  eval,
         const BranchPlain&                    prunedTree,
         const std::vector<AbstractParameter*>&params)
         ->std::vector<InsertionResult>;
     // ________________________________________________________________________
-    auto
-                        transformLikelihoods(
+    auto                                      transformLikelihoods(
         std::vector<InsertionResult>result) const
         ->std::vector<InsertionResult>;
 

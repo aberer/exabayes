@@ -4,14 +4,14 @@
 #include "BoundsChecker.hpp"
 
 ParameterProposal::ParameterProposal(
-    Category                         cat,
-    std::string                      name,
-    bool                             modBL,
-    std::unique_ptr<AbstractProposer>_proposer,
-    double                           p,
-    double                           weight,
-    double                           minTuning,
-    double                           maxTuning)
+    Category               cat,
+    std::string            name,
+    bool                   modBL,
+    AbstractProposer::UPtr _proposer,
+    double                 p,
+    double                 weight,
+    double                 minTuning,
+    double                 maxTuning)
     : AbstractProposal(cat, name, weight, minTuning, maxTuning, true)
     , modifiesBL(modBL)
     , parameter(p)

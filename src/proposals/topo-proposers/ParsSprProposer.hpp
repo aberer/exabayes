@@ -43,7 +43,7 @@ public:
         const std::vector<AbstractParameter*>&params);
     // ________________________________________________________________________
     virtual auto                                getMove() const
-        ->std::unique_ptr<TopoMove>;
+        ->TopoMove::UPtr;
     // ________________________________________________________________________
     virtual void                                printParams(
         std::ostream&out)  const

@@ -2,8 +2,8 @@
 
 
 ProposalSet::ProposalSet(
-    double                                         relWeight,
-    std::vector<std::unique_ptr<AbstractProposal> >_proposals)
+    double                             relWeight,
+    std::vector<AbstractProposal::UPtr>_proposals)
     : Serializable()
     , relativeWeight(relWeight)
     , proposals{}

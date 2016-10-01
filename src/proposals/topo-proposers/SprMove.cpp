@@ -190,11 +190,11 @@ std::ostream&                                      operator<<(
 }
 
 
-std::unique_ptr<TopoMove>                          SprMove::getInverse() const
+TopoMove::UPtr                                     SprMove::getInverse() const
 {
     // auto result = new SprMove();
     // *result = getInverseMove();
-    return std::move(std::unique_ptr<TopoMove>(new SprMove(getInverseMove())));
+    return std::move(TopoMove::UPtr(new SprMove(getInverseMove())));
 }
 
 

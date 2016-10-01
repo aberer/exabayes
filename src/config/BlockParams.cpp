@@ -151,7 +151,7 @@ void                    BlockParams
 }
 
 
-std::vector<std::unique_ptr<AbstractParameter> >                    BlockParams
+std::vector<AbstractParameter::UPtr>                    BlockParams
     ::getParameters() const
 {
     std::vector<std::unique_ptr<AbstractParameter> > result;
@@ -163,7 +163,7 @@ std::vector<std::unique_ptr<AbstractParameter> >                    BlockParams
 }
 
 
-nat                                                                 BlockParams
+nat                                                     BlockParams
     ::getNumSeen(
     Category cat)
 {
