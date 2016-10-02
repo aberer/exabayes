@@ -276,7 +276,8 @@ ParsSprProposer::weightMap                    ParsSprProposer::getWeights(
 }
 
 
-std::unique_ptr<TopoMove>                    ParsSprProposer::getMove() const
+auto                    ParsSprProposer::getMove() const
+    ->TopoMove::UPtr
 {
-    return std::unique_ptr<TopoMove>(_move.clone());
+    return TopoMove::UPtr(_move.clone());
 }

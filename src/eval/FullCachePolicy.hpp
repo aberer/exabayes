@@ -22,37 +22,32 @@ public:
     // ________________________________________________________________________
     virtual ~FullCachePolicy(){}
     // ________________________________________________________________________
-    virtual void
-                        imprintPolicy(
+    virtual void                    imprintPolicy(
         const TreeAln&   traln,
         ArrayOrientation&arrayOrient);
     // ________________________________________________________________________
-    virtual void
-                        freeMemory(
+    virtual void                    freeMemory(
         ArrayReservoir&res);
     // ________________________________________________________________________
-    virtual void
-                        accountForRejectionPolicy(
+    virtual void                    accountForRejectionPolicy(
         TreeAln&                traln,
         const std::vector<bool>&partitions,
         const std::vector<nat>& invalidNodes,
         ArrayOrientation&       arrayOrient,
         ArrayReservoir&         res);
     // ________________________________________________________________________
-    virtual void
-                        prepareForEvaluation(
+    virtual void                    prepareForEvaluation(
         TreeAln&          traln,
         BranchPlain       virtualRoot,
         nat               model,
         ArrayOrientation& arrayOrientation,
         ArrayReservoir&   res);
     // ________________________________________________________________________
-    virtual std::unique_ptr<ArrayPolicy>
-                        clone() const;
+    virtual auto                    clone() const
+        ->ArrayPolicy::UPtr;
     // ________________________________________________________________________
-    void
-                        enableRestoreGapVector()
-    {restorer.enableRestoreGapVector(); }
+    void                            enableRestoreGapVector()
+    {restorer.enableRestoreGapVector();}
 
     ///////////////////////////////////////////////////////////////////////////
     //                              PRIVATE DATA                             //

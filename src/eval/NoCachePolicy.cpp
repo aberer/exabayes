@@ -7,13 +7,14 @@ NoCachePolicy::NoCachePolicy(
 {}
 
 
-std::unique_ptr<ArrayPolicy>                    NoCachePolicy::clone() const
+auto                    NoCachePolicy::clone() const
+    ->ArrayPolicy::UPtr
 {
-    return std::unique_ptr<ArrayPolicy>(new NoCachePolicy(*this));
+    return std::make_unique<NoCachePolicy>(*this);
 }
 
 
-void                                            NoCachePolicy::
+void                    NoCachePolicy::
     accountForRejectionPolicy(
     TreeAln&                traln,
     const std::vector<bool>&partitions,

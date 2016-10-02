@@ -53,7 +53,7 @@ Chain::Chain(
     randKey_t                                             seed,
     const TreeAln&                                        traln,
     ParameterList                                         params,
-    const std::vector<std::unique_ptr<AbstractProposal> >&proposals,
+    const std::vector<AbstractProposal::UPtr>&            proposals,
     std::vector<ProposalSet>                              proposalSets,
     LikelihoodEvaluator                                   eval,
     bool                                                  isDryRun)
@@ -757,6 +757,7 @@ void                    Chain::stepSetProposal()
     for (auto&proposal : pSet.getProposalView())
         if (this->_tuneFrequency > 0  && this->_tuneFrequency <
             proposal->getNumCallSinceTuning())                                                 //
+                                                                                               //
                                                                                                //
                                                                                                //
                                                                                                // meh

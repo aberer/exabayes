@@ -144,7 +144,7 @@ public:
         const std::vector<nat>& invalidNodes);
     // ________________________________________________________________________
     ArrayOrientation                       getOrientation() const
-    {return _arrayOrientation; }
+    {return _arrayOrientation;}
     // ________________________________________________________________________
     void                                   expensiveVerify(
         TreeAln&    traln,
@@ -155,10 +155,10 @@ public:
         std::shared_ptr<TreeAln>_debugTraln);
     // ________________________________________________________________________
     ArrayReservoir&                        getArrayReservoir()
-    {return *(_arrayReservoir); }
+    {return *(_arrayReservoir);}
     // ________________________________________________________________________
     ParallelSetup&                         getParallelSetup()
-    {return *_plPtr; }
+    {return *_plPtr;}
     // ________________________________________________________________________
     void                                   evaluateSubtrees(
         TreeAln&                traln,
@@ -218,11 +218,11 @@ private:
     //                              PRIVATE DATA                             //
     ///////////////////////////////////////////////////////////////////////////
 private:
-    std::shared_ptr<TreeAln>        _debugTralnPtr;
-    bool                            _verifyLnl;
-    std::unique_ptr<ArrayPolicy>    _arrayPolicy;
-    ArrayOrientation                _arrayOrientation;
-    std::shared_ptr<ArrayReservoir> _arrayReservoir;
+    std::shared_ptr<TreeAln>_debugTralnPtr;
+    bool _verifyLnl;
+    ArrayPolicy::UPtr _arrayPolicy;
+    ArrayOrientation _arrayOrientation;
+    std::shared_ptr<ArrayReservoir>_arrayReservoir;
     ParallelSetup*                  _plPtr;
 };
 

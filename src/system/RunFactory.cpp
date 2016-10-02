@@ -23,7 +23,7 @@
 #include <iostream>
 
 void                    RunFactory::addStandardParameters(
-    std::vector<std::unique_ptr<AbstractParameter> >&params,
+    std::vector<AbstractParameter::UPtr>&            params,
     const TreeAln&                                   traln) const
 {
     int  highestParamId = -1;
@@ -64,7 +64,7 @@ void                    RunFactory::addStandardParameters(
 
     // add frequency parameters to aa-revmats, if not already there
     auto   relCat = Category::FREQUENCIES;
-    auto&& paramsToAdd = std::vector<std::unique_ptr<AbstractParameter> >{};
+    auto&& paramsToAdd = std::vector<AbstractParameter::UPtr>{};
 
     for (const auto&p : params)
     {
@@ -225,10 +225,8 @@ void                    RunFactory::addStandardPrior(
                || partition.getDataType() == PLL_AA_DATA
                || partition.getDataType() == PLL_BINARY_DATA
                );
-        var->setPrior(std::unique_ptr<AbstractPrior>(new DirichletPrior(
-                                                         std::vector<double>(
-                                                             partition.
-                                                                 getStates(), 1.))));
+        var->setPrior(std::make_unique<DirichletPrior>(
+                          std::vector<double>(partition.getStates(), 1.)));
     }
     break;
     case Category::SUBSTITUTION_RATES:
@@ -303,7 +301,7 @@ void                    RunFactory::addPriorsToParameters(
                 // tout << "setting prior " << &prior <<
                 // " for param "<< v.get() << std::endl;
 
-                v->setPrior(std::unique_ptr<AbstractPrior>(prior.clone()));
+                v->setPrior(AbstractPrior::UPtr(prior.clone()));
                 break;
             }
         }
@@ -325,7 +323,7 @@ void                    RunFactory::addPriorsToParameters(
                 {
                     // tout << "setting prior " << &prior << " for param "<<
                     // v.get() << std::endl;
-                    v->setPrior(std::unique_ptr<AbstractPrior>(prior.clone()));
+                    v->setPrior(AbstractPrior::UPtr(prior.clone()));
                     break;
                 }
             }
@@ -378,15 +376,16 @@ void                    RunFactory::addSecondaryParameters(
 }
 
 
-std::tuple<std::vector<std::unique_ptr<AbstractProposal> >, std::vector<ProposalSet> >                    RunFactory::produceProposals(
+auto                    RunFactory::produceProposals(
     const BlockProposalConfig&propConfig,
     const BlockPrior&         priorInfo,
     ParameterList&            params,
     const TreeAln&            traln,
     bool                      componentWiseMH,
     ParallelSetup&            pl)
+    ->std::tuple<std::vector<AbstractProposal::UPtr>, std::vector<ProposalSet> >
 {
-    auto proposals = std::vector<std::unique_ptr<AbstractProposal> >{};
+    auto proposals = std::vector<AbstractProposal::UPtr>{};
     auto resultPropSet = std::vector<ProposalSet>{};
     addPriorsToParameters(traln, priorInfo, params);
 
@@ -511,11 +510,11 @@ std::tuple<std::vector<std::unique_ptr<AbstractProposal> >, std::vector<Proposal
             // but we need a set of it
             for (auto&proposalType : proposalsForSet)
             {
-                auto lP = std::vector<std::unique_ptr<AbstractProposal> >{};
+                auto lP = std::vector<AbstractProposal::UPtr>{};
 
                 for (auto&p : elem.second)
                 {
-                    auto proposalClone = std::unique_ptr<AbstractProposal>(proposalType->clone());
+                    auto proposalClone = AbstractProposal::UPtr(proposalType->clone());
                     proposalClone->addPrimaryParameter(p->getId());
                     addSecondaryParameters(proposalClone.get(), params, traln.getNumberOfTaxa());
                     lP.push_back(std::move(proposalClone));

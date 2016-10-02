@@ -2,7 +2,7 @@
 
 
 ParameterList::ParameterList(
-    std::vector<std::unique_ptr<AbstractParameter> >params)
+    std::vector<AbstractParameter::UPtr>params)
     : _params{std::move(params)}
     , _paramView{}
 {

@@ -32,7 +32,6 @@
 
 using std::endl;
 using std::vector;
-using std::unique_ptr;
 using std::move;
 using std::get;
 
@@ -281,15 +280,14 @@ LikelihoodEvaluator                    SampleMaster::createEvaluatorPrototype(
     const TreeAln&initTree,
     bool          useSEV)
 {
-    auto&&plcy =  unique_ptr<ArrayPolicy>();
+    auto&&plcy =  ArrayPolicy::UPtr();
     auto  res  = std::make_shared<ArrayReservoir>(useSEV);
 
     switch (_cl.getMemoryMode())
     {
     case MemoryMode::RESTORE_ALL:
     {
-        plcy = unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, true,
-                                                           true));
+        plcy = std::make_unique<FullCachePolicy>(initTree, true, true);
 
         if (useSEV)
             plcy->enableRestoreGapVector();
@@ -297,8 +295,7 @@ LikelihoodEvaluator                    SampleMaster::createEvaluatorPrototype(
     break;
     case MemoryMode::RESTORE_INNER_TIP:
     {
-        plcy = unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, false,
-                                                           true));
+        plcy = std::make_unique<FullCachePolicy>(initTree, false, true);
 
         if (useSEV)
             plcy->enableRestoreGapVector();
@@ -306,8 +303,7 @@ LikelihoodEvaluator                    SampleMaster::createEvaluatorPrototype(
     break;
     case MemoryMode::RESTORE_INNER_INNER:
     {
-        plcy = unique_ptr<ArrayPolicy>(new FullCachePolicy(initTree, false,
-                                                           false));
+        plcy = std::make_unique<FullCachePolicy>(initTree, false, false);
 
         if (useSEV)
             plcy->enableRestoreGapVector();
@@ -315,7 +311,7 @@ LikelihoodEvaluator                    SampleMaster::createEvaluatorPrototype(
     break;
     case MemoryMode::RESTORE_NONE:
     {
-        plcy = unique_ptr<ArrayPolicy>(new NoCachePolicy(initTree));
+        plcy = std::make_unique<NoCachePolicy>(initTree);
     }
     break;
     default:
@@ -477,7 +473,7 @@ vector<std::string>                    SampleMaster::getStartingTreeStrings()
 
 
 void                                   SampleMaster::printProposals(
-    std::vector<std::unique_ptr<AbstractProposal> >&proposals,
+    std::vector<AbstractProposal::UPtr>&            proposals,
     std::vector<ProposalSet>&                       proposalSets,
     ParameterList&                                  params) const
 {
@@ -803,6 +799,14 @@ void                    SampleMaster::initializeRuns(
                                                                                     //
                                                                                     //
                                                                                     //
+                                                                                    //
+                                                                                    //
+                                                                                    //
+                                                                                    //
+                                                                                    //
+                                                                                    //
+                                                                                    //
+                                                                                    //
                                                                                     // meh
                                treeRandomness, blParams);
     }
@@ -1036,11 +1040,11 @@ std::pair<double,
 }
 
 
-std::tuple<ParameterList, std::vector<std::unique_ptr<AbstractProposal> >,
-           std::vector<ProposalSet> >                    SampleMaster::
-    processConfigFile(
+auto                    SampleMaster::processConfigFile(
     string        configFileName,
     const TreeAln&traln)
+    ->std::tuple<ParameterList, std::vector<AbstractProposal::UPtr>,
+    std::vector<ProposalSet> >
 {
     auto   reader = ConfigReader{};
     auto&& fh = ifstream(configFileName);
@@ -1067,7 +1071,7 @@ std::tuple<ParameterList, std::vector<std::unique_ptr<AbstractProposal> >,
     auto   paramList = ParameterList(move(paramResult));
 
     auto   proposalSetResult = vector<ProposalSet>{};
-    auto&& proposalResult = vector<unique_ptr<AbstractProposal> >{};
+    auto&& proposalResult = vector<AbstractProposal::UPtr>{};
     std::tie(proposalResult, proposalSetResult) = r.produceProposals(
             proposalConfig, priorBlock, paramList, traln,
             _runParams.isComponentWiseMH() && traln.getNumberOfPartitions() >

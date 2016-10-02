@@ -51,15 +51,16 @@ const double ProposalRegistry::initNodeSliderMultiplier = 0.191;
 /**
  * @brief yields a set of proposls for integrating a category
  */
-std::vector<std::unique_ptr<AbstractProposal> >
-ProposalRegistry::getSingleParameterProposals(
+
+auto                    ProposalRegistry::getSingleParameterProposals(
     Category                  cat,
     const BlockProposalConfig&config,
     const TreeAln&            traln,
     ParallelSetup&            pl,
     ParameterList&            params) const
+    ->std::vector<AbstractProposal::UPtr>
 {
-    auto   result = std::vector<unique_ptr<AbstractProposal> >{};
+    auto   result = std::vector<AbstractProposal::UPtr>{};
 
     auto   numNodeAges = traln.getNumberOfInnerNodes(true);
 
@@ -80,7 +81,7 @@ ProposalRegistry::getSingleParameterProposals(
         else if (not ProposalTypeFunc::isDefaultInstantiate(p))
             continue;
 
-        auto&& proposal = std::unique_ptr<AbstractProposal>{};
+        auto&& proposal = AbstractProposal::UPtr();
 
         switch (p)
         {
@@ -171,7 +172,7 @@ ProposalRegistry::getSingleParameterProposals(
         case ProposalType::REVMAT_SLIDER:
             proposal = make_unique<ParameterProposal>(
                     Category::SUBSTITUTION_RATES, "revMatSlider", true,
-                    make_unique<
+                    std::make_unique<
                         SlidingProposer>(BoundsChecker::rateMin,
                                          BoundsChecker::rateMax,
                                          true),
@@ -179,41 +180,32 @@ ProposalRegistry::getSingleParameterProposals(
                     1e-5, 1);
             break;
         case ProposalType::FREQUENCY_SLIDER:
-            proposal = make_unique<ParameterProposal>(
+            proposal = std::make_unique<ParameterProposal>(
                     Category::FREQUENCIES,
                     "freqSlider", true,
-                    std::unique_ptr<
-                        SlidingProposer>(
-                        new SlidingProposer(
-                            BoundsChecker::
-                                freqMin,
-                            std
-                                ::
-                                numeric_limits
-                            <double>::max(),
-                            false)),
+                    std::make_unique<SlidingProposer>(
+                        BoundsChecker::freqMin,
+                        std::numeric_limits<double>::max(),
+                        false),
                     initFrequencySlidingWindow,
-                    0.5,     1e-5, 1);
+                    0.5,
+                    1e-5,
+                    1);
             break;
         case ProposalType::RATE_HET_MULTI:
             proposal = make_unique<ParameterProposal>(
                     Category::RATE_HETEROGENEITY, "rateHetMulti", false,
-                    std::unique_ptr<
-                        MultiplierProposer>(new MultiplierProposer(
-                                                BoundsChecker::alphaMin,
-                                                BoundsChecker
-                                                    ::alphaMax)),
+                    std::make_unique<MultiplierProposer>(
+                        BoundsChecker::alphaMin, BoundsChecker::alphaMax),
                     initGammaMultiplier, 1,
                     1e-4, 1e2);
             break;
         case ProposalType::RATE_HET_SLIDER:
             proposal = make_unique<ParameterProposal>(
                     Category::RATE_HETEROGENEITY, "rateHetSlider", false,
-                    std::unique_ptr<
-                        SlidingProposer>(new SlidingProposer(
-                                             BoundsChecker::alphaMin,
-                                             BoundsChecker::
-                                                 alphaMax, false)),
+                    std::make_unique<SlidingProposer>(BoundsChecker::alphaMin,
+                                                      BoundsChecker::alphaMax,
+                                                      false),
                     initGammaSlidingWindow,
                     0, 1e-4, 1e2);
             break;
@@ -221,35 +213,33 @@ ProposalRegistry::getSingleParameterProposals(
             proposal = make_unique<ParameterProposal>(
                     Category::FREQUENCIES,
                     "freqDirich", true,
-                    std::unique_ptr<
-                        DirichletProposer>(
-                        new DirichletProposer(
-                            BoundsChecker::
-                                freqMin,
-                            std
-                                ::
-                                numeric_limits
-                            <double>::max(),
-                            false)),
+                    std::make_unique<DirichletProposer>(
+                        BoundsChecker::freqMin,
+                        std::numeric_limits
+                        <double>::max(),
+                        false),
                     initDirichletAlpha, 0.5,
                     1e-3, 1e4);
             break;
         case ProposalType::REVMAT_DIRICHLET:
             proposal = make_unique<ParameterProposal>(
-                    Category::SUBSTITUTION_RATES, "revMatDirich", true,
-                    std::unique_ptr<
-                        DirichletProposer>(new DirichletProposer(
-                                               BoundsChecker::rateMin,
-                                               BoundsChecker
-                                                   ::rateMax, true)),
-                    initDirichletAlpha, 1,
-                    1e-3, 1e4);
+                    Category::SUBSTITUTION_RATES,
+                    "revMatDirich",
+                    true,
+                    std::make_unique<DirichletProposer>(
+                        BoundsChecker::rateMin,
+                        BoundsChecker::rateMax,
+                        true),
+                    initDirichletAlpha,
+                    1,
+                    1e-3,
+                    1e4);
             break;
         case ProposalType::DIRICH_REVMAT_PER_RATE:
         {
             proposal = make_unique<ParameterProposal>(
                     Category::SUBSTITUTION_RATES, "revMatDirichRate", true,
-                    make_unique<
+                    std::make_unique<
                         RateDirichletProposer>(BoundsChecker::rateMin,
                                                BoundsChecker::rateMax),
                     initDirichletProtAlpha,
@@ -262,9 +252,9 @@ ProposalRegistry::getSingleParameterProposals(
         break;
         case ProposalType::SLIDING_REVMAT_PER_RATE:
         {
-            proposal = make_unique<ParameterProposal>(
+            proposal = std::make_unique<ParameterProposal>(
                     Category::SUBSTITUTION_RATES, "revMatSliderRate", true,
-                    make_unique<
+                    std::make_unique<
                         RateSlidingProposer>(BoundsChecker::rateMin,
                                              BoundsChecker::rateMax),
                     initRateSlidingWindow,

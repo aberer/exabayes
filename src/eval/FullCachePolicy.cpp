@@ -1,6 +1,7 @@
 #include "FullCachePolicy.hpp"
 #include "BranchPlain.hpp"
 
+#include "extensions.hpp"
 
 FullCachePolicy::FullCachePolicy(
     const TreeAln& traln,
@@ -10,7 +11,7 @@ FullCachePolicy::FullCachePolicy(
 {}
 
 
-void                                            FullCachePolicy::imprintPolicy(
+void                    FullCachePolicy::imprintPolicy(
     const TreeAln&   traln,
     ArrayOrientation&arrayOrient)
 {
@@ -18,13 +19,13 @@ void                                            FullCachePolicy::imprintPolicy(
 }
 
 
-void                                            FullCachePolicy::freeMemory(
+void                    FullCachePolicy::freeMemory(
     ArrayReservoir& res)
 {
     restorer.clearMemory(res);
 }
 
-void                                            FullCachePolicy::
+void                    FullCachePolicy::
     accountForRejectionPolicy(
     TreeAln&                traln,
     const std::vector<bool>&partitions,
@@ -36,12 +37,13 @@ void                                            FullCachePolicy::
 }
 
 
-std::unique_ptr<ArrayPolicy>                    FullCachePolicy::clone() const
+auto                    FullCachePolicy::clone() const
+    ->ArrayPolicy::UPtr
 {
-    return std::unique_ptr<ArrayPolicy>(new FullCachePolicy(*this));
+    return std::make_unique<FullCachePolicy>(*this);
 }
 
-void                                            FullCachePolicy::
+void                    FullCachePolicy::
     prepareForEvaluation(
     TreeAln&          traln,
     BranchPlain       virtualRoot,

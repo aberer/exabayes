@@ -14,58 +14,58 @@
 class ParameterProposal : public AbstractProposal
 {
 public:
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     ParameterProposal(
         Category               cat,
-        std::string            _name,
+        std::string            name,
         bool                   modifiesBL,
-        AbstractProposer::UPtr _proposer,
+        AbstractProposer::UPtr proposer,
         double                 parameter,
         double                 weight,
         double                 minTuning,
         double                 maxTuning);
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     ParameterProposal(
-        const ParameterProposal&prop);
-    // _________________________________________________________________________
+        const ParameterProposal& prop);
+    // ________________________________________________________________________
     virtual ~ParameterProposal(){}
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual void                                      applyToState(
         TreeAln&             traln,
         PriorBelief&         prior,
         log_double&          hastings,
         Randomness&          rand,
         LikelihoodEvaluator& eval);
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual void                                      evaluateProposal(
         LikelihoodEvaluator&evaluator,
         TreeAln&            traln,
         const BranchPlain&  branchSuggestion);
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual void                                      resetState(
         TreeAln&traln);
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual void                                      autotune();
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual BranchPlain                               determinePrimeBranch(
         const TreeAln&traln,
         Randomness&   rand) const {return BranchPlain();}
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual AbstractProposal*                         clone()
     const {return new ParameterProposal(*this);}
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual std::vector<nat>                          getInvalidatedNodes(
         const TreeAln&traln) const;
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual std::pair<BranchPlain,
                       BranchPlain>                    prepareForSetExecution(
         TreeAln&   traln,
         Randomness&rand)
     {return std::make_pair(BranchPlain(0, 0), BranchPlain(0, 0));}
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual void                                      readFromCheckpointCore(
         std::istream&in);
-    // _________________________________________________________________________
+    // ________________________________________________________________________
     virtual void                                      writeToCheckpointCore(
         std::ostream&out) const;
 private:

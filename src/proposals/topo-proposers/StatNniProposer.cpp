@@ -3,7 +3,7 @@
 #include "TreeRandomizer.hpp"
 #include "SprMove.hpp"
 
-void                                         StatNniProposer::determineMove(
+void                           StatNniProposer::determineMove(
     TreeAln&                              traln,
     LikelihoodEvaluator&                  eval,
     Randomness&                           rand,
@@ -22,13 +22,15 @@ void                                         StatNniProposer::determineMove(
 }
 
 
-TopoMoveProposer*                            StatNniProposer::clone() const
+auto                           StatNniProposer::clone() const
+    ->TopoMoveProposer
+*
 {
     return new StatNniProposer(*this);
 }
 
 
-BranchPlain                                  StatNniProposer::
+BranchPlain                    StatNniProposer::
     determinePrimeBranch(
     const TreeAln&traln,
     Randomness&   rand) const
@@ -37,16 +39,16 @@ BranchPlain                                  StatNniProposer::
 }
 
 
-std::unique_ptr<TopoMove>                    StatNniProposer::getMove() const
+auto                           StatNniProposer::getMove() const
+    ->TopoMove::UPtr
 {
-    return std::unique_ptr<TopoMove>(_move.clone());
+    return TopoMove::UPtr(_move.clone());
 }
 
 
-void                                         StatNniProposer::determineBackProb(
+auto                           StatNniProposer::determineBackProb(
     TreeAln&                              traln,
     LikelihoodEvaluator&                  eval,
     const std::vector<AbstractParameter*>&params)
-{
-    _backProb = log_double::fromAbs(1.);
-}
+    ->void
+{_backProb = log_double::fromAbs(1.);}

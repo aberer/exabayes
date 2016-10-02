@@ -177,7 +177,7 @@ AbstractPrior::UPtr                           BlockPrior::parsePrior(
         auto alphas = parseValues(token);
         auto pr = new DirichletPrior(alphas);
 
-        return std::unique_ptr<AbstractPrior>(pr);
+        return AbstractPrior::UPtr(pr);
     }
     else if (value.EqualsCaseInsensitive("fixed"))
     {

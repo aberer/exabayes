@@ -27,7 +27,7 @@ ParameterProposal::ParameterProposal(
     : AbstractProposal(rhs)
     , modifiesBL(rhs.modifiesBL)
     , parameter(rhs.parameter)
-    , proposer(std::unique_ptr<AbstractProposer>(rhs.proposer->clone()))
+    , proposer(AbstractProposer::UPtr(rhs.proposer->clone()))
     , _savedContent{rhs._savedContent}
     , _savedBinaryContent{rhs._savedBinaryContent}
     , _oldFCs{rhs._oldFCs}

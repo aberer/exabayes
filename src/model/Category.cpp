@@ -17,7 +17,7 @@
 using namespace std;
 
 namespace CategoryFuns {
-std::string                                           getShortName(
+std::string                              getShortName(
     Category cat)
 {
     switch (cat)
@@ -43,7 +43,7 @@ std::string                                           getShortName(
 }
 
 
-std::string                                           getComponentName(
+std::string                              getComponentName(
     Category cat)
 {
     switch (cat)
@@ -66,7 +66,7 @@ std::string                                           getComponentName(
     }
 }
 
-std::string                                           getPriorName(
+std::string                              getPriorName(
     Category cat)
 {
     switch (cat)
@@ -89,7 +89,7 @@ std::string                                           getPriorName(
 }
 
 
-std::vector<Category>                                 getAllCategories()
+std::vector<Category>                    getAllCategories()
 {
     return {
                Category::TOPOLOGY,
@@ -102,7 +102,7 @@ std::vector<Category>                                 getAllCategories()
 }
 
 
-Category                                              getCategoryByPriorName(
+Category                                 getCategoryByPriorName(
     std::string name)
 {
     // bad but this is a bit exhausting...
@@ -123,7 +123,7 @@ Category                                              getCategoryByPriorName(
 }
 
 
-Category                                              getCategoryFromLinkLabel(
+Category                                 getCategoryFromLinkLabel(
     std::string name)
 {
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -142,12 +142,13 @@ Category                                              getCategoryFromLinkLabel(
 }
 
 
-std::unique_ptr<AbstractParameter>                    getParameterFromCategory(
+auto                                     getParameterFromCategory(
     Category        cat,
     nat             id,
     nat             idOfMyKind,
     std::vector<nat>partitions,
     nat             numTaxa)
+    ->AbstractParameter::UPtr
 {
     switch (cat)
     {
@@ -172,7 +173,7 @@ std::unique_ptr<AbstractParameter>                    getParameterFromCategory(
 }
 
 // should the catogry by default be linked into a continuous block
-bool                                                  inUniqueByDefault(
+bool                                     inUniqueByDefault(
     Category cat)
 {
     return cat == Category::TOPOLOGY
@@ -180,7 +181,7 @@ bool                                                  inUniqueByDefault(
 }
 
 
-std::vector<Category>                                 getConflictingCategories(
+std::vector<Category>                    getConflictingCategories(
     Category cat)
 {
     switch (cat)

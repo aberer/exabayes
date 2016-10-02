@@ -154,10 +154,10 @@ void                    BlockParams
 std::vector<AbstractParameter::UPtr>                    BlockParams
     ::getParameters() const
 {
-    std::vector<std::unique_ptr<AbstractParameter> > result;
+    std::vector<AbstractParameter::UPtr> result;
 
     for (auto&p : parameters)
-        result.push_back(std::unique_ptr<AbstractParameter>(p->clone()));
+        result.push_back(AbstractParameter::UPtr(p->clone()));
 
     return result;
 }

@@ -15,6 +15,12 @@ class TreeAln;
 class ArrayPolicy
 {
     ///////////////////////////////////////////////////////////////////////////
+    //                              PUBLIC TYPES                             //
+    ///////////////////////////////////////////////////////////////////////////
+public:
+    using UPtr = std::unique_ptr<ArrayPolicy>;
+
+    ///////////////////////////////////////////////////////////////////////////
     //                            PUBLIC INTERFACE                           //
     ///////////////////////////////////////////////////////////////////////////
 public:
@@ -25,11 +31,11 @@ public:
     // ________________________________________________________________________
     virtual ~ArrayPolicy(){}
     // ________________________________________________________________________
-    virtual void                                            imprintPolicy(
+    virtual void                    imprintPolicy(
         const TreeAln&   traln,
         ArrayOrientation&arrayOrient)  = 0;
     // ________________________________________________________________________
-    void                                                    imprint(
+    void                            imprint(
         const TreeAln&   traln,
         ArrayOrientation&arrayOrient)
     {
@@ -38,13 +44,13 @@ public:
         imprintPolicy(traln, arrayOrient);
     }
     // ________________________________________________________________________
-    virtual void                                            freeMemory(
+    virtual void                    freeMemory(
         ArrayReservoir& res) = 0;
     // ________________________________________________________________________
     /**
      * @brief deal with rejection
      */
-    void                                                    accountForRejection(
+    void                            accountForRejection(
         TreeAln&                traln,
         const std::vector<bool>&partitions,
         const std::vector<nat>& invalidNodes,
@@ -71,8 +77,7 @@ public:
     }
 
     // ________________________________________________________________________
-    virtual void
-    accountForRejectionPolicy(
+    virtual void                    accountForRejectionPolicy(
         TreeAln&                traln,
         const std::vector<bool>&partitions,
         const std::vector<nat>& invalidNodes,
@@ -80,24 +85,24 @@ public:
         ArrayReservoir&         res)  = 0;
 
     // ________________________________________________________________________
-    virtual std::unique_ptr<ArrayPolicy>                    clone() const = 0;
-    virtual void
-    prepareForEvaluation(
+    virtual auto                    clone() const
+        ->ArrayPolicy::UPtr = 0;
+    // ________________________________________________________________________
+    virtual void                    prepareForEvaluation(
         TreeAln&          traln,
         BranchPlain       virtualRoot,
         nat               models,
         ArrayOrientation& arrayOrientation,
         ArrayReservoir&   res) = 0;
     // ________________________________________________________________________
-    virtual void
-    enableRestoreGapVector(){}
+    virtual void                    enableRestoreGapVector(){}
 
     ///////////////////////////////////////////////////////////////////////////
     //                             PROTECTED DATA                            //
     ///////////////////////////////////////////////////////////////////////////
 protected:
     // double prevLnl;
-    std::vector<log_double> partitionLnls;
+    std::vector<log_double>partitionLnls;
 };
 
 

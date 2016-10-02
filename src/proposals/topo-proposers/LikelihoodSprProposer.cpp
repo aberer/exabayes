@@ -125,10 +125,11 @@ const
 }
 
 
-std::unique_ptr<TopoMove>                       LikehoodSprProposer::getMove()
+auto                                            LikehoodSprProposer::getMove()
 const
+    ->TopoMove::UPtr
 {
-    return std::unique_ptr<TopoMove>(_move.clone());
+    return TopoMove::UPtr(_move.clone());
 }
 
 
