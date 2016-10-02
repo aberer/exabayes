@@ -31,8 +31,10 @@ AbstractProposal::AbstractProposal(
 {}
 
 
-std::ostream&                   AbstractProposal::printShort(
+auto                    AbstractProposal::printShort(
     std::ostream&out)  const
+    ->std::ostream
+&
 {
     out << _name << "( ";
 
@@ -73,10 +75,10 @@ std::ostream&                   AbstractProposal::printShort(
 }
 
 
-std::ostream&                                                 AbstractProposal
-    ::
-    printNamePartitions(
+auto                    AbstractProposal::printNamePartitions(
     std::ostream&out)
+    ->std::ostream
+&
 {
     out << _name  << "(";
     assert(_primParamIds.size() == 1);
@@ -97,9 +99,11 @@ std::ostream&                                                 AbstractProposal
 }
 
 
-std::ostream&                                                 operator<<(
+auto                    operator<<(
     std::ostream&           out,
     const AbstractProposal& rhs)
+    ->std::ostream
+&
 {
     out << rhs._name  << std::endl
         << "\tintegrating:\t";
@@ -119,28 +123,29 @@ std::ostream&                                                 operator<<(
 }
 
 
-void                                                          AbstractProposal
+auto                    AbstractProposal
     ::serialize(
     std::ostream&out)   const
+    ->void
 {
     _sctr.serialize(out);
     writeToCheckpointCore(out);
 }
 
 
-void                                                          AbstractProposal
+auto                    AbstractProposal
     ::
     deserialize(
     std::istream&in)
+    ->void
 {
     _sctr.deserialize(in);
     readFromCheckpointCore(in);
 }
 
 
-std::vector<AbstractParameter*>                               AbstractProposal
-    ::
-    getPrimaryParameterView() const
+auto                    AbstractProposal::getPrimaryParameterView() const
+    ->std::vector<AbstractParameter*>
 {
     auto result = std::vector<AbstractParameter*>{};
 
@@ -151,9 +156,8 @@ std::vector<AbstractParameter*>                               AbstractProposal
 }
 
 
-std::vector<AbstractParameter*>                               AbstractProposal
-    ::
-    getSecondaryParameterView() const
+auto                    AbstractProposal::getSecondaryParameterView() const
+    ->std::vector<AbstractParameter*>
 {
     auto result = std::vector<AbstractParameter*>{};
 
@@ -164,9 +168,8 @@ std::vector<AbstractParameter*>                               AbstractProposal
 }
 
 
-std::vector<AbstractParameter*>                               AbstractProposal
-    ::
-    getBranchLengthsParameterView() const
+auto                    AbstractProposal::getBranchLengthsParameterView() const
+    ->std::vector<AbstractParameter*>
 {
     auto result = std::vector<AbstractParameter*>{};
 
@@ -182,19 +185,16 @@ std::vector<AbstractParameter*>                               AbstractProposal
 }
 
 
-std::vector<nat>                                              AbstractProposal
-    ::
-    getAffectedPartitions() const
+auto                    AbstractProposal::getAffectedPartitions() const
+    ->std::vector<nat>
 {
     assert(_primParamIds.size() == 1);
     return _allParams->at(_primParamIds[0])->getPartitions();
 }
 
 
-std::array<bool,
-           3>                                                 AbstractProposal
-    ::getBranchProposalMode()
-const
+auto                    AbstractProposal::getBranchProposalMode() const
+    ->std::array<bool, 3>
 {
     bool outer = false;
     bool multiply = false;
@@ -243,11 +243,12 @@ const
  *
  * @return tuned parameter
  */
-double                    AbstractProposal::tuneParameter(
+auto                    AbstractProposal::tuneParameter(
     int    batch,
     double accRatio,
     double parameter,
     bool   inverse)
+    ->double
 {
     double delta = 1.0 / sqrt(batch + 1);
     // delta = 0.1 < delta ? 0.1 : delta;

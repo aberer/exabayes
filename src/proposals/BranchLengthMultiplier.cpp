@@ -78,9 +78,10 @@ void                           BranchLengthMultiplier::applyToState(
 
     hastings *= log_double::fromAbs(realMultiplier);
 
-    prior.addToRatio(param->getPrior()->getUpdatedValue(oldZ,
-                                                        b.getLength().getValue(),
-                                                        param));
+    prior.addToRatio(param->getPrior()->getUpdatedValue(
+                         oldZ,
+                         b.getLength().getValue(),
+                         *param));
 }
 
 

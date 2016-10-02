@@ -18,7 +18,7 @@ public:
         const ParameterContent& content)  const;
     // ________________________________________________________________________
     virtual bool                                needsIntegration() const
-    {return true; }
+    {return true;}
     // ________________________________________________________________________
     virtual void                                print(
         std::ostream& out) const;
@@ -26,7 +26,7 @@ public:
     virtual ParameterContent                    getInitialValue() const;
     // ________________________________________________________________________
     virtual ParameterContent                    drawFromPrior(
-        Randomness&rand)  const {assert(0); return ParameterContent{}; };
+        Randomness&rand)  const {assert(0); return ParameterContent{};};
     // ________________________________________________________________________
     virtual log_double                          accountForMeanSubstChange(
         TreeAln&                 traln,
@@ -35,19 +35,19 @@ public:
         double                   myNew) const;
     // ________________________________________________________________________
     virtual AbstractPrior*                      clone() const
-    {return new  UniformPrior(*this); }
+    {return new  UniformPrior(*this);}
     // ________________________________________________________________________
     virtual log_double                          getUpdatedValue(
         double                   oldRawVal,
         double                   newRawVal,
-        const AbstractParameter* param) const
-    {assert(0); return log_double(); }
+        const AbstractParameter& param) const
+    {assert(0); return log_double();}
     // ________________________________________________________________________
     double                                      getMin() const
-    {return minVal; }
+    {return minVal;}
     // ________________________________________________________________________
     double                                      getMax() const
-    {return maxVal; }
+    {return maxVal;}
     // ________________________________________________________________________
     double                                      getFirstDerivative(
         const AbstractParameter& param) const;

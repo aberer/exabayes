@@ -28,11 +28,11 @@ void                                ExponentialPrior::print(
 log_double                          ExponentialPrior::getUpdatedValue(
     double                   oldRawVal,
     double                   newRawVal,
-    const AbstractParameter* param) const
+    const AbstractParameter& param) const
 {
     // tout << SHOW(newRawVal)e
-    auto result = _lambda *  param->getMeanSubstitutionRate() * log(newRawVal
-                                                                    / oldRawVal);
+    auto result = _lambda
+        * param.getMeanSubstitutionRate() * log(newRawVal / oldRawVal);
     return log_double::fromLog(result);
 }
 
@@ -69,10 +69,13 @@ double                              ExponentialPrior::getFirstDerivative(
     // the situation even more complicated...
 
     // TODO properly cast it
-    assert(
-        dynamic_cast<BranchLengthsParameter*>(const_cast<AbstractParameter*>(&
-                                                                             param))
-        != nullptr);
+    // assert(dynamic_cast<BranchLengthsParameter*>(
+    //         const_cast<AbstractParameter*>(&param))
+    //     != nullptr);
+
+
+    assert(dynamic_cast<const BranchLengthsParameter*>(&param));
+
     auto fracchange = param.getMeanSubstitutionRate();
     return fracchange * _lambda;
 }

@@ -66,14 +66,17 @@ public:
     // ________________________________________________________________________
     // only for internal branch lengths; this is very ugly, however we need
     // this for maintaining numerical stability with > 300 partitions
-    virtual log_double                          getUpdatedValue(
+    virtual auto                                getUpdatedValue(
         double                   oldRawVal,
         double                   newRawVal,
-        const AbstractParameter* param) const = 0;
+        const AbstractParameter& param) const
+        ->log_double = 0;
     // ________________________________________________________________________
-    friend std::ostream&                        operator<<(
+    friend auto                                 operator<<(
         std::ostream&  out,
         AbstractPrior* rhs)
+        ->std::ostream
+    &
     {
         rhs->print(out);
         return out;

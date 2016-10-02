@@ -20,7 +20,7 @@ public:
     {}
     // ________________________________________________________________________
     virtual ParameterContent                    drawFromPrior(
-        Randomness&rand)  const {assert(0); return ParameterContent{}; };
+        Randomness&rand)  const {assert(0); return ParameterContent{};};
     // ________________________________________________________________________
     virtual log_double                          getLogProb(
         const ParameterContent& content) const;
@@ -31,7 +31,7 @@ public:
     virtual ParameterContent                    getInitialValue() const;
     // ________________________________________________________________________
     virtual bool                                needsIntegration() const
-    {return true; }
+    {return true;}
     // ________________________________________________________________________
     virtual log_double                          accountForMeanSubstChange(
         TreeAln&                 traln,
@@ -50,19 +50,19 @@ public:
     // ________________________________________________________________________
     double                                      getFirstDerivative(
         const AbstractParameter& param) const
-    {assert(0); return 0; }                      //
+    {assert(0); return 0;}                       //
     // ________________________________________________________________________
     virtual log_double                          getUpdatedValue(
         double                   oldRawVal,
         double                   newRawVal,
-        const AbstractParameter* param) const
-    {assert(0); return log_double(); }
+        const AbstractParameter& param) const
+    {assert(0); return log_double();}
 
     ///////////////////////////////////////////////////////////////////////////
     //                              PRIVATE DATA                             //
     ///////////////////////////////////////////////////////////////////////////
 private:
-    std::vector<double> alphas;
+    std::vector<double>alphas;
 };
 
 

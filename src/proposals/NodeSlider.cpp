@@ -155,7 +155,7 @@ void                           NodeSlider::
     auto lnPrA = param->getPrior()->getUpdatedValue(
             oneBranch.getLength().getValue(),
             testBranch.getLength().getValue(),
-            param);
+            *param);
 
     // auto lnPrA = param->getPrior()->getLogProb( ParameterContent{{
     // testBranch.getInterpretedLength(param) } } )
@@ -170,7 +170,7 @@ void                           NodeSlider::
     auto lnPrB = param->getPrior()->getUpdatedValue(
             otherBranch.getLength().getValue(),
             testBranch.getLength().getValue(),
-            param);
+            *param);
 
     // auto lnPrB = param->getPrior()->getLogProb( ParameterContent{{
     // testBranch.getInterpretedLength(param) } } )

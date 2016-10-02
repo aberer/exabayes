@@ -15,8 +15,27 @@
 #include <unistd.h>
 #endif
 
-
 #include <sstream>
+
+
+namespace  {
+// ____________________________________________________________________________
+auto                    block(
+    std::vector<bool>&isBlocked,
+    nat               num)
+    ->void
+{
+    isBlocked[num] = true;
+}
+// ____________________________________________________________________________
+auto                    unblock(
+    std::vector<bool>&isBlocked,
+    nat               num)
+    ->void
+{
+    isBlocked[num] = false;
+}
+}  //
 
 
 CoupledChains::CoupledChains(
@@ -59,28 +78,34 @@ CoupledChains::CoupledChains(
 
         for (auto&param : blParamsUnfixed)
         {
-            _paramId2TopFile.insert(std::make_pair(param->getId(),
-                                                   TopologyFile(workingdir,
-                                                                _runname,
-                                                                _runid, 0, ctr,
-                                                                blParamsUnfixed
-                                                                    .size() >
-                                                                1)));
+            _paramId2TopFile.insert(
+                std::make_pair(
+                    param->getId(),
+                    TopologyFile(workingdir,
+                                 _runname,
+                                 _runid,
+                                 0,
+                                 ctr,
+                                 blParamsUnfixed.size() > 1)));
             ++ctr;
         }
     }
     else if (topoParamUnfixed != nullptr)
-        _paramId2TopFile.insert(std::make_pair(topoParamUnfixed->getId(),
-                                               TopologyFile(workingdir,
-                                                            _runname, _runid,
-                                                            0, 0, false)));
+    {
+        _paramId2TopFile.insert(
+            std::make_pair(
+                topoParamUnfixed->getId(),
+                TopologyFile(workingdir, _runname, _runid, 0, 0, false)));
+    }
+
 
     _pFile.emplace_back(_workdir, _runname, _runid);
 }
 
 
-void                           CoupledChains::initializeOutputFiles(
+auto                    CoupledChains::initializeOutputFiles(
     bool isDryRun)
+    ->void
 {
     // TODO sampling file for every chain possibly
     auto&traln  = _chains[0].getTralnHandle();
@@ -95,9 +120,10 @@ void                           CoupledChains::initializeOutputFiles(
 }
 
 
-PendingSwap                    CoupledChains::prepareSwap(
+auto                    CoupledChains::prepareSwap(
     ParallelSetup&  pl,
     const SwapElem& theSwap)
+    ->PendingSwap
 {
     auto   flags = CommFlag::PRINT_STAT | CommFlag::PROPOSALS;
 
@@ -119,35 +145,38 @@ PendingSwap                    CoupledChains::prepareSwap(
 }
 
 
-bool                           CoupledChains::doSwap(
+auto                    CoupledChains::doSwap(
     ParallelSetup& pl,
     const SwapElem&theSwap)
+    ->bool
 {
-    int                   numChain = int(_chains.size());
+    int     numChain =
+        int(_chains.size());
     assert(numChain > 1);
 
-    auto                  flags = CommFlag::PRINT_STAT | CommFlag::PROPOSALS;
+    auto    flags =
+        CommFlag::PRINT_STAT
+        | CommFlag::PROPOSALS;
 
-    int                   cAIndex = theSwap.getOne();
-    int                   cBIndex = theSwap.getOther();
+    int     cAIndex =
+        theSwap.getOne();
+    int     cBIndex =
+        theSwap.getOther();
 
     assert(pl.isMyChain(_runid, cAIndex) ||    pl.isMyChain(_runid, cBIndex));
 
     if (not pl.isMyChain(_runid, cAIndex))
         std::swap(cAIndex, cBIndex);
 
-    auto&                 a = _chains[cAIndex];
-    auto&                 b = _chains[cBIndex];
+    auto&                                              a = _chains[cAIndex];
+    auto&                                              b = _chains[cBIndex];
 
-    bool                  mineHasSmallerId = a.getCouplingId() <
-        b.getCouplingId();
-    bool                  bothAreMine = pl.isMyChain(_runid, cAIndex) &&
-        pl.isMyChain(
-            _runid,
-            cBIndex);
+    bool    mineHasSmallerId = a.getCouplingId() < b.getCouplingId();
+    bool    bothAreMine = pl.isMyChain(_runid, cAIndex)
+        && pl.isMyChain(_runid, cBIndex);
 
-    auto                  aSer = std::string{};
-    auto                  bSer = std::string{};
+    auto    aSer = std::string{};
+    auto    bSer = std::string{};
 
     if (not bothAreMine)
     {
@@ -164,22 +193,25 @@ bool                           CoupledChains::doSwap(
     assert(b.getChainHeat() <= 1. && a.getChainHeat() <= 1.);
 
     auto
-                          aB = exponentiate((a.getLikelihood() * a.getLnPr()),
-                          b.getChainHeat()),
+            aB = exponentiate(
+            (a.getLikelihood()
+             * a.getLnPr()),
+            b.getChainHeat()),
         bA = exponentiate(b.getLikelihood() * b.getLnPr(), a.getChainHeat()),
         aA = exponentiate(a.getLikelihood() * a.getLnPr(), a.getChainHeat()),
         bB = exponentiate(b.getLikelihood() * b.getLnPr(), b.getChainHeat());
 
-    double                accRatio = min(log_double((aB * bA)  / (aA
-                                                                  * bB)).toAbs(),
-                                         1.0);
+    double  accRatio = min(
+            log_double(
+                (aB * bA) / (aA * bB)).toAbs(),
+            1.0);
 
-    nat                   coupIdA             = a.getCouplingId(),
-                          coupIdB             = b.getCouplingId();
+    nat     coupIdA = a.getCouplingId(),
+            coupIdB = b.getCouplingId();
 
     /* do the swap */
-    double                r = theSwap.getR();
-    bool                  didAccept = r < accRatio;
+    double  r = theSwap.getR();
+    bool    didAccept = r < accRatio;
 
     if (didAccept)
     {
@@ -203,9 +235,10 @@ bool                           CoupledChains::doSwap(
 }
 
 
-bool                    CoupledChains::doLocalSwap(
+auto                    CoupledChains::doLocalSwap(
     ParallelSetup& pl,
     const SwapElem&theSwap)
+    ->bool
 {
     int    numChain = int(_chains.size());
     assert(numChain > 1);
@@ -263,9 +296,10 @@ bool                    CoupledChains::doLocalSwap(
 }
 
 
-std::list<SwapElem>                    CoupledChains::generateSwapsForBatch(
+auto                    CoupledChains::generateSwapsForBatch(
     uint64_t startGen,
     uint64_t numGen)
+    ->std::list<SwapElem>
 {
     auto allSwaps = std::list<SwapElem>{};
 
@@ -306,9 +340,10 @@ std::list<SwapElem>                    CoupledChains::generateSwapsForBatch(
 }
 
 
-void                           CoupledChains::doStep(
+auto                    CoupledChains::doStep(
     nat           id,
     ParallelSetup&pl)
+    ->void
 {
     auto&chain = _chains[id];
     chain.step();
@@ -324,9 +359,10 @@ void                           CoupledChains::doStep(
 }
 
 
-bool                           CoupledChains::allMyChainsAreBlocked(
+auto                    CoupledChains::allMyChainsAreBlocked(
     const std::vector<bool>&isBlocked,
     const ParallelSetup&    pl) const
+    ->bool
 {
     auto result = true;
 
@@ -340,25 +376,11 @@ bool                           CoupledChains::allMyChainsAreBlocked(
 }
 
 
-static void                    block(
-    std::vector<bool>&isBlocked,
-    nat               num)
-{
-    isBlocked[num] = true;
-}
-
-static void                    unblock(
-    std::vector<bool>&isBlocked,
-    nat               num)
-{
-    isBlocked[num] = false;
-}
-
-
-void                           CoupledChains::executePart(
+auto                    CoupledChains::executePart(
     uint64_t       startGen,
     uint64_t       numGen,
     ParallelSetup& pl)
+    ->void
 {
     assert(pl.isMyRun(getRunid()));
 
@@ -596,8 +618,9 @@ void                           CoupledChains::executePart(
 }
 
 
-void                                        CoupledChains::deserialize(
+auto                    CoupledChains::deserialize(
     std::istream&in)
+    ->void
 {
     _rand.deserialize(in);
     _swapInfo.deserialize(in);
@@ -607,8 +630,9 @@ void                                        CoupledChains::deserialize(
 }
 
 
-void                                        CoupledChains::serialize(
+auto                    CoupledChains::serialize(
     std::ostream&out)   const
+    ->void
 {
     _rand.serialize(out);
     _swapInfo.serialize(out);
@@ -618,10 +642,10 @@ void                                        CoupledChains::serialize(
 }
 
 
-void                                        CoupledChains::
-    regenerateOutputFiles(
+auto                    CoupledChains::regenerateOutputFiles(
     std::string workdir,
     std::string prevId)
+    ->void
 {
     auto gen = _chains[0].getGeneration();
 
@@ -633,8 +657,8 @@ void                                        CoupledChains::
 }
 
 
-std::vector<std::string>                    CoupledChains::getAllFileNames()
-const
+auto                    CoupledChains::getAllFileNames() const
+    ->std::vector<std::string>
 {
     auto result = std::vector<std::string>{};
 

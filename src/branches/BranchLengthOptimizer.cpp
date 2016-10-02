@@ -46,8 +46,10 @@ void                    BranchLengthOptimizer::applyToTraversalDescriptor(
     for (auto i = 0u; i < execModel.size(); ++i)
     {
         auto& p = traln.getPartition(i);
-        tr.td[0].executeModel[i] = (execModel[i] && p.getWidth() > 0)  ?
-            PLL_TRUE : PLL_FALSE;
+        tr.td[0].executeModel[i] =
+            (execModel[i] && p.getWidth() > 0)
+            ? PLL_TRUE
+            : PLL_FALSE;
     }
 
     for (auto&v : _optParams)

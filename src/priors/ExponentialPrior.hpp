@@ -18,7 +18,7 @@ public:
         double lambda);
     // ________________________________________________________________________
     virtual bool                                needsIntegration() const
-    {return true; }
+    {return true;}
     // ________________________________________________________________________
     virtual log_double                          getLogProb(
         const ParameterContent& content) const;
@@ -26,7 +26,7 @@ public:
     virtual log_double                          getUpdatedValue(
         double                   oldRawVal,
         double                   newRawVal,
-        const AbstractParameter* param) const;
+        const AbstractParameter& param) const;
     // ________________________________________________________________________
     virtual ParameterContent                    drawFromPrior(
         Randomness&rand)  const;
@@ -35,7 +35,7 @@ public:
         std::ostream& out) const;
     // ________________________________________________________________________
     virtual double                              getLamda()  const
-    {return _lambda; }
+    {return _lambda;}
     // ________________________________________________________________________
     virtual ParameterContent                    getInitialValue() const;
     // ________________________________________________________________________
@@ -49,7 +49,7 @@ public:
         const AbstractParameter& param) const;
     // ________________________________________________________________________
     virtual AbstractPrior*                      clone() const
-    {return new ExponentialPrior(*this); }
+    {return new ExponentialPrior(*this);}
 
     ///////////////////////////////////////////////////////////////////////////
     //                              PRIVATE DATA                             //

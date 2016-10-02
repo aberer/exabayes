@@ -45,22 +45,22 @@ public:
         std::ostream&out) const;
     // ________________________________________________________________________
     double                                      getFirstDerivative(
-        const AbstractParameter& param) const {assert(0); return 0; }
+        const AbstractParameter& param) const {assert(0); return 0;}
     // ________________________________________________________________________
     virtual log_double                          getUpdatedValue(
         double                   oldRawVal,
         double                   newRawVal,
-        const AbstractParameter* param) const
-    {assert(0); return log_double(); }
+        const AbstractParameter& param) const
+    {assert(0); return log_double();}
     // ________________________________________________________________________
     virtual AbstractPrior*                      clone() const
-    {return new  DiscreteModelPrior(*this); }
+    {return new  DiscreteModelPrior(*this);}
 
     ///////////////////////////////////////////////////////////////////////////
     //                              PRIVATE DATA                             //
     ///////////////////////////////////////////////////////////////////////////
 private:
-    std::unordered_map<ProtModel, double> _modelProbs;
+    std::unordered_map<ProtModel, double>_modelProbs;
 };
 
 

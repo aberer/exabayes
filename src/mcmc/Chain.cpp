@@ -224,38 +224,15 @@ void                                Chain::suspend()
     _lnPr = _prior.getLnPrior();
     // tout << "SUSPEND " <<  MAX_SCI_PRECISION << _lnPr << std::endl;
 
-#if 0
-    // auto params =  getBranchLengthsParameterView();
-    AbstractParameter* param = (nullptr);
-
-    for (auto p : _params)
-        if (dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
-            param = p;
-
-    auto               bs = _traln.extractBranches(param);
-    tout << MAX_SCI_PRECISION << "SUSPEND " << bs << std::endl;
-#endif
-
     _evaluator.freeMemory();
 }
 
 
 void                                Chain::resume()
 {
-#if 0
-    AbstractParameter* param = (nullptr);
-
-    for (auto p : _params)
-        if (dynamic_cast<BranchLengthsParameter*>(p) != nullptr)
-            param = p;
-
-    auto               bs = _traln.extractBranches(param);
-    tout  << MAX_SCI_PRECISION << "RESUME " << bs << std::endl;
-#endif
-
     // auto vs = getParamView();
     _prior.initialize(_traln, _params);
-    auto               prNow = _prior.getLnPrior();
+    auto prNow = _prior.getLnPrior();
 
     // tout << "RESUME " <<  prNow  << std::endl;
 
@@ -760,6 +737,8 @@ void                    Chain::stepSetProposal()
                                                                                                //
                                                                                                //
                                                                                                //
+                                                                                               //
+                                                                                               //
                                                                                                // meh
             proposal->autotune();
 
@@ -837,8 +816,8 @@ void                                                    Chain::sample(
     std::unordered_map<nat, TopologyFile>&paramId2TopFile,
     ParameterFile&pFile) const
 {
-    auto              blParamsUnfixed =  std::vector<AbstractParameter*>{};
-    AbstractParameter*topoParamUnfixed = nullptr;
+    auto               blParamsUnfixed =  std::vector<AbstractParameter*>{};
+    AbstractParameter* topoParamUnfixed = nullptr;
 
     for (auto&param : _params)
     {

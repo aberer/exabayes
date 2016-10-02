@@ -163,7 +163,7 @@ void                    ParsSprProposer::
 }
 
 
-void                                          ParsSprProposer::
+void                    ParsSprProposer::
     determineBackProb(
     TreeAln&                              traln,
     LikelihoodEvaluator&                  eval,
@@ -187,16 +187,19 @@ void                                          ParsSprProposer::
     _backProb = log_double::fromAbs(weightedInsertionsBack[prunedFromBranch]);
 }
 
-TopoMoveProposer*                             ParsSprProposer::clone() const
+auto                    ParsSprProposer::clone() const
+    ->TopoMoveProposer
+*
 {
     return new ParsSprProposer(*this);
 }
 
 
-BranchPlain                                   ParsSprProposer::
+auto                    ParsSprProposer::
     determinePrimeBranch(
     const TreeAln&traln,
     Randomness&   rand) const
+    ->BranchPlain
 {
     auto    prunedTree = BranchPlain();
     nodeptr p, pn, pnn;
@@ -214,9 +217,10 @@ BranchPlain                                   ParsSprProposer::
 }
 
 
-ParsSprProposer::weightMap                    ParsSprProposer::getWeights(
+auto                    ParsSprProposer::getWeights(
     const TreeAln&   traln,
     branch2parsScore insertions)
+    ->ParsSprProposer::weightMap
 {
     auto   result = weightMap{};
     double minWeight = std::numeric_limits<double>::max();
