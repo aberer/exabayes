@@ -4,8 +4,9 @@ cd $(dirname $0 )
 
 emacs --batch --kill --eval "(progn \
     (find-file \"manual.org\")\
-    (org-html-export-to-html))\
-    (org-latex-export-to-pdf) "
+    (org-html-export-to-html) \
+    (org-latex-export-to-latex) \
+    (org-latex-export-to-pdf))"
 
 bibtex2html --no-abstract --no-keywords library2.bib
 

@@ -1,7 +1,7 @@
 #+TITLE: ExaBayes User's Manual
 
 #+LaTeX_CLASS: article
-#+LaTeX_CLASS_OPTIONS: [KOMA, a4paper, 12pt, titlepage]
+#+LaTeX_CLASS_OPTIONS: [KOMA, a4paper, 10pt, titlepage]
 
 #+OPTIONS: ^:nil
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/org.css" />
