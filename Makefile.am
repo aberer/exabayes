@@ -281,3 +281,7 @@ date:
 
 dist-hook:
 	make date
+
+manual/manual.pdf: man
+
+manual/manual.html: man
