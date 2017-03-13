@@ -1,0 +1,165 @@
+@article{Ronquist2012,
+abstract = {Since its introduction in 2001, MrBayes has grown in popularity as a software package for Bayesian phylogenetic inference using Markov chain Monte Carlo (MCMC) methods. With this note, we announce the release of version 3.2, a major upgrade to the latest official release presented in 2003. The new version provides convergence diagnostics and allows multiple analyses to be run in parallel with convergence progress monitored on the fly. The introduction of new proposals and automatic optimization of tuning parameters has improved convergence for many problems. The new version also sports significantly faster likelihood calculations through streaming single-instruction-multiple-data extensions (SSE) and support of the BEAGLE library, allowing likelihood calculations to be delegated to graphics processing units (GPUs) on compatible hardware. Speedup factors range from around 2 with SSE code to more than 50 with BEAGLE for codon problems. Checkpointing across all models allows long runs to be completed even when an analysis is prematurely terminated. New models include relaxed clocks, dating, model averaging across time-reversible substitution models, and support for hard, negative, and partial (backbone) tree constraints. Inference of species trees from gene trees is supported by full incorporation of the Bayesian estimation of species trees (BEST) algorithms. Marginal model likelihoods for Bayes factor tests can be estimated accurately across the entire model space using the stepping stone method. The new version provides more output options than previously, including samples of ancestral states, site rates, site d(N)/d(S) rations, branch rates, and node dates. A wide range of statistics on tree parameters can also be output for visualization in FigTree and compatible software.},
+author = {Ronquist, Fredrik and Teslenko, Maxim and van der Mark, Paul and Ayres, Daniel L and Darling, Aaron and H\"{o}hna, Sebastian and Larget, Bret and Liu, Liang and Suchard, Marc a and Huelsenbeck, John P},
+doi = {10.1093/sysbio/sys029},
+file = {:home/aberer/documents/watch/Syst Biol-2012-Ronquist-539-42.pdf:pdf},
+issn = {1076-836X},
+journal = {Systematic biology},
+keywords = {Algorithms,Classification,Classification: methods,Markov Chains,Models, Biological,Monte Carlo Method,Phylogeny,Software},
+month = may,
+number = {3},
+pages = {539--42},
+pmid = {22357727},
+title = {{MrBayes 3.2: efficient Bayesian phylogenetic inference and model choice across a large model space.}},
+url = {http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3329765\&tool=pmcentrez\&rendertype=abstract},
+volume = {61},
+year = {2012}
+}
+
+
+@article{Drummond2012,
+abstract = {Computational evolutionary biology, statistical phylogenetics and coalescent-based population genetics are becoming increasingly central to the analysis and understanding of molecular sequence data. We present the Bayesian Evolutionary Analysis by Sampling Trees (BEAST) software package version 1.7, which implements a family of Markov chain Monte Carlo (MCMC) algorithms for Bayesian phylogenetic inference, divergence time dating, coalescent analysis, phylogeography and related molecular evolutionary analyses. This package includes an enhanced graphical user interface program called Bayesian Evolutionary Analysis Utility (BEAUti) that enables access to advanced models for molecular sequence and phenotypic trait evolution that were previously available to developers only. The package also provides new tools for visualizing and summarizing multispecies coalescent and phylogeographic analyses. BEAUti and BEAST 1.7 are open source under the GNU lesser general public license and available at http://beast-mcmc.googlecode.com and http://beast.bio.ed.ac.uk.},
+author = {Drummond, Alexei J and Suchard, Marc a and Xie, Dong and Rambaut, Andrew},
+doi = {10.1093/molbev/mss075},
+file = {:home/aberer/documents/watch/mss075.pdf:pdf},
+issn = {1537-1719},
+journal = {Molecular biology and evolution},
+keywords = {Animals,Base Sequence,Bayes Theorem,Computational Biology,Computational Biology: methods,DNA, Mitochondrial,DNA, Mitochondrial: genetics,Finches,Finches: genetics,Molecular Sequence Data,Phenotype,Phylogeny,Software,User-Computer Interface},
+month = aug,
+number = {8},
+pages = {1969--73},
+pmid = {22367748},
+title = {{Bayesian phylogenetics with BEAUti and the BEAST 1.7.}},
+url = {http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3408070\&tool=pmcentrez\&rendertype=abstract},
+volume = {29},
+year = {2012}
+}
+
+
+@article{Lakner2008a,
+abstract = {The main limiting factor in Bayesian MCMC analysis of phylogeny is typically the efficiency with which topology proposals sample tree space. Here we evaluate the performance of seven different proposal mechanisms, including most of those used in current Bayesian phylogenetics software. We sampled 12 empirical nucleotide data sets--ranging in size from 27 to 71 taxa and from 378 to 2,520 sites--under difficult conditions: short runs, no Metropolis-coupling, and an oversimplified substitution model producing difficult tree spaces (Jukes Cantor with equal site rates). Convergence was assessed by comparison to reference samples obtained from multiple Metropolis-coupled runs. We find that proposals producing topology changes as a side effect of branch length changes (LOCAL and Continuous Change) consistently perform worse than those involving stochastic branch rearrangements (nearest neighbor interchange, subtree pruning and regrafting, tree bisection and reconnection, or subtree swapping). Among the latter, moves that use an extension mechanism to mix local with more distant rearrangements show better overall performance than those involving only local or only random rearrangements. Moves with only local rearrangements tend to mix well but have long burn-in periods, whereas moves with random rearrangements often show the reverse pattern. Combinations of moves tend to perform better than single moves. The time to convergence can be shortened considerably by starting with a good tree, but this comes at the cost of compromising convergence diagnostics based on overdispersed starting points. Our results have important implications for developers of Bayesian MCMC implementations and for the large group of users of Bayesian phylogenetics software.},
+author = {Lakner, Clemens and van der Mark, Paul and Huelsenbeck, John P and Larget, Bret and Ronquist, Fredrik},
+doi = {10.1080/10635150801886156},
+file = {::},
+isbn = {1063515080188},
+issn = {1063-5157},
+journal = {Systematic biology},
+keywords = {Bayes Theorem,Markov Chains,Models, Genetic,Monte Carlo Method,Phylogeny},
+month = feb,
+number = {1},
+pages = {86--103},
+pmid = {18278678},
+title = {{Efficiency of Markov chain Monte Carlo tree proposals in Bayesian phylogenetics.}},
+url = {http://www.ncbi.nlm.nih.gov/pubmed/18278678},
+volume = {57},
+year = {2008}
+}
+
+
+
+@article{Stamatakis2006,
+abstract = {RAxML-VI-HPC (randomized axelerated maximum likelihood for high performance
+computing) is a sequential and parallel program for inference of
+large phylogenies with maximum likelihood (ML). Low-level technical
+optimizations, a modification of the search algorithm, and the use
+of the GTR+CAT approximation as replacement for GTR+Gamma yield a
+program that is between 2.7 and 52 times faster than the previous
+version of RAxML. A large-scale performance comparison with GARLI,
+PHYML, IQPNNI and MrBayes on real data containing 1000 up to 6722
+taxa shows that RAxML requires at least 5.6 times less main memory
+and yields better trees in similar times than the best competing
+program (GARLI) on datasets up to 2500 taxa. On datasets > or =4000
+taxa it also runs 2-3 times faster than GARLI. RAxML has been parallelized
+with MPI to conduct parallel multiple bootstraps and inferences on
+distinct starting trees. The program has been used to compute ML
+trees on two of the largest alignments to date containing 25,057
+(1463 bp) and 2182 (51,089 bp) taxa, respectively. AVAILABILITY:
+icwww.epfl.ch/\~{}stamatak},
+author = {Stamatakis, Alexandros},
+doi = {10.1093/bioinformatics/btl446},
+institution = {Swiss Federal Institute of Technology Lausanne, School of Computer and Communication Sciences Lab Prof. Moret, STATION 14, CH-1015 Lausanne, Switzerland. Alexandros.Stamatakis@epfl.ch},
+journal = {Bioinformatics},
+keywords = { DNA, Genetic; Models, Molecular; Models, Nucleic Acid; Software; Species Specificity, Statistical; Phylogeny; Sequence Alignment, methods; Sequence Analysis, methods; Sequence Homology,Algorithms; Conserved Sequence; Evolution},
+month = nov,
+number = {21},
+pages = {2688--2690},
+pmid = {16928733},
+title = {{RAxML-VI-HPC: maximum likelihood-based phylogenetic analyses with thousands of taxa and mixed models.}},
+url = {http://dx.doi.org/10.1093/bioinformatics/btl446},
+volume = {22},
+year = {2006}
+}
+
+
+@article{Stamatakis2012,
+abstract = {Due to advances in molecular sequencing and the increasingly rapid collection of molecular data, the field of phyloinformatics is transforming into a computational science. Therefore, new tools are required that can be deployed in supercomputing environments and that scale to hundreds or thousands of cores.},
+author = {Stamatakis, Alexandros and Aberer, Andre J and Goll, Christian and Smith, Stephen A and Berger, Simon A and Izquierdo-Carrasco, Fernando},
+doi = {10.1093/bioinformatics/bts309},
+file = {:home/aberer/documents/watch/Bioinformatics-2012-Stamatakis-bioinformatics-bts309.pdf:pdf},
+issn = {1367-4811},
+journal = {Bioinformatics (Oxford, England)},
+month = aug,
+number = {15},
+pages = {2064--6},
+pmid = {22628519},
+title = {{RAxML-Light: a tool for computing terabyte phylogenies.}},
+url = {http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3400957\&tool=pmcentrez\&rendertype=abstract},
+volume = {28},
+year = {2012}
+}
+
+
+@INPROCEEDINGS{Stamatakis2012a, 
+author={Stamatakis, A. and Aberer, A.J.}, 
+booktitle={Parallel Distributed Processing (IPDPS), 2013 IEEE 27th International Symposium on}, 
+title={Novel Parallelization Schemes for Large-Scale Likelihood-based Phylogenetic Inference}, 
+year={2013}, 
+pages={1195-1204}, 
+keywords={application program interfaces;biology computing;data analysis;evolution (biological);fault tolerant computing;genetics;message passing;parallel processing;tree searching;ExaML;RAxML-Light scalability;checkpointable MPI-based code;code complexity;communication scheme;evolutionary trees;exascale maximum likelihood;fault tolerance;fork-join parallelization approach;hardware failures;large-scale likelihood-based phylogenetic inference;likelihood-based models;molecular data avalanche;molecular evolution;parallelization scheme;phylogenies reconstructing;real-world data analysis projects;scalable MPI-based code;scalable codes;tree search algorithm;wet-lab sequencing technologies;whole-genome datasets;Bayes methods;Computational modeling;Phylogeny;Random access memory;Sequential analysis;Shape;Standards;MPI;likelihood;parallelization;phylogenetics}, 
+doi={10.1109/IPDPS.2013.70}, 
+ISSN={1530-2075},}
+
+
+@inproceedings{zhang2012multi,
+author = {Zhang, J and Stamatakis, A},
+booktitle = {Parallel and Distributed Processing Symposium Workshops \& PhD Forum (IPDPSW), 2012 IEEE 26th International},
+mendeley-groups = {phylogenetics},
+organization = {IEEE},
+pages = {691--698},
+title = {{The multi-processor scheduling problem in phylogenetics}},
+year = {2012}
+}
+
+
+@article{Izquierdo-Carrasco2011,
+abstract = {BACKGROUND: The rapid accumulation of molecular sequence data, driven by novel wet-lab sequencing technologies, poses new challenges for large-scale maximum likelihood-based phylogenetic analyses on trees with more than 30,000 taxa and several genes. The three main computational challenges are: numerical stability, the scalability of search algorithms, and the high memory requirements for computing the likelihood.
+
+RESULTS: We introduce methods for solving these three key problems and provide respective proof-of-concept implementations in RAxML. The mechanisms presented here are not RAxML-specific and can thus be applied to any likelihood-based (Bayesian or maximum likelihood) tree inference program. We develop a new search strategy that can reduce the time required for tree inferences by more than 50\% while yielding equally good trees (in the statistical sense) for well-chosen starting trees. We present an adaptation of the Subtree Equality Vector technique for phylogenomic datasets with missing data (already available in RAxML v728) that can reduce execution times and memory requirements by up to 50\%. Finally, we discuss issues pertaining to the numerical stability of the $\Gamma$ model of rate heterogeneity on very large trees and argue in favor of rate heterogeneity models that use a single rate or rate category for each site to resolve these problems.
+
+CONCLUSIONS: We address three major issues pertaining to large scale tree reconstruction under maximum likelihood and propose respective solutions. Respective proof-of-concept/production-level implementations of our ideas are made available as open-source code.},
+author = {Izquierdo-Carrasco, Fernando and Smith, Stephen a and Stamatakis, Alexandros},
+doi = {10.1186/1471-2105-12-470},
+file = {:home/aberer/documents/watch/1471-2105-12-470.pdf:pdf},
+issn = {1471-2105},
+journal = {BMC bioinformatics},
+keywords = {Algorithms,Bayes Theorem,Likelihood Functions,Models, Genetic,Molecular Sequence Data,Phylogeny,Probability},
+month = jan,
+number = {1},
+pages = {470},
+pmid = {22165866},
+publisher = {BioMed Central Ltd},
+title = {{Algorithms, data structures, and numerics for likelihood-based phylogenetic inference of huge trees.}},
+url = {http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3267785\&tool=pmcentrez\&rendertype=abstract},
+volume = {12},
+year = {2011}
+}
+
+
+@incollection{kobert2014divisible,
+  title={The Divisible Load Balance Problem and Its Application to Phylogenetic Inference},
+  author={Kobert, Kassian and Flouri, Tom{\'a}{\v{s}} and Aberer, Andre and Stamatakis, Alexandros},
+  booktitle={Algorithms in Bioinformatics},
+  pages={204--216},
+  year={2014},
+  publisher={Springer}
+}
