@@ -2,16 +2,6 @@
 
 gitroot=$(dirname $0)
 
-if [ ! -d "$gitroot/.git" ]; then
-
-    echo ".git folder not found. Most likely you are attempting to"
-    echo "bootstrap from a github generated tar-ball which is not"
-    echo "supported. Please download the source-tarball from the"
-    echo "contributor's site or try to bootstrap in a cloned repository."
-
-    exit
-fi
-
 # use this script to compile the source code downloaded from the
 # repository.
 
