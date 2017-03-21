@@ -49,9 +49,21 @@ AX_PTHREAD
 
 AC_ARG_VAR([MPICXX],[sets the MPI c++ compiler ])
 
-
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h limits.h stdint.h stdlib.h string.h strings.h sys/time.h unistd.h])
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([ncl/ncl.h])
+AC_CHECK_HEADER([Random123/threefry.h])
+AC_LANG_POP([C++])
+
+dnl AS_IF([test "x$found_ncl_headers" != "xyes"], [AC_MSG_ERROR([Unable to find the standard integers headers])])
+
+dnl , [ncl], [found_ncl_lib=yes], [found_ncl_lib=no]
+
+dnl AC_LIB_LINKFLAGS([ncl])
+
+dnl PKG_CHECK_MODULES([ncl], [ncl-2.1 >= 2.1])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE
@@ -147,11 +159,12 @@ dnl test, if we have PLL AND force the user to provide a mpi-comiler, if we dont
 if test "x$MPI_CODE" = "xyes" ; then 
    AC_LANG_PUSH([C++])	 
    LX_FIND_MPI([], AC_MSG_ERROR(could not find mpi))
-
-   AC_LANG_POP([C++])	 
+   AC_LANG_POP([C++])
 fi 
 
 AM_CONDITIONAL([WITH_MPI], [ test "x$MPI_CODE" = "xyes" ])
+AM_CONDITIONAL([DYN_NCL], [ test "x$ac_cv_header_ncl_ncl_h" = "xyes" ])
+AM_CONDITIONAL([SYSTEM_RAND123], [ test "x$ac_cv_header_Random123_threefry_h" = "xyes" ])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

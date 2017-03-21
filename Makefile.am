@@ -4,7 +4,13 @@
 AUTOMAKE_OPTIONS= foreign subdir-objects
 
 EXTRA_DIST= src/releaseDate.hpp lib/Random123-1.08  LICENSE.txt lib/pll/avxLikelihood.c examples
-noinst_LIBRARIES=libbayes.a libncl.a libcommdummy.a libpll.a libpll_model.a 
+noinst_LIBRARIES=libbayes.a libcommdummy.a libpll.a libpll_model.a
+
+if DYN_NCL
+else
+	noinst_LIBRARIES+=libncl.a
+endif
+
 bin_PROGRAMS = yggdrasil parser-exabayes sdsf postProcParam credibleSet extractBips consense
 dist_doc_DATA = ./CHANGELOG  ./README.md ./COPYING
 
@@ -46,7 +52,7 @@ dist_docexamplesdir5_DATA= examples/binary/aln.model \
 examples/binary/call-parallel.sh examples/binary/call.sh \
 examples/binary/aln.phy examples/binary/config.nex
 
-.PHONY: my-update-src doc man date dist
+.PHONY: my-update-src date dist
 
 
 ################################################################
@@ -115,14 +121,27 @@ folders=$(shell find $(top_srcdir)/src -type d | grep -v '.deps' | grep -v comm 
 SRCINCLUDE=$(shell echo $(folders) | tr ' ' '\n' |  sed "s/\(.*\)/-I\1/" | tr '\n' ' ')
 SRCINCLUDE+= -I$(top_srcdir)/src/comm/ -I$(top_srcdir)/src/comm/threads
 
-RAND123_INCLUDES=-isystem $(top_srcdir)/lib/Random123-1.08/include/Random123 -isystem $(top_srcdir)/lib/Random123-1.08/include -isystem $(top_srcdir)/lib/Random123-1.08/examples
+RAND123_INCLUDES=-isystem $(top_srcdir)/lib/Random123-1.08/include
 NCL_INCLUDES=-isystem $(top_srcdir)/lib/ncl-2.1.18
-BAYES_COMMON= $(RAND123_INCLUDES) $(NCL_INCLUDES) $(SRCINCLUDE)  
-BAYES_INCLUDES=$(BAYES_COMMON) -I$(top_srcdir)/src/comm/dummy 
+BAYES_COMMON=$(SRCINCLUDE)
+
+BAYES_INCLUDES=$(BAYES_COMMON) -I$(top_srcdir)/src/comm/dummy
 BAYES_INCLUDES_PARA= $(BAYES_COMMON)-I$(top_srcdir)/src/comm/mpi 
 
-seqlibs= libncl.a libbayes.a libcommdummy.a  libpll.a libpll_model.a libncl.a  
-paralibs= libbayes.a libcommmpi.a libpll.a libpll_model.a libncl.a
+seqlibs=libbayes.a libcommdummy.a  libpll.a libpll_model.a
+paralibs=libbayes.a libcommmpi.a libpll.a libpll_model.a
+
+if DYN_NCL
+else
+BAYES_COMMON+=$(NCL_INCLUDES)
+seqlibs+=libncl.a
+paralibs+=libncl.a
+endif
+
+if SYSTEM_RAND123
+else
+BAYES_COMMON+=$(RAND123_INCLUDES)
+endif
 
 
 ################################################################ 
@@ -194,9 +213,13 @@ endif
 ################################################################
 # exabayes
 exabayes_SOURCES = ./src/apps/exabayes.cpp
-exabayes_CXXFLAGS=   $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)
+exabayes_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)
 exabayes_LDFLAGS=$(MPI_CXXLDFLAGS)
 exabayes_LDADD= $(paralibs) $(MPI_CXXLDFLAGS)
+
+if DYN_NCL
+exabayes_LDFLAGS+=-lncl
+endif
 
 ################################################################
 # yggdrasil 
@@ -204,11 +227,19 @@ yggdrasil_SOURCES = ./src/apps/exabayes.cpp
 yggdrasil_CXXFLAGS=$(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)  -D_IS_YGG
 yggdrasil_LDADD=$(seqlibs)
 
+if DYN_NCL
+yggdrasil_LDFLAGS=-lncl
+endif
+
 ################################################################
 # SDSF
 sdsf_SOURCES= ./src/apps/sdsf.cpp
 sdsf_CXXFLAGS= $(AM_CXXFLAGS) -O3 $(BAYES_INCLUDES)    
 sdsf_LDADD= $(seqlibs)
+
+if DYN_NCL
+sdsf_LDFLAGS=-lncl
+endif
 
 ################################################################
 # the parser 
@@ -274,10 +305,10 @@ doc:
 	doxygen 
 
 man:
-	./manual/process.sh ./manual
+	$(top_srcdir)/manual/process.sh ./manual
 
 date:
-	./utils/updateDate.sh
+	$(top_srcdir)/utils/updateDate.sh
 
 dist-hook:
 	make date
